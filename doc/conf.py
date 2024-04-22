@@ -167,6 +167,7 @@ autosummary_generate = True
 extlinks = {
     "issue": ("https://github.com/iiasa/message-ix-models/issue/%s", "GH #%s"),
     "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #%s"),
+    "gh-user": ("https://github.com/%s", "@%s"),
 }
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
@@ -184,8 +185,7 @@ def local_inv(name: str, *parts: str) -> Optional[str]:
         return str(Path(spec.origin).parents[1].joinpath(*parts, "objects.inv"))
 
 
-# For message-data, see: https://docs.readthedocs.io/en/stable/guides
-# /intersphinx.html#intersphinx-with-private-projects
+# For message-data, see: https://docs.readthedocs.io/en/stable/guides/intersphinx.html#intersphinx-with-private-projects
 _token = os.environ.get("RTD_TOKEN_MESSAGE_DATA", "")
 
 intersphinx_mapping = {
