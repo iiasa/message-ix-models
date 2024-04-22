@@ -1,0 +1,84 @@
+# Region code list
+#
+# - See message_data.tools.regions.
+# - The ISO 3166-1 alpha-3 codes are not defined in this file, but loaded from
+#   a copy of the ISO database, e.g. in pycountry.
+# - Among others, there are no assignments for:
+#   - ATA Antarctica
+#   - IOT British Indian Ocean Territory
+#   - SGS South Georgia
+
+World:
+  name: World
+  description: R12 regions
+
+R12_AFR:
+  parent: World
+  name: Sub-Saharan Africa
+  description: >-
+    Does not include Saint	Helena,	Ascension	and	Tristan	da	Cunha. 
+    In France-> Mayotte, Reunion data is present post 2010.
+    IEA MAP:  AFRICATOT - (DZA+EGY+LBY+MAR+SDN+SSD+TUN)->IIASA_AFRICA
+  child: [IIASA_AFRICA]
+
+R12_CHN:
+  parent: World
+  name: China region
+  child: [CHINAREG]
+
+R12_RCPA:
+  parent: World
+  name: Rest of Centrally Planned Asia
+  child: [KHM, LAO, MNG, PRK, VNM]
+
+R12_EEU:
+  parent: World
+  name: Central and Eastern Europe
+  child: [ALB, BGR, BIH, CZE, EST, HRV, HUN, LTU, LVA, MKD, MNE, POL, ROU, SRB, SVK, SVN, KOSOVO]
+
+R12_WEU:
+  parent: World
+  name: Western Europe
+  child: [AND, AUT, BEL, CHE, CYP, DEU, DNK, ESP, FIN, FRA, FRO, GBR, GIB, GRC, GREENLAND, IRL, ISL, ITA, LIE, LUX, MLT, NLD, NOR, PRT, SJM, SWE, TUR]
+
+R12_FSU:
+  parent: World
+  name: Former Soviet Union
+  child: [ARM, AZE, BLR, GEO, KAZ, KGZ, MDA, RUS, TJK, TKM, UKR, UZB]
+
+R12_LAM:
+  parent: World
+  name: Latin America and The Caribbean
+  description: >-
+    The source includes “Netherlands Antilles” which has a provisional ISO 3166-2 alpha-3 code (ANT),
+    but is not a country. It was dissolved in 2010 into BES, CUW and SXM, also included.
+  child: [LATAMER, CHL, COL, CRI, MEX]
+
+R12_MEA:
+  parent: World
+  name: Middle East and North Africa
+  child: [ASME, DZA,EGY,LBY, MAR, SDN, SSD, TUN, ISR, MPALESTINE ]
+
+R12_NAM:
+  parent: World
+  name: North America
+  child: [CAN, USA]
+
+R12_PAO:
+  parent: World
+  name: Pacific OECD
+  child: [AUS, JPN, NZL]
+
+R12_PAS:
+  parent: World
+  name: Other Pacific Asia
+  description: >-
+    IEA MAP:  OCEANIA - (AUS+NZL)->IIASA_PAS
+  child: [KOR, IDN, MYS, MMR, PHL, SGP, THA, BRN, TWN, IIASA_PAS]
+
+R12_SAS:
+  parent: World
+  description: >-
+    East timor and Maldives mapped here. IEA MAP: OTHERASIA - (OCEANIA - (AUS, NZL))->IIASA_SAS
+  name: South Asia
+  child: [BGD, IND, NPL, PAK, LKA, IIASA_SAS]
