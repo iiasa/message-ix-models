@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2024.4.22
+==========
 
 - Incorporate the :doc:`/global/index` documentation (:pull:`107`, :pull:`110`).
   This documentation formerly lived at https://docs.messageix.org/global/ and in a separate repository at `iiasa/message_doc <https://github.com/iiasa/message_doc>`_.
