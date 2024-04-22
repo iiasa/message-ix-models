@@ -167,6 +167,7 @@ autosummary_generate = True
 extlinks = {
     "issue": ("https://github.com/iiasa/message-ix-models/issue/%s", "GH #%s"),
     "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #%s"),
+    "gh-user": ("https://github.com/%s", "@%s"),
 }
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------

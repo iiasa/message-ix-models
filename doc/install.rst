@@ -1,10 +1,11 @@
 Installation
 ************
 
-.. note:: :mod:`message_ix_models` requires :mod:`message_ix` to run. Please ensure your system has :external+message-ix:ref:`their required dependencies <system-dependencies>` installed.
+.. note:: :mod:`message_ix_models` requires :mod:`message_ix` to run.
+   Please ensure your system has :ref:`their required dependencies <message-ix:system-dependencies>` installed.
 
-:mod:`message_ix_models` is structured as a Python package and is published to the PyPI public code repository. Hence, there are two options for the installation:
-
+:mod:`message_ix_models` is structured as a Python package and is published to the PyPI public code repository.
+Hence, there are two options for the installation:
 
 From PyPI
 ---------
@@ -15,12 +16,12 @@ This option is only recommended for users who do not wish to make any changes to
 
     $ pip install message-ix-models[<extra_dependencies>]
 
-
 From source
 -----------
 
-Use this option if you intend to make changes to the source code. 
-We value your contributions via pull requests to `the main repository <https://github.com/iiasa/message-ix-models>`_. Please consider :external+message-ix:doc:`contributing <contributing>` your changes.
+Use this option if you intend to make changes to the source code.
+We value your contributions via pull requests to `the main repository <https://github.com/iiasa/message-ix-models>`_.
+Please consider :doc:`contributing <message-ix:contributing>` your changes.
 
 1. Fork the `the main repository <https://github.com/iiasa/message-ix-models>`_.
    This will create a new repository ``<user>/message-ix-models``.
@@ -33,10 +34,9 @@ We value your contributions via pull requests to `the main repository <https://g
    This will allow keeping up to date with changes there and importing tags, which also needs to be done for the install tests to succeed::
 
     $ git remote add upstream git@github.com:iiasa/message-ix-models.git
-
     $ git fetch upstream --tags
 
-4. Inside the ``message-ix-models`` folder, run::
+4. Inside the :file:`message-ix-models` directory, run::
 
     $ pip install --editable .[<extra_dependencies>]
 
@@ -63,10 +63,11 @@ Verify that the version installed corresponds to the `latest release <https://gi
     # Show versions of message_ix, message-ix-models, and key dependencies
     $ message-ix show-versions
 
-    # Show the list of modelling platforms that have been installed and the path to the database config file
+    # Show the list of modelling platforms that have been installed and
+    # the path to the database config file
     # By default, just the local database should appear in the list
     $ message-ix platform list
     $ mix-models config show
 
-The above commands will work as of :mod:`message_ix` 3.0 and in subsequent versions.
+The above commands will work as of :mod:`message_ix` version 3.0 and in subsequent versions.
 Please read through the output of the :ref:`mix-models command <cli-help>` to understand the different CLI options and what you can do with them.
