@@ -7,16 +7,16 @@ Next release
 - Incorporate the :doc:`/global/index` documentation (:pull:`107`, :pull:`110`).
   This documentation formerly lived at https://docs.messageix.org/global/ and in a separate repository at `iiasa/message_doc <https://github.com/iiasa/message_doc>`_.
 - Improve tool for :ref:`migrate-filter-repo` (:pull:`174`); expand documentation.
-- Update investment cost assumptions for wind and solar technologies (:pull:`176`).
+- New module for :doc:`/api/tools-costs` (:pull:`99`).
 - Update investment cost assumptions in :doc:`/api/tools-costs` for wind and solar technologies (:pull:`176`).
 
   - Remove manually specified base year reference region costs for solar_pv_ppl and solar_pv_RC so that 2021 IEA WEO costs are used for these technologies.
   - Fix the manually specified base year reference region cost for wind_ppf.
   - Update cost reduction rates and scenarios for wind_ppf so that it follows the same narratives as wind_ppl.
 - Convert Intratec data for :doc:`/api/tools-costs` from Excel to a simpler CSV format. (:pull:`167`).
-- New module for :doc:`/api/tools-costs` (:pull:`99`).
 - Migrate :doc:`/api/report/legacy` to provide post-processing functionality for the :doc:`global model snapshot </api/model-snapshot>` (:pull:`159`).
 - Migrate and improve code for four sources of exogenous data (:pull:`162`): :mod:`.project.gea`, :mod:`.project.shape`, :mod:`.tools.gfei`, and :mod:`.tools.iea.eei`.
+- Add a :doc:`quickstart` (:pull:`157`).
 - Expand :doc:`data` (:pull:`161`).
 - Add an explicit :ref:`policy-upstream-versions` (:pull:`162`).
 
