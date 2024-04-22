@@ -19,7 +19,31 @@ from .structure import get_technology_groups
 if TYPE_CHECKING:
     import pathlib
 
+    from genno.types import AnyQuantity
+
 log = logging.getLogger(__name__)
+
+
+def write_report(qty: "AnyQuantity", path: Path, kwargs=None) -> None:
+    """Similar to :func:`.genno.operator.write_report`, but include units.
+
+    .. todo:: Move upstream, to :mod:`genno`.
+    """
+    from genno import operator
+    from message_ix_models.util import datetime_now_with_tz
+
+    kwargs = kwargs or dict()
+    kwargs.setdefault(
+        "header_comment",
+        f"""`{qty.name}` data from MESSAGEix-Transport calibration.
+
+Generated: {datetime_now_with_tz().isoformat()}
+
+Units: {qty.units:~}
+""",
+    )
+
+    operator.write_report(qty, path, kwargs)
 
 
 def add_debug(c: Computer) -> None:
@@ -68,7 +92,7 @@ def add_debug(c: Computer) -> None:
         )
     ):
         debug_keys.append(f"transport debug {i}")
-        c.add(debug_keys[-1], "write_report", key, output_dir.joinpath(f"{stem}.csv"))
+        c.add(debug_keys[-1], write_report, key, output_dir.joinpath(f"{stem}.csv"))
 
     def _(*args) -> "pathlib.Path":
         """Do nothing with the computed `args`, but return `output_path`."""
