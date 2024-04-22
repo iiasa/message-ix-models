@@ -807,9 +807,8 @@ def share_weight(
       - The interpolation between these points is given by the ratio :math:`k` between
         the same-node convergence-year GDP PPP per capita (`gdp`) and the reference
         node(s mean) base-year GDP PPP per capita.
-      - If no reference nodes are given, certain fixed share weights are used.
-
-        .. todo:: Document these.
+      - If no reference nodes are given, the values converge towards equal weights for
+        each of `t_modes`, with a fixed parameter :math:`k = 1/3`.
 
     - Values for the years between the base year and the convergence year are
       interpolated.
@@ -852,39 +851,32 @@ def share_weight(
 
     # Weights at the convergence year, yC
     for node in nodes:
-        # Retrieve referenc nodes: a set of 0+ nodes to converge towards
+        # Retrieve reference nodes: a set of 0+ nodes to converge towards
         ref_nodes = cfg.share_weight_convergence[node]
 
-        _1 = dict(n=node, **yC)
+        # Indexers
+        _1 = dict(n=node, **yC)  # Same node, convergence year
+        _2 = dict(n=ref_nodes, **y0)  # Reference node(s), base year
 
-        if not len(ref_nodes):
-            # No reference nodes: use equal shares, except higher value for LDV, and
-            # lower value for 2W.
-            # NB This will not work if these are not among the mode codes.
-            k = 1.0 / (len(t_modes) + 2 - 0.5)
-            weight.loc[_1] = k
-            weight.loc[dict(**_1, t="LDV")] = 3 * k
-            weight.loc[dict(**_1, t="2W")] = 0.5 * k
-            continue
+        if ref_nodes:
+            # Ratio between this node's GDP in yC and the mean of the reference nodes'
+            # GDP values in y0. Maximum 1.0.
+            k = min(
+                (gdp.sel(_1) / (gdp.sel(_2).sum() / float(len(ref_nodes)))).item(), 1.0
+            )
+            # As k tends to 1, converge towards the mean of the reference nodes' share
+            # weights in y0/base shares.
+            target = weight.sel(_2).mean("n")
+        else:
+            # `node` without `ref_nodes`
+            # Arbitrary value
+            k = 1 / 3.0
+            # As k tends to 1, converge towards equal weights
+            target = xr.DataArray(1.0 / len(t_modes))
 
-        _2 = dict(n=ref_nodes, **y0)
-
-        # Ratio between this node's GDP in yC and the mean of the reference nodes' GDP
-        # values in y0. Maximum 1.0.
-        k = min((gdp.sel(_1) / (gdp.sel(_2).sum() / float(len(ref_nodes)))).item(), 1.0)
-
-        # Scale weights in yC:
-        # - As k tends to 1, converge towards the mean of the reference nodes' scale
-        #   weights in y0/base shares.
+        # Scale weights in convergence year
         # - As k tends to 0, converge towards the same node's base shares.
-        weight.loc[_1] = k * weight.sel(_2).mean("n") + (1 - k) * weight.sel(
-            n=node, **y0
-        )
-
-    # Currently not enabled
-    # “Set 2010 sweight to 2005 value in order not to have rail in 2010, where
-    # technologies become available only in 2020”
-    # weight.loc[dict(y=2010)] = weight.loc[dict(y=2005)]
+        weight.loc[_1] = k * target + (1 - k) * weight.sel(n=node, **y0)
 
     # Interpolate linearly between y0 and yC
     # NB this will not work if yC is before the final period; it will leave NaN after yC
