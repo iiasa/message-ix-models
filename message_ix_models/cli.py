@@ -57,9 +57,9 @@ def main(click_ctx, **kwargs):
 
     # Check for a non-trivial execution of the CLI
     non_trivial = (
-        not any(s in sys.argv for s in {"last-log", "--help"})
-        and click_ctx.invoked_subcommand != "_test"
-        and "pytest" not in sys.argv[0]
+            not any(s in sys.argv for s in {"last-log", "--help"})
+            and click_ctx.invoked_subcommand != "_test"
+            and "pytest" not in sys.argv[0]
     )
 
     # Log to console: either DEBUG or INFO.
@@ -153,7 +153,6 @@ def _log_threads(k: int, n: int):
 # Attach the ixmp "config" CLI
 main.add_command(ixmp_cli.commands["config"])
 
-
 #: List of submodules providing CLI (sub)commands accessible through `mix-models`.
 #: Each of these should contain a function named ``cli`` decorated with @click.command
 #: or @click.group.
@@ -165,6 +164,7 @@ submodules = [
     "message_ix_models.report.cli",
     "message_ix_models.testing.cli",
     "message_ix_models.util.pooch",
+    "message_ix_models.model.material"
 ]
 
 try:
@@ -205,7 +205,6 @@ for name in submodules:
         continue
 
     main.add_command(cmd)
-
 
 if __name__ == "__main__":
     main()
