@@ -65,6 +65,6 @@ heat_i,NA,0,0,0,0,0
 geo_hpl,Renewable,0.1,0.15,0.18,0.25,0.35
 nuc_lc,Nuclear,0,0,0,0,0
 nuc_hc,Nuclear,0,0,0.15,0.3,0.45
-wind_ppf,NA,0,0,0,0,0
+wind_ppf,Renewable,0.15,0.3,0.53,0.65,0.75
 csp_sm1_ppl,NA,0,0,0,0,0
 csp_sm3_ppl,NA,0,0,0,0,0
