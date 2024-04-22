@@ -1,8 +1,10 @@
 from message_ix_models import Context
 from message_ix_models.util import load_private_data, private_data_path
+from scipy.optimize import curve_fit
 import pandas as pd
 import yaml
 import os
+import openpyxl as pxl
 
 # Configuration files
 METADATA = [
@@ -113,3 +115,86 @@ def get_all_input_data_dirs():
 def remove_from_list_if_exists(element, _list):
     if element in _list:
         _list.remove(element)
+
+
+def exponential(x, b, m):
+    return b * m**x
+
+
+def price_fit(df):
+    # print(df.lvl)
+    pars, cov = curve_fit(exponential, df.year, df.lvl, maxfev=5000)
+    val = exponential([2020], *pars)[0]
+    # print(df.commodity.unique(), df.node.unique(), val)
+    return val
+
+
+def cost_fit(df):
+    # print(df.lvl)
+    pars, cov = curve_fit(exponential, df.year, df.lvl, maxfev=5000)
+    val = exponential([2020], *pars)[0]
+    # print(df.node.unique(), val)
+    return val / 1000
+
+
+def update_macro_calib_file(scenario, fname):
+    path = "C:/Users/maczek/Downloads/macro/refactored/"
+    wb = pxl.load_workbook(path + fname)
+
+    # cost_ref
+    years = [i for i in range(2020, 2055, 5)]
+    df = scenario.var("COST_NODAL_NET", filters={"year": years})
+    df["node"] = pd.Categorical(
+        df["node"],
+        [
+            "R12_AFR",
+            "R12_CHN",
+            "R12_EEU",
+            "R12_FSU",
+            "R12_LAM",
+            "R12_MEA",
+            "R12_NAM",
+            "R12_PAO",
+            "R12_PAS",
+            "R12_RCPA",
+            "R12_SAS",
+            "R12_WEU",
+        ],
+    )
+    df = df[df["year"].isin([2025, 2030, 2035])].groupby(["node"]).apply(cost_fit)
+    ws = wb.get_sheet_by_name("cost_ref")
+    for i in range(2, 7):
+        ws[f"B{i}"].value = df.values[i-2]
+    for i in range(8, 13):
+        ws[f"B{i}"].value = df.values[i-2]
+
+    # price_ref
+    comms = ["i_feed", "i_spec", "i_therm", "rc_spec", "rc_therm", "transport"]
+    years = [i for i in range(2025, 2055, 5)]
+    df = scenario.var("PRICE_COMMODITY", filters={"commodity": comms, "year": years})
+    df["node"] = pd.Categorical(
+        df["node"],
+        [
+            "R12_AFR",
+            "R12_EEU",
+            "R12_FSU",
+            "R12_LAM",
+            "R12_MEA",
+            "R12_NAM",
+            "R12_PAO",
+            "R12_PAS",
+            "R12_SAS",
+            "R12_WEU",
+            "R12_CHN",
+            "R12_RCPA",
+        ],
+    )
+    df["commodity"] = pd.Categorical(
+        df["commodity"],
+        ["i_feed", "i_spec", "i_therm", "rc_spec", "rc_therm", "transport"],
+    )
+    df = df.groupby(["node", "commodity"]).apply(price_fit)
+    ws = wb.get_sheet_by_name("price_ref")
+    for i in range(2, 61):
+        ws[f"C{i}"].value = df.values[i-2]
+    wb.save(path + fname)
