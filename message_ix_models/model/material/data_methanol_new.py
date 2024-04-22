@@ -4,13 +4,30 @@ import yaml
 
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
+
+from message_data.model.material.material_demand import material_demand_calc
 from message_data.model.material.util import read_config
 from ast import literal_eval
 
-context = read_config()
+ssp_mode_map = {
+    "SSP1": "CTS core",
+    "SSP2": "RTS core",
+    "SSP3": "RTS high",
+    "SSP4": "CTS high",
+    "SSP5": "RTS high",
+    "LED": "CTS core",  # TODO: move to even lower projection
+}
+
+iea_elasticity_map = {
+    "CTS core": (1.2, 0.25),
+    "CTS high": (1.3, 0.48),
+    "RTS core": (1.25, 0.35),
+    "RTS high": (1.4, 0.54),
+}
 
 
 def gen_data_methanol_new(scenario):
+    context = read_config()
     df_pars = pd.read_excel(
         message_ix_models.util.private_data_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
@@ -40,13 +57,26 @@ def gen_data_methanol_new(scenario):
         pars_dict[i] = broadcast_reduced_df(pars_dict[i], i)
     # TODO: only temporary hack to ensure SSP_dev compatibility
     if "SSP_dev" in scenario.model:
-        file_path = message_ix_models.util.private_data_path("material", "methanol", "missing_rels.yaml")
+        file_path = message_ix_models.util.private_data_path(
+            "material", "methanol", "missing_rels.yaml"
+        )
         # file_path = "C:/Users\maczek\PycharmProjects\message_data\message_data\model\material\petrochemical model fixes notebooks\"
 
         with open(file_path, "r") as file:
             missing_rels = yaml.safe_load(file)
         df = pars_dict["relation_activity"]
         pars_dict["relation_activity"] = df[~df["relation"].isin(missing_rels)]
+
+    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
+        ssp_mode_map[context["ssp"]]
+    ]
+    df_final = material_demand_calc.gen_demand_petro(
+        scenario, "methanol", default_gdp_elasticity_2020, default_gdp_elasticity_2030
+    )
+    df_final["value"] = df_final["value"].apply(
+        lambda x: x * pars["methanol_resid_demand_share"]
+    )
+    pars_dict["demand"] = df_final
 
     return pars_dict
 
@@ -157,6 +187,6 @@ def broadcast_reduced_df(df, par_name):
             df_final_full[
                 (df_final_full.node_rel.values != "R12_GLB")
                 & (df_final_full.node_rel.values != df_final_full.node_loc.values)
-                ].index
+            ].index
         )
     return make_df(par_name, **df_final_full)
