@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 
 from collections import defaultdict
-from message_data.model.material.data_util import read_timeseries, read_rel
-from message_data.model.material.util import read_config
-from message_data.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.data_util import read_timeseries, read_rel
+from message_ix_models.model.material.util import read_config
+from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
@@ -13,7 +13,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     same_node,
     add_par_data,
-    private_data_path,
+    package_data_path,
 )
 
 
@@ -49,7 +49,7 @@ def read_data_petrochemicals(scenario):
 
     # Read the file
     data_petro = pd.read_excel(
-        private_data_path("material", "petrochemicals", fname), sheet_name=sheet_n
+        package_data_path("material", "petrochemicals", fname), sheet_name=sheet_n
     )
     # Clean the data
 
@@ -74,7 +74,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
 
     gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
     mer_to_ppp = pd.read_csv(
-        private_data_path("material", "other", "mer_to_ppp_default.csv")
+        package_data_path("material", "other", "mer_to_ppp_default.csv")
     ).set_index(["node", "year"])
     # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year") TODO: might need to be re-activated for different SSPs
     gdp_mer = gdp_mer.merge(
@@ -118,12 +118,12 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     #     dem_2020 = np.array([2, 75, 30, 4, 11, 42, 60, 32, 30, 29, 35])
     #     dem_2020 = pd.Series(dem_2020)
 
-    from message_data.model.material.material_demand.material_demand_calc import (
+    from message_ix_models.model.material.material_demand.material_demand_calc import (
         read_base_demand,
     )
 
     df_demand_2020 = read_base_demand(
-        private_data_path() / "material" / "petrochemicals/demand_petro.yaml"
+        package_data_path() / "material" / "petrochemicals/demand_petro.yaml"
     )
     df_demand_2020 = df_demand_2020.rename({"region": "Region"}, axis=1)
     df_demand = df_demand_2020.pivot(index="Region", columns="year", values="value")
@@ -397,7 +397,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # context = read_config()
 
     # df_pars = pd.read_excel(
-    #     private_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+    #     package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
     #     sheet_name="Sheet1",
     #     dtype=object,
     # )
@@ -493,12 +493,12 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # modify steam cracker hist data (naphtha -> gasoil) to make model feasible
     df_cap = pd.read_csv(
-        private_data_path(
+        package_data_path(
             "material", "petrochemicals", "steam_cracking_hist_new_cap.csv"
         )
     )
     df_act = pd.read_csv(
-        private_data_path("material", "petrochemicals", "steam_cracking_hist_act.csv")
+        package_data_path("material", "petrochemicals", "steam_cracking_hist_act.csv")
     )
     df_act.loc[df_act["mode"] == "naphtha", "mode"] = "vacuum_gasoil"
     df = results["historical_activity"]

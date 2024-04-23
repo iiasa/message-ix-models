@@ -4,15 +4,15 @@ import pandas as pd
 
 from collections import defaultdict
 
-from message_data.model.material.data_util import read_sector_data, read_timeseries
-from message_data.model.material.material_demand import material_demand_calc
-from message_data.model.material.util import read_config
+from message_ix_models.model.material.data_util import read_sector_data, read_timeseries
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import read_config
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
     same_node,
-    private_data_path,
+    package_data_path,
 )
 
 # Get endogenous material demand from buildings interface
@@ -87,7 +87,7 @@ def gen_mock_demand_cement(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -100,7 +100,7 @@ def gen_mock_demand_cement(scenario):
 
     # # Regions setting for IMAGE
     # region_cement = pd.read_excel(
-    #     private_data_path("material",  "CEMENT.BvR2010.xlsx"),
+    #     package_data_path("material",  "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
     #     .drop_duplicates().sort_values(by='Region #')
     #
@@ -122,7 +122,7 @@ def gen_mock_demand_cement(scenario):
     #
     # # Cement demand 2010 [Mt/year] (IMAGE)
     # demand2010_cement = pd.read_excel(
-    #     private_data_path("material",  "CEMENT.BvR2010.xlsx"),
+    #     package_data_path("material",  "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Domestic Consumption", skiprows=range(0,3)).\
     #     groupby(by=["Region #"]).sum()[[2010]].\
     #     join(region_cement.set_index('Region #'), on='Region #').\
@@ -457,7 +457,7 @@ if __name__ == "__main__":
 #         # GDP is only in MER in scenario.
 #         # To get PPP GDP, it is read externally from the R side
 #         df = r.derive_cement_demand(
-#             pop, base_demand, str(private_data_path("material"))
+#             pop, base_demand, str(package_data_path("material"))
 #         )
 #         df.year = df.year.astype(int)
 #
