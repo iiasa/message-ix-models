@@ -5,8 +5,9 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
 
+import genno
 import pandas as pd
-from genno import Computer, KeySeq, MissingKeyError, Quantity
+from genno import Computer, KeySeq, MissingKeyError
 from genno.core.key import single_key
 from message_ix import Reporter
 from message_ix_models import Context, ScenarioInfo
@@ -17,6 +18,7 @@ from . import Config
 if TYPE_CHECKING:
     import ixmp
     from genno import Computer, Key
+    from genno.types import AnyQuantity
     from message_ix_models import Spec
 
 log = logging.getLogger(__name__)
@@ -509,7 +511,7 @@ def multi(context: Context, targets):
 
     # Convert to a genno.Quantity
     cols = ["Variable", "Model", "Scenario", "Region", "Unit"]
-    data = Quantity(
+    data = genno.Quantity(
         pd.concat(dfs)
         .sort_values(cols)
         .melt(id_vars=cols, var_name="y")
@@ -538,7 +540,7 @@ def multi(context: Context, targets):
     return data
 
 
-def quantity_from_iamc(qty: Quantity, variable: str) -> Quantity:
+def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
     """Extract data for a single measure from `qty` with (at least) dimensions v, u.
 
     .. todo:: Move upstream, to either :mod:`ixmp` or :mod:`genno`.

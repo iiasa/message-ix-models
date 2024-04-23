@@ -208,7 +208,7 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Mapping[str, "AnyQuantit
         #    driving.
         # TODO calculate the values for modest and frequent driving
         for par_name, (cells, _) in TABLES.items():
-            df = pd.DataFrame(list(sheet[cells])).applymap(lambda c: c.value)
+            df = pd.DataFrame(list(sheet[cells])).map(lambda c: c.value)
 
             # - Make the first row the headers.
             # - Drop extra columns.
