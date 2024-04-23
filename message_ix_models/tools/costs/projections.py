@@ -92,7 +92,7 @@ def create_projections_constant(config: "Config"):
         df_region_diff.merge(df_ref_reg_decay, on="message_technology")
         .assign(
             inv_cost=lambda x: np.where(
-                x.year <= config.y0,
+                x.year <= config.base_year,
                 x.reg_cost_base_year,
                 x.inv_cost_ref_region_decay * x.reg_cost_ratio,
             ),
@@ -173,7 +173,7 @@ def create_projections_gdp(config: "Config"):
         )
         .assign(
             inv_cost=lambda x: np.where(
-                x.year <= config.y0,
+                x.year <= config.base_year,
                 x.reg_cost_base_year,
                 x.inv_cost_ref_region_decay * x.reg_cost_ratio_adj,
             ),
@@ -243,7 +243,7 @@ def create_projections_converge(config: "Config"):
         df_region_diff.merge(df_ref_reg_cost_reduction, on="message_technology")
         .assign(
             inv_cost_tmp=lambda x: np.where(
-                x.year <= config.y0,
+                x.year <= config.base_year,
                 x.reg_cost_base_year,
                 np.where(
                     x.year < config.convergence_year,
@@ -273,7 +273,9 @@ def create_projections_converge(config: "Config"):
     # Apply polynomial regression to costs at base year and convergence year
     # (interpolating)
     df_pre_converge_costs = (
-        df_tmp_costs.query("year == @config.y0 or year == @config.convergence_year")
+        df_tmp_costs.query(
+            "year == @config.base_year or year == @config.convergence_year"
+        )
         .groupby(cols[:3], group_keys=True)
         .apply(_predict)
         .reset_index()
@@ -287,7 +289,7 @@ def create_projections_converge(config: "Config"):
         )
         .assign(
             inv_cost_converge=lambda x: np.where(
-                x.year <= config.y0,
+                x.year <= config.base_year,
                 x.reg_cost_base_year,
                 np.where(
                     x.region == config.ref_region,

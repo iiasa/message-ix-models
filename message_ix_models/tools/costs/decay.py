@@ -336,9 +336,10 @@ def project_ref_region_inv_costs_using_reduction_rates(
     for y in config.seq_years:
         df_ref = df_ref.assign(
             ycur=lambda x: np.where(
-                y <= config.y0,
+                y <= config.base_year,
                 x.reg_cost_base_year,
-                (x.reg_cost_base_year - x.b) * np.exp(x.r * (y - config.y0)) + x.b,
+                (x.reg_cost_base_year - x.b) * np.exp(x.r * (y - config.base_year))
+                + x.b,
             )
         ).rename(columns={"ycur": y})
 
