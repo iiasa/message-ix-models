@@ -1,6 +1,6 @@
 import logging
 from functools import lru_cache
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 from message_ix import Scenario, make_df
@@ -12,6 +12,14 @@ from message_ix_models.util import (
 )
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
+
+if TYPE_CHECKING:
+    from typing import Sequence, TypedDict
+
+    MeltKwArgs = TypedDict(
+        "MeltKwArgs", {"id_vars": Sequence[str], "var_name": str, "value_name": str}
+    )
+
 
 log = logging.getLogger(__name__)
 
@@ -302,7 +310,7 @@ def add_LED_setup(scen: Scenario):
     node_list = get_nodes(scen)
 
     # Common arguments for pd.DataFrame.melt
-    melt_args = dict(
+    melt_args: "MeltKwArgs" = dict(
         id_vars=["TECHNOLOGY", "REGION"], var_name="year_vtg", value_name="value"
     )
     # Common arguments for pd.DataFrame.rename
