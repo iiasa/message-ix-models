@@ -89,18 +89,18 @@ TASKS = [
     (("whour:", "quantity_from_config", "config"), dict(name="work_hours")),
     (("lambda:", "quantity_from_config", "config"), dict(name="lamda")),
     (("y::conv", "quantity_from_config", "config"), dict(name="year_convergence")),
-    # Base passenger mode share
+    # Base passenger mode share (exogenous/reference data)
     (ms + "base", "base_shares", "mode share:n-t:ref", n, t_modes, y),
-    # GDP in the SSP(2024) input files is already expressed in PPP terms, so no need to
-    # multiply by mer_to_ppp
+    # GDP expressed in PPP. The in the SSP(2024) input files, this conversion is already
+    # applied, so no need to multiply by a mer_to_ppp factor here → simple alias.
     (gdp_ppp, gdp),
     # GDP PPP per capita
     (gdp_cap, "div", gdp_ppp, pop),
-    # GDP index
+    # …indexed to base-year values
     (gdp_index, "index_to", gdp_cap, literal("y"), "y0"),
-    # Projected PDT per capita
+    # Projected passenger-distance travelled (PDT) per capita
     (pdt_cap, "pdt_per_capita", gdp_cap, (pdt_cap / "y") + "ref", "y0", "config"),
-    # Total PDT
+    # Total PDT (n, y) = product of PDT / capita and population
     (pdt_ny, "mul", pdt_cap + "adj", pop),
     # Value-of-time multiplier
     ("votm:n-y", "votm", gdp_cap),
@@ -110,38 +110,43 @@ TASKS = [
     (price_sel1, "price_units", price_sel0),
     # Smooth prices to avoid zig-zag in share projections
     (price, "smooth", price_sel1),
-    # Transport costs by mode
+    # Cost of transport (n, t, y)
     (cost, "cost", price, gdp_cap, "whour:", "speed:t", "votm:n-y", y),
-    # Share weights
+    # Share weights (n, t, y)
     (sw, "share_weight", ms + "base", gdp_cap, cost, "lambda:", t_modes, y, "config"),
-    # Shares
+    # Mode shares
     ((ms, "logit", cost, sw, "lambda:", y), dict(dim="t")),
-    # Total PDT shared out by mode
+    # Total PDT (n, t, y), with modes for the 't' dimension
     (pdt_nyt + "0", "mul", pdt_ny, ms),
-    # Adjustment factor
+    # Scenario-specific adjustment factors
     ("pdt factor:n-y-t", "factor_pdt", n, y, t_modes, "config"),
     # Only the LDV values
     (
-        ("ldv pdt factor:n-y", "select", "pdt factor:n-y-t", dict(t=["LDV"])),
-        dict(drop=True),
+        ("ldv pdt factor:n-y", "select", "pdt factor:n-y-t"),
+        dict(indexers=dict(t="LDV"), drop=True),
     ),
     (pdt_nyt, "mul", pdt_nyt + "0", "pdt factor:n-y-t"),
     # Per capita (for validation)
     (pdt_nyt + "capita+post", "div", pdt_nyt, pop),
-    # LDV PDT only
+    # LDV PDT only (n, y)
     ((ldv_ny + "ref", "select", pdt_nyt), dict(indexers=dict(t="LDV"), drop=True)),
-    # Indexed to base year
-    (ldv_ny + "index", "index_to", ldv_ny + "ref", literal("y"), "y0"),
-    # Compute LDV PDT as ADVANCE base-year values indexed to overall growth
-    (ldv_ny + "total+0", "mul", ldv_ny + "index", "pdt ldv:n:advance"),
-    (ldv_ny + "total", "mul", ldv_ny + "total+0", "ldv pdt factor:n-y"),
-    # LDV PDT shared out by consumer group
+    # commented: The following computes LDV PDT as base-year values from the ADVANCE
+    # database × an index of the top-down (Schäfer) LDV PDT versus base-year values
+    # # Indexed to base year
+    # (ldv_ny + "index", "index_to", ldv_ny + "ref", literal("y"), "y0"),
+    # # Compute LDV PDT as ADVANCE base-year values indexed to overall growth
+    # (ldv_ny + "total+0", "mul", ldv_ny + "index", "pdt ldv:n:advance"),
+    # # Apply the scenario-specific adjustment factor
+    # (ldv_ny + "total", "mul", ldv_ny + "total+0", "ldv pdt factor:n-y"),
+    #
+    # Apply the scenario-specific adjustment factor
+    (ldv_ny + "total", "mul", ldv_ny + "ref", "ldv pdt factor:n-y"),
+    # LDV PDT shared out by consumer group (cg, n, y)
     (ldv_nycg, "mul", ldv_ny + "total", cg),
     #
-    # Base freight mode share
-    # …from IEA EEI
+    # # Base freight activity from IEA EEI
     # ("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
-    # …from file
+    # Base year freight activity from file (n, t), with modes for the 't' dimension
     (
         "fv:n-t:historical",
         "mul",
@@ -149,10 +154,11 @@ TASKS = [
         "freight activity:n:ref",
     ),
     (fv + "0", "mul", "fv:n-t:historical", gdp_index),
-    # Adjustment factor: generate and apply
+    # Scenario-specific adjustment factor for freight activity
     ("fv factor:n-t-y", "factor_fv", n, y, "config"),
+    # Apply the adjustment factor
     (fv + "1", "mul", fv + "0", "fv factor:n-t-y"),
-    # Select only the ROAD data
+    # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
     ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["ROAD"]))),
     # Relabel
     (
