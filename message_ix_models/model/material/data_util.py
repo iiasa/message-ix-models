@@ -1,23 +1,22 @@
+import os
 from typing import Literal
 
-import pandas as pd
-import os
-import message_ix
 import ixmp
-
-from message_data.model.material.util import (
-    read_config,
-    read_yaml_file,
-    invert_dictionary,
-    remove_from_list_if_exists,
-)
+import message_ix
+import pandas as pd
+from genno import Computer
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import private_data_path
+from message_ix_models.model.material.util import (
+    invert_dictionary,
+    read_config,
+    read_yaml_file,
+    remove_from_list_if_exists,
+)
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
-from genno import Computer
+from message_ix_models.util import package_data_path
 
 pd.options.mode.chained_assignment = None
 
@@ -40,7 +39,7 @@ def load_GDP_COVID():
     f_name = "iamc_db ENGAGE baseline GDP PPP.xlsx"
 
     gdp_ssp2 = pd.read_excel(
-        private_data_path("material", "other", f_name), sheet_name="data_R12"
+        package_data_path("material", "other", f_name), sheet_name="data_R12"
     )
     gdp_ssp2 = gdp_ssp2[gdp_ssp2["Scenario"] == "baseline"]
     regions = "R12_" + gdp_ssp2["Region"]
@@ -141,7 +140,7 @@ def modify_demand_and_hist_activity(scen):
         region_name_CHN = ""
 
     df = pd.read_excel(
-        private_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
+        package_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
     )
 
     # Filter the necessary variables
@@ -449,7 +448,7 @@ def modify_demand_and_hist_activity_debug(scen: message_ix.Scenario) -> dict:
         region_name_CHN = ""
 
     df = pd.read_excel(
-        private_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
+        package_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
     )
 
     # Filter the necessary variables
@@ -876,7 +875,7 @@ def map_iea_db_to_msg_regs(df_iea: pd.DataFrame, reg_map_fname: str) -> pd.DataF
     object
 
     """
-    file_path = private_data_path("node", reg_map_fname)
+    file_path = package_data_path("node", reg_map_fname)
     yaml_data = read_yaml_file(file_path)
     if "World" in yaml_data.keys():
         yaml_data.pop("World")
@@ -907,7 +906,7 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
     pd.DataFrame
         returns df with mapped technologies
     """
-    MAP = pd.read_csv(private_data_path("model", "IEA", tec_map_fname))
+    MAP = pd.read_csv(package_data_path("iea", tec_map_fname))
 
     MAP = pd.concat([MAP, MAP["IEA flow"].str.split(", ", expand=True)], axis=1)
     MAP = (
@@ -1342,7 +1341,7 @@ def add_elec_lowerbound_2020(scen):
     # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
 
     final = pd.read_csv(
-        private_data_path("material", "other", "residual_industry_2019.csv")
+        package_data_path("material", "other", "residual_industry_2019.csv")
     )
 
     # downselect needed fuels and sectors
@@ -1407,7 +1406,7 @@ def add_coal_lowerbound_2020(sc):
 
     context = read_config()
     final_resid = pd.read_csv(
-        private_data_path("material", "other", "residual_industry_2019.csv")
+        package_data_path("material", "other", "residual_industry_2019.csv")
     )
 
     # read input parameters for relevant technology/commodity combinations for converting betwen final and useful energy
@@ -1538,7 +1537,7 @@ def add_cement_bounds_2020(sc):
 
     context = read_config()
     final_resid = pd.read_csv(
-        private_data_path("material", "other", "residual_industry_2019.csv")
+        package_data_path("material", "other", "residual_industry_2019.csv")
     )
 
     input_cement_foil = sc.par(
@@ -1800,7 +1799,7 @@ def read_sector_data(scenario, sectname):
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        private_data_path("material", "steel_cement", context.datafile),
+        package_data_path("material", "steel_cement", context.datafile),
         sheet_name=sheet_n,
     )
 
@@ -1910,7 +1909,7 @@ def read_timeseries(scenario, material, filename):
 
     # Read the file
     df = pd.read_excel(
-        private_data_path("material", material, filename), sheet_name=sheet_n
+        package_data_path("material", material, filename), sheet_name=sheet_n
     )
 
     import numbers
@@ -1950,7 +1949,7 @@ def read_rel(scenario, material, filename):
 
     # Read the file
     data_rel = pd.read_excel(
-        private_data_path("material", material, filename),
+        package_data_path("material", material, filename),
         sheet_name=sheet_n,
     )
 

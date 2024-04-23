@@ -1,10 +1,12 @@
-from message_ix_models import Context
-from message_ix_models.util import load_private_data, private_data_path
-from scipy.optimize import curve_fit
+import os
+
+import openpyxl as pxl
 import pandas as pd
 import yaml
-import os
-import openpyxl as pxl
+from scipy.optimize import curve_fit
+
+from message_ix_models import Context
+from message_ix_models.util import load_private_data, private_data_path
 
 # Configuration files
 METADATA = [

@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 from .util import read_config
 from message_ix_models import ScenarioInfo
@@ -281,7 +281,7 @@ def gen_data_power_sector(scenario, dry_run=False):
 
     # paths to lca data
     code_path = Path(__file__).parents[0] / "material_intensity"
-    data_path = private_data_path("material", "power_sector")
+    data_path = package_data_path("material", "power_sector")
 
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)

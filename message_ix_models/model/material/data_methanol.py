@@ -2,9 +2,9 @@ import copy
 import pandas as pd
 
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node, private_data_path
-from message_data.model.material.util import read_config, combine_df_dictionaries
-from message_data.model.material.material_demand import material_demand_calc
+from message_ix_models.util import broadcast, same_node, package_data_path
+from message_ix_models.model.material.util import read_config, combine_df_dictionaries
+from message_ix_models.model.material.material_demand import material_demand_calc
 
 context = read_config()
 
@@ -30,7 +30,7 @@ def gen_data_methanol(scenario):
     ssp = context["ssp"]
     # read sensitivity file
     df_pars = pd.read_excel(
-        private_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+        package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
         sheet_name="Sheet1",
         dtype=object,
     )
@@ -165,11 +165,11 @@ def gen_data_methanol(scenario):
     trade_dict_fs["input"] = df
 
     dict_t_d_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
+        package_data_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
         sheet_name=None,
     )
     dict_t_d_fuel = pd.read_excel(
-        private_data_path("material", "methanol", "meth_t_d_fuel.xlsx"),
+        package_data_path("material", "methanol", "meth_t_d_fuel.xlsx"),
         sheet_name=None,
     )
 
@@ -283,7 +283,7 @@ def gen_data_methanol(scenario):
         new_dict2 = combine_df_dictionaries(
             new_dict2,
             pd.read_excel(
-                private_data_path("material", "methanol", f"h2_elec_{mode}.xlsx"),
+                package_data_path("material", "methanol", f"h2_elec_{mode}.xlsx"),
                 sheet_name=None,
             ),
         )
@@ -293,7 +293,7 @@ def gen_data_methanol(scenario):
 
 def gen_data_meth_h2(mode):
     h2_par_dict = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material", "methanol", f"meth_h2_techno_economic_{mode}.xlsx"
         ),
         sheet_name=None,
@@ -306,7 +306,7 @@ def gen_data_meth_h2(mode):
 
 def gen_data_meth_bio(scenario):
     df_bio = pd.read_excel(
-        private_data_path("material", "methanol", "meth_bio_techno_economic_new.xlsx"),
+        package_data_path("material", "methanol", "meth_bio_techno_economic_new.xlsx"),
         sheet_name=None,
     )
     coal_ratio = get_cost_ratio_2020(
@@ -339,7 +339,7 @@ def gen_data_meth_bio(scenario):
 
 def gen_meth_bio_ccs(scenario):
     df_bio = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material", "methanol", "meth_bio_techno_economic_new_ccs.xlsx"
         ),
         sheet_name=None,
@@ -374,7 +374,7 @@ def gen_meth_bio_ccs(scenario):
 
 def gen_data_meth_chemicals(scenario, chemical):
     df = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material", "methanol", "collection files", "MTO data collection.xlsx"
         ),
         sheet_name=chemical,
@@ -509,7 +509,7 @@ def add_methanol_fuel_additives(scenario):
     ]
 
     df_mtbe = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "methanol",
             "collection files",
@@ -524,7 +524,7 @@ def add_methanol_fuel_additives(scenario):
     df_mtbe = df_mtbe[["node_loc", "% share on trp"]]
 
     df_biodiesel = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "methanol",
             "collection files",
@@ -576,11 +576,11 @@ def add_methanol_fuel_additives(scenario):
 
 def add_meth_trade_historic():
     par_dict_trade = pd.read_excel(
-        private_data_path("material", "methanol", "meth_trade_techno_economic.xlsx"),
+        package_data_path("material", "methanol", "meth_trade_techno_economic.xlsx"),
         sheet_name=None,
     )
     par_dict_trade_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_trade_techno_economic_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_trade_techno_economic_fs.xlsx"),
         sheet_name=None,
     )
     par_dict_trade = combine_df_dictionaries(par_dict_trade_fs, par_dict_trade)
@@ -631,7 +631,7 @@ def update_methanol_costs(scenario):
 
 def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHAPE"):
     df = pd.read_csv(
-        private_data_path(
+        package_data_path(
             "material",
             "methanol",
             "results_material_" + pathway + "_" + sector + ".csv",
@@ -683,7 +683,7 @@ def gen_meth_residual_demand(gdp_elasticity_2020, gdp_elasticity_2030):
         ) + demand_t0
 
     df_gdp = pd.read_excel(
-        private_data_path("material", "methanol", "methanol demand.xlsx"),
+        package_data_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="GDP_baseline",
     )
 
@@ -691,7 +691,7 @@ def gen_meth_residual_demand(gdp_elasticity_2020, gdp_elasticity_2030):
     df = df.dropna(axis=1)
 
     df_demand_meth = pd.read_excel(
-        private_data_path("material", "methanol", "methanol demand.xlsx"),
+        package_data_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="methanol_demand",
         skiprows=[12],
     )
@@ -768,22 +768,22 @@ def get_scaled_cost_from_proxy_tec(
 
 def add_meth_tec_vintages():
     par_dict_ng = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
         sheet_name=None,
     )
     par_dict_ng_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
         sheet_name=None,
     )
     par_dict_ng.pop("historical_activity")
     par_dict_ng_fs.pop("historical_activity")
 
     par_dict_coal = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions.xlsx"),
         sheet_name=None,
     )
     par_dict_coal_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
         sheet_name=None,
     )
     par_dict_coal.pop("historical_activity")
@@ -797,11 +797,11 @@ def add_meth_hist_act():
     # fix demand infeasibility
     par_dict = {}
     df_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
         sheet_name="historical_activity",
     )
     df_fuel = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions.xlsx"),
         sheet_name="historical_activity",
     )
     par_dict["historical_activity"] = pd.concat([df_fs, df_fuel])
@@ -820,11 +820,11 @@ def add_meth_hist_act():
     # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
     # row["value"] = 0.0
     df_ng = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
         sheet_name="historical_activity",
     )
     df_ng_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
         sheet_name="historical_activity",
     )
     par_dict["historical_activity"] = pd.concat(
@@ -835,12 +835,12 @@ def add_meth_hist_act():
 
 def update_costs_with_loc_factor(df):
     loc_fact = pd.read_excel(
-        private_data_path("material", "methanol", "location factor collection.xlsx"),
+        package_data_path("material", "methanol", "location factor collection.xlsx"),
         sheet_name="comparison",
         index_col=0,
     )
     cost_conv = pd.read_excel(
-        private_data_path("material", "methanol", "location factor collection.xlsx"),
+        package_data_path("material", "methanol", "location factor collection.xlsx"),
         sheet_name="cost_convergence",
         index_col=0,
     )
