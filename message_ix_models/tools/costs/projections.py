@@ -478,9 +478,19 @@ def create_message_outputs(
                 np.where(
                     x.year_act <= y_base,
                     x.fix_cost,
-                    x.fix_cost * (1 + (config.fom_rate)) ** (x.year_act - y_base),
+                    np.where(
+                        config.fom_rate == 0,
+                        x.fix_cost,
+                        x.fix_cost
+                        * (1 + float(config.fom_rate)) ** (x.year_act - y_base),
+                    ),
                 ),
-                x.fix_cost * (1 + (config.fom_rate)) ** (x.year_act - x.year_vtg),
+                np.where(
+                    config.fom_rate == 0,
+                    x.fix_cost,
+                    x.fix_cost
+                    * (1 + float(config.fom_rate)) ** (x.year_act - x.year_vtg),
+                ),
             )
         )
         .assign(unit="USD/kWa")

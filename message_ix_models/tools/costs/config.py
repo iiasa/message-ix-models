@@ -27,9 +27,10 @@ class Config:
     final_year: int = 2100
 
     #: Rate of exponential growth (positive values) or decrease of fixed operating and
-    #: maintenance costs over time. The default of 0.025 implies exponential growth at a
+    #: maintenance costs over time. The default of 0 implies no change over time.
+    #: If the rate is 0.025, for example, that implies exponential growth at a
     #: rate of 2.5% per year; or :py:`(1 + 0.025) ** N` for a period of length N.
-    fom_rate: float = 0.025
+    fom_rate: float = 0
 
     #: Format of output from :func:`.create_cost_projections`. One of:
     #:
