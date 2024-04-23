@@ -182,7 +182,7 @@ class CapNewLDV(Plot):
         yield from [ggplot for _, ggplot in self.groupby_plot(data, "nl")]
 
 
-def read_csvs(stem: str, *paths: Path) -> pd.DataFrame:
+def read_csvs(stem: str, *paths: Path, **kwargs) -> pd.DataFrame:
     """Read and concatenate data for debugging plots.
 
     - Read data from files named :file:`{stem}.csv` in each of `paths`.
@@ -194,8 +194,12 @@ def read_csvs(stem: str, *paths: Path) -> pd.DataFrame:
         """Extract e.g. "SSP(2024).2-R12-B" from "debug-ICONICS_SSP(2024).2-R12-B"."""
         return dirname.parts[-1].split("ICONICS_", maxsplit=1)[-1]
 
+    kwargs.setdefault("comment", "#")
     return pd.concat(
-        {label_from(p): pd.read_csv(p.joinpath(f"{stem}.csv")) for p in paths},
+        {
+            label_from(p): pd.read_csv(p.joinpath(f"{stem}.csv"), **kwargs)
+            for p in paths
+        },
         names=["scenario"],
     ).reset_index("scenario")
 
