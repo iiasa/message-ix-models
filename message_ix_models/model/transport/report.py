@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Tuple
 
 import genno
 import pandas as pd
-from genno import Computer, KeySeq, MissingKeyError
+from genno import Computer, Key, KeySeq, MissingKeyError
 from genno.core.key import single_key
 from message_ix import Reporter
 from message_ix_models import Context, ScenarioInfo
@@ -17,7 +17,7 @@ from . import Config
 
 if TYPE_CHECKING:
     import ixmp
-    from genno import Computer, Key
+    from genno import Computer
     from genno.types import AnyQuantity
     from message_ix_models import Spec
 
@@ -262,7 +262,14 @@ def convert_iamc(c: "Computer") -> "Key":
 
 
 def misc(c: "Computer") -> None:
-    """Add miscellaneous tasks."""
+    """Add miscellaneous tasks.
+
+    Among others, these include:
+
+    - ``calibrate fe`` → a file :file:`calibrate-fe.csv`. See the header comment.
+    """
+    config: "Config" = c.graph["config"]["transport"]
+
     # Configuration for :func:`check`. Adds a single key, 'transport check', that
     # depends on others and returns a :class:`pandas.Series` of :class:`bool`.
     c.add("transport check", "transport_check", "scenario", "ACT:nl-t-yv-va-m-h")
@@ -272,6 +279,39 @@ def misc(c: "Computer") -> None:
 
     # Demand per capita
     c.add("demand::capita", "div" "demand:n-c-y", "population:n-y")
+
+    # Adjustment factor for LDV calibration: fuel economy ratio
+    k_num = Key("in:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
+    k_denom = Key("out:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
+    k_check = single_key(c.add("fuel economy::check", "div", k_num, k_denom))
+    c.add(
+        k_check + "sel",
+        "select",
+        k_check,
+        indexers=dict(t="LDV", ya=config.base_model_info.y0),
+        drop=True,
+    )
+
+    k_ratio = single_key(
+        c.add(
+            "fuel economy::ratio", "div", "fuel economy:nl-m:ldv+ref", k_check + "sel"
+        )
+    )
+    c.add("calibrate fe path", "make_output_path", "config", name="calibrate-fe.csv")
+    hc = "\n\n".join(
+        [
+            "Calibration factor for LDV fuel economy",
+            f"Ratio of ldv-fuel-economy-ref.csv\n      to ({k_num} / {k_denom})",
+            "Units: dimensionless\n",
+        ]
+    )
+    c.add(
+        "calibrate fe",
+        "write_report",
+        k_ratio,
+        "calibrate fe path",
+        kwargs=dict(header_comment=hc),
+    )
 
 
 def callback(rep: Reporter, context: Context) -> None:
