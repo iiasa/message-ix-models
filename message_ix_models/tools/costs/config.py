@@ -15,7 +15,10 @@ class Config:
     """
 
     #: Base year for projected costs.
-    base_year: int = 2021
+    #: This is the first year for which cost reductions/decay are calculated.
+    #: If the base year is greater than y0 (first model year),
+    #: then the costs are assumed to be the same from y0 to base_year.
+    base_year: int = 2025
 
     #: Year of convergence; used when :attr:`.method` is "convergence". This is the year
     #: by which costs in all regions should converge to the reference region's costs.
