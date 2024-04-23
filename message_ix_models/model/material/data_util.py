@@ -2006,7 +2006,7 @@ def get_ssp_soc_eco_data(context, model, measure, tec):
 
 
 def add_elec_i_ini_act(scenario):
-    par = "inital_activity_up"
+    par = "initial_activity_up"
     df_el = scenario.par(par, filters={"technology":"hp_el_i"})
     df_el["technology"] = "elec_i"
     scenario.check_out()
