@@ -104,6 +104,7 @@ def create_projections_constant(config: "Config"):
                 "scenario_version",
                 "scenario",
                 "message_technology",
+                "first_technology_year",
                 "region",
                 "year",
                 "inv_cost",
@@ -184,6 +185,7 @@ def create_projections_gdp(config: "Config"):
                 "scenario_version",
                 "scenario",
                 "message_technology",
+                "first_technology_year",
                 "region",
                 "year",
                 "inv_cost",
@@ -317,6 +319,7 @@ def create_projections_converge(config: "Config"):
                 "scenario_version",
                 "scenario",
                 "message_technology",
+                "first_technology_year",
                 "region",
                 "year",
                 "inv_cost",
@@ -364,6 +367,7 @@ def create_message_outputs(
             df_projections.scenario_version.unique(),
             df_projections.scenario.unique(),
             df_projections.message_technology.unique(),
+            df_projections.first_technology_year.unique(),
             df_projections.region.unique(),
             config.seq_years,
         ),
@@ -371,6 +375,7 @@ def create_message_outputs(
             "scenario_version",
             "scenario",
             "message_technology",
+            "first_technology_year",
             "region",
             "year",
         ],
@@ -404,6 +409,7 @@ def create_message_outputs(
                     "scenario_version",
                     "scenario",
                     "message_technology",
+                    "first_technology_year",
                     "region",
                     "year",
                 ],
@@ -431,6 +437,7 @@ def create_message_outputs(
         scenario=str,
         node_loc=str,
         technology=str,
+        first_technology_year=str,
         unit=str,
         year_vtg=int,
         value=float,
@@ -452,6 +459,7 @@ def create_message_outputs(
                 "scenario",
                 "node_loc",
                 "technology",
+                "first_technology_year",
                 "year_vtg",
                 "value",
                 "unit",
@@ -460,8 +468,21 @@ def create_message_outputs(
         )
         .astype(dtypes)
         .query("year_vtg in @config.Y")
+        .assign(first_technology_year=lambda x: x.first_technology_year.astype(float))
+        .assign(first_technology_year=lambda x: x.first_technology_year.astype(int))
+        .query("year_vtg >= first_technology_year")
         .reset_index(drop=True)
-        .drop_duplicates()
+        .drop_duplicates()[
+            [
+                "scenario_version",
+                "scenario",
+                "node_loc",
+                "technology",
+                "year_vtg",
+                "value",
+                "unit",
+            ]
+        ]
     )
 
     dtypes.update(year_act=int)
@@ -509,6 +530,7 @@ def create_message_outputs(
                 "scenario",
                 "node_loc",
                 "technology",
+                "first_technology_year",
                 "year_vtg",
                 "year_act",
                 "value",
@@ -518,8 +540,22 @@ def create_message_outputs(
         )
         .astype(dtypes)
         .query("year_act in @config.Y and year_vtg in @config.Y")
+        .assign(first_technology_year=lambda x: x.first_technology_year.astype(float))
+        .assign(first_technology_year=lambda x: x.first_technology_year.astype(int))
+        .query("year_vtg >= first_technology_year")
         .reset_index(drop=True)
-    ).drop_duplicates()
+    ).drop_duplicates()[
+        [
+            "scenario_version",
+            "scenario",
+            "node_loc",
+            "technology",
+            "year_vtg",
+            "year_act",
+            "value",
+            "unit",
+        ]
+    ]
 
     return inv, fom
 
