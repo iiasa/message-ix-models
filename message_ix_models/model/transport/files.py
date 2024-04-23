@@ -91,6 +91,12 @@ ExogenousDataFile("input-base", "input:t-c-h:base", "Base model input efficiency
 ExogenousDataFile("ldv-activity", "ldv activity:n:exo", "LDV activity")
 ExogenousDataFile("ldv-class", dims=("n", "vehicle_class"), required=False)
 ExogenousDataFile(
+    "ldv-fuel-economy-ref",
+    "fuel economy:nl-m:ldv+ref",
+    "Reference fuel economy for LDVs",
+    required=False,
+)
+ExogenousDataFile(
     "ldv-new-capacity",
     "cap_new:nl-t-yv:ldv+exo",
     "New capacity values for LDVs",
