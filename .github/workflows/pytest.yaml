@@ -16,7 +16,7 @@ jobs:
   warm-lfs-cache:
     strategy:
       matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
+        os: [ macos-13, ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: nschloe/action-cached-lfs-checkout@v1
@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         os:
-        - macos-latest
+        - macos-13
         - ubuntu-latest
         - windows-latest
         upstream:
