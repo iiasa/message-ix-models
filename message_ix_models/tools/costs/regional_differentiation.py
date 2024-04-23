@@ -419,9 +419,8 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
     # Grab WEO data and keep only investment costs
     df_weo = get_weo_data()
 
-    # Get list of years in WEO data and select year closest to base year
-    l_years = df_weo.year.unique()
-    sel_year = min(l_years, key=lambda x: abs(int(x) - config.base_year))
+    # Even if config.base_year is greater than 2021, use 2021 WEO data
+    sel_year = str(2021)
     log.info("…using year " + str(sel_year) + " data from WEO")
 
     # - Retrieve a map from MESSAGEix node IDs to WEO region names.
