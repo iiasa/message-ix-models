@@ -358,7 +358,7 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
     # - Broadcast over all nodes `n`.
     # - Set dimensions as index.
     return genno.Quantity(
-        df.infer_objects(copy=False)
+        df.infer_objects()
         .ffill()
         .reset_index()
         .assign(n=None)
@@ -417,7 +417,7 @@ def factor_input(
             df.loc[years, t_] = value.get(t_, 1.0)
 
     qty = genno.Quantity(
-        df.infer_objects(copy=False).fillna(1.0).reset_index().set_index("y").stack()
+        df.infer_objects().fillna(1.0).reset_index().set_index("y").stack()
     )
 
     return compound_growth(qty, "y")
@@ -450,7 +450,7 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> "AnyQu
     # - Broadcast over all nodes `n`.
     # - Set dimensions as index.
     return genno.Quantity(
-        df.infer_objects(copy=False)
+        df.infer_objects()
         .ffill()
         .reset_index()
         .melt(id_vars="y", var_name="t")

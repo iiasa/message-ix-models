@@ -1,7 +1,7 @@
 """Transport emissions data."""
 
 import logging
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
 
 import pandas as pd
 from genno import Quantity
@@ -12,6 +12,9 @@ from message_ix_models import Context
 from message_ix_models.util import private_data_path
 
 from .util import path_fallback
+
+if TYPE_CHECKING:
+    from genno.types import AnyQuantity
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +28,7 @@ def get_emissions_data(context: Context) -> Dict[str, pd.DataFrame]:
     return dict(emission_factor=qty.to_dataframe())
 
 
-def get_intensity(context: Context) -> pd.DataFrame:
+def get_intensity(context: Context) -> "AnyQuantity":
     """Load emissions intensity data from a file."""
     # FIXME use through the build computer
     return load_file(private_data_path("transport", "fuel-emi-intensity.csv"))
