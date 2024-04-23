@@ -193,7 +193,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
 
 
 # Group to allow for multiple CLI subcommands under "material"
-@click.group("material")
+@click.group("material-ix")
 @common_params("ssp")
 def cli(ssp):
     """Model with materials accounting."""
