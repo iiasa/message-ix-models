@@ -115,7 +115,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 
 
 def get_technology_reduction_scenarios_data(
-    base_year: int, module: str
+    first_year: int, module: str
 ) -> pd.DataFrame:
     """Read in technology first year and cost reduction scenarios.
 
@@ -184,13 +184,13 @@ def get_technology_reduction_scenarios_data(
         .assign(
             first_technology_year=lambda x: np.where(
                 x.first_year_original.isnull(),
-                base_year,
+                first_year,
                 x.first_year_original,
             )
         )
         .assign(
             first_technology_year=lambda x: np.where(
-                x.first_year_original > base_year, x.first_year_original, base_year
+                x.first_year_original > first_year, x.first_year_original, first_year
             )
         )
         .drop(columns=["first_year_original"])
@@ -309,9 +309,7 @@ def project_ref_region_inv_costs_using_reduction_rates(
     df_cost_reduction = get_cost_reduction_data(config.module)
 
     # Get scenarios data
-    df_scenarios = get_technology_reduction_scenarios_data(
-        config.base_year, config.module
-    )
+    df_scenarios = get_technology_reduction_scenarios_data(config.y0, config.module)
 
     # Merge cost reduction data with cost reduction rates data
     df_cost_reduction = df_cost_reduction.merge(
