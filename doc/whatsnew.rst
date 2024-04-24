@@ -1,18 +1,19 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+Changes to :doc:`/api/tools-costs` (:pull:`186`)
+------------------------------------------------
+  - Fix jumps in cost projections for technologies with first technology year that's after than the first model year.
+  - Change the use of base_year to mean the year to start modeling cost changes.
+  - Update cost assumptions for certain CCS technologies.
+  - Change the default fixed O&M reduction rate to 0.
 
 v2024.4.22
 ==========
 
-- Made changes to :doc:`/api/tools-costs` (:pull:`186`).
-
-  - Fixed jumps in cost projections for technologies with first technology year that's after than the first model year.
-  - Changed the use of base_year to mean the year to start modeling cost changes.
-  - Update cost assumptions for certain CCS technologies.
-  - Changed the default fixed O&M reduction rate to 0.
 - Incorporate the :doc:`/global/index` documentation (:pull:`107`, :pull:`110`).
   This documentation formerly lived at https://docs.messageix.org/global/ and in a separate repository at `iiasa/message_doc <https://github.com/iiasa/message_doc>`_.
 - Improve tool for :ref:`migrate-filter-repo` (:pull:`174`); expand documentation.
