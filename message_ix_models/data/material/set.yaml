@@ -382,7 +382,6 @@ steel:
     - pellet_steel
     - bf_steel
     - dri_steel
-    - sr_steel
     - bof_steel
     - eaf_steel
     - prep_secondary_steel_1
