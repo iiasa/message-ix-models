@@ -26,17 +26,6 @@ def ellipsize(elements: List) -> str:
     else:
         return ", ".join(map(str, elements))
 
-def ellipsize(elements: List) -> str:
-    """Generate a short string representation of `elements`.
-
-    If the list has more than 5 elements, only the first two and last two are shown,
-    with "..." between.
-    """
-    if len(elements) > 5:
-        return ", ".join(map(str, elements[:2] + ["..."] + elements[-2:]))
-    else:
-        return ", ".join(map(str, elements))
-
 
 def apply_spec(
     scenario: Scenario,
