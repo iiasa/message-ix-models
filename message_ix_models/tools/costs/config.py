@@ -15,7 +15,10 @@ class Config:
     """
 
     #: Base year for projected costs.
-    base_year: int = 2021
+    #: This is the first year for which cost reductions/decay are calculated.
+    #: If the base year is greater than y0 (first model year),
+    #: then the costs are assumed to be the same from y0 to base_year.
+    base_year: int = 2025
 
     #: Year of convergence; used when :attr:`.method` is "convergence". This is the year
     #: by which costs in all regions should converge to the reference region's costs.
@@ -27,9 +30,10 @@ class Config:
     final_year: int = 2100
 
     #: Rate of exponential growth (positive values) or decrease of fixed operating and
-    #: maintenance costs over time. The default of 0.025 implies exponential growth at a
+    #: maintenance costs over time. The default of 0 implies no change over time.
+    #: If the rate is 0.025, for example, that implies exponential growth at a
     #: rate of 2.5% per year; or :py:`(1 + 0.025) ** N` for a period of length N.
-    fom_rate: float = 0.025
+    fom_rate: float = 0
 
     #: Format of output from :func:`.create_cost_projections`. One of:
     #:

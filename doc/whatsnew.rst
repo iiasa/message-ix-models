@@ -1,8 +1,15 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+Changes to :doc:`/api/tools-costs` (:pull:`186`)
+------------------------------------------------
+  - Fix jumps in cost projections for technologies with first technology year that's after than the first model year.
+  - Change the use of base_year to mean the year to start modeling cost changes.
+  - Update cost assumptions for certain CCS technologies.
+  - Change the default fixed O&M reduction rate to 0.
 
 v2024.4.22
 ==========

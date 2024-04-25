@@ -13,7 +13,7 @@ from message_ix_models.tools.costs.projections import create_cost_projections
 # Defaults for all configuration settings:
 # - base_year=BASE_YEAR,
 # - convergence_year=2050,
-# - fom_rate=0.025,
+# - fom_rate=0,
 # - format="message",
 # - method="gdp",
 # - module="energy",

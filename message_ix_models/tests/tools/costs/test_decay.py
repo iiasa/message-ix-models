@@ -34,11 +34,13 @@ def test_get_cost_reduction_data(module: str, t_exp) -> None:
 
 @pytest.mark.parametrize("module", ("energy", "materials"))
 def test_get_technology_reduction_scenarios_data(module: str) -> None:
+    config = Config()
     # The function runs without error
-    result = get_technology_reduction_scenarios_data(Config.base_year, module=module)
+    result = get_technology_reduction_scenarios_data(config.y0, module=module)
 
-    # All first technology years are equal to or greater than the default base year
-    assert Config.base_year <= result.first_technology_year.min()
+    # All first technology years are equal to or greater than
+    # the default first model year
+    assert config.y0 <= result.first_technology_year.min()
 
     # Data for LED and SSP1-5 scenarios are present
     assert {"SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"} <= set(
@@ -70,5 +72,5 @@ def test_project_ref_region_inv_costs_using_reduction_rates(
     # Excluded technologies are *not* present
     assert set() == (t_excluded & t)
 
-    # The first technology year is equal to or greater than the default base year
-    assert Config.base_year <= result.first_technology_year.min()
+    # The first technology year is equal to or greater than the default first model year
+    assert config.y0 <= result.first_technology_year.min()
