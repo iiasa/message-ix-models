@@ -468,7 +468,7 @@ def create_message_outputs(
         )
         .astype(dtypes)
         .query("year_vtg in @config.Y")
-        .astype({"first_technology_year": float})
+        .astype({"first_technology_year": float})  # has to be float; int gives error
         .query("year_vtg >= first_technology_year")
         .reset_index(drop=True)
         .drop_duplicates()
@@ -531,7 +531,7 @@ def create_message_outputs(
         )
         .astype(dtypes)
         .query("year_act in @config.Y and year_vtg in @config.Y")
-        .astype({"first_technology_year": float})
+        .astype({"first_technology_year": float})  # has to be float; int gives error
         .query("year_vtg >= first_technology_year")
         .reset_index(drop=True)
         .drop_duplicates()
