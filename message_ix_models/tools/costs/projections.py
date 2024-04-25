@@ -468,21 +468,11 @@ def create_message_outputs(
         )
         .astype(dtypes)
         .query("year_vtg in @config.Y")
-        .assign(first_technology_year=lambda x: x.first_technology_year.astype(float))
-        .assign(first_technology_year=lambda x: x.first_technology_year.astype(int))
+        .astype({"first_technology_year": float})
         .query("year_vtg >= first_technology_year")
         .reset_index(drop=True)
-        .drop_duplicates()[
-            [
-                "scenario_version",
-                "scenario",
-                "node_loc",
-                "technology",
-                "year_vtg",
-                "value",
-                "unit",
-            ]
-        ]
+        .drop_duplicates()
+        .drop("first_technology_year", axis=1)
     )
 
     dtypes.update(year_act=int)
@@ -491,7 +481,8 @@ def create_message_outputs(
         .drop(columns=["inv_cost"])
         .assign(key=1)
         .merge(
-            pd.DataFrame(data={"year_act": config.seq_years}).assign(key=1), on="key"
+            pd.DataFrame(data={"year_act": config.seq_years}).assign(key=1),
+            on="key",
         )
         .drop(columns=["key"])
         .query("year_act >= year_vtg")
@@ -540,22 +531,12 @@ def create_message_outputs(
         )
         .astype(dtypes)
         .query("year_act in @config.Y and year_vtg in @config.Y")
-        .assign(first_technology_year=lambda x: x.first_technology_year.astype(float))
-        .assign(first_technology_year=lambda x: x.first_technology_year.astype(int))
+        .astype({"first_technology_year": float})
         .query("year_vtg >= first_technology_year")
         .reset_index(drop=True)
-    ).drop_duplicates()[
-        [
-            "scenario_version",
-            "scenario",
-            "node_loc",
-            "technology",
-            "year_vtg",
-            "year_act",
-            "value",
-            "unit",
-        ]
-    ]
+        .drop_duplicates()
+        .drop("first_technology_year", axis=1)
+    )
 
     return inv, fom
 
