@@ -15,7 +15,7 @@ def test_get_weo_data() -> None:
     result = get_weo_data()
 
     # Check that the minimum and maximum years are correct
-    assert min(result.year) == "2021"
+    assert min(result.year) == "2022"
     assert max(result.year) == "2050"
 
     # Check that the regions are correct
@@ -37,11 +37,11 @@ def test_get_weo_data() -> None:
 
     # Check one sample value
     assert np.isclose(
-        1324.68,
+        1238.018,
         result.query(
             "weo_technology == 'steam_coal_subcritical'"
             "and weo_region == 'United States'"
-            "and year == '2021'"
+            "and year == '2022'"
             "and cost_type == 'inv_cost'"
         )["value"].item(),
     )
