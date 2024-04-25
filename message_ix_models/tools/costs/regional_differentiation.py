@@ -49,31 +49,31 @@ def get_weo_data() -> pd.DataFrame:
     # their respective sheet in the Excel file,
     # and the start row
     DICT_TECH_ROWS = {
-        "bioenergy_ccus": ["Renewables", 95],
-        "bioenergy_cofiring": ["Renewables", 75],
-        "bioenergy_large": ["Renewables", 65],
-        "bioenergy_medium_chp": ["Renewables", 85],
-        "ccgt": ["Gas", 5],
-        "ccgt_ccs": ["Fossil fuels equipped with CCUS", 25],
-        "ccgt_chp": ["Gas", 25],
-        "csp": ["Renewables", 105],
-        "fuel_cell": ["Gas", 35],
-        "gas_turbine": ["Gas", 15],
-        "geothermal": ["Renewables", 115],
-        "hydropower_large": ["Renewables", 45],
-        "hydropower_small": ["Renewables", 55],
-        "igcc": ["Coal", 35],
-        "igcc_ccs": ["Fossil fuels equipped with CCUS", 15],
-        "marine": ["Renewables", 125],
-        "nuclear": ["Nuclear", 5],
-        "pulverized_coal_ccs": ["Fossil fuels equipped with CCUS", 5],
-        "solarpv_buildings": ["Renewables", 15],
-        "solarpv_large": ["Renewables", 5],
-        "steam_coal_subcritical": ["Coal", 5],
-        "steam_coal_supercritical": ["Coal", 15],
-        "steam_coal_ultrasupercritical": ["Coal", 25],
-        "wind_offshore": ["Renewables", 35],
-        "wind_onshore": ["Renewables", 25],
+        "bioenergy_ccus": ["Renewables", 99],
+        "bioenergy_cofiring": ["Renewables", 79],
+        "bioenergy_large": ["Renewables", 69],
+        "bioenergy_medium_chp": ["Renewables", 89],
+        "ccgt": ["Gas", 9],
+        "ccgt_ccs": ["Fossil fuels equipped with CCUS", 29],
+        "ccgt_chp": ["Gas", 29],
+        "csp": ["Renewables", 109],
+        "fuel_cell": ["Gas", 39],
+        "gas_turbine": ["Gas", 19],
+        "geothermal": ["Renewables", 119],
+        "hydropower_large": ["Renewables", 49],
+        "hydropower_small": ["Renewables", 59],
+        "igcc": ["Coal", 39],
+        "igcc_ccs": ["Fossil fuels equipped with CCUS", 19],
+        "marine": ["Renewables", 129],
+        "nuclear": ["Nuclear", 9],
+        "pulverized_coal_ccs": ["Fossil fuels equipped with CCUS", 9],
+        "solarpv_buildings": ["Renewables", 19],
+        "solarpv_large": ["Renewables", 9],
+        "steam_coal_subcritical": ["Coal", 9],
+        "steam_coal_supercritical": ["Coal", 19],
+        "steam_coal_ultrasupercritical": ["Coal", 29],
+        "wind_offshore": ["Renewables", 39],
+        "wind_onshore": ["Renewables", 29],
     }
 
     # Dict of cost types to read in and the required columns
@@ -81,17 +81,17 @@ def get_weo_data() -> pd.DataFrame:
 
     # Set file path for raw IEA WEO cost data
     file_path = package_data_path(
-        "iea", "WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb"
+        "iea", "WEO_2023_PG_Assumptions_STEPSandNZE_Scenario.xlsx"
     )
 
     # Retrieve conversion factor
-    conversion_factor = registry("1.0 USD_2021").to("USD_2005").magnitude  # noqa: F841
+    conversion_factor = registry("1.0 USD_2022").to("USD_2005").magnitude  # noqa: F841
 
     # Loop through Excel sheets to read in data and process:
     # - Convert to long format
     # - Only keep investment costs
     # - Replace "n.a." with NaN
-    # - Convert units from 2021 USD to 2005 USD
+    # - Convert units from 2022 USD to 2005 USD
     dfs_cost = []
     for tech_key, cost_key in product(DICT_TECH_ROWS, DICT_COST_COLS):
         df = (
@@ -103,7 +103,7 @@ def get_weo_data() -> pd.DataFrame:
                 nrows=9,
                 usecols=DICT_COST_COLS[cost_key],
             )
-            .set_axis(["weo_region", "2021", "2030", "2050"], axis=1)
+            .set_axis(["weo_region", "2022", "2030", "2050"], axis=1)
             .melt(id_vars=["weo_region"], var_name="year", value_name="value")
             .assign(
                 weo_technology=tech_key,
@@ -419,8 +419,8 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
     # Grab WEO data and keep only investment costs
     df_weo = get_weo_data()
 
-    # Even if config.base_year is greater than 2021, use 2021 WEO data
-    sel_year = str(2021)
+    # Even if config.base_year is greater than 2022, use 2022 WEO values
+    sel_year = str(2022)
     log.info("…using year " + str(sel_year) + " data from WEO")
 
     # - Retrieve a map from MESSAGEix node IDs to WEO region names.
