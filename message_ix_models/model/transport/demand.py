@@ -1,12 +1,13 @@
 """Demand calculation for MESSAGEix-Transport."""
 
 import logging
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
+import genno
 import numpy as np
 import pandas as pd
 from dask.core import literal
-from genno import Computer
+from genno import Computer, KeySeq
 from message_ix import make_df
 from message_ix_models.util import broadcast
 
@@ -37,6 +38,11 @@ from .key import (
     t_modes,
     y,
 )
+
+if TYPE_CHECKING:
+    from genno.types import AnyQuantity
+
+    from . import config
 
 log = logging.getLogger(__name__)
 
@@ -96,11 +102,9 @@ TASKS = [
     (gdp_ppp, gdp),
     # GDP PPP per capita
     (gdp_cap, "div", gdp_ppp, pop),
-    # …indexed to base-year values
-    (gdp_index, "index_to", gdp_cap, literal("y"), "y0"),
-    # Projected passenger-distance travelled (PDT) per capita
-    (pdt_cap, "pdt_per_capita", gdp_cap, (pdt_cap / "y") + "ref", "y0", "config"),
-    # Total PDT (n, y) = product of PDT / capita and population
+    #
+    # Total PDT (n, y) = product of PDT / capita and population. See pdt_per_capita()
+    # that sets up the calculation of `pdt_cap + "adj"`
     (pdt_ny, "mul", pdt_cap + "adj", pop),
     # Value-of-time multiplier
     ("votm:n-y", "votm", gdp_cap),
@@ -153,6 +157,8 @@ TASKS = [
         "freight mode share:n-t:ref",
         "freight activity:n:ref",
     ),
+    # …indexed to base-year values
+    (gdp_index, "index_to", gdp_ppp, literal("y"), "y0"),
     (fv + "0", "mul", "fv:n-t:historical", gdp_index),
     # Scenario-specific adjustment factor for freight activity
     ("fv factor:n-t-y", "factor_fv", n, y, "config"),
@@ -195,6 +201,102 @@ TASKS = [
 ]
 
 
+def pdt_per_capita(c: Computer) -> None:
+    """Set up calculation of :data:`pdt_cap`.
+
+    Per Schäfer et al. (2009) Figure 2.5: linear interpolation between log GDP PPP per
+    capita and log PDT per capita, specifically between the 2020 (GDP, PDT) and the
+    values (:attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_demand`), which give a fixed
+    future point towards which all regions converge.
+
+    Values from the file :file:`pdt-elasticity` are selected and used to scale the
+    difference between projected, log GDP in each future period and the log GDP in the
+    reference year.
+    """
+    from . import key
+
+    cfg: "config.Config" = c.graph["config"]["transport"]
+
+    gdp = KeySeq(key.gdp)
+    pdt = KeySeq("_pdt:n-y")
+
+    # GDP expressed in PPP. In the SSP(2024) input files, this conversion is already
+    # applied, so no need to multiply by a mer_to_ppp factor here → simple alias.
+    c.add(gdp["PPP"], gdp.base)
+
+    # GDP PPP per capita
+    c.add(gdp["capita"], "div", gdp["PPP"], pop)
+
+    # Add `y` dimension. Here for the future fixed point we use y=2 * max(y), e.g.
+    # 4220 for y=2110. The value doesn't matter, we just need to avoid overlap with y
+    # in the model.
+    def _future(qty: "AnyQuantity", years: List[int]) -> "AnyQuantity":
+        return qty.expand_dims(y=[years[-1] * 2])
+
+    # Same, but adding y0
+    c.add(pdt["ref"], lambda q, y: q.expand_dims(y=[y]), "pdt:n:capita+ref", "y0")
+
+    def _delta(qty: "AnyQuantity", y0: int) -> "AnyQuantity":
+        """Compute slope of `qty` between the last |y|-index and `y0`."""
+        ym1 = sorted(qty.coords["y"].values)[-1]
+        return qty.sel(y=ym1) - qty.sel(y=y0)
+
+    # Same transformation for both quantities
+    for x, reference_values in ((gdp, gdp["capita"]), (pdt, pdt["ref"])):
+        # Retrieve value from configuration
+        k = KeySeq(f"{x.name}::fixed")
+        c.add(k[0], "quantity_from_config", "config", name=f"fixed_{x.name.strip('_')}")
+        # Broadcast on `n` dimension
+        c.add(k[1] * "n", "mul", k[0], "n:n:ex world")
+        # Add dimension y=4220 (see _future, above)
+        c.add(x["fixed"], _future, k[1] * "n", "y")
+        # Concatenate with reference values
+        # TODO Ensure units are consistent
+        c.add(x["ext"], "concat", reference_values, x["fixed"])
+        # Log X
+        c.add(x["log"], np.log, x["ext"])
+        # Log X indexed to values at y=y0. By construction the values for y=y0 are 1.0.
+        c.add(x[0], "index_to", x["log"], literal("y"), "y0")
+        # Delta log X versus y=y0 value. By construction the values for y=y0 are 0.0.
+        c.add(x[1], "sub", x[0], genno.Quantity(1.0))
+        # Difference between the fixed point and y0 values
+        # TODO Maybe simplify this. Isn't the slope equal to the fixed-point values
+        #      by construction?
+        c.add(x["delta"] / "y", _delta, x[1], "y0")
+
+    # Compute slope of PDT w.r.t. GDP after transformation
+    c.add("pdt slope:n", "div", pdt["delta"] / "y", gdp["delta"] / "y")
+
+    # Select 'elasticity' from "pdt elasticity:scenario-n:exo"
+    c.add(
+        "pdt elasticity:n",
+        "select",
+        "pdt elasticity:scenario-n:exo",
+        indexers=dict(scenario=repr(cfg.ssp).split(":")[1]),
+    )
+
+    # Adjust GDP by multiplying by 'elasticity'
+    c.add(gdp[2], "mul", gdp[1], "pdt elasticity:n")
+
+    # Projected PDT = m × adjusted GDP
+    c.add(pdt["proj"], "mul", gdp[2], "pdt slope:n")
+
+    # Reverse transform
+    c.add(pdt[2], "add", pdt["proj"], genno.Quantity(1.0))
+    c.add("y::y0", lambda v: dict(y=v), "y0")
+    c.add("pdt:n:capita+y0", "select", pdt["log"], "y::y0")
+    c.add(pdt[3], "mul", pdt[2], "pdt:n:capita+y0")
+    c.add(pdt[4], np.exp, pdt[3])
+    # Assign units
+    # TODO Derive these from the input pdt["ref"]
+    c.add(pdt[5], "assign_units", pdt[4], units="km / year")
+
+    # Alias the last step to the target key
+    c.add(pdt_cap, pdt[4])
+
+    # TODO Compute adjusted GDP
+
+
 def prepare_computer(c: Computer) -> None:
     """Prepare `c` to calculate and add transport demand data.
 
@@ -204,8 +306,8 @@ def prepare_computer(c: Computer) -> None:
     """
     from . import factor
 
-    # NB It is necessary to pre-add this key because Computer.apply() errors otherwise
-    c.add_single(pdt_cap, None)
+    c.apply(pdt_per_capita)
+
     # Insert a scaling factor that varies according to SSP setting
     c.apply(factor.insert, pdt_cap, name="pdt non-active", target=pdt_cap + "adj")
 
