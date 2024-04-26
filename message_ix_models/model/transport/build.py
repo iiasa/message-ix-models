@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import pandas as pd
-import xarray as xr
 from genno import Computer, KeyExistsError, Quantity, quote
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
@@ -339,7 +338,7 @@ def add_structure(c: Computer):
     c.add("n::ex world", "nodes_ex_world", "n")
     c.add(
         "n:n:ex world",
-        lambda data: Quantity(xr.DataArray(1, dims="n", coords={"n": data})),
+        lambda n: Quantity([1.0] * len(n), coords={"n": n}),
         "n::ex world",
     )
     c.add("n::ex world+code", "nodes_ex_world", "nodes")
