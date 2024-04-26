@@ -2,8 +2,10 @@ import logging
 import re
 from pathlib import Path
 
+import genno
 import pytest
 from genno import Key
+from genno.testing import assert_units
 from message_ix_models.model.structure import get_codes
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from pytest import param
@@ -58,8 +60,6 @@ def test_demand_dummy(test_context, regions, years):
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, options):
     """Exogenous demand calculation succeeds."""
-    from genno.testing import assert_units
-
     c, info = testing.configure_build(
         test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
@@ -240,6 +240,62 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
     # Data sum to 1 across the consumer_group dimension, i.e. constitute a discrete
     # distribution
     assert (result.sum("cg") - 1.0 < 1e-08).all()
+
+
+DATA = """
+n        y     value
+R11_AFR  2020  0
+R11_AFR  2050  100
+R11_AFR  2100  200
+R11_WEU  2020  100
+R11_WEU  2050  200
+R11_WEU  2100  300
+"""
+
+
+def test_pdt_per_capita(
+    tmp_path, test_context, regions="R12", years="B", options=dict()
+):
+    """Test :func:`.pdt_per_capita`.
+
+    Moved from :mod:`.test_operator`.
+
+    .. todo:: Update for changes in #551.
+    """
+    from io import StringIO
+
+    import pandas as pd
+
+    from message_data.model.transport.key import pdt_cap
+
+    c, info = testing.configure_build(
+        test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
+    )
+
+    # Input data: GDP (PPP, per capita)
+    gdp_ppp_cap = genno.Quantity(
+        pd.read_fwf(StringIO(DATA)).astype({"y": int}).set_index(["n", "y"])["value"],
+        units="kUSD / passenger / year",
+    )
+    # PDT: reference value for the base period
+    pdt_ref = genno.Quantity(
+        pd.Series({"R11_AFR": 10000.0, "R11_WEU": 20000.0}).rename_axis("n"),
+        units="km / year",
+    )
+    # Configuration: defaults
+    config = dict(transport=Config())
+
+    del pdt_ref, config
+
+    # result = pdt_per_capita(gdp_ppp_cap, pdt_ref, 2020, config)
+    result = c.get(pdt_cap)
+    # print(f"{result = }")
+
+    # Data have the expected dimensions and shape
+    assert {"n", "y"} == set(result.dims)
+    assert gdp_ppp_cap.shape == result.shape
+    # Data have the expected units
+    assert_units(result, "km / year")
 
 
 @pytest.mark.parametrize(

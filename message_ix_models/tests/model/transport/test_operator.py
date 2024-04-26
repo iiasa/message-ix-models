@@ -1,6 +1,6 @@
 import pytest
 from genno import Quantity
-from genno.testing import assert_qty_equal, assert_units
+from genno.testing import assert_qty_equal
 from message_ix import Scenario
 from message_ix_models.project.ssp import SSP_2024
 from numpy.testing import assert_allclose
@@ -12,7 +12,6 @@ from message_data.model.transport.operator import (
     distance_nonldv,
     factor_input,
     factor_ssp,
-    pdt_per_capita,
     transport_check,
 )
 from message_data.model.transport.structure import get_technology_groups
@@ -130,46 +129,6 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
     result = factor_ssp(config, n, y, info=factor.Factor(layers))
 
     assert {"n", "y"} == set(result.dims)
-
-
-DATA = """
-n        y     value
-R11_AFR  2020  0
-R11_AFR  2050  100
-R11_AFR  2100  200
-R11_WEU  2020  100
-R11_WEU  2050  200
-R11_WEU  2100  300
-"""
-
-
-def test_pdt_per_capita():
-    """Test :func:`.pdt_per_capita`."""
-    from io import StringIO
-
-    import pandas as pd
-
-    # Input data: GDP (PPP, per capita)
-    gdp_ppp_cap = Quantity(
-        pd.read_fwf(StringIO(DATA)).astype({"y": int}).set_index(["n", "y"])["value"],
-        units="kUSD / passenger / year",
-    )
-    # PDT: reference value for the bas period
-    pdt_ref = Quantity(
-        pd.Series({"R11_AFR": 10000.0, "R11_WEU": 20000.0}).rename_axis("n"),
-        units="km / year",
-    )
-    # Configuration: defaults
-    config = dict(transport=Config())
-
-    result = pdt_per_capita(gdp_ppp_cap, pdt_ref, 2020, config)
-    # print(f"{result = }")
-
-    # Data have the expected dimensions and shape
-    assert {"n", "y"} == set(result.dims)
-    assert gdp_ppp_cap.shape == result.shape
-    # Data have the expected units
-    assert_units(result, "km / year")
 
 
 @pytest.mark.xfail(reason="Incomplete test")
