@@ -175,13 +175,13 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     config: "Config" = c.graph["config"]["transport"]
 
     # Identify appropriate source keyword arguments for loading GDP and population data
-    source = str(context.transport.ssp)
-    if context.transport.ssp in SSP_2017:
+    source = str(config.ssp)
+    if config.ssp in SSP_2017:
         source_kw: Tuple[Dict[str, Any], ...] = (
             dict(measure="GDP", model="IIASA GDP"),
             dict(measure="POP", model="IIASA GDP"),
         )
-    elif context.transport.ssp in SSP_2024:
+    elif config.ssp in SSP_2024:
         source_kw = (
             dict(measure="GDP", model="IIASA GDP 2023"),
             dict(measure="POP"),
