@@ -74,7 +74,6 @@ __all__ = [
     "merge_data",
     "nodes_ex_world",  # Re-export from message_ix_models.util TODO do this upstream
     "nodes_world_agg",
-    "pdt_per_capita",
     "price_units",
     "quantity_from_config",
     "relabel2",
@@ -684,42 +683,6 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
             return {dim: result}
 
     raise RuntimeError("Failed to identify the World node")
-
-
-def pdt_per_capita(
-    gdp_ppp_cap: "AnyQuantity", pdt_ref: "AnyQuantity", y0: int, config: dict
-) -> "AnyQuantity":
-    """Compute passenger distance traveled (PDT) per capita.
-
-    Per Schäfer et al. (2009) Figure 2.5: linear interpolation between (`gdp_ppp_cap`,
-    `pdt_ref`) in the first period of gdp_ppp_cap and the values (
-    :attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_demand`), which give a fixed future
-    point towards which all regions converge.
-    """
-    from genno.operator import convert_units
-
-    # Selectors/indices
-    n = dict(n=gdp_ppp_cap.coords["n"].data)
-
-    # Values from configuration; broadcast on dimension "n"
-    gdp_fix = config["transport"].fixed_GDP.expand_dims(n)
-    pdt_fix = config["transport"].fixed_demand.expand_dims(n)
-
-    # Reference/base-year GDP per capita
-    gdp_0 = gdp_ppp_cap.sel(dict(y=y0))
-
-    # Slope between initial and target point, for each "n"
-    m = (pdt_fix - pdt_ref) / (gdp_fix - gdp_0)
-
-    # Difference between projected GDP per capita and reference.
-    # Limit to minimum of zero; values < 0 can extrapolate to negative PDT per capita,
-    # which is invalid
-    # FIXME Remove typing exclusion once genno is properly typed for this operation
-    gdp_delta = np.maximum(gdp_ppp_cap - gdp_0, 0)  # type: ignore [call-overload]
-
-    # - Predict y = mx + b ∀ (n, y (period)).
-    # - Ensure units are in km / year, for debugging.
-    return ((m * gdp_delta) + pdt_ref).pipe(convert_units, "km / year")
 
 
 def price_units(qty: "AnyQuantity") -> "AnyQuantity":
