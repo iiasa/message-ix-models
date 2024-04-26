@@ -6,6 +6,7 @@ from genno import Key
 from .key import pdt_cap
 
 if TYPE_CHECKING:
+    import genno
     from genno.core.key import KeyLike
     from message_ix_models import Context
 
@@ -55,13 +56,34 @@ class ExogenousDataFile:
         if not any(f.key == self.key for f in FILES):
             FILES.append(self)
 
+    # Does nothing except ensure callable(…) == True for inspection by genno
+    def __call__(self): ...
+
     def __repr__(self) -> str:
         return f"<ExogenousDataFile {'/'.join(self.parts)} → {self.key}>"
 
-    def locate(self, context: "Context") -> Path:
+    def add_tasks(
+        self, c: "genno.Computer", *args, context: "Context"
+    ) -> Tuple["KeyLike", ...]:
+        from message_ix_models.util.ixmp import rename_dims
+
         from .util import path_fallback
 
-        return path_fallback(context, *self.parts)
+        try:
+            path = path_fallback(context, *self.parts)
+        except FileNotFoundError:
+            if self.required:
+                raise
+            else:
+                return ()
+
+        # Use standard RENAME_DIMS from ixmp config
+        dims = rename_dims().copy()
+        values = set(dims.values())
+        dims.update({d: d for d in self.key.dims if d not in values})
+
+        c.add("load_file", path, key=self.key, dims=dims, name=self.key.name)
+        return (self.key,)
 
 
 ExogenousDataFile(
@@ -112,4 +134,5 @@ ExogenousDataFile(
 )
 ExogenousDataFile(("ma3t", "population"), dims=("census_division", "area_type"))
 ExogenousDataFile("mer-to-ppp", dims=("n", "y"), required=False)
+ExogenousDataFile("pdt-elasticity", dims=("scenario", "n"))
 ExogenousDataFile("population-suburb-share", dims=("n", "y"), required=False)

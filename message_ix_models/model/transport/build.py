@@ -164,7 +164,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     import message_ix_models.tools.iea.web  # noqa: F401
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
-    from message_ix_models.util.ixmp import rename_dims
 
     # Ensure that the MERtoPPP data provider is available
     from . import data  # noqa: F401
@@ -173,6 +172,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     keys = {}
 
     context = c.graph["context"]
+    config: "Config" = c.graph["config"]["transport"]
 
     # Identify appropriate source keyword arguments for loading GDP and population data
     source = str(context.transport.ssp)
@@ -262,24 +262,15 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
     from .files import FILES, ExogenousDataFile
 
+    # Identify the mode-share file according to the config setting
     ExogenousDataFile(
-        ("mode-share", context.transport.mode_share),
+        ("mode-share", config.mode_share),
         "mode share:n-t:ref",
         "Reference (base year) mode share",
     )
 
     for f in FILES:
-        try:
-            c.add(
-                "load_file",
-                f.locate(context),
-                key=f.key,
-                dims=rename_dims(),
-                name=f.key.name,
-            )
-        except FileNotFoundError:
-            if f.required:
-                raise
+        c.add("", f, context=context)
 
 
 def add_structure(c: Computer):
