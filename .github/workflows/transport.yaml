@@ -3,10 +3,10 @@ name: MESSAGEix-Transport
 env:
   # Starting point of the workflow.
   # Use this value to build from a certain scenario:
-  base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+  # base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
   # Use this value to allow the workflow to determine model & scenario names
   # and versions:
-  # base: --platform="ixmp-dev"
+  base: --platform=ixmp-dev
 
   # Set this to a particular step to truncate the workflow
   from-step: ""
@@ -29,16 +29,20 @@ concurrency:
 jobs:
   report:
     runs-on: self-hosted
-    name: MESSAGEix-Transport ${{ matrix.SSP }}
+    name: MESSAGEix-Transport ${{ matrix.SSP }}${{ matrix.policy }}
 
     strategy:
       matrix:
+        # These correspond to short labels used for workflow step names
         SSP:
         - SSP1
         - SSP2
         - SSP3
         - SSP4
         - SSP5
+        policy:
+        - " policy"
+        - ""
 
     steps:
     - name: Clean workspace
@@ -171,21 +175,21 @@ jobs:
         mix-models fetch "SSP-Update-3.0"
         mix-models fetch "SSP-Update-3.0.1"
 
-    - name: Run MESSAGEix-Transport workflow "${{ env.from-step }}" → "${{ matrix.SSP }} reported"
+    - name: Run MESSAGEix-Transport workflow "${{ env.from-step }}" → "${{ matrix.SSP }}${{ matrix.policy }} reported"
       run: |
         mix-models \
           ${{ env.base }} \
           transport run \
-          --nodes=R12 --model-extra="ci nightly" \
+          --base=auto --nodes=R12 --model-extra="ci nightly" \
           --from="${{ env.from-step }}" \
-          "${{ matrix.SSP }} reported" \
+          "${{ matrix.SSP }}${{ matrix.policy }} reported" \
           --go
       continue-on-error: true
 
     - name: Upload results as a build artifact
       uses: actions/upload-artifact@v4
       with:
-        name: MESSAGEix-Transport ${{ matrix.SSP }}
+        name: MESSAGEix-Transport ${{ matrix.SSP }}${{ matrix.policy }}
         path: |
           ${{ github.workspace }}/report/
           !${{ github.workspace }}/report/cache/
