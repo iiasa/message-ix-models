@@ -54,7 +54,7 @@ cli.add_command(
             click.Option(
                 ["--scenario-extra", "target_scenario_name"],
                 callback=exec_cb("context.core.dest_scenario['scenario'] = value"),
-                default="baseline",
+                default="",
                 help="Scenario name suffix.",
             ),
             click.Option(
