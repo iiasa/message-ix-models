@@ -32,6 +32,12 @@ cli.add_command(
         slug="transport",
         params=[
             click.Option(
+                ["--base", "base_scenario"],
+                type=click.Choice(["auto", "bare"]),
+                default="bare",
+                help="Base scenario (if no --url)",
+            ),
+            click.Option(
                 ["--future", "futures_scenario"], help="Transport futures scenario."
             ),
             click.Option(
