@@ -200,6 +200,12 @@ class Config(ConfigHelper):
     #: appearing in MA³T.
     node_to_census_division: Dict = field(default_factory=dict)
 
+    #: **Temporary** setting for the SSP 2024 project: indicates whether the base
+    #: scenario used is a policy (carbon pricing) scenario, or not. This currently does
+    #: not affect *any* behaviour of :mod:`.transport` except the selection of a base
+    #: scenario via :func:`.base_scenario_url`.
+    policy: bool = False
+
     #: Flags for distinct scenario features according to projects. In addition to
     #: providing values directly, this can be set by passing :attr:`futures_scenario` or
     #: :attr:`navigate_scenario` to the constructor, or by calling
