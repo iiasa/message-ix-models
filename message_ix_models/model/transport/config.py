@@ -202,8 +202,8 @@ class Config(ConfigHelper):
 
     #: **Temporary** setting for the SSP 2024 project: indicates whether the base
     #: scenario used is a policy (carbon pricing) scenario, or not. This currently does
-    #: not affect *any* behaviour of :mod:`.transport` except the selection of a base
-    #: scenario via :func:`.base_scenario_url`.
+    #: not affect *any* behaviour of :mod:`~message_data.model.transport` except the
+    #: selection of a base scenario via :func:`.base_scenario_url`.
     policy: bool = False
 
     #: Flags for distinct scenario features according to projects. In addition to

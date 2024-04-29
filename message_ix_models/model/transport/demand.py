@@ -212,16 +212,17 @@ TASKS = [
 
 
 def pdt_per_capita(c: Computer) -> None:
-    """Set up calculation of :data:`pdt_cap`.
+    """Set up calculation of :data:`~.key.pdt_cap`.
 
     Per Schäfer et al. (2009) Figure 2.5: linear interpolation between log GDP PPP per
-    capita and log PDT per capita, specifically between the 2020 (GDP, PDT) and the
-    values (:attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_demand`), which give a fixed
-    future point towards which all regions converge.
+    capita and log PDT per capita, specifically between the observed (GDP, PDT) point in
+    |y0| and (:attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_pdt`), which give a future
+    “fixed point” towards which all regions converge.
 
-    Values from the file :file:`pdt-elasticity` are selected and used to scale the
-    difference between projected, log GDP in each future period and the log GDP in the
-    reference year.
+    Values from the file :file:`pdt-elasticity.csv` are selected according to
+    :attr:`.Config.ssp <.transport.config.Config.ssp>` and used to scale the difference
+    between projected, log GDP in each future period and the log GDP in the reference
+    year.
     """
     from . import key
 

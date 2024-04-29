@@ -27,7 +27,7 @@ Configuration
 General (:file:`config.yaml`, required)
 ---------------------------------------
 
-The contents of this configuration file exactly map to the attributes of the class :class:`.transport.Config`.
+The contents of this configuration file exactly map to the attributes of the class :class:`transport.Config <.transport.config.Config>`.
 The class stores all the settings understood by the code for building, solving, and reporting MESSAGEix-Transport, including their default values.
 (There is no common default like :file:`/data/transport/config.yaml`.)
 It also has methods for reading the configuration from file; see the detailed description of :meth:`.Config.from_context`.
@@ -61,40 +61,24 @@ Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_e
 
 .. admonition:: Example
 
-   Contents of the file :file:`freight-mode-share-ref.csv` are available at the key ``freight mode share:n-t:ref``; this key indicates the dimensionality of this quantity is :math:`(n, t)`.
+   Contents of the file :file:`freight-mode-share-ref.csv` are available at the key ``freight mode share:n-t:ref``.
+   The indicates the dimensionality of this quantity is :math:`(n, t)`.
+   The file has column headers "node", "technology", and "value".
 
 Not all files are currently or always used in model-building computations.
 Some submodules of :mod:`~message_data.model.transport` use additional data files via other mechanisms.
 Most of the files have a header comment including a precise description of the quantity, source of the data, and units of measurement; in some cases extended information is below (where a header comment would be too long).
 
-- :file:`demand-scale.csv` → ``demand scale:n-y:exo``
-- :file:`disutility.csv` → ``disutility:n-cg-t-y:per vehicle``
-- :file:`energy-other.csv` → ``energy:c-n:transport other``
-- :file:`freight-activity.csv` → ``freight activity:n:ref``
-- :file:`freight-mode-share-ref.csv` → ``freight mode share:n-t:ref``
-- :file:`fuel-emi-intensity.csv` → ``fuel emi intensity:c-e:exo``
-- :file:`ikarus/availability.csv` → ``ikarus availability:source-t-c-y:exo``
-- :file:`ikarus/fix_cost.csv` → ``ikarus fix_cost:source-t-c-y:exo``
-- :file:`ikarus/input.csv` → ``ikarus input:source-t-c-y:exo``
-- :file:`ikarus/inv_cost.csv` → ``ikarus inv_cost:source-t-c-y:exo``
-- :file:`ikarus/technical_lifetime.csv` → ``ikarus technical_lifetime:source-t-c-y:exo``
-- :file:`ikarus/var_cost.csv` → ``ikarus var_cost:source-t-c-y:exo``
-- :file:`input-base.csv` → ``input:t-c-h:base``
-- :file:`ldv-class.csv` → ``ldv class:n-vehicle_class:exo``
-- :file:`ldv-new-capacity.csv` → ``cap_new:nl-t-yv:ldv+exo``
-- :file:`load-factor-ldv.csv` → ``load factor ldv:n:exo``
-- :file:`load-factor-nonldv.csv` → ``load factor nonldv:t:exo``
-- :file:`ma3t/attitude.csv` → ``ma3t attitude:attitude:exo``
-- :file:`ma3t/driver.csv` → ``ma3t driver:census_division-area_type-driver_type:exo``
-- :file:`ma3t/population.csv` → ``ma3t population:census_division-area_type:exo``
-- :file:`mer-to-ppp.csv` → ``mer to ppp:n-y:exo``
-- :file:`population-suburb-share.csv` → ``population suburb share:n-y:exo``
-
 :file:`ldv-activity.csv` → ``ldv activity:n:exo``
 -------------------------------------------------
 
-Quantity: Activity (driving distance) per light-duty vehicle
-Units: kilometre / year
+Measure
+   Activity (driving distance) per light-duty vehicle
+Units
+   kilometre / year
+
+Notes
+~~~~~
 
 node = R12_AFR [1]_
   Obtained from literature, based on estimates from South Africa. The reported value for South Africa is lower (18000 km/year, `source <https://blog.sbtjapan.com/car-info/what-mileage-is-good-for-a-used-car#:~:text=Average%20Mileage%20in%20South%20Africa,is%20just%20a%20general%20guideline>`__) than the one for Kenya (22000 km/year, `source <https://www.changing-transport.org/wp-content/uploads/2019_Updated-transport-data-in-Kenya.pdf>`__).
@@ -131,9 +115,15 @@ As the name implies, the data for :doc:`MESSAGE (V)-Transport <old>` was derived
 :file:`mode-share/default.csv`
 ------------------------------
 
-Quantity: Share of each mode in passenger transport activity in the model base year
-Dimensions: :math:`(n, t)` with transport modes expressed in the :math:`t` dimensions.
-Units: dimensionless
+Measure
+   Share of each mode in passenger transport activity in the model base year
+Dimensions
+   :math:`(n, t)` with transport modes expressed in the :math:`t` dimensions.
+Units
+   dimensionless
+
+Notes
+~~~~~
 
 node = R12_AFR [2]_
    These new estimates are mainly based on IMAGE regional estimates (average of EA, WA, and SA) after discussion with Jarmo as well as an additional literature search + guesstimates from vehicle count etc.
@@ -170,9 +160,15 @@ node = R12_SAS [2]_
 :file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
 ----------------------------------------------
 
-Quantity: Passenger distance travelled per capita in the model base year
-Dimensions: :math:`(n)`
-Units: km / year
+Measure
+   Passenger distance travelled per capita in the model base year
+Dimensions
+   :math:`(n)`
+Units
+   km / year
+
+Notes
+~~~~~
 
 node = R12_CHN [4]_
    Based on the vehicle activity method `Liu, et al. 2022`_ estimate the total PDT for R12_CHN for year (2017) is 9406 billion pkm.
@@ -185,6 +181,44 @@ node = R12_CHN [4]_
    the PDT/capita = 11848.9/1.4483
 
 .. [4] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
+
+:file:`pdt-elasticity.csv` → ``pdt elasticity:scenario-n:exo``
+--------------------------------------------------------------
+
+Measure
+   “Elasticity” or multiplier for GDP PPP per capita
+Dimensions
+   :math:`(n, \text{scenario})`.
+   ‘scenario’ identifiers are partial URNs for codes in the :class:`.SSP_2024` code list.
+Units
+   dimensionless
+Where/how used
+   :func:`.pdt_per_capita`.
+
+Other files
+-----------
+- :file:`demand-scale.csv` → ``demand scale:n-y:exo``
+- :file:`disutility.csv` → ``disutility:n-cg-t-y:per vehicle``
+- :file:`energy-other.csv` → ``energy:c-n:transport other``
+- :file:`freight-activity.csv` → ``freight activity:n:ref``
+- :file:`freight-mode-share-ref.csv` → ``freight mode share:n-t:ref``
+- :file:`fuel-emi-intensity.csv` → ``fuel emi intensity:c-e:exo``
+- :file:`ikarus/availability.csv` → ``ikarus availability:source-t-c-y:exo``
+- :file:`ikarus/fix_cost.csv` → ``ikarus fix_cost:source-t-c-y:exo``
+- :file:`ikarus/input.csv` → ``ikarus input:source-t-c-y:exo``
+- :file:`ikarus/inv_cost.csv` → ``ikarus inv_cost:source-t-c-y:exo``
+- :file:`ikarus/technical_lifetime.csv` → ``ikarus technical_lifetime:source-t-c-y:exo``
+- :file:`ikarus/var_cost.csv` → ``ikarus var_cost:source-t-c-y:exo``
+- :file:`input-base.csv` → ``input:t-c-h:base``
+- :file:`ldv-class.csv` → ``ldv class:n-vehicle_class:exo``
+- :file:`ldv-new-capacity.csv` → ``cap_new:nl-t-yv:ldv+exo``
+- :file:`load-factor-ldv.csv` → ``load factor ldv:n:exo``
+- :file:`load-factor-nonldv.csv` → ``load factor nonldv:t:exo``
+- :file:`ma3t/attitude.csv` → ``ma3t attitude:attitude:exo``
+- :file:`ma3t/driver.csv` → ``ma3t driver:census_division-area_type-driver_type:exo``
+- :file:`ma3t/population.csv` → ``ma3t population:census_division-area_type:exo``
+- :file:`mer-to-ppp.csv` → ``mer to ppp:n-y:exo``
+- :file:`population-suburb-share.csv` → ``population suburb share:n-y:exo``
 
 Other data sources
 ==================

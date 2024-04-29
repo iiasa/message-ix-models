@@ -29,8 +29,9 @@ def base_scenario_url(
 
     :py:`method = "auto"`
        Automatically identify the base scenario URL from the contents of
-       :file:`base-scenario-url.json`. The settings :attr:`.Config.ssp` and
-       :attr:`.Config.policy` are used to match an entry in the file.
+       :file:`base-scenario-url.json`. The settings :attr:`.Config.ssp
+       <.transport.config.Config.ssp>` and :attr:`.Config.policy` are used to match an
+       entry in the file.
     :py:`method = "bare"`
        Construct bare RES scenario using :mod:`.model.bare.create_res` and the settings
        on `context` such as :attr:`.Config.regions`. Return the URL to this scenario.
