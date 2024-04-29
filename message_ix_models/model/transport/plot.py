@@ -711,8 +711,8 @@ def prepare_computer(c: Computer):
 
     Adds:
 
-    - 1 key like **"plot inv-cost"** corresponding to the :attr:`.basename` of each
-      :class:`.Plot` subclass defined in this module.
+    - 1 key like **"plot inv-cost"** corresponding to the :attr:`~.Plot.basename` of
+      each :class:`.Plot` subclass defined in this module.
     - The key **"transport plots"** that triggers writing all the plots to file.
     """
     import matplotlib

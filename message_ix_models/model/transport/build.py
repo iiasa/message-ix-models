@@ -155,7 +155,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     See also
     --------
-    :doc:`/reference/model/transport/data`
+    :doc:`/reference/model/transport/input`
     """
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.advance.data  # noqa: F401
