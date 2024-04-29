@@ -28,8 +28,11 @@ concurrency:
 
 jobs:
   report:
-    runs-on: self-hosted
     name: MESSAGEix-Transport ${{ matrix.SSP }}${{ matrix.policy }}
+    # Distribute jobs across any available self-hosted runner(s)
+    # runs-on: self-hosted
+    # Use one or a few specific runner(s)
+    runs-on: [ self-hosted, gh-runner-l2 ]
 
     strategy:
       matrix:
@@ -196,9 +199,10 @@ jobs:
         if-no-files-found: error
       continue-on-error: true
 
-  merge:
-    runs-on: self-hosted
+  collate:
+    name: Collate outputs
     needs: report
+    runs-on: self-hosted
 
     steps:
     - name: Merge artifacts
