@@ -107,7 +107,7 @@ TASKS = [
     # that sets up the calculation of `pdt_cap + "adj"`
     (pdt_ny, "mul", pdt_cap + "adj", pop),
     # Value-of-time multiplier
-    ("votm:n-y", "votm", gdp_cap),
+    ("votm:n-y", "votm", gdp_cap + "adj"),
     # Select only the price of transport services
     # FIXME should be the full set of prices
     ((price_sel0, "select", price_full), dict(indexers=dict(c="transport"), drop=True)),
@@ -115,9 +115,19 @@ TASKS = [
     # Smooth prices to avoid zig-zag in share projections
     (price, "smooth", price_sel1),
     # Cost of transport (n, t, y)
-    (cost, "cost", price, gdp_cap, "whour:", "speed:t", "votm:n-y", y),
+    (cost, "cost", price, gdp_cap + "adj", "whour:", "speed:t", "votm:n-y", y),
     # Share weights (n, t, y)
-    (sw, "share_weight", ms + "base", gdp_cap, cost, "lambda:", t_modes, y, "config"),
+    (
+        sw,
+        "share_weight",
+        ms + "base",
+        gdp_cap + "adj",
+        cost,
+        "lambda:",
+        t_modes,
+        y,
+        "config",
+    ),
     # Mode shares
     ((ms, "logit", cost, sw, "lambda:", y), dict(dim="t")),
     # Total PDT (n, t, y), with modes for the 't' dimension
@@ -257,7 +267,7 @@ def pdt_per_capita(c: Computer) -> None:
         c.add(x["log"], np.log, x["ext"])
         # Log X indexed to values at y=y0. By construction the values for y=y0 are 1.0.
         c.add(x[0], "index_to", x["log"], literal("y"), "y0")
-        # Delta log X versus y=y0 value. By construction the values for y=y0 are 0.0.
+        # Delta log X minus y=y0 value. By construction the values for y=y0 are 0.0.
         c.add(x[1], "sub", x[0], genno.Quantity(1.0))
         # Difference between the fixed point and y0 values
         # TODO Maybe simplify this. Isn't the slope equal to the fixed-point values
