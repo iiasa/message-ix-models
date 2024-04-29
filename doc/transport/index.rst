@@ -118,7 +118,83 @@ This can be invoked or modified by other code, or through the command-line::
     --from TEXT                     Truncate workflow at matching step(s).
     --help                          Show this message and exit.
 
-This is the method used by the :file:`transport.yaml` GitHub Actions workflow (see :ref:`transport-ci`) on a daily schedule, and thus always known to work.
+This workflow can be used in the following ways:
+
+Run the entire workflow
+   This is the method used by the :file:`transport.yaml` GitHub Actions workflow (see :ref:`transport-ci`) on a daily schedule, and thus always known to work for the combinations of arguments used in that workflow.
+
+   For the same reason, *it should not be necessary to run this manually*; simply trigger the workflow.
+
+   .. code-block:: shell
+
+      mix-models \
+        --platform=ixmp-dev \
+        transport run \
+        --base=auto --nodes=R12 --model-extra="ci nightly" \
+        --from="" \
+        "SSP2 policy reported" \
+        --go
+
+   The options result in the following behaviour:
+
+   - :program:`--platform=ixmp-dev`: store MESSAGEix-Transport scenarios on the :mod:`ixmp` platform named "ixmp-dev".
+   - :program:`--base=auto`: identify the base scenario URLs using :func:`.base_scenario_url` / the file :file:`base-scenario-url.json`, according to other config settings.
+   - :program:`--model-extra="ci nightly"`: append the string " ci nightly" to the model name of any created Scenario.
+     This avoids accidentally producing new versions of ‘production’ (model name, scenario name) combinations.
+   - :program:`--from=""`: start from the very first step in the workflow—load the identified base scenario—and perform all subsequent workflow steps, up to and including…
+   - :program:`"SSP2 policy reported"`: the target step to reach.
+   - :program:`--go`: Actually execute the workflow.
+     Omit this to show a preview/dry-run.
+
+Debug the build for a single scenario
+   This emulates the build step, but does not use any ‘real’ base scenario; only a :mod:`.bare` RES scenario that contains structure but no data.
+
+   .. code-block:: shell
+
+      mix-models \
+        transport run \
+        --nodes=R12 \
+        "SSP2 debug build" \
+        --go
+
+   This produces output files (:file:`.csv`, :file:`.pdf`) for debugging the build.
+   The output for this particular command is in the directory :file:`{local-data-path}/transport/debug-ICONICS:SSP(2024).2-R12-B/`.
+   With a different target or :program:`--nodes` option, the directory name will differ accordingly.
+
+Debug the build for all scenarios
+   This performs the above debug build step for all SSPs, and then runs :func:`debug_multi` to generate plots that compare the contents of the debug :file:`.csv` files for all 5 SSPs.
+   The plots are output to the directory :file:`{local-data-path}/transport/`.
+
+   .. code-block:: shell
+
+      mix-models \
+        transport run \
+        --nodes=R12 \
+        "debug build" \
+        --go
+
+Run only reporting
+   .. code-block:: shell
+
+      export URL="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12 ci nightly/SSP_2024.2 baseline#154"
+      mix-models \
+        --url="$URL" \
+        transport run \
+        --nodes=R12 --model-extra="ci nightly" \
+        --from="SSP2 solved" \
+        "SSP2 reported" \
+        --key="in:nl-t-ya-c:transport+units" \
+        --go
+
+   This:
+
+   - First sets a shell environment variable (``$URL``) that points to an (existing model name, scenario name, version)—for instance, one produced by the GitHub Actions workflow.
+   - :program:`--url="$URL"`: runs the workflow with this as a base URL.
+   - :program:`--from="SSP2 solved"`: starts *after* the step SSP2 solved.
+     In other words, assume that all steps up to and including this step have already run, and have produced a scenario with the given ``$URL``.
+   - :program:`"SSP2 reported"`: run the reporting step.
+   - :program:`--key="in:nl-t-ya-c:transport+units"`: compute only this reporting key; display; and exit.
+     This can be changed to any other key, or omitted entirely for the default action, which is to produce *all* output files (IAMC-structured output in :file:`.csv` and :file:`.xlsx` formats, plots in :file:`.pdf` format, and files for base MESSAGEix-GLOBIOM calibration in :file:`.csv` format) and also store the IAMC-structured output as time series data with the scenario.
 
 Manual
 ------
