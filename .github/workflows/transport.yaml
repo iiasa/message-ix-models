@@ -32,7 +32,7 @@ jobs:
     # Distribute jobs across any available self-hosted runner(s)
     # runs-on: self-hosted
     # Use one or a few specific runner(s)
-    runs-on: [ self-hosted, gh-runner-l2 ]
+    runs-on: [ self-hosted, iiasa-self-hosted-l2 ]
 
     strategy:
       matrix:
