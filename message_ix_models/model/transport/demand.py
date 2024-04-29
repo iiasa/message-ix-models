@@ -281,20 +281,25 @@ def pdt_per_capita(c: Computer) -> None:
     # Projected PDT = m × adjusted GDP
     c.add(pdt["proj"], "mul", gdp[2], "pdt slope:n")
 
-    # Reverse transform
-    c.add(pdt[2], "add", pdt["proj"], genno.Quantity(1.0))
-    c.add("y::y0", lambda v: dict(y=v), "y0")
-    c.add("pdt:n:capita+y0", "select", pdt["log"], "y::y0")
-    c.add(pdt[3], "mul", pdt[2], "pdt:n:capita+y0")
-    c.add(pdt[4], np.exp, pdt[3])
-    # Assign units
-    # TODO Derive these from the input pdt["ref"]
-    c.add(pdt[5], "assign_units", pdt[4], units="km / year")
+    # Reverse the transform for the adjusted GDP and projected PDT
+    # TODO Derive `units` the inputs, __ and pdt["ref"]
+    for x, start, units in (
+        (gdp, gdp[2], "kUSD_2017 / passenger / year"),
+        (pdt, pdt["proj"], "km/year"),
+    ):
+        # Reverse transform
+        c.add(x[3], "add", start, genno.Quantity(1.0))
+        c.add("y::y0", lambda v: dict(y=v), "y0")
+        c.add(x["log"] + "y0", "select", x["log"], "y::y0")
+        c.add(x[4], "mul", x[3], x["log"] + "y0")
+        c.add(x[5], np.exp, x[4])
+        c.add(x[6], "assign_units", x[5], units=units)
 
     # Alias the last step to the target key
-    c.add(pdt_cap, pdt[4])
+    c.add(pdt_cap, pdt[6])
 
-    # TODO Compute adjusted GDP
+    # Provide a key for the adjusted GDP
+    c.add(gdp_cap + "adj", gdp[6])
 
 
 def prepare_computer(c: Computer) -> None:
