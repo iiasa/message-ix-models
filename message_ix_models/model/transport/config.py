@@ -232,6 +232,9 @@ class Config(ConfigHelper):
 
     #: Speeds of transport modes. The labels on the 't' dimension must match
     #: :attr:`demand_modes`. Source: Schäefer et al. (2010)
+    #:
+    #: .. note:: Temporarily ignored for :pull:`551`; data are read instead from
+    #:    :file:`speed.csv`.
     speeds: Quantity = quantity_field(
         {
             "_dim": "t",
