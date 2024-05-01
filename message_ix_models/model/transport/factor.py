@@ -366,8 +366,8 @@ class Factor:
 LMH = Map(
     "setting", L=Constant(0.8, "n y"), M=Constant(1.0, "n y"), H=Constant(1.2, "n y")
 )
-#: Exclude 2020 from certain factors.
-OMIT_2020 = Omit(y=[2020])
+#: Exclude 2020 and 2025 from certain factors.
+OMIT_2025 = Omit(y=[2020, 2025])
 
 #: Common Factors for SSP quantification in transport.
 COMMON = {
@@ -382,7 +382,7 @@ COMMON = {
     "ldv ev inv_cost": Factor(
         [
             LMH,
-            OMIT_2020,
+            OMIT_2025,
             Keep(t=["ELC_100", "PHEV_ptrp"]),
             ScenarioSetting.of_enum(SSP_2024, "1=L 2=M 3=H 4=M 5=H", default="M"),
         ]
@@ -392,7 +392,7 @@ COMMON = {
     "ldv load factor": Factor(
         [
             LMH,
-            OMIT_2020,
+            OMIT_2025,
             ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=M 4=L 5=L", default="M"),
         ]
     ),
@@ -403,7 +403,7 @@ COMMON = {
         [
             LMH,
             Constant(1.0, "t"),
-            OMIT_2020,
+            OMIT_2025,
             ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=L 4=M 5=L", default="M"),
         ]
     ),
@@ -424,7 +424,7 @@ COMMON = {
                 M=Constant(0.95, "n y"),
                 L=Constant(1.0, "n y"),
             ),
-            OMIT_2020,
+            OMIT_2025,
             ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=L 4=M 5=L", default="M"),
         ]
     ),
