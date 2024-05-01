@@ -42,8 +42,6 @@ from .key import (
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
-    from . import config
-
 log = logging.getLogger(__name__)
 
 
@@ -226,8 +224,6 @@ def pdt_per_capita(c: Computer) -> None:
     """
     from . import key
 
-    cfg: "config.Config" = c.graph["config"]["transport"]
-
     gdp = KeySeq(key.gdp)
     pdt = KeySeq("_pdt:n-y")
 
@@ -283,7 +279,7 @@ def pdt_per_capita(c: Computer) -> None:
         "pdt elasticity:n",
         "select",
         "pdt elasticity:scenario-n:exo",
-        indexers=dict(scenario=repr(cfg.ssp).split(":")[1]),
+        "indexers:scenario",
     )
 
     # Adjust GDP by multiplying by 'elasticity'

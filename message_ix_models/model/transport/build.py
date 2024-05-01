@@ -310,6 +310,7 @@ def add_structure(c: Computer):
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
+        ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
         ("t::transport modes", quote(config.demand_modes)),
         ("y", quote(info.set["year"])),
         (
