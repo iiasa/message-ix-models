@@ -156,6 +156,8 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # gives units 1/a. The base model expects "GWa" for all 3 parameters.
     rep.add(ue + "1", "mul", ue, Quantity(1.0, units="GWa * a"))
 
+    # TODO compute shares of `ue + "1"` versus the total for each (n, y, m)
+
     # Select only ya=2020 data for use in `bound_activity_*`
     b_a_l = rep.add(Key("b_a_l", ue.dims), "select", ue + "1", quote(dict(ya=[2020])))
 

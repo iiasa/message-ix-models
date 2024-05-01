@@ -112,6 +112,7 @@ ExogenousDataFile(("ikarus", "var_cost"), dims=("source", "t", "c", "y"))
 ExogenousDataFile("input-base", "input:t-c-h:base", "Base model input efficiency")
 ExogenousDataFile("ldv-activity", "ldv activity:n:exo", "LDV activity")
 ExogenousDataFile("ldv-class", dims=("n", "vehicle_class"), required=False)
+ExogenousDataFile("ldv-input-adj", dims=("n", "scenario"))
 ExogenousDataFile(
     "ldv-input-ref",
     "fuel economy:nl-m:ldv+ref",
