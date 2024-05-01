@@ -110,16 +110,29 @@ def prepare_computer(c: Computer):
     if final is None:
         raise ValueError(f"invalid source for non-LDV data: {source}")
 
+    # Interpolate load factor
+    lf_nsy = Key("load factor ldv:scenario-n-y")
+    c.add(
+        lf_nsy + "0",
+        "interpolate",
+        lf_nsy + "exo",
+        "y::coords",
+        kwargs=dict(fill_value="extrapolate"),
+    )
+
+    # Select load factor
+    lf_ny = lf_nsy / "scenario"
+    c.add(lf_ny + "0", "select", lf_nsy + "0", "indexers:scenario")
+
     # Insert a scaling factor that varies according to SSP
-    k = Key("load factor ldv:n-y")
-    c.apply(factor.insert, (k / "y") + "exo", name="ldv load factor", target=k)
+    c.apply(factor.insert, lf_ny + "0", name="ldv load factor", target=lf_ny)
 
     keys = [
         c.add("ldv tech::ixmp", *final),
         c.add(
             "ldv usage::ixmp",
             usage_data,
-            k,
+            lf_ny,
             "cg",
             "n::ex world",
             "t::transport LDV",
