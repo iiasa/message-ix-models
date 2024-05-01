@@ -88,12 +88,23 @@ def prepare_computer(c: Computer):
     k_eff = Key("ldv efficiency:t-y-n")
     c.add(k_eff, "div", genno.Quantity(1.0), k_fe)
 
-    # Compute the input efficiency adjustment factor
+    # Compute the input efficiency adjustment factor for the NAVIGATE project
+    # TODO Move this to project-specific code
     k2 = Key("transport input factor:t-y")
     c.add(k2, "factor_input", "y", "t::transport", "t::transport agg", "config")
 
-    # Product of input factor and LDV efficiency
-    c.add(k_eff + "adj", "mul", k2, k_eff)
+    # Product of NAVIGATE input factor and LDV efficiency
+    c.add(k_eff + "adj+0", "mul", k2, k_eff)
+
+    # Multiply by values from ldv-input-adj.csv. See file comment. Drop the 'scenario'
+    # dimension; there is only one value in the file per 'n'.
+    c.add(
+        "ldv input adj:n",
+        "sum",
+        "ldv input adj:n-scenario:exo",
+        dimensions=["scenario"],
+    )
+    c.add(k_eff + "adj", "mul", k_eff + "adj+0", "ldv input adj:n")
 
     # Select a task for the final step that computes "ldv::ixmp"
     final = {
