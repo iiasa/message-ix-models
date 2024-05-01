@@ -3,7 +3,7 @@
 # Copied from calibrate-fe.csv produced with
 # ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12 ci nightly/SSP_2024.2 baseline#174
 #
-# Ratio of ldv-fuel-economy-ref.csv
+# Ratio of ldv-input-ref.csv
 #       to (in:nl-t-ya:transport+units / out:nl-t-ya:transport+units)
 #
 # The selection of particular "lo" or "hi" values corresponds to those in
