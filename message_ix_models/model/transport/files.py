@@ -124,7 +124,11 @@ ExogenousDataFile(
     "New capacity values for LDVs",
     required=False,
 )
-ExogenousDataFile("load-factor-ldv", doc="Load factor (occupancy) of LDVs", dims=("n",))
+ExogenousDataFile(
+    "load-factor-ldv",
+    doc="Load factor (occupancy) of LDVs",
+    dims=("scenario", "n", "y"),
+)
 ExogenousDataFile(
     "load-factor-nonldv", doc="Load factor (occupancy) of non-LDV vehicles", dims=("t",)
 )
