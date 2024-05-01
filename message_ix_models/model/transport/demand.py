@@ -89,7 +89,8 @@ _demand_common = (
 #: Task for computing and adding demand data; inputs to :meth:`.Computer.add_queue`.
 TASKS = [
     # Values based on configuration
-    (("speed:t", "quantity_from_config", "config"), dict(name="speeds")),
+    # Disabled for #551
+    # (("speed:t", "quantity_from_config", "config"), dict(name="speeds")),
     (("whour:", "quantity_from_config", "config"), dict(name="work_hours")),
     (("lambda:", "quantity_from_config", "config"), dict(name="lamda")),
     (("y::conv", "quantity_from_config", "config"), dict(name="year_convergence")),
@@ -112,8 +113,20 @@ TASKS = [
     (price_sel1, "price_units", price_sel0),
     # Smooth prices to avoid zig-zag in share projections
     (price, "smooth", price_sel1),
+    # Interpolate speed data
+    (
+        (
+            "speed:scenario-n-t-y:0",
+            "interpolate",
+            "speed:scenario-n-t-y:exo",
+            "y::coords",
+        ),
+        dict(kwargs=dict(fill_value="extrapolate")),
+    ),
+    # Select speed data
+    ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", "indexers:scenario"),
     # Cost of transport (n, t, y)
-    (cost, "cost", price, gdp_cap + "adj", "whour:", "speed:t", "votm:n-y", y),
+    (cost, "cost", price, gdp_cap + "adj", "whour:", "speed:n-t-y", "votm:n-y", y),
     # Share weights (n, t, y)
     (
         sw,
