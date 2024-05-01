@@ -101,12 +101,13 @@ node = R12_SAS [1]_
 
 .. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1944227441>`__.
 
-:file:`ldv-cost-efficiency.xlsx`
---------------------------------
+
+:file:`ldv-fix_cost.csv`, :file:`ldv-inv_cost.csv`, :file:`ldv-fuel-economy.csv`
+--------------------------------------------------------------------------------
 
 Data on costs and efficiencies of LDV technologies.
 
-This is a highly-structured spreadsheet that peforms some input calculations.
+Formerly this data was read from :file:`ldv-cost-efficiency.xlsx`, a highly-structured spreadsheet that performs some input calculations.
 The function :func:`get_USTIMES_MA3T` reads data from multiple sheets in this file.
 To understand the sheet names and cell layout expected, see the code for that function.
 

@@ -1,6 +1,6 @@
 # Fixed operation & maintenance cost of LDVs
 #
-# Source: Extracted from ldv-cost-efficiency-full.csv sheets named, e.g.
+# Source: Extracted from ldv-cost-efficiency-full.xlsx sheets named, e.g.
 # "MESSAGE_LDV_nam" in cells C62:Q74. Cells that duplicated the preceding period
 # (i.e. that were filled forward in time) are not included.
 #
