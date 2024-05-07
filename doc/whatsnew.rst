@@ -4,13 +4,14 @@ What's new
 Next release
 ============
 
-Changes to :doc:`/api/tools-costs` (:pull:`186`, :pull:`187`)
+Changes to :doc:`/api/tools-costs` (:pull:`186`, :pull:`187`, :pull:`190`)
 -------------------------------------------------------------
   - Fix jumps in cost projections for technologies with first technology year that's after than the first model year.
   - Change the use of base_year to mean the year to start modeling cost changes.
   - Update cost assumptions for certain CCS technologies.
   - Change the default fixed O&M reduction rate to 0.
   - Modify to use 2023 release of IEA WEO data and to use 2022 historic data for the base year.
+  - Change the default final year to 2110.
 
 v2024.4.22
 ==========
