@@ -25,15 +25,15 @@ derive_steel_demand <- function(df_pop, df_demand, datapath) {
     filter(region != "World") %>%
     mutate(year = as.integer(year), region = paste0('R12_', region))
 
-  df_raw_steel_consumption = read_excel(paste0(datapath, "/steel_cement", file_steel),
+  df_raw_steel_consumption = read_excel(paste0(datapath, "/steel", file_steel),
                                         sheet="Consumption regions", n_max=27) %>%  # kt
     select(-2) %>%
     pivot_longer(cols="1970":"2012",
                  values_to='consumption', names_to='year')
-  df_population = read_excel(paste0(datapath, "/steel_cement" ,file_cement),
+  df_population = read_excel(paste0(datapath, "/cement" ,file_cement),
                              sheet="Timer_POP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='pop', names_to='year')
-  df_gdp = read_excel(paste0(datapath, "/steel_cement", file_cement),
+  df_gdp = read_excel(paste0(datapath, "/cement", file_cement),
                       sheet="Timer_GDPCAP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='gdp.pcap', names_to='year')
 
@@ -82,13 +82,13 @@ derive_cement_demand <- function(df_pop, df_demand, datapath) {
     filter(region != "World") %>%
     mutate(year = as.integer(year), region = paste0('R12_', region))
 
-  df_raw_cement_consumption = read_excel(paste0(datapath, "/steel_cement", file_cement),
+  df_raw_cement_consumption = read_excel(paste0(datapath, "/cement", file_cement),
                                          sheet="Regions", skip=122, n_max=27) %>%  # kt
     pivot_longer(cols="1970":"2010", values_to='consumption', names_to='year')
-  df_population = read_excel(paste0(datapath, "/steel_cement", file_cement),
+  df_population = read_excel(paste0(datapath, "/cement", file_cement),
                              sheet="Timer_POP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='pop', names_to='year')
-  df_gdp = read_excel(paste0(datapath, "/steel_cement", file_cement),
+  df_gdp = read_excel(paste0(datapath, "/cement", file_cement),
                       sheet="Timer_GDPCAP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='gdp.pcap', names_to='year')
 
