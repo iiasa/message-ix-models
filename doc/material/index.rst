@@ -112,8 +112,11 @@ The code relies on the following input files, stored in :file:`data/material/`:
 :file:`STEEL_database_2012.xlsx`
   Historical steel demand data
 
-:file:`Global_steel_cement_MESSAGE.xlsx`
-  Techno-economic parametrization data for steel and cement sector combined (R12)
+:file:`Global_steel_MESSAGE.xlsx`
+  Techno-economic parametrization data for steel sector combined (R12)
+
+:file:`Global_cement_MESSAGE.xlsx`
+  Techno-economic parametrization data for cement sector combined (R12)  
 
 :file:`demand_aluminum.xlsx`
   Historical aluminum demand data

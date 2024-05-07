@@ -1916,7 +1916,7 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFra
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        package_data_path("material", "steel_cement", context.datafile),
+        package_data_path("material",sectname, file),
         sheet_name=sheet_n,
     )
 
