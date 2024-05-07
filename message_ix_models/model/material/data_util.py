@@ -1381,6 +1381,7 @@ def add_share_const_clinker_substitutes(scenario):
     s_info = ScenarioInfo(scenario)
     node_list = s_info.N
     node_list.remove('R12_GLB')
+    node_list.remove('World')
 
     coal_technologies = scenario.par('output', filters = {"commodity":"fly_ash",
     'level':'waste_material'})
