@@ -1204,7 +1204,7 @@ def add_cement_bounds_2020(sc):
         "added lower and upper bound for fuels for cement 2020."
     )
 
-def read_sector_data(scenario, sectname):
+def read_sector_data(scenario, sectname, file):
 
     # Read in technology-specific parameters from input xlsx
     # Now used for steel and cement, which are in one file
@@ -1223,7 +1223,7 @@ def read_sector_data(scenario, sectname):
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        package_data_path("material", "steel_cement", context.datafile),
+        package_data_path("material",sectname, file),
         sheet_name=sheet_n,
     )
 
