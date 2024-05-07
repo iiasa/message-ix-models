@@ -227,7 +227,7 @@ def create_bare(context, regions, dry_run):
 @cli.command("build")
 @click.option(
     "--datafile",
-    default="Global_steel_cement_MESSAGE.xlsx",
+    default="Global_steel_MESSAGE.xlsx",
     metavar="INPUT",
     help="File name for external data input",
 )
@@ -378,7 +378,7 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
 @click.option("--model_name", default="MESSAGEix-Materials")
 @click.option(
     "--datafile",
-    default="Global_steel_cement_MESSAGE.xlsx",
+    default="Global_steel_MESSAGE.xlsx",
     metavar="INPUT",
     help="File name for external data input",
 )
