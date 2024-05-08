@@ -85,7 +85,7 @@ def get_weo_data() -> pd.DataFrame:
     )
 
     # Retrieve conversion factor
-    conversion_factor = registry("1.0 USD_2022").to("USD_2005").magnitude  # noqa: F841
+    conversion_factor = registry("1.0 USD_2022").to("USD_2005").magnitude
 
     # Loop through Excel sheets to read in data and process:
     # - Convert to long format
@@ -122,7 +122,7 @@ def get_weo_data() -> pd.DataFrame:
                 axis=1,
             )
             .replace({"value": "n.a."}, np.nan)
-            .eval("value = value * @conversion_factor")
+            .assign(value=lambda x: x.value * conversion_factor)
         )
 
         dfs_cost.append(df)
