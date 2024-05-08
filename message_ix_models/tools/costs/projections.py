@@ -421,7 +421,8 @@ def create_message_outputs(
             fix_cost=lambda x: np.where(x.year <= y_base, x.fix_cost_2020, x.fix_cost),
         )
         .assign(
-            # FIXME Clarify the purpose of these hard-coded periods
+            # NOTE: This portion carries over the 2100 values to years beyond 2100.
+            # This is applicable in the case where Config.final_year > 2100.
             inv_cost=lambda x: np.where(x.year >= 2100, x.inv_cost_2100, x.inv_cost),
             fix_cost=lambda x: np.where(x.year >= 2100, x.fix_cost_2100, x.fix_cost),
         )
