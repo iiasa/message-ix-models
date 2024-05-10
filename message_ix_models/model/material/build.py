@@ -1,19 +1,16 @@
 import logging
 from typing import Callable, Dict, List, Mapping, Union
 
-import ixmp
-import message_ix
+import pandas as pd
 from ixmp.utils import maybe_check_out, maybe_commit
 from message_ix import Scenario
-import pandas as pd
-
 from sdmx.model import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
-
 log = logging.getLogger(__name__)
+
 
 def ellipsize(elements: List) -> str:
     """Generate a short string representation of `elements`.
@@ -28,10 +25,10 @@ def ellipsize(elements: List) -> str:
 
 
 def apply_spec(
-    scenario: Scenario,
-    spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
-    data: Callable = None,
-    **options,
+        scenario: Scenario,
+        spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
+        data: Callable = None,
+        **options,
 ):
     """Apply `spec` to `scenario`.
 

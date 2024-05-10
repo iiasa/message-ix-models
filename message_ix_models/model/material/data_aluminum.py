@@ -118,16 +118,16 @@ def gen_data_aluminum(scenario, dry_run=False):
 
             val = data_aluminum.loc[
                 (
-                    (data_aluminum["technology"] == t)
-                    & (data_aluminum["parameter"] == par)
+                        (data_aluminum["technology"] == t)
+                        & (data_aluminum["parameter"] == par)
                 ),
                 "value",
             ]
 
             regions = data_aluminum.loc[
                 (
-                    (data_aluminum["technology"] == t)
-                    & (data_aluminum["parameter"] == par)
+                        (data_aluminum["technology"] == t)
+                        & (data_aluminum["parameter"] == par)
                 ),
                 "region",
             ]
@@ -180,9 +180,9 @@ def gen_data_aluminum(scenario, dry_run=False):
 
                         # Assign higher efficiency to younger plants
                         elif (
-                            ((t == "soderberg_aluminum") or (t == "prebake_aluminum"))
-                            & (com == "electr")
-                            & (param_name == "input")
+                                ((t == "soderberg_aluminum") or (t == "prebake_aluminum"))
+                                & (com == "electr")
+                                & (param_name == "input")
                         ):
                             # All the vıntage years
                             year_vtg = sorted(set(yv_ya.year_vtg.values))
@@ -268,9 +268,9 @@ def gen_data_aluminum(scenario, dry_run=False):
 
                 # Copy parameters to all regions
                 if (
-                    (len(regions) == 1)
-                    and len(set(df["node_loc"])) == 1
-                    and list(set(df["node_loc"]))[0] != global_region
+                        (len(regions) == 1)
+                        and len(set(df["node_loc"])) == 1
+                        and list(set(df["node_loc"]))[0] != global_region
                 ):
                     df["node_loc"] = None
                     df = df.pipe(broadcast, node_loc=nodes)
@@ -392,20 +392,19 @@ def gen_data_aluminum(scenario, dry_run=False):
 
                     tec_list = data_aluminum_rel.loc[
                         (
-                            (data_aluminum_rel["relation"] == r)
-                            & (data_aluminum_rel["parameter"] == par_name)
+                                (data_aluminum_rel["relation"] == r)
+                                & (data_aluminum_rel["parameter"] == par_name)
                         ),
                         "technology",
                     ]
 
                     for tec in tec_list.unique():
-
                         val = data_aluminum_rel.loc[
                             (
-                                (data_aluminum_rel["relation"] == r)
-                                & (data_aluminum_rel["parameter"] == par_name)
-                                & (data_aluminum_rel["technology"] == tec)
-                                & (data_aluminum_rel["Region"] == reg)
+                                    (data_aluminum_rel["relation"] == r)
+                                    & (data_aluminum_rel["parameter"] == par_name)
+                                    & (data_aluminum_rel["technology"] == tec)
+                                    & (data_aluminum_rel["Region"] == reg)
                             ),
                             "value",
                         ].values[0]
@@ -425,9 +424,9 @@ def gen_data_aluminum(scenario, dry_run=False):
                 elif (par_name == "relation_upper") | (par_name == "relation_lower"):
                     val = data_aluminum_rel.loc[
                         (
-                            (data_aluminum_rel["relation"] == r)
-                            & (data_aluminum_rel["parameter"] == par_name)
-                            & (data_aluminum_rel["Region"] == reg)
+                                (data_aluminum_rel["relation"] == r)
+                                & (data_aluminum_rel["parameter"] == par_name)
+                                & (data_aluminum_rel["Region"] == reg)
                         ),
                         "value",
                     ].values[0]
@@ -441,8 +440,8 @@ def gen_data_aluminum(scenario, dry_run=False):
     results_aluminum = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
     return results_aluminum
 
-def gen_mock_demand_aluminum(scenario):
 
+def gen_mock_demand_aluminum(scenario):
     context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
@@ -469,7 +468,7 @@ def gen_mock_demand_aluminum(scenario):
 
     # The order:
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+    # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
@@ -491,7 +490,7 @@ def gen_mock_demand_aluminum(scenario):
 
     gdp_growth = gdp_growth.loc[
         (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
+        ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
 
     gdp_growth["Region"] = region_set + gdp_growth["Region"]
 
@@ -515,7 +514,6 @@ def gen_mock_demand_aluminum(scenario):
     )
 
     return demand2020_al
-
 
 # # load rpy2 modules
 # import rpy2.robjects as ro

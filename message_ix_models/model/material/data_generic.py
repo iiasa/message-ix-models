@@ -1,16 +1,17 @@
 from collections import defaultdict
 
-import message_ix_models.util
 import pandas as pd
-
-from .util import read_config
-from message_ix_models import ScenarioInfo
 from message_ix import make_df
-from .data_util import read_timeseries
+
+import message_ix_models.util
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     broadcast,
     same_node,
 )
+
+from .data_util import read_timeseries
+from .util import read_config
 
 
 def read_data_generic(scenario):
@@ -105,8 +106,8 @@ def gen_data_generic(scenario, dry_run=False):
 
             val = data_generic.loc[
                 (
-                    (data_generic["technology"] == t)
-                    & (data_generic["parameter"] == par)
+                        (data_generic["technology"] == t)
+                        & (data_generic["parameter"] == par)
                 ),
                 "value",
             ].values[0]
@@ -208,8 +209,8 @@ def gen_data_generic(scenario, dry_run=False):
             ]
             regions = data_generic_ts.loc[
                 (
-                    (data_generic_ts["technology"] == t)
-                    & (data_generic_ts["parameter"] == p)
+                        (data_generic_ts["technology"] == t)
+                        & (data_generic_ts["parameter"] == p)
                 ),
                 "region",
             ]
@@ -260,9 +261,9 @@ def gen_data_generic(scenario, dry_run=False):
 
             # Copy parameters to all regions
             if (
-                (len(set(regions)) == 1)
-                and len(set(df["node_loc"])) == 1
-                and list(set(df["node_loc"]))[0] != global_region
+                    (len(set(regions)) == 1)
+                    and len(set(df["node_loc"])) == 1
+                    and list(set(df["node_loc"]))[0] != global_region
             ):
                 df["node_loc"] = None
                 df = df.pipe(broadcast, node_loc=nodes)

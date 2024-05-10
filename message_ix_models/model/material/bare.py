@@ -1,17 +1,22 @@
 import logging
-import message_ix
-
 from typing import Mapping
-from message_ix_models import ScenarioInfo
-#from message_ix_models.util get_context, set_info, add_par_data
-from message_ix_models.util import add_par_data
+
+import message_ix
 from sdmx.model.v21 import Code
+
+import message_ix_models
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material import (
+    gen_data_aluminum,
+    gen_data_generic,
+    gen_data_steel,
+)
+
+# from message_ix_models.util get_context, set_info, add_par_data
+from message_ix_models.util import add_par_data
+
 from .build import apply_spec
 from .util import read_config
-from message_ix_models.model.data import get_data
-from message_ix_models.model.material import gen_data_steel, gen_data_generic, gen_data_aluminum, gen_data_petro_chemicals
-import message_ix_models
-
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +24,9 @@ log = logging.getLogger(__name__)
 # How do we add the historical period ?
 
 SETTINGS = dict(
-    #period_start=[2010],
+    # period_start=[2010],
     period_start=[1980],
-    first_model_year = [2020],
+    first_model_year=[2020],
     period_end=[2100],
     regions=["China"],
     res_with_dummies=[True],
@@ -45,7 +50,7 @@ def create_res(context=None, quiet=True):
         :func:`.build.apply_spec`.
     """
     mp = context.get_platform()
-    mp.add_unit('Mt')  
+    mp.add_unit('Mt')
 
     # Model and scenario name for the RES
     model_name = context.scenario_info['model']
@@ -78,7 +83,7 @@ DATA_FUNCTIONS = [
     gen_data_steel,
     gen_data_generic,
     gen_data_aluminum,
-    #gen_data_variable
+    # gen_data_variable
 ]
 
 
@@ -133,9 +138,9 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     # Add technologies
     # JM: try to find out a way to loop over 1st/2nd level and to just context["material"][xx]["add"]
     add.set["technology"] = context["material"]["steel"]["technology"]["add"] + \
-        context["material"]["generic"]["technology"]["add"] + \
-        context["material"]["aluminum"]["technology"]["add"] + \
-        context["material"]["petro_chemicals"]["technology"]["add"]
+                            context["material"]["generic"]["technology"]["add"] + \
+                            context["material"]["aluminum"]["technology"]["add"] + \
+                            context["material"]["petro_chemicals"]["technology"]["add"]
 
     # Add regions
 
@@ -156,7 +161,7 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     ))
 
     # JM: Leave the first time period as historical year
-    #add.set['cat_year'] = [('firstmodelyear', context.period_start + context.time_step)]
+    # add.set['cat_year'] = [('firstmodelyear', context.period_start + context.time_step)]
 
     # GU: Set 2020 as the first model year, leave the rest as historical year
     add.set['cat_year'] = [('firstmodelyear', context.first_model_year)]
@@ -164,27 +169,27 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     # Add levels
     # JM: For bare model, both 'add' & 'require' need to be added.
     add.set['level'] = context["material"]["steel"]["level"]["add"] + \
-        context["material"]["common"]["level"]["require"] + \
-        context["material"]["generic"]["level"]["add"] + \
-        context["material"]["aluminum"]["level"]["add"] +\
-        context["material"]["petro_chemicals"]["level"]["add"]
+                       context["material"]["common"]["level"]["require"] + \
+                       context["material"]["generic"]["level"]["add"] + \
+                       context["material"]["aluminum"]["level"]["add"] + \
+                       context["material"]["petro_chemicals"]["level"]["add"]
 
     # Add commodities
     add.set['commodity'] = context["material"]["steel"]["commodity"]["add"] + \
-        context["material"]["common"]["commodity"]["require"] + \
-        context["material"]["generic"]["commodity"]["add"] + \
-        context["material"]["aluminum"]["commodity"]["add"] + \
-        context["material"]["petro_chemicals"]["commodity"]["add"]
+                           context["material"]["common"]["commodity"]["require"] + \
+                           context["material"]["generic"]["commodity"]["add"] + \
+                           context["material"]["aluminum"]["commodity"]["add"] + \
+                           context["material"]["petro_chemicals"]["commodity"]["add"]
 
     # Add other sets
 
     add.set['type_tec'] = context["material"]["common"]["type_tec"]["add"]
-    add.set['mode'] = context["material"]["common"]["mode"]["require"] +\
-        context["material"]["generic"]["mode"]["add"] + \
-        context["material"]["petro_chemicals"]["mode"]["add"]
+    add.set['mode'] = context["material"]["common"]["mode"]["require"] + \
+                      context["material"]["generic"]["mode"]["add"] + \
+                      context["material"]["petro_chemicals"]["mode"]["add"]
 
-    add.set['emission'] = context["material"]["common"]["emission"]["require"] +\
-        context["material"]["common"]["emission"]["add"]
+    add.set['emission'] = context["material"]["common"]["emission"]["require"] + \
+                          context["material"]["common"]["emission"]["add"]
 
     # Add units, associated with commodities
     # JM: What is 'anno'

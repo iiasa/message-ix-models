@@ -1,21 +1,17 @@
-import pandas as pd
-import numpy as np
-
 from collections import defaultdict
-from message_ix_models.model.material.data_util import read_timeseries, read_rel
-from message_ix_models.model.material.util import read_config
-from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models import ScenarioInfo
+
+import pandas as pd
 from message_ix import make_df
+
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.data_util import read_timeseries
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import read_config
 from message_ix_models.util import (
     broadcast,
-    make_io,
-    make_matched_dfs,
-    same_node,
-    add_par_data,
     package_data_path,
+    same_node,
 )
-
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -66,10 +62,10 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     nodes = s_info.N
 
     def get_demand_t1_with_income_elasticity(
-        demand_t0, income_t0, income_t1, elasticity
+            demand_t0, income_t0, income_t1, elasticity
     ):
         return (
-            elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
+                elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
         ) + demand_t0
 
     gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
@@ -368,8 +364,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                 if (len(regions) == 1) and (rg != global_region):
                     if "node_loc" in df.columns:
                         if (
-                            len(set(df["node_loc"])) == 1
-                            and list(set(df["node_loc"]))[0] != global_region
+                                len(set(df["node_loc"])) == 1
+                                and list(set(df["node_loc"]))[0] != global_region
                         ):
                             # print("Copying to all R11")
                             df["node_loc"] = None
@@ -514,9 +510,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     df = results["growth_activity_up"]
     results["growth_activity_up"] = df[
         ~(
-            (df["technology"] == "steam_cracker_petro")
-            & (df["node_loc"] == "R12_AFR")
-            & (df["year_act"] == 2020)
+                (df["technology"] == "steam_cracker_petro")
+                & (df["node_loc"] == "R12_AFR")
+                & (df["year_act"] == 2020)
         )
     ]
 
@@ -555,6 +551,6 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
         (df_gro["technology"] == "steam_cracker_petro")
         & (df_gro["node_loc"] == "R12_RCPA")
         & (df_gro["year_act"] == 2020)
-    ].index
+        ].index
     results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
     return results
