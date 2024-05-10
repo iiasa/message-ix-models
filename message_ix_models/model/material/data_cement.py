@@ -1,18 +1,18 @@
+from collections import defaultdict
+
 import ixmp
 import message_ix
 import pandas as pd
+from message_ix import make_df
 
-from collections import defaultdict
-
+from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import read_sector_data, read_timeseries
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import read_config
-from message_ix_models import ScenarioInfo
-from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
-    same_node,
     package_data_path,
+    same_node,
 )
 
 # Get endogenous material demand from buildings interface
@@ -26,7 +26,6 @@ from message_ix_models.util import (
 
 # Generate a fake cement demand
 def gen_mock_demand_cement(scenario):
-
     context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
@@ -41,7 +40,7 @@ def gen_mock_demand_cement(scenario):
 
     # The order:
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+    # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
@@ -93,7 +92,7 @@ def gen_mock_demand_cement(scenario):
 
     gdp_growth = gdp_growth.loc[
         (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
+        ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
 
     d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
     gdp_growth["Region"] = region_set + gdp_growth["Region"]
@@ -412,7 +411,7 @@ def gen_data_cement(scenario, dry_run=False):
 
 if __name__ == "__main__":
     mp = ixmp.Platform("local")
-    scenario = message_ix.Scenario(mp,"MESSAGEix-Materials", "baseline")
+    scenario = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
     gen_data_cement(scenario)
 
 # # load rpy2 modules

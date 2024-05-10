@@ -1,13 +1,13 @@
 import copy
-import pandas as pd
 
+import pandas as pd
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node, package_data_path
-from message_ix_models.model.material.util import read_config, combine_df_dictionaries
+
 from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import combine_df_dictionaries, read_config
+from message_ix_models.util import broadcast, package_data_path, same_node
 
 context = read_config()
-
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -382,9 +382,9 @@ def gen_data_meth_chemicals(scenario, chemical):
     )
     # exclude emissions for now
     if chemical == "MTO":
-        df = df.iloc[:15,]
+        df = df.iloc[:15, ]
     if chemical == "Formaldehyde":
-        df = df.iloc[:10,]
+        df = df.iloc[:10, ]
 
     common = dict(
         # commodity="NH3",
@@ -506,7 +506,7 @@ def add_methanol_fuel_additives(scenario):
 
     par_dict_loil["input"] = par_dict_loil["input"][
         par_dict_loil["input"]["commodity"] == "lightoil"
-    ]
+        ]
 
     df_mtbe = pd.read_excel(
         package_data_path(
@@ -519,7 +519,7 @@ def add_methanol_fuel_additives(scenario):
         skiprows=[i for i in range(66)],
         sheet_name="MTBE calc",
     )
-    df_mtbe = df_mtbe.iloc[1:13,]
+    df_mtbe = df_mtbe.iloc[1:13, ]
     df_mtbe["node_loc"] = "R12_" + df_mtbe["node_loc"]
     df_mtbe = df_mtbe[["node_loc", "% share on trp"]]
 
@@ -549,14 +549,14 @@ def add_methanol_fuel_additives(scenario):
     )
     df_loil_meth["commodity"] = "methanol"
     par_dict_loil["input"]["value"] = (
-        par_dict_loil["input"]["value"] - df_loil_meth["value"]
+            par_dict_loil["input"]["value"] - df_loil_meth["value"]
     )
 
     df_loil_eth = df_loil_meth.copy(deep=True)
     df_loil_eth["commodity"] = "ethanol"
     df_loil_eth["mode"] = "ethanol"
     df_loil_eth["value"] = (
-        df_loil_eth["value"] * 1.6343
+            df_loil_eth["value"] * 1.6343
     )  # energy ratio methanol/ethanol in MTBE vs ETBE
 
     df_loil_eth_mode = par_dict_loil["input"].copy(deep=True)
@@ -676,10 +676,10 @@ def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHA
 
 def gen_meth_residual_demand(gdp_elasticity_2020, gdp_elasticity_2030):
     def get_demand_t1_with_income_elasticity(
-        demand_t0, income_t0, income_t1, elasticity
+            demand_t0, income_t0, income_t1, elasticity
     ):
         return (
-            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
+                elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
         ) + demand_t0
 
     df_gdp = pd.read_excel(
@@ -697,7 +697,7 @@ def gen_meth_residual_demand(gdp_elasticity_2020, gdp_elasticity_2030):
     )
     df_demand_meth = df_demand_meth[
         (~df_demand_meth["Region"].isna()) & (df_demand_meth["Region"] != "World")
-    ]
+        ]
     df_demand_meth = df_demand_meth.dropna(axis=1)
 
     df_demand = df.copy(deep=True)
@@ -757,7 +757,7 @@ def get_cost_ratio_2020(scenario, tec_name, cost_type, ref_reg="R12_NAM", year="
 
 
 def get_scaled_cost_from_proxy_tec(
-    value, scenario, proxy_tec, cost_type, new_tec, year="all"
+        value, scenario, proxy_tec, cost_type, new_tec, year="all"
 ):
     df = get_cost_ratio_2020(scenario, proxy_tec, cost_type, year=year)
     df["value"] = value * df["ratio"]
@@ -849,7 +849,7 @@ def update_costs_with_loc_factor(df):
     df = df.merge(loc_fact, left_on="node_loc", right_index=True)
     df = df.merge(cost_conv, left_on="year_vtg", right_index=True)
     df["value"] = (
-        df["value"] - (1 - df["WEU normalized"]) * df["value"] * df["convergence"]
+            df["value"] - (1 - df["WEU normalized"]) * df["value"] * df["convergence"]
     )
     return df[df.columns[:-2]]
 

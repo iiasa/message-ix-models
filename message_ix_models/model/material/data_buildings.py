@@ -1,22 +1,24 @@
-import pandas as pd
-
 from collections import defaultdict
-from message_ix_models.model.material.util import read_config
-from message_ix_models import ScenarioInfo
+
+import pandas as pd
 from message_ix import make_df
+
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.util import read_config
 from message_ix_models.util import (
-    same_node,
     copy_column,
     package_data_path,
+    same_node,
 )
 
 CASE_SENS = "ref"  # 'min', 'max'
 INPUTFILE = "LED_LED_report_IAMC_sensitivity_R12.csv"
+
+
 # INPUTFILE = 'LED_LED_report_IAMC_sensitivity_R11.csv'
 
 
 def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
-
     import numpy as np
 
     # Ensure config is loaded, get the context
@@ -80,7 +82,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
     ].reset_index(drop=True)
     bld_area_long = bld_data_long[
         bld_data_long["Variable"] == "Energy Service|Residential|Floor Space"
-    ].reset_index(drop=True)
+        ].reset_index(drop=True)
 
     tmp = bld_intensity_long.Variable.str.split("|", expand=True)
 
@@ -112,7 +114,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
 
 
 def get_scen_mat_demand(
-    commod, scenario, year="2020", inputfile=INPUTFILE, case=CASE_SENS
+        commod, scenario, year="2020", inputfile=INPUTFILE, case=CASE_SENS
 ):
     a, b, c = read_timeseries_buildings(inputfile, scenario, case)
     if not year == "all":  # specific year
@@ -123,7 +125,6 @@ def get_scen_mat_demand(
 
 
 def adjust_demand_param(scen):
-
     s_info = ScenarioInfo(scen)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
 
@@ -192,7 +193,7 @@ def gen_data_buildings(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     # fmy = s_info.y0
     nodes.remove("World")
-    #nodes.remove("R11_RCPA")
+    # nodes.remove("R11_RCPA")
 
     # Read field values from the buildings input data
     regions = list(set(data_buildings.node))
@@ -309,6 +310,7 @@ def gen_data_buildings(scenario, dry_run=False):
 if __name__ == "__main__":
     import ixmp
     import message_ix
+
     mp = ixmp.Platform("ixmp_dev")
     scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline_balance-equality_materials")
     df = gen_data_buildings(scen)

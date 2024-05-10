@@ -120,7 +120,7 @@ def remove_from_list_if_exists(element, _list):
 
 
 def exponential(x, b, m):
-    return b * m**x
+    return b * m ** x
 
 
 def price_fit(df):
@@ -166,9 +166,9 @@ def update_macro_calib_file(scenario, fname):
     df = df[df["year"].isin([2025, 2030, 2035])].groupby(["node"]).apply(cost_fit)
     ws = wb.get_sheet_by_name("cost_ref")
     for i in range(2, 7):
-        ws[f"B{i}"].value = df.values[i-2]
+        ws[f"B{i}"].value = df.values[i - 2]
     for i in range(8, 13):
-        ws[f"B{i}"].value = df.values[i-2]
+        ws[f"B{i}"].value = df.values[i - 2]
 
     # price_ref
     comms = ["i_feed", "i_spec", "i_therm", "rc_spec", "rc_therm", "transport"]
@@ -198,5 +198,5 @@ def update_macro_calib_file(scenario, fname):
     df = df.groupby(["node", "commodity"]).apply(price_fit)
     ws = wb.get_sheet_by_name("price_ref")
     for i in range(2, 61):
-        ws[f"C{i}"].value = df.values[i-2]
+        ws[f"C{i}"].value = df.values[i - 2]
     wb.save(path + fname)

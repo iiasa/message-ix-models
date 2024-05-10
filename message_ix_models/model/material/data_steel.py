@@ -1,27 +1,23 @@
-from .data_util import read_sector_data, read_timeseries
-
 from collections import defaultdict
-from pathlib import Path
 
 import pandas as pd
-
-from .material_demand import material_demand_calc
-from .util import read_config
-from .data_util import read_rel
+from message_ix import make_df
 
 # Get endogenous material demand from buildings interface
 from message_ix_models import ScenarioInfo
-from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
-    same_node,
     package_data_path,
+    same_node,
 )
+
+from .data_util import read_rel, read_sector_data, read_timeseries
+from .material_demand import material_demand_calc
+from .util import read_config
 
 
 # Generate a fake steel demand
 def gen_mock_demand_steel(scenario):
-
     context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
@@ -31,7 +27,7 @@ def gen_mock_demand_steel(scenario):
 
     # The order:
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+    # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
     # Finished steel demand from: https://www.oecd.org/industry/ind/Item_4b_Worldsteel.pdf
     # For region definitions: https://worldsteel.org/wp-content/uploads/2021-World-Steel-in-Figures.pdf
@@ -84,7 +80,7 @@ def gen_mock_demand_steel(scenario):
 
     gdp_growth = gdp_growth.loc[
         (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
+        ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
 
     gdp_growth["Region"] = region_set + gdp_growth["Region"]
 
@@ -379,8 +375,8 @@ def gen_data_steel(scenario, dry_run=False):
 
                 # Copy parameters to all regions
                 if (
-                    len(set(df["node_loc"])) == 1
-                    and list(set(df["node_loc"]))[0] != global_region
+                        len(set(df["node_loc"])) == 1
+                        and list(set(df["node_loc"]))[0] != global_region
                 ):
                     df["node_loc"] = None
                     df = df.pipe(broadcast, node_loc=nodes)
@@ -401,8 +397,8 @@ def gen_data_steel(scenario, dry_run=False):
             "unit": "???",
             "value": data_steel_rel.loc[
                 (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_activity")
+                        (data_steel_rel["relation"] == "max_global_recycling_steel")
+                        & (data_steel_rel["parameter"] == "relation_activity")
                 ),
                 "value",
             ].values[0],
@@ -417,8 +413,8 @@ def gen_data_steel(scenario, dry_run=False):
             "unit": "???",
             "value": data_steel_rel.loc[
                 (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_upper")
+                        (data_steel_rel["relation"] == "max_global_recycling_steel")
+                        & (data_steel_rel["parameter"] == "relation_upper")
                 ),
                 "value",
             ].values[0],
@@ -433,8 +429,8 @@ def gen_data_steel(scenario, dry_run=False):
             "unit": "???",
             "value": data_steel_rel.loc[
                 (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_lower")
+                        (data_steel_rel["relation"] == "max_global_recycling_steel")
+                        & (data_steel_rel["parameter"] == "relation_lower")
                 ),
                 "value",
             ].values[0],
@@ -482,8 +478,8 @@ def gen_data_steel(scenario, dry_run=False):
 
                     tec_list = data_steel_rel.loc[
                         (
-                            (data_steel_rel["relation"] == r)
-                            & (data_steel_rel["parameter"] == par_name)
+                                (data_steel_rel["relation"] == r)
+                                & (data_steel_rel["parameter"] == par_name)
                         ),
                         "technology",
                     ]
@@ -491,10 +487,10 @@ def gen_data_steel(scenario, dry_run=False):
                     for tec in tec_list.unique():
                         val = data_steel_rel.loc[
                             (
-                                (data_steel_rel["relation"] == r)
-                                & (data_steel_rel["parameter"] == par_name)
-                                & (data_steel_rel["technology"] == tec)
-                                & (data_steel_rel["Region"] == reg)
+                                    (data_steel_rel["relation"] == r)
+                                    & (data_steel_rel["parameter"] == par_name)
+                                    & (data_steel_rel["technology"] == tec)
+                                    & (data_steel_rel["Region"] == reg)
                             ),
                             "value",
                         ].values[0]
@@ -514,9 +510,9 @@ def gen_data_steel(scenario, dry_run=False):
                 elif (par_name == "relation_upper") | (par_name == "relation_lower"):
                     val = data_steel_rel.loc[
                         (
-                            (data_steel_rel["relation"] == r)
-                            & (data_steel_rel["parameter"] == par_name)
-                            & (data_steel_rel["Region"] == reg)
+                                (data_steel_rel["relation"] == r)
+                                & (data_steel_rel["parameter"] == par_name)
+                                & (data_steel_rel["Region"] == reg)
                         ),
                         "value",
                     ].values[0]
@@ -538,7 +534,6 @@ def gen_data_steel(scenario, dry_run=False):
     if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
         results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
     return results
-
 
 # # load rpy2 modules
 # import rpy2.robjects as ro

@@ -1,26 +1,14 @@
-from collections import defaultdict
 import logging
-import message_ix
-import ixmp
-import numpy as np
-import pandas as pd
-from .data_cement import gen_data_cement
-from .data_steel import gen_data_steel
-from .data_aluminum import gen_data_aluminum
-from .data_generic import gen_data_generic
 
 from message_ix_models import ScenarioInfo
-from message_ix import make_df
 from message_ix_models.util import (
-    broadcast,
-    make_io,
-    make_matched_dfs,
-    same_node,
     add_par_data,
 )
 
-from .util import read_config
-import re
+from .data_aluminum import gen_data_aluminum
+from .data_cement import gen_data_cement
+from .data_generic import gen_data_generic
+from .data_steel import gen_data_steel
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +19,7 @@ DATA_FUNCTIONS = [
     gen_data_generic,
     gen_data_petro_chemicals
 ]
+
 
 # Try to handle multiple data input functions from different materials
 def add_data(scenario, dry_run=False):

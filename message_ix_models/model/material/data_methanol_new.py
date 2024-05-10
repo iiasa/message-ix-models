@@ -1,13 +1,13 @@
-import message_ix_models.util
+from ast import literal_eval
+
 import pandas as pd
 import yaml
-
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node
 
+import message_ix_models.util
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import read_config
-from ast import literal_eval
+from message_ix_models.util import broadcast, same_node
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -187,6 +187,6 @@ def broadcast_reduced_df(df, par_name):
             df_final_full[
                 (df_final_full.node_rel.values != "R12_GLB")
                 & (df_final_full.node_rel.values != df_final_full.node_loc.values)
-            ].index
+                ].index
         )
     return make_df(par_name, **df_final_full)

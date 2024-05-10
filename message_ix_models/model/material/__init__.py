@@ -8,7 +8,7 @@ import message_ix
 import ntfy
 import pandas as pd
 
-#update_h2_blending,
+# update_h2_blending,
 from message_data.tools.utilities import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
 )
@@ -18,12 +18,10 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.build import apply_spec
 from message_ix_models.model.material.data_aluminum import gen_data_aluminum
 from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
-from message_ix_models.model.material.data_buildings import gen_data_buildings
 from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol_new import gen_data_methanol_new
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
-from message_ix_models.model.material.data_power_sector import gen_data_power_sector
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
     add_ccs_technologies,
@@ -52,10 +50,11 @@ from message_ix_models.tools import (
 )
 from message_ix_models.util import add_par_data, package_data_path
 from message_ix_models.util.click import common_params
+
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS_1 = [
-    #gen_data_buildings,
+    # gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
     # gen_data_ammonia, ## deprecated module!
@@ -389,7 +388,7 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
 @click.option("--add_calibration", default=False)
 @click.pass_obj
 def solve_scen(
-    context, datafile, model_name, scenario_name, add_calibration, add_macro, version
+        context, datafile, model_name, scenario_name, add_calibration, add_macro, version
 ):
     """Solve a scenario.
 
@@ -423,10 +422,11 @@ def solve_scen(
             scenario.set_as_default()
 
             # Report
-            from message_ix_models.model.material.report.reporting import report
             from message_data.tools.post_processing.iamc_report_hackathon import (
                 report as reporting,
             )
+
+            from message_ix_models.model.material.report.reporting import report
 
             # Remove existing timeseries and add material timeseries
             print("Reporting material-specific variables")
@@ -487,11 +487,12 @@ def solve_scen(
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 def add_building_ts(scenario_name, model_name):
+    from ixmp import Platform
+    from message_ix import Scenario
+
     from message_ix_models.reporting.materials.add_buildings_ts import (
         add_building_timeseries,
     )
-    from message_ix import Scenario
-    from ixmp import Platform
 
     print(model_name)
     mp = Platform()
@@ -512,10 +513,11 @@ def add_building_ts(scenario_name, model_name):
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
     """Run materials, then legacy reporting."""
-    from message_ix_models.model.material.report.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
+
+    from message_ix_models.model.material.report.reporting import report
 
     # Retrieve the scenario given by the --url option
     scenario = context.get_scenario()
@@ -534,10 +536,10 @@ def run_reporting(context, remove_ts, profile):
             print("There are no timeseries to be removed.")
     else:
         if profile:
-            import cProfile
-            import pstats
-            import io
             import atexit
+            import cProfile
+            import io
+            import pstats
 
             print("Profiling...")
             pr = cProfile.Profile()

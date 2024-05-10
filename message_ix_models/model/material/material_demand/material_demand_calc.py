@@ -1,30 +1,24 @@
-import message_ix_models.util
-import pandas as pd
-import numpy as np
 import message_ix
-from scipy.optimize import curve_fit
+import numpy as np
+import pandas as pd
 import yaml
-
 from message_data.model.material.util import read_config
-from message_ix_models import ScenarioInfo
 from message_ix import make_df
+from scipy.optimize import curve_fit
+
+import message_ix_models.util
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
-    broadcast,
-    make_io,
-    make_matched_dfs,
-    same_node,
-    add_par_data,
     private_data_path,
 )
-
 
 file_cement = "/CEMENT.BvR2010.xlsx"
 file_steel = "/STEEL_database_2012.xlsx"
 file_al = "/demand_aluminum.xlsx"
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
 
-giga = 10**9
-mega = 10**6
+giga = 10 ** 9
+mega = 10 ** 6
 
 material_data = {
     "aluminum": {"dir": "aluminum", "file": "/demand_aluminum.xlsx"},
@@ -139,9 +133,9 @@ def project_demand(df, phi, mu):
     df_demand = df.groupby("region", group_keys=False).apply(
         lambda group: group.assign(
             demand_pcap_base=group["demand.tot.base"].iloc[0]
-            * giga
-            / group["pop.mil"].iloc[0]
-            / mega
+                             * giga
+                             / group["pop.mil"].iloc[0]
+                             / mega
         )
     )
     df_demand = df_demand.groupby("region", group_keys=False).apply(
@@ -152,7 +146,7 @@ def project_demand(df, phi, mu):
     df_demand = df_demand.groupby("region", group_keys=False).apply(
         lambda group: group.assign(
             demand_pcap=group["demand_pcap0"]
-            + group["gap_base"] * gompertz(phi, mu, y=group["year"])
+                        + group["gap_base"] * gompertz(phi, mu, y=group["year"])
         )
     )
     df_demand = (
@@ -231,7 +225,7 @@ def read_hist_mat_demand(material):
             df_raw_cons["region"]
             .str.replace("(", "")
             .str.replace(")", "")
-            .str.replace("\d+", "")
+            .str.replace(r"\d+", "")
             .str[:-1]
         )
 
@@ -264,7 +258,7 @@ def read_hist_mat_demand(material):
             pd.merge(df_raw_cons, df_pop.drop("region", axis=1), on=["reg_no", "year"])
             .merge(df_gdp[["reg_no", "year", "gdp_pcap"]], on=["reg_no", "year"])
             .assign(
-                cons_pcap=lambda x: x["consumption"] / x["pop"] / 10**6,
+                cons_pcap=lambda x: x["consumption"] / x["pop"] / 10 ** 6,
                 del_t=lambda x: x["year"].astype(int) - 2010,
             )
             .dropna()
@@ -400,10 +394,10 @@ def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_203
     nodes = s_info.N
 
     def get_demand_t1_with_income_elasticity(
-        demand_t0, income_t0, income_t1, elasticity
+            demand_t0, income_t0, income_t1, elasticity
     ):
         return (
-            elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
+                elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
         ) + demand_t0
 
     if "GDP_PPP" in list(scenario.set("technology")):
