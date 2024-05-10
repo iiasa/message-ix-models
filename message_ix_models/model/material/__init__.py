@@ -36,15 +36,15 @@ from message_ix_models.model.material.data_util import (
     get_ssp_soc_eco_data,
     modify_baseyear_bounds,
     modify_demand_and_hist_activity,
-    modify_industry_demand,
-    read_config,
+    modify_industry_demand
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
     get_all_input_data_dirs,
     update_macro_calib_file,
+    read_config
 )
-from message_ix_models.tools import (
+from message_data.tools.utilities import (
     calibrate_UE_gr_to_demand,
     calibrate_UE_share_constraints,
 )
@@ -125,10 +125,10 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     # NOTE: changing demand affects the market penetration
     # levels for the enduse technologies.
     # Note: context.ssp doesnt work
-    calibrate_UE_gr_to_demand.main(
+    calibrate_UE_gr_to_demand(
         scenario, data_path=package_data_path(), ssp="SSP2", region="R12"
     )
-    calibrate_UE_share_constraints.main(scenario)
+    calibrate_UE_share_constraints(scenario)
 
     # Electricity calibration to avoid zero prices for CHN.
     if "R12_CHN" in nodes:
