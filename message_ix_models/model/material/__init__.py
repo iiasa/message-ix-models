@@ -16,6 +16,7 @@ from message_ix_models.tools.calibrate_UE_share_constraints import main as calib
 from .data_util import modify_demand_and_hist_activity, add_emission_accounting
 from .data_util import add_coal_lowerbound_2020, add_macro_COVID, add_cement_bounds_2020
 from .data_util import add_elec_lowerbound_2020, add_ccs_technologies, read_config
+from .data_util import add_share_const_clinker_substitutes
 
 
 log = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ def build(scenario):
     add_emission_accounting(scenario)
     add_coal_lowerbound_2020(scenario)
     add_cement_bounds_2020(scenario)
+    add_share_const_clinker_substitutes(scenario)
 
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration levels for the enduse technologies.
@@ -75,7 +77,7 @@ SPEC_LIST = [
     "aluminum",
     "petro_chemicals",
     # "buildings",
-    "power_sector",
+    # "power_sector",
 ]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
@@ -368,7 +370,7 @@ DATA_FUNCTIONS_1 = [
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    gen_data_power_sector,
+    # gen_data_power_sector,
     gen_data_aluminum
 ]
 
