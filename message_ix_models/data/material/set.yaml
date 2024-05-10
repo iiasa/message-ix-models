@@ -300,6 +300,7 @@ steel:
     - limestone_iron
     - coke_iron
     - slag_iron
+    - granulated_slag_iron
     - co_gas
     - bf_gas
     - off_gas
@@ -354,6 +355,7 @@ steel:
     - total_EOL_steel
     - bf_biomass_steel
     - prod_charcoal_steel
+    - slag_granulator_steel
 
   relation:
     add:
@@ -398,34 +400,53 @@ cement:
   commodity:
     add:
     - cement
-    - clinker_cement
-    - raw_meal_cement
-    - limestone_cement
+    - concrete
+    - clinker
+    - raw_meal
+    - limestone
+    - clay
+    - fly_ash
+    - granulated_slag_iron
+    - slag_iron
+    - sand_gravel
+    - aggregates
 
   level:
     add:
     - primary_material
     - secondary_material
     - tertiary_material
+    - grinded_material
     - final_material
     - useful_material
     - demand
     - dummy_end_of_life
     - end_of_life
+    - waste_material
 
   technology:
     add:
     - raw_meal_prep_cement
     - clinker_dry_cement
+    - rotary_kiln_wet_cement
     - clinker_wet_cement
     - clinker_dry_ccs_cement
     - clinker_wet_ccs_cement
     - grinding_ballmill_cement
     - grinding_vertmill_cement
     - DUMMY_limestone_supply_cement
+    - DUMMY_clay_supply_cement
     - total_EOL_cement
     - other_EOL_cement
     - scrap_recovery_cement
+    - mix_cement
+    - sand_gravel_supply_cement
+    - aggregates_supply_cement
+    - concrete_production_cement
+    - flash_calciner_cement
+    - clay_wet_cement
+    - landfilling_cement
+    - recycling_cement
 
     remove:
     - cement_co2scr
@@ -435,30 +456,39 @@ cement:
     remove:
     - cement_pro
     - cement_scrub_lim
+    add:
+    - max_regional_recycling_cement
 
   balance_equality:
     add:
-      - ["cement","end_of_life"]
+      - ["concrete","end_of_life"]
+      - ["concrete","dummy_end_of_life"]
 
   addon:
     add:
     - clinker_dry_ccs_cement
     - clinker_wet_ccs_cement
+    - clay_wet_cement
+    - clinker_wet_cement
 
   type_addon:
     add:
     - wet_ccs_cement
     - dry_ccs_cement
+    - rotary_kiln_wet_addons
 
   map_tec_addon:
     add:
     - [clinker_dry_cement, dry_ccs_cement]
     - [clinker_wet_cement, wet_ccs_cement]
+    - [rotary_kiln_wet_cement, rotary_kiln_wet_addons]
 
   cat_addon:
     add:
     - [dry_ccs_cement, clinker_dry_ccs_cement]
     - [wet_ccs_cement, clinker_wet_ccs_cement]
+    - [rotary_kiln_wet_addons, clinker_wet_cement]
+    - [rotary_kiln_wet_addons, clay_wet_cement]
 
 aluminum:
   commodity:

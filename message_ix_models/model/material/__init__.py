@@ -116,6 +116,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         # scenario.commit("no changes")
     add_coal_lowerbound_2020(scenario)
     add_cement_bounds_2020(scenario)
+    add_share_const_clinker_substitutes(scenario)
 
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration
