@@ -888,9 +888,10 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
 
 def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFrame:
     comms = ["i_spec", "i_therm"]
-    path = os.path.join(
-        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    )
+    path = package_data_path("iea", "REV2022_allISO_IEA.parquet")
+    #path = os.path.join(
+    #    "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
+    #)
     Inp = pd.read_parquet(path, engine="fastparquet")
     Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
     demand_shrs_new = calc_demand_shares(Inp, baseyear)
@@ -1000,9 +1001,10 @@ def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFram
     pd.DataFrame
 
     """
-    path = os.path.join(
-        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    )
+    #path = os.path.join(
+    #    "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
+    #)
+    path = package_data_path("iea", "REV2022_allISO_IEA.parquet")
     Inp = pd.read_parquet(path, engine="fastparquet")
     if years:
         Inp = Inp[Inp["TIME"].isin(years)]
@@ -1043,8 +1045,8 @@ def add_emission_accounting(scen):
     tec_list_input = [
         i for i in tec_list_input if (("furnace" in i) | ("hp_gas_" in i))
     ]
-    tec_list_input.remove("hp_gas_i")
-    tec_list_input.remove("hp_gas_rc")
+    #tec_list_input.remove("hp_gas_i")
+    #tec_list_input.remove("hp_gas_rc")
 
     # The technology list to retreive the emission_factors
     tec_list_residual = [
@@ -2098,6 +2100,7 @@ def gen_te_projections(
         method=method,
         format="message",
         scenario=ssp,
+        final_year=2110
     )
     out_materials = create_cost_projections(cfg)
     fix_cost = out_materials["fix_cost"].drop_duplicates().drop(
