@@ -1,5 +1,6 @@
 import os
 
+import message_ix
 import openpyxl as pxl
 import pandas as pd
 import yaml
@@ -16,8 +17,14 @@ METADATA = [
 ]
 
 
-def read_config():
-    """Read configuration from set.yaml."""
+def read_config() -> Context:
+    """Read configuration from set.yaml.
+
+    Returns
+    -------
+    message_ix_models.Context
+        Context object holding information about MESSAGEix-Materials structure
+    """
     # TODO this is similar to transport.utils.read_config; make a common
     #      function so it doesn't need to be in this file.
     context = Context.get_instance(-1)
@@ -52,7 +59,17 @@ def read_config():
     return context
 
 
-def prepare_xlsx_for_explorer(filepath):
+def prepare_xlsx_for_explorer(filepath: str) -> None:
+    """
+    Post-processing helper to make reporting files compliant for
+    upload to IIASA Scenario Explorer
+
+    Parameters
+    ----------
+    filepath : str
+        Path to xlsx files generated with message_ix_models.report.legacy
+
+    """
     df = pd.read_excel(filepath)
 
     def add_R12(str):
@@ -66,7 +83,21 @@ def prepare_xlsx_for_explorer(filepath):
     df.to_excel(filepath, index=False)
 
 
-def combine_df_dictionaries(*args):
+def combine_df_dictionaries(*args: dict[str, pd.DataFrame]) -> dict:
+    """
+    Iterates through dictionary items and collects all values with same keys
+     from dictionaries in one dict
+    Parameters
+    ----------
+    args: dict[str, pd.DataFrame]
+        arbitrary number of dictionaries with str keys and pd.DataFrame values
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        dictionary containing all unique elements of
+        pd.DataFrames provided by *args dict
+    """
     keys = set([key for tup in args for key in tup])
     comb_dict = {}
     for i in keys:
@@ -74,7 +105,19 @@ def combine_df_dictionaries(*args):
     return comb_dict
 
 
-def read_yaml_file(file_path):
+def read_yaml_file(file_path: str) -> dict:
+    """
+    Tries to read yaml file into a dict
+
+    Parameters
+    ----------
+    file_path : str
+        file path to yaml file
+
+    Returns
+    -------
+    dict
+    """
     with open(file_path, encoding="utf8") as file:
         try:
             data = yaml.safe_load(file)
@@ -84,7 +127,21 @@ def read_yaml_file(file_path):
             return None
 
 
-def invert_dictionary(original_dict):
+def invert_dictionary(original_dict: dict[str, list]) -> dict:
+    """
+    Create inverted dictionary from existing dictionary, where values turn
+    into keys and vice versa
+
+    Parameters
+    ----------
+    original_dict: dict
+        dictionary with values of list type
+
+    Returns
+    -------
+    dict
+
+    """
     inverted_dict = {}
     for key, value in original_dict.items():
         for array_element in value:
@@ -94,7 +151,19 @@ def invert_dictionary(original_dict):
     return inverted_dict
 
 
-def excel_to_csv(material_dir, fname):
+def excel_to_csv(material_dir: str, fname: str) -> None:
+    """
+    Helper to create trackable copies xlsx files used for MESSAGEix-Materials
+    data input by printing each sheet to a csv file. Output is saved in
+     "data/materials/version control"
+
+    Parameters
+    ----------
+    material_dir : str
+        path to industry sector data folder
+    fname : str
+        file name of xlsx file
+    """
     xlsx_dict = pd.read_excel(
         private_data_path("material", material_dir, fname), sheet_name=None
     )
@@ -108,30 +177,88 @@ def excel_to_csv(material_dir, fname):
         )
 
 
-def get_all_input_data_dirs():
+def get_all_input_data_dirs() -> list[str]:
+    """
+    Iteratable for getting all material input data folders
+
+    Returns
+    -------
+    list of folder names of material data
+    """
     elements = os.listdir(private_data_path("material"))
     elements = [i for i in elements if os.path.isdir(private_data_path("material", i))]
     return elements
 
 
-def remove_from_list_if_exists(element, _list):
+def remove_from_list_if_exists(element, _list: list) -> None:
+    """
+    Utility function removing element from list if it is part of the list
+    Parameters
+    ----------
+    element
+        element to remove
+    _list
+        list that poetntially contains element
+    """
     if element in _list:
         _list.remove(element)
 
 
-def exponential(x, b, m):
+def exponential(x: float or list[float], b: float, m: float) -> float:
+    """
+    Mathematical function used in Excels GROWTH function
+
+    Parameters
+    ----------
+    x: float or list
+        domain of function
+    b : float
+        function parameter b
+    m: float
+        function parameter m
+    Returns
+    -------
+    float
+        function value for given b, m and x
+    """
     return b * m ** x
 
 
-def price_fit(df):
-    # print(df.lvl)
+def price_fit(df: pd.DataFrame) -> float:
+    """
+    Python implementation of price_ref parameter estimation implemented in
+     MESSAGEix-MACRO calibration files.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        DataFrame with required columns: "year" and "lvl"
+    Returns
+    -------
+    float
+        estimated value for price_ref in 2020
+    """
+
     pars, cov = curve_fit(exponential, df.year, df.lvl, maxfev=5000)
     val = exponential([2020], *pars)[0]
     # print(df.commodity.unique(), df.node.unique(), val)
     return val
 
 
-def cost_fit(df):
+def cost_fit(df) -> float:
+    """
+    Python implementation of cost_ref parameter estimation implemented in
+     MESSAGEix-MACRO calibration files.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        DataFrame with required columns: "year" and "lvl"
+    Returns
+    -------
+    float
+        estimated value for cost_ref in 2020
+    """
     # print(df.lvl)
     pars, cov = curve_fit(exponential, df.year, df.lvl, maxfev=5000)
     val = exponential([2020], *pars)[0]
@@ -139,7 +266,17 @@ def cost_fit(df):
     return val / 1000
 
 
-def update_macro_calib_file(scenario, fname):
+def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
+    """
+    Function to automate manual steps in MACRO calibration
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        Scenario instance to be calibrated
+    fname : str
+        file name of MACRO file used for calibration
+    """
     path = "C:/Users/maczek/Downloads/macro/refactored/"
     wb = pxl.load_workbook(path + fname)
 

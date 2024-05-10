@@ -1,5 +1,6 @@
 import os
 from typing import Literal
+import numpy as np
 
 import ixmp
 import message_ix
@@ -21,7 +22,14 @@ from message_ix_models.util import package_data_path
 pd.options.mode.chained_assignment = None
 
 
-def load_GDP_COVID():
+def load_GDP_COVID() -> pd.DataFrame:
+    """
+    Load COVID adjuste GDP projection
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     context = read_config()
     # Obtain 2015 and 2020 GDP values from NGFS baseline. These values are COVID corrected. (GDP MER)
 
@@ -76,14 +84,33 @@ def load_GDP_COVID():
     return df_new
 
 
-def add_macro_COVID(scen, filename, check_converge=False):
+def add_macro_COVID(scen: message_ix.Scenario,
+                    filename: str,
+                    check_converge: bool = False) -> message_ix.Scenario:
+    """
+    Prepare data for MACRO calibration by reading data from xlsx file
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario to be calibrated
+    filename: str
+        name of xlsx calibration data file
+    check_converge: bool
+        parameter passed to MACRO calibration function
+    Returns
+    -------
+    message_ix.Scenario
+        MACRO-calibrated Scenario instance
+    """
     context = read_config()
     info = ScenarioInfo(scen)
     nodes = info.N
 
     # Excel file for calibration data
     if "SSP_dev" in scen.model:
-        xls_file = os.path.join("C:/", "Users", "maczek", "Downloads", "macro", filename)
+        xls_file = os.path.join("C:/", "Users", "maczek",
+                                "Downloads", "macro", filename)
     else:
         xls_file = os.path.join("P:", "ene.model", "MACRO", "python", filename)
     # Making a dictionary from the MACRO Excel file
@@ -111,7 +138,7 @@ def add_macro_COVID(scen, filename, check_converge=False):
     return scen
 
 
-def modify_demand_and_hist_activity(scen):
+def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
     """Take care of demand changes due to the introduction of material parents
     Shed industrial energy demand properly.
     Also need take care of remove dynamic constraints for certain energy carriers.
@@ -119,6 +146,11 @@ def modify_demand_and_hist_activity(scen):
     that provide output to different categories of industrial demand (e.g.
     i_therm, i_spec, i_feed). The historical activity is reduced the same %
     as the industrial demand is reduced.
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        scenario where industry demand should be reduced
     """
 
     # NOTE Temporarily modifying industrial energy demand
@@ -431,8 +463,25 @@ def modify_demand_and_hist_activity(scen):
     scen.commit(comment="remove bounds")
 
 
-def modify_demand_and_hist_activity_debug(scen: message_ix.Scenario) -> dict:
-    """modularized "dry-run" version of modify_demand_and_hist_activity() for debugging purposes"""
+def modify_demand_and_hist_activity_debug(scen: message_ix.Scenario) -> dict[str, pd.DataFrame]:
+    """modularized "dry-run" version of modify_demand_and_hist_activity() for
+     debugging purposes
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        scenario to used to get i_therm and i_spec parametrization
+    Returns
+    ---------
+    dict[str, pd.DataFrame]
+        three keys named like MESSAGEix-GLOBIOM codes:
+            - i_therm
+            - i_spec
+            - historical_activity
+        values are DataFrames representing the reduced residual
+        industry demands when adding MESSAGEix-Materials to a
+        MESSAGEix-GLOBIOM scenario
+    """
 
     context = read_config()
     s_info = ScenarioInfo(scen)
@@ -1785,7 +1834,22 @@ def add_cement_bounds_2020(sc):
     sc.commit("added lower and upper bound for fuels for cement 2020.")
 
 
-def read_sector_data(scenario, sectname):
+def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFrame:
+    """
+    Read sector data for industry with sectname
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+
+    sectname: sectname
+        name of industry sector
+
+    Returns
+    -------
+    pd.DataFrame
+
+    """
     # Read in technology-specific parameters from input xlsx
     # Now used for steel and cement, which are in one file
 
@@ -1848,9 +1912,15 @@ def read_sector_data(scenario, sectname):
     return data_df
 
 
-# Add the relevant ccs technologies to the co2_trans_disp and bco2_trans_disp
-# relations
-def add_ccs_technologies(scen):
+def add_ccs_technologies(scen: message_ix.Scenario) -> None:
+    """Adds the relevant CCS technologies to the co2_trans_disp and bco2_trans_disp
+    relations
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario instance to add CCS emission factor parametrization to
+    """
     context = read_config()
     s_info = ScenarioInfo(scen)
 
@@ -1894,9 +1964,26 @@ def add_ccs_technologies(scen):
 
 # Read in time-dependent parameters
 # Now only used to add fuel cost for bare model
-def read_timeseries(scenario, material, filename):
-    import numpy as np
+def read_timeseries(scenario: message_ix.Scenario, material: str, filename: str) -> pd.DataFrame:
+    """
+    Read "timeseries" type data from a sector specific xlsx input file
+    to DataFrame and format according to MESSAGEix standard
 
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        scenario used to get structural information like
+        model regions and years
+    material: str
+        name of material folder where xlsx is located
+    filename:
+        name of xlsx file
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the timeseries data for MESSAGEix parameters
+    """
     # Ensure config is loaded, get the context
     context = read_config()
     s_info = ScenarioInfo(scenario)
@@ -1940,7 +2027,24 @@ def read_timeseries(scenario, material, filename):
     return df
 
 
-def read_rel(scenario, material, filename):
+def read_rel(scenario: message_ix.Scenario, material: str, filename: str):
+    """
+    Read relation_* type parameter data for specific industry
+
+    Parameters
+    ----------
+    scenario:
+        scenario used to get structural information like
+    material: str
+        name of material folder where xlsx is located
+    filename:
+        name of xlsx file
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing relation_* parameter data
+    """
     # Ensure config is loaded, get the context
     context = read_config()
 
@@ -1961,11 +2065,32 @@ def read_rel(scenario, material, filename):
 
 
 def gen_te_projections(
-        scen,
+        scen: message_ix.Scenario,
         ssp: Literal["all", "LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "SSP2",
         method: Literal["constant", "convergence", "gdp"] = "convergence",
         ref_reg: str = "R12_NAM",
-) -> tuple:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Calls message_ix_models.tools.costs with config for MESSAGEix-Materials
+    and return inv_cost and fix_cost projections for energy and materials
+    technologies
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario instance is required to get technology set
+    ssp: str
+        SSP to use for projection assumptions
+    method: str
+        method to use for cost convergence over time
+    ref_reg: str
+        reference region to use for regional cost differentiation
+
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame]
+        tuple with "inv_cost" and "fix_cost" DataFrames
+    """
     model_tec_set = list(scen.set("technology"))
     cfg = Config(
         module="materials",
@@ -1986,7 +2111,27 @@ def gen_te_projections(
     return inv_cost, fix_cost
 
 
-def get_ssp_soc_eco_data(context, model, measure, tec):
+def get_ssp_soc_eco_data(context: Context, model: str, measure: str, tec):
+    """
+    Function to update scenario GDP and POP timeseries to SSP 3.0
+    and format to MESSAGEix "bound_activity_*" DataFrame
+
+    Parameters
+    ----------
+    context: Context
+        context used to prepare genno.Computer
+    model:
+        model name of projections to read
+    measure:
+        Indicator to read (GDP or Population)
+    tec:
+        name to use for "technology" column
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with SSP indicator data in "bound_activity_*" parameter
+        format
+    """
     from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
 
     c = Computer()
@@ -2009,7 +2154,16 @@ def get_ssp_soc_eco_data(context, model, measure, tec):
     return df
 
 
-def add_elec_i_ini_act(scenario):
+def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
+    """
+    Adds initial_activity_up parameter for "elec_i" technology by copying
+    value from "hp_el_i" technology
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        Scenario where "elec_i" should be updated
+    """
     par = "initial_activity_up"
     df_el = scenario.par(par, filters={"technology": "hp_el_i"})
     df_el["technology"] = "elec_i"
