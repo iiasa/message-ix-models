@@ -117,8 +117,6 @@ def get_scen_mat_demand(
 
 
 def adjust_demand_param(scen):
-    s_info = ScenarioInfo(scen)
-
     scen_mat_demand = scen.par(
         "demand", {"level": "demand"}
     )  # mat demand without buildings considered

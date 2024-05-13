@@ -64,22 +64,19 @@ def gen_data_methanol(scenario):
     # add meth prod fs mode
     par_dict_fs = {}
     for i in scenario.par_list():
-        try:
-            df = scenario.par(
-                i,
-                filters={
-                    "technology": [
-                        "meth_ng",
-                        "meth_coal",
-                        "meth_ng_ccs",
-                        "meth_coal_ccs",
-                    ]
-                },
-            )
-            if df.size != 0:
-                par_dict_fs[i] = df
-        except:
-            pass
+        df = scenario.par(
+            i,
+            filters={
+                "technology": [
+                    "meth_ng",
+                    "meth_coal",
+                    "meth_ng_ccs",
+                    "meth_coal_ccs",
+                ]
+            },
+        )
+        if df.size != 0:
+            par_dict_fs[i] = df
     for i in par_dict_fs.keys():
         if "mode" in par_dict_fs[i].columns:
             par_dict_fs[i]["mode"] = "feedstock"
@@ -89,22 +86,20 @@ def gen_data_methanol(scenario):
 
     par_dict = {}
     for i in scenario.par_list():
-        try:
-            df = scenario.par(
-                i,
-                filters={
-                    "technology": [
-                        "meth_ng",
-                        "meth_coal",
-                        "meth_ng_ccs",
-                        "meth_coal_ccs",
-                    ]
-                },
-            )
-            if df.size != 0:
-                par_dict[i] = df
-        except:
-            pass
+        df = scenario.par(
+            i,
+            filters={
+                "technology": [
+                    "meth_ng",
+                    "meth_coal",
+                    "meth_ng_ccs",
+                    "meth_coal_ccs",
+                ]
+            },
+        )
+        if df.size != 0:
+            par_dict[i] = df
+
     for i in par_dict.keys():
         if "mode" in par_dict[i].columns:
             par_dict[i]["mode"] = "fuel"
@@ -115,13 +110,10 @@ def gen_data_methanol(scenario):
     bal_fs_dict = {}
     bal_fuel_dict = {}
     for i in scenario.par_list():
-        try:
-            df = scenario.par(i, filters={"technology": "meth_bal"})
-            if df.size != 0:
-                bal_fs_dict[i] = df
-                bal_fuel_dict[i] = df.copy(deep=True)
-        except:
-            pass
+        df = scenario.par(i, filters={"technology": "meth_bal"})
+        if df.size != 0:
+            bal_fs_dict[i] = df
+            bal_fuel_dict[i] = df.copy(deep=True)
     for i in bal_fs_dict.keys():
         if "mode" in bal_fs_dict[i].columns:
             bal_fs_dict[i]["mode"] = "feedstock"
@@ -138,15 +130,13 @@ def gen_data_methanol(scenario):
     trade_dict_fs = {}
     trade_dict_fuel = {}
     for i in scenario.par_list():
-        try:
-            df = scenario.par(
-                i, filters={"technology": ["meth_imp", "meth_exp", "meth_trd"]}
-            )
-            if df.size != 0:
-                trade_dict_fs[i] = df
-                trade_dict_fuel[i] = df.copy(deep=True)
-        except:
-            pass
+        df = scenario.par(
+            i, filters={"technology": ["meth_imp", "meth_exp", "meth_trd"]}
+        )
+        if df.size != 0:
+            trade_dict_fs[i] = df
+            trade_dict_fuel[i] = df.copy(deep=True)
+
     for i in trade_dict_fs.keys():
         if "mode" in trade_dict_fs[i].columns:
             trade_dict_fs[i]["mode"] = "feedstock"
@@ -499,12 +489,9 @@ def add_methanol_fuel_additives(scenario):
         )
         return par_dict_loil
     for i in pars:
-        try:
-            df = scenario.par(i, filters={"technology": "loil_trp", "mode": "M1"})
-            if df.size != 0:
-                par_dict_loil[i] = df.copy(deep=True)
-        except:
-            pass
+        df = scenario.par(i, filters={"technology": "loil_trp", "mode": "M1"})
+        if df.size != 0:
+            par_dict_loil[i] = df.copy(deep=True)
 
     par_dict_loil["input"] = par_dict_loil["input"][
         par_dict_loil["input"]["commodity"] == "lightoil"

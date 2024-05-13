@@ -173,11 +173,11 @@ def gen_data_steel(scenario, dry_run=False):
                     & (data_steel_ts["parameter"] == p),
                     "value",
                 ]
-                units = data_steel_ts.loc[
-                    (data_steel_ts["technology"] == t)
-                    & (data_steel_ts["parameter"] == p),
-                    "units",
-                ].values[0]
+                # units = data_steel_ts.loc[
+                #     (data_steel_ts["technology"] == t)
+                #     & (data_steel_ts["parameter"] == p),
+                #     "units",
+                # ].values[0]
                 mod = data_steel_ts.loc[
                     (data_steel_ts["technology"] == t)
                     & (data_steel_ts["parameter"] == p),

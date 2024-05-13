@@ -137,7 +137,8 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     add = ScenarioInfo()
 
     # Add technologies
-    # JM: try to find out a way to loop over 1st/2nd level and to just context["material"][xx]["add"]
+    # JM: try to find out a way to loop over 1st/2nd level
+    # and to just context["material"][xx]["add"]
     add.set["technology"] = (
         context["material"]["steel"]["technology"]["add"]
         + context["material"]["generic"]["technology"]["add"]
@@ -164,7 +165,8 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     )
 
     # JM: Leave the first time period as historical year
-    # add.set['cat_year'] = [('firstmodelyear', context.period_start + context.time_step)]
+    # add.set['cat_year'] = [('firstmodelyear',
+    # context.period_start + context.time_step)]
 
     # GU: Set 2020 as the first model year, leave the rest as historical year
     add.set["cat_year"] = [("firstmodelyear", context.first_model_year)]
