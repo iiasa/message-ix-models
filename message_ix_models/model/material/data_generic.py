@@ -73,7 +73,6 @@ def gen_data_generic(scenario, dry_run=False):
     nodes.remove("World")
 
     for t in config["technology"]["add"]:
-
         # years = s_info.Y
         params = data_generic.loc[
             (data_generic["technology"] == t), "parameter"
@@ -84,9 +83,7 @@ def gen_data_generic(scenario, dry_run=False):
             0
         ]
         modelyears = [year for year in modelyears if year >= av]
-        yva = yv_ya.loc[
-            yv_ya.year_vtg >= av,
-        ]
+        yva = yv_ya.loc[yv_ya.year_vtg >= av,]
 
         # Iterate over parameters
         for par in params:
@@ -95,8 +92,8 @@ def gen_data_generic(scenario, dry_run=False):
 
             val = data_generic.loc[
                 (
-                        (data_generic["technology"] == t)
-                        & (data_generic["parameter"] == par)
+                    (data_generic["technology"] == t)
+                    & (data_generic["parameter"] == par)
                 ),
                 "value",
             ].values[0]
@@ -114,9 +111,7 @@ def gen_data_generic(scenario, dry_run=False):
             )
 
             if len(split) > 1:
-
                 if (param_name == "input") | (param_name == "output"):
-
                     com = split[1]
                     lev = split[2]
                     mod = split[3]
@@ -130,7 +125,7 @@ def gen_data_generic(scenario, dry_run=False):
                             mode=mod,
                             value=val,
                             unit="t",
-                            **common
+                            **common,
                         )
                         .pipe(broadcast, node_loc=nodes)
                         .pipe(same_node)
@@ -150,7 +145,7 @@ def gen_data_generic(scenario, dry_run=False):
                         emission=emi,
                         mode="low_temp",
                         unit="t",
-                        **common
+                        **common,
                     ).pipe(broadcast, node_loc=nodes)
 
                     df_high = make_df(
@@ -160,7 +155,7 @@ def gen_data_generic(scenario, dry_run=False):
                         emission=emi,
                         mode="high_temp",
                         unit="t",
-                        **common
+                        **common,
                     ).pipe(broadcast, node_loc=nodes)
 
                     results[param_name].append(df_low)
@@ -169,7 +164,6 @@ def gen_data_generic(scenario, dry_run=False):
             # Rest of the parameters apart from input, output and emission_factor
 
             else:
-
                 df = make_df(
                     param_name, technology=t, value=val, unit="t", **common
                 ).pipe(broadcast, node_loc=nodes)
@@ -199,16 +193,16 @@ def gen_data_generic(scenario, dry_run=False):
             ]
             regions = data_generic_ts.loc[
                 (
-                        (data_generic_ts["technology"] == t)
-                        & (data_generic_ts["parameter"] == p)
+                    (data_generic_ts["technology"] == t)
+                    & (data_generic_ts["parameter"] == p)
                 ),
                 "region",
             ]
-            units = data_generic_ts.loc[
-                (data_generic_ts["technology"] == t)
-                & (data_generic_ts["parameter"] == p),
-                "units",
-            ].values[0]
+            # units = data_generic_ts.loc[
+            #     (data_generic_ts["technology"] == t)
+            #     & (data_generic_ts["parameter"] == p),
+            #     "units",
+            # ].values[0]
             mod = data_generic_ts.loc[
                 (data_generic_ts["technology"] == t)
                 & (data_generic_ts["parameter"] == p),
@@ -229,7 +223,7 @@ def gen_data_generic(scenario, dry_run=False):
                     year_vtg=yr,
                     year_act=yr,
                     mode=mod,
-                    **common
+                    **common,
                 ).pipe(broadcast, node_loc=nodes)
             else:
                 rg = data_generic_ts.loc[
@@ -246,14 +240,14 @@ def gen_data_generic(scenario, dry_run=False):
                     year_act=yr,
                     mode=mod,
                     node_loc=rg,
-                    **common
+                    **common,
                 )
 
             # Copy parameters to all regions
             if (
-                    (len(set(regions)) == 1)
-                    and len(set(df["node_loc"])) == 1
-                    and list(set(df["node_loc"]))[0] != global_region
+                (len(set(regions)) == 1)
+                and len(set(df["node_loc"])) == 1
+                and list(set(df["node_loc"]))[0] != global_region
             ):
                 df["node_loc"] = None
                 df = df.pipe(broadcast, node_loc=nodes)

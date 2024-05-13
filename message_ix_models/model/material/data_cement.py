@@ -89,7 +89,7 @@ def gen_mock_demand_cement(scenario):
 
     gdp_growth = gdp_growth.loc[
         (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-        ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
+    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
 
     d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
     gdp_growth["Region"] = region_set + gdp_growth["Region"]
@@ -188,12 +188,9 @@ def gen_data_cement(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    allyears = s_info.set["year"]  # s_info.Y is only for modeling years
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
     yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1980]
-    fmy = s_info.y0
     nodes.remove("World")
 
     # Do not parametrize GLB region the same way
@@ -204,7 +201,6 @@ def gen_data_cement(scenario, dry_run=False):
 
     # for t in s_info.set['technology']:
     for t in config["technology"]["add"]:
-
         params = data_cement.loc[
             (data_cement["technology"] == t), "parameter"
         ].values.tolist()
@@ -227,11 +223,11 @@ def gen_data_cement(scenario, dry_run=False):
                     & (data_cement_ts["parameter"] == p),
                     "value",
                 ]
-                units = data_cement_ts.loc[
-                    (data_cement_ts["technology"] == t)
-                    & (data_cement_ts["parameter"] == p),
-                    "units",
-                ].values[0]
+                # units = data_cement_ts.loc[
+                #     (data_cement_ts["technology"] == t)
+                #     & (data_cement_ts["parameter"] == p),
+                #     "units",
+                # ].values[0]
                 mod = data_cement_ts.loc[
                     (data_cement_ts["technology"] == t)
                     & (data_cement_ts["parameter"] == p),
@@ -252,7 +248,7 @@ def gen_data_cement(scenario, dry_run=False):
                         year_vtg=yr,
                         year_act=yr,
                         mode=mod,
-                        **common
+                        **common,
                     ).pipe(broadcast, node_loc=nodes)
                 else:
                     rg = data_cement_ts.loc[
@@ -269,14 +265,13 @@ def gen_data_cement(scenario, dry_run=False):
                         year_act=yr,
                         mode=mod,
                         node_loc=rg,
-                        **common
+                        **common,
                     )
 
                 results[p].append(df)
 
         # Iterate over parameters
         for par in params:
-
             # Obtain the parameter names, commodity,level,emission
             split = par.split("|")
             param_name = split[0]
@@ -300,7 +295,6 @@ def gen_data_cement(scenario, dry_run=False):
             )
 
             for rg in regions:
-
                 # For the parameters which inlcudes index names
                 if len(split) > 1:
                     if (param_name == "input") | (param_name == "output"):
@@ -318,11 +312,10 @@ def gen_data_cement(scenario, dry_run=False):
                             mode=mod,
                             unit="t",
                             node_loc=rg,
-                            **common
+                            **common,
                         ).pipe(same_node)
 
                     elif param_name == "emission_factor":
-
                         # Assign the emisson type
                         emi = split[1]
                         mod = split[2]
@@ -335,7 +328,7 @@ def gen_data_cement(scenario, dry_run=False):
                             mode=mod,
                             unit="t",
                             node_loc=rg,
-                            **common
+                            **common,
                         )  # .pipe(broadcast, \
                         # node_loc=nodes))
 
@@ -348,7 +341,7 @@ def gen_data_cement(scenario, dry_run=False):
                             mode=mod,
                             unit="t",
                             node_loc=rg,
-                            **common
+                            **common,
                         )  # .pipe(broadcast, node_loc=nodes))
 
                 # Parameters with only parameter name
@@ -359,7 +352,7 @@ def gen_data_cement(scenario, dry_run=False):
                         value=val[regions[regions == rg].index[0]],
                         unit="t",
                         node_loc=rg,
-                        **common
+                        **common,
                     )  # .pipe(broadcast, node_loc=nodes))
 
                 if len(regions) == 1:

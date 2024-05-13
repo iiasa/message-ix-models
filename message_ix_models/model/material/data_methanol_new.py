@@ -186,6 +186,6 @@ def broadcast_reduced_df(df, par_name):
             df_final_full[
                 (df_final_full.node_rel.values != "R12_GLB")
                 & (df_final_full.node_rel.values != df_final_full.node_loc.values)
-                ].index
+            ].index
         )
     return make_df(par_name, **df_final_full)
