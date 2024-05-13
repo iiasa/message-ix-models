@@ -439,17 +439,18 @@ cement:
 
   type_addon:
     add:
-    - ccs_cement
+    - wet_ccs_cement
+    - dry_ccs_cement
 
   map_tec_addon:
     add:
-    - [clinker_dry_cement, ccs_cement]
-    - [clinker_wet_cement, ccs_cement]
+    - [clinker_dry_cement, dry_ccs_cement]
+    - [clinker_wet_cement, wet_ccs_cement]
 
   cat_addon:
     add:
-    - [ccs_cement, clinker_dry_ccs_cement]
-    - [ccs_cement, clinker_wet_ccs_cement]
+    - [dry_ccs_cement, clinker_dry_ccs_cement]
+    - [wet_ccs_cement, clinker_wet_ccs_cement]
 
 aluminum:
   commodity:
