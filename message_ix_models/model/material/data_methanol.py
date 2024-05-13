@@ -209,7 +209,8 @@ def gen_data_methanol(scenario):
     #         df = scenario.par(i, filters={"technology": ["meth_ng",
     #                                                      "meth_coal", "meth_ng_ccs",
     #                                                      "meth_coal_ccs", "meth_exp",
-    #                                                      "meth_imp", "meth_trd", "meth_bal", "meth_t_d"],
+    #                                                      "meth_imp", "meth_trd",
+    #                                                      "meth_bal", "meth_t_d"],
     #                                       "mode": "M1"})
     #         if df.size != 0:
     #             scenario.remove_par(i, df)
@@ -493,7 +494,8 @@ def add_methanol_fuel_additives(scenario):
     pars = ["output", "var_cost", "relation_activity", "input", "emission_factor"]
     if "loil_trp" not in scenario.set("technology").to_list():
         print(
-            "It seems that the selected scenario does not contain the technology: loil_trp. Methanol fuel blending could not be calculated and was skipped"
+            "It seems that the selected scenario does not contain the technology:"
+            "loil_trp. Methanol fuel blending could not be calculated and was skipped"
         )
         return par_dict_loil
     for i in pars:
@@ -805,7 +807,9 @@ def add_meth_hist_act():
         sheet_name="historical_activity",
     )
     par_dict["historical_activity"] = pd.concat([df_fs, df_fuel])
-    # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
+    # derived from graphic in
+    # "Methanol production statstics.xlsx/China demand split" diagram
+
     # hist_cap = make_df(
     #     "historical_new_capacity",
     #     node_loc="R12_CHN",
@@ -817,7 +821,8 @@ def add_meth_hist_act():
     # par_dict["historical_new_capacity"] = hist_cap
     # fix demand infeasibility
     # act = scenario.par("historical_activity")
-    # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
+    # row = act[act["technology"].str.startswith("meth")].sort_values("value",
+    # ascending=False).iloc[0]
     # row["value"] = 0.0
     df_ng = pd.read_excel(
         package_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),

@@ -60,7 +60,6 @@ def gen_data_methanol_new(scenario):
         file_path = message_ix_models.util.package_data_path(
             "material", "methanol", "missing_rels.yaml"
         )
-        # file_path = "C:/Users\maczek\PycharmProjects\message_ix_models\message_ix_models\model\material\petrochemical model fixes notebooks\"
 
         with open(file_path, "r") as file:
             missing_rels = yaml.safe_load(file)

@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import numpy as np
 import pandas as pd
 from message_ix import make_df
 
@@ -13,18 +14,10 @@ from message_ix_models.util import (
 
 CASE_SENS = "ref"  # 'min', 'max'
 INPUTFILE = "LED_LED_report_IAMC_sensitivity_R12.csv"
-
-
 # INPUTFILE = 'LED_LED_report_IAMC_sensitivity_R11.csv'
 
 
 def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
-    import numpy as np
-
-    # Ensure config is loaded, get the context
-    context = read_config()
-    s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
 
     # Read the file and filter the given sensitivity case
     bld_input_raw = pd.read_csv(package_data_path("material", "buildings", filename))
@@ -33,10 +26,10 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
     bld_input_mat = bld_input_raw[
         bld_input_raw[
             "Variable"
-        ].str.contains(  # str.contains("Floor Space|Aluminum|Cement|Steel|Final Energy")]
+        ].str.contains(  #"Floor Space|Aluminum|Cement|Steel|Final Energy"
             "Floor Space|Aluminum|Cement|Steel"
         )
-    ]  # Final Energy - Later. Need to figure out carving out
+    ]  # Final Energy - Later. Need to figure out how to carve out
     bld_input_mat["Region"] = "R12_" + bld_input_mat["Region"]
     print("Check the year values")
     print(bld_input_mat)
@@ -190,7 +183,6 @@ def gen_data_buildings(scenario, dry_run=False):
     # allyears = s_info.set['year'] #s_info.Y is only for modeling years
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
-    yv_ya = s_info.yv_ya
     # fmy = s_info.y0
     nodes.remove("World")
     # nodes.remove("R11_RCPA")
@@ -305,13 +297,3 @@ def gen_data_buildings(scenario, dry_run=False):
         adjust_demand_param(scenario)
 
     return results
-
-
-if __name__ == "__main__":
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline_balance-equality_materials")
-    df = gen_data_buildings(scen)
-    print()

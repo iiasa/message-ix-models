@@ -26,10 +26,7 @@ from message_ix_models.util import (
 
 # Generate a fake cement demand
 def gen_mock_demand_cement(scenario):
-    context = read_config()
     s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    fmy = s_info.y0
     nodes = s_info.N
     nodes.remove("World")
 
@@ -139,7 +136,7 @@ def gen_mock_demand_cement(scenario):
     )
 
     # demand2010_cement = demand2010_cement.\
-    #     join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
+    #    join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
 
     demand2020_cement.iloc[:, 3:] = (
         demand2020_cement.iloc[:, 3:]

@@ -55,24 +55,23 @@ def read_data_petrochemicals(scenario):
 
 
 def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
-    context = read_config()
     s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    modelyears = s_info.Y
     fy = scenario.firstmodelyear
-    nodes = s_info.N
 
     def get_demand_t1_with_income_elasticity(
-            demand_t0, income_t0, income_t1, elasticity
+        demand_t0, income_t0, income_t1, elasticity
     ):
         return (
-                elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
+            elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
         ) + demand_t0
 
     gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
     mer_to_ppp = pd.read_csv(
         package_data_path("material", "other", "mer_to_ppp_default.csv")
     ).set_index(["node", "year"])
-    # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year") TODO: might need to be re-activated for different SSPs
+    # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year")
+    # TODO: might need to be re-activated for different SSPs
     gdp_mer = gdp_mer.merge(
         mer_to_ppp.reset_index()[["node", "year", "value"]],
         left_on=["node_loc", "year_act"],
@@ -106,7 +105,8 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
 
     # if "R12_CHN" in nodes:
     #     nodes.remove("R12_GLB")
-    #     dem_2020 = np.array([2.4, 0.44, 3, 5, 11, 40.3, 49.8, 11, 37.5, 10.7, 29.2, 50.5])
+    #     dem_2020 = np.array([2.4, 0.44, 3, 5, 11, 40.3, 49.8, 11,
+    #     37.5, 10.7, 29.2, 50.5])
     #     dem_2020 = pd.Series(dem_2020)
     #
     # else:
@@ -248,7 +248,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                                 unit="t",
                                 node_loc=rg,
                                 node_origin=global_region,
-                                **common
+                                **common,
                             )
                         elif (param_name == "output") and (lev == "export"):
                             df = make_df(
@@ -261,7 +261,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                                 unit="t",
                                 node_loc=rg,
                                 node_dest=global_region,
-                                **common
+                                **common,
                             )
                         else:
                             df = make_df(
@@ -273,7 +273,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                                 value=val[regions[regions == rg].index[0]],
                                 unit="t",
                                 node_loc=rg,
-                                **common
+                                **common,
                             ).pipe(same_node)
 
                         # Copy parameters to all regions, when node_loc is not GLB
@@ -297,7 +297,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                             mode=mod,
                             unit="t",
                             node_loc=rg,
-                            **common
+                            **common,
                         )
 
                     elif param_name == "var_cost":
@@ -312,7 +312,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                                     mode=mod,
                                     value=val[regions[regions == rg].index[0]],
                                     unit="t",
-                                    **common
+                                    **common,
                                 )
                                 .pipe(broadcast, node_loc=nodes)
                                 .pipe(same_node)
@@ -327,7 +327,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                                 value=val[regions[regions == rg].index[0]],
                                 node_loc=rg,
                                 unit="t",
-                                **common
+                                **common,
                             ).pipe(same_node)
 
                     elif param_name == "share_mode_up":
@@ -341,7 +341,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                                 shares="steam_cracker",
                                 value=val[regions[regions == rg].index[0]],
                                 unit="-",
-                                **common
+                                **common,
                             )
                             .pipe(broadcast, node_share=nodes)
                             .pipe(same_node)
@@ -356,7 +356,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                         value=val[regions[regions == rg].index[0]],
                         unit="t",
                         node_loc=rg,
-                        **common
+                        **common,
                     )
                     df = df.drop_duplicates()
 
@@ -364,8 +364,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                 if (len(regions) == 1) and (rg != global_region):
                     if "node_loc" in df.columns:
                         if (
-                                len(set(df["node_loc"])) == 1
-                                and list(set(df["node_loc"]))[0] != global_region
+                            len(set(df["node_loc"])) == 1
+                            and list(set(df["node_loc"]))[0] != global_region
                         ):
                             # print("Copying to all R11")
                             df["node_loc"] = None
@@ -401,7 +401,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # default_gdp_elasticity_2020 = pars["hvc_elasticity_2020"]
     # default_gdp_elasticity_2030 = pars["hvc_elasticity_2030"]
 
-    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[ssp_mode_map[ssp]]
+    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
+        ssp_mode_map[ssp]
+    ]
 
     demand_hvc = material_demand_calc.gen_demand_petro(
         scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
@@ -463,7 +465,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                     year_vtg=yr,
                     year_act=yr,
                     mode=mod,
-                    **common
+                    **common,
                 ).pipe(broadcast, node_loc=nodes)
             else:
                 rg = data_petro_ts.loc[
@@ -480,7 +482,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                     year_act=yr,
                     mode=mod,
                     node_loc=rg,
-                    **common
+                    **common,
                 )
 
             results[p].append(df)
@@ -510,9 +512,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     df = results["growth_activity_up"]
     results["growth_activity_up"] = df[
         ~(
-                (df["technology"] == "steam_cracker_petro")
-                & (df["node_loc"] == "R12_AFR")
-                & (df["year_act"] == 2020)
+            (df["technology"] == "steam_cracker_petro")
+            & (df["node_loc"] == "R12_AFR")
+            & (df["year_act"] == 2020)
         )
     ]
 
@@ -551,6 +553,6 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
         (df_gro["technology"] == "steam_cracker_petro")
         & (df_gro["node_loc"] == "R12_RCPA")
         & (df_gro["year_act"] == 2020)
-        ].index
+    ].index
     results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
     return results

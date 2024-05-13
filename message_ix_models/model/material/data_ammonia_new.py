@@ -326,9 +326,9 @@ def set_exp_imp_nodes(df):
 
 
 def read_demand():
-    """Read and clean data from :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
+    """Read and clean data from
+    :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
     # Demand scenario [Mt N/year] from GLOBIOM
-    context = read_config()
 
     N_demand_GLO = pd.read_excel(
         package_data_path(
@@ -363,7 +363,6 @@ def read_demand():
     input_fuel = te_params[2010][
         list(range(4, te_params.shape[0], n_inputs_per_tech))
     ].reset_index(drop=True)
-    # input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
 
     capacity_factor = te_params[2010][
         list(range(11, te_params.shape[0], n_inputs_per_tech))
@@ -473,12 +472,16 @@ def read_demand():
     fs_GLO = feedshare_GLO.copy()
     fs_GLO.insert(1, "bio_pct", 0)
     fs_GLO.insert(2, "elec_pct", 0)
-    # 17/14 NH3:N ratio, to get NH3 activity based on N demand => No NH3 loss assumed during production
-    # FIXME: Name: elec_pct, dtype: float64 ' has dtype incompatible with int64, please explicitly cast to a compatible dtype first.
+    # 17/14 NH3:N ratio, to get NH3 activity based on N demand
+    # => No NH3 loss assumed during production
+
+    # FIXME: Name: elec_pct, dtype: float64 ' has dtype incompatible with int64,
+    #  please explicitly cast to a compatible dtype first.
     fs_GLO.iloc[:, 1:6] = input_fuel[5] * fs_GLO.iloc[:, 1:6]
     fs_GLO.insert(6, "NH3_to_N", 1)
 
-    # Share of feedstocks for NH3 prodution (based on 2010 => Assumed fixed for any past years)
+    # Share of feedstocks for NH3 prodution
+    # (based on 2010 => Assumed fixed for any past years)
     feedshare = fs_GLO.sort_values(["Region"]).set_index("Region").drop("R12_GLB")
 
     # Get historical N demand from SSP2-nopolicy (may need to vary for diff scenarios)

@@ -7,8 +7,10 @@ import ixmp
 import message_ix
 import ntfy
 import pandas as pd
-
-# update_h2_blending,
+from message_data.tools.utilities import (
+    calibrate_UE_gr_to_demand,
+    calibrate_UE_share_constraints,
+)
 from message_data.tools.utilities import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
 )
@@ -36,17 +38,13 @@ from message_ix_models.model.material.data_util import (
     get_ssp_soc_eco_data,
     modify_baseyear_bounds,
     modify_demand_and_hist_activity,
-    modify_industry_demand
+    modify_industry_demand,
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
     get_all_input_data_dirs,
+    read_config,
     update_macro_calib_file,
-    read_config
-)
-from message_data.tools.utilities import (
-    calibrate_UE_gr_to_demand,
-    calibrate_UE_share_constraints,
 )
 from message_ix_models.util import add_par_data, package_data_path
 from message_ix_models.util.click import common_params
@@ -96,7 +94,6 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         engage_updates._correct_balance_td_efficiencies(scenario)
         engage_updates._correct_coal_ppl_u_efficiencies(scenario)
         engage_updates._correct_td_co2cc_emissions(scenario)
-        update_h2_blending.main(scenario)
     spec = None
     apply_spec(scenario, spec, add_data_2)
 
@@ -340,7 +337,6 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
     elif mode == "cbudget":
         scenario = context.get_scenario()
         print(scenario.version)
-        # print('Base scenario is: ' + scenario.scenario + ", version: " + scenario.version)
         output_scenario_name = scenario.scenario + "_" + tag
         scenario_new = scenario.clone(
             "MESSAGEix-Materials",
@@ -388,7 +384,7 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
 @click.option("--add_calibration", default=False)
 @click.pass_obj
 def solve_scen(
-        context, datafile, model_name, scenario_name, add_calibration, add_macro, version
+    context, datafile, model_name, scenario_name, add_calibration, add_macro, version
 ):
     """Solve a scenario.
 
@@ -435,8 +431,6 @@ def solve_scen(
             reporting(
                 mp,
                 scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
                 "False",
                 scenario.model,
                 scenario.scenario,
@@ -550,8 +544,6 @@ def run_reporting(context, remove_ts, profile):
             reporting(
                 mp,
                 scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
                 "False",
                 scenario.model,
                 scenario.scenario,
@@ -578,8 +570,6 @@ def run_reporting(context, remove_ts, profile):
             reporting(
                 mp,
                 scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
                 "False",
                 scenario.model,
                 scenario.scenario,
