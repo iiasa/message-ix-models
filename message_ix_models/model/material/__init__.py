@@ -5,7 +5,6 @@ from typing import Mapping
 import click
 import ixmp
 import message_ix
-import ntfy
 import pandas as pd
 from message_data.tools.utilities import (
     calibrate_UE_gr_to_demand,
@@ -367,8 +366,6 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         scenario.add_par("inv_cost", inv)
         scenario.commit(f"update cost assumption to: {update_costs}")
 
-    ntfy.notify(title="MESSAGEix-Materials", message="building successfully finished!")
-
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
@@ -474,7 +471,6 @@ def solve_scen(
         print("Solving the scenario without MACRO")
         scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
         scenario.set_as_default()
-    ntfy.notify(title="MESSAGEix-Materials", message="solving successfully finished!")
 
 
 @cli.command("add_buildings_ts")
