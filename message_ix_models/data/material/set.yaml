@@ -371,19 +371,20 @@ steel:
       - dri_h2_steel
   type_addon:
     add:
-      - ccs_steel
-      - dri_steel
+      - bf_ccs_steel_addon
+      - dri_gas_ccs_steel_addon
+      - dri_steel_addon
   map_tec_addon:
     add:
-      - [bf_steel, ccs_steel]
-      - [dri_gas_steel, ccs_steel]
-      - [dri_steel, dri_steel]
+      - [bf_steel, bf_ccs_steel_addon]
+      - [dri_gas_steel, dri_gas_ccs_steel_addon]
+      - [dri_steel, dri_steel_addon]
   cat_addon:
     add:
-      - [ccs_steel, bf_ccs_steel]
-      - [ccs_steel, dri_gas_ccs_steel]
-      - [dri_steel, dri_gas_steel]
-      - [dri_steel, dri_h2_steel]
+      - [bf_ccs_steel_addon, bf_ccs_steel]
+      - [dri_gas_ccs_steel_addon, dri_gas_ccs_steel]
+      - [dri_steel_addon, dri_gas_steel]
+      - [dri_steel_addon, dri_h2_steel]
 
 cement:
   commodity:
