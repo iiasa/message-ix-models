@@ -25,10 +25,10 @@ def ellipsize(elements: List) -> str:
 
 
 def apply_spec(
-        scenario: Scenario,
-        spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
-        data: Callable = None,
-        **options,
+    scenario: Scenario,
+    spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
+    data: Callable = None,
+    **options,
 ):
     """Apply `spec` to `scenario`.
 
@@ -74,7 +74,6 @@ def apply_spec(
         maybe_check_out(scenario)
 
     if spec:
-
         dump: Dict[str, pd.DataFrame] = {}  # Removed data
 
         for set_name in scenario.set_list():

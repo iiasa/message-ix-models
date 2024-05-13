@@ -17,13 +17,6 @@ from .util import read_config
 def read_data_generic(scenario):
     """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
 
-    # Ensure config is loaded, get the context
-    context = read_config()
-    s_info = ScenarioInfo(scenario)
-
-    # Shorter access to sets configuration
-    # sets = context["material"]["generic"]
-
     # Read the file
     data_generic = pd.read_excel(
         message_ix_models.util.package_data_path(
@@ -34,14 +27,12 @@ def read_data_generic(scenario):
 
     # Clean the data
     # Drop columns that don't contain useful information
-
     data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
     data_generic_ts = read_timeseries(
         scenario, "other", "generic_furnace_boiler_techno_economic.xlsx"
     )
 
     # Unit conversion
-
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
 
@@ -65,11 +56,9 @@ def gen_data_generic(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    allyears = s_info.set["year"]  # s_info.Y is only for modeling years
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
-    fmy = s_info.y0
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
@@ -152,7 +141,8 @@ def gen_data_generic(scenario, dry_run=False):
                 elif param_name == "emission_factor":
                     emi = split[1]
 
-                    # TODO: Now tentatively fixed to one mode. Have values for the other mode too
+                    # TODO: Now tentatively fixed to one mode.
+                    #  Have values for the other mode too
                     df_low = make_df(
                         param_name,
                         technology=t,

@@ -5,23 +5,23 @@ from message_ix import make_df
 
 # Get endogenous material demand from buildings interface
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.data_util import (
+    read_rel,
+    read_sector_data,
+    read_timeseries,
+)
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import read_config
 from message_ix_models.util import (
     broadcast,
     package_data_path,
     same_node,
 )
 
-from .data_util import read_rel, read_sector_data, read_timeseries
-from .material_demand import material_demand_calc
-from .util import read_config
-
 
 # Generate a fake steel demand
 def gen_mock_demand_steel(scenario):
-    context = read_config()
     s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    fmy = s_info.y0
     nodes = s_info.N
     nodes.remove("World")
 
@@ -29,10 +29,14 @@ def gen_mock_demand_steel(scenario):
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
     # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
-    # Finished steel demand from: https://www.oecd.org/industry/ind/Item_4b_Worldsteel.pdf
-    # For region definitions: https://worldsteel.org/wp-content/uploads/2021-World-Steel-in-Figures.pdf
+    # Finished steel demand from:
+    # https://www.oecd.org/industry/ind/Item_4b_Worldsteel.pdf
+    # For region definitions:
+    # https://worldsteel.org/wp-content/uploads/2021-World-Steel-in-Figures.pdf
     # For detailed assumptions and calculation see: steel_demand_calculation.xlsx
-    # under https://iiasahub.sharepoint.com/sites/eceprog?cid=75ea8244-8757-44f1-83fd-d34f94ffd06a
+    # under
+    # https://iiasahub.sharepoint.com/
+    # sites/eceprog?cid=75ea8244-8757-44f1-83fd-d34f94ffd06a
 
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
@@ -116,7 +120,8 @@ def gen_data_steel(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    # TEMP: now add cement sector as well => Need to separate those since now I have get_data_steel and cement
+    # TEMP: now add cement sector as well
+    # => Need to separate those since now I have get_data_steel and cement
     data_steel = read_sector_data(scenario, "steel")
     # Special treatment for time-dependent Parameters
     data_steel_ts = read_timeseries(scenario, "steel_cement", context.datafile)
@@ -130,12 +135,10 @@ def gen_data_steel(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    allyears = s_info.set["year"]  # s_info.Y is only for modeling years
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
     yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1990]
-    fmy = s_info.y0
     nodes.remove("World")
 
     # Do not parametrize GLB region the same way
@@ -571,7 +574,8 @@ def gen_data_steel(scenario, dry_run=False):
 #     with localconverter(ro.default_converter + pandas2ri.converter):
 #         # GDP is only in MER in scenario.
 #         # To get PPP GDP, it is read externally from the R side
-#         df = r.derive_steel_demand(pop, base_demand, str(package_data_path("material")))
+#         df = r.derive_steel_demand(pop, base_demand,
+#         str(package_data_path("material")))
 #         df.year = df.year.astype(int)
 #
 #     return df

@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import message_ix
 import pandas as pd
 from message_ix import make_df
 
@@ -17,8 +18,20 @@ from .util import read_config
 # Get endogenous material demand from buildings interface
 
 
-def read_data_aluminum(scenario):
-    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
+def read_data_aluminum(scenario: message_ix.Scenario) \
+        -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    """Read and clean data from :file:`aluminum_techno_economic.xlsx`.
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        Scenario instance to build aluminum on
+    Returns
+    -------
+    tuple of three pd.DataFrames
+        returns aluminum data in three separate groups
+        time indepenendent parameters, relation parameters and time dependent parameters
+    """
 
     # Ensure config is loaded, get the context
     context = read_config()
@@ -58,13 +71,27 @@ def read_data_aluminum(scenario):
     return data_alu, data_alu_rel, data_aluminum_ts
 
 
-def print_full(x):
+def print_full(x: int):
     pd.set_option("display.max_rows", len(x))
     print(x)
     pd.reset_option("display.max_rows")
 
 
-def gen_data_aluminum(scenario, dry_run=False):
+def gen_data_aluminum(scenario: message_ix.Scenario, dry_run: bool = False) -> dict[pd.DataFrame]:
+    """
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        Scenario instance to build aluminum model on
+    dry_run: bool
+        *not implemented*
+    Returns
+    -------
+    dict[pd.DataFrame]
+        dict with MESSAGEix parameters as keys and parametrization as values
+        stored in pd.DataFrame
+    """
     context = read_config()
     config = context["material"]["aluminum"]
 
@@ -441,7 +468,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     return results_aluminum
 
 
-def gen_mock_demand_aluminum(scenario):
+def gen_mock_demand_aluminum(scenario: message_ix.Scenario) -> pd.DataFrame:
     context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
@@ -514,45 +541,3 @@ def gen_mock_demand_aluminum(scenario):
     )
 
     return demand2020_al
-
-# # load rpy2 modules
-# import rpy2.robjects as ro
-# from rpy2.robjects import pandas2ri
-# from rpy2.robjects.conversion import localconverter
-#
-# # This returns a df with columns ["region", "year", "demand.tot"]
-# def derive_aluminum_demand(scenario, dry_run=False):
-#     """Generate aluminum demand."""
-#     # paths to r code and lca data
-#     rcode_path = Path(__file__).parents[0] / "material_demand"
-#     context = read_config()
-#
-#     # source R code
-#     r = ro.r
-#     r.source(str(rcode_path / "init_modularized.R"))
-#
-#     # Read population and baseline demand for materials
-#     pop = scenario.par("bound_activity_up", {"technology": "Population"})
-#     pop = pop.loc[pop.year_act >= 2020].rename(
-#         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
-#     )
-#
-#     # import pdb; pdb.set_trace()
-#
-#     pop = pop[["region", "year", "pop.mil"]]
-#
-#     base_demand = gen_mock_demand_aluminum(scenario)
-#     base_demand = base_demand.loc[base_demand.year == 2020].rename(
-#         columns={"value": "demand.tot.base", "node": "region"}
-#     )
-#
-#     # call R function with type conversion
-#     with localconverter(ro.default_converter + pandas2ri.converter):
-#         # GDP is only in MER in scenario.
-#         # To get PPP GDP, it is read externally from the R side
-#         df = r.derive_aluminum_demand(
-#             pop, base_demand, str(package_data_path("material"))
-#         )
-#         df.year = df.year.astype(int)
-#
-#     return df

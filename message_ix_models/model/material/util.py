@@ -7,7 +7,7 @@ import yaml
 from scipy.optimize import curve_fit
 
 from message_ix_models import Context
-from message_ix_models.util import load_private_data, private_data_path
+from message_ix_models.util import load_package_data, package_data_path
 
 # Configuration files
 METADATA = [
@@ -42,7 +42,7 @@ def read_config() -> Context:
         _parts = list(parts)
         _parts[-1] += ".yaml"
 
-        context[key] = load_private_data(*_parts)
+        context[key] = load_package_data(*_parts)
 
     # Read material.yaml
     # context.metadata_path=Path("C:/Users/unlu/Documents/GitHub/message_data/data")
@@ -105,7 +105,7 @@ def combine_df_dictionaries(*args: dict[str, pd.DataFrame]) -> dict:
     return comb_dict
 
 
-def read_yaml_file(file_path: str) -> dict:
+def read_yaml_file(file_path: str) -> dict or None:
     """
     Tries to read yaml file into a dict
 
@@ -165,14 +165,14 @@ def excel_to_csv(material_dir: str, fname: str) -> None:
         file name of xlsx file
     """
     xlsx_dict = pd.read_excel(
-        private_data_path("material", material_dir, fname), sheet_name=None
+        package_data_path("material", material_dir, fname), sheet_name=None
     )
-    if not os.path.isdir(private_data_path("material", "version control")):
-        os.mkdir(private_data_path("material", "version control"))
-    os.mkdir(private_data_path("material", "version control", fname))
+    if not os.path.isdir(package_data_path("material", "version control")):
+        os.mkdir(package_data_path("material", "version control"))
+    os.mkdir(package_data_path("material", "version control", fname))
     for tab in xlsx_dict.keys():
         xlsx_dict[tab].to_csv(
-            private_data_path("material", "version control", fname, f"{tab}.csv"),
+            package_data_path("material", "version control", fname, f"{tab}.csv"),
             index=False,
         )
 
@@ -185,8 +185,8 @@ def get_all_input_data_dirs() -> list[str]:
     -------
     list of folder names of material data
     """
-    elements = os.listdir(private_data_path("material"))
-    elements = [i for i in elements if os.path.isdir(private_data_path("material", i))]
+    elements = os.listdir(package_data_path("material"))
+    elements = [i for i in elements if os.path.isdir(package_data_path("material", i))]
     return elements
 
 
@@ -221,7 +221,7 @@ def exponential(x: float or list[float], b: float, m: float) -> float:
     float
         function value for given b, m and x
     """
-    return b * m ** x
+    return b * m**x
 
 
 def price_fit(df: pd.DataFrame) -> float:
