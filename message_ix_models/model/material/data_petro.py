@@ -82,7 +82,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     df_gdp_ts = gdp_mer.pivot(
         index="Region", columns="year", values="gdp_ppp"
     ).reset_index()
-    num_cols = [i for i in df_gdp_ts.columns if type(i) == int]
+    num_cols = [i for i in df_gdp_ts.columns if isinstance(i, int)]
     hist_yrs = [i for i in num_cols if i < fy]
     df_gdp_ts = (
         df_gdp_ts.drop([i for i in hist_yrs if i in df_gdp_ts.columns], axis=1)
@@ -441,7 +441,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                 "value",
             ]
             # units = data_petro_ts.loc[
-            #     (data_petro_ts["technology"] == t) & (data_petro_ts["parameter"] == p),
+            #     (data_petro_ts["technology"] == t) &
+            #     (data_petro_ts["parameter"] == p),
             #     "units",
             # ].values[0]
             mod = data_petro_ts.loc[

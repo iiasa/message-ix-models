@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Sized
 
 import message_ix
 import pandas as pd
@@ -69,7 +70,7 @@ def read_data_aluminum(
     return data_alu, data_alu_rel, data_aluminum_ts
 
 
-def print_full(x: int):
+def print_full(x: Sized):
     pd.set_option("display.max_rows", len(x))
     print(x)
     pd.reset_option("display.max_rows")

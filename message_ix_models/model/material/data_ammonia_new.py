@@ -351,7 +351,7 @@ def read_demand():
     )
 
     # Read parameters in xlsx
-    te_params = data = pd.read_excel(
+    te_params = pd.read_excel(
         package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
         sheet_name="old_TE_sheet",
         engine="openpyxl",
@@ -513,8 +513,6 @@ def read_demand():
 
 
 def gen_demand():
-    context = read_config()
-
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
     demand_fs_org = pd.read_excel(

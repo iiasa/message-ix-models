@@ -1,12 +1,9 @@
 from collections import defaultdict
-from pathlib import Path
 
 import pandas as pd
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
-
-from .util import read_config
 
 
 def read_material_intensities(
@@ -275,11 +272,8 @@ def read_material_intensities(
 def gen_data_power_sector(scenario, dry_run=False):
     """Generate data for materials representation of power industry."""
     # Load configuration
-    context = read_config()
-    config = context["material"]["power_sector"]
 
     # paths to lca data
-    code_path = Path(__file__).parents[0] / "material_intensity"
     data_path = package_data_path("material", "power_sector")
 
     # Information about scenario, e.g. node, year
