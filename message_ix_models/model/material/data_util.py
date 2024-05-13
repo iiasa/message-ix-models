@@ -1,5 +1,5 @@
 import os
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import ixmp
 import message_ix
@@ -18,6 +18,9 @@ from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import package_data_path
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 pd.options.mode.chained_assignment = None
 
@@ -103,9 +106,6 @@ def add_macro_COVID(
     message_ix.Scenario
         MACRO-calibrated Scenario instance
     """
-    context = read_config()
-    info = ScenarioInfo(scen)
-    nodes = info.N
 
     # Excel file for calibration data
     if "SSP_dev" in scen.model:
@@ -157,7 +157,6 @@ def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
     # NOTE Temporarily modifying industrial energy demand
     # From IEA database (dumped to an excel)
 
-    context = read_config()
     s_info = ScenarioInfo(scen)
     fname = "MESSAGEix-Materials_final_energy_industry.xlsx"
 
@@ -234,7 +233,8 @@ def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
     df_feed = df[
         (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
     ]
-    df_feed_total = df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
+    # df_feed_total =
+    # df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
     df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
     df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
 
@@ -484,7 +484,6 @@ def modify_demand_and_hist_activity_debug(
         MESSAGEix-GLOBIOM scenario
     """
 
-    context = read_config()
     s_info = ScenarioInfo(scen)
     fname = "MESSAGEix-Materials_final_energy_industry.xlsx"
 
@@ -499,9 +498,8 @@ def modify_demand_and_hist_activity_debug(
         region_name_CPA = "CPA"
         region_name_CHN = ""
 
-    df = pd.read_excel(
-        package_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
-    )
+    path = package_data_path("material", "other", fname)
+    df = pd.read_excel(path, sheet_name=sheet_n, usecols="A:F")
 
     # Filter the necessary variables
     df = df[
@@ -561,7 +559,8 @@ def modify_demand_and_hist_activity_debug(
     df_feed = df[
         (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
     ]
-    df_feed_total = df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
+    # df_feed_total =
+    # df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
     df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
     df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
 
@@ -898,7 +897,7 @@ def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFr
     # )
     Inp = pd.read_parquet(path, engine="fastparquet")
     Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
-    demand_shrs_new = calc_demand_shares(Inp, baseyear)
+    demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
     df_demands = scen.par("demand", filters={"commodity": comms}).set_index(
         ["node", "commodity", "year"]
     )
@@ -1038,9 +1037,12 @@ def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFram
 
 
 def add_emission_accounting(scen):
-    context = read_config()
-    s_info = ScenarioInfo(scen)
+    """
 
+    Parameters
+    ----------
+    scen
+    """
     # (1) ******* Add non-CO2 gases to the relevant relations. ********
     # This is done by multiplying the input values and emission_factor
     # per year,region and technology.
@@ -1340,7 +1342,11 @@ def add_emission_accounting(scen):
     CF4_trp_Emissions = scen.par(
         "relation_activity", filters={"relation": "CF4_Emission"}
     )
-    list_tec_trp = [l for l in CF4_trp_Emissions["technology"].unique() if "trp" in l]
+    list_tec_trp = [
+        cf4_emi
+        for cf4_emi in CF4_trp_Emissions["technology"].unique()
+        if "trp" in cf4_emi
+    ]
     CF4_trp_Emissions = CF4_trp_Emissions[
         CF4_trp_Emissions["technology"].isin(list_tec_trp)
     ]
@@ -1350,7 +1356,9 @@ def add_emission_accounting(scen):
     # Remove transport related technologies from CF4_alm_red and add aluminum tecs.
 
     CF4_red = scen.par("relation_activity", filters={"relation": "CF4_alm_red"})
-    list_tec_trp = [l for l in CF4_red["technology"].unique() if "trp" in l]
+    list_tec_trp = [
+        cf4_emi for cf4_emi in CF4_red["technology"].unique() if "trp" in cf4_emi
+    ]
     CF4_red = CF4_red[CF4_red["technology"].isin(list_tec_trp)]
 
     scen.remove_par("relation_activity", CF4_red)
@@ -1602,7 +1610,6 @@ def add_coal_lowerbound_2020(sc):
 def add_cement_bounds_2020(sc):
     """Set lower and upper bounds for gas and oil as a calibration for 2020"""
 
-    context = read_config()
     final_resid = pd.read_csv(
         package_data_path("material", "other", "residual_industry_2019.csv")
     )
@@ -1937,8 +1944,6 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
     scen: message_ix.Scenario
         Scenario instance to add CCS emission factor parametrization to
     """
-    context = read_config()
-    s_info = ScenarioInfo(scen)
 
     # The relation coefficients for CO2_Emision and bco2_trans_disp and
     # co2_trans_disp are both MtC. The emission factor for CCS add_ccs_technologies
@@ -2003,7 +2008,6 @@ def read_timeseries(
         DataFrame containing the timeseries data for MESSAGEix parameters
     """
     # Ensure config is loaded, get the context
-    context = read_config()
     s_info = ScenarioInfo(scenario)
 
     # if context.scenario_info['scenario'] == 'NPi400':
@@ -2064,7 +2068,6 @@ def read_rel(scenario: message_ix.Scenario, material: str, filename: str):
         DataFrame containing relation_* parameter data
     """
     # Ensure config is loaded, get the context
-    context = read_config()
 
     s_info = ScenarioInfo(scenario)
 
@@ -2134,9 +2137,7 @@ def gen_te_projections(
     return inv_cost, fix_cost
 
 
-def get_ssp_soc_eco_data(
-    context: message_ix_models.util.context.Context, model: str, measure: str, tec
-):
+def get_ssp_soc_eco_data(context: "Context", model: str, measure: str, tec):
     """
     Function to update scenario GDP and POP timeseries to SSP 3.0
     and format to MESSAGEix "bound_activity_*" DataFrame

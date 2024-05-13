@@ -18,7 +18,6 @@ INPUTFILE = "LED_LED_report_IAMC_sensitivity_R12.csv"
 
 
 def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
-
     # Read the file and filter the given sensitivity case
     bld_input_raw = pd.read_csv(package_data_path("material", "buildings", filename))
     bld_input_raw = bld_input_raw.loc[bld_input_raw.Sensitivity == case]
@@ -26,7 +25,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
     bld_input_mat = bld_input_raw[
         bld_input_raw[
             "Variable"
-        ].str.contains(  #"Floor Space|Aluminum|Cement|Steel|Final Energy"
+        ].str.contains(  # "Floor Space|Aluminum|Cement|Steel|Final Energy"
             "Floor Space|Aluminum|Cement|Steel"
         )
     ]  # Final Energy - Later. Need to figure out how to carve out
@@ -75,7 +74,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
     ].reset_index(drop=True)
     bld_area_long = bld_data_long[
         bld_data_long["Variable"] == "Energy Service|Residential|Floor Space"
-        ].reset_index(drop=True)
+    ].reset_index(drop=True)
 
     tmp = bld_intensity_long.Variable.str.split("|", expand=True)
 
@@ -107,7 +106,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
 
 
 def get_scen_mat_demand(
-        commod, scenario, year="2020", inputfile=INPUTFILE, case=CASE_SENS
+    commod, scenario, year="2020", inputfile=INPUTFILE, case=CASE_SENS
 ):
     a, b, c = read_timeseries_buildings(inputfile, scenario, case)
     if not year == "all":  # specific year
@@ -119,9 +118,6 @@ def get_scen_mat_demand(
 
 def adjust_demand_param(scen):
     s_info = ScenarioInfo(scen)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-
-    # scen.clone(model=scen.model, scenario=scen.scenario+"_building")
 
     scen_mat_demand = scen.par(
         "demand", {"level": "demand"}
@@ -231,7 +227,7 @@ def gen_data_buildings(scenario, dry_run=False):
                     value=val_mat.value,
                     unit="t",
                     node_loc=rg,
-                    **common
+                    **common,
                 )
                 .pipe(same_node)
                 .assign(year_act=copy_column("year_vtg"))
@@ -249,7 +245,7 @@ def gen_data_buildings(scenario, dry_run=False):
                     value=val_scr.value,
                     unit="t",
                     node_loc=rg,
-                    **common
+                    **common,
                 )
                 .pipe(same_node)
                 .assign(year_act=copy_column("year_vtg"))
@@ -267,7 +263,7 @@ def gen_data_buildings(scenario, dry_run=False):
                 value=1,
                 unit="t",
                 node_loc=rg,
-                **common
+                **common,
             )
             .pipe(same_node)
             .assign(year_act=copy_column("year_vtg"))

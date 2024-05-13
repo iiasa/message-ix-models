@@ -10,7 +10,7 @@ from .util import read_config
 
 
 def read_material_intensities(
-        parameter, data_path, node, year, technology, commodity, level, inv_cost
+    parameter, data_path, node, year, technology, commodity, level, inv_cost
 ):
     if parameter in ["input_cap_new", "input_cap_ret", "output_cap_ret"]:
         ####################################################################
@@ -22,9 +22,7 @@ def read_material_intensities(
         data_lca = pd.read_excel(data_path_lca, sheet_name="environmentalImpacts")
 
         # read technology, region and commodity mappings
-        data_path_tec_map = (
-                data_path + "/MESSAGE_global_model_technologies.xlsx"
-        )
+        data_path_tec_map = data_path + "/MESSAGE_global_model_technologies.xlsx"
         technology_mapping = pd.read_excel(data_path_tec_map, sheet_name="technology")
 
         data_path_reg_map = data_path + "/LCA_region_mapping.xlsx"
@@ -41,9 +39,9 @@ def read_material_intensities(
         # mix for others) and remove operation phase (and remove duplicates)
         data_lca = data_lca.loc[
             (
-                    (data_lca["scenario"] == "Baseline")
-                    & (data_lca["technology variant"].isin(["mix", "residue"]))
-                    & (data_lca["phase"] != "Operation")
+                (data_lca["scenario"] == "Baseline")
+                & (data_lca["technology variant"].isin(["mix", "residue"]))
+                & (data_lca["phase"] != "Operation")
             )
         ]
 
@@ -129,10 +127,10 @@ def read_material_intensities(
                     for p in data_lca["phase"].unique():
                         temp = data_lca.loc[
                             (
-                                    (data_lca["node"] == n)
-                                    & (data_lca["technology"] == t)
-                                    & (data_lca["commodity"] == c)
-                                    & (data_lca["phase"] == p)
+                                (data_lca["node"] == n)
+                                & (data_lca["technology"] == t)
+                                & (data_lca["commodity"] == c)
+                                & (data_lca["phase"] == p)
                             )
                         ]
                         temp["value"] = temp["value"].interpolate(
@@ -182,7 +180,7 @@ def read_material_intensities(
                             & (data_lca_final["phase"] == "Construction")
                             & (data_lca_final["commodity"] == c)
                             & (data_lca_final["year"] == yeff)
-                            ]["value"].values[0]
+                        ]["value"].values[0]
                         val_cap_new = val_cap_new * 0.001
 
                         input_cap_new = pd.concat(
@@ -211,7 +209,7 @@ def read_material_intensities(
                             & (data_lca_final["phase"] == "End-of-life")
                             & (data_lca_final["commodity"] == c)
                             & (data_lca_final["year"] == yeff)
-                            ]["value"].values[0]
+                        ]["value"].values[0]
                         val_cap_input_ret = val_cap_input_ret * 0.001
 
                         input_cap_ret = pd.concat(
@@ -240,7 +238,7 @@ def read_material_intensities(
                             & (data_lca_final["phase"] == "Construction")
                             & (data_lca_final["commodity"] == c)
                             & (data_lca_final["year"] == yeff)
-                            ]["value"].values[0]
+                        ]["value"].values[0]
                         val_cap_output_ret = val_cap_output_ret * 0.001
 
                         output_cap_ret = pd.concat(

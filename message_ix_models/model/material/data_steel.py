@@ -84,7 +84,7 @@ def gen_mock_demand_steel(scenario):
 
     gdp_growth = gdp_growth.loc[
         (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-        ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
+    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
 
     gdp_growth["Region"] = region_set + gdp_growth["Region"]
 
@@ -151,7 +151,6 @@ def gen_data_steel(scenario, dry_run=False):
 
     # for t in s_info.set['technology']:
     for t in config["technology"]["add"]:
-
         params = data_steel.loc[
             (data_steel["technology"] == t), "parameter"
         ].values.tolist()
@@ -198,7 +197,7 @@ def gen_data_steel(scenario, dry_run=False):
                         year_vtg=yr,
                         year_act=yr,
                         mode=mod,
-                        **common
+                        **common,
                     ).pipe(broadcast, node_loc=nodes)
                 if p == "output":
                     comm = data_steel_ts.loc[
@@ -231,7 +230,7 @@ def gen_data_steel(scenario, dry_run=False):
                         node_dest=rg,
                         commodity=comm,
                         level=lev,
-                        **common
+                        **common,
                     )
                 else:
                     rg = data_steel_ts.loc[
@@ -248,7 +247,7 @@ def gen_data_steel(scenario, dry_run=False):
                         year_act=yr,
                         mode=mod,
                         node_loc=rg,
-                        **common
+                        **common,
                     )
 
                 results[p].append(df)
@@ -278,11 +277,9 @@ def gen_data_steel(scenario, dry_run=False):
             )
 
             for rg in regions:
-
                 # For the parameters which inlcudes index names
                 if len(split) > 1:
                     if (param_name == "input") | (param_name == "output"):
-
                         # Assign commodity and level names
                         com = split[1]
                         lev = split[2]
@@ -298,7 +295,7 @@ def gen_data_steel(scenario, dry_run=False):
                                 unit="t",
                                 node_loc=rg,
                                 node_origin=global_region,
-                                **common
+                                **common,
                             )
 
                         elif (param_name == "output") and (lev == "export"):
@@ -312,7 +309,7 @@ def gen_data_steel(scenario, dry_run=False):
                                 unit="t",
                                 node_loc=rg,
                                 node_dest=global_region,
-                                **common
+                                **common,
                             )
 
                         else:
@@ -325,7 +322,7 @@ def gen_data_steel(scenario, dry_run=False):
                                 mode=mod,
                                 unit="t",
                                 node_loc=rg,
-                                **common
+                                **common,
                             ).pipe(same_node)
 
                         # Copy parameters to all regions, when node_loc is not GLB
@@ -337,7 +334,6 @@ def gen_data_steel(scenario, dry_run=False):
                                 df = df.pipe(same_node)
 
                     elif param_name == "emission_factor":
-
                         # Assign the emisson type
                         emi = split[1]
                         mod = split[2]
@@ -350,7 +346,7 @@ def gen_data_steel(scenario, dry_run=False):
                             mode=mod,
                             unit="t",
                             node_loc=rg,
-                            **common
+                            **common,
                         )
 
                     else:  # time-independent var_cost
@@ -362,7 +358,7 @@ def gen_data_steel(scenario, dry_run=False):
                             mode=mod,
                             unit="t",
                             node_loc=rg,
-                            **common
+                            **common,
                         )
 
                 # Parameters with only parameter name
@@ -373,13 +369,13 @@ def gen_data_steel(scenario, dry_run=False):
                         value=val[regions[regions == rg].index[0]],
                         unit="t",
                         node_loc=rg,
-                        **common
+                        **common,
                     )
 
                 # Copy parameters to all regions
                 if (
-                        len(set(df["node_loc"])) == 1
-                        and list(set(df["node_loc"]))[0] != global_region
+                    len(set(df["node_loc"])) == 1
+                    and list(set(df["node_loc"]))[0] != global_region
                 ):
                     df["node_loc"] = None
                     df = df.pipe(broadcast, node_loc=nodes)
@@ -400,8 +396,8 @@ def gen_data_steel(scenario, dry_run=False):
             "unit": "???",
             "value": data_steel_rel.loc[
                 (
-                        (data_steel_rel["relation"] == "max_global_recycling_steel")
-                        & (data_steel_rel["parameter"] == "relation_activity")
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_activity")
                 ),
                 "value",
             ].values[0],
@@ -416,8 +412,8 @@ def gen_data_steel(scenario, dry_run=False):
             "unit": "???",
             "value": data_steel_rel.loc[
                 (
-                        (data_steel_rel["relation"] == "max_global_recycling_steel")
-                        & (data_steel_rel["parameter"] == "relation_upper")
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_upper")
                 ),
                 "value",
             ].values[0],
@@ -432,8 +428,8 @@ def gen_data_steel(scenario, dry_run=False):
             "unit": "???",
             "value": data_steel_rel.loc[
                 (
-                        (data_steel_rel["relation"] == "max_global_recycling_steel")
-                        & (data_steel_rel["parameter"] == "relation_lower")
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_lower")
                 ),
                 "value",
             ].values[0],
@@ -478,11 +474,10 @@ def gen_data_steel(scenario, dry_run=False):
 
             for par_name in params:
                 if par_name == "relation_activity":
-
                     tec_list = data_steel_rel.loc[
                         (
-                                (data_steel_rel["relation"] == r)
-                                & (data_steel_rel["parameter"] == par_name)
+                            (data_steel_rel["relation"] == r)
+                            & (data_steel_rel["parameter"] == par_name)
                         ),
                         "technology",
                     ]
@@ -490,10 +485,10 @@ def gen_data_steel(scenario, dry_run=False):
                     for tec in tec_list.unique():
                         val = data_steel_rel.loc[
                             (
-                                    (data_steel_rel["relation"] == r)
-                                    & (data_steel_rel["parameter"] == par_name)
-                                    & (data_steel_rel["technology"] == tec)
-                                    & (data_steel_rel["Region"] == reg)
+                                (data_steel_rel["relation"] == r)
+                                & (data_steel_rel["parameter"] == par_name)
+                                & (data_steel_rel["technology"] == tec)
+                                & (data_steel_rel["Region"] == reg)
                             ),
                             "value",
                         ].values[0]
@@ -505,7 +500,7 @@ def gen_data_steel(scenario, dry_run=False):
                             unit="-",
                             node_loc=reg,
                             node_rel=reg,
-                            **common_rel
+                            **common_rel,
                         ).pipe(same_node)
 
                         results[par_name].append(df)
@@ -513,9 +508,9 @@ def gen_data_steel(scenario, dry_run=False):
                 elif (par_name == "relation_upper") | (par_name == "relation_lower"):
                     val = data_steel_rel.loc[
                         (
-                                (data_steel_rel["relation"] == r)
-                                & (data_steel_rel["parameter"] == par_name)
-                                & (data_steel_rel["Region"] == reg)
+                            (data_steel_rel["relation"] == r)
+                            & (data_steel_rel["parameter"] == par_name)
+                            & (data_steel_rel["Region"] == reg)
                         ),
                         "value",
                     ].values[0]
@@ -537,6 +532,7 @@ def gen_data_steel(scenario, dry_run=False):
     if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
         results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
     return results
+
 
 # # load rpy2 modules
 # import rpy2.robjects as ro

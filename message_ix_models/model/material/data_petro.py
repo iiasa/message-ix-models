@@ -34,7 +34,6 @@ def read_data_petrochemicals(scenario):
     """Read and clean data from :file:`petrochemicals_techno_economic.xlsx`."""
 
     # Ensure config is loaded, get the context
-    context = read_config()
     s_info = ScenarioInfo(scenario)
     fname = "petrochemicals_techno_economic.xlsx"
 
@@ -178,11 +177,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    allyears = s_info.set["year"]
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
-    fmy = s_info.y0
     nodes.remove("World")
 
     # Do not parametrize GLB region the same way
@@ -443,10 +440,10 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                 (data_petro_ts["technology"] == t) & (data_petro_ts["parameter"] == p),
                 "value",
             ]
-            units = data_petro_ts.loc[
-                (data_petro_ts["technology"] == t) & (data_petro_ts["parameter"] == p),
-                "units",
-            ].values[0]
+            # units = data_petro_ts.loc[
+            #     (data_petro_ts["technology"] == t) & (data_petro_ts["parameter"] == p),
+            #     "units",
+            # ].values[0]
             mod = data_petro_ts.loc[
                 (data_petro_ts["technology"] == t) & (data_petro_ts["parameter"] == p),
                 "mode",

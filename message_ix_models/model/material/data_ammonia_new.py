@@ -138,7 +138,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
             df_temp["lifetime"] = df_temp["technology"].map(dict_lifetime)
             df_temp = df_temp[
                 (df_temp["year_act"] - df_temp["year_vtg"]) <= df_temp["lifetime"]
-                ]
+            ]
             par_dict[i] = df_temp.drop("lifetime", axis="columns")
     pars = ["inv_cost", "fix_cost"]
     tec_list = [
@@ -548,10 +548,10 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
     ssp = context["ssp"]
 
     def get_demand_t1_with_income_elasticity(
-            demand_t0, income_t0, income_t1, elasticity
+        demand_t0, income_t0, income_t1, elasticity
     ):
         return (
-                elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
+            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
         ) + demand_t0
 
     df_gdp = pd.read_excel(
