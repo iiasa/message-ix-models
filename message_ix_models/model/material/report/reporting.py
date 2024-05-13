@@ -8,9 +8,6 @@ New_Reporting_Model_Scenario.xlsx: Reporting including the material variables
 Merged_Model_Scenario.xlsx: Includes all IAMC variables
 Material_global_grpahs.pdf
 
-@author: unlu
-"""
-
 # NOTE: Works with pyam-iamc version 0.9.0
 # Problems with the most recent versions:
 # 0.11.0 --> Filtering with asterisk * does not work, dataframes are empty.
@@ -21,37 +18,25 @@ Material_global_grpahs.pdf
 # There are various tech.s that only have data starting from 2025 or 2030.
 # foil_imp AFR, frunace_h2_aluminum, h2_i...
 
-# PACKAGES
+@author: unlu
+"""
 
-from ixmp import Platform
-from message_ix import Scenario
-from message_ix.report import Reporter
-from ixmp.report import configure
-from message_ix_models import ScenarioInfo
-from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
-from message_ix_models.model.material.util import read_config
+import os
 
-import pandas as pd
+import matplotlib
 import numpy as np
+import openpyxl
+import pandas as pd
 import pyam
 import xlsxwriter
-import os
-import openpyxl
+from ixmp.report import configure
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from message_ix.report import Reporter
 
-# import plotly.graph_objects as go
-import matplotlib
+from message_ix_models import ScenarioInfo
 
 matplotlib.use("Agg")
-from matplotlib import pyplot as plt
-
-from pyam.plotting import OUTSIDE_LEGEND
-from matplotlib.backends.backend_pdf import PdfPages
-
-
-def print_full(x):
-    pd.set_option("display.max_rows", len(x))
-    print(x)
-    pd.reset_option("display.max_rows")
 
 
 def change_names(s):
@@ -153,10 +138,10 @@ def fix_excel(path_temp, path_new):
         "OCA": "OC",
     }
     # Iterate over the rows and replace
-    for i in range(1, ((sheet.max_row) + 1)):
+    for i in range(1, (sheet.max_row + 1)):
         data = [
             sheet.cell(row=i, column=col).value
-            for col in range(1, ((sheet.max_column) + 1))
+            for col in range(1, (sheet.max_column + 1))
         ]
         for index, value in enumerate(data):
             col_no = index + 1
@@ -331,7 +316,8 @@ def report(context, scenario):
     )
 
     # Convert methanol at primary_material from energy to material unit
-    # In the model this is kept as energy units to easily seperate two modes: fuel and feedstock
+    # In the model this is kept as energy units
+    # to easily seperate two modes: fuel and feedstock
     df.divide(
         "out|primary_material|methanol|meth_coal|feedstock",
         0.6976,
@@ -389,7 +375,8 @@ def report(context, scenario):
     )
 
     # Convert methanol at primary from energy to material unit
-    # In the model this is kept as energy units to easily seperate two modes: fuel and feedstock
+    # In the model this is kept as energy units
+    # to easily seperate two modes: fuel and feedstock
     df.divide(
         "out|primary|methanol|meth_coal|fuel",
         0.6976,
@@ -1104,7 +1091,7 @@ def report(context, scenario):
         )
         df_final.append(df_cement, inplace=True)
 
-    # ---------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
     # FINAL ENERGY BY FUELS (Only Non-Energy Use)
     # HVC production, ammonia production and methanol production.
 
@@ -1334,8 +1321,10 @@ def report(context, scenario):
                 df_final.append(df_final_energy, inplace=True)
 
             if c == "gas":
-                # Can not distinguish by type Gases (natural gas, biomass, synthetic fossil, efuel)
-                # (coal_gas), from biomass (gas_bio), natural gas (gas_bal): All go into secondary level
+                # Can not distinguish by type Gases
+                # (natural gas, biomass, synthetic fossil, efuel)
+                # (coal_gas), from biomass (gas_bio), natural gas (gas_bal):
+                # All go into secondary level
                 # Can not be distinguished in the final level.
                 df_final_energy.aggregate(
                     "Final Energy|Non-Energy Use|Gases",
@@ -1395,7 +1384,7 @@ def report(context, scenario):
                 # Natural Gas Liquids (Ethane/Propane)
 
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("gas_proc" in v))
+                    v for v in aux2_df["variable"].values if ("gas_proc" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -1597,7 +1586,7 @@ def report(context, scenario):
                         | (v.split("|")[3].endswith("resins"))
                         | (v.split("|")[3].endswith("_i"))
                         | (v.split("|")[3].endswith("_I"))
-                        | (("NH3") in v)
+                        | ("NH3" in v)
                         | (v.split("|")[3].startswith("meth"))
                         | (v.split("|")[3].startswith("CH2O"))
                     )
@@ -1650,8 +1639,10 @@ def report(context, scenario):
                 )
                 df_final.append(df_final_energy, inplace=True)
             if c == "gas":
-                # Can not distinguish by type Gases (natural gas, biomass, synthetic fossil, efuel)
-                # (coal_gas), from biomass (gas_bio), natural gas (gas_bal): All go into secondary level
+                # Can not distinguish by type Gases
+                # (natural gas, biomass, synthetic fossil, efuel)
+                # (coal_gas), from biomass (gas_bio), natural gas (gas_bal):
+                # All go into secondary level
                 # Can not be distinguished in the final level.
 
                 df_final_energy.aggregate(
@@ -1721,7 +1712,7 @@ def report(context, scenario):
                 # Other
 
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("methanol" in v))
+                    v for v in aux2_df["variable"].values if ("methanol" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -2004,7 +1995,7 @@ def report(context, scenario):
                     | (v.split("|")[3].endswith("resins"))
                     | (v.split("|")[3].endswith("_i"))
                     | (v.split("|")[3].endswith("_I"))
-                    | (("NH3") in v)
+                    | ("NH3" in v)
                     | (v.split("|")[3].endswith("_fs"))
                     | (v.split("|")[3].startswith("meth"))
                     | (v.split("|")[3].startswith("CH2O"))
@@ -2055,8 +2046,10 @@ def report(context, scenario):
                 )
                 df_final.append(df_final_energy, inplace=True)
             if c == "gas":
-                # Can not distinguish by type Gases (natural gas, biomass, synthetic fossil, efuel)
-                # (coal_gas), from biomass (gas_bio), natural gas (gas_bal): All go into secondary level
+                # Can not distinguish by type Gases
+                # (natural gas, biomass, synthetic fossil, efuel)
+                # (coal_gas), from biomass (gas_bio), natural gas (gas_bal):
+                # All go into secondary level
                 # Can not be distinguished in the final level.
                 df_final_energy.aggregate(
                     "Final Energy|Industry|Gases",
@@ -2127,7 +2120,7 @@ def report(context, scenario):
 
                 # Methanol
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("methanol" in v))
+                    v for v in aux2_df["variable"].values if ("methanol" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -2139,7 +2132,7 @@ def report(context, scenario):
                 # Natural Gas Liquids (Ethane/Propane)
 
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("gas_proc" in v))
+                    v for v in aux2_df["variable"].values if ("gas_proc" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -2318,7 +2311,7 @@ def report(context, scenario):
                 tec = [
                     t
                     for t in aux2_df["technology"].values
-                    if (((t.endswith("_i")) | (t.endswith("_I"))))
+                    if ((t.endswith("_i")) | (t.endswith("_I")))
                 ]
                 solar_tec = ["solar_i"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
@@ -2416,7 +2409,7 @@ def report(context, scenario):
                 elif c == "liquid_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "ethanol")),
+                            (aux2_df["commodity"] == "ethanol"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2445,7 +2438,7 @@ def report(context, scenario):
                 elif c == "liquid_other":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "methanol")),
+                            (aux2_df["commodity"] == "methanol"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2673,7 +2666,7 @@ def report(context, scenario):
                 elif c == "methanol":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "methanol")),
+                            (aux2_df["commodity"] == "methanol"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2699,7 +2692,7 @@ def report(context, scenario):
                 elif c == "liquid_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "ethanol")),
+                            (aux2_df["commodity"] == "ethanol"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2725,7 +2718,7 @@ def report(context, scenario):
                 elif c == "liquid_gas":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["technology"] == "gas_processing_petro")),
+                            (aux2_df["technology"] == "gas_processing_petro"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2747,7 +2740,7 @@ def report(context, scenario):
                 elif c == "solid_coal":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "coal")),
+                            (aux2_df["commodity"] == "coal"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2757,7 +2750,7 @@ def report(context, scenario):
                 elif c == "solid_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "biomass")),
+                            (aux2_df["commodity"] == "biomass"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2925,7 +2918,7 @@ def report(context, scenario):
                 tec = [
                     t
                     for t in aux2_df["technology"].values
-                    if (((t.endswith("_i")) | (t.endswith("_I")) | (t.endswith("_fs"))))
+                    if ((t.endswith("_i")) | (t.endswith("_I")) | (t.endswith("_fs")))
                 ]
                 solar_tec = ["solar_i"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
@@ -3023,7 +3016,7 @@ def report(context, scenario):
                 elif c == "liquid_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "ethanol")),
+                            (aux2_df["commodity"] == "ethanol"),
                             "variable",
                         ].values
                     ).tolist()
@@ -3057,7 +3050,7 @@ def report(context, scenario):
                 elif c == "liquid_other":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "methanol")),
+                            (aux2_df["commodity"] == "methanol"),
                             "variable",
                         ].values
                     ).tolist()
@@ -3079,7 +3072,7 @@ def report(context, scenario):
                 elif c == "solids_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "biomass")),
+                            (aux2_df["commodity"] == "biomass"),
                             "variable",
                         ].values
                     ).tolist()
@@ -3138,8 +3131,8 @@ def report(context, scenario):
             df_final.append(df_final_energy, inplace=True)
 
     # EMISSIONS
-    # If ammonia/methanol is used as feedstock the emissions are accounted under 'CO2_industry',
-    # so as 'demand'. If used as fuel, under 'CO2_transformation'.
+    # If ammonia/methanol is used as feedstock the emissions are accounted under
+    # 'CO2_industry', so as 'demand'. If used as fuel, under 'CO2_transformation'.
     # The CCS technologies deduct negative emissions from the overall CO2.
 
     sectors = [
@@ -3203,12 +3196,17 @@ def report(context, scenario):
                 # coefficent. CO2 is included here because it is the amount captured
                 # from the atmosphere and not related to process emissions.
 
-                # "emis|CO2_industry|biomass_NH3_ccs|*","emis|CO2_industry|gas_NH3_ccs|*",
-                # "emis|CO2_industry|coal_NH3_ccs|*","emis|CO2_industry|fueloil_NH3_ccs|*",
-                # "emis|CO2_industry|biomass_NH3|*","emis|CO2_industry|gas_NH3|*",
+                # "emis|CO2_industry|biomass_NH3_ccs|*",
+                # "emis|CO2_industry|gas_NH3_ccs|*",
+                # "emis|CO2_industry|coal_NH3_ccs|*",
+                # "emis|CO2_industry|fueloil_NH3_ccs|*",
+                # "emis|CO2_industry|biomass_NH3|*",
+                # "emis|CO2_industry|gas_NH3|*",
                 # "emis|CO2_industry|coal_NH3|*","emis|CO2_industry|fueloil_NH3|*",
-                # "emis|CO2_industry|electr_NH3|*",'emis|CO2_industry|meth_coal|feedstock',
-                # 'emis|CO2_industry|meth_ng|feedstock','emis|CO2_industry|meth_ng_ccs|feedstock',
+                # "emis|CO2_industry|electr_NH3|*",
+                # 'emis|CO2_industry|meth_coal|feedstock',
+                # 'emis|CO2_industry|meth_ng|feedstock',
+                # 'emis|CO2_industry|meth_ng_ccs|feedstock',
 
                 if e == "CO2_industry":
                     emi_filter = [
@@ -3403,7 +3401,8 @@ def report(context, scenario):
                         if s == "steel":
                             # Furnaces are not used as heat source for iron&steel
                             # Dummy supply technologies help accounting the emissions
-                            # from cokeoven_steel, bf_steel, dri_steel, eaf_steel, sinter_steel.
+                            # from cokeoven_steel, bf_steel, dri_steel,
+                            # eaf_steel, sinter_steel.
 
                             tec = [
                                 t
@@ -3426,9 +3425,7 @@ def report(context, scenario):
                             ]
                         elif s == "ammonia":
                             tec = [
-                                t
-                                for t in aux2_df["technology"].values
-                                if (("NH3" in t))
+                                t for t in aux2_df["technology"].values if ("NH3" in t)
                             ]
                         elif s == "methanol":
                             tec = [
@@ -3515,7 +3512,8 @@ def report(context, scenario):
                 )
                 df_emi = pyam.IamDataFrame(data=aux2_df)
 
-                # Aggregation over emission type for each sector if there are elements to aggregate
+                # Aggregation over emission type for each sector
+                # if there are elements to aggregate
 
                 if len(aggregate_list) != 0:
                     for i in range(len(aggregate_list)):
@@ -3566,7 +3564,8 @@ def report(context, scenario):
     #
     #         # Propylene production
     #
-    #         propylene_vars = [  # "out|final_material|propylene|catalytic_cracking_ref|atm_gasoil",
+    #         propylene_vars = [
+    # "out|final_material|propylene|catalytic_cracking_ref|atm_gasoil",
     #             # "out|final_material|propylene|catalytic_cracking_ref|vacuum_gasoil",
     #             "out|final_material|propylene|steam_cracker_petro|atm_gasoil",
     #             "out|final_material|propylene|steam_cracker_petro|naphtha",
@@ -3813,7 +3812,7 @@ def report(context, scenario):
     #                         "in|final|ethanol|ethanol_to_ethylene_petro|M1",
     #                         "in|final|gas|gas_processing_petro|M1",
     #                         "in|final|atm_gasoil|steam_cracker_petro|atm_gasoil",
-    #                         "in|final|vacuum_gasoil|steam_cracker_petro|vacuum_gasoil",
+    #                      "in|final|vacuum_gasoil|steam_cracker_petro|vacuum_gasoil",
     #                         "in|final|naphtha|steam_cracker_petro|naphtha",
     #                     ],
     #                     keep=False,
@@ -3831,7 +3830,8 @@ def report(context, scenario):
     #                 columns=["flow_type", "level", "commodity", "technology", "mode"],
     #             )
     #             aux2_df = pd.concat(
-    #                 [all_flows.reset_index(drop=True), aux1_df.reset_index(drop=True)],
+    #                [all_flows.reset_index(drop=True),
+    #                aux1_df.reset_index(drop=True)],
     #                 axis=1,
     #             )
     #
@@ -3845,7 +3845,8 @@ def report(context, scenario):
     #             commodity_list = []
     #             var_list = []
     #
-    #             # For each commodity collect the variable name, create an aggregate name
+    #             # For each commodity collect the variable name,
+    #             create an aggregate name
     #             s = change_names(s)
     #             for c in np.unique(aux2_df["commodity"].values):
     #                 var = np.unique(
@@ -3973,7 +3974,8 @@ def report(context, scenario):
     #     # Used for calculation of average prices for scraps
     #     output = scenario.par(
     #         "output",
-    #         filters={"technology": ["scrap_recovery_aluminum", "scrap_recovery_steel"]},
+    #         filters={"technology":
+    #         ["scrap_recovery_aluminum", "scrap_recovery_steel"]},
     #     )
     #     # Differs per sector what to report so more flexible with conditions.
     #     # Store the relevant variables in prices_all
@@ -4003,7 +4005,8 @@ def report(context, scenario):
     #         prices_all = prices[(prices["commodity"] == "pig_iron")]
     #     if c == "Steel":
     #         prices_all = prices[
-    #             (prices["commodity"] == "steel") & (prices["level"] == "final_material")
+    #             (prices["commodity"] == "steel")
+    #             & (prices["level"] == "final_material")
     #         ]
     #     if c == "Steel|New Scrap":
     #         prices_all = prices[
@@ -4046,12 +4049,15 @@ def report(context, scenario):
     #         for reg in output["node_loc"].unique():
     #             #for yr in output["year_act"].unique():
     #             for yr in prices["year"].unique():
-    #                 prices_temp = prices.groupby(["node", "year"]).get_group((reg, yr))
+    #                 prices_temp = prices.groupby(
+    #                 ["node", "year"]).get_group((reg, yr))
     #                 rate = prices_temp["weight"].values.tolist()
     #                 amount = prices_temp["lvl"].values.tolist()
     #                 weighted_avg = np.average(amount, weights=rate)
     #                 prices_new = pd.DataFrame(
-    #                     {"node": reg, "year": yr, "commodity": c, "lvl": weighted_avg,},
+    #                     {"node": reg, "year": yr,
+    #                     "commodity": c,
+    #                     "lvl": weighted_avg,},
     #                     index=[0],
     #                 )
     #                 prices_all = pd.concat([prices_all, prices_new])
@@ -4080,7 +4086,9 @@ def report(context, scenario):
     #         if (r == "R11_GLB") | (r == "R12_GLB"):
     #             continue
     #         df_price = pd.DataFrame(
-    #             {"model": model_name, "scenario": scenario_name, "unit": "2010USD/Mt",},
+    #             {"model": model_name,
+    #             "scenario": scenario_name,
+    #             "unit": "2010USD/Mt",},
     #             index=[0],
     #         )
     #
@@ -4119,7 +4127,9 @@ def report(context, scenario):
     # cap_new = scenario.var("CAP_NEW")
     # cap_new.drop(["mrg"], axis=1, inplace=True)
     # cap_new.rename(
-    #     columns={"lvl": "installed_capacity", "node_loc": "region", "year_vtg": "year"},
+    #     columns={"lvl": "installed_capacity",
+    #     "node_loc": "region",
+    #     "year_vtg": "year"},
     #     inplace=True,
     # )
     #
