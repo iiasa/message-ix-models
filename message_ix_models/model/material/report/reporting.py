@@ -741,7 +741,7 @@ def report(context, scenario):
         ]
         total_scrap_steel_vars = ["out|dummy_end_of_life|steel|total_EOL_steel|M1"]
 
-        new_scrap_steel_vars = ["out|new_scrap|steel|manuf_steel|M1"]
+        #new_scrap_steel_vars = ["out|new_scrap|steel|manuf_steel|M1"]
         old_scrap_steel_vars = ["out|dummy_end_of_life|steel|total_EOL_steel|M1"]
 
         df_steel.aggregate(
