@@ -1,4 +1,4 @@
-from .data_util import read_sector_data, read_timeseries
+from .data_util import read_sector_data, read_timeseries, read_rel
 
 import numpy as np
 from collections import defaultdict
@@ -8,7 +8,6 @@ from pathlib import Path
 import pandas as pd
 
 from .util import read_config
-from .data_util import read_rel
 
 # Get endogenous material demand from buildings interface
 from .data_buildings import get_scen_mat_demand
