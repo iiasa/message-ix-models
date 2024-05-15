@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import message_ix
 import openpyxl as pxl
@@ -105,7 +106,7 @@ def combine_df_dictionaries(*args: dict[str, pd.DataFrame]) -> dict:
     return comb_dict
 
 
-def read_yaml_file(file_path: str) -> dict or None:
+def read_yaml_file(file_path: str or Path) -> dict or None:
     """
     Tries to read yaml file into a dict
 
@@ -239,7 +240,7 @@ def price_fit(df: pd.DataFrame) -> float:
         estimated value for price_ref in 2020
     """
 
-    pars, cov = curve_fit(exponential, df.year, df.lvl, maxfev=5000)
+    pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
     val = exponential([2020], *pars)[0]
     # print(df.commodity.unique(), df.node.unique(), val)
     return val
@@ -260,7 +261,7 @@ def cost_fit(df) -> float:
         estimated value for cost_ref in 2020
     """
     # print(df.lvl)
-    pars, cov = curve_fit(exponential, df.year, df.lvl, maxfev=5000)
+    pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
     val = exponential([2020], *pars)[0]
     # print(df.node.unique(), val)
     return val / 1000
@@ -337,3 +338,26 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     for i in range(2, 61):
         ws[f"C{i}"].value = df.values[i - 2]
     wb.save(path + fname)
+
+
+def get_ssp_from_context(context: Context) -> str:
+    """
+    Get selected SSP from context
+    Parameters
+    ----------
+    context: Context
+    Returns
+    -------
+    str
+        SSP label
+    """
+    if "ssp" not in context:
+        ssp = "SSP2"
+    else:
+        ssp = context["ssp"]
+    return ssp
+
+
+def maybe_remove_water_tec(scenario, results):
+    if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
+        results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})

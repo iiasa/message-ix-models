@@ -80,6 +80,81 @@ def gen_data_methanol_new(scenario):
     return pars_dict
 
 
+def broadcast_nodes(df_bc_node, df_final, node_cols, node_cols_codes, i):
+    if len(node_cols) == 1:
+        if "node_loc" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_loc=node_cols_codes["node_loc"]
+            )
+        if "node_vtg" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_vtg=node_cols_codes["node_vtg"]
+            )
+        if "node_rel" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_rel=node_cols_codes["node_rel"]
+            )
+        if "node" in node_cols:
+            df_bc_node = df_bc_node.pipe(broadcast, node=node_cols_codes["node"])
+        if "node_share" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_share=node_cols_codes["node_share"]
+            )
+    else:
+        df_bc_node = df_bc_node.pipe(broadcast, node_loc=node_cols_codes["node_loc"])
+        if len(df_final.loc[i][node_cols].T.unique()) == 1:
+            # df_bc_node["node_rel"] = df_bc_node["node_loc"]
+            df_bc_node = df_bc_node.pipe(
+                same_node
+            )  # not working for node_rel in installed message_ix_models version
+        else:
+            if "node_rel" in list(df_bc_node.columns):
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, node_rel=node_cols_codes["node_rel"]
+                )
+            if "node_origin" in list(df_bc_node.columns):
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, node_origin=node_cols_codes["node_origin"]
+                )
+            if "node_dest" in list(df_bc_node.columns):
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, node_dest=node_cols_codes["node_dest"]
+                )
+    return df_bc_node
+
+
+def broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col):
+    if len(yr_col_out) == 1:
+        yr_list = [i[0] for i in yr_cols_codes[col]]
+        # print(yr_list)
+        if "year_act" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year_act=yr_list)
+        if "year_vtg" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year_vtg=yr_list)
+        if "year_rel" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year_rel=yr_list)
+        if "year" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year=yr_list)
+        df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)
+    else:
+        if "year_vtg" in yr_col_out:
+            y_v = [str(i) for i in yr_cols_codes[col]]
+            df_bc_node = df_bc_node.pipe(broadcast, year_vtg=y_v)
+            df_bc_node["year_act"] = [
+                literal_eval(i)[1] for i in df_bc_node["year_vtg"]
+            ]
+            df_bc_node["year_vtg"] = [
+                literal_eval(i)[0] for i in df_bc_node["year_vtg"]
+            ]
+        if "year_rel" in yr_col_out:
+            if "year_act" in yr_col_out:
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, year_act=[i[0] for i in yr_cols_codes[col]]
+                )
+            df_bc_node["year_rel"] = df_bc_node["year_act"]
+    return df_bc_node
+
+
 def broadcast_reduced_df(df, par_name):
     df_final = df
     df_final_full = pd.DataFrame()
@@ -103,78 +178,13 @@ def broadcast_reduced_df(df, par_name):
         for colname in node_cols:
             df_bc_node[colname] = None
         # broadcast in node dimensions
-        if len(node_cols) == 1:
-            if "node_loc" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_loc=node_cols_codes["node_loc"]
-                )
-            if "node_vtg" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_vtg=node_cols_codes["node_vtg"]
-                )
-            if "node_rel" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_rel=node_cols_codes["node_rel"]
-                )
-            if "node" in node_cols:
-                df_bc_node = df_bc_node.pipe(broadcast, node=node_cols_codes["node"])
-            if "node_share" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_share=node_cols_codes["node_share"]
-                )
-        else:
-            df_bc_node = df_bc_node.pipe(
-                broadcast, node_loc=node_cols_codes["node_loc"]
-            )
-            if len(df_final.loc[i][node_cols].T.unique()) == 1:
-                # df_bc_node["node_rel"] = df_bc_node["node_loc"]
-                df_bc_node = df_bc_node.pipe(
-                    same_node
-                )  # not working for node_rel in installed message_ix_models version
-            else:
-                if "node_rel" in list(df_bc_node.columns):
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, node_rel=node_cols_codes["node_rel"]
-                    )
-                if "node_origin" in list(df_bc_node.columns):
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, node_origin=node_cols_codes["node_origin"]
-                    )
-                if "node_dest" in list(df_bc_node.columns):
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, node_dest=node_cols_codes["node_dest"]
-                    )
+        df_bc_node = broadcast_nodes(
+            df_bc_node, df_final, node_cols, node_cols_codes, i
+        )
 
         for col in yr_col_inp:
             yr_cols_codes[col] = literal_eval(df_bc_node[col].values[0])
-        if len(yr_col_out) == 1:
-            yr_list = [i[0] for i in yr_cols_codes[col]]
-            # print(yr_list)
-            if "year_act" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year_act=yr_list)
-            if "year_vtg" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year_vtg=yr_list)
-            if "year_rel" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year_rel=yr_list)
-            if "year" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year=yr_list)
-            df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)
-        else:
-            if "year_vtg" in yr_col_out:
-                y_v = [str(i) for i in yr_cols_codes[col]]
-                df_bc_node = df_bc_node.pipe(broadcast, year_vtg=y_v)
-                df_bc_node["year_act"] = [
-                    literal_eval(i)[1] for i in df_bc_node["year_vtg"]
-                ]
-                df_bc_node["year_vtg"] = [
-                    literal_eval(i)[0] for i in df_bc_node["year_vtg"]
-                ]
-            if "year_rel" in yr_col_out:
-                if "year_act" in yr_col_out:
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, year_act=[i[0] for i in yr_cols_codes[col]]
-                    )
-                df_bc_node["year_rel"] = df_bc_node["year_act"]
+            broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col)
             # return df_bc_node
         # df_bc_node["year_rel"] = df_bc_node["year_act"]
         df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)

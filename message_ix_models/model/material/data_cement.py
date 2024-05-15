@@ -1,30 +1,20 @@
 from collections import defaultdict
 
-import ixmp
-import message_ix
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import read_sector_data, read_timeseries
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import read_config
+from message_ix_models.model.material.util import get_ssp_from_context, read_config
 from message_ix_models.util import (
     broadcast,
+    nodes_ex_world,
     package_data_path,
     same_node,
 )
 
-# Get endogenous material demand from buildings interface
 
-
-# gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
-#     0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
-#     0.00884341208063,0.00829374133206562, 0.00649794573935969, 0.00649794573935969]
-# gr = np.cumprod([(x+1) for x in gdp_growth])
-
-
-# Generate a fake cement demand
 def gen_mock_demand_cement(scenario):
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
@@ -171,12 +161,11 @@ def gen_data_cement(scenario, dry_run=False):
     # Load configuration
     context = read_config()
     config = read_config()["material"]["cement"]
-    ssp = context["ssp"]
+    ssp = get_ssp_from_context(context)
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
     context.datafile = "Global_steel_cement_MESSAGE.xlsx"
-    # Techno-economic assumptions
-    # TEMP: now add cement sector as well
+
     data_cement = read_sector_data(scenario, "cement")
     # Special treatment for time-dependent Parameters
     data_cement_ts = read_timeseries(scenario, "steel_cement", context.datafile)
@@ -188,22 +177,14 @@ def gen_data_cement(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    nodes = s_info.N
     yv_ya = s_info.yv_ya
     yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1980]
-    nodes.remove("World")
-
     # Do not parametrize GLB region the same way
-    if "R11_GLB" in nodes:
-        nodes.remove("R11_GLB")
-    if "R12_GLB" in nodes:
-        nodes.remove("R12_GLB")
+    nodes = nodes_ex_world(s_info.N)
 
     # for t in s_info.set['technology']:
     for t in config["technology"]["add"]:
-        params = data_cement.loc[
-            (data_cement["technology"] == t), "parameter"
-        ].values.tolist()
+        params = data_cement.loc[(data_cement["technology"] == t), "parameter"].unique()
 
         # Special treatment for time-varying params
         if t in tec_ts:
@@ -363,18 +344,6 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    # demand = gen_mock_demand_cement(scenario)
-    # demand = derive_cement_demand(scenario)
-    # df = make_df(
-    #     parname,
-    #     level="demand",
-    #     commodity="cement",
-    #     value=demand.value,
-    #     unit="t",
-    #     year=demand.year,
-    #     time="year",
-    #     node=demand.node,
-    # )
     df = material_demand_calc.derive_demand("cement", scenario, old_gdp=False, ssp=ssp)
     results[parname].append(df)
 
@@ -386,68 +355,7 @@ def gen_data_cement(scenario, dry_run=False):
     ).pipe(broadcast, node=nodes, technology=ccs_tec)
     results[parname].append(df)
 
-    # Test emission bound
-    # parname = 'bound_emission'
-    # df = (make_df(parname, type_tec='all', type_year='cumulative', \
-    #     type_emission='CO2_industry', \
-    #     value=200, unit='-').pipe(broadcast, node=nodes))
-    # results[parname].append(df)
-
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     return results
-
-
-if __name__ == "__main__":
-    mp = ixmp.Platform("local")
-    scenario = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
-    gen_data_cement(scenario)
-
-# # load rpy2 modules
-# import rpy2.robjects as ro
-# from rpy2.robjects import pandas2ri
-# from rpy2.robjects.conversion import localconverter
-#
-#
-# # This returns a df with columns ["region", "year", "demand.tot"]
-# def derive_cement_demand(scenario, dry_run=False):
-#     """Generate cement demand."""
-#     # paths to r code and lca data
-#     rcode_path = Path(__file__).parents[0] / "material_demand"
-#     context = read_config()
-#
-#     # source R code
-#     r = ro.r
-#     r.source(str(rcode_path / "init_modularized.R"))
-#
-#     # Read population and baseline demand for materials
-#     pop = scenario.par("bound_activity_up", {"technology": "Population"})
-#     pop = pop.loc[pop.year_act >= 2020].rename(
-#         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
-#     )
-#     pop = pop[["region", "year", "pop.mil"]]
-#
-#     base_demand = gen_mock_demand_cement(scenario)
-#     base_demand = base_demand.loc[base_demand.year == 2020].rename(
-#         columns={"value": "demand.tot.base", "node": "region"}
-#     )
-#
-#     # import pdb; pdb.set_trace()
-#
-#     # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
-#     # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
-#     #     columns={"value": "demand.tot.base", "node": "region"}
-#     # )
-#     # base_demand = base_demand[["region", "year", "demand.tot.base"]]
-#
-#     # call R function with type conversion
-#     with localconverter(ro.default_converter + pandas2ri.converter):
-#         # GDP is only in MER in scenario.
-#         # To get PPP GDP, it is read externally from the R side
-#         df = r.derive_cement_demand(
-#             pop, base_demand, str(package_data_path("material"))
-#         )
-#         df.year = df.year.astype(int)
-#
-#     return df

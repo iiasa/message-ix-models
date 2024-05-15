@@ -7,6 +7,7 @@ import message_ix_models.util
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     broadcast,
+    nodes_ex_world,
     same_node,
 )
 
@@ -57,20 +58,11 @@ def gen_data_generic(scenario, dry_run=False):
     # Iterate over technologies
 
     modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = s_info.N
     yv_ya = s_info.yv_ya
 
     # Do not parametrize GLB region the same way
-    if "R11_GLB" in nodes:
-        nodes.remove("R11_GLB")
-        global_region = "R11_GLB"
-    if "R12_GLB" in nodes:
-        nodes.remove("R12_GLB")
-        global_region = "R12_GLB"
-
-    # 'World' is included by default when creating a message_ix.Scenario().
-    # Need to remove it for the China bare model
-    nodes.remove("World")
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
 
     for t in config["technology"]["add"]:
         # years = s_info.Y

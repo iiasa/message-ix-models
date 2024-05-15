@@ -6,9 +6,10 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import read_timeseries
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import read_config
+from message_ix_models.model.material.util import get_ssp_from_context, read_config
 from message_ix_models.util import (
     broadcast,
+    nodes_ex_world,
     package_data_path,
     same_node,
 )
@@ -158,274 +159,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     )
 
 
-def gen_data_petro_chemicals(scenario, dry_run=False):
-    # Load configuration
-    context = read_config()
-    config = context["material"]["petro_chemicals"]
-    ssp = context["ssp"]
-    # Information about scenario, e.g. node, year
-    s_info = ScenarioInfo(scenario)
-
-    # Techno-economic assumptions
-    data_petro = read_data_petrochemicals(scenario)
-    data_petro_ts = read_timeseries(
-        scenario, "petrochemicals", "petrochemicals_techno_economic.xlsx"
-    )
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
-
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = s_info.N
-    yv_ya = s_info.yv_ya
-    nodes.remove("World")
-
-    # Do not parametrize GLB region the same way
-    if "R11_GLB" in nodes:
-        nodes.remove("R11_GLB")
-        global_region = "R11_GLB"
-    if "R12_GLB" in nodes:
-        nodes.remove("R12_GLB")
-        global_region = "R12_GLB"
-
-    for t in config["technology"]["add"]:
-        # years = s_info.Y
-        params = data_petro.loc[
-            (data_petro["technology"] == t), "parameter"
-        ].values.tolist()
-
-        # Availability year of the technology
-        av = data_petro.loc[(data_petro["technology"] == t), "availability"].values[0]
-        modelyears = [year for year in modelyears if year >= av]
-        yva = yv_ya.loc[yv_ya.year_vtg >= av,]
-
-        # Iterate over parameters
-        for par in params:
-            split = par.split("|")
-            param_name = par.split("|")[0]
-
-            val = data_petro.loc[
-                ((data_petro["technology"] == t) & (data_petro["parameter"] == par)),
-                "value",
-            ]
-
-            regions = data_petro.loc[
-                ((data_petro["technology"] == t) & (data_petro["parameter"] == par)),
-                "Region",
-            ]
-
-            # Common parameters for all input and output tables
-            # node_dest and node_origin are the same as node_loc
-
-            common = dict(
-                year_vtg=yva.year_vtg,
-                year_act=yva.year_act,
-                time="year",
-                time_origin="year",
-                time_dest="year",
-            )
-
-            for rg in regions:
-                if len(split) > 1:
-                    if (param_name == "input") | (param_name == "output"):
-                        com = split[1]
-                        lev = split[2]
-                        mod = split[3]
-
-                        if (param_name == "input") and (lev == "import"):
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                mode=mod,
-                                value=val[regions[regions == rg].index[0]],
-                                unit="t",
-                                node_loc=rg,
-                                node_origin=global_region,
-                                **common,
-                            )
-                        elif (param_name == "output") and (lev == "export"):
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                mode=mod,
-                                value=val[regions[regions == rg].index[0]],
-                                unit="t",
-                                node_loc=rg,
-                                node_dest=global_region,
-                                **common,
-                            )
-                        else:
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                mode=mod,
-                                value=val[regions[regions == rg].index[0]],
-                                unit="t",
-                                node_loc=rg,
-                                **common,
-                            ).pipe(same_node)
-
-                        # Copy parameters to all regions, when node_loc is not GLB
-                        if (len(regions) == 1) and (rg != global_region):
-                            # print("copying to all R11", rg, lev)
-                            df["node_loc"] = None
-                            df = df.pipe(broadcast, node_loc=nodes)  # .pipe(same_node)
-                            # Use same_node only for non-trade technologies
-                            if (lev != "import") and (lev != "export"):
-                                df = df.pipe(same_node)
-
-                    elif param_name == "emission_factor":
-                        emi = split[1]
-                        mod = split[2]
-
-                        df = make_df(
-                            param_name,
-                            technology=t,
-                            value=val[regions[regions == rg].index[0]],
-                            emission=emi,
-                            mode=mod,
-                            unit="t",
-                            node_loc=rg,
-                            **common,
-                        )
-
-                    elif param_name == "var_cost":
-                        mod = split[1]
-                        if rg != global_region:
-                            df = (
-                                make_df(
-                                    param_name,
-                                    technology=t,
-                                    commodity=com,
-                                    level=lev,
-                                    mode=mod,
-                                    value=val[regions[regions == rg].index[0]],
-                                    unit="t",
-                                    **common,
-                                )
-                                .pipe(broadcast, node_loc=nodes)
-                                .pipe(same_node)
-                            )
-                        else:
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                mode=mod,
-                                value=val[regions[regions == rg].index[0]],
-                                node_loc=rg,
-                                unit="t",
-                                **common,
-                            ).pipe(same_node)
-
-                    elif param_name == "share_mode_up":
-                        mod = split[1]
-
-                        df = (
-                            make_df(
-                                param_name,
-                                technology=t,
-                                mode=mod,
-                                shares="steam_cracker",
-                                value=val[regions[regions == rg].index[0]],
-                                unit="-",
-                                **common,
-                            )
-                            .pipe(broadcast, node_share=nodes)
-                            .pipe(same_node)
-                        )
-
-                # Rest of the parameters apart from input, output and emission_factor
-
-                else:
-                    df = make_df(
-                        param_name,
-                        technology=t,
-                        value=val[regions[regions == rg].index[0]],
-                        unit="t",
-                        node_loc=rg,
-                        **common,
-                    )
-                    df = df.drop_duplicates()
-
-                # Copy parameters to all regions
-                if (len(regions) == 1) and (rg != global_region):
-                    if "node_loc" in df.columns:
-                        if (
-                            len(set(df["node_loc"])) == 1
-                            and list(set(df["node_loc"]))[0] != global_region
-                        ):
-                            # print("Copying to all R11")
-                            df["node_loc"] = None
-                            df = df.pipe(broadcast, node_loc=nodes)
-
-                results[param_name].append(df)
-
-    share_dict = {
-        "shares": "steam_cracker",
-        "node_share": ["R12_MEA", "R12_NAM"],
-        "technology": "steam_cracker_petro",
-        "mode": "ethane",
-        "year_act": "2020",
-        "time": "year",
-        "value": [0.4, 0.4],
-        "unit": "-",
-    }
-    results["share_mode_lo"].append(make_df("share_mode_lo", **share_dict))
-
-    # Add demand
-    # Create external demand param
-
-    # demand_HVC = derive_petro_demand(scenario)
-    # default_gdp_elasticity = float(0.93)
-    # context = read_config()
-
-    # df_pars = pd.read_excel(
-    #     package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
-    #     sheet_name="Sheet1",
-    #     dtype=object,
-    # )
-    # pars = df_pars.set_index("par").to_dict()["value"]
-    # default_gdp_elasticity_2020 = pars["hvc_elasticity_2020"]
-    # default_gdp_elasticity_2030 = pars["hvc_elasticity_2030"]
-
-    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
-        ssp_mode_map[ssp]
-    ]
-
-    demand_hvc = material_demand_calc.gen_demand_petro(
-        scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
-    )
-    results["demand"].append(demand_hvc)
-
-    # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
-    # value=demand_e.value, unit='t',year=demand_e.year, time='year', \
-    # node=demand_e.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_e)
-    #
-    # df_p = make_df(paramname, level='final_material', commodity="propylene", \
-    # value=demand_p.value, unit='t',year=demand_p.year, time='year', \
-    # node=demand_p.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_p)
-    #
-    # df_BTX = make_df(paramname, level='final_material', commodity="BTX", \
-    # value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
-    # node=demand_BTX.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_BTX)
-
-    # Special treatment for time-varying params
-
-    tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
-
+def gen_data_petro_ts(data_petro_ts, results, tec_ts, nodes):
     for t in tec_ts:
         common = dict(
             time="year",
@@ -433,7 +167,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
             time_dest="year",
         )
 
-        param_name = data_petro_ts.loc[(data_petro_ts["technology"] == t), "parameter"]
+        param_name = data_petro_ts.loc[
+            (data_petro_ts["technology"] == t), "parameter"
+        ].unique()
 
         for p in set(param_name):
             val = data_petro_ts.loc[
@@ -484,6 +220,267 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                 )
 
             results[p].append(df)
+
+
+def assign_input_outpt(
+    split, param_name, regions, val, t, rg, global_region, common, nodes
+):
+    com = split[1]
+    lev = split[2]
+    mod = split[3]
+
+    if (param_name == "input") and (lev == "import"):
+        df = make_df(
+            param_name,
+            technology=t,
+            commodity=com,
+            level=lev,
+            mode=mod,
+            value=val[regions[regions == rg].index[0]],
+            unit="t",
+            node_loc=rg,
+            node_origin=global_region,
+            **common,
+        )
+    elif (param_name == "output") and (lev == "export"):
+        df = make_df(
+            param_name,
+            technology=t,
+            commodity=com,
+            level=lev,
+            mode=mod,
+            value=val[regions[regions == rg].index[0]],
+            unit="t",
+            node_loc=rg,
+            node_dest=global_region,
+            **common,
+        )
+    else:
+        df = make_df(
+            param_name,
+            technology=t,
+            commodity=com,
+            level=lev,
+            mode=mod,
+            value=val[regions[regions == rg].index[0]],
+            unit="t",
+            node_loc=rg,
+            **common,
+        ).pipe(same_node)
+
+    # Copy parameters to all regions, when node_loc is not GLB
+    if (len(regions) == 1) and (rg != global_region):
+        # print("copying to all R11", rg, lev)
+        df["node_loc"] = None
+        df = df.pipe(broadcast, node_loc=nodes)  # .pipe(same_node)
+        # Use same_node only for non-trade technologies
+        if (lev != "import") and (lev != "export"):
+            df = df.pipe(same_node)
+    return df
+
+
+def broadcast_to_regions(df, global_region, nodes):
+    if "node_loc" in df.columns:
+        if (
+            len(set(df["node_loc"])) == 1
+            and list(set(df["node_loc"]))[0] != global_region
+        ):
+            # print("Copying to all R11")
+            df["node_loc"] = None
+            df = df.pipe(broadcast, node_loc=nodes)
+    return df
+
+
+def gen_data_petro_chemicals(scenario, dry_run=False):
+    # Load configuration
+    context = read_config()
+    config = context["material"]["petro_chemicals"]
+    ssp = get_ssp_from_context(context)
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    # Techno-economic assumptions
+    data_petro = read_data_petrochemicals(scenario)
+    data_petro_ts = read_timeseries(
+        scenario, "petrochemicals", "petrochemicals_techno_economic.xlsx"
+    )
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+    yv_ya = s_info.yv_ya
+
+    for t in config["technology"]["add"]:
+        # years = s_info.Y
+        params = data_petro.loc[(data_petro["technology"] == t), "parameter"].unique()
+
+        # Availability year of the technology
+        av = data_petro.loc[(data_petro["technology"] == t), "availability"].values[0]
+        modelyears = [year for year in modelyears if year >= av]
+        yva = yv_ya.loc[yv_ya.year_vtg >= av,]
+
+        # Iterate over parameters
+        for par in params:
+            split = par.split("|")
+            param_name = par.split("|")[0]
+
+            val = data_petro.loc[
+                ((data_petro["technology"] == t) & (data_petro["parameter"] == par)),
+                "value",
+            ]
+
+            regions = data_petro.loc[
+                ((data_petro["technology"] == t) & (data_petro["parameter"] == par)),
+                "Region",
+            ]
+
+            # Common parameters for all input and output tables
+            # node_dest and node_origin are the same as node_loc
+
+            common = dict(
+                year_vtg=yva.year_vtg,
+                year_act=yva.year_act,
+                time="year",
+                time_origin="year",
+                time_dest="year",
+            )
+
+            for rg in regions:
+                if len(split) > 1:
+                    if (param_name == "input") | (param_name == "output"):
+                        df = assign_input_outpt(
+                            split,
+                            param_name,
+                            regions,
+                            val,
+                            t,
+                            rg,
+                            global_region,
+                            common,
+                            nodes,
+                        )
+                    elif param_name == "emission_factor":
+                        emi = split[1]
+                        mod = split[2]
+
+                        df = make_df(
+                            param_name,
+                            technology=t,
+                            value=val[regions[regions == rg].index[0]],
+                            emission=emi,
+                            mode=mod,
+                            unit="t",
+                            node_loc=rg,
+                            **common,
+                        )
+
+                    elif param_name == "var_cost":
+                        mod = split[1]
+                        if rg != global_region:
+                            df = (
+                                make_df(
+                                    param_name,
+                                    technology=t,
+                                    mode=mod,
+                                    value=val[regions[regions == rg].index[0]],
+                                    unit="t",
+                                    **common,
+                                )
+                                .pipe(broadcast, node_loc=nodes)
+                                .pipe(same_node)
+                            )
+                        else:
+                            df = make_df(
+                                param_name,
+                                technology=t,
+                                mode=mod,
+                                value=val[regions[regions == rg].index[0]],
+                                node_loc=rg,
+                                unit="t",
+                                **common,
+                            ).pipe(same_node)
+
+                    elif param_name == "share_mode_up":
+                        mod = split[1]
+
+                        df = (
+                            make_df(
+                                param_name,
+                                technology=t,
+                                mode=mod,
+                                shares="steam_cracker",
+                                value=val[regions[regions == rg].index[0]],
+                                unit="-",
+                                **common,
+                            )
+                            .pipe(broadcast, node_share=nodes)
+                            .pipe(same_node)
+                        )
+
+                # Rest of the parameters apart from input, output and emission_factor
+
+                else:
+                    df = make_df(
+                        param_name,
+                        technology=t,
+                        value=val[regions[regions == rg].index[0]],
+                        unit="t",
+                        node_loc=rg,
+                        **common,
+                    )
+                    df = df.drop_duplicates()
+
+                # Copy parameters to all regions
+                if (len(regions) == 1) and (rg != global_region):
+                    df = broadcast_to_regions(df, global_region, nodes)
+
+                results[param_name].append(df)
+
+    share_dict = {
+        "shares": "steam_cracker",
+        "node_share": ["R12_MEA", "R12_NAM"],
+        "technology": "steam_cracker_petro",
+        "mode": "ethane",
+        "year_act": "2020",
+        "time": "year",
+        "value": [0.4, 0.4],
+        "unit": "-",
+    }
+    results["share_mode_lo"].append(make_df("share_mode_lo", **share_dict))
+
+    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
+        ssp_mode_map[ssp]
+    ]
+    demand_hvc = material_demand_calc.gen_demand_petro(
+        scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
+    )
+    results["demand"].append(demand_hvc)
+
+    # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
+    # value=demand_e.value, unit='t',year=demand_e.year, time='year', \
+    # node=demand_e.node)#.pipe(broadcast, node=nodes)
+    # results["demand"].append(df_e)
+    #
+    # df_p = make_df(paramname, level='final_material', commodity="propylene", \
+    # value=demand_p.value, unit='t',year=demand_p.year, time='year', \
+    # node=demand_p.node)#.pipe(broadcast, node=nodes)
+    # results["demand"].append(df_p)
+    #
+    # df_BTX = make_df(paramname, level='final_material', commodity="BTX", \
+    # value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
+    # node=demand_BTX.node)#.pipe(broadcast, node=nodes)
+    # results["demand"].append(df_BTX)
+
+    # Special treatment for time-varying params
+
+    tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
+
+    gen_data_petro_ts(data_petro_ts, results, tec_ts, nodes)
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 

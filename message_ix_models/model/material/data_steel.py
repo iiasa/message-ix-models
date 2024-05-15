@@ -11,15 +11,20 @@ from message_ix_models.model.material.data_util import (
     read_timeseries,
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import read_config
+from message_ix_models.model.material.util import (
+    get_ssp_from_context,
+    maybe_remove_water_tec,
+    read_config,
+    remove_from_list_if_exists,
+)
 from message_ix_models.util import (
     broadcast,
+    nodes_ex_world,
     package_data_path,
     same_node,
 )
 
 
-# Generate a fake steel demand
 def gen_mock_demand_steel(scenario):
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
@@ -110,354 +115,240 @@ def gen_mock_demand_steel(scenario):
     return demand2020_steel
 
 
-def gen_data_steel(scenario, dry_run=False):
-    """Generate data for materials representation of steel industry."""
-    # Load configuration
-    context = read_config()
-    config = context["material"]["steel"]
-    ssp = context["ssp"]
-    # Information about scenario, e.g. node, year
-    s_info = ScenarioInfo(scenario)
+def gen_data_steel_ts(data_steel_ts, results, t, nodes):
+    common = dict(
+        time="year",
+        time_origin="year",
+        time_dest="year",
+    )
 
-    # Techno-economic assumptions
-    # TEMP: now add cement sector as well
-    # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel")
-    # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel_cement", context.datafile)
-    data_steel_rel = read_rel(scenario, "steel_cement", context.datafile)
+    param_name = data_steel_ts.loc[
+        (data_steel_ts["technology"] == t), "parameter"
+    ].unique()
 
-    tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
-
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
-
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = s_info.N
-    yv_ya = s_info.yv_ya
-    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1990]
-    nodes.remove("World")
-
-    # Do not parametrize GLB region the same way
-    if "R11_GLB" in nodes:
-        nodes.remove("R11_GLB")
-        global_region = "R11_GLB"
-    if "R12_GLB" in nodes:
-        nodes.remove("R12_GLB")
-        global_region = "R12_GLB"
-
-    # for t in s_info.set['technology']:
-    for t in config["technology"]["add"]:
-        params = data_steel.loc[
-            (data_steel["technology"] == t), "parameter"
-        ].values.tolist()
-
-        # Special treatment for time-varying params
-        if t in tec_ts:
-            common = dict(
-                time="year",
-                time_origin="year",
-                time_dest="year",
-            )
-
-            param_name = data_steel_ts.loc[
-                (data_steel_ts["technology"] == t), "parameter"
+    for p in set(param_name):
+        val = data_steel_ts.loc[
+            (data_steel_ts["technology"] == t) & (data_steel_ts["parameter"] == p),
+            "value",
+        ]
+        # units = data_steel_ts.loc[
+        #     (data_steel_ts["technology"] == t)
+        #     & (data_steel_ts["parameter"] == p),
+        #     "units",
+        # ].values[0]
+        mod = data_steel_ts.loc[
+            (data_steel_ts["technology"] == t) & (data_steel_ts["parameter"] == p),
+            "mode",
+        ]
+        yr = data_steel_ts.loc[
+            (data_steel_ts["technology"] == t) & (data_steel_ts["parameter"] == p),
+            "year",
+        ]
+        if p == "var_cost":
+            df = make_df(
+                p,
+                technology=t,
+                value=val,
+                unit="t",
+                year_vtg=yr,
+                year_act=yr,
+                mode=mod,
+                **common,
+            ).pipe(broadcast, node_loc=nodes)
+        if p == "output":
+            comm = data_steel_ts.loc[
+                (data_steel_ts["technology"] == t) & (data_steel_ts["parameter"] == p),
+                "commodity",
             ]
 
-            for p in set(param_name):
-                val = data_steel_ts.loc[
-                    (data_steel_ts["technology"] == t)
-                    & (data_steel_ts["parameter"] == p),
-                    "value",
-                ]
-                # units = data_steel_ts.loc[
-                #     (data_steel_ts["technology"] == t)
-                #     & (data_steel_ts["parameter"] == p),
-                #     "units",
-                # ].values[0]
-                mod = data_steel_ts.loc[
-                    (data_steel_ts["technology"] == t)
-                    & (data_steel_ts["parameter"] == p),
-                    "mode",
-                ]
-                yr = data_steel_ts.loc[
-                    (data_steel_ts["technology"] == t)
-                    & (data_steel_ts["parameter"] == p),
-                    "year",
-                ]
-                if p == "var_cost":
-                    df = make_df(
-                        p,
-                        technology=t,
-                        value=val,
-                        unit="t",
-                        year_vtg=yr,
-                        year_act=yr,
-                        mode=mod,
-                        **common,
-                    ).pipe(broadcast, node_loc=nodes)
-                if p == "output":
-                    comm = data_steel_ts.loc[
-                        (data_steel_ts["technology"] == t)
-                        & (data_steel_ts["parameter"] == p),
-                        "commodity",
-                    ]
+            lev = data_steel_ts.loc[
+                (data_steel_ts["technology"] == t) & (data_steel_ts["parameter"] == p),
+                "level",
+            ]
 
-                    lev = data_steel_ts.loc[
-                        (data_steel_ts["technology"] == t)
-                        & (data_steel_ts["parameter"] == p),
-                        "level",
-                    ]
-
-                    rg = data_steel_ts.loc[
-                        (data_steel_ts["technology"] == t)
-                        & (data_steel_ts["parameter"] == p),
-                        "region",
-                    ]
-
-                    df = make_df(
-                        p,
-                        technology=t,
-                        value=val,
-                        unit="t",
-                        year_vtg=yr,
-                        year_act=yr,
-                        mode=mod,
-                        node_loc=rg,
-                        node_dest=rg,
-                        commodity=comm,
-                        level=lev,
-                        **common,
-                    )
-                else:
-                    rg = data_steel_ts.loc[
-                        (data_steel_ts["technology"] == t)
-                        & (data_steel_ts["parameter"] == p),
-                        "region",
-                    ]
-                    df = make_df(
-                        p,
-                        technology=t,
-                        value=val,
-                        unit="t",
-                        year_vtg=yr,
-                        year_act=yr,
-                        mode=mod,
-                        node_loc=rg,
-                        **common,
-                    )
-
-                results[p].append(df)
-
-        # Iterate over parameters
-        for par in params:
-            # Obtain the parameter names, commodity,level,emission
-            split = par.split("|")
-            param_name = split[0]
-            # Obtain the scalar value for the parameter
-            val = data_steel.loc[
-                ((data_steel["technology"] == t) & (data_steel["parameter"] == par)),
-                "value",
-            ]  # .values
-            regions = data_steel.loc[
-                ((data_steel["technology"] == t) & (data_steel["parameter"] == par)),
+            rg = data_steel_ts.loc[
+                (data_steel_ts["technology"] == t) & (data_steel_ts["parameter"] == p),
                 "region",
-            ]  # .values
+            ]
 
-            common = dict(
-                year_vtg=yv_ya.year_vtg,
-                year_act=yv_ya.year_act,
-                # mode="M1",
-                time="year",
-                time_origin="year",
-                time_dest="year",
+            df = make_df(
+                p,
+                technology=t,
+                value=val,
+                unit="t",
+                year_vtg=yr,
+                year_act=yr,
+                mode=mod,
+                node_loc=rg,
+                node_dest=rg,
+                commodity=comm,
+                level=lev,
+                **common,
+            )
+        else:
+            rg = data_steel_ts.loc[
+                (data_steel_ts["technology"] == t) & (data_steel_ts["parameter"] == p),
+                "region",
+            ]
+            df = make_df(
+                p,
+                technology=t,
+                value=val,
+                unit="t",
+                year_vtg=yr,
+                year_act=yr,
+                mode=mod,
+                node_loc=rg,
+                **common,
             )
 
-            for rg in regions:
-                # For the parameters which inlcudes index names
-                if len(split) > 1:
-                    if (param_name == "input") | (param_name == "output"):
-                        # Assign commodity and level names
-                        com = split[1]
-                        lev = split[2]
-                        mod = split[3]
-                        if (param_name == "input") and (lev == "import"):
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                value=val[regions[regions == rg].index[0]],
-                                mode=mod,
-                                unit="t",
-                                node_loc=rg,
-                                node_origin=global_region,
-                                **common,
-                            )
+        results[p].append(df)
+    return
 
-                        elif (param_name == "output") and (lev == "export"):
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                value=val[regions[regions == rg].index[0]],
-                                mode=mod,
-                                unit="t",
-                                node_loc=rg,
-                                node_dest=global_region,
-                                **common,
-                            )
 
-                        else:
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                value=val[regions[regions == rg].index[0]],
-                                mode=mod,
-                                unit="t",
-                                node_loc=rg,
-                                **common,
-                            ).pipe(same_node)
+def get_data_steel_const(data_steel, results, params, t, yv_ya, nodes, global_region):
+    for par in params:
+        # Obtain the parameter names, commodity,level,emission
+        split = par.split("|")
+        param_name = split[0]
+        # Obtain the scalar value for the parameter
+        val = data_steel.loc[
+            ((data_steel["technology"] == t) & (data_steel["parameter"] == par)),
+            "value",
+        ]  # .values
+        regions = data_steel.loc[
+            ((data_steel["technology"] == t) & (data_steel["parameter"] == par)),
+            "region",
+        ]  # .values
 
-                        # Copy parameters to all regions, when node_loc is not GLB
-                        if (len(regions) == 1) and (rg != global_region):
-                            df["node_loc"] = None
-                            df = df.pipe(broadcast, node_loc=nodes)
-                            # Use same_node only for non-trade technologies
-                            if (lev != "import") and (lev != "export"):
-                                df = df.pipe(same_node)
+        common = dict(
+            year_vtg=yv_ya.year_vtg,
+            year_act=yv_ya.year_act,
+            # mode="M1",
+            time="year",
+            time_origin="year",
+            time_dest="year",
+        )
 
-                    elif param_name == "emission_factor":
-                        # Assign the emisson type
-                        emi = split[1]
-                        mod = split[2]
-
+        for rg in regions:
+            # For the parameters which inlcudes index names
+            if len(split) > 1:
+                if (param_name == "input") | (param_name == "output"):
+                    # Assign commodity and level names
+                    com = split[1]
+                    lev = split[2]
+                    mod = split[3]
+                    if (param_name == "input") and (lev == "import"):
                         df = make_df(
                             param_name,
                             technology=t,
+                            commodity=com,
+                            level=lev,
                             value=val[regions[regions == rg].index[0]],
-                            emission=emi,
                             mode=mod,
                             unit="t",
                             node_loc=rg,
+                            node_origin=global_region,
                             **common,
                         )
 
-                    else:  # time-independent var_cost
-                        mod = split[1]
+                    elif (param_name == "output") and (lev == "export"):
                         df = make_df(
                             param_name,
                             technology=t,
+                            commodity=com,
+                            level=lev,
+                            value=val[regions[regions == rg].index[0]],
+                            mode=mod,
+                            unit="t",
+                            node_loc=rg,
+                            node_dest=global_region,
+                            **common,
+                        )
+
+                    else:
+                        df = make_df(
+                            param_name,
+                            technology=t,
+                            commodity=com,
+                            level=lev,
                             value=val[regions[regions == rg].index[0]],
                             mode=mod,
                             unit="t",
                             node_loc=rg,
                             **common,
-                        )
+                        ).pipe(same_node)
 
-                # Parameters with only parameter name
-                else:
+                    # Copy parameters to all regions, when node_loc is not GLB
+                    if (len(regions) == 1) and (rg != global_region):
+                        df["node_loc"] = None
+                        df = df.pipe(broadcast, node_loc=nodes)
+                        # Use same_node only for non-trade technologies
+                        if (lev != "import") and (lev != "export"):
+                            df = df.pipe(same_node)
+
+                elif param_name == "emission_factor":
+                    # Assign the emisson type
+                    emi = split[1]
+                    mod = split[2]
+
                     df = make_df(
                         param_name,
                         technology=t,
                         value=val[regions[regions == rg].index[0]],
+                        emission=emi,
+                        mode=mod,
                         unit="t",
                         node_loc=rg,
                         **common,
                     )
 
-                # Copy parameters to all regions
-                if (
-                    len(set(df["node_loc"])) == 1
-                    and list(set(df["node_loc"]))[0] != global_region
-                ):
-                    df["node_loc"] = None
-                    df = df.pipe(broadcast, node_loc=nodes)
+                else:  # time-independent var_cost
+                    mod = split[1]
+                    df = make_df(
+                        param_name,
+                        technology=t,
+                        value=val[regions[regions == rg].index[0]],
+                        mode=mod,
+                        unit="t",
+                        node_loc=rg,
+                        **common,
+                    )
 
-                results[param_name].append(df)
+            # Parameters with only parameter name
+            else:
+                df = make_df(
+                    param_name,
+                    technology=t,
+                    value=val[regions[regions == rg].index[0]],
+                    unit="t",
+                    node_loc=rg,
+                    **common,
+                )
 
-    # Add relation for the maximum global scrap use in 2020
+            # Copy parameters to all regions
+            if (
+                len(set(df["node_loc"])) == 1
+                and list(set(df["node_loc"]))[0] != global_region
+            ):
+                df["node_loc"] = None
+                df = df.pipe(broadcast, node_loc=nodes)
 
-    df_max_recycling = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "year_act": 2020,
-            "node_loc": nodes,
-            "technology": "scrap_recovery_steel",
-            "mode": "M1",
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_activity")
-                ),
-                "value",
-            ].values[0],
-        }
-    )
+            results[param_name].append(df)
+    return
 
-    df_max_recycling_upper = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_upper")
-                ),
-                "value",
-            ].values[0],
-        },
-        index=[0],
-    )
-    df_max_recycling_lower = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_lower")
-                ),
-                "value",
-            ].values[0],
-        },
-        index=[0],
-    )
 
-    results["relation_activity"].append(df_max_recycling)
-    results["relation_upper"].append(df_max_recycling_upper)
-    results["relation_lower"].append(df_max_recycling_lower)
-
-    # Add relations for scrap grades and availability
-    regions = set(data_steel_rel["Region"].values)
+def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
     for reg in regions:
-        for r in data_steel_rel["relation"]:
+        for r in data_steel_rel["relation"].unique():
             model_years_rel = modelyears.copy()
             if r is None:
                 break
             if r == "max_global_recycling_steel":
                 continue
-            if r == "minimum_recycling_steel":
+            if r in ["minimum_recycling_steel", "max_regional_recycling_steel"]:
                 # Do not implement the minimum recycling rate for the year 2020
-                if 2020 in model_years_rel:
-                    model_years_rel.remove(2020)
-            if r == "max_regional_recycling_steel":
-                # Do not implement the minimum recycling rate for the year 2020
-                if 2020 in model_years_rel:
-                    model_years_rel.remove(2020)
+                remove_from_list_if_exists(2020, model_years_rel)
 
             params = set(
                 data_steel_rel.loc[
@@ -520,58 +411,118 @@ def gen_data_steel(scenario, dry_run=False):
                     )
 
                     results[par_name].append(df)
+    return
+
+
+def gen_data_steel(scenario, dry_run=False):
+    """Generate data for materials representation of steel industry."""
+    # Load configuration
+    context = read_config()
+    config = context["material"]["steel"]
+    ssp = get_ssp_from_context(context)
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    # Techno-economic assumptions
+    # TEMP: now add cement sector as well
+    # => Need to separate those since now I have get_data_steel and cement
+    data_steel = read_sector_data(scenario, "steel")
+    # Special treatment for time-dependent Parameters
+    data_steel_ts = read_timeseries(scenario, "steel_cement", context.datafile)
+    data_steel_rel = read_rel(scenario, "steel_cement", context.datafile)
+
+    tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
+
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+    yv_ya = s_info.yv_ya
+    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1990]
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+    for t in config["technology"]["add"]:
+        params = data_steel.loc[(data_steel["technology"] == t), "parameter"].unique()
+
+        # Special treatment for time-varying params
+        if t in tec_ts:
+            gen_data_steel_ts(data_steel_ts, results, t, nodes)
+
+        # Iterate over parameters
+        get_data_steel_const(
+            data_steel, results, params, t, yv_ya, nodes, global_region
+        )
+
+    # Add relation for the maximum global scrap use in 2020
+    df_max_recycling = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "year_act": 2020,
+            "node_loc": nodes,
+            "technology": "scrap_recovery_steel",
+            "mode": "M1",
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_activity")
+                ),
+                "value",
+            ].values[0],
+        }
+    )
+    df_max_recycling_upper = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_upper")
+                ),
+                "value",
+            ].values[0],
+        },
+        index=[0],
+    )
+    df_max_recycling_lower = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_lower")
+                ),
+                "value",
+            ].values[0],
+        },
+        index=[0],
+    )
+    results["relation_activity"].append(df_max_recycling)
+    results["relation_upper"].append(df_max_recycling_upper)
+    results["relation_lower"].append(df_max_recycling_lower)
+    # Add relations for scrap grades and availability
+    regions = set(data_steel_rel["Region"].values)
+    gen_data_steel_rel(data_steel_rel, results, regions, modelyears)
 
     # Create external demand param
     parname = "demand"
-
     df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
     results[parname].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-    if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
-        results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
+
+    maybe_remove_water_tec(scenario, results)
+
     return results
-
-
-# # load rpy2 modules
-# import rpy2.robjects as ro
-# from rpy2.robjects import pandas2ri
-# from rpy2.robjects.conversion import localconverter
-#
-#
-# # This returns a df with columns ["region", "year", "demand.tot"]
-# def derive_steel_demand(scenario, dry_run=False):
-#     """Generate steel demand."""
-#     # paths to r code and lca data
-#     rcode_path = Path(__file__).parents[0] / "material_demand"
-#     context = read_config()
-#
-#     # source R code
-#     r = ro.r
-#     r.source(str(rcode_path / "init_modularized.R"))
-#     context.get_local_path("material")
-#     # Read population and baseline demand for materials
-#     pop = scenario.par("bound_activity_up", {"technology": "Population"})
-#     pop = pop.loc[pop.year_act >= 2020].rename(
-#         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
-#     )
-#
-#     # import pdb; pdb.set_trace()
-#
-#     pop = pop[["region", "year", "pop.mil"]]
-#
-#     base_demand = gen_mock_demand_steel(scenario)
-#     base_demand = base_demand.loc[base_demand.year == 2020].rename(
-#         columns={"value": "demand.tot.base", "node": "region"}
-#     )
-#
-#     # call R function with type conversion
-#     with localconverter(ro.default_converter + pandas2ri.converter):
-#         # GDP is only in MER in scenario.
-#         # To get PPP GDP, it is read externally from the R side
-#         df = r.derive_steel_demand(pop, base_demand,
-#         str(package_data_path("material")))
-#         df.year = df.year.astype(int)
-#
-#     return df

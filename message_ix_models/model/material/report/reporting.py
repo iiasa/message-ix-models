@@ -153,7 +153,7 @@ def fix_excel(path_temp, path_new):
     new_workbook.save(path_new)
 
 
-def report(context, scenario):
+def report(context, scenario):    # noqa: C901
     # Obtain scenario information and directory
 
     s_info = ScenarioInfo(scenario)
@@ -741,7 +741,7 @@ def report(context, scenario):
         ]
         total_scrap_steel_vars = ["out|dummy_end_of_life|steel|total_EOL_steel|M1"]
 
-        #new_scrap_steel_vars = ["out|new_scrap|steel|manuf_steel|M1"]
+        # new_scrap_steel_vars = ["out|new_scrap|steel|manuf_steel|M1"]
         old_scrap_steel_vars = ["out|dummy_end_of_life|steel|total_EOL_steel|M1"]
 
         df_steel.aggregate(
