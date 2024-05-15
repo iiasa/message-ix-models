@@ -4,8 +4,13 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import read_config
-from message_ix_models.util import broadcast, package_data_path, same_node
+from message_ix_models.model.material.util import maybe_remove_water_tec, read_config
+from message_ix_models.util import (
+    broadcast,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
+)
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
@@ -51,14 +56,30 @@ def gen_all_NH3_fert(scenario, dry_run=False):
     }
 
 
+def broadcast_years(df_new, max_lt, act_years, vtg_years):
+    if "year_act" in df_new.columns:
+        df_new = df_new.pipe(same_node).pipe(broadcast, year_act=act_years)
+
+        if "year_vtg" in df_new.columns:
+            df_new = df_new.pipe(
+                broadcast,
+                year_vtg=np.linspace(
+                    0, int(max_lt / 5), int(max_lt / 5 + 1), dtype=int
+                ),
+            )
+            df_new["year_vtg"] = df_new["year_act"] - 5 * df_new["year_vtg"]
+            # remove years that are not in scenario set
+            df_new = df_new[~df_new["year_vtg"].isin([2065, 2075, 2085, 2095, 2105])]
+    else:
+        if "year_vtg" in df_new.columns:
+            df_new = df_new.pipe(same_node).pipe(broadcast, year_vtg=vtg_years)
+    return df_new
+
+
 def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
     s_info = ScenarioInfo(scenario)
     # s_info.yv_ya
-    nodes = s_info.N
-    if "World" in nodes:
-        nodes.pop(nodes.index("World"))
-    if "R12_GLB" in nodes:
-        nodes.pop(nodes.index("R12_GLB"))
+    nodes = nodes_ex_world(s_info.N)
 
     df = pd.read_excel(
         package_data_path(
@@ -94,25 +115,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         df_new = pd.concat([df_new_reg, df_new_no_reg])
 
         # broadcast scenario years
-        if "year_act" in df_new.columns:
-            df_new = df_new.pipe(same_node).pipe(broadcast, year_act=act_years)
-
-            if "year_vtg" in df_new.columns:
-                df_new = df_new.pipe(
-                    broadcast,
-                    year_vtg=np.linspace(
-                        0, int(max_lt / 5), int(max_lt / 5 + 1), dtype=int
-                    ),
-                )
-                df_new["year_vtg"] = df_new["year_act"] - 5 * df_new["year_vtg"]
-                # remove years that are not in scenario set
-                df_new = df_new[
-                    ~df_new["year_vtg"].isin([2065, 2075, 2085, 2095, 2105])
-                ]
-        else:
-            if "year_vtg" in df_new.columns:
-                df_new = df_new.pipe(same_node).pipe(broadcast, year_vtg=vtg_years)
-
+        df_new = broadcast_years(df_new, max_lt, act_years, vtg_years)
         # set import/export node_dest/origin to GLB for input/output
         set_exp_imp_nodes(df_new)
         par_dict[par_name] = df_new
@@ -180,10 +183,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         par_dict[p] = pd.concat([df[~df["technology"].isin(tec_list)], conv_cost_df])
 
     # HACK: quick fix to enable compatibility with water build
-    if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
-        par_dict["input"] = par_dict["input"].replace(
-            {"freshwater_supply": "freshwater"}
-        )
+    maybe_remove_water_tec(scenario, par_dict)
 
     return par_dict
 
