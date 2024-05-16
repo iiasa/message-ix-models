@@ -24,7 +24,7 @@ def ellipsize(elements: List) -> str:
         return ", ".join(map(str, elements))
 
 
-# FIXME Reduce complexity from 14 to ≤13
+# FIXME Reduce complexity (same issues as model.build.apply_spec())
 def apply_spec(  # noqa: C901
     scenario: Scenario,
     spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
