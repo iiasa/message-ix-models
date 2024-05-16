@@ -39,6 +39,9 @@ def create_res(context=None, quiet=True):
 
     Parameters
     ----------
+    quiet : bool
+        Only show log messages at level ``ERROR`` and higher. If :obj:`False` (default),
+        show log messages at level ``DEBUG`` and higher.
     context : .Context
         :attr:`.Context.scenario_info`  determines the model name and scenario
         name of the created Scenario.
