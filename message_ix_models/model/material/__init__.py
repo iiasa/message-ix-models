@@ -23,6 +23,7 @@ from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol_new import gen_data_methanol_new
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
+from message_ix_models.model.material.data_power_sector import gen_data_power_sector
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
     add_ccs_technologies,
@@ -61,7 +62,7 @@ DATA_FUNCTIONS_1 = [
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    # gen_data_power_sector,
+    gen_data_power_sector,
     gen_data_aluminum,
 ]
 
