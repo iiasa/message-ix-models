@@ -17,7 +17,7 @@ from message_ix_models.model.material.util import (
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.util import package_data_path
+from message_ix_models.util import package_data_path, private_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -891,10 +891,9 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
 
 def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFrame:
     comms = ["i_spec", "i_therm"]
-    path = package_data_path("iea", "REV2022_allISO_IEA.parquet")
-    # path = os.path.join(
-    #    "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    # )
+    path = os.path.join(
+        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
+    )
     Inp = pd.read_parquet(path, engine="fastparquet")
     Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
     demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
@@ -933,7 +932,7 @@ def map_iea_db_to_msg_regs(df_iea: pd.DataFrame, reg_map_fname: str) -> pd.DataF
     object
 
     """
-    file_path = package_data_path("node", reg_map_fname)
+    file_path = private_data_path("node", reg_map_fname)
     yaml_data = read_yaml_file(file_path)
     if "World" in yaml_data.keys():
         yaml_data.pop("World")
@@ -1007,22 +1006,21 @@ def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFram
     pd.DataFrame
 
     """
-    # path = os.path.join(
-    #    "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    # )
-    path = package_data_path("iea", "REV2022_allISO_IEA.parquet")
-    Inp = pd.read_parquet(path, engine="fastparquet")
+    path = os.path.join(
+        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
+    )
+    iea_enb_df = pd.read_parquet(path, engine="fastparquet")
     if years:
-        Inp = Inp[Inp["TIME"].isin(years)]
+        iea_enb_df = iea_enb_df[iea_enb_df["TIME"].isin(years)]
 
     # map IEA countries to MESSAGE region definition
-    Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
+    iea_enb_df = map_iea_db_to_msg_regs(iea_enb_df, "R12_SSP_V1.yaml")
 
     # read file for IEA product/flow - MESSAGE technologies map
     MAP = read_iea_tec_map(map_fname)
 
     # map IEA flows to MESSAGE technologies and aggregate
-    df_final = Inp.set_index(["PRODUCT", "FLOW"]).join(
+    df_final = iea_enb_df.set_index(["PRODUCT", "FLOW"]).join(
         MAP.set_index(["PRODUCT", "FLOW"])
     )
 
