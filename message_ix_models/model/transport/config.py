@@ -149,14 +149,15 @@ class Config(ConfigHelper):
     fast: bool = True
 
     #: Fixed future point for total passenger activity.
-    fixed_GDP: Quantity = quantity_field("1000 kUSD_2005 / passenger / year")
+    fixed_GDP: Quantity = quantity_field("1500 kUSD_2005 / passenger / year")
 
     #: Fixed future point for total passenger activity.
-    #: Default = 149500 * 1.12818725502081 * 2
     #:
-    #: Original comment: “Assume only half the speed (330 km/h) and not as steep a
+    #: AJ: Assuming mean speed of the high-speed transport is 330 km/h leads to 132495
+    #: passenger km / capita / year (Schafer & Victor 2000).
+    #: Original comment (DLM): “Assume only half the speed (330 km/h) and not as steep a
     #: curve.”
-    fixed_pdt: Quantity = quantity_field("337327.9893 km / year")
+    fixed_pdt: Quantity = quantity_field("132495 km / year")
 
     #: Load factors for vehicles.
     #:
