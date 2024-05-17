@@ -8,10 +8,12 @@ from functools import cmp_to_key
 
 import numpy as np
 import pandas as pd
-from message_ix_models.util import package_data_path
 from pandas.api.types import is_numeric_dtype
 
-from . import iamc_tree, utilities
+from message_ix_models.util import package_data_path
+from message_ix_models.util.compat.message_data import utilities
+
+from . import iamc_tree
 
 all_years = None
 years = None
