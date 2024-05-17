@@ -416,11 +416,10 @@ def solve_scen(
             scenario.set_as_default()
 
             # Report
-            from message_data.tools.post_processing.iamc_report_hackathon import (
+            from message_ix_models.model.material.report.reporting import report
+            from message_ix_models.report.legacy.iamc_report_hackathon import (
                 report as reporting,
             )
-
-            from message_ix_models.model.material.report.reporting import report
 
             # Remove existing timeseries and add material timeseries
             print("Reporting material-specific variables")
@@ -505,11 +504,10 @@ def add_building_ts(scenario_name, model_name):
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
     """Run materials, then legacy reporting."""
-    from message_data.tools.post_processing.iamc_report_hackathon import (
+    from message_ix_models.model.material.report.reporting import report
+    from message_ix_models.report.legacy.iamc_report_hackathon import (
         report as reporting,
     )
-
-    from message_ix_models.model.material.report.reporting import report
 
     # Retrieve the scenario given by the --url option
     scenario = context.get_scenario()
@@ -583,7 +581,7 @@ def run_reporting(context, remove_ts, profile):
 @cli.command("report-2")
 @click.pass_obj
 def run_old_reporting(context):
-    from message_data.tools.post_processing.iamc_report_hackathon import (
+    from message_ix_models.report.legacy.iamc_report_hackathon import (
         report as reporting,
     )
 
