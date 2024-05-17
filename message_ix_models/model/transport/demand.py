@@ -106,7 +106,9 @@ TASKS = [
     # that sets up the calculation of `pdt_cap + "adj"`
     (pdt_ny, "mul", pdt_cap + "adj", pop),
     # Value-of-time multiplier
-    ("votm:n-y", "votm", gdp_cap + "adj"),
+    # ("votm:n-y", "votm", gdp_cap + "adj"),
+    # use the original GDP path for votm calculations
+    ("votm:n-y", "votm", gdp_cap),
     # Select only the price of transport services
     # FIXME should be the full set of prices
     ((price_sel0, "select", price_full), dict(indexers=dict(c="transport"), drop=True)),
@@ -126,13 +128,13 @@ TASKS = [
     # Select speed data
     ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", "indexers:scenario"),
     # Cost of transport (n, t, y)
-    (cost, "cost", price, gdp_cap + "adj", "whour:", "speed:n-t-y", "votm:n-y", y),
+    (cost, "cost", price, gdp_cap, "whour:", "speed:n-t-y", "votm:n-y", y),
     # Share weights (n, t, y)
     (
         sw,
         "share_weight",
         ms + "base",
-        gdp_cap + "adj",
+        gdp_cap,
         cost,
         "lambda:",
         t_modes,
