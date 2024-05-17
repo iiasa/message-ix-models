@@ -6,13 +6,6 @@ import click
 import ixmp
 import message_ix
 import pandas as pd
-from message_data.tools.utilities import (
-    calibrate_UE_gr_to_demand,
-    calibrate_UE_share_constraints,
-)
-from message_data.tools.utilities import (
-    manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
-)
 
 import message_ix_models.tools.costs.projections
 from message_ix_models import ScenarioInfo
@@ -48,6 +41,13 @@ from message_ix_models.model.material.util import (
 )
 from message_ix_models.util import add_par_data, package_data_path, private_data_path
 from message_ix_models.util.click import common_params
+from message_ix_models.util.compat.message_data import (
+    calibrate_UE_gr_to_demand,
+    calibrate_UE_share_constraints,
+)
+from message_ix_models.util.compat.message_data import (
+    manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
+)
 
 log = logging.getLogger(__name__)
 
@@ -201,7 +201,7 @@ def cli(ssp):
 @click.pass_obj
 def create_bare(context, regions, dry_run):
     """Create the RES from scratch."""
-    from message_ix_models.model.create import create_res
+    from message_ix_models.model.bare import create_res
 
     if regions:
         context.regions = regions
@@ -481,6 +481,7 @@ def add_building_ts(scenario_name, model_name):
     from ixmp import Platform
     from message_ix import Scenario
 
+    # FIXME This import can not be resolved
     from message_ix_models.reporting.materials.add_buildings_ts import (
         add_building_timeseries,
     )
