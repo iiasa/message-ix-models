@@ -4,10 +4,10 @@ import numpy as np
 from itertools import groupby
 from operator import itemgetter
 
-from .get_optimization_years import main as get_optimization_years
 from .get_nodes import get_nodes
-
 from .utilities import CAGR
+
+from . import get_optimization_years
 
 # In some cases, end-use technologies have outputs onto multiple demands.
 # If this is the case, then the a manual assignment is undertaken,
@@ -38,7 +38,7 @@ def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, ve
     scenario : :class:`message_ix.Scenario`
         scenario to which changes should be applied
     data_path : :class:`pathlib.Path`
-        path to model-data directory in message_data repositor
+        path to model-data directory
     ssp : str
         name of SSP for which the script is being run.
         (SSP1, SSP2 or SSP3)
