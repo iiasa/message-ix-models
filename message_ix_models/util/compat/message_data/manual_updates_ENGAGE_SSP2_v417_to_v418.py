@@ -2,16 +2,15 @@ import numpy as np
 import pandas as pd
 from message_ix_models.util import private_data_path
 
-from message_data.tools.utilities import (
-    calibrate_UE_gr_to_demand,
-    calibrate_vre,
-    change_technology_lifetime,
-    check_scenario_fix_and_inv_cost,
-    get_optimization_years,
-    update_fix_and_inv_cost,
+from . import (
+    calibrate_UE_gr_to_demand, 
+    calibrate_vre, 
+    change_technology_lifetime, 
+    check_scenario_fix_and_inv_cost, 
+    get_optimization_years, 
+    update_fix_and_inv_cost, #TODO Why is this a module?
     update_h2_blending,
 )
-
 
 def _apply_npi_updates(scen):
     """Apply changes from ENGAGE 4.1.7 process applied.
