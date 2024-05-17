@@ -46,6 +46,7 @@ def read_config() -> Context:
         context[key] = load_package_data(*_parts)
 
     # Read material.yaml
+    # FIXME What is this personal information doing here?
     # context.metadata_path=Path("C:/Users/unlu/Documents/GitHub/message_data/data")
     # context.load_config("material", "set")
 
