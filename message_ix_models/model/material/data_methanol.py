@@ -56,9 +56,9 @@ def gen_data_methanol(scenario):
     meth_fs_dic = combine_df_dictionaries(meth_fs_dic, meth_h2_fs_dict)
 
     df = meth_fs_dic["output"]
-    df.loc[
-        (df["commodity"] == "methanol") & (df["level"] == "primary"), "level"
-    ] = "primary_material"
+    df.loc[(df["commodity"] == "methanol") & (df["level"] == "primary"), "level"] = (
+        "primary_material"
+    )
     meth_fs_dic["output"] = df
 
     # add meth prod fs and fuel mode
