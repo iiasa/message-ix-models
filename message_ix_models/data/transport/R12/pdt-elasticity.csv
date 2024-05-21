@@ -1,6 +1,6 @@
 # “Elasticity” of PDT-capita with respect to GDP
 #
-# Units: dimensionles
+# Units: dimensionless
 #
 scenario,    node,     value
 SSP(2024).1, R12_AFR,0.9
