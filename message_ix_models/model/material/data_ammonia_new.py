@@ -390,9 +390,7 @@ def read_demand():
     N_energy.oil_pct *= input_fuel[4] * CONVERSION_FACTOR_NH3_N
     N_energy = pd.concat(
         [N_energy.Region, N_energy.sum(axis=1, numeric_only=True)], axis=1
-    ).rename(
-        columns={0: "totENE", "Region": "node"}
-    )  # GWa
+    ).rename(columns={0: "totENE", "Region": "node"})  # GWa
 
     # N_trade_R12 = pd.read_csv(
     #    package_data_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0

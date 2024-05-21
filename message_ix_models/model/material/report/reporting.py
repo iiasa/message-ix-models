@@ -153,7 +153,7 @@ def fix_excel(path_temp, path_new):
     new_workbook.save(path_new)
 
 
-def report(context, scenario):    # noqa: C901
+def report(context, scenario):  # noqa: C901
     # Obtain scenario information and directory
 
     s_info = ScenarioInfo(scenario)
@@ -3282,14 +3282,12 @@ def report(context, scenario):    # noqa: C901
                             for t in aux2_df["technology"].values
                             if (
                                 (
-                                    (
-                                        ("cement" in t)
-                                        | ("steel" in t)
-                                        | ("aluminum" in t)
-                                        | ("petro" in t)
-                                    )
-                                    & ("furnace" not in t)
+                                    ("cement" in t)
+                                    | ("steel" in t)
+                                    | ("aluminum" in t)
+                                    | ("petro" in t)
                                 )
+                                & ("furnace" not in t)
                             )
                         ]
                     if (typ == "process") & (s != "all"):
