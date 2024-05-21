@@ -61,98 +61,15 @@ def gen_data_methanol(scenario):
     ] = "primary_material"
     meth_fs_dic["output"] = df
 
-    # add meth prod fs mode
-    par_dict_fs = {}
-    for i in scenario.par_list():
-        df = scenario.par(
-            i,
-            filters={
-                "technology": [
-                    "meth_ng",
-                    "meth_coal",
-                    "meth_ng_ccs",
-                    "meth_coal_ccs",
-                ]
-            },
-        )
-        if df.size != 0:
-            par_dict_fs[i] = df
-    for i in par_dict_fs.keys():
-        if "mode" in par_dict_fs[i].columns:
-            par_dict_fs[i]["mode"] = "feedstock"
-    df = par_dict_fs["output"]
-    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
-    par_dict_fs["output"] = df
-
-    par_dict = {}
-    for i in scenario.par_list():
-        df = scenario.par(
-            i,
-            filters={
-                "technology": [
-                    "meth_ng",
-                    "meth_coal",
-                    "meth_ng_ccs",
-                    "meth_coal_ccs",
-                ]
-            },
-        )
-        if df.size != 0:
-            par_dict[i] = df
-
-    for i in par_dict.keys():
-        if "mode" in par_dict[i].columns:
-            par_dict[i]["mode"] = "fuel"
-    df = par_dict["output"]
-    par_dict["output"] = df
+    # add meth prod fs and fuel mode
+    par_dict_fs = add_prod_mode(scenario, "feedstock", "primary_material")
+    par_dict = add_prod_mode(scenario, "fuel")
 
     # add meth_bal fs mode
-    bal_fs_dict = {}
-    bal_fuel_dict = {}
-    for i in scenario.par_list():
-        df = scenario.par(i, filters={"technology": "meth_bal"})
-        if df.size != 0:
-            bal_fs_dict[i] = df
-            bal_fuel_dict[i] = df.copy(deep=True)
-    for i in bal_fs_dict.keys():
-        if "mode" in bal_fs_dict[i].columns:
-            bal_fs_dict[i]["mode"] = "feedstock"
-            bal_fuel_dict[i]["mode"] = "fuel"
-
-    df = bal_fs_dict["input"]
-    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
-    bal_fs_dict["input"] = df
-    df = bal_fs_dict["output"]
-    df.loc[df["commodity"] == "methanol", "level"] = "secondary_material"
-    bal_fs_dict["output"] = df
+    bal_fs_dict, bal_fuel_dict = add_bal_modes(scenario)
 
     # add meth trade fs mode
-    trade_dict_fs = {}
-    trade_dict_fuel = {}
-    for i in scenario.par_list():
-        df = scenario.par(
-            i, filters={"technology": ["meth_imp", "meth_exp", "meth_trd"]}
-        )
-        if df.size != 0:
-            trade_dict_fs[i] = df
-            trade_dict_fuel[i] = df.copy(deep=True)
-
-    for i in trade_dict_fs.keys():
-        if "mode" in trade_dict_fs[i].columns:
-            trade_dict_fs[i]["mode"] = "feedstock"
-            trade_dict_fuel[i]["mode"] = "fuel"
-
-    df = trade_dict_fs["output"]
-    df.loc[df["technology"] == "meth_imp", "level"] = "secondary_material"
-    df.loc[df["technology"] == "meth_exp", "level"] = "export_fs"
-    df.loc[df["technology"] == "meth_trd", "level"] = "import_fs"
-    trade_dict_fs["output"] = df
-
-    df = trade_dict_fs["input"]
-    df.loc[df["technology"] == "meth_imp", "level"] = "import_fs"
-    df.loc[df["technology"] == "meth_trd", "level"] = "export_fs"
-    df.loc[df["technology"] == "meth_exp", "level"] = "primary_material"
-    trade_dict_fs["input"] = df
+    trade_dict_fuel, trade_dict_fs = add_trd_modes(scenario)
 
     dict_t_d_fs = pd.read_excel(
         package_data_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
@@ -164,13 +81,6 @@ def gen_data_methanol(scenario):
     )
 
     df_rel = dict_t_d_fs["relation_activity"]
-
-    def get_embodied_emi(row, pars, share_par):
-        if row["year_act"] < pars["incin_trend_end"]:
-            share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
-        else:
-            share = 0.5
-        return row["value"] * (1 - share) * pars[share_par]
 
     df_rel_meth = df_rel.loc[df_rel["technology"] == "meth_t_d", :]
     df_rel_meth["value"] = df_rel_meth.apply(
@@ -280,6 +190,99 @@ def gen_data_methanol(scenario):
         )
 
     return new_dict2
+
+
+def get_embodied_emi(row, pars, share_par):
+    if row["year_act"] < pars["incin_trend_end"]:
+        share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
+    else:
+        share = 0.5
+    return row["value"] * (1 - share) * pars[share_par]
+
+
+def add_prod_mode(scenario, mode, level=None):
+    tec_pars = [
+        x for x in scenario.par_list() if ("technology" in scenario.idx_sets(x))
+    ]
+    par_dict = {}
+    for i in tec_pars:
+        df = scenario.par(
+            i,
+            filters={
+                "technology": [
+                    "meth_ng",
+                    "meth_coal",
+                    "meth_ng_ccs",
+                    "meth_coal_ccs",
+                ]
+            },
+        )
+        if df.size != 0:
+            par_dict[i] = df
+
+    for i in par_dict.keys():
+        if "mode" in par_dict[i].columns:
+            par_dict[i]["mode"] = mode
+    df = par_dict["output"]
+    if level:
+        df.loc[df["commodity"] == "methanol", "level"] = level
+    par_dict["output"] = df
+    return par_dict
+
+
+def add_bal_modes(scenario):
+    tec_pars = [
+        x for x in scenario.par_list() if ("technology" in scenario.idx_sets(x))
+    ]
+    bal_fs_dict = {}
+    bal_fuel_dict = {}
+    for i in tec_pars:
+        df = scenario.par(i, filters={"technology": "meth_bal"})
+        if df.size != 0:
+            bal_fs_dict[i] = df
+            bal_fuel_dict[i] = df.copy(deep=True)
+    for i in bal_fs_dict.keys():
+        if "mode" in bal_fs_dict[i].columns:
+            bal_fs_dict[i]["mode"] = "feedstock"
+            bal_fuel_dict[i]["mode"] = "fuel"
+
+    df = bal_fs_dict["input"]
+    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
+    bal_fs_dict["input"] = df
+    df = bal_fs_dict["output"]
+    df.loc[df["commodity"] == "methanol", "level"] = "secondary_material"
+    bal_fs_dict["output"] = df
+    return bal_fs_dict, bal_fuel_dict
+
+
+def add_trd_modes(scenario):
+    trade_dict_fs = {}
+    trade_dict_fuel = {}
+    for i in scenario.par_list():
+        df = scenario.par(
+            i, filters={"technology": ["meth_imp", "meth_exp", "meth_trd"]}
+        )
+        if df.size != 0:
+            trade_dict_fs[i] = df
+            trade_dict_fuel[i] = df.copy(deep=True)
+
+    for i in trade_dict_fs.keys():
+        if "mode" in trade_dict_fs[i].columns:
+            trade_dict_fs[i]["mode"] = "feedstock"
+            trade_dict_fuel[i]["mode"] = "fuel"
+
+    df = trade_dict_fs["output"]
+    df.loc[df["technology"] == "meth_imp", "level"] = "secondary_material"
+    df.loc[df["technology"] == "meth_exp", "level"] = "export_fs"
+    df.loc[df["technology"] == "meth_trd", "level"] = "import_fs"
+    trade_dict_fs["output"] = df
+
+    df = trade_dict_fs["input"]
+    df.loc[df["technology"] == "meth_imp", "level"] = "import_fs"
+    df.loc[df["technology"] == "meth_trd", "level"] = "export_fs"
+    df.loc[df["technology"] == "meth_exp", "level"] = "primary_material"
+    trade_dict_fs["input"] = df
+    return trade_dict_fs, trade_dict_fuel
 
 
 def gen_data_meth_h2(mode):
@@ -469,7 +472,7 @@ def gen_data_meth_chemicals(scenario, chemical):
         ]
         df = par_dict["initial_activity_up"]
         par_dict["initial_activity_up"] = df[
-            ~((df["node_loc"] == "R12_CHN"))
+            ~(df["node_loc"] == "R12_CHN")
         ]  # & (df["year_act"] == 2020))]
         # par_dict.pop("growth_activity_up")
         # par_dict.pop("growth_activity_lo")
