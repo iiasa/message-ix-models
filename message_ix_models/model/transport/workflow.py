@@ -161,8 +161,12 @@ def generate(
     context.navigate = navigate.Config(
         scenario="baseline", buildings=False, material=False
     )
-    solve_config = SolveConfig(reserve_margin=False, solve=dict(model="MESSAGE"))
-
+    # Use lpmethod=4, scaind=1 to overcome LP status 5 (optimal with unscaled
+    # infeasibilities) when running on SSP(2024) base scenarios
+    solve_config = SolveConfig(
+        reserve_margin=False,
+        solve=dict(model="MESSAGE", solve_options=dict(lpmethod=4, scaind=1)),
+    )
     # Set the default .report.Config key for ".* reported" steps
     register("model.transport")
     context.report.key = report_key
