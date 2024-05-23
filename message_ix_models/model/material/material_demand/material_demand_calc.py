@@ -1,28 +1,17 @@
-import message_ix_models.util
-import pandas as pd
 import numpy as np
-import message_ix
-from scipy.optimize import curve_fit
+import pandas as pd
 import yaml
-
-from message_data.model.material.util import read_config
-from message_ix_models import ScenarioInfo
 from message_ix import make_df
-from message_ix_models.util import (
-    broadcast,
-    make_io,
-    make_matched_dfs,
-    same_node,
-    add_par_data,
-    package_data_path ,
-)
+from scipy.optimize import curve_fit
 
+import message_ix_models.util
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import package_data_path
 
 file_cement = "/CEMENT.BvR2010.xlsx"
 file_steel = "/STEEL_database_2012.xlsx"
 file_al = "/demand_aluminum.xlsx"
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
-
 giga = 10**9
 mega = 10**6
 
@@ -231,7 +220,7 @@ def read_hist_mat_demand(material):
             df_raw_cons["region"]
             .str.replace("(", "")
             .str.replace(")", "")
-            .str.replace("\d+", "")
+            .str.replace(r"\d+", "")
             .str[:-1]
         )
 
@@ -383,7 +372,7 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
     df_final["time"] = "year"
     df_final["unit"] = "t"
     # TODO: correct unit would be Mt but might not be registered on database
-    df_final = message_ix.make_df("demand", **df_final)
+    df_final = make_df("demand", **df_final)
     return df_final
 
 
