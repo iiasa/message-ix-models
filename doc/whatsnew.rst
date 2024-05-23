@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Add :doc:`/material/index` (:pull:`188`, :pull:`189`).
 Changes to :doc:`/api/tools-costs`
 ----------------------------------
   - Fix jumps in cost projections for technologies with first technology year that's after than the first model year (:pull:`186`).
