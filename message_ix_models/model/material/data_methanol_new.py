@@ -1,13 +1,13 @@
-import message_ix_models.util
+from ast import literal_eval
+
 import pandas as pd
 import yaml
-
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node
 
-from message_data.model.material.material_demand import material_demand_calc
-from message_data.model.material.util import read_config
-from ast import literal_eval
+import message_ix_models.util
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import read_config
+from message_ix_models.util import broadcast, same_node
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -29,7 +29,7 @@ iea_elasticity_map = {
 def gen_data_methanol_new(scenario):
     context = read_config()
     df_pars = pd.read_excel(
-        message_ix_models.util.private_data_path(
+        message_ix_models.util.package_data_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
         ),
         sheet_name="Sheet1",
@@ -38,7 +38,7 @@ def gen_data_methanol_new(scenario):
     pars = df_pars.set_index("par").to_dict()["value"]
     if pars["mtbe_scenario"] == "phase-out":
         pars_dict = pd.read_excel(
-            message_ix_models.util.private_data_path(
+            message_ix_models.util.package_data_path(
                 "material", "methanol", "methanol_techno_economic.xlsx"
             ),
             sheet_name=None,
@@ -46,7 +46,7 @@ def gen_data_methanol_new(scenario):
         )
     else:
         pars_dict = pd.read_excel(
-            message_ix_models.util.private_data_path(
+            message_ix_models.util.package_data_path(
                 "material", "methanol", "methanol_techno_economic_high_demand.xlsx"
             ),
             sheet_name=None,
@@ -57,10 +57,9 @@ def gen_data_methanol_new(scenario):
         pars_dict[i] = broadcast_reduced_df(pars_dict[i], i)
     # TODO: only temporary hack to ensure SSP_dev compatibility
     if "SSP_dev" in scenario.model:
-        file_path = message_ix_models.util.private_data_path(
+        file_path = message_ix_models.util.package_data_path(
             "material", "methanol", "missing_rels.yaml"
         )
-        # file_path = "C:/Users\maczek\PycharmProjects\message_data\message_data\model\material\petrochemical model fixes notebooks\"
 
         with open(file_path, "r") as file:
             missing_rels = yaml.safe_load(file)
@@ -79,6 +78,81 @@ def gen_data_methanol_new(scenario):
     pars_dict["demand"] = df_final
 
     return pars_dict
+
+
+def broadcast_nodes(df_bc_node, df_final, node_cols, node_cols_codes, i):
+    if len(node_cols) == 1:
+        if "node_loc" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_loc=node_cols_codes["node_loc"]
+            )
+        if "node_vtg" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_vtg=node_cols_codes["node_vtg"]
+            )
+        if "node_rel" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_rel=node_cols_codes["node_rel"]
+            )
+        if "node" in node_cols:
+            df_bc_node = df_bc_node.pipe(broadcast, node=node_cols_codes["node"])
+        if "node_share" in node_cols:
+            df_bc_node = df_bc_node.pipe(
+                broadcast, node_share=node_cols_codes["node_share"]
+            )
+    else:
+        df_bc_node = df_bc_node.pipe(broadcast, node_loc=node_cols_codes["node_loc"])
+        if len(df_final.loc[i][node_cols].T.unique()) == 1:
+            # df_bc_node["node_rel"] = df_bc_node["node_loc"]
+            df_bc_node = df_bc_node.pipe(
+                same_node
+            )  # not working for node_rel in installed message_ix_models version
+        else:
+            if "node_rel" in list(df_bc_node.columns):
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, node_rel=node_cols_codes["node_rel"]
+                )
+            if "node_origin" in list(df_bc_node.columns):
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, node_origin=node_cols_codes["node_origin"]
+                )
+            if "node_dest" in list(df_bc_node.columns):
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, node_dest=node_cols_codes["node_dest"]
+                )
+    return df_bc_node
+
+
+def broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col):
+    if len(yr_col_out) == 1:
+        yr_list = [i[0] for i in yr_cols_codes[col]]
+        # print(yr_list)
+        if "year_act" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year_act=yr_list)
+        if "year_vtg" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year_vtg=yr_list)
+        if "year_rel" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year_rel=yr_list)
+        if "year" in yr_col_out:
+            df_bc_node = df_bc_node.pipe(broadcast, year=yr_list)
+        df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)
+    else:
+        if "year_vtg" in yr_col_out:
+            y_v = [str(i) for i in yr_cols_codes[col]]
+            df_bc_node = df_bc_node.pipe(broadcast, year_vtg=y_v)
+            df_bc_node["year_act"] = [
+                literal_eval(i)[1] for i in df_bc_node["year_vtg"]
+            ]
+            df_bc_node["year_vtg"] = [
+                literal_eval(i)[0] for i in df_bc_node["year_vtg"]
+            ]
+        if "year_rel" in yr_col_out:
+            if "year_act" in yr_col_out:
+                df_bc_node = df_bc_node.pipe(
+                    broadcast, year_act=[i[0] for i in yr_cols_codes[col]]
+                )
+            df_bc_node["year_rel"] = df_bc_node["year_act"]
+    return df_bc_node
 
 
 def broadcast_reduced_df(df, par_name):
@@ -104,78 +178,13 @@ def broadcast_reduced_df(df, par_name):
         for colname in node_cols:
             df_bc_node[colname] = None
         # broadcast in node dimensions
-        if len(node_cols) == 1:
-            if "node_loc" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_loc=node_cols_codes["node_loc"]
-                )
-            if "node_vtg" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_vtg=node_cols_codes["node_vtg"]
-                )
-            if "node_rel" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_rel=node_cols_codes["node_rel"]
-                )
-            if "node" in node_cols:
-                df_bc_node = df_bc_node.pipe(broadcast, node=node_cols_codes["node"])
-            if "node_share" in node_cols:
-                df_bc_node = df_bc_node.pipe(
-                    broadcast, node_share=node_cols_codes["node_share"]
-                )
-        else:
-            df_bc_node = df_bc_node.pipe(
-                broadcast, node_loc=node_cols_codes["node_loc"]
-            )
-            if len(df_final.loc[i][node_cols].T.unique()) == 1:
-                # df_bc_node["node_rel"] = df_bc_node["node_loc"]
-                df_bc_node = df_bc_node.pipe(
-                    same_node
-                )  # not working for node_rel in installed message_ix_models version
-            else:
-                if "node_rel" in list(df_bc_node.columns):
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, node_rel=node_cols_codes["node_rel"]
-                    )
-                if "node_origin" in list(df_bc_node.columns):
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, node_origin=node_cols_codes["node_origin"]
-                    )
-                if "node_dest" in list(df_bc_node.columns):
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, node_dest=node_cols_codes["node_dest"]
-                    )
+        df_bc_node = broadcast_nodes(
+            df_bc_node, df_final, node_cols, node_cols_codes, i
+        )
 
         for col in yr_col_inp:
             yr_cols_codes[col] = literal_eval(df_bc_node[col].values[0])
-        if len(yr_col_out) == 1:
-            yr_list = [i[0] for i in yr_cols_codes[col]]
-            # print(yr_list)
-            if "year_act" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year_act=yr_list)
-            if "year_vtg" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year_vtg=yr_list)
-            if "year_rel" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year_rel=yr_list)
-            if "year" in yr_col_out:
-                df_bc_node = df_bc_node.pipe(broadcast, year=yr_list)
-            df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)
-        else:
-            if "year_vtg" in yr_col_out:
-                y_v = [str(i) for i in yr_cols_codes[col]]
-                df_bc_node = df_bc_node.pipe(broadcast, year_vtg=y_v)
-                df_bc_node["year_act"] = [
-                    literal_eval(i)[1] for i in df_bc_node["year_vtg"]
-                ]
-                df_bc_node["year_vtg"] = [
-                    literal_eval(i)[0] for i in df_bc_node["year_vtg"]
-                ]
-            if "year_rel" in yr_col_out:
-                if "year_act" in yr_col_out:
-                    df_bc_node = df_bc_node.pipe(
-                        broadcast, year_act=[i[0] for i in yr_cols_codes[col]]
-                    )
-                df_bc_node["year_rel"] = df_bc_node["year_act"]
+            broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col)
             # return df_bc_node
         # df_bc_node["year_rel"] = df_bc_node["year_act"]
         df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)

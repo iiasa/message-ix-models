@@ -1,13 +1,13 @@
 import copy
-import pandas as pd
 
+import pandas as pd
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node, private_data_path
-from message_data.model.material.util import read_config, combine_df_dictionaries
-from message_data.model.material.material_demand import material_demand_calc
+
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import combine_df_dictionaries, read_config
+from message_ix_models.util import broadcast, package_data_path, same_node
 
 context = read_config()
-
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -30,7 +30,7 @@ def gen_data_methanol(scenario):
     ssp = context["ssp"]
     # read sensitivity file
     df_pars = pd.read_excel(
-        private_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+        package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
         sheet_name="Sheet1",
         dtype=object,
     )
@@ -56,131 +56,31 @@ def gen_data_methanol(scenario):
     meth_fs_dic = combine_df_dictionaries(meth_fs_dic, meth_h2_fs_dict)
 
     df = meth_fs_dic["output"]
-    df.loc[
-        (df["commodity"] == "methanol") & (df["level"] == "primary"), "level"
-    ] = "primary_material"
+    df.loc[(df["commodity"] == "methanol") & (df["level"] == "primary"), "level"] = (
+        "primary_material"
+    )
     meth_fs_dic["output"] = df
 
-    # add meth prod fs mode
-    par_dict_fs = {}
-    for i in scenario.par_list():
-        try:
-            df = scenario.par(
-                i,
-                filters={
-                    "technology": [
-                        "meth_ng",
-                        "meth_coal",
-                        "meth_ng_ccs",
-                        "meth_coal_ccs",
-                    ]
-                },
-            )
-            if df.size != 0:
-                par_dict_fs[i] = df
-        except:
-            pass
-    for i in par_dict_fs.keys():
-        if "mode" in par_dict_fs[i].columns:
-            par_dict_fs[i]["mode"] = "feedstock"
-    df = par_dict_fs["output"]
-    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
-    par_dict_fs["output"] = df
-
-    par_dict = {}
-    for i in scenario.par_list():
-        try:
-            df = scenario.par(
-                i,
-                filters={
-                    "technology": [
-                        "meth_ng",
-                        "meth_coal",
-                        "meth_ng_ccs",
-                        "meth_coal_ccs",
-                    ]
-                },
-            )
-            if df.size != 0:
-                par_dict[i] = df
-        except:
-            pass
-    for i in par_dict.keys():
-        if "mode" in par_dict[i].columns:
-            par_dict[i]["mode"] = "fuel"
-    df = par_dict["output"]
-    par_dict["output"] = df
+    # add meth prod fs and fuel mode
+    par_dict_fs = add_prod_mode(scenario, "feedstock", "primary_material")
+    par_dict = add_prod_mode(scenario, "fuel")
 
     # add meth_bal fs mode
-    bal_fs_dict = {}
-    bal_fuel_dict = {}
-    for i in scenario.par_list():
-        try:
-            df = scenario.par(i, filters={"technology": "meth_bal"})
-            if df.size != 0:
-                bal_fs_dict[i] = df
-                bal_fuel_dict[i] = df.copy(deep=True)
-        except:
-            pass
-    for i in bal_fs_dict.keys():
-        if "mode" in bal_fs_dict[i].columns:
-            bal_fs_dict[i]["mode"] = "feedstock"
-            bal_fuel_dict[i]["mode"] = "fuel"
-
-    df = bal_fs_dict["input"]
-    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
-    bal_fs_dict["input"] = df
-    df = bal_fs_dict["output"]
-    df.loc[df["commodity"] == "methanol", "level"] = "secondary_material"
-    bal_fs_dict["output"] = df
+    bal_fs_dict, bal_fuel_dict = add_bal_modes(scenario)
 
     # add meth trade fs mode
-    trade_dict_fs = {}
-    trade_dict_fuel = {}
-    for i in scenario.par_list():
-        try:
-            df = scenario.par(
-                i, filters={"technology": ["meth_imp", "meth_exp", "meth_trd"]}
-            )
-            if df.size != 0:
-                trade_dict_fs[i] = df
-                trade_dict_fuel[i] = df.copy(deep=True)
-        except:
-            pass
-    for i in trade_dict_fs.keys():
-        if "mode" in trade_dict_fs[i].columns:
-            trade_dict_fs[i]["mode"] = "feedstock"
-            trade_dict_fuel[i]["mode"] = "fuel"
-
-    df = trade_dict_fs["output"]
-    df.loc[df["technology"] == "meth_imp", "level"] = "secondary_material"
-    df.loc[df["technology"] == "meth_exp", "level"] = "export_fs"
-    df.loc[df["technology"] == "meth_trd", "level"] = "import_fs"
-    trade_dict_fs["output"] = df
-
-    df = trade_dict_fs["input"]
-    df.loc[df["technology"] == "meth_imp", "level"] = "import_fs"
-    df.loc[df["technology"] == "meth_trd", "level"] = "export_fs"
-    df.loc[df["technology"] == "meth_exp", "level"] = "primary_material"
-    trade_dict_fs["input"] = df
+    trade_dict_fuel, trade_dict_fs = add_trd_modes(scenario)
 
     dict_t_d_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
+        package_data_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
         sheet_name=None,
     )
     dict_t_d_fuel = pd.read_excel(
-        private_data_path("material", "methanol", "meth_t_d_fuel.xlsx"),
+        package_data_path("material", "methanol", "meth_t_d_fuel.xlsx"),
         sheet_name=None,
     )
 
     df_rel = dict_t_d_fs["relation_activity"]
-
-    def get_embodied_emi(row, pars, share_par):
-        if row["year_act"] < pars["incin_trend_end"]:
-            share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
-        else:
-            share = 0.5
-        return row["value"] * (1 - share) * pars[share_par]
 
     df_rel_meth = df_rel.loc[df_rel["technology"] == "meth_t_d", :]
     df_rel_meth["value"] = df_rel_meth.apply(
@@ -209,7 +109,8 @@ def gen_data_methanol(scenario):
     #         df = scenario.par(i, filters={"technology": ["meth_ng",
     #                                                      "meth_coal", "meth_ng_ccs",
     #                                                      "meth_coal_ccs", "meth_exp",
-    #                                                      "meth_imp", "meth_trd", "meth_bal", "meth_t_d"],
+    #                                                      "meth_imp", "meth_trd",
+    #                                                      "meth_bal", "meth_t_d"],
     #                                       "mode": "M1"})
     #         if df.size != 0:
     #             scenario.remove_par(i, df)
@@ -283,7 +184,7 @@ def gen_data_methanol(scenario):
         new_dict2 = combine_df_dictionaries(
             new_dict2,
             pd.read_excel(
-                private_data_path("material", "methanol", f"h2_elec_{mode}.xlsx"),
+                package_data_path("material", "methanol", f"h2_elec_{mode}.xlsx"),
                 sheet_name=None,
             ),
         )
@@ -291,9 +192,102 @@ def gen_data_methanol(scenario):
     return new_dict2
 
 
+def get_embodied_emi(row, pars, share_par):
+    if row["year_act"] < pars["incin_trend_end"]:
+        share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
+    else:
+        share = 0.5
+    return row["value"] * (1 - share) * pars[share_par]
+
+
+def add_prod_mode(scenario, mode, level=None):
+    tec_pars = [
+        x for x in scenario.par_list() if ("technology" in scenario.idx_sets(x))
+    ]
+    par_dict = {}
+    for i in tec_pars:
+        df = scenario.par(
+            i,
+            filters={
+                "technology": [
+                    "meth_ng",
+                    "meth_coal",
+                    "meth_ng_ccs",
+                    "meth_coal_ccs",
+                ]
+            },
+        )
+        if df.size != 0:
+            par_dict[i] = df
+
+    for i in par_dict.keys():
+        if "mode" in par_dict[i].columns:
+            par_dict[i]["mode"] = mode
+    df = par_dict["output"]
+    if level:
+        df.loc[df["commodity"] == "methanol", "level"] = level
+    par_dict["output"] = df
+    return par_dict
+
+
+def add_bal_modes(scenario):
+    tec_pars = [
+        x for x in scenario.par_list() if ("technology" in scenario.idx_sets(x))
+    ]
+    bal_fs_dict = {}
+    bal_fuel_dict = {}
+    for i in tec_pars:
+        df = scenario.par(i, filters={"technology": "meth_bal"})
+        if df.size != 0:
+            bal_fs_dict[i] = df
+            bal_fuel_dict[i] = df.copy(deep=True)
+    for i in bal_fs_dict.keys():
+        if "mode" in bal_fs_dict[i].columns:
+            bal_fs_dict[i]["mode"] = "feedstock"
+            bal_fuel_dict[i]["mode"] = "fuel"
+
+    df = bal_fs_dict["input"]
+    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
+    bal_fs_dict["input"] = df
+    df = bal_fs_dict["output"]
+    df.loc[df["commodity"] == "methanol", "level"] = "secondary_material"
+    bal_fs_dict["output"] = df
+    return bal_fs_dict, bal_fuel_dict
+
+
+def add_trd_modes(scenario):
+    trade_dict_fs = {}
+    trade_dict_fuel = {}
+    for i in scenario.par_list():
+        df = scenario.par(
+            i, filters={"technology": ["meth_imp", "meth_exp", "meth_trd"]}
+        )
+        if df.size != 0:
+            trade_dict_fs[i] = df
+            trade_dict_fuel[i] = df.copy(deep=True)
+
+    for i in trade_dict_fs.keys():
+        if "mode" in trade_dict_fs[i].columns:
+            trade_dict_fs[i]["mode"] = "feedstock"
+            trade_dict_fuel[i]["mode"] = "fuel"
+
+    df = trade_dict_fs["output"]
+    df.loc[df["technology"] == "meth_imp", "level"] = "secondary_material"
+    df.loc[df["technology"] == "meth_exp", "level"] = "export_fs"
+    df.loc[df["technology"] == "meth_trd", "level"] = "import_fs"
+    trade_dict_fs["output"] = df
+
+    df = trade_dict_fs["input"]
+    df.loc[df["technology"] == "meth_imp", "level"] = "import_fs"
+    df.loc[df["technology"] == "meth_trd", "level"] = "export_fs"
+    df.loc[df["technology"] == "meth_exp", "level"] = "primary_material"
+    trade_dict_fs["input"] = df
+    return trade_dict_fs, trade_dict_fuel
+
+
 def gen_data_meth_h2(mode):
     h2_par_dict = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material", "methanol", f"meth_h2_techno_economic_{mode}.xlsx"
         ),
         sheet_name=None,
@@ -306,7 +300,7 @@ def gen_data_meth_h2(mode):
 
 def gen_data_meth_bio(scenario):
     df_bio = pd.read_excel(
-        private_data_path("material", "methanol", "meth_bio_techno_economic_new.xlsx"),
+        package_data_path("material", "methanol", "meth_bio_techno_economic_new.xlsx"),
         sheet_name=None,
     )
     coal_ratio = get_cost_ratio_2020(
@@ -339,7 +333,7 @@ def gen_data_meth_bio(scenario):
 
 def gen_meth_bio_ccs(scenario):
     df_bio = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material", "methanol", "meth_bio_techno_economic_new_ccs.xlsx"
         ),
         sheet_name=None,
@@ -374,7 +368,7 @@ def gen_meth_bio_ccs(scenario):
 
 def gen_data_meth_chemicals(scenario, chemical):
     df = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material", "methanol", "collection files", "MTO data collection.xlsx"
         ),
         sheet_name=chemical,
@@ -478,7 +472,7 @@ def gen_data_meth_chemicals(scenario, chemical):
         ]
         df = par_dict["initial_activity_up"]
         par_dict["initial_activity_up"] = df[
-            ~((df["node_loc"] == "R12_CHN"))
+            ~(df["node_loc"] == "R12_CHN")
         ]  # & (df["year_act"] == 2020))]
         # par_dict.pop("growth_activity_up")
         # par_dict.pop("growth_activity_lo")
@@ -493,23 +487,21 @@ def add_methanol_fuel_additives(scenario):
     pars = ["output", "var_cost", "relation_activity", "input", "emission_factor"]
     if "loil_trp" not in scenario.set("technology").to_list():
         print(
-            "It seems that the selected scenario does not contain the technology: loil_trp. Methanol fuel blending could not be calculated and was skipped"
+            "It seems that the selected scenario does not contain the technology:"
+            "loil_trp. Methanol fuel blending could not be calculated and was skipped"
         )
         return par_dict_loil
     for i in pars:
-        try:
-            df = scenario.par(i, filters={"technology": "loil_trp", "mode": "M1"})
-            if df.size != 0:
-                par_dict_loil[i] = df.copy(deep=True)
-        except:
-            pass
+        df = scenario.par(i, filters={"technology": "loil_trp", "mode": "M1"})
+        if df.size != 0:
+            par_dict_loil[i] = df.copy(deep=True)
 
     par_dict_loil["input"] = par_dict_loil["input"][
         par_dict_loil["input"]["commodity"] == "lightoil"
     ]
 
     df_mtbe = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "methanol",
             "collection files",
@@ -524,7 +516,7 @@ def add_methanol_fuel_additives(scenario):
     df_mtbe = df_mtbe[["node_loc", "% share on trp"]]
 
     df_biodiesel = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "methanol",
             "collection files",
@@ -576,11 +568,11 @@ def add_methanol_fuel_additives(scenario):
 
 def add_meth_trade_historic():
     par_dict_trade = pd.read_excel(
-        private_data_path("material", "methanol", "meth_trade_techno_economic.xlsx"),
+        package_data_path("material", "methanol", "meth_trade_techno_economic.xlsx"),
         sheet_name=None,
     )
     par_dict_trade_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_trade_techno_economic_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_trade_techno_economic_fs.xlsx"),
         sheet_name=None,
     )
     par_dict_trade = combine_df_dictionaries(par_dict_trade_fs, par_dict_trade)
@@ -631,7 +623,7 @@ def update_methanol_costs(scenario):
 
 def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHAPE"):
     df = pd.read_csv(
-        private_data_path(
+        package_data_path(
             "material",
             "methanol",
             "results_material_" + pathway + "_" + sector + ".csv",
@@ -683,7 +675,7 @@ def gen_meth_residual_demand(gdp_elasticity_2020, gdp_elasticity_2030):
         ) + demand_t0
 
     df_gdp = pd.read_excel(
-        private_data_path("material", "methanol", "methanol demand.xlsx"),
+        package_data_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="GDP_baseline",
     )
 
@@ -691,7 +683,7 @@ def gen_meth_residual_demand(gdp_elasticity_2020, gdp_elasticity_2030):
     df = df.dropna(axis=1)
 
     df_demand_meth = pd.read_excel(
-        private_data_path("material", "methanol", "methanol demand.xlsx"),
+        package_data_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="methanol_demand",
         skiprows=[12],
     )
@@ -768,22 +760,22 @@ def get_scaled_cost_from_proxy_tec(
 
 def add_meth_tec_vintages():
     par_dict_ng = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
         sheet_name=None,
     )
     par_dict_ng_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
         sheet_name=None,
     )
     par_dict_ng.pop("historical_activity")
     par_dict_ng_fs.pop("historical_activity")
 
     par_dict_coal = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions.xlsx"),
         sheet_name=None,
     )
     par_dict_coal_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
         sheet_name=None,
     )
     par_dict_coal.pop("historical_activity")
@@ -797,15 +789,17 @@ def add_meth_hist_act():
     # fix demand infeasibility
     par_dict = {}
     df_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
         sheet_name="historical_activity",
     )
     df_fuel = pd.read_excel(
-        private_data_path("material", "methanol", "meth_coal_additions.xlsx"),
+        package_data_path("material", "methanol", "meth_coal_additions.xlsx"),
         sheet_name="historical_activity",
     )
     par_dict["historical_activity"] = pd.concat([df_fs, df_fuel])
-    # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
+    # derived from graphic in
+    # "Methanol production statstics.xlsx/China demand split" diagram
+
     # hist_cap = make_df(
     #     "historical_new_capacity",
     #     node_loc="R12_CHN",
@@ -817,14 +811,15 @@ def add_meth_hist_act():
     # par_dict["historical_new_capacity"] = hist_cap
     # fix demand infeasibility
     # act = scenario.par("historical_activity")
-    # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
+    # row = act[act["technology"].str.startswith("meth")].sort_values("value",
+    # ascending=False).iloc[0]
     # row["value"] = 0.0
     df_ng = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
         sheet_name="historical_activity",
     )
     df_ng_fs = pd.read_excel(
-        private_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
+        package_data_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
         sheet_name="historical_activity",
     )
     par_dict["historical_activity"] = pd.concat(
@@ -835,12 +830,12 @@ def add_meth_hist_act():
 
 def update_costs_with_loc_factor(df):
     loc_fact = pd.read_excel(
-        private_data_path("material", "methanol", "location factor collection.xlsx"),
+        package_data_path("material", "methanol", "location factor collection.xlsx"),
         sheet_name="comparison",
         index_col=0,
     )
     cost_conv = pd.read_excel(
-        private_data_path("material", "methanol", "location factor collection.xlsx"),
+        package_data_path("material", "methanol", "location factor collection.xlsx"),
         sheet_name="cost_convergence",
         index_col=0,
     )

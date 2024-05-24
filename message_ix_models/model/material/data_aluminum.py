@@ -1,28 +1,39 @@
-import pandas as pd
 from collections import defaultdict
-from .data_util import read_timeseries
-from pathlib import Path
 
-
-from .material_demand import material_demand_calc
-from .util import read_config
-from .data_util import read_rel
-from message_ix_models import ScenarioInfo
+import message_ix
+import pandas as pd
 from message_ix import make_df
+
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     broadcast,
+    nodes_ex_world,
+    package_data_path,
     same_node,
-    private_data_path,
 )
 
-# Get endogenous material demand from buildings interface
+from .data_util import read_rel, read_timeseries
+from .material_demand import material_demand_calc
+from .util import combine_df_dictionaries, get_ssp_from_context, read_config
 
 
-def read_data_aluminum(scenario):
-    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
+def read_data_aluminum(
+    scenario: message_ix.Scenario,
+) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    """Read and clean data from :file:`aluminum_techno_economic.xlsx`.
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        Scenario instance to build aluminum on
+    Returns
+    -------
+    tuple of three pd.DataFrames
+        returns aluminum data in three separate groups
+        time indepenendent parameters, relation parameters and time dependent parameters
+    """
 
     # Ensure config is loaded, get the context
-    context = read_config()
     s_info = ScenarioInfo(scenario)
 
     # Shorter access to sets configuration
@@ -32,14 +43,12 @@ def read_data_aluminum(scenario):
 
     if "R12_CHN" in s_info.N:
         sheet_n = "data_R12"
-        sheet_n_relations = "relations_R12"
     else:
         sheet_n = "data_R11"
-        sheet_n_relations = "relations_R11"
 
     # Read the file
     data_alu = pd.read_excel(
-        private_data_path("material", "aluminum", fname), sheet_name=sheet_n
+        package_data_path("material", "aluminum", fname), sheet_name=sheet_n
     )
 
     # Drop columns that don't contain useful information
@@ -59,264 +68,46 @@ def read_data_aluminum(scenario):
     return data_alu, data_alu_rel, data_aluminum_ts
 
 
-def print_full(x):
-    pd.set_option("display.max_rows", len(x))
-    print(x)
-    pd.reset_option("display.max_rows")
+def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> dict[str, pd.DataFrame]:
+    """
+    Generates time variable parameter data for aluminum sector
+    Parameters
+    ----------
+    data: pd.DataFrame
+        time variable data from input file
+    nodes: list
+        regions of model
 
-
-def gen_data_aluminum(scenario, dry_run=False):
-    context = read_config()
-    config = context["material"]["aluminum"]
-
-    # Information about scenario, e.g. node, year
-    s_info = ScenarioInfo(scenario)
-    ssp = context["ssp"]
-    # Techno-economic assumptions
-    data_aluminum, data_aluminum_rel, data_aluminum_ts = read_data_aluminum(scenario)
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
-
-    allyears = s_info.set["year"]  # s_info.Y is only for modeling years
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = s_info.N
-    yv_ya = s_info.yv_ya
-    fmy = s_info.y0
-    nodes.remove("World")
-
-    # Do not parametrize GLB region the same way
-    if "R11_GLB" in nodes:
-        nodes.remove("R11_GLB")
-        global_region = "R11_GLB"
-    if "R12_GLB" in nodes:
-        nodes.remove("R12_GLB")
-        global_region = "R12_GLB"
-
-    for t in config["technology"]["add"]:
-
-        params = data_aluminum.loc[
-            (data_aluminum["technology"] == t), "parameter"
-        ].values.tolist()
-
-        # Obtain the active and vintage years
-        av = data_aluminum.loc[
-            (data_aluminum["technology"] == t), "availability"
-        ].values[0]
-        modelyears = [year for year in modelyears if year >= av]
-        yva = yv_ya.loc[yv_ya.year_vtg >= av]
-
-        # Iterate over parameters
-        for par in params:
-            # Obtain the parameter names, commodity,level,emission
-
-            split = par.split("|")
-            param_name = split[0]
-
-            # Obtain the scalar value for the parameter
-
-            val = data_aluminum.loc[
-                (
-                    (data_aluminum["technology"] == t)
-                    & (data_aluminum["parameter"] == par)
-                ),
-                "value",
-            ]
-
-            regions = data_aluminum.loc[
-                (
-                    (data_aluminum["technology"] == t)
-                    & (data_aluminum["parameter"] == par)
-                ),
-                "region",
-            ]
-
-            common = dict(
-                year_vtg=yv_ya.year_vtg,
-                year_act=yv_ya.year_act,
-                mode="M1",
-                time="year",
-                time_origin="year",
-                time_dest="year",
-            )
-
-            for rg in regions:
-                # For the parameters which inlcudes index names
-                if len(split) > 1:
-
-                    if (param_name == "input") | (param_name == "output"):
-
-                        # Assign commodity and level names
-                        # Later mod can be added
-                        com = split[1]
-                        lev = split[2]
-
-                        if (param_name == "input") and (lev == "import"):
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                value=val[regions[regions == rg].index[0]],
-                                unit="t",
-                                node_loc=rg,
-                                node_origin=global_region,
-                                **common
-                            )
-
-                        elif (param_name == "output") and (lev == "export"):
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                value=val[regions[regions == rg].index[0]],
-                                unit="t",
-                                node_loc=rg,
-                                node_dest=global_region,
-                                **common
-                            )
-
-                        # Assign higher efficiency to younger plants
-                        elif (
-                            ((t == "soderberg_aluminum") or (t == "prebake_aluminum"))
-                            & (com == "electr")
-                            & (param_name == "input")
-                        ):
-                            # All the vıntage years
-                            year_vtg = sorted(set(yv_ya.year_vtg.values))
-                            # Collect the values for the combination of vintage and
-                            # active years.
-                            input_values_all = []
-                            for yr_v in year_vtg:
-                                # The initial year efficiency value
-                                input_values_temp = [
-                                    val[regions[regions == rg].index[0]]
-                                ]
-                                # Reduction after the vintage year
-                                year_vtg_filtered = list(
-                                    filter(lambda op: op >= yr_v, year_vtg)
-                                )
-                                # Filter the active model years
-                                year_act = yv_ya.loc[
-                                    yv_ya["year_vtg"] == yr_v, "year_act"
-                                ].values
-                                for i in range(len(year_vtg_filtered) - 1):
-                                    input_values_temp.append(input_values_temp[i] * 1.1)
-
-                                act_year_no = len(year_act)
-                                input_values_temp = input_values_temp[-act_year_no:]
-                                input_values_all = input_values_all + input_values_temp
-
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                value=input_values_all,
-                                unit="t",
-                                node_loc=rg,
-                                **common
-                            ).pipe(same_node)
-
-                        else:
-                            df = make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                value=val[regions[regions == rg].index[0]],
-                                unit="t",
-                                node_loc=rg,
-                                **common
-                            ).pipe(same_node)
-
-                        # Copy parameters to all regions, when node_loc is not GLB
-                        if (len(regions) == 1) and (rg != global_region):
-                            df["node_loc"] = None
-                            df = df.pipe(broadcast, node_loc=nodes)  # .pipe(same_node)
-                            # Use same_node only for non-trade technologies
-                            if (lev != "import") and (lev != "export"):
-                                df = df.pipe(same_node)
-
-                    elif param_name == "emission_factor":
-
-                        # Assign the emisson type
-                        emi = split[1]
-
-                        df = make_df(
-                            param_name,
-                            technology=t,
-                            value=val[regions[regions == rg].index[0]],
-                            emission=emi,
-                            unit="t",
-                            node_loc=rg,
-                            **common
-                        )
-
-                # Parameters with only parameter name
-                else:
-                    df = make_df(
-                        param_name,
-                        technology=t,
-                        value=val[regions[regions == rg].index[0]],
-                        unit="t",
-                        node_loc=rg,
-                        **common
-                    )
-
-                # Copy parameters to all regions
-                if (
-                    (len(regions) == 1)
-                    and len(set(df["node_loc"])) == 1
-                    and list(set(df["node_loc"]))[0] != global_region
-                ):
-                    df["node_loc"] = None
-                    df = df.pipe(broadcast, node_loc=nodes)
-
-                results[param_name].append(df)
-
-    # Create external demand param
-    parname = "demand"
-    df = material_demand_calc.derive_demand("aluminum", scenario, old_gdp=False, ssp=ssp)
-    results[parname].append(df)
-
-    # Special treatment for time-varying params
-
-    tec_ts = set(data_aluminum_ts.technology)  # set of tecs in timeseries sheet
-
+    Returns
+    -------
+    pd.DataFrame
+        key-value pairs of parameter names and parameter data
+    """
+    tec_ts = set(data.technology)  # set of tecs in timeseries sheet
+    common = dict(
+        time="year",
+        time_origin="year",
+        time_dest="year",
+    )
+    par_dict = defaultdict(list)
     for t in tec_ts:
-        common = dict(
-            time="year",
-            time_origin="year",
-            time_dest="year",
-        )
-
-        param_name = data_aluminum_ts.loc[
-            (data_aluminum_ts["technology"] == t), "parameter"
-        ]
-
+        param_name = data.loc[(data["technology"] == t), "parameter"].unique()
         for p in set(param_name):
-            val = data_aluminum_ts.loc[
-                (data_aluminum_ts["technology"] == t)
-                & (data_aluminum_ts["parameter"] == p),
+            val = data.loc[
+                (data["technology"] == t) & (data["parameter"] == p),
                 "value",
             ]
-            units = data_aluminum_ts.loc[
-                (data_aluminum_ts["technology"] == t)
-                & (data_aluminum_ts["parameter"] == p),
-                "units",
-            ].values[0]
-            mod = data_aluminum_ts.loc[
-                (data_aluminum_ts["technology"] == t)
-                & (data_aluminum_ts["parameter"] == p),
+            # units = data.loc[
+            #     (data["technology"] == t)
+            #     & (data["parameter"] == p),
+            #     "units",
+            # ].values[0]
+            mod = data.loc[
+                (data["technology"] == t) & (data["parameter"] == p),
                 "mode",
             ]
-            yr = data_aluminum_ts.loc[
-                (data_aluminum_ts["technology"] == t)
-                & (data_aluminum_ts["parameter"] == p),
+            yr = data.loc[
+                (data["technology"] == t) & (data["parameter"] == p),
                 "year",
             ]
 
@@ -329,12 +120,11 @@ def gen_data_aluminum(scenario, dry_run=False):
                     year_vtg=yr,
                     year_act=yr,
                     mode=mod,
-                    **common
+                    **common,
                 ).pipe(broadcast, node_loc=nodes)
             else:
-                rg = data_aluminum_ts.loc[
-                    (data_aluminum_ts["technology"] == t)
-                    & (data_aluminum_ts["parameter"] == p),
+                rg = data.loc[
+                    (data["technology"] == t) & (data["parameter"] == p),
                     "region",
                 ]
                 df = make_df(
@@ -346,29 +136,26 @@ def gen_data_aluminum(scenario, dry_run=False):
                     year_act=yr,
                     mode=mod,
                     node_loc=rg,
-                    **common
+                    **common,
                 )
 
-            results[p].append(df)
+            par_dict[p].append(df)
+    return {par_name: pd.concat(dfs) for par_name, dfs in par_dict.items()}
 
-    # Add relations for scrap grades and availability
 
-    regions = set(data_aluminum_rel["Region"].values)
-
+def gen_data_alu_rel(data: pd.DataFrame, years: list) -> dict[str, pd.DataFrame]:
+    par_dict = defaultdict(list)
+    regions = set(data["Region"].values)
     for reg in regions:
-        for r in data_aluminum_rel["relation"]:
+        for r in data["relation"].unique():
             if r is None:
                 break
 
-            params = set(
-                data_aluminum_rel.loc[
-                    (data_aluminum_rel["relation"] == r), "parameter"
-                ].values
-            )
+            params = set(data.loc[(data["relation"] == r), "parameter"].values)
 
             # This relation should start from 2020...
             if r == "minimum_recycling_aluminum":
-                modelyears_copy = modelyears[:]
+                modelyears_copy = years[:]
                 if 2020 in modelyears_copy:
                     modelyears_copy.remove(2020)
 
@@ -379,34 +166,28 @@ def gen_data_aluminum(scenario, dry_run=False):
                     relation=r,
                 )
             else:
-
                 # Use all the model years for other relations...
                 common_rel = dict(
-                    year_rel=modelyears,
-                    year_act=modelyears,
+                    year_rel=years,
+                    year_act=years,
                     mode="M1",
                     relation=r,
                 )
 
             for par_name in params:
                 if par_name == "relation_activity":
-
-                    tec_list = data_aluminum_rel.loc[
-                        (
-                            (data_aluminum_rel["relation"] == r)
-                            & (data_aluminum_rel["parameter"] == par_name)
-                        ),
+                    tec_list = data.loc[
+                        ((data["relation"] == r) & (data["parameter"] == par_name)),
                         "technology",
                     ]
 
                     for tec in tec_list.unique():
-
-                        val = data_aluminum_rel.loc[
+                        val = data.loc[
                             (
-                                (data_aluminum_rel["relation"] == r)
-                                & (data_aluminum_rel["parameter"] == par_name)
-                                & (data_aluminum_rel["technology"] == tec)
-                                & (data_aluminum_rel["Region"] == reg)
+                                (data["relation"] == r)
+                                & (data["parameter"] == par_name)
+                                & (data["technology"] == tec)
+                                & (data["Region"] == reg)
                             ),
                             "value",
                         ].values[0]
@@ -418,17 +199,17 @@ def gen_data_aluminum(scenario, dry_run=False):
                             unit="-",
                             node_loc=reg,
                             node_rel=reg,
-                            **common_rel
+                            **common_rel,
                         ).pipe(same_node)
 
-                        results[par_name].append(df)
+                        par_dict[par_name].append(df)
 
                 elif (par_name == "relation_upper") | (par_name == "relation_lower"):
-                    val = data_aluminum_rel.loc[
+                    val = data.loc[
                         (
-                            (data_aluminum_rel["relation"] == r)
-                            & (data_aluminum_rel["parameter"] == par_name)
-                            & (data_aluminum_rel["Region"] == reg)
+                            (data["relation"] == r)
+                            & (data["parameter"] == par_name)
+                            & (data["Region"] == reg)
                         ),
                         "value",
                     ].values[0]
@@ -437,18 +218,244 @@ def gen_data_aluminum(scenario, dry_run=False):
                         par_name, value=val, unit="-", node_rel=reg, **common_rel
                     )
 
-                    results[par_name].append(df)
+                    par_dict[par_name].append(df)
+    return {par_name: pd.concat(dfs) for par_name, dfs in par_dict.items()}
 
-    results_aluminum = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+def assign_input_outpt(
+    split, param_name, regions, val, t, rg, glb_reg, common, yv_ya, nodes
+):
+    # Assign commodity and level names
+    # Later mod can be added
+    com = split[1]
+    lev = split[2]
+
+    if (param_name == "input") and (lev == "import"):
+        df = make_df(
+            param_name,
+            technology=t,
+            commodity=com,
+            level=lev,
+            value=val[regions[regions == rg].index[0]],
+            unit="t",
+            node_loc=rg,
+            node_origin=glb_reg,
+            **common,
+        )
+
+    elif (param_name == "output") and (lev == "export"):
+        df = make_df(
+            param_name,
+            technology=t,
+            commodity=com,
+            level=lev,
+            value=val[regions[regions == rg].index[0]],
+            unit="t",
+            node_loc=rg,
+            node_dest=glb_reg,
+            **common,
+        )
+
+    # Assign higher efficiency to younger plants
+    elif (
+        ((t == "soderberg_aluminum") or (t == "prebake_aluminum"))
+        & (com == "electr")
+        & (param_name == "input")
+    ):
+        # All the vıntage years
+        year_vtg = sorted(set(yv_ya.year_vtg.values))
+        # Collect the values for the combination of vintage and
+        # active years.
+        input_values_all = []
+        for yr_v in year_vtg:
+            # The initial year efficiency value
+            input_values_temp = [val[regions[regions == rg].index[0]]]
+            # Reduction after the vintage year
+            year_vtg_filtered = list(filter(lambda op: op >= yr_v, year_vtg))
+            # Filter the active model years
+            year_act = yv_ya.loc[yv_ya["year_vtg"] == yr_v, "year_act"].values
+            for i in range(len(year_vtg_filtered) - 1):
+                input_values_temp.append(input_values_temp[i] * 1.1)
+
+            act_year_no = len(year_act)
+            input_values_temp = input_values_temp[-act_year_no:]
+            input_values_all = input_values_all + input_values_temp
+
+        df = make_df(
+            param_name,
+            technology=t,
+            commodity=com,
+            level=lev,
+            value=input_values_all,
+            unit="t",
+            node_loc=rg,
+            **common,
+        ).pipe(same_node)
+
+    else:
+        df = make_df(
+            param_name,
+            technology=t,
+            commodity=com,
+            level=lev,
+            value=val[regions[regions == rg].index[0]],
+            unit="t",
+            node_loc=rg,
+            **common,
+        ).pipe(same_node)
+
+    # Copy parameters to all regions, when node_loc is not GLB
+    if (len(regions) == 1) and (rg != glb_reg):
+        df["node_loc"] = None
+        df = df.pipe(broadcast, node_loc=nodes)  # .pipe(same_node)
+        # Use same_node only for non-trade technologies
+        if (lev != "import") and (lev != "export"):
+            df = df.pipe(same_node)
+    return df
+
+
+def gen_data_alu_const(data, config, glb_reg, years, yv_ya, nodes):
+    results = defaultdict(list)
+    for t in config["technology"]["add"]:
+        params = data.loc[(data["technology"] == t), "parameter"].unique()
+        # Obtain the active and vintage years
+        av = data.loc[(data["technology"] == t), "availability"].values[0]
+        years = [year for year in years if year >= av]
+        yv_ya = yv_ya.loc[yv_ya.year_vtg >= av]
+        common = dict(
+            year_vtg=yv_ya.year_vtg,
+            year_act=yv_ya.year_act,
+            mode="M1",
+            time="year",
+            time_origin="year",
+            time_dest="year",
+        )
+        # Iterate over parameters
+        for par in params:
+            # Obtain the parameter names, commodity,level,emission
+            split = par.split("|")
+            param_name = split[0]
+
+            # Obtain the scalar value for the parameter
+            val = data.loc[
+                ((data["technology"] == t) & (data["parameter"] == par)),
+                "value",
+            ]
+
+            regions = data.loc[
+                ((data["technology"] == t) & (data["parameter"] == par)),
+                "region",
+            ]
+
+            for rg in regions:
+                # For the parameters which includes index names
+                if len(split) > 1:
+                    if (param_name == "input") | (param_name == "output"):
+                        df = assign_input_outpt(
+                            split,
+                            param_name,
+                            regions,
+                            val,
+                            t,
+                            rg,
+                            glb_reg,
+                            common,
+                            yv_ya,
+                            nodes,
+                        )
+
+                    elif param_name == "emission_factor":
+                        # Assign the emisson type
+                        emi = split[1]
+
+                        df = make_df(
+                            param_name,
+                            technology=t,
+                            value=val[regions[regions == rg].index[0]],
+                            emission=emi,
+                            unit="t",
+                            node_loc=rg,
+                            **common,
+                        )
+
+                # Parameters with only parameter name
+                else:
+                    df = make_df(
+                        param_name,
+                        technology=t,
+                        value=val[regions[regions == rg].index[0]],
+                        unit="t",
+                        node_loc=rg,
+                        **common,
+                    )
+
+                # Copy parameters to all regions
+                if (
+                    (len(regions) == 1)
+                    and len(set(df["node_loc"])) == 1
+                    and list(set(df["node_loc"]))[0] != glb_reg
+                ):
+                    df["node_loc"] = None
+                    df = df.pipe(broadcast, node_loc=nodes)
+
+                results[param_name].append(df)
+    return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+
+def gen_data_aluminum(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
+    """
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        Scenario instance to build aluminum model on
+    dry_run: bool
+        *not implemented*
+    Returns
+    -------
+    dict[pd.DataFrame]
+        dict with MESSAGEix parameters as keys and parametrization as values
+        stored in pd.DataFrame
+    """
+    context = read_config()
+    config = context["material"]["aluminum"]
+
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+    ssp = get_ssp_from_context(context)
+    # Techno-economic assumptions
+    data_aluminum, data_aluminum_rel, data_aluminum_ts = read_data_aluminum(scenario)
+    # List of data frames, to be concatenated together at end
+
+    modelyears = s_info.Y
+    yv_ya = s_info.yv_ya
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+
+    const_dict = gen_data_alu_const(
+        data_aluminum, config, global_region, modelyears, yv_ya, nodes
+    )
+
+    parname = "demand"
+    demand_dict = {}
+    df = material_demand_calc.derive_demand(
+        "aluminum", scenario, old_gdp=False, ssp=ssp
+    )
+    demand_dict[parname] = df
+
+    ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
+    rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
+
+    results_aluminum = combine_df_dictionaries(
+        const_dict, ts_dict, rel_dict, demand_dict
+    )
     return results_aluminum
 
 
-def gen_mock_demand_aluminum(scenario):
-
-    context = read_config()
+def gen_mock_demand_aluminum(scenario: message_ix.Scenario) -> pd.DataFrame:
     s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    fmy = s_info.y0
     nodes = s_info.N
     nodes.remove("World")
 
@@ -471,7 +478,7 @@ def gen_mock_demand_aluminum(scenario):
 
     # The order:
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+    # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
@@ -487,7 +494,7 @@ def gen_mock_demand_aluminum(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -517,46 +524,3 @@ def gen_mock_demand_aluminum(scenario):
     )
 
     return demand2020_al
-
-
-# # load rpy2 modules
-# import rpy2.robjects as ro
-# from rpy2.robjects import pandas2ri
-# from rpy2.robjects.conversion import localconverter
-#
-# # This returns a df with columns ["region", "year", "demand.tot"]
-# def derive_aluminum_demand(scenario, dry_run=False):
-#     """Generate aluminum demand."""
-#     # paths to r code and lca data
-#     rcode_path = Path(__file__).parents[0] / "material_demand"
-#     context = read_config()
-#
-#     # source R code
-#     r = ro.r
-#     r.source(str(rcode_path / "init_modularized.R"))
-#
-#     # Read population and baseline demand for materials
-#     pop = scenario.par("bound_activity_up", {"technology": "Population"})
-#     pop = pop.loc[pop.year_act >= 2020].rename(
-#         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
-#     )
-#
-#     # import pdb; pdb.set_trace()
-#
-#     pop = pop[["region", "year", "pop.mil"]]
-#
-#     base_demand = gen_mock_demand_aluminum(scenario)
-#     base_demand = base_demand.loc[base_demand.year == 2020].rename(
-#         columns={"value": "demand.tot.base", "node": "region"}
-#     )
-#
-#     # call R function with type conversion
-#     with localconverter(ro.default_converter + pandas2ri.converter):
-#         # GDP is only in MER in scenario.
-#         # To get PPP GDP, it is read externally from the R side
-#         df = r.derive_aluminum_demand(
-#             pop, base_demand, str(private_data_path("material"))
-#         )
-#         df.year = df.year.astype(int)
-#
-#     return df

@@ -1,13 +1,15 @@
-import pandas as pd
-
 from collections import defaultdict
-from message_data.model.material.util import read_config
-from message_ix_models import ScenarioInfo
+
+import numpy as np
+import pandas as pd
 from message_ix import make_df
+
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.util import read_config
 from message_ix_models.util import (
-    same_node,
     copy_column,
-    private_data_path,
+    package_data_path,
+    same_node,
 )
 
 CASE_SENS = "ref"  # 'min', 'max'
@@ -16,25 +18,17 @@ INPUTFILE = "LED_LED_report_IAMC_sensitivity_R12.csv"
 
 
 def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
-
-    import numpy as np
-
-    # Ensure config is loaded, get the context
-    context = read_config()
-    s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
-
     # Read the file and filter the given sensitivity case
-    bld_input_raw = pd.read_csv(private_data_path("material", "buildings", filename))
+    bld_input_raw = pd.read_csv(package_data_path("material", "buildings", filename))
     bld_input_raw = bld_input_raw.loc[bld_input_raw.Sensitivity == case]
 
     bld_input_mat = bld_input_raw[
         bld_input_raw[
             "Variable"
-        ].str.contains(  # str.contains("Floor Space|Aluminum|Cement|Steel|Final Energy")]
+        ].str.contains(  # "Floor Space|Aluminum|Cement|Steel|Final Energy"
             "Floor Space|Aluminum|Cement|Steel"
         )
-    ]  # Final Energy - Later. Need to figure out carving out
+    ]  # Final Energy - Later. Need to figure out how to carve out
     bld_input_mat["Region"] = "R12_" + bld_input_mat["Region"]
     print("Check the year values")
     print(bld_input_mat)
@@ -123,12 +117,6 @@ def get_scen_mat_demand(
 
 
 def adjust_demand_param(scen):
-
-    s_info = ScenarioInfo(scen)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-
-    # scen.clone(model=scen.model, scenario=scen.scenario+"_building")
-
     scen_mat_demand = scen.par(
         "demand", {"level": "demand"}
     )  # mat demand without buildings considered
@@ -189,10 +177,9 @@ def gen_data_buildings(scenario, dry_run=False):
     # allyears = s_info.set['year'] #s_info.Y is only for modeling years
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
-    yv_ya = s_info.yv_ya
     # fmy = s_info.y0
     nodes.remove("World")
-    #nodes.remove("R11_RCPA")
+    # nodes.remove("R11_RCPA")
 
     # Read field values from the buildings input data
     regions = list(set(data_buildings.node))
@@ -238,7 +225,7 @@ def gen_data_buildings(scenario, dry_run=False):
                     value=val_mat.value,
                     unit="t",
                     node_loc=rg,
-                    **common
+                    **common,
                 )
                 .pipe(same_node)
                 .assign(year_act=copy_column("year_vtg"))
@@ -256,7 +243,7 @@ def gen_data_buildings(scenario, dry_run=False):
                     value=val_scr.value,
                     unit="t",
                     node_loc=rg,
-                    **common
+                    **common,
                 )
                 .pipe(same_node)
                 .assign(year_act=copy_column("year_vtg"))
@@ -274,7 +261,7 @@ def gen_data_buildings(scenario, dry_run=False):
                 value=1,
                 unit="t",
                 node_loc=rg,
-                **common
+                **common,
             )
             .pipe(same_node)
             .assign(year_act=copy_column("year_vtg"))
@@ -304,12 +291,3 @@ def gen_data_buildings(scenario, dry_run=False):
         adjust_demand_param(scenario)
 
     return results
-
-
-if __name__ == "__main__":
-    import ixmp
-    import message_ix
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline_balance-equality_materials")
-    df = gen_data_buildings(scen)
-    print()

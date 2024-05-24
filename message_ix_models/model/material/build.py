@@ -1,30 +1,16 @@
 import logging
 from typing import Callable, Dict, List, Mapping, Union
 
-import ixmp
-import message_ix
+import pandas as pd
 from ixmp.utils import maybe_check_out, maybe_commit
 from message_ix import Scenario
-import pandas as pd
-
 from sdmx.model import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
-
 log = logging.getLogger(__name__)
 
-def ellipsize(elements: List) -> str:
-    """Generate a short string representation of `elements`.
-
-    If the list has more than 5 elements, only the first two and last two are shown,
-    with "..." between.
-    """
-    if len(elements) > 5:
-        return ", ".join(map(str, elements[:2] + ["..."] + elements[-2:]))
-    else:
-        return ", ".join(map(str, elements))
 
 def ellipsize(elements: List) -> str:
     """Generate a short string representation of `elements`.
@@ -38,7 +24,8 @@ def ellipsize(elements: List) -> str:
         return ", ".join(map(str, elements))
 
 
-def apply_spec(
+# FIXME Reduce complexity (same issues as model.build.apply_spec())
+def apply_spec(  # noqa: C901
     scenario: Scenario,
     spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
     data: Callable = None,
@@ -88,7 +75,6 @@ def apply_spec(
         maybe_check_out(scenario)
 
     if spec:
-
         dump: Dict[str, pd.DataFrame] = {}  # Removed data
 
         for set_name in scenario.set_list():
