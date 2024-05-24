@@ -1,59 +1,58 @@
+import logging
+import os
+from typing import Mapping
+
+import click
+import ixmp
 import message_ix
 import pandas as pd
-import ntfy
-import click
-import logging
-import ixmp
-import os
 
 import message_ix_models.tools.costs.projections
-from message_data.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import add_par_data, private_data_path
-from message_data.model.material.data_buildings import gen_data_buildings
-from message_data.tools.utilities import (
-    calibrate_UE_gr_to_demand,
-    calibrate_UE_share_constraints,
-    manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
-    update_h2_blending,
-)
-from message_data.model.material.data_util import (
-    modify_demand_and_hist_activity,
-    add_emission_accounting,
-    add_new_ind_hist_act,
-    modify_industry_demand,
-    modify_baseyear_bounds,
-    add_coal_lowerbound_2020,
-    add_macro_COVID,
-    add_cement_bounds_2020,
-    add_elec_lowerbound_2020,
+from message_ix_models.model.material.build import apply_spec
+from message_ix_models.model.material.data_aluminum import gen_data_aluminum
+from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
+from message_ix_models.model.material.data_cement import gen_data_cement
+from message_ix_models.model.material.data_generic import gen_data_generic
+from message_ix_models.model.material.data_methanol_new import gen_data_methanol_new
+from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
+from message_ix_models.model.material.data_power_sector import gen_data_power_sector
+from message_ix_models.model.material.data_steel import gen_data_steel
+from message_ix_models.model.material.data_util import (
     add_ccs_technologies,
-    read_config,
+    add_cement_bounds_2020,
+    add_coal_lowerbound_2020,
+    add_elec_i_ini_act,
+    add_elec_lowerbound_2020,
+    add_emission_accounting,
+    add_macro_COVID,
+    add_new_ind_hist_act,
     gen_te_projections,
     get_ssp_soc_eco_data,
-    add_elec_i_ini_act,
+    modify_baseyear_bounds,
+    modify_demand_and_hist_activity,
+    modify_industry_demand,
 )
-from message_data.model.material.util import (
+from message_ix_models.model.material.util import (
     excel_to_csv,
     get_all_input_data_dirs,
+    read_config,
     update_macro_calib_file,
 )
-from typing import Mapping
-from message_data.model.material.data_cement import gen_data_cement
-from message_data.model.material.data_steel import gen_data_steel
-from message_data.model.material.data_aluminum import gen_data_aluminum
-from message_data.model.material.data_generic import gen_data_generic
-from message_data.model.material.data_petro import gen_data_petro_chemicals
-from message_data.model.material.data_power_sector import gen_data_power_sector
-from message_data.model.material.data_methanol_new import gen_data_methanol_new
-from message_data.model.material.data_ammonia_new import gen_all_NH3_fert
-
-
+from message_ix_models.util import add_par_data, package_data_path, private_data_path
 from message_ix_models.util.click import common_params
+from message_ix_models.util.compat.message_data import (
+    calibrate_UE_gr_to_demand,
+    calibrate_UE_share_constraints,
+)
+from message_ix_models.util.compat.message_data import (
+    manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
+)
+
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS_1 = [
-    #gen_data_buildings,
+    # gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
     # gen_data_ammonia, ## deprecated module!
@@ -63,7 +62,7 @@ DATA_FUNCTIONS_1 = [
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    # gen_data_power_sector,
+    gen_data_power_sector,
     gen_data_aluminum,
 ]
 
@@ -83,7 +82,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         scenario.add_set("commodity", "freshwater_supply")
 
         water_dict = pd.read_excel(
-            private_data_path("material", "other", "water_tec_pars.xlsx"),
+            package_data_path("material", "other", "water_tec_pars.xlsx"),
             sheet_name=None,
         )
         for par in water_dict.keys():
@@ -95,7 +94,6 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         engage_updates._correct_balance_td_efficiencies(scenario)
         engage_updates._correct_coal_ppl_u_efficiencies(scenario)
         engage_updates._correct_td_co2cc_emissions(scenario)
-        update_h2_blending.main(scenario)
     spec = None
     apply_spec(scenario, spec, add_data_2)
 
@@ -121,7 +119,8 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     add_cement_bounds_2020(scenario)
 
     # Market penetration adjustments
-    # NOTE: changing demand affects the market penetration levels for the enduse technologies.
+    # NOTE: changing demand affects the market penetration
+    # levels for the enduse technologies.
     # Note: context.ssp doesnt work
     calibrate_UE_gr_to_demand(
         scenario, data_path=private_data_path(), ssp="SSP2", region="R12"
@@ -190,7 +189,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
 
 
 # Group to allow for multiple CLI subcommands under "material"
-@click.group("material")
+@click.group("material-ix")
 @common_params("ssp")
 def cli(ssp):
     """Model with materials accounting."""
@@ -202,7 +201,7 @@ def cli(ssp):
 @click.pass_obj
 def create_bare(context, regions, dry_run):
     """Create the RES from scratch."""
-    from message_data.model.create import create_res
+    from message_ix_models.model.bare import create_res
 
     if regions:
         context.regions = regions
@@ -338,7 +337,6 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
     elif mode == "cbudget":
         scenario = context.get_scenario()
         print(scenario.version)
-        # print('Base scenario is: ' + scenario.scenario + ", version: " + scenario.version)
         output_scenario_name = scenario.scenario + "_" + tag
         scenario_new = scenario.clone(
             "MESSAGEix-Materials",
@@ -368,8 +366,6 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         scenario.add_par("fix_cost", fix)
         scenario.add_par("inv_cost", inv)
         scenario.commit(f"update cost assumption to: {update_costs}")
-
-    ntfy.notify(title="MESSAGEix-Materials", message="building successfully finished!")
 
 
 @cli.command("solve")
@@ -420,8 +416,8 @@ def solve_scen(
             scenario.set_as_default()
 
             # Report
-            from message_data.model.material.report.reporting import report
-            from message_data.tools.post_processing.iamc_report_hackathon import (
+            from message_ix_models.model.material.report.reporting import report
+            from message_ix_models.report.legacy.iamc_report_hackathon import (
                 report as reporting,
             )
 
@@ -432,8 +428,6 @@ def solve_scen(
             reporting(
                 mp,
                 scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
                 "False",
                 scenario.model,
                 scenario.scenario,
@@ -477,18 +471,19 @@ def solve_scen(
         print("Solving the scenario without MACRO")
         scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
         scenario.set_as_default()
-    ntfy.notify(title="MESSAGEix-Materials", message="solving successfully finished!")
 
 
 @cli.command("add_buildings_ts")
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 def add_building_ts(scenario_name, model_name):
-    from message_data.reporting.materials.add_buildings_ts import (
+    from ixmp import Platform
+    from message_ix import Scenario
+
+    # FIXME This import can not be resolved
+    from message_ix_models.reporting.materials.add_buildings_ts import (
         add_building_timeseries,
     )
-    from message_ix import Scenario
-    from ixmp import Platform
 
     print(model_name)
     mp = Platform()
@@ -509,8 +504,8 @@ def add_building_ts(scenario_name, model_name):
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
     """Run materials, then legacy reporting."""
-    from message_data.model.material.report.reporting import report
-    from message_data.tools.post_processing.iamc_report_hackathon import (
+    from message_ix_models.model.material.report.reporting import report
+    from message_ix_models.report.legacy.iamc_report_hackathon import (
         report as reporting,
     )
 
@@ -531,10 +526,10 @@ def run_reporting(context, remove_ts, profile):
             print("There are no timeseries to be removed.")
     else:
         if profile:
-            import cProfile
-            import pstats
-            import io
             import atexit
+            import cProfile
+            import io
+            import pstats
 
             print("Profiling...")
             pr = cProfile.Profile()
@@ -545,8 +540,6 @@ def run_reporting(context, remove_ts, profile):
             reporting(
                 mp,
                 scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
                 "False",
                 scenario.model,
                 scenario.scenario,
@@ -573,8 +566,6 @@ def run_reporting(context, remove_ts, profile):
             reporting(
                 mp,
                 scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
                 "False",
                 scenario.model,
                 scenario.scenario,
@@ -590,7 +581,7 @@ def run_reporting(context, remove_ts, profile):
 @cli.command("report-2")
 @click.pass_obj
 def run_old_reporting(context):
-    from message_data.tools.post_processing.iamc_report_hackathon import (
+    from message_ix_models.report.legacy.iamc_report_hackathon import (
         report as reporting,
     )
 
@@ -796,7 +787,7 @@ def make_xls_input_vc_able(context, files):
         dirs = [i for i in dirs if i != "version control"]
         for dir in dirs:
             print(dir)
-            files = os.listdir(private_data_path("material", dir))
+            files = os.listdir(package_data_path("material", dir))
             files = [i for i in files if ((i.endswith(".xlsx")) & ~i.startswith("~$"))]
             print(files)
             for filename in files:
@@ -810,7 +801,7 @@ def make_xls_input_vc_able(context, files):
         # for element in files:
         #     print(element)
         #     fname = element.split("/")[-1]
-        #     path = private_data_path(str(element.split("/")[:-1]))
+        #     path = package_data_path(str(element.split("/")[:-1]))
         #     print(path, fname)
-        # message_data.model.material.util.excel_to_csv(files)
+        # message_ix_models.model.material.util.excel_to_csv(files)
     return

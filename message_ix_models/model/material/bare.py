@@ -1,17 +1,22 @@
 import logging
-import message_ix
-
 from typing import Mapping
-from message_ix_models import ScenarioInfo
-#from message_ix_models.util get_context, set_info, add_par_data
-from message_ix_models.util import add_par_data
+
+import message_ix
 from sdmx.model.v21 import Code
+
+import message_ix_models
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material import (
+    gen_data_aluminum,
+    gen_data_generic,
+    gen_data_steel,
+)
+
+# from message_ix_models.util get_context, set_info, add_par_data
+from message_ix_models.util import add_par_data
+
 from .build import apply_spec
 from .util import read_config
-from message_data.model.data import get_data
-from message_data.model.material import gen_data_steel, gen_data_generic, gen_data_aluminum, gen_data_petro_chemicals
-import message_data
-
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +24,9 @@ log = logging.getLogger(__name__)
 # How do we add the historical period ?
 
 SETTINGS = dict(
-    #period_start=[2010],
+    # period_start=[2010],
     period_start=[1980],
-    first_model_year = [2020],
+    first_model_year=[2020],
     period_end=[2100],
     regions=["China"],
     res_with_dummies=[True],
@@ -34,6 +39,9 @@ def create_res(context=None, quiet=True):
 
     Parameters
     ----------
+    quiet : bool
+        Only show log messages at level ``ERROR`` and higher. If :obj:`False` (default),
+        show log messages at level ``DEBUG`` and higher.
     context : .Context
         :attr:`.Context.scenario_info`  determines the model name and scenario
         name of the created Scenario.
@@ -45,18 +53,19 @@ def create_res(context=None, quiet=True):
         :func:`.build.apply_spec`.
     """
     mp = context.get_platform()
-    mp.add_unit('Mt')  
+    mp.add_unit("Mt")
 
     # Model and scenario name for the RES
-    model_name = context.scenario_info['model']
-    scenario_name = context.scenario_info['scenario']
+    model_name = context.scenario_info["model"]
+    scenario_name = context.scenario_info["scenario"]
 
     # Create the Scenario
-    scenario = message_ix.Scenario(mp, model=model_name,
-                                   scenario=scenario_name, version='new')
+    scenario = message_ix.Scenario(
+        mp, model=model_name, scenario=scenario_name, version="new"
+    )
 
     # TODO move to message_ix
-    scenario.init_par('MERtoPPP', ['node', 'year'])
+    scenario.init_par("MERtoPPP", ["node", "year"])
 
     # Uncomment to add dummy sets and data
     context.res_with_dummies = True
@@ -68,7 +77,7 @@ def create_res(context=None, quiet=True):
         # data=partial(get_data, context=context, spec=spec),
         data=add_data,
         quiet=quiet,
-        message=f"Create using message_data {message_data.__version__}",
+        message=f"Create using message_ix_models {message_ix_models.__version__}",
     )
 
     return scenario
@@ -78,7 +87,7 @@ DATA_FUNCTIONS = [
     gen_data_steel,
     gen_data_generic,
     gen_data_aluminum,
-    #gen_data_variable
+    # gen_data_variable
 ]
 
 
@@ -97,10 +106,10 @@ def add_data(scenario, dry_run=False):
 
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
-        log.info(f'from {func.__name__}()')
+        log.info(f"from {func.__name__}()")
         add_par_data(scenario, func(scenario), dry_run=dry_run)
 
-    log.info('done')
+    log.info("done")
 
 
 def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
@@ -131,11 +140,14 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     add = ScenarioInfo()
 
     # Add technologies
-    # JM: try to find out a way to loop over 1st/2nd level and to just context["material"][xx]["add"]
-    add.set["technology"] = context["material"]["steel"]["technology"]["add"] + \
-        context["material"]["generic"]["technology"]["add"] + \
-        context["material"]["aluminum"]["technology"]["add"] + \
-        context["material"]["petro_chemicals"]["technology"]["add"]
+    # JM: try to find out a way to loop over 1st/2nd level
+    # and to just context["material"][xx]["add"]
+    add.set["technology"] = (
+        context["material"]["steel"]["technology"]["add"]
+        + context["material"]["generic"]["technology"]["add"]
+        + context["material"]["aluminum"]["technology"]["add"]
+        + context["material"]["petro_chemicals"]["technology"]["add"]
+    )
 
     # Add regions
 
@@ -151,40 +163,49 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     add.set["relation"] = context["material"]["steel"]["relation"]["add"]
 
     # Add the time horizon
-    add.set['year'] = list(range(
-        context.period_start, context.period_end + 1, context.time_step
-    ))
+    add.set["year"] = list(
+        range(context.period_start, context.period_end + 1, context.time_step)
+    )
 
     # JM: Leave the first time period as historical year
-    #add.set['cat_year'] = [('firstmodelyear', context.period_start + context.time_step)]
+    # add.set['cat_year'] = [('firstmodelyear',
+    # context.period_start + context.time_step)]
 
     # GU: Set 2020 as the first model year, leave the rest as historical year
-    add.set['cat_year'] = [('firstmodelyear', context.first_model_year)]
+    add.set["cat_year"] = [("firstmodelyear", context.first_model_year)]
 
     # Add levels
     # JM: For bare model, both 'add' & 'require' need to be added.
-    add.set['level'] = context["material"]["steel"]["level"]["add"] + \
-        context["material"]["common"]["level"]["require"] + \
-        context["material"]["generic"]["level"]["add"] + \
-        context["material"]["aluminum"]["level"]["add"] +\
-        context["material"]["petro_chemicals"]["level"]["add"]
+    add.set["level"] = (
+        context["material"]["steel"]["level"]["add"]
+        + context["material"]["common"]["level"]["require"]
+        + context["material"]["generic"]["level"]["add"]
+        + context["material"]["aluminum"]["level"]["add"]
+        + context["material"]["petro_chemicals"]["level"]["add"]
+    )
 
     # Add commodities
-    add.set['commodity'] = context["material"]["steel"]["commodity"]["add"] + \
-        context["material"]["common"]["commodity"]["require"] + \
-        context["material"]["generic"]["commodity"]["add"] + \
-        context["material"]["aluminum"]["commodity"]["add"] + \
-        context["material"]["petro_chemicals"]["commodity"]["add"]
+    add.set["commodity"] = (
+        context["material"]["steel"]["commodity"]["add"]
+        + context["material"]["common"]["commodity"]["require"]
+        + context["material"]["generic"]["commodity"]["add"]
+        + context["material"]["aluminum"]["commodity"]["add"]
+        + context["material"]["petro_chemicals"]["commodity"]["add"]
+    )
 
     # Add other sets
 
-    add.set['type_tec'] = context["material"]["common"]["type_tec"]["add"]
-    add.set['mode'] = context["material"]["common"]["mode"]["require"] +\
-        context["material"]["generic"]["mode"]["add"] + \
-        context["material"]["petro_chemicals"]["mode"]["add"]
+    add.set["type_tec"] = context["material"]["common"]["type_tec"]["add"]
+    add.set["mode"] = (
+        context["material"]["common"]["mode"]["require"]
+        + context["material"]["generic"]["mode"]["add"]
+        + context["material"]["petro_chemicals"]["mode"]["add"]
+    )
 
-    add.set['emission'] = context["material"]["common"]["emission"]["require"] +\
-        context["material"]["common"]["emission"]["add"]
+    add.set["emission"] = (
+        context["material"]["common"]["emission"]["require"]
+        + context["material"]["common"]["emission"]["add"]
+    )
 
     # Add units, associated with commodities
     # JM: What is 'anno'
@@ -205,7 +226,7 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
 
     # Deduplicate by converting to a set and then back; not strictly necessary,
     # but reduces duplicate log entries
-    add.set['unit'] = sorted(set(add.set['unit']))
+    add.set["unit"] = sorted(set(add.set["unit"]))
 
     # JM: Manually set the first model year
     add.y0 = context.first_model_year
@@ -216,6 +237,6 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
         # Add a dummy commodity
         add.set["commodity"].append(Code("dummy"))
 
-    spec['add'] = add
-    spec['remove'] = remove
+    spec["add"] = add
+    spec["remove"] = remove
     return spec

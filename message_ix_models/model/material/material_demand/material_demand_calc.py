@@ -1,28 +1,17 @@
-import message_ix_models.util
-import pandas as pd
 import numpy as np
-import message_ix
-from scipy.optimize import curve_fit
+import pandas as pd
 import yaml
-
-from message_data.model.material.util import read_config
-from message_ix_models import ScenarioInfo
 from message_ix import make_df
-from message_ix_models.util import (
-    broadcast,
-    make_io,
-    make_matched_dfs,
-    same_node,
-    add_par_data,
-    private_data_path,
-)
+from scipy.optimize import curve_fit
 
+import message_ix_models.util
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import package_data_path
 
 file_cement = "/CEMENT.BvR2010.xlsx"
 file_steel = "/STEEL_database_2012.xlsx"
 file_al = "/demand_aluminum.xlsx"
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
-
 giga = 10**9
 mega = 10**6
 
@@ -185,7 +174,7 @@ def read_base_demand(filepath):
 
 
 def read_hist_mat_demand(material):
-    datapath = message_ix_models.util.private_data_path("material")
+    datapath = message_ix_models.util.package_data_path("material")
 
     if material in ["cement", "steel"]:
         # Read population data
@@ -231,7 +220,7 @@ def read_hist_mat_demand(material):
             df_raw_cons["region"]
             .str.replace("(", "")
             .str.replace(")", "")
-            .str.replace("\d+", "")
+            .str.replace(r"\d+", "")
             .str[:-1]
         )
 
@@ -298,7 +287,7 @@ def read_gdp_ppp_from_scen(scen):
         mer_to_ppp = scen.par("MERtoPPP")
         if not len(mer_to_ppp):
             mer_to_ppp = pd.read_csv(
-                message_ix_models.util.private_data_path(
+                message_ix_models.util.package_data_path(
                     "material", "other", "mer_to_ppp_default.csv"
                 )
             )
@@ -315,7 +304,7 @@ def read_gdp_ppp_from_scen(scen):
 
 
 def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
-    datapath = message_ix_models.util.private_data_path("material")
+    datapath = message_ix_models.util.package_data_path("material")
 
     # read pop projection from scenario
     df_pop = read_pop_from_scen(scen)
@@ -326,7 +315,7 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
         df_gdp = pd.read_excel(f"{datapath}/other{file_gdp}", sheet_name="data_R12")
         df_gdp = (
             df_gdp[df_gdp["Scenario"] == "baseline"]
-            .loc[:, ["Region", *[i for i in df_gdp.columns if type(i) == int]]]
+            .loc[:, ["Region", *[i for i in df_gdp.columns if isinstance(i, int)]]]
             .melt(id_vars="Region", var_name="year", value_name="gdp_ppp")
             .query('Region != "World"')
             .assign(
@@ -345,12 +334,12 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
     x_data = tuple(pd.Series(df_cons[col]) for col in fitting_dict[material]["x_data"])
 
     # run regression on historical data
-    params_opt, _ = curve_fit(
+    params_opt = curve_fit(
         fitting_dict[material]["function"],
         xdata=x_data,
         ydata=df_cons["cons_pcap"],
         p0=fitting_dict[material]["initial_guess"],
-    )
+    )[0]
     mode = ssp_mode_map[ssp]
     print(f"adjust regression parameters according to mode: {mode}")
     print(f"before adjustment: {params_opt}")
@@ -383,7 +372,7 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
     df_final["time"] = "year"
     df_final["unit"] = "t"
     # TODO: correct unit would be Mt but might not be registered on database
-    df_final = message_ix.make_df("demand", **df_final)
+    df_final = make_df("demand", **df_final)
     return df_final
 
 
@@ -393,11 +382,9 @@ def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_203
         raise ValueError(
             f"'{chemical}' not supported. Choose one of {chemicals_implemented}"
         )
-    context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     fy = scenario.firstmodelyear
-    nodes = s_info.N
 
     def get_demand_t1_with_income_elasticity(
         demand_t0, income_t0, income_t1, elasticity
@@ -411,7 +398,7 @@ def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_203
         df_gdp_ts = gdp_ppp.pivot(
             index="node_loc", columns="year_act", values="value"
         ).reset_index()
-        num_cols = [i for i in df_gdp_ts.columns if type(i) == int]
+        num_cols = [i for i in df_gdp_ts.columns if isinstance(i, int)]
         hist_yrs = [i for i in num_cols if i < fy]
         df_gdp_ts = (
             df_gdp_ts.drop([i for i in hist_yrs if i in df_gdp_ts.columns], axis=1)
@@ -421,9 +408,10 @@ def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_203
     else:
         gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
         mer_to_ppp = pd.read_csv(
-            private_data_path("material", "other", "mer_to_ppp_default.csv")
+            package_data_path("material", "other", "mer_to_ppp_default.csv")
         ).set_index(["node", "year"])
-        # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year") TODO: might need to be re-activated for different SSPs
+        # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year")
+        # TODO: might need to be re-activated for different SSPs
         gdp_mer = gdp_mer.merge(
             mer_to_ppp.reset_index()[["node", "year", "value"]],
             left_on=["node_loc", "year_act"],
@@ -435,7 +423,7 @@ def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_203
         df_gdp_ts = gdp_mer.pivot(
             index="Region", columns="year", values="gdp_ppp"
         ).reset_index()
-        num_cols = [i for i in df_gdp_ts.columns if type(i) == int]
+        num_cols = [i for i in df_gdp_ts.columns if isinstance(i, int)]
         hist_yrs = [i for i in num_cols if i < fy]
         df_gdp_ts = (
             df_gdp_ts.drop([i for i in hist_yrs if i in df_gdp_ts.columns], axis=1)
@@ -444,7 +432,7 @@ def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_203
         )
 
     df_demand_2020 = read_base_demand(
-        private_data_path()
+        package_data_path()
         / "material"
         / f"{material_data[chemical]['dir']}/demand_{chemical}.yaml"
     )

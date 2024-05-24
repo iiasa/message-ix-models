@@ -1,17 +1,22 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix import make_df
-from message_ix_models.util import broadcast, same_node, private_data_path
-from message_data.model.material.util import read_config
-from message_data.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import maybe_remove_water_tec, read_config
+from message_ix_models.util import (
+    broadcast,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
+)
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
 default_gdp_elasticity = (
     pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "methanol",
             "methanol_sensitivity_pars.xlsx",
@@ -51,17 +56,33 @@ def gen_all_NH3_fert(scenario, dry_run=False):
     }
 
 
+def broadcast_years(df_new, max_lt, act_years, vtg_years):
+    if "year_act" in df_new.columns:
+        df_new = df_new.pipe(same_node).pipe(broadcast, year_act=act_years)
+
+        if "year_vtg" in df_new.columns:
+            df_new = df_new.pipe(
+                broadcast,
+                year_vtg=np.linspace(
+                    0, int(max_lt / 5), int(max_lt / 5 + 1), dtype=int
+                ),
+            )
+            df_new["year_vtg"] = df_new["year_act"] - 5 * df_new["year_vtg"]
+            # remove years that are not in scenario set
+            df_new = df_new[~df_new["year_vtg"].isin([2065, 2075, 2085, 2095, 2105])]
+    else:
+        if "year_vtg" in df_new.columns:
+            df_new = df_new.pipe(same_node).pipe(broadcast, year_vtg=vtg_years)
+    return df_new
+
+
 def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
     s_info = ScenarioInfo(scenario)
     # s_info.yv_ya
-    nodes = s_info.N
-    if "World" in nodes:
-        nodes.pop(nodes.index("World"))
-    if "R12_GLB" in nodes:
-        nodes.pop(nodes.index("R12_GLB"))
+    nodes = nodes_ex_world(s_info.N)
 
     df = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "fert_techno_economic.xlsx",
@@ -94,25 +115,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         df_new = pd.concat([df_new_reg, df_new_no_reg])
 
         # broadcast scenario years
-        if "year_act" in df_new.columns:
-            df_new = df_new.pipe(same_node).pipe(broadcast, year_act=act_years)
-
-            if "year_vtg" in df_new.columns:
-                df_new = df_new.pipe(
-                    broadcast,
-                    year_vtg=np.linspace(
-                        0, int(max_lt / 5), int(max_lt / 5 + 1), dtype=int
-                    ),
-                )
-                df_new["year_vtg"] = df_new["year_act"] - 5 * df_new["year_vtg"]
-                # remove years that are not in scenario set
-                df_new = df_new[
-                    ~df_new["year_vtg"].isin([2065, 2075, 2085, 2095, 2105])
-                ]
-        else:
-            if "year_vtg" in df_new.columns:
-                df_new = df_new.pipe(same_node).pipe(broadcast, year_vtg=vtg_years)
-
+        df_new = broadcast_years(df_new, max_lt, act_years, vtg_years)
         # set import/export node_dest/origin to GLB for input/output
         set_exp_imp_nodes(df_new)
         par_dict[par_name] = df_new
@@ -153,7 +156,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         "fueloil_NH3_ccs",
     ]
     cost_conv = pd.read_excel(
-        private_data_path("material", "ammonia", "cost_conv_nh3.xlsx"),
+        package_data_path("material", "ammonia", "cost_conv_nh3.xlsx"),
         sheet_name="Sheet1",
         index_col=0,
     )
@@ -180,10 +183,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         par_dict[p] = pd.concat([df[~df["technology"].isin(tec_list)], conv_cost_df])
 
     # HACK: quick fix to enable compatibility with water build
-    if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
-        par_dict["input"] = par_dict["input"].replace(
-            {"freshwater_supply": "freshwater"}
-        )
+    maybe_remove_water_tec(scenario, par_dict)
 
     return par_dict
 
@@ -198,7 +198,7 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
         nodes.pop(nodes.index("R12_GLB"))
 
     df = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "fert_techno_economic.xlsx",
@@ -273,7 +273,7 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
         nodes.pop(nodes.index("R12_GLB"))
 
     df = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "fert_techno_economic.xlsx",
@@ -326,12 +326,12 @@ def set_exp_imp_nodes(df):
 
 
 def read_demand():
-    """Read and clean data from :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
+    """Read and clean data from
+    :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
     # Demand scenario [Mt N/year] from GLOBIOM
-    context = read_config()
 
     N_demand_GLO = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -341,7 +341,7 @@ def read_demand():
 
     # NH3 feedstock share by region in 2010 (from http://ietd.iipnetwork.org/content/ammonia#benchmarks)
     feedshare_GLO = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -351,8 +351,8 @@ def read_demand():
     )
 
     # Read parameters in xlsx
-    te_params = data = pd.read_excel(
-        private_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
+    te_params = pd.read_excel(
+        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
         sheet_name="old_TE_sheet",
         engine="openpyxl",
         nrows=72,
@@ -363,7 +363,6 @@ def read_demand():
     input_fuel = te_params[2010][
         list(range(4, te_params.shape[0], n_inputs_per_tech))
     ].reset_index(drop=True)
-    # input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
 
     capacity_factor = te_params[2010][
         list(range(11, te_params.shape[0], n_inputs_per_tech))
@@ -391,15 +390,13 @@ def read_demand():
     N_energy.oil_pct *= input_fuel[4] * CONVERSION_FACTOR_NH3_N
     N_energy = pd.concat(
         [N_energy.Region, N_energy.sum(axis=1, numeric_only=True)], axis=1
-    ).rename(
-        columns={0: "totENE", "Region": "node"}
-    )  # GWa
+    ).rename(columns={0: "totENE", "Region": "node"})  # GWa
 
     # N_trade_R12 = pd.read_csv(
-    #    private_data_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
+    #    package_data_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
     # )
     N_trade_R12 = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -425,12 +422,12 @@ def read_demand():
     NP["prod"] = NP.demand - NP.netimp
 
     # NH3_trade_R12 = pd.read_csv(
-    #    private_data_path(
+    #    package_data_path(
     #        "material", "ammonia", "NH3_trade_BACI_R12_aggregation.csv"
     #    )
     # )  # , index_col=0)
     NH3_trade_R12 = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -473,12 +470,16 @@ def read_demand():
     fs_GLO = feedshare_GLO.copy()
     fs_GLO.insert(1, "bio_pct", 0)
     fs_GLO.insert(2, "elec_pct", 0)
-    # 17/14 NH3:N ratio, to get NH3 activity based on N demand => No NH3 loss assumed during production
-    # FIXME: Name: elec_pct, dtype: float64 ' has dtype incompatible with int64, please explicitly cast to a compatible dtype first.
+    # 17/14 NH3:N ratio, to get NH3 activity based on N demand
+    # => No NH3 loss assumed during production
+
+    # FIXME: Name: elec_pct, dtype: float64 ' has dtype incompatible with int64,
+    #  please explicitly cast to a compatible dtype first.
     fs_GLO.iloc[:, 1:6] = input_fuel[5] * fs_GLO.iloc[:, 1:6]
     fs_GLO.insert(6, "NH3_to_N", 1)
 
-    # Share of feedstocks for NH3 prodution (based on 2010 => Assumed fixed for any past years)
+    # Share of feedstocks for NH3 prodution
+    # (based on 2010 => Assumed fixed for any past years)
     feedshare = fs_GLO.sort_values(["Region"]).set_index("Region").drop("R12_GLB")
 
     # Get historical N demand from SSP2-nopolicy (may need to vary for diff scenarios)
@@ -510,12 +511,10 @@ def read_demand():
 
 
 def gen_demand():
-    context = read_config()
-
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
     demand_fs_org = pd.read_excel(
-        private_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
+        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
         sheet_name="demand_i_feed_R12",
     )
 
@@ -552,7 +551,7 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
         ) + demand_t0
 
     df_gdp = pd.read_excel(
-        private_data_path("material", "methanol", "methanol demand.xlsx"),
+        package_data_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="GDP_baseline",
     )
 
