@@ -32,7 +32,7 @@ ssp_mode_map = {
     "SSP2": "normal",
     "SSP3": "high",
     "SSP4": "normal",
-    "SSP5": "high",
+    "SSP5": "highest",
     "LED": "low",
 }
 
@@ -49,7 +49,12 @@ mode_modifiers_dict = {
     },
     "high": {
         "steel": {"a": 1.3, "b": 1},
-        "cement": {"a": 1.3},
+        "cement": {"a": 1.2, "b": 1.5},
+        "aluminum": {"a": 1.4, "b": 1.3},
+    },
+    "highest": {
+        "steel": {"a": 1.3, "b": 1},
+        "cement": {"a": 1.8, "b": 4},
         "aluminum": {"a": 1.3, "b": 1},
     },
 }
