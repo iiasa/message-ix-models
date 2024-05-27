@@ -397,11 +397,23 @@ def create_message_outputs(
         (
             df_prod.merge(
                 val_2020,
-                on=["scenario_version", "scenario", "message_technology", "region"],
+                on=[
+                    "scenario_version",
+                    "scenario",
+                    "message_technology",
+                    "first_technology_year",
+                    "region",
+                ],
             )
             .merge(
                 val_2100,
-                on=["scenario_version", "scenario", "message_technology", "region"],
+                on=[
+                    "scenario_version",
+                    "scenario",
+                    "message_technology",
+                    "first_technology_year",
+                    "region",
+                ],
             )
             .merge(
                 df_projections,
