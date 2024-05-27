@@ -489,67 +489,115 @@ def create_message_outputs(
     )
 
     dtypes.update(year_act=int)
-    fom = (
-        df_merge.copy()
-        .drop(columns=["inv_cost"])
-        .assign(key=1)
-        .merge(
-            pd.DataFrame(data={"year_act": config.seq_years}).assign(key=1),
-            on="key",
-        )
-        .drop(columns=["key"])
-        .query("year_act >= year_vtg")
-        .assign(
-            val=lambda x: np.where(
-                x.year_vtg <= y_base,
-                np.where(
-                    x.year_act <= y_base,
-                    x.fix_cost,
+
+    if config.use_vintages is True:
+        fom = (
+            df_merge.copy()
+            .drop(columns=["inv_cost"])
+            .assign(key=1)
+            .merge(
+                pd.DataFrame(data={"year_act": config.seq_years}).assign(key=1),
+                on="key",
+            )
+            .drop(columns=["key"])
+            .query("year_act >= year_vtg")
+            .assign(
+                val=lambda x: np.where(
+                    x.year_vtg <= y_base,
+                    np.where(
+                        x.year_act <= y_base,
+                        x.fix_cost,
+                        np.where(
+                            config.fom_rate == 0,
+                            x.fix_cost,
+                            x.fix_cost
+                            * (1 + float(config.fom_rate)) ** (x.year_act - y_base),
+                        ),
+                    ),
                     np.where(
                         config.fom_rate == 0,
                         x.fix_cost,
                         x.fix_cost
-                        * (1 + float(config.fom_rate)) ** (x.year_act - y_base),
+                        * (1 + float(config.fom_rate)) ** (x.year_act - x.year_vtg),
                     ),
-                ),
-                np.where(
-                    config.fom_rate == 0,
-                    x.fix_cost,
-                    x.fix_cost
-                    * (1 + float(config.fom_rate)) ** (x.year_act - x.year_vtg),
-                ),
+                )
             )
+            .assign(unit="USD/kWa")
+            .rename(
+                columns={
+                    "val": "value",
+                    "message_technology": "technology",
+                    "region": "node_loc",
+                }
+            )
+            .reindex(
+                [
+                    "scenario_version",
+                    "scenario",
+                    "node_loc",
+                    "technology",
+                    "first_technology_year",
+                    "year_vtg",
+                    "year_act",
+                    "value",
+                    "unit",
+                ],
+                axis=1,
+            )
+            .astype(dtypes)
+            .query("year_act in @config.Y and year_vtg in @config.Y")
+            .astype(
+                {"first_technology_year": float}
+            )  # has to be float; int gives error
+            .query("year_vtg >= first_technology_year")
+            .reset_index(drop=True)
+            .drop_duplicates()
+            .drop("first_technology_year", axis=1)
         )
-        .assign(unit="USD/kWa")
-        .rename(
-            columns={
-                "val": "value",
-                "message_technology": "technology",
-                "region": "node_loc",
-            }
+    else:
+        fom = (
+            df_merge.drop(columns=["inv_cost"])
+            .rename(columns={"year_vtg": "year_act"})
+            .assign(key=1)
+            .copy()
+            .merge(
+                pd.DataFrame(data={"year_vtg": config.seq_years}).assign(key=1),
+                on="key",
+            )
+            .drop(columns=["key"])
+            .query("year_act >= year_vtg")
+            .assign(unit="USD/kWa")
+            .rename(
+                columns={
+                    "fix_cost": "value",
+                    "message_technology": "technology",
+                    "region": "node_loc",
+                }
+            )
+            .reindex(
+                [
+                    "scenario_version",
+                    "scenario",
+                    "node_loc",
+                    "technology",
+                    "first_technology_year",
+                    "year_vtg",
+                    "year_act",
+                    "value",
+                    "unit",
+                ],
+                axis=1,
+            )
+            .astype(dtypes)
+            .query("year_act in @config.Y and year_vtg in @config.Y")
+            .astype(
+                {"first_technology_year": float}
+            )  # has to be float; int gives error
+            .query("year_vtg >= first_technology_year")
+            .reset_index(drop=True)
+            .drop_duplicates()
+            .drop("first_technology_year", axis=1)
         )
-        .reindex(
-            [
-                "scenario_version",
-                "scenario",
-                "node_loc",
-                "technology",
-                "first_technology_year",
-                "year_vtg",
-                "year_act",
-                "value",
-                "unit",
-            ],
-            axis=1,
-        )
-        .astype(dtypes)
-        .query("year_act in @config.Y and year_vtg in @config.Y")
-        .astype({"first_technology_year": float})  # has to be float; int gives error
-        .query("year_vtg >= first_technology_year")
-        .reset_index(drop=True)
-        .drop_duplicates()
-        .drop("first_technology_year", axis=1)
-    )
 
     return inv, fom
 
