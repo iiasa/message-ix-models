@@ -441,8 +441,8 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     # => Need to separate those since now I have get_data_steel and cement
     data_steel = read_sector_data(scenario, "steel", "Global_steel_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel", "Global_steel_MESSAGE.xlsx")
-    data_steel_rel = read_rel(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel_ts = read_timeseries(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
+    data_steel_rel = read_rel(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 

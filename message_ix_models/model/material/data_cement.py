@@ -174,9 +174,14 @@ def gen_data_cement(
     context.datafile = "Global_steel_cement_MESSAGE.xlsx"
 
     # Techno-economic assumptions
-    data_cement = read_sector_data(scenario, "cement", "Global_cement_MESSAGE.xlsx")
+    # TEMP: now add cement sector as well
+    data_cement = read_sector_data(
+        scenario, "cement", ssp, "Global_cement_MESSAGE.xlsx"
+    )
     # Special treatment for time-dependent Parameters
-    data_cement_ts = read_timeseries(scenario, "cement", "Global_cement_MESSAGE.xlsx")
+    data_cement_ts = read_timeseries(
+        scenario, "cement", ssp, "Global_cement_MESSAGE.xlsx"
+    )
     tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
