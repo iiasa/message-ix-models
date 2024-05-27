@@ -490,7 +490,7 @@ def create_message_outputs(
 
     dtypes.update(year_act=int)
 
-    if config.use_vintages is True:
+    if config.use_vintages:
         fom = (
             df_merge.copy()
             .drop(columns=["inv_cost"])
