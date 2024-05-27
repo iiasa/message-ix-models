@@ -17,7 +17,7 @@ Changes to :doc:`/api/tools-costs`
   - Change the default fixed O&M reduction rate to 0 (:pull:`186`).
   - Modify to use 2023 release of IEA WEO data and to use 2022 historic data for the base year (:pull:`187`).
   - Change the default final year to 2110 (:pull:`190`).
-  - Add option to not or not use vintages for fixed O&M costs (:pull:`195`).
+  - Add option to use or not use vintages for fixed O&M costs (:pull:`195`).
 
 v2024.4.22
 ==========
