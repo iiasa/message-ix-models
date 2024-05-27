@@ -118,6 +118,7 @@ Those settings include the following; click each for the full description, allow
    :attr:`~.Config.scenario_version`,
    :attr:`~.Config.base_year`,
    :attr:`~.Config.convergence_year`,
+   :attr:`~.Config.use_vintages`, 
    :attr:`~.Config.fom_rate`, and
    :attr:`~.Config.format`.
 
