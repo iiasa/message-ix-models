@@ -589,4 +589,13 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
 
     maybe_remove_water_tec(scenario, results)
 
+    if ssp == "SSP1":
+        df_tmp = results["relation_activity"]
+        df_tmp = df_tmp[
+            (df_tmp["relation"] == "minimum_recycling_steel")
+            & (df_tmp["technology"] == "total_EOL_steel")
+        ]
+        df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
+        df_tmp["value"] = -0.7
+
     return results
