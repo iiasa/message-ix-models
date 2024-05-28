@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from message_ix import Scenario
 
@@ -7,7 +8,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.water.data.water_for_ppl import cool_tech, non_cooling_tec
 
 
-@pytest.mark.parametrize("RCP", ["no-climate", "6p0"])
+@pytest.mark.parametrize("RCP", ["no_climate", "6p0"])
 def test_cool_tec(request, test_context, RCP):
     mp = test_context.get_platform()
     scenario_info = {
@@ -18,9 +19,56 @@ def test_cool_tec(request, test_context, RCP):
     }
     s = Scenario(**scenario_info)
     s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("node", ["loc1", "loc2"])
+    s.add_set("technology", ["gad_cc", "coal_ppl"])
+    s.add_set("node", ["R11_CPA"])
     s.add_set("year", [2020, 2030, 2040])
+    s.add_set("mode", ["M1", "M2"])
+    s.add_set("commodity", ["electricity", "gas"])
+    s.add_set("level", ["secondary", "final"])
+    s.add_set("time", ["year"])
+
+    # make a df with these columns: node_loc	technology	year_vtg	year_act	mode	node_origin	commodity	level	time	time_origin	value	unit
+    df_add = pd.DataFrame(
+        {
+            "node_loc": ["R11_CPA"],
+            "technology": ["coal_ppl"],
+            "year_vtg": [2020],
+            "year_act": [2020],
+            "mode": ["M1"],
+            "node_origin": ["R11_CPA"],
+            "commodity": ["electricity"],
+            "level": ["secondary"],
+            "time": "year",
+            "time_origin": "year",
+            "value": [1],
+            "unit": "GWa",
+        }
+    )
+    # make a df with 'node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit'
+    df_ha = pd.DataFrame(
+        {
+            "node_loc": ["R11_CPA"],
+            "technology": ["coal_ppl"],
+            "year_act": [2020],
+            "mode": ["M1"],
+            "time": "year",
+            "value": [1],
+            "unit": "GWa",
+        }
+    )
+    df_hnc = pd.DataFrame(
+        {
+            "node_loc": ["R11_CPA"],
+            "technology": ["coal_ppl"],
+            "year_vtg": [2020],
+            "value": [1],
+            "unit": "GWa",
+        }
+    )
+    # add a parameter with these columns to the scenario
+    s.add_par("input", df_add)
+    s.add_par("historical_activity", df_ha)
+    s.add_par("historical_new_capacity", df_hnc)
 
     # TODO: this is where you would add
     #     "node_loc": ["loc1", "loc2"],
@@ -40,6 +88,7 @@ def test_cool_tec(request, test_context, RCP):
     test_context.nexus_set = "nexus"
     # TODO add
     test_context.RCP = RCP
+    test_context.REL = "med"
 
     # TODO: only leaving this in so you can see which data you might want to assert to
     # be in the result. Please remove after adapting the assertions below:

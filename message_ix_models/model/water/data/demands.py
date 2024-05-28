@@ -20,7 +20,10 @@ def get_basin_sizes(basin: pd.DataFrame, node: str) -> Tuple[float, float]:
     print(temp)
     sizes = temp.pivot_table(index=["STATUS"], aggfunc="size")
     print(sizes)
-    return sizes["DEV"], sizes["IND"]
+    # sizes_### = sizes["###"] if "###" in sizes.index else 0
+    sizes_dev = sizes["DEV"] if "DEV" in sizes.index else 0
+    sizes_ind = sizes["IND"] if "IND" in sizes.index else 0
+    return sizes_dev, sizes_ind
 
 
 def set_target_rate(df: pd.DataFrame, node: str, year: int, target: float) -> None:

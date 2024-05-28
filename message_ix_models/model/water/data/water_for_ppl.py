@@ -54,7 +54,7 @@ def cooling_fr(x: pd.Series) -> float:
         where:
             h_fg (flue gasses losses) = 0.1 (10% assumed losses)
     """
-    if "hpl" in x["index"]:
+    if "hpl" in x["parent_tech"]:
         return x["value"] - 1
     else:
         return x["value"] - (x["value"] * 0.1) - 1
@@ -253,9 +253,10 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
     # where h_fg (flue gasses losses) = 0.1
     ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
-    ref_input[["technology", "value", "level"]] = ref_input[
-        ["technology", "value", "level"]
-    ].apply(missing_tech, axis=1)
+
+    ref_input[["value", "level"]] = ref_input[["technology", "value", "level"]].apply(
+        missing_tech, axis=1
+    )
 
     # Combines the input df of parent_tech with water withdrawal data
     input_cool = (
