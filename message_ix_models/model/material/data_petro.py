@@ -319,7 +319,7 @@ def gen_data_petro_chemicals(
     # Techno-economic assumptions
     data_petro = read_data_petrochemicals(scenario)
     data_petro_ts = read_timeseries(
-        scenario, "petrochemicals", "petrochemicals_techno_economic.xlsx"
+        scenario, "petrochemicals", None, "petrochemicals_techno_economic.xlsx"
     )
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
