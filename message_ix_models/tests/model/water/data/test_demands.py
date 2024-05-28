@@ -10,7 +10,9 @@ from message_ix_models.model.water.data.demands import (
 )
 
 
-@pytest.mark.parametrize(["SDG", "time"], [("baseline", "year"), ("SDG", "month")])
+@pytest.mark.parametrize(
+    ["SDG", "time"], [("baseline", "year"), ("ambitious", "month")]
+)
 def test_add_sectoral_demands(request, test_context, SDG, time):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
