@@ -2005,7 +2005,7 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
 
 # Read in time-dependent parameters
 def read_timeseries(
-    scenario: message_ix.Scenario, material: str, filename: str
+    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
 ) -> pd.DataFrame:
     """
     Read "timeseries" type data from a sector specific xlsx input file
@@ -2013,6 +2013,8 @@ def read_timeseries(
 
     Parameters
     ----------
+    ssp: str
+        if timeseries is available for different SSPs, the respective file is selected
     scenario: message_ix.Scenario
         scenario used to get structural information like
         model regions and years
@@ -2039,7 +2041,9 @@ def read_timeseries(
     else:
         sheet_n = "timeseries_R11"
 
+    material = f"{material}/{ssp}" if ssp else material
     # Read the file
+
     df = pd.read_excel(
         package_data_path("material", material, filename), sheet_name=sheet_n
     )
@@ -2068,14 +2072,14 @@ def read_timeseries(
     return df
 
 
-def read_rel(
-    scenario: message_ix.Scenario, material: str, filename: str
-) -> pd.DataFrame:
+def read_rel(scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str)-> pd.DataFrame:
     """
     Read relation_* type parameter data for specific industry
 
     Parameters
     ----------
+    ssp: str
+        if relations are available for different SSPs, the respective file is selected
     scenario:
         scenario used to get structural information like
     material: str
@@ -2096,7 +2100,7 @@ def read_rel(
         sheet_n = "relations_R12"
     else:
         sheet_n = "relations_R11"
-
+    material = f"{material}/{ssp}" if ssp else material
     # Read the file
     data_rel = pd.read_excel(
         package_data_path("material", material, filename),
