@@ -27,7 +27,7 @@ def test_cool_tec(request, test_context, RCP):
     s.add_set("level", ["secondary", "final"])
     s.add_set("time", ["year"])
 
-    # make a df with these columns: node_loc	technology	year_vtg	year_act	mode	node_origin	commodity	level	time	time_origin	value	unit
+    # make a df for input
     df_add = pd.DataFrame(
         {
             "node_loc": ["R11_CPA"],
@@ -44,7 +44,7 @@ def test_cool_tec(request, test_context, RCP):
             "unit": "GWa",
         }
     )
-    # make a df with 'node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit'
+    # make a df for historical activity
     df_ha = pd.DataFrame(
         {
             "node_loc": ["R11_CPA"],
