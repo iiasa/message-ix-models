@@ -52,10 +52,10 @@ def read_data_aluminum(
     # Drop columns that don't contain useful information
     data_alu = data_alu.drop(["Source", "Description"], axis=1)
 
-    data_alu_rel = read_rel(scenario, "aluminum", "aluminum_techno_economic.xlsx")
+    data_alu_rel = read_rel(scenario, "aluminum", None, "aluminum_techno_economic.xlsx")
 
     data_aluminum_ts = read_timeseries(
-        scenario, "aluminum", "aluminum_techno_economic.xlsx"
+        scenario, "aluminum", None, "aluminum_techno_economic.xlsx"
     )
 
     # Unit conversion

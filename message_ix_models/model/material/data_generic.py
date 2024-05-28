@@ -30,7 +30,7 @@ def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
     # Drop columns that don't contain useful information
     data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
     data_generic_ts = read_timeseries(
-        scenario, "other", "generic_furnace_boiler_techno_economic.xlsx"
+        scenario, "other", None, "generic_furnace_boiler_techno_economic.xlsx"
     )
 
     # Unit conversion
