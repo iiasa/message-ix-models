@@ -33,47 +33,41 @@ def gen_mock_demand_cement(scenario):
         sheet_n = "data_R12"
         region_set = "R12_"
 
-        # demand2020_top = [76, 229.5, 0, 57, 55, 60, 89, 54, 129, 320, 51, 2065.5]
-        # Converted to concrete by using the 15% cement in concrete mix.
-        demand2020_top = [507, 1530, 0, 380, 367, 400, 593, 360, 860, 2133, 340, 13770]
+        demand2020_top = [76, 229.5, 0, 57, 55, 60, 89, 54, 129, 320, 51, 2065.5]
         # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
-        # convert this to concrete
         demand2020_rest = [
-            (4100 * 0.051 - 76)/0.15,
-            ((4100 * 0.14 - 155) * 0.2 * 0.1)/0.15,
-            (4100 * 0.064 * 0.5)/0.15,
-            (4100 * 0.026 - 57)/0.15,
-            (4100 * 0.046 * 0.5 - 55)/0.15,
-            ((4100 * 0.14 - 155) * 0.2)/0.15,
-            (4100 * 0.046 * 0.5)/0.15,
-            12/0.15,
-            (4100 * 0.003)/0.15,
-            ((4100 * 0.14 - 155) * 0.6)/0.15,
-            (4100 * 0.064 * 0.5 - 51)/0.15,
-            ((4100 * 0.14 - 155) * 0.2 * 0.9)/0.15,
+            (4100 * 0.051 - 76),
+            ((4100 * 0.14 - 155) * 0.2 * 0.1),
+            (4100 * 0.064 * 0.5),
+            (4100 * 0.026 - 57),
+            (4100 * 0.046 * 0.5 - 55),
+            ((4100 * 0.14 - 155) * 0.2),
+            (4100 * 0.046 * 0.5),
+            12,
+            (4100 * 0.003),
+            ((4100 * 0.14 - 155) * 0.6),
+            (4100 * 0.064 * 0.5 - 51),
+            ((4100 * 0.14 - 155) * 0.2 * 0.9),
         ]
     else:
         nodes.remove("R11_GLB")
         sheet_n = "data_R11"
         region_set = "R11_"
 
-        # demand2020_top = [76, 2295, 0, 57, 55, 60, 89, 54, 129, 320, 51]
-        # Converted to concrete by using the 15% cement in concrete mix.
-        demand2020_top = [507,15300, 0, 380, 367, 400, 593, 360, 860, 2133, 340]
-
+        demand2020_top = [76, 2295, 0, 57, 55, 60, 89, 54, 129, 320, 51]
         # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
         demand2020_rest = [
-            (4100 * 0.051 - 76)/0.15,
-            ((4100 * 0.14 - 155) * 0.2)/0.15,
-            (4100 * 0.064 * 0.5)/0.15,
-            (4100 * 0.026 - 57)/0.15,
-            (4100 * 0.046 * 0.5 - 55)/0.15,
-            ((4100 * 0.14 - 155) * 0.2)/0.15,
-            (4100 * 0.046 * 0.5)/0.15,
-            12/0.15,
-            (4100 * 0.003)/0.15,
-            ((4100 * 0.14 - 155) * 0.6)/0.15,
-            (4100 * 0.064 * 0.5 - 51)/0.15,
+            (4100 * 0.051 - 76),
+            ((4100 * 0.14 - 155) * 0.2),
+            (4100 * 0.064 * 0.5),
+            (4100 * 0.026 - 57),
+            (4100 * 0.046 * 0.5 - 55),
+            ((4100 * 0.14 - 155) * 0.2),
+            (4100 * 0.046 * 0.5),
+            12,
+            (4100 * 0.003),
+            ((4100 * 0.14 - 155) * 0.6),
+            (4100 * 0.064 * 0.5 - 51),
         ]
 
     # SSP2 R11 baseline GDP projection
@@ -423,8 +417,20 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df_demand = material_demand_calc.derive_demand("cement", scenario, old_gdp=False, ssp=ssp)
-    results[parname].append(df_demand)
+    # demand = gen_mock_demand_cement(scenario)
+    # Converte to concrete demand by dividing to 0.15.
+    demand = derive_cement_demand(scenario)
+    df = make_df(
+        parname,
+        level="demand",
+        commodity="concrete",
+        value=(demand.value)/0.15,
+        unit="t",
+        year=demand.year,
+        time="year",
+        node=demand.node,
+    )
+    results[parname].append(df)
 
     # Add CCS as addon
     parname = "addon_conversion"
