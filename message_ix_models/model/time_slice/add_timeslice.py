@@ -13,10 +13,11 @@ allow for the index of "time" being added to relations via new parameters like
 "relation_activity_time", etc.
 """
 
-import pandas as pd
 import os
 from datetime import datetime
 from timeit import default_timer as timer
+
+import pandas as pd
 
 # Parameters that should get the same value as "year" for time slices
 # Notice: this list is applied for all time-slice technologes then the input data for
@@ -294,7 +295,7 @@ def setup_parameters(sc, dict_xls, par_update):
     return par_update, index_cols
 
 
-def add_time_to_parameters(
+def configure_parameter(
     sc,
     parname,
     data_dict,
@@ -463,7 +464,7 @@ def main(
     sc,
     data_file,
     n_time,
-    commodities_timeslice,
+    commodities_time,
     temporal_lvls,
     add_hierarchy=True,
     extra_techs=[],
@@ -481,7 +482,7 @@ def main(
         Number of time slices (must be <= number of time slices in the data file,
         For example, if the input data has 48 time slices, this can be 48, 24, 16, or
         12 time slices)
-    commodities_timeslice : list of str
+    commodities_time : list of str
         List of commodities to be represented at the time-slice level.
         (relevant technologies will be found in the script)
     temporal_lvls : list of str
@@ -528,7 +529,7 @@ def main(
     # Representaiton model (input= to, ta ... output: ta, td)
 
     print("- Identifying technologies to be represented at subannual level...")
-    commodities = [x for x in set(sc.set("commodity")) if x in commodities_timeslice]
+    commodities = [x for x in set(sc.set("commodity")) if x in commodities_time]
 
     # Technologies with an "output" for time-slice commodities
     # Representaiton model: input= to, ta ... output: ta, td)
@@ -593,12 +594,12 @@ def main(
             item_list = tec_list
         else:
             item_list = None
-        # Chunking the number of time slices to avoind extremely lrage "commit"s
+        # Chunking the number of time slices to avoid extremely lrage "commit"s
         # This does not change the input data and is relevant for large models
         n1 = 0
         while n1 < n_time:
             nn = min([n_time, n1 + interval - 1])
-            add_time_to_parameters(
+            configure_parameter(
                 sc,
                 parname,
                 data_dict,
@@ -688,7 +689,7 @@ if __name__ == "__main__":
     path_xls = path_files + "\\data"
 
     # Time-slice related commodities and temporal levels
-    commodities_timeslice = ["electricity", "light"]
+    commodities_time = ["electricity", "light"]
     temporal_lvls = ["season"]
 
     # Number of time slices (this can be <= number of time slices in the data file)
@@ -702,4 +703,4 @@ if __name__ == "__main__":
     data_file = pd.ExcelFile("//".join([path_xls, xls_file]))
 
     # Adding time-slice data. modifications, and solving
-    main(scen, data_file, n_time, commodities_timeslice, temporal_lvls)
+    main(scen, data_file, n_time, commodities_time, temporal_lvls)
