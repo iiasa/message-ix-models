@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Add a module for implementing (sub-annual) time slices (:pull:`197`)
 - Add :doc:`/material/index` (:pull:`188`, :pull:`189`).
 Changes to :doc:`/api/tools-costs`
 ----------------------------------
