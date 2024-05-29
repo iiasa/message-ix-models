@@ -295,6 +295,65 @@ def setup_parameters(sc, dict_xls, par_update):
     return par_update, index_cols
 
 
+def get_node_tec(data_dict):
+    return [(k.split(",")[0], k.split(",")[1]) for k in data_dict.keys() if "," in k]
+
+
+def get_node_col(sc, parname):
+    return [x for x in sc.idx_names(parname) if x in ["node", "node_loc", "node_rel"]][
+        0
+    ]
+
+
+def get_df_ref(
+    sc_ref, parname, index_col, key, item_list, data_dict, node_tec, node_col
+):
+    if key == "all":
+        if item_list:
+            df_ref = sc_ref.par(parname, {index_col: item_list, "time": "year"})
+        else:
+            df_ref = sc_ref.par(parname, {"time": "year"})
+
+        df_ref = df_ref.loc[~df_ref[index_col].isin(data_dict.keys())]
+
+        for x in node_tec:
+            df_ref = df_ref.loc[
+                (df_ref[index_col] != x[1]) & (df_ref[node_col] != x[1])
+            ]
+    elif "," in key:
+        df_ref = sc_ref.par(
+            parname,
+            {
+                index_col: key.split(",")[1],
+                node_col: key.split(",")[0],
+                "time": "year",
+            },
+        )
+    else:
+        df_ref = sc_ref.par(parname, {index_col: key, "time": "year"})
+
+    return df_ref
+
+
+def process_df_ref(sc, df_ref, parname, times, n1, nn, tec_inp, tec_only_inp, ratio):
+    time_cols = [x for x in sc.idx_names(parname) if "time" in x]
+    df = []
+
+    for ti in times[n1:nn]:
+        df_new = df_ref.copy()
+        for col in time_cols:
+            if col == "time_origin":
+                df_new.loc[df_new["technology"].isin(tec_inp), col] = ti
+            elif col == "time_dest":
+                df_new.loc[~df_new["technology"].isin(tec_only_inp), col] = ti
+            else:
+                df_new[col] = ti
+        df_new["value"] *= ratio[times.index(ti)]
+        df.append(df_new)
+
+    return pd.concat(df, ignore_index=True) if df else pd.DataFrame()
+
+
 def configure_parameter(
     sc,
     parname,
@@ -343,73 +402,29 @@ def configure_parameter(
     sc.check_out()
     if not sc_ref:
         sc_ref = sc
-    # Node-technology pairs from the input data (e.g., "CAS,solar_pv_ppl")
-    node_tec = [
-        (k.split(",")[0], k.split(",")[1]) for k in data_dict.keys() if "," in k
-    ]
-    # Node and year related columns
-    node_col = [
-        x for x in sc.idx_names(parname) if x in ["node", "node_loc", "node_rel"]
-    ][0]
 
-    # Loop over "node,technology" pairs and their multipliers for time slices
+    node_tec = get_node_tec(data_dict)
+    node_col = get_node_col(sc, parname)
+
     for key, ratio in data_dict.items():
-        df = []
+        df_ref = get_df_ref(
+            sc_ref, parname, index_col, key, item_list, data_dict, node_tec, node_col
+        )
 
-        # if "all" members of that set are included in the analysis
-        if key == "all":
-            # If members of the indexed set are specified
-            if item_list:
-                df_ref = sc_ref.par(parname, {index_col: item_list, "time": "year"})
-            else:
-                df_ref = sc_ref.par(parname, {"time": "year"})
-
-            # Excluding those technologies that have explicit info through Excel
-            df_ref = df_ref.loc[~df_ref[index_col].isin(data_dict.keys())]
-
-            # Also for "node,technology" pairs
-            for x in node_tec:
-                df_ref = df_ref.loc[
-                    (df_ref[index_col] != x[1]) & (df_ref[node_col] != x[1])
-                ]
-
-        # Or if data defined per node,item (key='R11_CPA,i_spec')
-        elif "," in key:
-            df_ref = sc_ref.par(
-                parname,
-                {
-                    index_col: key.split(",")[1],
-                    node_col: key.split(",")[0],
-                    "time": "year",
-                },
-            )
-
-        else:
-            df_ref = sc_ref.par(parname, {index_col: key, "time": "year"})
-        # Adding new time slices to the "time" related column and removing "year"
         if df_ref.empty:
             continue
-        if nn >= n_time:
+
+        if nn >= n1:
             sc.remove_par(parname, df_ref)
-        # Time-related columns
-        time_cols = [x for x in sc.idx_names(parname) if "time" in x]
 
-        for ti in times[n1:nn]:
-            df_new = df_ref.copy()
-            for col in time_cols:
-                if col == "time_origin":
-                    df_new.loc[df_new["technology"].isin(tec_inp), col] = ti
-                elif col == "time_dest":
-                    df_new.loc[~df_new["technology"].isin(tec_only_inp), col] = ti
-                else:
-                    df_new[col] = ti
-            df_new["value"] *= ratio[times.index(ti)]
-            df.append(df_new)
+        df = process_df_ref(
+            sc, df_ref, parname, times, n1, nn, tec_inp, tec_only_inp, ratio
+        )
 
-        df = pd.concat(df, ignore_index=True)
-        sc.add_par(parname, df)
+        if not df.empty:
+            sc.add_par(parname, df)
+
     sc.commit("")
-    df = df_new = []
 
 
 def remove_data_zero(sc, parname, filters, value=0):
@@ -458,6 +473,112 @@ def par_remove(sc, par_dict, verbose=True):
             if not filters:
                 filters = "All"
             print(f'> {filters} data was removed from parmeter "{parname}".')
+
+
+def identify_technologies(sc, commodities_time, extra_techs):
+    commodities = [x for x in set(sc.set("commodity")) if x in commodities_time]
+    # Technologies with an "output" for time-slice commodities
+    # Representaiton model: input= to, ta ... output: ta, td)
+    tec_out = list(set(sc.par("output", {"commodity": commodities})["technology"]))
+    tec_out = sorted([x for x in tec_out if not any([y in x for y in extra_techs])])
+    # Technologies with "input" from commodities represented at the time-slice level
+    tec_inp = sorted(set(sc.par("input", {"commodity": commodities})["technology"]))
+
+    return tec_out, tec_inp, commodities
+
+
+def remove_zero_tech(sc, tec_out, tec_inp, remove_zero_input_output):
+    if remove_zero_input_output:
+        df_rem_out = set(
+            remove_data_zero(sc, "output", {"technology": tec_out})["technology"]
+        )
+        tec_out = sorted([x for x in tec_out if x not in df_rem_out])
+
+        df_rem_in = set(
+            remove_data_zero(sc, "input", {"technology": tec_inp})["technology"]
+        )
+        tec_inp = sorted([x for x in tec_inp if x not in df_rem_in])
+
+    return tec_out, tec_inp
+
+
+def setup_par_update(sc, par_list, n_time, duration, tec_list):
+    par_update = {}
+    for parname in par_list:
+        if parname in par_equal:
+            par_update[parname] = {"all": [1] * n_time}
+        elif parname in par_divide:
+            par_update[parname] = {"all": duration}
+        elif parname in par_ignore:
+            par_remove(sc, {parname: {"technology": tec_list}}, verb=False)
+    return par_update
+
+
+def modify_parameters(
+    sc, par_update, index_cols, tec_list, tec_inp, tec_only_inp, times, n_time, interval
+):
+    print("- Parameters are being modified for time slices...")
+    for parname, data_dict in par_update.items():
+        index_col = index_cols[parname]
+        item_list = tec_list if index_col == "technology" else None
+
+        n1 = 0
+        while n1 < n_time:
+            nn = min([n_time, n1 + interval - 1])
+            configure_parameter(
+                sc,
+                parname,
+                data_dict,
+                index_col,
+                item_list,
+                tec_inp,
+                tec_only_inp,
+                n1,
+                nn,
+                times,
+            )
+            print("    ", end="\r")
+            print(str(nn + 1), end="\r")
+            n1 += interval
+        print('- Time slices added to "{}".'.format(parname))
+    print("- All parameters successfully modified for time slices.")
+
+
+def correct_technology_input_output(sc, tec_inp, tec_out, commodities):
+    for tec in tec_inp:
+        df = sc.par("input", {"technology": tec})
+        df = df.loc[~df["commodity"].isin(commodities)].copy()
+        sc.remove_par("input", df)
+        df["time_origin"] = "year"
+        sc.add_par("input", df)
+    print("- Input of time-slice technologies corrected for year-related commodities.")
+
+    for tec in tec_out:
+        df = sc.par("output", {"technology": tec})
+        df = df.loc[~df["commodity"].isin(commodities)].copy()
+        sc.remove_par("output", df)
+        df["time_dest"] = "year"
+        sc.add_par("output", df)
+    print("- Output of time-slice technologies corrected for year-related commodities.")
+
+
+def solve_scenario(sc):
+    print(
+        'Solving scenario "{}/{}", started at {}, please wait!'.format(
+            sc.model, sc.scenario, datetime.now().strftime("%H:%M:%S")
+        )
+    )
+    start = timer()
+    sc.solve(solve_options={"lpmethod": "4"})
+    end = timer()
+    print(
+        "Elapsed time for solving:",
+        int((end - start) / 60),
+        "min and",
+        round((end - start) % 60, 2),
+        "sec.",
+    )
+    sc.set_as_default()
 
 
 def main(
@@ -527,31 +648,17 @@ def main(
     # List of technologies that will have output to time slices
     # sectors/commodities represented at time slice level
     # Representaiton model (input= to, ta ... output: ta, td)
-
-    print("- Identifying technologies to be represented at subannual level...")
-    commodities = [x for x in set(sc.set("commodity")) if x in commodities_time]
-
-    # Technologies with an "output" for time-slice commodities
-    # Representaiton model: input= to, ta ... output: ta, td)
-    tec_out = list(set(sc.par("output", {"commodity": commodities})["technology"]))
-    tec_out = sorted([x for x in tec_out if not any([y in x for y in extra_techs])])
-
-    # Technologies with "input" from commodities represented at the time-slice level
-    tec_inp = sorted(set(sc.par("input", {"commodity": commodities})["technology"]))
+    tec_out, tec_inp, commodities = identify_technologies(
+        sc, commodities_time, extra_techs
+    )
 
     # Excluding technologies with zero output for time-slice commodities
     # This is done because some technologies have output for certain commodities,
     # but the amount is zero.
     if remove_zero_input_output:
-        df_rem_out = set(
-            remove_data_zero(sc, "output", {"technology": tec_out})["technology"]
+        tec_out, tec_inp = remove_zero_tech(
+            sc, tec_out, tec_inp, remove_zero_input_output
         )
-        tec_out = sorted([x for x in tec_out if x not in df_rem_out])
-
-        df_rem_in = set(
-            remove_data_zero(sc, "input", {"technology": tec_inp})["technology"]
-        )
-        tec_inp = sorted([x for x in tec_inp if x not in df_rem_in])
 
     # Technologies with only input needed for time slices (output: 'year'/nothing)
     # Representaiton model (to='1', ta='1' --> ta='1', td='year')
@@ -568,54 +675,27 @@ def main(
     ]
 
     sc.check_out()
-
     # A dictionary for updating parameters with an index related to "time"
     # Keys are parameter names, values are members of an index (such as names of
     # technology/commodity/etc.), with a multiplier to their yearly value to convert
     # to time-related values. "all" can be passed to handle all members of the
     # examined index in one go.
-    par_update = {}
-    for parname in par_list:
-        if parname in par_equal:
-            par_update[parname] = {"all": [1] * n_time}
-        elif parname in par_divide:
-            par_update[parname] = {"all": duration}
-        elif parname in par_ignore:
-            par_remove(sc, {parname: {"technology": tec_list}}, verb=False)
+    par_update = setup_par_update(sc, par_list, n_time, duration, tec_list)
     sc.commit("")
 
     # Setting up the data and values of parameters from Excel
     par_update, index_cols = setup_parameters(sc, dict_xls, par_update)
-
-    print("- Parameters are being modified for time slices...")
-    for parname, data_dict in par_update.items():
-        index_col = index_cols[parname]
-        if index_col == "technology":
-            item_list = tec_list
-        else:
-            item_list = None
-        # Chunking the number of time slices to avoid extremely lrage "commit"s
-        # This does not change the input data and is relevant for large models
-        n1 = 0
-        while n1 < n_time:
-            nn = min([n_time, n1 + interval - 1])
-            configure_parameter(
-                sc,
-                parname,
-                data_dict,
-                index_col,
-                item_list,
-                tec_inp,
-                tec_only_inp,
-                n1,
-                nn,
-                times,
-            )
-            print("    ", end="\r")
-            print(str(nn + 1), end="\r")
-            n1 = n1 + interval
-        print('- Time slices added to "{}".'.format(parname))
-    print("- All parameters successfully modified for time slices.")
+    modify_parameters(
+        sc,
+        par_update,
+        index_cols,
+        tec_list,
+        tec_inp,
+        tec_only_inp,
+        times,
+        n_time,
+        interval,
+    )
 
     # -------------------------------------------------------------------------
     # 3) Doing some adjustments and solving
@@ -626,47 +706,11 @@ def main(
     # (These are for technologies that have multiple input or output commodities
     # from which only a subset of commodities should be at the time slice level)
     # 3.1) Correcting input of tec_inp technologies
-    for tec in tec_inp:
-        # e.g., echnologies with electr input that have other input commodities too
-        df = sc.par("input", {"technology": tec})
-        df = df.loc[~df["commodity"].isin(commodities)].copy()
-        sc.remove_par("input", df)
-        # Convert the input "time" of these commodities to "year"
-        df["time_origin"] = "year"
-        sc.add_par("input", df)
-    print("- Input of time-slice technologies corrected for year-related commodities.")
-
-    # 3.2) Correcting output of tec_out technologies for commodities that must not
-    # be at the time slice level
-    for tec in tec_out:
-        df = sc.par("output", {"technology": tec})
-        df = df.loc[~df["commodity"].isin(commodities)].copy()
-        sc.remove_par("output", df)
-        # Convert the output "time" of these commodities to "year"
-        df["time_dest"] = "year"
-        sc.add_par("output", df)
-    print("- Output of time-slice technologies corrected for year-related commodities.")
-
+    correct_technology_input_output(sc, tec_inp, tec_out, commodities)
     sc.commit("Time slice modifications done.")
 
     # 3.3) Solving
-    print(
-        'Solving scenario "{}/{}", started at {}, please wait!'.format(
-            sc.model, sc.scenario, datetime.now().strftime("%H:%M:%S")
-        )
-    )
-    start = timer()
-    sc.solve(solve_options={"lpmethod": "4"})
-    end = timer()
-    print(
-        "Elapsed time for solving:",
-        int((end - start) / 60),
-        "min and",
-        round((end - start) % 60, 2),
-        "sec.",
-    )
-
-    sc.set_as_default()
+    solve_scenario(sc)
     return sc
 
 
