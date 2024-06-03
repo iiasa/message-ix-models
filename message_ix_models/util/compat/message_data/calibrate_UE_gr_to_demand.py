@@ -7,7 +7,7 @@ from operator import itemgetter
 from .get_nodes import get_nodes
 from .utilities import CAGR
 
-from . import get_optimization_years
+from .get_optimization_years import main as get_optimization_years
 
 # In some cases, end-use technologies have outputs onto multiple demands.
 # If this is the case, then the a manual assignment is undertaken,

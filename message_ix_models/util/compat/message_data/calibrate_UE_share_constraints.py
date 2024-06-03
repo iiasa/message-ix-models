@@ -4,7 +4,7 @@ import pandas as pd
 from .get_historical_years import main as get_historical_years
 from .utilities import intpol
 
-from . import get_optimization_years
+from .get_optimization_years import main as get_optimization_years
 
 relation_set = {
     "UE_res_comm": [["sp", "th"], "useful_res_comm"],
