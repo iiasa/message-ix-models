@@ -262,8 +262,11 @@ def cost_fit(df) -> float:
         estimated value for cost_ref in 2020
     """
     # print(df.lvl)
-    pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
-    val = exponential([2020], *pars)[0]
+    try:
+        pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
+        val = exponential([2020], *pars)[0]
+    except RuntimeError:
+        val = df.lvl.values[0]
     # print(df.node.unique(), val)
     return val / 1000
 
