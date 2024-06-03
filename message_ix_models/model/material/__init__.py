@@ -96,6 +96,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         engage_updates._correct_td_co2cc_emissions(scenario)
     spec = None
     apply_spec(scenario, spec, add_data_2)
+    from message_ix_models import ScenarioInfo
 
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
