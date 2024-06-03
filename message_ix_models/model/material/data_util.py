@@ -738,6 +738,7 @@ def modify_demand_and_hist_activity_debug(
 def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
     # TODO: instead of removing bounds, bounds should be updated with IEA data
     scen.check_out()
+    th_tecs_to_keep = ["solar_i", "biomass_i"]
     for substr in ["up", "lo"]:
         df = scen.par(f"bound_activity_{substr}")
         scen.remove_par(
@@ -746,7 +747,11 @@ def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
         )
         scen.remove_par(
             f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_i")) & (df["year_act"] == 2020)],
+            df[
+                (df["technology"].str.endswith("_i"))
+                & (df["year_act"] == 2020)
+                & ~(df["technology"].isin(th_tecs_to_keep))
+            ],
         )
         scen.remove_par(
             f"bound_activity_{substr}",
