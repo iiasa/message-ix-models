@@ -1,7 +1,7 @@
 # derived by aggregating the country data set from GlobBulk Consulting
 - R12_AFR:
     year: 2020
-    value: 110.50000
+    value: 110.5
 - R12_RCPA:
     year: 2020
     value: 97.5
@@ -10,7 +10,7 @@
     value: 42.9
 - R12_FSU:
     year: 2020
-    value: 106.60000
+    value: 106.6
 - R12_LAM:
     year: 2020
     value: 184.3
@@ -34,4 +34,4 @@
     value: 205.4
 - R12_CHN:
     year: 2020
-    value: 2377
+    value: 2140
