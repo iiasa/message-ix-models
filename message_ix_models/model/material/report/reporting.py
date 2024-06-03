@@ -20,7 +20,8 @@ Material_global_grpahs.pdf
 
 @author: unlu
 """
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import os
 
 import matplotlib
