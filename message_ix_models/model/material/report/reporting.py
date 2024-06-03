@@ -26,7 +26,6 @@ import os
 
 import matplotlib
 import numpy as np
-import openpyxl
 import pandas as pd
 import pyam
 import xlsxwriter
@@ -67,20 +66,13 @@ def change_names(s):
     return s
 
 
-def fix_excel(path_temp, path_new):
+def fix_excel(df):
     """
     Fix the names of the regions or variables to be compatible
     with IAMC format. This is done in the final reported excel file
     (path_temp) and written to a new excel file (path_new).
     """
     # read Excel file and sheet by name
-    workbook = openpyxl.load_workbook(path_temp)
-    sheet = workbook["data"]
-
-    new_workbook = openpyxl.Workbook()
-    new_sheet = new_workbook["Sheet"]
-    new_sheet.title = "data"
-    new_sheet = new_workbook.active
 
     replacement = {
         "CO2_industry": "CO2",
@@ -131,31 +123,63 @@ def fix_excel(path_temp, path_new):
         "R12_WEU": "R12_WEU",
         "R12_CHN": "R12_CHN",
         "World": "R12_GLB",
+        "BCA": "BC",
+        "OCA": "OC",
+    }
+    columns = {
         "model": "Model",
         "scenario": "Scenario",
         "variable": "Variable",
         "region": "Region",
         "unit": "Unit",
-        "BCA": "BC",
-        "OCA": "OC",
     }
-    # Iterate over the rows and replace
-    for i in range(1, (sheet.max_row + 1)):
-        data = [
-            sheet.cell(row=i, column=col).value
-            for col in range(1, (sheet.max_column + 1))
-        ]
-        for index, value in enumerate(data):
-            col_no = index + 1
-            if value in replacement.keys():
-                new_sheet.cell(row=i, column=col_no).value = replacement.get(value)
-            else:
-                new_sheet.cell(row=i, column=col_no).value = value
+    # Iterate over the rows and replaced
+    df = df.replace(replacement)
+    df = df.rename(columns=columns)
 
-    new_workbook.save(path_new)
+    return df
 
 
-def report(context, scenario):  # noqa: C901
+def convert_mass_to_energy(df):
+    # Methanol input conversion from material to energy unit
+    conv_factor = 0.6976
+    inp_vars = ["in|final_material|methanol|MTO_petro",
+            "in|final_material|methanol|CH2O_synth"]
+    suffix = "energy"
+    for var in inp_vars:
+        df.divide(
+            f"{var}|M1",
+            (1 / conv_factor),
+            f"{var}|{suffix}",
+            append=True,
+            ignore_units=True,
+        )
+
+    # Convert methanol at primary_material from energy to material unit
+    # In the model this is kept as energy units
+    # to easily separate two modes: fuel and feedstock
+    outp_vars = [
+            "out|primary_material|methanol|meth_coal",
+            "out|primary_material|methanol|meth_coal_ccs",
+            "out|primary_material|methanol|meth_ng",
+            "out|primary_material|methanol|meth_ng_ccs",
+            "out|primary_material|methanol|meth_bio",
+            "out|primary|methanol|meth_bio_ccs",
+            "out|primary|methanol|meth_h2",
+            ]
+    modes = ["feedstock", "fuel"]
+    for mode in modes:
+        for var in outp_vars:
+            df.divide(
+                f"{var}|{mode}",
+                conv_factor,
+                f"{var}|{mode}Mt",
+                append=True,
+                ignore_units=True,
+            )
+
+
+def report(context, scenario, print_to_excel=False):  # noqa: C901
     # Obtain scenario information and directory
 
     s_info = ScenarioInfo(scenario)
@@ -185,19 +209,12 @@ def report(context, scenario):  # noqa: C901
     directory.mkdir(exist_ok=True)
 
     # Generate message_ix level reporting and dump to an excel file.
-
     rep = Reporter.from_scenario(scenario)
     configure(units={"replace": {"-": ""}})
     df = rep.get("message::default")
-    name = os.path.join(directory, f"message_ix_reporting_{scenario.scenario}.xlsx")
-    df.to_excel(name)
+    report = df.timeseries().reset_index()
     print("message_ix level reporting generated")
-
-    # Obtain a pyam dataframe / filter / global aggregation
-
-    path = os.path.join(directory, f"message_ix_reporting_{scenario.scenario}.xlsx")
-    report = pd.read_excel(path)
-    report.Unit.fillna("", inplace=True)
+    report.unit.fillna("", inplace=True)
     df = pyam.IamDataFrame(report)
     df.filter(region=nodes, year=years, inplace=True)
     df.filter(
@@ -298,151 +315,14 @@ def report(context, scenario):  # noqa: C901
         ],
         inplace=True,
     )
+    print("Necessary variables are filtered")
 
-    # Methanol input conversion from material to energy unit
-
-    df.divide(
-        "in|final_material|methanol|MTO_petro|M1",
-        (1 / 0.6976),
-        "in|final_material|methanol|MTO_petro|energy",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "in|final_material|methanol|CH2O_synth|M1",
-        (1 / 0.6976),
-        "in|final_material|methanol|CH2O_synth|energy",
-        append=True,
-        ignore_units=True,
-    )
-
-    # Convert methanol at primary_material from energy to material unit
-    # In the model this is kept as energy units
-    # to easily seperate two modes: fuel and feedstock
-    df.divide(
-        "out|primary_material|methanol|meth_coal|feedstock",
-        0.6976,
-        "out|primary_material|methanol|meth_coal|feedstockMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary_material|methanol|meth_coal_ccs|feedstock",
-        0.6976,
-        "out|primary_material|methanol|meth_coal_ccs|feedstockMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary_material|methanol|meth_ng|feedstock",
-        0.6976,
-        "out|primary_material|methanol|meth_ng|feedstockMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary_material|methanol|meth_ng_ccs|feedstock",
-        0.6976,
-        "out|primary_material|methanol|meth_ng_ccs|feedstockMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary_material|methanol|meth_bio|feedstock",
-        0.6976,
-        "out|primary_material|methanol|meth_bio|feedstockMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary_material|methanol|meth_bio_ccs|feedstock",
-        0.6976,
-        "out|primary_material|methanol|meth_bio_ccs|feedstockMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary_material|methanol|meth_h2|feedstock",
-        0.6976,
-        "out|primary_material|methanol|meth_h2|feedstockMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    # Convert methanol at primary from energy to material unit
-    # In the model this is kept as energy units
-    # to easily seperate two modes: fuel and feedstock
-    df.divide(
-        "out|primary|methanol|meth_coal|fuel",
-        0.6976,
-        "out|primary|methanol|meth_coal|fuelMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary|methanol|meth_coal_ccs|fuel",
-        0.6976,
-        "out|primary|methanol|meth_coal_ccs|fuelMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary|methanol|meth_ng|fuel",
-        0.6976,
-        "out|primary|methanol|meth_ng|fuelMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary|methanol|meth_ng_ccs|fuel",
-        0.6976,
-        "out|primary|methanol|meth_ng_ccs|fuelMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary|methanol|meth_bio|fuel",
-        0.6976,
-        "out|primary|methanol|meth_bio|fuelMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary|methanol|meth_bio_ccs|fuel",
-        0.6976,
-        "out|primary|methanol|meth_bio_ccs|fuelMt",
-        append=True,
-        ignore_units=True,
-    )
-
-    df.divide(
-        "out|primary|methanol|meth_h2|fuel",
-        0.6976,
-        "out|primary|methanol|meth_h2|fuelMt",
-        append=True,
-        ignore_units=True,
-    )
+    convert_mass_to_energy(df)
 
     df.convert_unit("unknown", to="", factor=1, inplace=True)
 
     variables = df.variable
     df.aggregate_region(variables, region="World", method="sum", append=True)
-
-    name = os.path.join(directory, "check.xlsx")
-    df.to_excel(name)
-    print("Necessary variables are filtered")
 
     # Obtain the model and scenario name
     model_name = df.model[0]
@@ -4183,17 +4063,12 @@ def report(context, scenario):  # noqa: C901
     # Trade
     # ....................
 
-    path_temp = os.path.join(directory, "temp_new_reporting.xlsx")
-    df_final.to_excel(path_temp, sheet_name="data")
-
     excel_name_new = "New_Reporting_" + model_name + "_" + scenario_name + ".xlsx"
     path_new = os.path.join(directory, excel_name_new)
-
-    print(path_temp)
-    print(path_new)
-    fix_excel(path_temp, path_new)
+    df_final = fix_excel(df_final.timeseries().reset_index())
     print("New reporting file generated.")
-    df_final = pd.read_excel(path_new)
+    if print_to_excel:
+        df_final.to_excel(path_new)
 
     # df_resid = pd.read_csv(path_resid)
     # df_resid["Model"] = model_name
@@ -4210,7 +4085,4 @@ def report(context, scenario):  # noqa: C901
     # scenario.add_timeseries(df_comm)
     print("Finished uploading timeseries")
     scenario.commit("Reporting uploaded as timeseries")
-
     pp.close()
-    os.remove(path_temp)
-    # os.remove(path)
