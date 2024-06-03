@@ -870,6 +870,13 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
         df_i_therm_materials.index.get_level_values(1) == "CHEMICAL", "Value"
     ] *= 0.67
 
+    # only covering cement at the moment
+    # quick fix assuming 67% of NONMET is used for cement in each region
+    # needs regional differentiation once data is collected
+    df_i_therm_materials.loc[
+        df_i_therm_materials.index.get_level_values(1) == "NONMET", "Value"
+    ] *= 0.67
+
     df_i_therm_materials = df_i_therm_materials.groupby("REGION").sum(numeric_only=True)
     df_i_therm_materials = df_i_therm_materials.add(df_elec_i, fill_value=0)
 
