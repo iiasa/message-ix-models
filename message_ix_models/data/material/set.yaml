@@ -108,7 +108,6 @@ generic:
     - furnace_coal_steel
     - furnace_elec_steel
     - furnace_h2_steel
-    - hp_gas_steel
     - hp_elec_steel
     - fc_h2_steel
     - solar_steel
@@ -122,7 +121,6 @@ generic:
     - furnace_coal_cement
     - furnace_elec_cement
     - furnace_h2_cement
-    - hp_gas_cement
     - hp_elec_cement
     - fc_h2_cement
     - solar_cement
@@ -136,7 +134,6 @@ generic:
     - furnace_gas_aluminum
     - furnace_elec_aluminum
     - furnace_h2_aluminum
-    - hp_gas_aluminum
     - hp_elec_aluminum
     - fc_h2_aluminum
     - solar_aluminum
@@ -151,7 +148,6 @@ generic:
     - furnace_gas_petro
     - furnace_elec_petro
     - furnace_h2_petro
-    - hp_gas_petro
     - hp_elec_petro
     - fc_h2_petro
     - solar_petro
@@ -166,7 +162,6 @@ generic:
     - furnace_gas_refining
     - furnace_elec_refining
     - furnace_h2_refining
-    - hp_gas_refining
     - hp_elec_refining
     - fc_h2_refining
     - solar_refining
@@ -180,7 +175,6 @@ generic:
     - furnace_gas_resins
     - furnace_elec_resins
     - furnace_h2_resins
-    - hp_gas_resins
     - hp_elec_resins
     - fc_h2_resins
     - solar_resins
