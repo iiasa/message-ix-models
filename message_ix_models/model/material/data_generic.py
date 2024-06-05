@@ -3,16 +3,19 @@ from collections import defaultdict
 import pandas as pd
 from message_ix import Scenario, make_df
 
-import message_ix_models.util
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.data_util import (
+    calculate_furnace_non_co2_emi_coeff,
+    get_thermal_industry_emi_coefficients,
+    read_timeseries,
+)
+from message_ix_models.model.material.util import read_config
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
+    package_data_path,
     same_node,
 )
-
-from .data_util import read_timeseries
-from .util import read_config
 
 
 def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
@@ -20,7 +23,7 @@ def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
 
     # Read the file
     data_generic = pd.read_excel(
-        message_ix_models.util.package_data_path(
+        package_data_path(
             "material", "other", "generic_furnace_boiler_techno_economic.xlsx"
         ),
         sheet_name="generic",
@@ -40,6 +43,22 @@ def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
     return data_generic, data_generic_ts
 
 
+def add_non_co2_emission_coefficients(scen, df_input, method="from_disk"):
+    if method == "from_disk":
+        df_emi = pd.read_csv(
+            package_data_path(
+                "material", "other", "industry_thermal_emi_coefficients.csv"
+            )
+        )
+    else:
+        df_emi = get_thermal_industry_emi_coefficients(scen)
+    df_input = df_input[df_input["year_act"].ge(scen.firstmodelyear)]
+    df_input = df_input.set_index(["node_loc", "year_act", "commodity", "technology"])
+    df_furnace_emi = calculate_furnace_non_co2_emi_coeff(df_input, df_emi)
+    return df_furnace_emi
+
+
+def gen_data_generic(scenario, dry_run=False):
 def gen_data_generic(
     scenario: Scenario, dry_run: bool = False
 ) -> dict[str, pd.DataFrame]:
@@ -248,6 +267,10 @@ def gen_data_generic(
                 df = df.pipe(broadcast, node_loc=nodes)
 
             results[p].append(df)
+
+    results["relation_activity"].append(
+        add_non_co2_emission_coefficients(scenario, pd.concat(results["input"]))
+    )
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
