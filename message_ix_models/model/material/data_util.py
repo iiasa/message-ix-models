@@ -1889,7 +1889,7 @@ def add_cement_bounds_2020(sc: message_ix.Scenario) -> None:
 
 
 def read_sector_data(
-    scenario: message_ix.Scenario, sectname: str, ssp: str, file: str
+    scenario: message_ix.Scenario, sectname: str, ssp: str
 ) -> pd.DataFrame:
     """
     Read sector data for industry with sectname
@@ -1911,6 +1911,9 @@ def read_sector_data(
 
     import numpy as np
 
+    # Ensure config is loaded, get the context
+    context = read_config()
+
     s_info = ScenarioInfo(scenario)
 
     if "R12_CHN" in s_info.N:
@@ -1920,7 +1923,7 @@ def read_sector_data(
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        package_data_path("material", sectname, ssp, file),
+        package_data_path("material", "steel_cement", ssp, context.datafile),
         sheet_name=sheet_n,
     )
 
@@ -1990,8 +1993,6 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
                 "gas_NH3_ccs",
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs",
-                "bf_ccs_steel",
-                "dri_gas_ccs_steel",
             ],
             "emission": "CO2",
         },
@@ -2265,3 +2266,150 @@ def calculate_ini_new_cap(
     df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
     df_demand["technology"] = technology
     return make_df("initial_new_capacity_up", **df_demand)
+
+
+
+def get_thermal_industry_emi_coefficients(scen: message_ix.Scenario) -> pd.DataFrame:
+    """
+    Pulls existing parametrization for non-CO2 emission
+    coefficients of given Scenario instance
+
+    Pulls MESSAGEix-GLOBIOM emission coefficients from "relation_activity"
+    and normalizes them to fuel inputs
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario instance to pull emission coefficients from
+    Returns
+    -------
+    pd.DataFrame
+    """
+    ind_th_tecs = ["biomass_i", "coal_i", "eth_i", "foil_i", "gas_i", "loil_i"]
+    relations = [
+        "BCA_Emission",
+        "CH4_Emission",
+        "CO_Emission",
+        "N2O_Emission",
+        "NH3_Emission",
+        "NOx_Emission",
+        "OCA_Emission",
+        "SO2_Emission",
+        "VOC_Emission",
+    ]
+    first_year = 2020
+    common_index = ["node_loc", "year_act", "technology"]
+    df_rel = scen.par(
+        "relation_activity", filters={"technology": ind_th_tecs, "relation": relations}
+    )
+    df_rel = df_rel[df_rel["year_act"].ge(first_year)]
+    df_rel = df_rel.set_index(common_index)
+
+    df_in = scen.par("input", filters={"technology": ind_th_tecs})
+    df_in = df_in[df_in["year_act"].ge(first_year)]
+    df_in = df_in.set_index(common_index)
+
+    df_joined = df_rel.join(
+        df_in[["value", "commodity"]], rsuffix="_in"
+    ).drop_duplicates()
+    df_joined["emi_factor"] = df_joined["value"] / df_joined["value_in"]
+    return df_joined
+
+
+def get_furnace_inputs(scen: message_ix.Scenario) -> pd.DataFrame:
+    """
+    Pulls existing parametrization for input coefficients
+     of given Scenario instance and returns only for technologies
+     with "furnace" in the name
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario instance to pull input parameter from
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    furn_tecs = "furnace"
+    df_furn = scen.par("input")
+    df_furn = df_furn[
+        (df_furn["technology"].str.contains(furn_tecs))
+        & (df_furn["year_act"].ge(first_year))
+    ]
+    df_furn = df_furn.set_index(["node_loc", "year_act", "commodity", "technology"])
+    return df_furn
+
+
+def calculate_furnace_non_co2_emi_coeff(
+    df_furn: pd.DataFrame, df_emi: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Joins input and emission coefficient DataFrames on
+    region, year and commodity to derive correct
+    non-CO2 emission factor parameter for industry furnaces
+
+    Parameters
+    ----------
+    df_furn: pd.DataFrame
+        DataFrame containing input parametrization of furnaces
+    df_emi: pd.DataFrame
+        DataFrame containing input normalized non-CO2 emission coefficients
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    df_final = (
+        pd.DataFrame(
+            df_emi.reset_index().set_index(["node_loc", "year_act", "commodity"])[
+                ["relation", "emi_factor"]
+            ]
+        )
+        .join(
+            df_furn["value"]
+            .reset_index()
+            .drop_duplicates()
+            .set_index(["node_loc", "year_act", "commodity", "technology"])
+        )
+        .reset_index()
+        .drop_duplicates()
+    )
+    df_final["value"] = df_final["value"] * df_final["emi_factor"]
+    df_final_new = (
+        make_df("relation_activity", **df_final)
+        .pipe(same_node)
+        .pipe(broadcast, mode=["high_temp", "low_temp"])
+    )
+    df_final_new["year_rel"] = df_final_new["year_act"]
+    df_final_new["unit"] = "???"
+    return df_final_new
+
+
+if __name__ == "__main__":
+    mp = ixmp.Platform("ixmp_dev")
+    scen = message_ix.Scenario(
+        mp, "SSP_dev_SSP2_v0.1_Blv0.6", "baseline_prep_lu_bkp_solved_materials"
+    )
+
+    # add_macro_COVID(scen, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx")
+
+    df_hist_new = calc_hist_activity(scen, [2015])
+    print()
+    # df_demand_new = modify_industry_demand(scen, 2015)
+    # old_dict = modify_demand_and_hist_activity_debug(scen)
+    #
+    # df = get_hist_act_data("IEA_mappings_furnaces.csv", years=[2015])
+    # df.index.names = ["node_loc", "technology", "year_act"]
+    # df_inp = scen.par(
+    #     "input",
+    #     filters={
+    #         "year_vtg": 2020,
+    #         "year_act": 2020,
+    #         "mode": "high_temp",
+    #         "node_loc": "R12_AFR",
+    #     },
+    # )
+    # df = df_inp.set_index(["technology"]).join(df).dropna()
+    # df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
+    # print()
