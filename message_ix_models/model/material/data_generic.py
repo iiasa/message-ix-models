@@ -62,6 +62,24 @@ def add_non_co2_emission_coefficients(scen, df_input, method="from_disk"):
     return df_furnace_emi
 
 
+def add_ind_therm_link_relations(tecs, years, nodes):
+    col_val_dict = {
+        "relation": "IndThermDemLink",
+        "mode": ["high_temp", "low_temp"],
+        "unit": "???",
+        "value": 1,
+    }
+    df = (
+        make_df("relation_activity", **col_val_dict)
+        .pipe(broadcast, node_loc=nodes)
+        .pipe(broadcast, year_rel=years)
+        .pipe(same_node)
+        .pipe(broadcast, technology=tecs)
+    )
+    df["year_act"] = df["year_rel"]
+    return df
+
+
 def gen_data_generic(
     scenario: Scenario, dry_run: bool = False
 ) -> dict[str, pd.DataFrame]:
@@ -271,7 +289,11 @@ def gen_data_generic(
     results["relation_activity"].append(
         add_non_co2_emission_coefficients(scenario, pd.concat(results["input"]))
     )
-
+    results["relation_activity"].append(
+        add_ind_therm_link_relations(
+            config["technology"]["add"], yv_ya["year_act"].unique(), nodes
+        )
+    )
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     return results
