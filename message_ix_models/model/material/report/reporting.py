@@ -20,8 +20,10 @@ Material_global_grpahs.pdf
 
 @author: unlu
 """
+
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 import os
 
 import matplotlib
@@ -143,8 +145,10 @@ def fix_excel(df):
 def convert_mass_to_energy(df):
     # Methanol input conversion from material to energy unit
     conv_factor = 0.6976
-    inp_vars = ["in|final_material|methanol|MTO_petro",
-            "in|final_material|methanol|CH2O_synth"]
+    inp_vars = [
+        "in|final_material|methanol|MTO_petro",
+        "in|final_material|methanol|CH2O_synth",
+    ]
     suffix = "energy"
     for var in inp_vars:
         df.divide(
@@ -159,21 +163,22 @@ def convert_mass_to_energy(df):
     # In the model this is kept as energy units
     # to easily separate two modes: fuel and feedstock
     outp_vars = [
-            "out|primary_material|methanol|meth_coal",
-            "out|primary_material|methanol|meth_coal_ccs",
-            "out|primary_material|methanol|meth_ng",
-            "out|primary_material|methanol|meth_ng_ccs",
-            "out|primary_material|methanol|meth_bio",
-            "out|primary|methanol|meth_bio_ccs",
-            "out|primary|methanol|meth_h2",
-            ]
+        "out|level|methanol|meth_coal",
+        "out|level|methanol|meth_coal_ccs",
+        "out|level|methanol|meth_ng",
+        "out|level|methanol|meth_ng_ccs",
+        "out|level|methanol|meth_bio",
+        "out|level|methanol|meth_bio_ccs",
+        "out|level|methanol|meth_h2",
+    ]
     modes = ["feedstock", "fuel"]
-    for mode in modes:
+    levels = ["primary_material", "primary"]
+    for mode, level in zip(modes, levels):
         for var in outp_vars:
             df.divide(
-                f"{var}|{mode}",
+                f"{var.replace('level', level)}|{mode}",
                 conv_factor,
-                f"{var}|{mode}Mt",
+                f"{var.replace('level', level)}|{mode}Mt",
                 append=True,
                 ignore_units=True,
             )
