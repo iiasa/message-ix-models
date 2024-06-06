@@ -60,13 +60,17 @@ class Config(ConfigHelper):
     #: "non-LDV growth_new_capacity_up"
     #:    Allowable annual increase in new capacity (roughly, sales) of each technology
     #:    for transport modes *other than* LDV. See :func:`non_ldv.growth_new_capacity`.
+    #: "* initial_*_up"
+    #:    Base value for growth constraints. These values are arbitrary.
     constraint: Dict = field(
         default_factory=lambda: {
             "LDV growth_activity_lo": -0.0192,
-            "LDV growth_activity_up": 0.0192 * 4.0,
-            "non-LDV growth_activity_lo": -0.0192 * 2.0,
+            "LDV growth_activity_up": 0.0192 * 3.0,
+            "non-LDV growth_activity_lo": -0.0192 * 1.0,
+            "non-LDV growth_activity_up": 0.0192 * 2.0,
             "non-LDV growth_new_capacity_up": 0.0192 * 1.0,
-            "non-LDV initial_new_capacity_up": 10.0,
+            "non-LDV initial_activity_up": 1.0,
+            "non-LDV initial_new_capacity_up": 1.0,
         }
     )
 
@@ -163,6 +167,7 @@ class Config(ConfigHelper):
     #:
     #: ``freight``: similar to IEA “Future of Trucks” (2017) values; see
     #: .transport.freight. Alternately use 5.0, similar to Roadmap 2017 values.
+
     load_factor: Dict = field(
         default_factory=lambda: {"freight": 10.0}  # tonne km per vehicle km
     )
