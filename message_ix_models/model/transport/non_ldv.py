@@ -1,6 +1,7 @@
 """Data for transport modes and technologies outside of LDVs."""
 
 import logging
+from collections import defaultdict
 from functools import lru_cache, partial
 from operator import itemgetter
 from typing import TYPE_CHECKING, Dict, List, Mapping
@@ -247,9 +248,11 @@ def constraint_data(
     t_0: List[Code] = list(filter(lambda t: t.parent and t.parent.id in modes, t_all))
     # Only the technologies that input c=electr
     t_1: List[Code] = list(filter(partial(_inputs, commodity="electr"), t_0))
+    # Aviation technologies only
+    t_2: List[Code] = list(filter(lambda t: t.parent and t.parent.id == "AIR", t_all))
 
     common = dict(year_act=years, year_vtg=years, time="year", unit="-")
-    data: Dict[str, pd.DataFrame] = dict()
+    dfs = defaultdict(list)
 
     # Iterate over:
     # 1. Parameter name
@@ -263,6 +266,8 @@ def constraint_data(
         ("growth_activity_lo", t_1, 0.0),
         # This 1 entry sets the value from config for all technologies
         # ("growth_activity_lo", t_0, np.nan),
+        # This entry sets the value from config for aviation technologies only
+        ("growth_activity_up", t_2, np.nan),
         # For this parameter, no differentiation
         ("growth_new_capacity_up", t_0, np.nan),
     ):
@@ -270,18 +275,21 @@ def constraint_data(
         value = np.nan_to_num(fixed_value, nan=config.constraint[f"non-LDV {name}"])
 
         # Assemble the data
-        data[name] = make_df(name, value=value, **common).pipe(
-            broadcast, node_loc=nodes, technology=techs
+        dfs[name].append(
+            make_df(name, value=value, **common).pipe(
+                broadcast, node_loc=nodes, technology=techs
+            )
         )
 
-        # Add initial_* values corresponding to growth_new_capacity_up only, to set the
-        # starting point of dynamic growth constraints
-        if name == "growth_new_capacity_up":
-            i_n_c = name.replace("growth", "initial")
-            value = config.constraint[f"non-LDV {i_n_c}"]
-            data.update(make_matched_dfs(data[name], **{i_n_c: value}))
+        # Add initial_* values corresponding to growth_{activity,new_capacity}_up, to
+        # set the starting point of dynamic constraints.
+        if name.endswith("_up"):
+            name_init = name.replace("growth", "initial")
+            value = config.constraint[f"non-LDV {name_init}"]
+            for n, df in make_matched_dfs(dfs[name][-1], **{name_init: value}).items():
+                dfs[n].append(df)
 
-    return data
+    return {k: pd.concat(v) for k, v in dfs.items()}
 
 
 def other(c: Computer, base: Key) -> List[Key]:
