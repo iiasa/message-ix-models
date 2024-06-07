@@ -4,7 +4,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache, partial
 from operator import itemgetter
-from typing import TYPE_CHECKING, Dict, List, Mapping
+from typing import TYPE_CHECKING, Dict, List, Mapping, Set
 
 import numpy as np
 import pandas as pd
@@ -235,8 +235,8 @@ def constraint_data(
 ) -> Dict[str, pd.DataFrame]:
     """Return constraints on growth of CAP_NEW for non-LDV technologies.
 
-    Responds to the :attr:`.Config.constraint` key
-    :py:`"non-LDV growth_new_capacity_up"`; see description there.
+    Responds to the :attr:`.Config.constraint` keys :py:`"non-LDV *"`; see description
+    there.
     """
     config: Config = genno_config["transport"]
 
@@ -245,11 +245,13 @@ def constraint_data(
 
     # Lists of technologies to constrain
     # All technologies under the non-LDV modes
-    t_0: List[Code] = list(filter(lambda t: t.parent and t.parent.id in modes, t_all))
+    t_0: Set[Code] = set(filter(lambda t: t.parent and t.parent.id in modes, t_all))
     # Only the technologies that input c=electr
-    t_1: List[Code] = list(filter(partial(_inputs, commodity="electr"), t_0))
+    t_1: Set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
     # Aviation technologies only
-    t_2: List[Code] = list(filter(lambda t: t.parent and t.parent.id == "AIR", t_all))
+    t_2: Set[Code] = set(filter(lambda t: t.parent and t.parent.id == "AIR", t_all))
+    # Only the technologies that input c=gas
+    t_3: Set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
 
     common = dict(year_act=years, year_vtg=years, time="year", unit="-")
     dfs = defaultdict(list)
@@ -262,14 +264,14 @@ def constraint_data(
         # These 2 entries set:
         # - 0 for the t_1 (c=electr) technologies
         # - The value from config for all others
-        ("growth_activity_lo", set(t_0) - set(t_1), np.nan),
-        ("growth_activity_lo", t_1, 0.0),
+        ("growth_activity_lo", list(t_0 - t_1), np.nan),
+        ("growth_activity_lo", list(t_1), 0.0),
         # This 1 entry sets the value from config for all technologies
         # ("growth_activity_lo", t_0, np.nan),
-        # This entry sets the value from config for aviation technologies only
-        ("growth_activity_up", t_2, np.nan),
+        # This entry sets the value from config for certain technologies
+        ("growth_activity_up", list(t_1 | t_2 | t_3), np.nan),
         # For this parameter, no differentiation
-        ("growth_new_capacity_up", t_0, np.nan),
+        ("growth_new_capacity_up", list(t_0), np.nan),
     ):
         # Use the fixed_value, if any, or a value from configuration
         value = np.nan_to_num(fixed_value, nan=config.constraint[f"non-LDV {name}"])
