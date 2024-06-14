@@ -5,9 +5,6 @@ import pytest
 MODULES_WITHOUT_TESTS = [
     None,
     "model.water",
-    "model.water.build",
-    "model.water.data",
-    "model.water.reporting",
 ]
 
 
