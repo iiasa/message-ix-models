@@ -256,7 +256,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     ref_input[["value", "level"]] = ref_input[["technology", "value", "level"]].apply(
         missing_tech, axis=1
-    )
+    )[["value", "level"]]
 
     # Combines the input df of parent_tech with water withdrawal data
     input_cool = (
