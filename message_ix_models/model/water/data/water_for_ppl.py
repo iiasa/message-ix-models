@@ -36,7 +36,7 @@ def missing_tech(x: pd.Series) -> pd.Series:
         else:
             return pd.Series((data_dic.get(x["technology"]), x["level"]))
     else:
-        return pd.Series((x["value"], x["level"]))
+        return pd.Series({"value": x["value"], "level": x["level"]})
 
 
 def cooling_fr(x: pd.Series) -> float:
