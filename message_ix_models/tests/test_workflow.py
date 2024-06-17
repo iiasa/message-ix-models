@@ -1,3 +1,4 @@
+import platform
 import re
 from typing import Optional
 
@@ -6,12 +7,19 @@ import pytest
 from message_ix import make_df
 
 from message_ix_models import Workflow, testing
+from message_ix_models.testing import GHA
 from message_ix_models.workflow import WorkflowStep, make_click_command, solve
 
-MARK = pytest.mark.skipif(
-    condition=ixmp.__version__ < "3.5",
-    reason="ixmp.TimeSeries.url not available prior to ixmp 3.5.0",
-)
+MARK = {
+    0: pytest.mark.skipif(
+        condition=ixmp.__version__ < "3.5",
+        reason="ixmp.TimeSeries.url not available prior to ixmp 3.5.0",
+    ),
+    1: pytest.mark.xfail(
+        condition=GHA and platform.system() == "Darwin",
+        reason="Graphviz not available for GitHub Actions jobs on macOS",
+    ),
+}
 
 
 # Functions for WorkflowSteps
@@ -87,7 +95,8 @@ def _wf(
     return wf
 
 
-@MARK
+@MARK[0]
+@MARK[1]
 def test_make_click_command(mix_models_cli) -> None:
     import click
 
@@ -123,7 +132,7 @@ def test_make_click_command(mix_models_cli) -> None:
             assert output in result.output
 
 
-@MARK
+@MARK[0]
 def test_workflow(caplog, request, test_context, wf) -> None:
     # Retrieve some information from the fixture
     mp = wf.graph.pop("_base_platform")
