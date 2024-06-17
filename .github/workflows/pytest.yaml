@@ -91,8 +91,8 @@ jobs:
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
-      with:
-        macos-skip-brew-update: true
+      # TEMPORARY Work around ts-graphviz/setup-graphviz#630
+      if: ${{ ! startswith(matrix.os, 'macos-') }}
 
     - name: Install packages and dependencies
       # By default, install:
