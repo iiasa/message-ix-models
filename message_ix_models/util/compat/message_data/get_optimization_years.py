@@ -13,7 +13,7 @@ def main(scen):
     """
 
     firstmodelyear = int(
-        scen.set("cat_year", {"type_year": ["firstmodelyear"]})["year"]
+        scen.set("cat_year", {"type_year": ["firstmodelyear"]})["year"].iloc[0]
     )
     model_years = scen.set("cat_year").year.unique().tolist()
     years = [y for y in model_years if y >= firstmodelyear]
