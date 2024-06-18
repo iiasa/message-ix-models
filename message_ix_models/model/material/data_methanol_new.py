@@ -184,7 +184,7 @@ def broadcast_reduced_df(df, par_name):
 
         for col in yr_col_inp:
             yr_cols_codes[col] = literal_eval(df_bc_node[col].values[0])
-            broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col)
+            df_bc_node = broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col)
             # return df_bc_node
         # df_bc_node["year_rel"] = df_bc_node["year_act"]
         df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)
