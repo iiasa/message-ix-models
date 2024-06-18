@@ -17,7 +17,7 @@ from message_ix_models.model.material.util import (
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.util import package_data_path, private_data_path
+from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -924,7 +924,7 @@ def map_iea_db_to_msg_regs(df_iea: pd.DataFrame, reg_map_fname: str) -> pd.DataF
     object
 
     """
-    file_path = private_data_path("node", reg_map_fname)
+    file_path = package_data_path("node", reg_map_fname)
     yaml_data = read_yaml_file(file_path)
     if "World" in yaml_data.keys():
         yaml_data.pop("World")
@@ -956,7 +956,7 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
     pd.DataFrame
         returns df with mapped technologies
     """
-    MAP = pd.read_csv(package_data_path("iea", tec_map_fname))
+    MAP = pd.read_csv(package_data_path("material", "iea_mappings", tec_map_fname))
 
     MAP = pd.concat([MAP, MAP["IEA flow"].str.split(", ", expand=True)], axis=1)
     MAP = (
