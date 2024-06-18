@@ -63,7 +63,6 @@ def main(scen, vintaging=False, check_only=False, remove_zero=True, verbose=Fals
             # ---------------------------------------------
             for n in df.node_loc.unique():
                 for t in df.loc[df.node_loc == n].technology.unique():
-
                     # Create filter for parametrized data.
                     loc_idx = (
                         (df.node_loc == n)

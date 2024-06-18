@@ -495,7 +495,6 @@ def main(
                     for y in sorted(
                         [x for x in set(df_old[year_ref]) if x in vtg_years]
                     ):
-
                         # The last active year of this vintage year
                         yr_end = act_years[vtg_years.index(y)]
 
@@ -669,7 +668,7 @@ def main(
                                 dd = df2.loc[:, yr_next].copy()
                                 df2[yr_end].loc[
                                     (df2[yr_end] < 0) & (df2[yr_next] >= 0)
-                                ] = (dd * extrapol_neg)
+                                ] = dd * extrapol_neg
 
                     # Extrapolate data
                     df_next = f_slice(df2, idx, year_ref, [year_next], y)
@@ -743,9 +742,9 @@ def main(
 
                         # To make sure no extra active years for new
                         # vintage years in the loop
-                        df_yr.loc[
-                            :, (df_yr.columns > yr_end) | (df_yr.columns < y)
-                        ] = np.nan
+                        df_yr.loc[:, (df_yr.columns > yr_end) | (df_yr.columns < y)] = (
+                            np.nan
+                        )
 
                     if y in set(df_old[year_ref]):
                         df2.loc[df2.index.isin(df_yr.index), :] = df_yr

@@ -1376,7 +1376,9 @@ def main(
     # Step3.3 Fill data gaps
     # ----------------------
 
-    data_df = _fill_data_gap(scen, data_df, tecs, cf_adj, idx, ren_bins, method, verbose)
+    data_df = _fill_data_gap(
+        scen, data_df, tecs, cf_adj, idx, ren_bins, method, verbose
+    )
 
     # -------------------------
     # Step3.4 Add periodic data
