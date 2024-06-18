@@ -8,9 +8,14 @@ from .get_nodes import get_nodes
 from .utilities import CAGR
 
 from .get_optimization_years import main as get_optimization_years
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
+    from pathlib import Path
 
 # In some cases, end-use technologies have outputs onto multiple demands.
-# If this is the case, then the a manual assignment is undertaken,
+# If this is the case, then a manual assignment is undertaken,
 # based on the last part of the end-use tec. name
 manual_demand_allocation = {
     "I": "i_spec",
@@ -25,7 +30,14 @@ manual_demand_allocation = {
 index = ["node_loc", "technology", "parameter", "year_act"]
 
 
-def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, verbose=False):
+def main(
+    scenario: "Scenario",
+    data_path: "Path",
+    ssp: str,
+    region: str,
+    first_mpa_year: int = None,
+    intpol_lim: int = 1
+):
     """Calibration of dynamic growth constraints for
     Useful Energy technologies.
 
@@ -51,15 +63,13 @@ def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, ve
         If changing, please check the results from manually adjusted mpas,
         and see that only values whcih should be adjusted are actually
         adjusted.
-    verbose : boolean (default=False)
-        option whether to print on screen messages.
     """
     # Retrieve years for which changes should be applied
     years = get_optimization_years(scenario)
 
     # Retrieve data for corresponding SSP
     data_filname = "SSP_UE_dyn_input.xlsx"
-    data_fil = data_path / "model" / "UE_dynamic_constraints" / data_filname
+    data_fil = data_path / "UE_dynamic_constraints" / data_filname
     mpa_data = pd.read_excel(data_fil, sheet_name="SSP_data")
     mpa_tec = mpa_data["technology"].tolist()
 
@@ -107,7 +117,11 @@ def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, ve
                 ]
             ],
             x,
-            int(scenario.par("duration_period", filters={"year": [x.name]}).value.iloc[0]),
+            int(
+                scenario.par("duration_period", filters={"year": [x.name]}).value.iloc[
+                    0
+                ]
+            ),
         )
     )
 
@@ -213,7 +227,9 @@ def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, ve
     )
 
     # Read data for manual overrides.
-    mpa_overrides = pd.read_excel(data_fil, sheet_name=f"{ssp}_{region}_mpa_manual_override")
+    mpa_overrides = pd.read_excel(
+        data_fil, sheet_name=f"{ssp}_{region}_mpa_manual_override"
+    )
 
     # Retrieve region prefix and adapt overrides
     region_id = list(set([x.split("_")[0] for x in get_nodes(scenario)]))[0]
