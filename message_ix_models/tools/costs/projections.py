@@ -393,27 +393,23 @@ def create_message_outputs(
         .rename(columns={"inv_cost": "inv_cost_2100", "fix_cost": "fix_cost_2100"})
     )
 
+    dims = [
+        "scenario_version",
+        "scenario",
+        "message_technology",
+        "first_technology_year",
+        "region",
+    ]
+
     df_merge = (
         (
             df_prod.merge(
                 val_2020,
-                on=[
-                    "scenario_version",
-                    "scenario",
-                    "message_technology",
-                    "first_technology_year",
-                    "region",
-                ],
+                on=dims,
             )
             .merge(
                 val_2100,
-                on=[
-                    "scenario_version",
-                    "scenario",
-                    "message_technology",
-                    "first_technology_year",
-                    "region",
-                ],
+                on=dims,
             )
             .merge(
                 df_projections,
