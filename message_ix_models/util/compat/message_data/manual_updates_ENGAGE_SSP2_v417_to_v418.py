@@ -848,7 +848,7 @@ def _correct_td_co2cc_emissions(scen):
                     continue
 
                 rel = rel.set_index(idx)
-                rel["CO2_should"] = inp["CO2_should"]
+                rel = rel.join(inp["CO2_should"])
 
                 # Filter out differences
                 rel = rel.loc[rel["value"] != rel["CO2_should"]]
