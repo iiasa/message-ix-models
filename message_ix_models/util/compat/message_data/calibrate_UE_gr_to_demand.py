@@ -36,7 +36,7 @@ def main(
     ssp: str,
     region: str,
     first_mpa_year: int = None,
-    intpol_lim: int = 1
+    intpol_lim: int = 1,
 ):
     """Calibration of dynamic growth constraints for
     Useful Energy technologies.

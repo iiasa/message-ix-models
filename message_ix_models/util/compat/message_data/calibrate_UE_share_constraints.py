@@ -79,7 +79,7 @@ def _add_data(scenario, row, period_intpol, relation_year, verbose):
         yr_prev = years[0]
         yr_next = years[-1]
         v_prev = share
-        v_next = float(tmp.loc[tmp.year_act == yr_next, "value"])
+        v_next = float(tmp.loc[tmp.year_act == yr_next, "value"].iloc[0])
         for y in years:
             if y == yr_prev:
                 tmp.loc[tmp.year_act == y, "value"] = share
