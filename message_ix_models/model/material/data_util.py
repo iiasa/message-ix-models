@@ -22,8 +22,6 @@ from message_ix_models.util import package_data_path
 if TYPE_CHECKING:
     from message_ix_models import Context
 
-pd.options.mode.chained_assignment = None
-
 
 def load_GDP_COVID() -> pd.DataFrame:
     """
