@@ -39,7 +39,7 @@ from message_ix_models.model.material.util import (
     read_config,
     update_macro_calib_file,
 )
-from message_ix_models.util import add_par_data, package_data_path
+from message_ix_models.util import add_par_data, package_data_path, private_data_path
 from message_ix_models.util.click import common_params
 from message_ix_models.util.compat.message_data import (
     calibrate_UE_gr_to_demand,
@@ -805,4 +805,50 @@ def make_xls_input_vc_able(context, files):
         #     path = package_data_path(str(element.split("/")[:-1]))
         #     print(path, fname)
         # message_ix_models.model.material.util.excel_to_csv(files)
+    return
+
+
+@cli.command("test_calib")
+@click.option("--scenario_name", default="NoPolicy")
+@click.option("--model_name", default="MESSAGEix-Materials")
+@click.pass_obj
+def test_calib(context, model_name, scenario_name):
+    """Solve a scenario.
+
+    Use the --model_name and --scenario_name option to specify the scenario to solve.
+    """
+    # Clone and set up
+    from message_ix import Scenario
+    from message_ix_models.model import macro
+    from sdmx.model import Annotation, Code
+    from message_ix_models.util import identify_nodes
+
+    mp = ixmp.Platform("ixmp_dev")
+    scenario = Scenario(mp, model_name, scenario_name)
+    scenario = scenario.clone("MESSAGEix-Materials", "refactor_macro_calib")
+    scenario.set_as_default()
+
+    def _c(id, sector):
+        return Code(id=id, annotations=[Annotation(id="macro-sector", text=sector)])
+
+    commodities = [
+        _c("i_therm", "i_therm"),
+        _c("i_spec", "i_spec"),
+        _c("rc_spec", "rc_spec"),
+        _c("rc_therm", "rc_therm"),
+        _c("transport", "transport"),
+    ]
+    context.model.regions = identify_nodes(scenario)
+    data = dict(
+        config=macro.generate("config", context, commodities),
+        aeei=macro.generate("aeei", context, commodities, value=0.02),
+        drate=macro.generate("drate", context, commodities, value=0.05),
+        depr=macro.generate("depr", context, commodities, value=0.05),
+        lotol=macro.generate("lotol", context, commodities, value=0.05),
+    )
+    # Load other MACRO data from file
+    data2 = macro.load(private_data_path("macro", "SSP1"))
+    data.update(data2)
+
+    scen = scenario.add_macro(data, check_convergence=False)
     return
