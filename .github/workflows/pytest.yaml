@@ -91,8 +91,8 @@ jobs:
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
-      with:
-        macos-skip-brew-update: true
+      # TEMPORARY Work around ts-graphviz/setup-graphviz#630
+      if: ${{ ! startswith(matrix.os, 'macos-') }}
 
     - name: Install packages and dependencies
       # By default, install:
@@ -108,6 +108,10 @@ jobs:
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
 
         pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
+
+        # TEMPORARY Work around hgrecco/pint#2007, unionai-oss/pandera#1685;
+        # see https://github.com/khaeru/genno/issues/140
+        pip install "pint != 0.24.0" "numpy < 2"
 
     - name: Configure local data path
       run: |
