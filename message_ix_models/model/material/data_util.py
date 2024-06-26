@@ -1071,12 +1071,12 @@ def add_emission_accounting(scen):
     """
     # (1) ******* Add non-CO2 gases to the relevant relations. ********
     # This is done by multiplying the input values and emission_factor
-    # per year,region and technology.
+    # per year,region and technology for furnace technologies.
 
     tec_list_residual = scen.par("emission_factor")["technology"].unique()
     tec_list_input = scen.par("input")["technology"].unique()
 
-    # The technology list to retrieve the input values
+    # The technology list to retrieve the input values for furnaces
     tec_list_input = [
         i for i in tec_list_input if (("furnace" in i) | ("hp_gas_" in i))
     ]
@@ -1916,7 +1916,7 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFra
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        package_data_path("material",sectname, file),
+        package_data_path("material", sectname),
         sheet_name=sheet_n,
     )
 
@@ -1987,7 +1987,7 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs",
                 "bf_ccs_steel",
-                "dri_gas_ccs_steel"
+                "dri_gas_ccs_steel",
             ],
             "emission": "CO2",
         },
