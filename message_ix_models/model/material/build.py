@@ -1,16 +1,18 @@
 import logging
-from typing import Callable, Dict, List, Mapping, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Mapping, Union
 
 import pandas as pd
-from ixmp.util import maybe_check_out, maybe_commit
-from message_ix import Scenario
 from sdmx.model import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
-from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
+from message_ix_models.util.ixmp import maybe_check_out, maybe_commit
 
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
+
+    from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
 def ellipsize(elements: List) -> str:
     """Generate a short string representation of `elements`.
@@ -26,8 +28,8 @@ def ellipsize(elements: List) -> str:
 
 # FIXME Reduce complexity (same issues as model.build.apply_spec())
 def apply_spec(  # noqa: C901
-    scenario: Scenario,
-    spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
+    scenario: "Scenario",
+    spec: Union["Spec", Mapping[str, "ScenarioInfo"]] = None,
     data: Callable = None,
     **options,
 ):
