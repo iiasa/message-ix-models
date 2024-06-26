@@ -49,6 +49,7 @@ class Extract:
         cls, list_method = {
             ".zip": (zipfile.ZipFile, "namelist"),
             ".xz": (tarfile.TarFile.open, "getnames"),
+            ".gz": (tarfile.TarFile.open, "getnames"),
         }[path.suffix]
 
         with cls(path) as archive:
