@@ -2,7 +2,7 @@ import logging
 from typing import Callable, Dict, List, Mapping, Union
 
 import pandas as pd
-from ixmp.utils import maybe_check_out, maybe_commit
+from ixmp.util import maybe_check_out, maybe_commit
 from message_ix import Scenario
 from sdmx.model import Code
 
