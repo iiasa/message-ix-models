@@ -227,6 +227,11 @@ def create_bare(context, regions, dry_run):
     metavar="INPUT",
     help="File name for external data input",
 )
+@click.option(
+    "--iea_data_path",
+    default="P:ene.model\\IEA_database\\Florian\\",
+    help="File path for external data input",
+)
 @click.option("--tag", default="", help="Suffix to the scenario name")
 @click.option(
     "--mode", default="by_url", type=click.Choice(["by_url", "cbudget", "by_copy"])
@@ -238,7 +243,9 @@ def create_bare(context, regions, dry_run):
     default=False,
 )
 @click.pass_obj
-def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_costs):
+def build_scen(
+    context, datafile, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
+):
     """Build a scenario.
 
     Use the --url option to specify the base scenario. If this scenario is on a
@@ -246,6 +253,14 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
     memory, i.e. ``jvmargs=["-Xmx16G"]``.
     """
 
+    if not os.path.isfile(iea_data_path + "REV2022_allISO_IEA.parquet"):
+        log.warning(
+            "The proprietary data file: 'REV2022_allISO_IEA.parquet' based on IEA"
+            "Extended Energy Balances required for the build cannot be found in"
+            "the given location."
+        )
+        return
+    return
     import message_ix
 
     mp = context.get_platform()
