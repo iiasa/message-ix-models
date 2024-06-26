@@ -10,9 +10,6 @@ from scipy.optimize import curve_fit
 from message_ix_models import Context
 from message_ix_models.util import load_package_data, package_data_path
 
-from pathlib import Path
-import yaml
-
 # Configuration files
 METADATA = [
     # ("material", "config"),
@@ -31,9 +28,7 @@ def read_config() -> Context:
     """
     # TODO this is similar to transport.utils.read_config; make a common
     #      function so it doesn't need to be in this file.
-    # In the original branch materials_2023_move2
-    # context = Context.get_instance(-1)
-    context = Context.get_instance(0)
+    context = Context.get_instance(-1)
 
     if "material set" in context:
         # Already loaded
@@ -57,20 +52,6 @@ def read_config() -> Context:
 
     # Use a shorter name
     context["material"] = context["material set"]
-
-    # There was an error in context["material"][type].items()
-    # context["material"] is not the content of the yaml file but the path to
-    # the yaml file. Below section added to read the yaml file.
-
-    try:
-        with open(context["material"], 'r') as yaml_file:
-            yaml_data = yaml.load(yaml_file, Loader=yaml.FullLoader)
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-    except Exception as e:
-        print(f"Error reading YAML file: {e}")
-
-    context["material"] = yaml_data
 
     # Merge technology.yaml with set.yaml
     # context["material"]["steel"]["technology"]["add"] = (
