@@ -851,5 +851,5 @@ def test_calib(context, model_name, scenario_name):
     data2 = macro.load(private_data_path("macro", "SSP1"))
     data.update(data2)
 
-    scen = scenario.add_macro(data, check_convergence=False)
+    scenario.add_macro(data, check_convergence=False)
     return
