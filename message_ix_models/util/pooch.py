@@ -96,6 +96,15 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
         ),
         processor=Extract(extract_dir="water"),
     ),
+    "MESSAGEix-Materials": dict(
+        pooch_args=dict(
+            base_url=f"{GH_MAIN}/material/",
+            registry={
+                "material.tar.gz": "sha1:b93f4390cb00749c2316fcdddf901a0eab896774"
+            },
+        ),
+        processor=Extract(extract_dir="material"),
+    ),
     "snapshot-0": dict(
         pooch_args=dict(
             base_url="doi:10.5281/zenodo.5793870",
