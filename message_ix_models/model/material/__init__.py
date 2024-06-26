@@ -819,8 +819,9 @@ def test_calib(context, model_name, scenario_name):
     """
     # Clone and set up
     from message_ix import Scenario
-    from message_ix_models.model import macro
     from sdmx.model import Annotation, Code
+
+    from message_ix_models.model import macro
     from message_ix_models.util import identify_nodes
 
     mp = ixmp.Platform("ixmp_dev")
