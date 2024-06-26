@@ -426,10 +426,10 @@ def gen_data_steel(scenario, dry_run=False):
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
     # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel")
+    data_steel = read_sector_data(scenario, "steel", "Global_steel_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel_cement", context.datafile)
-    data_steel_rel = read_rel(scenario, "steel_cement", context.datafile)
+    data_steel_ts = read_timeseries(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel_rel = read_rel(scenario, "steel", "Global_steel_MESSAGE.xlsx")
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 
@@ -519,6 +519,14 @@ def gen_data_steel(scenario, dry_run=False):
     parname = "demand"
     df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
     results[parname].append(df)
+
+    common = dict(
+    year_vtg=yv_ya.year_vtg,
+    year_act=yv_ya.year_act,
+    time="year",
+    time_origin="year",
+    time_dest="year",
+    )
 
     # Add CCS as addon
     parname = "addon_conversion"

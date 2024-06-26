@@ -14,8 +14,8 @@ mega = 10**6
 
 material_data = {
     "aluminum": {"dir": "aluminum", "file": "/demand_aluminum.xlsx"},
-    "steel": {"dir": "steel_cement", "file": "/STEEL_database_2012.xlsx"},
-    "cement": {"dir": "steel_cement", "file": "/CEMENT.BvR2010.xlsx"},
+    "steel": {"dir": "steel", "file": "/STEEL_database_2012.xlsx"},
+    "cement": {"dir": "cement", "file": "/CEMENT.BvR2010.xlsx"},
     "HVC": {"dir": "petrochemicals"},
     "NH3": {"dir": "ammonia"},
     "methanol": {"dir": "methanol"},
@@ -90,7 +90,7 @@ def gompertz(phi, mu, y, baseyear=2020):
 
 def read_timer_pop(datapath, material):
     df_population = pd.read_excel(
-        f'{datapath}/{material_data[material]["dir"]}{material_data["cement"]["file"]}',
+        f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
         sheet_name="Timer_POP",
         skiprows=[0, 1, 2, 30],
         nrows=26,
@@ -107,7 +107,7 @@ def read_timer_pop(datapath, material):
 def read_timer_gdp(datapath, material):
     # Read GDP per capita data
     df_gdp = pd.read_excel(
-        f'{datapath}/{material_data[material]["dir"]}{material_data["cement"]["file"]}',
+        f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
         sheet_name="Timer_GDPCAP",
         skiprows=[0, 1, 2, 30],
         nrows=26,
@@ -172,6 +172,7 @@ def read_base_demand(filepath):
 
 def read_hist_mat_demand(material):
     datapath = message_ix_models.util.package_data_path("material")
+    print(datapath)
 
     if material in ["cement", "steel"]:
         # Read population data
