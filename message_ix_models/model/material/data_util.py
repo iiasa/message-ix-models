@@ -2185,32 +2185,3 @@ def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
     scenario.add_par(par, df_el)
     scenario.commit("add initial_activity_up for elec_i")
     return
-
-
-if __name__ == "__main__":
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "SSP_dev_SSP2_v0.1_Blv0.6", "baseline_prep_lu_bkp_solved_materials"
-    )
-
-    # add_macro_COVID(scen, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx")
-
-    df_hist_new = calc_hist_activity(scen, [2015])
-    print()
-    # df_demand_new = modify_industry_demand(scen, 2015)
-    # old_dict = modify_demand_and_hist_activity_debug(scen)
-    #
-    # df = get_hist_act_data("IEA_mappings_furnaces.csv", years=[2015])
-    # df.index.names = ["node_loc", "technology", "year_act"]
-    # df_inp = scen.par(
-    #     "input",
-    #     filters={
-    #         "year_vtg": 2020,
-    #         "year_act": 2020,
-    #         "mode": "high_temp",
-    #         "node_loc": "R12_AFR",
-    #     },
-    # )
-    # df = df_inp.set_index(["technology"]).join(df).dropna()
-    # df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
-    # print()
