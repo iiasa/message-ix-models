@@ -188,7 +188,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
     return dict(require=require, add=add, remove=remove)
 
 
-# Group to allow for multiple CLI subcommands under "material"
+# Group to allow for multiple CLI subcommands under "material-ix"
 @click.group("material-ix")
 @common_params("ssp")
 def cli(ssp):
@@ -253,14 +253,13 @@ def build_scen(
     memory, i.e. ``jvmargs=["-Xmx16G"]``.
     """
 
-    if not os.path.isfile(iea_data_path + "REV2022_allISO_IEA.parquet"):
+    if not os.path.isfile(iea_data_path + "REV2022_allISO_IEA.parquet") & ~old_calib:
         log.warning(
             "The proprietary data file: 'REV2022_allISO_IEA.parquet' based on IEA"
-            "Extended Energy Balances required for the build cannot be found in"
-            "the given location."
+            "Extended Energy Balances required for the build with --old_calib=False"
+            " cannot be found in the given location. Aborting build..."
         )
         return
-    return
     import message_ix
 
     mp = context.get_platform()
@@ -657,7 +656,7 @@ def add_data_2(scenario, dry_run=False):
     log.info("done")
 
 
-@cli.command("modify_cost")
+@cli.command("modify_cost", hidden=True)
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
 @click.option("--scen_name", default="SSP_supply_cost_test_baseline_macro")
 @click.pass_obj
@@ -678,7 +677,7 @@ def modify_costs_with_tool(context, scen_name, ssp):
     scen.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
 
 
-@cli.command("run_cbud_scenario")
+@cli.command("run_cbud_scenario", hidden=True)
 @click.option(
     "--scenario",
     default="baseline_prep_lu_bkp_solved_materials_2025_macro",
@@ -729,7 +728,7 @@ def run_cbud_scenario(context, model, scenario, budget):
     return
 
 
-@cli.command("run_LED_cprice_scenario")
+@cli.command("run_LED_cprice_scenario", hidden=True)
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
 @click.option(
     "--scenario",
@@ -774,7 +773,7 @@ def run_LED_cprice(context, ssp, scenario):
     return
 
 
-@cli.command("make_xls_input_vc_able")
+@cli.command("make_xls_input_vc_able", hidden=True)
 @click.option(
     "--files",
     default="all",
@@ -807,7 +806,7 @@ def make_xls_input_vc_able(context, files):
     return
 
 
-@cli.command("test_calib")
+@cli.command("test_calib", hidden=True)
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 @click.pass_obj
