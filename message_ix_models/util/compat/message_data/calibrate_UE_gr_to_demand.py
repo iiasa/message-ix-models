@@ -4,14 +4,15 @@ import numpy as np
 from itertools import groupby
 from operator import itemgetter
 
-from .get_nodes import get_nodes
 from .utilities import CAGR
 
-from .get_optimization_years import main as get_optimization_years
 from typing import TYPE_CHECKING
+
+from ... import nodes_ex_world
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+    from message_ix_models import ScenarioInfo
     from pathlib import Path
 
 # In some cases, end-use technologies have outputs onto multiple demands.
@@ -32,6 +33,7 @@ index = ["node_loc", "technology", "parameter", "year_act"]
 
 def main(
     scenario: "Scenario",
+    s_info: "ScenarioInfo",
     data_path: "Path",
     ssp: str,
     region: str,
@@ -49,6 +51,7 @@ def main(
     ----------
     scenario : :class:`message_ix.Scenario`
         scenario to which changes should be applied
+    s_info: .ScenarioInfo
     data_path : :class:`pathlib.Path`
         path to model-data directory
     ssp : str
@@ -65,7 +68,7 @@ def main(
         adjusted.
     """
     # Retrieve years for which changes should be applied
-    years = get_optimization_years(scenario)
+    years = s_info.Y
 
     # Retrieve data for corresponding SSP
     data_filname = "SSP_UE_dyn_input.xlsx"
@@ -232,7 +235,7 @@ def main(
     )
 
     # Retrieve region prefix and adapt overrides
-    region_id = list(set([x.split("_")[0] for x in get_nodes(scenario)]))[0]
+    region_id = list(set([x.split("_")[0] for x in nodes_ex_world(s_info.N)]))[0]
     mpa_overrides["node_loc"] = region_id + "_" + mpa_overrides["node_loc"]
     mpa_overrides = mpa_overrides.set_index(["node_loc", "technology", "parameter"])
 
