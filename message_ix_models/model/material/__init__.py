@@ -37,7 +37,12 @@ from message_ix_models.model.material.util import (
     read_config,
     update_macro_calib_file,
 )
-from message_ix_models.util import add_par_data, package_data_path, private_data_path
+from message_ix_models.util import (
+    add_par_data,
+    identify_nodes,
+    package_data_path,
+    private_data_path,
+)
 from message_ix_models.util.click import common_params
 from message_ix_models.util.compat.message_data import (
     calibrate_UE_gr_to_demand,
@@ -122,9 +127,13 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     # levels for the enduse technologies.
     # FIXME: context.ssp only works for SSP1/2/3 currently missing SSP4/5
     calibrate_UE_gr_to_demand(
-        scenario, data_path=package_data_path("material"), ssp="SSP2", region="R12"
+        scenario,
+        s_info,
+        data_path=package_data_path("material"),
+        ssp="SSP2",
+        region=identify_nodes(scenario),
     )
-    calibrate_UE_share_constraints(scenario)
+    calibrate_UE_share_constraints(scenario, s_info)
 
     # Electricity calibration to avoid zero prices for CHN.
     if "R12_CHN" in nodes:
