@@ -160,37 +160,43 @@ def broadcast_reduced_df(df, par_name):
     df_final_full = pd.DataFrame()
 
     for i in df_final.index:
-        remove = ["'", "[", "]", " "]
+        # parse strings of node columns
         node_cols = [i for i in df_final.columns if "node" in i]
+        remove = ["'", "[", "]", " "]
         node_cols_codes = {}
         for col in node_cols:
             node_cols_codes[col] = pd.Series(
                 "".join(x for x in df_final.loc[i][col] if x not in remove).split(",")
             )
 
+        # create dataframe with required columns
         df_bc_node = make_df(par_name, **df_final.loc[i])
-        # brodcast in year dimensions
+
         yr_cols_codes = {}
         yr_col_inp = [i for i in df_final.columns if "year" in i]
         yr_col_out = [i for i in df_bc_node.columns if "year" in i]
         df_bc_node[yr_col_inp] = df_final.loc[i][yr_col_inp].values
 
+        # broadcast in node dimensions
         for colname in node_cols:
             df_bc_node[colname] = None
-        # broadcast in node dimensions
         df_bc_node = broadcast_nodes(
             df_bc_node, df_final, node_cols, node_cols_codes, i
         )
 
+        # brodcast in year dimensions
         for col in yr_col_inp:
             yr_cols_codes[col] = literal_eval(df_bc_node[col].values[0])
             df_bc_node = broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col)
-            # return df_bc_node
-        # df_bc_node["year_rel"] = df_bc_node["year_act"]
         df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)
 
         df_final_full = pd.concat([df_final_full, df_bc_node])
     df_final_full = df_final_full.drop_duplicates().reset_index(drop=True)
+
+    # special treatment for relation_activity dataframes:
+    # relations parametrization should only contain columns where node_rel == node_loc
+    # except for relations acting on a geographic global level
+    # (where node_rel == "R**_GLB")
     if par_name == "relation_activity":
         df_final_full = df_final_full.drop(
             df_final_full[
