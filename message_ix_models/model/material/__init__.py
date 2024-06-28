@@ -70,7 +70,9 @@ DATA_FUNCTIONS_2 = [
 ]
 
 
-def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario:
+def build(
+    scenario: message_ix.Scenario, old_calib: bool, iea_data_path=None
+) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
 
     # Get the specification
@@ -113,8 +115,8 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     else:
         modify_baseyear_bounds(scenario)
         last_hist_year = scenario.par("historical_activity")["year_act"].max()
-        modify_industry_demand(scenario, last_hist_year)
-        add_new_ind_hist_act(scenario, [last_hist_year])
+        modify_industry_demand(scenario, last_hist_year, iea_data_path)
+        add_new_ind_hist_act(scenario, [last_hist_year], iea_data_path)
         add_elec_i_ini_act(scenario)
         add_emission_accounting(scenario)
 
@@ -302,7 +304,7 @@ def build_scen(
                 scenario=context.scenario_info["scenario"] + "_" + tag,
                 keep_solution=False,
             )
-            scenario = build(scenario, old_calib=old_calib)
+            scenario = build(scenario, old_calib=old_calib, iea_data_path=iea_data_path)
         else:
             scenario = build(
                 context.get_scenario().clone(
@@ -310,6 +312,7 @@ def build_scen(
                     scenario=output_scenario_name + "_" + tag,
                 ),
                 old_calib=old_calib,
+                iea_data_path=iea_data_path,
             )
         # Set the latest version as default
         scenario.set_as_default()

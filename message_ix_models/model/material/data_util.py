@@ -762,10 +762,18 @@ def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
     scen.commit(comment="remove base year industry tec bounds")
 
 
-def calc_hist_activity(scen: message_ix.Scenario, years: list) -> pd.DataFrame:
-    df_orig = get_hist_act_data("IEA_mappings.csv", years=years)
-    df_mat = get_hist_act_data("IEA_mappings_industry.csv", years=years)
-    df_chem = get_hist_act_data("IEA_mappings_chemicals.csv", years=years)
+def calc_hist_activity(
+    scen: message_ix.Scenario, years: list, iea_data_path
+) -> pd.DataFrame:
+    df_orig = get_hist_act_data(
+        "IEA_mappings.csv", years=years, iea_data_path=iea_data_path
+    )
+    df_mat = get_hist_act_data(
+        "IEA_mappings_industry.csv", years=years, iea_data_path=iea_data_path
+    )
+    df_chem = get_hist_act_data(
+        "IEA_mappings_chemicals.csv", years=years, iea_data_path=iea_data_path
+    )
 
     # RFE: move hardcoded assumptions (chemicals and iron and steel)
     #  to external data files
@@ -799,8 +807,8 @@ def calc_hist_activity(scen: message_ix.Scenario, years: list) -> pd.DataFrame:
     return df_hist_act_scaled.reset_index()
 
 
-def add_new_ind_hist_act(scen: message_ix.Scenario, years: list) -> None:
-    df_act = calc_hist_activity(scen, years)
+def add_new_ind_hist_act(scen: message_ix.Scenario, years: list, iea_data_path) -> None:
+    df_act = calc_hist_activity(scen, years, iea_data_path)
     scen.check_out()
     scen.add_par("historical_activity", df_act)
     scen.commit("adjust historical activity of industrial end use tecs")
@@ -879,11 +887,11 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
     )
 
 
-def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFrame:
+def calc_resid_ind_demand(
+    scen: message_ix.Scenario, baseyear: int, iea_data_path
+) -> pd.DataFrame:
     comms = ["i_spec", "i_therm"]
-    path = os.path.join(
-        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    )
+    path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
     Inp = pd.read_parquet(path, engine="fastparquet")
     Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
     demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
@@ -895,8 +903,10 @@ def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFr
     return df_demands.reset_index()
 
 
-def modify_industry_demand(scen: message_ix.Scenario, baseyear: int) -> None:
-    df_demands_new = calc_resid_ind_demand(scen, baseyear)
+def modify_industry_demand(
+    scen: message_ix.Scenario, baseyear: int, iea_data_path
+) -> None:
+    df_demands_new = calc_resid_ind_demand(scen, baseyear, iea_data_path)
     scen.check_out()
     scen.add_par("demand", df_demands_new)
 
@@ -980,7 +990,9 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
     return MAP
 
 
-def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFrame:
+def get_hist_act_data(
+    map_fname: str, years: list or None = None, iea_data_path=None
+) -> pd.DataFrame:
     """
     reads IEA DB, maps and aggregates variables to MESSAGE technologies
 
@@ -996,9 +1008,7 @@ def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFram
     pd.DataFrame
 
     """
-    path = os.path.join(
-        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    )
+    path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
     iea_enb_df = pd.read_parquet(path, engine="fastparquet")
     if years:
         iea_enb_df = iea_enb_df[iea_enb_df["TIME"].isin(years)]
