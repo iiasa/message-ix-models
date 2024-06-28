@@ -3,7 +3,6 @@ import os
 from typing import Mapping
 
 import click
-import ixmp
 import message_ix
 import pandas as pd
 
@@ -284,7 +283,7 @@ def build_scen(
         context.datafile = datafile
 
         if context.scenario_info["model"] != "CD_Links_SSP2":
-            print("WARNING: this code is not tested with this base scenario!")
+            log.warning("WARNING: this code is not tested with this base scenario!")
 
         # Clone and set up
 
@@ -311,12 +310,14 @@ def build_scen(
         output_scenario_name = "2degrees"
         mod_mitig = "ENGAGE_SSP2_v4.1.8"
         scen_mitig = "EN_NPi2020_1000f"
-        print("Loading " + mod_mitig + " " + scen_mitig + " to retrieve carbon prices.")
+        log.info(
+            "Loading " + mod_mitig + " " + scen_mitig + " to retrieve carbon prices."
+        )
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
         tax_emission_new = scen_mitig_prices.var("PRICE_EMISSION")
 
-        scenario = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario_name)
-        print("Base scenario is " + scenario_name)
+        scenario = context.get_scenario()
+        log.info("Base scenario is " + scenario_name)
         output_scenario_name = output_scenario_name + "_" + tag
         scenario = scenario.clone(
             "MESSAGEix-Materials",
@@ -329,13 +330,13 @@ def build_scen(
         tax_emission_new["unit"] = "USD/tCO2"
         scenario.add_par("tax_emission", tax_emission_new)
         scenario.commit("2 degree prices are added")
-        print("New carbon prices added")
-        print("New scenario name is " + output_scenario_name)
+        log.info("New carbon prices added")
+        log.info("New scenario name is " + output_scenario_name)
         scenario.set_as_default()
 
     elif mode == "cbudget":
         scenario = context.get_scenario()
-        print(scenario.version)
+        log.info(scenario.version)
         output_scenario_name = scenario.scenario + "_" + tag
         scenario_new = scenario.clone(
             "MESSAGEix-Materials",
@@ -354,8 +355,8 @@ def build_scen(
         scenario_new.check_out()
         scenario_new.add_par("bound_emission", df)
         scenario_new.commit("add emission bound")
-        print("New carbon budget added")
-        print("New scenario name is " + output_scenario_name)
+        log.info("New carbon budget added")
+        log.info("New scenario name is " + output_scenario_name)
         scenario_new.set_as_default()
 
     if update_costs:
@@ -368,34 +369,16 @@ def build_scen(
 
 
 @cli.command("solve")
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--version", default=None)
-@click.option("--model_name", default="MESSAGEix-Materials")
-@click.option(
-    "--datafile",
-    default="Global_steel_cement_MESSAGE.xlsx",
-    metavar="INPUT",
-    help="File name for external data input",
-)
 @click.option("--add_macro", default=True)
 @click.option("--add_calibration", default=False)
 @click.pass_obj
-def solve_scen(
-    context, datafile, model_name, scenario_name, add_calibration, add_macro, version
-):
+def solve_scen(context, add_calibration, add_macro):
     """Solve a scenario.
 
     Use the --model_name and --scenario_name option to specify the scenario to solve.
     """
-    # Clone and set up
-    from message_ix import Scenario
-
-    mp = ixmp.Platform("ixmp_dev")
-    if version:
-        scenario = Scenario(mp, model_name, scenario_name, version=int(version))
-    else:
-        scenario = Scenario(mp, model_name, scenario_name)
-    # scenario = Scenario(context.get_platform(), model_name, scenario_name)
+    # default scenario: MESSAGEix-Materials NoPolicy
+    scenario = context.get_scenario()
 
     if scenario.has_solution():
         if not add_calibration:
@@ -403,11 +386,11 @@ def solve_scen(
 
     if add_calibration:
         # Solve with 2020 base year
-        print("Solving the scenario without MACRO")
-        print(
+        log.info("Solving the scenario without MACRO")
+        log.info(
             "After macro calibration a new scenario with the suffix _macro is created."
         )
-        print("Make sure to use this scenario to solve with MACRO iterations.")
+        log.info("Make sure to use this scenario to solve with MACRO iterations.")
         if not scenario.has_solution():
             scenario.solve(
                 model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"}
@@ -421,11 +404,11 @@ def solve_scen(
             )
 
             # Remove existing timeseries and add material timeseries
-            print("Reporting material-specific variables")
+            log.info("Reporting material-specific variables")
             report(context, scenario)
-            print("Reporting standard variables")
+            log.info("Reporting standard variables")
             reporting(
-                mp,
+                context.get_platform(),
                 scenario,
                 "False",
                 scenario.model,
@@ -450,14 +433,14 @@ def solve_scen(
         )
 
         # After solving, add macro calibration
-        print("Scenario solved, now adding MACRO calibration")
+        log.info("Scenario solved, now adding MACRO calibration")
         # scenario = add_macro_COVID(
         #     scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx"
         # )
         scenario = add_macro_COVID(
             scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
         )
-        print("Scenario calibrated.")
+        log.info("Scenario successfully calibrated.")
 
     if add_macro:  # Default True
         scenario.solve(
@@ -467,33 +450,28 @@ def solve_scen(
 
     if not add_macro:
         # Solve
-        print("Solving the scenario without MACRO")
+        log.info("Solving the scenario without MACRO")
         scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
         scenario.set_as_default()
 
 
-@cli.command("add_buildings_ts")
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--model_name", default="MESSAGEix-Materials")
-def add_building_ts(scenario_name, model_name):
-    from ixmp import Platform
-    from message_ix import Scenario
-
+@cli.command("add-buildings-ts")
+@click.pass_obj
+def add_building_ts(context):
     # FIXME This import can not be resolved
     from message_ix_models.reporting.materials.add_buildings_ts import (
         add_building_timeseries,
     )
 
-    print(model_name)
-    mp = Platform()
-
-    scenario = Scenario(mp, model_name, scenario_name)
-
+    scenario = context.get_scenario()
+    log.info(
+        f"Adding buildings specific timeseries to scenario:{scenario.model} - "
+        f"{scenario.scenario}"
+    )
     add_building_timeseries(scenario)
 
 
 @cli.command("report")
-# @cli.command("report-1")
 @click.option(
     "--remove_ts",
     default=False,
@@ -501,8 +479,8 @@ def add_building_ts(scenario_name, model_name):
 )
 @click.option("--profile", default=False)
 @click.pass_obj
-def run_reporting(context, remove_ts, profile):
-    """Run materials, then legacy reporting."""
+def run_reporting(context, remove_ts, profile, prep_for_explorer):
+    """Run materials specific reporting, then legacy reporting."""
     from message_ix_models.model.material.report.reporting import report
     from message_ix_models.report.legacy.iamc_report_hackathon import (
         report as reporting,
@@ -520,9 +498,9 @@ def run_reporting(context, remove_ts, profile):
             scenario.remove_timeseries(df_rem)
             scenario.commit("Existing timeseries removed.")
             scenario.set_as_default()
-            print("Existing timeseries are removed.")
+            log.info("Existing timeseries are removed.")
         else:
-            print("There are no timeseries to be removed.")
+            log.info("There are no timeseries to be removed.")
     else:
         if profile:
             import atexit
@@ -530,12 +508,12 @@ def run_reporting(context, remove_ts, profile):
             import io
             import pstats
 
-            print("Profiling...")
+            log.info("Profiling started...")
             pr = cProfile.Profile()
             pr.enable()
-            print("Reporting material-specific variables")
+            log.info("Reporting material-specific variables")
             report(context, scenario)
-            print("Reporting standard variables")
+            log.info("Reporting standard variables")
             reporting(
                 mp,
                 scenario,
@@ -549,19 +527,18 @@ def run_reporting(context, remove_ts, profile):
 
             def exit():
                 pr.disable()
-                print("Profiling completed")
+                log.info("Profiling completed")
                 s = io.StringIO()
                 pstats.Stats(pr, stream=s).sort_stats("cumulative").dump_stats(
                     "profiling.dmp"
                 )
-                print(s.getvalue())
 
             atexit.register(exit)
         else:
             # Remove existing timeseries and add material timeseries
-            print("Reporting material-specific variables")
+            log.info("Reporting material-specific variables")
             report(context, scenario)
-            print("Reporting standard variables")
+            log.info("Reporting standard variables")
             reporting(
                 mp,
                 scenario,
@@ -572,9 +549,6 @@ def run_reporting(context, remove_ts, profile):
                 merge_ts=True,
                 run_config="materials_run_config.yaml",
             )
-        # util.prepare_xlsx_for_explorer(
-        #     Path(os.getcwd()).parents[0].joinpath(
-        #         "reporting_output", scenario.model+"_"+scenario.scenario+".xlsx"))
 
 
 @cli.command("report-2")
@@ -656,19 +630,14 @@ def add_data_2(scenario, dry_run=False):
     log.info("done")
 
 
-@cli.command("modify_cost", hidden=True)
+@cli.command("modify-cost", hidden=True)
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
-@click.option("--scen_name", default="SSP_supply_cost_test_baseline_macro")
 @click.pass_obj
-def modify_costs_with_tool(context, scen_name, ssp):
-    import message_ix
-
-    mp = ixmp.Platform("ixmp_dev")
-    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=scen_name)
+def modify_costs_with_tool(context, ssp):
+    base = context.get_scenario()
     scen = base.clone(model=base.model, scenario=base.scenario.replace("baseline", ssp))
 
     inv, fix = gen_te_projections(scen, ssp)
-
     scen.check_out()
     scen.add_par("fix_cost", fix)
     scen.add_par("inv_cost", inv)
@@ -677,7 +646,7 @@ def modify_costs_with_tool(context, scen_name, ssp):
     scen.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
 
 
-@cli.command("run_cbud_scenario", hidden=True)
+@cli.command("run-cbud-scenario", hidden=True)
 @click.option(
     "--scenario",
     default="baseline_prep_lu_bkp_solved_materials_2025_macro",
@@ -687,18 +656,15 @@ def modify_costs_with_tool(context, scen_name, ssp):
 @click.option("--model", default="MESSAGEix-Materials")
 @click.pass_obj
 def run_cbud_scenario(context, model, scenario, budget):
-    import message_ix
-
     if budget == "1000f":
         budget_i = 3667
     elif budget == "650f":
         budget_i = 1750
     else:
-        print("chosen budget not available yet please choose 650f or 1000f")
+        log.error("chosen budget not available yet please choose 650f or 1000f")
         return
 
-    mp = ixmp.Platform("ixmp_dev")
-    base = message_ix.Scenario(mp, model, scenario=scenario)
+    base = context.get_scenario()
     scenario_cbud = base.clone(
         model=base.model,
         scenario=base.scenario + "_" + budget,
@@ -728,35 +694,32 @@ def run_cbud_scenario(context, model, scenario, budget):
     return
 
 
-@cli.command("run_LED_cprice_scenario", hidden=True)
+@cli.command("run-LED-cprice-scenario", hidden=True)
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
 @click.option(
-    "--scenario",
+    "--budget",
     default="1000f",
     help="description of carbon budget for mitigation target",
 )
 @click.pass_obj
-def run_LED_cprice(context, ssp, scenario):
-    import message_ix
-
-    mp = ixmp.Platform("ixmp_dev")
-    if scenario == "1000f":
+def run_LED_cprice(context, ssp, budget):
+    if budget in ["650f", "1000f"]:
         price_scen = message_ix.Scenario(
-            mp, "MESSAGEix-Materials", scenario="SSP_supply_cost_test_LED_macro_1000f"
-        )
-    if scenario == "650f":
-        price_scen = message_ix.Scenario(
-            mp,
+            context.get_platform(),
             "MESSAGEix-Materials",
-            scenario=f"SSP_supply_cost_test_LED_macro_{scenario}",
+            scenario=f"SSP_supply_cost_test_LED_macro_{budget}",
         )
-
+    else:
+        log.error(f"No price scenario available for budget: {budget}. Aborting..")
+        return
     base = message_ix.Scenario(
-        mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro"
+        context.get_platform(),
+        "MESSAGEix-Materials",
+        scenario=f"SSP_supply_cost_test_{ssp}_macro",
     )
     scen_cprice = base.clone(
         model=base.model,
-        scenario=base.scenario + f"_{scenario}_LED_prices",
+        scenario=base.scenario + f"_{budget}_LED_prices",
         shift_first_model_year=2025,
     )
 
@@ -767,13 +730,13 @@ def run_LED_cprice(context, ssp, scenario):
     tax_emission_new["unit"] = "USD/tCO2"
     scen_cprice.add_par("tax_emission", tax_emission_new)
     scen_cprice.commit("2 degree LED prices are added")
-    print("New LED 1000f carbon prices added")
+    log.info("New LED 1000f carbon prices added")
 
     scen_cprice.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
     return
 
 
-@cli.command("make_xls_input_vc_able", hidden=True)
+@cli.command("make-xls-input-vc-able", hidden=True)
 @click.option(
     "--files",
     default="all",
@@ -785,30 +748,18 @@ def make_xls_input_vc_able(context, files):
         dirs = get_all_input_data_dirs()
         dirs = [i for i in dirs if i != "version control"]
         for dir in dirs:
-            print(dir)
+            log.info(dir)
             files = os.listdir(package_data_path("material", dir))
             files = [i for i in files if ((i.endswith(".xlsx")) & ~i.startswith("~$"))]
-            print(files)
+            log.info(files)
             for filename in files:
                 excel_to_csv(dir, filename)
     else:
         raise NotImplementedError
-        # if not isinstance(files, tuple):
-        #     print(type(files))
-        #
-        # print(files)
-        # for element in files:
-        #     print(element)
-        #     fname = element.split("/")[-1]
-        #     path = package_data_path(str(element.split("/")[:-1]))
-        #     print(path, fname)
-        # message_ix_models.model.material.util.excel_to_csv(files)
     return
 
 
-@cli.command("test_calib", hidden=True)
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--model_name", default="MESSAGEix-Materials")
+@cli.command("test-calib", hidden=True)
 @click.pass_obj
 def test_calib(context, model_name, scenario_name):
     """Solve a scenario.
@@ -816,15 +767,12 @@ def test_calib(context, model_name, scenario_name):
     Use the --model_name and --scenario_name option to specify the scenario to solve.
     """
     # Clone and set up
-    from message_ix import Scenario
     from sdmx.model import Annotation, Code
 
     from message_ix_models.model import macro
     from message_ix_models.util import identify_nodes
 
-    mp = ixmp.Platform("ixmp_dev")
-    scenario = Scenario(mp, model_name, scenario_name)
-    scenario = scenario.clone("MESSAGEix-Materials", "refactor_macro_calib")
+    scenario = context.get_scenario().clone("MESSAGEix-Materials", "test_macro_calib")
     scenario.set_as_default()
 
     def _c(id, sector):
