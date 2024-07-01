@@ -55,6 +55,14 @@ class Config:
     #: Model variant for which to project costs.
     module: Literal["energy", "materials"] = "energy"
 
+    #: Use vintages.
+    #:
+    #: If True, for each vintage, the fixed O&M costs will be calculated as a
+    #: ratio of the investment costs, that decreases by the rate of :attr:`fom_rate`.
+    #: If False, the fix_cost is the ratio of the investment cost for each year_act.
+    #: In this case, the fix_cost is the same for all vintages of the same year_act.
+    use_vintages: bool = False
+
     #: .. todo:: Document the meaning of this setting.
     pre_last_year_rate: float = 0.01
 
