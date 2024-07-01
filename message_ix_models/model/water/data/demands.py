@@ -1,23 +1,32 @@
 """Prepare data for adding demands"""
 
 import os
+from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from message_ix import make_df
 
-from message_ix_models.util import broadcast, package_data_path
+from message_ix_models.util import broadcast, minimum_version, package_data_path
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
-def get_basin_sizes(basin, node):
+def get_basin_sizes(basin: pd.DataFrame, node: str) -> Tuple[float, float]:
     """Returns the sizes of developing and developed basins for a given node"""
     temp = basin[basin["BCU_name"] == node]
+    print(temp)
     sizes = temp.pivot_table(index=["STATUS"], aggfunc="size")
-    return sizes["DEV"], sizes["IND"]
+    print(sizes)
+    # sizes_### = sizes["###"] if "###" in sizes.index else 0
+    sizes_dev = sizes["DEV"] if "DEV" in sizes.index else 0
+    sizes_ind = sizes["IND"] if "IND" in sizes.index else 0
+    return sizes_dev, sizes_ind
 
 
-def set_target_rate(df, node, year, target):
+def set_target_rate(df: pd.DataFrame, node: str, year: int, target: float) -> None:
     """Sets the target value for a given node and year"""
     indices = df[df["node"] == node][df[df["node"] == node]["year"] == year].index
     for index in indices:
@@ -30,12 +39,12 @@ def set_target_rate(df, node, year, target):
             df.at[index, "value"] = target
 
 
-def set_target_rate_developed(df, node, target):
+def set_target_rate_developed(df: pd.DataFrame, node: str, target: float) -> None:
     """Sets target rate for a developed basin"""
     set_target_rate(df, node, 2030, target)
 
 
-def set_target_rate_developing(df, node, target):
+def set_target_rate_developing(df: pd.DataFrame, node: str, target: float) -> None:
     """Sets target rate for a developing basin"""
     for i in df.index:
         if df.at[i, "node"] == node and df.at[i, "year"] == 2030:
@@ -51,7 +60,7 @@ def set_target_rate_developing(df, node, target):
     set_target_rate(df, node, 2040, target)
 
 
-def set_target_rates(df, basin, val):
+def set_target_rates(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> None:
     """Sets target rates for all nodes in a given basin"""
     for node in df.node.unique():
         dev_size, ind_size = get_basin_sizes(basin, node)
@@ -61,7 +70,7 @@ def set_target_rates(df, basin, val):
             set_target_rate_developing(df, node, val)
 
 
-def target_rate(df, basin, val):
+def target_rate(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> pd.DataFrame:
     """
     Sets target connection and sanitation rates for SDG scenario.
     The function filters out the basins as developing and
@@ -74,21 +83,24 @@ def target_rate(df, basin, val):
     For developing basins, the access target is set at
     2040 and 2035 target is the average of
     2030 original rate and 2040 target.
-    Returns:
+
+    Returns
+    -------
         df (pandas.DataFrame): Data frame with updated value column.
     """
     set_target_rates(df, basin, val)
     return df
 
 
-def target_rate_trt(df, basin):
+def target_rate_trt(df: pd.DataFrame, basin: pd.DataFrame) -> pd.DataFrame:
     """
     Sets target treatment rates for SDG scenario. The target value for
     developed and developing region is making sure that the amount of untreated
     wastewater is halved beyond 2030 & 2040 respectively.
+
     Returns
     -------
-    data : dict of (str -> pandas.DataFrame)
+    data : pandas.DataFrame
     """
 
     value = []
@@ -141,12 +153,15 @@ def target_rate_trt(df, basin):
     return df
 
 
-def add_sectoral_demands(context):
+@minimum_version("message_ix 3.7")
+def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water sectoral demands
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -191,7 +206,7 @@ def add_sectoral_demands(context):
     df_f = df_x_c.to_dataframe("").unstack()
 
     # Format the dataframe to be compatible with message format
-    df_dmds = df_f.stack().reset_index(level=0).reset_index()
+    df_dmds = df_f.stack(future_stack=True).reset_index(level=0).reset_index()
     df_dmds.columns = ["year", "node", "variable", "value"]
     df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
 
@@ -206,15 +221,15 @@ def add_sectoral_demands(context):
         PATH = package_data_path(
             "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
         )
-        df_m = pd.read_csv(PATH)
+        df_m: pd.DataFrame = pd.read_csv(PATH)
         df_m.value *= 30  # from mcm/day to mcm/month
-        df_m["sector"][df_m["sector"] == "industry"] = "manufacturing"
+        df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
-        df_m["variable"].replace(
-            "urban_withdrawal_baseline", "urban_withdrawal2_baseline", inplace=True
+        df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
+            "urbann_withdrawal2_baseline"
         )
-        df_m["variable"].replace(
-            "urban_return_baseline", "urban_return2_baseline", inplace=True
+        df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
+            "urbann_return2_baseline"
         )
         df_m = df_m[["year", "pid", "variable", "value", "month"]]
         df_m.columns = ["year", "node", "variable", "value", "time"]
@@ -384,17 +399,20 @@ def add_sectoral_demands(context):
     )
     urban_dis["value"] = (1e-3 * urban_dis["value"]) * (1 - urban_dis["rate"])
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + urban_dis["node"],
-            commodity="urban_disconnected",
-            level="final",
-            year=urban_dis["year"],
-            time=urban_dis["time"],
-            value=urban_dis["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + urban_dis["node"],
+                commodity="urban_disconnected",
+                level="final",
+                year=urban_dis["year"],
+                time=urban_dis["time"],
+                value=urban_dis["value"],
+                unit="km3/year",
+            ),
+        ]
     )
     # rural water demand and return
     rural_mw = rual_withdrawal_df.reset_index(drop=True)
@@ -405,17 +423,20 @@ def add_sectoral_demands(context):
     )
     rural_mw["value"] = (1e-3 * rural_mw["value"]) * rural_mw["rate"]
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + rural_mw["node"],
-            commodity="rural_mw",
-            level="final",
-            year=rural_mw["year"],
-            time=rural_mw["time"],
-            value=rural_mw["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + rural_mw["node"],
+                commodity="rural_mw",
+                level="final",
+                year=rural_mw["year"],
+                time=rural_mw["time"],
+                value=rural_mw["value"],
+                unit="km3/year",
+            ),
+        ]
     )
 
     rural_dis = rual_withdrawal_df.reset_index(drop=True)
@@ -426,50 +447,59 @@ def add_sectoral_demands(context):
     )
     rural_dis["value"] = (1e-3 * rural_dis["value"]) * (1 - rural_dis["rate"])
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + rural_dis["node"],
-            commodity="rural_disconnected",
-            level="final",
-            year=rural_dis["year"],
-            time=rural_dis["time"],
-            value=rural_dis["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + rural_dis["node"],
+                commodity="rural_disconnected",
+                level="final",
+                year=rural_dis["year"],
+                time=rural_dis["time"],
+                value=rural_dis["value"],
+                unit="km3/year",
+            ),
+        ]
     )
 
     # manufactury/ industry water demand and return
     manuf_mw = industrial_withdrawals_df.reset_index(drop=True)
     manuf_mw["value"] = 1e-3 * manuf_mw["value"]
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + manuf_mw["node"],
-            commodity="industry_mw",
-            level="final",
-            year=manuf_mw["year"],
-            time=manuf_mw["time"],
-            value=manuf_mw["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + manuf_mw["node"],
+                commodity="industry_mw",
+                level="final",
+                year=manuf_mw["year"],
+                time=manuf_mw["time"],
+                value=manuf_mw["value"],
+                unit="km3/year",
+            ),
+        ]
     )
 
     manuf_uncollected_wst = industrial_return_df.reset_index(drop=True)
     manuf_uncollected_wst["value"] = 1e-3 * manuf_uncollected_wst["value"]
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + manuf_uncollected_wst["node"],
-            commodity="industry_uncollected_wst",
-            level="final",
-            year=manuf_uncollected_wst["year"],
-            time=manuf_uncollected_wst["time"],
-            value=-manuf_uncollected_wst["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + manuf_uncollected_wst["node"],
+                commodity="industry_uncollected_wst",
+                level="final",
+                year=manuf_uncollected_wst["year"],
+                time=manuf_uncollected_wst["time"],
+                value=-manuf_uncollected_wst["value"],
+                unit="km3/year",
+            ),
+        ]
     )
 
     urban_collected_wst = urban_return_df.reset_index(drop=True)
@@ -482,17 +512,20 @@ def add_sectoral_demands(context):
         1e-3 * urban_collected_wst["value"]
     ) * urban_collected_wst["rate"]
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + urban_collected_wst["node"],
-            commodity="urban_collected_wst",
-            level="final",
-            year=urban_collected_wst["year"],
-            time=urban_collected_wst["time"],
-            value=-urban_collected_wst["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + urban_collected_wst["node"],
+                commodity="urban_collected_wst",
+                level="final",
+                year=urban_collected_wst["year"],
+                time=urban_collected_wst["time"],
+                value=-urban_collected_wst["value"],
+                unit="km3/year",
+            ),
+        ]
     )
 
     rural_collected_wst = rural_return_df.reset_index(drop=True)
@@ -505,17 +538,20 @@ def add_sectoral_demands(context):
         1e-3 * rural_collected_wst["value"]
     ) * rural_collected_wst["rate"]
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + rural_collected_wst["node"],
-            commodity="rural_collected_wst",
-            level="final",
-            year=rural_collected_wst["year"],
-            time=rural_collected_wst["time"],
-            value=-rural_collected_wst["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + rural_collected_wst["node"],
+                commodity="rural_collected_wst",
+                level="final",
+                year=rural_collected_wst["year"],
+                time=rural_collected_wst["time"],
+                value=-rural_collected_wst["value"],
+                unit="km3/year",
+            ),
+        ]
     )
     urban_uncollected_wst = urban_return_df.reset_index(drop=True)
     urban_uncollected_wst = urban_uncollected_wst.merge(
@@ -527,17 +563,20 @@ def add_sectoral_demands(context):
         1 - urban_uncollected_wst["rate"]
     )
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + urban_uncollected_wst["node"],
-            commodity="urban_uncollected_wst",
-            level="final",
-            year=urban_uncollected_wst["year"],
-            time=urban_uncollected_wst["time"],
-            value=-urban_uncollected_wst["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + urban_uncollected_wst["node"],
+                commodity="urban_uncollected_wst",
+                level="final",
+                year=urban_uncollected_wst["year"],
+                time=urban_uncollected_wst["time"],
+                value=-urban_uncollected_wst["value"],
+                unit="km3/year",
+            ),
+        ]
     )
 
     rural_uncollected_wst = rural_return_df.reset_index(drop=True)
@@ -550,17 +589,20 @@ def add_sectoral_demands(context):
         1 - rural_uncollected_wst["rate"]
     )
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + rural_uncollected_wst["node"],
-            commodity="rural_uncollected_wst",
-            level="final",
-            year=rural_uncollected_wst["year"],
-            time=rural_uncollected_wst["time"],
-            value=-rural_uncollected_wst["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + rural_uncollected_wst["node"],
+                commodity="rural_uncollected_wst",
+                level="final",
+                year=rural_uncollected_wst["year"],
+                time=rural_uncollected_wst["time"],
+                value=-rural_uncollected_wst["value"],
+                unit="km3/year",
+            ),
+        ]
     )
     # Add 2010 & 2015 values as historical activities to corresponding technologies
     h_act = dmd_df[dmd_df["year"].isin([2010, 2015])]
@@ -640,7 +682,7 @@ def add_sectoral_demands(context):
         unit="-",
     ).pipe(
         broadcast,
-        time=sub_time,
+        time=pd.Series(sub_time),
     )
 
     df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
@@ -699,7 +741,7 @@ def add_sectoral_demands(context):
     return results
 
 
-def read_water_availability(context):
+def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Reads water availability data and bias correct
     it for the historical years and no climate
@@ -708,11 +750,10 @@ def read_water_availability(context):
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
-        are data frames ready for :meth:`~.Scenario.add_par`.
+    data : (pd.DataFrame, pd.DataFrame)
     """
 
     # Reference to the water configuration
@@ -747,8 +788,8 @@ def read_water_availability(context):
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
         df_sw["time"] = "year"
-        df_sw2210 = df_sw[df_sw["year"] == 2100]
-        df_sw2210["year"] = 2110
+        df_sw2210 = df_sw[df_sw["year"] == 2100].copy()
+        df_sw2210.loc["year"] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
 
@@ -770,8 +811,8 @@ def read_water_availability(context):
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
         df_gw["time"] = "year"
-        df_gw2210 = df_gw[df_gw["year"] == 2100]
-        df_gw2210["year"] = 2110
+        df_gw2210 = df_gw[df_gw["year"] == 2100].copy()
+        df_gw2210.loc["year"] = 2110
         df_gw = pd.concat([df_gw, df_gw2210])
         df_gw = df_gw[df_gw["year"].isin(info.Y)]
 
@@ -794,8 +835,8 @@ def read_water_availability(context):
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
         df_sw["time"] = pd.DatetimeIndex(df_sw["years"]).month
-        df_sw2210 = df_sw[df_sw["year"] == 2100]
-        df_sw2210["year"] = 2110
+        df_sw2210 = df_sw[df_sw["year"] == 2100].copy()
+        df_sw2210.loc["year"] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
 
@@ -816,20 +857,22 @@ def read_water_availability(context):
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
         df_gw["time"] = pd.DatetimeIndex(df_gw["years"]).month
-        df_gw2210 = df_gw[df_gw["year"] == 2100]
-        df_gw2210["year"] = 2110
-        df_gw = pd.concat([df_gw, df_sw2210])
+        df_gw2210 = df_gw[df_gw["year"] == 2100].copy()
+        df_gw2210.loc["year"] = 2110
+        df_gw = pd.concat([df_gw, df_gw2210])
         df_gw = df_gw[df_gw["year"].isin(info.Y)]
 
     return df_sw, df_gw
 
 
-def add_water_availability(context):
+def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water supply constraints
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -855,17 +898,20 @@ def add_water_availability(context):
         unit="km3/year",
     )
 
-    dmd_df = dmd_df.append(
-        make_df(
-            "demand",
-            node="B" + df_gw["Region"].astype(str),
-            commodity="groundwater_basin",
-            level="water_avail_basin",
-            year=df_gw["year"],
-            time=df_gw["time"],
-            value=-df_gw["value"],
-            unit="km3/year",
-        )
+    dmd_df = pd.concat(
+        [
+            dmd_df,
+            make_df(
+                "demand",
+                node="B" + df_gw["Region"].astype(str),
+                commodity="groundwater_basin",
+                level="water_avail_basin",
+                year=df_gw["year"],
+                time=df_gw["time"],
+                value=-df_gw["value"],
+                unit="km3/year",
+            ),
+        ]
     )
 
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x <= 0 else 0)
@@ -892,12 +938,14 @@ def add_water_availability(context):
     return results
 
 
-def add_irrigation_demand(context):
+def add_irrigation_demand(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds endogenous irrigation water demands from GLOBIOM emulator
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)

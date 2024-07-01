@@ -3,16 +3,19 @@
 import pandas as pd
 from message_ix import make_df
 
+from message_ix_models import Context
 from message_ix_models.util import broadcast, package_data_path
 
 
 # water & electricity for irrigation
-def add_irr_structure(context):
+def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     """Add irrigation withdrawal infrastructure
     The irrigation demands are added in
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -32,10 +35,11 @@ def add_irr_structure(context):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    if context.type_reg == "country":
-        df_node["region"] = context.map_ISO_c[context.regions]
-    else:
-        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    df_node["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df_node["REGION"].astype(str)
+    )
 
     # Reference to the water configuration
     info = context["water build info"]
@@ -58,36 +62,42 @@ def add_irr_structure(context):
         node_loc=df_node["region"],
     ).pipe(broadcast, year_vtg=info.Y)
 
-    inp = inp.append(
-        make_df(
-            "input",
-            technology="irrigation_oilcrops",
-            value=1,
-            unit="-",
-            level="water_supply",
-            commodity="freshwater",
-            mode="M1",
-            time="year",
-            time_origin="year",
-            node_origin=df_node["region"],
-            node_loc=df_node["region"],
-        ).pipe(broadcast, year_vtg=info.Y)
+    inp = pd.concat(
+        [
+            inp,
+            make_df(
+                "input",
+                technology="irrigation_oilcrops",
+                value=1,
+                unit="-",
+                level="water_supply",
+                commodity="freshwater",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                node_origin=df_node["region"],
+                node_loc=df_node["region"],
+            ).pipe(broadcast, year_vtg=info.Y),
+        ]
     )
 
-    inp = inp.append(
-        make_df(
-            "input",
-            technology="irrigation_sugarcrops",
-            value=1,
-            unit="-",
-            level="water_supply",
-            commodity="freshwater",
-            mode="M1",
-            time="year",
-            time_origin="year",
-            node_origin=df_node["region"],
-            node_loc=df_node["region"],
-        ).pipe(broadcast, year_vtg=info.Y)
+    inp = pd.concat(
+        [
+            inp,
+            make_df(
+                "input",
+                technology="irrigation_sugarcrops",
+                value=1,
+                unit="-",
+                level="water_supply",
+                commodity="freshwater",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                node_origin=df_node["region"],
+                node_loc=df_node["region"],
+            ).pipe(broadcast, year_vtg=info.Y),
+        ]
     )
     # year_act = year_vts for tecs with 1 time-step lifetime
     inp["year_act"] = inp["year_vtg"]
@@ -101,7 +111,7 @@ def add_irr_structure(context):
     # Average Value :0.101598174
     # High Value : 0.017123288
 
-    # inp = inp.append(
+    # inp = pd.concat([inp,
     #     make_df(
     #         "input",
     #         technology="irrigation_sugarcrops",
@@ -115,9 +125,9 @@ def add_irr_structure(context):
     #         node_origin=df_node["region"],
     #         node_loc=df_node["region"],
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-    # )
+    # ])
     #
-    # inp = inp.append(
+    # inp = pd.concat([inp,
     #     make_df(
     #         "input",
     #         technology="irrigation_oilcrops",
@@ -131,9 +141,9 @@ def add_irr_structure(context):
     #         node_origin=df_node["region"],
     #         node_loc=df_node["region"],
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-    # )
+    # ])
     #
-    # inp = inp.append(
+    # inp = pd.concat([inp,
     #     make_df(
     #         "input",
     #         technology="irrigation_cereal",
@@ -147,7 +157,7 @@ def add_irr_structure(context):
     #         node_origin=df_node["region"],
     #         node_loc=df_node["region"],
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-    # )
+    # ])
     # inp.loc[(inp['node_loc'] == 'R11_SAS') &
     #         (inp['commodity'] == 'electr'),
     #         "value",
@@ -169,42 +179,48 @@ def add_irr_structure(context):
         node_dest=df_node["region"],
     ).pipe(broadcast, year_vtg=info.Y)
 
-    irr_out = irr_out.append(
-        make_df(
-            "output",
-            technology="irrigation_sugarcrops",
-            value=1,
-            unit="km3/year",
-            level="irr_sugarcrops",
-            commodity="freshwater",
-            mode="M1",
-            time="year",
-            time_dest="year",
-            node_loc=df_node["region"],
-            node_dest=df_node["region"],
-        ).pipe(
-            broadcast,
-            year_vtg=info.Y,
-        )
+    irr_out = pd.concat(
+        [
+            irr_out,
+            make_df(
+                "output",
+                technology="irrigation_sugarcrops",
+                value=1,
+                unit="km3/year",
+                level="irr_sugarcrops",
+                commodity="freshwater",
+                mode="M1",
+                time="year",
+                time_dest="year",
+                node_loc=df_node["region"],
+                node_dest=df_node["region"],
+            ).pipe(
+                broadcast,
+                year_vtg=info.Y,
+            ),
+        ]
     )
 
-    irr_out = irr_out.append(
-        make_df(
-            "output",
-            technology="irrigation_oilcrops",
-            value=1,
-            unit="km3/year",
-            level="irr_oilcrops",
-            commodity="freshwater",
-            mode="M1",
-            time="year",
-            time_dest="year",
-            node_loc=df_node["region"],
-            node_dest=df_node["region"],
-        ).pipe(
-            broadcast,
-            year_vtg=info.Y,
-        )
+    irr_out = pd.concat(
+        [
+            irr_out,
+            make_df(
+                "output",
+                technology="irrigation_oilcrops",
+                value=1,
+                unit="km3/year",
+                level="irr_oilcrops",
+                commodity="freshwater",
+                mode="M1",
+                time="year",
+                time_dest="year",
+                node_loc=df_node["region"],
+                node_dest=df_node["region"],
+            ).pipe(
+                broadcast,
+                year_vtg=info.Y,
+            ),
+        ]
     )
 
     irr_out["year_act"] = irr_out["year_vtg"]

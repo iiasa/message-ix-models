@@ -24,7 +24,7 @@ METADATA = [
 ]
 
 
-def read_config(context=None):
+def read_config(context: Optional[Context] = None):
     """Read the water model configuration / metadata from file.
 
     Numerical values are converted to computation-ready data structures.
@@ -35,7 +35,7 @@ def read_config(context=None):
         The current Context, with the loaded configuration.
     """
 
-    context = context or Context.get_instance(0)
+    context = context or Context.get_instance(-1)
 
     # if context.nexus_set == 'nexus':
     if "water set" in context:
@@ -71,8 +71,8 @@ def map_add_on(rtype=Code):
         # Create a new code by combining two
         result["code"].append(
             Code(
-                id="".join(c.id for c in indices),
-                name=", ".join(c.name for c in indices),
+                id="".join(str(c.id) for c in indices),
+                name=", ".join(str(c.name) for c in indices),
             )
         )
 
@@ -97,27 +97,27 @@ def map_add_on(rtype=Code):
         raise ValueError(rtype)
 
 
-def add_commodity_and_level(df, default_level=None):
+def add_commodity_and_level(df: pd.DataFrame, default_level=None):
     # Add input commodity and level
-    t_info = Context.get_instance()["water set"]["technology"]["add"]
-    c_info = get_codes("commodity")
+    t_info: list = Context.get_instance()["water set"]["technology"]["add"]
+    c_info: list = get_codes("commodity")
 
     @lru_cache()
     def t_cl(t):
-        input = t_info[t_info.index(t)].anno["input"]
+        input = t_info[t_info.index(t)].annotations["input"]
         # Commodity must be specified
         commodity = input["commodity"]
         # Use the default level for the commodity in the RES (per
         # commodity.yaml)
         level = (
             input.get("level", "water_supply")
-            or c_info[c_info.index(commodity)].anno.get("level", None)
+            or c_info[c_info.index(commodity)].annotations.get("level", None)
             or default_level
         )
 
         return commodity, level
 
-    def func(row):
+    def func(row: pd.Series):
         row[["commodity", "level"]] = t_cl(row["technology"])
         return row
 
@@ -131,10 +131,15 @@ def map_yv_ya_lt(
 
     Parameters
     ----------
-    labels : pandas.DataFrame
-        Each column (dimension) corresponds to one in `df`. Each row represents one
-        matched set of labels for those dimensions.
+    periods : Tuple[int, ...]
+        A sequence of years.
     lt : int, lifetime
+    ya : int, active year
+        The first active year.
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame with columns 'year_vtg' and 'year_act'.
     """
     if not ya:
         ya = periods[0]
@@ -157,4 +162,6 @@ def map_yv_ya_lt(
     )
 
     # Select values using the `ya` and `lt` parameters
-    return df[(ya <= df.year_act) & (df.year_act - df.year_vtg <= lt)]
+    return df.loc[(ya <= df.year_act) & (df.year_act - df.year_vtg <= lt)].reset_index(
+        drop=True
+    )

@@ -100,6 +100,7 @@ nexus:
     - all
     add:
     - Mf # efficient mode
+    - M1 # required for bare_res test
 
   technology:
     remove:
@@ -347,7 +348,7 @@ nexus:
 
   map_tec_addon:
     add:
-    - [bio_hpl,cooling__bio_hpl]
+    - [bio_hpl, cooling__bio_hpl]
     - [bio_istig, cooling__bio_istig]
     - [bio_istig_ccs, cooling__bio_istig_ccs]
     - [bio_ppl,cooling__bio_ppl]
@@ -478,15 +479,16 @@ nexus:
     - share_low_lim_GWat_share
     - share_wat_recycle_total
     - share_wat_recycle_share
+    - water_resource_extraction # required for bare_res test
 
   cat_tec:
     add:
     - [share_low_lim_GWat_total, extract_surfacewater]
     - [share_low_lim_GWat_total, extract_groundwater]
     - [share_low_lim_GWat_share, extract_groundwater]
-    - [share_wat_recycle_total,urban_recycle]
-    - [share_wat_recycle_total,urban_discharge]
-    - [share_wat_recycle_share,urban_recycle]
+    - [share_wat_recycle_total, urban_recycle]
+    - [share_wat_recycle_total, urban_discharge]
+    - [share_wat_recycle_share, urban_recycle]
     - [water_distribution, urban_t_d]
     - [water_distribution, rural_t_d]
     - [water_distribution, urban_unconnected]
