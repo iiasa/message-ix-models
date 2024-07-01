@@ -1,5 +1,6 @@
 import os
-from typing import TYPE_CHECKING, Literal
+from functools import lru_cache
+from typing import TYPE_CHECKING, Literal, Mapping
 
 import ixmp
 import message_ix
@@ -9,11 +10,10 @@ from genno import Computer
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import (
-    invert_dictionary,
     read_config,
-    read_yaml_file,
     remove_from_list_if_exists,
 )
+from message_ix_models.model.structure import get_region_codes
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
@@ -893,7 +893,7 @@ def calc_resid_ind_demand(
     comms = ["i_spec", "i_therm"]
     path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
     Inp = pd.read_parquet(path, engine="fastparquet")
-    Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
+    Inp = map_iea_db_to_msg_regs(Inp)
     demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
     df_demands = scen.par("demand", filters={"commodity": comms}).set_index(
         ["node", "commodity", "year"]
@@ -918,36 +918,66 @@ def modify_industry_demand(
     scen.commit("adjust residual industry demands")
 
 
-def map_iea_db_to_msg_regs(df_iea: pd.DataFrame, reg_map_fname: str) -> pd.DataFrame:
+@lru_cache
+def get_region_map() -> Mapping[str, str]:
+    """Construct a mapping from "COUNTRY" IDs to regions (nodes in the "R12" codelist).
+
+    These "COUNTRY" IDs are produced by a certain script for processing the IEA
+    Extended World Energy Balances; this script is *not* in :mod:`message_ix_models`;
+    i.e. it is *not* the same as :mod:`.tools.iea.web`. They include some ISO 3166-1
+    alpha-3 codes, but also other values like "GREENLAND" (instead of "GRL"), "KOSOVO",
+    and "IIASA_SAS".
+
+    This function reads the `material-region` annotation on items in the R12 node
+    codelist, expecting a list of strings. Of these:
+
+    - The special value "*" is interpreted to mean "include the IDs all of the child
+      nodes of this node (i.e. their ISO 3166-1 alpha-3 codes) in the mapping".
+    - All other values are mapped directly.
+
+    The return value is cached for reuse.
+
+    Returns
+    -------
+    dict
+        Mapping from e.g. "KOSOVO" to e.g. "R12_EEU".
     """
+    result = {}
+
+    # - Load the R12 node codelist.
+    # - Iterate over codes that are regions (i.e. omit World and the ISO 3166-1 alpha-3
+    #   codes for individual countries within regions)
+    for node in get_region_codes("R12"):
+        # - Retrieve the "material-region" annotation and eval() it as a Python list.
+        # - Iterate over each value in this list.
+        for value in node.eval_annotation(id="material-region"):
+            # Update (expand) the mapping
+            if value == "*":  # Special value → map every child node's ID to the node ID
+                result.update({child.id: node.id for child in node.child})
+            else:  # Any other value → map it to the node ID
+                result.update({value: node.id})
+
+    return result
+
+
+def map_iea_db_to_msg_regs(df_iea: pd.DataFrame) -> pd.DataFrame:
+    """Add a "REGION" column to `df_iea`.
 
     Parameters
     ----------
     df_iea
-        df containing the IEA energy balances data set
-    reg_map_fname
-        name of file used for mapping countries to MESSAGEix regions
+        Data frame containing the IEA energy balances data set. This **must** have a
+        "COUNTRY" column.
+
     Returns
     -------
-    object
-
+    pandas.DataFrame
+        with added column "REGION" containing node IDs according to
+        :func:`get_region_map`.
     """
-    file_path = package_data_path("node", reg_map_fname)
-    yaml_data = read_yaml_file(file_path)
-    if "World" in yaml_data.keys():
-        yaml_data.pop("World")
-
-    r12_map = {k: v["child"] for k, v in yaml_data.items()}
-    r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
-
-    df_iea = df_iea.merge(
-        pd.DataFrame.from_dict(
-            r12_map_inv, orient="index", columns=["REGION"]
-        ).reset_index(),
-        left_on="COUNTRY",
-        right_on="index",
-    ).drop("index", axis=1)
-    return df_iea
+    # - Duplicate the "COUNTRY" column to "REGION".
+    # - Replace the "REGION" values using the mapping.
+    return df_iea.eval("REGION = COUNTRY").replace({"REGION": get_region_map()})
 
 
 def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
@@ -1014,7 +1044,7 @@ def get_hist_act_data(
         iea_enb_df = iea_enb_df[iea_enb_df["TIME"].isin(years)]
 
     # map IEA countries to MESSAGE region definition
-    iea_enb_df = map_iea_db_to_msg_regs(iea_enb_df, "R12_SSP_V1.yaml")
+    iea_enb_df = map_iea_db_to_msg_regs(iea_enb_df)
 
     # read file for IEA product/flow - MESSAGE technologies map
     MAP = read_iea_tec_map(map_fname)

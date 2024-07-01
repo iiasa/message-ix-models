@@ -113,7 +113,7 @@ def test_map_iea_db_to_msg_regs() -> None:
     df_in = df[["COUNTRY"]]
 
     # Function runs, returns a data frame with an added "REGION" column
-    df_out = map_iea_db_to_msg_regs(df_in, "R12_SSP_V1.yaml")
+    df_out = map_iea_db_to_msg_regs(df_in)
 
     # Check correctness:
     # - Merge `df_out` and `df`; this yields columns "REGION_x" and "REGION_y".
