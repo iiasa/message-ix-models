@@ -1,12 +1,16 @@
 import logging
+from typing import TYPE_CHECKING
 
 import pytest
 from ixmp.testing import assert_logs
 from message_ix import make_df
 from message_ix.testing import make_dantzig
 
-from message_ix_models import ScenarioInfo
+from message_ix_models import Spec
 from message_ix_models.model.build import apply_spec
+
+if TYPE_CHECKING:
+    from ixmp import Scenario
 
 
 @pytest.fixture
@@ -16,11 +20,12 @@ def scenario(test_context):
 
 
 @pytest.fixture(scope="function")
-def spec():
-    yield dict(add=ScenarioInfo(), require=ScenarioInfo(), remove=ScenarioInfo())
+def spec() -> Spec:
+    """An empty Spec."""
+    yield Spec()
 
 
-def test_apply_spec0(caplog, scenario, spec):
+def test_apply_spec0(caplog, scenario: "Scenario", spec: Spec):
     """Require missing element raises ValueError."""
     spec["require"].set["node"].append("vienna")
 
@@ -34,7 +39,7 @@ def test_apply_spec0(caplog, scenario, spec):
     ) in caplog.record_tuples
 
 
-def test_apply_spec1(caplog, scenario, spec):
+def test_apply_spec1(caplog, scenario: "Scenario", spec: Spec):
     """Add data using the data= argument."""
 
     def add_data_func(scenario, dry_run):
@@ -68,7 +73,7 @@ def test_apply_spec1(caplog, scenario, spec):
     assert 1 == sum(301.0 == scenario.par("demand")["value"])
 
 
-def test_apply_spec2(caplog, scenario, spec):
+def test_apply_spec2(caplog, scenario: "Scenario", spec: Spec):
     """Remove an element, with fast=True."""
     spec["remove"].set["node"] = ["new-york", "not-a-node"]
 
@@ -85,7 +90,7 @@ def test_apply_spec2(caplog, scenario, spec):
     )
 
 
-def test_apply_spec3(caplog, scenario, spec):
+def test_apply_spec3(caplog, scenario: "Scenario", spec: Spec):
     """Actually remove data."""
     spec["remove"].set["node"] = ["new-york"]
 
@@ -101,3 +106,26 @@ def test_apply_spec3(caplog, scenario, spec):
             "  3 rows total",
         ),
     )
+
+
+def test_apply_spec4(request, caplog, scenario: "Scenario", spec: Spec):
+    """Test that platform region IDs are added as necessary."""
+
+    # Existing region code list on `scenario.platform`
+    regions_pre = scenario.platform.regions()
+
+    # Add a unique node ID
+    node = f"{request.node.name} {len(regions_pre)}"
+    spec.add.set["node"] = [node]
+
+    # Also add a node ID that already exists as a region ID on `scenario.platform`
+    spec.add.set["node"].append(regions_pre["region"].iloc[0])
+
+    # Function runs
+    apply_spec(scenario, spec)
+
+    # `scenario.platform` gains a region ID corresponding to the new node ID
+    assert node in scenario.platform.regions()["region"].tolist()
+
+    # Nothing logged for the already-existing region ID
+    assert not any("already defined" in message for message in caplog.messages)
