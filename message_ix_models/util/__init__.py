@@ -424,7 +424,7 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
 
 
 def make_matched_dfs(
-    base: MutableMapping, **par_value: Union[float, pint.Quantity]
+    base: Union[MutableMapping, pd.DataFrame], **par_value: Union[float, pint.Quantity]
 ) -> Dict[str, pd.DataFrame]:
     """Return data frames derived from `base` for multiple parameters.
 

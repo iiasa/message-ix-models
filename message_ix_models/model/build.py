@@ -84,6 +84,9 @@ def apply_spec(  # noqa: C901
     # sets that may reference them.
     sets = sorted((len(scenario.idx_sets(s)), s) for s in scenario.set_list())
 
+    # Existing 'region' codes stored on the Platform associated with `scenario`
+    platform_regions = set(scenario.platform.regions()["region"])
+
     for _, set_name in sets:
         # Check whether this set is mentioned at all in the spec
         if 0 == sum(map(lambda info: len(info.set[set_name]), spec.values())):
@@ -129,7 +132,7 @@ def apply_spec(  # noqa: C901
         for element in add:
             name = element.id if isinstance(element, Code) else element
             scenario.add_set(set_name, name)
-            if set_name == "node":
+            if set_name == "node" and name not in platform_regions:
                 scenario.platform.add_region(name, "region")
 
         if len(add):
@@ -146,10 +149,6 @@ def apply_spec(  # noqa: C901
     for unit in spec["add"].set["unit"]:
         unit = unit if isinstance(unit, Code) else Code(id=unit, name=unit)
         _add_unit(scenario.platform, unit.id, str(unit.name))
-
-    # Add nodes to the Platform before adding data
-    for node in spec["add"].set["node"]:
-        scenario.platform.add_region(node, hierarchy="")
 
     # Add data
     if callable(data):
