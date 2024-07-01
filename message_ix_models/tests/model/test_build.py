@@ -106,3 +106,26 @@ def test_apply_spec3(caplog, scenario: "Scenario", spec: Spec):
             "  3 rows total",
         ),
     )
+
+
+def test_apply_spec4(request, caplog, scenario: "Scenario", spec: Spec):
+    """Test that platform region IDs are added as necessary."""
+
+    # Existing region code list on `scenario.platform`
+    regions_pre = scenario.platform.regions()
+
+    # Add a unique node ID
+    node = f"{request.node.name} {len(regions_pre)}"
+    spec.add.set["node"] = [node]
+
+    # Also add a node ID that already exists as a region ID on `scenario.platform`
+    spec.add.set["node"].append(regions_pre["region"].iloc[0])
+
+    # Function runs
+    apply_spec(scenario, spec)
+
+    # `scenario.platform` gains a region ID corresponding to the new node ID
+    assert node in scenario.platform.regions()["region"].tolist()
+
+    # Nothing logged for the already-existing region ID
+    assert not any("already defined" in message for message in caplog.messages)
