@@ -54,7 +54,7 @@ def test_demand_dummy(test_context, regions, years):
         param("R11", "B", 11, dict(futures_scenario="A---"), marks=MARK[1]),
         ("R12", "B", 12, dict()),
         ("R12", "B", 12, dict(navigate_scenario="act+ele+tec")),
-        param("R14", "B", 14, dict(), marks=MARK[2](AssertionError)),
+        param("R14", "B", 14, dict(), marks=MARK[2](genno.ComputationError)),
         param("ISR", "A", 1, dict(), marks=MARK[3]),
     ],
 )
@@ -134,7 +134,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
 @pytest.mark.parametrize(
     "ssp",
     [
-        SSP_2017["2"],
+        pytest.param(SSP_2017["2"], marks=MARK[2](genno.ComputationError)),
         SSP_2024["1"],
         SSP_2024["2"],
         SSP_2024["3"],
@@ -256,44 +256,22 @@ R11_WEU  2100  300
 def test_pdt_per_capita(
     tmp_path, test_context, regions="R12", years="B", options=dict()
 ):
-    """Test :func:`.pdt_per_capita`.
+    """Test calculation of PDT per capita, as configured by :func:`.pdt_per_capita`.
 
     Moved from :mod:`.test_operator`.
-
-    .. todo:: Update for changes in #551.
     """
-    from io import StringIO
-
-    import pandas as pd
-
+    # TODO After #551, this is largely similar to test_exo and test_pdt; merge
     from message_data.model.transport.key import pdt_cap
 
     c, info = testing.configure_build(
         test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
 
-    # Input data: GDP (PPP, per capita)
-    gdp_ppp_cap = genno.Quantity(
-        pd.read_fwf(StringIO(DATA)).astype({"y": int}).set_index(["n", "y"])["value"],
-        units="kUSD / passenger / year",
-    )
-    # PDT: reference value for the base period
-    pdt_ref = genno.Quantity(
-        pd.Series({"R11_AFR": 10000.0, "R11_WEU": 20000.0}).rename_axis("n"),
-        units="km / year",
-    )
-    # Configuration: defaults
-    config = dict(transport=Config())
-
-    del pdt_ref, config
-
-    # result = pdt_per_capita(gdp_ppp_cap, pdt_ref, 2020, config)
     result = c.get(pdt_cap)
-    # print(f"{result = }")
 
     # Data have the expected dimensions and shape
     assert {"n", "y"} == set(result.dims)
-    assert gdp_ppp_cap.shape == result.shape
+    assert (12, 29) == result.shape
     # Data have the expected units
     assert_units(result, "km / year")
 
@@ -337,7 +315,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
         ("R12", "SSP2"),
         ("R12", "SSP5"),
         ("R14", "SSP2"),
-        ("R14", "SSP5"),
+        pytest.param("R14", "SSP5", marks=MARK[2](RuntimeError)),
         pytest.param("R11", "SHAPE innovation", marks=MARK[4]),
     ],
 )

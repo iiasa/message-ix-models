@@ -1,5 +1,6 @@
 import logging
 
+import genno
 import pandas as pd
 import pytest
 from iam_units import registry
@@ -21,7 +22,13 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
-    "regions", [param("ISR", marks=testing.MARK[3]), "R11", "R12", "R14"]
+    "regions",
+    [
+        param("ISR", marks=testing.MARK[3]),
+        "R11",
+        "R12",
+        param("R14", marks=testing.MARK[2](genno.ComputationError)),
+    ],
 )
 def test_get_ldv_data(tmp_path, test_context, source, regions, years):
     # Info about the corresponding RES

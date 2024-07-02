@@ -2,7 +2,7 @@ import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-import pandas as pd
+import genno
 import pytest
 from message_ix_models import ScenarioInfo
 from message_ix_models.report import prepare_reporter, register
@@ -56,7 +56,7 @@ def test_register_cb():
     (
         param("R11", "A", marks=MARK[1]),
         ("R12", "A"),
-        param("R14", "A", marks=MARK[2](pd.errors.EmptyDataError)),
+        param("R14", "A", marks=MARK[2](genno.ComputationError)),
         param("ISR", "A", marks=MARK[3]),
     ),
 )
