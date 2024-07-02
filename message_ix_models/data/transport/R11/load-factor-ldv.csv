@@ -4,15 +4,15 @@
 # Original source unknown. The values appear to assume similarity
 # between certain regions.
 #
-node,     value
-R11_AFR, 1.807
-R11_CPA, 1.892
-R11_EEU, 1.643
-R11_FSU, 1.807
-R11_LAM, 1.807
-R11_MEA, 1.807
-R11_NAM, 1.53
-R11_PAO, 1.72
-R11_PAS, 1.892
-R11_SAS, 1.892
-R11_WEU, 1.643
+scenario,    node,    year, value
+SSP(2024).2, R11_AFR, 2020, 1.807
+SSP(2024).2, R11_CPA, 2020, 1.892
+SSP(2024).2, R11_EEU, 2020, 1.643
+SSP(2024).2, R11_FSU, 2020, 1.807
+SSP(2024).2, R11_LAM, 2020, 1.807
+SSP(2024).2, R11_MEA, 2020, 1.807
+SSP(2024).2, R11_NAM, 2020, 1.53
+SSP(2024).2, R11_PAO, 2020, 1.72
+SSP(2024).2, R11_PAS, 2020, 1.892
+SSP(2024).2, R11_SAS, 2020, 1.892
+SSP(2024).2, R11_WEU, 2020, 1.643
