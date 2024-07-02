@@ -1,4 +1,5 @@
 from ast import literal_eval
+from typing import TYPE_CHECKING, Dict, List
 
 import pandas as pd
 import yaml
@@ -8,6 +9,9 @@ import message_ix_models.util
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import read_config
 from message_ix_models.util import broadcast, same_node
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -26,7 +30,14 @@ iea_elasticity_map = {
 }
 
 
-def gen_data_methanol_new(scenario):
+def gen_data_methanol_new(scenario: "Scenario") -> Dict[str, pd.DataFrame]:
+    """
+    Generates data for methanol industry model
+
+    Parameters
+    ----------
+    scenario: .Scenario
+    """
     context = read_config()
     df_pars = pd.read_excel(
         message_ix_models.util.package_data_path(
@@ -54,7 +65,7 @@ def gen_data_methanol_new(scenario):
         )
 
     for i in pars_dict.keys():
-        pars_dict[i] = broadcast_reduced_df(pars_dict[i], i)
+        pars_dict[i] = unpivot_input_data(pars_dict[i], i)
     # TODO: only temporary hack to ensure SSP_dev compatibility
     if "SSP_dev" in scenario.model:
         file_path = message_ix_models.util.package_data_path(
@@ -80,7 +91,24 @@ def gen_data_methanol_new(scenario):
     return pars_dict
 
 
-def broadcast_nodes(df_bc_node, df_final, node_cols, node_cols_codes, i):
+def broadcast_nodes(
+    df_bc_node: pd.DataFrame,
+    df_final: pd.DataFrame,
+    node_cols: List[str],
+    node_cols_codes: Dict[str, pd.Series],
+    i: int,
+) -> pd.DataFrame:
+    """
+    Broadcast nodes that were stored in pivoted row
+
+    Parameters
+    ----------
+    df_bc_node: pd.DataFrame
+    df_final: pd.DataFrame
+    node_cols: List[str]
+    node_cols_codes: Dict[str, pd.Series]
+    i: int
+    """
     if len(node_cols) == 1:
         if "node_loc" in node_cols:
             df_bc_node = df_bc_node.pipe(
@@ -123,7 +151,21 @@ def broadcast_nodes(df_bc_node, df_final, node_cols, node_cols_codes, i):
     return df_bc_node
 
 
-def broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col):
+def broadcast_years(
+    df_bc_node: pd.DataFrame,
+    yr_col_out: List[str],
+    yr_cols_codes: Dict[str, List[str]],
+    col: str,
+) -> pd.DataFrame:
+    """
+    Broadcast years that were stored in pivoted row
+    Parameters
+    ----------
+    df_bc_node: pd.DataFrame
+    yr_col_out: List[str]
+    yr_cols_codes: ict[str, List[str]]
+    col: str
+    """
     if len(yr_col_out) == 1:
         yr_list = [i[0] for i in yr_cols_codes[col]]
         # print(yr_list)
@@ -155,12 +197,21 @@ def broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col):
     return df_bc_node
 
 
-def broadcast_reduced_df(df, par_name):
+def unpivot_input_data(df: pd.DataFrame, par_name: str):
+    """
+    Unpivot data that is already contains columns for respective MESSAGEix parameter
+    Parameters
+    ----------
+    df: pd.DataFrame
+        DataFrame containing parameter data with year and node values pivoted
+    par_name: str
+        name of MESSAGEix parameter
+    """
     df_final = df
     df_final_full = pd.DataFrame()
 
     for i in df_final.index:
-        # parse strings of node columns
+        # parse strings of node columns to dictionary
         node_cols = [i for i in df_final.columns if "node" in i]
         remove = ["'", "[", "]", " "]
         node_cols_codes = {}
@@ -172,6 +223,7 @@ def broadcast_reduced_df(df, par_name):
         # create dataframe with required columns
         df_bc_node = make_df(par_name, **df_final.loc[i])
 
+        # collect year values from year columns
         yr_cols_codes = {}
         yr_col_inp = [i for i in df_final.columns if "year" in i]
         yr_col_out = [i for i in df_bc_node.columns if "year" in i]
