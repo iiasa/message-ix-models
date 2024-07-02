@@ -3,7 +3,7 @@ What's new
 
 Next release
 ============
-
+- Update :doc:`/material/index` (:pull:`201`).
 - Add :doc:`/material/index` (:pull:`188`, :pull:`189`).
 - Reduce log verbosity of :func:`.apply_spec` (:pull:`202`).
 

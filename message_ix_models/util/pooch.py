@@ -49,6 +49,7 @@ class Extract:
         cls, list_method = {
             ".zip": (zipfile.ZipFile, "namelist"),
             ".xz": (tarfile.TarFile.open, "getnames"),
+            ".gz": (tarfile.TarFile.open, "getnames"),
         }[path.suffix]
 
         with cls(path) as archive:
@@ -95,6 +96,15 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
             registry={"water.tar.xz": "sha1:ec9e0655af90ca844c0158968bb03a194b8fa6c6"},
         ),
         processor=Extract(extract_dir="water"),
+    ),
+    "MESSAGEix-Materials": dict(
+        pooch_args=dict(
+            base_url=f"{GH_MAIN}/material/",
+            registry={
+                "material.tar.gz": "sha1:b93f4390cb00749c2316fcdddf901a0eab896774"
+            },
+        ),
+        processor=Extract(extract_dir="material"),
     ),
     "snapshot-0": dict(
         pooch_args=dict(

@@ -1,5 +1,6 @@
 from .get_nodes import get_nodes
 
+
 def main(scen):
     """Revise hydrogen-blending constraints.
 

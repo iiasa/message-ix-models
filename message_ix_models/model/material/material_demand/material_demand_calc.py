@@ -8,9 +8,6 @@ import message_ix_models.util
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
 
-file_cement = "/CEMENT.BvR2010.xlsx"
-file_steel = "/STEEL_database_2012.xlsx"
-file_al = "/demand_aluminum.xlsx"
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
 giga = 10**9
 mega = 10**6

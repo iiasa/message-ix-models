@@ -13,19 +13,6 @@ from message_ix_models.util import (
 )
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
-context = read_config()
-default_gdp_elasticity = (
-    pd.read_excel(
-        package_data_path(
-            "material",
-            "methanol",
-            "methanol_sensitivity_pars.xlsx",
-        )
-    )
-    .set_index("par")
-    .to_dict()["value"]["nh3_elasticity"]
-)
-# float(0.65) # old default value
 
 
 ssp_mode_map = {
@@ -52,7 +39,7 @@ def gen_all_NH3_fert(scenario, dry_run=False):
         **gen_data_ts(scenario),
         **gen_demand(),
         **gen_land_input(scenario),
-        **gen_resid_demand_NH3(scenario, default_gdp_elasticity),
+        **gen_resid_demand_NH3(scenario),
     }
 
 
@@ -536,87 +523,10 @@ def gen_demand():
     return {"demand": df}
 
 
-def gen_resid_demand_NH3(scenario, gdp_elasticity):
+def gen_resid_demand_NH3(scenario):
     context = read_config()
-    s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = s_info.N
     ssp = context["ssp"]
 
-    def get_demand_t1_with_income_elasticity(
-        demand_t0, income_t0, income_t1, elasticity
-    ):
-        return (
-            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
-        ) + demand_t0
-
-    df_gdp = pd.read_excel(
-        package_data_path("material", "methanol", "methanol demand.xlsx"),
-        sheet_name="GDP_baseline",
-    )
-
-    df = df_gdp[(~df_gdp["Region"].isna()) & (df_gdp["Region"] != "World")]
-    df = df.dropna(axis=1)
-
-    df_demand = df.copy(deep=True)
-    df_demand = df_demand.drop([2010, 2015, 2020], axis=1)
-
-    # Ammonia Technology Roadmap IEA. 2019 Global NH3 production = 182 Mt.
-    # 70% is used for nitrogen fertilizer production. Rest is 54.7 Mt.
-    # 12 Mt is missing from nitrogen fertilizer part. Possibly due to low demand
-    # coming from GLOBIOM updates. Also add this to the residual demand. (66.7 Mt)
-    # Approximate regional shares are from Future of Petrochemicals
-    # Methodological Annex page 7. Total production for regions:
-    # Asia Pacific (RCPA, CHN, SAS, PAS, PAO) = 90 Mt
-    # Eurasia (FSU) = 20 Mt, Middle East (MEA) = 15, Africa (AFR) = 5
-    # Europe (WEU, EEU) = 25 Mt, Central&South America (LAM) = 5
-    # North America (NAM) = 20 Mt.
-    # Regional shares are derived. They are based on production values not demand.
-    # Some assumptions made for the regions that are not explicitly covered in IEA.
-    # (CHN produces the 30% of the ammonia globally and India 10%.)
-    # The orders of the regions
-    # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
-
-    if "R12_CHN" in nodes:
-        nodes.remove("R12_GLB")
-        region_set = "R12_"
-        dem_2020 = np.array([2.5, 2.5, 4, 7, 2.5, 5.6, 7, 2.5, 2.5, 7, 5.6, 18])
-        dem_2020 = pd.Series(dem_2020)
-
-    else:
-        nodes.remove("R11_GLB")
-        region_set = "R11_"
-        dem_2020 = np.array([2.5, 19.5, 4, 7, 2.5, 5.6, 7, 2.5, 2.5, 7, 5.6])
-        dem_2020 = pd.Series(dem_2020)
-
-    df_demand[2020] = dem_2020
-
-    for i in range(len(modelyears) - 1):
-        income_year1 = modelyears[i]
-        income_year2 = modelyears[i + 1]
-
-        dem_2020 = get_demand_t1_with_income_elasticity(
-            dem_2020, df[income_year1], df[income_year2], gdp_elasticity
-        )
-        df_demand[income_year2] = dem_2020
-
-    df_melt = df_demand.melt(
-        id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
-    )
-
-    df_residual = make_df(
-        "demand",
-        unit="t",
-        level="final_material",
-        value=df_melt.value,
-        time="year",
-        commodity="NH3",
-        year=df_melt.year,
-        node=(region_set + df_melt["Region"]),
-    )
-
-    # TODO: remove old approach once tested
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
     ]
