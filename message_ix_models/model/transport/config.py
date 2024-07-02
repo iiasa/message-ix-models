@@ -6,7 +6,7 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 import message_ix
 from genno import Quantity
 from message_ix_models import Context, ScenarioInfo, Spec
-from message_ix_models.project.ssp import SSP_2017, ssp_field
+from message_ix_models.project.ssp import SSP_2024, ssp_field
 from message_ix_models.report.util import as_quantity
 from message_ix_models.util import identify_nodes, private_data_path
 from message_ix_models.util.config import ConfigHelper
@@ -255,7 +255,7 @@ class Config(ConfigHelper):
 
     #: Enum member indicating a Shared Socioeconomic Pathway, if any, to use for
     #: exogenous data.
-    ssp: ssp_field = ssp_field(default=SSP_2017["2"])
+    ssp: ssp_field = ssp_field(default=SSP_2024["2"])
 
     #: :any:`True` if a base model or MESSAGEix-Transport scenario (possibly with
     #: solution data) is available.
