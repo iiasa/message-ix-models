@@ -1,8 +1,8 @@
 import logging
 from copy import copy
 
+import genno
 import ixmp
-import pandas as pd
 import pytest
 from genno import Quantity
 from genno.testing import assert_units
@@ -70,7 +70,7 @@ def test_make_spec(regions_arg, regions_exp, years):
             "US-TIMES MA3T",
             "IKARUS",
             False,
-            marks=[mark.slow, MARK[2](pd.errors.EmptyDataError)],
+            marks=[mark.slow, MARK[2](genno.ComputationError)],
         ),
         # Pending iiasa/message_data#190
         param("ISR", "A", None, None, False, marks=MARK[3]),
