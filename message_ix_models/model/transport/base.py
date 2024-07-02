@@ -28,6 +28,10 @@ The numerator used to compute this scaling factor is the one corrected by the va
 scale-1.csv.
 """
 
+UE_SHARE_HEADER = (
+    """Portion of useful energy output by each t within (nl, ya) groups."""
+)
+
 
 def prepare_reporter(rep: "message_ix.Reporter") -> str:
     """Add tasks that produce data to parametrize transport in MESSAGEix-GLOBIOM.
@@ -151,6 +155,11 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     #   by the data from file.
     ue = rep.add("ue", "div", k["s2"] / "t", "input:t-c-h:base")
     assert isinstance(ue, Key)
+
+    # Compute shares of useful energy by input
+    ue_share = rep.add("ue::share", "div", ue / tuple("chl"), ue / tuple("chlt"))
+    assert isinstance(ue_share, Key)
+    _to_csv(ue_share, "ue share", dict(header_comment=UE_SHARE_HEADER))
 
     # Ensure units: in::transport+units [=] GWa/a and input::base [=] GWa; their ratio
     # gives units 1/a. The base model expects "GWa" for all 3 parameters.
