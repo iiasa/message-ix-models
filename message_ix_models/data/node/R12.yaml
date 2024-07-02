@@ -11,6 +11,9 @@
 # For the meaning and usage of specific annotations, see:
 # - iea-weo-region: message_ix_models.tools.iea.weo
 # - material-region: message_ix_models.model.material.data_util.get_region_map
+#   Codes were copied from R12_SSP_V1.yaml, currently only stored in private repository:
+#   https://github.com/iiasa/message_data/blob/materials_2023_move2/data/node/R12_SSP_V1.yaml
+#
 #   Entries are ordered:
 #   1. "*", if applicable.
 #   2. Any ISO 3166-1 alpha-3 codes, in alphabetical order.
@@ -49,7 +52,11 @@ R12_EEU:
     even though their ISO 3166-1 codes were deleted in 2006 and 2003, respectively.
   child: [ALB, BGR, BIH, CZE, EST, HRV, HUN, LTU, LVA, MKD, MNE, POL, ROU, SCG, SRB, SVK, SVN, YUG]
   iea-weo-region: European Union
-  material-region: ["*", SCG, YUG, KOSOVO]
+  # All children explicitly defined for "material-region" here, instead of using "*"
+  # since YUG should not be included here (IEA EWEB data is only used from 1990 onwards)
+  # See discussion here:
+  # https://github.com/iiasa/message-ix-models/pull/201#discussion_r1656828874
+  material-region: [ALB, BGR, BIH, CZE, EST, HRV, HUN, LTU, LVA, MKD, MNE, POL, ROU, SRB, SVK, SVN, KOSOVO]
 
 R12_FSU:
   parent: World
