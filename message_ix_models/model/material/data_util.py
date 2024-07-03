@@ -766,13 +766,13 @@ def calc_hist_activity(
     scen: message_ix.Scenario, years: list, iea_data_path
 ) -> pd.DataFrame:
     df_orig = get_hist_act_data(
-        "IEA_mappings.csv", years=years, iea_data_path=iea_data_path
+        "all_technologies.csv", years=years, iea_data_path=iea_data_path
     )
     df_mat = get_hist_act_data(
-        "IEA_mappings_industry.csv", years=years, iea_data_path=iea_data_path
+        "industry.csv", years=years, iea_data_path=iea_data_path
     )
     df_chem = get_hist_act_data(
-        "IEA_mappings_chemicals.csv", years=years, iea_data_path=iea_data_path
+        "chemicals.csv", years=years, iea_data_path=iea_data_path
     )
 
     # RFE: move hardcoded assumptions (chemicals and iron and steel)
