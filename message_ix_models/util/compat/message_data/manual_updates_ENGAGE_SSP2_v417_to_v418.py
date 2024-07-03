@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import private_data_path
 
 from . import (
@@ -7,7 +8,6 @@ from . import (
     calibrate_vre,
     change_technology_lifetime,
     check_scenario_fix_and_inv_cost,
-    get_optimization_years,
     update_fix_and_inv_cost,  # TODO Why is this a module?
     update_h2_blending,
 )
@@ -416,7 +416,8 @@ def _clean_bound_activity(scen):
         "loil_exp": "SAS",
     }
 
-    model_years = get_optimization_years(scen)
+    model_years = ScenarioInfo(scen).Y
+
     with scen.transact("Remove activity bounds"):
         for bound in ["bound_activity_lo", "bound_activity_up"]:
             df = scen.par(bound)

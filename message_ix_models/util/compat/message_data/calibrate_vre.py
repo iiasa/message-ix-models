@@ -2,10 +2,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-from .get_nodes import get_nodes
-
-from . import get_optimization_years
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import identify_nodes, nodes_ex_world
 
 
 def _fetch(df, tec, var, yr):
@@ -71,7 +69,8 @@ def _read_input_data(scen, input_file, tecs, historic_years):
     }
 
     # Retrieve the region-id (prefix)
-    region_id = list(set([x.split("_")[0] for x in get_nodes(scen)]))[0]
+    region_id = identify_nodes(scen)
+    regions = nodes_ex_world(ScenarioInfo(scen).N)
 
     # Iterate over the different sheets and retrieve data
     for sheet in sheets:
@@ -83,7 +82,7 @@ def _read_input_data(scen, input_file, tecs, historic_years):
         hist_cap["node_loc"] = region_id + "_" + hist_cap["node_loc"]
 
         # Filter out region data for regions contained in model
-        hist_cap = hist_cap[hist_cap["node_loc"].isin(get_nodes(scen))]
+        hist_cap = hist_cap[hist_cap["node_loc"].isin(regions)]
 
         # Assign variable name
         hist_cap["variable"] = sheets[sheet]["variable"]
@@ -113,14 +112,14 @@ def _read_input_data(scen, input_file, tecs, historic_years):
     data_cap = xlsx.parse("data_capacity_annual")
     data_cap = data_cap[data_cap.technology.isin(tecs)]
     data_cap["node_loc"] = region_id + "_" + data_cap["node_loc"]
-    data_cap = data_cap[data_cap.node_loc.isin(get_nodes(scen))]
+    data_cap = data_cap[data_cap.node_loc.isin(regions)]
 
     data_elecgen = xlsx.parse("data_electricity_market")
     data_elecgen = data_elecgen.rename(columns={data_elecgen.columns[0]: "node_loc"})
     data_elecgen["node_loc"] = region_id + "_" + data_elecgen["node_loc"]
-    data_elecgen = data_elecgen[data_elecgen.node_loc.isin(get_nodes(scen))]
+    data_elecgen = data_elecgen[data_elecgen.node_loc.isin(regions)]
 
-    return (df, data_cap, data_elecgen)
+    return df, data_cap, data_elecgen
 
 
 def _clean_data(df, idx, verbose):
@@ -1313,7 +1312,7 @@ def main(
         tecs_init_cap = tecs
 
     # Retrieves the historical years
-    opt_years = get_optimization_years(scen)
+    opt_years = ScenarioInfo(scen).Y
 
     # Set index used for input_data
     idx = ["node_loc", "technology", "variable", "year"]

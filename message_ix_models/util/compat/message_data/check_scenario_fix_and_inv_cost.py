@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-
-from . import get_optimization_years
+from message_ix_models import ScenarioInfo
 
 
 def main(scen, vintaging=False, check_only=False, remove_zero=True, verbose=False):
@@ -37,7 +36,7 @@ def main(scen, vintaging=False, check_only=False, remove_zero=True, verbose=Fals
     """
 
     # Retrieve model years
-    model_years = get_optimization_years.main(scen)
+    model_years = ScenarioInfo(scen).Y
 
     # Specify parameters which should be checked.
     # Currently, only `fix_cost` and `inv_cost` are covered.
