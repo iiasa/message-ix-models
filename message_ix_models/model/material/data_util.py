@@ -768,9 +768,7 @@ def calc_hist_activity(
     df_orig = get_hist_act_data(
         "all_technologies.csv", years=years, iea_data_path=iea_data_path
     )
-    df_mat = get_hist_act_data(
-        "industry.csv", years=years, iea_data_path=iea_data_path
-    )
+    df_mat = get_hist_act_data("industry.csv", years=years, iea_data_path=iea_data_path)
     df_chem = get_hist_act_data(
         "chemicals.csv", years=years, iea_data_path=iea_data_path
     )
