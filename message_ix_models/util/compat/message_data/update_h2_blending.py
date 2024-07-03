@@ -1,4 +1,5 @@
-from .get_nodes import get_nodes
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import nodes_ex_world
 
 
 def main(scen):
@@ -59,11 +60,8 @@ def main(scen):
         # Copy lower_bound
         rel_bnd = scen.par("relation_upper", filters={"relation": "gas_mix_lim"})
 
-        # Update parameters for all regions excpet GLB.
-        # get_nodes() ignores "World"
-        for n in get_nodes(scen):
-            if "GLB" in n:
-                continue
+        # Update parameters for all regions except GLB and World.
+        for n in nodes_ex_world(ScenarioInfo(scen).N):
             rel_act = rel_act.assign(node_rel=n, node_loc=n)
             scen.add_par("relation_activity", rel_act)
 

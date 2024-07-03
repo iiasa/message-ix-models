@@ -93,7 +93,12 @@ def _add_data(scenario, row, period_intpol, relation_year, verbose):
 
 
 def main(
-    scenario, s_info, historical_year=None, relation_year=None, period_intpol=4, verbose=False
+    scenario,
+    s_info,
+    historical_year=None,
+    relation_year=None,
+    period_intpol=4,
+    verbose=False,
 ):
     """Checks UE shares constraints against historical data.
 
