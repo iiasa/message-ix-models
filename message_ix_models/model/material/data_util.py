@@ -1,5 +1,6 @@
 import os
-from typing import TYPE_CHECKING, Literal
+from functools import lru_cache
+from typing import TYPE_CHECKING, Literal, Mapping
 
 import ixmp
 import message_ix
@@ -9,20 +10,17 @@ from genno import Computer
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import (
-    invert_dictionary,
     read_config,
-    read_yaml_file,
     remove_from_list_if_exists,
 )
+from message_ix_models.model.structure import get_region_codes
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.util import package_data_path, private_data_path
+from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
-
-pd.options.mode.chained_assignment = None
 
 
 def load_GDP_COVID() -> pd.DataFrame:
@@ -764,10 +762,16 @@ def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
     scen.commit(comment="remove base year industry tec bounds")
 
 
-def calc_hist_activity(scen: message_ix.Scenario, years: list) -> pd.DataFrame:
-    df_orig = get_hist_act_data("IEA_mappings.csv", years=years)
-    df_mat = get_hist_act_data("IEA_mappings_industry.csv", years=years)
-    df_chem = get_hist_act_data("IEA_mappings_chemicals.csv", years=years)
+def calc_hist_activity(
+    scen: message_ix.Scenario, years: list, iea_data_path
+) -> pd.DataFrame:
+    df_orig = get_hist_act_data(
+        "all_technologies.csv", years=years, iea_data_path=iea_data_path
+    )
+    df_mat = get_hist_act_data("industry.csv", years=years, iea_data_path=iea_data_path)
+    df_chem = get_hist_act_data(
+        "chemicals.csv", years=years, iea_data_path=iea_data_path
+    )
 
     # RFE: move hardcoded assumptions (chemicals and iron and steel)
     #  to external data files
@@ -801,8 +805,8 @@ def calc_hist_activity(scen: message_ix.Scenario, years: list) -> pd.DataFrame:
     return df_hist_act_scaled.reset_index()
 
 
-def add_new_ind_hist_act(scen: message_ix.Scenario, years: list) -> None:
-    df_act = calc_hist_activity(scen, years)
+def add_new_ind_hist_act(scen: message_ix.Scenario, years: list, iea_data_path) -> None:
+    df_act = calc_hist_activity(scen, years, iea_data_path)
     scen.check_out()
     scen.add_par("historical_activity", df_act)
     scen.commit("adjust historical activity of industrial end use tecs")
@@ -881,13 +885,13 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
     )
 
 
-def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFrame:
+def calc_resid_ind_demand(
+    scen: message_ix.Scenario, baseyear: int, iea_data_path
+) -> pd.DataFrame:
     comms = ["i_spec", "i_therm"]
-    path = os.path.join(
-        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    )
+    path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
     Inp = pd.read_parquet(path, engine="fastparquet")
-    Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
+    Inp = map_iea_db_to_msg_regs(Inp)
     demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
     df_demands = scen.par("demand", filters={"commodity": comms}).set_index(
         ["node", "commodity", "year"]
@@ -897,8 +901,10 @@ def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFr
     return df_demands.reset_index()
 
 
-def modify_industry_demand(scen: message_ix.Scenario, baseyear: int) -> None:
-    df_demands_new = calc_resid_ind_demand(scen, baseyear)
+def modify_industry_demand(
+    scen: message_ix.Scenario, baseyear: int, iea_data_path
+) -> None:
+    df_demands_new = calc_resid_ind_demand(scen, baseyear, iea_data_path)
     scen.check_out()
     scen.add_par("demand", df_demands_new)
 
@@ -910,36 +916,66 @@ def modify_industry_demand(scen: message_ix.Scenario, baseyear: int) -> None:
     scen.commit("adjust residual industry demands")
 
 
-def map_iea_db_to_msg_regs(df_iea: pd.DataFrame, reg_map_fname: str) -> pd.DataFrame:
+@lru_cache
+def get_region_map() -> Mapping[str, str]:
+    """Construct a mapping from "COUNTRY" IDs to regions (nodes in the "R12" codelist).
+
+    These "COUNTRY" IDs are produced by a certain script for processing the IEA
+    Extended World Energy Balances; this script is *not* in :mod:`message_ix_models`;
+    i.e. it is *not* the same as :mod:`.tools.iea.web`. They include some ISO 3166-1
+    alpha-3 codes, but also other values like "GREENLAND" (instead of "GRL"), "KOSOVO",
+    and "IIASA_SAS".
+
+    This function reads the `material-region` annotation on items in the R12 node
+    codelist, expecting a list of strings. Of these:
+
+    - The special value "*" is interpreted to mean "include the IDs all of the child
+      nodes of this node (i.e. their ISO 3166-1 alpha-3 codes) in the mapping".
+    - All other values are mapped directly.
+
+    The return value is cached for reuse.
+
+    Returns
+    -------
+    dict
+        Mapping from e.g. "KOSOVO" to e.g. "R12_EEU".
     """
+    result = {}
+
+    # - Load the R12 node codelist.
+    # - Iterate over codes that are regions (i.e. omit World and the ISO 3166-1 alpha-3
+    #   codes for individual countries within regions)
+    for node in get_region_codes("R12"):
+        # - Retrieve the "material-region" annotation and eval() it as a Python list.
+        # - Iterate over each value in this list.
+        for value in node.eval_annotation(id="material-region"):
+            # Update (expand) the mapping
+            if value == "*":  # Special value → map every child node's ID to the node ID
+                result.update({child.id: node.id for child in node.child})
+            else:  # Any other value → map it to the node ID
+                result.update({value: node.id})
+
+    return result
+
+
+def map_iea_db_to_msg_regs(df_iea: pd.DataFrame) -> pd.DataFrame:
+    """Add a "REGION" column to `df_iea`.
 
     Parameters
     ----------
     df_iea
-        df containing the IEA energy balances data set
-    reg_map_fname
-        name of file used for mapping countries to MESSAGEix regions
+        Data frame containing the IEA energy balances data set. This **must** have a
+        "COUNTRY" column.
+
     Returns
     -------
-    object
-
+    pandas.DataFrame
+        with added column "REGION" containing node IDs according to
+        :func:`get_region_map`.
     """
-    file_path = private_data_path("node", reg_map_fname)
-    yaml_data = read_yaml_file(file_path)
-    if "World" in yaml_data.keys():
-        yaml_data.pop("World")
-
-    r12_map = {k: v["child"] for k, v in yaml_data.items()}
-    r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
-
-    df_iea = df_iea.merge(
-        pd.DataFrame.from_dict(
-            r12_map_inv, orient="index", columns=["REGION"]
-        ).reset_index(),
-        left_on="COUNTRY",
-        right_on="index",
-    ).drop("index", axis=1)
-    return df_iea
+    # - Duplicate the "COUNTRY" column to "REGION".
+    # - Replace the "REGION" values using the mapping.
+    return df_iea.eval("REGION = COUNTRY").replace({"REGION": get_region_map()})
 
 
 def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
@@ -956,7 +992,7 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
     pd.DataFrame
         returns df with mapped technologies
     """
-    MAP = pd.read_csv(package_data_path("iea", tec_map_fname))
+    MAP = pd.read_csv(package_data_path("material", "iea_mappings", tec_map_fname))
 
     MAP = pd.concat([MAP, MAP["IEA flow"].str.split(", ", expand=True)], axis=1)
     MAP = (
@@ -982,7 +1018,9 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
     return MAP
 
 
-def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFrame:
+def get_hist_act_data(
+    map_fname: str, years: list or None = None, iea_data_path=None
+) -> pd.DataFrame:
     """
     reads IEA DB, maps and aggregates variables to MESSAGE technologies
 
@@ -998,15 +1036,13 @@ def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFram
     pd.DataFrame
 
     """
-    path = os.path.join(
-        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
-    )
+    path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
     iea_enb_df = pd.read_parquet(path, engine="fastparquet")
     if years:
         iea_enb_df = iea_enb_df[iea_enb_df["TIME"].isin(years)]
 
     # map IEA countries to MESSAGE region definition
-    iea_enb_df = map_iea_db_to_msg_regs(iea_enb_df, "R12_SSP_V1.yaml")
+    iea_enb_df = map_iea_db_to_msg_regs(iea_enb_df)
 
     # read file for IEA product/flow - MESSAGE technologies map
     MAP = read_iea_tec_map(map_fname)
@@ -2187,32 +2223,3 @@ def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
     scenario.add_par(par, df_el)
     scenario.commit("add initial_activity_up for elec_i")
     return
-
-
-if __name__ == "__main__":
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "SSP_dev_SSP2_v0.1_Blv0.6", "baseline_prep_lu_bkp_solved_materials"
-    )
-
-    # add_macro_COVID(scen, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx")
-
-    df_hist_new = calc_hist_activity(scen, [2015])
-    print()
-    # df_demand_new = modify_industry_demand(scen, 2015)
-    # old_dict = modify_demand_and_hist_activity_debug(scen)
-    #
-    # df = get_hist_act_data("IEA_mappings_furnaces.csv", years=[2015])
-    # df.index.names = ["node_loc", "technology", "year_act"]
-    # df_inp = scen.par(
-    #     "input",
-    #     filters={
-    #         "year_vtg": 2020,
-    #         "year_act": 2020,
-    #         "mode": "high_temp",
-    #         "node_loc": "R12_AFR",
-    #     },
-    # )
-    # df = df_inp.set_index(["technology"]).join(df).dropna()
-    # df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
-    # print()

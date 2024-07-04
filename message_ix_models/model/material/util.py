@@ -262,8 +262,11 @@ def cost_fit(df) -> float:
         estimated value for cost_ref in 2020
     """
     # print(df.lvl)
-    pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
-    val = exponential([2020], *pars)[0]
+    try:
+        pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
+        val = exponential([2020], *pars)[0]
+    except RuntimeError:
+        val = df.lvl.values[0]
     # print(df.node.unique(), val)
     return val / 1000
 
@@ -306,7 +309,7 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     ws = wb.get_sheet_by_name("cost_ref")
     for i in range(2, 7):
         ws[f"B{i}"].value = df.values[i - 2]
-    for i in range(8, 13):
+    for i in range(8, 14):
         ws[f"B{i}"].value = df.values[i - 2]
 
     # price_ref
@@ -336,7 +339,7 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     )
     df = df.groupby(["node", "commodity"]).apply(price_fit)
     ws = wb.get_sheet_by_name("price_ref")
-    for i in range(2, 61):
+    for i in range(2, 62):
         ws[f"C{i}"].value = df.values[i - 2]
     wb.save(path + fname)
 

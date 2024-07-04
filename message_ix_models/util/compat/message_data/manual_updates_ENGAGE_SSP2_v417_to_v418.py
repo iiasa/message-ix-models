@@ -1,16 +1,17 @@
 import numpy as np
 import pandas as pd
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import private_data_path
 
 from . import (
-    calibrate_UE_gr_to_demand, 
-    calibrate_vre, 
-    change_technology_lifetime, 
-    check_scenario_fix_and_inv_cost, 
-    get_optimization_years, 
-    update_fix_and_inv_cost, #TODO Why is this a module?
+    calibrate_UE_gr_to_demand,
+    calibrate_vre,
+    change_technology_lifetime,
+    check_scenario_fix_and_inv_cost,
+    update_fix_and_inv_cost,  # TODO Why is this a module?
     update_h2_blending,
 )
+
 
 def _apply_npi_updates(scen):
     """Apply changes from ENGAGE 4.1.7 process applied.
@@ -415,7 +416,8 @@ def _clean_bound_activity(scen):
         "loil_exp": "SAS",
     }
 
-    model_years = get_optimization_years(scen)
+    model_years = ScenarioInfo(scen).Y
+
     with scen.transact("Remove activity bounds"):
         for bound in ["bound_activity_lo", "bound_activity_up"]:
             df = scen.par(bound)
@@ -521,7 +523,18 @@ def _correct_coal_ppl_u_efficiencies(scen):
     # (see `P:\ene.model\SSP_V3`)
     efficiency_update = {
         "R12_AFR": [0.34, 0.34, 0.34, 0.37, 0.38, 0.38, np.nan, np.nan, np.nan, np.nan],
-        "R12_RCPA": [0.33, 0.33, 0.326, 0.321, 0.34, 0.36, 0.38, np.nan, np.nan, np.nan],
+        "R12_RCPA": [
+            0.33,
+            0.33,
+            0.326,
+            0.321,
+            0.34,
+            0.36,
+            0.38,
+            np.nan,
+            np.nan,
+            np.nan,
+        ],
         "R12_CHN": [0.33, 0.33, 0.326, 0.321, 0.34, 0.36, 0.38, np.nan, np.nan, np.nan],
         "R12_EEU": [0.315, 0.33, 0.35, 0.35, 0.36, 0.37, 0.38, np.nan, np.nan, np.nan],
         "R12_FSU": [0.327, 0.34, 0.31, 0.3, 0.31, 0.35, 0.38, np.nan, np.nan, np.nan],
@@ -836,7 +849,7 @@ def _correct_td_co2cc_emissions(scen):
                     continue
 
                 rel = rel.set_index(idx)
-                rel["CO2_should"] = inp["CO2_should"]
+                rel = rel.join(inp["CO2_should"])
 
                 # Filter out differences
                 rel = rel.loc[rel["value"] != rel["CO2_should"]]

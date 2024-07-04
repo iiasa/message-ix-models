@@ -10,4 +10,6 @@ prune message_ix_models/data/test/ssp
 # - Should be fetched with Pooch from GitHub.
 exclude message_ix_models/data/ssp/*.gz
 prune message_ix_models/data/water/*
+prune message_ix_models/data/material/*
 exclude message_ix_models/data/water/*.tar.xz
+exclude message_ix_models/data/material/*.tar.gz
