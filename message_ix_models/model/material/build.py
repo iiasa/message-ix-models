@@ -1,158 +1,235 @@
 import logging
-from typing import Callable, Dict, List, Mapping, Union
+from typing import Mapping
 
+import message_ix
 import pandas as pd
-from ixmp.utils import maybe_check_out, maybe_commit
-from message_ix import Scenario
-from sdmx.model import Code
 
-from message_ix_models.util import add_par_data, strip_par_data
-from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
+from message_ix_models.model.build import apply_spec
+from message_ix_models.model.material.data_aluminum import gen_data_aluminum
+from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
+from message_ix_models.model.material.data_cement import gen_data_cement
+from message_ix_models.model.material.data_generic import gen_data_generic
+from message_ix_models.model.material.data_methanol_new import gen_data_methanol_new
+from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
+from message_ix_models.model.material.data_power_sector import gen_data_power_sector
+from message_ix_models.model.material.data_steel import gen_data_steel
+from message_ix_models.model.material.data_util import (
+    add_ccs_technologies,
+    add_cement_bounds_2020,
+    add_coal_lowerbound_2020,
+    add_elec_i_ini_act,
+    add_elec_lowerbound_2020,
+    add_emission_accounting,
+    add_new_ind_hist_act,
+    modify_baseyear_bounds,
+    modify_demand_and_hist_activity,
+    modify_industry_demand,
+)
+from message_ix_models.model.material.util import read_config
+from message_ix_models.util import add_par_data, identify_nodes, package_data_path
+from message_ix_models.util.compat.message_data import (
+    calibrate_UE_gr_to_demand,
+    calibrate_UE_share_constraints,
+)
+from message_ix_models.util.compat.message_data import (
+    manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
+)
+from message_ix_models.util.scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
+DATA_FUNCTIONS_1 = [
+    # gen_data_buildings,
+    gen_data_methanol_new,
+    gen_all_NH3_fert,
+    # gen_data_ammonia, ## deprecated module!
+    gen_data_generic,
+    gen_data_steel,
+]
+DATA_FUNCTIONS_2 = [
+    gen_data_cement,
+    gen_data_petro_chemicals,
+    gen_data_power_sector,
+    gen_data_aluminum,
+]
 
-def ellipsize(elements: List) -> str:
-    """Generate a short string representation of `elements`.
+# add as needed/implemented
+SPEC_LIST = [
+    "generic",
+    "common",
+    "steel",
+    "cement",
+    "aluminum",
+    "petro_chemicals",
+    "buildings",
+    "power_sector",
+    "fertilizer",
+    "methanol",
+]
 
-    If the list has more than 5 elements, only the first two and last two are shown,
-    with "..." between.
-    """
-    if len(elements) > 5:
-        return ", ".join(map(str, elements[:2] + ["..."] + elements[-2:]))
+
+# Try to handle multiple data input functions from different materials
+def add_data_1(scenario, dry_run=False):
+    """Populate `scenario` with MESSAGEix-Materials data."""
+    # Information about `scenario`
+    info = ScenarioInfo(scenario)
+
+    # Check for two "node" values for global data, e.g. in
+    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
+    if {"World", "R11_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R11_GLB' from node list for data generation")
+        info.set["node"].remove("R11_GLB")
+    if {"World", "R12_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R12_GLB' from node list for data generation")
+        info.set["node"].remove("R12_GLB")
+
+    for func in DATA_FUNCTIONS_1 + DATA_FUNCTIONS_2:
+        # Generate or load the data; add to the Scenario
+        log.info(f"from {func.__name__}()")
+        data = func(scenario)
+        # if "SSP_dev" in scenario.model:
+        #     if "emission_factor" in list(data.keys()):
+        #         data.pop("emission_factor")
+        add_par_data(scenario, data, dry_run=dry_run)
+
+    log.info("done")
+
+
+def add_data_2(scenario, dry_run=False):
+    """Populate `scenario` with MESSAGEix-Materials data."""
+    # Information about `scenario`
+    info = ScenarioInfo(scenario)
+
+    # Check for two "node" values for global data, e.g. in
+    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
+    if {"World", "R11_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R11_GLB' from node list for data generation")
+        info.set["node"].remove("R11_GLB")
+    if {"World", "R12_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R12_GLB' from node list for data generation")
+        info.set["node"].remove("R12_GLB")
+
+    for func in DATA_FUNCTIONS_2:
+        # Generate or load the data; add to the Scenario
+        log.info(f"from {func.__name__}()")
+        # TODO: remove this once emission_factors are back in SSP_dev
+        data = func(scenario)
+        # if "SSP_dev" in scenario.model:
+        #     if "emission_factor" in list(data.keys()):
+        #         data.pop("emission_factor")
+        add_par_data(scenario, data, dry_run=dry_run)
+
+    log.info("done")
+
+
+def build(
+    scenario: message_ix.Scenario, old_calib: bool, iea_data_path=None
+) -> message_ix.Scenario:
+    """Set up materials accounting on `scenario`."""
+
+    # Get the specification
+    # Apply to the base scenario
+    spec = get_spec()
+
+    if "water_supply" not in list(scenario.set("level")):
+        scenario.check_out()
+        # add missing water tecs
+        scenario.add_set("technology", "extract__freshwater_supply")
+        scenario.add_set("level", "water_supply")
+        scenario.add_set("commodity", "freshwater_supply")
+
+        water_dict = pd.read_excel(
+            package_data_path("material", "other", "water_tec_pars.xlsx"),
+            sheet_name=None,
+        )
+        for par in water_dict.keys():
+            scenario.add_par(par, water_dict[par])
+        scenario.commit("add missing water tecs")
+
+    apply_spec(scenario, spec, add_data_1, fast=True)  # dry_run=True
+    if "SSP_dev" not in scenario.model:
+        engage_updates._correct_balance_td_efficiencies(scenario)
+        engage_updates._correct_coal_ppl_u_efficiencies(scenario)
+        engage_updates._correct_td_co2cc_emissions(scenario)
+    # spec = None
+    # apply_spec(scenario, spec, add_data_2)
+    from message_ix_models import ScenarioInfo
+
+    s_info = ScenarioInfo(scenario)
+    nodes = s_info.N
+
+    # Adjust exogenous energy demand to incorporate the endogenized sectors
+    # Adjust the historical activity of the useful level industry technologies
+    # Coal calibration 2020
+    add_ccs_technologies(scenario)
+    if old_calib:
+        modify_demand_and_hist_activity(scenario)
     else:
-        return ", ".join(map(str, elements))
+        modify_baseyear_bounds(scenario)
+        last_hist_year = scenario.par("historical_activity")["year_act"].max()
+        modify_industry_demand(scenario, last_hist_year, iea_data_path)
+        add_new_ind_hist_act(scenario, [last_hist_year], iea_data_path)
+        add_elec_i_ini_act(scenario)
+        add_emission_accounting(scenario)
 
+        # scenario.commit("no changes")
+    add_coal_lowerbound_2020(scenario)
+    add_cement_bounds_2020(scenario)
 
-# FIXME Reduce complexity (same issues as model.build.apply_spec())
-def apply_spec(  # noqa: C901
-    scenario: Scenario,
-    spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
-    data: Callable = None,
-    **options,
-):
-    """Apply `spec` to `scenario`.
-
-    Parameters
-    ----------
-    spec : .Spec
-        Specification of changes to make to `scenario`.
-    data : callable, optional
-        Function to add data to `scenario`. `data` can either manipulate the scenario
-        directly, or return a :class:`dict` compatible with :func:`.add_par_data`.
-
-    Other parameters
-    ----------------
-    dry_run : bool
-        Don't modify `scenario`; only show what would be done. Default :obj:`False`.
-        Exceptions will still be raised if the elements from ``spec['required']`` are
-        missing; this serves as a check that the scenario has the required features for
-        applying the spec.
-    fast : bool
-        Do not remove existing parameter data; increases speed on large scenarios.
-    quiet : bool
-        Only show log messages at level ``ERROR`` and higher. If :obj:`False` (default),
-        show log messages at level ``DEBUG`` and higher.
-    message : str
-        Commit message.
-
-    See also
-    --------
-    .add_par_data
-    .strip_par_data
-    .Code
-    .ScenarioInfo
-    """
-    dry_run = options.get("dry_run", False)
-
-    log.setLevel(logging.ERROR if options.get("quiet", False) else logging.DEBUG)
-
-    if not dry_run:
-        try:
-            scenario.remove_solution()
-        except ValueError:
-            pass
-        maybe_check_out(scenario)
-
-    if spec:
-        dump: Dict[str, pd.DataFrame] = {}  # Removed data
-
-        for set_name in scenario.set_list():
-            # Check whether this set is mentioned at all in the spec
-            if 0 == sum(map(lambda info: len(info.set[set_name]), spec.values())):
-                # Not mentioned; don't do anything
-                continue
-
-            log.info(f"Set {repr(set_name)}")
-
-            # Base contents of the set
-            base_set = scenario.set(set_name)
-            # Unpack a multi-dimensional/indexed set to a list of tuples
-            base = (
-                list(base_set.itertuples(index=False))
-                if isinstance(base_set, pd.DataFrame)
-                else base_set.tolist()
-            )
-
-            log.info(f"  {len(base)} elements")
-            # log.debug(', '.join(map(repr, base)))  # All elements; verbose
-
-            # Check for required elements
-            require = spec["require"].set[set_name]
-            log.info(f"  Check {len(require)} required elements")
-
-            # Raise an exception about the first missing element
-            missing = list(filter(lambda e: e not in base, require))
-            if len(missing):
-                log.error(f"  {len(missing)} elements not found: {repr(missing)}")
-                raise ValueError
-
-            # Remove elements and associated parameter values
-            remove = spec["remove"].set[set_name]
-            for element in remove:
-                msg = f"{repr(element)} and associated parameter elements"
-
-                if options.get("fast", False):
-                    log.info(f"  Skip removing {msg} (fast=True)")
-                    continue
-
-                log.info(f"  Remove {msg}")
-                strip_par_data(scenario, set_name, element, dry_run=dry_run, dump=dump)
-
-            # Add elements
-            add = [] if dry_run else spec["add"].set[set_name]
-            for element in add:
-                scenario.add_set(
-                    set_name,
-                    element.id if isinstance(element, Code) else element,
-                )
-
-            if len(add):
-                log.info(f"  Add {len(add)} element(s)")
-                log.debug("  " + ellipsize(add))
-
-            log.info("  ---")
-
-        N_removed = sum(len(d) for d in dump.values())
-        log.info(f"{N_removed} parameter elements removed")
-
-        # Add units to the Platform before adding data
-        for unit in spec["add"].set["unit"]:
-            unit = unit if isinstance(unit, Code) else Code(id=unit, name=unit)
-            log.info(f"Add unit {repr(unit)}")
-            scenario.platform.add_unit(unit.id, comment=str(unit.name))
-
-    # Add data
-    if callable(data):
-        result = data(scenario, dry_run=dry_run)
-        if result:
-            # `data` function returned some data; use add_par_data()
-            add_par_data(scenario, result, dry_run=dry_run)
-
-    # Finalize
-    log.info("Commit results.")
-    maybe_commit(
+    # Market penetration adjustments
+    # NOTE: changing demand affects the market penetration
+    # levels for the enduse technologies.
+    # FIXME: context.ssp only works for SSP1/2/3 currently missing SSP4/5
+    calibrate_UE_gr_to_demand(
         scenario,
-        condition=not dry_run,
-        message=options.get("message", f"{__name__}.apply_spec()"),
+        s_info,
+        data_path=package_data_path("material"),
+        ssp="SSP2",
+        region=identify_nodes(scenario),
     )
+    calibrate_UE_share_constraints(scenario, s_info)
+
+    # Electricity calibration to avoid zero prices for CHN.
+    if "R12_CHN" in nodes:
+        add_elec_lowerbound_2020(scenario)
+
+    # i_feed demand is zero creating a zero division error during MACRO calibration
+    scenario.check_out()
+    scenario.remove_set("sector", "i_feed")
+    scenario.commit("i_feed removed from sectors.")
+
+    df = scenario.par(
+        "bound_activity_lo",
+        filters={"node_loc": "R12_RCPA", "technology": "sp_el_I", "year_act": 2020},
+    )
+    scenario.check_out()
+    scenario.remove_par("bound_activity_lo", df)
+    scenario.commit("remove sp_el_I min bound on RCPA in 2020")
+
+    return scenario
+
+
+def get_spec() -> Mapping[str, ScenarioInfo]:
+    """Return the specification for materials accounting."""
+    require = ScenarioInfo()
+    add = ScenarioInfo()
+    remove = ScenarioInfo()
+
+    # Load configuration
+    # context = Context.get_instance(-1)
+    context = read_config()
+
+    # Update the ScenarioInfo objects with required and new set elements
+    for type in SPEC_LIST:
+        for set_name, config in context["material"][type].items():
+            # for cat_name, detail in config.items():
+            # Required elements
+            require.set[set_name].extend(config.get("require", []))
+
+            # Elements to add
+            add.set[set_name].extend(config.get("add", []))
+
+            # Elements to remove
+            remove.set[set_name].extend(config.get("remove", []))
+
+    return dict(require=require, add=add, remove=remove)

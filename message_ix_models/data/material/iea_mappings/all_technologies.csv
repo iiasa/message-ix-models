@@ -1,0 +1,63 @@
+﻿technology,include,technology shares,share basis,input commodity,input level,input basis,input,output commodity,output level,output,IEA flow,IEA product,unit,output or input
+bio_hpl,y,,model,,,model,,,,,HEATOUT,"PRIMSBIO, CHARCOAL, RENEWNS, MUNWASTER",TJ,output
+"bio_ppl,bio_istig",y,,model,biomass,primary,model,3.333333333,electr,secondary,1,ELOUTPUT,"PRIMSBIO, CHARCOAL, RENEWNS, MUNWASTER",GWh,output
+biomass_i,y,,model,biomass,final,model,1.538461538,i_therm,useful,1,TOTIND,"PRIMSBIO, CHARCOAL, RENEWNS, MUNWASTER",TJ,input
+coal_exp,y,,model,coal,primary,model,1,coal,export,1,EXPORTS,"HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,input
+coal_fs,y,,model,coal,final,model,2.2,i_feed,useful,1,NEINTREN,"HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,input
+coal_gas,y,,model,coal,secondary,model,1.315789474,gas,secondary,1,TGASWKS,OGASES,TJ,output
+coal_hpl,y,,model,,,model,,,,,HEATOUT,"HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,output
+coal_i,y,,model,coal,final,model,1.470588235,i_therm,useful,1,TOTIND,"HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,input
+coal_imp,y,,model,,,model,1,coal,secondary,1,IMPORTS,"HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,output
+"coal_ppl,coal_ppl_u,coal_adv,igcc",y,"0.8,0.2",model,coal,secondary,model,2.63,electr,secondary,1,ELOUTPUT,"HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",GWh,output
+coal_rc,y,,model,coal,final,model,1.851851852,rc_therm,useful,1,"RESIDENT, COMMPUB, AGRICULT, FISHING, ONONSPEC","HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,input
+coal_trp,y,,model,coal,final,model,3.333333333,transport,useful,1,"DOMESAIR, ROAD, RAIL, DOMESNAV, TRNONSPE, AVBUNK","HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,input
+elec_i,y,,model,electr,final,model,1.369863014,i_therm,useful,1,IRONSTL,ELECTR,TJ,input
+elec_trp,y,,model,electr,final,model,0.333333333,transport,useful,1,"DOMESAIR, ROAD, RAIL, DOMESNAV, TRNONSPE, AVBUNK",ELECTR,TJ,input
+eth_bio,y,,model,biomass,primary,model,2.43902439,ethanol,primary,1,INDPROD,"BIOGASOL, BIODIESEL, OBIOLIQ, BIOJETKERO",TJ,output
+eth_exp,y,,model,ethanol,primary,model,1,ethanol,export,1,EXPORTS,"BIOGASOL, BIODIESEL, OBIOLIQ, BIOJETKERO",TJ,output
+eth_i,y,,model,ethanol,final,model,1.234567901,i_therm,useful,1,TOTIND,"BIOGASOL, BIODIESEL, OBIOLIQ, BIOJETKERO",TJ,input
+eth_ic_trp,y,,model,ethanol,final,model,1,transport,useful,1,"DOMESAIR, ROAD, RAIL, DOMESNAV, TRNONSPE, AVBUNK","BIOGASOL, BIODIESEL, OBIOLIQ, BIOJETKERO",TJ,input
+eth_imp,y,,model,,,model,1,ethanol,secondary,1,IMPORTS,"BIOGASOL, BIODIESEL, OBIOLIQ, BIOJETKERO",TJ,output
+ethanol_fs,y,,model,ethanol,final,model,1,i_feed,useful,1,NEINTREN,"BIOGASOL, BIODIESEL, OBIOLIQ, BIOJETKERO",TJ,input
+foil_exp,y,,model,fueloil,secondary,model,1,fueloil,export,1,EXPORTS,"BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,input
+foil_fs,y,,model,fueloil,final,model,1,i_feed,useful,1,NEINTREN,"BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,input
+foil_hpl,y,,model,,,model,,,,,HEATOUT,"BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,output
+foil_i,y,,model,fueloil,final,model,1.369863014,i_therm,useful,1,TOTIND,"BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,input
+foil_imp,y,,model,,,model,,fueloil,secondary,1,IMPORTS,"BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,output
+foil_ppl,y,,model,fueloil,secondary,model,2.5,electr,secondary,1,ELOUTPUT,"BITUMEN, PARWAX, PETCOKE, RESFUEL",GWh,output
+foil_rc,y,,model,fueloil,final,model,1.5625,rc_therm,useful,1,"RESIDENT, COMMPUB, AGRICULT, FISHING, ONONSPEC","BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,input
+foil_trp,y,,model,fueloil,final,model,1,transport,useful,1,"DOMESAIR, ROAD, RAIL, DOMESNAV, TRNONSPE, AVBUNK","BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,input
+"gas_ct,gas_cc,gas_ppl",y,"0.1,0.6,0.3",model,gas,secondary,model,1.785714286,electr,secondary,1,ELOUTPUT,NATGAS,GWh,output
+gas_exp,y,,model,gas,,model,,,,1,EXPORTS,NATGAS,TJ,input
+gas_fs,y,,model,gas,final,model,1,i_feed,useful,1,NEINTREN,NATGAS,TJ,input
+gas_hpl,y,,model,,,model,,,,,HEATOUT,NATGAS,TJ,output
+gas_i,y,,model,gas,final,model,1.25,i_therm,useful,1,TOTIND,NATGAS,TJ,input
+gas_imp,y,,model,,,model,,gas,secondary,1,IMPORTS,NATGAS,TJ,output
+gas_rc,y,,model,gas,final,model,1.315789474,rc_therm,useful,1,"RESIDENT, COMMPUB, AGRICULT, FISHING, ONONSPEC",NATGAS,TJ,input
+gas_trp,y,,model,gas,final,model,1,transport,useful,1,"DOMESAIR, ROAD, RAIL, DOMESNAV, TRNONSPE, AVBUNK",NATGAS,TJ,input
+heat_i,y,,model,d_heat,final,model,1,i_therm,useful,1,TOTIND,"HEATNS, HEAT",TJ,output
+hp_el_i,y,,model,electr,final,model,0.333333333,i_therm,useful,1,THEAT,ELECTR,TJ,input
+hp_gas_i,y,,model,gas,final,model,0.5,i_therm,useful,1,THEAT,NATGAS,TJ,input
+heat_rc,y,,model,d_heat,final,model,1.5625,rc_therm,useful,1,"RESIDENT, COMMPUB, AGRICULT, FISHING, ONONSPEC",HEAT,TJ,input
+"hydro_lc,hydro_hc",y,"0.9,0.1",model,hydro,renewable,model,1,electr,secondary,1,ELOUTPUT,HYDRO,GWh,output
+LNG_imp,y,,model,LNG,import,model,1,LNG,secondary,1,IMPORTS,('LNG' ),TJ,output
+LNG_prod,y,,model,gas,primary,model,1,LNG,primary,1,INDPROD,('LNG' ),TJ,output
+loil_exp,y,,model,lightoil,secondary,model,1,lightoil,export,1,EXPORTS,"OTHKERO, ONONSPEC, REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, NAPHTHA, WHITESP, LUBRIC",TJ,input
+loil_fs,y,,model,lightoil,final,model,1,i_feed,useful,1,NEINTREN,"OTHKERO, ONONSPEC, REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, NAPHTHA, WHITESP, LUBRIC",TJ,input
+loil_i,y,,model,lightoil,final,model,1.369863014,i_therm,useful,1,TOTIND,"REFINGAS, ETHANE, LPG, AVGAS, JETGAS, NONBIOJETK, NAPHTHA, WHITESP, LUBRIC, ONONSPEC, OTHKERO",TJ,input
+loil_imp,y,,model,,,model,1,lightoil,secondary,1,IMPORTS,"OTHKERO, ONONSPEC, REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, NAPHTHA, WHITESP, LUBRIC",TJ,output
+"loil_ppl,loil_cc",y,,model,lightoil,secondary,model,2.5,electr,secondary,1,ELOUTPUT,"OTHKERO, ONONSPEC, REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, NAPHTHA, WHITESP, LUBRIC",GWh,output
+loil_rc,y,,model,lightoil,final,model,1.449275362,rc_therm,useful,1,"RESIDENT, COMMPUB, AGRICULT, FISHING, ONONSPEC","OTHKERO, ONONSPEC, REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, NAPHTHA, WHITESP, LUBRIC",TJ,input
+loil_trp,y,,model,lightoil,final,model,1,transport,useful,1,"DOMESAIR, ROAD, RAIL, DOMESNAV, TRNONSPE, AVBUNK","OTHKERO, ONONSPEC, REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, NAPHTHA, WHITESP, LUBRIC",TJ,input
+meth_coal,y,,model,coal,primary,model,1.923076923,lightoil,secondary,0,"TCOALLIQ, ECOALLIQ","REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, RESFUEL, NAPHTHA, WHITESP, LUBRIC, BITUMEN, PARWAX, PETCOKE, ONONSPEC, OTHKERO",TJ,output
+meth_imp,y,,model,methanol,import,model,1,methanol,secondary,1,IMPORTS,('methanol' ),TJ,output
+meth_ng,y,,model,gas,primary,model,1.666666667,lightoil,secondary,0,"EGTL, TGTL","REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, RESFUEL, NAPHTHA, WHITESP, LUBRIC, BITUMEN, PARWAX, PETCOKE, ONONSPEC, OTHKERO",TJ,output
+"nuc_lc,nuc_hc",y,,model,u5,stocks,model,0.967,electr,secondary,1,ELOUTPUT,NUCLEAR,GWh,output
+oil_exp,y,,model,crudeoil,primary,model,1,crudeoil,export,1,EXPORTS,"CRNGFEED, CRUDEOIL, NGL, REFFEEDS, ADDITIVE, NONCRUDE",TJ,input
+oil_imp,y,,model,,,model,,crudeoil,secondary,1,IMPORTS,"CRNGFEED, CRUDEOIL, NGL, REFFEEDS, ADDITIVE, NONCRUDE",TJ,output
+"ref_lol,ref_hil",y,,model,crudeoil,secondary,model,1.092082143,lightoil,secondary,0.675365448,TREFINER,"REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, RESFUEL, NAPHTHA, WHITESP, LUBRIC, BITUMEN, PARWAX, PETCOKE, ONONSPEC, OTHKERO",TJ,output
+solar_rc,y,,model,,,model,,rc_therm,useful,1,TFC,SOLARTH,TJ,output
+sp_el_I,y,,model,electr,final,model,1.234567901,i_spec,useful,1,"MINING, CONSTRUC, CHEMICAL, NONFERR, NONMET, TRANSEQ, MACHINE, FOODPRO, PAPERPRO, WOODPRO, TEXTILES, NONENUSE, INONSPEC",ELECTR,TJ,input
+"sp_el_RC,elec_rc",y,,pfu,electr,final,model,1.754385965,rc_spec,useful,1,"RESIDENT, COMMPUB, AGRICULT, FISHING, ONONSPEC",ELECTR,TJ,input
+sp_liq_I,y,,model,lightoil,final,model,,i_spec,useful,1,TOTIND,"NONBIOGASO, NONBIODIES",TJ,input
+syn_liq,y,,model,coal,primary,model,2.272727273,lightoil,secondary,1,"TCOALLIQ, ECOALLIQ","REFINGAS, ETHANE, LPG, NONBIOGASO, AVGAS, JETGAS, NONBIOJETK, NONBIODIES, RESFUEL, NAPHTHA, WHITESP, LUBRIC, BITUMEN, PARWAX, PETCOKE, ONONSPEC, OTHKERO",TJ,output

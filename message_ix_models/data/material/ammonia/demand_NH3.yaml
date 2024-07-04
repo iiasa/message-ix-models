@@ -1,3 +1,17 @@
+# Ammonia Technology Roadmap IEA. 2019 Global NH3 production = 182 Mt.
+# 70% is used for nitrogen fertilizer production. Rest is 54.7 Mt.
+# 12 Mt is missing from nitrogen fertilizer part. Possibly due to low demand
+# coming from GLOBIOM updates. Also add this to the residual demand. (66.7 Mt)
+# Approximate regional shares are from Future of Petrochemicals
+# Methodological Annex page 7. Total production for regions:
+# Asia Pacific (RCPA, CHN, SAS, PAS, PAO) = 90 Mt
+# Eurasia (FSU) = 20 Mt, Middle East (MEA) = 15, Africa (AFR) = 5
+# Europe (WEU, EEU) = 25 Mt, Central&South America (LAM) = 5
+# North America (NAM) = 20 Mt.
+# Regional shares are derived. They are based on production values not demand.
+# Some assumptions made for the regions that are not explicitly covered in IEA.
+# (CHN produces the 30% of the ammonia globally and India 10%.)
+
 - R12_AFR:
     year: 2020
     value: 2.5000

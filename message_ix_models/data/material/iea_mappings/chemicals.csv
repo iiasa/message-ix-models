@@ -1,0 +1,10 @@
+technology,include,technology shares,share basis,input commodity,input level,input basis,input,output commodity,output level,output,IEA flow,IEA product,unit,output or input
+biomass_i,y,,model,biomass,final,model,1.538461538,i_therm,useful,1,CHEMICAL,"PRIMSBIO, CHARCOAL, RENEWNS, MUNWASTER",TJ,input
+coal_i,y,,model,coal,final,model,1.470588235,i_therm,useful,1,CHEMICAL,"HARDCOAL, BROWN, ANTCOAL, COKCOAL, BITCOAL, SUBCOAL, LIGNITE, PEAT, PATFUEL, OVENCOKE, GASCOKE, COALTAR, BKB, GASWKSGS, COKEOVGS, BLFURGS, MANGAS, INDWASTE, MUNWASTEN",TJ,input
+eth_i,y,,model,ethanol,final,model,1.234567901,i_therm,useful,1,CHEMICAL,"BIOGASOL, BIODIESEL, OBIOLIQ, BIOJETKERO",TJ,input
+foil_i,y,,model,fueloil,final,model,1.369863014,i_therm,useful,1,CHEMICAL,"BITUMEN, PARWAX, PETCOKE, RESFUEL",TJ,input
+gas_i,y,,model,gas,final,model,1.25,i_therm,useful,1,CHEMICAL,NATGAS,TJ,input
+heat_i,y,,model,d_heat,final,model,1,i_therm,useful,1,CHEMICAL,"HEATNS, HEAT",TJ,output
+loil_i,y,,model,lightoil,final,model,1.369863014,i_therm,useful,1,CHEMICAL,"REFINGAS, ETHANE, LPG, AVGAS, JETGAS, NONBIOJETK, NAPHTHA, WHITESP, LUBRIC, ONONSPEC, OTHKERO",TJ,input
+sp_el_I,y,,model,electr,final,model,1.234567901,i_spec,useful,1,CHEMICAL,ELECTR,TJ,input
+sp_liq_I,y,,model,lightoil,final,model,,i_spec,useful,1,CHEMICAL,"NONBIOGASO, NONBIODIES",TJ,input

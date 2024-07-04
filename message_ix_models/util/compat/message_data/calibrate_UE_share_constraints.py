@@ -1,10 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from .get_historical_years import main as get_historical_years
 from .utilities import intpol
-
-from . import get_optimization_years
 
 relation_set = {
     "UE_res_comm": [["sp", "th"], "useful_res_comm"],
@@ -79,7 +76,7 @@ def _add_data(scenario, row, period_intpol, relation_year, verbose):
         yr_prev = years[0]
         yr_next = years[-1]
         v_prev = share
-        v_next = float(tmp.loc[tmp.year_act == yr_next, "value"])
+        v_next = float(tmp.loc[tmp.year_act == yr_next, "value"].iloc[0])
         for y in years:
             if y == yr_prev:
                 tmp.loc[tmp.year_act == y, "value"] = share
@@ -96,7 +93,12 @@ def _add_data(scenario, row, period_intpol, relation_year, verbose):
 
 
 def main(
-    scenario, historical_year=None, relation_year=None, period_intpol=4, verbose=False
+    scenario,
+    s_info,
+    historical_year=None,
+    relation_year=None,
+    period_intpol=4,
+    verbose=False,
 ):
     """Checks UE shares constraints against historical data.
 
@@ -112,6 +114,7 @@ def main(
     ----------
     scenario : :class:`message_ix.Scenario`
         scenario to which changes should be applies
+    s_info: .ScenarioInfo
     historical_year : int
         the last historical time period
     relation_year : int
@@ -126,9 +129,9 @@ def main(
 
     # Assigns the historical and relation_year if not defined
     if not historical_year:
-        historical_year = get_historical_years(scenario)[-1]
+        historical_year = [i for i in s_info.yv_ya["year_vtg"] if s_info.y0 > i >= 1990]
     if not relation_year:
-        relation_year = get_optimization_years(scenario)[0]
+        relation_year = s_info.y0
 
     exceedings = []
 
@@ -218,7 +221,9 @@ def main(
                         exceed["technology"] = "{}_{}".format(relation_technology, sets)
                         exceedings.append(exceed)
     if len(exceedings) != 0:
-        exceedings = pd.concat(exceedings, sort=True).reset_index().drop("index", axis=1)
+        exceedings = (
+            pd.concat(exceedings, sort=True).reset_index().drop("index", axis=1)
+        )
         if verbose:
             print(exceedings)
 
