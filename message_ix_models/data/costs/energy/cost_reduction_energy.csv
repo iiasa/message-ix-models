@@ -45,7 +45,7 @@ hydro_hc,Renewable,0,0,0,0,0
 meth_ng,Gas/Oil,0,0.05,0.1,0.15,0.2
 meth_ng_ccs,CCS,0,0.05,0.1,0.15,0.2
 coal_ppl_u,Coal,0,0,0,0,0
-stor_ppl,Renewable,0.1,0.2,0.25,0.4,0.5
+stor_ppl,Renewable,0.15,0.3,0.7,0.9,0.95
 h2_elec,Renewable,0,0,0.1,0.2,0.3
 liq_bio,Biomass,0.15,0.27,0.27,0.4,0.55
 liq_bio_ccs,CCS,0.15,0.27,0.27,0.4,0.55
@@ -66,5 +66,5 @@ geo_hpl,Renewable,0.1,0.15,0.18,0.25,0.35
 nuc_lc,Nuclear,0,0,0,0,0
 nuc_hc,Nuclear,0,0,0.15,0.3,0.45
 wind_ppf,Renewable,0.15,0.3,0.53,0.65,0.75
-csp_sm1_ppl,NA,0,0,0,0,0
-csp_sm3_ppl,NA,0,0,0,0,0
+csp_sm1_ppl,Renewable,0.15,0.3,0.3,0.5,0.7
+csp_sm3_ppl,Renewable,0.15,0.3,0.3,0.5,0.7
