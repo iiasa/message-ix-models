@@ -211,3 +211,5 @@ def gen_demand(context: "Context") -> None:
         keys.append(Key(q[name]))
 
         log.info(f"{len(q[name])} observations for {keys[-1]}")
+
+    return q
