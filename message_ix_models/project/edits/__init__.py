@@ -163,7 +163,15 @@ def gen_demand(context: "Context") -> None:
        MESSAGEix-Transport.
     """
     from genno import Key
-    from genno.operator import assign_units, rename, rename_dims, select
+    from genno.operator import assign_units, rename_dims, select
+
+    try:
+        from genno.operator import rename
+    except ImportError:  # genno < 1.26
+
+        def rename(qty: "AnyQuantity", name: str) -> "AnyQuantity":
+            qty.name = name
+            return qty
 
     # Read the SDMX structures
     sm = sdmx.read_sdmx(local_data_path("edits", "pasta-structure.xml"))
