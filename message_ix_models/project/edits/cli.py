@@ -13,6 +13,8 @@ def cli():
 @click.pass_obj
 def debug(context, **kwargs):
     """Development/debugging code."""
-    from . import read_pasta_data
+    from . import gen_demand, pasta_native_to_sdmx  # noqa: F401
 
-    read_pasta_data()
+    # commented: Only needs to occur once, then cached
+    # pasta_native_to_sdmx()
+    gen_demand()
