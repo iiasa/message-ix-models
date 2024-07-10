@@ -11,6 +11,7 @@ def cli():
 
 FILENAMES = [
     "advance/advance_compare_20171018-134445.csv.zip",
+    "edits/pasta.csv",
     "gea/GEADB_ARCHIVE_20171108.zip",
     "iea/372f7e29-en.zip",
     "iea/8624f431-en.zip",
@@ -103,7 +104,7 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         )
 
     # Determine columns in which to replace numerical data
-    if "iea" in filename:
+    if any(s in filename for s in ("iea", "edits")):
         # Specific column
         cols = ["Value"]
     else:
@@ -112,11 +113,16 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
 
     # Shape of random data
     size = (df.shape[0], len(cols))
-    # - Generate random data of this shape.
+    # - Generate random data of this shape, with columns `cols` and same index as `df`.
     # - Keep only the elements corresponding to non-NA elements of `df`.
     # - Update `df` with these values.*
     generator = random.default_rng()
-    df.update(df.where(df.isna(), pd.DataFrame(generator.random(size), columns=cols)))
+    df.update(
+        df.where(
+            df.isna(),
+            pd.DataFrame(generator.random(size), columns=cols, index=df.index),
+        )
+    )
 
     # Write to file, keeping only a few decimal points
     path_out.parent.mkdir(parents=True, exist_ok=True)
