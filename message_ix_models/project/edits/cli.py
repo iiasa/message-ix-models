@@ -11,7 +11,7 @@ def cli():
 
 @cli.command("_debug")
 @click.pass_obj
-def debug(context, **kwargs):
+def debug(context, **kwargs):  # pragma: no cover
     """Development/debugging code."""
     from . import gen_demand, pasta_native_to_sdmx  # noqa: F401
 
