@@ -9,6 +9,7 @@ from message_ix_models import util
 COMMANDS = [
     tuple(),
     ("debug",),
+    ("edits", "_debug"),
     ("fetch",),
     ("report",),
     ("ssp", "gen-structures"),
