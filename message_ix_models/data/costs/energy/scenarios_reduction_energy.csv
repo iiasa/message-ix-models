@@ -31,7 +31,6 @@ wind_ppf,high,medium,low,high,medium,very_high
 solar_th_ppl,high,medium,low,high,medium,very_high
 solar_pv_I,high,medium,low,high,medium,very_high
 solar_pv_RC,high,medium,low,high,medium,very_high
-solar_pv_ppl,high,medium,low,high,medium,very_high
 geo_ppl,high,medium,low,high,medium,medium
 hydro_lc,high,medium,low,high,medium,medium
 hydro_hc,high,medium,low,high,medium,medium
@@ -60,3 +59,12 @@ nuc_lc,medium,medium,low,high,high,medium
 nuc_hc,medium,medium,low,high,high,medium
 csp_sm1_ppl,high,medium,low,high,medium,very_high
 csp_sm3_ppl,high,medium,low,high,medium,very_high
+solar_res1,high,medium,low,high,medium,very_high
+solar_res2,high,medium,low,high,medium,very_high
+solar_res3,high,medium,low,high,medium,very_high
+solar_res4,high,medium,low,high,medium,very_high
+solar_res5,high,medium,low,high,medium,very_high
+solar_res6,high,medium,low,high,medium,very_high
+solar_res7,high,medium,low,high,medium,very_high
+solar_res8,high,medium,low,high,medium,very_high
+solar_res_hist,high,medium,low,high,medium,very_high
