@@ -34,7 +34,6 @@ wind_ppf,2020
 solar_th_ppl,2005
 solar_pv_I,2005
 solar_pv_RC,2005
-solar_pv_ppl,2020
 geo_ppl,2005
 hydro_lc,2005
 hydro_hc,2005
@@ -63,3 +62,12 @@ nuc_lc,2005
 nuc_hc,2005
 csp_sm1_ppl,2010
 csp_sm3_ppl,2010
+solar_res1,2020
+solar_res2,2020
+solar_res3,2020
+solar_res4,2020
+solar_res5,2020
+solar_res6,2020
+solar_res7,2020
+solar_res8,2020
+solar_res_hist,2020
