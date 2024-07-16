@@ -29,7 +29,6 @@ eth_bio_ccs,2030
 c_ppl_co2scr,2030
 g_ppl_co2scr,2030
 bio_ppl_co2scr,2030
-wind_ppl,2020
 wind_ppf,2020
 solar_th_ppl,2005
 solar_pv_I,2005
@@ -71,3 +70,8 @@ solar_res6,2020
 solar_res7,2020
 solar_res8,2020
 solar_res_hist,2020
+wind_res1,2020
+wind_res2,2020
+wind_res3,2020
+wind_res4,2020
+wind_res_hist,2020

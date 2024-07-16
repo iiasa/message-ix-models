@@ -26,7 +26,6 @@ eth_bio_ccs,medium,medium,low,high,high,medium
 c_ppl_co2scr,medium,medium,low,high,high,medium
 g_ppl_co2scr,medium,medium,low,high,high,medium
 bio_ppl_co2scr,medium,medium,low,high,high,medium
-wind_ppl,high,medium,low,high,medium,very_high
 wind_ppf,high,medium,low,high,medium,very_high
 solar_th_ppl,high,medium,low,high,medium,very_high
 solar_pv_I,high,medium,low,high,medium,very_high
@@ -68,3 +67,8 @@ solar_res6,high,medium,low,high,medium,very_high
 solar_res7,high,medium,low,high,medium,very_high
 solar_res8,high,medium,low,high,medium,very_high
 solar_res_hist,high,medium,low,high,medium,very_high
+wind_res1,high,medium,low,high,medium,very_high
+wind_res2,high,medium,low,high,medium,very_high
+wind_res3,high,medium,low,high,medium,very_high
+wind_res4,high,medium,low,high,medium,very_high
+wind_res_hist,high,medium,low,high,medium,very_high
