@@ -362,6 +362,15 @@ def create_message_outputs(
 
     y_base = config.base_year
 
+    dims = [
+        "scenario_version",
+        "scenario",
+        "message_technology",
+        "first_technology_year",
+        "region",
+        "year",
+    ]
+
     df_prod = pd.DataFrame(
         product(
             df_projections.scenario_version.unique(),
@@ -371,14 +380,7 @@ def create_message_outputs(
             df_projections.region.unique(),
             config.seq_years,
         ),
-        columns=[
-            "scenario_version",
-            "scenario",
-            "message_technology",
-            "first_technology_year",
-            "region",
-            "year",
-        ],
+        columns=dims,
     )
 
     val_2020 = (
@@ -393,36 +395,11 @@ def create_message_outputs(
         .rename(columns={"inv_cost": "inv_cost_2100", "fix_cost": "fix_cost_2100"})
     )
 
-    dims = [
-        "scenario_version",
-        "scenario",
-        "message_technology",
-        "first_technology_year",
-        "region",
-    ]
-
     df_merge = (
         (
-            df_prod.merge(
-                val_2020,
-                on=dims,
-            )
-            .merge(
-                val_2100,
-                on=dims,
-            )
-            .merge(
-                df_projections,
-                on=[
-                    "scenario_version",
-                    "scenario",
-                    "message_technology",
-                    "first_technology_year",
-                    "region",
-                    "year",
-                ],
-                how="left",
-            )
+            df_prod.merge(val_2020, on=dims[:-1])
+            .merge(val_2100, on=dims[:-1])
+            .merge(df_projections, on=dims, how="left")
         )
         .assign(
             inv_cost=lambda x: np.where(x.year <= y_base, x.inv_cost_2020, x.inv_cost),
@@ -491,30 +468,21 @@ def create_message_outputs(
     ).assign(key=1)
 
     def _compute_value(df: pd.DataFrame) -> pd.Series:
-        if config.use_vintages:
-            df["val"] = np.where(
-                df.year_vtg <= y_base,
-                np.where(
-                    df.year_act <= y_base,
-                    df.fix_cost,
-                    np.where(
-                        config.fom_rate == 0,
-                        df.fix_cost,
-                        df.fix_cost
-                        * (1 + float(config.fom_rate)) ** (df.year_act - y_base),
-                    ),
-                ),
-                np.where(
-                    config.fom_rate == 0,
-                    df.fix_cost,
-                    df.fix_cost
-                    * (1 + float(config.fom_rate)) ** (df.year_act - df.year_vtg),
-                ),
-            )
-            return df.val
-
-        else:
+        if not config.use_vintages:
             return df.fix_cost
+
+        rate = 1.0 + config.fom_rate
+
+        return np.where(
+            df.year_vtg <= y_base,
+            np.where(
+                df.year_act <= y_base,
+                df.fix_cost,
+                # NB if fom_rate was 0, the latter terms collapse to 1.0 ** (…) = 1.0
+                df.fix_cost * rate ** (df.year_act - y_base),
+            ),
+            df.fix_cost * rate ** (df.year_act - df.year_vtg),
+        )
 
     fom = (
         df_merge.copy()
@@ -525,12 +493,7 @@ def create_message_outputs(
         .drop(columns=["key"])
         .query("year_act >= year_vtg")
         .assign(value=_compute_value, unit="USD/kWa")
-        .rename(
-            columns={
-                "message_technology": "technology",
-                "region": "node_loc",
-            }
-        )
+        .rename(columns={"message_technology": "technology", "region": "node_loc"})
         .reindex(
             [
                 "scenario_version",
