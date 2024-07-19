@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from genno.types import AnyQuantity
     from message_ix import Scenario
     from message_ix_models import Context
+    from xarray.core.types import Dims
 
     import message_data.model.transport.factor
 
@@ -71,6 +72,8 @@ __all__ = [
     "indexers_usage",
     "input_commodity_level",
     "logit",
+    "max",
+    "min",
     "merge_data",
     "nodes_ex_world",  # Re-export from message_ix_models.util TODO do this upstream
     "nodes_world_agg",
@@ -596,6 +599,36 @@ def logit(
     return u / u.sum(dim)
 
 
+def max(
+    qty: "AnyQuantity",
+    dim: "Dims" = None,
+    *,
+    skipna: Optional[bool] = None,
+    keep_attrs: Optional[bool] = None,
+    **kwargs: Any,
+) -> "AnyQuantity":
+    """Like :meth:`xarray.DataArray.max`."""
+    assert skipna is keep_attrs is None and 0 == len(kwargs), NotImplementedError
+
+    # FIXME This is AttrSeries only
+    return qty.groupby(level=dim).max()  # type: ignore
+
+
+def min(
+    qty: "AnyQuantity",
+    dim: "Dims" = None,
+    *,
+    skipna: Optional[bool] = None,
+    keep_attrs: Optional[bool] = None,
+    **kwargs: Any,
+) -> "AnyQuantity":
+    """Like :meth:`xarray.DataArray.min`."""
+    assert skipna is keep_attrs is None and 0 == len(kwargs), NotImplementedError
+
+    # FIXME This is AttrSeries only
+    return qty.groupby(level=dim).min()  # type: ignore
+
+
 def merge_data(
     *others: Mapping[Hashable, pd.DataFrame],
 ) -> Dict[Hashable, pd.DataFrame]:
@@ -788,6 +821,8 @@ def share_weight(
         With dimensions :math:`(n, t, y)`: |n| matching `gdp_ppp_cap; :math:`t` per
         `t_modes`, and |y| per `y`.
     """
+    from builtins import min
+
     # Extract info from arguments
     cfg: Config = config["transport"]
     nodes = sorted(gdp.coords["n"].data)
