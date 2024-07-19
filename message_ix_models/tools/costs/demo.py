@@ -17,6 +17,7 @@ from message_ix_models.tools.costs.projections import create_cost_projections
 # - format="message",
 # - method="gdp",
 # - module="energy",
+# - use_vintages=False,
 # - node="R12",
 # - ref_region —automatically determined from node
 # - scenario="all",
