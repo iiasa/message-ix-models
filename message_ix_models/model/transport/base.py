@@ -162,7 +162,22 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # Compute shares of useful energy by input
     ue_share = rep.add("ue::share", "div", ue / tuple("chl"), ue / tuple("chlt"))
     assert isinstance(ue_share, Key)
+
+    # Minimum and maximum shares occurring over the model horizon in each region
+    rep.add(ue_share + "max", "max", ue_share, dim=("nl", "t"))
+    rep.add(ue_share + "min", "min", ue_share, dim=("nl", "t"))
+
     _to_csv(ue_share, "ue share", dict(header_comment=UE_SHARE_HEADER))
+    _to_csv(
+        ue_share + "max",
+        "ue share max",
+        dict(header_comment=UE_SHARE_HEADER + "\n\nMaximum across ya."),
+    )
+    _to_csv(
+        ue_share + "min",
+        "ue share min",
+        dict(header_comment=UE_SHARE_HEADER + "\n\nMinimum across ya."),
+    )
 
     # Ensure units: in::transport+units [=] GWa/a and input::base [=] GWa; their ratio
     # gives units 1/a. The base model expects "GWa" for all 3 parameters.
