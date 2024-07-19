@@ -71,13 +71,18 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         rep.add(csv, "write_report", base, path, write_kw or {})
         targets.append(csv)
 
+    # Keys for starting quantities
     e_iea = Key("energy:n-y-product-flow:iea")
     e_fnp = KeySeq(e_iea.drop("y"))
     e_cnlt = Key("energy:c-nl-t:iea+0")
     k = KeySeq("in:nl-t-ya-c-l-h:transport+units")
 
+    # First period
+    y0 = rep.get("y0")
+
     # Transform IEA EWEB data for comparison
-    rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
+    assert y0 == 2020, f"IEA Extended World Energy Balances: no data for y={y0}"
+    rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=y0), drop=True)
     rep.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
     rep.add(
         e_cnlt,
@@ -88,7 +93,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     )
 
     # Transport outputs for comparison
-    rep.add(k[0], "select", k.base, indexers=dict(ya=2020), drop=True)
+    rep.add(k[0], "select", k.base, indexers=dict(ya=y0), drop=True)
     rep.add(k[1], "aggregate", k[0], "groups::transport to iea", keep=False)
 
     # Scaling factor 1: ratio of MESSAGEix-Transport outputs to IEA data
@@ -105,8 +110,8 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     rep.add(s1[4], "select", s1[3], "indexers::iea to transport")
     rep.add(s1[5], "rename_dims", s1[4], quote(dict(t_new="t")))
 
-    # Interpolate the scaling factor from computed value in ya=2020 to 1.0 in ya ≥ 2050
-    rep.add(s1[6], lambda q: q.expand_dims(ya=[2020]), s1[5])
+    # Interpolate the scaling factor from computed value in ya=y₀ to 1.0 in ya ≥ 2050
+    rep.add(s1[6], lambda q: q.expand_dims(ya=[y0]), s1[5])
     rep.add(s1[7], lambda q: q.expand_dims(ya=[2050]).clip(1.0, 1.0), s1[5])
     rep.add(s1[8], lambda q: q.expand_dims(ya=[2110]).clip(1.0, 1.0), s1[5])
     rep.add(s1[9], "concat", s1[6], s1[7], s1[8])
@@ -121,9 +126,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     rep.add(k["s1"], "div", k.base, s1[10])
 
     # Scaling factor 2: ratio of total of scaled data to IEA total
-    rep.add(
-        k[2] / "ya", "select", k["s1"], indexers=dict(ya=2020), drop=True, sums=True
-    )
+    rep.add(k[2] / "ya", "select", k["s1"], indexers=dict(ya=y0), drop=True, sums=True)
     rep.add(
         "energy:nl:iea+transport",
         "select",
@@ -167,8 +170,8 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # TODO compute shares of `ue + "1"` versus the total for each (n, y, m)
 
-    # Select only ya=2020 data for use in `bound_activity_*`
-    b_a_l = rep.add(Key("b_a_l", ue.dims), "select", ue + "1", quote(dict(ya=[2020])))
+    # Select only ya=y₀ data for use in `bound_activity_*`
+    b_a_l = rep.add(Key("b_a_l", ue.dims), "select", ue + "1", quote(dict(ya=[y0])))
 
     # `bound_activity_up` values are 1.005 * `bound_activity_lo` values
     b_a_u = rep.add("b_a_u", "mul", b_a_l, Quantity(1.005))
