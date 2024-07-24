@@ -591,6 +591,20 @@ solar_res7:
   sector: electricity
   output: [electr, secondary]
 
+solar_res8:
+  name: solar_res8
+  description: Maximum solar electricity potential 8
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_hist:
+  name: solar_res_hist
+  description: Currently installed solar electricity capacity
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
 solar_th_ppl:
   name: solar_th_ppl
   description: Solar thermal power plant with storage
@@ -696,6 +710,13 @@ wind_res4:
   sector: electricity
   output: [electr, secondary]
 
+wind_res_hist:
+  name: wind_res_hist
+  description: Currently installed wind onshore capacity
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
 wind_ppf:
   name: wind_ppf
   description: Wind power plant offshore (provides capacity only)
@@ -735,6 +756,13 @@ wind_ref4:
 wind_ref5:
   name: wind_ref5
   description: Wind offshore potential and generation 5
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref_hist:
+  name: wind_ref_hist
+  description: Currently installed wind offshore capacity
   type: secondary
   sector: electricity
   output: [electr, secondary]
