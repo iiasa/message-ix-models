@@ -1,17 +1,21 @@
 """Data preparation for the MESSAGEix-GLOBIOM base model."""
 
 from functools import partial
-from typing import TYPE_CHECKING, Union
+from itertools import pairwise
+from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 import pandas as pd
+from genno import KeySeq
 from genno.core.key import single_key
 
 from .key import gdp_exo
 
 if TYPE_CHECKING:
+    import genno
     import message_ix
     from genno.core.key import KeyLike
+    from genno.types import AnyQuantity
 
 
 SCALE_1_HEADER = """Ratio of MESSAGEix-Transport output to IEA EWEB data.
@@ -31,6 +35,82 @@ scale-1.csv.
 UE_SHARE_HEADER = (
     """Portion of useful energy output by each t within (nl, ya) groups."""
 )
+
+
+def smooth(c: "genno.Computer", key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
+    """Implement ‘smoothing’ for `key` along the dimension `dim`.
+
+    1. Identify values which do not meet a certain criterion. Currently the criterion
+       is: the first contiguous sequence of values that are lower than the corresponding
+       value in :math:`y_A = y_0` (e.g. in 2020).
+    2. Remove those values.
+    3. Fill by linear interpolation.
+    """
+    from genno import Quantity
+
+    assert key.tag != "2"
+    ks = KeySeq(key.remove_tag(key.tag or ""))
+
+    def first_block_false(column: pd.Series) -> pd.Series:
+        """Modify `column` to contain at most one contiguous block of :data:`.False`."""
+        # Iterate over values pairwise to identify start and end indices of a block
+        i_start = i_end = 0
+        for i, pair in enumerate(pairwise(column.values), start=1):
+            if pair == (True, False):  # Start of a block of False values
+                i_start = i
+            elif pair == (False, True):  # End of a block
+                i_end = i
+                break  # Don't examine further values
+
+        if i_start > 0 and i_end > 0:  # Block of False values with a start and end
+            column.iloc[i_end:] = True  # Fill with True after the end of the block
+        elif i_start > 0:  # Block of False values *without* end
+            column.iloc[i_start:] = True  # Erase the entire block by overwriting
+
+        return column
+
+    def clip_nan(qty: "AnyQuantity", coord: Any) -> "AnyQuantity":
+        """Clip values below the value for `ya`, replacing with :any:`numpy.nan`.
+
+        Only the first contiguous block of values below the value for `ya` are clipped.
+        """
+        # Dimensions other than `dim`
+        others = list(qty.dims)
+        others.remove(dim)
+
+        # - Select the threshold values for `dim`=`coord`; broadcast to all `dim`.
+        # - Merge with `qty` values.
+        # - Reorder and sort index.
+        # - Compute condition for clipping.
+        # - Return clipped values.
+        return Quantity(
+            qty.sel({dim: coord})
+            .expand_dims({dim: qty.coords[dim]})
+            .to_series()
+            .rename("threshold")
+            .to_frame()
+            .merge(qty.to_series().rename("value"), left_index=True, right_index=True)
+            .reorder_levels(list(qty.dims))
+            .sort_index()
+            .where(
+                lambda df: (df.value >= df.threshold)
+                .groupby(others, group_keys=False)
+                .apply(first_block_false)
+            )["value"]
+        )
+
+    # Clip the data, removing values below the value for dim=y0
+    c.add(ks["_clip"], clip_nan, key, "y0")
+
+    # Identify the coordinates for interpolation on `dim`
+    c.add(ks["_ya coords"], lambda qty: {dim: sorted(qty.coords[dim].data)}, key)
+
+    # Interpolate to fill clipped data
+    c.add(
+        ks[2], "interpolate", ks["_clip"], ks["_ya coords"], method="slinear", sums=True
+    )
+
+    return ks[2]
 
 
 def prepare_reporter(rep: "message_ix.Reporter") -> str:
@@ -156,11 +236,13 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # will be used for `demand`.
     # - Sum across the "t" dimension of `k` to avoid conflict with "t" labels introduced
     #   by the data from file.
-    ue = rep.add("ue", "div", k["s2"] / "t", "input:t-c-h:base")
-    assert isinstance(ue, Key)
+    tmp = rep.add("ue", "div", k["s2"] / "t", "input:t-c-h:base")
+    ue = KeySeq(tmp)
 
     # Compute shares of useful energy by input
-    ue_share = rep.add("ue::share", "div", ue / tuple("chl"), ue / tuple("chlt"))
+    ue_share = rep.add(
+        "ue::share", "div", ue.base / tuple("chl"), ue.base / tuple("chlt")
+    )
     assert isinstance(ue_share, Key)
 
     # Minimum and maximum shares occurring over the model horizon in each region
@@ -181,12 +263,14 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Ensure units: in::transport+units [=] GWa/a and input::base [=] GWa; their ratio
     # gives units 1/a. The base model expects "GWa" for all 3 parameters.
-    rep.add(ue + "1", "mul", ue, Quantity(1.0, units="GWa * a"))
+    rep.add(ue[1], "mul", ue.base, Quantity(1.0, units="GWa * a"))
+    _to_csv(ue[1] / ("c", "t"), "demand no fill", {})
 
-    # TODO compute shares of `ue + "1"` versus the total for each (n, y, m)
+    # 'Smooth' ue[1] data by interpolating any dip below the base year value
+    assert rep.apply(smooth, ue[1] / ("c", "t")) == ue[2] / ("c", "t")
 
     # Select only ya=y₀ data for use in `bound_activity_*`
-    b_a_l = rep.add(Key("b_a_l", ue.dims), "select", ue + "1", quote(dict(ya=[y0])))
+    b_a_l = rep.add(Key("b_a_l", ue[2].dims), "select", ue[1], quote(dict(ya=[y0])))
 
     # `bound_activity_up` values are 1.005 * `bound_activity_lo` values
     b_a_u = rep.add("b_a_u", "mul", b_a_l, Quantity(1.005))
@@ -203,9 +287,9 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Add similar steps for each parameter
     for name, base_key, args in (
-        ("demand", (ue + "1").drop("c", "t"), args_demand),
+        ("demand", ue[2] / ("c", "t"), args_demand),
         ("bound_activity_lo", b_a_l, args_bound_activity),
-        ("bound_activity_lo-projected", ue + "1", args_bound_activity),
+        ("bound_activity_lo-projected", ue[1], args_bound_activity),
         ("bound_activity_up", b_a_u, args_bound_activity),
     ):
         # More identifiers
