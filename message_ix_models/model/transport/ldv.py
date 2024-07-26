@@ -166,7 +166,9 @@ def prepare_computer(c: Computer):
     except KeyError:
         pass  # No such file in this configuration
     else:
-        kw = dict(dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={})
+        kw: Dict[str, Any] = dict(
+            dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
+        )
 
         # historical_new_capacity: select only data prior to y₀
         kw.update(name="historical_new_capacity")
