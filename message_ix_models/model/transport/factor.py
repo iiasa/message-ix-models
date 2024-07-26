@@ -354,7 +354,7 @@ class Factor:
         )
 
     def __call__(
-        self, config, *coords, dims: Tuple[str], scenario_expr: str
+        self, config, *coords, dims: Tuple[str, ...], scenario_expr: str
     ) -> Quantity:
         """Invoke :meth:`quantify`, for use with :mod:`genno`."""
         kw = dict(zip(dims, coords))
