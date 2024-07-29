@@ -9,6 +9,7 @@ from message_ix_models.model.material.data_util import (
     read_rel,
     read_sector_data,
     read_timeseries,
+    calculate_ini_new_cap,
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import (
@@ -517,8 +518,8 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
-    results[parname].append(df)
+    df_demand = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
+    results[parname].append(df_demand)
 
     common = dict(
     year_vtg=yv_ya.year_vtg,
@@ -550,6 +551,19 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    results["initial_new_capacity_up"] = pd.concat(
+        [
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True), technology="dri_gas_ccs_steel",
+                material = "steel"
+            ),
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True), technology="bf_ccs_steel",
+                material = "steel"
+            ),
+        ]
+    )
 
     maybe_remove_water_tec(scenario, results)
 
