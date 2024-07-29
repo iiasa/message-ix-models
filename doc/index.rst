@@ -81,6 +81,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
 
    global/index
    material/index
+   transport/index
    water/index
 
 .. toctree::
