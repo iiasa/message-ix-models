@@ -241,7 +241,7 @@ def price_fit(df: pd.DataFrame) -> float:
         estimated value for price_ref in 2020
     """
 
-    pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
+    pars = curve_fit(exponential, df.year, df.lvl, maxfev=10000)[0]
     val = exponential([2020], *pars)[0]
     # print(df.commodity.unique(), df.node.unique(), val)
     return val
@@ -282,7 +282,9 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     fname : str
         file name of MACRO file used for calibration
     """
-    path = "C:/Users/maczek/Downloads/macro/refactored/"
+    # Change this according to the relevant data path 
+    path = "C:/Users/unlu/Documents/MyDocuments_IIASA/Material_Flow/macro_calibration/"
+
     wb = pxl.load_workbook(path + fname)
 
     # cost_ref
@@ -305,7 +307,7 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
             "R12_WEU",
         ],
     )
-    df = df[df["year"].isin([2025, 2030, 2035])].groupby(["node"]).apply(cost_fit)
+    df = df[df["year"].isin([2020, 2025, 2030])].groupby(["node"]).apply(cost_fit)
     ws = wb.get_sheet_by_name("cost_ref")
     for i in range(2, 7):
         ws[f"B{i}"].value = df.values[i - 2]
@@ -314,7 +316,7 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
 
     # price_ref
     comms = ["i_feed", "i_spec", "i_therm", "rc_spec", "rc_therm", "transport"]
-    years = [i for i in range(2025, 2055, 5)]
+    years = [i for i in range(2020, 2055, 5)]
     df = scenario.var("PRICE_COMMODITY", filters={"commodity": comms, "year": years})
     df["node"] = pd.Categorical(
         df["node"],

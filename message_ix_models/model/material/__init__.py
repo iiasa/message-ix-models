@@ -55,7 +55,6 @@ DATA_FUNCTIONS_1 = [
     # gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
-    # gen_data_ammonia, ## deprecated module!
     gen_data_generic,
     gen_data_steel,
 ]
@@ -65,7 +64,6 @@ DATA_FUNCTIONS_2 = [
     gen_data_power_sector,
     gen_data_aluminum,
 ]
-
 
 def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
@@ -161,7 +159,6 @@ SPEC_LIST = [
     "petro_chemicals",
     # "buildings",
     "power_sector",
-    "fertilizer",
     "methanol",
 ]
 
@@ -421,7 +418,7 @@ def solve_scen(
 
             # Report
             from message_ix_models.model.material.report.reporting import report
-            from message_ix_models.report.legacy.iamc_report_hackathon import (
+            from message_data.tools.post_processing.iamc_report_hackathon import (
                 report as reporting,
             )
 
@@ -451,7 +448,7 @@ def solve_scen(
 
         # update cost_ref and price_ref with new solution
         update_macro_calib_file(
-            scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+            scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat_v2.xlsx"
         )
 
         # After solving, add macro calibration
@@ -460,7 +457,7 @@ def solve_scen(
         #     scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx"
         # )
         scenario = add_macro_COVID(
-            scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+            scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat_v2.xlsx"
         )
         print("Scenario calibrated.")
 
@@ -508,7 +505,7 @@ def add_building_ts(scenario_name, model_name):
 def run_reporting(context, remove_ts, profile):
     """Run materials, then legacy reporting."""
     from message_ix_models.model.material.report.reporting import report
-    from message_ix_models.report.legacy.iamc_report_hackathon import (
+    from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
 
@@ -584,7 +581,7 @@ def run_reporting(context, remove_ts, profile):
 @cli.command("report-2")
 @click.pass_obj
 def run_old_reporting(context):
-    from message_ix_models.report.legacy.iamc_report_hackathon import (
+    from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
 
