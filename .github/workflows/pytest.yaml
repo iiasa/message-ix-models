@@ -2,7 +2,7 @@ name: Test
 
 on:
   pull_request:
-    branches: [ main , "migrate-*"]
+    branches: [ main , "migrate**"]
   schedule:
   # 05:00 UTC = 06:00 CET = 07:00 CEST
   - cron: "0 5 * * *"
