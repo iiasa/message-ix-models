@@ -179,7 +179,7 @@ def report(context, scenario):  # noqa: C901
         nodes.remove("R12_GLB*")
 
     # Path for materials reporting output
-    directory = package_data_path("material", "reporting_output")
+    directory = context.get_local_path("report", "materials")
     directory.mkdir(exist_ok=True)
 
     # Generate message_ix level reporting and dump to an excel file.
@@ -999,14 +999,14 @@ def report(context, scenario):  # noqa: C901
         df_cement_clinker.filter(
             variable=["out|tertiary_material|clinker_cement|*"], inplace=True
         )
-        df_cement_clinker.plot.stack(ax=ax1)
-        ax1.legend(
-            ["Dry Clinker", "Wet Clinker"], bbox_to_anchor=(-0.5, 1), loc="upper left"
-        )
-        ax1.set_title("Clinker Cement Production_" + r)
-        ax1.set_xlabel("Year")
-        ax1.set_ylabel("Mt")
-
+    #     df_cement_clinker.plot.stack(ax=ax1)
+    #     ax1.legend(
+    #         ["Dry Clinker", "Wet Clinker"], bbox_to_anchor=(-0.5, 1), loc="upper left"
+    #     )
+    #     ax1.set_title("Clinker Cement Production_" + r)
+    #     ax1.set_xlabel("Year")
+    #     ax1.set_ylabel("Mt")
+    #
         # Final prodcut cement
 
         df_cement = df.copy()

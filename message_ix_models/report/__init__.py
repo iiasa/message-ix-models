@@ -417,4 +417,4 @@ def defaults(rep: Reporter, context: Context) -> None:
 
 
 register(defaults)
-register("message_ix_models.report.plot")
+# register("message_ix_models.report.plot")
