@@ -812,7 +812,7 @@ def add_new_ind_hist_act(scen: message_ix.Scenario, years: list, iea_data_path) 
 
 def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
     # RFE: refactor to use external mapping file (analogue to calc_hist_activity())
-    i_spec_material_flows = ["NONMET", "NONFERR"] # "CHEMICAL"
+    i_spec_material_flows = ["NONMET", "NONFERR"]  # "CHEMICAL"
     i_therm_material_flows = ["NONMET", "CHEMICAL", "IRONSTL"]
     i_flow = ["TOTIND"]
     i_spec_prods = ["ELECTR", "NONBIODIES", "BIOGASOL"]
@@ -2431,9 +2431,9 @@ def calibrate_t_d_tecs(scenario):
         scenario.par("output", filters={"technology": tecs})[
             ["node_loc", "technology", "commodity", "level"]
         ]
-            .drop_duplicates()
-            .reset_index()
-            .drop("index", axis=1)
+        .drop_duplicates()
+        .reset_index()
+        .drop("index", axis=1)
     )
     update_df = pd.DataFrame()
     for i in td.index:
@@ -2471,8 +2471,8 @@ def calibrate_t_d_tecs(scenario):
 
         act = (
             pd.concat([histact, act])
-                .sort_values(by=["node_loc", "technology", "year_act"])
-                .set_index(["node_loc", "technology", "year_act"])
+            .sort_values(by=["node_loc", "technology", "year_act"])
+            .set_index(["node_loc", "technology", "year_act"])
         )
 
         # Multiply the activity data with the input efficiencies to derive total energy requirements
@@ -2480,15 +2480,11 @@ def calibrate_t_d_tecs(scenario):
             inp.loc[
                 (inp.year_vtg == inp.year_act)
                 & (inp.node_loc == row.node_loc)
-                & (
-                    inp.technology.isin(
-                        act.reset_index().technology.unique().tolist()
-                    )
-                )
+                & (inp.technology.isin(act.reset_index().technology.unique().tolist()))
                 & (inp.year_act.isin(act.reset_index().year_act.unique().tolist()))
-                ]
-                .set_index(["node_loc", "technology", "year_act"])
-                .value
+            ]
+            .set_index(["node_loc", "technology", "year_act"])
+            .value
         )
 
         # Backfill any missing values
@@ -2500,11 +2496,11 @@ def calibrate_t_d_tecs(scenario):
         df = act.copy()
         df = (
             df.reset_index()
-                .groupby(["node_loc", "year_act"])
-                .sum(numeric_only=True)[["fe"]]
-                .rename(columns={"fe": "value"})
-                .assign(unit="GWa", technology=row.technology, mode="M1", time="year")
-                .reset_index()
+            .groupby(["node_loc", "year_act"])
+            .sum(numeric_only=True)[["fe"]]
+            .rename(columns={"fe": "value"})
+            .assign(unit="GWa", technology=row.technology, mode="M1", time="year")
+            .reset_index()
         )
 
         update_df = pd.concat([update_df, df])
@@ -2525,6 +2521,92 @@ def calibrate_t_d_tecs(scenario):
         scenario.add_par("bound_activity_lo", update_df)
         update_df.value *= 1.005
         scenario.add_par("bound_activity_up", update_df)
+
+
+def maybe_add_water_tecs(scenario):
+    if "water_supply" not in list(scenario.set("level")):
+        scenario.check_out()
+        # add missing water tecs
+        scenario.add_set("technology", "extract__freshwater_supply")
+        scenario.add_set("level", "water_supply")
+        scenario.add_set("commodity", "freshwater_supply")
+
+        water_dict = pd.read_excel(
+            package_data_path("material", "other", "water_tec_pars.xlsx"),
+            sheet_name=None,
+        )
+        for par in water_dict.keys():
+            scenario.add_par(par, water_dict[par])
+        scenario.commit("add missing water tecs")
+
+
+def calibrate_for_SSPs(scenario):
+    add_elec_i_ini_act(scenario)
+    from message_ix.util import make_df
+
+    from message_ix_models import ScenarioInfo
+    from message_ix_models.util import broadcast, nodes_ex_world
+
+    # prohibit electricity use in clinker kilns in first decade
+    common = {
+        "technology": "furnace_elec_cement",
+        "mode": ["high_temp", "low_temp"],
+        "time": "year",
+        "value": 0,
+        "unit": "GWa",
+        "year_act": [2020, 2025],
+    }
+    s_info = ScenarioInfo(scenario)
+    scenario.check_out()
+    scenario.add_par(
+        "bound_activity_up",
+        make_df("bound_activity_up", **common).pipe(
+            broadcast, node_loc=nodes_ex_world(s_info.N)
+        ),
+    )
+    # force FSU gas use in clinker kilns
+    common = {
+        "technology": "furnace_gas_cement",
+        "mode": "high_temp",
+        "time": "year",
+        "value": 6.5,
+        "unit": "GWa",
+        "year_act": 2020,
+        "node_loc": "R12_FSU",
+    }
+    scenario.add_par("bound_activity_lo", make_df("bound_activity_up", **common))
+    scenario.commit("add bound for thermal electr use in cement")
+
+    # remove deprecated tecs in v13 baseline
+    if "v0.13" in scenario.scenario:
+        scenario.check_out()
+        scenario.remove_set("technology", ["hp_gas_i", "sp_coal_I", "hp_gas_rc"])
+        scenario.commit("remove already removed tecs")
+
+    scenario.check_out()
+    df = scenario.par(
+        "growth_activity_up", filters={"node_loc": "R12_RCPA", "year_act": 2020}
+    )
+    df = df[df["technology"].str.endswith("_i")]
+    df["value"] = 5
+    scenario.add_par("growth_activity_up", df)
+    scenario.commit("remove growth constraints in RCPA industry")
+
+    scenario.check_out()
+    df = scenario.par(
+        "historical_activity", filters={"technology": "solar_i", "year_act": 2015}
+    )
+    scenario.remove_par("historical_activity", df)
+    scenario.commit("remove incorrect solar_i hist act")
+
+    for bound in ["up", "lo"]:
+        df = scenario.par(f"bound_activity_{bound}", filters={"year_act": 2020})
+        scenario.check_out()
+        scenario.remove_par(
+            f"bound_activity_{bound}", df[df["technology"].str.contains("t_d")]
+        )
+        scenario.commit("remove t_d 2020 bounds")
+    return
 
 
 if __name__ == "__main__":
