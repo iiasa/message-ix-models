@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Literal
 
 import ixmp
 import message_ix
+from message_ix import make_df
 import numpy as np
 import pandas as pd
 from genno import Computer
@@ -111,7 +112,9 @@ def add_macro_COVID(
             "C:/", "Users", "maczek", "Downloads", "macro", filename
         )
     else:
-        xls_file = os.path.join("P:", "ene.model", "MACRO", "python", filename)
+        xls_file = os.path.join("C:\\", "Users", "unlu", "Documents",
+        "MyDocuments_IIASA", "Material_Flow", "macro_calibration" , filename)
+
     # Making a dictionary from the MACRO Excel file
     xls = pd.ExcelFile(xls_file)
     data = {}
@@ -2213,3 +2216,31 @@ if __name__ == "__main__":
     # df = df_inp.set_index(["technology"]).join(df).dropna()
     # df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
     # print()
+def calculate_ini_new_cap(df_demand, technology, material):
+    """
+    Derive initial_new_capacity_up parametrization for CCS based on cement demand
+    projection
+    Parameters
+    ----------
+    df_demand: pd.DataFrame
+        DataFrame containing "demand" MESSAGEix parametrization
+    technology: str
+        name of CCS technology to be parametrized
+    material: str
+        name of the material/industry sector
+    Returns
+    -------
+    DataFrame formatted to "initial_new_capacity_up" columns
+    """
+
+    SCALER = 0.005
+
+    if material == "cement":
+        CLINKER_RATIO = 0.72
+        df_demand["value"] *= CLINKER_RATIO * SCALER
+    else:
+        df_demand["value"] *= SCALER
+
+    df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
+    df_demand["technology"] = technology
+    return make_df("initial_new_capacity_up", **df_demand)

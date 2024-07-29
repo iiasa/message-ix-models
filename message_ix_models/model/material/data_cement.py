@@ -4,7 +4,7 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_sector_data, read_timeseries
+from message_ix_models.model.material.data_util import read_sector_data, read_timeseries, calculate_ini_new_cap
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import get_ssp_from_context, read_config
 from message_ix_models.util import (
@@ -13,7 +13,6 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
-
 
 def gen_mock_demand_cement(scenario):
     s_info = ScenarioInfo(scenario)
@@ -371,33 +370,14 @@ def gen_data_cement(scenario, dry_run=False):
     results["initial_new_capacity_up"] = pd.concat(
         [
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="clinker_dry_ccs_cement"
+                df_demand=df_demand.copy(deep=True), technology="clinker_dry_ccs_cement",
+                material = "cement"
             ),
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="clinker_wet_ccs_cement"
+                df_demand=df_demand.copy(deep=True), technology="clinker_wet_ccs_cement",
+                material = "cement"
             ),
         ]
     )
 
     return results
-
-def calculate_ini_new_cap(df_demand, technology):
-    """
-    Derive initial_new_capacity_up parametrization for CCS based on cement demand
-    projection
-    Parameters
-    ----------
-    df_demand: pd.DataFrame
-        DataFrame containing "demand" MESSAGEix parametrization
-    technology: str
-        name of CCS technology to be parametrized
-    Returns
-    -------
-    DataFrame formatted to "initial_new_capacity_up" columns
-    """
-    CLINKER_RATIO = 0.72
-    SCALER = 0.005
-    df_demand["value"] *= CLINKER_RATIO * SCALER
-    df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
-    df_demand["technology"] = technology
-    return make_df("initial_new_capacity_up", **df_demand)
