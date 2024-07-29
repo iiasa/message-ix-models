@@ -77,13 +77,17 @@ def add_ind_therm_link_relations(tecs, years, nodes):
         .pipe(broadcast, technology=tecs)
     )
     df["year_act"] = df["year_rel"]
-    df = df[~((
-               (df["technology"].str.startswith("solar")) |
-        (df["technology"].str.startswith("fc_h2_")) |
-       (df["technology"].str.startswith("furnace_h2")) |
-        (df["technology"].str.startswith("dheat"))
-        ) &
-       (df["year_act"].isin([2020, 2025])))]
+    df = df[
+        ~(
+            (
+                (df["technology"].str.startswith("solar"))
+                | (df["technology"].str.startswith("fc_h2_"))
+                | (df["technology"].str.startswith("furnace_h2"))
+                | (df["technology"].str.startswith("dheat"))
+            )
+            & (df["year_act"].isin([2020, 2025]))
+        )
+    ]
     return df
 
 
