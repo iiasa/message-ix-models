@@ -1,4 +1,4 @@
-from message_data.model.transport import factor
+from message_ix_models.model.transport import factor
 
 
 class TestFactor:

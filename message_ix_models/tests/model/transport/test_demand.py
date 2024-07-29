@@ -6,12 +6,12 @@ import genno
 import pytest
 from genno import Key
 from genno.testing import assert_units
-from message_ix_models.model.structure import get_codes
-from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from pytest import param
 
-from message_data.model.transport import Config, demand, testing
-from message_data.model.transport.testing import MARK
+from message_ix_models.model.structure import get_codes
+from message_ix_models.model.transport import Config, demand, testing
+from message_ix_models.model.transport.testing import MARK
+from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
 log = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
     ],
 )
 def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
-    from message_data.testing import assert_units
+    from message_ix_models.model.transport.testing import assert_units
 
     c, info = testing.configure_build(
         test_context, regions=regions, years=years, options=dict(ssp=ssp)
@@ -261,7 +261,7 @@ def test_pdt_per_capita(
     Moved from :mod:`.test_operator`.
     """
     # TODO After #551, this is largely similar to test_exo and test_pdt; merge
-    from message_data.model.transport.key import pdt_cap
+    from message_ix_models.model.transport.key import pdt_cap
 
     c, info = testing.configure_build(
         test_context, tmp_path=tmp_path, regions=regions, years=years, options=options

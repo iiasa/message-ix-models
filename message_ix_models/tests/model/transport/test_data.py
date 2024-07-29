@@ -3,12 +3,11 @@ import pytest
 from genno import Key, Quantity
 from iam_units import registry
 
-from message_data.model.transport import files, testing
-from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
-from message_data.model.transport.roadmap import get_roadmap_data
-from message_data.model.transport.testing import MARK
-from message_data.projects.navigate import T35_POLICY
-from message_data.testing import assert_units
+from message_ix_models.model.transport import files, testing
+from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
+from message_ix_models.model.transport.roadmap import get_roadmap_data
+from message_ix_models.model.transport.testing import MARK, assert_units
+from message_ix_models.project.navigate import T35_POLICY
 
 
 @pytest.mark.parametrize("file", files.FILES, ids=lambda f: "-".join(f.parts))

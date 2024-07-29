@@ -1,6 +1,6 @@
 from ixmp.testing import assert_logs
 
-from message_data.model.transport import testing
+from message_ix_models.model.transport import testing
 
 
 def test_disutility(
