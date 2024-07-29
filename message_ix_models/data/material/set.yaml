@@ -456,6 +456,8 @@ aluminum:
   commodity:
     add:
     - aluminum
+    - bauxite
+    - alumina
 
   level:
     add:
@@ -468,6 +470,7 @@ aluminum:
     - useful_material
     - product
     - secondary_material
+    - primary_material
     - demand
     - end_of_life
     - dummy_end_of_life_1
@@ -477,6 +480,7 @@ aluminum:
 
   technology:
     add:
+    - refining_aluminum
     - soderberg_aluminum
     - prebake_aluminum
     - secondary_aluminum
@@ -488,7 +492,7 @@ aluminum:
     - scrap_recovery_aluminum_1
     - scrap_recovery_aluminum_2
     - scrap_recovery_aluminum_3
-    - DUMMY_alumina_supply
+    - DUMMY_bauxite_supply
     - trade_aluminum
     - import_aluminum
     - export_aluminum
