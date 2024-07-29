@@ -11,11 +11,11 @@ from typing import Dict, Generator, List, Literal, Mapping, Optional, Union, cas
 
 import ixmp
 import yaml
-from message_ix_models.util import MESSAGE_DATA_PATH, as_codes
 from sdmx.model.v21 import Annotation, Code
 
-from message_data.model.workflow import Config as WfConfig
-from message_data.projects.engage.workflow import PolicyConfig
+from message_ix_models.model.workflow import Config as WfConfig
+from message_ix_models.project.engage.workflow import PolicyConfig
+from message_ix_models.util import MESSAGE_DATA_PATH, as_codes
 
 log = logging.getLogger(__name__)
 

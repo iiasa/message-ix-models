@@ -10,6 +10,7 @@ import pandas as pd
 from genno import Computer, Key, Quantity
 from genno.core.key import single_key
 from message_ix import make_df
+
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import (
@@ -177,7 +178,7 @@ def navigate_ele(
 
     Currently only items (1) and (2) are implemented.
     """
-    from message_data.projects.navigate import T35_POLICY
+    from message_ix_models.project.navigate import T35_POLICY
 
     if not (T35_POLICY.ELE & config["transport"].project["navigate"]):
         return dict()
@@ -302,7 +303,7 @@ class MERtoPPP(ExoDataSource):
     def __init__(self, source, source_kw):
         from .util import path_fallback
 
-        if not source.startswith("message_data.model.transport"):
+        if not source.startswith("message_ix_models.model.transport"):
             raise ValueError(source)
         elif source_kw.pop("measure") != "MERtoPPP":
             raise ValueError(source_kw)

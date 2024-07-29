@@ -8,6 +8,7 @@ from genno import Quantity
 from genno.operator import convert_units, load_file, mul
 from iam_units import registry
 from message_ix import make_df
+
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
 

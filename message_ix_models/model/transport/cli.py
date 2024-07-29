@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 
 import click
+
 from message_ix_models import ScenarioInfo
 from message_ix_models.util._logging import silence_log
 from message_ix_models.util.click import PARAMS, common_params, exec_cb

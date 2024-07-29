@@ -1,10 +1,11 @@
 from typing import Any, Dict, List, Sequence, Union
 
+from sdmx.model.common import Annotation, Code
+
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import load_private_data, private_data_path
-from sdmx.model.common import Annotation, Code
 
 from .util import path_fallback
 

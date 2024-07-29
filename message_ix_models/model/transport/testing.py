@@ -1,14 +1,15 @@
-"""Utilities for testing :mod:`~message_data.model.transport`."""
+"""Utilities for testing :mod:`~message_ix_models.model.transport`."""
 
 import logging
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional, Tuple
 
-import message_ix_models.report
 import pytest
 from genno import Computer
 from message_ix import Reporter, Scenario
+
+import message_ix_models.report
 from message_ix_models import Context, ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.util._logging import silence_log
@@ -76,7 +77,7 @@ def built_transport(
 
         # Optionally silence logs for code used via build.main()
         log_cm = (
-            silence_log("genno message_data.model.transport message_ix_models")
+            silence_log("genno message_ix_models.model.transport message_ix_models")
             if quiet
             else nullcontext()
         )
