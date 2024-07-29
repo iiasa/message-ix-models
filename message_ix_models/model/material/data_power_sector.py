@@ -14,6 +14,39 @@ def read_material_intensities(data_path, inv_cost):
     data_path_lca = data_path + "/NTNU_LCA_coefficients.xlsx"
     data_lca = pd.read_excel(data_path_lca, sheet_name="environmentalImpacts")
 
+    # For hydropower material intensity use "medium" from Kalt et al., 2021.
+    # Unit: t/MW
+
+    data_lca.loc[((data_lca['technology'] == 'Hydro')
+    & (data_lca['technology variant'] == 'mix')
+    & (data_lca['phase'] == 'Construction')
+    & (data_lca['impact'] == 'Iron')), 2010] = 45
+
+    data_lca.loc[((data_lca['technology'] == 'Hydro')
+    & (data_lca['technology variant'] == 'mix')
+    & (data_lca['phase'] == 'Construction')
+    & (data_lca['impact'] == 'Iron')), 2030] = 45
+
+    data_lca.loc[((data_lca['technology'] == 'Hydro')
+    & (data_lca['technology variant'] == 'mix')
+    & (data_lca['phase'] == 'Construction')
+    & (data_lca['impact'] == 'Aluminium')), 2010] = 0.572
+
+    data_lca.loc[((data_lca['technology'] == 'Hydro')
+    & (data_lca['technology variant'] == 'mix')
+    & (data_lca['phase'] == 'Construction')
+    & (data_lca['impact'] == 'Aluminium')), 2030] = 0.572
+
+    data_lca.loc[((data_lca['technology'] == 'Hydro')
+    & (data_lca['technology variant'] == 'mix')
+    & (data_lca['phase'] == 'Construction')
+    & (data_lca['impact'] == 'Cement')), 2010] = 787.5
+
+    data_lca.loc[((data_lca['technology'] == 'Hydro')
+    & (data_lca['technology variant'] == 'mix')
+    & (data_lca['phase'] == 'Construction')
+    & (data_lca['impact'] == 'Cement')), 2030] = 787.5
+
     # read technology, region and commodity mappings
     data_path_tec_map = data_path + "/MESSAGE_global_model_technologies.xlsx"
     technology_mapping = pd.read_excel(data_path_tec_map, sheet_name="technology")
