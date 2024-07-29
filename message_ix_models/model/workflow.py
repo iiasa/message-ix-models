@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from message_ix import Scenario
+
 from message_ix_models.util.config import ConfigHelper
 
 if TYPE_CHECKING:

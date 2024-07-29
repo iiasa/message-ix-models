@@ -12,6 +12,8 @@ from genno import Computer, Key, KeySeq, Quantity, quote
 from genno.core.key import single_key
 from iam_units import registry
 from message_ix import make_df
+from openpyxl import load_workbook
+
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
     ScenarioInfo,
@@ -25,7 +27,6 @@ from message_ix_models.util import (
     same_time,
     series_of_pint_quantity,
 )
-from openpyxl import load_workbook
 
 from .non_ldv import UNITS
 from .util import input_commodity_level

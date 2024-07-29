@@ -4,7 +4,8 @@ Bureau of Statistics) and for India (iTEM)."""
 import numpy as np
 import pandas as pd
 from iam_units import registry
-from item import historical
+from item import historical  # type: ignore [import-not-found]
+
 from message_ix_models.util import private_data_path
 
 UNITS = {

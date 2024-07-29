@@ -5,13 +5,14 @@ from itertools import product
 from typing import TYPE_CHECKING, Literal, Optional
 
 from genno import KeyExistsError
+
 from message_ix_models.project.ssp import SSP_2024
 from message_ix_models.util import private_data_path
 
 if TYPE_CHECKING:
     import message_ix_models
 
-    from message_data.model.transport.config import Config
+    from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -136,11 +137,10 @@ def generate(
     **options,
 ):
     from message_ix_models import Workflow
+    from message_ix_models.model.workflow import Config as SolveConfig
+    from message_ix_models.model.workflow import solve
+    from message_ix_models.project import navigate
     from message_ix_models.report import register, report
-
-    from message_data.model.workflow import Config as SolveConfig
-    from message_data.projects import navigate
-    from message_data.projects.navigate.workflow import solve
 
     from . import build
     from .config import Config

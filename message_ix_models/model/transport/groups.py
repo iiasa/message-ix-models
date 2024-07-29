@@ -130,6 +130,7 @@ def urban_rural_shares(pop: Quantity, config: dict) -> Quantity:
         Dimensions: at least area_type, possibly also n, y. Units: dimensionless.
     """
     from genno.operator import div
+
     from message_ix_models.util import broadcast
 
     if "area_type" in pop.dims:

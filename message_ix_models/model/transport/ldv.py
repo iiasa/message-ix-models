@@ -12,6 +12,9 @@ from genno import Computer, quote
 from genno.operator import load_file
 from message_ix import make_df
 from message_ix.report.operator import as_message_df
+from openpyxl import load_workbook
+from sdmx.model.v21 import Code
+
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
@@ -28,8 +31,6 @@ from message_ix_models.util import (
     same_node,
 )
 from message_ix_models.util.ixmp import rename_dims
-from openpyxl import load_workbook
-from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
 from .operator import extend_y

@@ -11,6 +11,8 @@ import pandas as pd
 from genno import Computer, Key, KeySeq, MissingKeyError, Quantity, quote
 from genno.core.key import KeyLike, iter_keys, single_key
 from message_ix import make_df
+from sdmx.model.v21 import Code
+
 from message_ix_models.util import (
     broadcast,
     make_io,
@@ -20,7 +22,6 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
-from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
 

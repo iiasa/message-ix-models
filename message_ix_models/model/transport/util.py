@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Union
 
 import pandas as pd
+
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import private_data_path
