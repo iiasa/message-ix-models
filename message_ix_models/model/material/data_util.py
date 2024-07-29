@@ -812,7 +812,7 @@ def add_new_ind_hist_act(scen: message_ix.Scenario, years: list, iea_data_path) 
 
 def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
     # RFE: refactor to use external mapping file (analogue to calc_hist_activity())
-    i_spec_material_flows = ["NONMET", "CHEMICAL", "NONFERR"]
+    i_spec_material_flows = ["NONMET", "NONFERR"] # "CHEMICAL"
     i_therm_material_flows = ["NONMET", "CHEMICAL", "IRONSTL"]
     i_flow = ["TOTIND"]
     i_spec_prods = ["ELECTR", "NONBIODIES", "BIOGASOL"]
@@ -2347,7 +2347,7 @@ def get_thermal_industry_emi_coefficients(scen: message_ix.Scenario) -> pd.DataF
     return df_joined
 
 
-def get_furnace_inputs(scen: message_ix.Scenario) -> pd.DataFrame:
+def get_furnace_inputs(scen: message_ix.Scenario, first_year) -> pd.DataFrame:
     """
     Pulls existing parametrization for input coefficients
      of given Scenario instance and returns only for technologies
@@ -2415,6 +2415,116 @@ def calculate_furnace_non_co2_emi_coeff(
     df_final_new["year_rel"] = df_final_new["year_act"]
     df_final_new["unit"] = "???"
     return df_final_new
+
+
+def calibrate_t_d_tecs(scenario):
+    # ------------------------------------------------------
+    # Revise t_d historical_activity and 2020 activity bounds
+    # ------------------------------------------------------
+
+    # The activity of the t_d technologies is adjusted to fit
+    # with the historical_activity/bda_lo calibration for all
+    # technologies which take from the output commodity/level.
+
+    tecs = [t for t in scenario.set("technology").tolist() if t.find("t_d") >= 0]
+    td = (
+        scenario.par("output", filters={"technology": tecs})[
+            ["node_loc", "technology", "commodity", "level"]
+        ]
+            .drop_duplicates()
+            .reset_index()
+            .drop("index", axis=1)
+    )
+    update_df = pd.DataFrame()
+    for i in td.index:
+        try:
+            row = td.iloc[i]
+        except:
+            here = 1
+        # Retrieve input of techologies which take from the commodity/level.
+        inp = scenario.par(
+            "input",
+            filters={
+                "node_loc": row.node_loc,
+                "commodity": row.commodity,
+                "level": row.level,
+            },
+        )
+
+        # Retrieve historical and calibrated activity as bound_activity_lo
+        # and combine the two.
+        histact = scenario.par(
+            "historical_activity",
+            filters={
+                "node_loc": row.node_loc,
+                "technology": inp.technology.unique().tolist(),
+            },
+        )
+        act = scenario.par(
+            "bound_activity_lo",
+            filters={
+                "node_loc": row.node_loc,
+                "technology": inp.technology.unique().tolist(),
+                "year_act": 2020,
+            },
+        )
+
+        act = (
+            pd.concat([histact, act])
+                .sort_values(by=["node_loc", "technology", "year_act"])
+                .set_index(["node_loc", "technology", "year_act"])
+        )
+
+        # Multiply the activity data with the input efficiencies to derive total energy requirements
+        act["eff"] = (
+            inp.loc[
+                (inp.year_vtg == inp.year_act)
+                & (inp.node_loc == row.node_loc)
+                & (
+                    inp.technology.isin(
+                        act.reset_index().technology.unique().tolist()
+                    )
+                )
+                & (inp.year_act.isin(act.reset_index().year_act.unique().tolist()))
+                ]
+                .set_index(["node_loc", "technology", "year_act"])
+                .value
+        )
+
+        # Backfill any missing values
+        act["eff"] = act["eff"].bfill()
+
+        act["fe"] = act["eff"] * act["value"]
+
+        # Aggregate the final energy data and assign the t_d technology name
+        df = act.copy()
+        df = (
+            df.reset_index()
+                .groupby(["node_loc", "year_act"])
+                .sum(numeric_only=True)[["fe"]]
+                .rename(columns={"fe": "value"})
+                .assign(unit="GWa", technology=row.technology, mode="M1", time="year")
+                .reset_index()
+        )
+
+        update_df = pd.concat([update_df, df])
+
+    update_df = update_df.reset_index().drop("index", axis=1)
+
+    # Make a manual adjusment to "gas_t_d_ch4".
+    # Because is has the same output as "gas_t_d", it will also get the
+    # the same historical_acitivty, therefore it is set to zero.
+    update_df.loc[update_df.technology == "gas_t_d_ch4", "value"] = 0
+
+    # Add data as historical_activity and bound_activity_lo/up (*1.005)
+    with scenario.transact("Calibrate t_d technology"):
+        hist_df = update_df.copy()
+        hist_df = hist_df.loc[hist_df.year_act < scenario.firstmodelyear]
+        scenario.add_par("historical_activity", hist_df)
+
+        scenario.add_par("bound_activity_lo", update_df)
+        update_df.value *= 1.005
+        scenario.add_par("bound_activity_up", update_df)
 
 
 if __name__ == "__main__":
