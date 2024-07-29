@@ -4,17 +4,17 @@ import genno
 import pandas as pd
 import pytest
 from iam_units import registry
-from message_ix_models.model.structure import get_codes
 from pytest import param
 
-from message_data.model.transport import testing
-from message_data.model.transport.ldv import (
+from message_ix_models.model.structure import get_codes
+from message_ix_models.model.transport import testing
+from message_ix_models.model.transport.ldv import (
     constraint_data,
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
-from message_data.projects.navigate import T35_POLICY
-from message_data.testing import assert_units
+from message_ix_models.model.transport.testing import assert_units
+from message_ix_models.project.navigate import T35_POLICY
 
 log = logging.getLogger(__name__)
 

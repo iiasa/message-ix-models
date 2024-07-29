@@ -6,12 +6,12 @@ import ixmp
 import pytest
 from genno import Quantity
 from genno.testing import assert_units
-from message_ix_models.model.structure import get_codes
-from message_ix_models.testing import bare_res
 from pytest import mark, param
 
-from message_data.model.transport import build, report, structure
-from message_data.model.transport.testing import MARK, configure_build
+from message_ix_models.model.structure import get_codes
+from message_ix_models.model.transport import build, report, structure
+from message_ix_models.model.transport.testing import MARK, configure_build
+from message_ix_models.testing import bare_res
 
 log = logging.getLogger(__name__)
 

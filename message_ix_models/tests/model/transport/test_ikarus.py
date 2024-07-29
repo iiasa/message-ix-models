@@ -5,10 +5,10 @@ from message_ix import make_df
 from numpy.testing import assert_allclose
 from pandas.testing import assert_series_equal
 
-from message_data.model.transport import ikarus, testing
-from message_data.model.transport.non_ldv import UNITS
-from message_data.projects.navigate import T35_POLICY
-from message_data.testing import assert_units
+from message_ix_models.model.transport import ikarus, testing
+from message_ix_models.model.transport.non_ldv import UNITS
+from message_ix_models.model.transport.testing import assert_units
+from message_ix_models.project.navigate import T35_POLICY
 
 
 @pytest.mark.skip(reason="Deprecated, slow")

@@ -4,16 +4,19 @@ from typing import TYPE_CHECKING
 
 import genno
 import pytest
-from message_ix_models import ScenarioInfo
-from message_ix_models.report import prepare_reporter, register
 from pytest import mark, param
 
-from message_data.model.transport.report import callback, configure_legacy_reporting
-from message_data.model.transport.testing import (
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.transport.report import (
+    callback,
+    configure_legacy_reporting,
+)
+from message_ix_models.model.transport.testing import (
     MARK,
     built_transport,
     simulated_solution,
 )
+from message_ix_models.report import prepare_reporter, register
 
 if TYPE_CHECKING:
     import message_ix
@@ -22,7 +25,7 @@ log = logging.getLogger(__name__)
 
 
 def test_configure_legacy():
-    from message_data.tools.post_processing.default_tables import TECHS
+    from message_ix_models.report.legacy.default_tables import TECHS
 
     config = deepcopy(TECHS)
 

@@ -2,11 +2,10 @@ import pytest
 from genno import Quantity
 from genno.testing import assert_qty_equal
 from message_ix import Scenario
-from message_ix_models.project.ssp import SSP_2024
 from numpy.testing import assert_allclose
 
-from message_data.model.transport import Config, factor
-from message_data.model.transport.operator import (
+from message_ix_models.model.transport import Config, factor
+from message_ix_models.model.transport.operator import (
     broadcast_advance,
     distance_ldv,
     distance_nonldv,
@@ -14,8 +13,9 @@ from message_data.model.transport.operator import (
     factor_ssp,
     transport_check,
 )
-from message_data.model.transport.structure import get_technology_groups
-from message_data.projects.navigate import T35_POLICY
+from message_ix_models.model.transport.structure import get_technology_groups
+from message_ix_models.project.navigate import T35_POLICY
+from message_ix_models.project.ssp import SSP_2024
 
 
 @pytest.mark.xfail(reason="Incomplete")

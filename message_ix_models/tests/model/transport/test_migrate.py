@@ -1,6 +1,6 @@
 import pytest
 
-from message_data.model.transport.migrate import import_all
+from message_ix_models.model.transport.migrate import import_all
 
 
 @pytest.mark.xfail(reason="Don't actually attempt to run the code.")

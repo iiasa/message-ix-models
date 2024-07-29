@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node
 
-from message_data.model.transport import Config, DataSourceConfig, testing
-from message_data.model.transport.emission import ef_for_input, get_emissions_data
+from message_ix_models.model.transport import Config, DataSourceConfig, testing
+from message_ix_models.model.transport.emission import ef_for_input, get_emissions_data
+from message_ix_models.util import broadcast, same_node
 
 
 def test_ef_for_input(test_context):
