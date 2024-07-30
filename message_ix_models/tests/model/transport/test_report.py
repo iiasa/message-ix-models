@@ -7,16 +7,13 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport.report import (
-    callback,
-    configure_legacy_reporting,
-)
+from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
     built_transport,
     simulated_solution,
 )
-from message_ix_models.report import prepare_reporter, register
+from message_ix_models.report import prepare_reporter
 
 if TYPE_CHECKING:
     import message_ix
@@ -51,10 +48,7 @@ def test_configure_legacy():
         assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
 
 
-def test_register_cb():
-    register(callback)
-
-
+@pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "regions, years",
     (
@@ -66,7 +60,8 @@ def test_register_cb():
 )
 def test_report_bare_solved(request, test_context, tmp_path, regions, years):
     """Run MESSAGEix-Transport–specific reporting."""
-    from message_ix_models.report import Config
+    from message_ix_models.model.transport.report import callback
+    from message_ix_models.report import Config, register
 
     register(callback)
 
@@ -103,7 +98,7 @@ def quiet_genno(caplog):
     caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
-@mark.usefixtures("quiet_genno")
+@mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
@@ -123,7 +118,7 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     assert 0 < len(result)
 
 
-@mark.usefixtures("quiet_genno")
+@mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 @pytest.mark.parametrize(
     "plot_name",
     # # All plots
@@ -147,6 +142,7 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
 
 
 @pytest.mark.xfail(raises=AssertionError, reason="Temporary, for #549")
+@pytest.mark.usefixtures("preserve_report_callbacks")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:
