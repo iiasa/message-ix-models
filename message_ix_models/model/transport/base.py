@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 import pandas as pd
-from genno import KeySeq
+from genno import Computer, KeySeq
 from genno.core.key import single_key
 
 from message_ix_models.util import minimum_version
@@ -40,7 +40,7 @@ UE_SHARE_HEADER = (
 
 
 @minimum_version("pandas 2")
-def smooth(c: "genno.Computer", key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
+def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     """Implement ‘smoothing’ for `key` along the dimension `dim`.
 
     1. Identify values which do not meet a certain criterion. Currently the criterion
