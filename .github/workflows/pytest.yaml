@@ -123,7 +123,7 @@ jobs:
     - name: Run test suite using pytest
       run: |
         pytest message_ix_models \
-          -m "not snapshot" \
+          -m "not (ece_db or snapshot)" \
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
           --numprocesses=auto \
