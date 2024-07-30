@@ -7,7 +7,7 @@ from iam_units import registry
 from pytest import param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import testing
+from message_ix_models.model.transport import build, testing
 from message_ix_models.model.transport.ldv import (
     constraint_data,
     read_USTIMES_MA3T,
@@ -19,6 +19,7 @@ from message_ix_models.project.navigate import T35_POLICY
 log = logging.getLogger(__name__)
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
@@ -149,6 +150,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
         assert N_exp <= len(df)
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, N_node_loc",
     [
@@ -168,6 +170,7 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
     assert N_node_loc == len(df["node_loc"].unique())
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "source, regions, years",
     [

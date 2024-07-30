@@ -5,7 +5,7 @@ from message_ix import make_df
 from numpy.testing import assert_allclose
 from pandas.testing import assert_series_equal
 
-from message_ix_models.model.transport import ikarus, testing
+from message_ix_models.model.transport import build, ikarus, testing
 from message_ix_models.model.transport.non_ldv import UNITS
 from message_ix_models.model.transport.testing import assert_units
 from message_ix_models.project.navigate import T35_POLICY
@@ -100,6 +100,7 @@ def test_get_ikarus_data0(test_context, regions, N_node, years):
         )
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions, N_node",

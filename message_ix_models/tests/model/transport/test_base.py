@@ -7,6 +7,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport.base import smooth
 
 
+@smooth.minimum_version
 def test_smooth(recwarn) -> None:
     c = Computer()
 
