@@ -23,19 +23,23 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 # Common marks for transport code
-MARK = (
-    pytest.mark.xfail(
+MARK = {
+    0: pytest.mark.xfail(
         reason="Missing R14 input data/assumptions", raises=FileNotFoundError
     ),
-    pytest.mark.skip(
+    1: pytest.mark.skip(
         reason="Currently only possible with regions=R12 input data/assumptions",
     ),
-    lambda t: pytest.mark.xfail(
+    2: lambda t: pytest.mark.xfail(
         reason="Missing input data/assumptions for this node codelist", raises=t
     ),
-    pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
-    pytest.mark.xfail(reason="Currently unsupported"),
-)
+    3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
+    4: pytest.mark.xfail(reason="Currently unsupported"),
+    # Tests that fail with data that cannot be migrated from message_data
+    5: lambda f: pytest.mark.xfail(
+        raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
+    ),
+}
 
 
 def assert_units(
