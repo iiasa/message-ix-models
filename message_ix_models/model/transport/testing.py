@@ -3,7 +3,7 @@
 import logging
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING, Mapping, Optional, Tuple, Union
 
 import pytest
 from genno import Computer
@@ -15,6 +15,10 @@ from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.util._logging import silence_log
 
 from . import Config, build
+
+if TYPE_CHECKING:
+    import pandas
+    import pint
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +36,26 @@ MARK = (
     pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
     pytest.mark.xfail(reason="Currently unsupported"),
 )
+
+
+def assert_units(
+    df: "pandas.DataFrame", expected: Union[str, dict, "pint.Unit", "pint.Quantity"]
+):
+    """Assert that `df` has the unique, `expected` units."""
+    import pint
+    from iam_units import registry
+
+    all_units = df["unit"].unique()
+    assert 1 == len(all_units), f"Non-unique {all_units = }"
+
+    # Convert the unique value to the same class as `expected`
+    if isinstance(expected, pint.Quantity):
+        assert expected == expected.__class__(1.0, all_units[0])
+    elif isinstance(expected, Mapping):
+        # Compare dimensionality of the units, rather than exact match
+        assert expected == registry.Quantity(all_units[0] or "0").dimensionality
+    else:
+        assert expected == expected.__class__(all_units[0])
 
 
 def configure_build(
