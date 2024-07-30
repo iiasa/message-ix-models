@@ -9,7 +9,7 @@ import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     import numbers
@@ -71,8 +71,8 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
         regions = context_or_regions.model.regions
 
     candidates = (
-        private_data_path("transport", regions, *parts),
-        private_data_path("transport", *parts),
+        package_data_path("transport", regions, *parts),
+        package_data_path("transport", *parts),
     )
 
     for c in candidates:

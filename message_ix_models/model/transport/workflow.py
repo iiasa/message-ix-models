@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 from genno import KeyExistsError
 
 from message_ix_models.project.ssp import SSP_2024
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     import message_ix_models
@@ -44,7 +44,7 @@ def base_scenario_url(
 
     if method == "auto":
         # Load URL info from file
-        with open(private_data_path("transport", "base-scenario-url.json")) as f:
+        with open(package_data_path("transport", "base-scenario-url.json")) as f:
             info = json.load(f)
 
         # Identify a key that matches the settings on `config`

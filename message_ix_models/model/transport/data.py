@@ -19,7 +19,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     make_source_tech,
     merge_data,
-    private_data_path,
+    package_data_path,
     same_node,
 )
 from message_ix_models.util.ixmp import rename_dims
@@ -239,7 +239,7 @@ class IEA_Future_of_Trucks(ExoDataSource):
 
         self.measure = source_kw.pop("measure")
         self.name, self._unit = self._name_unit[self.measure]
-        self.path = private_data_path("transport", f"iea-2017-t4-{self.measure}.csv")
+        self.path = package_data_path("transport", f"iea-2017-t4-{self.measure}.csv")
 
     def __call__(self):
         from genno.operator import load_file

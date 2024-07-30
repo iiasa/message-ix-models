@@ -6,7 +6,7 @@ import pandas as pd
 from iam_units import registry
 from item import historical  # type: ignore [import-not-found]
 
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 UNITS = {
     "Population": (1.0e-6, None, "dimensionless"),
@@ -146,7 +146,7 @@ def get_chn_ind_pop():
         DataFrame containing population data for China and India.
     """
     # Read csv file
-    pop = pd.read_csv(private_data_path("transport", POP_FILE), header=1)
+    pop = pd.read_csv(package_data_path("transport", POP_FILE), header=1)
     # Drop irrelevant columns and rename when necessary
     pop = pop.drop(
         [x for x in pop.columns if x not in ["LOCATION", "Time", "Value"]],
@@ -184,7 +184,7 @@ def get_chn_ind_data(private_vehicles=False):
     for file, skip_footer in FILES.values():
         # Read excel sheet
         df_aux = pd.read_csv(
-            private_data_path("transport", file),
+            package_data_path("transport", file),
             skipfooter=skip_footer,
             header=2,
         )
