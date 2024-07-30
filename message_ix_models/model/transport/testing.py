@@ -39,6 +39,9 @@ MARK = {
     5: lambda f: pytest.mark.xfail(
         raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
     ),
+    6: pytest.mark.xfail(
+        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/207"
+    ),
 }
 
 

@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+@MARK[6]
 def test_configure_legacy():
     from message_ix_models.report.legacy.default_tables import TECHS
 

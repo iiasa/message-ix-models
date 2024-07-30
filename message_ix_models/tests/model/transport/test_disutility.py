@@ -3,6 +3,7 @@ from ixmp.testing import assert_logs
 from message_ix_models.model.transport import testing
 
 
+@testing.MARK[6]
 def test_disutility(
     caplog, tmp_path, test_context, regions="R12", years="B", options={}
 ):
