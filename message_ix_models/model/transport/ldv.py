@@ -11,7 +11,6 @@ import pandas as pd
 from genno import Computer, quote
 from genno.operator import load_file
 from message_ix import make_df
-from message_ix.report.operator import as_message_df
 from openpyxl import load_workbook
 from sdmx.model.v21 import Code
 
@@ -27,6 +26,7 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     merge_data,
+    minimum_version,
     package_data_path,
     same_node,
 )
@@ -453,6 +453,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
+@minimum_version("message_ix 3.6")
 def capacity_factor(
     qty: "AnyQuantity", t_ldv: dict, y, y_broadcast: "AnyQuantity"
 ) -> Dict[str, pd.DataFrame]:
@@ -476,6 +477,11 @@ def capacity_factor(
         All periods, including pre-model periods.
     """
     from genno.operator import convert_units
+
+    try:
+        from message_ix.report.operator import as_message_df
+    except ImportError:
+        from message_ix.reporting.computations import as_message_df
 
     # TODO determine units from technology annotations
     data = convert_units(qty.expand_dims(y=y) * y_broadcast, "Mm / year")

@@ -9,6 +9,8 @@ import pandas as pd
 from genno import KeySeq
 from genno.core.key import single_key
 
+from message_ix_models.util import minimum_version
+
 from .key import gdp_exo
 
 if TYPE_CHECKING:
@@ -37,6 +39,7 @@ UE_SHARE_HEADER = (
 )
 
 
+@minimum_version("pandas 2")
 def smooth(c: "genno.Computer", key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     """Implement ‘smoothing’ for `key` along the dimension `dim`.
 

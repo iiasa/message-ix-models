@@ -3,13 +3,14 @@ import pytest
 from genno import Key, Quantity
 from iam_units import registry
 
-from message_ix_models.model.transport import files, testing
+from message_ix_models.model.transport import build, files, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.roadmap import get_roadmap_data
 from message_ix_models.model.transport.testing import MARK, assert_units
 from message_ix_models.project.navigate import T35_POLICY
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize("file", files.FILES, ids=lambda f: "-".join(f.parts))
 def test_data_files(test_context, file):
     """Input data can be read."""
@@ -62,6 +63,7 @@ def test_get_afr_data(test_context, region, length):
     ]
 
 
+@build.get_computer.minimum_version
 def test_get_freight_data(test_context, regions="R12", years="B"):
     ctx = test_context
     c, info = testing.configure_build(ctx, regions=regions, years=years)
@@ -78,6 +80,7 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
     } == set(result.keys())
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize("regions", ["R11", "R12"])
 def test_get_non_ldv_data(test_context, regions, years="B"):
     """:mod:`.non_ldv` returns the expected data."""
@@ -199,6 +202,7 @@ def test_get_chn_ind_pop():
     ]
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions", [pytest.param("ISR", marks=MARK[3]), "R11", "R12", "R14"]

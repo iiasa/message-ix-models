@@ -9,7 +9,7 @@ from genno.testing import assert_units
 from pytest import param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import Config, demand, testing
+from message_ix_models.model.transport import Config, build, demand, testing
 from message_ix_models.model.transport.testing import MARK
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
@@ -45,6 +45,7 @@ def test_demand_dummy(test_context, regions, years):
     assert any(data["demand"]["commodity"] == "transport pax URLMM")
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years, N_node, options",
     [
@@ -131,6 +132,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
         assert False, "Negative values in demand"
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "ssp",
     [
@@ -179,6 +181,7 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
     )
 
 
+@build.get_computer.minimum_version
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
 
@@ -209,6 +212,7 @@ def test_exo_report(test_context, tmp_path):
     c.get("demand plots")
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions",
     [
@@ -253,6 +257,7 @@ R11_WEU  2100  300
 """
 
 
+@build.get_computer.minimum_version
 def test_pdt_per_capita(
     tmp_path, test_context, regions="R12", years="B", options=dict()
 ):
@@ -276,6 +281,7 @@ def test_pdt_per_capita(
     assert_units(result, "km / year")
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions,years,pop_scen",
     [
@@ -308,6 +314,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
     assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
 
 
+@build.get_computer.minimum_version
 @pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "nodes, target",

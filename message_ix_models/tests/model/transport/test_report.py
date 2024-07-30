@@ -1,19 +1,22 @@
 import logging
 from copy import deepcopy
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import genno
 import pytest
+from packaging.version import parse
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.transport import build
 from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
     built_transport,
     simulated_solution,
 )
-from message_ix_models.report import prepare_reporter
+from message_ix_models.report import prepare_reporter, sim
 
 if TYPE_CHECKING:
     import message_ix
@@ -48,6 +51,7 @@ def test_configure_legacy():
         assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
 
 
+@build.get_computer.minimum_version
 @pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "regions, years",
@@ -98,6 +102,7 @@ def quiet_genno(caplog):
     caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
+@build.get_computer.minimum_version
 @mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
@@ -118,6 +123,7 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     assert 0 < len(result)
 
 
+@build.get_computer.minimum_version
 @mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 @pytest.mark.parametrize(
     "plot_name",
@@ -141,7 +147,12 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
-@pytest.mark.xfail(raises=AssertionError, reason="Temporary, for #549")
+@sim.to_simulate.minimum_version
+@pytest.mark.xfail(
+    raises=AssertionError,
+    reason="Temporary, for #549",
+    condition=parse(version("message_ix")) >= parse("3.8.0"),
+)
 @pytest.mark.usefixtures("preserve_report_callbacks")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"

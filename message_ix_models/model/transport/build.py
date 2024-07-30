@@ -11,6 +11,7 @@ from message_ix import Scenario
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
+from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time
 
 from . import Config
@@ -373,6 +374,7 @@ def add_structure(c: Computer):
     c.add("indexers::iea to transport", itemgetter(2), "groups::iea eweb")
 
 
+@minimum_version("message_ix 3.8")
 def get_computer(
     context: Context,
     obj: Optional[Computer] = None,
