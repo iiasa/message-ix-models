@@ -44,7 +44,7 @@ This section explains how such translation works, serving both as a requirements
 Integrated through legacy reporting
 -----------------------------------
 
-As of 2022-04, the :doc:`/reference/tools/post_processing` is still in active use.
+As of 2022-04, the :doc:`/api/report/legacy` is still in active use.
 One function it performs is **aggregation**: some totals across both transport and other sectors are computed by this code, along with other calculations.
 
 The transport reporting code must compute and store these data before it can be picked up and aggregated.

@@ -10,7 +10,7 @@ This page describes the structure and format of inputs required for building MES
 Both input data and configuration are stored in files under :file:`/data/transport/` in the :mod:`message_data` repository.
 (When migrated to :mod:`message_ix_models`, these files will live in :file:`message_ix_models/data/transport`.)
 
-In most cases, these files are read from a subdirectory like :file:`/data/transport/{nodes}/`, where `nodes` denotes the :mod:`message_ix_models` :doc:`node code list <message_ix_models:pkg-data/node>`—for instance, "R12"—for which MESSAGEix-Transport will be built.
+In most cases, these files are read from a subdirectory like :file:`/data/transport/{nodes}/`, where `nodes` denotes the :mod:`message_ix_models` :doc:`node code list </pkg-data/node>`—for instance, "R12"—for which MESSAGEix-Transport will be built.
 This value is retrieved from the :attr:`Context.regions <.model.Config.regions>` setting.
 
 - If the file data or configuration settings have a node (:math:`n`) dimension, the file **must** be placed in such a subdirectory.
@@ -40,7 +40,7 @@ Technology code list (:file:`technology.yaml`)
 ----------------------------------------------
 
 This file gives the code list for the MESSAGE ``technology`` concept/set/dimension.
-Some annotations (``iea-eweb-flow``, ``input``, ``report``) and the :attr:`.child` hierarchy give information about technologies' grouping according to transport modes.
+Some annotations (``iea-eweb-flow``, ``input``, ``report``) and the :attr:`~sdmx.model.common.Code.child` hierarchy give information about technologies' grouping according to transport modes.
 
 → View :source:`data/transport/technology.yaml` on GitHub
 
@@ -108,7 +108,7 @@ node = R12_SAS [1]_
 Data on costs and efficiencies of LDV technologies.
 
 Formerly this data was read from :file:`ldv-cost-efficiency.xlsx`, a highly-structured spreadsheet that performs some input calculations.
-The function :func:`get_USTIMES_MA3T` reads data from multiple sheets in this file.
+The function :func:`.get_USTIMES_MA3T` reads data from multiple sheets in this file.
 To understand the sheet names and cell layout expected, see the code for that function.
 
 As the name implies, the data for :doc:`MESSAGE (V)-Transport <old>` was derived from the US-TIMES and MA³T models.
@@ -229,7 +229,7 @@ Other data sources
 
 These include:
 
-- GDP and population from the :mod:`.tools.ssp` databases or other sources including the ADVANCE project, the Global Energy Assessment project, the SHAPE project, etc.
+- GDP and population from the :mod:`.project.ssp` data sources or other sources including the ADVANCE project, the Global Energy Assessment project, the SHAPE project, etc.
 
   .. note:: Formerly, file :file:`gdp.csv` was used.
 
