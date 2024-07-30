@@ -22,7 +22,7 @@ from message_ix_models.util import (
     convert_units,
     make_matched_dfs,
     nodes_ex_world,
-    private_data_path,
+    package_data_path,
     same_node,
     same_time,
     series_of_pint_quantity,
@@ -164,7 +164,7 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
     """
     # Open the input file using openpyxl
     wb = load_workbook(
-        private_data_path("transport", FILE), read_only=True, data_only=True
+        package_data_path("transport", FILE), read_only=True, data_only=True
     )
     # Open the 'updateTRPdata' sheet
     sheet = wb["updateTRPdata"]

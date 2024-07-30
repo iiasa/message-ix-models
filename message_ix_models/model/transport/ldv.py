@@ -27,7 +27,7 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     merge_data,
-    private_data_path,
+    package_data_path,
     same_node,
 )
 from message_ix_models.util.ixmp import rename_dims
@@ -218,7 +218,7 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Mapping[str, "AnyQuantit
     particular context settings.
     """
     # Open workbook
-    path = private_data_path("transport", subdir or "", FILE)
+    path = package_data_path("transport", subdir or "", FILE)
     wb = load_workbook(path, read_only=True, data_only=True)
 
     # Tables
@@ -272,7 +272,7 @@ def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, "AnyQuantity"]:
     result = {}
     for name in "fix_cost", "fuel economy", "inv_cost":
         result[name] = load_file(
-            path=private_data_path(
+            path=package_data_path(
                 "transport", subdir or "", f"ldv-{name.replace(' ', '-')}.csv"
             ),
             dims=rename_dims(),

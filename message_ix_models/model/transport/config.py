@@ -11,7 +11,7 @@ from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
 from message_ix_models.project.ssp import SSP_2024, ssp_field
 from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
 from message_ix_models.report.util import as_quantity
-from message_ix_models.util import identify_nodes, private_data_path
+from message_ix_models.util import identify_nodes, package_data_path
 from message_ix_models.util.config import ConfigHelper
 
 log = logging.getLogger(__name__)
@@ -353,7 +353,7 @@ class Config(ConfigHelper):
         try:
             # Update with region-specific configuration
             config.read_file(
-                private_data_path("transport", context.model.regions, "config.yaml")
+                package_data_path("transport", context.model.regions, "config.yaml")
             )
         except FileNotFoundError as e:
             log.warning(e)

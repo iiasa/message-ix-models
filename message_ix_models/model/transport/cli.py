@@ -83,7 +83,7 @@ def export_emissions_factors(context, path_stem):
     """
     from datetime import datetime
 
-    from message_ix_models.util import private_data_path
+    from message_ix_models.util import package_data_path
 
     # List of techs
     techs = context.transport.spec.remove.set["technology"]
@@ -92,7 +92,7 @@ def export_emissions_factors(context, path_stem):
     scenario = context.get_scenario()
 
     # Output path
-    out_dir = private_data_path("transport", "emi")
+    out_dir = package_data_path("transport", "emi")
     out_dir.mkdir(exist_ok=True, parents=True)
 
     for name in ("emission_factor", "relation_activity"):
