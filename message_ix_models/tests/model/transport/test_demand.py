@@ -4,7 +4,7 @@ from pathlib import Path
 
 import genno
 import pytest
-from genno import Key
+from genno import ComputationError, Key
 from genno.testing import assert_units
 from pytest import param
 
@@ -215,7 +215,7 @@ def test_exo_report(test_context, tmp_path):
         param("ISR", marks=MARK[3]),
         "R11",
         "R12",
-        param("R14", marks=MARK[2](AttributeError)),
+        param("R14", marks=MARK[2]((AttributeError, ComputationError))),
     ],
 )
 @pytest.mark.parametrize("years", ["B"])
