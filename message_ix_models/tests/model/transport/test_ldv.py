@@ -206,7 +206,15 @@ def test_ldv_constraint_data(test_context, source, regions, years):
         assert info.Y[1:] == sorted(df["year_act"].unique())
 
 
-@pytest.mark.parametrize("func", (read_USTIMES_MA3T, read_USTIMES_MA3T_2))
+@pytest.mark.parametrize(
+    "func",
+    (
+        pytest.param(
+            read_USTIMES_MA3T, marks=testing.MARK[5]("R11/ldv-cost-efficiency.xlsx")
+        ),
+        read_USTIMES_MA3T_2,
+    ),
+)
 def test_read_USTIMES_MA3T(func):
     all_nodes = get_codes("node/R11")
     nodes = all_nodes[all_nodes.index("World")].child
