@@ -70,10 +70,16 @@ report = ["plotnine", "xlsxwriter"]
 tests = [
   # For nbclient, thus nbformat
   "ixmp[tests]",
-  "message_ix_models[report]",
+  "message_ix_models[report,transport]",
   "pytest",
   "pytest-cov",
   "pytest-xdist",
+]
+transport = [
+  "message-ix-models[iea-web,report]",
+  "requests-cache",
+  "transport-energy",
+  "xarray",
 ]
 
 [project.scripts]
