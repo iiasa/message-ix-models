@@ -10,6 +10,7 @@ import pandas as pd
 from genno import Computer, Key, KeySeq, MissingKeyError
 from genno.core.key import single_key
 from message_ix import Reporter
+
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.util import add_replacements
 
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
     import ixmp
     from genno import Computer
     from genno.types import AnyQuantity
+
     from message_ix_models import Spec
 
 log = logging.getLogger(__name__)
@@ -384,7 +386,7 @@ def callback(rep: Reporter, context: Context) -> None:
 
 def configure_legacy_reporting(config: dict) -> None:
     """Callback to configure the legacy reporting."""
-    from message_data.tools.post_processing.default_tables import COMMODITY
+    from message_ix_models.report.legacy.default_tables import COMMODITY
 
     # NB the legacy reporting doesn't pass a context object to the hook that calls this
     #    function, so get an instance directly

@@ -8,8 +8,9 @@ from genno import Quantity
 from genno.operator import convert_units, load_file, mul
 from iam_units import registry
 from message_ix import make_df
+
 from message_ix_models import Context
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 from .util import path_fallback
 
@@ -31,7 +32,7 @@ def get_emissions_data(context: Context) -> Dict[str, pd.DataFrame]:
 def get_intensity(context: Context) -> "AnyQuantity":
     """Load emissions intensity data from a file."""
     # FIXME use through the build computer
-    return load_file(private_data_path("transport", "fuel-emi-intensity.csv"))
+    return load_file(package_data_path("transport", "fuel-emi-intensity.csv"))
 
 
 def strip_emissions_data(scenario, context):

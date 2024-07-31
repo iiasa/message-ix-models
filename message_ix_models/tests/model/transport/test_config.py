@@ -1,9 +1,9 @@
 import pytest
-from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
-from message_data.model.transport.config import Config
-from message_data.projects.navigate import T35_POLICY
-from message_data.projects.transport_futures import SCENARIO as TF_SCENARIO
+from message_ix_models.model.transport.config import Config
+from message_ix_models.project.navigate import T35_POLICY
+from message_ix_models.project.ssp import SSP_2017, SSP_2024
+from message_ix_models.project.transport_futures import SCENARIO as TF_SCENARIO
 
 FUTURES = (
     ("", TF_SCENARIO.BASE),

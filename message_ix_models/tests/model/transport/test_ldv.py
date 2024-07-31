@@ -4,21 +4,22 @@ import genno
 import pandas as pd
 import pytest
 from iam_units import registry
-from message_ix_models.model.structure import get_codes
 from pytest import param
 
-from message_data.model.transport import testing
-from message_data.model.transport.ldv import (
+from message_ix_models.model.structure import get_codes
+from message_ix_models.model.transport import build, testing
+from message_ix_models.model.transport.ldv import (
     constraint_data,
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
-from message_data.projects.navigate import T35_POLICY
-from message_data.testing import assert_units
+from message_ix_models.model.transport.testing import assert_units
+from message_ix_models.project.navigate import T35_POLICY
 
 log = logging.getLogger(__name__)
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
@@ -149,6 +150,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
         assert N_exp <= len(df)
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, N_node_loc",
     [
@@ -168,6 +170,7 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
     assert N_node_loc == len(df["node_loc"].unique())
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "source, regions, years",
     [
@@ -206,7 +209,15 @@ def test_ldv_constraint_data(test_context, source, regions, years):
         assert info.Y[1:] == sorted(df["year_act"].unique())
 
 
-@pytest.mark.parametrize("func", (read_USTIMES_MA3T, read_USTIMES_MA3T_2))
+@pytest.mark.parametrize(
+    "func",
+    (
+        pytest.param(
+            read_USTIMES_MA3T, marks=testing.MARK[5]("R11/ldv-cost-efficiency.xlsx")
+        ),
+        read_USTIMES_MA3T_2,
+    ),
+)
 def test_read_USTIMES_MA3T(func):
     all_nodes = get_codes("node/R11")
     nodes = all_nodes[all_nodes.index("World")].child

@@ -9,6 +9,7 @@ import pandas as pd
 from dask.core import literal
 from genno import Computer, KeySeq
 from message_ix import make_df
+
 from message_ix_models.util import broadcast
 
 from .key import (

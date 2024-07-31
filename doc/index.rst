@@ -69,6 +69,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    api/report/index
    api/tools
    api/tools-costs
+   api/tools-messagev
    api/data-sources
    api/util
    api/testing
@@ -80,6 +81,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
 
    global/index
    material/index
+   transport/index
    water/index
 
 .. toctree::

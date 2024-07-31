@@ -294,4 +294,4 @@ MESSAGE_Transport_port_to_ix\\Emails_and_documentation
   I'm not sure how useful these will be at the current stage, but they were a bit helpful for me when trying to refresh my memory of what came from where; therefore, I figured it's worth parking these aside in case someone else needs them.
 
 - There is no outstanding technical documentation for how the detailed transport model works at a fundamental level.
-  The best we have is the more conceptual description, which can be found in the supplementary information of :cite:`McCollum2017`.
+  The best we have is the more conceptual description, which can be found in the supplementary information of :cite:`mccollum-2017`.

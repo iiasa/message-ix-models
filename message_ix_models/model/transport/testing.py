@@ -1,36 +1,74 @@
-"""Utilities for testing :mod:`~message_data.model.transport`."""
+"""Utilities for testing :mod:`~message_ix_models.model.transport`."""
 
 import logging
+import platform
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING, Mapping, Optional, Tuple, Union
 
-import message_ix_models.report
 import pytest
 from genno import Computer
 from message_ix import Reporter, Scenario
+
+import message_ix_models.report
 from message_ix_models import Context, ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
-from message_ix_models.util._logging import silence_log
+from message_ix_models.util import silence_log
+from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, build
+
+if TYPE_CHECKING:
+    import pandas
+    import pint
 
 log = logging.getLogger(__name__)
 
 # Common marks for transport code
-MARK = (
-    pytest.mark.xfail(
+MARK = {
+    0: pytest.mark.xfail(
         reason="Missing R14 input data/assumptions", raises=FileNotFoundError
     ),
-    pytest.mark.skip(
+    1: pytest.mark.skip(
         reason="Currently only possible with regions=R12 input data/assumptions",
     ),
-    lambda t: pytest.mark.xfail(
+    2: lambda t: pytest.mark.xfail(
         reason="Missing input data/assumptions for this node codelist", raises=t
     ),
-    pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
-    pytest.mark.xfail(reason="Currently unsupported"),
-)
+    3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
+    4: pytest.mark.xfail(reason="Currently unsupported"),
+    # Tests that fail with data that cannot be migrated from message_data
+    5: lambda f: pytest.mark.xfail(
+        raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
+    ),
+    6: pytest.mark.xfail(
+        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/207"
+    ),
+    7: pytest.mark.xfail(
+        condition=testing.GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
+        reason="Graphviz missing on macos-13 GitHub Actions runners",
+    ),
+}
+
+
+def assert_units(
+    df: "pandas.DataFrame", expected: Union[str, dict, "pint.Unit", "pint.Quantity"]
+):
+    """Assert that `df` has the unique, `expected` units."""
+    import pint
+    from iam_units import registry
+
+    all_units = df["unit"].unique()
+    assert 1 == len(all_units), f"Non-unique {all_units = }"
+
+    # Convert the unique value to the same class as `expected`
+    if isinstance(expected, pint.Quantity):
+        assert expected == expected.__class__(1.0, all_units[0])
+    elif isinstance(expected, Mapping):
+        # Compare dimensionality of the units, rather than exact match
+        assert expected == registry.Quantity(all_units[0] or "0").dimensionality
+    else:
+        assert expected == expected.__class__(all_units[0])
 
 
 def configure_build(
@@ -76,7 +114,7 @@ def built_transport(
 
         # Optionally silence logs for code used via build.main()
         log_cm = (
-            silence_log("genno message_data.model.transport message_ix_models")
+            silence_log("genno message_ix_models.model.transport message_ix_models")
             if quiet
             else nullcontext()
         )

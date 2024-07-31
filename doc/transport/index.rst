@@ -4,34 +4,35 @@ MESSAGEix-Transport
 .. warning::
 
    MESSAGEix-Transport is **under development**.
-   For details, see the `project board <https://github.com/orgs/iiasa/projects/29>`_.
 
-:mod:`message_data.model.transport` adds a technology-rich representation of transport to models in the MESSAGEix-GLOBIOM family.
+   - The code and data documented on these pages were recently :doc:`migrated </migrate>` from :mod:`.message_data`.
+     The text may still contain references to the old location.
+   - For details, see the `project board <https://github.com/orgs/iiasa/projects/29>`_.
+
+:mod:`message_ix_models.model.transport` adds a technology-rich representation of transport to models in the MESSAGEix-GLOBIOM family.
 The resulting “model variant” is variously referred to as:
 
 - **MESSAGEix-Transport**,
-- “MESSAGEix-GLOBIOM ‘T’” or, with other variants like :mod:`.buildings` and :mod:`.material`, “MESSAGEix-GLOBIOM BMT”, or
+- “MESSAGEix-GLOBIOM ‘T’” or, with other variants like :mod:`.buildings` and :mod:`~message_ix_models.model.material`, “MESSAGEix-GLOBIOM BMT”, or
 - “MESSAGEix-XX-Transport” where built on a single-country base model (again, in the MESSAGEix-GLOBIOM family) named like “MESSAGEix-XX”.
 
-MESSAGEix-Transport extends the formulation described by McCollum et al. (2016) :cite:`McCollum2017` for the older, MESSAGE V framework that predated MESSAGEix.
-Some inherited information about the older model is collected at :doc:`transport/old`.
+MESSAGEix-Transport extends the formulation described by McCollum et al. (2017) :cite:`mccollum-2017` for the older, MESSAGE V framework that predated MESSAGEix.
+Some inherited information about the older model is collected at :doc:`old`.
 
 Information about MESSAGEix-Transport, its inputs, configuration, implementation, and output, are organized according to this diagram:
 
 .. figure:: https://raw.githubusercontent.com/khaeru/doc/main/image/data-stages.svg
 
-   Information about MESSAGEix-Transport is separated into:
-
-- :doc:`transport/input` (separate page)—line (1) in the diagram.
+- :doc:`input` (separate page)—line (1) in the diagram.
 - :ref:`transport-implementation` (below)—between lines (1) and (3) in the diagram.
-- :doc:`transport/output` (separate page)—between lines (3) and (4) in the diagram.
+- :doc:`output` (separate page)—between lines (3) and (4) in the diagram.
 
 .. toctree::
    :hidden:
    :maxdepth: 2
 
-   transport/input
-   transport/output
+   input
+   output
 
 On this page:
 
@@ -67,7 +68,7 @@ The code:
     - Add these data to the target :class:`.Scenario`.
 
 - **Solves** the :class:`.Scenario`.
-- Provides :mod:`message_ix_models.report` extensions to **report or post-process** the model solution data and prepare detailed transport outputs in various formats (see :doc:`transport/output`).
+- Provides :mod:`message_ix_models.report` extensions to **report or post-process** the model solution data and prepare detailed transport outputs in various formats (see :doc:`output`).
 
 Details
 -------
@@ -76,9 +77,9 @@ Details
    :hidden:
    :maxdepth: 2
 
-   transport/disutility
+   disutility
 
-On other page(s): :doc:`transport/disutility`.
+On other page(s): :doc:`disutility`.
 
 - For light-duty vehicle technologies annotated with ``historical-only: True``, parameter data for ``bound_new_capacity_up`` are created with a value of 0.0.
   These prevent new capacity of these technologies from being created during the model horizon, but allow pre-horizon installed capacity (represented by ``historical_new_capacity``) to continue to be operated within its technical lifetime.
@@ -92,7 +93,7 @@ Usage
 Automated workflow
 ------------------
 
-:mod:`.transport.workflow.generate` returns a :class:`.Workflow` instance.
+:func:`.transport.workflow.generate` returns a :class:`.Workflow` instance.
 This can be invoked or modified by other code, or through the command-line::
 
   $ mix-models transport run --help
@@ -162,7 +163,7 @@ Debug the build for a single scenario
    With a different target or :program:`--nodes` option, the directory name will differ accordingly.
 
 Debug the build for all scenarios
-   This performs the above debug build step for all SSPs, and then runs :func:`debug_multi` to generate plots that compare the contents of the debug :file:`.csv` files for all 5 SSPs.
+   This performs the above debug build step for all SSPs, and then runs :func:`.debug_multi` to generate plots that compare the contents of the debug :file:`.csv` files for all 5 SSPs.
    The plots are output to the directory :file:`{local-data-path}/transport/`.
 
    .. code-block:: shell
@@ -202,7 +203,7 @@ Manual
 This subsection contains an older, manual, step-by-step workflow.
 
 **Preliminaries.**
-Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for working with :mod:`.message_data`.
+Check the list of :doc:`pre-requisite knowledge <message-ix:prereqs>` for working with :mod:`.message_ix_models`.
 
 .. note:: One pre-requisite is basic familiarity with using a shell/command line.
 
@@ -243,7 +244,7 @@ The following is equivalent to calling :meth:`message_ix.Scenario.solve`::
     $ message-ix --url="$URL" solve
 
 **Report the results.**
-The ``-m model.transport`` option indicates that additional reporting calculations from :mod:`model.transport.report` should be added to the base reporting configuration for MESSAGEix-GLOBIOM::
+The ``-m model.transport`` option indicates that additional reporting calculations from :mod:`.model.transport.report` should be added to the base reporting configuration for MESSAGEix-GLOBIOM::
 
     $ mix-models --url="$URL" report -m model.transport "transport plots"
 
@@ -317,23 +318,23 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
    regions=R12, years=B. Includes MACRO calibration
 
 ``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_GLOBIOM_R12_s#1``
-  regions=R12, years=B. Includes :doc:`material` detail.
+  regions=R12, years=B. Includes :doc:`/material/index` detail.
 
 ``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_2305#?``
-  regions=R12, years=B. Includes :doc:`material` detail.
+  regions=R12, years=B. Includes :doc:`/material/index` detail.
 
 .. _transport-base-structure:
 
 Structure of base scenarios
 ---------------------------
 
-The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.create` or :mod:`.model.bare`) contains a representation of transport with lower resolution.
+The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.bare` or :mod:`message_data.model.create`) contains a representation of transport with lower resolution.
 Some documentation is in the base-model documentation (:py:`message_doc`; see also `iiasa/message-ix-models#107 <https://github.com/iiasa/message-ix-models/pull/107>`_).
 This section gives additional details missing there, which are relevant to MESSAGEix-Transport.
 
 - Demand (``commodity=transport``, ``level=useful``) is denoted in **energy units**, i.e. GWa.
 - Technologies producing this output; all at ``m=M1``, except where noted.
-  This is the same set as in :doc:`MESSAGE V <transport/old>`, i.e. in MESSAGE V, the aggregate transport representation is inactive but still present.
+  This is the same set as in :doc:`MESSAGE V <old>`, i.e. in MESSAGE V, the aggregate transport representation is inactive but still present.
 
   - ``coal_trp``
   - ``foil_trp``
@@ -428,7 +429,7 @@ This workflow:
   This artifact contains, *inter alia*:
 
   - One directory per job.
-  - In each directory, files :file:`transport.csv` and :file:`transport.xlsx` containing :doc:`MESSAGEix-Transport reporting output <transport/output>`.
+  - In each directory, files :file:`transport.csv` and :file:`transport.xlsx` containing :doc:`MESSAGEix-Transport reporting output <output>`.
   - In each directory, files :file:`demand.csv` and :file:`bound_activity_{lo,up}.csv` containing data suitable for parametrizing the base MESSAGEix-GLOBIOM model.
 - May be triggered manually.
   Use the “Run workflow” button and choose a branch; the code and data on this branch will be the ones used to build, solve, and report MESSAGEix-Transport.
@@ -466,14 +467,14 @@ Code reference
 
 The entire module and its contents are documented recursively:
 
-.. currentmodule:: message_data.model
+.. currentmodule:: message_ix_models.model
 
 .. autosummary::
    :toctree: _autosummary
    :template: autosummary-module.rst
    :recursive:
 
-   message_data.model.transport
+   message_ix_models.model.transport
 
 Other documents
 ===============
@@ -481,4 +482,4 @@ Other documents
 .. toctree::
    :maxdepth: 2
 
-   transport/old
+   old

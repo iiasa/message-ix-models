@@ -160,6 +160,7 @@ main.add_command(ixmp_cli.commands["config"])
 submodules = [
     "message_ix_models.model.cli",
     "message_ix_models.model.structure",
+    "message_ix_models.model.transport.cli",
     "message_ix_models.model.water.cli",
     "message_ix_models.project.edits.cli",
     "message_ix_models.project.ssp",

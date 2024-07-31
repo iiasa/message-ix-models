@@ -6,12 +6,12 @@ import ixmp
 import pytest
 from genno import Quantity
 from genno.testing import assert_units
-from message_ix_models.model.structure import get_codes
-from message_ix_models.testing import bare_res
 from pytest import mark, param
 
-from message_data.model.transport import build, report, structure
-from message_data.model.transport.testing import MARK, configure_build
+from message_ix_models.model.structure import get_codes
+from message_ix_models.model.transport import build, report, structure
+from message_ix_models.model.transport.testing import MARK, configure_build
+from message_ix_models.testing import bare_res
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +36,8 @@ def test_make_spec(regions_arg, regions_exp, years):
     assert expected == spec["require"].set["node"]
 
 
+@MARK[7]
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years, ldv, nonldv, solve",
     [
@@ -118,6 +120,7 @@ def test_build_bare_res(
         # "ixmp://local/MESSAGEix-Transport on ENGAGE_SSP2_v4.1.7/baseline",
     ),
 )
+@pytest.mark.usefixtures("preserve_report_callbacks")
 def test_build_existing(tmp_path, test_context, url, solve=False):
     """Test that model.transport.build works on certain existing scenarios.
 
@@ -160,6 +163,7 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
     del mp
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years, N_node, options",
     [

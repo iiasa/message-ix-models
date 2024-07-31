@@ -12,6 +12,8 @@ from genno import Computer, Key, KeySeq, Quantity, quote
 from genno.core.key import single_key
 from iam_units import registry
 from message_ix import make_df
+from openpyxl import load_workbook
+
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
     ScenarioInfo,
@@ -20,12 +22,11 @@ from message_ix_models.util import (
     convert_units,
     make_matched_dfs,
     nodes_ex_world,
-    private_data_path,
+    package_data_path,
     same_node,
     same_time,
     series_of_pint_quantity,
 )
-from openpyxl import load_workbook
 
 from .non_ldv import UNITS
 from .util import input_commodity_level
@@ -163,7 +164,7 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
     """
     # Open the input file using openpyxl
     wb = load_workbook(
-        private_data_path("transport", FILE), read_only=True, data_only=True
+        package_data_path("transport", FILE), read_only=True, data_only=True
     )
     # Open the 'updateTRPdata' sheet
     sheet = wb["updateTRPdata"]

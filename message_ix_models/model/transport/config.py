@@ -5,14 +5,14 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import message_ix
 from genno import Quantity
-from message_ix_models import Context, ScenarioInfo, Spec
-from message_ix_models.project.ssp import SSP_2024, ssp_field
-from message_ix_models.report.util import as_quantity
-from message_ix_models.util import identify_nodes, private_data_path
-from message_ix_models.util.config import ConfigHelper
 
-from message_data.projects.navigate import T35_POLICY as NAVIGATE_SCENARIO
-from message_data.projects.transport_futures import SCENARIO as FUTURES_SCENARIO
+from message_ix_models import Context, ScenarioInfo, Spec
+from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
+from message_ix_models.project.ssp import SSP_2024, ssp_field
+from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
+from message_ix_models.report.util import as_quantity
+from message_ix_models.util import identify_nodes, package_data_path
+from message_ix_models.util.config import ConfigHelper
 
 log = logging.getLogger(__name__)
 
@@ -41,9 +41,10 @@ class Config(ConfigHelper):
     """Configuration for MESSAGEix-Transport.
 
     This dataclass stores and documents all configuration settings required and used by
-    :mod:`~message_data.model.transport`. It also handles (via :meth:`.from_context`)
-    loading configuration and values from files like :file:`config.yaml`, while
-    respecting higher-level configuration, for instance :attr:`.model.Config.regions`.
+    :mod:`~message_ix_models.model.transport`. It also handles (via
+    :meth:`.from_context`) loading configuration and values from files like
+    :file:`config.yaml`, while respecting higher-level configuration, for instance
+    :attr:`.model.Config.regions`.
     """
 
     #: Information about the base model.
@@ -208,8 +209,8 @@ class Config(ConfigHelper):
 
     #: **Temporary** setting for the SSP 2024 project: indicates whether the base
     #: scenario used is a policy (carbon pricing) scenario, or not. This currently does
-    #: not affect *any* behaviour of :mod:`~message_data.model.transport` except the
-    #: selection of a base scenario via :func:`.base_scenario_url`.
+    #: not affect *any* behaviour of :mod:`~message_ix_models.model.transport` except
+    #: the selection of a base scenario via :func:`.base_scenario_url`.
     policy: bool = False
 
     #: Flags for distinct scenario features according to projects. In addition to
@@ -352,7 +353,7 @@ class Config(ConfigHelper):
         try:
             # Update with region-specific configuration
             config.read_file(
-                private_data_path("transport", context.model.regions, "config.yaml")
+                package_data_path("transport", context.model.regions, "config.yaml")
             )
         except FileNotFoundError as e:
             log.warning(e)

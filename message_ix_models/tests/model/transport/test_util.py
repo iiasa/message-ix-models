@@ -4,10 +4,10 @@ import pytest
 import xarray as xr
 from genno.testing import assert_qty_equal
 from iam_units import registry
-from message_ix_models.report.util import as_quantity
 
-from message_data.model.transport.config import Config, DataSourceConfig
-from message_data.model.transport.util import input_commodity_level
+from message_ix_models.model.transport.config import Config, DataSourceConfig
+from message_ix_models.model.transport.util import input_commodity_level
+from message_ix_models.report.util import as_quantity
 
 
 def test_add_cl(test_context):

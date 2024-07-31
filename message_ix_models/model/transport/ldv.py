@@ -11,7 +11,9 @@ import pandas as pd
 from genno import Computer, quote
 from genno.operator import load_file
 from message_ix import make_df
-from message_ix.report.operator import as_message_df
+from openpyxl import load_workbook
+from sdmx.model.v21 import Code
+
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
@@ -24,12 +26,11 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     merge_data,
-    private_data_path,
+    minimum_version,
+    package_data_path,
     same_node,
 )
 from message_ix_models.util.ixmp import rename_dims
-from openpyxl import load_workbook
-from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
 from .operator import extend_y
@@ -217,7 +218,7 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Mapping[str, "AnyQuantit
     particular context settings.
     """
     # Open workbook
-    path = private_data_path("transport", subdir or "", FILE)
+    path = package_data_path("transport", subdir or "", FILE)
     wb = load_workbook(path, read_only=True, data_only=True)
 
     # Tables
@@ -271,7 +272,7 @@ def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, "AnyQuantity"]:
     result = {}
     for name in "fix_cost", "fuel economy", "inv_cost":
         result[name] = load_file(
-            path=private_data_path(
+            path=package_data_path(
                 "transport", subdir or "", f"ldv-{name.replace(' ', '-')}.csv"
             ),
             dims=rename_dims(),
@@ -452,6 +453,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
+@minimum_version("message_ix 3.6")
 def capacity_factor(
     qty: "AnyQuantity", t_ldv: dict, y, y_broadcast: "AnyQuantity"
 ) -> Dict[str, pd.DataFrame]:
@@ -475,6 +477,11 @@ def capacity_factor(
         All periods, including pre-model periods.
     """
     from genno.operator import convert_units
+
+    try:
+        from message_ix.report.operator import as_message_df
+    except ImportError:
+        from message_ix.reporting.computations import as_message_df
 
     # TODO determine units from technology annotations
     data = convert_units(qty.expand_dims(y=y) * y_broadcast, "Mm / year")

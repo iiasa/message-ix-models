@@ -11,16 +11,17 @@ import pandas as pd
 from genno import Computer, Key, KeySeq, MissingKeyError, Quantity, quote
 from genno.core.key import KeyLike, iter_keys, single_key
 from message_ix import make_df
+from sdmx.model.v21 import Code
+
 from message_ix_models.util import (
     broadcast,
     make_io,
     make_matched_dfs,
     merge_data,
-    private_data_path,
+    package_data_path,
     same_node,
     same_time,
 )
-from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
 
@@ -104,7 +105,7 @@ def prepare_computer(c: Computer):
     )
     ####
     c.add(e[1] / "flow", "select", e[0], indexers=dict(flow="OTHER"), drop=True)
-    path = private_data_path("transport", context.regions, "energy-other.csv")
+    path = package_data_path("transport", context.regions, "energy-other.csv")
     kw = dict(header_comment=ENERGY_OTHER_HEADER)
     c.add("energy other csv", "write_report", e[1] / "flow", path=path, kwargs=kw)
 
