@@ -1,10 +1,11 @@
 from typing import Any, Dict, List, Sequence, Union
 
+from sdmx.model.common import Annotation, Code
+
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
-from message_ix_models.util import load_private_data, private_data_path
-from sdmx.model.common import Annotation, Code
+from message_ix_models.util import load_package_data, package_data_path
 
 from .util import path_fallback
 
@@ -67,8 +68,8 @@ def make_spec(regions: str) -> Spec:
 
         # Load and store the data from the YAML file: either in a subdirectory for
         # context.model.regions, or the top-level data directory
-        path = path_fallback(regions, fn).relative_to(private_data_path())
-        tmp[name] = load_private_data(*path.parts)
+        path = path_fallback(regions, fn).relative_to(package_data_path())
+        tmp[name] = load_package_data(*path.parts)
 
     # Merge contents of technology.yaml into set.yaml
     sets.update(tmp.pop("set"))

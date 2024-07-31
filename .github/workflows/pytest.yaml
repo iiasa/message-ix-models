@@ -2,7 +2,7 @@ name: Test
 
 on:
   pull_request:
-    branches: [ main , "migrate-*"]
+    branches: [ main , "migrate**"]
   schedule:
   # 05:00 UTC = 06:00 CET = 07:00 CEST
   - cron: "0 5 * * *"
@@ -123,7 +123,7 @@ jobs:
     - name: Run test suite using pytest
       run: |
         pytest message_ix_models \
-          -m "not snapshot" \
+          -m "not (ece_db or snapshot)" \
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
           --numprocesses=auto \

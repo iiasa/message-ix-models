@@ -51,6 +51,24 @@ def pytest_addoption(parser):
 # Fixtures
 
 
+@pytest.fixture(scope="function")
+def preserve_report_callbacks():
+    """Protect :data:`.report.CALLBACKS` from effects of a test function.
+
+    Use this fixture for test functions that call :func:`.report.register` to avoid
+    changing the global/default configuration for other tests.
+    """
+
+    from message_ix_models import report
+
+    try:
+        tmp = report.CALLBACKS.copy()
+        yield
+    finally:
+        report.CALLBACKS.clear()
+        report.CALLBACKS.extend(tmp)
+
+
 @pytest.fixture(scope="session")
 def session_context(pytestconfig, tmp_env):
     """A :class:`.Context` connected to a temporary, in-memory database.

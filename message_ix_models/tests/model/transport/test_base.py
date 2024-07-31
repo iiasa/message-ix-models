@@ -2,11 +2,12 @@ import numpy as np
 from genno import Computer, KeySeq
 from genno.operator import relabel
 from genno.testing import random_qty
+
 from message_ix_models.model.structure import get_codes
+from message_ix_models.model.transport.base import smooth
 
-from message_data.model.transport.base import smooth
 
-
+@smooth.minimum_version
 def test_smooth(recwarn) -> None:
     c = Computer()
 

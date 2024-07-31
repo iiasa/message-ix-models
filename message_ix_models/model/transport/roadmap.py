@@ -15,8 +15,9 @@ The countries belonging to the Africa region in the Roadmap 1.0 model are:
 """
 
 import pandas as pd
-from message_ix_models.util import private_data_path
 from plotnine import save_as_pdf_pages
+
+from message_ix_models.util import package_data_path
 
 #: Name of the file containing the data.
 FILE = "RoadmapResults_2017.xlsx"
@@ -116,7 +117,8 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
     Returns
     -------
     DataFrame : pandas.DataFrame
-        Same format as returned by :func:`~message_data.tools.iea_eei.get_eei_data`.
+        Same format as returned by
+        :func:`~message_ix_models.tools.iea.eei.get_eei_data`.
     """
     # Load and process data for Africa
     # Check years provided
@@ -127,7 +129,7 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
             assert x in ALL_YEARS
     # Read xlsx file
     df = pd.read_excel(
-        private_data_path("transport", FILE), sheet_name="Model Results", header=0
+        package_data_path("transport", FILE), sheet_name="Model Results", header=0
     )
     df = df[(df["Year"].isin(years)) & (df["Roadmap_Region"] == region[0])].reset_index(
         drop=True

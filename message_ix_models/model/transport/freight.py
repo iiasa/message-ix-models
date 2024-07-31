@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING, Dict, List
 import pandas as pd
 from genno import Computer
 from iam_units import registry
+from sdmx.model.v21 import Code
+
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import broadcast, make_io, make_matched_dfs, same_node
-from sdmx.model.v21 import Code
 
 from .util import input_commodity_level
 

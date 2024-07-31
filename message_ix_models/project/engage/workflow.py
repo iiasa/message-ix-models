@@ -1,9 +1,12 @@
 """ENGAGE workflow pieces for reuse with :class:`message_ix_models.Workflow`.
 
-These functions emulate the collective behaviour of :class:`.engage.runscript_main`,
-:class:`.engage.scenario_runner` and the associated configuration, but are adapted to be
-reusable, particularly in the Workflow pattern used in e.g. :mod:`.projects.navigate`.
+These functions emulate the collective behaviour of
+:class:`message_data.engage.runscript_main`,
+:class:`message_data.engage.scenario_runner` and the associated configuration, but are
+adapted to be reusable, particularly in the Workflow pattern used in e.g.
+:mod:`.project.navigate`.
 """
+
 import logging
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
@@ -11,14 +14,19 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from iam_units import convert_gwp
 from message_ix import Scenario
+
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.workflow import Config, solve
 from message_ix_models.util import broadcast, identify_nodes
 from message_ix_models.workflow import Workflow
 
-from message_data.model.workflow import Config, solve
-
-from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
-from .scenario_runner import ScenarioRunner
+try:
+    # NB These modules have not been migrated from message_data.projects.engage
+    from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
+    from .scenario_runner import ScenarioRunner
+except ImportError:
+    RELATION_GLOBAL_CO2: str = ""
+    ScenarioRunner = type("ScenarioRunner", (), {})
 
 log = logging.getLogger(__name__)
 

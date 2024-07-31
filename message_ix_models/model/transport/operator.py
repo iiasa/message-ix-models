@@ -26,8 +26,11 @@ import xarray as xr
 from genno import Computer, KeySeq, Operator, quote
 from genno.operator import apply_units, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
+from sdmx.model.v21 import Code
+
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codelist, get_codes
+from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.report.operator import compound_growth
 from message_ix_models.report.util import as_quantity
 from message_ix_models.util import (
@@ -37,19 +40,16 @@ from message_ix_models.util import (
     nodes_ex_world,
     show_versions,
 )
-from sdmx.model.v21 import Code
-
-from message_data.projects.navigate import T35_POLICY
 
 from .config import Config
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
     from message_ix import Scenario
-    from message_ix_models import Context
     from xarray.core.types import Dims
 
-    import message_data.model.transport.factor
+    import message_ix_models.model.transport.factor
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -468,7 +468,7 @@ def factor_ssp(
     nodes: List[str],
     years: List[int],
     *others: List,
-    info: "message_data.model.transport.factor.Factor",
+    info: "message_ix_models.model.transport.factor.Factor",
     extra_dims: Optional[Sequence[str]] = None,
 ) -> "AnyQuantity":
     """Return a scaling factor for an SSP realization."""
@@ -643,9 +643,9 @@ def merge_data(
 
 def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
     """Returns base-year demand for freight from IEA EEI, with dimensions n-c-y."""
-    from message_data.tools import iea_eei  # type: ignore [attr-defined]
+    from message_ix_models.tools.iea import eei
 
-    result = iea_eei.as_quantity(name, config["regions"])
+    result = eei.as_quantity(name, config["regions"])  # type: ignore [attr-defined]
     ym1 = result.coords["y"].data[-1]
 
     log.info(f"Use y={ym1} data for base-year freight transport activity")

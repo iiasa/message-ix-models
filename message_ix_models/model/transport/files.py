@@ -8,6 +8,7 @@ from .key import pdt_cap
 if TYPE_CHECKING:
     import genno
     from genno.core.key import KeyLike
+
     from message_ix_models import Context
 
 #: List of all :class:`.ExogenousDataFile`.

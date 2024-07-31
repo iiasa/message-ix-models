@@ -29,6 +29,7 @@ from typing import (
 import pandas as pd
 from genno import Computer, Key, Quantity
 from genno import operator as g
+
 from message_ix_models.project.ssp import SSP_2024
 
 if TYPE_CHECKING:

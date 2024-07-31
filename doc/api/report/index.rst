@@ -13,7 +13,7 @@ Elsewhere:
 - Reporting for specific model variants:
 
   - :mod:`.water.reporting`
-  - (Private) :doc:`Reporting of message_data.model.transport <m-data:reference/model/transport/report>`
+  - :doc:`transport/output` of :mod:`.model.transport`
 
 - :doc:`‘Legacy’ reporting <legacy>`.
 

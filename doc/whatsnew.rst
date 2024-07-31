@@ -6,6 +6,7 @@ Next release
 
 - Add :doc:`/material/index` (:pull:`188`, :pull:`189`).
 - Update :doc:`/material/index` (:pull:`201`).
+- Add :doc:`/transport/index` (:pull:`207`, :pull:`208`).
 - Add :doc:`/project/edits` project code and documentation (:pull:`204`).
 - Reduce log verbosity of :func:`.apply_spec` (:pull:`202`).
 - Made fixes and updates to :doc:`/api/tools-costs` (:pull:`186`, :pull:`187`, :pull:`190`, :pull:`195`).
@@ -16,7 +17,7 @@ Next release
   - Change the default fixed O&M reduction rate to 0 (:pull:`186`).
   - Modify to use 2023 release of IEA WEO data and to use 2022 historic data for the base year (:pull:`187`).
   - Change the default final year to 2110 (:pull:`190`).
-  - Add :attr:`~.costs.Config.use_vintages` to control whether vintages are used in computing fixed O&M costs (:pull:`195`).  
+  - Add :attr:`~.costs.Config.use_vintages` to control whether vintages are used in computing fixed O&M costs (:pull:`195`).
 
 v2024.4.22
 ==========

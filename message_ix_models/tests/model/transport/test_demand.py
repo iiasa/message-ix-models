@@ -4,14 +4,14 @@ from pathlib import Path
 
 import genno
 import pytest
-from genno import Key
+from genno import ComputationError, Key
 from genno.testing import assert_units
-from message_ix_models.model.structure import get_codes
-from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from pytest import param
 
-from message_data.model.transport import Config, demand, testing
-from message_data.model.transport.testing import MARK
+from message_ix_models.model.structure import get_codes
+from message_ix_models.model.transport import Config, build, demand, testing
+from message_ix_models.model.transport.testing import MARK
+from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ def test_demand_dummy(test_context, regions, years):
     assert any(data["demand"]["commodity"] == "transport pax URLMM")
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years, N_node, options",
     [
@@ -131,6 +132,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
         assert False, "Negative values in demand"
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "ssp",
     [
@@ -143,7 +145,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
     ],
 )
 def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
-    from message_data.testing import assert_units
+    from message_ix_models.model.transport.testing import assert_units
 
     c, info = testing.configure_build(
         test_context, regions=regions, years=years, options=dict(ssp=ssp)
@@ -179,6 +181,8 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
     )
 
 
+@MARK[7]
+@build.get_computer.minimum_version
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
 
@@ -209,13 +213,14 @@ def test_exo_report(test_context, tmp_path):
     c.get("demand plots")
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions",
     [
         param("ISR", marks=MARK[3]),
         "R11",
         "R12",
-        param("R14", marks=MARK[2](AttributeError)),
+        param("R14", marks=MARK[2]((AttributeError, ComputationError))),
     ],
 )
 @pytest.mark.parametrize("years", ["B"])
@@ -253,6 +258,7 @@ R11_WEU  2100  300
 """
 
 
+@build.get_computer.minimum_version
 def test_pdt_per_capita(
     tmp_path, test_context, regions="R12", years="B", options=dict()
 ):
@@ -261,7 +267,7 @@ def test_pdt_per_capita(
     Moved from :mod:`.test_operator`.
     """
     # TODO After #551, this is largely similar to test_exo and test_pdt; merge
-    from message_data.model.transport.key import pdt_cap
+    from message_ix_models.model.transport.key import pdt_cap
 
     c, info = testing.configure_build(
         test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
@@ -276,6 +282,7 @@ def test_pdt_per_capita(
     assert_units(result, "km / year")
 
 
+@build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions,years,pop_scen",
     [
@@ -308,6 +315,9 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
     assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
 
 
+@MARK[7]
+@build.get_computer.minimum_version
+@pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "nodes, target",
     [

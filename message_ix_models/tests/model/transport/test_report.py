@@ -1,19 +1,22 @@
 import logging
 from copy import deepcopy
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import genno
 import pytest
-from message_ix_models import ScenarioInfo
-from message_ix_models.report import prepare_reporter, register
+from packaging.version import parse
 from pytest import mark, param
 
-from message_data.model.transport.report import callback, configure_legacy_reporting
-from message_data.model.transport.testing import (
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.transport import build
+from message_ix_models.model.transport.report import configure_legacy_reporting
+from message_ix_models.model.transport.testing import (
     MARK,
     built_transport,
     simulated_solution,
 )
+from message_ix_models.report import prepare_reporter, sim
 
 if TYPE_CHECKING:
     import message_ix
@@ -21,8 +24,9 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+@MARK[6]
 def test_configure_legacy():
-    from message_data.tools.post_processing.default_tables import TECHS
+    from message_ix_models.report.legacy.default_tables import TECHS
 
     config = deepcopy(TECHS)
 
@@ -47,10 +51,9 @@ def test_configure_legacy():
         assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
 
 
-def test_register_cb():
-    register(callback)
-
-
+@MARK[7]
+@build.get_computer.minimum_version
+@pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "regions, years",
     (
@@ -62,7 +65,8 @@ def test_register_cb():
 )
 def test_report_bare_solved(request, test_context, tmp_path, regions, years):
     """Run MESSAGEix-Transport–specific reporting."""
-    from message_ix_models.report import Config
+    from message_ix_models.model.transport.report import callback
+    from message_ix_models.report import Config, register
 
     register(callback)
 
@@ -99,7 +103,9 @@ def quiet_genno(caplog):
     caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
-@mark.usefixtures("quiet_genno")
+@MARK[7]
+@build.get_computer.minimum_version
+@mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
@@ -119,7 +125,8 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     assert 0 < len(result)
 
 
-@mark.usefixtures("quiet_genno")
+@build.get_computer.minimum_version
+@mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 @pytest.mark.parametrize(
     "plot_name",
     # # All plots
@@ -142,7 +149,13 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
-@pytest.mark.xfail(raises=AssertionError, reason="Temporary, for #549")
+@sim.to_simulate.minimum_version
+@pytest.mark.xfail(
+    raises=AssertionError,
+    reason="Temporary, for #549",
+    condition=parse(version("message_ix")) >= parse("3.8.0"),
+)
+@pytest.mark.usefixtures("preserve_report_callbacks")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:

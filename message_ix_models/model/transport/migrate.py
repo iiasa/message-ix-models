@@ -13,7 +13,7 @@ from itertools import product
 import pandas as pd
 from tqdm import tqdm
 
-from message_data.tools.messagev import CHNFile, DICFile, INPFile
+from message_ix_models.tools.messagev import CHNFile, DICFile, INPFile
 
 log = logging.getLogger(__name__)
 

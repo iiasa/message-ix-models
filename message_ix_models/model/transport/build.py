@@ -8,8 +8,10 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 import pandas as pd
 from genno import Computer, KeyExistsError, Quantity, quote
 from message_ix import Scenario
+
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
+from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time
 
 from . import Config
@@ -29,6 +31,7 @@ def write_report(qty: "AnyQuantity", path: Path, kwargs=None) -> None:
     .. todo:: Move upstream, to :mod:`genno`.
     """
     from genno import operator
+
     from message_ix_models.util import datetime_now_with_tz
 
     kwargs = kwargs or dict()
@@ -194,7 +197,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
     prepare_computer(
-        context, c, "message_data.model.transport", source_kw=kw, strict=False
+        context, c, "message_ix_models.model.transport", source_kw=kw, strict=False
     )
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
@@ -371,6 +374,7 @@ def add_structure(c: Computer):
     c.add("indexers::iea to transport", itemgetter(2), "groups::iea eweb")
 
 
+@minimum_version("message_ix 3.8")
 def get_computer(
     context: Context,
     obj: Optional[Computer] = None,
