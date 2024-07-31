@@ -598,9 +598,30 @@ solar_res8:
   sector: electricity
   output: [electr, secondary]
 
-solar_res_hist:
-  name: solar_res_hist
-  description: Currently installed solar electricity capacity
+solar_res_hist_2005:
+  name: solar_res_hist_2005
+  description: Currently installed solar electricity capacity with 2005 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_hist_2010:
+  name: solar_res_hist_2010
+  description: Currently installed solar electricity capacity with 2010 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_hist_2015:
+  name: solar_res_hist_2015
+  description: Currently installed solar electricity capacity with 2015 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_hist_2020:
+  name: solar_res_hist_2020
+  description: Currently installed solar electricity capacity with 2020 year bin
   type: secondary
   sector: electricity
   output: [electr, secondary]
@@ -710,9 +731,30 @@ wind_res4:
   sector: electricity
   output: [electr, secondary]
 
-wind_res_hist:
-  name: wind_res_hist
-  description: Currently installed wind onshore capacity
+wind_res_hist_2005:
+  name: wind_res_hist_2005
+  description: Currently installed wind onshore capacity with 2005 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_res_hist_2010:
+  name: wind_res_hist_2010
+  description: Currently installed wind onshore capacity with 2010 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_res_hist_2015:
+  name: wind_res_hist_2015
+  description: Currently installed wind onshore capacity with 2015 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_res_hist_2020:
+  name: wind_res_hist_2020
+  description: Currently installed wind onshore capacity with 2020 year bin
   type: secondary
   sector: electricity
   output: [electr, secondary]
@@ -760,9 +802,30 @@ wind_ref5:
   sector: electricity
   output: [electr, secondary]
 
-wind_ref_hist:
-  name: wind_ref_hist
-  description: Currently installed wind offshore capacity
+wind_ref_hist_2005:
+  name: wind_ref_hist_2005
+  description: Currently installed wind offshore capacity with 2005 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref_hist_2010:
+  name: wind_ref_hist_2010
+  description: Currently installed wind offshore capacity with 2010 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref_hist_2015:
+  name: wind_ref_hist_2015
+  description: Currently installed wind offshore capacity with 2015 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref_hist_2020:
+  name: wind_ref_hist_2020
+  description: Currently installed wind offshore capacity with 2020 year bin
   type: secondary
   sector: electricity
   output: [electr, secondary]
