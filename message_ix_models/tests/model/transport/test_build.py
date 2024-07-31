@@ -36,6 +36,7 @@ def test_make_spec(regions_arg, regions_exp, years):
     assert expected == spec["require"].set["node"]
 
 
+@MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years, ldv, nonldv, solve",

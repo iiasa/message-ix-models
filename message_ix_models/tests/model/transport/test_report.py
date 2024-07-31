@@ -51,6 +51,7 @@ def test_configure_legacy():
         assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
 
 
+@MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
@@ -102,6 +103,7 @@ def quiet_genno(caplog):
     caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
+@MARK[7]
 @build.get_computer.minimum_version
 @mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
