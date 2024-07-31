@@ -1,6 +1,7 @@
 """Utilities for testing :mod:`~message_ix_models.model.transport`."""
 
 import logging
+import platform
 from contextlib import nullcontext
 from pathlib import Path
 from typing import TYPE_CHECKING, Mapping, Optional, Tuple, Union
@@ -12,7 +13,8 @@ from message_ix import Reporter, Scenario
 import message_ix_models.report
 from message_ix_models import Context, ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
-from message_ix_models.util._logging import silence_log
+from message_ix_models.util import silence_log
+from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, build
 
@@ -41,6 +43,10 @@ MARK = {
     ),
     6: pytest.mark.xfail(
         reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/207"
+    ),
+    7: pytest.mark.xfail(
+        condition=testing.GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
+        reason="Graphviz missing on macos-13 GitHub Actions runners",
     ),
 }
 

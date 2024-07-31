@@ -181,6 +181,7 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
     )
 
 
+@MARK[7]
 @build.get_computer.minimum_version
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
@@ -314,6 +315,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
     assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
 
 
+@MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
