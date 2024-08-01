@@ -176,7 +176,7 @@ def build_scen(
 
     if update_costs:
         log.info(f"Updating costs with {message_ix_models.tools.costs.projections}")
-        inv, fix = gen_te_projections(scenario, context["ssp"])
+        inv, fix = gen_te_projections(scenario, context["ssp"], method="gdp")
         scenario.check_out()
         scenario.add_par("fix_cost", fix)
         scenario.add_par("inv_cost", inv)
