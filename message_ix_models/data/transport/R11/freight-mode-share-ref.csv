@@ -1,0 +1,58 @@
+# Mode shares of freight activity in the model base year
+#
+# - Prepared by A. Javaid 2023-11-02.
+# - LAM data is based on weight (tones) as I haven’t yet found any good
+#   source for tonne-km mode split.
+# - LAM and SSA mode split are based on intra-regional movements, whereas
+#   others are either total within a region or total within a country.
+# - PNK inserted "0" for:
+#   - mode=AIR in R11_EEU, R11_FSU.
+#   - mode=WATER in R11_MEA, R11_NAM.
+#
+# Units: dimensionless
+#
+node,    technology, value
+R11_AFR, ROAD,       0.767
+R11_AFR, RAIL,       0.003
+R11_AFR, WATER,      0.221
+R11_AFR, AIR,        0.009
+R11_CPA, ROAD,       0.310
+R11_CPA, RAIL,       0.200
+R11_CPA, WATER,      0.480
+R11_CPA, AIR,        0.020
+R11_EEU, ROAD,       0.680
+R11_EEU, RAIL,       0.270
+R11_EEU, WATER,      0.050
+R11_EEU, AIR,        0.0
+R11_FSU, ROAD,       0.080
+R11_FSU, RAIL,       0.900
+R11_FSU, WATER,      0.020
+R11_FSU, AIR,        0.0
+R11_LAM, ROAD,       0.344
+R11_LAM, RAIL,       0.007
+R11_LAM, WATER,      0.648
+R11_LAM, AIR,        0.001
+R11_MEA, ROAD,       0.965
+R11_MEA, RAIL,       0.019
+R11_MEA, WATER,      0.0
+R11_MEA, AIR,        0.016
+R11_NAM, ROAD,       0.590
+R11_NAM, RAIL,       0.350
+R11_NAM, WATER,      0.0
+R11_NAM, AIR,        0.060
+R11_PAO, ROAD,       0.700
+R11_PAO, RAIL,       0.285
+R11_PAO, WATER,      0.0149
+R11_PAO, AIR,        0.01
+R11_PAS, ROAD,       0.747
+R11_PAS, RAIL,       0.011
+R11_PAS, WATER,      0.240
+R11_PAS, AIR,        0.002
+R11_SAS, ROAD,       0.600
+R11_SAS, RAIL,       0.380
+R11_SAS, WATER,      0.019
+R11_SAS, AIR,        0.001
+R11_WEU, ROAD,       0.750
+R11_WEU, RAIL,       0.190
+R11_WEU, WATER,      0.059
+R11_WEU, AIR,        0.001

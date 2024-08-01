@@ -1,0 +1,59 @@
+# Reporting variables for the MESSAGE V version of MESSAGE-Transport
+#
+# Derived from the .cin files.
+#
+# For all variables, the following were set (unless specified otherwise):
+# - direction: horizontal
+# - postdigits: 5
+# - totcol: true
+
+- title: Vehicle-kilometers traveled (all transport modes and vehicle types)
+  unit: v-bnkm , 1.
+- title: Passenger-kilometers traveled (only passenger transport modes)
+  unit: p-bnkm , 1.
+- title: Tonne-kilometers traveled (only freight transport modes)
+  unit: t-bnkm , 1.
+- title: Vehicle capacity (stock) in each year (all transport modes and vehicle types)
+  unit: million_vehicles , 1.
+- title: New vehicle capacity (sales) in each year (all transport modes and vehicle types)
+  unit: million_vehicles , 1.
+- title: Cumulative vehicle capacity (stock) by each year (all transport modes and vehicle types)
+  unit: million_vehicles , 1.
+- title: Final energy use (tank-to-wheel) (all transport modes and vehicle types)
+  unit: EJ , 0.03154
+- title: Direct CO2 emissions from transport (tank-to-wheel) (all transport modes and vehicle types)
+  unit: Mton_C, 1.
+- title: New vehicle efficiency - final energy use (tank-to-wheel) divided by vehicle kilometers-traveled
+  unit: MJ_per_vkm , 1.
+  totcol: false
+- title: New vehicle efficiency - final energy use (tank-to-wheel) divided by passenger kilometers-traveled
+  unit: MJ_per_pkm , 1.
+  totcol: false
+- title: Investment (capital) costs of vehicle technologies
+  unit: $_per_veh , 1.
+  totcol: false
+  postdigits: 0
+- title: Fixed O&M costs of vehicle technologies (also includes variable O&M in the case of non-LDVs)
+  unit: $_per_veh_yr , 1.
+  totcol: false
+  postdigits: 0
+- title: Variable O&M costs of vehicle technologies (anything extra that is not already included in fixed O&M costs)
+  unit: $_per_veh_yr , 1.
+  totcol: false
+  postdigits: 0
+- title: Vehicle occupancy rates (passenger) and load factors (freight)
+  unit: pass_tonne_per_veh , 1.
+  totcol: false
+  postdigits: 2
+- title: Disutility costs for LDVs (per vehicle; total across sub-components) - all vehicle types and consumer groups
+  unit: $/vehicle , 1000
+  totcol: false
+  postdigits: 0
+- title: Share of new vehicle capacity (sales) by technology in each year (LDVs only)
+  unit: fractional share , 1.
+  totcol: false
+  postdigits: 4
+- title: Share of vehicle capacity (stock) by technology in each year (LDVs only)
+  unit: fractional share , 1.
+  totcol: false
+  postdigits: 4

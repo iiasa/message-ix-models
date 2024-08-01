@@ -1,0 +1,11 @@
+# Share of population by technology propensity/attitude
+#
+# Units: dimensionless
+#
+# DLM: from sheet ‘Segmentation’ of the MA3T model.
+# PNK: values moved from LDV data workbook, sheet MESSAGE_LDV_nam.
+#
+attitude,value
+EA,0.08
+EM,0.38
+LM,0.54

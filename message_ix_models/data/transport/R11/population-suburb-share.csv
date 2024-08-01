@@ -1,0 +1,34 @@
+# Share of MSA population that is suburban
+#
+# Units: dimensionless
+#
+# - Values are filled forward by year.
+# - (DLM 2010-04-10) All future values and all 2010 non-NAM values are
+#   guesstimates for now.
+#
+node,    year, value
+R11_NAM, 2010, 0.618
+R11_NAM, 2015, 0.61
+R11_NAM, 2020, 0.6
+R11_NAM, 2025, 0.59
+R11_NAM, 2030, 0.58
+R11_NAM, 2035, 0.57
+R11_NAM, 2040, 0.56
+R11_NAM, 2045, 0.55
+R11_NAM, 2050, 0.54
+R11_NAM, 2060, 0.52
+R11_NAM, 2070, 0.5
+R11_NAM, 2080, 0.48
+R11_NAM, 2090, 0.46
+R11_NAM, 2100, 0.44
+R11_NAM, 2110, 0.44
+R11_LAM, 2010, 0.1
+R11_WEU, 2010, 0.1
+R11_EEU, 2010, 0.1
+R11_FSU, 2010, 0.1
+R11_MEA, 2010, 0.1
+R11_AFR, 2010,  .05
+R11_CPA, 2010,  .05
+R11_PAO, 2010, 0.1
+R11_PAS, 2010, 0.05
+R11_SAS, 2010, 0

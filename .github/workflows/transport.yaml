@@ -1,0 +1,212 @@
+name: MESSAGEix-Transport
+
+env:
+  # Starting point of the workflow.
+  # Use this value to build from a certain scenario:
+  # base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+  # Use this value to allow the workflow to determine model & scenario names
+  # and versions:
+  base: --platform=ixmp-dev
+
+  # Set this to a particular step to truncate the workflow
+  from-step: ""
+
+on:
+  # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
+  # pull_request:
+  #   branches: [ main, dev ]
+  # push:
+  #   branches: [ main, dev ]
+  schedule:
+  - cron: "0 1 * * *"  # 01:00 UTC = 02:00 CET = 03:00 CEST
+  workflow_dispatch: {}
+
+# Cancel previous runs that have not completed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    name: MESSAGEix-Transport ${{ matrix.SSP }}${{ matrix.policy }}
+    # Distribute jobs across any available self-hosted runner(s)
+    # runs-on: self-hosted
+    # Use one or a few specific runner(s)
+    runs-on: [ self-hosted, iiasa-self-hosted-l2 ]
+
+    strategy:
+      matrix:
+        # These correspond to short labels used for workflow step names
+        SSP:
+        - SSP1
+        - SSP2
+        - SSP3
+        - SSP4
+        - SSP5
+        policy:
+        - " policy"
+        - ""
+
+    steps:
+    - name: Clean workspace
+      run: |
+        rm -rf ${{ github.workspace }}/report/*
+
+    - uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: |
+          ${{ secrets.MESSAGE_BUILDINGS_PRIVATE_KEY }}
+          ${{ secrets.MESSAGE_TRADE_PRIVATE_KEY }}
+          ${{ secrets.NAVIGATE_WORKFLOW_PRIVATE_KEY }}
+
+    - uses: actions/checkout@v4
+      with:
+        path: message_data
+        lfs: true
+        # On GitHub Actions
+        # submodules: true
+        # On self-hosted runners
+        submodules: false
+
+    # NB Needed for self-hosted runner, not for GitHub
+    - name: Check out Git LFS files
+      working-directory: message_data
+      run: git lfs checkout
+
+    # Other repositories required for testing
+    - name: Check out message-static-data
+      uses: actions/checkout@v4
+      with:
+        repository: iiasa/message-static-data
+        token: ${{ secrets.MESSAGE_STATIC_DATA_PAT }}
+        path: message-static-data
+        lfs: true
+        # Only check out the following files to limit bandwidth usage.
+        # Respectively
+        # 1. IEA Extended World Energy Balances, OECD source, 2022 edition
+        sparse-checkout: |
+          iea/372f7e29-en.zip
+        sparse-checkout-cone-mode: false
+
+    - name: Connect static data to message_data
+      run: cp -rsv $(realpath message-static-data)/* message_data/data/
+
+    - uses: actions/checkout@v4
+      with:
+        repository: iiasa/MESSAGE_Buildings
+        path: buildings
+        ssh-key: ${{ secrets.MESSAGE_BUILDINGS_PRIVATE_KEY }}
+
+    # NB Needed for self-hosted runner, not for GitHub
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+
+    - uses: actions/setup-python@v5
+      with:
+        # Latest version testable on GitHub Actions
+        python-version: "3.12"
+        cache: pip
+        cache-dependency-path: "**/pyproject.toml"
+
+    - uses: iiasa/actions/setup-gams@main
+      with:
+        version: 35.2.0
+        license: ${{ secrets.GAMS_LICENSE }}
+
+    # NB the IIASA-hosted runner does not have permissions to do "sudo apt-get",
+    #    so the following doesn't work. Rather, the necessary packages
+    #    (graphviz libgraphviz-dev pkg-config) are manually installed on the
+    #    host system
+    # - uses: ts-graphviz/setup-graphviz@v2
+
+    # By default, the next step installs dependencies from PyPI.
+    # To run against unreleased code (on `main`, or other branches for open
+    # PRs), uncomment or modify the lines below as appropriate.
+    # - genno and message-ix-models are released frequently and *should* be
+    #   installed from PyPI, with only temporary exceptions.
+    # - ixmp and message-ix are released less frequently and *may* be installed
+    #   from `main`
+    - name: Force upgrade to unreleased dependencies
+      run: |
+        # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
+        pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
+        # Temporary, pending a release that includes iiasa/message-ix-models#161, #166
+        pip install --upgrade "message-ix-models[iea-web] @ git+https://github.com/iiasa/message-ix-models.git@main"
+
+        # Upgrade matplotlib
+        # pyam pins matplotlib < 3.7.1, which conflicts with plotnine per
+        # https://github.com/has2k1/plotnine/pull/751. Override.
+        pip install --upgrade matplotlib
+
+    - name: Install package; upgrade dependencies
+      working-directory: message_data
+      run: pip install --upgrade --upgrade-strategy=eager --editable .[dl,scgen,tests,transport]
+
+    - name: Configure
+      run: |
+        from pathlib import Path
+
+        # Ensure keys are defined
+        import message_data.model.buildings
+        from ixmp import config
+
+        config.add_platform(
+            "ixmp-dev",
+            "jdbc",
+            "oracle",
+            "x8oda.iiasa.ac.at:1521/PIXMP2.iiasa.ac.at",
+            "${{ secrets.IXMP_DEV_USER }}",
+            "${{ secrets.IXMP_DEV_PASS }}",
+            jvmargs="-Xmx16G",
+        )
+
+        p = Path("${{ github.workspace }}")
+        config.set("message local data", p / "report")
+        config.set("message solve options", {"iis": 1, "tilim": 60 * 30})
+        config.set("message buildings dir", p / "buildings")
+        config.save()
+
+        # Equivalent to "(ixmp|message-ix|mix-models) config show"
+        print(config.path.read_text())
+      shell: python
+
+    - name: Fetch data
+      run: |
+        mix-models fetch "SSP-Update-3.0"
+        mix-models fetch "SSP-Update-3.0.1"
+
+    - name: Run MESSAGEix-Transport workflow "${{ env.from-step }}" → "${{ matrix.SSP }}${{ matrix.policy }} reported"
+      run: |
+        mix-models \
+          ${{ env.base }} \
+          transport run \
+          --base=auto --nodes=R12 --model-extra="ci nightly" \
+          --from="${{ env.from-step }}" \
+          "${{ matrix.SSP }}${{ matrix.policy }} reported" \
+          --go
+      continue-on-error: true
+
+    - name: Upload results as a build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MESSAGEix-Transport ${{ matrix.SSP }}${{ matrix.policy }}
+        path: |
+          ${{ github.workspace }}/report/
+          !${{ github.workspace }}/report/cache/
+        if-no-files-found: error
+      continue-on-error: true
+
+  collate:
+    name: Collate outputs
+    needs: report
+    runs-on: self-hosted
+
+    steps:
+    - name: Merge artifacts
+      uses: actions/upload-artifact/merge@v4
+      with:
+        name: MESSAGEix-Transport
+        delete-merged: true

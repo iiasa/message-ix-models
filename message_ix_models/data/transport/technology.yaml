@@ -1,0 +1,484 @@
+# Technologies in MESSAGEix-Transport
+#
+# - Some of these codes still repeat those used for transport technologies in
+#   the MESSAGE V version of MESSAGE-Transport. Some note the reference:
+#   “The "GEAM_TRP_techinput.xls" workbook ("updateTRPdata" sheet) in
+#   Christoph's folders.”
+#
+# Codes have the following annotations:
+#
+# - 'gfei-2017-technology': Originally added to message_data.tools.iea_eei;
+#   moved here in iiasa/message_data#549 / iiasa/message-ix-models#162. Comments
+#   from the original location by F. Lovat:
+#
+#   - Flexfuel: Reference is ICEs vehicles using methanol/synthetic fossil
+#     liquids.
+#   - Missing in the mapping: ICE_L_ptrp, IGH_ghyb.
+#   - TODO: Deal with diesel (at the moment assumed to be ICE using biofuels)
+#     and LPG powertrains (so far, it is ICE_lpg, not present in
+#     MESSAGEix-Transport). Also, category "Hybrid" should be extended to the
+#     list of three modes: ICH_chyb, IAHe_ptrp, IAHm_ptrp.
+#
+# - 'input': same as in message-ix-models: mapping including 'commodity' and/or
+#   'level' keys indicating the technology's inputs.
+# - 'message-v-report': these appeared in the US-TIMES–MA³T input data, but were
+#   apparently not used in MESSAGE-(V)-Transport.
+# - 'report': are picked up by add_replacements() for reporting.
+
+ELC_100:
+  name: Battery-electric LDV
+  description: >-
+    Battery-electric light-duty vehicle using electricity only
+    (100-mile all-electric range)
+  report: BEV
+  input: {commodity: electr}
+  message-v-report: LDV_ELE
+  gfei-2017-technology: Electric
+
+HFC_ptrp:
+  report: FCEV
+  description: Hybridized fuel cell light-duty vehicle using hydrogen
+  input: {commodity: hydrogen}
+  message-v-report: LDV_HFC
+  gfei-2017-technology: Hydrogen
+
+IAHe_ptrp:
+  report: Biofuel hybrid
+  description: >-
+    Hybridized internal combustion engine light-duty vehicle using biofuels
+  input: {commodity: ethanol}
+  message-v-report: LDV_EHYB
+
+IAHm_ptrp:
+  report: Methanol hybrid
+  description: >-
+    Hybridized internal combustion engine light-duty vehicle using methanol/
+    synthetic fossil liquids
+  input: {commodity: methanol}
+  message-v-report: LDV_MHYB
+
+ICAe_ffv:
+  report: Biofuel ICEV
+  description: Internal combustion engine light-duty vehicle using biofuels
+  input: {commodity: ethanol}
+  message-v-report: LDV_ffv
+  gfei-2017-technology: Diesel
+
+ICAm_ptrp:
+  report: Synfuel ICEV
+  description: >-
+    Internal combustion engine light-duty vehicle using methanol/synthetic
+    fossil liquids
+  input: {commodity: methanol}
+  message-v-report: LDV_meth
+  gfei-2017-technology: Flexfuel
+
+ICE_conv:
+  report: ICEV
+  description: >-
+    Future (2005 and after) medium/high-efficiency internal combustion engine
+    light-duty vehicle using gasoline/diesel
+  input: {commodity: lightoil}
+  message-v-report: LDV_conv
+  gfei-2017-technology: Petrol
+
+ICE_L_ptrp:
+  report: ICEV (pre-2005)
+  description: >-
+    Historical (2005 and before) Low-efficiency internal combustion engine
+    light-duty vehicle using gasoline/diesel
+  input: {commodity: lightoil}
+  historical-only: True
+  message-v-report: LDV_ICE_L
+
+ICE_nga:
+  report: Gas ICEV
+  description: >-
+    Internal combustion engine light-duty vehicle using natural gas
+  input: {commodity: gas}
+  message-v-report: LDV_NGA
+  gfei-2017-technology: [CNG, LPG]
+
+ICH_chyb:
+  report: Hybrid
+  description: >-
+    Hybridized internal combustion engine light-duty vehicle using
+    gasoline/diesel
+  input: {commodity: lightoil}
+  message-v-report: LDV_CHYB
+  gfei-2017-technology: Hybrid
+
+IGH_ghyb:
+  report: Gas hybrid
+  description: >-
+    Hybridized internal combustion engine light-duty vehicle using natural gas
+  input: {commodity: gas}
+  message-v-report: LDV_GHYB
+
+PHEV_ptrp:
+  report: PHEV
+  description: >-
+    Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
+    all-electric range)
+  input: {commodity: lightoil}
+  message-v-report: LDV_PHEV
+  gfei-2017-technology: Plug-in
+
+ICE_H_moto:
+  report: ICEV
+  description: >-
+    High-efficiency internal combustion engine two-wheeler/motorcycle using
+    gasoline/diesel
+  input: {commodity: lightoil}
+  report: 2W_ICE_H
+
+ELE_moto:
+  report: BEV
+  description: >-
+    Battery-electric two-wheeler/motorcycle using electricity-only
+  input: {commodity: electr}
+  report: 2W_ELE
+
+ICE_H_bus:
+  description:
+    High-efficiency internal combustion engine bus using gasoline/diesel
+  input: {commodity: lightoil}
+  report: BUS_ICE_H
+
+ICE_M_bus:
+  description: >-
+    Medium-efficiency internal combustion engine bus using gasoline/diesel
+  input: {commodity: lightoil}
+  report: BUS_ICE_M
+
+ICG_bus:
+  description: Internal combustion engine bus using natural gas
+  input: {commodity: gas}
+  report: BUS_ICG
+
+ICAe_bus:
+  description: Internal combustion engine bus using biofuels
+  input: {commodity: ethanol}
+  report: BUS_ICAe
+
+ICH_bus:
+  description: >-
+    Hybridized internal combustion engine bus using gasoline/diesel
+  input: {commodity: lightoil}  # hybridized, but not plug-in, so only oil input
+  report: BUS_ICH
+
+FC_bus:
+  description: Hybridized fuel cell bus using hydrogen
+  input: {commodity: hydrogen}
+  report: BUS_HFC
+
+FCg_bus:
+  description: >-
+    Hybridized fuel cell bus using natural gas via steam reformation
+  input: {commodity: gas}
+  report: BUS_GFC
+
+FCm_bus:
+  description: >-
+    Hybridized fuel cell bus using methanol/synthetic fossil liquids via steam
+    reformation
+  input: {commodity: methanol}
+  report: BUS_MFC
+
+Trolley_bus:
+  description: Electric trolleybus connected to power cables
+  input: {commodity: electr}
+  report: BUS_ELEtr
+
+PHEV_bus:
+  description: Plug-in hybrid-electric bus using gasoline/diesel
+  input:
+    commodity: lightoil
+    # commodity: [electr, lightoil]  # actually both lightoil *and* electr
+  report: BUS_PHEV
+
+# BEV_bus:
+#   description: Battery-electric bus using electricity only
+#   input: {commodity: electr}
+#   report: BUS_BEV
+
+con_ar:
+  description: >-
+    Conventional jet engine passenger aircraft using light oil petroleum
+    products (kerosene jet fuel)
+  input: {commodity: lightoil}
+  report: AIRp_JF
+
+conh_ar:
+  description: Conventional jet engine passenger aircraft using hydrogen
+  input: {commodity: hydrogen}
+  report: AIRp_H2
+
+conm_ar:
+  description: >-
+    Conventional jet engine passenger aircraft using methanol/synthetic fossil
+    liquids
+  input: {commodity: methanol}
+  report: AIRp_MET
+
+conE_ar:
+  description: Conventional jet engine passenger aircraft using biofuels
+  input: {commodity: ethanol}
+  report: AIRp_BIO
+
+FR_ICE_H:
+  description: >-
+    High-efficiency internal combustion engine freight truck using
+    gasoline/diesel
+  input: {commodity: lightoil, level: final}
+  report: FRT_ICE_H
+
+FR_ICE_M:
+  description: >-
+    Medium-efficiency internal combustion engine freight truck using
+    gasoline/diesel
+  input: {commodity: lightoil}
+  report: FRT_ICE_M
+
+FR_ICE_L:
+  description: >-
+    Low-efficiency internal combustion engine freight truck using
+    gasoline/diesel
+  input: {commodity: lightoil}
+  report: FRT_ICE_L
+
+FR_ICG:
+  description: Internal combustion engine freight truck using natural gas
+  input: {commodity: gas}
+  report: FRT_ICG
+
+FR_ICAe:
+  description: Internal combustion engine freight truck using biofuels
+  input: {commodity: ethanol}
+  report: FRT_ICAe
+
+FR_ICH:
+  description: >-
+    Hybridized internal combustion engine freight truck using gasoline/diesel
+  input: {commodity: lightoil}
+  report: FRT_ICH
+
+FR_FCH:
+  description: Hybridized fuel cell freight truck using hydrogen
+  input: {commodity: hydrogen}
+  report: FRT_HFC
+
+FR_FCg:
+  description: >-
+    Hybridized fuel cell freight truck using natural gas via steam reformation
+  input: {commodity: gas}
+  report: FRT_GFC
+
+FR_FCm:
+  description: >-
+    Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
+    via steam reformation
+  input: {commodity: methanol}
+  report: FRT_MFC
+
+crail_pub:
+  description: >-
+    Coal-powered urban public rail transport: aggregate of metro/underground,
+    streetcars/trams, commuter trains, and regional trains
+  report: RAIL_urban_COAL
+
+dMspeed_rai:
+  description: Diesel-powered long-distance medium-speed rail transport
+  input: {commodity: lightoil}
+  report: RAIL_ldm_DSL
+
+drail_pub:
+  description: Diesel-powered urban public rail transport
+  input: {commodity: lightoil}
+  report: RAIL_urban_DSL
+
+Hspeed_rai:
+  description: Electrically-powered long-distance high-speed rail transport
+  input: {commodity: electr}
+  report: RAIL_ldh_ELE
+
+Mspeed_rai:
+  description: Electrically-powered long-distance medium-speed rail transport
+  input: {commodity: electr}
+  report: RAIL_ldm_ELE
+
+rail_pub:
+  description: >-
+    Electrically-powered urban public rail transport: aggregate of metro/
+    underground, streetcars/trams, commuter trains, and regional trains
+  input: {commodity: electr}
+  report: RAIL_urban_ELE
+
+transport freight road usage:
+  description: >-
+    Conversion from vehicle-distance traveled to freight transport activity
+
+transport pax load factor:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+
+transport 2w usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+transport air usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+transport bus usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+transport rail usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+
+
+# TODO Parametrize
+DUMMY supply of coal:
+  description: >-
+    Dummy technology for development; should not appear in the final model.
+DUMMY supply of electr: {}
+DUMMY supply of ethanol: {}
+DUMMY supply of fueloil: {}
+DUMMY supply of gas: {}
+DUMMY supply of hydrogen: {}
+DUMMY supply of lightoil: {}
+DUMMY supply of methanol: {}
+
+
+transport disutility:
+  description: >-
+    Technology for applying disutility costs to transport modes.
+
+# Occupancy_moto: {}
+# Occupancy_ptrp: {}
+# cons_convert: {}
+# disutility: {}
+# fuel_cell_ptrp: {}
+# gas_ref_ptrp: {}
+# h2stor_ptrp: {}
+# hybrid_ptrp: {}
+# oil_ref_ptrp: {}
+
+LDV:
+  name: Light-duty vehicles
+  report: LDV
+  description: >-
+    Passenger cars and trucks.
+
+    In MESSAGE-V, the output of these technologies was labelled: v-u
+  by_consumer_group: true
+  child:
+  - ELC_100
+  - HFC_ptrp
+  - IAHe_ptrp
+  - IAHm_ptrp
+  - ICAe_ffv
+  - ICAm_ptrp
+  - ICE_conv
+  - ICE_L_ptrp
+  - ICE_nga
+  - ICH_chyb
+  - IGH_ghyb
+  - PHEV_ptrp
+  # Units of ACT; units of CAP are 10⁶ vehicle
+  units: Gv km
+  iea-eweb-flow: [ROAD]
+
+"transport {technology.id} load factor":
+  _generate: {technology: LDV}
+  name: LDV occupancy
+
+2W:
+  name: Two-wheelers and motorcycles
+  description: >-
+    In MESSAGE-V, the output of these technologies was labelled: h-u
+  child: [ICE_H_moto, ELE_moto]
+  units: Gv km
+  iea-eweb-flow: [ROAD]
+
+freight truck:
+  name: Freight trucks
+  report: Truck
+  description: >-
+    In MESSAGE-V, the output of all freight technologies was labelled: f-u
+  child: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
+    FR_FCg, FR_FCm]
+  units: Gv km
+  iea-eweb-flow: [ROAD]
+
+AIR:
+  name: Aviation
+  report: "Domestic Aviation"
+  description: >-
+    Aviation (passenger aircraft only, ignoring shared freight component).
+
+    The aviation technologies in MESSAGE directly output passenger-km, not
+    vehicle-km; therefore, we must make use of the same occupancy factors here
+    that were used to define the aviation technologies in the first place.
+    See [1]. The occupancy factor assumed for all aviation technologies is 115.
+
+    In MESSAGE-V, the output of these technologies was labelled: a-u
+  child: [con_ar, conh_ar, conm_ar, conE_ar]
+  units: Gv km
+  iea-eweb-flow: [DOMESAIR]
+
+BUS:
+  name: Urban public transit
+  description: >-
+    Buses and other forms of urban public transit.
+
+    The bus technologies in MESSAGE directly output passenger-km, not
+    vehicle-km; therefore, we must make use of the same occupancy factors here
+    that were used to define the aviation technologies in the first place.
+    See [1]. The occupancy factor assumed for all urban public transit bus
+    technologies is 20.9.
+
+    In MESSAGE-V, the output of these technologies was labelled: u-u
+  child: [ICE_H_bus, ICE_M_bus, ICG_bus, ICAe_bus, ICH_bus, FC_bus, FCg_bus,
+         FCm_bus, Trolley_bus, PHEV_bus]
+  units: Gv km
+  iea-eweb-flow: [ROAD]
+
+RAIL:
+  name: Passenger rail
+  description: >-
+    Rail; passenger trains only, both urban public transit and long-distance
+    intercity.
+
+    The rail technologies in MESSAGE directly output passenger-km, not
+    vehicle-km; therefore, we must make use of the same occupancy factors here
+    that were used to define the aviation technologies in the first place.
+    See [1]. crail_pub and drail_pub have no capacity in MESSAGE and only
+    exist for bookkeeping purposes.
+
+    In MESSAGE-V, the output of these technologies was labelled: i-u
+  child: [crail_pub, dMspeed_rai, drail_pub, Hspeed_rai, Mspeed_rai, rail_pub]
+  units: Gv km
+  iea-eweb-flow: [RAIL]
+
+transport other coal: {input: {commodity: coal}}
+transport other electr: {input: {commodity: electr}}
+transport other fueloil: {input: {commodity: fueloil}}
+transport other gas: {input: {commodity: gas}}
+transport other lightoil: {input: {commodity: lightoil}}
+
+OTHER:
+  name: Other modes
+  description: >-
+    This 'mode' exists to represent aggregate transport demand for energy that
+    is not directly represented by inputs to other technologies in this file.
+  child:
+  - transport other coal
+  - transport other electr
+  - transport other fueloil
+  - transport other gas
+  - transport other lightoil
+  units: GWa
+  iea-eweb-flow:
+  - DOMESNAV
+  # - PIPELINE
+  - TRNONSPE

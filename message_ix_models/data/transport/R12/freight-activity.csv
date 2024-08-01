@@ -1,0 +1,19 @@
+# Freight activity
+#
+# Source: placeholder; extracted from ADVANCE database
+#
+# Units: Gt km
+#
+node,     value
+R12_AFR,  1210.1
+R12_CHN,  2388.7
+R12_EEU,   388.6
+R12_FSU,   810.4
+R12_LAM,  3100.6
+R12_MEA,  1210.1
+R12_NAM,  5148.9
+R12_PAO,   763.1
+R12_PAS,  2800.3
+R12_RCPA,  700.1
+R12_SAS,  1221.9
+R12_WEU,  3497.0

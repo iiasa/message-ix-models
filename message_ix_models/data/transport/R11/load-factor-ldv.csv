@@ -1,0 +1,18 @@
+# Load factor (occupancy) of LDVs
+#
+# Source: transcribed from MESSAGE (V) Transport .chn files
+# Original source unknown. The values appear to assume similarity
+# between certain regions.
+#
+scenario,    node,    year, value
+SSP(2024).2, R11_AFR, 2020, 1.807
+SSP(2024).2, R11_CPA, 2020, 1.892
+SSP(2024).2, R11_EEU, 2020, 1.643
+SSP(2024).2, R11_FSU, 2020, 1.807
+SSP(2024).2, R11_LAM, 2020, 1.807
+SSP(2024).2, R11_MEA, 2020, 1.807
+SSP(2024).2, R11_NAM, 2020, 1.53
+SSP(2024).2, R11_PAO, 2020, 1.72
+SSP(2024).2, R11_PAS, 2020, 1.892
+SSP(2024).2, R11_SAS, 2020, 1.892
+SSP(2024).2, R11_WEU, 2020, 1.643

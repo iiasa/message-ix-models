@@ -1,0 +1,52 @@
+[
+  {
+    "ssp": "ICONICS:SSP(2024).1",
+    "policy": false,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP1_v0.1_Blv0.14/baseline_prep_lu_bkp_solved_materials"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).2",
+    "policy": false,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP2_v0.1_Blv0.14/baseline_prep_lu_bkp_solved_materials"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).3",
+    "policy": false,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP3_v0.1_Blv0.14/baseline_prep_lu_bkp_solved_materials"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).4",
+    "policy": false,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP4_v0.1_Blv0.14/baseline_prep_lu_bkp_solved_materials"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).5",
+    "policy": false,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP5_v0.1_Blv0.14/baseline_prep_lu_bkp_solved_materials"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).1",
+    "policy": true,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP1_v0.1_Blv0.14/materials_low_dem_scen"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).2",
+    "policy": true,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP2_v0.1_Blv0.14/materials_low_dem_scen"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).3",
+    "policy": true,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP3_v0.1_Blv0.14/materials_low_dem_scen"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).4",
+    "policy": true,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP4_v0.1_Blv0.14/materials_low_dem_scen"
+  },
+  {
+    "ssp": "ICONICS:SSP(2024).5",
+    "policy": true,
+    "url": "ixmp://ixmp-dev/SSP_dev_SSP5_v0.1_Blv0.14/materials_low_dem_scen"
+  }
+]

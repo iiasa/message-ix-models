@@ -1,0 +1,42 @@
+# Share of population by census division and area type
+#
+# Units: dimensionless
+#
+# Values sum to roughly 1 across 'area_type' for each census
+#
+# DLM: from sheet ‘Segmentation’ of the MA3T model.
+# PNK: values moved from LDV data workbook, sheet MESSAGE_LDV_nam.
+#
+census_division, area_type, value
+1, UR, 0.268832855438424
+1, SU, 0.572995673124335
+1, RU, 0.158171471437241
+2, UR, 0.327060306044125
+2, SU, 0.587414994219707
+2, RU, 0.085524699736168
+3, UR, 0.28778149378994
+3, SU, 0.508478755094365
+3, RU, 0.203739751115695
+4, UR, 0.246180801184588
+4, SU, 0.354208776821434
+4, RU, 0.399610421993978
+5, UR, 0.215814106313489
+5, SU, 0.57909691793338
+5, RU, 0.205088975753132
+6, UR, 0.240327654482427
+6, SU, 0.345231780182003
+6, RU, 0.41444056533557
+7, UR, 0.404778556742996
+7, SU, 0.373774083832488
+7, RU, 0.221447359424516
+8, UR, 0.356653466169243
+8, SU, 0.391050882676074
+8, RU, 0.252295651154684
+9, UR, 0.366002151174452
+9, SU, 0.550994381267721
+9, RU, 0.083003467557827
+# Commented: these data are not used, and the mismatch between str dtype for
+# census_division and int (in driver.csv) interferes with data loading
+# T, UR, 0.303462968515322
+# T, SU, 0.49953663521844
+# T, RU, 0.197000396266238

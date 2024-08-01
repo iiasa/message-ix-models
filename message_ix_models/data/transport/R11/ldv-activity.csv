@@ -1,0 +1,47 @@
+# Activity (driving distance) per light-duty vehicle
+#
+# Source: Extracted from ldv-cost-efficiency.xlsx by D.L. McCollum;
+# see also comments in that file, most of which are copied here:
+#
+# - “Note: Modest and Frequent mileages for all non-NAM regions are
+#   scaled relative to the NAM values from MA3T. This is because we
+#   only have driving data for the average driver (supplied by Page
+#   Kyle of the GCAM team in March 2014).”
+#
+# Unit: kilometre / year
+#
+node, value
+# driver_type="M" (moderate)
+# R11_NAM, 13930
+# driver_type="A" (average)
+R11_NAM, 25860
+# driver_type="F" (frequent)
+# R11_NAM, 45550
+# DLM: “See the "vkt_veh_yr_GCAM.xlsx" spreadsheet that Page Kyle sent
+# me in late-March 2014. The value in this cell is an average of GCAM's
+# Brazil and Latin America regions.”
+R11_LAM, 14600
+# “…GCAM's Western Europe region.”
+R11_WEU, 11646
+# “…GCAM's Eastern Europe region.”
+R11_EEU,  8962
+# “…GCAM's Former Soviet Union region.”
+R11_FSU, 11482
+# “…GCAM's Middle East region.”
+R11_MEA, 14000
+# “…GCAM's Africa region.”
+R11_AFR, 10391
+# “…GCAM's China region. Actually, GCAM assumes an average value of
+# ~20500 km/yr for China, which seems too high in my opinion, so I
+# revised this value downwards. I made an assumption that the value
+# should be 20% lower, an estimate I arrived at based on the
+# consideration that GCAM assumes that average annual driving distances
+# in the US are 20% lower than what MA3T shows for the average driver
+# (19200 in GCAM vs. 25860 in MA3T).
+R11_CPA, 16000
+# “…GCAM's Japan and Australia-NZ regions.”
+R11_PAO, 10000
+# “…GCAM's Korea and Southeast Asia regions.”
+R11_PAS, 12000
+# “…GCAM's India region.”
+R11_SAS, 10400

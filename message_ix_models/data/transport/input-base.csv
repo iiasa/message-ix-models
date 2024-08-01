@@ -1,0 +1,19 @@
+# Input efficiency of MESSAGEix-GLOBIOM (base model) transport technologies
+#
+# Source: extracted from ixmp://ixmp-dev/SSP_dev_SSP2_v0.1/baseline_v0.1#1
+#
+# Omitted dimensions: year_vtg=2020, year_act=2020, mode=M1, level=final,
+# time_origin=year
+#
+# Units: GWa
+#
+technology,  commodity, time, value
+coal_trp,    coal,      year, 3.3333333333333335
+elec_trp,    electr,    year, 0.3333333333333333
+eth_fc_trp,  ethanol,   year, 0.6666666666666666
+eth_ic_trp,  ethanol,   year, 1.0
+foil_trp,    fueloil,   year, 1.0
+gas_trp,     gas,       year, 1.0
+loil_trp,    lightoil,  year, 1.0
+meth_fc_trp, methanol,  year, 0.6666666666666666
+meth_ic_trp, methanol,  year, 1.0

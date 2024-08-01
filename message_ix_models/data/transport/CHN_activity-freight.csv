@@ -1,0 +1,17 @@
+Dataset containing activity data for freight modes in China [100 million ton-km]
+Downloaded from National Bureau of Statistics China in 2021. https://data.stats.gov.cn/english/easyquery.htm?cn=C01
+Indicators,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000
+Freight Ton-Kilometers(100 million ton-km),199394.33,204686.24,197372.65,186629.48,178355.9,181667.69,168013.8,173804.46,159323.6,141837.42,122133.31,110300,101418.81,88839.85,80258.1,69445,53859.2,50685.9,47709.9,44320.5
+Freight Ton-Kilometers of Railways(100 million ton-km),30181.95,28820.99,26962.2,23792.26,23754.31,27530.19,29173.89,29187.09,29465.79,27644.13,25239.17,25106.28,23797,21954.41,20726,19288.8,17246.7,15658.4,14694.1,13770.49
+Freight Ton-Kilometers of National Railways(100 million ton-km),,,,,,25103.42,26845.01,27220.5,27631.67,25937.35,23649.88,23648.9,22112.46,20557.16,19533.4,18285.5,16475.6,15219.1,14368.8,13444
+Freight Ton-Kilometers of Local Railways(100 million ton-km),,,,,,135,154.94,136.18,138.72,116.07,126.59,150.88,132.68,105.66,99.2,89.1,69,62.8,55.4,43.6
+Freight Ton-Kilometers of Joint-venture Railways(100 million ton-km),,,,,,2291.77,2173.94,1830.41,1695.4,1590.72,1462.71,1306.46,1551.84,1291.59,1093.5,914.2,702.08,376.51,269.95,282.87
+Freight Ton-Kilometers of Highways(100 million ton-km),59636.39,71249.21,66771.52,61080.1,57955.72,56846.9,55738.08,59534.86,51374.74,43389.67,37188.82,32868.19,11354.69,9754.25,8693.2,7840.9,7099.48,6782.5,6330.4,6129.4
+Freight Ton-Kilometers of Waterways(100 million ton-km),103963.04,99052.82,98611.25,97338.8,91772.45,92774.56,79435.65,81707.58,75423.84,68427.53,57556.67,50262.7,64284.85,55485.75,49672.3,41428.7,28715.8,27510.6,25988.9,23734.2
+Freight Ton-Kilometers of Ocean(100 million ton-km),54057,51927,55084,58075,54236,55935,48705,53412,49355,45999,39524,32851,48686,42577,38552,32255,22305,21733,20873,17073
+Freight Ton-Kilometers of Civil Aviation(100 million ton-km),263.2,262.5,243.55,222.45,208.07,187.77,170.29,163.89,173.91,178.9,126.23,119.6,116.39,94.28,78.9,71.8,57.9,51.55,43.72,50.27
+Freight Ton-Kilometers of Petroleum and Gas Pipelines(100 million ton-km),5349.75,5300.72,4784.13,4195.87,4665.35,4328.28,3495.89,3211.04,2885.44,2197.19,2022.42,1944.03,1865.89,1551.17,1088,815,739,683,653,636
+"Note:1.In 2008, data on total passenger traffic and freight traffic of highway and waterways have changed.",,,,,,,,,,,,,,,,,,,,
+"2.The 2013 figures on passenger traffic and freight traffic are calculated with the data from the 2013 survey of transport economics, and have different coverages. The same applies to the relevant following tables.",,,,,,,,,,,,,,,,,,,,
+3.Data of transport of highways and waterways in 2014 and 2015 are adjusted according to small-sized sample survey on transport of highways and waterways conducted in 2015.,,,,,,,,,,,,,,,,,,,,
+Data Sources National Bureau of Statistics,,,,,,,,,,,,,,,,,,,,

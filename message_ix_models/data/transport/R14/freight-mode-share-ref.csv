@@ -1,0 +1,64 @@
+# Mode shares of freight activity in the model base year
+#
+# - Duplicated manually from corresponding R14 data as of 2023-10-20.
+# - R11_FSU data copied to R14_{CAS,RUS,SCS,UBM}.
+#
+# Units: dimensionless
+#
+node,    technology, value
+R14_AFR, AIR,        0.009
+R14_AFR, RAIL,       0.003
+R14_AFR, ROAD,       0.767
+R14_AFR, WATER,      0.221
+R14_CAS, AIR,        0.0
+R14_CAS, RAIL,       0.900
+R14_CAS, ROAD,       0.080
+R14_CAS, WATER,      0.020
+R14_CPA, AIR,        0.020
+R14_CPA, RAIL,       0.200
+R14_CPA, ROAD,       0.310
+R14_CPA, WATER,      0.480
+R14_EEU, AIR,        0.0
+R14_EEU, RAIL,       0.270
+R14_EEU, ROAD,       0.680
+R14_EEU, WATER,      0.050
+R14_LAM, AIR,        0.001
+R14_LAM, RAIL,       0.007
+R14_LAM, ROAD,       0.344
+R14_LAM, WATER,      0.648
+R14_MEA, AIR,        0.016
+R14_MEA, RAIL,       0.019
+R14_MEA, ROAD,       0.965
+R14_MEA, WATER,      0.0
+R14_NAM, AIR,        0.060
+R14_NAM, RAIL,       0.350
+R14_NAM, ROAD,       0.590
+R14_NAM, WATER,      0.0
+R14_PAO, AIR,        0.01
+R14_PAO, RAIL,       0.285
+R14_PAO, ROAD,       0.700
+R14_PAO, WATER,      0.0149
+R14_PAS, AIR,        0.002
+R14_PAS, RAIL,       0.011
+R14_PAS, ROAD,       0.747
+R14_PAS, WATER,      0.240
+R14_RUS, AIR,        0.0
+R14_RUS, RAIL,       0.900
+R14_RUS, ROAD,       0.080
+R14_RUS, WATER,      0.020
+R14_SAS, AIR,        0.001
+R14_SAS, RAIL,       0.380
+R14_SAS, ROAD,       0.600
+R14_SAS, WATER,      0.019
+R14_SCS, AIR,        0.0
+R14_SCS, RAIL,       0.900
+R14_SCS, ROAD,       0.080
+R14_SCS, WATER,      0.020
+R14_UBM, AIR,        0.0
+R14_UBM, RAIL,       0.900
+R14_UBM, ROAD,       0.080
+R14_UBM, WATER,      0.020
+R14_WEU, AIR,        0.001
+R14_WEU, RAIL,       0.190
+R14_WEU, ROAD,       0.750
+R14_WEU, WATER,      0.059

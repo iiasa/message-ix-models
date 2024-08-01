@@ -1,0 +1,253 @@
+# Set configuration for the MESSAGE-Transport model
+
+# For each set in the MESSAGEix framework, the group contains:
+# - 'require': elements that must be present for the model to be set up.
+# - 'remove': elements to remove.
+# - 'add': elements to add. This is a mapping from element short names to a
+#   longer description.
+
+area_type:
+  add:
+    UR: Urban, or “Inside MSA - Central City”
+    SU: Suburban, or “Inside MSA - Suburb”
+    RU: Rural, or “Outside MSA”
+
+attitude:
+  add:
+    EA: Early Adopter
+    EM: Early Majority
+    LM: Late Majority
+
+driver_type:
+  add:
+    M: Moderate
+    A: Average
+    F: Frequent
+
+consumer_group:
+  add:
+    "{area_type.id}{attitude.id}{driver_type.id}":
+      _generate:
+        area_type: null
+        attitude: null
+        driver_type: null
+      name: "{area_type.name}, {attitude.name}, {driver_type.name}"
+
+relation:
+  # Relations for which data should be adapted in order to integrate with legacy
+  # reporting, per "20221129_relation_comparison.xlsx"
+  require:
+  - BCA_Emission
+  - CH4_Emission
+  - CO2_trp
+  - CO_Emission
+  - HFC_Emission
+  - HFC_mobile_red
+  - N2O_Emission
+  - NH3_Emission
+  - NOx_Emission
+  - OCA_Emission
+  - SF6_Emission
+  - SF6_mag_red
+  - VOC_Emission
+
+technology:
+  remove:
+  # Base model transport technologies. See technology.yaml in message-ix-models
+  # for details
+  - back_trp
+  - coal_trp
+  - elec_trp
+  - eth_fc_trp
+  - eth_ic_trp
+  - foil_trp
+  - gas_trp
+  - h2_fc_trp
+  - loil_trp
+  - meth_fc_trp
+  - meth_ic_trp
+  # May be related to MCMA; see parallel RC(spec|therm)_1 for buildings
+  - Trans_1
+  - Trans_2
+  - Trans_3
+  - Trans_4
+  - Trans_5
+
+  # add: elements are generated from technology.yaml
+
+commodity:
+  require:
+  - coal
+  - electr
+  # Ethanol used by transport technologies (including ethanol flexible-fuel
+  # vehicles using ICEs and vehicles using fuel cells powered by an ethanol
+  # reformer).
+  - ethanol
+  - fueloil   # Includes heavy fuel oil used by maritime technologies.
+  - gas       # Compressed natural gas used by bi-fuel vehicles.
+  - hydrogen  # Gaseous H2 used by fuel-cell powered vehicles.
+  - lh2       # Liquid H2 used by fuel-cell powered vehicles.
+  - lightoil  # Includes gasoline, diesel oil.
+  # Methanol and dimethyl ether (DME) used by transport technologies (including
+  # methanol flexible-fuel vehicles using ICEs, vehicles using Direct Methanol
+  # Fuel Cells, and maritime technologies).
+  - methanol
+
+  remove:
+  - transport
+
+  add:
+    transport freight:
+      name: Freight transport
+      demand: true
+      units: Gt km
+
+    transport freight road:
+      name: Freight transport by road
+      demand: true
+      units: Gt km
+
+    transport freight vehicle:
+      name: Freight transport vehicle distance travelled
+      units: Gv km
+
+    transport freight road vehicle:
+      name: Freight transport by road vehicle distance travelled
+      units: Gv km
+
+    transport pax:
+      name: Passenger transport
+      description: >-
+        Not used when consumer group disutility formulation is in use.
+
+    transport pax 2w:
+      name: Passenger transport by 2-wheelers
+      units: Gp km
+    transport pax air:
+      name: Passenger transport by air
+      units: Gp km
+    transport pax bus:
+      name: Passenger transport by bus
+      units: Gp km
+    transport pax rail:
+      name: Passenger transport by rail
+      units: Gp km
+
+    transport pax vehicle:
+      name: Passenger transport vehicle distance travelled
+      units: Gv km
+
+    transport vehicle 2w:
+      name: Activity of 2-wheel passenger transport vehicles
+      units: Gv km
+    transport vehicle air:
+      name: Activity of air passenger transport vehicles
+      units: Gv km
+    transport vehicle bus:
+      name: Activity of bus passenger transport vehicles
+      units: Gv km
+    transport vehicle rail:
+      name: Activity of rail passenger transport vehicles
+      units: Gv km
+
+    disutility:
+      name: Generalized disutility
+      units: ""
+
+    # These keys are further processed by .model.transport.build to generate a
+    # longer list of codes
+    "transport vehicle {technology.id}":
+      _generate: {technology: LDV}
+      name: Activity for {technology.id} LDVs
+      units: Gv km
+
+    "transport pax {consumer_group.id}":
+      _generate: {consumer_group: null}
+      name: Activity for {consumer_group.id} passengers
+      units: Gp km
+      demand: true
+
+emission:
+  # commented: as of 2022-08, most MESSAGEix-GLOBIOM models have names like "TCE_CO2",
+  # "CO2_*", etc., but not CO2 directly. Thus we can't require it, and must instead add
+  # it (below)
+  # require:
+  # - CO2
+
+  add:
+  - CO2
+
+level:
+  require:
+  - final   # Fuel consumption in transport.
+  - useful  # Activity in passenger-kilometers [pkm] or tonne-kilometers [tkm].
+
+mode:
+  require:
+  - all
+
+node:
+  # transport.build.get_spec() sets the list of required nodes
+  require: []
+  # No nodes added/removed
+
+time:
+  # NB cannot handle models with sub-annual time resolution
+  require:
+  - year
+
+unit:
+  add:
+    # TODO move this one upstream
+    "": dimensionless
+
+    # Capacity
+    Mv: 10⁶ vehicle
+
+    # Activity
+    Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
+    Gp km: 10⁹ passenger-kilometre
+    Gp km / a: 10⁹ passenger-kilometre per year
+    Gp * km / a: 10⁹ passenger-kilometre per year
+    Gp / Gv: passengers per vehicle
+    Gt km: 10⁹ tonne-kilometre
+    Gt * km: 10⁹ tonne-kilometre
+    Gv km: 10⁹ vehicle kilometre
+    Gv * km: 10⁹ vehicle kilometre
+    Mm / a: 10³ kilometre per year
+    # for IKARUS
+    a: year
+
+    # Energy
+    # The following are equivalent, but not recognized as such by JDBCBackend
+    GWa / Gv / km: gigawatt-annum per billion vehicle kilometres
+    GW * a / Gv / km: gigawatt-annum per billion vehicle kilometres
+    GJ / km: gigajoule per kilometre
+    pkm / GJ: passenger-kilometre per gigajoule
+
+    # Cost
+    USD / km: USD per kilometre
+    MUSD / a / v: 10⁶ USD per vehicle-year
+    MUSD / v: 10⁶ USD per vehicle
+    GUSD_2010 / Gv / km: 10⁹ USD per 10⁹ vehicle kilometres
+    # for US-TIMES MA3T
+    USD / vehicle: USD per vehicle
+    USD_2010 / v: USD per vehicle
+
+    # Emissions
+    kt / Gv / km: kilotonnes emitted per 10⁹ vehicle kilometres
+    Mt / Gv / km: megatonnes emitted per 10⁹ vehicle kilometres
+
+# MA3T sets
+census_division:
+  add:
+    1: New England
+    2: Middle Atlantic
+    3: East North Central
+    4: West North Central
+    5: South Atlantic
+    6: East South Central
+    7: West South Central
+    8: Mountain
+    9: Pacific
+    T: Total

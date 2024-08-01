@@ -1,0 +1,57 @@
+# Calibration factor for LDV fuel economy
+#
+# Copied from calibrate-fe.csv produced with
+# ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12 ci nightly/SSP_2024.2 baseline#174
+#
+# Ratio of ldv-input-ref.csv
+#       to (in:nl-t-ya:transport+units / out:nl-t-ya:transport+units)
+#
+# The selection of particular "lo" or "hi" values corresponds to those in
+# ldv-activity.csv. Values with m=xx are manually interpreted. This ensures
+# consistency with the isoquants produced by T. Hara.
+#
+# Units: dimensionless
+#
+node,       scenario,  value
+
+# R12_AFR,  lo, 2.2029859888811836
+# Intermediate between 'lo' and 'hi'; manual interpolation
+R12_AFR,    xx, 2.0
+# R12_AFR,  hi, 1.2754129409312158
+
+# R12_CHN,  lo, 1.0887338011598995
+R12_CHN,    hi, 0.6895314074012694
+
+R12_EEU,    lo, 1.500822171436336
+# R12_EEU,  hi, 1.3507399542927028
+
+# R12_FSU,  lo, 1.6056835544307007
+R12_FSU,    hi, 1.17750127324918
+
+# R12_LAM,  lo, 1.3476439292746443
+R12_LAM,    xx, 1.2
+# R12_LAM,  hi, 1.167958072038025
+
+# R12_MEA,  lo, 2.02340069938891
+R12_MEA,    xx, 1.9
+# R12_MEA,  hi, 1.6440130682534837
+
+# R12_NAM,  lo, 1.3701726689006932
+R12_NAM,    hi, 1.153829615916371
+
+R12_PAO,    lo, 1.3937081412514551
+# R12_PAO,  hi, 1.2543373271263096
+
+# R12_PAS,  lo, 1.1495794808620663
+R12_PAS,    hi, 0.9727210991909792
+
+# R12_RCPA, lo, 1.2556158681748233
+R12_RCPA,   xx, 1.2
+# R12_RCPA, hi, 1.1509812124935892
+
+R12_SAS,    lo, 1.4231999363290224
+# R12_SAS,  hi, 1.1385599490632183
+
+# R12_WEU,  lo, 1.3528618454763552
+R12_WEU,    xx, 1.34
+# R12_WEU,  hi, 1.2401233583533242

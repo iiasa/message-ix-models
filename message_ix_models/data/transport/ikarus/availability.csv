@@ -1,0 +1,107 @@
+# Availability of non-LDV transport technologies
+#
+# Source:
+# - Extracted from GEAM_TRP_techinput.xlsx
+# - "source" index entries indicate:
+#   - "IKARUS": IKARUS transport model
+#   - "Krey/Linßen": "Diss Krey 2006" and "Linßen u.a. 2003"
+#
+# Unit: 100 km / a
+#
+source,technology,commodity,year,value
+IKARUS,tram,electr,2000,176.0
+IKARUS,tram,electr,2005,192.0
+IKARUS,tram,electr,2010,192.0
+IKARUS,tram,electr,2015,192.0
+IKARUS,tram,electr,2020,196.0
+IKARUS,tram,electr,2025,196.0
+IKARUS,tram,electr,2030,201.0
+IKARUS,tram efficient,electr,2005,189.0
+IKARUS,tram efficient,electr,2010,188.0
+IKARUS,tram efficient,electr,2015,188.0
+IKARUS,tram efficient,electr,2020,191.0
+IKARUS,tram efficient,electr,2025,191.0
+IKARUS,tram efficient,electr,2030,195.0
+IKARUS,commuter train diesel,diesel,2000,750.0
+IKARUS,commuter train diesel efficient,diesel,2000,750.0
+IKARUS,commuter train electric,electr,2000,750.0
+IKARUS,commuter train electric efficient,electr,2000,750.0
+IKARUS,regional train diesel,diesel,2000,1500.0
+IKARUS,regional train diesel efficient,diesel,2000,1500.0
+IKARUS,regional train electric,electr,2000,1500.0
+IKARUS,regional train electric efficient,electr,2000,1500.0
+IKARUS,intercity train diesel,diesel,2000,2000.0
+IKARUS,intercity train diesel efficient,diesel,2000,2000.0
+IKARUS,intercity train electric,electr,2000,2000.0
+IKARUS,intercity train electric efficient,electr,2000,2000.0
+IKARUS,high speed train,electr,2000,3000.0
+IKARUS,high speed train efficient,electr,2000,3000.0
+Krey/Linßen,Airplane jet,kerosene,2000,2500.0
+Krey/Linßen,Airplane jet efficient,kerosene,2000,2500.0
+Krey/Linßen,Bus diesel,diesel,2000,468.0
+Krey/Linßen,Bus diesel,diesel,2005,459.0
+Krey/Linßen,Bus diesel,diesel,2010,433.0
+Krey/Linßen,Bus diesel,diesel,2015,431.0
+Krey/Linßen,Bus diesel,diesel,2020,428.0
+Krey/Linßen,Bus diesel,diesel,2025,426.0
+Krey/Linßen,Bus diesel,diesel,2030,424.0
+Krey/Linßen,Bus diesel efficient,diesel,2005,459.0
+Krey/Linßen,Bus diesel efficient,diesel,2010,433.0
+Krey/Linßen,Bus diesel efficient,diesel,2015,431.0
+Krey/Linßen,Bus diesel efficient,diesel,2020,428.0
+Krey/Linßen,Bus diesel efficient,diesel,2025,426.0
+Krey/Linßen,Bus diesel efficient,diesel,2030,424.0
+Krey/Linßen,Bus CNG,CNG,2000,469.0
+Krey/Linßen,Bus CNG,CNG,2005,459.0
+Krey/Linßen,Bus CNG,CNG,2010,433.0
+Krey/Linßen,Bus CNG,CNG,2015,431.0
+Krey/Linßen,Bus CNG,CNG,2020,428.0
+Krey/Linßen,Bus CNG,CNG,2025,426.0
+Krey/Linßen,Bus CNG,CNG,2030,424.0
+# NB the values for Bus LPG duplicate those for Bus CNG
+Krey/Linßen,Bus LPG,LPG,2000,469.0
+Krey/Linßen,Bus LPG,LPG,2005,459.0
+Krey/Linßen,Bus LPG,LPG,2010,433.0
+Krey/Linßen,Bus LPG,LPG,2015,431.0
+Krey/Linßen,Bus LPG,LPG,2020,428.0
+Krey/Linßen,Bus LPG,LPG,2025,426.0
+Krey/Linßen,Bus LPG,LPG,2030,424.0
+# NB the values for Bus electric duplicate those for Bus CNG
+Krey/Linßen,Bus electric,electr,2000,468.0
+Krey/Linßen,Bus electric,electr,2005,459.0
+Krey/Linßen,Bus electric,electr,2010,433.0
+Krey/Linßen,Bus electric,electr,2015,431.0
+Krey/Linßen,Bus electric,electr,2020,428.0
+Krey/Linßen,Bus electric,electr,2025,426.0
+Krey/Linßen,Bus electric,electr,2030,424.0
+Krey/Linßen,Reisebus diesel,diesel,2000,349.0
+Krey/Linßen,Reisebus diesel,diesel,2005,353.0
+Krey/Linßen,Reisebus diesel,diesel,2010,351.0
+Krey/Linßen,Reisebus diesel,diesel,2015,354.0
+Krey/Linßen,Reisebus diesel,diesel,2020,357.0
+Krey/Linßen,Reisebus diesel,diesel,2025,360.0
+Krey/Linßen,Reisebus diesel,diesel,2030,363.0
+# NB the values for "Reisebus diesel efficient" duplicate those for "Reisebus"
+Krey/Linßen,Reisebus diesel efficient,diesel,2000,349.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2005,353.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2010,351.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2015,354.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2020,357.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2025,360.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2030,363.0
+# NB the values for "Reisebus CNG" duplicate those for "Reisebus"
+Krey/Linßen,Reisebus CNG,CNG,2000,349.0
+Krey/Linßen,Reisebus CNG,CNG,2005,353.0
+Krey/Linßen,Reisebus CNG,CNG,2010,351.0
+Krey/Linßen,Reisebus CNG,CNG,2015,354.0
+Krey/Linßen,Reisebus CNG,CNG,2020,357.0
+Krey/Linßen,Reisebus CNG,CNG,2025,360.0
+Krey/Linßen,Reisebus CNG,CNG,2030,363.0
+# NB the values for "Reisebus LNG" duplicate those for "Reisebus"
+Krey/Linßen,Reisebus LPG,LPG,2000,349.0
+Krey/Linßen,Reisebus LPG,LPG,2005,353.0
+Krey/Linßen,Reisebus LPG,LPG,2010,351.0
+Krey/Linßen,Reisebus LPG,LPG,2015,354.0
+Krey/Linßen,Reisebus LPG,LPG,2020,357.0
+Krey/Linßen,Reisebus LPG,LPG,2025,360.0
+Krey/Linßen,Reisebus LPG,LPG,2030,363.0

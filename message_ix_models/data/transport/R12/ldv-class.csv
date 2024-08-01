@@ -1,0 +1,50 @@
+# Vehicle class split
+#
+# Units: dimensionless
+#
+# - Empty values are zero.
+# - Duplicated manually from corresponding R11 data as of 2022-02-22.
+#
+node,    vehicle_class, value
+R12_AFR, Compact,       0.25
+R12_AFR, Full,          0.35
+R12_AFR, Large SUV,     0.05
+R12_AFR, Minivan,       0.10
+R12_AFR, Pickup truck,  0.05
+R12_AFR, Small SUV,     0.20
+R12_CHN, Compact,       0.98
+R12_CHN, Minivan,       0.02
+R12_RCPA, Compact,       0.98
+R12_RCPA, Minivan,       0.02
+R12_EEU, Compact,       0.98
+R12_EEU, Minivan,       0.02
+R12_FSU, Compact,       0.40
+R12_FSU, Full,          0.30
+R12_FSU, Small SUV,     0.30
+R12_LAM, Compact,       0.85
+R12_LAM, Full,          0.10
+R12_LAM, Small SUV,     0.05
+R12_MEA, Compact,       0.25
+R12_MEA, Full,          0.35
+R12_MEA, Large SUV,     0.05
+R12_MEA, Minivan,       0.10
+R12_MEA, Pickup truck,  0.05
+R12_MEA, Small SUV,     0.20
+R12_NAM, Compact,       0.29
+R12_NAM, Full,          0.24
+R12_NAM, Large SUV,     0.06
+R12_NAM, Mini compact,  0.02
+R12_NAM, Minivan,       0.11
+R12_NAM, Pickup truck,  0.21
+R12_NAM, Small SUV,     0.07
+R12_PAO, Compact,       0.98
+R12_PAO, Minivan,       0.02
+R12_PAS, Compact,       0.25
+R12_PAS, Full,          0.35
+R12_PAS, Large SUV,     0.05
+R12_PAS, Minivan,       0.10
+R12_PAS, Pickup truck,  0.05
+R12_PAS, Small SUV,     0.20
+R12_SAS, Compact,       1.00
+R12_WEU, Compact,       0.98
+R12_WEU, Minivan,       0.02

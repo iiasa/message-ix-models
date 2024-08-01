@@ -1,0 +1,24 @@
+# Freight activity
+#
+# Source:
+# - Placeholder.
+# - Duplicated manually from the corresponding R11 file.
+# - Data for R11_FSU split evenly across R14_{CAS,RUS,SCS,UBM}.
+#
+# Units: Gt km
+#
+node,    value
+R14_AFR, 1210.1
+R14_CAS, 202.6
+R14_CPA, 3088.8
+R14_EEU, 388.6
+R14_LAM, 3100.6
+R14_MEA, 1210.1
+R14_NAM, 5148.9
+R14_PAO, 763.1
+R14_PAS, 2800.3
+R14_RUS, 202.6
+R14_SAS, 1221.9
+R14_SCS, 202.6
+R14_UBM, 202.6
+R14_WEU, 3497.0

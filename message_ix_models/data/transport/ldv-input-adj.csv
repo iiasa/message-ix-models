@@ -1,0 +1,6 @@
+# Calibration factor for LDV fuel economy
+#
+# Units: dimensionless
+#
+scenario, value
+xx,       1.0
