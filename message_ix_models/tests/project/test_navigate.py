@@ -4,8 +4,8 @@ from pathlib import Path
 import ixmp
 import pytest
 from message_ix_models import testing
+from message_ix_models.project.navigate import T35_POLICY, Config
 
-from message_data.projects.navigate import T35_POLICY, Config
 from message_data.projects.navigate.report import _scenario_name
 from message_data.projects.navigate.workflow import add_macro
 
