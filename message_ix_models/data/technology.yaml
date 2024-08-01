@@ -598,6 +598,13 @@ solar_res8:
   sector: electricity
   output: [electr, secondary]
 
+solar_res_hist_2000:
+  name: solar_res_hist_2000
+  description: Currently installed solar electricity capacity with 2000 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
 solar_res_hist_2005:
   name: solar_res_hist_2005
   description: Currently installed solar electricity capacity with 2005 year bin
@@ -731,6 +738,13 @@ wind_res4:
   sector: electricity
   output: [electr, secondary]
 
+wind_res_hist_2000:
+  name: wind_res_hist_2000
+  description: Currently installed wind onshore capacity with 2005 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
 wind_res_hist_2005:
   name: wind_res_hist_2005
   description: Currently installed wind onshore capacity with 2005 year bin
@@ -798,6 +812,13 @@ wind_ref4:
 wind_ref5:
   name: wind_ref5
   description: Wind offshore potential and generation 5
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref_hist_2000:
+  name: wind_ref_hist_2000
+  description: Currently installed wind offshore capacity with 2000 year bin
   type: secondary
   sector: electricity
   output: [electr, secondary]
