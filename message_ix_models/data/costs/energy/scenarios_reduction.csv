@@ -53,6 +53,7 @@ nuc_lc,medium,medium,low,high,high,medium
 solar_i,high,medium,low,high,medium,medium
 solar_pv_I,high,medium,low,high,medium,very_high
 solar_pv_RC,high,medium,low,high,medium,very_high
+solar_res_hist_2000,high,medium,low,high,medium,very_high
 solar_res_hist_2005,high,medium,low,high,medium,very_high
 solar_res_hist_2010,high,medium,low,high,medium,very_high
 solar_res_hist_2015,high,medium,low,high,medium,very_high
@@ -69,6 +70,7 @@ solar_th_ppl,high,medium,low,high,medium,very_high
 stor_ppl,high,medium,low,high,medium,very_high
 syn_liq,medium,medium,high,medium,medium,medium
 syn_liq_ccs,medium,medium,high,medium,medium,medium
+wind_ref_hist_2000,high,medium,low,high,medium,very_high
 wind_ref_hist_2005,high,medium,low,high,medium,very_high
 wind_ref_hist_2010,high,medium,low,high,medium,very_high
 wind_ref_hist_2015,high,medium,low,high,medium,very_high
@@ -78,6 +80,7 @@ wind_ref2,high,medium,low,high,medium,very_high
 wind_ref3,high,medium,low,high,medium,very_high
 wind_ref4,high,medium,low,high,medium,very_high
 wind_ref5,high,medium,low,high,medium,very_high
+wind_res_hist_2000,high,medium,low,high,medium,very_high
 wind_res_hist_2005,high,medium,low,high,medium,very_high
 wind_res_hist_2010,high,medium,low,high,medium,very_high
 wind_res_hist_2015,high,medium,low,high,medium,very_high
@@ -86,3 +89,4 @@ wind_res1,high,medium,low,high,medium,very_high
 wind_res2,high,medium,low,high,medium,very_high
 wind_res3,high,medium,low,high,medium,very_high
 wind_res4,high,medium,low,high,medium,very_high
+
