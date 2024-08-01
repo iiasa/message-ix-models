@@ -508,3 +508,27 @@ def test_calib(context):
 
     scenario.add_macro(data, check_convergence=False)
     return
+
+
+@cli.command("calibrate")
+@click.pass_obj
+def calibrate(context, model_name, scenario_name, version):
+    """Calib a scenario.
+
+    Use the --model_name and --scenario_name option to specify the scenario to solve.
+    """
+    # Clone and set up
+    scenario = context.get_scenario()
+
+    # update cost_ref and price_ref with new solution
+    update_macro_calib_file(
+        scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+    )
+
+    # After solving, add macro calibration
+    print("Scenario solved, now adding MACRO calibration")
+    scenario = add_macro_COVID(
+        scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+    )
+    scenario.set_as_default()
+    print("Scenario calibrated.")
