@@ -158,8 +158,8 @@ jobs:
             "jdbc",
             "oracle",
             "x8oda.iiasa.ac.at:1521/PIXMP2.iiasa.ac.at",
-            "ixmp_dev",
-            "ixmp_dev",
+            "${{ secrets.IXMP_DEV_USER }}",
+            "${{ secrets.IXMP_DEV_PASS }}",
             jvmargs="-Xmx16G",
         )
 
