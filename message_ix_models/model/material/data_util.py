@@ -17,7 +17,12 @@ from message_ix_models.model.material.util import (
 from message_ix_models.model.structure import get_region_codes
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
-from message_ix_models.util import package_data_path
+from message_ix_models.util import (
+    broadcast,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
+)
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -2542,12 +2547,8 @@ def maybe_add_water_tecs(scenario):
 
 def calibrate_for_SSPs(scenario):
     add_elec_i_ini_act(scenario)
-    from message_ix.util import make_df
 
-    from message_ix_models import ScenarioInfo
-    from message_ix_models.util import broadcast, nodes_ex_world
-
-    # prohibit electricity use in clinker kilns in first decade
+    # prohibit electric clinker kilns in first decade
     common = {
         "technology": "furnace_elec_cement",
         "mode": ["high_temp", "low_temp"],
@@ -2564,7 +2565,7 @@ def calibrate_for_SSPs(scenario):
             broadcast, node_loc=nodes_ex_world(s_info.N)
         ),
     )
-    # force FSU gas use in clinker kilns
+    # enforce FSU gas use in clinker kilns in 2020
     common = {
         "technology": "furnace_gas_cement",
         "mode": "high_temp",
@@ -2577,12 +2578,7 @@ def calibrate_for_SSPs(scenario):
     scenario.add_par("bound_activity_lo", make_df("bound_activity_up", **common))
     scenario.commit("add bound for thermal electr use in cement")
 
-    # remove deprecated tecs in v13 baseline
-    if "v0.13" in scenario.scenario:
-        scenario.check_out()
-        scenario.remove_set("technology", ["hp_gas_i", "sp_coal_I", "hp_gas_rc"])
-        scenario.commit("remove already removed tecs")
-
+    # relax 2020 growth constraint for RCPA to avoid infeasibility
     scenario.check_out()
     df = scenario.par(
         "growth_activity_up", filters={"node_loc": "R12_RCPA", "year_act": 2020}
@@ -2592,13 +2588,6 @@ def calibrate_for_SSPs(scenario):
     scenario.add_par("growth_activity_up", df)
     scenario.commit("remove growth constraints in RCPA industry")
 
-    scenario.check_out()
-    df = scenario.par(
-        "historical_activity", filters={"technology": "solar_i", "year_act": 2015}
-    )
-    scenario.remove_par("historical_activity", df)
-    scenario.commit("remove incorrect solar_i hist act")
-
     for bound in ["up", "lo"]:
         df = scenario.par(f"bound_activity_{bound}", filters={"year_act": 2020})
         scenario.check_out()
@@ -2607,32 +2596,3 @@ def calibrate_for_SSPs(scenario):
         )
         scenario.commit("remove t_d 2020 bounds")
     return
-
-
-if __name__ == "__main__":
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "SSP_dev_SSP2_v0.1_Blv0.6", "baseline_prep_lu_bkp_solved_materials"
-    )
-
-    # add_macro_COVID(scen, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx")
-
-    df_hist_new = calc_hist_activity(scen, [2015])
-    print()
-    # df_demand_new = modify_industry_demand(scen, 2015)
-    # old_dict = modify_demand_and_hist_activity_debug(scen)
-    #
-    # df = get_hist_act_data("IEA_mappings_furnaces.csv", years=[2015])
-    # df.index.names = ["node_loc", "technology", "year_act"]
-    # df_inp = scen.par(
-    #     "input",
-    #     filters={
-    #         "year_vtg": 2020,
-    #         "year_act": 2020,
-    #         "mode": "high_temp",
-    #         "node_loc": "R12_AFR",
-    #     },
-    # )
-    # df = df_inp.set_index(["technology"]).join(df).dropna()
-    # df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
-    # print()
