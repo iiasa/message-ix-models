@@ -23,6 +23,7 @@ v2024.8.6
 - Add :doc:`/project/edits` project code and documentation (:pull:`204`).
 - Reduce log verbosity of :func:`.apply_spec` (:pull:`202`).
 - Fix and update :doc:`/api/tools-costs` (:pull:`186`, :pull:`187`, :pull:`190`, :pull:`195`).
+- Made fixes and updates to :doc:`/api/tools-costs` (:pull:`186`, :pull:`187`, :pull:`190`, :pull:`195`, :pull:`206`).
 
   - Fix jumps in cost projections for technologies with first technology year that's after than the first model year (:pull:`186`).
   - Change the use of base_year to mean the year to start modeling cost changes (:pull:`186`).
