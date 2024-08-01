@@ -12,11 +12,11 @@ env:
   from-step: ""
 
 on:
-  # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
+  # Uncomment these lines for debugging, but leave them commented on 'main'
   # pull_request:
-  #   branches: [ main, dev ]
+  #   branches: [ main ]
   # push:
-  #   branches: [ main, dev ]
+  #   branches: [ main ]
   schedule:
   - cron: "0 1 * * *"  # 01:00 UTC = 02:00 CET = 03:00 CEST
   workflow_dispatch: {}
