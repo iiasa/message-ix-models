@@ -1,0 +1,30 @@
+# Passenger distance travelled per capita
+#
+# Sources:
+#
+# - R12_CHN: see the documentation at https://docs.messageix.org/projects/models-internal/en/latest/reference/model/transport/files.html
+# - All others: rough calculation / temporary placeholder from
+#   data/advance/advance_compare_20171018-134445.csv.zip
+#   via .transport.operator._advance_data_for()
+#
+#   - variable="Transport|Service demand|All|Passenger"
+#     divided by variable="Transport|Population"
+#   - model="MESSAGE"
+#   - scenario="ADV3TRAr2_Base"
+#   - year=2020
+#
+# Units: km / year
+#
+node,     value
+R12_RCPA,  4795
+R12_PAS,   6400
+R12_CHN,   8099
+R12_EEU,  13000
+R12_WEU,  18495
+R12_SAS,   3000
+R12_LAM,   5800
+R12_AFR,   2300
+R12_MEA,   6500
+R12_PAO,  14000
+R12_FSU,   9120
+R12_NAM,  27896

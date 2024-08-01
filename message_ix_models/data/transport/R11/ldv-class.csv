@@ -1,0 +1,50 @@
+# Vehicle class split
+#
+# Units: dimensionless
+#
+# - Empty values are zero.
+# - (DLM 2014-04-10) All values for non-NAM regions are guesstimates for now.
+# - (PNK 2019-11-08) NAM values are computed from another Excel sheet.
+#   TODO compute directly.
+#
+node,    vehicle_class, value
+R11_AFR, Compact,       0.25
+R11_AFR, Full,          0.35
+R11_AFR, Large SUV,     0.05
+R11_AFR, Minivan,       0.10
+R11_AFR, Pickup truck,  0.05
+R11_AFR, Small SUV,     0.20
+R11_CPA, Compact,       0.98
+R11_CPA, Minivan,       0.02
+R11_EEU, Compact,       0.98
+R11_EEU, Minivan,       0.02
+R11_FSU, Compact,       0.40
+R11_FSU, Full,          0.30
+R11_FSU, Small SUV,     0.30
+R11_LAM, Compact,       0.85
+R11_LAM, Full,          0.10
+R11_LAM, Small SUV,     0.05
+R11_MEA, Compact,       0.25
+R11_MEA, Full,          0.35
+R11_MEA, Large SUV,     0.05
+R11_MEA, Minivan,       0.10
+R11_MEA, Pickup truck,  0.05
+R11_MEA, Small SUV,     0.20
+R11_NAM, Compact,       0.29
+R11_NAM, Full,          0.24
+R11_NAM, Large SUV,     0.06
+R11_NAM, Mini compact,  0.02
+R11_NAM, Minivan,       0.11
+R11_NAM, Pickup truck,  0.21
+R11_NAM, Small SUV,     0.07
+R11_PAO, Compact,       0.98
+R11_PAO, Minivan,       0.02
+R11_PAS, Compact,       0.25
+R11_PAS, Full,          0.35
+R11_PAS, Large SUV,     0.05
+R11_PAS, Minivan,       0.10
+R11_PAS, Pickup truck,  0.05
+R11_PAS, Small SUV,     0.20
+R11_SAS, Compact,       1.00
+R11_WEU, Compact,       0.98
+R11_WEU, Minivan,       0.02

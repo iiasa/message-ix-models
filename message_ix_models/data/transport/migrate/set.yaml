@@ -1,0 +1,31 @@
+commodity:
+- Dummy_{cg}
+- Dummy_fc
+- Dummy_Hkm
+- Dummy_Tkm
+- Dummy_util
+- Dummy_Vkm
+- DummyGas_ref
+- DummyH2_stor
+- DummyHybrid
+- DummyOil_ref
+- dummyX
+- trp_2wh
+- trp_avi
+- trp_fre
+- trp_pas
+- trp_rai
+- trp_urb
+
+node:
+- afr
+- cpa
+- eeu
+- fsu
+- lam
+- nam
+- mea
+- pao
+- pas
+- sas
+- weu

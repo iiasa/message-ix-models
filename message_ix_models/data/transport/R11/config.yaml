@@ -1,0 +1,79 @@
+# Configuration for MESSAGEix-Transport
+
+# Sources for input data
+data source:
+  # Emissions: ID of a dump from a base scenario
+  emissions: "1"
+
+# (DLM) “Which US census region should be used as a proxy for the distribution
+# of driver types in this MESSAGE region?”
+node to census_division:
+  R11_AFR: 2
+  R11_CPA: 2
+  R11_EEU: 2
+  R11_FSU: 2
+  R11_LAM: 2
+  R11_MEA: 2
+  R11_NAM: 2
+  R11_PAO: 2
+  R11_PAS: 2
+  R11_SAS: 2
+  R11_WEU: 2
+
+# TODO flatten this structure
+factor:
+  activity:
+    # Annual driving distance
+    # NB (DLM) “Modest and Frequent mileages for all non-NAM regions are scaled
+    #    relative to the NAM values from MA3T. This is because we only have
+    #    driving data for the average driver (supplied by Page Kyle of the GCAM
+    #    team in March 2014).
+    ldv:
+      _dim: driver_type
+      _unit: "1"  # dimensionless
+      M: 0.5386  # i.e. 13930 km in R11_NAM
+      A: 1  # by definition
+      F: 1.7614  # ie. 45550 km in R11_NAM
+  cost:
+    # Regional cost multipliers in 2010
+    ldv 2010:
+      R11_NAM: 1.0
+      R11_LAM: 0.9
+      R11_WEU: 1.0
+      R11_EEU: 1.0
+      R11_FSU: 1.0
+      R11_MEA: 0.9
+      R11_AFR: 0.9
+      R11_CPA: 0.9
+      R11_PAO: 1.0
+      R11_PAS: 0.9
+      R11_SAS: 0.9
+
+ldv cost catch-up year:
+  R11_NAM: 1.0
+  R11_LAM: 2030
+  R11_WEU: 1990
+  R11_EEU: 2010
+  R11_FSU: 2010
+  R11_MEA: 2030
+  R11_AFR: 2050
+  R11_CPA: 2030
+  R11_PAO: 1990
+  R11_PAS: 2030
+  R11_SAS: 2040
+
+# Parameters used in demand and mode share calculations -----------------------
+
+# Share weights for regions converge to the average of the regions in each list
+share weight convergence:
+  R11_AFR: [R11_PAO, R11_WEU]
+  R11_CPA: [R11_PAO, R11_WEU]
+  R11_EEU: [R11_PAO, R11_WEU]
+  R11_FSU: [R11_NAM]
+  R11_LAM: [R11_PAO, R11_WEU]
+  R11_MEA: [R11_NAM, R11_WEU]
+  R11_NAM: [R11_NAM]
+  R11_PAO: [R11_PAO, R11_WEU]
+  R11_PAS: [R11_PAO, R11_WEU]
+  R11_SAS: [R11_PAO, R11_WEU]
+  R11_WEU: [R11_PAO, R11_WEU]

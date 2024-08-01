@@ -1,0 +1,198 @@
+# Technical lifetime of non-LDV transport technologies
+#
+# Source:
+# - Extracted from GEAM_TRP_techinput.xlsx
+# - "source" index entries indicate:
+#   - "IKARUS": IKARUS transport model
+#   - "Krey/Linßen": "Diss Krey 2006" and "Linßen u.a. 2003"
+#
+# Unit: year
+#
+source,technology,commodity,year,value
+IKARUS,tram,electr,2000,25.0
+IKARUS,tram,electr,2005,25.0
+IKARUS,tram,electr,2010,25.0
+IKARUS,tram,electr,2015,25.0
+IKARUS,tram,electr,2020,25.0
+IKARUS,tram,electr,2025,25.0
+IKARUS,tram,electr,2030,25.0
+IKARUS,tram efficient,electr,2005,25.0
+IKARUS,tram efficient,electr,2010,25.0
+IKARUS,tram efficient,electr,2015,25.0
+IKARUS,tram efficient,electr,2020,25.0
+IKARUS,tram efficient,electr,2025,25.0
+IKARUS,tram efficient,electr,2030,25.0
+IKARUS,commuter train diesel,diesel,2000,30.0
+IKARUS,commuter train diesel,diesel,2005,30.0
+IKARUS,commuter train diesel,diesel,2010,30.0
+IKARUS,commuter train diesel,diesel,2015,30.0
+IKARUS,commuter train diesel,diesel,2020,30.0
+IKARUS,commuter train diesel,diesel,2025,30.0
+IKARUS,commuter train diesel,diesel,2030,30.0
+IKARUS,commuter train diesel efficient,diesel,2000,30.0
+IKARUS,commuter train diesel efficient,diesel,2005,30.0
+IKARUS,commuter train diesel efficient,diesel,2010,30.0
+IKARUS,commuter train diesel efficient,diesel,2015,30.0
+IKARUS,commuter train diesel efficient,diesel,2020,30.0
+IKARUS,commuter train diesel efficient,diesel,2025,30.0
+IKARUS,commuter train diesel efficient,diesel,2030,30.0
+IKARUS,commuter train electric,electr,2000,30.0
+IKARUS,commuter train electric,electr,2005,30.0
+IKARUS,commuter train electric,electr,2010,30.0
+IKARUS,commuter train electric,electr,2015,30.0
+IKARUS,commuter train electric,electr,2020,30.0
+IKARUS,commuter train electric,electr,2025,30.0
+IKARUS,commuter train electric,electr,2030,30.0
+IKARUS,commuter train electric efficient,electr,2000,30.0
+IKARUS,commuter train electric efficient,electr,2005,30.0
+IKARUS,commuter train electric efficient,electr,2010,30.0
+IKARUS,commuter train electric efficient,electr,2015,30.0
+IKARUS,commuter train electric efficient,electr,2020,30.0
+IKARUS,commuter train electric efficient,electr,2025,30.0
+IKARUS,commuter train electric efficient,electr,2030,30.0
+IKARUS,regional train diesel,diesel,2000,28.0
+IKARUS,regional train diesel,diesel,2005,28.0
+IKARUS,regional train diesel,diesel,2010,28.0
+IKARUS,regional train diesel,diesel,2015,28.0
+IKARUS,regional train diesel,diesel,2020,28.0
+IKARUS,regional train diesel,diesel,2025,28.0
+IKARUS,regional train diesel,diesel,2030,28.0
+IKARUS,regional train diesel efficient,diesel,2000,28.0
+IKARUS,regional train diesel efficient,diesel,2005,28.0
+IKARUS,regional train diesel efficient,diesel,2010,28.0
+IKARUS,regional train diesel efficient,diesel,2015,28.0
+IKARUS,regional train diesel efficient,diesel,2020,28.0
+IKARUS,regional train diesel efficient,diesel,2025,28.0
+IKARUS,regional train diesel efficient,diesel,2030,28.0
+IKARUS,regional train electric,electr,2000,28.0
+IKARUS,regional train electric,electr,2005,28.0
+IKARUS,regional train electric,electr,2010,28.0
+IKARUS,regional train electric,electr,2015,28.0
+IKARUS,regional train electric,electr,2020,28.0
+IKARUS,regional train electric,electr,2025,28.0
+IKARUS,regional train electric,electr,2030,28.0
+IKARUS,regional train electric efficient,electr,2000,28.0
+IKARUS,regional train electric efficient,electr,2005,28.0
+IKARUS,regional train electric efficient,electr,2010,28.0
+IKARUS,regional train electric efficient,electr,2015,28.0
+IKARUS,regional train electric efficient,electr,2020,28.0
+IKARUS,regional train electric efficient,electr,2025,28.0
+IKARUS,regional train electric efficient,electr,2030,28.0
+IKARUS,intercity train diesel,diesel,2000,30.0
+IKARUS,intercity train diesel,diesel,2005,30.0
+IKARUS,intercity train diesel,diesel,2010,30.0
+IKARUS,intercity train diesel,diesel,2015,30.0
+IKARUS,intercity train diesel,diesel,2020,30.0
+IKARUS,intercity train diesel,diesel,2025,30.0
+IKARUS,intercity train diesel,diesel,2030,30.0
+IKARUS,intercity train diesel efficient,diesel,2000,30.0
+IKARUS,intercity train diesel efficient,diesel,2005,30.0
+IKARUS,intercity train diesel efficient,diesel,2010,30.0
+IKARUS,intercity train diesel efficient,diesel,2015,30.0
+IKARUS,intercity train diesel efficient,diesel,2020,30.0
+IKARUS,intercity train diesel efficient,diesel,2025,30.0
+IKARUS,intercity train diesel efficient,diesel,2030,30.0
+IKARUS,intercity train electric,electr,2000,30.0
+IKARUS,intercity train electric,electr,2005,30.0
+IKARUS,intercity train electric,electr,2010,30.0
+IKARUS,intercity train electric,electr,2015,30.0
+IKARUS,intercity train electric,electr,2020,30.0
+IKARUS,intercity train electric,electr,2025,30.0
+IKARUS,intercity train electric,electr,2030,30.0
+IKARUS,intercity train electric efficient,electr,2000,30.0
+IKARUS,intercity train electric efficient,electr,2005,30.0
+IKARUS,intercity train electric efficient,electr,2010,30.0
+IKARUS,intercity train electric efficient,electr,2015,30.0
+IKARUS,intercity train electric efficient,electr,2020,30.0
+IKARUS,intercity train electric efficient,electr,2025,30.0
+IKARUS,intercity train electric efficient,electr,2030,30.0
+IKARUS,high speed train,electr,2000,30.0
+IKARUS,high speed train,electr,2005,30.0
+IKARUS,high speed train,electr,2010,30.0
+IKARUS,high speed train,electr,2015,30.0
+IKARUS,high speed train,electr,2020,30.0
+IKARUS,high speed train,electr,2025,30.0
+IKARUS,high speed train,electr,2030,30.0
+IKARUS,high speed train efficient,electr,2000,30.0
+IKARUS,high speed train efficient,electr,2005,30.0
+IKARUS,high speed train efficient,electr,2010,30.0
+IKARUS,high speed train efficient,electr,2015,30.0
+IKARUS,high speed train efficient,electr,2020,30.0
+IKARUS,high speed train efficient,electr,2025,30.0
+IKARUS,high speed train efficient,electr,2030,30.0
+Krey/Linßen,Airplane jet,kerosene,2000,20.0
+Krey/Linßen,Airplane jet,kerosene,2005,20.0
+Krey/Linßen,Airplane jet,kerosene,2010,20.0
+Krey/Linßen,Airplane jet,kerosene,2015,20.0
+Krey/Linßen,Airplane jet,kerosene,2020,20.0
+Krey/Linßen,Airplane jet,kerosene,2025,20.0
+Krey/Linßen,Airplane jet,kerosene,2030,20.0
+Krey/Linßen,Airplane jet efficient,kerosene,2000,20.0
+Krey/Linßen,Airplane jet efficient,kerosene,2005,20.0
+Krey/Linßen,Airplane jet efficient,kerosene,2010,20.0
+Krey/Linßen,Airplane jet efficient,kerosene,2015,20.0
+Krey/Linßen,Airplane jet efficient,kerosene,2020,20.0
+Krey/Linßen,Airplane jet efficient,kerosene,2025,20.0
+Krey/Linßen,Airplane jet efficient,kerosene,2030,20.0
+Krey/Linßen,Bus diesel,diesel,2000,14.8
+Krey/Linßen,Bus diesel,diesel,2005,14.7
+Krey/Linßen,Bus diesel,diesel,2010,14.7
+Krey/Linßen,Bus diesel,diesel,2015,14.7
+Krey/Linßen,Bus diesel,diesel,2020,14.7
+Krey/Linßen,Bus diesel,diesel,2025,14.7
+Krey/Linßen,Bus diesel,diesel,2030,14.7
+Krey/Linßen,Bus diesel efficient,diesel,2005,14.7
+Krey/Linßen,Bus diesel efficient,diesel,2010,14.7
+Krey/Linßen,Bus diesel efficient,diesel,2015,14.7
+Krey/Linßen,Bus diesel efficient,diesel,2020,14.7
+Krey/Linßen,Bus diesel efficient,diesel,2025,14.7
+Krey/Linßen,Bus diesel efficient,diesel,2030,14.7
+Krey/Linßen,Bus CNG,CNG,2000,14.8
+Krey/Linßen,Bus CNG,CNG,2005,14.7
+Krey/Linßen,Bus CNG,CNG,2010,14.7
+Krey/Linßen,Bus CNG,CNG,2015,14.7
+Krey/Linßen,Bus CNG,CNG,2020,14.7
+Krey/Linßen,Bus CNG,CNG,2025,14.7
+Krey/Linßen,Bus CNG,CNG,2030,14.7
+Krey/Linßen,Bus LPG,LPG,2000,14.8
+Krey/Linßen,Bus LPG,LPG,2005,14.7
+Krey/Linßen,Bus LPG,LPG,2010,14.7
+Krey/Linßen,Bus LPG,LPG,2015,14.7
+Krey/Linßen,Bus LPG,LPG,2020,14.7
+Krey/Linßen,Bus LPG,LPG,2025,14.7
+Krey/Linßen,Bus LPG,LPG,2030,14.7
+Krey/Linßen,Bus electric,electr,2000,12.5
+Krey/Linßen,Bus electric,electr,2005,12.5
+Krey/Linßen,Bus electric,electr,2010,12.5
+Krey/Linßen,Bus electric,electr,2015,12.5
+Krey/Linßen,Bus electric,electr,2020,12.5
+Krey/Linßen,Bus electric,electr,2025,12.5
+Krey/Linßen,Bus electric,electr,2030,12.4
+Krey/Linßen,Reisebus diesel,diesel,2000,15.0
+Krey/Linßen,Reisebus diesel,diesel,2005,15.0
+Krey/Linßen,Reisebus diesel,diesel,2010,15.0
+Krey/Linßen,Reisebus diesel,diesel,2015,15.0
+Krey/Linßen,Reisebus diesel,diesel,2020,15.0
+Krey/Linßen,Reisebus diesel,diesel,2025,15.0
+Krey/Linßen,Reisebus diesel,diesel,2030,15.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2000,15.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2005,15.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2010,15.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2015,15.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2020,15.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2025,15.0
+Krey/Linßen,Reisebus diesel efficient,diesel,2030,15.0
+Krey/Linßen,Reisebus CNG,CNG,2000,15.0
+Krey/Linßen,Reisebus CNG,CNG,2005,15.0
+Krey/Linßen,Reisebus CNG,CNG,2010,15.0
+Krey/Linßen,Reisebus CNG,CNG,2015,15.0
+Krey/Linßen,Reisebus CNG,CNG,2020,15.0
+Krey/Linßen,Reisebus CNG,CNG,2025,15.0
+Krey/Linßen,Reisebus CNG,CNG,2030,15.0
+Krey/Linßen,Reisebus LPG,LPG,2000,15.0
+Krey/Linßen,Reisebus LPG,LPG,2005,15.0
+Krey/Linßen,Reisebus LPG,LPG,2010,15.0
+Krey/Linßen,Reisebus LPG,LPG,2015,15.0
+Krey/Linßen,Reisebus LPG,LPG,2020,15.0
+Krey/Linßen,Reisebus LPG,LPG,2025,15.0
+Krey/Linßen,Reisebus LPG,LPG,2030,15.0

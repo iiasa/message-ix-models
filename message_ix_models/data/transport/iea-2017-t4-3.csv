@@ -1,0 +1,21 @@
+# Typical average fuel consumption of new trucks at representative payloads, by truck
+# category in selected countries
+#
+# Source: IEA (2017), “The Future of Trucks”, table 4, page 38
+# https://www.iea.org/reports/the-future-of-trucks
+#
+# Unit: 0.01 litre_of_diesel_equivalent / (t km)
+#
+node, technology, value
+USA,  LCV,         14.4
+EU28, LCV,         11.0
+CHN,  LCV,         12.1
+IND,  LCV,          6.7
+USA,  MFT,          4.4
+EU28, MFT,          3.3
+CHN,  MFT,          2.7
+IND,  MFT,          2.6
+USA,  HFT,          2.7
+EU28, HFT,          2.4
+CHN,  HFT,          2.9
+IND,  HFT,          3.5

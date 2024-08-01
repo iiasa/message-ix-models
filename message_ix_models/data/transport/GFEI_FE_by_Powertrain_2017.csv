@@ -1,0 +1,329 @@
+# Fuel consumption
+#
+# Source: data underlies "Figure 37. Fuel consumption range by type of powertrain
+# and vehicle size, 2017"` in
+# https://theicct.org/publications/gfei-tech-policy-drivers-2005-2017. Private
+# correspondence from the report authors.
+#
+# Values correspond exclusively to new vehicle registrations in year 2017.
+#
+# Units: 0.01 Lge / vkm
+#
+Country,        FuelTypeReduced, value
+Argentina,      Diesel,           8.2
+Argentina,      Flexfuel,         9
+Argentina,      Hybrid,           4.4
+Argentina,      Petrol,           7.9
+Australia,      Diesel,           8.5
+Australia,      Electric,         1.6
+Australia,      Hybrid,           4.7
+Australia,      LPG,             10.6
+Australia,      Petrol,           7.7
+Australia,      Plug-in,          2.9
+Austria,        CNG,              7.9
+Austria,        Diesel,           5.6
+Austria,        Electric,         2.4
+Austria,        Flexfuel,        16.8
+Austria,        Hybrid,           4.6
+Austria,        LPG,              6.2
+Austria,        Petrol,           6
+Austria,        Plug-in,          6.7
+Belgium,        CNG,              7.4
+Belgium,        Diesel,           5.2
+Belgium,        Electric,         2.2
+Belgium,        Hybrid,           4.5
+Belgium,        LPG,              6.7
+Belgium,        Petrol,           6.1
+Belgium,        Plug-in,          6.4
+Brazil,         Diesel,          10
+Brazil,         Electric,         2
+Brazil,         Flexfuel,         7.3
+Brazil,         Hybrid,           5.7
+Brazil,         Petrol,           8.7
+Brazil,         Plug-in,          3.1
+Brazil,         Unspec.,         10.2
+Bulgaria,       CNG,              6.8
+Bulgaria,       Diesel,           5.4
+Bulgaria,       Electric,         1.8
+Bulgaria,       Hybrid,           4.5
+Bulgaria,       LPG,              6.7
+Bulgaria,       Petrol,           6.5
+Bulgaria,       Plug-in,          4.5
+Canada,         CNG,             19.8
+Canada,         Diesel,           7.9
+Canada,         Electric,         1.9
+Canada,         Flexfuel,        10
+Canada,         Hybrid,           5.1
+Canada,         Petrol,           8.9
+Canada,         Plug-in,          2.8
+Chile,          Diesel,           7.8
+Chile,          Electric,         1.9
+Chile,          Hybrid,           4.8
+Chile,          Petrol,           8.1
+Chile,          Plug-in,          2.7
+China,          CNG,              9.5
+China,          Diesel,           8.5
+China,          Electric,         1.6
+China,          Hybrid,           5.1
+China,          Petrol,           7.8
+China,          Plug-in,          2.1
+Croatia,        CNG,              8.2
+Croatia,        Diesel,           4.9
+Croatia,        Electric,         2.9
+Croatia,        Hybrid,           4.4
+Croatia,        LPG,              6.4
+Croatia,        Petrol,           5.7
+Croatia,        Plug-in,          5.6
+Cyprus,         Diesel,           5.4
+Cyprus,         Hybrid,           4.6
+Cyprus,         Petrol,           5.9
+Cyprus,         Plug-in,          3.4
+Czech Republic, CNG,              7.8
+Czech Republic, Diesel,           5.5
+Czech Republic, Electric,         1.7
+Czech Republic, Flexfuel,        15.2
+Czech Republic, Hybrid,           4.5
+Czech Republic, LPG,              6.9
+Czech Republic, Petrol,           6.1
+Czech Republic, Plug-in,          8.6
+Denmark,        CNG,              7.5
+Denmark,        Diesel,           5
+Denmark,        Electric,         2
+Denmark,        Hybrid,           4.2
+Denmark,        LPG,              6.2
+Denmark,        Petrol,           5.4
+Denmark,        Plug-in,          3.6
+Egypt,          Diesel,           8.3
+Egypt,          Petrol,           7.5
+Egypt,          Unspec.,          8
+Estonia,        CNG,              7.8
+Estonia,        Diesel,           6.1
+Estonia,        Electric,         2
+Estonia,        Hybrid,           4.9
+Estonia,        LPG,              6.7
+Estonia,        Petrol,           6.6
+Estonia,        Plug-in,          7.1
+Finland,        CNG,              7.6
+Finland,        Diesel,           5.7
+Finland,        Electric,         2
+Finland,        Flexfuel,        27.5
+Finland,        Hybrid,           4.3
+Finland,        LPG,              6.2
+Finland,        Petrol,           6
+Finland,        Plug-in,          5.1
+France,         CNG,              9.9
+France,         Diesel,           5
+France,         Electric,         1.8
+France,         Flexfuel,         8.3
+France,         Hybrid,           4.4
+France,         LPG,              6.5
+France,         Petrol,           5.7
+France,         Plug-in,          2.9
+Germany,        CNG,              6.7
+Germany,        Diesel,           5.6
+Germany,        Electric,         1.7
+Germany,        Flexfuel,        16.1
+Germany,        Hybrid,           4.4
+Germany,        LPG,              6.5
+Germany,        Petrol,           6.3
+Germany,        Plug-in,          2.8
+Greece,         CNG,              6.1
+Greece,         Diesel,           4.7
+Greece,         Electric,         1.6
+Greece,         Hybrid,           4.1
+Greece,         LPG,              6
+Greece,         Petrol,           5.6
+Greece,         Plug-in,          5.1
+Hungary,        CNG,              8
+Hungary,        Diesel,           5.7
+Hungary,        Electric,         2.3
+Hungary,        Hybrid,           4.9
+Hungary,        LPG,              6.7
+Hungary,        Petrol,           6.3
+Hungary,        Plug-in,          7.3
+Iceland,        CNG,              6.2
+Iceland,        Diesel,           5.8
+Iceland,        Electric,         1.9
+Iceland,        Hybrid,           4.5
+Iceland,        Petrol,           6.2
+Iceland,        Plug-in,          2.9
+India,          CNG,              5.5
+India,          Diesel,           5.8
+India,          Electric,         1.8
+India,          Hybrid,           9.3
+India,          LPG,              5.7
+India,          Petrol,           5.5
+India,          Plug-in,          2.4
+Indonesia,      Diesel,           9.2
+Indonesia,      Hybrid,           6.5
+Indonesia,      Petrol,           7.4
+Indonesia,      Plug-in,          2.4
+Indonesia,      Unspec.,          9.5
+Ireland,        Diesel,           5.1
+Ireland,        Electric,         1.8
+Ireland,        Hybrid,           4.3
+Ireland,        LPG,              6.2
+Ireland,        Petrol,           5.7
+Ireland,        Plug-in,          1.7
+Italy,          CNG,              5.6
+Italy,          Diesel,           4.8
+Italy,          Electric,         1.9
+Italy,          Flexfuel,         9.9
+Italy,          Hybrid,           4.3
+Italy,          LPG,              6.3
+Italy,          Petrol,           5.8
+Italy,          Plug-in,          2.7
+Japan,          Diesel,           5.4
+Japan,          Electric,         2.1
+Japan,          Hybrid,           4.7
+Japan,          Hydrogen,         4
+Japan,          Petrol,           6.2
+Japan,          Plug-in,          2.9
+Japan,          Unspec.,          8
+Latvia,         CNG,              8
+Latvia,         Diesel,           5.6
+Latvia,         Electric,         1.8
+Latvia,         Hybrid,           4.9
+Latvia,         LPG,              6.5
+Latvia,         Petrol,           6.5
+Latvia,         Plug-in,          3.9
+Lithuania,      CNG,              7.7
+Lithuania,      Diesel,           5.7
+Lithuania,      Electric,         1.9
+Lithuania,      Hybrid,           4.8
+Lithuania,      LPG,              6.8
+Lithuania,      Petrol,           6.3
+Lithuania,      Plug-in,          5.4
+Luxembourg,     CNG,              7.3
+Luxembourg,     Diesel,           5.4
+Luxembourg,     Electric,         1.9
+Luxembourg,     Hybrid,           4.7
+Luxembourg,     LPG,              7
+Luxembourg,     Petrol,           6.7
+Luxembourg,     Plug-in,          2.6
+Malaysia,       Unspec.,          7.1
+Malta,          Diesel,           5
+Malta,          Electric,         1.9
+Malta,          Hybrid,           4.1
+Malta,          Petrol,           5.4
+Malta,          Plug-in,          3.3
+Mexico,         Diesel,           7
+Mexico,         Electric,         1.8
+Mexico,         Hybrid,           3.9
+Mexico,         Petrol,           6.6
+Mexico,         Plug-in,          5.2
+Mexico,         Unspec.,          9.6
+Netherlands,    CNG,              9.5
+Netherlands,    Diesel,           5.4
+Netherlands,    Electric,         1.9
+Netherlands,    Hybrid,           4.3
+Netherlands,    LPG,              6
+Netherlands,    Petrol,           5.5
+Netherlands,    Plug-in,          6.3
+Peru,           Unspec.,          8.1
+Philippines,    Unspec.,          8.4
+Poland,         CNG,              8.3
+Poland,         Diesel,           5.7
+Poland,         Electric,        20.6
+Poland,         Flexfuel,         8.7
+Poland,         Hybrid,          11.3
+Poland,         LPG,              6.8
+Poland,         Petrol,           6.2
+Poland,         Plug-in,          2.9
+Portugal,       CNG,              6.1
+Portugal,       Diesel,           4.7
+Portugal,       Electric,         2.1
+Portugal,       Hybrid,           4.3
+Portugal,       LPG,              5.7
+Portugal,       Petrol,           5.4
+Portugal,       Plug-in,          7.3
+Romania,        CNG,              7.9
+Romania,        Diesel,           5.3
+Romania,        Electric,         3.4
+Romania,        Flexfuel,        16.4
+Romania,        Hybrid,           4.3
+Romania,        LPG,              5.9
+Romania,        Petrol,           6.2
+Romania,        Plug-in,          5.4
+Russia,         Diesel,           7.4
+Russia,         Electric,         1.6
+Russia,         Hybrid,           5.7
+Russia,         Petrol,           8.3
+Russia,         Plug-in,          3
+Slovakia,       CNG,              8
+Slovakia,       Diesel,           5.7
+Slovakia,       Electric,         1.7
+Slovakia,       Flexfuel,        18.6
+Slovakia,       Hybrid,           4.7
+Slovakia,       LPG,              6.8
+Slovakia,       Petrol,           6.2
+Slovakia,       Plug-in,          4.1
+Slovenia,       CNG,              7.5
+Slovenia,       Diesel,           5.5
+Slovenia,       Electric,         2
+Slovenia,       Hybrid,           4.5
+Slovenia,       LPG,              6.8
+Slovenia,       Petrol,           6
+Slovenia,       Plug-in,          3
+South Africa,   Diesel,           8
+South Africa,   Electric,         1.6
+South Africa,   Hybrid,           4.8
+South Africa,   Petrol,           7.1
+South Africa,   Plug-in,          2.8
+South Korea,    Diesel,           5.9
+South Korea,    Electric,         1.5
+South Korea,    Hybrid,           5
+South Korea,    Hydrogen,         4.8
+South Korea,    LPG,              7.3
+South Korea,    Petrol,           6.3
+South Korea,    Plug-in,          4.3
+South Korea,    Unspec.,          7.6
+Spain,          CNG,              6.9
+Spain,          Diesel,           5
+Spain,          Electric,         1.9
+Spain,          Hybrid,           4.5
+Spain,          LPG,              6.6
+Spain,          Petrol,           6.1
+Spain,          Plug-in,          2.5
+Sweden,         CNG,              6.7
+Sweden,         Diesel,           5.8
+Sweden,         Electric,         2.1
+Sweden,         Hybrid,           4.5
+Sweden,         LPG,              6.3
+Sweden,         Petrol,           6.3
+Sweden,         Plug-in,          6.1
+Thailand,       CNG,             11
+Thailand,       Diesel,           8.4
+Thailand,       Electric,         2.3
+Thailand,       Hybrid,           7.1
+Thailand,       LPG,              9.9
+Thailand,       Petrol,           6.8
+Thailand,       Plug-in,          2.9
+Turkey,         Diesel,           5
+Turkey,         Electric,         1.7
+Turkey,         Hybrid,           4.4
+Turkey,         Petrol,           6.4
+Turkey,         Plug-in,          2.7
+Ukraine,        CNG,              8
+Ukraine,        Diesel,           6
+Ukraine,        Electric,         2
+Ukraine,        Hybrid,           5.3
+Ukraine,        LPG,              8.2
+Ukraine,        Petrol,           7.5
+Ukraine,        Plug-in,          4.2
+United Kingdom, CNG,             18
+United Kingdom, Diesel,           5.6
+United Kingdom, Electric,         1.9
+United Kingdom, Flexfuel,        17.1
+United Kingdom, Hybrid,           4.4
+United Kingdom, Petrol,           6.1
+United Kingdom, Plug-in,          2.9
+USA,            CNG,             22.4
+USA,            Diesel,           9.1
+USA,            Electric,         1.9
+USA,            Flexfuel,        11
+USA,            Hybrid,           4.7
+USA,            Hydrogen,         4.1
+USA,            Petrol,           8.6
+USA,            Plug-in,          2.7
+USA,            Unspec.,         10.5

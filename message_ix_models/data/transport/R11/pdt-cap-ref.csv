@@ -1,0 +1,18 @@
+# Passenger distance travelled per capita
+#
+# Source: placeholder; manually derived from corresponding R12 file.
+#
+# Units: km / year
+#
+node,    value
+R11_AFR,  3410
+R11_CPA,  5000
+R11_EEU, 18495
+R11_FSU,  9120
+R11_LAM,  5759
+R11_MEA,  3410
+R11_NAM, 27896
+R11_PAO, 23551
+R11_PAS,  4795
+R11_SAS,  2663
+R11_WEU, 18495

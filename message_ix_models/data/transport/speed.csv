@@ -1,0 +1,22 @@
+# Vehicle speed
+#
+# - This is the mean for all vehicles of all technologies in the given
+#   mode.
+# - The code that handles this file interpolates on the ‘year’
+#   dimension.
+#
+# Source: placeholder / fallback. Do not use these values.
+#
+# Unit: km / hour
+#
+scenario,    technology, year, value
+SSP(2024).2, LDV,        2020,  54.5
+SSP(2024).2, LDV,        2110,  54.5
+SSP(2024).2, 2W,         2020,  31
+SSP(2024).2, 2W,         2110,  31
+SSP(2024).2, AIR,        2020, 270
+SSP(2024).2, AIR,        2110, 270
+SSP(2024).2, BUS,        2020,  19
+SSP(2024).2, BUS,        2110,  19
+SSP(2024).2, RAIL,       2020,  35
+SSP(2024).2, RAIL,       2110,  35

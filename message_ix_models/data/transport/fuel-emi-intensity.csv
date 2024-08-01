@@ -1,0 +1,36 @@
+# Carbon emissions intensity of transport fuel use
+#
+# These values are in GWP-equivalent mass of carbon; not in mass of
+# the emissions species.
+#
+# Sources:
+# A: Exported 2021-06-09T23:52:44.140235 from
+#    ixmp://cloned-2021-06-09/ENGAGE_SSP2_v4.1.7/baseline
+# B: Exported from
+#    ixmp://ixmp-dev/MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE#12
+#
+# Notes:
+# - Data are for technologies like ``coal_trp``.
+# - In both A and B there were no data for eth_{if}c_trp.
+# - Data for A were identical to
+#   ixmp://cloned-2021-06-09/MESSAGEix-GLOBIOM_R12_CHN/baseline
+# - Units were recorded as "kg / kWa" in A and "???" in B. The former
+#   appears to be incorrect:
+#   https://www.eia.gov/environment/emissions/co2_vol_mass.php gives
+#   CO₂ intensity of natural gas as 52.91 kg / 10⁶ BTU; this is
+#   1582 kg / kW·a or 431 kg / kW·a carbon equivalent.
+#
+# Unit: t / kWa
+#
+commodity, emission, value
+# From source scenario A
+# coal,CO2,0.814
+# From source scenario B
+coal,CO2,2.713
+fueloil,CO2,0.665
+gas,CO2,0.482
+lightoil,CO2,0.631
+# For meth_fc_trp in source scenario B
+# methanol,CO2,0.366
+# For meth_ic_trp in source scenario B
+methanol,CO2,0.549

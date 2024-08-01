@@ -1,0 +1,77 @@
+# Mode shares in the model base year
+#
+# - Prepared by A. Javaid 2023-10-20.
+# - All data are for the year 2010.
+# - PNK inserted 0.00 for OTHER ROAD for the regions:
+#   R11_CPA, R11_EEU, R11_FSU, R11_LAM, R11_NAM, R11_PAS,
+#   R11_WEU
+#
+# Units: dimensionless
+#
+node,    technology, value
+R11_AFR, 2W,         0.05
+R11_AFR, AIR,        0.01
+R11_AFR, BUS,        0.10
+R11_AFR, LDV,        0.32
+R11_AFR, OTHER ROAD, 0.50
+R11_AFR, RAIL,       0.02
+R11_CPA, 2W,         0.08
+R11_CPA, AIR,        0.14
+R11_CPA, BUS,        0.30
+R11_CPA, LDV,        0.17
+R11_CPA, OTHER ROAD, 0.00
+R11_CPA, RAIL,       0.31
+R11_EEU, 2W,         0.01
+R11_EEU, AIR,        0.01
+R11_EEU, BUS,        0.34
+R11_EEU, LDV,        0.46
+R11_EEU, OTHER ROAD, 0.00
+R11_EEU, RAIL,       0.18
+R11_FSU, 2W,         0.01
+R11_FSU, AIR,        0.25
+R11_FSU, BUS,        0.20
+R11_FSU, LDV,        0.40
+R11_FSU, OTHER ROAD, 0.00
+R11_FSU, RAIL,       0.14
+R11_LAM, 2W,         0.04
+R11_LAM, AIR,        0.08
+R11_LAM, BUS,        0.36
+R11_LAM, LDV,        0.51
+R11_LAM, OTHER ROAD, 0.00
+R11_LAM, RAIL,       0.01
+R11_MEA, 2W,         0.02
+R11_MEA, AIR,        0.20
+R11_MEA, BUS,        0.18
+R11_MEA, LDV,        0.20
+R11_MEA, OTHER ROAD, 0.36
+R11_MEA, RAIL,       0.03
+R11_NAM, 2W,         0.01
+R11_NAM, AIR,        0.11
+R11_NAM, BUS,        0.06
+R11_NAM, LDV,        0.81
+R11_NAM, OTHER ROAD, 0.00
+R11_NAM, RAIL,       0.01
+R11_PAO, 2W,         0.01
+R11_PAO, AIR,        0.15
+R11_PAO, BUS,        0.05
+R11_PAO, LDV,        0.66
+R11_PAO, OTHER ROAD, 0.09
+R11_PAO, RAIL,       0.04
+R11_PAS, 2W,         0.06
+R11_PAS, AIR,        0.07
+R11_PAS, BUS,        0.47
+R11_PAS, LDV,        0.32
+R11_PAS, OTHER ROAD, 0.00
+R11_PAS, RAIL,       0.08
+R11_SAS, 2W,         0.30
+R11_SAS, AIR,        0.07
+R11_SAS, BUS,        0.19
+R11_SAS, LDV,        0.14
+R11_SAS, OTHER ROAD, 0.14
+R11_SAS, RAIL,       0.16
+R11_WEU, 2W,         0.02
+R11_WEU, AIR,        0.11
+R11_WEU, BUS,        0.07
+R11_WEU, LDV,        0.71
+R11_WEU, OTHER ROAD, 0.00
+R11_WEU, RAIL,       0.09

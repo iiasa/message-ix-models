@@ -1,0 +1,40 @@
+﻿Dataset containing population data for China and India. Downloaded from OECD iLibrary in 2021
+LOCATION,Country,SEX,Sex,AGE,Age,TIME,Time,Value
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2000,2000,1283198970
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2001,2001,1290937649
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2002,2002,1298646577
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2003,2003,1306343911
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2004,2004,1314007478
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2005,2005,1321623490
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2006,2006,1329209094
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2007,2007,1336800506
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2008,2008,1344415227
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2009,2009,1352068091
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2010,2010,1359755102
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2011,2011,1367480264
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2012,2012,1375198619
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2013,2013,1382793212
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2014,2014,1390110388
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2015,2015,1397028553
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2016,2016,1403500365
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2017,2017,1409517397
+CHN,China (People's Republic of),T,Total,TOTAL,Total,2018,2018,1415045928
+IND,India,T,Total,TOTAL,Total,2000,2000,1053050912
+IND,India,T,Total,TOTAL,Total,2001,2001,1071477855
+IND,India,T,Total,TOTAL,Total,2002,2002,1089807112
+IND,India,T,Total,TOTAL,Total,2003,2003,1108027848
+IND,India,T,Total,TOTAL,Total,2004,2004,1126135777
+IND,India,T,Total,TOTAL,Total,2005,2005,1144118674
+IND,India,T,Total,TOTAL,Total,2006,2006,1161977719
+IND,India,T,Total,TOTAL,Total,2007,2007,1179681239
+IND,India,T,Total,TOTAL,Total,2008,2008,1197146906
+IND,India,T,Total,TOTAL,Total,2009,2009,1214270132
+IND,India,T,Total,TOTAL,Total,2010,2010,1230980691
+IND,India,T,Total,TOTAL,Total,2011,2011,1247236029
+IND,India,T,Total,TOTAL,Total,2012,2012,1263065852
+IND,India,T,Total,TOTAL,Total,2013,2013,1278562207
+IND,India,T,Total,TOTAL,Total,2014,2014,1293859294
+IND,India,T,Total,TOTAL,Total,2015,2015,1309053980
+IND,India,T,Total,TOTAL,Total,2016,2016,1324171354
+IND,India,T,Total,TOTAL,Total,2017,2017,1339180127
+IND,India,T,Total,TOTAL,Total,2018,2018,1354051854

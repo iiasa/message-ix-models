@@ -546,6 +546,14 @@ def merge_data(
 def minimum_version(expr: str) -> Callable:
     """Decorator for functions that require a minimum version of some upstream package.
 
+    If the decorated function is called and the condition in `expr` is not met,
+    :class:`.NotImplementedError` is raised with an informative message.
+
+    The decorated function gains an attribute :py:`.minimum_version`, another decorator
+    that can be used on associated test code. This marks the test as XFAIL, raising
+    :class:`.NotImplementedError` or :class:`.RuntimeError` (e.g. for :mod:`.click`
+    testing).
+
     See :func:`.prepare_reporter` / :func:`.test_prepare_reporter` for a usage example.
 
     Parameters
@@ -582,7 +590,7 @@ def minimum_version(expr: str) -> Callable:
             # Create the mark
             mark = pytest.mark.xfail(
                 condition=condition,
-                raises=NotImplementedError,
+                raises=(NotImplementedError, RuntimeError),
                 reason=f"Not supported{message}",
             )
 

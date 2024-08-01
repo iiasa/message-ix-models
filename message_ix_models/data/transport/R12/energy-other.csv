@@ -1,0 +1,49 @@
+# 2020 energy demand for OTHER transport
+#
+# Source: extracted from IEA EWEB 2022.
+#
+# Units: TJ
+#
+node,     commodity, value
+R12_AFR,  electr,      1253.6680
+R12_AFR,  fueloil,      143.6568
+R12_AFR,  lightoil,   33992.8778
+R12_CHN,  fueloil,   367364.9882
+R12_CHN,  lightoil,  682239.2777
+R12_EEU,  electr,       465.0039
+R12_EEU,  gas,          315.0000
+R12_EEU,  lightoil,    9570.5007
+R12_FSU,  electr,     25598.1055
+R12_FSU,  fueloil,    10284.0010
+R12_FSU,  gas,        14289.9400
+R12_FSU,  lightoil,   69395.6977
+R12_LAM,  electr,       367.4013
+R12_LAM,  fueloil,    44532.4978
+R12_LAM,  gas,          419.6600
+R12_LAM,  lightoil,  114985.5161
+R12_MEA,  electr,      1881.6317
+R12_MEA,  fueloil,     9683.4028
+R12_MEA,  lightoil,    2373.1825
+R12_NAM,  ethanol,     3969.6300
+R12_NAM,  fueloil,    31401.4715
+R12_NAM,  gas,         2072.7005
+R12_NAM,  lightoil,  293179.6200
+R12_PAO,  electr,     10120.1864
+R12_PAO,  fueloil,    90847.7847
+R12_PAO,  gas,          577.3597
+R12_PAO,  lightoil,   77896.5029
+R12_PAS,  electr,      1095.0994
+R12_PAS,  ethanol,      267.1700
+R12_PAS,  fueloil,    11011.1077
+R12_PAS,  lightoil,  150611.1060
+R12_RCPA, coal,       36178.6611
+R12_RCPA, electr,      1231.8822
+R12_RCPA, fueloil,     5460.4506
+R12_RCPA, lightoil,   39291.9626
+R12_SAS,  fueloil,    40163.2593
+R12_SAS,  lightoil,   48668.7701
+R12_WEU,  electr,     23363.8099
+R12_WEU,  ethanol,     1117.8672
+R12_WEU,  fueloil,    47936.8437
+R12_WEU,  gas,         3619.7682
+R12_WEU,  lightoil,  181115.1895

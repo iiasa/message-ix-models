@@ -1,0 +1,15 @@
+Dataset containing activity data for passenger modes in China [100 million passenger-km]
+Downloaded from National Bureau of Statistics China in 2021. https://data.stats.gov.cn/english/easyquery.htm?cn=C01
+Indicators,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000
+Passenger-Kilometers(100 million passenger-km),35349.24,34218.15,32812.80,31258.46,30058.90,28647.13,27571.65,33383.09,30984.03,27894.26,24834.94,23196.70,21592.58,19197.21,17466.74,16309.10,13810.50,14125.60,13155.13,12261.10
+Passenger-Kilometers of Railways(100 million passenger-km),14706.64,14146.58,13456.92,12579.29,11960.60,11241.85,10595.62,9812.33,9612.29,8762.18,7878.89,7778.60,7216.31,6622.12,6061.96,5712.20,4788.61,4969.40,4766.82,4532.59
+Passenger-Kilometers of National Railways(100 million passenger-km),,,,,,11556.36,10550.32,9783.99,9582.71,8725.72,7840.09,7739.15,6896.18,6353.27,5833.20,5512.00,4622.79,4803.10,4636.55,4414.68
+Passenger-Kilometers of Local Railways(100 million passenger-km),,,,,,7.26,7.28,6.88,6.62,6.31,5.63,5.85,5.32,4.66,3.53,4.00,3.99,5.30,5.20,4.59
+Passenger-Kilometers of Joint-venture Railways(100 million passenger-km),,,,,,41.13,38.02,21.46,22.97,30.15,33.16,33.60,314.81,264.19,225.23,196.20,161.83,161.10,125.07,113.32
+Passenger-Kilometers of Highways(100 million passenger-km),8857.08,9279.68,9765.18,10228.71,10742.66,10996.75,11250.94,18467.55,16760.25,15020.81,13511.44,12476.11,11506.77,10130.85,9292.08,8748.40,7695.60,7805.80,7207.08,6657.42
+Passenger-Kilometers of Waterways(100 million passenger-km),80.22,79.57,77.66,72.33,73.08,74.34,68.33,77.48,74.53,72.27,69.38,59.18,77.78,73.58,67.77,66.30,63.10,81.80,89.88,100.54
+Passenger-Kilometers of Civil Aviation(100 million passenger-km),11705.30,10712.32,9513.04,8378.13,7282.55,6334.19,5656.76,5025.74,4536.96,4039.00,3375.24,2882.80,2791.73,2370.66,2044.93,1782.30,1263.19,1268.70,1091.35,970.54
+"Note:1.In 2008, data on total passenger traffic and freight traffic of highway and waterways have changed."
+"2.The 2013 figures on passenger traffic and freight traffic are calculated with the data from the 2013 survey of transport economics, and have different coverages. The same applies to the relevant following tables."
+3.Data of transport of highways and waterways in 2014 and 2015 are adjusted according to small-sized sample survey on transport of highways and waterways conducted in 2015.
+Data Sources National Bureau of Statistics

@@ -1,0 +1,66 @@
+# Activity (driving distance) per light-duty vehicle
+#
+# Source:
+#
+# - Values commented "TH 2024-04-11": calculation by T. Hara, shared at
+#   https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1712831476181449
+# - R12_AFR, R12_FSU, R12_NAM, R12_PAO, R12_PAS, R12_SAS: see the documentation
+#   at https://docs.messageix.org/projects/models-internal/en/latest/reference/model/transport/files.html
+# - All others:
+#
+#   - Duplicate of R11/ldv-activity.csv; see comments there.
+#   - R11_CPA value repeated for R12_RCPA and R12_CHN.
+#
+# Unit: kilometre / year
+#
+node,    value
+# R12_AFR,  11000  # TH low
+R12_AFR,  18000
+# R12_AFR,  19000  # TH high
+
+# R12_CHN,   9500  # TH low
+# TH high
+R12_CHN,  15000
+# R12_CHN,  16000  # Previous value
+
+# R12_EEU,   8962  # Previous value
+# TH low
+R12_EEU,   9000
+# R12_EEU,  10000  # TH high
+
+# R12_FSU,  11000  # TH low
+# TH high = previous value
+R12_FSU,  15000
+
+# R12_LAM,  13000  # TH low
+R12_LAM,  14600
+# R12_LAM,  15000  # TH high
+
+# R12_MEA,  13000  # TH low
+R12_MEA,  14000
+# R12_MEA,  16000  # TH high
+
+# R12_NAM,  16000  # TH low
+R12_NAM,  18400
+# R12_NAM,  19000  # TH high
+
+# TH low = previous value
+R12_PAO,   9000
+# R12_PAO,  10000  # TH high
+
+# R12_PAS,  11000  # TH low
+# TH high = previous value
+R12_PAS,  13000
+
+# R12_RCPA, 11000  # TH low
+# TH high
+R12_RCPA, 12000
+# R12_RCPA, 16000  # Previous value
+
+# TH low = previous value
+R12_SAS,  12000
+# R12_SAS,  15000  # TH high
+
+# R12_WEU,  11000  # TH low
+R12_WEU,  11646
+# R12_WEU,  12000  # TH high

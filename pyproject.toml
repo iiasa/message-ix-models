@@ -70,10 +70,16 @@ report = ["plotnine", "xlsxwriter"]
 tests = [
   # For nbclient, thus nbformat
   "ixmp[tests]",
-  "message_ix_models[report]",
+  "message_ix_models[report,transport]",
   "pytest",
   "pytest-cov",
   "pytest-xdist",
+]
+transport = [
+  "message-ix-models[iea-web,report]",
+  "requests-cache",
+  "transport-energy",
+  "xarray",
 ]
 
 [project.scripts]
@@ -130,10 +136,18 @@ module = ["ixmp.*"]
 no_implicit_optional = false
 
 [tool.pytest.ini_options]
-# Disable faulthandler plugin on Windows to prevent spurious console noise
-addopts = "-p no:faulthandler --cov=message_ix_models --cov-report="
+# Default options for invoking pytest
+# - Skip tests with the "ece_db" marker
+# - Disable faulthandler plugin on Windows to prevent spurious console noise
+# - No coverage report
+addopts = """
+  -m "not ece_db"
+  -p no:faulthandler
+  --cov=message_ix_models --cov-report="""
 filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
 markers = [
+  "ece_db: Tests requiring access to IIASA ECE internal databases",
+  "slow: Tests that typically take more than ~45 seconds wall time",
   "snapshot: Slow tests using the public MESSAGEix-GLOBIOM baseline snapshot",
 ]
 

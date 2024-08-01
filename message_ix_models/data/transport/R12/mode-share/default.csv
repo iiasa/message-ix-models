@@ -1,0 +1,75 @@
+# Mode shares in the model base year; default set
+#
+# Sources:
+#
+# - R12_AFR, R12_CHN, R12_MEA, R12_PAO, R12_SAS: see the documentation at
+#   https://docs.messageix.org/projects/models-internal/en/latest/reference/model/transport/files.html
+# - All others:
+#
+#   - Duplicated manually from corresponding R11 data as of 2023-10-20.
+#   - R11_CPA data copied to R12_RCPA.
+#   - t=OTHER_ROAD values of 0.00 removed as of 2024-02-15.
+#
+# Units: dimensionless
+#
+node,     technology, value
+R12_AFR,  2W,         0.12
+R12_AFR,  AIR,        0.04
+R12_AFR,  BUS,        0.61
+R12_AFR,  LDV,        0.21
+R12_AFR,  RAIL,       0.02
+R12_CHN,  2W,         0.029
+R12_CHN,  AIR,        0.106
+R12_CHN,  BUS,        0.251
+R12_CHN,  LDV,        0.447
+R12_CHN,  RAIL,       0.167
+R12_EEU,  2W,         0.01
+R12_EEU,  AIR,        0.01
+R12_EEU,  BUS,        0.35
+R12_EEU,  LDV,        0.46
+R12_EEU,  RAIL,       0.14
+R12_FSU,  2W,         0.01
+R12_FSU,  AIR,        0.25
+R12_FSU,  BUS,        0.20
+R12_FSU,  LDV,        0.40
+R12_FSU,  RAIL,       0.12
+R12_LAM,  2W,         0.04
+R12_LAM,  AIR,        0.08
+R12_LAM,  BUS,        0.36
+R12_LAM,  LDV,        0.50
+R12_LAM,  RAIL,       0.01
+R12_MEA,  2W,         0.05
+R12_MEA,  AIR,        0.13
+R12_MEA,  BUS,        0.38
+R12_MEA,  LDV,        0.43
+R12_MEA,  RAIL,       0.01
+R12_NAM,  2W,         0.005
+R12_NAM,  AIR,        0.11
+R12_NAM,  BUS,        0.06
+R12_NAM,  LDV,        0.81
+R12_NAM,  RAIL,       0.01
+R12_PAO,  2W,         0.01
+R12_PAO,  AIR,        0.137
+R12_PAO,  BUS,        0.043
+R12_PAO,  LDV,        0.58
+R12_PAO,  RAIL,       0.227
+R12_PAS,  2W,         0.06
+R12_PAS,  AIR,        0.07
+R12_PAS,  BUS,        0.47
+R12_PAS,  LDV,        0.32
+R12_PAS,  RAIL,       0.08
+R12_RCPA, 2W,         0.08
+R12_RCPA, AIR,        0.14
+R12_RCPA, BUS,        0.30
+R12_RCPA, LDV,        0.16
+R12_RCPA, RAIL,       0.31
+R12_SAS,  2W,         0.30
+R12_SAS,  AIR,        0.07
+R12_SAS,  BUS,        0.33
+R12_SAS,  LDV,        0.14
+R12_SAS,  RAIL,       0.16
+R12_WEU,  2W,         0.02
+R12_WEU,  AIR,        0.11
+R12_WEU,  BUS,        0.07
+R12_WEU,  LDV,        0.71
+R12_WEU,  RAIL,       0.09

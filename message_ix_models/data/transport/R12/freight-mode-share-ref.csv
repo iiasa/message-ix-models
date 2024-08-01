@@ -1,0 +1,56 @@
+# Mode shares of freight activity in the model base year
+#
+# - Duplicated manually from corresponding R11 data as of 2023-11-20.
+# - R12_CPA data copied to R12_CHN, R12_RCPA.
+#
+# Units: dimensionless
+#
+node,     technology, value
+R12_AFR,  ROAD,       0.767
+R12_AFR,  RAIL,       0.003
+R12_AFR,  WATER,      0.221
+R12_AFR,  AIR,        0.009
+R12_CHN,  ROAD,       0.310
+R12_CHN,  RAIL,       0.200
+R12_CHN,  WATER,      0.480
+R12_CHN,  AIR,        0.020
+R12_EEU,  ROAD,       0.680
+R12_EEU,  RAIL,       0.270
+R12_EEU,  WATER,      0.050
+R12_EEU,  AIR,        0.0
+R12_FSU,  ROAD,       0.080
+R12_FSU,  RAIL,       0.900
+R12_FSU,  WATER,      0.020
+R12_FSU,  AIR,        0.0
+R12_LAM,  ROAD,       0.344
+R12_LAM,  RAIL,       0.007
+R12_LAM,  WATER,      0.648
+R12_LAM,  AIR,        0.001
+R12_MEA,  ROAD,       0.965
+R12_MEA,  RAIL,       0.019
+R12_MEA,  WATER,      0.0
+R12_MEA,  AIR,        0.016
+R12_NAM,  ROAD,       0.590
+R12_NAM,  RAIL,       0.350
+R12_NAM,  WATER,      0.0
+R12_NAM,  AIR,        0.060
+R12_PAO,  ROAD,       0.700
+R12_PAO,  RAIL,       0.285
+R12_PAO,  WATER,      0.0149
+R12_PAO,  AIR,        0.01
+R12_PAS,  ROAD,       0.747
+R12_PAS,  RAIL,       0.011
+R12_PAS,  WATER,      0.240
+R12_PAS,  AIR,        0.002
+R12_RCPA, ROAD,       0.310
+R12_RCPA, RAIL,       0.200
+R12_RCPA, WATER,      0.480
+R12_RCPA, AIR,        0.020
+R12_SAS,  ROAD,       0.600
+R12_SAS,  RAIL,       0.380
+R12_SAS,  WATER,      0.019
+R12_SAS,  AIR,        0.001
+R12_WEU,  ROAD,       0.750
+R12_WEU,  RAIL,       0.190
+R12_WEU,  WATER,      0.059
+R12_WEU,  AIR,        0.001

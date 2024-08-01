@@ -1,0 +1,92 @@
+# Configuration for MESSAGEix-Transport
+
+# Sources for input data: defaults
+data source: {}
+
+# (DLM) “Which US census region should be used as a proxy for the distribution
+# of driver types in this MESSAGE region?”
+node to census_division:
+  R14_AFR: 2
+  R14_CAS: 2
+  R14_CPA: 2
+  R14_EEU: 2
+  R14_LAM: 2
+  R14_MEA: 2
+  R14_NAM: 2
+  R14_PAO: 2
+  R14_PAS: 2
+  R14_RUS: 2
+  R14_SAS: 2
+  R14_SCS: 2
+  R14_UBM: 2
+  R14_WEU: 2
+
+# TODO flatten this structure
+factor:
+  activity:
+    # Annual driving distance
+    # NB (DLM) “Modest and Frequent mileages for all non-NAM regions are scaled
+    #    relative to the NAM values from MA3T. This is because we only have
+    #    driving data for the average driver (supplied by Page Kyle of the GCAM
+    #    team in March 2014).
+    ldv:
+      _dim: driver_type
+      _unit: "1"  # dimensionless
+      M: 0.5386  # i.e. 13930 km in R11_NAM
+      A: 1  # by definition
+      F: 1.7614  # ie. 45550 km in R11_NAM
+  cost:
+    # Regional cost multipliers in 2010
+    ldv 2010:
+      R14_AFR: 0.9
+      R14_CPA: 0.9
+      R14_EEU: 1.0
+      R14_LAM: 0.9
+      R14_MEA: 0.9
+      R14_NAM: 1.0
+      R14_PAO: 1.0
+      R14_PAS: 0.9
+      R14_RUS: 1.0
+      R14_SAS: 0.9
+      R14_WEU: 1.0
+      # Duplicated from RUS
+      R14_CAS: 1.0
+      R14_SCS: 1.0
+      R14_UBM: 1.0
+
+ldv cost catch-up year:
+  R14_AFR: 2050
+  R14_CPA: 2030
+  R14_EEU: 2010
+  R14_LAM: 2030
+  R14_MEA: 2030
+  R14_NAM: 1.0
+  R14_PAO: 1990
+  R14_PAS: 2030
+  R14_RUS: 2010
+  R14_SAS: 2040
+  R14_WEU: 1990
+  # Duplicated from R14_RUS
+  R14_CAS: 2010
+  R14_SCS: 2010
+  R14_UBM: 2010
+
+# Parameters used in demand and mode share calculations -----------------------
+
+# Share weights for regions converge to the average of the regions in each list
+share weight convergence:
+  R14_AFR: [R14_PAO, R14_WEU]
+  R14_CPA: [R14_PAO, R14_WEU]
+  R14_EEU: [R14_PAO, R14_WEU]
+  R14_LAM: [R14_PAO, R14_WEU]
+  R14_MEA: [R14_NAM, R14_WEU]
+  R14_NAM: [R14_NAM]
+  R14_PAO: [R14_PAO, R14_WEU]
+  R14_PAS: [R14_PAO, R14_WEU]
+  R14_RUS: [R14_NAM]
+  R14_SAS: [R14_PAO, R14_WEU]
+  R14_WEU: [R14_PAO, R14_WEU]
+  # Imitating R14_RUS
+  R14_CAS: [R14_NAM]
+  R14_SCS: [R14_NAM]
+  R14_UBM: [R14_NAM]
