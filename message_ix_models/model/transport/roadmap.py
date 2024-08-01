@@ -83,7 +83,9 @@ UNITS = dict(
 )
 
 
-def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=False):
+def get_roadmap_data(
+    context, region=("Africa", "R11_AFR"), years=None, plot=False
+) -> pd.DataFrame:
     """Read transport activity data for Africa.
 
     The data is read from ``RoadmapResults_2017.xlsx``, which is already aggregated
