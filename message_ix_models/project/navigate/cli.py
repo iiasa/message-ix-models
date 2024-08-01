@@ -3,10 +3,9 @@
 import logging
 
 import click
+from message_ix_models.project.navigate import Config
 from message_ix_models.util.click import PARAMS
 from message_ix_models.workflow import make_click_command
-
-from . import Config
 
 log = logging.getLogger(__name__)
 

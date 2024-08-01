@@ -11,13 +11,12 @@ import pandas as pd
 from message_ix import Reporter, Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
+from message_ix_models.project.navigate import iter_scenario_codes
 from message_ix_models.report.util import copy_ts
 from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
 from sdmx.model.v21 import Code
 
 from message_data.tools.prep_submission import Config, ScenarioConfig
-
-from . import iter_scenario_codes
 
 log = logging.getLogger(__name__)
 

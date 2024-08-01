@@ -11,6 +11,8 @@ from genno.caching import hash_args
 from message_ix import Scenario, make_df
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
+from message_ix_models.model.workflow import Config as WfConfig
+from message_ix_models.project.navigate import get_policy_config
 from message_ix_models.util import (
     add_par_data,
     identify_nodes,
@@ -21,11 +23,9 @@ from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
 from message_data.model.transport.build import main as build_transport
-from message_data.model.workflow import Config as WfConfig
 from message_data.model.workflow import solve
 from message_data.projects.engage import workflow as engage
 
-from . import get_policy_config
 from .report import gen_config
 
 log = logging.getLogger(__name__)
@@ -550,7 +550,7 @@ def iter_scenarios(
       the name.
     - Older T6.2 scenario codes that appear in the official list but are not annotated.
     """
-    from . import iter_scenario_codes
+    from message_ix_models.project.navigate import iter_scenario_codes
 
     for code in iter_scenario_codes(context, filters):
         # Short label from the code ID
