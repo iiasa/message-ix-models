@@ -3,11 +3,14 @@ MESSAGEix-Transport
 
 .. warning::
 
-   MESSAGEix-Transport is **under development**.
+   1. MESSAGEix-Transport is **under development**.
+      For details, see:
 
-   - The code and data documented on these pages were recently :doc:`migrated </migrate>` from :mod:`.message_data`.
-     The text may still contain references to the old location.
-   - For details, see the `project board <https://github.com/orgs/iiasa/projects/29>`_.
+      - `Issues and PRs labeled 'transport' <https://github.com/iiasa/message-ix-models/issues?q=label%3Atransport>`_ on the :mod:`.message_ix_models` GitHub repository.
+      - The `project board <https://github.com/orgs/iiasa/projects/29>`_ (IIASA only).
+
+   2. The code and data documented on these pages were recently :doc:`migrated </migrate>` from the private   :mod:`.message_data` repository to the public :mod:`message_ix_models` repository.
+      The text may still contain references to the old location.
 
 :mod:`message_ix_models.model.transport` adds a technology-rich representation of transport to models in the MESSAGEix-GLOBIOM family.
 The resulting “model variant” is variously referred to as:
@@ -19,7 +22,7 @@ The resulting “model variant” is variously referred to as:
 MESSAGEix-Transport extends the formulation described by McCollum et al. (2017) :cite:`mccollum-2017` for the older, MESSAGE V framework that predated MESSAGEix.
 Some inherited information about the older model is collected at :doc:`old`.
 
-Information about MESSAGEix-Transport, its inputs, configuration, implementation, and output, are organized according to this diagram:
+This documentation of MESSAGEix-Transport, its inputs, configuration, implementation, and output, are organized according to this diagram:
 
 .. figure:: https://raw.githubusercontent.com/khaeru/doc/main/image/data-stages.svg
 
@@ -34,7 +37,7 @@ Information about MESSAGEix-Transport, its inputs, configuration, implementation
    input
    output
 
-On this page:
+Other topics covered on this page:
 
 .. contents::
    :local:

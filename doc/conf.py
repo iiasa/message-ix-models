@@ -168,6 +168,7 @@ extlinks = {
     "issue": ("https://github.com/iiasa/message-ix-models/issue/%s", "GH #%s"),
     "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #%s"),
     "gh-user": ("https://github.com/%s", "@%s"),
+    "source": ("https://github.com/iiasa/message-ix-models/blob/main/%s", "%s"),
 }
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
