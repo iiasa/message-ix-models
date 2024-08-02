@@ -161,7 +161,7 @@ select = ["C9", "E", "F", "I", "W"]
 # - .util.sdmx.as_codes(): 13 > 11
 mccabe.max-complexity = 11
 
-[tool.setuptools.packages.find]
-include = ["message_ix_models*"]
+[tool.setuptools.packages]
+find = {}
 
 [tool.setuptools_scm]
