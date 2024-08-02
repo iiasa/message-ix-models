@@ -10,7 +10,7 @@ repos:
     language: python
     entry: bash -c ". ${PRE_COMMIT_MYPY_VENV:-/dev/null}/bin/activate 2>/dev/null; mypy $0 $@; python -m pip list"
     additional_dependencies:
-    - mypy >= 1.9.0
+    - mypy >= 1.11.0
     - plotnine
     - pytest
     - sdmx1
@@ -20,7 +20,7 @@ repos:
     - "message-ix @ git+https://github.com/iiasa/message_ix.git@main"
     args: ["."]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.3.2
+  rev: v0.5.5
   hooks:
   - id: ruff
   - id: ruff-format

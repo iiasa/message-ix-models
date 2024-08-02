@@ -56,7 +56,7 @@ def test_ef_for_input(test_context):
     ra = result["relation_activity"]
     assert not ra.isna().any(axis=None), ra
 
-    assert int == ra.dtypes["year_act"]
+    assert ra.dtypes["year_act"] == int  # noqa: E721
 
     # print(ra.to_string())
 
