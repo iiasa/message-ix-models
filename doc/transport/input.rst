@@ -7,8 +7,7 @@ This page describes the structure and format of inputs required for building MES
    :local:
    :backlinks: none
 
-Both input data and configuration are stored in files under :file:`/data/transport/` in the :mod:`message_data` repository.
-(When migrated to :mod:`message_ix_models`, these files will live in :file:`message_ix_models/data/transport`.)
+Both input data and configuration are stored in files under :file:`message_ix_models/data/transport/`.
 
 In most cases, these files are read from a subdirectory like :file:`/data/transport/{nodes}/`, where `nodes` denotes the :mod:`message_ix_models` :doc:`node code list </pkg-data/node>`—for instance, "R12"—for which MESSAGEix-Transport will be built.
 This value is retrieved from the :attr:`Context.regions <.model.Config.regions>` setting.
@@ -66,7 +65,7 @@ Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_e
    The file has column headers "node", "technology", and "value".
 
 Not all files are currently or always used in model-building computations.
-Some submodules of :mod:`~message_data.model.transport` use additional data files via other mechanisms.
+Some submodules of :mod:`~message_ix_models.model.transport` use additional data files via other mechanisms.
 Most of the files have a header comment including a precise description of the quantity, source of the data, and units of measurement; in some cases extended information is below (where a header comment would be too long).
 
 :file:`ldv-activity.csv` → ``ldv activity:n:exo``
@@ -224,7 +223,7 @@ Other files
 Other data sources
 ==================
 
-:mod:`~message_data.model.transport` makes use of the :mod:`message_ix_models.tools.exo_data` mechanism to retrieve data from common (not transport-specific) sources.
+:mod:`~message_ix_models.model.transport` makes use of the :mod:`message_ix_models.tools.exo_data` mechanism to retrieve data from common (not transport-specific) sources.
 :class:`.DataSourceConfig`, :attr:`.transport.Config.ssp`, and other settings determine which sources and quantities are used.
 
 These include:

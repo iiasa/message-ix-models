@@ -67,7 +67,7 @@ def _convert(group_df):
     return group_df.assign(Value=qty.magnitude, Units=qty.units)
 
 
-def split_variable(s):
+def split_variable(s) -> pd.DataFrame:
     """Split strings in :class:`pandas.Series` *s* into Variable and Mode.
 
     Parameters
@@ -97,7 +97,7 @@ def split_variable(s):
     return df
 
 
-def get_ind_item_data():
+def get_ind_item_data() -> pd.DataFrame:
     """Retrieve activity data for rail and road transport for India from iTEM.
 
     Data is obtained from iTEM database's file ``T000.csv`` and filtered for the
@@ -134,7 +134,7 @@ def get_ind_item_data():
     return all_data
 
 
-def get_chn_ind_pop():
+def get_chn_ind_pop() -> pd.DataFrame:
     """Retrieve population data for China and India.
 
     The dataset is a ``.csv`` file in */data* and was retrieved from `OECD
@@ -157,7 +157,7 @@ def get_chn_ind_pop():
     return pop
 
 
-def get_chn_ind_data(private_vehicles=False):
+def get_chn_ind_data(private_vehicles=False) -> pd.DataFrame:
     """Read transport activity and vehicle stock data for China and India.
 
     The data is read from ``data/transport`` folder (data for China from NBSC) and
