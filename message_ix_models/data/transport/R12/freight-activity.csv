@@ -1,12 +1,17 @@
 # Freight activity
 #
-# Source: placeholder; extracted from ADVANCE database
+# Source:
+# - R12_CHN: 2024-08-01 AJ (copied from message_data by PNK). “Use CHN/US ratio
+#   from total inland freight demand from OECD data. Take R12_NAM → 0.85 of
+#   total freight demand to get US freight demand. Multiply it by CHN/US ratio
+#   to get estimate of R12_CHN freight demand.”
+# - All others: manually adapted from R11/freight-activity.csv.
 #
 # Units: Gt km
 #
 node,     value
 R12_AFR,  1210.1
-R12_CHN,  2388.7
+R12_CHN,  8753.3
 R12_EEU,   388.6
 R12_FSU,   810.4
 R12_LAM,  3100.6
