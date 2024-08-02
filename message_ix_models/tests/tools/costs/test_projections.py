@@ -12,8 +12,8 @@ from message_ix_models.util import add_par_data
     (
         (
             Config(node="R11", scenario="SSP2"),
-            {"technology": {"coal_ppl", "gas_ppl", "wind_ppl", "solar_pv_ppl"}},
-            {"technology": {"coal_ppl", "gas_ppl", "wind_ppl", "solar_pv_ppl"}},
+            {"technology": {"coal_ppl", "gas_ppl", "wind_res1", "solar_res1"}},
+            {"technology": {"coal_ppl", "gas_ppl", "wind_res1", "solar_res1"}},
         ),
         (
             Config(

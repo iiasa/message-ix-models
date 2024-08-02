@@ -72,7 +72,7 @@ def test_get_intratec_data() -> None:
 @pytest.mark.parametrize(
     "module, t_exp, rds_exp",
     (
-        ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_pv_ppl"}, {"weo"}),
+        ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}, {"weo"}),
         ("materials", {"biomass_NH3", "meth_h2", "furnace_foil_steel"}, {"energy"}),
     ),
 )
@@ -108,7 +108,7 @@ def test_adjust_technology_mapping(module) -> None:
 @pytest.mark.parametrize(
     "module, t_exp",
     (
-        ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_pv_ppl"}),
+        ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}),
         ("materials", {"biomass_NH3", "meth_h2", "furnace_foil_steel"}),
     ),
 )
