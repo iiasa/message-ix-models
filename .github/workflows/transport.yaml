@@ -1,6 +1,8 @@
 name: MESSAGEix-Transport
 
 env:
+  target: transport.yaml --repo=iiasa/message_data
+
   # Starting point of the workflow.
   # Use this value to build from a certain scenario:
   # base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
@@ -31,13 +33,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Invoke transport workflow in message_data
+      - name: Invoke "transport.yaml" workflow in message_data
         env:
           GH_TOKEN: ${{ secrets.MESSAGE_DATA_DISPATCH_TOKEN }}
-          GH_REPO: iiasa/message_data
         run: |
-          gh workflow run transport.yaml \
-            --ref fix/transport-workflow \
+          gh workflow run \
+            ${{ env.target }} --ref fix/transport-workflow \
             --field ref=${{ github.ref }} \
+            --field sha=${{ github.sha }} \
             --field base=${{ env.base }} \
             --field from-step=${{ env.from-step }}
+
+          sleep 5
+
+          gh run list \
+            --workflow=${{ env.target }} \
+            --json url,status \
+            --jq 'map(select(.status != "completed"))[0].url' >> $GITHUB_STEP_SUMMARY
