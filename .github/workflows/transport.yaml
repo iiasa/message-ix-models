@@ -38,7 +38,7 @@ jobs:
           GH_TOKEN: ${{ secrets.MESSAGE_DATA_DISPATCH_TOKEN }}
         run: |
           gh workflow run \
-            ${{ env.target }} --ref fix/transport-workflow \
+            ${{ env.target }} --ref=dev \
             --field ref=${{ github.ref }} \
             --field sha=${{ github.sha }} \
             --field base=${{ env.base }} \
