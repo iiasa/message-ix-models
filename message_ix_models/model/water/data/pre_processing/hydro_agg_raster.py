@@ -55,7 +55,7 @@ else:
     scenarios = ["ssp126", "ssp370"]
 
 
-def run_raster(cl, scen):
+def agg_raster(cl, scen):
     if isimip == "2b":
         wd1 = os.path.join("p:", "ene.model", "NEST", "hydrology") + os.sep
         wd = (
