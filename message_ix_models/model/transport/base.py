@@ -39,6 +39,22 @@ UE_SHARE_HEADER = (
 )
 
 
+def align_and_fill(
+    qty: "AnyQuantity", ref: "AnyQuantity", value: float = 1.0
+) -> "AnyQuantity":
+    """Align `qty` with `ref`, and fill with `value`.
+
+    The result is guaranteed to have a value for every key in `ref`.
+    """
+    from genno import Quantity
+
+    return Quantity(
+        pd.DataFrame.from_dict(
+            {"ref": ref.to_series(), "data": qty.to_series()}
+        ).fillna(value)["data"]
+    )
+
+
 @minimum_version("pandas 2")
 def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     """Implement ‘smoothing’ for `key` along the dimension `dim`.
@@ -184,29 +200,35 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     s1 = KeySeq(tmp)
     rep.add(s1[1], "convert_units", s1.base, units="1 / a")
     rep.add(s1[2], "mul", s1[1], Quantity(1.0, units="a"))
-
-    _to_csv(s1[2], s1.name, dict(header_comment=SCALE_1_HEADER))
-
     # Replace ~0 and ∞ values with 1.0; this avoids x / 0 = inf
     rep.add(s1[3], "where", s1[2], cond=lambda v: (v > 1e-3) & (v != np.inf), other=1.0)
-    # Restore original "t" labels to scale-1
-    rep.add(s1[4], "select", s1[3], "indexers::iea to transport")
-    rep.add(s1[5], "rename_dims", s1[4], quote(dict(t_new="t")))
+    # Ensure no values are dropped versus the numerator (= MESSAGE outputs)
+    rep.add(s1[4], align_and_fill, s1[3], k[1])
 
+    _to_csv(s1[4], s1.name, dict(header_comment=SCALE_1_HEADER))
+
+    # Restore original "t" labels to scale-1
+    rep.add(s1[5], "select", s1[4], "indexers::iea to transport")
+    rep.add(s1[6], "rename_dims", s1[5], quote(dict(t_new="t")))
     # Interpolate the scaling factor from computed value in ya=y₀ to 1.0 in ya ≥ 2050
-    rep.add(s1[6], lambda q: q.expand_dims(ya=[y0]), s1[5])
-    rep.add(s1[7], lambda q: q.expand_dims(ya=[2050]).clip(1.0, 1.0), s1[5])
-    rep.add(s1[8], lambda q: q.expand_dims(ya=[2110]).clip(1.0, 1.0), s1[5])
-    rep.add(s1[9], "concat", s1[6], s1[7], s1[8])
+    rep.add(s1[7], lambda q: q.expand_dims(ya=[y0]), s1[6])
+    rep.add(s1[8], lambda q: q.expand_dims(ya=[2050]).clip(1.0, 1.0), s1[6])
+    rep.add(s1[9], lambda q: q.expand_dims(ya=[2110]).clip(1.0, 1.0), s1[6])
+    rep.add(s1[10], "concat", s1[7], s1[8], s1[9])
     rep.add("ya::coord", lambda v: {"ya": v}, "y::model")
     rep.add(
-        s1[10], "interpolate", s1[9], "ya::coord", kwargs=dict(fill_value="extrapolate")
+        s1[11],
+        "interpolate",
+        s1[10],
+        "ya::coord",
+        kwargs=dict(fill_value="extrapolate"),
     )
-    _to_csv(s1[10], f"{s1.name}-blend", dict(header_comment=SCALE_1_HEADER))
+
+    _to_csv(s1[11], f"{s1.name} blend", dict(header_comment=SCALE_1_HEADER))
 
     # Correct MESSAGEix-Transport outputs for the MESSAGEix-base model using the high-
     # resolution scaling factor
-    rep.add(k["s1"], "div", k.base, s1[10])
+    rep.add(k["s1"], "div", k.base, s1[11])
 
     # Scaling factor 2: ratio of total of scaled data to IEA total
     rep.add(k[2] / "ya", "select", k["s1"], indexers=dict(ya=y0), drop=True, sums=True)
@@ -219,7 +241,6 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     )
     tmp = rep.add("scale 2", "div", k[2] / ("c", "t", "ya"), "energy:nl:iea+transport")
     s2 = KeySeq(tmp)
-
     rep.add(s2[1], "convert_units", s2.base, units="1 / a")
     rep.add(s2[2], "mul", s2[1], Quantity(1.0, units="a"))
 
