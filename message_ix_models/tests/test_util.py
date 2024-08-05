@@ -348,7 +348,7 @@ def test_path_fallback(caplog):
 
     # "package", "private", and "test" each expanded to a path
     with pytest.raises(ValueError, match=r"'foo.bar' not found in any of \["):
-        path_fallback("foo", "bar", where="cache package private test")
+        path_fallback("foo", "bar", where="cache local package private test")
 
     assert 4 <= len(caplog.messages)
     assert caplog.messages[-1].startswith("Not found: ")
