@@ -161,32 +161,35 @@ def prepare_computer(c: Computer):
         ),
     ]
 
-    # Add data from file ldv-new-capacity.csv
-    try:
-        k = Key(c.full_key("cap_new::ldv+exo"))
-    except KeyError:
-        pass  # No such file in this configuration
-    else:
-        kw: Dict[str, Any] = dict(
-            dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
-        )
+    # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
+    if config.ldv_stock_method == "A":
+        # Data from file ldv-new-capacity.csv
+        try:
+            k = Key(c.full_key("cap_new::ldv+exo"))
+        except KeyError:
+            pass  # No such file in this configuration
+    elif config.ldv_stock_method == "B":
+        k = c.apply(stock)
 
+    kw: Dict[str, Any] = dict(
+        dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
+    )
+    if k:
         # historical_new_capacity: select only data prior to y₀
         kw.update(name="historical_new_capacity")
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
         c.add(k + "1", "select", k, indexers=dict(yv=y_historical))
         keys.append(c.add("ldv hnc::ixmp", "as_message_df", k + "1", **kw))
 
-        # bound_new_capacity_{lo,up}: select only data from y₀ and later
+        # CAP_NEW/bound_new_capacity_{lo,up}
+        # - Select only data from y₀ and later
+        # - Add both upper and lower constraints to ensure the solution contains exactly
+        #   the given value.
+        # - Add a small margin to ensure feasibility.
         c.add(k + "2", "select", k, indexers=dict(yv=info.Y))
-        for s in "lo", "up":
+        for s in ("lo", "up"):
             kw.update(name=f"bound_new_capacity_{s}")
             keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "2", **kw))
-
-    # Calculate base-period CAP (‘stock’) and CAP_NEW/historical_new_capacity (‘sales’)
-    c.apply(stock)
-
-    # TODO add bound_activity constraints for first year given technology shares
 
     k_all = "transport ldv::ixmp"
     c.add(k_all, "merge_data", *keys)
