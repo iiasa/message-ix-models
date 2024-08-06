@@ -4,7 +4,7 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_sector_data, read_timeseries, calculate_ini_new_cap
+from message_ix_models.model.material.data_util import read_sector_data, read_timeseries, calculate_ini_new_cap, read_rel
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import get_ssp_from_context, read_config
 from message_ix_models.util import (
@@ -346,6 +346,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Add relations for the maximum recycling
 
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
     regions = set(data_cement_rel["Region"].values)
     for reg in regions:
         for r in data_cement_rel["relation"]:
@@ -419,18 +420,10 @@ def gen_data_cement(scenario, dry_run=False):
     parname = "demand"
     # demand = gen_mock_demand_cement(scenario)
     # Converte to concrete demand by dividing to 0.15.
-    demand = derive_cement_demand(scenario)
-    df = make_df(
-        parname,
-        level="demand",
-        commodity="concrete",
-        value=(demand.value)/0.15,
-        unit="t",
-        year=demand.year,
-        time="year",
-        node=demand.node,
-    )
-    results[parname].append(df)
+    df_demand = material_demand_calc.derive_demand("cement", scenario, old_gdp=False, ssp=ssp)
+    df_demand['value'] = df_demand['value'] / 0.15
+    df_demand['commodity'] = 'concrete'
+    results[parname].append(df_demand)
 
     # Add CCS as addon
     parname = "addon_conversion"
@@ -520,6 +513,14 @@ def gen_data_cement(scenario, dry_run=False):
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True), technology="clinker_wet_ccs_cement",
+                material = "cement"
+            ),
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True), technology="clay_wet_cement",
+                material = "cement"
+            ),
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True), technology="flash_calciner_cement",
                 material = "cement"
             ),
         ]

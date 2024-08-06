@@ -32,6 +32,7 @@ from message_ix_models.model.material.data_util import (
     modify_baseyear_bounds,
     modify_demand_and_hist_activity,
     modify_industry_demand,
+    add_share_const_clinker_substitutes
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
@@ -160,7 +161,6 @@ SPEC_LIST = [
     "petro_chemicals",
     # "buildings",
     "power_sector",
-    "methanol",
 ]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:

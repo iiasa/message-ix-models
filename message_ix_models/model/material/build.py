@@ -134,6 +134,8 @@ def apply_spec(
             # Add elements
             add = [] if dry_run else spec["add"].set[set_name]
             for element in add:
+                print(element)
+                print(set_name)
                 scenario.add_set(
                     set_name,
                     element.id if isinstance(element, Code) else element,
