@@ -127,6 +127,9 @@ ExogenousDataFile(
     required=False,
 )
 ExogenousDataFile(
+    "ldv-t-share", "tech share:t:ldv+exo", "Share of total stock for LDV technologies"
+)
+ExogenousDataFile(
     "load-factor-ldv",
     doc="Load factor (occupancy) of LDVs",
     dims=("scenario", "n", "y"),
