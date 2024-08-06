@@ -1,6 +1,7 @@
 """Generate input data."""
 
 import logging
+from typing import TYPE_CHECKING
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data
@@ -10,6 +11,9 @@ from .infrastructure import add_desalination, add_infrastructure_techs
 from .irrigation import add_irr_structure
 from .water_for_ppl import cool_tech, non_cooling_tec
 from .water_supply import add_e_flow, add_water_supply
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +44,7 @@ DATA_FUNCTIONS_COUNTRY = [
 ]
 
 
-def add_data(scenario, context, dry_run=False):
+def add_data(scenario, context: "Context", dry_run=False):
     """Populate `scenario` with MESSAGEix-Nexus data."""
 
     info = ScenarioInfo(scenario)
