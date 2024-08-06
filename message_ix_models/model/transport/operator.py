@@ -62,11 +62,13 @@ __all__ = [
     "distance_ldv",
     "distance_nonldv",
     "dummy_prices",
+    "duration_period",
     "extend_y",
     "factor_fv",
     "factor_input",
     "factor_pdt",
     "groups_iea_eweb",
+    "groups_y_annual",
     "iea_eei_fv",
     "indexers_n_cd",
     "indexers_usage",
@@ -80,6 +82,7 @@ __all__ = [
     "price_units",
     "quantity_from_config",
     "relabel2",
+    "sales_fraction_annual",
     "share_weight",
     "smooth",
     "transport_check",
@@ -317,6 +320,21 @@ def dummy_prices(gdp: "AnyQuantity") -> "AnyQuantity":
     )
 
 
+def duration_period(info: "ScenarioInfo") -> "AnyQuantity":
+    """Convert ``duration_period`` parameter data to :class:`.Quantity`.
+
+    .. todo:: Move to a more general module/location.
+    """
+    from genno.operator import unique_units_from_dim
+
+    return genno.Quantity(
+        info.par["duration_period"]
+        .replace("y", "year")
+        .rename(columns={"year": "y"})
+        .set_index(["y", "unit"])["value"]
+    ).pipe(unique_units_from_dim, "unit")
+
+
 def extend_y(qty: "AnyQuantity", y: List[int]) -> "AnyQuantity":
     """Extend `qty` along the "y" dimension to cover `y`."""
     y_ = set(y)
@@ -531,6 +549,17 @@ def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
     g2["t"] = xr.DataArray(g2.pop("t"), coords=[("t_new", g2.pop("t_new"))])
 
     return g0, g1, g2
+
+
+def groups_y_annual(duration_period: "AnyQuantity") -> "AnyQuantity":
+    """Return a list of groupers for aggregating annual data to MESSAGE periods.
+
+    .. todo:: Move to a more general module/location.
+    """
+    result = {}
+    for (period,), duration in duration_period.to_series().items():
+        result[period] = list(range(period + 1 - int(duration), period + 1))
+    return dict(y=result)
 
 
 def input_commodity_level(t: List[Code], default_level=None) -> "AnyQuantity":
@@ -782,6 +811,14 @@ def relabel2(qty: "AnyQuantity", new_dims: dict):
         result = select(result, selectors)
 
     return result
+
+
+def sales_fraction_annual(y0: int, age: int) -> "AnyQuantity":
+    """Return fractions of current stock that should be sold in prior years."""
+    N_y = 2 * int(age)  # Number of periods
+    return genno.Quantity(
+        [1.0 / N_y] * N_y, coords={"y": range(y0 + 1 - N_y, y0 + 1)}, units=""
+    )
 
 
 def share_weight(
