@@ -61,10 +61,12 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
 
     # Data are returned for the following parameters
     exp_pars = {
+        "bound_new_capacity_lo",
         "bound_new_capacity_up",
         "capacity_factor",
         "growth_activity_lo",
         "growth_activity_up",
+        "historical_new_capacity",
         "input",
         "output",
         "var_cost",
@@ -77,8 +79,6 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
             "relation_activity",
             "technical_lifetime",
         }
-    if regions == "R12":
-        exp_pars |= {"bound_new_capacity_lo", "historical_new_capacity"}
 
     assert exp_pars == set(data.keys())
 
