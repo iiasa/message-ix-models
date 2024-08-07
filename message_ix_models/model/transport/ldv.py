@@ -538,6 +538,15 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
             name, value=value, year_act=years, time="year", unit="-"
         ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
 
+        if bound == "lo":
+            continue
+
+        # Add initial_activity_up values allowing usage to begin in any period
+        name = f"initial_activity_{bound}"
+        data[name] = make_df(
+            name, value=1e6, year_act=years, time="year", unit="-"
+        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
+
     # Prevent new capacity from being constructed for techs annotated
     # "historical-only: True"
     historical_only_techs = list(
