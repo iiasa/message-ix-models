@@ -67,6 +67,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
         "growth_activity_lo",
         "growth_activity_up",
         "historical_new_capacity",
+        "initial_activity_up",
         "input",
         "output",
         "var_cost",
@@ -194,9 +195,12 @@ def test_ldv_constraint_data(test_context, source, regions, years):
     data = constraint_data(ctx)
 
     # Data are returned for the following parameters
-    assert {"bound_new_capacity_up", "growth_activity_lo", "growth_activity_up"} == set(
-        data.keys()
-    )
+    assert {
+        "bound_new_capacity_up",
+        "growth_activity_lo",
+        "growth_activity_up",
+        "initial_activity_up",
+    } == set(data.keys())
 
     for bound in ("lo", "up"):
         # Constraint data are returned. Use .pop() to exclude from the next assertions
