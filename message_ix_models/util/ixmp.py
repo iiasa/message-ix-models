@@ -2,6 +2,7 @@ from typing import Dict
 
 try:
     # ixmp 3.8.0 and later
+    from ixmp.report.util import get_reversed_rename_dims
     from ixmp.util import (
         discard_on_error,
         maybe_check_out,
@@ -13,7 +14,10 @@ except ImportError:
     # ixmp <= 3.7.0
     from contextlib import nullcontext
 
-    from ixmp.utils import (  # type: ignore [import-not-found,no-redef]  # noqa: F401
+    from ixmp.reporting.util import (  # type: ignore [import-not-found,no-redef]
+        get_reversed_rename_dims,
+    )
+    from ixmp.utils import (  # type: ignore [import-not-found,no-redef]
         maybe_check_out,
         maybe_commit,
         parse_url,
@@ -22,6 +26,16 @@ except ImportError:
 
     def discard_on_error(*args):
         return nullcontext()
+
+
+__all__ = [
+    "get_reversed_rename_dims",
+    "maybe_check_out",
+    "maybe_commit",
+    "parse_url",
+    "rename_dims",
+    "show_versions",
+]
 
 
 def rename_dims() -> Dict[str, str]:
