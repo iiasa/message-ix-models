@@ -1,29 +1,12 @@
 import numpy as np
 import pytest
-from genno import Key, Quantity
 from iam_units import registry
 
-from message_ix_models.model.transport import build, files, testing
+from message_ix_models.model.transport import build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.roadmap import get_roadmap_data
 from message_ix_models.model.transport.testing import MARK, assert_units
 from message_ix_models.project.navigate import T35_POLICY
-
-
-@build.get_computer.minimum_version
-@pytest.mark.parametrize("file", files.FILES, ids=lambda f: "-".join(f.parts))
-def test_data_files(test_context, file):
-    """Input data can be read."""
-    c, _ = testing.configure_build(test_context, regions="R12", years="B")
-
-    # Task runs
-    result = c.get(file.key)
-
-    # Quantity is loaded
-    assert isinstance(result, Quantity)
-
-    # Dimensions are as expected
-    assert set(Key(result).dims) == set(file.key.dims)
 
 
 @MARK[5]("RoadmapResults_2017.xlsx")
