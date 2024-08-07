@@ -335,22 +335,22 @@ def duration_period(info: "ScenarioInfo") -> "AnyQuantity":
     ).pipe(unique_units_from_dim, "unit")
 
 
-def extend_y(qty: "AnyQuantity", y: List[int]) -> "AnyQuantity":
+def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantity":
     """Extend `qty` along the "y" dimension to cover `y`."""
     y_ = set(y)
 
     # Subset of `y` appearing in `qty`
-    y_qty = sorted(set(qty.to_series().reset_index()["y"].unique()) & y_)
+    y_qty = sorted(set(qty.to_series().reset_index()[dim].unique()) & y_)
     # Subset of `target_years` to fill forward from the last period in `qty`
     y_to_fill = sorted(filter(partial(lt, y_qty[-1]), y_))
 
-    log.info(f"{qty.name}: extend from {y_qty[-1]} → {y_to_fill}")
+    log.info(f"{qty.name}: extend '{dim}' from {y_qty[-1]} → {y_to_fill}")
 
     # Map existing labels to themselves, and missing labels to the last existing one
     y_map = [(y, y) for y in y_qty] + [(y_qty[-1], y) for y in y_to_fill]
     # - Forward-fill *within* `qty` existing values.
     # - Use message_ix_models MappingAdapter to do the rest.
-    return MappingAdapter({"y": y_map})(qty.ffill("y"))  # type: ignore [attr-defined]
+    return MappingAdapter({dim: y_map})(qty.ffill(dim))  # type: ignore [attr-defined]
 
 
 def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
