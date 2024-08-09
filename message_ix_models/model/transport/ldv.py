@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
 
 import genno
 import pandas as pd
-from genno import Computer, quote
+from genno import Computer, Key, KeySeq, quote
 from genno.operator import load_file
 from message_ix import make_df
 from openpyxl import load_workbook
@@ -161,30 +161,35 @@ def prepare_computer(c: Computer):
         ),
     ]
 
-    # Add data from file ldv-new-capacity.csv
-    try:
-        k = Key(c.full_key("cap_new::ldv+exo"))
-    except KeyError:
-        pass  # No such file in this configuration
-    else:
-        kw: Dict[str, Any] = dict(
-            dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
-        )
+    # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
+    if config.ldv_stock_method == "A":
+        # Data from file ldv-new-capacity.csv
+        try:
+            k = Key(c.full_key("cap_new::ldv+exo"))
+        except KeyError:
+            pass  # No such file in this configuration
+    elif config.ldv_stock_method == "B":
+        k = c.apply(stock)
 
+    kw: Dict[str, Any] = dict(
+        dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
+    )
+    if k:
         # historical_new_capacity: select only data prior to y₀
         kw.update(name="historical_new_capacity")
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
         c.add(k + "1", "select", k, indexers=dict(yv=y_historical))
         keys.append(c.add("ldv hnc::ixmp", "as_message_df", k + "1", **kw))
 
-        # bound_new_capacity_{lo,up}: select only data from y₀ and later
+        # CAP_NEW/bound_new_capacity_{lo,up}
+        # - Select only data from y₀ and later
+        # - Add both upper and lower constraints to ensure the solution contains exactly
+        #   the given value.
+        # - Add a small margin to ensure feasibility.
         c.add(k + "2", "select", k, indexers=dict(yv=info.Y))
-        for s in "lo", "up":
+        for s in ("lo", "up"):
             kw.update(name=f"bound_new_capacity_{s}")
             keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "2", **kw))
-
-    # TODO add bound_activity constraints for first year given technology shares
-    # TODO add historical_new_capacity for period prior to to first year
 
     k_all = "transport ldv::ixmp"
     c.add(k_all, "merge_data", *keys)
@@ -533,6 +538,15 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
             name, value=value, year_act=years, time="year", unit="-"
         ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
 
+        if bound == "lo":
+            continue
+
+        # Add initial_activity_up values allowing usage to begin in any period
+        name = f"initial_activity_{bound}"
+        data[name] = make_df(
+            name, value=1e6, year_act=years, time="year", unit="-"
+        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
+
     # Prevent new capacity from being constructed for techs annotated
     # "historical-only: True"
     historical_only_techs = list(
@@ -544,6 +558,64 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     )
 
     return data
+
+
+def stock(c: Computer) -> Key:
+    """Prepare `c` to compute base-period stock and historical sales."""
+    from .key import ldv_ny
+
+    k = KeySeq("stock:n-y:ldv")
+
+    # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
+    #   load factor (occupancy) to obtain implied stock.
+    # - Correct units: "load factor ldv:n-y" is dimensionless, should be
+    #   passenger/vehicle
+    # - Select only the base-period value.
+    c.add(k[0], "div", ldv_ny + "total", "ldv activity:n:exo")
+    c.add(k[1], "div", k[0], "load factor ldv:n-y")
+    c.add(k[2], "div", k[1], genno.Quantity(1.0, units="passenger / vehicle"))
+    c.add(k[3] / "y", "select", k[2], "y0::coord")
+
+    # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
+    c.add("stock:n-t:ldv", "mul", k[3] / "y", "tech share:t:ldv+exo")
+
+    # TODO Move the following 4 calls to .build.add_structure() or similar
+    # Identify the subset of periods up to and including y0
+    c.add(
+        "y::to y0",
+        lambda periods, y0: dict(y=list(filter(lambda y: y <= y0, periods))),
+        "y",
+        "y0",
+    )
+    # Convert duration_period to Quantity
+    c.add("duration_period:y", "duration_period", "info")
+    # Duration_period up to and including y0
+    c.add("duration_period:y:to y0", "select", "duration_period:y", "y::to y0")
+    # Groups for aggregating annual to period data
+    c.add("y::annual agg", "groups_y_annual", "duration_period:y")
+
+    # Average age of existing LDVs
+    # TODO Move to .transport.Config
+    c.add("age::ldv", genno.Quantity(12, units="year"))
+
+    # Fraction of sales in preceding years
+    c.add("sales fraction:y:ldv", "sales_fraction_annual", "y0", "age::ldv")
+    # Absolute sales in preceding years
+    c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:y:ldv")
+    # Aggregate to model periods
+    c.add(
+        "sales:n-t-y:ldv",
+        "aggregate",
+        "sales:n-t-y:ldv+annual",
+        "y::annual agg",
+        keep=False,
+    )
+
+    # Rename dimensions to match those expected in prepare_computer(), above
+    k = Key("sales:nl-t-yv:ldv")
+    c.add(k, "rename_dims", "sales:n-t-y:ldv", name_dict={"n": "nl", "y": "yv"})
+
+    return k
 
 
 def usage_data(

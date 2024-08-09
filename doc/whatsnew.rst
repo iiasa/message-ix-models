@@ -10,6 +10,7 @@ v2024.8.6
 - Add :doc:`/material/index` (:pull:`188`, :pull:`189`).
 - Update :doc:`/material/index` (:pull:`201`).
 - Add :doc:`/transport/index` (:pull:`207`, :pull:`208`, :issue:`210`, :pull:`212`).
+- Add :doc:`/transport/index` (:pull:`207`, :pull:`208`, :pull:`212`, :pull:`213`).
 - Add :doc:`/project/edits` project code and documentation (:pull:`204`).
 - Reduce log verbosity of :func:`.apply_spec` (:pull:`202`).
 - Fix and update :doc:`/api/tools-costs` (:pull:`186`, :pull:`187`, :pull:`190`, :pull:`195`).

@@ -99,8 +99,13 @@ class Constant(Layer):
 
     operation = operator.mul
 
+    #: Units.
+    units: str = "dimensionless"
+
     def __init__(self, value: Union[float, Quantity], dims: Union[str, Sequence[str]]):
-        self.value = value if isinstance(value, Quantity) else Quantity(value)
+        self.value = (
+            value if isinstance(value, Quantity) else Quantity(value, units=self.units)
+        )
         self.dims = (
             tuple(re.split("[ -]", dims)) if isinstance(dims, str) else tuple(dims)
         )

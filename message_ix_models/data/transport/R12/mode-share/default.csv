@@ -18,11 +18,11 @@ R12_AFR,  AIR,        0.04
 R12_AFR,  BUS,        0.61
 R12_AFR,  LDV,        0.21
 R12_AFR,  RAIL,       0.02
-R12_CHN,  2W,         0.029
-R12_CHN,  AIR,        0.106
-R12_CHN,  BUS,        0.251
-R12_CHN,  LDV,        0.447
-R12_CHN,  RAIL,       0.167
+R12_CHN,  2W,         0.02
+R12_CHN,  AIR,        0.11
+R12_CHN,  BUS,        0.18
+R12_CHN,  LDV,        0.52
+R12_CHN,  RAIL,       0.17
 R12_EEU,  2W,         0.01
 R12_EEU,  AIR,        0.01
 R12_EEU,  BUS,        0.35

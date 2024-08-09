@@ -15,7 +15,7 @@
 #
 node,    value
 # R12_AFR,  11000  # TH low
-R12_AFR,  18000
+R12_AFR,  17000
 # R12_AFR,  19000  # TH high
 
 # R12_CHN,   9500  # TH low

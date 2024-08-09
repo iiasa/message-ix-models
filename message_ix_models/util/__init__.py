@@ -629,6 +629,8 @@ def path_fallback(
         - :class:`str` containing one or more of:
 
           - "cache": locate `parts` in the :mod:`message_ix_models` cache directory.
+          - "local": locate `parts in the user's local data directory (same as
+            :func:`local_data_path`).
           - "package": locate `parts` in :mod:`message_ix_models` package data (same
             as :func:`.package_data_path`).
           - "private": locate `parts` in the :mod:`message_data` :file:`/data/`
@@ -654,6 +656,8 @@ def path_fallback(
         if isinstance(item, str):
             if item == "cache":
                 dirs.append(user_cache_path("message-ix-models"))
+            elif item == "local":
+                dirs.append(local_data_path())
             elif item == "package":
                 dirs.append(package_data_path())
             elif item == "private":

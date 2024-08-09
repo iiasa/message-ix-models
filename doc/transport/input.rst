@@ -9,14 +9,14 @@ This page describes the structure and format of inputs required for building MES
 
 Both input data and configuration are stored in files under :file:`message_ix_models/data/transport/`.
 
-In most cases, these files are read from a subdirectory like :file:`/data/transport/{nodes}/`, where `nodes` denotes the :mod:`message_ix_models` :doc:`node code list </pkg-data/node>`—for instance, "R12"—for which MESSAGEix-Transport will be built.
-This value is retrieved from the :attr:`Context.regions <.model.Config.regions>` setting.
+In most cases, these files are read from a subdirectory like :file:`…/data/transport/{nodes}/`, where `nodes` denotes the :mod:`message_ix_models` :doc:`node code list </pkg-data/node>`—for instance, "R12"—for which MESSAGEix-Transport will be built.
+This value is retrieved from the :attr:`.model.Config.regions` setting on a :class:`.Context` object.
 
-- If the file data or configuration settings have a node (:math:`n`) dimension, the file **must** be placed in such a subdirectory.
+- If the file data or configuration settings have a node (|n|) dimension, the file **must** be placed in such a subdirectory.
   Data for one node list is not usable for base models using a different node list.
 - For other data, a node list–specific file **may** be used.
-  If none exists, the file of the same name in :file:`/data/transport/` is used as a default.
-  For example, :file:`/data/transport/R12/set.yaml` is used if it exists; if not, then :file:`/data/transport/set.yaml` is used.
+  If none exists, the file of the same name in :file:`…/data/transport/` is used as a default.
+  For example, :file:`…/data/transport/R12/set.yaml` is used if it exists; if not, then :file:`…/data/transport/set.yaml` is used.
 
 .. _transport-config:
 
@@ -27,8 +27,8 @@ General (:file:`config.yaml`, required)
 ---------------------------------------
 
 The contents of this configuration file exactly map to the attributes of the class :class:`transport.Config <.transport.config.Config>`.
-The class stores all the settings understood by the code for building, solving, and reporting MESSAGEix-Transport, including their default values.
-(There is no common default like :file:`/data/transport/config.yaml`.)
+The class stores all the settings understood by the code for building, solving, and reporting MESSAGEix-Transport.
+The class also defines the default values for each setting (there is no file :file:`…/data/transport/config.yaml` containing defaults.)
 It also has methods for reading the configuration from file; see the detailed description of :meth:`.Config.from_context`.
 
 The following is the configuration file for a base model with R12 nodes:
@@ -41,14 +41,14 @@ Technology code list (:file:`technology.yaml`)
 This file gives the code list for the MESSAGE ``technology`` concept/set/dimension.
 Some annotations (``iea-eweb-flow``, ``input``, ``report``) and the :attr:`~sdmx.model.common.Code.child` hierarchy give information about technologies' grouping according to transport modes.
 
-→ View :source:`data/transport/technology.yaml` on GitHub
+→ View :source:`message_ix_models/data/transport/technology.yaml` on GitHub
 
 Code lists for other MESSAGE sets (:file:`set.yaml`)
 ----------------------------------------------------
 
 This file gives code lists for other MESSAGE concepts/sets/dimensions.
 
-→ View :source:`data/transport/set.yaml` on GitHub
+→ View :source:`message_ix_models/data/transport/set.yaml` on GitHub
 
 .. _transport-data-files:
 
@@ -65,8 +65,10 @@ Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_e
    The file has column headers "node", "technology", and "value".
 
 Not all files are currently or always used in model-building computations.
-Some submodules of :mod:`~message_ix_models.model.transport` use additional data files via other mechanisms.
-Most of the files have a header comment including a precise description of the quantity, source of the data, and units of measurement; in some cases extended information is below (where a header comment would be too long).
+Some submodules of :mod:`~.model.transport` use additional data files via other mechanisms.
+Most of the files have a header comment including a precise description of the quantity, source of the data, and units of measurement.
+In some cases extended information is below (where a header comment would be too long).
+The :program:`git` history of files, or the GitHub "blame" view can also be used to inspect the edit history of each file, line by line.
 
 :file:`ldv-activity.csv` → ``ldv activity:n:exo``
 -------------------------------------------------
@@ -223,7 +225,7 @@ Other files
 Other data sources
 ==================
 
-:mod:`~message_ix_models.model.transport` makes use of the :mod:`message_ix_models.tools.exo_data` mechanism to retrieve data from common (not transport-specific) sources.
+:mod:`~.model.transport` makes use of the :mod:`.tools.exo_data` mechanism to retrieve data from common (not transport-specific) sources.
 :class:`.DataSourceConfig`, :attr:`.transport.Config.ssp`, and other settings determine which sources and quantities are used.
 
 These include:
