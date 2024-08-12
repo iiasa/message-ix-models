@@ -594,12 +594,9 @@ def stock(c: Computer) -> Key:
     # Groups for aggregating annual to period data
     c.add("y::annual agg", "groups_y_annual", "duration_period:y")
 
-    # Average age of existing LDVs
-    # TODO Move to .transport.Config
-    c.add("age::ldv", genno.Quantity(12, units="year"))
-
-    # Fraction of sales in preceding years
-    c.add("sales fraction:y:ldv", "sales_fraction_annual", "y0", "age::ldv")
+    # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
+    # multi-year periods)
+    c.add("sales fraction:n-t-y:ldv", "sales_fraction_annual", "age:n-t-y:ldv+exo")
     # Absolute sales in preceding years
     c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:y:ldv")
     # Aggregate to model periods

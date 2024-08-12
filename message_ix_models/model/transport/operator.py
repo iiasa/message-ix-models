@@ -813,12 +813,20 @@ def relabel2(qty: "AnyQuantity", new_dims: dict):
     return result
 
 
-def sales_fraction_annual(y0: int, age: int) -> "AnyQuantity":
+def sales_fraction_annual(age: "AnyQuantity") -> "AnyQuantity":
     """Return fractions of current stock that should be sold in prior years."""
-    N_y = 2 * int(age)  # Number of periods
-    return genno.Quantity(
-        [1.0 / N_y] * N_y, coords={"y": range(y0 + 1 - N_y, y0 + 1)}, units=""
-    )
+
+    def _(value: int):
+        """Produce the sales fractions for a scalar `value`."""
+        N = 2 * value.item()  # Number of periods
+        y0 = value.coords["y"].item()  # Initial period
+        coords = dict(y=range(y0 + 1 - N, y0 + 1))  # Periods included
+        return genno.Quantity([1.0 / N] * N, coords=coords, units="")
+
+    # - Group by all dims other than `y`.
+    # - Apply the function to each scalar value.
+    dims = list(filter(lambda d: d != "y", age.dims))
+    return age.groupby(dims).apply(_)
 
 
 def share_weight(
