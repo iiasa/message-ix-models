@@ -1,0 +1,10 @@
+# Mode shares in the model base year; flat/uniform shares for debugging
+#
+# Units: dimensionless
+#
+technology, value
+2W, 0.2
+BUS, 0.2
+LDV, 0.2
+RAIL, 0.2
+AIR, 0.2
