@@ -1,0 +1,19 @@
+# Mean age of LDVs as of the model base period
+#
+# Source: placeholder
+#
+# Unit: years
+#
+technology, year, value
+ELC_100,    2020, 12
+HFC_ptrp,   2020, 12
+IAHe_ptrp,  2020, 12
+IAHm_ptrp,  2020, 12
+ICAe_ffv,   2020, 12
+ICAm_ptrp,  2020, 12
+ICE_conv,   2020, 12
+ICE_L_ptrp, 2020, 12
+ICE_nga,    2020, 12
+ICH_chyb,   2020, 12
+IGH_ghyb,   2020, 12
+PHEV_ptrp,  2020, 12
