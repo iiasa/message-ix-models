@@ -7,6 +7,10 @@ from scipy.optimize import curve_fit
 import message_ix_models.util
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
+from message_ix_models.model.material.data_infrastructure import get_inf_mat_demand
+
+CASE_SENS = "mean"
+INFRA_SCEN = "baseline"
 
 file_cement = "/CEMENT.BvR2010.xlsx"
 file_steel = "/STEEL_database_2012.xlsx"
@@ -326,9 +330,54 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
         )
 
     # get base year demand of material
-    df_base_demand = read_base_demand(
+    df_base_demand_original = read_base_demand(
         f'{datapath}/{material_data[material]["dir"]}/demand_{material}.yaml'
     )
+
+    print('df_base_demand_original')
+    print(df_base_demand_original)
+
+    # In 2020 deduct the demand from infrastructure
+
+    INPUTFILE = package_data_path("material", "infrastructure", "stocks_forecast_MESSAGE.csv")
+
+    if material == 'cement':
+        infrastructure_demand = get_inf_mat_demand('concrete', '2020', INPUTFILE, case = CASE_SENS, infra_scenario = INFRA_SCEN)
+        infrastructure_demand['value'] *= 0.15
+    else:
+        infrastructure_demand = get_inf_mat_demand(material, '2020', INPUTFILE, case = CASE_SENS, infra_scenario = INFRA_SCEN)
+
+    infrastructure_demand['year'] = infrastructure_demand['year'].astype('int64')
+
+    print('Material')
+    print(material)
+    print('Data from BOKU')
+    print(infrastructure_demand)
+
+    infrastructure_demand.rename(columns={'node':'region'}, inplace = True)
+    infrastructure_demand.drop(['commodity'], axis = 1, inplace = True)
+
+    print('Data from BOKU - modification 1')
+    print(infrastructure_demand)
+
+    # Merge DataFrames on 'node', 'year', and 'commodity'
+    merged_df = pd.merge(df_base_demand_original, infrastructure_demand,
+    on=['region', 'year'], suffixes=('_df1', '_df2'))
+
+    print('Merged df initial')
+    print(merged_df)
+
+    # Subtract the 'value' columns
+    merged_df['value'] = merged_df['value_df1'] - merged_df['value_df2']
+
+    print('Merged df after subtraction')
+    print(merged_df)
+
+    # Select relevant columns to maintain the original format
+    df_base_demand = merged_df[['region', 'year', 'value']]
+
+    print('final df base demand')
+    print(df_base_demand)
 
     # get historical data (material consumption, pop, gdp)
     df_cons = read_hist_mat_demand(material)
@@ -366,14 +415,41 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
         df_all, fitting_dict[material]["phi"], fitting_dict[material]["mu"]
     )
 
+    print('df_final after regression is performed')
+    print(df_final)
+    df_final.to_excel('df_final_after_reg.xlsx')
+
+    # Make sure 2020 demand is kept as in the original data file
+    # Merge df_final (filtered for year 2020) with df_other on 'region' and 'year'
+    merged_df = pd.merge(df_final[df_final['year'] == 2020], df_base_demand_original,
+                         on=['region', 'year'])
+
+    print('merged df to keep 2020')
+    print(merged_df)
+    merged_df.to_excel('merged_df_2020.xlsx')
+
+    # Update df_final's demand_tot for year 2020 with the merged values
+    df_final.loc[df_final['year'] == 2020, 'demand_tot'] = df_final.loc[df_final['year'] == 2020].set_index(['region', 'year']).index.map(
+    merged_df.set_index(['region', 'year'])['value'])
+
+    print('last step')
+    print(df_final)
+    df_final.to_excel('df_final_last_step.xlsx')
+
     # format to MESSAGEix standard
     df_final = df_final.rename({"region": "node", "demand_tot": "value"}, axis=1)
     df_final["commodity"] = material
     df_final["level"] = "demand"
     df_final["time"] = "year"
     df_final["unit"] = "t"
+
     # TODO: correct unit would be Mt but might not be registered on database
     df_final = make_df("demand", **df_final)
+
+    print('final demand table')
+    print(df_final)
+    df_final.to_excel('df_final_nan.xlsx')
+
     return df_final
 
 

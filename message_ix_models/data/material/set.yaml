@@ -80,6 +80,7 @@ generic:
     - useful_refining
     - useful_petro
     - useful_resins
+    - useful_construction
 
   technology:
     add:
@@ -169,6 +170,20 @@ generic:
     - fc_h2_resins
     - solar_resins
     - dheat_resins
+    - furnace_foil_construction
+    - furnace_loil_construction
+    - furnace_biomass_construction
+    - furnace_ethanol_construction
+    - furnace_methanol_construction
+    - furnace_gas_construction
+    - furnace_coal_construction
+    - furnace_elec_construction
+    - furnace_h2_construction
+    - hp_gas_construction
+    - hp_elec_construction
+    - fc_h2_construction
+    - solar_construction
+    - dheat_construction    
   mode:
     add:
     - low_temp
@@ -198,6 +213,7 @@ petro_chemicals:
     - propane
     - ethylene
     - BTX
+    - asphalt
     remove:
     - i_feed
 
@@ -262,6 +278,7 @@ petro_chemicals:
     - export_petro
     - feedstock_t/d
     - production_HVC
+    - asphalt_mixing
     remove:
     # Any representation of refinery.
     - ref_hil
@@ -705,6 +722,19 @@ buildings:
   technology:
     add:
     - buildings
+
+infrastructure:
+  level:
+    add:
+    - service
+
+  commodity:
+    add:
+    - infra_area
+
+  technology:
+    add:
+    - infrastructure
 
 power_sector:
   unit:

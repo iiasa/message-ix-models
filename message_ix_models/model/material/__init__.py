@@ -18,6 +18,8 @@ from message_ix_models.model.material.data_methanol_new import gen_data_methanol
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
 from message_ix_models.model.material.data_power_sector import gen_data_power_sector
 from message_ix_models.model.material.data_steel import gen_data_steel
+from message_ix_models.model.material.data_infrastructure import gen_data_infrastructure
+from message_ix_models.model.material.data_infrastructure import adjust_demand_param
 from message_ix_models.model.material.data_util import (
     add_ccs_technologies,
     add_cement_bounds_2020,
@@ -53,16 +55,18 @@ from message_ix_models.util.compat.message_data import (
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS_1 = [
+    gen_data_infrastructure,
     # gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
     gen_data_generic,
     gen_data_steel,
 ]
+
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    gen_data_power_sector,
+    # gen_data_power_sector,
     gen_data_aluminum,
 ]
 
@@ -119,6 +123,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     add_cement_bounds_2020(scenario)
     add_share_const_clinker_substitutes(scenario)
 
+
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration
     # levels for the enduse technologies.
@@ -145,6 +150,8 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     scenario.remove_par("bound_activity_lo", df)
     scenario.commit("remove sp_el_I min bound on RCPA in 2020")
 
+    adjust_demand_param(scenario)
+
     return scenario
 
 
@@ -160,7 +167,8 @@ SPEC_LIST = [
     "aluminum",
     "petro_chemicals",
     # "buildings",
-    "power_sector",
+    # "power_sector",
+    "infrastructure"
 ]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
@@ -368,7 +376,6 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         scenario.add_par("fix_cost", fix)
         scenario.add_par("inv_cost", inv)
         scenario.commit(f"update cost assumption to: {update_costs}")
-
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
