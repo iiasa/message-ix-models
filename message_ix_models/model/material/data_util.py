@@ -1978,56 +1978,6 @@ def read_sector_data(
     return data_df
 
 
-def add_ccs_technologies(scen: message_ix.Scenario) -> None:
-    """Adds the relevant CCS technologies to the co2_trans_disp and bco2_trans_disp
-    relations
-
-    Parameters
-    ----------
-    scen: message_ix.Scenario
-        Scenario instance to add CCS emission factor parametrization to
-    """
-
-    # The relation coefficients for CO2_Emision and bco2_trans_disp and
-    # co2_trans_disp are both MtC. The emission factor for CCS add_ccs_technologies
-    # are specified in MtC as well.
-    bco2_trans_relation = scen.par(
-        "emission_factor", filters={"technology": "biomass_NH3_ccs", "emission": "CO2"}
-    )
-    co2_trans_relation = scen.par(
-        "emission_factor",
-        filters={
-            "technology": [
-                "clinker_dry_ccs_cement",
-                "clinker_wet_ccs_cement",
-                "gas_NH3_ccs",
-                "coal_NH3_ccs",
-                "fueloil_NH3_ccs",
-                "bf_ccs_steel",
-                "dri_gas_ccs_steel",
-            ],
-            "emission": "CO2",
-        },
-    )
-
-    bco2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
-    bco2_trans_relation["relation"] = "bco2_trans_disp"
-    bco2_trans_relation["node_rel"] = bco2_trans_relation["node_loc"]
-    bco2_trans_relation["year_rel"] = bco2_trans_relation["year_act"]
-    bco2_trans_relation["unit"] = "???"
-
-    co2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
-    co2_trans_relation["relation"] = "co2_trans_disp"
-    co2_trans_relation["node_rel"] = co2_trans_relation["node_loc"]
-    co2_trans_relation["year_rel"] = co2_trans_relation["year_act"]
-    co2_trans_relation["unit"] = "???"
-
-    scen.check_out()
-    scen.add_par("relation_activity", bco2_trans_relation)
-    scen.add_par("relation_activity", co2_trans_relation)
-    scen.commit("New CCS technologies added to the CO2 accounting relations.")
-
-
 # Read in time-dependent parameters
 def read_timeseries(
     scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
