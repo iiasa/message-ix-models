@@ -52,6 +52,12 @@ from message_ix_models.util.compat.message_data import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
 )
 
+from message_ix_models.model.material.scenario_run.supply_side_scenarios import (
+    fuel_switch,
+    fuel_switch_and_ccs,
+    material_substituion
+)
+
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS_1 = [
@@ -171,6 +177,15 @@ SPEC_LIST = [
     "infrastructure"
 ]
 
+_SUPPLY_SCENARIOS = [
+"recycling",
+"substitution",
+"fuel_switching",
+"ccs",
+"all",
+"none"
+]
+
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
     require = ScenarioInfo()
@@ -247,8 +262,12 @@ def create_bare(context, regions, dry_run):
     "--update_costs",
     default=False,
 )
+@click.option(
+    "--supply_scenario", default="none", type=click.Choice(_SUPPLY_SCENARIOS)
+)
+
 @click.pass_obj
-def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_costs):
+def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_costs, supply_scenario):
     """Build a scenario.
 
     Use the --url option to specify the base scenario. If this scenario is on a
@@ -376,6 +395,18 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         scenario.add_par("fix_cost", fix)
         scenario.add_par("inv_cost", inv)
         scenario.commit(f"update cost assumption to: {update_costs}")
+
+    if supply_scenario == "substitution":
+        log.info("Building material substitution scenario")
+        material_substituion(scenario)
+    elif supply_scenario == "fuel_switching":
+        log.info("Building fuel switching scenario")
+        fuel_switch(scenario)
+    elif supply_scenario == "ccs":
+        log.info("Building ccs scenario")
+        fuel_switch_and_ccs(scenario)
+    elif supply_scenario == "none":
+        log.info("No changes")
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
