@@ -1,7 +1,6 @@
 import os
 from typing import TYPE_CHECKING
 
-import message_ix
 import pandas as pd
 
 from message_ix_models import ScenarioInfo
@@ -14,10 +13,10 @@ from message_ix_models.util import (
 )
 
 if TYPE_CHECKING:
-    pass
+    from message_ix import Scenario
 
 
-def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
+def modify_demand_and_hist_activity(scen: "Scenario") -> None:
     """Take care of demand changes due to the introduction of material parents
     Shed industrial energy demand properly.
     Also need take care of remove dynamic constraints for certain energy carriers.
@@ -28,7 +27,7 @@ def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
 
     Parameters
     ----------
-    scen: message_ix.Scenario
+    scen: .Scenario
         scenario where industry demand should be reduced
     """
 
@@ -337,14 +336,14 @@ def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
 
 
 def modify_demand_and_hist_activity_debug(
-    scen: message_ix.Scenario,
+    scen: "Scenario",
 ) -> dict[str, pd.DataFrame]:
     """modularized "dry-run" version of modify_demand_and_hist_activity() for
      debugging purposes
 
     Parameters
     ----------
-    scen: message_ix.Scenario
+    scen: .Scenario
         scenario to used to get i_therm and i_spec parametrization
     Returns
     ---------
@@ -622,7 +621,7 @@ def modify_demand_and_hist_activity_debug(
     }
 
 
-def remove_baseyear_bounds(scen: message_ix.Scenario) -> None:
+def remove_baseyear_bounds(scen: "Scenario") -> None:
     # TODO: instead of removing bounds, bounds should be updated with IEA data
     scen.check_out()
     th_tecs_to_keep = ["solar_i", "biomass_i"]
@@ -647,7 +646,7 @@ def remove_baseyear_bounds(scen: message_ix.Scenario) -> None:
     scen.commit(comment="remove base year industry tec bounds")
 
 
-def get_2020_industry_activity(years: list, iea_data_path) -> pd.DataFrame:
+def get_2020_industry_activity(years: list, iea_data_path: str) -> pd.DataFrame:
     df_mat = get_hist_act_data("industry.csv", years=years, iea_data_path=iea_data_path)
     df_chem = get_hist_act_data(
         "chemicals.csv", years=years, iea_data_path=iea_data_path
@@ -675,9 +674,7 @@ def get_2020_industry_activity(years: list, iea_data_path) -> pd.DataFrame:
     return df
 
 
-def calc_hist_activity(
-    scen: message_ix.Scenario, years: list, iea_data_path
-) -> pd.DataFrame:
+def calc_hist_activity(scen: "Scenario", years: list, iea_data_path) -> pd.DataFrame:
     df_orig = get_hist_act_data(
         "all_technologies.csv", years=years, iea_data_path=iea_data_path
     )
@@ -718,7 +715,7 @@ def calc_hist_activity(
     return df_hist_act_scaled.reset_index()
 
 
-def add_new_ind_hist_act(scen: message_ix.Scenario, years: list, iea_data_path) -> None:
+def add_new_ind_hist_act(scen: "Scenario", years: list, iea_data_path: str) -> None:
     df_act = calc_hist_activity(scen, years, iea_data_path)
     scen.check_out()
     scen.add_par("historical_activity", df_act)
@@ -806,7 +803,7 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
 
 
 def calc_resid_ind_demand(
-    scen: message_ix.Scenario, baseyear: int, iea_data_path
+    scen: "Scenario", baseyear: int, iea_data_path: str
 ) -> pd.DataFrame:
     comms = ["i_spec", "i_therm"]
     path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
@@ -821,9 +818,7 @@ def calc_resid_ind_demand(
     return df_demands.reset_index()
 
 
-def modify_industry_demand(
-    scen: message_ix.Scenario, baseyear: int, iea_data_path
-) -> None:
+def modify_industry_demand(scen: "Scenario", baseyear: int, iea_data_path: str) -> None:
     df_demands_new = calc_resid_ind_demand(scen, baseyear, iea_data_path)
     scen.check_out()
     scen.add_par("demand", df_demands_new)
@@ -837,10 +832,10 @@ def modify_industry_demand(
 
 
 def get_hist_act_data(
-    map_fname: str, years: list or None = None, iea_data_path=None
+    map_fname: str, years: list or None = None, iea_data_path: str = None
 ) -> pd.DataFrame:
     """
-    reads IEA DB, maps and aggregates variables to MESSAGE technologies
+    Reads IEA DB, maps and aggregates variables to MESSAGE technologies
 
     Parameters
     ----------
@@ -880,7 +875,15 @@ def get_hist_act_data(
     return df_final
 
 
-def add_elec_lowerbound_2020(scen):
+def add_elec_lowerbound_2020(scen: "Scenario") -> None:
+    """
+    DEPRECATED
+    Adds a bound_activity_lo to the technology "sp_el_I"
+    Parameters
+    ----------
+    scen: .Scenario
+        scenario to apply the lower bound to
+    """
     # To avoid zero i_spec prices only for R12_CHN, add the below section.
     # read input parameters for relevant technology/commodity combinations for
     # converting betwen final and useful energy
@@ -956,6 +959,8 @@ def add_elec_lowerbound_2020(scen):
 
 def add_coal_lowerbound_2020(sc):
     """Set lower bounds for coal and i_spec as a calibration for 2020"""
+def add_coal_lowerbound_2020(scen: "Scenario") -> None:
+    """Set lower bounds for coal_i and sp_el_I technology as a calibration for 2020"""
 
     final_resid = pd.read_csv(
         package_data_path("material", "other", "residual_industry_2019.csv")
