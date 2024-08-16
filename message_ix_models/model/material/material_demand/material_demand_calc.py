@@ -12,6 +12,10 @@ from message_ix_models.model.material.data_infrastructure import get_inf_mat_dem
 CASE_SENS = "mean"
 INFRA_SCEN = "baseline"
 
+print('Adding infrastructure demand with:')
+print(CASE_SENS)
+print(INFRA_SCEN)
+
 file_cement = "/CEMENT.BvR2010.xlsx"
 file_steel = "/STEEL_database_2012.xlsx"
 file_al = "/demand_aluminum.xlsx"

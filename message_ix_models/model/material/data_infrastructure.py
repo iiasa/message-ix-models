@@ -16,6 +16,10 @@ CASE_SENS = "mean"
 INFRA_SCEN = "baseline"
 INPUTFILE = "stocks_forecast_MESSAGE.csv"
 
+print('Adding infrastructure demand with:')
+print(CASE_SENS)
+print(INFRA_SCEN)
+
 
 def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario = INFRA_SCEN):
 
