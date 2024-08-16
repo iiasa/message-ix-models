@@ -957,8 +957,6 @@ def add_elec_lowerbound_2020(scen: "Scenario") -> None:
     scen.commit("added lower bound for activity of residual electricity technologies")
 
 
-def add_coal_lowerbound_2020(sc):
-    """Set lower bounds for coal and i_spec as a calibration for 2020"""
 def add_coal_lowerbound_2020(scen: "Scenario") -> None:
     """Set lower bounds for coal_i and sp_el_I technology as a calibration for 2020"""
 
@@ -968,20 +966,11 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
 
     # read input parameters for relevant technology/commodity combinations
     # for converting betwen final and useful energy
-    input_residual_coal = sc.par(
+    input_residual_coal = scen.par(
         "input",
         filters={"technology": "coal_i", "year_vtg": "2020", "year_act": "2020"},
     )
-    input_cement_coal = sc.par(
-        "input",
-        filters={
-            "technology": "furnace_coal_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-    input_residual_electricity = sc.par(
+    input_residual_electricity = scen.par(
         "input",
         filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"},
     )
@@ -989,9 +978,6 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
     # downselect needed fuels and sectors
     final_residual_coal = final_resid.query(
         'MESSAGE_fuel=="coal" & MESSAGE_sector=="industry_residual"'
-    )
-    final_cement_coal = final_resid.query(
-        'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
     )
     final_residual_electricity = final_resid.query(
         'MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"'
@@ -1002,13 +988,6 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
     bound_coal = pd.merge(
         input_residual_coal,
         final_residual_coal,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-    bound_cement_coal = pd.merge(
-        input_cement_coal,
-        final_cement_coal,
         left_on="node_loc",
         right_on="MESSAGE_region",
         how="inner",
@@ -1024,7 +1003,6 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
     # derive useful energy values by dividing final energy
     # by input coefficient from final-to-useful technologies
     bound_coal["value"] = bound_coal["Value"] / bound_coal["value"]
-    bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
     bound_residual_electricity["value"] = (
         bound_residual_electricity["Value"] / bound_residual_electricity["value"]
     )
@@ -1033,24 +1011,12 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
     bound_coal = bound_coal.filter(
         items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
     )
-    bound_cement_coal = bound_cement_coal.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
     bound_residual_electricity = bound_residual_electricity.filter(
         items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
     )
 
     # rename columns if necessary
     bound_coal.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-    bound_cement_coal.columns = [
         "node_loc",
         "technology",
         "year_act",
@@ -1076,19 +1042,19 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
     bound_residual_electricity.loc[
         bound_residual_electricity.node_loc.isin(["R12_PAO"]), "value"
     ] *= 0.80
+
     bound_residual_electricity.loc[
         bound_residual_electricity.node_loc.isin(more), "value"
     ] *= 0.85
 
-    sc.check_out()
-
+    scen.check_out()
     # add parameter dataframes to ixmp
-    sc.add_par("bound_activity_lo", bound_coal)
+    scen.add_par("bound_activity_lo", bound_coal)
     # sc.add_par("bound_activity_lo", bound_cement_coal)
-    sc.add_par("bound_activity_lo", bound_residual_electricity)
+    scen.add_par("bound_activity_lo", bound_residual_electricity)
 
     # commit scenario to ixmp backend
-    sc.commit(
+    scen.commit(
         "added lower bound for activity of residual industrial coal"
         "and cement coal furnace technologies and "
         "adjusted 2020 residual industrial electricity demand"
@@ -1097,6 +1063,51 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
 
 if __name__ == "__main__":
     years = [1990, 1995, 2000, 2010, 2015, 2020]
+def add_coal_lowerbound_2020_cement(scen: "Scenario") -> None:
+    """
+    DEPRECATED
+    Adds a bound_activity_lo to the technology "furnace_coal_cement"
+    Parameters
+    ----------
+    scen: .Scenario
+        scenario to apply the lower bound to
+    """
+    final_resid = pd.read_csv(
+        package_data_path("material", "other", "residual_industry_2019.csv")
+    )
+    input_cement_coal = scen.par(
+        "input",
+        filters={
+            "technology": "furnace_coal_cement",
+            "year_vtg": "2020",
+            "year_act": "2020",
+            "mode": "high_temp",
+        },
+    )
+    final_cement_coal = final_resid.query(
+        'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
+    )
+    bound_cement_coal = pd.merge(
+        input_cement_coal,
+        final_cement_coal,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+    bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
+    bound_cement_coal = bound_cement_coal.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+    bound_cement_coal.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+
     df = get_2020_industry_activity(years, "P:ene.model\\IEA_database\\Florian\\")
 
     import ixmp
