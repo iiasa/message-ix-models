@@ -295,6 +295,10 @@ petro_chemicals:
     add:
     - steam_cracker
 
+  sector:
+    remove:
+    - i_feed
+
 steel:
   mode:
     add:
