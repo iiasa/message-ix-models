@@ -82,7 +82,7 @@ def remove_share_cat(
     type_tec_shr_name: str,
     all_tecs: List[str],
     shr_tecs: List[str],
-):
+) -> None:
     """
 
     Parameters
@@ -210,8 +210,33 @@ def gen_comm_shr_par(
     cname: str,
     shr_vals_df: pd.DataFrame,
     shr_type: Literal["up", "lo"] = "up",
-    years="all",
-):
+    years: str or List[int] = "all",
+) -> pd.DataFrame:
+    """Generates data frame for "share_commodity_up/lo" parameter with given values for
+    node_share and broadcasts them for given "years".
+
+    Parameters
+    ----------
+    scen: .Scenario
+        used if years == "all" to obtain model years for column "year"
+    cname: str
+        code to use for "share" column
+    shr_vals_df: pd.DataFrame
+        data frame with columns ["node_share", "value"]
+    shr_type: str
+        "up" or "lo"
+    years: str or list of int
+        "all" to generate for all optimization years of scen or list of years
+
+    Returns
+    -------
+    pd.DataFrame
+        with "share_commodity_up/lo" columns
+    """
+    req_cols = ["node_share", "value"]
+    check_cols = any(item in shr_vals_df for item in req_cols)
+    if not check_cols:
+        raise ValueError(f"shr_vals_df does not have the columns {req_cols}")
     df_final = shr_vals_df.copy(deep=True)
     if isinstance(years, str):
         if years == "all":
@@ -297,17 +322,19 @@ def remove_comm_share(
 
     Parameters
     ----------
-    scen
-    name
-    set_tot
-    set_share
-    all_tecs
-    shr_tecs
-    shr_vals
-    shr_type
-    years
+    scen: .Scenario
+    name: str
+
+    set_tot: str
+
+    set_share: str
+
+    all_tecs: list of str
+
+    shr_tecs: list of str
+
     """
-    print(f"Adding share constraint: {name}.")
+    print(f"Removing share constraint: {name}.")
 
     remove_share_cat(scen, name, set_tot, set_share, all_tecs, shr_tecs)
 
