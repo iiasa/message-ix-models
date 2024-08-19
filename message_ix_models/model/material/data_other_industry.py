@@ -806,7 +806,7 @@ def calc_resid_ind_demand(
     scen: "Scenario", baseyear: int, iea_data_path: str
 ) -> pd.DataFrame:
     comms = ["i_spec", "i_therm"]
-    path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
+    path = os.path.join(iea_data_path)
     Inp = pd.read_parquet(path, engine="fastparquet")
     Inp = map_iea_db_to_msg_regs(Inp)
     demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
@@ -844,12 +844,15 @@ def get_hist_act_data(
     years
         specifies timesteps for whom historical activity should
         be calculated and returned
+    iea_data_path: str
+        path to IEA EWEB parquet file
+
     Returns
     -------
     pd.DataFrame
 
     """
-    path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
+    path = os.path.join(iea_data_path)
     iea_enb_df = pd.read_parquet(path, engine="fastparquet")
     if years:
         iea_enb_df = iea_enb_df[iea_enb_df["TIME"].isin(years)]
