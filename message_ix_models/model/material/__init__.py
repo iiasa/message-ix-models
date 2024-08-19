@@ -764,7 +764,8 @@ def run_cbud_scenario(context, model, scenario, budget):
     scenario_cbud.commit("remove cumulative years from cat_year set")
     scenario_cbud.set("cat_year", {"type_year": "cumulative"})
 
-    scenario_cbud.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
+    # scenario_cbud.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
+    scenario_cbud.solve(model="MESSAGE", solve_options={"scaind": -1})
     return
 
 
