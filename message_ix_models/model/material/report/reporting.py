@@ -25,11 +25,11 @@ Material_global_grpahs.pdf
 
 from ixmp import Platform
 from message_ix import Scenario
-from message_ix.reporting import Reporter
+from message_ix.report import Reporter
 from ixmp.reporting import configure
 from message_ix_models import ScenarioInfo
-# from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
-# from message_data.model.material.util import read_config
+from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
+from message_data.model.material.util import read_config
 
 import pandas as pd
 import numpy as np
@@ -46,6 +46,7 @@ from matplotlib import pyplot as plt
 
 from pyam.plotting import OUTSIDE_LEGEND
 from matplotlib.backends.backend_pdf import PdfPages
+
 from message_ix_models.util import (
     package_data_path,
 )
@@ -195,7 +196,7 @@ def report(context,scenario):
         nodes.remove("R12_GLB*")
 
     # Path for materials reporting output
-    directory = package_data_path("material", "reporting_output")
+    directory = context.get_local_path("report", "materials")
     directory.mkdir(exist_ok=True)
 
     # Generate message_ix level reporting and dump to an excel file.
@@ -236,8 +237,6 @@ def report(context,scenario):
             "in|final_material|*|export_petro|*",
             "out|secondary|lightoil|loil_imp|*",
             "out|secondary|fueloil|foil_imp|*",
-            "out|tertiary_material|clinker_cement|*",
-            "out|product|cement|*",
             "out|final_material|BTX|*",
             "out|final_material|ethylene|*",
             "out|final_material|propylene|*",
@@ -291,7 +290,25 @@ def report(context,scenario):
             "out|dummy_end_of_life_2|aluminum|total_EOL_aluminum|M1",
             "out|dummy_end_of_life_3|aluminum|total_EOL_aluminum|M1",
             "out|dummy_end_of_life|steel|total_EOL_steel|M1",
-            "out|dummy_end_of_life|cement|total_EOL_cement|M1",
+            "out|dummy_end_of_life|concrete|total_EOL_cement|M1",
+            "out|final_material|cement|mix_cement|M1",
+            "out|final_material|cement|mix_cement|M2",
+            "out|final_material|cement|mix_cement|M3",
+            "out|final_material|cement|mix_cement|M4",
+            "out|grinded_material|clinker|grinding_ballmill_cement|M1",
+            "out|grinded_material|clinker|grinding_vertmill_cement|M1",
+            "out|grinded_material|granulated_slag_iron|grinding_ballmill_cement|M2",
+            "out|grinded_material|granulated_slag_iron|grinding_vertmill_cement|M2",
+            "out|grinded_material|fly_ash|grinding_ballmill_cement|M3",
+            "out|grinded_material|fly_ash|grinding_vertmill_cement|M3",
+            "out|grinded_material|clay|grinding_ballmill_cement|M4",
+            "out|grinded_material|clay|grinding_vertmill_cement|M4",
+            "out|product|concrete|concrete_production_cement|M1",
+            "out|product|concrete|concrete_production_cement|M2",
+            "in|final|charcoal|concrete_production_cement|M2",
+            "in|dummy_end_of_life|concrete|landfilling_cement|M1",
+            "in|dummy_end_of_life|concrete|recycling_cement|M1",
+            "in|dummy_end_of_life|concrete|recycling_cement|M2",
             "in|product|steel|scrap_recovery_steel|M1",
             "in|final_material|methanol|MTO_petro|M1",
             "in|final_material|methanol|CH2O_synth|M1",
@@ -312,6 +329,11 @@ def report(context,scenario):
         ],
         inplace=True,
     )
+
+    # Charcoal energy to material conversion
+
+    df.divide("in|final|charcoal|concrete_production_cement|M2", (0.951),
+    "in|final|charcoal|concrete_production_cement|Mt", append=True, ignore_units=True)
 
     # Methanol input conversion from material to energy unit
 
@@ -656,13 +678,15 @@ def report(context,scenario):
         # STEEL
 
         primary_steel_vars = ["out|final_material|steel|bof_steel|M1",
+                              "out|final_material|steel|bof_steel|M2",
                               "out|final_material|steel|eaf_steel|M1",
                               "out|final_material|steel|eaf_steel|M3"
                               ]
 
         secondary_steel_vars = [
             "out|final_material|steel|eaf_steel|M2",
-            "in|new_scrap|steel|bof_steel|M1"
+            "in|new_scrap|steel|bof_steel|M1",
+            "in|new_scrap|steel|bof_steel|M2",
         ]
 
         collected_scrap_steel_vars = [
@@ -674,11 +698,14 @@ def report(context,scenario):
         old_scrap_steel_vars = ["out|dummy_end_of_life|steel|total_EOL_steel|M1"]
 
         df_steel.aggregate(
-            "Production|Primary|Steel (before sub.)", components=primary_steel_vars, append=True,
+            "Production|Primary|Steel (before sub.1)", components=primary_steel_vars, append=True,
         )
 
-        df_steel.subtract("Production|Primary|Steel (before sub.)",
-        "in|new_scrap|steel|bof_steel|M1","Production|Primary|Steel", append = True)
+        df_steel.subtract("Production|Primary|Steel (before sub.1)",
+        "in|new_scrap|steel|bof_steel|M1","Production|Primary|Steel (before sub.2)", append = True)
+
+        df_steel.subtract("Production|Primary|Steel (before sub.2)",
+        "in|new_scrap|steel|bof_steel|M2","Production|Primary|Steel", append = True)
 
         df_steel.aggregate(
             "Production|Secondary|Steel", components=secondary_steel_vars, append=True,
@@ -887,78 +914,85 @@ def report(context,scenario):
 
     for r in nodes:
 
-        # PRODUCTION - PLOT
-
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 10))
-        fig.tight_layout(pad=15.0)
-
-        # Clinker cement
-
-        df_cement_clinker = df.copy()
-        df_cement_clinker.filter(region=r, year=years, inplace=True)
-        df_cement_clinker.filter(
-            variable=["out|tertiary_material|clinker_cement|*"], inplace=True
-        )
-        df_cement_clinker.plot.stack(ax=ax1)
-        ax1.legend(
-            ["Dry Clinker", "Wet Clinker"], bbox_to_anchor=(-0.5, 1), loc="upper left"
-        )
-        ax1.set_title("Clinker Cement Production_" + r)
-        ax1.set_xlabel("Year")
-        ax1.set_ylabel("Mt")
-
-        # Final prodcut cement
-
         df_cement = df.copy()
         df_cement.filter(region=r, year=years, inplace=True)
-        df_cement.filter(variable=["out|product|cement|*",
-                                   "out|tertiary_material|clinker_cement|*"
+        df_cement.filter(variable=["out|product|concrete|*",
+                                   "out|final_material|cement|*",
+                                   "out|grinded_material|*",
+                                   "out|dummy_end_of_life|concrete|*",
+                                   "in|dummy_end_of_life|concrete",
+                                   "in|final|charcoal|concrete_production_cement|*",
                                   ], inplace=True)
-        # df_cement.plot.stack(ax=ax2)
-        # ax2.legend(
-        #     ["Ballmill Grinding", "Vertical Mill Grinding"],
-        #     bbox_to_anchor=(-0.6, 1),
-        #     loc="upper left",
-        # )
-        # ax2.set_title("Final Cement Production_" + r)
-        # ax2.set_xlabel("Year")
-        # ax2.set_ylabel("Mt")
-
-        plt.close()
-        pp.savefig(fig)
 
         # PRODUCTION - IAMC format
 
-        primary_cement_vars = [
-            "out|product|cement|grinding_ballmill_cement|M1",
-            "out|product|cement|grinding_vertmill_cement|M1",
+        concrete_vars = ["out|product|concrete|concrete_production_cement|M1",
+                         "out|product|concrete|concrete_production_cement|M2",]
+
+        cement_vars = [
+            "out|final_material|cement|mix_cement|M1",
+            "out|final_material|cement|mix_cement|M2",
+            "out|final_material|cement|mix_cement|M3",
+            "out|final_material|cement|mix_cement|M4",
         ]
+
+        charcoal_vars = ["in|final|charcoal|concrete_production_cement|Mt"]
 
         clinker_vars = [
-        "out|tertiary_material|clinker_cement|clinker_dry_cement|M1",
-        "out|tertiary_material|clinker_cement|clinker_wet_cement|M1"
+        "out|grinded_material|clinker|grinding_ballmill_cement|M1",
+        "out|grinded_material|clinker|grinding_vertmill_cement|M1"
         ]
 
-        total_scrap_cement_vars = ["out|dummy_end_of_life|cement|total_EOL_cement|M1"]
+        slag_vars = ["out|grinded_material|granulated_slag_iron|grinding_ballmill_cement|M2",
+        "out|grinded_material|granulated_slag_iron|grinding_vertmill_cement|M2"]
+
+        flyash_vars = ["out|grinded_material|fly_ash|grinding_ballmill_cement|M3",
+        "out|grinded_material|fly_ash|grinding_vertmill_cement|M3"]
+
+        clay_vars = ["out|grinded_material|clay|grinding_ballmill_cement|M4",
+        "out|grinded_material|clay|grinding_vertmill_cement|M4"]
+
+        total_scrap_cement_vars = ["out|dummy_end_of_life|concrete|total_EOL_cement|M1"]
+
+        landfilling_cement_vars = ["in|dummy_end_of_life|concrete|landfilling_cement|M1"]
+
+        recycling_cement_vars = ["in|dummy_end_of_life|concrete|recycling_cement|M1",
+                                 "in|dummy_end_of_life|concrete|recycling_cement|M2"]
 
         df_cement.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+
+        df_cement.aggregate(
+            "Production|Non-Metallic Minerals|Concrete", components=concrete_vars, append=True,
+        )
+
+        df_cement.aggregate(
+            "Production|Non-Metallic Minerals|Charcoal Replacement", components=charcoal_vars, append=True,
+        )
 
         df_cement.aggregate(
             "Production|Non-Metallic Minerals|Clinker", components=clinker_vars, append=True,
         )
 
         df_cement.aggregate(
-            "Production|Primary|Non-Metallic Minerals|Cement", components=primary_cement_vars, append=True,
+            "Production|Non-Metallic Minerals|Slag", components=slag_vars, append=True,
+        )
+
+        df_cement.aggregate(
+            "Production|Non-Metallic Minerals|Fly Ash", components=flyash_vars, append=True,
+        )
+
+        df_cement.aggregate(
+            "Production|Non-Metallic Minerals|Calcined Clay", components=clay_vars, append=True,
         )
 
         df_cement.aggregate(
             "Production|Non-Metallic Minerals",
-            components=primary_cement_vars,
+            components=cement_vars,
             append=True,
         )
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Cement", components=primary_cement_vars, append=True,
+            "Production|Non-Metallic Minerals|Cement", components=cement_vars, append=True,
         )
 
         df_cement.aggregate(
@@ -968,17 +1002,37 @@ def report(context,scenario):
         )
 
         df_cement.aggregate(
-            "Total Scrap|Non-Metallic Minerals|Cement",
+            "Total Scrap|Non-Metallic Minerals|Concrete",
             components=total_scrap_cement_vars,
             append=True,
         )
+
+        df_cement.aggregate(
+            "Total Scrap|Landfilling|Non-Metallic Minerals|Concrete",
+            components=landfilling_cement_vars,
+            append=True,
+        )
+
+        df_cement.aggregate(
+            "Total Scrap|Recycling|Non-Metallic Minerals|Concrete",
+            components=recycling_cement_vars,
+            append=True,
+        )
+
         df_cement.filter(
             variable=[
-                "Production|Primary|Non-Metallic Minerals|Cement",
+                "Production|Non-Metallic Minerals",
                 "Production|Non-Metallic Minerals|Cement",
-                "Total Scrap|Non-Metallic Minerals"
-                "Total Scrap|Non-Metallic Minerals|Cement",
+                "Production|Non-Metallic Minerals|Concrete",
+                "Production|Non-Metallic Minerals|Charcoal Replacement",
+                "Total Scrap|Non-Metallic Minerals",
+                "Total Scrap|Non-Metallic Minerals|Concrete",
+                "Total Scrap|Landfilling|Non-Metallic Minerals|Concrete",
+                "Total Scrap|Recycling|Non-Metallic Minerals|Concrete",
                 "Production|Non-Metallic Minerals|Clinker",
+                "Production|Non-Metallic Minerals|Slag",
+                "Production|Non-Metallic Minerals|Fly Ash",
+                "Production|Non-Metallic Minerals|Calcined Clay"
             ],
             inplace=True,
         )
@@ -1321,8 +1375,11 @@ def report(context,scenario):
             df_final_energy.filter(
                 variable=["in|final|*|cokeoven_steel|*",
                           "in|final|co_gas|*",
-                          "in|final|bf_gas|*"], keep=False, inplace=True
-            )
+                          "in|final|bf_gas|*",
+                          "in|final|off_gas|*",
+                          "in|final|charcoal|concrete_production_cement|M2",
+                          ], keep=False, inplace=True
+             )
 
             if c == "electr":
                 df_final_energy.filter(variable=["in|final|electr|*",
@@ -1360,6 +1417,7 @@ def report(context,scenario):
                         "in|final|biomass|*",
                         "in|final|coal|*",
                         "in|final|coke_iron|*",
+                        "in|final|charcoal|*",
                     ],
                     inplace=True,
                 )
@@ -1579,7 +1637,8 @@ def report(context,scenario):
 
                 # Bio
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if ("biomass" in v)
+                    v for v in aux2_df["variable"].values if
+                    (("biomass" in v) | ("charcoal" in v))
                 ]
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Solids|Biomass",
@@ -1589,7 +1648,8 @@ def report(context,scenario):
 
                 # Fossil
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if ("biomass" not in v)
+                    v for v in aux2_df["variable"].values if
+                    (("biomass" not in v) & ("charcoal" not in v))
                 ]
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Solids|Coal",
@@ -1653,11 +1713,13 @@ def report(context,scenario):
                 "in|final|*|cokeoven_steel|*",
                 "in|final|bf_gas|*",
                 "in|final|co_gas|*",
+                "in|final|off_gas|*",
                 'in|final|*|meth_fc_trp|*',
                 'in|final|*|meth_ic_trp|*',
                 'in|final|*|meth_i|*',
                 'in|final|*|meth_rc|*',
-                'in|final|*|sp_meth_I|*']
+                'in|final|*|sp_meth_I|*',
+                'in|final|charcoal|concrete_production_cement|M2']
 
             df_final_energy.filter(variable=exclude, keep=False, inplace=True)
 
@@ -1719,6 +1781,7 @@ def report(context,scenario):
                     variable=[
                         "in|final|biomass|*",
                         "in|final|coal|*",
+                        "in|final|charcoal|*",
                         "in|final|coke_iron|*",
                         'in|secondary|coal|coal_NH3|M1',
                         'in|secondary|coal|coal_NH3_ccs|M1',
@@ -1962,7 +2025,8 @@ def report(context,scenario):
 
                 # Bio
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if ("biomass" in v)
+                    v for v in aux2_df["variable"].values if
+                    (("biomass" in v) | ("charcoal" in v))
                 ]
 
                 df_final_energy.aggregate(
@@ -1973,7 +2037,8 @@ def report(context,scenario):
 
                 # Fossil
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if ("coal" in v)
+                    v for v in aux2_df["variable"].values if
+                    (("biomass" not in v) & ("charcoal" not in v))
                 ]
 
                 df_final_energy.aggregate(
@@ -2031,7 +2096,10 @@ def report(context,scenario):
                 "in|final|vacuum_gasoil|steam_cracker_petro|*",
                 "in|final|*|cokeoven_steel|*",
                 "in|final|bf_gas|*",
-                "in|final|co_gas|*"]
+                "in|final|co_gas|*",
+                "in|final|off_gas|*",
+                "in|final|charcoal|concrete_production_cement|M2"
+                ]
 
             df_final_energy.filter(region=r, year=years, inplace=True)
             df_final_energy.filter(variable=["in|final|*",
@@ -2241,6 +2309,7 @@ def report(context,scenario):
                                 (aux2_df["commodity"] == "coal")
                                 | (aux2_df["commodity"] == "biomass")
                                 | (aux2_df["commodity"] == "coke_iron")
+                                | (aux2_df["commodity"] == "charcoal")
                             ),
                             "variable",
                         ].values
@@ -2254,7 +2323,9 @@ def report(context,scenario):
                 elif c == "solids_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            (aux2_df["commodity"] == "biomass"), "variable"
+                            ((aux2_df["commodity"] == "biomass")
+                           |(aux2_df["commodity"] == "charcoal"))
+                           ,"variable"
                         ].values
                     ).tolist()
                     aggregate_name = (
@@ -2574,9 +2645,11 @@ def report(context,scenario):
                 "in|final|*|cokeoven_steel|*",
                 "in|final|bf_gas|*",
                 "in|final|co_gas|*",
+                "in|final|off_gas|*",
                 'in|final|*|meth_fc_trp|*',
                 'in|final|*|meth_ic_trp|*',
-                'in|final|*|meth_rc|*']
+                'in|final|*|meth_rc|*',
+                'in|final|charcoal|concrete_production_cement|M2']
 
             include = [
                 'in|secondary|coal|coal_NH3|M1',
@@ -2800,7 +2873,8 @@ def report(context,scenario):
                         aux2_df.loc[
                             ((aux2_df["commodity"] == "coal") |
                              (aux2_df["commodity"] == "biomass") |
-                             (aux2_df["commodity"] == "coke_iron")
+                             (aux2_df["commodity"] == "coke_iron") |
+                             (aux2_df["commodity"] == "charcoal")
                              ), "variable",
                         ].values
                     ).tolist()
@@ -2810,7 +2884,9 @@ def report(context,scenario):
                 elif c == 'solids_bio':
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "biomass")), "variable",
+                            ((aux2_df["commodity"] == "biomass")
+                            | (aux2_df["commodity"] == "charcoal")
+                            ), "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
@@ -3879,7 +3955,7 @@ def report(context,scenario):
     # ....................
 
     path_temp = os.path.join(directory, "temp_new_reporting.xlsx")
-    df_final.to_excel(path_temp, sheet_name="data", index=False)
+    df_final.to_excel(path_temp, sheet_name="data", iamc_index=False)
 
     excel_name_new = "New_Reporting_" + model_name + "_" + scenario_name + ".xlsx"
     path_new = os.path.join(directory, excel_name_new)
