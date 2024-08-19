@@ -4,6 +4,7 @@ import message_ix
 import pandas as pd
 from message_data.tools.utilities import get_nodes
 from message_ix import make_df
+from share_constraints_constants import other_ind_th_tecs
 
 from message_ix_models.util import broadcast, same_node
 
@@ -390,34 +391,21 @@ def add_foil_shr_constraint():
         )
 
 
-def add_coal_constraint():
-    from ixmp import Platform
-    from message_ix import Scenario
-    from share_constraints_constants import other_ind_th_tecs
-
-    model = "SSP_dev_SSP2_v0.1_Blv0.18"
-    scenario = "baseline_prep_lu_bkp_solved_materials"
-    mp = Platform()
-    scen = Scenario(mp, model, scenario)
-    sc_clone = scen.clone(
-        scen.model, scen.scenario + "_coal_i_experiment", keep_solution=False
-    )
+def add_coal_constraint(scen):
     name = "UE_industry_th_coal"
     share_reg_values = pd.read_csv(
         "C:/Users/maczek/PycharmProjects/IEA-statistics-analysis/notebooks/coal_i_shares_2020.csv"
     )
     add_comm_share(
-        sc_clone,
+        scen,
         name,
-        "UE_industry_th_coal_total",
-        "UE_industry_th_coal_share",
+        f"{name}_total",
+        f"{name}_share",
         other_ind_th_tecs,
         ["coal_i"],
         share_reg_values,
-        years=sc_clone.yv_ya()["year_act"].drop_duplicates()[1:],
+        years=scen.yv_ya()["year_act"].drop_duplicates()[1:],
     )
-    sc_clone.set_as_default()
-    print()
 
 
 if __name__ == "__main__":
