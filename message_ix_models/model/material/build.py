@@ -121,7 +121,6 @@ def build(
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
-    add_ccs_technologies(scenario)
     if old_calib:
         modify_demand_and_hist_activity(scenario)
     else:
