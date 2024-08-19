@@ -1064,8 +1064,6 @@ def add_coal_lowerbound_2020(scen: "Scenario") -> None:
     )
 
 
-if __name__ == "__main__":
-    years = [1990, 1995, 2000, 2010, 2015, 2020]
 def add_coal_lowerbound_2020_cement(scen: "Scenario") -> None:
     """
     DEPRECATED
@@ -1111,16 +1109,13 @@ def add_coal_lowerbound_2020_cement(scen: "Scenario") -> None:
         "unit",
     ]
 
-    df = get_2020_industry_activity(years, "P:ene.model\\IEA_database\\Florian\\")
 
-    import ixmp
-    import message_ix
+def get_hist_act(scen, years):
+    s_info = ScenarioInfo(scen)
+    fmy = s_info.y0
+    iea_path = r"C:/Users\maczek\OneDrive - IIASA/S3_IEA_REV2024_FiltISO_TJ_BIO.parquet"
 
-    mp = ixmp.Platform()
-    scen = message_ix.Scenario(
-        mp, "SSP_dev_SSP2_v0.1_Blv0.18", "baseline_prep_lu_bkp_solved"
-    )
-
+    df = get_2020_industry_activity(years, iea_path)
     ind_tecs = [i for i in scen.set("technology") if i.endswith("_i")]
     inp = scen.par(
         "input", filters={"technology": ind_tecs, "year_act": years, "year_vtg": years}
@@ -1131,4 +1126,10 @@ def add_coal_lowerbound_2020_cement(scen: "Scenario") -> None:
     )
     df = df.join(inp["efficiency"]).dropna()
     df["Value"] = df["Value"] / df["efficiency"]
+    return {
+        "bound_activity_up": df[df.index.get_level_values(2).ge(fmy)],
+        "historical_activity": df[df.index.get_level_values(2).lt(fmy)],
+    }
+
+
     print()
