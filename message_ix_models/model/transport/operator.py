@@ -3,7 +3,7 @@
 import logging
 import re
 from functools import partial, reduce
-from itertools import product
+from itertools import pairwise, product
 from operator import gt, le, lt
 from typing import (
     TYPE_CHECKING,
@@ -26,6 +26,7 @@ import xarray as xr
 from genno import Computer, KeySeq, Operator, quote
 from genno.operator import apply_units, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
+from scipy import integrate
 from sdmx.model.v21 import Code
 
 from message_ix_models import ScenarioInfo
@@ -813,20 +814,66 @@ def relabel2(qty: "AnyQuantity", new_dims: dict):
     return result
 
 
+def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
+    """Construct a uniform distribution from `value` along its :math:`y`-dimension.
+
+    `value` must have a dimension `dim` with length 1 and a single value, :math:`k`. The
+    sole `dim`-coordinate is taken as :math:`d_{max}`: the upper end of a uniform
+    distribution of which the mean is :math:`d_{max} - k`.
+
+    Returns
+    -------
+    genno.Quantity
+        with dimension `dim`, and `dim` coordinates including all integer values up to
+        and including :math:`d_{max}`. Values are the piecewise integral of the uniform
+        distribution in the interval ending at the respective coordinate.
+    """
+    d_max = value.coords[dim].item()  # Upper end of the distribution
+    width = 2 * value.item()  # Width of a uniform distribution
+    height = 1.0 / width  # Height of the distribution
+    d_min = d_max - width  # Lower end of the distribution
+
+    def _uniform(x: float) -> float:
+        """Uniform distribution between `d_min` and `d_max`."""
+        return height if d_min < x < d_max else 0.0
+
+    # Points for piecewise integration of `_uniform`: integers from the first <= d_min
+    # to d_max inclusive
+    points = np.arange(np.floor(d_min), d_max + 1).astype(int)
+
+    # - Group `points` pairwise: (d0, d1), (d1, d2)
+    # - On each interval, compute the integral of _uniform() by quadrature.
+    # - Convert to Quantity with y-dimension, labelled with interval upper bounds.
+    return genno.Quantity(
+        pd.Series(
+            {b: integrate.quad(_uniform, a, b)[0] for a, b in pairwise(points)}
+        ).rename_axis(dim),
+        units="",
+    )
+
+
 def sales_fraction_annual(age: "AnyQuantity") -> "AnyQuantity":
-    """Return fractions of current stock that should be sold in prior years."""
+    """Return fractions of current vehicle stock that should be added in prior years.
 
-    def _(value: int):
-        """Produce the sales fractions for a scalar `value`."""
-        N = 2 * value.item()  # Number of periods
-        y0 = value.coords["y"].item()  # Initial period
-        coords = dict(y=range(y0 + 1 - N, y0 + 1))  # Periods included
-        return genno.Quantity([1.0 / N] * N, coords=coords, units="")
+    Parameters
+    ---
+    age : genno.Quantity
+        Mean age of vehicle stock. Must have dimension "y" and at least 1 other
+        dimension. For every unique combination of those other dimensions, there must be
+        only one value/|y|-coordinate. This is taken as the *rightmost* end of a uniform
+        distribution with mean age given by the respective value.
 
+    Returns
+    -------
+    genno.Quantity
+        Same dimensionality as `age`, with sufficient |y| coordinates to cover all years
+        in which. Every integer year is included, i.e. the result is **not** aggregated
+        to multi-year periods (called ``year`` in MESSAGE).
+    """
     # - Group by all dims other than `y`.
     # - Apply the function to each scalar value.
     dims = list(filter(lambda d: d != "y", age.dims))
-    return age.groupby(dims).apply(_)
+    return age.groupby(dims).apply(uniform_in_dim)
 
 
 def share_weight(
