@@ -174,8 +174,8 @@ def adjust_demand_param(scen):
             c,
             inputfile=INPUTFILE,
             year="all",
-            case='mean',
-            infra_scenario='baseline'
+            case=CASE_SENS,
+            infra_scenario=INFRA_SCEN
         ).rename(columns={"value": "inf_demand"})
 
         print('mat_inf_all')
@@ -220,8 +220,8 @@ def adjust_demand_param(scen):
                 'asphalt',
                 inputfile=INPUTFILE,
                 year="all",
-                case='mean',
-                infra_scenario='baseline')
+                case=CASE_SENS,
+                infra_scenario=INFRA_SCEN)
     mat_inf_asphalt["year"] = mat_inf_asphalt["year"].astype(int)
     mat_inf_asphalt['level'] = 'demand'
     mat_inf_asphalt["time"] = "year"
