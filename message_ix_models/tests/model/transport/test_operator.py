@@ -1,5 +1,6 @@
+import genno
+import numpy.testing as npt
 import pytest
-from genno import Quantity
 from genno.testing import assert_qty_equal
 from message_ix import Scenario
 from numpy.testing import assert_allclose
@@ -11,6 +12,7 @@ from message_ix_models.model.transport.operator import (
     distance_nonldv,
     factor_input,
     factor_ssp,
+    sales_fraction_annual,
     transport_check,
 )
 from message_ix_models.model.transport.structure import get_technology_groups
@@ -69,7 +71,7 @@ def test_distance_nonldv(test_context, regions):
 
     # Check a computed value
     assert_qty_equal(
-        Quantity(32.7633, units="Mm / vehicle / year", name="non-ldv distance"),
+        genno.Quantity(32.7633, units="Mm / vehicle / year", name="non-ldv distance"),
         result.sel(nl=f"{regions}_EEU", t="BUS", drop=True),
     )
 
@@ -131,8 +133,30 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
     assert {"n", "y"} == set(result.dims)
 
 
+def test_sales_fraction_annual():
+    q = genno.Quantity(
+        [[12.4, 6.1]], coords={"y": [2020], "n": list("AB")}, units="year"
+    )
+
+    result = sales_fraction_annual(q)
+
+    # Result has same dimensions as input
+    assert set(q.dims) == set(result.dims)
+    # Results are bounded in y at the last period given in input
+    assert 2020 == max(q.coords["y"])
+    # Results sum to 1.0
+    npt.assert_allclose([1.0, 1.0], result.sum(dim="y"))
+
+    # Values for earlier periods are uniform…
+    assert result.sel(n="A", y=1997).item() == result.sel(n="A", y=2020).item()
+    assert result.sel(n="B", y=2009).item() == result.sel(n="B", y=2020).item()
+    # Except the earliest period, containing the remainder of the distribution
+    assert result.sel(n="A", y=1996).item() <= result.sel(n="A", y=2020).item()
+    assert result.sel(n="B", y=2008).item() <= result.sel(n="B", y=2020).item()
+
+
 @pytest.mark.xfail(reason="Incomplete test")
 def test_transport_check(test_context):
     s = Scenario(test_context.get_platform(), model="m", scenario="s", version="new")
 
-    transport_check(s, Quantity())
+    transport_check(s, genno.Quantity())
