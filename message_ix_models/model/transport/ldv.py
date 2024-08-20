@@ -32,6 +32,7 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.ixmp import rename_dims
 
+from . import files as exo
 from .emission import ef_for_input
 from .operator import extend_y
 from .util import input_commodity_level
@@ -99,12 +100,7 @@ def prepare_computer(c: Computer):
 
     # Multiply by values from ldv-input-adj.csv. See file comment. Drop the 'scenario'
     # dimension; there is only one value in the file per 'n'.
-    c.add(
-        "ldv input adj:n",
-        "sum",
-        "ldv input adj:n-scenario:exo",
-        dimensions=["scenario"],
-    )
+    c.add("ldv input adj:n", "sum", exo.input_adj_ldv, dimensions=["scenario"])
     c.add(k_eff + "adj", "mul", k_eff + "adj+0", "ldv input adj:n")
 
     # Select a task for the final step that computes "ldv::ixmp"
@@ -154,7 +150,7 @@ def prepare_computer(c: Computer):
         c.add(
             "ldv capacity_factor::ixmp",
             capacity_factor,
-            "ldv activity:n:exo",
+            exo.activity_ldv,
             "t::transport LDV",
             "y",
             "broadcast:y-yv-ya",
@@ -571,13 +567,13 @@ def stock(c: Computer) -> Key:
     # - Correct units: "load factor ldv:n-y" is dimensionless, should be
     #   passenger/vehicle
     # - Select only the base-period value.
-    c.add(k[0], "div", ldv_ny + "total", "ldv activity:n:exo")
+    c.add(k[0], "div", ldv_ny + "total", exo.activity_ldv)
     c.add(k[1], "div", k[0], "load factor ldv:n-y")
     c.add(k[2], "div", k[1], genno.Quantity(1.0, units="passenger / vehicle"))
     c.add(k[3] / "y", "select", k[2], "y0::coord")
 
     # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
-    c.add("stock:n-t:ldv", "mul", k[3] / "y", "tech share:t:ldv+exo")
+    c.add("stock:n-t:ldv", "mul", k[3] / "y", exo.t_share_ldv)
 
     # TODO Move the following 4 calls to .build.add_structure() or similar
     # Identify the subset of periods up to and including y0
@@ -596,7 +592,7 @@ def stock(c: Computer) -> Key:
 
     # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
     # multi-year periods)
-    c.add("sales fraction:n-t-y:ldv", "sales_fraction_annual", "age:n-t-y:ldv+exo")
+    c.add("sales fraction:n-t-y:ldv", "sales_fraction_annual", exo.age_ldv)
     # Absolute sales in preceding years
     c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:y:ldv")
     # Aggregate to model periods
