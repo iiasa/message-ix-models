@@ -1,9 +1,10 @@
 from ixmp.testing import assert_logs
 
+import message_ix_models.model.transport.build
 from message_ix_models.model.transport import testing
 
 
-@testing.MARK[6]
+@message_ix_models.model.transport.build.get_computer.minimum_version
 def test_disutility(
     caplog, tmp_path, test_context, regions="R12", years="B", options={}
 ):
@@ -32,4 +33,4 @@ def test_disutility(
     # Data are added to the scenario
     N = 12 * 27 * 12 * 14  # n × cg × t × y
     with assert_logs(caplog, f"{N} rows in 'input'"):
-        c.get("add message_data.model.transport.disutility")
+        c.get("add message_ix_models.model.transport.disutility")

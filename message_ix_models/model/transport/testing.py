@@ -24,7 +24,8 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-# Common marks for transport code
+# Common marks for transport code. Do not reuse keys that are less than the highest key
+# appearing in the dict.
 MARK = {
     0: pytest.mark.xfail(
         reason="Missing R14 input data/assumptions", raises=FileNotFoundError
@@ -40,9 +41,6 @@ MARK = {
     # Tests that fail with data that cannot be migrated from message_data
     5: lambda f: pytest.mark.xfail(
         raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
-    ),
-    6: pytest.mark.xfail(
-        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/207"
     ),
     7: pytest.mark.xfail(
         condition=testing.GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,

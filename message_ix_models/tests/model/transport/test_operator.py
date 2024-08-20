@@ -1,9 +1,12 @@
+from importlib.metadata import version
+
 import genno
 import numpy.testing as npt
 import pytest
 from genno.testing import assert_qty_equal
 from message_ix import Scenario
 from numpy.testing import assert_allclose
+from packaging.version import parse
 
 from message_ix_models.model.transport import Config, factor
 from message_ix_models.model.transport.operator import (
@@ -133,6 +136,9 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
     assert {"n", "y"} == set(result.dims)
 
 
+@pytest.mark.skipif(
+    parse(version("genno")) < parse("1.25.0"), reason="Requires genno >= 1.25.0"
+)
 def test_sales_fraction_annual():
     q = genno.Quantity(
         [[12.4, 6.1]], coords={"y": [2020], "n": list("AB")}, units="year"

@@ -78,6 +78,7 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     # Data are provided for the these parameters
     exp_pars = {
         "bound_activity_lo",  # From .non_ldv.other(). For R11 this is empty.
+        "bound_activity_up",  # From act-non_ldv.csv via .non_ldv.bound_activity()
         "capacity_factor",
         "emission_factor",
         "fix_cost",
