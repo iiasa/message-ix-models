@@ -262,13 +262,15 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         log.info(repr(e))  # Solved scenario that already has this key
 
     # Data from files
-    from .files import FILES, ExogenousDataFile
+    from .files import FILES, add
 
     # Identify the mode-share file according to the config setting
-    ExogenousDataFile(
-        ("mode-share", config.mode_share),
-        "mode share:n-t:ref",
-        "Reference (base year) mode share",
+    add(
+        key="mode share:n-t:exo",
+        path=("mode-share", config.mode_share),
+        name="Reference (base year) mode share",
+        units="dimensionless",
+        replace=True,
     )
 
     for f in FILES:

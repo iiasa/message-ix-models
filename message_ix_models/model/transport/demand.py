@@ -12,6 +12,7 @@ from message_ix import make_df
 
 from message_ix_models.util import broadcast
 
+from . import files as exo
 from .key import (
     cg,
     cost,
@@ -96,7 +97,7 @@ TASKS = [
     (("lambda:", "quantity_from_config", "config"), dict(name="lamda")),
     (("y::conv", "quantity_from_config", "config"), dict(name="year_convergence")),
     # Base passenger mode share (exogenous/reference data)
-    (ms + "base", "base_shares", "mode share:n-t:ref", n, t_modes, y),
+    (ms + "base", "base_shares", "mode share:n-t:exo", n, t_modes, y),
     # GDP expressed in PPP. The in the SSP(2024) input files, this conversion is already
     # applied, so no need to multiply by a mer_to_ppp factor here → simple alias.
     (gdp_ppp, gdp),
@@ -118,12 +119,7 @@ TASKS = [
     (price, "smooth", price_sel1),
     # Interpolate speed data
     (
-        (
-            "speed:scenario-n-t-y:0",
-            "interpolate",
-            "speed:scenario-n-t-y:exo",
-            "y::coords",
-        ),
+        ("speed:scenario-n-t-y:0", "interpolate", exo.speed, "y::coords"),
         dict(kwargs=dict(fill_value="extrapolate")),
     ),
     # Select speed data
@@ -175,12 +171,7 @@ TASKS = [
     # # Base freight activity from IEA EEI
     # ("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
     # Base year freight activity from file (n, t), with modes for the 't' dimension
-    (
-        "fv:n-t:historical",
-        "mul",
-        "freight mode share:n-t:ref",
-        "freight activity:n:ref",
-    ),
+    ("fv:n-t:historical", "mul", exo.mode_share_freight, exo.activity_freight),
     # …indexed to base-year values
     (gdp_index, "index_to", gdp_ppp, literal("y"), "y0"),
     (fv + "0", "mul", "fv:n-t:historical", gdp_index),
@@ -291,12 +282,7 @@ def pdt_per_capita(c: Computer) -> None:
     c.add("pdt slope:n", "div", pdt["delta"] / "y", gdp["delta"] / "y")
 
     # Select 'elasticity' from "pdt elasticity:scenario-n:exo"
-    c.add(
-        "pdt elasticity:n",
-        "select",
-        "pdt elasticity:scenario-n:exo",
-        "indexers:scenario",
-    )
+    c.add("pdt elasticity:n", "select", exo.pdt_elasticity, "indexers:scenario")
 
     # Adjust GDP by multiplying by 'elasticity'
     c.add(gdp[2], "mul", gdp[1], "pdt elasticity:n")

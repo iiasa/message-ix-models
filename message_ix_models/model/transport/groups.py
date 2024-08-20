@@ -16,20 +16,19 @@ log = logging.getLogger(__name__)
 
 def prepare_computer(c: "Computer") -> None:
     """Prepare `rep` for calculating transport consumer groups."""
+    from . import files as exo
     from .key import cg, pop_at
 
     c.add("indexers:n-cd", "indexers_n_cd", "config")
     # Population shares by area_type
     c.add(pop_at, urban_rural_shares, "population:n-y", "config")
     # Exogenous data for consumer group sizes
-    keys = c.infer_keys(
-        [
-            "population suburb share:*:exo",
-            "ma3t attitude:*:exo",
-            "ma3t driver:*:exo",
-            "ma3t population:*:exo",
-        ]
-    )
+    keys = [
+        exo.population_suburb_share,
+        exo.pop_share_attitude,
+        exo.pop_share_driver,
+        exo.pop_share_cd_at,
+    ]
     c.add(cg, cg_shares, pop_at, *keys, "indexers:n-cd", "indexers:cg")
 
 

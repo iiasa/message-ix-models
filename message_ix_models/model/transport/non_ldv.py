@@ -56,6 +56,7 @@ Units: TJ
 
 
 def prepare_computer(c: Computer):
+    from . import files as exo
     from .key import n, t_modes, y
 
     context: "Context" = c.graph["context"]
@@ -83,7 +84,7 @@ def prepare_computer(c: Computer):
     # Data for usage technologies
     k_usage = "transport nonldv usage::ixmp"
     keys.append(k_usage)
-    c.add(k_usage, usage_data, "load factor nonldv:t:exo", t_modes, n, y)
+    c.add(k_usage, usage_data, exo.load_factor_nonldv, t_modes, n, y)
 
     # Data for non-specified transport technologies
 
