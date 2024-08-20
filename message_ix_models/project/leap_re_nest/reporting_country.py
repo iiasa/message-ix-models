@@ -1,6 +1,6 @@
 import pandas as pd
 import pyam
-from message_ix.reporting import Reporter
+from message_ix.report import Reporter
 
 from message_ix_models.model.water.reporting import report
 from message_ix_models.util import package_data_path
@@ -245,7 +245,7 @@ def report_country(sc):
     irr_ww = [irr_string + x + "|M1" for x in irr_tecs]
 
     ### Secondary Energy, electricity ###
-    se_ec_iam = report_iam.filter(variable="out|offgrid_final_urb|electr|*").variable
+    # se_ec_iam = report_iam.filter(variable="out|offgrid_final_urb|electr|*").variable
     sec_en_string = "out|secondary|electr|"
     # nuclear
     electr_nuc = [sec_en_string + x + "|M1" for x in ["nuc_fbr", "nuc_hc", "nuc_lc"]]
@@ -329,21 +329,20 @@ def report_country(sc):
     ]
     electr_offgrid = electr_offgrid_urb + electr_offgrid_rur
 
-    electr_grid = (
-        electr_nuc
-        + electr_oil
-        + electr_gas
-        + electr_coal
-        + electr_biomass
-        + electr_geot
-        + electr_hydro
-        + electr_solar
-        + electr_wind
-        + electr_hydro
-    )
+    # electr_grid = (
+    #     electr_nuc
+    #     + electr_oil
+    #     + electr_gas
+    #     + electr_coal
+    #     + electr_biomass
+    #     + electr_geot
+    #     + electr_hydro
+    #     + electr_solar
+    #     + electr_wind
+    # )
 
     ### investment ###
-    inv_iam = report_iam.filter(variable="inv cost|*").variable
+    # inv_iam = report_iam.filter(variable="inv cost|*").variable
     inv_en_string = "inv cost|"
     # nuclear
     inv_el_nuc = [inv_en_string + x for x in ["nuc_fbr", "nuc_hc", "nuc_lc"]]
@@ -397,18 +396,17 @@ def report_country(sc):
     inv_el_offgrid_rur = ["inv cost|offgrid_rur"]
     inv_el_offgrid = inv_el_offgrid_urb + inv_el_offgrid_rur
 
-    inv_el_grid = (
-        inv_el_nuc
-        + inv_el_oil
-        + inv_el_gas
-        + inv_el_coal
-        + inv_el_biomass
-        + inv_el_geot
-        + inv_el_hydro
-        + inv_el_solar
-        + inv_el_wind
-        + inv_el_hydro
-    )
+    # inv_el_grid = (
+    #     inv_el_nuc
+    #     + inv_el_oil
+    #     + inv_el_gas
+    #     + inv_el_coal
+    #     + inv_el_biomass
+    #     + inv_el_geot
+    #     + inv_el_hydro
+    #     + inv_el_solar
+    #     + inv_el_wind
+    # )
     # transm and distribution
     t_d_tec = [
         "elec_t_d",
@@ -478,7 +476,7 @@ def report_country(sc):
     inv_irr = [inv_en_string + x for x in irr_tecs]
 
     # fix and variable costs"
-    tom_iam = report_iam.filter(variable="total om cost|*").variable
+    # tom_iam = report_iam.filter(variable="total om cost|*").variable
     tom_en_string = "total om cost|"
     # nuclear
     tom_el_nuc = [tom_en_string + x for x in ["nuc_fbr", "nuc_hc", "nuc_lc"]]
@@ -532,18 +530,17 @@ def report_country(sc):
     tom_el_offgrid_rur = ["total om cost|offgrid_rur"]
     tom_el_offgrid = tom_el_offgrid_urb + tom_el_offgrid_rur
 
-    tom_el_grid = (
-        tom_el_nuc
-        + tom_el_oil
-        + tom_el_gas
-        + tom_el_coal
-        + tom_el_biomass
-        + tom_el_geot
-        + tom_el_hydro
-        + tom_el_solar
-        + tom_el_wind
-        + tom_el_hydro
-    )
+    # tom_el_grid = (
+    #     tom_el_nuc
+    #     + tom_el_oil
+    #     + tom_el_gas
+    #     + tom_el_coal
+    #     + tom_el_biomass
+    #     + tom_el_geot
+    #     + tom_el_hydro
+    #     + tom_el_solar
+    #     + tom_el_wind
+    # )
     # transmission & distribtion
     tom_t_d = [tom_en_string + x for x in t_d_tec]
     # non electricity cathegories aggregated
@@ -732,7 +729,7 @@ def report_country(sc):
     )
     map_unit = pd.DataFrame(
         [
-            ["Secondary Energy|Electricity", 0.03154, "EJ/yr"],  # from GWa to TWh
+            ["Secondary Energy\\|Electricity", 0.03154, "EJ/yr"],  # from GWa to TWh
             ["Investment", 0.001, "billion US$2010/yr"],
             ["Total Operation Management Cost", 0.001, "billion US$2010/yr"],
             ["Useful Energy", 0.03154, "EJ/yr"],
@@ -794,11 +791,12 @@ def report_country(sc):
         report_pd.rename(columns={last_column_name: "value"}, inplace=True)
 
     for index, row in map_unit.iterrows():
-        report_pd.loc[(report_pd["variable"].str.contains(row["names"])), "unit"] = row[
-            "unit"
-        ]
-        report_pd.loc[(report_pd["variable"].str.contains(row["names"])), "value"] = (
-            report_pd["value"] * row["conv"]
+        print(row["conv"])
+        condition = report_pd["variable"].str.contains(row["names"])
+        print(report_pd.loc[condition, "variable"].unique())
+        report_pd.loc[condition, "unit"] = row["unit"]
+        report_pd.loc[condition, "value"] = (
+            report_pd.loc[condition, "value"] * row["conv"]
         )
 
     out_path = package_data_path().parents[0] / "reporting_output/"
