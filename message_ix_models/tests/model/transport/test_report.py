@@ -1,11 +1,9 @@
 import logging
 from copy import deepcopy
-from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import genno
 import pytest
-from packaging.version import parse
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
@@ -24,7 +22,10 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-@MARK[6]
+@pytest.mark.xfail(
+    reason="Requires variables in .report.legacy.default_tables that have not been "
+    "migrated from message_data"
+)
 def test_configure_legacy():
     from message_ix_models.report.legacy.default_tables import TECHS
 
@@ -57,7 +58,7 @@ def test_configure_legacy():
 @pytest.mark.parametrize(
     "regions, years",
     (
-        param("R11", "A", marks=MARK[1]),
+        param("R11", "A", marks=MARK[2](ValueError)),
         ("R12", "A"),
         param("R14", "A", marks=MARK[2](genno.ComputationError)),
         param("ISR", "A", marks=MARK[3]),
@@ -150,11 +151,6 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
 
 
 @sim.to_simulate.minimum_version
-@pytest.mark.xfail(
-    raises=AssertionError,
-    reason="Temporary, for #549",
-    condition=parse(version("message_ix")) >= parse("3.8.0"),
-)
 @pytest.mark.usefixtures("preserve_report_callbacks")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
