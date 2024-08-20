@@ -45,19 +45,8 @@ def read_config() -> Context:
 
         context[key] = load_package_data(*_parts)
 
-    # Read material.yaml
-    # FIXME What is this personal information doing here?
-    # context.metadata_path=Path("C:/Users/unlu/Documents/GitHub/message_data/data")
-    # context.load_config("material", "set")
-
     # Use a shorter name
     context["material"] = context["material set"]
-
-    # Merge technology.yaml with set.yaml
-    # context["material"]["steel"]["technology"]["add"] = (
-    #     context.pop("transport technology")
-    # )
-
     return context
 
 
@@ -247,7 +236,7 @@ def price_fit(df: pd.DataFrame) -> float:
     return val
 
 
-def cost_fit(df) -> float:
+def cost_fit(df: pd.DataFrame) -> float:
     """
     Python implementation of cost_ref parameter estimation implemented in
      MESSAGEix-MACRO calibration files.
@@ -272,8 +261,11 @@ def cost_fit(df) -> float:
 
 
 def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
-    """
-    Function to automate manual steps in MACRO calibration
+    """Function to automate manual steps in MACRO calibration
+
+    Tries to open a xlsx file with the given "fname" and
+    writes cost_ref and price_ref values derived from scenario
+    "COST_NODAL_NET" and PRICE_COMMODITY" variables to the respective xlsx sheets.
 
     Parameters
     ----------
@@ -282,33 +274,33 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     fname : str
         file name of MACRO file used for calibration
     """
-    # Change this according to the relevant data path 
+    # Change this according to the relevant data path
     path = "C:/Users/unlu/Documents/MyDocuments_IIASA/Material_Flow/macro_calibration/"
-
     wb = pxl.load_workbook(path + fname)
 
+    fmy = scenario.firstmodelyear
+    nodes = [
+        "R12_AFR",
+        "R12_CHN",
+        "R12_EEU",
+        "R12_FSU",
+        "R12_LAM",
+        "R12_MEA",
+        "R12_NAM",
+        "R12_PAO",
+        "R12_PAS",
+        "R12_RCPA",
+        "R12_SAS",
+        "R12_WEU",
+    ]
+
     # cost_ref
-    years = [i for i in range(2020, 2055, 5)]
-    df = scenario.var("COST_NODAL_NET", filters={"year": years})
-    df["node"] = pd.Categorical(
-        df["node"],
-        [
-            "R12_AFR",
-            "R12_CHN",
-            "R12_EEU",
-            "R12_FSU",
-            "R12_LAM",
-            "R12_MEA",
-            "R12_NAM",
-            "R12_PAO",
-            "R12_PAS",
-            "R12_RCPA",
-            "R12_SAS",
-            "R12_WEU",
-        ],
-    )
-    df = df[df["year"].isin([2020, 2025, 2030])].groupby(["node"]).apply(cost_fit)
+    years_cost = [i for i in range(fmy, fmy + 15, 5)]
+    df = scenario.var("COST_NODAL_NET", filters={"year": years_cost})
+    df["node"] = pd.Categorical(df["node"], nodes)
+    df = df[df["year"].isin(years_cost)].groupby(["node"]).apply(cost_fit)
     ws = wb.get_sheet_by_name("cost_ref")
+    # write derived values to sheet. Cell B7 (MEA region) is skipped.
     for i in range(2, 7):
         ws[f"B{i}"].value = df.values[i - 2]
     for i in range(8, 14):
@@ -316,29 +308,12 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
 
     # price_ref
     comms = ["i_feed", "i_spec", "i_therm", "rc_spec", "rc_therm", "transport"]
-    years = [i for i in range(2020, 2055, 5)]
-    df = scenario.var("PRICE_COMMODITY", filters={"commodity": comms, "year": years})
-    df["node"] = pd.Categorical(
-        df["node"],
-        [
-            "R12_AFR",
-            "R12_EEU",
-            "R12_FSU",
-            "R12_LAM",
-            "R12_MEA",
-            "R12_NAM",
-            "R12_PAO",
-            "R12_PAS",
-            "R12_SAS",
-            "R12_WEU",
-            "R12_CHN",
-            "R12_RCPA",
-        ],
+    years_price = [i for i in range(fmy, 2055, 5)]
+    df = scenario.var(
+        "PRICE_COMMODITY", filters={"commodity": comms, "year": years_price}
     )
-    df["commodity"] = pd.Categorical(
-        df["commodity"],
-        ["i_feed", "i_spec", "i_therm", "rc_spec", "rc_therm", "transport"],
-    )
+    df["node"] = pd.Categorical(df["node"], nodes)
+    df["commodity"] = pd.Categorical(df["commodity"], comms)
     df = df.groupby(["node", "commodity"]).apply(price_fit)
     ws = wb.get_sheet_by_name("price_ref")
     for i in range(2, 62):

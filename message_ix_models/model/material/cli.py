@@ -324,7 +324,7 @@ def add_building_ts(context):
 )
 @click.option("--profile", default=False)
 @click.pass_obj
-def run_reporting(context, remove_ts, profile, prep_for_explorer):
+def run_reporting(context, remove_ts, profile):
     """Run materials specific reporting, then legacy reporting."""
     from message_ix_models.model.material.report.reporting import report
     from message_ix_models.report.legacy.iamc_report_hackathon import (
