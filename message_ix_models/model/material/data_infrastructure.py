@@ -13,7 +13,7 @@ from message_ix_models.util import (
 )
 
 CASE_SENS = "mean"
-INFRA_SCEN = "baseline"
+INFRA_SCEN = "ScP3"
 INPUTFILE = "stocks_forecast_MESSAGE.csv"
 
 print('Adding infrastructure demand with:')
@@ -147,14 +147,8 @@ def get_inf_mat_demand(
     commod, year="2020", inputfile=INPUTFILE, case=CASE_SENS, infra_scenario = INFRA_SCEN
 ):
     a, b, c = read_timeseries_infrastructure(inputfile, case, infra_scenario)
-    print('Outputs from read_timeseries_infrastructure function')
-    print(a)
-    print(b)
-    print(c)
     if not year == "all":  # specific year
         cc = c[(c.commodity == commod) & (c.year == year)].reset_index(drop=True)
-        print('cc')
-        print(cc)
     else:  # all years
         cc = c[(c.commodity == commod)].reset_index(drop=True)
     return cc
@@ -168,8 +162,6 @@ def adjust_demand_param(scen):
     comms = ["steel", "concrete", "aluminum"]
     INPUTFILE = package_data_path("material", "infrastructure", "stocks_forecast_MESSAGE.csv")
     for c in comms:
-        print('adjsut demand commodity')
-        print(c)
         mat_inf_all = get_inf_mat_demand(
             c,
             inputfile=INPUTFILE,
@@ -178,17 +170,10 @@ def adjust_demand_param(scen):
             infra_scenario=INFRA_SCEN
         ).rename(columns={"value": "inf_demand"})
 
-        print('mat_inf_all')
-        print(mat_inf_all)
-        mat_inf_all.to_excel('mat_inf_nonasphlt.xlsx')
-
         mat_inf_all["year"] = mat_inf_all["year"].astype(int)
 
         sub_mat_demand = scen_mat_demand.loc[scen_mat_demand.commodity == c]
 
-        print('scenario material demand')
-        print(sub_mat_demand)
-        sub_mat_demand.to_excel('sub_mat_demand.xlsx')
         # print("old", sub_mat_demand.loc[sub_mat_demand.year >=2025])
 
 
@@ -198,19 +183,9 @@ def adjust_demand_param(scen):
             how="left",
         )
 
-        print('joined table')
-        print(sub_mat_demand)
-        sub_mat_demand.to_excel('joined_table.xlsx')
 
         sub_mat_demand["value"] = sub_mat_demand["value"] + sub_mat_demand["inf_demand"]
-        print('the sum')
-        print(sub_mat_demand)
-
         sub_mat_demand = sub_mat_demand.drop(columns=["inf_demand"]).dropna(how="any")
-
-        print('the sum')
-        print(sub_mat_demand)
-        sub_mat_demand.to_excel('sub_mat_demand_final.xlsx')
 
         scen.add_par("demand", sub_mat_demand.loc[sub_mat_demand.year >= 2025])
 
@@ -226,10 +201,6 @@ def adjust_demand_param(scen):
     mat_inf_asphalt['level'] = 'demand'
     mat_inf_asphalt["time"] = "year"
     mat_inf_asphalt["unit"] = "t"
-
-    print('asphalt demand')
-    print(mat_inf_asphalt)
-    mat_inf_asphalt.to_excel('mat_inf_asphalt.xlsx')
 
     mat_inf_asphalt = mat_inf_asphalt[~mat_inf_asphalt['year'].isin([2065, 2075, 2085, 2095, 2105])]
 
