@@ -4,9 +4,10 @@ import message_ix
 import pandas as pd
 from message_data.tools.utilities import get_nodes
 from message_ix import make_df
-from share_constraints_constants import other_ind_th_tecs
 
-from message_ix_models.util import broadcast, same_node
+from message_ix_models.util import broadcast, package_data_path, same_node
+
+from .share_constraints_constants import other_ind_th_tecs
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -394,7 +395,7 @@ def add_foil_shr_constraint():
 def add_coal_constraint(scen):
     name = "UE_industry_th_coal"
     share_reg_values = pd.read_csv(
-        "C:/Users/maczek/PycharmProjects/IEA-statistics-analysis/notebooks/coal_i_shares_2020.csv"
+        package_data_path("material", "other", "coal_i_shares_2020.csv")
     )
     add_comm_share(
         scen,
