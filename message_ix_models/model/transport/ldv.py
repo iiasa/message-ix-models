@@ -594,7 +594,7 @@ def stock(c: Computer) -> Key:
     # multi-year periods)
     c.add("sales fraction:n-t-y:ldv", "sales_fraction_annual", exo.age_ldv)
     # Absolute sales in preceding years
-    c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:y:ldv")
+    c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:n-t-y:ldv")
     # Aggregate to model periods
     c.add(
         "sales:n-t-y:ldv",
