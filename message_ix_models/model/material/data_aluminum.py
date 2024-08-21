@@ -539,7 +539,6 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
 
     s_info = ScenarioInfo(scenario)
 
-    modelyears = s_info.Y
     yv_ya = s_info.yv_ya
     year_all = yv_ya["year_vtg"].unique()
 
