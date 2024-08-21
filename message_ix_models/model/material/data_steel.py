@@ -518,15 +518,17 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df_demand = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
+    df_demand = material_demand_calc.derive_demand(
+        "steel", scenario, old_gdp=False, ssp=ssp
+    )
     results[parname].append(df_demand)
 
     common = dict(
-    year_vtg=yv_ya.year_vtg,
-    year_act=yv_ya.year_act,
-    time="year",
-    time_origin="year",
-    time_dest="year",
+        year_vtg=yv_ya.year_vtg,
+        year_act=yv_ya.year_act,
+        time="year",
+        time_origin="year",
+        time_dest="year",
     )
 
     # Add CCS as addon
@@ -534,19 +536,24 @@ def gen_data_steel(scenario, dry_run=False):
     bf_tec = ["bf_steel"]
     df = make_df(
         parname, mode="M2", type_addon="bf_ccs_steel_addon", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology= bf_tec)
+    ).pipe(broadcast, node=nodes, technology=bf_tec)
     results[parname].append(df)
 
     dri_gas_tec = ["dri_gas_steel"]
     df = make_df(
-        parname, mode="M1", type_addon="dri_gas_ccs_steel_addon", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology= dri_gas_tec)
+        parname,
+        mode="M1",
+        type_addon="dri_gas_ccs_steel_addon",
+        value=1,
+        unit="-",
+        **common,
+    ).pipe(broadcast, node=nodes, technology=dri_gas_tec)
     results[parname].append(df)
 
     dri_tec = ["dri_steel"]
     df = make_df(
         parname, mode="M1", type_addon="dri_steel_addon", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology= dri_tec)
+    ).pipe(broadcast, node=nodes, technology=dri_tec)
     results[parname].append(df)
 
     # Concatenate to one data frame per parameter
@@ -555,12 +562,14 @@ def gen_data_steel(scenario, dry_run=False):
     results["initial_new_capacity_up"] = pd.concat(
         [
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="dri_gas_ccs_steel",
-                material = "steel"
+                df_demand=df_demand.copy(deep=True),
+                technology="dri_gas_ccs_steel",
+                material="steel",
             ),
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="bf_ccs_steel",
-                material = "steel"
+                df_demand=df_demand.copy(deep=True),
+                technology="bf_ccs_steel",
+                material="steel",
             ),
         ]
     )
