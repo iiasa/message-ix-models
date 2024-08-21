@@ -165,7 +165,7 @@ def generate(
     # infeasibilities) when running on SSP(2024) base scenarios
     solve_config = SolveConfig(
         reserve_margin=False,
-        solve=dict(model="MESSAGE", solve_options=dict(lpmethod=4, scaind=1)),
+        solve=dict(model="MESSAGE", solve_options=dict(iis=1, lpmethod=4, scaind=1)),
     )
     # Set the default .report.Config key for ".* reported" steps
     register("model.transport")
