@@ -97,8 +97,8 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
         return (
             pd.concat(
                 [
-                    dfs[0].to_series().rename("total_gdp"),
-                    dfs[1].to_series().rename("total_population"),
+                    dfs[0].to_series().rename("total_population"),
+                    dfs[1].to_series().rename("total_gdp"),
                     dfs[2].to_series().rename("gdp_ppp_per_capita"),
                     dfs[3].to_series().rename("gdp_ratio_reg_to_reference"),
                 ],
