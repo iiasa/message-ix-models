@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING, Literal, Mapping
 
 import ixmp
 import message_ix
-from message_ix import make_df
 import numpy as np
 import pandas as pd
 from genno import Computer
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import (
-    read_config,
     remove_from_list_if_exists,
 )
 from message_ix_models.model.structure import get_region_codes
@@ -112,8 +111,16 @@ def add_macro_COVID(
             "C:/", "Users", "maczek", "Downloads", "macro", filename
         )
     else:
-        xls_file = os.path.join("C:\\", "Users", "unlu", "Documents",
-        "MyDocuments_IIASA", "Material_Flow", "macro_calibration" , filename)
+        xls_file = os.path.join(
+            "C:\\",
+            "Users",
+            "unlu",
+            "Documents",
+            "MyDocuments_IIASA",
+            "Material_Flow",
+            "macro_calibration",
+            filename,
+        )
 
     # Making a dictionary from the MACRO Excel file
     xls = pd.ExcelFile(xls_file)
@@ -1886,7 +1893,9 @@ def add_cement_bounds_2020(sc):
     sc.commit("added lower and upper bound for fuels for cement 2020.")
 
 
-def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFrame:
+def read_sector_data(
+    scenario: message_ix.Scenario, sectname: str, file: str
+) -> pd.DataFrame:
     """
     Read sector data for industry with sectname
 
@@ -1906,9 +1915,6 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFra
     # Now used for steel and cement, which are in one file
 
     import numpy as np
-
-    # Ensure config is loaded, get the context
-    context = read_config()
 
     s_info = ScenarioInfo(scenario)
 
@@ -2230,33 +2236,6 @@ def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
     return
 
 
-if __name__ == "__main__":
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "SSP_dev_SSP2_v0.1_Blv0.6", "baseline_prep_lu_bkp_solved_materials"
-    )
-
-    # add_macro_COVID(scen, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx")
-
-    df_hist_new = calc_hist_activity(scen, [2015])
-    print()
-    # df_demand_new = modify_industry_demand(scen, 2015)
-    # old_dict = modify_demand_and_hist_activity_debug(scen)
-    #
-    # df = get_hist_act_data("IEA_mappings_furnaces.csv", years=[2015])
-    # df.index.names = ["node_loc", "technology", "year_act"]
-    # df_inp = scen.par(
-    #     "input",
-    #     filters={
-    #         "year_vtg": 2020,
-    #         "year_act": 2020,
-    #         "mode": "high_temp",
-    #         "node_loc": "R12_AFR",
-    #     },
-    # )
-    # df = df_inp.set_index(["technology"]).join(df).dropna()
-    # df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
-    # print()
 def calculate_ini_new_cap(df_demand, technology, material):
     """
     Derive initial_new_capacity_up parametrization for CCS based on cement demand
