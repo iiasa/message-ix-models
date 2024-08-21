@@ -178,14 +178,18 @@ def prepare_computer(c: Computer):
         keys.append(c.add("ldv hnc::ixmp", "as_message_df", k + "1", **kw))
 
         # CAP_NEW/bound_new_capacity_{lo,up}
-        # - Select only data from y₀ and later
+        # - Select only data from y₀ and later.
+        # - Discard values for ICE_conv.
+        #   TODO Do not hard code this label; instead, identify the technology with the
+        #   largest share and avoid setting constraints on it.
         # - Add both upper and lower constraints to ensure the solution contains exactly
         #   the given value.
         # - Add a small margin to ensure feasibility.
         c.add(k + "2", "select", k, indexers=dict(yv=info.Y))
+        c.add(k + "3", "select", k + "2", indexers=dict(t=["ICE_conv"]), inverse=True)
         for s in ("lo", "up"):
             kw.update(name=f"bound_new_capacity_{s}")
-            keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "2", **kw))
+            keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "3", **kw))
 
     k_all = "transport ldv::ixmp"
     c.add(k_all, "merge_data", *keys)
