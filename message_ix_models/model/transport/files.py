@@ -447,10 +447,10 @@ values for LDVs""",
 
 t_share_ldv = add(
     path="ldv-t-share",
-    key="tech share:t:ldv+exo",
+    key="tech share:n-t:ldv+exo",
     name="Share of total stock for LDV technologies",
     description="""
-- Values must sum to 1.
+- Values must sum to 1 across the 't' dimension.
 - Technology codes annotated "historical-only: True" (e.g. ICE_L_ptrp) must be omitted
   or have zero values. If not, incompatible/infeasible constraint values are created.
 """,
