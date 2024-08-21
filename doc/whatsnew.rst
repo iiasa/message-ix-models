@@ -13,6 +13,10 @@ Next release
 
 - Update :doc:`/transport/index` (:pull:`213`).
 - Add "LED", "SSP4", and "SSP5" as values for the :program:`--ssp=…` option in :func:`.common_params` (:pull:`233`).
+  - Fix naming of GDP and population columns in SSP data aggregation (:pull:`219`).
+- Fix and update :doc:`/api/tools-costs` (:pull:`206`)
+  - Made edits to the inputs for storage, CSP, hydrogen, and industry technologies (:pull:`206`).
+  - Replaced solar and wind technologies with new ones (:pull:`206`).
 
 v2024.8.6
 =========
@@ -32,9 +36,6 @@ v2024.8.6
   - Modify to use 2023 release of IEA WEO data and to use 2022 historic data for the base year (:pull:`187`).
   - Change the default final year to 2110 (:pull:`190`).
   - Add :attr:`~.costs.Config.use_vintages` to control whether vintages are used in computing fixed O&M costs (:pull:`195`).
-  - Add :attr:`~.costs.Config.use_vintages` to control whether vintages are used in computing fixed O&M costs (:pull:`195`).  
-  - Made edits to the inputs for storage, CSP, hydrogen, and industry technologies (:pull:`206`).
-  - Replaced solar and wind technologies with new ones (:pull:`206`).
 
 v2024.4.22
 ==========
