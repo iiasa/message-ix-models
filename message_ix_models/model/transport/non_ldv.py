@@ -175,6 +175,8 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
 
 
 def bound_activity_lo(c: Computer) -> List[Key]:
+    """Set minimum activity for certain technologies to ensure |y0| energy use."""
+
     @lru_cache
     def techs_for(mode: Code, commodity: str) -> List[Code]:
         """Return techs that are (a) associated with `mode` and (b) use `commodity`."""
@@ -194,9 +196,7 @@ def bound_activity_lo(c: Computer) -> List[Key]:
         rows: List[List] = []
         cols = ["n", "t", "c", "value"]
         for (n, modes, c), value in cfg.minimum_activity.items():
-            for m in (
-                ["2W", "BUS", "LDV", "freight truck"] if modes == "ROAD" else ["RAIL"]
-            ):
+            for m in ["2W", "BUS", "freight truck"] if modes == "ROAD" else ["RAIL"]:
                 m_idx = technologies.index(m)
                 rows.extend([n, t, c, value] for t in techs_for(technologies[m_idx], c))
 
