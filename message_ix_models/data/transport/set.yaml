@@ -205,6 +205,9 @@ unit:
     Mv: 10⁶ vehicle
     million * v: 10⁶ vehicle
 
+    # Additions to capacity
+    million * v / a: 10⁶ vehicle / year
+
     # Activity
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
     Gp km: 10⁹ passenger-kilometre
