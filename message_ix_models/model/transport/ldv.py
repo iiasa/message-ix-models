@@ -595,14 +595,16 @@ def stock(c: Computer) -> Key:
     c.add("sales fraction:n-t-y:ldv", "sales_fraction_annual", exo.age_ldv)
     # Absolute sales in preceding years
     c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:n-t-y:ldv")
-    # Aggregate to model periods
+    # Aggregate to model periods; total sales across the period
     c.add(
-        "sales:n-t-y:ldv",
+        "sales:n-t-y:ldv+total",
         "aggregate",
         "sales:n-t-y:ldv+annual",
         "y::annual agg",
         keep=False,
     )
+    # Divide by duration_period for the equivalent of CAP_NEW/historical_new_capacity
+    c.add("sales:n-t-y:ldv", "div", "sales:n-t-y:ldv+total", "duration_period:y")
 
     # Rename dimensions to match those expected in prepare_computer(), above
     k = Key("sales:nl-t-yv:ldv")
