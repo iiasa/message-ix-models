@@ -1110,12 +1110,11 @@ def add_coal_lowerbound_2020_cement(scen: "Scenario") -> None:
     ]
 
 
-def get_hist_act(scen, years):
+def get_hist_act(scen, years, data_file_path):
     s_info = ScenarioInfo(scen)
     fmy = s_info.y0
-    iea_path = r"C:/Users\maczek\OneDrive - IIASA/S3_IEA_REV2024_FiltISO_TJ_BIO.parquet"
 
-    df = get_2020_industry_activity(years, iea_path)
+    df = get_2020_industry_activity(years, data_file_path)
     ind_tecs = [i for i in scen.set("technology") if i.endswith("_i")]
     inp = scen.par(
         "input", filters={"technology": ind_tecs, "year_act": years, "year_vtg": years}
@@ -1125,10 +1124,19 @@ def get_hist_act(scen, years):
         columns={"value": "efficiency"}
     )
     df = df.join(inp["efficiency"]).dropna()
-    df["Value"] = df["Value"] / df["efficiency"]
+    df["value"] = df["Value"] / df["efficiency"]
+
+    df = df.reset_index()
+    df["mode"] = "M1"
+    df["unit"] = "GWa"
+    df["time"] = "year"
+    df = message_ix.util.make_df("historical_activity", **df)
     return {
-        "bound_activity_up": df[df.index.get_level_values(2).ge(fmy)],
-        "historical_activity": df[df.index.get_level_values(2).lt(fmy)],
+        "bound_activity_up": df[df["year_act"].ge(fmy)],
+        "bound_activity_lo": df[df["year_act"].ge(fmy)].assign(
+            value=lambda x: x["value"] * 0.95, axis=1
+        ),
+        "historical_activity": df[df["year_act"].lt(fmy)],
     }
 
 
