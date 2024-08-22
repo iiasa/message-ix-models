@@ -35,6 +35,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from message_ix.report import Reporter
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import package_data_path
 
 matplotlib.use("Agg")
 
