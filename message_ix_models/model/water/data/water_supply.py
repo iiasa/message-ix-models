@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from message_ix import make_df
+from message_ix import Scenario, make_df
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.demands import read_water_availability
@@ -144,8 +144,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     # Reference to the water configuration
     info = context["water build info"]
     # load the scenario from context
-    scen = context.get_scenario()
-    # scen = Scenario(context.get_platform(), **context.core.scenario_info)
+    # scen = context.get_scenario()
+    scen = Scenario(context.get_platform(), **context.core.scenario_info)
 
     # year_wat = (2010, 2015)
     fut_year = info.Y
@@ -857,7 +857,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         # dataframe to put constraints on env flows
         eflow_df = make_df(
             "bound_activity_lo",
-            node_loc="B" + df_env["Region"],
+            node_loc="B" + df_env["Region"].astype(str),
             technology="return_flow",
             year_act=df_env["year"],
             mode="M1",
