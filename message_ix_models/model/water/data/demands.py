@@ -201,7 +201,6 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     for key, df in d.items():
         df.rename(columns={"Unnamed: 0": "year"}, inplace=True)
         df.set_index("year", inplace=True)
-        df = df.drop(columns=["year"])
         dfs[key] = df
 
     # convert the dictionary of dataframes to xarray
@@ -928,7 +927,7 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     df_share = make_df(
         "share_commodity_lo",
         shares="share_low_lim_GWat",
-        node_share="B" + df_gw["Region"],
+        node_share="B" + df_gw["Region"].astype(str),
         year_act=df_gw["year"],
         time=df_gw["time"],
         value=df_gw["value"]
