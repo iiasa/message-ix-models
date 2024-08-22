@@ -66,7 +66,13 @@ qtot_7p0_gfdl = pd.read_csv(wd11 + f"{var}_monthly_gfdl-esm4_ssp370_future.csv")
 )
 
 new_cols = pd.date_range("2015-01-01", periods=1032, freq="M")
-qtot_7p0_gfdl.columns = new_cols
+# TODO Mypy complains for me:
+# Incompatible types in assignment (expression has type "DatetimeIndex", variable has type "Index[str]") # noqa: E501
+# I don't know how to fix it since I don't know what you're doing here.
+# Are you adding columns? Overwriting existing ones keeping the data?
+# Deleting all existing columns? Maybe this works instead?
+qtot_7p0_gfdl.columns = pd.Index([str(column) for column in new_cols])
+# qtot_7p0_gfdl.columns = new_cols
 
 
 qtot_2p6_gfdl = pd.read_csv(wd11 + f"{var}_monthly_gfdl-esm4_ssp126_future.csv").drop(
@@ -85,24 +91,22 @@ qtot_2p6_gfdl = pd.read_csv(wd11 + f"{var}_monthly_gfdl-esm4_ssp126_future.csv")
 )
 
 new_cols = pd.date_range("2015-01-01", periods=1032, freq="M")
-qtot_2p6_gfdl.columns = new_cols
+# Same as above
+qtot_2p6_gfdl.columns = pd.Index([str(column) for column in new_cols])
+# qtot_2p6_gfdl.columns = new_cols
 
 
 qtot_2p6_gfdl_avg = qtot_2p6_gfdl[pd.date_range("2015-01-01", periods=192, freq="M")]
 qtot_7p0_gfdl_avg = qtot_7p0_gfdl[pd.date_range("2015-01-01", periods=192, freq="M")]
 
 val_2020 = (
-    qtot_7p0_gfdl_avg.groupby(qtot_7p0_gfdl_avg.columns.month, axis=1).mean()
-    + qtot_2p6_gfdl_avg.groupby(qtot_2p6_gfdl_avg.columns.month, axis=1).mean()
+    qtot_7p0_gfdl_avg.T.groupby(["month"]).mean()
+    + qtot_2p6_gfdl_avg.T.groupby(["month"]).mean()
 ) / 2
 val_2020_annual = val_2020.mean(axis=1)
 
-delta60 = (
-    qtot_7p0_gfdl_avg.groupby(qtot_7p0_gfdl_avg.columns.month, axis=1).mean() - val_2020
-)
-delta26 = (
-    qtot_2p6_gfdl_avg.groupby(qtot_2p6_gfdl_avg.columns.month, axis=1).mean() - val_2020
-)
+delta60 = qtot_7p0_gfdl_avg.T.groupby(["month"]).mean() - val_2020
+delta26 = qtot_2p6_gfdl_avg.T.groupby(["month"]).mean() - val_2020
 
 
 def bias_correction(df):
