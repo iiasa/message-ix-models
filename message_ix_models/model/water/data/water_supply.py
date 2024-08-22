@@ -68,7 +68,7 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw.drop(columns=["BCU_name"], inplace=True)
         df_sw.set_index(["MSGREG", "Region", "Mode"], inplace=True)
         df_sw = df_sw.stack().reset_index(level=0).reset_index()
-        df_sw.columns = ["region", "mode", "date", "MSGREG", "share"]
+        df_sw.columns = pd.Index(["region", "mode", "date", "MSGREG", "share"])
         df_sw.sort_values(["region", "date", "MSGREG", "share"], inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
         df_sw["time"] = "year"
@@ -111,7 +111,7 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw.drop(columns=["BCU_name"], inplace=True)
         df_sw.set_index(["MSGREG", "Region", "Mode"], inplace=True)
         df_sw = df_sw.stack().reset_index(level=0).reset_index()
-        df_sw.columns = ["node", "mode", "date", "MSGREG", "share"]
+        df_sw.columns = pd.Index(["node", "mode", "date", "MSGREG", "share"])
         df_sw.sort_values(["node", "date", "MSGREG", "share"], inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
         df_sw["time"] = pd.DatetimeIndex(df_sw["date"]).month
@@ -816,9 +816,9 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
-        df_env.index = df_x["BCU_name"]
+        df_env.index = df_x["BCU_name"].index
         df_env = df_env.stack().reset_index()
-        df_env.columns = ["Region", "years", "value"]
+        df_env.columns = pd.Index(["Region", "years", "value"])
         df_env.sort_values(["Region", "years", "value"], inplace=True)
         df_env.fillna(0, inplace=True)
         df_env.reset_index(drop=True, inplace=True)
@@ -839,9 +839,9 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
         # new_cols = pd.to_datetime(df_env.columns, format="%Y/%m/%d")
         # df_env.columns = new_cols
-        df_env.index = df_x["BCU_name"]
+        df_env.index = df_x["BCU_name"].index
         df_env = df_env.stack().reset_index()
-        df_env.columns = ["Region", "years", "value"]
+        df_env.columns = pd.Index(["Region", "years", "value"])
         df_env.sort_values(["Region", "years", "value"], inplace=True)
         df_env.fillna(0, inplace=True)
         df_env.reset_index(drop=True, inplace=True)

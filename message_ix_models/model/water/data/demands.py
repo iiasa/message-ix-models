@@ -1,7 +1,7 @@
 """Prepare data for adding demands"""
 
 import os
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Literal, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,9 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 
-def get_basin_sizes(basin: pd.DataFrame, node: str) -> Tuple[float, float]:
+def get_basin_sizes(
+    basin: pd.DataFrame, node: str
+) -> Sequence[Union[pd.Series, Literal[0]]]:
     """Returns the sizes of developing and developed basins for a given node"""
     temp = basin[basin["BCU_name"] == node]
     print(temp)
@@ -23,7 +25,11 @@ def get_basin_sizes(basin: pd.DataFrame, node: str) -> Tuple[float, float]:
     # sizes_### = sizes["###"] if "###" in sizes.index else 0
     sizes_dev = sizes["DEV"] if "DEV" in sizes.index else 0
     sizes_ind = sizes["IND"] if "IND" in sizes.index else 0
-    return sizes_dev, sizes_ind
+    return_tuple: tuple[Union[pd.Series, Literal[0]], Union[pd.Series, Literal[0]]] = (
+        sizes_dev,
+        sizes_ind,
+    )  # type: ignore # Somehow, mypy is unable to recognize the proper type without forcing it
+    return return_tuple
 
 
 def set_target_rate(df: pd.DataFrame, node: str, year: int, target: float) -> None:
@@ -185,7 +191,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     fns = [os.path.splitext(os.path.basename(x))[0] for x in list_of_csvs]
     fns = " ".join(fns).replace("ssp2_regional_", "").split()
     # dictionary for reading csv files
-    d = {}
+    d: dict[str, pd.DataFrame] = {}
 
     for i in range(len(fns)):
         d[fns[i]] = pd.read_csv(list_of_csvs[i])
@@ -194,7 +200,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     dfs = {}
     for key, df in d.items():
         df.rename(columns={"Unnamed: 0": "year"}, inplace=True)
-        df.index = df["year"]
+        df.set_index("year", inplace=True)
         df = df.drop(columns=["year"])
         dfs[key] = df
 
@@ -232,7 +238,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             "urbann_return2_baseline"
         )
         df_m = df_m[["year", "pid", "variable", "value", "month"]]
-        df_m.columns = ["year", "node", "variable", "value", "time"]
+        df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
 
         # remove yearly parts from df_dms
         df_dmds = df_dmds[
@@ -741,7 +747,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     return results
 
 
-def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFrame]:
+def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
     """
     Reads water availability data and bias correct
     it for the historical years and no climate
@@ -781,9 +787,9 @@ def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFr
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
 
-        df_sw.index = df_x["BCU_name"]
+        df_sw.index = df_x["BCU_name"].index
         df_sw = df_sw.stack().reset_index()
-        df_sw.columns = ["Region", "years", "value"]
+        df_sw.columns = pd.Index(["Region", "years", "value"])
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
@@ -804,9 +810,9 @@ def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFr
         # Read groundwater data
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
-        df_gw.index = df_x["BCU_name"]
+        df_gw.index = df_x["BCU_name"].index
         df_gw = df_gw.stack().reset_index()
-        df_gw.columns = ["Region", "years", "value"]
+        df_gw.columns = pd.Index(["Region", "years", "value"])
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
@@ -827,9 +833,9 @@ def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFr
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
 
-        df_sw.index = df_x["BCU_name"]
+        df_sw.index = df_x["BCU_name"].index
         df_sw = df_sw.stack().reset_index()
-        df_sw.columns = ["Region", "years", "value"]
+        df_sw.columns = pd.Index(["Region", "years", "value"])
         df_sw.sort_values(["Region", "years", "value"], inplace=True)
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
@@ -849,9 +855,9 @@ def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFr
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
 
-        df_gw.index = df_x["BCU_name"]
+        df_gw.index = df_x["BCU_name"].index
         df_gw = df_gw.stack().reset_index()
-        df_gw.columns = ["Region", "years", "value"]
+        df_gw.columns = pd.Index(["Region", "years", "value"])
         df_gw.sort_values(["Region", "years", "value"], inplace=True)
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)

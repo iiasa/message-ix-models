@@ -114,32 +114,30 @@ def start_creating_input_dataframe(
                 ]
             )
 
-            return pd.concat(
-                [
-                    inp_df,
-                    (
-                        make_df(
-                            "input",
-                            technology=rows["tec"],
-                            value=rows["value_high"],
-                            unit="-",
-                            level=rows["inlvl"],
-                            commodity=rows["incmd"],
-                            mode="Mf",
-                        )
-                        .pipe(
-                            broadcast,
-                            map_yv_ya_lt(
-                                year_wat, rows["technical_lifetime_mid"], first_year
-                            ),
-                            node_loc=df_node["node"],
-                            time=sub_time,
-                        )
-                        .pipe(same_node)
-                        .pipe(same_time)
-                    ),
-                ]
-            )
+    return pd.concat(
+        [
+            inp_df,
+            (
+                make_df(
+                    "input",
+                    technology=rows["tec"],
+                    value=rows["value_high"],
+                    unit="-",
+                    level=rows["inlvl"],
+                    commodity=rows["incmd"],
+                    mode="Mf",
+                )
+                .pipe(
+                    broadcast,
+                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    node_loc=df_node["node"],
+                    time=sub_time,
+                )
+                .pipe(same_node)
+                .pipe(same_time)
+            ),
+        ]
+    )
 
 
 def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:

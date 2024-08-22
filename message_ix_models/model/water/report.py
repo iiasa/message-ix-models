@@ -220,7 +220,7 @@ def report_iam_definition(
         report_df2.columns = report_df2.columns.str.title()
         report_df2.reset_index(drop=True, inplace=True)
         report_df2["Region"] = remove_duplicate(report_df2)
-        report_df2.columns = map(str.lower, report_df2.columns)
+        report_df2.columns = report_df2.columns.str.lower()
         # make iamc dataframe
         report_iam2 = pyam.IamDataFrame(report_df2)
         report_iam = report_iam.append(report_iam2)
@@ -1148,8 +1148,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         pop_drink["value"] = pop_drink.value * pop_drink.rate
         cols = pop_tot.columns
         pop_drink = pop_drink[cols]
-        pop_drink_tot = pop_drink_tot.append(pop_drink)
-        pop_sdg6 = pop_sdg6.append(pop_drink)
+        pop_drink_tot = pd.concat([pop_drink_tot, pop_drink])
+        pop_sdg6 = pd.concat([pop_sdg6, pop_drink])
 
         # Population|Sanitation Acces
         df_sani = df_rate[df_rate.new_var.str.contains("treatment")]
@@ -1157,8 +1157,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
         pop_sani["value"] = pop_sani.value * pop_sani.rate
         pop_sani = pop_sani[cols]
-        pop_sani_tot = pop_sani_tot.append(pop_drink)
-        pop_sdg6 = pop_sdg6.append(pop_sani)
+        pop_sani_tot = pd.concat([pop_sani_tot, pop_drink])
+        pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
 
         # total values
         pop_drink_tot = (
@@ -1180,7 +1180,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         pop_sani_tot["variable"] = "Population|Sanitation Access"
         pop_sani_tot = pop_sani_tot[cols]
         # global values
-        pop_sdg6 = pop_sdg6.append(pop_drink_tot).append(pop_sani_tot)
+        pop_sdg6 = pd.concat([pd.concat([pop_sdg6, pop_drink_tot]), pop_sani_tot])
         pop_sdg6_glb = (
             pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
             .sum()
@@ -1189,7 +1189,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         pop_sdg6_glb["region"] = "World"
         pop_sdg6_glb = pop_sdg6_glb[cols]
 
-        pop_sdg6 = pop_sdg6.append(pop_sdg6_glb)
+        pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
         log.info("Population|Drinking Water Access")
 
     # Add water prices, ad-hoc procedure
