@@ -58,6 +58,7 @@ def prepare_computer(c: Computer):
     In both cases, :func:`get_constraints` is used to generate constraints.
     """
     from genno import Key
+    from genno.core.attrseries import AttrSeries
 
     from . import factor
 
@@ -135,27 +136,49 @@ def prepare_computer(c: Computer):
     # Insert a scaling factor that varies according to SSP
     c.apply(factor.insert, lf_ny + "0", name="ldv load factor", target=lf_ny)
 
-    keys = [
-        c.add("ldv tech::ixmp", *final),
-        c.add(
-            "ldv usage::ixmp",
-            usage_data,
-            lf_ny,
-            "cg",
-            "n::ex world",
-            "t::transport LDV",
-            "y::model",
-        ),
-        c.add("ldv constraints::ixmp", constraint_data, "context"),
-        c.add(
-            "ldv capacity_factor::ixmp",
-            capacity_factor,
-            exo.activity_ldv,
-            "t::transport LDV",
-            "y",
-            "broadcast:y-yv-ya",
-        ),
-    ]
+    # Keys to be included in combined data
+    keys = []
+
+    t_ldv = "t::transport LDV"
+
+    # Extend (forward fill) lifetime to cover all periods
+    c.add(exo.lifetime_ldv + "0", "extend_y", exo.lifetime_ldv, "y", dim="yv")
+    # Broadcast to all nodes
+    c.add(
+        "lifetime:nl-yv:ldv",
+        "broadcast_n",
+        exo.lifetime_ldv + "0",
+        "n::ex world",
+        dim="nl",
+    )
+    # Broadcast to all LDV technologies
+    # TODO Use a named operator like genno.operator.expand_dims, instead of the method
+    #      of the AttrSeries class
+    c.add("lifetime:nl-t-yv:ldv", AttrSeries.expand_dims, "lifetime:nl-yv:ldv", t_ldv)
+    # Convert to MESSAGE data structure
+    keys.append(Key("technical_lifetime::ldv+ixmp"))
+    c.add(
+        keys[-1],
+        "as_message_df",
+        "lifetime:nl-t-yv:ldv",
+        name=keys[-1].name,
+        dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
+        common={},
+    )
+
+    # Add further keys for MESSAGE-structured data
+    # Techno-economic attributes
+    keys.append("ldv tech::ixmp")
+    c.add(keys[-1], *final)
+    # Usage
+    keys.append("ldv usage::ixmp")
+    c.add(keys[-1], usage_data, lf_ny, "cg", "n::ex world", t_ldv, "y::model")
+    # Constraints
+    keys.append("ldv constraints::ixmp")
+    c.add(keys[-1], constraint_data, "context")
+    # Capacity factor
+    keys.append("ldv capacity_factor::ixmp")
+    c.add(keys[-1], capacity_factor, exo.activity_ldv, t_ldv, "y", "broadcast:y-yv-ya")
 
     # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
     if config.ldv_stock_method == "A":
@@ -313,7 +336,6 @@ def get_USTIMES_MA3T(
 
     # Retrieve configuration and ScenarioInfo
     config: "Config" = context.transport
-    technical_lifetime = config.ldv_lifetime["average"]
     info = config.base_model_info
     spec = config.spec
 
@@ -384,11 +406,6 @@ def get_USTIMES_MA3T(
         .pipe(broadcast, year_act=info.Y)
         .query("year_act >= year_vtg")
         .pipe(same_node)
-    )
-
-    # Add technical lifetimes
-    result.update(
-        make_matched_dfs(base=result["output"], technical_lifetime=technical_lifetime)
     )
 
     # Transform costs
