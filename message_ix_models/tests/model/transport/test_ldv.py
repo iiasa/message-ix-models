@@ -1,6 +1,5 @@
 import logging
 
-import genno
 import pandas as pd
 import pytest
 from iam_units import registry
@@ -28,7 +27,7 @@ log = logging.getLogger(__name__)
         param("ISR", marks=testing.MARK[3]),
         "R11",
         "R12",
-        param("R14", marks=testing.MARK[2](genno.ComputationError)),
+        "R14",
     ],
 )
 def test_get_ldv_data(tmp_path, test_context, source, regions, years):
@@ -70,6 +69,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
         "initial_activity_up",
         "input",
         "output",
+        "technical_lifetime",
         "var_cost",
     }
     if source == "US-TIMES MA3T":
@@ -78,7 +78,6 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
             "fix_cost",
             "inv_cost",
             "relation_activity",
-            "technical_lifetime",
         }
 
     assert exp_pars == set(data.keys())
