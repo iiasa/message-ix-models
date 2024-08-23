@@ -1,0 +1,6 @@
+# Technical lifetime (maximum age) of LDVs
+#
+# Units: year
+#
+node_loc, year_vtg, value
+*,        1960,     15

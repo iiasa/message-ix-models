@@ -348,6 +348,16 @@ emissions species.""",
     units="tonne / kWa",
 )
 
+lifetime_ldv = add(
+    key="lifetime:nl-yv:ldv+exo",
+    path="lifetime-ldv",
+    name="Technical lifetime (maximum age) of LDVs",
+    description="""Values are filled forwards. In MESSAGE(V)-Transport, this quantity
+had the additional dimension of driver_type, and values were 20 years for
+driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.""",
+    units="year",
+)
+
 mode_share_freight = add(
     key="freight mode share:n-t:exo",
     path="freight-mode-share-ref",
