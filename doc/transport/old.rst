@@ -198,7 +198,7 @@ The tables in this sheet have been preserved as the following files:
 - “Vehicle class splits” → ldv_class.csv.
 - “Regional cost multipliers” → config.yaml keys ``factor / cost / ldv 2010``, ``ldv cost catch-up year``.
 - “Annual driving distances by consumer type” → config.yaml keys ``ldv activity``, ``factor / activity / ldv``.
-- “Vehicle lifetimes by consumer type” → config.yaml key ``ldv lifetime``.
+- “Vehicle lifetimes by consumer type” → :file:`lifetime-ldv.csv`.
 - “Suburbanization rates” → suburb_area_share.csv.
 
   .. admonition:: PNK
