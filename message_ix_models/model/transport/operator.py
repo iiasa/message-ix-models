@@ -201,15 +201,17 @@ def broadcast_advance(data: "AnyQuantity", y0: int, config: dict) -> "AnyQuantit
     return result
 
 
-def broadcast_y_yv_ya(y: List[int], y_model: List[int]) -> "AnyQuantity":
+def broadcast_y_yv_ya(y: List[int], y_include: List[int]) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
-    This is distinct from :attr:`.ScenarioInfo.ya_ya`, because it omits all
-    :math:`y^V < y_0`.
+    This omits all :math:`y^V \notin y^{include}`.
+
+    If :py:`"y::model"` is passed as `y_include`, this is equivalent to
+    :attr:`.ScenarioInfo.ya_ya`.
     """
     dims = ["y", "yv", "ya"]
     series = (
-        pd.DataFrame(product(y, y_model), columns=dims[1:])
+        pd.DataFrame(product(y, y_include), columns=dims[1:])
         .query("ya >= yv")
         .assign(value=1.0, y=lambda df: df["yv"])
         .set_index(dims)["value"]
