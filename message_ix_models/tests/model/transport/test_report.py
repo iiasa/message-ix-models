@@ -15,6 +15,7 @@ from message_ix_models.model.transport.testing import (
     simulated_solution,
 )
 from message_ix_models.report import prepare_reporter, sim
+from message_ix_models.testing import GHA
 
 if TYPE_CHECKING:
     import message_ix
@@ -126,6 +127,7 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     assert 0 < len(result)
 
 
+@pytest.mark.xfail(condition=GHA, reason="Temporary, for #213; fails on GitHub Actions")
 @build.get_computer.minimum_version
 @mark.usefixtures("quiet_genno", "preserve_report_callbacks")
 @pytest.mark.parametrize(
@@ -150,6 +152,7 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
+@pytest.mark.xfail(condition=GHA, reason="Temporary, for #213; fails on GitHub Actions")
 @sim.to_simulate.minimum_version
 @pytest.mark.usefixtures("preserve_report_callbacks")
 def test_iamc_simulated(
