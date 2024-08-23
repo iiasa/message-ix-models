@@ -184,8 +184,13 @@ def prepare_computer(
     # Handle arguments
     source_kw = source_kw or dict()
     if measure := source_kw.get("measure"):
-        if measure not in MEASURES:
-            log.debug(f"source keyword {measure = } not in recognized {MEASURES}")
+        # commented: quiet logging; MEASURES is not automatically updated to include the
+        # IDs of measures recognized by additional SOURCES
+        # TODO Remove use of this variable, below, by ensuring that source_obj.name is
+        #      always present
+        # if measure not in MEASURES:
+        #     log.debug(f"source keyword {measure = } not in recognized {MEASURES}")
+        pass
     else:
         measure = "UNKNOWN"
 
