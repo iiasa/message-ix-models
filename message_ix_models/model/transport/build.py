@@ -205,22 +205,11 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     kw = dict(
         provider="OECD",
         edition="2022",
-        flow=[
-            "DOMESAIR",
-            "DOMESNAV",
-            "PIPELINE",
-            "RAIL",
-            "ROAD",
-            "TOTTRANS",
-            "TRNONSPE",
-            "WORLDAV",
-            "WORLDMAR",
-        ],
+        flow=(
+            "DOMESAIR DOMESNAV PIPELINE RAIL ROAD TOTTRANS TRNONSPE WORLDAV WORLDMAR"
+        ).split(),
     )
     prepare_computer(context, c, "IEA_EWEB", source_kw=kw, strict=False)
-    # Alias for use in reporting
-    # TODO Fix the upstream code so that the name is not "unknown"
-    c.add("energy:n-y-product-flow:iea", "unknown:n-y-product-flow")
 
     # Add IEA Future of Trucks data
     for kw in dict(measure=1), dict(measure=2):

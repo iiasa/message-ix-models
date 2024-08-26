@@ -70,7 +70,7 @@ class IEA_EWEB(ExoDataSource):
 
     id = "IEA_EWEB"
 
-    extra_dims = ("product", "flow")
+    key = "energy:n-y-product-flow:iea"
 
     def __init__(self, source, source_kw):
         """Initialize the data source."""

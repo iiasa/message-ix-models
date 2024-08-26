@@ -311,9 +311,8 @@ class DemoSource(ExoDataSource):
         self.indexers = dict(s=scenario)
 
         # Map from the measure ID to a variable name
-        self.indexers.update(
-            v={"POP": "Population", "GDP": "GDP"}[source_kw["measure"]]
-        )
+        self.measure = source_kw["measure"]
+        self.indexers.update(v={"POP": "Population", "GDP": "GDP"}[self.measure])
 
     def __call__(self) -> Quantity:
         from genno.operator import select
