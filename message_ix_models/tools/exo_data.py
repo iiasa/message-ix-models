@@ -41,8 +41,11 @@ class ExoDataSource(ABC):
     #: Identifier for this particular source.
     id: str = ""
 
-    #: Optional name for the returned :class:`.Key`/:class:`.Quantity`. If not set by
-    #: :meth:`.__init__`, then the "measure" keyword is used.
+    #: Key for the returned :class:`.Quantity`. Optional. See :meth:`get_keys`.
+    key: Optional[Key] = None
+
+    #: Name for the returned :class:`.Key`/:class:`.Quantity`. Optional. See
+    # :meth:`get_keys`.
     name: str = ""
 
     #: Optional additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
@@ -92,6 +95,25 @@ class ExoDataSource(ABC):
         the code **must** transform these, make appropriate selections, etc.
         """
         raise NotImplementedError
+
+    def get_keys(self) -> Tuple[Key, Key]:
+        """Return the target keys for the (1) raw and (2) transformed data.
+
+        Subclasses **may** override this method to provide different targets keys. In
+        the default implementation, the key for the transformed data is:
+
+        1. :attr:`.key`, if any, or
+        2. Constructed from:
+
+           - :attr:`.name` or :attr:`.measure` in lower-case.
+           - The dimensions :math:`(n, y)`, plus any :attr:`.extra_dims`.
+
+        The key for the raw data is the same, with :attr`.id` as an extra tag.
+        """
+        k = self.key or Key(
+            self.name or self.measure.lower(), ("n", "y") + self.extra_dims
+        )
+        return k + self.id, k
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         """Prepare `c` to transform raw data from `base_key`.
@@ -190,9 +212,7 @@ def prepare_computer(
         #      always present
         # if measure not in MEASURES:
         #     log.debug(f"source keyword {measure = } not in recognized {MEASURES}")
-        pass
-    else:
-        measure = "UNKNOWN"
+        del measure
 
     # Look up input data flow
     source_obj = None
@@ -232,15 +252,17 @@ def prepare_computer(
     c.add("y::coords", lambda years: dict(y=years), "y")
     c.add("y0::coord", lambda year: dict(y=year), "y0")
 
-    # Retrieve the raw data
-    k = Key(source_obj.name or measure.lower(), ("n", "y") + source_obj.extra_dims)
-    k_raw = k + source_obj.id  # Tagged with the source ID
-    keys = [k]  # Keys to return
+    # Retrieve the keys that will refer to the raw and transformed data
+    k_raw, k = source_obj.get_keys()
 
+    # Keys to return
+    keys = [k]
+
+    # Retrieve the raw data by invoking ExoDataSource.__call__
     c.add(k_raw, source_obj)
 
-    # Allow the class to further transform the data. See ExoDataSource.transform() for
-    # the default: aggregate, then interpolate
+    # Allow the class to add further tasks that transform the data. See
+    # ExoDataSource.transform() for the default: aggregate, then interpolate.
     key = source_obj.transform(c, k_raw)
 
     # Alias `key` -> `k`
@@ -251,7 +273,8 @@ def prepare_computer(
     c.add(k_y0, "index_to", k, "y0::coord")
     keys.append(k_y0)
 
-    # TODO also insert (1) index to a particular label on the "n" dimension (2) both
+    # TODO Index to a particular label on the "n" dimension
+    # TODO Index on both "n" and "y"
 
     return tuple(keys)
 
