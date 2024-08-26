@@ -76,6 +76,7 @@ __all__ = [
     "input_commodity_level",
     "logit",
     "max",
+    "maybe_select",
     "min",
     "merge_data",
     "nodes_ex_world",  # Re-export from message_ix_models.util TODO do this upstream
@@ -644,6 +645,34 @@ def max(
 
     # FIXME This is AttrSeries only
     return qty.groupby(level=dim).max()  # type: ignore
+
+
+def maybe_select(qty: "AnyQuantity", *, indexers: dict) -> "AnyQuantity":
+    """Select from `qty` if possible, using :py:`"*"` wildcard.
+
+    Same as :func:`genno.operator.select`, except:
+
+    1. If not all the dimensions of `indexers` are in `qty`, no selection is performed.
+    2. For each dimension of `indexers`, if the corresponding (scalar) value is not
+       present in `qty`, it is replaced with "*". `qty` **should** contain this value
+       along every dimension to be selected; otherwise, the result will be empty.
+    """
+    from genno.operator import select
+
+    try:
+        idx = {}
+        for dim, value in indexers.items():
+            if value in qty.coords[dim]:
+                idx[dim] = value
+            else:
+                log.debug(f"Use {dim}='*' for missing {value!r}")
+                idx[dim] = "*"
+    except ValueError as e:
+        msg = f"{e.args[0]} not among dims {qty.dims} of {qty.name}; no selection"
+        log.info(msg)
+        return qty
+    else:
+        return select(qty, indexers=idx)
 
 
 def min(
