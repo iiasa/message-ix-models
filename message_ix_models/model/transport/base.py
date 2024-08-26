@@ -2,6 +2,7 @@
 
 from functools import partial
 from itertools import pairwise
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
@@ -165,10 +166,15 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         # Some strings
         csv, path, fn = f"{name} csv", f"{name} path", f"{name.replace(' ', '-')}.csv"
         # Output path for this parameter
-        rep.add(path, "make_output_path", "config", name=fn)
+        rep.add(path, "make_output_path", "config", name=Path("base", fn))
         # Write to file
         rep.add(csv, "write_report", base, path, write_kw or {})
         targets.append(csv)
+
+    # Create output subdirectory for base model files
+    rep.graph["config"]["output_dir"].joinpath("base").mkdir(
+        parents=True, exist_ok=True
+    )
 
     # Keys for starting quantities
     e_iea = Key("energy:n-y-product-flow:iea")
