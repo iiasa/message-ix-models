@@ -85,6 +85,7 @@ def create_bare(context, regions, dry_run):
     "--update_costs",
     default=False,
 )
+@common_params("nodes")
 @click.pass_obj
 def build_scen(
     context, datafile, iea_data_path, tag, mode, scenario_name, old_calib, update_costs

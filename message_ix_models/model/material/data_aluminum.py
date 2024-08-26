@@ -317,6 +317,7 @@ def assign_input_outpt(
 def gen_data_alu_const(data, config, glb_reg, years, yv_ya, nodes):
     results = defaultdict(list)
     for t in config["technology"]["add"]:
+        t = t.id
         params = data.loc[(data["technology"] == t), "parameter"].unique()
         # Obtain the active and vintage years
         av = data.loc[(data["technology"] == t), "availability"].values[0]
@@ -440,9 +441,7 @@ def gen_data_aluminum(
 
     parname = "demand"
     demand_dict = {}
-    df = material_demand_calc.derive_demand(
-        "aluminum", scenario, old_gdp=False, ssp=ssp
-    )
+    df = material_demand_calc.derive_demand("aluminum", scenario, ssp=ssp)
     demand_dict[parname] = df
 
     ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)

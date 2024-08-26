@@ -446,6 +446,7 @@ def gen_data_steel(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
     for t in config["technology"]["add"]:
+        t = t.id
         params = data_steel.loc[(data_steel["technology"] == t), "parameter"].unique()
 
         # Special treatment for time-varying params
@@ -518,9 +519,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df_demand = material_demand_calc.derive_demand(
-        "steel", scenario, old_gdp=False, ssp=ssp
-    )
+    df_demand = material_demand_calc.derive_demand("steel", scenario, ssp=ssp)
     results[parname].append(df_demand)
 
     common = dict(
