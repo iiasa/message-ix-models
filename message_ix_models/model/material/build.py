@@ -38,15 +38,13 @@ from message_ix_models.util.scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
-DATA_FUNCTIONS_1 = [
+DATA_FUNCTIONS = [
     # gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
     # gen_data_ammonia, ## deprecated module!
     gen_data_generic,
     gen_data_steel,
-]
-DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
     gen_data_power_sector,
@@ -54,7 +52,7 @@ DATA_FUNCTIONS_2 = [
 ]
 
 # add as needed/implemented
-SPEC_LIST = [
+SPEC_LIST = (
     "generic",
     "common",
     "steel",
@@ -65,7 +63,7 @@ SPEC_LIST = [
     "power_sector",
     "fertilizer",
     "methanol",
-]
+)
 
 
 # Try to handle multiple data input functions from different materials
@@ -83,36 +81,9 @@ def add_data_1(scenario, dry_run=False):
         log.warning("Remove 'R12_GLB' from node list for data generation")
         info.set["node"].remove("R12_GLB")
 
-    for func in DATA_FUNCTIONS_1 + DATA_FUNCTIONS_2:
+    for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
         log.info(f"from {func.__name__}()")
-        data = func(scenario)
-        # if "SSP_dev" in scenario.model:
-        #     if "emission_factor" in list(data.keys()):
-        #         data.pop("emission_factor")
-        add_par_data(scenario, data, dry_run=dry_run)
-
-    log.info("done")
-
-
-def add_data_2(scenario, dry_run=False):
-    """Populate `scenario` with MESSAGEix-Materials data."""
-    # Information about `scenario`
-    info = ScenarioInfo(scenario)
-
-    # Check for two "node" values for global data, e.g. in
-    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
-    if {"World", "R11_GLB"} < set(info.set["node"]):
-        log.warning("Remove 'R11_GLB' from node list for data generation")
-        info.set["node"].remove("R11_GLB")
-    if {"World", "R12_GLB"} < set(info.set["node"]):
-        log.warning("Remove 'R12_GLB' from node list for data generation")
-        info.set["node"].remove("R12_GLB")
-
-    for func in DATA_FUNCTIONS_2:
-        # Generate or load the data; add to the Scenario
-        log.info(f"from {func.__name__}()")
-        # TODO: remove this once emission_factors are back in SSP_dev
         data = func(scenario)
         # if "SSP_dev" in scenario.model:
         #     if "emission_factor" in list(data.keys()):
@@ -147,16 +118,6 @@ def build(
         scenario.commit("add missing water tecs")
 
     apply_spec(scenario, spec, add_data_1, fast=True)  # dry_run=True
-    if "SSP_dev" not in scenario.model:
-        engage_updates._correct_balance_td_efficiencies(scenario)
-        engage_updates._correct_coal_ppl_u_efficiencies(scenario)
-        engage_updates._correct_td_co2cc_emissions(scenario)
-    # spec = None
-    # apply_spec(scenario, spec, add_data_2)
-    from message_ix_models import ScenarioInfo
-
-    s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
@@ -169,10 +130,24 @@ def build(
         last_hist_year = scenario.par("historical_activity")["year_act"].max()
         modify_industry_demand(scenario, last_hist_year, iea_data_path)
         add_new_ind_hist_act(scenario, [last_hist_year], iea_data_path)
-        add_elec_i_ini_act(scenario)
         add_emission_accounting(scenario)
 
-        # scenario.commit("no changes")
+    calibrate_existing_constraints(scenario)
+
+    return scenario
+
+
+def calibrate_existing_constraints(scenario):
+    if "SSP_dev" not in scenario.model:
+        engage_updates._correct_balance_td_efficiencies(scenario)
+        engage_updates._correct_coal_ppl_u_efficiencies(scenario)
+        engage_updates._correct_td_co2cc_emissions(scenario)
+
+    from message_ix_models import ScenarioInfo
+
+    s_info = ScenarioInfo(scenario)
+    nodes = s_info.N
+
     add_coal_lowerbound_2020(scenario)
     add_cement_bounds_2020(scenario)
 
@@ -193,11 +168,6 @@ def build(
     if "R12_CHN" in nodes:
         add_elec_lowerbound_2020(scenario)
 
-    # i_feed demand is zero creating a zero division error during MACRO calibration
-    scenario.check_out()
-    scenario.remove_set("sector", "i_feed")
-    scenario.commit("i_feed removed from sectors.")
-
     df = scenario.par(
         "bound_activity_lo",
         filters={"node_loc": "R12_RCPA", "technology": "sp_el_I", "year_act": 2020},
@@ -206,7 +176,7 @@ def build(
     scenario.remove_par("bound_activity_lo", df)
     scenario.commit("remove sp_el_I min bound on RCPA in 2020")
 
-    return scenario
+    add_elec_i_ini_act(scenario)
 
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
