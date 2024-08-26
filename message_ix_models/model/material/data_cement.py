@@ -190,6 +190,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # for t in s_info.set['technology']:
     for t in config["technology"]["add"]:
+        t = t.id
         params = data_cement.loc[(data_cement["technology"] == t), "parameter"].unique()
 
         # Special treatment for time-varying params
@@ -350,9 +351,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df_demand = material_demand_calc.derive_demand(
-        "cement", scenario, old_gdp=False, ssp=ssp
-    )
+    df_demand = material_demand_calc.derive_demand("cement", scenario, ssp=ssp)
     results[parname].append(df_demand)
 
     # Add CCS as addon
