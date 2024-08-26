@@ -16,6 +16,7 @@ from sdmx.model.v21 import Code
 
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
+from message_ix_models.tools import exo_data
 from message_ix_models.util import (
     ScenarioInfo,
     adapt_R11_R12,
@@ -33,6 +34,7 @@ from message_ix_models.util import (
 from message_ix_models.util.ixmp import rename_dims
 
 from . import files as exo
+from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
 from .operator import extend_y
 from .util import input_commodity_level
@@ -43,6 +45,31 @@ if TYPE_CHECKING:
     from .config import Config
 
 log = logging.getLogger(__name__)
+
+
+@exo_data.register_source
+class LDV(MaybeAdaptR11Source):
+    """Provider of exogenous data on LDVs
+
+    Parameters
+    ----------
+    source_kw :
+       Must include exactly the keys "measure" (must be one of "fuel economy",
+       "fix_cost", or "inv_cost"), "nodes", and "scenario".
+    """
+
+    id = __name__
+    measures = {"inv_cost", "fuel economy", "fix_cost"}
+    filename = {
+        "inv_cost": "ldv-inv_cost.csv",
+        "fuel economy": "ldv-fuel-economy.csv",
+        "fix_cost": "ldv-fix_cost.csv",
+    }
+
+    def __init__(self, source, source_kw) -> None:
+        super().__init__(source, source_kw)
+        # Use "exo" tag on the target key, to align with existing code in this module
+        self.key = Key(f"ldv {self.measure}:n-t-y:exo")
 
 
 def prepare_computer(c: Computer):
