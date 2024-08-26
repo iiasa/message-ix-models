@@ -196,9 +196,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
-    prepare_computer(
-        context, c, "message_ix_models.model.transport", source_kw=kw, strict=False
-    )
+    prepare_computer(context, c, "transport MERtoPPP", source_kw=kw, strict=False)
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
