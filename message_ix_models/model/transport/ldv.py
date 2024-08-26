@@ -1,15 +1,14 @@
 """Data for light-duty vehicles (LDVs) for passenger transport."""
 
 import logging
+import operator
 from collections import defaultdict
 from functools import lru_cache, partial
-from operator import itemgetter, le
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
 
 import genno
 import pandas as pd
-from genno import Computer, Key, KeySeq, quote
-from genno.operator import load_file
+from genno import Computer, Key, KeySeq
 from message_ix import make_df
 from openpyxl import load_workbook
 from sdmx.model.v21 import Code
@@ -19,8 +18,6 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.tools import exo_data
 from message_ix_models.util import (
     ScenarioInfo,
-    adapt_R11_R12,
-    adapt_R11_R14,
     broadcast,
     cached,
     check_support,
@@ -31,7 +28,6 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
-from message_ix_models.util.ixmp import rename_dims
 
 from . import files as exo
 from .data import MaybeAdaptR11Source
@@ -94,21 +90,20 @@ def prepare_computer(c: Computer):
     source = config.data_source.LDV
     info = config.base_model_info
 
-    # Add all the following computations, even if they will not be used
-    k1 = Key("US-TIMES MA3T")
-    c.add(k1 + "R11", read_USTIMES_MA3T_2, None, quote("R11"))
-
-    # Operator for adapting R11 data
-    adapt = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(context.model.regions)
-    if adapt:
-        c.add(k1 + "exo", adapt, k1 + "R11")  # Adapt
-    else:
-        c.add(k1 + "exo", k1 + "R11")  # Alias
-
-    # Extract the separate quantities
-    for name in TABLES:
-        k2 = Key(f"ldv {name}:n-t-y:exo")
-        c.add(k2, itemgetter(name), k1 + "exo")
+    # Use .tools.exo_data.prepare_computer() to add task that load, adapt, and select
+    # the appropriate data
+    for measure in LDV.measures:
+        exo_data.prepare_computer(
+            context,
+            c,
+            source=__name__,
+            source_kw=dict(
+                measure=measure,
+                nodes=context.model.regions,
+                scenario=str(config.ssp),
+            ),
+            strict=False,
+        )
 
     # Insert a scaling factor that varies according to SSP
     k_fe = Key("ldv fuel economy:n-t-y")
@@ -322,21 +317,6 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Mapping[str, "AnyQuantit
     return qty
 
 
-def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, "AnyQuantity"]:
-    """Same as :func:`read_USTIMES_MA3T`, but from CSV files."""
-    result = {}
-    for name in "fix_cost", "fuel economy", "inv_cost":
-        result[name] = load_file(
-            path=package_data_path(
-                "transport", subdir or "", f"ldv-{name.replace(' ', '-')}.csv"
-            ),
-            dims=rename_dims(),
-            name=name,
-        ).ffill("y")
-
-    return result
-
-
 def get_USTIMES_MA3T(
     context, efficiency: "AnyQuantity", inv_cost: "AnyQuantity", fix_cost: "AnyQuantity"
 ) -> Dict[str, pd.DataFrame]:
@@ -376,7 +356,7 @@ def get_USTIMES_MA3T(
     data = dict(efficiency=efficiency, inv_cost=inv_cost, fix_cost=fix_cost)
 
     # Years to include
-    target_years = list(filter(partial(le, 2010), info.set["year"]))
+    target_years = list(filter(partial(operator.le, 2010), info.set["year"]))
     # Extend over missing periods in the model horizon
     data = {name: extend_y(qty, target_years) for name, qty in data.items()}
 
