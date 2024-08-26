@@ -1,9 +1,9 @@
-# Configuration for message_data.model.material
-#
-# NB these values are currently for the nitrogen fertilizer materials
-#    accounting. Different sets can be created once there are 2+ different
-#    categories of materials.
+# Set configuration for the MESSAGE-Materials model
 
+# For each set in the MESSAGEix framework, the group contains:
+# - 'require': elements that must be present for the model to be set up.
+# - 'remove': elements to remove.
+# - 'add': elements to add.
 
 common:
   commodity:
@@ -18,8 +18,8 @@ common:
     - hydrogen
     - lh2
     - d_heat
-    add:
     - biomass
+    add:
     - water
     - fresh_water
 
@@ -33,9 +33,11 @@ common:
     - export
     - import
 
-  type_tec:
-    add:
-    - industry
+# Not used at the moment
+# maybe to be used in updated legacy reporting
+#  type_tec:
+#    add:
+#    - industry
 
   mode:
     add:
@@ -56,15 +58,21 @@ common:
     - CO2_transformation
 
   year:
-    add:
+    require:
     - 1980
     - 1990
+    - 1995
     - 2000
+    - 2005
     - 2010
+    - 2015
 
-  type_year:
+  unit:
     add:
-    - 2010
+    - t/kW
+    - Mt
+    - Mt/yr
+    - USD/kW
 
 generic:
   commodity:
@@ -169,6 +177,7 @@ generic:
     - fc_h2_resins
     - solar_resins
     - dheat_resins
+
   mode:
     add:
     - low_temp
@@ -279,6 +288,11 @@ petro_chemicals:
     - steam_cracker
 
 steel:
+  mode:
+    add:
+    - M3
+    - M4
+
   commodity:
     add:
     - steel
