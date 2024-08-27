@@ -102,6 +102,10 @@ Others
 - :func:`.report.register` becomes :meth:`.report.Config.register` which populates :attr:`.report.Config.callback` (:pull:`225`).
   The set of callback functions used to configure a class:`.Reporter` instance is thus now particular to a :class:`.report.Config` instance attached to a :class:`.Context` instance.
   This allows better isolation of code/tests that use different sets of callbacks.
+  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
+Improve and extend :doc:`/material/index` (:pull:`218`).
+
+  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/whatsnew`)
 
 v2024.8.6
 =========
