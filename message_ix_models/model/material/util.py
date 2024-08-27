@@ -276,8 +276,8 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
         file name of MACRO file used for calibration
     """
     # Change this according to the relevant data path
-    path = "C:/Users/unlu/Documents/MyDocuments_IIASA/Material_Flow/macro_calibration/"
-    wb = pxl.load_workbook(path + fname)
+    path = package_data_path("material", "macro", fname)
+    wb = pxl.load_workbook(path)
 
     fmy = scenario.firstmodelyear
     nodes = [
@@ -319,7 +319,7 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     ws = wb.get_sheet_by_name("price_ref")
     for i in range(2, 62):
         ws[f"C{i}"].value = df.values[i - 2]
-    wb.save(path + fname)
+    wb.save(path)
 
 
 def get_ssp_from_context(context: Context) -> str:

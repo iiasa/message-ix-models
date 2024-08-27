@@ -105,25 +105,8 @@ def add_macro_COVID(
         MACRO-calibrated Scenario instance
     """
 
-    # Excel file for calibration data
-    if "SSP_dev" in scen.model:
-        xls_file = os.path.join(
-            "C:/", "Users", "maczek", "Downloads", "macro", filename
-        )
-    else:
-        xls_file = os.path.join(
-            "C:\\",
-            "Users",
-            "unlu",
-            "Documents",
-            "MyDocuments_IIASA",
-            "Material_Flow",
-            "macro_calibration",
-            filename,
-        )
-
     # Making a dictionary from the MACRO Excel file
-    xls = pd.ExcelFile(xls_file)
+    xls = pd.ExcelFile(package_data_path("material", "macro", filename))
     data = {}
     for s in xls.sheet_names:
         data[s] = xls.parse(s)
