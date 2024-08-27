@@ -20,6 +20,15 @@ if TYPE_CHECKING:
     from genno.core.key import KeyLike
     from genno.types import AnyQuantity
 
+FE_HEADER = """Final energy input to transport technologies.
+
+Units: GWa
+"""
+
+FE_SHARE_HEADER = (
+    """Portion of final energy input to transport by each c within (nl, ya) groups."""
+)
+
 
 SCALE_1_HEADER = """Ratio of MESSAGEix-Transport output to IEA EWEB data.
 
@@ -254,6 +263,36 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Correct MESSAGEix-Transport outputs using the low-resolution scaling factor
     rep.add(k["s2"], "div", k["s1"], s2[2])
+
+    # Output "final energy csv"
+    rep.add(k["s2+GWa"], "convert_units", k["s2"], units="GWa / a", sums=True)
+    _to_csv(
+        k["s2+GWa"] / tuple("hlt"),
+        "final energy",
+        dict(header_comment="Final energy input to transport"),
+    )
+
+    # Compute shares of final energy by input
+    fe_share = rep.add(
+        "fe::share", "div", k["s2"] / tuple("hlt"), k["s2"] / tuple("chlt")
+    )
+    assert isinstance(fe_share, Key)
+
+    # Minimum and maximum shares occurring over the model horizon in each region
+    rep.add(fe_share + "max", "max", fe_share, dim=("nl", "c"))
+    rep.add(fe_share + "min", "min", fe_share, dim=("nl", "c"))
+
+    _to_csv(fe_share, "fe share", dict(header_comment=FE_SHARE_HEADER))
+    _to_csv(
+        fe_share + "max",
+        "fe share max",
+        dict(header_comment=FE_SHARE_HEADER + "\n\nMaximum across ya."),
+    )
+    _to_csv(
+        fe_share + "min",
+        "fe share min",
+        dict(header_comment=FE_SHARE_HEADER + "\n\nMinimum across ya."),
+    )
 
     # Compute for file and plot: transport final energy intensity of GDP PPP
     k_gdp = rep.add("gdp:nl-ya", "rename_dims", gdp_exo, quote({"n": "nl", "y": "ya"}))
