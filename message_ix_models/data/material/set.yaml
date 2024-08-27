@@ -6,6 +6,10 @@
 # - 'add': elements to add.
 
 common:
+  technology:
+    add:
+    - extract__freshwater_supply
+
   commodity:
     require:
     - coal
@@ -21,8 +25,7 @@ common:
     - biomass
     add:
     - water
-    - fresh_water
-
+    - fresh_water_supply
   level:
     require:
     - primary
@@ -377,22 +380,26 @@ steel:
       - ["steel","new_scrap"]
       - ["steel","useful_material"]
       - ["steel","final_material"]
+
   addon:
     add:
       - bf_ccs_steel
       - dri_gas_ccs_steel
       - dri_gas_steel
       - dri_h2_steel
+
   type_addon:
     add:
       - bf_ccs_steel_addon
       - dri_gas_ccs_steel_addon
       - dri_steel_addon
+
   map_tec_addon:
     add:
       - [bf_steel, bf_ccs_steel_addon]
       - [dri_gas_steel, dri_gas_ccs_steel_addon]
       - [dri_steel, dri_steel_addon]
+
   cat_addon:
     add:
       - [bf_ccs_steel_addon, bf_ccs_steel]
@@ -531,7 +538,6 @@ fertilizer:
   commodity:
     require:
     - electr
-    #- freshwater_supply removed for SSP_dev developments, is added in build if missing
     add:
     - NH3
     - Fertilizer Use|Nitrogen

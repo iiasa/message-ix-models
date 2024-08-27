@@ -138,9 +138,12 @@ def build_scen(
                 scenario=context.scenario_info["scenario"] + "_" + tag,
                 keep_solution=False,
             )
-            scenario = build(scenario, old_calib=old_calib, iea_data_path=iea_data_path)
+            scenario = build(
+                context, scenario, old_calib=old_calib, iea_data_path=iea_data_path
+            )
         else:
             scenario = build(
+                context,
                 context.get_scenario().clone(
                     model="MESSAGEix-Materials",
                     scenario=output_scenario_name + "_" + tag,
