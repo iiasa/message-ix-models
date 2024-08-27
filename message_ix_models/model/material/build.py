@@ -1,9 +1,10 @@
 import logging
-from typing import Mapping
+from typing import Any, Dict, Mapping
 
 import message_ix
 import pandas as pd
 
+from message_ix_models import Context
 from message_ix_models.model.build import apply_spec
 from message_ix_models.model.material.data_aluminum import gen_data_aluminum
 from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
@@ -25,8 +26,14 @@ from message_ix_models.model.material.data_util import (
     modify_demand_and_hist_activity,
     modify_industry_demand,
 )
-from message_ix_models.model.material.util import read_config
-from message_ix_models.util import add_par_data, identify_nodes, package_data_path
+from message_ix_models.model.material.util import path_fallback, read_config
+from message_ix_models.model.structure import generate_set_elements, get_region_codes
+from message_ix_models.util import (
+    add_par_data,
+    identify_nodes,
+    load_package_data,
+    package_data_path,
+)
 from message_ix_models.util.compat.message_data import (
     calibrate_UE_gr_to_demand,
     calibrate_UE_share_constraints,
@@ -34,7 +41,7 @@ from message_ix_models.util.compat.message_data import (
 from message_ix_models.util.compat.message_data import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
 )
-from message_ix_models.util.scenarioinfo import ScenarioInfo
+from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +49,6 @@ DATA_FUNCTIONS = [
     # gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
-    # gen_data_ammonia, ## deprecated module!
     gen_data_generic,
     gen_data_steel,
     gen_data_cement,
@@ -67,57 +73,51 @@ SPEC_LIST = (
 
 
 # Try to handle multiple data input functions from different materials
-def add_data_1(scenario, dry_run=False):
+def add_data(scenario, dry_run=False):
     """Populate `scenario` with MESSAGEix-Materials data."""
     # Information about `scenario`
-    info = ScenarioInfo(scenario)
-
-    # Check for two "node" values for global data, e.g. in
-    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
-    if {"World", "R11_GLB"} < set(info.set["node"]):
-        log.warning("Remove 'R11_GLB' from node list for data generation")
-        info.set["node"].remove("R11_GLB")
-    if {"World", "R12_GLB"} < set(info.set["node"]):
-        log.warning("Remove 'R12_GLB' from node list for data generation")
-        info.set["node"].remove("R12_GLB")
-
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
         log.info(f"from {func.__name__}()")
         data = func(scenario)
-        # if "SSP_dev" in scenario.model:
-        #     if "emission_factor" in list(data.keys()):
-        #         data.pop("emission_factor")
+        data = {k: v for k, v in data.items() if not v.empty}
         add_par_data(scenario, data, dry_run=dry_run)
-
     log.info("done")
 
 
 def build(
-    scenario: message_ix.Scenario, old_calib: bool, iea_data_path=None
+    context: Context,
+    scenario: message_ix.Scenario,
+    old_calib: bool,
+    modify_existing_constraints=True,
+    iea_data_path=None,
 ) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
+    node_suffix = context.model.regions
 
-    # Get the specification
-    # Apply to the base scenario
-    spec = get_spec()
-
-    if "water_supply" not in list(scenario.set("level")):
-        scenario.check_out()
-        # add missing water tecs
-        scenario.add_set("technology", "extract__freshwater_supply")
-        scenario.add_set("level", "water_supply")
-        scenario.add_set("commodity", "freshwater_supply")
-
-        water_dict = pd.read_excel(
-            package_data_path("material", "other", "water_tec_pars.xlsx"),
-            sheet_name=None,
+    if node_suffix != "R12":
+        raise NotImplementedError(
+            "MESSAGEix-Materials is currently only supporting"
+            " MESSAGEix-GLOBIOM R12 regions"
         )
-        for par in water_dict.keys():
-            scenario.add_par(par, water_dict[par])
-        scenario.commit("add missing water tecs")
 
-    apply_spec(scenario, spec, add_data_1, fast=True)  # dry_run=True
+    if f"{node_suffix}_GLB" not in list(scenario.platform.regions().region):
+        # Required for material trade model
+        # TODO Include this in the spec, while not using it as a value for `node_loc`
+        scenario.platform.add_region(f"{node_suffix}_GLB", "region", "World")
+
+    # Get the specification and apply to the base scenario
+    spec = make_spec(node_suffix)
+    apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
+
+    water_dict = pd.read_excel(
+        package_data_path("material", "other", "water_tec_pars.xlsx"),
+        sheet_name=None,
+    )
+    scenario.check_out()
+    for par in water_dict.keys():
+        scenario.add_par(par, water_dict[par])
+    scenario.commit("add missing water tecs")
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
@@ -132,7 +132,8 @@ def build(
         add_new_ind_hist_act(scenario, [last_hist_year], iea_data_path)
         add_emission_accounting(scenario)
 
-    calibrate_existing_constraints(scenario)
+    if modify_existing_constraints:
+        calibrate_existing_constraints(scenario)
 
     return scenario
 
@@ -153,7 +154,7 @@ def calibrate_existing_constraints(scenario):
 
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration
-    # levels for the enduse technologies.
+    # levels for the end-use technologies.
     # FIXME: context.ssp only works for SSP1/2/3 currently missing SSP4/5
     calibrate_UE_gr_to_demand(
         scenario,
@@ -203,3 +204,57 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
             remove.set[set_name].extend(config.get("remove", []))
 
     return dict(require=require, add=add, remove=remove)
+
+
+def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
+    sets: Dict[str, Any] = dict()
+    materials = ["common"] if not materials else materials
+    # Overrides specific to regional versions
+    tmp = dict()
+    # technology.yaml currently not used in Materials
+    for fn in ["set.yaml"]:  # , "technology.yaml"):
+        # Field name
+        name = fn.split(".yaml")[0]
+
+        # Load and store the data from the YAML file: either in a subdirectory for
+        # context.model.regions, or the top-level data directory
+        path = path_fallback(regions, fn).relative_to(package_data_path())
+        # tmp[name] = load_private_data(*path.parts)
+        tmp[name] = load_package_data(*path.parts)
+
+    # Merge contents of technology.yaml into set.yaml
+    # technology.yaml currently not used in Materials
+    sets.update(tmp.pop("set"))
+
+    s = Spec()
+
+    # Convert some values to codes
+    for material in materials:
+        for set_name in sets[material]:
+            if not all(
+                [
+                    isinstance(item, list)
+                    for sublist in sets[material][set_name].values()
+                    for item in sublist
+                ]
+            ):
+                generate_set_elements(sets[material], set_name)
+
+            # Elements to add, remove, and require
+            for action in {"add", "remove", "require"}:
+                s[action].set[set_name].extend(sets[material][set_name].get(action, []))
+            try:
+                s.add.set[f"{set_name} indexers"] = sets[material][set_name]["indexers"]
+            except KeyError:
+                pass
+
+    # The set of required nodes varies according to context.model.regions
+    codelist = regions
+    try:
+        s["require"].set["node"].extend(map(str, get_region_codes(codelist)))
+    except FileNotFoundError:
+        raise ValueError(
+            f"Cannot get spec for MESSAGEix-Materials with regions={codelist!r}"
+        ) from None
+
+    return s

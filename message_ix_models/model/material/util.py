@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Union
 
 import message_ix
 import openpyxl as pxl
@@ -342,3 +343,28 @@ def get_ssp_from_context(context: Context) -> str:
 def maybe_remove_water_tec(scenario, results):
     if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
         results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
+
+
+def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
+    """Return a :class:`.Path` constructed from `parts`.
+
+    If ``context.model.regions`` (or a string value as the first argument) is defined
+    and the file exists in a subdirectory of :file:`data/transport/{regions}/`, return
+    its path; otherwise, return the path in :file:`data/transport/`.
+    """
+    if isinstance(context_or_regions, str):
+        regions = context_or_regions
+    else:
+        # Use a value from a Context object, or a default
+        regions = context_or_regions.model.regions
+
+    candidates = (
+        package_data_path("material", regions, *parts),
+        package_data_path("material", *parts),
+    )
+
+    for c in candidates:
+        if c.exists():
+            return c
+
+    raise FileNotFoundError(candidates)
