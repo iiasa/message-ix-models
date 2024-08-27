@@ -202,6 +202,17 @@ def broadcast_advance(data: "AnyQuantity", y0: int, config: dict) -> "AnyQuantit
     return result
 
 
+def broadcast_n(qty: "AnyQuantity", n: List[str], *, dim: str) -> "AnyQuantity":
+    existing = sorted(qty.coords[dim].data)
+    missing = set(n) - set(existing)
+
+    if missing:
+        n_map = [(n_, n_) for n_ in existing] + [("*", n_) for n_ in missing]
+        return MappingAdapter({dim: n_map})(qty)
+    else:
+        return qty
+
+
 def broadcast_y_yv_ya(y: List[int], y_include: List[int]) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
