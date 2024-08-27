@@ -65,8 +65,8 @@ Use ``mix-models materials-ix {SSP} build`` to add the material implementation o
         --url="ixmp://ixmp_dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21" \
         --local-data "./data" material-ix SSP2 build --tag test --nodes R12
 
-The output scenario name will be baseline_DEFAULT_test. An additional tag `--tag` can be used to add an additional suffix to the new scenario name.
-The mode option `--mode` has two different inputs 'by_url' (by default) or 'by_copy'.
+The output scenario name will be baseline_DEFAULT_test. An additional tag ``--tag`` can be used to add an additional suffix to the new scenario name.
+The mode option ``--mode`` has two different inputs 'by_url' (by default) or 'by_copy'.
 The first one uses the provided url to add the materials implementation on top of the scenario from the url.
 This is the default option. The latter is used to create a 2 degree mitigation scenario with materials by copying carbon prices to the scenario that is specified by `--scenario_name`::
 
@@ -78,14 +78,22 @@ This command line only builds the scenario but does not solve it. To solve the s
     mix-models --url="ixmp://ixmp_dev/MESSAGEix-Materials/scenario_name" material-ix \
      SSP2 solve --add_calibration False --add_macro False
 
-The solve command has the `--add_calibration` option to add MACRO calibration to a baseline scenario. `--add_macro` option solves the scenario with MACRO.
-Both options are False by default.To first calibrate the scenario and then solve that scenario with MACRO both options should be set to True.
+The solve command has the ``--add_calibration`` option to add MACRO calibration to a baseline scenario with a valid calibration file specified with ``--macro-file``.
+The ``--add_macro`` option determines whether the scenario should be solved with MESSAGE or MESSAGE-MACRO.
+MESSAGEix-Materials provides one calibration file that is only compatible with scenarios with first model year 2025 and the common model structure of a MESSAGEix-GLOBIOM scenario.
+To first calibrate the scenario and then solve that scenario with MACRO both options should be set to True.
+
+It is also possible to shift the first model year and solve a clone with shifted years with ``--shift_model_year``.
+If ``--shift_model_year`` is set together with the macro options the model year will be shifted before the MACRO calibration.
+
+All three options are False by default.
+
 
 Reporting
 =========
 
 The reporting generates specific variables related to materials, mainly Production and Final Energy.
-The resulting reporting file is generated under message_ix_models\\data\\material\\reporting_output with the name “New_Reporting_MESSAGEix-Materials_scenario_name.xlsx”.
+The resulting reporting file is generated under :file:`message_ix_models\\data\\material\\reporting_output` with the name “New_Reporting_MESSAGEix-Materials_scenario_name.xlsx”.
 More detailed variables related to the whole energy system and emissions are not included in this reporting.
 
 Reporting is executed by the following command::

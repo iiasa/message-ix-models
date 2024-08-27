@@ -192,91 +192,79 @@ def build_scen(
         scenario.commit(f"update cost assumption to: {update_costs}")
 
 
+def validate_macrofile_path(ctx, param, value):
+    if value and ctx.params["macro_file"]:
+        if not package_data_path(
+            "material", "macro", ctx.params["macro_file"]
+        ).is_file():
+            raise FileNotFoundError(
+                "Specified file name of MACRO calibration file does not exist. Please"
+                "place in data/material/macro or use other file that exists."
+            )
+
+
 @cli.command("solve")
 @click.option("--add_macro", default=True)
-@click.option("--add_calibration", default=False)
+@click.option("--add_calibration", default=False, callback=validate_macrofile_path)
+@click.option("--macro_file", default=None, is_eager=True)
+@click.option("--shift_model_year", default=False)
 @click.pass_obj
-def solve_scen(context, add_calibration, add_macro):
+def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year):
     """Solve a scenario.
 
     Use the --model_name and --scenario_name option to specify the scenario to solve.
     """
     # default scenario: MESSAGEix-Materials NoPolicy
     scenario = context.get_scenario()
-
-    if scenario.has_solution():
-        if not add_calibration:
-            scenario.remove_solution()
-
-    if add_calibration:
-        # Solve with 2020 base year
-        log.info("Solving the scenario without MACRO")
-        log.info(
-            "After macro calibration a new scenario with the suffix _macro is created."
-        )
-        log.info("Make sure to use this scenario to solve with MACRO iterations.")
+    default_solve_opt = {
+        "model": "MESSAGE",
+        "solve_options": {"lpmethod": "4", "scaind": "-1"},
+    }
+    if shift_model_year:
         if not scenario.has_solution():
-            scenario.solve(
-                model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"}
+            scenario.solve(**default_solve_opt)
+        if scenario.timeseries(year=scenario.firstmodelyear).empty:
+            log.info(
+                "Scenario has no timeseries data in baseyear. Starting"
+                "reporting workflow before shifting baseyear."
             )
-            scenario.set_as_default()
-
-            # Report
-            from message_ix_models.model.material.report.reporting import report
-            from message_ix_models.report.legacy.iamc_report_hackathon import (
-                report as reporting,
-            )
-
-            # Remove existing timeseries and add material timeseries
-            log.info("Reporting material-specific variables")
-            report(context, scenario)
-            log.info("Reporting standard variables")
-            reporting(
-                context.get_platform(),
-                scenario,
-                "False",
-                scenario.model,
-                scenario.scenario,
-                merge_hist=True,
-                merge_ts=True,
-                run_config="materials_run_config.yaml",
-            )
-
-        # Shift to 2025 base year
+            run_reporting(context, False, False)
+        # Shift base year
         scenario = scenario.clone(
             model=scenario.model,
-            scenario=scenario.scenario + "_2025",
-            shift_first_model_year=2025,
+            scenario=scenario.scenario + f"_{shift_model_year}",
+            shift_first_model_year=shift_model_year,
         )
-        scenario.set_as_default()
-        scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
+
+    if add_calibration:
+        log.info(
+            "After macro calibration a new scenario with the suffix _macro is created."
+            "Make sure to use this scenario to solve with MACRO iterations."
+        )
+        if not scenario.has_solution():
+            log.info(
+                "Uncalibrated scenario has no solution. Solving the scenario"
+                "without MACRO before calibration"
+            )
+            scenario.solve(**default_solve_opt)
+            scenario.set_as_default()
 
         # update cost_ref and price_ref with new solution
-        update_macro_calib_file(
-            scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
-        )
+        # f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+        update_macro_calib_file(scenario, macro_file)
 
         # After solving, add macro calibration
         log.info("Scenario solved, now adding MACRO calibration")
-        # scenario = add_macro_COVID(
-        #     scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx"
-        # )
-        scenario = add_macro_COVID(
-            scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
-        )
+        # f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+        scenario = add_macro_COVID(scenario, macro_file)
         log.info("Scenario successfully calibrated.")
 
-    if add_macro:  # Default True
-        scenario.solve(
-            model="MESSAGE-MACRO", solve_options={"lpmethod": "4", "scaind": "-1"}
-        )
-        scenario.set_as_default()
+    if add_macro:
+        default_solve_opt.update({"model": "MESSAGE-MACRO"})
 
-    if not add_macro:
-        # Solve
-        log.info("Solving the scenario without MACRO")
-        scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
-        scenario.set_as_default()
+    log.info("Start solving the scenario")
+    scenario.solve(**default_solve_opt)
+    scenario.set_as_default()
 
 
 @cli.command("report")
