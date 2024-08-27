@@ -63,7 +63,7 @@ Use ``mix-models materials-ix {SSP} build`` to add the material implementation o
 
     mix-models \
         --url="ixmp://ixmp_dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21" \
-        --local-data "./data" material-ix SSP2 build --tag test
+        --local-data "./data" material-ix SSP2 build --tag test --nodes R12
 
 The output scenario name will be baseline_DEFAULT_test. An additional tag `--tag` can be used to add an additional suffix to the new scenario name.
 The mode option `--mode` has two different inputs 'by_url' (by default) or 'by_copy'.
@@ -106,8 +106,32 @@ Binary/raw data files
 
 The code relies on the following input files, stored in :file:`data/material/`:
 
+**Cement**
+
 :file:`CEMENT.BvR2010.xlsx`
    Historical cement demand data
+
+:file:`Global_cement_MESSAGE.xlsx`
+  Techno-economic parametrization data for cement sector combined (R12)
+
+:file:`demand_cement.yaml`
+  Base year demand data
+
+**Aluminum**
+
+:file:`demand_aluminum.xlsx`
+  Historical aluminum demand data
+
+:file:`aluminum_trade_data.csv`
+  Data retrieved from IAI MFA model and used for trade calibration
+
+:file:`aluminum_techno_economic.xlsx`
+  Techno-economic parametrization data for aluminum sector
+
+:file:`demand_aluminum.yaml`
+  Base year aluminum demand data
+
+**Iron and Steel**
 
 :file:`STEEL_database_2012.xlsx`
   Historical steel demand data
@@ -115,29 +139,13 @@ The code relies on the following input files, stored in :file:`data/material/`:
 :file:`Global_steel_MESSAGE.xlsx`
   Techno-economic parametrization data for steel sector combined (R12)
 
-:file:`Global_cement_MESSAGE.xlsx`
-  Techno-economic parametrization data for cement sector combined (R12)  
+:file:`worldsteel_steel_trade.xlsx`
+  Historical data from `worldsteel <https://worldsteel.org/data)>`_
 
-:file:`demand_aluminum.xlsx`
-  Historical aluminum demand data
+:file:`demand_steel.yaml`
+  Base year steel demand data
 
-:file:`demand_aluminum.xlsx`
-  Historical aluminum demand data
-
-:file:`aluminum_techno_economic.xlsx`
-  Techno-economic parametrization data for aluminum sector
-
-:file:`generic_furnace_boiler_techno_economic.xlsx`
-  Techno-economic parametrization data for generic furnace technologies
-
-:file:`iamc_db ENGAGE baseline GDP PPP.xlsx`
-  SSP GDP projection used for material demand projections
-
-:file:`MESSAGEix-Materials_final_energy_industry.xlsx`
-  Final energy values to calibrate base year values for industries
-
-:file:`residual_industry_2019.xlsx`
-  Final energy values to calculate the residual industry demand
+**Chemicals**
 
 :file:`nh3_fertilizer_demand.xlsx`
   Nitrogen fertilizer demand
@@ -166,6 +174,29 @@ The code relies on the following input files, stored in :file:`data/material/`:
 :file:`steam_cracking_hist_new_cap.csv`
   Steam cracker historical capacities in R12 regions
 
+:file:`ammonia/demand_NH3.yaml`
+   Ammonia demand in each R12 region in year 2020
+
+:file:`petrochemicals/demand_HVC.yaml`
+   HVC demand in each R12 region in year 2020
+
+:file:`methanol/demand_methanol.yaml`
+   Methanol demand in each R12 region in year 2020
+
+:file:`/methanol/results_material_SHAPE_comm.csv`
+   Commercial sector data from MESSAGEix-Buidings SHAPE scenario used to get wood demands from buildings to estimate resin demands
+
+:file:`/methanol/results_material_SHAPE_resid.csv`
+   Residential sector data from MESSAGEix-Buidings SHAPE scenario used to get wood demands from buildings to estimate resin demands
+
+:file:`/methanol/results_material_SSP2_comm.csv`
+   Commercial sector data from MESSAGEix-Buidings SSP2 scenario used to get wood demands from buildings to estimate resin demands
+
+:file:`/methanol/results_material_SSP2_resid.csv`
+   Residential sector data from MESSAGEix-Buidings SSP2 scenario used to get wood demands from buildings to estimate resin demands
+
+**Power sector**
+
 :file:`NTNU_LCA_coefficients.xlsx`
    Material intensity (and other) coefficients for power plants based on lifecycle assessment (LCA) data from the THEMIS database, compiled in the `ADVANCE project <http://www.fp7-advance.eu/?q=content/environmental-impacts-module>`_.
 
@@ -177,6 +208,32 @@ The code relies on the following input files, stored in :file:`data/material/`:
 
 :file:`LCA_commodity_mapping.xlsx`
    Commodity mapping (for materials) of global 11-regional MESSAGEix-GLOBIOM model to commodities of THEMIS LCA dataset.
+
+
+**Buildings**
+
+:file:`buildings/LED_LED_report_IAMC_sensitivity_R12.csv`
+   Data from MESSAGEix-Buidings LED scenarios used to get steel/cement/aluminum demands from buildings
+
+:file:`buildings/report_IRP_SSP2_BL_comm_R12.csv`
+   Commerical sector data from MESSAGEix-Buidings used to get steel/cement/aluminum demands from buildings
+
+:file:`buildings/report_IRP_SSP2_BL_resid_R12.csv`
+   Residential sector data from MESSAGEix-Buidings used to get steel/cement/aluminum demands from buildings
+
+**Other**
+
+:file:`generic_furnace_boiler_techno_economic.xlsx`
+  Techno-economic parametrization data for generic furnace technologies
+
+:file:`iamc_db ENGAGE baseline GDP PPP.xlsx`
+  SSP GDP projection used for material demand projections
+
+:file:`MESSAGEix-Materials_final_energy_industry.xlsx`
+  Final energy values to calibrate base year values for industries
+
+:file:`residual_industry_2019.xlsx`
+  Final energy values to calculate the residual industry demand
 
 :file:`SSP_UE_dyn_input.xlsx`
    Calibration file for industry end-use energy demands
@@ -193,33 +250,11 @@ The code relies on the following input files, stored in :file:`data/material/`:
 :file:`iea_mappings/industry.csv`
    Mapping of MESSAGEix-GLOBIOM industry technologies to IEA EWEB products of industry sector flows not covered by MESSAGEix-Materials
 
-:file:`ammonia/demand_NH3.yaml`
-   Ammonia demand in each R12 region in year 2020
-
 :file:`other/mer_to_ppp_default.csv`
    Default conversion factors for GDP MER to PPP used in MESSAGEix-GLOBIOM SSP2 scenarios.
    Used to create demand projections for steel/cement/aluminum/chemicals if GDP_PPP data is not in scenario
 
-:file:`buildings/LED_LED_report_IAMC_sensitivity_R12.csv`
-   Data from MESSAGEix-Buidings LED scenarios used to get steel/cement/aluminum demands from buildings
 
-:file:`buildings/report_IRP_SSP2_BL_comm_R12.csv`
-   Commerical sector data from MESSAGEix-Buidings used to get steel/cement/aluminum demands from buildings
-
-:file:`buildings/report_IRP_SSP2_BL_resid_R12.csv`
-   Residential sector data from MESSAGEix-Buidings used to get steel/cement/aluminum demands from buildings
-
-:file:`/methanol/results_material_SHAPE_comm.csv`
-   Commercial sector data from MESSAGEix-Buidings SHAPE scenario used to get wood demands from buildings to estimate resin demands
-
-:file:`/methanol/results_material_SHAPE_resid.csv`
-   Residential sector data from MESSAGEix-Buidings SHAPE scenario used to get wood demands from buildings to estimate resin demands
-
-:file:`/methanol/results_material_SSP2_comm.csv`
-   Commercial sector data from MESSAGEix-Buidings SSP2 scenario used to get wood demands from buildings to estimate resin demands
-
-:file:`/methanol/results_material_SSP2_resid.csv`
-   Residential sector data from MESSAGEix-Buidings SSP2 scenario used to get wood demands from buildings to estimate resin demands
 
 :file:`material/set.yaml`
 ----------------------------

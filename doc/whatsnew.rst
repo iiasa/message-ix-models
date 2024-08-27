@@ -17,6 +17,9 @@ Next release
   - Replace solar and wind technologies with new ones (:pull:`206`).
   - Reorganize input files and incorporate `first_year.csv` data into `tech_map.csv` (:pull:`221`).
   - Reconfigure use and implementation of technology variants/modules to be more agnostic (:pull:`221`).
+Improve and extend :doc:`/material/index` (:pull:`218`).
+
+  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/whatsnew`)
 
 v2024.8.6
 =========
