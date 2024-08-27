@@ -340,21 +340,38 @@ def duration_period(info: "ScenarioInfo") -> "AnyQuantity":
 
 
 def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantity":
-    """Extend `qty` along the "y" dimension to cover `y`."""
+    """Extend `qty` along the dimension `dim` to cover all of `y`.
+
+    - Values are first filled forward, then backwards, within existing `dim` labels in
+      `qty`.
+    - Labels in `y` that are *not* in `qty` are filled using the first or last existing
+      value.
+    """
     y_ = set(y)
 
     # Subset of `y` appearing in `qty`
-    y_qty = sorted(set(qty.to_series().reset_index()[dim].unique()) & y_)
-    # Subset of `target_years` to fill forward from the last period in `qty`
-    y_to_fill = sorted(filter(partial(lt, y_qty[-1]), y_))
+    existing = sorted(set(qty.coords[dim].data) & y_)
+    # y-coords to fill backward from the earliest appearing in `qty`
+    to_bfill = sorted(filter(partial(gt, existing[0]), y_))
+    # y-coords to fill forward from the latest appearing in `qty`
+    to_ffill = sorted(filter(partial(lt, existing[-1]), y_))
 
-    log.info(f"{qty.name}: extend '{dim}' from {y_qty[-1]} → {y_to_fill}")
+    log.info(
+        f"{qty.name}: extend {to_bfill} ← {dim}={existing[0]}; "
+        f"{dim}={existing[-1]} → {to_ffill}"
+    )
 
-    # Map existing labels to themselves, and missing labels to the last existing one
-    y_map = [(y, y) for y in y_qty] + [(y_qty[-1], y) for y in y_to_fill]
-    # - Forward-fill *within* `qty` existing values.
-    # - Use message_ix_models MappingAdapter to do the rest.
-    return MappingAdapter({dim: y_map})(qty.ffill(dim))  # type: ignore [attr-defined]
+    # Map existing labels to themselves, and missing labels to the first or last in
+    # `existing`
+    y_map = (
+        [(existing[0], y) for y in to_bfill]
+        + [(y, y) for y in existing]
+        + [(existing[-1], y) for y in to_ffill]
+    )
+    # - Forward-fill within existing y-coords of `qty`.
+    # - Backward-fill within existing y-coords of `qty`
+    # - Use MappingAdapter to do the rest.
+    return MappingAdapter({dim: y_map})(qty.ffill(dim).bfill(dim))  # type: ignore [attr-defined]
 
 
 def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
