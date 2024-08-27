@@ -1,9 +1,8 @@
 """Data for light-duty vehicles (LDVs) for passenger transport."""
 
 import logging
-import operator
 from collections import defaultdict
-from functools import lru_cache, partial
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
 
 import genno
@@ -356,7 +355,8 @@ def get_USTIMES_MA3T(
     data = dict(efficiency=efficiency, inv_cost=inv_cost, fix_cost=fix_cost)
 
     # Years to include
-    target_years = list(filter(partial(operator.le, 2010), info.set["year"]))
+    # FIXME Avoid hard-coding this period
+    target_years = list(filter(lambda y: 1995 <= y, info.set["year"]))
     # Extend over missing periods in the model horizon
     data = {name: extend_y(qty, target_years) for name, qty in data.items()}
 
