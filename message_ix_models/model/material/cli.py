@@ -38,31 +38,6 @@ def cli(ssp):
     """MESSAGEix-Materials variant."""
 
 
-@cli.command("create-bare")
-@click.option("--regions", type=click.Choice(["China", "R11", "R14"]))
-@click.option("--dry_run", "-n", is_flag=True, help="Only show what would be done.")
-@click.pass_obj
-def create_bare(context, regions, dry_run):
-    """Create the RES from scratch."""
-    from message_ix_models.model.bare import create_res
-
-    if regions:
-        context.regions = regions
-
-    # to allow historical years
-    context.period_start = 1980
-
-    # Otherwise it can not find the path to read the yaml files..
-    # context.metadata_path = context.metadata_path / "data"
-
-    scen = create_res(context)
-    build(scen, True)
-
-    # Solve
-    if not dry_run:
-        scen.solve()
-
-
 @cli.command("build")
 @click.option(
     "--datafile",
@@ -304,22 +279,6 @@ def solve_scen(context, add_calibration, add_macro):
         scenario.set_as_default()
 
 
-@cli.command("add-buildings-ts")
-@click.pass_obj
-def add_building_ts(context):
-    # FIXME This import can not be resolved
-    from message_ix_models.reporting.materials.add_buildings_ts import (
-        add_building_timeseries,
-    )
-
-    scenario = context.get_scenario()
-    log.info(
-        f"Adding buildings specific timeseries to scenario:{scenario.model} - "
-        f"{scenario.scenario}"
-    )
-    add_building_timeseries(scenario)
-
-
 @cli.command("report")
 @click.option(
     "--remove_ts",
@@ -398,31 +357,6 @@ def run_reporting(context, remove_ts, profile):
                 merge_ts=True,
                 run_config="materials_run_config.yaml",
             )
-
-
-@cli.command("report-2")
-@click.pass_obj
-def run_old_reporting(context):
-    from message_ix_models.report.legacy.iamc_report_hackathon import (
-        report as reporting,
-    )
-
-    # Retrieve the scenario given by the --url option
-    scenario = context.get_scenario()
-    mp = scenario.platform
-
-    reporting(
-        mp,
-        scenario,
-        # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-        #         string containing "True" or "False" instead of an actual bool.
-        "False",
-        scenario.model,
-        scenario.scenario,
-        merge_hist=True,
-        merge_ts=True,
-        run_config="materials_run_config.yaml",
-    )
 
 
 @cli.command("modify-cost", hidden=True)
