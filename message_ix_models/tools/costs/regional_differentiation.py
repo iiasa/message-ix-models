@@ -173,7 +173,7 @@ def get_intratec_data() -> pd.DataFrame:
 def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
     """Retrieve a technology mapping for `module`.
 
-    The data are read from a CSV file at :file:`data/{module}/tech_map_{module}.csv`.
+    The data are read from a CSV file at :file:`data/{module}/tech_map.csv`.
     The file must have the following columns:
 
     - ``message_technology``: MESSAGEix-GLOBIOM technology code
@@ -194,7 +194,7 @@ def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.Dat
     pandas.DataFrame
     """
 
-    path = package_data_path("costs", module, f"tech_map_{module}.csv")
+    path = package_data_path("costs", module, "tech_map.csv")
     return pd.read_csv(path, comment="#")
 
 
