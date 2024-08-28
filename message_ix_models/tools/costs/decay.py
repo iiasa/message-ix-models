@@ -149,14 +149,18 @@ def get_technology_reduction_scenarios_data(
         or very_high)
     """
 
-    energy_first_year_file = package_data_path("costs", "energy", "first_year.csv")
-    df_first_year = pd.read_csv(energy_first_year_file, skiprows=3)
+    energy_first_year_file = package_data_path("costs", "energy", "tech_map.csv")
+    df_first_year = pd.read_csv(energy_first_year_file, skiprows=4)[
+        ["message_technology", "first_year_original"]
+    ]
 
     if module == "materials":
         materials_first_year_file = package_data_path(
-            "costs", "materials", "first_year.csv"
+            "costs", "materials", "tech_map.csv"
         )
-        materials_first_year = pd.read_csv(materials_first_year_file)
+        materials_first_year = pd.read_csv(materials_first_year_file)[
+            ["message_technology", "first_year_original"]
+        ]
         df_first_year = pd.concat(
             [df_first_year, materials_first_year], ignore_index=True
         ).drop_duplicates()
