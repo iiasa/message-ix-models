@@ -4,7 +4,7 @@ import pandas as pd
 from message_ix_models.util import package_data_path
 
 from .config import Config
-from .regional_differentiation import get_raw_technology_mapping, subset_materials_map
+from .regional_differentiation import get_raw_technology_mapping, subset_module_map
 
 
 def get_cost_reduction_data(module) -> pd.DataFrame:
@@ -32,16 +32,17 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     # Get full list of technologies from mapping
     tech_map = energy_map = get_raw_technology_mapping("energy")
 
-    if module == "materials":
-        materials_map = get_raw_technology_mapping("materials")
-        materials_sub = subset_materials_map(materials_map)
+    # if module is not energy, run subset_module_map
+    if module != "energy":
+        module_map = get_raw_technology_mapping(module)
+        module_sub = subset_module_map(module_map)
 
-        # Remove energy technologies that exist in materials mapping
+        # Remove energy technologies that exist in module mapping
         energy_map = energy_map.query(
-            "message_technology not in @materials_sub.message_technology"
+            "message_technology not in @module_sub.message_technology"
         )
 
-        tech_map = pd.concat([energy_map, materials_sub], ignore_index=True)
+        tech_map = pd.concat([energy_map, module_sub], ignore_index=True)
 
     # Read in raw data
     gea_file_path = package_data_path("costs", "energy", "cost_reduction.csv")
@@ -60,9 +61,9 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         .reset_index(drop=1)
     ).reindex(["message_technology", "reduction_rate", "cost_reduction"], axis=1)
 
-    # For materials technologies with map_tech == energy, map to base technologies
+    # For module technologies with map_tech == energy, map to base technologies
     # and use cost reduction data
-    materials_rates_energy = (
+    module_rates_energy = (
         tech_map.query("reg_diff_source == 'energy'")
         .drop(columns=["reg_diff_source", "base_year_reference_region_cost"])
         .merge(
@@ -80,7 +81,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 
     # Combine technologies that have cost reduction rates
     df_reduction_techs = pd.concat(
-        [energy_rates, materials_rates_energy], ignore_index=True
+        [energy_rates, module_rates_energy], ignore_index=True
     )
     df_reduction_techs = df_reduction_techs.drop_duplicates().reset_index(drop=1)
 
@@ -93,10 +94,9 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
             "key": "z",
         }
     )
-
-    # For remaining materials technologies that are not mapped to energy technologies,
+    # For remaining module technologies that are not mapped to energy technologies,
     # assume no cost reduction
-    materials_rates_noreduction = (
+    module_rates_noreduction = (
         tech_map.query(
             "message_technology not in @df_reduction_techs.message_technology"
         )
@@ -105,9 +105,9 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         .drop(columns=["key"])
     ).reindex(["message_technology", "reduction_rate", "cost_reduction"], axis=1)
 
-    # Concatenate base and materials rates
+    # Concatenate base and module rates
     all_rates = pd.concat(
-        [energy_rates, materials_rates_energy, materials_rates_noreduction],
+        [energy_rates, module_rates_energy, module_rates_noreduction],
         ignore_index=True,
     ).reset_index(drop=1)
 
@@ -127,7 +127,7 @@ def get_technology_reduction_scenarios_data(
     Raw data on cost reduction scenarios are read from
     :file:`data/costs/[module]/scenarios_reduction_[module].csv`.
 
-    Assumptions are made for the materials module for technologies' cost reduction
+    Assumptions are made for the non-energy module for technologies' cost reduction
     scenarios that are not given.
 
     Parameters
@@ -154,25 +154,23 @@ def get_technology_reduction_scenarios_data(
         ["message_technology", "first_year_original"]
     ]
 
-    if module == "materials":
-        materials_first_year_file = package_data_path(
-            "costs", "materials", "tech_map.csv"
-        )
-        materials_first_year = pd.read_csv(materials_first_year_file)[
+    if module != "energy":
+        module_first_year_file = package_data_path("costs", module, "tech_map.csv")
+        module_first_year = pd.read_csv(module_first_year_file)[
             ["message_technology", "first_year_original"]
         ]
         df_first_year = pd.concat(
-            [df_first_year, materials_first_year], ignore_index=True
+            [df_first_year, module_first_year], ignore_index=True
         ).drop_duplicates()
 
     tech_map = tech_energy = get_raw_technology_mapping("energy")
 
-    if module == "materials":
-        tech_materials = subset_materials_map(get_raw_technology_mapping("materials"))
+    if module != "energy":
+        tech_module = subset_module_map(get_raw_technology_mapping(module))
         tech_energy = tech_energy.query(
-            "message_technology not in @tech_materials.message_technology"
+            "message_technology not in @tech_module.message_technology"
         )
-        tech_map = pd.concat([tech_energy, tech_materials], ignore_index=True)
+        tech_map = pd.concat([tech_energy, tech_module], ignore_index=True)
 
     tech_map = tech_map.reindex(
         ["message_technology", "reg_diff_source", "reg_diff_technology"], axis=1
