@@ -385,3 +385,35 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     rep.add(result, targets)
 
     return result
+
+
+def share_constraints(c: "genno.Computer") -> "genno.Key":
+    """Produce values for :file:`ue_share_constraints.xlsx`.
+
+    This file is used by some code in :mod:`message_data` (unclear where) to produce
+    values for the sets ``shares``, ``map_shares_commodity_*``, and
+    ``share_commodity_{lo,up}``, but has a different structure from any of these. In
+    particular, it has the columns:
+
+    - share_name e.g. "UE_transport_electric"
+    - share_tec e.g. "elec_trp" or a comma-separated list of ``technology`` codes.
+    - commodity e.g. "transport"
+    - level e.g. "useful"
+    - node: either "all" or values like "CPA", "RCPA" which are taken to correspond to
+      "R11_CPA", "R12_CPA", etc.
+    - SSP: either "all", "LED", or possibly other values.
+    - share_type: either "lower" or "upper" corresponding respectively to
+      ``share_commodity_lo`` or ``share_commodity_up``.
+    - target_value: either a value, "baseline", or "TS".
+    - 2025 through 2110 (following the "B" list of periods). If "target_value" is "TS",
+      these are filled, otherwise empty.
+    """
+
+    raise NotImplementedError
+
+    # TODO Transform ue-share values to the expected format
+    # TODO Output full-resolution data, i.e. node="AFR" etc., target_value="TS" and
+    #      values in 2025–2110 columns
+    # TODO Output data without a time dimension (i.e. target_value=ue-share-max)
+    # TODO Output data without a spatial dimension (i.e. node="all")
+    # TODO Output data without time or spatial dimensions
