@@ -228,7 +228,6 @@ def prepare_computer(c: Computer):
         #   largest share and avoid setting constraints on it.
         # - Add both upper and lower constraints to ensure the solution contains exactly
         #   the given value.
-        # - Add a small margin to ensure feasibility.
         c.add(k + "2", "select", k, indexers=dict(yv=info.Y))
         c.add(k + "3", "select", k + "2", indexers=dict(t=["ICE_conv"]), inverse=True)
         for s in ("lo", "up"):

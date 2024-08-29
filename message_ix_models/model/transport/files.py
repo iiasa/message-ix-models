@@ -467,6 +467,13 @@ t_share_ldv = add(
     units="dimensionless",
 )
 
+act_non_ldv = add(
+    path="act-non_ldv.csv",
+    key="activity:n-t-y:non-ldv+exo",
+    name="Fixed activity of non-LDV technologies.",
+    units="dimensionless",
+)
+
 load_factor_ldv = add(
     key="load factor ldv:scenario-n-y:exo",
     name="Load factor (occupancy) of LDVs",

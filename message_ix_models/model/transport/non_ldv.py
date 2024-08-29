@@ -23,6 +23,7 @@ from message_ix_models.util import (
     same_time,
 )
 
+from . import files as exo
 from .emission import ef_for_input
 
 if TYPE_CHECKING:
@@ -110,7 +111,7 @@ def prepare_computer(c: Computer):
     kw = dict(header_comment=ENERGY_OTHER_HEADER)
     c.add("energy other csv", "write_report", e[1] / "flow", path=path, kwargs=kw)
 
-    # Handle data from the file energy-transport.csv
+    # Handle data from the file energy-other.csv
     try:
         k = Key("energy:c-nl:transport other")
         keys.extend(iter_keys(c.apply(other, k)))
@@ -123,6 +124,9 @@ def prepare_computer(c: Computer):
     k_constraint = "constraints::ixmp+transport+non-ldv"
     keys.append(k_constraint)
     c.add(k_constraint, constraint_data, "t::transport", t_modes, n, y, "config")
+
+    # Add other constraints on activity of non-LDV technologies
+    keys.extend(bound_activity(c))
 
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
@@ -172,6 +176,21 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     data["output"] = output
 
     return data
+
+
+def bound_activity(c: "Computer") -> List[Key]:
+    """Constrain activity of non-LDV technologies based on :file:`act-non_ldv.csv`."""
+    base = exo.act_non_ldv
+
+    # Produce MESSAGE parameters bound_activity_{lo,up}:nl-t-ya-m-h
+    kw = dict(
+        dims=dict(node_loc="n", technology="t", year_act="y"),
+        common=dict(mode="all", time="year"),
+    )
+    k_bau = Key("bound_activity_up::non_ldv+ixmp")
+    c.add(k_bau, "as_message_df", base, name=k_bau.name, **kw)
+
+    return [k_bau]
 
 
 def bound_activity_lo(c: Computer) -> List[Key]:
@@ -326,7 +345,7 @@ def other(c: Computer, base: Key) -> List[Key]:
     # Convert units to GWa
     c.add(k_cnty[1], "convert_units", k_cnty[0], quote("GWa"))
 
-    # Produce MESSAGE parameter bound_activity_lo:nl-t-ya-m-h
+    # Produce MESSAGE parameters bound_activity_{lo,up}:nl-t-ya-m-h
     kw = dict(
         dims=dict(node_loc="n", technology="t", year_act="y"),
         common=dict(mode="all", time="year"),
