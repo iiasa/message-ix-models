@@ -242,8 +242,10 @@ def constraint_data(
     """
     config: Config = genno_config["transport"]
 
-    # Non-LDV modes
+    # Non-LDV modes passenger modes
     modes = set(t for t in t_modes if t != "LDV")
+    # Freight modes
+    modes.add("freight truck")
 
     # Lists of technologies to constrain
     # All technologies under the non-LDV modes
