@@ -12,9 +12,16 @@ There are also a few of changes in the command line interface.
 Model changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 **Iron & steel sector**
-This release introduces the following decarbonization technologies:
+This release introduces the following low-emission options:
 
-- (list technologies here)
+- Direct reduction of iron with hydrogen
+- Direct reduction of iron with natural gas
+- Direct reduction of iron with natural gas and CCS
+- Blast furnace with CCS
+- Blast furnace using charcoal
+- Basic oxygen furnace with top gas recirculation
+
+Global trade of finished steel has been calibrated according to wordsteel Association.
 
 Shared input data file :file:`Global_steel_cement_MESSAGE.xlsx` has been separated for steel and cement data.
 
@@ -26,7 +33,7 @@ CCS addon reformulated to prohibit wet CCS addon on dry clinker kiln and vice ve
 
 **Non ferrous metals sector**
 
-Global trade of aluminum calibrated according to IAI MFA model.
+Global trade of aluminum has been calibrated according to IAI MFA model.
 
 **Power sector**
 
@@ -34,8 +41,8 @@ Material intensity of hydro power plants updated (reference?)
 
 **Demand generator**
 
-GDP and population projections are read from scenarios by default.
-If the data is not available, default projections are used.
+GDP and population projections are read from scenarios by default by retrieving the parametrization of ``bound_activity_up`` for the technologies ``GDP``, ``GDP_PPP`` and ``Population``.
+If the data cannot be retrieved from the scenario parameters, default projections from an exogenous data file are used.
 
 **Other**
 
