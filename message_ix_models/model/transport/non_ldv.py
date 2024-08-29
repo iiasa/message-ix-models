@@ -333,6 +333,8 @@ def other(c: Computer, base: Key) -> List[Key]:
     )
     k_bal = Key("bound_activity_lo::transport other+ixmp")
     c.add(k_bal, "as_message_df", k_cnty.prev, name=k_bal.name, **kw)
+    k_bau = Key("bound_activity_up::transport other+ixmp")
+    c.add(k_bau, "as_message_df", k_cnty.prev, name=k_bau.name, **kw)
 
     # Divide by self to ensure values = 1.0 but same dimensionality
     c.add(k_cnty[2], "div", k_cnty[0], k_cnty[0])
@@ -346,7 +348,7 @@ def other(c: Computer, base: Key) -> List[Key]:
     c.add(k_input, "as_message_df", k_cnty.prev, name=k_input.name, **kw)
 
     result = Key("transport other::ixmp")
-    c.add(result, "merge_data", k_bal, k_input)
+    c.add(result, "merge_data", k_bal, k_bau, k_input)
     return [result]
 
 
