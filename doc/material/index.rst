@@ -269,3 +269,19 @@ The code relies on the following input files, stored in :file:`data/material/`:
 
 .. literalinclude:: ../../message_ix_models/data/material/set.yaml
    :language: yaml
+
+
+Release notes
+-----------
+
+
+This is the list of changes to pandas between each release. For full details,
+see the `commit logs <https://github.com/pandas-dev/pandas/commits/>`_. For install and
+upgrade instructions, see :ref:`install`.
+
+
+**Version 3.0**
+
+
+.. toctree::
+   :maxdepth: 2
