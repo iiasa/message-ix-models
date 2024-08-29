@@ -105,7 +105,7 @@ Others
   - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
 Improve and extend :doc:`/material/index` (:pull:`218`).
 
-  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/whatsnew`)
+  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`)
 
 v2024.8.6
 =========
