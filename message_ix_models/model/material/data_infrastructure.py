@@ -13,13 +13,12 @@ from message_ix_models.util import (
 )
 
 CASE_SENS = "mean"
-INFRA_SCEN = "ScP3"
+INFRA_SCEN = "baseline"
 INPUTFILE = "stocks_forecast_MESSAGE.csv"
 
 print('Adding infrastructure demand with:')
 print(CASE_SENS)
 print(INFRA_SCEN)
-
 
 def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario = INFRA_SCEN):
 
@@ -154,40 +153,40 @@ def get_inf_mat_demand(
     return cc
 
 def adjust_demand_param(scen):
-    scen_mat_demand = scen.par(
-        "demand", {"level": "demand"}
-    )
+    # scen_mat_demand = scen.par(
+    #     "demand", {"level": "demand"}
+    # )
 
     scen.check_out()
-    comms = ["steel", "concrete", "aluminum"]
-    INPUTFILE = package_data_path("material", "infrastructure", "stocks_forecast_MESSAGE.csv")
-    for c in comms:
-        mat_inf_all = get_inf_mat_demand(
-            c,
-            inputfile=INPUTFILE,
-            year="all",
-            case=CASE_SENS,
-            infra_scenario=INFRA_SCEN
-        ).rename(columns={"value": "inf_demand"})
-
-        mat_inf_all["year"] = mat_inf_all["year"].astype(int)
-
-        sub_mat_demand = scen_mat_demand.loc[scen_mat_demand.commodity == c]
-
-        # print("old", sub_mat_demand.loc[sub_mat_demand.year >=2025])
-
-
-        sub_mat_demand = sub_mat_demand.join(
-            mat_inf_all.set_index(["node", "year", "commodity"]),
-            on=["node", "year", "commodity"],
-            how="left",
-        )
-
-
-        sub_mat_demand["value"] = sub_mat_demand["value"] + sub_mat_demand["inf_demand"]
-        sub_mat_demand = sub_mat_demand.drop(columns=["inf_demand"]).dropna(how="any")
-
-        scen.add_par("demand", sub_mat_demand.loc[sub_mat_demand.year >= 2025])
+    # comms = ["steel", "concrete", "aluminum"]
+    # INPUTFILE = package_data_path("material", "infrastructure", "stocks_forecast_MESSAGE.csv")
+    # for c in comms:
+    #     mat_inf_all = get_inf_mat_demand(
+    #         c,
+    #         inputfile=INPUTFILE,
+    #         year="all",
+    #         case=CASE_SENS,
+    #         infra_scenario=INFRA_SCEN
+    #     ).rename(columns={"value": "inf_demand"})
+    #
+    #     mat_inf_all["year"] = mat_inf_all["year"].astype(int)
+    #
+    #     sub_mat_demand = scen_mat_demand.loc[scen_mat_demand.commodity == c]
+    #
+    #     # print("old", sub_mat_demand.loc[sub_mat_demand.year >=2025])
+    #
+    #
+    #     sub_mat_demand = sub_mat_demand.join(
+    #         mat_inf_all.set_index(["node", "year", "commodity"]),
+    #         on=["node", "year", "commodity"],
+    #         how="left",
+    #     )
+    #
+    #
+    #     sub_mat_demand["value"] = sub_mat_demand["value"] + sub_mat_demand["inf_demand"]
+    #     sub_mat_demand = sub_mat_demand.drop(columns=["inf_demand"]).dropna(how="any")
+    #
+    #     scen.add_par("demand", sub_mat_demand.loc[sub_mat_demand.year >= 2025])
 
     # Add asphalt demand
 
@@ -204,13 +203,11 @@ def adjust_demand_param(scen):
 
     mat_inf_asphalt = mat_inf_asphalt[~mat_inf_asphalt['year'].isin([2065, 2075, 2085, 2095, 2105])]
 
-    # Only replace for year >= 2025
-
-    scen.add_par("demand", mat_inf_asphalt.loc[mat_inf_asphalt.year >= 2025])
+    scen.add_par("demand", mat_inf_asphalt)
 
     # print("new", sub_mat_demand.loc[sub_mat_demand.year >=2025])
 
-    scen.commit("Building material demand subtracted")
+    scen.commit("Demand adjusted")
 
 def gen_data_infrastructure(scenario, dry_run=False):
 
@@ -241,6 +238,11 @@ def gen_data_infrastructure(scenario, dry_run=False):
 
     # allyears = s_info.set['year'] #s_info.Y is only for modeling years
     modelyears = s_info.Y  # s_info.Y is only for modeling years
+
+    # Keep 2020 the same and do not build a linkage with infrastructure model
+    if 2020 in modelyears:
+        modelyears.remove(2020)
+
     nodes = s_info.N
     # fmy = s_info.y0
     nodes.remove("World")
