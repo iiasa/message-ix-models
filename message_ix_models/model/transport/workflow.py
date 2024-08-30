@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 
 from genno import KeyExistsError
 
+from message_ix_models.model.workflow import Config
 from message_ix_models.project.ssp import SSP_2024
 from message_ix_models.util import package_data_path
 
@@ -15,6 +16,21 @@ if TYPE_CHECKING:
     from .config import Config
 
 log = logging.getLogger(__name__)
+
+
+# Use lpmethod=4, scaind=1 to overcome LP status 5 (optimal with unscaled
+# infeasibilities) when running on SSP(2024) base scenarios
+SOLVE_CONFIG = Config(
+    reserve_margin=False,
+    solve=dict(
+        model="MESSAGE",
+        solve_options=dict(
+            iis=1,
+            lpmethod=4,
+            scaind=1,
+        ),
+    ),
+)
 
 
 def base_scenario_url(
@@ -137,7 +153,6 @@ def generate(
     **options,
 ):
     from message_ix_models import Workflow
-    from message_ix_models.model.workflow import Config as SolveConfig
     from message_ix_models.model.workflow import solve
     from message_ix_models.project import navigate
     from message_ix_models.report import register, report
@@ -161,12 +176,7 @@ def generate(
     context.navigate = navigate.Config(
         scenario="baseline", buildings=False, material=False
     )
-    # Use lpmethod=4, scaind=1 to overcome LP status 5 (optimal with unscaled
-    # infeasibilities) when running on SSP(2024) base scenarios
-    solve_config = SolveConfig(
-        reserve_margin=False,
-        solve=dict(model="MESSAGE", solve_options=dict(iis=1, lpmethod=4, scaind=1)),
-    )
+
     # Set the default .report.Config key for ".* reported" steps
     register("model.transport")
     context.report.key = report_key
@@ -207,7 +217,7 @@ def generate(
         targets.append(target_url)
 
         # Build MESSAGEix-Transport on the scenario
-        wf.add_step(
+        name = wf.add_step(
             f"{label} built", base, build.main, target=target_url, clone=True, ssp=ssp
         )
 
@@ -216,7 +226,7 @@ def generate(
         wf.add_step(debug[-1], base, build.main, ssp=ssp, dry_run=True)
 
         # Solve
-        wf.add_step(f"{label} solved", f"{label} built", solve, config=solve_config)
+        wf.add_step(f"{label} solved", name, solve, config=SOLVE_CONFIG)
 
         # Report
         reported.append(f"{label} reported")
