@@ -169,6 +169,76 @@ def fix_excel(path_temp, path_new):
 
     new_workbook.save(path_new)
 
+def report_demand(df_demand, r, years):
+
+    # Infrastructure Demand
+    df_demand.filter(region=r, year=years, inplace=True)
+
+    variable_steel_infra=["in|demand|steel|infrastructure|M1"]
+    variable_aluminium_infra=["in|demand|aluminum|infrastructure|M1"]
+    variable_concrete_infra=["in|demand|concrete|infrastructure|M1"]
+    variable_aspahlt_infra=["in|demand|asphalt|infrastructure|M1"]
+
+    df_demand.aggregate(
+        "Material Demand|Steel|Infrastructure",
+        components=variable_steel_infra,
+        append=True,
+    )
+
+    df_demand.aggregate(
+        "Material Demand|Aluminium|Infrastructure",
+        components=variable_aluminium_infra,
+        append=True,
+    )
+
+    df_demand.aggregate(
+        "Material Demand|Concrete|Infrastructure",
+        components=variable_concrete_infra,
+        append=True,
+    )
+
+    df_demand.aggregate(
+        "Material Demand|Asphalt|Infrastructure",
+        components=variable_aspahlt_infra,
+        append=True,
+    )
+
+    # Total Demand
+
+    variable_steel_total=["out|demand|steel|other_EOL_steel|M1"]
+    variable_alu_total=["out|demand|aluminum|other_EOL_aluminum|M1"]
+    variable_concrete_total=["out|demand|concrete|other_EOL_cement|M1"]
+
+    df_demand.aggregate(
+        "Material Demand|Steel",
+        components=variable_steel_total,
+        append=True,
+    )
+
+    df_demand.aggregate(
+        "Material Demand|Aluminium",
+        components=variable_alu_total,
+        append=True,
+    )
+
+    df_demand.aggregate(
+        "Material Demand|Concrete",
+        components=variable_concrete_total,
+        append=True,
+    )
+
+    df_demand.filter(
+        variable=[
+            "Material Demand|Steel",
+            "Material Demand|Aluminium",
+            "Material Demand|Concrete",
+            "Material Demand|Steel|Infrastructure",
+            "Material Demand|Aluminium|Infrastructure",
+            "Material Demand|Concrete|Infrastructure",
+            "Material Demand|Asphalt|Infrastructure"], inplace = True)
+
+    return df_demand
+
 def report(context,scenario):
 
     # Obtain scenario information and directory
@@ -213,8 +283,8 @@ def report(context,scenario):
     path = os.path.join(directory, f"message_ix_reporting_{scenario.scenario}.xlsx")
     report = pd.read_excel(path)
     report.Unit.fillna("", inplace=True)
-    df = pyam.IamDataFrame(report)
-    df.filter(region=nodes, year=years, inplace=True)
+    df_pyam = pyam.IamDataFrame(report)
+    df = df_pyam.filter(region=nodes, year=years)
     df.filter(
         variable=[
             "out|new_scrap|aluminum|*",
@@ -314,6 +384,13 @@ def report(context,scenario):
             "in|final_material|methanol|CH2O_synth|M1",
             "out|end_of_life|*",
             "in|end_of_life|*",
+            "in|demand|aluminum|infrastructure|M1",
+            "in|demand|steel|infrastructure|M1",
+            "in|demand|concrete|infrastructure|M1",
+            "in|demand|asphalt|infrastructure|M1",
+            "out|demand|steel|other_EOL_steel|M1",
+            "out|demand|aluminum|other_EOL_aluminum|M1",
+            "out|demand|concrete|other_EOL_cement|M1",
             "emis|CO2_industry|*",
             "emis|CF4|*",
             "emis|SO2|*",
@@ -570,6 +647,16 @@ def report(context,scenario):
         plt.close()
         pp.savefig(fig)
 
+        # Material Demand
+
+        print("region")
+        print(r)
+
+        df_demand = df.copy()
+        df_demand.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+        df_demand_region = report_demand(df_demand, r, years)
+        df_final.append(df_demand_region, inplace = True)
+        
         # PRODUCTION - IAMC Variables
 
         # ALUMINUM
