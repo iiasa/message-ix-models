@@ -34,7 +34,8 @@ from message_ix_models.model.material.data_util import (
     modify_baseyear_bounds,
     modify_demand_and_hist_activity,
     modify_industry_demand,
-    add_share_const_clinker_substitutes
+    add_share_const_clinker_substitutes,
+    add_infrastructure_reporting
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
@@ -539,9 +540,14 @@ def add_building_ts(scenario_name, model_name):
     default=False,
     help="If True the existing timeseries in the scenario is removed.",
 )
+@click.option(
+    "--add_infra_vars",
+    default=False,
+    help="If True additional variables related to infrastructure model is added.",
+)
 @click.option("--profile", default=False)
 @click.pass_obj
-def run_reporting(context, remove_ts, profile):
+def run_reporting(context, remove_ts, profile, add_infra_vars):
     """Run materials, then legacy reporting."""
     from message_ix_models.model.material.report.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import (
@@ -597,6 +603,9 @@ def run_reporting(context, remove_ts, profile):
                 print(s.getvalue())
 
             atexit.register(exit)
+        if add_infra_vars:
+            add_infrastructure_reporting(context, scenario)
+
         else:
             # Remove existing timeseries and add material timeseries
             print("Reporting material-specific variables")

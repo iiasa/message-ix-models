@@ -2394,3 +2394,230 @@ def add_share_const_clinker_substitutes(scenario):
             scenario.add_par('share_commodity_up', df_3)
 
     scenario.commit("Add share constraints.")
+
+def get_material(variable):
+    parts = variable.split('|')
+    if len(parts) > 1:
+        return parts[1]
+    return None
+
+def calculate_ratios(df):
+    # Create an empty DataFrame to hold the new rows
+    new_rows = []
+
+    # Group by region, year, and material to ensure matching pairs
+    grouped = df.groupby(['region', 'year', 'material'])
+
+    for name, group in grouped:
+        # Extract the total demand and infrastructure-specific demand
+        total_demand = group.loc[group['variable'] == f'Material Demand|{name[2]}', 'value']
+        infrastructure_demand = group.loc[group['variable'] == f'Material Demand|{name[2]}|Infrastructure', 'value']
+
+        # Ensure both exist
+        if not total_demand.empty and not infrastructure_demand.empty:
+            # Calculate the ratio
+            ratio_value = infrastructure_demand.values[0] / total_demand.values[0]
+
+            # Create a new row dictionary
+            new_row = {
+                'region': name[0],
+                'variable': 'Ratio',
+                'unit': df.loc[group.index[0], 'unit'],
+                'year': name[1],
+                'value': ratio_value,
+                'model': df.loc[group.index[0], 'model'],
+                'scenario': df.loc[group.index[0], 'scenario'],
+                'material': name[2]
+            }
+
+            # Append the new row to the list
+            new_rows.append(new_row)
+
+    # Convert the list of new rows to a DataFrame
+    new_rows_df = pd.DataFrame(new_rows)
+
+    # Concatenate the new rows with the original DataFrame
+    df_with_ratios = pd.concat([df, new_rows_df], ignore_index=True)
+
+    # Drop duplicates
+    df_with_ratios = df_with_ratios.drop_duplicates()
+
+    return df_with_ratios
+
+def add_infrastructure_reporting(context, scenario):
+
+    # Obtain the necessary variables from the reporting
+
+    variables = ['Emissions|CO2|Energy|Demand|Industry|Steel',
+                 'Emissions|CO2|Energy|Demand|Industry|Non-Metallic Minerals|Cement',
+                 'Emissions|CO2|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium',
+                 'Emissions|CO2|Industrial Processes|Non-Metallic Minerals|Cement',
+                 'Emissions|CO2|Industrial Processes|Non-Ferrous Metals',
+                 'Emissions|CO2|Energy|Supply|Liquids|Oil']
+    df = scenario.timeseries()
+    df_emissions= df[df['variable'].isin(variables)]
+
+    # Prepare the data.
+    # Sum process and energy emissions for aluminum and cement.
+    # Rename the emissions variables
+
+    df_aluminum_energy = df_emissions[df_emissions['variable'] == \
+    'Emissions|CO2|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium']
+    df_aluminum_industrial = df_emissions[df_emissions['variable'] == \
+    'Emissions|CO2|Industrial Processes|Non-Ferrous Metals']
+    df_cement_energy = df_emissions[df_emissions['variable'] == \
+    'Emissions|CO2|Energy|Demand|Industry|Non-Metallic Minerals|Cement']
+    df_cement_industrial = df_emissions[df_emissions['variable'] == \
+    'Emissions|CO2|Industrial Processes|Non-Metallic Minerals|Cement']
+
+    df_summed_aluminum = df_aluminum_energy.groupby(['region', 'unit', \
+    'year', 'model', 'scenario']).sum().reset_index()
+    df_summed_aluminum['value'] += df_aluminum_industrial.groupby(['region', \
+    'unit', 'year', 'model', 'scenario']).sum().reset_index()['value']
+
+    df_summed_cement = df_cement_energy.groupby(['region', 'unit', 'year', \
+    'model', 'scenario']).sum().reset_index()
+    df_summed_cement['value'] += df_cement_industrial.groupby(['region', 'unit', \
+    'year', 'model', 'scenario']).sum().reset_index()['value']
+
+    df_summed_aluminum['variable'] = 'Total CO2 Emissions|Aluminium'
+    df_summed_cement['variable'] = 'Total CO2 Emissions|Concrete'
+
+    df_new = pd.concat([df_emissions, df_summed_aluminum, df_summed_cement], ignore_index=True)
+    df_new = df_new.sort_index()
+
+    df_new['variable'] = df_new['variable'].replace('Emissions|CO2|Energy|Supply|Liquids|Oil', \
+    'Total CO2 Emissions|Bitumen')
+    df_new['variable'] = df_new['variable'].replace('Emissions|CO2|Energy|Demand|Industry|Steel', \
+    'Total CO2 Emissions|Steel')
+    df_new['material'] = df_new['variable'].str.split('|').str[1]
+    df_new = df_new[df_new['material'] != 'CO2']
+
+    # Calculate the ratios: Infrastructure Demand / Total Material Demand
+
+    variables = ["Material Demand|Steel|Infrastructure",
+                "Material Demand|Aluminium|Infrastructure",
+                 "Material Demand|Concrete|Infrastructure",
+                 "Material Demand|Asphalt|Infrastructure",
+                 "Material Demand|Steel",
+                 "Material Demand|Aluminium",
+                 "Material Demand|Concrete",
+                 "Secondary Energy|Liquids|Oil"
+                ]
+    df_ratio= df[df['variable'].isin(variables)]
+
+    # Filter the rows where the variable column is equal to "Secondary Energy|Liquids|Oil"
+    condition = df_ratio['variable'] == 'Secondary Energy|Liquids|Oil'
+
+    # Convert refinery output from energy to Mt
+    # 1 EJ =  23.5 Mt
+    df_ratio.loc[condition, 'value'] *= 23.5
+    df_ratio.loc[condition, 'unit'] = "Mt/yr"
+
+    # Filter the rows where the variable column is equal to "Material Demand|Aspahlt|Infrastructure"
+    condition_2 = df_ratio['variable'] == 'Material Demand|Asphalt|Infrastructure'
+
+    # Multiply the value column by 0.7424 for the filtered rows
+    df_ratio.loc[condition_2, 'value'] *= 0.05
+
+    # Change the names to make it compatible with emissions calculation
+    df_ratio['variable'] = df_ratio['variable'].replace('Secondary Energy|Liquids|Oil', \
+    'Material Demand|Bitumen')
+    df_ratio['variable'] = df_ratio['variable'].replace('Material Demand|Asphalt|Infrastructure', \
+    'Material Demand|Bitumen|Infrastructure')
+
+    df_ratio['material'] = df_ratio['variable'].apply(get_material)
+    df_ratio = calculate_ratios(df_ratio)
+
+    # Keep the relevant reporting variables
+
+    df_ratio['variable'] = df_ratio['variable'].replace('Material Demand|Bitumen', \
+    'Total Refinery Output')
+    variable_list = ["Total Refinery Output", "Ratio"]
+    df_reporting = df_ratio[df_ratio["variable"].isin(variable_list)]
+
+    ratio_rows = df_reporting['variable'] == 'Ratio'
+
+    # Use this for the final reporting
+    df_reporting.loc[ratio_rows, 'variable'] = df_reporting.loc[ratio_rows, \
+    'variable'] + '|' + df_reporting.loc[ratio_rows, 'material']
+
+    # Change as Ratio|Steel etc. and keep only ratios.
+    ratio_df = df_reporting[df_reporting['variable'].str.contains('Ratio')]
+
+    # Drop the 'material' column in the final reporting.
+    df_reporting = df_reporting.drop(columns=['material'])
+
+    # Multiply the ratios with df_new (emissions data frame) for the same materials
+
+    merged_df = pd.merge(df_new, ratio_df,
+                         on=['region', 'year', 'material', 'model', 'scenario'],
+                         suffixes=('_emission', '_ratio'))
+
+    merged_df['value'] = merged_df['value_emission'] * merged_df['value_ratio']
+
+    result_df = merged_df[['region', 'variable_emission', 'unit_emission', 'year', \
+     'value', 'model', 'scenario', 'material']]
+
+    # Step 4: Rename columns appropriately
+    result_df = result_df.rename(columns={'variable_emission': 'variable', \
+    'unit_emission': 'unit'})
+
+    result_df['variable'] = 'Emissions|CO2|' + result_df['material'] + \
+    '|Infrastructure'
+
+    result_df = result_df.drop(columns=['material'])
+
+    # Prepare the final reporting output.
+    final_df_reporting = pd.concat([df_reporting, result_df], axis = 0)
+
+    # Map the region names to the usual reporting regions
+
+    region_mapping = {
+        'China (R12)': 'R12_CHN',
+        'GLB region (R12)': 'World',
+        "Eastern Europe (R12)": "R12_EEU",
+        "Former Soviet Union (R12)": "R12_FSU",
+        "Latin America (R12)": "R12_LAM",
+        "Middle East and Africa (R12)": "R12_MEA",
+        "North America (R12)": "R12_NAM",
+        "Pacific Asia (R12)": "R12_PAS",
+        "Pacific OECD (R12)": "R12_PAO",
+        "Rest of Centrally planned Asia (R12)": "R12_RCPA",
+        "South Asia (R12)": "R12_SAS",
+        "Subsaharan Africa (R12)": "R12_AFR",
+        "Western Europe (R12)": "R12_WEU",
+    }
+
+    # Apply the mapping to the 'region' column
+    final_df_reporting['region'] = final_df_reporting['region'].map(region_mapping)
+
+
+    # Convert to long format.
+    final_df_reporting = final_df_reporting.pivot(index=['region', 'variable', \
+    'unit', 'model', 'scenario'], columns='year', values='value').reset_index()
+
+    # Identify which columns should be capitalized (non-year columns)
+    non_year_columns = ['region', 'variable', 'unit', 'model', 'scenario']
+
+    # Capitalize only the non-year columns
+    final_df_reporting.rename(columns={col: col.capitalize() for \
+    col in non_year_columns}, inplace=True)
+
+    # Reorder the columns as desired
+    ordered_columns = ['Model', 'Scenario', 'Region', 'Variable', 'Unit'] + \
+    [col for col in final_df_reporting.columns if isinstance(col, int)]
+    final_df_reporting = final_df_reporting[ordered_columns]
+
+    directory = context.get_local_path("report", "materials")
+
+    name = os.path.join(directory, f"additional_infrastructure_variables_{scenario.scenario}.xlsx")
+    final_df_reporting.to_excel(name, index = False)
+
+    # Add these as timeseries to the scenario
+
+    scenario.check_out(timeseries_only=True)
+    print("Starting to upload timeseries")
+    print(final_df_reporting.head())
+    scenario.add_timeseries(final_df_reporting)
+    scenario.commit("Infrastructure reporting uploaded as timeseries")
