@@ -25,6 +25,10 @@ start = dt.now()
 pdrive_path = "/Volumes/mengm.pdrv"
 # pdrive_path = "/pdrive/projects/"
 
+# ene.model name
+enemodel = "ene.model"
+# enemodel = "ene.model3"  # unicc
+
 # selections
 var = "qr"
 isimip = "3b"
@@ -65,7 +69,7 @@ for cl in climmodels:
     for scen in scenarios:
         print(f"- Started {scen}...")
         if isimip == "2b":
-            wd1 = os.path.join(pdrive_path, "ene.model", "NEST", "hydrology") + os.sep
+            wd1 = os.path.join(pdrive_path, enemodel, "NEST", "hydrology") + os.sep
             wd = (
                 os.path.join(
                     pdrive_path, "watxene", "ISIMIP", "ISIMIP2b", "output", "LPJmL"
@@ -73,11 +77,11 @@ for cl in climmodels:
                 + os.sep
             )
             wd2 = (
-                os.path.join(pdrive_path, "ene.model", "NEST", "hydrology", "isimip2b")
+                os.path.join(pdrive_path, enemodel, "NEST", "hydrology", "isimip2b")
                 + os.sep
             )
         else:
-            wd1 = os.path.join(pdrive_path, "ene.model", "NEST", "hydrology")
+            wd1 = os.path.join(pdrive_path, enemodel, "NEST", "hydrology")
             wd = (
                 os.path.join(
                     pdrive_path,
@@ -93,7 +97,7 @@ for cl in climmodels:
             wd2 = (
                 os.path.join(
                     pdrive_path,
-                    "ene.model",
+                    enemodel,
                     "NEST",
                     "hydrology",
                     "processed_nc4-isimip3b",
