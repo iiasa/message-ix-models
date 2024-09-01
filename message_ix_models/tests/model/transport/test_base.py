@@ -1,10 +1,18 @@
+from typing import TYPE_CHECKING
+
+import genno
 import numpy as np
+import pandas as pd
+import pytest
 from genno import Computer, KeySeq
 from genno.operator import relabel
 from genno.testing import random_qty
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport.base import smooth
+from message_ix_models.model.transport.base import format_share_constraints, smooth
+
+if TYPE_CHECKING:
+    from genno.types import AnyQuantity
 
 
 @smooth.minimum_version
@@ -60,3 +68,37 @@ def test_smooth(recwarn) -> None:
 
     # One value for nl=nl1 is interpolated
     assert np.isclose(result.loc["nl1", 2030], 0.8)
+
+
+@pytest.fixture(scope="module")
+def qty() -> "AnyQuantity":
+    return genno.Quantity(
+        pd.DataFrame(
+            columns=["nl", "ya", "t", "value"],
+            data=[
+                ["R12_AFR", 2020, "elec_trp", 0.0014875088932665413],
+                ["R12_AFR", 2020, "eth_fc_trp", 0.0012603672387565318],
+                ["R12_AFR", 2025, "elec_trp", 0.0018723207739392755],
+                ["R12_AFR", 2025, "eth_fc_trp", 0.0015452722864602048],
+                ["R12_CHN", 2020, "elec_trp", 0.10682429727325753],
+                ["R12_CHN", 2020, "eth_fc_trp", 0.011632663973514212],
+                ["R12_CHN", 2025, "elec_trp", 0.06696025519877587],
+                ["R12_CHN", 2025, "eth_fc_trp", 0.005241369125381201],
+            ],
+        ).set_index(["nl", "ya", "t"])["value"]
+    )
+
+
+@pytest.mark.parametrize("groupby", ([], ["node"], ["year"], ["node", "year"]))
+@pytest.mark.parametrize("kind", ("lo", "up"))
+def test_format_share_constraints(qty, groupby, kind) -> None:
+    from message_ix_models.model.transport import Config
+    from message_ix_models.project.ssp import SSP_2024
+
+    config = dict(transport=Config(ssp=SSP_2024["1"]))
+
+    # Function runs
+    df = format_share_constraints(qty, config, kind=kind, groupby=groupby)
+
+    assert not df.isna().any(axis=None)
+    # TODO Expand with content assertions
