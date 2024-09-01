@@ -1,10 +1,11 @@
 """Data preparation for the MESSAGEix-GLOBIOM base model."""
 
 from functools import partial
-from itertools import pairwise
+from itertools import pairwise, product
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, List, Optional
 
+import genno
 import numpy as np
 import pandas as pd
 from genno import Computer, KeySeq
@@ -15,10 +16,12 @@ from message_ix_models.util import minimum_version
 from .key import gdp_exo
 
 if TYPE_CHECKING:
-    import genno
     import message_ix
     from genno.core.key import KeyLike
     from genno.types import AnyQuantity
+
+#: Key to trigger the computations set up by :func:`.prepare_computer`
+RESULT_KEY = "base model data"
 
 FE_HEADER = """Final energy input to transport technologies.
 
@@ -56,9 +59,7 @@ def align_and_fill(
 
     The result is guaranteed to have a value for every key in `ref`.
     """
-    from genno import Quantity
-
-    return Quantity(
+    return genno.Quantity(
         pd.DataFrame.from_dict(
             {"ref": ref.to_series(), "data": qty.to_series()}
         ).fillna(value)["data"]
@@ -75,8 +76,6 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     2. Remove those values.
     3. Fill by linear interpolation.
     """
-    from genno import Quantity
-
     assert key.tag != "2"
     ks = KeySeq(key.remove_tag(key.tag or ""))
 
@@ -112,7 +111,7 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
         # - Reorder and sort index.
         # - Compute condition for clipping.
         # - Return clipped values.
-        return Quantity(
+        return genno.Quantity(
             qty.sel({dim: coord})
             .expand_dims({dim: qty.coords[dim]})
             .to_series()
@@ -145,9 +144,9 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
 def prepare_reporter(rep: "message_ix.Reporter") -> str:
     """Add tasks that produce data to parametrize transport in MESSAGEix-GLOBIOM.
 
-    Returns a key, "base model data". Retrieving the key results in the creation of 5
-    files in the reporting output directory for the :class:`.Scenario` being reported
-    (see :func:`.make_output_path`):
+    Returns :data:`.RESULT_KEY`. Retrieving the key results in the creation of files in
+    the reporting output directory for the :class:`.Scenario` being reported (see
+    :func:`.make_output_path`):
 
     1. :file:`demand.csv`: This contains MESSAGEix-Transport model solution data
        transformed into ``demand`` parameter data for a base MESSAGEix-GLOBIOM model—
@@ -165,20 +164,11 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
        (c, t) totals in correspondence with IEA World Energy Balance (WEB) values.
     5. :file:`scale-2.csv`: Second stage scaling factor used to bring overall totals.
     """
-    from genno import Key, KeySeq, Quantity, quote
+    from genno import Key, KeySeq, quote
 
-    # Final key
-    targets = []
-
-    def _to_csv(base: "Key", name: str, write_kw: Union[dict, "KeyLike", None] = None):
-        """Helper to add computations to output data to CSV."""
-        # Some strings
-        csv, path, fn = f"{name} csv", f"{name} path", f"{name.replace(' ', '-')}.csv"
-        # Output path for this parameter
-        rep.add(path, "make_output_path", "config", name=Path("base", fn))
-        # Write to file
-        rep.add(csv, "write_report", base, path, write_kw or {})
-        targets.append(csv)
+    # Add an empty list; invoking this key will trigger calculation of all the keys
+    # below added to the list
+    rep.add(RESULT_KEY, [])
 
     # Create output subdirectory for base model files
     rep.graph["config"]["output_dir"].joinpath("base").mkdir(
@@ -214,13 +204,13 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     tmp = rep.add("scale 1", "div", k[1], e_cnlt)
     s1 = KeySeq(tmp)
     rep.add(s1[1], "convert_units", s1.base, units="1 / a")
-    rep.add(s1[2], "mul", s1[1], Quantity(1.0, units="a"))
+    rep.add(s1[2], "mul", s1[1], genno.Quantity(1.0, units="a"))
     # Replace ~0 and ∞ values with 1.0; this avoids x / 0 = inf
     rep.add(s1[3], "where", s1[2], cond=lambda v: (v > 1e-3) & (v != np.inf), other=1.0)
     # Ensure no values are dropped versus the numerator (= MESSAGE outputs)
     rep.add(s1[4], align_and_fill, s1[3], k[1])
 
-    _to_csv(s1[4], s1.name, dict(header_comment=SCALE_1_HEADER))
+    rep.apply(to_csv, s1[4], name=s1.name, header_comment=SCALE_1_HEADER)
 
     # Restore original "t" labels to scale-1
     rep.add(s1[5], "select", s1[4], "indexers::iea to transport")
@@ -239,7 +229,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         kwargs=dict(fill_value="extrapolate"),
     )
 
-    _to_csv(s1[11], f"{s1.name} blend", dict(header_comment=SCALE_1_HEADER))
+    rep.apply(to_csv, s1[11], name=f"{s1.name} blend", header_comment=SCALE_1_HEADER)
 
     # Correct MESSAGEix-Transport outputs for the MESSAGEix-base model using the high-
     # resolution scaling factor
@@ -257,48 +247,27 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     tmp = rep.add("scale 2", "div", k[2] / ("c", "t", "ya"), "energy:nl:iea+transport")
     s2 = KeySeq(tmp)
     rep.add(s2[1], "convert_units", s2.base, units="1 / a")
-    rep.add(s2[2], "mul", s2[1], Quantity(1.0, units="a"))
+    rep.add(s2[2], "mul", s2[1], genno.Quantity(1.0, units="a"))
 
-    _to_csv(s2[2], s2.name, dict(header_comment=SCALE_2_HEADER))
+    rep.apply(to_csv, s2[2], name=s2.name, header_comment=SCALE_2_HEADER)
 
     # Correct MESSAGEix-Transport outputs using the low-resolution scaling factor
     rep.add(k["s2"], "div", k["s1"], s2[2])
 
     # Output "final energy csv"
     rep.add(k["s2+GWa"], "convert_units", k["s2"], units="GWa / a", sums=True)
-    _to_csv(
+    rep.apply(
+        to_csv,
         k["s2+GWa"] / tuple("hlt"),
-        "final energy",
-        dict(header_comment="Final energy input to transport"),
-    )
-
-    # Compute shares of final energy by input
-    fe_share = rep.add(
-        "fe::share", "div", k["s2"] / tuple("hlt"), k["s2"] / tuple("chlt")
-    )
-    assert isinstance(fe_share, Key)
-
-    # Minimum and maximum shares occurring over the model horizon in each region
-    rep.add(fe_share + "max", "max", fe_share, dim=("nl", "c"))
-    rep.add(fe_share + "min", "min", fe_share, dim=("nl", "c"))
-
-    _to_csv(fe_share, "fe share", dict(header_comment=FE_SHARE_HEADER))
-    _to_csv(
-        fe_share + "max",
-        "fe share max",
-        dict(header_comment=FE_SHARE_HEADER + "\n\nMaximum across ya."),
-    )
-    _to_csv(
-        fe_share + "min",
-        "fe share min",
-        dict(header_comment=FE_SHARE_HEADER + "\n\nMinimum across ya."),
+        name="final energy",
+        header_comment="Final energy input to transport",
     )
 
     # Compute for file and plot: transport final energy intensity of GDP PPP
     k_gdp = rep.add("gdp:nl-ya", "rename_dims", gdp_exo, quote({"n": "nl", "y": "ya"}))
     k_fei = single_key(rep.add("fe intensity", "div", k["s2"] / tuple("chlt"), k_gdp))
     rep.add(k_fei + "units", "convert_units", k_fei, units="MJ / USD")
-    _to_csv(k_fei + "units", "fe intensity")
+    rep.apply(to_csv, k_fei + "units", name="fe intensity")
 
     # Convert "final" energy inputs to transport to "useful energy" outputs, using
     # efficiency data from input-base.csv (in turn, from the base model). This data
@@ -308,32 +277,12 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     tmp = rep.add("ue", "div", k["s2"] / "t", "input:t-c-h:base")
     ue = KeySeq(tmp)
 
-    # Compute shares of useful energy by input
-    ue_share = rep.add(
-        "ue::share", "div", ue.base / tuple("chl"), ue.base / tuple("chlt")
-    )
-    assert isinstance(ue_share, Key)
-
-    # Minimum and maximum shares occurring over the model horizon in each region
-    rep.add(ue_share + "max", "max", ue_share, dim=("nl", "t"))
-    rep.add(ue_share + "min", "min", ue_share, dim=("nl", "t"))
-
-    _to_csv(ue_share, "ue share", dict(header_comment=UE_SHARE_HEADER))
-    _to_csv(
-        ue_share + "max",
-        "ue share max",
-        dict(header_comment=UE_SHARE_HEADER + "\n\nMaximum across ya."),
-    )
-    _to_csv(
-        ue_share + "min",
-        "ue share min",
-        dict(header_comment=UE_SHARE_HEADER + "\n\nMinimum across ya."),
-    )
+    rep.apply(share_constraints, k["s2"], ue.base)
 
     # Ensure units: in::transport+units [=] GWa/a and input::base [=] GWa; their ratio
     # gives units 1/a. The base model expects "GWa" for all 3 parameters.
-    rep.add(ue[1], "mul", ue.base, Quantity(1.0, units="GWa * a"))
-    _to_csv(ue[1] / ("c", "t"), "demand no fill", {})
+    rep.add(ue[1], "mul", ue.base, genno.Quantity(1.0, units="GWa * a"))
+    rep.apply(to_csv, ue[1] / ("c", "t"), name="demand no fill")
 
     # 'Smooth' ue[1] data by interpolating any dip below the base year value
     assert rep.apply(smooth, ue[1] / ("c", "t")) == ue[2] / ("c", "t")
@@ -342,7 +291,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     b_a_l = rep.add(Key("b_a_l", ue[2].dims), "select", ue[1], quote(dict(ya=[y0])))
 
     # `bound_activity_up` values are 1.005 * `bound_activity_lo` values
-    b_a_u = rep.add("b_a_u", "mul", b_a_l, Quantity(1.005))
+    b_a_u = rep.add("b_a_u", "mul", b_a_l, genno.Quantity(1.005))
 
     # Keyword arguments for as_message_df()
     args_demand = dict(
@@ -363,7 +312,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     ):
         # More identifiers
         s = f"base model transport {name}"
-        key, header = Key(f"{s}::ixmp"), f"{s} header"
+        key, k_header = Key(f"{s}::ixmp"), f"{s} header"
 
         # Convert to MESSAGE data structure
         rep.add(
@@ -376,18 +325,105 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         rep.add(key + "1", partial(pd.DataFrame.sort_values, by=dims), key)
 
         # Header for this file
-        rep.add(header, "base_model_data_header", "scenario", name=name)
+        rep.add(k_header, "base_model_data_header", "scenario", name=name)
 
-        _to_csv(key + "1", name, header)
+        rep.apply(to_csv, key + "1", name=name, header_key=k_header)
 
-    # Key to trigger all the above
-    result = "base model data"
-    rep.add(result, targets)
-
-    return result
+    return RESULT_KEY
 
 
-def share_constraints(c: "genno.Computer") -> "genno.Key":
+def share_constraints(c: Computer, k_fe: "genno.Key", k_ue: "genno.Key") -> None:
+    """ """
+    from genno import Key
+
+    for label, k, dim in ("fe", k_fe, "c"), ("ue", k_ue, "t"):
+        # Dimensions to partial sum for the numerator of the share: omit `dim`
+        dims_numerator = tuple(sorted(set("chlt") - {dim}))
+
+        # Dimensions within which to compute max/min
+        dims_maxmin = ("nl", dim)
+
+        # Check dimensionality
+        assert set(k.dims) == set(dims_numerator) | set(dims_maxmin) | {"ya"}
+
+        # Compute shares of [...] energy by input
+        k_share = c.add(f"{label}::share", "div", k / dims_numerator, k / tuple("chlt"))
+        assert isinstance(k_share, Key)
+
+        # Minimum and maximum shares occurring over the model horizon in each region
+        c.add(k_share + "max", "max", k_share, dim=dims_maxmin)
+        c.add(k_share + "min", "min", k_share, dim=dims_maxmin)
+
+        c.apply(to_csv, k_share, name=f"{label} share", header_comment=FE_SHARE_HEADER)
+        c.apply(
+            to_csv,
+            k_share + "max",
+            name=f"{label} share max",
+            header_comment=FE_SHARE_HEADER + "\n\nMaximum across ya.",
+        )
+        c.apply(
+            to_csv,
+            k_share + "min",
+            name=f"{label} share min",
+            header_comment=FE_SHARE_HEADER + "\n\nMinimum across ya.",
+        )
+
+    # Transform ue-share values to the expected format
+    base = c.full_key("ue::share")
+    for kind, (label, groupby) in product(
+        ("lo", "up"),
+        (
+            ("A", []),  # Reduced resolution
+            ("B", ["node"]),  # Keep distinct nodes
+            ("C", ["year"]),  # Keep distinct years
+            ("D", ["node", "year"]),  # Full resolution / distinct by node, year
+        ),
+    ):
+        k = base + kind + label
+        c.add(k, format_share_constraints, base, "config", kind=kind, groupby=groupby)
+
+        agg = {"lo": "min", "up": "max"}[kind]
+        dims = {"node", "year"} - set(groupby)
+        c.apply(
+            to_csv,
+            k,
+            name=f"share constraint {kind} {label}",
+            float_format="{0:.3f}".format,
+            header_comment=f"""Candidate MESSAGEix-GLOBIOM share constraint values
+
+This set shows the {agg}imum values appearing across the {dims} dimension(s).""",
+        )
+
+
+def to_csv(
+    c: Computer,
+    base: "genno.Key",
+    *,
+    name: str,
+    header_key: Optional["KeyLike"] = None,
+    **write_kw,
+):
+    """Helper to add computations to output data to CSV."""
+    # Some strings
+    csv, path, fn = f"{name} csv", f"{name} path", f"{name.replace(' ', '-')}.csv"
+
+    # Output path for this parameter
+    c.add(path, "make_output_path", "config", name=Path("base", fn))
+
+    # Write to file
+    if header_key:
+        # write_report() kwargs supplied via reference to another key
+        c.add(csv, "write_report", base, path, header_key)
+    else:
+        # kwargs supplied as keyword arguments to to_csv()/Computer.apply()
+        c.add(csv, "write_report", base, path, kwargs=write_kw)
+
+    c.graph[RESULT_KEY].append(csv)
+
+
+def format_share_constraints(
+    qty: "AnyQuantity", config: dict, *, kind: str, groupby: List[str] = []
+) -> pd.DataFrame:
     """Produce values for :file:`ue_share_constraints.xlsx`.
 
     This file is used by some code in :mod:`message_data` (unclear where) to produce
@@ -408,12 +444,44 @@ def share_constraints(c: "genno.Computer") -> "genno.Key":
     - 2025 through 2110 (following the "B" list of periods). If "target_value" is "TS",
       these are filled, otherwise empty.
     """
+    columns = (
+        "share_name share_tec commodity level node SSP share_type target_value"
+    ).split()
 
-    raise NotImplementedError
+    if "year" in groupby:
 
-    # TODO Transform ue-share values to the expected format
-    # TODO Output full-resolution data, i.e. node="AFR" etc., target_value="TS" and
-    #      values in 2025–2110 columns
-    # TODO Output data without a time dimension (i.e. target_value=ue-share-max)
-    # TODO Output data without a spatial dimension (i.e. node="all")
-    # TODO Output data without time or spatial dimensions
+        def maybe_pivot(df: pd.DataFrame) -> pd.DataFrame:
+            return (
+                df.pivot(columns="year", values="target_value", index=columns[:-1])
+                .reset_index()
+                .assign(target_value="TS")
+                .reindex(columns=columns + sorted(df["year"].unique()))
+            )
+    else:
+
+        def maybe_pivot(df):
+            return df.reindex(columns=columns)
+
+    return (
+        qty.to_series()
+        .rename("target_value")
+        .reset_index()
+        .rename(columns={"nl": "node", "t": "share_tec", "ya": "year"})
+        .query("year >= 2020")
+        .groupby(groupby + ["share_tec"])
+        .agg(target_value=("target_value", {"lo": "min", "up": "max"}[kind]))
+        .reset_index()
+        .assign(
+            # Transform share_tec values to produce a share_name
+            share_name=lambda df: "UE_transport_" + df["share_tec"].str.rstrip("_trp"),
+            # Fixed values
+            SSP=f"SSP{str(config['transport'].ssp.value)}",
+            commodity="transport",
+            level="useful",
+            node="all"
+            if "node" not in groupby
+            else lambda df: df["node"].str.lstrip("R12_"),
+            share_type={"lo": "lower", "up": "upper"}[kind],
+        )
+        .pipe(maybe_pivot)
+    )
