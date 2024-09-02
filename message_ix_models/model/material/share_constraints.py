@@ -1,13 +1,21 @@
-from typing import TYPE_CHECKING, List, Literal
+from typing import TYPE_CHECKING, Any, List, Literal
 
 import message_ix
 import pandas as pd
 from message_data.tools.utilities import get_nodes
 from message_ix import make_df
+from pandas import DataFrame
 
-from message_ix_models.util import broadcast, package_data_path, same_node
-
-from .share_constraints_constants import other_ind_th_tecs
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.share_constraints_constants import (
+    other_ind_th_tecs,
+)
+from message_ix_models.util import (
+    broadcast,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
+)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -213,7 +221,7 @@ def gen_comm_shr_par(
     shr_vals_df: pd.DataFrame,
     shr_type: Literal["up", "lo"] = "up",
     years: str or List[int] = "all",
-) -> pd.DataFrame:
+) -> tuple[DataFrame, Any]:
     """Generates data frame for "share_commodity_up/lo" parameter with given values for
     node_share and broadcasts them for given "years".
 
@@ -375,7 +383,7 @@ def add_foil_shr_constraint():
     sc_clone = scen.clone(scen.model, scen.scenario + "foil_furn", keep_solution=False)
 
     for sec in foil_sectors:
-        df_sec_foil_shr = df_furn_cement = pd.read_csv(
+        df_sec_foil_shr = pd.read_csv(
             rf"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/furnace_foil_{sec}_share.csv",
             usecols=[0, 2],
         )
@@ -392,7 +400,7 @@ def add_foil_shr_constraint():
         )
 
 
-def add_coal_constraint(scen):
+def add_coal_constraint(scen: "Scenario"):
     name = "UE_industry_th_coal"
     share_reg_values = pd.read_csv(
         package_data_path("material", "other", "coal_i_shares_2020.csv")
@@ -409,49 +417,53 @@ def add_coal_constraint(scen):
     )
 
 
-if __name__ == "__main__":
-    add_coal_constraint()
+def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp: str):
+    lt_heat_shr_start = 0.35
+    ssp_lt_heat_shr_end = {
+        "SSP1": 0.65,
+        "SSP2": 0.5,
+        "SSP3": 0.35,
+        "SSP4": 0.6,
+        "SSP5": 0.5,
+        "LED": 0.65,
+    }
+    end_year = {
+        "SSP1": 2040,
+        "SSP2": 2055,
+        "SSP3": 2055,
+        "SSP4": 2045,
+        "SSP5": 2050,
+        "LED": 2035,
+    }
+    start_year = 2025
+    end_years = pd.DataFrame(index=list(end_year.keys()), data=end_year.values())
+    end_vals = pd.DataFrame(
+        index=list(ssp_lt_heat_shr_end.keys()), data=ssp_lt_heat_shr_end.values()
+    )
+    val_diff = end_vals - lt_heat_shr_start
+    year_diff = end_years - start_year
+    common = {
+        "shares": "UE_industry_th_low_temp_heat",
+        "time": "year",
+        "unit": "-",
+        "value": lt_heat_shr_start,
+    }
+    df = make_df("share_commodity_up", **common)
+    df = df.pipe(broadcast, node_share=nodes_ex_world(s_info.N)).pipe(
+        broadcast,
+        year_act=[i for i in s_info.yv_ya.year_act.unique() if i >= start_year],
+    )
 
-    # shr_const = "share_low_lim_foil_ind"
-    # type_tec_shr = "foil_cement"
-    # type_tec_tot = "all_cement"
-    #
-    # from ixmp import Platform
-    # from message_ix import Scenario
-    # from share_constraints_constants import foil_ind_tecs_ht, non_foil_ind_tecs_ht
-    #
-    # # df_furn_cement = pd.read_csv(
-    # #     r"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/furnace_foil_cement_share.csv",
-    # #     usecols=[0, 2],
-    # # )
-    # # df_furn_cement.columns = ["node_share", "value"]
-    # all_ind_tecs = {
-    #     a[0]: [a[1], *b[1]]
-    #     for a, b in zip(foil_ind_tecs_ht.items(), non_foil_ind_tecs_ht.items())
-    # }
-    #
-    # foil_sectors = set(all_ind_tecs.keys())
-    # foil_sectors.remove("resins")
-    #
-    # model = ""
-    # scenario = ""
-    # mp = Platform()
-    # scen = message_ix.Scenario(mp, model, scenario)
-    # sc_clone = scen.clone(scen.model, scen.scenario + "foil_furn", keep_solution=False)
-    #
-    # for sec in foil_sectors:
-    #     df_sec_foil_shr = df_furn_cement = pd.read_csv(
-    #         rf"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/furnace_foil_{sec}_share.csv",
-    #         usecols=[0, 2],
-    #     )
-    #     df_furn_cement.columns = ["node_share", "value"]
-    #     add_comm_share(
-    #         sc_clone,
-    #         f"{sec}_foil",
-    #         f"cat_{sec}_total",
-    #         f"cat_{sec}_foil",
-    #         all_ind_tecs[sec],
-    #         foil_ind_tecs_ht[sec],
-    #         df_furn_cement,
-    #         years=sc_clone.yv_ya()["year_act"].drop_duplicates()[1:],
-    #     )
+    def get_shr(row):
+        if row["year_act"] <= end_year[ssp]:
+            val = (
+                row["value"]
+                + (row["year_act"] - start_year)
+                * (val_diff / year_diff).loc[ssp].values[0]
+            )
+        else:
+            val = ssp_lt_heat_shr_end[ssp]
+        return val
+
+    df = df.assign(value=df.apply(lambda x: get_shr(x), axis=1))
+    return df
