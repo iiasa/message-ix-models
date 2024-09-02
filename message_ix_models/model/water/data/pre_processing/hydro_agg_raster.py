@@ -28,7 +28,7 @@ username = "meas"  # options: "meas", "mengm_unicc"
 isimipvers = "3b"
 
 #: Monthly scale
-monthlyscale = True
+monthlyscale = False
 
 #: Type of data
 #: Options: "historical", "future"
@@ -209,8 +209,7 @@ def process_raster(user, isimip, cl, scen, var, data):
                 {"lat": latchunk, "lon": lonchunk, "time": len(da.dis.time)}
             )
             # Resample daily data to monthly (by summing daily values)
-            da = da.resample(time="Y").mean()
-
+            da = da.resample(time="YE").mean()
             da["dis"] = da.dis.chunk(
                 {"lat": latchunk, "lon": lonchunk, "time": len(da.dis.time)}
             )
@@ -241,7 +240,7 @@ def process_raster(user, isimip, cl, scen, var, data):
                 {"lat": latchunk, "lon": lonchunk, "time": len(da.qtot.time)}
             )
             # Resample daily data to monthly (by summing daily values)
-            da = da.resample(time="Y").mean()
+            da = da.resample(time="YE").mean()
             da["qtot"] = da.qtot.chunk(
                 {"lat": latchunk, "lon": lonchunk, "time": len(da.qtot.time)}
             )
@@ -265,7 +264,7 @@ def process_raster(user, isimip, cl, scen, var, data):
                 {"lat": latchunk, "lon": lonchunk, "time": len(da.qr.time)}
             )
             # Resample daily data to monthly (by summing daily values)
-            da = da.resample(time="Y").mean()
+            da = da.resample(time="YE").mean()
             da["qr"] = da.qr.chunk(
                 {"lat": latchunk, "lon": lonchunk, "time": len(da.qr.time)}
             )
