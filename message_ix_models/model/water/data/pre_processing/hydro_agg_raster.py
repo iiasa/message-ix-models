@@ -161,12 +161,7 @@ def process_raster(user, isimip, cl, scen, var, data):
         hydro_data = path_water + f"*{cl}*{scen}*{var}*monthly*.nc"
 
     files = glob.glob(hydro_data)
-    if var != "qr":
-        # Open hydrological data as a combined dataset
-        da = xr.open_mfdataset(files)
-    else:
-        # Open hydrological data as a combined dataset
-        da = xr.open_mfdataset(files)
+    da = xr.open_mfdataset(files)
 
     if monthlyscale:
         if var == "dis":
