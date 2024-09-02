@@ -22,14 +22,15 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
     pandas.DataFrame
         with the columns:
 
-        - scenario_version
-        - scenario
-        - region
-        - year
-        - total_gdp
-        - total_population
-        - gdp_ppp_per_capita
-        - gdp_ratio_reg_to_reference
+        - scenario_version: version of SSP scenario data
+        - scenario: scenario (SSP1-5, LED)
+        - region: region name
+        - year: year of data
+        - total_population: total population aggregated to the regional level
+        - total_gdp: total GDP aggregated to the regional level
+        - gdp_ppp_per_capita: regional GDP per capita in PPP
+        - gdp_ratio_reg_to_reference: ratio of regional GDP per capita to \
+            reference region's GDP per capita
     """
     from collections import defaultdict
 
@@ -97,8 +98,8 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
         return (
             pd.concat(
                 [
-                    dfs[0].to_series().rename("total_gdp"),
-                    dfs[1].to_series().rename("total_population"),
+                    dfs[0].to_series().rename("total_population"),
+                    dfs[1].to_series().rename("total_gdp"),
                     dfs[2].to_series().rename("gdp_ppp_per_capita"),
                     dfs[3].to_series().rename("gdp_ratio_reg_to_reference"),
                 ],

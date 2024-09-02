@@ -67,8 +67,12 @@ def assign_income_groups(  # noqa: C901
             return 1.0
 
     elif method == "population":
+        # Work around khaeru/sdmx#191: ensure the HTTPS URL is used
+        client = sdmx.Client("WB_WDI")
+        client.source.url = client.source.url.replace("http://", "https://")
+
         # Retrieve WB_WDI data for SERIES=SP_POP_TOTAL (Population, total)
-        dm = sdmx.Client("WB_WDI").data(
+        dm = client.data(
             "WDI", key="A.SP_POP_TOTL.", params=dict(startPeriod=2020, endPeriod=2020)
         )
 
@@ -154,7 +158,7 @@ def fetch_codelist(id: str) -> "sdmx.model.common.Codelist":
     import sdmx
 
     file = pooch.retrieve(
-        url="http://api.worldbank.org/v2/sdmx/rest/codelist/WB/", known_hash=None
+        url="https://api.worldbank.org/v2/sdmx/rest/codelist/WB/", known_hash=None
     )
     # Read the retrieved SDMX StructureMessage and extract the code list
     sm = sdmx.read_sdmx(file)
