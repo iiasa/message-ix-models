@@ -13,6 +13,11 @@ common:
   technology:
     add:
     - extract__freshwater_supply
+    remove:
+      # remove deprecated technologies that are sometimes still existent in older MESSAGEix-GLOBIOM versions
+      - hp_gas_i
+      - sp_coal_I
+      - hp_gas_rc
 
   commodity:
     require:
@@ -30,14 +35,18 @@ common:
     add:
     - water
     - fresh_water_supply
+    - freshwater_supply
 
   level:
+    add:
+    - water_supply
+
     require:
     - primary
     - secondary
     - useful
     - final
-    - water_supply
+    #- water_supply
     - export
     - import
 
