@@ -25,6 +25,8 @@ from message_ix_models.util import (
 )
 
 if TYPE_CHECKING:
+    from message_ix import Scenario
+
     from message_ix_models import Context
 
 
@@ -2227,7 +2229,6 @@ def calculate_ini_new_cap(
     return make_df("initial_new_capacity_up", **df_demand)
 
 
-
 def get_thermal_industry_emi_coefficients(scen: message_ix.Scenario) -> pd.DataFrame:
     """
     Pulls existing parametrization for non-CO2 emission
@@ -2275,20 +2276,22 @@ def get_thermal_industry_emi_coefficients(scen: message_ix.Scenario) -> pd.DataF
     return df_joined
 
 
-def get_furnace_inputs(scen: message_ix.Scenario, first_year) -> pd.DataFrame:
-    """
-    Pulls existing parametrization for input coefficients
-     of given Scenario instance and returns only for technologies
-     with "furnace" in the name
+def get_furnace_inputs(scen: message_ix.Scenario, first_year: int) -> pd.DataFrame:
+    """Return existing parametrization for input coefficients of given Scenario instance
+     and returns only for technologies with "furnace" in the name
 
     Parameters
     ----------
     scen: message_ix.Scenario
         Scenario instance to pull input parameter from
+    first_year: int
+        Earliest year for which furnace input parameter should be retrieved
 
     Returns
     -------
     pd.DataFrame
+        a dataframe of furnace input paramter with index
+        ["node_loc", "year_act", "commodity", "technology"]
     """
     furn_tecs = "furnace"
     df_furn = scen.par("input")
@@ -2345,7 +2348,7 @@ def calculate_furnace_non_co2_emi_coeff(
     return df_final_new
 
 
-def calibrate_t_d_tecs(scenario):
+def calibrate_t_d_tecs(scenario: "Scenario"):
     # ------------------------------------------------------
     # Revise t_d historical_activity and 2020 activity bounds
     # ------------------------------------------------------
@@ -2403,7 +2406,8 @@ def calibrate_t_d_tecs(scenario):
             .set_index(["node_loc", "technology", "year_act"])
         )
 
-        # Multiply the activity data with the input efficiencies to derive total energy requirements
+        # Multiply the activity data with the input efficiencies to derive total energy
+        # requirements
         act["eff"] = (
             inp.loc[
                 (inp.year_vtg == inp.year_act)
@@ -2451,7 +2455,14 @@ def calibrate_t_d_tecs(scenario):
         scenario.add_par("bound_activity_up", update_df)
 
 
-def maybe_add_water_tecs(scenario):
+def maybe_add_water_tecs(scenario: "Scenario") -> None:
+    """Adds water supply technologies that are required for the Materials build
+
+    Parameters
+    ----------
+    scenario: .Scenario
+        instance to check for water technologies and add if missing
+    """
     if "water_supply" not in list(scenario.set("level")):
         scenario.check_out()
         # add missing water tecs
@@ -2468,7 +2479,16 @@ def maybe_add_water_tecs(scenario):
         scenario.commit("add missing water tecs")
 
 
-def calibrate_for_SSPs(scenario):
+def calibrate_for_SSPs(scenario: "Scenario") -> None:
+    """Adjust technologies activity bounds and growth constraints to avoid base year
+    infeasibilities in year 2020. Specifically developed for the SSP_dev scenarios,
+    where most technology activities are fixed in 2020.
+
+    Parameters
+    ----------
+    scenario: .Scenario
+        instance to apply parameter changes to
+    """
     add_elec_i_ini_act(scenario)
 
     # prohibit electric clinker kilns in first decade
