@@ -225,7 +225,7 @@ def subset_module_map(raw_map):
             "reg_diff_source.notnull() or base_year_reference_region_cost.notnull()"
         )
         .rename(columns={"base_year_reference_region_cost": "base_cost"})
-        .assign(base_year_reference_region_cost=lambda x: x.base_cost.round())
+        .assign(base_year_reference_region_cost=lambda x: x.base_cost)
         .drop(columns={"base_cost"})
     )
 
