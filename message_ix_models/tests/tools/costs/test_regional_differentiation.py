@@ -74,6 +74,11 @@ def test_get_intratec_data() -> None:
     (
         ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}, {"weo"}),
         ("materials", {"biomass_NH3", "meth_h2", "furnace_foil_steel"}, {"energy"}),
+        (
+            "cooling",
+            {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"},
+            {"energy"},
+        ),
     ),
 )
 def test_get_raw_technology_mapping(module, t_exp, rds_exp) -> None:
@@ -87,7 +92,7 @@ def test_get_raw_technology_mapping(module, t_exp, rds_exp) -> None:
     assert rds_exp <= set(result.reg_diff_source.unique())
 
 
-@pytest.mark.parametrize("module", ("energy", "materials"))
+@pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
 def test_adjust_technology_mapping(module) -> None:
     energy_raw = get_raw_technology_mapping("energy")
 
@@ -110,6 +115,7 @@ def test_adjust_technology_mapping(module) -> None:
     (
         ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}),
         ("materials", {"biomass_NH3", "meth_h2", "furnace_foil_steel"}),
+        ("cooling", {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}),
     ),
 )
 def test_apply_regional_differentiation(module, t_exp) -> None:
