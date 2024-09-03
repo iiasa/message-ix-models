@@ -12,7 +12,7 @@ import message_ix
 
 import message_ix_models.tools.costs.projections
 from message_ix_models.model.material.data_util import (
-    add_macro_COVID,
+    add_macro_materials,
     gen_te_projections,
 )
 from message_ix_models.model.material.util import (
@@ -257,7 +257,7 @@ def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year
         # After solving, add macro calibration
         log.info("Scenario solved, now adding MACRO calibration")
         # f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
-        scenario = add_macro_COVID(scenario, macro_file)
+        scenario = add_macro_materials(scenario, macro_file)
         log.info("Scenario successfully calibrated.")
 
     if add_macro:
@@ -537,7 +537,7 @@ def calibrate(context, model_name, scenario_name, version):
 
     # After solving, add macro calibration
     print("Scenario solved, now adding MACRO calibration")
-    scenario = add_macro_COVID(
+    scenario = add_macro_materials(
         scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
     )
     scenario.set_as_default()
