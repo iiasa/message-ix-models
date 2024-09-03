@@ -1426,6 +1426,7 @@ def gen_te_projections(
     ssp: Literal["all", "LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "SSP2",
     method: Literal["constant", "convergence", "gdp"] = "convergence",
     ref_reg: str = "R12_NAM",
+    module="materials",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Calls message_ix_models.tools.costs with config for MESSAGEix-Materials
@@ -1450,7 +1451,7 @@ def gen_te_projections(
     """
     model_tec_set = list(scen.set("technology"))
     cfg = Config(
-        module="materials",
+        module=module,
         ref_region=ref_reg,
         method=method,
         format="message",
@@ -1756,10 +1757,92 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
     scenario.commit("remove growth constraints in RCPA industry")
 
     for bound in ["up", "lo"]:
-        df = scenario.par(f"bound_activity_{bound}", filters={"year_act": 2020})
+        par = f"bound_activity_{bound}"
+        df = scenario.par(par, filters={"year_act": 2020})
         scenario.check_out()
         scenario.remove_par(
             f"bound_activity_{bound}", df[df["technology"].str.contains("t_d")]
         )
         scenario.commit("remove t_d 2020 bounds")
+
+        df = scenario.par(par, filters={"technology": "elec_i"})
+        df["value"] = 0
+        scenario.check_out()
+        scenario.add_par(par, df)
+        scenario.commit("set elec_i bounds 2020 to 0")
+
+    df = scenario.par("historical_activity", filters={"technology": "elec_i"})
+    scenario.check_out()
+    scenario.remove_par("historical_activity", df)
+    scenario.commit("remove elec_i hist act")
+    df = scenario.par("historical_activity", filters={"technology": "elec_i"})
+    scenario.check_out()
+    scenario.remove_par("historical_activity", df)
+    scenario.commit("remove elec_i hist act")
+
+    df = scenario.par(
+        "growth_activity_lo",
+        filters={
+            "node_loc": ["R12_CHN"],
+            "year_act": 2020,
+            "technology": "coal_i",
+        },
+    )
+    df["value"] = -0.1
+    scenario.check_out()
+    scenario.add_par("growth_activity_lo", df)
+    scenario.commit("decrease gro lo for coal_ i CHN 2020")
+
+    df = scenario.par(
+        "growth_activity_lo",
+        filters={
+            "node_loc": ["R12_LAM"],
+            "year_act": 2020,
+            "technology": "gas_i",
+        },
+    )
+    df["value"] = -0.04
+    scenario.check_out()
+    scenario.add_par("growth_activity_lo", df)
+    scenario.commit("decrease gro lo for gas_i LAM 2020")
+
+    df = scenario.par(
+        "growth_activity_lo",
+        filters={
+            "node_loc": ["R12_RCPA"],
+            "year_act": 2020,
+            "technology": "foil_i",
+        },
+    )
+    df["value"] = -0.1
+    scenario.check_out()
+    scenario.add_par("growth_activity_lo", df)
+    scenario.commit("decrease gro lo for foil_i RCPA 2020")
+
+    df = scenario.par(
+        "growth_activity_up",
+        filters={
+            "node_loc": ["R12_CHN"],
+            "year_act": 2020,
+            "technology": ["loil_i", "gas_i"],
+        },
+    )
+    df["value"] *= 4
+    scenario.check_out()
+    scenario.add_par("growth_activity_up", df)
+    scenario.commit("increase gro up for loil_i/gas_i CHN 2020")
+
+    df = scenario.par(
+        "growth_activity_up",
+        filters={
+            "node_loc": ["R12_CHN"],
+            "year_act": 2020,
+            "technology": ["loil_i", "gas_i", "heat_i"],
+        },
+    )
+    df["value"] = 5
+    scenario.check_out()
+    scenario.add_par("growth_activity_up", df)
+    scenario.commit("increase gro up for loil_i/gas_i/heat_i CHN 2020")
+
     return

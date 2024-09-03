@@ -181,6 +181,16 @@ def build_scen(
         scenario.add_par("fix_cost", fix)
         scenario.add_par("inv_cost", inv)
         scenario.commit(f"update cost assumption to: {update_costs}")
+        inv, fix = gen_te_projections(scenario, "SSP2", "gdp", module="energy")
+        scenario.check_out()
+        scenario.add_par(
+            "fix_cost",
+            fix[
+                (fix["technology"].str.endswith("_i"))
+                | (fix["technology"].str.endswith("_I"))
+            ],
+        )
+        scenario.commit(f"update cost assumption to: {update_costs}")
 
 
 def validate_macrofile_path(ctx, param, value):
