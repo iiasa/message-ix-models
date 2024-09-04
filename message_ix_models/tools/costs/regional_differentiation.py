@@ -389,26 +389,41 @@ def adjust_technology_mapping(module) -> pd.DataFrame:
                 .reset_index(drop=True)
             )
 
-        # If sub_map_module has a non-null fix_cost, then use that
+        # Get full list of technologies in module_all
+        # If a custom fix_ratio exists in raw_map_energy, then use that
+        # If a custom fix_ratio exists in sub_map_module, then use that
+        # (including replacing one in raw_map_energy)
         # Otherwise, keep the fix_ratio as null
         module_all = (
-            sub_map_module.query("fix_ratio.notnull()")[
-                ["message_technology", "fix_ratio"]
-            ]
-            .rename(columns={"fix_ratio": "module_fix_ratio"})
+            module_all.merge(
+                raw_map_energy.query("fix_ratio.notnull()")[
+                    ["message_technology", "fix_ratio"]
+                ].rename(columns={"fix_ratio": "fix_ratio_energy"}),
+                how="left",
+                on="message_technology",
+            )
             .merge(
-                module_all,
-                how="right",
+                sub_map_module.query("fix_ratio.notnull()")[
+                    ["message_technology", "fix_ratio"]
+                ].rename(columns={"fix_ratio": "fix_ratio_module"}),
+                how="left",
                 on="message_technology",
             )
             .assign(
                 fix_ratio=lambda x: np.where(
-                    x.module_fix_ratio.notnull(),
-                    x.module_fix_ratio,
+                    x.fix_ratio_energy.notnull(),
+                    x.fix_ratio_energy,
                     x.fix_ratio,
                 )
             )
-            .drop(columns=["module_fix_ratio"])
+            .assign(
+                fix_ratio=lambda x: np.where(
+                    x.fix_ratio_module.notnull(),
+                    x.fix_ratio_module,
+                    x.fix_ratio,
+                )
+            )
+            .drop(columns=["fix_ratio_energy", "fix_ratio_module"])
         )
 
         # Get list of technologies in raw_map_module that are not in module_all
