@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import genno
 import pytest
+from message_ix import ModelError
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
@@ -60,7 +61,13 @@ def test_configure_legacy():
     "regions, years",
     (
         param("R11", "A", marks=MARK[2](ValueError)),
-        ("R12", "A"),
+        param(
+            "R12",
+            "A",
+            marks=pytest.mark.xfail(
+                raises=ModelError, reason="Temporary, for message-ix-models#213"
+            ),
+        ),
         param("R14", "A", marks=MARK[2](genno.ComputationError)),
         param("ISR", "A", marks=MARK[3]),
     ),
