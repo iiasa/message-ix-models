@@ -1,5 +1,6 @@
 import logging
 import re
+from pathlib import Path
 from typing import Union
 
 import click
@@ -68,3 +69,13 @@ def cli():
 def gen_structures(context, **kwargs):
     """(Re)Generate the SSP data structures in SDMX."""
     generate(context)
+
+
+@cli.command("transport")
+@click.argument("path", type=click.File(exists=True, dir_okay=False, path_type=Path))
+@click.pass_obj
+def transport_cmd(context, path):
+    """Postprocess aviation emissions."""
+    from .transport import main
+
+    main(path)
