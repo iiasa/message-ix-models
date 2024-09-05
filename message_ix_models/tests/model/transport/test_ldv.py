@@ -1,6 +1,7 @@
 import logging
+from itertools import product
+from typing import List, Mapping, Tuple
 
-import genno
 import pandas as pd
 import pytest
 from iam_units import registry
@@ -8,11 +9,7 @@ from pytest import param
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import build, testing
-from message_ix_models.model.transport.ldv import (
-    constraint_data,
-    read_USTIMES_MA3T,
-    read_USTIMES_MA3T_2,
-)
+from message_ix_models.model.transport.ldv import constraint_data, read_USTIMES_MA3T
 from message_ix_models.model.transport.testing import assert_units
 from message_ix_models.project.navigate import T35_POLICY
 
@@ -28,10 +25,10 @@ log = logging.getLogger(__name__)
         param("ISR", marks=testing.MARK[3]),
         "R11",
         "R12",
-        param("R14", marks=testing.MARK[2](genno.ComputationError)),
+        "R14",
     ],
 )
-def test_get_ldv_data(tmp_path, test_context, source, regions, years):
+def test_get_ldv_data(tmp_path, test_context, source, regions, years) -> None:
     # Info about the corresponding RES
     ctx = test_context
     # Prepare a Computer for LDV data calculations
@@ -61,12 +58,16 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
 
     # Data are returned for the following parameters
     exp_pars = {
+        "bound_new_capacity_lo",
         "bound_new_capacity_up",
         "capacity_factor",
         "growth_activity_lo",
         "growth_activity_up",
+        "historical_new_capacity",
+        "initial_activity_up",
         "input",
         "output",
+        "technical_lifetime",
         "var_cost",
     }
     if source == "US-TIMES MA3T":
@@ -75,10 +76,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
             "fix_cost",
             "inv_cost",
             "relation_activity",
-            "technical_lifetime",
         }
-    if regions == "R12":
-        exp_pars |= {"bound_new_capacity_lo", "historical_new_capacity"}
 
     assert exp_pars == set(data.keys())
 
@@ -100,54 +98,72 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
     for name in ("fix_cost", "inv_cost"):
         assert_units(data[name], registry.Unit("USD_2010 / vehicle"))
 
-    # Historical periods from 2010 + all model periods
-    i = info.set["year"].index(2010)
-    y_2010 = info.set["year"][i:]
+    # Expected number of nodes
+    N_node = len(info.N[1:])
 
-    # Remaining data have the correct size
-    for par_name, df in sorted(data.items()):
-        # log.info(par_name)
+    # Historical periods from 1990 + all model periods
+    y_min = 1995
+    y_all = sorted(filter(lambda y: y_min <= y, info.set["year"]))
 
-        # No missing entries
-        assert not df.isna().any(axis=None), df.tostring()
+    # Number of valid (yv, ya) combinations for vintaged technologies
+    def include(arg):
+        yv, ya = arg
+        return yv <= ya and info.y0 <= ya
 
-        if "year_vtg" not in df.columns:
-            continue
+    N_y_vintaged = len(list(filter(include, product(y_all, y_all))))
+    # TODO Retrieve N_tech = 11 from info.set["technology"]
 
-        # Data covers at least these periods
-        exp_y = {"bound_new_capacity_up": info.Y, "var_cost": info.Y}.get(
-            par_name, y_2010
-        )
+    # Information about returned parameters
+    # TODO Include unit checks, above, in this collection
+    par_info: Mapping[str, Tuple[bool, List[int], int]] = {
+        "bound_new_capacity_lo": (False, [info.y0], 1),
+        "bound_new_capacity_up": (False, info.Y, 1),
+        "emission_factor": (True, None, None),
+        "historical_new_capacity": (
+            True,
+            list(filter(lambda y: y < info.y0, y_all))[1:],
+            11,
+        ),
+        "output": (False, y_all, 8),  # NB 8 here is arbitrary
+        "var_cost": (False, info.Y, 1),
+    }
 
-        # FIXME Temporarily disabled for #514
-        continue
+    try:
+        for par_name, df in sorted(data.items()):
+            # Expected values for this parameter: periods, number of technologies
+            skip, exp_y, N_t = par_info.get(par_name, (False, y_all, 11))
 
-        assert set(exp_y) <= set(df["year_vtg"].unique())
+            # print(par_name)  # DEBUG
 
-        # Expected number of (yv, ya) combinations in the data
-        N_y = len(exp_y)
-        try:
-            # Check for a vintaged parameter and technology
-            cond = df.eval("year_act - year_vtg > 0").any(axis=None)
-        except pd.errors.UndefinedVariableError:
-            cond = False
-        N_y *= ((len(exp_y) - 1) // 2) if cond else 1
+            # No missing entries
+            assert not df.isna().any(axis=None), df.tostring()
 
-        # Total length of data is at least the product of:
-        # - # of regions
-        # - # of technologies: 11 if specific to each LDV tech
-        # - # of periods
-        N_exp = (
-            len(info.N[1:])
-            * {"bound_new_capacity_up": 1, "var_cost": 1}.get(par_name, 11)
-            * N_y
-        )
-        # log.info(f"{N_exp = } {len(df) = }")
+            if "year_vtg" not in df.columns:
+                continue
 
-        # # Show the data for debugging
-        # print(par_name, df.to_string(), sep="\nq")
+            # Data covers at least these periods
+            assert exp_y is None or set(exp_y) <= set(df["year_vtg"].unique())
 
-        assert N_exp <= len(df)
+            if skip:
+                continue
+
+            # Expected number of (yv, ya) combinations in the data
+            try:
+                # Check for a vintaged parameter and technology
+                assert df.eval("year_act - year_vtg > 0").any(axis=None)
+                N_y = N_y_vintaged
+            except (pd.errors.UndefinedVariableError, AssertionError):
+                N_y = len(exp_y)
+
+            # Total length of data is at least the product of:
+            # - # of regions
+            # - # of technologies
+            # - # of periods
+            assert N_node * N_t * N_y <= len(df)
+    except AssertionError:
+        # Show the data for debugging
+        print(par_name, df.to_string(), sep="\n")
+        raise
 
 
 @build.get_computer.minimum_version
@@ -194,9 +210,12 @@ def test_ldv_constraint_data(test_context, source, regions, years):
     data = constraint_data(ctx)
 
     # Data are returned for the following parameters
-    assert {"bound_new_capacity_up", "growth_activity_lo", "growth_activity_up"} == set(
-        data.keys()
-    )
+    assert {
+        "bound_new_capacity_up",
+        "growth_activity_lo",
+        "growth_activity_up",
+        "initial_activity_up",
+    } == set(data.keys())
 
     for bound in ("lo", "up"):
         # Constraint data are returned. Use .pop() to exclude from the next assertions
@@ -215,10 +234,14 @@ def test_ldv_constraint_data(test_context, source, regions, years):
         pytest.param(
             read_USTIMES_MA3T, marks=testing.MARK[5]("R11/ldv-cost-efficiency.xlsx")
         ),
-        read_USTIMES_MA3T_2,
     ),
 )
 def test_read_USTIMES_MA3T(func):
+    """Data from the US-TIMES / MA³T source can be read.
+
+    .. todo:: Adapt to be more like :func:`.test_build.test_debug`, using the output
+       of :func:`.ldv.prepare_computer`.
+    """
     all_nodes = get_codes("node/R11")
     nodes = all_nodes[all_nodes.index("World")].child
     data = func(nodes, "R11")

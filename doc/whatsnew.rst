@@ -5,7 +5,10 @@ Next release
 ============
 
 - Fix and update :doc:`/api/tools-costs` (:pull:`219`)
-  - Fix naming of GDP and population columns in SSP data aggregation (:pull:`219`).
+
+  - Fix naming of GDP and population columns in SSP data aggregation.
+
+- Update :doc:`/transport/index` (:pull:`213`).
 
 v2024.8.6
 =========

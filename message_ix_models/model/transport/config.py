@@ -180,11 +180,11 @@ class Config(ConfigHelper):
     #: Dimensions: (node,).
     ldv_cost_catch_up_year: Dict = field(default_factory=dict)
 
-    #: Lifetime of light duty vehicles.
-    #: Dimensions: (consumer type,). Units: [time].
-    ldv_lifetime: Quantity = quantity_field(
-        dict(modest=20, average=15, frequent=10, _dim="consumer type", _unit="year")
-    )
+    #: Method for calibrating LDV stock and sales:
+    #:
+    #: - :py:`"A"`: use data from :file:`ldv-new-capacity.csv`, if it exists.
+    #: - :py:`"B"`: use func:`.ldv.stock`; see the function documentation.
+    ldv_stock_method: Literal["A", "B"] = "B"
 
     #: Tuples of (node, technology (transport mode), commodity) for which minimum
     #: activity should be enforced. See :func:`.non_ldv.bound_activity_lo`.

@@ -2,24 +2,21 @@
 
 import logging
 from collections import defaultdict
-from functools import lru_cache, partial
-from operator import itemgetter, le
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
 
 import genno
 import pandas as pd
-from genno import Computer, quote
-from genno.operator import load_file
+from genno import Computer, Key, KeySeq
 from message_ix import make_df
 from openpyxl import load_workbook
 from sdmx.model.v21 import Code
 
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
+from message_ix_models.tools import exo_data
 from message_ix_models.util import (
     ScenarioInfo,
-    adapt_R11_R12,
-    adapt_R11_R14,
     broadcast,
     cached,
     check_support,
@@ -30,8 +27,9 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
-from message_ix_models.util.ixmp import rename_dims
 
+from . import files as exo
+from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
 from .operator import extend_y
 from .util import input_commodity_level
@@ -42,6 +40,31 @@ if TYPE_CHECKING:
     from .config import Config
 
 log = logging.getLogger(__name__)
+
+
+@exo_data.register_source
+class LDV(MaybeAdaptR11Source):
+    """Provider of exogenous data on LDVs
+
+    Parameters
+    ----------
+    source_kw :
+       Must include exactly the keys "measure" (must be one of "fuel economy",
+       "fix_cost", or "inv_cost"), "nodes", and "scenario".
+    """
+
+    id = __name__
+    measures = {"inv_cost", "fuel economy", "fix_cost"}
+    filename = {
+        "inv_cost": "ldv-inv_cost.csv",
+        "fuel economy": "ldv-fuel-economy.csv",
+        "fix_cost": "ldv-fix_cost.csv",
+    }
+
+    def __init__(self, source, source_kw) -> None:
+        super().__init__(source, source_kw)
+        # Use "exo" tag on the target key, to align with existing code in this module
+        self.key = Key(f"ldv {self.measure}:n-t-y:exo")
 
 
 def prepare_computer(c: Computer):
@@ -57,6 +80,7 @@ def prepare_computer(c: Computer):
     In both cases, :func:`get_constraints` is used to generate constraints.
     """
     from genno import Key
+    from genno.core.attrseries import AttrSeries
 
     from . import factor
 
@@ -65,21 +89,20 @@ def prepare_computer(c: Computer):
     source = config.data_source.LDV
     info = config.base_model_info
 
-    # Add all the following computations, even if they will not be used
-    k1 = Key("US-TIMES MA3T")
-    c.add(k1 + "R11", read_USTIMES_MA3T_2, None, quote("R11"))
-
-    # Operator for adapting R11 data
-    adapt = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(context.model.regions)
-    if adapt:
-        c.add(k1 + "exo", adapt, k1 + "R11")  # Adapt
-    else:
-        c.add(k1 + "exo", k1 + "R11")  # Alias
-
-    # Extract the separate quantities
-    for name in TABLES:
-        k2 = Key(f"ldv {name}:n-t-y:exo")
-        c.add(k2, itemgetter(name), k1 + "exo")
+    # Use .tools.exo_data.prepare_computer() to add task that load, adapt, and select
+    # the appropriate data
+    for measure in LDV.measures:
+        exo_data.prepare_computer(
+            context,
+            c,
+            source=__name__,
+            source_kw=dict(
+                measure=measure,
+                nodes=context.model.regions,
+                scenario=str(config.ssp),
+            ),
+            strict=False,
+        )
 
     # Insert a scaling factor that varies according to SSP
     k_fe = Key("ldv fuel economy:n-t-y")
@@ -99,12 +122,7 @@ def prepare_computer(c: Computer):
 
     # Multiply by values from ldv-input-adj.csv. See file comment. Drop the 'scenario'
     # dimension; there is only one value in the file per 'n'.
-    c.add(
-        "ldv input adj:n",
-        "sum",
-        "ldv input adj:n-scenario:exo",
-        dimensions=["scenario"],
-    )
+    c.add("ldv input adj:n", "sum", exo.input_adj_ldv, dimensions=["scenario"])
     c.add(k_eff + "adj", "mul", k_eff + "adj+0", "ldv input adj:n")
 
     # Select a task for the final step that computes "ldv::ixmp"
@@ -139,52 +157,82 @@ def prepare_computer(c: Computer):
     # Insert a scaling factor that varies according to SSP
     c.apply(factor.insert, lf_ny + "0", name="ldv load factor", target=lf_ny)
 
-    keys = [
-        c.add("ldv tech::ixmp", *final),
-        c.add(
-            "ldv usage::ixmp",
-            usage_data,
-            lf_ny,
-            "cg",
-            "n::ex world",
-            "t::transport LDV",
-            "y::model",
-        ),
-        c.add("ldv constraints::ixmp", constraint_data, "context"),
-        c.add(
-            "ldv capacity_factor::ixmp",
-            capacity_factor,
-            "ldv activity:n:exo",
-            "t::transport LDV",
-            "y",
-            "broadcast:y-yv-ya",
-        ),
-    ]
+    # Keys to be included in combined data
+    keys = []
 
-    # Add data from file ldv-new-capacity.csv
-    try:
-        k = Key(c.full_key("cap_new::ldv+exo"))
-    except KeyError:
-        pass  # No such file in this configuration
-    else:
-        kw: Dict[str, Any] = dict(
-            dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
-        )
+    t_ldv = "t::transport LDV"
 
+    # Extend (forward fill) lifetime to cover all periods
+    c.add(exo.lifetime_ldv + "0", "extend_y", exo.lifetime_ldv, "y", dim="yv")
+    # Broadcast to all nodes
+    c.add(
+        "lifetime:nl-yv:ldv",
+        "broadcast_n",
+        exo.lifetime_ldv + "0",
+        "n::ex world",
+        dim="nl",
+    )
+    # Broadcast to all LDV technologies
+    # TODO Use a named operator like genno.operator.expand_dims, instead of the method
+    #      of the AttrSeries class
+    c.add("lifetime:nl-t-yv:ldv", AttrSeries.expand_dims, "lifetime:nl-yv:ldv", t_ldv)
+    # Convert to MESSAGE data structure
+    keys.append(Key("technical_lifetime::ldv+ixmp"))
+    c.add(
+        keys[-1],
+        "as_message_df",
+        "lifetime:nl-t-yv:ldv",
+        name=keys[-1].name,
+        dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
+        common={},
+    )
+
+    # Add further keys for MESSAGE-structured data
+    # Techno-economic attributes
+    keys.append("ldv tech::ixmp")
+    c.add(keys[-1], *final)
+    # Usage
+    keys.append("ldv usage::ixmp")
+    c.add(keys[-1], usage_data, lf_ny, "cg", "n::ex world", t_ldv, "y::model")
+    # Constraints
+    keys.append("ldv constraints::ixmp")
+    c.add(keys[-1], constraint_data, "context")
+    # Capacity factor
+    keys.append("ldv capacity_factor::ixmp")
+    c.add(keys[-1], capacity_factor, exo.activity_ldv, t_ldv, "y", "broadcast:y-yv-ya")
+
+    # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
+    if config.ldv_stock_method == "A":
+        # Data from file ldv-new-capacity.csv
+        try:
+            k = Key(c.full_key("cap_new::ldv+exo"))
+        except KeyError:
+            pass  # No such file in this configuration
+    elif config.ldv_stock_method == "B":
+        k = c.apply(stock)
+
+    kw: Dict[str, Any] = dict(
+        dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
+    )
+    if k:
         # historical_new_capacity: select only data prior to y₀
         kw.update(name="historical_new_capacity")
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
         c.add(k + "1", "select", k, indexers=dict(yv=y_historical))
         keys.append(c.add("ldv hnc::ixmp", "as_message_df", k + "1", **kw))
 
-        # bound_new_capacity_{lo,up}: select only data from y₀ and later
+        # CAP_NEW/bound_new_capacity_{lo,up}
+        # - Select only data from y₀ and later.
+        # - Discard values for ICE_conv.
+        #   TODO Do not hard code this label; instead, identify the technology with the
+        #   largest share and avoid setting constraints on it.
+        # - Add both upper and lower constraints to ensure the solution contains exactly
+        #   the given value.
         c.add(k + "2", "select", k, indexers=dict(yv=info.Y))
-        for s in "lo", "up":
+        c.add(k + "3", "select", k + "2", indexers=dict(t=["ICE_conv"]), inverse=True)
+        for s in ("lo", "up"):
             kw.update(name=f"bound_new_capacity_{s}")
-            keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "2", **kw))
-
-    # TODO add bound_activity constraints for first year given technology shares
-    # TODO add historical_new_capacity for period prior to to first year
+            keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "3", **kw))
 
     k_all = "transport ldv::ixmp"
     c.add(k_all, "merge_data", *keys)
@@ -267,21 +315,6 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Mapping[str, "AnyQuantit
     return qty
 
 
-def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, "AnyQuantity"]:
-    """Same as :func:`read_USTIMES_MA3T`, but from CSV files."""
-    result = {}
-    for name in "fix_cost", "fuel economy", "inv_cost":
-        result[name] = load_file(
-            path=package_data_path(
-                "transport", subdir or "", f"ldv-{name.replace(' ', '-')}.csv"
-            ),
-            dims=rename_dims(),
-            name=name,
-        ).ffill("y")
-
-    return result
-
-
 def get_USTIMES_MA3T(
     context, efficiency: "AnyQuantity", inv_cost: "AnyQuantity", fix_cost: "AnyQuantity"
 ) -> Dict[str, pd.DataFrame]:
@@ -308,7 +341,6 @@ def get_USTIMES_MA3T(
 
     # Retrieve configuration and ScenarioInfo
     config: "Config" = context.transport
-    technical_lifetime = config.ldv_lifetime["average"]
     info = config.base_model_info
     spec = config.spec
 
@@ -322,7 +354,8 @@ def get_USTIMES_MA3T(
     data = dict(efficiency=efficiency, inv_cost=inv_cost, fix_cost=fix_cost)
 
     # Years to include
-    target_years = list(filter(partial(le, 2010), info.set["year"]))
+    # FIXME Avoid hard-coding this period
+    target_years = list(filter(lambda y: 1995 <= y, info.set["year"]))
     # Extend over missing periods in the model horizon
     data = {name: extend_y(qty, target_years) for name, qty in data.items()}
 
@@ -379,11 +412,6 @@ def get_USTIMES_MA3T(
         .pipe(broadcast, year_act=info.Y)
         .query("year_act >= year_vtg")
         .pipe(same_node)
-    )
-
-    # Add technical lifetimes
-    result.update(
-        make_matched_dfs(base=result["output"], technical_lifetime=technical_lifetime)
     )
 
     # Transform costs
@@ -533,6 +561,15 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
             name, value=value, year_act=years, time="year", unit="-"
         ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
 
+        if bound == "lo":
+            continue
+
+        # Add initial_activity_up values allowing usage to begin in any period
+        name = f"initial_activity_{bound}"
+        data[name] = make_df(
+            name, value=1e6, year_act=years, time="year", unit="-"
+        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
+
     # Prevent new capacity from being constructed for techs annotated
     # "historical-only: True"
     historical_only_techs = list(
@@ -544,6 +581,63 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     )
 
     return data
+
+
+def stock(c: Computer) -> Key:
+    """Prepare `c` to compute base-period stock and historical sales."""
+    from .key import ldv_ny
+
+    k = KeySeq("stock:n-y:ldv")
+
+    # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
+    #   load factor (occupancy) to obtain implied stock.
+    # - Correct units: "load factor ldv:n-y" is dimensionless, should be
+    #   passenger/vehicle
+    # - Select only the base-period value.
+    c.add(k[0], "div", ldv_ny + "total", exo.activity_ldv)
+    c.add(k[1], "div", k[0], "load factor ldv:n-y")
+    c.add(k[2], "div", k[1], genno.Quantity(1.0, units="passenger / vehicle"))
+    c.add(k[3] / "y", "select", k[2], "y0::coord")
+
+    # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
+    c.add("stock:n-t:ldv", "mul", k[3] / "y", exo.t_share_ldv)
+
+    # TODO Move the following 4 calls to .build.add_structure() or similar
+    # Identify the subset of periods up to and including y0
+    c.add(
+        "y::to y0",
+        lambda periods, y0: dict(y=list(filter(lambda y: y <= y0, periods))),
+        "y",
+        "y0",
+    )
+    # Convert duration_period to Quantity
+    c.add("duration_period:y", "duration_period", "info")
+    # Duration_period up to and including y0
+    c.add("duration_period:y:to y0", "select", "duration_period:y", "y::to y0")
+    # Groups for aggregating annual to period data
+    c.add("y::annual agg", "groups_y_annual", "duration_period:y")
+
+    # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
+    # multi-year periods)
+    c.add("sales fraction:n-t-y:ldv", "sales_fraction_annual", exo.age_ldv)
+    # Absolute sales in preceding years
+    c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:n-t-y:ldv")
+    # Aggregate to model periods; total sales across the period
+    c.add(
+        "sales:n-t-y:ldv+total",
+        "aggregate",
+        "sales:n-t-y:ldv+annual",
+        "y::annual agg",
+        keep=False,
+    )
+    # Divide by duration_period for the equivalent of CAP_NEW/historical_new_capacity
+    c.add("sales:n-t-y:ldv", "div", "sales:n-t-y:ldv+total", "duration_period:y")
+
+    # Rename dimensions to match those expected in prepare_computer(), above
+    k = Key("sales:nl-t-yv:ldv")
+    c.add(k, "rename_dims", "sales:n-t-y:ldv", name_dict={"n": "nl", "y": "yv"})
+
+    return k
 
 
 def usage_data(

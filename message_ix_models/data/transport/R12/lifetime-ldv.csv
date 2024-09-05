@@ -1,0 +1,18 @@
+# Technical lifetime (maximum age) of LDVs
+#
+# Units: year
+#
+#
+node_loc, year_vtg, value
+R12_AFR,  1990,     25
+R12_CHN,  1990,     15
+R12_EEU,  1990,     28
+R12_FSU,  1990,     15
+R12_LAM,  1990,     25
+R12_MEA,  1990,     15
+R12_NAM,  1990,     18
+R12_PAO,  1990,     13
+R12_PAS,  1990,     13
+R12_RCPA, 1990,     15
+R12_SAS,  1990,     25
+R12_WEU,  1990,     20

@@ -98,11 +98,11 @@ class ADVANCE(ExoDataSource):
 
         # Map the `measure` keyword to a string appearing in the data
         _kw = copy(source_kw)
-        measure = _kw.pop("measure")
+        self.measure = _kw.pop("measure")
         self.variable = {
             "GDP": "GDP|PPP",
             "POP": "Population",
-        }.get(measure, measure)
+        }.get(self.measure, self.measure)
 
         # Store the model and scenario ID
         self.model = _kw.pop("model", None)

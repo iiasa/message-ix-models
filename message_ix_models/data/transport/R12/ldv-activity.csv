@@ -15,7 +15,7 @@
 #
 node,    value
 # R12_AFR,  11000  # TH low
-R12_AFR,  18000
+R12_AFR,  15500
 # R12_AFR,  19000  # TH high
 
 # R12_CHN,   9500  # TH low
@@ -30,14 +30,14 @@ R12_EEU,   9000
 
 # R12_FSU,  11000  # TH low
 # TH high = previous value
-R12_FSU,  15000
+R12_FSU,  13000
 
 # R12_LAM,  13000  # TH low
-R12_LAM,  14600
+R12_LAM,  13500
 # R12_LAM,  15000  # TH high
 
 # R12_MEA,  13000  # TH low
-R12_MEA,  14000
+R12_MEA,  14500
 # R12_MEA,  16000  # TH high
 
 # R12_NAM,  16000  # TH low
@@ -62,5 +62,5 @@ R12_SAS,  12000
 # R12_SAS,  15000  # TH high
 
 # R12_WEU,  11000  # TH low
-R12_WEU,  11646
+R12_WEU,  11700
 # R12_WEU,  12000  # TH high

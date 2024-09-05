@@ -3,7 +3,7 @@
 import logging
 import re
 from functools import partial, reduce
-from itertools import product
+from itertools import pairwise, product
 from operator import gt, le, lt
 from typing import (
     TYPE_CHECKING,
@@ -26,6 +26,7 @@ import xarray as xr
 from genno import Computer, KeySeq, Operator, quote
 from genno.operator import apply_units, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
+from scipy import integrate
 from sdmx.model.v21 import Code
 
 from message_ix_models import ScenarioInfo
@@ -62,17 +63,20 @@ __all__ = [
     "distance_ldv",
     "distance_nonldv",
     "dummy_prices",
+    "duration_period",
     "extend_y",
     "factor_fv",
     "factor_input",
     "factor_pdt",
     "groups_iea_eweb",
+    "groups_y_annual",
     "iea_eei_fv",
     "indexers_n_cd",
     "indexers_usage",
     "input_commodity_level",
     "logit",
     "max",
+    "maybe_select",
     "min",
     "merge_data",
     "nodes_ex_world",  # Re-export from message_ix_models.util TODO do this upstream
@@ -80,6 +84,7 @@ __all__ = [
     "price_units",
     "quantity_from_config",
     "relabel2",
+    "sales_fraction_annual",
     "share_weight",
     "smooth",
     "transport_check",
@@ -197,15 +202,28 @@ def broadcast_advance(data: "AnyQuantity", y0: int, config: dict) -> "AnyQuantit
     return result
 
 
-def broadcast_y_yv_ya(y: List[int], y_model: List[int]) -> "AnyQuantity":
+def broadcast_n(qty: "AnyQuantity", n: List[str], *, dim: str) -> "AnyQuantity":
+    existing = sorted(qty.coords[dim].data)
+    missing = set(n) - set(existing)
+
+    if missing:
+        n_map = [(n_, n_) for n_ in existing] + [("*", n_) for n_ in missing]
+        return MappingAdapter({dim: n_map})(qty)
+    else:
+        return qty
+
+
+def broadcast_y_yv_ya(y: List[int], y_include: List[int]) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
-    This is distinct from :attr:`.ScenarioInfo.ya_ya`, because it omits all
-    :math:`y^V < y_0`.
+    This omits all :math:`y^V \notin y^{include}`.
+
+    If :py:`"y::model"` is passed as `y_include`, this is equivalent to
+    :attr:`.ScenarioInfo.ya_ya`.
     """
     dims = ["y", "yv", "ya"]
     series = (
-        pd.DataFrame(product(y, y_model), columns=dims[1:])
+        pd.DataFrame(product(y, y_include), columns=dims[1:])
         .query("ya >= yv")
         .assign(value=1.0, y=lambda df: df["yv"])
         .set_index(dims)["value"]
@@ -317,22 +335,54 @@ def dummy_prices(gdp: "AnyQuantity") -> "AnyQuantity":
     )
 
 
-def extend_y(qty: "AnyQuantity", y: List[int]) -> "AnyQuantity":
-    """Extend `qty` along the "y" dimension to cover `y`."""
+def duration_period(info: "ScenarioInfo") -> "AnyQuantity":
+    """Convert ``duration_period`` parameter data to :class:`.Quantity`.
+
+    .. todo:: Move to a more general module/location.
+    """
+    from genno.operator import unique_units_from_dim
+
+    return genno.Quantity(
+        info.par["duration_period"]
+        .replace("y", "year")
+        .rename(columns={"year": "y"})
+        .set_index(["y", "unit"])["value"]
+    ).pipe(unique_units_from_dim, "unit")
+
+
+def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantity":
+    """Extend `qty` along the dimension `dim` to cover all of `y`.
+
+    - Values are first filled forward, then backwards, within existing `dim` labels in
+      `qty`.
+    - Labels in `y` that are *not* in `qty` are filled using the first or last existing
+      value.
+    """
     y_ = set(y)
 
     # Subset of `y` appearing in `qty`
-    y_qty = sorted(set(qty.to_series().reset_index()["y"].unique()) & y_)
-    # Subset of `target_years` to fill forward from the last period in `qty`
-    y_to_fill = sorted(filter(partial(lt, y_qty[-1]), y_))
+    existing = sorted(set(qty.coords[dim].data) & y_)
+    # y-coords to fill backward from the earliest appearing in `qty`
+    to_bfill = sorted(filter(partial(gt, existing[0]), y_))
+    # y-coords to fill forward from the latest appearing in `qty`
+    to_ffill = sorted(filter(partial(lt, existing[-1]), y_))
 
-    log.info(f"{qty.name}: extend from {y_qty[-1]} → {y_to_fill}")
+    log.info(
+        f"{qty.name}: extend {to_bfill} ← {dim}={existing[0]}; "
+        f"{dim}={existing[-1]} → {to_ffill}"
+    )
 
-    # Map existing labels to themselves, and missing labels to the last existing one
-    y_map = [(y, y) for y in y_qty] + [(y_qty[-1], y) for y in y_to_fill]
-    # - Forward-fill *within* `qty` existing values.
-    # - Use message_ix_models MappingAdapter to do the rest.
-    return MappingAdapter({"y": y_map})(qty.ffill("y"))  # type: ignore [attr-defined]
+    # Map existing labels to themselves, and missing labels to the first or last in
+    # `existing`
+    y_map = (
+        [(existing[0], y) for y in to_bfill]
+        + [(y, y) for y in existing]
+        + [(existing[-1], y) for y in to_ffill]
+    )
+    # - Forward-fill within existing y-coords of `qty`.
+    # - Backward-fill within existing y-coords of `qty`
+    # - Use MappingAdapter to do the rest.
+    return MappingAdapter({dim: y_map})(qty.ffill(dim).bfill(dim))  # type: ignore [attr-defined]
 
 
 def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
@@ -533,6 +583,17 @@ def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
     return g0, g1, g2
 
 
+def groups_y_annual(duration_period: "AnyQuantity") -> "AnyQuantity":
+    """Return a list of groupers for aggregating annual data to MESSAGE periods.
+
+    .. todo:: Move to a more general module/location.
+    """
+    result = {}
+    for (period,), duration in duration_period.to_series().items():
+        result[period] = list(range(period + 1 - int(duration), period + 1))
+    return dict(y=result)
+
+
 def input_commodity_level(t: List[Code], default_level=None) -> "AnyQuantity":
     """Return a Quantity for broadcasting dimension (t) to (c, l) for ``input``.
 
@@ -612,6 +673,34 @@ def max(
 
     # FIXME This is AttrSeries only
     return qty.groupby(level=dim).max()  # type: ignore
+
+
+def maybe_select(qty: "AnyQuantity", *, indexers: dict) -> "AnyQuantity":
+    """Select from `qty` if possible, using :py:`"*"` wildcard.
+
+    Same as :func:`genno.operator.select`, except:
+
+    1. If not all the dimensions of `indexers` are in `qty`, no selection is performed.
+    2. For each dimension of `indexers`, if the corresponding (scalar) value is not
+       present in `qty`, it is replaced with "*". `qty` **should** contain this value
+       along every dimension to be selected; otherwise, the result will be empty.
+    """
+    from genno.operator import select
+
+    try:
+        idx = {}
+        for dim, value in indexers.items():
+            if value in qty.coords[dim]:
+                idx[dim] = value
+            else:
+                log.debug(f"Use {dim}='*' for missing {value!r}")
+                idx[dim] = "*"
+    except ValueError as e:
+        msg = f"{e.args[0]} not among dims {qty.dims} of {qty.name}; no selection"
+        log.info(msg)
+        return qty
+    else:
+        return select(qty, indexers=idx)
 
 
 def min(
@@ -782,6 +871,68 @@ def relabel2(qty: "AnyQuantity", new_dims: dict):
         result = select(result, selectors)
 
     return result
+
+
+def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
+    """Construct a uniform distribution from `value` along its :math:`y`-dimension.
+
+    `value` must have a dimension `dim` with length 1 and a single value, :math:`k`. The
+    sole `dim`-coordinate is taken as :math:`d_{max}`: the upper end of a uniform
+    distribution of which the mean is :math:`d_{max} - k`.
+
+    Returns
+    -------
+    genno.Quantity
+        with dimension `dim`, and `dim` coordinates including all integer values up to
+        and including :math:`d_{max}`. Values are the piecewise integral of the uniform
+        distribution in the interval ending at the respective coordinate.
+    """
+    d_max = value.coords[dim].item()  # Upper end of the distribution
+    width = 2 * value.item()  # Width of a uniform distribution
+    height = 1.0 / width  # Height of the distribution
+    d_min = d_max - width  # Lower end of the distribution
+
+    def _uniform(x: float) -> float:
+        """Uniform distribution between `d_min` and `d_max`."""
+        return height if d_min < x < d_max else 0.0
+
+    # Points for piecewise integration of `_uniform`: integers from the first <= d_min
+    # to d_max inclusive
+    points = np.arange(np.floor(d_min), d_max + 1).astype(int)
+
+    # - Group `points` pairwise: (d0, d1), (d1, d2)
+    # - On each interval, compute the integral of _uniform() by quadrature.
+    # - Convert to Quantity with y-dimension, labelled with interval upper bounds.
+    return genno.Quantity(
+        pd.Series(
+            {b: integrate.quad(_uniform, a, b)[0] for a, b in pairwise(points)}
+        ).rename_axis(dim),
+        units="",
+    )
+
+
+def sales_fraction_annual(age: "AnyQuantity") -> "AnyQuantity":
+    """Return fractions of current vehicle stock that should be added in prior years.
+
+    Parameters
+    ---
+    age : genno.Quantity
+        Mean age of vehicle stock. Must have dimension "y" and at least 1 other
+        dimension. For every unique combination of those other dimensions, there must be
+        only one value/|y|-coordinate. This is taken as the *rightmost* end of a uniform
+        distribution with mean age given by the respective value.
+
+    Returns
+    -------
+    genno.Quantity
+        Same dimensionality as `age`, with sufficient |y| coordinates to cover all years
+        in which. Every integer year is included, i.e. the result is **not** aggregated
+        to multi-year periods (called ``year`` in MESSAGE).
+    """
+    # - Group by all dims other than `y`.
+    # - Apply the function to each scalar value.
+    dims = list(filter(lambda d: d != "y", age.dims))
+    return age.groupby(dims).apply(uniform_in_dim)
 
 
 def share_weight(

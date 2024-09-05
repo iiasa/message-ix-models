@@ -2,9 +2,10 @@
 
 import logging
 from collections import defaultdict
+from copy import deepcopy
 from functools import partial
 from operator import le
-from typing import TYPE_CHECKING, Dict, List, Mapping, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Mapping, Optional, Set, Tuple
 
 import pandas as pd
 from genno import Computer, Key, Quantity
@@ -14,6 +15,8 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import (
+    adapt_R11_R12,
+    adapt_R11_R14,
     broadcast,
     make_io,
     make_matched_dfs,
@@ -288,7 +291,96 @@ class IEA_Future_of_Trucks(ExoDataSource):
         return single_key(result)
 
 
-class MERtoPPP(ExoDataSource):
+class MaybeAdaptR11Source(ExoDataSource):
+    """Source of transport data, possibly adapted from R11 for other node code lists.
+
+    Parameters
+    ----------
+    source_kw :
+       Must include exactly the keys "measure", "nodes", and "scenario".
+    """
+
+    #: Set of measures recognized by a subclass.
+    measures: Set[str] = set()
+
+    #: Mapping from :attr:`.measures` entries to file names.
+    filename: Mapping[str, str] = dict()
+
+    _adapter: Optional[Callable] = None
+
+    def __init__(self, source, source_kw):
+        from .util import path_fallback
+
+        # Check that the given measure is supported by the current class
+        if not source == self.id:
+            raise ValueError(source)
+        measure = source_kw.pop("measure", None)
+        if measure not in self.measures:
+            raise ValueError(measure)
+        else:
+            self.measure = measure
+
+        # ID of the node code list
+        nodes = source_kw.pop("nodes")
+
+        # Scenario identifier
+        self.scenario = source_kw.pop("scenario", None)
+
+        # Dimensions for loaded data
+        self.dims = deepcopy(rename_dims())
+        self.dims["scenario"] = "scenario"
+
+        self.raise_on_extra_kw(source_kw)
+
+        filename = self.filename[measure]
+        try:
+            self.path = path_fallback(nodes, filename)
+            self._repr = f"Load {self.path}"
+        except FileNotFoundError:
+            log.info(f"Fall back to R11 data for {self.measure}")
+            self.path = path_fallback("R11", filename)
+
+            # Identify an adapter that can convert data from R11 to `nodes`
+            self._adapter = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(nodes)
+            self._repr = f"Load {self.path} and adapt R11 → {nodes}"
+
+            if self._adapter is None:
+                log.warning(
+                    f"Not implemented: transform {self.id} data from 'R11' to {nodes!r}"
+                )
+                raise NotImplementedError
+
+    def __call__(self):
+        from genno.operator import load_file
+
+        return load_file(self.path, dims=self.dims, name=self.measure)
+
+    def __repr__(self) -> str:
+        return self._repr
+
+    def get_keys(self) -> Tuple[Key, Key]:
+        """Return the target keys for the (1) raw and (2) transformed data."""
+        k = self.key or Key(
+            self.name or self.measure.lower(), ("n", "y") + self.extra_dims
+        )
+        return (k * "scenario" + self.id, k)
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        # Apply self.adapt, if any
+        if self._adapter:
+            k0 = base_key + "0"
+            c.add(base_key + "0", self._adapter, base_key)
+        else:
+            k0 = base_key
+
+        # Select on the 'scenario' dimension, if any
+        k1 = k0 / "scenario" + "1"
+        c.add(k1, "maybe_select", k0, indexers={"scenario": self.scenario})
+
+        return k1
+
+
+class MERtoPPP(MaybeAdaptR11Source):
     """Provider of exogenous MERtoPPP data.
 
     Parameters
@@ -299,46 +391,8 @@ class MERtoPPP(ExoDataSource):
     """
 
     id = "transport MERtoPPP"
-
-    def __init__(self, source, source_kw):
-        from .util import path_fallback
-
-        if not source.startswith("message_ix_models.model.transport"):
-            raise ValueError(source)
-        elif source_kw.pop("measure") != "MERtoPPP":
-            raise ValueError(source_kw)
-
-        # ID of the node code list
-        nodes = source_kw.pop("nodes")
-        self.raise_on_extra_kw(source_kw)
-
-        try:
-            self.path = path_fallback(nodes, "mer-to-ppp.csv")
-        except FileNotFoundError:
-            log.info("Fall back to R11 data")
-            self.path = path_fallback("R11", "mer-to-ppp.csv")
-
-            from message_ix_models.util import adapt_R11_R12, adapt_R11_R14
-
-            # Try to identify an adapter that can convert R11 to `regions_to`
-            if adapt := {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(nodes):
-                self.adapt = adapt
-            else:
-                log.warning(
-                    f"Not implemented: transform {self.id} data from 'R11' to {nodes!r}"
-                )
-                raise NotImplementedError
-        else:
-
-            def passthrough(qty):
-                return qty
-
-            self.adapt = passthrough
-
-    def __call__(self):
-        from genno.operator import load_file
-
-        return self.adapt(load_file(self.path, dims=rename_dims()))
+    measures = {"MERtoPPP"}
+    filename = {"MERtoPPP": "mer-to-ppp.csv"}
 
 
 # Attempt to register each source; tolerate exceptions if the model is re-imported

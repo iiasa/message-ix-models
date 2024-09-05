@@ -1,0 +1,162 @@
+# Mean age of LDVs as of the model base period
+#
+# Source: placeholder
+#
+# Unit: years
+#
+node,     technology, year, value
+R12_AFR,  ELC_100,    2020, 1
+R12_AFR,  HFC_ptrp,   2020, 12
+R12_AFR,  IAHe_ptrp,  2020, 12
+R12_AFR,  IAHm_ptrp,  2020, 12
+R12_AFR,  ICAe_ffv,   2020, 12
+R12_AFR,  ICAm_ptrp,  2020, 12
+R12_AFR,  ICE_conv,   2020, 14
+R12_AFR,  ICE_L_ptrp, 2020, 12
+R12_AFR,  ICE_nga,    2020, 12
+R12_AFR,  ICH_chyb,   2020, 12
+R12_AFR,  IGH_ghyb,   2020, 12
+R12_AFR,  PHEV_ptrp,  2020, 2
+
+R12_CHN,  ELC_100,    2020, 3
+R12_CHN,  HFC_ptrp,   2020, 7
+R12_CHN,  IAHe_ptrp,  2020, 7
+R12_CHN,  IAHm_ptrp,  2020, 7
+R12_CHN,  ICAe_ffv,   2020, 7
+R12_CHN,  ICAm_ptrp,  2020, 7
+R12_CHN,  ICE_conv,   2020, 7
+R12_CHN,  ICE_L_ptrp, 2020, 10
+R12_CHN,  ICE_nga,    2020, 7
+R12_CHN,  ICH_chyb,   2020, 8
+R12_CHN,  IGH_ghyb,   2020, 8
+R12_CHN,  PHEV_ptrp,  2020, 2
+
+R12_EEU,  ELC_100,    2020, 2
+R12_EEU,  HFC_ptrp,   2020, 13
+R12_EEU,  IAHe_ptrp,  2020, 13
+R12_EEU,  IAHm_ptrp,  2020, 13
+R12_EEU,  ICAe_ffv,   2020, 13
+R12_EEU,  ICAm_ptrp,  2020, 13
+R12_EEU,  ICE_conv,   2020, 13.6
+R12_EEU,  ICE_L_ptrp, 2020, 15
+R12_EEU,  ICE_nga,    2020, 13
+R12_EEU,  ICH_chyb,   2020, 12
+R12_EEU,  IGH_ghyb,   2020, 12
+R12_EEU,  PHEV_ptrp,  2020, 2
+
+R12_FSU,  ELC_100,    2020, 2
+R12_FSU,  HFC_ptrp,   2020, 12
+R12_FSU,  IAHe_ptrp,  2020, 12
+R12_FSU,  IAHm_ptrp,  2020, 12
+R12_FSU,  ICAe_ffv,   2020, 12
+R12_FSU,  ICAm_ptrp,  2020, 12
+R12_FSU,  ICE_conv,   2020, 14.5
+R12_FSU,  ICE_L_ptrp, 2020, 12
+R12_FSU,  ICE_nga,    2020, 12
+R12_FSU,  ICH_chyb,   2020, 12
+R12_FSU,  IGH_ghyb,   2020, 12
+R12_FSU,  PHEV_ptrp,  2020, 2
+
+R12_LAM,  ELC_100,    2020, 2
+R12_LAM,  HFC_ptrp,   2020, 13
+R12_LAM,  IAHe_ptrp,  2020, 13
+R12_LAM,  IAHm_ptrp,  2020, 13
+R12_LAM,  ICAe_ffv,   2020, 13
+R12_LAM,  ICAm_ptrp,  2020, 13
+R12_LAM,  ICE_conv,   2020, 13
+R12_LAM,  ICE_L_ptrp, 2020, 15
+R12_LAM,  ICE_nga,    2020, 13
+R12_LAM,  ICH_chyb,   2020, 13
+R12_LAM,  IGH_ghyb,   2020, 13
+R12_LAM,  PHEV_ptrp,  2020, 3
+
+R12_MEA,  ELC_100,    2020, 1
+R12_MEA,  HFC_ptrp,   2020, 6
+R12_MEA,  IAHe_ptrp,  2020, 6
+R12_MEA,  IAHm_ptrp,  2020, 6
+R12_MEA,  ICAe_ffv,   2020, 6
+R12_MEA,  ICAm_ptrp,  2020, 6
+R12_MEA,  ICE_conv,   2020, 6
+R12_MEA,  ICE_L_ptrp, 2020, 10
+R12_MEA,  ICE_nga,    2020, 6
+R12_MEA,  ICH_chyb,   2020, 6
+R12_MEA,  IGH_ghyb,   2020, 6
+R12_MEA,  PHEV_ptrp,  2020, 2.5
+
+R12_NAM,  ELC_100,    2020, 4
+R12_NAM,  HFC_ptrp,   2020, 12
+R12_NAM,  IAHe_ptrp,  2020, 12
+R12_NAM,  IAHm_ptrp,  2020, 12
+R12_NAM,  ICAe_ffv,   2020, 12
+R12_NAM,  ICAm_ptrp,  2020, 12
+R12_NAM,  ICE_conv,   2020, 12.3
+R12_NAM,  ICE_L_ptrp, 2020, 15
+R12_NAM,  ICE_nga,    2020, 12
+R12_NAM,  ICH_chyb,   2020, 12
+R12_NAM,  IGH_ghyb,   2020, 12
+R12_NAM,  PHEV_ptrp,  2020, 5
+
+R12_PAO,  ELC_100,    2020, 3.5
+R12_PAO,  HFC_ptrp,   2020, 9
+R12_PAO,  IAHe_ptrp,  2020, 9
+R12_PAO,  IAHm_ptrp,  2020, 9
+R12_PAO,  ICAe_ffv,   2020, 9
+R12_PAO,  ICAm_ptrp,  2020, 9
+R12_PAO,  ICE_conv,   2020, 9
+R12_PAO,  ICE_L_ptrp, 2020, 15
+R12_PAO,  ICE_nga,    2020, 9
+R12_PAO,  ICH_chyb,   2020, 9
+R12_PAO,  IGH_ghyb,   2020, 9
+R12_PAO,  PHEV_ptrp,  2020, 4
+
+R12_PAS,  ELC_100,    2020, 3
+R12_PAS,  HFC_ptrp,   2020, 6
+R12_PAS,  IAHe_ptrp,  2020, 7
+R12_PAS,  IAHm_ptrp,  2020, 7
+R12_PAS,  ICAe_ffv,   2020, 7
+R12_PAS,  ICAm_ptrp,  2020, 7
+R12_PAS,  ICE_conv,   2020, 6.5
+R12_PAS,  ICE_L_ptrp, 2020, 8
+R12_PAS,  ICE_nga,    2020, 7
+R12_PAS,  ICH_chyb,   2020, 7
+R12_PAS,  IGH_ghyb,   2020, 7
+R12_PAS,  PHEV_ptrp,  2020, 3
+
+R12_RCPA, ELC_100,    2020, 3
+R12_RCPA, HFC_ptrp,   2020, 12
+R12_RCPA, IAHe_ptrp,  2020, 12
+R12_RCPA, IAHm_ptrp,  2020, 12
+R12_RCPA, ICAe_ffv,   2020, 12
+R12_RCPA, ICAm_ptrp,  2020, 12
+R12_RCPA, ICE_conv,   2020, 12
+R12_RCPA, ICE_L_ptrp, 2020, 12
+R12_RCPA, ICE_nga,    2020, 12
+R12_RCPA, ICH_chyb,   2020, 12
+R12_RCPA, IGH_ghyb,   2020, 12
+R12_RCPA, PHEV_ptrp,  2020, 2.5
+
+R12_SAS,  ELC_100,    2020, 1.5
+R12_SAS,  HFC_ptrp,   2020, 6
+R12_SAS,  IAHe_ptrp,  2020, 6
+R12_SAS,  IAHm_ptrp,  2020, 6
+R12_SAS,  ICAe_ffv,   2020, 6
+R12_SAS,  ICAm_ptrp,  2020, 6
+R12_SAS,  ICE_conv,   2020, 6
+R12_SAS,  ICE_L_ptrp, 2020, 10
+R12_SAS,  ICE_nga,    2020, 6
+R12_SAS,  ICH_chyb,   2020, 6
+R12_SAS,  IGH_ghyb,   2020, 6
+R12_SAS,  PHEV_ptrp,  2020, 2.5
+
+R12_WEU,  ELC_100,    2020, 2.5
+R12_WEU,  HFC_ptrp,   2020, 11
+R12_WEU,  IAHe_ptrp,  2020, 11
+R12_WEU,  IAHm_ptrp,  2020, 11
+R12_WEU,  ICAe_ffv,   2020, 11
+R12_WEU,  ICAm_ptrp,  2020, 11
+R12_WEU,  ICE_conv,   2020, 11.2
+R12_WEU,  ICE_L_ptrp, 2020, 15
+R12_WEU,  ICE_nga,    2020, 11
+R12_WEU,  ICH_chyb,   2020, 11
+R12_WEU,  IGH_ghyb,   2020, 11
+R12_WEU,  PHEV_ptrp,  2020, 3

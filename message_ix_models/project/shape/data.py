@@ -72,15 +72,15 @@ class SHAPE(ExoDataSource):
         if source != self.id:
             raise ValueError(source)
 
-        measure = source_kw.pop("measure", None)
+        self.measure = source_kw.pop("measure", None)
         version = source_kw.pop("version", "latest")
         scenario = source_kw.pop("scenario", None)
 
         try:
             # Retrieve information about the `quantity`
-            info = INFO[measure]
+            info = INFO[self.measure]
         except KeyError:
-            raise ValueError(f"quantity must be one of {sorted(INFO.keys())}")
+            raise ValueError(f"measure must be one of {sorted(INFO.keys())}")
 
         self.raise_on_extra_kw(source_kw)
 
@@ -90,13 +90,13 @@ class SHAPE(ExoDataSource):
         # Construct path to data file
         self.path = path_fallback(
             "shape",
-            f"{measure}_v{version.replace('.', 'p')}{info['suffix']}",
+            f"{self.measure}_v{version.replace('.', 'p')}{info['suffix']}",
             where="private test",
         )
         if "test" in self.path.parts:
             log.warning(f"Reading random data from {self.path}")
 
-        variable = info.get("variable", measure)
+        variable = info.get("variable", self.measure)
         self.query = " and ".join(
             [
                 f"Scenario == {scenario!r}" if scenario else "True",

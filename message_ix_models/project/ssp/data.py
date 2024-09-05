@@ -77,10 +77,11 @@ class SSPOriginal(ExoDataSource):
         *parts, ssp_id = source.partition(s)
 
         # Map the `measure` keyword to a string appearing in the data
+        self.measure = source_kw.pop("measure")
         measure = {
             "GDP": "GDP|PPP",
             "POP": "Population",
-        }[source_kw.pop("measure")]
+        }[self.measure]
 
         # Store the model ID, if any
         model = source_kw.pop("model", None)
@@ -154,10 +155,11 @@ class SSPUpdate(ExoDataSource):
         *parts, ssp_id = source.partition(s)
 
         # Map the `measure` keyword to a 'Variable' dimension code
+        self.measure = source_kw.pop("measure")
         measure = {
             "GDP": "GDP|PPP",
             "POP": "Population",
-        }[source_kw.pop("measure")]
+        }[self.measure]
 
         # Store the model code, if any
         model = source_kw.pop("model", None)

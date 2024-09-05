@@ -59,7 +59,11 @@ IAHm_ptrp:
 
 ICAe_ffv:
   report: Biofuel ICEV
-  description: Internal combustion engine light-duty vehicle using biofuels
+  description: >-
+    Internal combustion engine light-duty vehicle using biofuels.
+
+    Although real-world flex-fuel vehicles are run on varying mix of
+    ethanol and lightoil, this technology uses only ethanol.
   input: {commodity: ethanol}
   message-v-report: LDV_ffv
   gfei-2017-technology: Diesel
