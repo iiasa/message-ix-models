@@ -49,7 +49,7 @@ def get_freight_data(
     info = context.transport.spec.add
     info.set["commodity"].extend(get_codes("commodity"))
 
-    technologies = techs[techs.index(Code(id="freight truck"))].child
+    technologies = techs[techs.index(Code(id="F ROAD"))].child
 
     # Information for data creation
     common = dict(

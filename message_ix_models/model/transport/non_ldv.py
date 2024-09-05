@@ -215,7 +215,7 @@ def bound_activity_lo(c: Computer) -> List[Key]:
         rows: List[List] = []
         cols = ["n", "t", "c", "value"]
         for (n, modes, c), value in cfg.minimum_activity.items():
-            for m in ["2W", "BUS", "freight truck"] if modes == "ROAD" else ["RAIL"]:
+            for m in ["2W", "BUS", "F ROAD"] if modes == "ROAD" else ["RAIL"]:
                 m_idx = technologies.index(m)
                 rows.extend([n, t, c, value] for t in techs_for(technologies[m_idx], c))
 
@@ -264,7 +264,7 @@ def constraint_data(
     # Non-LDV modes passenger modes
     modes = set(t for t in t_modes if t != "LDV")
     # Freight modes
-    modes.add("freight truck")
+    modes.add("F ROAD")
 
     # Lists of technologies to constrain
     # All technologies under the non-LDV modes

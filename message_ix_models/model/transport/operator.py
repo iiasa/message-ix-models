@@ -279,8 +279,8 @@ def distance_ldv(config: dict) -> "AnyQuantity":
 EEI_TECH_MAP = {
     "Buses": "BUS",
     "Cars/light trucks": "LDV",
-    "Freight trains": "freight rail",
-    "Freight trucks": "freight truck",
+    "Freight trains": "F RAIL",
+    "Freight trucks": "F ROAD",
     "Motorcycles": "2W",
     "Passenger trains": "RAIL",
 }
@@ -459,7 +459,7 @@ def factor_input(
             "2W": 1.5,
             "BUS": 1.5,
             "LDV": 1.5,
-            "freight truck": 2.0,
+            "F ROAD": 2.0,
             "AIR": 1.3,
         }.items():
             value.update({t: 1 - (v / 100.0) for t in t_groups[group]})
