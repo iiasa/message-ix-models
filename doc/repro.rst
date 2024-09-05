@@ -11,6 +11,7 @@ Elsewhere:
 
 - A `high-level introduction <https://paul.kishimoto.name/2021/06/issst/>`_, to how testing supports validity, reproducibility, interoperability, and reusability, in :mod:`message_ix_models` and related packages.
 - :doc:`api/testing` (:mod:`message_ix_models.testing`), on a separate page.
+- :doc:`data` for information about reproducible handling of data, both private and public.
 
 .. _repro-doc:
 
@@ -112,7 +113,7 @@ Trade
    International trade.
    Mention any special treatment of electricity trade across regions.
 
-Other items
+[other items]
    Include these and add explanatory text if the configuration differs from the base global model:
 
    - Fossil resources
@@ -135,14 +136,14 @@ Publications
 Other code
 ----------
 
-- Docstrings for general-purpose code and functions **should** explain clearly to which data (including scenario(s)) the code is *or* is not applicable.
-  Code **may** also check explicitly and raise informative Python exceptions if the target data/scenario is not supported.
+Docstrings for general-purpose code and functions **should** explain clearly to which data (including scenario(s)) the code is *or* is not applicable.
+Code **may** also check explicitly and raise informative Python exceptions if the target data/scenario is not supported.
 
-  These allow others to understand when the code:
+These allow others to understand when the code:
 
-  - can be (re)used without modification,
-  - can be modified or extended to support new uses, or
-  - can or should not be used.
+- can be (re)used without modification,
+- can be modified or extended to support new uses, or
+- can or should not be used.
 
 .. _repro-testing:
 
@@ -308,10 +309,10 @@ MESSAGEix-GLOBIOM 1.0
    .. todo:: Expand with a list of cases in which this model name has been used.
 
 MESSAGEix-GLOBIOM 1.1
-   This version is published as a :doc:`model-snapshot`, and uses:
+   This version is published as a :doc:`data snapshot <api/model-snapshot>`, and uses:
 
-   - R11 node list.
-   - B year (period) list.
+   - R11 :doc:`node list <pkg-data/node>`.
+   - B :doc:`year (period) list <pkg-data/year>`.
 
    .. todo:: Expand with a list of cases in which this model name has been used.
 
