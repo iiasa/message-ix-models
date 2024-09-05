@@ -184,7 +184,7 @@ def convert_mass_to_energy(df):
             )
 
 
-def report(context, scenario, print_to_excel=False):  # noqa: C901
+def report(scenario, print_to_excel=False):  # noqa: C901
     # Obtain scenario information and directory
 
     s_info = ScenarioInfo(scenario)
