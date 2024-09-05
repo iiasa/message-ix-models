@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Expand :doc:`repro` with sections on :ref:`repro-doc` and :ref:`versioning`, including :ref:`a list of external model names and ‘versions’ <model-names>` like “MESSAGEix-GLOBIOM 2.0” (:issue:`224`, :pull:`226`).
 - Fix and update :doc:`/api/tools-costs` (:pull:`219`)
 
   - Fix naming of GDP and population columns in SSP data aggregation.
