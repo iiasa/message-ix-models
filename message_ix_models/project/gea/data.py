@@ -6,11 +6,8 @@ from typing import TYPE_CHECKING
 
 import genno
 
-from message_ix_models.tools.exo_data import (
-    ExoDataSource,
-    iamc_like_data_for_query,
-    register_source,
-)
+from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.iamc import iamc_like_data_for_query
 from message_ix_models.util import package_data_path, path_fallback
 
 if TYPE_CHECKING:
