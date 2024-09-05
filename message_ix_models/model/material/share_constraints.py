@@ -400,7 +400,7 @@ def add_foil_shr_constraint():
         )
 
 
-def add_coal_constraint(scen: "Scenario"):
+def add_industry_coal_shr_constraint(scen: "Scenario"):
     name = "UE_industry_th_coal"
     share_reg_values = pd.read_csv(
         package_data_path("material", "other", "coal_i_shares_2020.csv")
