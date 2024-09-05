@@ -197,7 +197,7 @@ def navigate_ele(
             to_constrain.append(code.id)
 
     # Item (2): identify diesel-fueled freight truck technologies
-    for code in map(lambda t: techs[techs.index(t)], t_groups["t"]["freight truck"]):
+    for code in map(lambda t: techs[techs.index(t)], t_groups["t"]["F ROAD"]):
         if "diesel" in str(code.description):
             to_constrain.append(code.id)
 

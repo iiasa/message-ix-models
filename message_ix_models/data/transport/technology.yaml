@@ -285,6 +285,24 @@ FR_FCm:
   input: {commodity: methanol}
   report: FRT_MFC
 
+f road electr:
+  name: Freight road vehicle powered by electricity
+  input: {commodity: electr}
+
+f rail electr:
+  name: Freight rail powered by electricity
+  input: {commodity: electr}
+
+f rail lightoil:
+  name: Freight rail powered by light oil
+  input: {commodity: lightoil}
+
+F RAIL:
+  name: Freight rail
+  child: [f rail elec, f rail loil]
+  units: Gv km
+  iea-eweb-flow: [RAIL]
+
 crail_pub:
   description: >-
     Coal-powered urban public rail transport: aggregate of metro/underground,
@@ -404,13 +422,22 @@ LDV:
   units: Gv km
   iea-eweb-flow: [ROAD]
 
-freight truck:
-  name: Freight trucks
+F ROAD:
+  name: Freight road vehicle
   report: Truck
   description: >-
     In MESSAGE-V, the output of all freight technologies was labelled: f-u
-  child: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
-    FR_FCg, FR_FCm]
+  child:
+  - f road electr
+  - FR_FCg
+  - FR_FCH
+  - FR_FCm
+  - FR_ICAe
+  - FR_ICE_H
+  - FR_ICE_L
+  - FR_ICE_M
+  - FR_ICG
+  - FR_ICH
   units: Gv km
   iea-eweb-flow: [ROAD]
 
