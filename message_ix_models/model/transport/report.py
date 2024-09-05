@@ -519,6 +519,8 @@ def multi(context: Context, targets):
     """Report outputs from multiple scenarios."""
     import plotnine as p9
 
+    from message_ix_models.tools.iamc import _drop_unique
+
     report_dir = context.get_local_path("report")
     platform = context.get_platform()
 
@@ -542,15 +544,6 @@ def multi(context: Context, targets):
 
         dfs.append(df)
 
-    # FIXME This duplicates code from message_ix_models.tools.exo_data; deduplicate
-    def drop_unique(df, names) -> pd.DataFrame:
-        names_list = names.split()
-        for name in names_list:
-            values = df[name].unique()
-            if len(values) > 1:
-                raise RuntimeError(f"Not unique {name!r}: {values}")
-        return df.drop(names_list, axis=1)
-
     # Convert to a genno.Quantity
     cols = ["Variable", "Model", "Scenario", "Region", "Unit"]
     data = genno.Quantity(
@@ -558,7 +551,7 @@ def multi(context: Context, targets):
         .sort_values(cols)
         .melt(id_vars=cols, var_name="y")
         .astype({"y": int})
-        .pipe(drop_unique, "Model")
+        .pipe(_drop_unique, columns="Model", record=dict())
         .rename(columns={"Variable": "v", "Scenario": "s", "Region": "n"})
         .dropna(subset=["value"])
         .set_index("v s n y Unit".split())["value"]
