@@ -99,8 +99,13 @@ class Constant(Layer):
 
     operation = operator.mul
 
+    #: Units.
+    units: str = "dimensionless"
+
     def __init__(self, value: Union[float, Quantity], dims: Union[str, Sequence[str]]):
-        self.value = value if isinstance(value, Quantity) else Quantity(value)
+        self.value = (
+            value if isinstance(value, Quantity) else Quantity(value, units=self.units)
+        )
         self.dims = (
             tuple(re.split("[ -]", dims)) if isinstance(dims, str) else tuple(dims)
         )
@@ -416,13 +421,22 @@ COMMON = {
     # “Total pdt (active mode) differences across SSPs”
     # This is implemented as the remaining share of PDT for "non-active" modes; that is,
     # once active modes are subtracted.
+    #
+    # NB (PNK) Disabled to avoid decreases in PDT/capita from 2025→2030 and
+    #    corresponding decrease in final energy input to transport. This should be
+    #    replaced with a more complete representation of active mobility that starts in
+    #    y₀ (or historical periods) and changes smoothly, rather than cutting in as of
+    #    2030.
+    #
     # TODO Implement SSP4 as "HIC=H, MIC=M, LIC=M"
     "pdt non-active": Factor(
         [
             Map(
                 "setting",
-                H=Constant(0.9, "n y"),
-                M=Constant(0.95, "n y"),
+                # H=Constant(0.9, "n y"),
+                # M=Constant(0.95, "n y"),
+                H=Constant(1.0, "n y"),
+                M=Constant(1.0, "n y"),
                 L=Constant(1.0, "n y"),
             ),
             OMIT_2025,

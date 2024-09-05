@@ -12,12 +12,7 @@ from genno.core.key import single_key
 from platformdirs import user_cache_path
 
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
-from message_ix_models.util import (
-    HAS_MESSAGE_DATA,
-    cached,
-    package_data_path,
-    private_data_path,
-)
+from message_ix_models.util import cached, package_data_path, path_fallback
 from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
@@ -37,6 +32,12 @@ FILES = {
     ("OECD", "2022"): ("372f7e29-en.zip",),  # Timestamped 20230406T1000
     ("OECD", "2023"): ("8624f431-en.zip",),  # Timestamped 20231012T1000
 }
+
+#: Location of :data:`.FILES`; :py:`where=` argument to :func:`.path_fallback`.
+#:
+#: .. todo:: Change to :py:`"local test"`` after adjusting :file:`transport.yaml`
+#:    workflow in :mod:`.message_data`.
+WHERE = "local private test"
 
 
 @register_source
@@ -69,7 +70,7 @@ class IEA_EWEB(ExoDataSource):
 
     id = "IEA_EWEB"
 
-    extra_dims = ("product", "flow")
+    key = "energy:n-y-product-flow:iea"
 
     def __init__(self, source, source_kw):
         """Initialize the data source."""
@@ -80,8 +81,10 @@ class IEA_EWEB(ExoDataSource):
 
         provider = _kw.pop("provider", None)
         edition = _kw.pop("edition", None)
-        assert (provider, edition) in FILES
-        self.load_kw = dict(provider=provider, edition=edition)
+        try:
+            files = FILES[(provider, edition)]
+        except KeyError:
+            raise ValueError(f"No IEA data files for ({provider=!r}, {edition=!r})")
 
         self.indexers = dict(MEASURE="TJ")
         if product := _kw.pop("product", None):
@@ -91,6 +94,12 @@ class IEA_EWEB(ExoDataSource):
 
         if len(_kw):
             raise ValueError(_kw)
+
+        # Identify a location that contains the files for the given (provider, edition)
+        path = path_fallback("iea", files[0], where=WHERE).parent
+
+        # Store keyword arguments for load_data()
+        self.load_kw = dict(provider=provider, edition=edition, path=path)
 
     def __call__(self):
         """Load and process the data."""
@@ -231,19 +240,12 @@ def load_data(
     pandas.DataFrame
         The data frame has one column for each of :data:`.DIMS`, plus "Value".
     """
-    files = FILES[(provider, edition)]
-
-    # Identify a location that contains the `files`
-    if path is None:
-        if HAS_MESSAGE_DATA:
-            path = private_data_path("iea")
-        else:
-            path = package_data_path("test", "iea")
-            log.warning(f"Reading random data from {path}")
-
-    assert path.joinpath(files[0]).exists()
-
-    return iea_web_data_for_query(path, *files, query_expr=query_expr)
+    path = path or package_data_path("test", "iea")
+    if "test" in path.parts:
+        log.warning(f"Reading random data from {path}")
+    return iea_web_data_for_query(
+        path, *FILES[(provider, edition)], query_expr=query_expr
+    )
 
 
 def generate_code_lists(
@@ -264,14 +266,9 @@ def generate_code_lists(
     register_agency(IEA)
 
     # Read the data
-    if HAS_MESSAGE_DATA:
-        path = private_data_path("iea")
-    else:
-        path = package_data_path("test", "iea")
-        log.warning(f"Reading random data from {path}")
-    data = iea_web_data_for_query(
-        path, *FILES[(provider, edition)], query_expr="TIME > 0"
-    )
+    files = FILES[(provider, edition)]
+    path = path_fallback("iea", files[0], where=WHERE).parent
+    data = iea_web_data_for_query(path, *files, query_expr="TIME > 0")
 
     for concept_id in ("COUNTRY", "FLOW", "PRODUCT"):
         # Create a code list with the unique values from this dimension

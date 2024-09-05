@@ -196,31 +196,18 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
-    prepare_computer(
-        context, c, "message_ix_models.model.transport", source_kw=kw, strict=False
-    )
+    prepare_computer(context, c, "transport MERtoPPP", source_kw=kw, strict=False)
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
     kw = dict(
         provider="OECD",
         edition="2022",
-        flow=[
-            "DOMESAIR",
-            "DOMESNAV",
-            "PIPELINE",
-            "RAIL",
-            "ROAD",
-            "TOTTRANS",
-            "TRNONSPE",
-            "WORLDAV",
-            "WORLDMAR",
-        ],
+        flow=(
+            "DOMESAIR DOMESNAV PIPELINE RAIL ROAD TOTTRANS TRNONSPE WORLDAV WORLDMAR"
+        ).split(),
     )
     prepare_computer(context, c, "IEA_EWEB", source_kw=kw, strict=False)
-    # Alias for use in reporting
-    # TODO Fix the upstream code so that the name is not "unknown"
-    c.add("energy:n-y-product-flow:iea", "unknown:n-y-product-flow")
 
     # Add IEA Future of Trucks data
     for kw in dict(measure=1), dict(measure=2):
@@ -262,13 +249,15 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         log.info(repr(e))  # Solved scenario that already has this key
 
     # Data from files
-    from .files import FILES, ExogenousDataFile
+    from .files import FILES, add
 
     # Identify the mode-share file according to the config setting
-    ExogenousDataFile(
-        ("mode-share", config.mode_share),
-        "mode share:n-t:ref",
-        "Reference (base year) mode share",
+    add(
+        key="mode share:n-t:exo",
+        path=("mode-share", config.mode_share),
+        name="Reference (base year) mode share",
+        units="dimensionless",
+        replace=True,
     )
 
     for f in FILES:

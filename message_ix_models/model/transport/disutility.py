@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING
 
 from genno import Key, Quantity, quote
 
+from . import files as exo
+
 if TYPE_CHECKING:
     from genno import Computer
 
@@ -22,7 +24,7 @@ def prepare_computer(c: "Computer") -> None:
     # Divide disutility per vehicle by annual driving distance per vehicle → disutility
     # per vehicle-km; convert to preferred units
     # TODO add "cg" dimension to ldv activity
-    k2 = c.add(key + "2", "div", k1, "ldv activity:n:exo")
+    k2 = c.add(key + "2", "div", k1, exo.activity_ldv)
     k3 = c.add(key + "3", "mul", k2, Quantity(1.0, units="vehicle / year"))
     k4 = c.add(key + "4", "convert_units", k3, units="USD / km")
 

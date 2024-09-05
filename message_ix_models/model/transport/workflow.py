@@ -6,15 +6,33 @@ from typing import TYPE_CHECKING, Literal, Optional
 
 from genno import KeyExistsError
 
+from message_ix_models.model.workflow import Config
 from message_ix_models.project.ssp import SSP_2024
 from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
+    import message_ix
+
     import message_ix_models
 
     from .config import Config
 
 log = logging.getLogger(__name__)
+
+
+# Use lpmethod=4, scaind=1 to overcome LP status 5 (optimal with unscaled
+# infeasibilities) when running on SSP(2024) base scenarios
+SOLVE_CONFIG = Config(
+    reserve_margin=False,
+    solve=dict(
+        model="MESSAGE",
+        solve_options=dict(
+            iis=1,
+            lpmethod=4,
+            scaind=1,
+        ),
+    ),
+)
 
 
 def base_scenario_url(
@@ -129,6 +147,40 @@ def short_hash(value: str) -> str:
     return blake2s(value.encode()).hexdigest()[:3]
 
 
+def tax_emission(
+    context: "message_ix_models.Context", scenario: "message_ix.Scenario", price: float
+) -> "message_ix.Scenario":
+    """Add emission tax.
+
+    This function calls code from :mod:`message_data.projects.navigate.workflow`,
+    :mod:`message_data.tools.utilities`, and other non-public locations. It cannot be
+    used without access to those codes.
+    """
+    from message_ix import make_df
+
+    from message_ix_models.util import broadcast
+
+    try:
+        from message_data.projects.engage import workflow as engage_workflow
+        from message_data.projects.navigate import workflow as navigate_workflow
+    except ImportError:
+        raise RuntimeError("Requires non-public code from message_data")
+
+    # Add ENGAGE-style emissions accounting
+    scenario = engage_workflow.step_0(context, scenario)
+
+    # Add values for the MACRO 'drate' parameter.
+    # message_data.tools.utilities.add_tax_emission() refers to this parameter, rather
+    # than the MESSAGE 'interestrate' parameter, to compute nominal future values of the
+    # tax. The parameter is not present if MACRO has not been set up on the scenario.
+    name = "drate"
+    df = make_df(name, value=0.05, unit="-").pipe(broadcast, node=scenario.set("node"))
+    with scenario.transact(f"Add values for {name}"):
+        scenario.add_par(name, df)
+
+    return navigate_workflow.tax_emission(context, scenario, price)
+
+
 def generate(
     context: "message_ix_models.Context",
     *,
@@ -137,9 +189,7 @@ def generate(
     **options,
 ):
     from message_ix_models import Workflow
-    from message_ix_models.model.workflow import Config as SolveConfig
     from message_ix_models.model.workflow import solve
-    from message_ix_models.project import navigate
     from message_ix_models.report import register, report
 
     from . import build
@@ -157,16 +207,6 @@ def generate(
     # Prepare transport configuration, passing the remaining `options`
     Config.from_context(context, options=options)
 
-    # Set values expected by workflow steps re-used from .projects.navigate
-    context.navigate = navigate.Config(
-        scenario="baseline", buildings=False, material=False
-    )
-    # Use lpmethod=4, scaind=1 to overcome LP status 5 (optimal with unscaled
-    # infeasibilities) when running on SSP(2024) base scenarios
-    solve_config = SolveConfig(
-        reserve_margin=False,
-        solve=dict(model="MESSAGE", solve_options=dict(lpmethod=4, scaind=1)),
-    )
     # Set the default .report.Config key for ".* reported" steps
     register("model.transport")
     context.report.key = report_key
@@ -199,7 +239,7 @@ def generate(
             wf.add_step(base, None, target=base_url)
         except KeyExistsError:
             # Base scenario URL is identical to another (ssp, policy) combination; use
-            # that step
+            # the scenario returned by that step
             pass
 
         # Identify the target of the build step
@@ -207,16 +247,21 @@ def generate(
         targets.append(target_url)
 
         # Build MESSAGEix-Transport on the scenario
-        wf.add_step(
+        name = wf.add_step(
             f"{label} built", base, build.main, target=target_url, clone=True, ssp=ssp
         )
+
+        # This block copied from message_data.projects.navigate.workflow
+        if policy:
+            # Add a carbon tax
+            name = wf.add_step(f"{label} with tax", name, tax_emission, price=1000.0)
 
         # 'Simulate' build and produce debug outputs
         debug.append(f"{label} debug build")
         wf.add_step(debug[-1], base, build.main, ssp=ssp, dry_run=True)
 
         # Solve
-        wf.add_step(f"{label} solved", f"{label} built", solve, config=solve_config)
+        wf.add_step(f"{label} solved", name, solve, config=SOLVE_CONFIG)
 
         # Report
         reported.append(f"{label} reported")

@@ -171,7 +171,10 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
     ],
 )
 def test_debug(test_context, tmp_path, regions, years, N_node, options):
-    """Exogenous demand calculation succeeds."""
+    """Debug particular calculations in the transport build process."""
+    # Import certain keys
+    # from message_ix_models.model.transport.key import pdt_ny
+
     c, info = configure_build(
         test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
@@ -180,10 +183,8 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
     # commented: these are slow because they repeat some calculations many times.
     # Uncommented as needed for debugging
     for key, unit in (
-        # ("bound_activity_lo:n-t-y:transport minimum+ixmp", None),
-        # ("constraints::ixmp+transport+non-ldv", None),
-        # ("energy:flow-n-product:trn other+1", "TJ"),
-        # ("transport other::ixmp", None),
+        # Uncomment and modify these line(s) to check certain values
+        # ("transport nonldv::ixmp", None),
     ):
         print(f"\n\n-- {key} --\n\n")
         print(c.describe(key))
@@ -209,9 +210,15 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
             # qty.to_series().to_csv(dump)
         elif isinstance(result, dict):
             for k, v in result.items():
-                print(f"{k} = ")
-                print(v.head().to_string())
-                print(v.tail().to_string())
+                print(
+                    f"=== {k} ===",
+                    # v.head().to_string(),  # Initial rows
+                    v.to_string(),  # Entire value
+                    # v.tail().to_string(),  # Final rows
+                    f"=== {k} ===",
+                    sep="\n",
+                )
+                # print(v.tail().to_string())
                 missing = v.isna()
                 if missing.any(axis=None):
                     raise ValueError("Missing values")

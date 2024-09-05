@@ -52,7 +52,7 @@ class GEA(ExoDataSource):
         # Pieces for query
         model = source_kw.pop("model", None)
         scenario = source_kw.pop("scenario", None)
-        variable = source_kw.pop("measure")
+        self.measure = variable = source_kw.pop("measure")
 
         # Check for a valid (model, scenario) combination
         check = (model, scenario)

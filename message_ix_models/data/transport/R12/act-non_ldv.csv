@@ -1,0 +1,10 @@
+# Fixed activity of non-LDV technologies.
+#
+# Units: dimensionless
+#
+node,    technology, year, value
+R12_AFR, FCg_bus, 2020, 0.01
+R12_AFR, ICG_bus, 2020, 0.01
+R12_AFR,  FR_ICG, 2020, 0.0001
+R12_AFR,  FR_FCg, 2020, 0.00001
+R12_NAM,  FR_FCg, 2020, 0.001

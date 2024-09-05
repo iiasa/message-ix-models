@@ -1,0 +1,23 @@
+# Share of LDV technologies
+#
+# Source: placeholder values for development/debugging
+#
+# - Values must sum to 1.
+# - Technology codes annotated "historical-only: True" (e.g. ICE_L_ptrp) must be
+#   omitted or have zero values. If not, incompatible/infeasible constraint
+#   values are created.
+#
+# Units: dimensionless
+#
+technology, value
+ELC_100,    0.01
+HFC_ptrp,   0.01
+IAHe_ptrp,  0.01
+IAHm_ptrp,  0.01
+ICAe_ffv,   0.01
+ICAm_ptrp,  0.01
+ICE_conv,   0.90
+ICE_nga,    0.01
+ICH_chyb,   0.01
+IGH_ghyb,   0.01
+PHEV_ptrp,  0.01

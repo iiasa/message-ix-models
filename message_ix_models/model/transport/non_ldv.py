@@ -23,6 +23,7 @@ from message_ix_models.util import (
     same_time,
 )
 
+from . import files as exo
 from .emission import ef_for_input
 
 if TYPE_CHECKING:
@@ -56,6 +57,7 @@ Units: TJ
 
 
 def prepare_computer(c: Computer):
+    from . import files as exo
     from .key import n, t_modes, y
 
     context: "Context" = c.graph["context"]
@@ -83,7 +85,7 @@ def prepare_computer(c: Computer):
     # Data for usage technologies
     k_usage = "transport nonldv usage::ixmp"
     keys.append(k_usage)
-    c.add(k_usage, usage_data, "load factor nonldv:t:exo", t_modes, n, y)
+    c.add(k_usage, usage_data, exo.load_factor_nonldv, t_modes, n, y)
 
     # Data for non-specified transport technologies
 
@@ -109,7 +111,7 @@ def prepare_computer(c: Computer):
     kw = dict(header_comment=ENERGY_OTHER_HEADER)
     c.add("energy other csv", "write_report", e[1] / "flow", path=path, kwargs=kw)
 
-    # Handle data from the file energy-transport.csv
+    # Handle data from the file energy-other.csv
     try:
         k = Key("energy:c-nl:transport other")
         keys.extend(iter_keys(c.apply(other, k)))
@@ -122,6 +124,9 @@ def prepare_computer(c: Computer):
     k_constraint = "constraints::ixmp+transport+non-ldv"
     keys.append(k_constraint)
     c.add(k_constraint, constraint_data, "t::transport", t_modes, n, y, "config")
+
+    # Add other constraints on activity of non-LDV technologies
+    keys.extend(bound_activity(c))
 
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
@@ -173,7 +178,24 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
+def bound_activity(c: "Computer") -> List[Key]:
+    """Constrain activity of non-LDV technologies based on :file:`act-non_ldv.csv`."""
+    base = exo.act_non_ldv
+
+    # Produce MESSAGE parameters bound_activity_{lo,up}:nl-t-ya-m-h
+    kw = dict(
+        dims=dict(node_loc="n", technology="t", year_act="y"),
+        common=dict(mode="all", time="year"),
+    )
+    k_bau = Key("bound_activity_up::non_ldv+ixmp")
+    c.add(k_bau, "as_message_df", base, name=k_bau.name, **kw)
+
+    return [k_bau]
+
+
 def bound_activity_lo(c: Computer) -> List[Key]:
+    """Set minimum activity for certain technologies to ensure |y0| energy use."""
+
     @lru_cache
     def techs_for(mode: Code, commodity: str) -> List[Code]:
         """Return techs that are (a) associated with `mode` and (b) use `commodity`."""
@@ -193,9 +215,7 @@ def bound_activity_lo(c: Computer) -> List[Key]:
         rows: List[List] = []
         cols = ["n", "t", "c", "value"]
         for (n, modes, c), value in cfg.minimum_activity.items():
-            for m in (
-                ["2W", "BUS", "LDV", "freight truck"] if modes == "ROAD" else ["RAIL"]
-            ):
+            for m in ["2W", "BUS", "freight truck"] if modes == "ROAD" else ["RAIL"]:
                 m_idx = technologies.index(m)
                 rows.extend([n, t, c, value] for t in techs_for(technologies[m_idx], c))
 
@@ -241,8 +261,10 @@ def constraint_data(
     """
     config: Config = genno_config["transport"]
 
-    # Non-LDV modes
+    # Non-LDV modes passenger modes
     modes = set(t for t in t_modes if t != "LDV")
+    # Freight modes
+    modes.add("freight truck")
 
     # Lists of technologies to constrain
     # All technologies under the non-LDV modes
@@ -323,13 +345,15 @@ def other(c: Computer, base: Key) -> List[Key]:
     # Convert units to GWa
     c.add(k_cnty[1], "convert_units", k_cnty[0], quote("GWa"))
 
-    # Produce MESSAGE parameter bound_activity_lo:nl-t-ya-m-h
+    # Produce MESSAGE parameters bound_activity_{lo,up}:nl-t-ya-m-h
     kw = dict(
         dims=dict(node_loc="n", technology="t", year_act="y"),
         common=dict(mode="all", time="year"),
     )
     k_bal = Key("bound_activity_lo::transport other+ixmp")
     c.add(k_bal, "as_message_df", k_cnty.prev, name=k_bal.name, **kw)
+    k_bau = Key("bound_activity_up::transport other+ixmp")
+    c.add(k_bau, "as_message_df", k_cnty.prev, name=k_bau.name, **kw)
 
     # Divide by self to ensure values = 1.0 but same dimensionality
     c.add(k_cnty[2], "div", k_cnty[0], k_cnty[0])
@@ -343,7 +367,7 @@ def other(c: Computer, base: Key) -> List[Key]:
     c.add(k_input, "as_message_df", k_cnty.prev, name=k_input.name, **kw)
 
     result = Key("transport other::ixmp")
-    c.add(result, "merge_data", k_bal, k_input)
+    c.add(result, "merge_data", k_bal, k_bau, k_input)
     return [result]
 
 

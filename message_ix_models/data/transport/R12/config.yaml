@@ -38,7 +38,6 @@ minimum activity:
   # 1.0.
   # TODO reduce or remove these once technology activities are calibrated directly
   - [R12_AFR, ROAD, ethanol, 0.0780]
-  - [R12_AFR, ROAD, gas, 0.000661]
   - [R12_CHN, RAIL, electr, 2.33]
   - [R12_CHN, ROAD, ethanol, 5.36]
   - [R12_CHN, ROAD, gas, 23.1]

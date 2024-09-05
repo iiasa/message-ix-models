@@ -270,6 +270,8 @@ def misc(c: "Computer") -> None:
 
     - ``calibrate fe`` → a file :file:`calibrate-fe.csv`. See the header comment.
     """
+    from . import files as exo
+
     config: "Config" = c.graph["config"]["transport"]
 
     # Configuration for :func:`check`. Adds a single key, 'transport check', that
@@ -295,9 +297,7 @@ def misc(c: "Computer") -> None:
     )
 
     k_ratio = single_key(
-        c.add(
-            "fuel economy::ratio", "div", "fuel economy:nl-m:ldv+ref", k_check + "sel"
-        )
+        c.add("fuel economy::ratio", "div", exo.input_ref_ldv, k_check + "sel")
     )
     c.add("calibrate fe path", "make_output_path", "config", name="calibrate-fe.csv")
     hc = "\n\n".join(

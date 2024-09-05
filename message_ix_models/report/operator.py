@@ -160,7 +160,7 @@ def gwp_factors() -> Quantity:
     )
 
 
-def make_output_path(config: Mapping, name: str) -> "Path":
+def make_output_path(config: Mapping, name: Union[str, "Path"]) -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
     return config["output_dir"].joinpath(name)
 
