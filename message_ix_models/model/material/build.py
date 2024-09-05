@@ -27,7 +27,7 @@ from message_ix_models.model.material.data_util import (
     calibrate_for_SSPs,
 )
 from message_ix_models.model.material.share_constraints import (
-    add_coal_constraint,
+    add_industry_coal_shr_constraint,
     get_ssp_low_temp_shr_up,
 )
 from message_ix_models.model.material.util import (
@@ -154,7 +154,6 @@ def calibrate_existing_constraints(
         engage_updates._correct_td_co2cc_emissions(scenario)
 
     s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
 
     # add_coal_lowerbound_2020(scenario)
     add_cement_bounds_2020(scenario)
@@ -172,14 +171,12 @@ def calibrate_existing_constraints(
     )
     calibrate_UE_share_constraints(scenario, s_info)
 
-    # # Electricity calibration to avoid zero prices for CHN.
-    # if "R12_CHN" in nodes:
-    #     add_elec_lowerbound_2020(scenario)
-
     calibrate_for_SSPs(scenario)
-    # add share constraint for coal_i based on 2020 IEA data
-    add_coal_constraint(scenario)
 
+    # add share constraint for coal_i based on 2020 IEA data
+    add_industry_coal_shr_constraint(scenario)
+
+    # update low temp heat share constraint
     scenario.check_out()
     scenario.add_par(
         "share_commodity_up",
