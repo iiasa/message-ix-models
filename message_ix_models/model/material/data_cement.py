@@ -171,7 +171,6 @@ def gen_data_cement(
     ssp = get_ssp_from_context(context)
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
-    context.datafile = "Global_steel_cement_MESSAGE.xlsx"
 
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
@@ -357,9 +356,7 @@ def gen_data_cement(
 
     # Create external demand param
     parname = "demand"
-    df_demand = material_demand_calc.derive_demand(
-        "cement", scenario, old_gdp=False, ssp=ssp
-    )
+    df_demand = material_demand_calc.derive_demand("cement", scenario, ssp=ssp)
     results[parname].append(df_demand)
 
     # Add CCS as addon
