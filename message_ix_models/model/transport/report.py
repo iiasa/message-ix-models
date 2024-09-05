@@ -19,7 +19,6 @@ from . import Config
 if TYPE_CHECKING:
     import ixmp
     from genno import Computer
-    from genno.types import AnyQuantity
 
     from message_ix_models import Spec
 
@@ -519,6 +518,7 @@ def multi(context: Context, targets):
     """Report outputs from multiple scenarios."""
     import plotnine as p9
 
+    from message_ix_models.report.operator import quantity_from_iamc
     from message_ix_models.tools.iamc import _drop_unique
 
     report_dir = context.get_local_path("report")
@@ -573,32 +573,3 @@ def multi(context: Context, targets):
     plot.save("debug.pdf")
 
     return data
-
-
-def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
-    """Extract data for a single measure from `qty` with (at least) dimensions v, u.
-
-    .. todo:: Move upstream, to either :mod:`ixmp` or :mod:`genno`.
-
-    Parameters
-    ----------
-    variable : str
-        Regular expression to match the ``v`` dimension of `qty`.
-    """
-    import re
-
-    from genno.operator import relabel, select
-
-    expr = re.compile(variable)
-    variables, replacements = [], {}
-    for var in qty.coords["v"].data:
-        if match := expr.fullmatch(var):
-            variables.append(match.group(0))
-            replacements[match.group(0)] = match.group(1)
-
-    subset = qty.pipe(select, {"v": variables}).pipe(relabel, {"v": replacements})
-
-    unique_units = subset.coords["Unit"].data
-    assert 1 == len(unique_units)
-    subset.units = unique_units[0]
-    return subset.sel(Unit=unique_units[0], drop=True)
