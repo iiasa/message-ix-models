@@ -40,12 +40,6 @@ def cli(ssp):
 
 @cli.command("build")
 @click.option(
-    "--datafile",
-    default="Global_steel_cement_MESSAGE.xlsx",
-    metavar="INPUT",
-    help="File name for external data input",
-)
-@click.option(
     "--iea_data_path",
     default="P:ene.model\\IEA_database\\Florian\\",
     help="File path for external data input",
@@ -63,7 +57,7 @@ def cli(ssp):
 @common_params("nodes")
 @click.pass_obj
 def build_scen(
-    context, datafile, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
+    context, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
 ):
     """Build a scenario.
 
@@ -98,9 +92,6 @@ def build_scen(
 
         if type(output_scenario_name).__name__ == "NoneType":
             output_scenario_name = context.scenario_info["scenario"]
-
-        # context.metadata_path = context.metadata_path / "data"
-        context.datafile = datafile
 
         if context.scenario_info["model"] != "CD_Links_SSP2":
             log.warning("WARNING: this code is not tested with this base scenario!")
@@ -318,7 +309,7 @@ def run_reporting(context, remove_ts, profile):
             pr = cProfile.Profile()
             pr.enable()
             log.info("Reporting material-specific variables")
-            report(context, scenario)
+            report(scenario)
             log.info("Reporting standard variables")
             reporting(
                 mp,
@@ -343,7 +334,7 @@ def run_reporting(context, remove_ts, profile):
         else:
             # Remove existing timeseries and add material timeseries
             log.info("Reporting material-specific variables")
-            report(context, scenario)
+            report(scenario)
             log.info("Reporting standard variables")
             reporting(
                 mp,
