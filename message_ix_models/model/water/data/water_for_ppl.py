@@ -54,9 +54,12 @@ def cooling_fr(x: pd.Series) -> float:
         where:
             h_fg (flue gasses losses) = 0.1 (10% assumed losses)
     """
-    if "hpl" in x["parent_tech"]:
-        return x["value"] - 1
-    else:
+    try:
+        if "hpl" in x["parent_tech"]:
+            return x["value"] - 1
+        else:
+            return x["value"] - (x["value"] * 0.1) - 1
+    except KeyError:
         return x["value"] - (x["value"] * 0.1) - 1
 
 
