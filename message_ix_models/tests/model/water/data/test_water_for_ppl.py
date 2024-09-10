@@ -8,6 +8,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.water.data.water_for_ppl import cool_tech, non_cooling_tec
 
 
+@cool_tech.minimum_version
 @pytest.mark.parametrize("RCP", ["no_climate", "6p0"])
 def test_cool_tec(request, test_context, RCP):
     mp = test_context.get_platform()
