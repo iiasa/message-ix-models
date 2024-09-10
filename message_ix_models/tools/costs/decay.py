@@ -323,7 +323,7 @@ def project_ref_region_inv_costs_using_reduction_rates(
             cost_region_2100=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
             b=lambda x: (1 - config.pre_last_year_rate) * x.cost_region_2100,
-            r=lambda x: (1 / (config.final_year - config.base_year))
+            r=lambda x: (1 / (2100 - config.base_year))
             * np.log((x.cost_region_2100 - x.b) / (x.reg_cost_base_year - x.b)),
             reference_region=config.ref_region,
         )
