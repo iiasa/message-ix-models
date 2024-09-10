@@ -41,6 +41,9 @@ common:
     add:
     - M1
     - M2
+    - M3
+    - M4
+    - M5
 
   emission:
     add:
@@ -183,7 +186,7 @@ generic:
     - hp_elec_construction
     - fc_h2_construction
     - solar_construction
-    - dheat_construction    
+    - dheat_construction
   mode:
     add:
     - low_temp
@@ -328,6 +331,12 @@ steel:
     - old_scrap_1
     - old_scrap_2
     - old_scrap_3
+    - import_scrap_1
+    - import_scrap_2
+    - import_scrap_3
+    - export_scrap_1
+    - export_scrap_2
+    - export_scrap_3
     - primary_material
     - secondary_material
     - tertiary_material
@@ -338,7 +347,9 @@ steel:
     - demand
     - dummy_emission
     - end_of_life
-    - dummy_end_of_life
+    - dummy_end_of_life_1
+    - dummy_end_of_life_2
+    - dummy_end_of_life_3
     - dummy_ccs
 
   technology:
@@ -360,14 +371,19 @@ steel:
     - prep_secondary_steel_3
     - finishing_steel
     - manuf_steel
-    - scrap_recovery_steel
+    - scrap_recovery_steel_1
+    - scrap_recovery_steel_2
+    - scrap_recovery_steel_3
     - DUMMY_ore_supply
     - DUMMY_limestone_supply_steel
     - DUMMY_coal_supply
     - DUMMY_gas_supply
     - trade_steel
+    - trade_scrap_steel
     - import_steel
+    - import_scrap_steel
     - export_steel
+    - export_scrap_steel
     - other_EOL_steel
     - total_EOL_steel
     - bf_biomass_steel
@@ -390,6 +406,9 @@ steel:
       - ["steel","new_scrap"]
       - ["steel","useful_material"]
       - ["steel","final_material"]
+      - ["steel","export_scrap_1"]
+      - ["steel","export_scrap_2"]
+      - ["steel","export_scrap_3"]
   addon:
     add:
       - bf_ccs_steel
@@ -446,6 +465,7 @@ cement:
     - raw_meal_prep_cement
     - clinker_dry_cement
     - rotary_kiln_wet_cement
+    # - rotary_kiln_dry_cement
     - clinker_wet_cement
     - clinker_dry_ccs_cement
     - clinker_wet_ccs_cement
@@ -462,6 +482,7 @@ cement:
     - concrete_production_cement
     - flash_calciner_cement
     - clay_wet_cement
+    # - clay_dry_cement
     - landfilling_cement
     - recycling_cement
 
@@ -487,18 +508,21 @@ cement:
     - clinker_wet_ccs_cement
     - clay_wet_cement
     - clinker_wet_cement
+    # - clinker_dry_cement
 
   type_addon:
     add:
     - wet_ccs_cement
     - dry_ccs_cement
     - rotary_kiln_wet_addons
+    # - rotary_kiln_dry_addons
 
   map_tec_addon:
     add:
     - [clinker_dry_cement, dry_ccs_cement]
     - [clinker_wet_cement, wet_ccs_cement]
     - [rotary_kiln_wet_cement, rotary_kiln_wet_addons]
+    # - [rotary_kiln_dry_cement, rotary_kiln_dry_addons]
 
   cat_addon:
     add:
@@ -506,6 +530,8 @@ cement:
     - [wet_ccs_cement, clinker_wet_ccs_cement]
     - [rotary_kiln_wet_addons, clinker_wet_cement]
     - [rotary_kiln_wet_addons, clay_wet_cement]
+    # - [rotary_kiln_dry_addons, clinker_dry_cement]
+    # - [rotary_kiln_dry_addons, clay_dry_cement]
 
 aluminum:
   commodity:
@@ -520,6 +546,12 @@ aluminum:
     - old_scrap_1
     - old_scrap_2
     - old_scrap_3
+    - import_scrap_1
+    - import_scrap_2
+    - import_scrap_3
+    - export_scrap_1
+    - export_scrap_2
+    - export_scrap_3
     - useful_aluminum
     - final_material
     - useful_material
@@ -549,8 +581,11 @@ aluminum:
     - scrap_recovery_aluminum_3
     - DUMMY_bauxite_supply
     - trade_aluminum
+    - trade_scrap_aluminum
     - import_aluminum
+    - import_scrap_aluminum
     - export_aluminum
+    - export_scrap_aluminum
     - other_EOL_aluminum
     - total_EOL_aluminum
 

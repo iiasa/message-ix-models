@@ -1,4 +1,5 @@
 from collections import defaultdict
+import math
 
 import pandas as pd
 from message_ix import make_df
@@ -362,7 +363,6 @@ def gen_data_cement(scenario, dry_run=False):
             common_rel = dict(
                 year_rel=model_years_rel,
                 year_act=model_years_rel,
-                mode="M1",
                 relation=r,
             )
 
@@ -378,27 +378,43 @@ def gen_data_cement(scenario, dry_run=False):
                     ]
 
                     for tec in tec_list.unique():
-                        val = data_cement_rel.loc[
+
+                        mode = data_cement_rel.loc[
                             (
                                 (data_cement_rel["relation"] == r)
                                 & (data_cement_rel["parameter"] == par_name)
                                 & (data_cement_rel["technology"] == tec)
                                 & (data_cement_rel["Region"] == reg)
                             ),
-                            "value",
-                        ].values[0]
+                            "mode",
+                        ].values
 
-                        df = make_df(
-                            par_name,
-                            technology=tec,
-                            value=val,
-                            unit="-",
-                            node_loc=reg,
-                            node_rel=reg,
-                            **common_rel
-                        ).pipe(same_node)
+                        for m in mode:
 
-                        results[par_name].append(df)
+                            val = data_cement_rel.loc[
+                                (
+                                    (data_cement_rel["relation"] == r)
+                                    & (data_cement_rel["parameter"] == par_name)
+                                    & (data_cement_rel["technology"] == tec)
+                                    & (data_cement_rel["Region"] == reg)
+                                    & (data_cement_rel["mode"] == m)
+                                ),
+                                "value",
+                            ].values[0]
+
+
+                            df = make_df(
+                                par_name,
+                                technology=tec,
+                                value=val,
+                                unit="-",
+                                node_loc=reg,
+                                node_rel=reg,
+                                mode = m,
+                                **common_rel
+                            ).pipe(same_node)
+
+                            results[par_name].append(df)
 
                 elif (par_name == "relation_upper") | (par_name == "relation_lower"):
                     val = data_cement_rel.loc[
@@ -428,10 +444,10 @@ def gen_data_cement(scenario, dry_run=False):
     # Add CCS as addon
     parname = "addon_conversion"
 
-    technology_1 = ["clinker_dry_cement"]
-    df_1 = make_df(
-        parname, mode="M1", type_addon="dry_ccs_cement", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology=technology_1)
+    # technology_1 = ["clinker_dry_cement"]
+    # df_1 = make_df(
+    #     parname, mode="M1", type_addon="dry_ccs_cement", value=1, unit="-", **common
+    # ).pipe(broadcast, node=nodes, technology=technology_1)
 
     technology_2 = ["clinker_wet_cement"]
     df_2 = make_df(
@@ -443,10 +459,13 @@ def gen_data_cement(scenario, dry_run=False):
         parname, mode="M1", type_addon="rotary_kiln_wet_addons", value=1, unit="-", **common
     ).pipe(broadcast, node=nodes, technology= technology_3)
 
-    results[parname].append(df_1)
+    # technology_4 = ["rotary_kiln_dry_cement"]
+    # df_4 = make_df(
+    #     parname, mode="M1", type_addon="rotary_kiln_dry_addons", value=1, unit="-", **common
+    # ).pipe(broadcast, node=nodes, technology= technology_4)
+
     results[parname].append(df_2)
     results[parname].append(df_3)
-
 
     # Adding fly_ash as waste product from coal technologies
     coal_technologies_modes = {"feedstock": ["meth_coal","meth_coal_ccs"],
@@ -519,6 +538,10 @@ def gen_data_cement(scenario, dry_run=False):
                 df_demand=df_demand.copy(deep=True), technology="clay_wet_cement",
                 material = "cement"
             ),
+            # calculate_ini_new_cap(
+            #     df_demand=df_demand.copy(deep=True), technology="clay_dry_cement",
+            #     material = "cement"
+            # ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True), technology="flash_calciner_cement",
                 material = "cement"
