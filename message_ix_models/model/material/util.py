@@ -30,9 +30,9 @@ def read_config() -> Context:
     #      function so it doesn't need to be in this file.
     context = Context.get_instance(-1)
 
-    if "material set" in context:
-        # Already loaded
-        return context
+    # if "material set" in context:
+    #     # Already loaded
+    #     return context
 
     # Load material configuration
     for parts in METADATA:

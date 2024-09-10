@@ -1884,6 +1884,7 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str, file: str) ->
         sheet_name=sheet_n,
     )
 
+    print(package_data_path("material",sectname, file))
     # Clean the data
     data_df = data_df[
         [
@@ -2516,8 +2517,7 @@ def add_infrastructure_reporting(context, scenario):
 
     # Filter the rows where the variable column is equal to "Material Demand|Aspahlt|Infrastructure"
     condition_2 = df_ratio['variable'] == 'Material Demand|Asphalt|Infrastructure'
-
-    # Multiply the value column by 0.7424 for the filtered rows
+    
     df_ratio.loc[condition_2, 'value'] *= 0.05
 
     # Change the names to make it compatible with emissions calculation

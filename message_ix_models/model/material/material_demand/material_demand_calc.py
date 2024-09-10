@@ -10,7 +10,7 @@ from message_ix_models.util import package_data_path
 from message_ix_models.model.material.data_infrastructure import get_inf_mat_demand
 
 CASE_SENS = "mean"
-INFRA_SCEN = "ScP3"
+INFRA_SCEN = "baseline"
 
 print('Adding infrastructure demand with:')
 print(CASE_SENS)
