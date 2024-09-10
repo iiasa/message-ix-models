@@ -54,9 +54,10 @@ from message_ix_models.util.compat.message_data import (
 )
 
 from message_ix_models.model.material.scenario_run.supply_side_scenarios import (
-    fuel_switch,
-    fuel_switch_and_ccs,
-    material_substituion
+    no_clinker_substitution,
+    no_ccs,
+    increased_recycling,
+    limit_asphalt_recycling
 )
 
 log = logging.getLogger(__name__)
@@ -399,13 +400,38 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
 
     if supply_scenario == "substitution":
         log.info("Building material substitution scenario")
-        material_substituion(scenario)
+        # No CCS, fuel share same as today, recycling as today
+        # Material substituion allowed.
+        no_ccs(scenario)
+        limit_asphalt_recycling(scenario)
+        # keep_fuel_share(sceanrio)
     elif supply_scenario == "fuel_switching":
+        # No material substitution
+        # Recycling as today
+        # No CCS
         log.info("Building fuel switching scenario")
-        fuel_switch(scenario)
+        no_clinker_substitution(scenario)
+        limit_asphalt_recycling(scenario)
+        no_ccs(scenario)
     elif supply_scenario == "ccs":
+        # No material substitution
+        # Recycling as today
+        # Keep fuel share as today
         log.info("Building ccs scenario")
-        fuel_switch_and_ccs(scenario)
+        no_clinker_substitution(scenario)
+        limit_asphalt_recycling(scenario)
+        # keep_fuel_share(sceanrio)
+    elif supply_scenario == "recycling":
+        # No material substitution
+        # Recycling increased for steel and alu.
+        # For asphalt enhanced modes are allowed. (M4,M5)
+        # No CCS
+        # Keep fuel share as today
+        log.info("Building recycling scenario")
+        no_clinker_substitution(scenario)
+        increased_recycling(scenario)
+        no_ccs(scenario)
+        # keep_fuel_share(sceanrio)
     elif supply_scenario == "none":
         log.info("No changes")
 
