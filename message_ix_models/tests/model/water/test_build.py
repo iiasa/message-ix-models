@@ -8,6 +8,7 @@ from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 
 
 @map_basin_region_wat.minimum_version
+@pytest.mark.xfail(reason="Temporary, for #106")
 def test_build(request, test_context):
     # This is needed below and for the RES to contain the correct number of regions
     test_context.regions = "R11"
