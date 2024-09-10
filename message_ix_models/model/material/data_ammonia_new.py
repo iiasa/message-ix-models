@@ -10,7 +10,6 @@ package_data_path)
 from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
-context = read_config()
 
 default_gdp_elasticity = pd.read_excel(
         package_data_path(
