@@ -1,7 +1,7 @@
 import logging
 from functools import lru_cache
 from itertools import product
-from typing import Mapping
+from typing import Literal, Mapping
 
 import numpy as np
 import pandas as pd
@@ -170,7 +170,9 @@ def get_intratec_data() -> pd.DataFrame:
     return pd.read_csv(file, comment="#", skipinitialspace=True)
 
 
-def get_raw_technology_mapping(module) -> pd.DataFrame:
+def get_raw_technology_mapping(
+    module: Literal["energy", "materials"],
+) -> pd.DataFrame:
     """Retrieve a technology mapping for `module`.
 
     The data are read from a CSV file at :file:`data/{module}/tech_map.csv`.
@@ -231,7 +233,9 @@ def subset_module_map(raw_map):
     return sub_map
 
 
-def adjust_technology_mapping(module) -> pd.DataFrame:
+def adjust_technology_mapping(
+    module: Literal["energy", "materials"],
+) -> pd.DataFrame:
     """Adjust technology mapping based on sources and assumptions.
 
     Parameters
