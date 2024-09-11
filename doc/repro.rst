@@ -9,8 +9,8 @@ On this page:
 
 Elsewhere:
 
-- A `high-level introduction <https://paul.kishimoto.name/2021/06/issst/>`_, to how testing supports validity, reproducibility, interoperability, and reusability, in :mod:`message_ix_models` and related packages.
-- :doc:`api/testing` (:mod:`message_ix_models.testing`), on a separate page.
+- A `high-level introduction <https://paul.kishimoto.name/2021/06/issst/>`_ to how testing supports validity, reproducibility, interoperability, and reusability in :mod:`message_ix_models` and related packages.
+- :doc:`api/testing` (:mod:`message_ix_models.testing`).
 - :doc:`data` for information about reproducible handling of data, both private and public.
 
 .. _repro-doc:
@@ -28,8 +28,12 @@ Documentation serves different purposes for completed vs. ongoing work:
 
 - Docs **must** be placed in one of the following locations:
 
-  - :file:`doc/model/{variant}.rst`, or :file:`doc/model/{variant}/index.rst`, or :file:`doc/{variant}/index.rst` if there will be multiple documentation pages for the model variant.
-  - :file:`doc/project/{name}.rst`, or :file:`doc/project/{name}/index.rst` or :file:`doc/{name}/index.rst` if there will be multiple documentation pages for the project.
+  - For a model variant that can be documented on a single page: :file:`doc/model/{variant}.rst` or :file:`doc/{variant}.rst`.
+  - For a model variant with multiple documentation pages: :file:`doc/model/{variant}/index.rst` or :file:`doc/{variant}/index.rst`
+  - For a project that can be documented on a single page: :file:`doc/project/{name}.rst` or :file:`doc/{name}.rst`
+  - For a project with multiple documentation pages: :file:`doc/project/{name}/index.rst` or :file:`doc/{name}/index.rst`.
+
+  In either case, the ``{variant}`` or ``{name}`` **must** match the corresponding Python model name, except for the substitution of hyphens for underscores.
 
   In :mod:`message_data`, some docs have been placed ‘inline’ with the code, for example in:
 
@@ -47,9 +51,9 @@ Documentation serves different purposes for completed vs. ongoing work:
 Ongoing projects
 ----------------
 
-Documentation pages for ongoing projects **must** include a :code:`.. warning::` Sphinx directive at the top of the file indicating the code is under development.
-See e.g. :doc:`/transport/index`.
-This section **should** contain one or all of:
+Documentation pages for ongoing projects **must** include a :code:`.. warning::` Sphinx directive at the top of the file indicating the code is under active development.
+See for instance :doc:`/transport/index`.
+This directive **should** contain one or all of:
 
 - Link(s) to GitHub, including:
 
@@ -76,22 +80,22 @@ Documentation for ongoing projects **should** be added to :mod:`message_ix_model
 Completed projects
 ------------------
 
-Doc pages for completed projects **must** specify:
+Documentation pages for completed projects **must** specify all of the following.
 
-- location(s) of scenarios, e.g.
+- Location(s) of scenario data, e.g.
 
-  - ixmp URLS giving the platform (‘database’), model name, scenario name, *and* version for any scenarios.
+  - :mod:`ixmp` URLS giving the platform (‘database’), model name, scenario name, *and* version for any scenarios.
     These **must** allow a reader to distinguish between ‘main’ or meaningful scenarios and other extras that should not be used.
   - Specific external databases, Scenario Explorer instances, etc.
 
-- data sources,
-- reference to code used to prepare data,
-- any special parametrization or structure that is different from the RES or a referenced project, and
-- complete instructions to run all scenarios related to the project.
+- Data sources,
+- Reference to code used to prepare data,
+- Any special parametrization or structure that is different from the RES or a referenced project, and
+- Complete instructions to run all workflow(s) and/or scenarios related to the project.
 
-Doc pages for completed projects **should** include a “Summary” section with all relevant items from the following list.
+The pages **should** also include a “Summary” section with all relevant items from the following list.
 This allows quick/at-a-glance understanding of the model configuration used for a completed project.
-These can be described *directly*, or by *reference*, for the latter, write “same as <other project>” and add a ReST link to a full description elsewhere.
+These can be described *directly*, or by *reference*; for the latter, write “same as <other project>” and add a ReST link to a full description elsewhere.
 
 Example summary section
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,7 +105,7 @@ Versions
 
 Regions
    The regional aggregation used in the project.
-   Refer to one of the :doc:`message_ix_models:pkg-data/node`.
+   Refer to one of the :doc:`pkg-data/node`.
 
 Structure
    The set of technologies, constraints, and other parametrizations.
@@ -150,10 +154,14 @@ These allow others to understand when the code:
 Testing
 =======
 
-The code in :mod:`.model.bare` generates a “bare” reference energy system.
-This is a Scenario that has the same *structure* (ixmp 'sets') as actual instances of the MESSAGEix-GLOBIOM global model, but contains no *data* (ixmp 'parameter' values).
-Code that operates on the global model can be tested on the bare RES; if it works on that scenario, this is one indication (necessary, but not always sufficient) that it should work on fully-populated scenarios.
-Such tests are faster and lighter than testing on fully-populated scenarios, and make it easier to isolate errors in the code that is being tested.
+In addition to atomic/unit tests of individual functions, multiple strategies **may** be used to ensure code works on intended target MESSAGEix-GLOBIOM base scenarios.
+
+- The code in :mod:`.model.bare` generates a **“bare” reference energy system**.
+  This is a Scenario that has the same *structure* (ixmp 'sets') as actual instances of the MESSAGEix-GLOBIOM global model, but contains no *data* (ixmp 'parameter' values).
+  Code that operates on the global model can be tested on this bare RES; if it works on that scenario, this is one indication (necessary, but not always sufficient) that it should work on fully-populated scenarios.
+- :doc:`model/snapshot` can be used as target for tests.
+
+Such tests are faster and lighter than testing on fully-populated scenarios and make it easier to isolate errors in the code that is being tested.
 
 .. _test-suite:
 
@@ -258,9 +266,9 @@ The :mod:`ixmp` data model uniquely identifies scenarios by the triple of (model
 In other contexts, “external” model names are used; for instance, in data submitted to model comparison projects using the IAMC data structure—‘version’ is omitted, or not accepted/reassigned by the receiving system.
 In these cases, the “external” name:
 
-- may be different from the ‘internally’ name used in IIASA ECE :mod:`ixmp` databases.
-- serves to label and identify MESSAGEix-GLOBIOM model data in contexts where it is compared with other scenarios.
-- *does not*, on its own, suffice to identify the materials and steps to reproduce a scenario.
+- May be different from the ‘internally’ name used in IIASA ECE :mod:`ixmp` databases.
+- Serves to label and identify MESSAGEix-GLOBIOM model data in contexts where it is compared with other scenarios.
+- *Does not*, on its own, suffice to identify the materials and steps to reproduce a scenario.
 
 External model names **must** be recorded as corresponding to specific internal (model name, scenario name, version) identifiers.
 This **should** be done by recording scenario URLs.
@@ -279,8 +287,8 @@ version
    There is no established rule, guideline, or heuristic for what kinds of changes are “minor” or “major”.
    Developers **must**:
 
-   - initiate a discussion with colleagues about when to increment either the major or minor part, and
-   - record (below, or on a variant-specific documentation page) changes associated with an incremented version part.
+   1. Initiate a discussion with colleagues about when to increment either the major or minor part.
+   2. Record (below, or on a variant-specific documentation page) changes associated with an incremented version part.
 
 postfix
    This **should** be omitted if the model structure does not differ from the structure given below for the corresponding ``{name} {version}``.
