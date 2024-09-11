@@ -401,7 +401,7 @@ def report2(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
     This function does not do any numerical manipulations. The only changes applied are:
 
     - Data is transformed from wide to long format.
-    - The "node" dimension labels have "R12_" prepended.
+    - The `node` dimension labels have `R12_` prepended.
     """
     # Directory containing STURM output files
     base = config["sturm output path"]
