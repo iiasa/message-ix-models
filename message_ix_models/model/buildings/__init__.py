@@ -42,7 +42,7 @@ class Config:
     #: Name or ID of STURM scenario to run.
     sturm_scenario: str
 
-    #: Climate scenario. Either "BL" or "2C".
+    #: Climate scenario. Either `BL` or `2C`.
     climate_scenario: str = "BL"
 
     #: :obj:`True` if the base scenario should be cloned.
@@ -73,7 +73,7 @@ class Config:
     run_access: bool = False
 
     #: Keyword arguments for :meth:`.message_ix.Scenario.solve`. Set
-    #: ``model="MESSAGE_MACRO" to solve scenarios using MESSAGE_MACRO.
+    #: `model="MESSAGE_MACRO"` to solve scenarios using MESSAGE_MACRO.
     solve: Dict[str, Any] = field(default_factory=lambda: dict(model="MESSAGE"))
 
     #: Similar to `solve`, but using another config class
