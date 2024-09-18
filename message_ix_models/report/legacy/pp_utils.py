@@ -1865,7 +1865,9 @@ def _retr_crb_prc(ds, units):
     """
 
     # Retrieve VAR - PRICE_EMISSION
-    var = "PRICE_EMISSION_NEW"
+    # TODO iiasa/message_ix#726 is reworking PRICE_EMISSION_NEW to become the new PRICE_EMISSION
+    # Adjust the name here according to what you're running on
+    var = "PRICE_EMISSION"
     df = ds.var(var, {"type_tec": ["all"]})
     if df.empty:
         if var == "PRICE_EMISSION":
