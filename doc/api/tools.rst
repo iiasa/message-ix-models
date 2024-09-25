@@ -1,5 +1,5 @@
-General purpose modeling tools
-******************************
+General purpose modeling tools (:mod:`.tools`)
+**********************************************
 
 “Tools” can include, *inter alia*:
 

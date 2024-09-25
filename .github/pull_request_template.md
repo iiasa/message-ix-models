@@ -21,7 +21,7 @@ For example, one or more of:
 
 - Read the diff and note that the CI checks all pass.
 - Run a specific code snippet or command and check the output.
-- Build the documentation and look at a certain page.
+- Look at a certain page in the ReadTheDocs preview build of the documentation.
 - Ensure that changes/additions are self-documenting, i.e. that another
   developer (someone like the reviewer) will be able to understand what the code
   does in the future.
