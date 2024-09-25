@@ -89,6 +89,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    :caption: Research projects
 
    project/advance
+   project/circeular
    project/edits
    project/gea
    project/shape

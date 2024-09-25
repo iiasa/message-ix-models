@@ -1,5 +1,5 @@
-MESSAGEix-Materials
-********************
+MESSAGEix-Materials (:mod:`.model.material`)
+********************************************
 
 Description
 ===========

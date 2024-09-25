@@ -1,5 +1,5 @@
-MESSAGEix-Transport
-*******************
+MESSAGEix-Transport (:mod:`.model.transport`)
+*********************************************
 
 .. warning::
 
