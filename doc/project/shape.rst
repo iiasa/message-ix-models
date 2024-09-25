@@ -2,8 +2,8 @@
 
 .. module:: message_ix_models.project.shape
 
-SHAPE
-*****
+SHAPE (:mod:`.project.shape`)
+*****************************
 
 .. image:: http://shape-project.org/@@site-logo/Logo_Shape_RGB_72dpi_small.png
    :alt: SHAPE Logo
