@@ -1,7 +1,7 @@
 .. currentmodule:: message_ix_models.project.edits
 
-EDITS
-*****
+EDITS (:mod:`.project.edits`)
+*****************************
 
 “Energy Demand changes Induced by Technological and Social innovations (EDITS)”
 
