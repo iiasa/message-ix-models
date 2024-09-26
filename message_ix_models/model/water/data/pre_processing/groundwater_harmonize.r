@@ -17,7 +17,8 @@ library(tidyverse)
 #### REGION ####
 # define what region you work on
 # R11, R12 or a country
-reg = 'ZMB'
+reg = 'R12'
+setwd('P:/ene.model/NEST/groundwater/')
 
 # Define global raster at 1/8th degree
 base_raster = raster()
@@ -193,18 +194,18 @@ irr_dem = read.csv(paste0('P:/ene.model/NEST/groundwater/hist_irrigation_withdra
 # urban + manufacturing and rural demand depend on the region, in MCM!!
 urban_man_dem = read.csv(paste0('P:/ene.model/NEST/water_demands/harmonized/',
                                 reg,'/ssp2_regional_urban_withdrawal_baseline.csv'),
-                         check.names = F) %>% rename(year = '') %>% 
+                         check.names = F) %>% rename(year = 1) %>% 
   gather(key = 'BCU_name',value = 'urb_dem',-year) %>% 
   mutate(urb_dem = urb_dem/1000) # km3
 
 rural_dem = read.csv(paste0('P:/ene.model/NEST/water_demands/harmonized/',
                             reg,'/ssp2_regional_rural_withdrawal_baseline.csv'),
-                     check.names = F) %>% rename(year = '') %>% 
+                     check.names = F) %>% rename(year = 1) %>% 
   gather(key = 'BCU_name',value = 'rur_dem',-year) %>% 
   mutate(rur_dem = rur_dem/1000) # km3
 
 #specific region name for R11 or R12
-if (reg %in% c(" R11"," R12")){
+if (reg %in% c("R11","R12")){
   reg_add = paste0(reg,"_")
 } else{
   reg_add = ""
