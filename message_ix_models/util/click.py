@@ -247,7 +247,9 @@ PARAMS = {
         help="Run only reporting.",
     ),
     "ssp": Argument(
-        ["ssp"], callback=store_context, type=Choice(["SSP1", "SSP2", "SSP3"])
+        ["ssp"],
+        callback=store_context,
+        type=Choice(["LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]),
     ),
     "urls_from_file": Option(
         ["--urls-from-file", "-f"],
