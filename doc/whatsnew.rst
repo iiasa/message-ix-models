@@ -12,6 +12,7 @@ Next release
   - Fix naming of GDP and population columns in SSP data aggregation.
 
 - Update :doc:`/transport/index` (:pull:`213`).
+- Add "LED", "SSP4", and "SSP5" as values for the :program:`--ssp=…` option in :func:`.common_params` (:pull:`233`).
 
 v2024.8.6
 =========
