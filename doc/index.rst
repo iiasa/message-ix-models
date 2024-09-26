@@ -108,6 +108,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    project/nextgen-carbon
    project/ngfs
    project/prisma
+   project/scenariomip
    project/shape
    project/sparccle
    project/ssp
