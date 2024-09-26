@@ -370,7 +370,7 @@ nexus:
     - [loil_ppl, cooling__loil_ppl]
     - [nuc_hc, cooling__nuc_hc]
     - [nuc_lc, cooling__nuc_lc]
-    - [solar_th_ppl, cooling__solar_th_ppl]
+    # - [solar_th_ppl, cooling__solar_th_ppl]
 
 
   cat_addon:
@@ -908,7 +908,7 @@ cooling:
     - [loil_ppl, cooling__loil_ppl]
     - [nuc_hc, cooling__nuc_hc]
     - [nuc_lc, cooling__nuc_lc]
-    - [solar_th_ppl, cooling__solar_th_ppl]
+    # - [solar_th_ppl, cooling__solar_th_ppl]
 
 
   cat_addon:
