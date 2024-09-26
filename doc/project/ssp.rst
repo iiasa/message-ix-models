@@ -3,6 +3,16 @@
 Shared Socioeconomic Pathways (:mod:`.project.ssp`)
 ***************************************************
 
+.. warning::
+
+   The 2024 SSP update is **under development**.
+   For details, see:
+
+   - Tracking issue :issue:`234`.
+   - `Issues and PRs labeled 'p:SSP-2024' <https://github.com/iiasa/message-ix-models/issues?q=label%3Ap:SSP-2024>`_ on the :mod:`.message_ix_models` GitHub repository.
+
+See also :doc:`/project/scenariomip`.
+
 Structure
 =========
 
