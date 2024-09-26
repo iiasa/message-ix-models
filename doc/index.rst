@@ -92,6 +92,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    project/circeular
    project/edits
    project/gea
+   project/scenariomip
    project/shape
    project/ssp
 
