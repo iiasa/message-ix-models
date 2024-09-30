@@ -57,7 +57,8 @@ from message_ix_models.model.material.scenario_run.supply_side_scenarios import 
     no_clinker_substitution,
     no_ccs,
     increased_recycling,
-    limit_asphalt_recycling
+    limit_asphalt_recycling,
+    industry_sector_net_zero_targets
 )
 
 log = logging.getLogger(__name__)
@@ -185,7 +186,7 @@ _SUPPLY_SCENARIOS = [
 "fuel_switching",
 "ccs",
 "all",
-"none"
+"default"
 ]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
@@ -432,8 +433,45 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         increased_recycling(scenario)
         no_ccs(scenario)
         # keep_fuel_share(sceanrio)
-    elif supply_scenario == "none":
-        log.info("No changes")
+    elif supply_scenario == "default":
+        log.info("Default mode")
+        limit_asphalt_recycling(scenario)
+        no_clinker_substitution(scenario)
+    elif supply_scenario == "all":
+        increased_recycling(scenario)
+        # industry_sector_net_zero_targets(scenario)
+
+        # # Add climate budget as well
+        #
+        # budget = "1000f"
+        # budget_i = 3667
+        # name = scenario.scenario.split('_')[2]
+        # print(name)
+        #
+        # scenario_cbud = scenario.clone(
+        #     model=scenario.model,
+        #     scenario=name + "_demand_increased_supply_" + budget,
+        #     shift_first_model_year=2030,
+        # )
+        #
+        # emission_dict = {
+        #     "node": "World",
+        #     "type_emission": "TCE",
+        #     "type_tec": "all",
+        #     "type_year": "cumulative",
+        #     "unit": "???",
+        # }
+        # df = message_ix.make_df("bound_emission", value=budget_i, **emission_dict)
+        # scenario_cbud.check_out()
+        # scenario_cbud.add_par("bound_emission", df)
+        # scenario_cbud.commit("add emission bound")
+        # pre_model_yrs = scenario_cbud.set(
+        #     "cat_year", {"type_year": "cumulative", "year": [2020, 2015, 2010]}
+        # )
+        # scenario_cbud.check_out()
+        # scenario_cbud.remove_set("cat_year", pre_model_yrs)
+        # scenario_cbud.commit("remove cumulative years from cat_year set")
+        # scenario_cbud.set("cat_year", {"type_year": "cumulative"})
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
@@ -478,7 +516,11 @@ def solve_scen(
         print("Make sure to use this scenario to solve with MACRO iterations.")
         if not scenario.has_solution():
             scenario.solve(
-                model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"}
+                model="MESSAGE", solve_options={"lpmethod": "4",
+                # "scaind": "-1",
+                "predual":"1"
+
+                }
             )
             scenario.set_as_default()
 
@@ -536,7 +578,10 @@ def solve_scen(
     if not add_macro:
         # Solve
         print("Solving the scenario without MACRO")
-        scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
+        scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4",
+        "predual":"1",
+        # "scaind": "-1"
+        })
         scenario.set_as_default()
 
 
@@ -800,7 +845,7 @@ def run_cbud_scenario(context, model, scenario, budget):
     scenario_cbud.set("cat_year", {"type_year": "cumulative"})
 
     # scenario_cbud.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
-    scenario_cbud.solve(model="MESSAGE", solve_options={"scaind": -1})
+    scenario_cbud.solve(model="MESSAGE", solve_options={"predual": 1})
     return
 
 
