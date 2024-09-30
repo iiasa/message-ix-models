@@ -21,6 +21,9 @@ from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import package_data_path
 from message_ix_models.tools.get_optimization_years import main as get_optimization_years
 
+from message_ix.report import Reporter
+from ixmp.reporting import configure
+
 if TYPE_CHECKING:
     from message_ix_models import Context
 
@@ -2517,7 +2520,7 @@ def add_infrastructure_reporting(context, scenario):
 
     # Filter the rows where the variable column is equal to "Material Demand|Aspahlt|Infrastructure"
     condition_2 = df_ratio['variable'] == 'Material Demand|Asphalt|Infrastructure'
-    
+
     df_ratio.loc[condition_2, 'value'] *= 0.05
 
     # Change the names to make it compatible with emissions calculation
@@ -2568,6 +2571,31 @@ def add_infrastructure_reporting(context, scenario):
 
     result_df = result_df.drop(columns=['material'])
 
+    rep = Reporter.from_scenario(scenario)
+    configure(units={"replace": {"-": ""}})
+    df = rep.get("message::default")
+
+    demand_vacuum = df.filter(variable=["out|pre_intermediate|vacuum_residue|*", ])
+    demand_vacuum = demand_vacuum.timeseries().reset_index()
+
+    # Convert the unit from GWa to Mt
+    # 1 barrel = 1628.2 kwh
+    # 1 kWh = 6.1417 * 10^-4 barrels
+    # 1 Barrel = 0.138 metric tonne
+    # 1 kWh =  0.8475 * 10^-10 Mt
+    # 1 kWh = 10^-6 / 8760 GWa
+    # 1 EJ =  23.5 Mt
+
+    demand_vacuum.loc[:, demand_vacuum.select_dtypes(include='number').columns] *= 0.7424
+    demand_vacuum = demand_vacuum.rename(columns={'model': 'Model',
+                                                  'scenario': 'Scenario',
+                                                  'region': 'Region',
+                                                  'variable': 'Variable',
+                                                  'unit': 'Unit',
+                                                  })
+    demand_vacuum['Unit'] = 'Mt/yr'
+    demand_vacuum['Variable'] = 'Production|Vacuum Residue'
+
     # Prepare the final reporting output.
     final_df_reporting = pd.concat([df_reporting, result_df], axis = 0)
 
@@ -2589,9 +2617,24 @@ def add_infrastructure_reporting(context, scenario):
         "Western Europe (R12)": "R12_WEU",
     }
 
+    region_mapping_2 = {
+        'R12_CHN|R12_CHN': 'R12_CHN',
+        "R12_EEU|R12_EEU": "R12_EEU",
+        "R12_FSU|R12_FSU": "R12_FSU",
+        "R12_LAM|R12_LAM": "R12_LAM",
+        "R12_MEA|R12_MEA": "R12_MEA",
+        "R12_NAM|R12_NAM": "R12_NAM",
+        "R12_PAS|R12_PAS": "R12_PAS",
+        "R12_PAO|R12_PAO": "R12_PAO",
+        "R12_RCPA|R12_RCPA": "R12_RCPA",
+        "R12_SAS|R12_SAS": "R12_SAS",
+        "R12_AFR|R12_AFR": "R12_AFR",
+        "R12_WEU|R12_WEU": "R12_WEU",
+    }
+
     # Apply the mapping to the 'region' column
     final_df_reporting['region'] = final_df_reporting['region'].map(region_mapping)
-
+    demand_vacuum['Region'] = demand_vacuum['Region'].map(region_mapping_2)
 
     # Convert to long format.
     final_df_reporting = final_df_reporting.pivot(index=['region', 'variable', \
@@ -2603,6 +2646,9 @@ def add_infrastructure_reporting(context, scenario):
     # Capitalize only the non-year columns
     final_df_reporting.rename(columns={col: col.capitalize() for \
     col in non_year_columns}, inplace=True)
+
+    # Add vacuum resideu production
+    final_df_reporting = pd.concat([final_df_reporting, demand_vacuum], axis = 0)
 
     # Reorder the columns as desired
     ordered_columns = ['Model', 'Scenario', 'Region', 'Variable', 'Unit'] + \
