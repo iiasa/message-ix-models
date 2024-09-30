@@ -5,6 +5,106 @@ import pandas as pd
 
 """Infrastructure Supply Side Measures"""
 
+def industry_sector_net_zero_targets(scenario):
+
+    # Add iron and steel net zero target
+
+    s_info = ScenarioInfo(scenario)
+
+    scenario.check_out()
+
+    # Remove the technology diffusion constraints
+
+    remove_years = [2035, 2040, 2045, 2050, 2055, 2060, 2070, 2080, 2090, 2100,2110]
+    remove_growth_activity_up = scenario.par("growth_activity_up",
+    filters={'technology':['dri_gas_steel','dri_h2_steel', 'eaf_steel'],
+    'year_act': remove_years})
+    remove_initial_activity_up = scenario.par("initial_activity_up",
+    filters={'technology':['dri_gas_steel','dri_h2_steel', 'eaf_steel'],
+    'year_act': remove_years})
+
+    scenario.remove_par('growth_activity_up', remove_growth_activity_up)
+    scenario.remove_par('initial_activity_up', remove_initial_activity_up)
+
+    # To fix: To facilitate gradual phase out, add back the phasing down constraints
+
+    remove_growth_activity_lo = scenario.par("growth_activity_lo",
+    filters={'technology':['bof_steel'], 'year_act': remove_years})
+    remove_initial_activity_lo = scenario.par("initial_activity_lo",
+    filters={'technology':['bof_steel'], 'year_act': remove_years})
+    scenario.remove_par('growth_activity_lo', remove_growth_activity_lo)
+    scenario.remove_par('initial_activity_lo', remove_initial_activity_lo)
+
+    remove_soft_activity_up = scenario.par("soft_activity_up",
+    filters={'technology':['eaf_steel'], 'year_act': remove_years})
+    remove_soft_activity_lo = scenario.par("soft_activity_lo",
+    filters={'technology':['bof_steel'], 'year_act': remove_years})
+    abs_cost_soft_up = scenario.par("abs_cost_activity_soft_up",
+    filters={'technology':['eaf_steel', 'bof_steel'], 'year_act': remove_years})
+    level_cost_soft_up = scenario.par("level_cost_activity_soft_up",
+    filters={'technology':['eaf_steel', 'bof_steel'], 'year_act': remove_years})
+
+    scenario.remove_par('soft_activity_up', remove_soft_activity_up)
+    scenario.remove_par('soft_activity_lo', remove_soft_activity_lo)
+    scenario.remove_par('abs_cost_activity_soft_up', abs_cost_soft_up)
+    scenario.remove_par('level_cost_activity_soft_up', level_cost_soft_up)
+
+    growth_new_capacity_up = scenario.par("growth_new_capacity_up",
+    filters={'technology':['dri_gas_ccs_steel', 'bf_ccs_steel'],
+    'year_vtg':remove_years})
+
+    scenario.remove_par('growth_new_capacity_up', growth_new_capacity_up)
+
+    initial_new_capacity_up = scenario.par("initial_new_capacity_up",
+    filters={'technology':['dri_gas_ccs_steel', 'bf_ccs_steel'],
+    'year_vtg': remove_years})
+
+    scenario.remove_par('initial_new_capacity_up', initial_new_capacity_up)
+
+    # Add net-zero relation
+    # Note: In updated SSP implementaiton, 'CO2_Emission' does not exist.
+    # The negative coefficients should be read from output parameter.
+
+    co2_ind = scenario.par('relation_activity',
+    filters = {'relation':'CO2_ind','technology':["DUMMY_coal_supply",
+                                                  "DUMMY_gas_supply"]})
+
+    co2_emi = scenario.par('relation_activity',
+    filters = {'relation':'CO2_Emission','technology':["dri_gas_ccs_steel",
+                                                        "bf_ccs_steel",]})
+
+    rel_new = pd.concat([co2_ind, co2_emi], ignore_index=True)
+    rel_new = rel_new[rel_new['year_rel']>=2070]
+
+    rel_new['node_rel'] = 'R12_GLB'
+    rel_new['relation'] = 'steel_sector_target'
+
+    scenario.add_set('relation', 'steel_sector_target')
+
+    # Need to add slack values here. Emissions do not go to zero.
+    relation_upper_df =  pd.DataFrame({
+    "relation": 'steel_sector_target',
+    "node_rel": 'R12_GLB',
+    "year_rel": [2070, 2080, 2090, 2100],
+    "value": [2.7, 2.5, 2.1, 1.8],
+    "unit": "???"
+    })
+
+    # relation_lower_df =  pd.DataFrame({
+    # "relation": 'steel_sector_target',
+    # "node_rel": 'R12_GLB',
+    # "year_rel": [2070, 2080, 2090, 2100],
+    # "value": 0,
+    # "unit": "???"
+    # })
+
+    scenario.add_par('relation_activity', rel_new)
+    scenario.add_par('relation_upper', relation_upper_df)
+    # scenario.add_par('relation_lower', relation_lower_df)
+
+    scenario.commit('Steel sector target added.')
+
+
 def no_clinker_substitution(scenario):
 
     # Clinker substituion not allowed
