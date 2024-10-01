@@ -775,6 +775,13 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         pd.concat([filt_weo, filt_intratec, filt_none])
         .reset_index(drop=True)
         .assign(
+            reg_cost_ratio=lambda x: np.where(
+                x.reg_diff_source.isna() & x.reg_diff_technology.isna(),
+                1,
+                x.reg_cost_ratio,
+            )
+        )
+        .assign(
             reg_cost_base_year=lambda x: x.base_year_reference_region_cost
             * x.reg_cost_ratio
         )
