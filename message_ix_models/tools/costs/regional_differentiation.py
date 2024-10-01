@@ -170,19 +170,21 @@ def get_intratec_data() -> pd.DataFrame:
     return pd.read_csv(file, comment="#", skipinitialspace=True)
 
 
-def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
+def get_raw_technology_mapping(
+    module: Literal["energy", "materials"],
+) -> pd.DataFrame:
     """Retrieve a technology mapping for `module`.
 
-    The data are read from a CSV file at :file:`data/{module}/tech_map_{module}.csv`.
+    The data are read from a CSV file at :file:`data/{module}/tech_map.csv`.
     The file must have the following columns:
 
     - ``message_technology``: MESSAGEix-GLOBIOM technology code
     - ``reg_diff_source``: data source to map MESSAGEix technology to. A string like
       "weo", "energy", or possibly others.
-    - ``reg_diff_technology``: Technology code in the source data.
+    - ``reg_diff_technology``: technology code in the source data.
     - ``base_year_reference_region_cost``: manually specified base year cost of the
       technology in the reference region (in 2005 USD).
-    - ``fix_ratio``: ???
+    - ``fix_ratio``: manually specified of fixed O&M costs to investment costs.
 
     Parameters
     ----------
@@ -194,12 +196,12 @@ def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.Dat
     pandas.DataFrame
     """
 
-    path = package_data_path("costs", module, f"tech_map_{module}.csv")
+    path = package_data_path("costs", module, "tech_map.csv")
     return pd.read_csv(path, comment="#")
 
 
-def subset_materials_map(raw_map):
-    """Subset materials mapping for only technologies that have sufficient data.
+def subset_module_map(raw_map):
+    """Subset non-energy module mapping for only technologies that have sufficient data.
 
     Parameters
     ----------
@@ -217,22 +219,23 @@ def subset_materials_map(raw_map):
         - base_year_reference_region_cost: manually specified base year cost
           of the technology in the reference region (in 2005 USD)
     """
-    # - Remove materials technologies that are missing both a reg_diff_source and a
+    # - Remove module technologies that are missing both a reg_diff_source and a
     # base_year_reference_region_cost
-    # - Round base_year_reference_region_cost to nearest integer
     sub_map = (
         raw_map.query(
             "reg_diff_source.notnull() or base_year_reference_region_cost.notnull()"
         )
         .rename(columns={"base_year_reference_region_cost": "base_cost"})
-        .assign(base_year_reference_region_cost=lambda x: x.base_cost.round())
+        .assign(base_year_reference_region_cost=lambda x: x.base_cost)
         .drop(columns={"base_cost"})
     )
 
     return sub_map
 
 
-def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
+def adjust_technology_mapping(
+    module: Literal["energy", "materials"],
+) -> pd.DataFrame:
     """Adjust technology mapping based on sources and assumptions.
 
     Parameters
@@ -258,22 +261,22 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
     if module == "energy":
         return raw_map_energy
 
-    elif module == "materials":
-        raw_map_materials = get_raw_technology_mapping("materials")
-        sub_map_materials = subset_materials_map(raw_map_materials)
+    else:
+        raw_map_module = get_raw_technology_mapping(module)
+        sub_map_module = subset_module_map(raw_map_module)
 
-        # If message_technology in sub_map_materials is in raw_map_energy and
+        # If message_technology in sub_map_module is in raw_map_energy and
         # base_year_reference_region_cost is not null/empty, then replace
         # base_year_reference_region_cost in raw_map_energy with
-        # base_year_reference_region_cost in sub_map_materials
-        materials_replace = (
-            sub_map_materials.query(
+        # base_year_reference_region_cost in sub_map_module
+        module_replace = (
+            sub_map_module.query(
                 "message_technology in @raw_map_energy.message_technology"
             )
             .rename(
                 columns={
                     "message_technology": "material_message_technology",
-                    "base_year_reference_region_cost": "material_base_cost",
+                    "base_year_reference_region_cost": "module_base_cost",
                 }
             )
             .drop(columns=["reg_diff_source", "reg_diff_technology"])
@@ -285,8 +288,8 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
             )
             .assign(
                 base_year_reference_region_cost=lambda x: np.where(
-                    x.material_base_cost.notnull(),
-                    x.material_base_cost,
+                    x.module_base_cost.notnull(),
+                    x.module_base_cost,
                     x.base_year_reference_region_cost,
                 )
             )
@@ -304,12 +307,12 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
         # Subset to only rows where reg_diff_source is "energy"
         # Merge with raw_map_energy on reg_diff_technology
         # If the "base_year_reference_region_cost" is not
-        # null/empty in raw_materials_map,
+        # null/empty in raw_module_map,
         # then use that.
-        # If the base_year_reference_region_cost is null/empty in raw_materials_map,
+        # If the base_year_reference_region_cost is null/empty in raw_module_map,
         # then use the base_year_reference_region_cost from the mapped energy technology
-        materials_map_energy = (
-            sub_map_materials.query("reg_diff_source == 'energy'")
+        module_map_energy = (
+            sub_map_module.query("reg_diff_source == 'energy'")
             .drop(columns=["reg_diff_source"])
             .rename(
                 columns={
@@ -345,39 +348,91 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
             )
         )
 
-        # Get technologies that are mapped to Intratec AND have a base year cost
-        # Assign map_techonology as "all"
-        materials_map_intratec = sub_map_materials.query(
-            "reg_diff_source == 'intratec' and "
-            "base_year_reference_region_cost.notnull()"
-        ).assign(reg_diff_technology="all")
-
         # Get technologies that don't have a map source but do have a base year cost
         # For these technologies, assume no regional differentiation
         # So use the reference region base year cost as the base year cost
         # across all regions
-        materials_map_noregdiff = sub_map_materials.query(
+        module_map_noregdiff = sub_map_module.query(
             "reg_diff_source.isnull() and base_year_reference_region_cost.notnull()"
         )
 
-        # Concatenate materials_replace and materials_map_energy
+        # Concatenate module_replace, module_map_energy, and module_map_noregdiff
         # Drop duplicates
-        materials_all = (
+        module_all = (
             pd.concat(
                 [
-                    materials_replace,
-                    materials_map_energy,
-                    materials_map_intratec,
-                    materials_map_noregdiff,
+                    module_replace,
+                    module_map_energy,
+                    module_map_noregdiff,
                 ]
             )
             .drop_duplicates()
             .reset_index(drop=True)
         )
 
-        # Get list of technologies in raw_map_materials that are not in materials_all
-        missing_tech = raw_map_materials.query(
-            "message_technology not in @materials_all.message_technology"
+        # If module == "materials", then get materials_map_intratec
+        # and concatenate with module_all
+        if module == "materials":
+            # Get technologies that are mapped to Intratec AND have a base year cost
+            # Assign map_techonology as "all"
+            materials_map_intratec = sub_map_module.query(
+                "reg_diff_source == 'intratec' and "
+                "base_year_reference_region_cost.notnull()"
+            ).assign(reg_diff_technology="all")
+
+            # Concatenate materials_map_intratec and module_all
+            # Drop duplicates
+            module_all = (
+                pd.concat(
+                    [
+                        module_all,
+                        materials_map_intratec,
+                    ]
+                )
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
+
+        # Get full list of technologies in module_all
+        # If a custom fix_ratio exists in raw_map_energy, then use that
+        # If a custom fix_ratio exists in sub_map_module, then use that
+        # (including replacing one in raw_map_energy)
+        # Otherwise, keep the fix_ratio as null
+        module_all = (
+            module_all.merge(
+                raw_map_energy.query("fix_ratio.notnull()")[
+                    ["message_technology", "fix_ratio"]
+                ].rename(columns={"fix_ratio": "fix_ratio_energy"}),
+                how="left",
+                on="message_technology",
+            )
+            .merge(
+                sub_map_module.query("fix_ratio.notnull()")[
+                    ["message_technology", "fix_ratio"]
+                ].rename(columns={"fix_ratio": "fix_ratio_module"}),
+                how="left",
+                on="message_technology",
+            )
+            .assign(
+                fix_ratio=lambda x: np.where(
+                    x.fix_ratio_energy.notnull(),
+                    x.fix_ratio_energy,
+                    x.fix_ratio,
+                )
+            )
+            .assign(
+                fix_ratio=lambda x: np.where(
+                    x.fix_ratio_module.notnull(),
+                    x.fix_ratio_module,
+                    x.fix_ratio,
+                )
+            )
+            .drop(columns=["fix_ratio_energy", "fix_ratio_module"])
+        )
+
+        # Get list of technologies in raw_map_module that are not in module_all
+        missing_tech = raw_map_module.query(
+            "message_technology not in @module_all.message_technology"
         ).message_technology.unique()
 
         log.info(
@@ -386,7 +441,7 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
             + "\n".join(missing_tech)
         )
 
-        return materials_all
+        return module_all
 
 
 def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
@@ -622,13 +677,12 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
     df_weo = get_weo_regional_differentiation(config)
     df_intratec = get_intratec_regional_differentiation(config.node, config.ref_region)
 
-    # Filter for reg_diff_source == "energy" or "weo"
+    # Get mapping of technologies
     # Then merge with output of get_weo_regional_differentiation
     # If the base_year_reference_region_cost is empty, then use the weo_ref_region_cost
     # If the fix_ratio is empty, then use weo_fix_ratio
     filt_weo = (
-        df_map.query("reg_diff_source == 'energy' or reg_diff_source == 'weo'")
-        .merge(
+        df_map.merge(
             df_weo, left_on="reg_diff_technology", right_on="weo_technology", how="left"
         )
         .assign(
@@ -654,8 +708,6 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
             axis=1,
         )
     )
-
-    filt_weo.query("message_technology == 'coal_ppl'")
 
     # Filter for reg_diff_source == "intratec"
     # Then merge with output of get_intratec_regional_differentiation
@@ -692,14 +744,15 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         )
     )
 
-    # Filter for reg_diff_source == NaN
-    # Create dataframe of all regions and merge with map data
-    # Assume reg_cost_ratio = 1 for all regions
-    # If the fix_ratio is empty, then use 0
+    # TODO: Change from using intratec source as list of regions
     un_reg = pd.DataFrame(
         {"region": filt_intratec.region.unique(), "reg_cost_ratio": 1, "key": "z"}
     )
 
+    # Filter for reg_diff_source == NaN
+    # Create dataframe of all regions and merge with map data
+    # Assume reg_cost_ratio = 1 for all regions
+    # If the fix_ratio is empty, then use 0
     filt_none = (
         df_map.query("reg_diff_source.isnull()")
         .assign(key="z")
@@ -723,9 +776,18 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         pd.concat([filt_weo, filt_intratec, filt_none])
         .reset_index(drop=True)
         .assign(
+            reg_cost_ratio=lambda x: np.where(
+                x.reg_diff_source.isna() & x.reg_diff_technology.isna(),
+                1,
+                x.reg_cost_ratio,
+            )
+        )
+        .assign(
             reg_cost_base_year=lambda x: x.base_year_reference_region_cost
             * x.reg_cost_ratio
         )
+        .dropna(subset=["region"])
+        .reset_index(drop=True)
     )
 
     return all_tech
