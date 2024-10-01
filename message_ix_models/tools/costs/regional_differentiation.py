@@ -744,14 +744,15 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         )
     )
 
-    # Filter for reg_diff_source == NaN
-    # Create dataframe of all regions and merge with map data
-    # Assume reg_cost_ratio = 1 for all regions
-    # If the fix_ratio is empty, then use 0
+    # TODO: Change from using intratec source as list of regions
     un_reg = pd.DataFrame(
         {"region": filt_intratec.region.unique(), "reg_cost_ratio": 1, "key": "z"}
     )
 
+    # Filter for reg_diff_source == NaN
+    # Create dataframe of all regions and merge with map data
+    # Assume reg_cost_ratio = 1 for all regions
+    # If the fix_ratio is empty, then use 0
     filt_none = (
         df_map.query("reg_diff_source.isnull()")
         .assign(key="z")
