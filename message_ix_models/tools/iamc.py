@@ -1,6 +1,6 @@
 """Tools for working with IAMC-structured data."""
 
-from typing import TYPE_CHECKING, Any, List, Literal, MutableMapping, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, MutableMapping, Optional
 
 import genno
 import pandas as pd
@@ -169,7 +169,7 @@ def iamc_like_data_for_query(
         set(["MODEL", "SCENARIO", "VARIABLE", "UNIT"]) - set(unique.split())
     )
 
-    unique_values = dict()
+    unique_values: Dict[str, Any] = dict()
     tmp = (
         pd.read_csv(source, **kwargs)
         .drop(columns=drop or [])
@@ -188,4 +188,6 @@ def iamc_like_data_for_query(
         .stack()
         .dropna()
     )
-    return genno.Quantity(tmp, units=unique_values["UNIT"])
+    return genno.Quantity(
+        tmp, units=unique_values["UNIT"] if "UNIT" in unique else "dimensionless"
+    )
