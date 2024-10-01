@@ -785,6 +785,8 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
             reg_cost_base_year=lambda x: x.base_year_reference_region_cost
             * x.reg_cost_ratio
         )
+        .dropna(subset=["region"])
+        .reset_index(drop=True)
     )
 
     return all_tech
