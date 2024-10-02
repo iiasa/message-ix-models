@@ -7,18 +7,24 @@ import genno
 import xarray as xr
 
 from message_ix_models.tools.iamc import iamc_like_data_for_query
+from message_ix_models.util import minimum_version
 
 if TYPE_CHECKING:
     import pathlib
 
     from genno.types import AnyQuantity
 
-# TODO Retrieve from a package data code list
-EMISSION = "BC CH4 CO CO2 N2O NH3 NOx OC Sulfur VOC".split()
 
-
-def aviation_share() -> "AnyQuantity":
+def aviation_share(ref: "AnyQuantity") -> "AnyQuantity":
     """Return (dummy) data for the share of aviation in emissions.
+
+    Currently this returns exactly the value `0.2`.
+
+    Parameters
+    ----------
+    ref :
+        Reference quantity. The dimensions and coordinates :math:`(n, e, y)` of the
+        returned value exactly match `ref`.
 
     Returns
     -------
@@ -27,9 +33,9 @@ def aviation_share() -> "AnyQuantity":
     """
     return (
         genno.Quantity(0.2, units="dimensionless")
-        .expand_dims({"e": EMISSION})  # Full list
-        .expand_dims({"n": ["CHN", "NAM"]})  # Test data specimen
-        .expand_dims({"y": list(range(1990, 2110 + 1))})  # Crudely cover the full list
+        .expand_dims({"e": sorted(ref.coords["e"].data)})
+        .expand_dims({"n": sorted(ref.coords["n"].data)})
+        .expand_dims({"y": sorted(ref.coords["y"].data)})
     )
 
 
@@ -69,7 +75,7 @@ def finalize(
         .reset_index()
         .assign(
             Variable=lambda df: (
-                "Emission|" + df["e"] + "|Energy|Demand|Transportation|" + df["t"]
+                "Emissions|" + df["e"] + "|Energy|Demand|Transportation|" + df["t"]
             ).str.replace("|_T", "")
         )
         .drop(["e", "t"], axis=1)
@@ -153,6 +159,7 @@ def select_re(qty: "AnyQuantity", indexers: dict) -> "AnyQuantity":
 EXPR = r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|Transportation(?:\|(?P<t>.*))?$"
 
 
+@minimum_version("genno 1.25")
 def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
     """Postprocess aviation emissions for SSP 2024.
 
@@ -213,7 +220,7 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
     # Share from aviation
     # TODO Compute this using an emission factor and the energy use totals
     k_share = genno.Key("AIR emission share", tuple("eny"))
-    c.add(k_share, aviation_share)
+    c.add(k_share, aviation_share, k[2] / "t")
 
     # Product of the total and aviation share → aviation emissions
     c.add(k[3] / t, "mul", k[2] / t, k_share)
@@ -234,10 +241,10 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
             },
         ),
     )
-    c.add(k[5], "mul", k[3] / t, "broadcast:t:AIR emissions")
+    c.add(k[4], "mul", k[3] / t, "broadcast:t:AIR emissions")
 
     # Add to the input data
-    c.add(k[6], "add", k[1], k[5])
+    c.add(k[5], "add", k[1], k[4])
 
     # - Collapse to IAMC "VARIABLE" dimension name
     # - Recombine with other data
@@ -246,10 +253,11 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
         "target",
         finalize,
         k_input,
-        k[6],
+        k[5],
         "model name",
         "scenario name",
         path_out=path_out,
     )
 
+    # Execute
     c.get("target")
