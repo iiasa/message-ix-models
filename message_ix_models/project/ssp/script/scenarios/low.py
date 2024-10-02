@@ -9,9 +9,6 @@ from message_ix_models.project.ssp.script.util.functions import (
     remove_bof_steel_lower,
 )
 
-# path_ue = "/Users/meas/iiasagit/scenariomip-review/scenariomip_review/data/ue-shares"
-path_ue = "/home/mengm/repo/scenariomip-review/scenariomip_review/data/ue-shares"
-
 # selections
 sel_scen = "SSP1"
 scen_suffix = ""
