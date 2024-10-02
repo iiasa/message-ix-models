@@ -28,6 +28,10 @@ DIMS = ["COUNTRY", "PRODUCT", "TIME", "FLOW", "MEASURE"]
 
 #: Mapping from (provider, year, time stamp) → set of file name(s) containing data.
 FILES = {
+    ("IEA", "2024"): (  # Timestamped 20240725T0830
+        "web/2024-07-25/WBIG1.zip",
+        "web/2024-07-25/WBIG2.zip",
+    ),
     ("IEA", "2023"): ("WBIG1.zip", "WBIG2.zip"),  # Timestamped 20230726T0014
     ("OECD", "2021"): ("cac5fa90-en.zip",),  # Timestamped 20211119T1000
     ("OECD", "2022"): ("372f7e29-en.zip",),  # Timestamped 20230406T1000

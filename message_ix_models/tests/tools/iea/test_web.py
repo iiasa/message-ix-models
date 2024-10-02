@@ -49,6 +49,7 @@ class TestIEA_EWEB:
                 dict(provider="IEA", edition="2023", extra_kw="FOO"),
                 marks=pytest.mark.xfail(raises=ValueError),
             ),
+            dict(provider="IEA", edition="2024", flow=["AVBUNK"]),
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
@@ -84,7 +85,14 @@ PROVIDER_EDITION = (
             GHA or not HAS_MESSAGE_DATA, reason="No fuzzed version of this data"
         ),
     ),
-    ("OECD", "2023"),
+    pytest.param(
+        "IEA",
+        "2024",
+        marks=pytest.mark.xfail(
+            GHA or not HAS_MESSAGE_DATA, reason="No fuzzed version of this data"
+        ),
+    ),
+    ("OECD", "2021"),
     ("OECD", "2022"),
     ("OECD", "2023"),
 )
