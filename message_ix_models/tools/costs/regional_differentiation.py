@@ -171,7 +171,7 @@ def get_intratec_data() -> pd.DataFrame:
 
 
 def get_raw_technology_mapping(
-    module: Literal["energy", "materials"],
+    module: Literal["energy", "materials", "cooling"],
 ) -> pd.DataFrame:
     """Retrieve a technology mapping for `module`.
 
@@ -234,7 +234,7 @@ def subset_module_map(raw_map):
 
 
 def adjust_technology_mapping(
-    module: Literal["energy", "materials"],
+    module: Literal["energy", "materials", "cooling"],
 ) -> pd.DataFrame:
     """Adjust technology mapping based on sources and assumptions.
 

@@ -34,6 +34,11 @@ from message_ix_models.util import add_par_data
                 }
             },
         ),
+        (
+            Config(module="cooling", method="gdp", node="R12", scenario="SSP5"),
+            {"technology": {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}},
+            {"technology": {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}},
+        ),
         pytest.param(
             Config(node="R20"),
             set(),

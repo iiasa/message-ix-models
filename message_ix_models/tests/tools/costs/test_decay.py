@@ -18,6 +18,7 @@ from message_ix_models.tools.costs.regional_differentiation import (
     (
         ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}),
         ("materials", {"biomass_NH3", "MTO_petro", "furnace_foil_steel"}),
+        ("cooling", {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}),
     ),
 )
 def test_get_cost_reduction_data(module: str, t_exp) -> None:
@@ -32,7 +33,7 @@ def test_get_cost_reduction_data(module: str, t_exp) -> None:
     assert 0 <= stats["min"] and stats["max"] <= 1
 
 
-@pytest.mark.parametrize("module", ("energy", "materials"))
+@pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
 def test_get_technology_reduction_scenarios_data(module: str) -> None:
     config = Config()
     # The function runs without error
@@ -57,10 +58,11 @@ def test_get_technology_reduction_scenarios_data(module: str) -> None:
             {"biomass_NH3"},
         ),
         ("materials", {"biomass_NH3", "MTO_petro", "furnace_foil_steel"}, set()),
+        ("cooling", {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}, set()),
     ),
 )
 def test_project_ref_region_inv_costs_using_reduction_rates(
-    module: Literal["energy", "materials"], t_exp, t_excluded
+    module: Literal["energy", "materials", "cooling"], t_exp, t_excluded
 ) -> None:
     # Set up
     config = Config(module=module)
