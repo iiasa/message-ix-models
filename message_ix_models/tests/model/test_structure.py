@@ -54,6 +54,7 @@ class TestGetCodes:
         (
             "cd_links/unit",
             "commodity",
+            "emission",
             "level",
             "node/ISR",
             "node/R11",
