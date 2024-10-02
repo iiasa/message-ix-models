@@ -15,9 +15,7 @@ from message_ix_models.project.ssp.script.util.functions import (
 from message_ix_models.project.ssp.script.util.shares import (
     main as add_UE_share_constraints,
 )
-
-path_ue = "/Users/meas/iiasagit/scenariomip-review/scenariomip_review/data/ue-shares"
-# path_ue = "/home/mengm/repo/scenariomip-review/scenariomip_review/data/ue-shares"
+from message_ix_models.util import package_data_path
 
 # selections
 sel_scen = "LED"
@@ -44,6 +42,7 @@ nze_targets = [
 ]
 
 # model and scenario names
+path_ue = package_data_path("ue-shares")
 path_ue_file = os.path.join(path_ue, file_ue)
 snames = {"SSP1": "SSP1 - Very Low Emissions", "LED": "SSP2 - Very Low Emissions"}
 svers = {"SSP1": 1, "LED": 2}
