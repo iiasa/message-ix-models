@@ -12,7 +12,6 @@ from message_ix_models.project.ssp.script.util.functions import (
 # selections
 sel_scen = "SSP1"
 scen_suffix = ""
-# scen_vers = 1
 rem_bof_steel = True
 mod_growth_steel = True
 mod_initial_steel = True
@@ -38,27 +37,30 @@ svers = {"SSP1": 1, "SSP2": 1}
 model_orig = "SSP_" + sel_scen + "_v1.0"
 scenario_orig = snames[sel_scen]
 
-# add scen_suffic depending on remove_bof_steel, modify_lc_steel,
-# steel_scalar, and add_steel_target
 if rem_bof_steel:
     scen_suffix += "_bof"
 if mod_growth_steel:
-    scen_suffix += "_growth"  # + str(steel_growth)
+    scen_suffix += "_growth"
 if mod_initial_steel:
-    scen_suffix += "_initial"  # + str(steel_inital)
+    scen_suffix += "_initial"
 if add_steel_target:
     scen_suffix += "_nzsteel"
 
+# target scenario
 model_target = "MM_ScenarioMIP"
 scenario_target = "Low_" + sel_scen + scen_suffix  # + "_v" + str(scen_vers)
 
+# connect to database
 mp = ixmp.Platform("ixmp_dev")
+
+# load scenario
 s_orig = message_ix.Scenario(
     mp, model=model_orig, scenario=scenario_orig, version=svers[sel_scen]
 )
+
+# clone scenario
 s_tar = s_orig.clone(model_target, scenario_target, keep_solution=False)
 s_tar.set_as_default()
-
 
 # modify steel sector
 if rem_bof_steel:
@@ -85,15 +87,6 @@ if add_steel_target:
 
 # add balance equality
 add_balance_equality(s_tar)
-
-# solve parameters
-# message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-#     "advind": 0,
-#     "lpmethod": 4,
-#     "threads": 4,
-#     "epopt": 1e-6,
-#     "scaind": -1,
-# }
 
 solve_typ = "MESSAGE-MACRO"
 solve_args = dict(model=solve_typ)
