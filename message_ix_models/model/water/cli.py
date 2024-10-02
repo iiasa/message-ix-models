@@ -94,8 +94,20 @@ _REL = ["low", "med", "high"]
 
 @cli.command("nexus")
 @click.pass_obj
-@click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
-@click.option("--rels", default="low", type=click.Choice(_REL))
+@click.option(
+    "--rcps",
+    default="no_climate",
+    type=click.Choice(_RCPS),
+    show_default=True,
+    help="Specifies the climate scenario used ['no_climate','6p0','2p6']",
+)
+@click.option(
+    "--rels",
+    default="low",
+    type=click.Choice(_REL),
+    show_default=True,
+    help="Specifies the reliability of hydrological data ['low','mid','high']",
+)
 @click.option(
     "--sdgs",
     default="baseline",
@@ -194,8 +206,20 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
 
 @cli.command("cooling")
 @common_params("regions")
-@click.option("--rcps", type=click.Choice(_RCPS))
-@click.option("--rels", type=click.Choice(_REL))
+@click.option(
+    "--rcps",
+    default="no_climate",
+    type=click.Choice(_RCPS),
+    show_default=True,
+    help="Specifies the climate scenario used ['no_climate','6p0','2p6']",
+)
+@click.option(
+    "--rels",
+    default="low",
+    type=click.Choice(_REL),
+    show_default=True,
+    help="Specifies the reliability of hydrological data ['low','mid','high']",
+)
 @click.pass_obj
 def cooling_cli(context, regions, rcps, rels):
     """Build and solve model with new cooling technologies."""
