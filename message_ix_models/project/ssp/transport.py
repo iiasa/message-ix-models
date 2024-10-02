@@ -106,7 +106,8 @@ def extract_dims(
 def extract_dims1(qty: "AnyQuantity", dim: dict) -> "AnyQuantity":  # pragma: no cover
     """Extract dimensions from IAMC-like ‘variable’ names expressions.
 
-    .. note:: This incomplete, non-working version uses :mod:`xarray` semantics.
+    .. note:: This incomplete, non-working version of :func:`extract_dims` uses
+       :mod:`xarray` semantics.
     """
     from collections import defaultdict
 
@@ -148,11 +149,26 @@ def select_re(qty: "AnyQuantity", indexers: dict) -> "AnyQuantity":
     return qty.sel(new_indexers)
 
 
+#: Expression for IAMC ‘variable’ names used in :func:`main`.
 EXPR = r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|Transportation(?:\|(?P<t>.*))?$"
 
 
 def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
     """Postprocess aviation emissions for SSP 2024.
+
+    1. Read input data from `path_in`.
+    2. Select data with variable names matching :data:`EXPR`.
+    3. Calculate (identical) values for:
+
+       - ``Emissions|*|Energy|Demand|Transportation|Aviation``
+       - ``Emissions|*|Energy|Demand|Transportation|Aviation|International``
+
+       These are currently calculated as the product of :func:`aviation_share` and
+       ``Emissions|*|Energy|Demand|Transportation``.
+    4. Subtract (3) from:
+       ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping``
+    5. Recombine with all other, unmodified data.
+    6. Write to `path_out`.
 
     Parameters
     ----------
@@ -208,13 +224,12 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
     c.add(
         "broadcast:t:AIR emissions",
         genno.Quantity(
-            [1, 1, -1, -1],
+            [1, 1, -1],
             coords={
                 "t": [
                     "Aviation",
                     "Aviation|International",
                     "Road Rail and Domestic Shipping",
-                    "_T",
                 ]
             },
         ),
