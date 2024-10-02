@@ -20,7 +20,6 @@ from message_ix_models.util import package_data_path
 # selections
 sel_scen = "LED"
 scen_suffix = "g05_e9"
-# scen_vers = 1
 rem_bof_steel = True
 mod_growth_steel = True
 mod_initial_steel = True
@@ -41,35 +40,40 @@ nze_targets = [
     0,
 ]
 
-# model and scenario names
-path_ue = package_data_path("ue-shares")
-path_ue_file = os.path.join(path_ue, file_ue)
+# scenario names
 snames = {"SSP1": "SSP1 - Very Low Emissions", "LED": "SSP2 - Very Low Emissions"}
 svers = {"SSP1": 1, "LED": 2}
 model_orig = "SSP_" + sel_scen + "_v1.0"
 scenario_orig = snames[sel_scen]
 
-# add scen_suffic depending on remove_bof_steel, modify_lc_steel,
-# steel_scalar, and add_steel_target
 if rem_bof_steel:
     scen_suffix += "_bof"
 if mod_growth_steel:
-    scen_suffix += "_growth"  # + str(steel_growth)
+    scen_suffix += "_growth"
 if mod_initial_steel:
-    scen_suffix += "_initial"  # + str(steel_inital)
+    scen_suffix += "_initial"
 if add_steel_target:
     scen_suffix += "_nzsteel"
 
-model_target = "MM_ScenarioMIP"
-scenario_target = "VL_" + sel_scen + "_" + scen_suffix  # + "_v" + str(scen_vers)
+# read UE share file
+path_ue = package_data_path("ue-shares")
+path_ue_file = os.path.join(path_ue, file_ue)
 
+# target scenario
+model_target = "MM_ScenarioMIP"
+scenario_target = "VL_" + sel_scen + "_" + scen_suffix
+
+# connect to database
 mp = ixmp.Platform("ixmp_dev")
+
+# load scenario
 s_orig = message_ix.Scenario(
     mp, model=model_orig, scenario=scenario_orig, version=svers[sel_scen]
 )
+
+# clone scenario
 s_tar = s_orig.clone(model_target, scenario_target, keep_solution=False)
 s_tar.set_as_default()
-
 
 # modify bounds for some fuels in residential and commercial sector
 modify_rc_bounds(s_orig, s_tar, rc_years)
@@ -114,15 +118,7 @@ if add_steel_target:
 # add balance equality
 add_balance_equality(s_tar)
 
-# solve parameters
-# message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-#     "advind": 0,
-#     "lpmethod": 4,
-#     "threads": 4,
-#     "epopt": 1e-6,
-#     "scaind": -1,
-# }
-
+# solve
 solve_typ = "MESSAGE-MACRO"
 solve_args = dict(model=solve_typ)
 s_tar.solve(**solve_args)
