@@ -18,6 +18,16 @@ Code reference
 .. automodule:: message_ix_models.data.material
   :members:
 
+.. note::
+   See also :pull:`130`/the archived branch `materials-migrate <https://github.com/iiasa/message-ix-models/tree/migrate-materials>`_ for a distinct version of :mod:`.material`.
+   That earlier PR was superseded by :pull:`188`, but contains the 1.0.0 version of MESSAGEix-Materials, which was used for the first submission of :cite:`unlu_2024_materials`. The model structure is almost identical to the default model that was added by :pull:`188`.
+   Compared to :pull:`188` this version differs particularly in the following areas:
+
+   - Older base year calibration of "other industries" using outdated IEA EWEB data
+   - Material demands computed in R through ``rpy2``, instead of Python implementation
+   - Less accurate regional allocation/aggregation of base year demands for cement and steel
+   - No use of :mod:`.tools.costs`
+
 Data preparation
 ----------------
 
