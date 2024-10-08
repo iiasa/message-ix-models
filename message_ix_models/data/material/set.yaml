@@ -6,6 +6,10 @@
 # - 'add': elements to add.
 
 common:
+  node:
+    add:
+    - R12_GLB
+
   technology:
     add:
     - extract__freshwater_supply
@@ -26,6 +30,7 @@ common:
     add:
     - water
     - fresh_water_supply
+
   level:
     require:
     - primary
