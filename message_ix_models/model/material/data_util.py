@@ -1936,9 +1936,9 @@ def read_sector_data(
     list_ef = data_df[["Parameter", "Species", "Mode"]].apply(list, axis=1)
 
     data_df["parameter"] = list_series.str.join("|")
-    data_df.loc[data_df["Parameter"] == "emission_factor", "parameter"] = (
-        list_ef.str.join("|")
-    )
+    data_df.loc[
+        data_df["Parameter"] == "emission_factor", "parameter"
+    ] = list_ef.str.join("|")
 
     data_df = data_df.drop(["Parameter", "Level", "Commodity", "Mode"], axis=1)
     data_df = data_df.drop(data_df[data_df.Value == ""].index)
@@ -2004,7 +2004,6 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
 
 
 # Read in time-dependent parameters
-# Now only used to add fuel cost for bare model
 def read_timeseries(
     scenario: message_ix.Scenario, material: str, filename: str
 ) -> pd.DataFrame:

@@ -59,7 +59,7 @@ For example, the buildings script (`data_buildings.py`) is only used when the bu
 .. automodule:: message_ix_models.model.material.data_ammonia_new
   :members:
 
-.. automodule:: message_ix_models.model.material.data_methanol_new
+.. automodule:: message_ix_models.model.material.data_methanol
   :members:
 
 Build and Solve the model from CLI
