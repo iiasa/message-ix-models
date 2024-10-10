@@ -217,6 +217,8 @@ petro_chemicals:
     - ethylene
     - BTX
     - asphalt
+    - lignin
+    - bitumen
     remove:
     - i_feed
 
@@ -228,6 +230,7 @@ petro_chemicals:
     - pre_intermediate
     - desulfurized
     - intermediate
+    - primary_material
     - secondary_material
     - final_material
     - demand
@@ -282,6 +285,10 @@ petro_chemicals:
     - feedstock_t/d
     - production_HVC
     - asphalt_mixing
+    - DUMMY_lignin_supply
+    - lignin_production
+    - bitumen_production
+    
     remove:
     # Any representation of refinery.
     - ref_hil
