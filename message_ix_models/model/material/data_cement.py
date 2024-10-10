@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import message_ix
 import pandas as pd
 from message_ix import make_df
 
@@ -19,7 +20,7 @@ from message_ix_models.util import (
 )
 
 
-def gen_mock_demand_cement(scenario):
+def gen_mock_demand_cement(scenario: message_ix.Scenario) -> pd.DataFrame:
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
     nodes.remove("World")
@@ -160,7 +161,9 @@ def gen_mock_demand_cement(scenario):
     return demand2020_cement
 
 
-def gen_data_cement(scenario, dry_run=False):
+def gen_data_cement(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     """Generate data for materials representation of cement industry."""
     # Load configuration
     context = read_config()

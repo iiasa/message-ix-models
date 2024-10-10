@@ -72,7 +72,7 @@ SPEC_LIST = (
 
 
 # Try to handle multiple data input functions from different materials
-def add_data(scenario, dry_run=False):
+def add_data(scenario: message_ix.Scenario, dry_run: bool = False) -> None:
     """Populate `scenario` with MESSAGEix-Materials data."""
     # Information about `scenario`
     for func in DATA_FUNCTIONS:
@@ -88,8 +88,8 @@ def build(
     context: Context,
     scenario: message_ix.Scenario,
     old_calib: bool,
-    modify_existing_constraints=True,
-    iea_data_path=None,
+    modify_existing_constraints: bool = True,
+    iea_data_path: str | None = None,
 ) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
     node_suffix = context.model.regions
@@ -137,7 +137,7 @@ def build(
     return scenario
 
 
-def calibrate_existing_constraints(scenario):
+def calibrate_existing_constraints(scenario: message_ix.Scenario):
     if "SSP_dev" not in scenario.model:
         engage_updates._correct_balance_td_efficiencies(scenario)
         engage_updates._correct_coal_ppl_u_efficiencies(scenario)

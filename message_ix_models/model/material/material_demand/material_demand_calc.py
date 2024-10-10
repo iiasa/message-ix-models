@@ -1,5 +1,8 @@
 import logging
+from pathlib import Path
+from typing import Literal
 
+import message_ix
 import numpy as np
 import pandas as pd
 import yaml
@@ -54,12 +57,12 @@ mode_modifiers_dict = {
 log = logging.getLogger(__name__)
 
 
-def steel_function(x, a, b, m):
+def steel_function(x: pd.DataFrame | float, a: float, b: float, m: float):
     gdp_pcap, del_t = x
     return a * np.exp(b / gdp_pcap) * (1 - m) ** del_t
 
 
-def cement_function(x, a, b):
+def cement_function(x: pd.DataFrame | float, a, b):
     gdp_pcap = x[0]
     return a * np.exp(b / gdp_pcap)
 
@@ -89,11 +92,13 @@ fitting_dict = {
 }
 
 
-def gompertz(phi, mu, y, baseyear=2020):
+def gompertz(phi: float, mu: float, y: pd.DataFrame | float, baseyear: int = 2020):
     return 1 - np.exp(-phi * np.exp(-mu * (y - baseyear)))
 
 
-def read_timer_pop(datapath, material):
+def read_timer_pop(
+    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+):
     df_population = pd.read_excel(
         f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
         sheet_name="Timer_POP",
@@ -109,7 +114,9 @@ def read_timer_pop(datapath, material):
     return df_population
 
 
-def read_timer_gdp(datapath, material):
+def read_timer_gdp(
+    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+):
     # Read GDP per capita data
     df_gdp = pd.read_excel(
         f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
@@ -126,7 +133,7 @@ def read_timer_gdp(datapath, material):
     return df_gdp
 
 
-def project_demand(df, phi, mu):
+def project_demand(df: pd.DataFrame, phi: float, mu: float):
     df_demand = df.groupby("region", group_keys=False).apply(
         lambda group: group.assign(
             demand_pcap_base=group["demand.tot.base"].iloc[0]
@@ -158,7 +165,7 @@ def project_demand(df, phi, mu):
     return df_demand[["region", "year", "demand_tot"]]
 
 
-def read_base_demand(filepath):
+def read_base_demand(filepath: str | Path):
     with open(filepath, "r") as file:
         yaml_data = file.read()
 
@@ -175,7 +182,7 @@ def read_base_demand(filepath):
     return df
 
 
-def read_hist_mat_demand(material):
+def read_hist_mat_demand(material: Literal["cement", "steel", "aluminum"]):
     datapath = message_ix_models.util.package_data_path("material")
 
     if material in ["cement", "steel"]:
@@ -269,7 +276,7 @@ def read_hist_mat_demand(material):
     return df_cons
 
 
-def read_pop_from_scen(scen):
+def read_pop_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
     pop = scen.par("bound_activity_up", {"technology": "Population"})
     pop = pop.loc[pop.year_act >= 2020].rename(
         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
@@ -278,7 +285,7 @@ def read_pop_from_scen(scen):
     return pop
 
 
-def read_gdp_ppp_from_scen(scen):
+def read_gdp_ppp_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
     if len(scen.par("bound_activity_up", filters={"technology": "GDP_PPP"})):
         gdp = scen.par("bound_activity_up", {"technology": "GDP_PPP"})
         gdp = gdp.rename({"value": "gdp_ppp", "year_act": "year"}, axis=1)[
@@ -305,7 +312,11 @@ def read_gdp_ppp_from_scen(scen):
     return gdp
 
 
-def derive_demand(material, scen, ssp="SSP2"):
+def derive_demand(
+    material: Literal["cement", "steel", "aluminum"],
+    scen: message_ix.Scenario,
+    ssp: Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "SSP2",
+):
     datapath = message_ix_models.util.package_data_path("material")
 
     # read pop projection from scenario
@@ -397,7 +408,12 @@ def derive_demand(material, scen, ssp="SSP2"):
     return df_final
 
 
-def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_2030):
+def gen_demand_petro(
+    scenario: message_ix.Scenario,
+    chemical: Literal["HVC", "methanol", "NH3"],
+    gdp_elasticity_2020: float,
+    gdp_elasticity_2030: float,
+):
     chemicals_implemented = ["HVC", "methanol", "NH3"]
     if chemical not in chemicals_implemented:
         raise ValueError(

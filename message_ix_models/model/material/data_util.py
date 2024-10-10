@@ -879,7 +879,7 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
 
 
 def calc_resid_ind_demand(
-    scen: message_ix.Scenario, baseyear: int, iea_data_path
+    scen: message_ix.Scenario, baseyear: int, iea_data_path: str
 ) -> pd.DataFrame:
     comms = ["i_spec", "i_therm"]
     path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
@@ -895,7 +895,7 @@ def calc_resid_ind_demand(
 
 
 def modify_industry_demand(
-    scen: message_ix.Scenario, baseyear: int, iea_data_path
+    scen: message_ix.Scenario, baseyear: int, iea_data_path: str
 ) -> None:
     df_demands_new = calc_resid_ind_demand(scen, baseyear, iea_data_path)
     scen.check_out()
@@ -1012,7 +1012,7 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
 
 
 def get_hist_act_data(
-    map_fname: str, years: list or None = None, iea_data_path=None
+    map_fname: str, years: list or None = None, iea_data_path: str | None = None
 ) -> pd.DataFrame:
     """
     reads IEA DB, maps and aggregates variables to MESSAGE technologies
@@ -1055,7 +1055,7 @@ def get_hist_act_data(
     return df_final
 
 
-def add_emission_accounting(scen):
+def add_emission_accounting(scen: message_ix.Scenario) -> None:
     """
 
     Parameters
@@ -1416,7 +1416,7 @@ def add_emission_accounting(scen):
     # scen.commit("add methanol CO2_industry")
 
 
-def add_elec_lowerbound_2020(scen):
+def add_elec_lowerbound_2020(scen: message_ix.Scenario) -> None:
     # To avoid zero i_spec prices only for R12_CHN, add the below section.
     # read input parameters for relevant technology/commodity combinations for
     # converting betwen final and useful energy
@@ -1490,7 +1490,7 @@ def add_elec_lowerbound_2020(scen):
     scen.commit("added lower bound for activity of residual electricity technologies")
 
 
-def add_coal_lowerbound_2020(sc):
+def add_coal_lowerbound_2020(sc: message_ix.Scenario) -> None:
     """Set lower bounds for coal and i_spec as a calibration for 2020"""
 
     final_resid = pd.read_csv(
@@ -1626,7 +1626,7 @@ def add_coal_lowerbound_2020(sc):
     )
 
 
-def add_cement_bounds_2020(sc):
+def add_cement_bounds_2020(sc: message_ix.Scenario) -> None:
     """Set lower and upper bounds for gas and oil as a calibration for 2020"""
 
     final_resid = pd.read_csv(
@@ -2068,7 +2068,9 @@ def read_timeseries(
     return df
 
 
-def read_rel(scenario: message_ix.Scenario, material: str, filename: str):
+def read_rel(
+    scenario: message_ix.Scenario, material: str, filename: str
+) -> pd.DataFrame:
     """
     Read relation_* type parameter data for specific industry
 
@@ -2156,7 +2158,9 @@ def gen_te_projections(
     return inv_cost, fix_cost
 
 
-def get_ssp_soc_eco_data(context: "Context", model: str, measure: str, tec):
+def get_ssp_soc_eco_data(
+    context: "Context", model: str, measure: str, tec
+) -> pd.DataFrame:
     """
     Function to update scenario GDP and POP timeseries to SSP 3.0
     and format to MESSAGEix "bound_activity_*" DataFrame
@@ -2218,7 +2222,9 @@ def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
     return
 
 
-def calculate_ini_new_cap(df_demand, technology, material):
+def calculate_ini_new_cap(
+    df_demand: pd.DataFrame, technology: str, material: str
+) -> pd.DataFrame:
     """
     Derive initial_new_capacity_up parametrization for CCS based on cement demand
     projection
