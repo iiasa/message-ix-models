@@ -289,4 +289,4 @@ This is the list of changes to MESSAGEix-Materials between each release.
 .. toctree::
    :maxdepth: 2
 
-    v.1.1.0
+   v.1.1.0
