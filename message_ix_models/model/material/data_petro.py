@@ -316,6 +316,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
 
     for t in config["technology"]["add"]:
+        t = t.id
         # years = s_info.Y
         params = data_petro.loc[(data_petro["technology"] == t), "parameter"].unique()
 

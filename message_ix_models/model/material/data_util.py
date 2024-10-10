@@ -7,10 +7,10 @@ import message_ix
 import numpy as np
 import pandas as pd
 from genno import Computer
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import (
-    read_config,
     remove_from_list_if_exists,
 )
 from message_ix_models.model.structure import get_region_codes
@@ -105,15 +105,8 @@ def add_macro_COVID(
         MACRO-calibrated Scenario instance
     """
 
-    # Excel file for calibration data
-    if "SSP_dev" in scen.model:
-        xls_file = os.path.join(
-            "C:/", "Users", "maczek", "Downloads", "macro", filename
-        )
-    else:
-        xls_file = os.path.join("P:", "ene.model", "MACRO", "python", filename)
     # Making a dictionary from the MACRO Excel file
-    xls = pd.ExcelFile(xls_file)
+    xls = pd.ExcelFile(package_data_path("material", "macro", filename))
     data = {}
     for s in xls.sheet_names:
         data[s] = xls.parse(s)
@@ -1071,12 +1064,12 @@ def add_emission_accounting(scen):
     """
     # (1) ******* Add non-CO2 gases to the relevant relations. ********
     # This is done by multiplying the input values and emission_factor
-    # per year,region and technology.
+    # per year,region and technology for furnace technologies.
 
     tec_list_residual = scen.par("emission_factor")["technology"].unique()
     tec_list_input = scen.par("input")["technology"].unique()
 
-    # The technology list to retrieve the input values
+    # The technology list to retrieve the input values for furnaces
     tec_list_input = [
         i for i in tec_list_input if (("furnace" in i) | ("hp_gas_" in i))
     ]
@@ -1883,7 +1876,9 @@ def add_cement_bounds_2020(sc):
     sc.commit("added lower and upper bound for fuels for cement 2020.")
 
 
-def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFrame:
+def read_sector_data(
+    scenario: message_ix.Scenario, sectname: str, file: str
+) -> pd.DataFrame:
     """
     Read sector data for industry with sectname
 
@@ -1904,9 +1899,6 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFra
 
     import numpy as np
 
-    # Ensure config is loaded, get the context
-    context = read_config()
-
     s_info = ScenarioInfo(scenario)
 
     if "R12_CHN" in s_info.N:
@@ -1916,7 +1908,7 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str) -> pd.DataFra
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        package_data_path("material", "steel_cement", context.datafile),
+        package_data_path("material", sectname, file),
         sheet_name=sheet_n,
     )
 
@@ -1986,6 +1978,8 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
                 "gas_NH3_ccs",
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs",
+                "bf_ccs_steel",
+                "dri_gas_ccs_steel",
             ],
             "emission": "CO2",
         },
@@ -2010,7 +2004,6 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
 
 
 # Read in time-dependent parameters
-# Now only used to add fuel cost for bare model
 def read_timeseries(
     scenario: message_ix.Scenario, material: str, filename: str
 ) -> pd.DataFrame:
@@ -2223,3 +2216,33 @@ def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
     scenario.add_par(par, df_el)
     scenario.commit("add initial_activity_up for elec_i")
     return
+
+
+def calculate_ini_new_cap(df_demand, technology, material):
+    """
+    Derive initial_new_capacity_up parametrization for CCS based on cement demand
+    projection
+    Parameters
+    ----------
+    df_demand: pd.DataFrame
+        DataFrame containing "demand" MESSAGEix parametrization
+    technology: str
+        name of CCS technology to be parametrized
+    material: str
+        name of the material/industry sector
+    Returns
+    -------
+    DataFrame formatted to "initial_new_capacity_up" columns
+    """
+
+    SCALER = 0.005
+
+    if material == "cement":
+        CLINKER_RATIO = 0.72
+        df_demand["value"] *= CLINKER_RATIO * SCALER
+    else:
+        df_demand["value"] *= SCALER
+
+    df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
+    df_demand["technology"] = technology
+    return make_df("initial_new_capacity_up", **df_demand)

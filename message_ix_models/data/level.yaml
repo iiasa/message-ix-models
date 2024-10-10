@@ -17,6 +17,9 @@ final:
 import:
   name: Imports
 
+export:
+  name: Exports
+
 useful:
   name: Useful Energy
   description: >-

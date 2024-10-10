@@ -65,6 +65,7 @@ def gen_data_generic(scenario, dry_run=False):
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
 
     for t in config["technology"]["add"]:
+        t = t.id
         # years = s_info.Y
         params = data_generic.loc[
             (data_generic["technology"] == t), "parameter"

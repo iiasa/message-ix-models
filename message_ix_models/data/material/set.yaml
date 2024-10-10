@@ -1,11 +1,19 @@
-# Configuration for message_data.model.material
-#
-# NB these values are currently for the nitrogen fertilizer materials
-#    accounting. Different sets can be created once there are 2+ different
-#    categories of materials.
+# Set configuration for the MESSAGE-Materials model
 
+# For each set in the MESSAGEix framework, the group contains:
+# - 'require': elements that must be present for the model to be set up.
+# - 'remove': elements to remove.
+# - 'add': elements to add.
 
 common:
+  node:
+    add:
+    - R12_GLB
+
+  technology:
+    add:
+    - extract__freshwater_supply
+
   commodity:
     require:
     - coal
@@ -18,10 +26,10 @@ common:
     - hydrogen
     - lh2
     - d_heat
-    add:
     - biomass
+    add:
     - water
-    - fresh_water
+    - fresh_water_supply
 
   level:
     require:
@@ -33,9 +41,11 @@ common:
     - export
     - import
 
-  type_tec:
-    add:
-    - industry
+# Not used at the moment
+# maybe to be used in updated legacy reporting
+#  type_tec:
+#    add:
+#    - industry
 
   mode:
     add:
@@ -56,15 +66,21 @@ common:
     - CO2_transformation
 
   year:
-    add:
+    require:
     - 1980
     - 1990
+    - 1995
     - 2000
+    - 2005
     - 2010
+    - 2015
 
-  type_year:
+  unit:
     add:
-    - 2010
+    - t/kW
+    - Mt
+    - Mt/yr
+    - USD/kW
 
 generic:
   commodity:
@@ -169,6 +185,7 @@ generic:
     - fc_h2_resins
     - solar_resins
     - dheat_resins
+
   mode:
     add:
     - low_temp
@@ -279,10 +296,17 @@ petro_chemicals:
     - steam_cracker
 
 steel:
+  mode:
+    add:
+    - M3
+    - M4
+
   commodity:
     add:
     - steel
     - pig_iron
+    - pig_iron_dummy
+    - charcoal
     - sponge_iron
     - sinter_iron
     - pellet_iron
@@ -292,6 +316,7 @@ steel:
     - slag_iron
     - co_gas
     - bf_gas
+    - off_gas
 
   level:
     add:
@@ -310,6 +335,7 @@ steel:
     - dummy_emission
     - end_of_life
     - dummy_end_of_life
+    - dummy_ccs
 
   technology:
     add:
@@ -317,7 +343,12 @@ steel:
     - sinter_steel
     - pellet_steel
     - bf_steel
+    - bf_ccs_steel
     - dri_steel
+    - dri_gas_steel
+    - dri_gas_ccs_steel
+    - dri_h2_steel
+    - sr_steel
     - bof_steel
     - eaf_steel
     - prep_secondary_steel_1
@@ -335,6 +366,8 @@ steel:
     - export_steel
     - other_EOL_steel
     - total_EOL_steel
+    - bf_biomass_steel
+    - prod_charcoal_steel
 
   relation:
     add:
@@ -352,6 +385,32 @@ steel:
       - ["steel","new_scrap"]
       - ["steel","useful_material"]
       - ["steel","final_material"]
+
+  addon:
+    add:
+      - bf_ccs_steel
+      - dri_gas_ccs_steel
+      - dri_gas_steel
+      - dri_h2_steel
+
+  type_addon:
+    add:
+      - bf_ccs_steel_addon
+      - dri_gas_ccs_steel_addon
+      - dri_steel_addon
+
+  map_tec_addon:
+    add:
+      - [bf_steel, bf_ccs_steel_addon]
+      - [dri_gas_steel, dri_gas_ccs_steel_addon]
+      - [dri_steel, dri_steel_addon]
+
+  cat_addon:
+    add:
+      - [bf_ccs_steel_addon, bf_ccs_steel]
+      - [dri_gas_ccs_steel_addon, dri_gas_ccs_steel]
+      - [dri_steel_addon, dri_gas_steel]
+      - [dri_steel_addon, dri_h2_steel]
 
 cement:
   commodity:
@@ -406,22 +465,25 @@ cement:
 
   type_addon:
     add:
-    - ccs_cement
+    - wet_ccs_cement
+    - dry_ccs_cement
 
   map_tec_addon:
     add:
-    - [clinker_dry_cement, ccs_cement]
-    - [clinker_wet_cement, ccs_cement]
+    - [clinker_dry_cement, dry_ccs_cement]
+    - [clinker_wet_cement, wet_ccs_cement]
 
   cat_addon:
     add:
-    - [ccs_cement, clinker_dry_ccs_cement]
-    - [ccs_cement, clinker_wet_ccs_cement]
+    - [dry_ccs_cement, clinker_dry_ccs_cement]
+    - [wet_ccs_cement, clinker_wet_ccs_cement]
 
 aluminum:
   commodity:
     add:
     - aluminum
+    - bauxite
+    - alumina
 
   level:
     add:
@@ -434,6 +496,7 @@ aluminum:
     - useful_material
     - product
     - secondary_material
+    - primary_material
     - demand
     - end_of_life
     - dummy_end_of_life_1
@@ -443,6 +506,7 @@ aluminum:
 
   technology:
     add:
+    - refining_aluminum
     - soderberg_aluminum
     - prebake_aluminum
     - secondary_aluminum
@@ -454,7 +518,7 @@ aluminum:
     - scrap_recovery_aluminum_1
     - scrap_recovery_aluminum_2
     - scrap_recovery_aluminum_3
-    - DUMMY_alumina_supply
+    - DUMMY_bauxite_supply
     - trade_aluminum
     - import_aluminum
     - export_aluminum
@@ -479,7 +543,6 @@ fertilizer:
   commodity:
     require:
     - electr
-    #- freshwater_supply removed for SSP_dev developments, is added in build if missing
     add:
     - NH3
     - Fertilizer Use|Nitrogen
