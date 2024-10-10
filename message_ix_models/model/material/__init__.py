@@ -54,11 +54,12 @@ from message_ix_models.util.compat.message_data import (
 )
 
 from message_ix_models.model.material.scenario_run.supply_side_scenarios import (
-    no_clinker_substitution,
+    no_substitution,
     no_ccs,
     increased_recycling,
     limit_asphalt_recycling,
-    industry_sector_net_zero_targets
+    industry_sector_net_zero_targets,
+    keep_fuel_share
 )
 
 log = logging.getLogger(__name__)
@@ -405,13 +406,13 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         # Material substituion allowed.
         no_ccs(scenario)
         limit_asphalt_recycling(scenario)
-        # keep_fuel_share(sceanrio)
+        keep_fuel_share(sceanrio)
     elif supply_scenario == "fuel_switching":
         # No material substitution
         # Recycling as today
         # No CCS
         log.info("Building fuel switching scenario")
-        no_clinker_substitution(scenario)
+        no_substitution(scenario)
         limit_asphalt_recycling(scenario)
         no_ccs(scenario)
     elif supply_scenario == "ccs":
@@ -419,9 +420,9 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         # Recycling as today
         # Keep fuel share as today
         log.info("Building ccs scenario")
-        no_clinker_substitution(scenario)
+        no_substitution(scenario)
         limit_asphalt_recycling(scenario)
-        # keep_fuel_share(sceanrio)
+        keep_fuel_share(sceanrio)
     elif supply_scenario == "recycling":
         # No material substitution
         # Recycling increased for steel and alu.
@@ -429,14 +430,14 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         # No CCS
         # Keep fuel share as today
         log.info("Building recycling scenario")
-        no_clinker_substitution(scenario)
+        no_substitution(scenario)
         increased_recycling(scenario)
         no_ccs(scenario)
-        # keep_fuel_share(sceanrio)
+        keep_fuel_share(sceanrio)
     elif supply_scenario == "default":
         log.info("Default mode")
         limit_asphalt_recycling(scenario)
-        no_clinker_substitution(scenario)
+        no_substitution(scenario)
     elif supply_scenario == "all":
         increased_recycling(scenario)
         # industry_sector_net_zero_targets(scenario)

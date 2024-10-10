@@ -105,7 +105,7 @@ def industry_sector_net_zero_targets(scenario):
     scenario.commit('Steel sector target added.')
 
 
-def no_clinker_substitution(scenario):
+def no_substitution(scenario):
 
     # Clinker substituion not allowed
     s_info = ScenarioInfo(scenario)
@@ -119,7 +119,7 @@ def no_clinker_substitution(scenario):
     scenario.check_out()
 
     for n in nodes:
-        bound_activity = pd.DataFrame({
+        bound_activity_clay = pd.DataFrame({
              "node_loc": n,
              "technology": 'DUMMY_clay_supply_cement',
              "year_act": year_act,
@@ -127,8 +127,19 @@ def no_clinker_substitution(scenario):
              "time": 'year',
              "value": 0,
              "unit": 't'})
-        scenario.add_par("bound_activity_lo", bound_activity)
-        scenario.add_par("bound_activity_up", bound_activity)
+        scenario.add_par("bound_activity_lo", bound_activity_clay)
+        scenario.add_par("bound_activity_up", bound_activity_clay)
+
+        bound_activity_lignin = pd.DataFrame({
+             "node_loc": n,
+             "technology": 'bitumen_production',
+             "year_act": year_act,
+             "mode": 'M2',
+             "time": 'year',
+             "value": 0,
+             "unit": 't'})
+        scenario.add_par("bound_activity_lo", bound_activity_lignin)
+        scenario.add_par("bound_activity_up", bound_activity_lignin)
 
     scenario.commit('Model changes made.')
 
@@ -279,4 +290,273 @@ def limit_asphalt_recycling(scenario):
 
     scenario.commit('Model changes made.')
 
-# def keep_fuel_share(scenario):
+def keep_fuel_share(scenario):
+    # Fuel shares are calculated based on baseline demand, defaut supply scenario
+    # "df_ratios_final.xlsx" is used, produced by shares_of_current_fuel.ipynb
+
+    # Add share constraints
+
+    df = pd.read_excel(package_data_path("material", "infrastructure",
+    'df_ratios_final.xlsx'))
+
+    df = df.drop(columns=['Unnamed: 0'])
+    df = df[df['Region'] != 'World']
+
+    sectors = ['Steel', 'Non-Metallic Minerals', 'Non-Ferrous Metals']
+
+    for s in sectors:
+        df_sector = df[df['sector']==s]
+
+        if s == 'Steel':
+
+            s_name = 'Steel'
+            scenario.check_out()
+
+            type_tec_tot = 'all_tec_' + s_name
+
+            total_tech = ['bf_steel','bof_steel', 'finishing_steel',
+                          'pellet_steel', 'sinter_steel', 'dri_gas_steel',
+                          'dri_h2_steel', 'cokeoven_steel', 'bf_ccs_steel',
+                          'dri_gas_ccs_steel', 'bf_biomass_steel',
+                          'slag_granulator_steel', 'eaf_steel', 'prod_charcoal_steel']
+
+            scenario.add_cat('technology', type_tec_tot, total_tech)
+
+            scenario.commit('Added')
+
+        if s == 'Non-Metallic Minerals':
+
+            s_name = "Cement"
+
+            scenario.check_out()
+
+            type_tec_tot = 'all_tec_' + s_name
+
+            total_tech = ["furnace_foil_cement", "furnace_loil_cement",
+                          "furnace_biomass_cement", "furnace_gas_cement",
+                          "furnace_coal_cement", "furnace_elec_cement"]
+
+            scenario.add_cat('technology', type_tec_tot, total_tech)
+
+            scenario.commit('Added')
+
+        if s == 'Non-Ferrous Metals':
+
+            s_name = "Aluminum"
+
+            scenario.check_out()
+
+            type_tec_tot = 'all_tec_' + s_name
+
+            total_tech = ["furnace_foil_aluminum", "furnace_loil_aluminum",
+                          "furnace_biomass_aluminum", "furnace_gas_aluminum",
+                          "furnace_coal_aluminum", "furnace_elec_aluminum",
+                          'soderberg_aluminum', 'prebake_aluminum']
+
+            scenario.add_cat('technology', type_tec_tot, total_tech)
+
+            scenario.commit('Added')
+
+        for n in df_sector['Region'].unique():
+            for f in df_sector['fuel'].unique():
+
+                scenario.check_out()
+
+                shr_const = 'fuel_share_' + s_name + '_' + n + '_' + f
+
+                scenario.add_set('shares', shr_const)
+
+                type_tec_shr = 'share_tec_' + s_name + '_' + f
+
+                scenario.commit('Added')
+
+                if s == 'Steel':
+                    if f == 'Electricity':
+                        scenario.check_out()
+                        share_tech = ['bf_steel', 'bof_steel', 'eaf_steel',
+                                      'finishing_steel', 'pellet_steel',
+                                      'sinter_steel', 'dri_gas_steel',
+                                      'dri_h2_steel','bf_ccs_steel',
+                                      'dri_gas_ccs_steel', 'bf_biomass_steel',
+                                      'slag_granulator_steel']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = 'electr'
+                    elif f == 'Gases':
+                        scenario.check_out()
+                        share_tech = ['eaf_steel', 'dri_gas_steel']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = 'gas'
+                    elif f == 'Biomass':
+                        scenario.check_out()
+                        share_tech = ['prod_charcoal_steel']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = 'charcoal'
+                    elif f == 'Coal':
+                        scenario.check_out()
+                        share_tech = ['bf_steel', 'cokeoven_steel', 'sinter_steel']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = 'coal'
+                    else:
+                        continue
+
+                    df_share = pd.DataFrame({'shares': shr_const,
+                           'node_share': 'R12_'+ n,
+                           'node': 'R12_'+ n,
+                           'type_tec': type_tec_shr,
+                           'mode': ['M1', 'M2', 'M3', 'M4'],
+                           'commodity': c,
+                           'level': 'final'})
+                    scenario.add_set('map_shares_commodity_share', df_share)
+                    scenario.add_cat('technology', type_tec_shr, share_tech)
+
+                    for m in ['M1', 'M2', 'M3', 'M4']:
+                        df_total = pd.DataFrame({'shares': shr_const,
+                                'node_share': 'R12_'+ n,
+                                'node': 'R12_'+ n,
+                                'type_tec': type_tec_tot,
+                                'mode': m,
+                                'commodity': ['coal', 'gas', 'electr', 'charcoal'],
+                                'level': 'final'})
+                        scenario.add_set('map_shares_commodity_total', df_total)
+
+                    # Add lower bound share constraint for the end of the century
+                    value_df = df_sector[(df_sector['Region'] == n) & (df_sector['fuel'] == f)
+                    & (df_sector['sector'] == 'Steel')]
+                    val = value_df['Fuel_Ratio'].values[0]
+
+                    df_up = pd.DataFrame({'shares': shr_const,
+                               'node_share': 'R12_'+ n,
+                               'year_act': [2025, 2030, 2035, 2040, 2045, 2050,\
+                               2055, 2060, 2070,2080,2090,2100,2110],
+                               'time': 'year',
+                               'value': val,
+                               'unit': '%'})
+
+                    scenario.add_par('share_commodity_up', df_up)
+
+                    scenario.commit('Share constraints added')
+
+                if s == 'Non-Metallic Minerals':
+                    if f == 'Electricity':
+                        scenario.check_out()
+                        share_tech = ['furnace_elec_cement']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                    elif f == 'Gases':
+                        scenario.check_out()
+                        share_tech = ['furnace_gas_cement']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                    elif f == 'Biomass':
+                        scenario.check_out()
+                        share_tech = ['furnace_biomass_cement']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                    elif f == 'Coal':
+                        scenario.check_out()
+                        share_tech = ['furnace_coal_cement']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                    elif f == 'Oil':
+                        scenario.check_out()
+                        share_tech = ['furnace_foil_cement', 'furnace_loil_cement']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+
+                    df_share = pd.DataFrame({'shares': shr_const,
+                           'node_share': 'R12_'+ n,
+                           'node': 'R12_'+ n,
+                           'type_tec': type_tec_shr,
+                           'mode': 'high_temp',
+                           'commodity': 'ht_heat',
+                           'level': 'useful_cement'}, index = [0])
+                    scenario.add_set('map_shares_commodity_share', df_share)
+                    scenario.add_cat('technology', type_tec_shr, share_tech)
+
+                    df_total = pd.DataFrame({'shares': shr_const,
+                            'node_share': 'R12_'+ n,
+                            'node': 'R12_'+ n,
+                            'type_tec': type_tec_tot,
+                            'mode': 'high_temp',
+                            'commodity': 'ht_heat',
+                            'level': 'useful_cement'}, index = [0])
+                    scenario.add_set('map_shares_commodity_total', df_total)
+
+                    # Add lower bound share constraint for the end of the century
+                    value_df = df_sector[(df_sector['Region'] == n) & \
+                    (df_sector['fuel'] == f) & (df_sector['sector'] == 'Non-Metallic Minerals')]
+                    val = value_df['Fuel_Ratio'].values[0]
+
+                    df_up = pd.DataFrame({'shares': shr_const,
+                               'node_share': 'R12_'+ n,
+                               'year_act': [2025, 2030, 2035, 2040, 2045, 2050,\
+                               2055, 2060, 2070,2080,2090,2100,2110],
+                               'time': 'year',
+                               'value': val,
+                               'unit': '%'})
+
+                    scenario.add_par('share_commodity_up', df_up)
+
+                    scenario.commit('Share constraints added')
+
+
+                if s == 'Non-Ferrous Metals':
+                    if f == 'Electricity':
+                        scenario.check_out()
+                        share_tech = ['furnace_elec_aluminum', 'soderberg_aluminum',
+                        'prebake_aluminum']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = ['electr']
+                    elif f == 'Gases':
+                        scenario.check_out()
+                        share_tech = ['furnace_gas_aluminum']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c= ['gas']
+                    elif f == 'Biomass':
+                        scenario.check_out()
+                        share_tech = ['furnace_biomass_aluminum']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = ['biomass']
+                    elif f == 'Coal':
+                        scenario.check_out()
+                        share_tech = ['furnace_coal_aluminum']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = ['coal']
+                    elif f == 'Oil':
+                        scenario.check_out()
+                        share_tech = ['furnace_foil_aluminum', 'furnace_loil_aluminum']
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+                        c = ['fueloil', 'lightoil']
+
+                    for m in ['high_temp', 'low_temp', 'M1']:
+                        df_share = pd.DataFrame({'shares': shr_const,
+                               'node_share': 'R12_'+ n,
+                               'node': 'R12_'+ n,
+                               'type_tec': type_tec_shr,
+                               'mode': m,
+                               'commodity': c,
+                               'level': 'final'})
+                        scenario.add_set('map_shares_commodity_share', df_share)
+                        scenario.add_cat('technology', type_tec_shr, share_tech)
+
+                        df_total = pd.DataFrame({'shares': shr_const,
+                                'node_share': 'R12_'+ n,
+                                'node': 'R12_'+ n,
+                                'type_tec': type_tec_tot,
+                                'mode': m,
+                                'commodity': ['electr', 'biomass', 'fueloil',
+                                'lightoil', 'coal', 'gas'],
+                                'level': 'final'})
+                        scenario.add_set('map_shares_commodity_total', df_total)
+
+                    # Add lower bound share constraint for the end of the century
+                    value_df = df_sector[(df_sector['Region'] == n) & \
+                    (df_sector['fuel'] == f) & (df_sector['sector'] == 'Non-Ferrous Metals')]
+                    val = value_df['Fuel_Ratio'].values[0]
+
+                    df_up = pd.DataFrame({'shares': shr_const,
+                               'node_share': 'R12_'+ n,
+                               'year_act': [2025, 2030, 2035, 2040, 2045, 2050, \
+                               2055, 2060, 2070,2080,2090,2100,2110],
+                               'time': 'year',
+                               'value': val,
+                               'unit': '%'})
+
+                    scenario.add_par('share_commodity_up', df_up)
+
+                    scenario.commit('Share constraints added')

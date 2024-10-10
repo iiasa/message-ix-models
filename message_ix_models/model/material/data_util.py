@@ -2448,6 +2448,22 @@ def calculate_ratios(df):
 
     return df_with_ratios
 
+def add_bound_on_dummy_lignin(context, scenario):
+
+    years = get_optimization_years(scenario)
+
+    activity_bound_lignin = pd.DataFrame({
+            "node_loc": "R12_GLB",
+            "technology": "DUMMY_lignin_supply",
+            "year_act": years,
+            "mode": "M1",
+            "time": "year",
+            "value": 50 ,
+            "unit": "-",
+    })
+
+    scenario.add_par("bound_activity_up", activity_bound_lignin)
+
 def add_infrastructure_reporting(context, scenario):
 
     # Obtain the necessary variables from the reporting
