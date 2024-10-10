@@ -23,17 +23,16 @@ Code reference
    That earlier PR was superseded by :pull:`188`, but contains the 1.0.0 version of MESSAGEix-Materials, which was used for the first submission of :cite:`unlu_2024_materials`. The model structure is almost identical to the default model that was added by :pull:`188`.
    Compared to :pull:`188` this version differs particularly in the following areas:
 
-   - Older base year calibration of "other industries" using outdated IEA EWEB data
-   - Material demands computed in R through ``rpy2``, instead of Python implementation
-   - Less accurate regional allocation/aggregation of base year demands for cement and steel
-   - No use of :mod:`.tools.costs`
+   - Older base year calibration of "other industries" using outdated IEA EWEB data.
+   - Material demands computed in R through ``rpy2``, instead of Python implementation.
+   - Less accurate regional allocation/aggregation of base year demands for cement and steel.
+   - No use of :mod:`.tools.costs`.
 
 Data preparation
 ----------------
 
 These scripts are used to prepare and read the data into the model.
-They can be turned on and off individually under `DATA_FUNCTIONS` in `__init__.py`.
-For example, the buildings script (`data_buildings.py`) is only used when the buildings model outputs are given explicitly without linking the CHILLED/STURM model through a soft link.
+They can be turned on and off individually under ``DATA_FUNCTIONS`` in :mod:`__init__.py`.
 
 .. automodule:: message_ix_models.model.material.data_aluminum
   :members:
@@ -48,9 +47,6 @@ For example, the buildings script (`data_buildings.py`) is only used when the bu
   :members:
 
 .. automodule:: message_ix_models.model.material.data_power_sector
-  :members:
-
-.. automodule:: message_ix_models.model.material.data_buildings
   :members:
 
 .. automodule:: message_ix_models.model.material.data_generic
@@ -77,8 +73,8 @@ Use ``mix-models materials-ix {SSP} build`` to add the material implementation o
 
 The output scenario name will be baseline_DEFAULT_test. An additional tag ``--tag`` can be used to add an additional suffix to the new scenario name.
 The mode option ``--mode`` has two different inputs 'by_url' (by default) or 'by_copy'.
-The first one uses the provided url to add the materials implementation on top of the scenario from the url.
-This is the default option. The latter is used to create a 2 degree mitigation scenario with materials by copying carbon prices to the scenario that is specified by `--scenario_name`::
+The first one uses the provided ``--url`` to add the materials implementation on top of the scenario from the url.
+This is the default option. The latter is used to create a 2 degree mitigation scenario with materials by copying carbon prices to the scenario that is specified by ``--scenario_name``::
 
     mix-models --url="ixmp://ixmp_dev/MESSAGEix-Materials/scenario_name" material-ix \
      build --tag test --mode by_copy
@@ -91,19 +87,19 @@ This command line only builds the scenario but does not solve it. To solve the s
 The solve command has the ``--add_calibration`` option to add MACRO calibration to a baseline scenario with a valid calibration file specified with ``--macro-file``.
 The ``--add_macro`` option determines whether the scenario should be solved with MESSAGE or MESSAGE-MACRO.
 MESSAGEix-Materials provides one calibration file that is only compatible with scenarios with first model year 2025 and the common model structure of a MESSAGEix-GLOBIOM scenario.
-To first calibrate the scenario and then solve that scenario with MACRO both options should be set to True.
+To first calibrate the scenario and then solve that scenario with MACRO both options should be set to :any`True`.
 
 It is also possible to shift the first model year and solve a clone with shifted years with ``--shift_model_year``.
 If ``--shift_model_year`` is set together with the macro options the model year will be shifted before the MACRO calibration.
 
-All three options are False by default.
+All three options are :any:`False` by default.
 
 
 Reporting
 =========
 
 The reporting generates specific variables related to materials, mainly Production and Final Energy.
-The resulting reporting file is generated under :file:`message_ix_models\\data\\material\\reporting_output` with the name “New_Reporting_MESSAGEix-Materials_scenario_name.xlsx”.
+The resulting reporting file is generated under :file:`message_ix_models/data/material/reporting_output` with the name “New_Reporting_MESSAGEix-Materials_scenario_name.xlsx”.
 More detailed variables related to the whole energy system and emissions are not included in this reporting.
 
 Reporting is executed by the following command::
@@ -158,7 +154,7 @@ The code relies on the following input files, stored in :file:`data/material/`:
   Techno-economic parametrization data for steel sector combined (R12)
 
 :file:`worldsteel_steel_trade.xlsx`
-  Historical data from `worldsteel <https://worldsteel.org/data)>`_
+  Historical data from `worldsteel Association <https://worldsteel.org/data)>`_
 
 :file:`demand_steel.yaml`
   Base year steel demand data
@@ -282,16 +278,15 @@ The code relies on the following input files, stored in :file:`data/material/`:
 
 
 Release notes
------------
+-------------
 
 
-This is the list of changes to pandas between each release. For full details,
-see the `commit logs <https://github.com/pandas-dev/pandas/commits/>`_. For install and
-upgrade instructions, see :ref:`install`.
+This is the list of changes to MESSAGEix-Materials between each release.
 
 
-**Version 3.0**
-
+**Version 1.1.0**
 
 .. toctree::
    :maxdepth: 2
+
+    v.1.1.0

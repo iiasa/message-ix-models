@@ -19,7 +19,7 @@ Next release
   - Reconfigure use and implementation of technology variants/modules to be more agnostic (:pull:`221`).
 - Improve and extend :doc:`/material/index` (:pull:`218`).
 
-  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`)
+  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
 
 v2024.8.6
 =========
