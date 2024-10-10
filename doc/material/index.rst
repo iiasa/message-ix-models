@@ -278,7 +278,7 @@ The code relies on the following input files, stored in :file:`data/material/`:
 
 
 Release notes
--------------
+=============
 
 
 This is the list of changes to MESSAGEix-Materials between each release.
@@ -289,4 +289,4 @@ This is the list of changes to MESSAGEix-Materials between each release.
 .. toctree::
    :maxdepth: 2
 
-    v.1.1.0
+   v1.1.0
