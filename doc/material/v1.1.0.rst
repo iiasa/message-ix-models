@@ -1,16 +1,11 @@
-.. _whatsnew_0100:
-
 Version 1.1.0 (August 27, 2024)
-----------------------------------
+-------------------------------
 
-{{ header }}
-
-
-This is a release from MESSAGEix-Materials 1.0.0 and includes model additions and enhancements.
+This is a release of MESSAGEix-Materials and includes model additions and enhancements.
 There are also a few of changes in the command line interface.
 
 Model changes
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 **Iron & steel sector**
 This release introduces the following low-emission options:
 
@@ -71,7 +66,7 @@ Solving a scenario with a different first model year is possible with e.g.::
      SSP2 solve --shift_model_year=2025
 
 Depreciations
-~~~~~~~~~~~
+~~~~~~~~~~~~~
 The ``material-ix`` commands ``add-buildings-ts``, ``report-2`` and ``create-bare`` have been removed.
 
 New features
