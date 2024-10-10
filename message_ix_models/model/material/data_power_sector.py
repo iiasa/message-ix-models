@@ -1,11 +1,14 @@
 from collections import defaultdict
 
+import message_ix
 import pandas as pd
 
 from message_ix_models.util import package_data_path
 
 
-def read_material_intensities(data_path, inv_cost):
+def read_material_intensities(
+    data_path: str, inv_cost: pd.DataFrame
+) -> dict[str, pd.DataFrame]:
     ####################################################################
     # read data
     ####################################################################
@@ -324,7 +327,7 @@ def read_material_intensities(data_path, inv_cost):
     }
 
 
-def maybe_init_pars(scenario):
+def maybe_init_pars(scenario: message_ix.Scenario) -> None:
     if not scenario.has_par("input_cap_new"):
         scenario.init_par(
             "input_cap_new",
@@ -463,7 +466,9 @@ def maybe_init_pars(scenario):
         )
 
 
-def gen_data_power_sector(scenario, dry_run=False):
+def gen_data_power_sector(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     """Generate data for materials representation of power industry."""
     # Load configuration
 

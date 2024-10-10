@@ -197,7 +197,7 @@ def broadcast_years(
     return df_bc_node
 
 
-def unpivot_input_data(df: pd.DataFrame, par_name: str):
+def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
     """
     Unpivot data that is already contains columns for respective MESSAGEix parameter
     Parameters

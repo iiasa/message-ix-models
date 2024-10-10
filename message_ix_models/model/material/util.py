@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 import message_ix
 import openpyxl as pxl
@@ -182,7 +182,7 @@ def get_all_input_data_dirs() -> list[str]:
     return elements
 
 
-def remove_from_list_if_exists(element, _list: list) -> None:
+def remove_from_list_if_exists(element: Any, _list: list) -> None:
     """
     Utility function removing element from list if it is part of the list
     Parameters
@@ -340,7 +340,7 @@ def get_ssp_from_context(context: Context) -> str:
     return ssp
 
 
-def maybe_remove_water_tec(scenario, results):
+def maybe_remove_water_tec(scenario: message_ix.Scenario, results: dict) -> None:
     if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
         results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
 

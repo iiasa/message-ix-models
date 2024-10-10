@@ -1,5 +1,7 @@
 from collections import defaultdict
+from typing import Dict, Iterable, List
 
+import message_ix
 import pandas as pd
 from message_ix import make_df
 
@@ -26,7 +28,7 @@ from message_ix_models.util import (
 )
 
 
-def gen_mock_demand_steel(scenario):
+def gen_mock_demand_steel(scenario: message_ix.Scenario) -> pd.DataFrame:
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
     nodes.remove("World")
@@ -116,7 +118,9 @@ def gen_mock_demand_steel(scenario):
     return demand2020_steel
 
 
-def gen_data_steel_ts(data_steel_ts, results, t, nodes):
+def gen_data_steel_ts(
+    data_steel_ts: pd.DataFrame, results: Dict[str, list], t: str, nodes: List[str]
+):
     common = dict(
         time="year",
         time_origin="year",
@@ -207,7 +211,15 @@ def gen_data_steel_ts(data_steel_ts, results, t, nodes):
     return
 
 
-def get_data_steel_const(data_steel, results, params, t, yv_ya, nodes, global_region):
+def get_data_steel_const(
+    data_steel: pd.DataFrame,
+    results: Dict[str, list],
+    params: Iterable,
+    t: str,
+    yv_ya: pd.DataFrame,
+    nodes: List[str],
+    global_region: str,
+):
     for par in params:
         # Obtain the parameter names, commodity,level,emission
         split = par.split("|")
@@ -415,7 +427,7 @@ def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
     return
 
 
-def gen_data_steel(scenario, dry_run=False):
+def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     """Generate data for materials representation of steel industry."""
     # Load configuration
     context = read_config()

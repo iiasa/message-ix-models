@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Dict, Iterable, List
 
 import message_ix
 import pandas as pd
@@ -68,7 +69,7 @@ def read_data_aluminum(
     return data_alu, data_alu_rel, data_aluminum_ts
 
 
-def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> dict[str, pd.DataFrame]:
+def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> Dict[str, pd.DataFrame]:
     """
     Generates time variable parameter data for aluminum sector
     Parameters
@@ -223,7 +224,16 @@ def gen_data_alu_rel(data: pd.DataFrame, years: list) -> dict[str, pd.DataFrame]
 
 
 def assign_input_outpt(
-    split, param_name, regions, val, t, rg, glb_reg, common, yv_ya, nodes
+    split,
+    param_name: str,
+    regions: pd.DataFrame,
+    val,
+    t: str,
+    rg: str,
+    glb_reg: str,
+    common: dict,
+    yv_ya: pd.DataFrame,
+    nodes,
 ):
     # Assign commodity and level names
     # Later mod can be added
@@ -314,7 +324,14 @@ def assign_input_outpt(
     return df
 
 
-def gen_data_alu_const(data, config, glb_reg, years, yv_ya, nodes):
+def gen_data_alu_const(
+    data: pd.DataFrame,
+    config: dict,
+    glb_reg: str,
+    years: Iterable,
+    yv_ya: pd.DataFrame,
+    nodes: List[str],
+):
     results = defaultdict(list)
     for t in config["technology"]["add"]:
         t = t.id
@@ -527,7 +544,7 @@ def gen_mock_demand_aluminum(scenario: message_ix.Scenario) -> pd.DataFrame:
     return demand2020_al
 
 
-def gen_data_alu_trade(scenario: message_ix.Scenario):
+def gen_data_alu_trade(scenario: message_ix.Scenario) -> Dict[str, pd.DataFrame]:
     results = defaultdict(list)
 
     data_trade = pd.read_csv(
