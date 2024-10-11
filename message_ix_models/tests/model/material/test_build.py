@@ -31,6 +31,9 @@ def test_make_spec(regions_arg, regions_exp, material):
     "regions, years, relations, solve",
     [
         ("R12", "B", "B", False),
+        pytest.param(
+            "R11", "B", "B", False, marks=pytest.mark.xfail(raises=NotImplementedError)
+        ),
     ],
 )
 def test_build_bare_res(
