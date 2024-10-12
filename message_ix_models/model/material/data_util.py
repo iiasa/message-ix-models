@@ -20,7 +20,10 @@ from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
     package_data_path,
+    same_node,
 )
+
+from .util import read_yaml_file
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -1890,3 +1893,95 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
     scenario.commit("increase gro up for loil_i/gas_i/heat_i CHN 2020")
 
     return
+
+
+def gen_plastics_emission_factors(
+    info, species: Literal["methanol", "HVCs"]
+) -> pd.DataFrame:
+    """Generate "CO2_Emission" relation parameter that
+    represents stored carbon in produced plastics.
+    The calculation considers:
+    * carbon content of feedstocks,
+    * the share that is converted to plastics
+    * the end-of-life treatment (i.e. incineration, landfill, etc.)
+
+    Values are negative since they need to be deducted
+    from top-down accounting, which assumes that all extracted
+    carbonaceous resources are released as carbon emissions.
+    (Which is not correct for carbon used in long-lived products)
+
+    Parameters
+    ----------
+    species:
+        feedstock species to generate relation for
+    info: ScenarioInfo
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+
+    if species != "HVCs":
+        raise NotImplementedError
+
+    tec_species_map = {"methanol": NotImplemented, "HVCs": "production_HVC"}
+
+    # TODO: do same calculation for methanol not used for MTO but other plastics
+    carbon_pars = read_yaml_file(
+        package_data_path(
+            "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
+        )
+    )
+    # TODO: move EOL parameters to a different file to disassociate from methanol model
+    end_of_life_pars = pd.read_excel(
+        package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+        sheet_name="Sheet1",
+        dtype=object,
+    )
+    seq_carbon = {
+        k: (v["carbon mass"] / v["molar mass"]) * v["plastics use"]
+        for k, v in carbon_pars[species].items()
+    }
+    end_of_life_pars = end_of_life_pars.set_index("par").to_dict()["value"]
+    common = {
+        "unit": "Mt C",
+        "relation": "CO2_Emission",
+        "mode": seq_carbon.keys(),
+        "technology": tec_species_map[species],
+    }
+    co2_emi_rel = make_df("relation_activity", **common).drop(columns="value")
+    co2_emi_rel = co2_emi_rel.merge(
+        pd.Series(seq_carbon, name="value").to_frame().reset_index(),
+        left_on="mode",
+        right_on="index",
+    ).drop(columns="index")
+
+    years = info.Y  # [2020, 2025]
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, year_act=years)
+    co2_emi_rel["year_rel"] = co2_emi_rel["year_act"]
+
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(
+        same_node
+    )
+
+    def apply_eol_factor(row, pars):
+        if row["year_act"] < pars["incin_trend_end"]:
+            share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
+        else:
+            share = 0.5
+        return row["value"] * (1 - share)
+
+    co2_emi_rel["value"] = co2_emi_rel.apply(
+        lambda x: apply_eol_factor(x, end_of_life_pars), axis=1
+    ).mul(-1)
+    return co2_emi_rel
+
+
+if __name__ == "__main__":
+    from ixmp import Platform
+    from message_ix import Scenario
+
+    mp = Platform("ixmp_dev")
+    scen = Scenario(mp, "MESSAGEix-Materials", "test_c901_refactoring")
+    s_info = ScenarioInfo(scen)
+    gen_plastics_emission_factors(s_info, "methanol")
