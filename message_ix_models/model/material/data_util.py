@@ -17,7 +17,14 @@ from message_ix_models.model.material.util import (
 from message_ix_models.model.structure import get_region_codes
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
-from message_ix_models.util import package_data_path
+from message_ix_models.util import (
+    broadcast,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
+)
+
+from .util import read_yaml_file
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -738,6 +745,7 @@ def modify_demand_and_hist_activity_debug(
 def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
     # TODO: instead of removing bounds, bounds should be updated with IEA data
     scen.check_out()
+    th_tecs_to_keep = ["solar_i", "biomass_i"]
     for substr in ["up", "lo"]:
         df = scen.par(f"bound_activity_{substr}")
         scen.remove_par(
@@ -746,7 +754,11 @@ def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
         )
         scen.remove_par(
             f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_i")) & (df["year_act"] == 2020)],
+            df[
+                (df["technology"].str.endswith("_i"))
+                & (df["year_act"] == 2020)
+                & ~(df["technology"].isin(th_tecs_to_keep))
+            ],
         )
         scen.remove_par(
             f"bound_activity_{substr}",
@@ -807,7 +819,7 @@ def add_new_ind_hist_act(scen: message_ix.Scenario, years: list, iea_data_path) 
 
 def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
     # RFE: refactor to use external mapping file (analogue to calc_hist_activity())
-    i_spec_material_flows = ["NONMET", "CHEMICAL", "NONFERR"]
+    i_spec_material_flows = ["NONMET", "NONFERR"]  # "CHEMICAL"
     i_therm_material_flows = ["NONMET", "CHEMICAL", "IRONSTL"]
     i_flow = ["TOTIND"]
     i_spec_prods = ["ELECTR", "NONBIODIES", "BIOGASOL"]
@@ -863,6 +875,13 @@ def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
     # by Materials module currently
     df_i_therm_materials.loc[
         df_i_therm_materials.index.get_level_values(1) == "CHEMICAL", "Value"
+    ] *= 0.67
+
+    # only covering cement at the moment
+    # quick fix assuming 67% of NONMET is used for cement in each region
+    # needs regional differentiation once data is collected
+    df_i_therm_materials.loc[
+        df_i_therm_materials.index.get_level_values(1) == "NONMET", "Value"
     ] *= 0.67
 
     df_i_therm_materials = df_i_therm_materials.groupby("REGION").sum(numeric_only=True)
@@ -2236,3 +2255,388 @@ def calculate_ini_new_cap(
     return make_df("initial_new_capacity_up", **tmp)
 
     del scalar, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above
+
+
+def get_thermal_industry_emi_coefficients(scen: message_ix.Scenario) -> pd.DataFrame:
+    """
+    Pulls existing parametrization for non-CO2 emission
+    coefficients of given Scenario instance
+
+    Pulls MESSAGEix-GLOBIOM emission coefficients from "relation_activity"
+    and normalizes them to fuel inputs
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario instance to pull emission coefficients from
+    Returns
+    -------
+    pd.DataFrame
+    """
+    ind_th_tecs = ["biomass_i", "coal_i", "eth_i", "foil_i", "gas_i", "loil_i"]
+    relations = [
+        "BCA_Emission",
+        "CH4_Emission",
+        "CO_Emission",
+        "N2O_Emission",
+        "NH3_Emission",
+        "NOx_Emission",
+        "OCA_Emission",
+        "SO2_Emission",
+        "VOC_Emission",
+    ]
+    first_year = 2020
+    common_index = ["node_loc", "year_act", "technology"]
+    df_rel = scen.par(
+        "relation_activity", filters={"technology": ind_th_tecs, "relation": relations}
+    )
+    df_rel = df_rel[df_rel["year_act"].ge(first_year)]
+    df_rel = df_rel.set_index(common_index)
+
+    df_in = scen.par("input", filters={"technology": ind_th_tecs})
+    df_in = df_in[df_in["year_act"].ge(first_year)]
+    df_in = df_in.set_index(common_index)
+
+    df_joined = df_rel.join(
+        df_in[["value", "commodity"]], rsuffix="_in"
+    ).drop_duplicates()
+    df_joined["emi_factor"] = df_joined["value"] / df_joined["value_in"]
+    return df_joined
+
+
+def get_furnace_inputs(scen: message_ix.Scenario, first_year) -> pd.DataFrame:
+    """
+    Pulls existing parametrization for input coefficients
+     of given Scenario instance and returns only for technologies
+     with "furnace" in the name
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario instance to pull input parameter from
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    furn_tecs = "furnace"
+    df_furn = scen.par("input")
+    df_furn = df_furn[
+        (df_furn["technology"].str.contains(furn_tecs))
+        & (df_furn["year_act"].ge(first_year))
+    ]
+    df_furn = df_furn.set_index(["node_loc", "year_act", "commodity", "technology"])
+    return df_furn
+
+
+def calculate_furnace_non_co2_emi_coeff(
+    df_furn: pd.DataFrame, df_emi: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Joins input and emission coefficient DataFrames on
+    region, year and commodity to derive correct
+    non-CO2 emission factor parameter for industry furnaces
+
+    Parameters
+    ----------
+    df_furn: pd.DataFrame
+        DataFrame containing input parametrization of furnaces
+    df_emi: pd.DataFrame
+        DataFrame containing input normalized non-CO2 emission coefficients
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    df_final = (
+        pd.DataFrame(
+            df_emi.reset_index().set_index(["node_loc", "year_act", "commodity"])[
+                ["relation", "emi_factor"]
+            ]
+        )
+        .join(
+            df_furn["value"]
+            .reset_index()
+            .drop_duplicates()
+            .set_index(["node_loc", "year_act", "commodity", "technology"])
+        )
+        .reset_index()
+        .drop_duplicates()
+    )
+    df_final["value"] = df_final["value"] * df_final["emi_factor"]
+    df_final_new = (
+        make_df("relation_activity", **df_final)
+        .pipe(same_node)
+        .pipe(broadcast, mode=["high_temp", "low_temp"])
+    )
+    df_final_new["year_rel"] = df_final_new["year_act"]
+    df_final_new["unit"] = "???"
+    return df_final_new
+
+
+def calibrate_t_d_tecs(scenario):
+    # ------------------------------------------------------
+    # Revise t_d historical_activity and 2020 activity bounds
+    # ------------------------------------------------------
+
+    # The activity of the t_d technologies is adjusted to fit
+    # with the historical_activity/bda_lo calibration for all
+    # technologies which take from the output commodity/level.
+
+    tecs = [t for t in scenario.set("technology").tolist() if t.find("t_d") >= 0]
+    td = (
+        scenario.par("output", filters={"technology": tecs})[
+            ["node_loc", "technology", "commodity", "level"]
+        ]
+        .drop_duplicates()
+        .reset_index()
+        .drop("index", axis=1)
+    )
+    update_df = pd.DataFrame()
+    for i in td.index:
+        try:
+            row = td.iloc[i]
+        except:
+            here = 1
+        # Retrieve input of techologies which take from the commodity/level.
+        inp = scenario.par(
+            "input",
+            filters={
+                "node_loc": row.node_loc,
+                "commodity": row.commodity,
+                "level": row.level,
+            },
+        )
+
+        # Retrieve historical and calibrated activity as bound_activity_lo
+        # and combine the two.
+        histact = scenario.par(
+            "historical_activity",
+            filters={
+                "node_loc": row.node_loc,
+                "technology": inp.technology.unique().tolist(),
+            },
+        )
+        act = scenario.par(
+            "bound_activity_lo",
+            filters={
+                "node_loc": row.node_loc,
+                "technology": inp.technology.unique().tolist(),
+                "year_act": 2020,
+            },
+        )
+
+        act = (
+            pd.concat([histact, act])
+            .sort_values(by=["node_loc", "technology", "year_act"])
+            .set_index(["node_loc", "technology", "year_act"])
+        )
+
+        # Multiply the activity data with the input efficiencies to derive total energy requirements
+        act["eff"] = (
+            inp.loc[
+                (inp.year_vtg == inp.year_act)
+                & (inp.node_loc == row.node_loc)
+                & (inp.technology.isin(act.reset_index().technology.unique().tolist()))
+                & (inp.year_act.isin(act.reset_index().year_act.unique().tolist()))
+            ]
+            .set_index(["node_loc", "technology", "year_act"])
+            .value
+        )
+
+        # Backfill any missing values
+        act["eff"] = act["eff"].bfill()
+
+        act["fe"] = act["eff"] * act["value"]
+
+        # Aggregate the final energy data and assign the t_d technology name
+        df = act.copy()
+        df = (
+            df.reset_index()
+            .groupby(["node_loc", "year_act"])
+            .sum(numeric_only=True)[["fe"]]
+            .rename(columns={"fe": "value"})
+            .assign(unit="GWa", technology=row.technology, mode="M1", time="year")
+            .reset_index()
+        )
+
+        update_df = pd.concat([update_df, df])
+
+    update_df = update_df.reset_index().drop("index", axis=1)
+
+    # Make a manual adjusment to "gas_t_d_ch4".
+    # Because is has the same output as "gas_t_d", it will also get the
+    # the same historical_acitivty, therefore it is set to zero.
+    update_df.loc[update_df.technology == "gas_t_d_ch4", "value"] = 0
+
+    # Add data as historical_activity and bound_activity_lo/up (*1.005)
+    with scenario.transact("Calibrate t_d technology"):
+        hist_df = update_df.copy()
+        hist_df = hist_df.loc[hist_df.year_act < scenario.firstmodelyear]
+        scenario.add_par("historical_activity", hist_df)
+
+        scenario.add_par("bound_activity_lo", update_df)
+        update_df.value *= 1.005
+        scenario.add_par("bound_activity_up", update_df)
+
+
+def maybe_add_water_tecs(scenario):
+    if "water_supply" not in list(scenario.set("level")):
+        scenario.check_out()
+        # add missing water tecs
+        scenario.add_set("technology", "extract__freshwater_supply")
+        scenario.add_set("level", "water_supply")
+        scenario.add_set("commodity", "freshwater_supply")
+
+        water_dict = pd.read_excel(
+            package_data_path("material", "other", "water_tec_pars.xlsx"),
+            sheet_name=None,
+        )
+        for par in water_dict.keys():
+            scenario.add_par(par, water_dict[par])
+        scenario.commit("add missing water tecs")
+
+
+def calibrate_for_SSPs(scenario):
+    add_elec_i_ini_act(scenario)
+
+    # prohibit electric clinker kilns in first decade
+    common = {
+        "technology": "furnace_elec_cement",
+        "mode": ["high_temp", "low_temp"],
+        "time": "year",
+        "value": 0,
+        "unit": "GWa",
+        "year_act": [2020, 2025],
+    }
+    s_info = ScenarioInfo(scenario)
+    scenario.check_out()
+    scenario.add_par(
+        "bound_activity_up",
+        make_df("bound_activity_up", **common).pipe(
+            broadcast, node_loc=nodes_ex_world(s_info.N)
+        ),
+    )
+    # enforce FSU gas use in clinker kilns in 2020
+    common = {
+        "technology": "furnace_gas_cement",
+        "mode": "high_temp",
+        "time": "year",
+        "value": 6.5,
+        "unit": "GWa",
+        "year_act": 2020,
+        "node_loc": "R12_FSU",
+    }
+    scenario.add_par("bound_activity_lo", make_df("bound_activity_up", **common))
+    scenario.commit("add bound for thermal electr use in cement")
+
+    # relax 2020 growth constraint for RCPA to avoid infeasibility
+    scenario.check_out()
+    df = scenario.par(
+        "growth_activity_up", filters={"node_loc": "R12_RCPA", "year_act": 2020}
+    )
+    df = df[df["technology"].str.endswith("_i")]
+    df["value"] = 5
+    scenario.add_par("growth_activity_up", df)
+    scenario.commit("remove growth constraints in RCPA industry")
+
+    for bound in ["up", "lo"]:
+        df = scenario.par(f"bound_activity_{bound}", filters={"year_act": 2020})
+        scenario.check_out()
+        scenario.remove_par(
+            f"bound_activity_{bound}", df[df["technology"].str.contains("t_d")]
+        )
+        scenario.commit("remove t_d 2020 bounds")
+    return
+
+
+def gen_plastics_emission_factors(
+    info, species: Literal["methanol", "HVCs"]
+) -> pd.DataFrame:
+    """Generate "CO2_Emission" relation parameter that
+    represents stored carbon in produced plastics.
+    The calculation considers:
+    * carbon content of feedstocks,
+    * the share that is converted to plastics
+    * the end-of-life treatment (i.e. incineration, landfill, etc.)
+
+    Values are negative since they need to be deducted
+    from top-down accounting, which assumes that all extracted
+    carbonaceous resources are released as carbon emissions.
+    (Which is not correct for carbon used in long-lived products)
+
+    Parameters
+    ----------
+    species:
+        feedstock species to generate relation for
+    info: ScenarioInfo
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+
+    if species != "HVCs":
+        raise NotImplementedError
+
+    tec_species_map = {"methanol": NotImplemented, "HVCs": "production_HVC"}
+
+    # TODO: do same calculation for methanol not used for MTO but other plastics
+    carbon_pars = read_yaml_file(
+        package_data_path(
+            "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
+        )
+    )
+    # TODO: move EOL parameters to a different file to disassociate from methanol model
+    end_of_life_pars = pd.read_excel(
+        package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+        sheet_name="Sheet1",
+        dtype=object,
+    )
+    seq_carbon = {
+        k: (v["carbon mass"] / v["molar mass"]) * v["plastics use"]
+        for k, v in carbon_pars[species].items()
+    }
+    end_of_life_pars = end_of_life_pars.set_index("par").to_dict()["value"]
+    common = {
+        "unit": "Mt C",
+        "relation": "CO2_Emission",
+        "mode": seq_carbon.keys(),
+        "technology": tec_species_map[species],
+    }
+    co2_emi_rel = make_df("relation_activity", **common).drop(columns="value")
+    co2_emi_rel = co2_emi_rel.merge(
+        pd.Series(seq_carbon, name="value").to_frame().reset_index(),
+        left_on="mode",
+        right_on="index",
+    ).drop(columns="index")
+
+    years = info.Y  # [2020, 2025]
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, year_act=years)
+    co2_emi_rel["year_rel"] = co2_emi_rel["year_act"]
+
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(
+        same_node
+    )
+
+    def apply_eol_factor(row, pars):
+        if row["year_act"] < pars["incin_trend_end"]:
+            share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
+        else:
+            share = 0.5
+        return row["value"] * (1 - share)
+
+    co2_emi_rel["value"] = co2_emi_rel.apply(
+        lambda x: apply_eol_factor(x, end_of_life_pars), axis=1
+    ).mul(-1)
+    return co2_emi_rel
+
+
+if __name__ == "__main__":
+    from ixmp import Platform
+    from message_ix import Scenario
+
+    mp = Platform("ixmp_dev")
+    scen = Scenario(mp, "MESSAGEix-Materials", "test_c901_refactoring")
+    s_info = ScenarioInfo(scen)
+    gen_plastics_emission_factors(s_info, "methanol")

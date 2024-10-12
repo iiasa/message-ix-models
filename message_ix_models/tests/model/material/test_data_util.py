@@ -1,6 +1,12 @@
 import pandas as pd
+import pytest
+from message_ix.util import make_df
 
-from message_ix_models.model.material.data_util import map_iea_db_to_msg_regs
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.data_util import (
+    gen_plastics_emission_factors,
+    map_iea_db_to_msg_regs,
+)
 
 DATA = [
     ["ALB", "R12_EEU"],
@@ -120,3 +126,22 @@ def test_map_iea_db_to_msg_regs() -> None:
     # - Add a column with True if these two are equal.
     # - Assert all are equal.
     assert df_out.merge(df, on="COUNTRY").eval("Z = REGION_x == REGION_y").Z.all()
+
+
+@pytest.mark.parametrize(
+    "species",
+    [
+        "HVCs",
+        pytest.param("methanol", marks=pytest.mark.xfail(raises=NotImplementedError)),
+    ],
+)
+def test_gen_plastics_emission_factors(species):
+    info = ScenarioInfo()
+    info.set["node"] = ["node0", "node1"]
+    info.set["year"] = [2020, 2025]
+    out = gen_plastics_emission_factors(info, "HVCs")
+
+    assert not out.isna().any(axis=None)  # Completely full
+
+    # Data have the expected columns
+    assert sorted(make_df("relation_activity").columns) == sorted(out.columns)
