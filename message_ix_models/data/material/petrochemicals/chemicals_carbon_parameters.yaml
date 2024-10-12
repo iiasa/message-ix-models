@@ -1,0 +1,27 @@
+# this file provides data about the primary chemicals
+# needed to calculate emission factors and embodied carbon
+
+# "plastic use" describes the estimated downstream use in long-lived products (= plastics)
+# estimate is based on material flow data from Levi & Cullen chemicals MFA study
+# calculations are documented in "HVC plastic shares.xlsx" (currently stored on maczek OneDrive)
+# TODO: insert proper literature reference to paper and store xlsx file on a central repo
+
+HVCs:
+  ethylene:
+    molar mass: 28
+    carbon mass: 24
+    plastics use: 0.879
+  propylene:
+    molar mass: 42
+    carbon mass: 36
+    plastics use: 0.85
+  BTX: # values are weighted averages of benzene, toluene and xylene isomers
+    molar mass: 92
+    carbon mass: 84
+    plastics use: 0.855
+
+methanol:
+  M1:
+    molar mass: 32
+    carbon mass: 12
+    plastics use: 0.273
