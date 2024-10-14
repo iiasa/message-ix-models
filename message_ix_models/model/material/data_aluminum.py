@@ -548,7 +548,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> Dict[str, pd.DataFrame]
     results = defaultdict(list)
 
     data_trade = pd.read_csv(
-        package_data_path("material", "aluminum", "aluminum_trade_data.csv")
+        package_data_path("material", "aluminum", "aluminum_trade.csv")
     )
 
     data_trade.drop_duplicates()
