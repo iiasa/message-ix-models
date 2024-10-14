@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List
+from typing import List, Set
 
 import message_ix
 import pandas as pd
@@ -166,7 +166,7 @@ def gen_mock_demand_petro(
 
 
 def gen_data_petro_ts(
-    data_petro_ts: pd.DataFrame, results: dict[list], tec_ts, nodes
+    data_petro_ts: pd.DataFrame, results: dict[list], tec_ts: Set[str], nodes: List[str]
 ) -> None:
     for t in tec_ts:
         common = dict(
@@ -234,7 +234,7 @@ def assign_input_outpt(
     split: str,
     param_name: str,
     regions: pd.DataFrame,
-    val,
+    val: float | int,
     t: str,
     rg: str,
     global_region: str,
@@ -480,23 +480,7 @@ def gen_data_petro_chemicals(
     )
     results["demand"].append(demand_hvc)
 
-    # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
-    # value=demand_e.value, unit='t',year=demand_e.year, time='year', \
-    # node=demand_e.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_e)
-    #
-    # df_p = make_df(paramname, level='final_material', commodity="propylene", \
-    # value=demand_p.value, unit='t',year=demand_p.year, time='year', \
-    # node=demand_p.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_p)
-    #
-    # df_BTX = make_df(paramname, level='final_material', commodity="BTX", \
-    # value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
-    # node=demand_BTX.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_BTX)
-
     # Special treatment for time-varying params
-
     tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
 
     gen_data_petro_ts(data_petro_ts, results, tec_ts, nodes)
