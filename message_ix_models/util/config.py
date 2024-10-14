@@ -1,6 +1,8 @@
 import logging
 import os
-from dataclasses import dataclass, field, fields, is_dataclass, replace
+import pickle
+from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
+from hashlib import blake2s
 from pathlib import Path
 from typing import Any, Hashable, List, Mapping, MutableMapping, Optional, Sequence, Set
 
@@ -30,14 +32,16 @@ def _local_data_factory():
 class ConfigHelper:
     """Mix-in for :class:`dataclass`-based configuration classes.
 
-    This provides 3 methods—:meth:`read_file`, :meth:`replace`, and :meth:`from_dict`—
-    that help to use :class:`dataclass` classes for handling :mod:`message_ix_models`
+    This provides methods :meth:`read_file`, :meth:`replace`, and :meth:`from_dict` that
+    help to use :class:`dataclass` classes for handling :mod:`message_ix_models`
     configuration.
 
     All 3 methods take advantage of name manipulations: the characters "-" and " " are
     replaced with underscores ("_"). This allows to write the names of attributes in
     legible ways—e.g. "attribute name" or “attribute-name” instead of "attribute_name"—
     in configuration files and/or code.
+
+    It also add :meth:`hexdigest`.
     """
 
     @classmethod
@@ -130,6 +134,26 @@ class ConfigHelper:
     def from_dict(cls, data: Mapping):
         """Construct an instance from `data` with name manipulation."""
         return cls(**{k: v for k, v in cls._munge_dict(data, "raise", "mapping key")})
+
+    def hexdigest(self, length: int = -1) -> str:
+        """Return a hex digest that is unique for distinct settings on the instance.
+
+        Returns
+        -------
+        str
+            If `length` is non-zero, a string of this length; otherwise a 32-character
+            string from :meth:`.blake2s.hexdigest`.
+        """
+        # - Dump the dataclass instance to nested, sorted tuples. This is used instead
+        #   of dataclass.astuple() which allows e.g. units to pass as a (possibly
+        #   unsorted) dict.
+        # - Pickle this collection.
+        # - Hash.
+        h = blake2s(
+            pickle.dumps(asdict(self, dict_factory=lambda kv: tuple(sorted(kv))))
+        )
+        # Return the whole digest or a part
+        return h.hexdigest()[0 : length if length > 0 else h.digest_size]
 
 
 @dataclass
