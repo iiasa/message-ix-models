@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field, fields
 
 from message_ix_models.model.structure import codelists
+from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.context import _ALIAS
 
 
 @dataclass
-class Config:
+class Config(ConfigHelper):
     """Settings and valid values for :mod:`message_ix_models.model` and submodules.
 
     For backwards compatibility, it is possible to access these on a :class:`Context`
