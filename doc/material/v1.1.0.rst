@@ -8,6 +8,7 @@ Model changes
 ~~~~~~~~~~~~~
 
 **Iron & steel sector**
+
 This release introduces the following low-emission options:
 
 - Direct reduction of iron with hydrogen
@@ -66,7 +67,7 @@ Solving a scenario with a different first model year is possible with e.g.::
    mix-models --url="ixmp://ixmp_dev/MESSAGEix-Materials/scenario_name" material-ix \
      SSP2 solve --shift_model_year=2025
 
-Depreciations
+Deprecations
 ~~~~~~~~~~~~~
 The ``material-ix`` commands ``add-buildings-ts``, ``report-2`` and ``create-bare`` have been removed.
 
