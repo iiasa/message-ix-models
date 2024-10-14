@@ -46,7 +46,7 @@ def gen_all_NH3_fert(
 
 
 def broadcast_years(
-    df_new: pd.DataFrame, max_lt: int, act_years, vtg_years
+    df_new: pd.DataFrame, max_lt: int, act_years: pd.Series, vtg_years: pd.Series
 ) -> pd.DataFrame:
     if "year_act" in df_new.columns:
         df_new = df_new.pipe(same_node).pipe(broadcast, year_act=act_years)

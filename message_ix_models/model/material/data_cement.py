@@ -174,7 +174,6 @@ def gen_data_cement(
     context.datafile = "Global_steel_cement_MESSAGE.xlsx"
 
     # Techno-economic assumptions
-    # TEMP: now add cement sector as well
     data_cement = read_sector_data(scenario, "cement", "Global_cement_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
     data_cement_ts = read_timeseries(scenario, "cement", "Global_cement_MESSAGE.xlsx")
@@ -183,7 +182,7 @@ def gen_data_cement(
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    # For each technology there are differnet input and output combinations
+    # For each technology there are different input and output combinations
     # Iterate over technologies
 
     yv_ya = s_info.yv_ya
@@ -191,7 +190,6 @@ def gen_data_cement(
     # Do not parametrize GLB region the same way
     nodes = nodes_ex_world(s_info.N)
 
-    # for t in s_info.set['technology']:
     for t in config["technology"]["add"]:
         t = t.id
         params = data_cement.loc[(data_cement["technology"] == t), "parameter"].unique()

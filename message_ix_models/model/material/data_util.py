@@ -2159,7 +2159,7 @@ def gen_te_projections(
 
 
 def get_ssp_soc_eco_data(
-    context: "Context", model: str, measure: str, tec
+    context: "Context", model: str, measure: str, tec: str
 ) -> pd.DataFrame:
     """
     Function to update scenario GDP and POP timeseries to SSP 3.0

@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import pandas as pd
-from message_ix import make_df
+from message_ix import Scenario, make_df
 
 import message_ix_models.util
 from message_ix_models import ScenarioInfo
@@ -40,7 +40,9 @@ def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
     return data_generic, data_generic_ts
 
 
-def gen_data_generic(scenario: Scenario, dry_run: bool = False) -> dict[str, pd.DataFrame]:
+def gen_data_generic(
+    scenario: Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     # Load configuration
 
     config = read_config()["material"]["generic"]
