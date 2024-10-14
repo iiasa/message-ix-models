@@ -15,7 +15,7 @@ from .data_util import read_timeseries
 from .util import read_config
 
 
-def read_data_generic(scenario) -> (pd.DataFrame, pd.DataFrame):
+def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
     """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
 
     # Read the file
@@ -40,7 +40,7 @@ def read_data_generic(scenario) -> (pd.DataFrame, pd.DataFrame):
     return data_generic, data_generic_ts
 
 
-def gen_data_generic(scenario, dry_run=False) -> dict[str, pd.DataFrame]:
+def gen_data_generic(scenario: Scenario, dry_run: bool = False) -> dict[str, pd.DataFrame]:
     # Load configuration
 
     config = read_config()["material"]["generic"]
