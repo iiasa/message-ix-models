@@ -215,14 +215,16 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     """
     from message_ix_models.model import bare
 
-    name = bare.name(context)
+    # Model name: standard "MESSAGEix-GLOBIOM R12 YB" plus a suffix
+    model_name = bare.name(context, unique=True)
+
     mp = context.get_platform()
 
     try:
-        base = message_ix.Scenario(mp, name, "baseline")
+        base = message_ix.Scenario(mp, model_name, "baseline")
     except ValueError:
-        log.info(f"Create '{name}/baseline' for testing")
-        context.scenario_info.update(model=name, scenario="baseline")
+        log.info(f"Create '{model_name}/baseline' for testing")
+        context.scenario_info.update(model=model_name, scenario="baseline")
         base = bare.create_res(context)
 
     if solved and not base.has_solution():
@@ -235,7 +237,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
         # Generate a new scenario name with a random part
         new_name = f"baseline {b32hexencode(randbytes(3)).decode().rstrip('=').lower()}"
 
-    log.info(f"Clone to '{name}/{new_name}'")
+    log.info(f"Clone to '{model_name}/{new_name}'")
     return base.clone(scenario=new_name, keep_solution=solved)
 
 
