@@ -6,6 +6,7 @@ There are also a few of changes in the command line interface.
 
 Model changes
 ~~~~~~~~~~~~~
+
 **Iron & steel sector**
 This release introduces the following low-emission options:
 

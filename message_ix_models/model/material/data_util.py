@@ -2243,11 +2243,8 @@ def calculate_ini_new_cap(
 
     SCALER = 0.005
 
-    if material == "cement":
-        CLINKER_RATIO = 0.72
-        df_demand["value"] *= CLINKER_RATIO * SCALER
-    else:
-        df_demand["value"] *= SCALER
+    CLINKER_RATIO = 0.72 if material == "cement" else 1
+    df_demand["value"] *= CLINKER_RATIO * SCALER
 
     df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
     df_demand["technology"] = technology
