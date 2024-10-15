@@ -150,21 +150,28 @@ def get_spec(context) -> Spec:
     return Spec(add=add)
 
 
-def name(context):
+def name(context, *, unique: bool = False) -> str:
     """Generate a candidate name for a model given `context`.
 
     The name has a form like::
 
         MESSAGEix-GLOBIOM R99 YA +D
+        MESSAGEix-GLOBIOM R99 YA a1b2c
 
     where:
 
     - "R99" is the node list/regional aggregation.
     - "YA" indicates the year codelist (:doc:`/pkg-data/year`).
-    - "+D" appears if :attr:`.Config.res_with_dummies` is true.
-
+    - "+D" appears if `unique` is :any:`False` and :attr:`.Config.res_with_dummies` is
+      :any:`True`.
+    - A hexidecimal hash digest like "12b2c" appears if `unique` is :any:`True`. This
+      value is unique for every possible combination of settings on
+      :class:`.model.Config`; see :meth:`.Config.hexdigest`.
     """
     cfg = context.model
-    return f"MESSAGEix-GLOBIOM {cfg.regions} Y{cfg.years}" + (
-        " +D" if cfg.res_with_dummies else ""
-    )
+    result = f"MESSAGEix-GLOBIOM {cfg.regions} Y{cfg.years}"
+    if not unique:
+        result += " +D" if cfg.res_with_dummies else ""
+    else:
+        result += " " + cfg.hexdigest(5)
+    return result

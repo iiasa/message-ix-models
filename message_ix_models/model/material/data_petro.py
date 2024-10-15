@@ -1,5 +1,7 @@
 from collections import defaultdict
+from typing import List, Set
 
+import message_ix
 import pandas as pd
 from message_ix import make_df
 
@@ -31,7 +33,7 @@ iea_elasticity_map = {
 }
 
 
-def read_data_petrochemicals(scenario):
+def read_data_petrochemicals(scenario: message_ix.Scenario) -> pd.DataFrame:
     """Read and clean data from :file:`petrochemicals_techno_economic.xlsx`."""
 
     # Ensure config is loaded, get the context
@@ -54,7 +56,11 @@ def read_data_petrochemicals(scenario):
     return data_petro
 
 
-def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
+def gen_mock_demand_petro(
+    scenario: message_ix.Scenario,
+    gdp_elasticity_2020: float,
+    gdp_elasticity_2030: float,
+) -> pd.DataFrame:
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y
     fy = scenario.firstmodelyear
@@ -159,7 +165,9 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     )
 
 
-def gen_data_petro_ts(data_petro_ts, results, tec_ts, nodes):
+def gen_data_petro_ts(
+    data_petro_ts: pd.DataFrame, results: dict[list], tec_ts: Set[str], nodes: List[str]
+) -> None:
     for t in tec_ts:
         common = dict(
             time="year",
@@ -223,8 +231,16 @@ def gen_data_petro_ts(data_petro_ts, results, tec_ts, nodes):
 
 
 def assign_input_outpt(
-    split, param_name, regions, val, t, rg, global_region, common, nodes
-):
+    split: str,
+    param_name: str,
+    regions: pd.DataFrame,
+    val: float | int,
+    t: str,
+    rg: str,
+    global_region: str,
+    common: dict,
+    nodes: List[str],
+) -> pd.DataFrame:
     com = split[1]
     lev = split[2]
     mod = split[3]
@@ -279,7 +295,7 @@ def assign_input_outpt(
     return df
 
 
-def broadcast_to_regions(df, global_region, nodes):
+def broadcast_to_regions(df: pd.DataFrame, global_region: str, nodes: List[str]):
     if "node_loc" in df.columns:
         if (
             len(set(df["node_loc"])) == 1
@@ -291,7 +307,9 @@ def broadcast_to_regions(df, global_region, nodes):
     return df
 
 
-def gen_data_petro_chemicals(scenario, dry_run=False):
+def gen_data_petro_chemicals(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     # Load configuration
     context = read_config()
     config = context["material"]["petro_chemicals"]
@@ -316,6 +334,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
 
     for t in config["technology"]["add"]:
+        t = t.id
         # years = s_info.Y
         params = data_petro.loc[(data_petro["technology"] == t), "parameter"].unique()
 
@@ -461,23 +480,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     )
     results["demand"].append(demand_hvc)
 
-    # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
-    # value=demand_e.value, unit='t',year=demand_e.year, time='year', \
-    # node=demand_e.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_e)
-    #
-    # df_p = make_df(paramname, level='final_material', commodity="propylene", \
-    # value=demand_p.value, unit='t',year=demand_p.year, time='year', \
-    # node=demand_p.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_p)
-    #
-    # df_BTX = make_df(paramname, level='final_material', commodity="BTX", \
-    # value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
-    # node=demand_BTX.node)#.pipe(broadcast, node=nodes)
-    # results["demand"].append(df_BTX)
-
     # Special treatment for time-varying params
-
     tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
 
     gen_data_petro_ts(data_petro_ts, results, tec_ts, nodes)

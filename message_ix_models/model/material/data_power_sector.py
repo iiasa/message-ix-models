@@ -1,11 +1,14 @@
 from collections import defaultdict
 
+import message_ix
 import pandas as pd
 
 from message_ix_models.util import package_data_path
 
 
-def read_material_intensities(data_path, inv_cost):
+def read_material_intensities(
+    data_path: str, inv_cost: pd.DataFrame
+) -> dict[str, pd.DataFrame]:
     ####################################################################
     # read data
     ####################################################################
@@ -13,6 +16,69 @@ def read_material_intensities(data_path, inv_cost):
     # read LCA data from ADVANCE LCA tool
     data_path_lca = data_path + "/NTNU_LCA_coefficients.xlsx"
     data_lca = pd.read_excel(data_path_lca, sheet_name="environmentalImpacts")
+
+    # For hydropower material intensity use "medium" from Kalt et al., 2021.
+    # Unit: t/MW
+
+    data_lca.loc[
+        (
+            (data_lca["technology"] == "Hydro")
+            & (data_lca["technology variant"] == "mix")
+            & (data_lca["phase"] == "Construction")
+            & (data_lca["impact"] == "Iron")
+        ),
+        2010,
+    ] = 45
+
+    data_lca.loc[
+        (
+            (data_lca["technology"] == "Hydro")
+            & (data_lca["technology variant"] == "mix")
+            & (data_lca["phase"] == "Construction")
+            & (data_lca["impact"] == "Iron")
+        ),
+        2030,
+    ] = 45
+
+    data_lca.loc[
+        (
+            (data_lca["technology"] == "Hydro")
+            & (data_lca["technology variant"] == "mix")
+            & (data_lca["phase"] == "Construction")
+            & (data_lca["impact"] == "Aluminium")
+        ),
+        2010,
+    ] = 0.572
+
+    data_lca.loc[
+        (
+            (data_lca["technology"] == "Hydro")
+            & (data_lca["technology variant"] == "mix")
+            & (data_lca["phase"] == "Construction")
+            & (data_lca["impact"] == "Aluminium")
+        ),
+        2030,
+    ] = 0.572
+
+    data_lca.loc[
+        (
+            (data_lca["technology"] == "Hydro")
+            & (data_lca["technology variant"] == "mix")
+            & (data_lca["phase"] == "Construction")
+            & (data_lca["impact"] == "Cement")
+        ),
+        2010,
+    ] = 787.5
+
+    data_lca.loc[
+        (
+            (data_lca["technology"] == "Hydro")
+            & (data_lca["technology variant"] == "mix")
+            & (data_lca["phase"] == "Construction")
+            & (data_lca["impact"] == "Cement")
+        ),
+        2030,
+    ] = 787.5
 
     # read technology, region and commodity mappings
     data_path_tec_map = data_path + "/MESSAGE_global_model_technologies.xlsx"
@@ -261,7 +327,7 @@ def read_material_intensities(data_path, inv_cost):
     }
 
 
-def maybe_init_pars(scenario):
+def maybe_init_pars(scenario: message_ix.Scenario) -> None:
     if not scenario.has_par("input_cap_new"):
         scenario.init_par(
             "input_cap_new",
@@ -400,7 +466,9 @@ def maybe_init_pars(scenario):
         )
 
 
-def gen_data_power_sector(scenario, dry_run=False):
+def gen_data_power_sector(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     """Generate data for materials representation of power industry."""
     # Load configuration
 

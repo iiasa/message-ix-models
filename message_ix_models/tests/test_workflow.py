@@ -159,7 +159,7 @@ def test_workflow(caplog, request, test_context, wf) -> None:
     start_index = 1 if caplog.messages[0].startswith("Cull") else 0
     # This setting obtains the value R11 on some Windows GHA jobs, but is otherwise R14.
     # TODO Debug and fix.
-    m = f"MESSAGEix-GLOBIOM {test_context.model.regions} YB"
+    m = f"MESSAGEix-GLOBIOM {test_context.model.regions} YB 33029"
     messages = [
         f"Loaded ixmp://{mp}/{m}/test_workflow#1",
         f"Step runs on ixmp://{mp}/{m}/test_workflow#1",

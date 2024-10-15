@@ -1,12 +1,5 @@
-primary:
-  name: Primary Energy
-  description: >-
-    A form found in nature that has not been subjected to any human engineered
-    conversion process.
-
-secondary:
-  name: Secondary Energy
-  description: Forms which have been transformed from primary energy.
+export:
+  name: Exports
 
 final:
   name: Final Energy
@@ -16,6 +9,16 @@ final:
 
 import:
   name: Imports
+
+primary:
+  name: Primary Energy
+  description: >-
+    A form found in nature that has not been subjected to any human engineered
+    conversion process.
+
+secondary:
+  name: Secondary Energy
+  description: Forms which have been transformed from primary energy.
 
 useful:
   name: Useful Energy
@@ -32,7 +35,6 @@ water_supply:
 # are not currently used by model.bare.create_res.
 #
 # cooling
-# export
 # land_use_reporting
 # land_use
 # piped-gas
