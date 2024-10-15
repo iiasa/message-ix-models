@@ -41,3 +41,16 @@ Data
    .. autosummary::
       SSPOriginal
       SSPUpdate
+
+2024 update
+===========
+
+Transport
+---------
+
+.. currentmodule:: message_ix_models.project.ssp.transport
+
+.. automodule:: message_ix_models.project.ssp.transport
+   :members:
+
+   Use :program:`mix-models ssp transport --help in.xlsx out.xlsx` to invoke :func:`.main`.

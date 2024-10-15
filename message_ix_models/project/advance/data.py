@@ -3,11 +3,8 @@ from copy import copy
 
 from genno import Computer, Key
 
-from message_ix_models.tools.exo_data import (
-    ExoDataSource,
-    iamc_like_data_for_query,
-    register_source,
-)
+from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.iamc import iamc_like_data_for_query
 from message_ix_models.util import (
     HAS_MESSAGE_DATA,
     iter_keys,
