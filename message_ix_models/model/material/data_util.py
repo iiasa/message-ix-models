@@ -1897,7 +1897,7 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
 
 def gen_plastics_emission_factors(
     info, species: Literal["methanol", "HVCs"]
-) -> pd.DataFrame:
+) -> dict[str, pd.DataFrame]:
     """Generate "CO2_Emission" relation parameter that
     represents stored carbon in produced plastics.
     The calculation considers:
@@ -1921,12 +1921,8 @@ def gen_plastics_emission_factors(
     pd.DataFrame
     """
 
-    if species != "HVCs":
-        raise NotImplementedError
+    tec_species_map = {"methanol": "meth_ind_fs", "HVCs": "production_HVC"}
 
-    tec_species_map = {"methanol": NotImplemented, "HVCs": "production_HVC"}
-
-    # TODO: do same calculation for methanol not used for MTO but other plastics
     carbon_pars = read_yaml_file(
         package_data_path(
             "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
@@ -1974,14 +1970,4 @@ def gen_plastics_emission_factors(
     co2_emi_rel["value"] = co2_emi_rel.apply(
         lambda x: apply_eol_factor(x, end_of_life_pars), axis=1
     ).mul(-1)
-    return co2_emi_rel
-
-
-if __name__ == "__main__":
-    from ixmp import Platform
-    from message_ix import Scenario
-
-    mp = Platform("ixmp_dev")
-    scen = Scenario(mp, "MESSAGEix-Materials", "test_c901_refactoring")
-    s_info = ScenarioInfo(scen)
-    gen_plastics_emission_factors(s_info, "methanol")
+    return {"relation_activity": co2_emi_rel}

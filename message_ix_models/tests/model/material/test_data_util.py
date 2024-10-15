@@ -132,14 +132,14 @@ def test_map_iea_db_to_msg_regs() -> None:
     "species",
     [
         "HVCs",
-        pytest.param("methanol", marks=pytest.mark.xfail(raises=NotImplementedError)),
+        "methanol",
     ],
 )
 def test_gen_plastics_emission_factors(species):
     info = ScenarioInfo()
     info.set["node"] = ["node0", "node1"]
     info.set["year"] = [2020, 2025]
-    out = gen_plastics_emission_factors(info, "HVCs")
+    out = gen_plastics_emission_factors(info, species)["relation_activity"]
 
     assert not out.isna().any(axis=None)  # Completely full
 
