@@ -10,6 +10,7 @@ from sdmx.message import StructureMessage
 from sdmx.model.common import Codelist
 from sdmx.model.v21 import DataStructureDefinition
 
+from message_ix_models.tools.exo_data import ExoDataSource
 from message_ix_models.util import local_data_path
 
 if TYPE_CHECKING:
@@ -154,6 +155,21 @@ DATA_MAP = {
     "TKM": ("freight activity", "km"),
     "VKM": ("vehicle activity", "km"),
 }
+
+
+class PASTA(ExoDataSource):
+    """Retrieve and process PASTA data for use in MESSAGEix-Transport."""
+
+    id = "PASTA"
+
+    def __init__(self, source, source_kw):
+        if not source == self.id:
+            raise ValueError(source)
+
+        self.raise_on_extra_kw(source_kw)
+
+    def __call__(self):
+        raise NotImplementedError
 
 
 def gen_demand(context: "Context") -> None:
