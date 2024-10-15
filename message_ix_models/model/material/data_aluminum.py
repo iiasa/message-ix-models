@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Dict, Iterable, List
 
 import message_ix
 import pandas as pd
@@ -68,7 +69,7 @@ def read_data_aluminum(
     return data_alu, data_alu_rel, data_aluminum_ts
 
 
-def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> dict[str, pd.DataFrame]:
+def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> Dict[str, pd.DataFrame]:
     """
     Generates time variable parameter data for aluminum sector
     Parameters
@@ -223,7 +224,16 @@ def gen_data_alu_rel(data: pd.DataFrame, years: list) -> dict[str, pd.DataFrame]
 
 
 def assign_input_outpt(
-    split, param_name, regions, val, t, rg, glb_reg, common, yv_ya, nodes
+    split,
+    param_name: str,
+    regions: pd.DataFrame,
+    val,
+    t: str,
+    rg: str,
+    glb_reg: str,
+    common: dict,
+    yv_ya: pd.DataFrame,
+    nodes,
 ):
     # Assign commodity and level names
     # Later mod can be added
@@ -314,9 +324,17 @@ def assign_input_outpt(
     return df
 
 
-def gen_data_alu_const(data, config, glb_reg, years, yv_ya, nodes):
+def gen_data_alu_const(
+    data: pd.DataFrame,
+    config: dict,
+    glb_reg: str,
+    years: Iterable,
+    yv_ya: pd.DataFrame,
+    nodes: List[str],
+):
     results = defaultdict(list)
     for t in config["technology"]["add"]:
+        t = t.id
         params = data.loc[(data["technology"] == t), "parameter"].unique()
         # Obtain the active and vintage years
         av = data.loc[(data["technology"] == t), "availability"].values[0]
@@ -440,17 +458,17 @@ def gen_data_aluminum(
 
     parname = "demand"
     demand_dict = {}
-    df = material_demand_calc.derive_demand(
-        "aluminum", scenario, old_gdp=False, ssp=ssp
-    )
+    df = material_demand_calc.derive_demand("aluminum", scenario, ssp=ssp)
     demand_dict[parname] = df
 
     ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
     rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
+    trade_dict = gen_data_alu_trade(scenario)
 
     results_aluminum = combine_df_dictionaries(
-        const_dict, ts_dict, rel_dict, demand_dict
+        const_dict, ts_dict, rel_dict, demand_dict, trade_dict
     )
+
     return results_aluminum
 
 
@@ -524,3 +542,190 @@ def gen_mock_demand_aluminum(scenario: message_ix.Scenario) -> pd.DataFrame:
     )
 
     return demand2020_al
+
+
+def gen_data_alu_trade(scenario: message_ix.Scenario) -> Dict[str, pd.DataFrame]:
+    results = defaultdict(list)
+
+    data_trade = pd.read_csv(
+        package_data_path("material", "aluminum", "aluminum_trade.csv")
+    )
+
+    data_trade.drop_duplicates()
+
+    s_info = ScenarioInfo(scenario)
+
+    yv_ya = s_info.yv_ya
+    year_all = yv_ya["year_vtg"].unique()
+
+    data_trade = data_trade[data_trade["Year"].isin(year_all)]
+
+    # Divide R12_WEU as 0.7 WEU, 0.3 EEU.
+    data_trade.loc[(data_trade["Region"] == "Europe"), "Value"] *= 0.7
+    data_trade.loc[(data_trade["Region"] == "Europe"), "Region"] = "West Europe"
+
+    data_trade_eeu = data_trade[data_trade["Region"] == "West Europe"]
+    data_trade_eeu["Value"] *= 0.3 / 0.7
+    data_trade_eeu["Region"] = "East Europe"
+
+    data_trade = pd.concat([data_trade, data_trade_eeu])
+
+    # Sum Japan and Oceania as PAO
+
+    condition = (data_trade["Region"] == "Japan") | (data_trade["Region"] == "Oceania")
+    data_trade_pao = data_trade.loc[condition]
+    data_trade_pao = (
+        data_trade_pao.groupby(["Variable", "Year"])["Value"].sum().reset_index()
+    )
+
+    data_trade_pao["Region"] = "Pacific OECD"
+    data_trade = pd.concat([data_trade, data_trade_pao])
+    condition_updated = (data_trade["Region"] == "Japan") | (
+        data_trade["Region"] == "Oceania"
+    )
+    data_trade = data_trade.drop(data_trade[condition_updated].index)
+
+    data_trade.reset_index(drop=True, inplace=True)
+
+    # Divide Other Asia 50-50 to SAS and PAS
+
+    data_trade.loc[(data_trade["Region"] == "Other Asia"), "Value"] *= 0.5
+    data_trade.loc[(data_trade["Region"] == "Other Asia"), "Region"] = "South Asia"
+
+    data_trade_pas = data_trade[data_trade["Region"] == "South Asia"]
+    data_trade_pas["Region"] = "Other Pacific Asia"
+
+    data_trade = pd.concat([data_trade, data_trade_pas])
+
+    # Divide Other Producing Regions 50-50s as Africa and FSU
+
+    data_trade.loc[(data_trade["Region"] == "Other Producers"), "Value"] *= 0.5
+    data_trade.loc[(data_trade["Region"] == "Other Producers"), "Region"] = "Africa"
+
+    data_trade_fsu = data_trade[data_trade["Region"] == "Africa"]
+    data_trade_fsu["Region"] = "Former Soviet Union"
+
+    data_trade = pd.concat([data_trade, data_trade_fsu])
+
+    # Drop non-producers
+
+    condition = data_trade["Region"] == "Non Producers"
+    data_trade = data_trade.drop(data_trade[condition].index)
+
+    s_info = ScenarioInfo(scenario)
+
+    if "R12_CHN" in s_info.N:
+        region_tag = "R12_"
+        china_mapping = "R12_CHN"
+    else:
+        region_tag = "R11_"
+        china_mapping = "R11_CPA"
+
+    region_mapping = {
+        "China": china_mapping,
+        "West Europe": region_tag + "WEU",
+        "East Europe": region_tag + "EEU",
+        "Pacific OECD": region_tag + "PAO",
+        "South Asia": region_tag + "SAS",
+        "Other Pacific Asia": region_tag + "PAS",
+        "Africa": region_tag + "AFR",
+        "Former Soviet Union": region_tag + "FSU",
+        "Middle East": region_tag + "MEA",
+        "North America": region_tag + "NAM",
+        "South America": region_tag + "LAM",
+    }
+
+    # Add the data as historical_activity
+
+    data_trade = data_trade.replace(region_mapping)
+    data_trade.rename(
+        columns={"Region": "node_loc", "Year": "year_act", "Value": "value"},
+        inplace=True,
+    )
+
+    # Trade is at the product level.
+    # For imports this corresponds to: USE|Inputs|Imports
+
+    data_import = data_trade[data_trade["Variable"] == "USE|Inputs|Imports"]
+    data_import_hist = data_import[data_import["year_act"] <= 2015]
+    data_import_hist["technology"] = "import_aluminum"
+    data_import_hist["mode"] = "M1"
+    data_import_hist["time"] = "year"
+    data_import_hist["unit"] = "-"
+    data_import_hist.drop(["Variable"], axis=1, inplace=True)
+    data_import_hist.reset_index(drop=True)
+
+    # For exports this corresponds to: MANUFACTURING|Outputs|Exports
+
+    data_export = data_trade[data_trade["Variable"] == "MANUFACTURING|Outputs|Exports"]
+    data_export_hist = data_export[data_export["year_act"] <= 2015]
+    data_export_hist["technology"] = "export_aluminum"
+    data_export_hist["mode"] = "M1"
+    data_export_hist["time"] = "year"
+    data_export_hist["unit"] = "-"
+    data_export_hist.drop(["Variable"], axis=1, inplace=True)
+    data_export_hist.reset_index(drop=True)
+
+    results["historical_activity"].append(data_export_hist)
+    results["historical_activity"].append(data_import_hist)
+
+    # Add data as historical_new_capacity for export
+
+    for r in data_export_hist["node_loc"].unique():
+        df_hist_cap = data_export_hist[data_export_hist["node_loc"] == r]
+        df_hist_cap = df_hist_cap.sort_values(by="year_act")
+        df_hist_cap["value_difference"] = df_hist_cap["value"].diff()
+        df_hist_cap["value_difference"] = df_hist_cap["value_difference"].fillna(
+            df_hist_cap["value"]
+        )
+        df_hist_cap["historical_new_capacity"] = df_hist_cap["value_difference"] / 5
+
+        df_hist_cap = df_hist_cap.drop(
+            columns=["mode", "time", "value", "value_difference"], axis=1
+        )
+        df_hist_cap.rename(
+            columns={"historical_new_capacity": "value", "year_act": "year_vtg"},
+            inplace=True,
+        )
+
+        df_hist_cap["value"] = df_hist_cap["value"].apply(lambda x: 0 if x < 0 else x)
+        df_hist_cap["unit"] = "-"
+        results["historical_new_capacity"].append(df_hist_cap)
+
+    # For China fixing 2020 and 2025 values
+
+    import_chn = data_import[
+        (data_import["year_act"] == 2020) & (data_import["node_loc"] == "R12_CHN")
+    ]
+
+    export_chn = data_export[
+        (data_export["year_act"] == 2020) & (data_export["node_loc"] == "R12_CHN")
+    ]
+
+    # Merge the DataFrames on 'node_loc' and 'year'
+    merged_df = pd.merge(
+        import_chn,
+        export_chn,
+        on=["node_loc", "year_act"],
+        suffixes=("_import", "_export"),
+    )
+
+    # Subtract the 'value_import' from 'value_export' to get net export value
+    merged_df["value"] = merged_df["value_export"] - merged_df["value_import"]
+
+    # Select relevant columns for the final DataFrame
+    bound_act_net_export_chn = merged_df[["node_loc", "year_act", "value"]]
+
+    bound_act_net_export_chn["technology"] = "export_aluminum"
+    bound_act_net_export_chn["mode"] = "M1"
+    bound_act_net_export_chn["time"] = "year"
+    bound_act_net_export_chn["unit"] = "-"
+
+    bound_act_net_export_chn_2025 = bound_act_net_export_chn.replace({2020: 2025})
+
+    results["bound_activity_up"].append(bound_act_net_export_chn)
+    results["bound_activity_lo"].append(bound_act_net_export_chn)
+    results["bound_activity_up"].append(bound_act_net_export_chn_2025)
+    results["bound_activity_lo"].append(bound_act_net_export_chn_2025)
+
+    return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}

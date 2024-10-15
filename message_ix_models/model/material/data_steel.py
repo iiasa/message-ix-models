@@ -1,11 +1,14 @@
 from collections import defaultdict
+from typing import Dict, Iterable, List
 
+import message_ix
 import pandas as pd
 from message_ix import make_df
 
 # Get endogenous material demand from buildings interface
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
+    calculate_ini_new_cap,
     read_rel,
     read_sector_data,
     read_timeseries,
@@ -25,7 +28,7 @@ from message_ix_models.util import (
 )
 
 
-def gen_mock_demand_steel(scenario):
+def gen_mock_demand_steel(scenario: message_ix.Scenario) -> pd.DataFrame:
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
     nodes.remove("World")
@@ -115,7 +118,9 @@ def gen_mock_demand_steel(scenario):
     return demand2020_steel
 
 
-def gen_data_steel_ts(data_steel_ts, results, t, nodes):
+def gen_data_steel_ts(
+    data_steel_ts: pd.DataFrame, results: Dict[str, list], t: str, nodes: List[str]
+):
     common = dict(
         time="year",
         time_origin="year",
@@ -206,7 +211,15 @@ def gen_data_steel_ts(data_steel_ts, results, t, nodes):
     return
 
 
-def get_data_steel_const(data_steel, results, params, t, yv_ya, nodes, global_region):
+def get_data_steel_const(
+    data_steel: pd.DataFrame,
+    results: Dict[str, list],
+    params: Iterable,
+    t: str,
+    yv_ya: pd.DataFrame,
+    nodes: List[str],
+    global_region: str,
+):
     for par in params:
         # Obtain the parameter names, commodity,level,emission
         split = par.split("|")
@@ -414,7 +427,7 @@ def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
     return
 
 
-def gen_data_steel(scenario, dry_run=False):
+def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     """Generate data for materials representation of steel industry."""
     # Load configuration
     context = read_config()
@@ -426,10 +439,10 @@ def gen_data_steel(scenario, dry_run=False):
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
     # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel")
+    data_steel = read_sector_data(scenario, "steel", "Global_steel_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel_cement", context.datafile)
-    data_steel_rel = read_rel(scenario, "steel_cement", context.datafile)
+    data_steel_ts = read_timeseries(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel_rel = read_rel(scenario, "steel", "Global_steel_MESSAGE.xlsx")
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 
@@ -445,6 +458,7 @@ def gen_data_steel(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
     for t in config["technology"]["add"]:
+        t = t.id
         params = data_steel.loc[(data_steel["technology"] == t), "parameter"].unique()
 
         # Special treatment for time-varying params
@@ -517,11 +531,59 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
+    df_demand = material_demand_calc.derive_demand("steel", scenario, ssp=ssp)
+    results[parname].append(df_demand)
+
+    common = dict(
+        year_vtg=yv_ya.year_vtg,
+        year_act=yv_ya.year_act,
+        time="year",
+        time_origin="year",
+        time_dest="year",
+    )
+
+    # Add CCS as addon
+    parname = "addon_conversion"
+    bf_tec = ["bf_steel"]
+    df = make_df(
+        parname, mode="M2", type_addon="bf_ccs_steel_addon", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=bf_tec)
+    results[parname].append(df)
+
+    dri_gas_tec = ["dri_gas_steel"]
+    df = make_df(
+        parname,
+        mode="M1",
+        type_addon="dri_gas_ccs_steel_addon",
+        value=1,
+        unit="-",
+        **common,
+    ).pipe(broadcast, node=nodes, technology=dri_gas_tec)
+    results[parname].append(df)
+
+    dri_tec = ["dri_steel"]
+    df = make_df(
+        parname, mode="M1", type_addon="dri_steel_addon", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=dri_tec)
     results[parname].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    results["initial_new_capacity_up"] = pd.concat(
+        [
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True),
+                technology="dri_gas_ccs_steel",
+                material="steel",
+            ),
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True),
+                technology="bf_ccs_steel",
+                material="steel",
+            ),
+        ]
+    )
 
     maybe_remove_water_tec(scenario, results)
 

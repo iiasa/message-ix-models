@@ -30,7 +30,7 @@
 - FE_feedstock
 - FE_final_energy
 - FE_gaseous
-- FE_industry                                                                                                 [266/1626]
+- FE_industry
 - FE_liquids
 - FE_new_biomass
 - FE_old_biomass
@@ -55,7 +55,7 @@
 - NOx_Emission_bunkers
 - NOx_nonenergy
 - OCA_Emission
-- OCA_Emission_bunkers                                                                                        [241/1626]
+- OCA_Emission_bunkers
 - OilPrices
 - PE_BACKSTOPS
 - PE_coal
@@ -82,7 +82,7 @@
 - POPtoSolvent
 - RES_variable_limt
 - SF6_Emission
-- SF6_elec_red                                                                                                [214/1626]
+- SF6_elec_red
 - SF6_mag_red
 - SO2_Emission
 - SO2_Emission_bunkers
@@ -109,7 +109,7 @@
 - TN2O_Emission
 - TSF6_Emission
 - UE_feedstock
-- UE_feedstock_coal                                                                                           [187/1626]
+- UE_feedstock_coal
 - UE_feedstock_foil
 - UE_feedstock_gas
 - UE_feedstock_liquid
@@ -136,7 +136,7 @@
 - UE_res_comm_th_gas
 - UE_res_comm_th_heat
 - UE_res_comm_th_hp
-- UE_res_comm_th_hydrogen                                                                                     [160/1626]
+- UE_res_comm_th_hydrogen
 - UE_res_comm_th_liquid
 - UE_res_comm_th_solar
 - UE_res_comm_th_solids
@@ -160,7 +160,7 @@
 - WasteGenToSO2Link
 - WasteGenToVOCLink
 - bco2_trans_disp
-- bio_extr_mpen_c                                                                                             [136/1626]
+- bio_extr_mpen_c
 - bio_scrub_lim
 - co2_trans_disp
 - co_gen_limit
@@ -187,7 +187,7 @@
 - elec_relations2_hydro
 - elec_relations2_nuclear
 - elec_relations2_oil
-- elec_relations2_renewable                                                                                   [109/1626]
+- elec_relations2_renewable
 - extraction_coal
 - extraction_gas
 - extraction_oil
@@ -214,7 +214,7 @@
 - lim_exp_cpa_oil
 - lim_exp_eeu_eth
 - lim_exp_eeu_meth
-- lim_exp_fsu_LNG                                                                                              [82/1626]
+- lim_exp_fsu_LNG
 - lim_exp_fsu_coal
 - lim_exp_fsu_eth
 - lim_exp_fsu_meth
@@ -241,7 +241,7 @@
 - nica_limit
 - nuc_lc_in_el
 - oil_based_elec_gen
-- oil_extr_mpen_c                                                                                              [55/1626]
+- oil_extr_mpen_c
 - oil_imp_c
 - oil_prod
 - oil_trd
@@ -269,7 +269,7 @@
 - sm1_ppl_res
 - sm3_ppl_res
 - solar_csp_pot
-- solar_csp_pot1                                                                                               [27/1626]
+- solar_csp_pot1
 - solar_csp_pot2
 - solar_csp_pot3
 - solar_csp_pot4

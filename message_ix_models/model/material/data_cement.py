@@ -1,10 +1,15 @@
 from collections import defaultdict
 
+import message_ix
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_sector_data, read_timeseries
+from message_ix_models.model.material.data_util import (
+    calculate_ini_new_cap,
+    read_sector_data,
+    read_timeseries,
+)
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import get_ssp_from_context, read_config
 from message_ix_models.util import (
@@ -15,7 +20,7 @@ from message_ix_models.util import (
 )
 
 
-def gen_mock_demand_cement(scenario):
+def gen_mock_demand_cement(scenario: message_ix.Scenario) -> pd.DataFrame:
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
     nodes.remove("World")
@@ -156,7 +161,9 @@ def gen_mock_demand_cement(scenario):
     return demand2020_cement
 
 
-def gen_data_cement(scenario, dry_run=False):
+def gen_data_cement(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     """Generate data for materials representation of cement industry."""
     # Load configuration
     context = read_config()
@@ -166,15 +173,16 @@ def gen_data_cement(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
     context.datafile = "Global_steel_cement_MESSAGE.xlsx"
 
-    data_cement = read_sector_data(scenario, "cement")
+    # Techno-economic assumptions
+    data_cement = read_sector_data(scenario, "cement", "Global_cement_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
-    data_cement_ts = read_timeseries(scenario, "steel_cement", context.datafile)
+    data_cement_ts = read_timeseries(scenario, "cement", "Global_cement_MESSAGE.xlsx")
     tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    # For each technology there are differnet input and output combinations
+    # For each technology there are different input and output combinations
     # Iterate over technologies
 
     yv_ya = s_info.yv_ya
@@ -182,8 +190,8 @@ def gen_data_cement(scenario, dry_run=False):
     # Do not parametrize GLB region the same way
     nodes = nodes_ex_world(s_info.N)
 
-    # for t in s_info.set['technology']:
     for t in config["technology"]["add"]:
+        t = t.id
         params = data_cement.loc[(data_cement["technology"] == t), "parameter"].unique()
 
         # Special treatment for time-varying params
@@ -344,18 +352,41 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df = material_demand_calc.derive_demand("cement", scenario, old_gdp=False, ssp=ssp)
-    results[parname].append(df)
+    df_demand = material_demand_calc.derive_demand("cement", scenario, ssp=ssp)
+    results[parname].append(df_demand)
 
     # Add CCS as addon
     parname = "addon_conversion"
-    ccs_tec = ["clinker_wet_cement", "clinker_dry_cement"]
-    df = make_df(
-        parname, mode="M1", type_addon="ccs_cement", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology=ccs_tec)
-    results[parname].append(df)
+
+    technology_1 = ["clinker_dry_cement"]
+    df_1 = make_df(
+        parname, mode="M1", type_addon="dry_ccs_cement", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=technology_1)
+
+    technology_2 = ["clinker_wet_cement"]
+    df_2 = make_df(
+        parname, mode="M1", type_addon="wet_ccs_cement", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=technology_2)
+
+    results[parname].append(df_1)
+    results[parname].append(df_2)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    results["initial_new_capacity_up"] = pd.concat(
+        [
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True),
+                technology="clinker_dry_ccs_cement",
+                material="cement",
+            ),
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True),
+                technology="clinker_wet_ccs_cement",
+                material="cement",
+            ),
+        ]
+    )
 
     return results

@@ -1,3 +1,4 @@
+import message_ix
 import numpy as np
 import pandas as pd
 from message_ix import make_df
@@ -13,7 +14,6 @@ from message_ix_models.util import (
 )
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
-
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -32,7 +32,9 @@ iea_elasticity_map = {
 }
 
 
-def gen_all_NH3_fert(scenario, dry_run=False):
+def gen_all_NH3_fert(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     return {
         **gen_data(scenario),
         **gen_data_rel(scenario),
@@ -43,7 +45,9 @@ def gen_all_NH3_fert(scenario, dry_run=False):
     }
 
 
-def broadcast_years(df_new, max_lt, act_years, vtg_years):
+def broadcast_years(
+    df_new: pd.DataFrame, max_lt: int, act_years: pd.Series, vtg_years: pd.Series
+) -> pd.DataFrame:
     if "year_act" in df_new.columns:
         df_new = df_new.pipe(same_node).pipe(broadcast, year_act=act_years)
 
@@ -63,7 +67,12 @@ def broadcast_years(df_new, max_lt, act_years, vtg_years):
     return df_new
 
 
-def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
+def gen_data(
+    scenario: message_ix.Scenario,
+    dry_run=False,
+    add_ccs: bool = True,
+    lower_costs: bool = False,
+) -> dict[str, pd.DataFrame]:
     s_info = ScenarioInfo(scenario)
     # s_info.yv_ya
     nodes = nodes_ex_world(s_info.N)
@@ -250,7 +259,9 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
     return par_dict
 
 
-def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
+def gen_data_ts(
+    scenario: message_ix.Scenario, dry_run: bool = False, add_ccs: bool = True
+) -> dict[str, pd.DataFrame]:
     s_info = ScenarioInfo(scenario)
     # s_info.yv_ya
     nodes = s_info.N
@@ -305,14 +316,14 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
     return par_dict
 
 
-def set_exp_imp_nodes(df):
+def set_exp_imp_nodes(df: pd.DataFrame) -> None:
     if "node_dest" in df.columns:
         df.loc[df["technology"].str.contains("export"), "node_dest"] = "R12_GLB"
     if "node_origin" in df.columns:
         df.loc[df["technology"].str.contains("import"), "node_origin"] = "R12_GLB"
 
 
-def read_demand():
+def read_demand() -> dict[str, pd.DataFrame]:
     """Read and clean data from
     :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
     # Demand scenario [Mt N/year] from GLOBIOM
@@ -497,7 +508,7 @@ def read_demand():
     }
 
 
-def gen_demand():
+def gen_demand() -> dict[str, pd.DataFrame]:
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
     demand_fs_org = pd.read_excel(
@@ -523,7 +534,7 @@ def gen_demand():
     return {"demand": df}
 
 
-def gen_resid_demand_NH3(scenario):
+def gen_resid_demand_NH3(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
     context = read_config()
     ssp = context["ssp"]
 
@@ -537,13 +548,13 @@ def gen_resid_demand_NH3(scenario):
     return {"demand": df_residual}
 
 
-def gen_land_input(scenario):
+def gen_land_input(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
     df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
     df["level"] = "final_material"
     return {"land_input": df}
 
 
-def experiment_lower_CPA_SAS_costs(par_dict):
+def experiment_lower_CPA_SAS_costs(par_dict: dict) -> dict[str, pd.DataFrame]:
     cost_list = ["inv_cost", "fix_cost"]
     scaler = {
         "R12_RCPA": [0.66 * 0.91, 0.75 * 0.9],

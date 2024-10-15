@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import pandas as pd
-from message_ix import make_df
+from message_ix import Scenario, make_df
 
 import message_ix_models.util
 from message_ix_models import ScenarioInfo
@@ -15,7 +15,7 @@ from .data_util import read_timeseries
 from .util import read_config
 
 
-def read_data_generic(scenario):
+def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
     """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
 
     # Read the file
@@ -40,7 +40,9 @@ def read_data_generic(scenario):
     return data_generic, data_generic_ts
 
 
-def gen_data_generic(scenario, dry_run=False):
+def gen_data_generic(
+    scenario: Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     # Load configuration
 
     config = read_config()["material"]["generic"]
@@ -65,6 +67,7 @@ def gen_data_generic(scenario, dry_run=False):
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
 
     for t in config["technology"]["add"]:
+        t = t.id
         # years = s_info.Y
         params = data_generic.loc[
             (data_generic["technology"] == t), "parameter"
