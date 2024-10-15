@@ -638,6 +638,7 @@ methanol:
     - meth_trd
     - meth_exp
     - meth_imp
+    - meth_ind_fs
     remove:
     - sp_meth_I
     - meth_rc
