@@ -6,9 +6,16 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_timeseries
+from message_ix_models.model.material.data_util import (
+    gen_plastics_emission_factors,
+    read_timeseries,
+)
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import get_ssp_from_context, read_config
+from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
+    get_ssp_from_context,
+    read_config,
+)
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
@@ -544,6 +551,9 @@ def gen_data_petro_chemicals(
     df["value"] = -(1.33181 * 0.482)  # gas input * emission factor of gas
     df["technology"] = "gas_processing_petro"
     results["relation_activity"] = df
+
+    meth_downstream_emi = gen_plastics_emission_factors(s_info, "HVCs")
+    results = combine_df_dictionaries(results, meth_downstream_emi)
 
     # TODO: move this to input xlsx file
     df_gro = results["growth_activity_up"]
