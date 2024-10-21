@@ -148,6 +148,11 @@ These data can be further manipulated; for instance, added to a scenario using :
 See the file :file:`message_ix_models/tools/costs/demo.py` for multiple examples using various non-default settings to control the methods and data used by :func:`.create_cost_projections`.
 
 
+.. note:: The data produced are for all valid combinations of :math:`(y^V, y^A)`—including those that are beyond the `technical_lifetime` of the |t| to which they apply.
+   This may produce large data frames, depending on the number of technologies, regions, and scenarios. 
+   At the moment, :mod:`.tools.costs` does not filter out these combinations.
+   If this is problematic, the user may consider filtering the data for valid combinations of :math:`(y^V, y^A)`.
+
 Code reference
 ==============
 
