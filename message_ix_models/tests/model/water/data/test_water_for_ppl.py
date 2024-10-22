@@ -5,7 +5,11 @@ from message_ix import Scenario
 from message_ix_models import ScenarioInfo
 
 # from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.water_for_ppl import cool_tech, non_cooling_tec
+from message_ix_models.model.water.data.water_for_ppl import (
+    cool_tech,
+    non_cooling_tec,
+    relax_growth_constraint,
+)
 
 
 @cool_tech.minimum_version
@@ -201,3 +205,103 @@ def test_non_cooling_tec(request, test_context):
             "year_act",
         ]
     )
+
+
+# Mock function for scen.par
+class MockScenario:
+    def par(self, param, filters):
+        if param == "bound_activity_up":
+            return pd.DataFrame(
+                {
+                    "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
+                    "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
+                    "year_act": [2030, 2040, 2050],
+                    "value": [30, 15, 0],
+                }
+            )
+        elif param == "bound_new_capacity_up":
+            return pd.DataFrame(
+                {
+                    "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
+                    "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
+                    "year_vtg": [2030, 2040, 2050],
+                    "value": [30, 15, 0],
+                }
+            )
+        return pd.DataFrame()
+
+
+@pytest.mark.parametrize("constraint_type", ["activity", "new_capacity"])
+def test_relax_growth_constraint(constraint_type):
+    # Sample data for g_lo
+    if constraint_type == "activity":
+        year_type = "year_act"
+    elif constraint_type == "new_capacity":
+        year_type = "year_vtg"
+    else:
+        raise ValueError(
+            "Invalid constraint_type. Must be 'activity' or 'new_capacity'."
+        )
+
+    g_lo = pd.DataFrame(
+        {
+            "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR", "R12_AFR"],
+            "technology": [
+                "coal_ppl__ot_fresh",
+                "coal_ppl__ot_fresh",
+                "coal_ppl__ot_fresh",
+                "gas_ppl__ot_fresh",
+            ],
+            "year_act": [2030, 2040, 2050, 2030],
+            "time": ["year", "year", "year", "year"],
+            "value": [-0.05, -0.05, -0.05, -0.05],
+            "unit": ["%", "%", "%", "%"],
+        }
+    )
+
+    # Sample data for ref_hist
+    ref_hist = pd.DataFrame(
+        {
+            "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
+            "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
+            year_type: [2015, 2020, 2025],
+            "time": ["year", "year", "year"],
+            "value": [30, 50, 80],
+            "unit": ["GWa", "GWa", "GWa"],
+        }
+    )
+
+    # Sample data for cooling_df
+    cooling_df = pd.DataFrame(
+        {
+            "technology_name": [
+                "coal_ppl__ot_fresh",
+                "coal_ppl__ot_fresh",
+                "coal_ppl__ot_fresh",
+            ],
+            "parent_tech": ["coal_ppl", "coal_ppl", "coal_ppl"],
+        }
+    )
+
+    # Instantiate mock scenario
+    scen = MockScenario()
+
+    # Call the function with mock data
+    result = relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type)
+    # reset_index to make the comparison easier
+    result = result.reset_index(drop=True)
+
+    # Expected result (this is an example, you should adjust this based on expected behavior)
+    expected_result = pd.DataFrame(
+        {
+            "node_loc": ["R12_AFR", "R12_AFR"],
+            "technology": ["coal_ppl__ot_fresh", "gas_ppl__ot_fresh"],
+            "year_act": [2050, 2030],
+            "time": ["year", "year"],
+            "value": [-0.05, -0.05],
+            "unit": ["%", "%"],
+        }
+    )
+
+    # Assert that the result matches the expected DataFrame
+    pd.testing.assert_frame_equal(result, expected_result)
