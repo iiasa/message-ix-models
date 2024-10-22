@@ -248,6 +248,8 @@ def relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type):
     map_parent.rename(columns={"technology_name": "technology"}, inplace=True)
     # expand bound_up to all cooling technologies in map_parent
     combined_bound = pd.merge(combined_bound, map_parent, how="left")
+    # rename tear_type to year_act, because g_lo use it
+    combined_bound.rename(columns={year_type: "year_act"}, inplace=True)
 
     # Merge to g_lo to be able to remove the technologies
     g_lo = pd.merge(g_lo, combined_bound, how="left")
