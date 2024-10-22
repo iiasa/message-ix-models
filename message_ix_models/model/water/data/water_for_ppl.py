@@ -179,12 +179,14 @@ def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
 
 def relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type):
     """
-    Function to check if the parent technologies are shut down and require relaxing the growth constraint.
+    Function to check if the parent technologies are shut down and require
+    relaxing the growth constraint.
 
     Parameters:
     ref_hist (pd.DataFrame): Historical data.
     scen (Scenario): Scenario object to retrieve parameters.
-    cooling_df (pd.DataFrame): DataFrame containing cooling technologies and their parent technologies.
+    cooling_df (pd.DataFrame): DataFrame containing cooling technologies and
+    their parent technologies.
     g_lo (pd.DataFrame): DataFrame containing growth constraints.
     constraint_type (str): Type of constraint to check ("activity" or "capacity").
 
@@ -202,7 +204,7 @@ def relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type):
             "Invalid constraint_type. Must be 'activity' or 'new_capacity'."
         )
 
-    # Group by all variables of ref_hist apart from year_type and hist_value_col and only keep rows with max year_type
+    # keep rows with max year_type
     max_year_hist = (
         ref_hist.loc[ref_hist.groupby(["node_loc", "technology"])[year_type].idxmax()]
         .drop(columns="unit")
@@ -214,7 +216,7 @@ def relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type):
     # Get a set with unique year_type values and order them
     years = np.sort(bound_up_pare[year_type].unique())
 
-    # In max_year_hist add the next year from years corresponding to the hist_year columns
+    # In max_year_hist add the next year from years matching the hist_year columns
     max_year_hist["next_year"] = max_year_hist["hist_year"].apply(
         lambda x: years[years > x][0]
     )
@@ -227,7 +229,7 @@ def relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type):
     bound_up1 = bound_up1[bound_up1["value"] < 0.9 * bound_up1["hist_value"]]
     # not look ad sudden contraints after sthe starting year
     bound_up = bound_up.sort_values(by=["node_loc", "technology", year_type])
-    # Check if value for a year is greater than the value of the next year (after sorting)
+    # Check if value for a year is greater than the value of the next year
     bound_up["next_value"] = bound_up.groupby(["node_loc", "technology"])[
         "value"
     ].shift(-1)
