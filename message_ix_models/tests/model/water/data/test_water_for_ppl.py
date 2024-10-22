@@ -291,7 +291,7 @@ def test_relax_growth_constraint(constraint_type):
     # reset_index to make the comparison easier
     result = result.reset_index(drop=True)
 
-    # Expected result (this is an example, you should adjust this based on expected behavior)
+    # Expected result
     expected_result = pd.DataFrame(
         {
             "node_loc": ["R12_AFR", "R12_AFR"],
