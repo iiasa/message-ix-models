@@ -52,7 +52,7 @@ def test_process_raw_ssp_data(test_context, node) -> None:
     assert scens == set(result.scenario.unique())
 
 
-@pytest.mark.parametrize("module", ("energy", "materials"))
+@pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
 def test_adjust_cost_ratios_with_gdp(test_context, module) -> None:
     # Set parameters
     test_context.model.regions = "R12"
