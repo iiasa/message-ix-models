@@ -7,7 +7,10 @@ from message_ix import make_df
 
 import message_ix_models.util
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import gen_plastics_emission_factors
+from message_ix_models.model.material.data_util import (
+    gen_plastics_emission_factors,
+    gen_chemicals_co2_ind_factors,
+)
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import combine_df_dictionaries, read_config
 from message_ix_models.util import broadcast, same_node
@@ -92,9 +95,14 @@ def gen_data_methanol_new(scenario: "Scenario") -> Dict[str, pd.DataFrame]:
 
     s_info = ScenarioInfo(scenario)
     downstream_tec_pars = gen_meth_fs_downstream(s_info)
-    meth_downstream_emi = gen_plastics_emission_factors(s_info, "methanol")
+    meth_downstream_emi_top_down = gen_plastics_emission_factors(s_info, "methanol")
+    meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "methanol")
+
     pars_dict = combine_df_dictionaries(
-        pars_dict, downstream_tec_pars, meth_downstream_emi
+        pars_dict,
+        downstream_tec_pars,
+        meth_downstream_emi_top_down,
+        meth_downstream_emi_bot_up,
     )
 
     scen_rel_set = scenario.set("relation")
