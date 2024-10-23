@@ -1,6 +1,6 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-from typing import Any
+from typing import Any, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -177,32 +177,43 @@ def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
     ]
 
 
-def relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type):
+def relax_growth_constraint(
+    ref_hist: pd.DataFrame,
+    scen,
+    cooling_df: pd.DataFrame,
+    g_lo: pd.DataFrame,
+    constraint_type: Literal[Union["activity", "new_capacity"]],
+) -> pd.DataFrame:
     """
-    Function to check if the parent technologies are shut down and require
-    relaxing the growth constraint.
+    Checks if the parent technologies are shut down and require relaxing
+    the growth constraint.
 
-    Parameters:
-    ref_hist (pd.DataFrame): Historical data.
-    scen (Scenario): Scenario object to retrieve parameters.
-    cooling_df (pd.DataFrame): DataFrame containing cooling technologies and
-    their parent technologies.
-    g_lo (pd.DataFrame): DataFrame containing growth constraints.
-    constraint_type (str): Type of constraint to check ("activity" or "capacity").
+    Parameters
+    ----------
+    ref_hist : pd.DataFrame
+        Historical data in the reference scenario.
+    scen : Scenario
+        Scenario object to retrieve necessary parameters.
+    cooling_df : pd.DataFrame
+        DataFrame containing information on cooling technologies and their
+        parent technologies.
+    g_lo : pd.DataFrame
+        DataFrame containing growth constraints for each technology.
+    constraint_type : {"activity", "new_capacity"}
+        Type of constraint to check, either "activity" for operational limits or
+        "new_capacity" for capacity expansion limits.
 
-    Returns:
-    pd.DataFrame: Updated g_lo DataFrame with relaxed growth constraints.
+    Returns
+    -------
+    pd.DataFrame
+        Updated `g_lo` DataFrame with relaxed growth constraints.
     """
-    if constraint_type == "activity":
-        year_type = "year_act"
-        bound_param = "bound_activity_up"
-    elif constraint_type == "new_capacity":
-        year_type = "year_vtg"
-        bound_param = "bound_new_capacity_up"
-    else:
-        raise ValueError(
-            "Invalid constraint_type. Must be 'activity' or 'new_capacity'."
-        )
+    year_type = "year_act" if constraint_type == "activity" else "year_vtg"
+    bound_param = (
+        "bound_activity_up"
+        if constraint_type == "activity"
+        else "bound_new_capacity_up"
+    )
 
     # keep rows with max year_type
     max_year_hist = (
