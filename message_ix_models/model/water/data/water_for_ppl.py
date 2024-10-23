@@ -229,12 +229,13 @@ def relax_growth_constraint(
 
     # In max_year_hist add the next year from years matching the hist_year columns
     max_year_hist["next_year"] = max_year_hist["hist_year"].apply(
-        lambda x: years[years > x][0]
+        lambda x: years[years > x][0] if any(years > x) else None
     )
 
     # Merge the max_year_hist with bound_up_pare
     bound_up = pd.merge(bound_up_pare, max_year_hist, how="left")
-    # Look at years just after the historical year
+    # subset of first year after the historical
+    # if next_year = None (single year test case) bound_up1 is simply empty
     bound_up1 = bound_up[bound_up[year_type] == bound_up["next_year"]]
     # Categories that might break the growth constraints
     bound_up1 = bound_up1[bound_up1["value"] < 0.9 * bound_up1["hist_value"]]
