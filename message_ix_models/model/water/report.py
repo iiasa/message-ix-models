@@ -1113,6 +1113,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     for ur in ["urban", "rural"]:
         # CHANGE TO URBAN AND RURAL POP
         pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
+        # ONLY R11!!! Need to fix when updating the reporting to work with any region
         pop_tot = pop_tot[-(pop_tot.region == "GLB region (R11)")]
         pop_reg = np.unique(pop_tot["region"])
         # need to change names
