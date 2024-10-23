@@ -12,6 +12,7 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import (
+    read_yaml_file,
     remove_from_list_if_exists,
 )
 from message_ix_models.model.structure import get_region_codes
@@ -23,8 +24,6 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
-
-from .util import read_yaml_file
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -2573,7 +2572,7 @@ def gen_plastics_emission_factors(
 
     Returns
     -------
-    pd.DataFrame
+    Dict[str, pd.DataFrame]
     """
 
     tec_species_map = {"methanol": "meth_ind_fs", "HVCs": "production_HVC"}
@@ -2607,7 +2606,7 @@ def gen_plastics_emission_factors(
         right_on="index",
     ).drop(columns="index")
 
-    years = info.Y  # [2020, 2025]
+    years = info.Y
     co2_emi_rel = co2_emi_rel.pipe(broadcast, year_act=years)
     co2_emi_rel["year_rel"] = co2_emi_rel["year_act"]
 
@@ -2625,4 +2624,95 @@ def gen_plastics_emission_factors(
     co2_emi_rel["value"] = co2_emi_rel.apply(
         lambda x: apply_eol_factor(x, end_of_life_pars), axis=1
     ).mul(-1)
+    return {"relation_activity": co2_emi_rel}
+
+
+def gen_chemicals_co2_ind_factors(
+    info, species: Literal["methanol", "HVCs"]
+) -> Dict[str, pd.DataFrame]:
+    """Generate "CO2_ind" relation parameter that
+    represents carbon in chemical feedstocks that is oxidized in the
+    short-term (=during the model horizon) in downstream products.
+    This happens either through natural oxidation or combustion as the
+    end-of-life treatment of plastics.
+
+    The calculation considers:
+    * carbon content of feedstocks,
+    * the share that is converted to oxidizable chemicals
+    * the end-of-life treatment shares (i.e. incineration, landfill, etc.)
+
+    Values are positive since they need to be added
+    to bottom-up emission accounting.
+
+    Parameters
+    ----------
+    species:
+        feedstock species to generate relation for
+    info: ScenarioInfo
+
+    Returns
+    -------
+    Dict[str, pd.DataFrame]
+    """
+
+    tec_species_map = {"methanol": "meth_ind_fs", "HVCs": "production_HVC"}
+
+    carbon_pars = read_yaml_file(
+        package_data_path(
+            "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
+        )
+    )
+    # TODO: move EOL parameters to a different file to disassociate from methanol model
+    end_of_life_pars = pd.read_excel(
+        package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+        sheet_name="Sheet1",
+        dtype=object,
+    )
+    temporary_sequestered = {
+        k: (v["carbon mass"] / v["molar mass"]) * (1 - v["plastics use"])
+        for k, v in carbon_pars[species].items()
+    }
+    embodied_carbon_plastics = {
+        k: (v["carbon mass"] / v["molar mass"]) * v["plastics use"]
+        for k, v in carbon_pars[species].items()
+    }
+    end_of_life_pars = end_of_life_pars.set_index("par").to_dict()["value"]
+    common = {
+        "unit": "Mt C",
+        "relation": "CO2_ind",
+        "mode": embodied_carbon_plastics.keys(),
+        "technology": tec_species_map[species],
+    }
+    co2_emi_rel = make_df("relation_activity", **common).drop(columns="value")
+    co2_emi_rel = co2_emi_rel.merge(
+        pd.Series(embodied_carbon_plastics, name="value").to_frame().reset_index(),
+        left_on="mode",
+        right_on="index",
+    ).drop(columns="index")
+
+    years = info.Y
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, year_act=years)
+    co2_emi_rel["year_rel"] = co2_emi_rel["year_act"]
+
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(
+        same_node
+    )
+
+    def apply_eol_factor(row, pars):
+        if row["year_act"] < pars["incin_trend_end"]:
+            share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
+        else:
+            share = 0.5
+        return row["value"] * share
+
+    co2_emi_rel["value"] = co2_emi_rel.apply(
+        lambda x: apply_eol_factor(x, end_of_life_pars), axis=1
+    )
+
+    def add_non_combustion_oxidation(row):
+        return temporary_sequestered[row["mode"]] + row["value"]
+
+    co2_emi_rel["value"] = co2_emi_rel.apply(
+        lambda x: add_non_combustion_oxidation(x), axis=1
+    )
     return {"relation_activity": co2_emi_rel}
