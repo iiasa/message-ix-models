@@ -48,6 +48,9 @@ Currently, :mod:`.tools.costs` supports two module :attr:`~.Config.module` setti
 "materials"
    Technologies conceived as part of the materials and industry sectors.
 
+"cooling"
+   Cooling technologies for power plants.
+
 Data and files for a particular module can refer to other modules.
 This allows for values or settings for "materials" and other technologies to be assumed to match the values and settings used for the referenced "energy"-module technologies.
 
@@ -86,9 +89,9 @@ To add a new module, the following steps are required:
 Please note that the following assumptions are made in technology costs mapping:
 
 - If a technology is mapped to a technology in the "energy" module, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
-- If a "materials" (or any other non-"energy") technology has :py:`reg_diff_source="energy"` and the "base_year_reference_region_cost" is not empty, then the "base_year_reference_region_cost" in :file:`tech_map_[module].csv` is used as the base year cost for the technology in the reference region.
+- If a non-"energy" module (such as "materials" or "cooling") technology has :py:`reg_diff_source="energy"` and the "base_year_reference_region_cost" is not empty, then the "base_year_reference_region_cost" in :file:`tech_map_[module].csv` is used as the base year cost for the technology in the reference region.
   If the "base_year_reference_region_cost" is empty, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
-- If using the "materials" module, if a technology that is specified in :file:`tech_map_materials.csv` already exists in :file:`tech_map_energy.csv`, then the reference region cost is taken from :file:`tech_map_materials.csv`.
+- If using a non-"energy" module (such as "materials" or "cooling"), if a technology that is specified in :file:`tech_map_materials.csv` already exists in :file:`tech_map_energy.csv`, then the reference region cost is taken from :file:`tech_map_materials.csv`.
 - If a technology in a module is not mapped to any source of regional differentiation, then no cost reduction over the years is applied to the technology.
 - If a technology has a non-empty "base_year_reference_region_cost" but is not mapped to any source of regional differentiation, then assume no regional differentiation and use the reference region base year cost as the base year cost for all regions.
 
@@ -144,6 +147,11 @@ To use the tool with the default settings, simply create a :class:`.Config` obje
 These data can be further manipulated; for instance, added to a scenario using :func:`.add_par_data`.
 See the file :file:`message_ix_models/tools/costs/demo.py` for multiple examples using various non-default settings to control the methods and data used by :func:`.create_cost_projections`.
 
+
+.. note:: The data produced are for all valid combinations of :math:`(y^V, y^A)`—including those that are beyond the `technical_lifetime` of the |t| to which they apply.
+   This may produce large data frames, depending on the number of technologies, regions, and scenarios. 
+   At the moment, :mod:`.tools.costs` does not filter out these combinations.
+   If this is problematic, the user may consider filtering the data for valid combinations of :math:`(y^V, y^A)`.
 
 Code reference
 ==============
@@ -222,7 +230,7 @@ Regional differentiation of costs (:mod:`~.costs.regional_differentiation`)
       get_weo_data
       get_intratec_data
       get_raw_technology_mapping
-      subset_materials_map
+      subset_module_map
       adjust_technology_mapping
       get_weo_regional_differentiation
       get_intratec_regional_differentiation
