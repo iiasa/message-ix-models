@@ -267,6 +267,9 @@ def cooling(context, regions, rcps, rels):
     # Build
     build(context, scen)
 
+    # Set scenario as default
+    scen.set_as_default()
+
     # Solve
     scen.solve(solve_options={"lpmethod": "4"}, case=caseName)
 
