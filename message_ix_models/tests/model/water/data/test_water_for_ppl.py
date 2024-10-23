@@ -1,3 +1,5 @@
+from typing import Literal
+
 import pandas as pd
 import pytest
 from message_ix import Scenario
@@ -209,40 +211,29 @@ def test_non_cooling_tec(request, test_context):
 
 # Mock function for scen.par
 class MockScenario:
-    def par(self, param, filters):
-        if param == "bound_activity_up":
-            return pd.DataFrame(
-                {
-                    "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
-                    "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
-                    "year_act": [2030, 2040, 2050],
-                    "value": [30, 15, 0],
-                }
-            )
-        elif param == "bound_new_capacity_up":
-            return pd.DataFrame(
-                {
-                    "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
-                    "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
-                    "year_vtg": [2030, 2040, 2050],
-                    "value": [30, 15, 0],
-                }
-            )
-        return pd.DataFrame()
+    def par(
+        self,
+        param: Literal["bound_activity_up", "bound_new_capacity_up"],
+        filters: dict,
+    ) -> pd.DataFrame:
+        year_type = "year_act" if param == "bound_activity_up" else "year_vtg"
 
-
-@pytest.mark.parametrize("constraint_type", ["activity", "new_capacity"])
-def test_relax_growth_constraint(constraint_type):
-    # Sample data for g_lo
-    if constraint_type == "activity":
-        year_type = "year_act"
-    elif constraint_type == "new_capacity":
-        year_type = "year_vtg"
-    else:
-        raise ValueError(
-            "Invalid constraint_type. Must be 'activity' or 'new_capacity'."
+        return pd.DataFrame(
+            {
+                "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
+                "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
+                year_type: [2030, 2040, 2050],
+                "value": [30, 15, 0],
+            }
         )
 
+
+@pytest.mark.parametrize(
+    "constraint_type, year_type",
+    [("activity", "year_act"), ("new_capacity", "year_vtg")],
+)
+def test_relax_growth_constraint(constraint_type, year_type):
+    # Sample data for g_lo
     g_lo = pd.DataFrame(
         {
             "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR", "R12_AFR"],
