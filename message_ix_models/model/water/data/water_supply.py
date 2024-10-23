@@ -94,12 +94,11 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         # Reading data, the data is spatially and temporally aggregated from GHMs
         df_sw["BCU_name"] = df_x["BCU_name"]
 
-        if context.type_reg == "country":
-            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
-        else:
-            df_sw["MSGREG"] = (
-                f"{context.regions}_" + df_sw["BCU_name"].str.split("|").str[-1]
-            )
+        df_sw["MSGREG"] = (
+            context.map_ISO_c[context.regions]
+            if context.type_reg == "country"
+            else f"{context.regions}_" + df_sw["BCU_name"].str.split("|").str[-1]
+        )
 
         df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
         df_sw.drop(columns="Unnamed: 0", inplace=True)
