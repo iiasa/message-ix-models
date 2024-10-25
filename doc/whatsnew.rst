@@ -4,7 +4,8 @@ What's new
 Next release
 ============
 
-- Fix the nexus/cooling function and adding test for checking some input data (:pull:`236`).
+- Make setup of constraints for cooling technologies flexible (:pull:`242`). 
+- Fix the nexus/cooling function and add test for checking some input data (:pull:`236`).
 - Add :doc:`/project/circeular` project code and documentation (:pull:`232`).
 - Update water availability data and major code editing to allow a new test suite for the water module (:pull:`106`).
 - Expand :doc:`repro` with sections on :ref:`repro-doc` and :ref:`versioning`, including :ref:`a list of external model names and ‘versions’ <model-names>` like “MESSAGEix-GLOBIOM 2.0” (:issue:`224`, :pull:`226`).
