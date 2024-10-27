@@ -25,3 +25,9 @@ methanol:
     molar mass: 32
     carbon mass: 12
     plastics use: 0.273
+
+ethanol:
+  M1:
+    molar mass: 28
+    carbon mass: 24
+    plastics use: 1
