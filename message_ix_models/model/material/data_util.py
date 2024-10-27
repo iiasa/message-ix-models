@@ -1895,7 +1895,7 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
 
 
 def gen_plastics_emission_factors(
-    info, species: Literal["methanol", "HVCs"]
+    info, species: Literal["methanol", "HVCs", "ethanol"]
 ) -> dict[str, pd.DataFrame]:
     """Generate "CO2_Emission" relation parameter that
     represents stored carbon in produced plastics.
@@ -1939,7 +1939,7 @@ def gen_plastics_emission_factors(
     }
     end_of_life_pars = end_of_life_pars.set_index("par").to_dict()["value"]
     common = {
-        "unit": "Mt C",
+        "unit": "???",
         "relation": "CO2_Emission",
         "mode": seq_carbon.keys(),
         "technology": tec_species_map[species],
@@ -2000,7 +2000,11 @@ def gen_chemicals_co2_ind_factors(
     Dict[str, pd.DataFrame]
     """
 
-    tec_species_map = {"methanol": "meth_ind_fs", "HVCs": "production_HVC"}
+    tec_species_map = {
+        "methanol": "meth_ind_fs",
+        "HVCs": "production_HVC",
+        "ethanol": "ethanol_to_ethylene_petro",
+    }
 
     carbon_pars = read_yaml_file(
         package_data_path(
@@ -2023,7 +2027,7 @@ def gen_chemicals_co2_ind_factors(
     }
     end_of_life_pars = end_of_life_pars.set_index("par").to_dict()["value"]
     common = {
-        "unit": "Mt C",
+        "unit": "???",
         "relation": "CO2_ind",
         "mode": embodied_carbon_plastics.keys(),
         "technology": tec_species_map[species],
