@@ -358,9 +358,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     ref_hist_cap: pd.DataFrame = scen.par(
         "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
     )
-    # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
-    # where h_fg (flue gasses losses) = 0.1
-    # ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1 # probably obsolete
 
     ref_input[["value", "level"]] = ref_input.apply(missing_tech, axis=1)
 
