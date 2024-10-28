@@ -13,7 +13,7 @@ from message_ix_models.model.material.data_util import (
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import combine_df_dictionaries, read_config
-from message_ix_models.util import broadcast, same_node
+from message_ix_models.util import broadcast, same_node, nodes_ex_world
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -307,7 +307,7 @@ def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> Dict[str, pd.DataFrame]:
     }
     df_in = (
         make_df("input", **cols)
-        .pipe(broadcast, node_loc=s_info.N, year_act=year_all)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=year_all)
         .pipe(same_node)
     )
     df_in["year_vtg"] = df_in["year_act"]
@@ -326,7 +326,7 @@ def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> Dict[str, pd.DataFrame]:
     }
     df_out = (
         make_df("output", **cols)
-        .pipe(broadcast, node_loc=s_info.N, year_act=year_all)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=year_all)
         .pipe(same_node)
     )
     df_out["year_vtg"] = df_out["year_act"]
