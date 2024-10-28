@@ -2720,3 +2720,59 @@ def gen_chemicals_co2_ind_factors(
         lambda x: add_non_combustion_oxidation(x), axis=1
     )
     return {"relation_activity": co2_emi_rel}
+
+
+def gen_ethanol_to_ethylene_emi_factor(info) -> Dict[str, pd.DataFrame]:
+    """Generate "CO2_ind" relation parameter that
+    represents carbon in chemical feedstocks that is oxidized in the
+    short-term (=during the model horizon) in downstream products.
+    This happens either through natural oxidation or combustion as the
+    end-of-life treatment of plastics.
+
+    The calculation considers:
+    * carbon content of feedstocks,
+    * the share that is converted to oxidizable chemicals
+    * the end-of-life treatment shares (i.e. incineration, landfill, etc.)
+
+    Values are positive since they need to be added
+    to bottom-up emission accounting.
+
+    Parameters
+    ----------
+    info: ScenarioInfo
+
+    Returns
+    -------
+    Dict[str, pd.DataFrame]
+    """
+
+    carbon_pars = read_yaml_file(
+        package_data_path(
+            "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
+        )
+    )
+    embodied_carbon_plastics = {
+        k: (v["carbon mass"] / v["molar mass"]) * v["plastics use"]
+        for k, v in carbon_pars["ethanol"].items()
+    }
+    common = {
+        "unit": "???",
+        "relation": "CO2_ind",
+        "mode": embodied_carbon_plastics.keys(),
+        "technology": "ethanol_to_ethylene_petro",
+    }
+    co2_emi_rel = make_df("relation_activity", **common).drop(columns="value")
+    co2_emi_rel = co2_emi_rel.merge(
+        pd.Series(embodied_carbon_plastics, name="value").to_frame().reset_index(),
+        left_on="mode",
+        right_on="index",
+    ).drop(columns="index")
+
+    years = info.Y
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, year_act=years)
+    co2_emi_rel["year_rel"] = co2_emi_rel["year_act"]
+
+    co2_emi_rel = co2_emi_rel.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(
+        same_node
+    )
+    return {"relation_activity": co2_emi_rel}

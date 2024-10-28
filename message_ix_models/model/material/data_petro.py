@@ -7,9 +7,10 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
+    gen_chemicals_co2_ind_factors,
+    gen_ethanol_to_ethylene_emi_factor,
     gen_plastics_emission_factors,
     read_timeseries,
-    gen_chemicals_co2_ind_factors,
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import (
@@ -555,9 +556,13 @@ def gen_data_petro_chemicals(
 
     meth_downstream_emi_top_down = gen_plastics_emission_factors(s_info, "HVCs")
     meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "HVCs")
+    meth_downstream_emi_eth = gen_ethanol_to_ethylene_emi_factor(s_info)
 
     results = combine_df_dictionaries(
-        results, meth_downstream_emi_top_down, meth_downstream_emi_bot_up
+        results,
+        meth_downstream_emi_top_down,
+        meth_downstream_emi_bot_up,
+        meth_downstream_emi_eth,
     )
 
     # TODO: move this to input xlsx file
