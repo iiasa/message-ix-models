@@ -718,7 +718,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # con4 = cost['technology'].str.endswith("air")
     # con5 = cost.technology.isin(input_cool['technology_name'])
     # inv_cost = cost[(con3) | (con4)]
-    inv_cost = cost.copy()
+
     # Manually removing extra technologies not required
     # TODO make it automatic to not include the names manually
     techs_to_remove = [
@@ -735,23 +735,28 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         "nuc_htemp__cl_fresh",
         "nuc_htemp__air",
     ]
+
+    from message_ix_models.tools.costs.config import Config
+    from message_ix_models.tools.costs.projections import create_cost_projections
+
+    # Set config for cost projections
+    # Using GDP method for cost projections
+    cfg = Config(
+        module="cooling", scenario=context.ssp, method="gdp", node=context.regions
+    )
+
+    # Get projected investment and fixed o&m costs
+    cost_proj = create_cost_projections(cfg)
+
+    # Get only the investment costs for cooling technologies
+    inv_cost = cost_proj["inv_cost"][
+        ["year_vtg", "node_loc", "technology", "value", "unit"]
+    ]
+
+    # Remove technologies that are not required
     inv_cost = inv_cost[~inv_cost["technology"].isin(techs_to_remove)]
-    # Converting the cost to USD/GW
-    inv_cost["investment_USD_per_GW_mid"] = (
-        inv_cost["investment_million_USD_per_MW_mid"] * 1e3
-    )
 
-    inv_cost = (
-        make_df(
-            "inv_cost",
-            technology=inv_cost["technology"],
-            value=inv_cost["investment_USD_per_GW_mid"],
-            unit="USD/GWa",
-        )
-        .pipe(same_node)
-        .pipe(broadcast, node_loc=node_region, year_vtg=info.Y)
-    )
-
+    # Add the investment costs to the results
     results["inv_cost"] = inv_cost
 
     # Addon conversion
