@@ -182,7 +182,7 @@ def relax_growth_constraint(
     scen,
     cooling_df: pd.DataFrame,
     g_lo: pd.DataFrame,
-    constraint_type: Literal[Union["activity", "new_capacity"]],
+    constraint_type: Literal[Union["activity", "new_capacity", "total_capacity"]],
 ) -> pd.DataFrame:
     """
     Checks if the parent technologies are shut down and require relaxing
@@ -208,18 +208,22 @@ def relax_growth_constraint(
     pd.DataFrame
         Updated `g_lo` DataFrame with relaxed growth constraints.
     """
-    year_type = "year_act" if constraint_type == "activity" else "year_vtg"
+    year_type = "year_vtg" if constraint_type == "new_capacity" else "year_act"
+    year_hist = "year_act" if constraint_type == "activity" else "year_vtg"
+    print(year_type)
     bound_param = (
-        "bound_activity_up"
+        "bound_activity_lo"
         if constraint_type == "activity"
-        else "bound_new_capacity_up"
+        else "bound_new_capacity_lo"
+        if constraint_type == "new_capacity"
+        else "bound_total_capacity_lo"
     )
-
+    print(bound_param)
     # keep rows with max year_type
     max_year_hist = (
-        ref_hist.loc[ref_hist.groupby(["node_loc", "technology"])[year_type].idxmax()]
+        ref_hist.loc[ref_hist.groupby(["node_loc", "technology"])[year_hist].idxmax()]
         .drop(columns="unit")
-        .rename(columns={year_type: "hist_year", "value": "hist_value"})
+        .rename(columns={year_hist: "hist_year", "value": "hist_value"})
     )
 
     # Step 2: Check for bound_activity_up or bound_new_capacity_up conditions
@@ -238,14 +242,14 @@ def relax_growth_constraint(
     # if next_year = None (single year test case) bound_up1 is simply empty
     bound_up1 = bound_up[bound_up[year_type] == bound_up["next_year"]]
     # Categories that might break the growth constraints
-    bound_up1 = bound_up1[bound_up1["value"] < 0.9 * bound_up1["hist_value"]]
+    bound_up1 = bound_up1[bound_up1["value"] > 0.9 * bound_up1["hist_value"]]
     # not look ad sudden contraints after sthe starting year
     bound_up = bound_up.sort_values(by=["node_loc", "technology", year_type])
     # Check if value for a year is greater than the value of the next year
     bound_up["next_value"] = bound_up.groupby(["node_loc", "technology"])[
         "value"
     ].shift(-1)
-    bound_up2 = bound_up[bound_up["value"] > 0.9 * bound_up["next_value"]]
+    bound_up2 = bound_up[bound_up["value"] < 0.9 * bound_up["next_value"]]
     bound_up2 = bound_up2.drop(columns=["next_value"])
     # combine bound 1 and 2
     combined_bound = (
@@ -841,31 +845,23 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     results["capacity_factor"] = df
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
-    # growth activity low to allow the cooling techs to be operational
-    g_lo = make_df(
-        "growth_activity_lo",
-        technology=inp["technology"].drop_duplicates(),
-        value=-0.05,
-        unit="%",
-        time="year",
-    ).pipe(broadcast, year_act=info.Y, node_loc=node_region)
-
-    # relax growth constraints for activity jumps
-    g_lo = relax_growth_constraint(ref_hist_act, scen, cooling_df, g_lo, "activity")
-    # relax growth constraints for capacity jumps
-    g_lo = relax_growth_constraint(ref_hist_cap, scen, cooling_df, g_lo, "new_capacity")
-    results["growth_activity_lo"] = g_lo
-
-    # growth activity up on saline water
-    inp_saline = inp[inp["technology"].str.endswith("ot_saline")]
-
+    # growth activity up to avoid sudden switch in the cooling techs
     g_up = make_df(
         "growth_activity_up",
-        technology=inp_saline["technology"].drop_duplicates(),
+        technology=inp["technology"].drop_duplicates(),
         value=0.05,
         unit="%",
         time="year",
     ).pipe(broadcast, year_act=info.Y, node_loc=node_region)
+
+    # relax growth constraints for activity jumps of parent technologies
+    g_up = relax_growth_constraint(ref_hist_act, scen, cooling_df, g_up, "activity")
+    # relax growth constraints for capacity jumps of parent technologies
+    g_up = relax_growth_constraint(ref_hist_cap, scen, cooling_df, g_up, "new_capacity")
+    g_up = relax_growth_constraint(
+        ref_hist_cap, scen, cooling_df, g_up, "total_capacity"
+    )
+
     results["growth_activity_up"] = g_up
 
     return results
