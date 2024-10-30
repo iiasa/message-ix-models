@@ -247,7 +247,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     unit="km3",
                     year_vtg=year_wat,
                     year_act=year_wat,
-                    level="water_supply",
+                    level="saline_supply",
                     commodity="saline_ppl",
                     mode="M1",
                     time="year",
