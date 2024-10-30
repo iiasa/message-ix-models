@@ -213,17 +213,17 @@ def test_non_cooling_tec(request, test_context):
 class MockScenario:
     def par(
         self,
-        param: Literal["bound_activity_up", "bound_new_capacity_up"],
+        param: Literal["bound_activity_lo", "bound_new_capacity_lo"],
         filters: dict,
     ) -> pd.DataFrame:
-        year_type = "year_act" if param == "bound_activity_up" else "year_vtg"
+        year_type = "year_act" if param == "bound_activity_lo" else "year_vtg"
 
         return pd.DataFrame(
             {
                 "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
                 "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
                 year_type: [2030, 2040, 2050],
-                "value": [30, 15, 0],
+                "value": [15, 30, 32],
             }
         )
 
@@ -257,7 +257,7 @@ def test_relax_growth_constraint(constraint_type, year_type):
             "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
             year_type: [2015, 2020, 2025],
             "time": ["year", "year", "year"],
-            "value": [30, 50, 80],
+            "value": [1, 2, 3],
             "unit": ["GWa", "GWa", "GWa"],
         }
     )
