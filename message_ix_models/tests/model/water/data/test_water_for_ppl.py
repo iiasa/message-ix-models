@@ -223,7 +223,7 @@ class MockScenario:
                 "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
                 "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
                 year_type: [2030, 2040, 2050],
-                "value": [15, 30, 32],
+                "value": [15, 150, 2000],
             }
         )
 
@@ -234,7 +234,7 @@ class MockScenario:
 )
 def test_relax_growth_constraint(constraint_type, year_type):
     # Sample data for g_lo
-    g_lo = pd.DataFrame(
+    g_up = pd.DataFrame(
         {
             "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR", "R12_AFR"],
             "technology": [
@@ -278,7 +278,7 @@ def test_relax_growth_constraint(constraint_type, year_type):
     scen = MockScenario()
 
     # Call the function with mock data
-    result = relax_growth_constraint(ref_hist, scen, cooling_df, g_lo, constraint_type)
+    result = relax_growth_constraint(ref_hist, scen, cooling_df, g_up, constraint_type)
     # reset_index to make the comparison easier
     result = result.reset_index(drop=True)
 
