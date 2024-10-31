@@ -207,6 +207,14 @@ class ScenarioInfo:
         for k in "model", "scenario", "version":
             yield (k, getattr(self, k))
 
+    def __or__(self, other) -> "ScenarioInfo":
+        if not isinstance(other, ScenarioInfo):
+            return NotImplemented
+        result = ScenarioInfo()
+        result.update(self)
+        result.update(other)
+        return result
+
     def __repr__(self):
         return (
             f"<ScenarioInfo: {sum(len(v) for v in self.set.values())} code(s) in "
