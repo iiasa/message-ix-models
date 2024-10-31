@@ -2,7 +2,7 @@ import logging
 from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Mapping, MutableMapping, Sequence
 from datetime import datetime
-from functools import partial, update_wrapper
+from functools import partial, singledispatch, update_wrapper
 from importlib.metadata import version
 from itertools import count
 from pathlib import Path
@@ -732,20 +732,36 @@ def replace_par_data(
             log.info(f"{len(to_remove)} obs in {par_name!r}")
 
 
-def same_node(df: pd.DataFrame, from_col="node_loc") -> pd.DataFrame:
+@singledispatch
+def same_node(data: pd.DataFrame, from_col: str = "node_loc") -> pd.DataFrame:
     """Fill 'node_{,dest,loc,origin,rel,share}' in `df` from `from_col`."""
     cols = list(
-        set(df.columns)
+        set(data.columns)
         & ({"node", "node_loc", "node_origin", "node_dest", "node_rel", "node_share"})
         - {from_col}
     )
-    return df.assign(**{c: copy_column(from_col) for c in cols})
+    return data.assign(**{c: copy_column(from_col) for c in cols})
 
 
-def same_time(df: pd.DataFrame) -> pd.DataFrame:
+@same_node.register
+def _(data: dict, from_col: str = "node_loc") -> dict[str, pd.DataFrame]:
+    for key, df in data.items():
+        data[key] = same_node(df, from_col=from_col)
+    return data
+
+
+@singledispatch
+def same_time(data: pd.DataFrame) -> pd.DataFrame:
     """Fill 'time_origin'/'time_dest' in `df` from 'time'."""
-    cols = list(set(df.columns) & {"time_origin", "time_dest"})
-    return df.assign(**{c: copy_column("time") for c in cols})
+    cols = list(set(data.columns) & {"time_origin", "time_dest"})
+    return data.assign(**{c: copy_column("time") for c in cols})
+
+
+@same_time.register
+def _(data: dict) -> dict[str, pd.DataFrame]:
+    for key, df in data.items():
+        data[key] = same_time(df)
+    return data
 
 
 def show_versions() -> str:
