@@ -182,10 +182,7 @@ TASKS = [
     # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
     ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["ROAD"]))),
     # Relabel
-    (
-        (fv_cny, "relabel2", fv + "2"),
-        dict(new_dims={"c": "transport freight {t.lower()}"}),
-    ),
+    ((fv_cny, "relabel2", fv + "2"), dict(new_dims={"c": "transport F {t}"})),
     # Convert to ixmp format
     ("t demand freight::ixmp", "as_message_df", fv_cny, *_demand_common),
     # Select only non-LDV PDT
