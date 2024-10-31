@@ -6,7 +6,7 @@ from functools import partial, singledispatch, update_wrapper
 from importlib.metadata import version
 from itertools import count
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Literal, Optional, Protocol, Union
 
 import message_ix
 import pandas as pd
@@ -370,7 +370,13 @@ def iter_parameters(set_name, scenario: Optional["message_ix.Scenario"] = None):
                 yield name
 
 
-def make_io(src, dest, efficiency, on="input", **kwargs):
+def make_io(
+    src: tuple[str, str, str],
+    dest: tuple[str, str, str],
+    efficiency: float,
+    on: Literal["input", "output"] = "input",
+    **kwargs,
+):
     """Return input and output data frames for a 1-to-1 technology.
 
     Parameters
