@@ -298,7 +298,9 @@ f rail lightoil:
 
 F RAIL:
   name: Freight rail
-  child: [f rail elec, f rail loil]
+  child:
+  - f rail electr
+  - f rail lightoil
   units: Gv km
   iea-eweb-flow: [RAIL]
 
@@ -335,9 +337,17 @@ rail_pub:
   input: {commodity: electr}
   report: RAIL_urban_ELE
 
-transport freight road usage:
+transport F RAIL usage:
   description: >-
     Conversion from vehicle-distance traveled to freight transport activity
+  input: {commodity: transport F RAIL vehicle}
+  output: {commodity: transport F RAIL}
+
+transport F ROAD usage:
+  description: >-
+    Conversion from vehicle-distance traveled to freight transport activity
+  input: {commodity: transport F ROAD vehicle}
+  output: {commodity: transport F ROAD}
 
 transport pax load factor:
   description: >-
