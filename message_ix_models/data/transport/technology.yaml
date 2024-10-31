@@ -124,7 +124,7 @@ PHEV_ptrp:
   description: >-
     Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
     all-electric range)
-  input: {commodity: lightoil}
+  input: {commodity: [electr, lightoil]}
   message-v-report: LDV_PHEV
   gfei-2017-technology: Plug-in
 
@@ -197,8 +197,7 @@ Trolley_bus:
 PHEV_bus:
   description: Plug-in hybrid-electric bus using gasoline/diesel
   input:
-    commodity: lightoil
-    # commodity: [electr, lightoil]  # actually both lightoil *and* electr
+    commodity: [electr, lightoil]
   report: BUS_PHEV
 
 # BEV_bus:
