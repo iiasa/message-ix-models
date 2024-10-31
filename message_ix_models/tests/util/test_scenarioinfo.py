@@ -3,6 +3,7 @@ import re
 
 import pandas as pd
 import pytest
+from ixmp.testing import assert_logs
 from message_ix import make_df
 from message_ix.testing import make_dantzig
 from pandas.testing import assert_frame_equal
@@ -170,13 +171,16 @@ class TestScenarioInfo:
         si.set["foo"] = [1, 2, 3]
         assert "<ScenarioInfo: 3 code(s) in 1 set(s)>" == repr(si)
 
-    def test_update(self):
-        si = ScenarioInfo()
-        si.par["demand"] = make_df("demand")
+    def test_update(self, caplog):
+        si0 = ScenarioInfo()
+        si0.par["demand"] = make_df("demand")
 
-        # update() fails
-        with pytest.raises(NotImplementedError):
-            ScenarioInfo().update(si)
+        si1 = ScenarioInfo()
+
+        # update() does not merge parameter data
+        with assert_logs(caplog, "Not implemented: merging parameter data"):
+            si1.update(si0)
+        assert "demand" not in si1.par
 
     @pytest.mark.parametrize(
         "codelist, y0, N_all, N_Y, y_m1, dp_checks",

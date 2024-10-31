@@ -201,7 +201,7 @@ class ScenarioInfo:
             )
 
         for name, data_frame in other.par.items():
-            raise NotImplementedError("Merging parameter data")
+            log.warning(f"Not implemented: merging parameter data for {name!r}")
 
     def __iter__(self):
         for k in "model", "scenario", "version":
