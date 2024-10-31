@@ -251,9 +251,14 @@ class ScenarioInfo:
             print(self.set[set_name])
             raise
 
-        return self.set[set_name][idx].eval_annotation(
-            id="units", globals=dict(registry=pint.get_application_registry())
-        )
+        code = self.set[set_name][idx]
+
+        try:
+            return code.eval_annotation(
+                id="units", globals=dict(registry=pint.get_application_registry())
+            )
+        except AttributeError:
+            raise TypeError(f"{set_name!s} element {code!r} is str, not Code")
 
     def io_units(
         self, technology: str, commodity: str, level: Optional[str] = None
