@@ -52,7 +52,7 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
     c, info = testing.configure_build(ctx, regions=regions, years=years)
 
     # Code runs
-    result = c.get("transport freight::ixmp")
+    result = c.get("transport F::ixmp")
 
     # Data are provided for these parameters
     assert {
