@@ -756,6 +756,9 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # Remove technologies that are not required
     inv_cost = inv_cost[~inv_cost["technology"].isin(techs_to_remove)]
 
+    # Only keep cooling module technologies by filtering for technologies with "__"
+    inv_cost = inv_cost[inv_cost["technology"].str.contains("__")]
+
     # Add the investment costs to the results
     results["inv_cost"] = inv_cost
 
