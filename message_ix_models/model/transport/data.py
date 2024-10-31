@@ -108,7 +108,13 @@ def dummy_supply(technologies: List["Code"], info, config) -> Dict[str, pd.DataF
     for input_info in map(lambda t: t.eval_annotation(id="input"), technologies):
         if input_info is None or input_info.get("level", None) == "useful":
             continue  # No `input` annotation, or an LDV usage pseudo-technology
-        level_commodity.add(("final", input_info["commodity"]))
+        commodity = input_info["commodity"]
+        if isinstance(commodity, str):
+            level_commodity.add(("final", commodity))
+        elif isinstance(commodity, list):
+            level_commodity.update(("final", c) for c in commodity)
+        else:
+            raise TypeError(type(commodity))
 
     result: Dict[str, pd.DataFrame] = dict()
     common = dict(mode="all", time="year", time_dest="year", unit="GWa")
