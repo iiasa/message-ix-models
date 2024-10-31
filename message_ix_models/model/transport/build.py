@@ -265,10 +265,12 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
 
 def add_structure(c: Computer):
-    """Add keys to `c` for model structure required by demand computations.
+    """Add keys to `c` for structures required by :mod:`.transport.build` computations.
 
-    This uses `info` to mock the contents that would be reported from an already-
-    populated Scenario for sets "node", "year", and "cat_year".
+    This uses :attr:`.transport.Config.base_model_info` and
+    :attr:`.transport.Config.spec` to mock the contents that would be reported from an
+    already-populated Scenario for sets "node", "year", and "cat_year". It also adds
+    many other keys.
     """
     from operator import itemgetter
 
@@ -295,14 +297,24 @@ def add_structure(c: Computer):
     for key, *comp in (
         # Configuration
         ("info", lambda c: c.transport.base_model_info, "context"),
+        (
+            "transport info",
+            lambda c: c.transport.base_model_info | c.transport.spec.add,
+            "context",
+        ),
         ("dry_run", lambda c: c.core.dry_run, "context"),
         # Structure
-        ("c::transport", quote(info.set["commodity"])),
+        ("c::transport", quote(spec.add.set["commodity"])),
+        ("c::transport+base", quote(spec.add.set["commodity"] + info.set["commodity"])),
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
         ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
+        ("t::transport", quote(spec.add.set["technology"])),
+        # Dictionary form for aggregation
+        # TODO Choose a more informative key
+        ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
         ("t::transport modes", quote(config.demand_modes)),
         ("y", quote(info.set["year"])),
         (
@@ -315,16 +327,19 @@ def add_structure(c: Computer):
         except KeyExistsError:
             continue  # Already present; don't overwrite
 
+    # Create quantities for broadcasting (t,) to (t, c, l) dimensions
+    for kind in "input", "output":
+        c.add(
+            f"broadcast:t-c-l:transport+{kind}",
+            "broadcast_t_c_l",
+            "t::transport",
+            "c::transport+base",
+            kind=kind,
+            default_level="final",
+        )
+
     # Retrieve information about the model structure
-    technologies = spec.add.set["technology"]
     t_groups = get_technology_groups(spec)
-
-    # Lists and subsets
-    c.add("c::transport", quote(spec.add.set["commodity"]))
-    c.add("t::transport", quote(technologies))
-
-    # Create a quantity for broadcasting t to t, c, l
-    c.add("input_commodity_level", "broadcast:t-c-l", "t::transport", quote("final"))
 
     # List of nodes excluding "World"
     # TODO move upstream, to message_ix
@@ -340,7 +355,14 @@ def add_structure(c: Computer):
     # Model periods only
     c.add("y::model", "model_periods", "y", "cat_year")
     c.add("y0", itemgetter(0), "y::model")
-    c.add("broadcast:y-yv-ya", "broadcast_y_yv_ya", "y", "y::model")
+
+    # Quantities for broadcasting y to (yv, ya)
+    for base, tag, method in (
+        ("y", ":all", "product"),  # All periods
+        ("y::model", "", "product"),  # Model periods only
+        ("y::model", ":no vintage", "zip"),  # Model periods with no vintaging
+    ):
+        c.add(f"broadcast:y-yv-ya{tag}", "broadcast_y_yv_ya", base, base, method=method)
 
     # Mappings for use with aggregate, select, etc.
     c.add("t::transport agg", quote(dict(t=t_groups)))
@@ -351,9 +373,14 @@ def add_structure(c: Computer):
         "t::transport modes 1",
         quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
     )
+
+    # Groups of technologies and indexers
     for id, techs in t_groups.items():
+        # FIXME Combine or disambiguate these keys
+        # Indexer-form of technology groups
         c.add(f"t::transport {id}", quote(dict(t=techs)))
-    c.add("t::transport all", quote(dict(t=technologies)))
+        # List form of technology groups
+        c.add(f"t::{id}", quote(techs))
 
     # Mappings for use with IEA Extended World Energy Balances data
     c.add("groups::iea eweb", "groups_iea_eweb", "t::transport")
