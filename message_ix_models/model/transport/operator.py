@@ -202,7 +202,8 @@ def broadcast_advance(data: "AnyQuantity", y0: int, config: dict) -> "AnyQuantit
     return result
 
 
-def broadcast_n(qty: "AnyQuantity", n: List[str], *, dim: str) -> "AnyQuantity":
+def broadcast_n(qty: "AnyQuantity", n: List[str], *, dim: str = "n") -> "AnyQuantity":
+    """Broadcast over nodes `n` along dimension `dim`."""
     existing = sorted(qty.coords[dim].data)
     missing = set(n) - set(existing)
 
