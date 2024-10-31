@@ -282,7 +282,7 @@ def prepare_computer(c: Computer):
             # Drop existing "c" dimension
             key = single_key(c.add(key / "c", "drop_vars", key, quote("c")))
             # Fill (c, l) dimensions based on t
-            key = c.add(ks[5], "mul", key, "broadcast:t-c-l")
+            key = c.add(ks[5], "mul", key, "broadcast:t-c-l:transport+input")
         elif name == "technical_lifetime":
             # Round up technical_lifetime values due to incompatibility in handling
             # non-integer values in the GAMS code
