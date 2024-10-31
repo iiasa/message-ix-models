@@ -11,6 +11,7 @@ from typing import (
     Dict,
     Hashable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -214,17 +215,21 @@ def broadcast_n(qty: "AnyQuantity", n: List[str], *, dim: str = "n") -> "AnyQuan
         return qty
 
 
-def broadcast_y_yv_ya(y: List[int], y_include: List[int]) -> "AnyQuantity":
+def broadcast_y_yv_ya(
+    y: List[int], y_include: List[int], *, method: Literal["product", "zip"] = "product"
+) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
     This omits all :math:`y^V \notin y^{include}`.
 
     If :py:`"y::model"` is passed as `y_include`, this is equivalent to
-    :attr:`.ScenarioInfo.ya_ya`.
+    :attr:`.ScenarioInfo.yv_ya`.
     """
     dims = ["y", "yv", "ya"]
+
+    func = product if method == "product" else zip
     series = (
-        pd.DataFrame(product(y, y_include), columns=dims[1:])
+        pd.DataFrame(func(y, y_include), columns=dims[1:])
         .query("ya >= yv")
         .assign(value=1.0, y=lambda df: df["yv"])
         .set_index(dims)["value"]
