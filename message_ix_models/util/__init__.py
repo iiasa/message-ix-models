@@ -419,7 +419,8 @@ def make_io(
 
 
 def make_matched_dfs(
-    base: Union[MutableMapping, pd.DataFrame], **par_value: Union[float, pint.Quantity]
+    base: Union[MutableMapping, pd.DataFrame],
+    **par_value: Union[float, pint.Quantity, dict],
 ) -> dict[str, pd.DataFrame]:
     """Return data frames derived from `base` for multiple parameters.
 
@@ -450,14 +451,23 @@ def make_matched_dfs(
     >>>     technical_lifetime=pint.Quantity(8, "year"),
     >>> )
     """
-    data = ChainMap(dict(), base)
-    result = {}
-    for par, value in par_value.items():
-        data.maps[0] = (
-            dict(value=value.magnitude, unit=f"{value.units:~}")
-            if isinstance(value, pint.Quantity)
-            else dict(value=value)
-        )
+    replace = dict()
+    data = ChainMap(replace, base)
+    result = dict()
+    for par, values in par_value.items():
+        replace.clear()
+        if isinstance(values, dict):
+            replace.update(values)
+            value = replace.pop("value")
+        else:
+            value = values
+
+        if isinstance(value, pint.Quantity):
+            replace["value"] = value.magnitude
+            replace["unit"] = f"{value.units:~}"
+        else:
+            replace["value"] = value
+
         result[par] = (
             message_ix.make_df(par, **data).drop_duplicates().reset_index(drop=True)
         )
