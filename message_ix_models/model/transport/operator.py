@@ -350,6 +350,14 @@ def duration_period(info: "ScenarioInfo") -> "AnyQuantity":
     ).pipe(unique_units_from_dim, "unit")
 
 
+def expand_dims(qty: "AnyQuantity", dim, *args, **kwargs) -> "AnyQuantity":
+    """Like :meth:`.Quantity.expand_dims`.
+
+    .. todo:: Move upstream, to :mod:`.genno`.
+    """
+    return qty.expand_dims(dim=dim, *args, **kwargs)
+
+
 def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantity":
     """Extend `qty` along the dimension `dim` to cover all of `y`.
 
