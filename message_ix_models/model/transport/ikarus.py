@@ -1,27 +1,21 @@
 """Prepare non-LDV data from the IKARUS model via :file:`GEAM_TRP_techinput.xlsx`."""
 
 import logging
-from collections import defaultdict
 from functools import lru_cache, partial
 from operator import le
-from typing import TYPE_CHECKING, Dict
+from typing import Dict
 
 import pandas as pd
 import xarray as xr
 from genno import Computer, Key, KeySeq, Quantity, quote
 from genno.core.key import single_key
 from iam_units import registry
-from message_ix import make_df
 from openpyxl import load_workbook
 
-from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
-    ScenarioInfo,
-    broadcast,
     cached,
     convert_units,
     make_matched_dfs,
-    nodes_ex_world,
     package_data_path,
     same_node,
     same_time,
@@ -29,10 +23,6 @@ from message_ix_models.util import (
 )
 
 from .non_ldv import UNITS
-from .util import input_commodity_level
-
-if TYPE_CHECKING:
-    from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -219,7 +209,27 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
 
 
 def prepare_computer(c: Computer):
-    """Prepare `c` to perform model data preparation using IKARUS data."""
+    """Prepare `c` to perform model data preparation using IKARUS data.
+
+    ====================================================================================
+
+    The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed data is
+    exported into ``non_LDV_techs_wrapped.csv``.
+
+    .. note:: superseded by the computations set up by :func:`prepare_computer`.
+
+    Parameters
+    ----------
+    context : .Context
+
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+        Values are data frames ready for :meth:`~.Scenario.add_par`.
+        Years in the data include the model horizon indicated by
+        :attr:`.Config.base_model_info`, plus the additional year 2010.
+    """
     # TODO identify whether capacity_factor is needed
     c.configure(rename_dims={"source": "source"})
 
@@ -337,152 +347,3 @@ def prepare_computer(c: Computer):
     # .non_ldv.prepare_computer() only if IKARUS is the selected data source for non-LDV
     # data. Other derived quantities (emissions factors) are also prepared there based
     # on these outputs.
-
-
-def get_ikarus_data(context) -> Dict[str, pd.DataFrame]:
-    """Prepare non-LDV data from :cite:`Martinsen2006`.
-
-    The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed data is
-    exported into ``non_LDV_techs_wrapped.csv``.
-
-    .. note:: superseded by the computations set up by :func:`prepare_computer`.
-
-    Parameters
-    ----------
-    context : .Context
-
-    Returns
-    -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
-        Values are data frames ready for :meth:`~.Scenario.add_par`.
-        Years in the data include the model horizon indicated by
-        :attr:`.Config.base_model_info`, plus the additional year 2010.
-    """
-    # Reference to the transport configuration
-    config: "Config" = context.transport
-    tech_info = config.spec.add.set["technology"]
-    info = config.base_model_info
-
-    # Merge with base model commodity information for io_units() below
-    # TODO this duplicates code in .ldv; move to a common location
-    all_info = ScenarioInfo()
-    all_info.set["commodity"].extend(get_codes("commodity"))
-    all_info.update(config.spec.add)
-
-    # Retrieve the data from the spreadsheet. Use additional output efficiency and
-    # investment cost factors for some bus technologies
-    data = read_ikarus_data(
-        occupancy=config.non_ldv_output,  # type: ignore [attr-defined]
-        k_output=config.efficiency["bus output"],
-        k_inv_cost=config.cost["bus inv"],
-    )
-
-    # Create data frames to add imported params to MESSAGEix
-
-    # Vintage and active years from scenario info
-    # Prepend years between 2010 and *firstmodelyear* so that values are saved
-    missing_years = [x for x in info.set["year"] if (2010 <= x < info.y0)]
-    vtg_years = missing_years + info.yv_ya["year_vtg"].tolist()
-    act_years = missing_years + info.yv_ya["year_act"].tolist()
-
-    # Default values to be used as args in make_df()
-    defaults = dict(
-        mode="all",
-        year_act=act_years,
-        year_vtg=vtg_years,
-        time="year",
-        time_origin="year",
-        time_dest="year",
-    )
-
-    # Dict of ('parameter name' -> [list of data frames])
-    dfs = defaultdict(list)
-
-    # Iterate over each parameter and technology
-    for (par, tec), group_data in data.groupby(["param", "technology"]):
-        # Dict including the default values to be used as args in make_df()
-        args = defaults.copy()
-        args["technology"] = tec
-
-        # Parameter-specific arguments/processing
-        if par == "input":
-            pass  # Handled by input_commodity_level(), below
-        elif par == "output":
-            # Get the mode for a technology
-            mode = tech_info[tech_info.index(tec)].parent.id
-            args.update(dict(commodity=f"transport pax {mode.lower()}", level="useful"))
-
-        # Units, as an abbreviated string
-        _units = group_data.apply(lambda x: x.units).unique()
-        assert len(_units) == 1, "Units must be unique per (tec, par)"
-        units = _units[0]
-        args["unit"] = f"{units:~}"
-
-        # Create data frame with values from *args*
-        df = make_df(par, **args)
-
-        # Assign input commodity and level according to the technology
-        if par == "input":
-            df = input_commodity_level(context, df, default_level="final")
-
-        # Copy data into the 'value' column, by vintage year
-        for (year, *_), value in group_data.items():
-            df.loc[df["year_vtg"] == year, "value"] = value.magnitude
-
-        # Drop duplicates. For parameters with 'year_vtg' but no 'year_act' dimension,
-        # the same year_vtg appears multiple times because of the contents of *defaults*
-        df.drop_duplicates(inplace=True)
-
-        # Fill remaining values for the rest of vintage years with the last value
-        # registered, in this case for 2030.
-        df["value"] = df["value"].fillna(method="ffill")
-
-        # Convert to the model's preferred input/output units for each commodity
-        if par in ("input", "output"):
-            target_units = df.apply(
-                lambda row: all_info.io_units(
-                    row["technology"], row["commodity"], row["level"]
-                ),
-                axis=1,
-            ).unique()
-            assert 1 == len(target_units)
-        else:
-            target_units = []
-
-        if len(target_units):
-            # FIXME improve convert_units() to handle more of these steps
-            df["value"] = convert_units(
-                df["value"], {"value": (1.0, units, target_units[0])}
-            )
-            df["unit"] = f"{target_units[0]:~}"
-
-        # Round up technical_lifetime values due to incompatibility in handling
-        # non-integer values in the GAMS code
-        if par == "technical_lifetime":
-            df["value"] = df["value"].round()
-
-        # Broadcast across all nodes
-        dfs[par].append(
-            df.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(same_node)
-        )
-
-    # Concatenate data frames for each model parameter
-    result = {par: pd.concat(list_of_df) for par, list_of_df in dfs.items()}
-
-    # Capacity factors all 1.0
-    result.update(make_matched_dfs(result["output"], capacity_factor=1.0))
-    result["capacity_factor"]["unit"] = ""
-
-    if context.get("debug", False):
-        # Directory for debug output (if any)
-        debug_dir = context.get_local_path("debug")
-        # Ensure the directory
-        debug_dir.mkdir(parents=True, exist_ok=True)
-
-        for name, df in result.items():
-            target = debug_dir.joinpath(f"ikarus-{name}.csv")
-            log.info(f"Dump data to {target}")
-            df.to_csv(target, index=False)
-
-    return result
