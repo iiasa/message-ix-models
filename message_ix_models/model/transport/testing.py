@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 # Common marks for transport code. Do not reuse keys that are less than the highest key
 # appearing in the dict.
-MARK = {
+MARK: dict[int, pytest.MarkDecorator] = {
     0: pytest.mark.xfail(
         reason="Missing R14 input data/assumptions", raises=FileNotFoundError
     ),
