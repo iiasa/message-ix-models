@@ -542,6 +542,22 @@ def factor_ssp(
     return info.quantify(**kw)
 
 
+def freight_usage_output(context: "Context") -> "AnyQuantity":
+    """Output efficiency for ``transport F {MODE} usage`` pseudo-technologies.
+
+    Returns
+    -------
+    Quantity
+        with dimension |t|
+    """
+    modes = "F RAIL", "F ROAD"  # TODO Retrieve this from configuration
+    return genno.Quantity(
+        [context.transport.load_factor[m] for m in modes],
+        coords=dict(t=[f"transport {m} usage" for m in modes]),
+        units="Gt km",
+    )
+
+
 Groups = Dict[str, Dict[str, List[str]]]
 
 
