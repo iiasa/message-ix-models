@@ -793,15 +793,16 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
     This mapping should be used with :func:`.genno.operator.aggregate`, giving the
     argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
 
-    .. todo:: move upstream, to :mod:`message_ix_models`.
+    .. todo:: move to :mod:`message_ix_models.report.operator`.
     """
-    from message_ix_models.model.structure import get_codes
-
     result = {}
-    for n in get_codes(f"node/{config['regions']}"):
-        # "World" node should have no parent and some children. Countries (from
-        # pycountry) that are omitted from a mapping have neither parent nor children.
-        if len(n.child) and n.parent is None:
+
+    cl = get_codelist(f"node/{config['regions']}")
+    for n in cl:
+        # "World" node should have be top-level (its parent is the `cl` itself) and have
+        # some children. Countries (from pycountry) that are omitted from a mapping have
+        # no children.
+        if n.parent is cl and len(n.child):
             name = str(n)
 
             # FIXME Remove. This is a hack to suit the legacy reporting, which expects
