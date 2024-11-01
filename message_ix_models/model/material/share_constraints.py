@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, List, Literal
 
 import message_ix
 import pandas as pd
-from message_data.tools.utilities import get_nodes
+from ixmp import Platform
 from message_ix import make_df
 from pandas import DataFrame
 
@@ -197,13 +197,13 @@ def gen_comm_shr_map(
     [pd.DataFrame, pd.DataFrame]
     -------
     """
+    s_info = ScenarioInfo(scen)
     if nodes == "all":
-        nodes = get_nodes(scen)
-        nodes = [i for i in nodes if "GLB" not in i]
-    elif nodes not in get_nodes(scen):
+        nodes = nodes_ex_world(s_info.N)
+    elif nodes not in nodes_ex_world(s_info.N):
         print(
             f"The provided nodes: {nodes} are not contained in this scenario. "
-            f"Valid nodes of this scenario are: {get_nodes(scen)}"
+            f"Valid nodes of this scenario are: {nodes_ex_world(s_info.N)}"
         )
         return
 
