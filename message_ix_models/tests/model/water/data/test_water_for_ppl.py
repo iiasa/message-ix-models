@@ -94,8 +94,11 @@ def test_cool_tec(request, test_context, RCP):
     test_context.time = "year"
     test_context.nexus_set = "nexus"
     # TODO add
-    test_context.RCP = RCP
-    test_context.REL = "med"
+    test_context.update(
+        RCP=RCP,
+        REL="med",
+        ssp="SSP2",
+    )
 
     # TODO: only leaving this in so you can see which data you might want to assert to
     # be in the result. Please remove after adapting the assertions below:
