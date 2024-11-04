@@ -4,7 +4,7 @@ What's new
 Next release
 ============
 
-- Make setup of constraints for cooling technologies flexible (:pull:`242`). 
+- Make setup of constraints for cooling technologies flexible and update solar csp tech. name (:pull:`242`). 
 - Fix the nexus/cooling function and add test for checking some input data (:pull:`236`).
 - Add :doc:`/project/circeular` project code and documentation (:pull:`232`).
 - Update water availability data and major code editing to allow a new test suite for the water module (:pull:`106`).
