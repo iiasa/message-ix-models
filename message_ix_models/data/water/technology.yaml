@@ -576,6 +576,54 @@ nexus:
       technology using parasitic electricity
     input: {commodity: electr}
 
+  csp_sm1_ppl__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  csp_sm1_ppl__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed loop cooling
+      technology using freshwater supply & parasitic electricity
+    input: {commodity: freshwater_supply,electr}
+
+  csp_sm1_ppl__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: saline_supply_ppl}
+
+  csp_sm1_ppl__air:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  csp_sm3_ppl__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  csp_sm3_ppl__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed loop cooling
+      technology using freshwater supply & parasitic electricity
+    input: {commodity: freshwater_supply,electr}
+
+  csp_sm3_ppl__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: saline_supply_ppl}
+
+  csp_sm3_ppl__air:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
   urban_t_d:
     description: >-
       Urban water transmission & distribution
@@ -1323,4 +1371,54 @@ cooling:
       Solar thermal power plant with storage cooling by once through cooling
       technology using parasitic electricity
     input: {commodity: electr}
+
+  csp_sm1_ppl__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  csp_sm1_ppl__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed loop cooling
+      technology using freshwater supply & parasitic electricity
+    input: {commodity: freshwater_supply,electr}
+
+  csp_sm1_ppl__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: saline_supply_ppl}
+
+  csp_sm1_ppl__air:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  csp_sm3_ppl__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  csp_sm3_ppl__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed loop cooling
+      technology using freshwater supply & parasitic electricity
+    input: {commodity: freshwater_supply,electr}
+
+  csp_sm3_ppl__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: saline_supply_ppl}
+
+  csp_sm3_ppl__air:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  
 

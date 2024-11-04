@@ -50,6 +50,8 @@ nexus:
     - cooling__loil_ppl
     - cooling__nuc_hc
     - cooling__solar_th_ppl
+    - cooling__csp_sm1_ppl
+    - cooling__csp_sm3_ppl
 
     add:
     - electr
@@ -210,9 +212,16 @@ nexus:
     - nuc_hc__ot_saline
     - solar_th_ppl__ot_fresh
     - solar_th_ppl__cl_fresh
-    - solar_th_ppl__cl_fresh
     - solar_th_ppl__ot_saline
     - solar_th_ppl__air
+    - csp_sm1_ppl__ot_fresh
+    - csp_sm1_ppl__cl_fresh
+    - csp_sm1_ppl__ot_saline
+    - csp_sm1_ppl__air
+    - csp_sm3_ppl__ot_fresh
+    - csp_sm3_ppl__cl_fresh
+    - csp_sm3_ppl__ot_saline
+    - csp_sm3_ppl__air
     - extract__freshwater_supply
     - extract__freshwater_instream
     - extract__saline_supply
@@ -318,6 +327,14 @@ nexus:
     - solar_th_ppl__cl_fresh
     - solar_th_ppl__ot_saline
     - solar_th_ppl__air
+    - csp_sm1_ppl__ot_fresh
+    - csp_sm1_ppl__cl_fresh
+    - csp_sm1_ppl__ot_saline
+    - csp_sm1_ppl__air
+    - csp_sm3_ppl__ot_fresh
+    - csp_sm3_ppl__cl_fresh
+    - csp_sm3_ppl__ot_saline
+    - csp_sm3_ppl__air
 
   # cat_addon includes cooling technology addons for parent technologies
   type_addon:
@@ -345,6 +362,8 @@ nexus:
     - cooling__nuc_hc
     - cooling__nuc_lc
     - cooling__solar_th_ppl
+    - cooling__csp_sm1_ppl
+    - cooling__csp_sm3_ppl
 
   map_tec_addon:
     add:
@@ -370,7 +389,8 @@ nexus:
     - [loil_ppl, cooling__loil_ppl]
     - [nuc_hc, cooling__nuc_hc]
     - [nuc_lc, cooling__nuc_lc]
-    # - [solar_th_ppl, cooling__solar_th_ppl]
+    - [csp_sm1_ppl, cooling__csp_sm1_ppl]
+    - [csp_sm3_ppl, cooling__csp_sm3_ppl]
 
 
   cat_addon:
@@ -468,6 +488,14 @@ nexus:
     - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
     - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
     - [cooling__solar_th_ppl, solar_th_ppl__air]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__ot_fresh]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__cl_fresh]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__ot_saline]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__air]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__ot_fresh]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__cl_fresh]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__ot_saline]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__air]
 
   type_tec:
     add:
@@ -611,6 +639,8 @@ cooling:
     - cooling__loil_ppl
     - cooling__nuc_hc
     - cooling__solar_th_ppl
+    - cooling__csp_sm1_ppl
+    - cooling__csp_sm3_ppl
 
     add:
     - electr
@@ -747,9 +777,16 @@ cooling:
     - nuc_hc__ot_saline
     - solar_th_ppl__ot_fresh
     - solar_th_ppl__cl_fresh
-    - solar_th_ppl__cl_fresh
     - solar_th_ppl__ot_saline
     - solar_th_ppl__air
+    - csp_sm1_ppl__ot_fresh
+    - csp_sm1_ppl__cl_fresh
+    - csp_sm1_ppl__ot_saline
+    - csp_sm1_ppl__air
+    - csp_sm3_ppl__ot_fresh
+    - csp_sm3_ppl__cl_fresh
+    - csp_sm3_ppl__ot_saline
+    - csp_sm3_ppl__air
     - extract__upstream_landuse
     - extract__saline_supply
     - extract__freshwater_supply
@@ -856,6 +893,14 @@ cooling:
     - solar_th_ppl__cl_fresh
     - solar_th_ppl__ot_saline
     - solar_th_ppl__air
+    - csp_sm1_ppl__ot_fresh
+    - csp_sm1_ppl__cl_fresh
+    - csp_sm1_ppl__ot_saline
+    - csp_sm1_ppl__air
+    - csp_sm3_ppl__ot_fresh
+    - csp_sm3_ppl__cl_fresh
+    - csp_sm3_ppl__ot_saline
+    - csp_sm3_ppl__air
 
   # cat_addon includes cooling technology addons for parent technologies
   type_addon:
@@ -883,6 +928,8 @@ cooling:
     - cooling__nuc_hc
     - cooling__nuc_lc
     - cooling__solar_th_ppl
+    - cooling__csp_sm1_ppl
+    - cooling__csp_sm3_ppl
 
   map_tec_addon:
     add:
@@ -909,6 +956,8 @@ cooling:
     - [nuc_hc, cooling__nuc_hc]
     - [nuc_lc, cooling__nuc_lc]
     # - [solar_th_ppl, cooling__solar_th_ppl]
+    - [csp_sm1_ppl, cooling__csp_sm1_ppl]
+    - [csp_sm3_ppl, cooling__csp_sm3_ppl]
 
 
   cat_addon:
@@ -1006,6 +1055,14 @@ cooling:
     - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
     - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
     - [cooling__solar_th_ppl, solar_th_ppl__air]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__ot_fresh]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__cl_fresh]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__ot_saline]
+    - [cooling__csp_sm1_ppl, csp_sm1_ppl__air]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__ot_fresh]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__cl_fresh]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__ot_saline]
+    - [cooling__csp_sm3_ppl, csp_sm3_ppl__air]
 
 
   unit:
