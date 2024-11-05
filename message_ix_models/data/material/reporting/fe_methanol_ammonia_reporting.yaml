@@ -1,0 +1,54 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  in
+
+iamc_prefix:
+  Final Energy|Industry|
+
+common:
+  unit: GWa
+
+vars:
+  Chemicals|Ammonia|Solids|Coal:
+    filter:
+      { technology: [ coal_NH3, coal_NH3_ccs ], mode: M1, commodity: coal, level: secondary }
+    short: fe_nh3_coal
+
+  Chemicals|Ammonia|Solids|Biomass:
+    filter:
+      { technology: [ biomass_NH3, biomass_NH3_ccs ], mode: M1, commodity: biomass, level: primary }
+    short: fe_nh3_bio
+
+  Chemicals|Ammonia|Gases|Gas:
+    filter:
+      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: gas, level: secondary }
+    short: fe_nh3_gas
+
+  Chemicals|Ammonia|Liquids|Oil:
+    filter:
+      { technology: [ fueloil_NH3, fueloil_NH3_ccs ], mode: M1, commodity: fueloil, level: secondary }
+    short: fe_nh3_oil
+
+
+  Chemicals|Methanol|Solids|Coal:
+    filter:
+      {technology: [meth_coal, meth_coal_ccs], mode: feedstock, commodity: coal, level: secondary}
+    short: fe_meth_coal
+
+  Chemicals|Methanol|Solids|Biomass:
+    filter:
+      {technology: [meth_bio, meth_bio_ccs], mode: feedstock, commodity: biomass, level: primary}
+    short: fe_meth_bio
+
+  Chemicals|Methanol|Gases|Gas:
+    filter:
+      {technology: [meth_ng, meth_ng_ccs], mode: feedstock, commodity: gas, level: secondary}
+    short: fe_meth_gas
+
+  Chemicals|Methanol|Hydrogen:
+    filter:
+      {technology: meth_h2, mode: feedstock, commodity: [hydrogen, ht_heat], level: secondary}
+    short: fe_meth_h2
