@@ -1,0 +1,51 @@
+# collection of industry specific Final Energy non-energy reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  out
+
+iamc_prefix:
+  Final Energy|Industry|
+
+common:
+  unit:
+    GWa
+
+level_2:
+  Chemicals|Ammonia:
+    short: fe_nh3
+    components:
+      [ fe_nh3_coal, fe_nh3_gas, fe_nh3_oil, fe_nh3_bio ]
+
+  Chemicals|Methanol:
+    short: fe_meth
+    components:
+      [ fe_meth_coal, fe_meth_gas, fe_meth_bio, fe_meth_h2 ]
+
+
+level_1:
+  Chemicals|Ammonia|Solids:
+    short: fe_nh3_solids
+    components:
+      [ fe_nh3_coal, fe_nh3_bio ]
+
+  Chemicals|Ammonia|Liquids:
+    short: fe_nh3_liq
+    components:
+      [ fe_nh3_oil ]
+
+  Chemicals|Ammonia|Gases:
+    short: fe_nh3_gases
+    components:
+      [ fe_nh3_gas ]
+
+  Chemicals|Methanol|Solids:
+    short: fe_meth_solids
+    components:
+      [ fe_meth_coal, fe_meth_bio ]
+
+  Chemicals|Methanol|Gases:
+    short: fe_meth_gases
+    components:
+      [ fe_meth_gas ]
