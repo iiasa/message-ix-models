@@ -28,22 +28,28 @@ def common_params(param_names: str):
     """Decorate a click.command with common parameters `param_names`.
 
     `param_names` must be a space-separated string of names appearing in :data:`PARAMS`,
-    e.g. ``"ssp force output_model"``. The decorated function receives keyword
-    arguments with these names::
+    for instance :py:`"ssp force output_model"`. The decorated function receives keyword
+    arguments with these names; some are also stored on the
 
-        @click.command()
-        @common_params("ssp force output_model")
-        def mycmd(ssp, force, output_model)
-            # ...
+    Example
+    -------
+
+    >>> @click.command
+    ... @common_params("ssp force output_model")
+    ... @click.pass_obj
+    ... def mycmd(context, ssp, force, output_model):
+    ...     assert context.force == force
     """
 
+    # Create the decorator
     # Simplified from click.decorators._param_memo
     def decorator(f):
-        if not hasattr(f, "__click_params__"):
-            f.__click_params__ = []
-        f.__click_params__.extend(
+        # - Ensure f.__click_params__ exists
+        # - Append each param given in `param_names`
+        f.__dict__.setdefault("__click_params__", []).extend(
             PARAMS[name] for name in reversed(param_names.split())
         )
+
         return f
 
     return decorator
@@ -100,6 +106,101 @@ def format_sys_argv() -> str:
         indent = "  "
 
     return "\n".join(lines)[:-2]
+
+
+def scenario_param(
+    param_decls: Union[str, list[str]],
+    *,
+    values: list[str] = None,
+    default: Optional[str] = None,
+):
+    """Add an SSP or scenario option or argument to a :class:`click.Command`.
+
+    The parameter uses :func:`.store_context` to store the given value (if any) on
+    the :class:`.Context`.
+
+    Parameters
+    ----------
+    param_decls :
+        :py:`"--ssp"` (or any other name prefixed by ``--``) to generate a
+        :class:`click.Option`; :py:`"ssp"` to generate a :class:`click.Argument`.
+        Click-style declarations are also supported; see below.
+    values :
+        Allowable values. If not given, the allowable values are
+        ["LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"].
+    default :
+        Default value.
+
+    Raises
+    ------
+    ValueError
+        if `default` is given with `param_decls` that indicate a
+        :class:`click.Argument`.
+
+    Examples
+    --------
+    Add a (mandatory, positional) :class:`click.Argument`. This is nearly the same as
+    using :py:`common_params("ssp")`, except the decorated function does not receive an
+    :py:`ssp` argument. The value is still stored on :py:`context` automatically.
+
+    >>> @click.command
+    ... @scenario_param("ssp")
+    ... @click.pass_obj
+    ... def mycmd(context):
+    ...     print(context.ssp)
+
+    Add a :class:`click.Option` with certain, limited values and a default:
+
+    >>> @click.command
+    ... @scenario_param("--ssp", values=["SSP1", "SSP2", "SSP3"], default="SSP3")
+    ... @click.pass_obj
+    ... def mycmd(context):
+    ...     print(context.ssp)
+
+    An option given by the user as :command:`--scenario` but stored as
+    :py:`Context.ssp`:
+
+    >>> @click.command
+    ... @scenario_param(["--scenario", "ssp"])
+    ... @click.pass_obj
+    ... def mycmd(context):
+    ...     print(context.ssp)
+    """
+    if values is None:
+        values = ["LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
+
+    # Handle param_decls; identify the first string element
+    if isinstance(param_decls, list):
+        decl0 = param_decls[0]
+    else:
+        decl0 = param_decls
+        param_decls = [param_decls]  # Ensure list for use by click
+
+    # Choose either click.Option or click.Argument
+    if decl0.startswith("-"):
+        cls = Option
+    else:
+        cls = Argument
+        if default is not None:
+            raise ValueError(f"{default=} given for {cls}")
+
+    # Create the decorator
+    def decorator(f):
+        # - Ensure f.__click_params__ exists
+        # - Generate and append the parameter
+        f.__dict__.setdefault("__click_params__", []).append(
+            cls(
+                param_decls,
+                callback=store_context,
+                type=Choice(values),
+                default=default,
+                expose_value=False,
+            )
+        )
+
+        return f
+
+    return decorator
 
 
 def store_context(context: Union[click.Context, Context], param, value):
