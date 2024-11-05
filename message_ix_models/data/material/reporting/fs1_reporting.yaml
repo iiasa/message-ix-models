@@ -1,0 +1,65 @@
+# collection of industry specific Final Energy non-energy reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  out
+
+iamc_prefix:
+  Final Energy|Non-Energy Use|
+
+common:
+  unit:
+    GWa
+
+vars:
+# ammonia
+  Chemicals|Ammonia|Solids|Coal:
+    filter:
+      { technology: [ coal_NH3, coal_NH3_ccs ], mode: M1, commodity: NH3, level: secondary_material }
+    short:
+      fe_fs_nh3_coal
+
+  Chemicals|Ammonia|Solids|Biomass:
+    filter:
+      { technology: [ biomass_NH3, biomass_NH3_ccs ], mode: M1, commodity: NH3, level: secondary_material }
+    short:
+      fe_fs_nh3_bio
+
+  Chemicals|Ammonia|Liquids|Oil:
+    filter:
+      { technology: fueloil_NH3, mode: M1, commodity: NH3, level: secondary_material }
+    short:
+      fe_fs_nh3_oil
+
+  Chemicals|Ammonia|Gases|Gas:
+    filter:
+      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: NH3, level: secondary_material }
+    short:
+      fe_fs_nh3_gas
+
+
+# methanol
+  Chemicals|Methanol|Solids|Coal:
+    filter:
+        {technology: [meth_coal, meth_coal_ccs], mode: feedstock, commodity: methanol, level: primary_material}
+    short:
+        fe_fs_meth_coal
+
+  Chemicals|Methanol|Solids|Biomass:
+    filter:
+        {technology: [meth_bio, meth_bio_ccs], mode: feedstock, commodity: methanol, level: primary_material}
+    short:
+        fe_fs_meth_bio
+
+  Chemicals|Methanol|Gases|Gas:
+    filter:
+        {technology: [meth_ng, meth_ng_ccs], mode: feedstock, commodity: methanol, level: primary_material}
+    short:
+        fe_fs_meth_gas
+
+  Chemicals|Methanol|Hydrogen:
+    filter:
+        {technology: meth_h2, mode: feedstock, commodity: methanol, level: primary_material}
+    short:
+        fe_fs_meth_h2
