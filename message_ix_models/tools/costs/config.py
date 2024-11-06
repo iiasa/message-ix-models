@@ -22,6 +22,9 @@ class MODULE(Enum):
     #: Cooling technologies for power plants.
     cooling = auto()
 
+    #: Direct air capture.
+    dac = auto()
+
 
 @dataclass
 class Config:
