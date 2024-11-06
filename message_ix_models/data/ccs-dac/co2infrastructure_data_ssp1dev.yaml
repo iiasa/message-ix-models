@@ -1,0 +1,1304 @@
+# FOSSIL CCS
+bf_ccs_steel:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.213682
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M2: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+c_ppl_co2scr:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 2.32267
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+clinker_dry_ccs_cement:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.135
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+clinker_wet_ccs_cement:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.135
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+coal_adv_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 2.09429
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+coal_NH3_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 1.25667
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+dri_gas_ccs_steel:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.13
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+fueloil_NH3_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.799816
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+g_ppl_co2scr:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.905747
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+gas_cc_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.904167
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+gas_NH3_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.472617
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+h2_coal_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 1.23733
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+h2_smr_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.623188
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+igcc_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 2.15588
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+meth_coal_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.863462
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      feedstock: 1
+      fuel: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+meth_ng_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.228333
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      feedstock: 1
+      fuel: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+syn_liq_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 1.04318
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+
+
+# BIOMASS CCS
+bio_istig_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 2.70333
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+
+biomass_NH3_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.34799
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+
+bio_ppl_co2scr:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 2.51467
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+
+eth_bio_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 1.5439
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+
+h2_bio_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 1.45818
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+
+liq_bio_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 1.39773
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+
+meth_bio_ccs:
+  year_init: 2030
+  output_:
+    par_name: output
+    value: 0.786611
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      feedstock: 1
+      fuel: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+
+
+##############
+#--- The pipelines
+
+co2_trans1:
+  year_init: 2030
+  var_cost_: 
+    par_name: var_cost
+    value: 40
+    unit: '-' #$/tCO2a
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+    time:
+      year: 1
+  input_:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      secondary: 1
+  output_:
+    par_name: output
+    value: 0.99
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      final: 1
+  capacity_factor_:
+    par_name: capacity_factor
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  soft_activity_up_:
+    par_name: soft_activity_up
+    value: 0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  bound_activity_up_:
+    par_name: bound_activity_up
+    value: 30000
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    time: 
+      year: 1
+    mode:
+      all: 1
+
+co2_trans2:
+  year_init: 2030
+  var_cost_: 
+    par_name: var_cost
+    value: 115
+    unit: '-' #$/tCO2a
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+    time:
+      year: 1
+  input_:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      secondary: 1
+  output_:
+    par_name: output
+    value: 0.99
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      bic_co2: 1
+    level:
+      final: 1
+  capacity_factor_:
+    par_name: capacity_factor
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  soft_activity_up_:
+    par_name: soft_activity_up
+    value: 0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  growth_activity_up_:
+    par_name: growth_activity_up
+    value: 0.08
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  initial_activity_up_:
+    par_name: initial_activity_up
+    value: 0.2
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  level_cost_activity_soft_up_:
+    par_name: level_cost_activity_soft_up
+    value: 0.5
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  relation_activity_limit_tot_BECCS:
+    par_name: relation_activity
+    value: -1.0605
+    unit: Mt C/yr
+    relation: [limit_tot_BECCS]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+
+
+
+# - - - - - - - - - - - - - - - -
+# CO2 STORAGE and UTILIZATION
+#--- The storage
+co2_stor:
+  year_init: 2030
+  var_cost_: 
+    par_name: var_cost
+    value: 35
+    unit: '-' #$/tCO2a
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+      M2: 1
+    time:
+      year: 1
+  input_co2:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      final: 1
+  input_bco2:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M2: 1
+    commodity:
+      bic_co2: 1
+    level:
+      final: 1
+  output_co2:
+    par_name: output
+    value: 0.99
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      useful: 1
+  output_bco2:
+    par_name: output
+    value: 0.99
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M2: 1
+    commodity:
+      bic_co2: 1
+    level:
+      useful: 1
+  capacity_factor_:
+    par_name: capacity_factor
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  relation_activity_CO2_Emission:
+    par_name: relation_activity
+    value: -0.99
+    unit: Mt C/yr
+    relation: [CO2_Emission]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+      M2: 1
+
+#--- For utilization
+co2_util:
+  year_init: 2030
+  var_cost_: 
+    par_name: var_cost
+    value: 0
+    unit: '-' #$/tCO2a
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+      M2: 1
+      M3: 1
+    time:
+      year: 1
+  input_co2:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      fic_co2: 1
+    level:
+      final: 1
+  input_bco2:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M2: 1
+    commodity:
+      bic_co2: 1
+    level:
+      final: 1
+  input_dacco2:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M3: 1
+    commodity:
+      dac_co2: 1
+    level:
+      final: 1
+  output_co2:
+    par_name: output
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+      M2: 1
+      M3: 1
+    commodity:
+      captured_co2: 1
+    level:
+      final: 1
+  capacity_factor_:
+    par_name: capacity_factor
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+
+meth_h2:
+  year_init: 2030
+  input_co2:
+    par_name: input
+    value: 1.821
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      feedstock: 1
+      fuel: 1
+    commodity:
+      captured_co2: 1
+    level:
+      final: 1
