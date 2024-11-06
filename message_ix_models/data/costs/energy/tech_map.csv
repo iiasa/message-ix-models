@@ -103,3 +103,6 @@ wind_res_hist_2005,weo,wind_onshore,1181,,2020
 wind_res_hist_2010,weo,wind_onshore,1181,,2020
 wind_res_hist_2015,weo,wind_onshore,1181,,2020
 wind_res_hist_2020,weo,wind_onshore,1181,,2020
+dac_lt,weo,igcc_ccs,4000,,2030
+dac_hte,weo,igcc_ccs,5000,,2030
+dac_htg,weo,igcc_ccs,5500,,2030
