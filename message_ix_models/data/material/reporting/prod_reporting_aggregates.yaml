@@ -11,12 +11,17 @@ iamc_prefix:
 common:
   unit: Mt/yr
 
+level_4:
+  Chemicals:
+    short: prod_chem
+    components:
+      [ prod_hvc, prod_nh3, prod_meth ]
+
 level_3:
   Chemicals|High-Value Chemicals:
     short: prod_hvc
     components:
       [ prod_ethy, prod_propy, prod_btx]
-
 
 level_2:
   Chemicals|Ammonia:
@@ -39,7 +44,6 @@ level_2:
     short: prod_btx
     components:
       [ prod_btx_sc, prod_btx_ref]
-
 
 level_1:
   Chemicals|Ammonia|Gases:
@@ -88,7 +92,7 @@ level_1:
       [ prod_clinker_wet, prod_clinker_dry ]
 
   # aluminum
-  Non-Ferrous Metals|Aluminum:
+  Non-Ferrous Metals|Aluminium:
     short: prod_alu
     components:
       [ prod_alu_prim, prod_alu_sec ]
