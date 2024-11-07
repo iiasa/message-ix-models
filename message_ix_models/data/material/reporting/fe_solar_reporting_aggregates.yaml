@@ -1,0 +1,19 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  out
+
+iamc_prefix:
+  Final Energy|Industry|
+
+common:
+  unit: GWa
+
+
+level_1:
+  Solar:
+    short: fe_pe_solar
+    components:
+      [ fe_pe_other_solar ]

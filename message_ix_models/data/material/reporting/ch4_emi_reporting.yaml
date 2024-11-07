@@ -41,13 +41,13 @@ vars:
 
 
 # aluminum
-  Industrial Processes|Non-Ferrous Metals|Aluminum:
+  Industrial Processes|Non-Ferrous Metals|Aluminium:
     filter:
       { technology: [prebake_aluminum, soderberg_aluminum], mode: M1}
     short:
       emi_ch4_ind_proc_alu
 
-  Energy|Demand|Industry|Non-Ferrous Metals|Aluminum:
+  Energy|Demand|Industry|Non-Ferrous Metals|Aluminium:
     filter:
       { technology: [furnace_coal_aluminum, furnace_gas_aluminum, furnace_biomass_aluminum, furnace_foil_aluminum], mode: [high_temp, low_temp] }
     short:
