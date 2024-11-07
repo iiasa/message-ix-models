@@ -141,7 +141,7 @@ ccs_techs = [
     'igcc_ccs',
     'meth_coal_ccs',
     'meth_ng_ccs',
-    'syn_liq_ccs'
+    'syn_liq_ccs',
     # DACCS
     "dac_lt",
     "dac_hte",
@@ -263,16 +263,9 @@ for ssp in ssps:
     
     # ==============================================
     # Add new setup ================================
-    ## setup pipelines and storage technologies
+    ## setup pipelines, storage, and non-dac ccs technologies
     filepath = r'C:\Users\pratama\Documents\GitHub\MESSAGEix\message-ix-models\message_ix_models\data\ccs-dac'
     add_tech(scen,filepath=filepath+f'\co2infrastructure_data_{ssp}dev.yaml')
-    
-    ## removing excess year_act
-    #pars2remove = ['output']
-    #for par in pars2remove:
-    #    df = scen.par(par,{'technology':techs})
-    #    df = df.loc[df['year_act'] > df['year_vtg'].add(30)]
-    #    scen.remove_par(par, df)
     
     ## setup dac technologies
     filepath = r'C:\Users\pratama\Documents\GitHub\MESSAGEix\message-ix-models\message_ix_models\data\ccs-dac'
@@ -291,11 +284,22 @@ for ssp in ssps:
     
     ## removing excess year_act
     pars2remove = ['capacity_factor','fix_cost','input','output']
-    techs = ccs_techs
+    ##> use 2030 R12_NAM as basis to get technology lifetime
+    lt = scen.par("technical_lifetime", 
+                    {"technology":ccs_techs, 
+                     "node_loc":"R12_NAM", 
+                     "year_vtg":2030})
     for par in pars2remove:
-        df = scen.par(par,{'technology':techs})
-        df = df.loc[df['year_act'] > df['year_vtg'].add(30)]
-        scen.remove_par(par, df)
+        df2remove = []
+        df = scen.par(par,{'technology':ccs_techs})
+        rem_techs = ccs_techs if par == 'output' else dac_techs
+        for tech in rem_techs:
+            lt_tech = np.int32(lt[lt["technology"]==tech]["value"].iloc[0])
+            df2remove_tech = df[df['year_act'] > df['year_vtg'].add(lt_tech)]
+            df2remove_tech = df2remove_tech[df2remove_tech['technology'] == tech]
+            df2remove += [df2remove_tech]
+        df2remove = pd.concat(df2remove)
+        scen.remove_par(par, df2remove)
     
     ## make pipelines and storage a single period technology
     newpipesnstors = ['co2_stor','co2_trans1', 'co2_trans2']
