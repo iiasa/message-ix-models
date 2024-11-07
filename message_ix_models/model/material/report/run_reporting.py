@@ -271,8 +271,9 @@ def run_fe_reporting(rep: message_ix.Reporter, model: str, scenario: str):
         py_df_all.filter(unit="dimensionless", keep=False)
         .convert_unit("GWa", "EJ")
         .timeseries()
+        .reset_index()
     )
-    df_final.Unit = "EJ/yr"
+    df_final.unit = "EJ/yr"
     return df_final
 
 
@@ -514,8 +515,9 @@ def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
         py_df.filter(unit="dimensionless", keep=False)
         .convert_unit("GWa", "EJ")
         .timeseries()
+        .reset_index()
     )
-    df_final.Unit = "EJ/yr"
+    df_final.unit = "EJ/yr"
     return df_final
 
 
@@ -659,13 +661,16 @@ def run_all_categories(rep: message_ix.Reporter, model_name: str, scen_name: str
     return dfs
 
 
-def run(scenario, upload_ts=False):
+def run(scenario, upload_ts=False, region=False):
     rep = Reporter.from_scenario(scenario)
 
     dfs = run_all_categories(rep, scenario.model, scenario.scenario)
 
     py_df = pyam.concat(dfs)
-    py_df.aggregate_region(py_df.variable, append=True)
+    if region:
+        py_df.aggregate_region(py_df.variable, region=region, append=True)
+    else:
+        py_df.aggregate_region(py_df.variable, append=True)
     py_df.filter(variable="Share*", keep=False, inplace=True)
     if upload_ts:
         scenario.add_timeseries(py_df.timeseries())
