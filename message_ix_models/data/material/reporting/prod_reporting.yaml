@@ -272,13 +272,13 @@ vars:
 
 
   # aluminum
-  Non-Ferrous Metals|Aluminum|Primary:
+  Non-Ferrous Metals|Aluminium|Primary:
     filter:
       { technology: [prebake_aluminum, soderberg_aluminum], mode: M1, commodity: aluminum, level: final_material }
     short:
       prod_alu_sec
 
-  Non-Ferrous Metals|Aluminum|Secondary:
+  Non-Ferrous Metals|Aluminium|Secondary:
     filter:
       { technology: [secondary_aluminum], mode: M1, commodity: aluminum, level: final_material }
     short:

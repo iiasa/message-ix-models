@@ -22,13 +22,13 @@ level_2:
     components:
       [ fe_pe_ch_el, fe_pe_cement_el, fe_pe_aluminum_el, fe_pe_steel_el, fe_pe_other_el ]
   Gases|Gas:
-    short: fe_pe_el
+    short: fe_pe_gas
     components:
       [ fe_pe_hvc_gas, fe_pe_cement_gas, fe_pe_aluminum_gas, fe_pe_steel_gas, fe_pe_other_gas ]
   Gases:
-    short: fe_pe_el
+    short: fe_pe_gases
     components:
-      [ fe_pe_hvc_gas, fe_pe_cement_gas, fe_pe_aluminum_gas, fe_pe_steel_gas, fe_pe_other_gas ]
+      [ fe_pe_hvc_gases, fe_pe_cement_gases, fe_pe_aluminum_gases, fe_pe_steel_gases, fe_pe_other_gases ]
   Liquids|Biomass:
     short: fe_pe_oil
     components:
@@ -61,11 +61,11 @@ level_2:
     short: fe_pe_bio
     components:
       [ fe_pe_hvc_bio, fe_pe_cement_bio, fe_pe_aluminum_bio, fe_pe_other_bio ]
+  Hydrogen:
+    short: fe_pe_h2
+    components:
+      [ fe_pe_hvc_h2, fe_pe_cement_h2, fe_pe_aluminum_h2, fe_pe_steel_h2, fe_pe_other_h2 ]
 
-#  Chemicals:
-#    short: fe_pe_chem
-#    components:
-#      [ fe_pe_hvc_el, fe_pe_hvc_oil, fe_pe_hvc_liq, fe_pe_hvc_solids ]
 
   Non-Metallic Minerals|Cement:
     short: fe_pe_cement
@@ -80,13 +80,19 @@ level_2:
   Iron and Steel:
     short: fe_pe_steel
     components:
-      [ fe_pe_steel_el, fe_pe_steel_liq, fe_pe_steel_sol, fe_pe_steel_gas, fe_pe_steel_h2 ]
+      [ fe_pe_steel_el, fe_pe_steel_liq, fe_pe_steel_sol, fe_pe_steel_gases, fe_pe_steel_h2 ]
 
   Other Sector:
     short: fe_pe_oth
     components:
-      [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_sol, fe_pe_other_gas, fe_pe_other_h2 ]
+      [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_sol, fe_pe_other_gases, fe_pe_other_h2 ]
 
+  Chemicals|Other Sector:
+    short: fe_pe_chem_other
+    components:
+      [ fe_pe_resin_el, fe_pe_chem_other_gas, fe_pe_chem_other_oil,
+        fe_pe_chem_other_eth, fe_pe_chem_other_bio, fe_pe_chem_other_coal,
+        fe_pe_chem_other_h2 ]
 
 level_1:
   Chemicals|High-Value Chemicals|Electricity:
@@ -105,11 +111,59 @@ level_1:
     short: fe_pe_hvc_solids
     components:
       [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke]
-
   Chemicals|Liquids|Other:
     short: fe_pe_chem_oth
     components:
       [ fe_pe_hvc_oth ]
+  Chemicals|Liquids|Gases:
+    short: fe_pe_hvc_gases
+    components:
+      [ fe_pe_hvc_gas ]
+
+  Chemicals|Other Sector|Electricity:
+    short: fe_pe_chem_other_el
+    components:
+      [ fe_pe_resin_el ]
+  Chemicals|Other Sector|Gases|Gas:
+    short: fe_pe_chem_other_gas
+    components:
+      [ fe_pe_resin_gas ]
+  Chemicals|Other Sector|Gases:
+    short: fe_pe_chem_other_gases
+    components:
+      [ fe_pe_resin_gas ]
+  Chemicals|Other Sector|Liquids|Oil:
+    short: fe_pe_chem_other_oil
+    components:
+      [ fe_pe_resin_oil ]
+  Chemicals|Other Sector|Liquids|Biomass:
+    short: fe_pe_chem_other_eth
+    components:
+      [ fe_pe_resin_eth ]
+  Chemicals|Other Sector|Liquids|Other:
+    short: fe_pe_chem_other_meth
+    components:
+      [ fe_pe_resin_meth ]
+  Chemicals|Other Sector|Liquids:
+    short: fe_pe_chem_other_liq
+    components:
+      [ fe_pe_resin_eth, fe_pe_resin_oil ]
+  Chemicals|Other Sector|Solids|Biomass:
+    short: fe_pe_chem_other_bio
+    components:
+      [ fe_pe_resin_bio ]
+  Chemicals|Other Sector|Solids|Coal:
+    short: fe_pe_chem_other_coal
+    components:
+      [ fe_pe_resin_coal ]
+  Chemicals|Other Sector|Solids:
+    short: fe_pe_chem_other_sol
+    components:
+      [ fe_pe_resin_coal, fe_pe_resin_bio ]
+  Chemicals|Other Sector|Hydrogen:
+    short: fe_pe_chem_other_h2
+    components:
+      [ fe_pe_resin_h2 ]
 
   # cement
   Non-Metallic Minerals|Cement|Electricity:
@@ -128,7 +182,10 @@ level_1:
     short: fe_pe_cement_solids
     components:
       [ fe_pe_cement_bio, fe_pe_cement_coal, fe_pe_cement_coke ]
-
+  Non-Metallic Minerals|Cement|Gases:
+    short: fe_pe_cement_gases
+    components:
+      [ fe_pe_cement_gas ]
 
   # aluminum
   Non-Ferrous Metals|Aluminium|Electricity:
@@ -151,7 +208,10 @@ level_1:
     short: fe_pe_aluminum_bio_tot
     components:
       [ fe_pe_aluminum_bio, fe_pe_aluminum_bio_eth ]
-
+  Non-Ferrous Metals|Aluminium|Gases:
+    short: fe_pe_aluminum_gases
+    components:
+      [ fe_pe_aluminum_gas ]
 
   # TODO: Electricity could be further differentiated by process in fe_reporting.yaml
   # iron and steel
@@ -163,7 +223,7 @@ level_1:
   #    short:
   #      fe_pe_steel_el
   Iron and Steel|Gases:
-    short: fe_pe_steel_gas
+    short: fe_pe_steel_gases
     components:
       [ fe_pe_steel_gas, fe_pe_steel_gases_coal ]
   Iron and Steel|Liquids:
@@ -213,5 +273,4 @@ level_1:
     short: fe_pe_other_solids
     components:
       [ fe_pe_other_coal, fe_pe_other_bio ]
-
 
