@@ -24,7 +24,7 @@ dac_lt:
       electr: 1
     level:
       final: 1
-    year_vtg:
+    year_act:
       rate: 0
       2030: 0.92
       2035: 0.87
@@ -356,7 +356,7 @@ dac_hte:
       electr: 1
     level:
       final: 1
-    year_vtg:
+    year_act:
       rate: 0
       2030: 0.92
       2035: 0.87
@@ -688,7 +688,7 @@ dac_htg:
       electr: 1
     level:
       final: 1
-    year_vtg:
+    year_act:
       rate: 0
       2030: 0.92
       2035: 0.87
@@ -725,7 +725,7 @@ dac_htg:
       gas: 1
     level:
       final: 1
-    year_vtg:
+    year_act:
       rate: 0
       2030: 0.92
       2035: 0.87
@@ -1058,7 +1058,7 @@ DAC_mpen:
       year: 1
   soft_activity_up_:
     par_name: soft_activity_up
-    value: 0.05
+    value: 0.00 #0.05
     unit: '-'
     node_loc:
       R12_AFR: 1
