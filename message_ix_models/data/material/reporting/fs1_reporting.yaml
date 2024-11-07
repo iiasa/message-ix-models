@@ -14,17 +14,23 @@ common:
 
 vars:
 # ammonia
-  Chemicals|Ammonia|Solids|Coal:
+  Chemicals|Ammonia|Electricity:
     filter:
-      { technology: [ coal_NH3, coal_NH3_ccs ], mode: M1, commodity: NH3, level: secondary_material }
+      { technology: [ electr_NH3 ], mode: M1, commodity: NH3, level: secondary_material }
     short:
-      fe_fs_nh3_coal
+      fe_fs_nh3_el
 
   Chemicals|Ammonia|Solids|Biomass:
     filter:
       { technology: [ biomass_NH3, biomass_NH3_ccs ], mode: M1, commodity: NH3, level: secondary_material }
     short:
       fe_fs_nh3_bio
+
+  Chemicals|Ammonia|Solids|Coal:
+    filter:
+      { technology: [ coal_NH3, coal_NH3_ccs ], mode: M1, commodity: NH3, level: secondary_material }
+    short:
+      fe_fs_nh3_coal
 
   Chemicals|Ammonia|Liquids|Oil:
     filter:
