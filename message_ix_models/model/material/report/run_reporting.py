@@ -326,6 +326,11 @@ def add_chemicals_to_final_energy_variables(
             "Chemicals|Methanol|Solids|Coal",
             "Chemicals|High-Value Chemicals|Solids|Coal",
         ],
+        "Chemicals|Hydrogen": [
+            "Chemicals|Ammonia|Hydrogen",
+            "Chemicals|Methanol|Hydrogen",
+            "Chemicals|High-Value Chemicals|Hydrogen",
+        ],
     }
     prefix = "Final Energy|Industry|"
     fe_aggs = {prefix + k: [prefix + i for i in v] for k, v in chem_aggs.items()}
@@ -334,6 +339,7 @@ def add_chemicals_to_final_energy_variables(
 
     updated_fe_totals = []
     for comm in [
+        "Electricity",
         "Liquids",
         "Liquids|Oil",
         "Solids",
@@ -341,13 +347,14 @@ def add_chemicals_to_final_energy_variables(
         "Solids|Coal",
         "Gases",
         "Gases|Gas",
+        "Hydrogen",
     ]:
         updated_fe_totals.append(
             py_df_all.add(
                 prefix + comm,
                 prefix + f"Chemicals|{comm}",
                 prefix + comm,
-                # ignore_units=True,
+                ignore_units=True,
             )
         )
     py_df_updates = pyam.concat(updated_fe_totals)

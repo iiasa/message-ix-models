@@ -45,18 +45,45 @@ vars:
 
   Chemicals|Resins|Electricity:
     filter:
-      { technology: CH2O_to_resin, mode: M1, commodity: electr, level: final }
+      { technology: [CH2O_to_resin, furnace_elec_resins], mode: M1, commodity: electr, level: final }
     short:
       fe_pe_resin_el
-
-  Chemicals|Ammonia|Electricity:
+  Chemicals|Resins|Solids|Coal:
     filter:
-      { technology: [biomass_NH3, biomass_NH3_ccs, coal_NH3, coal_NH3_ccs,
-                     electr_NH3, fueloil_NH3, fueloil_NH3_ccs, gas_NH3, gas_NH3_ccs ],
-        mode: M1,
-        commodity: electr, level: secondary }
+      { technology: furnace_coal_resins, mode: M1, commodity: coal, level: final }
     short:
-      fe_pe_nh3_el
+      fe_pe_resin_coal
+  Chemicals|Resins|Solids|Biomass:
+    filter:
+      { technology: furnace_biomass_resins, mode: M1, commodity: biomass, level: final }
+    short:
+      fe_pe_resin_bio
+  Chemicals|Resins|Liquids|Oil:
+    filter:
+      { technology: [furnace_foil_resins, furnace_loil_resins], mode: M1, commodity: [fueloil, lightoil], level: final }
+    short:
+      fe_pe_resin_oil
+  Chemicals|Resins|Liquids|Biomass:
+    filter:
+      { technology: [ furnace_ethanol_resins ], mode: M1, commodity: [ ethanol ], level: final }
+    short:
+      fe_pe_resin_eth
+  Chemicals|Resins|Gases|Gas:
+    filter:
+      { technology: furnace_gas_resins, mode: M1, commodity: gas, level: final }
+    short:
+      fe_pe_resin_gas
+  Chemicals|Resins|Hydrogen:
+    filter:
+      { technology: [furnace_h2_resins, fc_h2_resins], mode: M1, commodity: hydrogen, level: final }
+    short:
+      fe_pe_resin_h2
+  Chemicals|Resins|Liquids|Other:
+    filter:
+      { technology: [ furnace_methanol_resins ], mode: M1, commodity: methanol, level: final }
+    short:
+      fe_pe_resin_meth
+
 
   Chemicals|High-Value Chemicals|Liquids|Oil|Light:
     filter:
@@ -112,6 +139,11 @@ vars:
     short:
       fe_pe_hvc_coke
 
+  Chemicals|Methanol|Electricity:
+    filter:
+      { technology: [meth_h2, meth_ng_ccs], mode: feedstock, commodity: electr, level: secondary }
+    short:
+      fe_pe_meth_el
 
   # cement
   Non-Metallic Minerals|Cement|Heat:
