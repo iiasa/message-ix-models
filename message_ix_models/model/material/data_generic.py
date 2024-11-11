@@ -84,7 +84,6 @@ def add_ind_therm_link_relations(tecs, years, nodes):
     return df
 
 
-def gen_data_generic(scenario, dry_run=False):
 def gen_data_generic(
     scenario: Scenario, dry_run: bool = False
 ) -> dict[str, pd.DataFrame]:
