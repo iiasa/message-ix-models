@@ -644,7 +644,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     ]
     # create a new column and use np.select to assign
     # values to it using our lists as arguments
-    h_act["commodity"] = np.select(conditions, values)
+    h_act["commodity"] = np.select(conditions, values, "Unknown technology")
     h_act["value"] = h_act["value"].abs()
 
     hist_act = make_df(
