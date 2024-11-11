@@ -100,167 +100,6 @@ def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
     scen.commit(comment="remove base year industry tec bounds")
 
 
-def calc_hist_activity(
-    scen: message_ix.Scenario, years: list, iea_data_path
-) -> pd.DataFrame:
-    df_orig = get_hist_act_data(
-        "all_technologies.csv", years=years, iea_data_path=iea_data_path
-    )
-    df_mat = get_hist_act_data("industry.csv", years=years, iea_data_path=iea_data_path)
-    df_chem = get_hist_act_data(
-        "chemicals.csv", years=years, iea_data_path=iea_data_path
-    )
-
-    # RFE: move hardcoded assumptions (chemicals and iron and steel)
-    #  to external data files
-
-    # scale chemical activity to deduct explicitly
-    # represented activities of MESSAGEix-Materials
-    # (67% are covered by NH3, HVCs and methanol)
-    df_chem = df_chem.mul(0.67)
-    df_mat = df_mat.sub(df_chem, fill_value=0)
-
-    # calculate share of residual activity not covered
-    # by industry sector explicit technologies
-    df = df_mat.div(df_orig).dropna().sort_values("Value", ascending=False)
-    # manually set elec_i to 0 since all of it is covered by iron/steel sector
-    df.loc[:, "elec_i", :] = 0
-
-    df = df.round(5)
-    df.index.set_names(["node_loc", "technology", "year_act"], inplace=True)
-
-    tecs = df.index.get_level_values("technology").unique()
-    df_hist_act = scen.par(
-        "historical_activity", filters={"technology": tecs, "year_act": years}
-    )
-
-    df_hist_act_scaled = (
-        df_hist_act.set_index([i for i in df_hist_act.columns if i != "value"])
-        .mul(df.rename({"Value": "value"}, axis=1))
-        .dropna()
-    )
-
-    return df_hist_act_scaled.reset_index()
-
-
-def add_new_ind_hist_act(scen: message_ix.Scenario, years: list, iea_data_path) -> None:
-    df_act = calc_hist_activity(scen, years, iea_data_path)
-    scen.check_out()
-    scen.add_par("historical_activity", df_act)
-    scen.commit("adjust historical activity of industrial end use tecs")
-
-
-def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
-    # RFE: refactor to use external mapping file (analogue to calc_hist_activity())
-    i_spec_material_flows = ["NONMET", "NONFERR"]  # "CHEMICAL"
-    i_therm_material_flows = ["NONMET", "CHEMICAL", "IRONSTL"]
-    i_flow = ["TOTIND"]
-    i_spec_prods = ["ELECTR", "NONBIODIES", "BIOGASOL"]
-    year = base_year
-
-    df_i_spec = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_flow))
-        & (iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & ~((iea_db_df["PRODUCT"] == ("ELECTR")) & (iea_db_df["FLOW"] == "IRONSTL"))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_spec = df_i_spec.groupby("REGION").sum(numeric_only=True)
-
-    df_i_spec_materials = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_spec_material_flows))
-        & (iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_spec_materials = df_i_spec_materials.groupby("REGION").sum(numeric_only=True)
-
-    df_i_spec_resid_shr = (
-        df_i_spec_materials.div(df_i_spec, fill_value=0).sub(1).mul(-1)
-    )
-    df_i_spec_resid_shr["commodity"] = "i_spec"
-
-    df_elec_i = iea_db_df[
-        ((iea_db_df["PRODUCT"] == ("ELECTR")) & (iea_db_df["FLOW"] == "IRONSTL"))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_elec_i = df_elec_i.groupby("REGION").sum(numeric_only=True)
-
-    agg_prods = ["MRENEW", "TOTAL"]
-    df_i_therm = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_flow))
-        & ~(iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & ~(iea_db_df["PRODUCT"].isin(agg_prods))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_therm = df_i_therm.groupby("REGION").sum(numeric_only=True)
-    df_i_therm = df_i_therm.add(df_elec_i, fill_value=0)
-
-    agg_prods = ["MRENEW", "TOTAL"]
-    df_i_therm_materials = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_therm_material_flows))
-        & ~(iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & ~(iea_db_df["PRODUCT"].isin(agg_prods))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_therm_materials = df_i_therm_materials.groupby(["REGION", "FLOW"]).sum(
-        numeric_only=True
-    )
-    # only two thirds of chemical consumption is represented
-    # by Materials module currently
-    df_i_therm_materials.loc[
-        df_i_therm_materials.index.get_level_values(1) == "CHEMICAL", "Value"
-    ] *= 0.67
-
-    # only covering cement at the moment
-    # quick fix assuming 67% of NONMET is used for cement in each region
-    # needs regional differentiation once data is collected
-    df_i_therm_materials.loc[
-        df_i_therm_materials.index.get_level_values(1) == "NONMET", "Value"
-    ] *= 0.67
-
-    df_i_therm_materials = df_i_therm_materials.groupby("REGION").sum(numeric_only=True)
-    df_i_therm_materials = df_i_therm_materials.add(df_elec_i, fill_value=0)
-
-    df_i_therm_resid_shr = df_i_therm_materials.div(df_i_therm).sub(1).mul(-1)
-    df_i_therm_resid_shr["commodity"] = "i_therm"
-
-    return (
-        pd.concat([df_i_spec_resid_shr, df_i_therm_resid_shr])
-        .set_index("commodity", append=True)
-        .drop("TIME", axis=1)
-    )
-
-
-def calc_resid_ind_demand(
-    scen: message_ix.Scenario, baseyear: int, iea_data_path
-) -> pd.DataFrame:
-    comms = ["i_spec", "i_therm"]
-    path = os.path.join(iea_data_path, "REV2022_allISO_IEA.parquet")
-    Inp = pd.read_parquet(path, engine="fastparquet")
-    Inp = map_iea_db_to_msg_regs(Inp)
-    demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
-    df_demands = scen.par("demand", filters={"commodity": comms}).set_index(
-        ["node", "commodity", "year"]
-    )
-    demand_shrs_new.index.set_names(["node", "commodity"], inplace=True)
-    df_demands["value"] = df_demands["value"] * demand_shrs_new["Value"]
-    return df_demands.reset_index()
-
-
-def modify_industry_demand(
-    scen: message_ix.Scenario, baseyear: int, iea_data_path
-) -> None:
-    df_demands_new = calc_resid_ind_demand(scen, baseyear, iea_data_path)
-    scen.check_out()
-    scen.add_par("demand", df_demands_new)
-
-    # RFE: calculate deductions from IEA data instead
-    #  of assuming full coverage by MESSAGE-Materials (chemicals)
-    # remove i_spec demand separately since we assume 100% coverage by MESSAGE-Materials
-    df_i_feed = scen.par("demand", filters={"commodity": "i_feed"})
-    scen.remove_par("demand", df_i_feed)
-    scen.commit("adjust residual industry demands")
-
-
 @lru_cache
 def get_region_map() -> Mapping[str, str]:
     """Construct a mapping from "COUNTRY" IDs to regions (nodes in the "R12" codelist).
@@ -1269,7 +1108,7 @@ def read_sector_data(
     return data_df
 
 
-def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
+def add_ccs_technologies(scen: message_ix.Scenario) -> None:
     """Adds the relevant CCS technologies to the co2_trans_disp and bco2_trans_disp
     relations
 
@@ -1282,16 +1121,30 @@ def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
     # The relation coefficients for CO2_Emision and bco2_trans_disp and
     # co2_trans_disp are both MtC. The emission factor for CCS add_ccs_technologies
     # are specified in MtC as well.
+    bco2_trans_relation = scen.par(
+        "emission_factor", filters={"technology": "biomass_NH3_ccs", "emission": "CO2"}
+    )
     co2_trans_relation = scen.par(
         "emission_factor",
         filters={
             "technology": [
                 "clinker_dry_ccs_cement",
                 "clinker_wet_ccs_cement",
+                "gas_NH3_ccs",
+                "coal_NH3_ccs",
+                "fueloil_NH3_ccs",
+                "bf_ccs_steel",
+                "dri_gas_ccs_steel",
             ],
             "emission": "CO2",
         },
     )
+
+    bco2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
+    bco2_trans_relation["relation"] = "bco2_trans_disp"
+    bco2_trans_relation["node_rel"] = bco2_trans_relation["node_loc"]
+    bco2_trans_relation["year_rel"] = bco2_trans_relation["year_act"]
+    bco2_trans_relation["unit"] = "???"
 
     co2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
     co2_trans_relation["relation"] = "co2_trans_disp"
@@ -1300,6 +1153,7 @@ def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
     co2_trans_relation["unit"] = "???"
 
     scen.check_out()
+    scen.add_par("relation_activity", bco2_trans_relation)
     scen.add_par("relation_activity", co2_trans_relation)
     scen.commit("New CCS technologies added to the CO2 accounting relations.")
 
@@ -1974,7 +1828,7 @@ def gen_plastics_emission_factors(
 
 def gen_chemicals_co2_ind_factors(
     info, species: Literal["methanol", "HVCs"]
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """Generate "CO2_ind" relation parameter that
     represents carbon in chemical feedstocks that is oxidized in the
     short-term (=during the model horizon) in downstream products.
@@ -2067,7 +1921,7 @@ def gen_chemicals_co2_ind_factors(
     return {"relation_activity": co2_emi_rel}
 
 
-def gen_ethanol_to_ethylene_emi_factor(info) -> Dict[str, pd.DataFrame]:
+def gen_ethanol_to_ethylene_emi_factor(info) -> dict[str, pd.DataFrame]:
     """Generate "CO2_ind" relation parameter that
     represents carbon in chemical feedstocks that is oxidized in the
     short-term (=during the model horizon) in downstream products.

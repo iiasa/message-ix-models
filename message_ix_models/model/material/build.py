@@ -10,13 +10,12 @@ from message_ix_models.model.material.data_aluminum import gen_data_aluminum
 from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
 from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
-from message_ix_models.model.material.data_methanol_new import gen_data_methanol_new
+from message_ix_models.model.material.data_methanol import gen_data_methanol
 from message_ix_models.model.material.data_other_industry import (
     gen_other_ind_demands,
     get_hist_act,
     modify_demand_and_hist_activity,
 )
-from message_ix_models.model.material.data_methanol import gen_data_methanol
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
