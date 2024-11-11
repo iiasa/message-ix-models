@@ -46,23 +46,29 @@ jobs:
         - version: v3.4.0
           python-version: "3.11"
           extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+          dask-dataframe: false
         - version: v3.5.0
           python-version: "3.11"
           extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+          dask-dataframe: false
         - version: v3.6.0
           python-version: "3.11"
           extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+          dask-dataframe: false
         - version: v3.7.0
           python-version: "3.11"
-          extra-deps: 'dask[dataframe]   "genno < 1.25"                "pytest == 8.0.0"' #
+          extra-deps: '                  "genno < 1.25"                "pytest == 8.0.0"' #
+          dask-dataframe: true
         # Latest released version
         - version: v3.8.0
           python-version: "3.12"
-          extra-deps: 'dask[dataframe]                                 "pytest == 8.0.0"' #
+          extra-deps: '                                                "pytest == 8.0.0"' #
+          dask-dataframe: true
         # Development version
         - version: main
           python-version: "3.12"
-          extra-deps: 'dask[dataframe]' #
+          extra-deps: '' #
+          dask-dataframe: true
 
       fail-fast: false
 
@@ -109,9 +115,13 @@ jobs:
 
         pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
 
+
+    - name: Install specific dask versions as workaround
+      if: ${{ matrix.upstream.dask-dataframe }}
+      run: |
         # TEMPORARY Work around dask v2024.11.0;
         # see https://github.com/khaeru/genno/issues/149
-        pip install "dask < 2024.11.0" "dask-expr < 1.1.17"
+        pip install "dask[dataframe] < 2024.11.0"
 
     - name: Configure local data path
       run: |
