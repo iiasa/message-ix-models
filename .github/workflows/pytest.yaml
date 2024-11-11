@@ -109,9 +109,9 @@ jobs:
 
         pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
 
-        # TEMPORARY Work around hgrecco/pint#2007, unionai-oss/pandera#1685;
-        # see https://github.com/khaeru/genno/issues/140
-        pip install "pint != 0.24.0" "numpy < 2"
+        # TEMPORARY Work around dask v2024.11.0;
+        # see https://github.com/khaeru/genno/issues/149
+        pip install "dask < 2024.11.0"
 
     - name: Configure local data path
       run: |
