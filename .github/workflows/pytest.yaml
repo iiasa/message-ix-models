@@ -111,7 +111,7 @@ jobs:
 
         # TEMPORARY Work around dask v2024.11.0;
         # see https://github.com/khaeru/genno/issues/149
-        pip install "dask < 2024.11.0"
+        pip install "dask < 2024.11.0" "dask-expr < 1.1.17"
 
     - name: Configure local data path
       run: |
