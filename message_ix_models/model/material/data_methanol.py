@@ -6,9 +6,14 @@ import yaml
 from message_ix import make_df
 
 import message_ix_models.util
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.data_util import (
+    gen_chemicals_co2_ind_factors,
+    gen_plastics_emission_factors,
+)
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import read_config
-from message_ix_models.util import broadcast, same_node
+from message_ix_models.model.material.util import combine_df_dictionaries, read_config
+from message_ix_models.util import broadcast, nodes_ex_world, same_node
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -87,6 +92,31 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         lambda x: x * pars["methanol_resid_demand_share"]
     )
     pars_dict["demand"] = df_final
+
+    s_info = ScenarioInfo(scenario)
+    downstream_tec_pars = gen_meth_fs_downstream(s_info)
+    meth_downstream_emi_top_down = gen_plastics_emission_factors(s_info, "methanol")
+    meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "methanol")
+
+    pars_dict = combine_df_dictionaries(
+        pars_dict,
+        downstream_tec_pars,
+        meth_downstream_emi_top_down,
+        meth_downstream_emi_bot_up,
+    )
+
+    scen_rel_set = scenario.set("relation")
+    for par in ["activity", "upper", "lower"]:
+        df_rel = pars_dict[f"relation_{par}"]
+        df_rel = df_rel[df_rel["relation"].isin(scen_rel_set.values)]
+        exc_rels = [
+            i for i in df_rel["relation"].unique() if i not in scen_rel_set.values
+        ]
+        print(
+            f"following relations are dropped from relation_{par} of methanol input "
+            f"data because they are not compatible with the scenario: {exc_rels}"
+        )
+        pars_dict[f"relation_{par}"] = df_rel
 
     return pars_dict
 
@@ -197,7 +227,7 @@ def broadcast_years(
     return df_bc_node
 
 
-def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
+def unpivot_input_data(df: pd.DataFrame, par_name: str):
     """
     Unpivot data that is already contains columns for respective MESSAGEix parameter
     Parameters
@@ -257,3 +287,47 @@ def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
             ].index
         )
     return make_df(par_name, **df_final_full)
+
+
+def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> Dict[str, pd.DataFrame]:
+    # input parameter
+    yv_ya = s_info.yv_ya
+    year_all = yv_ya["year_act"].unique()
+
+    tec_name = "meth_ind_fs"
+    cols = {
+        "technology": tec_name,
+        "commodity": "methanol",
+        "mode": "M1",
+        "level": "final_material",
+        "time": "year",
+        "time_origin": "year",
+        "value": 1,
+        "unit": "Mt",
+    }
+    df_in = (
+        make_df("input", **cols)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=year_all)
+        .pipe(same_node)
+    )
+    df_in["year_vtg"] = df_in["year_act"]
+
+    # output parameter
+    tec_name = "meth_ind_fs"
+    cols = {
+        "technology": tec_name,
+        "commodity": "methanol",
+        "mode": "M1",
+        "level": "demand",
+        "time": "year",
+        "time_dest": "year",
+        "value": 1,
+        "unit": "Mt",
+    }
+    df_out = (
+        make_df("output", **cols)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=year_all)
+        .pipe(same_node)
+    )
+    df_out["year_vtg"] = df_out["year_act"]
+    return dict(input=df_in, output=df_out)
