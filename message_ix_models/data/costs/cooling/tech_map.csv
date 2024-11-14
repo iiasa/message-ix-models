@@ -91,3 +91,11 @@ solar_th_ppl__air,energy,solar_th_ppl,220,0,2015
 solar_th_ppl__cl_fresh,energy,solar_th_ppl,100,0,2015
 solar_th_ppl__ot_fresh,energy,solar_th_ppl,0.4,0,2015
 solar_th_ppl__ot_saline,energy,solar_th_ppl,0.3,0,2015
+csp_sm1_ppl__air,energy,csp_sm1_ppl,220,0,2015
+csp_sm1_ppl__cl_fresh,energy,csp_sm1_ppl,100,0,2015
+csp_sm1_ppl__ot_fresh,energy,csp_sm1_ppl,0.4,0,2015
+csp_sm1_ppl__ot_saline,energy,csp_sm1_ppl,0.3,0,2015
+csp_sm3_ppl__air,energy,csp_sm3_ppl,220,0,2015
+csp_sm3_ppl__cl_fresh,energy,csp_sm3_ppl,100,0,2015
+csp_sm3_ppl__ot_fresh,energy,csp_sm3_ppl,0.4,0,2015
+csp_sm3_ppl__ot_saline,energy,csp_sm3_ppl,0.3,0,2015

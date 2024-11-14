@@ -1,9 +1,14 @@
 """Basic tests of the command line."""
 
 import click
+import pytest
 
 from message_ix_models.cli import cli_test_group
-from message_ix_models.util.click import common_params, temporary_command
+from message_ix_models.util.click import (
+    common_params,
+    scenario_param,
+    temporary_command,
+)
 
 
 def test_default_path_cb(session_context, mix_models_cli):
@@ -57,6 +62,50 @@ def test_regions(mix_models_cli):
 
     # Value given to the outer group is stored and available to the inner command
     assert "ZMB" == result.output.strip()
+
+
+@pytest.mark.parametrize(
+    "args, command, expected",
+    [
+        # As a (required, positional) argument
+        (dict(param_decls="ssp"), ["LED"], "LED"),
+        (dict(param_decls="ssp"), ["FOO"], "'FOO' is not one of 'LED', 'SSP1', "),
+        # As an option
+        # With no default
+        (dict(param_decls="--ssp"), [], "None"),
+        # With a limited of values
+        (
+            dict(param_decls="--ssp", values=["LED", "SSP2"]),
+            ["--ssp=SSP1"],
+            "'SSP1' is not one of 'LED', 'SSP2'",
+        ),
+        # With a default
+        (dict(param_decls="--ssp", default="SSP2"), [], "SSP2"),
+        # With a different name
+        (dict(param_decls=["--scenario", "ssp"]), ["--scenario=SSP5"], "SSP5"),
+    ],
+)
+def test_scenario_param(capsys, mix_models_cli, args, command, expected):
+    """Tests of :func:`scenario_param`."""
+
+    # scenario_param() can be used as a decorator with `args`
+    @click.command
+    @scenario_param(**args)
+    @click.pass_obj
+    def cmd(context):
+        """Temporary click Command: print the direct value and Context attribute."""
+        print(f"{context.ssp}")
+
+    with temporary_command(cli_test_group, cmd):
+        try:
+            result = mix_models_cli.assert_exit_0(["_test", "cmd"] + command)
+        except RuntimeError as e:
+            # `command` raises the expected value or error message
+            assert expected in capsys.readouterr().out, e
+        else:
+            # `command` can be invoked without error, and the function/Context get the
+            # expected value
+            assert expected == result.output.strip()
 
 
 def test_store_context(mix_models_cli):
