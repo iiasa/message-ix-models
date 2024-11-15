@@ -96,15 +96,18 @@ Commonly used:
    :members:
    :exclude-members: clone_to_dest
 
-   Context is a subclass of :class:`dict`, so common methods like :meth:`~dict.copy` and :meth:`~dict.setdefault` may be used to handle settings.
-   To be forgiving, it also provides attribute access; ``context.foo`` is equivalent to ``context["foo"]``.
+   Context is :class:`dict`-like, so :class:`dict` methods including :meth:`~dict.copy` and :meth:`~dict.setdefault` may be used to handle settings.
+   It also provides attribute access: :py:`context.foo` is equivalent to :py:`context["foo"]`.
 
    A Context instance always has the following members:
 
-   - ``core``: an instance of :class:`message_ix_models.Config`.
-   - ``model``: an instance of :class:`message_ix_models.model.Config`.
+   1. :attr:`core``: an instance of :class:`message_ix_models.Config`.
+   2. :attr:`model``: an instance of :class:`message_ix_models.model.Config`.
+   3. :attr:`report``: an instance of :class:`message_ix_models.report.Config`.
 
-   Attributes of these classes may be accessed by shorthand, e.g. ``context.regions`` is shorthand for ``context.model.regions``.
+   Attributes of (1) and (2) **may** be accessed by shorthand/aliases.
+   For instance, :py:`context.regions` is an alias for :py:`context.model.regions`.
+   However, for clarity and to support type checking, explicit reference to the configuration class and its attributes **should** be used.
 
    Context provides additional methods to do common tasks that depend on configurable settings:
 

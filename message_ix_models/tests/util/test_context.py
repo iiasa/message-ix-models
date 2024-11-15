@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import platform
@@ -6,6 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import click
+import genno.caching
 import ixmp
 import pytest
 from message_ix import Scenario
@@ -152,6 +154,13 @@ class TestContext:
         assert (
             dict(model="foo", scenario="bar", version=0) == test_context.scenario_info
         )
+
+    def test_asdict(self, session_context):
+        # asdict() method runs
+        session_context.asdict()
+
+        # Context can be serialized to json using the genno caching Encoder
+        json.dumps(session_context, cls=genno.caching.Encoder)
 
     def test_write_debug_archive(self, mix_models_cli):
         """:meth:`.write_debug_archive` works."""
