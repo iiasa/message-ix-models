@@ -190,11 +190,12 @@ class TestContext:
             result = mix_models_cli.invoke(["_test", "write-debug-archive"])
 
         # Output path is constructed as expected; file exists
+        assert 0 == result.exit_code, result.exception
         match = re.search(
             r"Write to: (.*main-_test-write-debug-archive-[\dabcdefT\-]+.zip)",
             result.output,
         )
-        assert Path(match.group(1)).exists()
+        assert match and Path(match.group(1)).exists(), result.output
 
         # Log output is generated for the non-existent path in Context.debug_paths
         assert re.search(r"Not found: .*bar.txt", result.output)
