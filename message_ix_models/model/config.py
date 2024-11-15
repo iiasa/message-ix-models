@@ -1,8 +1,6 @@
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 
-from message_ix_models.model.structure import codelists
 from message_ix_models.util.config import ConfigHelper
-from message_ix_models.util.context import _ALIAS
 
 
 @dataclass
@@ -47,6 +45,8 @@ class Config(ConfigHelper):
 
     def check(self):
         """Check the validity of :attr:`regions`, :attr:`relations`, :attr:`years`."""
+        from message_ix_models.model.structure import codelists
+
         for attr, name in [
             ("regions", "node"),
             ("relations", "relation"),
@@ -56,7 +56,3 @@ class Config(ConfigHelper):
                 raise ValueError(
                     f"{attr}={getattr(self, attr)!r} not among {codelists(name)}"
                 )
-
-
-# Extend the list of settings that can be set directly on a Context instance.
-_ALIAS.update({f.name: "model" for f in fields(Config)})

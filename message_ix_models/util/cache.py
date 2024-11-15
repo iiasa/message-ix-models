@@ -47,6 +47,11 @@ def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
 
 
 @genno.caching.Encoder.register
+def _context(o: Context):
+    return o.asdict()
+
+
+@genno.caching.Encoder.register
 def _dataclass(o: object):
     return (
         asdict(o)
