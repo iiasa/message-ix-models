@@ -1,6 +1,10 @@
 MESSAGEix-Nexus (:mod:`.model.water`)
 *************************************
 
+.. note:: The current version of :mod:`.model.water` is configured to work with scenarios that have technology set elements including ``csp_sm1_ppl`` and ``csp_sm3_ppl`` instead of ``solar_th_ppl``.
+   Previous versions (in :mod:`message_ix_models` v2024.8.6 and earlier) were configured to work with scenarios including the technology ``solar_th_ppl``.
+   See further discussion at :pull:`242`.
+
 :mod:`message_ix_models.model.water` adds water usage and demand related representation to the MESSAGEix-GLOBIOM global model.
 The resulting model is referred to as **“MESSAGEix-Nexus”**.
 This work extends the water sector linkage described by Parkinson et al. (2019) :cite:`parkinson-2019`.

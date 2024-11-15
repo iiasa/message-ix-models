@@ -6,9 +6,18 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_timeseries
+from message_ix_models.model.material.data_util import (
+    gen_chemicals_co2_ind_factors,
+    gen_ethanol_to_ethylene_emi_factor,
+    gen_plastics_emission_factors,
+    read_timeseries,
+)
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import get_ssp_from_context, read_config
+from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
+    get_ssp_from_context,
+    read_config,
+)
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
@@ -320,7 +329,7 @@ def gen_data_petro_chemicals(
     # Techno-economic assumptions
     data_petro = read_data_petrochemicals(scenario)
     data_petro_ts = read_timeseries(
-        scenario, "petrochemicals", "petrochemicals_techno_economic.xlsx"
+        scenario, "petrochemicals", None, "petrochemicals_techno_economic.xlsx"
     )
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -544,6 +553,17 @@ def gen_data_petro_chemicals(
     df["value"] = -(1.33181 * 0.482)  # gas input * emission factor of gas
     df["technology"] = "gas_processing_petro"
     results["relation_activity"] = df
+
+    meth_downstream_emi_top_down = gen_plastics_emission_factors(s_info, "HVCs")
+    meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "HVCs")
+    meth_downstream_emi_eth = gen_ethanol_to_ethylene_emi_factor(s_info)
+
+    results = combine_df_dictionaries(
+        results,
+        meth_downstream_emi_top_down,
+        meth_downstream_emi_bot_up,
+        meth_downstream_emi_eth,
+    )
 
     # TODO: move this to input xlsx file
     df_gro = results["growth_activity_up"]

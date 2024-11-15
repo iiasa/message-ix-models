@@ -1,6 +1,6 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-from typing import Any
+from typing import Any, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -26,16 +26,22 @@ def missing_tech(x: pd.Series) -> pd.Series:
     data_dic = {
         "geo_hpl": 1 / 0.850,
         "geo_ppl": 1 / 0.385,
+        "gas_hpl": 1 / 0.3,
+        "foil_hpl": 1 / 0.25,
         "nuc_hc": 1 / 0.326,
         "nuc_lc": 1 / 0.326,
         "solar_th_ppl": 1 / 0.385,
     }
 
-    if data_dic.get(x["technology"]):
+    if pd.notna(x["technology"]) and x["technology"] in data_dic:
+        value = data_dic.get(x["technology"])
+        if x["value"] < 1:
+            value = max(x["value"], value)
+        # for backwards compatibility
         if x["level"] == "cooling":
-            return pd.Series((data_dic.get(x["technology"]), "dummy_supply"))
+            return pd.Series({"value": value, "level": "dummy_supply"})
         else:
-            return pd.Series((data_dic.get(x["technology"]), x["level"]))
+            return pd.Series({"value": value, "level": x["level"]})
     else:
         return pd.Series({"value": x["value"], "level": x["level"]})
 
@@ -171,6 +177,107 @@ def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
     ]
 
 
+def relax_growth_constraint(
+    ref_hist: pd.DataFrame,
+    scen,
+    cooling_df: pd.DataFrame,
+    g_lo: pd.DataFrame,
+    constraint_type: Literal[Union["activity", "new_capacity", "total_capacity"]],
+) -> pd.DataFrame:
+    """
+    Checks if the parent technologies are shut down and require relaxing
+    the growth constraint.
+
+    Parameters
+    ----------
+    ref_hist : pd.DataFrame
+        Historical data in the reference scenario.
+    scen : Scenario
+        Scenario object to retrieve necessary parameters.
+    cooling_df : pd.DataFrame
+        DataFrame containing information on cooling technologies and their
+        parent technologies.
+    g_lo : pd.DataFrame
+        DataFrame containing growth constraints for each technology.
+    constraint_type : {"activity", "new_capacity"}
+        Type of constraint to check, either "activity" for operational limits or
+        "new_capacity" for capacity expansion limits.
+
+    Returns
+    -------
+    pd.DataFrame
+        Updated `g_lo` DataFrame with relaxed growth constraints.
+    """
+    year_type = "year_vtg" if constraint_type == "new_capacity" else "year_act"
+    year_hist = "year_act" if constraint_type == "activity" else "year_vtg"
+    print(year_type)
+    bound_param = (
+        "bound_activity_lo"
+        if constraint_type == "activity"
+        else "bound_new_capacity_lo"
+        if constraint_type == "new_capacity"
+        else "bound_total_capacity_lo"
+    )
+    print(bound_param)
+    # keep rows with max year_type
+    max_year_hist = (
+        ref_hist.loc[ref_hist.groupby(["node_loc", "technology"])[year_hist].idxmax()]
+        .drop(columns="unit")
+        .rename(columns={year_hist: "hist_year", "value": "hist_value"})
+    )
+
+    # Step 2: Check for bound_activity_up or bound_new_capacity_up conditions
+    bound_up_pare = scen.par(bound_param, {"technology": cooling_df["parent_tech"]})
+    # Get a set with unique year_type values and order them
+    years = np.sort(bound_up_pare[year_type].unique())
+
+    # In max_year_hist add the next year from years matching the hist_year columns
+    max_year_hist["next_year"] = max_year_hist["hist_year"].apply(
+        lambda x: years[years > x][0] if any(years > x) else None
+    )
+
+    # Merge the max_year_hist with bound_up_pare
+    bound_up = pd.merge(bound_up_pare, max_year_hist, how="left")
+    # subset of first year after the historical
+    # if next_year = None (single year test case) bound_up1 is simply empty
+    bound_up1 = bound_up[bound_up[year_type] == bound_up["next_year"]]
+    # Categories that might break the growth constraints
+    bound_up1 = bound_up1[bound_up1["value"] > 0.9 * bound_up1["hist_value"]]
+    # not look ad sudden contraints after sthe starting year
+    bound_up = bound_up.sort_values(by=["node_loc", "technology", year_type])
+    # Check if value for a year is greater than the value of the next year
+    bound_up["next_value"] = bound_up.groupby(["node_loc", "technology"])[
+        "value"
+    ].shift(-1)
+    bound_up2 = bound_up[bound_up["value"] < 0.9 * bound_up["next_value"]]
+    bound_up2 = bound_up2.drop(columns=["next_value"])
+    # combine bound 1 and 2
+    combined_bound = (
+        pd.concat([bound_up1, bound_up2]).drop_duplicates().reset_index(drop=True)
+    )
+    # Keep only node_loc, technology, and year_type
+    combined_bound = combined_bound[["node_loc", "technology", year_type]]
+    # Add columns with value "remove" to be able to use make_matched_dfs
+    combined_bound["rem"] = "remove"
+    combined_bound.rename(columns={"technology": "parent_tech"}, inplace=True)
+
+    # map_par tec to parent tec
+    map_parent = cooling_df[["technology_name", "parent_tech"]]
+    map_parent.rename(columns={"technology_name": "technology"}, inplace=True)
+    # expand bound_up to all cooling technologies in map_parent
+    combined_bound = pd.merge(combined_bound, map_parent, how="left")
+    # rename tear_type to year_act, because g_lo use it
+    combined_bound.rename(columns={year_type: "year_act"}, inplace=True)
+
+    # Merge to g_lo to be able to remove the technologies
+    g_lo = pd.merge(g_lo, combined_bound, how="left")
+    g_lo = g_lo[g_lo["rem"] != "remove"]
+    # Remove column rem and parent_tech
+    g_lo = g_lo.drop(columns=["rem", "parent_tech"])
+
+    return g_lo
+
+
 # water & electricity for cooling technologies
 @minimum_version("message_ix 3.7")
 def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
@@ -255,13 +362,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     ref_hist_cap: pd.DataFrame = scen.par(
         "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
     )
-    # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
-    # where h_fg (flue gasses losses) = 0.1
-    ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
 
-    ref_input[["value", "level"]] = ref_input[["technology", "value", "level"]].apply(
-        missing_tech, axis=1
-    )[["value", "level"]]
+    ref_input[["value", "level"]] = ref_input.apply(missing_tech, axis=1)
 
     # Combines the input df of parent_tech with water withdrawal data
     input_cool = (
@@ -276,18 +378,22 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # Convert year values into integers to be compatibel for model
     input_cool.year_vtg = input_cool.year_vtg.astype(int)
     input_cool.year_act = input_cool.year_act.astype(int)
-    # Drops extra technologies from the data
+    # Drops extra technologies from the data. backwards compatibility
     input_cool = input_cool[
         (input_cool["level"] != "water_supply") & (input_cool["level"] != "cooling")
     ]
-
+    # heat plants need no cooling
     input_cool = input_cool[
         ~input_cool["technology_name"].str.contains("hpl", na=False)
     ]
-    input_cool = input_cool[
-        (input_cool["node_loc"] != f"{context.regions}_GLB")
-        & (input_cool["node_origin"] != f"{context.regions}_GLB")
-    ]
+    # Swap node_loc if node_loc equals "{context.regions}_GLB"
+    input_cool.loc[input_cool["node_loc"] == f"{context.regions}_GLB", "node_loc"] = (
+        input_cool["node_origin"]
+    )
+    # Swap node_origin if node_origin equals "{context.regions}_GLB"
+    input_cool.loc[
+        input_cool["node_origin"] == f"{context.regions}_GLB", "node_origin"
+    ] = input_cool["node_loc"]
 
     input_cool["cooling_fraction"] = input_cool.apply(cooling_fr, axis=1)
 
@@ -347,7 +453,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     con1 = input_cool["technology_name"].str.endswith("ot_saline", na=False)
     con2 = input_cool["technology_name"].str.endswith("air", na=False)
     icmse_df = input_cool[(~con1) & (~con2)]
-
+    # electricity inputs
     inp = make_df(
         "input",
         node_loc=electr["node_loc"],
@@ -612,7 +718,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # con4 = cost['technology'].str.endswith("air")
     # con5 = cost.technology.isin(input_cool['technology_name'])
     # inv_cost = cost[(con3) | (con4)]
-    inv_cost = cost.copy()
+
     # Manually removing extra technologies not required
     # TODO make it automatic to not include the names manually
     techs_to_remove = [
@@ -629,23 +735,31 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         "nuc_htemp__cl_fresh",
         "nuc_htemp__air",
     ]
+
+    from message_ix_models.tools.costs.config import Config
+    from message_ix_models.tools.costs.projections import create_cost_projections
+
+    # Set config for cost projections
+    # Using GDP method for cost projections
+    cfg = Config(
+        module="cooling", scenario=context.ssp, method="gdp", node=context.regions
+    )
+
+    # Get projected investment and fixed o&m costs
+    cost_proj = create_cost_projections(cfg)
+
+    # Get only the investment costs for cooling technologies
+    inv_cost = cost_proj["inv_cost"][
+        ["year_vtg", "node_loc", "technology", "value", "unit"]
+    ]
+
+    # Remove technologies that are not required
     inv_cost = inv_cost[~inv_cost["technology"].isin(techs_to_remove)]
-    # Converting the cost to USD/GW
-    inv_cost["investment_USD_per_GW_mid"] = (
-        inv_cost["investment_million_USD_per_MW_mid"] * 1e3
-    )
 
-    inv_cost = (
-        make_df(
-            "inv_cost",
-            technology=inv_cost["technology"],
-            value=inv_cost["investment_USD_per_GW_mid"],
-            unit="USD/GWa",
-        )
-        .pipe(same_node)
-        .pipe(broadcast, node_loc=node_region, year_vtg=info.Y)
-    )
+    # Only keep cooling module technologies by filtering for technologies with "__"
+    inv_cost = inv_cost[inv_cost["technology"].str.contains("__")]
 
+    # Add the investment costs to the results
     results["inv_cost"] = inv_cost
 
     # Addon conversion
@@ -739,47 +853,24 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     results["capacity_factor"] = df
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
-    # growth activity low to allow the cooling techs to be operational
-    g_lo = make_df(
-        "growth_activity_lo",
-        technology=inp["technology"].drop_duplicates(),
-        value=-0.05,
-        unit="%",
-        time="year",
-    ).pipe(broadcast, year_act=info.Y, node_loc=node_region)
-    # Alligining certain technologies with growth constriants
-    g_lo.loc[g_lo["technology"].str.contains("bio_ppl|loil_ppl"), "value"] = -0.5
-    g_lo.loc[g_lo["technology"].str.contains("coal_ppl_u|coal_ppl"), "value"] = -0.5
-    g_lo.loc[
-        (g_lo["technology"].str.contains("coal_ppl_u|coal_ppl"))
-        & (g_lo["node_loc"].str.contains("CPA|PAS")),
-        "value",
-    ] = -1
-    results["growth_activity_lo"] = g_lo
-
-    # growth activity up on saline water
-    inp_saline = inp[inp["technology"].str.endswith("ot_saline")]
-
+    # growth activity up to avoid sudden switch in the cooling techs
     g_up = make_df(
         "growth_activity_up",
-        technology=inp_saline["technology"].drop_duplicates(),
+        technology=inp["technology"].drop_duplicates(),
         value=0.05,
         unit="%",
         time="year",
     ).pipe(broadcast, year_act=info.Y, node_loc=node_region)
-    results["growth_activity_up"] = g_up
 
-    # # adding initial activity
-    # in_lo = h_act.copy()
-    # in_lo.drop(columns='mode', inplace=True)
-    # in_lo = in_lo[in_lo['year_act'] == 2015]
-    # in_lo_1 = make_df('initial_activity_lo',
-    #                   node_loc=in_lo['node_loc'],
-    #                   technology=in_lo['technology'],
-    #                   time='year',
-    #                   value=in_lo['value'],
-    #                   unit='GWa').pipe(broadcast, year_act=[2015, 2020])
-    # results['initial_activity_lo'] = in_lo_1
+    # relax growth constraints for activity jumps of parent technologies
+    g_up = relax_growth_constraint(ref_hist_act, scen, cooling_df, g_up, "activity")
+    # relax growth constraints for capacity jumps of parent technologies
+    g_up = relax_growth_constraint(ref_hist_cap, scen, cooling_df, g_up, "new_capacity")
+    g_up = relax_growth_constraint(
+        ref_hist_cap, scen, cooling_df, g_up, "total_capacity"
+    )
+
+    results["growth_activity_up"] = g_up
 
     return results
 
@@ -839,7 +930,8 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
 
     n_cool_df = scen.par("output", {"technology": non_cool_tech})
     n_cool_df = n_cool_df[
-        (n_cool_df["node_loc"] != "R11_GLB") & (n_cool_df["node_dest"] != "R11_GLB")
+        (n_cool_df["node_loc"] != f"{context.regions}_GLB")
+        & (n_cool_df["node_dest"] != f"{context.regions}_GLB")
     ]
     n_cool_df_merge = pd.merge(n_cool_df, non_cool_df, on="technology", how="right")
     n_cool_df_merge.dropna(inplace=True)

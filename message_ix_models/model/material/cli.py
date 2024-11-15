@@ -12,7 +12,7 @@ import message_ix
 
 import message_ix_models.tools.costs.projections
 from message_ix_models.model.material.data_util import (
-    add_macro_COVID,
+    add_macro_materials,
     gen_te_projections,
 )
 from message_ix_models.model.material.util import (
@@ -40,12 +40,6 @@ def cli(ssp):
 
 @cli.command("build")
 @click.option(
-    "--datafile",
-    default="Global_steel_cement_MESSAGE.xlsx",
-    metavar="INPUT",
-    help="File name for external data input",
-)
-@click.option(
     "--iea_data_path",
     default="P:ene.model\\IEA_database\\Florian\\",
     help="File path for external data input",
@@ -63,7 +57,7 @@ def cli(ssp):
 @common_params("nodes")
 @click.pass_obj
 def build_scen(
-    context, datafile, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
+    context, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
 ):
     """Build a scenario.
 
@@ -98,9 +92,6 @@ def build_scen(
 
         if type(output_scenario_name).__name__ == "NoneType":
             output_scenario_name = context.scenario_info["scenario"]
-
-        # context.metadata_path = context.metadata_path / "data"
-        context.datafile = datafile
 
         if context.scenario_info["model"] != "CD_Links_SSP2":
             log.warning("WARNING: this code is not tested with this base scenario!")
@@ -185,10 +176,20 @@ def build_scen(
 
     if update_costs:
         log.info(f"Updating costs with {message_ix_models.tools.costs.projections}")
-        inv, fix = gen_te_projections(scenario, context["ssp"])
+        inv, fix = gen_te_projections(scenario, context["ssp"], method="gdp")
         scenario.check_out()
         scenario.add_par("fix_cost", fix)
         scenario.add_par("inv_cost", inv)
+        scenario.commit(f"update cost assumption to: {update_costs}")
+        inv, fix = gen_te_projections(scenario, "SSP2", "gdp", module="energy")
+        scenario.check_out()
+        scenario.add_par(
+            "fix_cost",
+            fix[
+                (fix["technology"].str.endswith("_i"))
+                | (fix["technology"].str.endswith("_I"))
+            ],
+        )
         scenario.commit(f"update cost assumption to: {update_costs}")
 
 
@@ -256,7 +257,7 @@ def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year
         # After solving, add macro calibration
         log.info("Scenario solved, now adding MACRO calibration")
         # f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
-        scenario = add_macro_COVID(scenario, macro_file)
+        scenario = add_macro_materials(scenario, macro_file)
         log.info("Scenario successfully calibrated.")
 
     if add_macro:
@@ -308,7 +309,7 @@ def run_reporting(context, remove_ts, profile):
             pr = cProfile.Profile()
             pr.enable()
             log.info("Reporting material-specific variables")
-            report(context, scenario)
+            report(scenario)
             log.info("Reporting standard variables")
             reporting(
                 mp,
@@ -333,7 +334,7 @@ def run_reporting(context, remove_ts, profile):
         else:
             # Remove existing timeseries and add material timeseries
             log.info("Reporting material-specific variables")
-            report(context, scenario)
+            report(scenario)
             log.info("Reporting standard variables")
             reporting(
                 mp,
@@ -516,3 +517,27 @@ def test_calib(context):
 
     scenario.add_macro(data, check_convergence=False)
     return
+
+
+@cli.command("calibrate")
+@click.pass_obj
+def calibrate(context, model_name, scenario_name, version):
+    """Calib a scenario.
+
+    Use the --model_name and --scenario_name option to specify the scenario to solve.
+    """
+    # Clone and set up
+    scenario = context.get_scenario()
+
+    # update cost_ref and price_ref with new solution
+    update_macro_calib_file(
+        scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+    )
+
+    # After solving, add macro calibration
+    print("Scenario solved, now adding MACRO calibration")
+    scenario = add_macro_materials(
+        scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+    )
+    scenario.set_as_default()
+    print("Scenario calibrated.")

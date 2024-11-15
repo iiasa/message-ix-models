@@ -32,7 +32,7 @@ ssp_mode_map = {
     "SSP2": "normal",
     "SSP3": "high",
     "SSP4": "normal",
-    "SSP5": "high",
+    "SSP5": "highest",
     "LED": "low",
 }
 
@@ -49,7 +49,12 @@ mode_modifiers_dict = {
     },
     "high": {
         "steel": {"a": 1.3, "b": 1},
-        "cement": {"a": 1.3},
+        "cement": {"a": 1.2, "b": 1.5},
+        "aluminum": {"a": 1.4, "b": 1.3},
+    },
+    "highest": {
+        "steel": {"a": 1.3, "b": 1},
+        "cement": {"a": 1.8, "b": 4},
         "aluminum": {"a": 1.3, "b": 1},
     },
 }
@@ -513,7 +518,7 @@ def gen_demand_petro(
 
     df_melt = df_demand.melt(ignore_index=False).reset_index()
 
-    level = "demand" if chemical == "HVC" else "final_material"
+    level = "demand" if chemical in ["HVC", "methanol"] else "final_material"
 
     return make_df(
         "demand",

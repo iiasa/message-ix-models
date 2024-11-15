@@ -427,6 +427,24 @@ def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
     return
 
 
+def gen_cokeoven_co2_cc(s_info):
+    emi_dict = {
+        "unit": "Mt C/yr",
+        "technology": "cokeoven_steel",
+        "mode": "M1",
+        "value": 0.814 * 0.2,
+        # coal coeffient * difference between coal "final" and "dummy_emission" input
+        "relation": "CO2_cc",
+    }
+    df = (
+        make_df("relation_activity", **emi_dict)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=s_info.Y)
+        .pipe(same_node)
+    )
+    df["year_rel"] = df["year_act"]
+    return df
+
+
 def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     """Generate data for materials representation of steel industry."""
     # Load configuration
@@ -439,10 +457,10 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
     # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel = read_sector_data(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel", "Global_steel_MESSAGE.xlsx")
-    data_steel_rel = read_rel(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel_ts = read_timeseries(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
+    data_steel_rel = read_rel(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 
@@ -585,6 +603,19 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         ]
     )
 
+    results["relation_activity"] = pd.concat(
+        [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
+    )
+
     maybe_remove_water_tec(scenario, results)
+
+    if ssp == "SSP1":
+        df_tmp = results["relation_activity"]
+        df_tmp = df_tmp[
+            (df_tmp["relation"] == "minimum_recycling_steel")
+            & (df_tmp["technology"] == "total_EOL_steel")
+        ]
+        df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
+        df_tmp["value"] = -0.7
 
     return results

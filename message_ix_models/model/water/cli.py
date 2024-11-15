@@ -4,7 +4,7 @@ import click
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util.click import common_params
+from message_ix_models.util.click import common_params, scenario_param
 
 log = logging.getLogger(__name__)
 
@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 # allows to activate water module
 @click.group("water-ix")
 @common_params("regions")
+@scenario_param("--ssp", default="SSP2")
 @click.option("--time", help="Manually defined time")
 @click.pass_obj
 def cli(context: "Context", regions, time):
@@ -206,6 +207,7 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
 
 @cli.command("cooling")
 @common_params("regions")
+@scenario_param("--ssp")
 @click.option(
     "--rcps",
     default="no_climate",
@@ -266,6 +268,9 @@ def cooling(context, regions, rcps, rels):
 
     # Build
     build(context, scen)
+
+    # Set scenario as default
+    scen.set_as_default()
 
     # Solve
     scen.solve(solve_options={"lpmethod": "4"}, case=caseName)
