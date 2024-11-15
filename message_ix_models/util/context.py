@@ -8,12 +8,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 import ixmp
-import message_ix
-from click import BadOptionUsage
-
-from .ixmp import parse_url
 
 if TYPE_CHECKING:
+    import message_ix
+
     import message_ix_models.model.config
     import message_ix_models.report.config
     import message_ix_models.util.config
@@ -226,10 +224,8 @@ class Context:
             self.set(k, v)
 
     def __deepcopy__(self, memo):
-        # Hide "_mp" from the copy
-        result = Context()
-        result.update((k, deepcopy(v)) for k, v in self._values.items() if k != "_mp")
-
+        result = Context()  # Create a new instance; this also updates _CONTEXTS
+        result._values.update((k, deepcopy(v)) for k, v in self._values.items())
         return result
 
     def __eq__(self, other) -> bool:
@@ -247,62 +243,19 @@ class Context:
             raise AttributeError(name) from None
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} object at {id(self)} with {len(self)} keys>"
+        return f"<Context object at {id(self)} with {len(self)} keys>"
 
     def __setattr__(self, name, value):
+        if name == "_values":
+            return object.__setattr__(self, name, value)
         self.set(name, value)
-
-    def delete(self):
-        """Hide the current Context from future :meth:`.get_instance` calls."""
-        # Index of the *last* matching instance
-        index = len(_CONTEXTS) - 1 - list(reversed(_CONTEXTS)).index(self)
-
-        if index > 0:
-            _CONTEXTS.pop(index)
-        else:  # pragma: no cover
-            # The `session_context` fixture means this won't occur during tests
-            log.warning("Won't delete the only Context instance")
-
-        self.close_db()
-
-    def write_debug_archive(self) -> None:
-        """Write an archive containing the files listed in :attr:`.debug_paths`.
-
-        The archive file name is constructed using :func:`.unique_id` and appears in a
-        :file:`debug` subdirectory under the :ref:`local data path <local-data>`.
-
-        The archive also contains a file :file:`command.txt` that gives the full
-        command-line used to invoke :program:`mix-models`.
-        """
-        from zipfile import ZIP_DEFLATED, ZipFile
-
-        from .click import format_sys_argv, unique_id
-
-        # Output file
-        target = self.core.local_data.joinpath("debug", f"{unique_id()}.zip")
-        log.info(f"Write to: {target}")
-
-        target.parent.mkdir(parents=True, exist_ok=True)
-
-        with ZipFile(target, mode="w", compression=ZIP_DEFLATED) as zf:
-            # Write a file that contains the CLI invocation
-            zf.writestr("command.txt", format_sys_argv())
-
-            # Write the identified files
-            for dp in self.core.debug_paths:
-                if not dp.exists():
-                    log.info(f"Not found: {dp}")
-                    continue
-
-                zf.write(dp, arcname=dp.relative_to(self.core.local_data))
-                # log.info(debug_path)
 
     # Particular methods of Context
     def asdict(self) -> dict:
         """Return a :func:`.deepcopy` of the Context's values as a :class:`dict`."""
         return {k: deepcopy(v) for k, v in self._values.items()}
 
-    def clone_to_dest(self, create=True) -> message_ix.Scenario:
+    def clone_to_dest(self, create=True) -> "message_ix.Scenario":
         """Return a scenario based on the ``--dest`` command-line option.
 
         Parameters
@@ -326,6 +279,9 @@ class Context:
         --------
         create_res
         """
+        # NB This method can not be moved to .util.config.Config because the
+        #    create_res() step uses both .util.config.Config *and* .model.Config.
+
         cfg = self.core
         if not cfg.dest_scenario:
             # No information on the destination; try to parse a URL, storing the keys
@@ -373,137 +329,18 @@ class Context:
         log.info(f"Clone to {repr(cfg.dest_scenario)}")
         return scenario_base.clone(platform=mp_dest, **cfg.dest_scenario)
 
-    def close_db(self):
-        try:
-            mp = self.pop("_mp")
-            mp.close_db()
-        except KeyError:
-            pass
+    def delete(self):
+        """Hide the current Context from future :meth:`.get_instance` calls."""
+        # Index of the *last* matching instance
+        index = len(_CONTEXTS) - 1 - list(reversed(_CONTEXTS)).index(self)
 
-    def get_cache_path(self, *parts) -> Path:
-        """Return a path to a local cache file, i.e. within :attr:`.Config.cache_path`.
+        if index > 0:
+            _CONTEXTS.pop(index)
+        else:  # pragma: no cover
+            # The `session_context` fixture means this won't occur during tests
+            log.warning("Won't delete the only Context instance")
 
-        The directory containing the resulting path is created if it does not already
-        exist.
-        """
-        result = self.core.cache_path.joinpath(*parts)
-        result.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-        return result
-
-    def get_local_path(self, *parts: str, suffix=None) -> Path:
-        """Return a path under :attr:`.Config.local_data`.
-
-        Parameters
-        ==========
-        parts :
-            Path fragments, for instance directories, passed to
-            :meth:`~.pathlib.PurePath.joinpath`.
-        suffix :
-            File name suffix including a "."—for instance, ".csv"—passed to
-            :meth:`~.pathlib.PurePath.with_suffix`.
-        """
-        result = self.core.local_data.joinpath(*parts)
-        return result.with_suffix(suffix) if suffix else result
-
-    def get_platform(self, reload=False) -> ixmp.Platform:
-        """Return a :class:`.Platform` from :attr:`.Config.platform_info`.
-
-        When used through the CLI, :attr:`.Config.platform_info` is a 'base' platform as
-        indicated by the --url or --platform  options.
-
-        If a Platform has previously been instantiated with :meth:`get_platform`, the
-        same object is returned unless `reload=True`.
-        """
-        if not reload:
-            # Return an existing Platform, if any
-            try:
-                return self["_mp"]
-            except KeyError:
-                pass
-
-        # Close any existing Platform, e.g. to reload it
-        try:
-            self["_mp"].close_db()
-            del self["_mp"]
-        except KeyError:
-            pass
-
-        # Create a Platform
-        self["_mp"] = ixmp.Platform(**self.core.platform_info)
-        return self["_mp"]
-
-    def get_scenario(self) -> message_ix.Scenario:
-        """Return a :class:`.Scenario` from :attr:`~.Config.scenario_info`.
-
-        When used through the CLI, :attr:`~.Config.scenario_info` is a ‘base’ scenario
-        for an operation, indicated by the ``--url`` or
-        ``--platform/--model/--scenario`` options.
-        """
-        return message_ix.Scenario(self.get_platform(), **self.core.scenario_info)
-
-    def set_scenario(self, scenario: message_ix.Scenario) -> None:
-        """Update :attr:`.Config.scenario_info` to match an existing `scenario`.
-
-        :attr:`.Config.url` is also updated.
-        """
-        self.core.scenario_info.update(
-            model=scenario.model, scenario=scenario.scenario, version=scenario.version
-        )
-        try:
-            url = scenario.url
-        except AttributeError:
-            # Compatibility with ixmp <3.5
-            url = f"{scenario.model}/{scenario.scenario}/{scenario.version}"
-        self.core.url = f"ixmp://{scenario.platform.name}/{url}"
-
-    def handle_cli_args(
-        self,
-        url=None,
-        platform=None,
-        model_name=None,
-        scenario_name=None,
-        version=None,
-        local_data=None,
-        verbose=False,
-        _store_as=("platform_info", "scenario_info"),
-    ):
-        """Handle command-line arguments.
-
-        May update the :attr:`.Config.local_data`, :attr:`~.Config.platform_info`,
-        :attr:`~.Config.scenario_info`, and/or :attr:`~.Config.url` settings.
-        """
-        self.core.verbose = verbose
-
-        # Store the path to command-specific data and metadata
-        if local_data:
-            self.core.local_data = local_data
-
-        # References to the Context settings to be updated
-        platform_info = getattr(self.core, _store_as[0])
-        scenario_info = getattr(self.core, _store_as[1])
-
-        # Store information for the target Platform
-        if url:
-            if platform or model_name or scenario_name or version:
-                raise BadOptionUsage(
-                    "--platform --model --scenario and/or --version",
-                    " redundant with --url",
-                )
-
-            self.core.url = url
-            urlinfo = parse_url(url)
-            platform_info.update(urlinfo[0])
-            scenario_info.update(urlinfo[1])
-        elif platform:
-            platform_info["name"] = platform
-
-        # Store information about the target Scenario
-        if model_name:
-            scenario_info["model"] = model_name
-        if scenario_name:
-            scenario_info["scenario"] = scenario_name
-        if version:
-            scenario_info["version"] = version
+        self.close_db()
 
     def use_defaults(self, settings):
         """Update from `settings`."""
@@ -515,3 +352,76 @@ class Context:
 
             if value not in info:
                 raise ValueError(f"{setting} must be in {info}; got {value}")
+
+    # Shorthand access to methods of :class:`~message_ix_models.util.config.Config`.
+    def close_db(self) -> None:
+        """Shorthand for :meth:`.Config.close_db`."""
+        self.core.close_db()
+
+    def get_cache_path(self, *parts) -> Path:
+        """Return a path to a local cache file, i.e. within :attr:`~.Config.cache_path`.
+
+        Shorthand for :meth:`.Config.get_cache_path`.
+        """
+        return self.core.get_cache_path(*parts)
+
+    def get_local_path(self, *parts: str, suffix=None) -> Path:
+        """Return a path under :attr:`.Config.local_data`.
+
+        Shorthand for :meth:`.Config.get_local_path`.
+        """
+        return self.core.get_local_path(*parts, suffix=suffix)
+
+    def get_platform(self, reload: bool = False) -> "ixmp.Platform":
+        """Return a :class:`.Platform` from :attr:`.Config.platform_info`.
+
+        Shorthand for :meth:`.Config.get_platform`.
+        """
+        return self.core.get_platform(reload=reload)
+
+    def get_scenario(self) -> "message_ix.Scenario":
+        """Return a :class:`.Scenario` from :attr:`~.Config.scenario_info`.
+
+        Shorthand for :meth:`.Config.get_scenario`.
+        """
+        return self.core.get_scenario()
+
+    def handle_cli_args(
+        self,
+        url=None,
+        platform=None,
+        model_name=None,
+        scenario_name=None,
+        version=None,
+        local_data=None,
+        verbose: bool = False,
+        _store_as: tuple[str, str] = ("platform_info", "scenario_info"),
+    ):
+        """Handle command-line arguments.
+
+        Shorthand for :meth:`.Config.handle_cli_args`.
+        """
+        self.core.handle_cli_args(
+            url=url,
+            platform=platform,
+            model_name=model_name,
+            scenario_name=scenario_name,
+            version=version,
+            local_data=local_data,
+            verbose=verbose,
+            _store_as=_store_as,
+        )
+
+    def set_scenario(self, scenario: "message_ix.Scenario") -> None:
+        """Update :attr:`.Config.scenario_info` to match an existing `scenario`.
+
+        Shorthand for :meth:`.Config.set_scenario`.
+        """
+        self.core.set_scenario(scenario=scenario)
+
+    def write_debug_archive(self) -> None:
+        """Write an archive containing the files listed in :attr:`.Config.debug_paths`.
+
+        Shorthand for :meth:`.Config.write_debug_archive`.
+        """
+        self.core.write_debug_archive()
