@@ -766,6 +766,30 @@ co2_trans1:
       year: 1
     mode:
       all: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
 
 co2_trans2:
   year_init: 2030
@@ -965,7 +989,31 @@ co2_trans2:
       rate: 0
     mode:
       M1: 1
-
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+    
 
 
 # - - - - - - - - - - - - - - - -
@@ -1113,6 +1161,31 @@ co2_stor:
     value: -0.99
     unit: Mt C/yr
     relation: [CO2_Emission]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+      M2: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
     year_rel:
       rate: 0
     node_loc:
