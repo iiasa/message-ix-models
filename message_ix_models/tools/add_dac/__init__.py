@@ -11,14 +11,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yaml
-
 from message_ix.models import MESSAGE_ITEMS
 from message_ix.utils import make_df
 
 
 def generate_df(
     scenario,
-    filepath="",
+    tech_data,
 ):
     """
     This function generate parameter dataframe, matching the data input
@@ -28,23 +27,8 @@ def generate_df(
     ----------
     scenario    : message_ix.Scenario()
         MESSAGEix Scenario where the data will be included
-    filepath    : string, path of the input file
-        the default is in the module's folder
+    tech_data   : dictionary, technology data read using load_package_data
     """
-
-    if not filepath:
-        module_path = os.path.abspath(__file__)  # get the module path
-        package_path = os.path.dirname(
-            os.path.dirname(module_path)
-        )  # get the package path
-        path = os.path.join(
-            package_path, "add_dac/tech_data.yaml"
-        )  # join the current working directory with a filename
-        with open(path, "r") as stream:
-            tech_data = yaml.safe_load(stream)
-    else:
-        with open(filepath, "r") as stream:
-            tech_data = yaml.safe_load(stream)
 
     # Set up dictionary of parameter indices list
     par_idx = {}
@@ -287,29 +271,15 @@ def generate_df(
     return data
 
 
-def print_df(scenario, filepath=""):
-    if not filepath:
-        module_path = os.path.abspath(__file__)  # get the module path
-        package_path = os.path.dirname(
-            os.path.dirname(module_path)
-        )  # get the package path
-        path = os.path.join(
-            package_path, "add_dac/tech_data.yaml"
-        )  # join the current working directory with a filename
-        data = generate_df(scenario, path)
-        for tec, val in data.items():
-            with pd.ExcelWriter(f"{tec}.xlsx", engine="xlsxwriter", mode="w") as writer:
-                for sheet_name, sheet_data in val.items():
-                    sheet_data.to_excel(writer, sheet_name=sheet_name, index=False)
-    else:
-        data = generate_df(scenario, filepath)
-        for tec, val in data.items():
-            with pd.ExcelWriter(f"{tec}.xlsx", engine="xlsxwriter", mode="w") as writer:
-                for sheet_name, sheet_data in val.items():
-                    sheet_data.to_excel(writer, sheet_name=sheet_name, index=False)
+def print_df(scenario, tech_data):
+    data = generate_df(scenario, tech_data)
+    for tec, val in data.items():
+        with pd.ExcelWriter(f"{tec}.xlsx", engine="xlsxwriter", mode="w") as writer:
+            for sheet_name, sheet_data in val.items():
+                sheet_data.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
-def add_tech(scenario, filepath=""):
+def add_tech(scenario, tech_data):
     """
     Parameters
     ----------
@@ -334,31 +304,7 @@ def add_tech(scenario, filepath=""):
     # scenario.add_set("cat_tec", ["co2_potential", "co2_stor"])
 
     # Reading new technology database
-    if not filepath:
-        module_path = os.path.abspath(__file__)  # get the module path
-        package_path = os.path.dirname(
-            os.path.dirname(module_path)
-        )  # get the package path
-        path = os.path.join(
-            package_path, "add_dac/tech_data.yaml"
-        )  # join the current working directory with a filename
-        data = generate_df(scenario, path)
-    else:
-        data = generate_df(scenario, filepath)
-
-    if not filepath:
-        module_path = os.path.abspath(__file__)  # get the module path
-        package_path = os.path.dirname(
-            os.path.dirname(module_path)
-        )  # get the package path
-        path = os.path.join(
-            package_path, "add_dac/tech_data.yaml"
-        )  # join the current working directory with a filename
-        with open(path, "r") as stream:
-            tech_data = yaml.safe_load(stream)
-    else:
-        with open(filepath, "r") as stream:
-            tech_data = yaml.safe_load(stream)
+    data = generate_df(scenario, tech_data)
 
     # TODO: @ywpratama, bring in the set information here from the YAML file
     # Adding parameters by technology and name

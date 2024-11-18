@@ -18,6 +18,7 @@ from message_ix.utils import make_df
 from message_ix_models.tools.add_dac import add_tech
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
+from message_ix_models.util import load_package_data
 
 
 def modify_rc_bounds(s_original, s_target, mod_years):
@@ -286,6 +287,7 @@ def gen_te_projections(
     tuple[pd.DataFrame, pd.DataFrame]
         tuple with "inv_cost" and "fix_cost" DataFrames
     """
+    dac_techs = ["dac_lt", "dac_hte", "dac_htg"]
     model_tec_set = dac_techs
     cfg = Config(
         module="dac",
@@ -510,12 +512,10 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
     # ==============================================
     # Add new setup ================================
     ## setup pipelines, storage, and non-dac ccs technologies
-    filepath = r"C:\Users\pratama\Documents\GitHub\MESSAGEix\message-ix-models\message_ix_models\data\ccs-dac"
-    add_tech(scen, filepath=filepath + f"\co2infrastructure_data_{ssp}dev.yaml")
+    add_tech(scen, load_package_data(f"ccs-dac\co2infrastructure_data_{ssp}dev.yaml"))
 
     ## setup dac technologies
-    filepath = r"C:\Users\pratama\Documents\GitHub\MESSAGEix\message-ix-models\message_ix_models\data\ccs-dac"
-    add_tech(scen, filepath=filepath + f"\daccs_setup_data_{ssp}dev.yaml")
+    add_tech(scen, load_package_data(f"ccs-dac\daccs_setup_data_{ssp}dev.yaml"))
 
     ## add dac costs using meas's tool
     ##> making the projection
