@@ -326,7 +326,12 @@ def prepare_computer(c: Computer):
 
         # Convert to message_ix-compatible data frames
         key = c.add(
-            "as_message_df", f"transport nonldv {name}::ixmp", key, name, dims, common
+            f"transport nonldv {name}::ixmp",
+            "as_message_df",
+            key,
+            name=name,
+            dims=dims,
+            common=common,
         )
 
         if name in parameters:
