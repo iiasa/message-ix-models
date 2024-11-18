@@ -39,13 +39,13 @@ def test_make_spec(regions_arg, regions_exp, years):
 @MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
-    "regions, years, ldv, nonldv, solve",
+    "regions, years, dummy_LDV, nonldv, solve",
     [
-        param("R11", "B", None, None, False, marks=MARK[1]),
+        param("R11", "B", True, None, False, marks=MARK[1]),
         param(  # 44s; 31 s with solve=False
             "R11",
             "A",
-            None,
+            True,
             None,
             True,
             marks=[
@@ -56,30 +56,28 @@ def test_make_spec(regions_arg, regions_exp, years):
                 ),
             ],
         ),
-        param("R11", "A", "US-TIMES MA3T", "IKARUS", False, marks=MARK[1]),  # 43 s
-        param(
-            "R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=[mark.slow, MARK[1]]
-        ),  # 74 s
+        param("R11", "A", False, "IKARUS", False, marks=MARK[1]),  # 43 s
+        param("R11", "A", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),  # 74 s
         # R11, B
-        param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=[mark.slow, MARK[1]]),
-        param("R11", "B", "US-TIMES MA3T", "IKARUS", True, marks=[mark.slow, MARK[1]]),
+        param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
+        param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
-        ("R12", "B", "US-TIMES MA3T", "IKARUS", True),
+        ("R12", "B", False, "IKARUS", True),
         # R14, A
         param(
             "R14",
             "A",
-            "US-TIMES MA3T",
+            False,
             "IKARUS",
             False,
             marks=[mark.slow, MARK[2](genno.ComputationError)],
         ),
         # Pending iiasa/message_data#190
-        param("ISR", "A", None, None, False, marks=MARK[3]),
+        param("ISR", "A", True, None, False, marks=MARK[3]),
     ],
 )
 def test_build_bare_res(
-    request, tmp_path, test_context, regions, years, ldv, nonldv, solve
+    request, tmp_path, test_context, regions, years, dummy_LDV: bool, nonldv, solve
 ):
     """.transport.build() works on the bare RES, and the model solves."""
     # Generate the relevant bare RES
@@ -88,7 +86,11 @@ def test_build_bare_res(
     scenario = bare_res(request, ctx)
 
     # Build succeeds without error
-    options = {"data source": {"LDV": ldv, "non-LDV": nonldv}, "dummy_supply": True}
+    options = {
+        "data source": {"non-LDV": nonldv},
+        "dummy_LDV": dummy_LDV,
+        "dummy_supply": True,
+    }
     build.main(ctx, scenario, options, fast=True)
 
     # dump_path = tmp_path / "scenario.xlsx"
