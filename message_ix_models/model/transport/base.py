@@ -188,6 +188,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     assert y0 == 2020, f"IEA Extended World Energy Balances: no data for y={y0}"
     rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=y0), drop=True)
     rep.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
+    # TODO Dump e_fnp[1] to CSV for AJ comparison
     rep.add(
         e_cnlt,
         "rename_dims",
@@ -459,7 +460,7 @@ def format_share_constraints(
             )
     else:
 
-        def maybe_pivot(df):
+        def maybe_pivot(df: pd.DataFrame) -> pd.DataFrame:
             return df.reindex(columns=columns)
 
     return (
