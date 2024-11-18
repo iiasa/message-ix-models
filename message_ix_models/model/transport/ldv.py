@@ -1,50 +1,53 @@
 """Data for light-duty vehicles (LDVs) for passenger transport."""
 
 import logging
-from collections import defaultdict
-from functools import lru_cache
+from operator import itemgetter
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
 
 import genno
 import pandas as pd
 from genno import Computer, Key, KeySeq
 from message_ix import make_df
-from openpyxl import load_workbook
-from sdmx.model.v21 import Code
+from sdmx.model.common import Code
 
 from message_ix_models.model import disutility
-from message_ix_models.model.structure import get_codes
 from message_ix_models.tools import exo_data
 from message_ix_models.util import (
     ScenarioInfo,
     broadcast,
-    cached,
-    check_support,
-    make_io,
+    convert_units,
     make_matched_dfs,
     merge_data,
     minimum_version,
-    package_data_path,
     same_node,
 )
 
 from . import files as exo
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
-from .operator import extend_y
-from .util import input_commodity_level
+from .util import wildcard
 
 if TYPE_CHECKING:
+    from genno import KeyLike
     from genno.types import AnyQuantity
+
+    from message_ix_models.types import ParameterData
 
     from .config import Config
 
 log = logging.getLogger(__name__)
 
+#: Shorthand for tags on keys
+Li = "::LDV+ixmp"
+
+#: Target key that collects all data generated in this module.
+TARGET = f"transport{Li}"
+
 
 @exo_data.register_source
 class LDV(MaybeAdaptR11Source):
-    """Provider of exogenous data on LDVs
+    """Provider of exogenous data on LDVs.
 
     Parameters
     ----------
@@ -55,6 +58,8 @@ class LDV(MaybeAdaptR11Source):
 
     id = __name__
     measures = {"inv_cost", "fuel economy", "fix_cost"}
+
+    #: Names of expected files given :attr:`measure`.
     filename = {
         "inv_cost": "ldv-inv_cost.csv",
         "fuel economy": "ldv-fuel-economy.csv",
@@ -64,20 +69,30 @@ class LDV(MaybeAdaptR11Source):
     def __init__(self, source, source_kw) -> None:
         super().__init__(source, source_kw)
         # Use "exo" tag on the target key, to align with existing code in this module
-        self.key = Key(f"ldv {self.measure}:n-t-y:exo")
+        self.key = Key(f"{self.measure}:n-t-y:LDV+exo")
+
+
+def _add(c: "Computer", _target_name: str, *args, **kwargs):
+    """Update `c` to merge ``_target_name::LDV+ixmp`` into :data:`TARGET`.
+
+    The `args` and `kwargs` are passed to :meth:`.Computer.add`.
+    """
+    key = f"{_target_name}{Li}"
+    c.add(key, *args, **kwargs)
+    c.graph[TARGET] = c.graph[TARGET] + (key,)
 
 
 def prepare_computer(c: Computer):
-    """Set up `c` to compute techno-economic data for light-duty-vehicle technologies.
+    """Set up `c` to compute parameter data for light-duty-vehicle technologies.
 
-    Results in a key ``ldv::ixmp`` that triggers computation of :mod:`ixmp`-ready
-    parameter data for LDV technologies. These computations respond to
-    :attr:`.DataSourceConfig.LDV`:
+    Results in a key :data:`TARGET` that triggers computation of :mod:`ixmp`-ready
+    parameter data for LDV technologies. These computations respond to, *inter alia*,
+    :attr:`.transport.Config.dummy_LDV`:
 
-    - :obj:`None`: :func:`get_dummy` is used.
-    - “US-TIMES MA3T”: :func:`get_USTIMES_MA3T` is used.
+    - :any:`True`: :func:`get_dummy` is used.
+    - :any:`False`: :func:`prepare_tech_econ` is used.
 
-    In both cases, :func:`get_constraints` is used to generate constraints.
+    In both cases, :func:`constraint_data` is used to generate constraint data.
     """
     from genno import Key
     from genno.core.attrseries import AttrSeries
@@ -86,88 +101,79 @@ def prepare_computer(c: Computer):
 
     context = c.graph["context"]
     config: "Config" = context.transport
-    source = config.data_source.LDV
     info = config.base_model_info
 
-    # Use .tools.exo_data.prepare_computer() to add task that load, adapt, and select
+    # Some keys/shorthand
+    k = SimpleNamespace(
+        fe=Key("fuel economy:n-t-y:LDV"),
+        eff=KeySeq("efficiency:t-y-n:LDV"),
+        factor_input=Key("input:t-y:LDV+factor"),
+    )
+    t_ldv = "t::transport LDV"
+
+    # Add a placeholder task to merge together all of the data prepared by this module.
+    # The helper function _add() above extends this with keys for the different pieces.
+    c.add(TARGET, "merge_data")
+
+    # Use .tools.exo_data.prepare_computer() to add tasks that load, adapt, and select
     # the appropriate data
-    for measure in LDV.measures:
+    kw = dict(nodes=context.model.regions, scenario=str(config.ssp))
+    for kw["measure"] in LDV.measures:
         exo_data.prepare_computer(
-            context,
-            c,
-            source=__name__,
-            source_kw=dict(
-                measure=measure,
-                nodes=context.model.regions,
-                scenario=str(config.ssp),
-            ),
-            strict=False,
+            context, c, source=__name__, source_kw=kw, strict=False
         )
 
     # Insert a scaling factor that varies according to SSP
-    k_fe = Key("ldv fuel economy:n-t-y")
-    c.apply(factor.insert, k_fe + "exo", name=k_fe.name, target=k_fe, dims="nty")
+    c.apply(
+        factor.insert, k.fe + "exo", name="ldv fuel economy", target=k.fe, dims="nty"
+    )
 
     # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
-    k_eff = Key("ldv efficiency:t-y-n")
-    c.add(k_eff, "div", genno.Quantity(1.0), k_fe)
+    c.add(k.eff[0], "div", genno.Quantity(1.0), k.fe)
 
     # Compute the input efficiency adjustment factor for the NAVIGATE project
     # TODO Move this to project-specific code
-    k2 = Key("transport input factor:t-y")
-    c.add(k2, "factor_input", "y", "t::transport", "t::transport agg", "config")
+    c.add(
+        k.factor_input,
+        "factor_input",
+        "y",
+        "t::transport",
+        "t::transport agg",
+        "config",
+    )
 
-    # Product of NAVIGATE input factor and LDV efficiency
-    c.add(k_eff + "adj+0", "mul", k2, k_eff)
+    # Product of NAVIGATE input efficiency factor and LDV efficiency
+    c.add(k.eff[1], "mul", k.factor_input, k.eff[0])
 
     # Multiply by values from ldv-input-adj.csv. See file comment. Drop the 'scenario'
     # dimension; there is only one value in the file per 'n'.
-    c.add("ldv input adj:n", "sum", exo.input_adj_ldv, dimensions=["scenario"])
-    c.add(k_eff + "adj", "mul", k_eff + "adj+0", "ldv input adj:n")
-
-    # Select a task for the final step that computes "ldv::ixmp"
-    final = {
-        "US-TIMES MA3T": (
-            get_USTIMES_MA3T,
-            "context",
-            k_eff + "adj",
-            "ldv inv_cost:n-t-y:exo",
-            "ldv fix_cost:n-t-y:exo",
-        ),
-        None: (get_dummy, "context"),
-    }.get(source)
-
-    if final is None:
-        raise ValueError(f"invalid source for non-LDV data: {source}")
+    c.add("input:n:LDV+adj", "sum", exo.input_adj_ldv, dimensions=["scenario"])
+    c.add(k.eff[2], "mul", k.eff[1], "input:n:LDV+adj")
 
     # Interpolate load factor
-    lf_nsy = Key("load factor ldv:scenario-n-y")
+    k.lf_nsy = KeySeq(exo.load_factor_ldv)
     c.add(
-        lf_nsy + "0",
+        k.lf_nsy[0],
         "interpolate",
-        lf_nsy + "exo",
+        k.lf_nsy.base,
         "y::coords",
         kwargs=dict(fill_value="extrapolate"),
     )
 
     # Select load factor
-    lf_ny = lf_nsy / "scenario"
-    c.add(lf_ny + "0", "select", lf_nsy + "0", "indexers:scenario")
+    k.lf_ny = k.lf_nsy / "scenario"
+    c.add(k.lf_ny[0], "select", k.lf_nsy[0], "indexers:scenario")
 
     # Insert a scaling factor that varies according to SSP
-    c.apply(factor.insert, lf_ny + "0", name="ldv load factor", target=lf_ny)
-
-    # Keys to be included in combined data
-    keys = []
-
-    t_ldv = "t::transport LDV"
+    c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny.base)
 
     # Extend (forward fill) lifetime to cover all periods
+    name = "technical_lifetime"
     c.add(exo.lifetime_ldv + "0", "extend_y", exo.lifetime_ldv, "y", dim="yv")
     # Broadcast to all nodes
     c.add(
-        "lifetime:nl-yv:ldv",
-        "broadcast_n",
+        f"{name}:nl-yv:LDV",
+        "broadcast_wildcard",
         exo.lifetime_ldv + "0",
         "n::ex world",
         dim="nl",
@@ -175,51 +181,66 @@ def prepare_computer(c: Computer):
     # Broadcast to all LDV technologies
     # TODO Use a named operator like genno.operator.expand_dims, instead of the method
     #      of the AttrSeries class
-    c.add("lifetime:nl-t-yv:ldv", AttrSeries.expand_dims, "lifetime:nl-yv:ldv", t_ldv)
+    c.add(f"{name}:nl-t-yv:LDV", AttrSeries.expand_dims, f"{name}:nl-yv:LDV", t_ldv)
     # Convert to MESSAGE data structure
-    keys.append(Key("technical_lifetime::ldv+ixmp"))
-    c.add(
-        keys[-1],
+    _add(
+        c,
+        name,
         "as_message_df",
-        "lifetime:nl-t-yv:ldv",
-        name=keys[-1].name,
+        f"{name}:nl-t-yv:LDV",
+        name=name,
         dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
         common={},
     )
 
     # Add further keys for MESSAGE-structured data
     # Techno-economic attributes
-    keys.append("ldv tech::ixmp")
-    c.add(keys[-1], *final)
+    # Select a task for the final step that computes "tech::LDV+ixmp"
+    if config.dummy_LDV:
+        _add(c, "tech", get_dummy, "context")
+    else:
+        c.apply(
+            prepare_tech_econ,
+            k_efficiency=k.eff[2],
+            k_inv_cost="inv_cost:n-t-y:LDV+exo",
+            k_fix_cost="fix_cost:n-t-y:LDV+exo",
+        )
+
     # Usage
-    keys.append("ldv usage::ixmp")
-    c.add(keys[-1], usage_data, lf_ny, "cg", "n::ex world", t_ldv, "y::model")
+    _add(c, "usage", usage_data, k.lf_ny.base, "cg", "n::ex world", t_ldv, "y::model")
     # Constraints
-    keys.append("ldv constraints::ixmp")
-    c.add(keys[-1], constraint_data, "context")
+    _add(c, "constraints", constraint_data, "context")
     # Capacity factor
-    keys.append("ldv capacity_factor::ixmp")
-    c.add(keys[-1], capacity_factor, exo.activity_ldv, t_ldv, "y", "broadcast:y-yv-ya")
+    _add(
+        c,
+        "capacity_factor",
+        capacity_factor,
+        exo.activity_ldv,
+        t_ldv,
+        "y",
+        "broadcast:y-yv-ya:all",
+    )
 
     # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
     if config.ldv_stock_method == "A":
         # Data from file ldv-new-capacity.csv
         try:
-            k = Key(c.full_key("cap_new::ldv+exo"))
+            k.stock = KeySeq(c.full_key("cap_new::ldv+exo"))
         except KeyError:
-            pass  # No such file in this configuration
+            k.stock = None  # No such file in this configuration
     elif config.ldv_stock_method == "B":
-        k = c.apply(stock)
+        k.stock = KeySeq(c.apply(stock))
 
-    kw: Dict[str, Any] = dict(
-        dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={}
-    )
-    if k:
+    if k.stock:
         # historical_new_capacity: select only data prior to y₀
-        kw.update(name="historical_new_capacity")
+        kw: Dict[str, Any] = dict(
+            common={},
+            dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
+            name="historical_new_capacity",
+        )
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
-        c.add(k + "1", "select", k, indexers=dict(yv=y_historical))
-        keys.append(c.add("ldv hnc::ixmp", "as_message_df", k + "1", **kw))
+        c.add(k.stock[1], "select", k.stock.base, indexers=dict(yv=y_historical))
+        _add(c, kw["name"], "as_message_df", k.stock[1], **kw)
 
         # CAP_NEW/bound_new_capacity_{lo,up}
         # - Select only data from y₀ and later.
@@ -228,140 +249,114 @@ def prepare_computer(c: Computer):
         #   largest share and avoid setting constraints on it.
         # - Add both upper and lower constraints to ensure the solution contains exactly
         #   the given value.
-        c.add(k + "2", "select", k, indexers=dict(yv=info.Y))
-        c.add(k + "3", "select", k + "2", indexers=dict(t=["ICE_conv"]), inverse=True)
-        for s in ("lo", "up"):
-            kw.update(name=f"bound_new_capacity_{s}")
-            keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "3", **kw))
+        c.add(k.stock[2], "select", k.stock.base, indexers=dict(yv=info.Y))
+        c.add(
+            k.stock[3],
+            "select",
+            k.stock[2],
+            indexers=dict(t=["ICE_conv"]),
+            inverse=True,
+        )
+        for kw["name"] in map("bound_new_capacity_{}".format, ("lo", "up")):
+            _add(c, kw["name"], "as_message_df", k.stock[3], **kw)
 
-    k_all = "transport ldv::ixmp"
-    c.add(k_all, "merge_data", *keys)
+    # Add the data to the target scenario
+    c.add("transport_data", __name__, key=TARGET)
 
-    c.add("transport_data", __name__, key=k_all)
 
-def get_USTIMES_MA3T(
-    context, efficiency: "AnyQuantity", inv_cost: "AnyQuantity", fix_cost: "AnyQuantity"
-) -> Dict[str, pd.DataFrame]:
-    """Prepare LDV data from US-TIMES and MA3T.
+DIMS = dict(
+    commodity="c",
+    level="l",
+    node_dest="n",
+    node_loc="n",
+    node_origin="n",
+    technology="t",
+    year_act="ya",
+    year_vtg="yv",
+)
+COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
 
-    .. todo:: Some calculations are performed in the spreadsheet; transfer to code.
-    .. todo:: Values for intermediate time periods e.g. 2025 are forward-filled from
-       the next earlier period, e.g. 2020; interpolate instead.
 
-    Returns
-    -------
-    dict of (str → pd.DataFrame)
-        Data for the ``input``, ``output``, ``capacity_factor, ``technical_lifetime``,
-        ``inv_cost``, and ``fix_cost`` parameters.
+def prepare_tech_econ(
+    c: Computer,
+    *,
+    k_efficiency: "KeyLike",
+    k_inv_cost: "KeyLike",
+    k_fix_cost: "KeyLike",
+) -> None:
+    """Prepare `c` to calculate techno-economic parameters for LDVs.
+
+    This prepares `k_target` to return a data structure with MESSAGE-ready data for the
+    parameters ``input``, ``ouput``, ``fix_cost``, and ``inv_cost``.
     """
-    from message_ix_models.util import convert_units
+    # Collection of KeySeq for starting-points
+    k = SimpleNamespace(input=KeySeq("input::LDV"), output=KeySeq("output::LDV"))
 
-    # Compatibility checks
-    check_support(
-        context,
-        settings=dict(regions=frozenset(["R11", "R12", "R14"])),
-        desc="US-TIMES and MA3T data available",
-    )
-
-    # Retrieve configuration and ScenarioInfo
-    config: "Config" = context.transport
-    info = config.base_model_info
-    spec = config.spec
-
-    # Merge with base model commodity information for io_units() below
-    # TODO this duplicates code in .ikarus; move to a common location
-    all_info = ScenarioInfo()
-    all_info.set["commodity"].extend(get_codes("commodity"))
-    all_info.update(spec.add)
-
-    # Retrieve the input data
-    data = dict(efficiency=efficiency, inv_cost=inv_cost, fix_cost=fix_cost)
-
-    # Years to include
+    # Identify periods to include
     # FIXME Avoid hard-coding this period
-    target_years = list(filter(lambda y: 1995 <= y, info.set["year"]))
-    # Extend over missing periods in the model horizon
-    data = {name: extend_y(qty, target_years) for name, qty in data.items()}
+    c.add("y::LDV", lambda y: list(filter(lambda x: 1995 <= x, y)), "y")
 
-    # Prepare "input" and "output" parameter data from `efficiency`
-    name = "efficiency"
-    base = data.pop(name).to_series().rename("value").reset_index()
-
-    common = dict(mode="all", time="year", time_dest="year", time_origin="year")
-
-    i_o = make_io(
-        src=(None, None, f"{efficiency.units:~}"),
-        dest=(None, "useful", "Gv km"),
-        efficiency=base["value"],
-        on="input",
-        node_loc=base["n"],  # Other dimensions
-        technology=base["t"].astype(str),
-        year_vtg=base["y"],
-        **common,
-    )
-
-    # Assign input commodity and level according to the technology
-    result = {}
-    result["input"] = (
-        input_commodity_level(context, i_o["input"], default_level="final")
-        .pipe(broadcast, year_act=info.Y)
-        .query("year_act >= year_vtg")
-        .pipe(same_node)
-    )
-
-    # Convert units to the model's preferred input units for each commodity
-    @lru_cache
-    def _io_units(t, c, l):  # noqa: E741
-        return all_info.io_units(t, c, l)
-
-    target_units = (
-        result["input"]
-        .apply(
-            lambda row: _io_units(row["technology"], row["commodity"], row["level"]),
-            axis=1,
+    # Create base quantity for "output" parameter
+    nty = tuple("nty")
+    c.add(k.output[0] * nty, wildcard(1.0, "gigavehicle km", nty))
+    for i, coords in enumerate(["n::ex world", "t::LDV", "y::model"]):
+        c.add(
+            k.output[i + 1] * nty,
+            "broadcast_wildcard",
+            k.output[i] * nty,
+            coords,
+            dim=coords[0],
         )
-        .unique()
-    )
-    assert 1 == len(target_units)
 
-    result["input"]["value"] = convert_units(
-        result["input"]["value"],
-        {"value": (1.0, f"{efficiency.units:~}", target_units[0])},
-    )
+    ### Convert input, output to MESSAGE data structure
+    for par_name, base, ks, i in (
+        ("input", k_efficiency, k.input, 0),
+        ("output", k.output[3] * nty, k.output, 4),
+    ):
+        # Extend data over missing periods in the model horizon
+        c.add(ks[i], "extend_y", base, "y::LDV")
 
-    # Assign output commodity based on the technology name
-    result["output"] = (
-        i_o["output"]
-        .assign(commodity=lambda df: "transport vehicle " + df["technology"])
-        .pipe(broadcast, year_act=info.Y)
-        .query("year_act >= year_vtg")
-        .pipe(same_node)
-    )
-
-    # Transform costs
-    for name in "fix_cost", "inv_cost":
-        base = data[name].to_series().reset_index()
-        result[name] = make_df(
-            name,
-            node_loc=base["n"],
-            technology=base["t"],
-            year_vtg=base["y"],
-            value=base[name],
-            unit=f"{data[name].units:~}",
+        # Produce the full quantity for input/output efficiency
+        prev = c.add(
+            ks[i + 1],
+            "mul",
+            ks[i],
+            f"broadcast:t-c-l:transport+{par_name}",
+            "broadcast:y-yv-ya:all",
         )
-    result["fix_cost"] = (
-        result["fix_cost"]
-        .pipe(broadcast, year_act=info.Y)
-        .query("year_act >= year_vtg")
-    )
 
-    # Compute CO₂ emissions factors
-    result.update(ef_for_input(context, result["input"], species="CO2"))
+        # Convert to ixmp/MESSAGEix-structured pd.DataFrame
+        # NB quote() is necessary with dask 2024.11.0, not with earlier versions
+        c.add(ks[i + 2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
 
-    return result
+        # Convert to target units
+        _add(c, par_name, convert_units, ks[i + 2], "transport info")
+
+    ### Transform costs
+    for par_name, base in (("fix_cost", k_fix_cost), ("inv_cost", k_inv_cost)):
+        prev = c.add(
+            f"{par_name}::LDV+0",
+            "interpolate",
+            base,
+            "y::coords",
+            kwargs=dict(fill_value="extrapolate"),
+        )
+        prev = c.add(f"{par_name}::LDV+1", "mul", prev, "broadcast:y-yv-ya:all")
+        _add(
+            c, par_name, "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON
+        )
+
+    ### Compute CO₂ emissions factors
+
+    # Extract the 'input' data frame
+    k.other = KeySeq("other::LDV")
+    c.add(k.other[0], itemgetter("input"), f"input{Li}")
+
+    # Use ef_for_input
+    _add(c, "emission_factor", ef_for_input, "context", k.other[0], species="CO2")
 
 
-def get_dummy(context) -> Dict[str, pd.DataFrame]:
+def get_dummy(context) -> "ParameterData":
     """Generate dummy, equal-cost output for each LDV technology."""
     # Information about the target structure
     config: "Config" = context.transport
@@ -386,9 +381,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
             year_vtg=years,
             unit="Gv km",
             level="useful",
-            mode="all",
-            time="year",
-            time_dest="year",
+            **COMMON,
         )
         .pipe(broadcast, node_loc=info.N[1:], technology=ldv_techs)
         .assign(commodity=lambda df: "transport vehicle " + df["technology"])
@@ -408,7 +401,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
 @minimum_version("message_ix 3.6")
 def capacity_factor(
     qty: "AnyQuantity", t_ldv: dict, y, y_broadcast: "AnyQuantity"
-) -> Dict[str, pd.DataFrame]:
+) -> "ParameterData":
     """Return capacity factor data for LDVs.
 
     The data are:
@@ -420,7 +413,7 @@ def capacity_factor(
     ----------
     qty
         Input data, for instance from file :`ldv-activity.csv`, with dimension |n|.
-    broadcast_y
+    y_broadcast
         The structure :py:`"broadcast:y-yv-va"`.
     t_ldv
         The structure :py:`"t::transport LDV"`, mapping the key "t" to the list of LDV
@@ -448,7 +441,7 @@ def capacity_factor(
     return result
 
 
-def constraint_data(context) -> Dict[str, pd.DataFrame]:
+def constraint_data(context) -> "ParameterData":
     """Return constraints on light-duty vehicle technology activity and usage.
 
     Responds to the :attr:`.Config.constraint` key :py:`"LDV growth_activity"`; see
@@ -511,7 +504,7 @@ def stock(c: Computer) -> Key:
     """Prepare `c` to compute base-period stock and historical sales."""
     from .key import ldv_ny
 
-    k = KeySeq("stock:n-y:ldv")
+    k = KeySeq("stock:n-y:LDV")
 
     # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
     #   load factor (occupancy) to obtain implied stock.
@@ -519,12 +512,12 @@ def stock(c: Computer) -> Key:
     #   passenger/vehicle
     # - Select only the base-period value.
     c.add(k[0], "div", ldv_ny + "total", exo.activity_ldv)
-    c.add(k[1], "div", k[0], "load factor ldv:n-y")
+    c.add(k[1], "div", k[0], "load factor ldv:n-y:exo")
     c.add(k[2], "div", k[1], genno.Quantity(1.0, units="passenger / vehicle"))
     c.add(k[3] / "y", "select", k[2], "y0::coord")
 
     # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
-    c.add("stock:n-t:ldv", "mul", k[3] / "y", exo.t_share_ldv)
+    c.add("stock:n-t:LDV", "mul", k[3] / "y", exo.t_share_ldv)
 
     # TODO Move the following 4 calls to .build.add_structure() or similar
     # Identify the subset of periods up to and including y0
@@ -543,23 +536,23 @@ def stock(c: Computer) -> Key:
 
     # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
     # multi-year periods)
-    c.add("sales fraction:n-t-y:ldv", "sales_fraction_annual", exo.age_ldv)
+    c.add("sales fraction:n-t-y:LDV", "sales_fraction_annual", exo.age_ldv)
     # Absolute sales in preceding years
-    c.add("sales:n-t-y:ldv+annual", "mul", "stock:n-t:ldv", "sales fraction:n-t-y:ldv")
+    c.add("sales:n-t-y:LDV+annual", "mul", "stock:n-t:LDV", "sales fraction:n-t-y:LDV")
     # Aggregate to model periods; total sales across the period
     c.add(
-        "sales:n-t-y:ldv+total",
+        "sales:n-t-y:LDV+total",
         "aggregate",
-        "sales:n-t-y:ldv+annual",
+        "sales:n-t-y:LDV+annual",
         "y::annual agg",
         keep=False,
     )
     # Divide by duration_period for the equivalent of CAP_NEW/historical_new_capacity
-    c.add("sales:n-t-y:ldv", "div", "sales:n-t-y:ldv+total", "duration_period:y")
+    c.add("sales:n-t-y:LDV", "div", "sales:n-t-y:LDV+total", "duration_period:y")
 
     # Rename dimensions to match those expected in prepare_computer(), above
-    k = Key("sales:nl-t-yv:ldv")
-    c.add(k, "rename_dims", "sales:n-t-y:ldv", name_dict={"n": "nl", "y": "yv"})
+    k = Key("sales:nl-t-yv:LDV")
+    c.add(k, "rename_dims", "sales:n-t-y:LDV", name_dict={"n": "nl", "y": "yv"})
 
     return k
 
@@ -570,11 +563,11 @@ def usage_data(
     nodes: List[str],
     t_ldv: Mapping[str, List],
     years: List,
-) -> Mapping[str, pd.DataFrame]:
-    """Generate data for LDV usage technologies.
+) -> "ParameterData":
+    """Generate data for LDV “usage pseudo-technologies”.
 
-    These technologies convert commodities like "transport ELC_100 vehicle" (i.e.
-    vehicle-distance traveled) into "transport pax RUEAM" (i.e. passenger-distance
+    These technologies convert commodities like "transport ELC_100 vehicle" (that is,
+    vehicle-distance traveled) into "transport pax RUEAM" (that is, passenger-distance
     traveled). These data incorporate:
 
     1. Load factor, in the ``output`` efficiency.
@@ -585,11 +578,7 @@ def usage_data(
     info = ScenarioInfo(set={"node": nodes, "year": years})
 
     # Regenerate the Spec for the disutility formulation
-    spec = disutility.get_spec(
-        groups=cg,
-        technologies=t_ldv["t"],
-        template=TEMPLATE,
-    )
+    spec = disutility.get_spec(groups=cg, technologies=t_ldv["t"], template=TEMPLATE)
 
     data = disutility.data_conversion(info, spec)
 
