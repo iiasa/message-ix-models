@@ -181,6 +181,8 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
         test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
 
+    fail = False  # Sentinel value for deferred failure assertion
+
     # Check that some keys (a) can be computed without error and (b) have correct units
     # commented: these are slow because they repeat some calculations many times.
     # Uncommented as needed for debugging
@@ -194,7 +196,8 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
         # Quantity can be computed
         result = c.get(key)
 
-        print(f"{result = }")
+        # # Display the entire `result` object
+        # print(f"{result = }")
 
         if isinstance(result, Quantity):
             print(result.to_series().to_string())
@@ -211,16 +214,27 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
             # print(f"Dumped to {dump}")
             # qty.to_series().to_csv(dump)
         elif isinstance(result, dict):
-            for k, v in result.items():
+            for k, v in sorted(result.items()):
                 print(
-                    f"=== {k} ===",
-                    # v.head().to_string(),  # Initial rows
-                    v.to_string(),  # Entire value
-                    # v.tail().to_string(),  # Final rows
-                    f"=== {k} ===",
+                    f"=== {k} ({len(v)} obs) ===",
+                    v.head().to_string(),  # Initial rows
+                    "...",
+                    v.tail().to_string(),  # Final rows
+                    # v.to_string(),  # Entire value
+                    f"=== {k} ({len(v)} obs) ===",
                     sep="\n",
                 )
                 # print(v.tail().to_string())
+
+                # Write to file
+                # if k == "output":
+                #     v.to_csv("debug-output.csv", index=False)
+
                 missing = v.isna()
                 if missing.any(axis=None):
-                    raise ValueError("Missing values")
+                    print("… missing values")
+                    fail = True  # Fail later
+
+        assert not fail  # Any failure in the above loop
+
+    assert not fail  # Any failure in the above loop
