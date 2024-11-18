@@ -313,10 +313,18 @@ activity_ldv = add(
     units="km / year",
 )
 
+pdt_cap_proj = add(
+    key="P activity:scenario-n-t-y:exo",
+    path="pdt-cap",
+    name="Projected passenger-distance travelled (PDT) per capita",
+    units="km / passenger / year",
+    required=False,
+)
+
 pdt_cap_ref = add(
     key=(pdt_cap / "y") + "ref",
     path="pdt-cap-ref",
-    name="Reference (historical) passenger distance travelled per capita",
+    name="Reference (historical) passenger-distance travelled (PDT) per capita",
     units="km / year",
 )
 
