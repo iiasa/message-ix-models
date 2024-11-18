@@ -1,7 +1,7 @@
 import logging
 from dataclasses import InitVar, dataclass, field, replace
 from enum import Enum
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
 
 import message_ix
 from genno import Quantity
@@ -13,6 +13,9 @@ from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCEN
 from message_ix_models.report.util import as_quantity
 from message_ix_models.util import identify_nodes, package_data_path
 from message_ix_models.util.config import ConfigHelper
+
+if TYPE_CHECKING:
+    from sdmx.model.common import Codelist
 
 log = logging.getLogger(__name__)
 
@@ -416,3 +419,67 @@ class Config(ConfigHelper):
         s = NAVIGATE_SCENARIO.parse(value)
         self.project.update(navigate=s)
         self.check()
+
+
+def get_cl_scenario() -> "Codelist":
+    """Generate ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
+
+    This code lists contains unique IDs for scenarios supported by the
+    MESSAGEix-Transport workflow (:mod:`.transport.workflow`), plus the annotations:
+
+    - ``SSP-URN``: the URN of a code identifying the SSP scenario to be used for
+      sociodemographic data, for instance
+      "urn:sdmx:org.sdmx.infomodel.codelist.Code=ICONICS:SSP(2024).1".
+    - ``is-LED-scenario``: either "True" or "False".
+    - ``EDITS-activity-id``: either "None", "'CA'", or "'HA'".
+    """
+    from sdmx.model import common
+
+    from message_ix_models.util.sdmx import read, write
+
+    # Other data structures
+    as_ = read("IIASA_ECE:AGENCIES")
+    cl_ssp_2024 = read("ICONICS:SSP(2024)")
+
+    cl = common.Codelist(
+        id="CL_TRANSPORT_SCENARIO", maintainer=as_["IIASA_ECE"], version="1.0.0"
+    )
+
+    def _a(*values):
+        """Shorthand to generate the annotations."""
+        return [
+            common.Annotation(id="SSP-URN", text=values[0]),
+            common.Annotation(id="is-LED-scenario", text=repr(values[1])),
+            common.Annotation(id="EDITS-activity-id", text=repr(values[2])),
+        ]
+
+    for ssp_code in cl_ssp_2024:
+        cl.append(
+            common.Code(
+                id=f"SSP{ssp_code.id}", annotations=_a(ssp_code.urn, False, None)
+            )
+        )
+
+    for ssp in ("1", "2"):
+        ssp_code = cl_ssp_2024[ssp]
+        cl.append(
+            common.Code(
+                id=f"LED-SSP{ssp_code.id}",
+                name=f"Low Energy Demand/High-with-Low scenario with SSP{ssp_code.id} "
+                "demographics",
+                annotations=_a(ssp_code.urn, True, None),
+            )
+        )
+
+    for id_, name in (("CA", "Current Ambition"), ("HA", "High Ambition")):
+        cl.append(
+            common.Code(
+                id=f"EDITS-{id_}",
+                name=f"EDITS scenario with ITF PASTA {id_!r} activity",
+                annotations=_a(cl_ssp_2024["2"].urn, False, id_),
+            )
+        )
+
+    write(cl)
+
+    return cl
