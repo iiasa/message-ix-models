@@ -60,7 +60,7 @@ def prepare_computer(c: genno.Computer):
         partial(
             make_matched_dfs,
             output=dict(
-                value=registry("1.0 tonne km"),
+                value=registry("1.0 gigatonne km"),
                 commodity="transport F ROAD vehicle",
                 level="useful",
                 time_dest=COMMON["time_dest"],

@@ -340,14 +340,16 @@ rail_pub:
 transport F RAIL usage:
   description: >-
     Conversion from vehicle-distance traveled to freight transport activity
-  input: {commodity: transport F RAIL vehicle}
+  input: {commodity: transport F RAIL vehicle, level: useful}
   output: {commodity: transport F RAIL}
+  units: tonne / vehicle
 
 transport F ROAD usage:
   description: >-
     Conversion from vehicle-distance traveled to freight transport activity
-  input: {commodity: transport F ROAD vehicle}
+  input: {commodity: transport F ROAD vehicle, level: useful}
   output: {commodity: transport F ROAD}
+  units: tonne / vehicle
 
 F usage:
   child:
@@ -383,7 +385,6 @@ DUMMY supply of gas: {}
 DUMMY supply of hydrogen: {}
 DUMMY supply of lightoil: {}
 DUMMY supply of methanol: {}
-
 
 transport disutility:
   description: >-

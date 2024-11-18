@@ -19,17 +19,18 @@ TEMPLATE = Code(
                 dict(
                     commodity="transport vehicle {technology}",
                     level="useful",
-                    unit="km",
+                    unit="Gv km",
                 )
             ),
         ),
         Annotation(
             id="output",
             text=repr(
-                dict(commodity="transport pax {group}", level="useful", unit="km")
+                dict(commodity="transport pax {group}", level="useful", unit="Gp km")
             ),
         ),
         Annotation(id="is-disutility", text=repr(True)),
+        Annotation(id="units", text="registry.Unit('passenger / vehicle')"),
     ],
 )
 
@@ -108,6 +109,6 @@ def make_spec(regions: str) -> Spec:
     )
 
     # Merge the items to be added by the two specs
-    s["add"].update(s2["add"])
+    s.add.update(s2.add)
 
     return s
