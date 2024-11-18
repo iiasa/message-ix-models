@@ -24,9 +24,6 @@ class DataSourceConfig(ConfigHelper):
     #: Emissions: ID of a dump from a base scenario.
     emissions: str = "1"
 
-    #: Light-duty passenger vehicle techno-economic data.
-    LDV: Union[None, Literal["US-TIMES MA3T"]] = "US-TIMES MA3T"
-
     #: Non-passenger and non-light-duty vehicles.
     non_LDV: str = "IKARUS"
 
@@ -120,6 +117,9 @@ class Config(ConfigHelper):
 
     #: Include dummy ``demand`` data for testing and debugging.
     dummy_demand: bool = False
+
+    #: Include dummy data for LDV technologies.
+    dummy_LDV: bool = False
 
     #: Include dummy technologies supplying commodities required by transport, for
     #: testing and debugging.

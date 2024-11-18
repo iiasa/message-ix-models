@@ -7,9 +7,8 @@ import pytest
 from iam_units import registry
 from pytest import param
 
-from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import build, testing
-from message_ix_models.model.transport.ldv import constraint_data, read_USTIMES_MA3T
+from message_ix_models.model.transport.ldv import constraint_data
 from message_ix_models.model.transport.testing import assert_units
 from message_ix_models.project.navigate import T35_POLICY
 
@@ -17,18 +16,12 @@ log = logging.getLogger(__name__)
 
 
 @build.get_computer.minimum_version
-@pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
+@pytest.mark.parametrize("dummy_LDV", [False, True])
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
-    "regions",
-    [
-        param("ISR", marks=testing.MARK[3]),
-        "R11",
-        "R12",
-        "R14",
-    ],
+    "regions", [param("ISR", marks=testing.MARK[3]), "R11", "R12", "R14"]
 )
-def test_get_ldv_data(tmp_path, test_context, source, regions, years) -> None:
+def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None:
     # Info about the corresponding RES
     ctx = test_context
     # Prepare a Computer for LDV data calculations
@@ -37,7 +30,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years) -> None:
         tmp_path=tmp_path,
         regions=regions,
         years=years,
-        options={"data source": {"LDV": source}, "navigate_scenario": T35_POLICY.TEC},
+        options={"dummy_LDV": dummy_LDV, "navigate_scenario": T35_POLICY.TEC},
     )
 
     # Earlier keys in the process, for debugging
@@ -70,7 +63,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years) -> None:
         "technical_lifetime",
         "var_cost",
     }
-    if source == "US-TIMES MA3T":
+    if not dummy_LDV:
         exp_pars |= {
             "emission_factor",
             "fix_cost",
@@ -86,8 +79,8 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years) -> None:
     # Output data is returned and has the correct units
     assert {"Gv km", "km", "-"} >= set(data["output"]["unit"].unique())
 
-    if source is None:
-        return
+    if dummy_LDV:
+        return  # Further tests don't apply if dummy data are used
 
     # Data are generated for multiple year_act for each year_vtg of a particular tech
     for name in "fix_cost", "input", "output":
@@ -188,22 +181,22 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
 
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
-    "source, regions, years",
+    "dummy_LDV, regions, years",
     [
-        (None, "R11", "A"),
-        ("US-TIMES MA3T", "R11", "A"),
-        ("US-TIMES MA3T", "R11", "B"),
-        ("US-TIMES MA3T", "R12", "B"),
-        ("US-TIMES MA3T", "R14", "A"),
+        (True, "R11", "A"),
+        (False, "R11", "A"),
+        (False, "R11", "B"),
+        (False, "R12", "B"),
+        (False, "R14", "A"),
         # Not implemented
-        param("US-TIMES MA3T", "ISR", "A", marks=testing.MARK[3]),
+        param(False, "ISR", "A", marks=testing.MARK[3]),
     ],
 )
-def test_ldv_constraint_data(test_context, source, regions, years):
+def test_ldv_constraint_data(test_context, dummy_LDV, regions, years):
     # Info about the corresponding RES
     ctx = test_context
     _, info = testing.configure_build(
-        ctx, regions=regions, years=years, options={"data source": {"LDV": source}}
+        ctx, regions=regions, years=years, options={"dummy_LDV": dummy_LDV}
     )
 
     # Method runs without error
@@ -226,44 +219,3 @@ def test_ldv_constraint_data(test_context, source, regions, years):
 
         # Data covers all periods except the first
         assert info.Y[1:] == sorted(df["year_act"].unique())
-
-
-@pytest.mark.parametrize(
-    "func",
-    (
-        pytest.param(
-            read_USTIMES_MA3T, marks=testing.MARK[5]("R11/ldv-cost-efficiency.xlsx")
-        ),
-    ),
-)
-def test_read_USTIMES_MA3T(func):
-    """Data from the US-TIMES / MA³T source can be read.
-
-    .. todo:: Adapt to be more like :func:`.test_build.test_debug`, using the output
-       of :func:`.ldv.prepare_computer`.
-    """
-    all_nodes = get_codes("node/R11")
-    nodes = all_nodes[all_nodes.index("World")].child
-    data = func(nodes, "R11")
-
-    # Expected contents
-    names = ["fix_cost", "fuel economy", "inv_cost"]
-    assert set(names) == set(data.keys())
-
-    # Correct units
-    assert data["inv_cost"].units.dimensionality == {"[currency]": 1, "[vehicle]": -1}
-    assert data["fix_cost"].units.dimensionality == {"[currency]": 1, "[vehicle]": -1}
-    assert data["fuel economy"].units.dimensionality == {
-        "[vehicle]": 1,
-        "[length]": -1,
-        "[mass]": -1,
-        "[time]": 2,
-    }
-
-    for name in names:
-        # Quantity has the expected name
-        assert data[name].name == name
-        # Quantity has the expected dimensions
-        assert {"n", "t", "y"} == set(data[name].dims)
-        # Data is returned for all regions
-        assert set(data[name].coords["n"].to_index()) == set(map(str, nodes))
