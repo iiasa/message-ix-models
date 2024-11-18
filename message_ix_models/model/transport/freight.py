@@ -43,7 +43,6 @@ def prepare_computer(c: genno.Computer):
     prev = c.add(
         k[1], "mul", k[0], "broadcast:t-c-l:transport+input", "broadcast:y-yv-ya"
     )
-
     # Convert input to MESSAGE data structure
     c.add(k[2], "as_message_df", prev, name="input", dims=DIMS, common=COMMON)
 
