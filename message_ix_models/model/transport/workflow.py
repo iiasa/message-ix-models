@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING, Literal, Optional
 
 from genno import KeyExistsError
 
-from message_ix_models.model.workflow import Config
-from message_ix_models.project.ssp import SSP_2024
+from message_ix_models.model.workflow import Config as WorkflowConfig
 from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
-    import message_ix
+    from message_ix import Scenario
 
-    import message_ix_models
+    from message_ix_models.util.context import Context
+    from message_ix_models.workflow import Workflow
 
     from .config import Config
 
@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 # Use lpmethod=4, scaind=1 to overcome LP status 5 (optimal with unscaled
 # infeasibilities) when running on SSP(2024) base scenarios
-SOLVE_CONFIG = Config(
+SOLVE_CONFIG = WorkflowConfig(
     reserve_margin=False,
     solve=dict(
         model="MESSAGE",
@@ -36,7 +36,7 @@ SOLVE_CONFIG = Config(
 
 
 def base_scenario_url(
-    context: "message_ix_models.Context", method: Literal["auto", "bare"] = "bare"
+    context: "Context", method: Literal["auto", "bare"] = "bare"
 ) -> str:
     """Identify the base MESSAGEix-GLOBIOM scenario.
 
@@ -88,7 +88,7 @@ def base_scenario_url(
             return f"ixmp://{context.platform_info.get('name', 'NONE')}/NONE/NONE"
 
 
-def maybe_use_temporary_platform(context: "message_ix_models.Context") -> None:
+def maybe_use_temporary_platform(context: "Context") -> None:
     """Set up a temporary, in-memory platform.
 
     .. todo:: Move upstream, to :mod:`message_ix_models`.
@@ -105,9 +105,7 @@ def maybe_use_temporary_platform(context: "message_ix_models.Context") -> None:
     log.info("No --platform/--url; using temporary, in-memory database")
 
 
-def scenario_url(
-    context: "message_ix_models.Context", label: Optional[str] = None
-) -> str:
+def scenario_url(context: "Context", label: Optional[str] = None) -> str:
     """Construct a target URL for a built MESSAGEix-Transport scenario.
 
     If the :attr:`.dest` URL is set on `context` (for instance, provided via the
@@ -147,9 +145,7 @@ def short_hash(value: str) -> str:
     return blake2s(value.encode()).hexdigest()[:3]
 
 
-def tax_emission(
-    context: "message_ix_models.Context", scenario: "message_ix.Scenario", price: float
-) -> "message_ix.Scenario":
+def tax_emission(context: "Context", scenario: "Scenario", price: float) -> "Scenario":
     """Add emission tax.
 
     This function calls code from :mod:`message_data.projects.navigate.workflow`,
@@ -182,24 +178,25 @@ def tax_emission(
 
 
 def generate(
-    context: "message_ix_models.Context",
+    context: "Context",
     *,
-    report_key="transport all",
+    report_key: str = "transport all",
     dry_run: bool = False,
     **options,
-):
+) -> "Workflow":
     from message_ix_models import Workflow
     from message_ix_models.model.workflow import solve
+    from message_ix_models.project.ssp import SSP_2024
     from message_ix_models.report import register, report
 
     from . import build
-    from .config import Config
+    from .config import Config, get_cl_scenario
     from .report import multi
 
     # Handle CLI options
     # TODO respect quiet
-    options.pop("target_model_name")  # Stored on context.core.dest_scenario
-    options.pop("target_scenario_name")  # Stored on context.core.dest_scenario
+    options.pop("target_model_name", None)  # Stored on context.core.dest_scenario
+    options.pop("target_scenario_name", None)  # Stored on context.core.dest_scenario
     base_scenario_method = options.pop("base_scenario")
 
     maybe_use_temporary_platform(context)
@@ -218,18 +215,37 @@ def generate(
     debug, reported, targets = [], [], []
 
     # Iterate over all (ssp, policy) combinations
-    for ssp, policy in product(SSP_2024, (False, True)):
+    cl_scenario = get_cl_scenario()
+
+    for scenario_code, policy in product(cl_scenario, (False, True)):
+        # Retrieve information from annotations on `scenario_code`
+        ssp_urn = str(scenario_code.get_annotation(id="SSP-URN").text)
+        is_LED = scenario_code.eval_annotation(id="is-LED-scenario")
+        EDITS_activity = scenario_code.eval_annotation(id="EDITS-activity-id")
+
+        # Look up the SSP_2024 code
+        ssp = SSP_2024.by_urn(ssp_urn)
+
         # Store settings on the context
         context.transport.ssp = ssp
         context.transport.policy = policy
 
         # Construct labels including the SSP code and policy identifier
-        label = f"SSP{ssp.name}{' policy' if policy else ''}"  # For step name
-        label_full = f"SSP_2024.{ssp.name}"  # For the scenario name
+        # ‘Short’ label used for workflow steps
+        label = f"{scenario_code.id}{' policy' if policy else ''}"
+        # ‘Full’ label used in the scenario name
+        if not is_LED and EDITS_activity is None:
+            label_full = f"SSP_2024.{ssp.name}"
+        else:
+            label_full = label
+
+        if policy and (is_LED or EDITS_activity is not None):  # TEMPORARY
+            log.info(f"({label_full}, {policy=}) → skip")
+            continue
 
         # Identify the base scenario
         base_url = base_scenario_url(context, base_scenario_method)
-        log.info(f"{label_full} {policy = }: {base_url = }")
+        log.info(f"({label_full}, {policy=}) → {base_url=}")
 
         # Name of the base step
         base = f"base {short_hash(base_url)}"
