@@ -35,6 +35,8 @@ from .sdmx import CodeLike, as_codes, eval_anno
 if TYPE_CHECKING:
     import genno
 
+    from message_ix_models.types import MutableParameterData, ParameterData
+
 __all__ = [
     "HAS_MESSAGE_DATA",
     "MESSAGE_DATA_PATH",
@@ -83,17 +85,16 @@ log = logging.getLogger(__name__)
 
 
 def add_par_data(
-    scenario: message_ix.Scenario,
-    data: Mapping[str, pd.DataFrame],
-    dry_run: bool = False,
-):
+    scenario: message_ix.Scenario, data: "ParameterData", dry_run: bool = False
+) -> int:
     """Add `data` to `scenario`.
 
     Parameters
     ----------
     data
-        Dict with keys that are parameter names, and values are pd.DataFrame or other
-        arguments
+        Any mapping with keys that are valid :mod:`message_ix` parameter names, and
+        values that are pd.DataFrame or other arguments valid for
+        :meth:`message_ix.Scenario.add_par`.
     dry_run : optional
         Only show what would be done.
 
@@ -421,7 +422,7 @@ def make_io(
 def make_matched_dfs(
     base: Union[MutableMapping, pd.DataFrame],
     **par_value: Union[float, pint.Quantity, dict],
-) -> dict[str, pd.DataFrame]:
+) -> "MutableParameterData":
     """Return data frames derived from `base` for multiple parameters.
 
     Creates one data frame per keyword argument.
@@ -476,7 +477,7 @@ def make_matched_dfs(
 
 def make_source_tech(
     info: Union[message_ix.Scenario, ScenarioInfo], common, **values
-) -> dict[str, pd.DataFrame]:
+) -> "MutableParameterData":
     """Return parameter data for a ‘source’ technology.
 
     The technology has no inputs; its output commodity and/or level are determined by
@@ -539,9 +540,7 @@ def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
     return series if query is None else series.to_frame().query(query)[0]
 
 
-def merge_data(
-    base: MutableMapping[str, pd.DataFrame], *others: Mapping[str, pd.DataFrame]
-) -> None:
+def merge_data(base: "MutableParameterData", *others: "ParameterData") -> None:
     """Merge dictionaries of DataFrames together into `base`."""
     for other in others:
         for par, df in other.items():
@@ -759,8 +758,10 @@ def same_node(data: pd.DataFrame, from_col: str = "node_loc") -> pd.DataFrame:
     return data.assign(**{c: copy_column(from_col) for c in cols})
 
 
-@same_node.register
-def _(data: dict, from_col: str = "node_loc") -> dict[str, pd.DataFrame]:
+@same_node.register(dict)
+def _(
+    data: "MutableParameterData", from_col: str = "node_loc"
+) -> "MutableParameterData":
     for key, df in data.items():
         data[key] = same_node(df, from_col=from_col)
     return data
@@ -773,8 +774,8 @@ def same_time(data: pd.DataFrame) -> pd.DataFrame:
     return data.assign(**{c: copy_column("time") for c in cols})
 
 
-@same_time.register
-def _(data: dict) -> dict[str, pd.DataFrame]:
+@same_time.register(dict)
+def _(data: "MutableParameterData") -> "MutableParameterData":
     for key, df in data.items():
         data[key] = same_time(df)
     return data
@@ -804,7 +805,7 @@ def strip_par_data(  # noqa: C901
     set_name: str,
     element: str,
     dry_run: bool = False,
-    dump: Optional[dict[str, pd.DataFrame]] = None,
+    dump: Optional["MutableParameterData"] = None,
 ) -> int:
     """Remove `element` from `set_name` in scenario, optionally dumping to `dump`.
 

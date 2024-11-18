@@ -1,7 +1,7 @@
 """Transport emissions data."""
 
 import logging
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from genno import Quantity
@@ -9,7 +9,6 @@ from genno.operator import convert_units, load_file, mul
 from iam_units import registry
 from message_ix import make_df
 
-from message_ix_models import Context
 from message_ix_models.util import package_data_path
 
 from .util import path_fallback
@@ -17,10 +16,13 @@ from .util import path_fallback
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
+    from message_ix_models import Context
+    from message_ix_models.types import ParameterData
+
 log = logging.getLogger(__name__)
 
 
-def get_emissions_data(context: Context) -> Dict[str, pd.DataFrame]:
+def get_emissions_data(context: "Context") -> "ParameterData":
     """Load emissions data from a file."""
 
     fn = f"{context.transport.data_source.emissions}-emission_factor.csv"
@@ -29,7 +31,7 @@ def get_emissions_data(context: Context) -> Dict[str, pd.DataFrame]:
     return dict(emission_factor=qty.to_dataframe())
 
 
-def get_intensity(context: Context) -> "AnyQuantity":
+def get_intensity(context: "Context") -> "AnyQuantity":
     """Load emissions intensity data from a file."""
     # FIXME use through the build computer
     return load_file(package_data_path("transport", "fuel-emi-intensity.csv"))
@@ -60,11 +62,11 @@ EI_TEMP = {
 
 
 def ef_for_input(
-    context: Context,
+    context: "Context",
     input_data: pd.DataFrame,
     species: str = "CO2",
     units_out: str = "kt / (Gv km)",
-) -> Dict[str, pd.DataFrame]:
+) -> "ParameterData":
     """Calculate emissions factors given data for the ``input`` parameter.
 
     Parameters
