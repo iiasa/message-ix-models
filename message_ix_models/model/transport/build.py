@@ -417,6 +417,10 @@ def get_computer(
 
         config.with_scenario = config.with_solution = False
 
+    # Ensure that members of e.g. base_model_info.set["commodity"] are Code objects with
+    # their respective annotations
+    config.base_model_info.substitute_codes()
+
     # Create a Computer
     c = obj or Computer()
 
