@@ -197,6 +197,15 @@ Units
 Where/how used
    :func:`.pdt_per_capita`.
 
+:file:`load-factor-ldv.csv` → ``load factor ldv:scenario-n-y:exo``
+------------------------------------------------------------------
+
+- Original source: Duplicate of :file:`…/R11/load-factor-ldv.csv` with R12_CHN and R12_RCPA values filled from R11_CPA.
+- Values for :py:`scenario="LED"` added in :pull:`225`.
+  Method described in `this Slack message <https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1731914351904059?thread_ts=1730218237.960269&cid=CCFHDNA6P>`_.
+
+  .. todo:: Transcribe the method into this document.
+
 Other files
 -----------
 - :file:`demand-scale.csv` → ``demand scale:n-y:exo``
