@@ -159,6 +159,24 @@ node = R12_SAS [2]_
 .. [2] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1941860412>`_.
 .. [3] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
 
+:file:`pdt-cap.csv` → ``P activity:scenario-n-t-y:exo``
+-------------------------------------------------------
+
+Measure
+   Projected PDT per capita
+Dimensions
+   :math:`(s, n, t, y)`
+Units:
+   km / passenger / year
+
+- This file is only used for :math:`s` values such as :py:`scenario="LED"`, in which case it is the source for projected
+PDT per capita.
+- Values for :py:`scenario="LED"` added in :pull:`225`.
+  Method described in `this Slack message <https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1731510626983289?thread_ts=1730218237.960269&cid=CCFHDNA6P>`__.
+
+  .. todo:: Transcribe the method into this document.
+
+
 :file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
 ----------------------------------------------
 
