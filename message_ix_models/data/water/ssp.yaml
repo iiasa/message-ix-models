@@ -1,0 +1,76 @@
+macro-regions:
+  globalNorth:
+  - WEU
+  - EEU
+  - FSU
+  - NAM
+  - PAO
+  globalSouth:
+  - LAM
+  - SAS
+  - AFR
+  - CPA
+  - CHN
+  - RCPA
+  - MEA
+  - PAS
+scenarios:
+  SSP1:
+    cooling_tech:
+      globalNorth:
+        bound_activity_up: # maybe revet to share if it is the only case
+          __ot_fresh: 0
+      globalSouth:
+        share_up:
+          __ot_fresh: 10
+          __ot_saline: "enabled"
+          __cl_fresh: "enabled"
+          __air: "enabled"
+  
+  SSP2:
+    cooling_tech:
+      globalNorth:
+        share_up:
+          __ot_fresh: 30
+          __ot_saline: "enabled"
+          __cl_fresh: "enabled"
+          __air: 50
+      globalSouth:
+        share_up:
+          __ot_fresh: 30
+          __ot_saline: "enabled"
+          __cl_fresh: "enabled"
+          __air: 50
+
+  SSP3:
+    cooling_tech:
+      all:
+        share_up:
+          __ot_fresh: 0
+          __ot_saline: "enabled"
+          __cl_fresh: "enabled"
+          __air: 30
+          
+  SSP4:
+    cooling_tech:
+      globalNorth:
+        share_up:
+          __ot_fresh: 0
+          __ot_saline: "enabled"
+          __cl_fresh: "enabled"
+          __air: 30
+      globalSouth:
+        share_up:
+          __ot_fresh: 30
+          __ot_saline: "enabled"
+          __cl_fresh: "enabled"
+          __air: 30
+# SSP5, no constraints on cooling technologies
+  LED:
+    cooling_tech:
+      all:
+        share_up:
+          __ot_fresh: "enabled"
+          __ot_saline: "enabled"
+          __cl_fresh: "enabled"
+          __air: 10
