@@ -103,6 +103,10 @@ nexus:
     add:
     - Mf # efficient mode
     - M1 # required for bare_res test
+    - Motf # to set shares on cooling technologies
+    - Mcl # closed loop cooling
+    - Mair # air cooling
+    - Mots # once through saline
 
   technology:
     remove:
@@ -670,6 +674,11 @@ cooling:
   mode:
     require:
     - all
+    add:
+    - Motf # to set shares on cooling technologies
+    - Mcl # closed loop cooling
+    - Mair # air cooling
+    - Mots # once through saline
 
   technology:
     remove:

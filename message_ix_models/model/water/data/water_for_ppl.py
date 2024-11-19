@@ -278,6 +278,35 @@ def relax_growth_constraint(
     return g_lo
 
 
+def update_mode_values(results):
+    """
+    Updates the "mode" column values in the parameter DataFrames of the results dictionary
+    based on the technology suffix.
+
+    Parameters:
+        results (dict): A dictionary where values are DataFrames containing model results.
+
+    Returns:
+        None: Updates the input dictionary in place.
+    """
+    # Mapping suffixes to new mode values
+    suffix_to_mode = {
+        "__ot_fresh": "Motf",
+        "__cl": "Mcl",
+        "__air": "Mair",
+        "__ot_saline": "Mots",
+    }
+    upd_results = results.copy()
+    for key, df in upd_results.items():
+        # Check if the DataFrame contains the "mode" column
+        if isinstance(df, pd.DataFrame) and "mode" in df.columns:
+            # Update the "mode" column based on the suffix in "technology"
+            for suffix, new_mode in suffix_to_mode.items():
+                mask = df["technology"].str.contains(suffix, na=False)
+                df.loc[mask, "mode"] = new_mode
+    return upd_results
+
+
 # water & electricity for cooling technologies
 @minimum_version("message_ix 3.7")
 def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
@@ -871,6 +900,9 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     )
 
     results["growth_activity_up"] = g_up
+
+    # change modes for cooling technologies, to be able to add the share constraints
+    results = update_mode_values(results)
 
     return results
 
