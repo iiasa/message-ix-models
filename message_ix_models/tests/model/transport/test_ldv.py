@@ -8,7 +8,7 @@ from iam_units import registry
 from pytest import param
 
 from message_ix_models.model.transport import build, testing
-from message_ix_models.model.transport.ldv import constraint_data
+from message_ix_models.model.transport.ldv import TARGET, constraint_data
 from message_ix_models.model.transport.testing import assert_units
 from message_ix_models.project.navigate import T35_POLICY
 
@@ -33,13 +33,13 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
         options={"dummy_LDV": dummy_LDV, "navigate_scenario": T35_POLICY.TEC},
     )
 
+    # Key to compute LDV data
+    key = TARGET
     # Earlier keys in the process, for debugging
     # key = "ldv fuel economy:n-t-y:exo"
     # key = "ldv efficiency:n-t-y"
     # key = "transport input factor:t-y"
     # key = "ldv efficiency:n-t-y:adj"
-
-    key = "transport ldv::ixmp"
 
     # print(c.describe(key))  # DEBUG
 
@@ -74,10 +74,14 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     assert exp_pars == set(data.keys())
 
     # Input data is returned and has the correct units
-    assert {"GW * a / Gv / km", "km", "-"} >= set(data["input"]["unit"].unique())
+    assert {"GW * a / Gv / km", "km", "-", "Gv km"} >= set(
+        data["input"]["unit"].unique()
+    )
 
     # Output data is returned and has the correct units
-    assert {"Gv km", "km", "-"} >= set(data["output"]["unit"].unique())
+    assert {"Gp km", "Gv km", "Gv * km", "km", "-"} >= set(
+        data["output"]["unit"].unique()
+    )
 
     if dummy_LDV:
         return  # Further tests don't apply if dummy data are used
@@ -94,7 +98,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     # Expected number of nodes
     N_node = len(info.N[1:])
 
-    # Historical periods from 1990 + all model periods
+    # Historical periods from 1995 + all model periods
     y_min = 1995
     y_all = sorted(filter(lambda y: y_min <= y, info.set["year"]))
 
@@ -135,7 +139,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
                 continue
 
             # Data covers at least these periods
-            assert exp_y is None or set(exp_y) <= set(df["year_vtg"].unique())
+            assert exp_y is None or set(exp_y) <= set(df["year_vtg"].unique()), par_name
 
             if skip:
                 continue
@@ -154,8 +158,8 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
             # - # of periods
             assert N_node * N_t * N_y <= len(df)
     except AssertionError:
-        # Show the data for debugging
-        print(par_name, df.to_string(), sep="\n")
+        # # Show the data for debugging
+        # print(par_name, df.to_string(), sep="\n")
         raise
 
 
@@ -171,7 +175,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
 def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
     c, _ = testing.configure_build(test_context, regions=regions, years=years)
 
-    result = c.get("ldv capacity_factor::ixmp")
+    result = c.get("capacity_factor::LDV+ixmp")
     assert {"capacity_factor"} == set(result)
     df = result.pop("capacity_factor")
     assert not df.isna().any(axis=None)
