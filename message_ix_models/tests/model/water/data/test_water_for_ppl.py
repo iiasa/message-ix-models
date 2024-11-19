@@ -11,7 +11,6 @@ from message_ix_models.model.water.data.water_for_ppl import (
     cool_tech,
     non_cooling_tec,
     relax_growth_constraint,
-    update_mode_values,
 )
 
 
@@ -300,54 +299,3 @@ def test_relax_growth_constraint(constraint_type, year_type):
 
     # Assert that the result matches the expected DataFrame
     pd.testing.assert_frame_equal(result, expected_result)
-
-
-def test_update_mode_values():
-    # Sample input data
-    results = {
-        "historical_activity": pd.DataFrame(
-            {
-                "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
-                "technology": [
-                    "coal_ppl__ot_fresh",
-                    "coal_ppl__cl",
-                    "gas_ppl__air",
-                ],
-                "year_act": [2030, 2040, 2050],
-                "mode": ["M1", "M1", "M1"],
-                "time": ["year", "year", "year"],
-                "value": [3, 4, 5],
-            }
-        ),
-        "other_data": pd.DataFrame({"some_column": [1, 2, 3]}),
-    }
-
-    # Expected output
-    expected_results = {
-        "historical_activity": pd.DataFrame(
-            {
-                "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
-                "technology": [
-                    "coal_ppl__ot_fresh",
-                    "coal_ppl__cl",
-                    "gas_ppl__air",
-                ],
-                "year_act": [2030, 2040, 2050],
-                "mode": ["Motf", "Mcl", "Mair"],
-                "time": ["year", "year", "year"],
-                "value": [3, 4, 5],
-            }
-        ),
-        "other_data": pd.DataFrame({"some_column": [1, 2, 3]}),
-    }
-
-    # Call the function
-    updated_results = update_mode_values(results)
-
-    # Assert that the "historical_activity" DataFrame matches the expected result
-    pd.testing.assert_frame_equal(
-        updated_results["historical_activity"], expected_results["historical_activity"]
-    )
-
-    # Assert that the "other_data" DataFrame remains unchanged
-    pd.testing.assert_frame_equal(updated_results["other_data"], results["other_data"])
