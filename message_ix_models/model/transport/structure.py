@@ -90,7 +90,7 @@ def make_spec(regions: str) -> Spec:
         except KeyError:
             pass
 
-    # The set of required nodes varies according to context.model.regions
+    # node: the set of required nodes varies according to context.model.regions
     codelist = regions
     try:
         s["require"].set["node"].extend(map(str, get_region_codes(codelist)))
@@ -99,11 +99,16 @@ def make_spec(regions: str) -> Spec:
             f"Cannot get spec for MESSAGEix-Transport with regions={codelist!r}"
         ) from None
 
-    # Generate a spec for the generalized disutility formulation for LDVs
     # Identify LDV technologies
     techs = s.add.set["technology"]
     LDV_techs = techs[techs.index("LDV")].child
 
+    # Associate LDV techs with their output commodities
+    for t in LDV_techs:
+        output = dict(commodity=f"transport vehicle {t.id}", level="useful")
+        t.annotations.append(Annotation(id="output", text=repr(output)))
+
+    # Generate a spec for the generalized disutility formulation for LDVs
     s2 = disutility.get_spec(
         groups=s.add.set["consumer_group"], technologies=LDV_techs, template=TEMPLATE
     )
