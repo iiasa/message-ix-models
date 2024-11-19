@@ -800,7 +800,9 @@ def merge_data(
        :func:`message_ix_models.util.merge_data`.
     """
     keys: Set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
-    return {k: pd.concat([o.get(k, None) for o in others]) for k in keys}
+    return {
+        k: pd.concat([o.get(k, None) for o in others], ignore_index=True) for k in keys
+    }
 
 
 def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
