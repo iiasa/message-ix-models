@@ -19,7 +19,7 @@ jobs:
         os: [ macos-13, macos-latest, ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: nschloe/action-cached-lfs-checkout@v1
+    - uses: francisbilham11/action-cached-lfs-checkout@v3
 
   pytest:
     needs: warm-lfs-cache
@@ -71,7 +71,7 @@ jobs:
         key: ${{ matrix.os }}
 
     - name: Check out message-ix-models
-      uses: nschloe/action-cached-lfs-checkout@v1
+      uses: francisbilham11/action-cached-lfs-checkout@v3
 
     - uses: actions/setup-python@v5
       with:
