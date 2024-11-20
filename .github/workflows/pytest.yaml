@@ -110,7 +110,7 @@ jobs:
 
     - uses: iiasa/actions/setup-gams@main
       with:
-        version: 29.1.0
+        version: 43.4.1
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
