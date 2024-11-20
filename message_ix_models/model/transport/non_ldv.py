@@ -2,9 +2,10 @@
 
 import logging
 from collections import defaultdict
+from collections.abc import Mapping
 from functools import lru_cache, partial
 from operator import itemgetter
-from typing import TYPE_CHECKING, Dict, List, Mapping, Set
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -64,7 +65,7 @@ def prepare_computer(c: Computer):
     source = context.transport.data_source.non_LDV
     log.info(f"non-LDV data from {source}")
 
-    keys: List[KeyLike] = []
+    keys: list[KeyLike] = []
 
     if source == "IKARUS":
         keys.append("transport nonldv::ixmp+ikarus")
@@ -134,7 +135,7 @@ def prepare_computer(c: Computer):
     c.add("transport_data", __name__, key=k_all)
 
 
-def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
+def get_2w_dummies(context) -> dict[str, pd.DataFrame]:
     """Generate dummy, equal-cost output for 2-wheeler technologies.
 
     **NB** this is analogous to :func:`.ldv.get_dummy`.
@@ -178,7 +179,7 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
-def bound_activity(c: "Computer") -> List[Key]:
+def bound_activity(c: "Computer") -> list[Key]:
     """Constrain activity of non-LDV technologies based on :file:`act-non_ldv.csv`."""
     base = exo.act_non_ldv
 
@@ -193,11 +194,11 @@ def bound_activity(c: "Computer") -> List[Key]:
     return [k_bau]
 
 
-def bound_activity_lo(c: Computer) -> List[Key]:
+def bound_activity_lo(c: Computer) -> list[Key]:
     """Set minimum activity for certain technologies to ensure |y0| energy use."""
 
     @lru_cache
-    def techs_for(mode: Code, commodity: str) -> List[Code]:
+    def techs_for(mode: Code, commodity: str) -> list[Code]:
         """Return techs that are (a) associated with `mode` and (b) use `commodity`."""
         result = []
         for t in mode.child:
@@ -212,7 +213,7 @@ def bound_activity_lo(c: Computer) -> List[Key]:
         cfg: "Config" = config["transport"]
 
         # Construct a set of all (node, technology, commodity) to constrain
-        rows: List[List] = []
+        rows: list[list] = []
         cols = ["n", "t", "c", "value"]
         for (n, modes, c), value in cfg.minimum_activity.items():
             for m in ["2W", "BUS", "F ROAD"] if modes == "ROAD" else ["RAIL"]:
@@ -252,8 +253,8 @@ def _inputs(technology: Code, commodity: str) -> bool:
 
 
 def constraint_data(
-    t_all, t_modes: List[str], nodes, years: List[int], genno_config: dict
-) -> Dict[str, pd.DataFrame]:
+    t_all, t_modes: list[str], nodes, years: list[int], genno_config: dict
+) -> dict[str, pd.DataFrame]:
     """Return constraints on growth of CAP_NEW for non-LDV technologies.
 
     Responds to the :attr:`.Config.constraint` keys :py:`"non-LDV *"`; see description
@@ -268,13 +269,13 @@ def constraint_data(
 
     # Lists of technologies to constrain
     # All technologies under the non-LDV modes
-    t_0: Set[Code] = set(filter(lambda t: t.parent and t.parent.id in modes, t_all))
+    t_0: set[Code] = set(filter(lambda t: t.parent and t.parent.id in modes, t_all))
     # Only the technologies that input c=electr
-    t_1: Set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
+    t_1: set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
     # Aviation technologies only
-    t_2: Set[Code] = set(filter(lambda t: t.parent and t.parent.id == "AIR", t_all))
+    t_2: set[Code] = set(filter(lambda t: t.parent and t.parent.id == "AIR", t_all))
     # Only the technologies that input c=gas
-    t_3: Set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
+    t_3: set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
 
     common = dict(year_act=years, year_vtg=years, time="year", unit="-")
     dfs = defaultdict(list)
@@ -317,7 +318,7 @@ def constraint_data(
     return {k: pd.concat(v) for k, v in dfs.items()}
 
 
-def other(c: Computer, base: Key) -> List[Key]:
+def other(c: Computer, base: Key) -> list[Key]:
     """Generate MESSAGE parameter data for ``transport other *`` technologies."""
     from .key import gdp_index
 
@@ -372,7 +373,7 @@ def other(c: Computer, base: Key) -> List[Key]:
 
 
 def usage_data(
-    load_factor: Quantity, modes: List[Code], nodes: List[str], years: List[int]
+    load_factor: Quantity, modes: list[Code], nodes: list[str], years: list[int]
 ) -> Mapping[str, pd.DataFrame]:
     """Generate data for non-LDV usage "virtual" technologies.
 
@@ -399,7 +400,7 @@ def usage_data(
             )
         )
 
-    result: Dict[str, pd.DataFrame] = dict()
+    result: dict[str, pd.DataFrame] = dict()
     merge_data(result, *data)
 
     for k, v in result.items():

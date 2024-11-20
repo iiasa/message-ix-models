@@ -2,23 +2,11 @@
 
 import logging
 import re
+from collections.abc import Mapping, Sequence
 from functools import partial, reduce
 from itertools import pairwise, product
 from operator import gt, le, lt
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Hashable,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, cast
 
 import genno
 import numpy as np
@@ -93,7 +81,7 @@ __all__ = [
 ]
 
 
-def base_model_data_header(scenario: "Scenario", *, name: str) -> Dict[str, str]:
+def base_model_data_header(scenario: "Scenario", *, name: str) -> dict[str, str]:
     """Return a header comment for writing out base model data."""
     versions = "\n\n".join(show_versions().split("\n\n")[:2])
 
@@ -109,7 +97,7 @@ using:
 
 
 def base_shares(
-    base: "AnyQuantity", nodes: List[str], techs: List[str], y: List[int]
+    base: "AnyQuantity", nodes: list[str], techs: list[str], y: list[int]
 ) -> "AnyQuantity":
     """Return base mode shares.
 
@@ -149,7 +137,7 @@ def base_shares(
     elif len(extra_modes):
         raise NotImplementedError(f"Extra mode(s) t={extra_modes}")
 
-    missing = cast(Set[Hashable], set("nty")) - set(result.dims)
+    missing = cast(set[Hashable], set("nty")) - set(result.dims)
     if len(missing):
         log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
 
@@ -221,7 +209,7 @@ def broadcast(q1: "AnyQuantity", q2: "AnyQuantity") -> "AnyQuantity":
 
 
 def broadcast_wildcard(
-    qty: "AnyQuantity", coords: List[str], *, dim: str = "n"
+    qty: "AnyQuantity", coords: list[str], *, dim: str = "n"
 ) -> "AnyQuantity":
     """Broadcast over coordinates `coords` along dimension `dim`.
 
@@ -248,8 +236,8 @@ def broadcast_wildcard(
 
 
 def broadcast_t_c_l(
-    technologies: List[Code],
-    commodities: List[Code],
+    technologies: list[Code],
+    commodities: list[Code],
     kind: Literal["input", "output"],
     default_level: Optional[str] = None,
 ) -> "AnyQuantity":
@@ -295,7 +283,7 @@ def broadcast_t_c_l(
 
 
 def broadcast_y_yv_ya(
-    y: List[int], y_include: List[int], *, method: Literal["product", "zip"] = "product"
+    y: list[int], y_include: list[int], *, method: Literal["product", "zip"] = "product"
 ) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
@@ -322,7 +310,7 @@ def cost(
     whours: "AnyQuantity",
     speeds: "AnyQuantity",
     votm: "AnyQuantity",
-    y: List[int],
+    y: list[int],
 ) -> "AnyQuantity":
     """Calculate cost of transport [money / distance].
 
@@ -443,7 +431,7 @@ def expand_dims(qty: "AnyQuantity", dim, *args, **kwargs) -> "AnyQuantity":
     return qty.expand_dims(dim=dim, *args, **kwargs)
 
 
-def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantity":
+def extend_y(qty: "AnyQuantity", y: list[int], *, dim: str = "y") -> "AnyQuantity":
     """Extend `qty` along the dimension `dim` to cover all of `y`.
 
     - Values are first filled forward, then backwards, within existing `dim` labels in
@@ -478,7 +466,7 @@ def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantit
     return MappingAdapter({dim: y_map})(qty.ffill(dim).bfill(dim))  # type: ignore [attr-defined]
 
 
-def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
+def factor_fv(n: list[str], y: list[int], config: dict) -> "AnyQuantity":
     """Scaling factor for freight activity.
 
     If :attr:`.Config.project` is :data:`ScenarioFlags.ACT`, the value declines from
@@ -516,7 +504,7 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
 
 
 def factor_input(
-    y: List[int], t: List[Code], t_agg: Dict, config: dict
+    y: list[int], t: list[Code], t_agg: dict, config: dict
 ) -> "AnyQuantity":
     """Scaling factor for ``input`` (energy intensity of activity).
 
@@ -570,7 +558,7 @@ def factor_input(
     return compound_growth(qty, "y")
 
 
-def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> "AnyQuantity":
+def factor_pdt(n: list[str], y: list[int], t: list[str], config: dict) -> "AnyQuantity":
     """Scaling factor for passenger activity.
 
     When :attr:`.Config.scenarios` includes :attr:`ScenarioFlags.ACT` (i.e. NAVIGATE
@@ -612,9 +600,9 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> "AnyQu
 
 def factor_ssp(
     config: dict,
-    nodes: List[str],
-    years: List[int],
-    *others: List,
+    nodes: list[str],
+    years: list[int],
+    *others: list,
     info: "message_ix_models.model.transport.factor.Factor",
     extra_dims: Optional[Sequence[str]] = None,
 ) -> "AnyQuantity":
@@ -641,10 +629,10 @@ def freight_usage_output(context: "Context") -> "AnyQuantity":
     )
 
 
-Groups = Dict[str, Dict[str, List[str]]]
+Groups = dict[str, dict[str, list[str]]]
 
 
-def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
+def groups_iea_eweb(technologies: list[Code]) -> tuple[Groups, Groups, dict]:
     """Structure for calibration to IEA Extended World Energy Balances (EWEB).
 
     Returns 3 sets of groups:
@@ -665,7 +653,7 @@ def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
     """
     g0: Groups = dict(flow={}, product={})
     g1: Groups = dict(t={})
-    g2: Dict = dict(t=[], t_new=[])
+    g2: dict = dict(t=[], t_new=[])
 
     # Add groups from base model commodity code list:
     # - IEA product list → MESSAGE commodity (e.g. "lightoil")
@@ -708,7 +696,7 @@ def groups_y_annual(duration_period: "AnyQuantity") -> "AnyQuantity":
 
 
 def logit(
-    x: "AnyQuantity", k: "AnyQuantity", lamda: "AnyQuantity", y: List[int], dim: str
+    x: "AnyQuantity", k: "AnyQuantity", lamda: "AnyQuantity", y: list[int], dim: str
 ) -> "AnyQuantity":
     r"""Compute probabilities for a logit random utility model.
 
@@ -793,19 +781,19 @@ def min(
 
 def merge_data(
     *others: Mapping[Hashable, pd.DataFrame],
-) -> Dict[Hashable, pd.DataFrame]:
+) -> dict[Hashable, pd.DataFrame]:
     """Slightly modified from message_ix_models.util.
 
     .. todo: move upstream or merge functionality with
        :func:`message_ix_models.util.merge_data`.
     """
-    keys: Set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
+    keys: set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
     return {
         k: pd.concat([o.get(k, None) for o in others], ignore_index=True) for k in keys
     }
 
 
-def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
+def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
     """Returns base-year demand for freight from IEA EEI, with dimensions n-c-y."""
     from message_ix_models.tools.iea import eei
 
@@ -818,7 +806,7 @@ def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
-def indexers_n_cd(config: Dict) -> Dict[str, xr.DataArray]:
+def indexers_n_cd(config: dict) -> dict[str, xr.DataArray]:
     """Indexers for selecting (`n`, `census_division`) → `n`.
 
     Based on :attr:`.Config.node_to_census_division`.
@@ -831,9 +819,9 @@ def indexers_n_cd(config: Dict) -> Dict[str, xr.DataArray]:
     )
 
 
-def indexers_usage(technologies: List[Code]) -> Dict:
+def indexers_usage(technologies: list[Code]) -> dict:
     """Indexers for replacing LDV `t` and `cg` with `t_new` for usage technologies."""
-    labels: Dict[str, List[str]] = dict(cg=[], t=[], t_new=[])
+    labels: dict[str, list[str]] = dict(cg=[], t=[], t_new=[])
     for t in technologies:
         if not t.eval_annotation("is-disutility"):
             continue
@@ -848,7 +836,7 @@ def indexers_usage(technologies: List[Code]) -> Dict:
     }
 
 
-def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
+def nodes_world_agg(config, dim: Hashable = "nl") -> dict[Hashable, Mapping]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
     This mapping should be used with :func:`.genno.operator.aggregate`, giving the
@@ -892,7 +880,7 @@ def price_units(qty: "AnyQuantity") -> "AnyQuantity":
 
 
 def quantity_from_config(
-    config: dict, name: str, dimensionality: Optional[Dict] = None
+    config: dict, name: str, dimensionality: Optional[dict] = None
 ) -> "AnyQuantity":
     if dimensionality:
         raise NotImplementedError
@@ -1016,8 +1004,8 @@ def share_weight(
     gdp: "AnyQuantity",
     cost: "AnyQuantity",
     lamda: "AnyQuantity",
-    t_modes: List[str],
-    y: List[int],
+    t_modes: list[str],
+    y: list[int],
     config: dict,
 ) -> "AnyQuantity":
     """Calculate mode share weights.
@@ -1060,9 +1048,9 @@ def share_weight(
 
     # Selectors
     # A scalar induces xarray but not genno <= 1.21 to drop
-    y0: Dict[Any, Any] = dict(y=y[0])
+    y0: dict[Any, Any] = dict(y=y[0])
     y0_ = dict(y=[y[0]])  # Do not drop
-    yC: Dict[Any, Any] = dict(y=cfg.year_convergence)
+    yC: dict[Any, Any] = dict(y=cfg.year_convergence)
 
     # Weights in y0 for all modes and nodes
     idx = dict(t=t_modes, n=nodes) | y0

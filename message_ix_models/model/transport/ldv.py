@@ -1,9 +1,10 @@
 """Data for light-duty vehicles (LDVs) for passenger transport."""
 
 import logging
+from collections.abc import Mapping
 from operator import itemgetter
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import genno
 import pandas as pd
@@ -233,7 +234,7 @@ def prepare_computer(c: Computer):
 
     if k.stock:
         # historical_new_capacity: select only data prior to y₀
-        kw: Dict[str, Any] = dict(
+        kw: dict[str, Any] = dict(
             common={},
             dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
             name="historical_new_capacity",
@@ -462,11 +463,11 @@ def constraint_data(context) -> "ParameterData":
 
     # List of technologies to constrain, including the LDV technologies, plus the
     # corresponding "X usage by CG" pseudo-technologies
-    constrained: List[Code] = []
+    constrained: list[Code] = []
     for t in map(str, ldv_techs):
         constrained.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
 
-    data: Dict[str, pd.DataFrame] = dict()
+    data: dict[str, pd.DataFrame] = dict()
     for bound in "lo", "up":
         name = f"growth_activity_{bound}"
 
@@ -559,10 +560,10 @@ def stock(c: Computer) -> Key:
 
 def usage_data(
     load_factor: "AnyQuantity",
-    cg: List["Code"],
-    nodes: List[str],
-    t_ldv: Mapping[str, List],
-    years: List,
+    cg: list["Code"],
+    nodes: list[str],
+    t_ldv: Mapping[str, list],
+    years: list,
 ) -> "ParameterData":
     """Generate data for LDV “usage pseudo-technologies”.
 

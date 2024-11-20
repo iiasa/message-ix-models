@@ -2,9 +2,10 @@
 
 import logging
 import platform
+from collections.abc import Mapping
 from contextlib import nullcontext
 from pathlib import Path
-from typing import TYPE_CHECKING, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import pytest
 from genno import Computer
@@ -76,7 +77,7 @@ def configure_build(
     years: str,
     tmp_path: Optional[Path] = None,
     options=None,
-) -> Tuple[Computer, ScenarioInfo]:
+) -> tuple[Computer, ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
 
     # By default, omit plots while testing

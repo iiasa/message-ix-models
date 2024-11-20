@@ -3,7 +3,6 @@
 import logging
 from functools import lru_cache, partial
 from operator import le
-from typing import Dict
 
 import pandas as pd
 import xarray as xr
@@ -102,7 +101,7 @@ SOURCE = {
 }
 
 
-def make_indexers(*args) -> Dict[str, xr.DataArray]:
+def make_indexers(*args) -> dict[str, xr.DataArray]:
     """Return indexers corresponding to `SOURCE`.
 
     These can be used for :mod:`xarray`-style advanced indexing to select from the data
@@ -116,7 +115,7 @@ def make_indexers(*args) -> Dict[str, xr.DataArray]:
     )
 
 
-def make_output(input_data: Dict[str, pd.DataFrame], techs) -> Dict[str, pd.DataFrame]:
+def make_output(input_data: dict[str, pd.DataFrame], techs) -> dict[str, pd.DataFrame]:
     """Make ``output`` data corresponding to IKARUS ``input`` data."""
     result = make_matched_dfs(
         input_data["input"], output=registry.Quantity(1.0, UNITS["output"])
