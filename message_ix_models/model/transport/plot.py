@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 import genno.compat.plotnine
 import pandas as pd
@@ -52,7 +52,7 @@ class Plot(genno.compat.plotnine.Plot):
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic
-    static: List["plotnine.typing.PlotAddable"] = [
+    static: list["plotnine.typing.PlotAddable"] = [
         p9.theme(figure_size=(11.7, 8.3)),
     ]
 
@@ -528,7 +528,7 @@ class DemandCap(Plot):
             yield ggplot
 
 
-def _reduce_units(df: pd.DataFrame, target_units) -> Tuple[pd.DataFrame, str]:
+def _reduce_units(df: pd.DataFrame, target_units) -> tuple[pd.DataFrame, str]:
     df_units = df["unit"].unique()
     assert 1 == len(df_units)
     tmp = registry.Quantity(1.0, df_units[0]).to(target_units)

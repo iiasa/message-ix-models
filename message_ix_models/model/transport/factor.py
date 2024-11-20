@@ -11,20 +11,10 @@ import logging
 import operator
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import partial
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import pandas as pd
 from genno import Computer, Key, Quantity
@@ -95,7 +85,7 @@ class Constant(Layer):
     value: Quantity
 
     #: Dimensions of the result.
-    dims: Tuple[str, ...]
+    dims: tuple[str, ...]
 
     operation = operator.mul
 
@@ -183,12 +173,12 @@ class Map(Layer):
     """
 
     dim: str
-    values: Dict[str, Layer]
+    values: dict[str, Layer]
 
     operation = operator.mul
 
     def __init__(
-        self, dim: str, values: Optional[Dict[str, Layer]] = None, **value_kwargs: Layer
+        self, dim: str, values: Optional[dict[str, Layer]] = None, **value_kwargs: Layer
     ):
         self.dim = dim
         self.values = values or value_kwargs
@@ -215,7 +205,7 @@ class ScenarioSetting(Layer):
     """
 
     #: Mapping from scenario identifier to setting label.
-    setting: Dict[Any, str]
+    setting: dict[Any, str]
 
     #: Default setting.
     default: str
@@ -310,7 +300,7 @@ class Factor:
     """
 
     #: Ordered list of :class:`.Layer`.
-    layers: List[Layer] = field(default_factory=list)
+    layers: list[Layer] = field(default_factory=list)
 
     def __hash__(self):
         return hash(tuple(self.layers))
@@ -360,7 +350,7 @@ class Factor:
         )
 
     def __call__(
-        self, config, *coords, dims: Tuple[str, ...], scenario_expr: str
+        self, config, *coords, dims: tuple[str, ...], scenario_expr: str
     ) -> Quantity:
         """Invoke :meth:`quantify`, for use with :mod:`genno`."""
         kw = dict(zip(dims, coords))

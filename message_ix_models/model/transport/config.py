@@ -1,7 +1,7 @@
 import logging
 from dataclasses import InitVar, dataclass, field, replace
 from enum import Enum
-from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import message_ix
 from genno import Quantity
@@ -63,7 +63,7 @@ class Config(ConfigHelper):
     #:    for transport modes *other than* LDV. See :func:`non_ldv.growth_new_capacity`.
     #: "* initial_*_up"
     #:    Base value for growth constraints. These values are arbitrary.
-    constraint: Dict = field(
+    constraint: dict = field(
         default_factory=lambda: {
             "LDV growth_activity_lo": -0.0192,
             "LDV growth_activity_up": 0.0192 * 3.0,
@@ -93,7 +93,7 @@ class Config(ConfigHelper):
     #:      'updateTRPdata', with the comment "Original data from Sei (PAO)."
     #:    - This probably refers to some source that gave relative costs of different
     #:      buses, in PAO, for this year; it is applied across all years.
-    cost: Dict = field(
+    cost: dict = field(
         default_factory=lambda: {
             #
             "ldv nga": 0.85,
@@ -114,7 +114,7 @@ class Config(ConfigHelper):
     #: specified in the corresponding technology.yaml file.
     #:
     #: .. todo:: Read directly from technology.yaml
-    demand_modes: List[str] = field(
+    demand_modes: list[str] = field(
         default_factory=lambda: ["LDV", "2W", "AIR", "BUS", "RAIL"]
     )
 
@@ -129,7 +129,7 @@ class Config(ConfigHelper):
     dummy_supply: bool = False
 
     #: Various efficiency factors.
-    efficiency: Dict = field(
+    efficiency: dict = field(
         default_factory=lambda: {
             "*": 0.2,
             "hev": 0.2,
@@ -150,7 +150,7 @@ class Config(ConfigHelper):
     emission_relations: bool = True
 
     #: Various other factors.
-    factor: Dict = field(default_factory=dict)
+    factor: dict = field(default_factory=dict)
 
     #: If :obj:`True` (the default), do not record/preserve parameter data when removing
     #: set elements from the base model.
@@ -171,7 +171,7 @@ class Config(ConfigHelper):
     #:
     #: ``F ROAD``: similar to IEA “Future of Trucks” (2017) values; see
     #: .transport.freight. Alternately use 5.0, similar to Roadmap 2017 values.
-    load_factor: Dict = field(
+    load_factor: dict = field(
         default_factory=lambda: {
             "F ROAD": 10.0,
             "F RAIL": 10.0,
@@ -183,7 +183,7 @@ class Config(ConfigHelper):
 
     #: Period in which LDV costs match those of a reference region.
     #: Dimensions: (node,).
-    ldv_cost_catch_up_year: Dict = field(default_factory=dict)
+    ldv_cost_catch_up_year: dict = field(default_factory=dict)
 
     #: Method for calibrating LDV stock and sales:
     #:
@@ -193,7 +193,7 @@ class Config(ConfigHelper):
 
     #: Tuples of (node, technology (transport mode), commodity) for which minimum
     #: activity should be enforced. See :func:`.non_ldv.bound_activity_lo`.
-    minimum_activity: Dict[Tuple[str, Tuple[str, ...], str], float] = field(
+    minimum_activity: dict[tuple[str, tuple[str, ...], str], float] = field(
         default_factory=dict
     )
 
@@ -202,7 +202,7 @@ class Config(ConfigHelper):
     mode_share: str = "default"
 
     #: List of modules containing model-building calculations.
-    modules: List[str] = field(
+    modules: list[str] = field(
         default_factory=lambda: (
             "groups demand freight ikarus ldv disutility non_ldv plot data"
         ).split()
@@ -210,7 +210,7 @@ class Config(ConfigHelper):
 
     #: Used by :func:`.get_USTIMES_MA3T` to map MESSAGE regions to U.S. census divisions
     #: appearing in MA³T.
-    node_to_census_division: Dict = field(default_factory=dict)
+    node_to_census_division: dict = field(default_factory=dict)
 
     #: **Temporary** setting for the SSP 2024 project: indicates whether the base
     #: scenario used is a policy (carbon pricing) scenario, or not. This currently does
@@ -226,7 +226,7 @@ class Config(ConfigHelper):
     #:
     #: :mod:`.transport.build` and :mod:`.transport.report` code will respond to these
     #: settings in documented ways.
-    project: Dict[str, Enum] = field(
+    project: dict[str, Enum] = field(
         default_factory=lambda: dict(
             futures=FUTURES_SCENARIO.BASE, navigate=NAVIGATE_SCENARIO.REF
         )
@@ -236,7 +236,7 @@ class Config(ConfigHelper):
     scaling: float = 1.0
 
     #: Mapping from nodes to other nodes towards which share weights should converge.
-    share_weight_convergence: Dict = field(default_factory=dict)
+    share_weight_convergence: dict = field(default_factory=dict)
 
     #: Specification for the structure of MESSAGEix-Transport, processed from contents
     #: of :file:`set.yaml` and :file:`technology.yaml`.
@@ -282,7 +282,7 @@ class Config(ConfigHelper):
     #: space-delimited string (:py:`"module_a -module_b"`) or sequence of strings.
     #: Values prefixed with a hyphen (:py:`"-module_b"`) are *removed* from
     #: :attr:`.modules`.
-    extra_modules: InitVar[Union[str, List[str]]] = None
+    extra_modules: InitVar[Union[str, list[str]]] = None
 
     #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
     #: :meth:`.ScenarioFlags.parse_futures`.
@@ -315,7 +315,7 @@ class Config(ConfigHelper):
         cls,
         context: Context,
         scenario: Optional[message_ix.Scenario] = None,
-        options: Optional[Dict] = None,
+        options: Optional[dict] = None,
     ) -> "Config":
         """Configure `context` for building MESSAGEix-Transport.
 

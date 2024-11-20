@@ -1,6 +1,7 @@
 """Tools for working with IAMC-structured data."""
 
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, MutableMapping, Optional
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import genno
 import pandas as pd
@@ -118,7 +119,7 @@ def iamc_like_data_for_query(
     query: str,
     *,
     archive_member: Optional[str] = None,
-    drop: Optional[List[str]] = None,
+    drop: Optional[list[str]] = None,
     non_iso_3166: Literal["keep", "discard"] = "discard",
     replace: Optional[dict] = None,
     unique: str = "MODEL SCENARIO VARIABLE UNIT",
@@ -169,7 +170,7 @@ def iamc_like_data_for_query(
         set(["MODEL", "SCENARIO", "VARIABLE", "UNIT"]) - set(unique.split())
     )
 
-    unique_values: Dict[str, Any] = dict()
+    unique_values: dict[str, Any] = dict()
     tmp = (
         pd.read_csv(source, **kwargs)
         .drop(columns=drop or [])

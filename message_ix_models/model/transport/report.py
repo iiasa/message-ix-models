@@ -3,7 +3,7 @@
 import logging
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import genno
 import pandas as pd
@@ -428,7 +428,7 @@ def configure_legacy_reporting(config: dict) -> None:
 
 def latest_reporting_from_file(
     info: ScenarioInfo, base_dir: Path
-) -> Tuple[Any, int, pd.DataFrame]:
+) -> tuple[Any, int, pd.DataFrame]:
     """Locate and retrieve the latest reported output for the scenario `info`.
 
     The file :file:`transport.csv` is sought in a subdirectory of `base_dir` identified
@@ -465,7 +465,7 @@ def latest_reporting_from_file(
 
 def latest_reporting_from_platform(
     info: ScenarioInfo, platform: "ixmp.Platform", minimum_version: int = -1
-) -> Tuple[Any, int, pd.DataFrame]:
+) -> tuple[Any, int, pd.DataFrame]:
     """Retrieve the latest reported output for the scenario described by `info`.
 
     The time series data attached to a scenario on `platform` is retrieved.

@@ -3,7 +3,7 @@
 from functools import partial
 from itertools import pairwise, product
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import genno
 import numpy as np
@@ -423,7 +423,7 @@ def to_csv(
 
 
 def format_share_constraints(
-    qty: "AnyQuantity", config: dict, *, kind: str, groupby: List[str] = []
+    qty: "AnyQuantity", config: dict, *, kind: str, groupby: list[str] = []
 ) -> pd.DataFrame:
     """Produce values for :file:`ue_share_constraints.xlsx`.
 

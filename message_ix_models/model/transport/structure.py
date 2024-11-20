@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Sequence, Union
+from collections.abc import Sequence
+from typing import Any, Union
 
 from sdmx.model.common import Annotation, Code
 
@@ -37,7 +38,7 @@ TEMPLATE = Code(
 
 def get_technology_groups(
     technologies: Union[Spec, ScenarioInfo, Sequence["Code"]],
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """Subsets of transport technologies for aggregation and filtering."""
     if isinstance(technologies, Spec):
         t_list: Sequence["Code"] = technologies.add.set["technology"]
@@ -46,7 +47,7 @@ def get_technology_groups(
     else:
         t_list = technologies
 
-    result: Dict[str, List[str]] = {"non-ldv": []}
+    result: dict[str, list[str]] = {"non-ldv": []}
 
     # Only include those technologies with children
     for tech in filter(lambda t: len(t.child), t_list):
@@ -59,7 +60,7 @@ def get_technology_groups(
 
 
 def make_spec(regions: str) -> Spec:
-    sets: Dict[str, Any] = dict()
+    sets: dict[str, Any] = dict()
 
     # Overrides specific to regional versions
     tmp = dict()

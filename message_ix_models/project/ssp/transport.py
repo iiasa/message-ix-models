@@ -1,7 +1,7 @@
 """Postprocess aviation emissions for SSP 2024."""
 
 import re
-from typing import TYPE_CHECKING, Dict, Hashable, List
+from typing import TYPE_CHECKING, Hashable
 
 import genno
 import xarray as xr
@@ -122,7 +122,7 @@ def extract_dims1(qty: "AnyQuantity", dim: dict) -> "AnyQuantity":  # pragma: no
         d0_new = f"{d0}_new"
         pattern = re.compile(expr)
 
-        indexers: Dict[Hashable, List[Hashable]] = {g: [] for g in pattern.groupindex}
+        indexers: dict[Hashable, list[Hashable]] = {g: [] for g in pattern.groupindex}
         indexers[d0_new] = []
 
         coords = qty.coords[d0].data.astype(str)

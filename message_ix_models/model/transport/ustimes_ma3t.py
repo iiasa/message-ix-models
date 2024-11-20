@@ -6,7 +6,8 @@ MESSAGE(V)-Transport.
 """
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, List, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 import genno
 import pandas as pd
@@ -32,7 +33,7 @@ TABLES = {
 
 
 @cached
-def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Mapping[str, "AnyQuantity"]:
+def read_USTIMES_MA3T(nodes: list[str], subdir=None) -> Mapping[str, "AnyQuantity"]:
     """Read the US-TIMES MA3T data from :data:`FILE`.
 
     No transformation is performed.

@@ -1,6 +1,7 @@
 """Types for hinting."""
 
-from typing import Hashable, Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping
+from typing import Hashable
 
 import pandas as pd
 

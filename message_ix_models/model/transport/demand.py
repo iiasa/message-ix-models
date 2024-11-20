@@ -1,7 +1,7 @@
 """Demand calculation for MESSAGEix-Transport."""
 
 import logging
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 import genno
 import numpy as np
@@ -48,8 +48,8 @@ log = logging.getLogger(__name__)
 
 
 def dummy(
-    commodities: List, nodes: List[str], y: List[int], config: dict
-) -> Dict[str, pd.DataFrame]:
+    commodities: list, nodes: list[str], y: list[int], config: dict
+) -> dict[str, pd.DataFrame]:
     """Dummy demands.
 
 
@@ -241,7 +241,7 @@ def pdt_per_capita(c: Computer) -> None:
     # Add `y` dimension. Here for the future fixed point we use y=2 * max(y), e.g.
     # 4220 for y=2110. The value doesn't matter, we just need to avoid overlap with y
     # in the model.
-    def _future(qty: "AnyQuantity", years: List[int]) -> "AnyQuantity":
+    def _future(qty: "AnyQuantity", years: list[int]) -> "AnyQuantity":
         return qty.expand_dims(y=[years[-1] * 2])
 
     # Same, but adding y0

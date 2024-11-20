@@ -3,7 +3,7 @@
 import logging
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional
 
 import pandas as pd
 from genno import Computer, KeyExistsError, Quantity, quote
@@ -179,7 +179,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Identify appropriate source keyword arguments for loading GDP and population data
     source = str(config.ssp)
     if config.ssp in SSP_2017:
-        source_kw: Tuple[Dict[str, Any], ...] = (
+        source_kw: tuple[dict[str, Any], ...] = (
             dict(measure="GDP", model="IIASA GDP"),
             dict(measure="POP", model="IIASA GDP"),
         )
@@ -472,7 +472,7 @@ def get_computer(
 def main(
     context: Context,
     scenario: Scenario,
-    options: Optional[Dict] = None,
+    options: Optional[dict] = None,
     **option_kwargs,
 ):
     """Build MESSAGEix-Transport on `scenario`.
