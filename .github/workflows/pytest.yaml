@@ -42,32 +42,36 @@ jobs:
         #   - pytest: upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0.
         #     https://github.com/iiasa/message-ix-models/pull/155
         #
-        # Minimum version given in pyproject.toml
-        - version: v3.4.0
+        # Minimum version given in pyproject.toml + earlier version of Python
+        - version: v3.4.0  # 2022-01-27
           python-version: "3.11"
-          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"'
           dask-dataframe: false
-        - version: v3.5.0
+        - version: v3.5.0  # 2022-05-06
           python-version: "3.11"
-          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"'
           dask-dataframe: false
-        - version: v3.6.0
+        - version: v3.6.0  # 2022-08-18
           python-version: "3.11"
-          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"'
           dask-dataframe: false
-        - version: v3.7.0
+        - version: v3.7.0  # 2023-05-17
           python-version: "3.11"
-          extra-deps: '                  "genno < 1.25"                "pytest == 8.0.0"' #
+          extra-deps: '                  "genno < 1.25"                "pytest == 8.0.0"'
           dask-dataframe: true
-        # Latest released version
-        - version: v3.8.0
+        - version: v3.8.0  # 2024-01-12
           python-version: "3.12"
-          extra-deps: '                                                "pytest == 8.0.0"' #
+          extra-deps: '                                                "pytest == 8.0.0"'
           dask-dataframe: true
-        # Development version
+        # Latest released version + latest released Python
+        - version: v3.9.0  # 2024-06-04
+          python-version: "3.13"
+          extra-deps: ''
+          dask-dataframe: true
+        # Development version + latest released Python
         - version: main
-          python-version: "3.12"
-          extra-deps: '' #
+          python-version: "3.13"
+          extra-deps: ''
           dask-dataframe: true
 
       fail-fast: false
@@ -153,7 +157,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
-      with: { python-version: "3.12" }
+      with: { python-version: "3.13" }
 
     - name: Force recreation of pre-commit virtual environment for mypy
       if: github.event_name == 'schedule'  # Comment this line to run on a PR
