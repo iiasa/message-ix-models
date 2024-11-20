@@ -10,7 +10,7 @@ adapted to be reusable, particularly in the Workflow pattern used in e.g.
 import logging
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Literal, Optional, Union
 
 from iam_units import convert_gwp
 from message_ix import Scenario
@@ -40,7 +40,7 @@ class PolicyConfig(Config):
     label: str = ""
 
     #: Which steps of the ENGAGE workflow to run. Empty list = don't run any steps.
-    steps: List[int] = field(default_factory=lambda: [1, 2, 3])
+    steps: list[int] = field(default_factory=lambda: [1, 2, 3])
 
     #: In :func:`step_1`, actual quantity of the carbon budget to be imposed , or the
     #: value "calc", in which case the value is calculated from :attr:`label` by
@@ -49,16 +49,16 @@ class PolicyConfig(Config):
 
     #: In :func:`step_3`, optional information on a second scenario from which to copy
     #: ``tax_emission`` data.
-    tax_emission_scenario: Dict = field(default_factory=dict)
+    tax_emission_scenario: dict = field(default_factory=dict)
 
     #: In :func:`step_3`, emission types or categories (``type_emission``) for which to
     #: apply values for ``tax_emission``.
-    step_3_type_emission: List[str] = field(default_factory=lambda: ["TCE_non-CO2"])
+    step_3_type_emission: list[str] = field(default_factory=lambda: ["TCE_non-CO2"])
 
 
 def calc_hist_cum_CO2(
     context: Context, scen: Scenario, info: ScenarioInfo
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Calculate historic CO2 emissions.
 
     Adapted from :meth:`.engage.scenario_runner.ScenarioRunner.calc_hist_cum_CO2`, with

@@ -1,9 +1,10 @@
 """Compatibility code that emulates legacy reporting."""
 
 import logging
+from collections.abc import Mapping
 from functools import partial
 from itertools import chain, count
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from genno import Key, Quantity, quote
 from genno.core.key import iter_keys, single_key
@@ -65,7 +66,7 @@ def anon(name: Optional[str] = None, dims: Optional[Key] = None) -> Key:
     return result.append(*getattr(dims, "dims", []))
 
 
-def get_techs(c: "Computer", prefix: str, kinds: Optional[str] = None) -> List[str]:
+def get_techs(c: "Computer", prefix: str, kinds: Optional[str] = None) -> list[str]:
     """Return a list of technologies.
 
     The list is assembled from lists in `c` with keys like "t::{prefix} {kind}",
@@ -88,7 +89,7 @@ def make_shorthand_function(
 
     def func(
         c: "Computer",
-        technologies: List[str],
+        technologies: list[str],
         *,
         name: Optional[str] = None,
         filters: Optional[dict] = None,
@@ -143,7 +144,7 @@ out = make_shorthand_function("out", "c h hd l nd t", "energy")
 
 def eff(
     c: "Computer",
-    technologies: List[str],
+    technologies: list[str],
     filters_in: Optional[dict] = None,
     filters_out: Optional[dict] = None,
 ) -> Key:
@@ -203,7 +204,7 @@ def pe_w_ccs_retro(
     return k6
 
 
-def prepare_techs(c: "Computer", technologies: List["Code"]) -> None:
+def prepare_techs(c: "Computer", technologies: list["Code"]) -> None:
     """Prepare sets of technologies in `c`.
 
     For each `key` → `expr` in :data:`TECH_FILTERS` and each technology :class:`Code`
@@ -214,14 +215,14 @@ def prepare_techs(c: "Computer", technologies: List["Code"]) -> None:
 
     These lists of technologies can be used directly or retrieve with :func:`get_techs`.
     """
-    result: Mapping[str, List[str]] = {k: list() for k in TECH_FILTERS}
+    result: Mapping[str, list[str]] = {k: list() for k in TECH_FILTERS}
 
     warned = set()  # Filters that raise some kind of Exception
 
     # Iterate over technologies
     for t in technologies:
         # Assemble information about `t` from its annotations
-        info: Dict[str, Any] = dict(id=t.id)
+        info: dict[str, Any] = dict(id=t.id)
         # Sector
         info["sector"] = str(t.get_annotation(id="sector").text)
         try:

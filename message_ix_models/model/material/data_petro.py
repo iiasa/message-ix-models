@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import List, Set
 
 import message_ix
 import pandas as pd
@@ -166,7 +165,7 @@ def gen_mock_demand_petro(
 
 
 def gen_data_petro_ts(
-    data_petro_ts: pd.DataFrame, results: dict[list], tec_ts: Set[str], nodes: List[str]
+    data_petro_ts: pd.DataFrame, results: dict[list], tec_ts: set[str], nodes: list[str]
 ) -> None:
     for t in tec_ts:
         common = dict(
@@ -239,7 +238,7 @@ def assign_input_outpt(
     rg: str,
     global_region: str,
     common: dict,
-    nodes: List[str],
+    nodes: list[str],
 ) -> pd.DataFrame:
     com = split[1]
     lev = split[2]
@@ -295,7 +294,7 @@ def assign_input_outpt(
     return df
 
 
-def broadcast_to_regions(df: pd.DataFrame, global_region: str, nodes: List[str]):
+def broadcast_to_regions(df: pd.DataFrame, global_region: str, nodes: list[str]):
     if "node_loc" in df.columns:
         if (
             len(set(df["node_loc"])) == 1

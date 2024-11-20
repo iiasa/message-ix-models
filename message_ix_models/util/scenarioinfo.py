@@ -5,7 +5,7 @@ import re
 from collections import defaultdict
 from dataclasses import InitVar, dataclass, field
 from itertools import product
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 import pint
@@ -79,10 +79,10 @@ class ScenarioInfo:
     version: Optional[int] = None
 
     #: Elements of :mod:`ixmp`/:mod:`message_ix` sets.
-    set: Dict[str, List] = field(default_factory=lambda: defaultdict(list))
+    set: dict[str, list] = field(default_factory=lambda: defaultdict(list))
 
     #: Elements of :mod:`ixmp`/:mod:`message_ix` parameters.
-    par: Dict[str, pd.DataFrame] = field(default_factory=dict)
+    par: dict[str, pd.DataFrame] = field(default_factory=dict)
 
     #: First model year, if set, else ``Y[0]``.
     y0: int = -1
@@ -161,7 +161,7 @@ class ScenarioInfo:
         return list(map(str, self.set["node"]))
 
     @property
-    def Y(self) -> List[int]:
+    def Y(self) -> list[int]:
         """Elements of the set 'year' that are >= the first model year."""
         return list(filter(lambda y: y >= self.y0, self.set["year"]))
 
@@ -280,7 +280,7 @@ class ScenarioInfo:
             )
         return c / t
 
-    def year_from_codes(self, codes: List[sdmx_model.Code]):
+    def year_from_codes(self, codes: list[sdmx_model.Code]):
         """Update using a list of `codes`.
 
         The following are updated:
@@ -326,7 +326,7 @@ class ScenarioInfo:
             log.debug("Discard existing 'duration_period' elements")
 
         fmy_set = False
-        duration_period: List[Dict] = []
+        duration_period: list[dict] = []
 
         # TODO use sorted() here once supported by sdmx
         for code in codes:

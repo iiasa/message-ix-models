@@ -1,10 +1,11 @@
 import logging
 import os
 import pickle
+from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
 from hashlib import blake2s
 from pathlib import Path
-from typing import Any, Hashable, List, Mapping, MutableMapping, Optional, Sequence, Set
+from typing import Any, Hashable, Optional
 
 import ixmp
 
@@ -45,7 +46,7 @@ class ConfigHelper:
     """
 
     @classmethod
-    def _fields(cls) -> Set[str]:
+    def _fields(cls) -> set[str]:
         """Names of fields in `cls`."""
         result = set(dir(cls))
         if is_dataclass(cls):
@@ -175,7 +176,7 @@ class Config:
     scenario_info: MutableMapping[str, str] = field(default_factory=dict)
 
     #: Like `scenario_info`, but a list for operations affecting multiple scenarios.
-    scenarios: List[ScenarioInfo] = field(default_factory=list)
+    scenarios: list[ScenarioInfo] = field(default_factory=list)
 
     #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
     dest_platform: MutableMapping[str, str] = field(default_factory=dict)

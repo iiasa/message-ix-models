@@ -2,7 +2,7 @@
 
 import logging
 from functools import lru_cache
-from typing import TYPE_CHECKING, Dict, List, Set, Tuple
+from typing import TYPE_CHECKING
 
 import genno
 
@@ -96,7 +96,7 @@ class GEA(ExoDataSource):
         k = super().transform(c, base_key)
 
         # TODO Incorporate the following
-        def adapt_nodes(nodes: List["Code"]) -> Dict[str, str]:
+        def adapt_nodes(nodes: list["Code"]) -> dict[str, str]:
             """Convert `nodes` with IDs e.g. “R11_AFR” to a mapping.
 
             From e.g. “AFR” to “R11_AFR”.
@@ -107,7 +107,7 @@ class GEA(ExoDataSource):
 
 
 @lru_cache
-def get_model_scenario() -> Set[Tuple[str, str]]:
+def get_model_scenario() -> set[tuple[str, str]]:
     """Return a set of valid GEA (model name, scenario name) combinations.
 
     These are read from :file:`data/gea/model-scenario.json`.

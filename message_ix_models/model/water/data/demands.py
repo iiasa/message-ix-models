@@ -1,7 +1,8 @@
 """Prepare data for adding demands"""
 
 import os
-from typing import TYPE_CHECKING, Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Literal, Union
 
 import numpy as np
 import pandas as pd

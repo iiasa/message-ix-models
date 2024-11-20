@@ -1,7 +1,7 @@
 """Common steps for workflows."""
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from message_ix import Scenario
 
@@ -21,7 +21,7 @@ class Config(ConfigHelper):
 
     #: Information on an optional, other scenario from which to copy demand data in
     #: :func:`solve` using :func:`transfer_demands`. Default: empty, do nothing.
-    demand_scenario: Dict = field(default_factory=dict)
+    demand_scenario: dict = field(default_factory=dict)
 
     #: :obj:`True` to call :func:`.reserve_margin.res_marg.main` in :func:`solve`.
     reserve_margin: bool = True
@@ -31,7 +31,7 @@ class Config(ConfigHelper):
     #: To replicate the behaviour of the `macro_params` argument to
     #: :meth:`.engage.ScenarioRunner.run`, which in turn sets the `convergence_issues`
     #: argument to :meth:`.engage.ScenarioRunner.solve`, set max_adjustment to 0.1.
-    solve: Dict[str, Any] = field(
+    solve: dict[str, Any] = field(
         default_factory=lambda: dict(model="MESSAGE-MACRO", max_adjustment=0.2)
     )
 

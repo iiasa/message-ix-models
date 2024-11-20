@@ -1,6 +1,6 @@
 import logging
+from collections.abc import Mapping
 from functools import lru_cache, partial
-from typing import Mapping
 
 import pandas as pd
 from sdmx.model.v21 import Code

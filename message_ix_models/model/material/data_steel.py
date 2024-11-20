@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Iterable, List
+from collections.abc import Iterable
 
 import message_ix
 import pandas as pd
@@ -119,7 +119,7 @@ def gen_mock_demand_steel(scenario: message_ix.Scenario) -> pd.DataFrame:
 
 
 def gen_data_steel_ts(
-    data_steel_ts: pd.DataFrame, results: Dict[str, list], t: str, nodes: List[str]
+    data_steel_ts: pd.DataFrame, results: dict[str, list], t: str, nodes: list[str]
 ):
     common = dict(
         time="year",
@@ -213,11 +213,11 @@ def gen_data_steel_ts(
 
 def get_data_steel_const(
     data_steel: pd.DataFrame,
-    results: Dict[str, list],
+    results: dict[str, list],
     params: Iterable,
     t: str,
     yv_ya: pd.DataFrame,
-    nodes: List[str],
+    nodes: list[str],
     global_region: str,
 ):
     for par in params:

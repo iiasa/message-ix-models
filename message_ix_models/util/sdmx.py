@@ -1,11 +1,12 @@
 """Utilities for handling objects from :mod:`sdmx`."""
 
 import logging
+from collections.abc import Mapping
 from datetime import datetime
 from enum import Enum, Flag
 from importlib.metadata import version
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
 import sdmx
@@ -27,8 +28,8 @@ CodeLike = Union[str, Code]
 
 # FIXME Reduce complexity from 13 → ≤11
 def as_codes(  # noqa: C901
-    data: Union[List[str], Dict[str, CodeLike]],
-) -> List[Code]:
+    data: Union[list[str], dict[str, CodeLike]],
+) -> list[Code]:
     """Convert `data` to a :class:`list` of :class:`.Code` objects.
 
     Various inputs are accepted:
@@ -38,7 +39,7 @@ def as_codes(  # noqa: C901
       further :class:`dict` with keys matching other Code attributes.
     """
     # Assemble results as a dictionary
-    result: Dict[str, Code] = {}
+    result: dict[str, Code] = {}
 
     if isinstance(data, list):
         # FIXME typing ignored temporarily for PR#9
