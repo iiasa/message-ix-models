@@ -4,8 +4,10 @@ What's new
 Next release
 ============
 
+- :mod:`message_ix_models` is tested and compatible with `Python 3.13 <https://www.python.org/downloads/release/python-3130/>`__ (:pull:`250`).
+- Support for Python 3.8 is dropped (:pull:`250`), as it has reached end-of-life.
 - Connect the water module to the cost module for cooling technologies (:pull:`245`).
-- Make setup of constraints for cooling technologies flexible and update solar csp tech. name (:pull:`242`). 
+- Make setup of constraints for cooling technologies flexible and update solar csp tech. name (:pull:`242`).
 - Fix the nexus/cooling function and add test for checking some input data (:pull:`236`).
 - Add :doc:`/project/circeular` project code and documentation (:pull:`232`).
 - Update water availability data and major code editing to allow a new test suite for the water module (:pull:`106`).
