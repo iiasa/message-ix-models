@@ -132,6 +132,9 @@ jobs:
 
         pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
 
+        # TEMPORARY With Python 3.13 pyam-iamc resolves to 1.3.1, which in turn
+        # limits pint < 0.17. Override.
+        pip install --upgrade pint
 
     - name: Install specific dask versions as workaround
       if: ${{ matrix.upstream.dask-dataframe }}
