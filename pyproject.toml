@@ -152,7 +152,12 @@ markers = [
 ]
 
 [tool.ruff]
-exclude = ["message_ix_models/report/legacy/", "message_ix_models/util/compat/message_data/"]
+exclude = [
+  "doc/_static/png_source_files/Land-use_emulator_figures.ipynb",
+  "message_ix_models/model/material/report/Historical Power Sector Stock Reporting-.ipynb",
+  "message_ix_models/report/legacy/",
+  "message_ix_models/util/compat/message_data/",
+]
 
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
