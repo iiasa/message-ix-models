@@ -16,7 +16,7 @@ jobs:
   warm-lfs-cache:
     strategy:
       matrix:
-        os: [ macos-13, ubuntu-latest, windows-latest ]
+        os: [ macos-13, macos-latest, ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: nschloe/action-cached-lfs-checkout@v1
@@ -28,6 +28,7 @@ jobs:
       matrix:
         os:
         - macos-13
+        - macos-latest
         - ubuntu-latest
         - windows-latest
         upstream:
@@ -73,6 +74,18 @@ jobs:
           python-version: "3.13"
           extra-deps: ''
           dask-dataframe: true
+
+        exclude:
+        # Specific version combinations that are invalid / not to be used
+        # These versions of ixmp are not able locate the arm64 GAMS API binaries
+        - { os: macos-latest, upstream: {version: v3.4.0 }}
+        - { os: macos-latest, upstream: {version: v3.5.0 }}
+        - { os: macos-latest, upstream: {version: v3.6.0 }}
+        - { os: macos-latest, upstream: {version: v3.7.0 }}
+        - { os: macos-latest, upstream: {version: v3.8.0 }}
+        - { os: macos-latest, upstream: {version: v3.9.0 }}
+        # Redundant with macos-latest
+        - { os: macos-13, upstream: {version: main }}
 
       fail-fast: false
 
