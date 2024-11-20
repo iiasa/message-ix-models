@@ -85,8 +85,8 @@ jobs:
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
-      # TEMPORARY Work around ts-graphviz/setup-graphviz#630
-      if: ${{ ! startswith(matrix.os, 'macos-') }}
+      # Work around ts-graphviz/setup-graphviz#630
+      if: ${{ matrix.os != 'macos-13' }}
 
     - name: Determine extra dependencies
       id: extra-deps
