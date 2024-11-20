@@ -120,7 +120,7 @@ def dummy_supply(technologies: List["Code"], info, config) -> Dict[str, pd.DataF
         merge_data(
             result,
             make_source_tech(
-                info, dict(commodity=c, level=level, technology=t, **common), **values
+                info, dict(commodity=c, level=level, technology=t) | common, **values
             ),
         )
 
