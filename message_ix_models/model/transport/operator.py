@@ -989,8 +989,7 @@ def share_weight(
     yC: Dict[Any, Any] = dict(y=cfg.year_convergence)
 
     # Weights in y0 for all modes and nodes
-    # NB here and below, with Python 3.9 one could do: dict(t=modes, n=nodes) | y0
-    idx = dict(t=t_modes, n=nodes, **y0)
+    idx = dict(t=t_modes, n=nodes) | y0
     w0 = share.sel(idx) / (cost.sel(idx).sel(c="transport", drop=True) ** lamda)
 
     # Normalize to 1 across modes
@@ -1005,8 +1004,8 @@ def share_weight(
         ref_nodes = cfg.share_weight_convergence[node]
 
         # Indexers
-        _1 = dict(n=node, **yC)  # Same node, convergence year
-        _2 = dict(n=ref_nodes, **y0)  # Reference node(s), base year
+        _1 = dict(n=node) | yC  # Same node, convergence year
+        _2 = dict(n=ref_nodes) | y0  # Reference node(s), base year
 
         if ref_nodes:
             # Ratio between this node's GDP in yC and the mean of the reference nodes'
