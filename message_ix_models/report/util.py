@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, Iterable, Optional, Union
+from collections.abc import Iterable
+from typing import Optional, Union
 
 import pandas as pd
 from dask.core import quote
@@ -19,7 +20,7 @@ log = logging.getLogger(__name__)
 #:
 #: - Applied to whole strings along each dimension.
 #: - These columns have :meth:`str.title` applied before these replacements.
-REPLACE_DIMS: Dict[str, Dict[str, str]] = {
+REPLACE_DIMS: dict[str, dict[str, str]] = {
     "c": {
         # in land_out, for CH4 emissions from GLOBIOM
         "Agri_Ch4": "GLOBIOM|Emissions|CH4 Emissions Total",

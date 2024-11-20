@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -125,13 +125,13 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
 
 
 def map_yv_ya_lt(
-    periods: Tuple[int, ...], lt: int, ya: Optional[int] = None
+    periods: tuple[int, ...], lt: int, ya: Optional[int] = None
 ) -> pd.DataFrame:
     """All meaningful combinations of (vintage year, active year) given `periods`.
 
     Parameters
     ----------
-    periods : Tuple[int, ...]
+    periods : tuple[int, ...]
         A sequence of years.
     lt : int, lifetime
     ya : int, active year

@@ -12,8 +12,9 @@ included in the computed cache key:
 
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
-from typing import TYPE_CHECKING, Callable, Set
+from typing import TYPE_CHECKING
 
 import genno.caching
 import ixmp
@@ -34,7 +35,7 @@ log = logging.getLogger(__name__)
 SKIP_CACHE = False
 
 # Paths already logged, to decrease verbosity
-PATHS_SEEN: Set["Path"] = set()
+PATHS_SEEN: set["Path"] = set()
 
 
 # Show genno how to hash function arguments seen in message_ix_models

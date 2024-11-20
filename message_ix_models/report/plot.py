@@ -6,8 +6,9 @@ The current set functions on time series data stored on the scenario by
 
 import logging
 import re
+from collections.abc import Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Sequence
+from typing import TYPE_CHECKING, Optional
 
 import genno.compat.plotnine
 import pandas as pd
@@ -52,7 +53,7 @@ class Plot(genno.compat.plotnine.Plot):
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic.
-    static: List["plotnine.typing.PlotAddable"] = [
+    static: list["plotnine.typing.PlotAddable"] = [
         p9.theme(figure_size=(23.4, 16.5)),  # A3 paper in landscape [inches]
         # p9.theme(figure_size=(11.7, 8.3)),  # A4 paper in landscape
     ]
@@ -73,7 +74,7 @@ class Plot(genno.compat.plotnine.Plot):
     #: List of regular expressions corresponding to :attr:`inputs`. These are passed as
     #: the `expr` argument to :func:`.filter_ts` to filter the entire set of time series
     #: data.
-    inputs_regex: List[re.Pattern] = []
+    inputs_regex: list[re.Pattern] = []
 
     @classmethod
     def add_tasks(

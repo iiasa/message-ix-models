@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Optional, Tuple
+from typing import Optional
 
 import pandas as pd
 from genno import Quantity
@@ -153,7 +153,7 @@ def add_tax_emission(
         scen.add_par(name, data)
 
 
-def split_species(unit_expr: str) -> Tuple[str, Optional[str]]:
+def split_species(unit_expr: str) -> tuple[str, Optional[str]]:
     """Split `unit_expr` to an expression without a unit mention, and maybe species."""
     if match := re.fullmatch("(.*)(CO2|C)(.*)", unit_expr):
         return f"{match.group(1)}{match.group(3)}", match.group(2)

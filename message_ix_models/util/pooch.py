@@ -1,8 +1,9 @@
 """Utilities for using :doc:`Pooch <pooch:about>`."""
 
 import logging
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any, Optional
 
 import click
 import pooch
@@ -152,7 +153,7 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
 
 def fetch(
     pooch_args: dict, *, extra_cache_path: Optional[str] = None, **fetch_kwargs
-) -> Tuple[Path, ...]:
+) -> tuple[Path, ...]:
     """Create a :class:`~pooch.Pooch` instance and fetch a single file.
 
     Files are stored under the directory identified by :meth:`.Context.get_cache_path`,

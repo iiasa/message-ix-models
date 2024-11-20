@@ -2,12 +2,13 @@
 
 import logging
 import operator
+from collections.abc import Generator, Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field, replace
 from enum import Flag, auto
 from functools import lru_cache, reduce
 from pathlib import Path
-from typing import Dict, Generator, List, Literal, Mapping, Optional, Union, cast
+from typing import Literal, Optional, Union, cast
 
 import ixmp
 import yaml
@@ -76,7 +77,7 @@ class T35_POLICY(Flag):
 #:   In the NAVIGATE workflow, the :attr:`demand_scenario` values (scenario info style,
 #:   a :class:`dict` of ``model`` name, ``scenario`` name, and optional ``version``) are
 #:   set in .navigate.workflow.generate().
-CLIMATE_POLICY: Dict[Optional[str], WfConfig] = {
+CLIMATE_POLICY: dict[Optional[str], WfConfig] = {
     # Default
     None: WfConfig(
         reserve_margin=False,
@@ -161,7 +162,7 @@ _A = {
 }
 
 
-def _anno(names: str, climate_policy) -> List[Annotation]:
+def _anno(names: str, climate_policy) -> list[Annotation]:
     """Return the annotations given by `names` from :data:`_A`.
 
     Shorthand function used to prepare :data:`EXTRA_SCENARIOS`.
@@ -201,7 +202,7 @@ EXTRA_SCENARIOS = [
 
 
 @lru_cache()
-def _read() -> List[Code]:
+def _read() -> list[Code]:
     """Read the codes from the NAVIGATE workflow directory."""
     workflow_dir = Path(ixmp.config.get("navigate workflow dir")).expanduser().resolve()
 
@@ -212,7 +213,7 @@ def _read() -> List[Code]:
         _content = yaml.safe_load(f)
 
     # Transform into a form intelligible by as_codes()
-    content: Dict[str, Union[str, Code]] = {}
+    content: dict[str, Union[str, Code]] = {}
     for item in _content:
         if isinstance(item, str):
             content[item] = Code(id=item, name=item)
@@ -265,7 +266,7 @@ class Config:
     carbon_tax: float = 1000.0
 
     #: Other scenario from which to copy historical time series data for reporting.
-    copy_ts: Dict = field(default_factory=dict)
+    copy_ts: dict = field(default_factory=dict)
 
     #: Target data structure for submission prep
     dsd: Literal["iiasa-ece", "navigate"] = "navigate"

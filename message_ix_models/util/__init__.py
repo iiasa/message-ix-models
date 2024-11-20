@@ -1,23 +1,12 @@
 import logging
 from collections import ChainMap, defaultdict
+from collections.abc import Callable, Collection, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from functools import partial, update_wrapper
 from importlib.metadata import version
 from itertools import count
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Collection,
-    Dict,
-    List,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Protocol,
-    Sequence,
-    Union,
-)
+from typing import TYPE_CHECKING, Optional, Protocol, Union
 
 import message_ix
 import pandas as pd
@@ -425,7 +414,7 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
 
 def make_matched_dfs(
     base: Union[MutableMapping, pd.DataFrame], **par_value: Union[float, pint.Quantity]
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """Return data frames derived from `base` for multiple parameters.
 
     Creates one data frame per keyword argument.
@@ -471,7 +460,7 @@ def make_matched_dfs(
 
 def make_source_tech(
     info: Union[message_ix.Scenario, ScenarioInfo], common, **values
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """Return parameter data for a ‘source’ technology.
 
     The technology has no inputs; its output commodity and/or level are determined by
@@ -612,7 +601,7 @@ def minimum_version(expr: str) -> Callable:
 
 def path_fallback(
     *parts: Union[str, Path],
-    where: Union[str, List[Union[str, Path]]] = "",
+    where: Union[str, list[Union[str, Path]]] = "",
 ) -> Path:
     """Locate a path constructed from `parts` found in the first of several directories.
 
@@ -783,7 +772,7 @@ def strip_par_data(  # noqa: C901
     set_name: str,
     element: str,
     dry_run: bool = False,
-    dump: Optional[Dict[str, pd.DataFrame]] = None,
+    dump: Optional[dict[str, pd.DataFrame]] = None,
 ) -> int:
     """Remove `element` from `set_name` in scenario, optionally dumping to `dump`.
 

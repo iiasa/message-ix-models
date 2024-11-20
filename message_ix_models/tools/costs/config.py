@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 from message_ix_models import ScenarioInfo
 
@@ -99,12 +99,12 @@ class Config:
         return self._info.y0
 
     @property
-    def Y(self) -> List[int]:
+    def Y(self) -> list[int]:
         """List of model periods."""
         return self._info.Y
 
     @property
-    def seq_years(self) -> List[int]:
+    def seq_years(self) -> list[int]:
         """Similar to :attr:`Y`.
 
         This list of periods differs in that it:

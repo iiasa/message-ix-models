@@ -3,7 +3,8 @@
 import itertools
 import logging
 import re
-from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple, Union
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import ixmp
 import pandas as pd
@@ -42,8 +43,8 @@ __all__ = [
 
 
 def codelist_to_groups(
-    codes: List["Code"], dim: str = "n"
-) -> Mapping[str, Mapping[str, List[str]]]:
+    codes: list["Code"], dim: str = "n"
+) -> Mapping[str, Mapping[str, list[str]]]:
     """Convert `codes` into a mapping from parent items to their children.
 
     The returned value is suitable for use with :func:`genno.operator.aggregate`.
@@ -87,7 +88,7 @@ def exogenous_data():
 @exogenous_data.helper
 def add_exogenous_data(
     func, c: "Computer", *, context=None, source=None, source_kw=None
-) -> Tuple["Key", ...]:
+) -> tuple["Key", ...]:
     """Prepare `c` to compute exogenous data from `source`."""
     from message_ix_models.tools.exo_data import prepare_computer
 
@@ -165,7 +166,7 @@ def make_output_path(config: Mapping, name: Union[str, "Path"]) -> "Path":
     return config["output_dir"].joinpath(name)
 
 
-def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
+def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:
     """Return the elements of `y` beyond the firstmodelyear of `cat_year`.
 
     .. todo:: Move upstream, to :mod:`message_ix`.
@@ -213,7 +214,7 @@ def remove_ts(
 
 
 # Non-weak references to objects to keep them alive
-_FROM_URL_REF: Set[Any] = set()
+_FROM_URL_REF: set[Any] = set()
 
 
 def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:

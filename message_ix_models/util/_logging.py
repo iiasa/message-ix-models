@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
-from typing import Dict, Optional, Union, cast
+from typing import Optional, Union, cast
 from warnings import warn
 
 # NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
@@ -26,7 +26,7 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 # References to handlers
-_HANDLER: Dict[str, logging.Handler] = dict()
+_HANDLER: dict[str, logging.Handler] = dict()
 
 # For mark_time()
 _TIMES = []

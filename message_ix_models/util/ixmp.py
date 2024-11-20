@@ -1,5 +1,3 @@
-from typing import Dict
-
 try:
     # ixmp 3.8.0 and later
     from ixmp.report.util import get_reversed_rename_dims
@@ -38,7 +36,7 @@ __all__ = [
 ]
 
 
-def rename_dims() -> Dict[str, str]:
+def rename_dims() -> dict[str, str]:
     """Access :data:`.ixmp.report.common.RENAME_DIMS`.
 
     This provides backwards-compatibility with ixmp versions 3.7.0 and earlier. It can

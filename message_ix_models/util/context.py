@@ -4,7 +4,6 @@ import logging
 from copy import deepcopy
 from dataclasses import fields
 from pathlib import Path
-from typing import List
 
 import ixmp
 import message_ix
@@ -16,7 +15,7 @@ from .ixmp import parse_url
 log = logging.getLogger(__name__)
 
 #: List of Context instances, from first created to last.
-_CONTEXTS: List["Context"] = []
+_CONTEXTS: list["Context"] = []
 
 
 # Configuration keys which can be accessed directly on Context.

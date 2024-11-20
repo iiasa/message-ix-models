@@ -1,6 +1,7 @@
 import os
+from collections.abc import Mapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Literal, Mapping
+from typing import TYPE_CHECKING, Literal
 
 import ixmp
 import message_ix
