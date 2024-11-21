@@ -95,30 +95,39 @@ level_2:
         fe_pe_chem_other_h2 ]
 
 level_1:
-  Chemicals|High-Value Chemicals|Electricity:
-    short: fe_pe_hvc_el
-    components:
-      [fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc]
-  Chemicals|High-Value Chemicals|Liquids|Oil:
-    short: fe_pe_hvc_oil
-    components:
-      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h ]
-  Chemicals|High-Value Chemicals|Liquids:
-    short: fe_pe_hvc_liq
-    components:
-      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h, fe_pe_hvc_bio_eth, fe_pe_hvc_oth]
-  Chemicals|High-Value Chemicals|Solids:
-    short: fe_pe_hvc_solids
-    components:
-      [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke]
+
+  # some Chemicals|<Fuels>|<Sub-fuel> variables are not specified here
+  #   because they are generated later in the workflow, after the
+  #   Methanol/HVC/Ammonia subcomponents are generated.
+  # The function run_reporting.add_chemicals_to_final_energy_variables
+  #   does this aggregation and updates all related aggregates.
+  # Only the ones not generated there are mapped here
+
   Chemicals|Liquids|Other:
     short: fe_pe_chem_oth
     components:
       [ fe_pe_hvc_oth ]
-  Chemicals|Liquids|Gases:
-    short: fe_pe_hvc_gases
+  Chemicals|Liquids|Biomass:
+    short: fe_pe_chem_oth
     components:
-      [ fe_pe_hvc_gas ]
+      [ fe_pe_hvc_bio_eth ]
+
+  Chemicals|High-Value Chemicals|Electricity:
+    short: fe_pe_hvc_el
+    components:
+      [fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc]
+  Chemicals|High-Value Chemicals|Liquids:
+    short: fe_pe_hvc_liq
+    components:
+      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h, fe_pe_hvc_bio_eth, fe_pe_hvc_oth]
+  Chemicals|High-Value Chemicals|Liquids|Oil:
+    short: fe_pe_hvc_oil
+    components:
+      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h ]
+  Chemicals|High-Value Chemicals|Solids:
+    short: fe_pe_hvc_solids
+    components:
+      [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke]
 
   Chemicals|Other Sector|Electricity:
     short: fe_pe_chem_other_el
