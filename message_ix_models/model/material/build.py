@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Dict, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import message_ix
 import pandas as pd
@@ -206,7 +207,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
 
 
 def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
-    sets: Dict[str, Any] = dict()
+    sets: dict[str, Any] = dict()
     materials = ["common"] if not materials else materials
     # Overrides specific to regional versions
     tmp = dict()

@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Type
 
 import pytest
 
@@ -8,7 +7,7 @@ from message_ix_models.util.config import ConfigHelper
 
 class TestConfigHelper:
     @pytest.fixture
-    def cls(self) -> Type:
+    def cls(self) -> type:
         """A class which inherits from ConfigHelper."""
 
         @dataclass
@@ -20,7 +19,7 @@ class TestConfigHelper:
         return Config
 
     @pytest.fixture
-    def cls2(self, cls) -> Type:
+    def cls2(self, cls) -> type:
         """A class with an attribute."""
 
         @dataclass

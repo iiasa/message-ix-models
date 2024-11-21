@@ -1,10 +1,10 @@
 import logging
 import re
 from collections import ChainMap
+from collections.abc import Mapping, MutableMapping
 from copy import copy
 from functools import lru_cache
 from itertools import product
-from typing import Dict, List, Mapping, MutableMapping, Tuple
 
 import click
 import pandas as pd
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 @lru_cache()
-def codelists(kind: str) -> List[str]:
+def codelists(kind: str) -> list[str]:
     """Return a valid IDs for code lists of `kind`.
 
     Parameters
@@ -32,7 +32,7 @@ def codelists(kind: str) -> List[str]:
 
 
 @lru_cache()
-def get_codes(name: str) -> List[Code]:
+def get_codes(name: str) -> list[Code]:
     """Return codes for the dimension/set `name` in MESSAGE-GLOBIOM scenarios.
 
     The information is read from :file:`data/{name}.yaml`, e.g.
@@ -101,7 +101,7 @@ def get_codelist(name: str) -> Codelist:
 
 
 @lru_cache()
-def get_region_codes(codelist: str) -> List[Code]:
+def get_region_codes(codelist: str) -> list[Code]:
     """Return the codes that are children of "World" in the specified `codelist`."""
     nodes = get_codes(f"node/{codelist}")
     return nodes[nodes.index(Code(id="World"))].child
@@ -109,7 +109,7 @@ def get_region_codes(codelist: str) -> List[Code]:
 
 def generate_product(
     data: Mapping, name: str, template: Code
-) -> Tuple[List[Code], Dict[str, xr.DataArray]]:
+) -> tuple[list[Code], dict[str, xr.DataArray]]:
     """Generates codes using a `template` by Cartesian product along ≥1 dimensions.
 
     :func:`generate_set_elements` is called for each of the `dims`, and these values

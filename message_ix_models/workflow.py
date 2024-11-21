@@ -2,16 +2,8 @@
 
 import logging
 import re
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from genno import Computer
 from message_ix import Scenario
@@ -207,7 +199,7 @@ class Workflow(Computer):
         # Add to the Computer; return the name of the added step
         return str(self.add_single(name, step, "context", base, strict=True))
 
-    def run(self, name_or_names: Union[str, List[str]]):
+    def run(self, name_or_names: Union[str, list[str]]):
         """Run all workflow steps necessary to produce `name_or_names`.
 
         Parameters
@@ -247,7 +239,7 @@ class Workflow(Computer):
 
     def guess_target(
         self, step_name: str, kind: Literal["platform", "scenario"] = "scenario"
-    ) -> Tuple[Mapping, str]:
+    ) -> tuple[Mapping, str]:
         """Traverse the graph looking for non-empty platform_info/scenario_info.
 
         Returns the info, and the step name containing it. Usually, this will identify

@@ -13,14 +13,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  version:
+    gams: "43.4.1"
+    python: "3.12"
+    upstream: main
+
 jobs:
   snapshots:
     runs-on: ubuntu-latest
     name: Test snapshots ubuntu-latest
-    env:
-      upstream-version: main
-      python-version: "3.12"
-      extra-deps: 'dask[dataframe]'
 
     steps:
     - name: Cache test data
@@ -33,17 +35,16 @@ jobs:
       uses: actions/checkout@v4
       with:
         lfs: true
-        fetch-depth: ${{ env.depth }}
 
     - uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.python-version }}
+        python-version: ${{ env.version.python }}
         cache: pip
         cache-dependency-path: "**/pyproject.toml"
 
     - uses: iiasa/actions/setup-gams@main
       with:
-        version: 29.1.0
+        version: ${{ env.version.gams }}
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
@@ -52,7 +53,7 @@ jobs:
 
     - name: Install packages and dependencies
       # By default, install:
-      # - ixmp, message_ix: from GitHub branches/tags per env.upstream-version (above)
+      # - ixmp, message_ix: from GitHub branches/tags per env.version.upstream (above)
       # - other dependencies including genno: from PyPI.
       #
       # To test against unreleased code (on `main`, or other branches
@@ -60,11 +61,11 @@ jobs:
       # as needed. DO NOT merge such changes to `main`.
       run: |
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
-        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ env.upstream-version }}"
-        # pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ env.upstream-version }}"
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ env.version.upstream }}"
+        # pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ env.version.upstream }}"
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@issue/723"
 
-        pip install .[docs,tests] ${{ env.extra-deps }}
+        pip install .[docs,tests] dask[dataframe]
 
     - name: Configure local data path
       run: |

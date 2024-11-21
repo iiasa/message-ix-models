@@ -15,8 +15,9 @@ def test_eval_anno(caplog, recwarn):
 
     c.annotations.append(Annotation(id="foo", text="bar baz"))
 
-    with caplog.at_level(logging.DEBUG, logger="message_ix_models"), pytest.warns(
-        DeprecationWarning
+    with (
+        caplog.at_level(logging.DEBUG, logger="message_ix_models"),
+        pytest.warns(DeprecationWarning),
     ):
         assert "bar baz" == eval_anno(c, "foo")
 

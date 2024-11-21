@@ -17,7 +17,7 @@ all_gases = sorted(
 
 def closest(List, K):
     """Finds the member of a list closest to a value (k)"""
-    return List[min(range(len(List)), key=lambda i: abs(List[i] - K))]
+    return list[min(range(len(List)), key=lambda i: abs(list[i] - K))]
 
 
 def f_index(df1, df2):
@@ -46,7 +46,7 @@ def idx_memb(List, x, distance):
     """Retrurns the member of the list with distance from x"""
 
     if List.index(x) + distance < len(List):
-        return List[List.index(x) + distance]
+        return list[List.index(x) + distance]
     else:
         return False
 

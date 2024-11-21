@@ -1,7 +1,7 @@
 import logging
 from dataclasses import InitVar, dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from message_ix_models.util import local_data_path, package_data_path
 from message_ix_models.util.config import ConfigHelper
@@ -30,7 +30,7 @@ class Config(ConfigHelper):
     cli_output: Optional[Path] = None
 
     #: Configuration to be handled by :mod:`genno.config`.
-    genno_config: Dict = field(default_factory=dict)
+    genno_config: dict = field(default_factory=dict)
 
     #: Key for the Quantity or computation to report.
     key: Optional["KeyLike"] = None
@@ -46,7 +46,7 @@ class Config(ConfigHelper):
 
     #: Keyword arguments for :func:`.report.legacy.iamc_report_hackathon.report`, plus
     #: the key "use", which should be :any:`True` if legacy reporting is to be used.
-    legacy: Dict = field(default_factory=lambda: dict(use=False, merge_hist=True))
+    legacy: dict = field(default_factory=lambda: dict(use=False, merge_hist=True))
 
     def __post_init__(self, from_file, _legacy) -> None:
         self.use_file(from_file)

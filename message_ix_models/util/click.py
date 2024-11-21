@@ -5,11 +5,12 @@ These are used for building CLIs using :mod:`click`.
 
 import logging
 import sys
+from collections.abc import Callable, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, List, Literal, Mapping, Optional, Union, cast
+from typing import Literal, Optional, Union, cast
 
 import click
 import click.testing
@@ -230,9 +231,9 @@ def temporary_command(group: "click.Group", command: "click.Command"):
 
 def urls_from_file(
     context: Union[click.Context, Context], param, value
-) -> List[ScenarioInfo]:
+) -> list[ScenarioInfo]:
     """Callback to parse scenario URLs from `value`."""
-    si: List[ScenarioInfo] = []
+    si: list[ScenarioInfo] = []
 
     if value is None:
         return si
@@ -416,7 +417,7 @@ class CliRunner:
         import subprocess
 
         assert 1 == len(args)
-        all_args: List[str] = [sys.executable, "-m", self.cli_module, *args[0]]
+        all_args: list[str] = [sys.executable, "-m", self.cli_module, *args[0]]
 
         # Run; capture in a subprocess.CompletedProcess
         cp = subprocess.run(all_args, capture_output=True, env=self.env, **kwargs)

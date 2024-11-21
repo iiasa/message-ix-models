@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Iterable, List
+from collections.abc import Iterable
 
 import message_ix
 import pandas as pd
@@ -69,7 +69,7 @@ def read_data_aluminum(
     return data_alu, data_alu_rel, data_aluminum_ts
 
 
-def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> Dict[str, pd.DataFrame]:
+def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> dict[str, pd.DataFrame]:
     """
     Generates time variable parameter data for aluminum sector
     Parameters
@@ -330,7 +330,7 @@ def gen_data_alu_const(
     glb_reg: str,
     years: Iterable,
     yv_ya: pd.DataFrame,
-    nodes: List[str],
+    nodes: list[str],
 ):
     results = defaultdict(list)
     for t in config["technology"]["add"]:
@@ -544,7 +544,7 @@ def gen_mock_demand_aluminum(scenario: message_ix.Scenario) -> pd.DataFrame:
     return demand2020_al
 
 
-def gen_data_alu_trade(scenario: message_ix.Scenario) -> Dict[str, pd.DataFrame]:
+def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
     results = defaultdict(list)
 
     data_trade = pd.read_csv(

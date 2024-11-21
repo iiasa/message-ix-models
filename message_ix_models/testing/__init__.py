@@ -2,11 +2,11 @@ import logging
 import os
 import shutil
 from base64 import b32hexencode
+from collections.abc import Generator
 from copy import deepcopy
 from pathlib import Path
 from random import randbytes
 from tempfile import TemporaryDirectory
-from typing import Generator
 
 import message_ix
 import pandas as pd

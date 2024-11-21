@@ -1,6 +1,7 @@
 import logging
 import sys
-from typing import TYPE_CHECKING, Any, Callable, List, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Optional
 
 import pandas as pd
 import sdmx
@@ -126,7 +127,7 @@ def generate_pasta_structures(
 
 def coords_to_codelists(
     qty: "AnyQuantity", *, id_transform: Optional[Callable] = str.upper, **kwargs
-) -> List["Codelist"]:
+) -> list["Codelist"]:
     """Convert the coordinates of `qty` to a collection of :class:`.Codelist`.
 
     .. todo:: Move upstream, to :mod:`genno`.

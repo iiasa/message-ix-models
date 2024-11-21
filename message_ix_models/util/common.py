@@ -1,7 +1,8 @@
 import logging
 from abc import abstractmethod
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, cast
+from typing import Any, Optional, cast
 
 import pandas as pd
 from genno import Quantity
@@ -23,10 +24,10 @@ else:  # pragma: no cover  (needs message_data)
 MESSAGE_MODELS_PATH = Path(__file__).parents[1]
 
 #: Package data already loaded with :func:`load_package_data`.
-PACKAGE_DATA: Dict[str, Any] = dict()
+PACKAGE_DATA: dict[str, Any] = dict()
 
 #: Data already loaded with :func:`load_private_data`.
-PRIVATE_DATA: Dict[str, Any] = dict()
+PRIVATE_DATA: dict[str, Any] = dict()
 
 
 __all__ = [
@@ -106,7 +107,7 @@ class MappingAdapter(Adapter):
 
     maps: Mapping
 
-    def __init__(self, maps: Mapping[str, Sequence[Tuple[str, str]]]):
+    def __init__(self, maps: Mapping[str, Sequence[tuple[str, str]]]):
         self.maps = maps
 
     def adapt(self, qty: Quantity) -> Quantity:
@@ -126,7 +127,7 @@ class MappingAdapter(Adapter):
 
 
 def _load(
-    var: Dict, base_path: Path, *parts: str, default_suffix: Optional[str] = None
+    var: dict, base_path: Path, *parts: str, default_suffix: Optional[str] = None
 ) -> Any:
     """Helper for :func:`.load_package_data` and :func:`.load_private_data`."""
     key = " ".join(parts)

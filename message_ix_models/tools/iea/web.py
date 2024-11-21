@@ -2,9 +2,10 @@
 
 import logging
 import zipfile
+from collections.abc import Iterable
 from copy import copy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import pandas as pd
 from genno import Quantity
@@ -198,7 +199,7 @@ def iea_web_data_for_query(
 
         if path.suffix == ".TXT":  # pragma: no cover
             names_to_read.append(fwf_to_csv(path, progress=True))
-            args: Dict[str, Any] = dict(header=None, names=DIMS + ["Value"])
+            args: dict[str, Any] = dict(header=None, names=DIMS + ["Value"])
         else:
             names_to_read.append(path)
             args = dict(header=0, usecols=DIMS + ["Value"])

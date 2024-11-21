@@ -1,5 +1,5 @@
 from ast import literal_eval
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import yaml
@@ -30,7 +30,7 @@ iea_elasticity_map = {
 }
 
 
-def gen_data_methanol(scenario: "Scenario") -> Dict[str, pd.DataFrame]:
+def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     """
     Generates data for methanol industry model
 
@@ -94,8 +94,8 @@ def gen_data_methanol(scenario: "Scenario") -> Dict[str, pd.DataFrame]:
 def broadcast_nodes(
     df_bc_node: pd.DataFrame,
     df_final: pd.DataFrame,
-    node_cols: List[str],
-    node_cols_codes: Dict[str, pd.Series],
+    node_cols: list[str],
+    node_cols_codes: dict[str, pd.Series],
     i: int,
 ) -> pd.DataFrame:
     """
@@ -105,8 +105,8 @@ def broadcast_nodes(
     ----------
     df_bc_node: pd.DataFrame
     df_final: pd.DataFrame
-    node_cols: List[str]
-    node_cols_codes: Dict[str, pd.Series]
+    node_cols: list[str]
+    node_cols_codes: dict[str, pd.Series]
     i: int
     """
     if len(node_cols) == 1:
@@ -153,8 +153,8 @@ def broadcast_nodes(
 
 def broadcast_years(
     df_bc_node: pd.DataFrame,
-    yr_col_out: List[str],
-    yr_cols_codes: Dict[str, List[str]],
+    yr_col_out: list[str],
+    yr_cols_codes: dict[str, list[str]],
     col: str,
 ) -> pd.DataFrame:
     """
@@ -162,8 +162,8 @@ def broadcast_years(
     Parameters
     ----------
     df_bc_node: pd.DataFrame
-    yr_col_out: List[str]
-    yr_cols_codes: ict[str, List[str]]
+    yr_col_out: list[str]
+    yr_cols_codes: ict[str, list[str]]
     col: str
     """
     if len(yr_col_out) == 1:

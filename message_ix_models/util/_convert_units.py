@@ -1,4 +1,5 @@
-from typing import Mapping, Optional, Tuple
+from collections.abc import Mapping
+from typing import Optional
 from warnings import catch_warnings, filterwarnings
 
 import pandas as pd
@@ -25,7 +26,7 @@ def series_of_pint_quantity(*args, **kwargs) -> pd.Series:
 
 def convert_units(
     s: pd.Series,
-    unit_info: Mapping[str, Tuple[float, str, Optional[str]]],
+    unit_info: Mapping[str, tuple[float, str, Optional[str]]],
     store="magnitude",
 ) -> pd.Series:
     """Convert units of `s`, for use with :meth:`~pandas.DataFrame.apply`.
