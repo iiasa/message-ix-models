@@ -273,7 +273,7 @@ def cooling(context, regions, rcps, rels):
     scen.set_as_default()
 
     # Solve
-    scen.solve(solve_options={"lpmethod": "4"}, case=caseName)
+    scen.solve(solve_options={"lpmethod": "4", "scaind": "1"}, case=caseName)
 
 
 @cli.command("report")
