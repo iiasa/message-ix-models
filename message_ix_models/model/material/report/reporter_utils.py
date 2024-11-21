@@ -106,18 +106,33 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
     if mode == "fuel":
         t_filter2.update({"l": ["primary"]})
 
-    rep.add("out::methanol", "select", "out:nl-t-ya-m-c-l", t_filter2)
-    rep.add("out::methanol-by-tec", "group_sum", "out::methanol", group="t", sum="c")
+    rep.add("out::methanol-prod", "select", "out:nl-t-ya-m-c-l", t_filter2)
     rep.add(
-        "out::methanol-total", "group_sum", "out::methanol", group=["nl", "ya"], sum="t"
+        "out::methanol-prod-by-tec",
+        "group_sum",
+        "out::methanol-prod",
+        group="t",
+        sum="c",
     )
-    rep.add("share::methanol", "div", "out::methanol-by-tec", "out::methanol-total")
+    rep.add(
+        "out::methanol-prod-total",
+        "group_sum",
+        "out::methanol-prod",
+        group=["nl", "ya"],
+        sum="t",
+    )
+    rep.add(
+        "share::methanol-prod-by-tec",
+        "div",
+        "out::methanol-prod-by-tec",
+        "out::methanol-prod-total",
+    )
     for comm, tecs in comm_tec_map.items():
         rep.add(
-            f"share::{comm}methanol",
+            f"share::{comm}-methanol-prod",
             "aggregate",
-            "share::methanol",
-            groups={"t": {f"{comm}methanol": tecs}},
+            "share::methanol-prod-by-tec",
+            groups={"t": {f"{comm}-methanol": tecs}},
             keep=False,
         )
 
@@ -136,10 +151,8 @@ def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
     ----------
     rep
     """
+    add_methanol_share_calculations(rep, mode=mode)
     for comm in comm_tec_map.keys():
-        if f"share::{comm}methanol" not in rep.keys():
-            add_methanol_share_calculations(rep, mode=mode)
-
         t_filter2 = {"t": "meth_exp", "m": mode}
         rep.add("out::methanol-export", "select", "out:nl-t-ya-m", t_filter2)
         rep.add(
@@ -153,7 +166,7 @@ def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
             f"out::{comm}methanol-export",
             "mul",
             "out::methanol-export",
-            f"share::{comm}methanol",
+            f"share::{comm}-methanol-prod",
         )
 
 
@@ -174,10 +187,9 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
     ----------
     rep
     """
-    for comm in comm_tec_map.keys():
-        if "out::{comm}methanol-export" not in rep.keys():
-            add_meth_export_calculations(rep, mode=mode)
 
+    add_meth_export_calculations(rep, mode=mode)
+    for comm in comm_tec_map.keys():
         t_filter2 = {"t": "meth_imp", "m": mode}
         rep.add("out::methanol-import", "select", "out:nl-t-ya-m", t_filter2)
 
@@ -205,7 +217,7 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
             f"share::{comm}methanol-import",
             "div",
             f"out::{comm}methanol-import",
-            "out::methanol-total",
+            "out::methanol-prod-total",
         )
 
 
@@ -220,17 +232,27 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
     ----------
     rep
     """
+    add_meth_import_calculations(rep, mode=mode)
+    if mode == "feedstock":
+        t_filter2 = {
+            "t": ["meth_t_d"],
+            "m": [mode],
+        }
+    else:
+        t_filter2 = {
+            "t": ["meth_t_d", "furnace_methanol_refining"],
+            "m": [mode, "high_temp"],
+        }
     for comm in comm_tec_map.keys():
-        if f"out::{comm}methanol-import" not in rep.keys():
-            add_meth_import_calculations(rep, mode=mode)
-
-        t_filter2 = {"t": "meth_t_d", "m": mode}
-        rep.add("in::methanol-final", "select", "in:nl-t-ya-m", t_filter2)
+        rep.add("in::methanol-final0", "select", "in:nl-t-ya-m", t_filter2)
+        rep.add(
+            "in::methanol-final", "sum", "in::methanol-final0", dimensions=["t", "m"]
+        )
         rep.add(
             f"out::{comm}methanol-prod",
             "mul",
-            "out::methanol-total",
-            f"share::{comm}methanol",
+            "out::methanol-prod-total",
+            f"share::{comm}-methanol-prod",
         )
         rep.add(
             f"out::{comm}methanol-final",
