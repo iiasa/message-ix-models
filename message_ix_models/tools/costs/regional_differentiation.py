@@ -1,7 +1,8 @@
 import logging
+from collections.abc import Mapping
 from functools import lru_cache
 from itertools import product
-from typing import Literal, Mapping
+from typing import Literal
 
 import numpy as np
 import pandas as pd

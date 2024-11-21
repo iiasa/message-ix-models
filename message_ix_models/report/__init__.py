@@ -1,11 +1,12 @@
 import logging
+from collections.abc import Callable
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Optional, Union
 from warnings import warn
 
 import genno.config
@@ -43,7 +44,7 @@ except AttributeError:
 
 
 #: List of callbacks for preparing the Reporter.
-CALLBACKS: List[Callable] = []
+CALLBACKS: list[Callable] = []
 
 
 @genno.config.handles("iamc")
@@ -298,7 +299,7 @@ def prepare_reporter(
     context: Context,
     scenario: Optional[Scenario] = None,
     reporter: Optional[Reporter] = None,
-) -> Tuple[Reporter, Key]:
+) -> tuple[Reporter, Key]:
     """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
 
     Parameters

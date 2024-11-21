@@ -1,9 +1,9 @@
 import logging
 from collections import defaultdict
+from collections.abc import Mapping, MutableMapping, Sequence
 from copy import copy
 from functools import partial
 from itertools import product
-from typing import List, Mapping, MutableMapping, Sequence
 
 import message_ix
 import pandas as pd
@@ -166,10 +166,10 @@ def data_conversion(info, spec: Spec) -> MutableMapping[str, pd.DataFrame]:
     )
 
     # Use the spec to retrieve information
-    technology: List[Code] = spec.add.set["technology"]
+    technology: list[Code] = spec.add.set["technology"]
 
     # Data to return
-    data0: Mapping[str, List[pd.DataFrame]] = defaultdict(list)
+    data0: Mapping[str, list[pd.DataFrame]] = defaultdict(list)
 
     # Loop over conversion technologies
     for t in technology:

@@ -5,10 +5,11 @@ module contains tools specifically for using these models with MESSAGEix-GLOBIOM
 """
 
 import logging
+from collections.abc import Mapping
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Literal, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import pandas as pd
 
@@ -29,7 +30,7 @@ COMMODITY = ["i_therm", "i_spec", "rc_spec", "rc_therm", "transport"]
 def generate(
     parameter: Literal["aeei", "config", "depr", "drate", "lotol"],
     context: "Context",
-    commodities: Union[List[str], List["Code"]] = COMMODITY,
+    commodities: Union[list[str], list["Code"]] = COMMODITY,
     value: Optional[float] = None,
 ) -> pd.DataFrame:
     """Generate uniform data for one :mod:`message_ix.macro` `parameter`.

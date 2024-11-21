@@ -2,10 +2,11 @@
 
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from copy import deepcopy
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Type
+from typing import Any, Literal, Optional
 
 from genno import Computer, Key, Quantity, quote
 
@@ -32,7 +33,7 @@ log = logging.getLogger(__name__)
 MEASURES = ("GDP", "POP")
 
 #: Known sources for data. Use :func:`register_source` to add to this collection.
-SOURCES: Dict[str, Type["ExoDataSource"]] = {}
+SOURCES: dict[str, type["ExoDataSource"]] = {}
 
 
 class ExoDataSource(ABC):
@@ -50,7 +51,7 @@ class ExoDataSource(ABC):
 
     #: Optional additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
     #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`.
-    extra_dims: Tuple[str, ...] = ()
+    extra_dims: tuple[str, ...] = ()
 
     #: :any:`True` if :meth:`.transform` should aggregate data on the |n| dimension.
     aggregate: bool = True
@@ -96,7 +97,7 @@ class ExoDataSource(ABC):
         """
         raise NotImplementedError
 
-    def get_keys(self) -> Tuple[Key, Key]:
+    def get_keys(self) -> tuple[Key, Key]:
         """Return the target keys for the (1) raw and (2) transformed data.
 
         Subclasses **may** override this method to provide different targets keys. In
@@ -172,7 +173,7 @@ def prepare_computer(
     source_kw: Optional[Mapping] = None,
     *,
     strict: bool = True,
-) -> Tuple[Key, ...]:
+) -> tuple[Key, ...]:
     """Prepare `c` to compute GDP, population, or other exogenous data.
 
     Check each :class:`ExoDataSource` in :data:`SOURCES` to determine whether it
@@ -279,7 +280,7 @@ def prepare_computer(
     return tuple(keys)
 
 
-def register_source(cls: Type[ExoDataSource]) -> Type[ExoDataSource]:
+def register_source(cls: type[ExoDataSource]) -> type[ExoDataSource]:
     """Register :class:`.ExoDataSource` `cls` as a source of exogenous data."""
     if cls.id in SOURCES:
         raise ValueError(f"{SOURCES[cls.id]} already registered for id {cls.id!r}")
@@ -342,7 +343,7 @@ def iamc_like_data_for_query(
     query: str,
     *,
     archive_member: Optional[str] = None,
-    drop: Optional[List[str]] = None,
+    drop: Optional[list[str]] = None,
     non_iso_3166: Literal["keep", "discard"] = "discard",
     replace: Optional[dict] = None,
     unique: str = "MODEL SCENARIO VARIABLE UNIT",

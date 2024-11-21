@@ -2,8 +2,9 @@
 
 import logging
 from collections import defaultdict
+from collections.abc import MutableMapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Dict, MutableMapping, Optional
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 
@@ -18,7 +19,7 @@ def assign_income_groups(  # noqa: C901
     cl_node: "sdmx.model.common.Codelist",
     cl_income_group: "sdmx.model.common.Codelist",
     method: str = "population",
-    replace: Optional[Dict[str, str]] = None,
+    replace: Optional[dict[str, str]] = None,
 ) -> None:
     """Annotate `cl_node` with income groups.
 
@@ -283,8 +284,8 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
 
 
 def make_map(
-    source: Dict[str, str], expand_key_urn: bool = True, expand_value_urn: bool = False
-) -> Dict[str, str]:
+    source: dict[str, str], expand_key_urn: bool = True, expand_value_urn: bool = False
+) -> dict[str, str]:
     """Prepare the :py:`replace` parameter of :func:`assign_income_groups`.
 
     The result has one (`key`, `value`) for each in `source`.

@@ -2,11 +2,11 @@
 
 import logging
 from collections import ChainMap, defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import pandas as pd
 from dask.core import quote
@@ -32,7 +32,7 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def dims_of(info: "Item") -> Dict[str, str]:
+def dims_of(info: "Item") -> dict[str, str]:
     """Return a mapping from the full index names to short dimension IDs of `info`."""
     return {d: rename_dims().get(d, d) for d in (info.dims or info.coords or [])}
 
@@ -53,7 +53,7 @@ def to_simulate():
 
 
 def simulate_qty(
-    name: str, dims: List[str], item_data: Union[dict, pd.DataFrame]
+    name: str, dims: list[str], item_data: Union[dict, pd.DataFrame]
 ) -> Quantity:
     """Return simulated data for item `name`.
 
@@ -71,7 +71,7 @@ def simulate_qty(
         data: Mapping = ChainMap(item_data, defaultdict(lambda: None))
 
         # Arguments for pd.DataFrame constructor
-        args: Dict[str, Any] = dict(data={})
+        args: dict[str, Any] = dict(data={})
 
         # Flag if all values in `data` are scalars
         all_scalar = True
@@ -141,7 +141,7 @@ def data_from_file(path: Path, *, name: str, dims: Sequence[str]) -> Quantity:
 def add_simulated_solution(
     rep: Reporter,
     info: ScenarioInfo,
-    data: Optional[Dict] = None,
+    data: Optional[dict] = None,
     path: Optional[Path] = None,
 ):
     """Add a simulated model solution to `rep`.

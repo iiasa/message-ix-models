@@ -1,5 +1,6 @@
 import logging
-from typing import Callable, Dict, List, Mapping, Optional, Union
+from collections.abc import Callable, Mapping
+from typing import Optional, Union
 
 import ixmp
 import pandas as pd
@@ -77,7 +78,7 @@ def apply_spec(  # noqa: C901
             pass
         maybe_check_out(scenario)
 
-    dump: Dict[str, pd.DataFrame] = {}  # Removed data
+    dump: dict[str, pd.DataFrame] = {}  # Removed data
 
     # Sort the list of sets by the number of dimensions; this places basic (non-indexed)
     # sets first. Elements for these sets must be added before elements for indexed
@@ -166,7 +167,7 @@ def apply_spec(  # noqa: C901
     )
 
 
-def ellipsize(elements: List) -> str:
+def ellipsize(elements: list) -> str:
     """Generate a short string representation of `elements`.
 
     If the list has more than 5 elements, only the first two and last two are shown,

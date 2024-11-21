@@ -1,6 +1,6 @@
 import logging
+from collections.abc import Mapping
 from itertools import product
-from typing import Mapping, Tuple
 
 import numpy as np
 import pandas as pd
@@ -335,7 +335,7 @@ def create_projections_converge(config: "Config"):
 
 def create_message_outputs(
     df_projections: pd.DataFrame, config: "Config"
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Create MESSAGEix outputs for investment and fixed costs.
 
     The returned data have the model periods given by :attr:`.Config.Y`.
@@ -522,7 +522,7 @@ def create_message_outputs(
 
 def create_iamc_outputs(
     msg_inv: pd.DataFrame, msg_fix: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Create IAMC outputs for investment and fixed costs.
 
     Parameters

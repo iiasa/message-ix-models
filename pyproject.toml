@@ -20,16 +20,16 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: R",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Information Analysis",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
   "click",
   "colorama",
@@ -152,7 +152,12 @@ markers = [
 ]
 
 [tool.ruff]
-exclude = ["message_ix_models/report/legacy/", "message_ix_models/util/compat/message_data/"]
+exclude = [
+  "doc/_static/png_source_files/Land-use_emulator_figures.ipynb",
+  "message_ix_models/model/material/report/Historical Power Sector Stock Reporting-.ipynb",
+  "message_ix_models/report/legacy/",
+  "message_ix_models/util/compat/message_data/",
+]
 
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
