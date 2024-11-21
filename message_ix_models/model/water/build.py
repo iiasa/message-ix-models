@@ -3,16 +3,97 @@ from collections.abc import Mapping
 from functools import lru_cache, partial
 
 import pandas as pd
+from message_ix import make_df
 from sdmx.model.v21 import Code
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import package_data_path
+from message_ix_models.util import broadcast, package_data_path
 
 from .utils import read_config
 
 log = logging.getLogger(__name__)
+
+
+def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
+    """
+    Categorize cooling technologies based on predefined types and match them with
+    parent technologies present in the scenario.
+
+    This function extracts cooling technology data from a CSV file, filters them
+    based on parent technologies available in the scenario, and categorizes each
+    cooling technology into a predefined type. It also retrieves a list of unique
+    region nodes from the scenario parameter data.
+
+    Parameters
+    ----------
+    context : Context
+        Provides access to the current scenario and configuration.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, list[str]]
+        - cat_tec: A DataFrame with columns:
+            - 'type_tec': Cooling technology category.
+            - 'tec': Name of the cooling technology.
+        - regions_df: A list of unique region nodes from the scenario.
+    """
+    # Define cooling type categories and their corresponding strings
+    cooling_types = {
+        "share_cooling_ot_fresh_tot": ["ot_fresh", "cl_fresh", "air", "ot_saline"],
+        "share_cooling_cl_fresh_tot": ["ot_fresh", "cl_fresh", "air", "ot_saline"],
+        "share_cooling_air_tot": ["ot_fresh", "cl_fresh", "air", "ot_saline"],
+        "share_cooling_ot_saline_tot": ["ot_fresh", "cl_fresh", "air", "ot_saline"],
+        "share_cooling_ot_fresh_share": ["ot_fresh"],
+        "share_cooling_cl_fresh_share": ["cl_fresh"],
+        "share_cooling_air_share": ["air"],
+        "share_cooling_ot_saline_share": ["ot_saline"],
+    }
+
+    FILE = "tech_water_performance_ssp_msg.csv"
+    path = package_data_path("water", "ppl_cooling_tech", FILE)
+    df = pd.read_csv(path)
+    cooling_df = df.loc[df["technology_group"] == "cooling"].copy()
+    # Separate a column for parent technologies of respective cooling
+    # techs
+    cooling_df["parent_tech"] = (
+        cooling_df["technology_name"]
+        .apply(lambda x: pd.Series(str(x).split("__")))
+        .drop(columns=1)
+    )
+    # Extract unique technologies
+    sc = context.get_scenario()
+    #  get df = sc.par("input") for technollgies in cooling_df(parent_tach)
+    df = sc.par("input", filters={"technology": cooling_df["parent_tech"].unique()})
+    parent_tech_sc = df["technology"].unique()
+    regions_df = df["node_loc"].unique().tolist()
+
+    # Assertion check for valid data
+    assert (
+        len(parent_tech_sc) > 0
+    ), "No matching parent technologies found in the scenario."
+    assert len(regions_df) > 0, "No unique nodes (regions) found in the scenario."
+
+    # not filter cooling_tec with only parent_tech matching parent_tech_sc
+    cooling_df = cooling_df.loc[cooling_df["parent_tech"].isin(parent_tech_sc)].copy()
+    unique_technologies = cooling_df["technology_name"].unique()
+
+    # Create a list to store rows for the cat_tec DataFrame
+    cat_tec_rows = []
+
+    # Iterate through unique technologies
+    for tech in unique_technologies:
+        for type_tec, keywords in cooling_types.items():
+            for keyword in keywords:
+                if keyword in tech:
+                    # Add a row to the cat_tec list with type_tec and technology
+                    cat_tec_rows.append({"type_tec": type_tec, "tec": tech})
+
+    # Create the cat_tec DataFrame
+    cat_tec = pd.DataFrame(cat_tec_rows)
+
+    return cat_tec, regions_df
 
 
 def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
@@ -168,6 +249,71 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
 
             # Elements to add
             add.set[set_name].extend(config.get("add", []))
+
+    # for both cooling and nexus add share contraints for cooling technologies
+    # cat_tec
+
+    results = {}
+    cat_tec, nodes_cooling = cat_tec_cooling(context)
+    results["cat_tec"] = cat_tec.values.tolist()
+    n = len(nodes_cooling)
+    # Share commodity for urban water recycling
+    shares_cool = [
+        "share_cooling_ot_fresh",
+        "share_cooling_cl_fresh",
+        "share_cooling_air",
+        "share_cooling_ot_saline",
+    ]
+    commodity_cool = ["ot_fresh", "cl_fresh", "air", "ot_saline"]
+    df_share = make_df(
+        "map_shares_commodity_share",
+        shares=shares_cool,
+        type_tec=[
+            "share_cooling_ot_fresh_share",
+            "share_cooling_cl_fresh_share",
+            "share_cooling_air_share",
+            "share_cooling_ot_saline_share",
+        ],
+        mode="M1",
+        commodity=commodity_cool,
+        level="share",
+    ).pipe(broadcast, node_share=nodes_cooling)
+    df_share["node"] = df_share["node_share"]
+    # re order columns like this ['shares', 'node_share', 'node',
+    # 'type_tec', 'mode', 'commodity', 'level']
+    df_share = df_share[
+        ["shares", "node_share", "node", "type_tec", "mode", "commodity", "level"]
+    ]
+
+    df_list = df_share.values.tolist()
+    results["map_shares_commodity_share"] = df_list
+    # for totoal
+    df_share = make_df(
+        "map_shares_commodity_total",
+        shares=shares_cool,
+        type_tec=[
+            "share_cooling_ot_fresh_tot",
+            "share_cooling_cl_fresh_tot",
+            "share_cooling_air_tot",
+            "share_cooling_ot_saline_tot",
+        ],
+        mode="M1",
+        level="share",
+    ).pipe(broadcast, node_share=nodes_cooling, commodity=commodity_cool)
+    df_share["node"] = df_share["node_share"]
+    # re order columns like this ['shares', 'node_share', 'node',
+    # 'type_tec', 'mode', 'commodity', 'level']
+    df_share = df_share[
+        ["shares", "node_share", "node", "type_tec", "mode", "commodity", "level"]
+    ]
+
+    df_list = df_share.values.tolist()
+
+    results["map_shares_commodity_total"] = df_list
+
+    for set_name, config in results.items():
+        # Sets  to add
+        add.set[set_name].extend(config)
 
     return dict(require=require, remove=remove, add=add)
 
