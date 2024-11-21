@@ -4,6 +4,7 @@ from typing import Any, Literal, Union
 
 import numpy as np
 import pandas as pd
+import yaml
 from message_ix import make_df
 
 from message_ix_models import Context
@@ -31,6 +32,8 @@ def missing_tech(x: pd.Series) -> pd.Series:
         "nuc_hc": 1 / 0.326,
         "nuc_lc": 1 / 0.326,
         "solar_th_ppl": 1 / 0.385,
+        "csp_sm1_ppl": 1 / 0.385,
+        "csp_sm3_ppl": 1 / 0.385,
     }
 
     if pd.notna(x["technology"]) and x["technology"] in data_dic:
@@ -278,6 +281,77 @@ def relax_growth_constraint(
     return g_lo
 
 
+def cooling_shares_SSP_from_yaml(
+    context: "Context",  # Aligning with the style of the functions provided
+) -> pd.DataFrame:
+    """
+    Populate a DataFrame for 'share_commodity_up' from a YAML configuration file.
+
+    Parameters
+    ----------
+    context : Context
+        Context object containing SSP information (e.g., context.SSP)
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame populated with values from the YAML configuration file.
+    """
+    # Load the YAML file
+    FILE = "ssp.yaml"
+    yaml_file_path = package_data_path("water", FILE)
+    with open(yaml_file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    # Read the SSP from the context
+    ssp = context.ssp
+
+    # Navigate to the scenarios section in the YAML file
+    macro_regions_data = yaml_data.get("macro-regions", {})
+    scenarios = yaml_data.get("scenarios", {})
+
+    # Validate that the SSP exists in the YAML data
+    if ssp not in scenarios:
+        raise ValueError(
+            f"SSP '{ssp}' not found in the 'scenarios' section of the YAML file."
+        )
+
+    # Extract data for the specified SSP
+    ssp_data = scenarios[ssp]["cooling_tech"]
+
+    # Initialize an empty list to hold DataFrames
+    df_region = pd.DataFrame()
+    info = context["water build info"]
+    year_constraint = [year for year in info.Y if year >= 2050]
+
+    # Loop through all regions and shares
+    for macro_region, region_data in ssp_data.items():
+        share_data = region_data.get("share_commodity_up", {})
+        reg_shares = macro_regions_data[macro_region]
+        # filter reg shares that are also in info.N
+        reg_shares = [
+            node
+            for node in info.N
+            if any(node.endswith(reg_share) for reg_share in reg_shares)
+        ]
+        for share, value in share_data.items():
+            # Create a DataFrame for the current region and share
+            df_region = pd.concat(
+                [
+                    df_region,
+                    make_df(
+                        "share_commodity_up",
+                        shares=[share],
+                        time=["year"],
+                        value=[value],
+                        unit=["-"],
+                    ).pipe(broadcast, year_act=year_constraint, node_share=reg_shares),
+                ]
+            )
+
+    return df_region
+
+
 # water & electricity for cooling technologies
 @minimum_version("message_ix 3.7")
 def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
@@ -354,6 +428,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     ref_input: pd.DataFrame = scen.par(
         "input", {"technology": cooling_df["parent_tech"]}
     )
+    # filter ref_input with technologiy csp_sm1_ppl
+    a = ref_input[ref_input["technology"].str.contains("csp_sm1_ppl", na=False)]
     # Extracting historical activity from scenario
     ref_hist_act: pd.DataFrame = scen.par(
         "historical_activity", {"technology": cooling_df["parent_tech"]}
@@ -534,6 +610,26 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     results["emission_factor"] = emi
 
+    # add output for share contraints to introduce SSP assumptions
+    # also in the nexus case, the share contraints are at the macro-regions
+
+    out = make_df(
+        "output",
+        node_loc=input_cool["node_loc"],
+        # take aprt of string after "__" from icmse_df["technology_name"]
+        technology=input_cool["technology_name"],
+        year_vtg=input_cool["year_vtg"],
+        year_act=input_cool["year_act"],
+        mode=input_cool["mode"],
+        node_dest=input_cool["node_origin"],
+        commodity=input_cool["technology_name"].str.split("__").str[1],
+        level="share",
+        time="year",
+        time_dest="year",
+        value=1,  # TO BE CHECKED icmse_df["value_cool"],
+        unit="-",
+    )
+
     # add water return flows for cooling tecs
     # Use share of basin availability to distribute the return flow from
     df_sw = map_basin_region_wat(context)
@@ -544,7 +640,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     )
     df_sw["time_dest"] = df_sw["time_dest"].astype(str)
     if context.nexus_set == "nexus":
-        out = pd.DataFrame()
+        # out = pd.DataFrame()
         for nn in icmse_df.node_loc.unique():
             # input cooling fresh basin
             icfb_df = icmse_df[icmse_df["node_loc"] == nn]
@@ -575,7 +671,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
         out = out.dropna(subset=["value"])
         out.reset_index(drop=True, inplace=True)
-        results["output"] = out
+    # in any case save out into results
+    results["output"] = out
 
     # costs and historical parameters
     path1 = package_data_path("water", "ppl_cooling_tech", FILE1)
@@ -871,6 +968,11 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     )
 
     results["growth_activity_up"] = g_up
+
+    # add share constraints for cooling technologies based on SSP assumptions
+    df_share = cooling_shares_SSP_from_yaml(context)
+
+    results["share_commodity_up"] = df_share
 
     return results
 
