@@ -266,7 +266,7 @@ def run_fe_reporting(rep: message_ix.Reporter, model: str, scenario: str):
 
     py_df_all = add_chemicals_to_final_energy_variables(dfs, rep, model, scenario)
 
-    py_df_all = update_liquids_subvariables(rep, py_df_all, model, scenario)
+    py_df_all = split_fe_other(rep, py_df_all, model, scenario)
     df_final = (
         py_df_all.filter(unit="dimensionless", keep=False)
         .convert_unit("GWa", "EJ")
@@ -340,13 +340,13 @@ def add_chemicals_to_final_energy_variables(
     updated_fe_totals = []
     for comm in [
         "Electricity",
+        "Gases",
+        "Gases|Gas",
         "Liquids",
         "Liquids|Oil",
         "Solids",
         "Solids|Biomass",
         "Solids|Coal",
-        "Gases",
-        "Gases|Gas",
         "Hydrogen",
     ]:
         updated_fe_totals.append(
@@ -363,10 +363,36 @@ def add_chemicals_to_final_energy_variables(
     return py_df_all
 
 
-def update_liquids_subvariables(
+def split_fe_other(
     rep: message_ix.Reporter, py_df_all: pyam.IamDataFrame, model: str, scenario: str
 ):
+    """This function takes the Final Energy|Industry|*|Liquids|Other values
+    and reallocates it to Liquids|Biomass/Coal/Oil/Gas based on the methanol
+    feedstock shares.
+    1) calculates the feedstock shares of methanol production with message_ix.Reporter
+    2) append the shares as temporary iamc variables them to the existing reporting
+        pyam object
+    3) Uses pyam multiply feature to calculate shares with each "Liquids|Other"
+        timeseries
+    4) Uses pyam aggregate to sum existing Liquids|Biomass/Coal/Oil/Gas with new
+        variables and store in separate pyam object
+    5) Filters out existing (outdated) Liquids|Biomass/Coal/Oil/Gas from reporting
+        pyam object
+    6) Concats the updated variables with the full reporting
+
+    Parameters
+    ----------
+    rep
+    py_df_all
+    model
+    scenario
+
+    Returns
+    -------
+
+    """
     add_biometh_final_share(rep, mode="fuel")
+    # set temporary filter on Reporter to speed up queries
     rep.set_filters(
         t=[
             "meth_bunker",
@@ -385,6 +411,7 @@ def update_liquids_subvariables(
             "meth_exp",
             "meth_imp",
             "meth_ind_fs",
+            "furnace_methanol_refining"
         ]
     )
     for c, full_name in zip(
