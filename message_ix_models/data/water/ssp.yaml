@@ -28,23 +28,19 @@ scenarios:
   SSP2:
     cooling_tech:
       globalNorth:
-        share_commodity_up:
+        share_commodity_up: &share_ssp2_common
           share_cooling_ot_fresh: 0.3
           share_cooling_air: 0.5
       globalSouth:
-        share_commodity_up:
-          share_cooling_ot_fresh: 0.3
-          share_cooling_air: 0.5
+        share_commodity_up: *share_ssp2_common
   SSP3:
     cooling_tech:
       globalNorth:
-        share_commodity_up:
+        share_commodity_up: &share_ssp3_common
           share_cooling_ot_fresh: 0
           share_cooling_air: 0.3
       globalSouth:
-        share_commodity_up:
-          share_cooling_ot_fresh: 0
-          share_cooling_air: 0.3
+        share_commodity_up: *share_ssp3_common
   SSP4:
     cooling_tech:
       globalNorth:
