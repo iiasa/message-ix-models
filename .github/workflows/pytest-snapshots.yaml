@@ -14,10 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  version:
-    gams: "43.4.1"
-    python: "3.12"
-    upstream: main
+  gams: "43.4.1"
+  python: "3.12"
+  upstream: main
 
 jobs:
   snapshots:
@@ -38,13 +37,13 @@ jobs:
 
     - uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.version.python }}
+        python-version: ${{ env.python }}
         cache: pip
         cache-dependency-path: "**/pyproject.toml"
 
     - uses: iiasa/actions/setup-gams@main
       with:
-        version: ${{ env.version.gams }}
+        version: ${{ env.gams }}
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
@@ -53,7 +52,7 @@ jobs:
 
     - name: Install packages and dependencies
       # By default, install:
-      # - ixmp, message_ix: from GitHub branches/tags per env.version.upstream (above)
+      # - ixmp, message_ix: from GitHub branches/tags per env.upstream (above)
       # - other dependencies including genno: from PyPI.
       #
       # To test against unreleased code (on `main`, or other branches
@@ -61,8 +60,8 @@ jobs:
       # as needed. DO NOT merge such changes to `main`.
       run: |
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
-        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ env.version.upstream }}"
-        # pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ env.version.upstream }}"
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ env.upstream }}"
+        # pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ env.upstream }}"
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@issue/723"
 
         pip install .[docs,tests] dask[dataframe]
