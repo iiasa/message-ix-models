@@ -111,6 +111,22 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     remove = ScenarioInfo()
     add = ScenarioInfo()
 
+    # cooling fata included by default
+    # Merge technology.yaml with set.yaml
+    context["water set"]["cooling"]["technology"]["add"] = context["water technology"][
+        "cooling"
+    ]
+    # Update the ScenarioInfo objects with required and new set elements
+    for set_name, config in context["water set"]["cooling"].items():
+        # Required elements
+        require.set[set_name].extend(config.get("require", []))
+
+        # Elements to remove
+        remove.set[set_name].extend(config.get("remove", []))
+
+        # Elements to add
+        add.set[set_name].extend(config.get("add", []))
+
     if context.nexus_set == "nexus":
         # Merge technology.yaml with set.yaml
         context["water set"]["nexus"]["technology"]["add"] = context[
@@ -233,22 +249,6 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         for set_name, config in results.items():
             # Sets  to add
             add.set[set_name].extend(config)
-
-    elif context.nexus_set == "cooling":
-        # Merge technology.yaml with set.yaml
-        context["water set"]["cooling"]["technology"]["add"] = context[
-            "water technology"
-        ]["cooling"]
-        # Update the ScenarioInfo objects with required and new set elements
-        for set_name, config in context["water set"]["cooling"].items():
-            # Required elements
-            require.set[set_name].extend(config.get("require", []))
-
-            # Elements to remove
-            remove.set[set_name].extend(config.get("remove", []))
-
-            # Elements to add
-            add.set[set_name].extend(config.get("add", []))
 
     # for both cooling and nexus add share contraints for cooling technologies
     # cat_tec
