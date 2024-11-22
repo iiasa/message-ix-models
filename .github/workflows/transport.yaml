@@ -1,7 +1,10 @@
 name: MESSAGEix-Transport
 
 env:
-  target: transport.yaml --repo=iiasa/message_data
+  # The repository, ref (branch), and workflow file name to dispatch
+  target-repo: iiasa/message_data
+  target-ref: dev
+  target-workflow: transport
 
   # Starting point of the workflow.
   # Use this value to build from a certain scenario:
@@ -33,12 +36,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Invoke "transport.yaml" workflow in message_data
+      - name: Invoke "${{ env.target-workflow }}" workflow in ${{ env.target-repo }}
         env:
           GH_TOKEN: ${{ secrets.MESSAGE_DATA_DISPATCH_TOKEN }}
         run: |
           gh workflow run \
-            ${{ env.target }} --ref=dev \
+            ${{ env.target-workflow }}.yaml \
+            --repo=${{ env.target-repo }} \
+            --ref=${{ env.target-ref }} \
             --field ref=${{ github.ref }} \
             --field sha=${{ github.sha }} \
             --field base=${{ env.base }} \
@@ -47,6 +52,6 @@ jobs:
           sleep 5
 
           gh run list \
-            --workflow=${{ env.target }} \
+            --workflow=${{ env.target-workflow.yaml }} --repo=${{ env.target-repo }} \
             --json url,status \
             --jq 'map(select(.status != "completed"))[0].url' >> $GITHUB_STEP_SUMMARY
