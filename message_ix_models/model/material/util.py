@@ -5,6 +5,7 @@ from typing import Any, Union
 import message_ix
 import openpyxl as pxl
 import pandas as pd
+import pycountry
 import yaml
 from scipy.optimize import curve_fit
 
@@ -389,3 +390,36 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
             return c
 
     raise FileNotFoundError(candidates)
+
+
+def get_pycountry_iso(row, mis_dict):
+    try:
+        row = pycountry.countries.lookup(row).alpha_3
+    except LookupError:
+        try:
+            row = mis_dict[row]
+        except KeyError:
+            print(f"{row} is not mapped to an ISO")
+            row = None
+    return row
+
+
+def get_r12_reg(df, r12_map_inv, col_name):
+    try:
+        df = r12_map_inv[df[col_name]]
+    except KeyError:
+        df = None
+    return df
+
+
+def add_R12_column(df, file_path, iso_column="COUNTRY"):
+    # Replace 'your_file_path.yaml' with the path to your actual YAML file
+    # file_path = private_data_path("node", "R12_SSP_V1.yaml")
+    yaml_data = read_yaml_file(file_path)
+    yaml_data.pop("World")
+
+    r12_map = {k: v["child"] for k, v in yaml_data.items()}
+    r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
+
+    df["R12"] = df.apply(lambda x: get_r12_reg(x, r12_map_inv, iso_column), axis=1)
+    return df

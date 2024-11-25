@@ -15,7 +15,13 @@ from message_ix_models.util import (
 
 from .data_util import read_rel, read_timeseries
 from .material_demand import material_demand_calc
-from .util import combine_df_dictionaries, get_ssp_from_context, read_config
+from .util import (
+    add_R12_column,
+    combine_df_dictionaries,
+    get_pycountry_iso,
+    get_ssp_from_context,
+    read_config,
+)
 
 
 def read_data_aluminum(
@@ -730,3 +736,94 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     results["bound_activity_lo"].append(bound_act_net_export_chn_2025)
 
     return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+
+def gen_hist_new_cap():
+    df_cap = pd.read_excel(
+        package_data_path("material", "aluminum", "smelters-with 2022 projection.xls"),
+        sheet_name="Sheet1",
+        skipfooter=23,
+    ).rename(columns={"Unnamed: 0": "Country", "Unnamed: 1": "Region"})
+    df_cap.Technology = df_cap.Technology.fillna("unknown")
+    df_cap = df_cap[~df_cap[1995].isna()]
+    df_cap.Country = df_cap["Country"].ffill()
+    df_cap["ISO"] = df_cap.Country.apply(
+        lambda c: get_pycountry_iso(
+            c,
+            {
+                "Surinam": "SUR",
+                "Trinidad": "TTO",
+                "Quatar": "QAT",
+                "Turkey": "TUR",
+                "UAE": "ARE",
+                "Gernamy": "DEU",
+                "Azerbaydzhan": "AZE",
+                "Russia": "RUS",
+                "Tadzhikistan": "TJK",
+                "UK": "GBR",
+                "Total": "World",
+                "Bosnia": "BIH",
+            },
+        )
+    )
+    df_cap = add_R12_column(
+        df_cap, file_path=package_data_path("node", "R12.yaml"), iso_column="ISO"
+    )
+
+    # generate historical_new_capacity for soderberg
+    df_cap_ss = df_cap[
+        (df_cap.Technology.str.contains("SS") & ~(df_cap.Technology.str.contains("PB")))
+        & ~(df_cap.Technology.str.contains("HAL"))
+        & ~(df_cap.Technology.str.contains("P"))
+    ]
+    df_cap_ss_r12 = df_cap_ss.groupby("R12").sum(numeric_only=True)
+    sample = df_cap_ss_r12[df_cap_ss_r12[df_cap_ss_r12.columns[-1]] != 0][
+        [i for i in range(1995, 2020, 5)] + [2019]
+    ]
+    hist_new_cap_ss = compute_differences(sample, 1995) / 10**6
+    hist_new_cap_ss = hist_new_cap_ss.rename(columns={2019: 2020})
+    hist_new_cap_ss = (
+        hist_new_cap_ss.reset_index()
+        .melt(id_vars="R12", var_name="year_vtg")
+        .assign(unit="Mt", technology="soderberg_aluminum")
+        .rename(columns={"R12": "node_loc"})
+    )
+
+    # generate historical_new_capacity for prebake
+    df_cap_pb = df_cap.loc[df_cap.index.difference(df_cap_ss.index)]
+    df_cap_pb_r12 = df_cap_pb.groupby("R12").sum(numeric_only=True)
+    sample = df_cap_pb_r12[[i for i in range(1995, 2020, 5)] + [2019]]
+    hist_new_cap_pb = compute_differences(sample, 1995) / 10**6
+    hist_new_cap_pb = hist_new_cap_pb.rename(columns={2019: 2020})
+    hist_new_cap_pb = (
+        hist_new_cap_pb.reset_index()
+        .melt(id_vars="R12", var_name="year_vtg")
+        .assign(unit="Mt", technology="prebake_aluminum")
+        .rename(columns={"R12": "node_loc"})
+    )
+
+    return {"historical_new_capacity": pd.concat([hist_new_cap_ss, hist_new_cap_pb])}
+
+
+def compute_differences(df, ref_col):
+    # Initialize a DataFrame to store differences
+    differences = df[ref_col].to_frame()
+
+    # Start with the reference column
+    ref_values = df[ref_col].copy()
+
+    for col in df.columns:
+        if col == ref_col:
+            continue  # Skip the reference column
+
+        # Compute differences
+        diff = df[col] - ref_values
+        diff[diff <= 0] = 0  # Keep only positive differences
+
+        # Store differences
+        differences[col] = diff
+
+        # Update the reference column where the current column is greater
+        ref_values = ref_values.where(df[col] <= ref_values, df[col])
+
+    return differences
