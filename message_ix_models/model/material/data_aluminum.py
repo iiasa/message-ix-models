@@ -78,7 +78,7 @@ def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> dict[str, pd.DataFrame]:
 
     Returns
     -------
-    pd.DataFrame
+    dict[str, pd.DataFrame]
         key-value pairs of parameter names and parameter data
     """
     tec_ts = set(data.technology)  # set of tecs in timeseries sheet
@@ -455,10 +455,14 @@ def gen_data_aluminum(
 
     parname = "demand"
     demand_dict = {}
+    df_2025 = pd.read_csv(package_data_path("material", "aluminum", "demand_2025.csv"))
     df = material_demand_calc.derive_demand("aluminum", scenario, ssp=ssp)
+    df = df[df["year"] != 2025]
+    df = pd.concat([df_2025, df])
     demand_dict[parname] = df
 
     ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
+    ts_dict.update(gen_hist_new_cap())
     rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
     trade_dict = gen_data_alu_trade(scenario)
 

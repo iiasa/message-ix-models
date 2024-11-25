@@ -553,7 +553,12 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
 
     # Create external demand param
     parname = "demand"
+    df_2025 = pd.read_csv(
+        package_data_path("material", "steel", "demand_2025.csv")
+    )
     df_demand = material_demand_calc.derive_demand("steel", scenario, ssp=ssp)
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
     results[parname].append(df_demand)
 
     common = dict(
