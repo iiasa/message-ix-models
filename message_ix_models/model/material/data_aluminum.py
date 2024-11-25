@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from collections.abc import Iterable
 
@@ -469,13 +470,15 @@ def gen_data_aluminum(
 
     ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
     ts_dict.update(gen_hist_new_cap())
+    ts_dict = combine_df_dictionaries(ts_dict, gen_hist_act())
+
     rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
+
     trade_dict = gen_data_alu_trade(scenario)
 
     results_aluminum = combine_df_dictionaries(
         const_dict, ts_dict, rel_dict, demand_dict, trade_dict
     )
-
     return results_aluminum
 
 
@@ -827,3 +830,110 @@ def compute_differences(df, ref_col):
         ref_values = ref_values.where(df[col] <= ref_values, df[col])
 
     return differences
+
+
+def load_bgs_data():
+    bgs_data_path = package_data_path("material", "aluminum", "bgs_data")
+
+    dfs = []
+
+    for fname in os.listdir(bgs_data_path):
+        if not fname.endswith(".xlsx"):
+            continue
+        # read and format BGS data
+        df_prim = pd.read_excel(bgs_data_path + fname, skipfooter=9, skiprows=1)
+        year_cols = df_prim.columns[2::2]
+        df_prim = df_prim[
+            [df_prim.columns.tolist()[0]] + df_prim.columns[3::2].tolist()
+        ]
+        df_prim.columns = ["Country"] + [int(i) for i in year_cols]
+        df_prim["ISO"] = df_prim["Country"].apply(
+            lambda x: get_pycountry_iso(
+                x,
+                {
+                    "Turkey": "TUR",
+                    "Russia": "RUS",
+                    "Bosnia & Herzegovina": "BIH",
+                    "Czechoslovakia": "CSK",
+                    "German Democratic Rep": "DEU",
+                    "Korea (Rep. of)": "KOR",
+                    "Soviet Union": "RUS",
+                    "Korea, Dem. P.R. of": "PRK",
+                    "Serbia and Montenegro": "SRB",
+                    "Yugoslavia": "YUG",
+                    "German Federal Republic": "DEU",
+                },
+            )
+        )
+        df_prim.drop("Country", axis=1, inplace=True)
+        for year in [i for i in df_prim.columns if isinstance(i, int)]:
+            df_prim[year] = pd.to_numeric(df_prim[year], errors="coerce")
+        dfs.append(df_prim)
+
+    df_prim = dfs[0].groupby("ISO").sum()
+    for _df in dfs[1:]:
+        df_prim = _df.groupby("ISO").sum().join(df_prim, how="outer")
+    df_prim = df_prim.dropna(how="all")
+    df_prim = df_prim[sorted(df_prim.columns)]
+
+    df_prim.reset_index(inplace=True)
+
+    # add R12 column
+    df_prim = add_R12_column(
+        df_prim.rename(columns={"ISO": "COUNTRY"}),
+        package_data_path("node", "R12_worldsteel.yaml"),
+    )
+    df_prim.rename(columns={"COUNTRY": "ISO"}, inplace=True)
+
+    return df_prim
+
+
+def gen_hist_act():
+    df_prim = load_bgs_data()
+    df_prim_r12 = df_prim.groupby("R12").sum(numeric_only=True).div(10**6)
+
+    # Soderberg
+    df_ss_act = df_prim_r12[[2015, 2020]].copy(deep=True)
+    # calculate historical production with soderberg electrodes in the only 3 regions
+    #   that still have soderberg capacity (based on capacity data from genisim)
+    df_ss_act.loc["R12_WEU"] *= 0.025
+    df_ss_act.loc["R12_LAM"] *= 0.25
+    df_ss_act.loc["R12_FSU"] *= 0.65
+    df_ss_act.loc[["R12_FSU", "R12_LAM", "R12_WEU"]]
+    df_ss_act = (
+        df_ss_act.reset_index()
+        .rename(columns={"R12": "node_loc"})
+        .melt(id_vars="node_loc", var_name="year_act")
+    )
+    df_ss_act = df_ss_act.assign(
+        technology="soderberg_aluminum", mode="M1", time="year", unit="Mt/yr"
+    )
+    df_ss_act = make_df("historical_activity", **df_ss_act)
+
+    # Prebake
+    df_pb_act = df_prim_r12[[2015, 2020]].copy(deep=True)
+    # deduct historical production with soderberg electrodes in the only 3 regions that
+    #   still have soderberg capacity (based on capacity data from genisim) to get
+    #   production with prebaked electrodes
+    df_pb_act.loc["R12_WEU"] *= 1 - 0.025
+    df_pb_act.loc["R12_LAM"] *= 1 - 0.25
+    df_pb_act.loc["R12_FSU"] *= 1 - 0.65
+    df_pb_act = (
+        df_pb_act.reset_index()
+        .rename(columns={"R12": "node_loc"})
+        .melt(id_vars="node_loc", var_name="year_act")
+    )
+    df_pb_act = df_pb_act.assign(
+        technology="prebake_aluminum", mode="M1", time="year", unit="Mt/yr"
+    )
+    df_pb_act = make_df("historical_activity", **df_pb_act)
+
+    par_dict = {}
+    par_dict["bound_activity_up"] = pd.concat(
+        [
+            df_pb_act[df_pb_act["year_act"] == 2020],
+            df_ss_act[df_ss_act["year_act"] == 2020],
+        ]
+    )
+    par_dict["bound_activity_lo"] = par_dict["bound_activity_up"].copy(deep=True)
+    return par_dict
