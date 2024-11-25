@@ -1,0 +1,13 @@
+node,commodity,level,year,time,value,unit
+R12_AFR,NH3,final_material,2025,year,2.655826840613548,t
+R12_CHN,NH3,final_material,2025,year,19.509765755986678,t
+R12_EEU,NH3,final_material,2025,year,4.213433572242334,t
+R12_FSU,NH3,final_material,2025,year,7.204624589619355,t
+R12_LAM,NH3,final_material,2025,year,2.6443630084868754,t
+R12_MEA,NH3,final_material,2025,year,2.6463332649010893,t
+R12_NAM,NH3,final_material,2025,year,7.291628222808803,t
+R12_PAO,NH3,final_material,2025,year,2.5658865183830537,t
+R12_PAS,NH3,final_material,2025,year,2.661091686760797,t
+R12_RCPA,NH3,final_material,2025,year,2.72594836078395,t
+R12_SAS,NH3,final_material,2025,year,7.755776900489005,t
+R12_WEU,NH3,final_material,2025,year,5.855896480835045,t
