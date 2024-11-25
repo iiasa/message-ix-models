@@ -356,7 +356,12 @@ def gen_data_cement(
 
     # Create external demand param
     parname = "demand"
+    df_2025 = pd.read_csv(
+        package_data_path("material", "cement", "demand_2025.csv")
+    )
     df_demand = material_demand_calc.derive_demand("cement", scenario, ssp=ssp)
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
     results[parname].append(df_demand)
 
     # Add CCS as addon
