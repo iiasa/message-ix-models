@@ -324,7 +324,7 @@ def report(
     Parameters
     ----------
     use_legacy_reporting : bool
-        :any:`True` (the default) to invoke :mod:`message_data.tools.post_processing`;
+        :any:`True` (the default) to invoke :mod:`message_ix_models.report.legacy`;
         :any:`False` to skip.
     """
     from message_ix_models.report import (

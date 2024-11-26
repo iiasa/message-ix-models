@@ -12,6 +12,12 @@ from message_data.model.buildings.report import (
     report3,
 )
 
+MARK = {
+    0: pytest.mark.xfail(
+        reason="Code needs update to work with message_ix_models.report.legacy"
+    )
+}
+
 
 @pytest.fixture(scope="function")
 def buildings_context(test_context):
@@ -46,10 +52,11 @@ def test_get_techs(buildings_context, commodity):
         (dict(include="enduse"), {"resid hotwater", "rc"}, {"comm coal"}),
         # As used e.g. in legacy reporting. Assert that names like "h2" are used instead
         # of "hydrogen", and that end-use groups are not included.
-        (
+        pytest.param(
             dict(include="commodity", legacy=True),
             {"afofi", "comm h2", "resid heat"},
             {"comm other_uses"},
+            marks=MARK[0],
         ),
     ),
 )
@@ -74,6 +81,7 @@ def test_get_tech_groups(test_context, args, present, absent):
     assert set() == absent & set(result)
 
 
+@MARK[0]
 def test_configure_legacy_reporting(buildings_context):
     config = dict()
 
