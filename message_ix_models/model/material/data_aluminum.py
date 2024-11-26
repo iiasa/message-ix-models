@@ -20,7 +20,7 @@ from .util import combine_df_dictionaries, get_ssp_from_context, read_config
 
 def read_data_aluminum(
     scenario: message_ix.Scenario,
-) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`.
 
     Parameters
@@ -42,10 +42,7 @@ def read_data_aluminum(
 
     fname = "aluminum_techno_economic.xlsx"
 
-    if "R12_CHN" in s_info.N:
-        sheet_n = "data_R12"
-    else:
-        sheet_n = "data_R11"
+    sheet_n = "data_R12" if "R12_CHN" in s_info.N else "data_R11"
 
     # Read the file
     data_alu = pd.read_excel(
@@ -564,7 +561,9 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     data_trade.loc[(data_trade["Region"] == "Europe"), "Value"] *= 0.7
     data_trade.loc[(data_trade["Region"] == "Europe"), "Region"] = "West Europe"
 
-    data_trade_eeu = data_trade[data_trade["Region"] == "West Europe"]
+    data_trade_eeu = data_trade.loc[data_trade["Region"] == "West Europe"].copy(
+        deep=True
+    )
     data_trade_eeu["Value"] *= 0.3 / 0.7
     data_trade_eeu["Region"] = "East Europe"
 
@@ -592,7 +591,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     data_trade.loc[(data_trade["Region"] == "Other Asia"), "Value"] *= 0.5
     data_trade.loc[(data_trade["Region"] == "Other Asia"), "Region"] = "South Asia"
 
-    data_trade_pas = data_trade[data_trade["Region"] == "South Asia"]
+    data_trade_pas = data_trade[data_trade["Region"] == "South Asia"].copy(deep=True)
     data_trade_pas["Region"] = "Other Pacific Asia"
 
     data_trade = pd.concat([data_trade, data_trade_pas])
@@ -602,7 +601,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     data_trade.loc[(data_trade["Region"] == "Other Producers"), "Value"] *= 0.5
     data_trade.loc[(data_trade["Region"] == "Other Producers"), "Region"] = "Africa"
 
-    data_trade_fsu = data_trade[data_trade["Region"] == "Africa"]
+    data_trade_fsu = data_trade[data_trade["Region"] == "Africa"].copy(deep=True)
     data_trade_fsu["Region"] = "Former Soviet Union"
 
     data_trade = pd.concat([data_trade, data_trade_fsu])
@@ -614,12 +613,8 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
 
     s_info = ScenarioInfo(scenario)
 
-    if "R12_CHN" in s_info.N:
-        region_tag = "R12_"
-        china_mapping = "R12_CHN"
-    else:
-        region_tag = "R11_"
-        china_mapping = "R11_CPA"
+    region_tag = "R12_" if "R12_CHN" in s_info.N else "R11_"
+    china_mapping = "R12_CHN" if "R12_CHN" in s_info.N else "R11_CPA"
 
     region_mapping = {
         "China": china_mapping,
@@ -647,7 +642,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     # For imports this corresponds to: USE|Inputs|Imports
 
     data_import = data_trade[data_trade["Variable"] == "USE|Inputs|Imports"]
-    data_import_hist = data_import[data_import["year_act"] <= 2015]
+    data_import_hist = data_import[data_import["year_act"] <= 2015].copy(deep=True)
     data_import_hist["technology"] = "import_aluminum"
     data_import_hist["mode"] = "M1"
     data_import_hist["time"] = "year"
@@ -658,7 +653,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     # For exports this corresponds to: MANUFACTURING|Outputs|Exports
 
     data_export = data_trade[data_trade["Variable"] == "MANUFACTURING|Outputs|Exports"]
-    data_export_hist = data_export[data_export["year_act"] <= 2015]
+    data_export_hist = data_export[data_export["year_act"] <= 2015].copy(deep=True)
     data_export_hist["technology"] = "export_aluminum"
     data_export_hist["mode"] = "M1"
     data_export_hist["time"] = "year"
@@ -714,7 +709,9 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     merged_df["value"] = merged_df["value_export"] - merged_df["value_import"]
 
     # Select relevant columns for the final DataFrame
-    bound_act_net_export_chn = merged_df[["node_loc", "year_act", "value"]]
+    bound_act_net_export_chn = merged_df[["node_loc", "year_act", "value"]].copy(
+        deep=True
+    )
 
     bound_act_net_export_chn["technology"] = "export_aluminum"
     bound_act_net_export_chn["mode"] = "M1"
