@@ -184,7 +184,15 @@ def get_tech_groups(
         reporting code; e.g. "electr" becomes "elec".
     """
     if legacy:
-        from message_data.tools.post_processing.default_tables import COMMODITY
+        try:
+            # FIXME This COMMODITY dictionary is not present in the version of the
+            #       legacy reporting migrated to message_ix_models. It, or this code,
+            #       must be updated in order to be usable.
+            from message_ix_models.report.legacy.default_tables import (  # type: ignore [attr-defined]
+                COMMODITY,
+            )
+        except ImportError:
+            COMMODITY = dict()
     else:
         COMMODITY = dict()
 

@@ -377,7 +377,7 @@ def return_func_dict() -> Dict[str, Callable]:
     """
     from importlib import import_module
 
-    from message_data.tools.post_processing import default_tables
+    from message_ix_models.report.legacy import default_tables
 
     # Retrieve a context reference
     # FIXME Don't depend on this being the most recent instance; pass a particular
@@ -404,8 +404,11 @@ def return_func_dict() -> Dict[str, Callable]:
 
         # Invoke a function named configure_legacy_reporting() from each module to
         # adjust `TECHS`
+        # FIXME This TECHS dictionary is not present in the version of the legacy
+        #       reporting migrated to message_ix_models. It, or this code, must be
+        #       updated in order to be usable.
         module_name = f"message_data.model.{name}.report"
-        import_module(module_name).configure_legacy_reporting(default_tables.TECHS)
+        import_module(module_name).configure_legacy_reporting(default_tables.TECHS)  # type: ignore [attr-defined]
 
         # Update `functions` using `func_dict` from the `tables_name` submodule, if any
         try:
@@ -417,7 +420,7 @@ def return_func_dict() -> Dict[str, Callable]:
 
     log.debug(
         f"Configured legacy reporting for -{variant}- model variant:\n"
-        f"{default_tables.TECHS = }"
+        f"{default_tables.TECHS = }"  # type: ignore [attr-defined]
     )
 
     return functions
