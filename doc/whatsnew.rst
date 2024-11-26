@@ -23,7 +23,7 @@ Next release
   - Reconfigure use and implementation of technology variants/modules to be more agnostic (:pull:`221`).
   - Change cost decay to reach reduction percentage specified on the year 2100 (:pull:`227`).
   - Add `cooling` technology variant/module (:pull:`222`).
-- Improve and extend :doc:`/material/index` (:pull:`218`).
+- Improve and extend :doc:`/material/index` (:pull:`218`, :pull:`253`).
 
   - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
 
