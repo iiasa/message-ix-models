@@ -229,6 +229,7 @@ def generate(
         # Store settings on the context
         context.transport.ssp = ssp
         context.transport.policy = policy
+        context.transport.project["LED"] = is_LED
 
         # Construct labels including the SSP code and policy identifier
         # ‘Short’ label used for workflow steps

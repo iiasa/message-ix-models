@@ -44,6 +44,8 @@ from .key import (
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
+    from .config import Config
+
 log = logging.getLogger(__name__)
 
 
@@ -317,7 +319,13 @@ def prepare_computer(c: Computer) -> None:
     """
     from . import factor
 
-    c.apply(pdt_per_capita)
+    config: "Config" = c.graph["context"].transport
+
+    if config.project.get("LED", False):
+        # Select from the file input
+        c.add(pdt_cap, "select", exo.pdt_cap_proj, indexers=dict(scenario="LED"))
+    else:
+        c.apply(pdt_per_capita)
 
     # Insert a scaling factor that varies according to SSP setting
     c.apply(factor.insert, pdt_cap, name="pdt non-active", target=pdt_cap + "adj")
