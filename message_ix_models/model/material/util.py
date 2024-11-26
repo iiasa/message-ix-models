@@ -64,11 +64,8 @@ def prepare_xlsx_for_explorer(filepath: str) -> None:
     """
     df = pd.read_excel(filepath)
 
-    def add_R12(str):
-        if len(str) < 5:
-            return "R12_" + str
-        else:
-            return str
+    def add_R12(str: str) -> str:
+        return "R12_" + str if len(str) < 5 else str
 
     df = df[~df["Region"].isna()]
     df["Region"] = df["Region"].map(add_R12)
@@ -97,7 +94,7 @@ def combine_df_dictionaries(*args: dict[str, pd.DataFrame]) -> dict:
     return comb_dict
 
 
-def read_yaml_file(file_path: str or Path) -> dict or None:
+def read_yaml_file(file_path: Union[str, Path]) -> Union[dict, None]:
     """
     Tries to read yaml file into a dict
 
@@ -119,7 +116,8 @@ def read_yaml_file(file_path: str or Path) -> dict or None:
             return None
 
 
-def invert_dictionary(original_dict: dict[str, list]) -> dict:
+# NOTE guessing the type hint here, but this seems unused anyway
+def invert_dictionary(original_dict: dict[str, list[str]]) -> dict[str, list[str]]:
     """
     Create inverted dictionary from existing dictionary, where values turn
     into keys and vice versa
@@ -134,7 +132,7 @@ def invert_dictionary(original_dict: dict[str, list]) -> dict:
     dict
 
     """
-    inverted_dict = {}
+    inverted_dict: dict[str, list[str]] = {}
     for key, value in original_dict.items():
         for array_element in value:
             if array_element not in inverted_dict:
@@ -196,7 +194,7 @@ def remove_from_list_if_exists(element: Any, _list: list) -> None:
         _list.remove(element)
 
 
-def exponential(x: float or list[float], b: float, m: float) -> float:
+def exponential(x: Union[float, list[float]], b: float, m: float) -> float:
     """
     Mathematical function used in Excels GROWTH function
 
@@ -300,7 +298,7 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     df = scenario.var("COST_NODAL_NET", filters={"year": years_cost})
     df["node"] = pd.Categorical(df["node"], nodes)
     df = df[df["year"].isin(years_cost)].groupby(["node"]).apply(cost_fit)
-    ws = wb.get_sheet_by_name("cost_ref")
+    ws = wb["cost_ref"]
     # write derived values to sheet. Cell B7 (MEA region) is skipped.
     for i in range(2, 7):
         ws[f"B{i}"].value = df.values[i - 2]
@@ -316,28 +314,25 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     df["node"] = pd.Categorical(df["node"], nodes)
     df["commodity"] = pd.Categorical(df["commodity"], comms)
     df = df.groupby(["node", "commodity"]).apply(price_fit)
-    ws = wb.get_sheet_by_name("price_ref")
+    ws = wb["price_ref"]
     for i in range(2, 62):
         ws[f"C{i}"].value = df.values[i - 2]
     wb.save(path)
 
 
 def get_ssp_from_context(context: Context) -> str:
-    """
-    Get selected SSP from context
+    """Get selected SSP from context
+
     Parameters
     ----------
     context: Context
+
     Returns
     -------
     str
         SSP label
     """
-    if "ssp" not in context:
-        ssp = "SSP2"
-    else:
-        ssp = context["ssp"]
-    return ssp
+    return "SSP2" if "ssp" not in context else context["ssp"]
 
 
 def maybe_remove_water_tec(scenario: message_ix.Scenario, results: dict) -> None:

@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import message_ix
 import numpy as np
 import pandas as pd
@@ -160,10 +162,7 @@ def gen_data(
         conv_cost_df = pd.DataFrame()
         df = par_dict[p]
         for tec in tec_list:
-            if p == "inv_cost":
-                year_col = "year_vtg"
-            else:
-                year_col = "year_act"
+            year_col = "year_vtg" if p == "inv_cost" else "year_act"
 
             df_tecs = df[df["technology"] == tec]
             df_tecs = df_tecs.merge(cost_conv, left_on=year_col, right_index=True)
@@ -213,11 +212,11 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_rel"] = df["node_rel"].apply(lambda x: None if x == "all" else x)
-        df = df.to_dict()
-        df = make_df(par_name, **df)
+        df_dict = cast(dict[str, Any], df.to_dict())
+        df = make_df(par_name, **df_dict)
         # split df into df with default values and df with regionalized values
         df_all_regs = df[df["node_rel"].isna()]
-        df_single_regs = df[~df["node_rel"].isna()]
+        df_single_regs = df.copy(deep=True).loc[~df["node_rel"].isna()]
 
         # broadcast regions to default parameter values
         df_all_regs = df_all_regs.pipe(broadcast, node_rel=nodes)
@@ -234,7 +233,9 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
             df_single_regs["node_loc"] = df_single_regs["node_loc"].apply(
                 lambda x: None if x == "all" else x
             )
-            df_new_reg_all_regs = df_single_regs[df_single_regs["node_loc"].isna()]
+            df_new_reg_all_regs = df_single_regs.copy(deep=True).loc[
+                df_single_regs["node_loc"].isna()
+            ]
             df_new_reg_all_regs = df_new_reg_all_regs.pipe(broadcast, node_loc=nodes)
             df_single_regs = pd.concat(
                 [
@@ -466,13 +467,11 @@ def read_demand() -> dict[str, pd.DataFrame]:
     # Process the regional historical activities
 
     fs_GLO = feedshare_GLO.copy()
-    fs_GLO.insert(1, "bio_pct", 0)
-    fs_GLO.insert(2, "elec_pct", 0)
+    fs_GLO.insert(1, "bio_pct", 0.0)
+    fs_GLO.insert(2, "elec_pct", 0.0)
     # 17/14 NH3:N ratio, to get NH3 activity based on N demand
     # => No NH3 loss assumed during production
 
-    # FIXME: Name: elec_pct, dtype: float64 ' has dtype incompatible with int64,
-    #  please explicitly cast to a compatible dtype first.
     fs_GLO.iloc[:, 1:6] = input_fuel[5] * fs_GLO.iloc[:, 1:6]
     fs_GLO.insert(6, "NH3_to_N", 1)
 

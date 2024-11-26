@@ -134,7 +134,7 @@ def read_timer_gdp(
 
 
 def project_demand(df: pd.DataFrame, phi: float, mu: float):
-    df_demand = df.groupby("region", group_keys=False).apply(
+    df_demand = df.groupby("region", group_keys=False)[df.columns].apply(
         lambda group: group.assign(
             demand_pcap_base=group["demand.tot.base"].iloc[0]
             * giga
@@ -142,19 +142,19 @@ def project_demand(df: pd.DataFrame, phi: float, mu: float):
             / mega
         )
     )
-    df_demand = df_demand.groupby("region", group_keys=False).apply(
+    df_demand = df_demand.groupby("region", group_keys=False)[df_demand.columns].apply(
         lambda group: group.assign(
             gap_base=group["demand_pcap_base"].iloc[0] - group["demand_pcap0"].iloc[0]
         )
     )
-    df_demand = df_demand.groupby("region", group_keys=False).apply(
+    df_demand = df_demand.groupby("region", group_keys=False)[df_demand.columns].apply(
         lambda group: group.assign(
             demand_pcap=group["demand_pcap0"]
             + group["gap_base"] * gompertz(phi, mu, y=group["year"])
         )
     )
     df_demand = (
-        df_demand.groupby("region", group_keys=False)
+        df_demand.groupby("region", group_keys=False)[df_demand.columns]
         .apply(
             lambda group: group.assign(
                 demand_tot=group["demand_pcap"] * group["pop.mil"] * mega / giga
