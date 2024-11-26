@@ -184,7 +184,7 @@ def read_material_intensities(
         for t in data_lca["technology"].unique():
             for c in data_lca["commodity"].unique():
                 for p in data_lca["phase"].unique():
-                    temp = data_lca.loc[
+                    temp = data_lca.copy(deep=True).loc[
                         (
                             (data_lca["node"] == n)
                             & (data_lca["technology"] == t)
@@ -501,6 +501,4 @@ def gen_data_power_sector(
     maybe_init_pars(scenario)
 
     # Concatenate to one data frame per parameter
-    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-
-    return results
+    return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}

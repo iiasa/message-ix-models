@@ -204,7 +204,7 @@ def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
         columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
     )
     for r in df_spec["REGION"].unique():
-        df_spec_temp = df_spec.loc[df_spec["REGION"] == r]
+        df_spec_temp = df_spec[df_spec["REGION"] == r].copy(deep=True)
         df_spec_total_temp = df_spec_total.loc[df_spec_total["REGION"] == r]
         df_spec_temp.loc[:, "i_spec"] = (
             df_spec_temp.loc[:, "RESULT"]
@@ -269,7 +269,7 @@ def modify_demand_and_hist_activity(scen: message_ix.Scenario) -> None:
     )
 
     for r in df_therm["REGION"].unique():
-        df_therm_temp = df_therm.loc[df_therm["REGION"] == r]
+        df_therm_temp = df_therm.loc[df_therm["REGION"] == r].copy(deep=True)
         df_therm_total_temp = df_therm_total.loc[df_therm_total["REGION"] == r]
         df_therm_temp.loc[:, "i_therm"] = (
             df_therm_temp.loc[:, "RESULT"]
