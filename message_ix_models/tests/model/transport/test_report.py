@@ -56,7 +56,6 @@ def test_configure_legacy():
 
 @MARK[7]
 @build.get_computer.minimum_version
-@pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "regions, years",
     (
@@ -75,9 +74,7 @@ def test_configure_legacy():
 def test_report_bare_solved(request, test_context, tmp_path, regions, years):
     """Run MESSAGEix-Transport–specific reporting."""
     from message_ix_models.model.transport.report import callback
-    from message_ix_models.report import Config, register
-
-    register(callback)
+    from message_ix_models.report import Config
 
     # Update configuration
     # key = "transport all"  # All including plots, etc.
@@ -87,6 +84,7 @@ def test_report_bare_solved(request, test_context, tmp_path, regions, years):
         years=years,
         report=Config("global.yaml", key=key, output_dir=tmp_path),
     )
+    test_context.report.register(callback)
 
     # Built and (optionally) solved scenario. dummy supply data is necessary for the
     # scenario to be feasible without any other contents.
@@ -114,7 +112,7 @@ def quiet_genno(caplog):
 
 @MARK[7]
 @build.get_computer.minimum_version
-@mark.usefixtures("quiet_genno", "preserve_report_callbacks")
+@mark.usefixtures("quiet_genno")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
@@ -136,7 +134,7 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
 
 @pytest.mark.xfail(condition=GHA, reason="Temporary, for #213; fails on GitHub Actions")
 @build.get_computer.minimum_version
-@mark.usefixtures("quiet_genno", "preserve_report_callbacks")
+@mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
     "plot_name",
     # # All plots
@@ -161,7 +159,6 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
 
 @pytest.mark.xfail(condition=GHA, reason="Temporary, for #213; fails on GitHub Actions")
 @sim.to_simulate.minimum_version
-@pytest.mark.usefixtures("preserve_report_callbacks")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:

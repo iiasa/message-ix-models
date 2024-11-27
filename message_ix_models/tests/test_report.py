@@ -1,5 +1,6 @@
 """Tests for :mod:`message_ix_models.report`."""
 
+import re
 from importlib.metadata import version
 
 import numpy as np
@@ -29,18 +30,25 @@ MARK = (
 )
 
 
-def test_register(caplog):
+def test_register(caplog) -> None:
     # Exception raised for unfindable module
-    with pytest.raises(ModuleNotFoundError):
+    with (
+        pytest.warns(DeprecationWarning, match=re.escape("register(…) function")),
+        pytest.raises(ModuleNotFoundError),
+    ):
         register("foo.bar")
 
     # Adding a callback of the same name twice triggers a log message
     def _cb(*args):
         pass
 
-    register(_cb)
-    with assert_logs(
-        caplog, "Already registered: <function test_register.<locals>._cb"
+    with (
+        pytest.warns(DeprecationWarning, match=re.escape("register(…) function")),
+    ):
+        register(_cb)
+    with (
+        pytest.warns(DeprecationWarning, match=re.escape("register(…) function")),
+        assert_logs(caplog, "Already registered: <function test_register.<locals>._cb"),
     ):
         register(_cb)
 

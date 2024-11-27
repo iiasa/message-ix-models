@@ -1,12 +1,10 @@
 import logging
-from collections.abc import Callable
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
-from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
 import genno.config
@@ -20,6 +18,9 @@ from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
+
+if TYPE_CHECKING:
+    from .config import Callback
 
 __all__ = [
     "Config",
@@ -41,10 +42,6 @@ except AttributeError:
     @genno.config.handles("_iamc formats")
     def _(c: Reporter, info):
         pass
-
-
-#: List of callbacks for preparing the Reporter.
-CALLBACKS: list[Callable] = []
 
 
 @genno.config.handles("iamc")
@@ -119,67 +116,20 @@ def iamc(c: Reporter, info):
     c.add("concat", f"{info['variable']}::iamc", *keys)
 
 
-def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
-    """Register a callback function for :meth:`prepare_reporter`.
+def register(name_or_callback: Union["Callback", str]) -> Optional[str]:
+    """Deprecated alias for :meth:`.report.Config.register`.
 
-    Each registered function is called by :meth:`prepare_reporter`, in order to add or
-    modify reporting keys. Specific model variants and projects can register a callback
-    to extend the reporting graph.
-
-    Callback functions must take two arguments: the Reporter, and a :class:`.Context`:
-
-    .. code-block:: python
-
-        from message_ix.report import Reporter
-        from message_ix_models import Context
-        from message_ix_models.report import register
-
-        def cb(rep: Reporter, ctx: Context):
-            # Modify `rep` by calling its methods ...
-            pass
-
-        register(cb)
-
-    Parameters
-    ----------
-    name_or_callback
-        If a string, this may be a submodule of :mod:`.message_ix_models`, or
-        :mod:`message_data`, in which case the function
-        ``{message_data,message_ix_models}.{name}.report.callback`` is used. Or, it may
-        be a fully-resolved package/module name, in which case ``{name}.callback`` is
-        used. If a callable (function), it is used directly.
+    This version uses :meth:`Context.get_instance()` to get the 0-th Context, and calls
+    that method.
     """
-    if isinstance(name_or_callback, str):
-        # Resolve a string
-        candidates = [
-            # As a fully-resolved package/module name
-            name_or_callback,
-            # As a submodule of message_ix_models
-            f"message_ix_models.{name_or_callback}.report",
-            # As a submodule of message_data
-            f"message_data.{name_or_callback}.report",
-        ]
-        mod = None
-        for name in candidates:
-            try:
-                mod = import_module(name)
-            except ModuleNotFoundError:
-                continue
-            else:
-                break
-        if mod is None:
-            raise ModuleNotFoundError(" or ".join(candidates))
-        callback = mod.callback
-    else:
-        callback = name_or_callback
-        name = callback.__name__
+    warn(
+        "message_ix_models.report.register(…) function; use the method "
+        ".report.Config.register(…) or Context.report.register(…) instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-    if callback in CALLBACKS:
-        log.info(f"Already registered: {callback}")
-        return None
-
-    CALLBACKS.append(callback)
-    return name
+    return Context.get_instance(0).report.register(name_or_callback)
 
 
 def log_before(context, rep, key) -> None:
@@ -367,7 +317,7 @@ def prepare_reporter(
     rep.configure(model=deepcopy(context.model))
 
     # Apply callbacks for other modules which define additional reporting computations
-    for callback in CALLBACKS:
+    for callback in context.report.callback:
         callback(rep, context)
 
     key = context.report.key
@@ -415,7 +365,3 @@ def defaults(rep: Reporter, context: Context) -> None:
             rep.add(*comp, strict=True)
         except KeyExistsError:
             pass  # message_ix > 3.7.0; these are already defined
-
-
-register(defaults)
-register("message_ix_models.report.plot")
