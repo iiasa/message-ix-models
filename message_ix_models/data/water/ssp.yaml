@@ -19,8 +19,8 @@ scenarios:
     cooling_tech:
       globalNorth:
       # constraints on for the globalNorth
-        share_commodity_up: # maybe revet to share if it is the only case
-          share_cooling_ot_fresh: 0
+        share_commodity_up:
+          share_cooling_ot_fresh: 0.001
       globalSouth:
       # constraints on for the globalSouth
         share_commodity_up:
@@ -37,7 +37,7 @@ scenarios:
     cooling_tech:
       globalNorth:
         share_commodity_up: &share_ssp3_common
-          share_cooling_ot_fresh: 0
+          share_cooling_ot_fresh: 0.001
           share_cooling_air: 0.3
       globalSouth:
         share_commodity_up: *share_ssp3_common
@@ -45,7 +45,7 @@ scenarios:
     cooling_tech:
       globalNorth:
         share_commodity_up:
-          share_cooling_ot_fresh: 0
+          share_cooling_ot_fresh: 0.001
           share_cooling_air: 0.3
       globalSouth:
         share_commodity_up:
@@ -54,6 +54,8 @@ scenarios:
 # SSP5, no constraints on cooling technologies
   LED:
     cooling_tech:
-      all:
-        share_commodity_up:
+      globalNorth:
+        share_commodity_up: &share_LED_common
           share_cooling_air: 0.1
+      globalSouth:
+        share_commodity_up: *share_LED_common
