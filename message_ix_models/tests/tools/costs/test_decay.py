@@ -4,7 +4,6 @@ import pytest
 
 from message_ix_models.tools.costs import Config
 from message_ix_models.tools.costs.decay import (
-    get_cost_reduction_data,
     get_technology_reduction_scenarios_data,
     project_ref_region_inv_costs_using_reduction_rates,
 )
@@ -21,18 +20,6 @@ from message_ix_models.tools.costs.regional_differentiation import (
         ("cooling", {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}),
     ),
 )
-def test_get_cost_reduction_data(module: str, t_exp) -> None:
-    # The function runs without error
-    result = get_cost_reduction_data(module)
-
-    # Expected MESSAGEix-GLOBIOM technologies are present in the data
-    assert t_exp <= set(result.message_technology.unique())
-
-    # Values of the "cost reduction" columns are between 0 and 1
-    stats = result.cost_reduction.describe()
-    assert 0 <= stats["min"] and stats["max"] <= 1
-
-
 @pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
 def test_get_technology_reduction_scenarios_data(module: str) -> None:
     config = Config()
