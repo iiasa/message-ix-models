@@ -36,10 +36,12 @@ def _get_module_scenarios_reduction(module, energy_map_df, tech_map_df):
     )
 
     if module != "energy":
-        if package_data_path("costs", module, "scenarios_reduction.csv"):
-            scenarios_module = pd.read_csv(
-                package_data_path("costs", module, "scenarios_reduction.csv")
-            )
+        ffile = package_data_path("costs", module, "scenarios_reduction.csv")
+
+        # if file exists, read it
+        # else, scenarios_joined is the same as scenarios_energy
+        if ffile:
+            scenarios_module = pd.read_csv(ffile)
 
             # if a technology exists in scenarios_module that exists in scen_red_energy,
             # remove it from scenarios_energy
@@ -54,7 +56,7 @@ def _get_module_scenarios_reduction(module, energy_map_df, tech_map_df):
                 drop=True
             )
         else:
-            scenarios_joined = scenarios_energy
+            scenarios_joined = scenarios_energy.copy()
 
         # In tech map, get technologies that are not in scenarios_joined
         # but are mapped to energy technologies
@@ -155,10 +157,9 @@ def _get_module_cost_reduction(module, energy_map_df, tech_map_df):
     )
 
     if module != "energy":
-        if package_data_path("costs", module, "cost_reduction.csv"):
-            reduction_module = pd.read_csv(
-                package_data_path("costs", module, "cost_reduction.csv"), comment="#"
-            )
+        ffile = package_data_path("costs", module, "cost_reduction.csv")
+        if ffile:
+            reduction_module = pd.read_csv(ffile, comment="#")
 
             # if a technology exists in scen_red_module that exists in scen_red_energy,
             # remove it from scen_red_energy
@@ -175,7 +176,7 @@ def _get_module_cost_reduction(module, energy_map_df, tech_map_df):
                 .drop(columns=["technology_type"])
             )
         else:
-            reduction_joined = reduction_energy
+            reduction_joined = reduction_energy.copy()
 
         # In tech map, get technologies that are not in reduction_joined
         # but are mapped to energy technologies
