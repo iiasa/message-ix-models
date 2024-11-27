@@ -384,11 +384,13 @@ def gen_data_cement(
                 df_demand=df_demand.copy(deep=True),
                 technology="clinker_dry_ccs_cement",
                 material="cement",
+                ssp = ssp
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True),
                 technology="clinker_wet_ccs_cement",
                 material="cement",
+                ssp = ssp
             ),
         ]
     )

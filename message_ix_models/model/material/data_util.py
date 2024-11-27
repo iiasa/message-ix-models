@@ -1411,7 +1411,7 @@ def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
 
 
 def calculate_ini_new_cap(
-    df_demand: pd.DataFrame, technology: str, material: str
+    df_demand: pd.DataFrame, technology: str, material: str, ssp: str
 ) -> pd.DataFrame:
     """
     Derive initial_new_capacity_up parametrization for CCS based on cement demand
@@ -1429,9 +1429,28 @@ def calculate_ini_new_cap(
     DataFrame formatted to "initial_new_capacity_up" columns
     """
 
-    SCALER = 0.005
+    if ssp in ["LED", "SSP1", "SSP2"]:
+        if material == "cement":
+            SCALER = 0.00066
+            CLINKER_RATIO = 0.72
+        if material == "steel":
+            SCALER = 0.0009
+            CLINKER_RATIO= 1
+    elif ssp in ["SSP4", "SSP5"]:
+        if material == "cement":
+            SCALER = 0.0014
+            CLINKER_RATIO = 0.72
+        if material == "steel":
+            SCALER = 0.002
+            CLINKER_RATIO = 1
+    elif ssp == "SSP3":
+        if material == "cement":
+            SCALER = 0.0005
+            CLINKER_RATIO = 0.72
+        if material == "steel":
+            SCALER = 0.0007
+            CLINKER_RATIO = 1
 
-    CLINKER_RATIO = 0.72 if material == "cement" else 1
     df_demand["value"] *= CLINKER_RATIO * SCALER
 
     df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
