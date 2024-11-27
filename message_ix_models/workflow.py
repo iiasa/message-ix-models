@@ -361,7 +361,11 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
 
         if not go:
             path = context.get_local_path(f"{slug}-workflow.svg")
-            wf.visualize(str(path))
+            wf.visualize(
+                str(path),
+                # key=target_step,  # DEBUG Uncomment to show only a subset of steps
+                rankdir="LR",
+            )
             log.info(f"Workflow diagram written to {path}")
             return
 
