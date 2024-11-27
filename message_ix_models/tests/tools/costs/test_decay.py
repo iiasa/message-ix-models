@@ -12,14 +12,6 @@ from message_ix_models.tools.costs.regional_differentiation import (
 )
 
 
-@pytest.mark.parametrize(
-    "module, t_exp",
-    (
-        ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}),
-        ("materials", {"biomass_NH3", "MTO_petro", "furnace_foil_steel"}),
-        ("cooling", {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}),
-    ),
-)
 @pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
 def test_get_technology_reduction_scenarios_data(module: str) -> None:
     config = Config()
