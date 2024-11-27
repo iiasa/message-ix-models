@@ -197,14 +197,70 @@ cooling:
     - solar_th_ppl__cl_fresh
     - solar_th_ppl__ot_saline
     - solar_th_ppl__air
-    - csp_sm1_ppl__ot_fresh
-    - csp_sm1_ppl__cl_fresh
-    - csp_sm1_ppl__ot_saline
-    - csp_sm1_ppl__air
-    - csp_sm3_ppl__ot_fresh
-    - csp_sm3_ppl__cl_fresh
-    - csp_sm3_ppl__ot_saline
-    - csp_sm3_ppl__air
+    - csp_sm1_res__ot_fresh
+    - csp_sm1_res__cl_fresh
+    - csp_sm1_res__ot_saline
+    - csp_sm1_res__air
+    - csp_sm1_res1__ot_fresh
+    - csp_sm1_res1__cl_fresh
+    - csp_sm1_res1__ot_saline
+    - csp_sm1_res1__air
+    - csp_sm1_res2__ot_fresh
+    - csp_sm1_res2__cl_fresh
+    - csp_sm1_res2__ot_saline
+    - csp_sm1_res2__air
+    - csp_sm1_res3__ot_fresh
+    - csp_sm1_res3__cl_fresh
+    - csp_sm1_res3__ot_saline
+    - csp_sm1_res3__air
+    - csp_sm1_res4__ot_fresh
+    - csp_sm1_res4__cl_fresh
+    - csp_sm1_res4__ot_saline
+    - csp_sm1_res4__air
+    - csp_sm1_res5__ot_fresh
+    - csp_sm1_res5__cl_fresh
+    - csp_sm1_res5__ot_saline
+    - csp_sm1_res5__air
+    - csp_sm1_res6__ot_fresh
+    - csp_sm1_res6__cl_fresh
+    - csp_sm1_res6__ot_saline
+    - csp_sm1_res6__air
+    - csp_sm1_res7__ot_fresh
+    - csp_sm1_res7__cl_fresh
+    - csp_sm1_res7__ot_saline
+    - csp_sm1_res7__air
+    - csp_sm3_res__ot_fresh
+    - csp_sm3_res__cl_fresh
+    - csp_sm3_res__ot_saline
+    - csp_sm3_res__air
+    - csp_sm3_res1__ot_fresh
+    - csp_sm3_res1__cl_fresh
+    - csp_sm3_res1__ot_saline
+    - csp_sm3_res1__air
+    - csp_sm3_res2__ot_fresh
+    - csp_sm3_res2__cl_fresh
+    - csp_sm3_res2__ot_saline
+    - csp_sm3_res2__air
+    - csp_sm3_res3__ot_fresh
+    - csp_sm3_res3__cl_fresh
+    - csp_sm3_res3__ot_saline
+    - csp_sm3_res3__air
+    - csp_sm3_res4__ot_fresh
+    - csp_sm3_res4__cl_fresh
+    - csp_sm3_res4__ot_saline
+    - csp_sm3_res4__air
+    - csp_sm3_res5__ot_fresh
+    - csp_sm3_res5__cl_fresh
+    - csp_sm3_res5__ot_saline
+    - csp_sm3_res5__air
+    - csp_sm3_res6__ot_fresh
+    - csp_sm3_res6__cl_fresh
+    - csp_sm3_res6__ot_saline
+    - csp_sm3_res6__air
+    - csp_sm3_res7__ot_fresh
+    - csp_sm3_res7__cl_fresh
+    - csp_sm3_res7__ot_saline
+    - csp_sm3_res7__air
     - extract__upstream_landuse
     - extract__saline_supply
     - extract__freshwater_supply
@@ -311,14 +367,70 @@ cooling:
     - solar_th_ppl__cl_fresh
     - solar_th_ppl__ot_saline
     - solar_th_ppl__air
-    - csp_sm1_ppl__ot_fresh
-    - csp_sm1_ppl__cl_fresh
-    - csp_sm1_ppl__ot_saline
-    - csp_sm1_ppl__air
-    - csp_sm3_ppl__ot_fresh
-    - csp_sm3_ppl__cl_fresh
-    - csp_sm3_ppl__ot_saline
-    - csp_sm3_ppl__air
+    - csp_sm1_res__ot_fresh
+    - csp_sm1_res__cl_fresh
+    - csp_sm1_res__ot_saline
+    - csp_sm1_res__air
+    - csp_sm1_res1__ot_fresh
+    - csp_sm1_res1__cl_fresh
+    - csp_sm1_res1__ot_saline
+    - csp_sm1_res1__air
+    - csp_sm1_res2__ot_fresh
+    - csp_sm1_res2__cl_fresh
+    - csp_sm1_res2__ot_saline
+    - csp_sm1_res2__air
+    - csp_sm1_res3__ot_fresh
+    - csp_sm1_res3__cl_fresh
+    - csp_sm1_res3__ot_saline
+    - csp_sm1_res3__air
+    - csp_sm1_res4__ot_fresh
+    - csp_sm1_res4__cl_fresh
+    - csp_sm1_res4__ot_saline
+    - csp_sm1_res4__air
+    - csp_sm1_res5__ot_fresh
+    - csp_sm1_res5__cl_fresh
+    - csp_sm1_res5__ot_saline
+    - csp_sm1_res5__air
+    - csp_sm1_res6__ot_fresh
+    - csp_sm1_res6__cl_fresh
+    - csp_sm1_res6__ot_saline
+    - csp_sm1_res6__air
+    - csp_sm1_res7__ot_fresh
+    - csp_sm1_res7__cl_fresh
+    - csp_sm1_res7__ot_saline
+    - csp_sm1_res7__air
+    - csp_sm3_res__ot_fresh
+    - csp_sm3_res__cl_fresh
+    - csp_sm3_res__ot_saline
+    - csp_sm3_res__air
+    - csp_sm3_res1__ot_fresh
+    - csp_sm3_res1__cl_fresh
+    - csp_sm3_res1__ot_saline
+    - csp_sm3_res1__air
+    - csp_sm3_res2__ot_fresh
+    - csp_sm3_res2__cl_fresh
+    - csp_sm3_res2__ot_saline
+    - csp_sm3_res2__air
+    - csp_sm3_res3__ot_fresh
+    - csp_sm3_res3__cl_fresh
+    - csp_sm3_res3__ot_saline
+    - csp_sm3_res3__air
+    - csp_sm3_res4__ot_fresh
+    - csp_sm3_res4__cl_fresh
+    - csp_sm3_res4__ot_saline
+    - csp_sm3_res4__air
+    - csp_sm3_res5__ot_fresh
+    - csp_sm3_res5__cl_fresh
+    - csp_sm3_res5__ot_saline
+    - csp_sm3_res5__air
+    - csp_sm3_res6__ot_fresh
+    - csp_sm3_res6__cl_fresh
+    - csp_sm3_res6__ot_saline
+    - csp_sm3_res6__air
+    - csp_sm3_res7__ot_fresh
+    - csp_sm3_res7__cl_fresh
+    - csp_sm3_res7__ot_saline
+    - csp_sm3_res7__air
 
   # cat_addon includes cooling technology addons for parent technologies
   type_addon:
@@ -346,8 +458,23 @@ cooling:
     - cooling__nuc_hc
     - cooling__nuc_lc
     - cooling__solar_th_ppl
-    - cooling__csp_sm1_ppl
-    - cooling__csp_sm3_ppl
+    - cooling__csp_sm1_res
+    - cooling__csp_sm1_res1
+    - cooling__csp_sm1_res2
+    - cooling__csp_sm1_res3
+    - cooling__csp_sm1_res4
+    - cooling__csp_sm1_res5
+    - cooling__csp_sm1_res6
+    - cooling__csp_sm1_res7
+    - cooling__csp_sm3_res
+    - cooling__csp_sm3_res1
+    - cooling__csp_sm3_res2
+    - cooling__csp_sm3_res3
+    - cooling__csp_sm3_res4
+    - cooling__csp_sm3_res5
+    - cooling__csp_sm3_res6
+    - cooling__csp_sm3_res7
+
 
   map_tec_addon:
     add:
@@ -374,8 +501,23 @@ cooling:
     - [nuc_hc, cooling__nuc_hc]
     - [nuc_lc, cooling__nuc_lc]
     # - [solar_th_ppl, cooling__solar_th_ppl]
-    - [csp_sm1_ppl, cooling__csp_sm1_ppl]
-    - [csp_sm3_ppl, cooling__csp_sm3_ppl]
+    - [csp_sm1_res, cooling__csp_sm1_res]
+    - [csp_sm1_res1, cooling__csp_sm1_res1]
+    - [csp_sm1_res2, cooling__csp_sm1_res2]
+    - [csp_sm1_res3, cooling__csp_sm1_res3]
+    - [csp_sm1_res4, cooling__csp_sm1_res4]
+    - [csp_sm1_res5, cooling__csp_sm1_res5]
+    - [csp_sm1_res6, cooling__csp_sm1_res6]
+    - [csp_sm1_res7, cooling__csp_sm1_res7]
+    - [csp_sm3_res, cooling__csp_sm3_res]
+    - [csp_sm3_res1, cooling__csp_sm3_res1]
+    - [csp_sm3_res2, cooling__csp_sm3_res2]
+    - [csp_sm3_res3, cooling__csp_sm3_res3]
+    - [csp_sm3_res4, cooling__csp_sm3_res4]
+    - [csp_sm3_res5, cooling__csp_sm3_res5]
+    - [csp_sm3_res6, cooling__csp_sm3_res6]
+    - [csp_sm3_res7, cooling__csp_sm3_res7]
+
 
   cat_addon:
   #   #TODO check whether these needs to be added ?
@@ -472,14 +614,71 @@ cooling:
     - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
     - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
     - [cooling__solar_th_ppl, solar_th_ppl__air]
-    - [cooling__csp_sm1_ppl, csp_sm1_ppl__ot_fresh]
-    - [cooling__csp_sm1_ppl, csp_sm1_ppl__cl_fresh]
-    - [cooling__csp_sm1_ppl, csp_sm1_ppl__ot_saline]
-    - [cooling__csp_sm1_ppl, csp_sm1_ppl__air]
-    - [cooling__csp_sm3_ppl, csp_sm3_ppl__ot_fresh]
-    - [cooling__csp_sm3_ppl, csp_sm3_ppl__cl_fresh]
-    - [cooling__csp_sm3_ppl, csp_sm3_ppl__ot_saline]
-    - [cooling__csp_sm3_ppl, csp_sm3_ppl__air]
+    - [cooling__csp_sm1_res, csp_sm1_res__ot_fresh]
+    - [cooling__csp_sm1_res, csp_sm1_res__cl_fresh]
+    - [cooling__csp_sm1_res, csp_sm1_res__ot_saline]
+    - [cooling__csp_sm1_res, csp_sm1_res__air]
+    - [cooling__csp_sm1_res1, csp_sm1_res1__ot_fresh]
+    - [cooling__csp_sm1_res1, csp_sm1_res1__cl_fresh]
+    - [cooling__csp_sm1_res1, csp_sm1_res1__ot_saline]
+    - [cooling__csp_sm1_res1, csp_sm1_res1__air]
+    - [cooling__csp_sm1_res2, csp_sm1_res2__ot_fresh]
+    - [cooling__csp_sm1_res2, csp_sm1_res2__cl_fresh]
+    - [cooling__csp_sm1_res2, csp_sm1_res2__ot_saline]
+    - [cooling__csp_sm1_res2, csp_sm1_res2__air]
+    - [cooling__csp_sm1_res3, csp_sm1_res3__ot_fresh]
+    - [cooling__csp_sm1_res3, csp_sm1_res3__cl_fresh]
+    - [cooling__csp_sm1_res3, csp_sm1_res3__ot_saline]
+    - [cooling__csp_sm1_res3, csp_sm1_res3__air]
+    - [cooling__csp_sm1_res4, csp_sm1_res4__ot_fresh]
+    - [cooling__csp_sm1_res4, csp_sm1_res4__cl_fresh]
+    - [cooling__csp_sm1_res4, csp_sm1_res4__ot_saline]
+    - [cooling__csp_sm1_res4, csp_sm1_res4__air]
+    - [cooling__csp_sm1_res5, csp_sm1_res5__ot_fresh]
+    - [cooling__csp_sm1_res5, csp_sm1_res5__cl_fresh]
+    - [cooling__csp_sm1_res5, csp_sm1_res5__ot_saline]
+    - [cooling__csp_sm1_res5, csp_sm1_res5__air]
+    - [cooling__csp_sm1_res6, csp_sm1_res6__ot_fresh]
+    - [cooling__csp_sm1_res6, csp_sm1_res6__cl_fresh]
+    - [cooling__csp_sm1_res6, csp_sm1_res6__ot_saline]
+    - [cooling__csp_sm1_res6, csp_sm1_res6__air]
+    - [cooling__csp_sm1_res7, csp_sm1_res7__ot_fresh]
+    - [cooling__csp_sm1_res7, csp_sm1_res7__cl_fresh]
+    - [cooling__csp_sm1_res7, csp_sm1_res7__ot_saline]
+    - [cooling__csp_sm1_res7, csp_sm1_res7__air]
+    - [cooling__csp_sm3_res, csp_sm3_res__ot_fresh]
+    - [cooling__csp_sm3_res, csp_sm3_res__cl_fresh]
+    - [cooling__csp_sm3_res, csp_sm3_res__ot_saline]
+    - [cooling__csp_sm3_res, csp_sm3_res__air]
+    - [cooling__csp_sm3_res1, csp_sm3_res1__ot_fresh]
+    - [cooling__csp_sm3_res1, csp_sm3_res1__cl_fresh]
+    - [cooling__csp_sm3_res1, csp_sm3_res1__ot_saline]
+    - [cooling__csp_sm3_res1, csp_sm3_res1__air]
+    - [cooling__csp_sm3_res2, csp_sm3_res2__ot_fresh]
+    - [cooling__csp_sm3_res2, csp_sm3_res2__cl_fresh]
+    - [cooling__csp_sm3_res2, csp_sm3_res2__ot_saline]
+    - [cooling__csp_sm3_res2, csp_sm3_res2__air]
+    - [cooling__csp_sm3_res3, csp_sm3_res3__ot_fresh]
+    - [cooling__csp_sm3_res3, csp_sm3_res3__cl_fresh]
+    - [cooling__csp_sm3_res3, csp_sm3_res3__ot_saline]
+    - [cooling__csp_sm3_res3, csp_sm3_res3__air]
+    - [cooling__csp_sm3_res4, csp_sm3_res4__ot_fresh]
+    - [cooling__csp_sm3_res4, csp_sm3_res4__cl_fresh]
+    - [cooling__csp_sm3_res4, csp_sm3_res4__ot_saline]
+    - [cooling__csp_sm3_res4, csp_sm3_res4__air]
+    - [cooling__csp_sm3_res5, csp_sm3_res5__ot_fresh]
+    - [cooling__csp_sm3_res5, csp_sm3_res5__cl_fresh]
+    - [cooling__csp_sm3_res5, csp_sm3_res5__ot_saline]
+    - [cooling__csp_sm3_res5, csp_sm3_res5__air]
+    - [cooling__csp_sm3_res6, csp_sm3_res6__ot_fresh]
+    - [cooling__csp_sm3_res6, csp_sm3_res6__cl_fresh]
+    - [cooling__csp_sm3_res6, csp_sm3_res6__ot_saline]
+    - [cooling__csp_sm3_res6, csp_sm3_res6__air]
+    - [cooling__csp_sm3_res7, csp_sm3_res7__ot_fresh]
+    - [cooling__csp_sm3_res7, csp_sm3_res7__cl_fresh]
+    - [cooling__csp_sm3_res7, csp_sm3_res7__ot_saline]
+    - [cooling__csp_sm3_res7, csp_sm3_res7__air]
+
 
   shares:
     add:
