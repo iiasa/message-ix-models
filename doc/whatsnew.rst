@@ -15,7 +15,7 @@ Next release
 - Expand :doc:`repro` with sections on :ref:`repro-doc` and :ref:`versioning`, including :ref:`a list of external model names and ‘versions’ <model-names>` like “MESSAGEix-GLOBIOM 2.0” (:issue:`224`, :pull:`226`).
 - Update :doc:`/transport/index` (:pull:`213`).
 - Add "LED", "SSP4", and "SSP5" as values for the :program:`--ssp=…` option in :func:`.common_params` (:pull:`233`).
-- Fix and update :doc:`/api/tools-costs` (:pull:`219`, :pull:`206`, :pull:`221`, :pull:`227`, :pull:`222`)
+- Fix and update :doc:`/api/tools-costs` (:pull:`219`, :pull:`206`, :pull:`221`, :pull:`227`, :pull:`222`, :pull:`255`)
 
   - Fix naming of GDP and population columns in SSP data aggregation (:pull:`219`).
   - Edit inputs for storage, CSP, hydrogen, and industry technologies (:pull:`206`).
@@ -24,6 +24,7 @@ Next release
   - Reconfigure use and implementation of technology variants/modules to be more agnostic (:pull:`221`).
   - Change cost decay to reach reduction percentage specified on the year 2100 (:pull:`227`).
   - Add `cooling` technology variant/module (:pull:`222`).
+  - Add functionality to specify cost reduction values and cost reduction scenarios in a module (:pull:`255`).
 - Improve and extend :doc:`/material/index` (:pull:`218`, :pull:`253`).
 
   - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
