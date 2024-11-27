@@ -594,11 +594,13 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
                 df_demand=df_demand.copy(deep=True),
                 technology="dri_gas_ccs_steel",
                 material="steel",
+                ssp = ssp,
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True),
                 technology="bf_ccs_steel",
                 material="steel",
+                ssp = ssp
             ),
         ]
     )
