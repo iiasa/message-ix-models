@@ -1,0 +1,7 @@
+# Cost reduction in 2100,,,,,,
+# ,,,,,,
+# Units: %  ,,,,,,
+message_technology,technology_type,very_low,low,medium,high,very_high
+furnace_coal_cement,Materials,0.23,0.24,0.25,0.26,0.27
+gas_ct,Gas/Oil,0.99,0.99,0.99,0.99,0.99
+bio_hpl,Materials,0.77,0.77,0.77,0.77,0.77
