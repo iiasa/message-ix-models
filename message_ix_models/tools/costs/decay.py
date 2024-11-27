@@ -10,6 +10,29 @@ from .regional_differentiation import get_raw_technology_mapping, subset_module_
 
 
 def _get_module_scenarios_reduction(module, energy_map_df, tech_map_df):
+    """Get scenarios reduction categories for a module.
+
+    Parameters
+    ----------
+    module : str
+        The module for which to get scenarios reduction categories.
+    energy_map_df : pandas.DataFrame
+        The technology mapping for the energy module.
+    tech_map_df : pandas.DataFrame
+        The technology mapping for the specific module.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - message_technology: name of technology in MESSAGEix
+        - SSP1: scenario reduction category for SSP1
+        - SSP2: scenario reduction category for SSP2
+        - SSP3: scenario reduction category for SSP3
+        - SSP4: scenario reduction category for SSP4
+        - SSP5: scenario reduction category for SSP5
+        - LED: scenario reduction category for LED
+    """
     # Get reduction scenarios for energy module
     scenarios_energy = pd.read_csv(
         package_data_path("costs", "energy", "scenarios_reduction.csv")
@@ -131,9 +154,29 @@ def _get_module_scenarios_reduction(module, energy_map_df, tech_map_df):
     return scenarios_all if module != "energy" else scenarios_energy
 
 
-# do similar in _get_module_scenarios_reduction but for cost_reduction.csv
-# and call it _get_module_cost_reduction
 def _get_module_cost_reduction(module, energy_map_df, tech_map_df):
+    """Get cost reduction values for technologies in a module.
+
+    Parameters
+    ----------
+    module : str
+        The module for which to get cost reduction values.
+    energy_map_df : pandas.DataFrame
+        The technology mapping for the energy module.
+    tech_map_df : pandas.DataFrame
+        The technology mapping for the specific module.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - message_technology: name of technology in MESSAGEix
+        - very_low: cost reduction for "none" scenario
+        - low: cost reduction for "low" scenario
+        - medium: cost reduction for "moderate" scenario
+        - high: cost reduction for "high" scenario
+        - very_high: cost reduction for "very high" scenario
+    """
     # Get cost reduction for energy module
     reduction_energy = pd.read_csv(
         package_data_path("costs", "energy", "cost_reduction.csv"), comment="#"
