@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 
@@ -40,7 +42,7 @@ def _get_module_scenarios_reduction(module, energy_map_df, tech_map_df):
 
         # if file exists, read it
         # else, scenarios_joined is the same as scenarios_energy
-        if ffile:
+        if os.path.exists(ffile):
             scenarios_module = pd.read_csv(ffile)
 
             # if a technology exists in scenarios_module that exists in scen_red_energy,
@@ -158,7 +160,8 @@ def _get_module_cost_reduction(module, energy_map_df, tech_map_df):
 
     if module != "energy":
         ffile = package_data_path("costs", module, "cost_reduction.csv")
-        if ffile:
+
+        if os.path.exists(ffile):
             reduction_module = pd.read_csv(ffile, comment="#")
 
             # if a technology exists in scen_red_module that exists in scen_red_energy,
