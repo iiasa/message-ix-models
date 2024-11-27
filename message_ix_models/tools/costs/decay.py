@@ -56,7 +56,7 @@ def _get_module_scenarios_reduction(module, energy_map_df, tech_map_df):
 
         # In tech map, get technologies that are not in scenarios_joined
         # but are mapped to energy technologies
-        # then, use the scenarios_reduction.csv from the energy module for those technologies
+        # then use the scenarios reduction from the energy module for those technologies
         scenarios_module_map_to_energy = (
             tech_map_df.query(
                 "(message_technology not in @scenarios_joined.message_technology) and \
