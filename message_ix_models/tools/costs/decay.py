@@ -53,6 +53,8 @@ def _get_module_scenarios_reduction(module, energy_map_df, tech_map_df):
             scenarios_joined = scenarios_energy._append(scenarios_module).reset_index(
                 drop=True
             )
+        else:
+            scenarios_joined = scenarios_energy
 
         # In tech map, get technologies that are not in scenarios_joined
         # but are mapped to energy technologies
@@ -172,6 +174,8 @@ def _get_module_cost_reduction(module, energy_map_df, tech_map_df):
                 .reset_index(drop=True)
                 .drop(columns=["technology_type"])
             )
+        else:
+            reduction_joined = reduction_energy
 
         # In tech map, get technologies that are not in reduction_joined
         # but are mapped to energy technologies
