@@ -1415,7 +1415,21 @@ def calculate_ini_new_cap(
         Formatted to "initial_new_capacity_up" columns.
     """
 
-    SCALER = 0.005
+    if ssp in ["LED", "SSP1", "SSP2"]:
+        if material == "cement":
+            SCALER = 0.00066
+        if material == "steel":
+            SCALER = 0.0009
+    elif ssp in ["SSP4", "SSP5"]:
+        if material == "cement":
+            SCALER = 0.0014
+        if material == "steel":
+            SCALER = 0.002
+    elif ssp == "SSP3":
+        if material == "cement":
+            SCALER = 0.0005
+        if material == "steel":
+            SCALER = 0.0007
 
     CLINKER_RATIO = 0.72 if material == "cement" else 1
 
