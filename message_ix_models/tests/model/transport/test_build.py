@@ -122,7 +122,6 @@ def test_build_bare_res(
         # "ixmp://local/MESSAGEix-Transport on ENGAGE_SSP2_v4.1.7/baseline",
     ),
 )
-@pytest.mark.usefixtures("preserve_report_callbacks")
 def test_build_existing(tmp_path, test_context, url, solve=False):
     """Test that model.transport.build works on certain existing scenarios.
 

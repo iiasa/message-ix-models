@@ -317,7 +317,6 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 
 @MARK[7]
 @build.get_computer.minimum_version
-@pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "nodes, target",
     [

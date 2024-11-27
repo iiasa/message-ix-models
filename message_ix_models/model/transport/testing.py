@@ -176,7 +176,7 @@ def simulated_solution(request, context) -> Reporter:
     add_simulated_solution(rep, info, data)
 
     # Register the callback to set up transport reporting
-    message_ix_models.report.register(callback)
+    context.report.register(callback)
 
     # Prepare the reporter
     with silence_log("genno", logging.CRITICAL):

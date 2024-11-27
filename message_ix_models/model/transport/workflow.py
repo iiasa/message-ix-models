@@ -187,7 +187,7 @@ def generate(
     from message_ix_models import Workflow
     from message_ix_models.model.workflow import solve
     from message_ix_models.project.ssp import SSP_2024
-    from message_ix_models.report import register, report
+    from message_ix_models.report import report
 
     from . import build
     from .config import Config, get_cl_scenario
@@ -205,8 +205,8 @@ def generate(
     Config.from_context(context, options=options)
 
     # Set the default .report.Config key for ".* reported" steps
-    register("model.transport")
     context.report.key = report_key
+    context.report.register("model.transport")
 
     # Create the workflow
     wf = Workflow(context)
