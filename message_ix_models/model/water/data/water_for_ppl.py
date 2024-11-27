@@ -1,6 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-from typing import Any, Literal, Union
+import logging
+from typing import Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,8 @@ from message_ix_models.util import (
     same_node,
 )
 
+log = logging.getLogger(__name__)
+
 
 def missing_tech(x: pd.Series) -> pd.Series:
     """Assign values to missing data.
@@ -32,21 +35,26 @@ def missing_tech(x: pd.Series) -> pd.Series:
         "nuc_hc": 1 / 0.326,
         "nuc_lc": 1 / 0.326,
         "solar_th_ppl": 1 / 0.385,
-        "csp_sm1_ppl": 1 / 0.385,
-        "csp_sm3_ppl": 1 / 0.385,
+        "csp_sm1_res": 1 / 0.385,
+        "csp_sm3_res": 1 / 0.385,
     }
 
-    if pd.notna(x["technology"]) and x["technology"] in data_dic:
-        value = data_dic.get(x["technology"])
-        if x["value"] < 1:
-            value = max(x["value"], value)
-        # for backwards compatibility
-        if x["level"] == "cooling":
-            return pd.Series({"value": value, "level": "dummy_supply"})
-        else:
-            return pd.Series({"value": value, "level": x["level"]})
-    else:
-        return pd.Series({"value": x["value"], "level": x["level"]})
+    if pd.notna(x["technology"]):
+        # Find a matching key in `data_dic` using substring matching
+        matched_key = next((key for key in data_dic if key in x["technology"]), None)
+
+        if matched_key:
+            value = data_dic[matched_key]
+            if x["value"] < 1:
+                value = max(x["value"], value)
+            # for backwards compatibility
+            if x["level"] == "cooling":
+                return pd.Series({"value": value, "level": "dummy_supply"})
+            else:
+                return pd.Series({"value": value, "level": x["level"]})
+
+    # Return the original values if no match is found
+    return pd.Series({"value": x["value"], "level": x["level"]})
 
 
 def cooling_fr(x: pd.Series) -> float:
@@ -88,26 +96,36 @@ def shares(
     corresponding cooling fraction
     """
     for col in search_cols_cooling_fraction:
-        # MAPPING ISOCODE to region name, assume one country only
         col2 = context.map_ISO_c[col] if context.type_reg == "country" else col
+
+        # Filter the cooling fraction
         cooling_fraction = hold_df[
             (hold_df["node_loc"] == col2)
             & (hold_df["technology_name"] == x["technology"])
         ]["cooling_fraction"]
-        x[col] = x[col] * cooling_fraction
 
-    results: list[Any] = []
+        # Log unmatched rows
+        if cooling_fraction.empty:
+            log.warning(
+                f"No cooling_fraction found for node_loc: {col2}, technology: {x['technology']}"
+            )
+            cooling_fraction = pd.Series([0])
+
+        # Ensure the Series is not empty before accessing its first element
+        if not cooling_fraction.empty:
+            x[col] = x[col] * cooling_fraction.iloc[0]
+        else:
+            # You could choose to leave the value unchanged or apply a default
+            x[col] = x[col] * 0  # Default to 0 if cooling_fraction is empty
+
+    # Construct the output
+    results = []
     for i in x:
         if isinstance(i, str):
             results.append(i)
         else:
-            if not len(i):
-                return pd.Series(
-                    [i for i in range(len(search_cols) - 1)] + ["delme"],
-                    index=search_cols,
-                )
-            else:
-                results.append(float(i))
+            results.append(float(i) if not isinstance(i, pd.Series) else i.iloc[0])
+
     return pd.Series(results, index=search_cols)
 
 
@@ -300,8 +318,11 @@ def cooling_shares_SSP_from_yaml(
     # Load the YAML file
     FILE = "ssp.yaml"
     yaml_file_path = package_data_path("water", FILE)
-    with open(yaml_file_path, "r") as file:
-        yaml_data = yaml.safe_load(file)
+    try:
+        with open(yaml_file_path, "r") as file:
+            yaml_data = yaml.safe_load(file)
+    except FileNotFoundError:
+        log.warning(f"YAML file '{FILE}' not found. Please, check your data.")
 
     # Read the SSP from the context
     ssp = context.ssp
@@ -312,9 +333,10 @@ def cooling_shares_SSP_from_yaml(
 
     # Validate that the SSP exists in the YAML data
     if ssp not in scenarios:
-        raise ValueError(
+        log.warning(
             f"SSP '{ssp}' not found in the 'scenarios' section of the YAML file."
         )
+        return pd.DataFrame()
 
     # Extract data for the specified SSP
     ssp_data = scenarios[ssp]["cooling_tech"]
@@ -428,8 +450,16 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     ref_input: pd.DataFrame = scen.par(
         "input", {"technology": cooling_df["parent_tech"]}
     )
-    # filter ref_input with technologiy csp_sm1_ppl
-    a = ref_input[ref_input["technology"].str.contains("csp_sm1_ppl", na=False)]
+    # list of tec in cooling_df["parent_tech"] that are not in ref_input
+    missing_tec = cooling_df["parent_tech"][
+        ~cooling_df["parent_tech"].isin(ref_input["technology"])
+    ]
+    # some techs only ahve output, like csp
+    ref_output: pd.DataFrame = scen.par("output", {"technology": missing_tec})
+    # set columns names of ref_output to be the same as ref_input
+    ref_output.columns = ref_input.columns
+    # merge ref_input and ref_output
+    ref_input = pd.concat([ref_input, ref_output])
     # Extracting historical activity from scenario
     ref_hist_act: pd.DataFrame = scen.par(
         "historical_activity", {"technology": cooling_df["parent_tech"]}
@@ -680,8 +710,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # Combine technology name to get full cooling tech names
     cost["technology"] = cost["utype"] + "__" + cost["cooling"]
     # Filtering out 2010 data to use for historical values
-    input_cool_2010 = input_cool[
-        (input_cool["year_act"] == 2010) & (input_cool["year_vtg"] == 2010)
+    input_cool_2020 = input_cool[
+        (input_cool["year_act"] == 2020) & (input_cool["year_vtg"] == 2020)
     ]
     # Filter out columns that contain 'mix' in column name
     columns = [col for col in cost.columns if "mix_" in col]
@@ -691,7 +721,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     search_cols = [
         col for col in cost.columns if context.regions in col or "technology" in col
     ]
-    hold_df = input_cool_2010[
+    hold_df = input_cool_2020[
         ["node_loc", "technology_name", "cooling_fraction"]
     ].drop_duplicates()
     search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
@@ -705,7 +735,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         hold_df=hold_df,
         search_cols=search_cols,
     )
-    hold_cost = hold_cost[hold_cost["technology"] != "delme"]
 
     changed_value_series = ref_hist_act.apply(
         hist_act, axis=1, context=context, hold_cost=hold_cost
@@ -724,6 +753,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     ]
     # dataframe for historical activities of cooling techs
     act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
+    act_value_df = act_value_df[act_value_df["new_value"] > 0]
 
     changed_value_series = ref_hist_cap.apply(
         hist_cap, axis=1, context=context, hold_cost=hold_cost
@@ -741,6 +771,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         "unit",
     ]
     cap_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
+    cap_value_df = cap_value_df[cap_value_df["new_value"] > 0]
 
     # Make model compatible df for historical activitiy
     h_act = make_df(
@@ -767,54 +798,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     )
 
     results["historical_new_capacity"] = h_cap
-
-    # Add upper bound for seawater cooling
-    # sums up all the historical activities of seawater cooling technologies
-    # h_act_saline = h_act[h_act["technology"].str.endswith("saline")]
-    # h_act_saline = h_act_saline[h_act_saline["year_act"] == 2015]
-    # h_act_saline.drop(columns=["year_act", "mode", "time", "unit"], inplace=True)
-    # h_act_saline = h_act_saline.groupby(["node_loc"]).sum()
-
-    # inp_saline = inp[inp["technology"].str.endswith("ot_saline")]
-    # inp_saline = inp_saline[
-    #     (inp_saline["year_vtg"] == 2015) & (inp_saline["year_act"] == 2015)
-    # ]
-    # inp_saline.drop(
-    #     columns=[
-    #         "year_vtg",
-    #         "commodity",
-    #         "year_act",
-    #         "mode",
-    #         "level",
-    #         "time",
-    #         "time_origin",
-    #         "unit",
-    #         "node_origin",
-    #     ],
-    #     inplace=True,
-    # )
-    # water_fr = inp_saline.groupby(["node_loc"]).mean()
-    # # multiplying input values of water withdrawal with
-    # bound_saline = water_fr.mul(h_act_saline)
-
-    # bound_up = make_df(
-    #     "bound_activity_up",
-    #     node_loc=bound_saline.index,
-    #     technology="extract_salinewater",
-    #     mode="M1",
-    #     time="year",
-    #     value=bound_saline["value"].values,
-    #     unit="km3/year",
-    # ).pipe(broadcast, year_act=info.Y)
-
-    # results["bound_activity_up"] = bound_up
-
-    # Filter out just cl_fresh & air technologies for adding inv_cost in model,
-    # The rest of technologies are assumed to have costs included in parent technologies
-    # con3 = cost['technology'].str.endswith("cl_fresh")
-    # con4 = cost['technology'].str.endswith("air")
-    # con5 = cost.technology.isin(input_cool['technology_name'])
-    # inv_cost = cost[(con3) | (con4)]
 
     # Manually removing extra technologies not required
     # TODO make it automatic to not include the names manually
@@ -972,7 +955,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # add share constraints for cooling technologies based on SSP assumptions
     df_share = cooling_shares_SSP_from_yaml(context)
 
-    results["share_commodity_up"] = df_share
+    if not df_share.empty:
+        results["share_commodity_up"] = df_share
 
     return results
 
