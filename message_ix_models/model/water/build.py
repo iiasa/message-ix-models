@@ -66,6 +66,14 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
     sc = context.get_scenario()
     #  get df = sc.par("input") for technollgies in cooling_df(parent_tach)
     df = sc.par("input", filters={"technology": cooling_df["parent_tech"].unique()})
+    missing_tec = cooling_df["parent_tech"][
+        ~cooling_df["parent_tech"].isin(df["technology"])
+    ]
+    # some techs only ahve output, like csp
+    ref_output: pd.DataFrame = sc.par("output", {"technology": missing_tec})
+    ref_output.columns = df.columns
+    # merge ref_input and ref_output
+    df = pd.concat([df, ref_output])
     parent_tech_sc = df["technology"].unique()
     regions_df = df["node_loc"].unique().tolist()
 
