@@ -179,14 +179,17 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     e_iea = Key("energy:n-y-product-flow:iea")
     e_fnp = KeySeq(e_iea.drop("y"))
     e_cnlt = Key("energy:c-nl-t:iea+0")
-    k = KeySeq("in:nl-t-ya-c-l-h:transport+units")
+    k = KeySeq("in:nl-t-ya-c-l-h:transport+units")  # MESSAGE solution values
 
     # First period
     y0 = rep.get("y0")
 
     # Transform IEA EWEB data for comparison
+    # - The specific edition of the data used is set in .build.add_exogenous_data()
+    # - Data for 2019 is used to proxy for `y0` = 2020, to avoid incorporating COVID
+    #   impacts.
     assert y0 == 2020, f"IEA Extended World Energy Balances: no data for y={y0}"
-    rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=y0), drop=True)
+    rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=2019), drop=True)
     rep.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
     # TODO Dump e_fnp[1] to CSV for AJ comparison
     rep.add(

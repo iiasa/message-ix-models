@@ -201,8 +201,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
     kw = dict(
-        provider="OECD",
-        edition="2022",
+        provider="IEA",
+        edition="2024",
         flow=(
             "DOMESAIR DOMESNAV PIPELINE RAIL ROAD TOTTRANS TRNONSPE WORLDAV WORLDMAR"
         ).split(),
