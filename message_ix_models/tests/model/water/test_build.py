@@ -40,15 +40,14 @@ def parametrize_for_cat_tec(request, context):
     # used in test_get_spec and test_cat_tec_cooling
     scenario = testing.bare_res(request, context)
     scenario.check_out()
-    scenario.add_set("node", ["R12_CPA"])
     inp_par = pd.DataFrame(
         {
-            "node_loc": ["R12_CPA", "R12_CPA"],
+            "node_loc": ["R12_NAM", "R12_NAM"],
             "technology": ["coal_ppl", "gas_ppl"],
             "year_vtg": [2020, 2020],
             "year_act": [2020, 2020],
             "mode": ["all", "all"],
-            "node_origin": ["R12_CPA", "R12_CPA"],
+            "node_origin": ["R12_NAM", "R12_NAM"],
             "commodity": ["electr", "electr"],
             "level": ["secondary", "secondary"],
             "time": ["year", "year"],
@@ -59,12 +58,12 @@ def parametrize_for_cat_tec(request, context):
     )
     out_par = pd.DataFrame(
         {
-            "node_loc": ["R12_CPA"],
+            "node_loc": ["R12_NAM"],
             "technology": ["geo_ppl"],
             "year_vtg": [2020],
             "year_act": [2020],
             "mode": ["all"],
-            "node_dest": ["R12_CPA"],
+            "node_dest": ["R12_NAM"],
             "commodity": ["electr"],
             "level": ["secondary"],
             "time": ["year"],
@@ -84,7 +83,7 @@ def parametrize_for_cat_tec(request, context):
 def test_get_spec(request, test_context, nexus_set):
     # Ensure test_context has all necessary keys for get_spec()
     test_context.nexus_set = nexus_set
-    test_context.regions = "R12"
+    test_context.model.regions = "R12"
     test_context.type_reg = "global"
 
     test_context = parametrize_for_cat_tec(request, test_context)
@@ -105,6 +104,7 @@ def test_get_spec(request, test_context, nexus_set):
 
 
 def test_cat_tec_cooling(request, test_context):
+    test_context.model.regions = "R12"
     test_context = parametrize_for_cat_tec(request, test_context)
     # Run the function
     cat_tec, regions = cat_tec_cooling(test_context)
