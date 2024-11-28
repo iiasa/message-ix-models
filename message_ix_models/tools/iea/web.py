@@ -21,7 +21,51 @@ if TYPE_CHECKING:
 
     import genno
 
+    from message_ix_models.util.common import MappingAdapter
+
 log = logging.getLogger(__name__)
+
+#: ISO 3166-1 alpha-3 codes for “COUNTRY” codes appearing in the 2024 edition. This
+#: mapping only includes values that are not matched by :func:`pycountry.lookup`. See
+#: :func:`.iso_3166_alpha_3`.
+COUNTRY_NAME = {
+    "AUSTRALI": "AUS",
+    "BOSNIAHERZ": "BIH",
+    "BRUNEI": "BRN",
+    "CONGO": "COD",  # Override lookup(…) → COG
+    "CONGOREP": "COG",
+    "COSTARICA": "CRI",
+    "COTEIVOIRE": "CIV",
+    "CURACAO": "CUW",
+    "CZECH": "CZE",
+    "DOMINICANR": "DOM",
+    "ELSALVADOR": "SLV",
+    "EQGUINEA": "GNQ",
+    "HONGKONG": "HKG",
+    "KOREA": "KOR",
+    "KOREADPR": "PRK",
+    "LUXEMBOU": "LUX",
+    "MBURKINAFA": "BFA",
+    "MCHAD": "TCD",
+    "MGREENLAND": "GRL",
+    "MMALI": "MLI",
+    "MMAURITANI": "MRT",
+    "MPALESTINE": "PSE",
+    "NETHLAND": "NLD",
+    "PHILIPPINE": "PHL",
+    "RUSSIA": "RUS",
+    "SAUDIARABI": "SAU",
+    "SOUTHAFRIC": "ZAF",
+    "SRILANKA": "LKA",
+    "SSUDAN": "SSD",
+    "SWITLAND": "CHE",
+    "TAIPEI": "TWN",
+    "TRINIDAD": "TTO",
+    "TURKEY": "TUR",
+    "TURKMENIST": "TKM",
+    "UAE": "ARE",
+    "UK": "GBR",
+}
 
 #: Dimensions of the data.
 DIMS = ["COUNTRY", "PRODUCT", "TIME", "FLOW", "MEASURE"]
@@ -84,12 +128,12 @@ class IEA_EWEB(ExoDataSource):
 
         _kw = copy(source_kw)
 
-        provider = _kw.pop("provider", None)
-        edition = _kw.pop("edition", None)
+        p = self.provider = _kw.pop("provider", None)
+        e = self.edition = _kw.pop("edition", None)
         try:
-            files = FILES[(provider, edition)]
+            files = FILES[(p, e)]
         except KeyError:
-            raise ValueError(f"No IEA data files for ({provider=!r}, {edition=!r})")
+            raise ValueError(f"No IEA data files for (provider={p!r}, edition={e!r})")
 
         self.indexers = dict(MEASURE="TJ")
         if product := _kw.pop("product", None):
@@ -101,10 +145,8 @@ class IEA_EWEB(ExoDataSource):
             raise ValueError(_kw)
 
         # Identify a location that contains the files for the given (provider, edition)
-        path = path_fallback("iea", files[0], where=WHERE).parent
-
-        # Store keyword arguments for load_data()
-        self.load_kw = dict(provider=provider, edition=edition, path=path)
+        # Parent directory relative to which `files` are found
+        self.path = dir_fallback("iea", files[0], where=WHERE)
 
     def __call__(self):
         """Load and process the data."""
@@ -113,15 +155,23 @@ class IEA_EWEB(ExoDataSource):
         # - Map dimensions.
         # - Apply `indexers` to select.
         return (
-            Quantity(load_data(**self.load_kw).set_index(DIMS)["Value"], units="TJ")
+            Quantity(
+                load_data(
+                    provider=self.provider, edition=self.edition, path=self.path
+                ).set_index(DIMS)["Value"],
+                units="TJ",
+            )
             .rename({"COUNTRY": "n", "TIME": "y", "FLOW": "flow", "PRODUCT": "product"})
             .sel(self.indexers, drop=True)
         )
 
     def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
         """Aggregate only; do not interpolate on "y"."""
+        # Map values like RUSSIA appearing in the (IEA, 2024) edition to e.g. RUS
+        adapter = get_mapping(self.provider, self.edition)
+        k = c.add(base_key + "adapted", adapter, base_key)
         return single_key(
-            c.add(base_key + "1", "aggregate", base_key, "n::groups", keep=False)
+            c.add(base_key + "agg", "aggregate", k, "n::groups", keep=False)
         )
 
 
@@ -191,8 +241,14 @@ def iea_web_data_for_query(
     """Load data from `base_path` / `filenames` in IEA WEB formats."""
     import dask.dataframe as dd
 
-    # Filenames to pass to dask.dataframe
-    names_to_read = []
+    names_to_read = []  # Filenames to pass to dask.dataframe
+    # Keyword arguments for read_csv()
+    # - Certain values appearing in (IEA, 2024) are mapped to NaN.
+    # - The Value column is numeric.
+    args: dict[str, Any] = dict(
+        dtype={"Value": float},
+        na_values=[".. ", "c ", "x "],
+    )
 
     # Iterate over origin filenames
     for filename in filenames:
@@ -203,10 +259,10 @@ def iea_web_data_for_query(
 
         if path.suffix == ".TXT":  # pragma: no cover
             names_to_read.append(fwf_to_csv(path, progress=True))
-            args: dict[str, Any] = dict(header=None, names=DIMS + ["Value"])
+            args.update(header=None, names=DIMS + ["Value"])
         else:
             names_to_read.append(path)
-            args = dict(header=0, usecols=DIMS + ["Value"])
+            args.update(header=0, usecols=DIMS + ["Value"])
 
     with silence_log("fsspec.local"):
         ddf = dd.read_csv(names_to_read, engine="pyarrow", **args)
@@ -272,7 +328,7 @@ def generate_code_lists(
 
     # Read the data
     files = FILES[(provider, edition)]
-    path = path_fallback("iea", files[0], where=WHERE).parent
+    path = dir_fallback("iea", files[0], where=WHERE)
     data = iea_web_data_for_query(path, *files, query_expr="TIME > 0")
 
     for concept_id in ("COUNTRY", "FLOW", "PRODUCT"):
@@ -282,3 +338,42 @@ def generate_code_lists(
             m.Code(id=code_id) for code_id in sorted(data[concept_id].dropna().unique())
         )
         write(cl, output_path)
+
+
+def dir_fallback(*parts, **kwargs) -> Path:
+    """Return path to the directory that *contains* a particular file.
+
+    If the last of `parts` is a string with path separators (for instance "a/b/c"), this
+    function returns a parent of the path returned by :func:`.path_fallback`, in which
+    this part is located.
+    """
+    f = Path(parts[-1])
+    return path_fallback("iea", f, where=WHERE).parents[len(f.parts) - 1]
+
+
+def get_mapping(provider: str, edition: str) -> "MappingAdapter":
+    """Return a Mapping Adapter from codes appearing in IEA EWEB data.
+
+    For each code in the ``COUNTRY`` code list for (`provider`, `edition`) that is a
+    country name, the adapter maps the name to a corresponding ISO 3166-1 alpha-3 code.
+    :data:`COUNTRY_NAME` is used for values particular to IEA EWEB.
+
+    Using the adapter makes data suitable for aggregation using the
+    :mod:`message_ix_models` ``node`` code lists, which include those alpha-3 codes as
+    children of each region code.
+    """
+    from message_ix_models.util import MappingAdapter, pycountry
+    from message_ix_models.util.sdmx import read
+
+    maps = dict()
+    for concept, dim in ("COUNTRY", "n"), ("FLOW", "flow"), ("PRODUCT", "product"):
+        if concept == "COUNTRY":
+            cl = read(f"IEA:{concept}_{provider}({edition})")
+            pycountry.COUNTRY_NAME.update(COUNTRY_NAME)
+
+            maps[dim] = list()
+            for code in cl:
+                new_id = pycountry.iso_3166_alpha_3(code.id) or code.id
+                maps[dim].append((code.id, new_id))
+
+    return MappingAdapter(maps)

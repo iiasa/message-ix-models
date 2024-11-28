@@ -3,7 +3,10 @@ from typing import Optional
 
 from pycountry import countries, historic_countries
 
-#: Mapping from common, non-standard country names to ISO 3166-1 names.
+#: Mapping from common, non-standard country names to exact field values occurring in
+#: the ISO 3166-1 database.
+#:
+#: Other code **may** extend this mapping before calling :func:`iso_3166_alpha_3`.
 COUNTRY_NAME = {
     "Korea": "Korea, Republic of",
     "Republic of Korea": "Korea, Republic of",

@@ -9,7 +9,12 @@ from packaging.version import parse
 
 from message_ix_models.testing import GHA
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.tools.iea.web import DIMS, generate_code_lists, load_data
+from message_ix_models.tools.iea.web import (
+    DIMS,
+    generate_code_lists,
+    get_mapping,
+    load_data,
+)
 from message_ix_models.util import HAS_MESSAGE_DATA
 
 # Dask < 2024.4.1 is incompatible with Python >= 3.11.9, but we pin dask in this range
@@ -123,18 +128,39 @@ def test_generate_code_lists(tmp_path, provider, edition):
     generate_code_lists(provider, edition, tmp_path)
 
 
+@pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
+def test_get_mapping(provider, edition) -> None:
+    # MappingAdapter can be generated
+    result = get_mapping(provider, edition)
+
+    # Only "COUNTRY" labels are mapped
+    assert {"n"} == set(result.maps)
+
+    # Expected number of values are mapped
+    assert {
+        ("IEA", "2023"): 191,
+        ("IEA", "2024"): 191,
+        ("OECD", "2021"): 190,
+        ("OECD", "2022"): 185,
+        ("OECD", "2023"): 191,
+    }[(provider, edition)] == len(result.maps["n"])
+
+
 @pytest.mark.parametrize(
     "urn, N",
     (
         ("IEA:COUNTRY_IEA(2023)", 191),
+        ("IEA:COUNTRY_IEA(2024)", 191),
         ("IEA:COUNTRY_OECD(2021)", 190),
         ("IEA:COUNTRY_OECD(2022)", 185),
         ("IEA:COUNTRY_OECD(2023)", 191),
         ("IEA:FLOW_IEA(2023)", 108),
+        ("IEA:FLOW_IEA(2024)", 108),
         ("IEA:FLOW_OECD(2021)", 108),
         ("IEA:FLOW_OECD(2022)", 108),
         ("IEA:FLOW_OECD(2023)", 108),
         ("IEA:PRODUCT_IEA(2023)", 68),
+        ("IEA:PRODUCT_IEA(2024)", 68),
         ("IEA:PRODUCT_OECD(2021)", 68),
         ("IEA:PRODUCT_OECD(2022)", 68),
         ("IEA:PRODUCT_OECD(2023)", 68),
