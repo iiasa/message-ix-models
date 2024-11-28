@@ -1,8 +1,9 @@
+import pandas as pd
 import pytest
 
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.build import get_spec, map_basin
+from message_ix_models.model.water.build import cat_tec_cooling, get_spec, map_basin
 from message_ix_models.model.water.build import main as build
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 
@@ -35,12 +36,58 @@ def test_build(request, test_context):
     assert "extract_surfacewater" in scenario.set("technology").tolist()
 
 
+def parametrize_for_cat_tec(request, context):
+    # used in test_get_spec and test_cat_tec_cooling
+    scenario = testing.bare_res(request, context)
+    scenario.check_out()
+    scenario.add_set("node", ["R12_CPA"])
+    inp_par = pd.DataFrame(
+        {
+            "node_loc": ["R12_CPA", "R12_CPA"],
+            "technology": ["coal_ppl", "gas_ppl"],
+            "year_vtg": [2020, 2020],
+            "year_act": [2020, 2020],
+            "mode": ["all", "all"],
+            "node_origin": ["R12_CPA", "R12_CPA"],
+            "commodity": ["electr", "electr"],
+            "level": ["secondary", "secondary"],
+            "time": ["year", "year"],
+            "time_origin": ["year", "year"],
+            "value": [1, 1],
+            "unit": ["GWa", "GWa"],
+        }
+    )
+    out_par = pd.DataFrame(
+        {
+            "node_loc": ["R12_CPA"],
+            "technology": ["geo_ppl"],
+            "year_vtg": [2020],
+            "year_act": [2020],
+            "mode": ["all"],
+            "node_dest": ["R12_CPA"],
+            "commodity": ["electr"],
+            "level": ["secondary"],
+            "time": ["year"],
+            "time_dest": ["year"],
+            "value": [1],
+            "unit": ["GWa"],
+        }
+    )
+    scenario.add_par("input", inp_par)
+    scenario.add_par("output", out_par)
+    scenario.commit("")
+    context.set_scenario(scenario)
+    return context
+
+
 @pytest.mark.parametrize("nexus_set", ["nexus", "cooling"])
-def test_get_spec(test_context, nexus_set):
+def test_get_spec(request, test_context, nexus_set):
     # Ensure test_context has all necessary keys for get_spec()
     test_context.nexus_set = nexus_set
     test_context.regions = "R12"
     test_context.type_reg = "global"
+
+    test_context = parametrize_for_cat_tec(request, test_context)
 
     if nexus_set == "nexus":
         # Need this to prepare for running get_spec() with nexus_set == "nexus"
@@ -55,3 +102,15 @@ def test_get_spec(test_context, nexus_set):
     # Contents are read correctly
     assert "water_supply" in spec["remove"].set["level"]
     assert "water_supply" in spec["add"].set["level"]
+
+
+def test_cat_tec_cooling(request, test_context):
+    test_context = parametrize_for_cat_tec(request, test_context)
+    # Run the function
+    cat_tec, regions = cat_tec_cooling(test_context)
+
+    # Assertions on the results
+    assert isinstance(cat_tec, pd.DataFrame)
+    assert set(cat_tec.columns) == {"type_tec", "tec"}
+    assert isinstance(regions, list)
+    assert len(regions) > 0
