@@ -18,11 +18,11 @@ scenarios:
   SSP1:
     cooling_tech:
       globalNorth:
-      # constraints on for the globalNorth
+      # constraints for the globalNorth
         share_commodity_up:
           share_cooling_ot_fresh: 0.001
       globalSouth:
-      # constraints on for the globalSouth
+      # constraints for the globalSouth
         share_commodity_up:
           share_cooling_ot_fresh: 0.1
   SSP2:

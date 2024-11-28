@@ -24,7 +24,7 @@ cooling:
     - urban_uncollected_wst
     - yield_freshwater_suply
     - rural_collected_wst
-    - rual_uncollected_wst
+    - rural_uncollected_wst
     - urban_mw
     - urban_dis
     - rural_mw
@@ -478,7 +478,7 @@ cooling:
 
   map_tec_addon:
     add:
-    - [bio_hpl,cooling__bio_hpl]
+    - [bio_hpl, cooling__bio_hpl]
     - [bio_istig, cooling__bio_istig]
     - [bio_istig_ccs, cooling__bio_istig_ccs]
     - [bio_ppl,cooling__bio_ppl]
