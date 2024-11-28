@@ -45,6 +45,9 @@ jobs:
         - { upstream: v3.9.0, python: "3.13" }  # 2024-06-04
         # Development version + latest released Python
         - { upstream: main,   python: "3.13" }
+        # NB Python 3.9 and 3.13 not supported by ixmp4
+        - { upstream: enh/ixmp4, python: "3.10"}
+        - { upstream: enh/ixmp4, python: "3.12"}
 
         exclude:
         # Specific version combinations that are invalid / not to be used
@@ -57,6 +60,7 @@ jobs:
         - { os: macos-latest, version: {upstream: v3.9.0 }}
         # Redundant with macos-latest
         - { os: macos-13, version: {upstream: main }}
+        - { os: macos-13, version: {upstream: enh/ixmp4 }}
 
       fail-fast: false
 
