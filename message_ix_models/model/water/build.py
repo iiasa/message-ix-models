@@ -54,7 +54,7 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
     FILE = "tech_water_performance_ssp_msg.csv"
     path = package_data_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
-    cooling_df = df.loc[df["technology_group"] == "cooling"].copy()
+    cooling_df = df.loc[df["technology_group"] == "cooling"].copy(deep=True)
     # Separate a column for parent technologies of respective cooling
     # techs
     cooling_df["parent_tech"] = (
@@ -69,7 +69,7 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
     missing_tec = cooling_df["parent_tech"][
         ~cooling_df["parent_tech"].isin(df["technology"])
     ]
-    # some techs only ahve output, like csp
+    # some techs only have output, like csp
     ref_output: pd.DataFrame = sc.par("output", {"technology": missing_tec})
     ref_output.columns = df.columns
     # merge ref_input and ref_output
@@ -119,7 +119,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     remove = ScenarioInfo()
     add = ScenarioInfo()
 
-    # cooling fata included by default
+    # cooling data included by default
     # Merge technology.yaml with set.yaml
     context["water set"]["cooling"]["technology"]["add"] = context["water technology"][
         "cooling"
@@ -287,15 +287,15 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         level="share",
     ).pipe(broadcast, node_share=nodes_cooling)
     df_share["node"] = df_share["node_share"]
-    # re order columns like this ['shares', 'node_share', 'node',
-    # 'type_tec', 'mode', 'commodity', 'level']
+    # re order columns like this:
+    # ['shares', 'node_share', 'node', 'type_tec', 'mode', 'commodity', 'level']
     df_share = df_share[
         ["shares", "node_share", "node", "type_tec", "mode", "commodity", "level"]
     ]
 
     df_list = df_share.values.tolist()
     results["map_shares_commodity_share"] = df_list
-    # for totoal
+    # for total
     df_share = make_df(
         "map_shares_commodity_total",
         shares=shares_cool,
@@ -309,8 +309,8 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         level="share",
     ).pipe(broadcast, node_share=nodes_cooling, commodity=commodity_cool)
     df_share["node"] = df_share["node_share"]
-    # re order columns like this ['shares', 'node_share', 'node',
-    # 'type_tec', 'mode', 'commodity', 'level']
+    # re order columns like this:
+    # ['shares', 'node_share', 'node', 'type_tec', 'mode', 'commodity', 'level']
     df_share = df_share[
         ["shares", "node_share", "node", "type_tec", "mode", "commodity", "level"]
     ]
@@ -320,7 +320,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     results["map_shares_commodity_total"] = df_list
 
     for set_name, config in results.items():
-        # Sets  to add
+        # Sets to add
         add.set[set_name].extend(config)
 
     return dict(require=require, remove=remove, add=add)

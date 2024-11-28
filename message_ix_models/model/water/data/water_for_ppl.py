@@ -48,10 +48,11 @@ def missing_tech(x: pd.Series) -> pd.Series:
             if x["value"] < 1:
                 value = max(x["value"], value)
             # for backwards compatibility
-            if x["level"] == "cooling":
-                return pd.Series({"value": value, "level": "dummy_supply"})
-            else:
-                return pd.Series({"value": value, "level": x["level"]})
+            return (
+                pd.Series({"value": value, "level": "dummy_supply"})
+                if x["level"] == "cooling"
+                else pd.Series({"value": value, "level": x["level"]})
+            )
 
     # Return the original values if no match is found
     return pd.Series({"value": x["value"], "level": x["level"]})
@@ -106,17 +107,19 @@ def shares(
 
         # Log unmatched rows
         if cooling_fraction.empty:
-            log.warning(
-                f"No cooling_fraction found for node_loc: {col2}, technology: {x['technology']}"
+            log.info(
+                f"No cooling_fraction found for node_loc: {col2}, "
+                f"technology: {x['technology']}"
             )
             cooling_fraction = pd.Series([0])
 
         # Ensure the Series is not empty before accessing its first element
-        if not cooling_fraction.empty:
-            x[col] = x[col] * cooling_fraction.iloc[0]
-        else:
-            # You could choose to leave the value unchanged or apply a default
-            x[col] = x[col] * 0  # Default to 0 if cooling_fraction is empty
+        # # Default to 0 if cooling_fraction is empty
+        x[col] = (
+            x[col] * cooling_fraction.iloc[0]
+            if not cooling_fraction.empty
+            else x[col] * 0
+        )
 
     # Construct the output
     results = []
@@ -454,7 +457,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     missing_tec = cooling_df["parent_tech"][
         ~cooling_df["parent_tech"].isin(ref_input["technology"])
     ]
-    # some techs only ahve output, like csp
+    # some techs only have output, like csp
     ref_output: pd.DataFrame = scen.par("output", {"technology": missing_tec})
     # set columns names of ref_output to be the same as ref_input
     ref_output.columns = ref_input.columns
@@ -646,7 +649,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     out = make_df(
         "output",
         node_loc=input_cool["node_loc"],
-        # take aprt of string after "__" from icmse_df["technology_name"]
         technology=input_cool["technology_name"],
         year_vtg=input_cool["year_vtg"],
         year_act=input_cool["year_act"],
@@ -656,7 +658,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         level="share",
         time="year",
         time_dest="year",
-        value=1,  # TO BE CHECKED icmse_df["value_cool"],
+        value=1,
         unit="-",
     )
 
@@ -670,7 +672,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     )
     df_sw["time_dest"] = df_sw["time_dest"].astype(str)
     if context.nexus_set == "nexus":
-        # out = pd.DataFrame()
         for nn in icmse_df.node_loc.unique():
             # input cooling fresh basin
             icfb_df = icmse_df[icmse_df["node_loc"] == nn]
