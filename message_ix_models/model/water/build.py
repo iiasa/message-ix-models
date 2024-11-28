@@ -70,7 +70,7 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
         ~cooling_df["parent_tech"].isin(df["technology"])
     ]
     # some techs only have output, like csp
-    ref_output: pd.DataFrame = sc.par("output", {"technology": missing_tec})
+    ref_output = sc.par("output", {"technology": missing_tec})
     ref_output.columns = df.columns
     # merge ref_input and ref_output
     df = pd.concat([df, ref_output])
