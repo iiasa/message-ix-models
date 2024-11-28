@@ -450,25 +450,23 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     # Extracting input database from scenario for parent technologies
     # Extracting input values from scenario
-    ref_input: pd.DataFrame = scen.par(
-        "input", {"technology": cooling_df["parent_tech"]}
-    )
+    ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
     # list of tec in cooling_df["parent_tech"] that are not in ref_input
     missing_tec = cooling_df["parent_tech"][
         ~cooling_df["parent_tech"].isin(ref_input["technology"])
     ]
     # some techs only have output, like csp
-    ref_output: pd.DataFrame = scen.par("output", {"technology": missing_tec})
+    ref_output = scen.par("output", {"technology": missing_tec})
     # set columns names of ref_output to be the same as ref_input
     ref_output.columns = ref_input.columns
     # merge ref_input and ref_output
     ref_input = pd.concat([ref_input, ref_output])
     # Extracting historical activity from scenario
-    ref_hist_act: pd.DataFrame = scen.par(
+    ref_hist_act = scen.par(
         "historical_activity", {"technology": cooling_df["parent_tech"]}
     )
     # Extracting historical capacity from scenario
-    ref_hist_cap: pd.DataFrame = scen.par(
+    ref_hist_cap = scen.par(
         "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
     )
 
