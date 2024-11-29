@@ -454,6 +454,6 @@ class CliRunner:
 
         if result.exit_code != 0:
             print(f"{result.exit_code = }", f"{result.output = }", sep="\n")
-            raise RuntimeError(result.exit_code)
+            raise RuntimeError(result.exit_code) from result.exception
 
         return result
