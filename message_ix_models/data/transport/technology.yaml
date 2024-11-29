@@ -349,6 +349,11 @@ transport F ROAD usage:
   input: {commodity: transport F ROAD vehicle}
   output: {commodity: transport F ROAD}
 
+F usage:
+  child:
+  - transport F RAIL usage
+  - transport F ROAD usage
+
 transport pax load factor:
   description: >-
     Conversion from vehicle-distance traveled to passenger transport activity
