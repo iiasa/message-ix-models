@@ -1,6 +1,7 @@
 """Utility code for MESSAGEix-Transport."""
 
 import logging
+from collections.abc import Hashable, Sequence
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Union
@@ -13,6 +14,8 @@ from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     import numbers
+
+    from genno.types import AnyQuantity
 
 log = logging.getLogger(__name__)
 
@@ -91,3 +94,17 @@ def sum_numeric(iterable: Iterable, /, start=0) -> "numbers.Real":
         except TypeError:
             pass
     return result
+
+
+def wildcard(value, units, dims: Sequence[Hashable]) -> "AnyQuantity":
+    """Return a Quantity with 1 label "*" along each of `dims`.
+
+    .. todo:: Move upstream, to `genno`.
+    """
+    import genno
+
+    coords = {d: ["*"] for d in dims}
+    try:
+        return genno.Quantity(value, coords=coords, units=units)
+    except TypeError:  # genno < 1.25
+        return genno.Quantity(value, units).expand_dims(coords)
