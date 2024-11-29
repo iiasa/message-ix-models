@@ -14,7 +14,8 @@ import json
 import logging
 from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
-from typing import TYPE_CHECKING
+from types import FunctionType
+from typing import TYPE_CHECKING, Union
 
 import genno.caching
 import ixmp
@@ -58,6 +59,11 @@ def _dataclass(o: object):
         if (is_dataclass(o) and not isinstance(o, type))
         else json.JSONEncoder().default(o)
     )
+
+
+@genno.caching.Encoder.register
+def _repr_only(o: Union[FunctionType]):
+    return repr(o)
 
 
 @genno.caching.Encoder.register
