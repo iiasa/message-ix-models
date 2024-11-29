@@ -90,13 +90,7 @@ PROVIDER_EDITION = (
             GHA or not HAS_MESSAGE_DATA, reason="No fuzzed version of this data"
         ),
     ),
-    pytest.param(
-        "IEA",
-        "2024",
-        marks=pytest.mark.xfail(
-            GHA or not HAS_MESSAGE_DATA, reason="No fuzzed version of this data"
-        ),
-    ),
+    ("IEA", "2024"),
     ("OECD", "2021"),
     ("OECD", "2022"),
     ("OECD", "2023"),
