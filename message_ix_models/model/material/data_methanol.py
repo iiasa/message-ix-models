@@ -289,7 +289,7 @@ def unpivot_input_data(df: pd.DataFrame, par_name: str):
     return make_df(par_name, **df_final_full)
 
 
-def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> Dict[str, pd.DataFrame]:
+def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> dict[str, pd.DataFrame]:
     # input parameter
     yv_ya = s_info.yv_ya
     year_all = yv_ya["year_act"].unique()
