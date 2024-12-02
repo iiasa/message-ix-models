@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Introduce an SSP configuration for cooling technologies with share constraints (:pull:`256`).
 - :mod:`message_ix_models` is tested and compatible with `Python 3.13 <https://www.python.org/downloads/release/python-3130/>`__ (:pull:`250`).
 - Support for Python 3.8 is dropped (:pull:`250`), as it has reached end-of-life.
 - Connect the water module to the cost module for cooling technologies (:pull:`245`).

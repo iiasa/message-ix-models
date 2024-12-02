@@ -1,0 +1,61 @@
+macro-regions:
+  globalNorth:
+  - WEU
+  - EEU
+  - FSU
+  - NAM
+  - PAO
+  globalSouth:
+  - LAM
+  - SAS
+  - AFR
+  - CPA
+  - CHN
+  - RCPA
+  - MEA
+  - PAS
+scenarios:
+  SSP1:
+    cooling_tech:
+      globalNorth:
+      # constraints for the globalNorth
+        share_commodity_up:
+          share_cooling_ot_fresh: 0.001
+      globalSouth:
+      # constraints for the globalSouth
+        share_commodity_up:
+          share_cooling_ot_fresh: 0.1
+  SSP2:
+    cooling_tech:
+      globalNorth:
+        share_commodity_up: &share_ssp2_common
+          share_cooling_ot_fresh: 0.3
+          share_cooling_air: 0.5
+      globalSouth:
+        share_commodity_up: *share_ssp2_common
+  SSP3:
+    cooling_tech:
+      globalNorth:
+        share_commodity_up: &share_ssp3_common
+          share_cooling_ot_fresh: 0.001
+          share_cooling_air: 0.3
+      globalSouth:
+        share_commodity_up: *share_ssp3_common
+  SSP4:
+    cooling_tech:
+      globalNorth:
+        share_commodity_up:
+          share_cooling_ot_fresh: 0.001
+          share_cooling_air: 0.3
+      globalSouth:
+        share_commodity_up:
+          share_cooling_ot_fresh: 0.3
+          share_cooling_air: 0.3
+# SSP5, no constraints on cooling technologies
+  LED:
+    cooling_tech:
+      globalNorth:
+        share_commodity_up: &share_LED_common
+          share_cooling_air: 0.1
+      globalSouth:
+        share_commodity_up: *share_LED_common
