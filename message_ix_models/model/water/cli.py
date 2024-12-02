@@ -120,6 +120,7 @@ _REL = ["low", "med", "high"]
     help="Defines whether the model solves with macro",
 )
 @common_params("regions")
+@scenario_param("--ssp")
 def nexus_cli(context: "Context", regions, rcps, sdgs, rels, macro=False):
     """
     Add basin structure connected to the energy sector and
@@ -157,7 +158,10 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
     context.SDG = sdgs
     context.REL = rels
 
-    log.info(f"RCP assumption is {context.RCP}. SDG is {context.SDG}")
+    log.info(
+        f"SSP assumption is {context.ssp}. SDG is {context.SDG}. "
+        f"RCP is {context.RCP}. REL is {context.REL}."
+    )
 
     from .build import main as build
 
@@ -246,6 +250,11 @@ def cooling(context, regions, rcps, rels):
     context.nexus_set = "cooling"
     context.RCP = rcps
     context.REL = rels
+
+    log.info(
+        f"SSP assumption is {context.ssp}. "
+        f"RCP is {context.RCP}. REL is {context.REL}."
+    )
 
     from .build import main as build
 
