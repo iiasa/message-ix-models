@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 import message_ix
 import openpyxl as pxl
@@ -347,7 +347,9 @@ def update_macro_calib_file(
     wb.save(path)
 
 
-def get_ssp_from_context(context: Context) -> str:
+def get_ssp_from_context(
+    context: Context,
+) -> Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]:
     """Get selected SSP from context
 
     Parameters
@@ -356,7 +358,6 @@ def get_ssp_from_context(context: Context) -> str:
 
     Returns
     -------
-    str
         SSP label
     """
     return "SSP2" if "ssp" not in context else context["ssp"]
