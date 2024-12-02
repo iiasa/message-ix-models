@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -10,7 +11,9 @@ from .regional_differentiation import get_raw_technology_mapping, subset_module_
 
 
 def _get_module_scenarios_reduction(
-    module: str, energy_map_df: pd.DataFrame, tech_map_df: pd.DataFrame
+    module: Literal["energy", "materials", "cooling"],
+    energy_map_df: pd.DataFrame,
+    tech_map_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """Get scenarios reduction categories for a module.
 
@@ -157,7 +160,9 @@ def _get_module_scenarios_reduction(
 
 
 def _get_module_cost_reduction(
-    module: str, energy_map_df: pd.DataFrame, tech_map_df: pd.DataFrame
+    module: Literal["energy", "materials", "cooling"],
+    energy_map_df: pd.DataFrame,
+    tech_map_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """Get cost reduction values for technologies in a module.
 
@@ -292,7 +297,7 @@ def _get_module_cost_reduction(
 
 # create function to get technology reduction scenarios data
 def get_technology_reduction_scenarios_data(
-    first_year: int, module: str
+    first_year: int, module: Literal["energy", "materials", "cooling"]
 ) -> pd.DataFrame:
     # Get full list of technologies from mapping
     tech_map = energy_map = get_raw_technology_mapping("energy")
