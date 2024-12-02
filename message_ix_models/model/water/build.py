@@ -3,7 +3,6 @@ from collections.abc import Mapping
 from functools import lru_cache, partial
 
 import pandas as pd
-from message_ix import make_df
 from sdmx.model.v21 import Code
 
 from message_ix_models import Context, ScenarioInfo
@@ -273,19 +272,25 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         "share_cooling_ot_saline",
     ]
     commodity_cool = ["ot_fresh", "cl_fresh", "air", "ot_saline"]
-    df_share = make_df(
-        "map_shares_commodity_share",
-        shares=shares_cool,
-        type_tec=[
-            "share_cooling_ot_fresh_share",
-            "share_cooling_cl_fresh_share",
-            "share_cooling_air_share",
-            "share_cooling_ot_saline_share",
-        ],
-        mode="M1",
-        commodity=commodity_cool,
-        level="share",
+
+    type_tec_share = [
+        "share_cooling_ot_fresh_share",
+        "share_cooling_cl_fresh_share",
+        "share_cooling_air_share",
+        "share_cooling_ot_saline_share",
+    ]
+    df_share = pd.DataFrame(
+        {
+            "shares": shares_cool,
+            "node_share": [None] * len(shares_cool),  # Placeholder for node_share
+            "node": [None] * len(shares_cool),  # Placeholder for node
+            "type_tec": type_tec_share,
+            "mode": "M1",  # Repeat mode
+            "commodity": commodity_cool,
+            "level": "share",  # Repeat level
+        }
     ).pipe(broadcast, node_share=nodes_cooling)
+
     df_share["node"] = df_share["node_share"]
     # re order columns like this:
     # ['shares', 'node_share', 'node', 'type_tec', 'mode', 'commodity', 'level']
@@ -296,18 +301,24 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     df_list = df_share.values.tolist()
     results["map_shares_commodity_share"] = df_list
     # for total
-    df_share = make_df(
-        "map_shares_commodity_total",
-        shares=shares_cool,
-        type_tec=[
-            "share_cooling_ot_fresh_tot",
-            "share_cooling_cl_fresh_tot",
-            "share_cooling_air_tot",
-            "share_cooling_ot_saline_tot",
-        ],
-        mode="M1",
-        level="share",
+    type_tec_tot = [
+        "share_cooling_ot_fresh_tot",
+        "share_cooling_cl_fresh_tot",
+        "share_cooling_air_tot",
+        "share_cooling_ot_saline_tot",
+    ]
+    df_share = pd.DataFrame(
+        {
+            "shares": shares_cool,
+            "node_share": [None] * len(shares_cool),  # Placeholder for node_share
+            "node": [None] * len(shares_cool),  # Placeholder for node
+            "type_tec": type_tec_tot,
+            "mode": "M1",  # Repeat mode
+            "commodity": [None] * len(shares_cool),
+            "level": "share",  # Repeat level
+        }
     ).pipe(broadcast, node_share=nodes_cooling, commodity=commodity_cool)
+
     df_share["node"] = df_share["node_share"]
     # re order columns like this:
     # ['shares', 'node_share', 'node', 'type_tec', 'mode', 'commodity', 'level']
