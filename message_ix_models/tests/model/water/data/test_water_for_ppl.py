@@ -4,11 +4,12 @@ import pandas as pd
 import pytest
 from message_ix import Scenario
 
-from message_ix_models import ScenarioInfo
+from message_ix_models import ScenarioInfo, testing
 
 # from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.water_for_ppl import (
     cool_tech,
+    cooling_shares_SSP_from_yaml,
     non_cooling_tec,
     relax_growth_constraint,
 )
@@ -299,3 +300,19 @@ def test_relax_growth_constraint(constraint_type, year_type):
 
     # Assert that the result matches the expected DataFrame
     pd.testing.assert_frame_equal(result, expected_result)
+
+
+@pytest.mark.parametrize("SSP, regions", [("SSP2", "R11"), ("LED", "R12")])
+def test_cooling_shares_SSP_from_yaml(request, test_context, SSP, regions):
+    test_context.model.regions = regions
+    scenario = testing.bare_res(request, test_context)
+    test_context["water build info"] = ScenarioInfo(scenario_obj=scenario)
+    test_context.ssp = SSP
+
+    # Act
+    result = cooling_shares_SSP_from_yaml(test_context)
+    print("RESULT ", result)
+    # Assert
+    assert isinstance(result, pd.DataFrame), "Result should be a DataFrame"
+    assert not result.empty, "Resulting DataFrame should not be empty"
+    assert result["year_act"].min() >= 2050  # Validate year constraint

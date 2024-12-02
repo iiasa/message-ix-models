@@ -1,3 +1,25 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:347a1e0a8afb3e269cd3ab50b219407a52813e6837ad77e1b04c181633aab69c
-size 1915
+,NAME,BASIN,REGION,BASIN_ID,area,area_km2,BCU_name,ISO,STATUS
+0,Eastern_1,Eastern,Zambia,31,0.523959235,6258.55807,1|Eastern,ZMB,DEV
+1,Central_2,Central,Zambia,32,0.081587185,970.5108894,2|Central,ZMB,DEV
+2,Lusaka_3,Lusaka,Zambia,32,0.799537666,9494.09442,3|Lusaka,ZMB,DEV
+3,Central_4,Central,Zambia,33,3.607608984,43119.76197,4|Central,ZMB,DEV
+4,Copperbelt_5,Copperbelt,Zambia,34,2.583044689,30985.29748,5|Copperbelt,ZMB,DEV
+5,Lusaka_6,Lusaka,Zambia,33,0.665139757,7911.787852,6|Lusaka,ZMB,DEV
+6,Lusaka_7,Lusaka,Zambia,34,0.563623953,6688.548374,7|Lusaka,ZMB,DEV
+7,North-Western_8,North-Western,Zambia,34,3.437069708,41202.29183,8|North-Western,ZMB,DEV
+8,Western_9,Western,Zambia,37,9.518070065,113006.8179,9|Western,ZMB,DEV
+9,Lusaka_10,Lusaka,Zambia,35,0.113152577,1338.980039,10|Lusaka,ZMB,DEV
+10,Southern_11,Southern,Zambia,35,2.550970218,30041.27059,11|Southern,ZMB,DEV
+11,Western_12,Western,Zambia,36,1.239967382,14617.36593,12|Western,ZMB,DEV
+12,North-Western_13,North-Western,Zambia,37,6.973057375,83703.51766,13|North-Western,ZMB,DEV
+13,Southern_14,Southern,Zambia,37,1.293476168,15242.37092,14|Southern,ZMB,DEV
+14,Luapula_15,Luapula,Zambia,84,4.122920279,49885.31326,15|Luapula,ZMB,DEV
+15,Muchinga_16,Muchinga,Zambia,84,3.116652232,37657.15467,16|Muchinga,ZMB,DEV
+16,Northern_17,Northern,Zambia,84,4.953766304,60079.90307,17|Northern,ZMB,DEV
+17,Northern_18,Northern,Zambia,85,1.309148889,15923.59941,18|Northern,ZMB,DEV
+18,Central_19,Central,Zambia,84,0.833206036,10010.39899,19|Central,ZMB,DEV
+19,Northern_20,Northern,Zambia,208,0.126487398,1538.312439,20|Northern,ZMB,DEV
+20,Eastern_21,Eastern,Zambia,33,3.729498743,44666.80092,21|Eastern,ZMB,DEV
+21,Southern_22,Southern,Zambia,34,1.882023383,22270.80447,22|Southern,ZMB,DEV
+22,Muchinga_23,Muchinga,Zambia,33,4.079012069,49221.52748,23|Muchinga,ZMB,DEV
+23,Central_24,Central,Zambia,34,4.619584836,54967.47602,24|Central,ZMB,DEV

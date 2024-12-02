@@ -21,11 +21,15 @@ model and scenario specifications can be either set manually in ``cli.py`` or sp
 
 .. code::
 
-   Usage: mix-models water [OPTIONS] COMMAND [ARGS]...
+   Usage: mix-models water-ix [OPTIONS] COMMAND [ARGS]...
+
+   MESSAGEix-Water and Nexus variant.
 
    Options:
-   --regions [ISR|R11|R12|R14|R32|RCP|ZMB]
+   --regions [ADVANCE|B210-R11|ISR|R11|R12|R14|R17|R20|R32|RCP|ZMB]
                                     Code list to use for 'node' dimension.
+   --ssp [LED|SSP1|SSP2|SSP3|SSP4|SSP5]
+   --time TEXT                     Manually defined time
    --help                          Show this message and exit.
 
    Commands:
