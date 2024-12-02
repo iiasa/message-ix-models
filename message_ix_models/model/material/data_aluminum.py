@@ -467,7 +467,7 @@ def gen_data_aluminum(
     demand_dict = gen_demand(scenario, ssp)
 
     ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
-    ts_dict.update(gen_hist_new_cap())
+    ts_dict.update(gen_hist_new_cap(s_info))
     ts_dict = combine_df_dictionaries(
         ts_dict, gen_smelting_hist_act(), gen_refining_hist_act()
     )
@@ -766,7 +766,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
     return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
 
-def gen_hist_new_cap():
+def gen_hist_new_cap(s_info):
     df_cap = pd.read_excel(
         package_data_path("material", "aluminum", "smelters-with 2022 projection.xls"),
         sheet_name="Sheet1",
@@ -831,8 +831,21 @@ def gen_hist_new_cap():
         .assign(unit="Mt", technology="prebake_aluminum")
         .rename(columns={"R12": "node_loc"})
     )
-
-    return {"historical_new_capacity": pd.concat([hist_new_cap_ss, hist_new_cap_pb])}
+    # only allow new soderberg capacity in FSU region
+    # (the only region where soderberg is still developed)
+    cols = {
+        "technology": "soderberg_aluminum",
+        "value": 0,
+        "unit": "GW",
+        "node_loc": [
+            i for i in nodes_ex_world(s_info.N) if i not in ["R12_FSU"]
+        ],
+    }
+    df_soder_up = make_df("fixed_new_capacity", **cols).pipe(
+        broadcast, year_vtg=s_info.Y[1:]
+    )
+    return {"historical_new_capacity": pd.concat([hist_new_cap_ss, hist_new_cap_pb]),
+            "fixed_new_capacity": df_soder_up}
 
 
 def compute_differences(df, ref_col):
