@@ -516,6 +516,9 @@ aluminum:
 
   technology:
     add:
+    - trade_alumina
+    - import_alumina
+    - export_alumina
     - refining_aluminum
     - soderberg_aluminum
     - prebake_aluminum
