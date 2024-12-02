@@ -1,3 +1,25 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:88b99ef9428d73b9ae3225cd7f58b0f471781167f5d087767784113d33b43e5b
-size 622
+"BCU_name","hist_cap_gw_km3_year","hist_cap_sw_km3_year"
+"13|North-Western",0,0.004
+"9|Western",0,0.016
+"12|Western",0,0
+"11|Southern",0.003,0.064
+"8|North-Western",0.002,0.056
+"5|Copperbelt",0.011,0.498
+"15|Luapula",0.002,0.057
+"4|Central",0.002,0.071
+"17|Northern",0,0.006
+"19|Central",0,0
+"18|Northern",0,0.001
+"6|Lusaka",0,0
+"21|Eastern",0.006,0.09
+"3|Lusaka",0.005,0.051
+"1|Eastern",0.004,0.08
+"16|Muchinga",0,0.005
+"23|Muchinga",0.001,0.006
+"14|Southern",0,0.001
+"20|Northern",0,0
+"24|Central",0.001,0.002
+"22|Southern",0.002,0.031
+"7|Lusaka",0,0.004
+"2|Central",0.085,0.295
+"10|Lusaka",0,0
