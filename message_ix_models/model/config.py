@@ -21,18 +21,18 @@ class Config(ConfigHelper):
     .. code-block:: python
 
        c = Context()
-       c.regions = "R14"
+       c.regions = "R12"
 
     …however, it is best to access them explicitly as:
 
     .. code-block:: python
 
-       c.model.regions = "R14"
+       c.model.regions = "R12"
     """
 
     #: The 'node' codelist (regional aggregation) to use. Must be one of the lists of
     #: nodes described at :doc:`/pkg-data/node`.
-    regions: str = "R14"
+    regions: str = "R12"
 
     #: The 'relations' codelist to use. Must be one of the lists of relations described
     #: at :doc:`/pkg-data/relation`.
