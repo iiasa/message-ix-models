@@ -1,27 +1,28 @@
 import os
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Literal
 
 import message_ix
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import (
-    broadcast,
-    nodes_ex_world,
-    package_data_path,
-    same_node,
-)
-
-from .data_util import read_rel, read_timeseries
-from .material_demand import material_demand_calc
-from .util import (
+from message_ix_models.model.material.data_util import read_rel, read_timeseries
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import (
     add_R12_column,
     combine_df_dictionaries,
     get_pycountry_iso,
     get_ssp_from_context,
     read_config,
+)
+from message_ix_models.util import (
+    broadcast,
+    make_io,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
 )
 
 
@@ -341,6 +342,8 @@ def gen_data_alu_const(
         t = t.id
         params = data.loc[(data["technology"] == t), "parameter"].unique()
         # Obtain the active and vintage years
+        if not len(params):
+            continue
         av = data.loc[(data["technology"] == t), "availability"].values[0]
         years = [year for year in years if year >= av]
         yv_ya = yv_ya.loc[yv_ya.year_vtg >= av]
@@ -460,6 +463,29 @@ def gen_data_aluminum(
         data_aluminum, config, global_region, modelyears, yv_ya, nodes
     )
 
+    demand_dict = gen_demand(scenario, ssp)
+
+    ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
+    ts_dict.update(gen_hist_new_cap())
+    ts_dict = combine_df_dictionaries(
+        ts_dict, gen_smelting_hist_act(), gen_refining_hist_act()
+    )
+
+    rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
+
+    trade_dict = gen_data_alu_trade(scenario)
+    alumina_trd = gen_alumina_trade_tecs(s_info)
+    growth_constr_dict = gen_2020_growth_constraints(s_info)
+
+    results_aluminum = combine_df_dictionaries(
+        const_dict,
+        ts_dict,
+        rel_dict,
+        demand_dict,
+        trade_dict,
+        growth_constr_dict,
+        alumina_trd,
+    )
     reduced_pdict = {}
     for k, v in results_aluminum.items():
         if set(["year_act", "year_vtg"]).issubset(v.columns):
@@ -467,6 +493,9 @@ def gen_data_aluminum(
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
 
     return reduced_pdict
+
+
+def gen_demand(scenario, ssp):
     parname = "demand"
     demand_dict = {}
     df_2025 = pd.read_csv(package_data_path("material", "aluminum", "demand_2025.csv"))
@@ -474,19 +503,7 @@ def gen_data_aluminum(
     df = df[df["year"] != 2025]
     df = pd.concat([df_2025, df])
     demand_dict[parname] = df
-
-    ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
-    ts_dict.update(gen_hist_new_cap())
-    ts_dict = combine_df_dictionaries(ts_dict, gen_hist_act())
-
-    rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
-
-    trade_dict = gen_data_alu_trade(scenario)
-
-    results_aluminum = combine_df_dictionaries(
-        const_dict, ts_dict, rel_dict, demand_dict, trade_dict
-    )
-    return results_aluminum
+    return demand_dict
 
 
 def gen_mock_demand_aluminum(scenario: message_ix.Scenario) -> pd.DataFrame:
@@ -790,7 +807,9 @@ def gen_hist_new_cap():
     sample = df_cap_ss_r12[df_cap_ss_r12[df_cap_ss_r12.columns[-1]] != 0][
         [i for i in range(1995, 2020, 5)] + [2019]
     ]
-    hist_new_cap_ss = compute_differences(sample, 1995) / 10**6
+    hist_new_cap_ss = (
+        compute_differences(sample, 1995) / 10**6 / 5
+    )  # convert to Mt and divide by year intervall
     hist_new_cap_ss = hist_new_cap_ss.rename(columns={2019: 2020})
     hist_new_cap_ss = (
         hist_new_cap_ss.reset_index()
@@ -803,7 +822,7 @@ def gen_hist_new_cap():
     df_cap_pb = df_cap.loc[df_cap.index.difference(df_cap_ss.index)]
     df_cap_pb_r12 = df_cap_pb.groupby("R12").sum(numeric_only=True)
     sample = df_cap_pb_r12[[i for i in range(1995, 2020, 5)] + [2019]]
-    hist_new_cap_pb = compute_differences(sample, 1995) / 10**6
+    hist_new_cap_pb = compute_differences(sample, 1995) / 10**6 / 5
     hist_new_cap_pb = hist_new_cap_pb.rename(columns={2019: 2020})
     hist_new_cap_pb = (
         hist_new_cap_pb.reset_index()
@@ -839,8 +858,10 @@ def compute_differences(df, ref_col):
     return differences
 
 
-def load_bgs_data():
-    bgs_data_path = package_data_path("material", "aluminum", "bgs_data")
+def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
+    bgs_data_path = package_data_path(
+        "material", "aluminum", "bgs_production", commodity
+    )
 
     dfs = []
 
@@ -848,7 +869,7 @@ def load_bgs_data():
         if not fname.endswith(".xlsx"):
             continue
         # read and format BGS data
-        df_prim = pd.read_excel(bgs_data_path + fname, skipfooter=9, skiprows=1)
+        df_prim = pd.read_excel(bgs_data_path.joinpath(fname), skipfooter=9, skiprows=1)
         year_cols = df_prim.columns[2::2]
         df_prim = df_prim[
             [df_prim.columns.tolist()[0]] + df_prim.columns[3::2].tolist()
@@ -869,6 +890,7 @@ def load_bgs_data():
                     "Serbia and Montenegro": "SRB",
                     "Yugoslavia": "YUG",
                     "German Federal Republic": "DEU",
+                    "Ireland, Republic of": "IRL",
                 },
             )
         )
@@ -888,15 +910,15 @@ def load_bgs_data():
     # add R12 column
     df_prim = add_R12_column(
         df_prim.rename(columns={"ISO": "COUNTRY"}),
-        package_data_path("node", "R12_worldsteel.yaml"),
+        package_data_path("node", "R12.yaml"),
     )
     df_prim.rename(columns={"COUNTRY": "ISO"}, inplace=True)
 
     return df_prim
 
 
-def gen_hist_act():
-    df_prim = load_bgs_data()
+def gen_smelting_hist_act():
+    df_prim = load_bgs_data("aluminum")
     df_prim_r12 = df_prim.groupby("R12").sum(numeric_only=True).div(10**6)
 
     # Soderberg
@@ -906,7 +928,7 @@ def gen_hist_act():
     df_ss_act.loc["R12_WEU"] *= 0.025
     df_ss_act.loc["R12_LAM"] *= 0.25
     df_ss_act.loc["R12_FSU"] *= 0.65
-    df_ss_act.loc[["R12_FSU", "R12_LAM", "R12_WEU"]]
+    df_ss_act = df_ss_act.loc[["R12_WEU", "R12_LAM", "R12_FSU"]]
     df_ss_act = (
         df_ss_act.reset_index()
         .rename(columns={"R12": "node_loc"})
@@ -936,6 +958,12 @@ def gen_hist_act():
     df_pb_act = make_df("historical_activity", **df_pb_act)
 
     par_dict = {}
+    par_dict["historical_activity"] = pd.concat(
+        [
+            df_pb_act[df_pb_act["year_act"] == 2015],
+            df_ss_act[df_ss_act["year_act"] == 2015],
+        ]
+    )
     par_dict["bound_activity_up"] = pd.concat(
         [
             df_pb_act[df_pb_act["year_act"] == 2020],
@@ -944,3 +972,120 @@ def gen_hist_act():
     )
     par_dict["bound_activity_lo"] = par_dict["bound_activity_up"].copy(deep=True)
     return par_dict
+
+
+def gen_refining_hist_act():
+    df_ref = load_bgs_data("alumina")
+    df_ref_r12 = df_ref.groupby("R12").sum(numeric_only=True).div(10**6)
+
+    df_ref_act = df_ref_r12[[2015, 2020]].copy(deep=True)
+    df_ref_act.loc["R12_LAM", 2020] -= 10
+    df_ref_act = (
+        df_ref_act.reset_index()
+        .rename(columns={"R12": "node_loc"})
+        .melt(id_vars="node_loc", var_name="year_act")
+    )
+    df_ref_act = df_ref_act.assign(
+        technology="refining_aluminum", mode="M1", time="year", unit="Mt/yr"
+    )
+    hist_act = make_df(
+        "historical_activity", **df_ref_act[df_ref_act["year_act"] == 2015]
+    )
+    bound_act = pd.concat(
+        [make_df("bound_activity_up", **df_ref_act[df_ref_act["year_act"] == 2020])]
+    )
+    par_dict = {
+        "historical_activity": hist_act,
+        "bound_activity_lo": bound_act,
+        "bound_activity_up": bound_act,
+    }
+    return par_dict
+
+
+def gen_alumina_trade_tecs(s_info):
+    modelyears = s_info.Y
+    yv_ya = s_info.yv_ya
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+
+    common = {
+        "time": "year",
+        "time_origin": "year",
+        "time_dest": "year",
+        "mode": "M1",
+        "node_loc": nodes,
+    }
+    exp_dict = make_io(
+        src=("alumina", "secondary_material", "Mt"),
+        dest=("alumina", "export", "Mt"),
+        efficiency=1.0,
+        technology="export_alumina",
+        node_dest=global_region,
+        node_origin=nodes,
+        **common,
+    )
+    imp_dict = make_io(
+        src=("alumina", "import", "Mt"),
+        dest=("alumina", "secondary_material", "Mt"),
+        efficiency=1.0,
+        technology="import_alumina",
+        node_origin=global_region,
+        node_dest=nodes,
+        **common,
+    )
+
+    common = {
+        "time": "year",
+        "time_origin": "year",
+        "time_dest": "year",
+        "mode": "M1",
+        "node_loc": global_region,
+    }
+    trd_dict = make_io(
+        src=("alumina", "export", "Mt"),
+        dest=("alumina", "import", "Mt"),
+        efficiency=1.0,
+        technology="trade_alumina",
+        node_dest=global_region,
+        node_origin=global_region,
+        **common,
+    )
+
+    trade_dict = combine_df_dictionaries(imp_dict, trd_dict, exp_dict)
+    trade_dict = {
+        k: v.pipe(broadcast, year_act=modelyears).assign(year_vtg=lambda x: x.year_act)
+        for k, v in trade_dict.items()
+    }
+    return trade_dict
+
+
+def gen_2020_growth_constraints(s_info):
+    common = {
+        "technology": "soderberg_aluminum",
+        "time": "year",
+        "unit": "???",
+        "value": 0.5,
+        "year_act": 2020,
+    }
+    df = make_df("growth_activity_up", **common).pipe(
+        broadcast, node_loc=nodes_ex_world(s_info.N)
+    )
+    return {"growth_activity_up": df}
+
+
+if __name__ == "__main__":
+    import ixmp
+    import message_ix
+
+    from message_ix_models.model.material.build import make_spec
+    # gen_smelting_hist_act()
+
+    mp = ixmp.Platform("local2")
+    scen = message_ix.Scenario(mp, "SSP2", "baseline")
+    # scen = message_ix.Scenario(
+    #     mp, "SSP_dev_SSP2_v1.0_Blv1.0", "baseline_prep_lu_bkp_solved"
+    # )
+
+    spec = make_spec("R12")
+    gen_demand(scenario=scen, ssp="SSP5")
+    print()
