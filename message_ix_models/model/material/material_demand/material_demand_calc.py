@@ -320,7 +320,7 @@ def read_gdp_ppp_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
 def derive_demand(
     material: Literal["cement", "steel", "aluminum"],
     scen: message_ix.Scenario,
-    ssp: Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "SSP2",
+    ssp: Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"] = "SSP2",
 ):
     datapath = message_ix_models.util.package_data_path("material")
 
