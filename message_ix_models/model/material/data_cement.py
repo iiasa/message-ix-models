@@ -400,4 +400,10 @@ def gen_data_cement(
         ]
     )
 
-    return results
+    reduced_pdict = {}
+    for k,v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict
