@@ -44,9 +44,9 @@ R12_MEA,  BUS,        0.38
 R12_MEA,  LDV,        0.43
 R12_MEA,  RAIL,       0.01
 R12_NAM,  2W,         0.005
-R12_NAM,  AIR,        0.11
+R12_NAM,  AIR,        0.12
 R12_NAM,  BUS,        0.06
-R12_NAM,  LDV,        0.81
+R12_NAM,  LDV,        0.805
 R12_NAM,  RAIL,       0.01
 R12_PAO,  2W,         0.01
 R12_PAO,  AIR,        0.13
