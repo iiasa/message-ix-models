@@ -629,4 +629,10 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
         df_tmp["value"] = -0.7
 
-    return results
+    reduced_pdict = {}
+    for k,v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 30]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict

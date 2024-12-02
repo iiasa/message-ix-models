@@ -578,4 +578,11 @@ def gen_data_petro_chemicals(
         & (df_gro["year_act"] == 2020)
     ].index
     results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
-    return results
+
+    reduced_pdict = {}
+    for k,v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 40]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict

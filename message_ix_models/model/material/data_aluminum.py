@@ -460,6 +460,13 @@ def gen_data_aluminum(
         data_aluminum, config, global_region, modelyears, yv_ya, nodes
     )
 
+    reduced_pdict = {}
+    for k, v in results_aluminum.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 30]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict
     parname = "demand"
     demand_dict = {}
     df_2025 = pd.read_csv(package_data_path("material", "aluminum", "demand_2025.csv"))
