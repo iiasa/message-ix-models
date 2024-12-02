@@ -15,6 +15,7 @@ from message_ix_models.model.material.util import (
     combine_df_dictionaries,
     get_pycountry_iso,
     get_ssp_from_context,
+    invert_dictionary,
     read_config,
 )
 from message_ix_models.util import (
@@ -882,14 +883,6 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
                     "Turkey": "TUR",
                     "Russia": "RUS",
                     "Bosnia & Herzegovina": "BIH",
-                    "Czechoslovakia": "CSK",
-                    "German Democratic Rep": "DEU",
-                    "Korea (Rep. of)": "KOR",
-                    "Soviet Union": "RUS",
-                    "Korea, Dem. P.R. of": "PRK",
-                    "Serbia and Montenegro": "SRB",
-                    "Yugoslavia": "YUG",
-                    "German Federal Republic": "DEU",
                     "Ireland, Republic of": "IRL",
                 },
             )
@@ -1073,7 +1066,147 @@ def gen_2020_growth_constraints(s_info):
     return {"growth_activity_up": df}
 
 
+def calibrate_2020_furnaces(s_info):
+    fname = "MetallurgicalAluminaRefiningFuelConsumption_1985-2023_File_8CountryOrRegion.csv"
+    iai_ref_map = {
+        "Africa & Asia (ex China)": [
+            "Azerbaijan",
+            "Azerbaijan",
+            "Azerbaijan",
+            "Guinea",
+            "India",
+            "Iran",
+            "Kazakhstan",
+            "Kazakhstan",
+            "Turkey",
+        ],
+        "North America": [
+            "Canada",
+            "United States of America",
+            "US Virgin Islands",
+            "US Virgin Islands",
+        ],
+        "South America": [
+            "Brazil",
+            "Guyana",
+            "Jamaica",
+            "Suriname",
+            "US Virgin Islands",
+            "Venezuela",
+        ],
+        "Oceania": ["Australia"],
+        "Europe": [
+            "Bosnia and Herzegovina",
+            "France",
+            "German Democratic Republic",
+            "Germany",
+            "Greece",
+            "Hungary",
+            "Hungary",
+            "Hungary",
+            "Ireland",
+            "Italy",
+            "Montenegro",
+            "Romania",
+            "Russian Federation",
+            "Russian Federation",
+            "Serbia and Montenegro",
+            "Serbia and Montenegro",
+            "Slovakia",
+            "Slovenia",
+            "Spain",
+            "Ukraine",
+            "Ukraine",
+            "United Kingdom",
+        ],
+        "China": ["China"],
+    }
+    iai_mis_dict = {
+        "Turkey": "TUR",
+        "Serbia and Montenegro": "SRB",
+        "US Virgin Islands": "VIR",
+        "German Democratic Republic": "DDR",
+    }
+    fuel_tec_map = {
+        "Coal": "furnace_coal_aluminum",
+        "Gas": "furnace_gas_aluminum",
+        "Oil": "furnace_foil_aluminum",
+        "Electricity": "furnace_elec_aluminum",
+    }
+    iai_ref_map = {k: v[0] for k, v in invert_dictionary(iai_ref_map).items()}
+    df_iai_cmap = pd.Series(iai_ref_map).to_frame().reset_index()
+
+    df_iai_cmap["ISO"] = df_iai_cmap["index"].apply(
+        lambda x: get_pycountry_iso(
+            x,
+            iai_mis_dict,
+        )
+    )
+    df_iai_cmap.drop(columns="index", inplace=True)
+
+    df_ref = load_bgs_data("alumina")
+    df_ref = df_ref.merge(df_iai_cmap, on="ISO", how="left")
+    df_ref["IAI"] = df_ref[0].fillna("Estimated Unreported")
+    df_ref = df_ref.drop(columns=0)
+
+    df_ref_en = pd.read_csv(package_data_path("material", "aluminum", fname), sep=";")
+    df_ref_en["Year"] = (
+        df_ref_en["Period from"].str.split("-", expand=True)[0].astype(int)
+    )
+    df_ref_en = df_ref_en.melt(
+        id_vars=["Year", "Row"], value_vars=df_ref_en.columns[4:-1], var_name="Region"
+    ).rename(columns={"Row": "Variable"})
+
+    df_ref_iai = df_ref.set_index(["IAI", "ISO"]).drop(columns="R12")
+    test = (
+        df_ref_en.rename(columns={"Region": "IAI"})
+        .set_index(["Year", "Variable", "IAI"])
+        .join((df_ref_iai / df_ref_iai.groupby("IAI").sum())[2019])
+    )
+    test["value"] = test["value"] * test[2019]
+    test = test.drop_duplicates().dropna().loc[2020].drop(2019, axis=1)
+
+    tec_map_df = pd.Series(fuel_tec_map).to_frame().reset_index()
+    tec_map_df.columns = ["Variable", "technology"]
+
+    test_r12 = add_R12_column(
+        test.reset_index(), package_data_path("node", "R12.yaml"), "ISO"
+    )
+    test_r12 = test_r12.groupby(["Variable", "R12"]).sum(numeric_only=True)
+    test_r12 = (
+        test_r12.loc[["Coal", "Gas", "Oil"]]
+        .div(10**6)
+        .mul(31.7)
+        .round(5)
+        .reset_index()
+        .merge(tec_map_df, on="Variable")
+        .drop("Variable", axis=1)
+        .rename(columns={"R12": "node_loc"})
+        .assign(unit="GWa", time="year", mode="high_temp", year_act=2020)
+    )
+    zero_furnaces = {
+        "unit": "GWa",
+        "time": "year",
+        "mode": "high_temp",
+        "technology": [
+            "furnace_biomass_aluminum",
+            "furnace_elec_aluminum",
+            "furnace_ethanol_aluminum",
+            "furnace_methanol_aluminum",
+            "furnace_h2_aluminum",
+        ],
+        "year_act": 2020,
+        "value": 0,
+    }
+    zbounds = make_df("bound_activity_up", **zero_furnaces).pipe(
+        broadcast, node_loc=nodes_ex_world(s_info.N)
+    )
+
+    return {"bound_activity_lo": test_r12, "bound_activity_up": zbounds}
+
+
 if __name__ == "__main__":
+    test = calibrate_2020_furnaces(s_info=["test"])
     import ixmp
     import message_ix
 
