@@ -1417,19 +1417,19 @@ def calculate_ini_new_cap(
 
     if ssp in ["LED", "SSP1", "SSP2"]:
         if material == "cement":
-            SCALER = 0.00066
-        if material == "steel":
-            SCALER = 0.0009
-    elif ssp in ["SSP4", "SSP5"]:
-        if material == "cement":
-            SCALER = 0.0014
+            SCALER = 0.001
         if material == "steel":
             SCALER = 0.002
+    elif ssp in ["SSP4", "SSP5"]:
+        if material == "cement":
+            SCALER = 0.002
+        if material == "steel":
+            SCALER = 0.003
     elif ssp == "SSP3":
         if material == "cement":
-            SCALER = 0.0005
+            SCALER = 0.0008
         if material == "steel":
-            SCALER = 0.0007
+            SCALER = 0.001
 
     CLINKER_RATIO = 0.72 if material == "cement" else 1
 
