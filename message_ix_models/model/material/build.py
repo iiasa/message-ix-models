@@ -17,7 +17,6 @@ from message_ix_models.model.material.data_other_industry import (
     modify_demand_and_hist_activity,
 )
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
-from message_ix_models.model.material.data_power_sector import gen_data_power_sector
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
     add_cement_bounds_2020,
@@ -54,14 +53,14 @@ from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
+    gen_data_aluminum,
     gen_data_methanol,
     gen_all_NH3_fert,
     gen_data_generic,
     gen_data_steel,
     gen_data_cement,
     gen_data_petro_chemicals,
-    gen_data_power_sector,
-    gen_data_aluminum,
+    #gen_data_power_sector,
 ]
 
 # add as needed/implemented
