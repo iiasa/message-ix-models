@@ -59,13 +59,13 @@ class Config(ConfigHelper):
     #:
     #:     from message_ix.report import Reporter
     #:     from message_ix_models import Context
-    #:     from message_ix_models.report import register
     #:
     #:     def cb(rep: Reporter, ctx: Context) -> None:
     #:         # Modify `rep` by calling its methods ...
     #:         pass
     #:
-    #: context.report.register(cb)
+    #:     # Register this callback on an existing Context instance
+    #:     context.report.register(cb)
     callback: list[Callback] = field(default_factory=_default_callbacks)
 
     #: Path to write reporting outputs when invoked from the command line.

@@ -181,14 +181,17 @@ class Context:
     # These SHOULD include all the keys from MODULE_WITH_CONFIG_DATACLASS
     @property
     def core(self) -> "message_ix_models.util.config.Config":
+        """An instance of :class:`.util.config.Config`."""
         return self._values["core"]
 
     @property
     def model(self) -> "message_ix_models.model.config.Config":
+        """An instance of :class:`.model.config.Config`."""
         return self._values["model"]
 
     @property
     def report(self) -> "message_ix_models.report.config.Config":
+        """An instance of :class:`.report.config.Config`."""
         return self._values["report"]
 
     # Dict-like behaviour
