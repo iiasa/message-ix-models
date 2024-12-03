@@ -1,4 +1,3 @@
-import json
 import logging
 from hashlib import blake2s
 from itertools import product
@@ -7,7 +6,6 @@ from typing import TYPE_CHECKING, Literal, Optional
 from genno import KeyExistsError
 
 from message_ix_models.model.workflow import Config as WorkflowConfig
-from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -48,7 +46,7 @@ def base_scenario_url(
 
     :py:`method = "auto"`
        Automatically identify the base scenario URL from the contents of
-       :file:`base-scenario-url.json`. The settings :attr:`.Config.ssp
+       ``CL_TRANSPORT_SCENARIO``. The settings :attr:`.Config.ssp
        <.transport.config.Config.ssp>` and :attr:`.Config.policy` are used to match an
        entry in the file.
     :py:`method = "bare"`
@@ -62,17 +60,7 @@ def base_scenario_url(
     config: "Config" = context.transport
 
     if method == "auto":
-        # Load URL info from file
-        with open(package_data_path("transport", "base-scenario-url.json")) as f:
-            info = json.load(f)
-
-        # Identify a key that matches the settings on `config`
-        key = (str(config.ssp), config.policy)
-        for item in info:
-            if (item["ssp"], item["policy"]) == key:
-                return item["url"]
-
-        raise ValueError(f"No base URL for ({key!r})")  # pragma: no cover
+        return config.base_scenario_url
     elif method == "bare":
         # Use a 'bare' RES or empty scenario
         if context.platform_info["name"] in (__name__, "message-ix-models"):
@@ -187,7 +175,6 @@ def generate(
 ) -> "Workflow":
     from message_ix_models import Workflow
     from message_ix_models.model.workflow import solve
-    from message_ix_models.project.ssp import SSP_2024
     from message_ix_models.report import report
 
     from . import build
@@ -219,25 +206,22 @@ def generate(
     cl_scenario = get_cl_scenario()
 
     for scenario_code, policy in product(cl_scenario, (False, True)):
-        # Retrieve information from annotations on `scenario_code`
-        ssp_urn = str(scenario_code.get_annotation(id="SSP-URN").text)
-        is_LED = scenario_code.eval_annotation(id="is-LED-scenario")
-        EDITS_activity = scenario_code.eval_annotation(id="EDITS-activity-id")
+        config = context.transport
+        # Update the .transport.Config from the `scenario_code`
+        config.use_scenario_code(scenario_code)
 
-        # Look up the SSP_2024 code
-        ssp = SSP_2024.by_urn(ssp_urn)
+        config.policy = policy
 
-        # Store settings on the context
-        context.transport.ssp = ssp
-        context.transport.policy = policy
-        context.transport.project["LED"] = is_LED
+        # TEMP
+        is_LED = config.project["LED"]
+        EDITS_activity = config.project["EDITS"]["activity"]
 
         # Construct labels including the SSP code and policy identifier
         # ‘Short’ label used for workflow steps
         label = f"{scenario_code.id}{' policy' if policy else ''}"
         # ‘Full’ label used in the scenario name
         if not is_LED and EDITS_activity is None:
-            label_full = f"SSP_2024.{ssp.name}"
+            label_full = f"SSP_2024.{config.ssp.name}"
         else:
             label_full = label
 
@@ -266,7 +250,12 @@ def generate(
 
         # Build MESSAGEix-Transport on the scenario
         name = wf.add_step(
-            f"{label} built", base, build.main, target=target_url, clone=True, ssp=ssp
+            f"{label} built",
+            base,
+            build.main,
+            target=target_url,
+            clone=True,
+            ssp=config.ssp,
         )
 
         # This block copied from message_data.projects.navigate.workflow
@@ -276,7 +265,7 @@ def generate(
 
         # 'Simulate' build and produce debug outputs
         debug.append(f"{label} debug build")
-        wf.add_step(debug[-1], base, build.main, ssp=ssp, dry_run=True)
+        wf.add_step(debug[-1], base, build.main, ssp=config.ssp, dry_run=True)
 
         # Solve
         wf.add_step(f"{label} solved", name, solve, config=SOLVE_CONFIG)
