@@ -1,6 +1,13 @@
 import logging
 from collections import ChainMap, defaultdict
-from collections.abc import Callable, Collection, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Collection,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from datetime import datetime
 from functools import partial, singledispatch, update_wrapper
 from importlib.metadata import version
@@ -547,16 +554,19 @@ def merge_data(base: "MutableParameterData", *others: "ParameterData") -> None:
             base[par] = pd.concat([base.get(par, None), df])
 
 
-def minimum_version(expr: str) -> Callable:
+def minimum_version(
+    expr: str, raises: Optional[Iterable[type[Exception]]] = None
+) -> Callable:
     """Decorator for functions that require a minimum version of some upstream package.
 
     If the decorated function is called and the condition in `expr` is not met,
     :class:`.NotImplementedError` is raised with an informative message.
 
-    The decorated function gains an attribute :py:`.minimum_version`, another decorator
-    that can be used on associated test code. This marks the test as XFAIL, raising
-    :class:`.NotImplementedError` or :class:`.RuntimeError` (e.g. for :mod:`.click`
-    testing).
+    The decorated function gains an attribute :py:`.minimum_version`, a pytest
+    MarkDecorator that can be used on associated test code. This marks the test as
+    XFAIL, raising :class:`.NotImplementedError` (directly); :class:`.RuntimeError` or
+    :class:`.AssertionError` (for instance, via :mod:`.click` test utilities), or any
+    of the classes given in the `raises` argument.
 
     See :func:`.prepare_reporter` / :func:`.test_prepare_reporter` for a usage example.
 
@@ -586,28 +596,26 @@ def minimum_version(expr: str) -> Callable:
 
         update_wrapper(wrapper, func)
 
-        # Create a test function decorator
-        def marker(test_func):
-            # Import pytest only when there is a test function to mark
+        try:
             import pytest
 
-            # Create the mark
-            mark = pytest.mark.xfail(
-                condition=condition,
-                raises=(NotImplementedError, RuntimeError),
-                reason=f"Not supported{message}",
+            # Create a MarkDecorator and store as an attribute of "wrapper"
+            setattr(
+                wrapper,
+                "minimum_version",
+                pytest.mark.xfail(
+                    condition=condition,
+                    raises=(
+                        NotImplementedError,  # Raised directly, above
+                        AssertionError,  # e.g. through CliRunner.assert_exit_0()
+                        RuntimeError,  # e.g. through genno.Computer
+                    )
+                    + tuple(raises or ()),  # Other exception classes
+                    reason=f"Not supported{message}",
+                ),
             )
-
-            # Attach to the test function
-            try:
-                test_func.pytestmark.append(mark)
-            except AttributeError:
-                test_func.pytestmark = [mark]
-
-            return test_func
-
-        # Store the decorator on the wrapped function
-        setattr(wrapper, "minimum_version", marker)
+        except ImportError:
+            pass  # Pytest not present; testing is not happening
 
         return wrapper
 
