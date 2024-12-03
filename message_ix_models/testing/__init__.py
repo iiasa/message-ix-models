@@ -146,7 +146,11 @@ def session_context(pytestconfig, tmp_env):
 @pytest.fixture(scope="function")
 def test_context(request, session_context):
     """A copy of :func:`session_context` scoped to one test function."""
-    ctx = deepcopy(session_context)
+    try:
+        ctx = deepcopy(session_context)
+    except Exception:
+        print(repr(session_context._values))
+        raise
 
     # Ensure there is a report key
     ctx.setdefault("report", dict())
