@@ -12,9 +12,10 @@ from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCEN
 from message_ix_models.report.util import as_quantity
 from message_ix_models.util import identify_nodes, package_data_path
 from message_ix_models.util.config import ConfigHelper
+from message_ix_models.util.sdmx import AnnotationsMixIn
 
 if TYPE_CHECKING:
-    from sdmx.model.common import Codelist
+    from sdmx.model import common
 
 log = logging.getLogger(__name__)
 
@@ -419,9 +420,32 @@ class Config(ConfigHelper):
         self.project.update(navigate=s)
         self.check()
 
+    def use_scenario_code(self, code: "common.Code") -> None:
+        """Update settings given a `code` with :class:`ScenarioCodeAnnotations`."""
+        sca = ScenarioCodeAnnotations.from_obj(code)
 
-def get_cl_scenario() -> "Codelist":
-    """Generate ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
+        # Look up the SSP_2024 Enum
+        self.ssp = SSP_2024.by_urn(sca.SSP_URN)
+
+        # Store settings on the context
+        self.project["LED"] = sca.is_LED_scenario
+        self.project["EDITS"] = {"activity": sca.EDITS_activity_id}
+
+        self.base_scenario_url = sca.base_scenario_URL
+
+
+@dataclass
+class ScenarioCodeAnnotations(AnnotationsMixIn):
+    """Set of annotations appearing on each Code in ``CL_TRANSPORT_SCENARIO``."""
+
+    SSP_URN: str
+    is_LED_scenario: bool
+    EDITS_activity_id: Optional[str]
+    base_scenario_URL: str
+
+
+def get_cl_scenario() -> "common.Codelist":
+    """Retrieve ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
 
     This code lists contains unique IDs for scenarios supported by the
     MESSAGEix-Transport workflow (:mod:`.transport.workflow`), plus the annotations:
@@ -434,51 +458,74 @@ def get_cl_scenario() -> "Codelist":
     """
     from sdmx.model import common
 
+    from message_ix_models.util.sdmx import read
+
+    IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
+
+    return refresh_cl_scenario(
+        common.Codelist(
+            id="CL_TRANSPORT_SCENARIO", maintainer=IIASA_ECE, version="1.0.0"
+        )
+    )
+
+
+def refresh_cl_scenario(cl: "common.Codelist") -> "common.Codelist":
+    """Refresh ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
+
+    The code list is entirely regenerated. If it is different from `cl`, the new
+    version is returned. Otherwise, `cl` is returned unaltered.
+    """
+    from sdmx.model import common
+
     from message_ix_models.util.sdmx import read, write
 
     # Other data structures
-    as_ = read("IIASA_ECE:AGENCIES")
+    IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
     cl_ssp_2024 = read("ICONICS:SSP(2024)")
 
-    cl: "common.Codelist" = common.Codelist(
-        id="CL_TRANSPORT_SCENARIO", maintainer=as_["IIASA_ECE"], version="1.0.0"
+    candidate: "common.Codelist" = common.Codelist(
+        id="CL_TRANSPORT_SCENARIO", maintainer=IIASA_ECE, version="1.0.0"
     )
 
-    def _a(*values):
+    # - The model name is per a Microsoft Teams message on 2024-11-25.
+    # - The scenario names appear to form a sequence from "baseline_DEFAULT" to
+    #   "baseline_DEFAULT_step_15" and finally "baseline". The one used below is the
+    #   latest in this sequence for which y₀=2020, rather than 2030.
+    base_url = "ixmp://ixmp-dev/SSP_SSP{}_v1.1/baseline_DEFAULT_step_13"
+
+    def _a(c, led, edits):
         """Shorthand to generate the annotations."""
-        return [
-            common.Annotation(id="SSP-URN", text=values[0]),
-            common.Annotation(id="is-LED-scenario", text=repr(values[1])),
-            common.Annotation(id="EDITS-activity-id", text=repr(values[2])),
-        ]
+        return ScenarioCodeAnnotations(
+            c.urn, led, edits, base_url.format(c.id)
+        ).get_annotations(dict)
 
     for ssp_code in cl_ssp_2024:
-        cl.append(
-            common.Code(
-                id=f"SSP{ssp_code.id}", annotations=_a(ssp_code.urn, False, None)
-            )
+        candidate.append(
+            common.Code(id=f"SSP{ssp_code.id}", **_a(ssp_code, False, None))
         )
 
     for ssp in ("1", "2"):
         ssp_code = cl_ssp_2024[ssp]
-        cl.append(
+        candidate.append(
             common.Code(
                 id=f"LED-SSP{ssp_code.id}",
                 name=f"Low Energy Demand/High-with-Low scenario with SSP{ssp_code.id} "
                 "demographics",
-                annotations=_a(ssp_code.urn, True, None),
+                **_a(ssp_code, True, None),
             )
         )
 
     for id_, name in (("CA", "Current Ambition"), ("HA", "High Ambition")):
-        cl.append(
+        candidate.append(
             common.Code(
                 id=f"EDITS-{id_}",
                 name=f"EDITS scenario with ITF PASTA {id_!r} activity",
-                annotations=_a(cl_ssp_2024["2"].urn, False, id_),
+                **_a(cl_ssp_2024["2"], False, id_),
             )
         )
 
-    write(cl)
-
-    return cl
+    if not candidate.compare(cl, strict=True):
+        write(candidate)
+        return candidate
+    else:
+        return cl
