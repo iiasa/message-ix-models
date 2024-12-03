@@ -26,7 +26,7 @@ from message_ix_models.tools.costs.regional_differentiation import (
     ),
 )
 def test_get_module_scenarios_reduction(
-    module: Literal["energy", "materials", "cooling"], t_exp
+    module: Literal["energy", "materials", "cooling"], t_exp: set[str]
 ) -> None:
     tech_map = energy_map = get_raw_technology_mapping("energy")
 
@@ -57,7 +57,7 @@ def test_get_module_scenarios_reduction(
     ),
 )
 def test_get_module_cost_reduction(
-    module: Literal["energy", "materials", "cooling"], t_exp
+    module: Literal["energy", "materials", "cooling"], t_exp: set[str]
 ) -> None:
     tech_map = energy_map = get_raw_technology_mapping("energy")
 
@@ -111,7 +111,9 @@ def test_get_technology_reduction_scenarios_data(
     ),
 )
 def test_project_ref_region_inv_costs_using_reduction_rates(
-    module: Literal["energy", "materials", "cooling"], t_exp, t_excluded
+    module: Literal["energy", "materials", "cooling"],
+    t_exp: set[str],
+    t_excluded: set[str],
 ) -> None:
     # Set up
     config = Config(module=module)
