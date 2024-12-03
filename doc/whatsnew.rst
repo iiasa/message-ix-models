@@ -18,6 +18,16 @@ By topic:
 Materials
 ---------
 
+
+By topic:
+
+.. contents::
+   :local:
+   :backlinks: none
+
+Materials
+---------
+
 - Improve and extend :doc:`/material/index` (:pull:`218`, :pull:`253`).
 - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
 
@@ -106,6 +116,37 @@ Others
 Improve and extend :doc:`/material/index` (:pull:`218`).
 
   - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`)
+Transport
+---------
+
+- Update :doc:`/transport/index` (:pull:`213`).
+
+Water/Nexus
+-----------
+
+- Update water availability data and major code editing to allow a new test suite for doc:`/water/index` (:pull:`106`).
+- Fix the nexus/cooling function and add test for checking some input data (:pull:`236`).
+- Make setup of constraints for cooling technologies flexible and update solar CSP technology name (:pull:`242`).
+- Connect :mod:`.model.water` to :mod:`.tools.costs` for cooling technologies (:pull:`245`).
+- Introduce an SSP configuration for cooling technologies with share constraints (:pull:`256`).
+
+Investment and fixed costs
+--------------------------
+
+- Fix naming of GDP and population columns in SSP data aggregation for :doc:`/api/tools-costs` (:pull:`219`).
+- Edit inputs for storage, CSP, hydrogen, and industry technologies (:pull:`206`).
+- Replace solar and wind technologies with new ones (:pull:`206`).
+- Reorganize input files and incorporate `first_year.csv` data into `tech_map.csv` (:pull:`221`).
+- Reconfigure use and implementation of technology variants/modules to be more agnostic (:pull:`221`).
+- Change cost decay to reach reduction percentage specified on the year 2100 (:pull:`227`).
+- Add `cooling` technology variant/module (:pull:`222`).
+- Add functionality to specify cost reduction values and cost reduction scenarios in a module (:issue:`251`, :pull:`255`).
+
+Others
+------
+
+- Add "LED", "SSP4", and "SSP5" as values for the :program:`--ssp=…` option in :func:`.common_params` (:pull:`233`).
+- Add :doc:`/project/circeular` project code and documentation (:pull:`232`).
 
 v2024.8.6
 =========
