@@ -2,6 +2,7 @@
 
 import logging
 from copy import deepcopy
+from dataclasses import is_dataclass
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
@@ -253,7 +254,12 @@ class Context:
     # Particular methods of Context
     def asdict(self) -> dict:
         """Return a :func:`.deepcopy` of the Context's values as a :class:`dict`."""
-        return {k: deepcopy(v) for k, v in self._values.items()}
+        from ._dataclasses import asdict
+
+        return {
+            k: asdict(v) if is_dataclass(v) else deepcopy(v)
+            for k, v in self._values.items()
+        }
 
     def clone_to_dest(self, create=True) -> "message_ix.Scenario":
         """Return a scenario based on the ``--dest`` command-line option.

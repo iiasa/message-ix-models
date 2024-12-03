@@ -1,5 +1,8 @@
 import logging
 import re
+import sys
+from copy import deepcopy
+from dataclasses import asdict as asdict_stdlib
 
 import pandas as pd
 import pytest
@@ -12,9 +15,34 @@ from sdmx.model.v21 import Code
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.structure import get_codes, process_technology_codes
 from message_ix_models.util import as_codes
+from message_ix_models.util._dataclasses import asdict as asdict_backport
 
 
 class TestScenarioInfo:
+    @pytest.fixture(scope="class")
+    def info(self) -> ScenarioInfo:
+        return ScenarioInfo()
+
+    @pytest.mark.parametrize(
+        "func",
+        (
+            pytest.param(
+                asdict_stdlib,
+                marks=pytest.mark.xfail(
+                    condition=sys.version_info.minor <= 11,
+                    reason="https://github.com/python/cpython/issues/79721",
+                ),
+            ),
+            asdict_backport,
+        ),
+    )
+    def test_asdict(self, func, info) -> None:
+        """Test backported :func:`.asdict` works for ScenarioInfo."""
+        func(info)
+
+    def test_deepcopy(self, info) -> None:
+        deepcopy(info)
+
     def test_empty(self):
         """ScenarioInfo created from scratch."""
         info = ScenarioInfo()

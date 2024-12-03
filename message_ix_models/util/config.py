@@ -2,13 +2,14 @@ import logging
 import os
 import pickle
 from collections.abc import Mapping, MutableMapping, Sequence
-from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
+from dataclasses import dataclass, field, fields, is_dataclass, replace
 from hashlib import blake2s
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Hashable, Optional
 
 import ixmp
 
+from ._dataclasses import asdict
 from .scenarioinfo import ScenarioInfo
 
 if TYPE_CHECKING:
