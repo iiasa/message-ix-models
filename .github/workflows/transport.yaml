@@ -3,7 +3,7 @@ name: MESSAGEix-Transport
 env:
   # The repository, ref (branch), and workflow file name to dispatch
   target-repo: iiasa/message_data
-  target-ref: dev
+  target-ref: enh/transport-2024-W47
   target-workflow: transport
 
   # Starting point of the workflow.
