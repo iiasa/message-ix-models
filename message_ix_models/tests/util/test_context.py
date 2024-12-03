@@ -13,6 +13,7 @@ import pytest
 from message_ix import Scenario
 
 from message_ix_models import Context
+from message_ix_models.util.scenarioinfo import ScenarioInfo
 
 
 class TestContext:
@@ -155,12 +156,16 @@ class TestContext:
             dict(model="foo", scenario="bar", version=0) == test_context.scenario_info
         )
 
-    def test_asdict(self, session_context):
+    def test_asdict(self, test_context):
+        # Add a ScenarioInfo object. This fails on Python <= 3.11 due to
+        # https://github.com/python/cpython/issues/79721
+        test_context.core.scenarios.append(ScenarioInfo())
+
         # asdict() method runs
-        session_context.asdict()
+        test_context.asdict()
 
         # Context can be serialized to json using the genno caching Encoder
-        json.dumps(session_context, cls=genno.caching.Encoder)
+        json.dumps(test_context, cls=genno.caching.Encoder)
 
     def test_write_debug_archive(self, mix_models_cli):
         """:meth:`.write_debug_archive` works."""

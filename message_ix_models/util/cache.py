@@ -13,7 +13,7 @@ included in the computed cache key:
 import json
 import logging
 from collections.abc import Callable
-from dataclasses import asdict, is_dataclass
+from dataclasses import is_dataclass
 from types import FunctionType
 from typing import TYPE_CHECKING, Union
 
@@ -22,6 +22,7 @@ import ixmp
 import sdmx.model
 import xarray as xr
 
+from ._dataclasses import asdict
 from .context import Context
 from .scenarioinfo import ScenarioInfo
 
