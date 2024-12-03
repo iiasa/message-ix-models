@@ -101,9 +101,9 @@ Commonly used:
 
    A Context instance always has the following members:
 
-   1. :attr:`core``: an instance of :class:`message_ix_models.Config`.
-   2. :attr:`model``: an instance of :class:`message_ix_models.model.Config`.
-   3. :attr:`report``: an instance of :class:`message_ix_models.report.Config`.
+   1. :attr:`core`: an instance of :class:`message_ix_models.Config`.
+   2. :attr:`model`: an instance of :class:`message_ix_models.model.Config`.
+   3. :attr:`report`: an instance of :class:`message_ix_models.report.Config`.
 
    Attributes of (1) and (2) **may** be accessed by shorthand/aliases.
    For instance, :py:`context.regions` is an alias for :py:`context.model.regions`.
@@ -214,4 +214,12 @@ Commonly used:
 .. currentmodule:: message_ix_models.util.sdmx
 
 .. automodule:: message_ix_models.util.sdmx
+   :members:
+
+:mod:`.types`
+=============
+
+.. currentmodule:: message_ix_models.types
+
+.. automodule:: message_ix_models.types
    :members:

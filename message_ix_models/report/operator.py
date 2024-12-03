@@ -38,6 +38,7 @@ __all__ = [
     "make_output_path",
     "model_periods",
     "nodes_ex_world",
+    "quantity_from_iamc",
     "remove_ts",
     "share_curtailment",
 ]
