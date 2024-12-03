@@ -3,7 +3,7 @@
 import logging
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import genno
 import pandas as pd
@@ -19,7 +19,6 @@ from . import Config
 if TYPE_CHECKING:
     import ixmp
     from genno import Computer
-    from genno.types import AnyQuantity
 
     from message_ix_models import Spec
 
@@ -429,7 +428,7 @@ def configure_legacy_reporting(config: dict) -> None:
 
 def latest_reporting_from_file(
     info: ScenarioInfo, base_dir: Path
-) -> Tuple[Any, int, pd.DataFrame]:
+) -> tuple[Any, int, pd.DataFrame]:
     """Locate and retrieve the latest reported output for the scenario `info`.
 
     The file :file:`transport.csv` is sought in a subdirectory of `base_dir` identified
@@ -466,7 +465,7 @@ def latest_reporting_from_file(
 
 def latest_reporting_from_platform(
     info: ScenarioInfo, platform: "ixmp.Platform", minimum_version: int = -1
-) -> Tuple[Any, int, pd.DataFrame]:
+) -> tuple[Any, int, pd.DataFrame]:
     """Retrieve the latest reported output for the scenario described by `info`.
 
     The time series data attached to a scenario on `platform` is retrieved.
@@ -519,6 +518,9 @@ def multi(context: Context, targets):
     """Report outputs from multiple scenarios."""
     import plotnine as p9
 
+    from message_ix_models.report.operator import quantity_from_iamc
+    from message_ix_models.tools.iamc import _drop_unique
+
     report_dir = context.get_local_path("report")
     platform = context.get_platform()
 
@@ -542,15 +544,6 @@ def multi(context: Context, targets):
 
         dfs.append(df)
 
-    # FIXME This duplicates code from message_ix_models.tools.exo_data; deduplicate
-    def drop_unique(df, names) -> pd.DataFrame:
-        names_list = names.split()
-        for name in names_list:
-            values = df[name].unique()
-            if len(values) > 1:
-                raise RuntimeError(f"Not unique {name!r}: {values}")
-        return df.drop(names_list, axis=1)
-
     # Convert to a genno.Quantity
     cols = ["Variable", "Model", "Scenario", "Region", "Unit"]
     data = genno.Quantity(
@@ -558,7 +551,7 @@ def multi(context: Context, targets):
         .sort_values(cols)
         .melt(id_vars=cols, var_name="y")
         .astype({"y": int})
-        .pipe(drop_unique, "Model")
+        .pipe(_drop_unique, columns="Model", record=dict())
         .rename(columns={"Variable": "v", "Scenario": "s", "Region": "n"})
         .dropna(subset=["value"])
         .set_index("v s n y Unit".split())["value"]
@@ -580,32 +573,3 @@ def multi(context: Context, targets):
     plot.save("debug.pdf")
 
     return data
-
-
-def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
-    """Extract data for a single measure from `qty` with (at least) dimensions v, u.
-
-    .. todo:: Move upstream, to either :mod:`ixmp` or :mod:`genno`.
-
-    Parameters
-    ----------
-    variable : str
-        Regular expression to match the ``v`` dimension of `qty`.
-    """
-    import re
-
-    from genno.operator import relabel, select
-
-    expr = re.compile(variable)
-    variables, replacements = [], {}
-    for var in qty.coords["v"].data:
-        if match := expr.fullmatch(var):
-            variables.append(match.group(0))
-            replacements[match.group(0)] = match.group(1)
-
-    subset = qty.pipe(select, {"v": variables}).pipe(relabel, {"v": replacements})
-
-    unique_units = subset.coords["Unit"].data
-    assert 1 == len(unique_units)
-    subset.units = unique_units[0]
-    return subset.sel(Unit=unique_units[0], drop=True)

@@ -1,0 +1,75 @@
+BCA:
+  name: Black carbon
+  report: BC
+
+CH4:
+  name: Methane
+
+CO:
+  name: Carbon monoxide
+
+CO2:
+  name: Carbon dioxide
+
+N2O:
+  name: Nitrous oxide
+
+NH3:
+  name: Ammonia
+
+NOx:
+  name: Nitrogen oxides
+
+OCA:
+  name: Organic carbon
+  report: OC
+
+SO2:
+  name: Sulfur dioxide
+  report: Sulfur
+
+VOC:
+  name: Volatile organic compounds
+
+# The following codes also appear in
+# ixmp://ixmp-dev/SSP_dev_SSP4_v0.1_Blv0.18/materials_low_dem_scen#1
+# (2024-10-02) but are not currently used by code in message_ix_models.
+#
+# Agri_CH4
+# Agri_N2O
+# Agri_N2O_calc
+# BCA_LandUseChangeEM
+# BCA_SavanBurnEM
+# CF4
+# CH4_LandUseChangeEM
+# CH4_SavanBurnEM
+# CO_LandUseChangeEM
+# CO_SavanBurnEM
+# CO2_industry
+# CO2_transformation
+# CO2_transport
+# HFC
+# LU_CH4
+# LU_CH4_Agri
+# LU_CH4_BioBurn
+# LU_CO2
+# LU_N2O
+# NH3_LandUseChangeEM
+# NH3_ManureEM
+# NH3_RiceEM
+# NH3_SavanBurnEM
+# NH3_SoilEM
+# NOx_LandUseChangeEM
+# NOx_SavanBurnEM
+# NOx_SoilEM
+# OCA_LandUseChangeEM
+# OCA_SavanBurnEM
+# PM2p5
+# SF6
+# SO2_LandUseChangeEM
+# SO2_SavanBurnEM
+# TCE
+# TCE_CO2
+# TCE_non-CO2
+# VOC_LandUseChangeEM
+# VOC_SavanBurnEM

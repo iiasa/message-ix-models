@@ -13,14 +13,16 @@ included in the computed cache key:
 import json
 import logging
 from collections.abc import Callable
-from dataclasses import asdict, is_dataclass
-from typing import TYPE_CHECKING
+from dataclasses import is_dataclass
+from types import FunctionType
+from typing import TYPE_CHECKING, Union
 
 import genno.caching
 import ixmp
 import sdmx.model
 import xarray as xr
 
+from ._dataclasses import asdict
 from .context import Context
 from .scenarioinfo import ScenarioInfo
 
@@ -47,12 +49,22 @@ def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
 
 
 @genno.caching.Encoder.register
+def _context(o: Context):
+    return o.asdict()
+
+
+@genno.caching.Encoder.register
 def _dataclass(o: object):
     return (
         asdict(o)
         if (is_dataclass(o) and not isinstance(o, type))
         else json.JSONEncoder().default(o)
     )
+
+
+@genno.caching.Encoder.register
+def _repr_only(o: Union[FunctionType]):
+    return repr(o)
 
 
 @genno.caching.Encoder.register

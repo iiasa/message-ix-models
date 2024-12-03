@@ -25,6 +25,14 @@ These codes have the following annotations:
 .. literalinclude:: ../../message_ix_models/data/commodity.yaml
    :language: yaml
 
+.. _emission-yaml:
+
+Emission species (:file:`emission.yaml`)
+========================================
+
+.. literalinclude:: ../../message_ix_models/data/emission.yaml
+   :language: yaml
+
 .. _level-yaml:
 
 Levels (``level.yaml``)

@@ -4,30 +4,103 @@ What's new
 Next release
 ============
 
-- Introduce an SSP configuration for cooling technologies with share constraints (:pull:`256`).
 - :mod:`message_ix_models` is tested and compatible with `Python 3.13 <https://www.python.org/downloads/release/python-3130/>`__ (:pull:`250`).
 - Support for Python 3.8 is dropped (:pull:`250`), as it has reached end-of-life.
-- Connect the water module to the cost module for cooling technologies (:pull:`245`).
-- Make setup of constraints for cooling technologies flexible and update solar csp tech. name (:pull:`242`).
-- Fix the nexus/cooling function and add test for checking some input data (:pull:`236`).
-- Add :doc:`/project/circeular` project code and documentation (:pull:`232`).
-- Update water availability data and major code editing to allow a new test suite for the water module (:pull:`106`).
 - Expand :doc:`repro` with sections on :ref:`repro-doc` and :ref:`versioning`, including :ref:`a list of external model names and ‘versions’ <model-names>` like “MESSAGEix-GLOBIOM 2.0” (:issue:`224`, :pull:`226`).
-- Update :doc:`/transport/index` (:pull:`213`).
-- Add "LED", "SSP4", and "SSP5" as values for the :program:`--ssp=…` option in :func:`.common_params` (:pull:`233`).
-- Fix and update :doc:`/api/tools-costs` (:pull:`219`, :pull:`206`, :pull:`221`, :pull:`227`, :pull:`222`, :pull:`255`)
+- New code list :ref:`emission-yaml` (:pull:`225`).
 
-  - Fix naming of GDP and population columns in SSP data aggregation (:pull:`219`).
-  - Edit inputs for storage, CSP, hydrogen, and industry technologies (:pull:`206`).
-  - Replace solar and wind technologies with new ones (:pull:`206`).
-  - Reorganize input files and incorporate `first_year.csv` data into `tech_map.csv` (:pull:`221`).
-  - Reconfigure use and implementation of technology variants/modules to be more agnostic (:pull:`221`).
-  - Change cost decay to reach reduction percentage specified on the year 2100 (:pull:`227`).
-  - Add `cooling` technology variant/module (:pull:`222`).
-  - Add functionality to specify cost reduction values and cost reduction scenarios in a module (:pull:`255`).
+By topic:
+
+.. contents::
+   :local:
+   :backlinks: none
+
+Materials
+---------
+
 - Improve and extend :doc:`/material/index` (:pull:`218`, :pull:`253`).
+- Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
 
-  - Release of MESSAGEix-Materials 1.1.0 (:doc:`/material/v1.1.0`).
+Transport
+---------
+
+- Update :doc:`/transport/index` (:pull:`213`, :pull:`225`).
+- Rework :mod:`~.transport.freight`, :mod:`~.transport.ldv`, and :mod:`~.transport.non_ldv` to use :mod:`genno` consistently.
+- Adopt consistent terms "F RAIL" and "F ROAD" for freight service/modes.
+- New technologies: "f rail {electr,lightoil}", "f road electr".
+- Extend unit annotations to all transport commodities.
+- New input :doc:`files </transport/input>` :file:`pdt-cap.csv` and :file:`load-factor-ldv.csv`.
+- Add :program:`mix-models ssp transport` CLI command to postprocess aviation emissions data.
+- New SDMX Codelist ``IIASA:CL_TRANSPORT_SCENARIO`` to distinguish “Low energy demand (LED)” and :doc:`/project/edits` scenarios from :doc:`/project/ssp` baseline scenarios.
+- Adjust R12 baseline settings:
+
+  - :file:`mode-share/default.csv`: adjust ``R12_NAM`` values for AIR and LDV.
+  - :file:`pdt-cap-ref.csv`: adjust ``R12_NAM`` value.
+- Implement LED scenarios via :file:`load-factor-ldv.csv` and :file:`pdt-cap.csv`.
+- Use y=2019 data from IEA EWEB 2024 edition to align MESSAGEix-Transport with base model calibration.
+- New :mod:`genno` operators: :func:`~.transport.operator.broadcast`,  :func:`~.transport.operator.broadcast_wildcard`,  :func:`~.transport.operator.broadcast_t_c_l`, :func:`~.transport.operator.freight_usage_output`.
+- New utility methods :func:`~.transport.config.get_cl_scenario`, :func:`~.transport.util.wildcard`.
+- Replace :class:`DataSourceConfig.LDV <.transport.config.DataSourceConfig>` setting with :attr:`Config.dummy_LDV <.transport.config.Config.dummy_LDV>`.
+
+Water/Nexus
+-----------
+
+- Update water availability data and major code editing to allow a new test suite for doc:`/water/index` (:pull:`106`).
+- Fix the nexus/cooling function and add test for checking some input data (:pull:`236`).
+- Make setup of constraints for cooling technologies flexible and update solar CSP technology name (:pull:`242`).
+- Connect :mod:`.model.water` to :mod:`.tools.costs` for cooling technologies (:pull:`245`).
+- Introduce an SSP configuration for cooling technologies with share constraints (:pull:`256`).
+
+Investment and fixed costs
+--------------------------
+
+- Fix naming of GDP and population columns in SSP data aggregation for :doc:`/api/tools-costs` (:pull:`219`).
+- Edit inputs for storage, CSP, hydrogen, and industry technologies (:pull:`206`).
+- Replace solar and wind technologies with new ones (:pull:`206`).
+- Reorganize input files and incorporate `first_year.csv` data into `tech_map.csv` (:pull:`221`).
+- Reconfigure use and implementation of technology variants/modules to be more agnostic (:pull:`221`).
+- Change cost decay to reach reduction percentage specified on the year 2100 (:pull:`227`).
+- Add `cooling` technology variant/module (:pull:`222`).
+- Add functionality to specify cost reduction values and cost reduction scenarios in a module (:issue:`251`, :pull:`255`).
+
+Others
+------
+
+- Add "LED", "SSP4", and "SSP5" as values for the :program:`--ssp=…` option in :func:`.common_params` (:pull:`233`).
+- Add :doc:`/project/circeular` project code and documentation (:pull:`232`).
+- :mod:`.iea.web` handles the 2024 edition and fixed-width file format published by the IEA directly (:pull:`225`).
+
+  - Code lists for the ``COUNTRY``, ``FLOW``, and ``PRODUCT`` concepts are included with :mod:`message_ix_models`.
+  - Add :data:`~.iea.web.COUNTRY_NAME` to map particular labels appearing in these data.
+  - Fuzzed data and tests for this functionality.
+
+- Add :any:`.types.ParameterData` and :any:`.types.MutableParameterData` to type the common internal data structure in which a :class:`dict` maps from MESSAGE parameter names to :mod:`message_ix`-structured :class:`pandas.DataFrame` (:pull:`225`).
+- :class:`message_ix_models.Config`—the “core” configuration class—gains methods specific to its settings (:pull:`225`).
+  These were formerly on :class:`.Context`.
+- :class:`.Context` is no longer a subclass of :class:`dict` (:pull:`225`).
+  This avoids its mishandling by :mod:`dask` version 2024.11.0 or later when Context is used with :class:`ixmp.Reporter`.
+
+  - Add :data:`.MODULE_WITH_CONFIG_DATACLASS`;
+    add attributes such as :attr:`.Context.model` that are typed to the respective class such as :class:`.model.Config`.
+  - Add :meth:`.Context.asdict` for serialization.
+  - Former methods such as :meth:`.Context.get_scenario` are aliased to their new locations, e.g. :meth:`.Config.get_scenario`.
+
+- Improve :class:`.ScenarioInfo` (:pull:`225`):
+
+  - Implement the :py:`|` (logical OR/union) operator: `si_a | si_b` is a new ScenarioInfo instance with the union of the contents of the operands.
+  - New method :meth:`.substitute_codes` to replace string codes (for instance, determined from a Scenario object) with Codes from the corresponding code list, including all annotations.
+
+- :class:`.MappingAdapter` skips missing labels in the input data without raising an exception (:pull:`225`).
+- :meth:`.Workflow.visualize` displays in left-to-right rank direction by default (:pull:`225`).
+- :func:`.convert_units` can handle MESSAGE-scheme :class:`pandas.DataFrame` (:pull:`225`).
+- :func:`.util.sdmx.make_enum` uses :class:`.URNLookupEnum` by default (:pull:`225`).
+  This allows to call, for instance, :py:`SSP_2024.by_urn("…Code=ICONICS:SSP(2024).2")` to retrieve an enumeration number.
+- :func:`.make_matched_dfs` accepts :class:`dict` for its :py:`par_value` arg, allowing replacement of values for particular dimensions of output data frames (:pull:`225`).
+- New reporting operator :func:`.quantity_from_iamc` (:pull:`225`).
+- :func:`.same_node` and :func:`.same_time` can handle :any:`.ParameterData` (:pull:`225`).
+- :func:`.report.register` becomes :meth:`.report.Config.register` which populates :attr:`.report.Config.callback` (:pull:`225`).
+  The set of callback functions used to configure a class:`.Reporter` instance is thus now particular to a :class:`.report.Config` instance attached to a :class:`.Context` instance.
+  This allows better isolation of code/tests that use different sets of callbacks.
 
 v2024.8.6
 =========

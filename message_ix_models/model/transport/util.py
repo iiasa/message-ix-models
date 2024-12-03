@@ -1,60 +1,19 @@
 """Utility code for MESSAGEix-Transport."""
 
 import logging
-from functools import lru_cache
+from collections.abc import Hashable, Iterable, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Union
-
-import pandas as pd
+from typing import TYPE_CHECKING, Union
 
 from message_ix_models import Context
-from message_ix_models.model.structure import get_codes
 from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     import numbers
 
+    from genno.types import AnyQuantity
+
 log = logging.getLogger(__name__)
-
-
-def input_commodity_level(
-    context: Context, df: pd.DataFrame, default_level=None
-) -> pd.DataFrame:
-    """Add input 'commodity' and 'level' to `df` based on 'technology'.
-
-    .. deprecated:: 2023-02-27
-       Use :func:`.computations.input_commodity_level` instead.
-    """
-    # Retrieve transport technology information from configuration
-    t_info = context.transport.spec.add.set["technology"]
-
-    # Retrieve general commodity information
-    c_info = get_codes("commodity")
-
-    @lru_cache()
-    def t_cl(t: str) -> pd.Series:
-        """Return the commodity and level given technology `t`."""
-        # Retrieve the "input" annotation for this technology
-        input = t_info[t_info.index(t)].eval_annotation("input")
-
-        # Commodity ID
-        commodity = input["commodity"]
-
-        # Retrieve the code for this commodity
-        c_code = c_info[c_info.index(commodity)]
-
-        # Level, in order of precedence:
-        # 1. Technology-specific input level from `t_code`.
-        # 2. Default level for the commodity from `c_code`.
-        # 3. `default_level` argument to this function.
-        level = (
-            input.get("level", None) or c_code.eval_annotation("level") or default_level
-        )
-
-        return pd.Series(dict(commodity=commodity, level=level))
-
-    # Process every row in `df`; return a new DataFrame
-    return df.combine_first(df["technology"].apply(t_cl))
 
 
 def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
@@ -91,3 +50,17 @@ def sum_numeric(iterable: Iterable, /, start=0) -> "numbers.Real":
         except TypeError:
             pass
     return result
+
+
+def wildcard(value, units, dims: Sequence[Hashable]) -> "AnyQuantity":
+    """Return a Quantity with 1 label "*" along each of `dims`.
+
+    .. todo:: Move upstream, to `genno`.
+    """
+    import genno
+
+    coords = {d: ["*"] for d in dims}
+    try:
+        return genno.Quantity(value, coords=coords, units=units)
+    except TypeError:  # genno < 1.25
+        return genno.Quantity(value, units).expand_dims(coords)

@@ -20,6 +20,77 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+REPLACE = dict(UNIT_MEASURE={"10^3 vkm/vehicle": "Mm / vehicle / year"})
+
+UNITS = """
+MEASURE    INDICATOR                               PRODUCT                                                 UNIT_MEASURE
+   energy                                    __NA                                    Oil and oil products                  PJ
+   energy                                    __NA                                                     Gas                  PJ
+   energy                                    __NA                                  Coal and coal products                  PJ
+   energy                                    __NA                                      Biofuels and waste                  PJ
+   energy                                    __NA                                                    Heat                  PJ
+   energy                                    __NA                                             Electricity                  PJ
+   energy                                    __NA                                           Other sources                  PJ
+   energy                                    __NA                                      Total final energy                  PJ
+   energy                                    __NA                                 Of which: Solar thermal                  PJ
+   energy                                    __NA                                          Motor gasoline                  PJ
+   energy                                    __NA                               Diesel and light fuel oil                  PJ
+   energy                                    __NA                                                     LPG                  PJ
+   energy                                    __NA                                          Heavy fuel oil                  PJ
+   energy                                    __NA                          Jet fuel and aviation gasoline                  PJ
+     __NA                                    __NA                                              Population                10^6
+     __NA                                    __NA                                     Services employment                10^6
+     __NA                                    __NA                                      Occupied dwellings                10^6
+     __NA                                    __NA                                  Residential floor area             10^9 m2
+     __NA                                    __NA                                     Heating degree days                10^3
+     __NA                                    __NA                                     Cooling degree days                10^3
+     __NA                                    __NA                                                  Stocks       million units
+     __NA                                    __NA                                             Value added   10^9 USD PPP 2015
+     __NA                                    __NA                                       Cement production              10^6 t
+     __NA                                    __NA                                        Steel production              10^6 t
+     __NA                                    __NA                                    Passenger-kilometres            10^9 pkm
+     __NA                                    __NA                                      Vehicle-kilometres            10^9 vkm
+     __NA                                    __NA                                           Vehicle stock                10^6
+     __NA                                    __NA                                        Tonne-kilometres            10^9 tkm
+     __NA                                    __NA      Occupied dwellings of which heated by oil products                   %
+     __NA                                    __NA               Occupied dwellings of which heated by gas                   %
+     __NA                                    __NA          Occupied dwellings of which heated by biofuels                   %
+     __NA                                    __NA  Occupied dwellings of which heated by district heating                   %
+     __NA                                    __NA       Occupied dwellings of which heated by electricity                   %
+     __NA                                    __NA                                     Services floor area             10^9 m2
+     __NA                                    __NA                                              Peak power                 MWp
+     __NA             Per capita energy intensity                                                    __NA              GJ/cap
+     __NA         Per floor area energy intensity                                                    __NA               GJ/m2
+     __NA      Per floor area TC energy intensity                                                    __NA               GJ/m2
+     __NA           Per dwelling energy intensity                                                    __NA               GJ/dw
+     __NA        Per dwelling TC energy intensity                                                    __NA               GJ/dw
+     __NA     Per unit equipment energy intensity                                                    __NA             GJ/unit
+     __NA        Per value added energy intensity                                                    __NA     MJ/USD PPP 2015
+     __NA  Per services employee energy intensity                                                    __NA         GJ/employee
+     __NA    Per physical output energy intensity                                                    __NA                GJ/t
+     __NA                          Fuel intensity                                                    __NA      litres/100 vkm
+     __NA         Passenger-kilometres per capita                                                    __NA        10^3 pkm/cap
+     __NA   Passenger-kilometres energy intensity                                                    __NA              MJ/pkm
+     __NA                   Passenger load factor                                                    __NA             pkm/vkm
+     __NA           Vehicle-kilometres per capita                                                    __NA        10^3 vkm/cap
+     __NA     Vehicle-kilometres energy intensity                                                    __NA              MJ/vkm
+     __NA                             Vehicle use                                                    __NA    10^3 vkm/vehicle
+     __NA             Tonne-kilometres per capita                                                    __NA        10^3 tkm/cap
+     __NA       Tonne-kilometres energy intensity                                                    __NA              MJ/tkm
+     __NA                     Freight load factor                                                    __NA             tkm/vkm
+emissions                                    __NA                                   Total final emissions               MtCO2
+     __NA             Per capita carbon intensity                                                    __NA            tCO2/cap
+     __NA         Per floor area carbon intensity                                                    __NA             tCO2/m2
+     __NA           Per dwelling carbon intensity                                                    __NA             tCO2/dw
+     __NA     Per unit equipment carbon intensity                                                    __NA           tCO2/unit
+     __NA        Per value added carbon intensity                                                    __NA  kgCO2/USD PPP 2015
+     __NA  Per services employee carbon intensity                                                    __NA       tCO2/employee
+     __NA    Per physical output carbon intensity                                                    __NA              tCO2/t
+     __NA   Passenger-kilometres carbon intensity                                                    __NA           kgCO2/pkm
+     __NA     Vehicle-kilometres carbon intensity                                                    __NA           kgCO2/vkm
+     __NA       Tonne-kilometres carbon intensity                                                    __NA           kgCO2/tkm
+"""  # noqa: E501
+
 #: Mapping of weights to variables used as weights for weighted averaging.
 #:
 #: .. todo:: Replace with tests showing usage of :func:`wavg`.
@@ -231,6 +302,7 @@ def iea_eei_data_raw(path, non_iso_3166: Literal["keep", "discard"] = "discard")
             .apply(lambda col: col.str.rstrip() if col.dtype == object else col)
             .assign(**assign)
             .pipe(extract_measure_and_units)
+            # .replace(REPLACE)
             .pipe(melt)
             .dropna(subset="value")
         )

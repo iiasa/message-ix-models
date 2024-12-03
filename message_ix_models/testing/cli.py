@@ -16,6 +16,8 @@ FILENAMES = [
     "iea/372f7e29-en.zip",
     "iea/8624f431-en.zip",
     "iea/cac5fa90-en.zip",
+    "iea/web/2024-07-25/WBIG1.zip",
+    "iea/web/2024-07-25/WBIG2.zip",
     "shape/gdp_v1p0.mif",
     "shape/gdp_v1p1.mif",
     "shape/gdp_v1p2.mif",
@@ -38,8 +40,9 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     """Create random data for testing.
 
     This command creates data files in message_ix_models/data/test/… based on
-    corresponding private files in message_data/data/…. This supports testing of code in
-    message_ix_models that handles these files.
+    corresponding private files in either message_data/data/… or the local data
+    directory. This supports testing of code in message_ix_models that handles these
+    files.
 
     The files are identical in structure and layout, except the values are "fuzzed", or
     replaced with random values.
@@ -55,11 +58,11 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     from numpy import char, random
 
     from message_ix_models.project.advance.data import NAME
-    from message_ix_models.util import package_data_path, private_data_path
+    from message_ix_models.util import package_data_path, path_fallback
 
     # Paths
     p = Path(filename)
-    path_in = private_data_path(p)
+    path_in = path_fallback(p, where="private local")
     path_out = package_data_path("test", p)
 
     # Shared arguments for read_csv() and to_csv()
@@ -70,20 +73,27 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         sep = ";"
 
     # Read the data
+    zf_member_name = None
     with TemporaryDirectory() as td:
         td_path = Path(td)
         if "advance" in filename:
             # Manually unpack one member of the multi-member archive `path_in`
+            zf_member_name = NAME
             target: Union[IO, Path, str] = zipfile.ZipFile(path_in).extract(
-                NAME, path=td_path
+                zf_member_name, path=td_path
             )
         elif "iea" in filename:
             # Manually unpack so that dask.dataframe.read_csv() can be used
-            from message_ix_models.tools.iea.web import unpack_zip
+            from message_ix_models.tools.iea.web import fwf_to_csv, unpack_zip
 
             target = unpack_zip(path_in)
+            zf_member_name = target.name
+            if target.suffix == ".TXT":
+                target = fwf_to_csv(target, progress=True)
         else:
             target = path_in
+
+        print(f"Read {target}")
 
         # - Read the data
         #   - Use dask & pyarrow.
@@ -127,10 +137,12 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     # Write to file, keeping only a few decimal points
     path_out.parent.mkdir(parents=True, exist_ok=True)
 
-    if "advance" in filename:
+    if path_out.suffix.lower() == ".zip":
         zf = zipfile.ZipFile(path_out, "w", compression=zipfile.ZIP_BZIP2)
-        target = zf.open(NAME)
+        target = zf.open(zf_member_name, "w")
+        print(f"Write to member {zf_member_name} in {path_out}")
     else:
         target = path_out
+        print(f"Write to {path_out}")
 
     df.to_csv(target, float_format="%.2f", index=False, sep=sep)

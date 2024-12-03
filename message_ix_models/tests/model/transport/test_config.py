@@ -1,6 +1,6 @@
 import pytest
 
-from message_ix_models.model.transport.config import Config
+from message_ix_models.model.transport.config import Config, get_cl_scenario
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.project.transport_futures import SCENARIO as TF_SCENARIO
@@ -88,3 +88,20 @@ class TestConfig:
             match=r"SCENARIO.A___ and T35_POLICY.ACT\|TEC are not compatible",
         ):
             c.set_futures_scenario("A---")
+
+
+def test_get_cl_scenario() -> None:
+    result = get_cl_scenario()
+
+    # Code lists contains codes with the expected IDs
+    assert {
+        "SSP1",
+        "SSP2",
+        "SSP3",
+        "SSP4",
+        "SSP5",
+        "LED-SSP1",
+        "LED-SSP2",
+        "EDITS-CA",
+        "EDITS-HA",
+    } == set(result.items.keys())

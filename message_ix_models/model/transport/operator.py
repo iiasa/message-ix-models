@@ -2,22 +2,11 @@
 
 import logging
 import re
+from collections.abc import Mapping, Sequence
 from functools import partial, reduce
 from itertools import pairwise, product
 from operator import gt, le, lt
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Hashable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, cast
 
 import genno
 import numpy as np
@@ -27,16 +16,15 @@ from genno import Computer, KeySeq, Operator, quote
 from genno.operator import apply_units, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from scipy import integrate
-from sdmx.model.v21 import Code
+from sdmx.model.common import Code, Codelist
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.structure import get_codelist, get_codes
+from message_ix_models.model.structure import get_codelist
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.report.operator import compound_growth
 from message_ix_models.report.util import as_quantity
 from message_ix_models.util import (
     MappingAdapter,
-    broadcast,
     datetime_now_with_tz,
     nodes_ex_world,
     show_versions,
@@ -58,6 +46,7 @@ __all__ = [
     "base_model_data_header",
     "base_shares",
     "broadcast_advance",
+    "broadcast_t_c_l",
     "broadcast_y_yv_ya",
     "cost",
     "distance_ldv",
@@ -73,7 +62,6 @@ __all__ = [
     "iea_eei_fv",
     "indexers_n_cd",
     "indexers_usage",
-    "input_commodity_level",
     "logit",
     "max",
     "maybe_select",
@@ -93,7 +81,7 @@ __all__ = [
 ]
 
 
-def base_model_data_header(scenario: "Scenario", *, name: str) -> Dict[str, str]:
+def base_model_data_header(scenario: "Scenario", *, name: str) -> dict[str, str]:
     """Return a header comment for writing out base model data."""
     versions = "\n\n".join(show_versions().split("\n\n")[:2])
 
@@ -109,7 +97,7 @@ using:
 
 
 def base_shares(
-    base: "AnyQuantity", nodes: List[str], techs: List[str], y: List[int]
+    base: "AnyQuantity", nodes: list[str], techs: list[str], y: list[int]
 ) -> "AnyQuantity":
     """Return base mode shares.
 
@@ -149,7 +137,7 @@ def base_shares(
     elif len(extra_modes):
         raise NotImplementedError(f"Extra mode(s) t={extra_modes}")
 
-    missing = cast(Set[Hashable], set("nty")) - set(result.dims)
+    missing = cast(set[Hashable], set("nty")) - set(result.dims)
     if len(missing):
         log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
 
@@ -202,28 +190,113 @@ def broadcast_advance(data: "AnyQuantity", y0: int, config: dict) -> "AnyQuantit
     return result
 
 
-def broadcast_n(qty: "AnyQuantity", n: List[str], *, dim: str) -> "AnyQuantity":
-    existing = sorted(qty.coords[dim].data)
-    missing = set(n) - set(existing)
+def broadcast(q1: "AnyQuantity", q2: "AnyQuantity") -> "AnyQuantity":
+    import numpy as np
 
-    if missing:
-        n_map = [(n_, n_) for n_ in existing] + [("*", n_) for n_ in missing]
-        return MappingAdapter({dim: n_map})(qty)
-    else:
-        return qty
+    # Squeeze dimensions of q1 that are (a) in q2 and (b) contain only NaN or None
+    # labels
+    squeezed = q1
+    for d in q2.dims:
+        if set(q1.coords[d].data) <= {np.nan, None}:
+            squeezed = squeezed.squeeze(dim=d)
+
+    # TODO Use the following once supported by genno
+    # squeezed = q1.squeeze(
+    #     dim=[d for d in q2.dims if set(q1.coords[d].data) <= {np.nan, None}]
+    # )
+
+    return squeezed * q2
 
 
-def broadcast_y_yv_ya(y: List[int], y_include: List[int]) -> "AnyQuantity":
+def broadcast_wildcard(
+    qty: "AnyQuantity", coords: list[str], *, dim: str = "n"
+) -> "AnyQuantity":
+    """Broadcast over coordinates `coords` along dimension `dim`.
+
+    Any missing labels in `coords` are populated using values of `qty` that have the
+    ‘wildcard’ label "*" for `dim`.
+    """
+    # Identify existing, non-wildcard labels along `dim`
+    existing = set(qty.coords[dim].data) - {"*"}
+    # Identify missing labels along `dim`
+    missing = sorted(set(coords) - existing)
+
+    if not missing:
+        return qty  # Nothing to do; `qty` is already complete
+
+    # Construct a MappingAdapter:
+    # - Each existing label (whether in ``) mapped to themselves.
+    # - "*" mapping to each missing label.
+    adapt = MappingAdapter(
+        {dim: [(x, x) for x in sorted(existing)] + [("*", x) for x in missing]}
+    )
+
+    # Apply the adapter to `qty`
+    return adapt(qty)
+
+
+def broadcast_t_c_l(
+    technologies: list[Code],
+    commodities: list[Code],
+    kind: Literal["input", "output"],
+    default_level: Optional[str] = None,
+) -> "AnyQuantity":
+    """Return a Quantity for broadcasting dimension (t) to (c, l) for `kind`."""
+
+    # Convert list[Union[Code, str]] into an SDMX Codelist for simpler usage
+    cl_commodity = Codelist(items={getattr(c, "id", c): c for c in commodities})
+
+    # Map each `tech` to a `commodity` and `level`
+    data = []
+    for tech in technologies:
+        # Retrieve the "input" or "output" annotation for this technology
+        input_ = tech.eval_annotation(kind)
+        if input_ is None:
+            continue  # No I/O commodity for this technology → skip
+
+        # Retrieve the "commodity" key: either the ID of one commodity, or a sequence
+        commodity = input_.get("commodity", ())
+
+        # Iterate over 0 or more commodity IDs
+        for c_id in (commodity,) if isinstance(commodity, str) else commodity:
+            try:
+                # Retrieve the Code object for this commodity
+                c = cl_commodity[c_id]
+            except KeyError:
+                continue  # Unknown commodity
+
+            # Level, in order of precedence:
+            # 1. Technology-specific input level from `t_code`.
+            # 2. Default level for the commodity from `c_code`.
+            # 3. `default_level` argument to this function.
+            try:
+                level_anno = str(c.get_annotation(id="level").text)
+            except (AttributeError, KeyError):
+                level_anno = None
+            level = input_.get("level", level_anno or default_level)
+
+            data.append((tech.id, c, level))
+
+    idx = pd.MultiIndex.from_frame(pd.DataFrame(data, columns=["t", "c", "l"]))
+    s = pd.Series(1.0, index=idx)
+    return genno.Quantity(s)
+
+
+def broadcast_y_yv_ya(
+    y: list[int], y_include: list[int], *, method: Literal["product", "zip"] = "product"
+) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
     This omits all :math:`y^V \notin y^{include}`.
 
     If :py:`"y::model"` is passed as `y_include`, this is equivalent to
-    :attr:`.ScenarioInfo.ya_ya`.
+    :attr:`.ScenarioInfo.yv_ya`.
     """
     dims = ["y", "yv", "ya"]
+
+    func = product if method == "product" else zip
     series = (
-        pd.DataFrame(product(y, y_include), columns=dims[1:])
+        pd.DataFrame(func(y, y_include), columns=dims[1:])
         .query("ya >= yv")
         .assign(value=1.0, y=lambda df: df["yv"])
         .set_index(dims)["value"]
@@ -237,7 +310,7 @@ def cost(
     whours: "AnyQuantity",
     speeds: "AnyQuantity",
     votm: "AnyQuantity",
-    y: List[int],
+    y: list[int],
 ) -> "AnyQuantity":
     """Calculate cost of transport [money / distance].
 
@@ -279,8 +352,8 @@ def distance_ldv(config: dict) -> "AnyQuantity":
 EEI_TECH_MAP = {
     "Buses": "BUS",
     "Cars/light trucks": "LDV",
-    "Freight trains": "freight rail",
-    "Freight trucks": "freight truck",
+    "Freight trains": "F RAIL",
+    "Freight trucks": "F ROAD",
     "Motorcycles": "2W",
     "Passenger trains": "RAIL",
 }
@@ -350,7 +423,15 @@ def duration_period(info: "ScenarioInfo") -> "AnyQuantity":
     ).pipe(unique_units_from_dim, "unit")
 
 
-def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantity":
+def expand_dims(qty: "AnyQuantity", dim, *args, **kwargs) -> "AnyQuantity":
+    """Like :meth:`.Quantity.expand_dims`.
+
+    .. todo:: Move upstream, to :mod:`.genno`.
+    """
+    return qty.expand_dims(dim=dim, *args, **kwargs)
+
+
+def extend_y(qty: "AnyQuantity", y: list[int], *, dim: str = "y") -> "AnyQuantity":
     """Extend `qty` along the dimension `dim` to cover all of `y`.
 
     - Values are first filled forward, then backwards, within existing `dim` labels in
@@ -385,7 +466,7 @@ def extend_y(qty: "AnyQuantity", y: List[int], *, dim: str = "y") -> "AnyQuantit
     return MappingAdapter({dim: y_map})(qty.ffill(dim).bfill(dim))  # type: ignore [attr-defined]
 
 
-def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
+def factor_fv(n: list[str], y: list[int], config: dict) -> "AnyQuantity":
     """Scaling factor for freight activity.
 
     If :attr:`.Config.project` is :data:`ScenarioFlags.ACT`, the value declines from
@@ -394,6 +475,8 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
 
     Otherwise, the value is 1.0 for every (`n`, `y`).
     """
+    from message_ix_models.util import broadcast
+
     # Empty data frame
     df = pd.DataFrame(columns=["value"], index=pd.Index(y, name="y"))
 
@@ -421,7 +504,7 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
 
 
 def factor_input(
-    y: List[int], t: List[Code], t_agg: Dict, config: dict
+    y: list[int], t: list[Code], t_agg: dict, config: dict
 ) -> "AnyQuantity":
     """Scaling factor for ``input`` (energy intensity of activity).
 
@@ -459,7 +542,7 @@ def factor_input(
             "2W": 1.5,
             "BUS": 1.5,
             "LDV": 1.5,
-            "freight truck": 2.0,
+            "F ROAD": 2.0,
             "AIR": 1.3,
         }.items():
             value.update({t: 1 - (v / 100.0) for t in t_groups[group]})
@@ -475,7 +558,7 @@ def factor_input(
     return compound_growth(qty, "y")
 
 
-def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> "AnyQuantity":
+def factor_pdt(n: list[str], y: list[int], t: list[str], config: dict) -> "AnyQuantity":
     """Scaling factor for passenger activity.
 
     When :attr:`.Config.scenarios` includes :attr:`ScenarioFlags.ACT` (i.e. NAVIGATE
@@ -485,6 +568,8 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> "AnyQu
 
     Otherwise, the value is 1.0 for every (`n`, `t`, `y`).
     """
+    from message_ix_models.util import broadcast
+
     # Empty data frame
     df = pd.DataFrame(columns=t, index=pd.Index(y, name="y"))
 
@@ -515,9 +600,9 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> "AnyQu
 
 def factor_ssp(
     config: dict,
-    nodes: List[str],
-    years: List[int],
-    *others: List,
+    nodes: list[str],
+    years: list[int],
+    *others: list,
     info: "message_ix_models.model.transport.factor.Factor",
     extra_dims: Optional[Sequence[str]] = None,
 ) -> "AnyQuantity":
@@ -528,10 +613,26 @@ def factor_ssp(
     return info.quantify(**kw)
 
 
-Groups = Dict[str, Dict[str, List[str]]]
+def freight_usage_output(context: "Context") -> "AnyQuantity":
+    """Output efficiency for ``transport F {MODE} usage`` pseudo-technologies.
+
+    Returns
+    -------
+    Quantity
+        with dimension |t|
+    """
+    modes = "F RAIL", "F ROAD"  # TODO Retrieve this from configuration
+    return genno.Quantity(
+        [context.transport.load_factor[m] for m in modes],
+        coords=dict(t=[f"transport {m} usage" for m in modes]),
+        units="Gt km",
+    )
 
 
-def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
+Groups = dict[str, dict[str, list[str]]]
+
+
+def groups_iea_eweb(technologies: list[Code]) -> tuple[Groups, Groups, dict]:
     """Structure for calibration to IEA Extended World Energy Balances (EWEB).
 
     Returns 3 sets of groups:
@@ -552,7 +653,7 @@ def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
     """
     g0: Groups = dict(flow={}, product={})
     g1: Groups = dict(t={})
-    g2: Dict = dict(t=[], t_new=[])
+    g2: dict = dict(t=[], t_new=[])
 
     # Add groups from base model commodity code list:
     # - IEA product list → MESSAGE commodity (e.g. "lightoil")
@@ -594,48 +695,8 @@ def groups_y_annual(duration_period: "AnyQuantity") -> "AnyQuantity":
     return dict(y=result)
 
 
-def input_commodity_level(t: List[Code], default_level=None) -> "AnyQuantity":
-    """Return a Quantity for broadcasting dimension (t) to (c, l) for ``input``.
-
-    .. todo:: This essentially replaces :func:`.transport.util.input_commodity_level`,
-       and is much faster. Replace usage of the other function with this one, then
-       remove the other.
-    """
-
-    c_info = get_codes("commodity")
-
-    # Map each `tech` to a `commodity` and `level`
-    data = []
-    for tech in t:
-        # Retrieve the "input" annotation for this technology
-        input_ = tech.eval_annotation("input")
-
-        # Retrieve the code for this commodity
-        try:
-            # Commodity ID
-            commodity = input_["commodity"]
-            c_code = c_info[c_info.index(commodity)]
-        except (KeyError, ValueError, TypeError):
-            # TypeError: input_ is None
-            # KeyError: "commodity" not in the annotation
-            # ValueError: `commodity` not in c_info
-            continue
-
-        # Level, in order of precedence:
-        # 1. Technology-specific input level from `t_code`.
-        # 2. Default level for the commodity from `c_code`.
-        # 3. `default_level` argument to this function.
-        level = input_.get("level") or c_code.eval_annotation("level") or default_level
-
-        data.append((tech.id, commodity, level))
-
-    idx = pd.MultiIndex.from_frame(pd.DataFrame(data, columns=["t", "c", "l"]))
-    s = pd.Series(1.0, index=idx)
-    return genno.Quantity(s)
-
-
 def logit(
-    x: "AnyQuantity", k: "AnyQuantity", lamda: "AnyQuantity", y: List[int], dim: str
+    x: "AnyQuantity", k: "AnyQuantity", lamda: "AnyQuantity", y: list[int], dim: str
 ) -> "AnyQuantity":
     r"""Compute probabilities for a logit random utility model.
 
@@ -720,17 +781,19 @@ def min(
 
 def merge_data(
     *others: Mapping[Hashable, pd.DataFrame],
-) -> Dict[Hashable, pd.DataFrame]:
+) -> dict[Hashable, pd.DataFrame]:
     """Slightly modified from message_ix_models.util.
 
     .. todo: move upstream or merge functionality with
        :func:`message_ix_models.util.merge_data`.
     """
-    keys: Set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
-    return {k: pd.concat([o.get(k, None) for o in others]) for k in keys}
+    keys: set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
+    return {
+        k: pd.concat([o.get(k, None) for o in others], ignore_index=True) for k in keys
+    }
 
 
-def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
+def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
     """Returns base-year demand for freight from IEA EEI, with dimensions n-c-y."""
     from message_ix_models.tools.iea import eei
 
@@ -743,7 +806,7 @@ def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
-def indexers_n_cd(config: Dict) -> Dict[str, xr.DataArray]:
+def indexers_n_cd(config: dict) -> dict[str, xr.DataArray]:
     """Indexers for selecting (`n`, `census_division`) → `n`.
 
     Based on :attr:`.Config.node_to_census_division`.
@@ -756,9 +819,9 @@ def indexers_n_cd(config: Dict) -> Dict[str, xr.DataArray]:
     )
 
 
-def indexers_usage(technologies: List[Code]) -> Dict:
+def indexers_usage(technologies: list[Code]) -> dict:
     """Indexers for replacing LDV `t` and `cg` with `t_new` for usage technologies."""
-    labels: Dict[str, List[str]] = dict(cg=[], t=[], t_new=[])
+    labels: dict[str, list[str]] = dict(cg=[], t=[], t_new=[])
     for t in technologies:
         if not t.eval_annotation("is-disutility"):
             continue
@@ -773,21 +836,22 @@ def indexers_usage(technologies: List[Code]) -> Dict:
     }
 
 
-def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
+def nodes_world_agg(config, dim: Hashable = "nl") -> dict[Hashable, Mapping]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
     This mapping should be used with :func:`.genno.operator.aggregate`, giving the
     argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
 
-    .. todo:: move upstream, to :mod:`message_ix_models`.
+    .. todo:: move to :mod:`message_ix_models.report.operator`.
     """
-    from message_ix_models.model.structure import get_codes
-
     result = {}
-    for n in get_codes(f"node/{config['regions']}"):
-        # "World" node should have no parent and some children. Countries (from
-        # pycountry) that are omitted from a mapping have neither parent nor children.
-        if len(n.child) and n.parent is None:
+
+    cl = get_codelist(f"node/{config['regions']}")
+    for n in cl:
+        # "World" node should have be top-level (its parent is the `cl` itself) and have
+        # some children. Countries (from pycountry) that are omitted from a mapping have
+        # no children.
+        if n.parent is cl and len(n.child):
             name = str(n)
 
             # FIXME Remove. This is a hack to suit the legacy reporting, which expects
@@ -816,7 +880,7 @@ def price_units(qty: "AnyQuantity") -> "AnyQuantity":
 
 
 def quantity_from_config(
-    config: dict, name: str, dimensionality: Optional[Dict] = None
+    config: dict, name: str, dimensionality: Optional[dict] = None
 ) -> "AnyQuantity":
     if dimensionality:
         raise NotImplementedError
@@ -940,8 +1004,8 @@ def share_weight(
     gdp: "AnyQuantity",
     cost: "AnyQuantity",
     lamda: "AnyQuantity",
-    t_modes: List[str],
-    y: List[int],
+    t_modes: list[str],
+    y: list[int],
     config: dict,
 ) -> "AnyQuantity":
     """Calculate mode share weights.
@@ -984,9 +1048,9 @@ def share_weight(
 
     # Selectors
     # A scalar induces xarray but not genno <= 1.21 to drop
-    y0: Dict[Any, Any] = dict(y=y[0])
+    y0: dict[Any, Any] = dict(y=y[0])
     y0_ = dict(y=[y[0]])  # Do not drop
-    yC: Dict[Any, Any] = dict(y=cfg.year_convergence)
+    yC: dict[Any, Any] = dict(y=cfg.year_convergence)
 
     # Weights in y0 for all modes and nodes
     idx = dict(t=t_modes, n=nodes) | y0
@@ -1075,8 +1139,7 @@ def _add_transport_data(func, c: "Computer", name: str, *, key) -> None:
 def transport_data(*args):
     """No action.
 
-    This exists to connect :func:`._add_transport_data` to
-    :meth:`genno.Computer.add`.
+    This exists to connect :func:`._add_transport_data` to :meth:`genno.Computer.add`.
     """
     pass  # pragma: no cover
 
@@ -1089,7 +1152,7 @@ def transport_check(scenario: "Scenario", ACT: "AnyQuantity") -> pd.Series:
     checks = {}
 
     # Correct number of outputs
-    ACT_lf = ACT.sel(t=["transport freight load factor", "transport pax load factor"])
+    ACT_lf = ACT.sel(t=["transport f load factor", "transport pax load factor"])
     checks["'transport * load factor' technologies are active"] = len(
         ACT_lf
     ) == 2 * len(info.Y) * (len(info.N) - 1)

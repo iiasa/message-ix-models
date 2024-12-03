@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import platform
@@ -6,11 +7,13 @@ from copy import deepcopy
 from pathlib import Path
 
 import click
+import genno.caching
 import ixmp
 import pytest
 from message_ix import Scenario
 
 from message_ix_models import Context
+from message_ix_models.util.scenarioinfo import ScenarioInfo
 
 
 class TestContext:
@@ -153,6 +156,17 @@ class TestContext:
             dict(model="foo", scenario="bar", version=0) == test_context.scenario_info
         )
 
+    def test_asdict(self, test_context):
+        # Add a ScenarioInfo object. This fails on Python <= 3.11 due to
+        # https://github.com/python/cpython/issues/79721
+        test_context.core.scenarios.append(ScenarioInfo())
+
+        # asdict() method runs
+        test_context.asdict()
+
+        # Context can be serialized to json using the genno caching Encoder
+        json.dumps(test_context, cls=genno.caching.Encoder)
+
     def test_write_debug_archive(self, mix_models_cli):
         """:meth:`.write_debug_archive` works."""
         # Create a CLI command attached to the hidden "_test" group
@@ -181,11 +195,12 @@ class TestContext:
             result = mix_models_cli.invoke(["_test", "write-debug-archive"])
 
         # Output path is constructed as expected; file exists
+        assert 0 == result.exit_code, result.exception
         match = re.search(
             r"Write to: (.*main-_test-write-debug-archive-[\dabcdefT\-]+.zip)",
             result.output,
         )
-        assert Path(match.group(1)).exists()
+        assert match and Path(match.group(1)).exists(), result.output
 
         # Log output is generated for the non-existent path in Context.debug_paths
         assert re.search(r"Not found: .*bar.txt", result.output)

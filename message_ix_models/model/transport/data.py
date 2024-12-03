@@ -2,10 +2,11 @@
 
 import logging
 from collections import defaultdict
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from functools import partial
 from operator import le
-from typing import TYPE_CHECKING, Callable, Dict, List, Mapping, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 from genno import Computer, Key, Quantity
@@ -51,8 +52,8 @@ def prepare_computer(c: Computer):
 
 
 def conversion(
-    nodes: List[str], years: List[int], config: dict
-) -> Dict[str, pd.DataFrame]:
+    nodes: list[str], years: list[int], config: dict
+) -> dict[str, pd.DataFrame]:
     """Input and output data for conversion technologies:
 
     The technologies are named 'transport {service} load factor'.
@@ -72,7 +73,7 @@ def conversion(
         ("pax", 1.0, "Gp km / a"),
     ]
 
-    data0: Mapping[str, List] = defaultdict(list)
+    data0: Mapping[str, list] = defaultdict(list)
     for service, factor, output_unit in service_info:
         i_o = make_io(
             (f"transport {service} vehicle", "useful", "Gv km"),
@@ -98,7 +99,7 @@ def conversion(
     return data1
 
 
-def dummy_supply(technologies: List["Code"], info, config) -> Dict[str, pd.DataFrame]:
+def dummy_supply(technologies: list["Code"], info, config) -> dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
     if not config["transport"].dummy_supply:
         return dict()
@@ -108,9 +109,15 @@ def dummy_supply(technologies: List["Code"], info, config) -> Dict[str, pd.DataF
     for input_info in map(lambda t: t.eval_annotation(id="input"), technologies):
         if input_info is None or input_info.get("level", None) == "useful":
             continue  # No `input` annotation, or an LDV usage pseudo-technology
-        level_commodity.add(("final", input_info["commodity"]))
+        commodity = input_info["commodity"]
+        if isinstance(commodity, str):
+            level_commodity.add(("final", commodity))
+        elif isinstance(commodity, list):
+            level_commodity.update(("final", c) for c in commodity)
+        else:
+            raise TypeError(type(commodity))
 
-    result: Dict[str, pd.DataFrame] = dict()
+    result: dict[str, pd.DataFrame] = dict()
     common = dict(mode="all", time="year", time_dest="year", unit="GWa")
     values = dict(output=1.0, var_cost=1.0)
 
@@ -127,7 +134,7 @@ def dummy_supply(technologies: List["Code"], info, config) -> Dict[str, pd.DataF
     return result
 
 
-def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
+def misc(info: ScenarioInfo, nodes: list[str], y: list[int]):
     """Miscellaneous bounds for calibration/vetting."""
 
     # Limit activity of methanol LDVs in the model base year
@@ -151,8 +158,8 @@ def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
 
 
 def navigate_ele(
-    nodes: List[str], techs: List["Code"], t_groups, years: List[int], config
-) -> Dict[str, pd.DataFrame]:
+    nodes: list[str], techs: list["Code"], t_groups, years: list[int], config
+) -> dict[str, pd.DataFrame]:
     """Return constraint data for :attr:`ScenarioFlags.ELE`.
 
     The text reads as follows as of 2023-02-15:
@@ -197,7 +204,7 @@ def navigate_ele(
             to_constrain.append(code.id)
 
     # Item (2): identify diesel-fueled freight truck technologies
-    for code in map(lambda t: techs[techs.index(t)], t_groups["t"]["freight truck"]):
+    for code in map(lambda t: techs[techs.index(t)], t_groups["t"]["F ROAD"]):
         if "diesel" in str(code.description):
             to_constrain.append(code.id)
 
@@ -301,7 +308,7 @@ class MaybeAdaptR11Source(ExoDataSource):
     """
 
     #: Set of measures recognized by a subclass.
-    measures: Set[str] = set()
+    measures: set[str] = set()
 
     #: Mapping from :attr:`.measures` entries to file names.
     filename: Mapping[str, str] = dict()
@@ -358,7 +365,7 @@ class MaybeAdaptR11Source(ExoDataSource):
     def __repr__(self) -> str:
         return self._repr
 
-    def get_keys(self) -> Tuple[Key, Key]:
+    def get_keys(self) -> tuple[Key, Key]:
         """Return the target keys for the (1) raw and (2) transformed data."""
         k = self.key or Key(
             self.name or self.measure.lower(), ("n", "y") + self.extra_dims

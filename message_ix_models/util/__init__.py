@@ -1,12 +1,19 @@
 import logging
 from collections import ChainMap, defaultdict
-from collections.abc import Callable, Collection, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Collection,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from datetime import datetime
-from functools import partial, update_wrapper
+from functools import partial, singledispatch, update_wrapper
 from importlib.metadata import version
 from itertools import count
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Literal, Optional, Protocol, Union
 
 import message_ix
 import pandas as pd
@@ -34,6 +41,8 @@ from .sdmx import CodeLike, as_codes, eval_anno
 
 if TYPE_CHECKING:
     import genno
+
+    from message_ix_models.types import MutableParameterData, ParameterData
 
 __all__ = [
     "HAS_MESSAGE_DATA",
@@ -83,17 +92,16 @@ log = logging.getLogger(__name__)
 
 
 def add_par_data(
-    scenario: message_ix.Scenario,
-    data: Mapping[str, pd.DataFrame],
-    dry_run: bool = False,
-):
+    scenario: message_ix.Scenario, data: "ParameterData", dry_run: bool = False
+) -> int:
     """Add `data` to `scenario`.
 
     Parameters
     ----------
     data
-        Dict with keys that are parameter names, and values are pd.DataFrame or other
-        arguments
+        Any mapping with keys that are valid :mod:`message_ix` parameter names, and
+        values that are pd.DataFrame or other arguments valid for
+        :meth:`message_ix.Scenario.add_par`.
     dry_run : optional
         Only show what would be done.
 
@@ -370,7 +378,13 @@ def iter_parameters(set_name, scenario: Optional["message_ix.Scenario"] = None):
                 yield name
 
 
-def make_io(src, dest, efficiency, on="input", **kwargs):
+def make_io(
+    src: tuple[str, str, str],
+    dest: tuple[str, str, str],
+    efficiency: float,
+    on: Literal["input", "output"] = "input",
+    **kwargs,
+):
     """Return input and output data frames for a 1-to-1 technology.
 
     Parameters
@@ -413,8 +427,9 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
 
 
 def make_matched_dfs(
-    base: Union[MutableMapping, pd.DataFrame], **par_value: Union[float, pint.Quantity]
-) -> dict[str, pd.DataFrame]:
+    base: Union[MutableMapping, pd.DataFrame],
+    **par_value: Union[float, pint.Quantity, dict],
+) -> "MutableParameterData":
     """Return data frames derived from `base` for multiple parameters.
 
     Creates one data frame per keyword argument.
@@ -444,14 +459,23 @@ def make_matched_dfs(
     >>>     technical_lifetime=pint.Quantity(8, "year"),
     >>> )
     """
-    data = ChainMap(dict(), base)
-    result = {}
-    for par, value in par_value.items():
-        data.maps[0] = (
-            dict(value=value.magnitude, unit=f"{value.units:~}")
-            if isinstance(value, pint.Quantity)
-            else dict(value=value)
-        )
+    replace = dict()
+    data = ChainMap(replace, base)
+    result = dict()
+    for par, values in par_value.items():
+        replace.clear()
+        if isinstance(values, dict):
+            replace.update(values)
+            value = replace.pop("value")
+        else:
+            value = values
+
+        if isinstance(value, pint.Quantity):
+            replace["value"] = value.magnitude
+            replace["unit"] = f"{value.units:~}"
+        else:
+            replace["value"] = value
+
         result[par] = (
             message_ix.make_df(par, **data).drop_duplicates().reset_index(drop=True)
         )
@@ -460,7 +484,7 @@ def make_matched_dfs(
 
 def make_source_tech(
     info: Union[message_ix.Scenario, ScenarioInfo], common, **values
-) -> dict[str, pd.DataFrame]:
+) -> "MutableParameterData":
     """Return parameter data for a ‘source’ technology.
 
     The technology has no inputs; its output commodity and/or level are determined by
@@ -523,25 +547,26 @@ def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
     return series if query is None else series.to_frame().query(query)[0]
 
 
-def merge_data(
-    base: MutableMapping[str, pd.DataFrame], *others: Mapping[str, pd.DataFrame]
-) -> None:
+def merge_data(base: "MutableParameterData", *others: "ParameterData") -> None:
     """Merge dictionaries of DataFrames together into `base`."""
     for other in others:
         for par, df in other.items():
             base[par] = pd.concat([base.get(par, None), df])
 
 
-def minimum_version(expr: str) -> Callable:
+def minimum_version(
+    expr: str, raises: Optional[Iterable[type[Exception]]] = None
+) -> Callable:
     """Decorator for functions that require a minimum version of some upstream package.
 
     If the decorated function is called and the condition in `expr` is not met,
     :class:`.NotImplementedError` is raised with an informative message.
 
-    The decorated function gains an attribute :py:`.minimum_version`, another decorator
-    that can be used on associated test code. This marks the test as XFAIL, raising
-    :class:`.NotImplementedError` or :class:`.RuntimeError` (e.g. for :mod:`.click`
-    testing).
+    The decorated function gains an attribute :py:`.minimum_version`, a pytest
+    MarkDecorator that can be used on associated test code. This marks the test as
+    XFAIL, raising :class:`.NotImplementedError` (directly); :class:`.RuntimeError` or
+    :class:`.AssertionError` (for instance, via :mod:`.click` test utilities), or any
+    of the classes given in the `raises` argument.
 
     See :func:`.prepare_reporter` / :func:`.test_prepare_reporter` for a usage example.
 
@@ -571,28 +596,26 @@ def minimum_version(expr: str) -> Callable:
 
         update_wrapper(wrapper, func)
 
-        # Create a test function decorator
-        def marker(test_func):
-            # Import pytest only when there is a test function to mark
+        try:
             import pytest
 
-            # Create the mark
-            mark = pytest.mark.xfail(
-                condition=condition,
-                raises=(NotImplementedError, RuntimeError),
-                reason=f"Not supported{message}",
+            # Create a MarkDecorator and store as an attribute of "wrapper"
+            setattr(
+                wrapper,
+                "minimum_version",
+                pytest.mark.xfail(
+                    condition=condition,
+                    raises=(
+                        NotImplementedError,  # Raised directly, above
+                        AssertionError,  # e.g. through CliRunner.assert_exit_0()
+                        RuntimeError,  # e.g. through genno.Computer
+                    )
+                    + tuple(raises or ()),  # Other exception classes
+                    reason=f"Not supported{message}",
+                ),
             )
-
-            # Attach to the test function
-            try:
-                test_func.pytestmark.append(mark)
-            except AttributeError:
-                test_func.pytestmark = [mark]
-
-            return test_func
-
-        # Store the decorator on the wrapped function
-        setattr(wrapper, "minimum_version", marker)
+        except ImportError:
+            pass  # Pytest not present; testing is not happening
 
         return wrapper
 
@@ -732,20 +755,38 @@ def replace_par_data(
             log.info(f"{len(to_remove)} obs in {par_name!r}")
 
 
-def same_node(df: pd.DataFrame, from_col="node_loc") -> pd.DataFrame:
+@singledispatch
+def same_node(data: pd.DataFrame, from_col: str = "node_loc") -> pd.DataFrame:
     """Fill 'node_{,dest,loc,origin,rel,share}' in `df` from `from_col`."""
     cols = list(
-        set(df.columns)
+        set(data.columns)
         & ({"node", "node_loc", "node_origin", "node_dest", "node_rel", "node_share"})
         - {from_col}
     )
-    return df.assign(**{c: copy_column(from_col) for c in cols})
+    return data.assign(**{c: copy_column(from_col) for c in cols})
 
 
-def same_time(df: pd.DataFrame) -> pd.DataFrame:
+@same_node.register(dict)
+def _(
+    data: "MutableParameterData", from_col: str = "node_loc"
+) -> "MutableParameterData":
+    for key, df in data.items():
+        data[key] = same_node(df, from_col=from_col)
+    return data
+
+
+@singledispatch
+def same_time(data: pd.DataFrame) -> pd.DataFrame:
     """Fill 'time_origin'/'time_dest' in `df` from 'time'."""
-    cols = list(set(df.columns) & {"time_origin", "time_dest"})
-    return df.assign(**{c: copy_column("time") for c in cols})
+    cols = list(set(data.columns) & {"time_origin", "time_dest"})
+    return data.assign(**{c: copy_column("time") for c in cols})
+
+
+@same_time.register(dict)
+def _(data: "MutableParameterData") -> "MutableParameterData":
+    for key, df in data.items():
+        data[key] = same_time(df)
+    return data
 
 
 def show_versions() -> str:
@@ -772,7 +813,7 @@ def strip_par_data(  # noqa: C901
     set_name: str,
     element: str,
     dry_run: bool = False,
-    dump: Optional[dict[str, pd.DataFrame]] = None,
+    dump: Optional["MutableParameterData"] = None,
 ) -> int:
     """Remove `element` from `set_name` in scenario, optionally dumping to `dump`.
 

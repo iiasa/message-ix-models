@@ -183,5 +183,8 @@ def generate(context: "Context", base_dir: Optional["PathLike"] = None):
         write(cl, base_dir)
 
 
+#: Enumeration of codes for SSP 2017 edition.
 SSP = SSP_2017 = make_enum("ICONICS:SSP(2017)")
+
+#: Enumeration of codes for SSP 2024 edition.
 SSP_2024 = make_enum("ICONICS:SSP(2024)")
