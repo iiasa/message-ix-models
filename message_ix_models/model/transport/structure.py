@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Sequence, Union
+from collections.abc import Sequence
+from typing import Any, Union
 
 from sdmx.model.common import Annotation, Code
 
@@ -19,24 +20,25 @@ TEMPLATE = Code(
                 dict(
                     commodity="transport vehicle {technology}",
                     level="useful",
-                    unit="km",
+                    unit="Gv km",
                 )
             ),
         ),
         Annotation(
             id="output",
             text=repr(
-                dict(commodity="transport pax {group}", level="useful", unit="km")
+                dict(commodity="transport pax {group}", level="useful", unit="Gp km")
             ),
         ),
         Annotation(id="is-disutility", text=repr(True)),
+        Annotation(id="units", text="registry.Unit('passenger / vehicle')"),
     ],
 )
 
 
 def get_technology_groups(
     technologies: Union[Spec, ScenarioInfo, Sequence["Code"]],
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """Subsets of transport technologies for aggregation and filtering."""
     if isinstance(technologies, Spec):
         t_list: Sequence["Code"] = technologies.add.set["technology"]
@@ -45,7 +47,7 @@ def get_technology_groups(
     else:
         t_list = technologies
 
-    result: Dict[str, List[str]] = {"non-ldv": []}
+    result: dict[str, list[str]] = {"non-ldv": []}
 
     # Only include those technologies with children
     for tech in filter(lambda t: len(t.child), t_list):
@@ -58,7 +60,7 @@ def get_technology_groups(
 
 
 def make_spec(regions: str) -> Spec:
-    sets: Dict[str, Any] = dict()
+    sets: dict[str, Any] = dict()
 
     # Overrides specific to regional versions
     tmp = dict()
@@ -89,7 +91,7 @@ def make_spec(regions: str) -> Spec:
         except KeyError:
             pass
 
-    # The set of required nodes varies according to context.model.regions
+    # node: the set of required nodes varies according to context.model.regions
     codelist = regions
     try:
         s["require"].set["node"].extend(map(str, get_region_codes(codelist)))
@@ -98,16 +100,21 @@ def make_spec(regions: str) -> Spec:
             f"Cannot get spec for MESSAGEix-Transport with regions={codelist!r}"
         ) from None
 
-    # Generate a spec for the generalized disutility formulation for LDVs
     # Identify LDV technologies
     techs = s.add.set["technology"]
     LDV_techs = techs[techs.index("LDV")].child
 
+    # Associate LDV techs with their output commodities
+    for t in LDV_techs:
+        output = dict(commodity=f"transport vehicle {t.id}", level="useful")
+        t.annotations.append(Annotation(id="output", text=repr(output)))
+
+    # Generate a spec for the generalized disutility formulation for LDVs
     s2 = disutility.get_spec(
         groups=s.add.set["consumer_group"], technologies=LDV_techs, template=TEMPLATE
     )
 
     # Merge the items to be added by the two specs
-    s["add"].update(s2["add"])
+    s.add.update(s2.add)
 
     return s

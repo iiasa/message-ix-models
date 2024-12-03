@@ -1,8 +1,12 @@
 import logging
 import re
+import sys
+from copy import deepcopy
+from dataclasses import asdict as asdict_stdlib
 
 import pandas as pd
 import pytest
+from ixmp.testing import assert_logs
 from message_ix import make_df
 from message_ix.testing import make_dantzig
 from pandas.testing import assert_frame_equal
@@ -11,9 +15,34 @@ from sdmx.model.v21 import Code
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.structure import get_codes, process_technology_codes
 from message_ix_models.util import as_codes
+from message_ix_models.util._dataclasses import asdict as asdict_backport
 
 
 class TestScenarioInfo:
+    @pytest.fixture(scope="class")
+    def info(self) -> ScenarioInfo:
+        return ScenarioInfo()
+
+    @pytest.mark.parametrize(
+        "func",
+        (
+            pytest.param(
+                asdict_stdlib,
+                marks=pytest.mark.xfail(
+                    condition=sys.version_info.minor <= 11,
+                    reason="https://github.com/python/cpython/issues/79721",
+                ),
+            ),
+            asdict_backport,
+        ),
+    )
+    def test_asdict(self, func, info) -> None:
+        """Test backported :func:`.asdict` works for ScenarioInfo."""
+        func(info)
+
+    def test_deepcopy(self, info) -> None:
+        deepcopy(info)
+
     def test_empty(self):
         """ScenarioInfo created from scratch."""
         info = ScenarioInfo()
@@ -170,13 +199,16 @@ class TestScenarioInfo:
         si.set["foo"] = [1, 2, 3]
         assert "<ScenarioInfo: 3 code(s) in 1 set(s)>" == repr(si)
 
-    def test_update(self):
-        si = ScenarioInfo()
-        si.par["demand"] = make_df("demand")
+    def test_update(self, caplog):
+        si0 = ScenarioInfo()
+        si0.par["demand"] = make_df("demand")
 
-        # update() fails
-        with pytest.raises(NotImplementedError):
-            ScenarioInfo().update(si)
+        si1 = ScenarioInfo()
+
+        # update() does not merge parameter data
+        with assert_logs(caplog, "Not implemented: merging parameter data"):
+            si1.update(si0)
+        assert "demand" not in si1.par
 
     @pytest.mark.parametrize(
         "codelist, y0, N_all, N_Y, y_m1, dp_checks",

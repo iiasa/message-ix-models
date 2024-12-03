@@ -124,7 +124,18 @@ def eval_anno(obj: AnnotableArtefact, id: str):
         return value
 
 
-def make_enum(urn, base=Enum):
+class URNLookupEnum(Enum):
+    """:class:`.Enum` subclass that allows looking up members using a URN."""
+
+    _urn_name: dict[str, str]
+
+    @classmethod
+    def by_urn(cls, urn: str):
+        """Return the :class:`.Enum` member given its `urn`."""
+        return cls[cls._urn_name[urn]]
+
+
+def make_enum(urn, base=URNLookupEnum):
     """Create an :class:`.enum.Enum` (or `base`) with members from codelist `urn`."""
     # Read the code list
     cl = read(urn)
@@ -134,7 +145,13 @@ def make_enum(urn, base=Enum):
     names.extend(code.id for code in cl)
 
     # Create the class
-    return base(urn, names)
+    result = base(urn, names)
+
+    if issubclass(base, URNLookupEnum):
+        # Populate the URN → member name mapping
+        result._urn_name = {code.urn: code.id for code in cl}
+
+    return result
 
 
 def read(urn: str, base_dir: Optional["PathLike"] = None):

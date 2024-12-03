@@ -97,22 +97,31 @@ commodity:
   - transport
 
   add:
-    transport freight:
+    transport F:
       name: Freight transport
       demand: true
       units: Gt km
 
-    transport freight road:
-      name: Freight transport by road
-      demand: true
+    transport F RAIL:
+      name: Freight transport by rail
       units: Gt km
+      level: useful
+      demand: true
 
-    transport freight vehicle:
-      name: Freight transport vehicle distance travelled
+    transport F ROAD:
+      name: Freight transport by road
+      units: Gt km
+      level: useful
+      demand: true
+
+    transport F RAIL vehicle:
+      name: Freight transport by rail vehicle distance travelled
+      level: useful
       units: Gv km
 
-    transport freight road vehicle:
+    transport F ROAD vehicle:
       name: Freight transport by road vehicle distance travelled
+      level: useful
       units: Gv km
 
     transport pax:

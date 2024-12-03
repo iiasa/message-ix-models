@@ -2,9 +2,10 @@
 
 import logging
 import platform
+from collections.abc import Mapping
 from contextlib import nullcontext
 from pathlib import Path
-from typing import TYPE_CHECKING, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import pytest
 from genno import Computer
@@ -26,7 +27,7 @@ log = logging.getLogger(__name__)
 
 # Common marks for transport code. Do not reuse keys that are less than the highest key
 # appearing in the dict.
-MARK = {
+MARK: dict[int, pytest.MarkDecorator] = {
     0: pytest.mark.xfail(
         reason="Missing R14 input data/assumptions", raises=FileNotFoundError
     ),
@@ -76,7 +77,7 @@ def configure_build(
     years: str,
     tmp_path: Optional[Path] = None,
     options=None,
-) -> Tuple[Computer, ScenarioInfo]:
+) -> tuple[Computer, ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
 
     # By default, omit plots while testing
@@ -175,7 +176,7 @@ def simulated_solution(request, context) -> Reporter:
     add_simulated_solution(rep, info, data)
 
     # Register the callback to set up transport reporting
-    message_ix_models.report.register(callback)
+    context.report.register(callback)
 
     # Prepare the reporter
     with silence_log("genno", logging.CRITICAL):

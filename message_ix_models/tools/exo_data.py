@@ -5,21 +5,18 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from copy import deepcopy
 from operator import itemgetter
-from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Optional
 
 from genno import Computer, Key, Quantity, quote
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import cached
 
 __all__ = [
     "MEASURES",
     "SOURCES",
     "DemoSource",
     "ExoDataSource",
-    "iamc_like_data_for_query",
     "prepare_computer",
     "register_source",
 ]
@@ -335,102 +332,3 @@ class DemoSource(ExoDataSource):
             v={"v0": "Population", "v1": "GDP"},
             y={"y0": 2010, "y1": 2050},
         )
-
-
-@cached
-def iamc_like_data_for_query(
-    path: Path,
-    query: str,
-    *,
-    archive_member: Optional[str] = None,
-    drop: Optional[list[str]] = None,
-    non_iso_3166: Literal["keep", "discard"] = "discard",
-    replace: Optional[dict] = None,
-    unique: str = "MODEL SCENARIO VARIABLE UNIT",
-    **kwargs,
-) -> Quantity:
-    """Load data from `path` in IAMC-like format and transform to :class:`.Quantity`.
-
-    The steps involved are:
-
-    1. Read the data file; use pyarrow for better performance.
-    2. Immediately apply `query` to reduce the data to be handled in subsequent steps.
-    3. Assert that Model, Scenario, Variable, and Unit are unique; store the unique
-       values. This means that `query` **must** result in data with unique values for
-       these dimensions.
-    4. Transform "Region" labels to ISO 3166-1 alpha-3 codes using
-       :func:`.iso_3166_alpha_3`.
-    5. Drop entire time series without such codes; for instance "World".
-    6. Transform to a pd.Series with "n" and "y" index levels; ensure the latter are
-       int.
-    7. Transform to :class:`.Quantity` with units.
-
-    The result is :obj:`.cached`.
-
-    Parameters
-    ----------
-    archive_member : bool, optional
-        If given, `path` may be an archive with 2 or more members. The member named by
-        `archive_member` is extracted and read.
-    non_iso_3166 : bool, optional
-        If "discard" (default), "region" labels that are not ISO 3166-1 country names
-        are discarded, along with associated data. If "keep", such labels are kept.
-    """
-    import pandas as pd
-
-    from message_ix_models.util.pycountry import iso_3166_alpha_3
-
-    unique_values = dict()
-
-    def drop_unique(df, names) -> pd.DataFrame:
-        if len(df) == 0:
-            raise RuntimeError(f"0 rows matching {query!r}")
-
-        names_list = names.split()
-        for name in names_list:
-            values = df[name].unique()
-            if len(values) > 1:
-                raise RuntimeError(f"Not unique {name!r}: {values}")
-            unique_values[name] = values[0]
-        return df.drop(names_list, axis=1)
-
-    def assign_n(df: pd.DataFrame) -> pd.DataFrame:
-        if non_iso_3166 == "discard":
-            return df.assign(n=df["REGION"].apply(iso_3166_alpha_3))
-        else:
-            return df.assign(n=df["REGION"].apply(lambda v: iso_3166_alpha_3(v) or v))
-
-    # Identify the source object/buffer to read from
-    if archive_member:
-        # A single member in a ZIP archive that has >1 members
-        import zipfile
-
-        zf = zipfile.ZipFile(path)
-        source: Any = zf.open(archive_member)
-    else:
-        # A direct path, possibly compressed
-        source = path
-
-    kwargs.setdefault("engine", "pyarrow")
-    set_index = ["n"] + sorted(
-        set(["MODEL", "SCENARIO", "VARIABLE", "UNIT"]) - set(unique.split())
-    )
-
-    tmp = (
-        pd.read_csv(source, **kwargs)
-        .drop(columns=drop or [])
-        .query(query)
-        .replace(replace or {})
-        .dropna(how="all", axis=1)
-        .rename(columns=lambda c: c.upper())
-        .pipe(drop_unique, unique)
-        .pipe(assign_n)
-        .dropna(subset=["n"])
-        .drop("REGION", axis=1)
-        .set_index(set_index)
-        .rename(columns=lambda y: int(y))
-        .rename_axis(columns="y")
-        .stack()
-        .dropna()
-    )
-    return Quantity(tmp, units=unique_values["UNIT"])

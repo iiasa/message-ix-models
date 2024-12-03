@@ -124,7 +124,7 @@ PHEV_ptrp:
   description: >-
     Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
     all-electric range)
-  input: {commodity: lightoil}
+  input: {commodity: [electr, lightoil]}
   message-v-report: LDV_PHEV
   gfei-2017-technology: Plug-in
 
@@ -197,8 +197,7 @@ Trolley_bus:
 PHEV_bus:
   description: Plug-in hybrid-electric bus using gasoline/diesel
   input:
-    commodity: lightoil
-    # commodity: [electr, lightoil]  # actually both lightoil *and* electr
+    commodity: [electr, lightoil]
   report: BUS_PHEV
 
 # BEV_bus:
@@ -285,6 +284,26 @@ FR_FCm:
   input: {commodity: methanol}
   report: FRT_MFC
 
+f road electr:
+  name: Freight road vehicle powered by electricity
+  input: {commodity: electr}
+
+f rail electr:
+  name: Freight rail powered by electricity
+  input: {commodity: electr}
+
+f rail lightoil:
+  name: Freight rail powered by light oil
+  input: {commodity: lightoil}
+
+F RAIL:
+  name: Freight rail
+  child:
+  - f rail electr
+  - f rail lightoil
+  units: Gv km
+  iea-eweb-flow: [RAIL]
+
 crail_pub:
   description: >-
     Coal-powered urban public rail transport: aggregate of metro/underground,
@@ -318,9 +337,24 @@ rail_pub:
   input: {commodity: electr}
   report: RAIL_urban_ELE
 
-transport freight road usage:
+transport F RAIL usage:
   description: >-
     Conversion from vehicle-distance traveled to freight transport activity
+  input: {commodity: transport F RAIL vehicle, level: useful}
+  output: {commodity: transport F RAIL}
+  units: tonne / vehicle
+
+transport F ROAD usage:
+  description: >-
+    Conversion from vehicle-distance traveled to freight transport activity
+  input: {commodity: transport F ROAD vehicle, level: useful}
+  output: {commodity: transport F ROAD}
+  units: tonne / vehicle
+
+F usage:
+  child:
+  - transport F RAIL usage
+  - transport F ROAD usage
 
 transport pax load factor:
   description: >-
@@ -351,7 +385,6 @@ DUMMY supply of gas: {}
 DUMMY supply of hydrogen: {}
 DUMMY supply of lightoil: {}
 DUMMY supply of methanol: {}
-
 
 transport disutility:
   description: >-
@@ -404,13 +437,22 @@ LDV:
   units: Gv km
   iea-eweb-flow: [ROAD]
 
-freight truck:
-  name: Freight trucks
+F ROAD:
+  name: Freight road vehicle
   report: Truck
   description: >-
     In MESSAGE-V, the output of all freight technologies was labelled: f-u
-  child: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
-    FR_FCg, FR_FCm]
+  child:
+  - f road electr
+  - FR_FCg
+  - FR_FCH
+  - FR_FCm
+  - FR_ICAe
+  - FR_ICE_H
+  - FR_ICE_L
+  - FR_ICE_M
+  - FR_ICG
+  - FR_ICH
   units: Gv km
   iea-eweb-flow: [ROAD]
 

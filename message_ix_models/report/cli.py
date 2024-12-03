@@ -10,10 +10,8 @@ log = logging.getLogger(__name__)
 
 def _modules_arg(context, param, value):
     """--module/-m: load extra reporting config from modules."""
-    from . import register
-
     for m in filter(len, value.split(",")):
-        name = register(m)
+        name = context.report.register(m)
         log.info(f"Registered reporting from {name}")
 
 

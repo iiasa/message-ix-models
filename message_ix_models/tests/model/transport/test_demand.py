@@ -117,7 +117,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
     assert {"demand"} == set(data.keys())
 
     # Certain labels are specifically excluded/dropped in the calculation
-    assert not {"transport pax ldv", "transport freight water"} & set(
+    assert not {"transport pax ldv", "transport F WATER"} & set(
         data["demand"]["commodity"].unique()
     )
     assert {"useful"} == set(data["demand"]["level"].unique())
@@ -317,7 +317,6 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 
 @MARK[7]
 @build.get_computer.minimum_version
-@pytest.mark.usefixtures("preserve_report_callbacks")
 @pytest.mark.parametrize(
     "nodes, target",
     [

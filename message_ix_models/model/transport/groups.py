@@ -2,7 +2,7 @@
 
 import logging
 from copy import deepcopy
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import xarray as xr
@@ -38,8 +38,8 @@ def cg_shares(
     ma3t_attitude: Quantity,
     ma3t_driver: Quantity,
     ma3t_pop: Quantity,
-    n_cd_indexers: Dict[str, xr.DataArray],
-    cg_indexers: Dict[str, xr.DataArray],
+    n_cd_indexers: dict[str, xr.DataArray],
+    cg_indexers: dict[str, xr.DataArray],
 ) -> Quantity:
     """Return shares of transport consumer groups.
 

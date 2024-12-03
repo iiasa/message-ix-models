@@ -43,13 +43,11 @@ def prepare_computer(c: "Computer") -> None:
         time="year",
         time_origin="year",
     )
+    dims = dict(
+        node_loc="n", node_origin="n", technology="t", year_vtg="y", year_act="y"
+    )
     c.add(
-        "disutility::ixmp",
-        "as_message_df",
-        key,
-        quote("input"),
-        dict(node_loc="n", node_origin="n", technology="t", year_vtg="y", year_act="y"),
-        common,
+        "disutility::ixmp", "as_message_df", key, name="input", dims=dims, common=common
     )
 
     # Add to the scenario

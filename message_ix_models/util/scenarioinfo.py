@@ -26,8 +26,8 @@ class ScenarioInfo:
     """Information about a :class:`.Scenario` object.
 
     Code that prepares data for a target Scenario can accept a ScenarioInfo instance.
-    This avoids the need to create or load an actual Scenario, which can be slow under
-    some conditions.
+    This avoids the need to create or load an actual Scenario or its data, which can be
+    a performance-limiting step.
 
     ScenarioInfo objects can also be used (for instance, by :func:`.apply_spec`) to
     describe the contents of a Scenario *before* it is created.
@@ -201,11 +201,19 @@ class ScenarioInfo:
             )
 
         for name, data_frame in other.par.items():
-            raise NotImplementedError("Merging parameter data")
+            log.warning(f"Not implemented: merging parameter data for {name!r}")
 
     def __iter__(self):
         for k in "model", "scenario", "version":
             yield (k, getattr(self, k))
+
+    def __or__(self, other) -> "ScenarioInfo":
+        if not isinstance(other, ScenarioInfo):
+            return NotImplemented
+        result = ScenarioInfo()
+        result.update(self)
+        result.update(other)
+        return result
 
     def __repr__(self):
         return (
@@ -243,9 +251,14 @@ class ScenarioInfo:
             print(self.set[set_name])
             raise
 
-        return self.set[set_name][idx].eval_annotation(
-            id="units", globals=dict(registry=pint.get_application_registry())
-        )
+        code = self.set[set_name][idx]
+
+        try:
+            return code.eval_annotation(
+                id="units", globals=dict(registry=pint.get_application_registry())
+            )
+        except AttributeError:
+            raise TypeError(f"{set_name!s} element {code!r} is str, not Code")
 
     def io_units(
         self, technology: str, commodity: str, level: Optional[str] = None
@@ -279,6 +292,28 @@ class ScenarioInfo:
                 f"commodity={commodity!r} [{c}] / technology={technology!r} [{t}]"
             )
         return c / t
+
+    def substitute_codes(self) -> None:
+        """Update the members of :attr:`set` using :func:`.get_codelist`.
+
+        Members of the following set(s) that are :class:`str` are replaced with codes
+        loaded from the corresponding code list(s), including all annotations:
+
+        - ``commodity``
+
+        .. todo:: Extend for other sets and cases where there are multiple code lists
+           (for instance ``year``, ``region``).
+        """
+        from message_ix_models.model.structure import get_codelist
+
+        for cl_id in ("commodity",):
+            cl = get_codelist(cl_id)
+            for i, value in enumerate(self.set[cl_id]):
+                if isinstance(value, str):
+                    try:
+                        self.set[cl_id][i] = cl[value]
+                    except KeyError:
+                        pass
 
     def year_from_codes(self, codes: list[sdmx_model.Code]):
         """Update using a list of `codes`.

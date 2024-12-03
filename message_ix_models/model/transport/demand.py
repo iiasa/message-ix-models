@@ -1,7 +1,7 @@
 """Demand calculation for MESSAGEix-Transport."""
 
 import logging
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 import genno
 import numpy as np
@@ -44,12 +44,14 @@ from .key import (
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
+    from .config import Config
+
 log = logging.getLogger(__name__)
 
 
 def dummy(
-    commodities: List, nodes: List[str], y: List[int], config: dict
-) -> Dict[str, pd.DataFrame]:
+    commodities: list, nodes: list[str], y: list[int], config: dict
+) -> dict[str, pd.DataFrame]:
     """Dummy demands.
 
 
@@ -81,11 +83,11 @@ def dummy(
     return dict(demand=pd.concat(dfs).pipe(broadcast, node=nodes))
 
 
-# Common positional args to as_message_df
-_demand_common = (
-    "demand",
-    dict(commodity="c", node="n", year="y"),
-    dict(level="useful", time="year"),
+# Common keyword args to as_message_df()
+_DEMAND_KW = dict(
+    name="demand",
+    dims=dict(commodity="c", node="n", year="y"),
+    common=dict(level="useful", time="year"),
 )
 
 #: Task for computing and adding demand data; inputs to :meth:`.Computer.add_queue`.
@@ -182,12 +184,9 @@ TASKS = [
     # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
     ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["ROAD"]))),
     # Relabel
-    (
-        (fv_cny, "relabel2", fv + "2"),
-        dict(new_dims={"c": "transport freight {t.lower()}"}),
-    ),
+    ((fv_cny, "relabel2", fv + "2"), dict(new_dims={"c": "transport F {t}"})),
     # Convert to ixmp format
-    ("t demand freight::ixmp", "as_message_df", fv_cny, *_demand_common),
+    (("t demand freight::ixmp", "as_message_df", fv_cny), _DEMAND_KW),
     # Select only non-LDV PDT
     ((pdt_nyt + "1", "select", pdt_nyt), dict(indexers=dict(t=["LDV"]), inverse=True)),
     # Relabel PDT
@@ -197,11 +196,11 @@ TASKS = [
     ),
     (pdt_cny, "convert_units", pdt_cny + "0", "Gp km / a"),
     # Convert to ixmp format
-    ("t demand pax non-ldv::ixmp", "as_message_df", pdt_cny, *_demand_common),
+    (("t demand pax non-ldv::ixmp", "as_message_df", pdt_cny), _DEMAND_KW),
     # Relabel ldv pdt:n-y-cg
     ((ldv_cny + "0", "relabel2", ldv_nycg), dict(new_dims={"c": "transport pax {cg}"})),
     (ldv_cny, "convert_units", ldv_cny + "0", "Gp km / a"),
-    ("t demand pax ldv::ixmp", "as_message_df", ldv_cny, *_demand_common),
+    (("t demand pax ldv::ixmp", "as_message_df", ldv_cny), _DEMAND_KW),
     # Dummy demands, if these are configured
     ("t demand dummy::ixmp", dummy, "c::transport", "nodes::ex world", y, "config"),
     # Merge all data together
@@ -244,7 +243,7 @@ def pdt_per_capita(c: Computer) -> None:
     # Add `y` dimension. Here for the future fixed point we use y=2 * max(y), e.g.
     # 4220 for y=2110. The value doesn't matter, we just need to avoid overlap with y
     # in the model.
-    def _future(qty: "AnyQuantity", years: List[int]) -> "AnyQuantity":
+    def _future(qty: "AnyQuantity", years: list[int]) -> "AnyQuantity":
         return qty.expand_dims(y=[years[-1] * 2])
 
     # Same, but adding y0
@@ -320,7 +319,13 @@ def prepare_computer(c: Computer) -> None:
     """
     from . import factor
 
-    c.apply(pdt_per_capita)
+    config: "Config" = c.graph["context"].transport
+
+    if config.project.get("LED", False):
+        # Select from the file input
+        c.add(pdt_cap, "select", exo.pdt_cap_proj, indexers=dict(scenario="LED"))
+    else:
+        c.apply(pdt_per_capita)
 
     # Insert a scaling factor that varies according to SSP setting
     c.apply(factor.insert, pdt_cap, name="pdt non-active", target=pdt_cap + "adj")

@@ -1,7 +1,7 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from genno import Key
 
@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 
 #: List of all :class:`.ExogenousDataFile`.
-FILES: List["ExogenousDataFile"] = []
+FILES: list["ExogenousDataFile"] = []
 
 
 class ExogenousDataFile:
@@ -94,8 +94,8 @@ class ExogenousDataFile:
         name: str,
         units: str,
         key: Optional["KeyLike"] = None,
-        dims: Optional[Tuple[str, ...]] = None,
-        path: Union[str, Tuple[str, ...], None] = None,
+        dims: Optional[tuple[str, ...]] = None,
+        path: Union[str, tuple[str, ...], None] = None,
         description: Optional[str] = None,
         required: bool = True,
     ):
@@ -184,7 +184,7 @@ class ExogenousDataFile:
 
     def add_tasks(
         self, c: "genno.Computer", *args, context: "Context"
-    ) -> Tuple["KeyLike", ...]:
+    ) -> tuple["KeyLike", ...]:
         """Prepare `c` to read data from a file like :attr:`.path`."""
         from message_ix_models.util.ixmp import rename_dims
 
@@ -313,10 +313,18 @@ activity_ldv = add(
     units="km / year",
 )
 
+pdt_cap_proj = add(
+    key="P activity:scenario-n-t-y:exo",
+    path="pdt-cap",
+    name="Projected passenger-distance travelled (PDT) per capita",
+    units="km / passenger / year",
+    required=False,
+)
+
 pdt_cap_ref = add(
     key=(pdt_cap / "y") + "ref",
     path="pdt-cap-ref",
-    name="Reference (historical) passenger distance travelled per capita",
+    name="Reference (historical) passenger-distance travelled (PDT) per capita",
     units="km / year",
 )
 

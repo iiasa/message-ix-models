@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from genno import Computer, Key
+    from genno.types import AnyQuantity
     from sdmx.model.v21 import Code
 
 log = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ __all__ = [
     "make_output_path",
     "model_periods",
     "nodes_ex_world",
+    "quantity_from_iamc",
     "remove_ts",
     "share_curtailment",
 ]
@@ -232,6 +234,33 @@ def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:
     _FROM_URL_REF.add(ts)
     _FROM_URL_REF.add(mp)
     return ts
+
+
+def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
+    """Extract data for a single measure from `qty` with (at least) dimensions v, u.
+
+    .. todo:: Move upstream, to either :mod:`ixmp` or :mod:`genno`.
+
+    Parameters
+    ----------
+    variable : str
+        Regular expression to match the ``v`` dimension of `qty`.
+    """
+    from genno.operator import relabel, select
+
+    expr = re.compile(variable)
+    variables, replacements = [], {}
+    for var in qty.coords["v"].data:
+        if match := expr.fullmatch(var):
+            variables.append(match.group(0))
+            replacements[match.group(0)] = match.group(1)
+
+    subset = qty.pipe(select, {"v": variables}).pipe(relabel, {"v": replacements})
+
+    unique_units = subset.coords["Unit"].data
+    assert 1 == len(unique_units)
+    subset.units = unique_units[0]
+    return subset.sel(Unit=unique_units[0], drop=True)
 
 
 # commented: currently unused
