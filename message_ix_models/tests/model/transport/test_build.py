@@ -31,6 +31,19 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+@pytest.fixture
+def N_node(request) -> int:
+    """Expected number of nodes, by introspection of other parameter values."""
+    if "build_kw" in request.fixturenames:
+        build_kw = request.getfixturevalue("build_kw")
+
+        # NB This could also be done by len(.model.structure.get_codelist(…)), but hard-
+        #    coding is probably a little faster
+        return {"ISR": 1, "R11": 11, "R12": 12, "R14": 14}[build_kw["regions"]]
+    else:
+        raise NotImplementedError
+
+
 @pytest.mark.parametrize("years", [None, "A", "B"])
 @pytest.mark.parametrize(
     "regions_arg, regions_exp",
