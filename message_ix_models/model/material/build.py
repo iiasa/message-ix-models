@@ -60,7 +60,7 @@ DATA_FUNCTIONS = [
     gen_data_steel,
     gen_data_cement,
     gen_data_petro_chemicals,
-    #gen_data_power_sector,
+    # gen_data_power_sector,
 ]
 
 # add as needed/implemented
@@ -194,7 +194,12 @@ def calibrate_existing_constraints(
     )
     with scenario.transact():
         scenario.remove_par("input", df_scrap_inp)
-
+    df_out_scrap = scenario.par(
+        "output",
+        filters={"level": "new_scrap", "commodity": "aluminum", "year_act": 2020},
+    )
+    with scenario.transact():
+        scenario.remove_par("output", df_out_scrap)
     return scenario
 
 
