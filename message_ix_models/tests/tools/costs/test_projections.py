@@ -114,3 +114,36 @@ def test_bare_res(request, test_context, node):
 
     # Scenario solves with the added data
     scenario.solve()
+
+
+@pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
+def test_ccs_costs(module):
+    cfg = Config(module=module, method="gdp")
+
+    # Function runs without error
+    result = create_cost_projections(cfg)
+
+    # Get inv cost
+    inv = result["inv_cost"]
+
+    # Get list of technologies with "ccs" in the name
+    ccs_tech = inv[inv.technology.str.contains("ccs")].technology.unique()
+
+    # Create array with "_ccs" removed from the technology names
+    tech = [t.replace("_ccs", "") for t in ccs_tech]
+
+    # Compare investment costs for technologies with and without CCS
+    non_ccs = (
+        inv[inv.technology.isin(tech)]
+        .drop(columns=["scenario_version", "unit"])
+        .set_index(["scenario", "node_loc", "year_vtg", "technology"])
+    )
+    ccs = (
+        inv[inv.technology.isin(ccs_tech)]
+        .assign(technology=lambda x: x.technology.str.replace("_ccs", ""))
+        .drop(columns=["scenario_version", "unit"])
+        .set_index(["scenario", "node_loc", "year_vtg", "technology"])
+    )
+
+    # Assert that costs for CCS technologies are greater than for non-CCS technologies
+    assert ccs.sub(non_ccs).dropna().ge(0).all().all()
