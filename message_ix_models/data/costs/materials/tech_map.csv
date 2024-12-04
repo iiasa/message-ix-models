@@ -13,7 +13,7 @@ agg_ref,"","",,,
 atm_distillation_ref,"","",30.25954286,0.021,1980
 bf_steel,"","",90.65,0.1,1990
 biomass_NH3,energy,igcc,3646.957331,0.036,1995
-biomass_NH3_ccs,energy,igcc_ccs,3876.680306,0.038,1995
+biomass_NH3_ccs,energy,igcc,3876.680306,0.038,1995
 bof_steel,"","",160.71,0.089,1990
 catalytic_cracking_ref,"","",181.5572571,0.022,1980
 catalytic_reforming_ref,"","",181.5572571,0.003,1980
@@ -22,7 +22,7 @@ clinker_dry_cement,"","",131.5,0.001,1980
 clinker_wet_ccs_cement,"","",180,0.167,1980
 clinker_wet_cement,"","",131.5,0.001,1980
 coal_NH3,energy,igcc,2917.565865,0.036,1995
-coal_NH3_ccs,energy,igcc_ccs,3087.128546,0.038,1995
+coal_NH3_ccs,energy,igcc,3087.128546,0.038,1995
 cokeoven_steel,"","",21.51,0.001,1990
 coking_ref,"","",235.4813143,0.021,1980
 dheat_aluminum,energy,heat_i,27.69,0.271,2030
@@ -50,7 +50,7 @@ feedstock_t/d,"","",,,
 finishing_aluminum,"","",,,
 finishing_steel,"","",228.92,0.1,1990
 fueloil_NH3,energy,igcc,3282.261598,0.036,1995
-fueloil_NH3_ccs,energy,igcc_ccs,3473.019614,0.038,1995
+fueloil_NH3_ccs,energy,igcc,3473.019614,0.038,1995
 furnace_biomass_aluminum,energy,biomass_i,154.32,0.267,1980
 furnace_biomass_cement,energy,biomass_i,154.32,0.267,1980
 furnace_biomass_petro,energy,biomass_i,154.32,0.267,1980
@@ -108,7 +108,7 @@ furnace_methanol_refining,energy,meth_i,57.4099999999999,0.165,2020
 furnace_methanol_resins,energy,meth_i,57.4099999999999,0.165,2020
 furnace_methanol_steel,energy,meth_i,57.4099999999999,0.165,2020
 gas_NH3,energy,igcc,2188.174399,0.036,1995
-gas_NH3_ccs,energy,igcc_ccs,2935.967579,0.038,1995
+gas_NH3_ccs,energy,igcc,2935.967579,0.038,1995
 gas_processing_petro,"","",,,
 grinding_ballmill_cement,"","",65.75,0.001,1980
 grinding_vertmill_cement,"","",85.75,0.001,1980

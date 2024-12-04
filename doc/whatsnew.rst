@@ -62,6 +62,7 @@ Investment and fixed costs
 - Change cost decay to reach reduction percentage specified on the year 2100 (:pull:`227`).
 - Add `cooling` technology variant/module (:pull:`222`).
 - Add functionality to specify cost reduction values and cost reduction scenarios in a module (:issue:`251`, :pull:`255`).
+- Fix technology mapping of ammonia CCS technologies in materials module (:pull:`258`).
 
 Others
 ------
