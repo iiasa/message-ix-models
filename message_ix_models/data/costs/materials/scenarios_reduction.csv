@@ -1,1 +1,10 @@
 message_technology,SSP1,SSP2,SSP3,SSP4,SSP5,LED
+bf_steel,very_low,medium,high,medium,high,very_low
+bof_steel,very_low,medium,high,medium,high,very_low
+dri_steel,medium,medium,low,medium,high,medium
+dri_h2_steel,very_high,low,very_low,medium,low,very_high
+eaf_steel,high,medium,low,medium,low,high
+bf_ccs_steel,medium,medium,low ,high,high,medium
+dri_gas_ccs_steel,medium,medium,low,high,high,medium
+clinker_dry_ccs_cement,medium,medium,low ,high,high,medium
+clinker_wet_ccs_cement,medium,medium,low,high,high,medium
