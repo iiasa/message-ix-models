@@ -9,7 +9,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import build, report, structure
+from message_ix_models.model.transport import build, demand, report, structure
 from message_ix_models.model.transport.ldv import TARGET
 from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
@@ -20,6 +20,7 @@ from message_ix_models.testing.check import (
     HasUnits,
     Log,
     NoneMissing,
+    NonNegative,
     Size,
     insert_checks,
 )
@@ -208,6 +209,42 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
             {"capacity_factor", "input", "output", "technical_lifetime"}
         ),
     ),
+    #
+    # The following are intermediate checks formerly in .test_demand.test_exo
+    "mode share:n-t-y:base": (HasUnits(""),),
+    "mode share:n-t-y": (HasUnits(""),),
+    "population:n-y": (HasUnits("Mpassenger"),),
+    "cg share:n-y-cg": (HasUnits(""),),
+    "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
+    "GDP:n-y:PPP+capita+index": (HasUnits(""),),
+    "votm:n-y": (HasUnits(""),),
+    "PRICE_COMMODITY:n-c-y:transport+smooth": (HasUnits("USD / km"),),
+    "cost:n-y-c-t": (HasUnits("USD / km"),),
+    # These units are implied by the test of "transport pdt:*":
+    # "transport pdt:n-y:total" [=] Mm / year
+    demand.pdt_nyt + "1": (HasUnits("passenger km / year"),),
+    demand.ldv_ny + "total": (HasUnits("Gp km / a"),),
+    # FIXME Handle dimensionality instead of exact units
+    # demand.ldv_nycg: (HasUnits({"[length]": 1, "[passenger]": 1, "[time]": -1}),),
+    "pdt factor:n-y-t": (HasUnits(""),),
+    # "fv factor:n-y": (HasUnits(""),),  # Fails: this key no longer exists
+    # "fv:n:advance": (HasUnits(""),),  # Fails: only fuzzed data in message-ix-models
+    demand.fv_cny: (HasUnits("Gt km"),),
+    #
+    # Exogenous demand calculation succeeds
+    "transport demand::ixmp": (
+        # Data is returned for the demand parameter only
+        ContainsDataForParameters({"demand"}),
+        HasCoords({"level": ["useful"]}),
+        # Certain labels are specifically excluded/dropped in the calculation
+        HasCoords(
+            {"commodity": ["transport pax ldv", "transport F WATER"]}, inverse=True
+        ),
+        # No negative values
+        NonNegative(),
+        # …plus default NoneMissing
+    ),
+    #
     # The following partly replicates .test_ldv.test_get_ldv_data()
     TARGET: (
         ContainsDataForParameters(
