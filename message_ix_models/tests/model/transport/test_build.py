@@ -1,17 +1,32 @@
 import logging
+from collections.abc import Collection
 from copy import copy
+from typing import TYPE_CHECKING, Literal
 
 import genno
 import ixmp
 import pytest
-from genno import Quantity
-from genno.testing import assert_units
 from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import build, report, structure
+from message_ix_models.model.transport.ldv import TARGET
 from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
+from message_ix_models.testing.check import (
+    ContainsDataForParameters,
+    Dump,
+    HasCoords,
+    HasUnits,
+    Log,
+    NoneMissing,
+    Size,
+    insert_checks,
+)
+
+if TYPE_CHECKING:
+    from message_ix_models.testing.check import Check
+    from message_ix_models.types import KeyLike
 
 log = logging.getLogger(__name__)
 
@@ -164,76 +179,90 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
     del mp
 
 
+CHECKS: dict["KeyLike", Collection["Check"]] = {
+    "broadcast:t-c-l:transport+input": (HasUnits("dimensionless"),),
+    "broadcast:t-c-l:transport+output": (
+        HasUnits("dimensionless"),
+        HasCoords({"commodity": ["transport F RAIL vehicle"]}),
+    ),
+    "output::transport F+ixmp": (
+        HasCoords(
+            {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
+        ),
+    ),
+    "transport F::ixmp": (
+        ContainsDataForParameters(
+            {"capacity_factor", "input", "output", "technical_lifetime"}
+        ),
+    ),
+    # The following partly replicates .test_ldv.test_get_ldv_data()
+    TARGET: (
+        ContainsDataForParameters(
+            {
+                "bound_new_capacity_lo",
+                "bound_new_capacity_up",
+                "capacity_factor",
+                "emission_factor",
+                "fix_cost",
+                "growth_activity_lo",
+                "growth_activity_up",
+                "historical_new_capacity",
+                "initial_activity_up",
+                "input",
+                "inv_cost",
+                "output",
+                "relation_activity",
+                "technical_lifetime",
+                "var_cost",
+            }
+        ),
+    ),
+}
+
+
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
-    "regions, years, N_node, options",
-    [
-        ("R12", "B", 12, dict()),
-    ],
+    "build_kw",
+    (
+        dict(regions="R11", years="A", options=dict()),
+        dict(regions="R11", years="B", options=dict()),
+        dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
+        dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
+        dict(regions="R12", years="B", options=dict()),
+        dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
+        dict(regions="R14", years="B", options=dict()),
+        param(dict(regions="ISR", years="A", options=dict()), marks=MARK[3]),
+    ),
 )
-def test_debug(test_context, tmp_path, regions, years, N_node, options):
+def test_debug(
+    test_context,
+    tmp_path,
+    build_kw,
+    N_node,
+    verbosity: Literal[0, 1, 2, 3] = 2,  # NB Increase this to show more verbose output
+):
     """Debug particular calculations in the transport build process."""
-    # Import certain keys
-    # from message_ix_models.model.transport.key import pdt_ny
+    # Get a Computer prepared to build the model with the given options
+    c, info = configure_build(test_context, tmp_path=tmp_path, **build_kw)
 
-    c, info = configure_build(
-        test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
-    )
+    # Construct a list of common checks
+    verbose: dict[int, list["Check"]] = {
+        0: [],
+        1: [Log(7)],
+        2: [Log(None)],
+        3: [Dump(tmp_path)],
+    }
+    common = [Size({"n": N_node}), NoneMissing()] + verbose[verbosity]
 
-    fail = False  # Sentinel value for deferred failure assertion
+    # Insert key-specific and common checks
+    k = "test_debug"
+    result = insert_checks(c, k, CHECKS, common)
 
-    # Check that some keys (a) can be computed without error and (b) have correct units
-    # commented: these are slow because they repeat some calculations many times.
-    # Uncommented as needed for debugging
-    for key, unit in (
-        # Uncomment and modify these line(s) to check certain values
-        # ("transport nonldv::ixmp", None),
-    ):
-        print(f"\n\n-- {key} --\n\n")
-        print(c.describe(key))
+    # Show what will be computed
+    if verbosity == 2:
+        print(c.describe(k))
 
-        # Quantity can be computed
-        result = c.get(key)
+    # Compute the test key
+    c.get(k)
 
-        # # Display the entire `result` object
-        # print(f"{result = }")
-
-        if isinstance(result, Quantity):
-            print(result.to_series().to_string())
-
-            # Quantity has the expected units
-            assert_units(result, unit)
-
-            # Quantity has the expected size on the n/node dimension
-            assert N_node == len(result.coords["n"]), result.coords["n"].data
-
-            # commented: dump to a temporary path for inspection
-            # fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
-            # dump = tmp_path.joinpath(fn).with_suffix(".csv")
-            # print(f"Dumped to {dump}")
-            # qty.to_series().to_csv(dump)
-        elif isinstance(result, dict):
-            for k, v in sorted(result.items()):
-                print(
-                    f"=== {k} ({len(v)} obs) ===",
-                    v.head().to_string(),  # Initial rows
-                    "...",
-                    v.tail().to_string(),  # Final rows
-                    # v.to_string(),  # Entire value
-                    f"=== {k} ({len(v)} obs) ===",
-                    sep="\n",
-                )
-                # print(v.tail().to_string())
-
-                # Write to file
-                # if k == "output":
-                #     v.to_csv("debug-output.csv", index=False)
-
-                missing = v.isna()
-                if missing.any(axis=None):
-                    print("… missing values")
-                    fail = True  # Fail later
-
-        assert not fail  # Any failure in the above loop
-
-    assert not fail  # Any failure in the above loop
+    assert result, "1 or more checks failed"
