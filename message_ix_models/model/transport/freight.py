@@ -53,18 +53,43 @@ def prepare_computer(c: genno.Computer):
     # Extract the 'input' data frame
     c.add(k[3], lambda d: d["input"], to_add[-1])
 
+    # Create base quantity for "output" parameter
+    # TODO Combine in a loop with "input", above—similar to .ldv
+    k_output = genno.KeySeq("F output")
+    nty = tuple("nty")
+    c.add(k_output[0] * nty, wildcard(1.0, "dimensionless", nty))
+    for i, coords in enumerate(["n::ex world", "t::F", "y::model"]):
+        c.add(
+            k_output[i + 1] * nty,
+            "broadcast_wildcard",
+            k_output[i] * nty,
+            coords,
+            dim=coords[0],
+        )
+
+    for par_name, base, ks, i in (("output", k_output[3] * nty, k_output, 3),):
+        # Produce the full quantity for input/output efficiency
+        prev = c.add(
+            ks[i + 1],
+            "mul",
+            ks[i],
+            f"broadcast:t-c-l:transport+{par_name}",
+            "broadcast:y-yv-ya:all",
+        )
+
+        # Convert to ixmp/MESSAGEix-structured pd.DataFrame
+        # NB quote() is necessary with dask 2024.11.0, not with earlier versions
+        c.add(ks[i + 2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
+
+        # Convert to target units
+        to_add.append("output::transport F+ixmp")
+        c.add(to_add[-1], convert_units, ks[i + 2], "transport info")
+
     # Produce corresponding output, capacity_factor, technical_lifetime
-    # FIXME Use "… F RAIL …" as appropriate
     c.add(
         k[4],
         partial(
             make_matched_dfs,
-            output=dict(
-                value=registry("1.0 gigatonne km"),
-                commodity="transport F ROAD vehicle",
-                level="useful",
-                time_dest=COMMON["time_dest"],
-            ),
             capacity_factor=registry.Quantity("1"),
             technical_lifetime=registry("10 year"),
         ),
