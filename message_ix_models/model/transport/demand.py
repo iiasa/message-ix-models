@@ -182,7 +182,7 @@ TASKS = [
     # Apply the adjustment factor
     (fv + "1", "mul", fv + "0", "fv factor:n-t-y"),
     # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
-    ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["ROAD"]))),
+    ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["RAIL", "ROAD"]))),
     # Relabel
     ((fv_cny, "relabel2", fv + "2"), dict(new_dims={"c": "transport F {t}"})),
     # Convert to ixmp format
