@@ -65,7 +65,7 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
     )
 
     data = c.get("transport demand::ixmp")
-    # data = c.get("t demand pax non-ldv::ixmp")
+    # data = c.get("demand::P+ixmp")
 
     # Returns a dict with a single key/data frame
     assert {"demand"} == set(data.keys())
