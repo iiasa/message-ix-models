@@ -2,3 +2,12 @@
 # ,,,,,,
 # Units: %  ,,,,,,
 message_technology,technology_type,very_low,low,medium,high,very_high
+bf_steel,Materials,0,0.1,0.2,0.3,0.4
+bof_steel,Materials,0,0.1,0.2,0.3,0.4
+dri_steel,Materials,0,0.1,0.2,0.3,0.4
+dri_h2_steel,Materials,0,0.1,0.2,0.3,0.4
+eaf_steel,Materials,0,0.1,0.2,0.3,0.4
+bf_ccs_steel,Materials,0,0.1,0.3,0.5,0.7
+dri_gas_ccs_steel,Materials,0,0.1,0.3,0.5,0.7
+clinker_dry_ccs_cement,Materials,0,0.1,0.3,0.5,0.7
+clinker_wet_ccs_cement,Materials,0,0.1,0.3,0.5,0.7
