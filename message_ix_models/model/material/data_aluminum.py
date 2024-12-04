@@ -477,7 +477,7 @@ def gen_data_aluminum(
     trade_dict = gen_data_alu_trade(scenario)
     alumina_trd = gen_alumina_trade_tecs(s_info)
     growth_constr_dict = gen_2020_growth_constraints(s_info)
-
+    ref_heat_input = gen_refining_input(s_info)
     results_aluminum = combine_df_dictionaries(
         const_dict,
         ts_dict,
@@ -486,6 +486,7 @@ def gen_data_aluminum(
         trade_dict,
         growth_constr_dict,
         alumina_trd,
+        ref_heat_input
     )
     reduced_pdict = {}
     for k, v in results_aluminum.items():
@@ -835,17 +836,17 @@ def gen_hist_new_cap(s_info):
     # (the only region where soderberg is still developed)
     cols = {
         "technology": "soderberg_aluminum",
-        "value": 0,
+        "value": 0.05,
         "unit": "GW",
-        "node_loc": [
-            i for i in nodes_ex_world(s_info.N) if i not in ["R12_FSU"]
-        ],
+        "node_loc": [i for i in nodes_ex_world(s_info.N) if i not in ["R12_FSU"]],
     }
     df_soder_up = make_df("fixed_new_capacity", **cols).pipe(
         broadcast, year_vtg=s_info.Y[1:]
     )
-    return {"historical_new_capacity": pd.concat([hist_new_cap_ss, hist_new_cap_pb]),
-            "fixed_new_capacity": df_soder_up}
+    return {
+        "historical_new_capacity": pd.concat([hist_new_cap_ss, hist_new_cap_pb]),
+        "fixed_new_capacity": df_soder_up,
+    }
 
 
 def compute_differences(df, ref_col):
@@ -1218,19 +1219,81 @@ def calibrate_2020_furnaces(s_info):
     return {"bound_activity_lo": test_r12, "bound_activity_up": zbounds}
 
 
+def gen_refining_input(s_info):
+    # read IAI refining statistics and format
+    path = package_data_path("material", "aluminum")
+    df_ref_int = pd.read_csv(path.joinpath("alu_ref_int_1985_2023.csv"), sep=";")
+    df_ref_int = df_ref_int.melt(
+        id_vars=["Period"], value_vars=df_ref_int.columns[1:], var_name="Region"
+    ).rename(columns={"Period": "Year"})
+    df_ref_int.value = pd.to_numeric(df_ref_int.value, errors="coerce")
+
+    # map from IAI regions to R12 regions based on country grouping listed in
+    # https://international-aluminium.org/statistics/metallurgical-alumina-refining-fuel-consumption/
+    # in the -Areas dropdown menu
+    iai_int_r12_map = {
+        "Africa & Asia (ex China)": ["R12_AFR", "R12_PAS", "R12_SAS", "R12_RCPA"],
+        "North America": ["R12_NAM"],
+        "Europe": ["R12_WEU", "R12_EEU", "R12_FSU"],
+        "Oceania": ["R12_PAO"],
+        "South America": ["R12_LAM"],
+        "China": ["R12_CHN"],
+    }
+    iai_int_r12_map = {k: v[0] for k, v in invert_dictionary(iai_int_r12_map).items()}
+
+    df_act = (
+        pd.Series(iai_int_r12_map)
+        .to_frame()
+        .reset_index()
+        .set_index(0)
+        .merge(df_ref_int, left_on=0, right_on="Region")
+        .drop(columns=["key_0"])
+        .drop_duplicates()
+    )
+
+    # select 2020 statistics as input for refing_aluminum technology
+    # format to "input" parameter dataframe
+    df_msg = (
+        df_act[df_act["Year"] == 2020]
+        .rename(columns={"index": "node_loc"})
+        .drop(columns="Region")
+    )
+    df_msg.value /= 3.6 * 8760
+    df_msg.value = df_msg.value.round(5)
+    df_msg = df_msg.assign(
+        technology="refining_aluminum",
+        mode="M1",
+        commodity="ht_heat",
+        level="useful_aluminum",
+        time="year",
+        time_origin="year",
+        unit="GWa",
+    )
+    df_msg = (
+        make_df("input", **df_msg)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.yv_ya.year_act.unique())
+    )
+    df_msg["year_vtg"] = df_msg["year_act"]
+    return {"input": df_msg}
+
+
 if __name__ == "__main__":
-    test = calibrate_2020_furnaces(s_info=["test"])
+    # test = calibrate_2020_furnaces(s_info=["test"])
     import ixmp
     import message_ix
 
     from message_ix_models.model.material.build import make_spec
     # gen_smelting_hist_act()
 
-    mp = ixmp.Platform("local2")
-    scen = message_ix.Scenario(mp, "SSP2", "baseline")
-    # scen = message_ix.Scenario(
-    #     mp, "SSP_dev_SSP2_v1.0_Blv1.0", "baseline_prep_lu_bkp_solved"
-    # )
+    # mp = ixmp.Platform("local2")
+    # scen = message_ix.Scenario(mp, "SSP2", "baseline")
+    mp = ixmp.Platform("ixmp_dev")
+    scen = message_ix.Scenario(
+        mp, "SSP_dev_SSP2_v1.0_Blv1.0", "baseline_prep_lu_bkp_solved"
+    )
+    s_info = ScenarioInfo(scen)
+    gen_refining_input(s_info)
 
     spec = make_spec("R12")
     gen_demand(scenario=scen, ssp="SSP5")

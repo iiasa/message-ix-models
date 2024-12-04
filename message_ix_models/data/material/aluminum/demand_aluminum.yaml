@@ -1,6 +1,6 @@
 - R12_AFR:
     year: 2020
-    value: 3.0
+    value: 2.75
 - R12_RCPA:
     year: 2020
     value: 2.0
@@ -9,7 +9,7 @@
     value: 5.3
 - R12_FSU:
     year: 2020
-    value: 5.0
+    value: 4.85
 - R12_LAM:
     year: 2020
     value: 2.6
