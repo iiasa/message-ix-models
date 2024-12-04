@@ -302,6 +302,7 @@ F RAIL:
   - f rail electr
   - f rail lightoil
   units: Gv km
+  output: {commodity: transport F RAIL vehicle}
   iea-eweb-flow: [RAIL]
 
 crail_pub:
@@ -454,7 +455,27 @@ F ROAD:
   - FR_ICG
   - FR_ICH
   units: Gv km
+  output: {commodity: transport F ROAD vehicle}
   iea-eweb-flow: [ROAD]
+
+F:  # Freight modes
+  # TODO Prepare this hierarchically from the following
+  # child:
+  # - F RAIL
+  # - F ROAD
+  child:
+  - f rail electr
+  - f rail lightoil
+  - f road electr
+  - FR_FCg
+  - FR_FCH
+  - FR_FCm
+  - FR_ICAe
+  - FR_ICE_H
+  - FR_ICE_L
+  - FR_ICE_M
+  - FR_ICG
+  - FR_ICH
 
 AIR:
   name: Aviation
