@@ -199,7 +199,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         HasUnits("dimensionless"),
         HasCoords({"commodity": ["transport F RAIL vehicle"]}),
     ),
-    "output::transport F+ixmp": (
+    "output::F+ixmp": (
         HasCoords(
             {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
         ),

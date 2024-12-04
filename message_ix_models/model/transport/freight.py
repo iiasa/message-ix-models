@@ -26,6 +26,9 @@ DIMS = dict(
     level="l",
 )
 
+#: Shorthand for tags on keys
+Fi = "::F+ixmp"
+
 
 def prepare_computer(c: genno.Computer):
     from genno.core.attrseries import AttrSeries
@@ -47,7 +50,7 @@ def prepare_computer(c: genno.Computer):
     c.add(k[2], "as_message_df", prev, name="input", dims=DIMS, common=COMMON)
 
     # Convert units
-    to_add.append("input::transport F+ixmp")
+    to_add.append(f"input{Fi}")
     c.add(to_add[-1], convert_units, k[2], "transport info")
 
     # Extract the 'input' data frame
@@ -82,7 +85,7 @@ def prepare_computer(c: genno.Computer):
         c.add(ks[i + 2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
 
         # Convert to target units
-        to_add.append("output::transport F+ixmp")
+        to_add.append(f"output{Fi}")
         c.add(to_add[-1], convert_units, ks[i + 2], "transport info")
 
     # Produce corresponding output, capacity_factor, technical_lifetime
@@ -100,7 +103,7 @@ def prepare_computer(c: genno.Computer):
     c.add(k[5], convert_units, k[4], "transport info")
 
     # Fill values
-    to_add.append("other::transport F+ixmp")
+    to_add.append(f"other{Fi}")
     c.add(to_add[-1], same_node, k[5])
 
     # Base values for conversion technologies
@@ -116,7 +119,7 @@ def prepare_computer(c: genno.Computer):
 
     # Convert output to MESSAGE data structure
     c.add(k[10], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
-    to_add.append("usage output::transport F+ixmp")
+    to_add.append(f"usage output{Fi}")
     c.add(to_add[-1], lambda v: same_time(same_node(v)), k[10])
 
     # Create corresponding input values in Gv km
@@ -133,7 +136,7 @@ def prepare_computer(c: genno.Computer):
     prev = c.add(
         k[i + 3], "as_message_df", prev, name="input", dims=DIMS, common=COMMON
     )
-    to_add.append("usage input::transport F+ixmp")
+    to_add.append(f"usage input{Fi}")
     c.add(to_add[-1], prev)
 
     # Merge data to one collection

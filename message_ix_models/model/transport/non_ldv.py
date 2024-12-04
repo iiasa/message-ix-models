@@ -57,6 +57,10 @@ Source: Extracted from IEA EWEB, 2022 OECD edition
 Units: TJ
 """
 
+#: Shorthand for tags on keys
+Oi = "::O+ixmp"
+Pi = "::P+ixmp"
+
 
 def prepare_computer(c: Computer):
     from . import files as exo
@@ -85,7 +89,7 @@ def prepare_computer(c: Computer):
         keys.append(k + "emi")
 
     # Data for usage technologies
-    k_usage = "transport nonldv usage::ixmp"
+    k_usage = f"transport usage{Pi}"
     keys.append(k_usage)
     c.add(k_usage, usage_data, exo.load_factor_nonldv, t_modes, n, y)
 
@@ -123,7 +127,7 @@ def prepare_computer(c: Computer):
     # Add minimum activity for transport technologies
     keys.extend(iter_keys(c.apply(bound_activity_lo)))
 
-    k_constraint = "constraints::ixmp+transport+non-ldv"
+    k_constraint = f"constraints{Pi}"
     keys.append(k_constraint)
     c.add(k_constraint, constraint_data, "t::transport", t_modes, n, y, "config")
 
@@ -131,7 +135,7 @@ def prepare_computer(c: Computer):
     keys.extend(bound_activity(c))
 
     # Add to the scenario
-    k_all = "transport nonldv::ixmp"
+    k_all = f"transport{Pi}"
     c.add(k_all, "merge_data", *keys)
     c.add("transport_data", __name__, key=k_all)
 
@@ -189,7 +193,7 @@ def bound_activity(c: "Computer") -> list[Key]:
         dims=dict(node_loc="n", technology="t", year_act="y"),
         common=dict(mode="all", time="year"),
     )
-    k_bau = Key("bound_activity_up::non_ldv+ixmp")
+    k_bau = Key(f"bound_activity_up{Pi}")
     c.add(k_bau, "as_message_df", base, name=k_bau.name, **kw)
 
     return [k_bau]
@@ -352,9 +356,9 @@ def other(c: Computer, base: Key) -> list[Key]:
         dims=dict(node_loc="n", technology="t", year_act="y"),
         common=dict(mode="all", time="year"),
     )
-    k_bal = Key("bound_activity_lo::transport other+ixmp")
+    k_bal = Key(f"bound_activity_lo{Oi}")
     c.add(k_bal, "as_message_df", k_cnty.prev, name=k_bal.name, **kw)
-    k_bau = Key("bound_activity_up::transport other+ixmp")
+    k_bau = Key(f"bound_activity_up{Oi}")
     c.add(k_bau, "as_message_df", k_cnty.prev, name=k_bau.name, **kw)
 
     # Divide by self to ensure values = 1.0 but same dimensionality
@@ -365,10 +369,10 @@ def other(c: Computer, base: Key) -> list[Key]:
     # Produce MESSAGE parameter input:nl-t-yv-ya-m-no-c-l-h-ho
     kw["dims"].update(commodity="c", node_origin="n", year_vtg="y")
     kw["common"].update(level="final", time_origin="year")
-    k_input = Key("input::transport other+ixmp")
+    k_input = Key(f"input{Oi}")
     c.add(k_input, "as_message_df", k_cnty.prev, name=k_input.name, **kw)
 
-    result = Key("transport other::ixmp")
+    result = Key(f"transport{Oi}")
     c.add(result, "merge_data", k_bal, k_bau, k_input)
     return [result]
 
