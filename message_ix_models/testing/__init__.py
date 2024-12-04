@@ -312,7 +312,7 @@ def export_test_data(context: Context):
     # Retrieve the type mapping first, to be modified as sheets are discarded
     ix_type_mapping = reader.parse("ix_type_mapping").set_index("item")
 
-    for name in reader.sheet_names:
+    for name in map(str, reader.sheet_names):
         # Check if this sheet is to be included
         if name == "ix_type_mapping":
             # Already handled
