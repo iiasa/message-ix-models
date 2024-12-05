@@ -50,6 +50,7 @@ Water/Nexus
 - Make setup of constraints for cooling technologies flexible and update solar CSP technology name (:pull:`242`).
 - Connect :mod:`.model.water` to :mod:`.tools.costs` for cooling technologies (:pull:`245`).
 - Introduce an SSP configuration for cooling technologies with share constraints (:pull:`256`).
+- Change SSP parameters and add missing CSP data (:pull:`262`).
 
 Investment and fixed costs
 --------------------------

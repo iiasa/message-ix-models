@@ -55,7 +55,10 @@ scenarios:
   LED:
     cooling_tech:
       globalNorth:
-        share_commodity_up: &share_LED_common
-          share_cooling_air: 0.1
+      # constraints for the globalNorth
+        share_commodity_up:
+          share_cooling_ot_fresh: 0.001
       globalSouth:
-        share_commodity_up: *share_LED_common
+      # constraints for the globalSouth
+        share_commodity_up:
+          share_cooling_ot_fresh: 0.1
