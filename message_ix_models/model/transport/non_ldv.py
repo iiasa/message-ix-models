@@ -119,8 +119,7 @@ def prepare_computer(c: Computer):
 
     # Handle data from the file energy-other.csv
     try:
-        k = Key("energy:c-nl:transport other")
-        keys.extend(iter_keys(c.apply(other, k)))
+        keys.extend(iter_keys(c.apply(other, exo.energy_other)))
     except MissingKeyError:
         log.warning(f"No key {k!r}; unable to add data for 'transport other *' techs")
 

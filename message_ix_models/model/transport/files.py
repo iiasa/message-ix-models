@@ -229,6 +229,12 @@ def add(*, replace: bool = False, **kwargs):
         exception.
     kwargs :
         Passed on to :class:`ExogenousDataFile`.
+
+    Returns
+    -------
+    Key
+        The :attr:`ExogenousDataFile.key` at which the loaded and transformed data will
+        be available.
     """
     edf = ExogenousDataFile(**kwargs)
 
