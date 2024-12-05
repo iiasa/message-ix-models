@@ -199,7 +199,10 @@ def bound_activity(c: "Computer") -> list[Key]:
 
 
 def bound_activity_lo(c: Computer) -> list[Key]:
-    """Set minimum activity for certain technologies to ensure |y0| energy use."""
+    """Set minimum activity for certain technologies to ensure |y0| energy use.
+
+    Responds to values in :attr:`.Config.minimum_activity`.
+    """
 
     @lru_cache
     def techs_for(mode: Code, commodity: str) -> list[Code]:
