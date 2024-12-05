@@ -386,7 +386,13 @@ def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
                         "technology",
                     ]
 
+                    print("debug")
+                    print(data_steel_rel)
+                    print(r)
+                    print(par_name)
+                    print(reg)
                     for tec in tec_list.unique():
+                        print(tec)
                         val = data_steel_rel.loc[
                             (
                                 (data_steel_rel["relation"] == r)
@@ -489,25 +495,30 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         )
 
     # Add relation for the maximum global scrap use in 2020
-    df_max_recycling = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "year_act": 2020,
-            "node_loc": nodes,
-            "technology": "scrap_recovery_steel",
-            "mode": "M1",
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_activity")
-                ),
-                "value",
-            ].values[0],
-        }
-    )
+    for t in ['scrap_recovery_steel_1', 'scrap_recovery_steel_2',
+                                        'scrap_recovery_steel_3']:
+        df_max_recycling = pd.DataFrame(
+            {
+                "relation": "max_global_recycling_steel",
+                "node_rel": "R12_GLB",
+                "year_rel": 2020,
+                "year_act": 2020,
+                "node_loc": nodes,
+                "technology": t,
+                "mode": "M1",
+                "unit": "???",
+                "value": data_steel_rel.loc[
+                    (
+                        (data_steel_rel["relation"] == "max_global_recycling_steel")
+                        & (data_steel_rel["parameter"] == "relation_activity")
+                    ),
+                    "value",
+                ].values[0],
+            }
+        )
+
+        results["relation_activity"].append(df_max_recycling)
+
     df_max_recycling_upper = pd.DataFrame(
         {
             "relation": "max_global_recycling_steel",
@@ -540,7 +551,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         },
         index=[0],
     )
-    results["relation_activity"].append(df_max_recycling)
+
     results["relation_upper"].append(df_max_recycling_upper)
     results["relation_lower"].append(df_max_recycling_lower)
     # Add relations for scrap grades and availability
