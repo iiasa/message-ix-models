@@ -341,7 +341,9 @@ steel:
     - demand
     - dummy_emission
     - end_of_life
-    - dummy_end_of_life
+    - dummy_end_of_life_1
+    - dummy_end_of_life_2
+    - dummy_end_of_life_3
     - dummy_ccs
 
   technology:
@@ -363,7 +365,9 @@ steel:
     - prep_secondary_steel_3
     - finishing_steel
     - manuf_steel
-    - scrap_recovery_steel
+    - scrap_recovery_steel_1
+    - scrap_recovery_steel_2
+    - scrap_recovery_steel_3
     - DUMMY_ore_supply
     - DUMMY_limestone_supply_steel
     - DUMMY_coal_supply
