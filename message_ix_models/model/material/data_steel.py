@@ -386,13 +386,7 @@ def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
                         "technology",
                     ]
 
-                    print("debug")
-                    print(data_steel_rel)
-                    print(r)
-                    print(par_name)
-                    print(reg)
                     for tec in tec_list.unique():
-                        print(tec)
                         val = data_steel_rel.loc[
                             (
                                 (data_steel_rel["relation"] == r)
