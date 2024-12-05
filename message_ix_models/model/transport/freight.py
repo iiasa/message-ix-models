@@ -53,9 +53,6 @@ def prepare_computer(c: genno.Computer):
     to_add.append(f"input{Fi}")
     c.add(to_add[-1], convert_units, k[2], "transport info")
 
-    # Extract the 'input' data frame
-    c.add(k[3], lambda d: d["input"], to_add[-1])
-
     # Create base quantity for "output" parameter
     # TODO Combine in a loop with "input", above—similar to .ldv
     k_output = genno.KeySeq("F output")
@@ -88,7 +85,10 @@ def prepare_computer(c: genno.Computer):
         to_add.append(f"output{Fi}")
         c.add(to_add[-1], convert_units, ks[i + 2], "transport info")
 
-    # Produce corresponding output, capacity_factor, technical_lifetime
+    # Extract the 'output' data frame
+    c.add(k[3], lambda d: d["output"], to_add[-1])
+
+    # Produce corresponding capacity_factor and technical_lifetime
     c.add(
         k[4],
         partial(

@@ -199,10 +199,12 @@ CHECKS = {
             {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
         ),
     ),
+    "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
     "transport F::ixmp": (
         ContainsDataForParameters(
             {"capacity_factor", "input", "output", "technical_lifetime"}
         ),
+        # HasCoords({"technology": ["f rail electr"]}),
     ),
     #
     # The following are intermediate checks formerly in .test_demand.test_exo
