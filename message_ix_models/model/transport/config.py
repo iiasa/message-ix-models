@@ -70,8 +70,10 @@ class Config(ConfigHelper):
             "non-LDV growth_activity_lo": -0.0192 * 1.0,
             "non-LDV growth_activity_up": 0.0192 * 2.0,
             "non-LDV growth_new_capacity_up": 0.0192 * 1.0,
-            "non-LDV initial_activity_up": 1.0,
-            "non-LDV initial_new_capacity_up": 1.0,
+            # NB If these values are not large enough, they can cause infeasibilities in
+            #    the base period for technologies that do not have historical_activity
+            "non-LDV initial_activity_up": 2.0,
+            "non-LDV initial_new_capacity_up": 2.0,
         }
     )
 
