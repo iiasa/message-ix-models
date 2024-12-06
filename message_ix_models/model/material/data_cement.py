@@ -171,12 +171,16 @@ def gen_data_cement(
     ssp = get_ssp_from_context(context)
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
-    context.datafile = "Global_steel_cement_MESSAGE.xlsx"
 
     # Techno-economic assumptions
-    data_cement = read_sector_data(scenario, "cement", "Global_cement_MESSAGE.xlsx")
+    # TEMP: now add cement sector as well
+    data_cement = read_sector_data(
+        scenario, "cement", ssp, "Global_cement_MESSAGE.xlsx"
+    )
     # Special treatment for time-dependent Parameters
-    data_cement_ts = read_timeseries(scenario, "cement", "Global_cement_MESSAGE.xlsx")
+    data_cement_ts = read_timeseries(
+        scenario, "cement", ssp, "Global_cement_MESSAGE.xlsx"
+    )
     tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
@@ -352,7 +356,12 @@ def gen_data_cement(
 
     # Create external demand param
     parname = "demand"
+    df_2025 = pd.read_csv(
+        package_data_path("material", "cement", "demand_2025.csv")
+    )
     df_demand = material_demand_calc.derive_demand("cement", scenario, ssp=ssp)
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
     results[parname].append(df_demand)
 
     # Add CCS as addon
@@ -380,13 +389,21 @@ def gen_data_cement(
                 df_demand=df_demand.copy(deep=True),
                 technology="clinker_dry_ccs_cement",
                 material="cement",
+                ssp = ssp
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True),
                 technology="clinker_wet_ccs_cement",
                 material="cement",
+                ssp = ssp
             ),
         ]
     )
 
-    return results
+    reduced_pdict = {}
+    for k,v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict
