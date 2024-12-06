@@ -1093,52 +1093,6 @@ co2_stor:
       bic_co2: 1
     level:
       final: 1
-  output_co2:
-    par_name: output
-    value: 0.99
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    mode:
-      M1: 1
-    commodity:
-      fic_co2: 1
-    level:
-      useful: 1
-  output_bco2:
-    par_name: output
-    value: 0.99
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    mode:
-      M2: 1
-    commodity:
-      bic_co2: 1
-    level:
-      useful: 1
   capacity_factor_:
     par_name: capacity_factor
     value: 1
