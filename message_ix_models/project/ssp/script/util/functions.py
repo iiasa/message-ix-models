@@ -382,27 +382,27 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
         ccs_ssp_pars = {
             "LED": {
                 "co2storage": 0.25,
-                "co2rate": 4000 / 3.667,
+                "co2rate": 6000 / 3.667,
             },
             "SSP1": {
                 "co2storage": 0.25,
-                "co2rate": 4000 / 3.667,
+                "co2rate": 6000 / 3.667,
             },
             "SSP2": {
                 "co2storage": 0.50,
-                "co2rate": 9000 / 3.667,
+                "co2rate": 16500 / 3.667,
             },
             "SSP3": {
                 "co2storage": 1.00,
-                "co2rate": 15000 / 3.667,
+                "co2rate": 18750 / 3.667,
             },
             "SSP4": {
                 "co2storage": 1.00,
-                "co2rate": 15000 / 3.667,
+                "co2rate": 35000 / 3.667,
             },
             "SSP5": {
                 "co2storage": 1.00,
-                "co2rate": 15000 / 3.667,
+                "co2rate": 35000 / 3.667,
             },
         }
 
