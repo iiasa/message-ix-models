@@ -64,9 +64,9 @@ R12_RCPA, BUS,        0.30
 R12_RCPA, LDV,        0.16
 R12_RCPA, RAIL,       0.30
 R12_SAS,  2W,         0.24
-R12_SAS,  AIR,        0.07
-R12_SAS,  BUS,        0.33
-R12_SAS,  LDV,        0.20
+R12_SAS,  AIR,        0.04
+R12_SAS,  BUS,        0.34
+R12_SAS,  LDV,        0.22
 R12_SAS,  RAIL,       0.16
 R12_WEU,  2W,         0.02
 R12_WEU,  AIR,        0.09
