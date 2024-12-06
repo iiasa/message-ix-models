@@ -59,7 +59,7 @@ def test_configure_legacy():
     "regions, years",
     (
         param("R11", "A", marks=MARK[2](ValueError)),
-        ("R12", "A"),
+        ("R12", "B"),
         param("R14", "A", marks=MARK[2](genno.ComputationError)),
         param("ISR", "A", marks=MARK[3]),
     ),
