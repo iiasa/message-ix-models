@@ -44,6 +44,8 @@ def read_data_aluminum(
     """
 
     # Ensure config is loaded, get the context
+    context = read_config()
+    ssp = get_ssp_from_context(context)
     s_info = ScenarioInfo(scenario)
 
     # Shorter access to sets configuration
@@ -55,16 +57,16 @@ def read_data_aluminum(
 
     # Read the file
     data_alu = pd.read_excel(
-        package_data_path("material", "aluminum", fname), sheet_name=sheet_n
+        package_data_path("material", "aluminum", ssp, fname), sheet_name=sheet_n
     )
 
     # Drop columns that don't contain useful information
     data_alu = data_alu.drop(["Source", "Description"], axis=1)
 
-    data_alu_rel = read_rel(scenario, "aluminum", None, "aluminum_techno_economic.xlsx")
+    data_alu_rel = read_rel(scenario, "aluminum", ssp, "aluminum_techno_economic.xlsx")
 
     data_aluminum_ts = read_timeseries(
-        scenario, "aluminum", None, "aluminum_techno_economic.xlsx"
+        scenario, "aluminum", ssp, "aluminum_techno_economic.xlsx"
     )
 
     # Unit conversion
