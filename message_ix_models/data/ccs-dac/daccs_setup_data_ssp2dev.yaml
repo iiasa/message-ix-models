@@ -1199,29 +1199,6 @@ co2_stor:
       dac_co2: 1
     level:
       final: 1
-  output_dacco2:
-    par_name: output
-    value: 0.99
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    mode:
-      M3: 1
-    commodity:
-      dac_co2: 1
-    level:
-      useful: 1
   relation_activity_CO2_Emission:
     par_name: relation_activity
     value: -0.99
