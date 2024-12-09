@@ -419,6 +419,8 @@ def split_fe_other(
         ["Coal", "Gas", "Biomass", "Hydrogen"],
     ):
         df_shrs = pd.DataFrame(rep.get(f"share::{c}methanol-final"))
+        if df_shrs.empty:
+            continue
         df_shrs = df_shrs.reset_index()
         df_shrs.rename(columns={"nl": "Region"}, inplace=True)
         df_shrs = df_shrs.pivot(columns="ya", values=0, index="Region")
