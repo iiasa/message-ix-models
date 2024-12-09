@@ -35,7 +35,8 @@ from message_ix_models.model.material.data_util import (
     modify_demand_and_hist_activity,
     modify_industry_demand,
     add_share_const_clinker_substitutes,
-    add_infrastructure_reporting
+    add_infrastructure_reporting,
+    add_bound_on_dummy_lignin
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
@@ -56,10 +57,15 @@ from message_ix_models.util.compat.message_data import (
 from message_ix_models.model.material.scenario_run.supply_side_scenarios import (
     no_substitution,
     no_ccs,
+    no_h2_steel,
+    no_methanol_cement,
+    no_h2_cement,
+    no_ethanol_cement,
     increased_recycling,
     limit_asphalt_recycling,
     industry_sector_net_zero_targets,
-    keep_fuel_share
+    keep_fuel_share,
+    minimum_ccs_cement
 )
 
 log = logging.getLogger(__name__)
@@ -132,6 +138,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     add_coal_lowerbound_2020(scenario)
     add_cement_bounds_2020(scenario)
     add_share_const_clinker_substitutes(scenario)
+    add_bound_on_dummy_lignin(scenario)
 
 
     # Market penetration adjustments
@@ -406,7 +413,11 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         # Material substituion allowed.
         no_ccs(scenario)
         limit_asphalt_recycling(scenario)
-        keep_fuel_share(sceanrio)
+        keep_fuel_share(scenario)
+        no_h2_steel(scenario)
+        no_methanol_cement(scenario)
+        no_h2_cement(scenario)
+        no_ethanol_cement(scenario)
     elif supply_scenario == "fuel_switching":
         # No material substitution
         # Recycling as today
@@ -422,7 +433,12 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         log.info("Building ccs scenario")
         no_substitution(scenario)
         limit_asphalt_recycling(scenario)
-        keep_fuel_share(sceanrio)
+        keep_fuel_share(scenario)
+        no_h2_steel(scenario)
+        no_methanol_cement(scenario)
+        no_ethanol_cement(scenario)
+        no_h2_cement(scenario)
+        # minimum_ccs_cement(scenario)
     elif supply_scenario == "recycling":
         # No material substitution
         # Recycling increased for steel and alu.
@@ -433,11 +449,20 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         no_substitution(scenario)
         increased_recycling(scenario)
         no_ccs(scenario)
-        keep_fuel_share(sceanrio)
+        keep_fuel_share(scenario)
+        no_h2_steel(scenario)
+        no_methanol_cement(scenario)
+        no_ethanol_cement(scenario)
+        no_h2_cement(scenario)
     elif supply_scenario == "default":
         log.info("Default mode")
         limit_asphalt_recycling(scenario)
         no_substitution(scenario)
+        keep_fuel_share(scenario)
+        no_h2_steel(scenario)
+        no_methanol_cement(scenario)
+        no_ethanol_cement(scenario)
+        no_h2_cement(scenario)
     elif supply_scenario == "all":
         increased_recycling(scenario)
         # industry_sector_net_zero_targets(scenario)
@@ -518,8 +543,8 @@ def solve_scen(
         if not scenario.has_solution():
             scenario.solve(
                 model="MESSAGE", solve_options={"lpmethod": "4",
-                # "scaind": "-1",
-                "predual":"1"
+                "scaind": "-1",
+                # "predual":"1"
 
                 }
             )
@@ -580,8 +605,8 @@ def solve_scen(
         # Solve
         print("Solving the scenario without MACRO")
         scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4",
-        "predual":"1",
-        # "scaind": "-1"
+        # "predual":"1",
+        "scaind": "-1"
         })
         scenario.set_as_default()
 
@@ -846,7 +871,11 @@ def run_cbud_scenario(context, model, scenario, budget):
     scenario_cbud.set("cat_year", {"type_year": "cumulative"})
 
     # scenario_cbud.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
-    scenario_cbud.solve(model="MESSAGE", solve_options={"predual": 1})
+    scenario_cbud.solve(model="MESSAGE", solve_options={
+    "scaind": -1,
+    # "predual": 1
+    })
+    scenario_cbud. set_as_default()
     return
 
 

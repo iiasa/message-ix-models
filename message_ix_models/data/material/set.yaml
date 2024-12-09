@@ -185,7 +185,6 @@ generic:
     - hp_gas_construction
     - hp_elec_construction
     - fc_h2_construction
-    - solar_construction
     - dheat_construction
   mode:
     add:
@@ -288,7 +287,10 @@ petro_chemicals:
     - DUMMY_lignin_supply
     - lignin_production
     - bitumen_production
-    
+    - export_bitumen
+    - import_bitumen
+    - trade_bitumen
+
     remove:
     # Any representation of refinery.
     - ref_hil

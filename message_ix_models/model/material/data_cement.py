@@ -444,10 +444,10 @@ def gen_data_cement(scenario, dry_run=False):
     # Add CCS as addon
     parname = "addon_conversion"
 
-    # technology_1 = ["clinker_dry_cement"]
-    # df_1 = make_df(
-    #     parname, mode="M1", type_addon="dry_ccs_cement", value=1, unit="-", **common
-    # ).pipe(broadcast, node=nodes, technology=technology_1)
+    technology_1 = ["clinker_dry_cement"]
+    df_1 = make_df(
+        parname, mode="M1", type_addon="dry_ccs_cement", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=technology_1)
 
     technology_2 = ["clinker_wet_cement"]
     df_2 = make_df(
@@ -464,6 +464,7 @@ def gen_data_cement(scenario, dry_run=False):
     #     parname, mode="M1", type_addon="rotary_kiln_dry_addons", value=1, unit="-", **common
     # ).pipe(broadcast, node=nodes, technology= technology_4)
 
+    results[parname].append(df_1)
     results[parname].append(df_2)
     results[parname].append(df_3)
 

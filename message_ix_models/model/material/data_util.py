@@ -2242,7 +2242,8 @@ def calculate_ini_new_cap(df_demand, technology, material):
 
     if material == "cement":
         CLINKER_RATIO = 0.72
-        df_demand["value"] *= CLINKER_RATIO * SCALER
+        CONCRETE_TO_CEMENT = 0.15
+        df_demand["value"] *= CLINKER_RATIO * SCALER * CONCRETE_TO_CEMENT
     else:
         df_demand["value"] *= SCALER
 
@@ -2448,21 +2449,48 @@ def calculate_ratios(df):
 
     return df_with_ratios
 
-def add_bound_on_dummy_lignin(context, scenario):
+def add_bound_on_dummy_lignin(scenario):
+    # Gobally 50 Mt lignin as by-product is produced from paper and pulp production.
+    # Distribute this to regions based on the shares of paper and pulp prod.
+    # https://www.statista.com/statistics/595787/paper-production-worldwide-distribution-by-region/
+    # Americas: 24%. LAM, NAM: 12%, 12%.
+    # Oceania: 1%. PAO: 1%.
+    # Africa: 1%. AFR 0.5%, MEA 0.5%.
+    # Europe: 24%. WEU, EEU: 12%, 12%.
+    # Asia: 50%. CHN: 30% (FAO). SAS (5%), PAS(5%), RCPA(5%), FSU(5%)
+
+    scenario.check_out()
+
+    region_value_mapping = {'R12_LAM': 0.12,
+                            'R12_NAM': 0.12,
+                            'R12_PAO': 0.01,
+                            'R12_AFR': 0.005,
+                            'R12_MEA': 0.005,
+                            'R12_WEU': 0.12,
+                            'R12_EEU': 0.12,
+                            'R12_CHN': 0.3,
+                            'R12_SAS': 0.05,
+                            'R12_PAS': 0.05,
+                            'R12_RCPA': 0.05,
+                            'R12_FSU': 0.05}
+
 
     years = get_optimization_years(scenario)
 
-    activity_bound_lignin = pd.DataFrame({
-            "node_loc": "R12_GLB",
-            "technology": "DUMMY_lignin_supply",
-            "year_act": years,
-            "mode": "M1",
-            "time": "year",
-            "value": 50 ,
-            "unit": "-",
-    })
+    for key, value in region_value_mapping.items():
+        activity_bound_lignin = pd.DataFrame({
+                "node_loc": key,
+                "technology": "DUMMY_lignin_supply",
+                "year_act": years,
+                "mode": "M1",
+                "time": "year",
+                "value": 50 * value ,
+                "unit": "-",
+        })
 
-    scenario.add_par("bound_activity_up", activity_bound_lignin)
+        scenario.add_par("bound_activity_up", activity_bound_lignin)
+
+    scenario.commit("Ligning bound added")
 
 def add_infrastructure_reporting(context, scenario):
 
@@ -2671,7 +2699,11 @@ def add_infrastructure_reporting(context, scenario):
     [col for col in final_df_reporting.columns if isinstance(col, int)]
     final_df_reporting = final_df_reporting[ordered_columns]
 
+    # Replace NaN, -inf, and inf with 0
+    final_df_reporting.replace([np.inf, -np.inf, np.nan], 0, inplace=True)
+
     directory = context.get_local_path("report", "materials")
+    print(directory)
 
     name = os.path.join(directory, f"additional_infrastructure_variables_{scenario.scenario}.xlsx")
     final_df_reporting.to_excel(name, index = False)

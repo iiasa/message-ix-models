@@ -2,6 +2,7 @@ from message_ix_models import ScenarioInfo
 import ixmp
 import message_ix
 import pandas as pd
+from message_ix_models.util import add_par_data, package_data_path
 
 """Infrastructure Supply Side Measures"""
 
@@ -185,6 +186,126 @@ def no_ccs(scenario):
                      "unit": 't'})
                 scenario.add_par("bound_activity_lo", bound_activity)
                 scenario.add_par("bound_activity_up", bound_activity)
+
+    scenario.commit('Model changes made.')
+
+def no_h2_steel(scenario):
+
+    # CCS is not allowed across industry
+    # Accelerated carbonation not allowed, 'recycling_cement':['M2']
+
+    s_info = ScenarioInfo(scenario)
+
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    year_act=yv_ya.year_act
+    nodes.remove("World")
+    nodes.remove("R12_GLB")
+
+    scenario.check_out()
+
+    for n in nodes:
+        for y in year_act:
+            bound_activity = pd.DataFrame({
+                 "node_loc": n,
+                 "technology": 'dri_h2_steel',
+                 "year_act": y,
+                 "mode": 'M1',
+                 "time": 'year',
+                 "value": 0,
+                 "unit": 't'}, index = [0])
+            scenario.add_par("bound_activity_lo", bound_activity)
+            scenario.add_par("bound_activity_up", bound_activity)
+
+    scenario.commit('Model changes made.')
+
+def no_methanol_cement(scenario):
+
+    # CCS is not allowed across industry
+    # Accelerated carbonation not allowed, 'recycling_cement':['M2']
+
+    s_info = ScenarioInfo(scenario)
+
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    year_act=yv_ya.year_act
+    nodes.remove("World")
+    nodes.remove("R12_GLB")
+
+    scenario.check_out()
+
+    for n in nodes:
+        for y in year_act:
+            bound_activity = pd.DataFrame({
+                 "node_loc": n,
+                 "technology": 'furnace_methanol_cement',
+                 "year_act": y,
+                 "mode": ['low_temp','high_temp'],
+                 "time": 'year',
+                 "value": 0,
+                 "unit": 't'})
+            scenario.add_par("bound_activity_lo", bound_activity)
+            scenario.add_par("bound_activity_up", bound_activity)
+
+    scenario.commit('Model changes made.')
+
+def no_h2_cement(scenario):
+
+    # CCS is not allowed across industry
+    # Accelerated carbonation not allowed, 'recycling_cement':['M2']
+
+    s_info = ScenarioInfo(scenario)
+
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    year_act=yv_ya.year_act
+    nodes.remove("World")
+    nodes.remove("R12_GLB")
+
+    scenario.check_out()
+
+    for n in nodes:
+        for y in year_act:
+            bound_activity = pd.DataFrame({
+                 "node_loc": n,
+                 "technology": 'furnace_h2_cement',
+                 "year_act": y,
+                 "mode": ['low_temp','high_temp'],
+                 "time": 'year',
+                 "value": 0,
+                 "unit": 't'})
+            scenario.add_par("bound_activity_lo", bound_activity)
+            scenario.add_par("bound_activity_up", bound_activity)
+
+    scenario.commit('Model changes made.')
+
+def no_ethanol_cement(scenario):
+
+    # CCS is not allowed across industry
+    # Accelerated carbonation not allowed, 'recycling_cement':['M2']
+
+    s_info = ScenarioInfo(scenario)
+
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    year_act=yv_ya.year_act
+    nodes.remove("World")
+    nodes.remove("R12_GLB")
+
+    scenario.check_out()
+
+    for n in nodes:
+        for y in year_act:
+            bound_activity = pd.DataFrame({
+                 "node_loc": n,
+                 "technology": 'furnace_ethanol_cement',
+                 "year_act": y,
+                 "mode": ['low_temp','high_temp'],
+                 "time": 'year',
+                 "value": 0,
+                 "unit": 't'})
+            scenario.add_par("bound_activity_lo", bound_activity)
+            scenario.add_par("bound_activity_up", bound_activity)
 
     scenario.commit('Model changes made.')
 
@@ -419,7 +540,7 @@ def keep_fuel_share(scenario):
                                 'level': 'final'})
                         scenario.add_set('map_shares_commodity_total', df_total)
 
-                    # Add lower bound share constraint for the end of the century
+                    # Add upper bound share constraint for the end of the century
                     value_df = df_sector[(df_sector['Region'] == n) & (df_sector['fuel'] == f)
                     & (df_sector['sector'] == 'Steel')]
                     val = value_df['Fuel_Ratio'].values[0]
@@ -433,6 +554,7 @@ def keep_fuel_share(scenario):
                                'unit': '%'})
 
                     scenario.add_par('share_commodity_up', df_up)
+                    scenario.add_par('share_commodity_lo', df_up)
 
                     scenario.commit('Share constraints added')
 
@@ -560,3 +682,39 @@ def keep_fuel_share(scenario):
                     scenario.add_par('share_commodity_up', df_up)
 
                     scenario.commit('Share constraints added')
+
+def minimum_ccs_cement(scenario):
+
+    # CCS cement use should be minimum as in the paper scenarios (2degrees_2207_2025_macro)
+
+    s_info = ScenarioInfo(scenario)
+
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    year_act=yv_ya.year_act
+    nodes.remove("World")
+    nodes.remove("R12_GLB")
+
+    df = pd.read_excel(package_data_path("material", "infrastructure",
+    'clinker_dry_ccs_cement.xlsx'))
+
+    df = df.dropna(axis=1, how='all')
+    df = df.drop(['year_vtg'], axis=1)
+    df_summed = df.groupby(['node_loc','year_act','mode','time']).sum().reset_index()
+
+    scenario.check_out()
+
+    for n in nodes:
+        for y in year_act:
+            val = df_summed.loc[(df_summed['node_loc'] == n) & (df_summed['year_act'] == y), 'value']
+            bound_activity = pd.DataFrame({
+                 "node_loc": n,
+                 "technology": 'clinker_dry_ccs_cement',
+                 "year_act": y,
+                 "mode": 'M1',
+                 "time": 'year',
+                 "value": val,
+                 "unit": 't'})
+            scenario.add_par("bound_activity_lo", bound_activity)
+
+    scenario.commit('Model changes made.')

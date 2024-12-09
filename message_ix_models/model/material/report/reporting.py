@@ -79,6 +79,8 @@ def change_names(s):
         s = "OC"
     elif s == "CO2_industry":
         s == "CO2"
+    elif s == "construction":
+        s == "Construction"
     else:
         s == s
     return s
@@ -375,6 +377,8 @@ def report(context,scenario):
             "out|grinded_material|clay|grinding_vertmill_cement|M4",
             "out|product|concrete|concrete_production_cement|M1",
             "out|product|concrete|concrete_production_cement|M2",
+            "out|final_material|bitumen|bitumen_production|M1",
+            "out|final_material|bitumen|bitumen_production|M2",
             "in|final|charcoal|concrete_production_cement|M2",
             "in|dummy_end_of_life|concrete|landfilling_cement|M1",
             "in|dummy_end_of_life|concrete|recycling_cement|M1",
@@ -656,7 +660,7 @@ def report(context,scenario):
         df_demand.convert_unit('', to='Mt/yr', factor=1, inplace = True)
         df_demand_region = report_demand(df_demand, r, years)
         df_final.append(df_demand_region, inplace = True)
-        
+
         # PRODUCTION - IAMC Variables
 
         # ALUMINUM
@@ -758,6 +762,47 @@ def report(context,scenario):
                 "Total Scrap|Non-Ferrous Metals|Aluminium",
                 "Total Scrap|Non-Ferrous Metals|Aluminium|New Scrap",
                 "Total Scrap|Non-Ferrous Metals|Aluminium|Old Scrap",
+            ],
+            inplace=True,
+        )
+
+        # BITUMEN
+
+        df_bit = df.copy()
+        df_bit.filter(region=r, year=years, inplace=True)
+        df_bit.filter(
+            variable=["out|final_material|bitumen|bitumen_production|M1",
+                      "out|final_material|bitumen|bitumen_production|M2"
+            ],
+            inplace=True,
+        )
+        df_bit.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+
+        df_bit.to_excel("df_bit.xlsx")
+
+        bitumen_var = [
+            "out|final_material|bitumen|bitumen_production|M1",
+        ]
+
+        bio_bitumen_var = [
+            "out|final_material|bitumen|bitumen_production|M2",
+        ]
+
+        df_bit.aggregate(
+            "Production|Bitumen",
+            components=bitumen_var,
+            append=True,
+        )
+        df_bit.aggregate(
+            "Production|Bio-Bitumen",
+            components=bio_bitumen_var,
+            append=True,
+        )
+
+        df_bit.filter(
+            variable=[
+                "Production|Bitumen",
+                "Production|Bio-Bitumen",
             ],
             inplace=True,
         )
@@ -996,6 +1041,7 @@ def report(context,scenario):
         df_final.append(df_al, inplace=True)
         df_final.append(df_steel, inplace=True)
         df_final.append(df_chemicals, inplace=True)
+        df_final.append(df_bit, inplace=True)
 
     # CEMENT
 
@@ -2168,7 +2214,8 @@ def report(context,scenario):
         "Non-Ferrous Metals",
         "Non-Metallic Minerals",
         "Chemicals",
-        'Other Sector'
+        'Other Sector',
+        "construction"
     ]
     print("Final Energy (excl non-energy use) by sector and fuel is being printed")
     for r in nodes:
