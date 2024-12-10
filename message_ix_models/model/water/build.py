@@ -334,6 +334,16 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         # Sets to add
         add.set[set_name].extend(config)
 
+    # clean the remove.set from things that are actually not in the scenario
+    # this saves building time significantly, as remove is slow
+    scen = context.get_scenario()
+    for category, elements in ((k, v) for k, v in remove.set.items() if k != "unit"):
+        # Get the corresponding set from the scenario
+        scen_set = scen.set(category)
+
+        # Filter elements to keep only those present in the scenario set
+        remove.set[category] = [elem for elem in elements if elem in scen_set.values]
+
     return dict(require=require, remove=remove, add=add)
 
 
