@@ -1,0 +1,4 @@
+message_technology,reg_diff_source,reg_diff_technology,base_year_reference_region_cost,fix_ratio,first_year_original
+dac_lt,energy,igcc_ccs,4000,,2030
+dac_hte,energy,igcc_ccs,5000,,2030
+dac_htg,energy,igcc_ccs,5500,,2030
