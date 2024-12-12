@@ -951,6 +951,49 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     results["growth_activity_up"] = g_up
 
+    # Extract inand expand some paramenters from parent technologies
+    init_act_up = scen.par(
+        "initial_activity_up", {"technology": cooling_df["parent_tech"]}
+    )
+    init_act_lo = scen.par(
+        "initial_activity_lo", {"technology": cooling_df["parent_tech"]}
+    )
+    soft_act_up = scen.par(
+        "soft_activity_up", {"technology": cooling_df["parent_tech"]}
+    )
+    soft_act_lo = scen.par(
+        "soft_activity_lo", {"technology": cooling_df["parent_tech"]}
+    )
+    lc_act_up = scen.par(
+        "level_cost_activity_soft_up", {"technology": cooling_df["parent_tech"]}
+    )
+    lc_act_lo = scen.par(
+        "level_cost_activity_soft_lo", {"technology": cooling_df["parent_tech"]}
+    )
+    g_lo = scen.par("growth_activity_lo", {"technology": cooling_df["parent_tech"]})
+
+    list_params = [
+        (init_act_up, "initial_activity_up"),
+        (init_act_lo, "initial_activity_lo"),
+        (soft_act_up, "soft_activity_up"),
+        (soft_act_lo, "soft_activity_lo"),
+        (lc_act_up, "level_cost_activity_soft_up"),
+        (lc_act_lo, "level_cost_activity_soft_lo"),
+        (g_lo, "growth_activity_lo"),
+    ]
+
+    # Expand initial activity bounds for cooling technologies
+    for suffix in ["__ot_fresh", "__cl_fresh", "__air", "__ot_saline"]:
+        # Copy the initial bounds for each cooling type
+        for df, param_name in list_params:
+            df_add = df.copy()
+            df_add["technology"] = df_add["technology"] + suffix
+            results[param_name] = (
+                pd.concat([results[param_name], df_add], ignore_index=True)
+                if param_name in results
+                else df_add
+            )
+
     # add share constraints for cooling technologies based on SSP assumptions
     df_share = cooling_shares_SSP_from_yaml(context)
 
