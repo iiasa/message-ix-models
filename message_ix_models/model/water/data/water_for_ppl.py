@@ -709,8 +709,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     # Combine technology name to get full cooling tech names
     cost["technology"] = cost["utype"] + "__" + cost["cooling"]
     # Filtering out 2010 data to use for historical values
-    input_cool_2020 = input_cool[
-        (input_cool["year_act"] == 2020) & (input_cool["year_vtg"] == 2020)
+    input_cool_2015 = input_cool[
+        (input_cool["year_act"] == 2015) & (input_cool["year_vtg"] == 2015)
     ]
     # Filter out columns that contain 'mix' in column name
     columns = [col for col in cost.columns if "mix_" in col]
@@ -720,7 +720,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     search_cols = [
         col for col in cost.columns if context.regions in col or "technology" in col
     ]
-    hold_df = input_cool_2020[
+    hold_df = input_cool_2015[
         ["node_loc", "technology_name", "cooling_fraction"]
     ].drop_duplicates()
     search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
