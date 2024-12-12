@@ -411,7 +411,7 @@ def split_fe_other(
             "meth_exp",
             "meth_imp",
             "meth_ind_fs",
-            "furnace_methanol_refining"
+            "furnace_methanol_refining",
         ]
     )
     for c, full_name in zip(
@@ -708,6 +708,10 @@ def run(scenario, upload_ts=False, region=False):
     else:
         py_df.aggregate_region(py_df.variable, append=True)
     py_df.filter(variable="Share*", keep=False, inplace=True)
+    py_df.filter(
+        year=[i for i in scenario.set("year") if i >= scenario.firstmodelyear],
+        inplace=True,
+    )
     if upload_ts:
         scenario.add_timeseries(py_df.timeseries())
     return py_df
