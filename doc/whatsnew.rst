@@ -64,6 +64,7 @@ Investment and fixed costs
 - Add `cooling` technology variant/module (:pull:`222`).
 - Add functionality to specify cost reduction values and cost reduction scenarios in a module (:issue:`251`, :pull:`255`).
 - Fix technology mapping of ammonia CCS technologies in materials module (:pull:`258`).
+- Remove unused `technology_type` column from tool (:pull:`269`).
 
 Others
 ------
