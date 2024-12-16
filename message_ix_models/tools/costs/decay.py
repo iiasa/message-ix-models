@@ -81,9 +81,9 @@ def _get_module_scenarios_reduction(
                 )
             ]
 
-            # append scen_red_module to scen_red_energy
-            scenarios_joined = scenarios_energy._append(scenarios_module).reset_index(
-                drop=True
+            # concat scenarios_energy and scenarios_module
+            scenarios_joined = pd.concat(
+                [scenarios_energy, scenarios_module], ignore_index=True
             )
         else:
             scenarios_joined = scenarios_energy.copy()
@@ -207,7 +207,6 @@ def _get_module_cost_reduction(
         pd.concat([reduction_energy, reduction_energy_no_reduction], ignore_index=True)
         .sort_values("message_technology")
         .reset_index(drop=True)
-        .drop(columns=["technology_type"])
     )
 
     if module != "energy":
@@ -224,11 +223,9 @@ def _get_module_cost_reduction(
                 )
             ]
 
-            # append scen_red_module to scen_red_energy
-            reduction_joined = (
-                reduction_energy._append(reduction_module)
-                .reset_index(drop=True)
-                .drop(columns=["technology_type"])
+            # concat reduction_energy and reduction_module
+            reduction_joined = pd.concat(
+                [reduction_energy, reduction_module], ignore_index=True
             )
         else:
             reduction_joined = reduction_energy.copy()
