@@ -13,6 +13,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
 from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time
+from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config
 from .structure import get_technology_groups
@@ -460,7 +461,7 @@ def get_computer(
     # Add tasks for debugging the build
     add_debug(c)
 
-    if visualize:
+    if visualize and HAS_GRAPHVIZ:
         path = context.get_local_path("transport", "build.svg")
         path.parent.mkdir(exist_ok=True)
         c.visualize(filename=path, key="add transport data")

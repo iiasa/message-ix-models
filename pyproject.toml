@@ -105,7 +105,11 @@ omit = [
 ]
 
 [tool.mypy]
-exclude = ["doc/", "message_ix_models/report/legacy/"]
+exclude = [
+  "build",
+  "doc",
+  "message_ix_models/report/legacy",
+]
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available

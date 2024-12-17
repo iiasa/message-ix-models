@@ -63,7 +63,7 @@ The data:
 
 The approach to handling proprietary data is the same as in :mod:`.project.advance` and :mod:`.project.ssp`:
 
-- Copies of the data are stored in the (private) :mod:`message_data` repository using Git LFS.
+- Copies of the data are stored in the (private) `message-static-data` repository using Git LFS.
   This respository is accessible only to users who have a license for the data.
 - :mod:`message_ix_models` contains only a ‘fuzzed’ version of the data (same structure, random values) for testing purposes.
 - Non-IIASA users must obtain their own license to access and use the data; obtain the data themselves; and place it on the system where they use :mod:`message_ix_models`.
@@ -71,8 +71,8 @@ The approach to handling proprietary data is the same as in :mod:`.project.advan
 The module :mod:`message_ix_models.tools.iea.web` attempts to detect and support both the providers/formats described below.
 The code supports using data from any of the above locations and formats, in multiple ways:
 
-- Use :func:`.tools.iea.web.load_data` to load data as :class:`pandas.DataFrame` and apply further pandas processing.
-- Use :class:`.IEA_EWEB` via :func:`.tools.exo_data.prepare_computer` to use the data in :mod:`genno` structured calculations.
+- Use :class:`.IEA_EWEB` via :func:`.exo_data.prepare_computer` to use the data in :mod:`genno` structured calculations.
+- Use :func:`.iea.web.load_data` to load data as :class:`pandas.DataFrame` and apply further processing using pandas.
 
 The **documentation** for the `2023 edition <https://iea.blob.core.windows.net/assets/0acb1453-1221-421b-9131-632ce71a4c1a/WORLDBAL_Documentation.pdf>`__ of the IEA source/format is publicly available.
 
@@ -82,8 +82,8 @@ Structure
 The data have the following conceptual dimensions, each enumerated by a different list of codes:
 
 - ``FLOW``, ``PRODUCT``: for both of these, the lists of codes appearing in the data are the same from 2021 and 2023 inclusive.
-- ``COUNTRY``: The data provided by IEA directly contain codes that are all caps, abbreviated country names, for instance "DOMINICANR".
-  The data provided by the OECD contain ISO 3166-1 alpha-3 codes, for instance "DOM".
+- ``COUNTRY``: The data provided by IEA directly contain codes that are all caps, abbreviated country names, for instance 'DOMINICANR'.
+  The data provided by the OECD contain ISO 3166-1 alpha-3 codes, for instance 'DOM'.
   In both cases, there are additional labels denoting country groupings; these are defined in the documentation linked above.
 
   Changes visible in these lists include:
@@ -98,8 +98,9 @@ The data have the following conceptual dimensions, each enumerated by a differen
     - New codes: GNQ, MDG, MKD, RWA, SWZ, UGA.
     - Removed: EQGUINEA, GREENLAND, MALI, MBURKINAFA, MCHAD, MMADAGASCA, MMAURITANI, MPALESTINE, MRWANDA, MUGANDA, NORTHMACED.
 
-- TIME: always a year.
-- MEASURE: unit of measurement, either "TJ" or "ktoe".
+  See the :py:`transform=...` source keyword argument and :meth:`.IEA_EWEB.transform` for different methods of handling this dimension.
+- ``TIME``: always a year.
+- ``UNIT_MEASURE`` (not labeled): unit of measurement, either 'TJ' or 'ktoe'.
 
 :mod:`message_ix_models` is packaged with SDMX structure data (stored in :file:`message_ix_models/data/sdmx/`) comprising code lists extracted from the raw data for the COUNTRY, FLOW, and PRODUCT dimensions.
 These can be used with other package utilities, for instance:

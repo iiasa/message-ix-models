@@ -299,7 +299,7 @@ def prepare_tech_econ(
 
     # Create base quantity for "output" parameter
     nty = tuple("nty")
-    c.add(k.output[0] * nty, wildcard(1.0, "gigavehicle km", nty))
+    c.add(k.output[0] * nty, wildcard(1.0, "", nty))
     for i, coords in enumerate(["n::ex world", "t::LDV", "y::model"]):
         c.add(
             k.output[i + 1] * nty,
