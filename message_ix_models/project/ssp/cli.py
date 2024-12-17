@@ -25,6 +25,7 @@ def gen_structures(context, **kwargs):
 
 
 @cli.command("transport")
+@click.option("--method", type=click.Choice(["A", "B"]), required=True)
 @click.argument("path_in", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument(
     "path_out",
@@ -32,7 +33,7 @@ def gen_structures(context, **kwargs):
     required=False,
 )
 @click.pass_obj
-def transport_cmd(context: "Context", path_in: Path, path_out: Optional[Path]):
+def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[Path]):
     """Postprocess aviation emissions.
 
     Data are read from PATH_IN, in .xlsx or .csv format. If .xlsx, the data are first
@@ -64,7 +65,7 @@ def transport_cmd(context: "Context", path_in: Path, path_out: Optional[Path]):
     else:
         path_out_user = path_out
 
-    main(path_in, path_out)
+    main(path_in, path_out, method)
 
     if path_out_user != path_out:
         print(f"Convert CSV output to {path_out_user}")
