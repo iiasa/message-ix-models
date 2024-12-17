@@ -88,8 +88,11 @@ def session_context(pytestconfig, tmp_env):
         else Path(pytestconfig.cache.makedir("cache"))
     )
 
+    # Store current .util.config.Config.local_data setting from the user's configuration
+    pytestconfig.user_local_data = ctx.core.local_data
+
     # Other local data in the temporary directory for this session only
-    ctx.local_data = session_tmp_dir
+    ctx.core.local_data = session_tmp_dir
 
     # Also set the "message local data" key in the ixmp config
     ixmp_config.set("message local data", session_tmp_dir)
