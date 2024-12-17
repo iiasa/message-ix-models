@@ -14,6 +14,9 @@ if TYPE_CHECKING:
 
     from genno.types import AnyQuantity
 
+#: Expression for IAMC ‘variable’ names used in :func:`main`.
+EXPR = r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|Transportation(?:\|(?P<t>.*))?$"
+
 
 def aviation_share(ref: "AnyQuantity") -> "AnyQuantity":
     """Return (dummy) data for the share of aviation in emissions.
@@ -36,57 +39,6 @@ def aviation_share(ref: "AnyQuantity") -> "AnyQuantity":
         .expand_dims({"e": sorted(ref.coords["e"].data)})
         .expand_dims({"n": sorted(ref.coords["n"].data)})
         .expand_dims({"y": sorted(ref.coords["y"].data)})
-    )
-
-
-def finalize(
-    q_all: "AnyQuantity",
-    q_update: "AnyQuantity",
-    model_name: str,
-    scenario_name: str,
-    path_out: "pathlib.Path",
-) -> None:
-    """Finalize output.
-
-    1. Reattach "Model" and "Scenario" labels.
-    2. Reassemble the "Variable" dimension/coords of `q_update`; drop "e" and "t".
-    3. Convert both `q_all` and `q_update` to :class:`pandas.Series`; update the former
-       with the contents of the latter.
-    4. Adjust to IAMC ‘wide’ structure and write to `path_out`.
-
-    Parameters
-    ----------
-    q_all :
-        All data.
-    q_update :
-        Revised data to overwrite corresponding values in `q_all`.
-    """
-
-    def _expand(qty):
-        return qty.expand_dims(
-            {"Model": [model_name], "Scenario": [scenario_name]}
-        ).rename({"n": "Region", "UNIT": "Unit", "VARIABLE": "Variable"})
-
-    s_all = q_all.pipe(_expand).to_series()
-
-    s_all.update(
-        q_update.pipe(_expand)
-        .to_frame()
-        .reset_index()
-        .assign(
-            Variable=lambda df: (
-                "Emissions|" + df["e"] + "|Energy|Demand|Transportation|" + df["t"]
-            ).str.replace("|_T", "")
-        )
-        .drop(["e", "t"], axis=1)
-        .set_index(s_all.index.names)[0]
-    )
-
-    (
-        s_all.unstack("y")
-        .reorder_levels(["Model", "Scenario", "Region", "Variable", "Unit"])
-        .reset_index()
-        .to_csv(path_out, index=False)
     )
 
 
@@ -145,37 +97,65 @@ def extract_dims1(qty: "AnyQuantity", dim: dict) -> "AnyQuantity":  # pragma: no
     return result
 
 
-def select_re(qty: "AnyQuantity", indexers: dict) -> "AnyQuantity":
-    """Select using regular expressions for each dimension."""
-    new_indexers = dict()
-    for dim, expr in indexers.items():
-        new_indexers[dim] = list(
-            map(str, filter(re.compile(expr).match, qty.coords[dim].data.astype(str)))
+def finalize(
+    q_all: "AnyQuantity",
+    q_update: "AnyQuantity",
+    model_name: str,
+    scenario_name: str,
+    path_out: "pathlib.Path",
+) -> None:
+    """Finalize output.
+
+    1. Reattach "Model" and "Scenario" labels.
+    2. Reassemble the "Variable" dimension/coords of `q_update`; drop "e" and "t".
+    3. Convert both `q_all` and `q_update` to :class:`pandas.Series`; update the former
+       with the contents of the latter.
+    4. Adjust to IAMC ‘wide’ structure and write to `path_out`.
+
+    Parameters
+    ----------
+    q_all :
+        All data.
+    q_update :
+        Revised data to overwrite corresponding values in `q_all`.
+    """
+
+    def _expand(qty):
+        return qty.expand_dims(
+            {"Model": [model_name], "Scenario": [scenario_name]}
+        ).rename({"n": "Region", "UNIT": "Unit", "VARIABLE": "Variable"})
+
+    s_all = q_all.pipe(_expand).to_series()
+
+    s_all.update(
+        q_update.pipe(_expand)
+        .to_frame()
+        .reset_index()
+        .assign(
+            Variable=lambda df: (
+                "Emissions|" + df["e"] + "|Energy|Demand|Transportation|" + df["t"]
+            ).str.replace("|_T", "")
         )
-    return qty.sel(new_indexers)
+        .drop(["e", "t"], axis=1)
+        .set_index(s_all.index.names)[0]
+    )
 
-
-#: Expression for IAMC ‘variable’ names used in :func:`main`.
-EXPR = r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|Transportation(?:\|(?P<t>.*))?$"
+    (
+        s_all.unstack("y")
+        .reorder_levels(["Model", "Scenario", "Region", "Variable", "Unit"])
+        .reset_index()
+        .to_csv(path_out, index=False)
+    )
 
 
 @minimum_version("genno 1.25")
-def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
+def main(path_in: "pathlib.Path", path_out: "pathlib.Path", method: str) -> None:
     """Postprocess aviation emissions for SSP 2024.
 
     1. Read input data from `path_in`.
-    2. Select data with variable names matching :data:`EXPR`.
-    3. Calculate (identical) values for:
-
-       - ``Emissions|*|Energy|Demand|Transportation|Aviation``
-       - ``Emissions|*|Energy|Demand|Transportation|Aviation|International``
-
-       These are currently calculated as the product of :func:`aviation_share` and
-       ``Emissions|*|Energy|Demand|Transportation``.
-    4. Subtract (3) from:
-       ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping``
-    5. Recombine with all other, unmodified data.
-    6. Write to `path_out`.
+    2. Call either :func:`prepare_method_A` or :func:`prepare_method_B` according to
+       the value of `method`.
+    3. Write to `path_out`.
 
     Parameters
     ----------
@@ -183,18 +163,15 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
         Input data path.
     path_out :
         Output data path.
+    method :
+        either 'A' or 'B'.
     """
     import pandas as pd
-
-    # Shorthand
-    e_t = ("e", "t")
-    t = "t"
-    k_input = genno.Key("input", ("n", "y", "VARIABLE", "UNIT"))
-    k = genno.KeySeq("result", ("n", "y", "UNIT") + e_t)
 
     c = genno.Computer()
 
     # Read the data from `path`
+    k_input = genno.Key("input", ("n", "y", "VARIABLE", "UNIT"))
     c.add(
         k_input,
         iamc_like_data_for_query,
@@ -207,6 +184,38 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
     df = pd.read_csv(path_in, nrows=1)
     c.add("model name", genno.quote(df["Model"].iloc[0]))
     c.add("scenario name", genno.quote(df["Scenario"].iloc[0]))
+    c.add("path out", path_out)
+
+    # Call a function to prepare the remaining calculations
+    prepare_func = {
+        "A": prepare_method_A,
+        "B": prepare_method_B,
+    }[method]
+    prepare_func(c, k_input)
+
+    # Execute
+    c.get("target")
+
+
+def prepare_method_A(c: "genno.Computer", k_input: "genno.Key") -> None:
+    """Prepare calculations using method 'A'.
+
+    1. Select data with variable names matching :data:`EXPR`.
+    2. Calculate (identical) values for:
+
+       - ``Emissions|*|Energy|Demand|Transportation|Aviation``
+       - ``Emissions|*|Energy|Demand|Transportation|Aviation|International``
+
+       These are currently calculated as the product of :func:`aviation_share` and
+       ``Emissions|*|Energy|Demand|Transportation``.
+    3. Subtract (2) from:
+       ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping``
+    4. Recombine with all other, unmodified data.
+    """
+    # Shorthand
+    e_t = ("e", "t")
+    t = "t"
+    k = genno.KeySeq("result", ("n", "y", "UNIT") + e_t)
 
     # Filter on "VARIABLE"
     c.add(k[0] / e_t, select_re, k_input, indexers={"VARIABLE": EXPR})
@@ -256,8 +265,20 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path"):
         k[5],
         "model name",
         "scenario name",
-        path_out=path_out,
+        "path out",
     )
 
-    # Execute
-    c.get("target")
+
+def prepare_method_B(c, k_input: "genno.Key"):
+    """Prepare calculations using method 'B'."""
+    raise NotImplementedError
+
+
+def select_re(qty: "AnyQuantity", indexers: dict) -> "AnyQuantity":
+    """Select from `qty` using regular expressions for each dimension."""
+    new_indexers = dict()
+    for dim, expr in indexers.items():
+        new_indexers[dim] = list(
+            map(str, filter(re.compile(expr).match, qty.coords[dim].data.astype(str)))
+        )
+    return qty.sel(new_indexers)
