@@ -350,6 +350,27 @@ def get_technology_reduction_scenarios_data(
         cost_reduction_long, on=["message_technology", "reduction_rate"], how="left"
     ).merge(adj_first_year, on="message_technology", how="left")
 
+    # filter for rows where cost_reduction is NaN and reduction rate is not "none"
+    # these are instances where a technology has a reduction_rate that
+    # does not have a cost_reduction value
+    check_nan = df.query("cost_reduction.isnull() and reduction_rate != 'none'")[
+        ["message_technology", "scenario", "reduction_rate"]
+    ]
+
+    if not check_nan.empty:
+        check_nan["print"] = (
+            check_nan.message_technology
+            + " + "
+            + check_nan.scenario
+            + " + "
+            + check_nan.reduction_rate
+        )
+
+        raise ValueError(
+            f"The following technology + scenario + reduction rate combinations are missing data. Please check the reduction rate exists for the technology.\n\
+                {check_nan.print.unique().tolist()}."
+        )
+
     # if reduction_rate is "none", then set cost_reduction to 0
     df["cost_reduction"] = np.where(df.reduction_rate == "none", 0, df.cost_reduction)
 
