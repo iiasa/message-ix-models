@@ -314,8 +314,6 @@ def get_technology_reduction_scenarios_data(
     scenarios_reduction = _get_module_scenarios_reduction(module, energy_map, tech_map)
     cost_reduction = _get_module_cost_reduction(module, energy_map, tech_map)
 
-    cost_reduction.query("message_technology == 'bio_hpl'")
-
     # get first year values
     adj_first_year = (
         tech_map[["message_technology", "first_year_original"]]
