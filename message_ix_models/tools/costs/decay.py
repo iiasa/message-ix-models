@@ -365,8 +365,10 @@ def get_technology_reduction_scenarios_data(
         )
 
         raise ValueError(
-            f"The following technology + scenario + reduction rate combinations are missing data. Please check the reduction rate exists for the technology.\n\
-                {check_nan.print.unique().tolist()}."
+            "The following technology + scenario + reduction rate combinations "
+            "are missing data. "
+            "Please check that the reduction rate exists for the technology.\n"
+            f"{check_nan.print.unique().tolist()}."
         )
 
     # if reduction_rate is "none", then set cost_reduction to 0
