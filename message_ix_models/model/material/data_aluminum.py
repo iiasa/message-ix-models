@@ -480,6 +480,7 @@ def gen_data_aluminum(
     alumina_trd = gen_alumina_trade_tecs(s_info)
     growth_constr_dict = gen_2020_growth_constraints(s_info)
     ref_heat_input = gen_refining_input(s_info)
+    ref_hist_act = calibrate_2020_furnaces(s_info)
     results_aluminum = combine_df_dictionaries(
         const_dict,
         ts_dict,
@@ -488,7 +489,8 @@ def gen_data_aluminum(
         trade_dict,
         growth_constr_dict,
         alumina_trd,
-        ref_heat_input
+        ref_heat_input,
+        ref_hist_act,
     )
     reduced_pdict = {}
     for k, v in results_aluminum.items():
@@ -1234,7 +1236,13 @@ def gen_refining_input(s_info):
     # https://international-aluminium.org/statistics/metallurgical-alumina-refining-fuel-consumption/
     # in the -Areas dropdown menu
     iai_int_r12_map = {
-        "Africa & Asia (ex China)": ["R12_AFR", "R12_PAS", "R12_SAS", "R12_RCPA"],
+        "Africa & Asia (ex China)": [
+            "R12_AFR",
+            "R12_PAS",
+            "R12_SAS",
+            "R12_RCPA",
+            "R12_MEA",
+        ],
         "North America": ["R12_NAM"],
         "Europe": ["R12_WEU", "R12_EEU", "R12_FSU"],
         "Oceania": ["R12_PAO"],
