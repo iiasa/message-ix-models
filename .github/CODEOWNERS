@@ -1,0 +1,37 @@
+# Notes
+# - No owner is assigned for "*". This means that changes to
+#   all other files can be approved by any user with write
+#   access to the repo.
+
+/doc/api/tools-costs.rst              @measrainsey
+/message_ix_models/data/costs         @measrainsey
+/message_ix_models/data/intratec      @measrainsey
+/message_ix_models/tests/tools/costs  @measrainsey
+/message_ix_models/tools/costs        @measrainsey
+
+/doc/material                            @GamzeUnlu95 @macflo8
+/message_ix_models/data/material         @GamzeUnlu95 @macflo8
+/message_ix_models/model/material        @GamzeUnlu95 @macflo8
+/message_ix_models/tests/model/material  @GamzeUnlu95 @macflo8
+
+/doc/transport
+/message_ix_models/data/transport         @khaeru @r-aneeque
+/message_ix_models/model/transport        @khaeru @r-aneeque
+/message_ix_models/tests/model/transport  @khaeru @r-aneeque
+
+/doc/water                            @adrivinca @awais307
+/message_ix_models/data/water         @adrivinca @awais307
+/message_ix_models/model/water        @adrivinca @awais307
+/message_ix_models/tests/model/water  @adrivinca @awais307
+
+# /message_ix_models/project/advance
+# /message_ix_models/project/circeular
+# /message_ix_models/project/edits
+# /message_ix_models/project/engage
+# /message_ix_models/project/gea
+
+/doc/project/navigate.rst            @khaeru
+/message_ix_models/project/navigate  @khaeru
+
+# /message_ix_models/project/shape
+# /message_ix_models/project/ssp
