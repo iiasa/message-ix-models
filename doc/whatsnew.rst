@@ -8,6 +8,7 @@ Next release
 - Support for Python 3.8 is dropped (:pull:`250`), as it has reached end-of-life.
 - Expand :doc:`repro` with sections on :ref:`repro-doc` and :ref:`versioning`, including :ref:`a list of external model names and ‘versions’ <model-names>` like “MESSAGEix-GLOBIOM 2.0” (:issue:`224`, :pull:`226`).
 - New code list :ref:`emission-yaml` (:pull:`225`).
+- Designate :ref:`code-owners` for certain files (:pull:`272`) and document development practices.
 
 By topic:
 
