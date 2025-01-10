@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2025.1.10
+==========
 
 - :mod:`message_ix_models` is tested and compatible with `Python 3.13 <https://www.python.org/downloads/release/python-3130/>`__ (:pull:`250`).
 - Support for Python 3.8 is dropped (:pull:`250`), as it has reached end-of-life.
