@@ -46,6 +46,43 @@ Code that will only work with certain structures…
 Code **may** also check a :class:`.Context` instance and automatically adapt data from certain structures to others, e.g. by interpolating data for certain periods or areas.
 To help with validation, code that does this **should** log on the :data:`logging.INFO` level to advertise these steps.
 
+.. _code-owners:
+
+Code owners
+===========
+
+The file :file:`.github/CODEOWNERS` (`on GitHub <https://github.com/iiasa/message-ix-models/blob/main/.github/CODEOWNERS>`__) indicates ‘owners’ for some files in the repository.
+See `GitHub's documentation of this feature <https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners>`__.
+For :mod:`message_ix_models`, we use this to designate people who are capable and responsible to evaluate whether changes in a pull request would have any impact on current or planned research applications of that code, and to suggest whether and how to adjust PRs.
+
+- As of 2025-01-10, we **do not require** pull request approvals from code owners on every PR that modifies files they own.
+  Owners only are notified of such PRs.
+  The author of a PR **should**:
+
+  - Observe the notified owners, if any.
+  - In the "How to review" section of the PR template, address those people individually with what (if anything) they need to look at as part of the PR.
+    This **may** entail saying, "@owner-a @owner-b: no need to review because <reasons>".
+
+- Groups of entries **should** include paths to all of the following, where applicable:
+
+  - Documentation, for instance :file:`/doc/{name}` or :file:`/doc/project/{name}.rst`
+  - Data, for instance :file:`/message_ix_models/data/{name}`
+  - Code, for instance :file:`/message_ix_models/model/{name}` or :file:`/message_ix_models/project/{name}`
+  - Tests, for instance :file:`/message_ix_models/tests/model/{name}` or :file:`/message_ix_models/tests/project/{name}`.
+
+- At least 2 people (individually, or via a GitHub team) **should** be designated owners for any file.
+  This may include one ‘active’ owner and a ‘backup’, or two or more active owners, etc.
+
+- For any pull request thats add new files to :mod:`message_ix_models`, the author(s) and reviewer(s) **should**:
+
+  - Consider whether the new files have an identifiable owner.
+    This may not be the case, for instance for general-purpose utility code.
+  - Check whether this understanding aligns with the ownership expressed in :file:`CODEOWNERS`.
+  - Add, remove, or adjust entries accordingly.
+  - Describe these changes in commit message(s) or their PR description.
+
+- If code owners depart IIASA or are reassigned to other work, they or the :mod:`message_ix_models` maintainers **must** initiate a discussion to identify a new set of owners for their files.
+
 .. _policy-upstream-versions:
 
 Upstream version policy
