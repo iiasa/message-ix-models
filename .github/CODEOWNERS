@@ -3,6 +3,9 @@
 #   all other files can be approved by any user with write
 #   access to the repo.
 
+# Includes this file, GitHub Actions workflows, and more
+/.github  @khaeru @glatterf42
+
 /doc/api/tools-costs.rst              @measrainsey
 /message_ix_models/data/costs         @measrainsey
 /message_ix_models/data/intratec      @measrainsey
