@@ -427,6 +427,24 @@ def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
     return
 
 
+def gen_cokeoven_co2_cc(s_info):
+    emi_dict = {
+        "unit": "Mt C/yr",
+        "technology": "cokeoven_steel",
+        "mode": "M1",
+        "value": 0.814 * 0.2,
+        # coal coeffient * difference between coal "final" and "dummy_emission" input
+        "relation": "CO2_cc",
+    }
+    df = (
+        make_df("relation_activity", **emi_dict)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=s_info.Y)
+        .pipe(same_node)
+    )
+    df["year_rel"] = df["year_act"]
+    return df
+
+
 def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     """Generate data for materials representation of steel industry."""
     # Load configuration
@@ -439,10 +457,10 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
     # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel = read_sector_data(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel", "Global_steel_MESSAGE.xlsx")
-    data_steel_rel = read_rel(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel_ts = read_timeseries(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
+    data_steel_rel = read_rel(scenario, "steel", ssp, "Global_steel_MESSAGE.xlsx")
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 
@@ -471,25 +489,29 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         )
 
     # Add relation for the maximum global scrap use in 2020
-    df_max_recycling = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "year_act": 2020,
-            "node_loc": nodes,
-            "technology": "scrap_recovery_steel",
-            "mode": "M1",
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_activity")
-                ),
-                "value",
-            ].values[0],
-        }
-    )
+    for t in ['scrap_recovery_steel_1', 'scrap_recovery_steel_2', 'scrap_recovery_steel_3']:
+        df_max_recycling = pd.DataFrame(
+                {
+                    "relation": "max_global_recycling_steel",
+                    "node_rel": "R12_GLB",
+                    "year_rel": 2020,
+                    "year_act": 2020,
+                    "node_loc": nodes,
+                    "technology": t,
+                    "mode": "M1",
+                    "unit": "???",
+                    "value": data_steel_rel.loc[
+                        (
+                            (data_steel_rel["relation"] == "max_global_recycling_steel")
+                            & (data_steel_rel["parameter"] == "relation_activity")
+                        ),
+                        "value",
+                    ].values[0],
+                }
+            )
+
+        results["relation_activity"].append(df_max_recycling)
+
     df_max_recycling_upper = pd.DataFrame(
         {
             "relation": "max_global_recycling_steel",
@@ -531,7 +553,12 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
 
     # Create external demand param
     parname = "demand"
+    df_2025 = pd.read_csv(
+        package_data_path("material", "steel", "demand_2025.csv")
+    )
     df_demand = material_demand_calc.derive_demand("steel", scenario, ssp=ssp)
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
     results[parname].append(df_demand)
 
     common = dict(
@@ -576,15 +603,36 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
                 df_demand=df_demand.copy(deep=True),
                 technology="dri_gas_ccs_steel",
                 material="steel",
+                ssp = ssp,
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True),
                 technology="bf_ccs_steel",
                 material="steel",
+                ssp = ssp
             ),
         ]
     )
 
+    results["relation_activity"] = pd.concat(
+        [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
+    )
+
     maybe_remove_water_tec(scenario, results)
 
-    return results
+    if ssp == "SSP1":
+        df_tmp = results["relation_activity"]
+        df_tmp = df_tmp[
+            (df_tmp["relation"] == "minimum_recycling_steel")
+            & (df_tmp["technology"] == "total_EOL_steel")
+        ]
+        df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
+        df_tmp["value"] = -0.7
+
+    reduced_pdict = {}
+    for k,v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 30]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict
