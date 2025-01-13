@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from copy import deepcopy
 from typing import Any, Union
 
 from sdmx.model.common import Annotation, Code
@@ -108,6 +109,12 @@ def make_spec(regions: str) -> Spec:
     for t in LDV_techs:
         output = dict(commodity=f"transport vehicle {t.id}", level="useful")
         t.annotations.append(Annotation(id="output", text=repr(output)))
+
+    # Associate other techs with their output commodities
+    for mode in "F RAIL", "F ROAD":
+        parent = techs[techs.index(mode)]
+        for t in parent.child:
+            t.annotations.append(deepcopy(parent.get_annotation(id="output")))
 
     # Generate a spec for the generalized disutility formulation for LDVs
     s2 = disutility.get_spec(
