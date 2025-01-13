@@ -179,8 +179,8 @@ The table currently includes:
      - :md-to-migrate:`link <message_data/scenario_generation/reserve_margin/res_marg.py>`
      - :msc-to-migrate:`link <models/modules/res_marg.py>`
      - None
-     - TODO
-     - TODO
+     - message_data
+     - :pull:`277`
 
    * - ``rescale_demands``
      - ?
