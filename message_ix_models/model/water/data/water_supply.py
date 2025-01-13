@@ -825,8 +825,9 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env.reset_index(drop=True, inplace=True)
         df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
         df_env["time"] = "year"
+        df_env["Region"] = df_env["Region"].map(df_x["BCU_name"])
         df_env2210 = df_env[df_env["year"] == 2100].copy()
-        df_env2210.loc["year"] = 2110
+        df_env2210["year"] = 2110
         df_env = pd.concat([df_env, df_env2210])
         df_env = df_env[df_env["year"].isin(info.Y)]
     else:
@@ -848,8 +849,9 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env.reset_index(drop=True, inplace=True)
         df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
         df_env["time"] = pd.DatetimeIndex(df_env["years"]).month
+        df_env["Region"] = df_env["Region"].map(df_x["BCU_name"])
         df_env2210 = df_env[df_env["year"] == 2100].copy()
-        df_env2210.loc["year"] = 2110
+        df_env2210["year"] = 2110
         df_env = pd.concat([df_env, df_env2210])
         df_env = df_env[df_env["year"].isin(info.Y)]
 

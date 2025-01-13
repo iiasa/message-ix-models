@@ -4,11 +4,15 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import pyam
-from message_ix import Reporter, Scenario
 
-from message_ix_models.report.legacy.iamc_report_hackathon import (
+# from message_ix_models.report.legacy.iamc_report_hackathon import (
+#     report as legacy_report,
+# )
+from message_data.tools.post_processing.iamc_report_hackathon import (
     report as legacy_report,
 )
+from message_ix import Reporter, Scenario
+
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
@@ -28,6 +32,7 @@ def run_old_reporting(sc: Optional[Scenario] = None):
         scen=sc,
         merge_hist=True,
         merge_ts=False,
+        run_config="GEIDCO4_GEI_run_config.yaml",
     )
 
 
@@ -105,12 +110,14 @@ def report_iam_definition(
             return df.drop(["c"], axis=1)
 
         # Mapping from dimension IDs to column names
-        rename = dict(n="region", y="time")
+        rename = dict(n="region", y="year")
 
-        key = rep_dm.convert_pyam("demand", rename=rename, collapse=collapse_callback)
+        rep_dm.require_compat("pyam")
+        key = rep_dm.add("demand", "as_pyam", rename=rename, collapse=collapse_callback)
+
         # Making a dataframe for demands
-        df_dmd = rep.get(key).as_pandas()
-        df_dmd = df_dmd.drop(columns=["exclude"])
+        df_dmd = rep_dm.get(key).as_pandas()
+        # df_dmd = df_dmd.drop(columns=["exclude"])
     else:
         df_dmd["model"] = sc.model
         df_dmd["scenario"] = sc.scenario
@@ -269,6 +276,152 @@ def multiply_electricity_output_of_hydro(
                 )
             )
     return report_iam
+
+
+def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> None:
+    """Add population with access to water and sanitation to the scenario
+
+    Parameters
+    ----------
+    sc : ixmp.Scenario
+        Scenario to add the population with access to water and sanitation
+    reg : str
+        Region to add the population with access to water and sanitation
+    sdgs : bool, optional
+        If True, add population with access to water and sanitation for SDG6, by default False
+    """
+    # add population with sanitation or drinking water access
+    mp2 = sc.platform
+
+    # load data on water and sanitation access
+    load_path = package_data_path("water", "demands", "harmonized", reg)
+    all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
+
+    pop_check = sc.timeseries(variable="Population")
+    pop_check = pop_check[pop_check.year >= 2020]
+    if pop_check.empty:
+        log.warning(
+            "No population data with future values found. Skipping calculations."
+        )
+        return pd.DataFrame()
+
+    pop_drink_tot = pd.DataFrame()
+    pop_sani_tot = pd.DataFrame()
+    pop_sdg6 = pd.DataFrame()
+    for ur in ["urban", "rural"]:
+        # CHANGE TO URBAN AND RURAL POP
+        pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
+        # ONLY R11!!! Need to fix when updating the reporting to work with any region
+        pop_tot = pop_tot[-(pop_tot.region == "GLB region (R11)")]
+        pop_reg = np.unique(pop_tot["region"])
+        # need to change names
+        reg_map = mp2.regions()
+        reg_map = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
+            columns=["parent", "hierarchy"]
+        )
+        reg_map["region"] = [x.split("_")[1] for x in reg_map.region]
+
+        df_rate = all_rates[all_rates.variable.str.contains(ur)]
+
+        df_rate = df_rate[df_rate.variable.str.contains("sdg" if sdgs else "baseline")]
+
+        df_rate["region"] = [x.split("|")[1] for x in df_rate.node]
+        df_rate = df_rate.drop(columns=["node"])
+        # make region mean (no weighted average)
+        df_rate = (
+            df_rate.groupby(["year", "variable", "region"])["value"]
+            .mean()
+            .reset_index()
+        )
+        # convert region name
+        df_rate = df_rate.merge(reg_map, how="left")
+        df_rate = df_rate.drop(columns=["region"])
+        df_rate = df_rate.rename(
+            columns={"mapped_to": "region", "variable": "new_var", "value": "rate"}
+        )
+
+        # Population|Drinking Water Access
+        df_drink = df_rate[df_rate.new_var.str.contains("connection")]
+        pop_drink = pop_tot.merge(df_drink, how="left")
+        pop_drink["variable"] = "Population|Drinking Water Access|" + ur.capitalize()
+        pop_drink["value"] = pop_drink.value * pop_drink.rate
+        cols = pop_tot.columns
+        pop_drink = pop_drink[cols]
+        pop_drink_tot = pd.concat([pop_drink_tot, pop_drink])
+        pop_sdg6 = pd.concat([pop_sdg6, pop_drink])
+
+        # Population|Sanitation Acces
+        df_sani = df_rate[df_rate.new_var.str.contains("treatment")]
+        pop_sani = pop_tot.merge(df_sani, how="left")
+        pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
+        pop_sani["value"] = pop_sani.value * pop_sani.rate
+        pop_sani = pop_sani[cols]
+        pop_sani_tot = pd.concat([pop_sani_tot, pop_drink])
+        pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
+
+        # total values
+        pop_drink_tot = (
+            pop_drink_tot.groupby(["region", "unit", "year", "model", "scenario"])[
+                "value"
+            ]
+            .sum()
+            .reset_index()
+        )
+        pop_drink_tot["variable"] = "Population|Drinking Water Access"
+        pop_drink_tot = pop_drink_tot[cols]
+        pop_sani_tot = (
+            pop_sani_tot.groupby(["region", "unit", "year", "model", "scenario"])[
+                "value"
+            ]
+            .sum()
+            .reset_index()
+        )
+        pop_sani_tot["variable"] = "Population|Sanitation Access"
+        pop_sani_tot = pop_sani_tot[cols]
+        # global values
+        pop_sdg6 = pd.concat([pd.concat([pop_sdg6, pop_drink_tot]), pop_sani_tot])
+        pop_sdg6_glb = (
+            pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
+            .sum()
+            .reset_index()
+        )
+        pop_sdg6_glb["region"] = "World"
+        pop_sdg6_glb = pop_sdg6_glb[cols]
+
+        pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
+        log.info("Population|Drinking Water Access")
+
+        return pop_sdg6
+
+
+def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
+    ww = ww_input[
+        ww_input.variable.isin(
+            ["out|final|rural_mw|rural_t_d|M1", "out|final|urban_mw|urban_t_d|M1"]
+        )
+    ]
+    ww["commodity"] = np.where(
+        ww.variable.str.contains("urban_mw"), "urban_mw", "rural_mw"
+    )
+    ww["wdr"] = ww["value"]
+    if not suban:
+        ww = ww[["region", "year", "commodity", "wdr"]]
+    else:
+        ww = ww[["region", "year", "subannual", "commodity", "wdr"]]
+        ww = pd.concat(
+            [
+                ww,
+                (
+                    ww.groupby(["region", "year", "commodity"])["wdr"]
+                    .sum()
+                    .reset_index()
+                    .assign(subannual="year")
+                    .loc[:, ["region", "year", "subannual", "commodity", "wdr"]]
+                ),
+            ]
+        ).reset_index(drop=True)
+
+    return ww
 
 
 # TODO
@@ -1094,105 +1247,6 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         columns=["names", "list_cat", "unit"],
     )
 
-    # add population with sanitation or drinking water access
-    mp2 = sc.platform
-
-    # load data on water and sanitation access
-    load_path = package_data_path("water", "demands", "harmonized", reg)
-    all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
-
-    pop_check = sc.timeseries(variable="Population")
-    pop_check = pop_check[pop_check.year >= 2020]
-    assert (
-        not pop_check.empty
-    ), "The Population data does not exist or timeseries() has no future values"
-
-    pop_drink_tot = pd.DataFrame()
-    pop_sani_tot = pd.DataFrame()
-    pop_sdg6 = pd.DataFrame()
-    for ur in ["urban", "rural"]:
-        # CHANGE TO URBAN AND RURAL POP
-        pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
-        # ONLY R11!!! Need to fix when updating the reporting to work with any region
-        pop_tot = pop_tot[-(pop_tot.region == "GLB region (R11)")]
-        pop_reg = np.unique(pop_tot["region"])
-        # need to change names
-        reg_map = mp2.regions()
-        reg_map = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
-            columns=["parent", "hierarchy"]
-        )
-        reg_map["region"] = [x.split("_")[1] for x in reg_map.region]
-
-        df_rate = all_rates[all_rates.variable.str.contains(ur)]
-
-        df_rate = df_rate[df_rate.variable.str.contains("sdg" if sdgs else "baseline")]
-
-        df_rate["region"] = [x.split("|")[1] for x in df_rate.node]
-        df_rate = df_rate.drop(columns=["node"])
-        # make region mean (no weighted average)
-        df_rate = (
-            df_rate.groupby(["year", "variable", "region"])["value"]
-            .mean()
-            .reset_index()
-        )
-        # convert region name
-        df_rate = df_rate.merge(reg_map, how="left")
-        df_rate = df_rate.drop(columns=["region"])
-        df_rate = df_rate.rename(
-            columns={"mapped_to": "region", "variable": "new_var", "value": "rate"}
-        )
-
-        # Population|Drinking Water Access
-        df_drink = df_rate[df_rate.new_var.str.contains("connection")]
-        pop_drink = pop_tot.merge(df_drink, how="left")
-        pop_drink["variable"] = "Population|Drinking Water Access|" + ur.capitalize()
-        pop_drink["value"] = pop_drink.value * pop_drink.rate
-        cols = pop_tot.columns
-        pop_drink = pop_drink[cols]
-        pop_drink_tot = pd.concat([pop_drink_tot, pop_drink])
-        pop_sdg6 = pd.concat([pop_sdg6, pop_drink])
-
-        # Population|Sanitation Acces
-        df_sani = df_rate[df_rate.new_var.str.contains("treatment")]
-        pop_sani = pop_tot.merge(df_sani, how="left")
-        pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
-        pop_sani["value"] = pop_sani.value * pop_sani.rate
-        pop_sani = pop_sani[cols]
-        pop_sani_tot = pd.concat([pop_sani_tot, pop_drink])
-        pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
-
-        # total values
-        pop_drink_tot = (
-            pop_drink_tot.groupby(["region", "unit", "year", "model", "scenario"])[
-                "value"
-            ]
-            .sum()
-            .reset_index()
-        )
-        pop_drink_tot["variable"] = "Population|Drinking Water Access"
-        pop_drink_tot = pop_drink_tot[cols]
-        pop_sani_tot = (
-            pop_sani_tot.groupby(["region", "unit", "year", "model", "scenario"])[
-                "value"
-            ]
-            .sum()
-            .reset_index()
-        )
-        pop_sani_tot["variable"] = "Population|Sanitation Access"
-        pop_sani_tot = pop_sani_tot[cols]
-        # global values
-        pop_sdg6 = pd.concat([pd.concat([pop_sdg6, pop_drink_tot]), pop_sani_tot])
-        pop_sdg6_glb = (
-            pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
-            .sum()
-            .reset_index()
-        )
-        pop_sdg6_glb["region"] = "World"
-        pop_sdg6_glb = pop_sdg6_glb[cols]
-
-        pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
-        log.info("Population|Drinking Water Access")
-
     # Add water prices, ad-hoc procedure
     wp = sc.var(
         "PRICE_COMMODITY", {"commodity": ["urban_mw", "rural_mw", "freshwater"]}
@@ -1295,7 +1349,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     report_iam.filter(variable=varsexclude, unit="unknown", keep=False, inplace=True)
     # prepare data for loading timeserie
     report_pd = report_iam.as_pandas()
-    report_pd = report_pd.drop(columns=["exclude"])
+    # report_pd = report_pd.drop(columns=["exclude"])
     # all initial variables form Reporte will be filtered out
     d = report_df.Variable.unique()
     d1 = pd.DataFrame({"variable": d})
@@ -1309,7 +1363,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     report_pd = report_pd[-report_pd.variable.isin(water_hydro_var)]
 
     # add water population
-    report_pd = report_pd.append(pop_sdg6)
+    pop_sdg6 = pop_water_access(sc, reg, sdgs)
+    report_pd = pd.concat([report_pd, pop_sdg6])
 
     # add units
     for index, row in map_agg_pd.iterrows():
@@ -1326,7 +1381,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     df_unit = df_unit[~df_unit["variable"].str.contains("Investment")]
     df_unit_inv = df_unit_inv.as_pandas()
     report_pd = pd.concat([df_unit, df_unit_inv])
-    report_pd = report_pd.drop(columns=["exclude"])
+    # report_pd = report_pd.drop(columns=["exclude"])
     report_pd["unit"].replace("EJ", "EJ/yr", inplace=True)
     # for country model
     if reg not in ["R11", " R12"] and suban:
@@ -1353,10 +1408,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         # Step 8: Concatenate the new dataframe with the original dataframe
         report_pd = pd.concat([report_pd, renamed_df])
 
-    if reg not in ["R11", " R12"]:
-        # temp for leap- re
-        out_path = package_data_path().parents[0] / "reporting_output/"
-        out_path.mkdir(exist_ok=True)
+    out_path = package_data_path().parents[0] / "reporting_output/"
+    out_path.mkdir(exist_ok=True)
 
     out_file = out_path / f"{sc.model}_{sc.scenario}_nexus.csv"
     report_pd.to_csv(out_file, index=False)
@@ -1367,36 +1420,6 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     sc.add_timeseries(report_pd)
     log.info("Finished uploading timeseries")
     sc.commit("Reporting uploaded as timeseries")
-
-
-def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
-    ww = ww_input[
-        ww_input.variable.isin(
-            ["out|final|rural_mw|rural_t_d|M1", "out|final|urban_mw|urban_t_d|M1"]
-        )
-    ]
-    ww["commodity"] = np.where(
-        ww.variable.str.contains("urban_mw"), "urban_mw", "rural_mw"
-    )
-    ww["wdr"] = ww["value"]
-    if not suban:
-        ww = ww[["region", "year", "commodity", "wdr"]]
-    else:
-        ww = ww[["region", "year", "subannual", "commodity", "wdr"]]
-        ww = pd.concat(
-            [
-                ww,
-                (
-                    ww.groupby(["region", "year", "commodity"])["wdr"]
-                    .sum()
-                    .reset_index()
-                    .assign(subannual="year")
-                    .loc[:, ["region", "year", "subannual", "commodity", "wdr"]]
-                ),
-            ]
-        ).reset_index(drop=True)
-
-    return ww
 
 
 def report_full(sc: Scenario, reg: str, sdgs=False) -> None:
