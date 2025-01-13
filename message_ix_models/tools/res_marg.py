@@ -1,10 +1,17 @@
-"""Update the reserve margin."""
+"""Update the reserve margin.
 
-import argparse
+:func:`main` can also be invoked using the CLI command
+:program:`mix-models --url=… res-marg`.
+"""
+
 from typing import TYPE_CHECKING
+
+import click
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+
+    from message_ix_models import Context
 
 
 def main(scen: "Scenario", contin: float = 0.2) -> None:
@@ -100,34 +107,8 @@ def main(scen: "Scenario", contin: float = 0.2) -> None:
                 )
 
 
-if __name__ == "__main__":
-    descr = """
-    Reserve margin calculation
-
-    Example usage:
-    python res_marg.py --version [X] [model name] [scenario name]
-
-    """
-    parser = argparse.ArgumentParser(
-        description=descr, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    version = "--version : string\n    ix-scenario name"
-    parser.add_argument("--version", help=version)
-    model = "model : string\n    ix-model name"
-    parser.add_argument("model", help=model)
-    scenario = "scenario : string\n    ix-scenario name"
-    parser.add_argument("scenario", help=scenario)
-
-    # parse cli
-    args = parser.parse_args()
-    model = args.model
-    scenario = args.scenario
-    version = int(args.version) if args.version else None
-
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform()
-    scen = message_ix.Scenario(mp, model, scenario, version=version, cache=True)
-
-    main(scen)
+@click.command("res-marg")
+@click.pass_obj
+def cli(ctx: "Context"):
+    """Reserve margin calculation."""
+    main(ctx.get_scenario())
