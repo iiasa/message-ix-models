@@ -1,24 +1,30 @@
+"""Update the reserve margin."""
+
 import argparse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
 
-def main(scen, contin=0.2):
-    """Updates the reserve margin.
-    For a given scenario, regional reserve margin (=peak load factor) values
-    are updated based on the electricity demand in the industry and res/comm
-    sector.
+def main(scen: "Scenario", contin: float = 0.2) -> None:
+    """Update the reserve margin.
+
+    For a given scenario, regional reserve margin (=peak load factor) values are updated
+    based on the electricity demand in the industry and res/comm sector.
+
     This is based on the approach described in Johnsonn et al. (2017):
-    DOI: https://doi.org/10.1016/j.eneco.2016.07.010
-    (see section 2.2.1. Firm capacity requirement)
+    DOI: https://doi.org/10.1016/j.eneco.2016.07.010 (see section 2.2.1. Firm capacity
+    requirement)
 
     Parameters
     ----------
-    scen : :class:`message_ix.Scenario`
-        scenario to which changes should be applied
-    contin : float
-        Backup capacity for contingency reasons as percentage of peak capacity
-        (default 20%)
+    scen :
+        Scenario to which changes should be applied.
+    contin :
+        Backup capacity for contingency reasons as percentage of peak capacity (default
+        20%).
     """
-
     demands = scen.par("demand")
     demands = (
         demands[demands.commodity.isin(["i_spec", "rc_spec"])]
