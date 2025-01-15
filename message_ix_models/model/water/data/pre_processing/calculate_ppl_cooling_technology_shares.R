@@ -111,24 +111,7 @@ for (reg in c("R11", "R12")) {
   csp_map <- csp_map %>% select(utype, cooling, utype_pl)
   map_all_types <- bind_rows(map_all_types, csp_map)
 
-  # for each utype, make sure no shares are 0
-  shars_cooling_MSG_global <- shars_cooling_MSG_global %>%
-    gather(msgregion, shares, -c(utype, cooling)) %>%
-    group_by(utype, msgregion) %>%
-    mutate(max_shares = max(shares)) %>%
-    ungroup() %>%
-    group_by(utype) %>%
-    mutate(main_tec_gbl = cooling[which.max(shares)]) %>%
-    ungroup() %>%
-    # change values
-    mutate(shares = if_else(max_shares == 0 & cooling == main_tec_gbl, 1, shares)) %>%
-    select(-c(max_shares, main_tec_gbl)) %>%
-    spread(msgregion, shares)
-
-  # This will be the file
-  write.csv(shars_cooling_MSG_global, paste0(data_subf, "/cool_techs_region_share_", reg, ".csv"), row.names = FALSE)
-
-  # back to shares, change names
+  # change names
   new_names <- paste0("mix_", names(shars_cooling_MSG_global)[!names(shars_cooling_MSG_global) %in% c("utype", "cooling")])
   names(shars_cooling_MSG_global)[!names(shars_cooling_MSG_global) %in% c("utype", "cooling")] <- new_names
   shars_cooling_MSG_global <- shars_cooling_MSG_global %>% mutate(utype_pl = utype)
@@ -145,6 +128,26 @@ for (reg in c("R11", "R12")) {
     left_join(all_shares)
 
   cooltech_cost_shares[is.na(cooltech_cost_shares)] <- 0
+  
+  # for each utype, make sure no shares are 0
+  cooltech_cost_shares <- cooltech_cost_shares %>%
+    gather(msgregion, shares, -c(utype, cooling, 
+                                 investment_million_USD_per_MW_low,
+                                 investment_million_USD_per_MW_mid,
+                                 investment_million_USD_per_MW_high,
+                                 utype_pl)) %>%
+    group_by(utype, msgregion) %>%
+    mutate(max_shares = max(shares)) %>%
+    ungroup() %>%
+    group_by(utype) %>%
+    mutate(main_tec_gbl = cooling[which.max(shares)]) %>%
+    ungroup() %>%
+    # change values
+    mutate(shares = if_else(max_shares == 0 & cooling == main_tec_gbl, 1, shares)) %>%
+    select(-c(max_shares, main_tec_gbl)) %>%
+    spread(msgregion, shares) %>% 
+    select(-utype_pl,everything(), utype_pl)
+  
   # write new file
   write.csv(cooltech_cost_shares, paste0(data_subf, "/cooltech_cost_and_shares_ssp_msg_", reg, ".csv"), row.names = FALSE)
 }
@@ -164,24 +167,7 @@ shars_cooling_country <- cooling_plants %>%
 
 shars_cooling_country[is.na(shars_cooling_country)] <- 0
 
-shars_cooling_country <- shars_cooling_country %>%
-  gather(msgregion, shares, -c(utype, cooling)) %>%
-  group_by(utype, msgregion) %>%
-  mutate(max_shares = max(shares)) %>%
-  ungroup() %>%
-  group_by(utype) %>%
-  mutate(main_tec_gbl = cooling[which.max(shares)]) %>%
-  ungroup() %>%
-  # change values
-  mutate(shares = if_else(max_shares == 0 & cooling == main_tec_gbl, 1, shares)) %>%
-  select(-c(max_shares, main_tec_gbl)) %>%
-  spread(msgregion, shares)
-
-
-# This will be the file
-write.csv(shars_cooling_country, paste0(data_subf, "/cool_techs_country_share.csv"), row.names = FALSE)
-
-# back to shares, change names
+# change names
 new_names <- paste0("mix_", names(shars_cooling_country)[!names(shars_cooling_country) %in% c("utype", "cooling")])
 names(shars_cooling_country)[!names(shars_cooling_country) %in% c("utype", "cooling")] <- new_names
 shars_cooling_country <- shars_cooling_country %>% mutate(utype_pl = utype)
@@ -197,6 +183,26 @@ cooltech_cost_shares_c <- cooltech_cost_shares %>%
   select(utype, cooling, investment_million_USD_per_MW_low, investment_million_USD_per_MW_mid, investment_million_USD_per_MW_high) %>%
   left_join(all_shares_c)
 
+cooltech_cost_shares_c$utype_pl[is.na(cooltech_cost_shares_c$utype_pl)] <- "0"
 cooltech_cost_shares_c[is.na(cooltech_cost_shares_c)] <- 0
+
+cooltech_cost_shares_c <- cooltech_cost_shares_c %>%
+  gather(msgregion, shares, -c(utype, cooling,
+                               investment_million_USD_per_MW_low,
+                               investment_million_USD_per_MW_mid,
+                               investment_million_USD_per_MW_high,
+                               utype_pl)) %>%
+  group_by(utype, msgregion) %>%
+  mutate(max_shares = max(shares)) %>%
+  ungroup() %>%
+  group_by(utype) %>%
+  mutate(main_tec_gbl = cooling[which.max(shares)]) %>%
+  ungroup() %>%
+  # change values
+  mutate(shares = if_else(max_shares == 0 & cooling == main_tec_gbl, 1, shares)) %>%
+  select(-c(max_shares, main_tec_gbl)) %>%
+  spread(msgregion, shares) %>% 
+  select(-utype_pl,everything(), utype_pl)
+
 # write new file
 write.csv(cooltech_cost_shares_c, paste0(data_subf, "/cooltech_cost_and_shares_country.csv"), row.names = FALSE)
