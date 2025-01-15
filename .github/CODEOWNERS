@@ -6,6 +6,10 @@
 # Includes this file, GitHub Actions workflows, and more
 /.github  @khaeru @glatterf42
 
+/doc/api/workflow.rst                      @khaeru @glatterf42
+/message_ix_models/workflow.py             @khaeru @glatterf42
+/message_ix_models/tests/test_workflow.py  @khaeru @glatterf42
+
 /doc/api/tools-costs.rst              @measrainsey
 /message_ix_models/data/costs         @measrainsey
 /message_ix_models/data/intratec      @measrainsey

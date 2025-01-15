@@ -35,7 +35,7 @@ The generic pattern for workflows is:
 
      - Solve the target scenario.
      - Invoke reporting.
-  4. The resulting function is passed to the next workflow step.
+  4. The resulting scenario is passed to the next workflow step.
 
 - A workflow can consist of any number of scenarios and steps.
 - The same precursor scenario can be used as the basis for multiple target scenarios.
@@ -56,7 +56,7 @@ These functions **must**:
 
   1. A :class:`.Context` instance.
   2. The precursor scenario.
-  3. Optionally additional, keyword-only arguments.
+  3. (Optional) Additional, keyword-only arguments.
 
 - Return either:
 
@@ -75,14 +75,14 @@ and they **should**:
 
 .. code-block:: python
 
-    def changes_a(s: Scenario) -> None:
+    def changes_a(c: Context, s: Scenario) -> None:
         """Change a scenario by modifying structure data, but not data."""
         with s.transact():
             s.add_set("technology", "test_tech")
 
         # Here, invoke other code to further modify `s`
 
-    def changes_b(s: Scenario, value=100.0) -> None:
+    def changes_b(c: Context, s: Scenario, *, value=100.0) -> None:
         """Change a scenario by modifying parameter data, but not structure.
 
         This function takes an extra argument, `values`, so functools.partial()
