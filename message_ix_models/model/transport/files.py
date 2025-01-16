@@ -347,6 +347,15 @@ demand_scale = add(
     units="dimensionless",
 )
 
+# NB This differs from fuel_emi_intensity in including (a) a 't[echnology]' dimension
+#    and (b) more and non-GHG species.
+emi_intensity = add(
+    key="emissions intensity:t-c-e:transport",
+    path="emi-intensity",
+    name="Emissions intensity of fuel use",
+    units="g / EJ",
+)
+
 energy_other = add(
     key="energy:c-n:transport other",
     path="energy-other",
@@ -355,9 +364,11 @@ energy_other = add(
     required=False,
 )
 
+# NB This differs from emi_intensity in (a) having no 't[echnology]' dimension and (b)
+#    including only CO₂.
 fuel_emi_intensity = add(
     key="fuel-emi-intensity:c-e",
-    name="Carbon emissions intensity of fuel use",
+    name="GHG emissions intensity of fuel use",
     description="""Values are in GWP-equivalent mass of carbon, not in mass of the
 emissions species.""",
     units="tonne / kWa",
