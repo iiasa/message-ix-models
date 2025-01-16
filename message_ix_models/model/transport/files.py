@@ -218,7 +218,7 @@ class ExogenousDataFile:
         # template =
 
 
-def add(*, replace: bool = False, **kwargs):
+def add(*, replace: bool = False, **kwargs) -> "Key":
     """Add or replace an entry in :data:`FILES`.
 
     Parameters
