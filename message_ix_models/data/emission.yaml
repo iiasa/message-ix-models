@@ -13,6 +13,7 @@ CO2:
 
 N2O:
   name: Nitrous oxide
+  units: kt
 
 NH3:
   name: Ammonia
