@@ -1,5 +1,5 @@
-UniCC User Guide
-****************
+Running MESSAGEix on UniCC
+**************************
 
 This is a guide on how to get set up on the Unified IIASA Computing Cluster (UnICC) and how to run MESSAGEix scenarios on the cluster.
 Please note that this guide is only for IIASA staff and collaborators who have access to the UnICC.
