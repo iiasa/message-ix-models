@@ -1,5 +1,5 @@
-Distributed computing
-*********************
+Overview and tooling
+********************
 
 This page introduces considerations, tools, and features for using **distributed** or **high-throughput computing** with MESSAGEix-GLOBIOM.
 
