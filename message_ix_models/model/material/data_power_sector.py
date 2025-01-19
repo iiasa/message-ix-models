@@ -498,7 +498,8 @@ def gen_data_power_sector(
 
     # create new parameters input_cap_new, output_cap_new, input_cap_ret,
     # output_cap_ret, input_cap and output_cap if they don't exist
-    maybe_init_pars(scenario)
+    with scenario.transact():
+        maybe_init_pars(scenario)
 
     # Concatenate to one data frame per parameter
     return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
