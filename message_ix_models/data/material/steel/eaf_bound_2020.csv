@@ -1,0 +1,13 @@
+relation,node_rel,year_rel,value,unit
+eaf_bound_2020,R12_AFR,2020,6.6451,Mt/yr
+eaf_bound_2020,R12_CHN,2020,97.9616,Mt/yr
+eaf_bound_2020,R12_EEU,2020,8.6757,Mt/yr
+eaf_bound_2020,R12_FSU,2020,28.3006,Mt/yr
+eaf_bound_2020,R12_LAM,2020,25.854,Mt/yr
+eaf_bound_2020,R12_MEA,2020,50.954,Mt/yr
+eaf_bound_2020,R12_NAM,2020,56.353,Mt/yr
+eaf_bound_2020,R12_PAO,2020,22.5628,Mt/yr
+eaf_bound_2020,R12_PAS,2020,48.159,Mt/yr
+eaf_bound_2020,R12_SAS,2020,64.1665,Mt/yr
+eaf_bound_2020,R12_WEU,2020,77.3729,Mt/yr
+eaf_bound_2020,R12_RCPA,2020,7.0,Mt/yr
