@@ -347,6 +347,7 @@ steel:
     - bf_steel
     - bf_ccs_steel
     - dri_steel
+    - dri_coal_steel
     - dri_gas_steel
     - dri_gas_ccs_steel
     - dri_h2_steel
@@ -378,6 +379,8 @@ steel:
       - minimum_recycling_steel
       - max_global_recycling_steel
       - max_regional_recycling_steel
+      - eaf_bound_2020
+      - bof_bound_2020
 
   balance_equality:
     add:
@@ -393,6 +396,7 @@ steel:
   addon:
     add:
       - bf_ccs_steel
+      - dri_coal_steel
       - dri_gas_ccs_steel
       - dri_gas_steel
       - dri_h2_steel
@@ -413,6 +417,7 @@ steel:
     add:
       - [bf_ccs_steel_addon, bf_ccs_steel]
       - [dri_gas_ccs_steel_addon, dri_gas_ccs_steel]
+      - [dri_steel_addon, dri_coal_steel]
       - [dri_steel_addon, dri_gas_steel]
       - [dri_steel_addon, dri_h2_steel]
 
