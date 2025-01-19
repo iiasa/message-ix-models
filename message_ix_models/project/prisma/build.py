@@ -91,6 +91,12 @@ def resolve_infeasibilities(scenario):
     with scenario.transact():
         scenario.remove_par("input", df_in_water)
 
+    df_in_water = scenario.par(
+        "bound_new_capacity_up", filters={"technology": "dri_steel"}
+    )
+    with scenario.transact():
+        scenario.remove_par("bound_new_capacity_up", df_in_water)
+
     # remove balance equality for steel commodities to give the model room to adjust
     bal_eq_original = scenario.set("balance_equality")
     bal_eq_steel = bal_eq_original[bal_eq_original["commodity"] == "steel"]
