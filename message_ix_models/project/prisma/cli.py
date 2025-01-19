@@ -9,8 +9,9 @@ def cli():
     """
 
 
-@click.command("build-wp4")
+@cli.command("build-wp4")
 @click.option("--tag", default="", help="Suffix to the scenario name")
+@click.pass_obj
 def build_wp4(context, tag):
     """Build PRISMA WP4."""
     from message_ix_models.project.prisma.build import (
@@ -20,7 +21,7 @@ def build_wp4(context, tag):
     )
 
     scenario = context.get_scenario().clone(
-        model=context.scenario_info["model"] + "(PRISMA)",
+        model=context.scenario_info["model"] + " (PRISMA)",
         scenario=context.scenario_info["scenario"] + tag,
         keep_solution=False,
     )
@@ -28,6 +29,7 @@ def build_wp4(context, tag):
     add_dri_update(scenario)
     add_eaf_bof_calibration(scenario)
     scenario.solve(solve_options={"scaind": -1})
+    scenario.set_as_default()
 
 
 @click.command("report-wp4")
