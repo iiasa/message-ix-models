@@ -1,11 +1,11 @@
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Literal
 
 import message_ix
 import pandas as pd
 from message_ix import make_df
 
-# Get endogenous material demand from buildings interface
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
     calculate_ini_new_cap,
@@ -428,24 +428,6 @@ def gen_data_steel_rel(data_steel_rel, results, regions, modelyears):
     return
 
 
-def gen_cokeoven_co2_cc(s_info):
-    emi_dict = {
-        "unit": "Mt C/yr",
-        "technology": "cokeoven_steel",
-        "mode": "M1",
-        "value": 0.814 * 0.2,
-        # coal coeffient * difference between coal "final" and "dummy_emission" input
-        "relation": "CO2_cc",
-    }
-    df = (
-        make_df("relation_activity", **emi_dict)
-        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=s_info.Y)
-        .pipe(same_node)
-    )
-    df["year_rel"] = df["year_act"]
-    return df
-
-
 def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     """Generate data for materials representation of steel industry."""
     # Load configuration
@@ -621,6 +603,13 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
     )
 
+    results = combine_df_dictionaries(
+        results,
+        gen_dri_act_bound(),
+        gen_dri_cap_calibration(),
+        gen_dri_coal_model(s_info),
+    )
+
     maybe_remove_water_tec(scenario, results)
 
     results = combine_df_dictionaries(
@@ -646,6 +635,132 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
 
     return reduced_pdict
+
+
+def gen_cokeoven_co2_cc(s_info):
+    emi_dict = {
+        "unit": "Mt C/yr",
+        "technology": "cokeoven_steel",
+        "mode": "M1",
+        "value": 0.814 * 0.2,
+        # coal coeffient * difference between coal "final" and "dummy_emission" input
+        "relation": "CO2_cc",
+    }
+    df = (
+        make_df("relation_activity", **emi_dict)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=s_info.Y)
+        .pipe(same_node)
+    )
+    df["year_rel"] = df["year_act"]
+    return df
+
+
+def gen_dri_act_bound():
+    df_act = pd.read_csv(
+        package_data_path("material", "steel", "dri_activity_2020.csv")
+    )
+    df_hist = pd.read_csv(
+        package_data_path("material", "steel", "dri_activity_hist.csv")
+    )
+    return {
+        "bound_activity_up": df_act,
+        "bound_activity_lo": df_act,
+        "historical_activity": df_hist,
+    }
+
+
+def gen_dri_cap_calibration():
+    df_cap_2020 = pd.read_csv(
+        package_data_path("material", "steel", "dri_capacity_2020.csv")
+    )
+    df_cap_hist = pd.read_csv(
+        package_data_path("material", "steel", "dri_capacity_hist.csv")
+    )
+    return {
+        "bound_new_capacity_up": df_cap_2020,
+        "bound_new_capacity_lo": df_cap_2020,
+        "historical_new_capacity": df_cap_hist,
+    }
+
+
+def gen_dri_coal_model(s_info):
+    model_years = s_info.Y
+    df = pd.read_csv(package_data_path("material", "steel", "dri_coal.csv"))
+    common = {
+        "time": "year",
+        "time_origin": "year",
+        "time_dest": "year",
+    }
+    par_dict = {}
+    for par in df.parameter.unique():
+        df_tmp = (
+            make_df(par, **df[df["parameter"] == par], **common)
+            .pipe(broadcast, year_act=model_years)
+            .pipe(same_node)
+        )
+        if "year_rel" in df_tmp.columns:
+            df_tmp["year_rel"] = df_tmp["year_act"]
+        if "year_vtg" in df_tmp.columns:
+            df_tmp["year_vtg"] = df_tmp["year_act"]
+        par_dict[par] = df_tmp
+
+    tec_lt_hist = make_df(
+        "technical_lifetime",
+        technology="dri_steel",
+        year_vtg=[i for i in range(1970, 2020, 5)],
+        value=[i for i in range(60, 30, -5)] + [30] * 4,
+        unit="???",
+        **common,
+    ).pipe(
+        broadcast,
+        node_loc=nodes_ex_world(s_info.N),
+    )
+    tec_lt = make_df(
+        "technical_lifetime",
+        technology="dri_steel",
+        value=30,
+        year_vtg=model_years,
+        unit="???",
+        **common,
+    ).pipe(
+        broadcast,
+        node_loc=nodes_ex_world(s_info.N),
+    )
+    par_dict["technical_lifetime"] = pd.concat([tec_lt_hist, tec_lt])
+    return par_dict
+
+
+def gen_2020_calibration_relation(scenario, tech: Literal["eaf", "bof"]):
+    s_info = ScenarioInfo(scenario)
+    modes = {"eaf": ["M1", "M2", "M3"], "bof": ["M1", "M2"]}
+    df = (
+        make_df(
+            "relation_activity",
+            relation=f"{tech}_bound_2020",
+            year_rel=2020,
+            value=1,
+            technology=f"{tech}_steel",
+            year_act=2020,
+            unit="???",
+        )
+        .pipe(broadcast, mode=modes[tech])
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(same_node)
+        .assign(node_rel=lambda x: x["node_loc"])
+    )
+
+    rel_up = pd.read_csv(
+        package_data_path("material", "steel", f"{tech}_bound_2020.csv")
+    )
+
+    return {"relation_activity": df, "relation_upper": rel_up, "relation_lower": rel_up}
+
+
+def gen_bof_2020_calibration():
+    bound = pd.read_csv(package_data_path("material", "steel", "bof_bound_2020.csv"))
+
+    return {"bound_activity_up": bound, "bound_activity_lo": bound}
+
 
 
 def get_scrap_prep_cost(s_info, ssp):
