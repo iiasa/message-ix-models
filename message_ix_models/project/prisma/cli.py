@@ -1,0 +1,43 @@
+import click
+
+
+@click.group("prisma")
+def cli():
+    """PRISMA project.
+
+    https://docs.messageix.org/projects/models/en/latest/project/prisma.html
+    """
+
+
+@click.command("build-wp4")
+@click.option("--tag", default="", help="Suffix to the scenario name")
+def build_wp4(context, tag):
+    """Build PRISMA WP4."""
+    from message_ix_models.project.prisma.build import (
+        add_dri_update,
+        add_eaf_bof_calibration,
+        add_power_sector,
+    )
+
+    scenario = context.get_scenario().clone(
+        model=context.scenario_info["model"] + "(PRISMA)",
+        scenario=context.scenario_info["scenario"] + tag,
+        keep_solution=False,
+    )
+    add_power_sector(scenario)
+    add_dri_update(scenario)
+    add_eaf_bof_calibration(scenario)
+    scenario.solve(solve_options={"scaind": -1})
+
+
+@click.command("report-wp4")
+@click.option("--upload", default=True, help="Upload the results to the database")
+def report_wp4(context, upload):
+    from message_ix_models.model.material.report.run_reporting import run
+
+    scenario = context.get_scenario().clone(
+        model=context.scenario_info["model"] + "(PRISMA)",
+        scenario=context.scenario_info["scenario"],
+        keep_solution=False,
+    )
+    run(scenario, upload)
