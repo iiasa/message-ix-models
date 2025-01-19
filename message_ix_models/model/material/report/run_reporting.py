@@ -267,6 +267,25 @@ def run_fe_reporting(rep: message_ix.Reporter, model: str, scenario: str):
     py_df_all = add_chemicals_to_final_energy_variables(dfs, rep, model, scenario)
 
     py_df_all = split_fe_other(rep, py_df_all, model, scenario)
+
+    vars = [
+        "Final Energy|Industry|Other Sector",
+        "Final Energy|Industry|Iron and Steel",
+        "Final Energy|Industry|Non-Ferrous Metals|Aluminium",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement",
+        "Final Energy|Industry|Chemicals",
+    ]
+    vars2 = [
+        "Final Energy|Industry|Electricity",
+        "Final Energy|Industry|Solids",
+        "Final Energy|Industry|Gases",
+        "Final Energy|Industry|Liquids",
+        "Final Energy|Industry|Hydrogen",
+        "Final Energy|Industry|Solar",
+        "Final Energy|Industry|Heat",
+    ]
+    py_df_all.aggregate("Final Energy|Industry", components=vars2, append=True)
+
     df_final = (
         py_df_all.filter(unit="dimensionless", keep=False)
         .convert_unit("GWa", "EJ")
@@ -354,7 +373,7 @@ def add_chemicals_to_final_energy_variables(
                 prefix + comm,
                 prefix + f"Chemicals|{comm}",
                 prefix + comm,
-                ignore_units=True,
+                ignore_units=False,
             )
         )
     py_df_updates = pyam.concat(updated_fe_totals)
@@ -474,6 +493,7 @@ def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
     )
     config = load_config("fs1")
     df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df.loc[df.index.get_level_values("iamc_name").str.contains("Ammonia")] *= 0.697615
     dfs.append(
         format_reporting_df(
             df,
