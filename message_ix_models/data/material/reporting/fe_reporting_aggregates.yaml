@@ -52,15 +52,15 @@ level_2:
   Solids:
     short: fe_pe_solids
     components:
-      [ fe_pe_hvc_solids, fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_coal, fe_pe_other_solids]
+      [ fe_pe_hvc_solids, fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids]
   Solids|Coal:
     short: fe_pe_coal
     components:
-      [ fe_pe_hvc_coal, fe_pe_cement_coal, fe_pe_aluminum_coal, fe_pe_steel_coal, fe_pe_other_coal ]
+      [ fe_pe_hvc_coal, fe_pe_cement_coal, fe_pe_aluminum_coal, fe_pe_steel_solid_coal, fe_pe_other_coal ]
   Solids|Biomass:
     short: fe_pe_bio
     components:
-      [ fe_pe_hvc_bio, fe_pe_cement_bio, fe_pe_aluminum_bio, fe_pe_other_bio ]
+      [ fe_pe_hvc_bio, fe_pe_cement_bio, fe_pe_aluminum_bio, fe_pe_other_bio, fe_pe_steel_solid_bio ]
   Hydrogen:
     short: fe_pe_h2
     components:
@@ -85,7 +85,7 @@ level_2:
   Other Sector:
     short: fe_pe_oth
     components:
-      [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_sol, fe_pe_other_gases, fe_pe_other_h2 ]
+      [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_solids, fe_pe_other_gases, fe_pe_other_h2 ]
 
   Chemicals|Other Sector:
     short: fe_pe_chem_other
@@ -255,7 +255,7 @@ level_1:
     components:
       [ fe_pe_other_el_th_res, fe_pe_other_el_th_hp, fe_pe_other_el_sp ]
   Other Sector|Gases:
-    short: fe_pe_gases
+    short: fe_pe_other_gases
     components:
       [ fe_pe_other_gas ]
   Other Sector|Hydrogen:
