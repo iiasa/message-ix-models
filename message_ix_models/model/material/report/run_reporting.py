@@ -19,7 +19,7 @@ class ReporterConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     iamc_prefix: str
     message_query_key: Literal[
-        "out", "in", "ACT", "emi", "CAP"
+        "out", "in", "ACT", "emi", "CAP", "land_in", "demand"
     ]  # TODO: try to import message_ix.Reporter keys here
     unit: Literal["Mt/yr", "GWa", "Mt CH4/yr", "GW"]
     df_mapping: pd.DataFrame  # TODO: use pandera to check on columns/dtypes etc.
@@ -76,11 +76,13 @@ def pyam_df_from_rep(
         for col in mapping_df.index.names
     }
     rep.set_filters(**filters_dict)
-    df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l"))
+    df_var = pd.DataFrame(rep.get(f"{rep.infer_keys(reporter_var)}"))
+    node_dimension = "nl" if "nl" in df_var.index.names else "n"
+    year_dimension = "ya" if "ya" in df_var.index.names else "y"
     df = (
         df_var.join(mapping_df[["iamc_name", "unit"]])
         .dropna()
-        .groupby(["nl", "ya", "iamc_name"])
+        .groupby([node_dimension, year_dimension, "iamc_name"])
         .sum(numeric_only=True)
     )
     rep.set_filters()
@@ -104,7 +106,15 @@ def format_reporting_df(
     """
     df.columns = ["value"]
     df = df.reset_index()
-    df = df.rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
+    node_dimension = "nl" if "nl" in df.columns else "n"
+    year_dimension = "ya" if "ya" in df.columns else "y"
+    df = df.rename(
+        columns={
+            "iamc_name": "variable",
+            node_dimension: "region",
+            year_dimension: "Year",
+        }
+    )
     df["variable"] = variable_prefix + df["variable"]
     df["Model"] = model_name
     df["Scenario"] = scenario_name
@@ -778,8 +788,54 @@ def run_prod_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str
     return py_df
 
 
+def run_demand_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
+    dfs = []
+    config = load_config("demand1")
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    dfs.append(
+        format_reporting_df(
+            df,
+            config.iamc_prefix,
+            model_name,
+            scen_name,
+            config.unit,
+            config.df_mapping,
+        )
+    )
+    config = load_config("demand2")
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    dfs.append(
+        format_reporting_df(
+            df,
+            config.iamc_prefix,
+            model_name,
+            scen_name,
+            config.unit,
+            config.df_mapping,
+        )
+    )
+    py_df = pyam.concat(dfs)
+    ammonia_var = f"{config.iamc_prefix}Chemicals|Ammonia"
+    bof = py_df.multiply(
+        f"{config.iamc_prefix}Chemicals|Nitrogen Fertilizer",
+        1.21429,
+        ammonia_var + "|Fertilizer",
+        ignore_units='Mt/yr'
+    )
+    py_df = pyam.concat([py_df, bof])
+    bof = py_df.add(
+        f"{config.iamc_prefix}Chemicals|Ammonia|Industry",
+        ammonia_var + "|Fertilizer",
+        ammonia_var,
+        ignore_units='Mt/yr'
+    )
+    py_df = pyam.concat([py_df, bof])
+    return py_df
+
+
 def run_all_categories(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
+    dfs.append(run_demand_reporting(rep, model_name, scen_name))
     dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
