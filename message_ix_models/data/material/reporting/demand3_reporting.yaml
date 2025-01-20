@@ -3,7 +3,7 @@
 # each variable specifies a list of filter for genno.operator.select()
 
 var:
-  in_cap
+  in_cap_new
 
 iamc_prefix:
   Material Demand|

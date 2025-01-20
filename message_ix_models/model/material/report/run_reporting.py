@@ -19,7 +19,15 @@ class ReporterConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     iamc_prefix: str
     message_query_key: Literal[
-        "out", "in", "ACT", "emi", "CAP", "land_in", "demand"
+        "out",
+        "in",
+        "ACT",
+        "emi",
+        "CAP",
+        "land_in",
+        "demand",
+        "out_cap_ret",
+        "in_cap_new",
     ]  # TODO: try to import message_ix.Reporter keys here
     unit: Literal["Mt/yr", "GWa", "Mt CH4/yr", "GW"]
     df_mapping: pd.DataFrame  # TODO: use pandera to check on columns/dtypes etc.
@@ -78,7 +86,13 @@ def pyam_df_from_rep(
     rep.set_filters(**filters_dict)
     df_var = pd.DataFrame(rep.get(f"{rep.infer_keys(reporter_var)}"))
     node_dimension = "nl" if "nl" in df_var.index.names else "n"
-    year_dimension = "ya" if "ya" in df_var.index.names else "y"
+    year_dimension = (
+        "ya"
+        if "ya" in df_var.index.names
+        else "yv"
+        if "yv" in df_var.index.names
+        else "y"
+    )
     df = (
         df_var.join(mapping_df[["iamc_name", "unit"]])
         .dropna()
@@ -107,7 +121,7 @@ def format_reporting_df(
     df.columns = ["value"]
     df = df.reset_index()
     node_dimension = "nl" if "nl" in df.columns else "n"
-    year_dimension = "ya" if "ya" in df.columns else "y"
+    year_dimension = "ya" if "ya" in df.columns else "yv" if "yv" in df.columns else "y"
     df = df.rename(
         columns={
             "iamc_name": "variable",
@@ -802,6 +816,20 @@ def run_demand_reporting(rep: message_ix.Reporter, model_name: str, scen_name: s
             config.df_mapping,
         )
     )
+    # power sector material demand
+    config = load_config("demand3")
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    dfs.append(
+        format_reporting_df(
+            df,
+            config.iamc_prefix,
+            model_name,
+            scen_name,
+            config.unit,
+            config.df_mapping,
+        )
+    )
+    # fertilizer demand from GLOBIOM
     config = load_config("demand2")
     df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
     dfs.append(
@@ -820,14 +848,14 @@ def run_demand_reporting(rep: message_ix.Reporter, model_name: str, scen_name: s
         f"{config.iamc_prefix}Chemicals|Nitrogen Fertilizer",
         1.21429,
         ammonia_var + "|Fertilizer",
-        ignore_units='Mt/yr'
+        ignore_units="Mt/yr",
     )
     py_df = pyam.concat([py_df, bof])
     bof = py_df.add(
         f"{config.iamc_prefix}Chemicals|Ammonia|Industry",
         ammonia_var + "|Fertilizer",
         ammonia_var,
-        ignore_units='Mt/yr'
+        ignore_units="Mt/yr",
     )
     py_df = pyam.concat([py_df, bof])
     return py_df
@@ -836,7 +864,7 @@ def run_demand_reporting(rep: message_ix.Reporter, model_name: str, scen_name: s
 def run_scrap_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
     config = load_config("scrap")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df = out_cap_ret_from_rep(rep, config.df_mapping)
     dfs.append(
         format_reporting_df(
             df,
@@ -853,6 +881,7 @@ def run_scrap_reporting(rep: message_ix.Reporter, model_name: str, scen_name: st
 
 def run_all_categories(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
+    dfs.append(run_scrap_reporting(rep, model_name, scen_name))
     dfs.append(run_demand_reporting(rep, model_name, scen_name))
     dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_fe_reporting(rep, model_name, scen_name))
@@ -861,9 +890,72 @@ def run_all_categories(rep: message_ix.Reporter, model_name: str, scen_name: str
     return dfs
 
 
+def calc_out_cap_ret(rep):
+    df = pd.DataFrame(rep.get("CAP"))
+    df_tmp = df.reset_index()
+
+    def shift_year(row):
+        if row < 2060:
+            row = row + 5
+        else:
+            row = row + 10
+        return row
+
+    df_tmp["ya"] = df_tmp["ya"].apply(shift_year)
+    df_shifted = df_tmp.set_index(list(df_tmp.columns[:-1]))
+
+    df_diff = df - df_shifted
+    # set positive values to zero
+    # since retired CAP is calculated subtracting the current year from the
+    # previous year the first year vintage CAP is positive since there are not
+    # previous year values. We do not expect retired capacity in the first year vintage
+    df_diff.loc[(df_diff["CAP"] > -(10 ** (-6))), "CAP"] = 0.0
+
+    dur = pd.DataFrame(rep.get("duration_period"))
+    dur.index.names = ["yv"]
+    df_diff = df_diff.join(dur)
+    df_diff["CAP"] = df_diff["CAP"] / df_diff["duration_period"]
+    df_diff.drop(columns=["duration_period"], inplace=True)
+
+    df_diff = df_diff.join(pd.DataFrame(rep.get("output_cap_ret")))
+    df_diff["out_cap_ret"] = -(df_diff["CAP"] * df_diff["output_cap_ret"])
+    df_diff.drop(columns=["CAP", "output_cap_ret"], inplace=True)
+    return df_diff
+
+
+def out_cap_ret_from_rep(rep: message_ix.Reporter, mapping_df: pd.DataFrame):
+    """
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    filters_dict = {
+        col: list(mapping_df.index.get_level_values(col).unique())
+        for col in mapping_df.index.names
+    }
+    rep.set_filters(**filters_dict)
+    df_var = calc_out_cap_ret(rep)
+    node_dimension = "nl" if "nl" in df_var.index.names else "n"
+    year_dimension = (
+        "ya"
+        if "ya" in df_var.index.names
+        else "yv"
+        if "yv" in df_var.index.names
+        else "y"
+    )
+    df = (
+        df_var.join(mapping_df[["iamc_name", "unit"]])
+        .dropna()
+        .groupby([node_dimension, year_dimension, "iamc_name"])
+        .sum(numeric_only=True)
+    )
+    rep.set_filters()
+    return df
+
+
 def run(scenario, upload_ts=False, region=False):
     rep = Reporter.from_scenario(scenario)
-
     dfs = run_all_categories(rep, scenario.model, scenario.scenario)
 
     py_df = pyam.concat(dfs)
@@ -877,5 +969,7 @@ def run(scenario, upload_ts=False, region=False):
         inplace=True,
     )
     if upload_ts:
+        scenario.check_out(timeseries_only=True)
         scenario.add_timeseries(py_df.timeseries())
+        scenario.commit('add materials reporting TS')
     return py_df
