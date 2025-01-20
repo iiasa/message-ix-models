@@ -216,6 +216,10 @@ def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year
     Use the --model_name and --scenario_name option to specify the scenario to solve.
     """
     # default scenario: MESSAGEix-Materials NoPolicy
+    add_calibration = True
+    # print(add_calibration, add_macro, shift_model_year, macro_file)
+    # print(type(add_calibration), type(add_macro), type(shift_model_year), macro_file)
+    # return
     scenario = context.get_scenario()
     default_solve_opt = {
         "model": "MESSAGE",
@@ -224,17 +228,39 @@ def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year
     if shift_model_year:
         if not scenario.has_solution():
             scenario.solve(**default_solve_opt)
+
         if scenario.timeseries(year=scenario.firstmodelyear).empty:
             log.info(
                 "Scenario has no timeseries data in baseyear. Starting"
                 "reporting workflow before shifting baseyear."
             )
-            run_reporting(context, False, False)
+            from message_data.tools.post_processing.iamc_report_hackathon import (
+                report as reporting,
+            )
+
+            from message_ix_models.model.material.report.run_reporting import run
+
+            # Remove existing timeseries and add material timeseries
+            log.info("Reporting material-specific variables")
+            run(scenario, region="R12_GLB", upload_ts=True)
+            log.info("Reporting standard variables")
+            mp = scenario.platform
+            reporting(
+                mp,
+                scenario,
+                "False",
+                scenario.model,
+                scenario.scenario,
+                merge_hist=True,
+                merge_ts=True,
+                run_config="materials_daccs_run_config.yaml",
+            )
+
         # Shift base year
         scenario = scenario.clone(
             model=scenario.model,
             scenario=scenario.scenario + f"_{shift_model_year}",
-            shift_first_model_year=shift_model_year,
+            shift_first_model_year=int(shift_model_year),
         )
 
     if add_calibration:
@@ -278,7 +304,7 @@ def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
     """Run materials specific reporting, then legacy reporting."""
-    from message_ix_models.model.material.report.reporting import report
+    from message_ix_models.model.material.report.run_reporting import run
     from message_ix_models.report.legacy.iamc_report_hackathon import (
         report as reporting,
     )
@@ -299,53 +325,20 @@ def run_reporting(context, remove_ts, profile):
         else:
             log.info("There are no timeseries to be removed.")
     else:
-        if profile:
-            import atexit
-            import cProfile
-            import io
-            import pstats
-
-            log.info("Profiling started...")
-            pr = cProfile.Profile()
-            pr.enable()
-            log.info("Reporting material-specific variables")
-            report(scenario)
-            log.info("Reporting standard variables")
-            reporting(
-                mp,
-                scenario,
-                "False",
-                scenario.model,
-                scenario.scenario,
-                merge_hist=True,
-                merge_ts=True,
-                run_config="materials_run_config.yaml",
-            )
-
-            def exit():
-                pr.disable()
-                log.info("Profiling completed")
-                s = io.StringIO()
-                pstats.Stats(pr, stream=s).sort_stats("cumulative").dump_stats(
-                    "profiling.dmp"
-                )
-
-            atexit.register(exit)
-        else:
-            # Remove existing timeseries and add material timeseries
-            log.info("Reporting material-specific variables")
-            report(scenario)
-            log.info("Reporting standard variables")
-            reporting(
-                mp,
-                scenario,
-                "False",
-                scenario.model,
-                scenario.scenario,
-                merge_hist=True,
-                merge_ts=True,
-                run_config="materials_run_config.yaml",
-            )
+        # Remove existing timeseries and add material timeseries
+        log.info("Reporting material-specific variables")
+        run(scenario, region="R12_GLB", upload_ts=True)
+        log.info("Reporting standard variables")
+        reporting(
+            mp,
+            scenario,
+            "False",
+            scenario.model,
+            scenario.scenario,
+            merge_hist=True,
+            merge_ts=True,
+            run_config="materials_daccs_run_config.yaml",
+        )
 
 
 @cli.command("modify-cost", hidden=True)
