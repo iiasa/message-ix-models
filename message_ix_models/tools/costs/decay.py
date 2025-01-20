@@ -406,11 +406,11 @@ def project_ref_region_inv_costs_using_reduction_rates(
         regional_diff_df.query("region == @config.ref_region")
         .merge(df_cost_reduction, on="message_technology")
         .assign(
-            cost_region_2100=lambda x: x.reg_cost_base_year
+            cost_region_reduc_year=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
-            b=lambda x: (1 - config.pre_last_year_rate) * x.cost_region_2100,
-            r=lambda x: (1 / (2100 - config.base_year))
-            * np.log((x.cost_region_2100 - x.b) / (x.reg_cost_base_year - x.b)),
+            b=lambda x: (1 - config.pre_last_year_rate) * x.cost_region_reduc_year,
+            r=lambda x: (1 / (config.reduction_year - config.base_year))
+            * np.log((x.cost_region_reduc_year - x.b) / (x.reg_cost_base_year - x.b)),
             reference_region=config.ref_region,
         )
     )
@@ -439,7 +439,7 @@ def project_ref_region_inv_costs_using_reduction_rates(
                 "fix_ratio",
                 "reduction_rate",
                 "cost_reduction",
-                "cost_region_2100",
+                "cost_region_reduc_year",
             ]
         )
         .melt(
