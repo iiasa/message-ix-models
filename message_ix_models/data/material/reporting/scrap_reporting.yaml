@@ -1,0 +1,163 @@
+# collection of industry specific production reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  out_cap
+
+iamc_prefix:
+  Scrap|
+
+common:
+  unit: Mt/yr
+
+vars:
+  # cement
+  # aluminum
+  Non-Metallic Minerals|Cement|Electricity|Biomass:
+    filter:
+      { technology:[bio_istig, bio_istig_ccs, bio_ppl], commodity: cement, level: end_of_life }
+    short:
+      scrap_cement_el_bio
+
+  Non-Metallic Minerals|Cement|Electricity|Coal:
+    filter:
+      { technology: [ coal_adv, coal_adv_ccs, coal_ppl, coal_ppl_u, igcc, igcc_ccs ], commodity: cement, level: end_of_life }
+    short:
+      scrap_cement_el_coal
+
+  Non-Metallic Minerals|Cement|Electricity|Oil:
+    filter:
+      { technology: [ loil_ppl, foil_ppl, loil_cc ], commodity: cement, level: end_of_life }
+    short:
+      scrap_cement_el_coal
+
+  Non-Metallic Minerals|Cement|Electricity|Gas:
+    filter:
+      { technology: [ gas_cc, gas_cc_ccs, gas_ct, gas_ppl ], commodity: cement, level: end_of_life }
+    short:
+      scrap_cement_el_gas
+
+  Non-Metallic Minerals|Cement|Electricity|Hydro:
+    filter:
+      { technology: [ hydro_hc, hydro_lc ], commodity: cement, level: end_of_life }
+    short:
+      scrap_cement_el_
+
+  Non-Metallic Minerals|Cement|Electricity|Nuclear:
+    filter:
+      { technology: [ nuc_hc, nuc_lc ], commodity: cement, level: end_of_life }
+    short:
+      scrap_cement_el_nuc
+
+  Non-Metallic Minerals|Cement|Electricity|Solar:
+    filter:
+      { technology: [ csp_sm1_ppl, csp_sm3_ppl, solar_pv_ppl ], commodity: cement, level: end_of_life }
+    short:
+      scrap_cement_el_solar
+
+    Non-Metallic Minerals|Cement|Electricity|Wind:
+      filter:
+        { technology: [ wind_ppl, wind_ppf ], commodity: cement, level: end_of_life }
+      short:
+        scrap_cement_el_wind
+
+
+  # aluminum
+  Non-Ferrous Metals|Aluminium|Electricity|Biomass:
+    filter:
+      { technology:[bio_istig, bio_istig_ccs, bio_ppl], commodity: aluminum, level: end_of_life }
+    short:
+      scrap_alu_el_bio
+
+  Non-Ferrous Metals|Aluminium|Electricity|Coal:
+    filter:
+      { technology: [ coal_adv, coal_adv_ccs, coal_ppl, coal_ppl_u, igcc, igcc_ccs ], commodity: aluminum, level: end_of_life }
+    short:
+      scrap_alu_el_coal
+
+  Non-Ferrous Metals|Aluminium|Electricity|Oil:
+    filter:
+      { technology: [ loil_ppl, foil_ppl, loil_cc ], commodity: aluminum, level: end_of_life }
+    short:
+      scrap_alu_el_coal
+
+  Non-Ferrous Metals|Aluminium|Electricity|Gas:
+    filter:
+      { technology: [ gas_cc, gas_cc_ccs, gas_ct, gas_ppl ], commodity: aluminum, level: end_of_life }
+    short:
+      scrap_alu_el_gas
+
+  Non-Ferrous Metals|Aluminium|Electricity|Hydro:
+    filter:
+      { technology: [ hydro_hc, hydro_lc ], commodity: aluminum, level: end_of_life }
+    short:
+      scrap_alu_el_
+
+  Non-Ferrous Metals|Aluminium|Electricity|Nuclear:
+    filter:
+      { technology: [ nuc_hc, nuc_lc ], commodity: aluminum, level: end_of_life }
+    short:
+      scrap_alu_el_nuc
+
+  Non-Ferrous Metals|Aluminium|Electricity|Solar:
+    filter:
+      { technology: [ csp_sm1_ppl, csp_sm3_ppl, solar_pv_ppl ], commodity: aluminum, level: end_of_life }
+    short:
+      scrap_alu_el_solar
+
+    Non-Ferrous Metals|Aluminium|Electricity|Wind:
+      filter:
+        { technology: [ wind_ppl, wind_ppf ], commodity: aluminum, level: end_of_life }
+      short:
+        scrap_alu_el_wind
+
+
+  # steel
+  Iron and Steel|Steel|Electricity|Biomass:
+    filter:
+      { technology:[bio_istig, bio_istig_ccs, bio_ppl], commodity: steel, level: end_of_life }
+    short:
+      scrap_steel_el_bio
+
+  Iron and Steel|Steel|Electricity|Coal:
+    filter:
+      { technology: [ coal_adv, coal_adv_ccs, coal_ppl, coal_ppl_u, igcc, igcc_ccs ], commodity: steel, level: end_of_life }
+    short:
+      scrap_steel_el_coal
+
+  Iron and Steel|Steel|Electricity|Oil:
+    filter:
+      { technology: [ loil_ppl, foil_ppl, loil_cc ], commodity: steel, level: end_of_life }
+    short:
+      scrap_steel_el_coal
+
+  Iron and Steel|Steel|Electricity|Gas:
+    filter:
+      { technology: [ gas_cc, gas_cc_ccs, gas_ct, gas_ppl ], commodity: steel, level: end_of_life }
+    short:
+      scrap_steel_el_gas
+
+  Iron and Steel|Steel|Electricity|Hydro:
+    filter:
+      { technology: [ hydro_hc, hydro_lc ], commodity: steel, level: end_of_life }
+    short:
+      scrap_steel_el_
+
+  Iron and Steel|Steel|Electricity|Nuclear:
+    filter:
+      { technology: [ nuc_hc, nuc_lc ], commodity: steel, level: end_of_life }
+    short:
+      scrap_steel_el_nuc
+
+  Iron and Steel|Steel|Electricity|Solar:
+    filter:
+      { technology: [ csp_sm1_ppl, csp_sm3_ppl, solar_pv_ppl ], commodity: steel, level: end_of_life }
+    short:
+      scrap_steel_el_solar
+
+    Iron and Steel|Steel|Electricity|Wind:
+      filter:
+        { technology: [ wind_ppl, wind_ppf ], commodity: steel, level: end_of_life }
+      short:
+        scrap_steel_el_wind

@@ -833,6 +833,24 @@ def run_demand_reporting(rep: message_ix.Reporter, model_name: str, scen_name: s
     return py_df
 
 
+def run_scrap_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
+    dfs = []
+    config = load_config("scrap")
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    dfs.append(
+        format_reporting_df(
+            df,
+            config.iamc_prefix,
+            model_name,
+            scen_name,
+            config.unit,
+            config.df_mapping,
+        )
+    )
+    py_df = pyam.concat(dfs)
+    return py_df
+
+
 def run_all_categories(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
     dfs.append(run_demand_reporting(rep, model_name, scen_name))
