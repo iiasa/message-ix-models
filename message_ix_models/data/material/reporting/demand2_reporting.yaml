@@ -1,0 +1,19 @@
+# collection of industry specific production reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  land_in
+
+iamc_prefix:
+  Material Demand|
+
+common:
+  unit: Mt/yr
+
+vars:
+  Chemicals|Nitrogen Fertilizer:
+    filter:
+        {commodity: Fertilizer Use|Nitrogen, level: final_material}
+    short:
+        demand_nfert

@@ -1,0 +1,55 @@
+# collection of industry specific production reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  demand
+
+iamc_prefix:
+  Material Demand|
+
+common:
+  unit: Mt/yr
+
+vars:
+  #ammonia use in industry (NOT for fertilizer)
+  Chemicals|Ammonia|Industry:
+    filter:
+        {commodity: NH3, level: final_material}
+    short:
+        demand_nh3
+
+  # methanol use for different chemicals (NOT for MTO process)
+  Chemicals|Methanol:
+    filter:
+        {commodity: methanol, level: demand}
+    short:
+        demand_meth
+
+  # HVCs
+  Chemicals|High-Value Chemicals:
+    filter:
+      {commodity: HVC, level: demand}
+    short:
+        demand_hvc
+
+  # cement
+  Non-Metallic Minerals|Cement:
+    filter:
+      { commodity: cement, level: demand }
+    short:
+      demand_cement
+
+  # aluminum
+  Non-Ferrous Metals|Aluminum:
+    filter:
+      { commodity: aluminum, level: demand }
+    short:
+      demand_alu
+
+  # steel
+  Iron and Steel|Steel:
+    filter:
+      { commodity: steel, level: demand }
+    short:
+      demand_steel
