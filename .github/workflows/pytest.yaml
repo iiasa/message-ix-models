@@ -1,8 +1,9 @@
 name: Test
 
 on:
-  pull_request:
-    branches: [ main , "migrate**"]
+  pull_request_target:
+    branches: [ main, "migrate**" ]
+    types: [ labeled, opened, reopened, synchronize ]
   schedule:
   # 05:00 UTC = 06:00 CET = 07:00 CEST
   - cron: "0 5 * * *"
@@ -12,8 +13,33 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  gams-version: 43.4.1
+  label: "safe to test"
+  python-version: "3.13"
+
 jobs:
+  check:
+    name: check permissions
+    runs-on: ubuntu-latest
+    steps:
+    - if: >
+        !(
+          github.event_name == 'schedule'
+          || github.repository == github.event.pull_request.head.repo.full_name
+          || contains(github.event.pull_request.labels.*.name, env.label)
+        )
+      run: |
+        echo "Pytest workflow will not run for branch in fork without label \`${{ env.label }}\`." >>$GITHUB_STEP_SUMMARY
+        exit 1
+
   warm-lfs-cache:
+    needs: check
+
     strategy:
       matrix:
         os: [ macos-13, macos-latest, ubuntu-latest, windows-latest ]
@@ -73,23 +99,23 @@ jobs:
     - name: Check out message-ix-models
       uses: francisbilham11/action-cached-lfs-checkout@v3
 
-    - uses: actions/setup-python@v5
+    - name: Set up uv, Python
+      uses: astral-sh/setup-uv@v5
       with:
+        cache-dependency-glob: "**/pyproject.toml"
         python-version: ${{ matrix.version.python }}
-        cache: pip
-        cache-dependency-path: "**/pyproject.toml"
 
     - uses: iiasa/actions/setup-gams@main
       with:
-        version: 43.4.1
+        version: ${{ env.gams-version }}
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
       # Work around ts-graphviz/setup-graphviz#630
-      if: ${{ matrix.os != 'macos-13' }}
+      if: matrix.os != 'macos-13'
 
     - name: Determine extra dependencies
-      id: extra-deps
+      id: dependencies
       run : |
         from os import environ
         from pathlib import Path
@@ -110,42 +136,36 @@ jobs:
     - name: Install packages and dependencies
       # By default, install:
       # - ixmp, message_ix: from GitHub branches/tags per matrix.version.upstream (above)
-      # - other dependencies including genno: from PyPI.
+      # - other dependencies: from PyPI.
       #
-      # To test against unreleased code (on `main`, or other branches
-      # for open PRs), temporarily uncomment, add, or edit lines below
-      # as needed. DO NOT merge such changes to `main`.
+      # To test against unreleased code (on `main`, or other branches for open PRs),
+      # temporarily edit or add lines below as needed. DO NOT merge such changes to `main`.
       run: |
-        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.version.upstream }}"
-        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.version.upstream }}"
-
-        pip install .[docs,tests] ${{ steps.extra-deps.outputs.value }}
-
-        # TEMPORARY With Python 3.13 pyam-iamc resolves to 1.3.1, which in turn
-        # limits pint < 0.17. Override.
-        pip install --upgrade pint
+        uv pip install --upgrade \
+          ${{ steps.dependencies.outputs.value }} \
+          "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.version.upstream }}" \
+          "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.version.upstream }}" \
+          .[docs,tests]
 
     - name: Configure local data path
       run: |
         mkdir -p message-local-data/cache
         mix-models config set "message local data" "$(realpath message-local-data)"
         mix-models config show
-      shell: bash
 
     - name: Run test suite using pytest
       run: |
         pytest message_ix_models \
           -m "not (ece_db or snapshot)" \
-          -rA --verbose --color=yes --durations=20 \
+          --color=yes --durations=20 -rA --verbose \
           --cov-report=term-missing --cov-report=xml \
           --numprocesses=auto \
           --local-cache --jvmargs="-Xmx6G"
-      shell: bash
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v5
       with:
-        token: ${{ secrets.CODECOV_TOKEN }} # required
+        token: ${{ secrets.CODECOV_TOKEN }}  # Required
 
   pre-commit:
     name: Code quality
@@ -154,12 +174,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with: { python-version: "3.13" }
-
-    - name: Force recreation of pre-commit virtual environment for mypy
-      if: github.event_name == 'schedule'  # Comment this line to run on a PR
-      run: gh cache list -L 999 | cut -f2 | grep pre-commit | xargs -I{} gh cache delete "{}" || true
-      env: { GH_TOKEN: "${{ github.token }}" }
-
-    - uses: pre-commit/action@v3.0.1
+    - uses: astral-sh/setup-uv@v5
+      with:
+        cache-dependency-glob: "**/pyproject.toml"
+        python-version: ${{ env.python-version }}
+    - uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit|${{ env.UV_PYTHON }}|${{ hashFiles('.pre-commit-config.yaml') }}
+        lookup-only: ${{ github.event_name == 'schedule' }}  # Set 'true' to recreate cache
+    - run: uvx pre-commit run --all-files --color=always --show-diff-on-failure
