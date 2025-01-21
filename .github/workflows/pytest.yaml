@@ -1,12 +1,14 @@
 name: Test
 
 on:
+  # Uncomment this entry only to debug the workflow
+  # pull_request:
+  #   branches: [ main ]
   pull_request_target:
     branches: [ main, "migrate**" ]
     types: [ labeled, opened, reopened, synchronize ]
   schedule:
-  # 05:00 UTC = 06:00 CET = 07:00 CEST
-  - cron: "0 5 * * *"
+  - cron: "0 5 * * *"  # = 06:00 CET = 07:00 CEST
 
 # Cancel previous runs that have not completed
 concurrency:
