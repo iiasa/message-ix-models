@@ -384,8 +384,16 @@ def callback(rep: Reporter, context: Context) -> None:
 
 
 def configure_legacy_reporting(config: dict) -> None:
-    """Callback to configure the legacy reporting."""
-    from message_ix_models.report.legacy.default_tables import COMMODITY
+    """Callback to configure the legacy reporting.
+
+    .. warning:: This requires code changes from :pull:`254` that are not yet merged to
+       :mod:`message_ix_models` ``main``, particularly the variable
+       :py:`default_tables.COMMODITY`. The PR (or part of it) must be completed in order
+       to use this function.
+    """
+    from message_ix_models.report.legacy.default_tables import (  # type: ignore [attr-defined]
+        COMMODITY,
+    )
 
     # NB the legacy reporting doesn't pass a context object to the hook that calls this
     #    function, so get an instance directly

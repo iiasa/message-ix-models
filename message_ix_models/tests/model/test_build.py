@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Generator
 from typing import TYPE_CHECKING
 
 import pytest
@@ -10,7 +11,7 @@ from message_ix_models import Spec
 from message_ix_models.model.build import apply_spec
 
 if TYPE_CHECKING:
-    from ixmp import Scenario
+    from message_ix import Scenario
 
 
 @pytest.fixture
@@ -20,7 +21,7 @@ def scenario(test_context):
 
 
 @pytest.fixture(scope="function")
-def spec() -> Spec:
+def spec() -> Generator[Spec, None, None]:
     """An empty Spec."""
     yield Spec()
 

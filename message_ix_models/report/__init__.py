@@ -11,6 +11,7 @@ import genno.config
 import yaml
 from genno import Key, KeyExistsError
 from genno.compat.pyam import iamc as handle_iamc
+from genno.core.key import single_key
 from message_ix import Reporter, Scenario
 
 from message_ix_models import Context, ScenarioInfo
@@ -20,6 +21,8 @@ from message_ix_models.util._logging import mark_time, silence_log
 from .config import Config
 
 if TYPE_CHECKING:
+    from genno.core.key import KeyLike  # TODO Import from genno.types
+
     from .config import Callback
 
 __all__ = [
@@ -249,7 +252,7 @@ def prepare_reporter(
     context: Context,
     scenario: Optional[Scenario] = None,
     reporter: Optional[Reporter] = None,
-) -> tuple[Reporter, Key]:
+) -> tuple[Reporter, Optional["KeyLike"]]:
     """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
 
     Parameters
@@ -306,6 +309,7 @@ def prepare_reporter(
         # Construct ScenarioInfo
         si = ScenarioInfo(scenario, empty=True)
         # Use the scenario URL to extend the path
+        assert context.report.output_dir
         context.report.set_output_dir(context.report.output_dir.joinpath(si.path))
 
     # Pass values to genno's configuration; deepcopy to protect from destructive
@@ -321,6 +325,7 @@ def prepare_reporter(
         callback(rep, context)
 
     key = context.report.key
+
     if key:
         # If just a bare name like "ACT" is given, infer the full key
         if Key.bare_name(key):
@@ -331,12 +336,16 @@ def prepare_reporter(
 
         if context.report.cli_output:
             # Add a new task that writes `key` to the specified file
-            key = rep.add(
-                "cli-output", "write_report", key, path=context.report.cli_output
+            key = single_key(
+                rep.add(
+                    "cli-output", "write_report", key, path=context.report.cli_output
+                )
             )
-    else:
+    elif rep.default_key:
         key = rep.default_key
         log.info(f"No key given; will use default: {key!r}")
+    else:
+        log.info("No key given and no default")
 
     # Create the output directory
     context.report.mkdir()

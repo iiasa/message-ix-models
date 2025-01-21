@@ -64,7 +64,7 @@ def codelist_to_groups(
     return {dim: groups}
 
 
-def compound_growth(qty: Quantity, dim: str) -> Quantity:
+def compound_growth(qty: "AnyQuantity", dim: str) -> "AnyQuantity":
     """Compute compound growth along `dim` of `qty`."""
     # Compute intervals along `dim`
     # The value at index d is the duration between d and the next index d+1

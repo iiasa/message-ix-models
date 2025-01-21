@@ -2,11 +2,14 @@ import logging
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import pandas as pd
 from genno import Quantity
 from genno.operator import concat
+
+if TYPE_CHECKING:
+    from genno.types import AnyQuantity
 
 log = logging.getLogger(__name__)
 
@@ -79,7 +82,7 @@ class Adapter:
             raise TypeError(type(data))
 
     @abstractmethod
-    def adapt(self, qty: Quantity) -> Quantity:
+    def adapt(self, qty: "AnyQuantity") -> "AnyQuantity":
         """Adapt data."""
 
 
@@ -110,7 +113,7 @@ class MappingAdapter(Adapter):
     def __init__(self, maps: Mapping[str, Sequence[tuple[str, str]]]):
         self.maps = maps
 
-    def adapt(self, qty: Quantity) -> Quantity:
+    def adapt(self, qty: "AnyQuantity") -> "AnyQuantity":
         result = qty
 
         for dim, labels in self.maps.items():

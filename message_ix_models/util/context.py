@@ -36,7 +36,7 @@ _CONTEXTS: list["Context"] = []
 #:
 #:    This **should** be :any:`False` for all new modules/Config classes. Aliasing is
 #:    provided only for backwards-compatible support of earlier code.
-MODULE_WITH_CONFIG_DATACLASS: tuple[tuple[str, Optional[str], bool, bool], ...] = (
+MODULE_WITH_CONFIG_DATACLASS: tuple[tuple[str, str, bool, bool], ...] = (
     ("message_ix_models.util.config", "core", True, True),
     ("message_ix_models.model.config", "model", True, True),
     ("message_ix_models.report.config", "report", True, False),
@@ -157,11 +157,11 @@ class Context:
         else:
             # Warn about direct reference to aliased attributes
             if base_key not in {"core", "model"}:  # pragma: no cover
-                log.warnings(f"Use Context.{base_key}.{key} instead of Context.{key}")
+                log.warning(f"Use Context.{base_key}.{key} instead of Context.{key}")
             return self._values[base_key]
 
     # General item access
-    def get(self, key: str, default: Optional = None):
+    def get(self, key: str, default: Optional[Any] = None):
         """Retrieve the value for `key`."""
         target = self._dealias(key)
         if isinstance(target, dict):

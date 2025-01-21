@@ -1,7 +1,7 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, cast
 
 from genno import Key
 
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from sdmx.model.common import ConceptScheme
 
     from message_ix_models import Context
+from message_ix_models.types import MaintainableArtefactArgs
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ class ExogenousDataFile:
 
     #: :class:`sdmx.Dataflow <sdmx.model.common.BaseDataflowDefinition>` describing the
     #: input data flow.
-    df: "sdmx.model.common.BaseDataflowDefinition"
+    df: "sdmx.model.common.BaseDataflow"
 
     # Access to annotations of DFD
     @property
@@ -108,9 +109,9 @@ class ExogenousDataFile:
 
         # Handle `path` argument
         if isinstance(path, str):
-            path = Path(path)
+            _path = Path(path)
         elif path:
-            path = Path(*path)
+            _path = Path(*path)
 
         # Parse and store units
         ureg = pint.get_application_registry()
@@ -123,24 +124,24 @@ class ExogenousDataFile:
 
         if not key:
             # Determine from file path
-            key = Key(" ".join(path.parts).replace("-", " "), dims or (), "exo")
+            key = Key(" ".join(_path.parts).replace("-", " "), dims or (), "exo")
         else:
             # Convert to Key object
             key = Key(key)
 
             if path is None:
-                path = Path(key.name.replace(" ", "-"))
+                _path = Path(key.name.replace(" ", "-"))
 
         anno.append(Annotation(id="genno-key", text=str(key)))
 
-        path = path.with_suffix(".csv")
-        anno.append(Annotation(id="file-path", text=str(path)))
+        _path = _path.with_suffix(".csv")
+        anno.append(Annotation(id="file-path", text=str(_path)))
 
         # Retrieve the shared concept scheme
         common = common_structures()
         cs: "ConceptScheme" = common.concept_scheme["CS_MESSAGE_TRANSPORT"]
         # Reuse its properties for maintainable artefacts
-        kw = dict(
+        kw: "MaintainableArtefactArgs" = dict(
             maintainer=cs.maintainer,
             version=cs.version,
             is_final=cs.is_final,
@@ -156,10 +157,10 @@ class ExogenousDataFile:
         dsd = DataStructureDefinition(id=ds_id, **kw, name=f"Structure of {df_id}")
 
         # Add dimensions
-        dims = get_reversed_rename_dims()
+        _rrd = get_reversed_rename_dims()
         for dim in key.dims:
             # Symbol ('n') → Dimension ID ('node') → upper case
-            dim_id = dims.get(dim, dim).upper()
+            dim_id = _rrd.get(dim, dim).upper()
             # Add to the concept scheme
             concept = cs.setdefault(id=dim_id)
             # Add the dimension to the DSD
@@ -298,7 +299,7 @@ def read_structures() -> "sdmx.message.StructureMessage":
     import sdmx
 
     with open(package_data_path("sdmx", "transport-in.xml"), "rb") as f:
-        return sdmx.read_sdmx(f)
+        return cast("sdmx.message.StructureMessage", sdmx.read_sdmx(f))
 
 
 activity_freight = add(
