@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  gams: "43.4.1"
-  python: "3.12"
+  gams-version: 43.4.1
+  python-version: "3.13"
   upstream: main
 
 jobs:
@@ -35,15 +35,15 @@ jobs:
       with:
         lfs: true
 
-    - uses: actions/setup-python@v5
+    - name: Set up uv, Python
+      uses: astral-sh/setup-uv@v5
       with:
+        cache-dependency-glob: "**/pyproject.toml"
         python-version: ${{ env.python }}
-        cache: pip
-        cache-dependency-path: "**/pyproject.toml"
 
     - uses: iiasa/actions/setup-gams@main
       with:
-        version: ${{ env.gams }}
+        version: ${{ env.gams-version }}
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
@@ -59,12 +59,12 @@ jobs:
       # for open PRs), temporarily uncomment, add, or edit lines below
       # as needed. DO NOT merge such changes to `main`.
       run: |
-        # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
-        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ env.upstream }}"
-        # pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ env.upstream }}"
-        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@issue/723"
+        # uv pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
+        uv pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ env.upstream }}"
+        # uv pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ env.upstream }}"
+        uv pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@issue/723"
 
-        pip install .[docs,tests] dask[dataframe]
+        uv pip install .[docs,tests] dask[dataframe]
 
     - name: Configure local data path
       run: |
