@@ -112,7 +112,7 @@ def format_sys_argv() -> str:
 def scenario_param(
     param_decls: Union[str, list[str]],
     *,
-    values: list[str] = None,
+    values: Optional[list[str]] = None,
     default: Optional[str] = None,
 ):
     """Add an SSP or scenario option or argument to a :class:`click.Command`.
@@ -179,7 +179,7 @@ def scenario_param(
 
     # Choose either click.Option or click.Argument
     if decl0.startswith("-"):
-        cls = Option
+        cls: type = Option
     else:
         cls = Argument
         if default is not None:

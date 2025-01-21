@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 import pandas as pd
-from genno import Quantity
+from genno import Key, Quantity
 from genno.core.key import single_key
 from platformdirs import user_cache_path
 
@@ -119,7 +119,7 @@ class IEA_EWEB(ExoDataSource):
 
     id = "IEA_EWEB"
 
-    key = "energy:n-y-product-flow:iea"
+    key = Key("energy:n-y-product-flow:iea")
 
     def __init__(self, source, source_kw):
         """Initialize the data source."""
@@ -365,7 +365,7 @@ def get_mapping(provider: str, edition: str) -> "MappingAdapter":
     from message_ix_models.util import MappingAdapter, pycountry
     from message_ix_models.util.sdmx import read
 
-    maps = dict()
+    maps: dict[str, list[tuple[str, str]]] = dict()
     for concept, dim in ("COUNTRY", "n"), ("FLOW", "flow"), ("PRODUCT", "product"):
         if concept == "COUNTRY":
             cl = read(f"IEA:{concept}_{provider}({edition})")

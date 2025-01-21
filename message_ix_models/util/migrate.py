@@ -166,7 +166,7 @@ def prep_repo(
         # Write a list of missing LFS objects
         to_remove = missing_lfs_objects(repo)
         Path.cwd().joinpath("lfs-sha256s-to-remove.txt").write_text(
-            "\n".join(to_remove)
+            "\n".join(map(str, to_remove))
         )
 
     # Delete the `origin` remote
@@ -235,7 +235,7 @@ def step_2(config):
 
 @main.command("step-3")
 @click.pass_obj
-def step_3(config):
+def step_3(config) -> None:
     """Rewrite history and prepare rebase."""
     cwd = Path.cwd()
 

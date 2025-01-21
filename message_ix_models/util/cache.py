@@ -90,6 +90,7 @@ def cached(func: Callable) -> Callable:
     """
     # Determine and create the cache path
     cache_path = Context.get_instance(-1).core.cache_path
+    assert cache_path
 
     if cache_path not in PATHS_SEEN:
         log.debug(f"{func.__name__}() will cache in {cache_path}")

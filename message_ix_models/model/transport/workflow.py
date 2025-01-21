@@ -56,6 +56,7 @@ def base_scenario_url(
        on `context` such as :attr:`.Config.regions`. Return the URL to this scenario.
     """
     if context.scenario_info:
+        assert context.core.url
         return context.core.url
 
     config: "Config" = context.transport

@@ -5,11 +5,11 @@ from iam_units import registry
 from message_ix_models.model.transport import build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.roadmap import get_roadmap_data
-from message_ix_models.model.transport.testing import MARK, assert_units
+from message_ix_models.model.transport.testing import MARK, assert_units, make_mark
 from message_ix_models.project.navigate import T35_POLICY
 
 
-@MARK[5]("RoadmapResults_2017.xlsx")
+@make_mark[5]("RoadmapResults_2017.xlsx")
 @pytest.mark.parametrize(
     "region, length",
     [

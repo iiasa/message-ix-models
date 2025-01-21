@@ -105,7 +105,22 @@ omit = [
 ]
 
 [tool.mypy]
-exclude = ["doc/", "message_ix_models/report/legacy/"]
+files = [
+  "doc",
+  "message_ix_models",
+]
+
+[[tool.mypy.overrides]]
+module = [
+  # TODO Satisfy mypy in the following
+  "message_ix_models.model.material.*",
+  "message_ix_models.model.water.*",
+  # Legacy codes that may not be type hinted
+  "message_ix_models.report.legacy.*",
+  "message_ix_models.tools.messagev",
+  "message_ix_models.util.compat.message_data.*",
+]
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available
@@ -129,11 +144,6 @@ module = [
   "sklearn",
 ]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-# Work around iiasa/ixmp#465 and similar
-module = ["ixmp.*"]
-no_implicit_optional = false
 
 [tool.pytest.ini_options]
 # Default options for invoking pytest

@@ -441,7 +441,7 @@ def get_cl_scenario() -> "Codelist":
     as_ = read("IIASA_ECE:AGENCIES")
     cl_ssp_2024 = read("ICONICS:SSP(2024)")
 
-    cl = common.Codelist(
+    cl: "common.Codelist" = common.Codelist(
         id="CL_TRANSPORT_SCENARIO", maintainer=as_["IIASA_ECE"], version="1.0.0"
     )
 

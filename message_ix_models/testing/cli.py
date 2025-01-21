@@ -138,6 +138,8 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     path_out.parent.mkdir(parents=True, exist_ok=True)
 
     if path_out.suffix.lower() == ".zip":
+        assert zf_member_name is not None
+
         zf = zipfile.ZipFile(path_out, "w", compression=zipfile.ZIP_BZIP2)
         target = zf.open(zf_member_name, "w")
         print(f"Write to member {zf_member_name} in {path_out}")

@@ -13,7 +13,7 @@ from functools import partial, singledispatch, update_wrapper
 from importlib.metadata import version
 from itertools import count
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Protocol, Union
 
 import message_ix
 import pandas as pd
@@ -459,7 +459,7 @@ def make_matched_dfs(
     >>>     technical_lifetime=pint.Quantity(8, "year"),
     >>> )
     """
-    replace = dict()
+    replace: dict[str, Any] = dict()
     data = ChainMap(replace, base)
     result = dict()
     for par, values in par_value.items():
