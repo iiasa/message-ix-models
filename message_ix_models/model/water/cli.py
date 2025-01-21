@@ -252,8 +252,7 @@ def cooling(context, regions, rcps, rels):
     context.REL = rels
 
     log.info(
-        f"SSP assumption is {context.ssp}. "
-        f"RCP is {context.RCP}. REL is {context.REL}."
+        f"SSP assumption is {context.ssp}. RCP is {context.RCP}. REL is {context.REL}."
     )
 
     from .build import main as build

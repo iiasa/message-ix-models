@@ -165,7 +165,7 @@ def read(urn: str, base_dir: Optional["PathLike"] = None):
 
     if len(paths) > 1:
         log.info(
-            f"Match {paths[0].relative_to(base_dir)} for {urn!r}; {len(paths) -1 } "
+            f"Match {paths[0].relative_to(base_dir)} for {urn!r}; {len(paths) - 1} "
             "other result(s)"
         )
 

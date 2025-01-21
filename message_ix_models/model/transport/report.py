@@ -281,7 +281,7 @@ def misc(c: "Computer") -> None:
     c.add("distance:nl:non-ldv", "distance_nonldv", "config")
 
     # Demand per capita
-    c.add("demand::capita", "div" "demand:n-c-y", "population:n-y")
+    c.add("demand::capita", "divdemand:n-c-y", "population:n-y")
 
     # Adjustment factor for LDV calibration: fuel economy ratio
     k_num = Key("in:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
@@ -379,7 +379,7 @@ def callback(rep: Reporter, context: Context) -> None:
         ],
     )
 
-    log.info(f"Added {len(rep.graph)-N_keys} keys")
+    log.info(f"Added {len(rep.graph) - N_keys} keys")
     # TODO Write an SVG visualization of reporting calculations
 
 

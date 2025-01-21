@@ -100,7 +100,7 @@ def read_timer_pop(
     datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
 ):
     df_population = pd.read_excel(
-        f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
+        f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
         sheet_name="Timer_POP",
         skiprows=[0, 1, 2, 30],
         nrows=26,
@@ -119,7 +119,7 @@ def read_timer_gdp(
 ):
     # Read GDP per capita data
     df_gdp = pd.read_excel(
-        f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
+        f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
         sheet_name="Timer_GDPCAP",
         skiprows=[0, 1, 2, 30],
         nrows=26,
@@ -195,7 +195,7 @@ def read_hist_mat_demand(material: Literal["cement", "steel", "aluminum"]):
     if material == "aluminum":
         df_raw_cons = (
             pd.read_excel(
-                f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
+                f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
                 sheet_name="final_table",
                 nrows=378,
             )
@@ -213,7 +213,7 @@ def read_hist_mat_demand(material: Literal["cement", "steel", "aluminum"]):
         )
     elif material == "steel":
         df_raw_cons = pd.read_excel(
-            f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
+            f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
             sheet_name="Consumption regions",
             nrows=26,
         )
@@ -246,7 +246,7 @@ def read_hist_mat_demand(material: Literal["cement", "steel", "aluminum"]):
         )
     elif material == "cement":
         df_raw_cons = pd.read_excel(
-            f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
+            f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
             sheet_name="Regions",
             skiprows=122,
             nrows=26,
@@ -358,7 +358,7 @@ def derive_demand(
 
     # get base year demand of material
     df_base_demand = read_base_demand(
-        f'{datapath}/{material_data[material]["dir"]}/demand_{material}.yaml'
+        f"{datapath}/{material_data[material]['dir']}/demand_{material}.yaml"
     )
 
     # get historical data (material consumption, pop, gdp)

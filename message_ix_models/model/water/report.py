@@ -1103,9 +1103,9 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
 
     pop_check = sc.timeseries(variable="Population")
     pop_check = pop_check[pop_check.year >= 2020]
-    assert (
-        not pop_check.empty
-    ), "The Population data does not exist or timeseries() has no future values"
+    assert not pop_check.empty, (
+        "The Population data does not exist or timeseries() has no future values"
+    )
 
     pop_drink_tot = pd.DataFrame()
     pop_sani_tot = pd.DataFrame()
