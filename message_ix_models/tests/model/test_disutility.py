@@ -239,9 +239,9 @@ def test_get_data(scenario, spec):
 
     # Test that the code will not encounter #45 / iiasa/ixmp#425
     for name, df in data.items():
-        assert (
-            "" not in df["unit"].unique()
-        ), f"{repr(name)} data has dimensionless units"
+        assert "" not in df["unit"].unique(), (
+            f"{repr(name)} data has dimensionless units"
+        )
 
 
 def test_get_spec(groups, techs, template):

@@ -77,9 +77,9 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
     regions_df = df["node_loc"].unique().tolist()
 
     # Assertion check for valid data
-    assert (
-        len(parent_tech_sc) > 0
-    ), "No matching parent technologies found in the scenario."
+    assert len(parent_tech_sc) > 0, (
+        "No matching parent technologies found in the scenario."
+    )
     assert len(regions_df) > 0, "No unique nodes (regions) found in the scenario."
 
     # not filter cooling_tec with only parent_tech matching parent_tech_sc
