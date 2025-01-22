@@ -695,39 +695,39 @@ Running MESSAGEix on the cluster
 Example script
 --------------
 Here is a simple Python script to simply grab, clone, and solve a MESSAGE.
-Create it by calling `nano ~/jobs/message/solve.py`, then pasting the following:
+Create it by calling `nano ~/job/message/solve.py`, then pasting the following:
 
 .. code:: python
 
-   import message_ix
+    import message_ix
 
-   # select scenario
-   model_orig = "model" # replace with name of real model
-   scen_orig = "scenario" # replace with name of real scenario
+    # select scenario
+    model_orig = "model" # replace with name of real model
+    scen_orig = "scenario" # replace with name of real scenario
 
-   # target scenario
-   model_tgt = "unicc_test"
-   scen_tgt = scen_orig + "_cloned"
-   comment = "Cloned " + model_orig + "/" + scen_orig
+    # target scenario
+    model_tgt = "unicc_test"
+    scen_tgt = scen_orig + "_cloned"
+    comment = "Cloned " + model_orig + "/" + scen_orig
 
-   # load scenario
-   print("Loading scenario...")
-   s, mp = message_ix.Scenario.from_url("ixmp://ixmp_dev/" + model_orig + "/" + scen_orig)
+    # load scenario
+    print("Loading scenario...")
+    s, mp = message_ix.Scenario.from_url("ixmp://ixmp_dev/" + model_orig + "/" + scen_orig)
 
-   # clone scenario
-   print("Cloning scenario...")
-   s_new = s.clone(model_tgt, scen_tgt, comment, keep_solution=False)
+    # clone scenario
+    print("Cloning scenario...")
+    s_new = s.clone(model_tgt, scen_tgt, comment, keep_solution=False)
 
-   # solve the cloned scenario
-   print("Solving scenario...")
-   s_new.set_as_default()
-   s_new.solve(
-       "MESSAGE",
-   )
+    # solve the cloned scenario
+    print("Solving scenario...")
+    s_new.set_as_default()
+    s_new.solve(
+        "MESSAGE",
+    )
 
-   # close db
-   print("Closing database...")
-   mp.close_db()
+    # close db
+    print("Closing database...")
+    mp.close_db()
 
 
 Submitting Jobs
@@ -740,30 +740,30 @@ work. So, run:
 
 .. code:: bash
 
-   nano job.do
+   nano ~/job/message/job.do
 
 In the editor, write/paste:
 
 .. code:: bash
 
-   #!/bin/bash
-   #SBATCH --time=3:00:00
-   #SBATCH --mem=40G
-   #SBATCH --mail-type=BEGIN,END,FAIL
-   #SBATCH --mail-user=username@iiasa.ac.at
-   #SBATCH -o ~/out/solve_%J.out
-   #SBATCH -e ~/err/solve_%J.err
+    #!/bin/bash
+    #SBATCH --time=3:00:00
+    #SBATCH --mem=40G
+    #SBATCH --mail-type=BEGIN,END,FAIL
+    #SBATCH --mail-user=username@iiasa.ac.at
+    #SBATCH -o ~/out/solve_%J.out
+    #SBATCH -e ~/err/solve_%J.err
 
-   module purge
-   source /opt/apps/lmod/8.7/init/bash
-   module load Python/3.11.5-GCCcore-13.2.0
-   module load Java
+    module purge
+    source /opt/apps/lmod/8.7/init/bash
+    module load Python/3.11.5-GCCcore-13.2.0
+    module load Java
 
-   echo "Activating environment..."
-   source ~/env/env-name/bin/activate
+    echo "Activating environment..."
+    source ~/env/env-name/bin/activate
 
-   echo "Running python script..."
-   python ~/jobs/message/solve.py
+    echo "Running python script..."
+    python ~/job/message/solve.py
 
 This script requests the following:
 
@@ -787,13 +787,6 @@ It is important (I think) to load the Python and Java modules. I’m not
 sure why the ``source /opt/apps/lmod/8.7/init/bash`` line is there, but
 ICT included that in an email to me when I was asking for help.
 
-NOTE ON MEMORY: If this is not specified, the default amount of memory
-that gets assigned to the job is 2GB. I think more
-CPUs per job could also be requested instead, which would also give more memory (2 GB times the
-number of CPUs). But instead, just request more memory. This
-is IMPORTANT because a job with 8GB of memory failed during
-the reporting because it requires a lot of memory.
-
 To submit the job, run the following (assuming you are in the folder
 where ``job.do`` is located):
 
@@ -804,8 +797,123 @@ where ``job.do`` is located):
 The ``sbatch`` command is what submits the job, and whatever argument
 that comes after it is your job file.
 
+Checking queue
+--------------
+
 To check the status of the job(s) by the user:
 
 .. code:: bash
 
    squeue -u username
+
+
+While the job is waiting/pending, your queue may look like this:
+
+.. code:: bash
+
+   JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+   1234567     batch     job1 username PD       0:00      1 (Resources)
+
+The ``ST`` column shows the status of the job. ``PD`` means pending.
+
+When the job is running, the queue may look like this:
+
+.. code:: bash
+
+   JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+   1234567     batch     job1 username  R       0:01      1 node1
+
+
+Usually my jobs run right away or within a few minutes of being submitted,
+but sometimes they can sit in the queue for a while. This is usually because
+there are a lot of jobs in the queue, and the cluster is busy.
+
+To check where all jobs submitted by all users are in the queue:
+
+.. code:: bash
+
+   squeue
+
+
+Checking job run information
+----------------------------
+
+To check information about a specific job, a helpful command is (replace
+``1234567`` with the actual job ID):
+
+.. code:: bash
+
+   scontrol show jobid 1234567
+
+Your output will look something like this:
+
+.. code:: bash
+
+    JobId=404543 JobName=job.do
+   UserId=mengm(32712) GroupId=mengm(60100) MCS_label=N/A
+   Priority=10000 Nice=0 Account=default QOS=normal
+   JobState=FAILED Reason=NonZeroExitCode Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=1:0
+   DerivedExitCode=0:0
+   RunTime=00:00:11 TimeLimit=03:00:00 TimeMin=N/A
+   SubmitTime=2025-01-22T05:56:31 EligibleTime=2025-01-22T05:56:31
+   AccrueTime=2025-01-22T05:56:31
+   StartTime=2025-01-22T05:56:35 EndTime=2025-01-22T05:56:46 Deadline=N/A
+   PreemptEligibleTime=2025-01-22T05:56:35 PreemptTime=None
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2025-01-22T05:56:35 Scheduler=Backfill
+   Partition=generic AllocNode:Sid=10.42.153.116:248
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=compute2
+   BatchHost=compute2
+   NumNodes=1 NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=1,mem=40G,node=1,billing=1
+   AllocTRES=cpu=1,mem=40G,node=1,billing=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   JOB_GRES=(null)
+     Nodes=compute2 CPU_IDs=2 Mem=40960 GRES=
+   MinCPUsNode=1 MinMemoryNode=40G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/home/mengm/job/message/job.do
+   WorkDir=/home/mengm
+   StdErr=/home/mengm/~/err/solve_%J.err
+   StdIn=/dev/null
+   StdOut=/home/mengm/~/out/solve_%J.out
+   Power=
+   MailUser=username@iiasa.ac.at MailType=BEGIN,END,FAIL
+
+Here you see the job information, including submit time, the associated commands/files, and the output files.
+Additionally, here you can see the resources requested and allocated for the job, such as number of nodes, CPUs, memory, etc.
+
+The ``JobState`` will show the status of the job. If it is ``FAILED``, the
+``Reason`` will show why it failed. The ``ExitCode`` will show the exit
+code of the job. If it is ``0:0``, then the job ran successfully. If it
+is ``1:0``, then the job failed.
+
+When my job fails, I usually go ahead and check both the ``err`` and
+``out`` files to see what happened. The ``err`` file will show any
+errors or warnings that occurred during the job, and the ``out`` file
+will show any print statements or output from the Python script.
+
+Another useful command to check recent jobs and their information is:
+
+.. code:: bash
+
+   sacct -l
+
+However, this will show a lot of information, so it might be better to
+run a more specific command like:
+
+.. code:: bash
+
+   sacct --format=jobid,MaxRSS,MaxVMSize,start,end,CPUTimeRAW,NodeList
+
+Note on memory
+--------------
+
+NOTE ON MEMORY: If this is not specified, the default amount of memory
+that gets assigned to the job is 2GB. I think more
+CPUs per job could also be requested instead, which would also give more memory (2 GB times the
+number of CPUs). But instead, just request more memory. I especially recommend this because if
+you're running legacy reporting, that requires a bit of memory, so your job might fail if
+you don't request enough memory.
