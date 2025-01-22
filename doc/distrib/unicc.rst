@@ -908,6 +908,35 @@ run a more specific command like:
 
    sacct --format=jobid,MaxRSS,MaxVMSize,start,end,CPUTimeRAW,NodeList
 
+
+Resources to request for reducing MESSAGEix run time
+---------------------------------------------------
+
+The following information is based on non-scientific "testing" (goofing around), so take it with a grain of salt.
+I have found that requesting more CPUs per task can help reduce the run time of a MESSAGEix solve.
+
+For example, a MESSAGE job with ``#SBATCH --cpus-per-task=4`` took over 30 minutes to finish, 
+whereas the same job with ``#SBATCH --cpus-per-task=16`` took about 20 minutes to finish.
+I also tried changing ``#SBATCH --ntasks=1`` to ``#SBATCH --ntasks=4``, but that didn't seem to make a difference in run time.
+
+So usually my ``SBATCH`` job request settings look like this:
+
+.. code:: bash
+
+    #SBATCH --time=20:00:00
+    #SBATCH --mem=100G
+    #SBATCH --nodes=1
+    #SBATCH --ntasks=1
+    #SBATCH --cpus-per-task=16
+
+I usually request lots of run time (20 hours) and lots of memory (100 GB) because I don't want my job to for those reasons.
+
+I keep ``--nodes=1`` because I don't know enough about running on multiple nodes, and I don't really do any parallel computing, 
+so I don't think I need to request more than one node.
+
+In general though I'm sure there are other settings people can play around with to optimize their job run time,
+including maybe on the CPLEX side for example, but I haven't really looked into that, and this is just what I've found so far.
+
 Note on memory
 --------------
 
