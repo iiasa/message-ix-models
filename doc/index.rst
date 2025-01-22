@@ -91,11 +91,26 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    :caption: Research projects
 
    project/advance
+   project/alps
+   project/carbon-direct
    project/circeular
+   project/cfr
    project/edits
+   project/ecemf
+   project/elevate
+   project/nextgen-carbon
+   project/ngfs
    project/gea
+   project/geidco
+   project/genie
+   project/guide
+   project/hyway
+   project/newpathways
+   project/prisma
    project/shape
+   project/sparccle
    project/ssp
+   project/uptake
 
 .. toctree::
    :maxdepth: 2
