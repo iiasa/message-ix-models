@@ -30,7 +30,7 @@ from .emission import ef_for_input
 from .util import wildcard
 
 if TYPE_CHECKING:
-    from genno import KeyLike
+    from genno.core.key import KeyLike  # TODO Import from genno.types
     from genno.types import AnyQuantity
 
     from message_ix_models.types import ParameterData
@@ -118,10 +118,10 @@ def prepare_computer(c: Computer):
 
     # Use .tools.exo_data.prepare_computer() to add tasks that load, adapt, and select
     # the appropriate data
-    kw = dict(nodes=context.model.regions, scenario=str(config.ssp))
-    for kw["measure"] in LDV.measures:
+    kw0 = dict(nodes=context.model.regions, scenario=str(config.ssp))
+    for kw0["measure"] in LDV.measures:
         exo_data.prepare_computer(
-            context, c, source=__name__, source_kw=kw, strict=False
+            context, c, source=__name__, source_kw=kw0, strict=False
         )
 
     # Insert a scaling factor that varies according to SSP
@@ -234,14 +234,14 @@ def prepare_computer(c: Computer):
 
     if k.stock:
         # historical_new_capacity: select only data prior to y₀
-        kw: dict[str, Any] = dict(
+        kw1: dict[str, Any] = dict(
             common={},
             dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
             name="historical_new_capacity",
         )
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
         c.add(k.stock[1], "select", k.stock.base, indexers=dict(yv=y_historical))
-        _add(c, kw["name"], "as_message_df", k.stock[1], **kw)
+        _add(c, kw1["name"], "as_message_df", k.stock[1], **kw1)
 
         # CAP_NEW/bound_new_capacity_{lo,up}
         # - Select only data from y₀ and later.
@@ -258,8 +258,8 @@ def prepare_computer(c: Computer):
             indexers=dict(t=["ICE_conv"]),
             inverse=True,
         )
-        for kw["name"] in map("bound_new_capacity_{}".format, ("lo", "up")):
-            _add(c, kw["name"], "as_message_df", k.stock[3], **kw)
+        for kw1["name"] in map("bound_new_capacity_{}".format, ("lo", "up")):
+            _add(c, kw1["name"], "as_message_df", k.stock[3], **kw1)
 
     # Add the data to the target scenario
     c.add("transport_data", __name__, key=TARGET)
@@ -426,8 +426,10 @@ def capacity_factor(
 
     try:
         from message_ix.report.operator import as_message_df
-    except ImportError:
-        from message_ix.reporting.computations import as_message_df
+    except ImportError:  # Older message_ix
+        from message_ix.reporting.computations import (  # type: ignore [no-redef]
+            as_message_df,
+        )
 
     # TODO determine units from technology annotations
     data = convert_units(qty.expand_dims(y=y) * y_broadcast, "Mm / year")
@@ -552,10 +554,10 @@ def stock(c: Computer) -> Key:
     c.add("sales:n-t-y:LDV", "div", "sales:n-t-y:LDV+total", "duration_period:y")
 
     # Rename dimensions to match those expected in prepare_computer(), above
-    k = Key("sales:nl-t-yv:LDV")
-    c.add(k, "rename_dims", "sales:n-t-y:LDV", name_dict={"n": "nl", "y": "yv"})
+    k_result = Key("sales:nl-t-yv:LDV")
+    c.add(k_result, "rename_dims", "sales:n-t-y:LDV", name_dict={"n": "nl", "y": "yv"})
 
-    return k
+    return k_result
 
 
 def usage_data(

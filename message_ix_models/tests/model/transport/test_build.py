@@ -10,7 +10,7 @@ from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import build, report, structure
-from message_ix_models.model.transport.testing import MARK, configure_build
+from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
 
 log = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ def test_make_spec(regions_arg, regions_exp, years):
         param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
         param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
-        ("R12", "B", False, "IKARUS", True),
+        param("R12", "B", False, "IKARUS", True, marks=MARK[8]),
         # R14, A
         param(
             "R14",
@@ -70,7 +70,7 @@ def test_make_spec(regions_arg, regions_exp, years):
             False,
             "IKARUS",
             False,
-            marks=[mark.slow, MARK[2](genno.ComputationError)],
+            marks=[mark.slow, make_mark[2](genno.ComputationError)],
         ),
         # Pending iiasa/message_data#190
         param("ISR", "A", True, None, False, marks=MARK[3]),

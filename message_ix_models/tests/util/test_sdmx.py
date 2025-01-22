@@ -31,7 +31,7 @@ def test_eval_anno(caplog, recwarn):
         assert 7 == eval_anno(c, id="qux")
 
 
-def test_make_enum():
+def test_make_enum0():
     """:func:`.make_enum` works with :class:`~enum.Flag` and subclasses."""
     from enum import Flag, IntFlag
 
@@ -57,6 +57,32 @@ def test_make_enum():
 
     # Expected length
     assert 2 ** (len(E) - 1) == list(E)[-1].value
+
+
+_urn_prefix = "urn:sdmx:org.sdmx.infomodel.codelist"
+
+
+@pytest.mark.parametrize(
+    "urn, expected",
+    (
+        ("ICONICS:SSP(2017)", f"{_urn_prefix}.Code=ICONICS:SSP(2017).1"),
+        ("ICONICS:SSP(2024)", f"{_urn_prefix}.Code=ICONICS:SSP(2024).1"),
+        ("SSP(2017)", f"{_urn_prefix}.Code=ICONICS:SSP(2017).1"),
+        ("SSP(2024)", f"{_urn_prefix}.Code=ICONICS:SSP(2024).1"),
+        ("SSP", f"{_urn_prefix}.Code=ICONICS:SSP(2017).1"),
+        pytest.param(
+            "AGENCIES",
+            f"{_urn_prefix}.Agency=IIASA_ECE:AGENCIES(0.1).IEA",
+            marks=pytest.mark.xfail(raises=KeyError, reason="XML needs update"),
+        ),
+    ),
+)
+def test_make_enum1(urn, expected):
+    # make_enum() runs
+    E = make_enum(urn)
+
+    # A known URN retrieves an enumeration member
+    E.by_urn(expected)
 
 
 @pytest.mark.parametrize(

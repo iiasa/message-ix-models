@@ -4,12 +4,13 @@ import logging
 from collections import defaultdict
 from collections.abc import MutableMapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 import pandas as pd
 
 if TYPE_CHECKING:
     import sdmx.model.common
+    from sdmx.message import StructureMessage
 
 log = logging.getLogger(__name__)
 
@@ -162,7 +163,7 @@ def fetch_codelist(id: str) -> "sdmx.model.common.Codelist":
         url="https://api.worldbank.org/v2/sdmx/rest/codelist/WB/", known_hash=None
     )
     # Read the retrieved SDMX StructureMessage and extract the code list
-    sm = sdmx.read_sdmx(file)
+    sm = cast("StructureMessage", sdmx.read_sdmx(file))
 
     return sm.codelist[id]
 

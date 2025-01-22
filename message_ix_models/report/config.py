@@ -3,7 +3,7 @@ from collections.abc import Callable
 from dataclasses import InitVar, dataclass, field
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, TypeVar, Union
 
 from message_ix_models.util import local_data_path, package_data_path
 from message_ix_models.util.config import ConfigHelper
@@ -18,7 +18,8 @@ log = logging.getLogger(__name__)
 
 #: Type signature of callback functions referenced by :attr:`.Config.callback` and
 #: used by :func:`.prepare_reporter`.
-Callback = Callable[["genno.Computer", "Context"], None]
+ComputerT = TypeVar("ComputerT", bound="genno.Computer")
+Callback = Callable[[ComputerT, "Context"], None]
 
 
 def _default_callbacks() -> list[Callback]:

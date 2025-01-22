@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from functools import partial, reduce
 from itertools import pairwise, product
 from operator import gt, le, lt
-from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, cast
+from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, Union, cast
 
 import genno
 import numpy as np
@@ -237,14 +237,16 @@ def broadcast_wildcard(
 
 def broadcast_t_c_l(
     technologies: list[Code],
-    commodities: list[Code],
+    commodities: list[Union[Code, str]],
     kind: Literal["input", "output"],
     default_level: Optional[str] = None,
 ) -> "AnyQuantity":
     """Return a Quantity for broadcasting dimension (t) to (c, l) for `kind`."""
 
     # Convert list[Union[Code, str]] into an SDMX Codelist for simpler usage
-    cl_commodity = Codelist(items={getattr(c, "id", c): c for c in commodities})
+    cl_commodity: "Codelist" = Codelist()
+    for c0 in commodities:
+        cl_commodity.setdefault(id=c0.id if isinstance(c0, Code) else c0)
 
     # Map each `tech` to a `commodity` and `level`
     data = []
@@ -261,7 +263,7 @@ def broadcast_t_c_l(
         for c_id in (commodity,) if isinstance(commodity, str) else commodity:
             try:
                 # Retrieve the Code object for this commodity
-                c = cl_commodity[c_id]
+                c1 = cl_commodity[c_id]
             except KeyError:
                 continue  # Unknown commodity
 
@@ -270,12 +272,12 @@ def broadcast_t_c_l(
             # 2. Default level for the commodity from `c_code`.
             # 3. `default_level` argument to this function.
             try:
-                level_anno = str(c.get_annotation(id="level").text)
+                level_anno = str(c1.get_annotation(id="level").text)
             except (AttributeError, KeyError):
                 level_anno = None
             level = input_.get("level", level_anno or default_level)
 
-            data.append((tech.id, c, level))
+            data.append((tech.id, c1, level))
 
     idx = pd.MultiIndex.from_frame(pd.DataFrame(data, columns=["t", "c", "l"]))
     s = pd.Series(1.0, index=idx)
@@ -428,7 +430,8 @@ def expand_dims(qty: "AnyQuantity", dim, *args, **kwargs) -> "AnyQuantity":
 
     .. todo:: Move upstream, to :mod:`.genno`.
     """
-    return qty.expand_dims(dim=dim, *args, **kwargs)
+    kwargs.update(dim=dim)
+    return qty.expand_dims(*args, **kwargs)
 
 
 def extend_y(qty: "AnyQuantity", y: list[int], *, dim: str = "y") -> "AnyQuantity":
@@ -684,7 +687,7 @@ def groups_iea_eweb(technologies: list[Code]) -> tuple[Groups, Groups, dict]:
     return g0, g1, g2
 
 
-def groups_y_annual(duration_period: "AnyQuantity") -> "AnyQuantity":
+def groups_y_annual(duration_period: "AnyQuantity") -> dict[str, dict[int, list[int]]]:
     """Return a list of groupers for aggregating annual data to MESSAGE periods.
 
     .. todo:: Move to a more general module/location.

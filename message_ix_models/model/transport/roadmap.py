@@ -171,6 +171,7 @@ def get_roadmap_data(
         # Plot all indicators as grid, per mode, and store them into PNG images
         save_as_pdf_pages(
             # plot_params_per_mode(df),  # TODO Convert to use genno.core.plotnine.Plot
+            [],
             filename=f"{context.model.regions}_AFR_Indicators_per_mode.pdf",
             path=debug_path,
         )

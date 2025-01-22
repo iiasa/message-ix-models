@@ -4,16 +4,13 @@ import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-import genno
-
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.tools.iamc import iamc_like_data_for_query
 from message_ix_models.util import package_data_path, path_fallback
 
 if TYPE_CHECKING:
+    import genno
     from sdmx.model.common import Code
-
-    from message_ix_models import Computer
 
 log = logging.getLogger(__name__)
 
@@ -83,7 +80,7 @@ class GEA(ExoDataSource):
             non_iso_3166="keep",
         )
 
-    def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
+    def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
         """Prepare `c` to transform raw data from `base_key`.
 
         Compared to :meth:`.ExoDataSource.transform`, this version:

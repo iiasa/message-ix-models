@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum, Flag
 from importlib.metadata import version
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, cast
 from warnings import warn
 
 import sdmx
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from os import PathLike
 
     import sdmx.model.common
+    from sdmx.message import StructureMessage
 
 log = logging.getLogger(__name__)
 
@@ -127,12 +128,16 @@ def eval_anno(obj: AnnotableArtefact, id: str):
 class URNLookupEnum(Enum):
     """:class:`.Enum` subclass that allows looking up members using a URN."""
 
-    _urn_name: dict[str, str]
+    _ignore_ = "_urn_name"
+    _urn_name: dict
+
+    def __init_subclass__(cls):
+        cls._urn_name = dict()
 
     @classmethod
     def by_urn(cls, urn: str):
         """Return the :class:`.Enum` member given its `urn`."""
-        return cls[cls._urn_name[urn]]
+        return cls[cls.__dict__["_urn_name"][urn]]
 
 
 def make_enum(urn, base=URNLookupEnum):
@@ -149,7 +154,8 @@ def make_enum(urn, base=URNLookupEnum):
 
     if issubclass(base, URNLookupEnum):
         # Populate the URN → member name mapping
-        result._urn_name = {code.urn: code.id for code in cl}
+        for code in cl:
+            result._urn_name[code.urn] = code.id
 
     return result
 
@@ -165,13 +171,13 @@ def read(urn: str, base_dir: Optional["PathLike"] = None):
 
     if len(paths) > 1:
         log.info(
-            f"Match {paths[0].relative_to(base_dir)} for {urn!r}; {len(paths) -1 } "
+            f"Match {paths[0].relative_to(base_dir)} for {urn!r}; {len(paths) - 1} "
             "other result(s)"
         )
 
     try:
         with open(paths[0], "rb") as f:
-            msg = sdmx.read_sdmx(f)
+            msg = cast("StructureMessage", sdmx.read_sdmx(f))
     except IndexError:
         raise FileNotFoundError(f"'*{urn}*.xml', '*{urn.upper()}*.xml' or similar")
 

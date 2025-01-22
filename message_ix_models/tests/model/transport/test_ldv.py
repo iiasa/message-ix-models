@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Mapping
 from itertools import product
+from typing import Optional
 
 import pandas as pd
 import pytest
@@ -112,10 +113,10 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
 
     # Information about returned parameters
     # TODO Include unit checks, above, in this collection
-    par_info: Mapping[str, tuple[bool, list[int], int]] = {
+    par_info: Mapping[str, tuple[bool, Optional[list[int]], int]] = {
         "bound_new_capacity_lo": (False, [info.y0], 1),
         "bound_new_capacity_up": (False, info.Y, 1),
-        "emission_factor": (True, None, None),
+        "emission_factor": (True, None, 0),
         "historical_new_capacity": (
             True,
             list(filter(lambda y: y < info.y0, y_all))[1:],
@@ -150,7 +151,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
                 assert df.eval("year_act - year_vtg > 0").any(axis=None)
                 N_y = N_y_vintaged
             except (pd.errors.UndefinedVariableError, AssertionError):
-                N_y = len(exp_y)
+                N_y = len(exp_y or [])
 
             # Total length of data is at least the product of:
             # - # of regions

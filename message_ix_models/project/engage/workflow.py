@@ -25,7 +25,7 @@ try:
     from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
     from .scenario_runner import ScenarioRunner
 except ImportError:
-    RELATION_GLOBAL_CO2: str = ""
+    RELATION_GLOBAL_CO2 = ""
     ScenarioRunner = type("ScenarioRunner", (), {})
 
 log = logging.getLogger(__name__)

@@ -16,9 +16,11 @@ import plotnine as p9
 from genno import Computer, Key
 
 if TYPE_CHECKING:
-    import plotnine.typing
     from genno.core.key import KeyLike
     from message_ix import Scenario
+
+    # NB The following is itself within an if TYPE_CHECKING block; mypy can't find it
+    from plotnine.typing import PlotAddable  # type: ignore [attr-defined]
 
     from message_ix_models import Context
 
@@ -53,7 +55,7 @@ class Plot(genno.compat.plotnine.Plot):
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic.
-    static: list["plotnine.typing.PlotAddable"] = [
+    static: list["PlotAddable"] = [
         p9.theme(figure_size=(23.4, 16.5)),  # A3 paper in landscape [inches]
         # p9.theme(figure_size=(11.7, 8.3)),  # A4 paper in landscape
     ]

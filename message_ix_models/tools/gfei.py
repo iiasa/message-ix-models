@@ -10,7 +10,8 @@ from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import path_fallback
 
 if TYPE_CHECKING:
-    from genno import Computer, Quantity
+    from genno import Computer
+    from genno.types import AnyQuantity
 
     from message_ix_models import Context
 
@@ -79,7 +80,7 @@ class GFEI(ExoDataSource):
 
         from message_ix_models.util.pycountry import iso_3166_alpha_3
 
-        def relabel_n(qty: "Quantity") -> "Quantity":
+        def relabel_n(qty: "AnyQuantity") -> "AnyQuantity":
             labels = {n: iso_3166_alpha_3(n) for n in qty.coords["n"].data}
             return genno.operator.relabel(qty, {"n": labels})
 

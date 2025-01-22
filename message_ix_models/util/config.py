@@ -5,7 +5,7 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from hashlib import blake2s
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Hashable, Optional
+from typing import TYPE_CHECKING, Any, Hashable, Optional, Union
 
 import ixmp
 
@@ -168,11 +168,11 @@ class Config:
     #: Base path for cached data, e.g. as given by the :program:`--cache-path` CLI
     #: option. Default: the directory :file:`message-ix-models` within the directory
     #: given by :func:`.platformdirs.user_cache_path`.
-    cache_path: Optional[str] = None
+    cache_path: Optional[Path] = None
 
     #: Paths of files containing debug outputs. See
     #: :meth:`.Context.write_debug_archive`.
-    debug_paths: Sequence[str] = field(default_factory=list)
+    debug_paths: Sequence[Path] = field(default_factory=list)
 
     #: Like :attr:`url`, used by e.g. :meth:`.clone_to_dest`.
     dest: Optional[str] = None
@@ -203,7 +203,9 @@ class Config:
     #: Keyword arguments—`model`, `scenario`, and optionally `version`—for the
     #: :class:`ixmp.Scenario` constructor, as given by the :program:`--model`/
     #: :program:`--scenario` or :program:`--url` CLI options.
-    scenario_info: MutableMapping[str, str] = field(default_factory=dict)
+    scenario_info: MutableMapping[str, Optional[Union[int, str]]] = field(
+        default_factory=dict
+    )
 
     #: Like `scenario_info`, but a list for operations affecting multiple scenarios.
     scenarios: list[ScenarioInfo] = field(default_factory=list)
@@ -240,11 +242,9 @@ class Config:
 
         If no such Platform exists or the connection is already closed, does nothing.
         """
-        try:
+        if self._mp:
             self._mp.close_db()
             self._mp = None
-        except AttributeError:
-            pass
 
     def get_cache_path(self, *parts) -> Path:
         """Return a path to a local cache file, i.e. within :attr:`cache_path`.
@@ -252,6 +252,7 @@ class Config:
         The directory containing the resulting path is created if it does not already
         exist.
         """
+        assert self.cache_path
         result = self.cache_path.joinpath(*parts)
         result.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
         return result
@@ -285,11 +286,9 @@ class Config:
             return self._mp
 
         # Close any existing Platform, e.g. to reload it
-        try:
+        if self._mp:
             self._mp.close_db()
             self._mp = None
-        except AttributeError:
-            pass
 
         # Create a Platform
         self._mp = ixmp.Platform(**self.platform_info)
@@ -330,7 +329,7 @@ class Config:
 
         # Store the path to command-specific data and metadata
         if local_data:
-            self.local_data = local_data
+            self.local_data = Path(local_data)
 
         # References to the Context settings to be updated
         platform_info = getattr(self, _store_as[0])

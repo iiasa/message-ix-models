@@ -12,7 +12,7 @@ from message_ix_models.util.compat.message_data.get_nodes import get_nodes
 from message_ix_models.util.compat.message_data.get_optimization_years import main as get_optimization_years
 from message_ix_models.util.compat.message_data.utilities import retrieve_region_mapping
 
-from . import postprocess 
+from . import postprocess
 from . import pp_utils
 
 log = logging.getLogger(__name__)
@@ -332,7 +332,7 @@ def report(
             # Filter out timeseries entries which exist for a certain variable
             var = config["run_tables"][i]["root"]
             tmp = ts[ts.Variable.str.find(var) >= 0]
-            tmp.Variable = tmp.Variable.str.replace(f"{var}|".replace("|", "\|"), "")
+            tmp.Variable = tmp.Variable.str.replace(f"{var}|".replace("|", r"\|"), "")
             if not tmp.empty:
                 dfs[i] = (
                     tmp.set_index(iamc_index)

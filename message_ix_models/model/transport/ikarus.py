@@ -3,6 +3,7 @@
 import logging
 from functools import lru_cache, partial
 from operator import le
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import xarray as xr
@@ -22,6 +23,9 @@ from message_ix_models.util import (
 )
 
 from .non_ldv import UNITS
+
+if TYPE_CHECKING:
+    from message_ix_models.types import ParameterData
 
 log = logging.getLogger(__name__)
 
@@ -115,7 +119,7 @@ def make_indexers(*args) -> dict[str, xr.DataArray]:
     )
 
 
-def make_output(input_data: dict[str, pd.DataFrame], techs) -> dict[str, pd.DataFrame]:
+def make_output(input_data: dict[str, pd.DataFrame], techs) -> "ParameterData":
     """Make ``output`` data corresponding to IKARUS ``input`` data."""
     result = make_matched_dfs(
         input_data["input"], output=registry.Quantity(1.0, UNITS["output"])

@@ -184,6 +184,8 @@ def local_inv(name: str, *parts: str) -> Optional[str]:
     spec = find_spec(name)
     if spec and spec.origin:
         return str(Path(spec.origin).parents[1].joinpath(*parts, "objects.inv"))
+    else:
+        return None
 
 
 # For message-data, see: https://docs.readthedocs.io/en/stable/guides/intersphinx.html#intersphinx-with-private-projects

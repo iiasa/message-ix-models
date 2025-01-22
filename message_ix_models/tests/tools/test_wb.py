@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 #      marked tests XPASS.
 MARK = pytest.mark.xfail(
     raises=ValueError,
-    match="SHA256 hash of downloaded file .* does not match .* got but got "
+    reason="SHA256 hash of downloaded file .* does not match .* got but got "
     "9b8452db52e391602c9e9e4d4ef4d254f505ce210ce6464497cf3e40002a3545",
 )
 

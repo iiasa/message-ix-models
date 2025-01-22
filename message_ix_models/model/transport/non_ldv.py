@@ -29,6 +29,7 @@ from .emission import ef_for_input
 
 if TYPE_CHECKING:
     from message_ix_models import Context
+    from message_ix_models.types import ParameterData
 
     from .config import Config
 
@@ -135,7 +136,7 @@ def prepare_computer(c: Computer):
     c.add("transport_data", __name__, key=k_all)
 
 
-def get_2w_dummies(context) -> dict[str, pd.DataFrame]:
+def get_2w_dummies(context) -> "ParameterData":
     """Generate dummy, equal-cost output for 2-wheeler technologies.
 
     **NB** this is analogous to :func:`.ldv.get_dummy`.
