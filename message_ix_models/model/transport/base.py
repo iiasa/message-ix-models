@@ -373,7 +373,7 @@ def share_constraints(c: Computer, k_fe: "genno.Key", k_ue: "genno.Key") -> None
         )
 
     # Transform ue-share values to the expected format
-    base = c.full_key("ue::share")
+    base = Key(c.full_key("ue::share"))
     for kind, (label, groupby) in product(
         ("lo", "up"),
         (

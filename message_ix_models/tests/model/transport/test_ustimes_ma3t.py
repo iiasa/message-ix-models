@@ -3,7 +3,7 @@ from message_ix_models.model.transport import testing
 from message_ix_models.model.transport.ustimes_ma3t import read_USTIMES_MA3T
 
 
-@testing.MARK[5]("R11/ldv-cost-efficiency.xlsx")
+@testing.make_mark[5]("R11/ldv-cost-efficiency.xlsx")
 def test_read_USTIMES_MA3T():
     """Data from the US-TIMES / MA³T source can be read.
 

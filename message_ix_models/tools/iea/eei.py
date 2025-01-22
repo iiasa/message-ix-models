@@ -187,15 +187,13 @@ class IEA_EEI(ExoDataSource):
         )
 
     def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
-        ks = genno.KeySeq(super().transform(c, base_key))
-        k = ks.base
+        k = super().transform(c, base_key)
 
         if self.broadcast_map:
             k_map = genno.Key(self.broadcast_map)
             rename = {k_map.dims[1]: k_map.dims[0]}
-            k = c.add(
-                ks[0], "broadcast_map", ks.base, self.broadcast_map, rename=rename
-            )
+            c.add(k + "0", "broadcast_map", k, self.broadcast_map, rename=rename)
+            k = k + "0"
 
         if self.weights:
             # TODO Add operations for computing a weighted mean
@@ -283,7 +281,7 @@ def iea_eei_data_raw(path, non_iso_3166: Literal["keep", "discard"] = "discard")
 
         # Preserve the sector and/or measure ID from the sheet name
         s, m = match.groups()
-        assign = dict()
+        assign: dict[str, str] = dict()
         if s not in ("Activity",):
             assign.update(SECTOR=s.lower())
         if m in ("Energy", "Emissions"):

@@ -8,6 +8,7 @@ from operator import itemgetter
 from typing import Optional
 
 from genno import Computer, Key, Quantity, quote
+from genno.core.key import single_key
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
@@ -43,8 +44,11 @@ class ExoDataSource(ABC):
     key: Optional[Key] = None
 
     #: Name for the returned :class:`.Key`/:class:`.Quantity`. Optional. See
-    # :meth:`get_keys`.
+    #: :meth:`get_keys`.
     name: str = ""
+
+    #: Primary measure.
+    measure = ""
 
     #: Optional additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
     #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`.
@@ -134,12 +138,12 @@ class ExoDataSource(ABC):
         k = base_key
         # Aggregate
         if self.aggregate:
-            k = c.add(k + "1", "aggregate", k, "n::groups", keep=False)
+            k = single_key(c.add(k + "1", "aggregate", k, "n::groups", keep=False))
 
         # Interpolate to the desired set of periods
         if self.interpolate:
             kw = dict(fill_value="extrapolate")
-            k = c.add(k + "2", "interpolate", k, "y::coords", kwargs=kw)
+            k = single_key(c.add(k + "2", "interpolate", k, "y::coords", kwargs=kw))
 
         return k
 

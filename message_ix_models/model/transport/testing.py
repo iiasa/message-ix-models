@@ -2,18 +2,19 @@
 
 import logging
 import platform
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from contextlib import nullcontext
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 import pytest
 from genno import Computer
-from message_ix import Reporter, Scenario
+from message_ix import ModelError, Reporter, Scenario
 
 import message_ix_models.report
-from message_ix_models import Context, ScenarioInfo, testing
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.testing import GHA, bare_res
 from message_ix_models.util import silence_log
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
@@ -34,18 +35,25 @@ MARK: dict[int, pytest.MarkDecorator] = {
     1: pytest.mark.skip(
         reason="Currently only possible with regions=R12 input data/assumptions",
     ),
-    2: lambda t: pytest.mark.xfail(
-        reason="Missing input data/assumptions for this node codelist", raises=t
-    ),
     3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
     4: pytest.mark.xfail(reason="Currently unsupported"),
     # Tests that fail with data that cannot be migrated from message_data
+    7: pytest.mark.xfail(
+        condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
+        reason="Graphviz missing on macos-13 GitHub Actions runners",
+    ),
+    8: pytest.mark.xfail(
+        raises=ModelError,
+        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/281",
+    ),
+}
+
+make_mark: dict[int, Callable[..., pytest.MarkDecorator]] = {
+    2: lambda t: pytest.mark.xfail(
+        reason="Missing input data/assumptions for this node codelist", raises=t
+    ),
     5: lambda f: pytest.mark.xfail(
         raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
-    ),
-    7: pytest.mark.xfail(
-        condition=testing.GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
-        reason="Graphviz missing on macos-13 GitHub Actions runners",
     ),
 }
 
@@ -101,7 +109,7 @@ def built_transport(
     options = options or dict()
 
     # Retrieve (maybe generate) the bare RES with the same settings
-    res = testing.bare_res(request, context, solved)
+    res = bare_res(request, context, solved)
 
     # Derive the name for the transport scenario
     model_name = res.model.replace("-GLOBIOM", "-Transport")

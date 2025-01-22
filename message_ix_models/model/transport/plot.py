@@ -14,8 +14,10 @@ from iam_units import registry
 from .key import gdp_cap, pdt_nyt
 
 if TYPE_CHECKING:
-    import plotnine.typing
     from genno.core.key import KeyLike
+
+    # NB The following is itself within an if TYPE_CHECKING block; mypy can't find it
+    from plotnine.typing import PlotAddable  # type: ignore [attr-defined]
 
     from .config import Config
 
@@ -52,7 +54,7 @@ class Plot(genno.compat.plotnine.Plot):
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic
-    static: list["plotnine.typing.PlotAddable"] = [
+    static: list["PlotAddable"] = [
         p9.theme(figure_size=(11.7, 8.3)),
     ]
 

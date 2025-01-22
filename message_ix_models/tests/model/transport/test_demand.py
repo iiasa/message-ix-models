@@ -10,7 +10,7 @@ from pytest import param
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import Config, build, demand, testing
-from message_ix_models.model.transport.testing import MARK
+from message_ix_models.model.transport.testing import MARK, make_mark
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
 log = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def test_demand_dummy(test_context, regions, years):
         param("R11", "B", 11, dict(futures_scenario="A---"), marks=MARK[1]),
         ("R12", "B", 12, dict()),
         ("R12", "B", 12, dict(navigate_scenario="act+ele+tec")),
-        param("R14", "B", 14, dict(), marks=MARK[2](genno.ComputationError)),
+        param("R14", "B", 14, dict(), marks=make_mark[2](genno.ComputationError)),
         param("ISR", "A", 1, dict(), marks=MARK[3]),
     ],
 )
@@ -136,7 +136,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
 @pytest.mark.parametrize(
     "ssp",
     [
-        pytest.param(SSP_2017["2"], marks=MARK[2](genno.ComputationError)),
+        pytest.param(SSP_2017["2"], marks=make_mark[2](genno.ComputationError)),
         SSP_2024["1"],
         SSP_2024["2"],
         SSP_2024["3"],
@@ -220,7 +220,7 @@ def test_exo_report(test_context, tmp_path):
         param("ISR", marks=MARK[3]),
         "R11",
         "R12",
-        param("R14", marks=MARK[2]((AttributeError, ComputationError))),
+        param("R14", marks=make_mark[2]((AttributeError, ComputationError))),
     ],
 )
 @pytest.mark.parametrize("years", ["B"])
@@ -324,7 +324,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
         ("R12", "SSP2"),
         ("R12", "SSP5"),
         ("R14", "SSP2"),
-        pytest.param("R14", "SSP5", marks=MARK[2](RuntimeError)),
+        pytest.param("R14", "SSP5", marks=make_mark[2](RuntimeError)),
         pytest.param("R11", "SHAPE innovation", marks=MARK[4]),
     ],
 )

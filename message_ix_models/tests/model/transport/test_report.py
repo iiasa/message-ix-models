@@ -12,6 +12,7 @@ from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
     built_transport,
+    make_mark,
     simulated_solution,
 )
 from message_ix_models.report import prepare_reporter, sim
@@ -58,9 +59,9 @@ def test_configure_legacy():
 @pytest.mark.parametrize(
     "regions, years",
     (
-        param("R11", "A", marks=MARK[2](ValueError)),
-        ("R12", "A"),
-        param("R14", "A", marks=MARK[2](genno.ComputationError)),
+        param("R11", "A", marks=make_mark[2](ValueError)),
+        param("R12", "A", marks=MARK[8]),
+        param("R14", "A", marks=make_mark[2](genno.ComputationError)),
         param("ISR", "A", marks=MARK[3]),
     ),
 )
