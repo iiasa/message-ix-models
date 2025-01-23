@@ -39,7 +39,7 @@ jobs:
       uses: astral-sh/setup-uv@v5
       with:
         cache-dependency-glob: "**/pyproject.toml"
-        python-version: ${{ env.python }}
+        python-version: ${{ env.python-version }}
 
     - uses: iiasa/actions/setup-gams@main
       with:
