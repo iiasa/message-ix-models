@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from functools import partial, reduce
 from itertools import pairwise, product
 from operator import gt, le, lt
-from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
 
 import genno
 import numpy as np
@@ -238,10 +238,17 @@ def broadcast_wildcard(
 def broadcast_t_c_l(
     technologies: list[Code],
     commodities: list[Union[Code, str]],
-    kind: Literal["input", "output"],
+    kind: str,
     default_level: Optional[str] = None,
 ) -> "AnyQuantity":
-    """Return a Quantity for broadcasting dimension (t) to (c, l) for `kind`."""
+    """Return a Quantity for broadcasting dimension (t) to (c, l) for `kind`.
+
+    Parameter
+    ---------
+    kind :
+       Either "input" or "output".
+    """
+    assert kind in ("input", "output")
 
     # Convert list[Union[Code, str]] into an SDMX Codelist for simpler usage
     cl_commodity: "Codelist" = Codelist()
@@ -285,7 +292,7 @@ def broadcast_t_c_l(
 
 
 def broadcast_y_yv_ya(
-    y: list[int], y_include: list[int], *, method: Literal["product", "zip"] = "product"
+    y: list[int], y_include: list[int], *, method: str = "product"
 ) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
@@ -293,10 +300,14 @@ def broadcast_y_yv_ya(
 
     If :py:`"y::model"` is passed as `y_include`, this is equivalent to
     :attr:`.ScenarioInfo.yv_ya`.
+
+    Parameters
+    ----------
+    method :
+        Either "product" or "zip".
     """
     dims = ["y", "yv", "ya"]
-
-    func = product if method == "product" else zip
+    func = {"product": product, "zip": zip}[method]
     series = (
         pd.DataFrame(func(y, y_include), columns=dims[1:])
         .query("ya >= yv")

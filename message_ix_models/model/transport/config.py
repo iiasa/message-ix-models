@@ -1,7 +1,6 @@
 import logging
 from dataclasses import InitVar, dataclass, field, replace
-from enum import Enum
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 import message_ix
 from genno import Quantity
@@ -226,7 +225,7 @@ class Config(ConfigHelper):
     #:
     #: :mod:`.transport.build` and :mod:`.transport.report` code will respond to these
     #: settings in documented ways.
-    project: dict[str, Enum] = field(
+    project: dict[str, Any] = field(
         default_factory=lambda: dict(
             futures=FUTURES_SCENARIO.BASE, navigate=NAVIGATE_SCENARIO.REF
         )
