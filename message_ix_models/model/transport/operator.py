@@ -33,6 +33,8 @@ from message_ix_models.util import (
 from .config import Config
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from genno.types import AnyQuantity
     from message_ix import Scenario
     from xarray.core.types import Dims
@@ -1204,3 +1206,28 @@ def votm(gdp_ppp_cap: "AnyQuantity") -> "AnyQuantity":
     )
     assert_units(result, "")
     return result
+
+
+def write_report_debug(qty: "AnyQuantity", path: "Path", kwargs=None) -> None:
+    """Similar to :func:`.genno.operator.write_report`, but include units.
+
+    This version is used only in :func:`.add_debug`.
+
+    .. todo:: Move upstream, to :mod:`genno`.
+    """
+    from genno import operator
+
+    from message_ix_models.util import datetime_now_with_tz
+
+    kwargs = kwargs or dict()
+    kwargs.setdefault(
+        "header_comment",
+        f"""`{qty.name}` data from MESSAGEix-Transport calibration.
+
+Generated: {datetime_now_with_tz().isoformat()}
+
+Units: {qty.units:~}
+""",
+    )
+
+    operator.write_report(qty, path, kwargs)

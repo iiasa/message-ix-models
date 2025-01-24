@@ -74,7 +74,9 @@ rst_prolog = r"""
 .. role:: strike
 .. role:: underline
 
+.. |c| replace:: :math:`c`
 .. |n| replace:: :math:`n`
+.. |t| replace:: :math:`t`
 .. |y| replace:: :math:`y`
 .. |y0| replace:: :math:`y_0`
 
