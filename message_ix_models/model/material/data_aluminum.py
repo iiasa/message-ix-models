@@ -44,30 +44,17 @@ def read_data_aluminum(
     """
 
     # Ensure config is loaded, get the context
-    context = read_config()
-    ssp = get_ssp_from_context(context)
     s_info = ScenarioInfo(scenario)
 
-    # Shorter access to sets configuration
-    # sets = context["material"]["generic"]
-
-    fname = "aluminum_techno_economic.xlsx"
-
-    sheet_n = "data_R12" if "R12_CHN" in s_info.N else "data_R11"
-
     # Read the file
-    data_alu = pd.read_excel(
-        package_data_path("material", "aluminum", ssp, fname), sheet_name=sheet_n
-    )
+    data_alu = pd.read_csv(package_data_path("material", "aluminum", "data_R12.csv"))
 
     # Drop columns that don't contain useful information
     data_alu = data_alu.drop(["Source", "Description"], axis=1)
 
-    data_alu_rel = read_rel(scenario, "aluminum", ssp, "aluminum_techno_economic.xlsx")
+    data_alu_rel = read_rel(scenario, "aluminum", None, "relations_R12.csv")
 
-    data_aluminum_ts = read_timeseries(
-        scenario, "aluminum", ssp, "aluminum_techno_economic.xlsx"
-    )
+    data_aluminum_ts = read_timeseries(scenario, "aluminum", None, "timeseries_R12.csv")
 
     # Unit conversion
 
@@ -481,6 +468,9 @@ def gen_data_aluminum(
     growth_constr_dict = gen_2020_growth_constraints(s_info)
     ref_heat_input = gen_refining_input(s_info)
     ref_hist_act = calibrate_2020_furnaces(s_info)
+    scrap_cost = get_scrap_prep_cost(s_info, ssp)
+    max_recyc = gen_max_recycling_rel(s_info, ssp)
+    scrap_heat = gen_scrap_prep_heat(s_info, ssp)
     results_aluminum = combine_df_dictionaries(
         const_dict,
         ts_dict,
@@ -491,6 +481,9 @@ def gen_data_aluminum(
         alumina_trd,
         ref_heat_input,
         ref_hist_act,
+        scrap_cost,
+        max_recyc,
+        scrap_heat,
     )
     reduced_pdict = {}
     for k, v in results_aluminum.items():
@@ -510,78 +503,6 @@ def gen_demand(scenario, ssp):
     df = pd.concat([df_2025, df])
     demand_dict[parname] = df
     return demand_dict
-
-
-def gen_mock_demand_aluminum(scenario: message_ix.Scenario) -> pd.DataFrame:
-    s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
-    nodes.remove("World")
-
-    # Demand at product level (IAI Global Aluminum Cycle 2018)
-    # Globally: 82.4 Mt
-    # Domestic production + Import
-    # AFR: No Data
-    # CPA - China: 28.2 Mt
-    # EEU / 2 + WEU / 2 = Europe 12.5 Mt
-    # FSU: No data
-    # LAM: South America: 2.5 Mt
-    # MEA: Middle East: 2
-    # NAM: North America: 14.1
-    # PAO: Japan: 3
-    # PAS/2 + SAS /2: Other Asia: 11.5 Mt
-    # Remaining 8.612 Mt shared between AFR and FSU
-    # This is used as 2020 data.
-
-    # For R12: China and CPA demand divided by 0.1 and 0.9.
-
-    # The order:
-    # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
-
-    if "R12_CHN" in nodes:
-        nodes.remove("R12_GLB")
-        sheet_n = "data_R12"
-        region_set = "R12_"
-        d = [3, 2, 6, 5, 2.5, 2, 13.6, 3, 4.8, 4.8, 6, 26]
-
-    else:
-        nodes.remove("R11_GLB")
-        sheet_n = "data_R11"
-        region_set = "R11_"
-        d = [3, 28, 6, 5, 2.5, 2, 13.6, 3, 4.8, 4.8, 6]
-
-    # SSP2 R11 baseline GDP projection
-    gdp_growth = pd.read_excel(
-        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
-        sheet_name=sheet_n,
-    )
-
-    gdp_growth = gdp_growth.loc[
-        (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
-
-    gdp_growth["Region"] = region_set + gdp_growth["Region"]
-
-    demand2020_al = (
-        pd.DataFrame({"Region": nodes, "Val": d})
-        .join(gdp_growth.set_index("Region"), on="Region")
-        .rename(columns={"Region": "node"})
-    )
-
-    demand2020_al.iloc[:, 3:] = (
-        demand2020_al.iloc[:, 3:]
-        .div(demand2020_al[2020], axis=0)
-        .multiply(demand2020_al["Val"], axis=0)
-    )
-
-    demand2020_al = pd.melt(
-        demand2020_al.drop(["Val", "Scenario"], axis=1),
-        id_vars=["node"],
-        var_name="year",
-        value_name="value",
-    )
-
-    return demand2020_al
 
 
 def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
@@ -773,7 +694,9 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
 
 def gen_hist_new_cap(s_info):
     df_cap = pd.read_excel(
-        package_data_path("material", "aluminum", "smelters-with 2022 projection.xls"),
+        package_data_path(
+            "material", "aluminum", "raw", "smelters-with 2022 projection.xls"
+        ),
         sheet_name="Sheet1",
         skipfooter=23,
     ).rename(columns={"Unnamed: 0": "Country", "Unnamed: 1": "Region"})
@@ -879,7 +802,7 @@ def compute_differences(df, ref_col):
 
 def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
     bgs_data_path = package_data_path(
-        "material", "aluminum", "bgs_production", commodity
+        "material", "aluminum", "raw", "bgs_production", commodity
     )
 
     dfs = []
@@ -1167,7 +1090,7 @@ def calibrate_2020_furnaces(s_info):
     df_ref["IAI"] = df_ref[0].fillna("Estimated Unreported")
     df_ref = df_ref.drop(columns=0)
 
-    df_ref_en = pd.read_csv(package_data_path("material", "aluminum", fname), sep=";")
+    df_ref_en = pd.read_csv(package_data_path("material", "aluminum", "raw", fname), sep=";")
     df_ref_en["Year"] = (
         df_ref_en["Period from"].str.split("-", expand=True)[0].astype(int)
     )
@@ -1288,23 +1211,186 @@ def gen_refining_input(s_info):
     return {"input": df_msg}
 
 
-if __name__ == "__main__":
-    # test = calibrate_2020_furnaces(s_info=["test"])
-    import ixmp
-    import message_ix
+def gen_trade_growth_constraints(s_info):
+    par_dict1 = {}
+    par_dict2 = {}
+    aluminum_tecs = ["export_aluminum"]
+    alumina_tecs = ["export_alumina", "import_alumina"]
+    for par in ["growth_activity_up", "initial_activity_up"]:
+        par_dict2[par] = (
+            make_df(par, value=0.1, technology=aluminum_tecs, time="year", unit="???")
+            .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+            .pipe(
+                broadcast,
+                year_act=[i for i in range(2020, 2060, 5)]
+                + [i for i in range(2060, 2115, 10)],
+            )
+        )
+    for par in ["growth_activity_up", "initial_activity_up"]:
+        par_dict1[par] = (
+            make_df(par, value=0.1, technology=alumina_tecs, time="year", unit="???")
+            .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+            .pipe(
+                broadcast,
+                year_act=[i for i in range(2025, 2060, 5)]
+                + [i for i in range(2060, 2115, 10)],
+            )
+        )
+    return combine_df_dictionaries(par_dict1, par_dict2)
 
-    from message_ix_models.model.material.build import make_spec
-    # gen_smelting_hist_act()
 
-    # mp = ixmp.Platform("local2")
-    # scen = message_ix.Scenario(mp, "SSP2", "baseline")
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "SSP_dev_SSP2_v1.0_Blv1.0", "baseline_prep_lu_bkp_solved"
+def gen_max_recycling_rel(s_info, ssp):
+    ssp_vals = {
+        "LED": -0.98,
+        "SSP1": -0.98,
+        "SSP2": -0.90,
+        "SSP3": -0.80,
+        "SSP4": -0.90,
+        "SSP5": -0.80,
+    }
+    df = (
+        make_df(
+            "relation_activity",
+            technology="total_EOL_aluminum",
+            value=ssp_vals[ssp],
+            mode="M1",
+            relation="maximum_recycling_aluminum",
+            time="year",
+            time_origin="year",
+            unit="???",
+        )
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_act=s_info.Y)
+        .pipe(same_node)
+        .assign(year_rel=lambda x: x.year_act)
     )
-    s_info = ScenarioInfo(scen)
-    gen_refining_input(s_info)
+    return {"relation_activity": df}
 
-    spec = make_spec("R12")
-    gen_demand(scenario=scen, ssp="SSP5")
-    print()
+
+def gen_scrap_prep_heat(s_info, ssp):
+    # Converted from 1.4 GJ/t,https://publications.jrc.ec.europa.eu/repository/handle/JRC96680
+    ssp_vals = {
+        "LED": [0.044394, 0.044394, 0.044394],
+        "SSP1": [0.044394, 0.044394, 0.044394],
+        "SSP2": [0.044394, 0.046, 0.048],
+        "SSP3": [0.048, 0.048, 0.048],
+        "SSP4": [0.044394, 0.046, 0.048],
+        "SSP5": [0.048, 0.048, 0.048],
+    }
+
+    df = (
+        make_df(
+            "input",
+            technology=[
+                "prep_secondary_aluminum_1",
+                "prep_secondary_aluminum_2",
+                "prep_secondary_aluminum_3",
+            ],
+            value=ssp_vals[ssp],
+            mode="M1",
+            commodity="lt_heat",
+            level="useful_aluminum",
+            time="year",
+            time_origin="year",
+            unit="GWa",
+        )
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_act=s_info.Y)
+        .pipe(same_node)
+        .assign(year_vtg=lambda x: x.year_act)
+    )
+    return {"input": df}
+
+
+def get_scrap_prep_cost(s_info, ssp):
+    years = s_info.Y
+    ref_tec_ssp = {
+        "LED": "prep_secondary_aluminum_1",
+        "SSP1": "prep_secondary_aluminum_1",
+        "SSP3": "prep_secondary_aluminum_3",
+        "SSP5": "prep_secondary_aluminum_3",
+    }
+    start_val = {
+        "prep_secondary_aluminum_1": 500,
+        "prep_secondary_aluminum_2": 1000,
+        "prep_secondary_aluminum_3": 1500,
+    }
+    common = {
+        "mode": "M1",
+        "time": "year",
+        "unit": "???",
+    }
+
+    if ssp not in ref_tec_ssp.keys():
+        ref_cost = [
+            start_val[list(start_val.keys())[0]] * 1.05**i for i, _ in enumerate(years)
+        ]
+        tec2 = [
+            start_val[list(start_val.keys())[1]] * 1.05**i for i, _ in enumerate(years)
+        ]
+        tec3 = [
+            start_val[list(start_val.keys())[2]] * 1.05**i for i, _ in enumerate(years)
+        ]
+
+        df1 = make_df(
+            "var_cost",
+            technology=list(start_val.keys())[0],
+            year_act=years,
+            value=ref_cost,
+            **common,
+        )
+        df2 = make_df(
+            "var_cost",
+            technology=list(start_val.keys())[1],
+            year_act=years,
+            value=tec2,
+            **common,
+        )
+        df3 = make_df(
+            "var_cost",
+            technology=list(start_val.keys())[2],
+            year_act=years,
+            value=tec3,
+            **common,
+        )
+    else:
+        ref_cost = [start_val[ref_tec_ssp[ssp]] * 1.05**i for i, _ in enumerate(years)]
+        other_tecs = start_val.keys() - [ref_tec_ssp[ssp]]
+        tec2 = [
+            start_val[list(other_tecs)[0]]
+            + ((ref_cost[-1] - start_val[list(other_tecs)[0]]) / (len(years) - 1)) * i
+            for i, _ in enumerate(years)
+        ]
+        tec3 = [
+            start_val[list(other_tecs)[1]]
+            + ((ref_cost[-1] - start_val[list(other_tecs)[1]]) / (len(years) - 1)) * i
+            for i, _ in enumerate(years)
+        ]
+
+        df1 = make_df(
+            "var_cost",
+            technology=ref_tec_ssp[ssp],
+            year_act=years,
+            value=ref_cost,
+            **common,
+        )
+        df2 = make_df(
+            "var_cost",
+            technology=list(other_tecs)[0],
+            year_act=years,
+            value=tec2,
+            **common,
+        )
+        df3 = make_df(
+            "var_cost",
+            technology=list(other_tecs)[1],
+            year_act=years,
+            value=tec3,
+            **common,
+        )
+    df = (
+        pd.concat([df1, df2, df3])
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .assign(year_vtg=lambda x: x.year_act)
+    )
+    return {"var_cost": df}
