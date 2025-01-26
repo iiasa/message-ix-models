@@ -11,7 +11,11 @@ from message_ix_models.model.material.data_util import (
     read_timeseries,
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import get_ssp_from_context, read_config
+from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
+    get_ssp_from_context,
+    read_config,
+)
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
@@ -173,13 +177,12 @@ def gen_data_cement(
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    # TEMP: now add cement sector as well
     data_cement = read_sector_data(
-        scenario, "cement", ssp, "Global_cement_MESSAGE.xlsx"
+        scenario, "cement", None, "cement_R12.csv"
     )
     # Special treatment for time-dependent Parameters
     data_cement_ts = read_timeseries(
-        scenario, "cement", ssp, "Global_cement_MESSAGE.xlsx"
+        scenario, "cement", None, "timeseries_R12.csv"
     )
     tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
@@ -188,7 +191,6 @@ def gen_data_cement(
 
     # For each technology there are different input and output combinations
     # Iterate over technologies
-
     yv_ya = s_info.yv_ya
     yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1980]
     # Do not parametrize GLB region the same way
@@ -356,9 +358,7 @@ def gen_data_cement(
 
     # Create external demand param
     parname = "demand"
-    df_2025 = pd.read_csv(
-        package_data_path("material", "cement", "demand_2025.csv")
-    )
+    df_2025 = pd.read_csv(package_data_path("material", "cement", "demand_2025.csv"))
     df_demand = material_demand_calc.derive_demand("cement", scenario, ssp=ssp)
     df_demand = df_demand[df_demand["year"] != 2025]
     df_demand = pd.concat([df_2025, df_demand])
@@ -389,21 +389,45 @@ def gen_data_cement(
                 df_demand=df_demand.copy(deep=True),
                 technology="clinker_dry_ccs_cement",
                 material="cement",
-                ssp = ssp
+                ssp=ssp,
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True),
                 technology="clinker_wet_ccs_cement",
                 material="cement",
-                ssp = ssp
+                ssp=ssp,
             ),
         ]
     )
+    results = combine_df_dictionaries(results, gen_grow_cap_up(s_info, ssp))
 
     reduced_pdict = {}
-    for k,v in results.items():
+    for k, v in results.items():
         if set(["year_act", "year_vtg"]).issubset(v.columns):
             v = v[(v["year_act"] - v["year_vtg"]) <= 25]
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
 
     return reduced_pdict
+
+
+def gen_grow_cap_up(s_info, ssp):
+    ssp_vals = {
+        "LED": 0.0009,
+        "SSP1": 0.0009,
+        "SSP2": 0.0009,
+        "SSP3": 0.0007,
+        "SSP4": 0.0010,
+        "SSP5": 0.0010,
+    }
+
+    df = (
+        make_df(
+            "growth_new_capacity_up",
+            technology=["clinker_dry_ccs_cement", "clinker_wet_ccs_cement"],
+            value=ssp_vals[ssp],
+            unit="???",
+        )
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_vtg=s_info.Y)
+    )
+    return {"growth_new_capacity_up": df}
