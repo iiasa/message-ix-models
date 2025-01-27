@@ -1,5 +1,9 @@
+import ixmp
+import message_ix
+
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
+from message_ix_models.tools.costs.scenario import update_scenario_costs
 
 # Example 1: Get cost projections for all scenarios in R12,
 # for the base suite of technologies,
@@ -66,3 +70,14 @@ r12_materials_ssp2 = create_cost_projections(cfg)
 
 r12_materials_ssp2["inv_cost"]
 r12_materials_ssp2["fix_cost"]
+
+
+# Example 4: Modify a MESSAGEix scenario to include updated costs.
+# This also changes the pre-base year costs in the scenario.
+# For ScenarioMIP, also change the reduction_year to 2150.
+cfg = Config(module="materials", method="gdp", scenario="SSP2", reduction_year=2150)
+mp = ixmp.Platform("ixmp_dev")
+scen = message_ix.Scenario(
+    mp, model="model", scenario="scenario"
+)  # replace with actual model and scenario names
+update_scenario_costs(scen, cfg)
