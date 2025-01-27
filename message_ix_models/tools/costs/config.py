@@ -24,8 +24,11 @@ class Config:
     #: This year is used to apply the decay rate to the costs in the reference region.
     reduction_year: int = 2100
 
-    #: Year that cost reduction values are reached.
-    #: This year is used to apply the decay rate to the costs in the reference region.
+    #: Final projection year.
+    #: This is the year that costs for all regions are projected until.
+    #: If the final_projection_year is greater than the final_model_year,
+    #: then the costs are assumed to be the same from final_model_year until
+    #: the final_projection_year.
     final_projection_year: int = 2100
 
     #: Final model year. Note that the default is the same as the final
