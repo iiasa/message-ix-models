@@ -364,11 +364,9 @@ def project_ref_region_inv_costs_using_reduction_rates(
     This function uses the cost reduction rates for each technology under each scenario
     to project the capital costs for each technology in the reference region.
 
-    The changing of costs is projected until the year 2100
-    (hard-coded in this function), which might not be the same
-    as :attr:`.Config.final_year` (:attr:`.Config.final_year` represents the final
-    projection year instead). 2100 is hard coded because the cost reduction values are
-    assumed to be reached by 2100.
+    The exponential decay is applied on the reference region until
+    :attr:`Config.reduction_year`: this is the year the cost reaches the reduction value
+    specified.
 
     The returned data have the list of periods given by :attr:`.Config.seq_years`.
 
@@ -401,7 +399,7 @@ def project_ref_region_inv_costs_using_reduction_rates(
     )
 
     # Filter for reference region, and merge with reduction scenarios and discount rates
-    # Calculate cost in reference region in 2100
+    # Calculate cost in reference region in :attr:`.Config.reduction_year`
     df_ref = (
         regional_diff_df.query("region == @config.ref_region")
         .merge(df_cost_reduction, on="message_technology")
