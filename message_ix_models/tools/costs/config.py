@@ -20,6 +20,10 @@ class Config:
     #: then the costs are assumed to be the same from y0 to base_year.
     base_year: int = 2025
 
+    #: Year that cost reduction values are reached.
+    #: This year is used to apply the decay rate to the costs in the reference region.
+    reduction_year: int = 2100
+
     #: Year of convergence; used when :attr:`.method` is "convergence". This is the year
     #: by which costs in all regions should converge to the reference region's costs.
     #: See :func:`.create_projections_converge`.
