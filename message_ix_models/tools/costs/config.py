@@ -40,10 +40,6 @@ class Config:
     #: See :func:`.create_projections_converge`.
     convergence_year: int = 2050
 
-    #: Final year for projections. Note that the default is the same as the final
-    #: model year of 2110 commonly used in MESSAGEix-GLOBIOM (:doc:`/pkg-data/year`).
-    final_year: int = 2110
-
     #: Rate of exponential growth (positive values) or decrease of fixed operating and
     #: maintenance costs over time. The default of 0 implies no change over time.
     #: If the rate is 0.025, for example, that implies exponential growth at a
