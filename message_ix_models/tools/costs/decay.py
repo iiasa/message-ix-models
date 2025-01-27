@@ -437,7 +437,7 @@ def project_ref_region_inv_costs_using_reduction_rates(
                 "fix_ratio",
                 "reduction_rate",
                 "cost_reduction",
-                "cost_region_2100",
+                "cost_region_reduc_year",
             ]
         )
         .melt(
