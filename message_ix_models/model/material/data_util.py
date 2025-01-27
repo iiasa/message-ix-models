@@ -203,7 +203,7 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
 
 
 def read_sector_data(
-    scenario: message_ix.Scenario, sectname: str, ssp: str, filename: str
+    scenario: message_ix.Scenario, sectname: str, ssp: str | None, filename: str
 ) -> pd.DataFrame:
     """
     Read sector data for industry with sectname
@@ -214,7 +214,10 @@ def read_sector_data(
 
     sectname: sectname
         name of industry sector
-
+    ssp: str or None
+        if sector data should be read from SSP specific file
+    filename:
+        name of input file with suffix
     Returns
     -------
     pd.DataFrame
@@ -232,11 +235,14 @@ def read_sector_data(
     else:
         sheet_n = sectname + "_R11"
 
-    # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
-    data_df = pd.read_excel(
-        package_data_path("material", sectname, ssp, filename),
-        sheet_name=sheet_n,
-    )
+    if filename.endswith(".csv"):
+        data_df = pd.read_csv(
+            package_data_path("material", sectname, filename))
+    else:
+        data_df = pd.read_excel(
+            package_data_path("material", sectname, ssp, filename),
+            sheet_name=sheet_n,
+        )
 
     # Clean the data
     data_df = data_df[
@@ -319,9 +325,12 @@ def read_timeseries(
     material = f"{material}/{ssp}" if ssp else material
     # Read the file
 
-    df = pd.read_excel(
-        package_data_path("material", material, filename), sheet_name=sheet_n
-    )
+    if filename.endswith(".csv"):
+        df = pd.read_csv(package_data_path("material", material, filename))
+    else:
+        df = pd.read_excel(
+            package_data_path("material", material, filename), sheet_name=sheet_n
+        )
 
     import numbers
 
@@ -379,10 +388,12 @@ def read_rel(
         sheet_n = "relations_R11"
     material = f"{material}/{ssp}" if ssp else material
     # Read the file
-    data_rel = pd.read_excel(
-        package_data_path("material", material, filename),
-        sheet_name=sheet_n,
-    )
+    if filename.endswith(".csv"):
+        data_rel = pd.read_csv(package_data_path("material", material, filename))
+    else:
+        data_rel = pd.read_excel(
+            package_data_path("material", material, filename), sheet_name=sheet_n
+        )
 
     return data_rel
 
@@ -1435,7 +1446,7 @@ def calculate_ini_new_cap(
             CLINKER_RATIO = 0.72
         if material == "steel":
             SCALER = 0.002
-            CLINKER_RATIO= 1
+            CLINKER_RATIO = 1
     elif ssp in ["SSP4", "SSP5"]:
         if material == "cement":
             SCALER = 0.002
