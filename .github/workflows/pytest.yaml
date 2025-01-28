@@ -74,8 +74,6 @@ jobs:
         # - Versions of ixmp and message_ix to test.
         # - Latest supported Python version for those or other dependencies.
         # Minimum version given in pyproject.toml + earlier version of Python
-        - { upstream: v3.4.0, python: "3.11" }  # 2022-01-27
-        - { upstream: v3.5.0, python: "3.11" }  # 2022-05-06
         - { upstream: v3.6.0, python: "3.11" }  # 2022-08-18
         - { upstream: v3.7.0, python: "3.11" }  # 2023-05-17
         - { upstream: v3.8.0, python: "3.12" }  # 2024-01-12
@@ -87,8 +85,6 @@ jobs:
         exclude:
         # Specific version combinations that are invalid / not to be used
         # These versions of ixmp are not able locate the arm64 GAMS API binaries
-        - { os: macos-latest, version: { upstream: v3.4.0 }}
-        - { os: macos-latest, version: { upstream: v3.5.0 }}
         - { os: macos-latest, version: { upstream: v3.6.0 }}
         - { os: macos-latest, version: { upstream: v3.7.0 }}
         - { os: macos-latest, version: { upstream: v3.8.0 }}
