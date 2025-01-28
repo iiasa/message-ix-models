@@ -142,7 +142,7 @@ Run the entire workflow
    The options result in the following behaviour:
 
    - :program:`--platform=ixmp-dev`: store MESSAGEix-Transport scenarios on the :mod:`ixmp` platform named "ixmp-dev".
-   - :program:`--base=auto`: identify the base scenario URLs using :func:`.base_scenario_url` / the file :file:`base-scenario-url.json`, according to other config settings.
+   - :program:`--base=auto`: identify the base scenario URLs using :func:`.base_scenario_url` / the file :ref:`CL_TRANSPORT_SCENARIO`, according to other config settings.
    - :program:`--model-extra="ci nightly"`: append the string " ci nightly" to the model name of any created Scenario.
      This avoids accidentally producing new versions of ‘production’ (model name, scenario name) combinations.
    - :program:`--from=""`: start from the very first step in the workflow—load the identified base scenario—and perform all subsequent workflow steps, up to and including…

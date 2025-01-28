@@ -24,6 +24,8 @@ MutableParameterData = MutableMapping[str, pd.DataFrame]
 
 
 class MaintainableArtefactArgs(TypedDict):
+    """Some keyword arguments to :class:`sdmx.model.common.MaintainableArtefact`."""
+
     is_external_reference: Optional[bool]
     is_final: Optional[bool]
     maintainer: Any

@@ -338,17 +338,20 @@ def prepare_method_B(
     1. From the :class:`.IEA_EWEB` 2024 edition, select data for :math:`y = 2019` and
        the :data:`FLOWS`.
     2. Aggregate IEA EWEB to align with MESSAGEix-GLOBIOM |c|.
-    3. Reverse the sign of flow=AVBUNK; these values are negative in the source data.
+    3. Reverse the sign of values for flow=AVBUNK. These are negative in the source
+       data, but their absolute value must be added to values for flow=DOMESAIR.
     4. Compute the ratio :math:`(AVBUNK + DOMESAIR) / TOTTRANS`, the share of aviation
        in final energy.
     5. From the input data (`k_input`), select the values matching :data:`EXPR_FE`, that
        is, final energy use by aviation.
-    6. Load emissions intensity of aviation final energy use :file:`emi-intensity.csv` /
-       :data:`emi_intensity`.
+    6. Load emissions intensity of aviation final energy use from the file
+       :ref:`transport-input-emi-intensity`.
     7. Multiply (4) × (5) × (6) to compute the estimate of
        ``Emissions|*|Energy|Demand|Transportation|Aviation``.
-    8. Subtract (7) from:
-       ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping``.
+    8. Estimate
+       ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping`` as
+       the negative of (7).
+    9. Adjust `k_emi_in` by adding (7) and (8).
     """
     from message_ix_models.model.transport import build
     from message_ix_models.model.transport import files as exo

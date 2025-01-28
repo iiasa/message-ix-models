@@ -37,6 +37,17 @@ class AnnotationsMixIn:
 
     # TODO Type with overrides: list → list
     def get_annotations(self, _rtype: Union[type[list], type[dict]]):
+        """Return a collection of :class:`.Annotation` for the fields of the object.
+
+        Returns
+        -------
+        list of :class:`Annotation <sdmx.model.common.Annotation>`
+            if `_rtype` is :class:`list`.
+        dict
+            if `_rtype` is :class:`dict`. The dict has the one key "annotations", mapped
+            to a :class:`list` of Annotations. This can be used as a keyword argument
+            to the constructor of a :class:`.AnnotableArtefact` subclass.
+        """
         result = []
         for f in fields(self):
             anno_id = f.name.replace("_", "-")
@@ -51,6 +62,7 @@ class AnnotationsMixIn:
 
     @classmethod
     def from_obj(cls: type["Self"], obj: common.AnnotableArtefact) -> "Self":
+        """Return a new instance of `cls` given an AnnotableArtefact `obj`."""
         args = []
         for f in fields(cls):
             anno_id = f.name.replace("_", "-")
