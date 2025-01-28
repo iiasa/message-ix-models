@@ -1,7 +1,7 @@
 name: Test
 
 on:
-  # Uncomment this entry only to debug the workflow
+  # To debug the workflow, uncomment this entry AND comment pull_request_target
   # pull_request:
   #   branches: [ main ]
   pull_request_target:
@@ -26,7 +26,7 @@ env:
 
 jobs:
   check:
-    name: check permissions
+    name: Check permissions, identify ref to test
     runs-on: ubuntu-latest
     steps:
     - if: >
@@ -39,7 +39,15 @@ jobs:
         echo "Pytest workflow will not run for branch in fork without label \`${{ env.label }}\`." >>$GITHUB_STEP_SUMMARY
         exit 1
 
+    - name: Identify ref to check out
+      id: ref
+      run: echo "ref=${{ github.event_name != 'pull_request_target' && github.ref || github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+
+    outputs:
+      ref: ${{ steps.ref.outputs.ref }}
+
   warm-lfs-cache:
+    name: Warm Git LFS cache
     needs: check
 
     strategy:
@@ -48,6 +56,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: francisbilham11/action-cached-lfs-checkout@v3
+      with:
+        ref: ${{ needs.check.outputs.ref }}
 
   pytest:
     needs: warm-lfs-cache
@@ -77,14 +87,14 @@ jobs:
         exclude:
         # Specific version combinations that are invalid / not to be used
         # These versions of ixmp are not able locate the arm64 GAMS API binaries
-        - { os: macos-latest, version: {upstream: v3.4.0 }}
-        - { os: macos-latest, version: {upstream: v3.5.0 }}
-        - { os: macos-latest, version: {upstream: v3.6.0 }}
-        - { os: macos-latest, version: {upstream: v3.7.0 }}
-        - { os: macos-latest, version: {upstream: v3.8.0 }}
-        - { os: macos-latest, version: {upstream: v3.9.0 }}
+        - { os: macos-latest, version: { upstream: v3.4.0 }}
+        - { os: macos-latest, version: { upstream: v3.5.0 }}
+        - { os: macos-latest, version: { upstream: v3.6.0 }}
+        - { os: macos-latest, version: { upstream: v3.7.0 }}
+        - { os: macos-latest, version: { upstream: v3.8.0 }}
+        - { os: macos-latest, version: { upstream: v3.9.0 }}
         # Redundant with macos-latest
-        - { os: macos-13, version: {upstream: main }}
+        - { os: macos-13, version: { upstream: main }}
 
       fail-fast: false
 
@@ -100,6 +110,8 @@ jobs:
 
     - name: Check out message-ix-models
       uses: francisbilham11/action-cached-lfs-checkout@v3
+      with:
+        ref: ${{ needs.check.outputs.ref }}
 
     - name: Set up uv, Python
       uses: astral-sh/setup-uv@v5
@@ -171,11 +183,12 @@ jobs:
 
   pre-commit:
     name: Code quality
-
+    needs: check
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.check.output.ref }}
     - uses: astral-sh/setup-uv@v5
       with:
         cache-dependency-glob: "**/pyproject.toml"
