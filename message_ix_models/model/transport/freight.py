@@ -26,6 +26,9 @@ DIMS = dict(
     level="l",
 )
 
+#: Shorthand for tags on keys
+Fi = "::F+ixmp"
+
 
 def prepare_computer(c: genno.Computer):
     from genno.core.attrseries import AttrSeries
@@ -47,24 +50,49 @@ def prepare_computer(c: genno.Computer):
     c.add(k[2], "as_message_df", prev, name="input", dims=DIMS, common=COMMON)
 
     # Convert units
-    to_add.append("input::transport F+ixmp")
+    to_add.append(f"input{Fi}")
     c.add(to_add[-1], convert_units, k[2], "transport info")
 
-    # Extract the 'input' data frame
-    c.add(k[3], lambda d: d["input"], to_add[-1])
+    # Create base quantity for "output" parameter
+    # TODO Combine in a loop with "input", above—similar to .ldv
+    k_output = genno.KeySeq("F output")
+    nty = tuple("nty")
+    c.add(k_output[0] * nty, wildcard(1.0, "dimensionless", nty))
+    for i, coords in enumerate(["n::ex world", "t::F", "y::model"]):
+        c.add(
+            k_output[i + 1] * nty,
+            "broadcast_wildcard",
+            k_output[i] * nty,
+            coords,
+            dim=coords[0],
+        )
 
-    # Produce corresponding output, capacity_factor, technical_lifetime
-    # FIXME Use "… F RAIL …" as appropriate
+    for par_name, base, ks, i in (("output", k_output[3] * nty, k_output, 3),):
+        # Produce the full quantity for input/output efficiency
+        prev = c.add(
+            ks[i + 1],
+            "mul",
+            ks[i],
+            f"broadcast:t-c-l:transport+{par_name}",
+            "broadcast:y-yv-ya:all",
+        )
+
+        # Convert to ixmp/MESSAGEix-structured pd.DataFrame
+        # NB quote() is necessary with dask 2024.11.0, not with earlier versions
+        c.add(ks[i + 2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
+
+        # Convert to target units
+        to_add.append(f"output{Fi}")
+        c.add(to_add[-1], convert_units, ks[i + 2], "transport info")
+
+    # Extract the 'output' data frame
+    c.add(k[3], lambda d: d["output"], to_add[-1])
+
+    # Produce corresponding capacity_factor and technical_lifetime
     c.add(
         k[4],
         partial(
             make_matched_dfs,
-            output=dict(
-                value=registry("1.0 gigatonne km"),
-                commodity="transport F ROAD vehicle",
-                level="useful",
-                time_dest=COMMON["time_dest"],
-            ),
             capacity_factor=registry.Quantity("1"),
             technical_lifetime=registry("10 year"),
         ),
@@ -75,7 +103,7 @@ def prepare_computer(c: genno.Computer):
     c.add(k[5], convert_units, k[4], "transport info")
 
     # Fill values
-    to_add.append("other::transport F+ixmp")
+    to_add.append(f"other{Fi}")
     c.add(to_add[-1], same_node, k[5])
 
     # Base values for conversion technologies
@@ -91,7 +119,7 @@ def prepare_computer(c: genno.Computer):
 
     # Convert output to MESSAGE data structure
     c.add(k[10], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
-    to_add.append("usage output::transport F+ixmp")
+    to_add.append(f"usage output{Fi}")
     c.add(to_add[-1], lambda v: same_time(same_node(v)), k[10])
 
     # Create corresponding input values in Gv km
@@ -108,7 +136,7 @@ def prepare_computer(c: genno.Computer):
     prev = c.add(
         k[i + 3], "as_message_df", prev, name="input", dims=DIMS, common=COMMON
     )
-    to_add.append("usage input::transport F+ixmp")
+    to_add.append(f"usage input{Fi}")
     c.add(to_add[-1], prev)
 
     # Merge data to one collection

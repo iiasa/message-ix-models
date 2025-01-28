@@ -5,13 +5,16 @@ import zipfile
 from collections.abc import Iterable
 from copy import copy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
+import genno
 import pandas as pd
-from genno import Key, Quantity
+from genno import Key
 from genno.core.key import single_key
+from genno.operator import concat
 from platformdirs import user_cache_path
 
+from message_ix_models.model.structure import get_codelist
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import cached, package_data_path, path_fallback
 from message_ix_models.util._logging import silence_log
@@ -20,13 +23,15 @@ if TYPE_CHECKING:
     import os
 
     import genno
+    from genno.types import AnyQuantity
 
+    from message_ix_models.types import KeyLike
     from message_ix_models.util.common import MappingAdapter
 
 log = logging.getLogger(__name__)
 
-#: ISO 3166-1 alpha-3 codes for “COUNTRY” codes appearing in the 2024 edition. This
-#: mapping only includes values that are not matched by :func:`pycountry.lookup`. See
+#: ISO 3166-1 alpha-3 codes for 'COUNTRY' codes appearing in the 2024 edition. This
+#: mapping includes only values that are not matched by :func:`pycountry.lookup`. See
 #: :func:`.iso_3166_alpha_3`.
 COUNTRY_NAME = {
     "AUSTRALI": "AUS",
@@ -94,15 +99,17 @@ class IEA_EWEB(ExoDataSource):
     """Provider of exogenous data from the IEA Extended World Energy Balances.
 
     To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    :py:`source_kw`:
+    following `source_kw`:
 
-    - "provider": Either "IEA" or "OECD". See :data:`.FILES`.
-    - "edition": one of "2021", "2022", or "2023". See :data:`.FILES`.
-    - "product": :class:`str` or :class:`list` of :class:`str`.
-    - "flow": :class:`str` or :class:`list` of :class:`str`.
-
-    The returned data have the extra dimensions "product" and "flow", and are not
-    aggregated by year.
+    - :py:`provider`: Either 'IEA' or 'OECD'. See :data:`.FILES`.
+    - :py:`edition`: one of '2021', '2022', or '2023'. See :data:`.FILES`.
+    - :py:`product` (optional): :class:`str` or :class:`list` of :class:`str`. Select
+      only these labels from the 'PRODUCT' dimension.
+    - :py:`flow` (optional): :class:`str` or :class:`list` of :class:`str`. Select only
+      these labels from the 'FLOW' dimension.
+    - :py:`transform` (optional): either "A" (default) or "B". See :meth:`.transform`.
+    - :py:`regions`: **must** also be given with the value :py:`"R12"` if giving
+      :py:`transform="B"`.
 
     Example
     -------
@@ -141,6 +148,22 @@ class IEA_EWEB(ExoDataSource):
         if flow := _kw.pop("flow", None):
             self.indexers.update(flow=flow)
 
+        # Handle the 'transform' keyword
+        self.transform_method = _kw.pop("transform", "A")
+        regions = _kw.pop("regions", None)
+        if self.transform_method not in "AB":
+            raise ValueError(f"transform={self.transform_method!r}")
+        elif self.transform_method == "B":
+            if (p, e) != ("IEA", "2024"):
+                raise ValueError(
+                    f"transform='B' only supported for (provider='IEA', "
+                    f"edition='2024'); got {(p, e)!r}"
+                )
+            elif regions != "R12":
+                raise ValueError(
+                    f"transform='B' only supported for regions='R12'; got {regions!r}"
+                )
+
         if len(_kw):
             raise ValueError(_kw)
 
@@ -155,7 +178,7 @@ class IEA_EWEB(ExoDataSource):
         # - Map dimensions.
         # - Apply `indexers` to select.
         return (
-            Quantity(
+            genno.Quantity(
                 load_data(
                     provider=self.provider, edition=self.edition, path=self.path
                 ).set_index(DIMS)["Value"],
@@ -166,13 +189,42 @@ class IEA_EWEB(ExoDataSource):
         )
 
     def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
-        """Aggregate only; do not interpolate on "y"."""
+        """Prepare `c` to transform raw data from `base_key`.
+
+        1. Map IEA ``COUNTRY`` codes to ISO 3166-1 alpha-3 codes, where such mapping
+           exists. See :func:`get_mapping` and :data:`COUNTRY_NAME`.
+
+        The next steps depend on whether :py:`transform="A"` or :py:`transform="B"` was
+        given with the `source_kw`.
+
+        :py:`transform="A"` (default)
+           2. Aggregate using "n::groups"—the same as :meth:`.ExoDataSource.transform`.
+              This operates on the |n| labels transformed to alpha-3 codes by step (1)
+              above.
+
+        :py:`transform="B"`
+           2. Compute intermediate quantities using :func:`.transform_B`.
+           3. Aggregate using the groups returned by :func:`get_node_groups_B`.
+
+        This method does *not* prepare interpolation or aggregation on |y|.
+        """
         # Map values like RUSSIA appearing in the (IEA, 2024) edition to e.g. RUS
         adapter = get_mapping(self.provider, self.edition)
         k = c.add(base_key + "adapted", adapter, base_key)
-        return single_key(
-            c.add(base_key + "agg", "aggregate", k, "n::groups", keep=False)
-        )
+
+        if self.transform_method == "A":
+            # Key for aggregation groups: hierarchy from the standard code lists,
+            # already added by .exo_data.prepare_computer()
+            k_n_agg: "KeyLike" = "n::groups"
+        elif self.transform_method == "B":
+            # Derive intermediate values "_IIASA_{AFR,PAS,SAS}"
+            k = c.add(base_key + "adapted" + "2", transform_B, k)
+
+            # Add groups for aggregation, including these intermediate values
+            k_n_agg = single_key(c.add(f"n::groups+{self.id}", get_node_groups_B))
+
+        # Aggregate on 'n' dimension using the `k_n_agg`
+        return single_key(c.add(base_key + "agg", "aggregate", k, k_n_agg, keep=False))
 
 
 def fwf_to_csv(path: Path, progress: bool = False) -> Path:  # pragma: no cover
@@ -354,7 +406,7 @@ def dir_fallback(*parts, **kwargs) -> Path:
 def get_mapping(provider: str, edition: str) -> "MappingAdapter":
     """Return a Mapping Adapter from codes appearing in IEA EWEB data.
 
-    For each code in the ``COUNTRY`` code list for (`provider`, `edition`) that is a
+    For each code in the IEA 'COUNTRY' code list for (`provider`, `edition`) that is a
     country name, the adapter maps the name to a corresponding ISO 3166-1 alpha-3 code.
     :data:`COUNTRY_NAME` is used for values particular to IEA EWEB.
 
@@ -377,3 +429,75 @@ def get_mapping(provider: str, edition: str) -> "MappingAdapter":
                 maps[dim].append((code.id, new_id))
 
     return MappingAdapter(maps)
+
+
+def get_node_groups_B() -> dict[Literal["n"], dict[str, list[str]]]:
+    """Return groups for aggregating on |n| as part of the :py:`transform='B'` method.
+
+    These are of three kinds:
+
+    1. For the nodes 'R12_FSU', 'R12_PAO', 'R12_RCPA', 'R12_WEU', the common :ref:`R12`
+       is used.
+    2. For the nodes 'R12_CHN', 'R12_MEA', 'R12_LAM', 'R12_NAM', the labels in the
+       ``material-region`` annotation are used. These may reference certain labels
+       specific to IEA EWEB; omit certain alpha-3 codes present in (1); or both.
+    3. For the nodes 'R12_AFR',  'R12_PAS', 'R12_SAS', a mix of the codes generated by
+       :func:`transform_B` and alpha-3 codes are used.
+
+    .. note:: This function mirrors the behaviour of code that is not present in
+       :mod:`message_ix_models` using a file :file:`R12_SSP_V1.yaml` that is also not
+       present. See
+       `iiasa/message-ix-models#201 <https://github.com/iiasa/message-ix-models/pull/201#pullrequestreview-2144852265>`_
+       for a detailed discussion.
+
+    See also
+    --------
+    .IEA_EWEB.transform
+    """
+    result = dict(
+        R12_AFR=["_IIASA_AFR"],
+        R12_PAS="KOR IDN MYS MMR PHL SGP THA BRN TWN _IIASA_PAS".split(),
+        R12_SAS="BGD IND NPL PAK LKA _IIASA_SAS".split(),
+    )
+
+    cl = get_codelist("node/R12")
+    for n in "R12_FSU", "R12_PAO", "R12_RCPA", "R12_WEU":
+        result[n] = [c.id for c in cl[n].child]
+    for n in "R12_CHN", "R12_MEA", "R12_EEU", "R12_LAM", "R12_NAM":
+        result[n] = cl[n].eval_annotation(id="material-region")
+
+    return dict(n=result)
+
+
+def transform_B(qty: "AnyQuantity") -> "AnyQuantity":
+    """Compute some derived intermediate labels along the |n| dimension of `qty`.
+
+    These are used via :meth:`.IEA_EWEB.transform` in the aggregations specified by
+    :func:`get_node_groups_B`.
+
+    1. ``_IIASA_AFR = AFRICA - DZA - EGY - LBY - MAR - SDN - SSD - TUN``. Note that
+       'AFRICA' is 'AFRICATOT' in the reference notebook, but no such label appears in
+       the data.
+    2. ``_IIASA_PAS = UNOCEANIA - AUS - NZL``. Note that 'UNOCEANIA' is 'OCEANIA' in the
+       reference notebook, but no such label appears in the data.
+    3. ``_IIASA_SAS = OTHERASIA - _IIASA_PAS``.
+
+    .. note:: This function mirrors the behaviour of code in a file
+       :file:`Step2_REGIONS.ipynb` that is not present in :mod:`message_ix_models`.
+
+    Returns
+    -------
+    genno.Quantity
+       the original `qty` with 3 appended |n| labels as above.
+    """
+    n_afr = ["DZA", "EGY", "LBY", "MAR", "SDN", "SSD", "TUN"]
+    q_afr = qty.sel(n="AFRICA", drop=True) - qty.sel(n=n_afr).sum(dim="n")
+    q_pas = qty.sel(n="UNOCEANIA", drop=True) - qty.sel(n=["AUS", "NZL"]).sum(dim="n")
+    q_sas = qty.sel(n="OTHERASIA", drop=True) - q_pas
+
+    return concat(
+        qty,
+        q_afr.expand_dims({"n": ["_IIASA_AFR"]}),
+        q_pas.expand_dims({"n": ["_IIASA_PAS"]}),
+        q_sas.expand_dims({"n": ["_IIASA_SAS"]}),
+    )

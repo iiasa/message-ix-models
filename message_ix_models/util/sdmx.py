@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Mapping
+from dataclasses import dataclass, fields
 from datetime import datetime
 from enum import Enum, Flag
 from importlib.metadata import version
@@ -12,25 +13,68 @@ from warnings import warn
 import sdmx
 import sdmx.message
 from iam_units import registry
-from sdmx.model.v21 import AnnotableArtefact, Annotation, Code, InternationalString
+from sdmx.model import common
 
 from .common import package_data_path
 
 if TYPE_CHECKING:
     from os import PathLike
+    from typing import TypeVar
 
-    import sdmx.model.common
     from sdmx.message import StructureMessage
+
+    # TODO Use "from typing import Self" once Python 3.11 is the minimum supported
+    Self = TypeVar("Self", bound="AnnotationsMixIn")
 
 log = logging.getLogger(__name__)
 
-CodeLike = Union[str, Code]
+CodeLike = Union[str, common.Code]
+
+
+@dataclass
+class AnnotationsMixIn:
+    """Mix-in for dataclasses to allow (de)serializing as SDMX annotations."""
+
+    # TODO Type with overrides: list → list
+    def get_annotations(self, _rtype: Union[type[list], type[dict]]):
+        """Return a collection of :class:`.Annotation` for the fields of the object.
+
+        Returns
+        -------
+        list of :class:`Annotation <sdmx.model.common.Annotation>`
+            if `_rtype` is :class:`list`.
+        dict
+            if `_rtype` is :class:`dict`. The dict has the one key "annotations", mapped
+            to a :class:`list` of Annotations. This can be used as a keyword argument
+            to the constructor of a :class:`.AnnotableArtefact` subclass.
+        """
+        result = []
+        for f in fields(self):
+            anno_id = f.name.replace("_", "-")
+            result.append(
+                common.Annotation(id=anno_id, text=repr(getattr(self, f.name)))
+            )
+
+        if _rtype is list:
+            return result
+        else:
+            return dict(annotations=result)
+
+    @classmethod
+    def from_obj(cls: type["Self"], obj: common.AnnotableArtefact) -> "Self":
+        """Return a new instance of `cls` given an AnnotableArtefact `obj`."""
+        args = []
+        for f in fields(cls):
+            anno_id = f.name.replace("_", "-")
+            args.append(obj.eval_annotation(id=anno_id))
+
+        return cls(*args)
 
 
 # FIXME Reduce complexity from 13 → ≤11
 def as_codes(  # noqa: C901
     data: Union[list[str], dict[str, CodeLike]],
-) -> list[Code]:
+) -> list[common.Code]:
     """Convert `data` to a :class:`list` of :class:`.Code` objects.
 
     Various inputs are accepted:
@@ -40,7 +84,7 @@ def as_codes(  # noqa: C901
       further :class:`dict` with keys matching other Code attributes.
     """
     # Assemble results as a dictionary
-    result: dict[str, Code] = {}
+    result: dict[str, common.Code] = {}
 
     if isinstance(data, list):
         # FIXME typing ignored temporarily for PR#9
@@ -50,7 +94,7 @@ def as_codes(  # noqa: C901
 
     for id, info in data.items():
         # Pass through Code; convert other types to dict()
-        if isinstance(info, Code):
+        if isinstance(info, common.Code):
             result[info.id] = info
             continue
         elif isinstance(info, str):
@@ -61,14 +105,16 @@ def as_codes(  # noqa: C901
             raise TypeError(info)
 
         # Create a Code object
-        code = Code(
+        code = common.Code(
             id=str(id),
             name=_info.pop("name", str(id).title()),
         )
 
         # Store the description, if any
         try:
-            code.description = InternationalString(value=_info.pop("description"))
+            code.description = common.InternationalString(
+                value=_info.pop("description")
+            )
         except KeyError:
             pass
 
@@ -90,7 +136,9 @@ def as_codes(  # noqa: C901
         # Convert other dictionary (key, value) pairs to annotations
         for id, value in _info.items():
             code.annotations.append(
-                Annotation(id=id, text=value if isinstance(value, str) else repr(value))
+                common.Annotation(
+                    id=id, text=value if isinstance(value, str) else repr(value)
+                )
             )
 
         result[code.id] = code
@@ -98,7 +146,7 @@ def as_codes(  # noqa: C901
     return list(result.values())
 
 
-def eval_anno(obj: AnnotableArtefact, id: str):
+def eval_anno(obj: common.AnnotableArtefact, id: str):
     """Retrieve the annotation `id` from `obj`, run :func:`eval` on its contents.
 
     .. deprecated:: 2023.9.12
@@ -220,9 +268,7 @@ def write(obj, base_dir: Optional["PathLike"] = None, basename: Optional[str] = 
     log.info(f"Wrote {path}")
 
 
-def register_agency(
-    agency: "sdmx.model.common.Agency",
-) -> "sdmx.model.common.AgencyScheme":
+def register_agency(agency: "common.Agency") -> "common.AgencyScheme":
     """Add `agency` to the :class:`.AgencyScheme` "IIASA_ECE:AGENCIES"."""
     # Read the existing agency scheme
     as_ = read("IIASA_ECE:AGENCIES")

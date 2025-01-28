@@ -1,18 +1,23 @@
 """Build MESSAGEix-Transport on a base model."""
 
 import logging
+from functools import partial
 from importlib import import_module
+from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+import genno
 import pandas as pd
-from genno import Computer, KeyExistsError, Quantity, quote
+from genno import Computer, KeyExistsError, quote
 from message_ix import Scenario
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
+from message_ix_models.model.structure import get_codelist
 from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time
+from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config
 from .structure import get_technology_groups
@@ -20,32 +25,8 @@ from .structure import get_technology_groups
 if TYPE_CHECKING:
     import pathlib
 
-    from genno.types import AnyQuantity
 
 log = logging.getLogger(__name__)
-
-
-def write_report(qty: "AnyQuantity", path: Path, kwargs=None) -> None:
-    """Similar to :func:`.genno.operator.write_report`, but include units.
-
-    .. todo:: Move upstream, to :mod:`genno`.
-    """
-    from genno import operator
-
-    from message_ix_models.util import datetime_now_with_tz
-
-    kwargs = kwargs or dict()
-    kwargs.setdefault(
-        "header_comment",
-        f"""`{qty.name}` data from MESSAGEix-Transport calibration.
-
-Generated: {datetime_now_with_tz().isoformat()}
-
-Units: {qty.units:~}
-""",
-    )
-
-    operator.write_report(qty, path, kwargs)
 
 
 def add_debug(c: Computer) -> None:
@@ -94,7 +75,12 @@ def add_debug(c: Computer) -> None:
         )
     ):
         debug_keys.append(f"transport debug {i}")
-        c.add(debug_keys[-1], write_report, key, output_dir.joinpath(f"{stem}.csv"))
+        c.add(
+            debug_keys[-1],
+            "write_report_debug",
+            key,
+            output_dir.joinpath(f"{stem}.csv"),
+        )
 
     def _(*args) -> "pathlib.Path":
         """Do nothing with the computed `args`, but return `output_path`."""
@@ -234,7 +220,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         log.info(repr(e))  # Solved scenario that already has this key
 
     # Ensure correct units
-    c.add("population:n-y", "mul", "pop:n-y", Quantity(1.0, units="passenger"))
+    c.add("population:n-y", "mul", "pop:n-y", genno.Quantity(1.0, units="passenger"))
 
     # Dummy prices
     try:
@@ -264,25 +250,123 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         c.add("", f, context=context)
 
 
-def add_structure(c: Computer):
-    """Add keys to `c` for structures required by :mod:`.transport.build` computations.
+#: :mod:`genno` tasks for model structure information that are 'static'—that is, do not
+#: change based on :class:`~.transport.config.Config` settings. See
+#: :func:`add_structure`.
+#:
+#: These include:
+#:
+#: - ``info``: :attr:`transport.Config.base_model_info
+#:   <transport.config.Config.base_model_info>`, an instance of :class:`.ScenarioInfo`.
+#: - ``transport info``: the logical union of
+#:   :attr:`~.transport.config.Config.base_model_info` and the :attr:`.Spec.add` member
+#:   of :attr:`Config.spec <.transport.config.Config.spec>`. This includes
+#:   all set elements that will be present in the build model.
+#: - ``dry_run``: :attr:`.Config.dry_run`.
+#: - ``e::codelist``: :func:`.get_codelist` for :ref:`emission-yaml`.
+#: - ``groups::iea to transport``, ``groups::transport to iea``, ``indexers::iea to
+#:   transport``: the 3 outputs of :func:`.groups_iea_eweb`, for use with IEA Extended
+#:   World Energy Balances data.
+#: - ``n::ex world``: |n| as :class:`list` of :class:`str`, excluding "World". See
+#:   :func:`.nodes_ex_world`.
+#: - ``n::ex world+code``: |n| as :class:`list`` of :class:`.Code`, excluding "World".
+#: - ``n:n:ex world``: a 1-dimensional :class:`.Quantity` for broadcasting (values all
+#:   1).
+#: - ``nl::world agg``: :class:`dict` mapping to aggregate "World" from individual |n|.
+#:   See :func:`.nodes_world_agg`.
+STRUCTURE_STATIC = (
+    ("info", lambda c: c.transport.base_model_info, "context"),
+    (
+        "transport info",
+        lambda c: c.transport.base_model_info | c.transport.spec.add,
+        "context",
+    ),
+    ("dry_run", lambda c: c.core.dry_run, "context"),
+    ("e::codelist", partial(get_codelist, "emission")),
+    ("groups::iea eweb", "groups_iea_eweb", "t::transport"),
+    ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
+    ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
+    ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
+    ("n::ex world", "nodes_ex_world", "n"),
+    (
+        "n:n:ex world",
+        lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}),
+        "n::ex world",
+    ),
+    ("n::ex world+code", "nodes_ex_world", "nodes"),
+    ("nl::world agg", "nodes_world_agg", "config"),
+)
 
-    This uses :attr:`.transport.Config.base_model_info` and
-    :attr:`.transport.Config.spec` to mock the contents that would be reported from an
-    already-populated Scenario for sets "node", "year", and "cat_year". It also adds
-    many other keys.
+
+def add_structure(c: Computer) -> None:
+    """Add tasks to `c` for structures required by :mod:`.transport.build`.
+
+    These include:
+
+    - The following keys *only* if not already present in `c`. If, for example, `c` is
+      a :class:`.Reporter` prepared from an already-solved :class:`.Scenario`, the
+      existing tasks referring to the Scenario contents are not changed.
+
+      - ``n``: |n| as :class:`list` of :class:`str`.
+      - ``y``: |y| in the base model.
+      - ``cat_year``: simulated data structure for "cat_year" with at least 1 row
+        :py:`("firstmodelyear", y0)`.
+      - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`.
+      - ``y0``: The first model period, :class:`int`.
+
+    - All tasks from :data:`STRUCTURE_STATIC`.
+    - ``c::transport``: the |c| set of the :attr:`~.Spec.add` member of
+      :attr:`Config.spec <.transport.config.Config.spec>`, transport commodities to be
+      added.
+    - ``c::transport+base``: all |c| that will be present in the build model
+    - ``cg``: "consumer group" set elements.
+    - ``indexers:cg``: ``cg`` as indexers.
+    - ``nodes``: |n| in the base model.
+    - ``indexers:scenario``: :class:`dict` mapping "scenario" to the short form of
+      :attr:`Config.ssp <.transport.config.Config.ssp>` (for instance, "SSP1"), for
+      indexing.
+    - ``t::transport``: all transport |t| to be added, :class:`list`.
+    - ``t::transport agg``: :class:`dict` mapping "t" to the output of
+      :func:`.get_technology_groups`. For use with operators like 'aggregate', 'select',
+      etc.
+    - ``t::transport all``: :class:`dict` mapping "t" to ``t::transport``.
+      .. todo:: Choose a more informative key.
+    - ``t::transport modes``: :attr:`Config.demand_modes
+      <.transport.config.Config.demand_modes>`.
+    - ``t::transport modes 0``: :class:`dict` mapping "t" to the keys only from
+      ``t::transport agg``. Use with 'aggregate' to produce the sum across modes,
+      including "non-LDV".
+    - ``t::transport modes 1``: same as ``t::transport modes 0`` except excluding
+      "non-ldv".
+    - ``t::RAIL`` etc.: transport |t| in the "RAIL" mode/group as :class:`list` of
+      :class:`str`. See :func:`.get_technology_groups`.
+    - ``t::transport RAIL`` etc.: :class:`dict` mapping "t" to the elements of
+      ``t::RAIL``.
+    - ``broadcast:t-c-l:input``: Quantity for broadcasting (all values 1) from every
+      transport |t| (same as ``t::transport``) to the :math:`(c, l)` that that
+      technology receives as input. See :func:`.broadcast_t_c_l`.
+    - ``broadcast:t-c-l:input``: same as above, but for the :math:`(c, l)` that the
+      technology produces as output.
+    - ``broadcast:y-yv-ya:all``: Quantity for broadcasting (all values 1) from every |y|
+      to every possible combination of :math:`(y^V=y, y^A)`—including historical
+      periods. See :func:`.broadcast_y_yv_ya`.
+    - ``broadcast:y-yv-ya``: same as above, but only model periods (``y::model``).
+    - ``broadcast:y-yv-ya:no vintage``: same as above, but only the cases where
+      :math:`y^V = y^A`.
     """
-    from operator import itemgetter
-
     from ixmp.report import configure
 
-    config: "Config" = c.graph["context"].transport
-    info = config.base_model_info  # Information about the base scenario
-    spec = config.spec  # Specification for MESSAGEix-Transport structure
+    from .operator import broadcast_t_c_l, broadcast_y_yv_ya
+
+    # Retrieve configuration and other information
+    config: "Config" = c.graph["context"].transport  # .model.transport.Config object
+    info = config.base_model_info  # ScenarioInfo describing the base scenario
+    spec = config.spec  # Specification for MESSAGEix-Transport structure to be built
+    t_groups = get_technology_groups(spec)  # Technology groups/hierarchy
 
     # Update RENAME_DIMS with transport-specific concepts/dimensions. This allows to use
     # genno.operator.load_file(…, dims=RENAME_DIMS) in add_exogenous_data()
-    # TODO move to a more appropriate location
+    # TODO Read from a concept scheme or list of dimensions
     configure(
         rename_dims={
             "area_type": "area_type",
@@ -294,67 +378,56 @@ def add_structure(c: Computer):
         }
     )
 
-    for key, *comp in (
-        # Configuration
-        ("info", lambda c: c.transport.base_model_info, "context"),
-        (
-            "transport info",
-            lambda c: c.transport.base_model_info | c.transport.spec.add,
-            "context",
-        ),
-        ("dry_run", lambda c: c.core.dry_run, "context"),
-        # Structure
-        ("c::transport", quote(spec.add.set["commodity"])),
-        ("c::transport+base", quote(spec.add.set["commodity"] + info.set["commodity"])),
-        ("cg", quote(spec.add.set["consumer_group"])),
-        ("indexers:cg", spec.add.set["consumer_group indexers"]),
+    # Tasks only to be added if not already present in `c`. These must be done
+    # separately because add_queue does not support the strict/pass combination.
+    for task in (
         ("n", quote(list(map(str, info.set["node"])))),
-        ("nodes", quote(info.set["node"])),
-        ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
-        ("t::transport", quote(spec.add.set["technology"])),
-        # Dictionary form for aggregation
-        # TODO Choose a more informative key
-        ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
-        ("t::transport modes", quote(config.demand_modes)),
         ("y", quote(info.set["year"])),
         (
             "cat_year",
             pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
         ),
+        ("y::model", "model_periods", "y", "cat_year"),
+        ("y0", itemgetter(0), "y::model"),
     ):
         try:
-            c.add(key, *comp, strict=True)  # Raise an exception if `key` exists
-        except KeyExistsError:
-            continue  # Already present; don't overwrite
+            c.add(*task, strict=True)
+        except KeyExistsError:  # Already present
+            # log.debug(f"Use existing {c.describe(task[0])}")
+            pass
 
-    # Create quantities for broadcasting (t,) to (t, c, l) dimensions
-    for kind in "input", "output":
-        c.add(
+    # Assemble a queue of tasks
+    # - `Static` tasks
+    # - Single 'dynamic' tasks based on config, info, spec, and/or t_groups
+    # - Multiple static and dynamic tasks generated in loops etc.
+    tasks = list(STRUCTURE_STATIC) + [
+        ("c::transport", quote(spec.add.set["commodity"])),
+        ("c::transport+base", quote(spec.add.set["commodity"] + info.set["commodity"])),
+        ("cg", quote(spec.add.set["consumer_group"])),
+        ("indexers:cg", spec.add.set["consumer_group indexers"]),
+        ("nodes", quote(info.set["node"])),
+        ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
+        ("t::transport", quote(spec.add.set["technology"])),
+        ("t::transport agg", quote(dict(t=t_groups))),
+        ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
+        ("t::transport modes", quote(config.demand_modes)),
+        ("t::transport modes 0", quote(dict(t=list(t_groups.keys())))),
+        (
+            "t::transport modes 1",
+            quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
+        ),
+    ]
+
+    # Quantities for broadcasting (t,) to (t, c, l) dimensions
+    tasks += [
+        (
             f"broadcast:t-c-l:transport+{kind}",
-            "broadcast_t_c_l",
+            partial(broadcast_t_c_l, kind=kind, default_level="final"),
             "t::transport",
             "c::transport+base",
-            kind=kind,
-            default_level="final",
         )
-
-    # Retrieve information about the model structure
-    t_groups = get_technology_groups(spec)
-
-    # List of nodes excluding "World"
-    # TODO move upstream, to message_ix
-    c.add("n::ex world", "nodes_ex_world", "n")
-    c.add(
-        "n:n:ex world",
-        lambda n: Quantity([1.0] * len(n), coords={"n": n}),
-        "n::ex world",
-    )
-    c.add("n::ex world+code", "nodes_ex_world", "nodes")
-    c.add("nl::world agg", "nodes_world_agg", "config")
-
-    # Model periods only
-    c.add("y::model", "model_periods", "y", "cat_year")
-    c.add("y0", itemgetter(0), "y::model")
+        for kind in ("input", "output")
+    ]
 
     # Quantities for broadcasting y to (yv, ya)
     for base, tag, method in (
@@ -362,32 +435,28 @@ def add_structure(c: Computer):
         ("y::model", "", "product"),  # Model periods only
         ("y::model", ":no vintage", "zip"),  # Model periods with no vintaging
     ):
-        c.add(f"broadcast:y-yv-ya{tag}", "broadcast_y_yv_ya", base, base, method=method)
-
-    # Mappings for use with aggregate, select, etc.
-    c.add("t::transport agg", quote(dict(t=t_groups)))
-    # Sum across modes, including "non-ldv"
-    c.add("t::transport modes 0", quote(dict(t=list(t_groups.keys()))))
-    # Sum across modes, excluding "non-ldv"
-    c.add(
-        "t::transport modes 1",
-        quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
-    )
+        tasks.append(
+            (
+                f"broadcast:y-yv-ya{tag}",
+                partial(broadcast_y_yv_ya, method=method),
+                base,
+                base,
+            )
+        )
 
     # Groups of technologies and indexers
+    # FIXME Combine or disambiguate these keys
     for id, techs in t_groups.items():
-        # FIXME Combine or disambiguate these keys
-        # Indexer-form of technology groups
-        c.add(f"t::transport {id}", quote(dict(t=techs)))
-        # List form of technology groups
-        c.add(f"t::{id}", quote(techs))
+        tasks += [
+            # Indexer-form of technology groups
+            (f"t::transport {id}", quote(dict(t=techs))),
+            # List form of technology groups
+            (f"t::{id}", quote(techs)),
+        ]
 
-    # Mappings for use with IEA Extended World Energy Balances data
-    c.add("groups::iea eweb", "groups_iea_eweb", "t::transport")
-    # Unpack
-    c.add("groups::iea to transport", itemgetter(0), "groups::iea eweb")
-    c.add("groups::transport to iea", itemgetter(1), "groups::iea eweb")
-    c.add("indexers::iea to transport", itemgetter(2), "groups::iea eweb")
+    # - Change each task from single-tuple form to (args, kwargs) with strict=True.
+    # - Add all to the Computer, making 2 passes.
+    c.add_queue(map(lambda t: (t, dict(strict=True)), tasks), max_tries=2, fail="raise")
 
 
 @minimum_version("message_ix 3.8")
@@ -398,7 +467,29 @@ def get_computer(
     visualize: bool = True,
     **kwargs,
 ) -> Computer:
-    """Return a :class:`genno.Computer` set up for model-building calculations."""
+    """Return a :class:`genno.Computer` set up for model-building calculations.
+
+    The returned computer contains:
+
+    - Everything added by :func:`.add_structure`, :func:`.add_exogenous_data`, and
+      :func:`.add_debug`.
+    - For each module in :attr:`.transport.config.Config.modules`, everything added by
+      the :py:`prepare_computer()` function in that module.
+    - ``context``: a reference to `context`.
+    - ``scenario``: a reference to a Scenario, if one appears in `kwargs`.
+    - ``add transport data``: a list of keys which, when computed, will cause all
+      transport data to be computed and added to ``scenario``.
+
+    Parameters
+    ----------
+    obj :
+       If `obj` is an existing :class:`.Computer` (or subclass, such as
+       :class`.Reporter`), tasks are added the existing tasks in its graph. Otherwise, a
+       new Computer is created and populated.
+    visualize :
+       If :any:`True` (the default), a file :file:`transport/build.svg` is written in
+       the local data directory with a visualization of the ``add transport data`` key.
+    """
     from . import operator
 
     # Configure
@@ -407,11 +498,14 @@ def get_computer(
     # Structure information for the base model
     scenario = kwargs.get("scenario")
     if scenario:
+        # Retrieve structure information from an existing base model/`scenario`
         config.base_model_info = ScenarioInfo(scenario)
 
         config.with_scenario = True
         config.with_solution = scenario.has_solution()
     else:
+        # Generate a Spec/ScenarioInfo for a non-existent base model/`scenario` as
+        # described by `context`
         base_spec = bare.get_spec(context)
         config.base_model_info = base_spec["add"]
 
@@ -460,7 +554,7 @@ def get_computer(
     # Add tasks for debugging the build
     add_debug(c)
 
-    if visualize:
+    if visualize and HAS_GRAPHVIZ:
         path = context.get_local_path("transport", "build.svg")
         path.parent.mkdir(exist_ok=True)
         c.visualize(filename=path, key="add transport data")

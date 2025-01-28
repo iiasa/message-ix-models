@@ -1,0 +1,70 @@
+# Emissions intensity of energy use
+#
+# Sources
+# - Group 1: e-mail text from Shaohui Zhang 2024-10-09
+#   Originally supplied with units [g / kg].
+# - Group 2: e-mail attachment from Shaohui Zhang 2024-10-09
+#   "EMEP_EEA Emission factor.xlsx". These all have the following
+#   dimensions/metadata in other columns:
+#   - NFR: 1.A.3.a.ii.(i)
+#   - Sector: Civil aviation (domestic, LTO)
+#     → technology=AIR
+#   - Table: Table_3-3
+#   - Type: Tier 1 Emission Factor
+#   - Technology: NA
+#   - Fuel: Jet Gasoline and Aviation Gasoline
+#   - Abatement: (empty)
+#   - Region: NA
+#   - Pollutant → emission
+#   - CI_lower, CI_upper, Reference → preserved as comments
+#   - Unit: kg/tonne fuel, which is equivalent to g / kg fuel.
+# - Group 3: e-mail from Lena Höglund-Isaksson 2024-10-06.
+#   The units for these are kt/petajoule gasoline with [=] g / MJ.
+#
+# Units: g / MJ
+#
+technology, commodity, emission, value
+#
+# Group 1
+#
+AIR,        lightoil,  SO2,   0.0279  #    1.2  g/kg
+# AIR,      lightoil,  NOx,   0.3284  #   14.12 g/kg, lower end of confidence interval
+# AIR,      lightoil,  NOx,   0.3521  #   15.14 g/kg, upper end of confidence interval
+#
+# Group 2
+#
+# “Calculated using Tier 2 method”
+# - These values are used because the above are too large and produce negative totals.
+#
+# AIR,      lightoil,  NOx,   0.0465  #    2    g/kg
+AIR,        lightoil,  NOx,   0.0930  #    4    g/kg
+# AIR,      lightoil,  NOx,   0.1860  #    8    g/kg
+#
+# “Calculated using Tier 2 method”
+# - The low end of the range is used because the midpoint value produces negative totals.
+#
+AIR,        lightoil,  CO,    0.5     # Placeholder value for debugging
+# AIR,      lightoil,  CO,   13.95    #  600    g/kg
+# AIR,      lightoil,  CO,   27.90    # 1200    g/kg
+# AIR,      lightoil,  CO,   55.81    # 2400    g/kg
+#
+# “Calculated using Tier 2 method”
+# - These data were provided with the code 'NMVOC', but we use the label 'VOC' to
+#   align with MESSAGEix-GLOBIOM, even though these are not strictly the same.
+# - The low end of the range is used because the midpoint value produces negative totals.
+#
+AIR,        lightoil,  VOC,   0.1     # Placeholder value for debugging
+# AIR,      lightoil,  VOC,   0.2209  #    9.5  g/kg
+# AIR,      lightoil,  VOC,   0.4419  #   19    g/kg
+# AIR,      lightoil,  VOC,   0.8837  #   38    g/kg
+#
+# “Assuming 0.05% S by mass”
+#
+# AIR,      lightoil,  SOx,   0.0116  #    0.5  g/kg
+AIR,        lightoil,  SOx,   0.0233  #    1    g/kg
+# AIR,      lightoil,  SOx,   0.0465  #    2    g/kg
+#
+# Group 3
+#
+AIR,        lightoil,  CH4,   0.0005
+AIR,        lightoil,  N2O,   0.0031
