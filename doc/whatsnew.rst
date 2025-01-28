@@ -1,8 +1,20 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Update :class:`.IEA_EWEB` to support :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
+- Update :doc:`/transport/index` (:pull:`259`).
+
+  - Adjust constraints on :py:`t="conm_ar"`.
+  - Recompute :attr:`.minimum_activity` for transport technologies.
+  - Adjust freight activity, freight and passenger mode shares for some regions.
+  - Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
+  - Simplify and consolidate tests.
+
+- Add :func:`.prepare_method_B` to :mod:`.ssp.transport` (:pull:`259`).
+- New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
 
 v2025.1.10
 ==========

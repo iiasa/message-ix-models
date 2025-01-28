@@ -30,7 +30,7 @@ def insert(c: "Computer", key: "KeyLike", operation, tag: str = "pre") -> "KeyLi
 
     It is also possible to insert `operation` that mutates its input in certain ways.
 
-    .. todo:: Migrate to :py:`genno.Computer.insert()`.
+    .. todo:: Migrate to :py:`genno.Computer.insert()` or similar.
 
     Returns
     -------

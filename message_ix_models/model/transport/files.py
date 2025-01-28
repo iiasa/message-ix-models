@@ -1,3 +1,8 @@
+"""Input data flows for MESSAGEix-Transport, read from CSV files.
+
+See :ref:`transport-data-files` for documentation of the data flows in :data:`FILES`.
+"""
+
 import logging
 from functools import lru_cache
 from pathlib import Path
