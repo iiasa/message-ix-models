@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 import pytest
-from genno import Computer
 from message_ix import ModelError, Reporter, Scenario
 
 import message_ix_models.report
@@ -23,6 +22,7 @@ from . import Config, build
 if TYPE_CHECKING:
     import pandas
     import pint
+    from genno import Computer
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ def configure_build(
     years: str,
     tmp_path: Optional[Path] = None,
     options=None,
-) -> tuple[Computer, ScenarioInfo]:
+) -> tuple["Computer", ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
 
     # By default, omit plots while testing

@@ -1,3 +1,8 @@
+"""Input data flows for MESSAGEix-Transport, read from CSV files.
+
+See :ref:`transport-data-files` for documentation of the data flows in :data:`FILES`.
+"""
+
 import logging
 from functools import lru_cache
 from pathlib import Path
@@ -218,7 +223,7 @@ class ExogenousDataFile:
         # template =
 
 
-def add(*, replace: bool = False, **kwargs):
+def add(*, replace: bool = False, **kwargs) -> "Key":
     """Add or replace an entry in :data:`FILES`.
 
     Parameters
@@ -229,6 +234,12 @@ def add(*, replace: bool = False, **kwargs):
         exception.
     kwargs :
         Passed on to :class:`ExogenousDataFile`.
+
+    Returns
+    -------
+    Key
+        The :attr:`ExogenousDataFile.key` at which the loaded and transformed data will
+        be available.
     """
     edf = ExogenousDataFile(**kwargs)
 
@@ -341,6 +352,15 @@ demand_scale = add(
     units="dimensionless",
 )
 
+# NB This differs from fuel_emi_intensity in including (a) a 't[echnology]' dimension
+#    and (b) more and non-GHG species.
+emi_intensity = add(
+    key="emissions intensity:t-c-e:transport",
+    path="emi-intensity",
+    name="Emissions intensity of fuel use",
+    units="g / EJ",
+)
+
 energy_other = add(
     key="energy:c-n:transport other",
     path="energy-other",
@@ -349,9 +369,11 @@ energy_other = add(
     required=False,
 )
 
+# NB This differs from emi_intensity in (a) having no 't[echnology]' dimension and (b)
+#    including only CO₂.
 fuel_emi_intensity = add(
     key="fuel-emi-intensity:c-e",
-    name="Carbon emissions intensity of fuel use",
+    name="GHG emissions intensity of fuel use",
     description="""Values are in GWP-equivalent mass of carbon, not in mass of the
 emissions species.""",
     units="tonne / kWa",

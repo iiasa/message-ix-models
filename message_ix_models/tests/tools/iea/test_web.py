@@ -1,6 +1,7 @@
 """Tests of :mod:`.tools`."""
 
 from importlib.metadata import version
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
@@ -17,6 +18,9 @@ from message_ix_models.tools.iea.web import (
 )
 from message_ix_models.util import HAS_MESSAGE_DATA
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
 # Dask < 2024.4.1 is incompatible with Python >= 3.11.9, but we pin dask in this range
 # for tests of message_ix < 3.7.0. Skip these tests:
 MARK_DASK_PYTHON = pytest.mark.skipif(
@@ -25,8 +29,27 @@ MARK_DASK_PYTHON = pytest.mark.skipif(
 )
 
 
+@pytest.fixture
+def user_local_data(pytestconfig, request) -> "Generator":  # pragma: no cover
+    """Symlink :path:`…/iea/` in the test local data directory to the user's."""
+    if "test_context" not in request.fixturenames:
+        return
+    test_local_data = request.getfixturevalue("test_context").core.local_data
+    user_local_data = pytestconfig.user_local_data
+
+    source = test_local_data.joinpath("iea")
+    source.symlink_to(user_local_data.joinpath("iea"))
+
+    try:
+        yield
+    finally:
+        source.unlink()
+
+
 class TestIEA_EWEB:
     @MARK_DASK_PYTHON
+    # Uncomment the following line to use the full data files from a local copy
+    # @pytest.mark.usefixtures("user_local_data")
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
     @pytest.mark.parametrize(
         "source_kw",
@@ -55,6 +78,13 @@ class TestIEA_EWEB:
                 marks=pytest.mark.xfail(raises=ValueError),
             ),
             dict(provider="IEA", edition="2024", flow=["AVBUNK"]),
+            pytest.param(
+                dict(provider="IEA", edition="2024", transform="B"),
+                marks=pytest.mark.xfail(
+                    raises=ValueError, reason="Missing regions= kwarg"
+                ),
+            ),
+            dict(provider="IEA", edition="2024", transform="B", regions="R12"),
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
@@ -75,8 +105,9 @@ class TestIEA_EWEB:
 
         # Data contain expected coordinates
         # NB cannot test total counts here because the fuzzed test data does not
-        #    necessarily include ≥1 data point from each COUNTRY and TIME
-        assert {"R14_AFR", "R14_WEU"} < set(result.coords["n"].data)
+        #    necessarily include ≥1 data point from each (n, y)
+        n = source_kw.get("regions", "R14")
+        assert {f"{n}_AFR", f"{n}_WEU"} < set(result.coords["n"].data)
         assert {1980, 2018} < set(result.coords["y"].data)
 
 

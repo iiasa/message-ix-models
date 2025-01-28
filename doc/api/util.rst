@@ -10,10 +10,12 @@ Submodules:
 
    click
    context
+   genno
    importlib
    _logging
    node
    pooch
+   pycountry
    scenarioinfo
    sdmx
 
@@ -158,6 +160,13 @@ Commonly used:
 
       If no base scenario can be loaded, :func:`.bare.create_res` is called to generate a base scenario.
 
+:mod:`.util.genno`
+==================
+
+.. currentmodule:: message_ix_models.util.genno
+
+.. automodule:: message_ix_models.util.genno
+   :members:
 
 :mod:`.util.importlib`
 ======================

@@ -20,8 +20,8 @@ This value is retrieved from the :attr:`.model.Config.regions` setting on a :cla
 
 .. _transport-config:
 
-Configuration
-=============
+Configuration and model structure
+=================================
 
 General (:file:`config.yaml`, required)
 ---------------------------------------
@@ -50,13 +50,45 @@ This file gives code lists for other MESSAGE concepts/sets/dimensions.
 
 → View :source:`message_ix_models/data/transport/set.yaml` on GitHub
 
+.. _CL_TRANSPORT_SCENARIO:
+
+Code list ``CL_TRANSPORT_SCENARIO``
+-----------------------------------
+
+This code list, stored in the file :file:`message_ix_models/data/sdmx/IIASA_ECE_CL_TRANSPORT_SCENARIO(1.0.0).xml`, contains an SDMX code list for distinct MESSAGEix-Transport scenarios.
+The codes have IDs like ``LED-SSP1`` that give a short identifier used in :mod:`.transport.workflow` and elsewhere, and names that give a complete, human-readable description.
+Every code has all of following annotations:
+
+``SSP-URN``
+   Complete URN of a code in ``ICONICS:SSP(2024)`` or another code list for the SSP used for sociodemographic input data and to control other settings in :mod:`.transport.build`.
+
+   Example annotation text: ``'urn:sdmx:org.sdmx.infomodel.codelist.Code=ICONICS:SSP(2024).1'``
+
+``is-LED-Scenario``
+   Example annotation text: ``True``
+
+   :func:`repr` of Python :any:`True` or :any:`False`, the former indicating that "Low Energy Demand (LED)" settings should be used.
+   See also :attr:`Config.project <.transport.config.Config.project>`.
+
+``EDITS-activity-id``
+   Example annotation text: ``'HA'``
+
+   For :doc:`/project/edits`, the identity of an ITF PASTA scenario providing exogenous transport activity.
+
+``base-scenario-URL``
+   Example annotation text: ``'ixmp://ixmp-dev/SSP_SSP1_v1.1/baseline_DEFAULT_step_13'``
+
+   URL of a base scenario used to build the corresponding MESSAGEix-Transport scenario.
+
+
 .. _transport-data-files:
 
 Input data files
 ================
 
 :data:`.transport.files.FILES` gives a list of all data files.
-Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_exogenous_data`), each of these files is connected to a :class:`genno.Computer` used for model-building, and its contents appear at the key given in the list below.
+Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_exogenous_data`), each of these files is connected to a :class:`genno.Computer` used for model-building.
+Its content are available at the corresponding key, which is used as an input for further model-building computations.
 
 .. admonition:: Example
 
@@ -67,8 +99,21 @@ Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_e
 Not all files are currently or always used in model-building computations.
 Some submodules of :mod:`~.model.transport` use additional data files via other mechanisms.
 Most of the files have a header comment including a precise description of the quantity, source of the data, and units of measurement.
-In some cases extended information is below (where a header comment would be too long).
+In some cases—where a header comment would be too long—extended information is below.
 The :program:`git` history of files, or the GitHub "blame" view can also be used to inspect the edit history of each file, line by line.
+
+.. _transport-input-emi-intensity:
+
+:file:`emi-intensity.csv` → ``emissions intensity:t-c-e:transport``
+-------------------------------------------------------------------
+
+Measure
+   Emissions intensity of energy use
+Units
+   g (of emissions species) / MJ (of input energy)
+
+See the file :source:`on GitHub <message_ix_models/data/transport/emi-intensity.csv>` for inline comments and commit history.
+Currently only used in :mod:`.ssp.transport`.
 
 :file:`ldv-activity.csv` → ``ldv activity:n:exo``
 -------------------------------------------------

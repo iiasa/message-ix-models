@@ -5,6 +5,14 @@ from typing import Any, Optional, TypedDict, Union
 
 import pandas as pd
 import sdmx.model.common
+from genno.core.key import KeyLike  # TODO Import from genno.types, when possible
+
+__all__ = [
+    "KeyLike",
+    "MaintainableArtefactArgs",
+    "MutableParameterData",
+    "ParameterData",
+]
 
 #: Collection of :mod:`message_ix` or :mod:`ixmp` parameter data. Keys should be
 #: parameter names (:class:`str`), and values should be data frames with the same
@@ -16,6 +24,8 @@ MutableParameterData = MutableMapping[str, pd.DataFrame]
 
 
 class MaintainableArtefactArgs(TypedDict):
+    """Some keyword arguments to :class:`sdmx.model.common.MaintainableArtefact`."""
+
     is_external_reference: Optional[bool]
     is_final: Optional[bool]
     maintainer: Any

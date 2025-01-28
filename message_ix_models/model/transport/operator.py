@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from functools import partial, reduce
 from itertools import pairwise, product
 from operator import gt, le, lt
-from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
 
 import genno
 import numpy as np
@@ -33,6 +33,8 @@ from message_ix_models.util import (
 from .config import Config
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from genno.types import AnyQuantity
     from message_ix import Scenario
     from xarray.core.types import Dims
@@ -238,10 +240,17 @@ def broadcast_wildcard(
 def broadcast_t_c_l(
     technologies: list[Code],
     commodities: list[Union[Code, str]],
-    kind: Literal["input", "output"],
+    kind: str,
     default_level: Optional[str] = None,
 ) -> "AnyQuantity":
-    """Return a Quantity for broadcasting dimension (t) to (c, l) for `kind`."""
+    """Return a Quantity for broadcasting dimension (t) to (c, l) for `kind`.
+
+    Parameter
+    ---------
+    kind :
+       Either "input" or "output".
+    """
+    assert kind in ("input", "output")
 
     # Convert list[Union[Code, str]] into an SDMX Codelist for simpler usage
     cl_commodity: "Codelist" = Codelist()
@@ -285,7 +294,7 @@ def broadcast_t_c_l(
 
 
 def broadcast_y_yv_ya(
-    y: list[int], y_include: list[int], *, method: Literal["product", "zip"] = "product"
+    y: list[int], y_include: list[int], *, method: str = "product"
 ) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
@@ -293,10 +302,14 @@ def broadcast_y_yv_ya(
 
     If :py:`"y::model"` is passed as `y_include`, this is equivalent to
     :attr:`.ScenarioInfo.yv_ya`.
+
+    Parameters
+    ----------
+    method :
+        Either "product" or "zip".
     """
     dims = ["y", "yv", "ya"]
-
-    func = product if method == "product" else zip
+    func = {"product": product, "zip": zip}[method]
     series = (
         pd.DataFrame(func(y, y_include), columns=dims[1:])
         .query("ya >= yv")
@@ -1193,3 +1206,28 @@ def votm(gdp_ppp_cap: "AnyQuantity") -> "AnyQuantity":
     )
     assert_units(result, "")
     return result
+
+
+def write_report_debug(qty: "AnyQuantity", path: "Path", kwargs=None) -> None:
+    """Similar to :func:`.genno.operator.write_report`, but include units.
+
+    This version is used only in :func:`.add_debug`.
+
+    .. todo:: Move upstream, to :mod:`genno`.
+    """
+    from genno import operator
+
+    from message_ix_models.util import datetime_now_with_tz
+
+    kwargs = kwargs or dict()
+    kwargs.setdefault(
+        "header_comment",
+        f"""`{qty.name}` data from MESSAGEix-Transport calibration.
+
+Generated: {datetime_now_with_tz().isoformat()}
+
+Units: {qty.units:~}
+""",
+    )
+
+    operator.write_report(qty, path, kwargs)

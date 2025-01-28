@@ -27,9 +27,9 @@ R12_LAM,  RAIL,       0.007
 R12_LAM,  WATER,      0.648
 R12_LAM,  AIR,        0.001
 R12_MEA,  ROAD,       0.965
-R12_MEA,  RAIL,       0.019
+R12_MEA,  RAIL,       0.025
 R12_MEA,  WATER,      0.0
-R12_MEA,  AIR,        0.016
+R12_MEA,  AIR,        0.01
 R12_NAM,  ROAD,       0.590
 R12_NAM,  RAIL,       0.350
 R12_NAM,  WATER,      0.0

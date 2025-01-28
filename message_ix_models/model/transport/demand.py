@@ -182,11 +182,11 @@ TASKS = [
     # Apply the adjustment factor
     (fv + "1", "mul", fv + "0", "fv factor:n-t-y"),
     # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
-    ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["ROAD"]))),
+    ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["RAIL", "ROAD"]))),
     # Relabel
     ((fv_cny, "relabel2", fv + "2"), dict(new_dims={"c": "transport F {t}"})),
     # Convert to ixmp format
-    (("t demand freight::ixmp", "as_message_df", fv_cny), _DEMAND_KW),
+    (("demand::F+ixmp", "as_message_df", fv_cny), _DEMAND_KW),
     # Select only non-LDV PDT
     ((pdt_nyt + "1", "select", pdt_nyt), dict(indexers=dict(t=["LDV"]), inverse=True)),
     # Relabel PDT
@@ -196,21 +196,21 @@ TASKS = [
     ),
     (pdt_cny, "convert_units", pdt_cny + "0", "Gp km / a"),
     # Convert to ixmp format
-    (("t demand pax non-ldv::ixmp", "as_message_df", pdt_cny), _DEMAND_KW),
+    (("demand::P+ixmp", "as_message_df", pdt_cny), _DEMAND_KW),
     # Relabel ldv pdt:n-y-cg
     ((ldv_cny + "0", "relabel2", ldv_nycg), dict(new_dims={"c": "transport pax {cg}"})),
     (ldv_cny, "convert_units", ldv_cny + "0", "Gp km / a"),
-    (("t demand pax ldv::ixmp", "as_message_df", ldv_cny), _DEMAND_KW),
+    (("demand::LDV+ixmp", "as_message_df", ldv_cny), _DEMAND_KW),
     # Dummy demands, if these are configured
-    ("t demand dummy::ixmp", dummy, "c::transport", "nodes::ex world", y, "config"),
+    ("demand::dummy+ixmp", dummy, "c::transport", "nodes::ex world", y, "config"),
     # Merge all data together
     (
         "transport demand::ixmp",
         "merge_data",
-        "t demand pax ldv::ixmp",
-        "t demand pax non-ldv::ixmp",
-        "t demand freight::ixmp",
-        "t demand dummy::ixmp",
+        "demand::LDV+ixmp",
+        "demand::P+ixmp",
+        "demand::F+ixmp",
+        "demand::dummy+ixmp",
     ),
 ]
 
