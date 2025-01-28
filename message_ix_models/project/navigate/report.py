@@ -240,9 +240,9 @@ def gen_config(
         # Construct a filename to read the variable names reported, below
         filename = legacy_output_path(cfg.source_dir, s)
 
-    assert 1 == len(
-        regions
-    ), f"{len(scenarios)} scenarios have {len(regions)} distinct regions: {regions}"
+    assert 1 == len(regions), (
+        f"{len(scenarios)} scenarios have {len(regions)} distinct regions: {regions}"
+    )
     node_cl = list(regions)[0]
 
     # Region name mapping

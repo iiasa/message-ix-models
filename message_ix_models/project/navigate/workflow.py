@@ -4,7 +4,7 @@ import re
 from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
-from typing import Dict, Generator, List, Mapping, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Generator, List, Mapping, Optional, Tuple, cast
 
 from genno import KeyExistsError
 from genno.caching import hash_args
@@ -27,6 +27,9 @@ from message_data.model.workflow import solve
 from message_data.projects.engage import workflow as engage
 
 from .report import gen_config
+
+if TYPE_CHECKING:
+    import pandas
 
 log = logging.getLogger(__name__)
 
@@ -280,13 +283,13 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     # - Use a scaling factor of 1.0 for unrelated sectors.
     # - Recompute "value".
     # - Drop the temporary column.
-    data["demand_ref"] = (
+    data["demand_ref"] = cast(
+        "pandas.DataFrame",
         data["demand_ref"]
         .merge(c_share, how="left", on=["node", "sector"])
         .fillna({"afofi share": 1.0})
-        .eval("value = value * `afofi share`")
-        .drop("afofi share", axis=1)
-    )
+        .eval("value = value * `afofi share`"),
+    ).drop("afofi share", axis=1)
 
     # Add units present in the MACRO input data which may yet be missing on the platform
     # FIXME use consistent units in the MACRO input data and message-ix-models

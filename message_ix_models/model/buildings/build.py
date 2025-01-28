@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
-from typing import Dict, Iterable, List, Mapping, Sequence
+from typing import Dict, Iterable, List, Mapping, Sequence, cast
 
 import message_ix
 import pandas as pd
@@ -101,13 +101,13 @@ def adapt_emission_factors(data: Dict[str, pd.DataFrame]):
     # - Divide by base-model input efficiency to recover emissions factors per fuel.
     # - Drop "input" column.
     ra = "relation_activity"
-    data[ra] = (
+    data[ra] = cast(
+        pd.DataFrame,
         data[ra][~data[ra].relation.isin(omit)]
         .merge(input_, how="left", on=cols)
         .astype({"year_rel": int})
-        .eval("value = value / input")
-        .drop("input", axis=1)
-    )
+        .eval("value = value / input"),
+    ).drop("input", axis=1)
 
     # Set input efficiencies to 1.0 per MESSAGE-Buildings representation
     data["input"] = data["input"].assign(value=1.0)
@@ -592,7 +592,7 @@ def prune_spec(spec: Spec, data: Dict[str, pd.DataFrame]) -> None:
         spec.add.set[name] = sorted(
             filter(lambda c: c.id in values, spec.add.set[name])
         )
-        log.info(f"Prune {N-len(spec.add.set[name])} {name} codes with no data")
+        log.info(f"Prune {N - len(spec.add.set[name])} {name} codes with no data")
 
         missing = values - set(spec.add.set[name]) - set(spec.require.set[name])
         if len(missing):
@@ -723,6 +723,7 @@ def materials(
                 (comm, "product", "t"),
                 (f"{rc}_floor_construction", "demand", "t"),
                 efficiency=eff,
+                on="input",
                 technology=f"construction_{rc}_build",
                 **common,
             )
@@ -731,6 +732,7 @@ def materials(
                 (comm, "end_of_life", "t"),  # will be flipped to output
                 (f"{rc}_floor_demolition", "demand", "t"),
                 efficiency=eff,
+                on="input",
                 technology=f"demolition_{rc}_build",
                 **common,
             )
