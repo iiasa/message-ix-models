@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import pytest
 
+from message_ix_models.model.transport.testing import MARK
 from message_ix_models.project.ssp.transport import main
 from message_ix_models.tests.tools.iea.test_web import user_local_data  # noqa: F401
 from message_ix_models.util import package_data_path
@@ -79,6 +80,7 @@ VARIABLE = {
 }
 
 
+@MARK["gh-288"]
 @main.minimum_version
 # @pytest.mark.usefixtures("user_local_data")
 @pytest.mark.parametrize("method", ("A", "B"))
@@ -152,7 +154,7 @@ def test_cli(tmp_path, mix_models_cli, input_xlsx_path) -> None:
     copyfile(input_file, path_in)
 
     # Code runs
-    result = mix_models_cli.invoke(["ssp", "transport", f"{path_in}"])
+    result = mix_models_cli.invoke(["ssp", "transport", "--method=A", f"{path_in}"])
     assert 0 == result.exit_code, result.output
 
     # Output path was determined automatically and exists
