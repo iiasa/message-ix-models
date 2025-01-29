@@ -13,6 +13,7 @@ import pytest
 from message_ix import Scenario
 
 from message_ix_models import Context
+from message_ix_models.model import transport
 from message_ix_models.util.scenarioinfo import ScenarioInfo
 
 
@@ -157,9 +158,15 @@ class TestContext:
         )
 
     def test_asdict(self, test_context):
-        # Add a ScenarioInfo object. This fails on Python <= 3.11 due to
-        # https://github.com/python/cpython/issues/79721
+        # Add some contents that stress-test asdict()
+
+        # 1. A ScenarioInfo object. This fails on Python <= 3.11 due to
+        #    https://github.com/python/cpython/issues/79721
         test_context.core.scenarios.append(ScenarioInfo())
+        # 2. Self-reference
+        test_context.foo = test_context
+        # 3. Complex dataclass
+        transport.Config.from_context(test_context)
 
         # asdict() method runs
         test_context.asdict()
