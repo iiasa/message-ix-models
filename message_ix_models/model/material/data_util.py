@@ -236,8 +236,7 @@ def read_sector_data(
         sheet_n = sectname + "_R11"
 
     if filename.endswith(".csv"):
-        data_df = pd.read_csv(
-            package_data_path("material", sectname, filename))
+        data_df = pd.read_csv(package_data_path("material", sectname, filename))
     else:
         data_df = pd.read_excel(
             package_data_path("material", sectname, ssp, filename),
@@ -1310,6 +1309,7 @@ def gen_te_projections(
     method: Literal["constant", "convergence", "gdp"] = "convergence",
     ref_reg: str = "R12_NAM",
     module="materials",
+    reduction_year=2100,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Calls message_ix_models.tools.costs with config for MESSAGEix-Materials
@@ -1340,6 +1340,7 @@ def gen_te_projections(
         format="message",
         scenario=ssp,
         final_year=2110,
+        reduction_year=reduction_year,
     )
     out_materials = create_cost_projections(cfg)
     fix_cost = (
