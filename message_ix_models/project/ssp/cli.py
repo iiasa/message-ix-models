@@ -69,4 +69,4 @@ def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[
 
     if path_out_user != path_out:
         print(f"Convert CSV output to {path_out_user}")
-        pd.read_csv(path_out).to_excel(path_out_user)
+        pd.read_csv(path_out).to_excel(path_out_user, index=False)
