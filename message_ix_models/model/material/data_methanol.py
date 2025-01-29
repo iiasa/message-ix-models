@@ -1,5 +1,5 @@
 from ast import literal_eval
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import yaml
@@ -11,7 +11,11 @@ from message_ix_models.model.material.data_util import (
     gen_plastics_emission_factors,
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import combine_df_dictionaries, read_config
+from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
+    get_ssp_from_context,
+    read_config,
+)
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
@@ -48,19 +52,16 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     scenario: .Scenario
     """
     context = read_config()
+    ssp = get_ssp_from_context(context)
     df_pars = pd.read_excel(
-        package_data_path(
-            "material", "methanol", "methanol_sensitivity_pars.xlsx"
-        ),
+        package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
         sheet_name="Sheet1",
         dtype=object,
     )
     pars = df_pars.set_index("par").to_dict()["value"]
     if pars["mtbe_scenario"] == "phase-out":
         pars_dict = pd.read_excel(
-            package_data_path(
-                "material", "methanol", "methanol_techno_economic.xlsx"
-            ),
+            package_data_path("material", "methanol", "methanol_techno_economic.xlsx"),
             sheet_name=None,
             dtype=object,
         )
@@ -77,9 +78,7 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         pars_dict[i] = unpivot_input_data(pars_dict[i], i)
     # TODO: only temporary hack to ensure SSP_dev compatibility
     if "SSP_dev" in scenario.model:
-        file_path = package_data_path(
-            "material", "methanol", "missing_rels.yaml"
-        )
+        file_path = package_data_path("material", "methanol", "missing_rels.yaml")
 
         with open(file_path, "r") as file:
             missing_rels = yaml.safe_load(file)
@@ -87,11 +86,9 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         pars_dict["relation_activity"] = df[~df["relation"].isin(missing_rels)]
 
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
-        ssp_mode_map[context["ssp"]]
+        ssp_mode_map[ssp]
     ]
-    df_2025 = pd.read_csv(
-        package_data_path("material", "methanol", "demand_2025.csv")
-    )
+    df_2025 = pd.read_csv(package_data_path("material", "methanol", "demand_2025.csv"))
     df_demand = material_demand_calc.gen_demand_petro(
         scenario, "methanol", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
