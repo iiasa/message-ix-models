@@ -7,7 +7,7 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import maybe_remove_water_tec, read_config
+from message_ix_models.model.material.util import maybe_remove_water_tec, read_config, get_ssp_from_context
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
@@ -535,7 +535,7 @@ def gen_demand() -> dict[str, pd.DataFrame]:
 
 def gen_resid_demand_NH3(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
     context = read_config()
-    ssp = context["ssp"]
+    ssp = get_ssp_from_context(context)
 
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
