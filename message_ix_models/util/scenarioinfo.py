@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 # TODO: use kw_only=True once python 3.10 is oldest supported version
 # FIXME the .. autosummary part does not render correctly in VSCode preview
-@dataclass()
+@dataclass
 class ScenarioInfo:
     """Information about a :class:`.Scenario` object.
 

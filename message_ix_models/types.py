@@ -7,7 +7,15 @@ import pandas as pd
 import sdmx.model.common
 from genno.core.key import KeyLike  # TODO Import from genno.types, when possible
 
+try:
+    from genno.core.quantity import AnyQuantity
+except ImportError:  # genno <= 1.24
+    from genno.core.quantity import Quantity
+
+    AnyQuantity: type = Quantity  # type: ignore [no-redef]
+
 __all__ = [
+    "AnyQuantity",
     "KeyLike",
     "MaintainableArtefactArgs",
     "MutableParameterData",
