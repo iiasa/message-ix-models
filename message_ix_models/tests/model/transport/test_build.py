@@ -91,7 +91,7 @@ def test_make_spec(regions_arg, regions_exp, years):
         param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
         param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
-        param("R12", "B", False, "IKARUS", True, marks=MARK[8]),
+        param("R12", "B", False, "IKARUS", True, marks=MARK["gh-281"]),
         # R14, A
         param(
             "R14",
@@ -276,14 +276,14 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
 @pytest.mark.parametrize(
     "build_kw",
     (
-        dict(regions="R11", years="A", options=dict()),
-        dict(regions="R11", years="B", options=dict()),
+        dict(regions="R11", years="A"),
+        dict(regions="R11", years="B"),
         dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
         dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
-        dict(regions="R12", years="B", options=dict()),
+        dict(regions="R12", years="B"),
         dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
-        dict(regions="R14", years="B", options=dict()),
-        param(dict(regions="ISR", years="A", options=dict()), marks=MARK[3]),
+        param(dict(regions="R14", years="B"), marks=MARK[9]),
+        param(dict(regions="ISR", years="A"), marks=MARK[3]),
     ),
 )
 def test_debug(

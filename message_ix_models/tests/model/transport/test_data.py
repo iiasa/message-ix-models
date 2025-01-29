@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from iam_units import registry
 
-from message_ix_models.model.transport import build, testing
+from message_ix_models.model.transport import build, non_ldv, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.roadmap import get_roadmap_data
 from message_ix_models.model.transport.testing import MARK, assert_units, make_mark
@@ -73,7 +73,7 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     c, _ = testing.configure_build(ctx, regions=regions, years=years)
 
     # Code runs
-    data = c.get("transport nonldv::ixmp")
+    data = c.get(f"transport{non_ldv.Pi}")
 
     # Data are provided for the these parameters
     exp_pars = {
@@ -189,7 +189,13 @@ def test_get_chn_ind_pop():
 @build.get_computer.minimum_version
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
-    "regions", [pytest.param("ISR", marks=MARK[3]), "R11", "R12", "R14"]
+    "regions",
+    [
+        pytest.param("ISR", marks=MARK[3]),
+        "R11",
+        "R12",
+        pytest.param("R14", marks=MARK[9]),
+    ],
 )
 @pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
 def test_navigate_ele(test_context, regions, years, options):

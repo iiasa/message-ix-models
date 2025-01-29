@@ -17,7 +17,7 @@ from message_ix_models.project.navigate import T35_POLICY
     [
         ("R11", 11),
         ("R12", 12),
-        ("R14", 14),
+        pytest.param("R14", 14, marks=testing.MARK[9]),
         pytest.param("ISR", 1, marks=testing.MARK[3]),
     ],
 )
