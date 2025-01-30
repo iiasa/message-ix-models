@@ -767,11 +767,14 @@ def add_emission_accounting(scen):
         },
     )
     CF4_red_add.drop(["year_vtg", "emission"], axis=1, inplace=True)
-    CF4_red_add["relation"] = "CF4_alm_red"
     CF4_red_add["unit"] = "???"
     CF4_red_add["year_rel"] = CF4_red_add["year_act"]
     CF4_red_add["node_rel"] = CF4_red_add["node_loc"]
+    CF4_red_add["relation"] = "CF4_Emission"
+    scen.add_par("relation_activity", CF4_red_add)
 
+    CF4_red_add["relation"] = "CF4_alm_red"
+    CF4_red_add["value"] *= 1000
     scen.add_par("relation_activity", CF4_red_add)
     scen.commit("CF4 relations corrected.")
 
