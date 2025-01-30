@@ -1057,11 +1057,13 @@ def read_sector_data(
     else:
         sheet_n = sectname + "_R11"
 
-    # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
-    data_df = pd.read_excel(
-        package_data_path("material", sectname, ssp, filename),
-        sheet_name=sheet_n,
-    )
+    if filename.endswith(".csv"):
+        data_df = pd.read_csv(package_data_path("material", sectname, filename))
+    else:
+        data_df = pd.read_excel(
+            package_data_path("material", sectname, ssp, filename),
+            sheet_name=sheet_n,
+        )
 
     # Clean the data
     data_df = data_df[
@@ -1196,6 +1198,11 @@ def read_timeseries(
 
     if filename.endswith(".csv"):
         df = pd.read_csv(package_data_path("material", material, filename))
+        # Function to convert string to integer if it is a digit
+        def convert_if_digit(col_name):
+            return int(col_name) if col_name.isdigit() else col_name
+        # Apply the function to the DataFrame column names
+        df = df.rename(columns=convert_if_digit)
     else:
         df = pd.read_excel(
             package_data_path("material", material, filename), sheet_name=sheet_n
