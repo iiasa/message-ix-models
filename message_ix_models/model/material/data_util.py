@@ -326,6 +326,11 @@ def read_timeseries(
 
     if filename.endswith(".csv"):
         df = pd.read_csv(package_data_path("material", material, filename))
+        # Function to convert string to integer if it is a digit
+        def convert_if_digit(col_name):
+            return int(col_name) if col_name.isdigit() else col_name
+        # Apply the function to the DataFrame column names
+        df = df.rename(columns=convert_if_digit)
     else:
         df = pd.read_excel(
             package_data_path("material", material, filename), sheet_name=sheet_n
