@@ -141,6 +141,7 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
 def test_plot_simulated(request, test_context, plot_name, regions="R12", years="B"):
     """Plots are generated correctly using simulated data."""
     test_context.update(regions=regions, years=years)
+    log.debug(f"test_plot_simulated: {test_context.regions = }")
     rep = simulated_solution(request, test_context)
 
     # print(rep.describe(f"plot {plot_name}"))  # DEBUG
