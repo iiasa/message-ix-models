@@ -780,7 +780,7 @@ def gen_max_recycling_rel(s_info, ssp):
             unit="???",
         )
         .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
-        .pipe(broadcast, year_act=s_info.Y)
+        .pipe(broadcast, year_act=[i for i in s_info.Y if i > 2020])
         .pipe(same_node)
         .assign(year_rel=lambda x: x.year_act)
     )
