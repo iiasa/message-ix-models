@@ -14,6 +14,7 @@ import json
 import logging
 from collections.abc import Callable
 from dataclasses import is_dataclass
+from enum import Enum
 from types import FunctionType
 from typing import TYPE_CHECKING, Union
 
@@ -21,6 +22,8 @@ import genno.caching
 import ixmp
 import sdmx.model
 import xarray as xr
+
+from message_ix_models.types import AnyQuantity
 
 from ._dataclasses import asdict
 from .context import Context
@@ -44,10 +47,27 @@ PATHS_SEEN: set["Path"] = set()
 
 
 @genno.caching.Encoder.register
+def _quantity(o: AnyQuantity):
+    return tuple(o.to_series().to_dict())
+
+
+# Upstream
+@genno.caching.Encoder.register
+def _enum(o: Enum):
+    return repr(o)
+
+
+@genno.caching.Encoder.register
 def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
     return str(o)
 
 
+@genno.caching.Encoder.register
+def _sdmx_internationalstring(o: sdmx.model.InternationalString):
+    return tuple(o.localizations)
+
+
+# First-party
 @genno.caching.Encoder.register
 def _context(o: Context):
     return o.asdict()
@@ -72,7 +92,7 @@ def _si(o: ScenarioInfo):
     return dict(o.set)
 
 
-genno.caching.Encoder.ignore(xr.Dataset, ixmp.Platform)
+genno.caching.Encoder.ignore(xr.DataArray, xr.Dataset, ixmp.Platform)
 
 
 def cached(func: Callable) -> Callable:

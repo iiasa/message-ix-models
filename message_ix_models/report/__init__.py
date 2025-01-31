@@ -281,6 +281,8 @@ def prepare_reporter(
     """
     log.info("Prepare reporter")
 
+    log.debug(f".report.prepare_reporter: {context.regions = }")
+
     if reporter:
         # Existing `Reporter` provided
         rep = reporter

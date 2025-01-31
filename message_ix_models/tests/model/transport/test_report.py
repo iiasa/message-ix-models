@@ -2,7 +2,6 @@ import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-import genno
 import pytest
 from pytest import mark, param
 
@@ -60,8 +59,8 @@ def test_configure_legacy():
     "regions, years",
     (
         param("R11", "A", marks=make_mark[2](ValueError)),
-        param("R12", "B", marks=MARK[8]),
-        param("R14", "A", marks=make_mark[2](genno.ComputationError)),
+        param("R12", "B", marks=MARK["gh-281"]),
+        param("R14", "A", marks=MARK[9]),
         param("ISR", "A", marks=MARK[3]),
     ),
 )
@@ -142,6 +141,7 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
 def test_plot_simulated(request, test_context, plot_name, regions="R12", years="B"):
     """Plots are generated correctly using simulated data."""
     test_context.update(regions=regions, years=years)
+    log.debug(f"test_plot_simulated: {test_context.regions = }")
     rep = simulated_solution(request, test_context)
 
     # print(rep.describe(f"plot {plot_name}"))  # DEBUG

@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import ixmp
 
+from .config import ConfigHelper
+
 if TYPE_CHECKING:
     import message_ix
 
@@ -72,7 +74,7 @@ class Context:
 
     __slots__ = ("_values",)
     # Internal storage of keys and values
-    _values: dict
+    _values: dict[str, Any]
 
     @classmethod
     def get_instance(cls, index=0) -> "Context":
@@ -255,14 +257,30 @@ class Context:
         self.set(name, value)
 
     # Particular methods of Context
-    def asdict(self) -> dict:
-        """Return a :func:`.deepcopy` of the Context's values as a :class:`dict`."""
+    def asdict(self) -> dict[str, Any]:
+        """Return a :func:`.deepcopy` of the Context's values as a :class:`dict`.
+
+        Currently this is **only** used in support of :mod:`.util.cache`.
+        """
         from ._dataclasses import asdict
 
-        return {
-            k: asdict(v) if is_dataclass(v) else deepcopy(v)
-            for k, v in self._values.items()
-        }
+        result: dict[str, Any] = {}
+        for k, v in self._values.items():
+            try:
+                if v is self:
+                    pass
+                elif isinstance(v, ConfigHelper):
+                    # Work around https://github.com/python/cpython/issues/94345
+                    result[k] = repr(v)
+                elif is_dataclass(v) and not isinstance(v, type):
+                    result[k] = asdict(v)
+                else:
+                    result[k] = deepcopy(v)
+            except RecursionError:
+                log.error(f"RecursionError occurred on {v}")
+                raise
+
+        return result
 
     def clone_to_dest(self, create=True) -> "message_ix.Scenario":
         """Return a scenario based on the ``--dest`` command-line option.

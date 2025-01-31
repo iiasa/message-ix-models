@@ -6,9 +6,10 @@ occurs with :attr:`.ScenarioInfo.set`, which is of class :class:`defaultdict`. T
 backported function **should** be used when (a) Python 3.11 or earlier is in use and (b)
 ScenarioInfo is handled directly or indirectly.
 """
-# NB Comments are deleted
 
+# NB Comments are deleted
 import copy
+import sys
 import types
 from dataclasses import fields
 
@@ -43,7 +44,7 @@ def _is_dataclass_instance(obj):
     return hasattr(type(obj), _FIELDS)
 
 
-def asdict(obj, *, dict_factory=dict):
+def _asdict(obj, *, dict_factory=dict):
     if not _is_dataclass_instance(obj):
         raise TypeError("asdict() should be called on dataclass instances")
     return _asdict_inner(obj, dict_factory)
@@ -93,3 +94,9 @@ def _asdict_inner(obj, dict_factory):  # noqa: C901
         return obj_type(_asdict_inner(v, dict_factory) for v in obj)
     else:
         return copy.deepcopy(obj)
+
+
+if sys.version_info < (3, 13):
+    asdict = _asdict
+else:
+    from dataclasses import asdict
