@@ -22,7 +22,6 @@ Among other tasks, the tools allow modelers to:
    cli
    quickstart
    repro
-   distrib
    bibliography
 
 API reference
@@ -104,6 +103,13 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    pkg-data/year
    pkg-data/codelists
    pkg-data/iiasa-se
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Distributed computing
+
+   distrib/overview
+   distrib/unicc
 
 .. toctree::
    :maxdepth: 2
