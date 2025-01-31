@@ -4,6 +4,8 @@ What's new
 Next release
 ============
 
+- Support for :mod:`ixmp` and :mod:`message_ix` versions 3.4.x and 3.5.x is dropped in accordance with the :ref:`policy-upstream-versions` (:pull:`288`).
+  The minimum version of both packages is 3.6.0.
 - Update :class:`.IEA_EWEB` to support :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
 - Update :doc:`/transport/index` (:pull:`259`).
 

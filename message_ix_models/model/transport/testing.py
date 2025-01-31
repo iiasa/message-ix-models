@@ -2,7 +2,7 @@
 
 import logging
 import platform
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Hashable, Mapping
 from contextlib import nullcontext
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
@@ -14,7 +14,7 @@ import message_ix_models.report
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.testing import GHA, bare_res
-from message_ix_models.util import silence_log
+from message_ix_models.util import identify_nodes, silence_log
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, build
@@ -28,12 +28,12 @@ log = logging.getLogger(__name__)
 
 # Common marks for transport code. Do not reuse keys that are less than the highest key
 # appearing in the dict.
-MARK: dict[int, pytest.MarkDecorator] = {
+MARK: dict[Hashable, pytest.MarkDecorator] = {
     0: pytest.mark.xfail(
-        reason="Missing R14 input data/assumptions", raises=FileNotFoundError
+        reason="Missing R14 input data/config", raises=FileNotFoundError
     ),
     1: pytest.mark.skip(
-        reason="Currently only possible with regions=R12 input data/assumptions",
+        reason="Currently only possible with regions=R12 input data/config",
     ),
     3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
     4: pytest.mark.xfail(reason="Currently unsupported"),
@@ -42,9 +42,13 @@ MARK: dict[int, pytest.MarkDecorator] = {
         condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
         reason="Graphviz missing on macos-13 GitHub Actions runners",
     ),
-    8: pytest.mark.xfail(
+    "gh-281": pytest.mark.xfail(
         raises=ModelError,
         reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/281",
+    ),
+    9: pytest.mark.xfail(reason="Missing R14 input data/config"),
+    "gh-288": pytest.mark.xfail(
+        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/288",
     ),
 }
 
@@ -115,7 +119,7 @@ def built_transport(
     model_name = res.model.replace("-GLOBIOM", "-Transport")
 
     try:
-        scenario = Scenario(context.get_platform(), model_name, "baseline")
+        scenario = Scenario(res.platform, model_name, "baseline")
     except ValueError:
         log.info(f"Create '{model_name}/baseline' for testing")
 
@@ -138,7 +142,20 @@ def built_transport(
         scenario.solve(solve_options=dict(lpmethod=4))
 
     log.info(f"Clone to '{model_name}/{request.node.name}'")
-    return scenario.clone(scenario=request.node.name, keep_solution=solved)
+    result = scenario.clone(scenario=request.node.name, keep_solution=solved)
+
+    if (
+        GHA
+        and platform.system() == "Darwin"
+        and identify_nodes(result) != context.model.regions
+    ):
+        pytest.xfail(
+            reason="Known issue on GitHub Actions macOS runners: result has nodes "
+            f"{identify_nodes(result) = !r} != {identify_nodes(res) = !r} == "
+            f"{context.model.regions = !r}"
+        )
+
+    return result
 
 
 def simulated_solution(request, context) -> Reporter:
@@ -189,5 +206,7 @@ def simulated_solution(request, context) -> Reporter:
     # Prepare the reporter
     with silence_log("genno", logging.CRITICAL):
         message_ix_models.report.prepare_reporter(context, reporter=rep)
+
+    log.debug(f"simulated_solution: {context.regions = }")
 
     return rep

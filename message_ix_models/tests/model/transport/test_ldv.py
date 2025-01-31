@@ -20,7 +20,13 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize("dummy_LDV", [False, True])
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
-    "regions", [param("ISR", marks=testing.MARK[3]), "R11", "R12", "R14"]
+    "regions",
+    [
+        param("ISR", marks=testing.MARK[3]),
+        "R11",
+        "R12",
+        pytest.param("R14", marks=testing.MARK[9]),
+    ],
 )
 def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None:
     # Info about the corresponding RES
@@ -80,6 +86,9 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     )
 
     # Output data is returned and has the correct units
+    # for k, df_group in data["output"].groupby("unit"):
+    #     if k == "":  # DEBUG Show data with particular units
+    #         print(df_group.to_string())
     assert {"Gp km", "Gv km", "Gv * km", "km", "-"} >= set(
         data["output"]["unit"].unique()
     )
@@ -170,7 +179,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     [
         ("R11", 11),
         ("R12", 12),
-        ("R14", 14),
+        param("R14", 14, marks=testing.MARK[9]),
     ],
 )
 def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
@@ -192,7 +201,7 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
         (False, "R11", "A"),
         (False, "R11", "B"),
         (False, "R12", "B"),
-        (False, "R14", "A"),
+        param(False, "R14", "A", marks=testing.MARK[9]),
         # Not implemented
         param(False, "ISR", "A", marks=testing.MARK[3]),
     ],

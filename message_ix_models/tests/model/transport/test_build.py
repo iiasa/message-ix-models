@@ -91,7 +91,7 @@ def test_make_spec(regions_arg, regions_exp, years):
         param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
         param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
-        param("R12", "B", False, "IKARUS", True, marks=MARK[8]),
+        param("R12", "B", False, "IKARUS", True, marks=MARK["gh-281"]),
         # R14, A
         param(
             "R14",
@@ -276,14 +276,14 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
 @pytest.mark.parametrize(
     "build_kw",
     (
-        dict(regions="R11", years="A", options=dict()),
-        dict(regions="R11", years="B", options=dict()),
+        dict(regions="R11", years="A"),
+        dict(regions="R11", years="B"),
         dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
         dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
-        dict(regions="R12", years="B", options=dict()),
+        dict(regions="R12", years="B"),
         dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
-        dict(regions="R14", years="B", options=dict()),
-        param(dict(regions="ISR", years="A", options=dict()), marks=MARK[3]),
+        param(dict(regions="R14", years="B"), marks=MARK[9]),
+        param(dict(regions="ISR", years="A"), marks=MARK[3]),
     ),
 )
 def test_debug(
@@ -291,7 +291,7 @@ def test_debug(
     tmp_path,
     build_kw,
     N_node,
-    verbosity: Literal[0, 1, 2, 3] = 2,  # NB Increase this to show more verbose output
+    verbosity: Literal[0, 1, 2, 3] = 0,  # NB Increase this to show more verbose output
 ):
     """Debug particular calculations in the transport build process."""
     # Get a Computer prepared to build the model with the given options
@@ -299,10 +299,10 @@ def test_debug(
 
     # Construct a list of common checks
     verbose: dict[int, list["Check"]] = {
-        0: [],
-        1: [Log(7)],
-        2: [Log(None)],
-        3: [Dump(tmp_path)],
+        0: [],  # Don't log anything.
+        1: [Log()],  # Log 7 lines at the start/end of each quantity.
+        2: [Log(None)],  # Log *all* data. This is produces GHA logs >1 GiB.
+        3: [Dump(tmp_path)],  # Dump all data to a file.
     }
     common = [Size({"n": N_node}), NoneMissing()] + verbose[verbosity]
 

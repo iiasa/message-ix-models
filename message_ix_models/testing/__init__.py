@@ -202,6 +202,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     from message_ix_models.model import bare
 
     # Model name: standard "MESSAGEix-GLOBIOM R12 YB" plus a suffix
+    log.info(f"bare_res: {context.model.regions = }")
     model_name = bare.name(context, unique=True)
 
     mp = context.get_platform()
@@ -212,6 +213,8 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
         log.info(f"Create '{model_name}/baseline' for testing")
         context.scenario_info.update(model=model_name, scenario="baseline")
         base = bare.create_res(context)
+
+    log.info(f"bare_res: {base.set('node') = }")
 
     if solved and not base.has_solution():
         log.info("Solve")

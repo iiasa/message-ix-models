@@ -341,12 +341,15 @@ class Config(ConfigHelper):
         # Handle arguments
         options = options or dict()
 
+        log.debug(f".transport.Config.from_context: {context.model.regions = }")
         try:
             # Identify the node codelist used in `scenario`
             regions = identify_nodes(scenario) if scenario else context.model.regions
         except (AttributeError, ValueError):
             pass
         else:
+            if scenario:
+                log.debug(f".transport.Config.from_context: {scenario.set('node') = }")
             if context.model.regions != regions:
                 log.info(
                     f"Override Context.model.regions={context.model.regions!r} with "
