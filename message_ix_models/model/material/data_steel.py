@@ -454,7 +454,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     nodes = nodes_ex_world(s_info.N)
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
     yv_ya = s_info.yv_ya
-    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1990]
+    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1970]
 
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
