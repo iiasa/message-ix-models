@@ -456,6 +456,15 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     yv_ya = s_info.yv_ya
     yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1970]
 
+    df = yv_ya.loc[yv_ya.year_act == 2020]
+    df["year_act"] = None
+    pre_model = df.pipe(broadcast, year_act=df.year_vtg)
+    pre_model = pre_model[
+        (pre_model["year_act"].ge(pre_model["year_vtg"]))
+        & (pre_model["year_act"].lt(2020))
+    ]
+    yv_ya = pd.concat([pre_model, yv_ya])
+
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
     for t in config["technology"]["add"]:
@@ -638,7 +647,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     reduced_pdict = {}
     for k, v in results.items():
         if set(["year_act", "year_vtg"]).issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 30]
+            v = v[(v["year_act"] - v["year_vtg"]) <= 60]
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
 
     return reduced_pdict
@@ -932,3 +941,12 @@ def gen_grow_cap_up(s_info, ssp):
         .pipe(broadcast, year_vtg=s_info.Y)
     )
     return {"growth_new_capacity_up": df}
+
+
+if __name__ == "__main__":
+    import ixmp
+    import message_ix
+
+    mp = ixmp.Platform("local2")
+    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
+    gen_data_steel(scen)
