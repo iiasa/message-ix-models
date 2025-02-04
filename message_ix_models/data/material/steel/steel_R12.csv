@@ -172,7 +172,7 @@ eaf_steel,input,R12_RCPA,dummy_emission,gas,,M3,Mt/Mt,0.002,,
 dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.7,"IEA ETSAP, (Otto et al., 2017)",
 dri_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,163.85,Costs for DRI-NG. IEA ETSAP. Convert from 2000 USD to 2005 USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=145,
 dri_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,14.689999999999998,Variable O&M cost. Convert from 2000 USD to 2005 USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=145,IEA ETSAP - Technology Brief
-dri_steel,capacity_factor,R12_RCPA,,,,,%,0.81,,
+dri_steel,capacity_factor,R12_RCPA,,,,,%,0.95,,
 dri_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
 dri_gas_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.014700913242009133,,
 dri_gas_steel,input,R12_RCPA,final,gas,,M1,GWa/Mt,0.33,, http://www.iipinetwork.org/wp-content/Ietd/content/direct-reduced-iron.html 
