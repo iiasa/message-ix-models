@@ -561,7 +561,7 @@ def gen_data_aluminum(
     reduced_pdict = {}
     for k, v in results_aluminum.items():
         if set(["year_act", "year_vtg"]).issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 30]
+            v = v[(v["year_act"] - v["year_vtg"]) <= 60]
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
 
     return reduced_pdict
