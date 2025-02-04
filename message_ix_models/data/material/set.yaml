@@ -389,6 +389,7 @@ steel:
       - max_regional_recycling_steel
       - eaf_bound_2020
       - bof_bound_2020
+      - bf_bound_2020
 
   balance_equality:
     add:
