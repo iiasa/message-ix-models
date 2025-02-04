@@ -619,6 +619,13 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_grow_cap_up(s_info, ssp),
     )
 
+    results = combine_df_dictionaries(
+        results,
+        gen_2020_calibration_relation(s_info, "eaf"),
+        gen_2020_calibration_relation(s_info, "bof"),
+        gen_2020_calibration_relation(s_info, "bf"),
+    )
+
     if ssp == "SSP1":
         df_tmp = results["relation_activity"]
         df_tmp = df_tmp[
@@ -730,9 +737,12 @@ def gen_dri_coal_model(s_info):
     return par_dict
 
 
-def gen_2020_calibration_relation(scenario, tech: Literal["eaf", "bof"]):
-    s_info = ScenarioInfo(scenario)
-    modes = {"eaf": ["M1", "M2", "M3"], "bof": ["M1", "M2"]}
+def gen_2020_calibration_relation(s_info, tech: Literal["eaf", "bof", "bf"]):
+    modes = {
+        "eaf": ["M1", "M2", "M3"],
+        "bof": ["M1", "M2"],
+        "bf": ["M1", "M2", "M3", "M4"],
+    }
     df = (
         make_df(
             "relation_activity",
@@ -760,7 +770,6 @@ def gen_bof_2020_calibration():
     bound = pd.read_csv(package_data_path("material", "steel", "bof_bound_2020.csv"))
 
     return {"bound_activity_up": bound, "bound_activity_lo": bound}
-
 
 
 def get_scrap_prep_cost(s_info, ssp):
