@@ -1,4 +1,41 @@
-"""Utilities for the `SLURM Workload Manager <https://slurm.schedmd.com/>`_."""
+"""Utilities for the `SLURM Workload Manager <https://slurm.schedmd.com/>`_.
+
+To use, transform a desired, ordinary invocation of the :program:`mix-models` CLI:
+
+.. code-block:: bash
+   :caption: Command 1
+
+   mix-models --opt_a=0 -b 2 command --opt_c=2 subcommand --opt_d=3 arg0 arg1
+
+…into something like:
+
+.. code-block:: bash
+   :caption: Command 2
+
+   mix-models sbatch --go \\
+     --username=example_user \\
+     --venv=/home/example_user/venv/py3.13_demo \\
+     -- \\
+     --opt_a=0 -b 2 command --opt_c=2 subcommand --opt_d=3 arg0 arg1
+
+In particular:
+
+- The inserted ``--`` separates the command ``sbatch`` from the options and arguments to
+  be used to invoke :program:`mix-models` on the worker node.
+  This command will result in exactly Command 1 being invoked at the end of the script
+  :data:`TEMPLATE`.
+- The options :program:`--username` and  :program:`--venv` are also passed into the
+  template. As the name implies, they are optional. The values are read from the
+  ``$USER`` and ``$VIRTUAL_ENV`` environment variables, respectively, wherever Command 2
+  is invoked.
+- Without the option :program:`--go`, the batch script is only printed out.
+  Add this option to actually call sbatch.
+
+See also:
+
+- `sbatch <https://slurm.schedmd.com/sbatch.html>`_ manual page.
+- :doc:`/distrib/unicc`.
+"""
 
 import os
 from collections.abc import Sequence
@@ -12,6 +49,9 @@ if TYPE_CHECKING:
 
 #: Template for an sbatch script. Currently, the same as suggested by
 #: :doc:`/distrib/unicc`.
+#:
+#: .. todo:: Read this content in separate pieces from the user's configuration and
+#:    assemble.
 TEMPLATE = """#!/bin/bash
 #SBATCH --time=1:00:00
 #SBATCH --mem=32G
