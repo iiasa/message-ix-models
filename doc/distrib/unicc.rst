@@ -1,57 +1,69 @@
-Running MESSAGEix on UniCC
+Running MESSAGEix on UnICC
 **************************
 
 This is a guide on how to get set up on the Unified IIASA Computing Cluster (UnICC) and how to run MESSAGEix scenarios on the cluster.
-Please note that this guide is only for IIASA staff and collaborators who have access to the UnICC.
+
+.. attention::
+
+   - The steps in this guide will only be actionable for IIASA staff and collaborators who have access to the UnICC.
+     It *may* be of use to others with access to similar systems, but is not (yet) intended as a general guide.
+   - The information contained is up-to-date as of 2025-01-16.
+     Changes to the cluster configuration may change the required steps.
 
 .. contents::
    :local:
    :backlinks: none
 
-Prerequisites and Good-to-Knows
+Prerequisites and good-to-knows
 ===============================
 
 Access to the UnICC
 -------------------
 
-To access the UnICC, an IIASA account is required. With your IIASA account, create a ticket with Information and Communication Technologies (ICT) to request access to the UnICC.
-The intranet page on the UnICC can be found [here](https://iiasahub.sharepoint.com/sites/ict/SitePages/Scientific-Computing.aspx).
+To access the UnICC, an IIASA account is required.
+With your IIASA account, create a ticket with Information and Communication Technologies (ICT) to request access to the UnICC.
+The intranet page on the UnICC can be found `here <https://iiasahub.sharepoint.com/sites/ict/SitePages/Scientific-Computing.aspx>`__.
 On the intranet webpage, the Slurm User Guide file has a section on how to request access to the UnICC, including what information needs to be provided to ICT in your request:
+
 1. Are there any existing shared projects folder inside the cluster that you need access to?
-2. Do you need a new shared project folder inside the cluster? In this case, please specify the
-project name (default size 1 TB), also the name of the users who need access to the folder.
+2. Do you need a new shared project folder inside the cluster?
+   In this case, please specify the project name (default size 1 TB), also the name of the users who need access to the folder.
 3. Please note that existing home folders will be automatically attached.
-4. Please describe which already existing P: drive folder(s) you need access to from inside the
-cluster.
+4. Please describe which already existing P: drive folder(s) you need access to from inside the cluster.
 5. Please note, a 5GB home folder will be automatically created for you in the cluster.
 
-Storage Space
+Storage space
 ~~~~~~~~~~~~~
 
-When requesting access to UnICC, 5GB of space on your home directory will likely be given by default. While setting up the MESSAGE environment, it is easy to hit the maximum (the repositories like `message_data` are big and GAMS installation itself is almost 2GB on its own). So, request more space upfront or ask for an increase later (it is possible to request 50GB of storage space, and increase that even further later).
+When requesting access to UnICC, 5GB of space on your home directory will likely be given by default.
+While setting up the MESSAGE environment, it is easy to hit the maximum (the repositories like `message_data` are big and GAMS installation itself is almost 2GB on its own).
+So, request more space upfront or ask for an increase later (it is possible to request 50GB of storage space, and increase that even further later).
 
-Network Drives Access on the Cluster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Network drive access
+~~~~~~~~~~~~~~~~~~~~
 
-As part of the questionnaire above for the ticket, specify which P: drive folders you need access to. Additionally, access to your H: drive on the cluster will be automatically granted. Every user's H: drive is located on the cluster in `/hdrive/all_users/[username]`.
+As part of the questionnaire above for the ticket, specify which P: drive folders you need access to.
+Additionally, access to your H: drive on the cluster will be automatically granted.
+Every user's H: drive is located on the cluster in `/hdrive/all_users/[username]`.
 
 If a shared project folder was requested, it will be located in ``/projects/[project name]``.
 
-Using MESSAGE Environments on H: Drive vs Setting Up New MESSAGE Environments
+Using MESSAGE environments on H: drive vs setting up new MESSAGE Environments
 -----------------------------------------------------------------------------
 
 This guide walks through the process of installing a MESSAGEix environment from source on the cluster (in your home directory).
 Theoretically, because the H: drive can be accessed on the cluster, repositories and MESSAGEix environments could possibly be in your H: drive folder.
 Then, potentially, just activate your MESSAGE environment(s) from the H: drive, saving the trouble of creating new MESSAGE environments.
 
-Note on Working in Terminal
----------------------------
+Working in terminal
+-------------------
 
-The rest of this document assumes you're in a terminal window on the UniCC cluster and not in a notebook.
+The rest of this document assumes you're in a terminal window on the UnICC cluster and not in a notebook.
 
-Also, throughout this guide ```nano``` is used to edit files. If ```nano``` is not familiar, use ``vim`` or ``emacs``` or any other text editor you're comfortable with.
+Also, throughout this guide :program:`nano` is used to edit files.
+If :program:`nano` is not familiar, use :program:`vim`, :program:`emacs` or any other text editor you're comfortable with.
 
-Git-Related Setup
+Git-related setup
 =================
 
 Generate SSH Key
@@ -59,10 +71,7 @@ Generate SSH Key
 
 This was needed to clone GitHub repositories.
 
-Follow instructions here:
-https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
-and
-https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account
+Follow GitHub's instructions to `generate a new SSH key and add it to the ssh-agent <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>`_, then `add the new SSH key to your GitHub account <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>`_
 
 Run:
 
@@ -85,13 +94,13 @@ Add SSH Key to SSH-Agent
 
 Start ssh-agent in the background:
 
-::
+.. code:: bash
 
    eval "$(ssh-agent -s)"
 
 Add SSH private key to ssh-agent:
 
-::
+.. code:: bash
 
    ssh-add ~/.ssh/id_ed25519
 
@@ -100,7 +109,7 @@ Add SSH Key to GitHub Account
 
 Run:
 
-::
+.. code:: bash
 
    cat ~/.ssh/id_ed25519.pub
 
@@ -118,13 +127,14 @@ Creating Personal Access Tokens
 This was needed to clone message_data for some reason.
 
 Refer to
-`https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens <Creating%20a%20personal%20access%20token>`__
-for instructions.
+`creating a personal access token <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens>`_ for instructions.
 
-In Settings > Developer settings > Personal access tokens > Fine-grained
-tokens 1. Click “Tokens (classic)” 2. Select Generate new token >
-Generate new token (classic) 3. Enter token name “IIASA UnICC” 4. Select
-“No expiration”.
+In Settings > Developer settings > Personal access tokens > Fine-grained tokens
+
+1. Click “Tokens (classic)”
+2. Select Generate new token > Generate new token (classic)
+3. Enter token name “IIASA UnICC”
+4. Select “No expiration”.
 
 Add Email and Username to Global Git Config
 -------------------------------------------
@@ -138,8 +148,7 @@ Add Email and Username to Global Git Config
 Auto Load Python and Java on Startup
 ------------------------------------
 
-Add the following to ``~/.bash_profile`` (by entering
-``nano ~/.bash_profile``):
+Add the following to :file:`$HOME/.bash_profile` (by entering :code:`nano ~/.bash_profile`):
 
 .. code:: bash
 
@@ -154,23 +163,17 @@ $PATH) and that Java is loaded (and added to $PATH) each time the terminal is lo
 Create Virtual Environment
 --------------------------
 
-A lot of people on the team use ``conda`` but Python’s
-``venv`` is used to create the virtual environment.
+A lot of people on the team use ``conda`` but Python’s ``venv`` is used to create the virtual environment.
 
-*IMPORTANT NOTE* When initially trying to create a virtual environment
-by just running ``python -m venv my_env``, it caused issues when trying
-to activate the environment in a Slurm job. It works just fine
-interactively on the node, but when using within a job, it would fail to
-activate. The reason is because the default ``python`` command on the
-interactive node creates an environment using the default Python
-instance, inherited from Jupyter, which is not accessible from the
-compute nodes where the Slurm job will run. So it’s necessary to create
-an environment the following way:
+.. important::
 
-In the home directory (``~``), run the following to create and activate
-the virtual environment (note that if the instructions
-earlier to run ``module purge`` or ``module load`` in your
-``~/.bash_profile`` were followed, these steps probably don’t have to be done again):
+   When initially trying to create a virtual environment by just running :code:`python -m venv my_env`, it caused issues when trying to activate the environment in a Slurm job.
+   It works just fine interactively on the node, but when using within a job, it would fail to activate.
+
+   The reason is because the default :program:`python` command on the interactive node creates an environment using the default Python instance, inherited from Jupyter, which is not accessible from the compute nodes where the Slurm job will run.
+   So it’s necessary to create an environment the following way.
+
+In the home directory (:file:`~` or :file:`$HOME`), run the following to create and activate the virtual environment (note that if the instructions earlier to run :code:`module purge`` or :code:`module load` in your :file:`~/.bash_profile` were followed, these steps probably don’t have to be done again):
 
 .. code:: bash
 
@@ -310,23 +313,22 @@ Install ``message-ix-models``
 
       pip install --editable .
 
-Install ``git-lfs``
--------------------
+Install :program:`git-lfs`
+--------------------------
 
-UniCC already has ``git lfs`` installed on the system, but you may still need install large file storage for ``message_data``
-or ``message-ix-models``. Note that you may not have to, as perhaps you don't need to access the large files in these repositories for your work.
-The benefit of not installing is that you don't end up using all the needed storage space. But if you do need access to those files, then follow the instructions below.
+UnICC already has :program:`git lfs` installed on the system, but you may still need install large file storage for ``message_data`` or ``message-ix-models``.
+Note that you may not have to, as perhaps you don't need to access the large files in these repositories for your work.
+The benefit of not installing is that you don't end up using all the needed storage space.
+But if you do need access to those files, then follow the instructions below.
 The same instructions can be followed from the root directory of ``message_data`` or ``message_ix_models``.
 
-Load ``git lfs`` (if included in your
-``~/.bash_profile`` like written earlier, this line doesn’t have to be run):
+Load ``git lfs`` (if included in your ``~/.bash_profile`` like written earlier, this line doesn’t have to be run):
 
 .. code:: bash
 
    module load git-lfs
 
-Then, within the root directory of ``message-ix-models`` or
-``message_data`` run the following:
+Then, within the root directory of ``message-ix-models`` or ``message_data`` run the following:
 
 .. code:: bash
 
@@ -391,15 +393,27 @@ Also grab lfs:
    git lfs fetch --all
    git lfs pull
 
-Install GAMS
-------------
+GAMS
+----
 
-Go to the following website to get the download of GAMS:
-https://www.gams.com/download/
+From module
+~~~~~~~~~~~
+
+GAMS is provided as a module.
+Load the module:
+
+.. code:: bash
+
+   module load gams
+
+Install manually
+~~~~~~~~~~~~~~~~
+
+Go to the following website to get the download of GAMS: https://www.gams.com/download/
 
 Click on the Linux download link, and then when the download popup
-window shows up, right click and copy the link instead. Use
-the link to put in the terminal to download the file:
+window shows up, right click and copy the link instead.
+Use the link to put in the terminal to download the file:
 
 .. code:: bash
 
@@ -409,8 +423,7 @@ the link to put in the terminal to download the file:
 The Linux installation instructions are here:
 https://www.gams.com/46/docs/UG_UNIX_INSTALL.html
 
-Create a location/directory where GAMS will be installed and navigate
-to it (in this case, it is in a folder called ``~/opt/gams``)
+Create a location/directory where GAMS will be installed and navigate to it (in this case, it is in a folder called ``~/opt/gams``)
 
 .. code:: bash
 
@@ -420,8 +433,7 @@ to it (in this case, it is in a folder called ``~/opt/gams``)
    mkdir gams
    cd gams/
 
-Run the installation file by simply inputting the filename (complete
-with path) into the command line:
+Run the installation file by simply inputting the filename (complete with path) into the command line:
 
 .. code:: bash
 
@@ -445,17 +457,14 @@ Then try to run the executable file again:
 
    ~/downloads/linux_x64_64_sfx.exe
 
-This should start the installation of GAMS and create a folder in
-``~/opt/gams`` (or wherever GAMS is being installed) called
-``gams46.5_linux_x64_64_sfx``. Navigate into this folder:
+This should start the installation of GAMS and create a folder in ``~/opt/gams`` (or wherever GAMS is being installed) called ``gams46.5_linux_x64_64_sfx``.
+Navigate into this folder:
 
 .. code:: bash
 
    cd gams46.5_linux_x64_64_sfx
 
-When within the ``/home/username/opt/gams/gams46.5_linux_x64_64_sfx``,
-run the ``gams`` command to see if it works (but at this moment the full path of the ``gams`` command has to be referenced, which is
-``/home/username/opt/gams/gams46.5_linux_x64_64_sfx/gams``):
+When within the ``/home/username/opt/gams/gams46.5_linux_x64_64_sfx``, run the ``gams`` command to see if it works (but at this moment the full path of the ``gams`` command has to be referenced, which is ``/home/username/opt/gams/gams46.5_linux_x64_64_sfx/gams``):
 
 .. code:: bash
 
@@ -489,9 +498,7 @@ run the ``gams`` command to see if it works (but at this moment the full path of
    *** Status: Normal completion
    --- Job ? Stop 06/11/24 14:18:48 elapsed 0:00:00.001
 
-Based on the output, there already is a gamslice (located in
-``~/opt/gams/gams46.5_linux_x64_64_sfx``), which the contents
-can be checked:
+Based on the output, there already is a gamslice (located in ``~/opt/gams/gams46.5_linux_x64_64_sfx``), which the contents can be checked:
 
 .. code:: bash
 
@@ -500,27 +507,22 @@ can be checked:
    https://www.gams.com/latest/docs/UG%5FLicense.html_______________
    […]
 
-This seems to be a demo gamslice license, so rename it to
-``gamslice_demo.txt`` so it can be replaced with a proper license.
+This seems to be a demo gamslice license, so rename it to ``gamslice_demo.txt`` so it can be replaced with a proper license.
 
 .. code:: bash
 
    mv gamslice.txt gamslice_demo.txt
 
-Copy one of the GAMS licenses in the ECE program folder and put it
-into the H: drive in a folder called ``gams``. Within UniCC, the H: drive can
-be accessed via: ``/hdrive/all_users/username/``.
+Copy one of the GAMS licenses in the ECE program folder and put it into the H: drive in a folder called ``gams``.
+Within UnICC, the H: drive can be accessed via: ``/hdrive/all_users/username/``.
 
-So, copy the GAMS license from the H: drive to the GAMS installation
-location (the paths will be different depending on where the file is saved on your own H: drive):
+So, copy the GAMS license from the H: drive to the GAMS installation location (the paths will be different depending on where the file is saved on your own H: drive):
 
 .. code:: bash
 
    cp /hdrive/all_users/username/gams/gamslice_wCPLEX_2024-12-20.txt /home/username/opt/gams/gams46.5_linux_x64_64_sfx/
 
-Then, within the ``/home/username/opt/gams/gams46.5_linux_x64_64_sfx/``
-folder, rename the ``gamslice_wCPLEX_2024-12-20.txt`` file to just
-``gamslice.txt``:
+Then, within the ``/home/username/opt/gams/gams46.5_linux_x64_64_sfx/`` folder, rename the ``gamslice_wCPLEX_2024-12-20.txt`` file to just ``gamslice.txt``:
 
 .. code:: bash
 
@@ -576,8 +578,7 @@ I also add the GAMS aliases:
    alias gams=/home/username/opt/gams/gams46.5_linux_x64_64_sfx/gams
    alias gamslib=/home/username/opt/gams/gams46.5_linux_x64_64_sfx/gamslib
 
-Now, running just ``gams`` anywhere in the terminal gives the following
-output:
+Now, running just ``gams`` anywhere in the terminal gives the following output:
 
 .. code:: bash
 
@@ -612,8 +613,7 @@ output:
    *** Status: Normal completion
    --- Job ? Stop 06/11/24 15:14:28 elapsed 0:00:00.000
 
-I can also test if GAMS is working properly by running
-``gams trnsport``:
+I can also test if GAMS is working properly by running ``gams trnsport``:
 
 .. code:: bash
 
@@ -733,10 +733,9 @@ Create it by calling `nano ~/job/message/solve.py`, then pasting the following:
 Submitting Jobs
 ---------------
 
-To submit a job, create a new file called ``job.do``, but it doesn’t
-have to be called that and it can have any file extension. For example,
-it can be called ``submit.job`` or even ``hi.jpeg``, and those would all
-work. So, run:
+To submit a job, create a new file called ``job.do``, but it doesn’t have to be called that and it can have any file extension.
+For example, it can be called ``submit.job`` or even ``hi.jpeg``, and those would all work.
+So, run:
 
 .. code:: bash
 
@@ -767,12 +766,12 @@ In the editor, write/paste:
 
 This script requests the following:
 
-* 3 hours of time
-* 40 GB of memory
-* Send an email when the job begins and ends (or fails)
-* Send email to the address provided
-* Save the outputs of the job (not the solved scenario, just any print statements in the Python script or anything like that) in ``/home/username/out/message/``, and the file would be called ``solve_%J.out`` where the “%J” is the job number
-* Same as above, but saves the errors in an ``err`` folder. This is helpful when the script outputs a lot of warnings or errors and now there is a separate file for errors/warnings and a separate file for just the output.
+- 3 hours of time
+- 40 GB of memory
+- Send an email when the job begins and ends (or fails)
+- Send email to the address provided
+- Save the outputs of the job (not the solved scenario, just any print statements in the Python script or anything like that) in ``/home/username/out/message/``, and the file would be called ``solve_%J.out`` where the “%J” is the job number
+- Same as above, but saves the errors in an ``err`` folder. This is helpful when the script outputs a lot of warnings or errors and now there is a separate file for errors/warnings and a separate file for just the output.
 
 You can choose to forego saving the outputs and errors to files, but it is helpful to have them saved somewhere in case you need to refer back to them or to see what happened during the job.
 If using the exact same script as above, you will have to manually create the ``out`` and ``err`` folders in the home directory first, if they don't already exist.
@@ -783,9 +782,8 @@ You can do this by running:
     mkdir ~/out
     mkdir ~/err
 
-It is important (I think) to load the Python and Java modules. I’m not
-sure why the ``source /opt/apps/lmod/8.7/init/bash`` line is there, but
-ICT included that in an email to me when I was asking for help.
+It is important (I think) to load the Python and Java modules.
+I’m not sure why the ``source /opt/apps/lmod/8.7/init/bash`` line is there, but ICT included that in an email to me when I was asking for help.
 
 To submit the job, run the following (assuming you are in the folder
 where ``job.do`` is located):
@@ -794,8 +792,7 @@ where ``job.do`` is located):
 
    sbatch job.do
 
-The ``sbatch`` command is what submits the job, and whatever argument
-that comes after it is your job file.
+The ``sbatch`` command is what submits the job, and whatever argument that comes after it is your job file.
 
 Checking queue
 --------------
@@ -814,7 +811,8 @@ While the job is waiting/pending, your queue may look like this:
    JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
    1234567     batch     job1 username PD       0:00      1 (Resources)
 
-The ``ST`` column shows the status of the job. ``PD`` means pending.
+The ``ST`` column shows the status of the job.
+``PD`` means pending.
 
 When the job is running, the queue may look like this:
 
@@ -824,9 +822,8 @@ When the job is running, the queue may look like this:
    1234567     batch     job1 username  R       0:01      1 node1
 
 
-Usually my jobs run right away or within a few minutes of being submitted,
-but sometimes they can sit in the queue for a while. This is usually because
-there are a lot of jobs in the queue, and the cluster is busy.
+Usually my jobs run right away or within a few minutes of being submitted, but sometimes they can sit in the queue for a while.
+This is usually because there are a lot of jobs in the queue, and the cluster is busy.
 
 To check where all jobs submitted by all users are in the queue:
 
@@ -838,8 +835,7 @@ To check where all jobs submitted by all users are in the queue:
 Checking job run information
 ----------------------------
 
-To check information about a specific job, a helpful command is (replace
-``1234567`` with the actual job ID):
+To check information about a specific job, a helpful command is (replace ``1234567`` with the actual job ID):
 
 .. code:: bash
 
@@ -849,7 +845,7 @@ Your output will look something like this:
 
 .. code:: bash
 
-    JobId=404543 JobName=job.do
+   JobId=404543 JobName=job.do
    UserId=mengm(32712) GroupId=mengm(60100) MCS_label=N/A
    Priority=10000 Nice=0 Account=default QOS=normal
    JobState=FAILED Reason=NonZeroExitCode Dependency=(null)
@@ -885,15 +881,15 @@ Your output will look something like this:
 Here you see the job information, including submit time, the associated commands/files, and the output files.
 Additionally, here you can see the resources requested and allocated for the job, such as number of nodes, CPUs, memory, etc.
 
-The ``JobState`` will show the status of the job. If it is ``FAILED``, the
-``Reason`` will show why it failed. The ``ExitCode`` will show the exit
-code of the job. If it is ``0:0``, then the job ran successfully. If it
-is ``1:0``, then the job failed.
+The ``JobState`` will show the status of the job.
+If it is ``FAILED``, the ``Reason`` will show why it failed.
+The ``ExitCode`` will show the exit code of the job.
+If it is ``0:0``, then the job ran successfully.
+If it is ``1:0``, then the job failed.
 
 When my job fails, I usually go ahead and check both the ``err`` and
-``out`` files to see what happened. The ``err`` file will show any
-errors or warnings that occurred during the job, and the ``out`` file
-will show any print statements or output from the Python script.
+``out`` files to see what happened.
+The ``err`` file will show any errors or warnings that occurred during the job, and the ``out`` file will show any print statements or output from the Python script.
 
 Another useful command to check recent jobs and their information is:
 
@@ -901,13 +897,11 @@ Another useful command to check recent jobs and their information is:
 
    sacct -l
 
-However, this will show a lot of information, so it might be better to
-run a more specific command like:
+However, this will show a lot of information, so it might be better to run a more specific command like:
 
 .. code:: bash
 
    sacct --format=jobid,MaxRSS,MaxVMSize,start,end,CPUTimeRAW,NodeList
-
 
 Resources to request for reducing MESSAGEix run time
 ---------------------------------------------------
@@ -915,8 +909,7 @@ Resources to request for reducing MESSAGEix run time
 The following information is based on non-scientific "testing" (goofing around), so take it with a grain of salt.
 I have found that requesting more CPUs per task can help reduce the run time of a MESSAGEix solve.
 
-For example, a MESSAGE job with ``#SBATCH --cpus-per-task=4`` took over 30 minutes to finish, 
-whereas the same job with ``#SBATCH --cpus-per-task=16`` took about 20 minutes to finish.
+For example, a MESSAGE job with ``#SBATCH --cpus-per-task=4`` took over 30 minutes to finish, whereas the same job with ``#SBATCH --cpus-per-task=16`` took about 20 minutes to finish.
 I also tried changing ``#SBATCH --ntasks=1`` to ``#SBATCH --ntasks=4``, but that didn't seem to make a difference in run time.
 
 So usually my ``SBATCH`` job request settings look like this:
@@ -929,20 +922,27 @@ So usually my ``SBATCH`` job request settings look like this:
     #SBATCH --ntasks=1
     #SBATCH --cpus-per-task=16
 
-I usually request lots of run time (20 hours) and lots of memory (100 GB) because I don't want my job to for those reasons.
+I usually request lots of run time (20 hours) and lots of memory (100 GB) because I don't want my job to fail for those reasons.
 
-I keep ``--nodes=1`` because I don't know enough about running on multiple nodes, and I don't really do any parallel computing, 
-so I don't think I need to request more than one node.
+.. caution::
+   Many users making such requests simultaneously is likely to worsen congestion on UnICC and make it less usable for all users.
+   A better approach is to use one's own best estimates of the actual resource use, multiplied by a safety factor.
 
-In general though I'm sure there are other settings people can play around with to optimize their job run time,
-including maybe on the CPLEX side for example, but I haven't really looked into that, and this is just what I've found so far.
+I keep ``--nodes=1`` because I don't know enough about running on multiple nodes, and I don't really do any parallel computing, so I don't think I need to request more than one node.
+
+In general though I'm sure there are other settings people can play around with to optimize their job run time, including maybe on the CPLEX side for example, but I haven't really looked into that, and this is just what I've found so far.
 
 Note on memory
 --------------
 
-NOTE ON MEMORY: If this is not specified, the default amount of memory
-that gets assigned to the job is 2GB. I think more
-CPUs per job could also be requested instead, which would also give more memory (2 GB times the
-number of CPUs). But instead, just request more memory. I especially recommend this because if
-you're running legacy reporting, that requires a bit of memory, so your job might fail if
+If this is not specified, the default amount of memory that gets assigned to the job is 2GB.
+I think more CPUs per job could also be requested instead, which would also give more memory (2 GB times the number of CPUs).
+But instead, just request more memory.
+I especially recommend this because if you're running legacy reporting, that requires a bit of memory, so your job might fail if
 you don't request enough memory.
+
+Changes
+=======
+
+2025-01-16
+   Initial version of the guide by :gh-user:`measrainsey`.
