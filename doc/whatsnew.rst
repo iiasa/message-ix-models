@@ -16,6 +16,7 @@ Next release
   - Simplify and consolidate tests.
 
 - Add :func:`.prepare_method_B` to :mod:`.ssp.transport` (:pull:`259`).
+- New HOWTO guide :doc:`/distrib/unicc` (:pull:`279`).
 - New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
 
 v2025.1.10
