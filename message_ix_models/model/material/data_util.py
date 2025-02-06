@@ -1347,7 +1347,6 @@ def gen_te_projections(
         method=method,
         format="message",
         scenario=ssp,
-        final_year=2110,
         reduction_year=reduction_year,
     )
     out_materials = create_cost_projections(cfg)
