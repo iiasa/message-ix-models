@@ -1,36 +1,36 @@
 - R12_AFR:
-    value: 15.945
+    value: 15.58
     year: 2020
 - R12_CHN:
-    value: 1010.298
+    value: 987.05
     year: 2020
 - R12_EEU:
-    value: 35.475
+    value: 34.66
     year: 2020
 - R12_FSU:
-    value: 56.162
+    value: 54.88
     year: 2020
 - R12_LAM:
-    value: 60.129
+    value: 58.76
     year: 2020
 - R12_MEA:
-    value: 68.329
+    value: 66.77
     year: 2020
 - R12_NAM:
-    value: 93.736
+    value: 91.59
     year: 2020
 - R12_PAO:
-    value: 58.48
+    value: 57.14
     year: 2020
 - R12_PAS:
-    value: 123.848
+    value: 121.01
     year: 2020
 - R12_RCPA:
-    value: 24.458
+    value: 23.90
     year: 2020
 - R12_SAS:
-    value: 103.727
+    value: 101.35
     year: 2020
 - R12_WEU:
-    value: 139.43
+    value: 136.24
     year: 2020
