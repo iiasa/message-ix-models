@@ -12,6 +12,7 @@ COMMANDS = [
     ("edits", "_debug"),
     ("fetch",),
     ("report",),
+    ("sbatch",),
     ("ssp", "gen-structures"),
     ("techs",),
     ("testing",),
