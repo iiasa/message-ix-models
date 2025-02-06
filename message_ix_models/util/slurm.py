@@ -54,7 +54,7 @@ def invoke_sbatch(
     if dry_run:
         cmd = "echo"
         print(f"Will invoke `sbatch` with standard input:\n\n{stdin.decode()}")
-    else:
+    else:  # pragma: no cover
         cmd = "sbatch"
 
     return run(cmd, input=stdin, stdout=PIPE, stderr=STDOUT)
