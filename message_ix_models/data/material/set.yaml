@@ -383,16 +383,16 @@ steel:
       - bof_bound_2020
       - bf_bound_2020
 
-  balance_equality:
-    add:
-      - ["steel","old_scrap_1"]
-      - ["steel","old_scrap_2"]
-      - ["steel","old_scrap_3"]
-      - ["steel","end_of_life"]
-      - ["steel","product"]
-      - ["steel","new_scrap"]
-      - ["steel","useful_material"]
-      - ["steel","final_material"]
+#  balance_equality:
+#    add:
+#      - ["steel","old_scrap_1"]
+#      - ["steel","old_scrap_2"]
+#      - ["steel","old_scrap_3"]
+#      - ["steel","end_of_life"]
+#      - ["steel","product"]
+#      - ["steel","new_scrap"]
+#      - ["steel","useful_material"]
+#      - ["steel","final_material"]
 
   addon:
     add:
