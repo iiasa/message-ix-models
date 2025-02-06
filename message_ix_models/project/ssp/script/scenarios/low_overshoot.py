@@ -2,19 +2,13 @@ import ixmp
 import message_ix
 import numpy as np
 import pandas as pd
-import yaml
 
-from collections.abc import Mapping
-from itertools import repeat
-from message_ix.models import MESSAGE_ITEMS
-from message_ix.utils import make_df
+# %matplotlib inline
 
-from typing import Literal
-
-%matplotlib inline
 
 # Function to add share constraints for end-use technologies
-def add_UE_share_constraints(
+# FIXME Reduce complexity from 30 to ≤ 11
+def add_UE_share_constraints(  # noqa: C901
     scen,
     path_UE_share_input,
     ssp="SSP2",
@@ -304,7 +298,7 @@ def add_UE_share_constraints(
                         # than the target value if it is, then the interpolate
                         # to gradually increase the share.
                         check = baseval < ts.iloc[0].value
-                    if check == False:
+                    if check is False:
                         if calibration_year not in ts.index:
                             ts = pd.concat(
                                 [
@@ -318,8 +312,9 @@ def add_UE_share_constraints(
                             ts.loc[calibration_year, "value"] = baseval
                         ts.loc[
                             years[
-                                years.index(calibration_year)
-                                + 1 : years.index(calibration_year)
+                                years.index(calibration_year) + 1 : years.index(
+                                    calibration_year
+                                )
                                 + period_interpol
                             ],
                             "value",
@@ -342,95 +337,104 @@ def add_UE_share_constraints(
                     ts = ts.loc[ts.year_act >= start_year]
                     scen.add_par(share_type, ts)
 
+
 # Relaxation parameters for low overshoot scenarios
 # SSP: [injection rate, storage]
-ssps = {"SSP2":np.round(22000/3.667,0), 
-        "SSP4":np.round(22000/3.667,0),
-        "SSP5":np.round(32000/3.667,0)}
+ssps = {
+    "SSP2": np.round(22000 / 3.667, 0),
+    "SSP4": np.round(22000 / 3.667, 0),
+    "SSP5": np.round(32000 / 3.667, 0),
+}
 
 for ssp in ssps.keys():
     mp = ixmp.Platform()
 
     emiss_bound_name = "600f"
 
-    sbase = message_ix.Scenario(mp, model=f"SSP_{ssp}_v1.0",
-                                scenario=f"NPi2030_{emiss_bound_name}")
-    
+    sbase = message_ix.Scenario(
+        mp, model=f"SSP_{ssp}_v1.0", scenario=f"NPi2030_{emiss_bound_name}"
+    )
+
     s2run = sbase.clone(
         f"SSP_{ssp}_v1.0",
         f"{ssp} - Low Overshoot",
         keep_solution=False,
     )
     s2run.check_out()
-    
+
     # Relaxing co2 injection rate constraint
-    df2rem = s2run.par("bound_activity_up",{
-        "technology":"co2_stor_glb"})
+    df2rem = s2run.par("bound_activity_up", {"technology": "co2_stor_glb"})
     df2add = df2rem.copy()
     df2add["value"] = ssps[ssp]
-    
-    s2run.remove_par("bound_activity_up",df2rem)
-    s2run.add_par("bound_activity_up", df2add)  # comment out if want unlimited injection rate
-    
+
+    s2run.remove_par("bound_activity_up", df2rem)
+    s2run.add_par(
+        "bound_activity_up", df2add
+    )  # comment out if want unlimited injection rate
+
     # Relaxing trans1 activity up
     # no longer implemented
-    #df2rem = s2run.par("bound_activity_up",{
+    # df2rem = s2run.par("bound_activity_up",{
     #    "technology":"co2_trans1"})
-    #s2run.remove_par("bound_activity_up",df2rem)
-    
+    # s2run.remove_par("bound_activity_up",df2rem)
+
     # Removing co2 storage share constraint
     # no longer implemented
     if ssp != "SSP5":
-        df2rem = s2run.par("share_mode_lo",{
-            "technology":"co2_storcumulative"})
-        s2run.remove_par("share_mode_lo",df2rem)
-        
+        df2rem = s2run.par("share_mode_lo", {"technology": "co2_storcumulative"})
+        s2run.remove_par("share_mode_lo", df2rem)
+
     # updating emission bound
-    df2rem = s2run.par("bound_emission",
-                       {"node":"World",
-                        "type_emission":"TCE",
-                        "type_year":"cumulative"})
+    df2rem = s2run.par(
+        "bound_emission",
+        {"node": "World", "type_emission": "TCE", "type_year": "cumulative"},
+    )
     df2add = df2rem.copy()
     df2add["value"] = -300
-    
-    s2run.remove_par("bound_emission",df2rem)
+
+    s2run.remove_par("bound_emission", df2rem)
     s2run.add_par("bound_emission", df2add)
-    
+
     # increasing storage limit
-    df2rem = s2run.par("bound_activity_up",{"technology":"co2_storcumulative"})
+    df2rem = s2run.par("bound_activity_up", {"technology": "co2_storcumulative"})
     df2add = df2rem.copy()
     df2add["value"] = df2rem["value"].mul(100)
-    
-    s2run.remove_par("bound_activity_up",df2rem)
-    #s2run.add_par("bound_activity_up", df2add) # currently set to unlimited
-    
+
+    s2run.remove_par("bound_activity_up", df2rem)
+    # s2run.add_par("bound_activity_up", df2add) # currently set to unlimited
+
     # Remove transport thing
     # Yoga: I comment this out as this is perhaps need to be done in the transport
     # so I don't interefere with any updates performed by the transport team
     # ---
     # ---> from here
-    #s2run.remove_set("shares", "UE_transport_fossil_Minimum")
-    #s2run.add_set("technology", ['meth_fc_trp','meth_ic_trp'])
+    # s2run.remove_set("shares", "UE_transport_fossil_Minimum")
+    # s2run.add_set("technology", ['meth_fc_trp','meth_ic_trp'])
 
-    #s2run.commit(comment=f"modify scenario parameters for {ssp}_Low Overshoot")
+    # s2run.commit(comment=f"modify scenario parameters for {ssp}_Low Overshoot")
 
-    #input_path = "C:/Users/pratama/Documents/GitHub/MESSAGEix/message_ix/tutorial/dac_scenarios/SSPs"
-    #file_name = "/ue_share_constraints.xlsx"
-    #add_UE_share_constraints(
-    #        s2run, # scenario object
-    #        input_path+file_name, # path
-    #        ssp="SSP5", # SSP-name i.e "LED"
-    #        start_year=2035, # the year as of which a constraint should be added, best this is the firstmodelyear for your case
-    #        calibration_year=2020, # 2020
-    #        clean_relations=False, # set to False
-    #        verbose=True, # set to True
-    #    )
+    # input_path = (
+    #     "C:/Users/pratama/Documents/GitHub/MESSAGEix/message_ix/tutorial/"
+    #     "dac_scenarios/SSPs"
+    # )
+    # file_name = "/ue_share_constraints.xlsx"
+    # add_UE_share_constraints(
+    #     s2run,  # scenario object
+    #     input_path + file_name,  # path
+    #     ssp="SSP5",  # SSP-name i.e "LED"
+    #     # the year as of which a constraint should be added, best this is the
+    #     # firstmodelyear for your case
+    #     start_year=2035,
+    #     calibration_year=2020,  # 2020
+    #     clean_relations=False,  # set to False
+    #     verbose=True,  # set to True
+    # )
     # ---> until here
 
-    s2run.solve(solve_options={'scaind': '-1'})
+    s2run.solve(solve_options={"scaind": "-1"})
     print(ssp, "objective value:", s2run.var("OBJ")["lvl"])
 
-    s2run.set_as_default()        
-    
+    s2run.set_as_default()
+
     # CLOSE CONNECTION
     mp.close_db()
