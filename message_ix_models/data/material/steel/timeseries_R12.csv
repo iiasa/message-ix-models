@@ -1,6 +1,7 @@
 technology,parameter,region,mode,commodity,level,units,1990,1995,2000,2005,2010,2015,2020,2025,2030,2035,2040,2045,2050,2055,2060,2070,2080,2090,2100,2110
 bof_steel,historical_activity,R12_AFR,M1,,,Mt,,,,,,8.0,,,,,,,,,,,,,,
 bof_steel,historical_activity,R12_EEU,M1,,,Mt,,,,,,78.0,,,,,,,,,,,,,,
+eaf_steel,bound_activity_lo,R12_CHN,M2,,,Mt,,,,,,,75.3,,,,,,,,,,,,,
 eaf_steel,historical_activity,R12_EEU,M2,,,Mt,,,,,,52.0,,,,,,,,,,,,,,
 bof_steel,historical_activity,R12_FSU,M1,,,Mt,,,,,,80.0,,,,,,,,,,,,,,
 eaf_steel,historical_activity,R12_FSU,M2,,,Mt,,,,,,20.0,,,,,,,,,,,,,,
