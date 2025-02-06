@@ -60,7 +60,7 @@ jobs:
         ref: ${{ needs.check.outputs.ref }}
 
   pytest:
-    needs: warm-lfs-cache
+    needs: [ check, warm-lfs-cache ]
 
     strategy:
       matrix:
