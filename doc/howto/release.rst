@@ -1,5 +1,5 @@
-Releasing
-*********
+Release a new version of :mod:`message_ix_models`
+*************************************************
 
 Version numbers
 ===============

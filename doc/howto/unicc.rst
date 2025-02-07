@@ -1,5 +1,5 @@
-Running MESSAGEix on UnICC
-**************************
+Run :program:`mix-models` on UnICC
+**********************************
 
 This is a guide on how to get set up on the Unified IIASA Computing Cluster (UnICC) and how to run MESSAGEix scenarios on the cluster.
 

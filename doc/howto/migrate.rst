@@ -1,5 +1,5 @@
-Migrating from :mod:`message_data`
-**********************************
+Migrate code from :mod:`message_data`
+*************************************
 
 :mod:`message_ix_models` coexists with the private repository/package currently named :mod:`message_data`.
 The latter is the location for code related to new research that has not yet been completed and published, data that must remain closed-source permanently, etc.
@@ -14,8 +14,8 @@ Over time:
 .. contents::
    :local:
 
-Using both packages together
-============================
+Use both packages together
+==========================
 
 This section gives some practices and tips for using the two packages together.
 

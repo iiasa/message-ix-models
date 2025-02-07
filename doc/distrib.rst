@@ -1,5 +1,5 @@
-Overview and tooling
-********************
+Distributed computing
+*********************
 
 This page introduces considerations, tools, and features for using **distributed** or **high-throughput computing** with MESSAGEix-GLOBIOM.
 
@@ -38,4 +38,7 @@ Tooling
   `HTCondor <https://htcondor.readthedocs.io/en/latest/>`_, etc., but rather allow :mod:`message_ix` & co. to be used with/through those.
 - The individual features, tools, utilities, etc. should each be simple, i.e. `do one thing, and do it well <https://en.wikipedia.org/wiki/Unix_philosophy#Do_One_Thing_and_Do_It_Well>`__.
 
-.. todo:: Extend.
+See:
+
+- :doc:`howto/unicc` —a guide for one particular cluster using SLURM.
+- :mod:`.util.slurm` for the :program:`mix-models sbatch` command-line utility.

@@ -14,14 +14,17 @@ Among other tasks, the tools allow modelers to:
 - report quantities computed from model outputs.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: User guide
 
    install
    data
    cli
-   quickstart
+   howto/index
    repro
+   distrib
+   develop
+   whatsnew
    bibliography
 
 API reference
@@ -103,22 +106,6 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    pkg-data/year
    pkg-data/codelists
    pkg-data/iiasa-se
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Distributed computing
-
-   distrib/overview
-   distrib/unicc
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development
-
-   develop
-   whatsnew
-   migrate
-   releasing
 
 Indices and tables
 ==================

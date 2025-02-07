@@ -225,6 +225,14 @@ Commonly used:
 .. automodule:: message_ix_models.util.sdmx
    :members:
 
+:mod:`.util.slurm`
+==================
+
+.. currentmodule:: message_ix_models.util.slurm
+
+.. automodule:: message_ix_models.util.slurm
+   :members:
+
 :mod:`.types`
 =============
 
