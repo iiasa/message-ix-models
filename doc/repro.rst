@@ -182,8 +182,8 @@ Each test **should** have a docstring explaining what it checks.
 
    tests
 
-Running the test suite
-----------------------
+Run the test suite
+------------------
 
 Some notes for running the test suite.
 

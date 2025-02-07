@@ -1,5 +1,5 @@
-Quick-start guide to running a MESSAGEix-GLOBIOM baseline model
-***************************************************************
+Run a MESSAGEix-GLOBIOM baseline model
+**************************************
 
 .. contents::
    :local:
