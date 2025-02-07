@@ -17,6 +17,8 @@ Each HOWTO is contained on its own page:
 
    Run a baseline model <quickstart>
    Run mix-models on UnICC <unicc>
+   migrate
+   Release message-ix-models <release>
 
 Write a HOWTO
 =============
