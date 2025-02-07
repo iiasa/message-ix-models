@@ -211,6 +211,7 @@ intersphinx_mapping = {
     "pytest": ("https://docs.pytest.org/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),
+    "sphinx": ("https://www.sphinx-doc.org/en/master", None),
 }
 
 # -- Options for sphinx.ext.linkcode / ixmp.util.sphinx_linkcode_github ----------------

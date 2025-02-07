@@ -34,7 +34,8 @@ In particular:
 See also:
 
 - `sbatch <https://slurm.schedmd.com/sbatch.html>`_ manual page.
-- :doc:`/distrib/unicc`.
+- :doc:`/howto/unicc`.
+- :doc:`/distrib/`.
 """
 
 import os

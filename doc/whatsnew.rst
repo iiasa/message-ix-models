@@ -16,7 +16,8 @@ Next release
   - Simplify and consolidate tests.
 
 - Add :func:`.prepare_method_B` to :mod:`.ssp.transport` (:pull:`259`).
-- New HOWTO guide :doc:`/distrib/unicc` (:pull:`279`) and supporting command :program:`mix-models sbatch` in :mod:`.util.slurm` (:pull:`291`).
+- New :doc:`/howto/index` documentation sub-tree (:pull:`291`).
+- New guide on HOWTO :doc:`/howto/unicc` (:pull:`279`) and supporting command :program:`mix-models sbatch` in :mod:`.util.slurm` (:pull:`291`).
 - New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
 
 v2025.1.10
