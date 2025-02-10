@@ -8,12 +8,13 @@ from typing import TYPE_CHECKING, Any, Optional
 import genno
 import numpy as np
 import pandas as pd
-from genno import Computer, KeySeq
+from genno import Computer, Key, KeySeq, quote
 from genno.core.key import single_key
 
 from message_ix_models.util import minimum_version
 
 from .key import gdp_exo
+from .key import report as k_report
 
 if TYPE_CHECKING:
     import message_ix
@@ -166,11 +167,12 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
        (c, t) totals in correspondence with IEA World Energy Balance (WEB) values.
     5. :file:`scale-2.csv`: Second stage scaling factor used to bring overall totals.
     """
-    from genno import Key, KeySeq, quote
 
     # Add an empty list; invoking this key will trigger calculation of all the keys
     # below added to the list
     rep.add(RESULT_KEY, [])
+    # Add this result key to the list of all reporting keys
+    rep.graph[k_report.all].append(RESULT_KEY)
 
     # Create output subdirectory for base model files
     rep.graph["config"]["output_dir"].joinpath("base").mkdir(
