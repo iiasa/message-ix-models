@@ -92,6 +92,7 @@ price_sel0 = price_sel1 + "raw units"
 #: Keys for :mod:`.transport.report`.
 report = SimpleNamespace(
     all="transport all",
+    sdmx=Key("transport::sdmx"),
 )
 
 sw = Key("share weight", "nty")
