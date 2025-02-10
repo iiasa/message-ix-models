@@ -37,4 +37,4 @@ class MaintainableArtefactArgs(TypedDict):
     is_external_reference: Optional[bool]
     is_final: Optional[bool]
     maintainer: Any
-    version: Optional[Union[str, sdmx.model.common.Version]]
+    version: Optional[Union[str, "sdmx.model.common.Version"]]
