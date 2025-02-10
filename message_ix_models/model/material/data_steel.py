@@ -633,6 +633,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_2020_calibration_relation(s_info, "eaf"),
         gen_2020_calibration_relation(s_info, "bof"),
         gen_2020_calibration_relation(s_info, "bf"),
+        gen_bof_pig_input(s_info)
     )
 
     if ssp == "SSP1":
@@ -941,6 +942,45 @@ def gen_grow_cap_up(s_info, ssp):
         .pipe(broadcast, year_vtg=s_info.Y)
     )
     return {"growth_new_capacity_up": df}
+
+
+def gen_bof_pig_input(s_info):
+    special_regions = ["R12_EEU", "R12_NAM"]
+    other_regions = [i for i in nodes_ex_world(s_info.N) if i not in special_regions]
+    years = [i for i in range(1970, 2060, 5)] + [i for i in range(2060, 2115, 10)]
+    dimensions = {
+        "technology": "bof_steel",
+        "mode": ["M1", "M2"],
+        "commodity": "pig_iron",
+        "level": "tertiary_material",
+        "time": "year",
+        "time_origin": "year",
+        "unit": "???",
+    }
+    df1= (
+        make_df("input", value=0.92, **dimensions)
+        .pipe(broadcast, node_loc=other_regions)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=years)
+        .pipe(broadcast, year_vtg=years)
+    )
+    df2 = (
+        make_df("input", value=0.86, **dimensions)
+        .pipe(broadcast, node_loc=special_regions)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[2020, 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df3 = (
+        make_df("input", value=0.92, **dimensions)
+        .pipe(broadcast, node_loc=special_regions)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[i for i in years if i > 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df = pd.concat([df1, df2, df3])
+    df = df[df["year_act"] - df["year_vtg"] < 30]
+    return {"input": df}
 
 
 if __name__ == "__main__":
