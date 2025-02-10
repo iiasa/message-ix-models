@@ -1,5 +1,7 @@
 """Keys to refer to various quantities."""
 
+from types import SimpleNamespace
+
 from genno import Key
 
 __all__ = [
@@ -86,6 +88,11 @@ pdt_nyt = _pdt * "t"
 price_sel1 = price_full + "transport"
 price = price_sel1 + "smooth"
 price_sel0 = price_sel1 + "raw units"
+
+#: Keys for :mod:`.transport.report`.
+report = SimpleNamespace(
+    all="transport all",
+)
 
 sw = Key("share weight", "nty")
 

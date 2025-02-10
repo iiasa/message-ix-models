@@ -490,7 +490,7 @@ def get_computer(
        If :any:`True` (the default), a file :file:`transport/build.svg` is written in
        the local data directory with a visualization of the ``add transport data`` key.
     """
-    from . import operator
+    from . import key, operator
 
     # Configure
     config = Config.from_context(context, **kwargs)
@@ -539,6 +539,7 @@ def get_computer(
     # Add a computation that is an empty list.
     # Individual modules's prepare_computer() functions can append keys.
     c.add("add transport data", [])
+    c.add(key.report.all, [])  # Needed by .plot.prepare_computer()
 
     # Add structure-related keys
     add_structure(c)
