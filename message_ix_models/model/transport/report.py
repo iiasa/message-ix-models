@@ -2,6 +2,7 @@
 
 import logging
 from copy import deepcopy
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -15,12 +16,14 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.util import add_replacements
 
 from . import Config
+from .key import pdt_nyt
 
 if TYPE_CHECKING:
     import ixmp
     from genno import Computer
 
     from message_ix_models import Spec
+    from message_ix_models.types import KeyLike
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +31,17 @@ log = logging.getLogger(__name__)
 #: Units for final energy. This *exact* value (and not e.g. "EJ / year") is required for
 #: the legacy reporting to properly handle the result.
 _FE_UNIT = "EJ/yr"
+
+#: SDMX output data flows to generate.
+DATAFLOW = (
+    ("population_in", Key("pop:n-y")),
+    ("gdp_in", Key("gdp:n-y")),
+    ("passenger_activity", pdt_nyt),  # FIXME Fails; GDP:n-y is simulated_qty()
+    # Same as "Energy Service|Transportation" IAMC variable
+    ("activity_vehicle", Key("out:nl-t-ya-c:transport+units")),
+    # Same as "Final Energy|Transportation"
+    ("fe_transport", Key("in:nl-t-ya-c:transport+units")),
+)
 
 CONVERT_IAMC = (
     # NB these are currently tailored to produce the variable names expected for the
@@ -229,6 +243,7 @@ def callback(rep: Reporter, context: Context) -> None:
     reapply_units(rep)
     misc(rep)
     convert_iamc(rep)  # Adds to key.report.all
+    convert_sdmx(rep)  # Adds to key.report.all
     base.prepare_reporter(rep)  # Tasks that prepare data to parametrize the base model
 
     log.info(f"Added {len(rep.graph) - N_keys} keys")
@@ -335,6 +350,25 @@ def convert_iamc(c: "Computer") -> None:
         # Use this line for "transport::iamc+file" instead of "transport::iamc+all"
         # k + " file"
     )
+
+
+def convert_sdmx(c: "Computer") -> None:
+    """Add tasks to convert data to SDMX."""
+    from .key import report as k_report
+    from .operator import write_sdmx_csv
+
+    k_dir = "dir::transport sdmx"
+    c.add(k_dir, "make_output_path", "config", name="sdmx")
+
+    keys: list["KeyLike"] = [k_dir]
+
+    for id_, k_base in DATAFLOW:
+        k = Key(id_, tag="sdmx")
+        c.add(k, partial(write_sdmx_csv, id=id_, dims=k_base.dims), k_base, k_dir)
+        keys.append(k)
+
+    c.add(k_report.sdmx, keys)
+    c.graph[k_report.all].append(k_report.sdmx)
 
 
 def latest_reporting_from_file(
