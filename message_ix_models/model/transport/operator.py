@@ -1235,3 +1235,36 @@ Units: {qty.units:~}
     )
 
     operator.write_report(qty, path, kwargs)
+
+
+def write_sdmx_csv(qty: "AnyQuantity", path: "Path", **kwargs) -> None:
+    """Write two files for `qty`.
+
+    1. :file:`{path}/{kwargs['id']}-structure.xml` —an SDMX-ML
+       :class:`.StructureMessage` containing a dataflow, data structure, codelists, and
+       concept scheme for the data flow.
+    2. :file:`{path}/{kwargs['id']}.csv` —and SDMX-CSV :class:`.DataMessage` with the
+       values from `qty`.
+    """
+    import sdmx
+
+    from message_ix_models.util.sdmx import make_dataflow
+
+    sm = make_dataflow(**kwargs)
+    dfd = tuple(sm.dataflow.values())[0]
+
+    # Common values
+    common = dict(STRUCTURE="dataflow", STRUCTURE_ID=dfd.urn.split("=")[-1], ACTION="I")
+    # SDMX-CSV column order
+    columns = list(common)
+    columns.extend(dim.id for dim in dfd.structure.dimensions)
+    columns.extend(measure.id for measure in dfd.structure.measures)
+
+    path.mkdir(parents=True, exist_ok=True)
+
+    df = qty.to_series().reset_index().assign(**common).reindex(columns=columns)
+    df.to_csv(path.joinpath(f"{kwargs['id']}.csv"), index=False)
+
+    path.joinpath(f"{kwargs['id']}-structure.xml").write_bytes(
+        sdmx.to_xml(sm, pretty_print=True)
+    )
