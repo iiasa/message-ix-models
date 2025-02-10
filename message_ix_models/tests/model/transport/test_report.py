@@ -6,7 +6,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport import build
+from message_ix_models.model.transport import build, key
 from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
@@ -126,10 +126,16 @@ def test_simulated_solution(request, test_context, build, regions="R12", years="
     k = rep.full_key("out")
     rep.get(k)
 
-    # A quantity for message_data.model.transport can be computed
+    # A quantity for message_ix_models.model.transport can be computed
     k = "transport stock::iamc"
     result = rep.get(k)
     assert 0 < len(result)
+
+    # SDMX data for message_ix_models.project.edits can be computed
+    result = rep.get(key.report.sdmx)
+    p = result[0]
+    assert p.joinpath("population_in.csv").exists()
+    assert p.joinpath("population_in-structure.xml").exists()
 
 
 @build.get_computer.minimum_version
