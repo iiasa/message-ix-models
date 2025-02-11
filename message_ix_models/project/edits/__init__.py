@@ -132,7 +132,7 @@ def coords_to_codelists(
 ) -> list["Codelist"]:
     """Convert the coordinates of `qty` to a collection of :class:`.Codelist`.
 
-    .. todo:: Move upstream, to :mod:`genno`.
+    .. todo:: Move upstream, to :mod:`genno.compat.sdmx`.
     """
     result = []
 

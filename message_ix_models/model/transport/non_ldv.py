@@ -269,7 +269,7 @@ def constraint_data(
     """
     config: Config = genno_config["transport"]
 
-    # Non-LDV modes passenger modes
+    # Non-LDV passenger modes
     modes = set(t for t in t_modes if t != "LDV")
     # Freight modes
     modes.add("F ROAD")

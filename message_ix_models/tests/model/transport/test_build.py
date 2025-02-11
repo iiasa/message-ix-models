@@ -205,7 +205,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         ),
     ),
     "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
-    "transport F::ixmp": (
+    "transport::F+ixmp": (
         ContainsDataForParameters(
             {"capacity_factor", "input", "output", "technical_lifetime"}
         ),
