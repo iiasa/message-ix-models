@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from genno import Computer
 
     from message_ix_models import Spec
-    from message_ix_models.types import KeyLike
 
 log = logging.getLogger(__name__)
 
@@ -354,20 +353,29 @@ def convert_iamc(c: "Computer") -> None:
 
 def convert_sdmx(c: "Computer") -> None:
     """Add tasks to convert data to SDMX."""
+    from sdmx.message import StructureMessage
+
     from .key import report as k_report
-    from .operator import write_sdmx_csv
+    from .operator import write_sdmx_data
 
-    k_dir = "dir::transport sdmx"
-    c.add(k_dir, "make_output_path", "config", name="sdmx")
+    # Directory for SDMX output
+    dir = "dir::transport sdmx"
+    c.add(dir, "make_output_path", "config", name="sdmx")
 
-    keys: list["KeyLike"] = [k_dir]
+    # Add a key that returns a reference to a shared StructureMessage
+    sm = "sdmx structure message"
+    c.add(sm, StructureMessage)
 
-    for id_, k_base in DATAFLOW:
-        k = Key(id_, tag="sdmx")
-        c.add(k, partial(write_sdmx_csv, id=id_, dims=k_base.dims), k_base, k_dir)
-        keys.append(k)
+    # Write each quantity in DATAFLOW to .{csv,xml}; update the shared StructureMessage
+    keys = []
+    for id_, base in DATAFLOW:
+        keys.append(Key(id_, tag="sdmx"))
+        c.add(keys[-1], partial(write_sdmx_data, id=id_, dims=base.dims), base, sm, dir)
 
-    c.add(k_report.sdmx, keys)
+    # Collect all the keys *then* write the collected structures to file
+    c.add(k_report.sdmx, "write_sdmx_structures", sm, dir, *keys)
+
+    # Connect to the main report key
     c.graph[k_report.all].append(k_report.sdmx)
 
 

@@ -133,9 +133,13 @@ def test_simulated_solution(request, test_context, build, regions="R12", years="
 
     # SDMX data for message_ix_models.project.edits can be computed
     result = rep.get(key.report.sdmx)
-    p = result[0]
-    assert p.joinpath("population_in.csv").exists()
-    assert p.joinpath("population_in-structure.xml").exists()
+
+    # The task returns the directory in which output is written
+    p = result
+    # Expected files are generated
+    assert p.joinpath("structure.xml").exists()
+    assert p.joinpath("DF_POPULATION_IN.csv").exists()
+    assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
 @build.get_computer.minimum_version

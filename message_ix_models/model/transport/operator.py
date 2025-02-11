@@ -36,6 +36,7 @@ from .config import Config
 if TYPE_CHECKING:
     from pathlib import Path
 
+    import sdmx.message
     from genno.types import AnyQuantity
     from message_ix import Scenario
     from xarray.core.types import Dims
@@ -1237,22 +1238,29 @@ Units: {qty.units:~}
     operator.write_report(qty, path, kwargs)
 
 
-def write_sdmx_csv(qty: "AnyQuantity", path: "Path", **kwargs) -> None:
+def write_sdmx_data(
+    qty: "AnyQuantity",
+    structure_message: "sdmx.message.StructureMessage",
+    path: "Path",
+    **kwargs,
+) -> None:
     """Write two files for `qty`.
 
-    1. :file:`{path}/{kwargs['id']}-structure.xml` —an SDMX-ML
-       :class:`.StructureMessage` containing a dataflow, data structure, codelists, and
-       concept scheme for the data flow.
-    2. :file:`{path}/{kwargs['id']}.csv` —and SDMX-CSV :class:`.DataMessage` with the
+    1. :file:`{path}/{kwargs['id']}.csv` —an SDMX-CSV :class:`.DataMessage` with the
+       values from `qty`.
+    2. :file:`{path}/{kwargs['id']}.xml` —an SDMX-ML :class:`.DataMessage` with the
        values from `qty`.
     """
     import sdmx
+    from genno.compat.sdmx.operator import quantity_to_message
 
     from message_ix_models.util.sdmx import make_dataflow
 
-    sm = make_dataflow(**kwargs)
-    dfd = tuple(sm.dataflow.values())[0]
+    # Add a dataflow and related structures to `structure_message`
+    make_dataflow(**kwargs, message=structure_message)
+    dfd = tuple(structure_message.dataflow.values())[-1]
 
+    # Convert to SDMX_CSV
     # Common values
     common = dict(STRUCTURE="dataflow", STRUCTURE_ID=dfd.urn.split("=")[-1], ACTION="I")
     # SDMX-CSV column order
@@ -1262,9 +1270,30 @@ def write_sdmx_csv(qty: "AnyQuantity", path: "Path", **kwargs) -> None:
 
     path.mkdir(parents=True, exist_ok=True)
 
+    # Write SDMX-CSV
     df = qty.to_series().reset_index().assign(**common).reindex(columns=columns)
     df.to_csv(path.joinpath(f"{kwargs['id']}.csv"), index=False)
 
-    path.joinpath(f"{kwargs['id']}-structure.xml").write_bytes(
-        sdmx.to_xml(sm, pretty_print=True)
+    # Write SDMX-ML
+    path.joinpath(f"{kwargs['id']}.xml").write_bytes(
+        sdmx.to_xml(
+            # FIXME Remove exclusion once upstream type hint is improved
+            quantity_to_message(qty, structure=dfd.structure),  # type: ignore [arg-type]
+            pretty_print=True,
+        )
     )
+
+
+def write_sdmx_structures(structure_message, path: "Path", *args) -> "Path":
+    """Write `structure_message`.
+
+    The message is written to :file:`{path}/structure.xml` in SDMX-ML format.
+    """
+    import sdmx
+
+    path.mkdir(parents=True, exist_ok=True)
+    path.joinpath("structure.xml").write_bytes(
+        sdmx.to_xml(structure_message, pretty_print=True)
+    )
+
+    return path
