@@ -154,7 +154,11 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.tools.exo_data import prepare_computer
 
     # Ensure that the MERtoPPP data provider is available
-    from . import data  # noqa: F401
+    from . import (
+        data,  # noqa: F401
+        key,
+    )
+    from .files import FILES, add
 
     # Added keys
     keys = {}
@@ -179,7 +183,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         keys[kw["measure"]] = prepare_computer(
             context, c, source, source_kw=kw, strict=False
         )
-
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
     prepare_computer(context, c, "transport MERtoPPP", source_kw=kw, strict=False)
@@ -208,34 +211,35 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         # Add the base data
         kw = dict(measure=m, name=f"advance {n}")
         kw.update(common)
-        key, *_ = prepare_computer(context, c, "ADVANCE", source_kw=kw, strict=False)
+        k, *_ = prepare_computer(context, c, "ADVANCE", source_kw=kw, strict=False)
         # Broadcast to R12
-        c.add(f"{n}:n:advance", "broadcast_advance", key, "y0", "config")
+        c.add(f"{n}:n:advance", "broadcast_advance", k, "y0", "config")
 
     # Alias for other computations which expect the upper-case name
     c.add("MERtoPPP:n-y", "mertoppp:n-y")
-    try:
-        c.add("GDP:n-y", "gdp:n-y", strict=True)
-    except KeyExistsError as e:
-        log.info(repr(e))  # Solved scenario that already has this key
+
+    # FIXME Ensure the latter case for a simulated solution
+    # if key.GDP in c:
+    if False:
+        pass  # Solved scenario that already has this key
+    else:
+        c.add(key.GDP, keys["GDP"][0])
 
     # Ensure correct units
     c.add("population:n-y", "mul", "pop:n-y", genno.Quantity(1.0, units="passenger"))
 
-    # Dummy prices
-    try:
-        c.add(
-            "PRICE_COMMODITY:n-c-y",
-            "dummy_prices",
-            keys["GDP"][0],
-            sums=True,
-            strict=True,
-        )
-    except KeyExistsError as e:
-        log.info(repr(e))  # Solved scenario that already has this key
+    # FIXME Adjust to derive PRICE_COMMODITY c=transport from solved scenario with
+    #       MESSAGEix-Transport detail, then uncomment the following line
+    # if key.price.base - "transport" in c:
+    if False:
+        # Alias PRICE_COMMODITY:… to PRICE_COMMODITY:*:transport, e.g. solved scenario
+        # that already has this key
+        c.add(key.price[0], key.price.base - "transport")
+    else:
+        # Not solved scenario → dummy prices
+        c.add(key.price[0], "dummy_prices", keys["GDP"][0], sums=True)
 
     # Data from files
-    from .files import FILES, add
 
     # Identify the mode-share file according to the config setting
     add(
