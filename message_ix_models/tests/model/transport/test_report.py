@@ -59,7 +59,7 @@ def test_configure_legacy():
     "regions, years",
     (
         param("R11", "A", marks=make_mark[2](ValueError)),
-        param("R12", "B", marks=MARK["gh-281"]),
+        ("R12", "B"),
         param("R14", "A", marks=MARK[9]),
         param("ISR", "A", marks=MARK[3]),
     ),

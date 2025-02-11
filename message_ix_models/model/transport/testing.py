@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 import pytest
-from message_ix import ModelError, Reporter, Scenario
+from message_ix import Reporter, Scenario
 
 import message_ix_models.report
 from message_ix_models import ScenarioInfo
@@ -43,10 +43,6 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
     7: pytest.mark.xfail(
         condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
         reason="Graphviz missing on macos-13 GitHub Actions runners",
-    ),
-    "gh-281": pytest.mark.xfail(
-        raises=ModelError,
-        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/281",
     ),
     9: pytest.mark.xfail(reason="Missing R14 input data/config"),
     "gh-288": pytest.mark.xfail(
