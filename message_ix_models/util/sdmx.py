@@ -251,11 +251,16 @@ Each concept in the concept scheme has:
 
     # Add concepts for MESSAGE sets/dimensions
     for k, v in rename_dims().items():
-        cs.setdefault(
-            id=k.upper(),
-            name=f"{k!r} MESSAGEix set",
-            annotations=[common.Annotation(id="aliases", text=repr({v}))],
+        # Retrieve or create the Concept for the set (e.g. "year" for k="year_act")
+        set_name = k.split("_")[0]
+        concept = cs.setdefault(
+            id=set_name.upper(),
+            name=f"{set_name!r} MESSAGEix set",
+            annotations=[common.Annotation(id="aliases", text=repr(set()))],
         )
+        # Add `v` to the aliases annotation
+        anno = concept.get_annotation(id="aliases")
+        anno.text = repr(eval(str(anno.text)) | {v})
 
     for c_id in "MODEL", "SCENARIO", "VERSION":
         cs.setdefault(
