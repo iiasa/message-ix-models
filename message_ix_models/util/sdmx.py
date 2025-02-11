@@ -334,12 +334,12 @@ def make_dataflow(
     ma_kwargs.setdefault("version", str(get_version()))
 
     # Create the data structure definition
-    dsd = v21.DataStructureDefinition(id=f"DS_{id}", **ma_kwargs)
+    dsd = v21.DataStructureDefinition(id=f"DS_{id.upper()}", **ma_kwargs)
     dsd.measures.getdefault(id="value")
     sm.add(dsd)
 
     # Create the data flow definition
-    dfd = v21.DataflowDefinition(id=f"DF_{id}", **ma_kwargs, structure=dsd)
+    dfd = v21.DataflowDefinition(id=f"DF_{id.upper()}", **ma_kwargs, structure=dsd)
     dfd.urn = urn.make(dfd)
     if name:
         dfd.description = name
