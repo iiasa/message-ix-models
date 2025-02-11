@@ -10,6 +10,7 @@ from dask.core import literal
 from genno import Computer, KeySeq
 from message_ix import make_df
 
+from message_ix_models.report.key import GDP
 from message_ix_models.util import broadcast
 
 from . import files as exo
@@ -18,7 +19,6 @@ from .key import (
     cost,
     fv,
     fv_cny,
-    gdp,
     gdp_cap,
     gdp_index,
     gdp_ppp,
@@ -33,9 +33,6 @@ from .key import (
     pdt_nyt,
     pop,
     price,
-    price_full,
-    price_sel0,
-    price_sel1,
     sw,
     t_modes,
     y,
@@ -102,7 +99,7 @@ TASKS = [
     (ms + "base", "base_shares", "mode share:n-t:exo", n, t_modes, y),
     # GDP expressed in PPP. The in the SSP(2024) input files, this conversion is already
     # applied, so no need to multiply by a mer_to_ppp factor here → simple alias.
-    (gdp_ppp, gdp),
+    (gdp_ppp, GDP),
     # GDP PPP per capita
     (gdp_cap, "div", gdp_ppp, pop),
     #
@@ -115,10 +112,10 @@ TASKS = [
     ("votm:n-y", "votm", gdp_cap),
     # Select only the price of transport services
     # FIXME should be the full set of prices
-    ((price_sel0, "select", price_full), dict(indexers=dict(c="transport"), drop=True)),
-    (price_sel1, "price_units", price_sel0),
+    ((price[1], "select", price[0]), dict(indexers=dict(c="transport"), drop=True)),
+    (price[2], "price_units", price[1]),
     # Smooth prices to avoid zig-zag in share projections
-    (price, "smooth", price_sel1),
+    (price.base, "smooth", price[2]),
     # Interpolate speed data
     (
         ("speed:scenario-n-t-y:0", "interpolate", exo.speed, "y::coords"),
@@ -127,7 +124,7 @@ TASKS = [
     # Select speed data
     ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", "indexers:scenario"),
     # Cost of transport (n, t, y)
-    (cost, "cost", price, gdp_cap, "whour:", "speed:n-t-y", "votm:n-y", y),
+    (cost, "cost", price.base, gdp_cap, "whour:", "speed:n-t-y", "votm:n-y", y),
     # Share weights (n, t, y)
     (
         sw,
@@ -228,9 +225,7 @@ def pdt_per_capita(c: Computer) -> None:
     between projected, log GDP in each future period and the log GDP in the reference
     year.
     """
-    from . import key
-
-    gdp = KeySeq(key.gdp)
+    gdp = KeySeq(GDP)
     pdt = KeySeq("_pdt:n-y")
 
     # GDP expressed in PPP. In the SSP(2024) input files, this conversion is already
