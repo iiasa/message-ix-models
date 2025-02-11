@@ -140,7 +140,7 @@ def prepare_computer(c: genno.Computer):
     c.add(to_add[-1], prev)
 
     # Merge data to one collection
-    k_all = "transport F::ixmp"
+    k_all = f"transport{Fi}"
     c.add(k_all, "merge_data", *to_add)
 
     # Append to the "add transport data" key
