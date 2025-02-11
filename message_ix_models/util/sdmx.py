@@ -297,6 +297,7 @@ def make_dataflow(
     name: Optional[str] = None,
     ma_kwargs: Optional["MaintainableArtefactArgs"] = None,
     context: Optional["Context"] = None,
+    message: Optional["sdmx.message.StructureMessage"] = None,
 ) -> "sdmx.message.StructureMessage":
     """Create and store an SDMX 2.1 DataflowDefinition (DFD) and related structures.
 
@@ -322,7 +323,7 @@ def make_dataflow(
     """
     from sdmx import urn
 
-    sm = sdmx.message.StructureMessage()
+    sm = message or sdmx.message.StructureMessage()
 
     if ma_kwargs is None:
         ma_kwargs = {}
