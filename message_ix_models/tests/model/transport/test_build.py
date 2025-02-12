@@ -9,7 +9,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import build, demand, report, structure
+from message_ix_models.model.transport import build, demand, key, report, structure
 from message_ix_models.model.transport.ldv import TARGET
 from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
@@ -91,7 +91,7 @@ def test_make_spec(regions_arg, regions_exp, years):
         param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
         param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
-        param("R12", "B", False, "IKARUS", True, marks=MARK["gh-281"]),
+        ("R12", "B", False, "IKARUS", True),
         # R14, A
         param(
             "R14",
@@ -205,7 +205,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         ),
     ),
     "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
-    "transport F::ixmp": (
+    "transport::F+ixmp": (
         ContainsDataForParameters(
             {"capacity_factor", "input", "output", "technical_lifetime"}
         ),
@@ -220,7 +220,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
     "GDP:n-y:PPP+capita+index": (HasUnits(""),),
     "votm:n-y": (HasUnits(""),),
-    "PRICE_COMMODITY:n-c-y:transport+smooth": (HasUnits("USD / km"),),
+    key.price.base: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
     # These units are implied by the test of "transport pdt:*":
     # "transport pdt:n-y:total" [=] Mm / year

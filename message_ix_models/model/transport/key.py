@@ -1,9 +1,12 @@
 """Keys to refer to various quantities."""
 
-from genno import Key
+from types import SimpleNamespace
+
+from genno import Key, KeySeq
+
+from message_ix_models.report.key import GDP, PRICE_COMMODITY
 
 __all__ = [
-    "PRICE_COMMODITY",
     "cg",
     "cost",
     "fv_cny",
@@ -11,7 +14,6 @@ __all__ = [
     "gdp_cap",
     "gdp_index",
     "gdp_ppp",
-    "gdp",
     "ldv_cny",
     "ldv_ny",
     "ldv_nycg",
@@ -24,9 +26,6 @@ __all__ = [
     "pdt_nyt",
     "pop_at",
     "pop",
-    "price_full",
-    "price_sel0",
-    "price_sel1",
     "price",
     "sw",
     "t_modes",
@@ -34,11 +33,8 @@ __all__ = [
 ]
 
 # Existing keys, either from Reporter.from_scenario() or .build.add_structure()
-gdp = Key("GDP", "ny")
 gdp_exo = Key("gdp", "ny")
 mer_to_ppp = Key("MERtoPPP", "ny")
-PRICE_COMMODITY = Key("PRICE_COMMODITY", "nclyh")
-price_full = PRICE_COMMODITY / ("h", "l")
 
 # Keys for new quantities
 
@@ -54,7 +50,7 @@ pop = Key("population", "ny")
 pop_at = pop * "area_type"
 
 #: GDP at purchasing power parity.
-gdp_ppp = gdp + "PPP"
+gdp_ppp = GDP + "PPP"
 
 #: :data:`.gdp_ppp` per capita.
 gdp_cap = gdp_ppp + "capita"
@@ -83,9 +79,14 @@ pdt_ny = _pdt + "total"
 #: technologies.
 pdt_nyt = _pdt * "t"
 
-price_sel1 = price_full + "transport"
-price = price_sel1 + "smooth"
-price_sel0 = price_sel1 + "raw units"
+#: Prices.
+price = KeySeq(PRICE_COMMODITY / ("h", "l") + "transport")
+
+#: Keys for :mod:`.transport.report`.
+report = SimpleNamespace(
+    all="transport all",
+    sdmx=Key("transport::sdmx"),
+)
 
 sw = Key("share weight", "nty")
 

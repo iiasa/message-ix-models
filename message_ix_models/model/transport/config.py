@@ -349,7 +349,9 @@ class Config(ConfigHelper):
             pass
         else:
             if scenario:
-                log.debug(f".transport.Config.from_context: {scenario.set('node') = }")
+                log.debug(
+                    f"scenario.set('node') = {' '.join(sorted(scenario.set('node')))}"
+                )
             if context.model.regions != regions:
                 log.info(
                     f"Override Context.model.regions={context.model.regions!r} with "

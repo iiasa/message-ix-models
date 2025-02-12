@@ -3,7 +3,7 @@ import re
 from collections import ChainMap
 from collections.abc import Mapping, MutableMapping
 from copy import copy
-from functools import lru_cache
+from functools import cache
 from itertools import product
 
 import click
@@ -19,7 +19,7 @@ from message_ix_models.util.sdmx import as_codes
 log = logging.getLogger(__name__)
 
 
-@lru_cache()
+@cache
 def codelists(kind: str) -> list[str]:
     """Return a valid IDs for code lists of `kind`.
 
@@ -31,7 +31,7 @@ def codelists(kind: str) -> list[str]:
     return sorted(path.stem for path in package_data_path(kind).glob("*.yaml"))
 
 
-@lru_cache()
+@cache
 def get_codes(name: str) -> list[Code]:
     """Return codes for the dimension/set `name` in MESSAGE-GLOBIOM scenarios.
 
@@ -92,7 +92,7 @@ def get_codes(name: str) -> list[Code]:
     return data
 
 
-@lru_cache()
+@cache
 def get_codelist(name: str) -> Codelist:
     """Return a :class:`.Codelist` for `name` in MESSAGEix-GLOBIOM scenarios."""
     cl = Codelist(id=name.replace("/", "_").upper())
@@ -100,7 +100,7 @@ def get_codelist(name: str) -> Codelist:
     return cl
 
 
-@lru_cache()
+@cache
 def get_region_codes(codelist: str) -> list[Code]:
     """Return the codes that are children of "World" in the specified `codelist`."""
     nodes = get_codes(f"node/{codelist}")
