@@ -573,16 +573,21 @@ def minimum_version(
     Parameters
     ----------
     expr :
-        Like "example 1.2.3.post0". The condition for the decorated function is that
-        the installed version must be equal to or greater than this version.
+        Like "pkgA 1.2.3.post0; pkgB 2025.2". The condition for the decorated function
+        is that the installed version must be equal to or greater than this version.
     """
+    from platform import python_version
 
     from packaging.version import parse
 
-    package, v_min = expr.split(" ")
-    v_package = version(package)
-    condition = parse(v_package) < parse(v_min)
-    message = f" with {package} {v_package} < {v_min}"
+    # Handle `expr`, updating `condition` and `message`
+    condition, message = False, " with "
+    for spec in expr.split(";"):
+        package, v_min = spec.strip().split(" ")
+        v_package = python_version() if package == "python" else version(package)
+        if parse(v_package) < parse(v_min):
+            condition = True
+            message += f"{package} {v_package} < {v_min}"
 
     # Create the decorator
     def decorator(func):
