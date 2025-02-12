@@ -4,7 +4,7 @@ import logging
 import re
 from collections.abc import Mapping, Sequence
 from functools import partial, reduce
-from itertools import pairwise, product
+from itertools import product
 from operator import gt, le, lt
 from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
 
@@ -26,6 +26,7 @@ from message_ix_models.report.util import as_quantity
 from message_ix_models.util import (
     MappingAdapter,
     datetime_now_with_tz,
+    minimum_version,
     nodes_ex_world,
     show_versions,
 )
@@ -953,6 +954,7 @@ def relabel2(qty: "AnyQuantity", new_dims: dict):
     return result
 
 
+@minimum_version("python 3.10")
 def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
     """Construct a uniform distribution from `value` along its :math:`y`-dimension.
 
@@ -967,6 +969,8 @@ def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
         and including :math:`d_{max}`. Values are the piecewise integral of the uniform
         distribution in the interval ending at the respective coordinate.
     """
+    from itertools import pairwise
+
     d_max = value.coords[dim].item()  # Upper end of the distribution
     width = 2 * value.item()  # Width of a uniform distribution
     height = 1.0 / width  # Height of the distribution

@@ -1,7 +1,7 @@
 """Data preparation for the MESSAGEix-GLOBIOM base model."""
 
 from functools import partial
-from itertools import pairwise, product
+from itertools import product
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -66,7 +66,7 @@ def align_and_fill(
     )
 
 
-@minimum_version("pandas 2")
+@minimum_version("pandas 2; python 3.10")
 def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     """Implement ‘smoothing’ for `key` along the dimension `dim`.
 
@@ -76,6 +76,8 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     2. Remove those values.
     3. Fill by linear interpolation.
     """
+    from itertools import pairwise
+
     assert key.tag != "2"
     ks = KeySeq(key.remove_tag(key.tag or ""))
 
