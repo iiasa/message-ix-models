@@ -14,6 +14,7 @@ from warnings import warn
 
 import sdmx
 import sdmx.message
+import sdmx.urn
 from iam_units import registry
 from sdmx.model import common, v21
 
@@ -207,15 +208,20 @@ def get_cl(name: str, context: Optional["Context"] = None) -> "common.Codelist":
     name = name or name.lower()
     id_ = id_ or name.upper()
 
+    as_ = read("IIASA_ECE:AGENCIES")
     cl: "common.Codelist" = common.Codelist(
         id=f"CL_{id_}",
         name=f"Codes for message-ix-models concept {name!r}",
+        maintainer=as_["IIASA_ECE"],
         # FIXME remove str() once sdmx1 > 2.21.1 can handle Version
         version=str(get_version()),
+        is_external_reference=False,
+        is_final=True,
     )
+    cl.urn = sdmx.urn.make(cl)
 
     try:
-        cl.extend(get_codes(name))
+        cl.extend(get_codes(name.lower()))
     except FileNotFoundError:
         pass
 
@@ -271,6 +277,17 @@ unique keys including (model name, scenario name, version).""",
         )
 
     cs.setdefault(
+        id="UNIT_MEASURE",
+        name="Unit of measure",
+        description="Unit in which data values are expressed",
+        annotations=[
+            common.Annotation(
+                id="same-as-urn",
+                text="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).UNIT_MEASURE",
+            ),
+        ],
+    )
+    cs.setdefault(
         id="URL",
         name="ixmp scenario URL",
         description="""URL combining the platform name (~database), model name, scenario
@@ -285,7 +302,7 @@ https://docs.messageix.org/projects/ixmp/en/stable/api.html#ixmp.TimeSeries.url"
 def get_concept(string: str) -> "common.Concept":
     """Retrieve a single Concept from :func:`get_cs`."""
     for concept in get_cs().items.values():
-        labels = [concept.id] + list(concept.eval_annotation(id="aliases"))
+        labels = [concept.id] + list(concept.eval_annotation(id="aliases") or [])
         if re.fullmatch("|".join(labels), string, flags=re.IGNORECASE):
             return concept
     raise ValueError(string)
@@ -353,6 +370,7 @@ def make_dataflow(
     # Add the common concept scheme
     sm.add(get_cs())
 
+    # Add dimensions to the DSD according to `dims`
     for order, dim_id in enumerate(dims):
         # Retrieve the dimension concept and its full ID
         concept = get_concept(dim_id)
@@ -368,6 +386,14 @@ def make_dataflow(
             local_representation=common.Representation(enumerated=cl),
             order=order,
         )
+
+    # Add attributes
+    nsr = v21.NoSpecifiedRelationship()
+    for attr_id in "MODEL", "SCENARIO", "VERSION", "UNIT_MEASURE":
+        # Retrieve the attribute concept and its full ID
+        concept = get_concept(attr_id)
+
+        dsd.attributes.getdefault(id=attr_id, concept_identity=concept, related_to=nsr)
 
     return sm
 

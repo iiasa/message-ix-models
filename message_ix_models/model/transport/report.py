@@ -368,9 +368,10 @@ def convert_sdmx(c: "Computer") -> None:
 
     # Write each quantity in DATAFLOW to .{csv,xml}; update the shared StructureMessage
     keys = []
+    args = [sm, "scenario", dir]  # Common arguments
     for id_, base in DATAFLOW:
         keys.append(Key(id_, tag="sdmx"))
-        c.add(keys[-1], partial(write_sdmx_data, id=id_, dims=base.dims), base, sm, dir)
+        c.add(keys[-1], partial(write_sdmx_data, id=id_, dims=base.dims), base, *args)
 
     # Collect all the keys *then* write the collected structures to file
     c.add(k_report.sdmx, "write_sdmx_structures", sm, dir, *keys)
