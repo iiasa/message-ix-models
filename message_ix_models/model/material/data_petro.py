@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Union
 
 import message_ix
 import pandas as pd
@@ -233,7 +234,7 @@ def assign_input_outpt(
     split: str,
     param_name: str,
     regions: pd.DataFrame,
-    val: float | int,
+    val: Union[float, int],
     t: str,
     rg: str,
     global_region: str,

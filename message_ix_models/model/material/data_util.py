@@ -1,7 +1,7 @@
 import os
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Optional
 
 import ixmp
 import message_ix
@@ -1013,7 +1013,7 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
 
 
 def get_hist_act_data(
-    map_fname: str, years: list or None = None, iea_data_path: str | None = None
+    map_fname: str, years: list or None = None, iea_data_path: Optional[str] = None
 ) -> pd.DataFrame:
     """
     reads IEA DB, maps and aggregates variables to MESSAGE technologies

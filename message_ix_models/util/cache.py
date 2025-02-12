@@ -32,6 +32,7 @@ from .scenarioinfo import ScenarioInfo
 if TYPE_CHECKING:
     from pathlib import Path
 
+
 log = logging.getLogger(__name__)
 
 
@@ -46,9 +47,18 @@ PATHS_SEEN: set["Path"] = set()
 # Show genno how to hash function arguments seen in message_ix_models
 
 
-@genno.caching.Encoder.register
-def _quantity(o: AnyQuantity):
+def _quantity(o: "AnyQuantity"):
     return tuple(o.to_series().to_dict())
+
+
+try:
+    genno.caching.Encoder.register(AnyQuantity)(_quantity)
+except TypeError:  # Python 3.10 or earlier
+    from genno.core.attrseries import AttrSeries
+    from genno.core.sparsedataarray import SparseDataArray
+
+    genno.caching.Encoder.register(AttrSeries)(_quantity)
+    genno.caching.Encoder.register(SparseDataArray)(_quantity)
 
 
 # Upstream

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 import message_ix
 import numpy as np
@@ -57,12 +57,12 @@ mode_modifiers_dict = {
 log = logging.getLogger(__name__)
 
 
-def steel_function(x: pd.DataFrame | float, a: float, b: float, m: float):
+def steel_function(x: Union[pd.DataFrame, float], a: float, b: float, m: float):
     gdp_pcap, del_t = x
     return a * np.exp(b / gdp_pcap) * (1 - m) ** del_t
 
 
-def cement_function(x: pd.DataFrame | float, a: float, b: float):
+def cement_function(x: Union[pd.DataFrame, float], a: float, b: float):
     gdp_pcap = x[0]
     return a * np.exp(b / gdp_pcap)
 
@@ -92,12 +92,14 @@ fitting_dict = {
 }
 
 
-def gompertz(phi: float, mu: float, y: pd.DataFrame | float, baseyear: int = 2020):
+def gompertz(
+    phi: float, mu: float, y: Union[pd.DataFrame, float], baseyear: int = 2020
+):
     return 1 - np.exp(-phi * np.exp(-mu * (y - baseyear)))
 
 
 def read_timer_pop(
-    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
 ):
     df_population = pd.read_excel(
         f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
@@ -115,7 +117,7 @@ def read_timer_pop(
 
 
 def read_timer_gdp(
-    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
 ):
     # Read GDP per capita data
     df_gdp = pd.read_excel(
@@ -165,7 +167,7 @@ def project_demand(df: pd.DataFrame, phi: float, mu: float):
     return df_demand[["region", "year", "demand_tot"]]
 
 
-def read_base_demand(filepath: str | Path):
+def read_base_demand(filepath: Union[str, Path]):
     with open(filepath, "r") as file:
         yaml_data = file.read()
 
