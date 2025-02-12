@@ -37,4 +37,5 @@ class MaintainableArtefactArgs(TypedDict):
     is_external_reference: Optional[bool]
     is_final: Optional[bool]
     maintainer: Any
-    version: Optional[Union[str, sdmx.model.common.Version]]
+    # NB Only present from sdmx1 2.16; minimum for message-ix-models is sdmx1 2.13.1
+    version: Optional[Union[str, "sdmx.model.common.Version"]]
