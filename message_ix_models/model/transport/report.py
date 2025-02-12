@@ -35,7 +35,7 @@ _FE_UNIT = "EJ/yr"
 DATAFLOW = (
     ("population_in", Key("pop:n-y")),
     ("gdp_in", Key("gdp:n-y")),
-    ("passenger_activity", pdt_nyt),  # FIXME Fails; GDP:n-y is simulated_qty()
+    ("activity_passenger", pdt_nyt),
     # Same as "Energy Service|Transportation" IAMC variable
     ("activity_vehicle", Key("out:nl-t-ya-c:transport+units")),
     # Same as "Final Energy|Transportation"
