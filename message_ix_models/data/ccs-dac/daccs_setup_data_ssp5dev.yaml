@@ -937,7 +937,7 @@ dac_htg:
       M1: 1
   relation_activity_CO2_cc:
     par_name: relation_activity
-    value: -1
+    value: 0.12 # This is emissions from gas. 0.118 MtC/GWa (IEAGHG, 2021) of gas for DAC, so 0.12 (adjusting)
     unit: Mt C/yr
     relation: [CO2_cc]
     year_rel:
@@ -957,6 +957,18 @@ dac_htg:
       R12_WEU: 1
     year_act:
       rate: 0
+      2030: 0.82
+      2035: 0.70
+      2040: 0.58
+      2045: 0.50
+      2050: 0.43
+      2055: 0.39
+      2060: 0.35
+      2070: 0.32
+      2080: 0.31
+      2090: 0.31
+      2100: 0.30
+      2110: 0.30
     mode:
       M1: 1
 

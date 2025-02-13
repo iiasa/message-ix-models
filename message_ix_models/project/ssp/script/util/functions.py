@@ -743,3 +743,14 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
         dfpar2add = pd.concat(df_list)
         scen.add_par("relation_upper", dfpar2add)
         scen.add_par("relation_lower", dfpar2add)
+
+        # ==============================================
+        ## Adjust dac_htg CO2_cc as it burns gas as input
+        cc2rem = scen.par(
+            "relation_activity", {"relation": "CO2_cc", "technology": "dac_htg"}
+        )
+        cc2add = cc2rem.copy()
+        cc2add["value"] = cc2add["value"].sub(1)
+
+        scen.remove_par("relation_activity", cc2rem)
+        scen.add_par("relation_activity", cc2add)
