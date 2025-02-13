@@ -74,7 +74,8 @@ jobs:
         # - Versions of ixmp and message_ix to test.
         # - Latest supported Python version for those or other dependencies.
         # Minimum version given in pyproject.toml + earlier version of Python
-        - { upstream: v3.6.0, python: "3.11" }  # 2022-08-18
+        # For this job only, the oldest version of Python supported by message-ix-models
+        - { upstream: v3.6.0, python: "3.9" }  # Released 2022-08-18
         - { upstream: v3.7.0, python: "3.11" }  # 2023-05-17
         - { upstream: v3.8.0, python: "3.12" }  # 2024-01-12
         # Latest released version + latest released Python
@@ -133,6 +134,7 @@ jobs:
         v, result = "${{ matrix.version.upstream }}".replace("main", "vmain"), []
         for condition, dependency in (
             (v <= "v3.6.0", "dask < 2024.3.0"),  # dask[dataframe] >= 2024.3.0 requires dask-expr and in turn pandas >= 2.0 (#156)
+            (v <= "v3.6.0", "numpy < 2.0"),
             (v <= "v3.6.0", "pandas < 2.0"),
             (v >= "v3.7.0", "dask[dataframe] < 2024.11.0"),  # dask >= 2024.11.0 changes handling of dict (will be addressed in #225)
             (v <= "v3.7.0", "genno < 1.25"),  # Upstream versions < 3.8.0 import genno.computations, removed in 1.25.0 (#156)
