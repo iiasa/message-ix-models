@@ -13,21 +13,28 @@ import sys
 import types
 from dataclasses import fields
 
+try:
+    from types import EllipsisType, NoneType, NotImplementedType
+except ImportError:  # Python 3.9
+    EllipsisType = type(...)  # type: ignore [misc]
+    NoneType = type(None)  # type: ignore [misc]
+    NotImplementedType = type(NotImplemented)  # type: ignore [misc]
+
 __all__ = [
     "asdict",
 ]
 
 _ATOMIC_TYPES = frozenset(
     {
-        types.NoneType,
+        NoneType,
         bool,
         int,
         float,
         str,
         complex,
         bytes,
-        types.EllipsisType,
-        types.NotImplementedType,
+        EllipsisType,
+        NotImplementedType,
         types.CodeType,
         types.BuiltinFunctionType,
         types.FunctionType,

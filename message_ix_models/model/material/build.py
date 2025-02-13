@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Optional
 
 import message_ix
 import pandas as pd
@@ -90,7 +90,7 @@ def build(
     scenario: message_ix.Scenario,
     old_calib: bool,
     modify_existing_constraints: bool = True,
-    iea_data_path: str | None = None,
+    iea_data_path: Optional[str] = None,
 ) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
     node_suffix = context.model.regions

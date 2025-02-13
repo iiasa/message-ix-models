@@ -17,6 +17,7 @@ from message_ix_models.model.transport.operator import (
     factor_ssp,
     sales_fraction_annual,
     transport_check,
+    uniform_in_dim,
 )
 from message_ix_models.model.transport.structure import get_technology_groups
 from message_ix_models.project.navigate import T35_POLICY
@@ -139,6 +140,7 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
 @pytest.mark.skipif(
     parse(version("genno")) < parse("1.25.0"), reason="Requires genno >= 1.25.0"
 )
+@uniform_in_dim.minimum_version
 def test_sales_fraction_annual():
     q = genno.Quantity(
         [[12.4, 6.1]], coords={"y": [2020], "n": list("AB")}, units="year"

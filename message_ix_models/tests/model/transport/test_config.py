@@ -75,18 +75,14 @@ class TestConfig:
 
     def test_scenario_conflict(self):
         # Giving both raises an exception
-        with pytest.raises(
-            ValueError,
-            match=r"SCENARIO.A___ and T35_POLICY.ACT\|TEC are not compatible",
-        ):
+        at = "(ACT|TEC)"  # Order differs in Python 3.9
+        expr = rf"SCENARIO.A___ and T35_POLICY.{at}\|{at} are not compatible"
+        with pytest.raises(ValueError, match=expr):
             c = Config(futures_scenario="A---", navigate_scenario="act+tec")
 
         # Also a conflict
         c = Config(navigate_scenario="act+tec")
-        with pytest.raises(
-            ValueError,
-            match=r"SCENARIO.A___ and T35_POLICY.ACT\|TEC are not compatible",
-        ):
+        with pytest.raises(ValueError, match=expr):
             c.set_futures_scenario("A---")
 
 
