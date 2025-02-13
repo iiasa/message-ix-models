@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from genno import Computer
 from ixmp.testing import assert_logs
@@ -103,5 +104,11 @@ def test_prepare_techs_filter_error(caplog, monkeypatch):
     """:func:`.prepare_techs` logs warnings for invalid filters."""
     monkeypatch.setitem(TECH_FILTERS, "foo", "not a filter")
 
-    with assert_logs(caplog, "SyntaxError('invalid syntax", at_level=logging.WARNING):
+    message = "SyntaxError('" + (
+        "invalid syntax"
+        if sys.version_info >= (3, 10)
+        else "unexpected EOF while parsing"
+    )
+
+    with assert_logs(caplog, message, at_level=logging.WARNING):
         prepare_techs(Computer(), get_codes("technology"))
