@@ -49,6 +49,8 @@ Documentation
   :doc:`project/sparccle`, and
   :doc:`project/uptake` (:pull:`282`).
 
+- New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
+- Bug fix: adjust or guard some Python usage that was not compatible with Python 3.9—the earliest version supported by :mod:`message_ix_models` (:pull:`295`, :issue:`294`).
 
 v2025.1.10
 ==========
