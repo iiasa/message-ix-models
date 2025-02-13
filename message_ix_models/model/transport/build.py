@@ -360,6 +360,7 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
+    from . import key
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -391,7 +392,7 @@ def add_structure(c: Computer) -> None:
             "cat_year",
             pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
         ),
-        ("y::model", "model_periods", "y", "cat_year"),
+        (key.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
     ):
         try:
@@ -414,7 +415,7 @@ def add_structure(c: Computer) -> None:
         ("t::transport", quote(spec.add.set["technology"])),
         ("t::transport agg", quote(dict(t=t_groups))),
         ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
-        ("t::transport modes", quote(config.demand_modes)),
+        (key.t_modes, quote(config.demand_modes)),
         ("t::transport modes 0", quote(dict(t=list(t_groups.keys())))),
         (
             "t::transport modes 1",
