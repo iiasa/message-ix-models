@@ -1166,7 +1166,7 @@ meth_h2:
   year_init: 2030
   input_co2_fic:
     par_name: input
-    value: 1.821
+    value: 0.549
     unit: '-'
     node_loc:
       R12_AFR: 1
@@ -1190,7 +1190,7 @@ meth_h2:
       final: 1
   input_co2_bic:
     par_name: input
-    value: 1.821
+    value: 0.549
     unit: '-'
     node_loc:
       R12_AFR: 1
@@ -1214,7 +1214,7 @@ meth_h2:
       final: 1
   input_co2_dac:
     par_name: input
-    value: 1.821
+    value: 0.549
     unit: '-'
     node_loc:
       R12_AFR: 1
