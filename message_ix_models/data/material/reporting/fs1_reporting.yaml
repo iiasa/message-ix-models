@@ -66,6 +66,6 @@ vars:
 
   Chemicals|Methanol|Hydrogen:
     filter:
-        {technology: meth_h2, mode: feedstock, commodity: methanol, level: primary_material}
+        {technology: meth_h2, mode: [feedstock_dac, feedstock_fic, feedstock_bic], commodity: methanol, level: primary_material}
     short:
         fe_fs_meth_h2
