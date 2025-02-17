@@ -42,6 +42,12 @@ vars:
     short: fe_nh3_gas
 
 
+  Chemicals|Methanol|Electricity:
+    filter:
+      { technology: [meth_h2, meth_ng_ccs], mode: feedstock, commodity: electr, level: secondary }
+    short:
+      fe_pe_meth_el
+
   Chemicals|Methanol|Solids|Coal:
     filter:
       {technology: [meth_coal, meth_coal_ccs], mode: feedstock, commodity: coal, level: secondary}
