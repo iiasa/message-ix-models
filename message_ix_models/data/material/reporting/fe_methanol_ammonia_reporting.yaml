@@ -44,7 +44,7 @@ vars:
 
   Chemicals|Methanol|Electricity:
     filter:
-      { technology: [meth_h2, meth_ng_ccs], mode: feedstock, commodity: electr, level: secondary }
+      { technology: [meth_h2, meth_ng_ccs], mode: [feedstock, feedstock_dac, feedstock_fic, feedstock_bic], commodity: electr, level: secondary }
     short:
       fe_pe_meth_el
 
@@ -65,5 +65,5 @@ vars:
 
   Chemicals|Methanol|Hydrogen:
     filter:
-      {technology: meth_h2, mode: feedstock, commodity: hydrogen, level: secondary}
+      {technology: meth_h2, mode: [feedstock_dac, feedstock_fic, feedstock_bic], commodity: hydrogen, level: secondary}
     short: fe_meth_h2
