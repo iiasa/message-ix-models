@@ -459,6 +459,7 @@ def split_fe_other(
         updated_rows = []
 
         for var in [i for i in py_df_all.variable if "Liquids|Other" in i]:
+            # calculate variable with methanol feed share to allocate proportionally
             py_df_all.multiply(
                 var,
                 f"Share|{c}-methanol",
@@ -478,37 +479,62 @@ def split_fe_other(
         py_df_all.filter(variable=py_df_update.variable, keep=False, inplace=True)
         py_df_all = pyam.concat([py_df_all, py_df_update])
     rep.set_filters()
+    # set all Liquids|Other to 0 since they are fully allocated to other variables now
+    rows = []
+    for var in [i for i in py_df_all.variable if "Liquids|Other" in i]:
+        rows.append(
+            py_df_all.multiply(
+                var,
+                0,
+                var,
+            )
+        )
+    py_df_all = pyam.concat(
+        [
+            py_df_all.filter(
+                variable=[i for i in py_df_all.variable if "Liquids|Other" in i],
+                keep=False,
+            ),
+            pyam.concat(rows),
+        ]
+    )
     return py_df_all
 
 
 def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
-    config = load_config("fs2")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    hvc_config = load_config("fs2")
+    df_hvc = pyam_df_from_rep(rep, hvc_config.message_query_key, hvc_config.df_mapping)
     dfs.append(
         format_reporting_df(
-            df,
-            config.iamc_prefix,
+            df_hvc,
+            hvc_config.iamc_prefix,
             model_name,
             scen_name,
-            config.unit,
-            config.df_mapping,
+            hvc_config.unit,
+            hvc_config.df_mapping,
         )
     )
-    config = load_config("fs1")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
-    df.loc[df.index.get_level_values("iamc_name").str.contains("Ammonia")] *= 0.697615
+
+    nh3_meth_config = load_config("fs1")
+    df_nh3_meth = pyam_df_from_rep(
+        rep, nh3_meth_config.message_query_key, nh3_meth_config.df_mapping
+    )
+    df_nh3_meth.loc[
+        df_nh3_meth.index.get_level_values("iamc_name").str.contains("Ammonia")
+    ] *= 0.697615
     dfs.append(
         format_reporting_df(
-            df,
-            config.iamc_prefix,
+            df_nh3_meth,
+            nh3_meth_config.iamc_prefix,
             model_name,
             scen_name,
-            config.unit,
-            config.df_mapping,
+            nh3_meth_config.unit,
+            nh3_meth_config.df_mapping,
         )
     )
     py_df = pyam.concat(dfs)
+
     prefix = "Final Energy|Non-Energy Use|"
     chem_aggs = {
         "Chemicals": [
@@ -643,6 +669,25 @@ def split_mto_feedstock(
         py_df_update = pyam.concat(updated_rows)
         py_df_all.filter(variable=py_df_update.variable, keep=False, inplace=True)
         py_df_all = pyam.concat([py_df_all, py_df_update])
+    # set all Liquids|Other to 0 since they are fully allocated to other variables now
+    rows = []
+    for var in [i for i in py_df_all.variable if "Liquids|Other" in i]:
+        rows.append(
+            py_df_all.multiply(
+                var,
+                0,
+                var,
+            )
+        )
+    py_df_all = pyam.concat(
+        [
+            py_df_all.filter(
+                variable=[i for i in py_df_all.variable if "Liquids|Other" in i],
+                keep=False,
+            ),
+            pyam.concat(rows),
+        ]
+    )
     rep.set_filters()
     return py_df_all
 
