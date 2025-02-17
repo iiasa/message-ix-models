@@ -458,15 +458,15 @@ def split_fe_other(
             py_df_all.multiply(
                 var,
                 f"Share|{c}-methanol",
-                var.replace("Other", f"{c}-methanol"),
+                var.replace("Liquids|Other", f"Liquids|{c}-methanol"),
                 append=True,
             )
             updated_rows.append(
                 py_df_all.aggregate(
-                    var.replace("Other", full_name),
+                    var.replace("Liquids|Other", f"Liquids|{full_name}"),
                     [
-                        var.replace("Other", full_name),
-                        var.replace("Other", f"{c}-methanol"),
+                        var.replace("Liquids|Other", f"Liquids|{full_name}"),
+                        var.replace("Liquids|Other", f"Liquids|{c}-methanol"),
                     ],
                 )
             )
@@ -624,15 +624,15 @@ def split_mto_feedstock(
             py_df_all.multiply(
                 var,
                 f"Share|{c}-methanol-fs",
-                var.replace("Other", f"{c}-methanol"),
+                var.replace("Liquids|Other", f"Liquids|{c}-methanol"),
                 append=True,
             )
             updated_rows.append(
                 py_df_all.aggregate(
-                    var.replace("Other", full_name),
+                    var.replace("Liquids|Other", f"Liquids|{full_name}"),
                     [
-                        var.replace("Other", full_name),
-                        var.replace("Other", f"{c}-methanol"),
+                        var.replace("Liquids|Other", f"Liquids|{full_name}"),
+                        var.replace("Liquids|Other", f"Liquids|{c}-methanol"),
                     ],
                 )
             )
