@@ -216,21 +216,25 @@ def run_fe_methanol_nh3_reporting(
     -------
 
     """
-    config = load_config("fe_methanol_ammonia")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    nh3_mt_to_gwa = 0.697615
+    fe_config = load_config("fe_methanol_ammonia")
+    df_fe = pyam_df_from_rep(rep, fe_config.message_query_key, fe_config.df_mapping)
 
-    config2 = load_config("fs1")
-    config2.iamc_prefix = config.iamc_prefix
-    df2 = pyam_df_from_rep(rep, config2.message_query_key, config2.df_mapping)
-    df2.loc[df2.index.get_level_values("iamc_name").str.contains("Ammonia")] *= 0.697615
-    df_final = df.sub(df2, fill_value=0)
+    fs_config = load_config("fs1")
+    fs_config.iamc_prefix = fe_config.iamc_prefix
+    df_fs = pyam_df_from_rep(rep, fs_config.message_query_key, fs_config.df_mapping)
+    df_fs.loc[df_fs.index.get_level_values("iamc_name").str.contains("Ammonia")] *= (
+        nh3_mt_to_gwa
+    )
+
+    df_final = df_fe.sub(df_fs, fill_value=0)
     py_df = format_reporting_df(
         df_final,
-        config2.iamc_prefix,
+        fs_config.iamc_prefix,
         model_name,
         scen_name,
-        config.unit,
-        config.df_mapping,
+        fe_config.unit,
+        fe_config.df_mapping,
     )
     return py_df
 
