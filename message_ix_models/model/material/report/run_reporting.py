@@ -548,7 +548,7 @@ def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
         ],
         "Chemicals|Solids|Biomass": [
             "Chemicals|Ammonia|Solids|Biomass",
-            "Chemicals|Methanol|Solids|Biomasss",
+            "Chemicals|Methanol|Solids|Biomass",
             "Chemicals|High-Value Chemicals|Solids|Biomass",
         ],
         "Chemicals|Solids|Coal": [
