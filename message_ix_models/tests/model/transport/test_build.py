@@ -232,8 +232,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
     "votm:n-y": (HasUnits(""),),
     key.price.base: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
-    # These units are implied by the test of "transport pdt:*":
-    # "transport pdt:n-y:total" [=] Mm / year
+    demand.pdt_nyt + "0": (HasUnits("passenger km / year"),),
     demand.pdt_nyt + "1": (HasUnits("passenger km / year"),),
     demand.ldv_ny + "total": (HasUnits("Gp km / a"),),
     # FIXME Handle dimensionality instead of exact units
@@ -292,6 +291,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
         dict(regions="R12", years="B"),
         dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
+        dict(regions="R12", years="B", options=dict(project={"LED": True})),
         param(dict(regions="R14", years="B"), marks=MARK[9]),
         param(dict(regions="ISR", years="A"), marks=MARK[3]),
     ),
@@ -320,8 +320,10 @@ def test_debug(
     k = "test_debug"
     result = insert_checks(c, k, CHECKS, common)
 
+    # Show and get a different key
+    # k = key.pdt_cny
+
     # Show what will be computed
-    # k = "pdt:n-y:capita+adj+ssp factor"
     if verbosity:
         print(c.describe(k))
 

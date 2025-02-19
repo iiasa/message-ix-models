@@ -493,7 +493,7 @@ def factor_fv(n: list[str], y: list[int], config: dict) -> "AnyQuantity":
     df.iloc[0, :] = 1.0
 
     # NAVIGATE T3.5 "act" demand-side scenario
-    if T35_POLICY.ACT & config["transport"].project["navigate"]:
+    if T35_POLICY.ACT & config["transport"].project.get("navigate", T35_POLICY.REF):
         years = list(filter(lambda y: y <= 2050, y))
         df.loc[years, "value"] = np.interp(years, [y[0], 2050], [1.0, 0.865])
 
@@ -540,7 +540,7 @@ def factor_input(
     df.iloc[0, :] = 1.0
 
     # NAVIGATE T3.5 "tec" demand-side scenario
-    if T35_POLICY.TEC & config["transport"].project["navigate"]:
+    if T35_POLICY.TEC & config["transport"].project.get("navigate", T35_POLICY.REF):
         years = list(filter(partial(gt, 2050), df.index))
 
         # Prepare a dictionary mapping technologies to their respective EI improvement
@@ -586,7 +586,7 @@ def factor_pdt(n: list[str], y: list[int], t: list[str], config: dict) -> "AnyQu
     df.iloc[0, :] = 1.0
 
     # Handle particular scenarios
-    if T35_POLICY.ACT & config["transport"].project["navigate"]:
+    if T35_POLICY.ACT & config["transport"].project.get("navigate", T35_POLICY.REF):
         # NAVIGATE T3.5 "act" demand-side scenario
         years = list(filter(lambda y: y <= 2050, y))
         df.loc[years, "LDV"] = np.interp(years, [y[0], 2050], [1.0, 0.8])
