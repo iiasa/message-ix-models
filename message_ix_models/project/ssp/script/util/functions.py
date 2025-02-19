@@ -18,7 +18,7 @@ from message_ix.utils import make_df
 from message_ix_models.tools.add_dac import add_tech
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
-from message_ix_models.util import load_package_data
+from message_ix_models.util import broadcast, load_package_data
 
 
 def modify_rc_bounds(s_original, s_target, mod_years):
@@ -312,6 +312,90 @@ def gen_te_projections(
     return inv_cost, fix_cost
 
 
+def _add_new_meth_h2_modes(scenario: message_ix.Scenario):
+    """
+    Add new modes for meth_h2 technology parametrization from the scenario.
+
+    meth_h2 uses CO2 to produce methanol.
+    fuel and feedstock mode are split into 3 modes each
+    depending on the CO2 source that is used:
+    biogenic (=bic), direct air capture (=dac), fossil (=fic).
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        scenario, where parameters for new modes should be added
+    """
+    par_dict = {}
+    for par in [x for x in scenario.par_list() if "mode" in scenario.idx_sets(x)]:
+        df = scenario.par(par, filters={"technology": "meth_h2"})
+        if len(df.index):
+            par_dict[par] = df.copy(deep=True)
+
+    par_dict_new = {k: pd.DataFrame() for k in par_dict.keys()}
+    for par, df in par_dict.items():
+        for mode in ["feedstock", "fuel"]:
+            df_tmp = df[df["mode"].values == mode].copy(deep=True)
+            df_tmp["mode"] = None
+            df_tmp = df_tmp.pipe(
+                broadcast, mode=[f"{mode}_{suffix}" for suffix in ["bic", "dac", "fic"]]
+            )
+            par_dict_new[par] = pd.concat([par_dict_new[par], df_tmp])
+
+    with scenario.transact():
+        for par, df in par_dict_new.items():
+            scenario.add_par(par, df)
+
+
+def _remove_old_meth_h2_modes(scenario: message_ix.Scenario):
+    """
+    Remove old modes for meth_h2 technology from the scenario.
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        scenario, where parameters for new modes should be added
+    """
+    par_dict = {}
+    for par in [x for x in scenario.par_list() if "mode" in scenario.idx_sets(x)]:
+        df = scenario.par(
+            par, filters={"technology": "meth_h2", "mode": ["feedstock", "fuel"]}
+        )
+        if len(df.index):
+            par_dict[par] = df.copy(deep=True)
+
+    with scenario.transact():
+        for par, df in par_dict.items():
+            scenario.remove_par(par, df)
+
+
+def _register_new_modes(scenario):
+    """
+    Register new modes required for meth_h2 technology parametrization
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        scenario, where meth_h2 modes should be registered
+    """
+    modes = ["bic", "dac", "fic"]
+    for mode in ["feedstock", "fuel"]:
+        scenario.add_set("mode", [f"{mode}_{suffix}" for suffix in modes])
+
+
+def update_meth_h2_modes(scenario: message_ix.Scenario):
+    """Add new meth_h2 modes to set and update meth_h2 parametrization accordingly.
+
+    Parameters
+    ----------
+    scenario: message_ix.Scenario
+        scenario, where meth_h2 mode update should be applied
+    """
+    _register_new_modes(scenario)
+    _add_new_meth_h2_modes(scenario)
+    _remove_old_meth_h2_modes(scenario)
+
+
 def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
     with scen.transact(""):
         # CO2 storage potential from Matt and Sidd
@@ -463,6 +547,8 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
 
         dac_techs = ["dac_lt", "dac_hte", "dac_htg"]
 
+        update_meth_h2_modes(scen)
+
         # mp = ixmp.Platform()
 
         # calling base scenario
@@ -514,11 +600,11 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
         # Add new setup ================================
         ## setup pipelines, storage, and non-dac ccs technologies
         add_tech(
-            scen, load_package_data(f"ccs-dac\co2infrastructure_data_{ssp}dev.yaml")
+            scen, load_package_data(rf"ccs-dac\co2infrastructure_data_{ssp}dev.yaml")
         )
 
         ## setup dac technologies
-        add_tech(scen, load_package_data(f"ccs-dac\daccs_setup_data_{ssp}dev.yaml"))
+        add_tech(scen, load_package_data(rf"ccs-dac\daccs_setup_data_{ssp}dev.yaml"))
 
         ## add dac costs using meas's tool
         ##> making the projection
