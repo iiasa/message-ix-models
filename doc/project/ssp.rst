@@ -3,6 +3,11 @@
 Shared Socioeconomic Pathways (:mod:`.project.ssp`)
 ***************************************************
 
+For the 2023–2025 update process:
+
+- Project lead, lead modeler: :gh-user:`OFR-IIASA`
+
+
 Structure
 =========
 
