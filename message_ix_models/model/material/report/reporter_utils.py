@@ -106,7 +106,7 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
     if mode == "fuel":
         t_filter2.update({"l": ["primary"]})
 
-    rep.add("out::methanol-prod", "select", "out:nl-t-ya-m-c-l", t_filter2)
+    rep.add("out::methanol-prod", "select", "out:nl-t-ya-c-l", t_filter2)
     rep.add(
         "out::methanol-prod-by-tec",
         "group_sum",
