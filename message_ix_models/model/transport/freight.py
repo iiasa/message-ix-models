@@ -179,6 +179,8 @@ def constraint_data(
     # Only the technologies that input c=gas
     t_2: set["Code"] = set(filter(partial(has_input_commodity, commodity="gas"), t_0))
 
+    assert all(len(t) for t in (t_0, t_1, t_2)), "Technology groups are empty"
+
     common = dict(year_act=years, year_vtg=years, time="year", unit="-")
     dfs = defaultdict(list)
 
@@ -217,4 +219,8 @@ def constraint_data(
             for n, df in make_matched_dfs(dfs[name][-1], **{name_init: value}).items():
                 dfs[n].append(df)
 
-    return {k: pd.concat(v) for k, v in dfs.items()}
+    result = {k: pd.concat(v) for k, v in dfs.items()}
+
+    assert not any(v.isna().any(axis=None) for v in result.values()), "Missing labels"
+
+    return result
