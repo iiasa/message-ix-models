@@ -7,18 +7,48 @@ Next release
 - Support for :mod:`ixmp` and :mod:`message_ix` versions 3.4.x and 3.5.x is dropped in accordance with the :ref:`policy-upstream-versions` (:pull:`288`).
   The minimum version of both packages is 3.6.0.
 - Update :class:`.IEA_EWEB` to support :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
-- Update :doc:`/transport/index` (:pull:`259`).
-
-  - Adjust constraints on :py:`t="conm_ar"`.
-  - Recompute :attr:`.minimum_activity` for transport technologies.
-  - Adjust freight activity, freight and passenger mode shares for some regions.
-  - Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
-  - Simplify and consolidate tests.
-
 - Add :func:`.prepare_method_B` to :mod:`.ssp.transport` (:pull:`259`).
+- New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
+
+By topic:
+
+.. contents::
+   :local:
+   :backlinks: none
+
+Transport
+---------
+
+Update :doc:`/transport/index` (:pull:`259`).
+
+- Adjust constraints on :py:`t="conm_ar"`.
+- Recompute :attr:`.minimum_activity` for transport technologies.
+- Adjust freight activity, freight and passenger mode shares for some regions.
+- Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
+- Simplify and consolidate tests.
+
+Documentation
+-------------
+
 - New :doc:`/howto/index` documentation sub-tree (:pull:`291`).
 - New guide on HOWTO :doc:`/howto/unicc` (:pull:`279`) and supporting command :program:`mix-models sbatch` in :mod:`.util.slurm` (:pull:`291`).
-- New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
+- New summary pages for projects
+  :doc:`project/alps`,
+  :doc:`project/carbon-direct`,
+  :doc:`project/cfr`,
+  :doc:`project/ecemf`,
+  :doc:`project/elevate`,
+  :doc:`project/geidco`,
+  :doc:`project/genie`,
+  :doc:`project/guide`,
+  :doc:`project/hyway`,
+  :doc:`project/newpathways`,
+  :doc:`project/nextgen-carbon`,
+  :doc:`project/ngfs`,
+  :doc:`project/prisma`,
+  :doc:`project/sparccle`, and
+  :doc:`project/uptake` (:pull:`282`).
+
 
 v2025.1.10
 ==========
