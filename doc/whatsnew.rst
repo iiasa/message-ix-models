@@ -4,8 +4,8 @@ What's new
 Next release
 ============
 
-- Support for :mod:`ixmp` and :mod:`message_ix` versions 3.4.x and 3.5.x is dropped in accordance with the :ref:`policy-upstream-versions` (:pull:`288`).
-  The minimum version of both packages is 3.6.0.
+- Support for :mod:`ixmp` and :mod:`message_ix` versions 3.4, 3.5, and 3.6 is dropped in accordance with the :ref:`policy-upstream-versions` (:pull:`288`, :pull:`289`).
+  The minimum version of both packages is 3.7.0.
 - Update :class:`.IEA_EWEB` to support :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
 - Add :func:`.prepare_method_B` to :mod:`.ssp.transport` (:pull:`259`).
 - New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
