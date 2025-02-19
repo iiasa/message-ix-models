@@ -2,7 +2,7 @@
 
 from types import SimpleNamespace
 
-from genno import Key, KeySeq
+from genno import Key, Keys, KeySeq
 
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 
@@ -37,6 +37,30 @@ gdp_exo = Key("gdp", "ny")
 mer_to_ppp = Key("MERtoPPP", "ny")
 
 # Keys for new quantities
+
+#: Quantities for broadcasting (t) to (t, c, l). See :func:`.broadcast_t_c_l`.
+#:
+#: - :py:`.input`: Quantity for broadcasting (all values 1) from every transport |t|
+#:   (same as ``t::transport``) to the :math:`(c, l)` that that technology receives as
+#:   input.
+#: - :py:`.output`: same as above, but for the :math:`(c, l)` that the technology
+#:   produces as output.
+bcast_tcl = Keys(
+    input="broadcast:t-c-l:transport+input",
+    output="broadcast:t-c-l:transport+output",
+)
+
+#: Quantities for broadcasting (y) to (yv, ya). See :func:`.broadcast_y_yv_ya`.
+#:
+#: - :py:`.all`: Quantity for broadcasting (all values 1) from every |y| to every
+#:   possible combination of :math:`(y^V=y, y^A)`—including historical periods.
+#: - :py:`.model`: same as above, but only model periods (``y::model``).
+#: - :py:`.no_vintage`: same as above, but only the cases where :math:`y^V = y^A`.
+bcast_y = Keys(
+    all="broadcast:y-yv-ya:all",
+    model="broadcast:y-yv-ya:model",
+    no_vintage="broadcast:y-yv-ya:no vintage",
+)
 
 #: Shares of population with consumer group (`cg`) dimension.
 cg = Key("cg share:n-y-cg")
