@@ -316,14 +316,22 @@ def prepare_computer(c: Computer) -> None:
 
     config: "Config" = c.graph["context"].transport
 
-    if config.project.get("LED", False):
-        # Select from the file input
-        c.add(pdt_cap, "select", exo.pdt_cap_proj, indexers=dict(scenario="LED"))
-    else:
-        c.apply(pdt_per_capita)
+    # Compute total PDT per capita
+    c.apply(pdt_per_capita)
 
     # Insert a scaling factor that varies according to SSP setting
     c.apply(factor.insert, pdt_cap, name="pdt non-active", target=pdt_cap + "adj")
 
+    # Add other tasks for demand calculation
     c.add_queue(TASKS)
+
+    if config.project.get("LED", False):
+        # Replace certain calculations for LED projected activity
+
+        # Select data from input file: projected PDT per capita
+        c.add(pdt_cap * "t", "select", exo.pdt_cap_proj, indexers=dict(scenario="LED"))
+
+        # Multiply by population for the total
+        c.add(pdt_nyt + "0", "mul", pdt_cap * "t", pop)
+
     c.add("transport_data", __name__, key="transport demand::ixmp")
