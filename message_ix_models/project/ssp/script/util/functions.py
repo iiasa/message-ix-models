@@ -342,9 +342,8 @@ def _add_new_meth_h2_modes(scenario: message_ix.Scenario):
             )
             par_dict_new[par] = pd.concat([par_dict_new[par], df_tmp])
 
-    with scenario.transact():
-        for par, df in par_dict_new.items():
-            scenario.add_par(par, df)
+    for par, df in par_dict_new.items():
+        scenario.add_par(par, df)
 
 
 def _remove_old_meth_h2_modes(scenario: message_ix.Scenario):
@@ -364,9 +363,8 @@ def _remove_old_meth_h2_modes(scenario: message_ix.Scenario):
         if len(df.index):
             par_dict[par] = df.copy(deep=True)
 
-    with scenario.transact():
-        for par, df in par_dict.items():
-            scenario.remove_par(par, df)
+    for par, df in par_dict.items():
+        scenario.remove_par(par, df)
 
 
 def _register_new_modes(scenario):
