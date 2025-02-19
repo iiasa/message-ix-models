@@ -97,7 +97,6 @@ def prepare_computer(c: Computer):
     In both cases, :func:`constraint_data` is used to generate constraint data.
     """
     from genno import Key
-    from genno.core.attrseries import AttrSeries
 
     from . import factor
 
@@ -181,9 +180,7 @@ def prepare_computer(c: Computer):
         dim="nl",
     )
     # Broadcast to all LDV technologies
-    # TODO Use a named operator like genno.operator.expand_dims, instead of the method
-    #      of the AttrSeries class
-    c.add(f"{name}:nl-t-yv:LDV", AttrSeries.expand_dims, f"{name}:nl-yv:LDV", t_ldv)
+    c.add(f"{name}:nl-t-yv:LDV", "expand_dims", f"{name}:nl-yv:LDV", t_ldv)
     # Convert to MESSAGE data structure
     _add(
         c,

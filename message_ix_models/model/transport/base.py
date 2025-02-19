@@ -116,7 +116,7 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
         # - Return clipped values.
         return genno.Quantity(
             qty.sel({dim: coord})
-            .expand_dims({dim: qty.coords[dim]})
+            .expand_dims({dim: qty.coords[dim].data})
             .to_series()
             .rename("threshold")
             .to_frame()

@@ -122,19 +122,20 @@ def prepare_computer(c: genno.Computer):
     prev = c.add(k[6], "mul", prev, bcast_tcl.output)
 
     # Broadcast over the (n, yv, ya) dimensions
-    dim = dict(n=["*"], y=[None], ya=[None], yv=[None])
-    prev = c.add(k[7], "expand_dims", prev, dim=dim)
-    prev = c.add(k[8], "broadcast_wildcard", prev, "n", dim="n")
-    prev = c.add(k[9], "broadcast", prev, "broadcast:y-yv-ya:no vintage")
+    d = tuple("tcl") + tuple("ny")
+    prev = c.add(k[7] * d, "expand_dims", prev, dim=dict(n=["*"], y=["*"]))
+    prev = c.add(k[8] * d, "broadcast_wildcard", prev, "n::ex world", dim="n")
+    prev = c.add(k[9] * d, "broadcast_wildcard", prev, "y::model", dim="y")
+    prev = c.add(k[10] * (d + ("ya", "yv")), "mul", prev, bcast_y.no_vintage)
 
     # Convert output to MESSAGE data structure
-    c.add(k[10], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
+    c.add(k[11], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
     to_add.append(f"usage output{Fi}")
-    c.add(to_add[-1], lambda v: same_time(same_node(v)), k[10])
+    c.add(to_add[-1], lambda v: same_time(same_node(v)), k[11])
 
     # Create corresponding input values in Gv km
-    prev = c.add(k[11], wildcard(1.0, "gigavehicle km", tuple("nty")))
-    for i, coords in enumerate(["n::ex world", "t::F usage", "y::model"], start=11):
+    prev = c.add(k[12], wildcard(1.0, "gigavehicle km", tuple("nty")))
+    for i, coords in enumerate(["n::ex world", "t::F usage", "y::model"], start=12):
         prev = c.add(k[i + 1], "broadcast_wildcard", k[i], coords, dim=coords[0])
     prev = c.add(k[i + 2], "mul", prev, bcast_tcl.input, bcast_y.no_vintage)
     prev = c.add(
