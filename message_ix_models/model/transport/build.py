@@ -346,17 +346,7 @@ def add_structure(c: Computer) -> None:
       :class:`str`. See :func:`.get_technology_groups`.
     - ``t::transport RAIL`` etc.: :class:`dict` mapping "t" to the elements of
       ``t::RAIL``.
-    - ``broadcast:t-c-l:input``: Quantity for broadcasting (all values 1) from every
-      transport |t| (same as ``t::transport``) to the :math:`(c, l)` that that
-      technology receives as input. See :func:`.broadcast_t_c_l`.
-    - ``broadcast:t-c-l:input``: same as above, but for the :math:`(c, l)` that the
-      technology produces as output.
-    - ``broadcast:y-yv-ya:all``: Quantity for broadcasting (all values 1) from every |y|
-      to every possible combination of :math:`(y^V=y, y^A)`—including historical
-      periods. See :func:`.broadcast_y_yv_ya`.
-    - ``broadcast:y-yv-ya``: same as above, but only model periods (``y::model``).
-    - ``broadcast:y-yv-ya:no vintage``: same as above, but only the cases where
-      :math:`y^V = y^A`.
+    - All of the keys in :data:`.bcast_tcl` and :data:`.bcast_y`.
     """
     from ixmp.report import configure
 
@@ -424,30 +414,23 @@ def add_structure(c: Computer) -> None:
     ]
 
     # Quantities for broadcasting (t,) to (t, c, l) dimensions
-    tasks += [
+    tasks.extend(
         (
-            f"broadcast:t-c-l:transport+{kind}",
+            getattr(key.bcast_tcl, kind),
             partial(broadcast_t_c_l, kind=kind, default_level="final"),
             "t::transport",
             "c::transport+base",
         )
         for kind in ("input", "output")
-    ]
+    )
 
     # Quantities for broadcasting y to (yv, ya)
-    for base, tag, method in (
-        ("y", ":all", "product"),  # All periods
-        ("y::model", "", "product"),  # Model periods only
-        ("y::model", ":no vintage", "zip"),  # Model periods with no vintaging
+    for k, base, method in (
+        (key.bcast_y.all, "y", "product"),  # All periods
+        (key.bcast_y.model, "y::model", "product"),  # Model periods only
+        (key.bcast_y.no_vintage, "y::model", "zip"),  # Model periods with no vintaging
     ):
-        tasks.append(
-            (
-                f"broadcast:y-yv-ya{tag}",
-                partial(broadcast_y_yv_ya, method=method),
-                base,
-                base,
-            )
-        )
+        tasks.append((k, partial(broadcast_y_yv_ya, method=method), base, base))
 
     # Groups of technologies and indexers
     # FIXME Combine or disambiguate these keys
