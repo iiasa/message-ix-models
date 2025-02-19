@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Optional
 
 import message_ix
 import numpy as np
@@ -285,7 +285,7 @@ def read_sector_data(
 
 
 def read_timeseries(
-    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
+    scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
     """
     Read "timeseries" type data from a sector specific xlsx input file
@@ -363,7 +363,7 @@ def read_timeseries(
 
 
 def read_rel(
-    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
+    scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
     """
     Read relation_* type parameter data for specific industry
