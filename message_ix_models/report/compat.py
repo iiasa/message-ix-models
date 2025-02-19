@@ -260,8 +260,17 @@ def assert_dims(c: "Computer", *keys: Key):
     task, in order to ensure the key matches the dimensionality of the quantity that
     will result from the task.
 
-    .. todo:: Remove once handled upstream in :mod:`genno`.
+    .. deprecated:: 2025-02-17
+       Handled upstream in :func:`genno.operator.add_binop` with genno ≥1.20.
     """
+    from warnings import warn
+
+    warn(
+        "message-ix-models.report.compat.assert_dims()",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     for key in keys:
         task = c.graph[key]
         expected = Key.product("foo", *task[1:])
