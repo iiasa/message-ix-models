@@ -207,7 +207,17 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
     "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
     "transport::F+ixmp": (
         ContainsDataForParameters(
-            {"capacity_factor", "input", "output", "technical_lifetime"}
+            {
+                "capacity_factor",
+                "growth_activity_lo",
+                "growth_activity_up",
+                "growth_new_capacity_up",
+                "initial_activity_up",
+                "initial_new_capacity_up",
+                "input",
+                "output",
+                "technical_lifetime",
+            }
         ),
         # HasCoords({"technology": ["f rail electr"]}),
     ),
@@ -311,7 +321,8 @@ def test_debug(
     result = insert_checks(c, k, CHECKS, common)
 
     # Show what will be computed
-    if verbosity == 2:
+    # k = "pdt:n-y:capita+adj+ssp factor"
+    if verbosity:
         print(c.describe(k))
 
     # Compute the test key

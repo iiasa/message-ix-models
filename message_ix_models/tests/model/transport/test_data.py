@@ -57,6 +57,11 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
     # Data are provided for these parameters
     assert {
         "capacity_factor",
+        "growth_activity_lo",
+        "growth_activity_up",
+        "growth_new_capacity_up",
+        "initial_activity_up",
+        "initial_new_capacity_up",
         "input",
         "output",
         "technical_lifetime",
