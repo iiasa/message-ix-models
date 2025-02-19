@@ -16,6 +16,10 @@ Modeling activities may include:
 - Soft-link with service models, dynamic MFA (`MISO2 <https://github.com/socialecologyboku/MISO2>`_), MRIO (EXIOfutures), and waste (GAINS) models (2024-06–2025-08).
 - Develop integrated energy-material-emissions scenarios with focus on demand side transformation (2025-01–2026-08).
 
+As of 2025-01:
+
+- Lead modeler :gh-user:`amastrucci` (buildings), :gh-user:`r-aneeque` (transport)
+
 Code reference
 ==============
 
