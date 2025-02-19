@@ -203,7 +203,8 @@ def test_apply_units(request, test_context, regions):
     reporter, key = prepare_reporter(test_context, bare_res)
 
     # Units are converted
-    df = reporter.get("Investment Cost::iamc").as_pandas()
+    key = "Investment Cost::iamc"
+    df = reporter.get(key).as_pandas()
     assert ["EUR_2005"] == df["unit"].unique()
 
 
