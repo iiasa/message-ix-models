@@ -6,7 +6,7 @@ from genno.testing import assert_qty_equal
 from iam_units import registry
 
 from message_ix_models.model.transport.config import Config, DataSourceConfig
-from message_ix_models.report.util import as_quantity
+from message_ix_models.util.genno import as_quantity
 
 
 @pytest.mark.xfail(reason="Refactoring")
