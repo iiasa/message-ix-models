@@ -49,7 +49,7 @@ Fi = "::F+ixmp"
 def prepare_computer(c: genno.Computer):
     from genno.core.attrseries import AttrSeries
 
-    from .key import n, y
+    from .key import bcast_tcl, bcast_y, n, y
 
     to_add = []  # Keys for ixmp-structured data to add to the target scenario
     k = genno.KeySeq("F")  # Sequence of temporary keys for the present function
@@ -61,9 +61,7 @@ def prepare_computer(c: genno.Computer):
     t_F_ROAD = "t::transport F ROAD"
     c.add(k[0], AttrSeries.expand_dims, "energy intensity of VDT:n-y", t_F_ROAD)
     # Broadcast over dimensions (c, l, y, yv, ya)
-    prev = c.add(
-        k[1], "mul", k[0], "broadcast:t-c-l:transport+input", "broadcast:y-yv-ya"
-    )
+    prev = c.add(k[1], "mul", k[0], bcast_tcl.input, bcast_y.model)
     # Convert input to MESSAGE data structure
     c.add(k[2], "as_message_df", prev, name="input", dims=DIMS, common=COMMON)
 
@@ -87,13 +85,7 @@ def prepare_computer(c: genno.Computer):
 
     for par_name, base, ks, i in (("output", k_output[3] * nty, k_output, 3),):
         # Produce the full quantity for input/output efficiency
-        prev = c.add(
-            ks[i + 1],
-            "mul",
-            ks[i],
-            f"broadcast:t-c-l:transport+{par_name}",
-            "broadcast:y-yv-ya:all",
-        )
+        prev = c.add(ks[i + 1], "mul", ks[i], getattr(bcast_tcl, par_name), bcast_y.all)
 
         # Convert to ixmp/MESSAGEix-structured pd.DataFrame
         # NB quote() is necessary with dask 2024.11.0, not with earlier versions
@@ -127,7 +119,7 @@ def prepare_computer(c: genno.Computer):
     # Base values for conversion technologies
     prev = c.add("F usage output:t:base", "freight_usage_output", "context")
     # Broadcast from (t,) to (t, c, l) dimensions
-    prev = c.add(k[6], "mul", prev, "broadcast:t-c-l:transport+output")
+    prev = c.add(k[6], "mul", prev, bcast_tcl.output)
 
     # Broadcast over the (n, yv, ya) dimensions
     dim = dict(n=["*"], y=[None], ya=[None], yv=[None])
@@ -144,13 +136,7 @@ def prepare_computer(c: genno.Computer):
     prev = c.add(k[11], wildcard(1.0, "gigavehicle km", tuple("nty")))
     for i, coords in enumerate(["n::ex world", "t::F usage", "y::model"], start=11):
         prev = c.add(k[i + 1], "broadcast_wildcard", k[i], coords, dim=coords[0])
-    prev = c.add(
-        k[i + 2],
-        "mul",
-        prev,
-        "broadcast:t-c-l:transport+input",
-        "broadcast:y-yv-ya:no vintage",
-    )
+    prev = c.add(k[i + 2], "mul", prev, bcast_tcl.input, bcast_y.no_vintage)
     prev = c.add(
         k[i + 3], "as_message_df", prev, name="input", dims=DIMS, common=COMMON
     )
@@ -183,7 +169,7 @@ def constraint_data(
     # Freight modes
     modes = ["F ROAD", "F RAIL"]
 
-    # Lists of technologies to constrain
+    # Sets of technologies to constrain
     # All technologies under the non-LDV modes
     t_0: set["Code"] = set(filter(lambda t: t.parent and t.parent.id in modes, t_all))
     # Only the technologies that input c=electr
