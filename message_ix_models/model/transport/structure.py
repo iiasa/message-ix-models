@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from copy import deepcopy
+from itertools import chain
 from typing import Any, Union
 
 from sdmx.model.common import Annotation, Code
@@ -50,9 +51,15 @@ def get_technology_groups(
 
     result: dict[str, list[str]] = {"non-ldv": []}
 
+    # Recursively collect leaf IDs
+    def _leaf_ids(node) -> list[str]:
+        return list(
+            chain(*[_leaf_ids(c) if len(c.child) else (c.id,) for c in node.child])
+        )
+
     # Only include those technologies with children
     for tech in filter(lambda t: len(t.child), t_list):
-        result[tech.id] = list(c.id for c in tech.child)
+        result[tech.id] = _leaf_ids(tech)
         # Store non-LDV technologies
         if tech.id != "LDV":
             result["non-ldv"].extend(result[tech.id])
