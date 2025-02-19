@@ -27,6 +27,7 @@ from message_ix_models.util import (
 from . import files as exo
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
+from .key import bcast_tcl, bcast_y
 from .util import wildcard
 
 if TYPE_CHECKING:
@@ -213,13 +214,7 @@ def prepare_computer(c: Computer):
     _add(c, "constraints", constraint_data, "context")
     # Capacity factor
     _add(
-        c,
-        "capacity_factor",
-        capacity_factor,
-        exo.activity_ldv,
-        t_ldv,
-        "y",
-        "broadcast:y-yv-ya:all",
+        c, "capacity_factor", capacity_factor, exo.activity_ldv, t_ldv, "y", bcast_y.all
     )
 
     # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
@@ -318,13 +313,7 @@ def prepare_tech_econ(
         c.add(ks[i], "extend_y", base, "y::LDV")
 
         # Produce the full quantity for input/output efficiency
-        prev = c.add(
-            ks[i + 1],
-            "mul",
-            ks[i],
-            f"broadcast:t-c-l:transport+{par_name}",
-            "broadcast:y-yv-ya:all",
-        )
+        prev = c.add(ks[i + 1], "mul", ks[i], getattr(bcast_tcl, par_name), bcast_y.all)
 
         # Convert to ixmp/MESSAGEix-structured pd.DataFrame
         # NB quote() is necessary with dask 2024.11.0, not with earlier versions
@@ -342,7 +331,7 @@ def prepare_tech_econ(
             "y::coords",
             kwargs=dict(fill_value="extrapolate"),
         )
-        prev = c.add(f"{par_name}::LDV+1", "mul", prev, "broadcast:y-yv-ya:all")
+        prev = c.add(f"{par_name}::LDV+1", "mul", prev, bcast_y.all)
         _add(
             c, par_name, "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON
         )
@@ -415,7 +404,7 @@ def capacity_factor(
     qty
         Input data, for instance from file :`ldv-activity.csv`, with dimension |n|.
     y_broadcast
-        The structure :py:`"broadcast:y-yv-va"`.
+        The structure :data:`bcast_y.model <.bcast_y>`.
     t_ldv
         The structure :py:`"t::transport LDV"`, mapping the key "t" to the list of LDV
         technologies.
