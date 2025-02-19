@@ -1,7 +1,7 @@
 import os
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Optional
 
 import message_ix
 import numpy as np
