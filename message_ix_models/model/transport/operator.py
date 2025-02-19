@@ -22,7 +22,6 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.report.operator import compound_growth
-from message_ix_models.report.util import as_quantity
 from message_ix_models.util import (
     MappingAdapter,
     datetime_now_with_tz,
@@ -30,6 +29,7 @@ from message_ix_models.util import (
     nodes_ex_world,
     show_versions,
 )
+from message_ix_models.util.genno import as_quantity
 
 from .config import Config
 
