@@ -93,19 +93,20 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    project/advance
    project/alps
    project/carbon-direct
-   project/circeular
    project/cfr
-   project/edits
+   project/circeular
    project/ecemf
+   project/edits
    project/elevate
-   project/nextgen-carbon
-   project/ngfs
    project/gea
    project/geidco
    project/genie
    project/guide
    project/hyway
+   project/navigate
    project/newpathways
+   project/nextgen-carbon
+   project/ngfs
    project/prisma
    project/shape
    project/sparccle
