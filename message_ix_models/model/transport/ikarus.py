@@ -19,7 +19,6 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
     same_time,
-    series_of_pint_quantity,
 )
 
 from .key import bcast_tcl, bcast_y
@@ -190,7 +189,7 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
         output = registry.Quantity(
             occupancy[tec], "passenger / vehicle"
         ) * k_output.get(tec, 1.0)
-        df["output"] = series_of_pint_quantity([output] * len(df.index), index=df.index)
+        df["output"] = pd.Series([output] * len(df.index), index=df.index)
 
         df["inv_cost"] *= k_inv_cost.get(tec, 1.0)
 

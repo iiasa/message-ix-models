@@ -20,7 +20,7 @@ import pandas as pd
 import pint
 from platformdirs import user_cache_path
 
-from ._convert_units import convert_units, series_of_pint_quantity
+from ._convert_units import convert_units
 from ._logging import mark_time, preserve_log_level, silence_log
 from .cache import cached
 from .common import (
@@ -82,7 +82,6 @@ __all__ = [
     "replace_par_data",
     "same_node",
     "same_time",
-    "series_of_pint_quantity",
     "show_versions",
     "silence_log",
     "strip_par_data",
