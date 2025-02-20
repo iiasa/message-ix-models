@@ -9,6 +9,7 @@ Next release
 - Update :class:`.IEA_EWEB` to support :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
 - Add :func:`.prepare_method_B` to :mod:`.ssp.transport` (:pull:`259`).
 - New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
+- Drop obsolete :py:`series_of_pint_quantity()` (:pull:`289`).
 
 By topic:
 
@@ -19,13 +20,22 @@ By topic:
 Transport
 ---------
 
-Update :doc:`/transport/index` (:pull:`259`).
+Update :doc:`/transport/index` (:pull:`259`, :pull:`289`).
 
 - Adjust constraints on :py:`t="conm_ar"`.
 - Recompute :attr:`.minimum_activity` for transport technologies.
-- Adjust freight activity, freight and passenger mode shares for some regions.
+- Improve freight representation:
+
+  - Adjust freight activity, freight and passenger mode shares for some regions.
+  - Add dynamic constraints on activity of freight technologies.
+  - Fix alignment of freight technology outputs with demand |l|.
+
+- Implement LED override using exogenous passenger activity data from :ref:`transport-pdt-cap-proj`.
 - Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
+- Generate SDMX-ML structural metadata, including data flow definitions, and SDMX-{CSV,ML} data outputs for certain reported quantities.
+- Expand use of fixed/shared keys from :mod:`.transport.key`.
 - Simplify and consolidate tests.
+- Improve :func:`.simulated_solution` to load ‘simulated’ solution data from file to reduce test durations.
 
 Documentation
 -------------
@@ -445,12 +455,12 @@ Earlier releases
 2021.7.27
 ---------
 
-- Improve caching using  mod:`genno` v1.8.0 (:pull:`29`).
+- Improve caching using :mod:`genno` v1.8.0 (:pull:`29`).
 
 2021.7.22
 ---------
 
-- Migrate utilities :func:`.cached`, :func:`.check_support`, :func:`.convert_units`, :func:`.maybe_query`, :func:`.series_of_pint_quantity` (:pull:`27`)
+- Migrate utilities :func:`.cached`, :func:`.check_support`, :func:`.convert_units`, :func:`.maybe_query`, :py:`series_of_pint_quantity()` (:pull:`27`)
 - Add :data:`.testing.NIE`.
 - Add the ``--jvmargs`` option to :command:`pytest` (see :func:`.pytest_addoption`).
 - Remove :py:`.Context.get_config_file()`, :py:`.get_path()`, :py:`.load_config()`, and :py:`.units`, all deprecated since 2021-02-28.

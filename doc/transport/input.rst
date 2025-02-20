@@ -204,6 +204,8 @@ node = R12_SAS [2]_
 .. [2] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1941860412>`_.
 .. [3] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
 
+.. _transport-pdt-cap-proj:
+
 :file:`pdt-cap.csv` → ``P activity:scenario-n-t-y:exo``
 -------------------------------------------------------
 
@@ -220,7 +222,6 @@ PDT per capita.
   Method described in `this Slack message <https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1731510626983289?thread_ts=1730218237.960269&cid=CCFHDNA6P>`__.
 
   .. todo:: Transcribe the method into this document.
-
 
 :file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
 ----------------------------------------------
