@@ -82,6 +82,7 @@ solar_res_hist_2005,weo,solarpv_large,,,2020
 solar_res_hist_2010,weo,solarpv_large,,,2020
 solar_res_hist_2015,weo,solarpv_large,,,2020
 solar_res_hist_2020,weo,solarpv_large,,,2020
+solar_res_hist_2025,weo,solarpv_large,,,2020
 solar_th_ppl,weo,csp,969,,2005
 stor_ppl,weo,csp,800,,2005
 syn_liq,weo,igcc,3224,,2020
@@ -95,6 +96,7 @@ wind_ref_hist_2005,weo,wind_offshore,1771,,2020
 wind_ref_hist_2010,weo,wind_offshore,1771,,2020
 wind_ref_hist_2015,weo,wind_offshore,1771,,2020
 wind_ref_hist_2020,weo,wind_offshore,1771,,2020
+wind_ref_hist_2025,weo,wind_offshore,1771,,2020
 wind_res1,weo,wind_onshore,1181,,2020
 wind_res2,weo,wind_onshore,1181,,2020
 wind_res3,weo,wind_onshore,1181,,2020
@@ -103,6 +105,7 @@ wind_res_hist_2005,weo,wind_onshore,1181,,2020
 wind_res_hist_2010,weo,wind_onshore,1181,,2020
 wind_res_hist_2015,weo,wind_onshore,1181,,2020
 wind_res_hist_2020,weo,wind_onshore,1181,,2020
+wind_res_hist_2025,weo,wind_onshore,1181,,2020
 dac_lt,weo,igcc_ccs,4000,,2030
 dac_hte,weo,igcc_ccs,5000,,2030
 dac_htg,weo,igcc_ccs,5500,,2030

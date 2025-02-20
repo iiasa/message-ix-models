@@ -58,6 +58,7 @@ solar_res_hist_2005,high,medium,low,high,low_medium,very_high
 solar_res_hist_2010,high,medium,low,high,low_medium,very_high
 solar_res_hist_2015,high,medium,low,high,low_medium,very_high
 solar_res_hist_2020,high,medium,low,high,low_medium,very_high
+solar_res_hist_2025,high,medium,low,high,low_medium,very_high
 solar_res1,high,medium,low,high,low_medium,very_high
 solar_res2,high,medium,low,high,low_medium,very_high
 solar_res3,high,medium,low,high,low_medium,very_high
@@ -75,6 +76,7 @@ wind_ref_hist_2005,high,medium,low,high,medium,very_high
 wind_ref_hist_2010,high,medium,low,high,medium,very_high
 wind_ref_hist_2015,high,medium,low,high,medium,very_high
 wind_ref_hist_2020,high,medium,low,high,medium,very_high
+wind_ref_hist_2025,high,medium,low,high,medium,very_high
 wind_ref1,high,medium,low,high,medium,very_high
 wind_ref2,high,medium,low,high,medium,very_high
 wind_ref3,high,medium,low,high,medium,very_high
@@ -85,6 +87,7 @@ wind_res_hist_2005,high,medium,low,high,medium,very_high
 wind_res_hist_2010,high,medium,low,high,medium,very_high
 wind_res_hist_2015,high,medium,low,high,medium,very_high
 wind_res_hist_2020,high,medium,low,high,medium,very_high
+wind_res_hist_2025,high,medium,low,high,medium,very_high
 wind_res1,high,medium,low,high,medium,very_high
 wind_res2,high,medium,low,high,medium,very_high
 wind_res3,high,medium,low,high,medium,very_high
