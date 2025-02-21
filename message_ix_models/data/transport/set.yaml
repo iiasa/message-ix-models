@@ -168,7 +168,8 @@ commodity:
     "transport vehicle {technology.id}":
       _generate: {technology: LDV}
       name: Activity for {technology.id} LDVs
-      units: Gv km
+      # FIXME This is necessary to avoid imputed dimensionless in <output::LDV+ixmp>
+      units: (Gv km)**2
 
     "transport pax {consumer_group.id}":
       _generate: {consumer_group: null}

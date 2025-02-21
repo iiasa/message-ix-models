@@ -1,6 +1,6 @@
 # Projected passenger-distance travelled (PDT) per capita
 #
-# Units: km / passenger
+# Units: km / year
 #
 scenario, node,     technology, year, value
 LED,      R12_AFR,  2W,         2020,   360

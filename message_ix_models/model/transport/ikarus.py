@@ -19,9 +19,9 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
     same_time,
-    series_of_pint_quantity,
 )
 
+from .key import bcast_tcl, bcast_y
 from .non_ldv import UNITS
 
 if TYPE_CHECKING:
@@ -189,7 +189,7 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
         output = registry.Quantity(
             occupancy[tec], "passenger / vehicle"
         ) * k_output.get(tec, 1.0)
-        df["output"] = series_of_pint_quantity([output] * len(df.index), index=df.index)
+        df["output"] = pd.Series([output] * len(df.index), index=df.index)
 
         df["inv_cost"] *= k_inv_cost.get(tec, 1.0)
 
@@ -295,7 +295,7 @@ def prepare_computer(c: Computer):
             # Drop existing "c" dimension
             key = single_key(c.add(key / "c", "drop_vars", key, quote("c")))
             # Fill (c, l) dimensions based on t
-            key = c.add(ks[5], "mul", key, "broadcast:t-c-l:transport+input")
+            key = c.add(ks[5], "mul", key, bcast_tcl.input)
         elif name == "technical_lifetime":
             # Round up technical_lifetime values due to incompatibility in handling
             # non-integer values in the GAMS code
@@ -306,7 +306,7 @@ def prepare_computer(c: Computer):
 
         if name in ("fix_cost", "input", "var_cost"):
             # Broadcast across valid (yv, ya) pairs
-            key = c.add(ks[7], "mul", key, "broadcast:y-yv-ya")
+            key = c.add(ks[7], "mul", key, bcast_y.model)
 
         # Convert to target units
         try:

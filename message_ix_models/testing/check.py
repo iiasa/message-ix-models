@@ -11,8 +11,6 @@ from typing import TYPE_CHECKING, ClassVar, Optional, TypeVar, Union
 import genno
 import pandas as pd
 
-from message_ix_models.util.genno import insert
-
 if TYPE_CHECKING:
     import pathlib
 
@@ -378,18 +376,13 @@ def insert_checks(
 
     # Iterate over keys mentioned in `check_map`
     for key, checks in check_map.items():
-        # Insert a task with apply_checks() as the callable
-        insert(
-            computer,
-            key,
-            partial(
-                apply_checks,
-                key=key,
-                # A collection of Check instances, including those specific to `key` and
-                # those from `check_common`
-                checks=tuple(checks) + tuple(check_common),
-                result_cb=result,
-            ),
+        # A collection of Check instances, including those specific to `key` and those
+        # from `check_common`
+        c = tuple(checks) + tuple(check_common)
+        # Insert a task with apply_checks() as the callable; move the existing task to
+        # "{key}+pre"
+        computer.insert(
+            key, partial(apply_checks, key=key, checks=c, result_cb=result), ...
         )
 
     # Add a task at `target` that collects the outputs of every inserted call

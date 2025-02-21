@@ -6,7 +6,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport import build
+from message_ix_models.model.transport import build, key
 from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
@@ -59,7 +59,7 @@ def test_configure_legacy():
     "regions, years",
     (
         param("R11", "A", marks=make_mark[2](ValueError)),
-        param("R12", "B", marks=MARK["gh-281"]),
+        ("R12", "B"),
         param("R14", "A", marks=MARK[9]),
         param("ISR", "A", marks=MARK[3]),
     ),
@@ -106,10 +106,17 @@ def quiet_genno(caplog):
 @MARK[7]
 @build.get_computer.minimum_version
 @mark.usefixtures("quiet_genno")
-def test_simulated_solution(request, test_context, regions="R12", years="B"):
+@mark.parametrize(
+    "build",
+    (
+        True,  # Run .transport.build.main()
+        False,  # Use data from an Excel export
+    ),
+)
+def test_simulated_solution(request, test_context, build, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
-    rep = simulated_solution(request, test_context)
+    rep = simulated_solution(request, test_context, build)
 
     # A quantity for a MESSAGEix variable was added and can be retrieved
     k = rep.full_key("ACT")
@@ -119,10 +126,20 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     k = rep.full_key("out")
     rep.get(k)
 
-    # A quantity for message_data.model.transport can be computed
+    # A quantity for message_ix_models.model.transport can be computed
     k = "transport stock::iamc"
     result = rep.get(k)
     assert 0 < len(result)
+
+    # SDMX data for message_ix_models.project.edits can be computed
+    result = rep.get(key.report.sdmx)
+
+    # The task returns the directory in which output is written
+    p = result
+    # Expected files are generated
+    assert p.joinpath("structure.xml").exists()
+    assert p.joinpath("DF_POPULATION_IN.csv").exists()
+    assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
 @build.get_computer.minimum_version
@@ -142,7 +159,7 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     """Plots are generated correctly using simulated data."""
     test_context.update(regions=regions, years=years)
     log.debug(f"test_plot_simulated: {test_context.regions = }")
-    rep = simulated_solution(request, test_context)
+    rep = simulated_solution(request, test_context, build=True)
 
     # print(rep.describe(f"plot {plot_name}"))  # DEBUG
 
@@ -158,7 +175,7 @@ def test_iamc_simulated(
     test_context.update(regions=regions, years=years)
     test_context.report.output_dir = test_context.get_local_path()
 
-    rep = simulated_solution(request, test_context)
+    rep = simulated_solution(request, test_context, build=True)
 
     # Key collecting both file output/scenario update
     # NB the trailing colons are necessary because of how genno handles report.yaml

@@ -154,7 +154,11 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.tools.exo_data import prepare_computer
 
     # Ensure that the MERtoPPP data provider is available
-    from . import data  # noqa: F401
+    from . import (
+        data,  # noqa: F401
+        key,
+    )
+    from .files import FILES, add
 
     # Added keys
     keys = {}
@@ -179,7 +183,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         keys[kw["measure"]] = prepare_computer(
             context, c, source, source_kw=kw, strict=False
         )
-
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
     prepare_computer(context, c, "transport MERtoPPP", source_kw=kw, strict=False)
@@ -208,34 +211,35 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         # Add the base data
         kw = dict(measure=m, name=f"advance {n}")
         kw.update(common)
-        key, *_ = prepare_computer(context, c, "ADVANCE", source_kw=kw, strict=False)
+        k, *_ = prepare_computer(context, c, "ADVANCE", source_kw=kw, strict=False)
         # Broadcast to R12
-        c.add(f"{n}:n:advance", "broadcast_advance", key, "y0", "config")
+        c.add(f"{n}:n:advance", "broadcast_advance", k, "y0", "config")
 
     # Alias for other computations which expect the upper-case name
     c.add("MERtoPPP:n-y", "mertoppp:n-y")
-    try:
-        c.add("GDP:n-y", "gdp:n-y", strict=True)
-    except KeyExistsError as e:
-        log.info(repr(e))  # Solved scenario that already has this key
+
+    # FIXME Ensure the latter case for a simulated solution
+    # if key.GDP in c:
+    if False:
+        pass  # Solved scenario that already has this key
+    else:
+        c.add(key.GDP, keys["GDP"][0])
 
     # Ensure correct units
     c.add("population:n-y", "mul", "pop:n-y", genno.Quantity(1.0, units="passenger"))
 
-    # Dummy prices
-    try:
-        c.add(
-            "PRICE_COMMODITY:n-c-y",
-            "dummy_prices",
-            keys["GDP"][0],
-            sums=True,
-            strict=True,
-        )
-    except KeyExistsError as e:
-        log.info(repr(e))  # Solved scenario that already has this key
+    # FIXME Adjust to derive PRICE_COMMODITY c=transport from solved scenario with
+    #       MESSAGEix-Transport detail, then uncomment the following line
+    # if key.price.base - "transport" in c:
+    if False:
+        # Alias PRICE_COMMODITY:… to PRICE_COMMODITY:*:transport, e.g. solved scenario
+        # that already has this key
+        c.add(key.price[0], key.price.base - "transport")
+    else:
+        # Not solved scenario → dummy prices
+        c.add(key.price[0], "dummy_prices", keys["GDP"][0], sums=True)
 
     # Data from files
-    from .files import FILES, add
 
     # Identify the mode-share file according to the config setting
     add(
@@ -342,20 +346,11 @@ def add_structure(c: Computer) -> None:
       :class:`str`. See :func:`.get_technology_groups`.
     - ``t::transport RAIL`` etc.: :class:`dict` mapping "t" to the elements of
       ``t::RAIL``.
-    - ``broadcast:t-c-l:input``: Quantity for broadcasting (all values 1) from every
-      transport |t| (same as ``t::transport``) to the :math:`(c, l)` that that
-      technology receives as input. See :func:`.broadcast_t_c_l`.
-    - ``broadcast:t-c-l:input``: same as above, but for the :math:`(c, l)` that the
-      technology produces as output.
-    - ``broadcast:y-yv-ya:all``: Quantity for broadcasting (all values 1) from every |y|
-      to every possible combination of :math:`(y^V=y, y^A)`—including historical
-      periods. See :func:`.broadcast_y_yv_ya`.
-    - ``broadcast:y-yv-ya``: same as above, but only model periods (``y::model``).
-    - ``broadcast:y-yv-ya:no vintage``: same as above, but only the cases where
-      :math:`y^V = y^A`.
+    - All of the keys in :data:`.bcast_tcl` and :data:`.bcast_y`.
     """
     from ixmp.report import configure
 
+    from . import key
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -387,7 +382,7 @@ def add_structure(c: Computer) -> None:
             "cat_year",
             pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
         ),
-        ("y::model", "model_periods", "y", "cat_year"),
+        (key.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
     ):
         try:
@@ -410,7 +405,7 @@ def add_structure(c: Computer) -> None:
         ("t::transport", quote(spec.add.set["technology"])),
         ("t::transport agg", quote(dict(t=t_groups))),
         ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
-        ("t::transport modes", quote(config.demand_modes)),
+        (key.t_modes, quote(config.demand_modes)),
         ("t::transport modes 0", quote(dict(t=list(t_groups.keys())))),
         (
             "t::transport modes 1",
@@ -419,30 +414,23 @@ def add_structure(c: Computer) -> None:
     ]
 
     # Quantities for broadcasting (t,) to (t, c, l) dimensions
-    tasks += [
+    tasks.extend(
         (
-            f"broadcast:t-c-l:transport+{kind}",
+            getattr(key.bcast_tcl, kind),
             partial(broadcast_t_c_l, kind=kind, default_level="final"),
             "t::transport",
             "c::transport+base",
         )
         for kind in ("input", "output")
-    ]
+    )
 
     # Quantities for broadcasting y to (yv, ya)
-    for base, tag, method in (
-        ("y", ":all", "product"),  # All periods
-        ("y::model", "", "product"),  # Model periods only
-        ("y::model", ":no vintage", "zip"),  # Model periods with no vintaging
+    for k, base, method in (
+        (key.bcast_y.all, "y", "product"),  # All periods
+        (key.bcast_y.model, "y::model", "product"),  # Model periods only
+        (key.bcast_y.no_vintage, "y::model", "zip"),  # Model periods with no vintaging
     ):
-        tasks.append(
-            (
-                f"broadcast:y-yv-ya{tag}",
-                partial(broadcast_y_yv_ya, method=method),
-                base,
-                base,
-            )
-        )
+        tasks.append((k, partial(broadcast_y_yv_ya, method=method), base, base))
 
     # Groups of technologies and indexers
     # FIXME Combine or disambiguate these keys
@@ -490,7 +478,7 @@ def get_computer(
        If :any:`True` (the default), a file :file:`transport/build.svg` is written in
        the local data directory with a visualization of the ``add transport data`` key.
     """
-    from . import operator
+    from . import key, operator
 
     # Configure
     config = Config.from_context(context, **kwargs)
@@ -539,6 +527,7 @@ def get_computer(
     # Add a computation that is an empty list.
     # Individual modules's prepare_computer() functions can append keys.
     c.add("add transport data", [])
+    c.add(key.report.all, [])  # Needed by .plot.prepare_computer()
 
     # Add structure-related keys
     add_structure(c)

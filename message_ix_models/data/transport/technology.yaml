@@ -302,7 +302,7 @@ F RAIL:
   - f rail electr
   - f rail lightoil
   units: Gv km
-  output: {commodity: transport F RAIL vehicle}
+  output: {commodity: transport F RAIL vehicle, level: useful}
   iea-eweb-flow: [RAIL]
 
 crail_pub:
@@ -342,14 +342,14 @@ transport F RAIL usage:
   description: >-
     Conversion from vehicle-distance traveled to freight transport activity
   input: {commodity: transport F RAIL vehicle, level: useful}
-  output: {commodity: transport F RAIL}
+  output: {commodity: transport F RAIL, level: useful}
   units: tonne / vehicle
 
 transport F ROAD usage:
   description: >-
     Conversion from vehicle-distance traveled to freight transport activity
   input: {commodity: transport F ROAD vehicle, level: useful}
-  output: {commodity: transport F ROAD}
+  output: {commodity: transport F ROAD, level: useful}
   units: tonne / vehicle
 
 F usage:
@@ -455,27 +455,13 @@ F ROAD:
   - FR_ICG
   - FR_ICH
   units: Gv km
-  output: {commodity: transport F ROAD vehicle}
+  output: {commodity: transport F ROAD vehicle, level: useful}
   iea-eweb-flow: [ROAD]
 
 F:  # Freight modes
-  # TODO Prepare this hierarchically from the following
-  # child:
-  # - F RAIL
-  # - F ROAD
   child:
-  - f rail electr
-  - f rail lightoil
-  - f road electr
-  - FR_FCg
-  - FR_FCH
-  - FR_FCm
-  - FR_ICAe
-  - FR_ICE_H
-  - FR_ICE_L
-  - FR_ICE_M
-  - FR_ICG
-  - FR_ICH
+  - F RAIL
+  - F ROAD
 
 AIR:
   name: Aviation
@@ -526,6 +512,14 @@ RAIL:
   child: [crail_pub, dMspeed_rai, drail_pub, Hspeed_rai, Mspeed_rai, rail_pub]
   units: Gv km
   iea-eweb-flow: [RAIL]
+
+P: # Passenger modes
+  child:
+  - 2W
+  - AIR
+  - BUS
+  - LDV
+  - RAIL
 
 transport other coal: {input: {commodity: coal}}
 transport other electr: {input: {commodity: electr}}

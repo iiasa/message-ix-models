@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from genno import Computer, KeySeq
-from genno.operator import relabel
-from genno.testing import random_qty
+from genno.operator import random_qty, relabel
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport.base import format_share_constraints, smooth

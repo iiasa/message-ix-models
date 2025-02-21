@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from iam_units import registry
 
-from message_ix_models.model.transport import build, non_ldv, testing
+from message_ix_models.model.transport import build, freight, non_ldv, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.roadmap import get_roadmap_data
 from message_ix_models.model.transport.testing import MARK, assert_units, make_mark
@@ -52,11 +52,16 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
     c, info = testing.configure_build(ctx, regions=regions, years=years)
 
     # Code runs
-    result = c.get("transport F::ixmp")
+    result = c.get(f"transport{freight.Fi}")
 
     # Data are provided for these parameters
     assert {
         "capacity_factor",
+        "growth_activity_lo",
+        "growth_activity_up",
+        "growth_new_capacity_up",
+        "initial_activity_up",
+        "initial_new_capacity_up",
         "input",
         "output",
         "technical_lifetime",

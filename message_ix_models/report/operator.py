@@ -239,14 +239,24 @@ def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:
 def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
     """Extract data for a single measure from `qty` with (at least) dimensions v, u.
 
-    .. todo:: Move upstream, to either :mod:`ixmp` or :mod:`genno`.
+    .. deprecated:: 2025-02-17
+       Use :func:`.genno.compat.pyam.operator.quantity_from_iamc` instead.
 
     Parameters
     ----------
     variable : str
         Regular expression to match the ``v`` dimension of `qty`.
     """
+    from warnings import warn
+
     from genno.operator import relabel, select
+
+    warn(
+        "message-ix-models.report.operator.quantity_from_iamc(); use "
+        "genno.compat.pyam.operator.quantity_from_iamc() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     expr = re.compile(variable)
     variables, replacements = [], {}

@@ -12,6 +12,7 @@ from genno import Computer
 from iam_units import registry
 
 from .key import gdp_cap, pdt_nyt
+from .key import report as k_report
 
 if TYPE_CHECKING:
     from genno.core.key import KeyLike
@@ -743,3 +744,5 @@ def prepare_computer(c: Computer):
     key = "transport plots"
     log.info(f"Add {repr(key)} collecting {len(keys)} plots")
     c.add(key, keys)
+
+    c.graph[k_report.all].append(key)

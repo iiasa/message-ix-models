@@ -37,7 +37,6 @@ from message_ix_models.util import (
     replace_par_data,
     same_node,
     same_time,
-    series_of_pint_quantity,
     strip_par_data,
 )
 
@@ -148,11 +147,11 @@ def test_check_support(test_context):
 
 
 def test_convert_units(recwarn):
-    """:func:`.convert_units` and :func:`.series_of_pint_quantity` work."""
+    """:func:`.convert_units` works."""
     # Common arguments
     args = [pd.Series([1.1, 10.2, 100.3], name="bar"), dict(bar=(10.0, "lb", "kg"))]
 
-    exp = series_of_pint_quantity(
+    exp = pd.Series(
         [registry("4.9895 kg"), registry("46.2664 kg"), registry("454.9531 kg")],
     )
 
@@ -168,12 +167,14 @@ def test_convert_units(recwarn):
     exp = pd.Series([q.magnitude for q in exp.values], name="bar")
     assert_series_equal(exp, convert_units(*args, store="magnitude"), check_dtype=False)
 
+    N = len(recwarn)
+
     # Other values for store= are errors
     with pytest.raises(ValueError, match="store = 'foo'"):
         convert_units(*args, store="foo")
 
     # series_of_pint_quantity() successfully caught warnings
-    assert 0 == len(recwarn)
+    assert N == len(recwarn)
 
 
 def test_copy_column():

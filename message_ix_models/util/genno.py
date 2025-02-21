@@ -3,51 +3,36 @@
 Most code appearing here **should** be migrated upstream, to genno itself.
 """
 
-import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from genno import Computer
+    from genno.types import AnyQuantity
 
-    from message_ix_models.types import KeyLike
+try:
+    from genno.operator import as_quantity
+except ImportError:
+    # genno < 1.25, e.g. with message_ix/ixmp 3.7.0
+    # TODO Remove when support for these upstream versions is dropped
+
+    def as_quantity(info: Union[dict, float, str]) -> "AnyQuantity":
+        import genno
+        import pandas as pd
+        from iam_units import registry
+
+        if isinstance(info, str):
+            q = registry.Quantity(info)
+            return genno.Quantity(q.magnitude, units=q.units)
+        elif isinstance(info, float):
+            return genno.Quantity(info)
+        elif isinstance(info, dict):
+            data = info.copy()
+            dim = data.pop("_dim")
+            unit = data.pop("_unit")
+            return genno.Quantity(pd.Series(data).rename_axis(dim), units=unit)
+        else:
+            raise TypeError(type(info))
 
 
-log = logging.getLogger(__name__)
-
-
-def insert(c: "Computer", key: "KeyLike", operation, tag: str = "pre") -> "KeyLike":
-    """Insert a task that performs `operation` on `key`.
-
-    1. The existing task at `key` is moved to a new key, ``{key}+{tag}``.
-    2. A new task is inserted at `key` that performs `operation` on the output of the
-       original task.
-
-    One way to use :func:`insert` is with a ‘pass-through’ `operation` that, for
-    instance, performs logging, assertions, or other steps, then returns its input
-    unchanged. In this way, all other tasks in the graph referring to `key` receive
-    exactly the same input as they would have previously, prior to the :func:`insert`
-    call.
-
-    It is also possible to insert `operation` that mutates its input in certain ways.
-
-    .. todo:: Migrate to :py:`genno.Computer.insert()` or similar.
-
-    Returns
-    -------
-    KeyLike
-        same as the `key` parameter.
-    """
-    import genno
-
-    # Determine a key for the task that to be shifted
-    k_pre = genno.Key(key) + tag
-    assert k_pre not in c
-
-    # Move the existing task at `key` to `k_pre`
-    c.graph[k_pre] = c.graph.pop(key)
-    log.info(f"Move {key!r} to {k_pre!r}")
-
-    # Add `operation` at `key`, operating on the output of the original task
-    c.graph[key] = (operation, k_pre)
-
-    return key
+__all__ = [
+    "as_quantity",
+]
