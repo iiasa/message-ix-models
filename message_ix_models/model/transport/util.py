@@ -12,8 +12,20 @@ if TYPE_CHECKING:
     import numbers
 
     from genno.types import AnyQuantity
+    from sdmx.model.common import Code
 
 log = logging.getLogger(__name__)
+
+
+def has_input_commodity(technology: "Code", commodity: str) -> bool:
+    """Return :any:`True` if `technology` has an ‘input’ annotation with `commodity`.
+
+    :func:`.filter` helper for sequences of technology codes.
+    """
+    if input_info := technology.eval_annotation(id="input"):
+        return commodity in input_info["commodity"]
+    else:
+        return False
 
 
 def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:

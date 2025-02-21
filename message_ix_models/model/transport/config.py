@@ -9,9 +9,9 @@ from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
 from message_ix_models.project.ssp import SSP_2024, ssp_field
 from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
-from message_ix_models.report.util import as_quantity
 from message_ix_models.util import identify_nodes, package_data_path
 from message_ix_models.util.config import ConfigHelper
+from message_ix_models.util.genno import as_quantity
 from message_ix_models.util.sdmx import AnnotationsMixIn
 
 if TYPE_CHECKING:
@@ -349,7 +349,9 @@ class Config(ConfigHelper):
             pass
         else:
             if scenario:
-                log.debug(f".transport.Config.from_context: {scenario.set('node') = }")
+                log.debug(
+                    f"scenario.set('node') = {' '.join(sorted(scenario.set('node')))}"
+                )
             if context.model.regions != regions:
                 log.info(
                     f"Override Context.model.regions={context.model.regions!r} with "
@@ -474,7 +476,7 @@ def get_cl_scenario() -> "common.Codelist":
     )
 
 
-def refresh_cl_scenario(cl: "common.Codelist") -> "common.Codelist":
+def refresh_cl_scenario(cl: Optional["common.Codelist"] = None) -> "common.Codelist":
     """Refresh ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
 
     The code list is entirely regenerated. If it is different from `cl`, the new
@@ -489,14 +491,21 @@ def refresh_cl_scenario(cl: "common.Codelist") -> "common.Codelist":
     cl_ssp_2024 = read("ICONICS:SSP(2024)")
 
     candidate: "common.Codelist" = common.Codelist(
-        id="CL_TRANSPORT_SCENARIO", maintainer=IIASA_ECE, version="1.0.0"
+        id="CL_TRANSPORT_SCENARIO",
+        maintainer=IIASA_ECE,
+        version="1.0.0",
+        is_external_reference=False,
+        is_final=False,
     )
 
-    # - The model name is per a Microsoft Teams message on 2024-11-25.
+    # - Model name:
+    #   - 2024-11-25: use _v1.1 per a Microsoft Teams message.
+    #   - 2025-02-20: update to _v2.1 per discussion with OF. At this point _v2.3 is the
+    #     latest appearing in the database.
     # - The scenario names appear to form a sequence from "baseline_DEFAULT" to
     #   "baseline_DEFAULT_step_15" and finally "baseline". The one used below is the
     #   latest in this sequence for which y₀=2020, rather than 2030.
-    base_url = "ixmp://ixmp-dev/SSP_SSP{}_v1.1/baseline_DEFAULT_step_13"
+    base_url = "ixmp://ixmp-dev/SSP_SSP{}_v2.1/baseline_DEFAULT_step_13"
 
     def _a(c, led, edits):
         """Shorthand to generate the annotations."""
@@ -529,7 +538,7 @@ def refresh_cl_scenario(cl: "common.Codelist") -> "common.Codelist":
             )
         )
 
-    if not candidate.compare(cl, strict=True):
+    if cl is None or not candidate.compare(cl, strict=True):
         write(candidate)
         return candidate
     else:

@@ -1,13 +1,12 @@
 import logging
 from collections.abc import Iterable
-from typing import Optional, Union
+from typing import Optional
 
 import pandas as pd
 from dask.core import quote
-from genno import Key, Quantity
+from genno import Key
 from genno.compat.pyam.util import collapse as genno_collapse
 from genno.core.key import single_key
-from iam_units import registry
 from message_ix import Reporter
 from sdmx.model.v21 import Code
 
@@ -68,25 +67,6 @@ REPLACE_VARS = {
     r"Import Energy\|(Liquids\|(Biomass|Oil))": r"Secondary Energy|\1",
     r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
 }
-
-
-def as_quantity(info: Union[dict, float, str]) -> Quantity:
-    """Convert values from a :class:`dict` to Quantity.
-
-    .. todo:: move upstream, to :mod:`genno`.
-    """
-    if isinstance(info, str):
-        q = registry.Quantity(info)
-        return Quantity(q.magnitude, units=q.units)
-    elif isinstance(info, float):
-        return Quantity(info)
-    elif isinstance(info, dict):
-        data = info.copy()
-        dim = data.pop("_dim")
-        unit = data.pop("_unit")
-        return Quantity(pd.Series(data).rename_axis(dim), units=unit)
-    else:
-        raise TypeError(type(info))
 
 
 def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:

@@ -329,7 +329,7 @@ pdt_cap_proj = add(
     key="P activity:scenario-n-t-y:exo",
     path="pdt-cap",
     name="Projected passenger-distance travelled (PDT) per capita",
-    units="km / passenger / year",
+    units="km / year",
     required=False,
 )
 

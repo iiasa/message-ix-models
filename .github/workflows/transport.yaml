@@ -7,14 +7,45 @@ env:
   target-workflow: transport
 
   # Starting point of the workflow.
+  #
   # Use this value to build from a certain scenario:
   # base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+  #
   # Use this value to allow the workflow to determine model & scenario names
   # and versions:
   base: --platform=ixmp-dev
 
-  # Set this to a particular step to truncate the workflow
+  # Set this to a particular step to truncate the workflow.
   from-step: ""
+
+  # Workflow steps/labels to run. These correspond to the 'TARGET' argument to
+  # 'mix-models transport run'. Each label triggers 1 job in the target-repo/
+  # target-workflow.
+  #
+  # - Delete lines to disable some runs.
+  # - Ensure there is NO trailing comma on the last line.
+  labels: >-
+    [
+      "SSP1",
+      "SSP1 policy",
+      "SSP2",
+      "SSP2 policy",
+      "SSP3",
+      "SSP3 policy",
+      "SSP4",
+      "SSP4 policy",
+      "SSP5",
+      "SSP5 policy",
+      "EDITS-CA",
+      "EDITS-HA",
+      "LED-SSP1",
+      "LED-SSP2"
+    ]
+
+  # Currently disabled:
+  # [
+  #
+  # ]
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
@@ -36,22 +67,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Invoke "${{ env.target-workflow }}" workflow in ${{ env.target-repo }}
-        env:
-          GH_TOKEN: ${{ secrets.MESSAGE_DATA_DISPATCH_TOKEN }}
-        run: |
-          gh workflow run \
-            ${{ env.target-workflow }}.yaml \
-            --repo=${{ env.target-repo }} \
-            --ref=${{ env.target-ref }} \
-            --field ref=${{ github.ref }} \
-            --field sha=${{ github.sha }} \
-            --field base=${{ env.base }} \
-            --field from-step=${{ env.from-step }}
+    - name: Assemble JSON payload
+      run: |
+        echo '{
+          "ref": "${{ github.ref }}",
+          "sha": "${{ github.sha }}",
+          "base": "${{ env.base }}",
+          "from-step": "${{ env.from-step }}",
+          "labels": ${{ env.labels }}
+        }' | jq -r -c '.labels = (.labels | tostring)' | tee payload.json
 
-          sleep 5
+    - name: Invoke "${{ env.target-workflow }}" workflow in ${{ env.target-repo }}
+      env:
+        GH_TOKEN: ${{ secrets.MESSAGE_DATA_DISPATCH_TOKEN }}
+      run: |
+        cat payload.json | gh workflow run --json \
+          ${{ env.target-workflow }}.yaml \
+          --repo=${{ env.target-repo }} \
+          --ref=${{ env.target-ref }}
 
-          gh run list \
-            --workflow=${{ env.target-workflow.yaml }} --repo=${{ env.target-repo }} \
-            --json url,status \
-            --jq 'map(select(.status != "completed"))[0].url' >> $GITHUB_STEP_SUMMARY
+        sleep 5
+
+        gh run list \
+          --workflow=${{ env.target-workflow.yaml }} --repo=${{ env.target-repo }} \
+          --json url,status \
+          --jq 'map(select(.status != "completed"))[0].url' >>$GITHUB_STEP_SUMMARY

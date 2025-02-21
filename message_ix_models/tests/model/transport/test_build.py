@@ -9,7 +9,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import build, demand, report, structure
+from message_ix_models.model.transport import build, demand, key, report, structure
 from message_ix_models.model.transport.ldv import TARGET
 from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
@@ -91,7 +91,7 @@ def test_make_spec(regions_arg, regions_exp, years):
         param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
         param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
-        param("R12", "B", False, "IKARUS", True, marks=MARK["gh-281"]),
+        ("R12", "B", False, "IKARUS", True),
         # R14, A
         param(
             "R14",
@@ -205,9 +205,19 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         ),
     ),
     "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
-    "transport F::ixmp": (
+    "transport::F+ixmp": (
         ContainsDataForParameters(
-            {"capacity_factor", "input", "output", "technical_lifetime"}
+            {
+                "capacity_factor",
+                "growth_activity_lo",
+                "growth_activity_up",
+                "growth_new_capacity_up",
+                "initial_activity_up",
+                "initial_new_capacity_up",
+                "input",
+                "output",
+                "technical_lifetime",
+            }
         ),
         # HasCoords({"technology": ["f rail electr"]}),
     ),
@@ -220,10 +230,9 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
     "GDP:n-y:PPP+capita+index": (HasUnits(""),),
     "votm:n-y": (HasUnits(""),),
-    "PRICE_COMMODITY:n-c-y:transport+smooth": (HasUnits("USD / km"),),
+    key.price.base: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
-    # These units are implied by the test of "transport pdt:*":
-    # "transport pdt:n-y:total" [=] Mm / year
+    demand.pdt_nyt + "0": (HasUnits("passenger km / year"),),
     demand.pdt_nyt + "1": (HasUnits("passenger km / year"),),
     demand.ldv_ny + "total": (HasUnits("Gp km / a"),),
     # FIXME Handle dimensionality instead of exact units
@@ -282,6 +291,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
         dict(regions="R12", years="B"),
         dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
+        dict(regions="R12", years="B", options=dict(project={"LED": True})),
         param(dict(regions="R14", years="B"), marks=MARK[9]),
         param(dict(regions="ISR", years="A"), marks=MARK[3]),
     ),
@@ -310,8 +320,11 @@ def test_debug(
     k = "test_debug"
     result = insert_checks(c, k, CHECKS, common)
 
+    # Show and get a different key
+    # k = key.pdt_cny
+
     # Show what will be computed
-    if verbosity == 2:
+    if verbosity:
         print(c.describe(k))
 
     # Compute the test key

@@ -2,7 +2,6 @@ import logging
 from collections.abc import Mapping
 from functools import singledispatch
 from typing import TYPE_CHECKING, Any, Optional
-from warnings import catch_warnings, filterwarnings
 
 import pandas as pd
 from iam_units import registry
@@ -11,24 +10,6 @@ if TYPE_CHECKING:
     from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
-
-
-def series_of_pint_quantity(*args, **kwargs) -> pd.Series:
-    """Suppress a spurious warning.
-
-    Creating a :class:`pandas.Series` with a list of :class:`pint.Quantity` triggers a
-    warning “The unit of the quantity is stripped when downcasting to ndarray,” even
-    though the entire object is being stored and the unit is **not** stripped. This
-    function suppresses this warning.
-    """
-    with catch_warnings():
-        filterwarnings(
-            "ignore",
-            message="The unit of the quantity is stripped when downcasting to ndarray",
-            module="pandas.core.dtypes.cast",
-        )
-
-        return pd.Series(*args, **kwargs)
 
 
 @singledispatch
@@ -85,7 +66,7 @@ def _(
     # - Reassemble into a series with index matching `s`
     result = registry.Quantity(factor * data.values, unit_in).to(unit_out)
 
-    return series_of_pint_quantity(
+    return pd.Series(
         result.magnitude if store == "magnitude" else result.tolist(),
         index=data.index,
         dtype=(float if store == "magnitude" else object),

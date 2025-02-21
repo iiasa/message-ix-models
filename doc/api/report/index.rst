@@ -172,7 +172,6 @@ Utilities
    .. autosummary::
 
       add_replacements
-      as_quantity
       collapse
       collapse_gwp_info
       copy_ts

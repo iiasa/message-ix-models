@@ -218,7 +218,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
         context.scenario_info.update(model=model_name, scenario="baseline")
         base = bare.create_res(context)
 
-    log.info(f"bare_res: {base.set('node') = }")
+    log.info(f"base.set('node') = {' '.join(sorted(base.set('node')))}")
 
     if solved and not base.has_solution():
         log.info("Solve")

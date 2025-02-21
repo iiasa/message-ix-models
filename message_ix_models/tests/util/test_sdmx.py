@@ -1,10 +1,17 @@
 import logging
 import re
+from typing import TYPE_CHECKING
 
 import pytest
-from sdmx.model.v21 import Annotation, Code
+import sdmx
+from sdmx.model.common import Annotation, Code
 
-from message_ix_models.util.sdmx import eval_anno, make_enum, read
+from message_ix_models.util.sdmx import eval_anno, make_dataflow, make_enum, read
+
+if TYPE_CHECKING:
+    from message_ix_models.types import MaintainableArtefactArgs
+
+log = logging.getLogger(__name__)
 
 
 def test_eval_anno(caplog, recwarn):
@@ -29,6 +36,34 @@ def test_eval_anno(caplog, recwarn):
 
     with pytest.warns(DeprecationWarning):
         assert 7 == eval_anno(c, id="qux")
+
+
+@pytest.mark.parametrize(
+    "id_, dims, name",
+    (
+        ("TEST", "t-c-e", None),
+        ("GDP", "n-y", None),
+        ("POPULATION", "n-y", None),
+        ("TRANSPORT_ACTIVITY", "n-y-t", None),
+        ("FE_TRANSPORT", "n-t-c", "Final energy use in transport"),
+    ),
+)
+def test_make_dataflow(tmp_path, test_context, id_, dims, name) -> None:
+    ma_kwargs: "MaintainableArtefactArgs" = dict()
+
+    dims_tuple = tuple(dims.split("-"))
+    sm = make_dataflow(id_, dims_tuple, name, ma_kwargs, test_context)
+
+    # Message contains the expected items
+    assert len(dims_tuple) == len(sm.codelist)  # One codelist per item
+    assert {"CS_MESSAGE_IX_MODELS"} == set(sm.concept_scheme)
+    assert {f"DF_{id_}"} == set(sm.dataflow)
+    assert {f"DS_{id_}"} == set(sm.structure)
+
+    path_out = tmp_path.joinpath("output.xml")
+    path_out.write_bytes(sdmx.to_xml(sm, pretty_print=True))
+
+    log.debug(path_out)
 
 
 def test_make_enum0():

@@ -26,6 +26,7 @@ from message_ix_models.util import (
 
 from . import files as exo
 from .emission import ef_for_input
+from .util import has_input_commodity
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -248,41 +249,28 @@ def bound_activity_lo(c: Computer) -> list[Key]:
     return [k["ixmp"]]
 
 
-def _inputs(technology: Code, commodity: str) -> bool:
-    """Return :any:`True` if `technology` has an ‘input’ annotation with `commodity`.
-
-    :func:`.filter` helper for sequences of technology codes.
-    """
-    if input_info := technology.eval_annotation(id="input"):
-        return commodity in input_info["commodity"]
-    else:
-        return False
-
-
 def constraint_data(
     t_all, t_modes: list[str], nodes, years: list[int], genno_config: dict
 ) -> dict[str, pd.DataFrame]:
-    """Return constraints on growth of CAP_NEW for non-LDV technologies.
+    """Return constraints on growth of ACT and CAP_NEW for non-LDV technologies.
 
     Responds to the :attr:`.Config.constraint` keys :py:`"non-LDV *"`; see description
     there.
     """
     config: Config = genno_config["transport"]
 
-    # Non-LDV modes passenger modes
+    # Non-LDV passenger modes
     modes = set(t for t in t_modes if t != "LDV")
-    # Freight modes
-    modes.add("F ROAD")
 
     # Lists of technologies to constrain
     # All technologies under the non-LDV modes
     t_0: set[Code] = set(filter(lambda t: t.parent and t.parent.id in modes, t_all))
     # Only the technologies that input c=electr
-    t_1: set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
+    t_1: set[Code] = set(filter(partial(has_input_commodity, commodity="electr"), t_0))
     # Aviation technologies only
     t_2: set[Code] = set(filter(lambda t: t.parent and t.parent.id == "AIR", t_all))
     # Only the technologies that input c=gas
-    t_3: set[Code] = set(filter(partial(_inputs, commodity="electr"), t_0))
+    t_3: set[Code] = set(filter(partial(has_input_commodity, commodity="gas"), t_0))
 
     common = dict(year_act=years, year_vtg=years, time="year", unit="-")
     dfs = defaultdict(list)
