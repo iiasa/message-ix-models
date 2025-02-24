@@ -22,10 +22,10 @@
 /message_ix_models/tests/tools/costs  @adrivinca @macflo8 @OFR-IIASA @ywpratama
 /message_ix_models/tools/costs        @adrivinca @macflo8 @OFR-IIASA @ywpratama
 
-/doc/material                            @GamzeUnlu95 @macflo8
-/message_ix_models/data/material         @GamzeUnlu95 @macflo8
-/message_ix_models/model/material        @GamzeUnlu95 @macflo8
-/message_ix_models/tests/model/material  @GamzeUnlu95 @macflo8
+/doc/material                            @macflo8
+/message_ix_models/data/material         @macflo8
+/message_ix_models/model/material        @macflo8
+/message_ix_models/tests/model/material  @macflo8
 
 /doc/transport
 /message_ix_models/data/transport         @khaeru @r-aneeque
