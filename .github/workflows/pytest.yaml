@@ -129,17 +129,20 @@ jobs:
       id: dependencies
       run : |
         from os import environ
+        from packaging.version import Version, parse
         from pathlib import Path
 
-        v, result = "${{ matrix.version.upstream }}".replace("main", "vmain"), []
-        for condition, dependency in (
-            (v >= "v3.7.0", "dask[dataframe] < 2024.11.0"),  # dask >= 2024.11.0 changes handling of dict (will be addressed in #225)
-            (v <= "v3.7.0", "genno < 1.25"),  # Upstream versions < 3.8.0 import genno.computations, removed in 1.25.0 (#156)
-            (v < "v3.9.0", "pytest == 8.0.0"),  # Upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0 (#155)
-        ):
-            result.extend([f'"{dependency}"'] if condition else [])
+        version_string = "${{ matrix.version.upstream }}"
 
-        Path(environ["GITHUB_OUTPUT"]).write_text(f"value={' '.join(result)}\n")
+        if version_string != "main": 
+            v, result = parse(version_string), []
+            for condition, dependency in (
+                (v <= Version("v3.7.0"), "genno < 1.25"),  # Upstream versions < 3.8.0 import genno.computations, removed in 1.25.0 (#156)
+                (v < Version("v3.9.0"), "pytest == 8.0.0"),  # Upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0 (#155)
+            ):
+                result.extend([f'"{dependency}"'] if condition else [])
+
+            Path(environ["GITHUB_OUTPUT"]).write_text(f"value={' '.join(result)}\n")
       shell: python
 
     - name: Install packages and dependencies
