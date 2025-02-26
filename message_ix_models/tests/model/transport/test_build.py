@@ -9,11 +9,11 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import build, demand, key, report, structure
-from message_ix_models.model.transport.ldv import TARGET
+from message_ix_models.model.transport import build, demand, key, ldv, report, structure
 from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
 from message_ix_models.testing.check import (
+    Check,
     ContainsDataForParameters,
     Dump,
     HasCoords,
@@ -193,6 +193,53 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
     del mp
 
 
+class LDV_PHEV_input(Check):
+    """Check magnitudes of input energy intensities of LDV PHEV technologies.
+
+    There are three conditions:
+
+    1. Electricity input to the PHEV is less than electricity input to BEV.
+    2. Light oil input to the PHEV is less than light oil input to an ICEV.
+    3. Total energy input to the PHEV is between the BEV and ICEV.
+    """
+
+    # Technologies to check
+    _t = ("ELC_100", "PHEV_ptrp", "ICE_conv")
+
+    types = (dict,)
+
+    def run(self, obj):
+        def _join_levels(df):
+            """Join multi-index labels to a single str."""
+            return df.set_axis(
+                df.columns.to_series().apply(lambda v: " ".join(map(str, v))), axis=1
+            )
+
+        t0, t1, t2 = self._t
+        tmp = (
+            obj["input"]
+            .query(f"technology in {self._t!r}")
+            .set_index(["node_loc", "year_vtg", "year_act"])
+            .pivot(columns=["technology", "commodity"], values="value")
+            .pipe(_join_levels)
+            .eval(f"`{t1}` = `{t1} electr` + `{t1} lightoil`")
+            .eval(f"c1 = `{t1} electr` <= `{t0} electr`")
+            .eval(f"c2 = `{t1} lightoil` <= `{t2} lightoil`")
+            .eval(f"c3 = `{t0} electr` < `{t1}` < `{t2} lightoil`")
+            .eval("cond = c1 & c2 & c3")
+        )
+
+        if not tmp.cond.all():
+            fail = tmp[~tmp.cond]
+            return (
+                False,
+                f"LDV input does not satisfy conditions in {len(fail)} cases:\n"
+                f"{fail.to_string()}",
+            )
+        else:
+            return True, "LDV input satisfies conditions"
+
+
 CHECKS: dict["KeyLike", Collection["Check"]] = {
     "broadcast:t-c-l:transport+input": (HasUnits("dimensionless"),),
     "broadcast:t-c-l:transport+output": (
@@ -255,9 +302,10 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         NonNegative(),
         # …plus default NoneMissing
     ),
+    f"input{ldv.Li}": (LDV_PHEV_input(),),
     #
     # The following partly replicates .test_ldv.test_get_ldv_data()
-    TARGET: (
+    ldv.TARGET: (
         ContainsDataForParameters(
             {
                 "bound_new_capacity_lo",
