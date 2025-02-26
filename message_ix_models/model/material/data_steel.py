@@ -555,6 +555,23 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     df_demand = pd.concat([df_2025, df_demand])
     results[parname].append(df_demand)
 
+    new_scrap_ratio = {
+        "R12_AFR": 0.92,
+        "R12_CHN": 0.9,
+        "R12_EEU": 0.9,
+        "R12_FSU": 0.9,
+        "R12_LAM": 0.9,
+        "R12_MEA": 0.92,
+        "R12_NAM": 0.85,
+        "R12_PAO": 0.85,
+        "R12_PAS": 0.9,
+        "R12_RCPA": 0.92,
+        "R12_SAS": 0.92,
+        "R12_WEU": 0.85,
+    }
+
+    scale_fse_demand(df_demand, new_scrap_ratio)
+
     common = dict(
         year_vtg=yv_ya.year_vtg,
         year_act=yv_ya.year_act,
@@ -633,7 +650,9 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_2020_calibration_relation(s_info, "eaf"),
         gen_2020_calibration_relation(s_info, "bof"),
         gen_2020_calibration_relation(s_info, "bf"),
-        gen_bof_pig_input(s_info)
+        gen_bof_pig_input(s_info),
+        gen_finishing_steel_io(s_info),
+        gen_manuf_steel_io(new_scrap_ratio, s_info),
     )
 
     if ssp == "SSP1":
@@ -982,11 +1001,68 @@ def gen_bof_pig_input(s_info):
     df = df[df["year_act"] - df["year_vtg"] < 30]
     return {"input": df}
 
+def scale_fse_demand(demand, new_scrap_ratio):
+    demand["value"] = demand.apply(
+        lambda x: x["value"] * (new_scrap_ratio[x["node"]]), axis=1
+    )
 
-if __name__ == "__main__":
-    import ixmp
-    import message_ix
 
-    mp = ixmp.Platform("local2")
-    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
-    gen_data_steel(scen)
+def gen_finishing_steel_io(s_info: ScenarioInfo):
+    dimensions = {
+        "technology": "finishing_steel",
+        "mode": "M1",
+        "commodity": "steel",
+        "time": "year",
+        "time_dest": "year",
+        "unit": "???",
+    }
+    df = pd.read_csv(package_data_path("material", "steel", "finishing_loss_ratio.csv"))
+    df_out_steel = (
+        make_df("output", **df, **dimensions, level="useful_material")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_steel = df_out_steel[df_out_steel["year_act"].le(df_out_steel["year_vtg"])]
+    df_out_scrap = (
+        make_df("output", **df, **dimensions, level="new_scrap")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_scrap["value"] = df_out_scrap["value"].sub(1).abs().round(4)
+    df_out_scrap = df_out_scrap[df_out_scrap["year_act"].le(df_out_scrap["year_vtg"])]
+    return {"output": pd.concat([df_out_steel, df_out_scrap])}
+
+
+def gen_manuf_steel_io(ratio, s_info: ScenarioInfo):
+    dimensions = {
+        "technology": "manuf_steel",
+        "mode": "M1",
+        "commodity": "steel",
+        "time": "year",
+        "time_dest": "year",
+        "unit": "???",
+    }
+    df = (
+        pd.Series(ratio)
+        .to_frame()
+        .reset_index()
+        .rename(columns={"index": "node_loc", 0: "value"})
+    )
+    df_out_steel = (
+        make_df("output", **df, **dimensions, level="product")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_steel = df_out_steel[df_out_steel["year_act"].le(df_out_steel["year_vtg"])]
+    df_out_scrap = (
+        make_df("output", **df, **dimensions, level="new_scrap")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_scrap["value"] = df_out_scrap["value"].sub(1).abs().round(4)
+    df_out_scrap = df_out_scrap[df_out_scrap["year_act"].le(df_out_scrap["year_vtg"])]
+    return {"output": pd.concat([df_out_steel, df_out_scrap])}
