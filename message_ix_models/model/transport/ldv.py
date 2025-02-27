@@ -3,12 +3,12 @@
 import logging
 from collections.abc import Mapping
 from operator import itemgetter
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 
 import genno
 import pandas as pd
-from genno import Computer, Key, KeySeq
+from genno import Computer, Key, Keys
+from genno.core.key import single_key
 from message_ix import make_df
 from sdmx.model.common import Code
 
@@ -105,9 +105,9 @@ def prepare_computer(c: Computer):
     info = config.base_model_info
 
     # Some keys/shorthand
-    k = SimpleNamespace(
+    k = Keys(
         fe=Key("fuel economy:n-t-y:LDV"),
-        eff=KeySeq("efficiency:t-y-n:LDV"),
+        eff=Key("efficiency:t-y-n:LDV"),
         factor_input=Key("input:t-y:LDV+factor"),
     )
     t_ldv = "t::transport LDV"
@@ -152,11 +152,11 @@ def prepare_computer(c: Computer):
     c.add(k.eff[2], "mul", k.eff[1], "input:n:LDV+adj")
 
     # Interpolate load factor
-    k.lf_nsy = KeySeq(exo.load_factor_ldv)
+    k.lf_nsy = Key(exo.load_factor_ldv)
     c.add(
         k.lf_nsy[0],
         "interpolate",
-        k.lf_nsy.base,
+        k.lf_nsy,
         "y::coords",
         kwargs=dict(fill_value="extrapolate"),
     )
@@ -166,7 +166,7 @@ def prepare_computer(c: Computer):
     c.add(k.lf_ny[0], "select", k.lf_nsy[0], "indexers:scenario")
 
     # Insert a scaling factor that varies according to SSP
-    c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny.base)
+    c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny)
 
     # Extend (forward fill) lifetime to cover all periods
     name = "technical_lifetime"
@@ -206,7 +206,7 @@ def prepare_computer(c: Computer):
         )
 
     # Usage
-    _add(c, "usage", usage_data, k.lf_ny.base, "cg", "n::ex world", t_ldv, "y::model")
+    _add(c, "usage", usage_data, k.lf_ny, "cg", "n::ex world", t_ldv, "y::model")
     # Constraints
     _add(c, "constraints", constraint_data, "context")
     # Capacity factor
@@ -218,11 +218,11 @@ def prepare_computer(c: Computer):
     if config.ldv_stock_method == "A":
         # Data from file ldv-new-capacity.csv
         try:
-            k.stock = KeySeq(c.full_key("cap_new::ldv+exo"))
+            k.stock = Key(c.full_key("cap_new::ldv+exo"))
         except KeyError:
-            k.stock = None  # No such file in this configuration
+            k.stock = Key("")  # No such file in this configuration
     elif config.ldv_stock_method == "B":
-        k.stock = KeySeq(c.apply(stock))
+        k.stock = single_key(c.apply(stock))
 
     if k.stock:
         # historical_new_capacity: select only data prior to y₀
@@ -232,7 +232,7 @@ def prepare_computer(c: Computer):
             name="historical_new_capacity",
         )
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
-        c.add(k.stock[1], "select", k.stock.base, indexers=dict(yv=y_historical))
+        c.add(k.stock[1], "select", k.stock, indexers=dict(yv=y_historical))
         _add(c, kw1["name"], "as_message_df", k.stock[1], **kw1)
 
         # CAP_NEW/bound_new_capacity_{lo,up}
@@ -242,7 +242,7 @@ def prepare_computer(c: Computer):
         #   largest share and avoid setting constraints on it.
         # - Add both upper and lower constraints to ensure the solution contains exactly
         #   the given value.
-        c.add(k.stock[2], "select", k.stock.base, indexers=dict(yv=info.Y))
+        c.add(k.stock[2], "select", k.stock, indexers=dict(yv=info.Y))
         c.add(
             k.stock[3],
             "select",
@@ -283,7 +283,7 @@ def prepare_tech_econ(
     parameters ``input``, ``ouput``, ``fix_cost``, and ``inv_cost``.
     """
     # Collection of KeySeq for starting-points
-    k = SimpleNamespace(input=KeySeq("input::LDV"), output=KeySeq("output::LDV"))
+    k = Keys(input=Key("input::LDV"), output=Key("output::LDV"))
 
     # Identify periods to include
     # FIXME Avoid hard-coding this period
@@ -336,7 +336,7 @@ def prepare_tech_econ(
     ### Compute CO₂ emissions factors
 
     # Extract the 'input' data frame
-    k.other = KeySeq("other::LDV")
+    k.other = Key("other::LDV")
     c.add(k.other[0], itemgetter("input"), f"input{Li}")
 
     # Use ef_for_input
@@ -493,7 +493,7 @@ def stock(c: Computer) -> Key:
     """Prepare `c` to compute base-period stock and historical sales."""
     from .key import ldv_ny
 
-    k = KeySeq("stock:n-y:LDV")
+    k = Key("stock:n-y:LDV")
 
     # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
     #   load factor (occupancy) to obtain implied stock.
