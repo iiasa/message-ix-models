@@ -103,6 +103,152 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
     return cat_tec, regions_df
 
 
+def share_map_cool(share_keys, type_tec_keys, regions_df, commodity_mapping=None):
+    """
+    Helper function to create the share mapping DataFrame for both 'tot' and 'share' levels.
+
+    Parameters:
+    ----------
+    share_keys : list
+        List of share keys (e.g., 'share_calib_*')
+    type_tec_keys : list
+        List of type_tec keys (e.g., 'share_calib_*_tot' or '_share')
+    regions_df : list
+        List of region nodes
+    commodity_mapping : dict, optional
+        If provided, maps each share_key to a specific commodity.
+
+    Returns:
+    -------
+    list
+        List of share mapping rows
+    """
+    # Assign commodities correctly
+    commodities = [
+        commodity_mapping[key]
+        if commodity_mapping
+        else ["ot_fresh", "air", "ot_saline", "cl_fresh"]
+        for key in share_keys
+    ]
+
+    # Expand rows in case of multiple commodities per key
+    expanded_rows = []
+    for key, type_tec, commodity_list in zip(share_keys, type_tec_keys, commodities):
+        for commodity in (
+            commodity_list if isinstance(commodity_list, list) else [commodity_list]
+        ):
+            expanded_rows.append(
+                {
+                    "shares": key,
+                    "node_share": None,
+                    "node": None,
+                    "type_tec": type_tec,
+                    "mode": "M1",
+                    "commodity": commodity,
+                    "level": "share",
+                }
+            )
+
+    df_share = pd.DataFrame(expanded_rows).pipe(broadcast, node_share=regions_df)
+    df_share["node"] = df_share["node_share"]
+    return df_share[
+        ["shares", "node_share", "node", "type_tec", "mode", "commodity", "level"]
+    ]
+
+
+def cat_tec_cooling_calib(
+    context: Context,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Categorize cooling technologies based on predefined types and match them with
+    parent technologies present in the scenario.
+
+    Parameters
+    ----------
+    context : Context
+        Provides access to the current scenario and configuration.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, list[str]]
+        - cat_tec: A DataFrame with columns:
+            - 'type_tec': Cooling technology category.
+            - 'tec': Name of the cooling technology.
+        - regions_df: A list of unique region nodes from the scenario.
+    """
+    FILE1 = (
+        "cooltech_cost_and_shares_"
+        + (f"ssp_msg_{context.regions}" if context.type_reg == "global" else "country")
+        + ".csv"
+    )
+    path1 = package_data_path("water", "ppl_cooling_tech", FILE1)
+    cool_df = pd.read_csv(path1)
+
+    # Extract region nodes
+    # read columns that start with "mix_" from cool_df
+    mix_cols = [col for col in cool_df.columns if col.startswith("mix_")]
+    # remove "mix_" from the column names
+    regions_df = [col.replace("mix_", "") for col in mix_cols]
+
+    # Prepare lists for share definitions
+    share_keys = []
+    type_tec_tot = []
+    type_tec_share = []
+    commodity_mapping = {}
+
+    # Create a dictionary to store cooling techs per parent_tec
+    cooling_by_parent = cool_df.groupby("utype")["cooling"].unique().to_dict()
+
+    # Iterate over the rows to define share constraints
+    for _, row in cool_df.iterrows():
+        parent_tec = row["utype"]
+        cool_tec = row["cooling"]
+
+        share_key = f"share_calib_{parent_tec}_{cool_tec}"
+        share_keys.append(share_key)
+
+        type_tec_tot.append(f"{share_key}_tot")
+        type_tec_share.append(f"{share_key}_share")
+
+        # Assign the commodity based on the cooling type
+        commodity_mapping[share_key] = (
+            cool_tec  # Assigning the correct single commodity
+        )
+
+    # Build cat_tec DataFrame
+    cat_tec_rows = []
+
+    for parent_tec, cool_tecs in cooling_by_parent.items():
+        for cool_tec in cool_tecs:
+            share_key_tot = f"share_calib_{parent_tec}_{cool_tec}_tot"
+            share_key_share = f"share_calib_{parent_tec}_{cool_tec}_share"
+
+            # "tot" maps to all cooling technologies for that parent
+            for other_cool in cool_tecs:
+                cat_tec_rows.append(
+                    {"type_tec": share_key_tot, "tec": f"{parent_tec}__{other_cool}"}
+                )
+
+            # "share" maps only to the specific cooling technology
+            cat_tec_rows.append(
+                {"type_tec": share_key_share, "tec": f"{parent_tec}__{cool_tec}"}
+            )
+
+    cat_tec = pd.DataFrame(cat_tec_rows)
+
+    # Create share constraint mappings
+    map_share_commodity_tot = share_map_cool(share_keys, type_tec_tot, regions_df)
+    map_share_commodity_share = share_map_cool(
+        share_keys, type_tec_share, regions_df, commodity_mapping
+    )
+
+    return (
+        cat_tec,
+        pd.DataFrame(map_share_commodity_tot),
+        pd.DataFrame(map_share_commodity_share),
+    )
+
+
 def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     """Return the specification for nexus implementation
 
@@ -242,6 +388,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
             "node": df_node,
             "type_tec": ["share_wat_recycle_total"] * n,
             "mode": ["M1"] * n,
+            # I think this should be something else TODO NEXUS
             "commodity": ["urban_collected_wst"] * n,
             "level": ["water_treat"] * n,
         }
@@ -262,7 +409,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
 
     results = {}
     cat_tec, nodes_cooling = cat_tec_cooling(context)
-    results["cat_tec"] = cat_tec.values.tolist()
+
     n = len(nodes_cooling)
     # Share commodity for urban water recycling
     shares_cool = [
@@ -292,14 +439,11 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     ).pipe(broadcast, node_share=nodes_cooling)
 
     df_share["node"] = df_share["node_share"]
-    # re order columns like this:
-    # ['shares', 'node_share', 'node', 'type_tec', 'mode', 'commodity', 'level']
+
     df_share = df_share[
         ["shares", "node_share", "node", "type_tec", "mode", "commodity", "level"]
     ]
 
-    df_list = df_share.values.tolist()
-    results["map_shares_commodity_share"] = df_list
     # for total
     type_tec_tot = [
         "share_cooling_ot_fresh_tot",
@@ -307,7 +451,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         "share_cooling_air_tot",
         "share_cooling_ot_saline_tot",
     ]
-    df_share = pd.DataFrame(
+    df_tot = pd.DataFrame(
         {
             "shares": shares_cool,
             "node_share": [None] * len(shares_cool),  # Placeholder for node_share
@@ -319,16 +463,32 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         }
     ).pipe(broadcast, node_share=nodes_cooling, commodity=commodity_cool)
 
-    df_share["node"] = df_share["node_share"]
-    # re order columns like this:
-    # ['shares', 'node_share', 'node', 'type_tec', 'mode', 'commodity', 'level']
-    df_share = df_share[
+    df_tot["node"] = df_tot["node_share"]
+
+    df_tot = df_tot[
         ["shares", "node_share", "node", "type_tec", "mode", "commodity", "level"]
     ]
 
-    df_list = df_share.values.tolist()
+    # calibration cooling contraints on single parent techs
+    (
+        cat_tec_calib_cool,
+        map_com_tot_calib_cool,
+        map_com_share_calib_cool,
+    ) = cat_tec_cooling_calib(context)
 
-    results["map_shares_commodity_total"] = df_list
+    cat_tec_list = pd.concat([cat_tec, cat_tec_calib_cool]).values.tolist()
+
+    results["cat_tec"] = cat_tec_list
+
+    map_share_commodity_tot_list = pd.concat(
+        [df_tot, map_com_tot_calib_cool]
+    ).values.tolist()
+    results["map_shares_commodity_total"] = map_share_commodity_tot_list
+
+    map_share_commodity_share_list = pd.concat(
+        [df_share, map_com_share_calib_cool]
+    ).values.tolist()
+    results["map_shares_commodity_share"] = map_share_commodity_share_list
 
     for set_name, config in results.items():
         # Sets to add
