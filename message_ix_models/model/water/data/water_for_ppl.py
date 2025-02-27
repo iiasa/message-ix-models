@@ -708,24 +708,121 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     cost = pd.read_csv(path1)
     # Combine technology name to get full cooling tech names
     cost["technology"] = cost["utype"] + "__" + cost["cooling"]
-    # Filtering out 2010 data to use for historical values
+    cost["share"] = cost["utype"] + "_" + cost["cooling"]
+
+    # add contraint with relation, based on shares
+    # Keep only "utype", "technology", and columns starting with "mix_"
+    share_filtered = cost.loc[
+        :,
+        ["utype", "share"] + [col for col in cost.columns if col.startswith("mix_")],
+    ]
+
+    # Melt to long format
+    share_long = share_filtered.melt(
+        id_vars=["utype", "share"], var_name="node_share", value_name="value"
+    )
+    # filter with uypt in cooling_df["parent_tech"]
+    share_long = share_long[
+        share_long["utype"].isin(input_cool["parent_tech"].unique())
+    ].reset_index(drop=True)
+
+    # Remove "mix_" prefix from region names
+    share_long["node_share"] = share_long["node_share"].str.replace(
+        "mix_", "", regex=False
+    )
+    # Replace 0 values with 0.0001
+    share_long["value"] = share_long["value"] * 1.05  # give some flexibility
+    share_long["value"] = share_long["value"].replace(0, 0.0001)
+
+    # Expand for years [2020, 2025]
+    share_long = share_long.loc[share_long.index.repeat(2)].reset_index(drop=True)
+    share_long["shares"] = "share_calib_" + share_long["share"]
+    share_long.drop(columns={"utype", "share"}, inplace=True)
+    # restore cost as it was for future use
+    cost.drop(columns="share", inplace=True)
+    share_long["time"] = "year"
+    share_long["unit"] = "-"
+    share_calib = share_long.copy()
+    years_calib = [2020, 2025]
+    share_calib["year_act"] = years_calib * (len(share_calib) // 2)
+    # take year in info.N but not years_calib
+    years_fut = [year for year in info.Y if year not in years_calib]
+    share_fut = share_long.copy()
+    share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
+    # filter only shares that contain "ot_saline"
+    share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
+    # if value < 0.4 set to 0.4, not so allow too much saline where there is no
+    share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
+    # append share_calib and share_fut
+    results["share_commodity_up"] = pd.concat([share_calib, share_fut])
+
+    # Filtering out 2015 data to use for historical values
     input_cool_2015 = input_cool[
         (input_cool["year_act"] == 2015) & (input_cool["year_vtg"] == 2015)
     ]
-    # Filter out columns that contain 'mix' in column name
-    columns = [col for col in cost.columns if "mix_" in col]
-    # Rename column names to R11 to match with the previous df
+    # set of parent_tech and node_loc for input_cool
+    input_cool_set = set(zip(input_cool["parent_tech"], input_cool["node_loc"]))
+    year_list = [2020, 2010, 2030, 2050, 2000, 2080, 1990]
 
+    for year in year_list:
+        print(year)
+        # Identify missing combinations in the current aggregate
+        input_cool_2015_set = set(
+            zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
+        )
+        missing_combinations = input_cool_set - input_cool_2015_set
+
+        if not missing_combinations:
+            break  # Stop if no missing combinations remain
+
+        # Extract missing rows from input_cool with the current year
+        missing_rows = input_cool[
+            (input_cool["year_act"] == year)
+            & (input_cool["year_vtg"] == year)
+            & input_cool.apply(
+                lambda row: (row["parent_tech"], row["node_loc"])
+                in missing_combinations,
+                axis=1,
+            )
+        ]
+
+        if not missing_rows.empty:
+            # Modify year columns to 2015
+            missing_rows = missing_rows.copy()
+            missing_rows["year_act"] = 2015
+            missing_rows["year_vtg"] = 2015
+
+            # Append to the aggregated dataset
+            input_cool_2015 = pd.concat(
+                [input_cool_2015, missing_rows], ignore_index=True
+            )
+
+    # Final check if there are still missing combinations
+    input_cool_2015_set = set(
+        zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
+    )
+    still_missing = input_cool_set - input_cool_2015_set
+
+    if still_missing:
+        print(
+            f"Warning: Some combinations are still missing even after trying all years: {still_missing}"
+        )
+
+    # Filter out columns that contain 'mix' in column name
+    # Rename column names to match with the previous df
     cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
     search_cols = [
-        col for col in cost.columns if context.regions in col or "technology" in col
+        col
+        for col in cost.columns
+        if context.regions in col or col in ["technology", "utype"]
     ]
     hold_df = input_cool_2015[
         ["node_loc", "technology_name", "cooling_fraction"]
     ].drop_duplicates()
-    search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
-
-    # Apply function to the
+    search_cols_cooling_fraction = [
+        col for col in search_cols if col not in ["technology", "utype"]
+    ]
+    # multiplication factor with cooling factor and shares
     hold_cost = cost[search_cols].apply(
         shares,
         axis=1,
