@@ -20,6 +20,7 @@ from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config
+from .operator import indexer_scenario
 from .structure import get_technology_groups
 
 if TYPE_CHECKING:
@@ -291,6 +292,8 @@ STRUCTURE_STATIC = (
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
+    ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
+    ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
     ("n::ex world", "nodes_ex_world", "n"),
     (
         "n:n:ex world",
@@ -401,8 +404,6 @@ def add_structure(c: Computer) -> None:
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("nodes", quote(info.set["node"])),
-        # TODO Use "LED" where appropriate
-        ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
         ("t::transport", quote(spec.add.set["technology"])),
         ("t::transport agg", quote(dict(t=t_groups))),
         ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
