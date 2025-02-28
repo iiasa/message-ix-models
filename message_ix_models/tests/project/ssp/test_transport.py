@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import pytest
 
-from message_ix_models.model.transport.testing import MARK
-from message_ix_models.project.ssp.transport import main
+from message_ix_models.project.ssp.transport import prepare_computer, process_file
 from message_ix_models.tests.tools.iea.test_web import user_local_data  # noqa: F401
 from message_ix_models.util import package_data_path
 
@@ -80,18 +79,20 @@ VARIABLE = {
 }
 
 
-@MARK["gh-288"]
-@main.minimum_version
+@prepare_computer.minimum_version
 # @pytest.mark.usefixtures("user_local_data")
 @pytest.mark.parametrize("method", ("A", "B"))
-def test_main(tmp_path, test_context, input_csv_path, method) -> None:
+def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""
+    if method == "A":
+        pytest.skip("Obsolete case")
+
     # Locate a temporary data file
     path_in = input_csv_path
     path_out = tmp_path.joinpath("output.csv")
 
     # Code runs
-    main(path_in=path_in, path_out=path_out, method=method)
+    process_file(path_in=path_in, path_out=path_out, method=method)
 
     # Output path exists
     assert path_out.exists()
@@ -141,7 +142,7 @@ def test_main(tmp_path, test_context, input_csv_path, method) -> None:
         assert False, msg
 
 
-@main.minimum_version
+@prepare_computer.minimum_version
 def test_cli(tmp_path, mix_models_cli, input_xlsx_path) -> None:
     """Code can be invoked from the command-line."""
     from shutil import copyfile
