@@ -31,7 +31,6 @@ from .key import bcast_tcl, bcast_y
 from .util import wildcard
 
 if TYPE_CHECKING:
-    from genno.core.key import KeyLike  # TODO Import from genno.types
     from genno.types import AnyQuantity
 
     from message_ix_models.types import ParameterData
@@ -40,7 +39,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-#: Shorthand for tags on keys
+#: Shorthand for tags on keys.
 Li = "::LDV+ixmp"
 
 #: Target key that collects all data generated in this module.
@@ -200,9 +199,9 @@ def prepare_computer(c: Computer):
     else:
         c.apply(
             prepare_tech_econ,
-            k_efficiency=k.eff[2],
-            k_inv_cost="inv_cost:n-t-y:LDV+exo",
-            k_fix_cost="fix_cost:n-t-y:LDV+exo",
+            efficiency=k.eff[2],
+            inv_cost=Key("inv_cost:n-t-y:LDV+exo"),
+            fix_cost=Key("fix_cost:n-t-y:LDV+exo"),
         )
 
     # Usage
@@ -257,6 +256,10 @@ def prepare_computer(c: Computer):
     c.add("transport_data", __name__, key=TARGET)
 
 
+#: Common, fixed values for :func:`.prepare_tech_econ` and :func:`.get_dummy`.
+COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
+
+#: Mapping from short dimension IDs to MESSAGE index names.
 DIMS = dict(
     commodity="c",
     level="l",
@@ -267,80 +270,73 @@ DIMS = dict(
     year_act="ya",
     year_vtg="yv",
 )
-COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
 
 
 def prepare_tech_econ(
-    c: Computer,
-    *,
-    k_efficiency: "KeyLike",
-    k_inv_cost: "KeyLike",
-    k_fix_cost: "KeyLike",
+    c: Computer, *, efficiency: Key, inv_cost: Key, fix_cost: Key
 ) -> None:
     """Prepare `c` to calculate techno-economic parameters for LDVs.
 
     This prepares `k_target` to return a data structure with MESSAGE-ready data for the
     parameters ``input``, ``ouput``, ``fix_cost``, and ``inv_cost``.
     """
-    # Collection of KeySeq for starting-points
-    k = Keys(input=Key("input::LDV"), output=Key("output::LDV"))
-
     # Identify periods to include
     # FIXME Avoid hard-coding this period
     c.add("y::LDV", lambda y: list(filter(lambda x: 1995 <= x, y)), "y")
 
     # Create base quantity for "output" parameter
-    nty = tuple("nty")
-    c.add(k.output[0] * nty, wildcard(1.0, "Gv km", nty))
-    for i, coords in enumerate(["n::ex world", "t::LDV", "y::model"]):
-        c.add(
-            k.output[i + 1] * nty,
-            "broadcast_wildcard",
-            k.output[i] * nty,
-            coords,
-            dim=coords[0],
-        )
+    k = output_base = Key("output:n-t-y:LDV+base")
+    c.add(k[0], wildcard(1.0, "Gv km", k.dims))
 
-    ### Convert input, output to MESSAGE data structure
-    for par_name, base, ks, i in (
-        ("input", k_efficiency, k.input, 0),
-        ("output", k.output[3] * nty, k.output, 4),
+    # Broadcast over (n, t, y) dimensions
+    coords = ["n::ex world", "t::LDV", "y::model"]
+    c.add(k[1], "broadcast_wildcard", k[0], *coords, dim=k.dims)
+
+    # Broadcast `exo.input_share` over (c, t) dimensions. This produces a large Quantity
+    # with 1.0 everywhere except explicit entries in the input data file.
+    # NB Order matters here
+    k = exo.input_share
+    coords = ["t::LDV", "c::transport+base", "y"]  # NB include historical periods
+    c.add(k[0], "broadcast_wildcard", k, *coords, dim=k.dims)
+
+    # Multiply by `bcast_tcl.input` to keep only the entries that correspond to actual
+    # input commodities of particular technologies.
+    input_bcast = c.add("input broadcast::LDV", "mul", k[0], bcast_tcl.input)
+
+    ### Convert input and output to MESSAGE data structure
+    for par_name, base, bcast in (
+        ("input", efficiency, input_bcast),
+        ("output", output_base[1], bcast_tcl.output),
     ):
-        # Extend data over missing periods in the model horizon
-        c.add(ks[i], "extend_y", base, "y::LDV")
+        k = Key(par_name, base.dims, "LDV")
 
-        # Produce the full quantity for input/output efficiency
-        prev = c.add(ks[i + 1], "mul", ks[i], getattr(bcast_tcl, par_name), bcast_y.all)
+        # Extend data over missing periods in the model horizon
+        c.add(k[0], "extend_y", base, "y::LDV")
+
+        # Broadcast from (y) to (yv, ya) dims to produce the full quantity for
+        # input/output efficiency
+        prev = c.add(k[1], "mul", k[0], bcast, bcast_y.all)
 
         # Convert to ixmp/MESSAGEix-structured pd.DataFrame
-        # NB quote() is necessary with dask 2024.11.0, not with earlier versions
-        c.add(ks[i + 2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
+        c.add(k[2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
 
-        # Convert to target units
-        _add(c, par_name, convert_units, ks[i + 2], "transport info")
+        # Convert to target units and append to `TARGET`
+        _add(c, par_name, convert_units, k[2], "transport info")
 
     ### Transform costs
-    for par_name, base in (("fix_cost", k_fix_cost), ("inv_cost", k_inv_cost)):
-        prev = c.add(
-            f"{par_name}::LDV+0",
-            "interpolate",
-            base,
-            "y::coords",
-            kwargs=dict(fill_value="extrapolate"),
-        )
-        prev = c.add(f"{par_name}::LDV+1", "mul", prev, bcast_y.all)
-        _add(
-            c, par_name, "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON
-        )
+    kw = dict(fill_value="extrapolate")
+    for name, base in (("fix_cost", fix_cost), ("inv_cost", inv_cost)):
+        prev = c.add(f"{name}::LDV+0", "interpolate", base, "y::coords", kwargs=kw)
+        prev = c.add(f"{name}::LDV+1", "mul", prev, bcast_y.all)
+        _add(c, name, "as_message_df", prev, name=name, dims=DIMS, common=COMMON)
 
     ### Compute CO₂ emissions factors
-
     # Extract the 'input' data frame
-    k.other = Key("other::LDV")
-    c.add(k.other[0], itemgetter("input"), f"input{Li}")
+    other = Key("other::LDV")
+    c.add(other[0], itemgetter("input"), f"input{Li}")
 
-    # Use ef_for_input
-    _add(c, "emission_factor", ef_for_input, "context", k.other[0], species="CO2")
+    # Apply ef_for_input; append to `TARGET`
+    _add(c, "emission_factor", ef_for_input, "context", other[0], species="CO2")
 
 
 def get_dummy(context) -> "ParameterData":
