@@ -162,7 +162,7 @@ def prepare_computer(c: Computer):
 
     # Select load factor
     k.lf_ny = k.lf_nsy / "scenario"
-    c.add(k.lf_ny[0], "select", k.lf_nsy[0], "indexers:scenario")
+    c.add(k.lf_ny[0], "select", k.lf_nsy[0], "indexers:scenario:LED")
 
     # Insert a scaling factor that varies according to SSP
     c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny)

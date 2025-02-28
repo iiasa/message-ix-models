@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from functools import partial, reduce
 from itertools import product
 from operator import gt, le, lt
-from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, Union, cast
 
 import genno
 import numpy as np
@@ -64,6 +64,7 @@ __all__ = [
     "groups_iea_eweb",
     "groups_y_annual",
     "iea_eei_fv",
+    "indexer_scenario",
     "indexers_n_cd",
     "indexers_usage",
     "logit",
@@ -786,6 +787,30 @@ def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
 
     assert set("nyt") == set(result.dims)
     return result.sel(y=ym1, t="Total freight transport", drop=True)
+
+
+def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"], str]:
+    """Indexer for the ``scenario`` dimension.
+
+    If `with_LED` **and** :py:`config.project["LDV"] = True`, then the single label is
+    "LED". Otherwise it is the short form of the :attr:`.transport.config.Config.ssp`
+    code, e.g. "SSP1". In other words, this treats "LDV" as mutually exclusive with an
+    SSP scenario identifier (instead of orthogonal).
+
+    Parameters
+    ----------
+    config :
+        The genno.Computer "config" dictionary, with a key "transport" mapped to an
+        instance of :class:`.transport.Config`.
+    """
+    # Retrieve the .transport.Config object from the genno.Computer "config" dict
+    c: "Config" = config["transport"]
+
+    return dict(
+        scenario="LED"
+        if (with_LED and c.project.get("LED", False))
+        else repr(c.ssp).split(":")[1]
+    )
 
 
 def indexers_n_cd(config: dict) -> dict[str, xr.DataArray]:
