@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Hashable
 import genno
 import pandas as pd
 import xarray as xr
-from genno import Key, KeySeq
+from genno import Key
 from genno.core.key import single_key
 
 from message_ix_models import Context
@@ -18,7 +18,8 @@ if TYPE_CHECKING:
     import pathlib
 
     import sdmx.model.common
-    from genno.types import AnyQuantity
+    from genno import Computer
+    from genno.types import AnyQuantity, KeyLike, TQuantity
 
 #: Dimensions of several quantities.
 DIMS = "e n t y UNIT".split()
@@ -34,7 +35,7 @@ FLOWS = ["AVBUNK", "DOMESAIR", "TOTTRANS"]
 L = "AIR emi"
 
 
-def aviation_share(ref: "AnyQuantity") -> "AnyQuantity":
+def aviation_share(ref: "TQuantity") -> "TQuantity":
     """Return (dummy) data for the share of aviation in emissions.
 
     Currently this returns exactly the value `0.2`.
@@ -115,11 +116,9 @@ def e_UNIT(cl_emission: "sdmx.model.common.Codelist") -> "AnyQuantity":
 
 
 def extract_dims(
-    qty: "AnyQuantity", dim_expr: dict, *, drop: bool = True, fillna: str = "_T"
-) -> "AnyQuantity":
+    qty: "TQuantity", dim_expr: dict, *, drop: bool = True, fillna: str = "_T"
+) -> "TQuantity":
     """Extract dimensions from IAMC-like ‘variable’ names using regular expressions."""
-    import pandas as pd
-
     dims = list(qty.dims)
 
     dfs = [qty.to_frame().reset_index()]
@@ -133,7 +132,7 @@ def extract_dims(
     return genno.Quantity(pd.concat(dfs, axis=1).set_index(dims)["value"])
 
 
-def extract_dims1(qty: "AnyQuantity", dim: dict) -> "AnyQuantity":  # pragma: no cover
+def extract_dims1(qty: "TQuantity", dim: dict) -> "TQuantity":  # pragma: no cover
     """Extract dimensions from IAMC-like ‘variable’ names expressions.
 
     .. note:: This incomplete, non-working version of :func:`extract_dims` uses
@@ -170,12 +169,8 @@ def extract_dims1(qty: "AnyQuantity", dim: dict) -> "AnyQuantity":  # pragma: no
 
 
 def finalize(
-    q_all: "AnyQuantity",
-    q_update: "AnyQuantity",
-    model_name: str,
-    scenario_name: str,
-    path_out: "pathlib.Path",
-) -> None:
+    q_all: "TQuantity", q_update: "TQuantity", model_name: str, scenario_name: str
+) -> pd.DataFrame:
     """Finalize output.
 
     1. Reattach "Model" and "Scenario" labels.
@@ -183,7 +178,7 @@ def finalize(
     3. Convert both `q_all` and `q_update` to :class:`pandas.Series`; update the former
        with the contents of the latter. This retains all other, unmodified data in
        `q_all`.
-    4. Adjust to IAMC ‘wide’ structure and write to `path_out`.
+    4. Adjust to IAMC ‘wide’ structure.
 
     Parameters
     ----------
@@ -215,22 +210,22 @@ def finalize(
         .rename("value")
     )
 
-    (
+    return (
         s_all.unstack("y")
         .reorder_levels(["Model", "Scenario", "Region", "Variable", "Unit"])
         .reset_index()
-        .to_csv(path_out, index=False)
     )
 
 
-@minimum_version("genno 1.25")
-def main(path_in: "pathlib.Path", path_out: "pathlib.Path", method: str) -> None:
-    """Postprocess aviation emissions for SSP 2024.
+def process_file(
+    path_in: "pathlib.Path", path_out: "pathlib.Path", method: str
+) -> None:
+    """Process data from file.
 
-    1. Read input data from `path_in`.
+    1. Read input data from `path_in` in IAMC CSV format.
     2. Call either :func:`prepare_method_A` or :func:`prepare_method_B` according to the
        value of `method`.
-    3. Write to `path_out`.
+    3. Write to `path_out` in the same format as (1).
 
     Parameters
     ----------
@@ -241,8 +236,6 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path", method: str) -> None
     method :
         Either 'A' or 'B'.
     """
-    import pandas as pd
-
     c = genno.Computer()
 
     # Read the data from `path`
@@ -260,12 +253,20 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path", method: str) -> None
     df = pd.read_csv(path_in, nrows=1)
     c.add("model name", genno.quote(df["Model"].iloc[0]))
     c.add("scenario name", genno.quote(df["Scenario"].iloc[0]))
-    c.add("path out", path_out)
 
+    prepare_computer(c, k_input, method)
+
+    # Execute, write the result back to file
+    c.get("target").to_csv(path_out, index=False)
+
+
+@minimum_version("genno 1.28")
+def prepare_computer(c: "Computer", k_input: Key, method: str) -> "KeyLike":
+    """Prepare `c`."""
     # Common structure and utility quantities used by prepare_method_[AB]
     c.add(f"broadcast:t:{L}", broadcast_t, include_international=method == "A")
 
-    k_emi_in, e_t = KeySeq(L, DIMS, "input"), tuple("et")
+    k_emi_in, e_t = Key(L, DIMS, "input"), tuple("et")
 
     # Select and transform data matching EXPR_EMI
     # Filter on "VARIABLE"
@@ -275,23 +276,18 @@ def main(path_in: "pathlib.Path", path_out: "pathlib.Path", method: str) -> None
     c.add(k_emi_in[2], "assign_units", k_emi_in[1], units="Mt/year")
 
     # Call a function to prepare the remaining calculations
-    # This returns a key like "*:e-n-t-y-UNIT:*"
     prepare_func = {"A": prepare_method_A, "B": prepare_method_B}[method]
-
-    k = prepare_func(c, k_input, k_emi_in.prev)
-
+    k = prepare_func(c, k_input, k_emi_in.last)
+    # This should return a key like "*:e-n-t-y-UNIT:*"; check
     assert set(DIMS) == set(k.dims), k.dims
 
     # Add to the input data
-    k_adj = c.add(Key(L, DIMS, "adj"), "add", k_emi_in.prev, k)
+    k_adj = c.add(Key(L, DIMS, "adj"), "add", k_emi_in.last, k)
 
     # - Collapse to IAMC "VARIABLE" dimension name
     # - Recombine with other data
-    # - Write back to the file
-    c.add("target", finalize, k_input, k_adj, "model name", "scenario name", "path out")
-
-    # Execute
-    c.get("target")
+    c.add("target", finalize, k_input, k_adj, "model name", "scenario name")
+    return "target"
 
 
 def prepare_method_A(
@@ -311,7 +307,7 @@ def prepare_method_A(
        ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping``
     """
     # Shorthand
-    k = KeySeq("result", DIMS)
+    k = Key("result", DIMS)
 
     # Select the total
     c.add(k[0] / "t", "select", k_emi_in, indexers={"t": "_T"}, drop=True)
@@ -367,8 +363,8 @@ def prepare_method_B(
 
     # Shorthand for keys and sequences of keys
     k_ei = exo.emi_intensity
-    k_fe_in = KeySeq("fe", ("c", "n", "y", "UNIT"), "input")
-    k_cnt = KeySeq("energy", ("c", "n", "t"), L)
+    k_fe_in = Key("fe", ("c", "n", "y", "UNIT"), "input")
+    k_cnt = Key("energy", ("c", "n", "t"), L)
     k_cn = k_cnt / "t"
 
     ### Prepare data from IEA EWEB: the share of aviation in transport consumption of
@@ -377,7 +373,7 @@ def prepare_method_B(
     # Fetch data from IEA EWEB
     kw = dict(provider="IEA", edition="2024", flow=FLOWS, transform="B", regions="R12")
     k_iea = prepare_computer(context, c, "IEA_EWEB", kw, strict=False)[0]
-    k_fnp = KeySeq(k_iea / "y")  # flow, node, product
+    k_fnp = Key(k_iea / "y")  # flow, node, product
 
     # Select data for 2019 only
     c.add(k_fnp[0], "select", k_iea, indexers=dict(y=2019), drop=True)
@@ -427,7 +423,7 @@ def prepare_method_B(
 
     ### Compute estimate of emissions
     # Product of aviation share and FE of total transport → FE of aviation
-    k_ = c.add(f"{L} fe", "mul", k_fe_in.prev / "UNIT", k_cn.prev)
+    k_ = c.add(f"{L} fe", "mul", k_fe_in.last / "UNIT", k_cn.last)
 
     # Convert exogenous emission intensity data to Mt / EJ
     c.add(k_ei + "conv", "convert_units", k_ei, units="Mt / EJ")

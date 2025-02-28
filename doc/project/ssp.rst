@@ -58,7 +58,7 @@ Transport
 .. automodule:: message_ix_models.project.ssp.transport
    :members:
 
-   Use :program:`mix-models ssp transport --help in.xlsx out.xlsx` to invoke :func:`.main`.
+   Use :program:`mix-models ssp transport --help in.xlsx out.xlsx` to invoke :func:`.process_file`.
    Data are read from PATH_IN, in :file:`.xlsx` or :file:`.csv` format.
    If :file:`.xlsx`, the data are first temporarily converted to :file:`.csv`.
    Data are written to PATH_OUT; if not given, this defaults to the same path and suffix as PATH_IN, with "_out" added to the stem.
