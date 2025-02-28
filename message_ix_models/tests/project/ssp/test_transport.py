@@ -3,7 +3,11 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import pytest
 
-from message_ix_models.project.ssp.transport import prepare_computer, process_file
+from message_ix_models.project.ssp.transport import (
+    prepare_computer,
+    process_df,
+    process_file,
+)
 from message_ix_models.tests.tools.iea.test_web import user_local_data  # noqa: F401
 from message_ix_models.util import package_data_path
 
@@ -79,41 +83,27 @@ VARIABLE = {
 }
 
 
-@prepare_computer.minimum_version
-# @pytest.mark.usefixtures("user_local_data")
-@pytest.mark.parametrize("method", ("A", "B"))
-def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
-    """Code can be called from Python."""
-    if method == "A":
-        pytest.skip("Obsolete case")
-
-    # Locate a temporary data file
-    path_in = input_csv_path
-    path_out = tmp_path.joinpath("output.csv")
-
-    # Code runs
-    process_file(path_in=path_in, path_out=path_out, method=method)
-
-    # Output path exists
-    assert path_out.exists()
-
-    # Read input file
-    df_in = pd.read_csv(path_in)
-
+def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: str) -> None:
+    """Common checks for :func:`test_process_df` and :func:`test_process_file`."""
     # Identify dimension columns
     dims_wide = list(df_in.columns)[:5]  # …in 'wide' layout
     dims = dims_wide + ["Year"]  # …in 'long' layout
 
     # Convert wide to long; sort
-    df_in = df_in.melt(dims_wide, var_name="Year").sort_values(dims)
+    def _to_long(df):
+        return (
+            df.melt(dims_wide, var_name=dims[-1])
+            .astype({dims[-1]: int})
+            .sort_values(dims)
+        )
+
+    df_in = _to_long(df_in)
+    df_out = _to_long(df_out)
 
     # Input data already contains the variable names to be modified
     exp = {v[1] for v in VARIABLE if IN_ & v[0]}
     assert exp <= set(df_in["Variable"].unique())
     region = set(df_in["Region"].unique())
-
-    # Read output file
-    df_out = pd.read_csv(path_out).melt(dims_wide, var_name="Year")
 
     # Data have the same length
     assert len(df_in) == len(df_out)
@@ -128,6 +118,18 @@ def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
         "abs(value_y - value_x) > 1e-16"
     )
 
+    # Possible number of modified values. In each tuple, the first is the count with
+    # the full IEA EWEB dataset, the second with the fuzzed data
+    N = {
+        "A": (2840, None),
+        "B": (2400, 1400),
+    }[method]
+
+    try:
+        full_iea_eweb_data = N.index(len(df)) == 0  # True if the full dataset
+    except IndexError:
+        assert False, f"Unexpected number of modified values: {len(df)}"
+
     # df.to_csv("debug0.csv")  # DEBUG Dump to file
     # print(df.to_string(max_rows=50))  # DEBUG Show in test output
 
@@ -139,7 +141,55 @@ def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     if len(cond):
         msg = "Negative emissions totals after processing"
         print(f"\n{msg}:", cond.to_string(), sep="\n")
-        assert False, msg
+        assert not full_iea_eweb_data, msg
+
+
+@prepare_computer.minimum_version
+@pytest.mark.parametrize(
+    "method",
+    (
+        pytest.param("A", marks=pytest.mark.xfail(reason="Obsolete/not maintained")),
+        "B",
+    ),
+)
+def test_process_df(input_csv_path, method) -> None:
+    df_in = pd.read_csv(input_csv_path)
+
+    # Code runs
+    df_out = process_df(df_in, method=method)
+
+    # Output satisfies expectations
+    check(df_in, df_out, method)
+
+
+@prepare_computer.minimum_version
+# @pytest.mark.usefixtures("user_local_data")
+@pytest.mark.parametrize(
+    "method",
+    (
+        pytest.param("A", marks=pytest.mark.xfail(reason="Obsolete/not maintained")),
+        "B",
+    ),
+)
+def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
+    """Code can be called from Python."""
+
+    # Locate a temporary data file
+    path_in = input_csv_path
+    path_out = tmp_path.joinpath("output.csv")
+
+    # Code runs
+    process_file(path_in=path_in, path_out=path_out, method=method)
+
+    # Output path exists
+    assert path_out.exists()
+
+    # Read input and output files
+    df_in = pd.read_csv(path_in)
+    df_out = pd.read_csv(path_out)
+
+    # Output satisfies expectations
+    check(df_in, df_out, method)
 
 
 @prepare_computer.minimum_version

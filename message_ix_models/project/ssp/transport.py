@@ -1,7 +1,9 @@
 """Postprocess aviation emissions for SSP 2024."""
 
+import logging
 import re
-from typing import TYPE_CHECKING, Hashable
+from collections.abc import Hashable
+from typing import TYPE_CHECKING
 
 import genno
 import pandas as pd
@@ -11,7 +13,7 @@ from genno.core.key import single_key
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.tools.iamc import iamc_like_data_for_query
+from message_ix_models.tools.iamc import iamc_like_data_for_query, to_quantity
 from message_ix_models.util import minimum_version
 
 if TYPE_CHECKING:
@@ -20,6 +22,8 @@ if TYPE_CHECKING:
     import sdmx.model.common
     from genno import Computer
     from genno.types import AnyQuantity, KeyLike, TQuantity
+
+log = logging.getLogger(__name__)
 
 #: Dimensions of several quantities.
 DIMS = "e n t y UNIT".split()
@@ -121,7 +125,7 @@ def extract_dims(
     """Extract dimensions from IAMC-like ‘variable’ names using regular expressions."""
     dims = list(qty.dims)
 
-    dfs = [qty.to_frame().reset_index()]
+    dfs = [qty.to_series().rename("value").reset_index()]
     for dim, expr in dim_expr.items():
         pattern = re.compile(expr)
         dfs.append(dfs[0][dim].str.extract(pattern).fillna(fillna))
@@ -194,9 +198,14 @@ def finalize(
             {"Model": [model_name], "Scenario": [scenario_name]}
         ).rename({"n": "Region", "UNIT": "Unit", "VARIABLE": "Variable"})
 
+    # Convert `q_all` to pd.Series
     s_all = q_all.pipe(_expand).to_series()
 
-    s_all.update(
+    # - Convert `q_update` to pd.Series
+    # - Reassemble "Variable" codes.
+    # - Drop dimensions (e, t).
+    # - Align index with s_all.
+    s_update = (
         q_update.pipe(_expand)
         .to_frame()
         .reset_index()
@@ -209,6 +218,10 @@ def finalize(
         .set_index(s_all.index.names)[0]
         .rename("value")
     )
+    log.info(f"{len(s_update)} obs to update")
+
+    # Update `s_all`. This yields an 'outer join' of the original and s_update indices.
+    s_all.update(s_update)
 
     return (
         s_all.unstack("y")
@@ -217,52 +230,15 @@ def finalize(
     )
 
 
-def process_file(
-    path_in: "pathlib.Path", path_out: "pathlib.Path", method: str
-) -> None:
-    """Process data from file.
-
-    1. Read input data from `path_in` in IAMC CSV format.
-    2. Call either :func:`prepare_method_A` or :func:`prepare_method_B` according to the
-       value of `method`.
-    3. Write to `path_out` in the same format as (1).
-
-    Parameters
-    ----------
-    path_in :
-        Input data path.
-    path_out :
-        Output data path.
-    method :
-        Either 'A' or 'B'.
-    """
-    c = genno.Computer()
-
-    # Read the data from `path`
-    k_input = genno.Key("input", ("n", "y", "VARIABLE", "UNIT"))
-    c.add(
-        k_input,
-        iamc_like_data_for_query,
-        path=path_in,
-        non_iso_3166="keep",
-        query="Model != ''",
-        unique="MODEL SCENARIO",
-    )
-
-    # Peek at `path` to identify the model and scenario names
-    df = pd.read_csv(path_in, nrows=1)
-    c.add("model name", genno.quote(df["Model"].iloc[0]))
-    c.add("scenario name", genno.quote(df["Scenario"].iloc[0]))
-
-    prepare_computer(c, k_input, method)
-
-    # Execute, write the result back to file
-    c.get("target").to_csv(path_out, index=False)
-
-
 @minimum_version("genno 1.28")
 def prepare_computer(c: "Computer", k_input: Key, method: str) -> "KeyLike":
-    """Prepare `c`."""
+    """Prepare `c` to process aviation emissions data.
+
+    Returns
+    -------
+    str
+        "target". Calling :py:`c.get("target")` triggers the calculation.
+    """
     # Common structure and utility quantities used by prepare_method_[AB]
     c.add(f"broadcast:t:{L}", broadcast_t, include_international=method == "A")
 
@@ -344,7 +320,7 @@ def prepare_method_B(
        :ref:`transport-input-emi-intensity`.
     7. Multiply (4) × (5) × (6) to compute the estimate of
        ``Emissions|*|Energy|Demand|Transportation|Aviation``.
-    8. Estimate
+    8. Estimate an additive adjustment to
        ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping`` as
        the negative of (7).
     9. Adjust `k_emi_in` by adding (7) and (8).
@@ -449,6 +425,79 @@ def prepare_method_B(
     labels = dict(n={v: k for k, v in labels["n"].items()})
     k_result = single_key(c.add(Key(L, k_.dims, "3"), "relabel", k_, labels=labels))
     return Key(k_result)
+
+
+def process_df(data: pd.DataFrame, *, method: str = "B") -> pd.DataFrame:
+    """Process `data`.
+
+    Same as :func:`process_file`, except the data is returned as a data frame in the
+    same structure as `data`.
+    """
+    c = genno.Computer()
+
+    # Peek at `data` to identify the model and scenario names
+    c.add("model name", genno.quote(data["Model"].iloc[0]))
+    c.add("scenario name", genno.quote(data["Scenario"].iloc[0]))
+
+    # Convert `data` to a Quantity with the appropriate structure
+    k_input = genno.Key("input", ("n", "y", "VARIABLE", "UNIT"))
+    c.add(
+        k_input,
+        to_quantity,
+        data,
+        non_iso_3166="keep",
+        query="Model != ''",
+        unique="MODEL SCENARIO",
+    )
+
+    # Prepare all other tasks
+    prepare_computer(c, k_input, method)
+
+    # Compute and return the result
+    return c.get("target")
+
+
+def process_file(
+    path_in: "pathlib.Path", path_out: "pathlib.Path", *, method: str
+) -> None:
+    """Process data from file.
+
+    1. Read input data from `path_in` in IAMC CSV format.
+    2. Call :func:`prepare_computer` and in turn either :func:`prepare_method_A` or
+       :func:`prepare_method_B` according to the value of `method`.
+    3. Write to `path_out` in the same format as (1).
+
+    Parameters
+    ----------
+    path_in :
+        Input data path.
+    path_out :
+        Output data path.
+    method :
+        Either 'A' or 'B'.
+    """
+    c = genno.Computer()
+
+    # Read the data from `path`
+    k_input = genno.Key("input", ("n", "y", "VARIABLE", "UNIT"))
+    c.add(
+        k_input,
+        iamc_like_data_for_query,
+        path=path_in,
+        non_iso_3166="keep",
+        query="Model != ''",
+        unique="MODEL SCENARIO",
+    )
+
+    # Peek at `path` to identify the model and scenario names
+    df = pd.read_csv(path_in, nrows=1)
+    c.add("model name", genno.quote(df["Model"].iloc[0]))
+    c.add("scenario name", genno.quote(df["Scenario"].iloc[0]))
+
+    prepare_computer(c, k_input, method)
+
+    # Execute, write the result back to file
+    c.get("target").to_csv(path_out, index=False)
 
 
 def select_re(qty: "AnyQuantity", indexers: dict) -> "AnyQuantity":
