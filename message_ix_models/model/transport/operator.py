@@ -212,33 +212,6 @@ def broadcast(q1: "AnyQuantity", q2: "AnyQuantity") -> "AnyQuantity":
     return squeezed * q2
 
 
-def broadcast_wildcard(
-    qty: "AnyQuantity", coords: list[str], *, dim: str = "n"
-) -> "AnyQuantity":
-    """Broadcast over coordinates `coords` along dimension `dim`.
-
-    Any missing labels in `coords` are populated using values of `qty` that have the
-    ‘wildcard’ label "*" for `dim`.
-    """
-    # Identify existing, non-wildcard labels along `dim`
-    existing = set(qty.coords[dim].data) - {"*"}
-    # Identify missing labels along `dim`
-    missing = sorted(set(coords) - existing)
-
-    if not missing:
-        return qty  # Nothing to do; `qty` is already complete
-
-    # Construct a MappingAdapter:
-    # - Each existing label (whether in ``) mapped to themselves.
-    # - "*" mapping to each missing label.
-    adapt = MappingAdapter(
-        {dim: [(x, x) for x in sorted(existing)] + [("*", x) for x in missing]}
-    )
-
-    # Apply the adapter to `qty`
-    return adapt(qty)
-
-
 def broadcast_t_c_l(
     technologies: list[Code],
     commodities: list[Union[Code, str]],
