@@ -65,7 +65,7 @@ def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[
     else:
         path_out_user = path_out
 
-    process_file(path_in, path_out, method)
+    process_file(path_in, path_out, method=method)
 
     if path_out_user != path_out:
         print(f"Convert CSV output to {path_out_user}")
