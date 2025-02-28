@@ -401,6 +401,7 @@ def add_structure(c: Computer) -> None:
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("nodes", quote(info.set["node"])),
+        # TODO Use "LED" where appropriate
         ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
         ("t::transport", quote(spec.add.set["technology"])),
         ("t::transport agg", quote(dict(t=t_groups))),

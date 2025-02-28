@@ -1,0 +1,12 @@
+# Share of input of LDV technologies from each commodity
+#
+# Units: dimensionless
+#
+technology, commodity, year, value
+PHEV_ptrp,  electr,    *,    0.4
+PHEV_ptrp,  lightoil,  *,    0.6
+# NB the following lines are needed for a balanced output
+#    from broadcast_wildcard()
+*,          electr,    *,    1.0
+*,          lightoil,  *,    1.0
+*,          *,         *,    1.0

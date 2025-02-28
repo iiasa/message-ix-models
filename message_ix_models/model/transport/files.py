@@ -369,6 +369,12 @@ energy_other = add(
     required=False,
 )
 
+input_share = add(
+    key="input-share:t-c-y:exo",
+    name="Share of input of LDV technologies from each commodity",
+    units="dimensionless",
+)
+
 # NB This differs from emi_intensity in (a) having no 't[echnology]' dimension and (b)
 #    including only CO₂.
 fuel_emi_intensity = add(
