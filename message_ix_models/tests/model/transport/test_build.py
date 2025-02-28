@@ -240,6 +240,7 @@ class LDV_PHEV_input(Check):
             return True, "LDV input satisfies conditions"
 
 
+#: Inline checks for :func:`.test_debug`.
 CHECKS: dict["KeyLike", Collection["Check"]] = {
     "broadcast:t-c-l:transport+input": (HasUnits("dimensionless"),),
     "broadcast:t-c-l:transport+output": (
@@ -345,37 +346,54 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
     ),
 )
 def test_debug(
-    test_context,
-    tmp_path,
-    build_kw,
-    N_node,
-    verbosity: Literal[0, 1, 2, 3] = 0,  # NB Increase this to show more verbose output
+    test_context, tmp_path, build_kw, N_node, *, verbosity: Literal[0, 1, 2, 3] = 0
 ):
-    """Debug particular calculations in the transport build process."""
+    """Check and debug particular steps in the transport build process.
+
+    By default, this test applies all of the :data:`.CHECKS` using
+    :func:`.insert_checks` and then runs the entire build process, asserting that all
+    the checks pass.
+
+    It can also be used by uncommenting and adjusting the lines marked :py:`# DEBUG` to
+    inspect the behaviour of a sub-graph of the :class:`.Computer`. Such changes
+    **should not** be committed.
+
+    Parameters
+    ----------
+    verbosity : int
+        Adjust to show more verbose output:
+
+        0. Don't log anything
+        1. Log 7 values at the start/end of each quantity.
+        2. Log *all* data. This produces large logs; more than 1 GiB of text.
+        3. Dump all data to files in `tmp_path`.
+    """
     # Get a Computer prepared to build the model with the given options
     c, info = configure_build(test_context, tmp_path=tmp_path, **build_kw)
 
     # Construct a list of common checks
-    verbose: dict[int, list["Check"]] = {
-        0: [],  # Don't log anything.
-        1: [Log()],  # Log 7 lines at the start/end of each quantity.
-        2: [Log(None)],  # Log *all* data. This is produces GHA logs >1 GiB.
-        3: [Dump(tmp_path)],  # Dump all data to a file.
-    }
-    common = [Size({"n": N_node}), NoneMissing()] + verbose[verbosity]
+    v: dict[int, list] = {0: [], 1: [Log()], 2: [Log(None)], 3: [Dump(tmp_path)]}
+    common = [Size({"n": N_node}), NoneMissing()] + v[verbosity]
 
     # Insert key-specific and common checks
     k = "test_debug"
     result = insert_checks(c, k, CHECKS, common)
 
-    # Show and get a different key
+    # DEBUG Show and compute a different key
     # k = key.pdt_cny
 
     # Show what will be computed
+    # verbosity = True  # DEBUG Force printing the description
     if verbosity:
         print(c.describe(k))
 
+    # return  # DEBUG Exit before doing any computation
+
     # Compute the test key
-    c.get(k)
+    tmp = c.get(k)
+
+    # DEBUG Handle a subset of the result for inspection
+    # print(tmp)
 
     assert result, "1 or more checks failed"
+    del tmp
