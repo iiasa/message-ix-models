@@ -2,7 +2,7 @@
 
 import logging
 import re
-from collections.abc import Callable, Hashable, Mapping
+from collections.abc import Callable, Hashable, Mapping, Sequence
 from itertools import filterfalse, product
 from typing import TYPE_CHECKING, Any, Optional, Union
 
@@ -15,19 +15,25 @@ from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 
 from message_ix_models import Context
-from message_ix_models.util import add_par_data, nodes_ex_world
+from message_ix_models.util import MappingAdapter, add_par_data, nodes_ex_world
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from typing import Protocol
 
     from genno import Computer, Key
     from genno.types import AnyQuantity, TQuantity
     from sdmx.model.v21 import Code
 
+    class SupportsLessThan(Protocol):
+        def __lt__(self, __other: Any) -> bool: ...
+
+
 log = logging.getLogger(__name__)
 
 __all__ = [
     "add_par_data",
+    "broadcast_wildcard",
     "codelist_to_groups",
     "compound_growth",
     "exogenous_data",
@@ -43,6 +49,50 @@ __all__ = [
     "select_expand",
     "share_curtailment",
 ]
+
+
+def broadcast_wildcard(
+    qty: "TQuantity",
+    *coords: Sequence["SupportsLessThan"],
+    dim: Union[Hashable, Sequence[Hashable]] = "n",
+) -> "TQuantity":
+    """Broadcast over coordinates `coords` along respective dimension(s) `dim`.
+
+    `dim` may identify a single dimension or a sequence of dimensions; `coords` must
+    be given for each dimension
+
+    For each respective items from `dim` and `coords`, any missing coordinates along the
+    dimension are populated using the values of `qty` keyed with the 'wildcard' label
+    "*".
+    """
+    if isinstance(dim, Hashable) and not isinstance(dim, tuple):
+        dim = (dim,)
+    if len(dim) != len(coords):
+        raise ValueError(
+            f"Must provide same number of dim (got |{dim}| = {len(dim)}) as coords "
+            f"(got {len(coords)})"
+        )
+
+    mapping = {}
+    # Iterate over dimensions `d` and respective coords `c`
+    for d, c in zip(dim, coords):
+        # Identify existing, non-wildcard labels along `dim`
+        existing = set(qty.coords[d].data) - {"*"}
+        # Identify missing labels along `dim`
+        missing = sorted(set(c) - existing)
+
+        if not missing:
+            continue  # Nothing to do for dim `d`; `qty` has a complete set of labels
+
+        # - Each existing label mapped to itself.
+        # - "*" mapped to each missing label.
+        mapping[d] = [(x, x) for x in sorted(existing)] + [("*", x) for x in missing]
+
+    if not mapping:
+        return qty  # Nothing to do for *any* dimension
+
+    # Construct a MappingAdapter and apply to `qty`
+    return MappingAdapter(mapping)(qty)
 
 
 def codelist_to_groups(
