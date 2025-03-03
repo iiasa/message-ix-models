@@ -10,16 +10,22 @@
 /message_ix_models/workflow.py             @khaeru @glatterf42
 /message_ix_models/tests/test_workflow.py  @khaeru @glatterf42
 
-/doc/api/tools-costs.rst              @measrainsey
-/message_ix_models/data/costs         @measrainsey
-/message_ix_models/data/intratec      @measrainsey
-/message_ix_models/tests/tools/costs  @measrainsey
-/message_ix_models/tools/costs        @measrainsey
+# Colleagues responsible for module-specific cost data
+/message_ix_models/data/costs/cooling   @adrivinca
+/message_ix_models/data/costs/dac       @ywpratama
+/message_ix_models/data/costs/material  @macflo8
 
-/doc/material                            @GamzeUnlu95 @macflo8
-/message_ix_models/data/material         @GamzeUnlu95 @macflo8
-/message_ix_models/model/material        @GamzeUnlu95 @macflo8
-/message_ix_models/tests/model/material  @GamzeUnlu95 @macflo8
+# All of the above + others
+/doc/api/tools-costs.rst              @adrivinca @macflo8 @OFR-IIASA @ywpratama
+/message_ix_models/data/costs         @adrivinca @macflo8 @OFR-IIASA @ywpratama
+/message_ix_models/data/intratec      @adrivinca @macflo8 @OFR-IIASA @ywpratama
+/message_ix_models/tests/tools/costs  @adrivinca @macflo8 @OFR-IIASA @ywpratama
+/message_ix_models/tools/costs        @adrivinca @macflo8 @OFR-IIASA @ywpratama
+
+/doc/material                            @macflo8
+/message_ix_models/data/material         @macflo8
+/message_ix_models/model/material        @macflo8
+/message_ix_models/tests/model/material  @macflo8
 
 /doc/transport
 /message_ix_models/data/transport         @khaeru @r-aneeque
