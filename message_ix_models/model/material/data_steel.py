@@ -1002,7 +1002,7 @@ def gen_bof_pig_input(s_info):
     )
     df_chn = (
         make_df("input", value=0.83 / pig_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc="R12_CHN")
+        .pipe(broadcast, node_loc=["R12_CHN"])
         .pipe(same_node)
         .pipe(broadcast, year_act=[2020, 2025])
         .pipe(broadcast, year_vtg=years)
@@ -1041,7 +1041,7 @@ def gen_bof_pig_input(s_info):
     )
     df_chn = (
         make_df("input", value=(1 - 0.83) / scrap_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc="R12_CHN")
+        .pipe(broadcast, node_loc=["R12_CHN"])
         .pipe(same_node)
         .pipe(broadcast, year_act=[2020, 2025])
         .pipe(broadcast, year_vtg=years)
