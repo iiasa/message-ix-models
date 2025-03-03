@@ -434,7 +434,7 @@ def derive_demand(
 
     # format to MESSAGEix standard
     df_par = format_to_demand_par(df_final, material)
-    return df_par, df_all
+    return df_par
 
 
 def gen_demand_petro(
