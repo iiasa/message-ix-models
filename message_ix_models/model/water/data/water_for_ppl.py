@@ -35,8 +35,8 @@ def missing_tech(x: pd.Series) -> pd.Series:
         "nuc_hc": 1 / 0.326,
         "nuc_lc": 1 / 0.326,
         "solar_th_ppl": 1 / 0.385,
-        "csp_sm1_res": 1 / 0.385,
-        "csp_sm3_res": 1 / 0.385,
+        "csp_sm1_ppl": 1 / 0.385,
+        "csp_sm3_ppl": 1 / 0.385,
     }
 
     if pd.notna(x["technology"]):
@@ -141,9 +141,7 @@ def hist_act(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
     hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
     *cooling_fraction
     """
-    tech_df = hold_cost[
-        hold_cost["technology"].str.startswith(x.technology)
-    ]  # [x.node_loc]
+    tech_df = hold_cost[hold_cost["utype"] == x.technology]
 
     node_search = context.regions if context.type_reg == "country" else x["node_loc"]
 
@@ -175,9 +173,8 @@ def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
     hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
     share * cooling_fraction
     """
-    tech_df = hold_cost[
-        hold_cost["technology"].str.startswith(x.technology)
-    ]  # [x.node_loc]
+    tech_df = hold_cost[hold_cost["utype"] == x.technology]
+
     if context.type_reg == "country":
         node_search = context.regions
     else:
@@ -199,6 +196,57 @@ def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
         ]
         for new_value, cooling_technology in zip(new_values, cooling_technologies)
     ]
+
+
+def apply_act_cap_multiplier(
+    df: pd.DataFrame,
+    hold_cost: pd.DataFrame,
+    cap_fact_parent: pd.DataFrame = None,
+    param_name: str = "",
+) -> pd.DataFrame:
+    """
+    Generalized function to apply hold_cost factors and optionally divide by cap factor.
+    hold cost contain the share per cooling technologies and their activity factors
+    compared to parent technologies.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input dataframe in long format, containing 'node_loc', 'technology', and 'value'.
+    hold_cost : pd.DataFrame
+        DataFrame with 'utype', region-specific multipliers (wide format), and 'technology'.
+    cap_fact_parent : pd.DataFrame, optional
+        DataFrame with capacity factors, used only if 'capacity' is in param_name.
+    param_name : str, optional
+        The name of the parameter being processed.
+
+    Returns
+    -------
+    pd.DataFrame
+        The modified dataframe.
+    """
+
+    # Melt hold_cost to long format
+    hold_cost_long = hold_cost.melt(
+        id_vars=["utype", "technology"], var_name="node_loc", value_name="multiplier"
+    )
+
+    # Merge and apply hold_cost multipliers
+    df = df.merge(hold_cost_long, how="left")
+    df["value"] *= df["multiplier"]
+
+    # filter with value > 0
+    df = df[df["value"] > 0]
+
+    # If parameter is capacity-related, divide by cap_fact
+    if "capacity" in param_name and cap_fact_parent is not None:
+        df = df.merge(cap_fact_parent, how="left")
+        df["value"] /= df["cap_fact"]
+        df.drop(columns="cap_fact", inplace=True)
+
+    df.drop(columns=["utype", "multiplier"], inplace=True)
+
+    return df
 
 
 def relax_growth_constraint(
@@ -449,26 +497,33 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     scen = context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
-    # Extracting input values from scenario
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
+    output_par_tec = cooling_df["parent_tech"]
+    # replace csp_sm1_res with csp_sm1_ppl and csp_sm3_res with csp_sm3_ppl
+    output_par_tec = output_par_tec.replace(
+        {"csp_sm1_ppl": "csp_sm1_res", "csp_sm3_ppl": "csp_sm3_res"}, regex=True
+    )
+
     # list of tec in cooling_df["parent_tech"] that are not in ref_input
-    missing_tec = cooling_df["parent_tech"][
-        ~cooling_df["parent_tech"].isin(ref_input["technology"])
-    ]
+    missing_tec = output_par_tec[~output_par_tec.isin(ref_input["technology"])]
     # some techs only have output, like csp
     ref_output = scen.par("output", {"technology": missing_tec})
     # set columns names of ref_output to be the same as ref_input
     ref_output.columns = ref_input.columns
+    # rename the technology for csp back to ppl
+    ref_output["technology"] = ref_output["technology"].replace(
+        {"csp_sm1_res": "csp_sm1_ppl", "csp_sm3_res": "csp_sm3_ppl"}, regex=True
+    )
     # merge ref_input and ref_output
     ref_input = pd.concat([ref_input, ref_output])
     # Extracting historical activity from scenario
-    ref_hist_act = scen.par(
-        "historical_activity", {"technology": cooling_df["parent_tech"]}
-    )
-    # Extracting historical capacity from scenario
-    ref_hist_cap = scen.par(
-        "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
-    )
+    # ref_hist_act = scen.par(
+    #     "historical_activity", {"technology": cooling_df["parent_tech"]}
+    # )
+    # # Extracting historical capacity from scenario
+    # ref_hist_cap = scen.par(
+    #     "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
+    # )
 
     ref_input[["value", "level"]] = ref_input.apply(missing_tech, axis=1)
 
@@ -708,24 +763,121 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     cost = pd.read_csv(path1)
     # Combine technology name to get full cooling tech names
     cost["technology"] = cost["utype"] + "__" + cost["cooling"]
-    # Filtering out 2010 data to use for historical values
-    input_cool_2020 = input_cool[
-        (input_cool["year_act"] == 2020) & (input_cool["year_vtg"] == 2020)
-    ]
-    # Filter out columns that contain 'mix' in column name
-    columns = [col for col in cost.columns if "mix_" in col]
-    # Rename column names to R11 to match with the previous df
+    cost["share"] = cost["utype"] + "_" + cost["cooling"]
 
+    # add contraint with relation, based on shares
+    # Keep only "utype", "technology", and columns starting with "mix_"
+    share_filtered = cost.loc[
+        :,
+        ["utype", "share"] + [col for col in cost.columns if col.startswith("mix_")],
+    ]
+
+    # Melt to long format
+    share_long = share_filtered.melt(
+        id_vars=["utype", "share"], var_name="node_share", value_name="value"
+    )
+    # filter with uypt in cooling_df["parent_tech"]
+    share_long = share_long[
+        share_long["utype"].isin(input_cool["parent_tech"].unique())
+    ].reset_index(drop=True)
+
+    # Remove "mix_" prefix from region names
+    share_long["node_share"] = share_long["node_share"].str.replace(
+        "mix_", "", regex=False
+    )
+    # Replace 0 values with 0.0001
+    share_long["value"] = share_long["value"] * 1.05  # give some flexibility
+    share_long["value"] = share_long["value"].replace(0, 0.0001)
+
+    # Expand for years [2020, 2025]
+    share_long = share_long.loc[share_long.index.repeat(2)].reset_index(drop=True)
+    share_long["shares"] = "share_calib_" + share_long["share"]
+    share_long.drop(columns={"utype", "share"}, inplace=True)
+    # restore cost as it was for future use
+    cost.drop(columns="share", inplace=True)
+    share_long["time"] = "year"
+    share_long["unit"] = "-"
+    share_calib = share_long.copy()
+    years_calib = [2020, 2025]
+    share_calib["year_act"] = years_calib * (len(share_calib) // 2)
+    # take year in info.N but not years_calib
+    years_fut = [year for year in info.Y if year not in years_calib]
+    share_fut = share_long.copy()
+    share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
+    # filter only shares that contain "ot_saline"
+    share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
+    # if value < 0.4 set to 0.4, not so allow too much saline where there is no
+    share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
+    # append share_calib and share_fut
+    results["share_commodity_up"] = pd.concat([share_calib, share_fut])
+
+    # Filtering out 2015 data to use for historical values
+    input_cool_2015 = input_cool[
+        (input_cool["year_act"] == 2015) & (input_cool["year_vtg"] == 2015)
+    ]
+    # set of parent_tech and node_loc for input_cool
+    input_cool_set = set(zip(input_cool["parent_tech"], input_cool["node_loc"]))
+    year_list = [2020, 2010, 2030, 2050, 2000, 2080, 1990]
+
+    for year in year_list:
+        print(year)
+        # Identify missing combinations in the current aggregate
+        input_cool_2015_set = set(
+            zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
+        )
+        missing_combinations = input_cool_set - input_cool_2015_set
+
+        if not missing_combinations:
+            break  # Stop if no missing combinations remain
+
+        # Extract missing rows from input_cool with the current year
+        missing_rows = input_cool[
+            (input_cool["year_act"] == year)
+            & (input_cool["year_vtg"] == year)
+            & input_cool.apply(
+                lambda row: (row["parent_tech"], row["node_loc"])
+                in missing_combinations,
+                axis=1,
+            )
+        ]
+
+        if not missing_rows.empty:
+            # Modify year columns to 2015
+            missing_rows = missing_rows.copy()
+            missing_rows["year_act"] = 2015
+            missing_rows["year_vtg"] = 2015
+
+            # Append to the aggregated dataset
+            input_cool_2015 = pd.concat(
+                [input_cool_2015, missing_rows], ignore_index=True
+            )
+
+    # Final check if there are still missing combinations
+    input_cool_2015_set = set(
+        zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
+    )
+    still_missing = input_cool_set - input_cool_2015_set
+
+    if still_missing:
+        print(
+            f"Warning: Some combinations are still missing even after trying all years: {still_missing}"
+        )
+
+    # Filter out columns that contain 'mix' in column name
+    # Rename column names to match with the previous df
     cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
     search_cols = [
-        col for col in cost.columns if context.regions in col or "technology" in col
+        col
+        for col in cost.columns
+        if context.regions in col or col in ["technology", "utype"]
     ]
-    hold_df = input_cool_2020[
+    hold_df = input_cool_2015[
         ["node_loc", "technology_name", "cooling_fraction"]
     ].drop_duplicates()
-    search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
-
-    # Apply function to the
+    search_cols_cooling_fraction = [
+        col for col in search_cols if col not in ["technology", "utype"]
+    ]
+    # multiplication factor with cooling factor and shares
     hold_cost = cost[search_cols].apply(
         shares,
         axis=1,
@@ -735,68 +887,118 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         search_cols=search_cols,
     )
 
-    changed_value_series = ref_hist_act.apply(
-        hist_act, axis=1, context=context, hold_cost=hold_cost
-    )
-    changed_value_series_flat = [
-        row for series in changed_value_series for row in series
-    ]
-    columns = [
-        "node_loc",
-        "technology",
-        "cooling_technology",
-        "year_act",
-        "value",
-        "new_value",
-        "unit",
-    ]
-    # dataframe for historical activities of cooling techs
-    act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
-    act_value_df = act_value_df[act_value_df["new_value"] > 0]
+    # changed_value_series = ref_hist_act.apply(
+    #     hist_act, axis=1, context=context, hold_cost=hold_cost
+    # )
+    # changed_value_series_flat = [
+    #     row for series in changed_value_series for row in series
+    # ]
+    # columns_act = [
+    #     "node_loc",
+    #     "technology",
+    #     "cooling_technology",
+    #     "year_act",
+    #     "value",
+    #     "new_value",
+    #     "unit",
+    # ]
+    # # dataframe for historical activities of cooling techs
+    # act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns_act)
+    # act_value_df = act_value_df[act_value_df["new_value"] > 0]
 
-    changed_value_series = ref_hist_cap.apply(
-        hist_cap, axis=1, context=context, hold_cost=hold_cost
+    # # now hist capacity
+    # changed_value_series = ref_hist_cap.apply(
+    #     hist_cap, axis=1, context=context, hold_cost=hold_cost
+    # )
+    # changed_value_series_flat = [
+    #     row for series in changed_value_series for row in series
+    # ]
+    # columns_cap = [
+    #     "node_loc",
+    #     "technology",
+    #     "cooling_technology",
+    #     "year_vtg",
+    #     "value",
+    #     "new_value",
+    #     "unit",
+    # ]
+    # cap_value_df = pd.DataFrame(changed_value_series_flat, columns=columns_cap)
+    # cap_value_df = cap_value_df[cap_value_df["new_value"] > 0]
+
+    # h_act = make_df(
+    #     "historical_activity",
+    #     node_loc=act_value_df["node_loc"],
+    #     technology=act_value_df["cooling_technology"],
+    #     year_act=act_value_df["year_act"],
+    #     mode="M1",
+    #     time="year",
+    #     value=act_value_df["new_value"],
+    #     # TODO finalize units
+    #     unit="GWa",
+    # )
+
+    # results["historical_activity"] = h_act
+
+    # hist cap to be divided by cap_factor of the parent tec
+    cap_fact_parent = scen.par(
+        "capacity_factor", {"technology": cooling_df["parent_tech"]}
     )
-    changed_value_series_flat = [
-        row for series in changed_value_series for row in series
+    # cap_fact_parent = cap_fact_parent[
+    #     (cap_fact_parent["node_loc"] == "R12_NAM")
+    #     & (cap_fact_parent["technology"] == "coal_ppl_u") # nuc_lc
+    # ]
+    # keep node_loc, technology , year_vtg and value
+    cap_fact_parent1 = cap_fact_parent[
+        ["node_loc", "technology", "year_vtg", "value"]
+    ].drop_duplicates()
+    cap_fact_parent1 = cap_fact_parent1[
+        cap_fact_parent1["year_vtg"] < scen.firstmodelyear
     ]
-    columns = [
-        "node_loc",
-        "technology",
-        "cooling_technology",
-        "year_vtg",
-        "value",
-        "new_value",
-        "unit",
+    # group by "node_loc", "technology", "year_vtg" and get the minimum value
+    cap_fact_parent1 = cap_fact_parent1.groupby(
+        ["node_loc", "technology", "year_vtg"], as_index=False
+    ).min()
+    # filter for values that have year_act < sc.firstmodelyear
+
+    # in some cases the capacity parameters are used with year_all
+    # (e.g. initial_new_capacity_up). need year_Act for this
+    cap_fact_parent2 = cap_fact_parent[
+        ["node_loc", "technology", "year_act", "value"]
+    ].drop_duplicates()
+    cap_fact_parent2 = cap_fact_parent2[
+        cap_fact_parent2["year_act"] >= scen.firstmodelyear
     ]
-    cap_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
-    cap_value_df = cap_value_df[cap_value_df["new_value"] > 0]
+    # group by "node_loc", "technology", "year_vtg" and get the minimum value
+    cap_fact_parent2 = cap_fact_parent2.groupby(
+        ["node_loc", "technology", "year_act"], as_index=False
+    ).min()
+    cap_fact_parent2.rename(columns={"year_act": "year_vtg"}, inplace=True)
 
-    # Make model compatible df for historical activitiy
-    h_act = make_df(
-        "historical_activity",
-        node_loc=act_value_df["node_loc"],
-        technology=act_value_df["cooling_technology"],
-        year_act=act_value_df["year_act"],
-        mode="M1",
-        time="year",
-        value=act_value_df["new_value"],
-        # TODO finalize units
-        unit="GWa",
+    cap_fact_parent = pd.concat([cap_fact_parent1, cap_fact_parent2])
+
+    # rename value to cap_fact
+    cap_fact_parent.rename(
+        columns={"value": "cap_fact", "technology": "utype"}, inplace=True
     )
 
-    results["historical_activity"] = h_act
-    # Make model compatible df for histroical new capacity
-    h_cap = make_df(
-        "historical_new_capacity",
-        node_loc=cap_value_df["node_loc"],
-        technology=cap_value_df["cooling_technology"],
-        year_vtg=cap_value_df["year_vtg"],
-        value=cap_value_df["new_value"],
-        unit="GWa",
-    )
+    # # merge cap_fact_parent with cap_value_df
+    # cap_value_df = pd.merge(cap_value_df, cap_fact_parent, how="left")
+    # # divide new_value by cap_fact
+    # cap_value_df["new_value"] = cap_value_df["new_value"] / cap_value_df["cap_fact"]
+    # # drop cap_fact
+    # cap_value_df.drop(columns="cap_fact", inplace=True)
 
-    results["historical_new_capacity"] = h_cap
+    # # Make model compatible df for histroical new capacity
+    # h_cap = make_df(
+    #     "historical_new_capacity",
+    #     node_loc=cap_value_df["node_loc"],
+    #     technology=cap_value_df["cooling_technology"],
+    #     year_vtg=cap_value_df["year_vtg"],
+    #     value=cap_value_df["new_value"],
+    #     unit="GWa",
+    # )
+
+    # results["historical_new_capacity"] = h_cap
 
     # Manually removing extra technologies not required
     # TODO make it automatic to not include the names manually
@@ -869,14 +1071,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     results["addon_lo"] = addon_lo["addon_lo"]
 
     # technical lifetime
-    # make_matched_dfs didn't map all technologies
-    # tl = make_matched_dfs(inv_cost,
-    #                       technical_lifetime = 30)
-    year = info.Y
-    if 2010 in year:
-        pass
-    else:
-        year.insert(0, 2010)
+    year = info.yv_ya.year_vtg.drop_duplicates()
+    year = year[year >= 1990]
 
     tl = (
         make_df(
@@ -930,32 +1126,81 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
             df["value"] = np.select(conditions, choices, default=df["value"])
 
     results["capacity_factor"] = df
-    # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
-    # growth activity up to avoid sudden switch in the cooling techs
-    g_up = make_df(
+    # Extract inand expand some paramenters from parent technologies
+    # Define parameter names to be extracted
+    param_names = [
+        "historical_activity",
+        "historical_new_capacity",
+        "initial_activity_up",
+        "initial_activity_lo",
+        "initial_new_capacity_up",
+        "soft_activity_up",
+        "soft_activity_lo",
+        "soft_new_capacity_up",
+        "level_cost_activity_soft_up",
+        "level_cost_activity_soft_lo",
+        "growth_activity_lo",
         "growth_activity_up",
-        technology=inp["technology"].drop_duplicates(),
-        value=0.05,
-        unit="%",
-        time="year",
-    ).pipe(broadcast, year_act=info.Y, node_loc=node_region)
+        "growth_new_capacity_up",
+    ]
 
-    # relax growth constraints for activity jumps of parent technologies
-    g_up = relax_growth_constraint(ref_hist_act, scen, cooling_df, g_up, "activity")
-    # relax growth constraints for capacity jumps of parent technologies
-    g_up = relax_growth_constraint(ref_hist_cap, scen, cooling_df, g_up, "new_capacity")
-    g_up = relax_growth_constraint(
-        ref_hist_cap, scen, cooling_df, g_up, "total_capacity"
-    )
+    multip_list = [
+        "historical_activity",
+        "historical_new_capacity",
+        "initial_activity_up",
+        "initial_activity_lo",
+        "initial_new_capacity_up",
+    ]
 
-    results["growth_activity_up"] = g_up
+    # Extract parameters dynamically
+    list_params = [
+        (scen.par(p, {"technology": cooling_df["parent_tech"]}), p) for p in param_names
+    ]
+
+    # Expand parameters for cooling technologies
+    suffixes = ["__ot_fresh", "__cl_fresh", "__air", "__ot_saline"]
+
+    for df, param_name in list_params:
+        df_param = pd.DataFrame()
+        for suffix in suffixes:
+            df_add = df.copy()
+            df_add["technology"] = df_add["technology"] + suffix
+            df_param = pd.concat([df_param, df_add])
+
+        if param_name in multip_list:
+            df_param_share = apply_act_cap_multiplier(
+                df_param, hold_cost, cap_fact_parent, param_name
+            )
+        else:
+            df_param_share = df_param
+
+        results[param_name] = pd.concat(
+            [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
+        )
+
+    # # Function to rename and add transformed parameters
+    # def rename_and_add(param_name, new_name, rename_dict):
+    #     if param_name in results:
+    #         df_transformed = (
+    #             results[param_name].drop(columns="time").rename(columns=rename_dict)
+    #         )
+    #         results[new_name] = df_transformed
+
+    # # Apply renaming for multiple parameters
+    # rename_and_add("soft_activity_up", "soft_new_capacity_up", {"year_act": "year_vtg"})
+    # rename_and_add(
+    #     "growth_activity_up", "growth_new_capacity_up", {"year_act": "year_vtg"}
+    # )
 
     # add share constraints for cooling technologies based on SSP assumptions
     df_share = cooling_shares_SSP_from_yaml(context)
 
     if not df_share.empty:
-        results["share_commodity_up"] = df_share
+        # pd concat to the existing results["share_commodity_up"]
+        results["share_commodity_up"] = pd.concat(
+            [results["share_commodity_up"], df_share], ignore_index=True
+        )
 
     return results
 
