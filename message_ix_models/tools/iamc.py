@@ -125,32 +125,28 @@ def iamc_like_data_for_query(
     unique: str = "MODEL SCENARIO VARIABLE UNIT",
     **kwargs,
 ) -> "AnyQuantity":
-    """Load data from `path` in IAMC-like format and transform to :class:`.Quantity`.
+    """Load data from `path` in an IAMC-like format and transform to :class:`.Quantity`.
 
     The steps involved are:
 
-    1. Read the data file; use pyarrow for better performance.
-    2. Immediately apply `query` to reduce the data to be handled in subsequent steps.
-    3. Assert that Model, Scenario, Variable, and Unit are unique; store the unique
-       values. This means that `query` **must** result in data with unique values for
-       these dimensions.
-    4. Transform "Region" labels to ISO 3166-1 alpha-3 codes using
-       :func:`.iso_3166_alpha_3`.
-    5. Drop entire time series without such codes; for instance "World".
-    6. Transform to a pd.Series with "n" and "y" index levels; ensure the latter are
-       int.
-    7. Transform to :class:`.Quantity` with units.
-
-    The result is :obj:`.cached`.
+    1. Read the data file. Additional `kwargs` are passed to :func:`pandas.read_csv`.
+       By default (unless `kwargs` explicitly give a different value), pyarrow is used
+       for better performance.
+    2. Pass the result through :func:`to_quantity`, with the parameters `query`,
+       `drop`, `non_iso_3166`, `replace`, and `unique`.
+    3. Cache the result using :obj:`.cached`. Subsequent calls with the same arguments
+       will yield the cached result rather than repeating steps (1) and (2).
 
     Parameters
     ----------
     archive_member : bool, optional
         If given, `path` may be an archive with 2 or more members. The member named by
         `archive_member` is extracted and read.
-    non_iso_3166 : bool, optional
-        If "discard" (default), "region" labels that are not ISO 3166-1 country names
-        are discarded, along with associated data. If "keep", such labels are kept.
+
+    Returns
+    -------
+    genno.Quantity
+        of the same structure returned by :func:`to_quantity`.
     """
     import pandas as pd
 
@@ -166,14 +162,82 @@ def iamc_like_data_for_query(
         source = path
 
     kwargs.setdefault("engine", "pyarrow")
+
+    return to_quantity(
+        pd.read_csv(source, **kwargs),
+        query=query,
+        drop=drop,
+        non_iso_3166=non_iso_3166,
+        replace=replace,
+        unique=unique,
+    )
+
+
+def to_quantity(
+    data: "pd.DataFrame",
+    *,
+    query: str,
+    drop: Optional[list[str]] = None,
+    non_iso_3166: Literal["keep", "discard"] = "discard",
+    replace: Optional[dict] = None,
+    unique: str = "MODEL SCENARIO VARIABLE UNIT",
+) -> "AnyQuantity":
+    """Convert `data` in IAMC ‘wide’ structure to :class:`genno.Quantity`.
+
+    `data` is processed via the following steps:
+
+     1. Drop columns given in `drop`, if any.
+     2. Apply `query`. This is done early to reduce the data handled in subsequent
+        steps. The query string must use the original column names (with matching case)
+        as appearing in `data` (or, for :func:`iamc_like_data_for_query`, in the file at
+        `path`).
+     3. Apply replacements from `replace`, if any.
+     4. Drop columns that are entirely empty.
+     5. Rename all columns/dimensions to upper case.
+     6. Assert that the `unique` columns each contain exactly 1 unique value, then
+        drop these columns. This means that `query` **must** result in data with unique
+        values for these dimensions.
+     7. Transform "REGION" codes via :func:`.iso_3166_alpha_3` to an "n" dimension
+        containing ISO 3166-1 alpha-3 codes. If `non_iso_3166`, preserve codes that do
+        not appear in the standard.
+     8. Drop entire time series where (7) does not yield an "n" code.
+     9. Transform to :class:`pandas.Series` with "n" and "y" index levels; ensure the
+        latter are :class:`int`.
+    10. Transform to :class:`.Quantity` and attach units.
+
+    Parameters
+    ----------
+    data :
+        Data frame in IAMC ‘wide’ format. The column names "Model", "Scenario",
+        "Region", "Variable", and "Unit" may be in any case.
+    query :
+        Query to select a subset of data, passed to :meth:`pandas.DataFrame.query`.
+    drop :
+        Identifiers of columns in `data`, passed to :meth:`pandas.DataFrame.drop`.
+    non_iso_3166 :
+        If "discard" (default), "region" labels that are not ISO 3166-1 country names
+        are discarded, along with associated data. If "keep", such labels are kept.
+    replace :
+        Replacements for values in columns, passed to :meth:`pandas.DataFrame.replace`.
+    unique :
+        Columns which must contain unique values. These columns are dropped from the
+        result.
+
+    Returns
+    -------
+    genno.Quantity
+        with at least dimensions :py:`("n", "y")`, and then a subset of :py:`("MODEL",
+        "SCENARIO", "VARIABLE", "UNIT")`—only those dimensions *not* indicated by
+        `unique`. If "UNIT" is in `unique`, the quantity has the given, unique units;
+        otherwise, it is dimensionless.
+    """
     set_index = ["n"] + sorted(
         set(["MODEL", "SCENARIO", "VARIABLE", "UNIT"]) - set(unique.split())
     )
 
     unique_values: dict[str, Any] = dict()
     tmp = (
-        pd.read_csv(source, **kwargs)
-        .drop(columns=drop or [])
+        data.drop(columns=drop or [])
         .query(query)
         .replace(replace or {})
         .dropna(how="all", axis=1)
