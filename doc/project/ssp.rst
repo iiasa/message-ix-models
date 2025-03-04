@@ -47,8 +47,12 @@ Data
       SSPOriginal
       SSPUpdate
 
-2024 update
-===========
+.. _ssp-2024:
+
+2023–2025 update
+================
+
+This update is related to the `Scenario Model Intercomparison Project (ScenarioMIP) for CMIP7 <https://wcrp-cmip.org/mips/scenariomip>`_.
 
 Transport
 ---------
@@ -58,19 +62,23 @@ Transport
 .. automodule:: message_ix_models.project.ssp.transport
    :members:
 
-   Use :program:`mix-models ssp transport --help in.xlsx out.xlsx` to invoke :func:`.main`.
-   Data are read from PATH_IN, in :file:`.xlsx` or :file:`.csv` format.
-   If :file:`.xlsx`, the data are first temporarily converted to :file:`.csv`.
-   Data are written to PATH_OUT; if not given, this defaults to the same path and suffix as PATH_IN, with "_out" added to the stem.
+   There are two ways to invoke this code:
 
-   For example:
+   1. To process data from file, use :program:`mix-models ssp transport --help in.xlsx out.xlsx` to invoke :func:`.process_file`.
+      Data are read from PATH_IN, in :file:`.xlsx` or :file:`.csv` format.
+      If :file:`.xlsx`, the data are first temporarily converted to :file:`.csv`.
+      Data are written to PATH_OUT; if not given, this defaults to the same path and suffix as PATH_IN, with "_out" added to the stem.
 
-   .. code-block:: shell
+      For example:
 
-      mix-models ssp transport --method=B \
-        SSP_SSP2_v2.1_baseline.xlsx
+      .. code-block:: shell
 
-   …produces a file :file:`SSP_SSP2_v2.1_baseline_out.xlsx` in the same directory.
+         mix-models ssp transport --method=B \
+           SSP_SSP2_v2.1_baseline.xlsx
+
+      …produces a file :file:`SSP_SSP2_v2.1_baseline_out.xlsx` in the same directory.
+
+   2. To process an existing :class:`pandas.DataFrame` from other code, call :func:`.process_df`, passing the input dataframe and the `method` parameter.
 
    As of 2025-01-25:
 

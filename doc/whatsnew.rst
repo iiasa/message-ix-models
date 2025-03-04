@@ -11,7 +11,7 @@ Next release
     The minimum supported version of both packages is 3.7.0.
 
 - Update :class:`.IEA_EWEB` to support :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
-- Add :func:`.prepare_method_B` to :mod:`.ssp.transport` (:pull:`259`).
+
 - New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
 - Drop obsolete :py:`series_of_pint_quantity()` (:pull:`289`).
 
@@ -20,6 +20,14 @@ By topic:
 .. contents::
    :local:
    :backlinks: none
+
+SSP :ref:`ssp-2024`/ScenarioMIP
+-------------------------------
+
+Improve :mod:`.ssp.transport`:
+
+- Add :func:`.prepare_method_B` and make this the default1 (:pull:`259`).
+- Add :func:`~.ssp.transport.process_df` (:pull:`303`).
 
 Transport
 ---------

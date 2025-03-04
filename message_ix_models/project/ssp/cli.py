@@ -43,7 +43,7 @@ def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[
     import pandas as pd
     from platformdirs import user_cache_path
 
-    from .transport import main
+    from .transport import process_file
 
     if path_in.suffix == ".xlsx":
         path_in_user = path_in
@@ -65,7 +65,7 @@ def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[
     else:
         path_out_user = path_out
 
-    main(path_in, path_out, method)
+    process_file(path_in, path_out, method=method)
 
     if path_out_user != path_out:
         print(f"Convert CSV output to {path_out_user}")
