@@ -35,8 +35,8 @@ def missing_tech(x: pd.Series) -> pd.Series:
         "nuc_hc": 1 / 0.326,
         "nuc_lc": 1 / 0.326,
         "solar_th_ppl": 1 / 0.385,
-        "csp_sm1_res": 1 / 0.385,
-        "csp_sm3_res": 1 / 0.385,
+        "csp_sm1_ppl": 1 / 0.385,
+        "csp_sm3_ppl": 1 / 0.385,
     }
 
     if pd.notna(x["technology"]):
@@ -443,48 +443,36 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         .drop(columns=1)
     )
 
-    # Filter for rows where parent_tech is "csp_sm1_res"
-    csp_rows = cooling_df[cooling_df["parent_tech"] == "csp_sm1_res"].copy()
-
-    # Define suffixes for historical years
-    hist_years = ["hist_2010", "hist_2015", "hist_2020"]
-
-    # Expand the dataframe for csp historical caapcities
-    expanded_rows = []
-    for hist_year in hist_years:
-        temp_df = csp_rows.copy()
-        temp_df["parent_tech"] = temp_df["parent_tech"] + f"_{hist_year}"
-        temp_df["technology_name"] = temp_df["technology_name"].str.replace(
-            "csp_sm1_res", f"csp_sm1_res_{hist_year}"
-        )
-        expanded_rows.append(temp_df)
-
-    # Concatenate with original dataframe
-    cooling_df = pd.concat([cooling_df] + expanded_rows, ignore_index=True)
-
     scen = context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
-    # Extracting input values from scenario
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
+    output_par_tec = cooling_df["parent_tech"]
+    # replace csp_sm1_res with csp_sm1_ppl and csp_sm3_res with csp_sm3_ppl
+    output_par_tec = output_par_tec.replace(
+        {"csp_sm1_ppl": "csp_sm1_res", "csp_sm3_ppl": "csp_sm3_res"}, regex=True
+    )
+
     # list of tec in cooling_df["parent_tech"] that are not in ref_input
-    missing_tec = cooling_df["parent_tech"][
-        ~cooling_df["parent_tech"].isin(ref_input["technology"])
-    ]
+    missing_tec = output_par_tec[~output_par_tec.isin(ref_input["technology"])]
     # some techs only have output, like csp
     ref_output = scen.par("output", {"technology": missing_tec})
     # set columns names of ref_output to be the same as ref_input
     ref_output.columns = ref_input.columns
+    # rename the technology for csp back to ppl
+    ref_output["technology"] = ref_output["technology"].replace(
+        {"csp_sm1_res": "csp_sm1_ppl", "csp_sm3_res": "csp_sm3_ppl"}, regex=True
+    )
     # merge ref_input and ref_output
     ref_input = pd.concat([ref_input, ref_output])
     # Extracting historical activity from scenario
-    ref_hist_act = scen.par(
-        "historical_activity", {"technology": cooling_df["parent_tech"]}
-    )
-    # Extracting historical capacity from scenario
-    ref_hist_cap = scen.par(
-        "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
-    )
+    # ref_hist_act = scen.par(
+    #     "historical_activity", {"technology": cooling_df["parent_tech"]}
+    # )
+    # # Extracting historical capacity from scenario
+    # ref_hist_cap = scen.par(
+    #     "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
+    # )
 
     ref_input[["value", "level"]] = ref_input.apply(missing_tech, axis=1)
 
