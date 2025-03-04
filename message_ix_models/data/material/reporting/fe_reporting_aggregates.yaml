@@ -32,7 +32,7 @@ level_2:
   Liquids|Biomass:
     short: fe_pe_oil
     components:
-      [ furnace_ethanol_petro, fe_pe_cement_bio_eth, fe_pe_aluminum_bio_eth, fe_pe_other_eth, fe_pe_steel_liq_bio ]
+      [ furnace_ethanol_petro, fe_pe_cement_bio_eth, fe_pe_aluminum_bio_eth, fe_pe_other_eth, fe_pe_steel_liq_bio]
   Liquids|Oil:
     short: fe_pe_oil
     components:
@@ -45,14 +45,10 @@ level_2:
     short: fe_pe_liq
     components:
       [ fe_pe_hvc_liq, fe_pe_cement_liq, fe_pe_aluminum_liq, fe_pe_other_liq ]
-  Biomass:
-    short: fe_pe_bio
-    components:
-      [ fe_pe_hvc_bio_eth, fe_pe_cement_bio, fe_pe_aluminum_bio_eth, fe_pe_other_bio, fe_pe_other_eth ]
   Solids:
     short: fe_pe_solids
     components:
-      [ fe_pe_hvc_solids, fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids ]
+      [ fe_pe_hvc_solids, fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids]
   Solids|Coal:
     short: fe_pe_coal
     components:
@@ -82,17 +78,22 @@ level_2:
     components:
       [ fe_pe_steel_el, fe_pe_steel_liq, fe_pe_steel_sol, fe_pe_steel_gases, fe_pe_steel_h2 ]
 
-  Other Sector:
-    short: fe_pe_oth
-    components:
-      [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_solids, fe_pe_other_gases, fe_pe_other_h2 ]
-
   Chemicals|Other Sector:
     short: fe_pe_chem_other
     components:
       [ fe_pe_resin_el, fe_pe_chem_other_gas, fe_pe_chem_other_oil,
         fe_pe_chem_other_eth, fe_pe_chem_other_bio, fe_pe_chem_other_coal,
         fe_pe_chem_other_h2 ]
+
+  Chemicals|High-Value Chemicals:
+    short: fe_pe_hvc
+    components:
+      [ fe_pe_hvc_el, fe_pe_hvc_liq, fe_pe_hvc_solids, fe_pe_hvc_gases, fe_pe_hvc_h2 ]
+
+  Other Sector:
+    short: fe_pe_oth
+    components:
+      [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_solids, fe_pe_other_gases, fe_pe_other_h2, fe_pe_other_heat ]
 
 level_1:
 
@@ -108,18 +109,24 @@ level_1:
     components:
       [ fe_pe_hvc_oth ]
   Chemicals|Liquids|Biomass:
-    short: fe_pe_chem_oth
+    short: fe_pe_chem_bio
     components:
       [ fe_pe_hvc_bio_eth ]
 
   Chemicals|High-Value Chemicals|Electricity:
     short: fe_pe_hvc_el
     components:
-      [ fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc ]
+      [fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc]
+
+  Chemicals|High-Value Chemicals|Gases:
+    short: fe_pe_hvc_gases
+    components:
+      [ fe_pe_hvc_gas]
+
   Chemicals|High-Value Chemicals|Liquids:
     short: fe_pe_hvc_liq
     components:
-      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h, fe_pe_hvc_bio_eth, fe_pe_hvc_oth ]
+      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h, fe_pe_hvc_bio_eth, fe_pe_hvc_oth]
   Chemicals|High-Value Chemicals|Liquids|Oil:
     short: fe_pe_hvc_oil
     components:
@@ -127,7 +134,7 @@ level_1:
   Chemicals|High-Value Chemicals|Solids:
     short: fe_pe_hvc_solids
     components:
-      [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke ]
+      [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke]
 
   Chemicals|Other Sector|Electricity:
     short: fe_pe_chem_other_el
@@ -178,7 +185,7 @@ level_1:
   Non-Metallic Minerals|Cement|Electricity:
     short: fe_pe_cement_el
     components:
-      [ fe_pe_cement_el_ht, fe_pe_cement_el_oth ]
+      [fe_pe_cement_el_ht, fe_pe_cement_el_oth]
   Non-Metallic Minerals|Cement|Liquids|Oil:
     short: fe_pe_cement_oil
     components:
@@ -249,7 +256,7 @@ level_1:
   Other Sector|Electricity|Thermal:
     short: fe_pe_other_el_th
     components:
-      [ fe_pe_other_el_th_res, fe_pe_other_el_th_hp ]
+      [fe_pe_other_el_th_res, fe_pe_other_el_th_hp ]
   Other Sector|Electricity:
     short: fe_pe_other_el
     components:
@@ -277,7 +284,7 @@ level_1:
   Other Sector|Liquids:
     short: fe_pe_other_liq
     components:
-      [ fe_pe_other_oil_l_sp, fe_pe_other_oil_l_th, fe_pe_other_oil_h_th, fe_pe_other_eth_th, fe_pe_other_eth_sp ]
+      [fe_pe_other_oil_l_sp, fe_pe_other_oil_l_th, fe_pe_other_oil_h_th, fe_pe_other_eth_th, fe_pe_other_eth_sp ]
   Other Sector|Solids:
     short: fe_pe_other_solids
     components:

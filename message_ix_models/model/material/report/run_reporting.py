@@ -272,6 +272,17 @@ def run_fe_reporting(rep: message_ix.Reporter, model: str, scenario: str):
 
     py_df_all = split_fe_other(rep, py_df_all, model, scenario)
 
+    # Add solar to "other industry" aggregate
+    var = "Final Energy|Industry|Other Sector"
+    other_sector_agg = py_df_all.add(
+        f"{var}|Solar",
+        var,
+        var,
+    )
+    py_df_all = pyam.concat(
+        [py_df_all.filter(variable=var, keep=False), other_sector_agg]
+    )
+
     vars = [
         "Final Energy|Industry|Other Sector",
         "Final Energy|Industry|Iron and Steel",
@@ -310,49 +321,59 @@ def add_chemicals_to_final_energy_variables(
             "Chemicals|Ammonia",
             "Chemicals|Methanol",
             "Chemicals|High-Value Chemicals",
+            "Chemicals|Other Sector"
         ],
         "Chemicals|Electricity": [
             "Chemicals|Ammonia|Electricity",
             "Chemicals|Methanol|Electricity",
             "Chemicals|High-Value Chemicals|Electricity",
+            "Chemicals|Other Sector|Electricity"
         ],
         "Chemicals|Gases": [
             "Chemicals|Ammonia|Gases",
             "Chemicals|Methanol|Gases",
             "Chemicals|High-Value Chemicals|Gases",
+            "Chemicals|Other Sector|Gases"
         ],
         "Chemicals|Gases|Gas": [
             "Chemicals|Ammonia|Gases|Gas",
             "Chemicals|Methanol|Gases|Gas",
             "Chemicals|High-Value Chemicals|Gases|Gas",
+            "Chemicals|Other Sector|Gases|Gas"
         ],
         "Chemicals|Liquids": [
             "Chemicals|Ammonia|Liquids",
             "Chemicals|High-Value Chemicals|Liquids",
+            "Chemicals|Other Sector|Liquids"
         ],
         "Chemicals|Liquids|Oil": [
             "Chemicals|Ammonia|Liquids|Oil",
             "Chemicals|High-Value Chemicals|Liquids|Oil",
+            "Chemicals|Other Sector|Liquids|Oil"
         ],
         "Chemicals|Solids": [
             "Chemicals|Ammonia|Solids",
             "Chemicals|Methanol|Solids",
             "Chemicals|High-Value Chemicals|Solids",
+            "Chemicals|Other Sector|"
         ],
         "Chemicals|Solids|Biomass": [
             "Chemicals|Ammonia|Solids|Biomass",
             "Chemicals|Methanol|Solids|Biomasss",
             "Chemicals|High-Value Chemicals|Solids|Biomass",
+            "Chemicals|Other Sector|Solids|Biomass"
         ],
         "Chemicals|Solids|Coal": [
             "Chemicals|Ammonia|Solids|Coal",
             "Chemicals|Methanol|Solids|Coal",
             "Chemicals|High-Value Chemicals|Solids|Coal",
+            "Chemicals|Other Sector|Solids|Coal"
         ],
         "Chemicals|Hydrogen": [
             "Chemicals|Ammonia|Hydrogen",
             "Chemicals|Methanol|Hydrogen",
             "Chemicals|High-Value Chemicals|Hydrogen",
+            "Chemicals|Other Sector|Hydrogen"
         ],
     }
     prefix = "Final Energy|Industry|"
