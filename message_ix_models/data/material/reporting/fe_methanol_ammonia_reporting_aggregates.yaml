@@ -16,7 +16,7 @@ level_2:
   Chemicals|Ammonia:
     short: fe_nh3
     components:
-      [ fe_nh3_coal, fe_nh3_gas, fe_nh3_oil, fe_nh3_bio ]
+      [ fe_pe_nh3_el, fe_nh3_coal, fe_nh3_gas, fe_nh3_oil, fe_nh3_bio ]
 
   Chemicals|Methanol:
     short: fe_meth
