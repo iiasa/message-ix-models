@@ -32,7 +32,7 @@ def run_old_reporting(sc: Optional[Scenario] = None):
         scen=sc,
         merge_hist=True,
         merge_ts=False,
-        run_config="GEIDCO4_GEI_run_config.yaml",
+        run_config="default_run_config.yaml",
     )
 
 
