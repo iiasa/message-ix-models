@@ -73,6 +73,11 @@ vars:
       { technology: furnace_gas_resins, mode: M1, commodity: gas, level: final }
     short:
       fe_pe_resin_gas
+  Chemicals|Resins|Gases:
+    filter:
+      { technology: furnace_gas_resins, mode: M1, commodity: gas, level: final }
+    short:
+      fe_pe_resin_gases
   Chemicals|Resins|Hydrogen:
     filter:
       { technology: [furnace_h2_resins, fc_h2_resins], mode: M1, commodity: hydrogen, level: final }
