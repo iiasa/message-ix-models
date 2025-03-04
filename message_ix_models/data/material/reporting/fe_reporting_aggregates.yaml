@@ -16,51 +16,51 @@ level_2:
   Heat:
     short: fe_pe_heat
     components:
-      [ fe_pe_hvc_heat, fe_pe_cement_heat, fe_pe_aluminum_heat, fe_pe_steel_heat, fe_pe_other_heat ]
+      [ fe_pe_cement_heat, fe_pe_aluminum_heat, fe_pe_steel_heat, fe_pe_other_heat ]
   Electricity:
     short: fe_pe_el
     components:
-      [ fe_pe_chem_other_el, fe_pe_cement_el, fe_pe_aluminum_el, fe_pe_steel_el, fe_pe_other_el ]
+      [ fe_pe_cement_el, fe_pe_aluminum_el, fe_pe_steel_el, fe_pe_other_el ]
   Gases|Gas:
     short: fe_pe_gas
     components:
-      [ fe_pe_hvc_gas, fe_pe_cement_gas, fe_pe_aluminum_gas, fe_pe_steel_gas, fe_pe_other_gas ]
+      [ fe_pe_cement_gas, fe_pe_aluminum_gas, fe_pe_steel_gas, fe_pe_other_gas ]
   Gases:
     short: fe_pe_gases
     components:
-      [ fe_pe_hvc_gases, fe_pe_cement_gases, fe_pe_aluminum_gases, fe_pe_steel_gases, fe_pe_other_gases ]
+      [ fe_pe_cement_gases, fe_pe_aluminum_gases, fe_pe_steel_gases, fe_pe_other_gases ]
   Liquids|Biomass:
     short: fe_pe_oil
     components:
-      [ furnace_ethanol_petro, fe_pe_cement_bio_eth, fe_pe_aluminum_bio_eth, fe_pe_other_eth, fe_pe_steel_liq_bio]
+      [ fe_pe_cement_bio_eth, fe_pe_aluminum_bio_eth, fe_pe_other_eth, fe_pe_steel_liq_bio]
   Liquids|Oil:
     short: fe_pe_oil
     components:
-      [ fe_pe_hvc_oil, fe_pe_cement_oil, fe_pe_aluminum_oil, fe_pe_other_liq_bio ]
+      [ fe_pe_cement_oil, fe_pe_aluminum_oil, fe_pe_other_liq_bio ]
   Liquids|Other:
     short: fe_pe_liq_oth
     components:
-      [ fe_pe_hvc_oth, fe_pe_cement_oth, fe_pe_aluminum_oth ]
+      [ fe_pe_cement_oth, fe_pe_aluminum_oth ]
   Liquids:
     short: fe_pe_liq
     components:
-      [ fe_pe_hvc_liq, fe_pe_cement_liq, fe_pe_aluminum_liq, fe_pe_other_liq ]
+      [ fe_pe_cement_liq, fe_pe_aluminum_liq, fe_pe_other_liq ]
   Solids:
     short: fe_pe_solids
     components:
-      [ fe_pe_hvc_solids, fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids]
+      [ fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids]
   Solids|Coal:
     short: fe_pe_coal
     components:
-      [ fe_pe_hvc_coal, fe_pe_cement_coal, fe_pe_aluminum_coal, fe_pe_steel_solid_coal, fe_pe_other_coal ]
+      [ fe_pe_cement_coal, fe_pe_aluminum_coal, fe_pe_steel_solid_coal, fe_pe_other_coal ]
   Solids|Biomass:
     short: fe_pe_bio
     components:
-      [ fe_pe_hvc_bio, fe_pe_cement_bio, fe_pe_aluminum_bio, fe_pe_other_bio, fe_pe_steel_solid_bio ]
+      [ fe_pe_cement_bio, fe_pe_aluminum_bio, fe_pe_other_bio, fe_pe_steel_solid_bio ]
   Hydrogen:
     short: fe_pe_h2
     components:
-      [ fe_pe_hvc_h2, fe_pe_cement_h2, fe_pe_aluminum_h2, fe_pe_steel_h2, fe_pe_other_h2 ]
+      [ fe_pe_cement_h2, fe_pe_aluminum_h2, fe_pe_steel_h2, fe_pe_other_h2 ]
 
 
   Non-Metallic Minerals|Cement:
@@ -117,12 +117,10 @@ level_1:
     short: fe_pe_hvc_el
     components:
       [fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc]
-
   Chemicals|High-Value Chemicals|Gases:
     short: fe_pe_hvc_gases
     components:
       [ fe_pe_hvc_gas]
-
   Chemicals|High-Value Chemicals|Liquids:
     short: fe_pe_hvc_liq
     components:
