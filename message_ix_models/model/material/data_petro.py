@@ -6,9 +6,18 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_timeseries
+from message_ix_models.model.material.data_util import (
+    gen_chemicals_co2_ind_factors,
+    gen_ethanol_to_ethylene_emi_factor,
+    gen_plastics_emission_factors,
+    read_timeseries,
+)
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import get_ssp_from_context, read_config
+from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
+    get_ssp_from_context,
+    read_config,
+)
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
@@ -320,7 +329,7 @@ def gen_data_petro_chemicals(
     # Techno-economic assumptions
     data_petro = read_data_petrochemicals(scenario)
     data_petro_ts = read_timeseries(
-        scenario, "petrochemicals", "petrochemicals_techno_economic.xlsx"
+        scenario, "petrochemicals", None, "petrochemicals_techno_economic.xlsx"
     )
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -475,10 +484,15 @@ def gen_data_petro_chemicals(
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
     ]
-    demand_hvc = material_demand_calc.gen_demand_petro(
+    df_demand = material_demand_calc.gen_demand_petro(
         scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
-    results["demand"].append(demand_hvc)
+    df_2025 = pd.read_csv(
+        package_data_path("material", "petrochemicals", "demand_2025.csv")
+    )
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
+    results["demand"].append(df_demand)
 
     # Special treatment for time-varying params
     tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
@@ -545,6 +559,17 @@ def gen_data_petro_chemicals(
     df["technology"] = "gas_processing_petro"
     results["relation_activity"] = df
 
+    meth_downstream_emi_top_down = gen_plastics_emission_factors(s_info, "HVCs")
+    meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "HVCs")
+    meth_downstream_emi_eth = gen_ethanol_to_ethylene_emi_factor(s_info)
+
+    results = combine_df_dictionaries(
+        results,
+        meth_downstream_emi_top_down,
+        meth_downstream_emi_bot_up,
+        meth_downstream_emi_eth,
+    )
+
     # TODO: move this to input xlsx file
     df_gro = results["growth_activity_up"]
     drop_idx = df_gro[
@@ -553,4 +578,11 @@ def gen_data_petro_chemicals(
         & (df_gro["year_act"] == 2020)
     ].index
     results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
-    return results
+
+    reduced_pdict = {}
+    for k,v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 40]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict
