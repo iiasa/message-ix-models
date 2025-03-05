@@ -132,72 +132,6 @@ def shares(
     return pd.Series(results, index=search_cols)
 
 
-def hist_act(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
-    """Calculate historical activity of cooling technology.
-    The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
-
-    Returns
-    -------
-    hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
-    *cooling_fraction
-    """
-    tech_df = hold_cost[hold_cost["utype"] == x.technology]
-
-    node_search = context.regions if context.type_reg == "country" else x["node_loc"]
-
-    node_loc = x["node_loc"]
-    technology = x["technology"]
-    cooling_technologies = list(tech_df["technology"])
-    new_values = tech_df[node_search] * x.value
-
-    return [
-        [
-            node_loc,
-            technology,
-            cooling_technology,
-            x.year_act,
-            x.value,
-            new_value,
-            x.unit,
-        ]
-        for new_value, cooling_technology in zip(new_values, cooling_technologies)
-    ]
-
-
-def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
-    """Calculate historical capacity of cooling technology.
-    The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
-
-    Returns
-    -------
-    hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
-    share * cooling_fraction
-    """
-    tech_df = hold_cost[hold_cost["utype"] == x.technology]
-
-    if context.type_reg == "country":
-        node_search = context.regions
-    else:
-        node_search = x["node_loc"]  # R11_EEU
-    node_loc = x["node_loc"]
-    technology = x["technology"]
-    cooling_technologies = list(tech_df["technology"])
-    new_values = tech_df[node_search] * x.value
-
-    return [
-        [
-            node_loc,
-            technology,
-            cooling_technology,
-            x.year_vtg,
-            x.value,
-            new_value,
-            x.unit,
-        ]
-        for new_value, cooling_technology in zip(new_values, cooling_technologies)
-    ]
-
-
 def apply_act_cap_multiplier(
     df: pd.DataFrame,
     hold_cost: pd.DataFrame,
@@ -231,123 +165,24 @@ def apply_act_cap_multiplier(
         id_vars=["utype", "technology"], var_name="node_loc", value_name="multiplier"
     )
 
-    # Merge and apply hold_cost multipliers
+    # Merge and apply hold_cost multipliers: share * addon_factor
+    # ACT,c = ACT,p * share * addon_factor
     df = df.merge(hold_cost_long, how="left")
     df["value"] *= df["multiplier"]
 
     # filter with value > 0
     df = df[df["value"] > 0]
 
-    # If parameter is capacity-related, divide by cap_fact
+    # If parameter is capacity-related, multiply by cap_fact
+    # CAP,c * cf,c(=1) = CAP,p * share * addon_factor * cf,p
     if "capacity" in param_name and cap_fact_parent is not None:
         df = df.merge(cap_fact_parent, how="left")
-        df["value"] /= df["cap_fact"]
+        df["value"] *= df["cap_fact"]
         df.drop(columns="cap_fact", inplace=True)
 
     df.drop(columns=["utype", "multiplier"], inplace=True)
 
     return df
-
-
-def relax_growth_constraint(
-    ref_hist: pd.DataFrame,
-    scen,
-    cooling_df: pd.DataFrame,
-    g_lo: pd.DataFrame,
-    constraint_type: Literal[Union["activity", "new_capacity", "total_capacity"]],
-) -> pd.DataFrame:
-    """
-    Checks if the parent technologies are shut down and require relaxing
-    the growth constraint.
-
-    Parameters
-    ----------
-    ref_hist : pd.DataFrame
-        Historical data in the reference scenario.
-    scen : Scenario
-        Scenario object to retrieve necessary parameters.
-    cooling_df : pd.DataFrame
-        DataFrame containing information on cooling technologies and their
-        parent technologies.
-    g_lo : pd.DataFrame
-        DataFrame containing growth constraints for each technology.
-    constraint_type : {"activity", "new_capacity"}
-        Type of constraint to check, either "activity" for operational limits or
-        "new_capacity" for capacity expansion limits.
-
-    Returns
-    -------
-    pd.DataFrame
-        Updated `g_lo` DataFrame with relaxed growth constraints.
-    """
-    year_type = "year_vtg" if constraint_type == "new_capacity" else "year_act"
-    year_hist = "year_act" if constraint_type == "activity" else "year_vtg"
-    print(year_type)
-    bound_param = (
-        "bound_activity_lo"
-        if constraint_type == "activity"
-        else "bound_new_capacity_lo"
-        if constraint_type == "new_capacity"
-        else "bound_total_capacity_lo"
-    )
-    print(bound_param)
-    # keep rows with max year_type
-    max_year_hist = (
-        ref_hist.loc[ref_hist.groupby(["node_loc", "technology"])[year_hist].idxmax()]
-        .drop(columns="unit")
-        .rename(columns={year_hist: "hist_year", "value": "hist_value"})
-    )
-
-    # Step 2: Check for bound_activity_up or bound_new_capacity_up conditions
-    bound_up_pare = scen.par(bound_param, {"technology": cooling_df["parent_tech"]})
-    # Get a set with unique year_type values and order them
-    years = np.sort(bound_up_pare[year_type].unique())
-
-    # In max_year_hist add the next year from years matching the hist_year columns
-    max_year_hist["next_year"] = max_year_hist["hist_year"].apply(
-        lambda x: years[years > x][0] if any(years > x) else None
-    )
-
-    # Merge the max_year_hist with bound_up_pare
-    bound_up = pd.merge(bound_up_pare, max_year_hist, how="left")
-    # subset of first year after the historical
-    # if next_year = None (single year test case) bound_up1 is simply empty
-    bound_up1 = bound_up[bound_up[year_type] == bound_up["next_year"]]
-    # Categories that might break the growth constraints
-    bound_up1 = bound_up1[bound_up1["value"] > 0.9 * bound_up1["hist_value"]]
-    # not look ad sudden contraints after sthe starting year
-    bound_up = bound_up.sort_values(by=["node_loc", "technology", year_type])
-    # Check if value for a year is greater than the value of the next year
-    bound_up["next_value"] = bound_up.groupby(["node_loc", "technology"])[
-        "value"
-    ].shift(-1)
-    bound_up2 = bound_up[bound_up["value"] < 0.9 * bound_up["next_value"]]
-    bound_up2 = bound_up2.drop(columns=["next_value"])
-    # combine bound 1 and 2
-    combined_bound = (
-        pd.concat([bound_up1, bound_up2]).drop_duplicates().reset_index(drop=True)
-    )
-    # Keep only node_loc, technology, and year_type
-    combined_bound = combined_bound[["node_loc", "technology", year_type]]
-    # Add columns with value "remove" to be able to use make_matched_dfs
-    combined_bound["rem"] = "remove"
-    combined_bound.rename(columns={"technology": "parent_tech"}, inplace=True)
-
-    # map_par tec to parent tec
-    map_parent = cooling_df[["technology_name", "parent_tech"]]
-    map_parent.rename(columns={"technology_name": "technology"}, inplace=True)
-    # expand bound_up to all cooling technologies in map_parent
-    combined_bound = pd.merge(combined_bound, map_parent, how="left")
-    # rename tear_type to year_act, because g_lo use it
-    combined_bound.rename(columns={year_type: "year_act"}, inplace=True)
-
-    # Merge to g_lo to be able to remove the technologies
-    g_lo = pd.merge(g_lo, combined_bound, how="left")
-    g_lo = g_lo[g_lo["rem"] != "remove"]
-    # Remove column rem and parent_tech
-    g_lo = g_lo.drop(columns=["rem", "parent_tech"])
-
-    return g_lo
 
 
 def cooling_shares_SSP_from_yaml(
@@ -516,14 +351,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     )
     # merge ref_input and ref_output
     ref_input = pd.concat([ref_input, ref_output])
-    # Extracting historical activity from scenario
-    # ref_hist_act = scen.par(
-    #     "historical_activity", {"technology": cooling_df["parent_tech"]}
-    # )
-    # # Extracting historical capacity from scenario
-    # ref_hist_cap = scen.par(
-    #     "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
-    # )
 
     ref_input[["value", "level"]] = ref_input.apply(missing_tech, axis=1)
 
@@ -789,8 +616,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     share_long["value"] = share_long["value"] * 1.05  # give some flexibility
     share_long["value"] = share_long["value"].replace(0, 0.0001)
 
-    # Expand for years [2020, 2025]
-    share_long = share_long.loc[share_long.index.repeat(2)].reset_index(drop=True)
     share_long["shares"] = "share_calib_" + share_long["share"]
     share_long.drop(columns={"utype", "share"}, inplace=True)
     # restore cost as it was for future use
@@ -798,11 +623,16 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     share_long["time"] = "year"
     share_long["unit"] = "-"
     share_calib = share_long.copy()
+    # Expand for years [2020, 2025]
+    share_calib = share_calib.loc[share_calib.index.repeat(2)].reset_index(drop=True)
     years_calib = [2020, 2025]
     share_calib["year_act"] = years_calib * (len(share_calib) // 2)
     # take year in info.N but not years_calib
     years_fut = [year for year in info.Y if year not in years_calib]
     share_fut = share_long.copy()
+    share_fut = share_fut.loc[share_fut.index.repeat(len(years_fut))].reset_index(
+        drop=True
+    )
     share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
     # filter only shares that contain "ot_saline"
     share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
