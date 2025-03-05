@@ -378,7 +378,7 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
             },
             "SSP2": {
                 "co2storage": 0.50,
-                "co2rate": 16500 / 3.667,
+                "co2rate": 6000 / 3.667, # For JUSTMIP, we change this to SSP1 limits. ScenarioMIP SSP2 setup: 16500 / 3.667 (16.5 GtCO2/yr = 66% of Grant et al. ) 
             },
             "SSP3": {
                 "co2storage": 1.00,
