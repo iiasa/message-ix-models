@@ -85,6 +85,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    material/index
    transport/index
    water/index
+   hydro/index
 
 .. toctree::
    :maxdepth: 2
