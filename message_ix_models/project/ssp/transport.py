@@ -3,11 +3,11 @@
 import logging
 import re
 from collections.abc import Hashable
-from typing import TYPE_CHECKING
+from functools import cache
+from typing import TYPE_CHECKING, Optional
 
 import genno
 import pandas as pd
-import xarray as xr
 from genno import Key
 from genno.core.key import single_key
 
@@ -28,9 +28,10 @@ log = logging.getLogger(__name__)
 #: Dimensions of several quantities.
 DIMS = "e n t y UNIT".split()
 
-#: Expression for IAMC ‘variable’ names used in :func:`main`.
-EXPR_EMI = r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|Transportation(?:\|(?P<t>.*))?$"
-EXPR_FE = r"^Final Energy\|Transportation\|(?P<c>Liquids\|Oil)$"
+EXPR_EMI = re.compile(
+    r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|Transportation(?:\|(?P<t>.*))?$"
+)
+EXPR_FE = re.compile(r"^Final Energy\|Transportation\|(?P<c>Liquids\|Oil)$")
 
 #: :class:`.IEA_EWEB` flow codes used in the current file.
 FLOWS = ["AVBUNK", "DOMESAIR", "TOTTRANS"]
@@ -119,59 +120,6 @@ def e_UNIT(cl_emission: "sdmx.model.common.Codelist") -> "AnyQuantity":
     )
 
 
-def extract_dims(
-    qty: "TQuantity", dim_expr: dict, *, drop: bool = True, fillna: str = "_T"
-) -> "TQuantity":
-    """Extract dimensions from IAMC-like ‘variable’ names using regular expressions."""
-    dims = list(qty.dims)
-
-    dfs = [qty.to_series().rename("value").reset_index()]
-    for dim, expr in dim_expr.items():
-        pattern = re.compile(expr)
-        dfs.append(dfs[0][dim].str.extract(pattern).fillna(fillna))
-        dims.extend(pattern.groupindex)
-        if drop:
-            dims.remove(dim)
-
-    return genno.Quantity(pd.concat(dfs, axis=1).set_index(dims)["value"])
-
-
-def extract_dims1(qty: "TQuantity", dim: dict) -> "TQuantity":  # pragma: no cover
-    """Extract dimensions from IAMC-like ‘variable’ names expressions.
-
-    .. note:: This incomplete, non-working version of :func:`extract_dims` uses
-       :mod:`xarray` semantics.
-    """
-    from collections import defaultdict
-
-    result = qty
-    for d0, expr in dim.items():
-        d0_new = f"{d0}_new"
-        pattern = re.compile(expr)
-
-        indexers: dict[Hashable, list[Hashable]] = {g: [] for g in pattern.groupindex}
-        indexers[d0_new] = []
-
-        coords = qty.coords[d0].data.astype(str)
-        for coord in coords:
-            if match := pattern.match(coord):
-                groupdict = match.groupdict()
-                coord_new = coord[match.span()[1] :]
-            else:
-                groupdict = defaultdict(None)
-                coord_new = coord
-
-            for g in pattern.groupindex:
-                indexers[g].append(groupdict[g])
-            indexers[d0_new].append(coord_new)
-
-        for d1, labels in indexers.items():
-            i2 = {d0: xr.DataArray(coords, coords={d1: labels})}
-            result = result.sel(i2)
-
-    return result
-
-
 def finalize(
     q_all: "TQuantity", q_update: "TQuantity", model_name: str, scenario_name: str
 ) -> pd.DataFrame:
@@ -239,17 +187,17 @@ def prepare_computer(c: "Computer", k_input: Key, method: str) -> "KeyLike":
     str
         "target". Calling :py:`c.get("target")` triggers the calculation.
     """
+    c.require_compat("message_ix_models.report.operator")
+
     # Common structure and utility quantities used by prepare_method_[AB]
     c.add(f"broadcast:t:{L}", broadcast_t, include_international=method == "A")
 
-    k_emi_in, e_t = Key(L, DIMS, "input"), tuple("et")
+    k_emi_in = Key(L, DIMS, "input")
 
     # Select and transform data matching EXPR_EMI
-    # Filter on "VARIABLE"
-    c.add(k_emi_in[0] / e_t, select_re, k_input, indexers={"VARIABLE": EXPR_EMI})
-    # Extract the "e" and "t" dimensions from "VARIABLE"
-    c.add(k_emi_in[1], extract_dims, k_emi_in[0] / e_t, dim_expr={"VARIABLE": EXPR_EMI})
-    c.add(k_emi_in[2], "assign_units", k_emi_in[1], units="Mt/year")
+    # Filter on "VARIABLE", expand the (e, t) dimensions from "VARIABLE"
+    c.add(k_emi_in[0], "select_expand", k_input, dim_cb={"VARIABLE": v_to_emi_coords})
+    c.add(k_emi_in[1], "assign_units", k_emi_in[0], units="Mt/year")
 
     # Call a function to prepare the remaining calculations
     prepare_func = {"A": prepare_method_A, "B": prepare_method_B}[method]
@@ -379,14 +327,11 @@ def prepare_method_B(
 
     ### Prepare data from the input data file: total transport consumption of light oil
 
-    # Filter on "VARIABLE"
-    c.add(k_fe_in[0] / "c", select_re, k_input, indexers={"VARIABLE": EXPR_FE})
-
-    # Extract the "e" dimensions from "VARIABLE"
-    c.add(k_fe_in[1], extract_dims, k_fe_in[0] / "c", dim_expr={"VARIABLE": EXPR_FE})
+    # Filter on "VARIABLE", extract (e) dimension
+    c.add(k_fe_in[0], "select_expand", k_input, dim_cb={"VARIABLE": v_to_fe_coords})
 
     # Convert "UNIT" dim labels to Quantity.units
-    c.add(k_fe_in[2] / "UNIT", "unique_units_from_dim", k_fe_in[1], dim="UNIT")
+    c.add(k_fe_in[1] / "UNIT", "unique_units_from_dim", k_fe_in[0], dim="UNIT")
 
     # Relabel:
     # - c[ommodity]: 'Liquids|Oil' (IAMC 'variable' component) → 'lightoil'
@@ -395,7 +340,7 @@ def prepare_method_B(
         c={"Liquids|Oil": "lightoil"},
         n={n.id.partition("_")[2]: n.id for n in get_codelist("node/R12")},
     )
-    c.add(k_fe_in[3] / "UNIT", "relabel", k_fe_in[2] / "UNIT", labels=labels)
+    c.add(k_fe_in[2] / "UNIT", "relabel", k_fe_in[1] / "UNIT", labels=labels)
 
     ### Compute estimate of emissions
     # Product of aviation share and FE of total transport → FE of aviation
@@ -500,11 +445,21 @@ def process_file(
     c.get("target").to_csv(path_out, index=False)
 
 
-def select_re(qty: "AnyQuantity", indexers: dict) -> "AnyQuantity":
-    """Select from `qty` using regular expressions for each dimension."""
-    new_indexers = dict()
-    for dim, expr in indexers.items():
-        new_indexers[dim] = list(
-            map(str, filter(re.compile(expr).match, qty.coords[dim].data.astype(str)))
-        )
-    return qty.sel(new_indexers)
+@cache
+def v_to_fe_coords(value: Hashable) -> Optional[dict[str, str]]:
+    """Match ‘variable’ names used in :func:`main`."""
+    if match := EXPR_FE.fullmatch(str(value)):
+        return match.groupdict()
+    else:
+        return None
+
+
+@cache
+def v_to_emi_coords(value: Hashable) -> Optional[dict[str, str]]:
+    """Match ‘variable’ names used in :func:`main`."""
+    if match := EXPR_EMI.fullmatch(str(value)):
+        result = match.groupdict()
+        result["t"] = result["t"] or "_T"
+        return result
+    else:
+        return None
