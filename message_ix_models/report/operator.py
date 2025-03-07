@@ -2,8 +2,8 @@
 
 import logging
 import re
-from collections.abc import Mapping
-from itertools import product
+from collections.abc import Callable, Hashable, Mapping
+from itertools import filterfalse, product
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 import genno
@@ -40,6 +40,7 @@ __all__ = [
     "nodes_ex_world",
     "quantity_from_iamc",
     "remove_ts",
+    "select_expand",
     "share_curtailment",
 ]
 
@@ -271,6 +272,68 @@ def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
     assert 1 == len(unique_units)
     subset.units = unique_units[0]
     return subset.sel(Unit=unique_units[0], drop=True)
+
+
+def select_expand(
+    qty: "TQuantity",
+    dim_cb: dict[str, Callable[[Hashable], dict[Hashable, Hashable]]],
+) -> "TQuantity":
+    """Select and expand dimensions using callbacks for existing coordinates.
+
+    This combines behaviours of :func:`genno.operator.select`,
+    :func:`genno.operator.relabel`, and :func:`genno.operator.rename`. Specifically,
+    for each (`dim`, `function`) in `dim_cb`:
+
+    - The `function` is applied to each coordinate/label along `dim` of `qty`.
+    - If the return value is :any:`False`-y (for example, empty :class:`dict`), all data
+      indexed by that label is discarded.
+    - If the return value is a non-empty :class:`dict`, data are preserved. The `dim`
+      label is replaced by 1+ new dimension(s) and label(s) from the keys and values,
+      respectively, of the return value.
+
+    Parameters
+    ----------
+    dim_cb :
+       Mapping from dimensions of `qty` to callback functions. Each function should
+       receive a single coordinate label, and return a :class:`dict`.
+    """
+    # TODO Rewrite using xarray-indexing semantics
+
+    # Data frames to concatenate along axis=1
+    dfs = [qty.to_series().rename("value").reset_index()]
+
+    # Mask for subset of data to be preserved
+    keep = pd.Series(True, index=dfs[0].index)
+
+    # Iterate over `dim`ensions in `dim_cb`
+    for dim, func in dim_cb.items():
+        # Apply `func` to the original dimension labels
+        dfs.append(dfs[0][dim].apply(func))
+
+        # Update mask to exclude rows for which `func` returned None, False, {}, etc.
+        keep &= dfs[-1].astype(bool)
+
+    # - Select only `mask` values for each of the `dfs`.
+    # - Concatenate with the original data.
+    df = pd.concat(
+        [dfs[0][keep].reset_index(drop=True)]
+        + [pd.DataFrame(df[keep].tolist()) for df in dfs[1:]],
+        axis=1,
+    )
+
+    # Columns not in the original, but returned by one of `dim_cb`: these may be new or
+    # may preserve original values
+    columns = df.columns.tolist()
+    new_dims = columns[columns.index("value") + 1 :]
+
+    # Columns that are not result dims: "value"; original dims that appear in `dim_cb`
+    # and not in `new_dims`
+    exclude = {"value"} | set(dim_cb) - set(new_dims)
+
+    # Identify dimensions of the result
+    result_dims = list(filterfalse(exclude.__contains__, columns))
+
+    return type(qty)(df.set_index(result_dims)["value"])
 
 
 # commented: currently unused
