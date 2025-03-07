@@ -1,14 +1,14 @@
 """Atomic reporting operations for MESSAGEix-GLOBIOM."""
 
-import itertools
 import logging
 import re
 from collections.abc import Mapping
+from itertools import product
 from typing import TYPE_CHECKING, Any, Optional, Union
 
+import genno
 import ixmp
 import pandas as pd
-from genno import Quantity
 from genno.core.operator import Operator
 from genno.operator import pow
 from iam_units import convert_gwp
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from genno import Computer, Key
-    from genno.types import AnyQuantity
+    from genno.types import AnyQuantity, TQuantity
     from sdmx.model.v21 import Code
 
 log = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def codelist_to_groups(
     return {dim: groups}
 
 
-def compound_growth(qty: "AnyQuantity", dim: str) -> "AnyQuantity":
+def compound_growth(qty: "TQuantity", dim: str) -> "TQuantity":
     """Compute compound growth along `dim` of `qty`."""
     # Compute intervals along `dim`
     # The value at index d is the duration between d and the next index d+1
@@ -74,7 +74,7 @@ def compound_growth(qty: "AnyQuantity", dim: str) -> "AnyQuantity":
     # - Compute cumulative product along `dim` from the first index.
     # - Shift, so the value at index d is the growth relative to the prior index d-1
     # - Fill in 1.0 for the first index.
-    return pow(qty, Quantity(dur)).cumprod(dim).shift({dim: 1}).fillna(1.0)
+    return pow(qty, type(qty)(dur)).cumprod(dim).shift({dim: 1}).fillna(1.0)
 
 
 @Operator.define()
@@ -129,7 +129,7 @@ def get_ts(
     return scenario.timeseries(iamc=iamc, subannual=subannual, **filters)
 
 
-def gwp_factors() -> Quantity:
+def gwp_factors() -> "AnyQuantity":
     """Use :mod:`iam_units` to generate a Quantity of GWP factors.
 
     The quantity is dimensionless, e.g. for converting [mass] to [mass], andhas
@@ -146,7 +146,7 @@ def gwp_factors() -> Quantity:
     species_to = ["CO2"]  # Add to this list to perform additional conversions
 
     data = []
-    for m, s_from, s_to in itertools.product(metric, SPECIES, species_to):
+    for m, s_from, s_to in product(metric, SPECIES, species_to):
         # Get the conversion factor from iam_units
         factor = convert_gwp(m, (1, "kg"), s_from, s_to).magnitude
 
@@ -158,7 +158,7 @@ def gwp_factors() -> Quantity:
         data.append((m[:3], s_from, s_to, factor))
 
     # Convert to Quantity object and return
-    return Quantity(
+    return genno.Quantity(
         pd.DataFrame(data, columns=dims + ["value"]).set_index(dims)["value"].dropna()
     )
 
