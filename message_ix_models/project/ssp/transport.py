@@ -4,7 +4,7 @@ import logging
 import re
 from collections.abc import Hashable
 from functools import cache
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import genno
 import pandas as pd
@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 DIMS = "e n t y UNIT".split()
 
 EXPR_EMI = re.compile(
-    r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|Transportation(?:\|(?P<t>.*))?$"
+    r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|(?P<t>(Bunkers|Transportation).*)$"
 )
 EXPR_FE = re.compile(r"^Final Energy\|Transportation\|(?P<c>Liquids\|Oil)$")
 
@@ -64,27 +64,53 @@ def aviation_share(ref: "TQuantity") -> "TQuantity":
     )
 
 
-def broadcast_t(include_international: bool) -> "AnyQuantity":
+def broadcast_t(version: Literal[1, 2], include_international: bool) -> "AnyQuantity":
     """Quantity to re-add the |t| dimension.
 
     Parameters
     ----------
-    include_international
-        If :any:`True`, include "Aviation|International" with magnitude 1.0. Otherwise,
-        omit
+    version :
+        Version of ‘variable’ names supported by the current module.
+    include_international :
+        If :any:`True`, include "Transportation|Aviation|International" with magnitude
+        1.0. Otherwise, omit.
 
     Return
     ------
     genno.Quantity
-        with dimension "t" and the values:
+        with dimension "t".
 
-        - +1.0 for t="Aviation", a label with missing data.
-        - -1.0 for t="Road Rail and Domestic Shipping", a label with existing data from
-          which the aviation total should be subtracted.
+        If :py:`version=1`, the values include:
+
+        - +1.0 for t="Transportation|Aviation", a label with missing data.
+        - -1.0 for t="Transportation|Road Rail and Domestic Shipping", a label with
+          existing data from which the aviation total must be subtracted.
+
+        If :py:`version=2`, the values include:
+
+        - +1.0 for t="Bunkers" and t="Bunkers|International Aviation", labels with zeros
+          in the input data file.
+        - -1.0 for t="Transportation" and t="Transportation|Road Rail and Domestic
+          Shipping", labels with existing data from which the aviation total must be
+          subtracted.
     """
-    value = [1, -1, 1]
-    t = ["Aviation", "Road Rail and Domestic Shipping", "Aviation|International"]
-    idx = slice(None) if include_international else slice(-1)
+    if version == 1:
+        value = [1, -1, 1]
+        t = [
+            "Transportation|Aviation",
+            "Transportation|Road Rail and Domestic Shipping",
+            "Transportation|Aviation|International",
+        ]
+        idx = slice(None) if include_international else slice(-1)
+    elif version == 2:
+        value = [1, 1, -1, -1]
+        t = [
+            "Bunkers",
+            "Bunkers|International Aviation",
+            "Transportation",
+            "Transportation|Road Rail and Domestic Shipping",
+        ]
+        idx = slice(None)
 
     return genno.Quantity(value[idx], coords={"t": t[idx]})
 
@@ -158,9 +184,7 @@ def finalize(
         .to_frame()
         .reset_index()
         .assign(
-            Variable=lambda df: (
-                "Emissions|" + df["e"] + "|Energy|Demand|Transportation|" + df["t"]
-            ).str.replace("|_T", ""),
+            Variable=lambda df: "Emissions|" + df["e"] + "|Energy|Demand|" + df["t"]
         )
         .drop(["e", "t"], axis=1)
         .set_index(s_all.index.names)[0]
@@ -190,7 +214,9 @@ def prepare_computer(c: "Computer", k_input: Key, method: str) -> "KeyLike":
     c.require_compat("message_ix_models.report.operator")
 
     # Common structure and utility quantities used by prepare_method_[AB]
-    c.add(f"broadcast:t:{L}", broadcast_t, include_international=method == "A")
+    c.add(
+        f"broadcast:t:{L}", broadcast_t, version=2, include_international=method == "A"
+    )
 
     k_emi_in = Key(L, DIMS, "input")
 
@@ -266,11 +292,8 @@ def prepare_method_B(
        is, final energy use by aviation.
     6. Load emissions intensity of aviation final energy use from the file
        :ref:`transport-input-emi-intensity`.
-    7. Multiply (4) × (5) × (6) to compute the estimate of
-       ``Emissions|*|Energy|Demand|Transportation|Aviation``.
-    8. Estimate an additive adjustment to
-       ``Emissions|*|Energy|Demand|Transportation|Road Rail and Domestic Shipping`` as
-       the negative of (7).
+    7. Multiply (4) × (5) × (6) to compute the estimate of aviation emissions.
+    8. Estimate adjustments according to :func:`broadcast_t`.
     9. Adjust `k_emi_in` by adding (7) and (8).
     """
     from message_ix_models.model.transport import build
@@ -458,8 +481,6 @@ def v_to_fe_coords(value: Hashable) -> Optional[dict[str, str]]:
 def v_to_emi_coords(value: Hashable) -> Optional[dict[str, str]]:
     """Match ‘variable’ names used in :func:`main`."""
     if match := EXPR_EMI.fullmatch(str(value)):
-        result = match.groupdict()
-        result["t"] = result["t"] or "_T"
-        return result
+        return match.groupdict()
     else:
         return None
