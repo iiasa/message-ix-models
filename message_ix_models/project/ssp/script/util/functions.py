@@ -301,6 +301,66 @@ def gen_te_projections(
     return inv_cost, fix_cost
 
 
+def adjust_ccs_setup_co2rates(scen: message_ix.Scenario, ssp="SSP2"):
+    # SSPs CCS parameters
+    ccs_ssp_pars = {
+        "LED": {
+            "co2rate": 6000 / 3.667,
+        },
+        "SSP1": {
+            "co2rate": 6000 / 3.667,
+        },
+        "SSP2": {
+            "co2rate": 6000 / 3.667, # For JUSTMIP, we change this to SSP1 limits. ScenarioMIP SSP2 setup: 16500 / 3.667 (16.5 GtCO2/yr = 66% of Grant et al. ) 
+        },
+        "SSP3": {
+            "co2rate": 18750 / 3.667,
+        },
+        "SSP4": {
+            "co2rate": 35000 / 3.667,
+        },
+        "SSP5": {
+            "co2rate": 35000 / 3.667,
+        },
+    }
+
+    # update numbers following a changed ccs_ssp_pars
+    len_periods = {
+            2025: 5,
+            2030: 5,
+            2035: 5,
+            2040: 5,
+            2045: 5,
+            2050: 5,
+            2055: 5,
+            2060: 5,
+            2070: 10,
+            2080: 10,
+            2090: 10,
+            2100: 10,
+            2110: 10,
+        }
+    years = [year for year in list(len_periods.keys()) if year > 2025]
+    df_list = []
+    for year in years:
+        df = make_df(
+            "bound_activity_up",
+            node_loc="R12_GLB",
+            technology="co2_stor_glb",
+            year_act=year,
+            mode="all",
+            time="year",
+            value=ccs_ssp_pars[ssp]["co2rate"],
+            unit="???",
+        )
+        df_list += [df]
+    df_co2ratelim = pd.concat(df_list)
+
+    ## adding parameters
+    with scen.transact("Update CCS annual rate"):
+        scen.add_par("bound_activity_up", df_co2ratelim)
+
+
 def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
     with scen.transact(""):
         # CO2 storage potential from Matt and Sidd
@@ -378,7 +438,8 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
             },
             "SSP2": {
                 "co2storage": 0.50,
-                "co2rate": 6000 / 3.667, # For JUSTMIP, we change this to SSP1 limits. ScenarioMIP SSP2 setup: 16500 / 3.667 (16.5 GtCO2/yr = 66% of Grant et al. ) 
+                "co2rate": 16500 / 3.667,
+                # "co2rate": 6000 / 3.667, # For JUSTMIP, we change this to SSP1 limits. ScenarioMIP SSP2 setup: 16500 / 3.667 (16.5 GtCO2/yr = 66% of Grant et al. )
             },
             "SSP3": {
                 "co2storage": 1.00,
