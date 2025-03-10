@@ -45,6 +45,8 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+EXTRAPOLATE = dict(kwargs=dict(fill_value="extrapolate"))
+
 
 def dummy(
     commodities: list, nodes: list[str], y: list[int], config: dict
@@ -117,10 +119,7 @@ TASKS = [
     # Smooth prices to avoid zig-zag in share projections
     (price.base, "smooth", price[2]),
     # Interpolate speed data
-    (
-        ("speed:scenario-n-t-y:0", "interpolate", exo.speed, "y::coords"),
-        dict(kwargs=dict(fill_value="extrapolate")),
-    ),
+    (("speed:scenario-n-t-y:0", "interpolate", exo.speed, "y::coords"), EXTRAPOLATE),
     # Select speed data
     ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", "indexers:scenario"),
     # Cost of transport (n, t, y)
@@ -276,10 +275,14 @@ def pdt_per_capita(c: Computer) -> None:
     c.add("pdt slope:n", "div", pdt["delta"] / "y", gdp["delta"] / "y")
 
     # Select 'elasticity' from "pdt elasticity:scenario-n:exo"
-    c.add("pdt elasticity:n", "select", exo.pdt_elasticity, "indexers:scenario")
+    k_e = genno.Key(exo.pdt_elasticity.name, "ny")
+    c.add(k_e[0], "select", exo.pdt_elasticity, "indexers:scenario")
+
+    # Interpolate on "y" dimension
+    c.add(k_e[1], "interpolate", k_e[0], "y::coords", **EXTRAPOLATE)
 
     # Adjust GDP by multiplying by 'elasticity'
-    c.add(gdp[2], "mul", gdp[1], "pdt elasticity:n")
+    c.add(gdp[2], "mul", gdp[1], k_e[1])
 
     # Projected PDT = m × adjusted GDP
     c.add(pdt["proj"], "mul", gdp[2], "pdt slope:n")

@@ -556,7 +556,7 @@ mer_to_ppp = add(
 )
 
 pdt_elasticity = add(
-    key="pdt elasticity:scenario-n:exo",
+    key="pdt elasticity:scenario-n-y:exo",
     name="“Elasticity” of PDT-capita with respect to GDP",
     units="dimensionless",
 )
