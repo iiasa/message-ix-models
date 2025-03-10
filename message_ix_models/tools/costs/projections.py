@@ -389,16 +389,21 @@ def create_message_outputs(
         .drop(columns=["year"])
     )
 
-    val_2100 = (
-        df_projections.query("year == 2100")
+    val_fin_proj_year = (
+        df_projections.query("year == @config.final_projection_year")
         .drop(columns=["year"])
-        .rename(columns={"inv_cost": "inv_cost_2100", "fix_cost": "fix_cost_2100"})
+        .rename(
+            columns={
+                "inv_cost": "inv_cost_fin_proj_year",
+                "fix_cost": "fix_cost_fin_proj_year",
+            }
+        )
     )
 
     df_merge = (
         (
             df_prod.merge(val_2020, on=dims[:-1])
-            .merge(val_2100, on=dims[:-1])
+            .merge(val_fin_proj_year, on=dims[:-1])
             .merge(df_projections, on=dims, how="left")
         )
         .assign(
@@ -406,13 +411,28 @@ def create_message_outputs(
             fix_cost=lambda x: np.where(x.year <= y_base, x.fix_cost_2020, x.fix_cost),
         )
         .assign(
-            # NOTE: This portion carries over the 2100 values to years beyond 2100.
-            # This is applicable in the case where Config.final_year > 2100.
-            inv_cost=lambda x: np.where(x.year >= 2100, x.inv_cost_2100, x.inv_cost),
-            fix_cost=lambda x: np.where(x.year >= 2100, x.fix_cost_2100, x.fix_cost),
+            # NOTE: This portion carries over the final projection year values to
+            # the final mdoel year.
+            # This is applicable in the case where
+            # `attr`:Config.final_model_year > `attr`:Config.final_projection_year.
+            inv_cost=lambda x: np.where(
+                x.year >= config.final_projection_year,
+                x.inv_cost_fin_proj_year,
+                x.inv_cost,
+            ),
+            fix_cost=lambda x: np.where(
+                x.year >= config.final_projection_year,
+                x.fix_cost_fin_proj_year,
+                x.fix_cost,
+            ),
         )
         .drop(
-            columns=["inv_cost_2020", "fix_cost_2020", "inv_cost_2100", "fix_cost_2100"]
+            columns=[
+                "inv_cost_2020",
+                "fix_cost_2020",
+                "inv_cost_fin_proj_year",
+                "fix_cost_fin_proj_year",
+            ]
         )
         .rename(columns={"year": "year_vtg"})
         .drop_duplicates()
