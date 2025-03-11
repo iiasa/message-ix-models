@@ -153,13 +153,14 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     import message_ix_models.tools.iea.web  # noqa: F401
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
+    from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
     from . import (
         data,  # noqa: F401
         key,
     )
-    from .files import FILES, add
+    from .files import iter_files
 
     # Added keys
     keys = {}
@@ -243,7 +244,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
 
     # Identify the mode-share file according to the config setting
-    add(
+    Dataflow(
         key="mode share:n-t:exo",
         path=("mode-share", config.mode_share),
         name="Reference (base year) mode share",
@@ -251,7 +252,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         replace=True,
     )
 
-    for f in FILES:
+    for _, f in iter_files():
         c.add("", f, context=context)
 
 

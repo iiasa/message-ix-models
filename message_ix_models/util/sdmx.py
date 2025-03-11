@@ -15,18 +15,23 @@ from warnings import warn
 import sdmx
 import sdmx.message
 import sdmx.urn
+from genno import Key
 from iam_units import registry
 from sdmx.model import common, v21
 
 from .common import package_data_path
+from .ixmp import get_reversed_rename_dims, rename_dims
 
 if TYPE_CHECKING:
     from os import PathLike
     from typing import TypeVar
 
+    import pint
+    from genno import Computer, Key
     from sdmx.message import StructureMessage
+    from sdmx.model.common import ConceptScheme
 
-    from message_ix_models.types import MaintainableArtefactArgs
+    from message_ix_models.types import KeyLike, MaintainableArtefactArgs
 
     from .context import Context
 
@@ -36,6 +41,10 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 CodeLike = Union[str, common.Code]
+
+
+#: Collection of Dataflow.
+DATAFLOW: dict[str, "Dataflow"] = {}
 
 
 @dataclass
@@ -76,6 +85,218 @@ class AnnotationsMixIn:
             args.append(obj.eval_annotation(id=anno_id))
 
         return cls(*args)
+
+
+class Dataflow:
+    """Information about an input or output data flow.
+
+    If an input data flow, the data is expected in a file at `path`.
+
+    .. todo::
+       - Generate documentation (docstrings or snippets) in reStructuredText format.
+       - Accept an argument that sets :attr:`dfd` directly; skip handling other
+         arguments.
+       - Annotate certain dimensions as optional; expand :meth:`.add_tasks` to
+         automatically handle insertion of these dimensions.
+       - Merge with, or make a subclass of, :class:`.ExoData`.
+
+    Parameters
+    ----------
+    name : str
+        Human-readable name of the data flow.
+    units : str
+        Units for observations in the data flow.
+    key : KeyLike, optional
+        Key at which the data from the file will be present in a :class:`.Computer`.
+    dims : tuple of str, optional
+        Dimensions of the data.
+    path : str or tuple of str, optional
+        Path at which an input data file is located. If not supplied, :attr:`path` is
+        constructed from `key`, `dims`, and the tag "exo".
+    description : str, optional
+        Human-readable description of the data flow, including any notes about required
+        properties or contents or methods used to handle the data.
+    required : bool, optional
+        If :any:`True` (the default), the input data file **must** be present for the
+        build to succeed.
+    replace : bool, *optional*
+        If :any:`True`, replace any existing entry in :data:`DATAFLOW` that with an
+        equivalent URN to the one implied by `kwargs`. Otherwise (default), raise an
+        exception.
+    """
+
+    #: :class:`sdmx.Dataflow <sdmx.model.common.BaseDataflowDefinition>` describing the
+    #: data flow.
+    df: "sdmx.model.common.BaseDataflow"
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        units: str,
+        key: Optional["KeyLike"] = None,
+        dims: Optional[tuple[str, ...]] = None,
+        path: Union[str, tuple[str, ...], None] = None,
+        description: Optional[str] = None,
+        required: bool = True,
+        replace: bool = False,
+    ):
+        import pint
+        from sdmx.model.common import Annotation
+        from sdmx.model.v21 import DataflowDefinition, DataStructureDefinition
+
+        # Collection of annotations for the data flow
+        anno = [Annotation(id="required-for-build", text=repr(required))]
+
+        # Handle `path` argument
+        if isinstance(path, str):
+            _path = Path(path)
+        elif path:
+            _path = Path(*path)
+
+        # Parse and store units
+        ureg = pint.get_application_registry()
+        try:
+            units = ureg.Unit(units)
+        except Exception as e:
+            log.info(f"Replace units {units!r} with 'dimensionless' due to {e}")
+            units = ureg.dimensionless
+        anno.append(Annotation(id="preferred-units", text=f"{units}"))
+
+        if not key:
+            # Determine from file path
+            key = Key(" ".join(_path.parts).replace("-", " "), dims or (), "exo")
+        else:
+            # Convert to Key object
+            key = Key(key)
+
+            if path is None:
+                _path = Path(key.name.replace(" ", "-"))
+
+        anno.append(Annotation(id="genno-key", text=str(key)))
+
+        _path = _path.with_suffix(".csv")
+        anno.append(Annotation(id="file-path", text=str(_path)))
+
+        # Retrieve the shared concept scheme
+        common = common_structures()
+        cs: "ConceptScheme" = common.concept_scheme["CS_MESSAGE_TRANSPORT"]
+        # Reuse its properties for maintainable artefacts
+        kw: "MaintainableArtefactArgs" = dict(
+            maintainer=cs.maintainer,
+            version=cs.version,
+            is_final=cs.is_final,
+            is_external_reference=cs.is_external_reference,
+        )
+
+        # SDMX IDs for the data flow and data structure
+        name_for_id = key.name.upper().replace(" ", "_")
+        df_id = f"DF_{name_for_id}"
+        ds_id = f"DS_{name_for_id}"
+
+        # Create a data structure definition
+        dsd = DataStructureDefinition(id=ds_id, **kw, name=f"Structure of {df_id}")
+
+        # Add dimensions
+        _rrd = get_reversed_rename_dims()
+        for dim in key.dims:
+            # Symbol ('n') → Dimension ID ('node') → upper case
+            dim_id = _rrd.get(dim, dim).upper()
+            # Add to the concept scheme
+            concept = cs.setdefault(id=dim_id)
+            # Add the dimension to the DSD
+            dsd.dimensions.getdefault(id=dim_id, concept_identity=concept)
+
+        if description is not None:
+            desc = f"{description.strip()}\n\n"
+        else:
+            desc = ""
+        desc += "Input data for MESSAGEix-Transport."
+
+        # Create and store a data flow definition
+        self.df = DataflowDefinition(
+            id=df_id, **kw, name=name, description=desc, structure=dsd, annotations=anno
+        )
+        self.df.urn = sdmx.urn.make(self.df)
+
+        # Add or replace an entry in DATAFLOW
+        if duplicate := list(filter(lambda x: x.key == self.key, DATAFLOW.values())):
+            existing = duplicate[0]
+            if replace:
+                log.info(f"Replace existing entry for {existing.df.urn!r}")
+                DATAFLOW[self.df.urn] = self
+            else:
+                raise RuntimeError(
+                    f"Definition of {self} duplicates existing {existing}"
+                )
+        else:
+            # Add to the list of FILES
+            DATAFLOW[self.df.urn] = self
+
+    # Does nothing except ensure callable(…) == True for inspection by genno
+    def __call__(self): ...
+
+    def __repr__(self) -> str:
+        return f"<ExogenousDataFile {self.path} → {self.key}>"
+
+    # Access to annotations of DFD
+    @property
+    def key(self) -> "Key":
+        """:class:`genno.Key`, including preferred dimensions."""
+        return Key(str(self.df.get_annotation(id="genno-key").text))
+
+    @property
+    def path(self) -> Path:
+        """Path fragment for the location of a file containing the data."""
+        return Path(str(self.df.get_annotation(id="file-path").text))
+
+    @property
+    def required(self) -> bool:
+        """:any:`True` if the data must be present for :func:`.transport.build.main`."""
+        return self.df.eval_annotation(id="required-for-build")
+
+    @property
+    def units(self) -> "pint.Unit":
+        """Preferred units."""
+        import pint
+
+        return pint.get_application_registry().Unit(
+            self.df.eval_annotation(id="preferred-units")
+        )
+
+    # For interaction with genno
+    def add_tasks(
+        self, c: "Computer", *args, context: "Context"
+    ) -> tuple["KeyLike", ...]:
+        """Prepare `c` to read data from a file like :attr:`.path`."""
+        # TODO Use a package-wide utility or a callback
+        from message_ix_models.model.transport.util import path_fallback
+
+        # Identify the path
+        try:
+            path = path_fallback(context, self.path)
+        except FileNotFoundError:
+            if self.required:
+                raise
+            else:
+                return ()
+
+        # Use standard RENAME_DIMS from ixmp config
+        dims = rename_dims().copy()
+        values = set(dims.values())
+        dims.update({d: d for d in self.key.dims if d not in values})
+
+        c.add("load_file", path, key=self.key, dims=dims, name=self.key.name)
+        return (self.key,)
+
+    def generate_csv_template(self) -> Path:
+        """Generate a CSV template file."""
+        raise NotImplementedError
+        # 1. In the current format.abs
+        # 2. In SDMX-CSV.
+        # dm = DataMessage()
+        # dm.data.append(DataSet(structure))
+        # template =
 
 
 # FIXME Reduce complexity from 13 → ≤11
@@ -151,6 +372,35 @@ def as_codes(  # noqa: C901
         result[code.id] = code
 
     return list(result.values())
+
+
+@cache
+def common_structures() -> "sdmx.message.StructureMessage":
+    """Return common structures for use in the current module."""
+    from importlib.metadata import version
+
+    from packaging.version import parse
+    from sdmx.message import StructureMessage
+    from sdmx.model.common import ConceptScheme
+
+    from message_ix_models.util.sdmx import read
+
+    # Create a shared concept scheme with…
+    # - Same maintainer "IIASA_ECE" as in "IIASA_ECE:AGENCIES".
+    # - Version based on the current version of message_ix_models.
+    # - Final and not an external reference
+    cs = ConceptScheme(
+        id="CS_MESSAGE_TRANSPORT",
+        maintainer=read("IIASA_ECE:AGENCIES")["IIASA_ECE"],
+        version=parse(version("message_ix_models")).base_version,
+        is_final=False,
+        is_external_reference=False,
+    )
+
+    # Return encapsulated in a StructureMessage
+    sm = StructureMessage()
+    sm.add(cs)
+    return sm
 
 
 def eval_anno(obj: common.AnnotableArtefact, id: str):

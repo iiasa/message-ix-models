@@ -6,6 +6,8 @@ from genno import Key, Keys, KeySeq
 
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 
+from . import files
+
 __all__ = [
     "cg",
     "cost",
@@ -124,3 +126,9 @@ t_modes = "t::transport modes"
 
 #: Model periods.
 y = "y::model"
+
+#: Keys referring to loaded exogenous data flows (data loaded from files).
+exo = Keys()
+
+for name, df in files.iter_files():
+    setattr(exo, name, df.key)

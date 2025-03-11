@@ -2,16 +2,92 @@ import logging
 import re
 from typing import TYPE_CHECKING
 
+import genno
 import pytest
 import sdmx
+from genno import Key
 from sdmx.model.common import Annotation, Code
 
-from message_ix_models.util.sdmx import eval_anno, make_dataflow, make_enum, read
+from message_ix_models.model.transport import build, testing
+from message_ix_models.util.sdmx import (
+    DATAFLOW,
+    Dataflow,
+    eval_anno,
+    make_dataflow,
+    make_enum,
+    read,
+)
 
 if TYPE_CHECKING:
+    from genno import Computer
+
     from message_ix_models.types import MaintainableArtefactArgs
 
 log = logging.getLogger(__name__)
+
+
+class TestDataflow:
+    """Test :class:`.Dataflow."""
+
+    @pytest.fixture
+    def any_df(self):
+        yield next(iter(DATAFLOW.values()))
+
+    # TODO Use a broader-scoped context to allow (scope="class")
+    @pytest.fixture
+    def build_computer(self, test_context):
+        """A :class:`.Computer` from :func:`.configure_build`.
+
+        This in turn invokes :func:`.transport.build.add_exogenous_data`, which adds
+        each of :data:`.FILES` to a Computer.
+        """
+        c, _ = testing.configure_build(test_context, regions="R12", years="B")
+        yield c
+
+    @build.get_computer.minimum_version
+    @pytest.mark.parametrize(
+        "file",
+        [f for f in DATAFLOW.values() if f.intent & Dataflow.FLAG.IN],
+        ids=lambda f: "-".join(f.path.parts),
+    )
+    def test_configure_build(
+        self, build_computer: "Computer", file: "Dataflow"
+    ) -> None:
+        """Input data can be read and has the expected dimensions."""
+        c = build_computer
+
+        # Task runs
+        result = c.get(file.key)
+
+        # Quantity is loaded
+        assert isinstance(result, genno.Quantity)
+
+        # Dimensions are as expected
+        assert set(Key(result).dims) == set(file.key.dims)
+
+    def test_generate_csv_template(self, any_df: "Dataflow") -> None:
+        with pytest.raises(NotImplementedError):
+            any_df.generate_csv_template()
+
+    def test_repr(self, any_df: "Dataflow") -> None:
+        urn = (
+            "urn:sdmx:org.sdmx.infomodel.datastructure.DataflowDefinition=IIASA_ECE:"
+            "DF_FREIGHT_ACTIVITY(2025.1.11)"
+        )
+        assert (
+            "<ExogenousDataFile freight-activity.csv → freight activity:n:exo>"
+            == repr(DATAFLOW[urn])
+        )
+
+    def test_required(self, any_df: "Dataflow") -> None:
+        """The :`ExogenousDataFiles.required` property has a :class:`bool` value."""
+        assert isinstance(any_df.required, bool)
+
+    def test_units(self, any_df: "Dataflow") -> None:
+        """The :`ExogenousDataFiles.units` property has a :class:`pint.Unit` value."""
+        import pint
+
+        assert isinstance(any_df.units, pint.Unit)
 
 
 def test_eval_anno(caplog, recwarn):
