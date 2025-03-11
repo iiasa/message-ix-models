@@ -31,7 +31,16 @@ ParameterData = Mapping[str, pd.DataFrame]
 MutableParameterData = MutableMapping[str, pd.DataFrame]
 
 
-class MaintainableArtefactArgs(TypedDict, total=False):
+class AnnotableArtefactArgs(TypedDict, total=False):
+    annotations: list[sdmx.model.common.Annotation]
+
+
+class NameableArtefactArgs(AnnotableArtefactArgs, total=False):
+    name: Optional[str]
+    description: Optional[str]
+
+
+class MaintainableArtefactArgs(NameableArtefactArgs, total=False):
     """Some keyword arguments to :class:`sdmx.model.common.MaintainableArtefact`."""
 
     is_external_reference: Optional[bool]

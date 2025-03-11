@@ -2,7 +2,6 @@
 
 import logging
 from copy import deepcopy
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -16,7 +15,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.util import add_replacements
 
 from . import Config
-from .key import exo, pdt_nyt
+from .key import exo
 
 if TYPE_CHECKING:
     import ixmp
@@ -31,16 +30,6 @@ log = logging.getLogger(__name__)
 #: the legacy reporting to properly handle the result.
 _FE_UNIT = "EJ/yr"
 
-#: SDMX output data flows to generate.
-DATAFLOW = (
-    ("population_in", Key("pop:n-y")),
-    ("gdp_in", Key("gdp:n-y")),
-    ("activity_passenger", pdt_nyt),
-    # Same as "Energy Service|Transportation" IAMC variable
-    ("activity_vehicle", Key("out:nl-t-ya-c:transport+units")),
-    # Same as "Final Energy|Transportation"
-    ("fe_transport", Key("in:nl-t-ya-c:transport+units")),
-)
 
 CONVERT_IAMC = (
     # NB these are currently tailored to produce the variable names expected for the
@@ -355,12 +344,14 @@ def convert_sdmx(c: "Computer") -> None:
     """Add tasks to convert data to SDMX."""
     from sdmx.message import StructureMessage
 
+    from message_ix_models.util.sdmx import DATAFLOW, Dataflow
+
     from .key import report as k_report
     from .operator import write_sdmx_data
 
     # Directory for SDMX output
-    dir = "dir::transport sdmx"
-    c.add(dir, "make_output_path", "config", name="sdmx")
+    dir_ = "dir::transport sdmx"
+    c.add(dir_, "make_output_path", "config", name="sdmx")
 
     # Add a key that returns a reference to a shared StructureMessage
     sm = "sdmx structure message"
@@ -368,13 +359,12 @@ def convert_sdmx(c: "Computer") -> None:
 
     # Write each quantity in DATAFLOW to .{csv,xml}; update the shared StructureMessage
     keys = []
-    args = [sm, "scenario", dir]  # Common arguments
-    for id_, base in DATAFLOW:
-        keys.append(Key(id_, tag="sdmx"))
-        c.add(keys[-1], partial(write_sdmx_data, id=id_, dims=base.dims), base, *args)
+    for df in filter(lambda df: df.intent & Dataflow.FLAG.OUT, DATAFLOW.values()):
+        keys.append(Key(df.key.name, tag="sdmx"))
+        c.add(keys[-1], write_sdmx_data, df.key, sm, "scenario", dir_, df_urn=df.df.urn)
 
     # Collect all the keys *then* write the collected structures to file
-    c.add(k_report.sdmx, "write_sdmx_structures", sm, dir, *keys)
+    c.add(k_report.sdmx, "write_sdmx_structures", sm, dir_, *keys)
 
     # Connect to the main report key
     c.graph[k_report.all].append(k_report.sdmx)

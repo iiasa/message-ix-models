@@ -245,6 +245,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     # Identify the mode-share file according to the config setting
     Dataflow(
+        module=__name__,
         key="mode share:n-t:exo",
         path=("mode-share", config.mode_share),
         name="Reference (base year) mode share",
@@ -252,7 +253,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         replace=True,
     )
 
-    for _, f in iter_files():
+    for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, iter_files()):
         c.add("", f, context=context)
 
 
