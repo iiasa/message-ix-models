@@ -27,24 +27,12 @@ env:
   labels: >-
     [
       "SSP1",
-      "SSP1 policy",
-      "SSP2",
-      "SSP2 policy",
-      "SSP3",
-      "SSP3 policy",
-      "SSP4",
-      "SSP4 policy",
-      "SSP5",
-      "SSP5 policy",
-      "EDITS-CA",
-      "EDITS-HA",
-      "LED-SSP1",
-      "LED-SSP2"
+      "SSP2"
     ]
 
   # Currently disabled:
   # [
-  #
+  # 
   # ]
 
 on:
