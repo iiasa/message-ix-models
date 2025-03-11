@@ -304,10 +304,11 @@ def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
     """Run materials specific reporting, then legacy reporting."""
-    from message_ix_models.model.material.report.run_reporting import run
-    from message_ix_models.report.legacy.iamc_report_hackathon import (
+    from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
+
+    from message_ix_models.model.material.report.run_reporting import run
 
     # Retrieve the scenario given by the --url option
     scenario = context.get_scenario()
