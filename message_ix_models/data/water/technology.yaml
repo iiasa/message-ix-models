@@ -569,6 +569,78 @@ cooling:
       technology using parasitic electricity.
     input: {commodity: electr}
 
+  csp_sm1_res_hist_2010__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once-through cooling
+      technology using freshwater supply.
+    input: {commodity: freshwater_supply}
+
+  csp_sm1_res_hist_2010__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed-loop cooling
+      technology using freshwater supply & parasitic electricity.
+    input: {commodity: freshwater_supply, electr}
+
+  csp_sm1_res_hist_2010__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once-through cooling
+      technology using saline water supply.
+    input: {commodity: saline_supply_ppl}
+
+  csp_sm1_res_hist_2010__air:
+    description: >-
+      Solar thermal power plant with storage cooling by air cooling
+      technology using parasitic electricity.
+    input: {commodity: electr}
+
+  csp_sm1_res_hist_2015__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once-through cooling
+      technology using freshwater supply.
+    input: {commodity: freshwater_supply}
+
+  csp_sm1_res_hist_2015__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed-loop cooling
+      technology using freshwater supply & parasitic electricity.
+    input: {commodity: freshwater_supply, electr}
+
+  csp_sm1_res_hist_2015__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once-through cooling
+      technology using saline water supply.
+    input: {commodity: saline_supply_ppl}
+
+  csp_sm1_res_hist_2015__air:
+    description: >-
+      Solar thermal power plant with storage cooling by air cooling
+      technology using parasitic electricity.
+    input: {commodity: electr}
+
+  csp_sm1_res_hist_2020__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once-through cooling
+      technology using freshwater supply.
+    input: {commodity: freshwater_supply}
+
+  csp_sm1_res_hist_2020__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed-loop cooling
+      technology using freshwater supply & parasitic electricity.
+    input: {commodity: freshwater_supply, electr}
+
+  csp_sm1_res_hist_2020__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once-through cooling
+      technology using saline water supply.
+    input: {commodity: saline_supply_ppl}
+
+  csp_sm1_res_hist_2020__air:
+    description: >-
+      Solar thermal power plant with storage cooling by air cooling
+      technology using parasitic electricity.
+    input: {commodity: electr}
+
   csp_sm1_res1__ot_fresh:
     description: >-
       Solar thermal power plant with storage cooling by once-through cooling

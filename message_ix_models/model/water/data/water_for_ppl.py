@@ -1,7 +1,6 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import logging
-from typing import Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -329,24 +328,24 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         .drop(columns=1)
     )
 
-    # Filter for rows where parent_tech is "csp_sm1_res"
-    csp_rows = cooling_df[cooling_df["parent_tech"] == "csp_sm1_res"].copy()
+    # # Filter for rows where parent_tech is "csp_sm1_res"
+    # csp_rows = cooling_df[cooling_df["parent_tech"] == "csp_sm1_res"].copy()
 
-    # Define suffixes for historical years
-    hist_years = ["hist_2010", "hist_2015", "hist_2020"]
+    # # Define suffixes for historical years
+    # hist_years = ["hist_2010", "hist_2015", "hist_2020"]
 
-    # Expand the dataframe for csp historical caapcities
-    expanded_rows = []
-    for hist_year in hist_years:
-        temp_df = csp_rows.copy()
-        temp_df["parent_tech"] = temp_df["parent_tech"] + f"_{hist_year}"
-        temp_df["technology_name"] = temp_df["technology_name"].str.replace(
-            "csp_sm1_res", f"csp_sm1_res_{hist_year}"
-        )
-        expanded_rows.append(temp_df)
+    # # Expand the dataframe for csp historical caapcities
+    # expanded_rows = []
+    # for hist_year in hist_years:
+    #     temp_df = csp_rows.copy()
+    #     temp_df["parent_tech"] = temp_df["parent_tech"] + f"_{hist_year}"
+    #     temp_df["technology_name"] = temp_df["technology_name"].str.replace(
+    #         "csp_sm1_res", f"csp_sm1_res_{hist_year}"
+    #     )
+    #     expanded_rows.append(temp_df)
 
-    # Concatenate with original dataframe
-    cooling_df = pd.concat([cooling_df] + expanded_rows, ignore_index=True)
+    # # Concatenate with original dataframe
+    # cooling_df = pd.concat([cooling_df] + expanded_rows, ignore_index=True)
 
     scen = context.get_scenario()
 
