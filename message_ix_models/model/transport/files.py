@@ -5,11 +5,11 @@ See :ref:`transport-data-files` for documentation of the data flows in :data:`FI
 
 import logging
 from collections.abc import Iterator
-from functools import lru_cache
+from functools import cache
 from typing import TYPE_CHECKING, cast
 
 from message_ix_models.util import package_data_path
-from message_ix_models.util.sdmx import DATAFLOW, Dataflow
+from message_ix_models.util.sdmx import DATAFLOW, STORE, Dataflow
 
 if TYPE_CHECKING:
     import sdmx.message
@@ -19,16 +19,13 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-@lru_cache()
-def common_structures() -> "sdmx.message.StructureMessage":
+@cache
+def common_structures() -> "sdmx.model.common.ConceptScheme":
     """Return common structures for use in the current module."""
-    from importlib.metadata import version
-
-    from packaging.version import parse
-    from sdmx.message import StructureMessage
+    import sdmx.urn
     from sdmx.model.common import ConceptScheme
 
-    from message_ix_models.util.sdmx import read
+    from message_ix_models.util.sdmx import get_version, read
 
     # Create a shared concept scheme with…
     # - Same maintainer "IIASA_ECE" as in "IIASA_ECE:AGENCIES".
@@ -37,15 +34,15 @@ def common_structures() -> "sdmx.message.StructureMessage":
     cs = ConceptScheme(
         id="CS_MESSAGE_TRANSPORT",
         maintainer=read("IIASA_ECE:AGENCIES")["IIASA_ECE"],
-        version=parse(version("message_ix_models")).base_version,
+        version=get_version(),
         is_final=False,
         is_external_reference=False,
     )
+    cs.urn = sdmx.urn.make(cs)
 
-    # Return encapsulated in a StructureMessage
-    sm = StructureMessage()
-    sm.add(cs)
-    return sm
+    STORE.add(cs)
+
+    return cs
 
 
 def collect_structures() -> "sdmx.message.StructureMessage":
@@ -53,16 +50,17 @@ def collect_structures() -> "sdmx.message.StructureMessage":
 
     The structural metadata are written to :file:`transport-in.xml`.
     """
-    from message_ix_models.util.sdmx import write
+    from sdmx.message import StructureMessage
 
-    sm = common_structures()
+    from message_ix_models.util import sdmx
 
-    for file in DATAFLOW.values():
+    sm = StructureMessage()
+
+    for df in DATAFLOW.values():
         # Add both the DFD and DSD
-        sm.add(file.df)
-        sm.add(file.df.structure)
+        sdmx.collect_structures(sm, df.df)
 
-    write(sm, basename="transport-in")
+    sdmx.write(sm, basename="transport-in")
 
     return sm
 
@@ -82,6 +80,19 @@ def iter_files() -> Iterator[tuple[str, "Dataflow"]]:
         yield ("", df)
 
 
+def _make_dataflow(**kwargs) -> "Dataflow":
+    """Shorthand for data flows from this module."""
+    common_structures()  # Ensure CS_MESSAGE_TRANSPORT exists
+
+    kwargs.setdefault("module", __name__)
+    desc = kwargs.setdefault("description", "")
+    kwargs["description"] = f"{desc.strip()}\n\nInput data for MESSAGEix-Transport."
+    kwargs.setdefault("i_o", Dataflow.FLAG.IN)
+    kwargs.setdefault("cs_urn", ("ConceptScheme=IIASA_ECE:CS_MESSAGE_TRANSPORT",))
+
+    return Dataflow(**kwargs)
+
+
 def read_structures() -> "sdmx.message.StructureMessage":
     """Read structural metadata from :file:`transport-in.xml`."""
     import sdmx
@@ -90,7 +101,7 @@ def read_structures() -> "sdmx.message.StructureMessage":
         return cast("sdmx.message.StructureMessage", sdmx.read_sdmx(f))
 
 
-act_non_ldv = Dataflow(
+act_non_ldv = _make_dataflow(
     path="act-non_ldv.csv",
     key="activity:n-t-y:non-ldv+exo",
     name="Fixed activity of non-LDV technologies.",
@@ -98,26 +109,26 @@ act_non_ldv = Dataflow(
 )
 
 
-activity_freight = Dataflow(
+activity_freight = _make_dataflow(
     key="freight activity:n:exo",
     name="Freight transport activity",
     units="Gt / km",
 )
 
-activity_ldv = Dataflow(
+activity_ldv = _make_dataflow(
     key="ldv activity:n:exo",
     name="Activity (driving distance) per light duty vehicle",
     units="km / year",
 )
 
-age_ldv = Dataflow(
+age_ldv = _make_dataflow(
     path="ldv-age",
     key="age:n-t-y:ldv+exo",
     name="Mean age of LDVs as of the model base period",
     units="years",
 )
 
-cap_new_ldv = Dataflow(
+cap_new_ldv = _make_dataflow(
     path="ldv-new-capacity",
     key="cap_new:nl-t-yv:ldv+exo",
     name="New capacity values for LDVs",
@@ -127,7 +138,7 @@ values for LDVs""",
     required=False,
 )
 
-class_ldv = Dataflow(
+class_ldv = _make_dataflow(
     path="ldv-class",
     dims=("n", "vehicle_class"),
     name="Share of light-duty vehicles by class",
@@ -135,13 +146,13 @@ class_ldv = Dataflow(
     required=False,
 )
 
-disutility = Dataflow(
+disutility = _make_dataflow(
     key="disutility:n-cg-t-y:per vehicle",
     name="Disutility cost of LDV usage",
     units="kUSD / vehicle",
 )
 
-demand_scale = Dataflow(
+demand_scale = _make_dataflow(
     key="demand-scale:n-y",
     name="Scaling of total demand relative to base year levels",
     units="dimensionless",
@@ -149,14 +160,14 @@ demand_scale = Dataflow(
 
 # NB This differs from fuel_emi_intensity in including (a) a 't[echnology]' dimension
 #    and (b) more and non-GHG species.
-emi_intensity = Dataflow(
+emi_intensity = _make_dataflow(
     key="emissions intensity:t-c-e:transport",
     path="emi-intensity",
     name="Emissions intensity of fuel use",
     units="g / EJ",
 )
 
-energy_other = Dataflow(
+energy_other = _make_dataflow(
     key="energy:c-n:transport other",
     path="energy-other",
     name="2020 demand for other transport energy",
@@ -166,7 +177,7 @@ energy_other = Dataflow(
 
 # NB This differs from emi_intensity in (a) having no 't[echnology]' dimension and (b)
 #    including only CO₂.
-fuel_emi_intensity = Dataflow(
+fuel_emi_intensity = _make_dataflow(
     key="fuel-emi-intensity:c-e",
     name="GHG emissions intensity of fuel use",
     description="""Values are in GWP-equivalent mass of carbon, not in mass of the
@@ -174,7 +185,7 @@ emissions species.""",
     units="tonne / kWa",
 )
 
-ikarus_availability = Dataflow(
+ikarus_availability = _make_dataflow(
     path=("ikarus", "availability"),
     dims=("source", "t", "c", "y"),
     name="Availability of non-LDV transport technologies",
@@ -182,7 +193,7 @@ ikarus_availability = Dataflow(
     units="km / a",
 )
 
-ikarus_fix_cost = Dataflow(
+ikarus_fix_cost = _make_dataflow(
     path=("ikarus", "fix_cost"),
     dims=("source", "t", "c", "y"),
     name="Fixed cost of non-LDV transport technologies",
@@ -190,48 +201,48 @@ ikarus_fix_cost = Dataflow(
     units="kEUR_2000",
 )
 
-ikarus_input = Dataflow(
+ikarus_input = _make_dataflow(
     path=("ikarus", "input"),
     dims=("source", "t", "c", "y"),
     name="Input energy intensity of non-LDV transport technologies",
     units="GJ / (100 vehicle km)",
 )
 
-ikarus_inv_cost = Dataflow(
+ikarus_inv_cost = _make_dataflow(
     path=("ikarus", "inv_cost"),
     dims=("source", "t", "c", "y"),
     name="Investment/capital cost of non-LDV transport technologies",
     units="MEUR_2000",
 )
 
-ikarus_technical_lifetime = Dataflow(
+ikarus_technical_lifetime = _make_dataflow(
     path=("ikarus", "technical_lifetime"),
     dims=("source", "t", "c", "y"),
     name="Technical lifetime of non-LDV transport technologies",
     units="year",
 )
 
-ikarus_var_cost = Dataflow(
+ikarus_var_cost = _make_dataflow(
     path=("ikarus", "var_cost"),
     dims=("source", "t", "c", "y"),
     name="Variable cost of non-LDV transport technologies",
     units="EUR_2000 / (100 vehicle km)",
 )
 
-input_adj_ldv = Dataflow(
+input_adj_ldv = _make_dataflow(
     key="ldv input adj:n-scenario:exo",
     name="Calibration factor for LDV fuel economy",
     units="dimensionless",
 )
 
-input_base = Dataflow(
+input_base = _make_dataflow(
     path="input-base",
     key="input:t-c-h:base",
     name="Base model input efficiency",
     units="GWa",
 )
 
-input_ref_ldv = Dataflow(
+input_ref_ldv = _make_dataflow(
     path="ldv-input-ref",
     key="fuel economy:nl-m:ldv+ref",
     name="Reference fuel economy for LDVs",
@@ -239,13 +250,13 @@ input_ref_ldv = Dataflow(
     required=False,
 )
 
-input_share = Dataflow(
+input_share = _make_dataflow(
     key="input-share:t-c-y:exo",
     name="Share of input of LDV technologies from each commodity",
     units="dimensionless",
 )
 
-lifetime_ldv = Dataflow(
+lifetime_ldv = _make_dataflow(
     key="lifetime:nl-yv:ldv+exo",
     path="lifetime-ldv",
     name="Technical lifetime (maximum age) of LDVs",
@@ -255,34 +266,34 @@ driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.""",
     units="year",
 )
 
-load_factor_ldv = Dataflow(
+load_factor_ldv = _make_dataflow(
     key="load factor ldv:scenario-n-y:exo",
     name="Load factor (occupancy) of LDVs",
     description="""Units are implicitly passengers per vehicle.""",
     units="dimensionless",
 )
 
-load_factor_nonldv = Dataflow(
+load_factor_nonldv = _make_dataflow(
     key="load factor nonldv:t:exo",
     name="Load factor (occupancy) of non-LDV passenger vehicles",
     units="passenger / vehicle",
 )
 
-mer_to_ppp = Dataflow(
+mer_to_ppp = _make_dataflow(
     key="mer to ppp:n-y",
     name="Conversion from market exchange rate (MER) to PPP",
     units="dimensionless",
     required=False,
 )
 
-mode_share_freight = Dataflow(
+mode_share_freight = _make_dataflow(
     key="freight mode share:n-t:exo",
     path="freight-mode-share-ref",
     name="Mode shares of freight activity in the model base period",
     units="dimensionless",
 )
 
-pdt_cap_proj = Dataflow(
+pdt_cap_proj = _make_dataflow(
     key="P activity:scenario-n-t-y:exo",
     path="pdt-cap",
     name="Projected passenger-distance travelled (PDT) per capita",
@@ -290,27 +301,27 @@ pdt_cap_proj = Dataflow(
     required=False,
 )
 
-pdt_cap_ref = Dataflow(
+pdt_cap_ref = _make_dataflow(
     key="pdt:n:capita+ref",
     path="pdt-cap-ref",
     name="Reference (historical) passenger-distance travelled (PDT) per capita",
     units="km / year",
 )
 
-pdt_elasticity = Dataflow(
+pdt_elasticity = _make_dataflow(
     key="pdt elasticity:scenario-n-y:exo",
     name="“Elasticity” of PDT-capita with respect to GDP",
     units="dimensionless",
 )
 
-pop_share_attitude = Dataflow(
+pop_share_attitude = _make_dataflow(
     path=("ma3t", "attitude"),
     dims=("attitude",),
     name="Share of population by technology propensity/attitude",
     units="dimensionless",
 )
 
-pop_share_cd_at = Dataflow(
+pop_share_cd_at = _make_dataflow(
     path=("ma3t", "population"),
     dims=("census_division", "area_type"),
     name="Share of population by census division and area type",
@@ -318,7 +329,7 @@ pop_share_cd_at = Dataflow(
     units="dimensionless",
 )
 
-pop_share_driver = Dataflow(
+pop_share_driver = _make_dataflow(
     path=("ma3t", "driver"),
     dims=("census_division", "area_type", "driver_type"),
     name="Share of population by driver type, census_division, and area_type",
@@ -327,14 +338,14 @@ other dimensions.""",
     units="dimensionless",
 )
 
-population_suburb_share = Dataflow(
+population_suburb_share = _make_dataflow(
     key="population suburb share:n-y:exo",
     name="Share of MSA population that is suburban",
     units="dimensionless",
     required=False,
 )
 
-speed = Dataflow(
+speed = _make_dataflow(
     key="speed:scenario-n-t-y:exo",
     name="Vehicle speed",
     description="""
@@ -343,7 +354,7 @@ speed = Dataflow(
     units="km / hour",
 )
 
-t_share_ldv = Dataflow(
+t_share_ldv = _make_dataflow(
     path="ldv-t-share",
     key="tech share:n-t:ldv+exo",
     name="Share of total stock for LDV technologies",
