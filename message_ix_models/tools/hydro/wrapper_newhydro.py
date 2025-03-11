@@ -13,7 +13,7 @@ It is possible to consider:
     3. to select different climate assumption (hist, rcp6p0, rcp 2p6)
 
     Data source:
-    Gernaat et al. Climate change impacts on renewable energy supply. 
+    Gernaat et al. Climate change impacts on renewable energy supply.
     Nat. Clim. Chang. 11, 119–125 (2021). https://doi.org/10.1038/s41558-020-00949-9
 
 """
@@ -24,8 +24,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 
 def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020):
@@ -45,7 +46,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         )
         return
 
-    data_path = private_data_path("hydro", "output_MESSAGE_aggregation", reg)
+    data_path = package_data_path("hydro", "output_MESSAGE_aggregation", reg)
 
     # List of parameters which 'may' have old hydro tecs
     # Derived from set(par_tecHydro) in the original script
@@ -70,13 +71,15 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         "var_cost",
         "bound_new_capacity_up",
         "bound_new_capacity_lo",
+        "bound_total_capacity_up",
+        "bound_total_capacity_lo",
         "bound_activity_up",
         "bound_activity_lo",
         "initial_new_capacity_up",
         "growth_new_capacity_up",
         "initial_new_capacity_lo",
         "growth_new_capacity_lo",
-        # 'initial_activity_up',
+        "initial_activity_up",
         "growth_activity_up",
         # 'initial_activity_lo',
         "growth_activity_lo",
@@ -172,7 +175,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
     par_hydro = [
         x for x in param_set_hydro if "hydro_hc" in set(scenario.par(x)["technology"])
     ]
-
+    print("full list of parameters", par_hydro)
     par_skip_new = (
         [x for x in par_hydro if "bound" in x]
         + [x for x in par_hydro if "ref_" in x]
@@ -180,10 +183,9 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         + [x for x in par_hydro if "growth_" in x]
         + ["historical_activity", "historical_new_capacity"]
     )
-
+    print("parameters treated individually", par_skip_new)
     # Looping for all regions
     for focus_region in msg_reg:
-
         print("Parametrizing each MESSAGE region: " + focus_region)
         start_time = time.time()
         LF = pd.read_csv(
@@ -323,7 +325,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     continue  # taken care of later for new tecs
                 scenario.add_par(t, df)
 
-        #%% Param inputs (Part 2 of 3).
+        # %% Param inputs (Part 2 of 3).
 
         # Parameters which need to be customized: input, inv_cost, fix_cost, & other renewable params
         # newtechnames allhydrotech
@@ -587,7 +589,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 lf2sub = LF2.loc[LF2.commodity == i].reset_index(drop=True)
                 InputLoadFactor(scenario, focus_region, lf2sub, comm=i, case="pol_2nd")
 
-        #%% edit renewable_potential and reneweable_capacity_factor for historical conditions
+        # %% edit renewable_potential and reneweable_capacity_factor for historical conditions
         # rewnewable potential, add max hist_act to the first grade potential
         # NEW_ED remove hydro_2 & commented
         df = scenario.par(
@@ -640,7 +642,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
 
             scenario.add_par("capacity_factor", df)
 
-        #%%
+        # %%
 
         for i in allhydrotech:  # not sure is hist tec should have it after 2020
             df = pd.DataFrame(
@@ -749,7 +751,7 @@ def InputLoadFactor(scenario, focus_region, lfsub, comm, case="all"):
                 # value=lfsub.at[g, "x.interval"],
                 grade="c" + str(g + 1),
                 unit="GWa",
-                **base_hydro_input
+                **base_hydro_input,
             )
         )
         cfac = pd.DataFrame(
@@ -758,7 +760,7 @@ def InputLoadFactor(scenario, focus_region, lfsub, comm, case="all"):
                 # value=lfsub.at[g, "avgLF"],
                 grade="c" + str(g + 1),
                 unit="%",
-                **base_hydro_input
+                **base_hydro_input,
             )
         )
 
