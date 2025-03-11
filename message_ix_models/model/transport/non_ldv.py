@@ -24,8 +24,8 @@ from message_ix_models.util import (
     same_time,
 )
 
-from . import files as exo
 from .emission import ef_for_input
+from .key import exo
 from .util import has_input_commodity
 
 if TYPE_CHECKING:
@@ -64,7 +64,6 @@ Pi = "::P+ixmp"
 
 
 def prepare_computer(c: Computer):
-    from . import files as exo
     from .key import n, t_modes, y
 
     context: "Context" = c.graph["context"]

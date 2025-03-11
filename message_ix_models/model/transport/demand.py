@@ -13,10 +13,10 @@ from message_ix import make_df
 from message_ix_models.report.key import GDP
 from message_ix_models.util import broadcast
 
-from . import files as exo
 from .key import (
     cg,
     cost,
+    exo,
     fv,
     fv_cny,
     gdp_cap,
