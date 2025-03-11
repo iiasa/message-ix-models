@@ -27,6 +27,9 @@ from message_ix_models.util import (
     same_node,
 )
 from message_ix_models.util.ixmp import rename_dims
+from message_ix_models.util.sdmx import Dataflow
+
+from .files import common_structures
 
 if TYPE_CHECKING:
     from sdmx.model.v21 import Code
@@ -409,3 +412,42 @@ for cls in IEA_Future_of_Trucks, MERtoPPP:
         register_source(cls)  # type: ignore [type-abstract]
     except ValueError as e:
         log.info(str(e))
+
+
+# Output data flows for reporting
+
+
+def _make_dataflow(**kwargs) -> "Dataflow":
+    """Shorthand for data flows from this module."""
+    common_structures()  # Ensure CS_MESSAGE_TRANSPORT exists
+
+    kwargs.setdefault("module", __name__)
+    kwargs.setdefault("units", "dimensionless")  # FIXME Look up the correct units
+    kwargs.setdefault("i_o", Dataflow.FLAG.OUT)
+    desc = kwargs.setdefault("description", "")
+    kwargs["description"] = f"{desc.strip()}\n\nOutput data from MESSAGEix-Transport."
+    kwargs.setdefault("cs_urn", ("ConceptScheme=IIASA_ECE:CS_MESSAGE_TRANSPORT",))
+
+    return Dataflow(**kwargs)
+
+
+activity_passenger = _make_dataflow(
+    id="ACTIVITY_PASSENGER",
+    name="Passenger activity",
+    key="pdt:n-y-t",
+    units="dimensionless",
+)
+activity_vehicle = _make_dataflow(
+    id="ACTIVITY_VEHICLE",
+    name="Vehicle activity",
+    description='Same as "Energy Service|Transportation" IAMC variable.',
+    key="out:nl-t-ya-c:transport+units",
+)
+fe_transport = _make_dataflow(
+    id="FE_TRANSPORT",
+    name="Final energy",
+    description='Same as "Final Energy|Transportation" IAMC variable.',
+    key="in:nl-t-ya-c:transport+units",
+)
+gdp_in = _make_dataflow(id="GDP_IN", name="GDP", key="gdp:n-y")
+population_in = _make_dataflow(id="POPULATION_IN", name="Population", key="pop:n-y")

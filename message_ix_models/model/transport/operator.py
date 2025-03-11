@@ -1232,7 +1232,8 @@ def write_sdmx_data(
     structure_message: "sdmx.message.StructureMessage",
     scenario: "ScenarioInfo",
     path: "Path",
-    **kwargs,
+    *,
+    df_urn: str,
 ) -> None:
     """Write two files for `qty`.
 
@@ -1241,20 +1242,20 @@ def write_sdmx_data(
     2. :file:`{path}/{dataflow_id}.xml` —an SDMX-ML :class:`.DataMessage` with the
        values from `qty`.
 
-    …where `dataflow_id` is the data flow ID constructed by :func:`.make_dataflow`.
+    …where `dataflow_id` is the ID of a dataflow referred to by `df_urn`.
 
-    The `structure_message` is passed to :func:`.make_dataflow` and updated with the
-    given structures.
+    The `structure_message` is updated with the relevant structures.
     """
     import sdmx
     from genno.compat.sdmx.operator import quantity_to_message
-    from sdmx.model import common
+    from sdmx.model import common, v21
 
-    from message_ix_models.util.sdmx import make_dataflow
+    from message_ix_models.util.sdmx import DATAFLOW, collect_structures
 
     # Add a dataflow and related structures to `structure_message`
-    make_dataflow(**kwargs, message=structure_message)
-    dfd = tuple(structure_message.dataflow.values())[-1]
+    dfd = DATAFLOW[df_urn].df
+    assert isinstance(dfd, v21.DataflowDefinition)
+    collect_structures(structure_message, dfd)
 
     # Convert `qty` to DataMessage
     # FIXME Remove exclusion once upstream type hint is improved
@@ -1281,6 +1282,7 @@ def write_sdmx_data(
     # Convert to SDMX_CSV
     # FIXME Remove this once sdmx1 supports it directly
     # Fixed values in certain columns
+    assert dfd.urn is not None
     fixed_cols = dict(
         STRUCTURE="dataflow", STRUCTURE_ID=dfd.urn.split("=")[-1], ACTION="I"
     )
