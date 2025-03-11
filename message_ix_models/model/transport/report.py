@@ -16,7 +16,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.util import add_replacements
 
 from . import Config
-from .key import pdt_nyt
+from .key import exo, pdt_nyt
 
 if TYPE_CHECKING:
     import ixmp
@@ -475,8 +475,6 @@ def misc(c: "Computer") -> None:
 
     - ``calibrate fe`` → a file :file:`calibrate-fe.csv`. See the header comment.
     """
-    from . import files as exo
-
     config: "Config" = c.graph["config"]["transport"]
 
     # Configuration for :func:`check`. Adds a single key, 'transport check', that

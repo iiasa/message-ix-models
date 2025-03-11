@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from genno import Key, Quantity, quote
 
-from . import files as exo
+from .key import exo
 
 if TYPE_CHECKING:
     from genno import Computer

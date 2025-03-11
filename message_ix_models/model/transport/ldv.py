@@ -24,10 +24,9 @@ from message_ix_models.util import (
     same_node,
 )
 
-from . import files as exo
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
-from .key import bcast_tcl, bcast_y
+from .key import bcast_tcl, bcast_y, exo
 from .util import wildcard
 
 if TYPE_CHECKING:
