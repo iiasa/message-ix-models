@@ -33,6 +33,17 @@ except ImportError:
             raise TypeError(type(info))
 
 
+try:
+    from genno import Keys
+except ImportError:
+    # genno < 1.28 with message_ix/ixmp 3.7.0
+    # TODO Remove when support for these upstream versions is dropped
+
+    from types import SimpleNamespace
+
+    Keys = SimpleNamespace  # type: ignore [assignment, misc]
+
 __all__ = [
+    "Keys",
     "as_quantity",
 ]

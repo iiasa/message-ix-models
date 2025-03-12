@@ -8,7 +8,13 @@ from genno import Key
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
 
-from message_ix_models.model.transport import build, testing
+from message_ix_models.model.transport import (
+    build,
+    # Ensure .util.sdmx.DATAFLOW is populated. This seems needed only for Python ≤ 3.9
+    # TODO Remove once Python 3.9 is no longer supported
+    data,  # noqa: F401
+    testing,
+)
 from message_ix_models.util.sdmx import DATAFLOW, Dataflow, eval_anno, make_enum, read
 
 if TYPE_CHECKING:

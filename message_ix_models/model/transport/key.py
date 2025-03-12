@@ -2,9 +2,10 @@
 
 from types import SimpleNamespace
 
-from genno import Key, Keys, KeySeq
+from genno import Key, KeySeq
 
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
+from message_ix_models.util.genno import Keys
 
 from .data import iter_files
 
