@@ -452,7 +452,7 @@ def add_structure(c: Computer) -> None:
     c.add_queue(map(lambda t: (t, dict(strict=True)), tasks), max_tries=2, fail="raise")
 
 
-@minimum_version("message_ix 3.8")
+@minimum_version("message_ix 3.8; genno 1.28")
 def get_computer(
     context: Context,
     obj: Optional[Computer] = None,
