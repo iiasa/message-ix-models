@@ -1323,63 +1323,12 @@ def gen_te_projections(
     )
     fix_cost = fix_cost[fix_cost["technology"].isin(model_tec_set)]
 
-    #    # Ensure that fix_costs are also added for activity years of vintage years
-    #    # prior to the firstmodelyear and remove any entries for activity years for
-    #    # which the technology is not active.
-    #    tmp_fc = pd.DataFrame()
-    #    remove = []
-    #    for node in fix_cost.node_loc.unique().tolist():
-    #        for tec in fix_cost.loc[fix_cost.node_loc == node].technology.unique().tolist():
-    #            yva_found = False
-    #            tmp = fix_cost.loc[(fix_cost.node_loc == node) & (fix_cost.technology == tec)].copy()
-    #            try:
-    #                yva = scen.vintage_and_active_years([node, tec])
-    #                yva_found = True
-    #            except Exception:
-    #                yva = scen.vintage_and_active_years()
-    #            if yva_found == False or max(yva.year_vtg) < max(scen.set("year")):
-    #                inp = scen.par("input", filters={"node_loc": node, "technology": tec})[["year_vtg", "year_act"]]
-    #                inp = inp.loc[inp.year_act >= scen.firstmodelyear]
-    #                out = scen.par("output", filters={"node_loc": node, "technology": tec})[["year_vtg", "year_act"]]
-    #                out = out.loc[out.year_act >= scen.firstmodelyear]
-    #                if not inp.empty:
-    #                    yva = yva.merge(inp, on=["year_vtg", "year_act"], how="right")
-    #                elif not out.empty:
-    #                    yva = yva.merge(out, on=["year_vtg", "year_act"], how="right")
-    #                else:
-    #                    yva = scen.par("relation_activity", filters={"node_loc": node, "technology": tec})[["year_rel", "year_act"]].drop_duplicates().rename(columns={"year_rel": "year_vtg"})
-    #                    if yva.empty:
-    #                        yva = scen.par("relation_total_capacity", filters={"node_rel": node, "technology": tec})[["year_rel"]].drop_duplicates().rename(columns={"year_rel": "year_vtg"})
-    #                        yva["year_act"] = yva["year_vtg"]
-    #            if yva.empty:
-    #                print(f"No data found for technology {tec} in node {node}. Continuing")
-    #                remove.append([node, tec])
-    #                continue
-    #
-    #            tmp = tmp.merge(yva, on=["year_vtg", "year_act"], how="right").sort_values(by=["year_act", "year_vtg"]).bfill()
-    #
-    #            # Handle Exceptions
-    #            if tec in ["coal_ppl_u", "nuc_lc"]:
-    #                tmp = tmp.dropna()
-    #
-    #            check = tmp.copy()
-    #            check = check.loc[check.value.isnull()]
-    #            if not check.empty:
-    #                print(tec)
-    #                print(node)
-    #                print(tmp)
-    #                print(check)
-    #
-    #            tmp_fc = pd.concat([tmp_fc, tmp])
-    #    fix_cost = tmp_fc.copy()
     inv_cost = (
         out_materials["inv_cost"]
         .drop_duplicates()
         .drop(["scenario_version", "scenario"], axis=1)
     )
     inv_cost = inv_cost[inv_cost["technology"].isin(model_tec_set)]
-    #    for items in remove:
-    #        inv_cost = inv_cost.loc[~((inv_cost.node_loc == items[0]) & (inv_cost.technology == items[1]))]
     return inv_cost, fix_cost
 
 
