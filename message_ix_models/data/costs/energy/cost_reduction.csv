@@ -1,18 +1,18 @@
-# Cost reduction in 2100,,,,,
-# ,,,,,
-# Units: %  ,,,,,
-#,,,,,
-# Data is copied from Sheet1 in https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP_technology_learning.xlsx,,,,,
-# There are some manually changed assumptions to the original GEA data in the spreadsheet (can be seen in the spreadsheet as marked in yellow),,,,,
-# The initial copied data can be found in gea_reduction_rates.csv,,,,,
-# This file renames the learning rates from GEAL to low and GEAM to medium and GEAH to high,,,,,
+# Cost reduction in 2100,,,,,,
+# ,,,,,,
+# Units: %  ,,,,,,
+#,,,,,,
+# Data is copied from Sheet1 in https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP_technology_learning.xlsx,,,,,,
+# There are some manually changed assumptions to the original GEA data in the spreadsheet (can be seen in the spreadsheet as marked in yellow),,,,,,
+# The initial copied data can be found in gea_reduction_rates.csv,,,,,,
+# This file renames the learning rates from GEAL to low and GEAM to medium and GEAH to high,,,,,,
 message_technology,very_low,low,low_medium,medium,high,very_high
 bio_istig,0,0.1,0.3,0.3,0.4,0.5
 bio_istig_ccs,0,0.1,0.3,0.3,0.4,0.6
 bio_ppl,0,0.1,0.2,0.2,0.3,0.4
 bio_ppl_co2scr,0,0,0,0,0.3,0.4
 biomass_i,0,0,0,0,0,0
-c_ppl_co2scr,0,0,0,0,0.3,0.4
+c_ppl_co2scr,0,0,0.1,0.2,0.3,0.4
 coal_adv,0,0.1,0.3,0.3,0.5,0.7
 coal_adv_ccs,0,0.1,0.3,0.3,0.5,0.7
 coal_i,0,0,0,0,0,0
@@ -21,11 +21,11 @@ coal_ppl_u,0,0,0,0,0,0
 csp_sm1_ppl,0.15,0.3,0.3,0.3,0.5,0.7
 csp_sm3_ppl,0.15,0.3,0.3,0.3,0.5,0.7
 elec_i,0,0,0,0,0,0
-eth_bio,0,0.27,0.27,0.27,0.4,0.55
-eth_bio_ccs,0,0.27,0.27,0.27,0.4,0.55
+eth_bio,0,0.1,0.27,0.27,0.4,0.55
+eth_bio_ccs,0,0.1,0.27,0.27,0.4,0.55
 eth_i,0,0,0,0,0,0
 foil_i,0,0,0,0,0,0
-g_ppl_co2scr,0,0,0,0,0.3,0.4
+g_ppl_co2scr,0,0,0.1,0.2,0.3,0.4
 gas_cc,0.1,0.2,0.29,0.29,0.38,0.5
 gas_cc_ccs,0.1,0.2,0.29,0.29,0.5,0.7
 gas_ct,0.1,0.2,0.29,0.29,0.38,0.5
@@ -33,11 +33,11 @@ gas_i,0,0,0,0,0,0
 gas_ppl,0.1,0.2,0.29,0.29,0.38,0.5
 geo_hpl,0.1,0.15,0.18,0.18,0.25,0.35
 geo_ppl,0,0.1,0.18,0.18,0.25,0.35
-h2_bio,0,0.25,0.4,0.4,0.5,0.7
-h2_bio_ccs,0,0.25,0.4,0.4,0.5,0.7
+h2_bio,0,0.1,0.25,0.4,0.5,0.7
+h2_bio_ccs,0,0.1,0.25,0.4,0.5,0.7
 h2_coal,0,0.25,0.4,0.4,0.4,0.5
 h2_coal_ccs,0,0.25,0.4,0.4,0.4,0.5
-h2_elec,0,0,0.1,0.1,0.2,0.3
+h2_elec,0,0.1,0.25,0.5,0.7,0.8
 h2_i,0,0,0,0,0,0
 h2_smr,0,0.25,0.4,0.4,0.5,0.7
 h2_smr_ccs,0,0.25,0.4,0.4,0.5,0.7
@@ -48,15 +48,15 @@ hydro_hc,0,0,0,0,0,0
 hydro_lc,0,0,0,0,0,0
 igcc,0,0.1,0.3,0.3,0.5,0.7
 igcc_ccs,0,0.1,0.3,0.3,0.5,0.7
-liq_bio,0.15,0.27,0.27,0.27,0.4,0.55
-liq_bio_ccs,0.15,0.27,0.27,0.27,0.4,0.55
+liq_bio,0,0.1,0.27,0.27,0.4,0.55
+liq_bio_ccs,0,0.1,0.27,0.27,0.4,0.55
 loil_i,0,0,0,0,0,0
 meth_coal,0,0.05,0.1,0.1,0.15,0.2
 meth_coal_ccs,0,0.05,0.1,0.1,0.15,0.2
 meth_i,0,0,0,0,0,0
 meth_ng,0,0.05,0.1,0.1,0.15,0.2
 meth_ng_ccs,0,0.05,0.1,0.1,0.15,0.2
-nuc_hc,0,0,0.15,0.15,0.3,0.45
+nuc_hc,0,0,0.15,0.2,0.3,0.45
 nuc_lc,0,0,0,0,0,0
 solar_i,0.1,0.2,0.6,0.6,0.9,0.95
 solar_pv_I,0.15,0.3,0.7,0.7,0.9,0.95
