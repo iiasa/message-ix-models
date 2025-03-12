@@ -32,7 +32,7 @@ extensions = [
     "sphinx.ext.viewcode",
     # Others
     "genno.compat.sphinx.rewrite_refs",
-    # "ixmp.util.sphinx_linkcode_github",
+    # "ixmp.util.sphinx_linkcode_github",  # TODO Address build errors, then enable
     "sphinxcontrib.bibtex",
 ]
 

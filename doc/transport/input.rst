@@ -83,70 +83,188 @@ Every code has all of following annotations:
 
 .. _transport-data-files:
 
-Input data files
+Input data flows
 ================
 
-:data:`.transport.files.FILES` gives a list of all data files.
-Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_exogenous_data`), each of these files is connected to a :class:`genno.Computer` used for model-building.
-Its content are available at the corresponding key, which is used as an input for further model-building computations.
+The module :mod:`.transport.data` contains a number of :class:`.Dataflow` instances, listed below, that each describe an input or output data flow.
+For each of the input data flows:
 
-.. admonition:: Example
+- the :attr:`.Dataflow.path` attribute gives a *file path* where a CSV file with input data is expected.
+- the :attr:`.Dataflow.key` attribute gives the :class:`~.genno.Key` where loaded and transformed data from the file is available.
+  (See also :data:`.transport.key.exo`, which allows access to all of these keys.)
+  The key also expresses the dimensions of the input data flow.
+- The additional metadata explains the measure concept, units of measure, etc.
 
-   Contents of the file :file:`freight-mode-share-ref.csv` are available at the key ``freight mode share:n-t:ref``.
-   The indicates the dimensionality of this quantity is :math:`(n, t)`.
-   The file has column headers "node", "technology", and "value".
+Through :func:`.transport.build.main` (ultimately, :func:`.transport.build.add_exogenous_data` and :meth:`.Dataflow.add_tasks`), each of these files is connected to a :class:`genno.Computer` used for building MESSAGEix-Transport.
+Its contents are available as a quantity at the corresponding key, which is used as an input for further model-building computations.
+
+.. admonition:: Example: :data:`~.data.mode_share_freight`
+
+   - Contents of the file :file:`freight-mode-share-ref.csv` are available at the key ``freight mode share:n-t:ref``.
+   - The key indicates the dimensionality of this quantity is :math:`(n, t)`.
+   - The corresponding CSV file has column headers "node", "technology", and "value".
 
 Not all files are currently or always used in model-building computations.
-Some submodules of :mod:`~.model.transport` use additional data files via other mechanisms.
-Most of the files have a header comment including a precise description of the quantity, source of the data, and units of measurement.
+Some submodules of :mod:`~.model.transport` use additional data files loaded or processed via other methods; see below under “Other data sources.”
+Most of the files have a header comment including the source of the data and units of measurement.
 In some cases—where a header comment would be too long—extended information is below.
 The :program:`git` history of files, or the GitHub "blame" view can also be used to inspect the edit history of each file, line by line.
 
+Quick links to each of the data flows:
+:data:`~.data.act_non_ldv`
+:data:`~.data.activity_freight`
+:data:`~.data.activity_ldv`
+:data:`~.data.age_ldv`
+:data:`~.data.cap_new_ldv`
+:data:`~.data.class_ldv`
+:data:`~.data.disutility`
+:data:`~.data.demand_scale`
+:data:`~.data.emi_intensity`
+:data:`~.data.energy_other`
+:data:`~.data.fuel_emi_intensity`
+:data:`~.data.ikarus_availability`
+:data:`~.data.ikarus_fix_cost`
+:data:`~.data.ikarus_input`
+:data:`~.data.ikarus_inv_cost`
+:data:`~.data.ikarus_technical_lifetime`
+:data:`~.data.ikarus_var_cost`
+:data:`~.data.input_adj_ldv`
+:data:`~.data.input_base`
+:data:`~.data.input_ref_ldv`
+:data:`~.data.input_share`
+:data:`~.data.lifetime_ldv`
+:data:`~.data.load_factor_ldv`
+:data:`~.data.load_factor_nonldv`
+:data:`~.data.mer_to_ppp`
+:data:`~.data.mode_share_freight`
+:data:`~.data.pdt_cap_proj`
+:data:`~.data.pdt_cap_ref`
+:data:`~.data.pdt_elasticity`
+:data:`~.data.pop_share_attitude`
+:data:`~.data.pop_share_cd_at`
+:data:`~.data.pop_share_driver`
+:data:`~.data.population_suburb_share`
+:data:`~.data.speed`
+:data:`~.data.t_share_ldv`
+
+.. autodata:: message_ix_models.model.transport.data.act_non_ldv
+.. autodata:: message_ix_models.model.transport.data.activity_freight
+.. autodata:: message_ix_models.model.transport.data.activity_ldv
+
+   node = R12_AFR [1]_
+     Obtained from literature, based on estimates from South Africa. The reported value for South Africa is lower (18000 km/year, `source <https://blog.sbtjapan.com/car-info/what-mileage-is-good-for-a-used-car#:~:text=Average%20Mileage%20in%20South%20Africa,is%20just%20a%20general%20guideline>`__) than the one for Kenya (22000 km/year, `source <https://www.changing-transport.org/wp-content/uploads/2019_Updated-transport-data-in-Kenya.pdf>`__).
+
+   node = R12_FSU [1]_
+     Based on Russia estimates (`source <https://eng.autostat.ru/news/17616/>`__).
+
+   node = R12_NAM [1]_
+     Based on US estimates (`source <https://afdc.energy.gov/data/10309>`__`), Canada estimates tend to [be] lower in general.
+
+   node = R12_PAO [1]_
+     Estimates for AU is 11000 in 2020, it's a sharp decrease from 12600 in 2018 (maybe a Covid effect?).
+     Whereas JP is 8532 (`source <https://www.mlit.go.jp/road/road_e/statistics.html>`__) in 2016.
+
+   node = R12_PAS [1]_
+     Based on Singapore by `Chong et al. (2018) <https://doi.org/10.1016/j.enconman.2017.12.083>`__.
+
+   node = R12_SAS [1]_
+     Based on India, mainly Delhi estimate by `Goel et al. (2015) <https://doi.org/10.1016/j.tbs.2014.10.001>`__.
+
+   .. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1944227441>`__.
+
+.. autodata:: message_ix_models.model.transport.data.age_ldv
+.. autodata:: message_ix_models.model.transport.data.cap_new_ldv
+.. autodata:: message_ix_models.model.transport.data.class_ldv
+.. autodata:: message_ix_models.model.transport.data.disutility
+.. autodata:: message_ix_models.model.transport.data.demand_scale
+
 .. _transport-input-emi-intensity:
 
-:file:`emi-intensity.csv` → ``emissions intensity:t-c-e:transport``
--------------------------------------------------------------------
+.. autodata:: message_ix_models.model.transport.data.emi_intensity
 
-Measure
-   Emissions intensity of energy use
-Units
-   g (of emissions species) / MJ (of input energy)
+   See the file :source:`on GitHub <message_ix_models/data/transport/emi-intensity.csv>` for inline comments and commit history.
 
-See the file :source:`on GitHub <message_ix_models/data/transport/emi-intensity.csv>` for inline comments and commit history.
-Currently only used in :mod:`.ssp.transport`.
+   Currently only used in :mod:`.ssp.transport`.
 
-:file:`ldv-activity.csv` → ``ldv activity:n:exo``
--------------------------------------------------
+.. autodata:: message_ix_models.model.transport.data.energy_other
+.. autodata:: message_ix_models.model.transport.data.fuel_emi_intensity
+.. autodata:: message_ix_models.model.transport.data.ikarus_availability
+.. autodata:: message_ix_models.model.transport.data.ikarus_fix_cost
+.. autodata:: message_ix_models.model.transport.data.ikarus_input
+.. autodata:: message_ix_models.model.transport.data.ikarus_inv_cost
+.. autodata:: message_ix_models.model.transport.data.ikarus_technical_lifetime
+.. autodata:: message_ix_models.model.transport.data.ikarus_var_cost
+.. autodata:: message_ix_models.model.transport.data.input_adj_ldv
+.. autodata:: message_ix_models.model.transport.data.input_base
+.. autodata:: message_ix_models.model.transport.data.input_ref_ldv
+.. autodata:: message_ix_models.model.transport.data.input_share
+.. autodata:: message_ix_models.model.transport.data.lifetime_ldv
+.. autodata:: message_ix_models.model.transport.data.load_factor_ldv
 
-Measure
-   Activity (driving distance) per light-duty vehicle
-Units
-   kilometre / year
+   The code that handles this file interpolates on the |y| dimension.
 
-Notes
-~~~~~
+   Original source for the R12 version: duplicate of :file:`R11/load-factor-ldv.csv` with R12_CHN and R12_RCPA values filled from R11_CPA.
 
-node = R12_AFR [1]_
-  Obtained from literature, based on estimates from South Africa. The reported value for South Africa is lower (18000 km/year, `source <https://blog.sbtjapan.com/car-info/what-mileage-is-good-for-a-used-car#:~:text=Average%20Mileage%20in%20South%20Africa,is%20just%20a%20general%20guideline>`__) than the one for Kenya (22000 km/year, `source <https://www.changing-transport.org/wp-content/uploads/2019_Updated-transport-data-in-Kenya.pdf>`__).
+   Values for :py:`scenario="LED"` added in :pull:`225`, prepared using a method described in `this Slack message <https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1731914351904059?thread_ts=1730218237.960269&cid=CCFHDNA6P>`_.
 
-node = R12_FSU [1]_
-  Based on Russia estimates (`source <https://eng.autostat.ru/news/17616/>`__).
+   .. todo:: Transcribe the method into this document.
 
-node = R12_NAM [1]_
-  Based on US estimates (`source <https://afdc.energy.gov/data/10309>`__`), Canada estimates tend to [be] lower in general.
+.. autodata:: message_ix_models.model.transport.data.load_factor_nonldv
+.. autodata:: message_ix_models.model.transport.data.mer_to_ppp
+.. autodata:: message_ix_models.model.transport.data.mode_share_freight
 
-node = R12_PAO [1]_
-  Estimates for AU is 11000 in 2020, it's a sharp decrease from 12600 in 2018 (maybe a Covid effect?).
-  Whereas JP is 8532 (`source <https://www.mlit.go.jp/road/road_e/statistics.html>`__) in 2016.
+.. _transport-pdt-cap-proj:
+.. autodata:: message_ix_models.model.transport.data.pdt_cap_proj
 
-node = R12_PAS [1]_
-  Based on Singapore by `Chong et al. (2018) <https://doi.org/10.1016/j.enconman.2017.12.083>`__.
+   This file is only used for :math:`s` values such as :py:`scenario="LED"`, in which case it is the source for projected PDT per capita.
 
-node = R12_SAS [1]_
-  Based on India, mainly Delhi estimate by `Goel et al. (2015) <https://doi.org/10.1016/j.tbs.2014.10.001>`__.
+   Values for :py:`scenario="LED"` added in :pull:`225` using a method described in `this Slack message <https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1731510626983289?thread_ts=1730218237.960269&cid=CCFHDNA6P>`__.
 
-.. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1944227441>`__.
+   .. todo:: Transcribe the method into this document.
 
+.. autodata:: message_ix_models.model.transport.data.pdt_cap_ref
+
+   node = R12_CHN [4]_
+      Based on the vehicle activity method `Liu, et al. 2022`_ estimate the total PDT for R12_CHN for year (2017) is 9406 billion pkm.
+      This is the latest corrected estimate available from Liu, et al. 2022.
+      Based on similar estimates for 2013 & 2015, I estimate the average growth of PDT to be 8% per year.
+      Using the growth rate and 2017 estimate, the total PDT for year (2020) comes out to be 11848.9 billion pkm.
+
+      R12_CHN population estimate from IMAGE: 1.4483 billion
+
+      Thus PDT/capita = 11848.9 / 1.4483
+
+   .. [4] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
+
+.. autodata:: message_ix_models.model.transport.data.pdt_elasticity
+
+   Codes on the ‘scenario’ dimension are partial URNs for codes in the :class:`.SSP_2024` code list.
+   Used via :func:`.pdt_per_capita`, which interpolates on the |y| dimension.
+
+.. autodata:: message_ix_models.model.transport.data.pop_share_attitude
+.. autodata:: message_ix_models.model.transport.data.pop_share_cd_at
+.. autodata:: message_ix_models.model.transport.data.pop_share_driver
+.. autodata:: message_ix_models.model.transport.data.population_suburb_share
+.. autodata:: message_ix_models.model.transport.data.speed
+.. autodata:: message_ix_models.model.transport.data.t_share_ldv
+
+Other data sources
+==================
+
+:mod:`~.model.transport` makes use of the :mod:`.tools.exo_data` mechanism to retrieve data from common (not transport-specific) sources.
+:class:`.DataSourceConfig`, :attr:`.transport.Config.ssp`, and other settings determine which sources and quantities are used.
+
+These include:
+
+- GDP and population from the :mod:`.project.ssp` data sources or other sources including the ADVANCE project, the Global Energy Assessment project, the SHAPE project, etc.
+
+  .. note:: Formerly, file :file:`gdp.csv` was used.
+
+   This is no longer supported; instead, use databases via :func:`.exo_data.prepare_computer` or introduce quantities with the same dimensions and units into the :class:`.Computer` used for model building/reporting.
+
+- Energy from the IEA Extended World Energy Balances.
+- :class:`.IEA_Future_of_Trucks`.
+- :class:`.MERtoPPP`.
 
 :file:`ldv-fix_cost.csv`, :file:`ldv-inv_cost.csv`, :file:`ldv-fuel-economy.csv`
 --------------------------------------------------------------------------------
@@ -203,112 +321,3 @@ node = R12_SAS [2]_
 
 .. [2] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1941860412>`_.
 .. [3] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
-
-.. _transport-pdt-cap-proj:
-
-:file:`pdt-cap.csv` → ``P activity:scenario-n-t-y:exo``
--------------------------------------------------------
-
-Measure
-   Projected PDT per capita
-Dimensions
-   :math:`(s, n, t, y)`
-Units:
-   km / passenger / year
-
-- This file is only used for :math:`s` values such as :py:`scenario="LED"`, in which case it is the source for projected
-PDT per capita.
-- Values for :py:`scenario="LED"` added in :pull:`225`.
-  Method described in `this Slack message <https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1731510626983289?thread_ts=1730218237.960269&cid=CCFHDNA6P>`__.
-
-  .. todo:: Transcribe the method into this document.
-
-:file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
-----------------------------------------------
-
-Measure
-   Passenger distance travelled per capita in the model base year
-Dimensions
-   :math:`(n)`
-Units
-   km / year
-
-Notes
-~~~~~
-
-node = R12_CHN [4]_
-   Based on the vehicle activity method `Liu, et al. 2022`_ estimate the total PDT for R12_CHN for year (2017) is 9406 billion pkm.
-   This is the latest corrected estimate available from Liu, et al. 2022.
-   Based on similar estimates for 2013 & 2015, I estimate the average growth of PDT to be 8% per year.
-   Using the growth rate and 2017 estimate, the total PDT for year (2020) comes out to be 11848.9 billion pkm.
-
-   R12_CHN population estimate from IMAGE: 1.4483 billion
-
-   the PDT/capita = 11848.9/1.4483
-
-.. [4] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
-
-:file:`pdt-elasticity.csv` → ``pdt elasticity:scenario-n:exo``
---------------------------------------------------------------
-
-Measure
-   “Elasticity” or multiplier for GDP PPP per capita
-Dimensions
-   :math:`(n, \text{scenario})`.
-   ‘scenario’ identifiers are partial URNs for codes in the :class:`.SSP_2024` code list.
-Units
-   dimensionless
-Where/how used
-   :func:`.pdt_per_capita`.
-
-:file:`load-factor-ldv.csv` → ``load factor ldv:scenario-n-y:exo``
-------------------------------------------------------------------
-
-- Original source: Duplicate of :file:`…/R11/load-factor-ldv.csv` with R12_CHN and R12_RCPA values filled from R11_CPA.
-- Values for :py:`scenario="LED"` added in :pull:`225`.
-  Method described in `this Slack message <https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1731914351904059?thread_ts=1730218237.960269&cid=CCFHDNA6P>`_.
-
-  .. todo:: Transcribe the method into this document.
-
-Other files
------------
-- :file:`demand-scale.csv` → ``demand scale:n-y:exo``
-- :file:`disutility.csv` → ``disutility:n-cg-t-y:per vehicle``
-- :file:`energy-other.csv` → ``energy:c-n:transport other``
-- :file:`freight-activity.csv` → ``freight activity:n:ref``
-- :file:`freight-mode-share-ref.csv` → ``freight mode share:n-t:ref``
-- :file:`fuel-emi-intensity.csv` → ``fuel emi intensity:c-e:exo``
-- :file:`ikarus/availability.csv` → ``ikarus availability:source-t-c-y:exo``
-- :file:`ikarus/fix_cost.csv` → ``ikarus fix_cost:source-t-c-y:exo``
-- :file:`ikarus/input.csv` → ``ikarus input:source-t-c-y:exo``
-- :file:`ikarus/inv_cost.csv` → ``ikarus inv_cost:source-t-c-y:exo``
-- :file:`ikarus/technical_lifetime.csv` → ``ikarus technical_lifetime:source-t-c-y:exo``
-- :file:`ikarus/var_cost.csv` → ``ikarus var_cost:source-t-c-y:exo``
-- :file:`input-base.csv` → ``input:t-c-h:base``
-- :file:`ldv-class.csv` → ``ldv class:n-vehicle_class:exo``
-- :file:`ldv-new-capacity.csv` → ``cap_new:nl-t-yv:ldv+exo``
-- :file:`load-factor-ldv.csv` → ``load factor ldv:n:exo``
-- :file:`load-factor-nonldv.csv` → ``load factor nonldv:t:exo``
-- :file:`ma3t/attitude.csv` → ``ma3t attitude:attitude:exo``
-- :file:`ma3t/driver.csv` → ``ma3t driver:census_division-area_type-driver_type:exo``
-- :file:`ma3t/population.csv` → ``ma3t population:census_division-area_type:exo``
-- :file:`mer-to-ppp.csv` → ``mer to ppp:n-y:exo``
-- :file:`population-suburb-share.csv` → ``population suburb share:n-y:exo``
-
-Other data sources
-==================
-
-:mod:`~.model.transport` makes use of the :mod:`.tools.exo_data` mechanism to retrieve data from common (not transport-specific) sources.
-:class:`.DataSourceConfig`, :attr:`.transport.Config.ssp`, and other settings determine which sources and quantities are used.
-
-These include:
-
-- GDP and population from the :mod:`.project.ssp` data sources or other sources including the ADVANCE project, the Global Energy Assessment project, the SHAPE project, etc.
-
-  .. note:: Formerly, file :file:`gdp.csv` was used.
-
-   This is no longer supported; instead, use databases via :func:`.exo_data.prepare_computer` or introduce quantities with the same dimensions and units into the :class:`.Computer` used for model building/reporting.
-
-- Energy from the IEA Extended World Energy Balances.
-- :class:`.IEA_Future_of_Trucks`.
-- :class:`.MERtoPPP`.
