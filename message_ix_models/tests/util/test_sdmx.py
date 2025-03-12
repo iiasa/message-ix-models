@@ -63,10 +63,11 @@ class TestDataflow:
     def test_repr(self, any_df: "Dataflow") -> None:
         urn = (
             "urn:sdmx:org.sdmx.infomodel.datastructure.DataflowDefinition=IIASA_ECE:"
-            "DF_FREIGHT_ACTIVITY(2025.1.11)"
+            "DF_FREIGHT_ACTIVITY(2025.3.11)"
         )
         assert (
-            "<ExogenousDataFile freight-activity.csv → freight activity:n:exo>"
+            "<Dataflow wrapping "
+            "'DataflowDefinition=IIASA_ECE:DF_FREIGHT_ACTIVITY(2025.3.11)'>"
             == repr(DATAFLOW[urn])
         )
 

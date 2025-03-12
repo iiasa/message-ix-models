@@ -4,9 +4,21 @@ from iam_units import registry
 
 from message_ix_models.model.transport import build, freight, non_ldv, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
+from message_ix_models.model.transport.data import collect_structures, read_structures
 from message_ix_models.model.transport.roadmap import get_roadmap_data
 from message_ix_models.model.transport.testing import MARK, assert_units, make_mark
 from message_ix_models.project.navigate import T35_POLICY
+
+
+def test_collect_structures():
+    sm1 = collect_structures()
+
+    sm2 = read_structures()
+
+    # Structures are retrieved from file successfully
+    # The value is either 30 or 31 depending on whether .build.add_exogenous_data() has
+    # run
+    assert 30 <= len(sm1.dataflow) == len(sm2.dataflow)
 
 
 @make_mark[5]("RoadmapResults_2017.xlsx")
