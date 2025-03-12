@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from genno import Computer, Key
     from sdmx.message import StructureMessage
 
-    from message_ix_models.types import KeyLike, MaintainableArtefactArgs
+    from message_ix_models.types import KeyLike
 
     # TODO Use "from typing import Self" once Python 3.11 is the minimum supported
     Self = TypeVar("Self", bound="AnnotationsMixIn")
@@ -169,6 +169,8 @@ class Dataflow:
         # Used only for creation
         replace: bool = False,
         cs_urn: list[str] = [],
+        # Others
+        **ma_kwargs,
     ):
         import pint
         from sdmx.model.common import Annotation
@@ -217,7 +219,6 @@ class Dataflow:
         anno.append(Annotation(id="file-path", text=str(_path)))
 
         # Default properties for maintainable artefacts
-        ma_kwargs: "MaintainableArtefactArgs" = dict()
         ma_kwargs.setdefault("maintainer", read("IIASA_ECE:AGENCIES")["IIASA_ECE"])
         ma_kwargs.setdefault("is_external_reference", False)
         ma_kwargs.setdefault("is_final", False)
@@ -566,8 +567,7 @@ def get_cl(name: str, context: Optional["Context"] = None) -> "common.Codelist":
         id=f"CL_{id_}",
         name=f"Codes for message-ix-models concept {name!r}",
         maintainer=as_["IIASA_ECE"],
-        # FIXME remove str() once sdmx1 > 2.21.1 can handle Version
-        version=str(get_version()),
+        version=get_version(with_dev=False),
         is_external_reference=False,
         is_final=True,
     )
@@ -695,12 +695,21 @@ def get_concept(string: str, *, cs_urn: tuple[str, ...] = tuple()) -> "common.Co
         raise ValueError(string)
 
 
-def get_version() -> str:
+@cache
+def get_version(with_dev: Optional[bool] = True) -> str:
     """Return a :class:`sdmx.model.common.Version` for :mod:`message_ix_models`.
 
     .. todo:: Remove :py:`str(...)` once sdmx1 > 2.21.1 can handle Version.
+
+    Parameters
+    ----------
+    with_dev : bool
+        If :any:`True`, include the dev version part, e.g. "2025.3.12.dev123". If not,
+        exclude.
     """
-    return str(common.Version(version(__package__.split(".")[0]).split("+")[0]))
+    tmp, *_ = version(__package__.split(".")[0]).partition("+" if with_dev else ".dev")
+
+    return str(common.Version(tmp))
 
 
 def make_enum(urn, base=URNLookupEnum):
