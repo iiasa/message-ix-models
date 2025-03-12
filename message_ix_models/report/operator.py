@@ -59,7 +59,7 @@ def broadcast_wildcard(
     """Broadcast over coordinates `coords` along respective dimension(s) `dim`.
 
     `dim` may identify a single dimension or a sequence of dimensions; `coords` must
-    be given for each dimension
+    be given for each dimension.
 
     For each respective items from `dim` and `coords`, any missing coordinates along the
     dimension are populated using the values of `qty` keyed with the 'wildcard' label

@@ -398,7 +398,12 @@ def add_structure(c: Computer) -> None:
     # - Multiple static and dynamic tasks generated in loops etc.
     tasks: list[tuple] = list(STRUCTURE_STATIC) + [
         ("c::transport", quote(spec.add.set["commodity"])),
-        ("c::transport+base", quote(spec.add.set["commodity"] + info.set["commodity"])),
+        # Convert to str to avoid TypeError in broadcast_wildcard → sorted()
+        # TODO Remove once sdmx.model.common.Code is sortable with str
+        (
+            "c::transport+base",
+            quote(list(map(str, spec.add.set["commodity"] + info.set["commodity"]))),
+        ),
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("nodes", quote(info.set["node"])),
