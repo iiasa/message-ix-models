@@ -156,11 +156,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
-    from . import (
-        data,  # noqa: F401
-        key,
-    )
-    from .files import iter_files
+    from . import data, key
 
     # Added keys
     keys = {}
@@ -253,7 +249,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         replace=True,
     )
 
-    for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, iter_files()):
+    for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
 
 

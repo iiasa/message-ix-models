@@ -3,9 +3,6 @@
 # Source: Duplicate of R11/load-factor-ldv.csv; R12_CHN and R12_RCPA values
 # filled from R11_CPA.
 #
-# - The code that handles this file interpolates on the ‘year’
-#   dimension.
-#
 # Units: dimensionless
 #
 # (Implicitly passengers per vehicle.)
