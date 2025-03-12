@@ -94,7 +94,6 @@ class Dataflow:
     If an input data flow, the data is expected in a file at `path`.
 
     .. todo::
-       - Generate documentation (docstrings or snippets) in reStructuredText format.
        - Accept an argument that sets :attr:`dfd` directly; skip handling other
          arguments.
        - Annotate certain dimensions as optional; expand :meth:`.add_tasks` to
@@ -272,6 +271,9 @@ class Dataflow:
         self.df = DataflowDefinition(id=df_id, **ma_kwargs, structure=dsd)
         self.df.urn = sdmx.urn.make(self.df)
 
+        # Update the instance with a docstring
+        self._update_doc()
+
         # Add or replace an entry in DATAFLOW
         if duplicate := list(
             filter(
@@ -297,7 +299,27 @@ class Dataflow:
     def __call__(self): ...
 
     def __repr__(self) -> str:
-        return f"<ExogenousDataFile {self.path} → {self.key}>"
+        assert self.df.urn is not None
+        return f"<Dataflow wrapping {sdmx.urn.shorten(self.df.urn)!r}>"
+
+    def _update_doc(self) -> None:
+        """Update the instance with a docstring."""
+        lines = [
+            f"{self.df.name} [{self.units}]",
+            "",
+            f"- Key and dimensions: **<{self.key}>**",
+        ]
+        if self.intent & self.FLAG.IN:
+            # Lines only relevant for input quantities
+            lines.append(f"- Input file at path: :file:`{self.path}`")
+            lines.append(f"- Required for build: {self.required}")
+        else:
+            lines.append(
+                f"- Output data from :mod:`{self.df.eval_annotation('module')}`"
+            )
+        lines.append(f"\n{self.df.description}")
+
+        self.__doc__ = "\n".join(lines)
 
     # Access to annotations of DFD
     @property
