@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from functools import partial, reduce
 from itertools import product
 from operator import gt, le, lt
-from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, Union, cast
 
 import genno
 import numpy as np
@@ -64,6 +64,7 @@ __all__ = [
     "groups_iea_eweb",
     "groups_y_annual",
     "iea_eei_fv",
+    "indexer_scenario",
     "indexers_n_cd",
     "indexers_usage",
     "logit",
@@ -210,33 +211,6 @@ def broadcast(q1: "AnyQuantity", q2: "AnyQuantity") -> "AnyQuantity":
     # )
 
     return squeezed * q2
-
-
-def broadcast_wildcard(
-    qty: "AnyQuantity", coords: list[str], *, dim: str = "n"
-) -> "AnyQuantity":
-    """Broadcast over coordinates `coords` along dimension `dim`.
-
-    Any missing labels in `coords` are populated using values of `qty` that have the
-    ‘wildcard’ label "*" for `dim`.
-    """
-    # Identify existing, non-wildcard labels along `dim`
-    existing = set(qty.coords[dim].data) - {"*"}
-    # Identify missing labels along `dim`
-    missing = sorted(set(coords) - existing)
-
-    if not missing:
-        return qty  # Nothing to do; `qty` is already complete
-
-    # Construct a MappingAdapter:
-    # - Each existing label (whether in ``) mapped to themselves.
-    # - "*" mapping to each missing label.
-    adapt = MappingAdapter(
-        {dim: [(x, x) for x in sorted(existing)] + [("*", x) for x in missing]}
-    )
-
-    # Apply the adapter to `qty`
-    return adapt(qty)
 
 
 def broadcast_t_c_l(
@@ -815,6 +789,30 @@ def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
+def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"], str]:
+    """Indexer for the ``scenario`` dimension.
+
+    If `with_LED` **and** :py:`config.project["LDV"] = True`, then the single label is
+    "LED". Otherwise it is the short form of the :attr:`.transport.config.Config.ssp`
+    code, e.g. "SSP1". In other words, this treats "LDV" as mutually exclusive with an
+    SSP scenario identifier (instead of orthogonal).
+
+    Parameters
+    ----------
+    config :
+        The genno.Computer "config" dictionary, with a key "transport" mapped to an
+        instance of :class:`.transport.Config`.
+    """
+    # Retrieve the .transport.Config object from the genno.Computer "config" dict
+    c: "Config" = config["transport"]
+
+    return dict(
+        scenario="LED"
+        if (with_LED and c.project.get("LED", False))
+        else repr(c.ssp).split(":")[1]
+    )
+
+
 def indexers_n_cd(config: dict) -> dict[str, xr.DataArray]:
     """Indexers for selecting (`n`, `census_division`) → `n`.
 
@@ -1234,7 +1232,8 @@ def write_sdmx_data(
     structure_message: "sdmx.message.StructureMessage",
     scenario: "ScenarioInfo",
     path: "Path",
-    **kwargs,
+    *,
+    df_urn: str,
 ) -> None:
     """Write two files for `qty`.
 
@@ -1243,20 +1242,20 @@ def write_sdmx_data(
     2. :file:`{path}/{dataflow_id}.xml` —an SDMX-ML :class:`.DataMessage` with the
        values from `qty`.
 
-    …where `dataflow_id` is the data flow ID constructed by :func:`.make_dataflow`.
+    …where `dataflow_id` is the ID of a dataflow referred to by `df_urn`.
 
-    The `structure_message` is passed to :func:`.make_dataflow` and updated with the
-    given structures.
+    The `structure_message` is updated with the relevant structures.
     """
     import sdmx
     from genno.compat.sdmx.operator import quantity_to_message
-    from sdmx.model import common
+    from sdmx.model import common, v21
 
-    from message_ix_models.util.sdmx import make_dataflow
+    from message_ix_models.util.sdmx import DATAFLOW, collect_structures
 
     # Add a dataflow and related structures to `structure_message`
-    make_dataflow(**kwargs, message=structure_message)
-    dfd = tuple(structure_message.dataflow.values())[-1]
+    dfd = DATAFLOW[df_urn].df
+    assert isinstance(dfd, v21.DataflowDefinition)
+    collect_structures(structure_message, dfd)
 
     # Convert `qty` to DataMessage
     # FIXME Remove exclusion once upstream type hint is improved
@@ -1283,6 +1282,7 @@ def write_sdmx_data(
     # Convert to SDMX_CSV
     # FIXME Remove this once sdmx1 supports it directly
     # Fixed values in certain columns
+    assert dfd.urn is not None
     fixed_cols = dict(
         STRUCTURE="dataflow", STRUCTURE_ID=dfd.urn.split("=")[-1], ACTION="I"
     )

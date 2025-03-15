@@ -20,6 +20,7 @@ from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config
+from .operator import indexer_scenario
 from .structure import get_technology_groups
 
 if TYPE_CHECKING:
@@ -152,13 +153,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     import message_ix_models.tools.iea.web  # noqa: F401
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
+    from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
-    from . import (
-        data,  # noqa: F401
-        key,
-    )
-    from .files import FILES, add
+    from . import data, key
 
     # Added keys
     keys = {}
@@ -242,7 +240,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
 
     # Identify the mode-share file according to the config setting
-    add(
+    Dataflow(
+        module=__name__,
         key="mode share:n-t:exo",
         path=("mode-share", config.mode_share),
         name="Reference (base year) mode share",
@@ -250,7 +249,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         replace=True,
     )
 
-    for f in FILES:
+    for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
 
 
@@ -291,6 +290,8 @@ STRUCTURE_STATIC = (
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
+    ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
+    ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
     ("n::ex world", "nodes_ex_world", "n"),
     (
         "n:n:ex world",
@@ -395,13 +396,17 @@ def add_structure(c: Computer) -> None:
     # - `Static` tasks
     # - Single 'dynamic' tasks based on config, info, spec, and/or t_groups
     # - Multiple static and dynamic tasks generated in loops etc.
-    tasks = list(STRUCTURE_STATIC) + [
+    tasks: list[tuple] = list(STRUCTURE_STATIC) + [
         ("c::transport", quote(spec.add.set["commodity"])),
-        ("c::transport+base", quote(spec.add.set["commodity"] + info.set["commodity"])),
+        # Convert to str to avoid TypeError in broadcast_wildcard → sorted()
+        # TODO Remove once sdmx.model.common.Code is sortable with str
+        (
+            "c::transport+base",
+            quote(list(map(str, spec.add.set["commodity"] + info.set["commodity"]))),
+        ),
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("nodes", quote(info.set["node"])),
-        ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
         ("t::transport", quote(spec.add.set["technology"])),
         ("t::transport agg", quote(dict(t=t_groups))),
         ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
@@ -447,7 +452,7 @@ def add_structure(c: Computer) -> None:
     c.add_queue(map(lambda t: (t, dict(strict=True)), tasks), max_tries=2, fail="raise")
 
 
-@minimum_version("message_ix 3.8")
+@minimum_version("message_ix 3.8; genno 1.28")
 def get_computer(
     context: Context,
     obj: Optional[Computer] = None,

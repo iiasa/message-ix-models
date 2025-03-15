@@ -190,7 +190,7 @@ def test_pdt_per_capita(
 
     # Data have the expected dimensions and shape
     assert {"n", "y"} == set(result.dims)
-    assert (12, 29) == result.shape
+    assert (12, 28) == result.shape
     # Data have the expected units
     assert_units(result, "km / year")
 

@@ -3,12 +3,12 @@
 import logging
 from collections.abc import Mapping
 from operator import itemgetter
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 
 import genno
 import pandas as pd
-from genno import Computer, Key, KeySeq
+from genno import Computer, Key, Keys
+from genno.core.key import single_key
 from message_ix import make_df
 from sdmx.model.common import Code
 
@@ -24,14 +24,12 @@ from message_ix_models.util import (
     same_node,
 )
 
-from . import files as exo
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
-from .key import bcast_tcl, bcast_y
+from .key import bcast_tcl, bcast_y, exo
 from .util import wildcard
 
 if TYPE_CHECKING:
-    from genno.core.key import KeyLike  # TODO Import from genno.types
     from genno.types import AnyQuantity
 
     from message_ix_models.types import ParameterData
@@ -40,7 +38,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-#: Shorthand for tags on keys
+#: Shorthand for tags on keys.
 Li = "::LDV+ixmp"
 
 #: Target key that collects all data generated in this module.
@@ -105,9 +103,9 @@ def prepare_computer(c: Computer):
     info = config.base_model_info
 
     # Some keys/shorthand
-    k = SimpleNamespace(
+    k = Keys(
         fe=Key("fuel economy:n-t-y:LDV"),
-        eff=KeySeq("efficiency:t-y-n:LDV"),
+        eff=Key("efficiency:t-y-n:LDV"),
         factor_input=Key("input:t-y:LDV+factor"),
     )
     t_ldv = "t::transport LDV"
@@ -152,21 +150,21 @@ def prepare_computer(c: Computer):
     c.add(k.eff[2], "mul", k.eff[1], "input:n:LDV+adj")
 
     # Interpolate load factor
-    k.lf_nsy = KeySeq(exo.load_factor_ldv)
+    k.lf_nsy = Key(exo.load_factor_ldv)
     c.add(
         k.lf_nsy[0],
         "interpolate",
-        k.lf_nsy.base,
+        k.lf_nsy,
         "y::coords",
         kwargs=dict(fill_value="extrapolate"),
     )
 
     # Select load factor
     k.lf_ny = k.lf_nsy / "scenario"
-    c.add(k.lf_ny[0], "select", k.lf_nsy[0], "indexers:scenario")
+    c.add(k.lf_ny[0], "select", k.lf_nsy[0], "indexers:scenario:LED")
 
     # Insert a scaling factor that varies according to SSP
-    c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny.base)
+    c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny)
 
     # Extend (forward fill) lifetime to cover all periods
     name = "technical_lifetime"
@@ -200,13 +198,13 @@ def prepare_computer(c: Computer):
     else:
         c.apply(
             prepare_tech_econ,
-            k_efficiency=k.eff[2],
-            k_inv_cost="inv_cost:n-t-y:LDV+exo",
-            k_fix_cost="fix_cost:n-t-y:LDV+exo",
+            efficiency=k.eff[2],
+            inv_cost=Key("inv_cost:n-t-y:LDV+exo"),
+            fix_cost=Key("fix_cost:n-t-y:LDV+exo"),
         )
 
     # Usage
-    _add(c, "usage", usage_data, k.lf_ny.base, "cg", "n::ex world", t_ldv, "y::model")
+    _add(c, "usage", usage_data, k.lf_ny, "cg", "n::ex world", t_ldv, "y::model")
     # Constraints
     _add(c, "constraints", constraint_data, "context")
     # Capacity factor
@@ -218,11 +216,11 @@ def prepare_computer(c: Computer):
     if config.ldv_stock_method == "A":
         # Data from file ldv-new-capacity.csv
         try:
-            k.stock = KeySeq(c.full_key("cap_new::ldv+exo"))
+            k.stock = Key(c.full_key("cap_new::ldv+exo"))
         except KeyError:
-            k.stock = None  # No such file in this configuration
+            k.stock = Key("")  # No such file in this configuration
     elif config.ldv_stock_method == "B":
-        k.stock = KeySeq(c.apply(stock))
+        k.stock = single_key(c.apply(stock))
 
     if k.stock:
         # historical_new_capacity: select only data prior to y₀
@@ -232,7 +230,7 @@ def prepare_computer(c: Computer):
             name="historical_new_capacity",
         )
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
-        c.add(k.stock[1], "select", k.stock.base, indexers=dict(yv=y_historical))
+        c.add(k.stock[1], "select", k.stock, indexers=dict(yv=y_historical))
         _add(c, kw1["name"], "as_message_df", k.stock[1], **kw1)
 
         # CAP_NEW/bound_new_capacity_{lo,up}
@@ -242,7 +240,7 @@ def prepare_computer(c: Computer):
         #   largest share and avoid setting constraints on it.
         # - Add both upper and lower constraints to ensure the solution contains exactly
         #   the given value.
-        c.add(k.stock[2], "select", k.stock.base, indexers=dict(yv=info.Y))
+        c.add(k.stock[2], "select", k.stock, indexers=dict(yv=info.Y))
         c.add(
             k.stock[3],
             "select",
@@ -257,6 +255,10 @@ def prepare_computer(c: Computer):
     c.add("transport_data", __name__, key=TARGET)
 
 
+#: Common, fixed values for :func:`.prepare_tech_econ` and :func:`.get_dummy`.
+COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
+
+#: Mapping from short dimension IDs to MESSAGE index names.
 DIMS = dict(
     commodity="c",
     level="l",
@@ -267,80 +269,73 @@ DIMS = dict(
     year_act="ya",
     year_vtg="yv",
 )
-COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
 
 
 def prepare_tech_econ(
-    c: Computer,
-    *,
-    k_efficiency: "KeyLike",
-    k_inv_cost: "KeyLike",
-    k_fix_cost: "KeyLike",
+    c: Computer, *, efficiency: Key, inv_cost: Key, fix_cost: Key
 ) -> None:
     """Prepare `c` to calculate techno-economic parameters for LDVs.
 
     This prepares `k_target` to return a data structure with MESSAGE-ready data for the
     parameters ``input``, ``ouput``, ``fix_cost``, and ``inv_cost``.
     """
-    # Collection of KeySeq for starting-points
-    k = SimpleNamespace(input=KeySeq("input::LDV"), output=KeySeq("output::LDV"))
-
     # Identify periods to include
     # FIXME Avoid hard-coding this period
     c.add("y::LDV", lambda y: list(filter(lambda x: 1995 <= x, y)), "y")
 
     # Create base quantity for "output" parameter
-    nty = tuple("nty")
-    c.add(k.output[0] * nty, wildcard(1.0, "Gv km", nty))
-    for i, coords in enumerate(["n::ex world", "t::LDV", "y::model"]):
-        c.add(
-            k.output[i + 1] * nty,
-            "broadcast_wildcard",
-            k.output[i] * nty,
-            coords,
-            dim=coords[0],
-        )
+    k = output_base = Key("output:n-t-y:LDV+base")
+    c.add(k[0], wildcard(1.0, "Gv km", k.dims))
 
-    ### Convert input, output to MESSAGE data structure
-    for par_name, base, ks, i in (
-        ("input", k_efficiency, k.input, 0),
-        ("output", k.output[3] * nty, k.output, 4),
+    # Broadcast over (n, t, y) dimensions
+    coords = ["n::ex world", "t::LDV", "y::model"]
+    c.add(k[1], "broadcast_wildcard", k[0], *coords, dim=k.dims)
+
+    # Broadcast `exo.input_share` over (c, t) dimensions. This produces a large Quantity
+    # with 1.0 everywhere except explicit entries in the input data file.
+    # NB Order matters here
+    k = exo.input_share
+    coords = ["t::LDV", "c::transport+base", "y"]  # NB include historical periods
+    c.add(k[0], "broadcast_wildcard", k, *coords, dim=k.dims)
+
+    # Multiply by `bcast_tcl.input` to keep only the entries that correspond to actual
+    # input commodities of particular technologies.
+    input_bcast = c.add("input broadcast::LDV", "mul", k[0], bcast_tcl.input)
+
+    ### Convert input and output to MESSAGE data structure
+    for par_name, base, bcast in (
+        ("input", efficiency, input_bcast),
+        ("output", output_base[1], bcast_tcl.output),
     ):
-        # Extend data over missing periods in the model horizon
-        c.add(ks[i], "extend_y", base, "y::LDV")
+        k = Key(par_name, base.dims, "LDV")
 
-        # Produce the full quantity for input/output efficiency
-        prev = c.add(ks[i + 1], "mul", ks[i], getattr(bcast_tcl, par_name), bcast_y.all)
+        # Extend data over missing periods in the model horizon
+        c.add(k[0], "extend_y", base, "y::LDV")
+
+        # Broadcast from (y) to (yv, ya) dims to produce the full quantity for
+        # input/output efficiency
+        prev = c.add(k[1], "mul", k[0], bcast, bcast_y.all)
 
         # Convert to ixmp/MESSAGEix-structured pd.DataFrame
-        # NB quote() is necessary with dask 2024.11.0, not with earlier versions
-        c.add(ks[i + 2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
+        c.add(k[2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
 
-        # Convert to target units
-        _add(c, par_name, convert_units, ks[i + 2], "transport info")
+        # Convert to target units and append to `TARGET`
+        _add(c, par_name, convert_units, k[2], "transport info")
 
     ### Transform costs
-    for par_name, base in (("fix_cost", k_fix_cost), ("inv_cost", k_inv_cost)):
-        prev = c.add(
-            f"{par_name}::LDV+0",
-            "interpolate",
-            base,
-            "y::coords",
-            kwargs=dict(fill_value="extrapolate"),
-        )
-        prev = c.add(f"{par_name}::LDV+1", "mul", prev, bcast_y.all)
-        _add(
-            c, par_name, "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON
-        )
+    kw = dict(fill_value="extrapolate")
+    for name, base in (("fix_cost", fix_cost), ("inv_cost", inv_cost)):
+        prev = c.add(f"{name}::LDV+0", "interpolate", base, "y::coords", kwargs=kw)
+        prev = c.add(f"{name}::LDV+1", "mul", prev, bcast_y.all)
+        _add(c, name, "as_message_df", prev, name=name, dims=DIMS, common=COMMON)
 
     ### Compute CO₂ emissions factors
-
     # Extract the 'input' data frame
-    k.other = KeySeq("other::LDV")
-    c.add(k.other[0], itemgetter("input"), f"input{Li}")
+    other = Key("other::LDV")
+    c.add(other[0], itemgetter("input"), f"input{Li}")
 
-    # Use ef_for_input
-    _add(c, "emission_factor", ef_for_input, "context", k.other[0], species="CO2")
+    # Apply ef_for_input; append to `TARGET`
+    _add(c, "emission_factor", ef_for_input, "context", other[0], species="CO2")
 
 
 def get_dummy(context) -> "ParameterData":
@@ -493,7 +488,7 @@ def stock(c: Computer) -> Key:
     """Prepare `c` to compute base-period stock and historical sales."""
     from .key import ldv_ny
 
-    k = KeySeq("stock:n-y:LDV")
+    k = Key("stock:n-y:LDV")
 
     # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
     #   load factor (occupancy) to obtain implied stock.
