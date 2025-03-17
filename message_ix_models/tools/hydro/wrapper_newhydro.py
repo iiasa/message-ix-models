@@ -312,7 +312,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                         / CCsum
                         / float(CC["avgIC"].loc[CC["technology"] == i])
                     )
-                    df = df.loc[df.year_vtg <= fmy]
+                    # df = df.loc[df.year_vtg <= fmy]
                     # Scale the original hydro_hc value (arbitrary)
                 elif t == "relation_activity":
                     dfnew = deepcopy(df.set_index("relation"))
@@ -503,13 +503,42 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
             df = scenario.par(
                 i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
             )
-            df = df.loc[df.year_act <= fmy]
+            # df = df.loc[df.year_act <= fmy]
             df["technology"] = "hydro_1"
             scenario.add_par(i, df)
             df = scenario.par(
                 i, {"technology": ["hydro_hc"], "node_loc": [focus_region]}
             )
-            df = df.loc[df.year_act <= fmy]
+            # df = df.loc[df.year_act <= fmy]
+            df["technology"] = "hydro_2"
+            scenario.add_par(i, df)
+
+        for i in ["bound_new_capacity_up", "bound_new_capacity_lo"]:
+            df = scenario.par(
+                i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
+            )
+
+            df["technology"] = "hydro_1"
+            scenario.add_par(i, df)
+
+            df = scenario.par(
+                i, {"technology": ["hydro_hc"], "node_loc": [focus_region]}
+            )
+            df["technology"] = "hydro_2"
+            scenario.add_par(i, df)
+
+        for i in ["bound_total_capacity_up", "bound_total_capacity_lo"]:
+            df = scenario.par(
+                i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
+            )
+
+            df["technology"] = "hydro_1"
+            scenario.add_par(i, df)
+
+            df = scenario.par(
+                i, {"technology": ["hydro_hc"], "node_loc": [focus_region]}
+            )
+
             df["technology"] = "hydro_2"
             scenario.add_par(i, df)
 
