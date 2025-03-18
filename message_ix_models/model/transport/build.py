@@ -15,7 +15,7 @@ from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.util import minimum_version
+from message_ix_models.util import either_dict_or_kwargs, minimum_version
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
@@ -458,9 +458,10 @@ def get_computer(
     obj: Optional[Computer] = None,
     *,
     visualize: bool = True,
-    **kwargs,
+    scenario: Optional[Scenario] = None,
+    options: Optional[dict] = None,
 ) -> Computer:
-    """Return a :class:`genno.Computer` set up for model-building calculations.
+    """Return a :class:`genno.Computer` set up for model-building computations.
 
     The returned computer contains:
 
@@ -468,10 +469,10 @@ def get_computer(
       :func:`.add_debug`.
     - For each module in :attr:`.transport.config.Config.modules`, everything added by
       the :py:`prepare_computer()` function in that module.
-    - ``context``: a reference to `context`.
-    - ``scenario``: a reference to a Scenario, if one appears in `kwargs`.
-    - ``add transport data``: a list of keys which, when computed, will cause all
-      transport data to be computed and added to ``scenario``.
+    - "context": a reference to `context`.
+    - "scenario": a reference to `scenario`.
+    - "add transport data": a list of keys which, when computed, causes all data for
+      MESSAGEix-Transport to be computed and added to the "scenario".
 
     Parameters
     ----------
@@ -481,15 +482,33 @@ def get_computer(
        new Computer is created and populated.
     visualize :
        If :any:`True` (the default), a file :file:`transport/build.svg` is written in
-       the local data directory with a visualization of the ``add transport data`` key.
+       the local data directory with a visualization of the "add transport data" key.
+    options :
+       Passed to :meth:`.transport.Config.from_context` *except* if the single key
+       "config" is present: if so, the corresponding value **must** be an instance
+       of :class:`.transport.Config`, and this is used directly.
     """
     from . import key, operator
 
-    # Configure
-    config = Config.from_context(context, **kwargs)
+    # Update .model.Config with the regions of a given scenario
+    context.model.regions_from_scenario(scenario)
+
+    # Ensure an instance of .transport.Config
+    if options is not None and "config" in options:
+        # Use an instance passed as a keyword argument
+        config = context.transport = options.pop("config")
+        if len(options):
+            raise ValueError(
+                "Both config=.transport.Config(...) and additional options={...}"
+            )
+    elif options:
+        # Create a new instance using `kwargs`
+        config = Config.from_context(context, options=options)
+    else:
+        # Retrieve the current .transport.Config. AttributeError if no instance exists.
+        config = context.transport
 
     # Structure information for the base model
-    scenario = kwargs.get("scenario")
     if scenario:
         # Retrieve structure information from an existing base model/`scenario`
         config.base_model_info = ScenarioInfo(scenario)
@@ -565,6 +584,13 @@ def main(
 ):
     """Build MESSAGEix-Transport on `scenario`.
 
+    Parameters
+    ----------
+    options :
+        These (or `options_kwargs`) are passed to :func:`.get_computer`, *except* an
+        optional key "dry_run", which is removed and used to update
+        :attr:`.Config.dry_run`.
+
     See also
     --------
     add_data
@@ -574,16 +600,10 @@ def main(
     from .emission import strip_emissions_data
     from .util import sum_numeric
 
-    # Check arguments
-    options = dict() if options is None else options.copy()
-    dupe = set(options.keys()) & set(option_kwargs.keys())
-    if len(dupe):
-        raise ValueError(f"Option(s) {repr(dupe)} appear in both `options` and kwargs")
-    options.update(option_kwargs)
+    options = either_dict_or_kwargs("options", options, option_kwargs)
 
-    # Use fast=True by default
-    options.setdefault("fast", True)
-    dry_run = options.pop("dry_run", False)
+    # Remove the "dry_run" option, if any, and update `context`
+    context.core.dry_run = options.pop("dry_run", context.core.dry_run)
 
     log.info("Configure MESSAGEix-Transport")
     mark_time()
@@ -601,7 +621,7 @@ def main(
         # For calls to add_par_data(), int() are returned with number of observations
         log.info(f"Added {sum_numeric(result)} total obs")
 
-    if dry_run:
+    if context.core.dry_run:
         return c.get("transport build debug")
 
     # First strip existing emissions data
