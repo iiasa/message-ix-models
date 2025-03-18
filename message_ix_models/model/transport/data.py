@@ -518,7 +518,7 @@ activity_freight = _input_dataflow(
 )
 
 activity_ldv = _input_dataflow(
-    key="ldv activity:n:exo",
+    key="ldv activity:scenario-n-y:exo",
     name="Activity (driving distance) per light duty vehicle",
     units="km / year",
 )
