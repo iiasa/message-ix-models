@@ -67,6 +67,8 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         "relation_total_capacity",
         "soft_activity_lo",
         "soft_activity_up",
+        "soft_new_capacity_lo",
+        "soft_new_capacity_up",
         "technical_lifetime",
         "var_cost",
         "bound_new_capacity_up",
@@ -76,8 +78,8 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         "bound_activity_up",
         "bound_activity_lo",
         "initial_new_capacity_up",
-        "growth_new_capacity_up",
         "initial_new_capacity_lo",
+        "growth_new_capacity_up",
         "growth_new_capacity_lo",
         "initial_activity_up",
         "growth_activity_up",
@@ -108,7 +110,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
     scenario.check_out()
 
     # Read in the LF and CC values generated from R - for the new technologies
-    numstep = 8
+    numstep = 6
     newtechnames = ["hydro_" + str(x) for x in range(1, numstep + 1)]
     # histtechname = ["hydro_hist"]
     newaggname = ["hydro_mpen"]
@@ -364,15 +366,36 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
             else:  # climate scenarios
                 invcost1 = float(CC.loc[CC.technology == i, "avgIC"])
                 invcost2 = float(CC.loc[CC.technology == i, "avgIC_2nd"])
-                df.loc[df.year_vtg <= 2070, "value"] = invcost1
+
+                # Define time steps and interpolate
+                years = [2050, 2055, 2060, 2070]
+                costs = [
+                    invcost1,
+                    invcost1 + (invcost2 - invcost1) * 0.33,  # 1/3 transition by 2055
+                    invcost1 + (invcost2 - invcost1) * 0.67,  # 2/3 transition by 2060
+                    invcost2,
+                ]
+
+                # Assign values
+                for y, c in zip(years, costs):
+                    df.loc[df.year_vtg == y, "value"] = c
+                    df_fx.loc[df_fx.year_vtg == y, "value"] = c * 0.022  # fixed cost
+
+                # Assign values for any years <2050 or >2070
+                df.loc[df.year_vtg < 2050, "value"] = invcost1
                 df.loc[df.year_vtg > 2070, "value"] = invcost2
-                # import pdb; pdb.set_trace()
-                df_fx.loc[df_fx.year_vtg <= 2070, "value"] = (
-                    invcost1 * 0.022
-                )  # fixed cost = 2.2% of capital cost
-                df_fx.loc[df_fx.year_vtg > 2070, "value"] = (
-                    invcost2 * 0.022
-                )  # fixed cost = 2.2% of capital cost
+                df_fx.loc[df_fx.year_vtg < 2050, "value"] = invcost1 * 0.022
+                df_fx.loc[df_fx.year_vtg > 2070, "value"] = invcost2 * 0.022
+
+                # df.loc[df.year_vtg <= 2070, "value"] = invcost1
+                # df.loc[df.year_vtg > 2070, "value"] = invcost2
+                # # import pdb; pdb.set_trace()
+                # df_fx.loc[df_fx.year_vtg <= 2070, "value"] = (
+                #     invcost1 * 0.022
+                # )  # fixed cost = 2.2% of capital cost
+                # df_fx.loc[df_fx.year_vtg > 2070, "value"] = (
+                #     invcost2 * 0.022
+                # )  # fixed cost = 2.2% of capital cost
 
             df_fx["technology"] = i
             scenario.add_par("inv_cost", df)
