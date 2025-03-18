@@ -29,7 +29,7 @@ SOLVE_CONFIG = WorkflowConfig(
             iis=1,
             lpmethod=4,
             scaind=1,
-            tilim=30 * 60,
+            tilim=45 * 60,
         ),
     ),
 )
