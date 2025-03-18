@@ -120,7 +120,7 @@ def test_build_bare_res(
         "dummy_LDV": dummy_LDV,
         "dummy_supply": True,
     }
-    build.main(ctx, scenario, options, fast=True)
+    build.main(ctx, scenario, options)
 
     # dump_path = tmp_path / "scenario.xlsx"
     # log.info(f"Dump contents to {dump_path}")
@@ -176,7 +176,7 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
     mp = scenario.platform
 
     # Build succeeds without error
-    build.main(ctx, scenario, fast=True)
+    build.main(ctx, scenario)
 
     # commented: slow
     # dump_path = tmp_path / "scenario.xlsx"
