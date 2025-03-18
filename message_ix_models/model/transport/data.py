@@ -667,12 +667,12 @@ input_share = _input_dataflow(
 )
 
 lifetime_ldv = _input_dataflow(
-    key="lifetime:nl-yv:ldv+exo",
+    key="lifetime:scenario-nl-t-yv:ldv+exo",
     path="lifetime-ldv",
     name="Technical lifetime (maximum age) of LDVs",
-    description="""Values are filled forwards. In MESSAGE(V)-Transport, this quantity
-had the additional dimension of driver_type, and values were 20 years for
-driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.""",
+    description="""Values are interpolated across the model horizon. In MESSAGE(V)-
+Transport, this quantity had the additional dimension of driver_type, and values were 20
+years for driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.""",
     units="year",
 )
 
