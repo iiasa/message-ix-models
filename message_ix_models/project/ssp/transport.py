@@ -296,7 +296,7 @@ def prepare_method_B(
     8. Estimate adjustments according to :func:`broadcast_t`.
     9. Adjust `k_emi_in` by adding (7) and (8).
     """
-    from message_ix_models.model.transport import build
+    from message_ix_models.model.transport import Config, build
     from message_ix_models.model.transport.key import exo
     from message_ix_models.tools.exo_data import prepare_computer
 
@@ -306,7 +306,7 @@ def prepare_method_B(
 
     # Add the same structure information used in the build and report workflow steps for
     # MESSAGEix-Transport, notably <e::codelist> and <groups::iea to transport>
-    build.get_computer(context, c)
+    build.get_computer(context, c, options=dict(config=Config()))
 
     # Shorthand for keys and sequences of keys
     k_ei = exo.emi_intensity
