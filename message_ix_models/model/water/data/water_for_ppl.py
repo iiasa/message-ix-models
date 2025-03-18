@@ -397,7 +397,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     input_cool["cooling_fraction"] = input_cool.apply(cooling_fr, axis=1)
 
-    # Converting water withdrawal units to Km3/GWa
+    # Converting water withdrawal units to MCM/GWa
     # this refers to activity per cooling requirement (heat)
     input_cool["value_cool"] = (
         input_cool["water_withdrawal_mid_m3_per_output"]
@@ -405,10 +405,13 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         * 60
         * 24
         * 365
-        * 1e-9
+        * 1e-6  # MCM
         / input_cool["cooling_fraction"]
     )
-
+    # set to 1e-6 if value_cool is negative
+    input_cool["value_cool"] = np.where(
+        input_cool["value_cool"] < 0, 1e-6, input_cool["value_cool"]
+    )
     input_cool["return_rate"] = 1 - (
         input_cool["water_consumption_mid_m3_per_output"]
         / input_cool["water_withdrawal_mid_m3_per_output"]
@@ -486,7 +489,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
                 time="year",
                 time_origin="year",
                 value=icmse_df["value_cool"],
-                unit="km3/GWa",
+                unit="MCM/GWa",
             ),
         ]
     )
@@ -507,7 +510,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
                 time="year",
                 time_origin="year",
                 value=saline_df["value_cool"],
-                unit="km3/GWa",
+                unit="MCM/GWa",
             ),
         ]
     )
@@ -529,7 +532,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         mode=emiss_df["mode"],
         emission="fresh_return",
         value=emiss_df["value_return"],
-        unit="km3/yr",
+        unit="MCM/GWa",
     )
 
     results["emission_factor"] = emi
@@ -581,7 +584,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
                     level="water_avail_basin",
                     time="year",
                     value=icfb_df["value_return"],
-                    unit="km3/GWa",
+                    unit="MCM/GWa",
                 )
                 .pipe(broadcast, node_dest=bs, time_dest=sub_time)
                 .merge(df_sw, how="left")
@@ -901,7 +904,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         time="year",
         type_addon=adon_df["tech"],
         value=adon_df["cooling_fraction"],
-        unit="km3/GWa",
+        unit="-",  # from electricity to thermal
     )
 
     results["addon_conversion"] = addon_df
@@ -1094,7 +1097,12 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
     non_cool_df = non_cool_df.rename(columns={"technology_name": "technology"})
 
     non_cool_df["value"] = (
-        non_cool_df["water_withdrawal_mid_m3_per_output"] * 60 * 60 * 24 * 365 * (1e-9)
+        non_cool_df["water_withdrawal_mid_m3_per_output"]
+        * 60
+        * 60
+        * 24
+        * 365
+        * (1e-6)  # MCM
     )
 
     non_cool_tech = list(non_cool_df["technology"].unique())
@@ -1114,7 +1122,7 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
         "input",
         technology=n_cool_df_merge["technology"],
         value=n_cool_df_merge["value_y"],
-        unit="km3/GWa",
+        unit="MCM/GWa",
         level="water_supply",
         commodity="freshwater",
         time_origin="year",

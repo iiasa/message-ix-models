@@ -1225,6 +1225,7 @@ cooling:
   unit:
     add:
     - km3/GWa
+    - MCM/GWa
     - km3
     - km3/year
 
