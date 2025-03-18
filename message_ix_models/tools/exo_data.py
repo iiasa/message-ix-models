@@ -251,7 +251,9 @@ def prepare_computer(
         c.add("y0", itemgetter(0), "y")
 
     # Above as coords/indexers
+    # TODO Move to somewhere usable without calling the current function
     c.add("y::coords", lambda years: dict(y=years), "y")
+    c.add("yv::coords", lambda years: dict(yv=years), "y")
     c.add("y0::coord", lambda year: dict(y=year), "y0")
 
     # Retrieve the keys that will refer to the raw and transformed data
