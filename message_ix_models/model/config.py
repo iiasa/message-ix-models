@@ -1,6 +1,14 @@
+import logging
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Optional
 
 from message_ix_models.util.config import ConfigHelper
+from message_ix_models.util.node import identify_nodes
+
+if TYPE_CHECKING:
+    import message_ix
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -56,3 +64,34 @@ class Config(ConfigHelper):
                 raise ValueError(
                     f"{attr}={getattr(self, attr)!r} not among {codelists(name)}"
                 )
+
+    def regions_from_scenario(
+        self, scenario: Optional["message_ix.Scenario"] = None
+    ) -> None:
+        """Update :attr:`regions` by inspection of an existing `scenario`.
+
+        The attribute is updated only if:
+
+        1. `scenario` is not :any:`None`.
+        2. :func:`identify_nodes` returns the ID of a node code list.
+        3. The returned ID from (2) is different from the current value of
+           :attr:`regions`.
+        """
+        if scenario is None:
+            return
+
+        try:
+            # Identify the node code list used in `scenario`
+            regions = identify_nodes(scenario)
+        except ValueError:
+            pass
+        else:
+            # log.debug(
+            #     f"scenario.set('node') = {' '.join(sorted(scenario.set('node')))}"
+            # )
+            if regions != self.regions:
+                log.info(
+                    f"Replace .model.Config.regions={self.regions!r} with {regions!r} "
+                    f" from contents of {scenario.url!r}"
+                )
+                self.regions = regions
