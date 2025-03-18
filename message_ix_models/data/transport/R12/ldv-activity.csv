@@ -1,66 +1,119 @@
 # Activity (driving distance) per light-duty vehicle
 #
-# Source:
+# Sources:
 #
 # - Values commented "TH 2024-04-11": calculation by T. Hara, shared at
 #   https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1712831476181449
 # - R12_AFR, R12_FSU, R12_NAM, R12_PAO, R12_PAS, R12_SAS: see the documentation
-#   at https://docs.messageix.org/projects/models-internal/en/latest/reference/model/transport/files.html
+#   at https://docs.messageix.org/projects/models/en/latest/transport/input.html
 # - All others:
 #
 #   - Duplicate of R11/ldv-activity.csv; see comments there.
 #   - R11_CPA value repeated for R12_RCPA and R12_CHN.
+# - scenario=LED: SharePoint ECE.prog > Documents > Transport > LED Scenario >
+#   input files > ldv-act per veh-LDV.xlsx as of 2025-03-18.
 #
 # Unit: kilometre / year
 #
-node,    value
-# R12_AFR,  11000  # TH low
-R12_AFR,  15500
-# R12_AFR,  19000  # TH high
+scenario, node,     year, value
+# *,      R12_AFR,  2020, 11000  # TH low
+# *,      R12_AFR,  2110, 11000  # TH low
+*,        R12_AFR,  2020, 15500
+*,        R12_AFR,  2110, 15500
+# *,      R12_AFR,  2020, 19000  # TH high
+# *,      R12_AFR,  2110, 19000  # TH high
+# *,      R12_CHN,  2020,  9500  # TH low
+# *,      R12_CHN,  2110,  9500  # TH low
+*,        R12_CHN,  2020, 15000  # TH high
+*,        R12_CHN,  2110, 15000  # TH high
+# *,      R12_CHN,  2020, 16000  # Previous value
+# *,      R12_CHN,  2110, 16000  # Previous value
+# *,      R12_EEU,  2020,  8962  # Previous value
+# *,      R12_EEU,  2110,  8962  # Previous value
+*,        R12_EEU,  2020,  9000  # TH low
+*,        R12_EEU,  2110,  9000  # TH low
+# *,      R12_EEU,  2020, 10000  # TH high
+# *,      R12_EEU,  2110, 10000  # TH high
+# *,      R12_FSU,  2020, 11000  # TH low
+# *,      R12_FSU,  2110, 11000  # TH low
+*,        R12_FSU,  2020, 13000  # TH high = previous value
+*,        R12_FSU,  2110, 13000  # TH high = previous value
+# *,      R12_LAM,  2020, 13000  # TH low
+# *,      R12_LAM,  2110, 13000  # TH low
+*,        R12_LAM,  2020, 13500
+*,        R12_LAM,  2110, 13500
+# *,      R12_LAM,  2020, 15000  # TH high
+# *,      R12_LAM,  2110, 15000  # TH high
+# *,      R12_MEA,  2020, 13000  # TH low
+# *,      R12_MEA,  2110, 13000  # TH low
+*,        R12_MEA,  2020, 14500
+*,        R12_MEA,  2110, 14500
+# *,      R12_MEA,  2020, 16000  # TH high
+# *,      R12_MEA,  2110, 16000  # TH high
+# *,      R12_NAM,  2020, 16000  # TH low
+# *,      R12_NAM,  2110, 16000  # TH low
+*,        R12_NAM,  2020, 18400
+*,        R12_NAM,  2110, 18400
+# *,      R12_NAM,  2020, 19000  # TH high
+# *,      R12_NAM,  2110, 19000  # TH high
+*,        R12_PAO,  2020,  9000  # TH low = previous value
+*,        R12_PAO,  2110,  9000  # TH low = previous value
+# *,      R12_PAO,  2020, 10000  # TH high
+# *,      R12_PAO,  2110, 10000  # TH high
+# *,      R12_PAS,  2020, 11000  # TH low
+# *,      R12_PAS,  2110, 11000  # TH low
+*,        R12_PAS,  2020, 13000  # TH high = previous value
+*,        R12_PAS,  2110, 13000  # TH high = previous value
+# *,      R12_RCPA, 2020, 11000  # TH low
+# *,      R12_RCPA, 2110, 11000  # TH low
+*,        R12_RCPA, 2020, 12000  # TH high
+*,        R12_RCPA, 2110, 12000  # TH high
+# *,      R12_RCPA, 2020, 16000  # Previous value
+# *,      R12_RCPA, 2110, 16000  # Previous value
+*,        R12_SAS,  2020, 12000  # TH low = previous value
+*,        R12_SAS,  2110, 12000  # TH low = previous value
+# *,      R12_SAS,  2020, 15000  # TH high
+# *,      R12_SAS,  2110, 15000  # TH high
+# *,      R12_WEU,  2020, 11000  # TH low
+# *,      R12_WEU,  2110, 11000  # TH low
+*,        R12_WEU,  2020, 11700
+*,        R12_WEU,  2110, 11700
+# *,      R12_WEU,  2020, 12000  # TH high
+# *,      R12_WEU,  2110, 12000  # TH high
 
-# R12_CHN,   9500  # TH low
-# TH high
-R12_CHN,  15000
-# R12_CHN,  16000  # Previous value
-
-# R12_EEU,   8962  # Previous value
-# TH low
-R12_EEU,   9000
-# R12_EEU,  10000  # TH high
-
-# R12_FSU,  11000  # TH low
-# TH high = previous value
-R12_FSU,  13000
-
-# R12_LAM,  13000  # TH low
-R12_LAM,  13500
-# R12_LAM,  15000  # TH high
-
-# R12_MEA,  13000  # TH low
-R12_MEA,  14500
-# R12_MEA,  16000  # TH high
-
-# R12_NAM,  16000  # TH low
-R12_NAM,  18400
-# R12_NAM,  19000  # TH high
-
-# TH low = previous value
-R12_PAO,   9000
-# R12_PAO,  10000  # TH high
-
-# R12_PAS,  11000  # TH low
-# TH high = previous value
-R12_PAS,  13000
-
-# R12_RCPA, 11000  # TH low
-# TH high
-R12_RCPA, 12000
-# R12_RCPA, 16000  # Previous value
-
-# TH low = previous value
-R12_SAS,  12000
-# R12_SAS,  15000  # TH high
-
-# R12_WEU,  11000  # TH low
-R12_WEU,  11700
-# R12_WEU,  12000  # TH high
+LED,      R12_AFR,  2020, 15500
+LED,      R12_AFR,  2050, 15113
+LED,      R12_AFR,  2110, 15113
+LED,      R12_CHN,  2020, 15000
+LED,      R12_CHN,  2050, 15113
+LED,      R12_CHN,  2110, 15113
+LED,      R12_EEU,  2020, 9000
+LED,      R12_EEU,  2050, 14087
+LED,      R12_EEU,  2110, 14087
+LED,      R12_FSU,  2020, 13000
+LED,      R12_FSU,  2050, 14087
+LED,      R12_FSU,  2110, 14087
+LED,      R12_LAM,  2020, 13500
+LED,      R12_LAM,  2050, 15113
+LED,      R12_LAM,  2110, 15113
+LED,      R12_MEA,  2020, 14500
+LED,      R12_MEA,  2050, 15113
+LED,      R12_MEA,  2110, 15113
+LED,      R12_NAM,  2020, 18400
+LED,      R12_NAM,  2050, 14087
+LED,      R12_NAM,  2110, 14087
+LED,      R12_PAO,  2020, 9000
+LED,      R12_PAO,  2050, 14087
+LED,      R12_PAO,  2110, 14087
+LED,      R12_PAS,  2020, 13000
+LED,      R12_PAS,  2050, 15113
+LED,      R12_PAS,  2110, 15113
+LED,      R12_RCPA, 2020, 12000
+LED,      R12_RCPA, 2050, 15113
+LED,      R12_RCPA, 2110, 15113
+LED,      R12_SAS,  2020, 12000
+LED,      R12_SAS,  2050, 15113
+LED,      R12_SAS,  2110, 15113
+LED,      R12_WEU,  2020, 11700
+LED,      R12_WEU,  2050, 14087
+LED,      R12_WEU,  2110, 14087
