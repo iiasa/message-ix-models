@@ -1009,6 +1009,21 @@ def sales_fraction_annual(age: "AnyQuantity") -> "AnyQuantity":
     return age.groupby(dims).apply(uniform_in_dim)
 
 
+def scenario_codes() -> list[str]:
+    """Return valid codes for a `scenario` dimension of some quantities.
+
+    The list includes:
+
+    - Values like "SSP(2024).1" for every member of the :data:`SSP_2024` enumeration.
+    - The value "LED".
+
+    For use with, for instance :func:`.broadcast_wildcard`.
+    """
+    from message_ix_models.project.ssp import SSP_2024
+
+    return [repr(c).split(":")[1] for c in SSP_2024] + ["LED"]
+
+
 def share_weight(
     share: "AnyQuantity",
     gdp: "AnyQuantity",

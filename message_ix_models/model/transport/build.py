@@ -300,6 +300,7 @@ STRUCTURE_STATIC = (
     ),
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
+    ("scenario::all", "scenario_codes"),
 )
 
 
