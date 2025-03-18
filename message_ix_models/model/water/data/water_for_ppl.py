@@ -176,8 +176,22 @@ def apply_act_cap_multiplier(
     # CAP,c * cf,c(=1) = CAP,p * share * addon_factor * cf,p
     if "capacity" in param_name and cap_fact_parent is not None:
         df = df.merge(cap_fact_parent, how="left")
-        df["value"] *= df["cap_fact"]
+        df["value"] *= df["cap_fact"] * 1.2  # flexibility
         df.drop(columns="cap_fact", inplace=True)
+    # remove if there are Nan values, but write a log that inform on the parameter and the head of the data
+    # Identify missing or invalid values
+    missing_values = (
+        df["value"].isna()
+        | (df["value"] == "")
+        | (df["value"].astype(str).str.strip() == "")
+    )
+
+    if missing_values.any():
+        print("diobo")
+        log.warning(
+            f"Missing or empty values found in {param_name}.head(1):\n{df[missing_values].head(1)}"
+        )
+        df = df[~missing_values]  # Remove rows with missing/empty values
 
     df.drop(columns=["utype", "multiplier"], inplace=True)
 
@@ -447,6 +461,10 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     electr["value_cool"] = (
         electr["parasitic_electricity_demand_fraction"] / electr["cooling_fraction"]
     )
+    # set to 1e-6 if value_cool is negative
+    electr["value_cool"] = np.where(
+        electr["value_cool"] < 0, 1e-6, electr["value_cool"]
+    )
     # Filters out technologies requiring saline water supply
     saline_df = input_cool[
         input_cool["technology_name"].str.endswith("ot_saline", na=False)
@@ -652,6 +670,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
     # if value < 0.4 set to 0.4, not so allow too much saline where there is no
     share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
+    # keep only after 2050
+    share_fut = share_fut[share_fut["year_act"] >= 2050]
     # append share_calib and share_fut
     results["share_commodity_up"] = pd.concat([share_calib, share_fut])
 
