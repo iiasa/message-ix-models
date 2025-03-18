@@ -20,14 +20,13 @@ from message_ix_models.util import (
     convert_units,
     make_matched_dfs,
     merge_data,
-    minimum_version,
     same_node,
 )
 
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
 from .key import bcast_tcl, bcast_y, exo
-from .util import wildcard
+from .util import EXTRAPOLATE, wildcard
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
@@ -40,6 +39,21 @@ log = logging.getLogger(__name__)
 
 #: Shorthand for tags on keys.
 Li = "::LDV+ixmp"
+
+#: Mapping from short dimension IDs to MESSAGE index names.
+DIMS = dict(
+    commodity="c",
+    level="l",
+    node_dest="n",
+    node_loc="n",
+    node_origin="n",
+    technology="t",
+    year_act="ya",
+    year_vtg="yv",
+)
+
+#: Common, fixed values for :func:`.prepare_tech_econ` and :func:`.get_dummy`.
+COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
 
 #: Target key that collects all data generated in this module.
 TARGET = f"transport{Li}"
@@ -150,9 +164,7 @@ def prepare_computer(c: Computer):
     c.add(k.eff[2], "mul", k.eff[1], "input:n:LDV+adj")
 
     ### Load factor
-
     # Interpolate on "y" dimension
-    EXTRAPOLATE = dict(kwargs=dict(fill_value="extrapolate"))
     k.lf_nsy = Key(exo.load_factor_ldv)
     c.add(k.lf_nsy[0], "interpolate", k.lf_nsy, "y::coords", **EXTRAPOLATE)
 
@@ -162,6 +174,9 @@ def prepare_computer(c: Computer):
 
     # Insert a scaling factor that varies according to SSP
     c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny)
+
+    # Apply the function usage_data() for further processing
+    _add(c, "usage", usage_data, k.lf_ny, "cg", "n::ex world", t_ldv, "y::model")
 
     ### Technical lifetime
     tl, k_tl = "technical_lifetime", exo.lifetime_ldv
@@ -185,6 +200,24 @@ def prepare_computer(c: Computer):
     dims = dict(node_loc="nl", technology="t", year_vtg="yv")
     _add(c, tl, "as_message_df", k_tl[3] / "scenario", name=tl, dims=dims, common={})
 
+    ### Capacity factor
+    cf, k_cf_s = "capacity_factor", exo.activity_ldv
+    k_cf = k_cf_s / "scenario"
+    # Convert units
+    c.add(k_cf_s[0], "convert_units", k_cf_s, units="Mm/year")
+    # Broadcast to all scenarios
+    c.add(k_cf_s[1], "broadcast_wildcard", k_cf_s[0], "scenario::all", dim="scenario")
+    # Select values for the current scenario
+    c.add(k_cf[2], "select", k_cf_s[1], "indexers:scenario:LED")
+    # Interpolate on "y" dimension
+    c.add(k_cf[3], "interpolate", k_cf[2], "y::coords", **EXTRAPOLATE)
+    # Add dimension "t" indexing all LDV technologies
+    prev = c.add(k_cf[4] * "t", "expand_dims", k_cf[3], "t::transport LDV")
+    # Broadcast y → (yV, yA)
+    prev = c.add(k_cf[5], "mul", prev, bcast_y.all)
+    # Convert to MESSAGE data structure
+    _add(c, cf, "as_message_df", prev, name=cf, dims=DIMS, common=COMMON)
+
     # Add further keys for MESSAGE-structured data
     # Techno-economic attributes
     # Select a task for the final step that computes "tech::LDV+ixmp"
@@ -198,14 +231,8 @@ def prepare_computer(c: Computer):
             fix_cost=Key("fix_cost:n-t-y:LDV+exo"),
         )
 
-    # Usage
-    _add(c, "usage", usage_data, k.lf_ny, "cg", "n::ex world", t_ldv, "y::model")
     # Constraints
     _add(c, "constraints", constraint_data, "context")
-    # Capacity factor
-    _add(
-        c, "capacity_factor", capacity_factor, exo.activity_ldv, t_ldv, "y", bcast_y.all
-    )
 
     # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
     if config.ldv_stock_method == "A":
@@ -248,22 +275,6 @@ def prepare_computer(c: Computer):
 
     # Add the data to the target scenario
     c.add("transport_data", __name__, key=TARGET)
-
-
-#: Common, fixed values for :func:`.prepare_tech_econ` and :func:`.get_dummy`.
-COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
-
-#: Mapping from short dimension IDs to MESSAGE index names.
-DIMS = dict(
-    commodity="c",
-    level="l",
-    node_dest="n",
-    node_loc="n",
-    node_origin="n",
-    technology="t",
-    year_act="ya",
-    year_vtg="yv",
-)
 
 
 def prepare_tech_econ(
@@ -373,51 +384,6 @@ def get_dummy(context) -> "ParameterData":
     data["output"] = output
 
     return data
-
-
-@minimum_version("message_ix 3.6")
-def capacity_factor(
-    qty: "AnyQuantity", t_ldv: dict, y, y_broadcast: "AnyQuantity"
-) -> "ParameterData":
-    """Return capacity factor data for LDVs.
-
-    The data are:
-
-    - Broadcast across all |yV|, |yA| (`broadcast_y`), and LDV technologies (`t_ldv`).
-    - Converted to :mod:`message_ix` parameter format using :func:`.as_message_df`.
-
-    Parameters
-    ----------
-    qty
-        Input data, for instance from file :`ldv-activity.csv`, with dimension |n|.
-    y_broadcast
-        The structure :data:`bcast_y.model <.bcast_y>`.
-    t_ldv
-        The structure :py:`"t::transport LDV"`, mapping the key "t" to the list of LDV
-        technologies.
-    y
-        All periods, including pre-model periods.
-    """
-    from genno.operator import convert_units
-
-    try:
-        from message_ix.report.operator import as_message_df
-    except ImportError:  # Older message_ix
-        from message_ix.reporting.computations import (  # type: ignore [no-redef]
-            as_message_df,
-        )
-
-    # TODO determine units from technology annotations
-    data = convert_units(qty.expand_dims(y=y) * y_broadcast, "Mm / year")
-
-    name = "capacity_factor"
-    dims = dict(node_loc="n", year_vtg="yv", year_act="ya")
-    # TODO Remove typing exclusion once message_ix is updated for genno 1.25
-    result = as_message_df(data, name, dims, dict(time="year"))  # type: ignore [arg-type]
-
-    result[name] = result[name].pipe(broadcast, technology=t_ldv["t"])
-
-    return result
 
 
 def constraint_data(context) -> "ParameterData":
