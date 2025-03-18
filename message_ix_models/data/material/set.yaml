@@ -229,6 +229,7 @@ petro_chemicals:
     - secondary_material
     - final_material
     - demand
+    - refinery
 
   balance_equality:
     add:
