@@ -4,3 +4,4 @@
 #
 scenario, node_loc, technology, year_vtg, value
 *,        *,        *,          1960,     15
+*,        *,        *,          2110,     15

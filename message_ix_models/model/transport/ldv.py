@@ -149,15 +149,12 @@ def prepare_computer(c: Computer):
     c.add("input:n:LDV+adj", "sum", exo.input_adj_ldv, dimensions=["scenario"])
     c.add(k.eff[2], "mul", k.eff[1], "input:n:LDV+adj")
 
-    # Interpolate load factor
+    ### Load factor
+
+    # Interpolate on "y" dimension
+    EXTRAPOLATE = dict(kwargs=dict(fill_value="extrapolate"))
     k.lf_nsy = Key(exo.load_factor_ldv)
-    c.add(
-        k.lf_nsy[0],
-        "interpolate",
-        k.lf_nsy,
-        "y::coords",
-        kwargs=dict(fill_value="extrapolate"),
-    )
+    c.add(k.lf_nsy[0], "interpolate", k.lf_nsy, "y::coords", **EXTRAPOLATE)
 
     # Select load factor
     k.lf_ny = k.lf_nsy / "scenario"
@@ -166,29 +163,27 @@ def prepare_computer(c: Computer):
     # Insert a scaling factor that varies according to SSP
     c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny)
 
-    # Extend (forward fill) lifetime to cover all periods
-    name = "technical_lifetime"
-    c.add(exo.lifetime_ldv + "0", "extend_y", exo.lifetime_ldv, "y", dim="yv")
-    # Broadcast to all nodes
-    c.add(
-        f"{name}:nl-yv:LDV",
-        "broadcast_wildcard",
-        exo.lifetime_ldv + "0",
-        "n::ex world",
-        dim="nl",
-    )
-    # Broadcast to all LDV technologies
-    c.add(f"{name}:nl-t-yv:LDV", "expand_dims", f"{name}:nl-yv:LDV", t_ldv)
+    ### Technical lifetime
+    tl, k_tl = "technical_lifetime", exo.lifetime_ldv
+
+    # Interpolate on "yv" dimension
+    c.add(k_tl[0], "interpolate", k_tl, "yv::coords", **EXTRAPOLATE)
+
+    # Broadcast to all nodes, scenarios, and LDV technologies
+    coords = ["scenario::all", "n::ex world", "t::LDV"]
+    c.add(k_tl[1], "broadcast_wildcard", k_tl[0], *coords, dim=("scenario", "nl", "t"))
+
+    # Select values for the current scenario
+    c.add(k_tl[2] / "scenario", "select", k_tl[1], "indexers:scenario:LED")
+
+    # Convert to integer
+    # NB This is required because the MESSAGEix GAMS implementation cannot handle non-
+    #    integer values
+    c.add(k_tl[3] / "scenario", lambda qty: qty.astype(int), k_tl[2] / "scenario")
+
     # Convert to MESSAGE data structure
-    _add(
-        c,
-        name,
-        "as_message_df",
-        f"{name}:nl-t-yv:LDV",
-        name=name,
-        dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
-        common={},
-    )
+    dims = dict(node_loc="nl", technology="t", year_vtg="yv")
+    _add(c, tl, "as_message_df", k_tl[3] / "scenario", name=tl, dims=dims, common={})
 
     # Add further keys for MESSAGE-structured data
     # Techno-economic attributes
