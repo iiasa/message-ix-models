@@ -10,9 +10,11 @@ from message_ix import make_df
 
 from message_ix_models.util import broadcast, minimum_version, package_data_path
 
-from message_ix_models.model.water.data.data_transformers import DSL_RULES, apply_transformation_rule
+from message_ix_models.model.water.data.data_transformers import DSL_RULES, apply_transformation_rule, convert_units
 if TYPE_CHECKING:
     from message_ix_models import Context
+
+CONVERT_TO_MCM = True  # flag to convert km3/year to mcm/year
 
 @minimum_version("message_ix 3.7")
 def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
@@ -164,7 +166,6 @@ def _apply_sdg_adjustments(comps, df_dmds, context) -> dict:
     return comps
 
 
-
 def _assemble_historical_data(dmd_df, info):
     # extract historical activity and capacity data for selected years
     h_act = dmd_df[dmd_df["year"].isin([2010, 2015])]
@@ -194,6 +195,13 @@ def _assemble_historical_data(dmd_df, info):
     ]
     h_act["commodity"] = np.select(conditions, values, "unknown commodity")
     h_act["value"] = h_act["value"].abs()
+    # convert historical activity values if flag enabled
+    if CONVERT_TO_MCM:
+        h_act_converted = convert_units(h_act["value"], "km3/year", "mcm/year")
+        hist_unit = "mcm/year"
+    else:
+        h_act_converted = h_act["value"]
+        hist_unit = "km3/year"
     hist_act = make_df(
         "historical_activity",
         node_loc=h_act["node"],
@@ -201,8 +209,8 @@ def _assemble_historical_data(dmd_df, info):
         year_act=h_act["year"],
         mode="M1",
         time=h_act["time"],
-        value=h_act["value"],
-        unit="km3/year",
+        value=h_act_converted,
+        unit=hist_unit,
     )
     h_cap = h_act[h_act["year"] >= 2015]
     h_cap = (
@@ -210,13 +218,20 @@ def _assemble_historical_data(dmd_df, info):
         .sum()
         .reset_index()
     )
+    # convert historical capacity values if flag enabled
+    if CONVERT_TO_MCM:
+        h_cap_value = convert_units(h_cap["value"] / 5, "km3/year", "mcm/year")
+        cap_unit = "mcm/year"
+    else:
+        h_cap_value = h_cap["value"] / 5
+        cap_unit = "km3/year"
     hist_cap = make_df(
         "historical_new_capacity",
         node_loc=h_cap["node"],
         technology=h_cap["commodity"],
         year_vtg=h_cap["year"],
-        value=h_cap["value"] / 5,
-        unit="km3/year",
+        value=h_cap_value,
+        unit=cap_unit,
     )
     return hist_act, hist_cap
 
