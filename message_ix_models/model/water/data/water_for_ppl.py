@@ -342,29 +342,9 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         .drop(columns=1)
     )
 
-    # # Filter for rows where parent_tech is "csp_sm1_res"
-    # csp_rows = cooling_df[cooling_df["parent_tech"] == "csp_sm1_res"].copy()
-
-    # # Define suffixes for historical years
-    # hist_years = ["hist_2010", "hist_2015", "hist_2020"]
-
-    # # Expand the dataframe for csp historical caapcities
-    # expanded_rows = []
-    # for hist_year in hist_years:
-    #     temp_df = csp_rows.copy()
-    #     temp_df["parent_tech"] = temp_df["parent_tech"] + f"_{hist_year}"
-    #     temp_df["technology_name"] = temp_df["technology_name"].str.replace(
-    #         "csp_sm1_res", f"csp_sm1_res_{hist_year}"
-    #     )
-    #     expanded_rows.append(temp_df)
-
-    # # Concatenate with original dataframe
-    # cooling_df = pd.concat([cooling_df] + expanded_rows, ignore_index=True)
-
     scen = context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
-    # Extracting input values from scenario
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
     # list of tec in cooling_df["parent_tech"] that are not in ref_input
     missing_tec = cooling_df["parent_tech"][
@@ -442,17 +422,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     input_cool["value_consumption"] = (
         input_cool["consumption_rate"] * input_cool["value_cool"]
     )
-
-    # def foo3(x):
-    #     """
-    #     This function is similar to foo2, but it returns electricity values
-    #     per unit of cooling for techs that require parasitic electricity demand
-    #     """
-    #     if "hpl" in x['index']:
-    #         return x['parasitic_electricity_demand_fraction']
-    #
-    #     elif x['parasitic_electricity_demand_fraction'] > 0.0:
-    #         return x['parasitic_electricity_demand_fraction'] / x['cooling_fraction']
 
     # Filter out technologies that requires parasitic electricity
     electr = input_cool[input_cool["parasitic_electricity_demand_fraction"] > 0.0]
@@ -672,8 +641,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
     # keep only after 2050
     share_fut = share_fut[share_fut["year_act"] >= 2050]
-    # append share_calib and share_fut
-    results["share_commodity_up"] = pd.concat([share_calib, share_fut])
+    # append share_calib and (share_fut only to add constraints on ot_saline)
+    results["share_commodity_up"] = pd.concat([share_calib])
 
     # Filtering out 2015 data to use for historical values
     input_cool_2015 = input_cool[
@@ -751,58 +720,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         search_cols=search_cols,
     )
 
-    # changed_value_series = ref_hist_act.apply(
-    #     hist_act, axis=1, context=context, hold_cost=hold_cost
-    # )
-    # changed_value_series_flat = [
-    #     row for series in changed_value_series for row in series
-    # ]
-    # columns_act = [
-    #     "node_loc",
-    #     "technology",
-    #     "cooling_technology",
-    #     "year_act",
-    #     "value",
-    #     "new_value",
-    #     "unit",
-    # ]
-    # # dataframe for historical activities of cooling techs
-    # act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns_act)
-    # act_value_df = act_value_df[act_value_df["new_value"] > 0]
-
-    # # now hist capacity
-    # changed_value_series = ref_hist_cap.apply(
-    #     hist_cap, axis=1, context=context, hold_cost=hold_cost
-    # )
-    # changed_value_series_flat = [
-    #     row for series in changed_value_series for row in series
-    # ]
-    # columns_cap = [
-    #     "node_loc",
-    #     "technology",
-    #     "cooling_technology",
-    #     "year_vtg",
-    #     "value",
-    #     "new_value",
-    #     "unit",
-    # ]
-    # cap_value_df = pd.DataFrame(changed_value_series_flat, columns=columns_cap)
-    # cap_value_df = cap_value_df[cap_value_df["new_value"] > 0]
-
-    # h_act = make_df(
-    #     "historical_activity",
-    #     node_loc=act_value_df["node_loc"],
-    #     technology=act_value_df["cooling_technology"],
-    #     year_act=act_value_df["year_act"],
-    #     mode="M1",
-    #     time="year",
-    #     value=act_value_df["new_value"],
-    #     # TODO finalize units
-    #     unit="GWa",
-    # )
-
-    # results["historical_activity"] = h_act
-
     # hist cap to be divided by cap_factor of the parent tec
     cap_fact_parent = scen.par(
         "capacity_factor", {"technology": cooling_df["parent_tech"]}
@@ -844,25 +761,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     cap_fact_parent.rename(
         columns={"value": "cap_fact", "technology": "utype"}, inplace=True
     )
-
-    # # merge cap_fact_parent with cap_value_df
-    # cap_value_df = pd.merge(cap_value_df, cap_fact_parent, how="left")
-    # # divide new_value by cap_fact
-    # cap_value_df["new_value"] = cap_value_df["new_value"] / cap_value_df["cap_fact"]
-    # # drop cap_fact
-    # cap_value_df.drop(columns="cap_fact", inplace=True)
-
-    # # Make model compatible df for histroical new capacity
-    # h_cap = make_df(
-    #     "historical_new_capacity",
-    #     node_loc=cap_value_df["node_loc"],
-    #     technology=cap_value_df["cooling_technology"],
-    #     year_vtg=cap_value_df["year_vtg"],
-    #     value=cap_value_df["new_value"],
-    #     unit="GWa",
-    # )
-
-    # results["historical_new_capacity"] = h_cap
 
     # Manually removing extra technologies not required
     # TODO make it automatic to not include the names manually
@@ -1042,20 +940,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         results[param_name] = pd.concat(
             [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
         )
-
-    # # Function to rename and add transformed parameters
-    # def rename_and_add(param_name, new_name, rename_dict):
-    #     if param_name in results:
-    #         df_transformed = (
-    #             results[param_name].drop(columns="time").rename(columns=rename_dict)
-    #         )
-    #         results[new_name] = df_transformed
-
-    # # Apply renaming for multiple parameters
-    # rename_and_add("soft_activity_up", "soft_new_capacity_up", {"year_act": "year_vtg"})
-    # rename_and_add(
-    #     "growth_activity_up", "growth_new_capacity_up", {"year_act": "year_vtg"}
-    # )
 
     # add share constraints for cooling technologies based on SSP assumptions
     df_share = cooling_shares_SSP_from_yaml(context)
