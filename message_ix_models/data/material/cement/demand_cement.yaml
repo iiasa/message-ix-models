@@ -1,37 +1,36 @@
-# derived by aggregating the country data set from GlobBulk Consulting
 - R12_AFR:
-    year: 2020
-    value: 110.5
+  value: 112.662
+  year: 2020
 - R12_RCPA:
-    year: 2020
-    value: 97.5
+  value: 101.143
+  year: 2020
 - R12_EEU:
-    year: 2020
-    value: 42.9
+  value: 55.461
+  year: 2020
 - R12_FSU:
-    year: 2020
-    value: 106.6
+  value: 106.986
+  year: 2020
 - R12_LAM:
-    year: 2020
-    value: 184.3
+  value: 165.464
+  year: 2020
 - R12_MEA:
-    year: 2020
-    value: 294.6
+  value: 282.55
+  year: 2020
 - R12_NAM:
-    year: 2020
-    value: 116
+  value: 102.75
+  year: 2020
 - R12_PAO:
-    year: 2020
-    value: 53.5
+  value: 61.587
+  year: 2020
 - R12_PAS:
-    year: 2020
-    value: 232.7
+  value: 206.057
+  year: 2020
 - R12_SAS:
-    year: 2020
-    value: 389
+  value: 382.774
+  year: 2020
 - R12_WEU:
-    year: 2020
-    value: 205.4
+  value: 214.55
+  year: 2020
 - R12_CHN:
-    year: 2020
-    value: 2140
+  value: 2378.412
+  year: 2020
