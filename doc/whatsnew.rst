@@ -126,6 +126,7 @@ Water/Nexus
 - Connect :mod:`.model.water` to :mod:`.tools.costs` for cooling technologies (:pull:`245`).
 - Introduce an SSP configuration for cooling technologies with share constraints (:pull:`256`).
 - Change SSP parameters and add missing CSP data (:pull:`262`).
+- Additional final constraints and data on cooling technologies for the SSP runs (:pull:`268`).
 
 Investment and fixed costs
 --------------------------
