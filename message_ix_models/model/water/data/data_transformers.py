@@ -86,6 +86,22 @@ DSL_RULES = [
     },
 ]
 
+# new: unit conversion helper using a reference dict for common unit conversions
+def convert_units(value, from_unit: str, to_unit: str):
+    # convert between common water demand units
+    conversion_factors = {
+        ("km3/year", "mcm/year"): 1000,
+        ("mcm/year", "km3/year"): 0.001,
+        ("km3", "mcm"): 1000,
+        ("mcm", "km3"): 0.001,
+    }
+    if from_unit.lower() == to_unit.lower():
+        return value
+    key = (from_unit.lower(), to_unit.lower())
+    if key in conversion_factors:
+        return value * conversion_factors[key]
+    raise ValueError(f"conversion from {from_unit} to {to_unit} not defined")
+
 def _compute_value(withdrawal, rate, conversion, rate_op):
     # use pattern matching to choose the appropriate rate adjustment
     match rate_op:
@@ -110,6 +126,9 @@ def apply_transformation_rule(rule: dict, comps: dict, node_prefix: str = "B") -
         df["value"] = rule["conversion"] * df["value"]
     if rule.get("sign", 1) < 0:
         df["value"] = -df["value"]
+
+    # convert output from km3/year to mcm/year
+    df_converted_value = convert_units(df["value"], "km3/year", "mcm/year")
     return make_df(
         "demand",
         node=node_prefix + df["node"],
@@ -117,6 +136,6 @@ def apply_transformation_rule(rule: dict, comps: dict, node_prefix: str = "B") -
         level="final",
         year=df["year"],
         time=df["time"],
-        value=df["value"],
-        unit="km3/year",
+        value=df_converted_value,
+        unit="mcm/year",
     ) 
