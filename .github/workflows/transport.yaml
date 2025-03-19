@@ -32,7 +32,6 @@ env:
      "SSP4",
      "SSP5",
      "SSP5 policy",
-     "SSP1",
      "LED-SSP1",
      "LED-SSP2"
     ]
