@@ -234,7 +234,11 @@ def test_non_cooling_tec(request, test_context):
         ),  # Apply capacity factors
     ],
 )
-def test_apply_act_cap_multiplier(param_name, cap_fact_parent, expected_values):
+def test_apply_act_cap_multiplier(
+    param_name: str,
+    cap_fact_parent: Optional[pd.DataFrame],
+    expected_values: list[float],
+) -> None:
     # Dummy input data
     df = pd.DataFrame(
         {

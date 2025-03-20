@@ -77,9 +77,9 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
     regions_df = df["node_loc"].unique().tolist()
 
     # Assertion check for valid data
-    assert len(parent_tech_sc) > 0, (
-        "No matching parent technologies found in the scenario."
-    )
+    assert (
+        len(parent_tech_sc) > 0
+    ), "No matching parent technologies found in the scenario."
     assert len(regions_df) > 0, "No unique nodes (regions) found in the scenario."
 
     # not filter cooling_tec with only parent_tech matching parent_tech_sc
@@ -103,7 +103,12 @@ def cat_tec_cooling(context: Context) -> tuple[pd.DataFrame, list[str]]:
     return cat_tec, regions_df
 
 
-def share_map_cool(share_keys, type_tec_keys, regions_df, commodity_mapping=None):
+def share_map_cool(
+    share_keys: list[str],
+    type_tec_keys: list[str],
+    regions_df: list[str],
+    commodity_mapping: dict[str, str],
+) -> pd.DataFrame:
     """
     Helper function to create the share mapping DataFrame for both 'tot' and 'share' levels.
 
@@ -125,9 +130,11 @@ def share_map_cool(share_keys, type_tec_keys, regions_df, commodity_mapping=None
     """
     # Assign commodities correctly
     commodities = [
-        commodity_mapping[key]
-        if commodity_mapping
-        else ["ot_fresh", "air", "ot_saline", "cl_fresh"]
+        (
+            commodity_mapping[key]
+            if commodity_mapping
+            else ["ot_fresh", "air", "ot_saline", "cl_fresh"]
+        )
         for key in share_keys
     ]
 
