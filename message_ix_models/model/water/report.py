@@ -4,13 +4,6 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import pyam
-
-# from message_ix_models.report.legacy.iamc_report_hackathon import (
-#     report as legacy_report,
-# )
-from message_data.tools.post_processing.iamc_report_hackathon import (
-    report as legacy_report,
-)
 from message_ix import Reporter, Scenario
 
 from message_ix_models.util import package_data_path
@@ -19,6 +12,19 @@ log = logging.getLogger(__name__)
 
 
 def run_old_reporting(sc: Optional[Scenario] = None):
+    try:
+        from message_data.tools.post_processing.iamc_report_hackathon import (
+            report as legacy_report,
+        )
+    except ImportError:
+        log.warning(
+            "Missing message_data.tools.post_processing; fall back to "
+            "message_ix_models.report.legacy. This may not work."
+        )
+        from message_ix_models.report.legacy.iamc_report_hackathon import (
+            report as legacy_report,
+        )
+
     if sc is None:
         raise ValueError("Must provide a Scenario object!")
     mp2 = sc.platform
@@ -117,6 +123,7 @@ def report_iam_definition(
 
         # Making a dataframe for demands
         df_dmd = rep_dm.get(key).as_pandas()
+        # old code left, to be revised
         # df_dmd = df_dmd.drop(columns=["exclude"])
     else:
         df_dmd["model"] = sc.model
@@ -194,9 +201,11 @@ def report_iam_definition(
                 df.groupby(["model", "scenario", "variable", "subannual", "year"])
                 .apply(
                     lambda x: x.assign(
-                        region=x["reg2"]
-                        if len(x["reg2"].unique()) > len(x["reg1"].unique())
-                        else x["reg1"]
+                        region=(
+                            x["reg2"]
+                            if len(x["reg2"].unique()) > len(x["reg1"].unique())
+                            else x["reg1"]
+                        )
                     )
                 )
                 .reset_index(drop=True)
@@ -204,9 +213,9 @@ def report_iam_definition(
             # case of
             exeption = "in|water_supply_basin|freshwater_basin|basin_to_reg"
             df["region"] = df.apply(
-                lambda row: row["reg2"]
-                if exeption in row["variable"]
-                else row["region"],
+                lambda row: (
+                    row["reg2"] if exeption in row["variable"] else row["region"]
+                ),
                 axis=1,
             )
             df = df[
@@ -1349,6 +1358,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     report_iam.filter(variable=varsexclude, unit="unknown", keep=False, inplace=True)
     # prepare data for loading timeserie
     report_pd = report_iam.as_pandas()
+    # old code left, to be revised
     # report_pd = report_pd.drop(columns=["exclude"])
     # all initial variables form Reporte will be filtered out
     d = report_df.Variable.unique()
@@ -1381,6 +1391,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     df_unit = df_unit[~df_unit["variable"].str.contains("Investment")]
     df_unit_inv = df_unit_inv.as_pandas()
     report_pd = pd.concat([df_unit, df_unit_inv])
+    # old code left, to be revised
     # report_pd = report_pd.drop(columns=["exclude"])
     report_pd["unit"].replace("EJ", "EJ/yr", inplace=True)
     # for country model
