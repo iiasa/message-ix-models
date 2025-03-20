@@ -10,6 +10,8 @@ from message_ix_models.testing import GHA
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.tools.iea.web import (
     DIMS,
+    IEA_EWEB,
+    TRANSFORM,
     generate_code_lists,
     get_mapping,
     load_data,
@@ -37,6 +39,20 @@ def user_local_data(pytestconfig, request) -> "Generator":  # pragma: no cover
         source.unlink()
 
 
+_FLOW = [
+    "DOMESAIR",
+    "DOMESNAV",
+    "PIPELINE",
+    "RAIL",
+    "ROAD",
+    "TOTTRANS",
+    "TRNONSPE",
+    "WORLDAV",
+    "WORLDMAR",
+]
+
+
+@IEA_EWEB.transform.minimum_version
 class TestIEA_EWEB:
     # Uncomment the following line to use the full data files from a local copy
     # @pytest.mark.usefixtures("user_local_data")
@@ -48,21 +64,7 @@ class TestIEA_EWEB:
                 provider="OECD", edition="2021", product=["CHARCOAL"], flow=["RESIDENT"]
             ),
             # All flows related to transport
-            dict(
-                provider="OECD",
-                edition="2022",
-                flow=[
-                    "DOMESAIR",
-                    "DOMESNAV",
-                    "PIPELINE",
-                    "RAIL",
-                    "ROAD",
-                    "TOTTRANS",
-                    "TRNONSPE",
-                    "WORLDAV",
-                    "WORLDMAR",
-                ],
-            ),
+            dict(provider="OECD", edition="2022", flow=_FLOW),
             pytest.param(
                 dict(provider="IEA", edition="2023", extra_kw="FOO"),
                 marks=pytest.mark.xfail(raises=ValueError),
@@ -75,6 +77,13 @@ class TestIEA_EWEB:
                 ),
             ),
             dict(provider="IEA", edition="2024", transform="B", regions="R12"),
+            dict(
+                provider="IEA",
+                edition="2024",
+                flow=["AVBUNK"] + _FLOW,
+                transform=TRANSFORM.B | TRANSFORM.C,
+                regions="R12",
+            ),
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
@@ -99,6 +108,46 @@ class TestIEA_EWEB:
         n = source_kw.get("regions", "R14")
         assert {f"{n}_AFR", f"{n}_WEU"} < set(result.coords["n"].data)
         assert {1980, 2018} < set(result.coords["y"].data)
+
+
+class TestTRANSFORM:
+    def test_from_value(self) -> None:
+        assert TRANSFORM.from_value() is TRANSFORM.DEFAULT
+        assert TRANSFORM.from_value(None) is TRANSFORM.DEFAULT
+        assert TRANSFORM.from_value(TRANSFORM.DEFAULT) is TRANSFORM.DEFAULT
+        assert TRANSFORM.from_value("B") is TRANSFORM.B
+
+        with pytest.raises(KeyError):
+            TRANSFORM.from_value("D")
+
+    def test_is_valid(self, caplog) -> None:
+        with pytest.raises(ValueError):
+            (TRANSFORM["A"] | TRANSFORM["B"]).is_valid()
+
+        assert (TRANSFORM["A"] | TRANSFORM["B"]).is_valid(fail="log") is False
+        assert caplog.messages[-1].endswith("mutually exclusive")
+
+        assert (TRANSFORM["A"] | TRANSFORM["C"]).is_valid() is True
+        assert (TRANSFORM["B"] | TRANSFORM["C"]).is_valid() is True
+
+        assert TRANSFORM["C"].is_valid(fail="log") is False
+        assert " at least one of " in caplog.messages[-1]
+
+    def test_values(self) -> None:
+        """Test ordinary behaviours of enum.Flag."""
+        TRANSFORM["A"] == TRANSFORM.A == 1
+        TRANSFORM["B"] == TRANSFORM.B == 2
+        TRANSFORM["C"] == TRANSFORM.C == 4
+
+        v1 = TRANSFORM.A | TRANSFORM.C
+        assert TRANSFORM.A & v1
+        assert not TRANSFORM.B & v1
+        assert TRANSFORM.C & v1
+
+        v2 = TRANSFORM.C
+        assert not TRANSFORM.A & v2
+        assert not TRANSFORM.B & v2
+        assert TRANSFORM.C & v2
 
 
 # NB once there is a fuzzed version of the (IEA, 2023) data available, usage of this
