@@ -29,6 +29,39 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
 
 
+def fill_initial_years_from2050(df):
+    # Identify the year column dynamically
+    year_col = [col for col in df.columns if "year" in col.lower()]
+    if not year_col:
+        raise ValueError("No column related to 'year' found in dataframe.")
+
+    year_col = year_col[0]  # Use the first found year column
+
+    # Check if 2050 exists in the dataframe
+    if 2050 not in df[year_col].values:
+        raise ValueError("Missing 2050 values in the dataframe. Cannot proceed.")
+
+    # Get the 2050 data as a base for filling
+    df_2050 = df[df[year_col] == 2050].copy()
+
+    # Fill missing years (2020, 2025)
+    new_years = [2020, 2025]
+    new_rows = []
+
+    for y in new_years:
+        if y not in df[year_col].values:  # Only add if missing
+            df_y = df_2050.copy()
+            df_y[year_col] = y
+            new_rows.append(df_y)
+            print(f"Values added for: {y}")
+
+    # Concatenate new rows if there are any
+    if new_rows:
+        df = pd.concat([df] + new_rows, ignore_index=True)
+
+    return df
+
+
 def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020):
     """Add new hydro technologies to an existing scenrio
 
@@ -83,7 +116,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         "growth_new_capacity_lo",
         "initial_activity_up",
         "growth_activity_up",
-        # 'initial_activity_lo',
+        "initial_activity_lo",
         "growth_activity_lo",
         "relation_activity",
         "ref_new_capacity",
@@ -184,6 +217,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         # + [x for x in par_hydro if "initial_" in x]
         + [x for x in par_hydro if "growth_" in x]
         + ["historical_activity", "historical_new_capacity"]
+        + ["inv_cost", "initial_activity_lo"]
     )
     print("parameters treated individually", par_skip_new)
     # Looping for all regions
@@ -308,14 +342,18 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 if t == "capacity_factor":
                     df["value"] = 1  # capacity_factor = 1 for new hydro
                 # input part moved below
-                elif t == "initial_new_capacity_up":
+                elif t in ["initial_new_capacity_up", "initial_new_capacity_lo"]:
                     df["value"] = (
                         dfOrg["value"]
                         / CCsum
                         / float(CC["avgIC"].loc[CC["technology"] == i])
                     )
+                    df = fill_initial_years_from2050(df)
                     # df = df.loc[df.year_vtg <= fmy]
                     # Scale the original hydro_hc value (arbitrary)
+                elif t == "initial_activity_up":
+                    df = fill_initial_years_from2050(df)
+                    scenario.add_par("initial_activity_lo", df)
                 elif t == "relation_activity":
                     dfnew = deepcopy(df.set_index("relation"))
                     dfnew = dfnew.drop(
@@ -323,8 +361,6 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     ).reset_index()  # Remove hydro_pot relation
                     scenario.add_par(t, dfnew)
                     continue
-                elif t == "inv_cost":
-                    continue  # taken care of later for new tecs
                 scenario.add_par(t, df)
 
         # %% Param inputs (Part 2 of 3).
@@ -495,7 +531,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 df["value"] = 1 if (i in newtechnames) else -1
                 scenario.add_par("relation_activity", df)
 
-        for i in ["growth_activity_up"]:
+        for i in ["growth_activity_up", "growth_activity_lo"]:
             df = scenario.par(
                 i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
             )
@@ -510,7 +546,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
             df["technology"] = "hydro_2"
             scenario.add_par(i, df)
 
-        for i in ["growth_new_capacity_up"]:
+        for i in ["growth_new_capacity_up", "growth_new_capacity_lo"]:
             df = scenario.par(
                 i, {"technology": ["coal_ppl"], "node_loc": [focus_region]}
             )
