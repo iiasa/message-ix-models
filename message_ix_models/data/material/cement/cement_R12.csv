@@ -37,7 +37,7 @@ DUMMY_limestone_supply_cement,emission_factor,R12_RCPA,,,SO2,M1,kt/Mt,,0.9790000
 DUMMY_limestone_supply_cement,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,,0.000332,From China steel
 DUMMY_limestone_supply_cement,output,R12_RCPA,primary_material,limestone_cement,,M1,Mt,,1.0,From China steel
 grinding_ballmill_cement,input,R12_RCPA,final,electr,,M1,GWa/Mt,,0.006,"50% of 0.012 Gwa/Mt (=110kwh/t), based on 110 kWh/t from ETSAP IEA"
-grinding_ballmill_cement,input,R12_RCPA,tertiary_material,clinker_cement,,M1,Mt/Mt,,0.72,IEA (0.72)
+# grinding_ballmill_cement,input,R12_RCPA,tertiary_material,clinker_cement,,M1,Mt/Mt,,0.72,IEA (0.72)
 grinding_ballmill_cement,output,R12_RCPA,product,cement,,M1,Mt,,1.0,
 other_EOL_cement,output,R12_RCPA,demand,cement,,M1,Mt,,1.0,
 grinding_ballmill_cement,technical_lifetime,R12_RCPA,,,,,yr,,25.0,IEA ETSAP
@@ -45,7 +45,7 @@ grinding_ballmill_cement,capacity_factor,R12_RCPA,,,,,%,,0.8,Arbitrary
 grinding_ballmill_cement,inv_cost,R12_RCPA,,,,,MUSD/Mt,,65.75,
 grinding_ballmill_cement,fix_cost,R12_RCPA,,,,,MUSD/Mt,,0.072,
 grinding_vertmill_cement,input,R12_RCPA,final,electr,,M1,GWa/Mt,,0.0054,"50% of 0.012 Gwa/Mt * 90%, based on 110 kWh/t from ETSAP IEA and ADVANCE EE estimate"
-grinding_vertmill_cement,input,R12_RCPA,tertiary_material,clinker_cement,,M1,Mt/Mt,,0.72,IEA (0.72)
+# grinding_vertmill_cement,input,R12_RCPA,tertiary_material,clinker_cement,,M1,Mt/Mt,,0.72,IEA (0.72)
 grinding_vertmill_cement,output,R12_RCPA,product,cement,,M1,Mt,,1.0,
 other_EOL_cement,input,R12_RCPA,product,cement,,M1,Mt,,1.0,
 grinding_vertmill_cement,technical_lifetime,R12_RCPA,,,,,yr,,25.0,IEA ETSAP
