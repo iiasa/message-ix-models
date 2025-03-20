@@ -3,7 +3,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from message_ix_models.model.water.data import demands_pt3, demands_pt3_refactor_DSL
+from message_ix_models.model.water.data import demands_pt3 as demands_pt3_old
+from message_ix_models.model.water.data import demands_pt3 as demands_pt3_new
 
 # dummy context with minimal attributes
 class DummyContext(dict):
@@ -22,7 +23,7 @@ class DummyWaterBuildInfo:
 def dummy_context():
     # using the real csv file; ensure the region corresponds to a real data file
     build_info = DummyWaterBuildInfo(Y=[2010, 2015, 2020, 2030, 2040])
-    ctx = DummyContext(regions="R12", time="year", SDG="baseline", water_build_info=build_info)
+    ctx = DummyContext(regions="R12", time="year", SDG="sdg", water_build_info=build_info)
     return ctx
 
 def sort_and_reset(df: pd.DataFrame) -> pd.DataFrame:
@@ -34,9 +35,9 @@ def compare_dataframes(df1: pd.DataFrame, df2: pd.DataFrame):
 
 def test_parity(dummy_context):
     # run original implementation
-    out_old = demands_pt3.add_sectoral_demands(dummy_context)
+    out_old = demands_pt3_old.add_sectoral_demands(dummy_context)
     # run new dsl-based implementation
-    out_new = demands_pt3_refactor_DSL.add_sectoral_demands(dummy_context)
+    out_new = demands_pt3_new.add_sectoral_demands(dummy_context)
     # ensure both have same keys
     assert set(out_old.keys()) == set(out_new.keys())
     # compare corresponding dataframes

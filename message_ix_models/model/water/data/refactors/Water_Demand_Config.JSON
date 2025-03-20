@@ -1,0 +1,303 @@
+{
+  "metadata": {
+    "name": "water_sectoral_demands",
+    "description": "Configuration for water sectoral demand transformations",
+    "version": "1.0"
+  },
+  "data_sources": {
+    "base_path": "water/demands/harmonized/{region}/.",
+    "files": ["ssp2_regional_*.csv"],
+    "interpolation_years": [2015, 2025, 2035, 2045, 2055],
+    "subannual": {
+      "enabled": "{year_not_in_time}",
+      "path": "water/demands/harmonized/{region}/ssp2_m_water_demands.csv",
+      "replace_variables": [
+        "urban_withdrawal2_baseline",
+        "rural_withdrawal_baseline",
+        "manufacturing_withdrawal_baseline",
+        "manufacturing_return_baseline",
+        "urban_return2_baseline",
+        "rural_return_baseline"
+      ]
+    }
+  },
+  "components": {
+    "urban_withdrawal": {
+      "source_variable": "urban_withdrawal2_baseline",
+      "unit": "mcm/year"
+    },
+    "rural_withdrawal": {
+      "source_variable": "rural_withdrawal_baseline",
+      "unit": "mcm/year"
+    },
+    "manufacturing_withdrawal": {
+      "source_variable": "manufacturing_withdrawal_baseline",
+      "unit": "mcm/year"
+    },
+    "manufacturing_return": {
+      "source_variable": "manufacturing_return_baseline",
+      "unit": "mcm/year"
+    },
+    "urban_return": {
+      "source_variable": "urban_return2_baseline",
+      "unit": "mcm/year"
+    },
+    "rural_return": {
+      "source_variable": "rural_return_baseline",
+      "unit": "mcm/year"
+    },
+    "urban_connection_rate": {
+      "source_variable": "urban_connection_rate_baseline",
+      "unit": "fraction"
+    },
+    "rural_connection_rate": {
+      "source_variable": "rural_connection_rate_baseline",
+      "unit": "fraction"
+    },
+    "urban_treatment_rate": {
+      "source_variable": "urban_treatment_rate_baseline",
+      "unit": "fraction"
+    },
+    "rural_treatment_rate": {
+      "source_variable": "rural_treatment_rate_baseline",
+      "unit": "fraction"
+    },
+    "recycling": {
+      "source_variable": "urban_recycling_rate_baseline",
+      "unit": "fraction"
+    }
+  },
+  "policy_adjustments": {
+    "sdg": {
+      "urban_treatment_rate": {
+        "method": "target_rate",
+        "target": 0.95
+      },
+      "rural_treatment_rate": {
+        "method": "target_rate",
+        "target": 0.8
+      },
+      "urban_connection_rate": {
+        "method": "target_rate",
+        "target": 0.99
+      },
+      "rural_connection_rate": {
+        "method": "target_rate",
+        "target": 0.8
+      },
+      "recycling": {
+        "method": "target_rate",
+        "target": "treatment"
+      }
+    }
+  },
+  "transformations": [
+    {
+      "id": "urban_connected_demand",
+      "description": "urban water demand for connected population",
+      "inputs": ["urban_withdrawal", "urban_connection_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": "urban_connection_rate"}
+        ]
+      },
+      "output": {
+        "commodity": "urban_mw",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "urban_disconnected_demand",
+      "description": "urban water demand for disconnected population",
+      "inputs": ["urban_withdrawal", "urban_connection_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": {"value": 1, "subtract": "urban_connection_rate"}}
+        ]
+      },
+      "output": {
+        "commodity": "urban_disconnected",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "rural_connected_demand",
+      "description": "rural water demand for connected population",
+      "inputs": ["rural_withdrawal", "rural_connection_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": "rural_connection_rate"}
+        ]
+      },
+      "output": {
+        "commodity": "rural_mw",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "rural_disconnected_demand",
+      "description": "rural water demand for disconnected population",
+      "inputs": ["rural_withdrawal", "rural_connection_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": {"value": 1, "subtract": "rural_connection_rate"}}
+        ]
+      },
+      "output": {
+        "commodity": "rural_disconnected",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "manufacturing_demand",
+      "description": "manufacturing water demand",
+      "inputs": ["manufacturing_withdrawal"],
+      "operation": {
+        "type": "convert",
+        "steps": [
+          {"convert": "mcm_to_km3"}
+        ]
+      },
+      "output": {
+        "commodity": "industry_mw",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "manufacturing_return",
+      "description": "manufacturing water return flow",
+      "inputs": ["manufacturing_return"],
+      "operation": {
+        "type": "convert",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": -1}
+        ]
+      },
+      "output": {
+        "commodity": "industry_uncollected_wst",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "urban_collected_waste",
+      "description": "urban collected wastewater",
+      "inputs": ["urban_return", "urban_treatment_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": "urban_treatment_rate"},
+          {"multiply": -1}
+        ]
+      },
+      "output": {
+        "commodity": "urban_collected_wst",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "urban_uncollected_waste",
+      "description": "urban uncollected wastewater",
+      "inputs": ["urban_return", "urban_treatment_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": {"value": 1, "subtract": "urban_treatment_rate"}},
+          {"multiply": -1}
+        ]
+      },
+      "output": {
+        "commodity": "urban_uncollected_wst",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "rural_collected_waste",
+      "description": "rural collected wastewater",
+      "inputs": ["rural_return", "rural_treatment_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": "rural_treatment_rate"},
+          {"multiply": -1}
+        ]
+      },
+      "output": {
+        "commodity": "rural_collected_wst",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    },
+    {
+      "id": "rural_uncollected_waste",
+      "description": "rural uncollected wastewater",
+      "inputs": ["rural_return", "rural_treatment_rate"],
+      "operation": {
+        "type": "multiply",
+        "steps": [
+          {"convert": "mcm_to_km3"},
+          {"multiply": {"value": 1, "subtract": "rural_treatment_rate"}},
+          {"multiply": -1}
+        ]
+      },
+      "output": {
+        "commodity": "rural_uncollected_wst",
+        "level": "final",
+        "node_prefix": "B",
+        "unit": "km3/year"
+      }
+    }
+  ],
+  "historical_data": {
+    "years": [2010, 2015],
+    "capacity_year_threshold": 2015,
+    "commodity_map": {
+      "urban_mw": "urban_t_d",
+      "industry_mw": "industry_unconnected",
+      "rural_mw": "rural_t_d",
+      "urban_disconnected": "urban_unconnected",
+      "rural_disconnected": "rural_unconnected",
+      "urban_collected_wst": "urban_sewerage",
+      "rural_collected_wst": "rural_sewerage",
+      "urban_uncollected_wst": "urban_untreated",
+      "industry_uncollected_wst": "industry_untreated",
+      "rural_uncollected_wst": "rural_untreated"
+    }
+  },
+  "constraints": {
+    "recycling_share": {
+      "type": "share_commodity_lo",
+      "name": "share_wat_recycle",
+      "component": "recycling",
+      "node_prefix": "B"
+    }
+  }
+}
