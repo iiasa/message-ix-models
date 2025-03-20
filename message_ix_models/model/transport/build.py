@@ -150,9 +150,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.advance.data  # noqa: F401
     import message_ix_models.project.ssp.data  # noqa: F401
-    import message_ix_models.tools.iea.web  # noqa: F401
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
+    from message_ix_models.tools.iea.web import TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
@@ -187,13 +187,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
-    kw = dict(
-        provider="IEA",
-        edition="2024",
-        flow=(
-            "DOMESAIR DOMESNAV PIPELINE RAIL ROAD TOTTRANS TRNONSPE WORLDAV WORLDMAR"
-        ).split(),
-    )
+    kw = dict(provider="IEA", edition="2024", regions=context.model.regions)
+    if context.model.regions == "R12":
+        kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
     prepare_computer(context, c, "IEA_EWEB", source_kw=kw, strict=False)
 
     # Add IEA Future of Trucks data
