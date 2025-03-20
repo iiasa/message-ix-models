@@ -287,7 +287,7 @@ def multiply_electricity_output_of_hydro(
     return report_iam
 
 
-def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> None:
+def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame:
     """Add population with access to water and sanitation to the scenario
 
     Parameters
