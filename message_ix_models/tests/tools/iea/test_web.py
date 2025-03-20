@@ -1,12 +1,10 @@
 """Tests of :mod:`.tools`."""
 
-from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
 from genno import Computer
-from packaging.version import parse
 
 from message_ix_models.testing import GHA
 from message_ix_models.tools.exo_data import prepare_computer
@@ -20,13 +18,6 @@ from message_ix_models.util import HAS_MESSAGE_DATA
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-
-# Dask < 2024.4.1 is incompatible with Python >= 3.11.9, but we pin dask in this range
-# for tests of message_ix < 3.7.0. Skip these tests:
-MARK_DASK_PYTHON = pytest.mark.skipif(
-    condition=parse(version("message_ix")) < parse("3.7.0"),
-    reason="Pinned dask version and certain Python versions are incompatible",
-)
 
 
 @pytest.fixture
@@ -47,7 +38,6 @@ def user_local_data(pytestconfig, request) -> "Generator":  # pragma: no cover
 
 
 class TestIEA_EWEB:
-    @MARK_DASK_PYTHON
     # Uncomment the following line to use the full data files from a local copy
     # @pytest.mark.usefixtures("user_local_data")
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
@@ -128,7 +118,6 @@ PROVIDER_EDITION = (
 )
 
 
-@MARK_DASK_PYTHON
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_load_data(test_context, tmp_path, provider, edition):
     # # Store in the temporary directory for this test
@@ -146,7 +135,6 @@ def test_load_data(test_context, tmp_path, provider, edition):
     assert (set(DIMS) & {"Value"}) < set(result.columns)
 
 
-@MARK_DASK_PYTHON
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_generate_code_lists(tmp_path, provider, edition):
     # generate_code_lists() runs
