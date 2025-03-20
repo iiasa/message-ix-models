@@ -24,147 +24,6 @@ from message_ix_models.util import (
 )
 
 
-def gen_mock_demand_cement(scenario: message_ix.Scenario) -> pd.DataFrame:
-    s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
-    nodes.remove("World")
-
-    # 2019 production by country (USGS)
-    # p43 of https://pubs.usgs.gov/periodicals/mcs2020/mcs2020-cement.pdf
-
-    # For R12: China and CPA demand divided by 0.1 and 0.9.
-
-    # The order:
-    # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
-
-    if "R12_CHN" in nodes:
-        nodes.remove("R12_GLB")
-        sheet_n = "data_R12"
-        region_set = "R12_"
-
-        demand2020_top = [76, 229.5, 0, 57, 55, 60, 89, 54, 129, 320, 51, 2065.5]
-        # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
-        demand2020_rest = [
-            4100 * 0.051 - 76,
-            (4100 * 0.14 - 155) * 0.2 * 0.1,
-            4100 * 0.064 * 0.5,
-            4100 * 0.026 - 57,
-            4100 * 0.046 * 0.5 - 55,
-            (4100 * 0.14 - 155) * 0.2,
-            4100 * 0.046 * 0.5,
-            12,
-            4100 * 0.003,
-            (4100 * 0.14 - 155) * 0.6,
-            4100 * 0.064 * 0.5 - 51,
-            (4100 * 0.14 - 155) * 0.2 * 0.9,
-        ]
-    else:
-        nodes.remove("R11_GLB")
-        sheet_n = "data_R11"
-        region_set = "R11_"
-
-        demand2020_top = [76, 2295, 0, 57, 55, 60, 89, 54, 129, 320, 51]
-        # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
-        demand2020_rest = [
-            4100 * 0.051 - 76,
-            (4100 * 0.14 - 155) * 0.2,
-            4100 * 0.064 * 0.5,
-            4100 * 0.026 - 57,
-            4100 * 0.046 * 0.5 - 55,
-            (4100 * 0.14 - 155) * 0.2,
-            4100 * 0.046 * 0.5,
-            12,
-            4100 * 0.003,
-            (4100 * 0.14 - 155) * 0.6,
-            4100 * 0.064 * 0.5 - 51,
-        ]
-
-    # SSP2 R11 baseline GDP projection
-    gdp_growth = pd.read_excel(
-        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
-        sheet_name=sheet_n,
-    )
-
-    gdp_growth = gdp_growth.loc[
-        (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
-
-    d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
-    gdp_growth["Region"] = region_set + gdp_growth["Region"]
-
-    # # Regions setting for IMAGE
-    # region_cement = pd.read_excel(
-    #     package_data_path("material",  "CEMENT.BvR2010.xlsx"),
-    #     sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
-    #     .drop_duplicates().sort_values(by='Region #')
-    #
-    # region_cement = region_cement.loc[region_cement['Region #'] < 999]
-    # region_cement['node'] = \
-    #     ['R11_NAM', 'R11_NAM',
-    #      'R11_LAM', 'R11_LAM',
-    #      'R11_LAM', 'R11_LAM',
-    #      'R11_AFR', 'R11_AFR',
-    #      'R11_AFR', 'R11_AFR',
-    #      'R11_WEU', 'R11_EEU',
-    #      'R11_EEU', 'R11_FSU',
-    #      'R11_FSU', 'R11_FSU',
-    #      'R11_MEA', 'R11_SAS',
-    #      'R11_PAS', 'R11_CPA',
-    #      'R11_PAS', 'R11_PAS',
-    #      'R11_PAO', 'R11_PAO',
-    #      'R11_SAS', 'R11_AFR']
-    #
-    # # Cement demand 2010 [Mt/year] (IMAGE)
-    # demand2010_cement = pd.read_excel(
-    #     package_data_path("material",  "CEMENT.BvR2010.xlsx"),
-    #     sheet_name="Domestic Consumption", skiprows=range(0,3)).\
-    #     groupby(by=["Region #"]).sum()[[2010]].\
-    #     join(region_cement.set_index('Region #'), on='Region #').\
-    #     rename(columns={2010:'value'})
-    #
-    # demand2010_cement = demand2010_cement.groupby(by=['node']).sum().reset_index()
-    # demand2010_cement['value'] = demand2010_cement['value'] / 1e9 # kg to Mt
-
-    # Directly assigned countries from the table on p43
-
-    demand2020_cement = (
-        pd.DataFrame({"Region": nodes, "value": d})
-        .join(gdp_growth.set_index("Region"), on="Region")
-        .rename(columns={"Region": "node"})
-    )
-
-    # demand2010_cement = demand2010_cement.\
-    #    join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
-
-    demand2020_cement.iloc[:, 3:] = (
-        demand2020_cement.iloc[:, 3:]
-        .div(demand2020_cement[2020], axis=0)
-        .multiply(demand2020_cement["value"], axis=0)
-    )
-
-    # Do this if we have 2020 demand values for buildings
-    # sp = get_spec()
-    # if 'buildings' in sp['add'].set['technology']:
-    #     val = get_scen_mat_demand("cement",scenario) # Mt in 2020
-    #     print("Base year demand of {}:".format("cement"), val)
-    #     # demand2020_cement['value'] = demand2020_cement['value'] - val['value']
-    #     # Scale down all years' demand values by the 2020 ratio
-    #     demand2020_cement.iloc[:,3:] =  demand2020_cement.iloc[:,3:].\
-    #         multiply(demand2020_cement[2020]- val['value'], axis=0).\
-    #         div(demand2020_cement[2020], axis=0)
-    #     print("UPDATE {} demand for 2020!".format("cement"))
-    #
-    demand2020_cement = pd.melt(
-        demand2020_cement.drop(["value", "Scenario"], axis=1),
-        id_vars=["node"],
-        var_name="year",
-        value_name="value",
-    )
-
-    return demand2020_cement
-
-
 def gen_data_cement(
     scenario: message_ix.Scenario, dry_run: bool = False
 ) -> dict[str, pd.DataFrame]:
@@ -396,7 +255,10 @@ def gen_data_cement(
         ]
     )
     results = combine_df_dictionaries(
-        results, gen_grow_cap_up(s_info, ssp), read_furnace_2020_bound()
+        results,
+        gen_grow_cap_up(s_info, ssp),
+        read_furnace_2020_bound(),
+        gen_clinker_ratios(s_info),
     )
 
     reduced_pdict = {}
@@ -434,3 +296,46 @@ def gen_grow_cap_up(s_info, ssp):
 def read_furnace_2020_bound():
     df = pd.read_csv(package_data_path("material", "cement", "cement_bound_2020.csv"))
     return {"bound_activity_lo": df}
+
+
+def gen_clinker_ratios(s_info):
+    # 2020 ratios from
+    # https://www.sciencedirect.com/science/article/pii/S1750583624002238#bib0071
+    # Appendix B
+    reg_map = {
+        "R12_AFR": 0.75,
+        "R12_CHN": 0.65,
+        "R12_EEU": 0.82,
+        "R12_FSU": 0.85,
+        "R12_LAM": 0.71,
+        "R12_MEA": 0.8,
+        "R12_NAM": 0.87,
+        "R12_PAO": 0.83,
+        "R12_PAS": 0.78,
+        "R12_RCPA": 0.78,
+        "R12_SAS": 0.7,
+        "R12_WEU": 0.74,
+    }
+    df = make_df(
+        "input",
+        node_loc=reg_map.keys(),
+        node_origin=reg_map.keys(),
+        value=reg_map.values(),
+        commodity="clinker_cement",
+        level="tertiary_material",
+        mode="M1",
+        time="year",
+        time_origin="year",
+        unit="???",
+    )
+    df = (
+        df.pipe(
+            broadcast,
+            technology=["grinding_ballmill_cement", "grinding_vertmill_cement"],
+        )
+        .pipe(broadcast, year_act=s_info.Y)
+        .pipe(broadcast, year_vtg=s_info.yv_ya["year_vtg"].unique())
+    )
+    df = df[df["year_act"] >= df["year_vtg"]]
+    df = df[df["year_act"] - df["year_vtg"] < 25]
+    return {"input": df}

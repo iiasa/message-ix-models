@@ -236,7 +236,9 @@ def read_sector_data(
         sheet_n = sectname + "_R11"
 
     if filename.endswith(".csv"):
-        data_df = pd.read_csv(package_data_path("material", sectname, filename))
+        data_df = pd.read_csv(
+            package_data_path("material", sectname, filename), comment="#"
+        )
     else:
         data_df = pd.read_excel(
             package_data_path("material", sectname, ssp, filename),
