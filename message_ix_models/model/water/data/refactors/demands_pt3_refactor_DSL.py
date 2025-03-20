@@ -14,7 +14,8 @@ from message_ix_models.model.water.data.data_transformers import DSL_RULES, appl
 if TYPE_CHECKING:
     from message_ix_models import Context
 
-CONVERT_TO_MCM = True  # flag to convert km3/year to mcm/year
+CONVERT_TO_MCM = False
+  # flag to convert km3/year to mcm/year
 
 @minimum_version("message_ix 3.7")
 def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:

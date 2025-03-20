@@ -1,4 +1,3 @@
-
 import os
 import builtins
 from collections.abc import Sequence
@@ -13,6 +12,57 @@ from message_ix_models.util import broadcast, minimum_version, package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
+
+
+def _preprocess_demand_data(context: "Context") -> pd.DataFrame:
+    # read and clean raw demand data to standardized format
+    region = f"{context.regions}"
+    # get data path using package_data_path
+    path = package_data_path("water", "demands", "harmonized", region, ".")
+    # get the csv files matching format
+    list_of_csvs = list(path.glob("ssp2_regional_*.csv"))
+    fns = [os.path.splitext(os.path.basename(x))[0] for x in list_of_csvs]
+    fns = " ".join(fns).replace("ssp2_regional_", "").split()
+    d: dict[str, pd.DataFrame] = {}
+    for i in range(len(fns)):
+        d[fns[i]] = pd.read_csv(list_of_csvs[i])
+    dfs = {}
+    for key, df in d.items():
+        df.rename(columns={"Unnamed: 0": "year"}, inplace=True)
+        df.set_index("year", inplace=True)
+        dfs[key] = df
+    # combine dataframes using xarray and interpolate selected years
+    df_x = xr.Dataset(dfs).to_array()
+    df_x_interp = df_x.interp(year=[2015, 2025, 2035, 2045, 2055])
+    df_x_c = df_x.combine_first(df_x_interp)
+    df_f = df_x_c.to_dataframe("").unstack()
+    # stack to obtain standardized dataframe with columns year, node, variable, value
+    df_dmds = df_f.stack(future_stack=True).reset_index(level=0).reset_index()
+    df_dmds.columns = ["year", "node", "variable", "value"]
+    df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
+    df_dmds["time"] = "year"
+    # if sub-annual timesteps are used, merge with monthly data
+    if "year" not in context.time:
+        PATH = package_data_path("water", "demands", "harmonized", region, "ssp2_m_water_demands.csv")
+        df_m: pd.DataFrame = pd.read_csv(PATH)
+        df_m.value *= 30  # conversion from mcm/day to mcm/month
+        df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
+        df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
+        df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = "urbann_withdrawal2_baseline"
+        df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = "urbann_return2_baseline"
+        df_m = df_m[["year", "pid", "variable", "value", "month"]]
+        df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
+        # remove yearly parts before merging with monthly data
+        df_dmds = df_dmds[~df_dmds["variable"].isin([
+            "urban_withdrawal2_baseline",
+            "rural_withdrawal_baseline",
+            "manufacturing_withdrawal_baseline",
+            "manufacturing_return_baseline",
+            "urban_return2_baseline",
+            "rural_return_baseline",
+        ])]
+        df_dmds = pd.concat([df_dmds, df_m])
+    return df_dmds
 
 
 @minimum_version("message_ix 3.7")
@@ -31,168 +81,59 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         are data frames ready for :meth:`~.Scenario.add_par`.
     """
 
-    # define an empty dictionary
+    # add water sectoral demands
     results = {}
-
-    # Reference to the water configuration
     info = context["water build info"]
-
-    # defines path to read in demand data
-    region = f"{context.regions}"
     sub_time = context.time
-    #message_ix_models/data/
-    path = package_data_path("water", "demands", "harmonized", region, ".")
-    # make sure all of the csvs have format, otherwise it might not work
-    list_of_csvs = list(path.glob("ssp2_regional_*.csv"))
-    # define names for variables
-    fns = [os.path.splitext(os.path.basename(x))[0] for x in list_of_csvs]
-    fns = " ".join(fns).replace("ssp2_regional_", "").split()
-    # dictionary for reading csv files
-    d: dict[str, pd.DataFrame] = {}
 
-    for i in range(len(fns)):
-        d[fns[i]] = pd.read_csv(list_of_csvs[i])
-
-    # d is a dictionary that have ist of dataframes read in this folder
-    dfs = {}
-    for key, df in d.items():
-        df.rename(columns={"Unnamed: 0": "year"}, inplace=True)
-        df.set_index("year", inplace=True)
-        dfs[key] = df
-
-    # convert the dictionary of dataframes to xarray
-    df_x = xr.Dataset(dfs).to_array()
-    df_x_interp = df_x.interp(year=[2015, 2025, 2035, 2045, 2055])
-    df_x_c = df_x.combine_first(df_x_interp)
-    # Unstack xarray back to pandas dataframe
-    df_f = df_x_c.to_dataframe("").unstack()
-
-    # Format the dataframe to be compatible with message format
-    df_dmds = df_f.stack(future_stack=True).reset_index(level=0).reset_index()
-    df_dmds.columns = ["year", "node", "variable", "value"]
-    df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
-
-    df_dmds["time"] = "year"
-
-    # Write final interpolated values as csv
-    # df2_f.to_csv('final_interpolated_values.csv')
-
-    # if we are using sub-annual timesteps we replace the rural and municipal
-    # withdrawals and return flows with monthly data and also add industrial
-    if "year" not in context.time:
-        PATH = package_data_path(
-            "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
-        )
-        df_m: pd.DataFrame = pd.read_csv(PATH)
-        df_m.value *= 30  # from mcm/day to mcm/month
-        df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
-        df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
-        df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
-            "urbann_withdrawal2_baseline"
-        )
-        df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
-            "urbann_return2_baseline"
-        )
-        df_m = df_m[["year", "pid", "variable", "value", "month"]]
-        df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
-
-        # remove yearly parts from df_dms
-        df_dmds = df_dmds[
-            ~df_dmds["variable"].isin(
-                [
-                    "urban_withdrawal2_baseline",
-                    "rural_withdrawal_baseline",
-                    "manufacturing_withdrawal_baseline",
-                    "manufacturing_return_baseline",
-                    "urban_return2_baseline",
-                    "rural_return_baseline",
-                ]
-            )
-        ]
-        # attach the monthly demand
-        df_dmds = pd.concat([df_dmds, df_m])
+    # get standardized input data
+    df_dmds = _preprocess_demand_data(context)
 
     urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal2_baseline"]
     rual_withdrawal_df = df_dmds[df_dmds["variable"] == "rural_withdrawal_baseline"]
-    industrial_withdrawals_df = df_dmds[
-        df_dmds["variable"] == "manufacturing_withdrawal_baseline"
-    ]
-    industrial_return_df = df_dmds[
-        df_dmds["variable"] == "manufacturing_return_baseline"
-    ]
+    industrial_withdrawals_df = df_dmds[df_dmds["variable"] == "manufacturing_withdrawal_baseline"]
+    industrial_return_df = df_dmds[df_dmds["variable"] == "manufacturing_return_baseline"]
     urban_return_df = df_dmds[df_dmds["variable"] == "urban_return2_baseline"]
     urban_return_df.reset_index(drop=True, inplace=True)
     rural_return_df = df_dmds[df_dmds["variable"] == "rural_return_baseline"]
     rural_return_df.reset_index(drop=True, inplace=True)
-    urban_connection_rate_df = df_dmds[
-        df_dmds["variable"] == "urban_connection_rate_baseline"
-    ]
+    urban_connection_rate_df = df_dmds[df_dmds["variable"] == "urban_connection_rate_baseline"]
     urban_connection_rate_df.reset_index(drop=True, inplace=True)
-    rural_connection_rate_df = df_dmds[
-        df_dmds["variable"] == "rural_connection_rate_baseline"
-    ]
+    rural_connection_rate_df = df_dmds[df_dmds["variable"] == "rural_connection_rate_baseline"]
     rural_connection_rate_df.reset_index(drop=True, inplace=True)
 
-    urban_treatment_rate_df = df_dmds[
-        df_dmds["variable"] == "urban_treatment_rate_baseline"
-    ]
+    urban_treatment_rate_df = df_dmds[df_dmds["variable"] == "urban_treatment_rate_baseline"]
     urban_treatment_rate_df.reset_index(drop=True, inplace=True)
 
-    rural_treatment_rate_df = df_dmds[
-        df_dmds["variable"] == "rural_treatment_rate_baseline"
-    ]
+    rural_treatment_rate_df = df_dmds[df_dmds["variable"] == "rural_treatment_rate_baseline"]
     rural_treatment_rate_df.reset_index(drop=True, inplace=True)
 
     df_recycling = df_dmds[df_dmds["variable"] == "urban_recycling_rate_baseline"]
     df_recycling.reset_index(drop=True, inplace=True)
 
-    all_rates_base = pd.concat(
-        [
-            urban_connection_rate_df,
-            rural_connection_rate_df,
-            urban_treatment_rate_df,
-            rural_treatment_rate_df,
-            df_recycling,
-        ]
-    )
-
     if context.SDG != "baseline":
-        # only if SDG exactly equal to SDG, otherwise other policies are possible
         if context.SDG == "SDG":
-            # reading basin mapping to countries
             FILE2 = f"basins_country_{context.regions}.csv"
             PATH = package_data_path("water", "delineation", FILE2)
-
             df_basin = pd.read_csv(PATH)
-
-            # Applying 80% sanitation rate for rural sanitation
             rural_treatment_rate_df = rural_treatment_rate_df_sdg = target_rate(
                 rural_treatment_rate_df, df_basin, 0.8
             )
-            # Applying 95% sanitation rate for urban sanitation
             urban_treatment_rate_df = urban_treatment_rate_df_sdg = target_rate(
                 urban_treatment_rate_df, df_basin, 0.95
             )
-            # Applying 99% connection rate for urban infrastructure
             urban_connection_rate_df = urban_connection_rate_df_sdg = target_rate(
                 urban_connection_rate_df, df_basin, 0.99
             )
-            # Applying 80% connection rate for rural infrastructure
             rural_connection_rate_df = rural_connection_rate_df_sdg = target_rate(
                 rural_connection_rate_df, df_basin, 0.8
             )
-            # Applying sdg6 waste water treatment target
             df_recycling = df_recycling_sdg = target_rate_trt(df_recycling, df_basin)
-
         else:
             pol_scen = context.SDG
-
-            # check if data is there
-            check_dm = df_dmds[
-                df_dmds["variable"] == "urban_connection_rate_" + pol_scen
-            ]
+            check_dm = df_dmds[df_dmds["variable"] == "urban_connection_rate_" + pol_scen]
             if check_dm.empty:
-                raise ValueError(f"Policy data is missing for the {pol_scen} scenario.")
+                raise ValueError(f"policy data is missing for the {pol_scen} scenario.")
             urban_connection_rate_df = urban_connection_rate_df_sdg = df_dmds[
                 df_dmds["variable"] == "urban_connection_rate_" + pol_scen
             ]
@@ -201,22 +142,18 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 df_dmds["variable"] == "rural_connection_rate_" + pol_scen
             ]
             rural_connection_rate_df.reset_index(drop=True, inplace=True)
-
             urban_treatment_rate_df = urban_treatment_rate_df_sdg = df_dmds[
                 df_dmds["variable"] == "urban_treatment_rate_" + pol_scen
             ]
             urban_treatment_rate_df.reset_index(drop=True, inplace=True)
-
             rural_treatment_rate_df = rural_treatment_rate_df_sdg = df_dmds[
                 df_dmds["variable"] == "rural_treatment_rate_" + pol_scen
             ]
             rural_treatment_rate_df.reset_index(drop=True, inplace=True)
-
             df_recycling = df_recycling_sdg = df_dmds[
                 df_dmds["variable"] == "urban_recycling_rate_" + pol_scen
             ]
             df_recycling.reset_index(drop=True, inplace=True)
-
         all_rates_sdg = pd.concat(
             [
                 urban_connection_rate_df_sdg,
@@ -226,20 +163,21 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 df_recycling_sdg,
             ]
         )
-        all_rates_sdg["variable"] = [
-            x.replace("baseline", pol_scen) for x in all_rates_sdg["variable"]
-        ]
-        all_rates = pd.concat([all_rates_base, all_rates_sdg])
+        all_rates_sdg["variable"] = [x.replace("baseline", pol_scen) for x in all_rates_sdg["variable"]]
+        all_rates = pd.concat([pd.concat([
+            urban_connection_rate_df,
+            rural_connection_rate_df,
+            urban_treatment_rate_df,
+            rural_treatment_rate_df,
+            df_recycling,
+        ]), all_rates_sdg])
         save_path = package_data_path("water", "demands", "harmonized", context.regions)
-        # save all the rates for reporting purposes
         all_rates.to_csv(save_path / "all_rates_SSP2.csv", index=False)
 
     # urban water demand and return. 1e-3 from mcm to km3
     urban_mw = urban_withdrawal_df.reset_index(drop=True)
     urban_mw = urban_mw.merge(
-        urban_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        urban_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     urban_mw["value"] = (1e-3 * urban_mw["value"]) * urban_mw["rate"]
 
@@ -255,9 +193,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     )
     urban_dis = urban_withdrawal_df.reset_index(drop=True)
     urban_dis = urban_dis.merge(
-        urban_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        urban_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     urban_dis["value"] = (1e-3 * urban_dis["value"]) * (1 - urban_dis["rate"])
 
@@ -279,9 +215,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     # rural water demand and return
     rural_mw = rual_withdrawal_df.reset_index(drop=True)
     rural_mw = rural_mw.merge(
-        rural_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        rural_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     rural_mw["value"] = (1e-3 * rural_mw["value"]) * rural_mw["rate"]
 
@@ -303,9 +237,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     rural_dis = rual_withdrawal_df.reset_index(drop=True)
     rural_dis = rural_dis.merge(
-        rural_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        rural_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     rural_dis["value"] = (1e-3 * rural_dis["value"]) * (1 - rural_dis["rate"])
 
@@ -366,9 +298,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     urban_collected_wst = urban_return_df.reset_index(drop=True)
     urban_collected_wst = urban_collected_wst.merge(
-        urban_treatment_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        urban_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     urban_collected_wst["value"] = (
         1e-3 * urban_collected_wst["value"]
@@ -392,9 +322,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     rural_collected_wst = rural_return_df.reset_index(drop=True)
     rural_collected_wst = rural_collected_wst.merge(
-        rural_treatment_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        rural_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     rural_collected_wst["value"] = (
         1e-3 * rural_collected_wst["value"]
@@ -417,9 +345,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     )
     urban_uncollected_wst = urban_return_df.reset_index(drop=True)
     urban_uncollected_wst = urban_uncollected_wst.merge(
-        urban_treatment_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        urban_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     urban_uncollected_wst["value"] = (1e-3 * urban_uncollected_wst["value"]) * (
         1 - urban_uncollected_wst["rate"]
@@ -443,9 +369,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     rural_uncollected_wst = rural_return_df.reset_index(drop=True)
     rural_uncollected_wst = rural_uncollected_wst.merge(
-        rural_treatment_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
+        rural_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
     )
     rural_uncollected_wst["value"] = (1e-3 * rural_uncollected_wst["value"]) * (
         1 - rural_uncollected_wst["rate"]
@@ -549,55 +473,5 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
     results["share_commodity_lo"] = df_share_wat
-
-    # rel = make_df(
-    #     "relation_activity",
-    #     relation="recycle_rel",
-    #     node_rel="B" + df_recycling["node"],
-    #     year_rel=df_recycling["year"],
-    #     node_loc="B" + df_recycling["node"],
-    #     technology="urban_recycle",
-    #     year_act=df_recycling["year"],
-    #     mode="M1",
-    #     value=-df_recycling["value"],
-    #     unit="-",
-    # )
-
-    # rel = rel.append(
-    #     make_df(
-    #         "relation_activity",
-    #         relation="recycle_rel",
-    #         node_rel="B" + df_recycling["node"],
-    #         year_rel=df_recycling["year"],
-    #         node_loc="B" + df_recycling["node"],
-    #         technology="urban_sewerage",
-    #         year_act=df_recycling["year"],
-    #         mode="M1",
-    #         value=1,
-    #         unit="-",
-    #     )
-    # )
-
-    # results["relation_activity"] = rel
-
-    # rel_lo = make_df(
-    #     "relation_lower",
-    #     relation="recycle_rel",
-    #     node_rel="B" + df_recycling["node"],
-    #     value=0,
-    #     unit="-",
-    # ).pipe(broadcast, year_rel=info.Y)
-
-    # results["relation_lower"] = rel_lo
-
-    # rel_up = make_df(
-    #     "relation_upper",
-    #     relation="recycle_rel",
-    #     node_rel="B" + df_recycling["node"],
-    #     value=0,
-    #     unit="-",
-    # ).pipe(broadcast, year_rel=info.Y)
-
-    # results["relation_upper"] = rel_up
 
     return results
