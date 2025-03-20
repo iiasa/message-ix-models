@@ -39,6 +39,19 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+IEA_EWEB_FLOW = [
+    "AVBUNK",
+    "DOMESAIR",
+    "DOMESNAV",
+    "PIPELINE",
+    "RAIL",
+    "ROAD",
+    "TOTTRANS",
+    "TRNONSPE",
+    "WORLDAV",
+    "WORLDMAR",
+]
+
 
 class IEA_Future_of_Trucks(ExoDataSource):
     """Retrieve IEA “Future of Trucks” data.

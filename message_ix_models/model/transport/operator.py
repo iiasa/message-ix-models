@@ -638,6 +638,10 @@ def groups_iea_eweb(technologies: list[Code]) -> tuple[Groups, Groups, dict]:
     g1: Groups = dict(t={})
     g2: dict = dict(t=[], t_new=[])
 
+    def replace(value: str) -> str:
+        """Map original codes to codes derived with :func:`.web.transform_C`."""
+        return {"DOMESAIR": "_1", "TOTTRANS": "_2"}.get(value, value)
+
     # Add groups from base model commodity code list:
     # - IEA product list → MESSAGE commodity (e.g. "lightoil")
     # - IEA flow list → MESSAGE technology group (e.g. "transport")
@@ -645,12 +649,12 @@ def groups_iea_eweb(technologies: list[Code]) -> tuple[Groups, Groups, dict]:
         if products := c.eval_annotation(id="iea-eweb-product"):
             g0["product"][c.id] = products
         if flows := c.eval_annotation(id="iea-eweb-flow"):
-            g0["flow"][c.id] = flows
+            g0["flow"][c.id] = list(map(replace, flows))
 
     # Add groups from MESSAGEix-Transport technology code list
     for t in technologies:
-        if flows := t.eval_annotation(id="iea-eweb-flow"):
-            target = flows[0] if len(flows) == 1 else t.id
+        if flows := list(map(replace, t.eval_annotation(id="iea-eweb-flow") or [])):
+            target = flows[0] if len(flows) == 1 and flows != ["_1"] else t.id
 
             g0["flow"][target] = flows
 
