@@ -588,6 +588,17 @@ elasticity_f = _input_dataflow(
     units="dimensionless",
 )
 
+elasticity_p = _input_dataflow(
+    key="elasticity:scenario-n-y:P+exo",
+    id="elasticity_p",
+    path="elasticity-p",
+    name="‘Elasticity’ of PDT per capita with respect to GDP(PPP) per capita",
+    description="The code that handles this input data flow interpolates on the ‘year’ "
+    "dimension. The ‘node’ dimension is optional; if not provided, values are broadcast"
+    " across all existing nodes.",
+    units="dimensionless",
+)
+
 # NB This differs from fuel_emi_intensity in including (a) a 't[echnology]' dimension
 #    and (b) more and non-GHG species.
 emi_intensity = _input_dataflow(
@@ -740,16 +751,6 @@ pdt_cap_ref = _input_dataflow(
     description="In particular, this is the PDT per capita in the model base year, "
     "currently 2020",
     units="km / year",
-)
-
-pdt_elasticity = _input_dataflow(
-    key="elasticity:scenario-n-y:P+exo",
-    path="pdt-elasticity",
-    name="‘Elasticity’ of PDT per capita with respect to GDP(PPP) per capita",
-    description="The code that handles this input data flow interpolates on the ‘year’ "
-    "dimension. The ‘node’ dimension is optional; if not provided, values are broadcast"
-    " across all existing nodes.",
-    units="dimensionless",
 )
 
 pop_share_attitude = _input_dataflow(
