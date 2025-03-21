@@ -374,6 +374,7 @@ def dummy_supply(technologies: list["Code"], info, config) -> dict[str, pd.DataF
 
 
 def iter_files() -> Iterator[tuple[str, "Dataflow"]]:
+    """Iterate over all :class:`Dataflows <.Dataflow>` defined in this module."""
     other: set[Dataflow] = set(DATAFLOW.values())
 
     for name, df in globals().items():
@@ -579,6 +580,14 @@ demand_scale = _input_dataflow(
     units="dimensionless",
 )
 
+elasticity_f = _input_dataflow(
+    key="elasticity:scenario-n-y:F+exo",
+    id="elasticity_f",
+    path="elasticity-f",
+    name="‘Elasticity’ of freight activity with respect to GDP(PPP)",
+    units="dimensionless",
+)
+
 # NB This differs from fuel_emi_intensity in including (a) a 't[echnology]' dimension
 #    and (b) more and non-GHG species.
 emi_intensity = _input_dataflow(
@@ -734,8 +743,12 @@ pdt_cap_ref = _input_dataflow(
 )
 
 pdt_elasticity = _input_dataflow(
-    key="pdt elasticity:scenario-n-y:exo",
-    name="“Elasticity” of PDT-capita with respect to GDP",
+    key="elasticity:scenario-n-y:P+exo",
+    path="pdt-elasticity",
+    name="‘Elasticity’ of PDT per capita with respect to GDP(PPP) per capita",
+    description="The code that handles this input data flow interpolates on the ‘year’ "
+    "dimension. The ‘node’ dimension is optional; if not provided, values are broadcast"
+    " across all existing nodes.",
     units="dimensionless",
 )
 
