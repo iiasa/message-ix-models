@@ -257,6 +257,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         ContainsDataForParameters(
             {
                 "capacity_factor",
+                "demand",
                 "growth_activity_lo",
                 "growth_activity_up",
                 "growth_new_capacity_up",
@@ -268,6 +269,9 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
             }
         ),
         # HasCoords({"technology": ["f rail electr"]}),
+    ),
+    "transport::O+ixmp": (
+        ContainsDataForParameters({"bound_activity_lo", "bound_activity_up", "input"}),
     ),
     #
     # The following are intermediate checks formerly in .test_demand.test_exo
