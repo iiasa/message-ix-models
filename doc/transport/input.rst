@@ -119,6 +119,7 @@ Quick links to each of the data flows:
 :data:`~.data.class_ldv`
 :data:`~.data.disutility`
 :data:`~.data.demand_scale`
+:data:`~.data.elasticity_f`
 :data:`~.data.emi_intensity`
 :data:`~.data.energy_other`
 :data:`~.data.fuel_emi_intensity`
@@ -177,6 +178,7 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.class_ldv
 .. autodata:: message_ix_models.model.transport.data.disutility
 .. autodata:: message_ix_models.model.transport.data.demand_scale
+.. autodata:: message_ix_models.model.transport.data.elasticity_f
 
 .. _transport-input-emi-intensity:
 
