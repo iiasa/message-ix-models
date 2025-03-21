@@ -554,7 +554,7 @@ In particular, values up to 2015 (the final period before |y0|) are used for
 :py:`historical_new_capacity`. Values from |y0| onwards are used for
 :py:`bound_new_capacity_lo` and :py:`bound_new_capacity_up`.
 """,
-    units="MVehicle",
+    units="Mvehicle",
     required=False,
 )
 
@@ -628,7 +628,7 @@ ikarus_input = _input_dataflow(
     path=("ikarus", "input"),
     dims=("source", "t", "c", "y"),
     name="Input energy intensity of non-LDV transport technologies",
-    units="GJ / (100 vehicle km)",
+    units="GJ / (hectovehicle km)",
 )
 
 ikarus_inv_cost = _input_dataflow(
@@ -649,7 +649,7 @@ ikarus_var_cost = _input_dataflow(
     path=("ikarus", "var_cost"),
     dims=("source", "t", "c", "y"),
     name="Variable cost of non-LDV transport technologies",
-    units="EUR_2000 / (100 vehicle km)",
+    units="EUR_2000 / (hectovehicle km)",
 )
 
 input_adj_ldv = _input_dataflow(
