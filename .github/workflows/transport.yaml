@@ -26,12 +26,13 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-     "SSP1"
+      "SSP1",
+      "SSP5"
     ]
 
   # Currently disabled:
   # [
-  # 
+  #
   # ]
 
 on:
