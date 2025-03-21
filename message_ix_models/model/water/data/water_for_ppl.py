@@ -1,6 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -134,7 +135,7 @@ def shares(
 def apply_act_cap_multiplier(
     df: pd.DataFrame,
     hold_cost: pd.DataFrame,
-    cap_fact_parent: pd.DataFrame = None,
+    cap_fact_parent: Optional[pd.DataFrame] = None,
     param_name: str = "",
 ) -> pd.DataFrame:
     """
@@ -145,9 +146,11 @@ def apply_act_cap_multiplier(
     Parameters
     ----------
     df : pd.DataFrame
-        The input dataframe in long format, containing 'node_loc', 'technology', and 'value'.
+        The input dataframe in long format, containing 'node_loc', 'technology', and
+        'value'.
     hold_cost : pd.DataFrame
-        DataFrame with 'utype', region-specific multipliers (wide format), and 'technology'.
+        DataFrame with 'utype', region-specific multipliers (wide format), and
+        'technology'.
     cap_fact_parent : pd.DataFrame, optional
         DataFrame with capacity factors, used only if 'capacity' is in param_name.
     param_name : str, optional
@@ -178,7 +181,8 @@ def apply_act_cap_multiplier(
         df = df.merge(cap_fact_parent, how="left")
         df["value"] *= df["cap_fact"] * 1.2  # flexibility
         df.drop(columns="cap_fact", inplace=True)
-    # remove if there are Nan values, but write a log that inform on the parameter and the head of the data
+    # remove if there are Nan values, but write a log that inform on the parameter and
+    # the head of the data
     # Identify missing or invalid values
     missing_values = (
         df["value"].isna()
@@ -189,7 +193,8 @@ def apply_act_cap_multiplier(
     if missing_values.any():
         print("diobo")
         log.warning(
-            f"Missing or empty values found in {param_name}.head(1):\n{df[missing_values].head(1)}"
+            f"Missing or empty values found in {param_name}.head(1):\n"
+            f"{df[missing_values].head(1)}"
         )
         df = df[~missing_values]  # Remove rows with missing/empty values
 
@@ -653,7 +658,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     year_list = [2020, 2010, 2030, 2050, 2000, 2080, 1990]
 
     for year in year_list:
-        print(year)
+        log.debug(f"cool_tech() for year '{year}'")
         # Identify missing combinations in the current aggregate
         input_cool_2015_set = set(
             zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
@@ -692,8 +697,9 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     still_missing = input_cool_set - input_cool_2015_set
 
     if still_missing:
-        print(
-            f"Warning: Some combinations are still missing even after trying all years: {still_missing}"
+        log.warning(
+            f"Warning: Some combinations are still missing even after trying all "
+            f"years: {still_missing}"
         )
 
     # Filter out columns that contain 'mix' in column name
@@ -930,12 +936,11 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
             df_add["technology"] = df_add["technology"] + suffix
             df_param = pd.concat([df_param, df_add])
 
-        if param_name in multip_list:
-            df_param_share = apply_act_cap_multiplier(
-                df_param, hold_cost, cap_fact_parent, param_name
-            )
-        else:
-            df_param_share = df_param
+        df_param_share = (
+            apply_act_cap_multiplier(df_param, hold_cost, cap_fact_parent, param_name)
+            if param_name in multip_list
+            else df_param
+        )
 
         results[param_name] = pd.concat(
             [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
