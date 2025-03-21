@@ -31,6 +31,7 @@ h2_coal,medium,medium,high,medium,medium,medium
 h2_coal_ccs,medium,medium,high,medium,medium,medium
 h2_elec,high,medium,low,high,medium,medium
 h2_i,low,low,low,low,low,low
+h2_pyro,high,medium,low,medium,high,medium
 h2_smr,high,medium,low,medium,high,medium
 h2_smr_ccs,medium,medium,low,high,high,medium
 heat_i,low,low,low,low,low,low
