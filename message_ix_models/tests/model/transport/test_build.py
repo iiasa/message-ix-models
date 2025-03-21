@@ -9,7 +9,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import build, demand, key, ldv, report, structure
+from message_ix_models.model.transport import build, key, ldv, report, structure
 from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
 from message_ix_models.testing.check import (
@@ -280,15 +280,15 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
     "votm:n-y": (HasUnits(""),),
     key.price.base: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
-    demand.pdt_nyt + "0": (HasUnits("passenger km / year"),),
-    demand.pdt_nyt + "1": (HasUnits("passenger km / year"),),
-    demand.ldv_ny + "total": (HasUnits("Gp km / a"),),
+    key.pdt_nyt[0]: (HasUnits("passenger km / year"),),
+    key.pdt_nyt[1]: (HasUnits("passenger km / year"),),
+    key.ldv_ny + "total": (HasUnits("Gp km / a"),),
     # FIXME Handle dimensionality instead of exact units
     # demand.ldv_nycg: (HasUnits({"[length]": 1, "[passenger]": 1, "[time]": -1}),),
     "pdt factor:n-y-t": (HasUnits(""),),
     # "fv factor:n-y": (HasUnits(""),),  # Fails: this key no longer exists
     # "fv:n:advance": (HasUnits(""),),  # Fails: only fuzzed data in message-ix-models
-    demand.fv_cny: (HasUnits("Gt km"),),
+    key.fv_cny: (HasUnits("Gt km"),),
     #
     # Exogenous demand calculation succeeds
     "transport demand::ixmp": (
