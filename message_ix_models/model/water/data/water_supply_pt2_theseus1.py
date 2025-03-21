@@ -1,3 +1,24 @@
+"""Prepare data for water use for cooling & energy technologies."""
+
+import numpy as np
+import pandas as pd
+from message_ix import Scenario, make_df
+
+from message_ix_models import Context
+from message_ix_models.model.water.data.demands import read_water_availability
+from message_ix_models.model.water.utils import map_yv_ya_lt
+from message_ix_models.util import (
+    broadcast,
+    minimum_version,
+    package_data_path,
+    same_node,
+    same_time,
+)
+from message_ix_models.model.water.data.water_supply_rules import COOLING_SUPPLY_RULES, EXTRACTION_INPUT_RULES
+
+
+
+
 def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     """Add Water supply infrastructure
     This function links the water supply based on different settings and options.
@@ -32,6 +53,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear
+
+    # define mapping for freshwater supply based on a 50-year lifetime
+    yv_ya_sw = map_yv_ya_lt(year_wat, 50, first_year)
+    yv_ya_gw = map_yv_ya_lt(year_wat, 20, first_year)
 
     print(" future year = ", fut_year)
     print(" year_wat = ", year_wat)
@@ -70,71 +95,32 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     if context.nexus_set == "cooling":
-        # Add output df  for surfacewater supply for regions
-        output_df = (
-            make_df(
-                "output",
-                technology="extract_surfacewater",
-                value=1,
-                unit="km3",
-                year_vtg=year_wat,
-                year_act=year_wat,
-                level="water_supply",
-                commodity="freshwater",
-                mode="M1",
-                time="year",
-                time_dest="year",
-                time_origin="year",
+        # cooling branch using cooling supply rules
+        cooling_outputs = []
+        for rule in COOLING_SUPPLY_RULES:
+            r = rule.copy()
+            r["year_vtg"] = year_wat
+            r["year_act"] = year_wat
+            r.setdefault("broadcast", {})["node_loc"] = node_region
+            df_rule = make_df(
+                r["type"],
+                technology=r["technology"],
+                value=r["value"],
+                unit=r["unit"],
+                level=r["level"],
+                commodity=r["commodity"],
+                mode=r["mode"],
+                time=r.get("time"),
+                time_origin=r.get("time_origin"),
+                time_dest=r.get("time_dest"),
+                year_vtg=r.get("year_vtg"),
+                year_act=r.get("year_act"),
             )
-            .pipe(broadcast, node_loc=node_region)
-            .pipe(same_node)
-        )
-
-        # Add output df  for groundwater supply for regions
-        output_df = pd.concat(
-            [
-                output_df,
-                make_df(
-                    "output",
-                    technology="extract_groundwater",
-                    value=1,
-                    unit="km3",
-                    year_vtg=year_wat,
-                    year_act=year_wat,
-                    level="water_supply",
-                    commodity="freshwater",
-                    mode="M1",
-                    time="year",
-                    time_dest="year",
-                    time_origin="year",
-                )
-                .pipe(broadcast, node_loc=node_region)
-                .pipe(same_node),
-            ]
-        )
-        # Add output of saline water supply for regions
-        output_df = pd.concat(
-            [
-                output_df,
-                make_df(
-                    "output",
-                    technology="extract_salinewater",
-                    value=1,
-                    unit="km3",
-                    year_vtg=year_wat,
-                    year_act=year_wat,
-                    level="saline_supply",
-                    commodity="saline_ppl",
-                    mode="M1",
-                    time="year",
-                    time_dest="year",
-                    time_origin="year",
-                )
-                .pipe(broadcast, node_loc=node_region)
-                .pipe(same_node),
-            ]
-        )
-        results["output"] = output_df
+            if "broadcast" in r and r["broadcast"]:
+                df_rule = broadcast(df_rule, **r["broadcast"])
+            df_rule = same_node(df_rule)
+            cooling_outputs.append(df_rule)
+        results["output"] = pd.concat(cooling_outputs)
 
     elif context.nexus_set == "nexus":
         # input data frame  for slack technology balancing equality with demands
@@ -223,126 +209,40 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         #         node_loc=df_node["node"],
         #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
         # ])
-
         # input data frame  for freshwater supply
+
         yv_ya_sw = map_yv_ya_lt(year_wat, 50, first_year)
-
-        inp = pd.concat(
-            [
-                inp,
-                make_df(
-                    "input",
-                    technology="extract_surfacewater",
-                    value=1,
-                    unit="-",
-                    level="water_avail_basin",
-                    commodity="surfacewater_basin",
-                    mode="M1",
-                    node_origin=df_node["node"],
-                    node_loc=df_node["node"],
-                )
-                .pipe(
-                    broadcast,
-                    yv_ya_sw,
-                    time=pd.Series(sub_time),
-                )
-                .pipe(same_time),
-            ]
-        )
-
-        # input dataframe  for groundwater supply
         yv_ya_gw = map_yv_ya_lt(year_wat, 20, first_year)
-        inp = pd.concat(
-            [
-                inp,
-                make_df(
-                    "input",
-                    technology="extract_groundwater",
-                    value=1,
-                    unit="-",
-                    level="water_avail_basin",
-                    commodity="groundwater_basin",
-                    mode="M1",
-                    node_origin=df_node["node"],
-                    node_loc=df_node["node"],
-                )
-                .pipe(
-                    broadcast,
-                    yv_ya_gw,
-                    time=pd.Series(sub_time),
-                )
-                .pipe(same_time),
-            ]
-        )
-
-        # electricity input dataframe  for extract freshwater supply
-        # low: 0.001141553, mid: 0.018835616, high: 0.03652968
-        inp = pd.concat(
-            [
-                inp,
-                make_df(
-                    "input",
-                    technology="extract_surfacewater",
-                    value=0.018835616,
-                    unit="-",
-                    level="final",
-                    commodity="electr",
-                    mode="M1",
-                    time_origin="year",
-                    node_origin=df_node["region"],
-                    node_loc=df_node["node"],
-                ).pipe(
-                    broadcast,
-                    yv_ya_sw,
-                    time=pd.Series(sub_time),
-                ),
-            ]
-        )
-
-        inp = pd.concat(
-            [
-                inp,
-                make_df(
-                    "input",
-                    technology="extract_groundwater",
-                    value=df_gwt["GW_per_km3_per_year"] + 0.043464579,
-                    unit="-",
-                    level="final",
-                    commodity="electr",
-                    mode="M1",
-                    time_origin="year",
-                    node_origin=df_node["region"],
-                    node_loc=df_node["node"],
-                ).pipe(
-                    broadcast,
-                    yv_ya_gw,
-                    time=pd.Series(sub_time),
-                ),
-            ]
-        )
-
-        inp = pd.concat(
-            [
-                inp,
-                make_df(
-                    "input",
-                    technology="extract_gw_fossil",
-                    value=(df_gwt["GW_per_km3_per_year"] + 0.043464579)
-                    * 2,  # twice as much normal gw
-                    unit="-",
-                    level="final",
-                    commodity="electr",
-                    mode="M1",
-                    time_origin="year",
-                    node_origin=df_node["region"],
-                    node_loc=df_node["node"],
-                ).pipe(
-                    broadcast,
-                    yv_ya_gw,
-                    time=pd.Series(sub_time),
-                ),
-            ]
-        )
+        # apply dsl rules to build extraction input dataframes for water avail and electricity supply
+        extraction_inputs = []
+        for rule in EXTRACTION_INPUT_RULES:
+            r = rule.copy()
+            # if the value is a string expression, evaluate it in a context with df_gwt available
+            if isinstance(r["value"], str):
+                try:
+                    r["value"] = eval(r["value"], {}, {"df_gwt": df_gwt})
+                    if hasattr(r["value"], "astype"):
+                        r["value"] = r["value"].astype(float)
+                except Exception as e:
+                    raise ValueError(f"error evaluating rule {r['technology']} value expression: {e}")
+            broadcast_yr = yv_ya_sw if r["broadcast"]["yv_ya"] == "yv_ya_sw" else yv_ya_gw
+            df_rule = make_df(
+                r["type"],
+                technology=r["technology"],
+                value=r["value"],
+                unit=r["unit"],
+                level=r["level"],
+                commodity=r["commodity"],
+                mode=r["mode"],
+                time_origin=r.get("time_origin"),
+                node_origin=df_node["node"] if r.get("node_origin") == "node" else df_node["region"],
+                node_loc=df_node["node"] if r.get("node_loc") == "node" else df_node["node"]
+            )
+            df_rule = broadcast(df_rule, broadcast_yr, time=pd.Series(sub_time))
+            df_rule = same_time(df_rule)
+            extraction_inputs.append(df_rule)
+        inp = pd.concat([inp] + extraction_inputs)
+        inp["value"] = pd.to_numeric(inp["value"], errors="raise")
 
         if context.type_reg == "global":
             inp.loc[
@@ -632,3 +532,4 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         results["fix_cost"] = fix_cost
 
     return results
+

@@ -3,7 +3,7 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.water_supply import (
+from message_ix_models.model.water.data.water_supply_total_refactor import (
     add_e_flow,
     add_water_supply,
     map_basin_region_wat,
