@@ -50,9 +50,26 @@ cooling:
     - cooling__loil_cc
     - cooling__loil_ppl
     - cooling__nuc_hc
-    - cooling__solar_th_ppl
-    - cooling__csp_sm1_ppl
-    - cooling__csp_sm3_ppl
+    - cooling__nuc_lc
+    - cooling__csp_sm1_res
+    - cooling__csp_sm1_res1
+    - cooling__csp_sm1_res2
+    - cooling__csp_sm1_res3
+    - cooling__csp_sm1_res4
+    - cooling__csp_sm1_res5
+    - cooling__csp_sm1_res6
+    - cooling__csp_sm1_res7
+    - cooling__csp_sm1_res_hist_2010
+    - cooling__csp_sm1_res_hist_2015
+    - cooling__csp_sm1_res_hist_2020
+    - cooling__csp_sm3_res
+    - cooling__csp_sm3_res1
+    - cooling__csp_sm3_res2
+    - cooling__csp_sm3_res3
+    - cooling__csp_sm3_res4
+    - cooling__csp_sm3_res5
+    - cooling__csp_sm3_res6
+    - cooling__csp_sm3_res7
 
     add:
     - electr
@@ -94,109 +111,87 @@ cooling:
     - extract__saline_supply
     - bio_hpl__ot_fresh
     - bio_hpl__cl_fresh
-    - bio_hpl__cl_fresh
     - bio_hpl__ot_saline
     - bio_hpl__air
     - bio_istig__ot_fresh
-    - bio_istig__cl_fresh
     - bio_istig__cl_fresh
     - bio_istig__ot_saline
     - bio_istig__air
     - bio_istig_ccs__ot_fresh
     - bio_istig_ccs__cl_fresh
-    - bio_istig_ccs__cl_fresh
     - bio_istig_ccs__ot_saline
     - bio_istig_ccs__air
     - bio_ppl__ot_fresh
-    - bio_ppl__cl_fresh
     - bio_ppl__cl_fresh
     - bio_ppl__ot_saline
     - bio_ppl__air
     - coal_adv__ot_fresh
     - coal_adv__cl_fresh
-    - coal_adv__cl_fresh
     - coal_adv__ot_saline
     - coal_adv__air
     - coal_adv_ccs__ot_fresh
     - coal_adv_ccs__cl_fresh
-    - coal_adv_ccs__cl_fresh
     - coal_adv_ccs__ot_saline
     - coal_ppl__ot_fresh
-    - coal_ppl__cl_fresh
     - coal_ppl__cl_fresh
     - coal_ppl__ot_saline
     - coal_ppl__air
     - coal_ppl_u__ot_fresh
     - coal_ppl_u__cl_fresh
-    - coal_ppl_u__cl_fresh
     - coal_ppl_u__ot_saline
     - coal_ppl_u__air
     - foil_hpl__ot_fresh
-    - foil_hpl__cl_fresh
     - foil_hpl__cl_fresh
     - foil_hpl__ot_saline
     - foil_hpl__air
     - foil_ppl__ot_fresh
     - foil_ppl__cl_fresh
-    - foil_ppl__cl_fresh
     - foil_ppl__ot_saline
     - foil_ppl__air
     - gas_cc__ot_fresh
-    - gas_cc__cl_fresh
     - gas_cc__cl_fresh
     - gas_cc__ot_saline
     - gas_cc__air
     - gas_cc_ccs__ot_fresh
     - gas_cc_ccs__cl_fresh
-    - gas_cc_ccs__cl_fresh
     - gas_cc_ccs__ot_saline
     - gas_hpl__ot_fresh
-    - gas_hpl__cl_fresh
     - gas_hpl__cl_fresh
     - gas_hpl__ot_saline
     - gas_hpl__air
     - gas_ppl__ot_fresh
     - gas_ppl__cl_fresh
-    - gas_ppl__cl_fresh
     - gas_ppl__ot_saline
     - gas_ppl__air
     - geo_hpl__ot_fresh
-    - geo_hpl__cl_fresh
     - geo_hpl__cl_fresh
     - geo_hpl__ot_saline
     - geo_hpl__air
     - geo_ppl__ot_fresh
     - geo_ppl__cl_fresh
-    - geo_ppl__cl_fresh
     - geo_ppl__ot_saline
     - geo_ppl__air
     - igcc__ot_fresh
-    - igcc__cl_fresh
     - igcc__cl_fresh
     - igcc__ot_saline
     - igcc__air
     - igcc_ccs__ot_fresh
     - igcc_ccs__cl_fresh
-    - igcc_ccs__cl_fresh
     - igcc_ccs__ot_saline
     - loil_cc__ot_fresh
-    - loil_cc__cl_fresh
     - loil_cc__cl_fresh
     - loil_cc__ot_saline
     - loil_cc__air
     - loil_ppl__ot_fresh
     - loil_ppl__cl_fresh
-    - loil_ppl__cl_fresh
     - loil_ppl__ot_saline
     - loil_ppl__air
     - nuc_hc__ot_fresh
     - nuc_hc__cl_fresh
-    - nuc_hc__cl_fresh
     - nuc_hc__ot_saline
-    - solar_th_ppl__ot_fresh
-    - solar_th_ppl__cl_fresh
-    - solar_th_ppl__ot_saline
-    - solar_th_ppl__air
+    - nuc_lc__ot_fresh
+    - nuc_lc__cl_fresh
+    - nuc_lc__ot_saline
     - csp_sm1_res__ot_fresh
     - csp_sm1_res__cl_fresh
     - csp_sm1_res__ot_saline
@@ -229,6 +224,18 @@ cooling:
     - csp_sm1_res7__cl_fresh
     - csp_sm1_res7__ot_saline
     - csp_sm1_res7__air
+    - csp_sm1_res_hist_2010__ot_fresh
+    - csp_sm1_res_hist_2010__cl_fresh
+    - csp_sm1_res_hist_2010__ot_saline
+    - csp_sm1_res_hist_2010__air
+    - csp_sm1_res_hist_2015__ot_fresh
+    - csp_sm1_res_hist_2015__cl_fresh
+    - csp_sm1_res_hist_2015__ot_saline
+    - csp_sm1_res_hist_2015__air
+    - csp_sm1_res_hist_2020__ot_fresh
+    - csp_sm1_res_hist_2020__cl_fresh
+    - csp_sm1_res_hist_2020__ot_saline
+    - csp_sm1_res_hist_2020__air
     - csp_sm3_res__ot_fresh
     - csp_sm3_res__cl_fresh
     - csp_sm3_res__ot_saline
@@ -363,10 +370,10 @@ cooling:
     - nuc_hc__cl_fresh
     - nuc_hc__ot_saline
     - nuc_hc__air
-    - solar_th_ppl__ot_fresh
-    - solar_th_ppl__cl_fresh
-    - solar_th_ppl__ot_saline
-    - solar_th_ppl__air
+    - nuc_lc__ot_fresh
+    - nuc_lc__cl_fresh
+    - nuc_lc__ot_saline
+    - nuc_lc__air
     - csp_sm1_res__ot_fresh
     - csp_sm1_res__cl_fresh
     - csp_sm1_res__ot_saline
@@ -399,6 +406,18 @@ cooling:
     - csp_sm1_res7__cl_fresh
     - csp_sm1_res7__ot_saline
     - csp_sm1_res7__air
+    - csp_sm1_res_hist_2010__ot_fresh
+    - csp_sm1_res_hist_2010__cl_fresh
+    - csp_sm1_res_hist_2010__ot_saline
+    - csp_sm1_res_hist_2010__air
+    - csp_sm1_res_hist_2015__ot_fresh
+    - csp_sm1_res_hist_2015__cl_fresh
+    - csp_sm1_res_hist_2015__ot_saline
+    - csp_sm1_res_hist_2015__air
+    - csp_sm1_res_hist_2020__ot_fresh
+    - csp_sm1_res_hist_2020__cl_fresh
+    - csp_sm1_res_hist_2020__ot_saline
+    - csp_sm1_res_hist_2020__air
     - csp_sm3_res__ot_fresh
     - csp_sm3_res__cl_fresh
     - csp_sm3_res__ot_saline
@@ -457,7 +476,6 @@ cooling:
     - cooling__loil_ppl
     - cooling__nuc_hc
     - cooling__nuc_lc
-    - cooling__solar_th_ppl
     - cooling__csp_sm1_res
     - cooling__csp_sm1_res1
     - cooling__csp_sm1_res2
@@ -466,6 +484,9 @@ cooling:
     - cooling__csp_sm1_res5
     - cooling__csp_sm1_res6
     - cooling__csp_sm1_res7
+    - cooling__csp_sm1_res_hist_2010
+    - cooling__csp_sm1_res_hist_2015
+    - cooling__csp_sm1_res_hist_2020
     - cooling__csp_sm3_res
     - cooling__csp_sm3_res1
     - cooling__csp_sm3_res2
@@ -500,7 +521,6 @@ cooling:
     - [loil_ppl, cooling__loil_ppl]
     - [nuc_hc, cooling__nuc_hc]
     - [nuc_lc, cooling__nuc_lc]
-    # - [solar_th_ppl, cooling__solar_th_ppl]
     - [csp_sm1_res, cooling__csp_sm1_res]
     - [csp_sm1_res1, cooling__csp_sm1_res1]
     - [csp_sm1_res2, cooling__csp_sm1_res2]
@@ -509,6 +529,9 @@ cooling:
     - [csp_sm1_res5, cooling__csp_sm1_res5]
     - [csp_sm1_res6, cooling__csp_sm1_res6]
     - [csp_sm1_res7, cooling__csp_sm1_res7]
+    - [csp_sm1_res_hist_2010, cooling__csp_sm1_res_hist_2010]
+    - [csp_sm1_res_hist_2015, cooling__csp_sm1_res_hist_2015]
+    - [csp_sm1_res_hist_2020, cooling__csp_sm1_res_hist_2020]
     - [csp_sm3_res, cooling__csp_sm3_res]
     - [csp_sm3_res1, cooling__csp_sm3_res1]
     - [csp_sm3_res2, cooling__csp_sm3_res2]
@@ -610,10 +633,6 @@ cooling:
     - [cooling__nuc_lc, nuc_lc__cl_fresh]
     - [cooling__nuc_lc, nuc_lc__ot_saline]
     - [cooling__nuc_lc, nuc_lc__air]
-    - [cooling__solar_th_ppl, solar_th_ppl__ot_fresh]
-    - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
-    - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
-    - [cooling__solar_th_ppl, solar_th_ppl__air]
     - [cooling__csp_sm1_res, csp_sm1_res__ot_fresh]
     - [cooling__csp_sm1_res, csp_sm1_res__cl_fresh]
     - [cooling__csp_sm1_res, csp_sm1_res__ot_saline]
@@ -646,6 +665,18 @@ cooling:
     - [cooling__csp_sm1_res7, csp_sm1_res7__cl_fresh]
     - [cooling__csp_sm1_res7, csp_sm1_res7__ot_saline]
     - [cooling__csp_sm1_res7, csp_sm1_res7__air]
+    - [cooling__csp_sm1_res_hist_2010, csp_sm1_res_hist_2010__ot_fresh]
+    - [cooling__csp_sm1_res_hist_2010, csp_sm1_res_hist_2010__cl_fresh]
+    - [cooling__csp_sm1_res_hist_2010, csp_sm1_res_hist_2010__ot_saline]
+    - [cooling__csp_sm1_res_hist_2010, csp_sm1_res_hist_2010__air]
+    - [cooling__csp_sm1_res_hist_2015, csp_sm1_res_hist_2015__ot_fresh]
+    - [cooling__csp_sm1_res_hist_2015, csp_sm1_res_hist_2015__cl_fresh]
+    - [cooling__csp_sm1_res_hist_2015, csp_sm1_res_hist_2015__ot_saline]
+    - [cooling__csp_sm1_res_hist_2015, csp_sm1_res_hist_2015__air]
+    - [cooling__csp_sm1_res_hist_2020, csp_sm1_res_hist_2020__ot_fresh]
+    - [cooling__csp_sm1_res_hist_2020, csp_sm1_res_hist_2020__cl_fresh]
+    - [cooling__csp_sm1_res_hist_2020, csp_sm1_res_hist_2020__ot_saline]
+    - [cooling__csp_sm1_res_hist_2020, csp_sm1_res_hist_2020__air]
     - [cooling__csp_sm3_res, csp_sm3_res__ot_fresh]
     - [cooling__csp_sm3_res, csp_sm3_res__cl_fresh]
     - [cooling__csp_sm3_res, csp_sm3_res__ot_saline]
@@ -686,6 +717,171 @@ cooling:
     - share_cooling_cl_fresh
     - share_cooling_ot_saline
     - share_cooling_air
+    - share_calib_bio_hpl_cl_fresh
+    - share_calib_bio_hpl_ot_saline
+    - share_calib_bio_hpl_air
+    - share_calib_bio_hpl_ot_fresh
+    - share_calib_bio_istig_cl_fresh
+    - share_calib_bio_istig_ot_saline
+    - share_calib_bio_istig_air
+    - share_calib_bio_istig_ot_fresh
+    - share_calib_bio_istig_ccs_cl_fresh
+    - share_calib_bio_istig_ccs_ot_saline
+    - share_calib_bio_istig_ccs_air
+    - share_calib_bio_istig_ccs_ot_fresh
+    - share_calib_bio_ppl_cl_fresh
+    - share_calib_bio_ppl_ot_saline
+    - share_calib_bio_ppl_air
+    - share_calib_bio_ppl_ot_fresh
+    - share_calib_coal_adv_cl_fresh
+    - share_calib_coal_adv_ot_saline
+    - share_calib_coal_adv_air
+    - share_calib_coal_adv_ot_fresh
+    - share_calib_coal_adv_ccs_cl_fresh
+    - share_calib_coal_adv_ccs_ot_saline
+    - share_calib_coal_adv_ccs_air
+    - share_calib_coal_adv_ccs_ot_fresh
+    - share_calib_coal_ppl_cl_fresh
+    - share_calib_coal_ppl_ot_saline
+    - share_calib_coal_ppl_air
+    - share_calib_coal_ppl_ot_fresh
+    - share_calib_coal_ppl_u_cl_fresh
+    - share_calib_coal_ppl_u_ot_saline
+    - share_calib_coal_ppl_u_air
+    - share_calib_coal_ppl_u_ot_fresh
+    - share_calib_csp_sm1_res_cl_fresh
+    - share_calib_csp_sm1_res_ot_saline
+    - share_calib_csp_sm1_res_air
+    - share_calib_csp_sm1_res_ot_fresh
+    - share_calib_csp_sm1_res1_cl_fresh
+    - share_calib_csp_sm1_res1_ot_saline
+    - share_calib_csp_sm1_res1_air
+    - share_calib_csp_sm1_res1_ot_fresh
+    - share_calib_csp_sm1_res2_cl_fresh
+    - share_calib_csp_sm1_res2_ot_saline
+    - share_calib_csp_sm1_res2_air
+    - share_calib_csp_sm1_res2_ot_fresh
+    - share_calib_csp_sm1_res3_cl_fresh
+    - share_calib_csp_sm1_res3_ot_saline
+    - share_calib_csp_sm1_res3_air
+    - share_calib_csp_sm1_res3_ot_fresh
+    - share_calib_csp_sm1_res4_cl_fresh
+    - share_calib_csp_sm1_res4_ot_saline
+    - share_calib_csp_sm1_res4_air
+    - share_calib_csp_sm1_res4_ot_fresh
+    - share_calib_csp_sm1_res5_cl_fresh
+    - share_calib_csp_sm1_res5_ot_saline
+    - share_calib_csp_sm1_res5_air
+    - share_calib_csp_sm1_res5_ot_fresh
+    - share_calib_csp_sm1_res6_cl_fresh
+    - share_calib_csp_sm1_res6_ot_saline
+    - share_calib_csp_sm1_res6_air
+    - share_calib_csp_sm1_res6_ot_fresh
+    - share_calib_csp_sm1_res7_cl_fresh
+    - share_calib_csp_sm1_res7_ot_saline
+    - share_calib_csp_sm1_res7_air
+    - share_calib_csp_sm1_res7_ot_fresh
+    - share_calib_csp_sm1_res_hist_2010_cl_fresh
+    - share_calib_csp_sm1_res_hist_2010_ot_saline
+    - share_calib_csp_sm1_res_hist_2010_air
+    - share_calib_csp_sm1_res_hist_2010_ot_fresh
+    - share_calib_csp_sm1_res_hist_2015_cl_fresh
+    - share_calib_csp_sm1_res_hist_2015_ot_saline
+    - share_calib_csp_sm1_res_hist_2015_air
+    - share_calib_csp_sm1_res_hist_2015_ot_fresh
+    - share_calib_csp_sm1_res_hist_2020_cl_fresh
+    - share_calib_csp_sm1_res_hist_2020_ot_saline
+    - share_calib_csp_sm1_res_hist_2020_air
+    - share_calib_csp_sm1_res_hist_2020_ot_fresh
+    - share_calib_csp_sm3_res_cl_fresh
+    - share_calib_csp_sm3_res_ot_saline
+    - share_calib_csp_sm3_res_air
+    - share_calib_csp_sm3_res_ot_fresh
+    - share_calib_csp_sm3_res1_cl_fresh
+    - share_calib_csp_sm3_res1_ot_saline
+    - share_calib_csp_sm3_res1_air
+    - share_calib_csp_sm3_res1_ot_fresh
+    - share_calib_csp_sm3_res2_cl_fresh
+    - share_calib_csp_sm3_res2_ot_saline
+    - share_calib_csp_sm3_res2_air
+    - share_calib_csp_sm3_res2_ot_fresh
+    - share_calib_csp_sm3_res3_cl_fresh
+    - share_calib_csp_sm3_res3_ot_saline
+    - share_calib_csp_sm3_res3_air
+    - share_calib_csp_sm3_res3_ot_fresh
+    - share_calib_csp_sm3_res4_cl_fresh
+    - share_calib_csp_sm3_res4_ot_saline
+    - share_calib_csp_sm3_res4_air
+    - share_calib_csp_sm3_res4_ot_fresh
+    - share_calib_csp_sm3_res5_cl_fresh
+    - share_calib_csp_sm3_res5_ot_saline
+    - share_calib_csp_sm3_res5_air
+    - share_calib_csp_sm3_res5_ot_fresh
+    - share_calib_csp_sm3_res6_cl_fresh
+    - share_calib_csp_sm3_res6_ot_saline
+    - share_calib_csp_sm3_res6_air
+    - share_calib_csp_sm3_res6_ot_fresh
+    - share_calib_csp_sm3_res7_cl_fresh
+    - share_calib_csp_sm3_res7_ot_saline
+    - share_calib_csp_sm3_res7_air
+    - share_calib_csp_sm3_res7_ot_fresh
+    - share_calib_foil_hpl_cl_fresh
+    - share_calib_foil_hpl_ot_saline
+    - share_calib_foil_hpl_air
+    - share_calib_foil_hpl_ot_fresh
+    - share_calib_foil_ppl_cl_fresh
+    - share_calib_foil_ppl_ot_saline
+    - share_calib_foil_ppl_air
+    - share_calib_foil_ppl_ot_fresh
+    - share_calib_gas_cc_cl_fresh
+    - share_calib_gas_cc_ot_saline
+    - share_calib_gas_cc_air
+    - share_calib_gas_cc_ot_fresh
+    - share_calib_gas_cc_ccs_cl_fresh
+    - share_calib_gas_cc_ccs_ot_saline
+    - share_calib_gas_cc_ccs_air
+    - share_calib_gas_cc_ccs_ot_fresh
+    - share_calib_gas_hpl_cl_fresh
+    - share_calib_gas_hpl_ot_saline
+    - share_calib_gas_hpl_air
+    - share_calib_gas_hpl_ot_fresh
+    - share_calib_gas_ppl_cl_fresh
+    - share_calib_gas_ppl_ot_saline
+    - share_calib_gas_ppl_air
+    - share_calib_gas_ppl_ot_fresh
+    - share_calib_geo_hpl_cl_fresh
+    - share_calib_geo_hpl_ot_saline
+    - share_calib_geo_hpl_air
+    - share_calib_geo_hpl_ot_fresh
+    - share_calib_geo_ppl_cl_fresh
+    - share_calib_geo_ppl_ot_saline
+    - share_calib_geo_ppl_air
+    - share_calib_geo_ppl_ot_fresh
+    - share_calib_igcc_cl_fresh
+    - share_calib_igcc_ot_saline
+    - share_calib_igcc_air
+    - share_calib_igcc_ot_fresh
+    - share_calib_igcc_ccs_cl_fresh
+    - share_calib_igcc_ccs_ot_saline
+    - share_calib_igcc_ccs_air
+    - share_calib_igcc_ccs_ot_fresh
+    - share_calib_loil_cc_cl_fresh
+    - share_calib_loil_cc_ot_saline
+    - share_calib_loil_cc_air
+    - share_calib_loil_cc_ot_fresh
+    - share_calib_loil_ppl_cl_fresh
+    - share_calib_loil_ppl_ot_saline
+    - share_calib_loil_ppl_air
+    - share_calib_loil_ppl_ot_fresh
+    - share_calib_nuc_hc_cl_fresh
+    - share_calib_nuc_hc_ot_saline
+    - share_calib_nuc_hc_air
+    - share_calib_nuc_hc_ot_fresh
+    - share_calib_nuc_lc_cl_fresh
+    - share_calib_nuc_lc_ot_saline
+    - share_calib_nuc_lc_air
+    - share_calib_nuc_lc_ot_fresh
+
 
   type_tec:
     add:
@@ -697,10 +893,339 @@ cooling:
     - share_cooling_ot_saline_share
     - share_cooling_air_tot
     - share_cooling_air_share
+    - share_calib_bio_hpl_cl_fresh_tot
+    - share_calib_bio_hpl_cl_fresh_share
+    - share_calib_bio_hpl_ot_saline_tot
+    - share_calib_bio_hpl_ot_saline_share
+    - share_calib_bio_hpl_air_tot
+    - share_calib_bio_hpl_air_share
+    - share_calib_bio_hpl_ot_fresh_tot
+    - share_calib_bio_hpl_ot_fresh_share
+    - share_calib_bio_istig_cl_fresh_tot
+    - share_calib_bio_istig_cl_fresh_share
+    - share_calib_bio_istig_ot_saline_tot
+    - share_calib_bio_istig_ot_saline_share
+    - share_calib_bio_istig_air_tot
+    - share_calib_bio_istig_air_share
+    - share_calib_bio_istig_ot_fresh_tot
+    - share_calib_bio_istig_ot_fresh_share
+    - share_calib_bio_istig_ccs_cl_fresh_tot
+    - share_calib_bio_istig_ccs_cl_fresh_share
+    - share_calib_bio_istig_ccs_ot_saline_tot
+    - share_calib_bio_istig_ccs_ot_saline_share
+    - share_calib_bio_istig_ccs_air_tot
+    - share_calib_bio_istig_ccs_air_share
+    - share_calib_bio_istig_ccs_ot_fresh_tot
+    - share_calib_bio_istig_ccs_ot_fresh_share
+    - share_calib_bio_ppl_cl_fresh_tot
+    - share_calib_bio_ppl_cl_fresh_share
+    - share_calib_bio_ppl_ot_saline_tot
+    - share_calib_bio_ppl_ot_saline_share
+    - share_calib_bio_ppl_air_tot
+    - share_calib_bio_ppl_air_share
+    - share_calib_bio_ppl_ot_fresh_tot
+    - share_calib_bio_ppl_ot_fresh_share
+    - share_calib_coal_adv_cl_fresh_tot
+    - share_calib_coal_adv_cl_fresh_share
+    - share_calib_coal_adv_ot_saline_tot
+    - share_calib_coal_adv_ot_saline_share
+    - share_calib_coal_adv_air_tot
+    - share_calib_coal_adv_air_share
+    - share_calib_coal_adv_ot_fresh_tot
+    - share_calib_coal_adv_ot_fresh_share
+    - share_calib_coal_adv_ccs_cl_fresh_tot
+    - share_calib_coal_adv_ccs_cl_fresh_share
+    - share_calib_coal_adv_ccs_ot_saline_tot
+    - share_calib_coal_adv_ccs_ot_saline_share
+    - share_calib_coal_adv_ccs_air_tot
+    - share_calib_coal_adv_ccs_air_share
+    - share_calib_coal_adv_ccs_ot_fresh_tot
+    - share_calib_coal_adv_ccs_ot_fresh_share
+    - share_calib_coal_ppl_cl_fresh_tot
+    - share_calib_coal_ppl_cl_fresh_share
+    - share_calib_coal_ppl_ot_saline_tot
+    - share_calib_coal_ppl_ot_saline_share
+    - share_calib_coal_ppl_air_tot
+    - share_calib_coal_ppl_air_share
+    - share_calib_coal_ppl_ot_fresh_tot
+    - share_calib_coal_ppl_ot_fresh_share
+    - share_calib_coal_ppl_u_cl_fresh_tot
+    - share_calib_coal_ppl_u_cl_fresh_share
+    - share_calib_coal_ppl_u_ot_saline_tot
+    - share_calib_coal_ppl_u_ot_saline_share
+    - share_calib_coal_ppl_u_air_tot
+    - share_calib_coal_ppl_u_air_share
+    - share_calib_coal_ppl_u_ot_fresh_tot
+    - share_calib_coal_ppl_u_ot_fresh_share
+    - share_calib_csp_sm1_res_cl_fresh_tot
+    - share_calib_csp_sm1_res_cl_fresh_share
+    - share_calib_csp_sm1_res_ot_saline_tot
+    - share_calib_csp_sm1_res_ot_saline_share
+    - share_calib_csp_sm1_res_air_tot
+    - share_calib_csp_sm1_res_air_share
+    - share_calib_csp_sm1_res_ot_fresh_tot
+    - share_calib_csp_sm1_res_ot_fresh_share
+    - share_calib_csp_sm1_res1_cl_fresh_tot
+    - share_calib_csp_sm1_res1_cl_fresh_share
+    - share_calib_csp_sm1_res1_ot_saline_tot
+    - share_calib_csp_sm1_res1_ot_saline_share
+    - share_calib_csp_sm1_res1_air_tot
+    - share_calib_csp_sm1_res1_air_share
+    - share_calib_csp_sm1_res1_ot_fresh_tot
+    - share_calib_csp_sm1_res1_ot_fresh_share
+    - share_calib_csp_sm1_res2_cl_fresh_tot
+    - share_calib_csp_sm1_res2_cl_fresh_share
+    - share_calib_csp_sm1_res2_ot_saline_tot
+    - share_calib_csp_sm1_res2_ot_saline_share
+    - share_calib_csp_sm1_res2_air_tot
+    - share_calib_csp_sm1_res2_air_share
+    - share_calib_csp_sm1_res2_ot_fresh_tot
+    - share_calib_csp_sm1_res2_ot_fresh_share
+    - share_calib_csp_sm1_res3_cl_fresh_tot
+    - share_calib_csp_sm1_res3_cl_fresh_share
+    - share_calib_csp_sm1_res3_ot_saline_tot
+    - share_calib_csp_sm1_res3_ot_saline_share
+    - share_calib_csp_sm1_res3_air_tot
+    - share_calib_csp_sm1_res3_air_share
+    - share_calib_csp_sm1_res3_ot_fresh_tot
+    - share_calib_csp_sm1_res3_ot_fresh_share
+    - share_calib_csp_sm1_res4_cl_fresh_tot
+    - share_calib_csp_sm1_res4_cl_fresh_share
+    - share_calib_csp_sm1_res4_ot_saline_tot
+    - share_calib_csp_sm1_res4_ot_saline_share
+    - share_calib_csp_sm1_res4_air_tot
+    - share_calib_csp_sm1_res4_air_share
+    - share_calib_csp_sm1_res4_ot_fresh_tot
+    - share_calib_csp_sm1_res4_ot_fresh_share
+    - share_calib_csp_sm1_res5_cl_fresh_tot
+    - share_calib_csp_sm1_res5_cl_fresh_share
+    - share_calib_csp_sm1_res5_ot_saline_tot
+    - share_calib_csp_sm1_res5_ot_saline_share
+    - share_calib_csp_sm1_res5_air_tot
+    - share_calib_csp_sm1_res5_air_share
+    - share_calib_csp_sm1_res5_ot_fresh_tot
+    - share_calib_csp_sm1_res5_ot_fresh_share
+    - share_calib_csp_sm1_res6_cl_fresh_tot
+    - share_calib_csp_sm1_res6_cl_fresh_share
+    - share_calib_csp_sm1_res6_ot_saline_tot
+    - share_calib_csp_sm1_res6_ot_saline_share
+    - share_calib_csp_sm1_res6_air_tot
+    - share_calib_csp_sm1_res6_air_share
+    - share_calib_csp_sm1_res6_ot_fresh_tot
+    - share_calib_csp_sm1_res6_ot_fresh_share
+    - share_calib_csp_sm1_res7_cl_fresh_tot
+    - share_calib_csp_sm1_res7_cl_fresh_share
+    - share_calib_csp_sm1_res7_ot_saline_tot
+    - share_calib_csp_sm1_res7_ot_saline_share
+    - share_calib_csp_sm1_res7_air_tot
+    - share_calib_csp_sm1_res7_air_share
+    - share_calib_csp_sm1_res7_ot_fresh_tot
+    - share_calib_csp_sm1_res7_ot_fresh_share
+    - share_calib_csp_sm1_res_hist_2010_cl_fresh_tot
+    - share_calib_csp_sm1_res_hist_2010_cl_fresh_share
+    - share_calib_csp_sm1_res_hist_2010_ot_saline_tot
+    - share_calib_csp_sm1_res_hist_2010_ot_saline_share
+    - share_calib_csp_sm1_res_hist_2010_air_tot
+    - share_calib_csp_sm1_res_hist_2010_air_share
+    - share_calib_csp_sm1_res_hist_2010_ot_fresh_tot
+    - share_calib_csp_sm1_res_hist_2010_ot_fresh_share
+    - share_calib_csp_sm1_res_hist_2015_cl_fresh_tot
+    - share_calib_csp_sm1_res_hist_2015_cl_fresh_share
+    - share_calib_csp_sm1_res_hist_2015_ot_saline_tot
+    - share_calib_csp_sm1_res_hist_2015_ot_saline_share
+    - share_calib_csp_sm1_res_hist_2015_air_tot
+    - share_calib_csp_sm1_res_hist_2015_air_share
+    - share_calib_csp_sm1_res_hist_2015_ot_fresh_tot
+    - share_calib_csp_sm1_res_hist_2015_ot_fresh_share
+    - share_calib_csp_sm1_res_hist_2020_cl_fresh_tot
+    - share_calib_csp_sm1_res_hist_2020_cl_fresh_share
+    - share_calib_csp_sm1_res_hist_2020_ot_saline_tot
+    - share_calib_csp_sm1_res_hist_2020_ot_saline_share
+    - share_calib_csp_sm1_res_hist_2020_air_tot
+    - share_calib_csp_sm1_res_hist_2020_air_share
+    - share_calib_csp_sm1_res_hist_2020_ot_fresh_tot
+    - share_calib_csp_sm1_res_hist_2020_ot_fresh_share
+    - share_calib_csp_sm3_res_cl_fresh_tot
+    - share_calib_csp_sm3_res_cl_fresh_share
+    - share_calib_csp_sm3_res_ot_saline_tot
+    - share_calib_csp_sm3_res_ot_saline_share
+    - share_calib_csp_sm3_res_air_tot
+    - share_calib_csp_sm3_res_air_share
+    - share_calib_csp_sm3_res_ot_fresh_tot
+    - share_calib_csp_sm3_res_ot_fresh_share
+    - share_calib_csp_sm3_res1_cl_fresh_tot
+    - share_calib_csp_sm3_res1_cl_fresh_share
+    - share_calib_csp_sm3_res1_ot_saline_tot
+    - share_calib_csp_sm3_res1_ot_saline_share
+    - share_calib_csp_sm3_res1_air_tot
+    - share_calib_csp_sm3_res1_air_share
+    - share_calib_csp_sm3_res1_ot_fresh_tot
+    - share_calib_csp_sm3_res1_ot_fresh_share
+    - share_calib_csp_sm3_res2_cl_fresh_tot
+    - share_calib_csp_sm3_res2_cl_fresh_share
+    - share_calib_csp_sm3_res2_ot_saline_tot
+    - share_calib_csp_sm3_res2_ot_saline_share
+    - share_calib_csp_sm3_res2_air_tot
+    - share_calib_csp_sm3_res2_air_share
+    - share_calib_csp_sm3_res2_ot_fresh_tot
+    - share_calib_csp_sm3_res2_ot_fresh_share
+    - share_calib_csp_sm3_res3_cl_fresh_tot
+    - share_calib_csp_sm3_res3_cl_fresh_share
+    - share_calib_csp_sm3_res3_ot_saline_tot
+    - share_calib_csp_sm3_res3_ot_saline_share
+    - share_calib_csp_sm3_res3_air_tot
+    - share_calib_csp_sm3_res3_air_share
+    - share_calib_csp_sm3_res3_ot_fresh_tot
+    - share_calib_csp_sm3_res3_ot_fresh_share
+    - share_calib_csp_sm3_res4_cl_fresh_tot
+    - share_calib_csp_sm3_res4_cl_fresh_share
+    - share_calib_csp_sm3_res4_ot_saline_tot
+    - share_calib_csp_sm3_res4_ot_saline_share
+    - share_calib_csp_sm3_res4_air_tot
+    - share_calib_csp_sm3_res4_air_share
+    - share_calib_csp_sm3_res4_ot_fresh_tot
+    - share_calib_csp_sm3_res4_ot_fresh_share
+    - share_calib_csp_sm3_res5_cl_fresh_tot
+    - share_calib_csp_sm3_res5_cl_fresh_share
+    - share_calib_csp_sm3_res5_ot_saline_tot
+    - share_calib_csp_sm3_res5_ot_saline_share
+    - share_calib_csp_sm3_res5_air_tot
+    - share_calib_csp_sm3_res5_air_share
+    - share_calib_csp_sm3_res5_ot_fresh_tot
+    - share_calib_csp_sm3_res5_ot_fresh_share
+    - share_calib_csp_sm3_res6_cl_fresh_tot
+    - share_calib_csp_sm3_res6_cl_fresh_share
+    - share_calib_csp_sm3_res6_ot_saline_tot
+    - share_calib_csp_sm3_res6_ot_saline_share
+    - share_calib_csp_sm3_res6_air_tot
+    - share_calib_csp_sm3_res6_air_share
+    - share_calib_csp_sm3_res6_ot_fresh_tot
+    - share_calib_csp_sm3_res6_ot_fresh_share
+    - share_calib_csp_sm3_res7_cl_fresh_tot
+    - share_calib_csp_sm3_res7_cl_fresh_share
+    - share_calib_csp_sm3_res7_ot_saline_tot
+    - share_calib_csp_sm3_res7_ot_saline_share
+    - share_calib_csp_sm3_res7_air_tot
+    - share_calib_csp_sm3_res7_air_share
+    - share_calib_csp_sm3_res7_ot_fresh_tot
+    - share_calib_csp_sm3_res7_ot_fresh_share
+    - share_calib_foil_hpl_cl_fresh_tot
+    - share_calib_foil_hpl_cl_fresh_share
+    - share_calib_foil_hpl_ot_saline_tot
+    - share_calib_foil_hpl_ot_saline_share
+    - share_calib_foil_hpl_air_tot
+    - share_calib_foil_hpl_air_share
+    - share_calib_foil_hpl_ot_fresh_tot
+    - share_calib_foil_hpl_ot_fresh_share
+    - share_calib_foil_ppl_cl_fresh_tot
+    - share_calib_foil_ppl_cl_fresh_share
+    - share_calib_foil_ppl_ot_saline_tot
+    - share_calib_foil_ppl_ot_saline_share
+    - share_calib_foil_ppl_air_tot
+    - share_calib_foil_ppl_air_share
+    - share_calib_foil_ppl_ot_fresh_tot
+    - share_calib_foil_ppl_ot_fresh_share
+    - share_calib_gas_cc_cl_fresh_tot
+    - share_calib_gas_cc_cl_fresh_share
+    - share_calib_gas_cc_ot_saline_tot
+    - share_calib_gas_cc_ot_saline_share
+    - share_calib_gas_cc_air_tot
+    - share_calib_gas_cc_air_share
+    - share_calib_gas_cc_ot_fresh_tot
+    - share_calib_gas_cc_ot_fresh_share
+    - share_calib_gas_cc_ccs_cl_fresh_tot
+    - share_calib_gas_cc_ccs_cl_fresh_share
+    - share_calib_gas_cc_ccs_ot_saline_tot
+    - share_calib_gas_cc_ccs_ot_saline_share
+    - share_calib_gas_cc_ccs_air_tot
+    - share_calib_gas_cc_ccs_air_share
+    - share_calib_gas_cc_ccs_ot_fresh_tot
+    - share_calib_gas_cc_ccs_ot_fresh_share
+    - share_calib_gas_hpl_cl_fresh_tot
+    - share_calib_gas_hpl_cl_fresh_share
+    - share_calib_gas_hpl_ot_saline_tot
+    - share_calib_gas_hpl_ot_saline_share
+    - share_calib_gas_hpl_air_tot
+    - share_calib_gas_hpl_air_share
+    - share_calib_gas_hpl_ot_fresh_tot
+    - share_calib_gas_hpl_ot_fresh_share
+    - share_calib_gas_ppl_cl_fresh_tot
+    - share_calib_gas_ppl_cl_fresh_share
+    - share_calib_gas_ppl_ot_saline_tot
+    - share_calib_gas_ppl_ot_saline_share
+    - share_calib_gas_ppl_air_tot
+    - share_calib_gas_ppl_air_share
+    - share_calib_gas_ppl_ot_fresh_tot
+    - share_calib_gas_ppl_ot_fresh_share
+    - share_calib_geo_hpl_cl_fresh_tot
+    - share_calib_geo_hpl_cl_fresh_share
+    - share_calib_geo_hpl_ot_saline_tot
+    - share_calib_geo_hpl_ot_saline_share
+    - share_calib_geo_hpl_air_tot
+    - share_calib_geo_hpl_air_share
+    - share_calib_geo_hpl_ot_fresh_tot
+    - share_calib_geo_hpl_ot_fresh_share
+    - share_calib_geo_ppl_cl_fresh_tot
+    - share_calib_geo_ppl_cl_fresh_share
+    - share_calib_geo_ppl_ot_saline_tot
+    - share_calib_geo_ppl_ot_saline_share
+    - share_calib_geo_ppl_air_tot
+    - share_calib_geo_ppl_air_share
+    - share_calib_geo_ppl_ot_fresh_tot
+    - share_calib_geo_ppl_ot_fresh_share
+    - share_calib_igcc_cl_fresh_tot
+    - share_calib_igcc_cl_fresh_share
+    - share_calib_igcc_ot_saline_tot
+    - share_calib_igcc_ot_saline_share
+    - share_calib_igcc_air_tot
+    - share_calib_igcc_air_share
+    - share_calib_igcc_ot_fresh_tot
+    - share_calib_igcc_ot_fresh_share
+    - share_calib_igcc_ccs_cl_fresh_tot
+    - share_calib_igcc_ccs_cl_fresh_share
+    - share_calib_igcc_ccs_ot_saline_tot
+    - share_calib_igcc_ccs_ot_saline_share
+    - share_calib_igcc_ccs_air_tot
+    - share_calib_igcc_ccs_air_share
+    - share_calib_igcc_ccs_ot_fresh_tot
+    - share_calib_igcc_ccs_ot_fresh_share
+    - share_calib_loil_cc_cl_fresh_tot
+    - share_calib_loil_cc_cl_fresh_share
+    - share_calib_loil_cc_ot_saline_tot
+    - share_calib_loil_cc_ot_saline_share
+    - share_calib_loil_cc_air_tot
+    - share_calib_loil_cc_air_share
+    - share_calib_loil_cc_ot_fresh_tot
+    - share_calib_loil_cc_ot_fresh_share
+    - share_calib_loil_ppl_cl_fresh_tot
+    - share_calib_loil_ppl_cl_fresh_share
+    - share_calib_loil_ppl_ot_saline_tot
+    - share_calib_loil_ppl_ot_saline_share
+    - share_calib_loil_ppl_air_tot
+    - share_calib_loil_ppl_air_share
+    - share_calib_loil_ppl_ot_fresh_tot
+    - share_calib_loil_ppl_ot_fresh_share
+    - share_calib_nuc_hc_cl_fresh_tot
+    - share_calib_nuc_hc_cl_fresh_share
+    - share_calib_nuc_hc_ot_saline_tot
+    - share_calib_nuc_hc_ot_saline_share
+    - share_calib_nuc_hc_air_tot
+    - share_calib_nuc_hc_air_share
+    - share_calib_nuc_hc_ot_fresh_tot
+    - share_calib_nuc_hc_ot_fresh_share
+    - share_calib_nuc_lc_cl_fresh_tot
+    - share_calib_nuc_lc_cl_fresh_share
+    - share_calib_nuc_lc_ot_saline_tot
+    - share_calib_nuc_lc_ot_saline_share
+    - share_calib_nuc_lc_air_tot
+    - share_calib_nuc_lc_air_share
+    - share_calib_nuc_lc_ot_fresh_tot
+    - share_calib_nuc_lc_ot_fresh_share
 
   unit:
     add:
     - km3/GWa
+    - MCM/GWa
     - km3
     - km3/year
 

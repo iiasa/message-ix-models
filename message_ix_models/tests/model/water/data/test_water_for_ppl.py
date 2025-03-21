@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Optional
 
 import pandas as pd
 import pytest
@@ -8,10 +8,10 @@ from message_ix_models import ScenarioInfo, testing
 
 # from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.water_for_ppl import (
+    apply_act_cap_multiplier,
     cool_tech,
     cooling_shares_SSP_from_yaml,
     non_cooling_tec,
-    relax_growth_constraint,
 )
 
 
@@ -213,93 +213,55 @@ def test_non_cooling_tec(request, test_context):
     )
 
 
-# Mock function for scen.par
-class MockScenario:
-    def par(
-        self,
-        param: Literal["bound_activity_lo", "bound_new_capacity_lo"],
-        filters: dict,
-    ) -> pd.DataFrame:
-        year_type = "year_act" if param == "bound_activity_lo" else "year_vtg"
-
-        return pd.DataFrame(
-            {
-                "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
-                "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
-                year_type: [2030, 2040, 2050],
-                "value": [15, 150, 2000],
-            }
-        )
-
-
 @pytest.mark.parametrize(
-    "constraint_type, year_type",
-    [("activity", "year_act"), ("new_capacity", "year_vtg")],
+    "param_name, cap_fact_parent, expected_values",
+    [
+        (
+            "historical_activity",
+            None,
+            [100 * 0.5, 150 * 1.2],
+        ),  # Only apply hold_cost multipliers
+        (
+            "historical_new_capacity",
+            pd.DataFrame(
+                {
+                    "node_loc": ["R1", "R2"],
+                    "technology": ["TechA", "TechB"],
+                    "cap_fact": [0.9, 0.9],
+                }
+            ),
+            [100 * 0.5 * 0.9 * 1.2, 150 * 1.2 * 0.9 * 1.2],
+        ),  # Apply capacity factors
+    ],
 )
-def test_relax_growth_constraint(constraint_type, year_type):
-    # Sample data for g_lo
-    g_up = pd.DataFrame(
+def test_apply_act_cap_multiplier(
+    param_name: str,
+    cap_fact_parent: Optional[pd.DataFrame],
+    expected_values: list[float],
+) -> None:
+    # Dummy input data
+    df = pd.DataFrame(
         {
-            "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR", "R12_AFR"],
-            "technology": [
-                "coal_ppl__ot_fresh",
-                "coal_ppl__ot_fresh",
-                "coal_ppl__ot_fresh",
-                "gas_ppl__ot_fresh",
-            ],
-            "year_act": [2030, 2040, 2050, 2030],
-            "time": ["year", "year", "year", "year"],
-            "value": [-0.05, -0.05, -0.05, -0.05],
-            "unit": ["%", "%", "%", "%"],
+            "node_loc": ["R1", "R2"],
+            "technology": ["TechA", "TechB"],
+            "value": [100, 150],
         }
     )
 
-    # Sample data for ref_hist
-    ref_hist = pd.DataFrame(
+    hold_cost = pd.DataFrame(
         {
-            "node_loc": ["R12_AFR", "R12_AFR", "R12_AFR"],
-            "technology": ["coal_ppl", "coal_ppl", "coal_ppl"],
-            year_type: [2015, 2020, 2025],
-            "time": ["year", "year", "year"],
-            "value": [1, 2, 3],
-            "unit": ["GWa", "GWa", "GWa"],
+            "utype": ["Type1", "Type2"],
+            "technology": ["TechA", "TechB"],
+            "R1": [0.5, 0.8],
+            "R2": [1.0, 1.2],
         }
     )
 
-    # Sample data for cooling_df
-    cooling_df = pd.DataFrame(
-        {
-            "technology_name": [
-                "coal_ppl__ot_fresh",
-                "coal_ppl__ot_fresh",
-                "coal_ppl__ot_fresh",
-            ],
-            "parent_tech": ["coal_ppl", "coal_ppl", "coal_ppl"],
-        }
+    result = apply_act_cap_multiplier(df, hold_cost, cap_fact_parent, param_name)
+
+    assert result["value"].tolist() == expected_values, (
+        f"Failed for param_name: {param_name}"
     )
-
-    # Instantiate mock scenario
-    scen = MockScenario()
-
-    # Call the function with mock data
-    result = relax_growth_constraint(ref_hist, scen, cooling_df, g_up, constraint_type)
-    # reset_index to make the comparison easier
-    result = result.reset_index(drop=True)
-
-    # Expected result
-    expected_result = pd.DataFrame(
-        {
-            "node_loc": ["R12_AFR", "R12_AFR"],
-            "technology": ["coal_ppl__ot_fresh", "gas_ppl__ot_fresh"],
-            "year_act": [2050, 2030],
-            "time": ["year", "year"],
-            "value": [-0.05, -0.05],
-            "unit": ["%", "%"],
-        }
-    )
-
-    # Assert that the result matches the expected DataFrame
-    pd.testing.assert_frame_equal(result, expected_result)
 
 
 @pytest.mark.parametrize("SSP, regions", [("SSP2", "R11"), ("LED", "R12")])
