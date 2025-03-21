@@ -14,7 +14,11 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
-from message_ix_models.model.water.data.water_supply_rules import COOLING_SUPPLY_RULES, EXTRACTION_INPUT_RULES
+from message_ix_models.model.water.data.water_supply_rules import (
+    COOLING_SUPPLY_RULES, EXTRACTION_INPUT_RULES, 
+    TECHNICAL_LIFETIME_RULES, INVESTMENT_COST_RULES,
+    SHARE_MODE_RULES
+)
 
 
 
@@ -393,7 +397,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         output_df["year_act"] = output_df["year_vtg"]
 
         results["output"] = output_df
-
         # dummy variable cost for dummy water to energy technology
         var = make_df(
             "var_cost",
@@ -429,99 +432,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         # ])
         #                )
         results["var_cost"] = var
-
-        # load the share of sw
-        df_sw = map_basin_region_wat(context)
-
-        share = make_df(
-            "share_mode_up",
-            shares="share_basin",
-            technology="basin_to_reg",
-            mode=df_sw["mode"],
-            node_share=df_sw["MSGREG"],
-            time=df_sw["time"],
-            value=df_sw["share"],
-            unit="%",
-            year_act=df_sw["year"],
-        )
-
-        results["share_mode_up"] = share
-
-        tl = (
-            make_df(
-                "technical_lifetime",
-                technology="extract_surfacewater",
-                value=50,
-                unit="y",
-            )
-            .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
-            .pipe(same_node)
-        )
-
-        tl = pd.concat(
-            [
-                tl,
-                make_df(
-                    "technical_lifetime",
-                    technology="extract_groundwater",
-                    value=20,
-                    unit="y",
-                )
-                .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
-                .pipe(same_node),
-            ]
-        )
-
-        tl = pd.concat(
-            [
-                tl,
-                make_df(
-                    "technical_lifetime",
-                    technology="extract_gw_fossil",
-                    value=20,
-                    unit="y",
-                )
-                .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
-                .pipe(same_node),
-            ]
-        )
-
-        results["technical_lifetime"] = tl
-
-        # Prepare dataframe for investments
-        inv_cost = make_df(
-            "inv_cost",
-            technology="extract_surfacewater",
-            value=155.57,
-            unit="USD/km3",
-        ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
-
-        inv_cost = pd.concat(
-            [
-                inv_cost,
-                make_df(
-                    "inv_cost",
-                    technology="extract_groundwater",
-                    value=54.52,
-                    unit="USD/km3",
-                ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
-            ]
-        )
-
-        inv_cost = pd.concat(
-            [
-                inv_cost,
-                make_df(
-                    "inv_cost",
-                    technology="extract_gw_fossil",
-                    value=54.52 * 150,  # assume higher as normal GW
-                    unit="USD/km3",
-                ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
-            ]
-        )
-
-        results["inv_cost"] = inv_cost
-
         fix_cost = make_df(
             "fix_cost",
             technology="extract_gw_fossil",
@@ -530,6 +440,63 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         ).pipe(broadcast, yv_ya_gw, node_loc=df_node["node"])
 
         results["fix_cost"] = fix_cost
+
+        # incorporate share_mode_rules for linking basin and region water supply
+        df_sw = map_basin_region_wat(context)
+        share_outputs = []
+        for rule in SHARE_MODE_RULES:
+            r = rule.copy()
+            for field in ["mode", "node_share", "time", "value", "year_act"]:
+                if field in r and isinstance(r[field], str):
+                    try:
+                        # evaluate the field expression in the context where df_sw is available
+                        r[field] = eval(r[field], {}, {"df_sw": df_sw})
+                    except Exception as e:
+                        raise ValueError(f"error evaluating share_mode_up rule for field {field}: {e}")
+            share_df = make_df(
+                r["type"],
+                shares=r["shares"],
+                technology=r["technology"],
+                mode=r["mode"],
+                node_share=r["node_share"],
+                time=r["time"],
+                value=r["value"],
+                unit=r["unit"],
+                year_act=r["year_act"],
+            )
+            share_outputs.append(share_df)
+        results["share_mode_up"] = pd.concat(share_outputs)
+
+        # technical lifetime refactor using rules
+        tl_list = []
+        for rule in TECHNICAL_LIFETIME_RULES:
+            r = rule.copy()
+            df_rule = make_df(
+                r["type"],
+                technology=r["technology"],
+                value=r["value"],
+                unit=r["unit"],
+            )
+            if "broadcast" in r and r["broadcast"]:
+                df_rule = broadcast(df_rule, year_vtg=year_wat, node_loc=df_node["node"])
+            df_rule = same_node(df_rule)
+            tl_list.append(df_rule)
+        results["technical_lifetime"] = pd.concat(tl_list)
+
+        # refactored investment cost block using investment cost rules
+        inv_costs = []
+        for rule in INVESTMENT_COST_RULES:
+            r = rule.copy()
+            df_rule = make_df(
+                r["type"],
+                technology=r["technology"],
+                value=r["value"],
+                unit=r["unit"],
+            )
+            if "broadcast" in r and r["broadcast"]:
+                df_rule = broadcast(df_rule, year_vtg=year_wat, node_loc=df_node["node"])
+            inv_costs.append(df_rule)
+        results["inv_cost"] = pd.concat(inv_costs)
 
     return results
 
