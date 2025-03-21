@@ -119,6 +119,7 @@ Quick links to each of the data flows:
 :data:`~.data.class_ldv`
 :data:`~.data.disutility`
 :data:`~.data.demand_scale`
+:data:`~.data.elasticity_f`
 :data:`~.data.emi_intensity`
 :data:`~.data.energy_other`
 :data:`~.data.fuel_emi_intensity`
@@ -177,6 +178,14 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.class_ldv
 .. autodata:: message_ix_models.model.transport.data.disutility
 .. autodata:: message_ix_models.model.transport.data.demand_scale
+<<<<<<< HEAD
+=======
+.. autodata:: message_ix_models.model.transport.data.elasticity_f
+.. autodata:: message_ix_models.model.transport.data.elasticity_p
+
+   Codes on the ‘scenario’ dimension are partial URNs for codes in the :class:`.SSP_2024` code list.
+   Used via :func:`.pdt_per_capita`, which interpolates on the |y| dimension.
+>>>>>>> c43ad5eb8 (fixup! Add .transport.data.elasticity_f input data flow)
 
 .. _transport-input-emi-intensity:
 
