@@ -25,7 +25,7 @@ from message_ix_models.util import (
 )
 
 from .emission import ef_for_input
-from .key import exo
+from .key import exo, fv
 from .util import has_input_commodity
 
 if TYPE_CHECKING:
@@ -314,8 +314,6 @@ def constraint_data(
 
 def other(c: Computer, base: Key) -> list[Key]:
     """Generate MESSAGE parameter data for ``transport other *`` technologies."""
-    from .key import gdp_index
-
     # Keys
     assert {"c", "n"} == set(base.dims)
     bcast = Key("broadcast:c-t:other transport")
@@ -335,8 +333,8 @@ def other(c: Computer, base: Key) -> list[Key]:
     c.add(bcast, broadcast_other_transport, "t::transport")
     c.add(k_cnt, "mul", base, bcast)
 
-    # Project values across y using GDP PPP index
-    c.add(k_cnty[0], "mul", k_cnt, gdp_index)
+    # Project values across y using same trajectory as road freight activity
+    c.add(k_cnty[0], "mul", k_cnt, fv["ROAD index"])
     # Convert units to GWa
     c.add(k_cnty[1], "convert_units", k_cnty[0], quote("GWa"))
 
