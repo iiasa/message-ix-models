@@ -107,7 +107,7 @@ def share_map_cool(
     share_keys: list[str],
     type_tec_keys: list[str],
     regions_df: list[str],
-    commodity_mapping: dict[str, str],
+    commodity_mapping: dict[str, str] = None,
 ) -> pd.DataFrame:
     """
     Helper function to create the share mapping DataFrame for both 'tot' and 'share' levels.
