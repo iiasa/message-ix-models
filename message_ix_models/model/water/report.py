@@ -297,7 +297,8 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
     reg : str
         Region to add the population with access to water and sanitation
     sdgs : bool, optional
-        If True, add population with access to water and sanitation for SDG6, by default False
+        If True, add population with access to water and sanitation for SDG6, by default
+        False
     """
     # add population with sanitation or drinking water access
     mp2 = sc.platform

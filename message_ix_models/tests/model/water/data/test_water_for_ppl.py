@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Optional
 
 import pandas as pd
 import pytest
@@ -259,9 +259,9 @@ def test_apply_act_cap_multiplier(
 
     result = apply_act_cap_multiplier(df, hold_cost, cap_fact_parent, param_name)
 
-    assert (
-        result["value"].tolist() == expected_values
-    ), f"Failed for param_name: {param_name}"
+    assert result["value"].tolist() == expected_values, (
+        f"Failed for param_name: {param_name}"
+    )
 
 
 @pytest.mark.parametrize("SSP, regions", [("SSP2", "R11"), ("LED", "R12")])
