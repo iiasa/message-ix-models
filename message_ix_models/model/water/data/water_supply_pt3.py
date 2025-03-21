@@ -1,4 +1,14 @@
+"""Prepare data for water use for cooling & energy technologies."""
 
+import numpy as np
+import pandas as pd
+from message_ix import Scenario, make_df
+
+from message_ix_models import Context
+from message_ix_models.model.water.data.demands import read_water_availability
+from message_ix_models.util import (
+    package_data_path,
+)
 
 def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     """Add environmental flows
