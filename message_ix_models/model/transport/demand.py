@@ -198,7 +198,7 @@ def pdt_per_capita(c: "Computer") -> None:
     |y0| and (:attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_pdt`), which give a future
     “fixed point” towards which all regions converge.
 
-    Values from the file :file:`pdt-elasticity.csv` are selected according to
+    Values from the file :data:`.elasticity_p` are selected according to
     :attr:`.Config.ssp <.transport.config.Config.ssp>` and used to scale the difference
     between projected, log GDP in each future period and the log GDP in the reference
     year.
@@ -253,9 +253,9 @@ def pdt_per_capita(c: "Computer") -> None:
     # Compute slope of PDT w.r.t. GDP after transformation
     c.add("pdt slope:n", "div", pdt["delta"] / "y", gdp["delta"] / "y")
 
-    # Select 'elasticity' from "pdt elasticity:scenario-n:exo"
-    k_e = genno.Key(exo.pdt_elasticity.name, "ny")
-    c.add(k_e[0], "select", exo.pdt_elasticity, "indexers:scenario")
+    # Select 'elasticity' from "elasticity:scenario-n-y:P+exo"
+    k_e = genno.Key(exo.elasticity_p.name, "ny")
+    c.add(k_e[0], "select", exo.elasticity_p, "indexers:scenario")
 
     # Interpolate on "y" dimension
     c.add(k_e[1], "interpolate", k_e[0], "y::coords", **EXTRAPOLATE)
