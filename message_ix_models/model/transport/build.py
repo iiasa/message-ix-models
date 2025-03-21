@@ -315,6 +315,7 @@ def add_structure(c: Computer) -> None:
         :py:`("firstmodelyear", y0)`.
       - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`.
       - ``y0``: The first model period, :class:`int`.
+      - ``y::y0``: ``y0`` as an indexer.
 
     - All tasks from :data:`STRUCTURE_STATIC`.
     - ``c::transport``: the |c| set of the :attr:`~.Spec.add` member of
@@ -382,6 +383,7 @@ def add_structure(c: Computer) -> None:
         ),
         (key.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
+        ("y::y0", lambda v: dict(y=v[0]), "y::model"),
     ):
         try:
             c.add(*task, strict=True)
