@@ -662,6 +662,48 @@ class EnergyCmdty1(EnergyCmdty0):
             yield ggplot
 
 
+class Scale1Diff(Plot):
+    """scale-1 factor in y=2020; changes between 2 scenarios."""
+
+    basename = "scale-1-diff"
+
+    runs_on_solved_scenario = False
+    inputs = ["scale-1:nl-t-c-l-h:a", "scale-1:nl-t-c-l-h:b"]
+
+    _s, _v, _y = "scenario", "value", "t + ' ' + c"
+    static = Plot.static + [
+        p9.aes(x=_v, y=_y, yend=_y, group=_s, color=_s, shape=_s),
+        p9.facet_wrap("nl", scales="free_x"),
+        p9.geom_vline(p9.aes(xintercept=_v), pd.DataFrame([[1.0]], columns=[_v])),
+        p9.geom_point(),
+        p9.scale_shape(unfilled=True),
+        p9.scale_x_log10(),
+        p9.labs(x="", y="Mode × commodity"),
+    ]
+
+    def generate(self, data_a, data_b):
+        # Data for plotting points
+        df0 = (
+            pd.concat([data_a.assign(scenario="a"), data_b.assign(scenario="b")])
+            .drop(["l", "h", "unit"], axis=1)
+            .query("nl != 'R12_GLB'")
+        )
+        # Data for plotting segments/arrows
+        df1 = (
+            df0.pivot(columns="scenario", index=["nl", "t", "c"])
+            .set_axis(["value", "xend"], axis=1)
+            .reset_index()
+            .assign(scenario="diff")
+        )
+
+        return (
+            p9.ggplot(df0)
+            + p9.geom_segment(p9.aes(xend="xend"), df1, arrow=p9.arrow(length=0.03))
+            + self.static
+            + self.ggtitle()
+        )
+
+
 class Stock0(Plot):
     """LDV transport vehicle stock."""
 
