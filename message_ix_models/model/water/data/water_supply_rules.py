@@ -89,7 +89,7 @@ EXTRACTION_INPUT_RULES = [
     {
         "type": "input",
         "technology": "extract_groundwater",
-        "value": "df_gwt['GW_per_km3_per_year'] + 0.043464579",
+        "value": "df_gwt['GW_per_km3_per_year'] + 0.043464579", # string expression
         "unit": "-",
         "level": "final",
         "commodity": "electr",
@@ -114,3 +114,71 @@ EXTRACTION_INPUT_RULES = [
         # adjustment for global regions can be applied after this dsl processing
     },
 ]
+
+# new technical lifetime rules
+TECHNICAL_LIFETIME_RULES = [
+    {
+        "type": "technical_lifetime",
+        "technology": "extract_surfacewater",
+        "value": 50,
+        "unit": "y",
+        "broadcast": {"year_vtg": None, "node_loc": None},
+    },
+    {
+        "type": "technical_lifetime",
+        "technology": "extract_groundwater",
+        "value": 20,
+        "unit": "y",
+        "broadcast": {"year_vtg": None, "node_loc": None},
+    },
+    {
+        "type": "technical_lifetime",
+        "technology": "extract_gw_fossil",
+        "value": 20,
+        "unit": "y",
+        "broadcast": {"year_vtg": None, "node_loc": None},
+    },
+]
+
+# investment cost rules
+INVESTMENT_COST_RULES = [
+    {
+        "type": "inv_cost",
+        "technology": "extract_surfacewater",
+        "value": 155.57,
+        "unit": "USD/km3",
+        "broadcast": {"year_vtg": None, "node_loc": None},
+    },
+    {
+        "type": "inv_cost",
+        "technology": "extract_groundwater",
+        "value": 54.52,
+        "unit": "USD/km3",
+        "broadcast": {"year_vtg": None, "node_loc": None},
+    },
+    {
+        "type": "inv_cost",
+        "technology": "extract_gw_fossil",
+        "value": 54.52 * 150,
+        "unit": "USD/km3",
+        "broadcast": {"year_vtg": None, "node_loc": None},
+    },
+]
+
+# share mode rule to link basin and region water supply; uses mapped basin data from df_sw
+SHARE_MODE_RULES = [
+    {
+        "type": "share_mode_up",
+        "shares": "share_basin",
+        "technology": "basin_to_reg",
+        # dynamic fields; these string expressions will be evaluated in a context 
+        # where df_sw is the output of map_basin_region_wat(context)
+        "mode": "df_sw['mode']",
+        "node_share": "df_sw['MSGREG']",
+        "time": "df_sw['time']",
+        "value": "df_sw['share']",
+        "unit": "%",
+        "year_act": "df_sw['year']",
+    }
+]
+
