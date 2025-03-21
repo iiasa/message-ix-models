@@ -120,6 +120,7 @@ Quick links to each of the data flows:
 :data:`~.data.disutility`
 :data:`~.data.demand_scale`
 :data:`~.data.elasticity_f`
+:data:`~.data.elasticity_p`
 :data:`~.data.emi_intensity`
 :data:`~.data.energy_other`
 :data:`~.data.fuel_emi_intensity`
@@ -140,7 +141,6 @@ Quick links to each of the data flows:
 :data:`~.data.mode_share_freight`
 :data:`~.data.pdt_cap_proj`
 :data:`~.data.pdt_cap_ref`
-:data:`~.data.pdt_elasticity`
 :data:`~.data.pop_share_attitude`
 :data:`~.data.pop_share_cd_at`
 :data:`~.data.pop_share_driver`
@@ -179,6 +179,10 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.disutility
 .. autodata:: message_ix_models.model.transport.data.demand_scale
 .. autodata:: message_ix_models.model.transport.data.elasticity_f
+.. autodata:: message_ix_models.model.transport.data.elasticity_p
+
+   Codes on the ‘scenario’ dimension are partial URNs for codes in the :class:`.SSP_2024` code list.
+   Used via :func:`.pdt_per_capita`, which interpolates on the |y| dimension.
 
 .. _transport-input-emi-intensity:
 
@@ -237,11 +241,6 @@ Quick links to each of the data flows:
       Thus PDT/capita = 11848.9 / 1.4483
 
    .. [4] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
-
-.. autodata:: message_ix_models.model.transport.data.pdt_elasticity
-
-   Codes on the ‘scenario’ dimension are partial URNs for codes in the :class:`.SSP_2024` code list.
-   Used via :func:`.pdt_per_capita`, which interpolates on the |y| dimension.
 
 .. autodata:: message_ix_models.model.transport.data.pop_share_attitude
 .. autodata:: message_ix_models.model.transport.data.pop_share_cd_at
