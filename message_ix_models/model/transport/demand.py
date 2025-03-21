@@ -17,10 +17,7 @@ from .key import (
     cg,
     cost,
     exo,
-    fv,
-    fv_cny,
     gdp_cap,
-    gdp_index,
     gdp_ppp,
     ldv_cny,
     ldv_ny,
@@ -165,24 +162,6 @@ TASKS = [
     (ldv_ny + "total", "mul", ldv_ny + "ref", "ldv pdt factor:n-y"),
     # LDV PDT shared out by consumer group (cg, n, y)
     (ldv_nycg, "mul", ldv_ny + "total", cg),
-    #
-    # # Base freight activity from IEA EEI
-    # ("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
-    # Base year freight activity from file (n, t), with modes for the 't' dimension
-    ("fv:n-t:historical", "mul", exo.mode_share_freight, exo.activity_freight),
-    # …indexed to base-year values
-    (gdp_index, "index_to", gdp_ppp, literal("y"), "y0"),
-    (fv + "0", "mul", "fv:n-t:historical", gdp_index),
-    # Scenario-specific adjustment factor for freight activity
-    ("fv factor:n-t-y", "factor_fv", n, y, "config"),
-    # Apply the adjustment factor
-    (fv + "1", "mul", fv + "0", "fv factor:n-t-y"),
-    # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
-    ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["RAIL", "ROAD"]))),
-    # Relabel
-    ((fv_cny, "relabel2", fv + "2"), dict(new_dims={"c": "transport F {t}"})),
-    # Convert to ixmp format
-    (("demand::F+ixmp", "as_message_df", fv_cny), _DEMAND_KW),
     # Select only non-LDV PDT
     ((pdt_nyt + "1", "select", pdt_nyt), dict(indexers=dict(t=["LDV"]), inverse=True)),
     # Relabel PDT
@@ -205,7 +184,6 @@ TASKS = [
         "merge_data",
         "demand::LDV+ixmp",
         "demand::P+ixmp",
-        "demand::F+ixmp",
         "demand::dummy+ixmp",
     ),
 ]
