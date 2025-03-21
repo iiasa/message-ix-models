@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 import pandas as pd
 import pytest
