@@ -280,7 +280,6 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
     "population:n-y": (HasUnits("Mpassenger"),),
     "cg share:n-y-cg": (HasUnits(""),),
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
-    "GDP:n-y:PPP+capita+index": (HasUnits(""),),
     "votm:n-y": (HasUnits(""),),
     key.price.base: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),

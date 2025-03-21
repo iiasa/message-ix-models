@@ -5,12 +5,14 @@ from functools import partial
 from operator import itemgetter
 from typing import TYPE_CHECKING
 
+import genno
 import numpy as np
 import pandas as pd
 from genno import Key, literal
 from iam_units import registry
 from message_ix import make_df
 
+from message_ix_models.report.key import GDP
 from message_ix_models.util import (
     broadcast,
     convert_units,
@@ -21,8 +23,8 @@ from message_ix_models.util import (
 from message_ix_models.util.genno import Collector
 
 from .demand import _DEMAND_KW
-from .key import bcast_tcl, bcast_y, exo, fv, fv_cny, gdp_index, gdp_ppp, n, y
-from .util import has_input_commodity, wildcard
+from .key import bcast_tcl, bcast_y, exo, fv, fv_cny, n, y
+from .util import EXTRAPOLATE, has_input_commodity, wildcard
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -135,28 +137,70 @@ def demand(c: "Computer") -> None:
     """Prepare calculation of freight activity/``demand``."""
     # commented: Base freight activity from IEA EEI
     # c.add("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config")
-
     # Base year freight activity from file (n, t), with modes for the 't' dimension
     c.add("fv:n-t:historical", "mul", exo.mode_share_freight, exo.activity_freight)
+    c.add(fv["log y0"], np.log, "fv:n-t:historical")
 
-    # …indexed to base-year values
-    c.add(gdp_index, "index_to", gdp_ppp, literal("y"), "y0")
-    c.add(fv[0], "mul", "fv:n-t:historical", gdp_index)
+    ### Apply pseudo 'elasticity' of freight activity
+
+    # Log GDP(PPP). NB This is the total value, in contrast to
+    # .transport.demand.pdt_per_capita(), which manipulates per-capita values.
+    gdp = GDP + "F"
+    c.add(gdp["log"], np.log, GDP)
+
+    # Log GDP indexed to values at y=y0. By construction the values for y=y0 are 1.0.
+    c.add(gdp[0], "index_to", gdp["log"], literal("y"), "y0")
+
+    # Delta log GDP minus y=y0 value. By construction the values for y=y0 are 0.0.
+    c.add(gdp[1], "sub", gdp[0], genno.Quantity(1.0))
+
+    ### Prepare exo.elasticity_f
+    k_e = Key(exo.elasticity_f.name, "ny", "F")
+
+    # Broadcast elasticity to all scenarios
+    coords = ["scenario::all", "n::ex world"]
+    c.add(
+        k_e[0], "broadcast_wildcard", exo.elasticity_f, *coords, dim=("scenario", "n")
+    )
+
+    # Select values for the current scenario
+    c.add(k_e[1], "select", k_e[0], "indexers:scenario:LED")
+
+    # Interpolate on "y" dimension
+    c.add(k_e[2], "interpolate", k_e[1], "y::coords", **EXTRAPOLATE)
+
+    ###
+
+    # Adjust GDP by multiplying by 'elasticity'
+    c.add(gdp[2], "mul", gdp[1], k_e[2])
+
+    # Projected delta log freight activity is exactly the same
+    c.add(fv[0], gdp[2])
+
+    # Reverse the transformation
+    c.add(fv[1], "add", fv[0], genno.Quantity(1.0))
+    c.add(fv[2], "mul", fv[1], fv["log y0"])
+    c.add(fv[3], np.exp, fv[2])
 
     # (NAVIGATE) Scenario-specific adjustment factor for freight activity
     c.add("fv factor:n-t-y", "factor_fv", n, y, "config")
 
     # Apply the adjustment factor
-    c.add(fv[1], "mul", fv[0], "fv factor:n-t-y")
+    c.add(fv[4], "mul", fv[3], "fv factor:n-t-y")
 
-    # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
-    c.add(fv[2], "select", fv[1], indexers=dict(t=["RAIL", "ROAD"]))
+    # Select certain modes. NB Do not drop so 't' labels can be used for 'c', next.
+    c.add(fv[5], "select", fv[4], indexers=dict(t=["RAIL", "ROAD"]))
 
     # Relabel
-    c.add(fv_cny, "relabel2", fv[2], new_dims={"c": "transport F {t}"})
+    c.add(fv_cny, "relabel2", fv[5], new_dims={"c": "transport F {t}"})
 
     # Convert to ixmp format
     collect("demand", "as_message_df", fv_cny, **_DEMAND_KW)
+
+    # Compute indices, e.g. for use in .non_ldv.other()
+    for t in ["RAIL", "ROAD"]:
+        c.add(fv[5][t], "select", fv[5], indexers=dict(t=t))
+        c.add(fv[f"{t} index"], "index_to", fv[5][t], literal("y"), "y0")
 
 
 def prepare_computer(c: "Computer") -> None:
