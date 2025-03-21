@@ -22,6 +22,7 @@ from message_ix_models.util import (
     merge_data,
     same_node,
 )
+from message_ix_models.util.genno import Collector
 
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
@@ -56,7 +57,7 @@ DIMS = dict(
 COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
 
 #: Target key that collects all data generated in this module.
-TARGET = f"transport{Li}"
+TARGET = "transport::LDV+ixmp"
 
 
 @exo_data.register_source
@@ -86,14 +87,7 @@ class LDV(MaybeAdaptR11Source):
         self.key = Key(f"{self.measure}:n-t-y:LDV+exo")
 
 
-def _add(c: "Computer", _target_name: str, *args, **kwargs):
-    """Update `c` to merge ``_target_name::LDV+ixmp`` into :data:`TARGET`.
-
-    The `args` and `kwargs` are passed to :meth:`.Computer.add`.
-    """
-    key = f"{_target_name}{Li}"
-    c.add(key, *args, **kwargs)
-    c.graph[TARGET] = c.graph[TARGET] + (key,)
+collect = Collector(TARGET, "{}::LDV+ixmp".format)
 
 
 def prepare_computer(c: Computer):
@@ -112,6 +106,8 @@ def prepare_computer(c: Computer):
 
     from . import factor
 
+    collect.computer = c
+
     context = c.graph["context"]
     config: "Config" = context.transport
     info = config.base_model_info
@@ -123,10 +119,6 @@ def prepare_computer(c: Computer):
         factor_input=Key("input:t-y:LDV+factor"),
     )
     t_ldv = "t::transport LDV"
-
-    # Add a placeholder task to merge together all of the data prepared by this module.
-    # The helper function _add() above extends this with keys for the different pieces.
-    c.add(TARGET, "merge_data")
 
     # Use .tools.exo_data.prepare_computer() to add tasks that load, adapt, and select
     # the appropriate data
@@ -176,7 +168,7 @@ def prepare_computer(c: Computer):
     c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny)
 
     # Apply the function usage_data() for further processing
-    _add(c, "usage", usage_data, k.lf_ny, "cg", "n::ex world", t_ldv, "y::model")
+    collect("usage", usage_data, k.lf_ny, "cg", "n::ex world", t_ldv, "y::model")
 
     ### Technical lifetime
     tl, k_tl = "technical_lifetime", exo.lifetime_ldv
@@ -198,7 +190,7 @@ def prepare_computer(c: Computer):
 
     # Convert to MESSAGE data structure
     dims = dict(node_loc="nl", technology="t", year_vtg="yv")
-    _add(c, tl, "as_message_df", k_tl[3] / "scenario", name=tl, dims=dims, common={})
+    collect(tl, "as_message_df", k_tl[3] / "scenario", name=tl, dims=dims, common={})
 
     ### Capacity factor
     cf, k_cf_s = "capacity_factor", exo.activity_ldv
@@ -216,13 +208,13 @@ def prepare_computer(c: Computer):
     # Broadcast y → (yV, yA)
     prev = c.add(k_cf[5], "mul", prev, bcast_y.all)
     # Convert to MESSAGE data structure
-    _add(c, cf, "as_message_df", prev, name=cf, dims=DIMS, common=COMMON)
+    collect(cf, "as_message_df", prev, name=cf, dims=DIMS, common=COMMON)
 
     # Add further keys for MESSAGE-structured data
     # Techno-economic attributes
     # Select a task for the final step that computes "tech::LDV+ixmp"
     if config.dummy_LDV:
-        _add(c, "tech", get_dummy, "context")
+        collect("tech", get_dummy, "context")
     else:
         c.apply(
             prepare_tech_econ,
@@ -232,7 +224,7 @@ def prepare_computer(c: Computer):
         )
 
     # Constraints
-    _add(c, "constraints", constraint_data, "context")
+    collect("constraints", constraint_data, "context")
 
     # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
     if config.ldv_stock_method == "A":
@@ -253,7 +245,7 @@ def prepare_computer(c: Computer):
         )
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
         c.add(k.stock[1], "select", k.stock, indexers=dict(yv=y_historical))
-        _add(c, kw1["name"], "as_message_df", k.stock[1], **kw1)
+        collect(kw1["name"], "as_message_df", k.stock[1], **kw1)
 
         # CAP_NEW/bound_new_capacity_{lo,up}
         # - Select only data from y₀ and later.
@@ -271,7 +263,7 @@ def prepare_computer(c: Computer):
             inverse=True,
         )
         for kw1["name"] in map("bound_new_capacity_{}".format, ("lo", "up")):
-            _add(c, kw1["name"], "as_message_df", k.stock[3], **kw1)
+            collect(kw1["name"], "as_message_df", k.stock[3], **kw1)
 
     # Add the data to the target scenario
     c.add("transport_data", __name__, key=TARGET)
@@ -326,14 +318,14 @@ def prepare_tech_econ(
         c.add(k[2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
 
         # Convert to target units and append to `TARGET`
-        _add(c, par_name, convert_units, k[2], "transport info")
+        collect(par_name, convert_units, k[2], "transport info")
 
     ### Transform costs
     kw = dict(fill_value="extrapolate")
     for name, base in (("fix_cost", fix_cost), ("inv_cost", inv_cost)):
         prev = c.add(f"{name}::LDV+0", "interpolate", base, "y::coords", kwargs=kw)
         prev = c.add(f"{name}::LDV+1", "mul", prev, bcast_y.all)
-        _add(c, name, "as_message_df", prev, name=name, dims=DIMS, common=COMMON)
+        collect(name, "as_message_df", prev, name=name, dims=DIMS, common=COMMON)
 
     ### Compute CO₂ emissions factors
     # Extract the 'input' data frame
@@ -341,7 +333,7 @@ def prepare_tech_econ(
     c.add(other[0], itemgetter("input"), f"input{Li}")
 
     # Apply ef_for_input; append to `TARGET`
-    _add(c, "emission_factor", ef_for_input, "context", other[0], species="CO2")
+    collect("emission_factor", ef_for_input, "context", other[0], species="CO2")
 
 
 def get_dummy(context) -> "ParameterData":
