@@ -3,6 +3,7 @@
 import logging
 import re
 from collections.abc import Callable, Hashable, Mapping, Sequence
+from functools import reduce
 from itertools import filterfalse, product
 from typing import TYPE_CHECKING, Any, Optional, Union
 
@@ -25,6 +26,8 @@ if TYPE_CHECKING:
     from genno.types import AnyQuantity, TQuantity
     from sdmx.model.v21 import Code
 
+    from message_ix_models.types import ParameterData
+
     class SupportsLessThan(Protocol):
         def __lt__(self, __other: Any) -> bool: ...
 
@@ -42,6 +45,7 @@ __all__ = [
     "get_ts",
     "gwp_factors",
     "make_output_path",
+    "merge_data",
     "model_periods",
     "nodes_ex_world",
     "quantity_from_iamc",
@@ -217,6 +221,18 @@ def gwp_factors() -> "AnyQuantity":
 def make_output_path(config: Mapping, name: Union[str, "Path"]) -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
     return config["output_dir"].joinpath(name)
+
+
+def merge_data(*others: "ParameterData") -> "ParameterData":
+    """Alternate form of :func:`message_ix_models.util.merge_data`.
+
+    This form returns a new, distinct :class:`dict` and does not mutate any of its
+    arguments.
+    """
+    keys: set[str] = reduce(lambda x, y: x | y.keys(), others, set())
+    return {
+        k: pd.concat([o.get(k, None) for o in others], ignore_index=True) for k in keys
+    }
 
 
 def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:

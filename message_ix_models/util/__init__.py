@@ -557,7 +557,11 @@ def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
 
 
 def merge_data(base: "MutableParameterData", *others: "ParameterData") -> None:
-    """Merge dictionaries of DataFrames together into `base`."""
+    """Merge dictionaries of DataFrames together into `base`.
+
+    For use with :mod:`genno`, see instead :func:`.report.operator.merge_data` that
+    *returns* the merged data rather than updating the first argument.
+    """
     for other in others:
         for par, df in other.items():
             base[par] = pd.concat([base.get(par, None), df])

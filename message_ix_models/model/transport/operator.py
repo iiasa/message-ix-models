@@ -3,7 +3,7 @@
 import logging
 import re
 from collections.abc import Mapping, Sequence
-from functools import partial, reduce
+from functools import partial
 from itertools import product
 from operator import gt, le, lt
 from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, Union, cast
@@ -71,7 +71,6 @@ __all__ = [
     "max",
     "maybe_select",
     "min",
-    "merge_data",
     "nodes_ex_world",  # Re-export from message_ix_models.util TODO do this upstream
     "nodes_world_agg",
     "price_units",
@@ -764,20 +763,6 @@ def min(
 
     # FIXME This is AttrSeries only
     return qty.groupby(level=dim).min()  # type: ignore
-
-
-def merge_data(
-    *others: Mapping[Hashable, pd.DataFrame],
-) -> dict[Hashable, pd.DataFrame]:
-    """Slightly modified from message_ix_models.util.
-
-    .. todo: move upstream or merge functionality with
-       :func:`message_ix_models.util.merge_data`.
-    """
-    keys: set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
-    return {
-        k: pd.concat([o.get(k, None) for o in others], ignore_index=True) for k in keys
-    }
 
 
 def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
