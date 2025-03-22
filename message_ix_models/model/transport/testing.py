@@ -130,7 +130,7 @@ def built_transport(
 
         with log_cm:
             scenario = res.clone(model=model_name)
-            build.main(context, scenario, options, fast=True)
+            build.main(context, scenario, options)
     else:
         # Loaded existing Scenario; ensure config files are loaded on `context`
         Config.from_context(context, options=options)

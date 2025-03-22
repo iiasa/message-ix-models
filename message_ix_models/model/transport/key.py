@@ -2,13 +2,17 @@
 
 from types import SimpleNamespace
 
-from genno import Key, Keys, KeySeq
+from genno import Key, KeySeq
 
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
+from message_ix_models.util.genno import Keys
+
+from .data import iter_files
 
 __all__ = [
     "cg",
     "cost",
+    "exo",
     "fv_cny",
     "fv",
     "gdp_cap",
@@ -124,3 +128,17 @@ t_modes = "t::transport modes"
 
 #: Model periods.
 y = "y::model"
+
+#: Keys referring to loaded input data flows (exogenous data loaded from files).
+#: Attributes correspond to the members of :mod:`.transport.data`; see
+#: :doc:`/transport/input` for a complete list.
+#:
+#: .. code-block:: python
+#:
+#:    >>> from message_ix_models.model.transport.key import exo
+#:    >>> exo.act_non_ldv
+#:    <activity:n-t-y:non-ldv+exo>
+exo = Keys()
+
+for name, df in iter_files():
+    setattr(exo, name, df.key)

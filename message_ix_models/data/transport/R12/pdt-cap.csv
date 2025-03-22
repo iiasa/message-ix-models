@@ -3,843 +3,844 @@
 # Units: km / year
 #
 scenario, node,     technology, year, value
-LED,      R12_AFR,  2W,         2020,   360
-LED,      R12_AFR,  2W,         2025,   748.50024
-LED,      R12_AFR,  2W,         2030,   892.10217
-LED,      R12_AFR,  2W,         2035,  1035.7041
-LED,      R12_AFR,  2W,         2040,  1179.3059
-LED,      R12_AFR,  2W,         2045,  1322.9078
-LED,      R12_AFR,  2W,         2050,  1466.5098
-LED,      R12_AFR,  2W,         2055,  1610.1117
-LED,      R12_AFR,  2W,         2060,  1753.7136
-LED,      R12_AFR,  2W,         2070,  2040.9174
-LED,      R12_AFR,  2W,         2080,  2328.1213
-LED,      R12_AFR,  2W,         2090,  2615.325
-LED,      R12_AFR,  2W,         2100,  2902.5288
-LED,      R12_AFR,  2W,         2110,  3189.7327
-LED,      R12_AFR,  AIR,        2020,   120
-LED,      R12_AFR,  AIR,        2025,   150.90652
-LED,      R12_AFR,  AIR,        2030,   288.82312
-LED,      R12_AFR,  AIR,        2035,   426.73972
-LED,      R12_AFR,  AIR,        2040,   564.65631
-LED,      R12_AFR,  AIR,        2045,   702.57294
-LED,      R12_AFR,  AIR,        2050,   840.4895
-LED,      R12_AFR,  AIR,        2055,   978.40613
-LED,      R12_AFR,  AIR,        2060,  1116.3228
-LED,      R12_AFR,  AIR,        2070,  1392.1559
-LED,      R12_AFR,  AIR,        2080,  1667.9891
-LED,      R12_AFR,  AIR,        2090,  1943.8223
-LED,      R12_AFR,  AIR,        2100,  2219.6555
-LED,      R12_AFR,  AIR,        2110,  2219.6555
-LED,      R12_AFR,  BUS,        2020,  1740
-LED,      R12_AFR,  BUS,        2025,  2027.491
-LED,      R12_AFR,  BUS,        2030,  2149.8218
-LED,      R12_AFR,  BUS,        2035,  2272.1526
-LED,      R12_AFR,  BUS,        2040,  2394.4832
-LED,      R12_AFR,  BUS,        2045,  2516.814
-LED,      R12_AFR,  BUS,        2050,  2639.1448
-LED,      R12_AFR,  BUS,        2055,  2761.4756
-LED,      R12_AFR,  BUS,        2060,  2883.8062
-LED,      R12_AFR,  BUS,        2070,  3128.4678
-LED,      R12_AFR,  BUS,        2080,  3373.1292
-LED,      R12_AFR,  BUS,        2090,  3617.7908
-LED,      R12_AFR,  BUS,        2100,  3862.4521
-LED,      R12_AFR,  BUS,        2110,  4107.1138
-LED,      R12_AFR,  LDV,        2020,   720
-LED,      R12_AFR,  LDV,        2025,   806.46033
-LED,      R12_AFR,  LDV,        2030,   845.39478
-LED,      R12_AFR,  LDV,        2035,   884.32916
-LED,      R12_AFR,  LDV,        2040,   923.26361
-LED,      R12_AFR,  LDV,        2045,   962.198
-LED,      R12_AFR,  LDV,        2050,  1001.1324
-LED,      R12_AFR,  LDV,        2055,  1040.0669
-LED,      R12_AFR,  LDV,        2060,  1079.0012
-LED,      R12_AFR,  LDV,        2070,  1156.8701
-LED,      R12_AFR,  LDV,        2080,  1234.7389
-LED,      R12_AFR,  LDV,        2090,  1312.6078
-LED,      R12_AFR,  LDV,        2100,  1390.4766
-LED,      R12_AFR,  LDV,        2110,  1468.3455
-LED,      R12_AFR,  RAIL,       2020,    60
-LED,      R12_AFR,  RAIL,       2025,   453.93179
-LED,      R12_AFR,  RAIL,       2030,   596.21588
-LED,      R12_AFR,  RAIL,       2035,   738.5
-LED,      R12_AFR,  RAIL,       2040,   880.78412
-LED,      R12_AFR,  RAIL,       2045,  1023.0682
-LED,      R12_AFR,  RAIL,       2050,  1165.3523
-LED,      R12_AFR,  RAIL,       2055,  1307.6364
-LED,      R12_AFR,  RAIL,       2060,  1449.9205
-LED,      R12_AFR,  RAIL,       2070,  1734.4886
-LED,      R12_AFR,  RAIL,       2080,  2019.0569
-LED,      R12_AFR,  RAIL,       2090,  2303.625
-LED,      R12_AFR,  RAIL,       2100,  2588.1934
-LED,      R12_AFR,  RAIL,       2110,  2872.7615
-LED,      R12_CHN,  2W,         2020,   174
-LED,      R12_CHN,  2W,         2025,   593.50024
-LED,      R12_CHN,  2W,         2030,   746.21979
-LED,      R12_CHN,  2W,         2035,   898.93933
-LED,      R12_CHN,  2W,         2040,  1051.6588
-LED,      R12_CHN,  2W,         2045,  1204.3784
-LED,      R12_CHN,  2W,         2050,  1357.0979
-LED,      R12_CHN,  2W,         2055,  1509.8175
-LED,      R12_CHN,  2W,         2060,  1662.537
-LED,      R12_CHN,  2W,         2070,  1967.9761
-LED,      R12_CHN,  2W,         2080,  2273.4153
-LED,      R12_CHN,  2W,         2090,  2578.8542
-LED,      R12_CHN,  2W,         2100,  2884.2935
-LED,      R12_CHN,  2W,         2110,  3189.7324
-LED,      R12_CHN,  AIR,        2020,   957
-LED,      R12_CHN,  AIR,        2025,   848.40649
-LED,      R12_CHN,  AIR,        2030,   939.82312
-LED,      R12_CHN,  AIR,        2035,  1031.2397
-LED,      R12_CHN,  AIR,        2040,  1122.6563
-LED,      R12_CHN,  AIR,        2045,  1214.0729
-LED,      R12_CHN,  AIR,        2050,  1305.4895
-LED,      R12_CHN,  AIR,        2055,  1396.9061
-LED,      R12_CHN,  AIR,        2060,  1488.3228
-LED,      R12_CHN,  AIR,        2070,  1671.1559
-LED,      R12_CHN,  AIR,        2080,  1853.9891
-LED,      R12_CHN,  AIR,        2090,  2036.8223
-LED,      R12_CHN,  AIR,        2100,  2219.6555
-LED,      R12_CHN,  AIR,        2110,  2219.6555
-LED,      R12_CHN,  BUS,        2020,  1566
-LED,      R12_CHN,  BUS,        2025,  1882.491
-LED,      R12_CHN,  BUS,        2030,  2013.3511
-LED,      R12_CHN,  BUS,        2035,  2144.2112
-LED,      R12_CHN,  BUS,        2040,  2275.0715
-LED,      R12_CHN,  BUS,        2045,  2405.9316
-LED,      R12_CHN,  BUS,        2050,  2536.7917
-LED,      R12_CHN,  BUS,        2055,  2667.6519
-LED,      R12_CHN,  BUS,        2060,  2798.5122
-LED,      R12_CHN,  BUS,        2070,  3060.2324
-LED,      R12_CHN,  BUS,        2080,  3321.9529
-LED,      R12_CHN,  BUS,        2090,  3583.6731
-LED,      R12_CHN,  BUS,        2100,  3845.3936
-LED,      R12_CHN,  BUS,        2110,  4107.1138
-LED,      R12_CHN,  LDV,        2020,  4524
-LED,      R12_CHN,  LDV,        2025,  3976.4604
-LED,      R12_CHN,  LDV,        2030,  3828.9243
-LED,      R12_CHN,  LDV,        2035,  3681.3882
-LED,      R12_CHN,  LDV,        2040,  3533.8518
-LED,      R12_CHN,  LDV,        2045,  3386.3157
-LED,      R12_CHN,  LDV,        2050,  3238.7795
-LED,      R12_CHN,  LDV,        2055,  3091.2434
-LED,      R12_CHN,  LDV,        2060,  2943.7073
-LED,      R12_CHN,  LDV,        2070,  2648.6348
-LED,      R12_CHN,  LDV,        2080,  2353.5625
-LED,      R12_CHN,  LDV,        2090,  2058.4902
-LED,      R12_CHN,  LDV,        2100,  1763.4178
-LED,      R12_CHN,  LDV,        2110,  1468.3455
-LED,      R12_CHN,  RAIL,       2020,  1479
-LED,      R12_CHN,  RAIL,       2025,  1636.4319
-LED,      R12_CHN,  RAIL,       2030,  1709.1571
-LED,      R12_CHN,  RAIL,       2035,  1781.8823
-LED,      R12_CHN,  RAIL,       2040,  1854.6077
-LED,      R12_CHN,  RAIL,       2045,  1927.3329
-LED,      R12_CHN,  RAIL,       2050,  2000.0581
-LED,      R12_CHN,  RAIL,       2055,  2072.7834
-LED,      R12_CHN,  RAIL,       2060,  2145.5085
-LED,      R12_CHN,  RAIL,       2070,  2290.959
-LED,      R12_CHN,  RAIL,       2080,  2436.4094
-LED,      R12_CHN,  RAIL,       2090,  2581.8601
-LED,      R12_CHN,  RAIL,       2100,  2727.3105
-LED,      R12_CHN,  RAIL,       2110,  2872.761
-LED,      R12_EEU,  2W,         2020,   134.02061
-LED,      R12_EEU,  2W,         2025,   225.29666
-LED,      R12_EEU,  2W,         2030,   316.57269
-LED,      R12_EEU,  2W,         2035,   407.84869
-LED,      R12_EEU,  2W,         2040,   499.12469
-LED,      R12_EEU,  2W,         2045,   590.40076
-LED,      R12_EEU,  2W,         2050,   681.67676
-LED,      R12_EEU,  2W,         2055,   681.67676
-LED,      R12_EEU,  2W,         2060,   681.67682
-LED,      R12_EEU,  2W,         2070,   681.67676
-LED,      R12_EEU,  2W,         2080,   681.67676
-LED,      R12_EEU,  2W,         2090,   681.67676
-LED,      R12_EEU,  2W,         2100,   681.67676
-LED,      R12_EEU,  2W,         2110,   681.67676
-LED,      R12_EEU,  AIR,        2020,   134.02061
-LED,      R12_EEU,  AIR,        2025,   481.62646
-LED,      R12_EEU,  AIR,        2030,   829.2323
-LED,      R12_EEU,  AIR,        2035,  1176.8381
-LED,      R12_EEU,  AIR,        2040,  1524.4438
-LED,      R12_EEU,  AIR,        2045,  1872.0497
-LED,      R12_EEU,  AIR,        2050,  2219.6555
-LED,      R12_EEU,  AIR,        2055,  2219.6555
-LED,      R12_EEU,  AIR,        2060,  2219.6553
-LED,      R12_EEU,  AIR,        2070,  2219.6555
-LED,      R12_EEU,  AIR,        2080,  2219.6553
-LED,      R12_EEU,  AIR,        2090,  2219.6555
-LED,      R12_EEU,  AIR,        2100,  2219.6555
-LED,      R12_EEU,  AIR,        2110,  2219.6555
-LED,      R12_EEU,  BUS,        2020,  4690.7217
-LED,      R12_EEU,  BUS,        2025,  4669.5381
-LED,      R12_EEU,  BUS,        2030,  4662.4771
-LED,      R12_EEU,  BUS,        2035,  4655.4155
-LED,      R12_EEU,  BUS,        2040,  4648.3545
-LED,      R12_EEU,  BUS,        2045,  4641.2935
-LED,      R12_EEU,  BUS,        2050,  4634.2319
-LED,      R12_EEU,  BUS,        2055,  4627.1709
-LED,      R12_EEU,  BUS,        2060,  4620.1099
-LED,      R12_EEU,  BUS,        2070,  4605.9873
-LED,      R12_EEU,  BUS,        2080,  4591.8647
-LED,      R12_EEU,  BUS,        2090,  4577.7427
-LED,      R12_EEU,  BUS,        2100,  4563.6201
-LED,      R12_EEU,  BUS,        2110,  4563.6201
-LED,      R12_EEU,  LDV,        2020,  6164.9482
-LED,      R12_EEU,  LDV,        2025,  6792.8779
-LED,      R12_EEU,  LDV,        2030,  6873.0762
-LED,      R12_EEU,  LDV,        2035,  6953.2744
-LED,      R12_EEU,  LDV,        2040,  7033.4722
-LED,      R12_EEU,  LDV,        2045,  7113.6704
-LED,      R12_EEU,  LDV,        2050,  7193.8687
-LED,      R12_EEU,  LDV,        2055,  7274.0669
-LED,      R12_EEU,  LDV,        2060,  7354.2651
-LED,      R12_EEU,  LDV,        2070,  7514.6611
-LED,      R12_EEU,  LDV,        2080,  7675.0576
-LED,      R12_EEU,  LDV,        2090,  7835.4541
-LED,      R12_EEU,  LDV,        2100,  7995.8501
-LED,      R12_EEU,  LDV,        2110,  8156.2466
-LED,      R12_EEU,  RAIL,       2020,  1876.2887
-LED,      R12_EEU,  RAIL,       2025,  1854.0057
-LED,      R12_EEU,  RAIL,       2030,  1831.7228
-LED,      R12_EEU,  RAIL,       2035,  1809.4397
-LED,      R12_EEU,  RAIL,       2040,  1787.1566
-LED,      R12_EEU,  RAIL,       2045,  1764.8737
-LED,      R12_EEU,  RAIL,       2050,  1742.5907
-LED,      R12_EEU,  RAIL,       2055,  1742.5907
-LED,      R12_EEU,  RAIL,       2060,  1742.5907
-LED,      R12_EEU,  RAIL,       2070,  1742.5908
-LED,      R12_EEU,  RAIL,       2080,  1742.5907
-LED,      R12_EEU,  RAIL,       2090,  1742.5907
-LED,      R12_EEU,  RAIL,       2100,  1742.5907
-LED,      R12_EEU,  RAIL,       2110,  1742.5907
-LED,      R12_FSU,  2W,         2020,    92
-LED,      R12_FSU,  2W,         2025,   190.27948
-LED,      R12_FSU,  2W,         2030,   288.55896
-LED,      R12_FSU,  2W,         2035,   386.83838
-LED,      R12_FSU,  2W,         2040,   485.11783
-LED,      R12_FSU,  2W,         2045,   583.39728
-LED,      R12_FSU,  2W,         2050,   681.67676
-LED,      R12_FSU,  2W,         2055,   681.67676
-LED,      R12_FSU,  2W,         2060,   681.67682
-LED,      R12_FSU,  2W,         2070,   681.67676
-LED,      R12_FSU,  2W,         2080,   681.67676
-LED,      R12_FSU,  2W,         2090,   681.67676
-LED,      R12_FSU,  2W,         2100,   681.67676
-LED,      R12_FSU,  2W,         2110,   681.67676
-LED,      R12_FSU,  AIR,        2020,  1840
-LED,      R12_FSU,  AIR,        2025,  1903.2759
-LED,      R12_FSU,  AIR,        2030,  1966.5519
-LED,      R12_FSU,  AIR,        2035,  2029.8276
-LED,      R12_FSU,  AIR,        2040,  2093.1035
-LED,      R12_FSU,  AIR,        2045,  2156.3794
-LED,      R12_FSU,  AIR,        2050,  2219.6553
-LED,      R12_FSU,  AIR,        2055,  2219.6553
-LED,      R12_FSU,  AIR,        2060,  2219.6553
-LED,      R12_FSU,  AIR,        2070,  2219.6555
-LED,      R12_FSU,  AIR,        2080,  2219.6553
-LED,      R12_FSU,  AIR,        2090,  2219.6555
-LED,      R12_FSU,  AIR,        2100,  2219.6555
-LED,      R12_FSU,  AIR,        2110,  2219.6555
-LED,      R12_FSU,  BUS,        2020,  2024
-LED,      R12_FSU,  BUS,        2025,  2447.27
-LED,      R12_FSU,  BUS,        2030,  2588.3601
-LED,      R12_FSU,  BUS,        2035,  2729.45
-LED,      R12_FSU,  BUS,        2040,  2870.54
-LED,      R12_FSU,  BUS,        2045,  3011.6301
-LED,      R12_FSU,  BUS,        2050,  3152.72
-LED,      R12_FSU,  BUS,        2055,  3293.8101
-LED,      R12_FSU,  BUS,        2060,  3434.9001
-LED,      R12_FSU,  BUS,        2070,  3717.0801
-LED,      R12_FSU,  BUS,        2080,  3999.26
-LED,      R12_FSU,  BUS,        2090,  4281.4399
-LED,      R12_FSU,  BUS,        2100,  4563.6201
-LED,      R12_FSU,  BUS,        2110,  4563.6201
-LED,      R12_FSU,  LDV,        2020,  4140
-LED,      R12_FSU,  LDV,        2025,  5105.4209
-LED,      R12_FSU,  LDV,        2030,  5284.8813
-LED,      R12_FSU,  LDV,        2035,  5464.3418
-LED,      R12_FSU,  LDV,        2040,  5643.8018
-LED,      R12_FSU,  LDV,        2045,  5823.2622
-LED,      R12_FSU,  LDV,        2050,  6002.7227
-LED,      R12_FSU,  LDV,        2055,  6182.1831
-LED,      R12_FSU,  LDV,        2060,  6361.6431
-LED,      R12_FSU,  LDV,        2070,  6720.564
-LED,      R12_FSU,  LDV,        2080,  7079.4844
-LED,      R12_FSU,  LDV,        2090,  7438.4053
-LED,      R12_FSU,  LDV,        2100,  7797.3257
-LED,      R12_FSU,  LDV,        2110,  8156.2466
-LED,      R12_FSU,  RAIL,       2020,  1104
-LED,      R12_FSU,  RAIL,       2025,  1210.4319
-LED,      R12_FSU,  RAIL,       2030,  1316.8636
-LED,      R12_FSU,  RAIL,       2035,  1423.2954
-LED,      R12_FSU,  RAIL,       2040,  1529.7271
-LED,      R12_FSU,  RAIL,       2045,  1636.1589
-LED,      R12_FSU,  RAIL,       2050,  1742.5907
-LED,      R12_FSU,  RAIL,       2055,  1742.5907
-LED,      R12_FSU,  RAIL,       2060,  1742.5907
-LED,      R12_FSU,  RAIL,       2070,  1742.5908
-LED,      R12_FSU,  RAIL,       2080,  1742.5907
-LED,      R12_FSU,  RAIL,       2090,  1742.5907
-LED,      R12_FSU,  RAIL,       2100,  1742.5907
-LED,      R12_FSU,  RAIL,       2110,  1742.5907
-LED,      R12_LAM,  2W,         2020,   282.82828
-LED,      R12_LAM,  2W,         2025,   684.19049
-LED,      R12_LAM,  2W,         2030,   831.57532
-LED,      R12_LAM,  2W,         2035,   978.96014
-LED,      R12_LAM,  2W,         2040,  1126.345
-LED,      R12_LAM,  2W,         2045,  1273.7297
-LED,      R12_LAM,  2W,         2050,  1421.1146
-LED,      R12_LAM,  2W,         2055,  1568.4994
-LED,      R12_LAM,  2W,         2060,  1715.8843
-LED,      R12_LAM,  2W,         2070,  2010.6538
-LED,      R12_LAM,  2W,         2080,  2305.4236
-LED,      R12_LAM,  2W,         2090,  2600.1931
-LED,      R12_LAM,  2W,         2100,  2894.9629
-LED,      R12_LAM,  2W,         2110,  3189.7324
-LED,      R12_LAM,  AIR,        2020,   565.65656
-LED,      R12_LAM,  AIR,        2025,   522.28699
-LED,      R12_LAM,  AIR,        2030,   635.44489
-LED,      R12_LAM,  AIR,        2035,   748.60278
-LED,      R12_LAM,  AIR,        2040,   861.76068
-LED,      R12_LAM,  AIR,        2045,   974.91858
-LED,      R12_LAM,  AIR,        2050,  1088.0765
-LED,      R12_LAM,  AIR,        2055,  1201.2344
-LED,      R12_LAM,  AIR,        2060,  1314.3923
-LED,      R12_LAM,  AIR,        2070,  1540.7081
-LED,      R12_LAM,  AIR,        2080,  1767.0239
-LED,      R12_LAM,  AIR,        2090,  1993.3397
-LED,      R12_LAM,  AIR,        2100,  2219.6555
-LED,      R12_LAM,  AIR,        2110,  2219.6555
-LED,      R12_LAM,  BUS,        2020,  2545.4546
-LED,      R12_LAM,  BUS,        2025,  2698.7031
-LED,      R12_LAM,  BUS,        2030,  2781.5508
-LED,      R12_LAM,  BUS,        2035,  2864.3984
-LED,      R12_LAM,  BUS,        2040,  2947.2461
-LED,      R12_LAM,  BUS,        2045,  3030.0938
-LED,      R12_LAM,  BUS,        2050,  3112.9417
-LED,      R12_LAM,  BUS,        2055,  3195.7893
-LED,      R12_LAM,  BUS,        2060,  3278.637
-LED,      R12_LAM,  BUS,        2070,  3444.3323
-LED,      R12_LAM,  BUS,        2080,  3610.0276
-LED,      R12_LAM,  BUS,        2090,  3775.7231
-LED,      R12_LAM,  BUS,        2100,  3941.4185
-LED,      R12_LAM,  BUS,        2110,  4107.1138
-LED,      R12_LAM,  LDV,        2020,  3535.3535
-LED,      R12_LAM,  LDV,        2025,  3152.5884
-LED,      R12_LAM,  LDV,        2030,  3053.5154
-LED,      R12_LAM,  LDV,        2035,  2954.4421
-LED,      R12_LAM,  LDV,        2040,  2855.3691
-LED,      R12_LAM,  LDV,        2045,  2756.2959
-LED,      R12_LAM,  LDV,        2050,  2657.2229
-LED,      R12_LAM,  LDV,        2055,  2558.1497
-LED,      R12_LAM,  LDV,        2060,  2459.0767
-LED,      R12_LAM,  LDV,        2070,  2260.9304
-LED,      R12_LAM,  LDV,        2080,  2062.7842
-LED,      R12_LAM,  LDV,        2090,  1864.6379
-LED,      R12_LAM,  LDV,        2100,  1666.4917
-LED,      R12_LAM,  LDV,        2110,  1468.3455
-LED,      R12_LAM,  RAIL,       2020, 70.707069
-LED,      R12_LAM,  RAIL,       2025,   462.8544
-LED,      R12_LAM,  RAIL,       2030,   604.61365
-LED,      R12_LAM,  RAIL,       2035,   746.37286
-LED,      R12_LAM,  RAIL,       2040,   888.13214
-LED,      R12_LAM,  RAIL,       2045,  1029.8914
-LED,      R12_LAM,  RAIL,       2050,  1171.6506
-LED,      R12_LAM,  RAIL,       2055,  1313.4098
-LED,      R12_LAM,  RAIL,       2060,  1455.1691
-LED,      R12_LAM,  RAIL,       2070,  1738.6875
-LED,      R12_LAM,  RAIL,       2080,  2022.2061
-LED,      R12_LAM,  RAIL,       2090,  2305.7246
-LED,      R12_LAM,  RAIL,       2100,  2589.2429
-LED,      R12_LAM,  RAIL,       2110,  2872.7615
-LED,      R12_MEA,  2W,         2020,   325
-LED,      R12_MEA,  2W,         2025,   719.33362
-LED,      R12_MEA,  2W,         2030,   864.65118
-LED,      R12_MEA,  2W,         2035,  1009.9688
-LED,      R12_MEA,  2W,         2040,  1155.2864
-LED,      R12_MEA,  2W,         2045,  1300.604
-LED,      R12_MEA,  2W,         2050,  1445.9216
-LED,      R12_MEA,  2W,         2055,  1591.2391
-LED,      R12_MEA,  2W,         2060,  1736.5568
-LED,      R12_MEA,  2W,         2070,  2027.1919
-LED,      R12_MEA,  2W,         2080,  2317.8271
-LED,      R12_MEA,  2W,         2090,  2608.4624
-LED,      R12_MEA,  2W,         2100,  2899.0974
-LED,      R12_MEA,  2W,         2110,  3189.7327
-LED,      R12_MEA,  AIR,        2020,   845
-LED,      R12_MEA,  AIR,        2025,   755.07324
-LED,      R12_MEA,  AIR,        2030,   852.71204
-LED,      R12_MEA,  AIR,        2035,   950.35089
-LED,      R12_MEA,  AIR,        2040,  1047.9897
-LED,      R12_MEA,  AIR,        2045,  1145.6285
-LED,      R12_MEA,  AIR,        2050,  1243.2673
-LED,      R12_MEA,  AIR,        2055,  1340.9061
-LED,      R12_MEA,  AIR,        2060,  1438.5449
-LED,      R12_MEA,  AIR,        2070,  1633.8226
-LED,      R12_MEA,  AIR,        2080,  1829.1002
-LED,      R12_MEA,  AIR,        2090,  2024.3779
-LED,      R12_MEA,  AIR,        2100,  2219.6555
-LED,      R12_MEA,  AIR,        2110,  2219.6555
-LED,      R12_MEA,  BUS,        2020,  2470
-LED,      R12_MEA,  BUS,        2025,  2635.8242
-LED,      R12_MEA,  BUS,        2030,  2722.3706
-LED,      R12_MEA,  BUS,        2035,  2808.917
-LED,      R12_MEA,  BUS,        2040,  2895.4636
-LED,      R12_MEA,  BUS,        2045,  2982.01
-LED,      R12_MEA,  BUS,        2050,  3068.5564
-LED,      R12_MEA,  BUS,        2055,  3155.1028
-LED,      R12_MEA,  BUS,        2060,  3241.6494
-LED,      R12_MEA,  BUS,        2070,  3414.7422
-LED,      R12_MEA,  BUS,        2080,  3587.8352
-LED,      R12_MEA,  BUS,        2090,  3760.928
-LED,      R12_MEA,  BUS,        2100,  3934.021
-LED,      R12_MEA,  BUS,        2110,  4107.1138
-LED,      R12_MEA,  LDV,        2020,  2795
-LED,      R12_MEA,  LDV,        2025,  2535.627
-LED,      R12_MEA,  LDV,        2030,  2472.8457
-LED,      R12_MEA,  LDV,        2035,  2410.0645
-LED,      R12_MEA,  LDV,        2040,  2347.2832
-LED,      R12_MEA,  LDV,        2045,  2284.502
-LED,      R12_MEA,  LDV,        2050,  2221.7207
-LED,      R12_MEA,  LDV,        2055,  2158.9395
-LED,      R12_MEA,  LDV,        2060,  2096.1582
-LED,      R12_MEA,  LDV,        2070,  1970.5956
-LED,      R12_MEA,  LDV,        2080,  1845.0331
-LED,      R12_MEA,  LDV,        2090,  1719.4705
-LED,      R12_MEA,  LDV,        2100,  1593.908
-LED,      R12_MEA,  LDV,        2110,  1468.3455
-LED,      R12_MEA,  RAIL,       2020,    65
-LED,      R12_MEA,  RAIL,       2025,   458.09848
-LED,      R12_MEA,  RAIL,       2030,   600.13745
-LED,      R12_MEA,  RAIL,       2035,   742.17645
-LED,      R12_MEA,  RAIL,       2040,   884.21545
-LED,      R12_MEA,  RAIL,       2045,  1026.2545
-LED,      R12_MEA,  RAIL,       2050,  1168.2935
-LED,      R12_MEA,  RAIL,       2055,  1310.3325
-LED,      R12_MEA,  RAIL,       2060,  1452.3715
-LED,      R12_MEA,  RAIL,       2070,  1736.4495
-LED,      R12_MEA,  RAIL,       2080,  2020.5275
-LED,      R12_MEA,  RAIL,       2090,  2304.6055
-LED,      R12_MEA,  RAIL,       2100,  2588.6836
-LED,      R12_MEA,  RAIL,       2110,  2872.7615
-LED,      R12_NAM,  2W,         2020,   130.65326
-LED,      R12_NAM,  2W,         2025,   222.49051
-LED,      R12_NAM,  2W,         2030,   314.32776
-LED,      R12_NAM,  2W,         2035,   406.16501
-LED,      R12_NAM,  2W,         2040,   498.00226
-LED,      R12_NAM,  2W,         2045,   589.83948
-LED,      R12_NAM,  2W,         2050,   681.67676
-LED,      R12_NAM,  2W,         2055,   681.67676
-LED,      R12_NAM,  2W,         2060,   681.67682
-LED,      R12_NAM,  2W,         2070,   681.67676
-LED,      R12_NAM,  2W,         2080,   681.67676
-LED,      R12_NAM,  2W,         2090,   681.67676
-LED,      R12_NAM,  2W,         2100,   681.67676
-LED,      R12_NAM,  2W,         2110,   681.67676
-LED,      R12_NAM,  AIR,        2020,  2874.3718
-LED,      R12_NAM,  AIR,        2025,  2765.2524
-LED,      R12_NAM,  AIR,        2030,  2656.1331
-LED,      R12_NAM,  AIR,        2035,  2547.0137
-LED,      R12_NAM,  AIR,        2040,  2437.894
-LED,      R12_NAM,  AIR,        2045,  2328.7747
-LED,      R12_NAM,  AIR,        2050,  2219.6553
-LED,      R12_NAM,  AIR,        2055,  2219.6553
-LED,      R12_NAM,  AIR,        2060,  2219.6553
-LED,      R12_NAM,  AIR,        2070,  2219.6555
-LED,      R12_NAM,  AIR,        2080,  2219.6553
-LED,      R12_NAM,  AIR,        2090,  2219.6555
-LED,      R12_NAM,  AIR,        2100,  2219.6555
-LED,      R12_NAM,  AIR,        2110,  2219.6555
-LED,      R12_NAM,  BUS,        2020,  1567.8392
-LED,      R12_NAM,  BUS,        2025,  2067.1362
-LED,      R12_NAM,  BUS,        2030,  2233.5686
-LED,      R12_NAM,  BUS,        2035,  2400.0007
-LED,      R12_NAM,  BUS,        2040,  2566.4331
-LED,      R12_NAM,  BUS,        2045,  2732.8652
-LED,      R12_NAM,  BUS,        2050,  2899.2976
-LED,      R12_NAM,  BUS,        2055,  3065.7297
-LED,      R12_NAM,  BUS,        2060,  3232.1621
-LED,      R12_NAM,  BUS,        2070,  3565.0266
-LED,      R12_NAM,  BUS,        2080,  3897.8911
-LED,      R12_NAM,  BUS,        2090,  4230.7554
-LED,      R12_NAM,  BUS,        2100,  4563.6201
-LED,      R12_NAM,  BUS,        2110,  4563.6201
-LED,      R12_NAM,  LDV,        2020, 21165.83
-LED,      R12_NAM,  LDV,        2025, 19293.613
-LED,      R12_NAM,  LDV,        2030, 18638.475
-LED,      R12_NAM,  LDV,        2035, 17983.334
-LED,      R12_NAM,  LDV,        2040, 17328.195
-LED,      R12_NAM,  LDV,        2045, 16673.057
-LED,      R12_NAM,  LDV,        2050, 16017.917
-LED,      R12_NAM,  LDV,        2055, 15362.778
-LED,      R12_NAM,  LDV,        2060, 14707.639
-LED,      R12_NAM,  LDV,        2070, 13397.36
-LED,      R12_NAM,  LDV,        2080, 12087.082
-LED,      R12_NAM,  LDV,        2090, 10776.804
-LED,      R12_NAM,  LDV,        2100,  9466.5254
-LED,      R12_NAM,  LDV,        2110,  8156.2466
-LED,      R12_NAM,  RAIL,       2020,   261.30652
-LED,      R12_NAM,  RAIL,       2025,   508.18726
-LED,      R12_NAM,  RAIL,       2030,   755.06799
-LED,      R12_NAM,  RAIL,       2035,  1001.9486
-LED,      R12_NAM,  RAIL,       2040,  1248.8292
-LED,      R12_NAM,  RAIL,       2045,  1495.71
-LED,      R12_NAM,  RAIL,       2050,  1742.5907
-LED,      R12_NAM,  RAIL,       2055,  1742.5907
-LED,      R12_NAM,  RAIL,       2060,  1742.5907
-LED,      R12_NAM,  RAIL,       2070,  1742.5908
-LED,      R12_NAM,  RAIL,       2080,  1742.5907
-LED,      R12_NAM,  RAIL,       2090,  1742.5907
-LED,      R12_NAM,  RAIL,       2100,  1742.5907
-LED,      R12_NAM,  RAIL,       2110,  1742.5907
-LED,      R12_PAO,  2W,         2020,   140
-LED,      R12_PAO,  2W,         2025,   230.27948
-LED,      R12_PAO,  2W,         2030,   320.55896
-LED,      R12_PAO,  2W,         2035,   410.83838
-LED,      R12_PAO,  2W,         2040,   501.11783
-LED,      R12_PAO,  2W,         2045,   591.39728
-LED,      R12_PAO,  2W,         2050,   681.67676
-LED,      R12_PAO,  2W,         2055,   681.67676
-LED,      R12_PAO,  2W,         2060,   681.67682
-LED,      R12_PAO,  2W,         2070,   681.67676
-LED,      R12_PAO,  2W,         2080,   681.67676
-LED,      R12_PAO,  2W,         2090,   681.67676
-LED,      R12_PAO,  2W,         2100,   681.67676
-LED,      R12_PAO,  2W,         2110,   681.67676
-LED,      R12_PAO,  AIR,        2020,  1820
-LED,      R12_PAO,  AIR,        2025,  1886.6093
-LED,      R12_PAO,  AIR,        2030,  1953.2185
-LED,      R12_PAO,  AIR,        2035,  2019.8276
-LED,      R12_PAO,  AIR,        2040,  2086.4368
-LED,      R12_PAO,  AIR,        2045,  2153.0459
-LED,      R12_PAO,  AIR,        2050,  2219.6553
-LED,      R12_PAO,  AIR,        2055,  2219.6553
-LED,      R12_PAO,  AIR,        2060,  2219.6553
-LED,      R12_PAO,  AIR,        2070,  2219.6555
-LED,      R12_PAO,  AIR,        2080,  2219.6553
-LED,      R12_PAO,  AIR,        2090,  2219.6555
-LED,      R12_PAO,  AIR,        2100,  2219.6555
-LED,      R12_PAO,  AIR,        2110,  2219.6555
-LED,      R12_PAO,  BUS,        2020,   700
-LED,      R12_PAO,  BUS,        2025,  1343.9368
-LED,      R12_PAO,  BUS,        2030,  1558.5823
-LED,      R12_PAO,  BUS,        2035,  1773.2279
-LED,      R12_PAO,  BUS,        2040,  1987.8734
-LED,      R12_PAO,  BUS,        2045,  2202.519
-LED,      R12_PAO,  BUS,        2050,  2417.1646
-LED,      R12_PAO,  BUS,        2055,  2631.8101
-LED,      R12_PAO,  BUS,        2060,  2846.4556
-LED,      R12_PAO,  BUS,        2070,  3275.7468
-LED,      R12_PAO,  BUS,        2080,  3705.0378
-LED,      R12_PAO,  BUS,        2090,  4134.3291
-LED,      R12_PAO,  BUS,        2100,  4563.6201
-LED,      R12_PAO,  BUS,        2110,  4563.6201
-LED,      R12_PAO,  LDV,        2020,  8120
-LED,      R12_PAO,  LDV,        2025,  8422.0879
-LED,      R12_PAO,  LDV,        2030,  8406.4502
-LED,      R12_PAO,  LDV,        2035,  8390.8125
-LED,      R12_PAO,  LDV,        2040,  8375.1748
-LED,      R12_PAO,  LDV,        2045,  8359.5371
-LED,      R12_PAO,  LDV,        2050,  8343.8994
-LED,      R12_PAO,  LDV,        2055,  8328.2617
-LED,      R12_PAO,  LDV,        2060,  8312.624
-LED,      R12_PAO,  LDV,        2070,  8281.3486
-LED,      R12_PAO,  LDV,        2080,  8250.0732
-LED,      R12_PAO,  LDV,        2090,  8218.7979
-LED,      R12_PAO,  LDV,        2100,  8187.522
-LED,      R12_PAO,  LDV,        2110,  8156.2466
-LED,      R12_PAO,  RAIL,       2020,  3220
-LED,      R12_PAO,  RAIL,       2025,  2973.7651
-LED,      R12_PAO,  RAIL,       2030,  2727.5303
-LED,      R12_PAO,  RAIL,       2035,  2481.2954
-LED,      R12_PAO,  RAIL,       2040,  2235.0603
-LED,      R12_PAO,  RAIL,       2045,  1988.8254
-LED,      R12_PAO,  RAIL,       2050,  1742.5907
-LED,      R12_PAO,  RAIL,       2055,  1742.5907
-LED,      R12_PAO,  RAIL,       2060,  1742.5907
-LED,      R12_PAO,  RAIL,       2070,  1742.5908
-LED,      R12_PAO,  RAIL,       2080,  1742.5907
-LED,      R12_PAO,  RAIL,       2090,  1742.5907
-LED,      R12_PAO,  RAIL,       2100,  1742.5907
-LED,      R12_PAO,  RAIL,       2110,  1742.5907
-LED,      R12_PAS,  2W,         2020,   480
-LED,      R12_PAS,  2W,         2025,   848.50024
-LED,      R12_PAS,  2W,         2030,   986.21979
-LED,      R12_PAS,  2W,         2035,  1123.9393
-LED,      R12_PAS,  2W,         2040,  1261.6589
-LED,      R12_PAS,  2W,         2045,  1399.3784
-LED,      R12_PAS,  2W,         2050,  1537.098
-LED,      R12_PAS,  2W,         2055,  1674.8176
-LED,      R12_PAS,  2W,         2060,  1812.5371
-LED,      R12_PAS,  2W,         2070,  2087.9763
-LED,      R12_PAS,  2W,         2080,  2363.4153
-LED,      R12_PAS,  2W,         2090,  2638.8545
-LED,      R12_PAS,  2W,         2100,  2914.2935
-LED,      R12_PAS,  2W,         2110,  3189.7327
-LED,      R12_PAS,  AIR,        2020,   560
-LED,      R12_PAS,  AIR,        2025,   517.57318
-LED,      R12_PAS,  AIR,        2030,   631.04535
-LED,      R12_PAS,  AIR,        2035,   744.51752
-LED,      R12_PAS,  AIR,        2040,   857.98962
-LED,      R12_PAS,  AIR,        2045,   971.46179
-LED,      R12_PAS,  AIR,        2050,  1084.934
-LED,      R12_PAS,  AIR,        2055,  1198.4061
-LED,      R12_PAS,  AIR,        2060,  1311.8783
-LED,      R12_PAS,  AIR,        2070,  1538.8226
-LED,      R12_PAS,  AIR,        2080,  1765.7668
-LED,      R12_PAS,  AIR,        2090,  1992.7112
-LED,      R12_PAS,  AIR,        2100,  2219.6555
-LED,      R12_PAS,  AIR,        2110,  2219.6555
-LED,      R12_PAS,  BUS,        2020,  3360
-LED,      R12_PAS,  BUS,        2025,  3377.491
-LED,      R12_PAS,  BUS,        2030,  3420.4099
-LED,      R12_PAS,  BUS,        2035,  3463.3289
-LED,      R12_PAS,  BUS,        2040,  3506.248
-LED,      R12_PAS,  BUS,        2045,  3549.167
-LED,      R12_PAS,  BUS,        2050,  3592.0859
-LED,      R12_PAS,  BUS,        2055,  3635.0049
-LED,      R12_PAS,  BUS,        2060,  3677.9238
-LED,      R12_PAS,  BUS,        2070,  3763.762
-LED,      R12_PAS,  BUS,        2080,  3849.5999
-LED,      R12_PAS,  BUS,        2090,  3935.4377
-LED,      R12_PAS,  BUS,        2100,  4021.2759
-LED,      R12_PAS,  BUS,        2110,  4107.1138
-LED,      R12_PAS,  LDV,        2020,  2960
-LED,      R12_PAS,  LDV,        2025,  2673.127
-LED,      R12_PAS,  LDV,        2030,  2602.2576
-LED,      R12_PAS,  LDV,        2035,  2531.3879
-LED,      R12_PAS,  LDV,        2040,  2460.5186
-LED,      R12_PAS,  LDV,        2045,  2389.6489
-LED,      R12_PAS,  LDV,        2050,  2318.7795
-LED,      R12_PAS,  LDV,        2055,  2247.9099
-LED,      R12_PAS,  LDV,        2060,  2177.0405
-LED,      R12_PAS,  LDV,        2070,  2035.3015
-LED,      R12_PAS,  LDV,        2080,  1893.5625
-LED,      R12_PAS,  LDV,        2090,  1751.8235
-LED,      R12_PAS,  LDV,        2100,  1610.0845
-LED,      R12_PAS,  LDV,        2110,  1468.3455
-LED,      R12_PAS,  RAIL,       2020,   640
-LED,      R12_PAS,  RAIL,       2025,   937.26514
-LED,      R12_PAS,  RAIL,       2030,  1051.1179
-LED,      R12_PAS,  RAIL,       2035,  1164.9706
-LED,      R12_PAS,  RAIL,       2040,  1278.8234
-LED,      R12_PAS,  RAIL,       2045,  1392.676
-LED,      R12_PAS,  RAIL,       2050,  1506.5288
-LED,      R12_PAS,  RAIL,       2055,  1620.3815
-LED,      R12_PAS,  RAIL,       2060,  1734.2343
-LED,      R12_PAS,  RAIL,       2070,  1961.9397
-LED,      R12_PAS,  RAIL,       2080,  2189.645
-LED,      R12_PAS,  RAIL,       2090,  2417.3506
-LED,      R12_PAS,  RAIL,       2100,  2645.0559
-LED,      R12_PAS,  RAIL,       2110,  2872.7615
-LED,      R12_RCPA, 2W,         2020,   404.21054
-LED,      R12_RCPA, 2W,         2025,   785.34241
-LED,      R12_RCPA, 2W,         2030,   926.7771
-LED,      R12_RCPA, 2W,         2035,  1068.2118
-LED,      R12_RCPA, 2W,         2040,  1209.6466
-LED,      R12_RCPA, 2W,         2045,  1351.0813
-LED,      R12_RCPA, 2W,         2050,  1492.516
-LED,      R12_RCPA, 2W,         2055,  1633.9507
-LED,      R12_RCPA, 2W,         2060,  1775.3855
-LED,      R12_RCPA, 2W,         2070,  2058.2549
-LED,      R12_RCPA, 2W,         2080,  2341.1243
-LED,      R12_RCPA, 2W,         2090,  2623.9939
-LED,      R12_RCPA, 2W,         2100,  2906.8633
-LED,      R12_RCPA, 2W,         2110,  3189.7327
-LED,      R12_RCPA, AIR,        2020,   555.78949
-LED,      R12_RCPA, AIR,        2025,   514.06445
-LED,      R12_RCPA, AIR,        2030,   627.77051
-LED,      R12_RCPA, AIR,        2035,   741.47662
-LED,      R12_RCPA, AIR,        2040,   855.18268
-LED,      R12_RCPA, AIR,        2045,   968.88873
-LED,      R12_RCPA, AIR,        2050,  1082.5948
-LED,      R12_RCPA, AIR,        2055,  1196.3009
-LED,      R12_RCPA, AIR,        2060,  1310.007
-LED,      R12_RCPA, AIR,        2070,  1537.4191
-LED,      R12_RCPA, AIR,        2080,  1764.8312
-LED,      R12_RCPA, AIR,        2090,  1992.2434
-LED,      R12_RCPA, AIR,        2100,  2219.6555
-LED,      R12_RCPA, AIR,        2110,  2219.6555
-LED,      R12_RCPA, BUS,        2020,  1515.7894
-LED,      R12_RCPA, BUS,        2025,  1840.6489
-LED,      R12_RCPA, BUS,        2030,  1973.9703
-LED,      R12_RCPA, BUS,        2035,  2107.2917
-LED,      R12_RCPA, BUS,        2040,  2240.6133
-LED,      R12_RCPA, BUS,        2045,  2373.9348
-LED,      R12_RCPA, BUS,        2050,  2507.2563
-LED,      R12_RCPA, BUS,        2055,  2640.5776
-LED,      R12_RCPA, BUS,        2060,  2773.8992
-LED,      R12_RCPA, BUS,        2070,  3040.542
-LED,      R12_RCPA, BUS,        2080,  3307.1851
-LED,      R12_RCPA, BUS,        2090,  3573.8279
-LED,      R12_RCPA, BUS,        2100,  3840.4709
-LED,      R12_RCPA, BUS,        2110,  4107.1138
-LED,      R12_RCPA, LDV,        2020,   808.42108
-LED,      R12_RCPA, LDV,        2025,   880.14459
-LED,      R12_RCPA, LDV,        2030,   914.74463
-LED,      R12_RCPA, LDV,        2035,   949.34467
-LED,      R12_RCPA, LDV,        2040,   983.94476
-LED,      R12_RCPA, LDV,        2045,  1018.5448
-LED,      R12_RCPA, LDV,        2050,  1053.1449
-LED,      R12_RCPA, LDV,        2055,  1087.7449
-LED,      R12_RCPA, LDV,        2060,  1122.345
-LED,      R12_RCPA, LDV,        2070,  1191.545
-LED,      R12_RCPA, LDV,        2080,  1260.7451
-LED,      R12_RCPA, LDV,        2090,  1329.9453
-LED,      R12_RCPA, LDV,        2100,  1399.1454
-LED,      R12_RCPA, LDV,        2110,  1468.3455
-LED,      R12_RCPA, RAIL,       2020,  1515.7894
-LED,      R12_RCPA, RAIL,       2025,  1667.0896
-LED,      R12_RCPA, RAIL,       2030,  1738.0115
-LED,      R12_RCPA, RAIL,       2035,  1808.9333
-LED,      R12_RCPA, RAIL,       2040,  1879.8552
-LED,      R12_RCPA, RAIL,       2045,  1950.7771
-LED,      R12_RCPA, RAIL,       2050,  2021.699
-LED,      R12_RCPA, RAIL,       2055,  2092.6208
-LED,      R12_RCPA, RAIL,       2060,  2163.5427
-LED,      R12_RCPA, RAIL,       2070,  2305.3865
-LED,      R12_RCPA, RAIL,       2080,  2447.2302
-LED,      R12_RCPA, RAIL,       2090,  2589.074
-LED,      R12_RCPA, RAIL,       2100,  2730.9177
-LED,      R12_RCPA, RAIL,       2110,  2872.7615
-LED,      R12_SAS,  2W,         2020,   840
-LED,      R12_SAS,  2W,         2025,  1148.5002
-LED,      R12_SAS,  2W,         2030,  1268.5728
-LED,      R12_SAS,  2W,         2035,  1388.6453
-LED,      R12_SAS,  2W,         2040,  1508.7178
-LED,      R12_SAS,  2W,         2045,  1628.7903
-LED,      R12_SAS,  2W,         2050,  1748.8627
-LED,      R12_SAS,  2W,         2055,  1868.9352
-LED,      R12_SAS,  2W,         2060,  1989.0077
-LED,      R12_SAS,  2W,         2070,  2229.1526
-LED,      R12_SAS,  2W,         2080,  2469.2976
-LED,      R12_SAS,  2W,         2090,  2709.4426
-LED,      R12_SAS,  2W,         2100,  2949.5876
-LED,      R12_SAS,  2W,         2110,  3189.7327
-LED,      R12_SAS,  AIR,        2020,   245
-LED,      R12_SAS,  AIR,        2025,   255.0732
-LED,      R12_SAS,  AIR,        2030,   386.04535
-LED,      R12_SAS,  AIR,        2035,   517.01752
-LED,      R12_SAS,  AIR,        2040,   647.98969
-LED,      R12_SAS,  AIR,        2045,   778.96179
-LED,      R12_SAS,  AIR,        2050,   909.93396
-LED,      R12_SAS,  AIR,        2055,  1040.9061
-LED,      R12_SAS,  AIR,        2060,  1171.8783
-LED,      R12_SAS,  AIR,        2070,  1433.8226
-LED,      R12_SAS,  AIR,        2080,  1695.7668
-LED,      R12_SAS,  AIR,        2090,  1957.7112
-LED,      R12_SAS,  AIR,        2100,  2219.6555
-LED,      R12_SAS,  AIR,        2110,  2219.6555
-LED,      R12_SAS,  BUS,        2020,  1155
-LED,      R12_SAS,  BUS,        2025,  1539.991
-LED,      R12_SAS,  BUS,        2030,  1690.9982
-LED,      R12_SAS,  BUS,        2035,  1842.0054
-LED,      R12_SAS,  BUS,        2040,  1993.0127
-LED,      R12_SAS,  BUS,        2045,  2144.0198
-LED,      R12_SAS,  BUS,        2050,  2295.0271
-LED,      R12_SAS,  BUS,        2055,  2446.0344
-LED,      R12_SAS,  BUS,        2060,  2597.0415
-LED,      R12_SAS,  BUS,        2070,  2899.0559
-LED,      R12_SAS,  BUS,        2080,  3201.0703
-LED,      R12_SAS,  BUS,        2090,  3503.085
-LED,      R12_SAS,  BUS,        2100,  3805.0994
-LED,      R12_SAS,  BUS,        2110,  4107.1138
-LED,      R12_SAS,  LDV,        2020,   700
-LED,      R12_SAS,  LDV,        2025,   789.7937
-LED,      R12_SAS,  LDV,        2030,   829.7085
-LED,      R12_SAS,  LDV,        2035,   869.62329
-LED,      R12_SAS,  LDV,        2040,   909.53815
-LED,      R12_SAS,  LDV,        2045,   949.45294
-LED,      R12_SAS,  LDV,        2050,   989.36774
-LED,      R12_SAS,  LDV,        2055,  1029.2826
-LED,      R12_SAS,  LDV,        2060,  1069.1974
-LED,      R12_SAS,  LDV,        2070,  1149.027
-LED,      R12_SAS,  LDV,        2080,  1228.8566
-LED,      R12_SAS,  LDV,        2090,  1308.6863
-LED,      R12_SAS,  LDV,        2100,  1388.5159
-LED,      R12_SAS,  LDV,        2110,  1468.3455
-LED,      R12_SAS,  RAIL,       2020,   560
-LED,      R12_SAS,  RAIL,       2025,   870.59851
-LED,      R12_SAS,  RAIL,       2030,   988.3728
-LED,      R12_SAS,  RAIL,       2035,  1106.1471
-LED,      R12_SAS,  RAIL,       2040,  1223.9214
-LED,      R12_SAS,  RAIL,       2045,  1341.6957
-LED,      R12_SAS,  RAIL,       2050,  1459.47
-LED,      R12_SAS,  RAIL,       2055,  1577.2443
-LED,      R12_SAS,  RAIL,       2060,  1695.0186
-LED,      R12_SAS,  RAIL,       2070,  1930.5671
-LED,      R12_SAS,  RAIL,       2080,  2166.1157
-LED,      R12_SAS,  RAIL,       2090,  2401.6643
-LED,      R12_SAS,  RAIL,       2100,  2637.2129
-LED,      R12_SAS,  RAIL,       2110,  2872.7615
-LED,      R12_WEU,  2W,         2020,   300
-LED,      R12_WEU,  2W,         2025,   363.61279
-LED,      R12_WEU,  2W,         2030,   427.22562
-LED,      R12_WEU,  2W,         2035,   490.83838
-LED,      R12_WEU,  2W,         2040,   554.45117
-LED,      R12_WEU,  2W,         2045,   618.06396
-LED,      R12_WEU,  2W,         2050,   681.67676
-LED,      R12_WEU,  2W,         2055,   681.67676
-LED,      R12_WEU,  2W,         2060,   681.67682
-LED,      R12_WEU,  2W,         2070,   681.67676
-LED,      R12_WEU,  2W,         2080,   681.67676
-LED,      R12_WEU,  2W,         2090,   681.67676
-LED,      R12_WEU,  2W,         2100,   681.67676
-LED,      R12_WEU,  2W,         2110,   681.67676
-LED,      R12_WEU,  AIR,        2020,  1650
-LED,      R12_WEU,  AIR,        2025,  1744.9426
-LED,      R12_WEU,  AIR,        2030,  1839.8851
-LED,      R12_WEU,  AIR,        2035,  1934.8276
-LED,      R12_WEU,  AIR,        2040,  2029.7701
-LED,      R12_WEU,  AIR,        2045,  2124.7126
-LED,      R12_WEU,  AIR,        2050,  2219.6553
-LED,      R12_WEU,  AIR,        2055,  2219.6553
-LED,      R12_WEU,  AIR,        2060,  2219.6553
-LED,      R12_WEU,  AIR,        2070,  2219.6555
-LED,      R12_WEU,  AIR,        2080,  2219.6553
-LED,      R12_WEU,  AIR,        2090,  2219.6555
-LED,      R12_WEU,  AIR,        2100,  2219.6555
-LED,      R12_WEU,  AIR,        2110,  2219.6555
-LED,      R12_WEU,  BUS,        2020,  1050
-LED,      R12_WEU,  BUS,        2025,  1635.6035
-LED,      R12_WEU,  BUS,        2030,  1830.8046
-LED,      R12_WEU,  BUS,        2035,  2026.0057
-LED,      R12_WEU,  BUS,        2040,  2221.2068
-LED,      R12_WEU,  BUS,        2045,  2416.408
-LED,      R12_WEU,  BUS,        2050,  2611.6091
-LED,      R12_WEU,  BUS,        2055,  2806.8101
-LED,      R12_WEU,  BUS,        2060,  3002.0112
-LED,      R12_WEU,  BUS,        2070,  3392.4136
-LED,      R12_WEU,  BUS,        2080,  3782.8157
-LED,      R12_WEU,  BUS,        2090,  4173.2178
-LED,      R12_WEU,  BUS,        2100,  4563.6201
-LED,      R12_WEU,  BUS,        2110,  4563.6201
-LED,      R12_WEU,  LDV,        2020, 10500
-LED,      R12_WEU,  LDV,        2025, 10405.421
-LED,      R12_WEU,  LDV,        2030, 10273.116
-LED,      R12_WEU,  LDV,        2035, 10140.813
-LED,      R12_WEU,  LDV,        2040, 10008.508
-LED,      R12_WEU,  LDV,        2045,  9876.2031
-LED,      R12_WEU,  LDV,        2050,  9743.8994
-LED,      R12_WEU,  LDV,        2055,  9611.5947
-LED,      R12_WEU,  LDV,        2060,  9479.29
-LED,      R12_WEU,  LDV,        2070,  9214.6816
-LED,      R12_WEU,  LDV,        2080,  8950.0732
-LED,      R12_WEU,  LDV,        2090,  8685.4639
-LED,      R12_WEU,  LDV,        2100,  8420.8555
-LED,      R12_WEU,  LDV,        2110,  8156.2466
-LED,      R12_WEU,  RAIL,       2020,  1500
-LED,      R12_WEU,  RAIL,       2025,  1540.4319
-LED,      R12_WEU,  RAIL,       2030,  1580.8636
-LED,      R12_WEU,  RAIL,       2035,  1621.2954
-LED,      R12_WEU,  RAIL,       2040,  1661.7271
-LED,      R12_WEU,  RAIL,       2045,  1702.1589
-LED,      R12_WEU,  RAIL,       2050,  1742.5907
-LED,      R12_WEU,  RAIL,       2055,  1742.5907
-LED,      R12_WEU,  RAIL,       2060,  1742.5907
-LED,      R12_WEU,  RAIL,       2070,  1742.5908
-LED,      R12_WEU,  RAIL,       2080,  1742.5907
-LED,      R12_WEU,  RAIL,       2090,  1742.5907
-LED,      R12_WEU,  RAIL,       2100,  1742.5907
-LED,      R12_WEU,  RAIL,       2110,  1742.5907
+LED,R12_AFR,2W,2020,360
+LED,R12_AFR,2W,2020,360
+LED,R12_AFR,2W,2025,349.98388671875
+LED,R12_AFR,2W,2030,344.6222839355469
+LED,R12_AFR,2W,2035,360.2837219238281
+LED,R12_AFR,2W,2040,376.3924255371094
+LED,R12_AFR,2W,2045,390.5007019042969
+LED,R12_AFR,2W,2050,399.0496826171875
+LED,R12_AFR,2W,2055,399.1865234375
+LED,R12_AFR,2W,2060,392.7279663085938
+LED,R12_AFR,2W,2070,366.2047119140625
+LED,R12_AFR,2W,2080,329.6648559570313
+LED,R12_AFR,2W,2090,287.3380432128906
+LED,R12_AFR,2W,2100,239.7504425048828
+LED,R12_AFR,2W,2110,186.1843566894531
+LED,R12_AFR,AIR,2020,120
+LED,R12_AFR,AIR,2025,121.805549621582
+LED,R12_AFR,AIR,2030,127.1338882446289
+LED,R12_AFR,AIR,2035,151.6692962646484
+LED,R12_AFR,AIR,2040,188.6494598388672
+LED,R12_AFR,AIR,2045,244.7713623046875
+LED,R12_AFR,AIR,2050,325.888427734375
+LED,R12_AFR,AIR,2055,439.525634765625
+LED,R12_AFR,AIR,2060,588.641357421875
+LED,R12_AFR,AIR,2070,948.18798828125
+LED,R12_AFR,AIR,2080,1224.320434570313
+LED,R12_AFR,AIR,2090,1308.121215820313
+LED,R12_AFR,AIR,2100,1222.314453125
+LED,R12_AFR,AIR,2110,1015.314392089844
+LED,R12_AFR,BUS,2020,1740
+LED,R12_AFR,BUS,2025,1780.66943359375
+LED,R12_AFR,BUS,2030,1838.319213867188
+LED,R12_AFR,BUS,2035,1990.294067382813
+LED,R12_AFR,BUS,2040,2168.668212890625
+LED,R12_AFR,BUS,2045,2373.2900390625
+LED,R12_AFR,BUS,2050,2596.604248046875
+LED,R12_AFR,BUS,2055,2824.058349609375
+LED,R12_AFR,BUS,2060,3062.0732421875
+LED,R12_AFR,BUS,2070,3557.52001953125
+LED,R12_AFR,BUS,2080,4037.936767578125
+LED,R12_AFR,BUS,2090,4455.232421875
+LED,R12_AFR,BUS,2100,4757.85791015625
+LED,R12_AFR,BUS,2110,4864.76806640625
+LED,R12_AFR,LDV,2020,720
+LED,R12_AFR,LDV,2025,799.4566040039063
+LED,R12_AFR,LDV,2030,898.6297607421875
+LED,R12_AFR,LDV,2035,1094.39111328125
+LED,R12_AFR,LDV,2040,1337.340087890625
+LED,R12_AFR,LDV,2045,1626.252197265625
+LED,R12_AFR,LDV,2050,1938.304565429688
+LED,R12_AFR,LDV,2055,2238.887451171875
+LED,R12_AFR,LDV,2060,2502.305908203125
+LED,R12_AFR,LDV,2070,2853.29150390625
+LED,R12_AFR,LDV,2080,2980.26806640625
+LED,R12_AFR,LDV,2090,2954.5478515625
+LED,R12_AFR,LDV,2100,2818.096923828125
+LED,R12_AFR,LDV,2110,2578.206298828125
+LED,R12_AFR,RAIL,2020,60
+LED,R12_AFR,RAIL,2025,111.8758926391602
+LED,R12_AFR,RAIL,2030,171.4755706787109
+LED,R12_AFR,RAIL,2035,258.1607971191406
+LED,R12_AFR,RAIL,2040,373.7814636230469
+LED,R12_AFR,RAIL,2045,529.0264892578125
+LED,R12_AFR,RAIL,2050,732.5852661132813
+LED,R12_AFR,RAIL,2055,990.5956420898438
+LED,R12_AFR,RAIL,2060,1310.398193359375
+LED,R12_AFR,RAIL,2070,2143.411376953125
+LED,R12_AFR,RAIL,2080,3227.6123046875
+LED,R12_AFR,RAIL,2090,4576.7958984375
+LED,R12_AFR,RAIL,2100,6214.5390625
+LED,R12_AFR,RAIL,2110,8100.70166015625
+LED,R12_CHN,2W,2020,174
+LED,R12_CHN,2W,2025,175.4468841552734
+LED,R12_CHN,2W,2030,176.6652679443359
+LED,R12_CHN,2W,2035,178.8364105224609
+LED,R12_CHN,2W,2040,179.2528381347656
+LED,R12_CHN,2W,2045,179.0093688964844
+LED,R12_CHN,2W,2050,177.9751892089844
+LED,R12_CHN,2W,2055,182.0181274414063
+LED,R12_CHN,2W,2060,185.8734436035156
+LED,R12_CHN,2W,2070,189.2817718505859
+LED,R12_CHN,2W,2080,192.6901000976562
+LED,R12_CHN,2W,2090,196.0984283447265
+LED,R12_CHN,2W,2100,199.5067565917968
+LED,R12_CHN,2W,2110,202.9150848388672
+LED,R12_CHN,AIR,2020,957
+LED,R12_CHN,AIR,2025,1109.301391601563
+LED,R12_CHN,AIR,2030,1300.466186523438
+LED,R12_CHN,AIR,2035,1593.781860351563
+LED,R12_CHN,AIR,2040,1832.63671875
+LED,R12_CHN,AIR,2045,2037.926635742188
+LED,R12_CHN,AIR,2050,2183.029296875
+LED,R12_CHN,AIR,2055,2297.962646484375
+LED,R12_CHN,AIR,2060,2343.946044921875
+LED,R12_CHN,AIR,2070,2131.670532226563
+LED,R12_CHN,AIR,2080,1919.39501953125
+LED,R12_CHN,AIR,2090,1707.119506835938
+LED,R12_CHN,AIR,2100,1494.843994140625
+LED,R12_CHN,AIR,2110,1282.568481445313
+LED,R12_CHN,BUS,2020,1566
+LED,R12_CHN,BUS,2025,1729.201293945313
+LED,R12_CHN,BUS,2030,1898.126342773438
+LED,R12_CHN,BUS,2035,2084.573974609375
+LED,R12_CHN,BUS,2040,2270.96484375
+LED,R12_CHN,BUS,2045,2460.0703125
+LED,R12_CHN,BUS,2050,2645.1865234375
+LED,R12_CHN,BUS,2055,2914.35693359375
+LED,R12_CHN,BUS,2060,3190.76123046875
+LED,R12_CHN,BUS,2070,3637.868359375003
+LED,R12_CHN,BUS,2080,4084.975488281256
+LED,R12_CHN,BUS,2090,4532.082617187509
+LED,R12_CHN,BUS,2100,4979.189746093762
+LED,R12_CHN,BUS,2110,5426.296875
+LED,R12_CHN,LDV,2020,4524
+LED,R12_CHN,LDV,2025,4714.74462890625
+LED,R12_CHN,LDV,2030,4882.19140625
+LED,R12_CHN,LDV,2035,5075.77490234375
+LED,R12_CHN,LDV,2040,5135.939453125
+LED,R12_CHN,LDV,2045,5123.18701171875
+LED,R12_CHN,LDV,2050,5040.54052734375
+LED,R12_CHN,LDV,2055,5054.28759765625
+LED,R12_CHN,LDV,2060,5028.62841796875
+LED,R12_CHN,LDV,2070,4713.963476562509
+LED,R12_CHN,LDV,2080,4399.29853515626
+LED,R12_CHN,LDV,2090,4084.633593750012
+LED,R12_CHN,LDV,2100,3769.968652343756
+LED,R12_CHN,LDV,2110,3455.3037109375
+LED,R12_CHN,RAIL,2020,1479
+LED,R12_CHN,RAIL,2025,1665.307861328125
+LED,R12_CHN,RAIL,2030,1876.889526367188
+LED,R12_CHN,RAIL,2035,2136.79931640625
+LED,R12_CHN,RAIL,2040,2400.271484375
+LED,R12_CHN,RAIL,2045,2679.43505859375
+LED,R12_CHN,RAIL,2050,2967.096923828125
+LED,R12_CHN,RAIL,2055,3360.08837890625
+LED,R12_CHN,RAIL,2060,3781.302490234375
+LED,R12_CHN,RAIL,2070,4872.294726562512
+LED,R12_CHN,RAIL,2080,5963.286962890648
+LED,R12_CHN,RAIL,2090,7054.279199218756
+LED,R12_CHN,RAIL,2100,8145.271435546892
+LED,R12_CHN,RAIL,2110,9236.263671875
+LED,R12_EEU,2W,2020,134.0206146240234
+LED,R12_EEU,2W,2025,138.4045749240452
+LED,R12_EEU,2W,2030,142.7885352240669
+LED,R12_EEU,2W,2035,147.1724955240886
+LED,R12_EEU,2W,2040,151.5564558241103
+LED,R12_EEU,2W,2045,155.9404161241321
+LED,R12_EEU,2W,2050,160.3243764241538
+LED,R12_EEU,2W,2055,164.7083367241753
+LED,R12_EEU,2W,2060,169.0922970241971
+LED,R12_EEU,2W,2070,177.8602176242404
+LED,R12_EEU,2W,2080,186.628138224284
+LED,R12_EEU,2W,2090,195.3960588243273
+LED,R12_EEU,2W,2100,204.1639794243706
+LED,R12_EEU,2W,2110,212.9319000244141
+LED,R12_EEU,AIR,2020,134.0206146240234
+LED,R12_EEU,AIR,2025,193.7786653306757
+LED,R12_EEU,AIR,2030,253.536716037328
+LED,R12_EEU,AIR,2035,313.2947667439803
+LED,R12_EEU,AIR,2040,373.0528174506326
+LED,R12_EEU,AIR,2045,432.8108681572812
+LED,R12_EEU,AIR,2050,492.5689188639335
+LED,R12_EEU,AIR,2055,552.3269695705858
+LED,R12_EEU,AIR,2060,612.0850202772381
+LED,R12_EEU,AIR,2070,731.601121690539
+LED,R12_EEU,AIR,2080,851.1172231038436
+LED,R12_EEU,AIR,2090,970.6333245171445
+LED,R12_EEU,AIR,2100,1090.149425930449
+LED,R12_EEU,AIR,2110,1209.66552734375
+LED,R12_EEU,BUS,2020,4690.7216796875
+LED,R12_EEU,BUS,2025,4665.57562934028
+LED,R12_EEU,BUS,2030,4640.429578993056
+LED,R12_EEU,BUS,2035,4615.283528645835
+LED,R12_EEU,BUS,2040,4590.13747829861
+LED,R12_EEU,BUS,2045,4564.99142795139
+LED,R12_EEU,BUS,2050,4539.84537760417
+LED,R12_EEU,BUS,2055,4514.699327256945
+LED,R12_EEU,BUS,2060,4489.553276909721
+LED,R12_EEU,BUS,2070,4439.26117621528
+LED,R12_EEU,BUS,2080,4388.969075520835
+LED,R12_EEU,BUS,2090,4338.67697482639
+LED,R12_EEU,BUS,2100,4288.384874131945
+LED,R12_EEU,BUS,2110,4238.0927734375
+LED,R12_EEU,LDV,2020,6164.9482421875
+LED,R12_EEU,LDV,2025,6199.664089626735
+LED,R12_EEU,LDV,2030,6234.379937065971
+LED,R12_EEU,LDV,2035,6269.095784505208
+LED,R12_EEU,LDV,2040,6303.811631944443
+LED,R12_EEU,LDV,2045,6338.527479383682
+LED,R12_EEU,LDV,2050,6373.24332682292
+LED,R12_EEU,LDV,2055,6407.959174262154
+LED,R12_EEU,LDV,2060,6442.67502170139
+LED,R12_EEU,LDV,2070,6512.10671657986
+LED,R12_EEU,LDV,2080,6581.538411458332
+LED,R12_EEU,LDV,2090,6650.970106336808
+LED,R12_EEU,LDV,2100,6720.40180121528
+LED,R12_EEU,LDV,2110,6789.83349609375
+LED,R12_EEU,RAIL,2020,1876.288696289063
+LED,R12_EEU,RAIL,2025,2173.772467719187
+LED,R12_EEU,RAIL,2030,2471.256239149312
+LED,R12_EEU,RAIL,2035,2768.740010579437
+LED,R12_EEU,RAIL,2040,3066.223782009547
+LED,R12_EEU,RAIL,2045,3363.707553439672
+LED,R12_EEU,RAIL,2050,3661.191324869797
+LED,R12_EEU,RAIL,2055,3958.675096299921
+LED,R12_EEU,RAIL,2060,4256.158867730031
+LED,R12_EEU,RAIL,2070,4851.126410590281
+LED,R12_EEU,RAIL,2080,5446.093953450531
+LED,R12_EEU,RAIL,2090,6041.061496310766
+LED,R12_EEU,RAIL,2100,6636.029039171015
+LED,R12_EEU,RAIL,2110,7230.99658203125
+LED,R12_FSU,2W,2020,92
+LED,R12_FSU,2W,2025,94.65718078613281
+LED,R12_FSU,2W,2030,95.68980407714844
+LED,R12_FSU,2W,2035,97.57755279541016
+LED,R12_FSU,2W,2040,99.23914337158203
+LED,R12_FSU,2W,2045,100.7929458618164
+LED,R12_FSU,2W,2050,101.9544982910156
+LED,R12_FSU,2W,2055,105.6298980712891
+LED,R12_FSU,2W,2060,109.9065093994141
+LED,R12_FSU,2W,2070,120.762565612793
+LED,R12_FSU,2W,2080,132.6807537078857
+LED,R12_FSU,2W,2090,144.5989418029785
+LED,R12_FSU,2W,2100,156.5171298980713
+LED,R12_FSU,2W,2110,168.4353179931641
+LED,R12_FSU,AIR,2020,1840
+LED,R12_FSU,AIR,2025,2047.281372070313
+LED,R12_FSU,AIR,2030,2019.759033203125
+LED,R12_FSU,AIR,2035,2141.438720703125
+LED,R12_FSU,AIR,2040,2233.035400390625
+LED,R12_FSU,AIR,2045,2304.462890625
+LED,R12_FSU,AIR,2050,2307.79296875
+LED,R12_FSU,AIR,2055,2335.54931640625
+LED,R12_FSU,AIR,2060,2336.92919921875
+LED,R12_FSU,AIR,2070,2293.615478515625
+LED,R12_FSU,AIR,2080,1999.088958740234
+LED,R12_FSU,AIR,2090,1704.562438964844
+LED,R12_FSU,AIR,2100,1410.035919189453
+LED,R12_FSU,AIR,2110,1115.509399414063
+LED,R12_FSU,BUS,2020,2024
+LED,R12_FSU,BUS,2025,2194.336181640625
+LED,R12_FSU,BUS,2030,2352.17529296875
+LED,R12_FSU,BUS,2035,2515.79150390625
+LED,R12_FSU,BUS,2040,2677.132080078125
+LED,R12_FSU,BUS,2045,2837.048828125
+LED,R12_FSU,BUS,2050,2986.73486328125
+LED,R12_FSU,BUS,2055,3210.5263671875
+LED,R12_FSU,BUS,2060,3454.835693359375
+LED,R12_FSU,BUS,2070,4022.01318359375
+LED,R12_FSU,BUS,2080,4560.612915039063
+LED,R12_FSU,BUS,2090,5099.212646484375
+LED,R12_FSU,BUS,2100,5637.812377929688
+LED,R12_FSU,BUS,2110,6176.412109375
+LED,R12_FSU,LDV,2020,4140
+LED,R12_FSU,LDV,2025,4430.1572265625
+LED,R12_FSU,LDV,2030,4538.64990234375
+LED,R12_FSU,LDV,2035,4731.3603515625
+LED,R12_FSU,LDV,2040,4887.61767578125
+LED,R12_FSU,LDV,2045,5017.9345703125
+LED,R12_FSU,LDV,2050,5096.16015625
+LED,R12_FSU,LDV,2055,5279.37060546875
+LED,R12_FSU,LDV,2060,5471.0810546875
+LED,R12_FSU,LDV,2070,5912.3818359375
+LED,R12_FSU,LDV,2080,6200.37744140625
+LED,R12_FSU,LDV,2090,6488.373046875
+LED,R12_FSU,LDV,2100,6776.36865234375
+LED,R12_FSU,LDV,2110,7064.3642578125
+LED,R12_FSU,RAIL,2020,1104
+LED,R12_FSU,RAIL,2025,1169.954833984375
+LED,R12_FSU,RAIL,2030,1212.836547851563
+LED,R12_FSU,RAIL,2035,1275.644409179688
+LED,R12_FSU,RAIL,2040,1338.78369140625
+LED,R12_FSU,RAIL,2045,1403.884765625
+LED,R12_FSU,RAIL,2050,1463.547729492188
+LED,R12_FSU,RAIL,2055,1561.491577148438
+LED,R12_FSU,RAIL,2060,1670.888061523438
+LED,R12_FSU,RAIL,2070,1936.117431640625
+LED,R12_FSU,RAIL,2080,2233.463806152344
+LED,R12_FSU,RAIL,2090,2530.810180664063
+LED,R12_FSU,RAIL,2100,2828.156555175781
+LED,R12_FSU,RAIL,2110,3125.5029296875
+LED,R12_LAM,2W,2020,282.8282775878906
+LED,R12_LAM,2W,2025,285.4895324707031
+LED,R12_LAM,2W,2030,281.0115661621094
+LED,R12_LAM,2W,2035,277.1612548828125
+LED,R12_LAM,2W,2040,271.9887390136719
+LED,R12_LAM,2W,2045,265.4259643554688
+LED,R12_LAM,2W,2050,257.3164978027344
+LED,R12_LAM,2W,2055,258.0037536621094
+LED,R12_LAM,2W,2060,259.3116760253906
+LED,R12_LAM,2W,2070,262.3806457519531
+LED,R12_LAM,2W,2080,261.0549011230469
+LED,R12_LAM,2W,2090,239.8430124918614
+LED,R12_LAM,2W,2100,218.6311238606766
+LED,R12_LAM,2W,2110,197.4192352294922
+LED,R12_LAM,AIR,2020,565.6565551757813
+LED,R12_LAM,AIR,2025,735.71728515625
+LED,R12_LAM,AIR,2030,827.5756225585938
+LED,R12_LAM,AIR,2035,1004.986145019531
+LED,R12_LAM,AIR,2040,1222.429443359375
+LED,R12_LAM,AIR,2045,1449.98486328125
+LED,R12_LAM,AIR,2050,1642.170166015625
+LED,R12_LAM,AIR,2055,1850.790405273438
+LED,R12_LAM,AIR,2060,2018.66650390625
+LED,R12_LAM,AIR,2070,2238.28076171875
+LED,R12_LAM,AIR,2080,2260.65625
+LED,R12_LAM,AIR,2090,1955.861043294257
+LED,R12_LAM,AIR,2100,1651.065836588532
+LED,R12_LAM,AIR,2110,1346.270629882813
+LED,R12_LAM,BUS,2020,2545.45458984375
+LED,R12_LAM,BUS,2025,2787.009765625
+LED,R12_LAM,BUS,2030,2892.47119140625
+LED,R12_LAM,BUS,2035,3046.65869140625
+LED,R12_LAM,BUS,2040,3188.0009765625
+LED,R12_LAM,BUS,2045,3300.291015625
+LED,R12_LAM,BUS,2050,3372.27294921875
+LED,R12_LAM,BUS,2055,3547.826904296875
+LED,R12_LAM,BUS,2060,3731.177734375
+LED,R12_LAM,BUS,2070,4131.2294921875
+LED,R12_LAM,BUS,2080,4526.29736328125
+LED,R12_LAM,BUS,2090,4757.784505208323
+LED,R12_LAM,BUS,2100,4989.27164713541
+LED,R12_LAM,BUS,2110,5220.7587890625
+LED,R12_LAM,LDV,2020,3535.353515625
+LED,R12_LAM,LDV,2025,3930.751708984375
+LED,R12_LAM,LDV,2030,4113.44091796875
+LED,R12_LAM,LDV,2035,4369.11865234375
+LED,R12_LAM,LDV,2040,4598.48583984375
+LED,R12_LAM,LDV,2045,4774.0234375
+LED,R12_LAM,LDV,2050,4878.333984375
+LED,R12_LAM,LDV,2055,5121.00927734375
+LED,R12_LAM,LDV,2060,5364.31689453125
+LED,R12_LAM,LDV,2070,5868.55322265625
+LED,R12_LAM,LDV,2080,6325.30224609375
+LED,R12_LAM,LDV,2090,6477.578776041662
+LED,R12_LAM,LDV,2100,6629.855305989582
+LED,R12_LAM,LDV,2110,6782.1318359375
+LED,R12_LAM,RAIL,2020,70.70706939697266
+LED,R12_LAM,RAIL,2025,101.3610229492188
+LED,R12_LAM,RAIL,2030,135.6736907958984
+LED,R12_LAM,RAIL,2035,178.9481506347656
+LED,R12_LAM,RAIL,2040,231.3665161132813
+LED,R12_LAM,RAIL,2045,293.4820861816406
+LED,R12_LAM,RAIL,2050,364.9258728027344
+LED,R12_LAM,RAIL,2055,463.9175109863281
+LED,R12_LAM,RAIL,2060,585.34716796875
+LED,R12_LAM,RAIL,2070,914.0819091796875
+LED,R12_LAM,RAIL,2080,1377.728149414063
+LED,R12_LAM,RAIL,2090,2150.329752604157
+LED,R12_LAM,RAIL,2100,2922.931355794281
+LED,R12_LAM,RAIL,2110,3695.532958984375
+LED,R12_MEA,2W,2020,325
+LED,R12_MEA,2W,2025,312.3658752441406
+LED,R12_MEA,2W,2030,295.8184204101563
+LED,R12_MEA,2W,2035,284.3418579101563
+LED,R12_MEA,2W,2040,272.3575439453125
+LED,R12_MEA,2W,2045,259.3324584960938
+LED,R12_MEA,2W,2050,245.4469757080078
+LED,R12_MEA,2W,2055,240.3021392822266
+LED,R12_MEA,2W,2060,236.7778167724609
+LED,R12_MEA,2W,2070,233.0047760009766
+LED,R12_MEA,2W,2080,229.000732421875
+LED,R12_MEA,2W,2090,223.8003082275391
+LED,R12_MEA,2W,2100,218.3058013916016
+LED,R12_MEA,2W,2110,212.8112945556641
+LED,R12_MEA,AIR,2020,715
+LED,R12_MEA,AIR,2025,813.5684814453125
+LED,R12_MEA,AIR,2030,872.5641479492188
+LED,R12_MEA,AIR,2035,1022.999267578125
+LED,R12_MEA,AIR,2040,1194.303100585938
+LED,R12_MEA,AIR,2045,1352.386474609375
+LED,R12_MEA,AIR,2050,1472.578125
+LED,R12_MEA,AIR,2055,1614.88916015625
+LED,R12_MEA,AIR,2060,1740.5751953125
+LED,R12_MEA,AIR,2070,1926.200439453125
+LED,R12_MEA,AIR,2080,1977.043090820313
+LED,R12_MEA,AIR,2090,1933.802978515625
+LED,R12_MEA,AIR,2100,1826.71826171875
+LED,R12_MEA,AIR,2110,1719.633544921875
+LED,R12_MEA,BUS,2020,2470
+LED,R12_MEA,BUS,2025,2605.241943359375
+LED,R12_MEA,BUS,2030,2716.29248046875
+LED,R12_MEA,BUS,2035,2843.97412109375
+LED,R12_MEA,BUS,2040,2967.005126953125
+LED,R12_MEA,BUS,2045,3078.114013671875
+LED,R12_MEA,BUS,2050,3171.231689453125
+LED,R12_MEA,BUS,2055,3371.7236328125
+LED,R12_MEA,BUS,2060,3596.906494140625
+LED,R12_MEA,BUS,2070,4104.869140625
+LED,R12_MEA,BUS,2080,4606.2109375
+LED,R12_MEA,BUS,2090,5060.908203125
+LED,R12_MEA,BUS,2100,5442.3974609375
+LED,R12_MEA,BUS,2110,5823.88671875
+LED,R12_MEA,LDV,2020,2892.5
+LED,R12_MEA,LDV,2025,3192.63818359375
+LED,R12_MEA,LDV,2030,3391.9599609375
+LED,R12_MEA,LDV,2035,3673.18212890625
+LED,R12_MEA,LDV,2040,3914.526611328125
+LED,R12_MEA,LDV,2045,4086.603759765625
+LED,R12_MEA,LDV,2050,4184.84521484375
+LED,R12_MEA,LDV,2055,4388.78466796875
+LED,R12_MEA,LDV,2060,4595.6220703125
+LED,R12_MEA,LDV,2070,5017.2666015625
+LED,R12_MEA,LDV,2080,5379.90771484375
+LED,R12_MEA,LDV,2090,5684.08740234375
+LED,R12_MEA,LDV,2100,5966.87255859375
+LED,R12_MEA,LDV,2110,6249.65771484375
+LED,R12_MEA,RAIL,2020,97.5
+LED,R12_MEA,RAIL,2025,142.2434539794922
+LED,R12_MEA,RAIL,2030,189.2916412353516
+LED,R12_MEA,RAIL,2035,246.0345916748047
+LED,R12_MEA,RAIL,2040,309.4769592285156
+LED,R12_MEA,RAIL,2045,377.9990539550781
+LED,R12_MEA,RAIL,2050,450.0655517578125
+LED,R12_MEA,RAIL,2055,545.7462768554688
+LED,R12_MEA,RAIL,2060,657.4540405273438
+LED,R12_MEA,RAIL,2070,937.208251953125
+LED,R12_MEA,RAIL,2080,1290.23486328125
+LED,R12_MEA,RAIL,2090,1726.2119140625
+LED,R12_MEA,RAIL,2100,2343.341796875
+LED,R12_MEA,RAIL,2110,2960.4716796875
+LED,R12_NAM,2W,2020,155
+LED,R12_NAM,2W,2025,157.3534088134766
+LED,R12_NAM,2W,2030,159.7068176269531
+LED,R12_NAM,2W,2035,162.0602264404297
+LED,R12_NAM,2W,2040,164.4136352539063
+LED,R12_NAM,2W,2045,166.7670440673828
+LED,R12_NAM,2W,2050,169.1204528808594
+LED,R12_NAM,2W,2055,171.4738616943359
+LED,R12_NAM,2W,2060,173.8272705078125
+LED,R12_NAM,2W,2070,178.5340881347656
+LED,R12_NAM,2W,2080,183.2409057617188
+LED,R12_NAM,2W,2090,187.9477233886719
+LED,R12_NAM,2W,2100,192.654541015625
+LED,R12_NAM,2W,2110,197.3613586425781
+LED,R12_NAM,AIR,2020,3720
+LED,R12_NAM,AIR,2025,3650.315809461808
+LED,R12_NAM,AIR,2030,3580.631618923613
+LED,R12_NAM,AIR,2035,3510.947428385418
+LED,R12_NAM,AIR,2040,3441.263237847223
+LED,R12_NAM,AIR,2045,3371.579047309027
+LED,R12_NAM,AIR,2050,3301.894856770836
+LED,R12_NAM,AIR,2055,3232.210666232641
+LED,R12_NAM,AIR,2060,3162.526475694445
+LED,R12_NAM,AIR,2070,3023.158094618058
+LED,R12_NAM,AIR,2080,2883.789713541668
+LED,R12_NAM,AIR,2090,2744.421332465277
+LED,R12_NAM,AIR,2100,2605.052951388891
+LED,R12_NAM,AIR,2110,2465.6845703125
+LED,R12_NAM,BUS,2020,1860
+LED,R12_NAM,BUS,2025,2166.900770399297
+LED,R12_NAM,BUS,2030,2473.801540798609
+LED,R12_NAM,BUS,2035,2780.702311197922
+LED,R12_NAM,BUS,2040,3087.603081597219
+LED,R12_NAM,BUS,2045,3394.503851996531
+LED,R12_NAM,BUS,2050,3701.404622395828
+LED,R12_NAM,BUS,2055,4008.305392795141
+LED,R12_NAM,BUS,2060,4315.206163194438
+LED,R12_NAM,BUS,2070,4929.007703993047
+LED,R12_NAM,BUS,2080,5542.809244791672
+LED,R12_NAM,BUS,2090,6156.610785590281
+LED,R12_NAM,BUS,2100,6770.412326388891
+LED,R12_NAM,BUS,2110,7384.2138671875
+LED,R12_NAM,LDV,2020,24955
+LED,R12_NAM,LDV,2025,24002.70732964412
+LED,R12_NAM,LDV,2030,23050.41465928819
+LED,R12_NAM,LDV,2035,22098.12198893231
+LED,R12_NAM,LDV,2040,21145.82931857638
+LED,R12_NAM,LDV,2045,20193.5366482205
+LED,R12_NAM,LDV,2050,19241.24397786456
+LED,R12_NAM,LDV,2055,18288.95130750869
+LED,R12_NAM,LDV,2060,17336.65863715281
+LED,R12_NAM,LDV,2070,15432.073296441
+LED,R12_NAM,LDV,2080,13527.48795572919
+LED,R12_NAM,LDV,2090,11622.90261501737
+LED,R12_NAM,LDV,2100,9718.317274305562
+LED,R12_NAM,LDV,2110,7813.73193359375
+LED,R12_NAM,RAIL,2020,310
+LED,R12_NAM,RAIL,2025,504.433973524312
+LED,R12_NAM,RAIL,2030,698.8679470486095
+LED,R12_NAM,RAIL,2035,893.3019205729215
+LED,R12_NAM,RAIL,2040,1087.735894097234
+LED,R12_NAM,RAIL,2045,1282.169867621531
+LED,R12_NAM,RAIL,2050,1476.603841145843
+LED,R12_NAM,RAIL,2055,1671.037814670141
+LED,R12_NAM,RAIL,2060,1865.471788194453
+LED,R12_NAM,RAIL,2070,2254.339735243062
+LED,R12_NAM,RAIL,2080,2643.207682291672
+LED,R12_NAM,RAIL,2090,3032.075629340281
+LED,R12_NAM,RAIL,2100,3420.943576388891
+LED,R12_NAM,RAIL,2110,3809.8115234375
+LED,R12_PAO,2W,2020,140
+LED,R12_PAO,2W,2025,142.4252234564887
+LED,R12_PAO,2W,2030,144.8504469129774
+LED,R12_PAO,2W,2035,147.2756703694662
+LED,R12_PAO,2W,2040,149.7008938259548
+LED,R12_PAO,2W,2045,152.1261172824436
+LED,R12_PAO,2W,2050,154.5513407389323
+LED,R12_PAO,2W,2055,156.976564195421
+LED,R12_PAO,2W,2060,159.4017876519097
+LED,R12_PAO,2W,2070,164.2522345648871
+LED,R12_PAO,2W,2080,169.1026814778646
+LED,R12_PAO,2W,2090,173.953128390842
+LED,R12_PAO,2W,2100,178.8035753038195
+LED,R12_PAO,2W,2110,183.6540222167969
+LED,R12_PAO,AIR,2020,1820
+LED,R12_PAO,AIR,2025,1805.860263400607
+LED,R12_PAO,AIR,2030,1791.720526801215
+LED,R12_PAO,AIR,2035,1777.580790201823
+LED,R12_PAO,AIR,2040,1763.441053602431
+LED,R12_PAO,AIR,2045,1749.301317003038
+LED,R12_PAO,AIR,2050,1735.161580403646
+LED,R12_PAO,AIR,2055,1721.021843804254
+LED,R12_PAO,AIR,2060,1706.882107204861
+LED,R12_PAO,AIR,2070,1678.602634006076
+LED,R12_PAO,AIR,2080,1650.323160807292
+LED,R12_PAO,AIR,2090,1622.043687608507
+LED,R12_PAO,AIR,2100,1593.764214409723
+LED,R12_PAO,AIR,2110,1565.484741210938
+LED,R12_PAO,BUS,2020,700
+LED,R12_PAO,BUS,2025,938.58251953125
+LED,R12_PAO,BUS,2030,1177.1650390625
+LED,R12_PAO,BUS,2035,1415.74755859375
+LED,R12_PAO,BUS,2040,1654.330078125
+LED,R12_PAO,BUS,2045,1892.91259765625
+LED,R12_PAO,BUS,2050,2131.4951171875
+LED,R12_PAO,BUS,2055,2370.07763671875
+LED,R12_PAO,BUS,2060,2608.66015625
+LED,R12_PAO,BUS,2070,3085.8251953125
+LED,R12_PAO,BUS,2080,3562.990234375
+LED,R12_PAO,BUS,2090,4040.1552734375
+LED,R12_PAO,BUS,2100,4517.3203125
+LED,R12_PAO,BUS,2110,4994.4853515625
+LED,R12_PAO,LDV,2020,8120
+LED,R12_PAO,LDV,2025,7951.871609157984
+LED,R12_PAO,LDV,2030,7783.743218315969
+LED,R12_PAO,LDV,2035,7615.614827473953
+LED,R12_PAO,LDV,2040,7447.486436631938
+LED,R12_PAO,LDV,2045,7279.358045789922
+LED,R12_PAO,LDV,2050,7111.229654947907
+LED,R12_PAO,LDV,2055,6943.101264105906
+LED,R12_PAO,LDV,2060,6774.972873263891
+LED,R12_PAO,LDV,2070,6438.716091579859
+LED,R12_PAO,LDV,2080,6102.459309895828
+LED,R12_PAO,LDV,2090,5766.202528211797
+LED,R12_PAO,LDV,2100,5429.945746527781
+LED,R12_PAO,LDV,2110,5093.68896484375
+LED,R12_PAO,RAIL,2020,3220
+LED,R12_PAO,RAIL,2025,3521.129937065969
+LED,R12_PAO,RAIL,2030,3822.259874131938
+LED,R12_PAO,RAIL,2035,4123.389811197922
+LED,R12_PAO,RAIL,2040,4424.519748263891
+LED,R12_PAO,RAIL,2045,4725.649685329859
+LED,R12_PAO,RAIL,2050,5026.779622395828
+LED,R12_PAO,RAIL,2055,5327.909559461812
+LED,R12_PAO,RAIL,2060,5629.039496527781
+LED,R12_PAO,RAIL,2070,6231.299370659719
+LED,R12_PAO,RAIL,2080,6833.559244791672
+LED,R12_PAO,RAIL,2090,7435.819118923609
+LED,R12_PAO,RAIL,2100,8038.078993055562
+LED,R12_PAO,RAIL,2110,8640.3388671875
+LED,R12_PAS,2W,2020,480
+LED,R12_PAS,2W,2025,456.89892578125
+LED,R12_PAS,2W,2030,427.6212158203125
+LED,R12_PAS,2W,2035,408.0481262207031
+LED,R12_PAS,2W,2040,390.1551513671875
+LED,R12_PAS,2W,2045,375.0212358747212
+LED,R12_PAS,2W,2050,359.8873203822544
+LED,R12_PAS,2W,2055,344.7534048897875
+LED,R12_PAS,2W,2060,329.6194893973218
+LED,R12_PAS,2W,2070,299.3516584123881
+LED,R12_PAS,2W,2080,269.0838274274556
+LED,R12_PAS,2W,2090,238.8159964425222
+LED,R12_PAS,2W,2100,208.5481654575897
+LED,R12_PAS,2W,2110,178.2803344726563
+LED,R12_PAS,AIR,2020,560
+LED,R12_PAS,AIR,2025,684.8783569335938
+LED,R12_PAS,AIR,2030,768.3536376953125
+LED,R12_PAS,AIR,2035,914.5093383789063
+LED,R12_PAS,AIR,2040,1064.430297851563
+LED,R12_PAS,AIR,2045,1067.499293736049
+LED,R12_PAS,AIR,2050,1070.568289620536
+LED,R12_PAS,AIR,2055,1073.637285505022
+LED,R12_PAS,AIR,2060,1076.706281389509
+LED,R12_PAS,AIR,2070,1082.844273158483
+LED,R12_PAS,AIR,2080,1088.982264927455
+LED,R12_PAS,AIR,2090,1095.120256696428
+LED,R12_PAS,AIR,2100,1101.258248465402
+LED,R12_PAS,AIR,2110,1107.396240234375
+LED,R12_PAS,BUS,2020,3360
+LED,R12_PAS,BUS,2025,3544.59912109375
+LED,R12_PAS,BUS,2030,3700.708251953125
+LED,R12_PAS,BUS,2035,3912.3212890625
+LED,R12_PAS,BUS,2040,4140.39794921875
+LED,R12_PAS,BUS,2045,4184.287109375
+LED,R12_PAS,BUS,2050,4228.17626953125
+LED,R12_PAS,BUS,2055,4272.0654296875
+LED,R12_PAS,BUS,2060,4315.95458984375
+LED,R12_PAS,BUS,2070,4403.73291015625
+LED,R12_PAS,BUS,2080,4491.51123046875
+LED,R12_PAS,BUS,2090,4579.28955078125
+LED,R12_PAS,BUS,2100,4667.06787109375
+LED,R12_PAS,BUS,2110,4754.84619140625
+LED,R12_PAS,LDV,2020,2960
+LED,R12_PAS,LDV,2025,3326.5478515625
+LED,R12_PAS,LDV,2030,3560.28955078125
+LED,R12_PAS,LDV,2035,3862.277099609375
+LED,R12_PAS,LDV,2040,4128.82177734375
+LED,R12_PAS,LDV,2045,4120.713588169643
+LED,R12_PAS,LDV,2050,4112.605398995536
+LED,R12_PAS,LDV,2055,4104.497209821424
+LED,R12_PAS,LDV,2060,4096.38902064732
+LED,R12_PAS,LDV,2070,4080.172642299106
+LED,R12_PAS,LDV,2080,4063.956263950893
+LED,R12_PAS,LDV,2090,4047.73988560268
+LED,R12_PAS,LDV,2100,4031.523507254461
+LED,R12_PAS,LDV,2110,4015.30712890625
+LED,R12_PAS,RAIL,2020,640
+LED,R12_PAS,RAIL,2025,823.86376953125
+LED,R12_PAS,RAIL,2030,1012.333068847656
+LED,R12_PAS,RAIL,2035,1248.878540039063
+LED,R12_PAS,RAIL,2040,1519.351318359375
+LED,R12_PAS,RAIL,2045,1987.454328264517
+LED,R12_PAS,RAIL,2050,2455.55733816963
+LED,R12_PAS,RAIL,2055,2923.660348074773
+LED,R12_PAS,RAIL,2060,3391.763357979915
+LED,R12_PAS,RAIL,2070,4327.96937779017
+LED,R12_PAS,RAIL,2080,5264.175397600455
+LED,R12_PAS,RAIL,2090,6200.38141741071
+LED,R12_PAS,RAIL,2100,7136.587437220995
+LED,R12_PAS,RAIL,2110,8072.79345703125
+LED,R12_RCPA,2W,2020,404.2105407714844
+LED,R12_RCPA,2W,2025,414.1551818847656
+LED,R12_RCPA,2W,2030,406.2133483886719
+LED,R12_RCPA,2W,2035,399.6655578613281
+LED,R12_RCPA,2W,2040,383.2218933105469
+LED,R12_RCPA,2W,2045,363.7086181640625
+LED,R12_RCPA,2W,2050,345.1980285644531
+LED,R12_RCPA,2W,2055,330.3993835449219
+LED,R12_RCPA,2W,2060,317.9335021972656
+LED,R12_RCPA,2W,2070,296.1551818847656
+LED,R12_RCPA,2W,2080,269.3987426757813
+LED,R12_RCPA,2W,2090,235.6074676513672
+LED,R12_RCPA,2W,2100,199.4299163818359
+LED,R12_RCPA,2W,2110,163.2015686035156
+LED,R12_RCPA,AIR,2020,555.7894897460938
+LED,R12_RCPA,AIR,2025,743.1212768554688
+LED,R12_RCPA,AIR,2030,931.198974609375
+LED,R12_RCPA,AIR,2035,1327.268798828125
+LED,R12_RCPA,AIR,2040,1784.122314453125
+LED,R12_RCPA,AIR,2045,2230.60791015625
+LED,R12_RCPA,AIR,2050,2607.6416015625
+LED,R12_RCPA,AIR,2055,2908.426025390625
+LED,R12_RCPA,AIR,2060,3106.1142578125
+LED,R12_RCPA,AIR,2070,3197.003173828125
+LED,R12_RCPA,AIR,2080,2871.0283203125
+LED,R12_RCPA,AIR,2090,2291.76806640625
+LED,R12_RCPA,AIR,2100,1654.445678710938
+LED,R12_RCPA,AIR,2110,1039.983642578125
+LED,R12_RCPA,BUS,2020,1515.789428710938
+LED,R12_RCPA,BUS,2025,1629.478149414063
+LED,R12_RCPA,BUS,2030,1722.492797851563
+LED,R12_RCPA,BUS,2035,1829.713623046875
+LED,R12_RCPA,BUS,2040,1936.40087890625
+LED,R12_RCPA,BUS,2045,2056.44482421875
+LED,R12_RCPA,BUS,2050,2198.588623046875
+LED,R12_RCPA,BUS,2055,2375.871337890625
+LED,R12_RCPA,BUS,2060,2581.431640625
+LED,R12_RCPA,BUS,2070,3055.49267578125
+LED,R12_RCPA,BUS,2080,3512.585693359375
+LED,R12_RCPA,BUS,2090,3873.81494140625
+LED,R12_RCPA,BUS,2100,4154.47607421875
+LED,R12_RCPA,BUS,2110,4369.693359375
+LED,R12_RCPA,LDV,2020,808.4210815429688
+LED,R12_RCPA,LDV,2025,1097.704467773438
+LED,R12_RCPA,LDV,2030,1367.905639648438
+LED,R12_RCPA,LDV,2035,1712.652709960938
+LED,R12_RCPA,LDV,2040,2009.483764648438
+LED,R12_RCPA,LDV,2045,2251.875
+LED,R12_RCPA,LDV,2050,2454.50634765625
+LED,R12_RCPA,LDV,2055,2645.53564453125
+LED,R12_RCPA,LDV,2060,2825.507568359375
+LED,R12_RCPA,LDV,2070,3152.49853515625
+LED,R12_RCPA,LDV,2080,3359.8544921875
+LED,R12_RCPA,LDV,2090,3414.03857421875
+LED,R12_RCPA,LDV,2100,3365.0908203125
+LED,R12_RCPA,LDV,2110,3247.970458984375
+LED,R12_RCPA,RAIL,2020,1515.789428710938
+LED,R12_RCPA,RAIL,2025,1738.7392578125
+LED,R12_RCPA,RAIL,2030,1926.72216796875
+LED,R12_RCPA,RAIL,2035,2195.141845703125
+LED,R12_RCPA,RAIL,2040,2447.12451171875
+LED,R12_RCPA,RAIL,2045,2694.872314453125
+LED,R12_RCPA,RAIL,2050,2955.721923828125
+LED,R12_RCPA,RAIL,2055,3257.814208984375
+LED,R12_RCPA,RAIL,2060,3598.227294921875
+LED,R12_RCPA,RAIL,2070,4388.4951171875
+LED,R12_RCPA,RAIL,2080,5204.53466796875
+LED,R12_RCPA,RAIL,2090,5956.2705078125
+LED,R12_RCPA,RAIL,2100,6689.5361328125
+LED,R12_RCPA,RAIL,2110,7446.60693359375
+LED,R12_SAS,2W,2020,960
+LED,R12_SAS,2W,2025,1042.297241210938
+LED,R12_SAS,2W,2030,1032.638061523438
+LED,R12_SAS,2W,2035,1042.7939453125
+LED,R12_SAS,2W,2040,1034.465087890625
+LED,R12_SAS,2W,2045,1009.565856933594
+LED,R12_SAS,2W,2050,970.6906127929688
+LED,R12_SAS,2W,2055,924.3265380859375
+LED,R12_SAS,2W,2060,874.3482666015625
+LED,R12_SAS,2W,2070,769.3289794921875
+LED,R12_SAS,2W,2080,605.7471046447754
+LED,R12_SAS,2W,2090,442.1652297973633
+LED,R12_SAS,2W,2100,278.5833549499512
+LED,R12_SAS,2W,2110,115.0014801025391
+LED,R12_SAS,AIR,2020,160
+LED,R12_SAS,AIR,2025,229.4959259033203
+LED,R12_SAS,AIR,2030,277.5835571289063
+LED,R12_SAS,AIR,2035,383.0354919433594
+LED,R12_SAS,AIR,2040,540.9185791015625
+LED,R12_SAS,AIR,2045,761.5991821289063
+LED,R12_SAS,AIR,2050,1023.853942871094
+LED,R12_SAS,AIR,2055,1297.202880859375
+LED,R12_SAS,AIR,2060,1550.608154296875
+LED,R12_SAS,AIR,2070,1942.2001953125
+LED,R12_SAS,AIR,2080,1817.668090820313
+LED,R12_SAS,AIR,2090,1693.135986328125
+LED,R12_SAS,AIR,2100,1568.603881835938
+LED,R12_SAS,AIR,2110,1444.07177734375
+LED,R12_SAS,BUS,2020,1360
+LED,R12_SAS,BUS,2025,1530.223266601563
+LED,R12_SAS,BUS,2030,1649.731689453125
+LED,R12_SAS,BUS,2035,1811.199462890625
+LED,R12_SAS,BUS,2040,1990.9990234375
+LED,R12_SAS,BUS,2045,2194.9130859375
+LED,R12_SAS,BUS,2050,2423.02880859375
+LED,R12_SAS,BUS,2055,2679.263427734375
+LED,R12_SAS,BUS,2060,2966.244140625
+LED,R12_SAS,BUS,2070,3645.626708984375
+LED,R12_SAS,BUS,2080,4201.263366699219
+LED,R12_SAS,BUS,2090,4756.900024414063
+LED,R12_SAS,BUS,2100,5312.536682128906
+LED,R12_SAS,BUS,2110,5868.17333984375
+LED,R12_SAS,LDV,2020,880
+LED,R12_SAS,LDV,2025,1248.320068359375
+LED,R12_SAS,LDV,2030,1535.297119140625
+LED,R12_SAS,LDV,2035,1954.123168945313
+LED,R12_SAS,LDV,2040,2414.205810546875
+LED,R12_SAS,LDV,2045,2879.101318359375
+LED,R12_SAS,LDV,2050,3301.580810546875
+LED,R12_SAS,LDV,2055,3672.869873046875
+LED,R12_SAS,LDV,2060,4000.317626953125
+LED,R12_SAS,LDV,2070,4578.224609375
+LED,R12_SAS,LDV,2080,4624.497802734375
+LED,R12_SAS,LDV,2090,4670.77099609375
+LED,R12_SAS,LDV,2100,4717.044189453125
+LED,R12_SAS,LDV,2110,4763.3173828125
+LED,R12_SAS,RAIL,2020,640
+LED,R12_SAS,RAIL,2025,799.3246459960938
+LED,R12_SAS,RAIL,2030,913.902587890625
+LED,R12_SAS,RAIL,2035,1094.092041015625
+LED,R12_SAS,RAIL,2040,1309.082763671875
+LED,R12_SAS,RAIL,2045,1558.587890625
+LED,R12_SAS,RAIL,2050,1833.654907226563
+LED,R12_SAS,RAIL,2055,2135.573974609375
+LED,R12_SAS,RAIL,2060,2468.91259765625
+LED,R12_SAS,RAIL,2070,3264.092041015625
+LED,R12_SAS,RAIL,2080,4172.677917480469
+LED,R12_SAS,RAIL,2090,5081.263793945313
+LED,R12_SAS,RAIL,2100,5989.849670410156
+LED,R12_SAS,RAIL,2110,6898.435546875
+LED,R12_WEU,2W,2020,300
+LED,R12_WEU,2W,2025,293.4449081420898
+LED,R12_WEU,2W,2030,286.8898162841797
+LED,R12_WEU,2W,2035,280.3347244262695
+LED,R12_WEU,2W,2040,273.7796325683594
+LED,R12_WEU,2W,2045,267.2245407104492
+LED,R12_WEU,2W,2050,260.6694488525391
+LED,R12_WEU,2W,2055,254.1143569946289
+LED,R12_WEU,2W,2060,247.5592651367188
+LED,R12_WEU,2W,2070,234.4490814208984
+LED,R12_WEU,2W,2080,221.3388977050781
+LED,R12_WEU,2W,2090,208.2287139892578
+LED,R12_WEU,2W,2100,195.1185302734375
+LED,R12_WEU,2W,2110,182.0083465576172
+LED,R12_WEU,AIR,2020,1350
+LED,R12_WEU,AIR,2025,1359.326639811198
+LED,R12_WEU,AIR,2030,1368.653279622396
+LED,R12_WEU,AIR,2035,1377.979919433594
+LED,R12_WEU,AIR,2040,1387.306559244792
+LED,R12_WEU,AIR,2045,1396.633199055989
+LED,R12_WEU,AIR,2050,1405.959838867188
+LED,R12_WEU,AIR,2055,1415.286478678385
+LED,R12_WEU,AIR,2060,1424.613118489583
+LED,R12_WEU,AIR,2070,1443.266398111979
+LED,R12_WEU,AIR,2080,1461.919677734375
+LED,R12_WEU,AIR,2090,1480.572957356771
+LED,R12_WEU,AIR,2100,1499.226236979166
+LED,R12_WEU,AIR,2110,1517.879516601563
+LED,R12_WEU,BUS,2020,1050
+LED,R12_WEU,BUS,2025,1265.869276258672
+LED,R12_WEU,BUS,2030,1481.738552517359
+LED,R12_WEU,BUS,2035,1697.607828776047
+LED,R12_WEU,BUS,2040,1913.477105034719
+LED,R12_WEU,BUS,2045,2129.346381293406
+LED,R12_WEU,BUS,2050,2345.215657552078
+LED,R12_WEU,BUS,2055,2561.084933810766
+LED,R12_WEU,BUS,2060,2776.954210069438
+LED,R12_WEU,BUS,2070,3208.692762586797
+LED,R12_WEU,BUS,2080,3640.431315104172
+LED,R12_WEU,BUS,2090,4072.169867621531
+LED,R12_WEU,BUS,2100,4503.908420138891
+LED,R12_WEU,BUS,2110,4935.64697265625
+LED,R12_WEU,LDV,2020,10650
+LED,R12_WEU,LDV,2025,10349.908718533
+LED,R12_WEU,LDV,2030,10049.81743706599
+LED,R12_WEU,LDV,2035,9749.72615559897
+LED,R12_WEU,LDV,2040,9449.634874131945
+LED,R12_WEU,LDV,2045,9149.543592664937
+LED,R12_WEU,LDV,2050,8849.452311197929
+LED,R12_WEU,LDV,2055,8549.361029730928
+LED,R12_WEU,LDV,2060,8249.269748263905
+LED,R12_WEU,LDV,2070,7649.087185329874
+LED,R12_WEU,LDV,2080,7048.904622395843
+LED,R12_WEU,LDV,2090,6448.722059461812
+LED,R12_WEU,LDV,2100,5848.539496527798
+LED,R12_WEU,LDV,2110,5248.35693359375
+LED,R12_WEU,RAIL,2020,1650
+LED,R12_WEU,RAIL,2025,2031.385470920155
+LED,R12_WEU,RAIL,2030,2412.770941840281
+LED,R12_WEU,RAIL,2035,2794.156412760436
+LED,R12_WEU,RAIL,2040,3175.541883680562
+LED,R12_WEU,RAIL,2045,3556.927354600717
+LED,R12_WEU,RAIL,2050,3938.312825520843
+LED,R12_WEU,RAIL,2055,4319.698296440969
+LED,R12_WEU,RAIL,2060,4701.083767361124
+LED,R12_WEU,RAIL,2070,5463.854709201405
+LED,R12_WEU,RAIL,2080,6226.625651041686
+LED,R12_WEU,RAIL,2090,6989.396592881967
+LED,R12_WEU,RAIL,2100,7752.167534722219
+LED,R12_WEU,RAIL,2110,8514.9384765625

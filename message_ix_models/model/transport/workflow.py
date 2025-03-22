@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from hashlib import blake2s
 from itertools import product
 from typing import TYPE_CHECKING, Literal, Optional
@@ -28,14 +29,14 @@ SOLVE_CONFIG = WorkflowConfig(
             iis=1,
             lpmethod=4,
             scaind=1,
-            tilim=30 * 60,
+            tilim=45 * 60,
         ),
     ),
 )
 
 
 def base_scenario_url(
-    context: "Context", method: Literal["auto", "bare"] = "bare"
+    context: "Context", config: "Config", method: Literal["auto", "bare"] = "bare"
 ) -> str:
     """Identify the base MESSAGEix-GLOBIOM scenario.
 
@@ -57,8 +58,6 @@ def base_scenario_url(
     if context.scenario_info:
         assert context.core.url
         return context.core.url
-
-    config: "Config" = context.transport
 
     if method == "auto":
         return config.base_scenario_url
@@ -190,7 +189,7 @@ def generate(
 
     maybe_use_temporary_platform(context)
 
-    # Prepare transport configuration, passing the remaining `options`
+    # Prepare base/common transport configuration, passing the remaining `options`
     Config.from_context(context, options=options)
 
     # Set the default .report.Config key for ".* reported" steps
@@ -207,13 +206,14 @@ def generate(
     cl_scenario = get_cl_scenario()
 
     for scenario_code, policy in product(cl_scenario, (False, True)):
-        config = context.transport
-        # Update the .transport.Config from the `scenario_code`
-        config.use_scenario_code(scenario_code)
+        # Make a copy of the base .transport.Config for this particular workflow branch
+        config = deepcopy(context.transport)
 
+        # Update the .transport.Config from the `scenario_code` and `policy`
+        config.use_scenario_code(scenario_code)
         config.policy = policy
 
-        # TEMP
+        # Retrieve updated values
         is_LED = config.project["LED"]
         EDITS_activity = config.project["EDITS"]["activity"]
 
@@ -226,13 +226,13 @@ def generate(
         else:
             label_full = label
 
-        if policy and (is_LED or EDITS_activity is not None):  # TEMPORARY
-            log.info(f"({label_full}, {policy=}) → skip")
+        if config.policy and (is_LED or EDITS_activity is not None):  # TEMPORARY
+            log.info(f"({label_full}, {config.policy=}) → skip")
             continue
 
         # Identify the base scenario
-        base_url = base_scenario_url(context, base_scenario_method)
-        log.info(f"({label_full}, {policy=}) → {base_url=}")
+        base_url = base_scenario_url(context, config, base_scenario_method)
+        log.info(f"({label_full}, {config.policy=}) → {base_url=}")
 
         # Name of the base step
         base = f"base {short_hash(base_url)}"
@@ -256,17 +256,17 @@ def generate(
             build.main,
             target=target_url,
             clone=True,
-            ssp=config.ssp,
+            config=config,
         )
 
         # This block copied from message_data.projects.navigate.workflow
-        if policy:
+        if config.policy:
             # Add a carbon tax
             name = wf.add_step(f"{label} with tax", name, tax_emission, price=1000.0)
 
         # 'Simulate' build and produce debug outputs
         debug.append(f"{label} debug build")
-        wf.add_step(debug[-1], base, build.main, ssp=config.ssp, dry_run=True)
+        wf.add_step(debug[-1], base, build.main, config=config, dry_run=True)
 
         # Solve
         wf.add_step(f"{label} solved", name, solve, config=SOLVE_CONFIG)

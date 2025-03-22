@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+#: Keyword arguments for :func:`genno.operator.interpolate`.
+EXTRAPOLATE = dict(kwargs=dict(fill_value="extrapolate"))
+
+
 def has_input_commodity(technology: "Code", commodity: str) -> bool:
     """Return :any:`True` if `technology` has an ‘input’ annotation with `commodity`.
 

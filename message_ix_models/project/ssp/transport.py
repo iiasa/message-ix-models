@@ -297,7 +297,7 @@ def prepare_method_B(
     9. Adjust `k_emi_in` by adding (7) and (8).
     """
     from message_ix_models.model.transport import build
-    from message_ix_models.model.transport import files as exo
+    from message_ix_models.model.transport.key import exo
     from message_ix_models.tools.exo_data import prepare_computer
 
     # Fetch a Context instance

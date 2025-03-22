@@ -1,18 +1,71 @@
 # Technical lifetime (maximum age) of LDVs
 #
+# Sources
+# - scenario=*: see https://github.com/iiasa/message-ix-models/pull/213
+# - scenario=LED: SharePoint ECE.prog > Documents > Transport > LED Scenario >
+#   input files > lifetime-ldv-LED.xlsx as of 2025-03-18.
+#
 # Units: year
 #
-#
-node_loc, year_vtg, value
-R12_AFR,  1990,     25
-R12_CHN,  1990,     15
-R12_EEU,  1990,     28
-R12_FSU,  1990,     15
-R12_LAM,  1990,     25
-R12_MEA,  1990,     15
-R12_NAM,  1990,     18
-R12_PAO,  1990,     13
-R12_PAS,  1990,     13
-R12_RCPA, 1990,     15
-R12_SAS,  1990,     25
-R12_WEU,  1990,     20
+scenario, node_loc, technology, year_vtg, value
+*,        R12_AFR,  *,          1990,     25
+*,        R12_AFR,  *,          2110,     25
+*,        R12_CHN,  *,          1990,     15
+*,        R12_CHN,  *,          2110,     15
+*,        R12_EEU,  *,          1990,     28
+*,        R12_EEU,  *,          2110,     28
+*,        R12_FSU,  *,          1990,     15
+*,        R12_FSU,  *,          2110,     15
+*,        R12_LAM,  *,          1990,     25
+*,        R12_LAM,  *,          2110,     25
+*,        R12_MEA,  *,          1990,     15
+*,        R12_MEA,  *,          2110,     15
+*,        R12_NAM,  *,          1990,     18
+*,        R12_NAM,  *,          2110,     18
+*,        R12_PAO,  *,          1990,     13
+*,        R12_PAO,  *,          2110,     13
+*,        R12_PAS,  *,          1990,     13
+*,        R12_PAS,  *,          2110,     13
+*,        R12_RCPA, *,          1990,     15
+*,        R12_RCPA, *,          2110,     15
+*,        R12_SAS,  *,          1990,     25
+*,        R12_SAS,  *,          2110,     25
+*,        R12_WEU,  *,          1990,     20
+*,        R12_WEU,  *,          2110,     20
+
+LED,      R12_AFR,  *,          1990,     25
+LED,      R12_AFR,  *,          2050,     19.36
+LED,      R12_AFR,  *,          2110,     19.36
+LED,      R12_CHN,  *,          1990,     15
+LED,      R12_CHN,  *,          2050,     19.36
+LED,      R12_CHN,  *,          2110,     19.36
+LED,      R12_EEU,  *,          1990,     28
+LED,      R12_EEU,  *,          2050,     19.55
+LED,      R12_EEU,  *,          2110,     19.55
+LED,      R12_FSU,  *,          1990,     15
+LED,      R12_FSU,  *,          2050,     19.55
+LED,      R12_FSU,  *,          2110,     19.55
+LED,      R12_LAM,  *,          1990,     25
+LED,      R12_LAM,  *,          2050,     19.36
+LED,      R12_LAM,  *,          2110,     19.36
+LED,      R12_MEA,  *,          1990,     15
+LED,      R12_MEA,  *,          2050,     19.36
+LED,      R12_MEA,  *,          2110,     19.36
+LED,      R12_NAM,  *,          1990,     18
+LED,      R12_NAM,  *,          2050,     19.55
+LED,      R12_NAM,  *,          2110,     19.55
+LED,      R12_PAO,  *,          1990,     13
+LED,      R12_PAO,  *,          2050,     19.55
+LED,      R12_PAO,  *,          2110,     19.55
+LED,      R12_PAS,  *,          1990,     13
+LED,      R12_PAS,  *,          2050,     19.36
+LED,      R12_PAS,  *,          2110,     19.36
+LED,      R12_RCPA, *,          1990,     15
+LED,      R12_RCPA, *,          2050,     19.36
+LED,      R12_RCPA, *,          2110,     19.36
+LED,      R12_SAS,  *,          1990,     25
+LED,      R12_SAS,  *,          2050,     19.36
+LED,      R12_SAS,  *,          2110,     19.36
+LED,      R12_WEU,  *,          1990,     20
+LED,      R12_WEU,  *,          2050,     19.55
+LED,      R12_WEU,  *,          2110,     19.55

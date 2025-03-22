@@ -8,9 +8,6 @@
 # They are derived from (1) an IEA EV data set and (2) data from the OICA
 # website.
 #
-# - Values up to 2015 are used for historical_new_capacity.
-# - Values from 2020 onwards are used for both bound_new_capacity_{lo,up}.
-#
 # Units: Mvehicle
 #
 # - The following are from iea_ev_bound_new_capacity_ev.csv.
