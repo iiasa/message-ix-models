@@ -17,8 +17,6 @@ from message_ix_models.util import (
 )
 
 
-
-
 def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     """Add Water supply infrastructure
     This function links the water supply based on different settings and options.

@@ -2,6 +2,57 @@
 # these templates are used to declare the supply transformation logic.
 # dynamic values (e.g. years, node locations) are filled in within add_water_supply.
 
+SLACK_TECHNOLOGY_RULES = [
+    {
+     "type" : "input", 
+     "technology": "return_flow", 
+     "value": 1,
+     "unit" : "-", 
+     "level" : "water_avail_basin", 
+     "commodity" : "surfacewater_basin", 
+     "mode" : "M1", 
+     "year_vtg" : None, 
+     "year_act" : None, 
+    }, 
+    {
+        "type" : "input", 
+        "technology" : "gw_recharge", 
+        "value" : 1, 
+        "unit" : "-", 
+        "level" : "water_avail_basin", 
+        "commodity" : "groundwater_basin", 
+        "mode" : "M1", 
+        "year_vtg" : None, 
+        "year_act" : None, 
+    }, 
+    {
+        "type" : "input", 
+        "technology" : "basin_to_reg", 
+        "value" : 1, 
+        "unit" : "-", 
+        "level" : "water_supply_basin", 
+        "commodity" : "freshwater_basin", 
+        "mode" : "df_node['mode']", 
+        "node_origin" : "df_node['node']", 
+        "node_loc" : "df_node['region']", 
+    }, 
+    {
+        "type" : "input", 
+        "technology" : "salinewater_return", 
+        "value" : 1, 
+        "unit" : "-", 
+        "level" : "water_avail_basin", 
+        "commodity" : "salinewater_basin", 
+        "mode" : "M1",
+        "time" : "year", 
+        "time_origin" : "year", 
+        "node_origin" : "df_node['node']", 
+        "node_loc" : "df_node['node']", 
+    }
+
+    
+]
+
 # cooling branch (outputs only)
 COOLING_SUPPLY_RULES = [
     {
@@ -179,6 +230,130 @@ SHARE_MODE_RULES = [
         "value": "df_sw['share']",
         "unit": "%",
         "year_act": "df_sw['year']",
+    }
+]
+
+# historical new capacity rules - abstracts historical capacity data creation
+HISTORICAL_NEW_CAPACITY_RULES = [
+    {
+        "type": "historical_new_capacity",
+        "technology": "extract_surfacewater",
+        "value": "df_hist['hist_cap_sw_km3_year'] / 5",
+        "unit": "km3/year",
+        "node_loc": "df_hist['BCU_name']",
+        "year_vtg": 2015,
+    },
+    {
+        "type": "historical_new_capacity",
+        "technology": "extract_groundwater",
+        "value": "df_hist['hist_cap_gw_km3_year'] / 5",
+        "unit": "km3/year",
+        "node_loc": "df_hist['BCU_name']",
+        "year_vtg": 2015,
+    },
+]
+
+
+EXTRACTION_OUTPUT_RULES = [
+    {
+        "type": "output",
+        "technology": "extract_surfacewater",
+        "value": 1,
+        "unit": "-",
+        "level": "water_supply_basin",
+        "commodity": "freshwater_basin",
+        "mode": "M1",
+        "node_loc": "df_node['node']",
+        "node_dest": "df_node['node']",
+    },
+    {
+        "type": "output",
+        "technology": "extract_groundwater",
+        "value": 1,
+        "unit": "-",
+        "level": "water_supply_basin",
+        "commodity": "freshwater_basin",
+        "mode": "M1",
+        "node_loc": "df_node['node']",
+        "node_dest": "df_node['node']",
+    },
+    {
+        "type": "output",
+        "technology": "extract_gw_fossil",
+        "value": 1,
+        "unit": "-",
+        "level": "water_supply_basin",
+        "commodity": "freshwater_basin",
+        "mode": "M1",
+        "node_loc": "df_node['node']",
+        "node_dest": "df_node['node']",
+        "time_origin": "year",
+    },
+    {
+        "type": "output",
+        "technology": "extract_salinewater",
+        "value": 1,
+        "unit": "km3",
+        "year_vtg": None,
+        "year_act": None,
+        "level": "saline_supply",
+        "commodity": "saline_ppl",
+        "mode": "M1",
+        "time": "year",
+        "time_dest": "year",
+        "time_origin": "year",
+    }
+]
+
+DUMMY_BASIN_TO_REG_OUTPUT_RULES = [
+    {
+        "type": "output",
+        "technology": "basin_to_reg",
+        "value": 1,
+        "unit": "-",
+        "level": "water_supply",
+        "commodity": "freshwater",
+        "time_dest": "year",
+        "mode": "df_node['mode']",
+        "node_loc": "df_node['region']",
+        "node_dest": "df_node['region']",
+    }
+]
+
+DUMMY_VARIABLE_COST_RULES = [
+    {
+        "type": "var_cost",
+        "technology": "basin_to_reg",
+        "mode": "df_node['mode']",
+        "node_loc": "df_node['region']",
+        "value": 20,
+        "unit": "-",
+    }, 
+    {
+        "type": "var_cost",
+        "technology": "extract_surfacewater",
+        "value": 0.0001,
+        "unit": "USD/km3",
+        "mode": "M1",
+        "time": "year",
+    },
+    {
+        "type": "var_cost",
+        "technology": "extract_groundwater",
+        "value": 0.001,
+        "unit": "USD/km3",
+        "mode": "M1",
+        "time": "year",
+    },
+    
+]
+
+FIXED_COST_RULES = [
+    {
+        "type": "fix_cost",
+        "technology": "extract_gw_fossil",
+        "value": 300,
+        "unit": "USD/km3",
     }
 ]
 

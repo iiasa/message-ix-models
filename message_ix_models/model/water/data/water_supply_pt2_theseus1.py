@@ -15,12 +15,12 @@ from message_ix_models.util import (
     same_time,
 )
 from message_ix_models.model.water.data.water_supply_rules import (
+    SLACK_TECHNOLOGY_RULES,
     COOLING_SUPPLY_RULES, EXTRACTION_INPUT_RULES, 
     TECHNICAL_LIFETIME_RULES, INVESTMENT_COST_RULES,
-    SHARE_MODE_RULES
+    SHARE_MODE_RULES, HISTORICAL_NEW_CAPACITY_RULES, EXTRACTION_OUTPUT_RULES, 
+    DUMMY_BASIN_TO_REG_OUTPUT_RULES, FIXED_COST_RULES, DUMMY_VARIABLE_COST_RULES
 )
-
-
 
 
 def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
@@ -53,7 +53,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     fut_year = info.Y
     year_wat = (2010, 2015, *info.Y)
     sub_time = context.time
-    print(sub_time)
+
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear
@@ -62,8 +62,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     yv_ya_sw = map_yv_ya_lt(year_wat, 50, first_year)
     yv_ya_gw = map_yv_ya_lt(year_wat, 20, first_year)
 
-    print(" future year = ", fut_year)
-    print(" year_wat = ", year_wat)
 
     # reading basin_delineation
     FILE = f"basins_by_region_simpl_{context.regions}.csv"
@@ -127,97 +125,53 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         results["output"] = pd.concat(cooling_outputs)
 
     elif context.nexus_set == "nexus":
-        # input data frame  for slack technology balancing equality with demands
-        inp = (
-            make_df(
-                "input",
-                technology="return_flow",
-                value=1,
-                unit="-",
-                level="water_avail_basin",
-                commodity="surfacewater_basin",
-                mode="M1",
-                year_vtg=year_wat,
-                year_act=year_wat,
-            )
-            .pipe(
-                broadcast,
-                node_loc=df_node["node"],
-                time=pd.Series(sub_time),
-            )
-            .pipe(same_node)
-            .pipe(same_time)
-        )
 
-        inp = pd.concat(
-            [
-                inp,
-                make_df(
-                    "input",
-                    technology="gw_recharge",
-                    value=1,
-                    unit="-",
-                    level="water_avail_basin",
-                    commodity="groundwater_basin",
-                    mode="M1",
-                    year_vtg=year_wat,
-                    year_act=year_wat,
-                )
-                .pipe(
-                    broadcast,
-                    node_loc=df_node["node"],
-                    time=pd.Series(sub_time),
-                )
-                .pipe(same_node)
-                .pipe(same_time),
-            ]
-        )
+        slack_inputs = []
+        for rule in SLACK_TECHNOLOGY_RULES:
+            r = rule.copy()
+            common_args = {
+                "name": r["type"], 
+                "technology": r["technology"], 
+                "value": r["value"], 
+                "unit": r["unit"], 
+                "level": r["level"], 
+                "commodity": r["commodity"], 
+            }
+            match rule["technology"]:
+                case "return_flow"|"gw_recharge":
+                    df_rule = make_df(
+                        **common_args, 
+                        mode=r["mode"], 
+                        year_vtg=year_wat, 
+                        year_act=year_wat, 
+                    ).pipe(
+                        broadcast, 
+                        node_loc=df_node["node"], 
+                        time=pd.Series(sub_time), 
+                    ).pipe(same_node).pipe(same_time)
+                    slack_inputs.append(df_rule)
+                case "basin_to_reg":
+                    df_rule = make_df(
+                        **common_args, 
+                        mode=eval(r["mode"], {}, {"df_node": df_node}), 
+                        node_origin=eval(r["node_origin"], {}, {"df_node": df_node}), 
+                        node_loc=eval(r["node_loc"], {}, {"df_node": df_node}), 
+                    ).pipe(
+                        broadcast, 
+                        year_vtg=year_wat, 
+                        time=pd.Series(sub_time), 
+                    ).pipe(same_time)
+                    slack_inputs.append(df_rule)
 
-        # input dataframe  linking water supply to energy dummy technology
-        inp = pd.concat(
-            [
-                inp,
-                make_df(
-                    "input",
-                    technology="basin_to_reg",
-                    value=1,
-                    unit="-",
-                    level="water_supply_basin",
-                    commodity="freshwater_basin",
-                    mode=df_node["mode"],
-                    node_origin=df_node["node"],
-                    node_loc=df_node["region"],
-                )
-                .pipe(
-                    broadcast,
-                    year_vtg=year_wat,
-                    time=pd.Series(sub_time),
-                )
-                .pipe(same_time),
-            ]
-        )
-        inp["year_act"] = inp["year_vtg"]
-        # # input data frame  for slack technology balancing equality with demands
-        # inp = pd.concat([inp,
-        #     make_df(
-        #         "input",
-        #         technology="salinewater_return",
-        #         value=1,
-        #         unit="-",
-        #         level="water_avail_basin",
-        #         commodity="salinewater_basin",
-        #         mode="M1",
-        #         time="year",
-        #         time_origin="year",
-        #         node_origin=df_node["node"],
-        #         node_loc=df_node["node"],
-        #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-        # ])
-        # input data frame  for freshwater supply
+                case "salinewater_return":
+                    #skip
+                    pass
+                case _:
+                    raise ValueError(f"Invalid technology: {r['technology']}")
+        slack_inputs = pd.concat(slack_inputs)
+        slack_inputs["year_act"] = slack_inputs["year_vtg"]
+        results["input"] = slack_inputs
 
-        yv_ya_sw = map_yv_ya_lt(year_wat, 50, first_year)
-        yv_ya_gw = map_yv_ya_lt(year_wat, 20, first_year)
-        # apply dsl rules to build extraction input dataframes for water avail and electricity supply
         extraction_inputs = []
         for rule in EXTRACTION_INPUT_RULES:
             r = rule.copy()
@@ -245,7 +199,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             df_rule = broadcast(df_rule, broadcast_yr, time=pd.Series(sub_time))
             df_rule = same_time(df_rule)
             extraction_inputs.append(df_rule)
-        inp = pd.concat([inp] + extraction_inputs)
+        inp = pd.concat([slack_inputs] + extraction_inputs)
         inp["value"] = pd.to_numeric(inp["value"], errors="raise")
 
         if context.type_reg == "global":
@@ -258,186 +212,127 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
 
         results["input"] = inp
 
-        # Add output df  for freshwater supply for basins
-        output_df = (
-            make_df(
-                "output",
-                technology="extract_surfacewater",
-                value=1,
-                unit="-",
-                level="water_supply_basin",
-                commodity="freshwater_basin",
-                mode="M1",
-                node_loc=df_node["node"],
-                node_dest=df_node["node"],
+        # Refactored extraction_outputs block to reduce repetition
+        extraction_outputs = []
+        for rule in EXTRACTION_OUTPUT_RULES:
+            r = rule.copy()
+            r["type"] = "output"
+            
+            common_args = {
+                "name": "output",
+                "technology": r["technology"],
+                "value": r["value"],
+                "unit": r["unit"],
+                "level": r["level"],
+                "commodity": r["commodity"],
+                "mode": r["mode"],                
+            }
+            match r["technology"]:
+                case "extract_salinewater":
+                    df_rule = make_df(
+                        **common_args, 
+                        year_vtg=year_wat,
+                        year_act=year_wat,
+                        time=r["time"],
+                        time_dest=r["time_dest"],
+                        time_origin=r["time_origin"],
+                    )
+                    df_rule = broadcast(df_rule, node_loc=node_region)
+                    df_rule = same_node(df_rule)
+                case _:
+                    common_args.update(
+                        node_loc=eval(r["node_loc"], {}, {"df_node": df_node}),
+                        node_dest=eval(r["node_dest"], {}, {"df_node": df_node}),
+                    )
+                    if r["technology"] == "extract_gw_fossil":
+                        df_rule = make_df(**common_args, time_origin=r["time_origin"])
+                    else:
+                        df_rule = make_df(**common_args)
+                    
+                    broadcast_year = yv_ya_gw if r["technology"] in ["extract_gw_fossil", "extract_groundwater"] else yv_ya_sw
+                    df_rule = broadcast(df_rule, broadcast_year, time=pd.Series(sub_time))
+                    df_rule = same_time(df_rule)
+            extraction_outputs.append(df_rule)
+        results["output"] = pd.concat(extraction_outputs)
+        
+        hist_new_cap = []
+        for rule in HISTORICAL_NEW_CAPACITY_RULES:
+            r = rule.copy()
+            name = r["type"]
+            df_rule = make_df(
+                name,
+                node_loc = eval(r["node_loc"], {}, {"df_hist": df_hist}),
+                technology = r["technology"],
+                value = eval(r["value"], {}, {"df_hist": df_hist}),
+                unit = r["unit"],
+                year_vtg = r["year_vtg"],
             )
-            .pipe(
-                broadcast,
-                yv_ya_sw,
-                time=pd.Series(sub_time),
-            )
-            .pipe(same_time)
-        )
-        # Add output df  for groundwater supply for basins
-        output_df = pd.concat(
-            [
-                output_df,
-                make_df(
-                    "output",
-                    technology="extract_groundwater",
-                    value=1,
-                    unit="-",
-                    level="water_supply_basin",
-                    commodity="freshwater_basin",
-                    mode="M1",
-                    node_loc=df_node["node"],
-                    node_dest=df_node["node"],
-                )
-                .pipe(
-                    broadcast,
-                    yv_ya_gw,
-                    time=pd.Series(sub_time),
-                )
-                .pipe(same_time),
-            ]
-        )
+            hist_new_cap.append(df_rule)
 
-        # Add output df  for groundwater supply for basins
-        output_df = pd.concat(
-            [
-                output_df,
-                make_df(
-                    "output",
-                    technology="extract_gw_fossil",
-                    value=1,
-                    unit="-",
-                    level="water_supply_basin",
-                    commodity="freshwater_basin",
-                    mode="M1",
-                    node_loc=df_node["node"],
-                    node_dest=df_node["node"],
-                    time_origin="year",
-                )
-                .pipe(
-                    broadcast,
-                    yv_ya_gw,
-                    time=pd.Series(sub_time),
-                )
-                .pipe(same_time),
-            ]
-        )
+        results["historical_new_capacity"] = pd.concat(hist_new_cap)
+        dummy_basin_to_reg_output = []
+        for rule in DUMMY_BASIN_TO_REG_OUTPUT_RULES:
+            r = rule.copy()
+            df_rule = make_df(
+                r["type"],
+                technology=r["technology"],
+                value=r["value"],
+                unit=r["unit"],
+                level=r["level"],
+                commodity=r["commodity"],
+                time_dest=r["time_dest"],
+                mode=eval(r["mode"], {}, {"df_node": df_node}),
+                node_loc=eval(r["node_loc"], {}, {"df_node": df_node}),
+                node_dest=eval(r["node_dest"], {}, {"df_node": df_node}),
+            ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
+            df_rule["year_act"] = df_rule["year_vtg"]
+            dummy_basin_to_reg_output.append(df_rule)
+        dummy_basin_to_reg_output = pd.concat(dummy_basin_to_reg_output)
+        results["output"] = pd.concat([results["output"], dummy_basin_to_reg_output])
 
-        # Add output of saline water supply for regions
-        output_df = pd.concat(
-            [
-                output_df,
-                make_df(
-                    "output",
-                    technology="extract_salinewater",
-                    value=1,
-                    unit="km3",
-                    year_vtg=year_wat,
-                    year_act=year_wat,
-                    level="saline_supply",
-                    commodity="saline_ppl",
-                    mode="M1",
-                    time="year",
-                    time_dest="year",
-                    time_origin="year",
-                )
-                .pipe(broadcast, node_loc=node_region)
-                .pipe(same_node),
-            ]
-        )
+        results["output"]["year_act"] = results["output"]["year_vtg"]
 
-        hist_new_cap = make_df(
-            "historical_new_capacity",
-            node_loc=df_hist["BCU_name"],
-            technology="extract_surfacewater",
-            value=df_hist["hist_cap_sw_km3_year"] / 5,  # n period
-            unit="km3/year",
-            year_vtg=2015,
-        )
+        var_costs = []
+        for rule in DUMMY_VARIABLE_COST_RULES:
+            r = rule.copy()
+            common_args = {
+                "name": r["type"],
+                "technology": r["technology"],
+                "value": r["value"],
+                "unit": r["unit"],
 
-        hist_new_cap = pd.concat(
-            [
-                hist_new_cap,
-                make_df(
-                    "historical_new_capacity",
-                    node_loc=df_hist["BCU_name"],
-                    technology="extract_groundwater",
-                    value=df_hist["hist_cap_gw_km3_year"] / 5,
-                    unit="km3/year",
-                    year_vtg=2015,
-                ),
-            ]
-        )
+            }
+            match r["technology"]:
+                case "basin_to_reg":
+                    common_args.update(
+                        mode=eval(r["mode"], {}, {"df_node": df_node}),
+                        node_loc=eval(r["node_loc"], {}, {"df_node": df_node}),
+                    )
+                    df_rule = make_df(**common_args).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
+                    df_rule["year_act"] = df_rule["year_vtg"]
+                    var_costs.append(df_rule)
+                case "extract_surfacewater"|"extract_groundwater":
+                    pass
+                case _:
+                    raise ValueError(f"Invalid technology: {r['technology']}")
+        results["var_cost"] = pd.concat(var_costs)
 
-        results["historical_new_capacity"] = hist_new_cap
-
-        # output data frame linking water supply to energy dummy technology
-        output_df = pd.concat(
-            [
-                output_df,
-                make_df(
-                    "output",
-                    technology="basin_to_reg",
-                    value=1,
-                    unit="-",
-                    level="water_supply",
-                    commodity="freshwater",
-                    time_dest="year",
-                    node_loc=df_node["region"],
-                    node_dest=df_node["region"],
-                    mode=df_node["mode"],
-                ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time)),
-            ]
-        )
-
-        output_df["year_act"] = output_df["year_vtg"]
-
-        results["output"] = output_df
-        # dummy variable cost for dummy water to energy technology
-        var = make_df(
-            "var_cost",
-            technology="basin_to_reg",
-            mode=df_node["mode"],
-            node_loc=df_node["region"],
-            value=20,
-            unit="-",
-        ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
-        var["year_act"] = var["year_vtg"]
-        # # Dummy cost for extract surface ewater to prioritize water sources
-        # var = pd.concat([var, make_df(
-        #     "var_cost",
-        #     technology='extract_surfacewater',
-        #     value= 0.0001,
-        #     unit="USD/km3",
-        #     mode="M1",
-        #     time="year",
-        #     ).pipe(broadcast, year_vtg=year_wat,
-        #       year_act=year_wat, node_loc=df_node["node"]
-        #        )
-        #                  ])
-        # # Dummy cost for extract groundwater
-        # var = pd.concat([var, make_df(
-        #     "var_cost",
-        #     technology='extract_groundwater',
-        #     value= 0.001,
-        #     unit="USD/km3",
-        #     mode="M1",
-        #     time="year",
-        # ).pipe(broadcast, year_vtg=year_wat,
-        #   year_act=year_wat, node_loc=df_node["node"]
-        # ])
-        #                )
-        results["var_cost"] = var
-        fix_cost = make_df(
-            "fix_cost",
-            technology="extract_gw_fossil",
-            value=300,  # assumed
-            unit="USD/km3",
-        ).pipe(broadcast, yv_ya_gw, node_loc=df_node["node"])
+        fix_costs = []
+        for rule in FIXED_COST_RULES:
+            r = rule.copy()
+            common_args = {
+                "name": r["type"],
+                "technology": r["technology"],
+                "value": r["value"],
+                "unit": r["unit"],
+            }
+            match r["technology"]:
+                case "extract_gw_fossil":
+                    df_rule = make_df(**common_args).pipe(broadcast, yv_ya_gw, node_loc=df_node["node"])
+                    fix_costs.append(df_rule)
+                case _:
+                    raise ValueError(f"Invalid technology: {r['technology']}")
+        fix_cost = pd.concat(fix_costs)
 
         results["fix_cost"] = fix_cost
 
