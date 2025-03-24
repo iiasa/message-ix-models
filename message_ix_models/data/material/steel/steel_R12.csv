@@ -49,8 +49,6 @@ bf_steel,output,R12_RCPA,waste_material,slag_iron,,M2,Mt,0.195,22% less coke+coa
 bf_steel,output,R12_RCPA,waste_material,slag_iron,,M4,Mt,0.195,Assume the same as M2 unless other data is found.,
 bf_steel,output,R12_RCPA,waste_material,slag_iron,,M3,Mt,0.25,Assume same as M1 unless other data is found,
 bf_steel,capacity_factor,R12_RCPA,,,,,%,0.87,,TNO
-bf_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,240.4,Average value of 212. Converted from 2000USD to 2005USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=212,IEA ETSAP
-bf_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,11.89,"https://www.exchangerates.org.uk/EUR-USD-spot-exchange-rates-history-2010.html, https://www.in2013dollars.com/us/inflation/2010?endYear=2005&amount=13.27","IEA ETSAP, fixed o&m cost"
 bf_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,2.37,"https://www.exchangerates.org.uk/EUR-USD-spot-exchange-rates-history-2010.html, https://www.in2013dollars.com/us/inflation/2010?endYear=2005&amount=2.65","IEA ETSAP, variable O&M cost"
 bf_steel,var_cost,R12_RCPA,,,,M2,MUSD/Mt,2.37,Assume same as M1 unless other data is found,
 bf_steel,var_cost,R12_RCPA,,,,M3,MUSD/Mt,2.607,"Assumed 10% increase unless other data found.  Suopajarvi et al., 2017 mentions cost increase without quantifying.",
@@ -73,8 +71,6 @@ bf_biomass_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,
 bf_ccs_steel,input,R12_RCPA,final,electr,,M2,GWa/Mt,0.036773059360730595,Additional electricity needed for CCS and oxygen unit,"Average of IEA ETSAP, 2010, Otto et al., 2017 and Perpinan et al., 2023"
 bf_ccs_steel,output,R12_RCPA,tertiary_material,pig_iron,,M2,Mt,1.0,,
 bf_ccs_steel,input,R12_RCPA,tertiary_material,pig_iron_dummy,,M2,Mt,1.0,,
-bf_ccs_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,268.6999,Additional cost from TGR CCS. Converted from 2010 euro to 2005 USD. Assuming that the furnace is kept. (There is also some literature mentioning you need a smaller furnace so you need to renew…),IEA ETSAP - Technology Brief
-bf_ccs_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,5.918500000000001,Additional cost from TGR CCS. Converted from 2010 euro to 2005 USD,IEA ETSAP - Technology Brief
 bf_ccs_steel,var_cost,R12_RCPA,,,,M2,MUSD/Mt,3.5511000000000004,Additional cost from TGR CCS. Converted from 2010 euro to 2005 USD,IEA ETSAP - Technology Brief
 bf_ccs_steel,emission_factor,R12_RCPA,,,CO2,M2,MtC/Mt,-0.2136818181818184,Range between 0.7 -  0.867,"Otto et al., 2017; Fan & Friedmann, 2021; TNO"
 bf_ccs_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,TNO
@@ -97,8 +93,6 @@ bof_steel,output,R12_RCPA,waste_material,slag_iron,,M2,Mt,0.085,,
 bof_steel,emission_factor,R12_RCPA,,,PM2p5,M2,Mt/Mt,0.00018449999999999999,"Wu etal., 2015",
 bof_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,0.00018449999999999999,"Wu etal., 2015",
 bof_steel,capacity_factor,R12_RCPA,,,,,%,0.798,,
-bof_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,113.4,Converted from 2000USD to 2005USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=100,IEA ETSAP
-bof_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,14.28,http://www.steelonthenet.com,
 bof_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
 cokeoven_steel,input,R12_RCPA,dummy_emission,coal,,M1,GWa/GWa,1.1302552821066614,,
 cokeoven_steel,input,R12_RCPA,final,coal,,M1,GWa/GWa,1.3333333333333333,"IEA balance 2018 ""Coke ovens"" EJ share",
@@ -106,13 +100,10 @@ cokeoven_steel,input,R12_RCPA,final,coal,,M1,GWa/GWa,1.3333333333333333,"IEA bal
 # cokeoven_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/GWa,0.5073570776255708,,
 cokeoven_steel,output,R12_RCPA,final,coke_iron,,M1,GWa,1.0,,
 cokeoven_steel,output,R12_RCPA,final,co_gas,,M1,GWa,0.06666666666666667,"ratio derived from IEA balance 2018 (world), FE COG output ~1.3EJ, coal input to CO  ~26EJ ",
-cokeoven_steel,inv_cost,R12_RCPA,,,,,MUSD/GWa,21.51,,
-cokeoven_steel,fix_cost,R12_RCPA,,,,,MUSD/GWa,0.027432162990867582,,
 cokeoven_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,322.94898696281075,,
 cokeoven_steel,capacity_factor,R12_RCPA,,,,,%,0.701,,
 cokeoven_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
 dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.7,"IEA ETSAP, (Otto et al., 2017)",
-dri_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,163.85,Costs for DRI-NG. IEA ETSAP. Convert from 2000 USD to 2005 USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=145,
 dri_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,14.689999999999998,Variable O&M cost. Convert from 2000 USD to 2005 USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=145,IEA ETSAP - Technology Brief
 dri_steel,capacity_factor,R12_RCPA,,,,,%,0.95,,
 dri_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
@@ -128,13 +119,10 @@ dri_h2_steel,input,R12_RCPA,useful_steel,ht_heat,,M1,Gwa/Mt,0.0,1606 MJ/t DRI. W
 dri_h2_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,6.8493150684931506e-09,0.06 MWh/ tDRI. To bring the hydrogen to the right pressure,"Devlin et al., 2023"
 dri_h2_steel,output,R12_RCPA,tertiary_material,sponge_iron,,M1,Mt/Mt,1.0,,
 # dri_h2_steel,output,R12_RCPA,water_supply,water,,M1,Mm3/Mt,690.0,for now assume same as natural gas as used by Jihoon. If necessary we can later find a more specific number for water vapour which is the result of this process,
-dri_h2_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,33.150000000000006,310 $ / t  = 197 2005 USD/t​. Only the extra cost,"Devlin et al., 2023"
 dri_h2_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,6.0,It is not specified if this is fixed or variable but just as maintenece. 3% of CAPEX.,"Toktarova et al., 2021"
 dri_h2_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,average,"20 y (Pimm et al., 2021; IEA ETSAP), 40 y (Toktarova et al., 2021) (Lopez at al., 2022)​"
 dri_gas_ccs_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.005139100698630137,0.34 GJ/tCO2 converted,"Gielen, 2003"
 dri_gas_ccs_steel,output,R12_RCPA,dummy_ccs,gas,,M1,GWa/Mt,0.33,To be used in the materials_tables.py. This will keep track of how much gas is used as input in CCS technology which needs to be deducted from _inp_nonccs_gas_tecs,Same as CCS cement
-dri_gas_ccs_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,133.0,130 EUR2017 to EUR2005 to USD2005 (multiply 1.24),"https://www.pbl.nl/sites/default/files/downloads/pbl-2019-decarbonisation-options-for-the-dutch-steel-industry_3723.pdf, https://www.in2013dollars.com/europe/inflation/2017?endYear=2005&amount=130, https://www.macrotrends.net/2548/euro-dollar-exchange-rate-historical-chart"
-dri_gas_ccs_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,5.625,Between 5-10 inrease from Figure 2.11 of IEA Iron and Steel Technology Roadmap. Converted from 2020  to 2005 USD.,https://iea.blob.core.windows.net/assets/eb0c8ec1-3665-4959-97d0-187ceca189a8/Iron_and_Steel_Technology_Roadmap.pdf
 dri_gas_ccs_steel,emission_factor,R12_RCPA,,,CO2,M1,MtC/Mt,-0.13,"0.5 t/DRI (midrex tehcnical boruchure), 85% capture rate (IEA, CCS Working Group)",
 dri_gas_ccs_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,Figure 2.11 of IEA Iron and Steel Technology Roadmap
 dri_gas_ccs_steel,capacity_factor,R12_RCPA,,,,,%,0.9,,
@@ -172,7 +160,6 @@ eaf_steel,output,R12_RCPA,final_material,steel,,M2,Mt,1.0,,
 eaf_steel,output,R12_RCPA,waste_material,slag_iron,,M2,Mt,0.09,From China,
 eaf_steel,output,R12_RCPA,final_material,steel,,M3,Mt,1.0,,
 eaf_steel,output,R12_RCPA,waste_material,slag_iron,,M3,Mt,0.09,From China,
-eaf_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,107.6768,"IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf, $1.33/EUR2010",
 eaf_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,42.2674,Variable O&M cost,IEA ESTAP 2010
 eaf_steel,var_cost,R12_RCPA,,,,M2,MUSD/Mt,42.2674,Variable O&M cost,IEA ESTAP 2010
 eaf_steel,var_cost,R12_RCPA,,,,M3,MUSD/Mt,42.2674,Variable O&M cost,IEA ESTAP 2010
@@ -189,7 +176,6 @@ eaf_steel,capacity_factor,R12_RCPA,,,,,%,0.811,,
 eaf_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
 export_steel,input,R12_RCPA,useful_material,steel,,M1,,1.0,,
 export_steel,output,R12_RCPA,export,steel,,M1,,1.0,,
-export_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,250.0,existing MESSAGE value,
 export_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,existing MESSAGE value for coal_exp,
 finishing_steel,input,R12_RCPA,final,coal,,M1,GWa/Mt,0.0,Assumed recovered heat,
 # finishing_steel,input,R12_RCPA,final,coke_iron,,M1,GWa/Mt,0.0,Assumed recovered heat,
@@ -221,8 +207,6 @@ pellet_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.004027932854615403,China_s
 # pellet_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,0.83,,
 pellet_steel,input,R12_RCPA,primary_material,ore_iron,,M1,Mt/Mt,1.1857707509881423,,
 pellet_steel,output,R12_RCPA,secondary_material,pellet_iron,,M1,Mt,1.0,,
-pellet_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,25.14,,
-pellet_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,2.514,,
 pellet_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,1.76,,
 # pellet_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,0.9,,
 pellet_steel,capacity_factor,R12_RCPA,,,,,%,0.867,,
@@ -268,8 +252,6 @@ sinter_steel,emission_factor,R12_RCPA,,,SO2,M1,kt/Mt,1.827,,
 sinter_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,1.99,,
 # sinter_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,18.81,,
 sinter_steel,capacity_factor,R12_RCPA,,,,,%,0.878,,
-sinter_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,1.905,,
-sinter_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,19.05,,
 sinter_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
 slag_granulator_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,28.0,"​4000 Indian Rupee = 47.95 USD, round to 50. 10% mark up. 3%opex​, 43.65 USD/t * --> 28 2005USD",https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
 slag_granulator_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,0.85,1.35 USD/t --> to 2005 USD -->0.85 2005USD,https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
