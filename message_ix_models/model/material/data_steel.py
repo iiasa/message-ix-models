@@ -694,10 +694,14 @@ def gen_cokeoven_co2_cc(s_info):
 
 def gen_dri_act_bound():
     df_act = pd.read_csv(
-        package_data_path("material", "steel", "dri_activity_2020.csv")
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_activity_2020.csv"
+        )
     )
     df_hist = pd.read_csv(
-        package_data_path("material", "steel", "dri_activity_hist.csv")
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_activity_hist.csv"
+        )
     )
     return {
         "bound_activity_up": df_act,
@@ -708,10 +712,14 @@ def gen_dri_act_bound():
 
 def gen_dri_cap_calibration():
     df_cap_2020 = pd.read_csv(
-        package_data_path("material", "steel", "dri_capacity_2020.csv")
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_capacity_2020.csv"
+        )
     )
     df_cap_hist = pd.read_csv(
-        package_data_path("material", "steel", "dri_capacity_hist.csv")
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_capacity_hist.csv"
+        )
     )
     return {
         "bound_new_capacity_up": df_cap_2020,
@@ -790,16 +798,12 @@ def gen_2020_calibration_relation(s_info, tech: Literal["eaf", "bof", "bf"]):
     )
 
     rel_up = pd.read_csv(
-        package_data_path("material", "steel", f"{tech}_bound_2020.csv")
+        package_data_path(
+            "material", "steel", "baseyear_calibration", f"{tech}_bound_2020.csv"
+        )
     )
 
     return {"relation_activity": df, "relation_upper": rel_up, "relation_lower": rel_up}
-
-
-def gen_bof_2020_calibration():
-    bound = pd.read_csv(package_data_path("material", "steel", "bof_bound_2020.csv"))
-
-    return {"bound_activity_up": bound, "bound_activity_lo": bound}
 
 
 def get_scrap_prep_cost(s_info, ssp):
