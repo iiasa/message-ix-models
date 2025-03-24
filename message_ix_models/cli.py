@@ -64,7 +64,7 @@ def main(click_ctx, **kwargs):
 
     # Log to console: either DEBUG or INFO.
     # Don't start file logging for a non-trivial execution.
-    setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", file=non_trivial)
+    setup_logging(level="DEBUG" if kwargs["verbose"] else "INFO", file=non_trivial)
 
     if "pytest" not in sys.argv[0]:
         log.debug("CLI invoked with:\n" + "\n  ".join(sys.argv))
@@ -77,10 +77,10 @@ def main(click_ctx, **kwargs):
     click_ctx.obj = Context.get_instance(-1)
 
     # Handle command-line parameters
-    click_ctx.obj.handle_cli_args(**kwargs)
+    click_ctx.obj.core.handle_cli_args(**kwargs)
 
     # Close any database connections when the CLI exits
-    click_ctx.call_on_close(click_ctx.obj.close_db)
+    click_ctx.call_on_close(click_ctx.obj.core.close_db)
 
     # Ensure all log messages are handled
     click_ctx.call_on_close(flush)
