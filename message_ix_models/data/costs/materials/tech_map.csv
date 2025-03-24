@@ -11,11 +11,11 @@ MTO_petro,intratec,"",870.38,0.037,2020
 NH3_to_N_fertil,"","",2537.62,0.04,1995
 agg_ref,"","",,,
 atm_distillation_ref,"","",30.26,0.021,1980
-bf_ccs_steel,"","",268.7,0,2030
-bf_steel,"","",240.4,0.1,1990
+bf_ccs_steel,"","",268.7,0.022,2030
+bf_steel,"","",240.4,0.04946,1990
 biomass_NH3,energy,igcc,3646.957331,0.036,1995
 biomass_NH3_ccs,energy,igcc,3876.68,0.038,1995
-bof_steel,"","",113.4,0.089,1990
+bof_steel,"","",113.4,0.126,1990
 catalytic_cracking_ref,"","",181.56,0.022,1980
 catalytic_reforming_ref,"","",181.56,0.003,1980
 clinker_dry_ccs_cement,"","",172.5,0.167,1980
@@ -24,7 +24,7 @@ clinker_wet_ccs_cement,"","",172.5,0.167,1980
 clinker_wet_cement,"","",131.5,0.001,1980
 coal_NH3,energy,igcc,2917.56,0.036,1995
 coal_NH3_ccs,energy,igcc,3087.13,0.038,1995
-cokeoven_steel,"","",21.51,0.001,1990
+cokeoven_steel,"","",21.51,0.001275,1990
 coking_ref,"","",235.48,0.021,1980
 dheat_aluminum,energy,heat_i,27.69,0.271,2030
 dheat_cement,energy,heat_i,27.69,0.271,2030
@@ -33,7 +33,7 @@ dheat_refining,energy,heat_i,27.69,0.271,2030
 dheat_resins,energy,heat_i,27.69,0.271,2030
 dheat_steel,energy,heat_i,27.69,0.271,2030
 dri_h2_steel,"","",33.15,0,2030
-dri_gas_ccs_steel,"","",133,0,2030
+dri_gas_ccs_steel,"","",133,0.0423,2030
 dri_steel,"","",163.9,0,1990
 eaf_steel,"","",107.68,0.496,1990
 electr_NH3,"","",3824.86,0.04,1995
@@ -51,7 +51,7 @@ fc_h2_resins,energy,h2_fc_I,1909,0,2030
 fc_h2_steel,energy,h2_fc_I,1909,0,2030
 feedstock_t/d,"","",,,
 finishing_aluminum,"","",,,
-finishing_steel,"","",228.92,0.1,1990
+finishing_steel,"","",,,
 fueloil_NH3,energy,igcc,3282.26,0.036,1995
 fueloil_NH3_ccs,energy,igcc,3473.02,0.038,1995
 furnace_biomass_aluminum,energy,biomass_i,154.32,0.267,1980
@@ -135,7 +135,7 @@ import_aluminum,"","",,,
 import_petro,"","",,,
 import_steel,"","",,,
 manuf_aluminum,"","",,,
-manuf_steel,"","",228.92,0,1990
+manuf_steel,"","",,,
 meth_bal,"","",,,
 meth_bio,energy,meth_coal,2407.6,0.034,2020
 meth_bio_ccs,energy,meth_coal,2503.38,0.037,2030
