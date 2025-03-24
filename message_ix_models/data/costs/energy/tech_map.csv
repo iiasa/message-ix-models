@@ -46,7 +46,7 @@ h2_fc_RC,weo,fuel_cell,3500,,
 h2_fc_trp,weo,fuel_cell,3500,,
 h2_i,weo,ccgt_chp,97,,2030
 h2_liq,weo,igcc,820,,
-h2_pyro,weo,igcc,1100,,2030
+h2_pyro,weo,igcc,1100,,2010
 h2_smr,weo,igcc,737,,2010
 h2_smr_ccs,weo,igcc_ccs,1361,,2010
 heat_i,weo,ccgt_chp,50,,1985
