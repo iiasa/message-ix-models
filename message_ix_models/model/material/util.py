@@ -308,10 +308,8 @@ def update_macro_calib_file(
         df["node"] = pd.Categorical(df["node"], nodes)
         df = df[df["year"].isin(years_cost)].groupby(["node"]).apply(cost_fit)
         ws = wb.get_sheet_by_name("cost_ref")
-        # write derived values to sheet. Cell B7 (MEA region) is skipped.
-        for i in range(2, 7):
-            ws[f"B{i}"].value = df.values[i - 2]
-        for i in range(8, 14):
+        for i in range(2, 14):
+            ws[f"A{i}"].value = nodes[i - 2]
             ws[f"B{i}"].value = df.values[i - 2]
     else:
         vals = df[df["year"] == fmy + 5]["lvl"].values
