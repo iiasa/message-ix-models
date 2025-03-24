@@ -253,12 +253,12 @@ sinter_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,1.99,,
 # sinter_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,18.81,,
 sinter_steel,capacity_factor,R12_RCPA,,,,,%,0.878,,
 sinter_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
-slag_granulator_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,28.0,"​4000 Indian Rupee = 47.95 USD, round to 50. 10% mark up. 3%opex​, 43.65 USD/t * --> 28 2005USD",https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
-slag_granulator_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,0.85,1.35 USD/t --> to 2005 USD -->0.85 2005USD,https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
-slag_granulator_steel,input,R12_RCPA,waste_material,slag_iron,,M1,Mt/Mt,1.0,,
-slag_granulator_steel,output,R12_RCPA,tertiary_material,granulated_slag_iron,,M1,Mt/Mt,1.0,,
-slag_granulator_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,0.014840182648401824,130 kwh for drying,https://www.energy-innovation-austria.at/article/forwaerts-2-0-2/?lang=en
-slag_granulator_steel,technical_lifetime,R12_RCPA,,,,M1,,30.0,,Assumed
+# slag_granulator_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,28.0,"​4000 Indian Rupee = 47.95 USD, round to 50. 10% mark up. 3%opex​, 43.65 USD/t * --> 28 2005USD",https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
+# slag_granulator_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,0.85,1.35 USD/t --> to 2005 USD -->0.85 2005USD,https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
+# slag_granulator_steel,input,R12_RCPA,waste_material,slag_iron,,M1,Mt/Mt,1.0,,
+# slag_granulator_steel,output,R12_RCPA,tertiary_material,granulated_slag_iron,,M1,Mt/Mt,1.0,,
+# slag_granulator_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,0.014840182648401824,130 kwh for drying,https://www.energy-innovation-austria.at/article/forwaerts-2-0-2/?lang=en
+# slag_granulator_steel,technical_lifetime,R12_RCPA,,,,M1,,30.0,,Assumed
 total_EOL_steel,output,R12_RCPA,dummy_end_of_life_1,steel,,M1,,0.25,,
 total_EOL_steel,output,R12_RCPA,dummy_end_of_life_2,steel,,M1,,0.5,,
 total_EOL_steel,output,R12_RCPA,dummy_end_of_life_3,steel,,M1,,0.25,,
