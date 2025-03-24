@@ -215,10 +215,16 @@ def report(context: Context, *args, **kwargs):
         result = rep.get(key)
 
     # Display information about the result
-    log.info(f"Result:\n\n{result}\n")
     log.info(
         f"File output(s), if any, written under:\n{rep.graph['config']['output_dir']}"
     )
+    msg = ["Result"]
+    if context.core.verbose and isinstance(result, genno.Quantity):
+        msg.append(result.to_string())
+    else:
+        msg.append(str(result))
+
+    log.info("\n\n".join(msg + [""]))
 
 
 def _invoke_legacy_reporting(context):
