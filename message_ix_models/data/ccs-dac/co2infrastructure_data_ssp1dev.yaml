@@ -475,7 +475,7 @@ biomass_NH3_ccs:
   year_init: 2030
   output_:
     par_name: output
-    value: 0.34799
+    value: 1.2769
     unit: Mt C/yr
     node_loc:
       R12_AFR: 1
