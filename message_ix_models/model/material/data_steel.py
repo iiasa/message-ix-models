@@ -653,6 +653,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_bof_pig_input(s_info),
         gen_finishing_steel_io(s_info),
         gen_manuf_steel_io(new_scrap_ratio, s_info),
+        gen_iron_ore_cost(s_info, ssp),
     )
 
     if ssp == "SSP1":
@@ -1130,3 +1131,42 @@ def gen_manuf_steel_io(ratio, s_info: ScenarioInfo):
     df_out_scrap["value"] = df_out_scrap["value"].sub(1).abs().round(4)
     df_out_scrap = df_out_scrap[df_out_scrap["year_act"].le(df_out_scrap["year_vtg"])]
     return {"output": pd.concat([df_out_steel, df_out_scrap])}
+
+
+def gen_iron_ore_cost(s_info, ssp):
+    years1 = [i for i in range(2020, 2030, 5)]
+    years2 = [i for i in range(2030, 2060, 5)] + [i for i in range(2060, 2115, 10)]
+    start_val = 100
+    end_val = {
+        "LED": 130,
+        "SSP1": 130,
+        "SSP2": 80,
+        "SSP3": 100,
+        "SSP4": 60,
+        "SSP5": 80,
+    }
+    common = {
+        "technology":"DUMMY_ore_supply",
+        "mode": "M1",
+        "time": "year",
+        "unit": "???",
+    }
+
+    df1 = make_df(
+        "var_cost",
+        year_act=years1,
+        value=start_val,
+        **common,
+    )
+    df2 = make_df(
+        "var_cost",
+        year_act=years2,
+        value=end_val[ssp],
+        **common,
+    )
+    df = (
+        pd.concat([df1, df2])
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .assign(year_vtg=lambda x: x.year_act)
+    )
+    return {"var_cost": df}
