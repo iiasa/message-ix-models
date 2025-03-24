@@ -7,7 +7,12 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import maybe_remove_water_tec, read_config, get_ssp_from_context
+from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
+    get_ssp_from_context,
+    maybe_remove_water_tec,
+    read_config,
+)
 from message_ix_models.util import (
     broadcast,
     nodes_ex_world,
@@ -179,6 +184,8 @@ def gen_data(
 
     # HACK: quick fix to enable compatibility with water build
     maybe_remove_water_tec(scenario, par_dict)
+    #add 2020 and 2025 CCS bounds
+    par_dict = combine_df_dictionaries(par_dict, gen_ccs_bounds(s_info))
 
     return par_dict
 
@@ -540,9 +547,7 @@ def gen_resid_demand_NH3(scenario: message_ix.Scenario) -> dict[str, pd.DataFram
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
     ]
-    df_2025 = pd.read_csv(
-        package_data_path("material", "ammonia", "demand_2025.csv")
-    )
+    df_2025 = pd.read_csv(package_data_path("material", "ammonia", "demand_2025.csv"))
     df_residual = material_demand_calc.gen_demand_petro(
         scenario, "NH3", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
@@ -581,3 +586,24 @@ def experiment_lower_CPA_SAS_costs(par_dict: dict) -> dict[str, pd.DataFrame]:
         par_dict[c] = df
 
     return par_dict
+
+
+def gen_ccs_bounds(s_info):
+    common = {
+        "technology": [
+            "biomass_NH3_ccs",
+            "gas_NH3_ccs",
+            "coal_NH3_ccs",
+            "fueloil_NH3_ccs",
+        ],
+        "mode": "M1",
+        "time": "year",
+        "unit": "???",
+        "value": 0,
+    }
+    df = (
+        make_df("bound_activity_up", **common)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_act=[2020, 2025])
+    )
+    return {"bound_activity_up": df}
