@@ -345,59 +345,59 @@ def add_chemicals_to_final_energy_variables(
             "Chemicals|Ammonia",
             "Chemicals|Methanol",
             "Chemicals|High-Value Chemicals",
-            "Chemicals|Other Sector"
+            "Chemicals|Other Sector",
         ],
         "Chemicals|Electricity": [
             "Chemicals|Ammonia|Electricity",
             "Chemicals|Methanol|Electricity",
             "Chemicals|High-Value Chemicals|Electricity",
-            "Chemicals|Other Sector|Electricity"
+            "Chemicals|Other Sector|Electricity",
         ],
         "Chemicals|Gases": [
             "Chemicals|Ammonia|Gases",
             "Chemicals|Methanol|Gases",
             "Chemicals|High-Value Chemicals|Gases",
-            "Chemicals|Other Sector|Gases"
+            "Chemicals|Other Sector|Gases",
         ],
         "Chemicals|Gases|Gas": [
             "Chemicals|Ammonia|Gases|Gas",
             "Chemicals|Methanol|Gases|Gas",
             "Chemicals|High-Value Chemicals|Gases|Gas",
-            "Chemicals|Other Sector|Gases|Gas"
+            "Chemicals|Other Sector|Gases|Gas",
         ],
         "Chemicals|Liquids": [
             "Chemicals|Ammonia|Liquids",
             "Chemicals|High-Value Chemicals|Liquids",
-            "Chemicals|Other Sector|Liquids"
+            "Chemicals|Other Sector|Liquids",
         ],
         "Chemicals|Liquids|Oil": [
             "Chemicals|Ammonia|Liquids|Oil",
             "Chemicals|High-Value Chemicals|Liquids|Oil",
-            "Chemicals|Other Sector|Liquids|Oil"
+            "Chemicals|Other Sector|Liquids|Oil",
         ],
         "Chemicals|Solids": [
             "Chemicals|Ammonia|Solids",
             "Chemicals|Methanol|Solids",
             "Chemicals|High-Value Chemicals|Solids",
-            "Chemicals|Other Sector|"
+            "Chemicals|Other Sector|",
         ],
         "Chemicals|Solids|Biomass": [
             "Chemicals|Ammonia|Solids|Biomass",
             "Chemicals|Methanol|Solids|Biomasss",
             "Chemicals|High-Value Chemicals|Solids|Biomass",
-            "Chemicals|Other Sector|Solids|Biomass"
+            "Chemicals|Other Sector|Solids|Biomass",
         ],
         "Chemicals|Solids|Coal": [
             "Chemicals|Ammonia|Solids|Coal",
             "Chemicals|Methanol|Solids|Coal",
             "Chemicals|High-Value Chemicals|Solids|Coal",
-            "Chemicals|Other Sector|Solids|Coal"
+            "Chemicals|Other Sector|Solids|Coal",
         ],
         "Chemicals|Hydrogen": [
             "Chemicals|Ammonia|Hydrogen",
             "Chemicals|Methanol|Hydrogen",
             "Chemicals|High-Value Chemicals|Hydrogen",
-            "Chemicals|Other Sector|Hydrogen"
+            "Chemicals|Other Sector|Hydrogen",
         ],
     }
     prefix = "Final Energy|Industry|"
@@ -969,7 +969,7 @@ def run(scenario, upload_ts=False, region=False):
         inplace=True,
     )
     if upload_ts:
-        scenario.check_out(timeseries_only=True)
+        # scenario.check_out(timeseries_only=True)
         scenario.add_timeseries(py_df.timeseries())
-        scenario.commit('add materials reporting TS')
+        # scenario.commit('add materials reporting TS')
     return py_df
