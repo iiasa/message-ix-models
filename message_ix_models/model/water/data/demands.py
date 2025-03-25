@@ -15,28 +15,6 @@ from message_ix_models.util import broadcast, minimum_version, package_data_path
 if TYPE_CHECKING:
     from message_ix_models import Context
 
-builtins.Sequence = Sequence
-builtins.Union = Union
-builtins.Literal = Literal
-builtins.TYPE_CHECKING = TYPE_CHECKING
-builtins.np = np
-builtins.pd = pd
-builtins.xr = xr
-builtins.make_df = make_df
-builtins.broadcast = broadcast
-builtins.minimum_version = minimum_version
-builtins.package_data_path = package_data_path
-builtins.os = os
-if TYPE_CHECKING:
-    builtins.Context = Context
-
-from message_ix_models.model.water.data.demands_pt2 import *
-from message_ix_models.model.water.data.demands_pt3 import *
-
-
-
-
-
 
 def get_basin_sizes(
     basin: pd.DataFrame, node: str
