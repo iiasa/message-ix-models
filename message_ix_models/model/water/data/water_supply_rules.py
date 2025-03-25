@@ -32,9 +32,9 @@ SLACK_TECHNOLOGY_RULES = [
         "unit" : "-", 
         "level" : "water_supply_basin", 
         "commodity" : "freshwater_basin", 
-        "mode" : "df_node['mode']", 
-        "node_origin" : "df_node['node']", 
-        "node_loc" : "df_node['region']", 
+        "mode" : "df_node[mode]", 
+        "node_origin" : "df_node[node]", 
+        "node_loc" : "df_node[region]", 
     }, 
     {
         "type" : "input", 
@@ -46,8 +46,8 @@ SLACK_TECHNOLOGY_RULES = [
         "mode" : "M1",
         "time" : "year", 
         "time_origin" : "year", 
-        "node_origin" : "df_node['node']", 
-        "node_loc" : "df_node['node']", 
+        "node_origin" : "df_node[node]", 
+        "node_loc" : "df_node[node]", 
     }
 
     
@@ -60,33 +60,37 @@ COOLING_SUPPLY_RULES = [
         "technology": "extract_surfacewater",
         "value": 1,
         "unit": "km3",
+        "year_vtg": None,
+        "year_act": None,
         "level": "water_supply",
         "commodity": "freshwater",
         "mode": "M1",
         "time": "year",
         "time_dest": "year",
         "time_origin": "year",
-        "broadcast": {"node_loc": None},  # to be set to node_region at runtime
+
+
     },
     {
         "type": "output",
         "technology": "extract_groundwater",
         "value": 1,
         "unit": "km3",
+        "year_vtg": None,
+        "year_act": None,
         "level": "water_supply",
         "commodity": "freshwater",
         "mode": "M1",
         "time": "year",
         "time_dest": "year",
         "time_origin": "year",
-        "broadcast": {"node_loc": None},
     },
     {
         "type": "output",
         "technology": "extract_salinewater",
         "value": 1,
         "unit": "km3",
-        "year_vtg": None,  # filled in dynamically
+        "year_vtg": None,
         "year_act": None,
         "level": "saline_supply",
         "commodity": "saline_ppl",
@@ -94,7 +98,6 @@ COOLING_SUPPLY_RULES = [
         "time": "year",
         "time_dest": "year",
         "time_origin": "year",
-        "broadcast": {"node_loc": None},
     },
 ]
 
@@ -108,8 +111,8 @@ EXTRACTION_INPUT_RULES = [
         "level": "water_avail_basin",
         "commodity": "surfacewater_basin",
         "mode": "M1",
-        "node_origin": "node",  # use df_node["node"]
-        "node_loc": "node",     # use df_node["node"]
+        "node_origin": "df_node[node]",  # use df_node["node"]
+        "node_loc": "df_node[node]",     # use df_node["node"]
         "broadcast": {"yv_ya": "yv_ya_sw", "time": "sub_time"},
     },
     {
@@ -120,8 +123,8 @@ EXTRACTION_INPUT_RULES = [
         "level": "water_avail_basin",
         "commodity": "groundwater_basin",
         "mode": "M1",
-        "node_origin": "node",
-        "node_loc": "node",
+        "node_origin": "df_node[node]",
+        "node_loc": "df_node[node]",
         "broadcast": {"yv_ya": "yv_ya_gw", "time": "sub_time"},
     },
     {
@@ -133,8 +136,8 @@ EXTRACTION_INPUT_RULES = [
         "commodity": "electr",
         "mode": "M1",
         "time_origin": "year",
-        "node_origin": "region",  # use df_node["region"]
-        "node_loc": "node",
+        "node_origin": "df_node[region]",  # use df_node["region"]
+        "node_loc": "df_node[node]",
         "broadcast": {"yv_ya": "yv_ya_sw", "time": "sub_time"},
     },
     {
@@ -146,8 +149,8 @@ EXTRACTION_INPUT_RULES = [
         "commodity": "electr",
         "mode": "M1",
         "time_origin": "year",
-        "node_origin": "region",
-        "node_loc": "node",
+        "node_origin": "df_node[region]",
+        "node_loc": "df_node[node]",
         "broadcast": {"yv_ya": "yv_ya_gw", "time": "sub_time"},
     },
     {
@@ -159,8 +162,8 @@ EXTRACTION_INPUT_RULES = [
         "commodity": "electr",
         "mode": "M1",
         "time_origin": "year",
-        "node_origin": "region",
-        "node_loc": "node",
+        "node_origin": "df_node[region]",
+        "node_loc": "df_node[node]",
         "broadcast": {"yv_ya": "yv_ya_gw", "time": "sub_time"},
         # adjustment for global regions can be applied after this dsl processing
     },
@@ -357,3 +360,28 @@ FIXED_COST_RULES = [
     }
 ]
 
+E_FLOW_RULES_DMD = [
+    {
+        "type": "demand",
+        "node": "df_sw['Region'].astype(str)",
+        "commodity": "surfacewater_basin",
+        "level": "water_avail_basin",
+        "year": "df_sw['year']",
+        "time": "df_sw['time']",
+        "value": "df_sw['value']",
+        "unit": "km3/year"
+    }
+]
+
+E_FLOW_RULES_BOUND = [
+    {
+        "type": "bound_activity_lo",
+        "node": "df_env['Region'].astype(str)",
+        "technology": "return_flow",
+        "year_act": "df_env['year']",
+        "mode": "M1",
+        "time": "df_env['time']",
+        "value": "df_env['value']",
+        "unit": "km3/year",
+    }
+]

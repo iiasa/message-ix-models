@@ -13,9 +13,9 @@ from message_ix import make_df
 from message_ix_models.util import broadcast, minimum_version, package_data_path
 
 from message_ix_models.model.water.data.demand_rules import *
+
 if TYPE_CHECKING:
     from message_ix_models import Context
-
 
 
 

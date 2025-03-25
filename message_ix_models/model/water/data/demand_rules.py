@@ -1,5 +1,9 @@
 import pandas as pd
+import numpy as np
 import re
+
+from message_ix import make_df
+
 URBAN_DEMAND = [
     {   "type": "demand",
         "node": "urban_mw[node]",
@@ -206,15 +210,22 @@ def key_check(rules: list[list[dict]]) -> None:
             raise ValueError(f"Missing required columns: {set_of_keys - set(rules[0][0].keys())}")
     return set_of_keys
 
-
 def eval_field(expr: str, df_processed: pd.DataFrame, df_processed2: pd.DataFrame = None):
-    # Find all prefixes (e.g., "df_gw", "df_sw") that occur before a '[' character.
+    # If the expression is already a numeric literal (or any non-string type),
+    # return it directly.
+    if not isinstance(expr, str):
+        return expr
+
+    import re  # Ensure regex is available.
+    
+    # Find all dataframe prefixes (e.g., "df_gw", "df_sw") that occur before a '[' character.
     prefixes = re.findall(r'(\w+)\s*\[', expr)
     unique_prefixes = []
     for p in prefixes:
         if p not in unique_prefixes:
             unique_prefixes.append(p)
-    # No dataframe reference found; evaluate as-is.
+    
+    # No dataframe reference found; evaluate the expression as-is.
     match len(unique_prefixes):
         case 0:
             return eval(expr, {}, {})
@@ -224,19 +235,24 @@ def eval_field(expr: str, df_processed: pd.DataFrame, df_processed2: pd.DataFram
             local_context = {unique_prefixes[0]: df_processed, unique_prefixes[1]: df_processed2}
         case _:
             raise ValueError(f"Expression '{expr}' uses more than two different dataframes: {unique_prefixes}")
-    # Replace field-access expressions that are missing quotes around the key.
+    
+    # Replace instances of field-access that are missing quotes around the key.
     def repl(match):
         prefix = match.group(1)
         key = match.group(2).strip()
-        # If the key is not quoted, add quotes.
+        # If the key is already quoted, return as is.
         if (key.startswith("'") and key.endswith("'")) or (key.startswith('"') and key.endswith('"')):
             return f"{prefix}[{key}]"
         else:
             return f"{prefix}['{key}']"
     
-    # Process the expression such that, e.g., df_gw[value] becomes df_gw['value'].
+    # Process the expression (e.g. convert df_gw[value] to df_gw['value']).
     new_expr = re.sub(r'(\w+)\[\s*([^\]]+?)\s*\]', repl, expr)
+    
+    # Evaluate the new expression using an empty globals dict and the constructed local context.
     return eval(new_expr, {}, local_context)
+
+
 
 def pre_rule_processing(df_processed: pd.DataFrame) -> pd.DataFrame:
     """

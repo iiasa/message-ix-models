@@ -3,8 +3,7 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.refactors.demands_pt3_refactor_DSL_v2 import add_sectoral_demands
-from message_ix_models.model.water.data.demands_pt2 import add_water_availability, add_irrigation_demand
+from message_ix_models.model.water.data.demands import add_sectoral_demands,  add_water_availability, add_irrigation_demand
 
 
 
