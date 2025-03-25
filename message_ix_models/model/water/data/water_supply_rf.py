@@ -14,13 +14,96 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
-from message_ix_models.model.water.data.water_supply_rules import (
-    SLACK_TECHNOLOGY_RULES,
-    COOLING_SUPPLY_RULES, EXTRACTION_INPUT_RULES, 
-    TECHNICAL_LIFETIME_RULES, INVESTMENT_COST_RULES,
-    SHARE_MODE_RULES, HISTORICAL_NEW_CAPACITY_RULES, EXTRACTION_OUTPUT_RULES, 
-    DUMMY_BASIN_TO_REG_OUTPUT_RULES, FIXED_COST_RULES, DUMMY_VARIABLE_COST_RULES
-)
+from message_ix_models.model.water.data.water_supply_rules import *
+from message_ix_models.model.water.data.demand_rules import eval_field_old as eval_field
+
+
+def _basin_region_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", info : None, monthly : bool = False) -> pd.DataFrame:
+    """
+    Preprocess the basin region data.
+    """
+    df = df.copy()
+    df.drop(columns=["Unnamed: 0"], inplace=True)
+
+    df["BCU_name"] = df_x["BCU_name"]
+
+    df["MSGREG"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df["BCU_name"].str.split("|").str[-1]
+    )
+
+    df = df.set_index(["MSGREG", "BCU_name"])
+
+    # Calculating ratio of water availability in basin by region
+    df = df.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
+    df.reset_index(level=0, drop=True, inplace=True)
+    df.reset_index(inplace=True)
+    df["Region"] = "B" + df["BCU_name"].astype(str)
+    df["Mode"] = df["Region"].replace(regex=["^B"], value="M")
+    df.drop(columns=["BCU_name"], inplace=True)
+    df.set_index(["MSGREG", "Region", "Mode"], inplace=True)
+    df = df.stack().reset_index(level=0).reset_index()
+    df.columns = pd.Index(["region", "mode", "date", "MSGREG", "share"])
+    df.sort_values(["region", "date", "MSGREG", "share"], inplace=True)
+    df["year"] = pd.DatetimeIndex(df["date"]).year
+    df["time"] = "year" if not monthly else pd.DatetimeIndex(df["date"]).month
+    df = df[df["year"].isin(info.Y)]
+    df.reset_index(drop=True, inplace=True)
+
+    return df
+
+@minimum_version("message_ix 3.7")
+def map_basin_region_wat(context: "Context") -> pd.DataFrame:
+    """
+    Calculate share of water availability of basins per each parent region.
+
+    The parent region could be global message regions or country
+
+    Parameters
+    ----------
+        context : .Context
+
+    Returns
+    -------
+        data : pandas.DataFrame
+    """
+    info = context["water build info"]
+
+    PATH = package_data_path(
+        "water",
+        "delineation",
+        f"basins_by_region_simpl_{context.regions}.csv"
+    )
+    df_x = pd.read_csv(PATH)
+    
+
+    match context.time:
+        case "year":
+            # Adding freshwater supply constraints
+            # Reading data, the data is spatially and temprally aggregated from GHMs
+            monthly = False
+            path = package_data_path(
+                "water",
+                "availability",
+                f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+            )
+        case "month":
+            # add water return flows for cooling tecs
+            # Use share of basin availability to distribute the return flow from
+            monthly = True
+            path = package_data_path(
+                "water",
+                "availability",
+                f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
+            )
+        case _:
+            raise ValueError(f"Invalid time: {context.time}")
+
+    df_sw = pd.read_csv(path)
+    df_sw = _basin_region_preprocess(df_sw, df_x, context, info, monthly)
+
+    return df_sw
 
 
 def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
@@ -101,9 +184,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         cooling_outputs = []
         for rule in COOLING_SUPPLY_RULES:
             r = rule.copy()
-            r["year_vtg"] = year_wat
-            r["year_act"] = year_wat
-            r.setdefault("broadcast", {})["node_loc"] = node_region
             df_rule = make_df(
                 r["type"],
                 technology=r["technology"],
@@ -112,15 +192,12 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 level=r["level"],
                 commodity=r["commodity"],
                 mode=r["mode"],
-                time=r.get("time"),
-                time_origin=r.get("time_origin"),
-                time_dest=r.get("time_dest"),
-                year_vtg=r.get("year_vtg"),
-                year_act=r.get("year_act"),
-            )
-            if "broadcast" in r and r["broadcast"]:
-                df_rule = broadcast(df_rule, **r["broadcast"])
-            df_rule = same_node(df_rule)
+                time=r["time"],
+                time_origin=r["time_origin"],
+                time_dest=r["time_dest"],
+                year_vtg= year_wat,
+                year_act= year_wat,
+            ).pipe(broadcast, node_loc=node_region).pipe(same_node)
             cooling_outputs.append(df_rule)
         results["output"] = pd.concat(cooling_outputs)
 
@@ -153,9 +230,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 case "basin_to_reg":
                     df_rule = make_df(
                         **common_args, 
-                        mode=eval(r["mode"], {}, {"df_node": df_node}), 
-                        node_origin=eval(r["node_origin"], {}, {"df_node": df_node}), 
-                        node_loc=eval(r["node_loc"], {}, {"df_node": df_node}), 
+                        mode=eval_field(r["mode"], df_node), 
+                        node_origin=eval_field(r["node_origin"], df_node), 
+                        node_loc=eval_field(r["node_loc"], df_node), 
                     ).pipe(
                         broadcast, 
                         year_vtg=year_wat, 
@@ -175,27 +252,31 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         extraction_inputs = []
         for rule in EXTRACTION_INPUT_RULES:
             r = rule.copy()
-            # if the value is a string expression, evaluate it in a context with df_gwt available
-            if isinstance(r["value"], str):
-                try:
-                    r["value"] = eval(r["value"], {}, {"df_gwt": df_gwt})
-                    if hasattr(r["value"], "astype"):
-                        r["value"] = r["value"].astype(float)
-                except Exception as e:
-                    raise ValueError(f"error evaluating rule {r['technology']} value expression: {e}")
+
             broadcast_yr = yv_ya_sw if r["broadcast"]["yv_ya"] == "yv_ya_sw" else yv_ya_gw
-            df_rule = make_df(
-                r["type"],
-                technology=r["technology"],
-                value=r["value"],
-                unit=r["unit"],
-                level=r["level"],
-                commodity=r["commodity"],
-                mode=r["mode"],
-                time_origin=r.get("time_origin"),
-                node_origin=df_node["node"] if r.get("node_origin") == "node" else df_node["region"],
-                node_loc=df_node["node"] if r.get("node_loc") == "node" else df_node["node"]
-            )
+
+            common_args = {
+                "technology": r["technology"],
+                "value": eval_field(r["value"], df_gwt),
+                "unit": r["unit"],
+                "level": r["level"],
+                "commodity": r["commodity"],
+                "mode": r["mode"],
+                "node_origin": eval_field(r["node_origin"], df_node),
+                "node_loc": eval_field(r["node_loc"], df_node),
+            }
+            match r["technology"]:
+                case "extract_surfacewater"|"extract_groundwater":
+                    df_rule = make_df(
+                        r["type"],
+                        **common_args,
+                    )   
+                case _:
+                    df_rule = make_df(
+                        r["type"],
+                        **common_args,
+                        time_origin=r["time_origin"],
+                    )
             df_rule = broadcast(df_rule, broadcast_yr, time=pd.Series(sub_time))
             df_rule = same_time(df_rule)
             extraction_inputs.append(df_rule)
@@ -241,8 +322,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     df_rule = same_node(df_rule)
                 case _:
                     common_args.update(
-                        node_loc=eval(r["node_loc"], {}, {"df_node": df_node}),
-                        node_dest=eval(r["node_dest"], {}, {"df_node": df_node}),
+                        node_loc= eval_field(r["node_loc"], df_node),
+                        node_dest= eval_field(r["node_dest"], df_node),
                     )
                     if r["technology"] == "extract_gw_fossil":
                         df_rule = make_df(**common_args, time_origin=r["time_origin"])
@@ -261,9 +342,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             name = r["type"]
             df_rule = make_df(
                 name,
-                node_loc = eval(r["node_loc"], {}, {"df_hist": df_hist}),
+                node_loc = eval_field(r["node_loc"], df_hist),
                 technology = r["technology"],
-                value = eval(r["value"], {}, {"df_hist": df_hist}),
+                value = eval_field(r["value"], df_hist),
                 unit = r["unit"],
                 year_vtg = r["year_vtg"],
             )
@@ -281,9 +362,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 level=r["level"],
                 commodity=r["commodity"],
                 time_dest=r["time_dest"],
-                mode=eval(r["mode"], {}, {"df_node": df_node}),
-                node_loc=eval(r["node_loc"], {}, {"df_node": df_node}),
-                node_dest=eval(r["node_dest"], {}, {"df_node": df_node}),
+                mode=eval_field(r["mode"], df_node),
+                node_loc=eval_field(r["node_loc"], df_node),
+                node_dest=eval_field(r["node_dest"], df_node),
             ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
             df_rule["year_act"] = df_rule["year_vtg"]
             dummy_basin_to_reg_output.append(df_rule)
@@ -305,8 +386,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             match r["technology"]:
                 case "basin_to_reg":
                     common_args.update(
-                        mode=eval(r["mode"], {}, {"df_node": df_node}),
-                        node_loc=eval(r["node_loc"], {}, {"df_node": df_node}),
+                        mode=eval_field(r["mode"], df_node),
+                        node_loc=eval_field(r["node_loc"], df_node),
                     )
                     df_rule = make_df(**common_args).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
                     df_rule["year_act"] = df_rule["year_vtg"]
@@ -345,7 +426,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 if field in r and isinstance(r[field], str):
                     try:
                         # evaluate the field expression in the context where df_sw is available
-                        r[field] = eval(r[field], {}, {"df_sw": df_sw})
+                        r[field] = eval_field(r[field], df_sw)
                     except Exception as e:
                         raise ValueError(f"error evaluating share_mode_up rule for field {field}: {e}")
             share_df = make_df(
@@ -394,4 +475,144 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         results["inv_cost"] = pd.concat(inv_costs)
 
     return results
+
+
+def _e_flow_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", info : None, monthly : bool = False) -> pd.DataFrame:
+    """
+    Preprocess the e-flow data.
+    """
+    df = df.copy()
+    df.drop(columns=["Unnamed: 0"], inplace=True)
+    df.index = df_x["BCU_name"].index
+    df = df.stack().reset_index()
+    df.columns = pd.Index(["Region", "years", "value"])
+    df.sort_values(["Region", "years", "value"], inplace=True)
+    df.fillna(0, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    df["year"] = pd.DatetimeIndex(df["years"]).year
+    df["time"] = "year" if not monthly else pd.DatetimeIndex(df["years"]).month
+    df["Region"] = df["Region"].map(df_x["BCU_name"])
+    df2210 = df[df["year"] == 2100].copy()
+    df2210["year"] = 2110
+    df = pd.concat([df, df2210])
+    df = df[df["year"].isin(info.Y)]
+
+    return df
+    
+
+
+def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
+    """Add environmental flows
+    This function bounds the available water and allocates the environmental
+    flows.Environmental flow bounds are calculated using Variable Monthly Flow
+    (VMF) method. The VMF method is applied to wet and dry seasonal runoff
+    values. These wet and dry seasonal values are then aggregated to annual
+    values.Environmental flows in the model will be incorporated as bounds on
+    'return_flow' technology. The lower bound on this technology will ensure
+    that certain amount of water remain
+
+    Parameters
+    ----------
+    context : .Context
+
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+        Values are data frames ready for :meth:`~.Scenario.add_par`.
+        Years in the data include the model horizon indicated by
+        ``context["water build info"]``, plus the additional year 2010.
+    """
+    # define an empty dictionary
+    results = {}
+
+    info = context["water build info"]
+
+    # Adding freshwater supply constraints
+    # Reading data, the data is spatially and temprally aggregated from GHMs
+    df_sw, df_gw = read_water_availability(context)
+
+    # reading sample for assiging basins
+    PATH = package_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+    )
+    df_x = pd.read_csv(PATH)
+
+    eflow_dmd_df = []
+    for rule in E_FLOW_RULES_DMD:
+        r = rule.copy()
+        dmd_df = make_df(
+            r["type"],
+            node=eval_field(r["node"], df_sw),
+            commodity=r["commodity"],
+            level=r["level"],
+            year=eval_field(r["year"], df_sw),
+            time=eval_field(r["time"], df_sw),
+            value=eval_field(r["value"], df_sw),
+            unit=r["unit"],
+        )
+        eflow_dmd_df.append(dmd_df)
+    dmd_df = pd.concat(eflow_dmd_df)
+    dmd_df = dmd_df[dmd_df["year"] >= 2025].reset_index(drop=True)
+    dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x >= 0 else 0)
+
+    match context.time:
+        case "year":
+            # Reading data, the data is spatially and temporally aggregated from GHMs
+            monthly = False
+            path = package_data_path(
+                "water",
+                "availability",
+                f"e-flow_{context.RCP}_{context.regions}.csv",
+            )
+        case "month":
+            monthly = True
+            path = package_data_path(
+                "water",
+                "availability",
+                f"e-flow_5y_m_{context.RCP}_{context.regions}.csv",
+            )
+        case _:
+            raise ValueError(f"Invalid time: {context.time}")
+
+    df_env = pd.read_csv(path)
+    df_env = _e_flow_preprocess(df_env, df_x, context, info, monthly)
+
+    # Return a processed dataframe for env flow calculations
+    if context.SDG != "baseline":
+        # dataframe to put constraints on env flows
+        eflow_df = []
+        for rule in E_FLOW_RULES_BOUND:
+            r = rule.copy()
+            df = make_df(
+                r["type"],
+                node_loc= "B" + eval_field(r["node"], df_env),
+                technology=r["technology"],
+                year_act=eval_field(r["year_act"], df_env),
+                mode=r["mode"],
+                time=eval_field(r["time"], df_env),
+                value=eval_field(r["value"], df_env),
+                unit=r["unit"],
+            )
+            eflow_df.append(df)
+        eflow_df = pd.concat(eflow_df)
+
+        eflow_df["value"] = eflow_df["value"].apply(lambda x: x if x >= 0 else 0)
+        eflow_df = eflow_df[eflow_df["year_act"] >= 2025].reset_index(drop=True)
+
+        dmd_df.sort_values(by=["node", "year"], inplace=True)
+        dmd_df.reset_index(drop=True, inplace=True)
+        eflow_df.sort_values(by=["node_loc", "year_act"], inplace=True)
+        eflow_df.reset_index(drop=True, inplace=True)
+
+        eflow_df["value"] = np.where(
+            eflow_df["value"] >= 0.7 * dmd_df["value"],
+            0.7 * dmd_df["value"],
+            eflow_df["value"],
+        )
+
+        results["bound_activity_lo"] = eflow_df
+
+    return results
+
 

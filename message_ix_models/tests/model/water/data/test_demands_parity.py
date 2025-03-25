@@ -9,6 +9,10 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.demands_rf import read_water_availability as new_read_water_availability, add_water_availability as new_add_water_availability, add_sectoral_demands as new_add_sectoral_demands
 from message_ix_models.model.water.data.demands import read_water_availability as old_read_water_availability, add_water_availability as old_add_water_availability, add_sectoral_demands as old_add_sectoral_demands
 
+import time as pytime
+
+
+#compare performance of new and old demands
 
 
 
@@ -62,8 +66,18 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
     test_context["water build info"] = ScenarioInfo(s)
 
     # Call the function to be tested
+    start_time_new = pytime.time()
     result1 = new_add_sectoral_demands(context=test_context)
+    end_time_new = pytime.time()
+    new_time = end_time_new - start_time_new
+    start_time_old = pytime.time()
     result2 = old_add_sectoral_demands(context=test_context)
+    end_time_old = pytime.time()
+    old_time = end_time_old - start_time_old
+
+    #save to a results txt file
+    with open("results.txt", "a") as f:
+        f.write(f"New time Add Sectoral Demands: {new_time}, Old time Add Sectoral Demands: {old_time}\n")
     # First, verify that both outputs have the same keys.
     assert set(result1.keys()) == set(result2.keys())
     
@@ -91,11 +105,28 @@ def test_add_water_availability(test_context, time):
     test_context.time = time
 
     # Run the function to be tested
+    start_time_new = pytime.time()
     result1_sw, result1_gw = new_read_water_availability(context=test_context)
+    end_time_new = pytime.time()
+    new_time = end_time_new - start_time_new
+    start_time_old = pytime.time()
     result2_sw, result2_gw = old_read_water_availability(context=test_context)
+    end_time_old = pytime.time()
+    old_time = end_time_old - start_time_old
+    with open("results.txt", "a") as f:
+        f.write(f"New time Read Water Availability: {new_time}, Old time Read Water Availability: {old_time}\n")
 
+    start_time_new = pytime.time()
     result1 = new_add_water_availability(context=test_context)
+    end_time_new = pytime.time()
+    new_time = end_time_new - start_time_new
+    start_time_old = pytime.time()
     result2 = old_add_water_availability(context=test_context)
+    end_time_old = pytime.time()
+    old_time = end_time_old - start_time_old
+    with open("results.txt", "a") as f:
+        f.write(f"New time Add Water Availability: {new_time}, Old time Add Water Availability: {old_time}\n")
+
 
     assert set(result1.keys()) == set(result2.keys())
 
