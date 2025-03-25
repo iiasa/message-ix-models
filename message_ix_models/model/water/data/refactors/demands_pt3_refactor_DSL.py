@@ -10,7 +10,8 @@ from message_ix import make_df
 
 from message_ix_models.util import broadcast, minimum_version, package_data_path
 
-from message_ix_models.model.water.data.data_transformers import DSL_RULES, apply_transformation_rule, convert_units
+from message_ix_models.model.water.data.common_tooling.demand_rules import DSL_RULES
+from message_ix_models.model.water.data.common_tooling.demand_tooling import apply_transformation_rule, convert_units
 if TYPE_CHECKING:
     from message_ix_models import Context
 
