@@ -328,7 +328,9 @@ def run_reporting(context, remove_ts, profile):
     else:
         # Remove existing timeseries and add material timeseries
         log.info("Reporting material-specific variables")
+        scenario.check_out(timeseries_only=True)
         run(scenario, region="R12_GLB", upload_ts=True)
+        scenario.commit("upload materials reporting TS")
         log.info("Reporting standard variables")
         reporting(
             mp,
