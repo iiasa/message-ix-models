@@ -1,5 +1,5 @@
 import pandas as pd
-
+import re
 URBAN_DEMAND = [
     {   "type": "demand",
         "node": "urban_mw[node]",
@@ -147,7 +147,7 @@ HISTORICAL_CAPACITY = [
     }
 ]
 
-SHARE_CONSTRAINTS = [
+SHARE_CONSTRAINTS_RECYCLING = [
     {   "type": "share_commodity_lo",
         "shares": "share_wat_recycle",
         "node": "df_recycling[node]",
@@ -156,6 +156,45 @@ SHARE_CONSTRAINTS = [
         "unit": "-",
     }
 ]
+
+WATER_AVAILABILITY = [
+    {   "type": "demand",
+        "node": "df_sw[Region].astype(str)",
+        "commodity": "surfacewater_basin",
+        "level": "water_avail_basin",
+        "year": "df_sw[year]",
+        "time": "df_sw[time]",
+        "value": "df_sw[value]",
+        "unit": "km3/year",
+        "df_source": "df_sw"
+    },
+    {   "type": "demand",
+        "node": "df_gw[Region].astype(str)",
+        "commodity": "groundwater_basin",
+        "level": "water_avail_basin",
+        "year": "df_gw[year]",
+        "time": "df_gw[time]",
+        "value": "df_gw[value]",
+        "unit": "km3/year",
+        "df_source": "df_gw"
+    }
+]
+
+SHARE_CONSTRAINTS_GW = [
+    {   "type": "share_commodity_lo",
+        "shares": "share_low_lim_GWat",
+        "node": "df_gw[Region].astype(str)",
+        "year": "df_gw[year]",
+        "time": "df_gw[time]",
+        "value": "df_gw[value] / (df_sw[value] + df_gw[value]) * 0.95",
+        "unit": "-",
+        "df_source1": "df_gw",
+        "df_source2": "df_sw"
+    }
+]
+
+
+
 
 def key_check(rules: list[list[dict]]) -> None:
     """Loop through rules and check if all rules have in common the keys in the DataFrame, each rule is a list of dictionaries. Prove that all the rules have the same keys"""
@@ -168,39 +207,36 @@ def key_check(rules: list[list[dict]]) -> None:
     return set_of_keys
 
 
-def eval_field(expr: str, df_processed: pd.DataFrame):
-    # Split the expression into field access and arithmetic parts
-    if '[' in expr:
-        # Extract the variable name and the rest of the expression
-        var_name, rest = expr.split('[', 1)
-        
-        # Find the closing bracket and separate field access from arithmetic
-        bracket_end = rest.find(']')
-        if bracket_end == -1:
-            raise ValueError(f"Invalid expression: missing closing bracket in {expr}")
-            
-        key_with_bracket = rest[:bracket_end]
-        arithmetic = rest[bracket_end+1:].strip()
-        
-        # Process the key
-        key = key_with_bracket
-        if not (key.startswith('"') or key.startswith("'")):
-            key = f"'{key}'"
-            
-        # Reconstruct the base expression
-        base_expr = f"{var_name}[{key}]"
-        
-        # Combine with arithmetic if present
-        if arithmetic:
-            full_expr = f"({base_expr}){arithmetic}"
+def eval_field(expr: str, df_processed: pd.DataFrame, df_processed2: pd.DataFrame = None):
+    # Find all prefixes (e.g., "df_gw", "df_sw") that occur before a '[' character.
+    prefixes = re.findall(r'(\w+)\s*\[', expr)
+    unique_prefixes = []
+    for p in prefixes:
+        if p not in unique_prefixes:
+            unique_prefixes.append(p)
+    # No dataframe reference found; evaluate as-is.
+    match len(unique_prefixes):
+        case 0:
+            return eval(expr, {}, {})
+        case 1:
+            local_context = {unique_prefixes[0]: df_processed}
+        case 2 if df_processed2 is not None:
+            local_context = {unique_prefixes[0]: df_processed, unique_prefixes[1]: df_processed2}
+        case _:
+            raise ValueError(f"Expression '{expr}' uses more than two different dataframes: {unique_prefixes}")
+    # Replace field-access expressions that are missing quotes around the key.
+    def repl(match):
+        prefix = match.group(1)
+        key = match.group(2).strip()
+        # If the key is not quoted, add quotes.
+        if (key.startswith("'") and key.endswith("'")) or (key.startswith('"') and key.endswith('"')):
+            return f"{prefix}[{key}]"
         else:
-            full_expr = base_expr
-            
-        local_context = {var_name: df_processed}
-        return eval(full_expr, {}, local_context)
-    else:
-        # Handle case where there's no field access, just arithmetic
-        return eval(expr, {}, {})
+            return f"{prefix}['{key}']"
+    
+    # Process the expression such that, e.g., df_gw[value] becomes df_gw['value'].
+    new_expr = re.sub(r'(\w+)\[\s*([^\]]+?)\s*\]', repl, expr)
+    return eval(new_expr, {}, local_context)
 
 def pre_rule_processing(df_processed: pd.DataFrame) -> pd.DataFrame:
     """
