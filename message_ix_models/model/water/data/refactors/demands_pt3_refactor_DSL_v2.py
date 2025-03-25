@@ -10,8 +10,8 @@ import pandas as pd
 import xarray as xr
 from message_ix import make_df
 from message_ix_models.util import broadcast, minimum_version, package_data_path
-from message_ix_models.model.water.data.data_transformers import DSL_RULES, convert_units, apply_transformation_rule, apply_dsl_transformations
-
+from message_ix_models.model.water.data.common_tooling.demand_rules import DSL_RULES
+from message_ix_models.model.water.data.common_tooling.demand_tooling import *
 
 # ---------------------------------------------------------------------------
 def target_rate(df: pd.DataFrame, df_basin: pd.DataFrame, target: Union[float, str], Years: list[int], Start_Year: int, Interp_rate: float, treatment_rate: float = 0.25) -> pd.DataFrame:
