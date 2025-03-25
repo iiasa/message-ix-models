@@ -19,7 +19,6 @@ from message_ix_models.model.material.data_other_industry import (
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
-    add_cement_bounds_2020,
     add_cement_ccs_co2_tr_relation,
     add_emission_accounting,
     add_water_par_data,
@@ -155,7 +154,7 @@ def calibrate_existing_constraints(
     s_info = ScenarioInfo(scenario)
 
     # add_coal_lowerbound_2020(scenario)
-    add_cement_bounds_2020(scenario)
+    # add_cement_bounds_2020(scenario)
 
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration

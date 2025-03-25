@@ -236,7 +236,9 @@ def read_sector_data(
         sheet_n = sectname + "_R11"
 
     if filename.endswith(".csv"):
-        data_df = pd.read_csv(package_data_path("material", sectname, filename))
+        data_df = pd.read_csv(
+            package_data_path("material", sectname, filename), comment="#"
+        )
     else:
         data_df = pd.read_excel(
             package_data_path("material", sectname, ssp, filename),
@@ -1634,17 +1636,6 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
             broadcast, node_loc=nodes_ex_world(s_info.N)
         ),
     )
-    # enforce FSU gas use in clinker kilns in 2020
-    common = {
-        "technology": "furnace_gas_cement",
-        "mode": "high_temp",
-        "time": "year",
-        "value": 6.5,
-        "unit": "GWa",
-        "year_act": 2020,
-        "node_loc": "R12_FSU",
-    }
-    scenario.add_par("bound_activity_lo", make_df("bound_activity_up", **common))
     scenario.commit("add bound for thermal electr use in cement")
 
     # relax 2020 growth constraint for RCPA to avoid infeasibility
