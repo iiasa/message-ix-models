@@ -6,6 +6,7 @@ prune .github
 prune message_ix_models/data/test/advance
 prune message_ix_models/data/test/gea
 prune message_ix_models/data/test/iea
+prune message_ix_models/data/test/report
 prune message_ix_models/data/test/shape
 prune message_ix_models/data/test/snapshot-*
 prune message_ix_models/data/test/ssp
