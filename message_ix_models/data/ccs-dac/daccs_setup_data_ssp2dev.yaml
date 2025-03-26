@@ -975,27 +975,27 @@ dac_htg:
 
 DAC_mpen:
   year_init: 2030
-  growth_activity_up_:
-    par_name: growth_activity_up
-    value: 0.10
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    year_act:
-      rate: 0.0
-    time:
-      year: 1
+#  growth_activity_up_:
+#    par_name: growth_activity_up
+#    value: 0.10
+#    unit: '-'
+#    node_loc:
+#      R12_AFR: 1
+#      R12_CHN: 1
+#      R12_RCPA: 1
+#      R12_EEU: 1
+#      R12_FSU: 1
+#      R12_LAM: 1
+#      R12_MEA: 1
+#      R12_NAM: 1
+#      R12_PAO: 1
+#      R12_PAS: 1
+#      R12_SAS: 1
+#      R12_WEU: 1
+#    year_act:
+#      rate: 0.0
+#    time:
+#      year: 1
   soft_activity_up_:
     par_name: soft_activity_up
     value: 0.00 #0.05
@@ -1017,27 +1017,27 @@ DAC_mpen:
       rate: 0.0
     time:
       year: 1
-  initial_activity_up_:
-    par_name: initial_activity_up
-    value: 0.00824158
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 14.1
-      R12_RCPA: 14.1
-      R12_EEU: 1.5
-      R12_FSU: 2.6
-      R12_LAM: 4.5
-      R12_MEA: 3.4
-      R12_NAM: 14.6
-      R12_PAO: 3.8
-      R12_PAS: 4.5
-      R12_SAS: 2.8
-      R12_WEU: 10.9
-    year_act:
-      rate: 0.0
-    time:
-      year: 1
+#  initial_activity_up_:
+#    par_name: initial_activity_up
+#    value: 0.00824158
+#    unit: '-'
+#    node_loc:
+#      R12_AFR: 1
+#      R12_CHN: 14.1
+#      R12_RCPA: 14.1
+#      R12_EEU: 1.5
+#      R12_FSU: 2.6
+#      R12_LAM: 4.5
+#      R12_MEA: 3.4
+#      R12_NAM: 14.6
+#      R12_PAO: 3.8
+#      R12_PAS: 4.5
+#      R12_SAS: 2.8
+#      R12_WEU: 10.9
+#    year_act:
+#      rate: 0.0
+#    time:
+#      year: 1
   relation_activity_DAC_mpen_c:
     par_name: relation_activity
     value: -1
