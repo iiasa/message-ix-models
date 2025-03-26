@@ -5,9 +5,9 @@ from ixmp import Platform
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix import Scenario
-from message_ix_models.model.water.data.water_supply_rf import map_basin_region_wat as new_map_basin_region_wat, add_e_flow as new_add_e_flow, add_water_supply as new_add_water_supply
+from message_ix_models.model.water.data.water_supply import map_basin_region_wat as new_map_basin_region_wat, add_e_flow as new_add_e_flow, add_water_supply as new_add_water_supply
 
-from message_ix_models.model.water.data.water_supply import map_basin_region_wat as map_basin_region_wat, add_water_supply as add_water_supply, add_e_flow as add_e_flow
+from message_ix_models.model.water.data.water_supply_legacy import map_basin_region_wat as map_basin_region_wat, add_water_supply as add_water_supply, add_e_flow as add_e_flow
 
 import time as pytime
 #@pytest.mark.skip(reason="passed")
