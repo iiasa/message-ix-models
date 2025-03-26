@@ -1,14 +1,14 @@
 """Prepare data for adding demands"""
 
 import os
-import builtins
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-from message_ix import make_df
+from message_ix import make_df as make_df
+
 
 from message_ix_models.util import broadcast, minimum_version, package_data_path
 

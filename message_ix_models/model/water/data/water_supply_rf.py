@@ -15,7 +15,7 @@ from message_ix_models.util import (
     same_time,
 )
 from message_ix_models.model.water.data.water_supply_rules import *
-from message_ix_models.model.water.data.demand_rules import eval_field_old as eval_field
+from message_ix_models.model.water.data.demand_rules import eval_field as eval_field
 
 
 def _basin_region_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", info : None, monthly : bool = False) -> pd.DataFrame:
