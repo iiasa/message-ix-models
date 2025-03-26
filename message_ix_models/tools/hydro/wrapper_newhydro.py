@@ -21,9 +21,11 @@ It is possible to consider:
 import time
 from copy import deepcopy
 from pathlib import Path
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
@@ -60,6 +62,13 @@ def fill_initial_years_from2050(df):
         df = pd.concat([df] + new_rows, ignore_index=True)
 
     return df
+
+
+def copy_and_rename(df: pd.DataFrame, new_tech: str) -> pd.DataFrame:
+    """Copy a dataframe and rename the technology column."""
+    df_new = deepcopy(df)
+    df_new["technology"] = new_tech
+    return df_new
 
 
 def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020):
@@ -138,6 +147,8 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
     years = s_info.yv_ya.year_vtg.unique()
     fmy = s_info.y0
     vtg_years = years[years < fmy].tolist()
+    # future years
+    fut_years = years[years >= fmy].tolist()
     msg_reg = [x for x in nodes if "GLB" not in x and "World" not in x]
 
     scenario.check_out()
@@ -216,13 +227,15 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         + [x for x in par_hydro if "ref_" in x]
         # + [x for x in par_hydro if "initial_" in x]
         + [x for x in par_hydro if "growth_" in x]
+        + [x for x in par_hydro if "initial_" in x]
         + ["historical_activity", "historical_new_capacity"]
-        + ["inv_cost", "initial_activity_lo"]
+        + ["inv_cost"]
     )
     print("parameters treated individually", par_skip_new)
     # Looping for all regions
     for focus_region in msg_reg:
         print("Parametrizing each MESSAGE region: " + focus_region)
+        print("do updates work?")
         start_time = time.time()
         LF = pd.read_csv(
             Path(
@@ -332,7 +345,6 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
             df = scenario.par(
                 t, {"technology": ["hydro_hc"], node_column: [focus_region]}
             )
-            dfOrg = deepcopy(df)
 
             for i in newtechnames:
                 # print("Technology: " + i)
@@ -341,19 +353,6 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 df["technology"] = i
                 if t == "capacity_factor":
                     df["value"] = 1  # capacity_factor = 1 for new hydro
-                # input part moved below
-                elif t in ["initial_new_capacity_up", "initial_new_capacity_lo"]:
-                    df["value"] = (
-                        dfOrg["value"]
-                        / CCsum
-                        / float(CC["avgIC"].loc[CC["technology"] == i])
-                    )
-                    df = fill_initial_years_from2050(df)
-                    # df = df.loc[df.year_vtg <= fmy]
-                    # Scale the original hydro_hc value (arbitrary)
-                elif t == "initial_activity_up":
-                    df = fill_initial_years_from2050(df)
-                    scenario.add_par("initial_activity_lo", df)
                 elif t == "relation_activity":
                     dfnew = deepcopy(df.set_index("relation"))
                     dfnew = dfnew.drop(
@@ -438,80 +437,40 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
             scenario.add_par("fix_cost", df_fx)
 
         # %% Historical activity & capacity
+        # Define technology mapping
+        tech_mapping: Dict[str, str] = {"hydro_lc": "hydro_1", "hydro_hc": "hydro_2"}
 
-        # based on historical_activity of older model in 2010
-        # hydro_1 gets from hydro_lc, hydro_2 from hydro_hc
-        # # NEW_ED all historic act to hydro_1
-        df = scenario.par(
-            "historical_activity",
-            {"technology": ["hydro_lc"], "node_loc": [focus_region]},
-        )
-        reg_hist_activity = deepcopy(df.groupby("year_act").agg("sum")).reset_index()
+        # Store max historical activity values
+        max_hist_activity: Dict[str, float] = {}
+        # Process historical activity
 
-        dfsub = (
-            deepcopy(df.loc[df.technology == "hydro_lc"])
-            .sort_values(by=["year_act"])
-            .reset_index(drop="TRUE")
-        )
-        dfsub.technology = "hydro_1"
-        # Warning occurs because dfsub is derived from another df. (!?) https://stackoverflow.com/questions/44723183/set-value-to-an-entire-column-of-a-pandas-dataframe
-        dfsub["value"] = reg_hist_activity.value
-        scenario.add_par("historical_activity", dfsub)
-        max_hist_act1 = float(dfsub[dfsub.year_act == 2015].value)
+        for old_tech, new_tech in tech_mapping.items():
+            df = scenario.par(
+                "historical_activity",
+                {"technology": [old_tech], "node_loc": [focus_region]},
+            )
+            df_new = copy_and_rename(df, new_tech)
+            if not df_new.empty:
+                scenario.add_par("historical_activity", df_new)
+                # Store max historical activity for year 2015
+                max_value = df_new.loc[df_new.year_act == 2015, "value"]
+                max_hist_activity[new_tech] = (
+                    float(max_value.values[0]) if not max_value.empty else 0.0
+                )
 
-        # same for hydro_hc and hydro_2
-        # NEW_ED commented
-        df = scenario.par(
-            "historical_activity",
-            {"technology": ["hydro_hc"], "node_loc": [focus_region]},
-        )
-        reg_hist_activity = deepcopy(df.groupby("year_act").agg("sum")).reset_index()
-
-        dfsub = (
-            deepcopy(df.loc[df.technology == "hydro_hc"])
-            .sort_values(by=["year_act"])
-            .reset_index(drop="TRUE")
-        )
-        dfsub.technology = "hydro_2"
-        # Warning occurs because dfsub is derived from another df. (!?) https://stackoverflow.com/questions/44723183/set-value-to-an-entire-column-of-a-pandas-dataframe
-        dfsub["value"] = reg_hist_activity.value
-        scenario.add_par("historical_activity", dfsub)
-        max_hist_act2 = float(dfsub[dfsub.year_act == 2015].value)
+        # Extract specific values for hydro_1 and hydro_2
+        max_hist_act1 = max_hist_activity.get("hydro_1", 0.0)
+        max_hist_act2 = max_hist_activity.get("hydro_2", 0.0)
 
         # historical_new_capacity = also the sum of hydro_lc & hydro_hc
-        # # NEW_ED all to hydro_1
-        df = scenario.par(
-            "historical_new_capacity",
-            {"technology": ["hydro_lc"], "node_loc": [focus_region]},
-        )
-        reg_hcap = df.groupby(["year_vtg"]).sum().sort_values(by=["year_vtg"])
-        reg_hcap = reg_hcap.reset_index(drop="TRUE")
-
-        dfsub = (
-            deepcopy(df.loc[df.technology == "hydro_lc"])
-            .sort_values(by=["year_vtg"])
-            .reset_index(drop="TRUE")
-        )
-        dfsub["technology"] = "hydro_1"
-        dfsub["value"] = reg_hcap.value  # Need to be modified
-        scenario.add_par("historical_new_capacity", dfsub)
-        # same for hydro_hc and hydro_2
-        # NEW_ED commented
-        df = scenario.par(
-            "historical_new_capacity",
-            {"technology": ["hydro_hc"], "node_loc": [focus_region]},
-        )
-        reg_hcap = df.groupby(["year_vtg"]).sum().sort_values(by=["year_vtg"])
-        reg_hcap = reg_hcap.reset_index(drop="TRUE")
-
-        dfsub = (
-            deepcopy(df.loc[df.technology == "hydro_hc"])
-            .sort_values(by=["year_vtg"])
-            .reset_index(drop="TRUE")
-        )
-        dfsub["technology"] = "hydro_2"
-        dfsub["value"] = reg_hcap.value  # Need to be modified
-        scenario.add_par("historical_new_capacity", dfsub)
+        for old_tech, new_tech in tech_mapping.items():
+            df = scenario.par(
+                "historical_new_capacity",
+                {"technology": [old_tech], "node_loc": [focus_region]},
+            )
+            df_new = copy_and_rename(df, new_tech)
+            if not df_new.empty:
+                scenario.add_par("historical_new_capacity", df_new)
 
         # %% Dynamic constraints on hydrotec adoption
         # Set relations: hydro_new_const
@@ -531,77 +490,241 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 df["value"] = 1 if (i in newtechnames) else -1
                 scenario.add_par("relation_activity", df)
 
-        for i in ["growth_activity_up", "growth_activity_lo"]:
-            df = scenario.par(
-                i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
-            )
-            df = df.loc[df.year_act > 2010]
-            df["technology"] = "hydro_1"
-            # hydro_2
-            scenario.add_par(i, df)
-            df = scenario.par(
-                i, {"technology": ["hydro_hc"], "node_loc": [focus_region]}
-            )
-            df = df.loc[df.year_act > 2010]
-            df["technology"] = "hydro_2"
-            scenario.add_par(i, df)
+        # newtechnames without hydro_1 and hydro_2
+        newtechs_3 = [x for x in newtechnames if x not in ["hydro_1", "hydro_2"]]
+        # Process growth activity
+        for param in ["growth_activity_up", "growth_activity_lo"]:
+            for old_tech, new_tech in tech_mapping.items():
+                df = scenario.par(
+                    param, {"technology": [old_tech], "node_loc": [focus_region]}
+                )
+                df = df.loc[df.year_act > 2010]  # Apply filtering
 
-        for i in ["growth_new_capacity_up", "growth_new_capacity_lo"]:
-            df = scenario.par(
-                i, {"technology": ["coal_ppl"], "node_loc": [focus_region]}
-            )
-            df = df.loc[df.year_vtg > 2010]
-            df["technology"] = "hydro_1"
-            df["value"] = 0.1
-            # hydro_2
-            scenario.add_par(i, df)
-            df["technology"] = "hydro_2"
-            scenario.add_par(i, df)
-        # bound act_up
-        for i in ["bound_activity_up"]:
-            df = scenario.par(
-                i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
-            )
-            # df = df.loc[df.year_act <= fmy]
-            df["technology"] = "hydro_1"
-            scenario.add_par(i, df)
-            df = scenario.par(
-                i, {"technology": ["hydro_hc"], "node_loc": [focus_region]}
-            )
-            # df = df.loc[df.year_act <= fmy]
-            df["technology"] = "hydro_2"
-            scenario.add_par(i, df)
+                df_new = copy_and_rename(df, new_tech)
+                if not df.empty:
+                    scenario.add_par(param, df_new)
+                else:
+                    extra_df = make_df(
+                        param,
+                        node_loc=focus_region,
+                        technology=new_tech,
+                        year_act=[year for year in fut_years if year > 2025],
+                        time="year",
+                        value=0.05 if "_up" in param else -0.05,
+                        unit="%",
+                    )
+                    scenario.add_par(param, extra_df)
+                    # also add for all other tecs and cases 0.05
 
-        for i in ["bound_new_capacity_up", "bound_new_capacity_lo"]:
-            df = scenario.par(
-                i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
-            )
+            # Also add for all other technologies with a fixed value of 0.05
+            for i in newtechs_3:
+                extra_df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_act=[year for year in fut_years if year > 2025],
+                    time="year",
+                    value=0.05 if "_up" in param else -0.05,
+                    unit="%",
+                )
+                scenario.add_par(param, extra_df)
 
-            df["technology"] = "hydro_1"
-            scenario.add_par(i, df)
+        # Process growth new capacity for all hydro technologies
+        for param in [
+            "soft_new_capacity_up",
+            "growth_new_capacity_up",
+        ]:
+            for i in newtechnames:
+                df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_vtg=fut_years,
+                    value=0.5 if "growth" in param else 0.9,
+                    unit="%" if "growth" in param else "???",
+                )
+                # if regon containrs _CHN and year 2030, value is 0.5
+                if "_CHN" in focus_region and param == "growth_new_capacity_up":
+                    # filter year > 2030
+                    df = df.loc[df.year_vtg > 2030]
+                scenario.add_par(param, df)
 
-            df = scenario.par(
-                i, {"technology": ["hydro_hc"], "node_loc": [focus_region]}
-            )
-            df["technology"] = "hydro_2"
-            scenario.add_par(i, df)
+        # soft activity
+        for param in ["soft_activity_up", "soft_activity_lo"]:
+            for i in newtechnames:
+                df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_act=fut_years,
+                    time="year",
+                    value=0.05 if "_up" in param else -0.05,
+                    unit="???",
+                )
+                scenario.add_par(param, df)
 
-        for i in ["bound_total_capacity_up", "bound_total_capacity_lo"]:
-            df = scenario.par(
-                i, {"technology": ["hydro_lc"], "node_loc": [focus_region]}
-            )
+        for param in ["abs_cost_activity_soft_up", "abs_cost_activity_soft_lo"]:
+            for i in newtechnames:
+                df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_act=fut_years,
+                    time="year",
+                    value=5,
+                    unit="???",
+                )
+                scenario.add_par(param, df)
 
-            df["technology"] = "hydro_1"
-            scenario.add_par(i, df)
+        for param in ["level_cost_activity_soft_up", "level_cost_activity_soft_lo"]:
+            for i in newtechnames:
+                df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_act=fut_years,
+                    time="year",
+                    value=5,
+                    unit="???",
+                )
+                scenario.add_par(param, df)
+        # same for capacity
 
-            df = scenario.par(
-                i, {"technology": ["hydro_hc"], "node_loc": [focus_region]}
-            )
+        for param in ["abs_cost_new_capacity_soft_up", "abs_cost_new_capacity_soft_lo"]:
+            for i in newtechnames:
+                df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_vtg=fut_years,
+                    value=2,
+                    unit="???",
+                )
+                scenario.add_par(param, df)
 
-            df["technology"] = "hydro_2"
-            scenario.add_par(i, df)
+        for param in [
+            "level_cost_new_capacity_soft_up",
+            "level_cost_new_capacity_soft_lo",
+        ]:
+            for i in newtechnames:
+                df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_vtg=fut_years,
+                    value=0.1,
+                    unit="???",
+                )
+                scenario.add_par(param, df)
 
-        # %% Tweaking initial_activity_up
+        # # this for all hydro tecs TO CHANGE
+        # for i in ["growth_new_capacity_up", "growth_new_capacity_lo"]:
+        #     df = scenario.par(
+        #         i, {"technology": ["coal_ppl"], "node_loc": [focus_region]}
+        #     )
+        #     df = df.loc[df.year_vtg > 2010]
+        #     df["technology"] = "hydro_1"
+        #     df["value"] = 0.1
+        #     # hydro_2
+        #     scenario.add_par(i, df)
+        #     df["technology"] = "hydro_2"
+        #     scenario.add_par(i, df)
+        # # bound act_up
+
+        for param in [
+            "bound_activity_up",
+            "bound_activity_lo",
+            "bound_new_capacity_up",
+            "bound_new_capacity_lo",
+            "bound_total_capacity_up",
+            "bound_total_capacity_lo",
+            "growth_new_capacity_lo",  # only hydro_lc
+            "initial_new_capacity_lo",  # only hydro_lc
+        ]:
+            for old_tech, new_tech in tech_mapping.items():
+                df = scenario.par(
+                    param, {"technology": [old_tech], "node_loc": [focus_region]}
+                )
+                df_new = copy_and_rename(df, new_tech)
+                if not df.empty:
+                    scenario.add_par(param, df_new)
+
+        # %% Tweaking initial_activity_up and _lo
+        for param in ["initial_activity_up", "initial_activity_lo"]:
+            for old_tech, new_tech in tech_mapping.items():
+                df = scenario.par(
+                    param, {"technology": [old_tech], "node_loc": [focus_region]}
+                )
+                df = df.loc[df.year_act > 2010]  # Apply filtering
+
+                df_new = copy_and_rename(df, new_tech)
+                if not df.empty:
+                    scenario.add_par(param, df_new)
+                else:
+                    extra_df = make_df(
+                        param,
+                        node_loc=focus_region,
+                        technology=new_tech,
+                        year_act=fut_years,
+                        time="year",
+                        value=0.5 if "_up" in param else 0.45,
+                        unit="GWa",
+                    )
+                    scenario.add_par(param, extra_df)
+                    # also add for all other tecs and cases 0.05
+
+            # Also add for all other technologies with a fixed value of 0.05
+            for i in newtechs_3:
+                extra_df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_act=fut_years,
+                    time="year",
+                    value=0.05 if "_up" in param else 0,
+                    unit="GWa",
+                )
+                scenario.add_par(param, extra_df)
+
+        # initial_new_capcity_up and _lo
+        for param in ["initial_new_capacity_up"]:
+            for old_tech, new_tech in tech_mapping.items():
+                df = scenario.par(
+                    param, {"technology": [old_tech], "node_loc": [focus_region]}
+                )
+                df = df.loc[df.year_vtg > 2010]  # Apply filtering
+                dfOrg = df.copy()
+                df["value"] = (
+                    dfOrg["value"]
+                    / CCsum
+                    / float(CC["avgIC"].loc[CC["technology"] == i])
+                )
+                df_new = copy_and_rename(df, new_tech)
+                if not df.empty:
+                    scenario.add_par(param, df_new)
+                else:
+                    extra_df = make_df(
+                        param,
+                        node_loc=focus_region,
+                        technology=new_tech,
+                        year_vtg=fut_years,
+                        value=0.5 if "_up" in param else 0.0001,
+                        unit="GW",
+                    )
+                    scenario.add_par(param, extra_df)
+                    # also add for all other tecs and cases 0.05
+
+            # Also add for all other technologies with a fixed value of 0.05
+            for i in newtechs_3:
+                extra_df = make_df(
+                    param,
+                    node_loc=focus_region,
+                    technology=i,
+                    year_vtg=fut_years,
+                    value=0.5 if "_up" in param else 0.0001,
+                    unit="GW",
+                )
+                scenario.add_par(param, extra_df)
 
         # Get the highest new capacity built in a year from the history
         # NEW_ED removed hydro_2
@@ -661,12 +784,6 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
         }
 
         for i in newcommnames:
-            # if scenario_code == "hist":
-            #     lfsub = LF.loc[LF.commodity == i].reset_index(drop=True)
-            #     lfidx = lfsub.index
-            # else:
-            #     lf1sub = LF1.loc[LF1.commodity == i].reset_index(drop=True)
-            #     lf2sub = LF2.loc[LF2.commodity == i].reset_index(drop=True)
 
             if scenario_code == "hist":
                 lfsub = LF.loc[LF.commodity == i].reset_index(drop=True)
