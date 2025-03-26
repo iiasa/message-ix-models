@@ -418,7 +418,7 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
         # technology modes
         modes = ["M1", "M2", "M3"]
 
-        # length for each periods
+        # length for each period
         len_periods = {
             2025: 5,
             2030: 5,
@@ -598,11 +598,11 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
         # Add new setup ================================
         ## setup pipelines, storage, and non-dac ccs technologies
         add_tech(
-            scen, load_package_data(rf"ccs-dac\co2infrastructure_data_{ssp}dev.yaml")
+            scen, load_package_data("ccs-dac", f"co2infrastructure_data_{ssp}dev.yaml")
         )
 
         ## setup dac technologies
-        add_tech(scen, load_package_data(rf"ccs-dac\daccs_setup_data_{ssp}dev.yaml"))
+        add_tech(scen, load_package_data("ccs-dac", f"daccs_setup_data_{ssp}dev.yaml"))
 
         ## add dac costs using meas's tool
         ##> making the projection
