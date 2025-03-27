@@ -11,7 +11,8 @@ import pandas as pd
 import pycountry
 import xarray as xr
 from iam_units import registry
-from sdmx.model.v21 import Annotation, Code, Codelist
+from sdmx.model.common import Code, Codelist
+from sdmx.model.v21 import Annotation
 
 from message_ix_models.util import load_package_data, package_data_path
 from message_ix_models.util.sdmx import as_codes
@@ -95,7 +96,7 @@ def get_codes(name: str) -> list[Code]:
 @cache
 def get_codelist(name: str) -> Codelist:
     """Return a :class:`.Codelist` for `name` in MESSAGEix-GLOBIOM scenarios."""
-    cl = Codelist(id=name.replace("/", "_").upper())
+    cl: Codelist = Codelist(id=name.replace("/", "_").upper())
     cl.extend(get_codes(name))
     return cl
 

@@ -115,7 +115,7 @@ def get_spec(context) -> Spec:
     nodes = get_codes(f"node/{context.model.regions}")
 
     # Top-level "World" node
-    world = nodes[nodes.index("World")]
+    world = nodes[nodes.index(Code(id="World"))]
 
     # Set elements: World, followed by the direct children of World
     add.set["node"] = [world] + world.child

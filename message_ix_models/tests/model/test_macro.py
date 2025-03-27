@@ -1,7 +1,8 @@
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from sdmx.model import Annotation, Code
+from sdmx.model.common import Code
+from sdmx.model.v21 import Annotation
 
 from message_ix_models.model.macro import generate, load
 from message_ix_models.util import package_data_path
