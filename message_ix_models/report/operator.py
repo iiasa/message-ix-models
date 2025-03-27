@@ -266,6 +266,9 @@ def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
             variables.append(match.group(0))
             replacements[match.group(0)] = match.group(1)
 
+    # Prevent a mypy warning in the next line; see https://github.com/khaeru/genno#166
+    assert isinstance(qty, genno.Quantity)
+
     subset = qty.pipe(select, {"v": variables}).pipe(relabel, {"v": replacements})
 
     unique_units = subset.coords["Unit"].data
