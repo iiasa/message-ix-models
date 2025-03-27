@@ -15,10 +15,10 @@ from message_ix_models.project.navigate import T35_POLICY
 @pytest.mark.parametrize(
     "regions, N_node",
     [
+        pytest.param("ISR", 1, marks=testing.MARK[3]),
         ("R11", 11),
         ("R12", 12),
-        pytest.param("R14", 14, marks=testing.MARK[9]),
-        pytest.param("ISR", 1, marks=testing.MARK[3]),
+        ("R14", 14),
     ],
 )
 @pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.TEC)])

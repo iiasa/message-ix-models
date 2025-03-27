@@ -211,7 +211,7 @@ def test_get_chn_ind_pop():
         pytest.param("ISR", marks=MARK[3]),
         "R11",
         "R12",
-        pytest.param("R14", marks=MARK[9]),
+        "R14",
     ],
 )
 @pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
