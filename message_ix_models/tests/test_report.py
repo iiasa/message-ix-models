@@ -1,7 +1,7 @@
 """Tests for :mod:`message_ix_models.report`."""
 
 import re
-from importlib.metadata import version
+from collections.abc import Hashable
 
 import numpy as np
 import pandas as pd
@@ -21,13 +21,7 @@ MIN_CONFIG = {
     },
 }
 
-MARK = (
-    # Used in test_operator
-    pytest.mark.xfail(
-        condition=version("message_ix") < "3.5",
-        reason="Not supported with message_ix < 3.5",
-    ),
-)
+MARK: dict[Hashable, pytest.MarkDecorator] = {}
 
 
 def test_register(caplog) -> None:
