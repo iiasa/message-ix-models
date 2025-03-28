@@ -5,9 +5,10 @@ from functools import lru_cache, partial
 from operator import le
 from typing import TYPE_CHECKING
 
+import genno
 import pandas as pd
 import xarray as xr
-from genno import Computer, Key, KeySeq, Quantity, quote
+from genno import Computer, Key, quote
 from genno.core.key import single_key
 from iam_units import registry
 from openpyxl import load_workbook
@@ -235,19 +236,16 @@ def prepare_computer(c: Computer):
     c.configure(rename_dims={"source": "source"})
 
     c.add_single("ikarus indexers", quote(make_indexers()))
-    c.add_single("y::ikarus", lambda data: list(filter(partial(le, 2000), data)), "y")
-    k_u = c.add("ikarus adjust units", Quantity(1.0, units="(vehicle year) ** -1"))
+    c.add("y::ikarus", lambda data: list(filter(partial(le, 2000), data)), "y")
+    c.add("y::ikarus+coords", lambda data: dict(y=data), "y::ikarus")
+    k_u = c.add(
+        "ikarus adjust units", genno.Quantity(1.0, units="(vehicle year) ** -1")
+    )
 
     # NB this (harmlessly) duplicates an addition in .ldv.prepare_computer()
     # TODO deduplicate
-    k_fi = c.add(
-        "factor_input",
-        "transport input factor:t-y",
-        "y",
-        "t::transport",
-        "t::transport agg",
-        "config",
-    )
+    k_fi = Key("transport input factor:t-y")
+    c.add(k_fi, "factor_input", "y", "t::transport", "t::transport agg", "config")
 
     parameters = ["fix_cost", "input", "inv_cost", "technical_lifetime", "var_cost"]
 
@@ -261,50 +259,55 @@ def prepare_computer(c: Computer):
     final = {}
     for name in ["availability"] + parameters:
         # Base key for computations related to parameter `name`
-        ks = KeySeq(f"ikarus {name}:c-t-y")
+        k = Key(f"ikarus {name}:c-t-y")
 
         # Refer to data loaded from file
         # Extend over missing periods in the model horizon
-        key = c.add(
-            ks[0] * "source",
+        prev = c.add(
+            k[0] * "source",
             "extend_y",
-            ks.base * "source" + "exo",
+            k * "source" + "exo",
             "y::ikarus",
             strict=True,
         )
 
         if name in ("fix_cost", "inv_cost"):
+            # Also interpolate on y for periods within the extend_y endpoints
+            prev = c.add(
+                k[1] * "source", "interpolate", k[0] * "source", "y::ikarus+coords"
+            )
+
             # Adjust for "availability". The IKARUS source gives these costs, and
             # simultaneously an "availability" in [length]. Implicitly, the costs are
             # those to construct/operate enough vehicles/infrastructure to provide that
             # amount of availability. E.g. a cost of 1000 EUR and availability of 10 km
             # give a cost of 100 EUR / km.
-            key = c.add(ks[1], "div", key, Key("ikarus availability", "tyc", "0"))
+            prev = c.add(k[2], "div", prev, Key("ikarus availability", "tyc", "0"))
             # Adjust units
-            key = c.add(ks[2], "mul", key, k_u)
+            prev = c.add(k[3], "mul", prev, k_u)
 
         # Select desired values
-        c.add(ks[3], "select", key, "ikarus indexers")
-        key = c.add(ks[4], "rename_dims", ks[3], quote({"t_new": "t"}))
+        prev = c.add(k[4], "select", prev, "ikarus indexers")
+        prev = c.add(k[5], "rename_dims", prev, quote({"t_new": "t"}))
 
         if name == "input":
             # Apply scenario-specific input efficiency factor
-            key = single_key(c.add("nonldv efficiency::adj", "mul", k_fi, key))
+            prev = single_key(c.add("nonldv efficiency::adj", "mul", k_fi, prev))
             # Drop existing "c" dimension
-            key = single_key(c.add(key / "c", "drop_vars", key, quote("c")))
+            prev = c.add(prev / "c", "drop_vars", prev, quote("c"))
             # Fill (c, l) dimensions based on t
-            key = c.add(ks[5], "mul", key, bcast_tcl.input)
+            prev = c.add(k[6], "mul", prev, bcast_tcl.input)
         elif name == "technical_lifetime":
             # Round up technical_lifetime values due to incompatibility in handling
             # non-integer values in the GAMS code
-            key = c.add(ks[5], "round", key)
+            prev = c.add(k[6], "round", prev)
 
         # Broadcast across "n" dimension
-        key = c.add(ks[6], "mul", key, "n:n:ex world")
+        prev = c.add(k[7], "mul", prev, "n:n:ex world")
 
         if name in ("fix_cost", "input", "var_cost"):
             # Broadcast across valid (yv, ya) pairs
-            key = c.add(ks[7], "mul", key, bcast_y.model)
+            prev = c.add(k[8], "mul", prev, bcast_y.model)
 
         # Convert to target units
         try:
@@ -312,7 +315,7 @@ def prepare_computer(c: Computer):
         except KeyError:  # "availability"
             pass
         else:
-            key = c.add(ks[8], "convert_units", key, target_units)
+            prev = c.add(k[9], "convert_units", prev, target_units)
 
         # Mapping between short dimension IDs in the computed quantities and the
         # dimensions in the respective MESSAGE parameters
@@ -326,10 +329,10 @@ def prepare_computer(c: Computer):
         )
 
         # Convert to message_ix-compatible data frames
-        key = c.add(
+        prev = c.add(
             f"transport nonldv {name}::ixmp",
             "as_message_df",
-            key,
+            prev,
             name=name,
             dims=dims,
             common=common,
@@ -337,12 +340,12 @@ def prepare_computer(c: Computer):
 
         if name in parameters:
             # The "availability" task would error, since it is not a MESSAGE parameter
-            final[name] = key
+            final[name] = prev
 
     # Derive "output" data from "input"
-    key = "transport nonldv output::ixmp"
+    prev = "transport nonldv output::ixmp"
     final["output"] = c.add(
-        key, make_output, "transport nonldv input::ixmp", "t::transport"
+        prev, make_output, "transport nonldv input::ixmp", "t::transport"
     )
 
     # Merge all data together
