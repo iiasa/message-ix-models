@@ -2,17 +2,18 @@
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Collection, Mapping
+from collections.abc import Callable, Collection, Hashable, Mapping
 from dataclasses import dataclass
 from functools import partial
 from itertools import count
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Optional, TypeVar, Union
 
 import genno
 import pandas as pd
 
 if TYPE_CHECKING:
-    import pathlib
+    import pint.registry
 
     from message_ix_models.types import KeyLike
 
@@ -119,7 +120,7 @@ class Dump(Check):
     This always returns :any:`True`.
     """
 
-    base_path: "pathlib.Path"
+    base_path: Path
 
     types = (dict, pd.DataFrame, genno.Quantity)
 
@@ -156,7 +157,7 @@ class Dump(Check):
 class HasCoords(Check):
     """Object has/omits certain coordinates."""
 
-    coords: dict[str, Collection[str]]
+    coords: dict[str, Collection[Hashable]]
     inverse: bool = False
     types = (dict, pd.DataFrame, genno.Quantity)
 
@@ -194,7 +195,7 @@ class HasCoords(Check):
 class HasUnits(Check):
     """Quantity has the expected units."""
 
-    units: Optional[Union[str, dict]]
+    units: Optional[Union[str, dict, "pint.registry.Quantity", "pint.registry.Unit"]]
     types = (genno.Quantity, pd.DataFrame, dict)
 
     def run(self, obj):
@@ -266,7 +267,9 @@ class Log(Check):
     This always returns :any:`True`.
     """
 
+    #: Number of rows to log.
     rows: Optional[int] = 7
+
     types = (dict, pd.DataFrame, genno.Quantity)
 
     def recurse_parameter_data(self, obj) -> tuple[bool, str]:
@@ -399,3 +402,29 @@ def insert_checks(
     computer.add(target, list(check_map))
 
     return result
+
+
+def verbose_check(verbosity: int, tmp_path: Optional[Path] = None) -> list[Check]:
+    """Return 0 or more checks that display the data to which they are applied.
+
+    These may be appended to collections passed as inputs to :func:`.insert_checks`.
+
+    Parameters
+    ----------
+    verbosity : int
+        0. Don't log anything
+        1. Log :attr:`.Log.rows` values at the start/end of each quantity.
+        2. Log *all* data. This can produce large logs, e.g. more than 1 GiB of text for
+           :func:`.tests.model.transport.test_build.test_debug`.
+        3. Dump all data to files in `tmp_path`.
+    """
+    from message_ix_models.testing.check import Dump, Log
+
+    values: dict[int, list[Check]] = {
+        0: [],
+        1: [Log()],
+        2: [Log(None)],
+        3: [Dump(tmp_path or Path.cwd())],
+    }
+
+    return values[verbosity]
