@@ -1,13 +1,71 @@
+from copy import deepcopy
+from typing import TYPE_CHECKING
+
+import numpy as np
 import pytest
 from iam_units import registry
-from message_ix import make_df
-from numpy.testing import assert_allclose
-from pandas.testing import assert_series_equal
 
 from message_ix_models.model.transport import build, testing
-from message_ix_models.model.transport.non_ldv import UNITS
-from message_ix_models.model.transport.testing import assert_units
+from message_ix_models.model.transport.ikarus import TARGET
+from message_ix_models.model.transport.passenger import UNITS
 from message_ix_models.project.navigate import T35_POLICY
+from message_ix_models.testing.check import (
+    Check,
+    ContainsDataForParameters,
+    HasCoords,
+    HasUnits,
+    NoneMissing,
+    Size,
+    insert_checks,
+    verbose_check,
+)
+
+if TYPE_CHECKING:
+    from message_ix_models.types import KeyLike
+
+PARAMETERS = "fix_cost input inv_cost output technical_lifetime var_cost".split()
+
+
+class C1(Check):
+    """A particular value in ``inv_cost``."""
+
+    types = (dict,)
+
+    def run(self, obj):
+        row = (
+            obj["inv_cost"]
+            .query("technology == 'rail_pub' and year_vtg == 2020")
+            .iloc[0, :]
+        )
+        return np.allclose(
+            23.689086, row["value"]
+        ), "inv_cost(t=rail_pub, yv=2020) has expected value"
+
+
+class C2(Check):
+    """Particular values in ``technical_lifetime``."""
+
+    types = (dict,)
+
+    def run(self, obj):
+        name = "technical_lifetime"
+
+        df = obj[name]
+        n, yv = sorted(df["node_loc"].unique())[-1], (2010, 2050)  # noqa: F841
+        q = "node_loc == @n and technology == 'ICG_bus' and year_vtg in @yv"
+        msg = f"{name} values of 14.7 are rounded to 15.0"
+
+        return np.allclose(df.query(q).value, 15.0), msg
+
+
+CHECKS: dict["KeyLike", list[Check]] = {
+    TARGET: [
+        ContainsDataForParameters(set(PARAMETERS)),
+        HasCoords({"technology": ["con_ar"]}),
+        C1(),
+        C2(),
+    ]
+}
 
 
 @build.get_computer.minimum_version
@@ -22,92 +80,56 @@ from message_ix_models.project.navigate import T35_POLICY
     ],
 )
 @pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.TEC)])
-def test_get_ikarus_data(test_context, regions, N_node, years, options):
-    """Test genno-based IKARUS data prep."""
+def test_get_ikarus_data(
+    tmp_path,
+    test_context,
+    regions,
+    N_node,
+    years,
+    options,
+    verbosity: int = 1,
+):
+    """Test genno-based IKARUS data prep.
+
+    .. todo:: Roll in to :func:`.transport.test_build.test_debug`.
+    """
     ctx = test_context
     c, info = testing.configure_build(
         ctx, regions=regions, years=years, options=options
     )
 
-    # commented: for a manual check that `options` have an effect
-    # print(c.get("nonldv efficiency:t-y:adj").to_series().to_string())
+    # Extend `CHECKS`
+    checks = deepcopy(CHECKS)
 
-    k = "transport nonldv::ixmp+ikarus"
+    # Data cover the model time horizon
+    checks[TARGET].append(HasCoords({"year_vtg": info.Y}))
 
-    # commented: for debugging
-    # print(k)
-    # print(c.describe(k))
+    # Data have the expected units for the respective parameter
+    for par_name in PARAMETERS:
+        checks[f"transport nonldv {par_name}::ixmp"] = [
+            HasUnits(registry(UNITS[par_name])),
+        ]
 
-    # All calculations complete without error
-    data = c.get(k)
-
-    parameters = (
-        "fix_cost",
-        "input",
-        "inv_cost",
-        "output",
-        "technical_lifetime",
-        "var_cost",
+    result = insert_checks(
+        c,
+        "test_get_ikarus_data",
+        checks,
+        # Construct a list of common checks
+        [Size({"n": N_node}), NoneMissing()] + verbose_check(verbosity, tmp_path),
     )
 
-    for name in parameters:
-        assert name in data
+    # Show and print a different key
+    k = TARGET
 
-        v = data[name]
+    # Show what will be computed
+    # verbosity = True  # DEBUG Force printing the description
+    if verbosity:
+        print(c.describe(k))
 
-        # commented: for debugging
-        # print(name)
-        # print(v.head().to_string())
-        # print(f"{len(v) = }")
+    # return  # DEBUG Exit before doing any computation
 
-        # No null keys or values
-        assert not v.isna().any(axis=None)
+    # Compute the test key; all calculations complete without error
+    tmp = c.get(k)
 
-        # Data have the expected units for the respective parameter
-        assert_units(v, registry(UNITS[name]))
-
-        # Data cover the entire model horizon
-        assert set(info.Y) <= set(v["year_vtg"].unique())
-
-        # Aviation technologies are present
-        assert "con_ar" in v["technology"].unique()
-
-    # Test a particular value in inv_cost
-    row = (
-        data["inv_cost"]
-        .query("technology == 'rail_pub' and year_vtg == 2020")
-        .iloc[0, :]
-    )
-    assert "GUSD_2010 / Gv / km" == row["unit"]
-    assert_allclose(23.689086, row["value"])
-
-    # Specific magnitudes of other values to check
-    # TODO use testing tools to make the following less verbose
-    par_name = "technical_lifetime"
-    defaults = dict(node_loc=info.N[-1], technology="ICG_bus", time="year")
-    checks = [
-        dict(year_vtg=2010, value=15.0),  # values of 14.7 are rounded to 15.0
-        dict(year_vtg=2050, value=15.0),  # values of 14.7 are rounded to 15.0
-    ]
-
-    for check in checks:
-        # Create expected data
-        check["year_act"] = check["year_vtg"]
-        exp = make_df(par_name, **defaults, **check)
-        assert len(exp) == 1, "Single row for expected value"
-
-        # Use merge() to find data with matching column values
-        columns = sorted(set(exp.columns) - {"value", "unit"})
-        result = exp.merge(data[par_name], on=columns, how="inner")
-
-        # Single row matches
-        assert len(result) == 1, result
-
-        # Values match
-        assert_series_equal(
-            result["value_x"],
-            result["value_y"],
-            check_exact=False,
-            check_names=False,
-            atol=1e-4,
-        )
+    assert result, "1 or more checks failed"
+    del tmp
