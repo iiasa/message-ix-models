@@ -17,7 +17,7 @@ For "Phase IV", from 2022-09 to 2023-06:
 
 Introduction
 ------------
-The GEDICO IV project aims to design and develop two contrasting scenarios: a Business-as-Usual (BAU) scenario and the Global Energy Interconnection (GEI) 1.5°C scenario. 
+The GEIDCO IV project aims to design and develop two contrasting scenarios: a Business-as-Usual (BAU) scenario and the Global Energy Interconnection (GEI) 1.5°C scenario. 
 Under the GEI 1.5°C scenario, the project analyzes global and regional pathways toward carbon peaking and carbon neutrality. 
 This includes a detailed assessment of energy demand across regions, sub-sectors, and energy types, with a particular focus on end-use sectors such as industry, transport, and buildings.
 
@@ -38,14 +38,14 @@ Scenario identifier
 
 Data
 ----
-R11 (original GEDICO IV):
+R11 (original GEIDCO IV):
     stored at the sharepoint, Documents - ECE.prog\\Projects\\GEIDCO_2022-2023\\Model and data
 
-R12 (baseline scenario for GEDICO V): 
-    see message-data branch `project/gedico_r12 <https://github.com/iiasa/message_data/tree/project/gedico_r12>`_
+R12 (baseline scenario for GEIDCO V): 
+    see message-data branch `project/geidco_r12 <https://github.com/iiasa/message_data/tree/project/geidco_r12>`_
 
 TBA: 
-  a generator for more general use in the message-ix-models repo `project/gedico <https://github.com/iiasa/message-ix-models/tree/project/gedico>`_ (generate bare sheets, users fill in minimum techno-economic parameters for UHV technologies, build scenario)
+  a generator for more general use in the message-ix-models repo `project/geidco <https://github.com/iiasa/message-ix-models/tree/project/geidco>`_ (generate bare sheets, users fill in minimum techno-economic parameters for UHV technologies, build scenario)
 
 Code references
 ---------------
@@ -53,6 +53,6 @@ TBA:
     the generator ()
         message_ix_models.tools.generate_interpipe
     the runner (:func: bare, :func: build, :func: solve)
-        message_ix_models.project.gedico.run_baseline
+        message_ix_models.project.geidco.run_baseline
 
 
