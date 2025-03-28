@@ -5,7 +5,7 @@ import platform
 from collections.abc import Callable, Hashable, Mapping
 from contextlib import nullcontext
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import pytest
 from message_ix import Reporter, Scenario
@@ -72,12 +72,14 @@ def assert_units(
 
     # Convert the unique value to the same class as `expected`
     if isinstance(expected, pint.Quantity):
-        assert expected == expected.__class__(1.0, all_units[0])
+        other: Any = expected.__class__(1.0, all_units[0])
     elif isinstance(expected, Mapping):
         # Compare dimensionality of the units, rather than exact match
-        assert expected == registry.Quantity(all_units[0] or "0").dimensionality
+        other = registry.Quantity(all_units[0] or "0").dimensionality
     else:
-        assert expected == expected.__class__(all_units[0])
+        other = expected.__class__(all_units[0])
+
+    assert expected == other, f"{expected!r} != {other!r}"
 
 
 def configure_build(
