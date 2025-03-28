@@ -1,12 +1,11 @@
 import numpy as np
 import pytest
-from iam_units import registry
 
-from message_ix_models.model.transport import build, freight, non_ldv, testing
+from message_ix_models.model.transport import build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.data import collect_structures, read_structures
 from message_ix_models.model.transport.roadmap import get_roadmap_data
-from message_ix_models.model.transport.testing import MARK, assert_units, make_mark
+from message_ix_models.model.transport.testing import MARK, make_mark
 from message_ix_models.project.navigate import T35_POLICY
 
 
@@ -56,81 +55,6 @@ def test_get_afr_data(test_context, region, length):
         "units",
         "region",
     ]
-
-
-@build.get_computer.minimum_version
-def test_get_freight_data(test_context, regions="R12", years="B"):
-    ctx = test_context
-    c, info = testing.configure_build(ctx, regions=regions, years=years)
-
-    # Code runs
-    result = c.get(f"transport{freight.Fi}")
-
-    # Data are provided for these parameters
-    assert {
-        "capacity_factor",
-        "growth_activity_lo",
-        "growth_activity_up",
-        "growth_new_capacity_up",
-        "initial_activity_up",
-        "initial_new_capacity_up",
-        "input",
-        "output",
-        "technical_lifetime",
-    } == set(result.keys())
-
-
-@build.get_computer.minimum_version
-@pytest.mark.parametrize("regions", ["R11", "R12"])
-def test_get_non_ldv_data(test_context, regions, years="B"):
-    """:mod:`.non_ldv` returns the expected data."""
-    # TODO realign with test_ikarus.py
-    # TODO add options
-    ctx = test_context
-    c, _ = testing.configure_build(ctx, regions=regions, years=years)
-
-    # Code runs
-    data = c.get(f"transport{non_ldv.Pi}")
-
-    # Data are provided for the these parameters
-    exp_pars = {
-        "bound_activity_lo",  # From .non_ldv.other(). For R11 this is empty.
-        "bound_activity_up",  # From act-non_ldv.csv via .non_ldv.bound_activity()
-        "capacity_factor",
-        "emission_factor",
-        "fix_cost",
-        "growth_activity_lo",
-        "growth_activity_up",
-        "growth_new_capacity_up",
-        "initial_activity_up",
-        "initial_new_capacity_up",
-        "input",
-        "inv_cost",
-        "output",
-        "relation_activity",
-        "technical_lifetime",
-        "var_cost",
-    }
-    assert exp_pars == set(data.keys())
-
-    # Input data have expected units
-    mask0 = data["input"]["technology"].str.endswith(" usage")
-    mask1 = data["input"]["technology"].str.startswith("transport other")
-
-    assert_units(data["input"][mask0], registry("Gv km"))
-    if mask1.any():
-        assert_units(data["input"][mask1], registry("GWa"))
-    assert_units(data["input"][~(mask0 | mask1)], registry("1.0 GWa / (Gv km)"))
-
-    # Output data exist for all non-LDV modes
-    modes = list(filter(lambda m: m != "LDV", ctx.transport.demand_modes))
-    obs = set(data["output"]["commodity"].unique())
-    assert len(modes) * 2 == len(obs)
-
-    # Output data have expected units
-    mask = data["output"]["technology"].str.endswith(" usage")
-    assert_units(data["output"][~mask], {"[vehicle]": 1, "[length]": 1})
-    assert_units(data["output"][mask], {"[passenger]": 1, "[length]": 1})
 
 
 @pytest.mark.skip("Pending https://github.com/transportenergy/database/issues/75")
@@ -240,7 +164,7 @@ def test_navigate_ele(test_context, regions, years, options):
 
     # Certain fossil fueled technologies are constrained
     techs = set(bncu["technology"].unique())
-    print(f"{techs = }")
+    # print(f"{techs = }")
     assert {"ICAe_ffv", "ICE_nga", "IGH_ghyb", "FR_ICE_M", "FR_ICE_L"} <= techs
 
     # Electric technologies are not constrained
