@@ -171,17 +171,15 @@ class Dataflow:
         **ma_kwargs,
     ):
         import pint
-        from sdmx.model.common import Annotation
-        from sdmx.model.v21 import DataflowDefinition, DataStructureDefinition
 
         # Ensure CS_MESSAGE_IX_MODELS is available
         get_cs()
 
         # Collection of annotations for the data flow
         anno = [
-            Annotation(id="intent", text=str(i_o.name)),
-            Annotation(id="module", text=repr(module)),
-            Annotation(
+            v21.Annotation(id="intent", text=str(i_o.name)),
+            v21.Annotation(id="module", text=repr(module)),
+            v21.Annotation(
                 id="required-for-build", text=repr((i_o & self.FLAG.IN) and required)
             ),
         ]
@@ -199,7 +197,7 @@ class Dataflow:
         except Exception as e:
             log.info(f"Replace units {units!r} with 'dimensionless' due to {e}")
             units = ureg.dimensionless
-        anno.append(Annotation(id="preferred-units", text=f"{units}"))
+        anno.append(v21.Annotation(id="preferred-units", text=f"{units}"))
 
         if not key:
             # Determine from file path
@@ -211,10 +209,10 @@ class Dataflow:
             if path is None:
                 _path = Path(key.name.replace(" ", "-"))
 
-        anno.append(Annotation(id="genno-key", text=str(key)))
+        anno.append(v21.Annotation(id="genno-key", text=str(key)))
 
         _path = _path.with_suffix(".csv")
-        anno.append(Annotation(id="file-path", text=str(_path)))
+        anno.append(v21.Annotation(id="file-path", text=str(_path)))
 
         # Default properties for maintainable artefacts
         ma_kwargs.setdefault("maintainer", read("IIASA_ECE:AGENCIES")["IIASA_ECE"])
@@ -229,7 +227,7 @@ class Dataflow:
 
         # Create a data structure definition
         ma_kwargs["name"] = f"Structure of {df_id}"
-        dsd = DataStructureDefinition(id=ds_id, **ma_kwargs)
+        dsd = v21.DataStructureDefinition(id=ds_id, **ma_kwargs)
         dsd.urn = sdmx.urn.make(dsd)
 
         # Add dimensions to `DSD` according to `key.dims`
@@ -267,7 +265,7 @@ class Dataflow:
             f"{description.strip()}\n\n" if description is not None else ""
         )
         ma_kwargs["annotations"] = anno
-        self.df = DataflowDefinition(id=df_id, **ma_kwargs, structure=dsd)
+        self.df = v21.DataflowDefinition(id=df_id, **ma_kwargs, structure=dsd)
         self.df.urn = sdmx.urn.make(self.df)
 
         # Update the instance with a docstring
@@ -613,7 +611,7 @@ Each concept in the concept scheme has:
         concept = cs.setdefault(
             id=set_name.upper(),
             name=f"{set_name!r} MESSAGEix set",
-            annotations=[common.Annotation(id="aliases", text=repr(set()))],
+            annotations=[v21.Annotation(id="aliases", text=repr(set()))],
         )
         # Add `v` to the aliases annotation
         anno = concept.get_annotation(id="aliases")
