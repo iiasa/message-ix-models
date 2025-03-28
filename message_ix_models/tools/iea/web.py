@@ -576,7 +576,7 @@ def transform_C(qty: "TQuantity") -> "TQuantity":
     :py:`flow="_1"` and :py:`flow="_2"` such that:
 
     .. math::
-       X_{\_1} = X_{DOMESAIR} - X_{AVBUNK}
+       X_{\_1} = X_{DOMESAIR} - X_{AVBUNK} \\
        X_{\_2} = X_{TOTTRANS} - X_{AVBUNK}
 
     The resulting values for, for instance, :math:`X_{\_1}` are larger in magnitude than
