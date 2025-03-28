@@ -238,6 +238,9 @@ def prepare_computer(c: Computer):
         k.stock = single_key(c.apply(stock))
 
     if k.stock:
+        # Convert units
+        c.add(k.stock[0], "convert_units", k.stock, units="million * vehicle / year")
+
         # historical_new_capacity: select only data prior to y₀
         kw1: dict[str, Any] = dict(
             common={},
@@ -245,7 +248,7 @@ def prepare_computer(c: Computer):
             name="historical_new_capacity",
         )
         y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
-        c.add(k.stock[1], "select", k.stock, indexers=dict(yv=y_historical))
+        c.add(k.stock[1], "select", k.stock[0], indexers=dict(yv=y_historical))
         collect(kw1["name"], "as_message_df", k.stock[1], **kw1)
 
         # CAP_NEW/bound_new_capacity_{lo,up}
@@ -255,14 +258,9 @@ def prepare_computer(c: Computer):
         #   largest share and avoid setting constraints on it.
         # - Add both upper and lower constraints to ensure the solution contains exactly
         #   the given value.
-        c.add(k.stock[2], "select", k.stock, indexers=dict(yv=info.Y))
-        c.add(
-            k.stock[3],
-            "select",
-            k.stock[2],
-            indexers=dict(t=["ICE_conv"]),
-            inverse=True,
-        )
+        c.add(k.stock[2], "select", k.stock[0], indexers=dict(yv=info.Y))
+        indexers = dict(t=["ICE_conv"])
+        c.add(k.stock[3], "select", k.stock[2], indexers=indexers, inverse=True)
         for kw1["name"] in map("bound_new_capacity_{}".format, ("lo", "up")):
             collect(kw1["name"], "as_message_df", k.stock[3], **kw1)
 
