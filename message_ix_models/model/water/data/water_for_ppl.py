@@ -278,6 +278,61 @@ def cooling_shares_SSP_from_yaml(
     return df_region
 
 
+def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame:
+    """Create the capacity_factor base on data in `inp` and `context.
+
+    Parameters
+    ----------
+    inp : pd.DataFrame
+        The DataFrame representing the "input" parameter.
+    context : .Context
+        The general context in which the function is run.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame representing the "capacity_factor" parameter.
+    """
+    cap_fact = make_matched_dfs(inp, capacity_factor=1)
+    # Climate Impacts on freshwater cooling capacity
+    # Taken from
+    # https://www.sciencedirect.com/science/article/pii/S0959378016301236?via%3Dihub#sec0080
+    if context.RCP == "no_climate":
+        df = cap_fact["capacity_factor"]
+    else:
+        df = cap_fact["capacity_factor"]
+        # reading ppl cooling impact dataframe
+        path = package_data_path(
+            "water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx"
+        )
+        df_impact = pd.read_excel(path, sheet_name=f"{context.regions}_{context.RCP}")
+
+        for n in df_impact["node"]:
+            conditions = [
+                df["technology"].str.contains("fresh")
+                & (df["year_act"] >= 2025)
+                & (df["year_act"] < 2050)
+                & (df["node_loc"] == n),
+                df["technology"].str.contains("fresh")
+                & (df["year_act"] >= 2050)
+                & (df["year_act"] < 2070)
+                & (df["node_loc"] == n),
+                df["technology"].str.contains("fresh")
+                & (df["year_act"] >= 2070)
+                & (df["node_loc"] == n),
+            ]
+
+            choices = [
+                df_impact[(df_impact["node"] == n)]["2025s"],
+                df_impact[(df_impact["node"] == n)]["2050s"],
+                df_impact[(df_impact["node"] == n)]["2070s"],
+            ]
+
+            df["value"] = np.select(conditions, choices, default=df["value"])
+
+    return df
+
+
 # water & electricity for cooling technologies
 @minimum_version("message_ix 3.7")
 def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
@@ -855,45 +910,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     results["technical_lifetime"] = tl
 
-    cap_fact = make_matched_dfs(inp, capacity_factor=1)
-    # Climate Impacts on freshwater cooling capacity
-    # Taken from
-    # https://www.sciencedirect.com/science/article/
-    #  pii/S0959378016301236?via%3Dihub#sec0080
-    if context.RCP == "no_climate":
-        df = cap_fact["capacity_factor"]
-    else:
-        df = cap_fact["capacity_factor"]
-        # reading ppl cooling impact dataframe
-        path = package_data_path(
-            "water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx"
-        )
-        df_impact = pd.read_excel(path, sheet_name=f"{context.regions}_{context.RCP}")
-
-        for n in df_impact["node"]:
-            conditions = [
-                df["technology"].str.contains("fresh")
-                & (df["year_act"] >= 2025)
-                & (df["year_act"] < 2050)
-                & (df["node_loc"] == n),
-                df["technology"].str.contains("fresh")
-                & (df["year_act"] >= 2050)
-                & (df["year_act"] < 2070)
-                & (df["node_loc"] == n),
-                df["technology"].str.contains("fresh")
-                & (df["year_act"] >= 2070)
-                & (df["node_loc"] == n),
-            ]
-
-            choices = [
-                df_impact[(df_impact["node"] == n)]["2025s"],
-                df_impact[(df_impact["node"] == n)]["2050s"],
-                df_impact[(df_impact["node"] == n)]["2070s"],
-            ]
-
-            df["value"] = np.select(conditions, choices, default=df["value"])
-
-    results["capacity_factor"] = df
+    results["capacity_factor"] = _compose_capacity_factor(inp=inp, context=context)
 
     # Extract inand expand some paramenters from parent technologies
     # Define parameter names to be extracted

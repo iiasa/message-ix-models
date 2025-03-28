@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 import sdmx
-from sdmx.model.common import Annotation, Code
+from sdmx.model.common import Code
+from sdmx.model.v21 import Annotation
 
 from message_ix_models.util.sdmx import eval_anno, make_dataflow, make_enum, read
 

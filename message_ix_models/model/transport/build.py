@@ -395,7 +395,7 @@ def add_structure(c: Computer) -> None:
     # - `Static` tasks
     # - Single 'dynamic' tasks based on config, info, spec, and/or t_groups
     # - Multiple static and dynamic tasks generated in loops etc.
-    tasks = list(STRUCTURE_STATIC) + [
+    tasks: list[tuple] = list(STRUCTURE_STATIC) + [
         ("c::transport", quote(spec.add.set["commodity"])),
         ("c::transport+base", quote(spec.add.set["commodity"] + info.set["commodity"])),
         ("cg", quote(spec.add.set["consumer_group"])),

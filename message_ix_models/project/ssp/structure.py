@@ -5,8 +5,8 @@ from textwrap import wrap
 from typing import TYPE_CHECKING, Optional
 
 import sdmx
-import sdmx.model.v30 as m
 import sdmx.urn
+from sdmx.model import common, v21
 
 from message_ix_models.util.sdmx import make_enum, register_agency, write
 
@@ -135,17 +135,17 @@ including by geo-engineering if necessary.""",
 def generate(context: "Context", base_dir: Optional["PathLike"] = None):
     """Generate SDMX code lists containing the SSPs."""
     # Agency for ICONICS as the maintainer of other objects
-    ICONICS = m.Agency(
+    ICONICS = common.Agency(
         id="ICONICS",
         name="International Committee on New Integrated Climate Change Assessment "
         "Scenarios",
-        contact=[m.Contact(uri=["https://depts.washington.edu/iconics/"])],
+        contact=[common.Contact(uri=["https://depts.washington.edu/iconics/"])],
     )
     register_agency(ICONICS)
 
     for cl_info in CL_INFO:
         # Create the codelist: format the name and description
-        cl: m.Codelist = m.Codelist(
+        cl: common.Codelist = common.Codelist(
             id="SSP",
             name=f"Shared Socioeconomic Pathways ({cl_info['name_extra']})",
             description="\n".join(
@@ -161,13 +161,13 @@ def generate(context: "Context", base_dir: Optional["PathLike"] = None):
             original_id = f"SSP{info['id']}"
 
             # Format the name, description; add an annotation
-            c = m.Code(
+            c = common.Code(
                 id=info["id"],
                 name=f"{original_id}: {info['name']}",
                 description="\n".join(
                     [f"{original_id}: {info['name_long']}", "", info["description"]]
                 ),
-                annotations=[m.Annotation(id="original-id", text=original_id)],
+                annotations=[v21.Annotation(id="original-id", text=original_id)],
             )
 
             # Append to the code list

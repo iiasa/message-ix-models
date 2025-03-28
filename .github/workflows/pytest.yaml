@@ -189,7 +189,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ needs.check.output.ref }}
+        ref: ${{ needs.check.outputs.ref }}
     - uses: astral-sh/setup-uv@v5
       with:
         cache-dependency-glob: "**/pyproject.toml"

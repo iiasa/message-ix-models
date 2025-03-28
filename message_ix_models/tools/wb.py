@@ -58,7 +58,7 @@ def assign_income_groups(  # noqa: C901
     """
 
     import sdmx
-    import sdmx.model.v21 as m
+    from sdmx.model import v21
 
     replace = replace or dict()
 
@@ -137,7 +137,7 @@ def assign_income_groups(  # noqa: C901
             pass
 
         # Annotate the node
-        node.annotations.append(m.Annotation(id="wb-income-group", text=ig))
+        node.annotations.append(v21.Annotation(id="wb-income-group", text=ig))
 
     log.debug(
         "(node, group) weights:\n"
@@ -197,7 +197,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
       <sdmx.model.common.AnnotableArtefact.get_annotation>`, and other methods.
     """
     import pooch
-    import sdmx.model.v21 as m
+    from sdmx.model import v21
 
     cl = fetch_codelist("CL_REF_AREA_WDI")
 
@@ -236,12 +236,12 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
 
         # Annotate wb-income-group; map a value like "Low income" to a URN
         code.annotations.append(
-            m.Annotation(id="wb-income-group", text=urn_for(row["Income group"]))
+            v21.Annotation(id="wb-income-group", text=urn_for(row["Income group"]))
         )
 
         try:
             code.annotations.append(
-                m.Annotation(id="wb-lending-category", text=row["Lending category"])
+                v21.Annotation(id="wb-lending-category", text=row["Lending category"])
             )
         except ValueError:
             pass  # text was None → no value

@@ -3,9 +3,9 @@ import sys
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional, cast
 
+import genno
 import pandas as pd
 import sdmx
-from genno import Quantity
 from genno.compat.sdmx.operator import dataset_to_quantity, quantity_to_message
 from sdmx.message import StructureMessage
 from sdmx.model.common import Codelist
@@ -57,7 +57,7 @@ def pasta_native_to_sdmx() -> "AnyQuantity":
     df = pd.read_csv(path).rename(columns={"Value": "value"}).set_index(PASTA_DIMS)
 
     # Convert to genno.Quantity
-    q = Quantity(df)
+    q = genno.Quantity(df)
 
     # Show the dimensions and codes
     print(q.coords)
@@ -207,6 +207,9 @@ def gen_demand(context: "Context") -> dict[str, "AnyQuantity"]:
             "Year": "y",
         },
     )
+
+    # Prevent a mypy warning in the next line; see https://github.com/khaeru/genno#166
+    assert isinstance(q_all, genno.Quantity)
 
     # Separate according to "Data" codes
     q = dict()

@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import genno
 import pandas as pd
-import sdmx.model.v21 as m
 from sdmx.message import StructureMessage
+from sdmx.model import common, v21
 
 from message_ix_models.util import cached
 from message_ix_models.util.pycountry import iso_3166_alpha_3
@@ -43,8 +43,8 @@ def describe(data: pd.DataFrame, extra: Optional[str] = None) -> StructureMessag
 
     sm = StructureMessage()
 
-    def _cl(dim: str) -> m.Codelist:
-        result = m.Codelist(
+    def _cl(dim: str) -> common.Codelist:
+        result: common.Codelist = common.Codelist(
             id=dim,
             description=f"Codes appearing in the {dim!r} dimension of "
             + (extra or "data")
@@ -58,7 +58,7 @@ def describe(data: pd.DataFrame, extra: Optional[str] = None) -> StructureMessag
     for dim in ("MODEL", "SCENARIO", "REGION"):
         cl = _cl(dim)
         for value in sorted(data[dim].unique()):
-            cl.append(m.Code(id=value))
+            cl.append(common.Code(id=value))
 
     # Handle "VARIABLE" and "UNIT" jointly
     dims = ["VARIABLE", "UNIT"]
@@ -69,10 +69,10 @@ def describe(data: pd.DataFrame, extra: Optional[str] = None) -> StructureMessag
     ):
         group_units = group_data["UNIT"].unique()
         cl_variable.append(
-            m.Code(
+            common.Code(
                 id=variable,
                 annotations=[
-                    m.Annotation(
+                    v21.Annotation(
                         id="preferred-unit-measure", text=", ".join(group_units)
                     )
                 ],
@@ -80,7 +80,7 @@ def describe(data: pd.DataFrame, extra: Optional[str] = None) -> StructureMessag
         )
         for unit in group_units:
             try:
-                cl_unit.append(m.Code(id=unit))
+                cl_unit.append(common.Code(id=unit))
             except ValueError:
                 pass
 

@@ -48,7 +48,7 @@ class AnnotationsMixIn:
 
         Returns
         -------
-        list of :class:`Annotation <sdmx.model.common.Annotation>`
+        list of :class:`Annotation <sdmx.model.common.BaseAnnotation>`
             if `_rtype` is :class:`list`.
         dict
             if `_rtype` is :class:`dict`. The dict has the one key "annotations", mapped
@@ -58,9 +58,7 @@ class AnnotationsMixIn:
         result = []
         for f in fields(self):
             anno_id = f.name.replace("_", "-")
-            result.append(
-                common.Annotation(id=anno_id, text=repr(getattr(self, f.name)))
-            )
+            result.append(v21.Annotation(id=anno_id, text=repr(getattr(self, f.name))))
 
         if _rtype is list:
             return result
@@ -143,7 +141,7 @@ def as_codes(  # noqa: C901
         # Convert other dictionary (key, value) pairs to annotations
         for id, value in _info.items():
             code.annotations.append(
-                common.Annotation(
+                v21.Annotation(
                     id=id, text=value if isinstance(value, str) else repr(value)
                 )
             )
@@ -281,7 +279,7 @@ unique keys including (model name, scenario name, version).""",
         name="Unit of measure",
         description="Unit in which data values are expressed",
         annotations=[
-            common.Annotation(
+            v21.Annotation(
                 id="same-as-urn",
                 text="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).UNIT_MEASURE",
             ),

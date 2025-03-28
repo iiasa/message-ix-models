@@ -1,4 +1,5 @@
 import pytest
+from sdmx.model.common import Code
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.tools.costs import Config
@@ -20,7 +21,7 @@ def test_process_raw_ssp_data(test_context, node) -> None:
     # Retrieve list of node IDs
     nodes = get_codes(f"node/{node}")
     # Convert to string
-    regions = set(map(str, nodes[nodes.index("World")].child))
+    regions = set(map(str, nodes[nodes.index(Code(id="World"))].child))
 
     # Function runs
     # - context is ignored by process_raw_ssp_data
@@ -82,7 +83,7 @@ def test_adjust_cost_ratios_with_gdp(test_context, module) -> None:
     # Retrieve list of node IDs
     nodes = get_codes(f"node/{test_context.model.regions}")
     # Convert to string
-    regions = set(map(str, nodes[nodes.index("World")].child))
+    regions = set(map(str, nodes[nodes.index(Code(id="World"))].child))
 
     # Assert that all regions are present
     assert regions == set(result.region.unique())
