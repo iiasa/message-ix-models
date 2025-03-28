@@ -32,7 +32,7 @@ MutableParameterData = MutableMapping[str, pd.DataFrame]
 
 
 class AnnotableArtefactArgs(TypedDict, total=False):
-    annotations: list[sdmx.model.common.Annotation]
+    annotations: list[sdmx.model.common.BaseAnnotation]
 
 
 class NameableArtefactArgs(AnnotableArtefactArgs, total=False):
