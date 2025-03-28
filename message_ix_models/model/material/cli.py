@@ -484,7 +484,8 @@ def test_calib(context):
     Use the --model_name and --scenario_name option to specify the scenario to solve.
     """
     # Clone and set up
-    from sdmx.model import Annotation, Code
+    from sdmx.model.common import Code
+    from sdmx.model.v21 import Annotation
 
     from message_ix_models.model import macro
     from message_ix_models.util import identify_nodes
