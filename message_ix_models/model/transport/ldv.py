@@ -26,7 +26,7 @@ from message_ix_models.util.genno import Collector
 
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
-from .key import bcast_tcl, bcast_y, exo
+from .key import activity_ldv_full, bcast_tcl, bcast_y, exo
 from .util import EXTRAPOLATE, wildcard
 
 if TYPE_CHECKING:
@@ -202,9 +202,10 @@ def prepare_computer(c: Computer):
     # Select values for the current scenario
     c.add(k_cf[2], "select", k_cf_s[1], "indexers:scenario:LED")
     # Interpolate on "y" dimension
-    c.add(k_cf[3], "interpolate", k_cf[2], "y::coords", **EXTRAPOLATE)
+    c.add(k_cf["full"], "interpolate", k_cf[2], "y::coords", **EXTRAPOLATE)
+    assert k_cf["full"] == activity_ldv_full
     # Add dimension "t" indexing all LDV technologies
-    prev = c.add(k_cf[4] * "t", "expand_dims", k_cf[3], "t::transport LDV")
+    prev = c.add(k_cf[4] * "t", "expand_dims", k_cf["full"], "t::transport LDV")
     # Broadcast y → (yV, yA)
     prev = c.add(k_cf[5], "mul", prev, bcast_y.all)
     # Convert to MESSAGE data structure
@@ -448,7 +449,7 @@ def stock(c: Computer) -> Key:
     # - Correct units: "load factor ldv:n-y" is dimensionless, should be
     #   passenger/vehicle
     # - Select only the base-period value.
-    c.add(k[0], "div", ldv_ny + "total", exo.activity_ldv)
+    c.add(k[0], "div", ldv_ny + "total", activity_ldv_full)
     c.add(k[1], "div", k[0], "load factor ldv:n-y:exo")
     c.add(k[2], "div", k[1], genno.Quantity(1.0, units="passenger / vehicle"))
     c.add(k[3] / "y", "select", k[2], "y0::coord")
