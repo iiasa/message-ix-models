@@ -358,6 +358,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
     disutility.TARGET: (ContainsDataForParameters({"input"}),),
     #
+    "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
     # The following partly replicates .test_ldv.test_get_ldv_data()
     ldv.TARGET: (
         ContainsDataForParameters(
