@@ -10,6 +10,7 @@ from message_ix_models.util.genno import Keys
 from .data import iter_files
 
 __all__ = [
+    "activity_ldv_full",
     "cg",
     "cost",
     "exo",
@@ -142,3 +143,5 @@ exo = Keys()
 
 for name, df in iter_files():
     setattr(exo, name, df.key)
+
+activity_ldv_full = exo.activity_ldv / "scenario" + "full"
