@@ -22,7 +22,7 @@ from message_ix_models.util import (
 )
 
 from .key import bcast_tcl, bcast_y
-from .non_ldv import UNITS
+from .passenger import UNITS
 
 if TYPE_CHECKING:
     from message_ix_models.types import ParameterData

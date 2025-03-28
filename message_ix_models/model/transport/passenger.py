@@ -1,16 +1,14 @@
-"""Data for transport modes and technologies outside of LDVs."""
+"""Data for passenger transport modes and technologies, excepting LDVs."""
 
 import logging
 from collections import defaultdict
 from collections.abc import Mapping
 from functools import lru_cache, partial
-from operator import itemgetter
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from genno import Computer, Key, KeySeq, MissingKeyError, Quantity, quote
-from genno.core.key import KeyLike, iter_keys, single_key
+from genno import Computer, Key, KeySeq, Quantity, quote
 from message_ix import make_df
 from sdmx.model.v21 import Code
 
@@ -23,9 +21,9 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
+from message_ix_models.util.genno import Collector
 
-from .emission import ef_for_input
-from .key import exo, fv
+from .key import exo
 from .util import has_input_commodity
 
 if TYPE_CHECKING:
@@ -62,38 +60,42 @@ Units: TJ
 Oi = "::O+ixmp"
 Pi = "::P+ixmp"
 
+TARGET = "transport::P+ixmp"
+
+collect = Collector(TARGET, "{}::F+ixmp".format)
+
 
 def prepare_computer(c: Computer):
     from .key import n, t_modes, y
 
     context: "Context" = c.graph["context"]
+
+    # Collect data in `TARGET` and connect to the "add transport data" key
+    collect.computer = c
+    c.add("transport_data", __name__, key=TARGET)
+
     source = context.transport.data_source.non_LDV
     log.info(f"non-LDV data from {source}")
 
-    keys: list[KeyLike] = []
-
     if source == "IKARUS":
-        keys.append("transport nonldv::ixmp+ikarus")
+        collect("ikarus", "transport nonldv::ixmp+ikarus")
     elif source is None:
         pass  # Don't add any data
     else:
         raise ValueError(f"Unknown source for non-LDV data: {source!r}")
 
     # Dummy/placeholder data for 2-wheelers (not present in IKARUS)
-    keys.append(single_key(c.add("transport 2W::ixmp", get_2w_dummies, "context")))
+    collect("2W", get_2w_dummies, "context")
 
-    # Compute CO₂ emissions factors
-    for k in map(Key, list(keys[:-1])):
-        c.add(k + "input", itemgetter("input"), k)
-        c.add(k + "emi", ef_for_input, "context", k + "input", species="CO2")
-        keys.append(k + "emi")
+    # TODO add these steps within the above, using a utility function
+    # # Compute CO₂ emissions factors
+    # for k in map(Key, list(keys[:-1])):
+    #     c.add(k + "input", itemgetter("input"), k)
+    #     c.add(k + "emi", ef_for_input, "context", k + "input", species="CO2")
+    #     keys.append(k + "emi")
 
-    # Data for usage technologies
-    k_usage = f"transport usage{Pi}"
-    keys.append(k_usage)
-    c.add(k_usage, usage_data, exo.load_factor_nonldv, t_modes, n, y)
-
-    # Data for non-specified transport technologies
+    # Data for usage pseudo-technologies
+    collect("usage", usage_data, exo.load_factor_nonldv, t_modes, n, y)
 
     #### NB lines below duplicated from .transport.base
     e_iea = Key("energy:n-y-product-flow:iea")
@@ -118,25 +120,14 @@ def prepare_computer(c: Computer):
     c.add("energy other csv", "write_report", e[1] / "flow", path=path, kwargs=kw)
 
     # Handle data from the file energy-other.csv
-    try:
-        keys.extend(iter_keys(c.apply(other, exo.energy_other)))
-    except MissingKeyError:
-        log.warning(f"No key {k!r}; unable to add data for 'transport other *' techs")
 
     # Add minimum activity for transport technologies
-    keys.extend(iter_keys(c.apply(bound_activity_lo)))
+    c.apply(bound_activity_lo)
 
-    k_constraint = f"constraints{Pi}"
-    keys.append(k_constraint)
-    c.add(k_constraint, constraint_data, "t::transport", t_modes, n, y, "config")
+    collect("constraints", constraint_data, "t::transport", t_modes, n, y, "config")
 
     # Add other constraints on activity of non-LDV technologies
-    keys.extend(bound_activity(c))
-
-    # Add to the scenario
-    k_all = f"transport{Pi}"
-    c.add(k_all, "merge_data", *keys)
-    c.add("transport_data", __name__, key=k_all)
+    bound_activity(c)
 
 
 def get_2w_dummies(context) -> "ParameterData":
@@ -183,7 +174,7 @@ def get_2w_dummies(context) -> "ParameterData":
     return data
 
 
-def bound_activity(c: "Computer") -> list[Key]:
+def bound_activity(c: "Computer") -> None:
     """Constrain activity of non-LDV technologies based on :file:`act-non_ldv.csv`."""
     base = exo.act_non_ldv
 
@@ -193,12 +184,10 @@ def bound_activity(c: "Computer") -> list[Key]:
         common=dict(mode="all", time="year"),
     )
     k_bau = Key(f"bound_activity_up{Pi}")
-    c.add(k_bau, "as_message_df", base, name=k_bau.name, **kw)
-
-    return [k_bau]
+    collect(k_bau.name, "as_message_df", base, name=k_bau.name, **kw)
 
 
-def bound_activity_lo(c: Computer) -> list[Key]:
+def bound_activity_lo(c: Computer) -> None:
     """Set minimum activity for certain technologies to ensure |y0| energy use.
 
     Responds to values in :attr:`.Config.minimum_activity`.
@@ -244,8 +233,7 @@ def bound_activity_lo(c: Computer) -> list[Key]:
         common=dict(mode="all", time="year"),
     )
 
-    c.add(k["ixmp"], "as_message_df", k[0], name=k.name, **kw)
-    return [k["ixmp"]]
+    collect(k.name, "as_message_df", k[0], name=k.name, **kw)
 
 
 def constraint_data(
@@ -310,58 +298,6 @@ def constraint_data(
                 dfs[n].append(df)
 
     return {k: pd.concat(v) for k, v in dfs.items()}
-
-
-def other(c: Computer, base: Key) -> list[Key]:
-    """Generate MESSAGE parameter data for ``transport other *`` technologies."""
-    # Keys
-    assert {"c", "n"} == set(base.dims)
-    bcast = Key("broadcast:c-t:other transport")
-    k_cnt = (base + "0") * "t"  # with added dimension "t"
-    k_cnty = KeySeq(base * ("t", "y") + "1")  # with added dimensions "t", "y"
-
-    def broadcast_other_transport(technologies) -> Quantity:
-        """Transform e.g. c="gas" to (c="gas", t="transport other gas")."""
-        rows = []
-        cols = ["c", "t", "value"]
-
-        for code in filter(lambda code: "other" in code.id, technologies):
-            rows.append([code.eval_annotation(id="input")["commodity"], code.id, 1.0])
-
-        return Quantity(pd.DataFrame(rows, columns=cols).set_index(cols[:-1])[cols[-1]])
-
-    c.add(bcast, broadcast_other_transport, "t::transport")
-    c.add(k_cnt, "mul", base, bcast)
-
-    # Project values across y using same trajectory as road freight activity
-    c.add(k_cnty[0], "mul", k_cnt, fv["ROAD index"])
-    # Convert units to GWa
-    c.add(k_cnty[1], "convert_units", k_cnty[0], quote("GWa"))
-
-    # Produce MESSAGE parameters bound_activity_{lo,up}:nl-t-ya-m-h
-    kw = dict(
-        dims=dict(node_loc="n", technology="t", year_act="y"),
-        common=dict(mode="all", time="year"),
-    )
-    k_bal = Key(f"bound_activity_lo{Oi}")
-    c.add(k_bal, "as_message_df", k_cnty.prev, name=k_bal.name, **kw)
-    k_bau = Key(f"bound_activity_up{Oi}")
-    c.add(k_bau, "as_message_df", k_cnty.prev, name=k_bau.name, **kw)
-
-    # Divide by self to ensure values = 1.0 but same dimensionality
-    c.add(k_cnty[2], "div", k_cnty[0], k_cnty[0])
-    # Results in dimensionless; re-assign units
-    c.add(k_cnty[3], "assign_units", k_cnty[2], quote("GWa"))
-
-    # Produce MESSAGE parameter input:nl-t-yv-ya-m-no-c-l-h-ho
-    kw["dims"].update(commodity="c", node_origin="n", year_vtg="y")
-    kw["common"].update(level="final", time_origin="year")
-    k_input = Key(f"input{Oi}")
-    c.add(k_input, "as_message_df", k_cnty.prev, name=k_input.name, **kw)
-
-    result = Key(f"transport{Oi}")
-    c.add(result, "merge_data", k_bal, k_bau, k_input)
-    return [result]
 
 
 def usage_data(
