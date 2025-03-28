@@ -288,6 +288,7 @@ STRUCTURE_STATIC = (
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
     ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
     ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
+    ("indexers::usage", "indexers_usage", "t::transport"),
     ("n::ex world", "nodes_ex_world", "n"),
     (
         "n:n:ex world",
