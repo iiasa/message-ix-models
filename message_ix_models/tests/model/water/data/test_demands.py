@@ -3,11 +3,8 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.demands import (
-    add_irrigation_demand,
-    add_sectoral_demands,
-    add_water_availability,
-)
+from message_ix_models.model.water.data.demands import add_sectoral_demands,  add_water_availability, add_irrigation_demand
+
 
 
 @add_sectoral_demands.minimum_version
