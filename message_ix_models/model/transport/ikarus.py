@@ -104,6 +104,8 @@ SOURCE = {
     "Trolley_bus": ("Krey/Linßen", "Bus electric", "C229:I235"),
 }
 
+TARGET = "transport nonldv::ixmp+ikarus"
+
 
 def make_indexers(*args) -> dict[str, xr.DataArray]:
     """Return indexers corresponding to `SOURCE`.
@@ -214,12 +216,8 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
 def prepare_computer(c: Computer):
     """Prepare `c` to perform model data preparation using IKARUS data.
 
-    ====================================================================================
-
     The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed data is
     exported into ``non_LDV_techs_wrapped.csv``.
-
-    .. note:: superseded by the computations set up by :func:`prepare_computer`.
 
     Parameters
     ----------
@@ -348,8 +346,7 @@ def prepare_computer(c: Computer):
     )
 
     # Merge all data together
-    k_all = "transport nonldv::ixmp+ikarus"
-    c.add(k_all, "merge_data", *final.values())
+    c.add(TARGET, "merge_data", *final.values())
 
     # NB we do *not* call c.add("transport_data", ...) here; that is done in
     # .non_ldv.prepare_computer() only if IKARUS is the selected data source for non-LDV
