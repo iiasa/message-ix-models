@@ -1,28 +1,42 @@
 import logging
-from collections.abc import Collection
 from copy import copy
 from typing import TYPE_CHECKING, Literal
 
 import genno
 import ixmp
 import pytest
+from iam_units import registry
 from pytest import mark, param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import build, key, ldv, report, structure
-from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
+from message_ix_models.model.transport import (
+    Config,
+    build,
+    disutility,
+    freight,
+    key,
+    ldv,
+    passenger,
+    report,
+    structure,
+)
+from message_ix_models.model.transport.testing import (
+    MARK,
+    assert_units,
+    configure_build,
+    make_mark,
+)
 from message_ix_models.testing import bare_res
 from message_ix_models.testing.check import (
     Check,
     ContainsDataForParameters,
-    Dump,
     HasCoords,
     HasUnits,
-    Log,
     NoneMissing,
     NonNegative,
     Size,
     insert_checks,
+    verbose_check,
 )
 
 if TYPE_CHECKING:
@@ -240,8 +254,43 @@ class LDV_PHEV_input(Check):
             return True, "LDV input satisfies conditions"
 
 
+class Passenger(Check):
+    """Check data from :mod:`.transport.passenger`.
+
+    These assertions were formerly in a test at
+    :py:`.tests.transport.test_data.test_get_non_ldv_data()`.
+    """
+
+    types = (dict,)
+
+    def run(self, obj):
+        # Input data have expected units
+        df_input = obj["input"]
+        mask0 = df_input["technology"].str.endswith(" usage")
+        mask1 = df_input["technology"].str.startswith("transport other")
+
+        assert_units(df_input[mask0], registry("Gv km"))
+        if mask1.any():
+            assert_units(df_input[mask1], registry("GWa"))
+        assert_units(df_input[~(mask0 | mask1)], registry("1.0 GWa / (Gv km)"))
+
+        # Output data exist for all non-LDV modes
+        df_output = obj["output"]
+        modes = list(filter(lambda m: m != "LDV", Config().demand_modes))
+        obs = set(df_output["commodity"].unique())
+        assert len(modes) * 2 == len(obs)
+
+        # Output data have expected units
+        mask = df_output["technology"].str.endswith(" usage")
+        assert_units(df_output[~mask], {"[vehicle]": 1, "[length]": 1})
+        assert_units(df_output[mask], {"[passenger]": 1, "[length]": 1})
+
+        return True, "Passenger non-LDV input and output satisfy conditions"
+
+
 #: Inline checks for :func:`.test_debug`.
-CHECKS: dict["KeyLike", Collection["Check"]] = {
+CHECKS: dict["KeyLike", tuple[Check, ...]] = {
+    # .build.add_structure()
     "broadcast:t-c-l:transport+input": (HasUnits("dimensionless"),),
     "broadcast:t-c-l:transport+output": (
         HasUnits("dimensionless"),
@@ -252,6 +301,7 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
             {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
         ),
     ),
+    # .freight.other()
     "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
     "transport::F+ixmp": (
         ContainsDataForParameters(
@@ -269,9 +319,6 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
             }
         ),
         # HasCoords({"technology": ["f rail electr"]}),
-    ),
-    "transport::O+ixmp": (
-        ContainsDataForParameters({"bound_activity_lo", "bound_activity_up", "input"}),
     ),
     #
     # The following are intermediate checks formerly in .test_demand.test_exo
@@ -307,6 +354,9 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
         # …plus default NoneMissing
     ),
     f"input{ldv.Li}": (LDV_PHEV_input(),),
+    # .disutility.prepare_computer()
+    "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
+    disutility.TARGET: (ContainsDataForParameters({"input"}),),
     #
     # The following partly replicates .test_ldv.test_get_ldv_data()
     ldv.TARGET: (
@@ -329,6 +379,46 @@ CHECKS: dict["KeyLike", Collection["Check"]] = {
                 "var_cost",
             }
         ),
+    ),
+    # The following replicates a deleted .transport.test_data.test_get_freight_data()
+    freight.TARGET: (
+        ContainsDataForParameters(
+            {
+                "demand",
+                "capacity_factor",
+                "growth_activity_lo",
+                "growth_activity_up",
+                "growth_new_capacity_up",
+                "initial_activity_up",
+                "initial_new_capacity_up",
+                "input",
+                "output",
+                "technical_lifetime",
+            }
+        ),
+    ),
+    passenger.TARGET: (
+        ContainsDataForParameters(
+            {
+                "bound_activity_lo",  # From .passenger.other(). For R11 this is empty.
+                "bound_activity_up",  # act-non_ldv.csv via .passenger.bound_activity()
+                "capacity_factor",
+                # "emission_factor",
+                "fix_cost",
+                "growth_activity_lo",
+                "growth_activity_up",
+                "growth_new_capacity_up",
+                "initial_activity_up",
+                "initial_new_capacity_up",
+                "input",
+                "inv_cost",
+                "output",
+                # "relation_activity",
+                "technical_lifetime",
+                "var_cost",
+            }
+        ),
+        Passenger(),
     ),
 }
 
@@ -364,23 +454,30 @@ def test_debug(
     Parameters
     ----------
     verbosity : int
-        Adjust to show more verbose output:
-
-        0. Don't log anything
-        1. Log 7 values at the start/end of each quantity.
-        2. Log *all* data. This produces large logs; more than 1 GiB of text.
-        3. Dump all data to files in `tmp_path`.
+        Passed to :func:`.verbose_check`.
     """
     # Get a Computer prepared to build the model with the given options
     c, info = configure_build(test_context, tmp_path=tmp_path, **build_kw)
 
-    # Construct a list of common checks
-    v: dict[int, list] = {0: [], 1: [Log()], 2: [Log(None)], 3: [Dump(tmp_path)]}
-    common = [Size({"n": N_node}), NoneMissing()] + v[verbosity]
+    # Modify CHECKS according to the settings
+    checks = CHECKS.copy()
+    if test_context.model.regions == "R12":
+        checks["transport::O+ixmp"] = (
+            ContainsDataForParameters(
+                {"bound_activity_lo", "bound_activity_up", "input"}
+            ),
+        )
+
+    # Has exactly the periods (y) in the model horizon
+    k = "disutility:n-cg-t-y"
+    checks[k] = checks[k] + (HasCoords({"y": info.Y}),)
+
+    # Construct a list of common checks to be appended to every value in `checks`
+    common = [Size({"n": N_node}), NoneMissing()] + verbose_check(verbosity, tmp_path)
 
     # Insert key-specific and common checks
     k = "test_debug"
-    result = insert_checks(c, k, CHECKS, common)
+    result = insert_checks(c, k, checks, common)
 
     # DEBUG Show and compute a different key
     # k = key.pdt_cny
