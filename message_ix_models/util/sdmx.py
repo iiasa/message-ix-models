@@ -92,11 +92,10 @@ class Dataflow:
     If an input data flow, the data is expected in a file at `path`.
 
     .. todo::
-       - Accept an argument that sets :attr:`dfd` directly; skip handling other
-         arguments.
+       - Accept an argument that sets :attr:`df` directly and ignores other arguments.
        - Annotate certain dimensions as optional; expand :meth:`.add_tasks` to
          automatically handle insertion of these dimensions.
-       - Merge with, or make a subclass of, :class:`.ExoData`.
+       - Merge with :class:`.ExoDataSource`.
 
     Parameters
     ----------

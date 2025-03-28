@@ -34,6 +34,7 @@ from .key import (
     t_modes,
     y,
 )
+from .util import EXTRAPOLATE
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -42,8 +43,6 @@ if TYPE_CHECKING:
     from .config import Config
 
 log = logging.getLogger(__name__)
-
-EXTRAPOLATE = dict(kwargs=dict(fill_value="extrapolate"))
 
 
 def dummy(
