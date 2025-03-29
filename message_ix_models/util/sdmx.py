@@ -359,7 +359,7 @@ class Dataflow:
         import pint
 
         return pint.get_application_registry().Unit(
-            self.df.eval_annotation(id="preferred-units")
+            str(self.df.get_annotation(id="preferred-units").text)
         )
 
     # For interaction with genno
