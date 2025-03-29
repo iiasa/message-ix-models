@@ -9,6 +9,7 @@ from message_ix_models.model.transport.testing import MARK, make_mark
 from message_ix_models.project.navigate import T35_POLICY
 
 
+@MARK["sdmx#230"]
 def test_collect_structures():
     sm1 = collect_structures()
 
