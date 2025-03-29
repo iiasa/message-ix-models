@@ -8,6 +8,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterator, Mapping
 from copy import deepcopy
 from functools import cache, partial
+from itertools import chain
 from operator import le
 from typing import TYPE_CHECKING, Optional, cast
 
@@ -373,20 +374,22 @@ def dummy_supply(technologies: list["Code"], info, config) -> dict[str, pd.DataF
     return result
 
 
-def iter_files() -> Iterator[tuple[str, "Dataflow"]]:
-    """Iterate over all :class:`Dataflows <.Dataflow>` defined in this module."""
-    other: set[Dataflow] = set(DATAFLOW.values())
+_DEFAULT_MODULE = __name__.rpartition(".")[0]
 
-    for name, df in globals().items():
-        try:
-            other.remove(df)
-        except (KeyError, TypeError):
-            pass
-        else:
-            yield (name, df)
 
-    for df in other:
-        yield ("", df)
+def iter_files(module: str = _DEFAULT_MODULE) -> Iterator[tuple[str, "Dataflow"]]:
+    """Iterate over all :class:`Dataflows <.Dataflow>` defined in :mod:`.transport`."""
+    # Dataflows defined in the current module
+    df_local: set[Dataflow] = set(
+        [v for v in globals().values() if isinstance(v, Dataflow)]
+    )
+    # Other Dataflow instances
+    df_other: set[Dataflow] = set(DATAFLOW.values()) - df_local
+
+    yield from filter(
+        lambda x: isinstance(x[1], Dataflow) and x[1].module.startswith(module),
+        chain(globals().items(), map(lambda y: ("", y), df_other)),
+    )
 
 
 def misc(info: ScenarioInfo, nodes: list[str], y: list[int]):
