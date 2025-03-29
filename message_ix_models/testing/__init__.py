@@ -6,7 +6,7 @@ try:
     from base64 import b32hexencode as b32encode
 except ImportError:
     from base64 import b32encode
-from collections.abc import Generator
+from collections.abc import Generator, Hashable
 from copy import deepcopy
 from pathlib import Path
 from random import randbytes
@@ -15,6 +15,7 @@ from tempfile import TemporaryDirectory
 import message_ix
 import pandas as pd
 import pytest
+import sdmx.exceptions
 from ixmp import config as ixmp_config
 
 from message_ix_models import util
@@ -23,6 +24,50 @@ from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
 
 log = logging.getLogger(__name__)
+
+#: Items with names that match (partially or fully) these names are omitted by
+#: :func:`export_test_data`.
+EXPORT_OMIT = [
+    "aeei",
+    "cost_MESSAGE",
+    "demand_MESSAGE",
+    "demand",
+    "depr",
+    "esub",
+    "gdp_calibrate",
+    "grow",
+    "historical_gdp",
+    "kgdp",
+    "kpvs",
+    "lakl",
+    "land",
+    "lotol",
+    "mapping_macro_sector",
+    "MERtoPPP",
+    "prfconst",
+    "price_MESSAGE",
+    "ref_",
+    "sector",
+]
+
+#: :data:`True` if tests occur on GitHub Actions.
+GHA = "GITHUB_ACTIONS" in os.environ
+
+#: Common marks for tests. Use either short, informative :class:`str` keys or
+#: :class:`int`; in the latter case, do not reuse keys lower than the highest key in the
+#: collection.
+MARK: dict[Hashable, pytest.MarkDecorator] = {
+    "sdmx#230": pytest.mark.xfail(
+        condition=GHA,
+        reason="https://github.com/khaeru/sdmx/issues/230",
+        raises=sdmx.exceptions.XMLParseError,
+    )
+}
+
+#: Shorthand for marking a parametrized test case that is expected to fail because it is
+#: not implemented.
+NIE = pytest.mark.xfail(raises=NotImplementedError)
+
 
 # pytest hooks
 
@@ -234,32 +279,6 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     return base.clone(scenario=new_name, keep_solution=solved)
 
 
-#: Items with names that match (partially or fully) these names are omitted by
-#: :func:`export_test_data`.
-EXPORT_OMIT = [
-    "aeei",
-    "cost_MESSAGE",
-    "demand_MESSAGE",
-    "demand",
-    "depr",
-    "esub",
-    "gdp_calibrate",
-    "grow",
-    "historical_gdp",
-    "kgdp",
-    "kpvs",
-    "lakl",
-    "land",
-    "lotol",
-    "mapping_macro_sector",
-    "MERtoPPP",
-    "prfconst",
-    "price_MESSAGE",
-    "ref_",
-    "sector",
-]
-
-
 def export_test_data(context: Context):
     """Export a subset of data from a scenario, for use in tests.
 
@@ -350,14 +369,6 @@ def export_test_data(context: Context):
     writer.close()
 
     mark_time()
-
-
-#: Shorthand for marking a parametrized test case that is expected to fail because it is
-#: not implemented.
-NIE = pytest.mark.xfail(raises=NotImplementedError)
-
-#: :data:`True` if tests occur on GitHub Actions.
-GHA = "GITHUB_ACTIONS" in os.environ
 
 
 def not_ci(reason=None, action="skip"):

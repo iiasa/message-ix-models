@@ -1,18 +1,117 @@
 import logging
 import re
-from typing import TYPE_CHECKING
 
+import genno
 import pytest
-import sdmx
+from genno import Computer, Key
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
 
-from message_ix_models.util.sdmx import eval_anno, make_dataflow, make_enum, read
-
-if TYPE_CHECKING:
-    from message_ix_models.types import MaintainableArtefactArgs
+from message_ix_models.model.transport import (
+    build,
+    # Ensure .util.sdmx.DATAFLOW is populated. This seems needed only for Python ≤ 3.9
+    # TODO Remove once Python 3.9 is no longer supported
+    data,  # noqa: F401
+    testing,
+)
+from message_ix_models.util.sdmx import DATAFLOW, Dataflow, eval_anno, make_enum, read
 
 log = logging.getLogger(__name__)
+
+
+class TestDataflow:
+    """Test :class:`.Dataflow."""
+
+    @pytest.fixture
+    def any_df(self):
+        yield next(iter(DATAFLOW.values()))
+
+    # TODO Use a broader-scoped context to allow (scope="class")
+    @pytest.fixture
+    def build_computer(self, test_context):
+        """A :class:`.Computer` from :func:`.configure_build`.
+
+        This in turn invokes :func:`.transport.build.add_exogenous_data`, which adds
+        each of :data:`.FILES` to a Computer.
+        """
+        c, _ = testing.configure_build(test_context, regions="R12", years="B")
+        yield c
+
+    def test_init(self, caplog) -> None:
+        # Message is logged for invalid units
+        Dataflow(module=__name__, name="test_init_0", path="test-init-0", units="foo")
+        assert "'foo' is not defined in the unit registry" in caplog.records[0].message
+
+        # Exception is raised for duplicate definition
+        with pytest.raises(
+            RuntimeError, match="Definition of .*DF_TEST_INIT_0.*duplicates"
+        ):
+            Dataflow(
+                module=__name__, name="test_init_0", path="test-init-0", units="foo"
+            )
+
+    def test_add_tasks(self, caplog, test_context) -> None:
+        c = Computer()
+
+        n, p = "test_add_tasks", "test-add-tasks"
+
+        # FileNotFoundError is raised when adding to Computer with no file
+        df0 = Dataflow(module=__name__, name=f"{n}0", path=f"{p}0", units="")
+        with pytest.raises(FileNotFoundError):
+            c.add("", df0, context=test_context)
+
+        # With required=False, no exception, but also no keys added
+        df1 = Dataflow(
+            module=__name__, name=f"{n}1", path=f"{p}1", units="", required=False
+        )
+        result = c.add("", df1, context=test_context)
+        assert () == result
+
+    @build.get_computer.minimum_version
+    @pytest.mark.parametrize(
+        "file",
+        [f for f in DATAFLOW.values() if f.intent & Dataflow.FLAG.IN],
+        ids=lambda f: "-".join(f.path.parts),
+    )
+    def test_configure_build(
+        self, build_computer: "Computer", file: "Dataflow"
+    ) -> None:
+        """Input data can be read and has the expected dimensions."""
+        c = build_computer
+
+        # Task runs
+        result = c.get(file.key)
+
+        # Quantity is loaded
+        assert isinstance(result, genno.Quantity)
+
+        # Dimensions are as expected
+        assert set(Key(result).dims) == set(file.key.dims)
+
+    def test_generate_csv_template(self, any_df: "Dataflow") -> None:
+        with pytest.raises(NotImplementedError):
+            any_df.generate_csv_template()
+
+    def test_repr(self, any_df: "Dataflow") -> None:
+        urn = (
+            "urn:sdmx:org.sdmx.infomodel.datastructure.DataflowDefinition=IIASA_ECE:"
+            "DF_FREIGHT_ACTIVITY(2025.3.11)"
+        )
+        assert (
+            "<Dataflow wrapping "
+            "'DataflowDefinition=IIASA_ECE:DF_FREIGHT_ACTIVITY(2025.3.11)'>"
+            == repr(DATAFLOW[urn])
+        )
+
+    def test_required(self, any_df: "Dataflow") -> None:
+        """The :`ExogenousDataFiles.required` property has a :class:`bool` value."""
+        assert isinstance(any_df.required, bool)
+
+    def test_units(self, any_df: "Dataflow") -> None:
+        """The :`ExogenousDataFiles.units` property has a :class:`pint.Unit` value."""
+        import pint
+
+        assert isinstance(any_df.units, pint.Unit)
 
 
 def test_eval_anno(caplog, recwarn):
@@ -37,34 +136,6 @@ def test_eval_anno(caplog, recwarn):
 
     with pytest.warns(DeprecationWarning):
         assert 7 == eval_anno(c, id="qux")
-
-
-@pytest.mark.parametrize(
-    "id_, dims, name",
-    (
-        ("TEST", "t-c-e", None),
-        ("GDP", "n-y", None),
-        ("POPULATION", "n-y", None),
-        ("TRANSPORT_ACTIVITY", "n-y-t", None),
-        ("FE_TRANSPORT", "n-t-c", "Final energy use in transport"),
-    ),
-)
-def test_make_dataflow(tmp_path, test_context, id_, dims, name) -> None:
-    ma_kwargs: "MaintainableArtefactArgs" = dict()
-
-    dims_tuple = tuple(dims.split("-"))
-    sm = make_dataflow(id_, dims_tuple, name, ma_kwargs, test_context)
-
-    # Message contains the expected items
-    assert len(dims_tuple) == len(sm.codelist)  # One codelist per item
-    assert {"CS_MESSAGE_IX_MODELS"} == set(sm.concept_scheme)
-    assert {f"DF_{id_}"} == set(sm.dataflow)
-    assert {f"DS_{id_}"} == set(sm.structure)
-
-    path_out = tmp_path.joinpath("output.xml")
-    path_out.write_bytes(sdmx.to_xml(sm, pretty_print=True))
-
-    log.debug(path_out)
 
 
 def test_make_enum0():

@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
         param("ISR", marks=testing.MARK[3]),
         "R11",
         "R12",
-        pytest.param("R14", marks=testing.MARK[9]),
+        "R14",
     ],
 )
 def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None:
@@ -56,6 +56,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     # print(data)  # DEBUG
     # print(data.to_series().to_string())  # DEBUG
 
+    # TODO Merge the following with test_build.test_debug() using Check objects
     # Data are returned for the following parameters
     exp_pars = {
         "bound_new_capacity_lo",
@@ -179,7 +180,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     [
         ("R11", 11),
         ("R12", 12),
-        param("R14", 14, marks=testing.MARK[9]),
+        ("R14", 14),
     ],
 )
 def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
@@ -201,7 +202,7 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
         (False, "R11", "A"),
         (False, "R11", "B"),
         (False, "R12", "B"),
-        param(False, "R14", "A", marks=testing.MARK[9]),
+        (False, "R14", "A"),
         # Not implemented
         param(False, "ISR", "A", marks=testing.MARK[3]),
     ],

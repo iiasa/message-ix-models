@@ -30,3 +30,11 @@ Others:
 
 .. automodule:: message_ix_models.testing
    :members:
+
+.. currentmodule:: message_ix_models.testing.check
+
+Checks
+======
+
+.. automodule:: message_ix_models.testing.check
+   :members:

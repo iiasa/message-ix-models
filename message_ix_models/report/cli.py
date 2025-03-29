@@ -55,6 +55,9 @@ def cli(context, config_file, legacy, cli_output, key, **kwargs):
 
     With --urls-from-file, read multiple Scenario identifiers from FILE, and report each
     one. In this usage, --output-path may only be a directory.
+
+    If --verbose is given to the top-level CLI, the full description of the steps to
+    calculate KEY is printed, as well as the entire result, if any.
     """
     from copy import deepcopy
 

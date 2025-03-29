@@ -10,9 +10,27 @@ Next release
   - Support for :mod:`ixmp` and :mod:`message_ix` versions 3.4, 3.5, and 3.6 is dropped  (:pull:`288`, :pull:`289`).
     The minimum supported version of both packages is 3.7.0.
 
-- Update :class:`.IEA_EWEB` to support :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
+- Update :class:`.IEA_EWEB` to support:
 
-- New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
+  - :py:`transform="B"` / :func:`.transform_B` (:issue:`230`, :pull:`259`).
+  - :py:`transform="C"` / :func:`.transform_C` (:issue:`229`, :pull:`300`).
+  - The :class:`~.web.TRANSFORM` enumeration for specifying and validating multiple transformations.
+
+- New class :class:`.Dataflow` for describing input and/or output data flows (:pull:`300`) that are read from file and attached to a :class:`.Computer`.
+  Generalized from former :py:`.transport.files.ExogenousDataFile`.
+- New method :meth:`.Config.regions_from_scenario` (:pull:`300`),
+  extracted/generalized from :meth:`.transport.Config.from_context`.
+- New general-purpose :mod:`genno` operators in :mod:`.report.operator`: :func:`.broadcast_wildcard` and :func:`.merge_data` (:pull:`300`),
+  extracted/generalized from :mod:`.transport.operator`.
+- New utilities:
+
+  - :class:`.genno.Collector` (:pull:`300`).
+  - :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
+  - :func:`.check.verbose_check` (:pull:`300`).
+
+- Display entire result quantity in :func:`.report.report` / :program:`mix-models report` with :py:`verbose=True` (:pull:`300`).
+- Bug fix: :program:`mix-models --verbose` command-line option was not stored on :class:`.Context`/:class:`~.util.Config` (:pull:`300`).
+- Bug fix: adjust or guard some Python usage that was not compatible with Python 3.9—the earliest version supported by :mod:`message_ix_models` (:pull:`295`, :issue:`294`).
 - Drop obsolete :py:`series_of_pint_quantity()` (:pull:`289`).
 
 By topic:
@@ -33,20 +51,34 @@ Improve :mod:`.ssp.transport`:
 Transport
 ---------
 
-Update :doc:`/transport/index` (:pull:`259`, :pull:`289`).
+Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`).
 
 - Adjust constraints on :py:`t="conm_ar"`.
-- Recompute :attr:`.minimum_activity` for transport technologies.
+- Drop some :attr:`.minimum_activity` entries; recompute values and add to :data:`.act_non_ldv`.
 - Improve freight representation:
 
   - Adjust freight activity, freight and passenger mode shares for some regions.
   - Add dynamic constraints on activity of freight technologies.
   - Fix alignment of freight technology outputs with demand |l|.
+  - Add :data:`.elasticity_f`, analogous to :data:`.elasticity_p`.
+    See :func:`.freight.demand`.
 
 - Implement LED override using exogenous passenger activity data from :ref:`transport-pdt-cap-proj`.
+- Update input data for :data:`.elasticity_p`, :data:`ikarus_inv_cost`, :data:`.inv_cost_ldv`, :data:`.mode_share_freight`, :data:`.pdt_cap_ref`, :data:`.speed`, .
+- Add LED-specific parametrization for :data:`.activity_ldv`, :data:`lifetime_ldv`, :data:`.load_factor_ldv`, :data:`pdt_cap_proj`, .
 - Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
 - Generate SDMX-ML structural metadata, including data flow definitions, and SDMX-{CSV,ML} data outputs for certain reported quantities.
+
+  - New input data flow :data:`.input_share`.
+  - Add :py:`scenario` dimension to :data:`.activity_ldv`, :data:`.lifetime_ldv`, input data flow and files.
 - Expand use of fixed/shared keys from :mod:`.transport.key`.
+- Improve documentation:
+
+  - Expand documentation of :doc:`input data flows <transport/input>` to include *all* input data flows.
+  - Document some :doc:`output data flows <transport/output>`.
+- New operator :func:`.indexer_scenario`.
+- New plot :class:`.Scale1Diff`.
+- Simplify signature of :func:`.transport.build.main`, :func:`.transport.build.get_computer`.
 - Simplify and consolidate tests.
 - Improve :func:`.simulated_solution` to load ‘simulated’ solution data from file to reduce test durations.
 
@@ -71,9 +103,6 @@ Documentation
   :doc:`project/prisma`,
   :doc:`project/sparccle`, and
   :doc:`project/uptake` (:pull:`282`).
-
-- New utility :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
-- Bug fix: adjust or guard some Python usage that was not compatible with Python 3.9—the earliest version supported by :mod:`message_ix_models` (:pull:`295`, :issue:`294`).
 
 v2025.1.10
 ==========

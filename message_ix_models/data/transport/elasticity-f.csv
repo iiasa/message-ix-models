@@ -1,0 +1,7 @@
+# ‘Elasticity’ of freight activity with respect to GDP(PPP)
+#
+# Units: dimensionless
+#
+scenario,    node, year, value
+SSP(2024).2, *,    2020, 1.0
+SSP(2024).2, *,    2110, 1.0

@@ -2,7 +2,7 @@
 
 import logging
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, fields
 from datetime import datetime
 from enum import Enum, Flag
@@ -15,20 +15,23 @@ from warnings import warn
 import sdmx
 import sdmx.message
 import sdmx.urn
+from genno import Key
 from iam_units import registry
 from sdmx.model import common, v21
 
 from .common import package_data_path
+from .context import Context
+from .ixmp import rename_dims
 
 if TYPE_CHECKING:
     from os import PathLike
     from typing import TypeVar
 
+    import pint
+    from genno import Computer, Key
     from sdmx.message import StructureMessage
 
-    from message_ix_models.types import MaintainableArtefactArgs
-
-    from .context import Context
+    from message_ix_models.types import KeyLike
 
     # TODO Use "from typing import Self" once Python 3.11 is the minimum supported
     Self = TypeVar("Self", bound="AnnotationsMixIn")
@@ -36,6 +39,13 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 CodeLike = Union[str, common.Code]
+
+
+#: Collection of :class:`.Dataflow` instances.
+DATAFLOW: dict[str, "Dataflow"] = {}
+
+#: Common store of SDMX structural artefacts.
+STORE = sdmx.message.StructureMessage()
 
 
 @dataclass
@@ -74,6 +84,334 @@ class AnnotationsMixIn:
             args.append(obj.eval_annotation(id=anno_id))
 
         return cls(*args)
+
+
+class Dataflow:
+    """Information about an input or output data flow.
+
+    If an input data flow, the data is expected in a file at `path`.
+
+    .. todo::
+       - Accept an argument that sets :attr:`df` directly and ignores other arguments.
+       - Annotate certain dimensions as optional; expand :meth:`.add_tasks` to
+         automatically handle insertion of these dimensions.
+       - Merge with :class:`.ExoDataSource`.
+
+    Parameters
+    ----------
+    module : str
+        Should be the name of the code module responsible for creating the data flow,
+        for instance using :py:`__name__`.
+    id : str
+        Partial ID of both the DFD and a related DataStructureDefinition. The strings
+        :py:`"DF_"` and :py:`"DS_"` are automatically prepended, and the characters " "
+        and "-" replaced with underscores.
+    name : str
+        Human-readable name of the data flow.
+    units : str
+        Units for observations in the data flow.
+    key : KeyLike, optional
+        Key at which the data from the file will be present in a :class:`.Computer`.
+    dims : tuple of str, optional
+        IDs of dimensions of the DSD. These may be short dimension IDs as used in
+        :mod:`message_ix.report`, for instance :py:`"t"` for the 'technology' dimension.
+    path : str or tuple of str, optional
+        Path at which an input data file is located. If not supplied, :attr:`path` is
+        constructed from `key`, `dims`, and the tag "exo".
+    description : str, optional
+        Human-readable description of the data flow, including any notes about required
+        properties or contents or methods used to handle the data.
+    required : bool, optional
+        If :any:`True` (the default), the input data file **must** be present for the
+        build to succeed.
+    replace : bool, *optional*
+        If :any:`True`, replace any existing entry in :data:`DATAFLOW` that with an
+        equivalent URN to the one implied by `kwargs`. Otherwise (default), raise an
+        exception.
+    """
+
+    class FLAG(Flag):
+        """Flags for :attr:`.intent`."""
+
+        #: Input data flow.
+        IN = 1
+        #: Output data flow.
+        OUT = 2
+
+    #: :class:`sdmx.Dataflow <sdmx.model.common.BaseDataflowDefinition>` describing the
+    #: data flow.
+    #:
+    #: This instance will always have annotations with the following IDs:
+    #:
+    #: - "file-path": see :attr:`.path`.
+    #: - "genno-key": see :attr:`.key`.
+    #: - "intent": see :attr:`.intent`.
+    #: - "preferred-units": see :attr:`.units`.
+    #: - "required-for-build": see :attr:`.required`.
+    df: "sdmx.model.common.BaseDataflow"
+
+    def __init__(
+        self,
+        *,
+        module: str,
+        id: Optional[str] = None,
+        name: str,
+        units: str,
+        description: Optional[str] = None,
+        key: Optional["KeyLike"] = None,
+        dims: Optional[tuple[str, ...]] = None,
+        i_o: FLAG = FLAG.IN,
+        path: Union[str, tuple[str, ...], None] = None,
+        required: bool = True,
+        # Used only for creation
+        replace: bool = False,
+        cs_urn: list[str] = [],
+        # Others
+        **ma_kwargs,
+    ):
+        import pint
+
+        # Ensure CS_MESSAGE_IX_MODELS is available
+        get_cs()
+
+        # Collection of annotations for the data flow
+        anno = [
+            v21.Annotation(id="intent", text=str(i_o.name)),
+            v21.Annotation(id="module", text=module),
+            v21.Annotation(
+                id="required-for-build", text=repr((i_o & self.FLAG.IN) and required)
+            ),
+        ]
+
+        # Handle `path` argument
+        if isinstance(path, str):
+            _path = Path(path)  # Convert str to Path
+        elif path:
+            _path = Path(*path)  # Something else, not None
+
+        # Parse and store units
+        ureg = pint.get_application_registry()
+        try:
+            units = ureg.Unit(units)
+        except Exception as e:
+            log.info(f"Replace units {units!r} with 'dimensionless' due to {e}")
+            units = ureg.dimensionless
+        anno.append(v21.Annotation(id="preferred-units", text=f"{units}"))
+
+        if not key:
+            # Determine from file path
+            key = Key(" ".join(_path.parts).replace("-", " "), dims or (), "exo")
+        else:
+            # Convert to Key object
+            key = Key(key)
+
+            if path is None:
+                _path = Path(key.name.replace(" ", "-"))
+
+        anno.append(v21.Annotation(id="genno-key", text=str(key)))
+
+        _path = _path.with_suffix(".csv")
+        anno.append(v21.Annotation(id="file-path", text=str(_path)))
+
+        # Default properties for maintainable artefacts
+        ma_kwargs.setdefault("maintainer", read("IIASA_ECE:AGENCIES")["IIASA_ECE"])
+        ma_kwargs.setdefault("is_external_reference", False)
+        ma_kwargs.setdefault("is_final", False)
+        ma_kwargs.setdefault("version", get_version())
+
+        # IDs for the data flow and data structure
+        name_for_id = (id or key.name).upper().replace(" ", "_").replace("-", "_")
+        df_id = f"DF_{name_for_id}"
+        ds_id = f"DS_{name_for_id}"
+
+        # Create a data structure definition
+        ma_kwargs["name"] = f"Structure of {df_id}"
+        dsd = v21.DataStructureDefinition(id=ds_id, **ma_kwargs)
+        dsd.urn = sdmx.urn.make(dsd)
+
+        # Add dimensions to `DSD` according to `key.dims`
+        for order, dim_id in enumerate(key.dims):
+            # Retrieve the dimension concept and its full ID
+            concept = get_concept(dim_id, cs_urn=tuple(cs_urn))
+
+            # Create a code list for this dimension
+            cl = get_cl(concept.id)
+
+            # Create the dimension
+            dsd.dimensions.getdefault(
+                id=dim_id,
+                concept_identity=concept,
+                local_representation=common.Representation(enumerated=cl),
+                order=order,
+            )
+
+        # Add attributes
+        nsr = v21.NoSpecifiedRelationship()
+        for attr_id in "MODEL", "SCENARIO", "VERSION", "UNIT_MEASURE":
+            # Retrieve the attribute concept and its full ID
+            concept = get_concept(attr_id)
+
+            dsd.attributes.getdefault(
+                id=attr_id, concept_identity=concept, related_to=nsr
+            )
+
+        # Add a measure
+        dsd.measures.getdefault(id="value")
+
+        # Create and store a data flow definition
+        ma_kwargs["name"] = name
+        ma_kwargs["description"] = (
+            f"{description.strip()}\n\n" if description is not None else ""
+        )
+        ma_kwargs["annotations"] = anno
+        self.df = v21.DataflowDefinition(id=df_id, **ma_kwargs, structure=dsd)
+        self.df.urn = sdmx.urn.make(self.df)
+
+        # Update the instance with a docstring
+        self._update_doc()
+
+        # Add or replace an entry in DATAFLOW
+        if duplicate := list(
+            filter(
+                lambda x: x.key == self.key and x.intent == self.intent,
+                DATAFLOW.values(),
+            )
+        ):
+            existing = duplicate[0]
+            if replace:
+                log.info(f"Replace existing entry for {existing.df.urn!r}")
+                DATAFLOW[self.df.urn] = self
+            else:
+                raise RuntimeError(
+                    f"Definition of {self} duplicates existing {existing}"
+                )
+        else:
+            # Add to the collection of DATAFLOW and the STORE
+            DATAFLOW[self.df.urn] = self
+            STORE.add(self.df)
+            STORE.add(dsd)
+
+    # Does nothing except ensure callable(…) == True for inspection by genno
+    def __call__(self): ...
+
+    def __repr__(self) -> str:
+        assert self.df.urn is not None
+        return f"<Dataflow wrapping {sdmx.urn.shorten(self.df.urn)!r}>"
+
+    def _update_doc(self) -> None:
+        """Update the instance with a docstring."""
+        lines = [
+            f"{self.df.name} [{self.units}]",
+            "",
+            f"- Key and dimensions: **<{self.key}>**",
+        ]
+        if self.intent & self.FLAG.IN:
+            # Lines only relevant for input quantities
+            lines.append(f"- Input file at path: :file:`{self.path}`")
+            lines.append(f"- Required for build: {self.required}")
+        else:
+            lines.append(
+                f"- Output data from :mod:`{self.df.eval_annotation('module')}`"
+            )
+        lines.append(f"\n{self.df.description}")
+
+        self.__doc__ = "\n".join(lines)
+
+    # Access to annotations of DFD
+    @property
+    def intent(self) -> FLAG:
+        """Indicates whether the dataflow is for input or output."""
+        return self.FLAG[str(self.df.get_annotation(id="intent").text)]
+
+    @property
+    def key(self) -> "Key":
+        """:class:`genno.Key`, including preferred dimensions.
+
+        When :attr:`intent` is :data:`FLAG.IN`, this is the key at which the loaded data
+        is available. When :attr:`intent` is :data:`FLAG.OUT`, this is the key from
+        which the output data will be prepared.
+        """
+        return Key(str(self.df.get_annotation(id="genno-key").text))
+
+    @property
+    def module(self) -> str:
+        """Module with which the data flow is associated."""
+        return str(self.df.get_annotation(id="module").text)
+
+    @property
+    def path(self) -> Path:
+        """Path fragment for the location of a file containing input data."""
+        return Path(str(self.df.get_annotation(id="file-path").text))
+
+    @property
+    def required(self) -> bool:
+        """:any:`True` if the input file :path:`.path` must be present to build a model.
+
+        This means that a corresponding function, for instance
+        :func:`.transport.build.main`, expects the file to be present.
+        """
+        return self.df.eval_annotation(id="required-for-build")
+
+    @property
+    def units(self) -> "pint.Unit":
+        """Preferred units for the data."""
+        import pint
+
+        return pint.get_application_registry().Unit(
+            str(self.df.get_annotation(id="preferred-units").text)
+        )
+
+    # For interaction with genno
+    def add_tasks(
+        self, c: "Computer", *args, context: "Context"
+    ) -> tuple["KeyLike", ...]:
+        """Prepare `c` to read data from a file at :attr:`.path`."""
+        # TODO Use a package-wide utility or a callback
+        from message_ix_models.model.transport.util import path_fallback
+
+        # Identify the path
+        try:
+            path = path_fallback(context, self.path)
+        except FileNotFoundError:
+            if self.required:
+                raise
+            else:
+                return ()
+
+        # Use standard RENAME_DIMS from ixmp config
+        dims = rename_dims().copy()
+        values = set(dims.values())
+        dims.update({d: d for d in self.key.dims if d not in values})
+
+        c.add("load_file", path, key=self.key, dims=dims, name=self.key.name)
+        return (self.key,)
+
+    def generate_csv_template(self) -> Path:
+        """Generate a CSV template file.
+
+        Currently not implemented.
+        """
+        raise NotImplementedError
+        # 1. In the current format.abs
+        # 2. In SDMX-CSV.
+        # dm = DataMessage()
+        # dm.data.append(DataSet(structure))
+        # template =
+
+
+class URNLookupEnum(Enum):
+    """:class:`.Enum` subclass that allows looking up members using a URN."""
+
+    _ignore_ = "_urn_name"
+    _urn_name: dict
+
+    def __init_subclass__(cls):
+        cls._urn_name = dict()
+
+    @classmethod
+    def by_urn(cls, urn: str):
+        """Return the :class:`.Enum` member given its `urn`."""
+        return cls[cls.__dict__["_urn_name"][urn]]
 
 
 # FIXME Reduce complexity from 13 → ≤11
@@ -151,6 +489,33 @@ def as_codes(  # noqa: C901
     return list(result.values())
 
 
+def collect_structures(
+    target: "sdmx.message.StructureMessage", dfd: "sdmx.model.common.BaseDataflow"
+) -> None:
+    """Update `target` with `dfd` and related structures.
+
+    These include:
+
+    - The :class:`.DataStructureDefinition` (DSD) that structures `dfd`.
+    - For each component (dimension, attribute, or measure) in the DSD:
+
+      - Any :class:`~sdmx.model.common.ConceptScheme` that provides the concept role.
+      - Any :class:`~sdmx.model.common.Codelist` that enumerates the component.
+    """
+    target.add(dfd)
+    target.add(dfd.structure)
+    for cl in (
+        dfd.structure.dimensions,
+        dfd.structure.attributes,
+        getattr(dfd.structure, "measures", v21.MeasureDescriptor()),
+    ):
+        for component in cl.components:
+            if component.concept_identity is not None:
+                target.add(component.concept_identity.parent)
+            if component.local_representation is not None:
+                target.add(component.local_representation.enumerated)
+
+
 def eval_anno(obj: common.AnnotableArtefact, id: str):
     """Retrieve the annotation `id` from `obj`, run :func:`eval` on its contents.
 
@@ -178,19 +543,10 @@ def eval_anno(obj: common.AnnotableArtefact, id: str):
         return value
 
 
-class URNLookupEnum(Enum):
-    """:class:`.Enum` subclass that allows looking up members using a URN."""
-
-    _ignore_ = "_urn_name"
-    _urn_name: dict
-
-    def __init_subclass__(cls):
-        cls._urn_name = dict()
-
-    @classmethod
-    def by_urn(cls, urn: str):
-        """Return the :class:`.Enum` member given its `urn`."""
-        return cls[cls.__dict__["_urn_name"][urn]]
+def get(urn: str) -> Optional["common.MaintainableArtefact"]:
+    """Return an object given its URN."""
+    full_urn = sdmx.urn.expand(urn)
+    return STORE.get(sdmx.urn.URN(full_urn).id)
 
 
 def get_cl(name: str, context: Optional["Context"] = None) -> "common.Codelist":
@@ -211,8 +567,7 @@ def get_cl(name: str, context: Optional["Context"] = None) -> "common.Codelist":
         id=f"CL_{id_}",
         name=f"Codes for message-ix-models concept {name!r}",
         maintainer=as_["IIASA_ECE"],
-        # FIXME remove str() once sdmx1 > 2.21.1 can handle Version
-        version=str(get_version()),
+        version=get_version(with_dev=False),
         is_external_reference=False,
         is_final=True,
     )
@@ -232,8 +587,6 @@ def get_cs() -> "common.ConceptScheme":
 
     The full artefact contains its own detailed description.
     """
-    from .ixmp import rename_dims
-
     cs = common.ConceptScheme(
         id="CS_MESSAGE_IX_MODELS",
         name="Concepts for message-ix-models",
@@ -251,6 +604,8 @@ Each concept in the concept scheme has:
   :data:`ixmp.report.RENAME_DIMS`, for example :py:`"t"` for 'technology'.""",
         maintainer=common.Agency(id="IIASA_ECE"),
         version="1.0.0",
+        is_final=True,
+        is_external_reference=False,
     )
 
     # Add concepts for MESSAGE sets/dimensions
@@ -260,7 +615,7 @@ Each concept in the concept scheme has:
         concept = cs.setdefault(
             id=set_name.upper(),
             name=f"{set_name!r} MESSAGEix set",
-            annotations=[common.Annotation(id="aliases", text=repr(set()))],
+            annotations=[v21.Annotation(id="aliases", text=repr(set()))],
         )
         # Add `v` to the aliases annotation
         anno = concept.get_annotation(id="aliases")
@@ -293,107 +648,68 @@ name, and version of an ixmp Scenario. See
 https://docs.messageix.org/projects/ixmp/en/stable/api.html#ixmp.TimeSeries.url""",
     )
 
+    STORE.add(cs)
+
     return cs
 
 
 @cache
-def get_concept(string: str) -> "common.Concept":
-    """Retrieve a single Concept from :func:`get_cs`."""
-    for concept in get_cs().items.values():
-        labels = [concept.id] + list(concept.eval_annotation(id="aliases") or [])
-        if re.fullmatch("|".join(labels), string, flags=re.IGNORECASE):
-            return concept
-    raise ValueError(string)
+def get_concept(string: str, *, cs_urn: tuple[str, ...] = tuple()) -> "common.Concept":
+    """Retrieve (or create) a single Concept from a concept scheme.
+
+    Items are sought first in "CS_MESSAGE_IX_MODELS" (see :func:`get_cs`) and then in
+    the concept scheme(s) indicated by `cs_urn`, if any. `string` is matched against
+    both item IDS and the contents of an "aliases" annotation (if any).
+
+    If (and only if) `cs_urn` is given **and** the concept is not found, it is created
+    in the last of `cs_urn`. In other words, CS_MESSAGE_IX_MODELS is never modified.
+
+    Raises
+    ------
+    ValueError
+        if no concept with an ID or alias matching `string` is found, and `cs_urn` is
+        not given.
+    """
+    # TODO Would prefer to use StructureMessage.get() here, but does not handle URNs.
+    #      Adjust once supported upstream
+    cs_all = list(
+        filter(
+            None,
+            cast(
+                Iterable[Optional["common.ItemScheme"]],
+                [get("ConceptScheme=IIASA_ECE:CS_MESSAGE_IX_MODELS")]
+                + [get(u) for u in cs_urn],
+            ),
+        )
+    )
+
+    for cs in cs_all:
+        for concept in cs.items.values():
+            labels = [concept.id] + list(concept.eval_annotation(id="aliases") or [])
+            if re.fullmatch("|".join(labels), string, flags=re.IGNORECASE):
+                return concept
+
+    if cs_urn:
+        return cs_all[-1].setdefault(id=string)
+    else:
+        raise ValueError(string)
 
 
-def get_version() -> "common.Version":
-    """Return a :class:`sdmx.model.common.Version` for :mod:`message_ix_models`."""
-    return common.Version(version(__package__.split(".")[0]).split("+")[0])
+@cache
+def get_version(with_dev: Optional[bool] = True) -> str:
+    """Return a :class:`sdmx.model.common.Version` for :mod:`message_ix_models`.
 
-
-def make_dataflow(
-    id: str,
-    dims: Sequence[str],
-    name: Optional[str] = None,
-    ma_kwargs: Optional["MaintainableArtefactArgs"] = None,
-    context: Optional["Context"] = None,
-    message: Optional["sdmx.message.StructureMessage"] = None,
-) -> "sdmx.message.StructureMessage":
-    """Create and store an SDMX 2.1 DataflowDefinition (DFD) and related structures.
+    .. todo:: Remove :py:`str(...)` once sdmx1 > 2.21.1 can handle Version.
 
     Parameters
     ----------
-    id :
-        Partial ID of both the DFD and a related DataStructureDefinition (DSD).
-    dims :
-        IDs of the dimensions of the DSD. These may be short dimension IDs as used in
-        :mod:`message_ix.report`, for instance :py:`"t"` for the 'technology' dimension.
-    ma_kwargs :
-        Common keyword arguments for all SDMX MaintainableArtefacts created.
-
-    Returns
-    -------
-    sdmx.message.StructureMessage
-        …containing:
-
-        - 1 :class:`.DataflowDefinition`.
-        - 1 :class:`.DataStructureDefinition`.
-        - 1 :class:`.ConceptScheme`, ``IIASA_ECE:CS_COMMON``.
-        - For each dimension indicated by `dims`, a :class:`Codelist`.
+    with_dev : bool
+        If :any:`True`, include the dev version part, e.g. "2025.3.12.dev123". If not,
+        exclude.
     """
-    from sdmx import urn
+    tmp, *_ = version(__package__.split(".")[0]).partition("+" if with_dev else ".dev")
 
-    sm = message or sdmx.message.StructureMessage()
-
-    if ma_kwargs is None:
-        ma_kwargs = {}
-    ma_kwargs.setdefault("maintainer", common.Agency(id="IIASA_ECE"))
-    ma_kwargs.setdefault("is_external_reference", False)
-    ma_kwargs.setdefault("is_final", True)
-    # FIXME remove str() once sdmx1 > 2.21.1 can handle Version
-    ma_kwargs.setdefault("version", str(get_version()))
-
-    # Create the data structure definition
-    dsd = v21.DataStructureDefinition(id=f"DS_{id.upper()}", **ma_kwargs)
-    dsd.measures.getdefault(id="value")
-    sm.add(dsd)
-
-    # Create the data flow definition
-    dfd = v21.DataflowDefinition(id=f"DF_{id.upper()}", **ma_kwargs, structure=dsd)
-    dfd.urn = urn.make(dfd)
-    if name:
-        dfd.description = name
-    sm.add(dfd)
-
-    # Add the common concept scheme
-    sm.add(get_cs())
-
-    # Add dimensions to the DSD according to `dims`
-    for order, dim_id in enumerate(dims):
-        # Retrieve the dimension concept and its full ID
-        concept = get_concept(dim_id)
-
-        # Create a code list for this dimension
-        cl = get_cl(concept.id, context=context)
-        sm.add(cl)
-
-        # Create the dimension
-        dsd.dimensions.getdefault(
-            id=dim_id,
-            concept_identity=concept,
-            local_representation=common.Representation(enumerated=cl),
-            order=order,
-        )
-
-    # Add attributes
-    nsr = v21.NoSpecifiedRelationship()
-    for attr_id in "MODEL", "SCENARIO", "VERSION", "UNIT_MEASURE":
-        # Retrieve the attribute concept and its full ID
-        concept = get_concept(attr_id)
-
-        dsd.attributes.getdefault(id=attr_id, concept_identity=concept, related_to=nsr)
-
-    return sm
+    return str(common.Version(tmp))
 
 
 def make_enum(urn, base=URNLookupEnum):

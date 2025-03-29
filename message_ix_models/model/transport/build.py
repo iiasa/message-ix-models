@@ -15,11 +15,12 @@ from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.util import minimum_version
+from message_ix_models.util import either_dict_or_kwargs, minimum_version
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config
+from .operator import indexer_scenario
 from .structure import get_technology_groups
 
 if TYPE_CHECKING:
@@ -149,16 +150,13 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.advance.data  # noqa: F401
     import message_ix_models.project.ssp.data  # noqa: F401
-    import message_ix_models.tools.iea.web  # noqa: F401
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
+    from message_ix_models.tools.iea.web import TRANSFORM
+    from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
-    from . import (
-        data,  # noqa: F401
-        key,
-    )
-    from .files import FILES, add
+    from . import data, key
 
     # Added keys
     keys = {}
@@ -189,13 +187,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
-    kw = dict(
-        provider="IEA",
-        edition="2024",
-        flow=(
-            "DOMESAIR DOMESNAV PIPELINE RAIL ROAD TOTTRANS TRNONSPE WORLDAV WORLDMAR"
-        ).split(),
-    )
+    kw = dict(provider="IEA", edition="2024", regions=context.model.regions)
+    if context.model.regions == "R12":
+        kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
     prepare_computer(context, c, "IEA_EWEB", source_kw=kw, strict=False)
 
     # Add IEA Future of Trucks data
@@ -242,7 +236,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
 
     # Identify the mode-share file according to the config setting
-    add(
+    Dataflow(
+        module=__name__,
         key="mode share:n-t:exo",
         path=("mode-share", config.mode_share),
         name="Reference (base year) mode share",
@@ -250,7 +245,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         replace=True,
     )
 
-    for f in FILES:
+    for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
 
 
@@ -291,6 +286,9 @@ STRUCTURE_STATIC = (
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
+    ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
+    ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
+    ("indexers::usage", "indexers_usage", "t::transport"),
     ("n::ex world", "nodes_ex_world", "n"),
     (
         "n:n:ex world",
@@ -299,6 +297,7 @@ STRUCTURE_STATIC = (
     ),
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
+    ("scenario::all", "scenario_codes"),
 )
 
 
@@ -317,6 +316,7 @@ def add_structure(c: Computer) -> None:
         :py:`("firstmodelyear", y0)`.
       - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`.
       - ``y0``: The first model period, :class:`int`.
+      - ``y::y0``: ``y0`` as an indexer.
 
     - All tasks from :data:`STRUCTURE_STATIC`.
     - ``c::transport``: the |c| set of the :attr:`~.Spec.add` member of
@@ -384,6 +384,7 @@ def add_structure(c: Computer) -> None:
         ),
         (key.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
+        ("y::y0", lambda v: dict(y=v[0]), "y::model"),
     ):
         try:
             c.add(*task, strict=True)
@@ -397,11 +398,15 @@ def add_structure(c: Computer) -> None:
     # - Multiple static and dynamic tasks generated in loops etc.
     tasks: list[tuple] = list(STRUCTURE_STATIC) + [
         ("c::transport", quote(spec.add.set["commodity"])),
-        ("c::transport+base", quote(spec.add.set["commodity"] + info.set["commodity"])),
+        # Convert to str to avoid TypeError in broadcast_wildcard → sorted()
+        # TODO Remove once sdmx.model.common.Code is sortable with str
+        (
+            "c::transport+base",
+            quote(list(map(str, spec.add.set["commodity"] + info.set["commodity"]))),
+        ),
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("nodes", quote(info.set["node"])),
-        ("indexers:scenario", quote(dict(scenario=repr(config.ssp).split(":")[1]))),
         ("t::transport", quote(spec.add.set["technology"])),
         ("t::transport agg", quote(dict(t=t_groups))),
         ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
@@ -447,15 +452,16 @@ def add_structure(c: Computer) -> None:
     c.add_queue(map(lambda t: (t, dict(strict=True)), tasks), max_tries=2, fail="raise")
 
 
-@minimum_version("message_ix 3.8")
+@minimum_version("message_ix 3.8; genno 1.28")
 def get_computer(
     context: Context,
     obj: Optional[Computer] = None,
     *,
     visualize: bool = True,
-    **kwargs,
+    scenario: Optional[Scenario] = None,
+    options: Optional[dict] = None,
 ) -> Computer:
-    """Return a :class:`genno.Computer` set up for model-building calculations.
+    """Return a :class:`genno.Computer` set up for model-building computations.
 
     The returned computer contains:
 
@@ -463,10 +469,10 @@ def get_computer(
       :func:`.add_debug`.
     - For each module in :attr:`.transport.config.Config.modules`, everything added by
       the :py:`prepare_computer()` function in that module.
-    - ``context``: a reference to `context`.
-    - ``scenario``: a reference to a Scenario, if one appears in `kwargs`.
-    - ``add transport data``: a list of keys which, when computed, will cause all
-      transport data to be computed and added to ``scenario``.
+    - "context": a reference to `context`.
+    - "scenario": a reference to `scenario`.
+    - "add transport data": a list of keys which, when computed, causes all data for
+      MESSAGEix-Transport to be computed and added to the "scenario".
 
     Parameters
     ----------
@@ -476,15 +482,33 @@ def get_computer(
        new Computer is created and populated.
     visualize :
        If :any:`True` (the default), a file :file:`transport/build.svg` is written in
-       the local data directory with a visualization of the ``add transport data`` key.
+       the local data directory with a visualization of the "add transport data" key.
+    options :
+       Passed to :meth:`.transport.Config.from_context` *except* if the single key
+       "config" is present: if so, the corresponding value **must** be an instance
+       of :class:`.transport.Config`, and this is used directly.
     """
     from . import key, operator
 
-    # Configure
-    config = Config.from_context(context, **kwargs)
+    # Update .model.Config with the regions of a given scenario
+    context.model.regions_from_scenario(scenario)
+
+    # Ensure an instance of .transport.Config
+    if options is not None and "config" in options:
+        # Use an instance passed as a keyword argument
+        config = context.transport = options.pop("config")
+        if len(options):
+            raise ValueError(
+                "Both config=.transport.Config(...) and additional options={...}"
+            )
+    elif options:
+        # Create a new instance using `kwargs`
+        config = Config.from_context(context, options=options)
+    else:
+        # Retrieve the current .transport.Config. AttributeError if no instance exists.
+        config = context.transport
 
     # Structure information for the base model
-    scenario = kwargs.get("scenario")
     if scenario:
         # Retrieve structure information from an existing base model/`scenario`
         config.base_model_info = ScenarioInfo(scenario)
@@ -560,6 +584,13 @@ def main(
 ):
     """Build MESSAGEix-Transport on `scenario`.
 
+    Parameters
+    ----------
+    options :
+        These (or `options_kwargs`) are passed to :func:`.get_computer`, *except* an
+        optional key "dry_run", which is removed and used to update
+        :attr:`.Config.dry_run`.
+
     See also
     --------
     add_data
@@ -569,16 +600,10 @@ def main(
     from .emission import strip_emissions_data
     from .util import sum_numeric
 
-    # Check arguments
-    options = dict() if options is None else options.copy()
-    dupe = set(options.keys()) & set(option_kwargs.keys())
-    if len(dupe):
-        raise ValueError(f"Option(s) {repr(dupe)} appear in both `options` and kwargs")
-    options.update(option_kwargs)
+    options = either_dict_or_kwargs("options", options, option_kwargs)
 
-    # Use fast=True by default
-    options.setdefault("fast", True)
-    dry_run = options.pop("dry_run", False)
+    # Remove the "dry_run" option, if any, and update `context`
+    context.core.dry_run = options.pop("dry_run", context.core.dry_run)
 
     log.info("Configure MESSAGEix-Transport")
     mark_time()
@@ -596,7 +621,7 @@ def main(
         # For calls to add_par_data(), int() are returned with number of observations
         log.info(f"Added {sum_numeric(result)} total obs")
 
-    if dry_run:
+    if context.core.dry_run:
         return c.get("transport build debug")
 
     # First strip existing emissions data
