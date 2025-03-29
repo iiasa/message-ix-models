@@ -178,7 +178,7 @@ class Dataflow:
         # Collection of annotations for the data flow
         anno = [
             v21.Annotation(id="intent", text=str(i_o.name)),
-            v21.Annotation(id="module", text=repr(module)),
+            v21.Annotation(id="module", text=module),
             v21.Annotation(
                 id="required-for-build", text=repr((i_o & self.FLAG.IN) and required)
             ),
@@ -333,6 +333,11 @@ class Dataflow:
         which the output data will be prepared.
         """
         return Key(str(self.df.get_annotation(id="genno-key").text))
+
+    @property
+    def module(self) -> str:
+        """Module with which the data flow is associated."""
+        return str(self.df.get_annotation(id="module").text)
 
     @property
     def path(self) -> Path:
