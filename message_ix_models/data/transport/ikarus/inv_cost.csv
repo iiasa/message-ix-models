@@ -43,6 +43,7 @@ IKARUS,commuter train electric,electr,2015,2.5
 IKARUS,commuter train electric,electr,2020,2.72
 IKARUS,commuter train electric,electr,2025,2.95
 IKARUS,commuter train electric,electr,2030,3.18
+IKARUS,commuter train electric,electr,2070,2.78
 IKARUS,commuter train electric efficient,electr,2000,1.62
 IKARUS,commuter train electric efficient,electr,2005,1.84
 IKARUS,commuter train electric efficient,electr,2010,2.03
@@ -71,6 +72,7 @@ IKARUS,regional train electric,electr,2015,2.6
 IKARUS,regional train electric,electr,2020,2.83
 IKARUS,regional train electric,electr,2025,3.08
 IKARUS,regional train electric,electr,2030,3.32
+IKARUS,regional train electric,electr,2070,2.8
 IKARUS,regional train electric efficient,electr,2000,1.67
 IKARUS,regional train electric efficient,electr,2005,1.93
 IKARUS,regional train electric efficient,electr,2010,2.09
@@ -99,6 +101,7 @@ IKARUS,intercity train electric,electr,2015,4.85
 IKARUS,intercity train electric,electr,2020,5.3
 IKARUS,intercity train electric,electr,2025,5.75
 IKARUS,intercity train electric,electr,2030,6.2
+IKARUS,intercity train electric,electr,2070,4.5
 IKARUS,intercity train electric efficient,electr,2000,4.35
 IKARUS,intercity train electric efficient,electr,2005,5.34
 IKARUS,intercity train electric efficient,electr,2010,5.53
@@ -141,6 +144,7 @@ Krey/Linßen,Bus diesel,diesel,2015,0.184
 Krey/Linßen,Bus diesel,diesel,2020,0.194
 Krey/Linßen,Bus diesel,diesel,2025,0.198
 Krey/Linßen,Bus diesel,diesel,2030,0.202
+Krey/Linßen,Bus diesel,diesel,2050,0.202
 Krey/Linßen,Bus diesel efficient,diesel,2005,0.194
 Krey/Linßen,Bus diesel efficient,diesel,2010,0.202
 Krey/Linßen,Bus diesel efficient,diesel,2015,0.211
@@ -168,6 +172,7 @@ Krey/Linßen,Bus electric,electr,2015,0.223
 Krey/Linßen,Bus electric,electr,2020,0.232
 Krey/Linßen,Bus electric,electr,2025,0.234
 Krey/Linßen,Bus electric,electr,2030,0.238
+Krey/Linßen,Bus electric,electr,2050,0.200
 Krey/Linßen,Reisebus diesel,diesel,2000,0.154
 Krey/Linßen,Reisebus diesel,diesel,2005,0.162
 Krey/Linßen,Reisebus diesel,diesel,2010,0.174

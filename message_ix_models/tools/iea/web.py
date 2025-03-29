@@ -4,28 +4,32 @@ import logging
 import zipfile
 from collections.abc import Iterable
 from copy import copy
+from enum import Flag
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 import genno
 import pandas as pd
 from genno import Key
-from genno.core.key import single_key
 from genno.operator import concat
 from platformdirs import user_cache_path
 
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
-from message_ix_models.util import cached, package_data_path, path_fallback
+from message_ix_models.util import (
+    cached,
+    minimum_version,
+    package_data_path,
+    path_fallback,
+)
 from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
     import os
 
     import genno
-    from genno.types import AnyQuantity
+    from genno.types import TQuantity
 
-    from message_ix_models.types import KeyLike
     from message_ix_models.util.common import MappingAdapter
 
 log = logging.getLogger(__name__)
@@ -86,6 +90,64 @@ FILES = {
     ("OECD", "2022"): ("372f7e29-en.zip",),  # Timestamped 20230406T1000
     ("OECD", "2023"): ("8624f431-en.zip",),  # Timestamped 20231012T1000
 }
+
+
+class TRANSFORM(Flag):
+    """Flags for optional transformations of IEA EWEB data."""
+
+    #: Aggregate using "n::groups"—the same as :meth:`.ExoDataSource.transform`. This
+    #: operates on the |n| labels transformed to alpha-3 codes by step (1) above.
+    #:
+    #: Mutually exclusive with :attr:`B`.
+    A = 1
+
+    #: - Compute intermediate quantities using :func:`.transform_B`.
+    #: - Aggregate using the groups returned by :func:`get_node_groups_B`.
+    #:
+    #: Mutually exclusive with :attr:`A`.
+    B = 2
+
+    #: Derive additional "flow" labels using :func:`.transform_C`.
+    C = 4
+
+    DEFAULT = A
+
+    @classmethod
+    def from_value(
+        cls, value: Union[str, int, "TRANSFORM", None] = None
+    ) -> "TRANSFORM":
+        """Return a member of the enumeration given a name, :class:`int`, or None.
+
+        :meth:`.is_valid` is called on the result.
+        """
+        if isinstance(value, str):
+            result = cls[value]
+        elif isinstance(value, int):
+            result = cls(value)
+        elif isinstance(value, cls):
+            result = value
+        elif value is None:
+            result = cls.DEFAULT
+
+        result.is_valid()
+
+        return result
+
+    def is_valid(self, *, fail: Literal["log", "raise"] = "raise") -> bool:
+        """Check whether a particular set of flags is value."""
+        msg = None
+        if self == TRANSFORM.A | TRANSFORM.B:
+            msg = "TRANSFORM.A and TRANSFORM.B flags to IEA_EWEB are mutually exclusive"
+        elif not self & (TRANSFORM.A | TRANSFORM.B):
+            msg = "Must give at least one of TRANSFORM.A or TRANSFORM.B"
+        if msg and fail == "raise":
+            raise ValueError(msg)
+        elif msg:
+            log.error(msg)
+            return False
+        else:
+            return True
+
 
 #: Location of :data:`.FILES`; :py:`where=` argument to :func:`.path_fallback`.
 #:
@@ -149,23 +211,19 @@ class IEA_EWEB(ExoDataSource):
             self.indexers.update(flow=flow)
 
         # Handle the 'transform' keyword
-        self.transform_method = _kw.pop("transform", "A")
+        self.transform_method = TRANSFORM.from_value(_kw.pop("transform", None))
+
         regions = _kw.pop("regions", None)
-        if self.transform_method not in "AB":
-            raise ValueError(f"transform={self.transform_method!r}")
-        elif self.transform_method == "B":
+        if self.transform_method & TRANSFORM.B:
+            msg = "TRANSFORM.B only supported for "
             if (p, e) != ("IEA", "2024"):
                 raise ValueError(
-                    f"transform='B' only supported for (provider='IEA', "
-                    f"edition='2024'); got {(p, e)!r}"
+                    f"{msg}(provider='IEA', edition='2024'); got {(p, e)!r}"
                 )
             elif regions != "R12":
-                raise ValueError(
-                    f"transform='B' only supported for regions='R12'; got {regions!r}"
-                )
+                raise ValueError(f"{msg}regions='R12'; got {regions!r}")
 
-        if len(_kw):
-            raise ValueError(_kw)
+        self.raise_on_extra_kw(_kw)
 
         # Identify a location that contains the files for the given (provider, edition)
         # Parent directory relative to which `files` are found
@@ -188,6 +246,7 @@ class IEA_EWEB(ExoDataSource):
             .sel(self.indexers, drop=True)
         )
 
+    @minimum_version("genno 1.28")
     def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
         """Prepare `c` to transform raw data from `base_key`.
 
@@ -210,21 +269,28 @@ class IEA_EWEB(ExoDataSource):
         """
         # Map values like RUSSIA appearing in the (IEA, 2024) edition to e.g. RUS
         adapter = get_mapping(self.provider, self.edition)
-        k = c.add(base_key + "adapted", adapter, base_key)
+        k, result = base_key, base_key["agg"]
+        c.add(k[0], adapter, k)
 
-        if self.transform_method == "A":
+        if self.transform_method & TRANSFORM.A:
             # Key for aggregation groups: hierarchy from the standard code lists,
             # already added by .exo_data.prepare_computer()
-            k_n_agg: "KeyLike" = "n::groups"
-        elif self.transform_method == "B":
+            k_n_agg = Key("n", (), "groups")
+            c.add(k[1], k[0])
+        elif self.transform_method & TRANSFORM.B:
             # Derive intermediate values "_IIASA_{AFR,PAS,SAS}"
-            k = c.add(base_key + "adapted" + "2", transform_B, k)
+            c.add(k[1], transform_B, k[0])
 
             # Add groups for aggregation, including these intermediate values
-            k_n_agg = single_key(c.add(f"n::groups+{self.id}", get_node_groups_B))
+            k_n_agg = Key("n", (), f"groups+{self.id}")
+            c.add(k_n_agg, get_node_groups_B)
+
+        if self.transform_method & TRANSFORM.C:
+            c.add(k[2], transform_C, k[1])
 
         # Aggregate on 'n' dimension using the `k_n_agg`
-        return single_key(c.add(base_key + "agg", "aggregate", k, k_n_agg, keep=False))
+        c.add(result, "aggregate", k.last, k_n_agg, keep=False)
+        return result
 
 
 def fwf_to_csv(path: Path, progress: bool = False) -> Path:  # pragma: no cover
@@ -469,7 +535,7 @@ def get_node_groups_B() -> dict[Literal["n"], dict[str, list[str]]]:
     return dict(n=result)
 
 
-def transform_B(qty: "AnyQuantity") -> "AnyQuantity":
+def transform_B(qty: "TQuantity") -> "TQuantity":
     """Compute some derived intermediate labels along the |n| dimension of `qty`.
 
     These are used via :meth:`.IEA_EWEB.transform` in the aggregations specified by
@@ -500,4 +566,25 @@ def transform_B(qty: "AnyQuantity") -> "AnyQuantity":
         q_afr.expand_dims({"n": ["_IIASA_AFR"]}),
         q_pas.expand_dims({"n": ["_IIASA_PAS"]}),
         q_sas.expand_dims({"n": ["_IIASA_SAS"]}),
+    )
+
+
+def transform_C(qty: "TQuantity") -> "TQuantity":
+    r"""Compute data for some additional "flow" codes related to transport.
+
+    In the source data, values for :py:`flow="AVBUNK"` are negative. Populate data for
+    :py:`flow="_1"` and :py:`flow="_2"` such that:
+
+    .. math::
+       X_{\_1} = X_{DOMESAIR} - X_{AVBUNK} \\
+       X_{\_2} = X_{TOTTRANS} - X_{AVBUNK}
+
+    The resulting values for, for instance, :math:`X_{\_1}` are larger in magnitude than
+    the values for :math:`X_{DOMESAIR}`, because a negative number is subtracted.
+    """
+    q_avbunk = qty.sel(flow="AVBUNK", drop=True)
+    return concat(
+        qty,
+        (qty.sel(flow="DOMESAIR", drop=True) - q_avbunk).expand_dims({"flow": ["_1"]}),
+        (qty.sel(flow="TOTTRANS", drop=True) - q_avbunk).expand_dims({"flow": ["_2"]}),
     )

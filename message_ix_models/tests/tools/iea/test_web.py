@@ -1,17 +1,17 @@
 """Tests of :mod:`.tools`."""
 
-from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
 from genno import Computer
-from packaging.version import parse
 
 from message_ix_models.testing import GHA
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.tools.iea.web import (
     DIMS,
+    IEA_EWEB,
+    TRANSFORM,
     generate_code_lists,
     get_mapping,
     load_data,
@@ -20,13 +20,6 @@ from message_ix_models.util import HAS_MESSAGE_DATA
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-
-# Dask < 2024.4.1 is incompatible with Python >= 3.11.9, but we pin dask in this range
-# for tests of message_ix < 3.7.0. Skip these tests:
-MARK_DASK_PYTHON = pytest.mark.skipif(
-    condition=parse(version("message_ix")) < parse("3.7.0"),
-    reason="Pinned dask version and certain Python versions are incompatible",
-)
 
 
 @pytest.fixture
@@ -46,8 +39,21 @@ def user_local_data(pytestconfig, request) -> "Generator":  # pragma: no cover
         source.unlink()
 
 
+_FLOW = [
+    "DOMESAIR",
+    "DOMESNAV",
+    "PIPELINE",
+    "RAIL",
+    "ROAD",
+    "TOTTRANS",
+    "TRNONSPE",
+    "WORLDAV",
+    "WORLDMAR",
+]
+
+
+@IEA_EWEB.transform.minimum_version
 class TestIEA_EWEB:
-    @MARK_DASK_PYTHON
     # Uncomment the following line to use the full data files from a local copy
     # @pytest.mark.usefixtures("user_local_data")
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
@@ -58,21 +64,7 @@ class TestIEA_EWEB:
                 provider="OECD", edition="2021", product=["CHARCOAL"], flow=["RESIDENT"]
             ),
             # All flows related to transport
-            dict(
-                provider="OECD",
-                edition="2022",
-                flow=[
-                    "DOMESAIR",
-                    "DOMESNAV",
-                    "PIPELINE",
-                    "RAIL",
-                    "ROAD",
-                    "TOTTRANS",
-                    "TRNONSPE",
-                    "WORLDAV",
-                    "WORLDMAR",
-                ],
-            ),
+            dict(provider="OECD", edition="2022", flow=_FLOW),
             pytest.param(
                 dict(provider="IEA", edition="2023", extra_kw="FOO"),
                 marks=pytest.mark.xfail(raises=ValueError),
@@ -85,6 +77,13 @@ class TestIEA_EWEB:
                 ),
             ),
             dict(provider="IEA", edition="2024", transform="B", regions="R12"),
+            dict(
+                provider="IEA",
+                edition="2024",
+                flow=["AVBUNK"] + _FLOW,
+                transform=TRANSFORM.B | TRANSFORM.C,
+                regions="R12",
+            ),
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
@@ -111,6 +110,46 @@ class TestIEA_EWEB:
         assert {1980, 2018} < set(result.coords["y"].data)
 
 
+class TestTRANSFORM:
+    def test_from_value(self) -> None:
+        assert TRANSFORM.from_value() is TRANSFORM.DEFAULT
+        assert TRANSFORM.from_value(None) is TRANSFORM.DEFAULT
+        assert TRANSFORM.from_value(TRANSFORM.DEFAULT) is TRANSFORM.DEFAULT
+        assert TRANSFORM.from_value("B") is TRANSFORM.B
+
+        with pytest.raises(KeyError):
+            TRANSFORM.from_value("D")
+
+    def test_is_valid(self, caplog) -> None:
+        with pytest.raises(ValueError):
+            (TRANSFORM["A"] | TRANSFORM["B"]).is_valid()
+
+        assert (TRANSFORM["A"] | TRANSFORM["B"]).is_valid(fail="log") is False
+        assert caplog.messages[-1].endswith("mutually exclusive")
+
+        assert (TRANSFORM["A"] | TRANSFORM["C"]).is_valid() is True
+        assert (TRANSFORM["B"] | TRANSFORM["C"]).is_valid() is True
+
+        assert TRANSFORM["C"].is_valid(fail="log") is False
+        assert " at least one of " in caplog.messages[-1]
+
+    def test_values(self) -> None:
+        """Test ordinary behaviours of enum.Flag."""
+        TRANSFORM["A"] == TRANSFORM.A == 1
+        TRANSFORM["B"] == TRANSFORM.B == 2
+        TRANSFORM["C"] == TRANSFORM.C == 4
+
+        v1 = TRANSFORM.A | TRANSFORM.C
+        assert TRANSFORM.A & v1
+        assert not TRANSFORM.B & v1
+        assert TRANSFORM.C & v1
+
+        v2 = TRANSFORM.C
+        assert not TRANSFORM.A & v2
+        assert not TRANSFORM.B & v2
+        assert TRANSFORM.C & v2
+
+
 # NB once there is a fuzzed version of the (IEA, 2023) data available, usage of this
 #    variable can be replaced with list(FILES.keys())
 PROVIDER_EDITION = (
@@ -128,7 +167,6 @@ PROVIDER_EDITION = (
 )
 
 
-@MARK_DASK_PYTHON
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_load_data(test_context, tmp_path, provider, edition):
     # # Store in the temporary directory for this test
@@ -146,7 +184,6 @@ def test_load_data(test_context, tmp_path, provider, edition):
     assert (set(DIMS) & {"Value"}) < set(result.columns)
 
 
-@MARK_DASK_PYTHON
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_generate_code_lists(tmp_path, provider, edition):
     # generate_code_lists() runs

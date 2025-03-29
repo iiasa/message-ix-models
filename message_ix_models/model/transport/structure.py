@@ -3,7 +3,8 @@ from copy import deepcopy
 from itertools import chain
 from typing import Any, Union
 
-from sdmx.model.common import Annotation, Code
+from sdmx.model.common import Code
+from sdmx.model.v21 import Annotation
 
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model import disutility

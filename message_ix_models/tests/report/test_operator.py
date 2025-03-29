@@ -24,8 +24,6 @@ from message_ix_models.report.operator import (
     share_curtailment,
 )
 
-from ..test_report import MARK
-
 
 @pytest.fixture
 def c() -> Computer:
@@ -78,7 +76,6 @@ def test_filter_ts():
     assert {"ar"} == set(result.variable.unique())
 
 
-@MARK[0]
 def test_from_url(scenario):
     full_url = f"ixmp://{scenario.platform.name}/{scenario.url}"
 
@@ -95,7 +92,6 @@ def test_from_url(scenario):
     assert scenario.url == result.url
 
 
-@MARK[0]
 def test_get_remove_ts(caplog, scenario):
     # get_ts() runs
     result0 = get_ts(scenario)

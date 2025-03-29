@@ -2,14 +2,13 @@ import logging
 from dataclasses import InitVar, dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
-import message_ix
 from genno import Quantity
 
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
 from message_ix_models.project.ssp import SSP_2024, ssp_field
 from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
-from message_ix_models.util import identify_nodes, package_data_path
+from message_ix_models.util import package_data_path
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.genno import as_quantity
 from message_ix_models.util.sdmx import AnnotationsMixIn
@@ -206,7 +205,7 @@ class Config(ConfigHelper):
     #: List of modules containing model-building calculations.
     modules: list[str] = field(
         default_factory=lambda: (
-            "groups demand freight ikarus ldv disutility non_ldv plot data"
+            "groups demand freight ikarus ldv disutility other passenger plot data"
         ).split()
     )
 
@@ -313,51 +312,30 @@ class Config(ConfigHelper):
         self.set_navigate_scenario(navigate_scenario)
 
     @classmethod
-    def from_context(
-        cls,
-        context: Context,
-        scenario: Optional[message_ix.Scenario] = None,
-        options: Optional[dict] = None,
-    ) -> "Config":
+    def from_context(cls, context: Context, options: Optional[dict] = None) -> "Config":
         """Configure `context` for building MESSAGEix-Transport.
 
-        1. If `scenario` is given, ``context.model.regions`` is updated to match. See
-           :func:`.identify_nodes`.
-        2. ``context.transport`` is set to an instance of :class:`Config`.
+        :py:`context.transport` is set to an instance of :class:`Config`.
 
-           Configuration files and metadata are read and override the class defaults.
+        Configuration files and metadata are read and override the class defaults.
 
-           The files listed in :data:`.METADATA` are stored in the respective
-           attributes, e.g. :attr:`set` corresponding to
-           :file:`data/transport/set.yaml`.
+        The files listed in :data:`.METADATA` are stored in the respective attributes
+        for instance :attr:`set` corresponding to :file:`data/transport/set.yaml`.
 
-           If a subdirectory of :file:`data/transport/` exists corresponding to
-           ``context.model.regions`` then the files are loaded from that subdirectory,
-           for instance :file:`data/transport/ISR/set.yaml` is preferred to
-           :file:`data/transport/set.yaml`.
+        If a subdirectory of :file:`data/transport/` exists corresponding to
+        :py:`context.model.regions` (:attr:`.model.Config.regions`), then the files are
+        loaded from that subdirectory, for instance :file:`data/transport/ISR/set.yaml`
+        is preferred to :file:`data/transport/set.yaml`.
+
+        .. note:: This method previously had behaviour similar to
+           :meth:`.model.Config.regions_from_scenario`. Calling code should call that
+           method if it is needed to ensure that :attr:`.model.Config.regions` has the
+           desired value.
         """
         from .structure import make_spec
 
         # Handle arguments
         options = options or dict()
-
-        log.debug(f".transport.Config.from_context: {context.model.regions = }")
-        try:
-            # Identify the node codelist used in `scenario`
-            regions = identify_nodes(scenario) if scenario else context.model.regions
-        except (AttributeError, ValueError):
-            pass
-        else:
-            if scenario:
-                log.debug(
-                    f"scenario.set('node') = {' '.join(sorted(scenario.set('node')))}"
-                )
-            if context.model.regions != regions:
-                log.info(
-                    f"Override Context.model.regions={context.model.regions!r} with "
-                    f"{regions!r} from scenario contents"
-                )
-                context.model.regions = regions
 
         # Default configuration
         config = cls()
@@ -434,7 +412,7 @@ class Config(ConfigHelper):
         # Look up the SSP_2024 Enum
         self.ssp = SSP_2024.by_urn(sca.SSP_URN)
 
-        # Store settings on the context
+        # Store settings on the Config instance
         self.project["LED"] = sca.is_LED_scenario
         self.project["EDITS"] = {"activity": sca.EDITS_activity_id}
 

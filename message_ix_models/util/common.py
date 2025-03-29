@@ -122,7 +122,7 @@ class MappingAdapter(Adapter):
                 continue
             result = concat(
                 *[
-                    qty.sel({dim: a}, drop=True).expand_dims({dim: [b]})
+                    result.sel({dim: a}, drop=True).expand_dims({dim: [b]})
                     for (a, b) in labels
                     if a in coords[dim]  # Skip `label` if not in `dim` of `qty`
                 ]

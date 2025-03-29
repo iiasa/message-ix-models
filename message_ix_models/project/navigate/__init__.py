@@ -8,15 +8,19 @@ from dataclasses import asdict, dataclass, field, replace
 from enum import Flag, auto
 from functools import lru_cache, reduce
 from pathlib import Path
-from typing import Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Literal, Optional, Union, cast
 
 import ixmp
 import yaml
-from sdmx.model.v21 import Annotation, Code
+from sdmx.model.common import Code
+from sdmx.model.v21 import Annotation
 
 from message_ix_models.model.workflow import Config as WfConfig
 from message_ix_models.project.engage.workflow import PolicyConfig
 from message_ix_models.util import MESSAGE_MODELS_PATH, as_codes
+
+if TYPE_CHECKING:
+    from sdmx.model.common import BaseAnnotation
 
 log = logging.getLogger(__name__)
 
@@ -162,13 +166,13 @@ _A = {
 }
 
 
-def _anno(names: str, climate_policy) -> list[Annotation]:
+def _anno(names: str, climate_policy) -> list["BaseAnnotation"]:
     """Return the annotations given by `names` from :data:`_A`.
 
     Shorthand function used to prepare :data:`EXTRA_SCENARIOS`.
     """
     # Collect predefined annotations from _A
-    result = [_A[name] for name in names.split()]
+    result: list["BaseAnnotation"] = [_A[name] for name in names.split()]
 
     # Add an annotation with the value of the `climate_policy` argument
     result.append(Annotation(id="navigate_climate_policy", text=climate_policy))

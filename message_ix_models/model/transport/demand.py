@@ -6,21 +6,18 @@ from typing import TYPE_CHECKING
 import genno
 import numpy as np
 import pandas as pd
-from dask.core import literal
-from genno import Computer, KeySeq
+from genno import Key, literal
 from message_ix import make_df
 
 from message_ix_models.report.key import GDP
 from message_ix_models.util import broadcast
 
-from . import files as exo
+from . import factor
 from .key import (
     cg,
     cost,
-    fv,
-    fv_cny,
+    exo,
     gdp_cap,
-    gdp_index,
     gdp_ppp,
     ldv_cny,
     ldv_ny,
@@ -37,8 +34,10 @@ from .key import (
     t_modes,
     y,
 )
+from .util import EXTRAPOLATE
 
 if TYPE_CHECKING:
+    from genno import Computer
     from genno.types import AnyQuantity
 
     from .config import Config
@@ -117,10 +116,7 @@ TASKS = [
     # Smooth prices to avoid zig-zag in share projections
     (price.base, "smooth", price[2]),
     # Interpolate speed data
-    (
-        ("speed:scenario-n-t-y:0", "interpolate", exo.speed, "y::coords"),
-        dict(kwargs=dict(fill_value="extrapolate")),
-    ),
+    (("speed:scenario-n-t-y:0", "interpolate", exo.speed, "y::coords"), EXTRAPOLATE),
     # Select speed data
     ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", "indexers:scenario"),
     # Cost of transport (n, t, y)
@@ -140,7 +136,7 @@ TASKS = [
     # Mode shares
     ((ms, "logit", cost, sw, "lambda:", y), dict(dim="t")),
     # Total PDT (n, t, y), with modes for the 't' dimension
-    (pdt_nyt + "0", "mul", pdt_ny, ms),
+    (pdt_nyt[0], "mul", pdt_ny, ms),
     # Scenario-specific adjustment factors
     ("pdt factor:n-y-t", "factor_pdt", n, y, t_modes, "config"),
     # Only the LDV values
@@ -148,7 +144,7 @@ TASKS = [
         ("ldv pdt factor:n-y", "select", "pdt factor:n-y-t"),
         dict(indexers=dict(t="LDV"), drop=True),
     ),
-    (pdt_nyt, "mul", pdt_nyt + "0", "pdt factor:n-y-t"),
+    (pdt_nyt, "mul", pdt_nyt[0], "pdt factor:n-y-t"),
     # Per capita (for validation)
     (pdt_nyt + "capita+post", "div", pdt_nyt, pop),
     # LDV PDT only (n, y)
@@ -166,37 +162,19 @@ TASKS = [
     (ldv_ny + "total", "mul", ldv_ny + "ref", "ldv pdt factor:n-y"),
     # LDV PDT shared out by consumer group (cg, n, y)
     (ldv_nycg, "mul", ldv_ny + "total", cg),
-    #
-    # # Base freight activity from IEA EEI
-    # ("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
-    # Base year freight activity from file (n, t), with modes for the 't' dimension
-    ("fv:n-t:historical", "mul", exo.mode_share_freight, exo.activity_freight),
-    # …indexed to base-year values
-    (gdp_index, "index_to", gdp_ppp, literal("y"), "y0"),
-    (fv + "0", "mul", "fv:n-t:historical", gdp_index),
-    # Scenario-specific adjustment factor for freight activity
-    ("fv factor:n-t-y", "factor_fv", n, y, "config"),
-    # Apply the adjustment factor
-    (fv + "1", "mul", fv + "0", "fv factor:n-t-y"),
-    # Select only the ROAD data. NB Do not drop so 't' labels can be used for 'c', next.
-    ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["RAIL", "ROAD"]))),
-    # Relabel
-    ((fv_cny, "relabel2", fv + "2"), dict(new_dims={"c": "transport F {t}"})),
-    # Convert to ixmp format
-    (("demand::F+ixmp", "as_message_df", fv_cny), _DEMAND_KW),
     # Select only non-LDV PDT
-    ((pdt_nyt + "1", "select", pdt_nyt), dict(indexers=dict(t=["LDV"]), inverse=True)),
+    ((pdt_nyt[1], "select", pdt_nyt), dict(indexers=dict(t=["LDV"]), inverse=True)),
     # Relabel PDT
     (
-        (pdt_cny + "0", "relabel2", pdt_nyt + "1"),
+        (pdt_cny[0], "relabel2", pdt_nyt[1]),
         dict(new_dims={"c": "transport pax {t.lower()}"}),
     ),
-    (pdt_cny, "convert_units", pdt_cny + "0", "Gp km / a"),
+    (pdt_cny, "convert_units", pdt_cny[0], "Gp km / a"),
     # Convert to ixmp format
     (("demand::P+ixmp", "as_message_df", pdt_cny), _DEMAND_KW),
     # Relabel ldv pdt:n-y-cg
-    ((ldv_cny + "0", "relabel2", ldv_nycg), dict(new_dims={"c": "transport pax {cg}"})),
-    (ldv_cny, "convert_units", ldv_cny + "0", "Gp km / a"),
+    ((ldv_cny[0], "relabel2", ldv_nycg), dict(new_dims={"c": "transport pax {cg}"})),
+    (ldv_cny, "convert_units", ldv_cny[0], "Gp km / a"),
     (("demand::LDV+ixmp", "as_message_df", ldv_cny), _DEMAND_KW),
     # Dummy demands, if these are configured
     ("demand::dummy+ixmp", dummy, "c::transport", "nodes::ex world", y, "config"),
@@ -206,13 +184,12 @@ TASKS = [
         "merge_data",
         "demand::LDV+ixmp",
         "demand::P+ixmp",
-        "demand::F+ixmp",
         "demand::dummy+ixmp",
     ),
 ]
 
 
-def pdt_per_capita(c: Computer) -> None:
+def pdt_per_capita(c: "Computer") -> None:
     """Set up calculation of :data:`~.key.pdt_cap`.
 
     Per Schäfer et al. (2009) Figure 2.5: linear interpolation between log GDP PPP per
@@ -220,17 +197,17 @@ def pdt_per_capita(c: Computer) -> None:
     |y0| and (:attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_pdt`), which give a future
     “fixed point” towards which all regions converge.
 
-    Values from the file :file:`pdt-elasticity.csv` are selected according to
+    Values from the file :data:`.elasticity_p` are selected according to
     :attr:`.Config.ssp <.transport.config.Config.ssp>` and used to scale the difference
     between projected, log GDP in each future period and the log GDP in the reference
     year.
     """
-    gdp = KeySeq(GDP)
-    pdt = KeySeq("_pdt:n-y")
+    gdp = Key(GDP)
+    pdt = Key("_pdt:n-y")
 
     # GDP expressed in PPP. In the SSP(2024) input files, this conversion is already
     # applied, so no need to multiply by a mer_to_ppp factor here → simple alias.
-    c.add(gdp["PPP"], gdp.base)
+    c.add(gdp["PPP"], gdp)
 
     # GDP PPP per capita
     c.add(gdp["capita"], "div", gdp["PPP"], pop)
@@ -252,7 +229,7 @@ def pdt_per_capita(c: Computer) -> None:
     # Same transformation for both quantities
     for x, reference_values in ((gdp, gdp["capita"]), (pdt, pdt["ref"])):
         # Retrieve value from configuration
-        k = KeySeq(f"{x.name}::fixed")
+        k = Key(x.name, (), "fixed")
         c.add(k[0], "quantity_from_config", "config", name=f"fixed_{x.name.strip('_')}")
         # Broadcast on `n` dimension
         c.add(k[1] * "n", "mul", k[0], "n:n:ex world")
@@ -275,11 +252,15 @@ def pdt_per_capita(c: Computer) -> None:
     # Compute slope of PDT w.r.t. GDP after transformation
     c.add("pdt slope:n", "div", pdt["delta"] / "y", gdp["delta"] / "y")
 
-    # Select 'elasticity' from "pdt elasticity:scenario-n:exo"
-    c.add("pdt elasticity:n", "select", exo.pdt_elasticity, "indexers:scenario")
+    # Select 'elasticity' from "elasticity:scenario-n-y:P+exo"
+    k_e = genno.Key(exo.elasticity_p.name, "ny")
+    c.add(k_e[0], "select", exo.elasticity_p, "indexers:scenario")
+
+    # Interpolate on "y" dimension
+    c.add(k_e[1], "interpolate", k_e[0], "y::coords", **EXTRAPOLATE)
 
     # Adjust GDP by multiplying by 'elasticity'
-    c.add(gdp[2], "mul", gdp[1], "pdt elasticity:n")
+    c.add(gdp[2], "mul", gdp[1], k_e[1])
 
     # Projected PDT = m × adjusted GDP
     c.add(pdt["proj"], "mul", gdp[2], "pdt slope:n")
@@ -305,15 +286,13 @@ def pdt_per_capita(c: Computer) -> None:
     c.add(gdp_cap + "adj", gdp[6])
 
 
-def prepare_computer(c: Computer) -> None:
+def prepare_computer(c: "Computer") -> None:
     """Prepare `c` to calculate and add transport demand data.
 
     See also
     --------
     TASKS
     """
-    from . import factor
-
     config: "Config" = c.graph["context"].transport
 
     # Compute total PDT per capita
@@ -332,6 +311,6 @@ def prepare_computer(c: Computer) -> None:
         c.add(pdt_cap * "t", "select", exo.pdt_cap_proj, indexers=dict(scenario="LED"))
 
         # Multiply by population for the total
-        c.add(pdt_nyt + "0", "mul", pdt_cap * "t", pop)
+        c.add(pdt_nyt[0], "mul", pdt_cap * "t", pop)
 
     c.add("transport_data", __name__, key="transport demand::ixmp")

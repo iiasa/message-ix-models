@@ -1,4 +1,5 @@
 from importlib.metadata import version
+from typing import TYPE_CHECKING
 
 import genno
 import numpy.testing as npt
@@ -15,6 +16,7 @@ from message_ix_models.model.transport.operator import (
     distance_nonldv,
     factor_input,
     factor_ssp,
+    groups_iea_eweb,
     sales_fraction_annual,
     transport_check,
     uniform_in_dim,
@@ -22,6 +24,9 @@ from message_ix_models.model.transport.operator import (
 from message_ix_models.model.transport.structure import get_technology_groups
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.project.ssp import SSP_2024
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 @pytest.mark.xfail(reason="Incomplete")
@@ -135,6 +140,13 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
     result = factor_ssp(config, n, y, info=factor.Factor(layers))
 
     assert {"n", "y"} == set(result.dims)
+
+
+def test_groups_iea_eweb(test_context: "Context") -> None:
+    cfg = Config.from_context(test_context)
+
+    # Function runs
+    groups_iea_eweb(cfg.spec.add.set["technology"])
 
 
 @pytest.mark.skipif(

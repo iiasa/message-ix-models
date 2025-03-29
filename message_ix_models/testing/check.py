@@ -2,17 +2,18 @@
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Collection, Mapping
+from collections.abc import Callable, Collection, Hashable, Mapping
 from dataclasses import dataclass
 from functools import partial
 from itertools import count
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Optional, TypeVar, Union
 
 import genno
 import pandas as pd
 
 if TYPE_CHECKING:
-    import pathlib
+    import pint.registry
 
     from message_ix_models.types import KeyLike
 
@@ -102,10 +103,13 @@ class ContainsDataForParameters(Check):
     def run(self, obj):
         if self.parameter_names:
             if self.parameter_names != set(obj):
-                return False, f"Parameters {set(obj)} != {self.parameter_names}"
+                return (
+                    False,
+                    f"Parameters {sorted(set(obj))} != {sorted(self.parameter_names)}",
+                )
             else:
                 N = len(self.parameter_names)
-                return True, f"{N}/{N} expected parameters present"
+                return True, f"{N}/{N} expected parameters are present"
         return True
 
 
@@ -116,7 +120,7 @@ class Dump(Check):
     This always returns :any:`True`.
     """
 
-    base_path: "pathlib.Path"
+    base_path: Path
 
     types = (dict, pd.DataFrame, genno.Quantity)
 
@@ -151,9 +155,9 @@ class Dump(Check):
 
 @dataclass
 class HasCoords(Check):
-    """Object has/lacks certain coordinates."""
+    """Object has/omits certain coordinates."""
 
-    coords: dict[str, Collection[str]]
+    coords: dict[str, Collection[Hashable]]
     inverse: bool = False
     types = (dict, pd.DataFrame, genno.Quantity)
 
@@ -163,23 +167,27 @@ class HasCoords(Check):
 
         # Prepare a coords mapping for the object
         if isinstance(obj, pd.DataFrame):
-            coords = {dim: obj[dim].unique() for dim in obj.columns}
+            # Unique values in each column
+            coords = {dim: set(obj[dim].unique()) for dim in obj.columns}
         else:
-            coords = obj.coords
+            # genno or xarray coords → mapping of str → xr.DataArray; unpack the latter
+            coords = {k: set(v.data) for k, v in obj.coords.items()}
 
         result = True
         message = []
         for dim, v in self.coords.items():
             if dim not in coords:
                 continue
-            exp, obs = set(v), set(coords[dim])
+            d, exp, obs = f"Dimension {dim!r}", set(v), coords[dim]
 
             if not self.inverse and not exp <= obs:
                 result = False
-                message.append(f"\nDimension {dim!r}: missing coords {exp - obs}")
+                message.append(f"{d} is missing coords {exp - obs}")
             elif self.inverse and not exp.isdisjoint(obs):
                 result = False
-                message.append(f"\nDimension {dim!r}: coords {exp ^ obs} present")
+                message.append(f"{d} has unexpected coords {exp ^ obs}")
+            else:
+                message.append(f"{d} has {len(exp)}/{len(exp)} expected coords")
         return result, "\n".join(message)
 
 
@@ -187,18 +195,21 @@ class HasCoords(Check):
 class HasUnits(Check):
     """Quantity has the expected units."""
 
-    units: Optional[Union[str, dict]]
-    types = (genno.Quantity,)
+    units: Optional[Union[str, dict, "pint.registry.Quantity", "pint.registry.Unit"]]
+    types = (genno.Quantity, pd.DataFrame, dict)
 
     def run(self, obj):
         from genno.testing import assert_units as a_u_genno
 
         from message_ix_models.model.transport.testing import assert_units as a_u_local
 
+        if isinstance(obj, dict):
+            return self.recurse_parameter_data(obj)
+
         if self.units is None:
             return True
 
-        if isinstance(self.units, dict):
+        if isinstance(self.units, dict) or isinstance(obj, pd.DataFrame):
             func = a_u_local
             if isinstance(obj, genno.Quantity):
                 obj = obj.to_series().reset_index()
@@ -208,7 +219,7 @@ class HasUnits(Check):
         try:
             func(obj, self.units)
         except AssertionError as e:
-            return False, repr(e)
+            return False, f"Expected {e!s}"
         else:
             return True, f"Units are {self.units!r}"
 
@@ -256,7 +267,9 @@ class Log(Check):
     This always returns :any:`True`.
     """
 
+    #: Number of rows to log.
     rows: Optional[int] = 7
+
     types = (dict, pd.DataFrame, genno.Quantity)
 
     def recurse_parameter_data(self, obj) -> tuple[bool, str]:
@@ -389,3 +402,29 @@ def insert_checks(
     computer.add(target, list(check_map))
 
     return result
+
+
+def verbose_check(verbosity: int, tmp_path: Optional[Path] = None) -> list[Check]:
+    """Return 0 or more checks that display the data to which they are applied.
+
+    These may be appended to collections passed as inputs to :func:`.insert_checks`.
+
+    Parameters
+    ----------
+    verbosity : int
+        0. Don't log anything
+        1. Log :attr:`.Log.rows` values at the start/end of each quantity.
+        2. Log *all* data. This can produce large logs, e.g. more than 1 GiB of text for
+           :func:`.tests.model.transport.test_build.test_debug`.
+        3. Dump all data to files in `tmp_path`.
+    """
+    from message_ix_models.testing.check import Dump, Log
+
+    values: dict[int, list[Check]] = {
+        0: [],
+        1: [Log()],
+        2: [Log(None)],
+        3: [Dump(tmp_path or Path.cwd())],
+    }
+
+    return values[verbosity]

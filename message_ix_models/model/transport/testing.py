@@ -2,16 +2,17 @@
 
 import logging
 import platform
+from collections import ChainMap
 from collections.abc import Callable, Hashable, Mapping
 from contextlib import nullcontext
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import pytest
 from message_ix import Reporter, Scenario
 
 import message_ix_models.report
-from message_ix_models import ScenarioInfo
+from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.testing import GHA, bare_res
 from message_ix_models.util import identify_nodes, silence_log
@@ -30,25 +31,28 @@ log = logging.getLogger(__name__)
 
 # Common marks for transport code. Do not reuse keys that are less than the highest key
 # appearing in the dict.
-MARK: dict[Hashable, pytest.MarkDecorator] = {
-    0: pytest.mark.xfail(
-        reason="Missing R14 input data/config", raises=FileNotFoundError
-    ),
-    1: pytest.mark.skip(
-        reason="Currently only possible with regions=R12 input data/config",
-    ),
-    3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
-    4: pytest.mark.xfail(reason="Currently unsupported"),
-    # Tests that fail with data that cannot be migrated from message_data
-    7: pytest.mark.xfail(
-        condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
-        reason="Graphviz missing on macos-13 GitHub Actions runners",
-    ),
-    9: pytest.mark.xfail(reason="Missing R14 input data/config"),
-    "gh-288": pytest.mark.xfail(
-        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/288",
-    ),
-}
+MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
+    {
+        0: pytest.mark.xfail(
+            reason="Missing R14 input data/config", raises=FileNotFoundError
+        ),
+        1: pytest.mark.skip(
+            reason="Currently only possible with regions=R12 input data/config",
+        ),
+        3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
+        4: pytest.mark.xfail(reason="Currently unsupported"),
+        # Tests that fail with data that cannot be migrated from message_data
+        7: pytest.mark.xfail(
+            condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
+            reason="Graphviz missing on macos-13 GitHub Actions runners",
+        ),
+        9: pytest.mark.xfail(reason="Missing R14 input data/config"),
+        "gh-288": pytest.mark.xfail(
+            reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/288",
+        ),
+    },
+    testing.MARK,
+)
 
 make_mark: dict[int, Callable[..., pytest.MarkDecorator]] = {
     2: lambda t: pytest.mark.xfail(
@@ -72,12 +76,14 @@ def assert_units(
 
     # Convert the unique value to the same class as `expected`
     if isinstance(expected, pint.Quantity):
-        assert expected == expected.__class__(1.0, all_units[0])
+        other: Any = expected.__class__(1.0, all_units[0])
     elif isinstance(expected, Mapping):
         # Compare dimensionality of the units, rather than exact match
-        assert expected == registry.Quantity(all_units[0] or "0").dimensionality
+        other = registry.Quantity(all_units[0] or "0").dimensionality
     else:
-        assert expected == expected.__class__(all_units[0])
+        other = expected.__class__(all_units[0])
+
+    assert expected == other, f"{expected!r} != {other!r}"
 
 
 def configure_build(
@@ -130,7 +136,7 @@ def built_transport(
 
         with log_cm:
             scenario = res.clone(model=model_name)
-            build.main(context, scenario, options, fast=True)
+            build.main(context, scenario, options)
     else:
         # Loaded existing Scenario; ensure config files are loaded on `context`
         Config.from_context(context, options=options)

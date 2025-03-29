@@ -10,27 +10,36 @@
 #
 # Unit: kilometre / year
 #
-node, value
+scenario, node,    year, value
 # driver_type="M" (moderate)
-# R11_NAM, 13930
+# *,      R11_NAM, 2020, 13930
+# *,      R11_NAM, 2110, 13930
 # driver_type="A" (average)
-R11_NAM, 25860
+*,        R11_NAM, 2020, 25860
+*,        R11_NAM, 2110, 25860
 # driver_type="F" (frequent)
-# R11_NAM, 45550
+# *,      R11_NAM, 2020, 45550
+# *,      R11_NAM, 2110, 45550
 # DLM: “See the "vkt_veh_yr_GCAM.xlsx" spreadsheet that Page Kyle sent
 # me in late-March 2014. The value in this cell is an average of GCAM's
 # Brazil and Latin America regions.”
-R11_LAM, 14600
+*,        R11_LAM, 2020, 14600
+*,        R11_LAM, 2110, 14600
 # “…GCAM's Western Europe region.”
-R11_WEU, 11646
+*,        R11_WEU, 2020, 11646
+*,        R11_WEU, 2110, 11646
 # “…GCAM's Eastern Europe region.”
-R11_EEU,  8962
+*,        R11_EEU, 2020,  8962
+*,        R11_EEU, 2110,  8962
 # “…GCAM's Former Soviet Union region.”
-R11_FSU, 11482
+*,        R11_FSU, 2020, 11482
+*,        R11_FSU, 2110, 11482
 # “…GCAM's Middle East region.”
-R11_MEA, 14000
+*,        R11_MEA, 2020, 14000
+*,        R11_MEA, 2110, 14000
 # “…GCAM's Africa region.”
-R11_AFR, 10391
+*,        R11_AFR, 2020, 10391
+*,        R11_AFR, 2110, 10391
 # “…GCAM's China region. Actually, GCAM assumes an average value of
 # ~20500 km/yr for China, which seems too high in my opinion, so I
 # revised this value downwards. I made an assumption that the value
@@ -38,10 +47,14 @@ R11_AFR, 10391
 # consideration that GCAM assumes that average annual driving distances
 # in the US are 20% lower than what MA3T shows for the average driver
 # (19200 in GCAM vs. 25860 in MA3T).
-R11_CPA, 16000
+*,        R11_CPA, 2020, 16000
+*,        R11_CPA, 2110, 16000
 # “…GCAM's Japan and Australia-NZ regions.”
-R11_PAO, 10000
+*,        R11_PAO, 2020, 10000
+*,        R11_PAO, 2110, 10000
 # “…GCAM's Korea and Southeast Asia regions.”
-R11_PAS, 12000
+*,        R11_PAS, 2020, 12000
+*,        R11_PAS, 2110, 12000
 # “…GCAM's India region.”
-R11_SAS, 10400
+*,        R11_SAS, 2020, 10400
+*,        R11_SAS, 2110, 10400
