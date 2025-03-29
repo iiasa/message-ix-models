@@ -1,10 +1,9 @@
 import logging
 import re
-from typing import TYPE_CHECKING
 
 import genno
 import pytest
-from genno import Key
+from genno import Computer, Key
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
 
@@ -16,10 +15,6 @@ from message_ix_models.model.transport import (
     testing,
 )
 from message_ix_models.util.sdmx import DATAFLOW, Dataflow, eval_anno, make_enum, read
-
-if TYPE_CHECKING:
-    from genno import Computer
-
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +36,36 @@ class TestDataflow:
         """
         c, _ = testing.configure_build(test_context, regions="R12", years="B")
         yield c
+
+    def test_init(self, caplog) -> None:
+        # Message is logged for invalid units
+        Dataflow(module=__name__, name="test_init_0", path="test-init-0", units="foo")
+        assert "'foo' is not defined in the unit registry" in caplog.records[0].message
+
+        # Exception is raised for duplicate definition
+        with pytest.raises(
+            RuntimeError, match="Definition of .*DF_TEST_INIT_0.*duplicates"
+        ):
+            Dataflow(
+                module=__name__, name="test_init_0", path="test-init-0", units="foo"
+            )
+
+    def test_add_tasks(self, caplog, test_context) -> None:
+        c = Computer()
+
+        n, p = "test_add_tasks", "test-add-tasks"
+
+        # FileNotFoundError is raised when adding to Computer with no file
+        df0 = Dataflow(module=__name__, name=f"{n}0", path=f"{p}0", units="")
+        with pytest.raises(FileNotFoundError):
+            c.add("", df0, context=test_context)
+
+        # With required=False, no exception, but also no keys added
+        df1 = Dataflow(
+            module=__name__, name=f"{n}1", path=f"{p}1", units="", required=False
+        )
+        result = c.add("", df1, context=test_context)
+        assert () == result
 
     @build.get_computer.minimum_version
     @pytest.mark.parametrize(
