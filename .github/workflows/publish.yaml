@@ -12,7 +12,7 @@ on:
 
 jobs:
   publish:
-    uses: iiasa/actions/.github/workflows/publish.yaml@main
+    uses: iiasa/actions/.github/workflows/publish.yaml@enh/publish-lfs
     secrets:
       PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
       TESTPYPI_TOKEN: ${{ secrets.TESTPYPI_TOKEN }}
