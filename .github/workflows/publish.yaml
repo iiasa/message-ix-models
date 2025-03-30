@@ -17,4 +17,3 @@ jobs:
       lfs: true
     secrets:
       PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      TESTPYPI_TOKEN: ${{ secrets.TESTPYPI_TOKEN }}
