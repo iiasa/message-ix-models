@@ -20,7 +20,7 @@ from message_ix_models.model.water.data.demand_rules import eval_field as eval_f
 
 def _basin_region_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", info : None, monthly : bool = False) -> pd.DataFrame:
     """
-    Preprocess the basin region data.
+    Preprocess the basin region data for map_basin_region_wat function.
     """
     df = df.copy()
     df.drop(columns=["Unnamed: 0"], inplace=True)
@@ -54,6 +54,7 @@ def _basin_region_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Con
     return df
 
 @minimum_version("message_ix 3.7")
+@minimum_version("python 3.10")
 def map_basin_region_wat(context: "Context") -> pd.DataFrame:
     """
     Calculate share of water availability of basins per each parent region.
@@ -67,6 +68,8 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
     Returns
     -------
         data : pandas.DataFrame
+
+    Requires Python 3.10+ for pattern matching support.
     """
     info = context["water build info"]
 
@@ -105,7 +108,7 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
 
     return df_sw
 
-
+@minimum_version("python 3.10")
 def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     """Add Water supply infrastructure
     This function links the water supply based on different settings and options.
@@ -122,6 +125,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         Values are data frames ready for :meth:`~.Scenario.add_par`.
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
+    
+    Requires Python 3.10+ for pattern matching support.
     """
     # define an empty dictionary
     results = {}
@@ -479,7 +484,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
 
 def _e_flow_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", info : None, monthly : bool = False) -> pd.DataFrame:
     """
-    Preprocess the e-flow data.
+    Preprocess the e-flow data for add_e_flow function.
     """
     df = df.copy()
     df.drop(columns=["Unnamed: 0"], inplace=True)
@@ -500,7 +505,7 @@ def _e_flow_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context",
     return df
     
 
-
+@minimum_version("python 3.10")
 def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     """Add environmental flows
     This function bounds the available water and allocates the environmental
@@ -522,6 +527,8 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         Values are data frames ready for :meth:`~.Scenario.add_par`.
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
+    
+    Requires Python 3.10+ for pattern matching support.
     """
     # define an empty dictionary
     results = {}
