@@ -226,7 +226,11 @@ def prepare_computer(c: "Computer", k_input: Key, method: str) -> "KeyLike":
     c.add(k_emi_in[1], "assign_units", k_emi_in[0], units="Mt/year")
 
     # Call a function to prepare the remaining calculations
-    prepare_func = {"A": prepare_method_A, "B": prepare_method_B}[method]
+    prepare_func = {
+        "A": prepare_method_A,
+        "B": prepare_method_B,
+        "C": prepare_method_C,
+    }[method]
     k = prepare_func(c, k_input, k_emi_in.last)
     # This should return a key like "*:e-n-t-y-UNIT:*"; check
     assert set(DIMS) == set(k.dims), k.dims
@@ -393,6 +397,21 @@ def prepare_method_B(
     labels = dict(n={v: k for k, v in labels["n"].items()})
     k_result = single_key(c.add(Key(L, k_.dims, "3"), "relabel", k_, labels=labels))
     return Key(k_result)
+
+
+def prepare_method_C(
+    c: "genno.Computer", k_input: "genno.Key", k_emi_in: "genno.Key"
+) -> "genno.Key":
+    """Prepare calculations using method 'C'.
+
+    Excluding data transformations, units, and other manipulations for alignment:
+
+    1. Identify a corresponding base scenario.
+    2. Compute the share of `AIR` in total transport final energy.
+
+    …and then the same steps 5–9 as in :func:`.prepare_method_B`.
+    """
+    raise NotImplementedError
 
 
 def process_df(data: pd.DataFrame, *, method: str = "B") -> pd.DataFrame:
