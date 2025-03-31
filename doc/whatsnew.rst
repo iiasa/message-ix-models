@@ -103,6 +103,7 @@ Documentation
   :doc:`project/prisma`,
   :doc:`project/sparccle`, and
   :doc:`project/uptake` (:pull:`282`).
+- Expand the :ref:`costs-usage` section of the :mod:`.tools.costs` documentation to describe the requirement for SSP input data (:issue:`313`, :pull:`322`).
 
 v2025.1.10
 ==========
