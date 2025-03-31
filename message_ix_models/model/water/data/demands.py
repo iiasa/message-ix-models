@@ -18,11 +18,14 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 
-
+@minimum_version("python 3.10")
 def get_basin_sizes(
     basin: pd.DataFrame, node: str
 ) -> Sequence[Union[pd.Series, Literal[0]]]:
-    """Returns the sizes of developing and developed basins for a given node"""
+    """Returns the sizes of developing and developed basins for a given node
+    
+    Requires Python 3.10+ for pattern matching support.
+    """
     temp = basin[basin["BCU_name"] == node]
     sizes = temp.pivot_table(index=["STATUS"], aggfunc="size")
     sizes_dev = sizes["DEV"] if "DEV" in sizes.index else 0
@@ -30,7 +33,7 @@ def get_basin_sizes(
     return_tuple: tuple[Union[pd.Series, Literal[0]], Union[pd.Series, Literal[0]]] = (
         sizes_dev,
         sizes_ind,
-    )  # type: ignore # Somehow, mypy is unable to recognize the proper type without forcing it
+    )  
     return return_tuple
 
 
@@ -46,10 +49,26 @@ def set_target_rate(df: pd.DataFrame, node: str, year: int, target: float) -> No
         ):
             df.at[index, "value"] = target
 
-
+@minimum_version("message_ix 3.7")
+@minimum_version("python 3.10")
 def target_rate(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> pd.DataFrame:
-    """
-    Sets target rates for all nodes in a given basin
+    """    
+    Sets target connection and sanitation rates for SDG scenario.
+    The function filters out the basins as developing and
+    developed based on the countries overlapping basins.
+    If the number of developing countries in the basins are
+    more than basin is categorized as developing and vice versa.
+    If the number of developing and developed countries are equal
+    in a basin, then the basin is assumed developing.
+    For developed basins, target is set at 2030.
+    For developing basins, the access target is set at
+    2040 and 2035 target is the average of
+    2030 original rate and 2040 target.
+
+    Returns
+    -------
+        df (pandas.DataFrame): Data frame with updated value column.
+    Requires Python 3.10+ for pattern matching support.
     """
     for node in df.node.unique():
         dev_size, ind_size = get_basin_sizes(basin, node)
@@ -67,6 +86,7 @@ def target_rate(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> pd.DataFra
                 set_target_rate(df, node, 2040, val)
 
 
+@minimum_version("python 3.10")
 def target_rate_trt(df: pd.DataFrame, basin: pd.DataFrame) -> pd.DataFrame:
     """
     Sets target treatment rates for SDG scenario. The target value for
@@ -150,6 +170,7 @@ def _preprocess_availability_data(df: pd.DataFrame, monthly: bool = False, df_x:
     df = df[df["year"].isin(info.Y)]
     return df
 
+@minimum_version("python 3.10")
 def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
     """
     Reads water availability data and bias correct
@@ -163,6 +184,8 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
     Returns
     -------
     data : (pd.DataFrame, pd.DataFrame)
+
+    Requires Python 3.10+ for pattern matching support.
     """
 
     # Reference to the water configuration
@@ -212,7 +235,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
 
     return df_sw, df_gw
 
-
+@minimum_version("python 3.10")
 def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water supply constraints
@@ -226,6 +249,8 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     data : dict of (str -> pandas.DataFrame)
         Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
         are data frames ready for :meth:`~.Scenario.add_par`.
+
+    Requires Python 3.10+ for pattern matching support.
     """
 
     # define an empty dictionary
@@ -334,6 +359,19 @@ def add_irrigation_demand(context: "Context") -> dict[str, pd.DataFrame]:
     
 
 def _preprocess_demand_data_stage1(context: "Context") -> pd.DataFrame:
+    """
+    Pre-process the DataFrame to prepare it for the rule evaluation.
+
+    Parameters
+    ----------
+    context : .Context
+
+    Returns
+    -------
+    data : pandas.DataFrame
+
+    """
+
     # read and clean raw demand data to standardized format
     region = f"{context.regions}"
     # get data path using package_data_path
@@ -385,7 +423,13 @@ def _preprocess_demand_data_stage1(context: "Context") -> pd.DataFrame:
 
 def _preprocess_demand_data_stage2(df_dmds: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """
-    Pre-process the DataFrame to prepare it for the rule evaluation.
+     Second stage of pre-processing the DataFrame to prepare it for the rule evaluation.
+
+    Parameters
+    ----------
+    df_dmds : pandas.DataFrame
+
+    Returns
     """
     variables_operations = {
         "urban_withdrawal2_baseline": {"df_name": "urban_withdrawal_df", "reset_index": False},
@@ -413,6 +457,7 @@ def _preprocess_demand_data_stage2(df_dmds: pd.DataFrame) -> dict[str, pd.DataFr
 
 
 @minimum_version("message_ix 3.7")
+@minimum_version("python 3.10")
 def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water sectoral demands
@@ -426,6 +471,8 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     data : dict of (str -> pandas.DataFrame)
         Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
         are data frames ready for :meth:`~.Scenario.add_par`.
+
+    Requires Python 3.10+ for pattern matching support.
     """
 
     # add water sectoral demands
