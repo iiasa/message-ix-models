@@ -15,6 +15,14 @@ if TYPE_CHECKING:
     import pathlib
 
 
+METHOD = (
+    pytest.param("A", marks=pytest.mark.xfail(reason="Obsolete/not maintained")),
+    "B",
+    pytest.param(
+        "C", marks=pytest.mark.xfail(reason="Incomplete", raises=NotImplementedError)
+    ),
+)
+
 # Test data file paths
 V1 = "SSP_dev_SSP2_v0.1_Blv0.18_baseline_prep_lu_bkp_solved_materials_2025_macro.csv"
 V2 = "SSP_LED_v2.3.1_baseline.csv"
@@ -127,6 +135,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: str) -> None:
     N = {
         "A": (5434, None),
         "B": (4660, 2660),
+        "C": (0, 0),  # TODO Determine and insert actual values
     }[method]
 
     try:
@@ -148,13 +157,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: str) -> None:
 
 
 @prepare_computer.minimum_version
-@pytest.mark.parametrize(
-    "method",
-    (
-        pytest.param("A", marks=pytest.mark.xfail(reason="Obsolete/not maintained")),
-        "B",
-    ),
-)
+@pytest.mark.parametrize("method", METHOD)
 def test_process_df(input_csv_path, method) -> None:
     df_in = pd.read_csv(input_csv_path)
 
@@ -167,13 +170,7 @@ def test_process_df(input_csv_path, method) -> None:
 
 @prepare_computer.minimum_version
 # @pytest.mark.usefixtures("user_local_data")
-@pytest.mark.parametrize(
-    "method",
-    (
-        pytest.param("A", marks=pytest.mark.xfail(reason="Obsolete/not maintained")),
-        "B",
-    ),
-)
+@pytest.mark.parametrize("method", METHOD)
 def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""
 
