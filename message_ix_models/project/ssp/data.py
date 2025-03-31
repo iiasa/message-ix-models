@@ -18,24 +18,29 @@ log = logging.getLogger(__name__)
 class SSPOriginal(ExoDataSource):
     """Provider of exogenous data from the original SSP database.
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    arguments:
+    This database is accessible from https://tntcat.iiasa.ac.at/SspDb/dsd.
 
-    - `source`: Any value from :data:`.SSP_2017` or equivalent string, for instance
-      "ICONICS:SSP(2017).2". The specific SSP for which data is returned is determined
-      from the value.
-    - `source_kw` including:
+    To use data from this source:
 
-      - "model": one of:
+    1. Read the general documentation for :mod:`.project.ssp.data`.
+    2. If necessary, obtain copy of the original data file(s).
+    3. Call :func:`.exo_data.prepare_computer` with the arguments:
 
-          - IIASA GDP
-          - IIASA-WiC POP
-          - NCAR
-          - OECD Env-Growth
-          - PIK GDP-32
+       - `source`: Any value from :data:`.SSP_2017` or equivalent string, for instance
+         "ICONICS:SSP(2017).2". The specific SSP for which data is returned is
+         determined from the value.
+       - `source_kw` including:
 
-      - "measure": The measures available differ according to the model; see the source
-        data for details.
+         - "model": one of:
+
+           - IIASA GDP
+           - IIASA-WiC POP
+           - NCAR
+           - OECD Env-Growth
+           - PIK GDP-32
+
+         - "measure": The measures available differ according to the model; see the
+           source data for details.
 
     Example
     -------
@@ -117,12 +122,17 @@ class SSPOriginal(ExoDataSource):
 class SSPUpdate(ExoDataSource):
     """Provider of exogenous data from the SSP Update database.
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    arguments:
+    This database is accessible from https://data.ece.iiasa.ac.at/ssp.
 
-    - `source`: Any value from :data:`.SSP_2024` or equivalent string, for instance
-      "ICONICS:SSP(2024).2".
-    - `release`: One of "3.0.1", "3.0", or "preview".
+    To use data from this source:
+
+    1. Read the general documentation for :mod:`.project.ssp.data`.
+    2. If necessary, obtain copy of the original data file(s).
+    3. Call :func:`.exo_data.prepare_computer` with the arguments:
+
+       - `source`: Any value from :data:`.SSP_2024` or equivalent string, for instance
+         "ICONICS:SSP(2024).2".
+       - `release`: One of "3.0.1", "3.0", or "preview".
 
     Example
     -------
