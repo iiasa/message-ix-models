@@ -105,6 +105,8 @@ The tool uses the following data sources for the regional differentiation of cos
 
 The tool also uses :mod:`.ssp.data` (via :func:`.exo_data.prepare_computer`) to adjust the costs of technologies based on GDP per capita.
 
+.. _costs-usage:
+
 Usage
 =====
 
@@ -121,7 +123,7 @@ Those settings include the following; click each for the full description, allow
    :attr:`~.Config.scenario_version`,
    :attr:`~.Config.base_year`,
    :attr:`~.Config.convergence_year`,
-   :attr:`~.Config.use_vintages`, 
+   :attr:`~.Config.use_vintages`,
    :attr:`~.Config.fom_rate`, and
    :attr:`~.Config.format`.
 
@@ -130,7 +132,10 @@ Those settings include the following; click each for the full description, allow
 - "inv_cost": the investment costs of the technologies in each region.
 - "fix_cost": the fixed O&M costs of the technologies in each region.
 
-To use the tool with the default settings, simply create a :class:`.Config` object and pass it as an argument to :func:`.create_cost_projections`::
+To use the tool, you **must** first obtain a copy of the SSP input data.
+See the documentation at :mod:`message_ix_models.project.ssp.data`.
+
+Next, create a :class:`.Config` object and pass it as an argument to :func:`.create_cost_projections`::
 
    from message_ix_models.tools.costs import Config, create_cost_projections
 
@@ -149,7 +154,7 @@ See the file :file:`message_ix_models/tools/costs/demo.py` for multiple examples
 
 
 .. note:: The data produced are for all valid combinations of :math:`(y^V, y^A)`—including those that are beyond the `technical_lifetime` of the |t| to which they apply.
-   This may produce large data frames, depending on the number of technologies, regions, and scenarios. 
+   This may produce large data frames, depending on the number of technologies, regions, and scenarios.
    At the moment, :mod:`.tools.costs` does not filter out these combinations.
    If this is problematic, the user may consider filtering the data for valid combinations of :math:`(y^V, y^A)`.
 
