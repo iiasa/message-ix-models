@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-import re
-
 from message_ix import make_df
 
 URBAN_DEMAND = [
@@ -132,7 +129,7 @@ RURAL_UNCOLLECTED_WST = [
 HISTORICAL_ACTIVITY = [
     {   "type": "historical_activity",
         "node": "h_act[node]",
-        "technology": "h_act[commodity]",  # Will be mapped using HISTORICAL_ACTIVITY_MAPPING
+        "technology": "h_act[commodity]",
         "year": "h_act[year]",
         "mode": "M1",
         "time": "h_act[time]",
@@ -144,9 +141,9 @@ HISTORICAL_ACTIVITY = [
 HISTORICAL_CAPACITY = [
     {   "type": "historical_new_capacity",
         "node": "h_cap[node]",
-        "technology": "h_cap[commodity]",  # Will be mapped using HISTORICAL_ACTIVITY_MAPPING
+        "technology": "h_cap[commodity]",
         "year": "h_cap[year]",
-        "value": "h_cap[value] / 5",  # Division by 5 as per original code
+        "value": "h_cap[value] / 5",
         "unit": "km3/year",
     }
 ]
@@ -198,33 +195,36 @@ SHARE_CONSTRAINTS_GW = [
 ]
 
 
-
-
 def key_check(rules: list[list[dict]]) -> None:
-    """Loop through rules and check if all rules have in common the keys in the DataFrame, each rule is a list of dictionaries. Prove that all the rules have the same keys"""
-    
+    """Loop through rules and check if all rules have in common the keys in the DataFrame,
+     each rule is a list of dictionaries. Prove that all the rules have the same keys"""
+
     set_of_keys = set(rules[0][0].keys())
     for rule in rules:
         set_of_keys = set_of_keys.intersection(set(rule[0].keys()))
         if set_of_keys != set(rules[0][0].keys()):
-            raise ValueError(f"Missing required columns: {set_of_keys - set(rules[0][0].keys())}")
+            raise ValueError(
+                f"Missing required columns: {set_of_keys - set(rules[0][0].keys())}"
+            )
     return set_of_keys
 
-def eval_field(expr: str, df_processed: pd.DataFrame, df_processed2: pd.DataFrame = None):
+def eval_field(
+    expr: str,
+    df_processed: pd.DataFrame,
+    df_processed2: pd.DataFrame = None):
     # If the expression is already a numeric literal (or any non-string type),
     # return it directly.
     if not isinstance(expr, str):
         return expr
 
     import re  # Ensure regex is available.
-    
+
     # Find all dataframe prefixes (e.g., "df_gw", "df_sw") that occur before a '[' character.
     prefixes = re.findall(r'(\w+)\s*\[', expr)
     unique_prefixes = []
     for p in prefixes:
         if p not in unique_prefixes:
             unique_prefixes.append(p)
-    
     # No dataframe reference found; evaluate the expression as-is.
     match len(unique_prefixes):
         case 0:
@@ -234,8 +234,9 @@ def eval_field(expr: str, df_processed: pd.DataFrame, df_processed2: pd.DataFram
         case 2 if df_processed2 is not None:
             local_context = {unique_prefixes[0]: df_processed, unique_prefixes[1]: df_processed2}
         case _:
-            raise ValueError(f"Expression '{expr}' uses more than two different dataframes: {unique_prefixes}")
-    
+            raise ValueError(
+                f"Expression '{expr}' uses more than two different dataframes: {unique_prefixes}"
+                )
     # Replace instances of field-access that are missing quotes around the key.
     def repl(match):
         prefix = match.group(1)
@@ -245,10 +246,10 @@ def eval_field(expr: str, df_processed: pd.DataFrame, df_processed2: pd.DataFram
             return f"{prefix}[{key}]"
         else:
             return f"{prefix}['{key}']"
-    
+
     # Process the expression (e.g. convert df_gw[value] to df_gw['value']).
     new_expr = re.sub(r'(\w+)\[\s*([^\]]+?)\s*\]', repl, expr)
-    
+
     # Evaluate the new expression using an empty globals dict and the constructed local context.
     return eval(new_expr, {}, local_context)
 
