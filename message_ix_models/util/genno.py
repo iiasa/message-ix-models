@@ -49,6 +49,7 @@ __all__ = [
     "Collector",
     "Keys",
     "as_quantity",
+    "update_computer",
 ]
 
 
@@ -110,3 +111,36 @@ class Collector:
         c.graph[self._target] = c.graph[self._target] + (key,)
 
         return key
+
+
+def update_computer(a: "Computer", b: "Computer") -> None:
+    """Update `a` with keys and tasks from `b`.
+
+    For most keys, the task in `b` is copied to `a` at the same key. For the key
+    "config", the contents of the :class:`dict` in `a` are updated with the values from
+    the one in `b`. This overwrites or replaces existing configuration.
+
+    .. todo:: Migrate upstream to a method like :py:`genno.Computer.update`.
+
+    Raises
+    ------
+    RuntimeError
+        - if any key already exists in `a` with a task different from the corresponding
+          one in `b`.
+        - if the key "context" maps to different :class:`Context` instances in `a` and
+          `b`.
+    """
+    for k, v in b.graph.items():
+        if k == "context":
+            if a.graph.get(k, v) is not v:
+                raise RuntimeError(f"Existing task {k} → {a.graph[k]} is not {v}")
+        elif k == "config":
+            target = a.graph.setdefault(k, dict())
+            target.update(v)
+        else:
+            if k in a.graph and a.graph[k] != v:
+                raise RuntimeError(
+                    f"Existing task {k} → {a.graph[k]} would be overwritten by {v}"
+                )
+            assert k not in a.graph, k
+            a.graph[k] = v
