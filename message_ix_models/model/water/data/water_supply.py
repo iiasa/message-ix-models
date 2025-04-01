@@ -5,7 +5,23 @@ import pandas as pd
 from message_ix import Scenario, make_df
 
 from message_ix_models import Context
+from message_ix_models.model.water.data.demand_rules import eval_field as eval_field
 from message_ix_models.model.water.data.demands import read_water_availability
+from message_ix_models.model.water.data.water_supply_rules import (
+    COOLING_SUPPLY_RULES,
+    DUMMY_BASIN_TO_REG_OUTPUT_RULES,
+    DUMMY_VARIABLE_COST_RULES,
+    E_FLOW_RULES_BOUND,
+    E_FLOW_RULES_DMD,
+    EXTRACTION_INPUT_RULES,
+    EXTRACTION_OUTPUT_RULES,
+    FIXED_COST_RULES,
+    HISTORICAL_NEW_CAPACITY_RULES,
+    INVESTMENT_COST_RULES,
+    SHARE_MODE_RULES,
+    SLACK_TECHNOLOGY_RULES,
+    TECHNICAL_LIFETIME_RULES,
+)
 from message_ix_models.model.water.utils import map_yv_ya_lt
 from message_ix_models.util import (
     broadcast,
@@ -14,11 +30,10 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
-from message_ix_models.model.water.data.water_supply_rules import *
-from message_ix_models.model.water.data.demand_rules import eval_field as eval_field
 
 
-def _basin_region_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", info : None, monthly : bool = False) -> pd.DataFrame:
+def _basin_region_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", 
+info : None, monthly : bool = False) -> pd.DataFrame:
     """
     Preprocess the basin region data for map_basin_region_wat function.
     """
@@ -79,7 +94,7 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         f"basins_by_region_simpl_{context.regions}.csv"
     )
     df_x = pd.read_csv(PATH)
-    
+
 
     match context.time:
         case "year":
@@ -125,7 +140,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         Values are data frames ready for :meth:`~.Scenario.add_par`.
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
-    
     Requires Python 3.10+ for pattern matching support.
     """
     # define an empty dictionary
@@ -138,7 +152,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     scen = Scenario(context.get_platform(), **context.core.scenario_info)
 
     # year_wat = (2010, 2015)
-    fut_year = info.Y
     year_wat = (2010, 2015, *info.Y)
     sub_time = context.time
 
@@ -212,36 +225,36 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         for rule in SLACK_TECHNOLOGY_RULES:
             r = rule.copy()
             common_args = {
-                "name": r["type"], 
-                "technology": r["technology"], 
-                "value": r["value"], 
-                "unit": r["unit"], 
-                "level": r["level"], 
-                "commodity": r["commodity"], 
+                "name": r["type"],
+                "technology": r["technology"],
+                "value": r["value"],
+                "unit": r["unit"],
+                "level": r["level"],
+                "commodity": r["commodity"],
             }
             match rule["technology"]:
                 case "return_flow"|"gw_recharge":
                     df_rule = make_df(
-                        **common_args, 
-                        mode=r["mode"], 
-                        year_vtg=year_wat, 
-                        year_act=year_wat, 
+                        **common_args,
+                        mode=r["mode"],
+                        year_vtg=year_wat,
+                        year_act=year_wat,
                     ).pipe(
-                        broadcast, 
-                        node_loc=df_node["node"], 
-                        time=pd.Series(sub_time), 
+                        broadcast,
+                        node_loc=df_node["node"],
+                        time=pd.Series(sub_time),
                     ).pipe(same_node).pipe(same_time)
                     slack_inputs.append(df_rule)
                 case "basin_to_reg":
                     df_rule = make_df(
-                        **common_args, 
-                        mode=eval_field(r["mode"], df_node), 
-                        node_origin=eval_field(r["node_origin"], df_node), 
-                        node_loc=eval_field(r["node_loc"], df_node), 
+                        **common_args,
+                        mode=eval_field(r["mode"], df_node),
+                        node_origin=eval_field(r["node_origin"], df_node),
+                        node_loc=eval_field(r["node_loc"], df_node),
                     ).pipe(
-                        broadcast, 
-                        year_vtg=year_wat, 
-                        time=pd.Series(sub_time), 
+                        broadcast,
+                        year_vtg=year_wat,
+                        time=pd.Series(sub_time),
                     ).pipe(same_time)
                     slack_inputs.append(df_rule)
 
@@ -275,7 +288,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     df_rule = make_df(
                         r["type"],
                         **common_args,
-                    )   
+                    )
                 case _:
                     df_rule = make_df(
                         r["type"],
@@ -303,7 +316,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         for rule in EXTRACTION_OUTPUT_RULES:
             r = rule.copy()
             r["type"] = "output"
-            
             common_args = {
                 "name": "output",
                 "technology": r["technology"],
@@ -311,7 +323,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 "unit": r["unit"],
                 "level": r["level"],
                 "commodity": r["commodity"],
-                "mode": r["mode"],                
+                "mode": r["mode"],
             }
             match r["technology"]:
                 case "extract_salinewater":
@@ -334,13 +346,11 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                         df_rule = make_df(**common_args, time_origin=r["time_origin"])
                     else:
                         df_rule = make_df(**common_args)
-                    
-                    broadcast_year = yv_ya_gw if r["technology"] in ["extract_gw_fossil", "extract_groundwater"] else yv_ya_sw
+                    broadcast_year = yv_ya_gw if r["technology"] in ["extract_gw_fossil","extract_groundwater"] else yv_ya_sw
                     df_rule = broadcast(df_rule, broadcast_year, time=pd.Series(sub_time))
                     df_rule = same_time(df_rule)
             extraction_outputs.append(df_rule)
         results["output"] = pd.concat(extraction_outputs)
-        
         hist_new_cap = []
         for rule in HISTORICAL_NEW_CAPACITY_RULES:
             r = rule.copy()
@@ -482,7 +492,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     return results
 
 
-def _e_flow_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context", info : None, monthly : bool = False) -> pd.DataFrame:
+def _e_flow_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context",
+info : None, monthly : bool = False) -> pd.DataFrame:
     """
     Preprocess the e-flow data for add_e_flow function.
     """
@@ -503,7 +514,6 @@ def _e_flow_preprocess(df: pd.DataFrame, df_x: pd.DataFrame, context: "Context",
     df = df[df["year"].isin(info.Y)]
 
     return df
-    
 
 @minimum_version("python 3.10")
 def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
@@ -527,7 +537,6 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         Values are data frames ready for :meth:`~.Scenario.add_par`.
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
-    
     Requires Python 3.10+ for pattern matching support.
     """
     # define an empty dictionary
