@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import genno
 import numpy as np
 import pandas as pd
-from genno import Computer, Key, KeySeq, quote
+from genno import Computer, Key, quote
 from genno.core.key import single_key
 
 from message_ix_models.util import minimum_version
@@ -80,7 +80,7 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     from itertools import pairwise
 
     assert key.tag != "2"
-    ks = KeySeq(key.remove_tag(key.tag or ""))
+    ks = Key(key.remove_tag(key.tag or ""))
 
     def first_block_false(column: pd.Series) -> pd.Series:
         """Modify `column` to contain at most one contiguous block of :data:`.False`."""
@@ -181,9 +181,9 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Keys for starting quantities
     e_iea = Key("energy:n-y-product-flow:iea")
-    e_fnp = KeySeq(e_iea.drop("y"))
+    e_fnp = Key(e_iea.drop("y"))
     e_cnlt = Key("energy:c-nl-t:iea+0")
-    k = KeySeq("in:nl-t-ya-c-l-h:transport+units")  # MESSAGE solution values
+    k = Key("in:nl-t-ya-c-l-h:transport+units")  # MESSAGE solution values
 
     # First period
     y0 = rep.get("y0")
@@ -205,18 +205,18 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     )
 
     # Transport outputs for comparison
-    rep.add(k[0], "select", k.base, indexers=dict(ya=y0), drop=True)
-    rep.add(k[1], "aggregate", k[0], "groups::transport to iea", keep=False)
+    rep.add(k[0], "aggregate", k, "groups::transport to iea", keep=False, sums=True)
+    rep.add(k[1] / "ya", "select", k[0], indexers=dict(ya=y0), drop=True)
 
     # Scaling factor 1: ratio of MESSAGEix-Transport outputs to IEA data
-    tmp = rep.add("scale 1", "div", k[1], e_cnlt)
-    s1 = KeySeq(tmp)
-    rep.add(s1[1], "convert_units", s1.base, units="1 / a")
+    tmp = rep.add("scale 1", "div", k[1] / "ya", e_cnlt)
+    s1 = Key(single_key(tmp))
+    rep.add(s1[1], "convert_units", s1, units="1 / a")
     rep.add(s1[2], "mul", s1[1], genno.Quantity(1.0, units="a"))
     # Replace ~0 and ∞ values with 1.0; this avoids x / 0 = inf
     rep.add(s1[3], "where", s1[2], cond=lambda v: (v > 1e-3) & (v != np.inf), other=1.0)
     # Ensure no values are dropped versus the numerator (= MESSAGE outputs)
-    rep.add(s1[4], align_and_fill, s1[3], k[1])
+    rep.add(s1[4], align_and_fill, s1[3], k[1] / "ya")
 
     rep.apply(to_csv, s1[4], name=s1.name, header_comment=SCALE_1_HEADER)
 
@@ -241,7 +241,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Correct MESSAGEix-Transport outputs for the MESSAGEix-base model using the high-
     # resolution scaling factor
-    rep.add(k["s1"], "div", k.base, s1[11])
+    rep.add(k["s1"], "div", k, s1[11])
 
     # Scaling factor 2: ratio of total of scaled data to IEA total
     rep.add(k[2] / "ya", "select", k["s1"], indexers=dict(ya=y0), drop=True, sums=True)
@@ -253,8 +253,8 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         drop=True,
     )
     tmp = rep.add("scale 2", "div", k[2] / ("c", "t", "ya"), "energy:nl:iea+transport")
-    s2 = KeySeq(tmp)
-    rep.add(s2[1], "convert_units", s2.base, units="1 / a")
+    s2 = Key(single_key(tmp))
+    rep.add(s2[1], "convert_units", s2, units="1 / a")
     rep.add(s2[2], "mul", s2[1], genno.Quantity(1.0, units="a"))
 
     rep.apply(to_csv, s2[2], name=s2.name, header_comment=SCALE_2_HEADER)
@@ -283,13 +283,13 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # - Sum across the "t" dimension of `k` to avoid conflict with "t" labels introduced
     #   by the data from file.
     tmp = rep.add("ue", "div", k["s2"] / "t", "input:t-c-h:base")
-    ue = KeySeq(tmp)
+    ue = Key(single_key(tmp))
 
-    rep.apply(share_constraints, k["s2"], ue.base)
+    rep.apply(share_constraints, k["s2"], ue)
 
     # Ensure units: in::transport+units [=] GWa/a and input::base [=] GWa; their ratio
     # gives units 1/a. The base model expects "GWa" for all 3 parameters.
-    rep.add(ue[1], "mul", ue.base, genno.Quantity(1.0, units="GWa * a"))
+    rep.add(ue[1], "mul", ue, genno.Quantity(1.0, units="GWa * a"))
     rep.apply(to_csv, ue[1] / ("c", "t"), name="demand no fill")
 
     # 'Smooth' ue[1] data by interpolating any dip below the base year value
