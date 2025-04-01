@@ -165,9 +165,12 @@ class ConfigHelper:
 class Config:
     """Core/top-level settings for :mod:`message_ix_models` and :mod:`message_data`."""
 
-    #: Base path for cached data, e.g. as given by the :program:`--cache-path` CLI
-    #: option. Default: the directory :file:`message-ix-models` within the directory
-    #: given by :func:`.platformdirs.user_cache_path`.
+    #: Base path for cached data. By default, the directory :file:`message-ix-models`
+    #: within the directory given by :func:`.platformdirs.user_cache_path`. This **may**
+    #: be something like :file:`$HOME/.cache/message-ix-models/`.
+    #: The :program:`--cache-path` CLI option modifies this value.
+    #:
+    #: See also :ref:`cache-data`.
     cache_path: Optional[Path] = None
 
     #: Paths of files containing debug outputs. See

@@ -33,15 +33,20 @@ Data
 .. automodule:: message_ix_models.project.ssp.data
    :members:
 
-   Although free of charge, neither the 2017 or 2024 SSP data can be downloaded automatically.
-   Both sources require that users first submit personal information to register before being able to retrieve the data.
-   :mod:`message_ix_models` does not circumvent this requirement.
-   Thus:
+   Although free of charge, both the 2017 and 2024 SSP data are provided under licenses that prevent distribution with or automated retrieval by :mod:`message_ix_models`.
+   Both sources require that users first submit personal information to register before being able to retrieve the data,
+   and restrict the distribution of the complete, original files.
 
-   - A copy of the data are stored in :mod:`message_data`.
-   - :mod:`message_ix_models` contains only a ‘fuzzed’ version of the data (same structure, random values) for testing purposes.
+   Thus, :mod:`message_ix_models` contains only a ‘fuzzed’ version of the data (same structure, random values) for testing purposes.
 
-   .. todo:: Allow users without access to :mod:`message_data` to read a local copy of this data from a :attr:`.Config.local_data` subdirectory.
+   In order to use these data via the tools in this module, the user must obtain a copy of the files
+   —for instance, by manually completing the registration and download steps—
+   and place them in the directory :attr:`.Config.cache_path` (see :ref:`cache-data`)
+   or :file:`message_ix_models/data/ssp/` within the environment where :mod:`message_ix_models` is installed.
+   For :class:`SSPUpdate`, the specific file names required are the ones given by :data:`.pooch.SOURCE`::
+
+      1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz
+      1710759470883-ssp_basic_drivers_release_3.0.1_full.csv.gz
 
    .. autosummary::
       SSPOriginal
