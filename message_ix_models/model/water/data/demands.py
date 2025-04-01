@@ -9,10 +9,23 @@ import pandas as pd
 import xarray as xr
 from message_ix import make_df as make_df
 
-
+from message_ix_models.model.water.data.demand_rules import (
+    HISTORICAL_ACTIVITY,
+    HISTORICAL_CAPACITY,
+    INDUSTRIAL_DEMAND,
+    RURAL_COLLECTED_WST,
+    RURAL_DEMAND,
+    RURAL_UNCOLLECTED_WST,
+    SHARE_CONSTRAINTS_GW,
+    SHARE_CONSTRAINTS_RECYCLING,
+    URBAN_COLLECTED_WST,
+    URBAN_DEMAND,
+    URBAN_UNCOLLECTED_WST,
+    WATER_AVAILABILITY,
+    eval_field,
+    load_rules,
+)
 from message_ix_models.util import broadcast, minimum_version, package_data_path
-
-from message_ix_models.model.water.data.demand_rules import *
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -23,7 +36,6 @@ def get_basin_sizes(
     basin: pd.DataFrame, node: str
 ) -> Sequence[Union[pd.Series, Literal[0]]]:
     """Returns the sizes of developing and developed basins for a given node
-    
     Requires Python 3.10+ for pattern matching support.
     """
     temp = basin[basin["BCU_name"] == node]
@@ -52,7 +64,7 @@ def set_target_rate(df: pd.DataFrame, node: str, year: int, target: float) -> No
 @minimum_version("message_ix 3.7")
 @minimum_version("python 3.10")
 def target_rate(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> pd.DataFrame:
-    """    
+    """
     Sets target connection and sanitation rates for SDG scenario.
     The function filters out the basins as developing and
     developed based on the countries overlapping basins.
@@ -98,11 +110,10 @@ def target_rate_trt(df: pd.DataFrame, basin: pd.DataFrame) -> pd.DataFrame:
     data : pandas.DataFrame
     """
     updates = []  # Will hold tuples of (index, new_value)
-    
     for node in df.node.unique():
         basin_node = basin[basin["BCU_name"] == node]
         sizes = basin_node.pivot_table(index=["STATUS"], aggfunc="size")
-        
+
         # Use pattern matching to decide on the threshold year.
         is_dev = sizes["DEV"] >= sizes["IND"]
         match len(sizes):
@@ -118,29 +129,33 @@ def target_rate_trt(df: pd.DataFrame, basin: pd.DataFrame) -> pd.DataFrame:
                         threshold = 2040
                     case _:
                         threshold = 2030
-        
+
         # Filter rows for this node and the chosen threshold year.
         node_rows = df[(df["node"] == node) & (df["year"] >= threshold)]
         for j in node_rows.index:
             old_val = df.at[j, "value"]
             new_val = old_val + (1 - old_val) / 2
             updates.append((j, np.float64(new_val)))
-    
+
     # Create a temporary DataFrame from the updates.
     update_df = pd.DataFrame(updates, columns=["Index", "Value"])
-    
+
     # Update the main DataFrame with new values.
     for _, row in update_df.iterrows():
         df.at[row["Index"], "Value"] = row["Value"]
-    
+
     # Combine new values with original ones.
     real_value = df["Value"].combine_first(df["value"])
     df.drop(["value", "Value"], axis=1, inplace=True)
     df["value"] = real_value
-    
+
     return df
 
-def _preprocess_availability_data(df: pd.DataFrame, monthly: bool = False, df_x: pd.DataFrame = None, info = None) -> pd.DataFrame:
+def _preprocess_availability_data(
+    df: pd.DataFrame,
+    monthly: bool = False,
+    df_x: pd.DataFrame = None,
+     info = None) -> pd.DataFrame:
     """
     Preprocesses availability data
 
@@ -296,20 +311,22 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
             df_source2 = df_sw
         else:
             raise ValueError(f"Invalid df_source: {rule['df_source1']} or {rule['df_source2']}")
-        
+
         df_share = make_df(
             rule["type"],
             shares=rule["shares"],
             node_share="B" + eval_field(rule["node"], df_source1),
             year_act=eval_field(rule["year"], df_source1),
             time=eval_field(rule["time"], df_source1),
-            value=eval_field(rule["value"], df_source1, df_source2),             
+            value=eval_field(rule["value"], df_source1, df_source2),
             unit=rule["unit"],
-    )
+        )
+        share_constraints_gw.append(df_share)
 
-    df_share["value"] = df_share["value"].fillna(0)
+    share_constraints_gw = pd.concat(share_constraints_gw)
+    share_constraints_gw["value"] = share_constraints_gw["value"].fillna(0)
 
-    results["share_commodity_lo"] = df_share
+    results["share_commodity_lo"] = share_constraints_gw
 
     return results
 
@@ -356,7 +373,6 @@ def add_irrigation_demand(context: "Context") -> dict[str, pd.DataFrame]:
 
     return results
 
-    
 
 def _preprocess_demand_data_stage1(context: "Context") -> pd.DataFrame:
     """
@@ -482,7 +498,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     # get standardized input data
     df_dmds = _preprocess_demand_data_stage1(context)
-    
+
     # Process data and unpack results
     processed_data = _preprocess_demand_data_stage2(df_dmds)
     urban_withdrawal_df = processed_data["urban_withdrawal_df"]
@@ -619,7 +635,6 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 manuf_mw = industrial_withdrawals_df.reset_index(drop=True)
                 manuf_mw["value"] = 1e-3 * manuf_mw["value"]
                 industrial_dmds.append(load_rules(r, manuf_mw))
-                
             case "industry_uncollected_wst":
                 manuf_uncollected_wst = industrial_return_df.reset_index(drop=True)
                 manuf_uncollected_wst["value"] = 1e-3 * manuf_uncollected_wst["value"]
@@ -641,7 +656,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         ) * urban_collected_wst["rate"]
         urban_collected_wst_df.append(load_rules(r, urban_collected_wst))
 
-    urban_collected_wst_df = pd.concat(urban_collected_wst_df)    
+    urban_collected_wst_df = pd.concat(urban_collected_wst_df)
     dmd_df = pd.concat([dmd_df, urban_collected_wst_df])
 
     # rural collected wastewater
