@@ -210,21 +210,12 @@ def generate(
         config = deepcopy(context.transport)
 
         # Update the .transport.Config from the `scenario_code` and `policy`
-        config.use_scenario_code(scenario_code)
         config.policy = policy
+        label, label_full = config.use_scenario_code(scenario_code)
 
         # Retrieve updated values
         is_LED = config.project["LED"]
         EDITS_activity = config.project["EDITS"]["activity"]
-
-        # Construct labels including the SSP code and policy identifier
-        # ‘Short’ label used for workflow steps
-        label = f"{scenario_code.id}{' policy' if policy else ''}"
-        # ‘Full’ label used in the scenario name
-        if not is_LED and EDITS_activity is None:
-            label_full = f"SSP_2024.{config.ssp.name}"
-        else:
-            label_full = label
 
         if config.policy and (is_LED or EDITS_activity is not None):  # TEMPORARY
             log.info(f"({label_full}, {config.policy=}) → skip")
