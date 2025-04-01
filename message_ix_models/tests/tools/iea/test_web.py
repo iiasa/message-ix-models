@@ -1,5 +1,6 @@
 """Tests of :mod:`.tools`."""
 
+import logging
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -21,20 +22,25 @@ from message_ix_models.util import HAS_MESSAGE_DATA
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+log = logging.getLogger(__name__)
+
 
 @pytest.fixture
 def user_local_data(pytestconfig, request) -> "Generator":  # pragma: no cover
     """Symlink :path:`…/iea/` in the test local data directory to the user's."""
-    if "test_context" not in request.fixturenames:
-        return
-    test_local_data = request.getfixturevalue("test_context").core.local_data
-    user_local_data = pytestconfig.user_local_data
+    try:
+        context = request.getfixturevalue("test_context")
+    except RuntimeError:
+        context = None
 
-    source = test_local_data.joinpath("iea")
-    source.symlink_to(user_local_data.joinpath("iea"))
+    target = pytestconfig.user_local_data.joinpath("iea")
+
+    source = context.core.local_data.joinpath("iea")
+    log.info(f"Symlink {source} -> {target}")
+    source.symlink_to(target)
 
     try:
-        yield
+        yield source
     finally:
         source.unlink()
 

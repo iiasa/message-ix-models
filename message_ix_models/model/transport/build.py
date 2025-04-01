@@ -570,7 +570,7 @@ def get_computer(
     if visualize and HAS_GRAPHVIZ:
         path = context.get_local_path("transport", "build.svg")
         path.parent.mkdir(exist_ok=True)
-        c.visualize(filename=path, key="add transport data")
+        c.visualize(filename=path, key="add transport data", rankdir="LR")
         log.info(f"Visualization written to {path}")
 
     return c
