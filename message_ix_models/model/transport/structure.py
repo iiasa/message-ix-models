@@ -62,6 +62,7 @@ def get_technology_groups(
     for tech in filter(lambda t: len(t.child), t_list):
         result[tech.id] = _leaf_ids(tech)
         # Store non-LDV technologies
+        # FIXME This is actually "P ex LDV"; label as such
         if tech.id != "LDV":
             result["non-ldv"].extend(result[tech.id])
 

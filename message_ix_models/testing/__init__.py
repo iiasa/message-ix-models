@@ -57,11 +57,15 @@ GHA = "GITHUB_ACTIONS" in os.environ
 #: :class:`int`; in the latter case, do not reuse keys lower than the highest key in the
 #: collection.
 MARK: dict[Hashable, pytest.MarkDecorator] = {
+    0: pytest.mark.xfail(
+        condition=GHA,
+        reason="GitHub-hosted runner has no access to IIASA-internal databases",
+    ),
     "sdmx#230": pytest.mark.xfail(
         condition=GHA,
         reason="https://github.com/khaeru/sdmx/issues/230",
         raises=sdmx.exceptions.XMLParseError,
-    )
+    ),
 }
 
 #: Shorthand for marking a parametrized test case that is expected to fail because it is

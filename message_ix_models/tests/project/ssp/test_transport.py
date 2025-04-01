@@ -4,23 +4,24 @@ import pandas as pd
 import pytest
 
 from message_ix_models.project.ssp.transport import (
-    prepare_computer,
+    METHOD,
+    get_computer,
+    get_scenario_code,
     process_df,
     process_file,
 )
+from message_ix_models.testing import MARK
 from message_ix_models.tests.tools.iea.test_web import user_local_data  # noqa: F401
+from message_ix_models.tools.iea import web
 from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     import pathlib
 
-
-METHOD = (
-    pytest.param("A", marks=pytest.mark.xfail(reason="Obsolete/not maintained")),
-    "B",
-    pytest.param(
-        "C", marks=pytest.mark.xfail(reason="Incomplete", raises=NotImplementedError)
-    ),
+METHOD_PARAM = (
+    METHOD.A,
+    METHOD.B,
+    pytest.param(METHOD.C, marks=MARK[0]),
 )
 
 # Test data file paths
@@ -53,48 +54,21 @@ IN_ = 1  #         Data appears in the input file only
 OUT = 2  #         Data appears in the output file *and* with a modified magnitude
 I_O = IN_ | OUT  # Both
 
+#: Emissions species codes appearing in the IAMC-structured / reported data; these are
+#: *different* from those internal to the model.
+SPECIES = {"CH4", "BC", "CO", "CO2", "N2O", "NH3", "NOx", "OC", "Sulfur", "VOC"}
 
-#: Mapping from emission species (appearing in IAMC-structured / reported data, not
-#: model internal) to flags indicating whether data for associated ‘Variable’ codes
-#: appear in the input file and/or are modified in the output file. See
-#: :func:`expected_variables`.
-SPECIES = {
-    "CH4": I_O,
-    "BC": IN_,  # No emissions factor data for e=BCA
-    "CO": I_O,
-    "CO2": IN_,
-    "N2O": I_O,
-    "NH3": IN_,  # No emissions factor data for e=NH3
-    "NOx": I_O,
-    "OC": IN_,  # No emissions factor data for e=OCA
-    "Sulfur": IN_,  # No emissions factor data for e=SO2; only SOx
-    "VOC": I_O,
+#: Species for which no aviation-specific emission factor values are available.
+SPECIES_WITHOUT_EF = {
+    "BC",  # No emissions factor data for e=BCA
+    "CO2",
+    "NH3",
+    "OC",  # No emissions factor data for e=OCA
+    "Sulfur",  # No emissions factor data for e=SO2; only SOx
 }
 
 
-def expected_variables(flag: int) -> set[str]:
-    """Set of expected ‘Variable’ codes according to `flag`."""
-    # Shorthand
-    edb = "Energy|Demand|Bunkers"
-    edt = "Energy|Demand|Transportation"
-
-    result = set()
-    for e, exp in SPECIES.items():
-        result |= (
-            {
-                f"Emissions|{e}|{edb}",
-                f"Emissions|{e}|{edb}|International Aviation",
-                f"Emissions|{e}|{edt}",
-                f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
-            }
-            if flag & exp
-            else set()
-        )
-
-    return result
-
-
-def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: str) -> None:
+def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     """Common checks for :func:`test_process_df` and :func:`test_process_file`."""
     # Identify dimension columns
     dims_wide = list(df_in.columns)[:5]  # …in 'wide' layout
@@ -114,7 +88,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: str) -> None:
     df_out = _to_long(df_out)
 
     # Input data already contains the variable names to be modified
-    assert expected_variables(IN_) <= set(df_in["Variable"].unique())
+    assert expected_variables(IN_, method) <= set(df_in["Variable"].unique())
     region = set(df_in["Region"].unique())
 
     # Data have the same length
@@ -130,24 +104,32 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: str) -> None:
         "abs(value_out - value_in) > 1e-16"
     )
 
-    # Possible number of modified values. In each tuple, the first is the count with
-    # the full IEA EWEB dataset, the second with the fuzzed data
-    N = {
-        "A": (5434, None),
-        "B": (4660, 2660),
-        "C": (0, 0),  # TODO Determine and insert actual values
-    }[method]
+    # Identify the directory from which IEA EWEB data is read
+    iea_data_dir = web.dir_fallback(web.FILES[("IEA", "2024")][0])
+    # True if the full data set is present; False if the fuzzed test data are being used
+    full_iea_eweb_data = not (
+        iea_data_dir.parts[-4:] == ("message_ix_models", "data", "test", "iea")
+    )
 
-    try:
-        full_iea_eweb_data = N.index(len(df)) == 0  # True if the full dataset
-    except ValueError:
-        assert False, f"Unexpected number of modified values: {len(df)}"
+    # Number of modified values
+    N_exp = {
+        (METHOD.A, True): 10280,
+        (METHOD.A, False): 10280,
+        (METHOD.B, True): 4660,
+        (METHOD.B, False): 3060,
+        (METHOD.C, True): 3220,
+        (METHOD.C, False): 3220,
+    }[(method, full_iea_eweb_data)]
 
-    # df.to_csv("debug-diff.csv")  # DEBUG Dump to file
-    # print(df.to_string(max_rows=50))  # DEBUG Show in test output
+    if N_exp != len(df):
+        # df.to_csv("debug-diff.csv")  # DEBUG Dump to file
+        # print(df.to_string(max_rows=50))  # DEBUG Show in test output
+        assert N_exp == len(df), (
+            f"Unexpected number of modified values: {len(df)} != {N_exp}"
+        )
 
     # All of the expected 'variable' codes have been modified
-    assert expected_variables(OUT) == set(df["Variable"].unique())
+    assert expected_variables(OUT, method) == set(df["Variable"].unique())
 
     cond = df.query("value_out < 0")
     if len(cond):
@@ -156,44 +138,29 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: str) -> None:
         assert not full_iea_eweb_data, msg
 
 
-@prepare_computer.minimum_version
-@pytest.mark.parametrize("method", METHOD)
-def test_process_df(input_csv_path, method) -> None:
-    df_in = pd.read_csv(input_csv_path)
+def expected_variables(flag: int, method: METHOD) -> set[str]:
+    """Set of expected ‘Variable’ codes according to `flag` and `method`."""
+    # Shorthand
+    edb = "Energy|Demand|Bunkers"
+    edt = "Energy|Demand|Transportation"
 
-    # Code runs
-    df_out = process_df(df_in, method=method)
+    result = set()
+    for e in SPECIES:
+        # Expected data flows in which these variable codes appear
+        exp = IN_ if (e in SPECIES_WITHOUT_EF and method != METHOD.A) else I_O
+        if flag & exp:
+            result |= {
+                f"Emissions|{e}|{edb}",
+                f"Emissions|{e}|{edb}|International Aviation",
+                f"Emissions|{e}|{edt}",
+                f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
+            }
 
-    # Output satisfies expectations
-    check(df_in, df_out, method)
-
-
-@prepare_computer.minimum_version
-# @pytest.mark.usefixtures("user_local_data")
-@pytest.mark.parametrize("method", METHOD)
-def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
-    """Code can be called from Python."""
-
-    # Locate a temporary data file
-    path_in = input_csv_path
-    path_out = tmp_path.joinpath("output.csv")
-
-    # Code runs
-    process_file(path_in=path_in, path_out=path_out, method=method)
-
-    # Output path exists
-    assert path_out.exists()
-
-    # Read input and output files
-    df_in = pd.read_csv(path_in)
-    df_out = pd.read_csv(path_out)
-
-    # Output satisfies expectations
-    check(df_in, df_out, method)
+    return result
 
 
-@prepare_computer.minimum_version
-def test_cli(tmp_path, mix_models_cli, input_xlsx_path) -> None:
+@get_computer.minimum_version
+def test_cli(tmp_path, mix_models_cli, test_context, input_xlsx_path) -> None:
     """Code can be invoked from the command-line."""
     from shutil import copyfile
 
@@ -219,3 +186,71 @@ def test_cli(tmp_path, mix_models_cli, input_xlsx_path) -> None:
         "Convert CSV output to ",
     ):
         assert message in result.output
+
+
+@pytest.mark.parametrize(
+    "expected_id, model_name, scenario_name",
+    [
+        ("LED-SSP1", "SSP_LED_v2.3.1", "baseline_1000f"),
+        ("LED-SSP1", "SSP_LED_v2.3.1", "baseline"),
+        ("LED-SSP2", "SSP_LED_v2.3.1", "SSP2 - Very Low Emissions"),
+        ("SSP1", "SSP_SSP1_v2.3.1", "baseline_1000f"),
+        ("SSP1", "SSP_SSP1_v2.3.1", "baseline"),
+        ("SSP1", "SSP_SSP1_v2.3.1", "SSP1 - Low Emissions"),
+        ("SSP1", "SSP_SSP1_v2.3.1", "SSP1 - Very Low Emissions"),
+        ("SSP2", "SSP_SSP2_v2.4.1", "baseline_1000f"),
+        ("SSP2", "SSP_SSP2_v2.4.1", "baseline"),
+        ("SSP2", "SSP_SSP2_v2.4.1", "SSP2 - Low Emissions"),
+        ("SSP2", "SSP_SSP2_v2.4.1", "SSP2 - Low Overshoot"),
+        ("SSP2", "SSP_SSP2_v2.4.1", "SSP2 - Medium Emissions"),
+        ("SSP2", "SSP_SSP2_v2.4.1", "SSP2 - Medium-Low Emissions"),
+        ("SSP3", "SSP_SSP3_v2.4.1", "baseline_1000f"),
+        ("SSP3", "SSP_SSP3_v2.4.1", "SSP3 - High Emissions"),
+        ("SSP4", "SSP_SSP4_v2.3.1", "baseline_1000f"),
+        ("SSP4", "SSP_SSP4_v2.3.1", "baseline"),
+        ("SSP4", "SSP_SSP4_v2.3.1", "SSP4 - Low Overshoot"),
+        ("SSP5", "SSP_SSP5_v2.4.1", "baseline_1000f"),
+        ("SSP5", "SSP_SSP5_v2.4.1", "SSP5 - High Emissions"),
+        ("SSP5", "SSP_SSP5_v2.4.1", "SSP5 - Low Overshoot"),
+    ],
+)
+def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
+    result = get_scenario_code(model_name, scenario_name)
+    assert expected_id == result.id
+
+
+@get_computer.minimum_version
+# @pytest.mark.usefixtures("user_local_data")
+@pytest.mark.parametrize("method", METHOD_PARAM)
+def test_process_df(test_context, input_csv_path, method) -> None:
+    df_in = pd.read_csv(input_csv_path)
+
+    # Code runs
+    df_out = process_df(df_in, method=method)
+
+    # Output satisfies expectations
+    check(df_in, df_out, method)
+
+
+@get_computer.minimum_version
+# @pytest.mark.usefixtures("user_local_data")
+@pytest.mark.parametrize("method", METHOD_PARAM)
+def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
+    """Code can be called from Python."""
+
+    # Locate a temporary data file
+    path_in = input_csv_path
+    path_out = tmp_path.joinpath("output.csv")
+
+    # Code runs
+    process_file(path_in=path_in, path_out=path_out, method=method)
+
+    # Output path exists
+    assert path_out.exists()
+
+    # Read input and output files
+    df_in = pd.read_csv(path_in)
+    df_out = pd.read_csv(path_out)
+
+    # Output satisfies expectations
+    check(df_in, df_out, method)
