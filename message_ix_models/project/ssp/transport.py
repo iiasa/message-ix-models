@@ -28,13 +28,13 @@ log = logging.getLogger(__name__)
 #: Dimensions of several quantities.
 DIMS = "e n t y UNIT".split()
 
-#: Expression used to extract :math:`(e, t)` dimension coordinates from variable codes
-#: in :func:`v_to_emi_coords`.
+#: Expression used to select and extract :math:`(e, t)` dimension coordinates from
+#: variable codes in :func:`v_to_emi_coords`.
 EXPR_EMI = re.compile(
     r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|(?P<t>(Bunkers|Transportation).*)$"
 )
-#: Expression used to extract :math:`(c)` dimension coordinates from variable codes in
-#: :func:`v_to_fe_coords`.
+#: Expression used to select and extract :math:`(c)` dimension coordinates from variable
+#: codes in :func:`v_to_fe_coords`.
 EXPR_FE = re.compile(r"^Final Energy\|Transportation\|(?P<c>Liquids\|Oil)$")
 
 #: Keywords for :func:`.iamc_like_data_for_query` / :func:`.to_quantity`.
@@ -321,8 +321,8 @@ def get_computer(
 def get_scenario_code(model_name: str, scenario_name: str) -> "sdmx.model.common.Code":
     """Return a specific code from ``CL_TRANSPORT_SCENARIO``.
 
-    This function handles (`model_name`, `scenario_name`) combinations seen in base
-    model outputs as of 2025-04-02.
+    See :func:`.get_cl_scenario`. This function handles (`model_name`, `scenario_name`)
+    combinations seen in base model outputs as of 2025-04-02.
     """
     from message_ix_models.model.transport.config import get_cl_scenario
 
@@ -371,9 +371,9 @@ def method_B(c: "Computer") -> None:
     """Prepare calculations up to :data:`K.emi` using :data:`METHOD.B`.
 
     This method uses the |y0| share of aviation in total transport final energy as
-    indicated by :class:`.IEA_EWEB` (with dimensions :math:`(c, n)`) to disaggregate
-    total final energy from the input data, then applies emission factors to compute
-    aviation emissions.
+    indicated by :class:`.IEA_EWEB`, with dimensions :math:`(c, n)`, to disaggregate
+    total final energy from the input data, then applies emission intensity data to
+    compute aviation emissions.
 
     Excluding data transformations, units, and other manipulations for alignment:
 
@@ -505,7 +505,7 @@ def method_C(c: "Computer") -> None:
     """Prepare calculations up to :data:`K.emi` using :data:`METHOD.C`.
 
     This method uses a solved MESSAGEix-Transport scenario to compute the share of
-    aviation in total transport final energy (with dimensions :math:`(c, n, y)`), and
+    aviation in total transport final energy, with dimensions :math:`(c, n, y)`, and
     the proceeds similarly to :func:`method_B`.
 
     Excluding data transformations, units, and other manipulations for alignment:
