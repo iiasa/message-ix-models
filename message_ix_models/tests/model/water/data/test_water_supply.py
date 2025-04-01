@@ -1,6 +1,7 @@
 import sys
-import pytest
+
 import pandas as pd
+import pytest
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
@@ -10,6 +11,7 @@ from message_ix_models.model.water.data.water_supply import (
     add_water_supply,
     map_basin_region_wat,
 )
+
 # Version check for Python 3.10+
 PYTHON_310_PLUS = sys.version_info >= (3, 10)
 
