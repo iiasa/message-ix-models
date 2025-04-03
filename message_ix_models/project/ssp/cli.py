@@ -25,7 +25,7 @@ def gen_structures(context, **kwargs):
 
 
 @cli.command("transport")
-@click.option("--method", type=click.Choice(["A", "B"]), required=True)
+@click.option("--method", type=click.Choice(["A", "B", "C"]), required=True)
 @click.argument("path_in", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument(
     "path_out",
@@ -39,11 +39,14 @@ def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[
     Data are read from PATH_IN, in .xlsx or .csv format. If .xlsx, the data are first
     temporarily converted to .csv. Data are written to PATH_OUT; if not given, this
     defaults to the same path and suffix as PATH_IN, with "_out" added to the stem.
+
+    For --method=C, the top-level option --platform=ixmp-dev (for example) may be used
+    to specify the Platform on which to locate solved MESSAGEix-Transport scenarios.
     """
     import pandas as pd
     from platformdirs import user_cache_path
 
-    from .transport import process_file
+    from .transport import METHOD, process_file
 
     if path_in.suffix == ".xlsx":
         path_in_user = path_in
@@ -65,7 +68,12 @@ def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[
     else:
         path_out_user = path_out
 
-    process_file(path_in, path_out, method=method)
+    process_file(
+        path_in,
+        path_out,
+        method=METHOD[method],
+        platform_name=context.core.platform_info.get("name", None),
+    )
 
     if path_out_user != path_out:
         print(f"Convert CSV output to {path_out_user}")

@@ -405,8 +405,21 @@ class Config(ConfigHelper):
         self.project.update(navigate=s)
         self.check()
 
-    def use_scenario_code(self, code: "common.Code") -> None:
-        """Update settings given a `code` with :class:`ScenarioCodeAnnotations`."""
+    def use_scenario_code(self, code: "common.Code") -> tuple[str, str]:
+        """Update settings given a `code` with :class:`ScenarioCodeAnnotations`.
+
+        Returns
+        -------
+        tuple of str
+            The entries are:
+
+            1. A short label suitable for a :class:`.Workflow` step name, for instance
+               "SSP3 policy" or "SSP5", where the first part is :py:`code.id`. See
+               :func:`.transport.workflow.generate`.
+            2. A longer, more explicity label suitable for (part of) a
+               :attr:`message_ix.Scenario.scenario` name in an :mod:`ixmp` database, for
+               instance "SSP_2024.3".
+        """
         sca = ScenarioCodeAnnotations.from_obj(code)
 
         # Look up the SSP_2024 Enum
@@ -417,6 +430,17 @@ class Config(ConfigHelper):
         self.project["EDITS"] = {"activity": sca.EDITS_activity_id}
 
         self.base_scenario_url = sca.base_scenario_URL
+
+        # Construct labels including the SSP code and policy identifier
+        # ‘Short’ label used for workflow steps
+        label = f"{code.id}{' policy' if self.policy else ''}"
+        # ‘Full’ label used in the scenario name
+        if not sca.is_LED_scenario and sca.EDITS_activity_id is None:
+            label_full = f"SSP_2024.{self.ssp.name}"
+        else:
+            label_full = label
+
+        return label, label_full
 
 
 @dataclass

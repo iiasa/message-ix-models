@@ -137,7 +137,7 @@ jobs:
 
         version_string = "${{ matrix.version.upstream }}"
 
-        if version_string != "main": 
+        if version_string != "main":
             v, result = parse(version_string), []
             for condition, dependency in (
                 (v <= Version("v3.7.0"), "genno < 1.25"),  # Upstream versions < 3.8.0 import genno.computations, removed in 1.25.0 (#156)
@@ -174,7 +174,7 @@ jobs:
           -m "not (ece_db or snapshot)" \
           --color=yes --durations=20 -rA --verbose \
           --cov-report=term-missing --cov-report=xml \
-          --numprocesses=auto \
+          --numprocesses=auto --dist=loadscope \
           --local-cache --jvmargs="-Xmx6G"
 
     - name: Upload test coverage to Codecov.io

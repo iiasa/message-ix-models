@@ -114,8 +114,15 @@ class Context:
             cls = getattr(import_module(module_name), "Config")
             # Collect any kwargs aliased to attributes of this class
             values = self._collect_aliased_kw(key, kwargs) if aliased else {}
-            # Create and store the class instance
-            kwargs[key] = cls(**values)
+            if key in kwargs:
+                if len(values):
+                    log.warn(
+                        f"Existing kwargs {key}={kwargs[key]} exists; "
+                        f"discard aliased {values}"
+                    )
+            else:
+                # Create and store the class instance
+                kwargs[key] = cls(**values)
 
         # Store keyword arguments on _values
         object.__setattr__(self, "_values", dict(*args, **kwargs))
