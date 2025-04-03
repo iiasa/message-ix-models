@@ -151,9 +151,5 @@ cache/
 # Temporary Excel files
 *~$*
 
-# SSP related files (not ready for public)
-SSP-Review-Phase-1.xlsx
-message_ix_models/data/ssp/*
-
 # Scratch files
 *scratch*
