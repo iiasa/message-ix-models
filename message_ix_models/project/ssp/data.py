@@ -132,7 +132,7 @@ class SSPUpdate(ExoDataSource):
 
        - `source`: Any value from :data:`.SSP_2024` or equivalent string, for instance
          "ICONICS:SSP(2024).2".
-       - `release`: One of "3.0.1", "3.0", or "preview".
+       - `release`: One of "3.1", "3.0.1", "3.0", or "preview".
 
     Example
     -------
@@ -151,6 +151,7 @@ class SSPUpdate(ExoDataSource):
     filename = {
         "3.0": "1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz",
         "3.0.1": "1710759470883-ssp_basic_drivers_release_3.0.1_full.csv.gz",
+        "3.1": "1721734326790-ssp_basic_drivers_release_3.1_full.csv.gz",
         "preview": "SSP-Review-Phase-1.csv.gz",
     }
 
@@ -183,7 +184,7 @@ class SSPUpdate(ExoDataSource):
         models = []
         scenarios = []
 
-        if release in ("3.0.1", "3.0"):
+        if release in ("3.1", "3.0.1", "3.0"):
             # Directories in which to locate `self.filename`:
             # - User's local cache (retrieved with "mix-models fetch" or equivalent).
             # - Stored directly within message_ix_models (editable install from a clone
