@@ -1,0 +1,13 @@
+node,commodity,level,year,time,value,unit
+R12_AFR,cement,demand,2025,year,140.2425571595793,t
+R12_EEU,cement,demand,2025,year,43.839280097299145,t
+R12_FSU,cement,demand,2025,year,108.45888265422545,t
+R12_LAM,cement,demand,2025,year,200.83402436976078,t
+R12_MEA,cement,demand,2025,year,323.46591566959586,t
+R12_NAM,cement,demand,2025,year,119.67969767150731,t
+R12_PAO,cement,demand,2025,year,53.48376239064636,t
+R12_PAS,cement,demand,2025,year,250.72079017745176,t
+R12_SAS,cement,demand,2025,year,488.5888605832439,t
+R12_WEU,cement,demand,2025,year,210.9156287414474,t
+R12_CHN,cement,demand,2025,year,2165.810003963428,t
+R12_RCPA,cement,demand,2025,year,106.38144508300388,t

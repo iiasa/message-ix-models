@@ -1,15 +1,16 @@
 import os
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 import message_ix
 import openpyxl as pxl
 import pandas as pd
+import pycountry
 import yaml
 from scipy.optimize import curve_fit
 
-from message_ix_models import Context
-from message_ix_models.util import load_package_data, package_data_path
+from message_ix_models import Context, ScenarioInfo
+from message_ix_models.util import load_package_data, nodes_ex_world, package_data_path
 
 # Configuration files
 METADATA = [
@@ -228,10 +229,12 @@ def price_fit(df: pd.DataFrame) -> float:
     float
         estimated value for price_ref in 2020
     """
-
+    if 2025 in df["year"].values:
+        if df[df["year"] == 2025]["lvl"].gt(0.5).all():
+            val = df[df["year"] == 2025]["lvl"].values[0].round(3)
+            return val
     pars = curve_fit(exponential, df.year, df.lvl, maxfev=10000)[0]
     val = exponential([2020], *pars)[0]
-    # print(df.commodity.unique(), df.node.unique(), val)
     return val
 
 
@@ -259,7 +262,9 @@ def cost_fit(df: pd.DataFrame) -> float:
     return val / 1000
 
 
-def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
+def update_macro_calib_file(
+    scenario: message_ix.Scenario, fname: str, extrapolate=True
+) -> None:
     """Function to automate manual steps in MACRO calibration
 
     Tries to open a xlsx file with the given "fname" and
@@ -295,15 +300,24 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
 
     # cost_ref
     years_cost = [i for i in range(fmy, fmy + 15, 5)]
-    df = scenario.var("COST_NODAL_NET", filters={"year": years_cost})
-    df["node"] = pd.Categorical(df["node"], nodes)
-    df = df[df["year"].isin(years_cost)].groupby(["node"]).apply(cost_fit)
-    ws = wb["cost_ref"]
-    # write derived values to sheet. Cell B7 (MEA region) is skipped.
-    for i in range(2, 7):
-        ws[f"B{i}"].value = df.values[i - 2]
-    for i in range(8, 14):
-        ws[f"B{i}"].value = df.values[i - 2]
+    df = scenario.var(
+        "COST_NODAL_NET",
+        filters={"year": years_cost, "node": nodes_ex_world(ScenarioInfo(scenario).N)},
+    )
+    if extrapolate:
+        df["node"] = pd.Categorical(df["node"], nodes)
+        df = df[df["year"].isin(years_cost)].groupby(["node"]).apply(cost_fit)
+        ws = wb.get_sheet_by_name("cost_ref")
+        for i in range(2, 14):
+            ws[f"A{i}"].value = nodes[i - 2]
+            ws[f"B{i}"].value = df.values[i - 2]
+    else:
+        vals = df[df["year"] == fmy + 5]["lvl"].values
+        nodes = df["node"].values
+        ws = wb.get_sheet_by_name("cost_ref")
+        for i in range(2, 14):
+            ws[f"A{i}"].value = nodes
+            ws[f"B{i}"].value = (vals[i - 2] / 1000).round(3)
 
     # price_ref
     comms = ["i_feed", "i_spec", "i_therm", "rc_spec", "rc_therm", "transport"]
@@ -316,11 +330,24 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     df = df.groupby(["node", "commodity"]).apply(price_fit)
     ws = wb["price_ref"]
     for i in range(2, 62):
+        ws[f"A{i}"].value = df.index.get_level_values(0).values[i - 2]
+        ws[f"B{i}"].value = df.index.get_level_values(1).values[i - 2]
         ws[f"C{i}"].value = df.values[i - 2]
+
+    # demand_ref
+    df = scenario.par("demand", filters={"commodity": comms, "year": fmy})
+    ws = wb.get_sheet_by_name("demand_ref")
+    for i in range(2, 62):
+        ws[f"A{i}"].value = df.node.values[i - 2]
+        ws[f"B{i}"].value = df.commodity.values[i - 2]
+        ws[f"C{i}"].value = df.value.values[i - 2]
+
     wb.save(path)
 
 
-def get_ssp_from_context(context: Context) -> str:
+def get_ssp_from_context(
+    context: Context,
+) -> Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]:
     """Get selected SSP from context
 
     Parameters
@@ -329,7 +356,6 @@ def get_ssp_from_context(context: Context) -> str:
 
     Returns
     -------
-    str
         SSP label
     """
     return "SSP2" if "ssp" not in context else context["ssp"]
@@ -363,3 +389,36 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
             return c
 
     raise FileNotFoundError(candidates)
+
+
+def get_pycountry_iso(row, mis_dict):
+    try:
+        row = pycountry.countries.lookup(row).alpha_3
+    except LookupError:
+        try:
+            row = mis_dict[row]
+        except KeyError:
+            print(f"{row} is not mapped to an ISO")
+            row = None
+    return row
+
+
+def get_r12_reg(df, r12_map_inv, col_name):
+    try:
+        df = r12_map_inv[df[col_name]]
+    except KeyError:
+        df = None
+    return df
+
+
+def add_R12_column(df, file_path, iso_column="COUNTRY"):
+    # Replace 'your_file_path.yaml' with the path to your actual YAML file
+    # file_path = private_data_path("node", "R12_SSP_V1.yaml")
+    yaml_data = read_yaml_file(file_path)
+    yaml_data.pop("World")
+
+    r12_map = {k: v["child"] for k, v in yaml_data.items()}
+    r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
+
+    df["R12"] = df.apply(lambda x: get_r12_reg(x, r12_map_inv, iso_column), axis=1)
+    return df
