@@ -74,7 +74,7 @@ def main(click_ctx, **kwargs):
     # NB this can't be Context.only(). When click.testing.CliRunner is used, there may
     #    already be ≥2 Context instances created elsewhere in the test session before
     #    this function is called to run CLI commands within the test session.
-    click_ctx.obj = Context.get_instance(-1)
+    click_ctx.obj = Context()
 
     # Handle command-line parameters
     click_ctx.obj.core.handle_cli_args(**kwargs)

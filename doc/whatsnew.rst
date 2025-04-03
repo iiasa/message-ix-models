@@ -44,7 +44,8 @@ SSP :ref:`ssp-2024`/ScenarioMIP
 
 Improve :mod:`.ssp.transport`:
 
-- Add :func:`.prepare_method_B` and make this the default (:pull:`259`).
+- Add :func:`~.ssp.transport.method_B` and make this the default (:pull:`259`).
+- Add :func:`~.ssp.transport.method_C` (:issue:`305`, :pull:`325`).
 - Add :func:`~.ssp.transport.process_df` (:pull:`303`).
 - Adapt to revised ‘variable’ codes (:pull:`309`, :issue:`304`).
 
