@@ -104,28 +104,25 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     )
 
     # Identify the directory from which IEA EWEB data is read
-    iea_data_dir = web.dir_fallback(web.FILES[("IEA", "2024")][0])
-    # True if the full data set is present; False if the fuzzed test data are being used
-    full_iea_eweb_data = not (
-        iea_data_dir.parts[-4:] == ("message_ix_models", "data", "test", "iea")
-    )
+    iea_eweb_dir = web.dir_fallback(web.FILES[("IEA", "2024")][0])
+    # True if the fuzzed test data are being used
+    iea_eweb_test_data = iea_eweb_dir.match("message_ix_models/data/test/iea/web")
 
     # Number of modified values
     N_exp = {
-        (METHOD.A, True): 10280,
         (METHOD.A, False): 10280,
-        (METHOD.B, True): 4660,
-        (METHOD.B, False): 3060,
-        (METHOD.C, True): 3220,
+        (METHOD.A, True): 10280,
+        (METHOD.B, False): 4660,
+        (METHOD.B, True): 3060,
         (METHOD.C, False): 3220,
-    }[(method, full_iea_eweb_data)]
+        (METHOD.C, True): 3220,
+    }[(method, iea_eweb_test_data)]
 
     if N_exp != len(df):
         # df.to_csv("debug-diff.csv")  # DEBUG Dump to file
         # print(df.to_string(max_rows=50))  # DEBUG Show in test output
-        assert N_exp == len(df), (
-            f"Unexpected number of modified values: {len(df)} != {N_exp}"
-        )
+        msg = f"Unexpected number of modified values: {N_exp} != {len(df)}"
+        assert N_exp == len(df)
 
     # All of the expected 'variable' codes have been modified
     assert expected_variables(OUT, method) == set(df["Variable"].unique())
@@ -134,7 +131,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     if len(cond):
         msg = "Negative emissions totals after processing"
         print(f"\n{msg}:", cond.to_string(), sep="\n")
-        assert not full_iea_eweb_data, msg
+        assert iea_eweb_test_data, msg  # Negative values → fail if NOT using test data
 
 
 def expected_variables(flag: int, method: METHOD) -> set[str]:
