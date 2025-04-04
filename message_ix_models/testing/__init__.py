@@ -142,10 +142,10 @@ def session_context(pytestconfig, tmp_env):
     )
 
     # Store current .util.config.Config.local_data setting from the user's configuration
-    pytestconfig.user_local_data = ctx.core.local_data
+    uld = pytestconfig.user_local_data = ctx.core.local_data
 
     # Other local data in the temporary directory for this session only
-    ctx.core.local_data = session_tmp_dir
+    sld = ctx.core.local_data = session_tmp_dir
 
     # Also set the "message local data" key in the ixmp config
     ixmp_config.set("message local data", session_tmp_dir)
@@ -157,6 +157,17 @@ def session_context(pytestconfig, tmp_env):
 
         # Create some subdirectories
         util.MESSAGE_DATA_PATH.joinpath("data", "tests").mkdir(parents=True)
+
+    # Symlink some paths from the user's local data into parallel subpaths of the test
+    # local data directory
+    for parts in (
+        ("iea",),
+        ("ssp",),
+    ):
+        target = uld.joinpath(*parts)
+        path = sld.joinpath(*parts)
+        log.info(f"Symlink {path} -> {target}")
+        path.symlink_to(target)
 
     # Add a platform connected to an in-memory database
     platform_name = "message-ix-models"

@@ -11,7 +11,6 @@ from message_ix_models.project.ssp.transport import (
     process_file,
 )
 from message_ix_models.testing import MARK
-from message_ix_models.tests.tools.iea.test_web import user_local_data  # noqa: F401
 from message_ix_models.tools.iea import web
 from message_ix_models.util import package_data_path
 
@@ -220,7 +219,6 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
 
 
 @get_computer.minimum_version
-# @pytest.mark.usefixtures("user_local_data")
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(test_context, input_csv_path, method) -> None:
     df_in = pd.read_csv(input_csv_path)
@@ -233,7 +231,6 @@ def test_process_df(test_context, input_csv_path, method) -> None:
 
 
 @get_computer.minimum_version
-# @pytest.mark.usefixtures("user_local_data")
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""
