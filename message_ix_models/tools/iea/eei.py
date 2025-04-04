@@ -148,9 +148,10 @@ class IEA_EEI(ExoDataSource):
         self.raise_on_extra_kw(source_kw)
 
         self.path = path_fallback(
-            "transport",
+            "iea",
+            "eei",
             "Energyefficiencyindicators_2020-extended.xlsx",
-            where="private",
+            where="local private test",
         )
 
         # Prepare query
