@@ -1,10 +1,8 @@
 import logging
 
-from platformdirs import user_cache_path
-
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.tools.iamc import iamc_like_data_for_query
-from message_ix_models.util import package_data_path, private_data_path
+from message_ix_models.util import path_fallback
 
 __all__ = [
     "SSPOriginal",
@@ -12,6 +10,18 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+
+#: :py:`where` argument to :func:`path_fallback`, used by both :class:`.SSPOriginal` and
+#: :class:`.SSPUpdate`. In order:
+#:
+#: 1. Currently data is stored in message-static-data, cloned and linked from within the
+#:    user's 'local' data directory.
+#: 2. Previously some files were stored directly within message_ix_models (available in
+#:    an editable install from a clone of the git repository, 'package') or in
+#:    :mod:`message_data` ('private'). These settings are only provided for backward
+#:    compatibility.
+#: 3. If the above are not available, use the fuzzed/random test data ('test').
+WHERE = "local package private test"
 
 
 @register_source
@@ -93,25 +103,17 @@ class SSPOriginal(ExoDataSource):
 
         self.raise_on_extra_kw(source_kw)
 
+        # Identify input data path
+        self.path = path_fallback("ssp", self.filename, where=WHERE)
+        if "test" in self.path.parts:
+            log.warning(f"Read random data from {self.path}")
+
         # Assemble a query string
         extra = "d" if ssp_id == "4" and model == "IIASA-WiC POP" else ""
         self.query = (
             f"SCENARIO == 'SSP{ssp_id}{extra}_v9_{date}' and VARIABLE == '{measure}'"
             + (f" and MODEL == '{model}'" if model else "")
         )
-        # log.debug(query)
-
-        # Iterate over possible locations for the data file
-        dirs = [private_data_path("ssp"), package_data_path("test", "ssp")]
-        for path in [d.joinpath(self.filename) for d in dirs]:
-            if not path.exists():
-                log.info(f"Not found: {path}")
-                continue
-            if "test" in path.parts:
-                log.warning(f"Reading random data from {path}")
-            break
-
-        self.path = path
 
     def __call__(self):
         # Use prepared path, query, and replacements
@@ -132,7 +134,7 @@ class SSPUpdate(ExoDataSource):
 
        - `source`: Any value from :data:`.SSP_2024` or equivalent string, for instance
          "ICONICS:SSP(2024).2".
-       - `release`: One of "3.0.1", "3.0", or "preview".
+       - `release`: One of "3.1", "3.0.1", "3.0", or "preview".
 
     Example
     -------
@@ -151,6 +153,7 @@ class SSPUpdate(ExoDataSource):
     filename = {
         "3.0": "1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz",
         "3.0.1": "1710759470883-ssp_basic_drivers_release_3.0.1_full.csv.gz",
+        "3.1": "1721734326790-ssp_basic_drivers_release_3.1_full.csv.gz",
         "preview": "SSP-Review-Phase-1.csv.gz",
     }
 
@@ -183,13 +186,7 @@ class SSPUpdate(ExoDataSource):
         models = []
         scenarios = []
 
-        if release in ("3.0.1", "3.0"):
-            # Directories in which to locate `self.filename`:
-            # - User's local cache (retrieved with "mix-models fetch" or equivalent).
-            # - Stored directly within message_ix_models (editable install from a clone
-            #   of the git repository).
-            dirs = [user_cache_path("message-ix-models"), package_data_path("ssp")]
-
+        if release in ("3.1", "3.0.1", "3.0"):
             scenarios.append(f"SSP{ssp_id}")
 
             if measure == "GDP|PPP":
@@ -202,9 +199,6 @@ class SSPUpdate(ExoDataSource):
                     Scenario={"Historical Reference": scenarios[0]},
                 )
         elif release == "preview":
-            # Look first in message_data, then in message_ix_models test data
-            dirs = [private_data_path("ssp"), package_data_path("test", "ssp")]
-
             models.extend([model] if model is not None else [])
             scenarios.append(f"SSP{ssp_id} - Review Phase 1")
         else:
@@ -214,22 +208,15 @@ class SSPUpdate(ExoDataSource):
             )
             raise ValueError(release)
 
+        # Identify input data path
+        self.path = path_fallback("ssp", self.filename[release], where=WHERE)
+        if "test" in self.path.parts:
+            log.warning(f"Read random data from {self.path}")
+
         # Assemble and store a query string
         self.query = f"Scenario in {scenarios!r} and Variable == '{measure}'" + (
             f"and Model in {models!r}" if models else ""
         )
-        # log.info(f"{self.query = }")
-
-        # Iterate over possible locations for the data file
-        for path in [d.joinpath(self.filename[release]) for d in dirs]:
-            if not path.exists():
-                log.info(f"Not found: {path}")
-                continue
-            if "test" in path.parts:
-                log.warning(f"Reading random data from {path}")
-            break
-
-        self.path = path
 
     def __call__(self):
         # Use prepared path, query, and replacements

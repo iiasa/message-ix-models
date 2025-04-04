@@ -4,11 +4,6 @@ import pytest
 
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.tools.iea.eei import IEA_EEI  # noqa: F401
-from message_ix_models.util import HAS_MESSAGE_DATA
-
-pytestmark = pytest.mark.skipif(
-    condition=not HAS_MESSAGE_DATA, reason="No fuzzed/random test data for this source."
-)
 
 # Infill data for R12 nodes not present in the IEA data
 # NB these are hand-picked as of 2022-07-20 so that the ratio of freight activity / GDP
@@ -31,12 +26,13 @@ R12_MAP = [
 
 
 class TestIEA_EEI:
+    @IEA_EEI.transform.minimum_version
     @pytest.mark.parametrize(
         "source_kw, dimensionality",
         (
             (
                 dict(
-                    indicator="Passenger load factor",
+                    measure="Passenger load factor",
                     # broadcast_map="bc:n-n2",
                 ),
                 {"Mode/vehicle type", "SECTOR"},
@@ -50,7 +46,7 @@ class TestIEA_EEI:
             ("R12", True, 5),
         ),
     )
-    def test_prepare_computer(  # pragma: no cover cf. iiasa/message-ix-models#164
+    def test_prepare_computer(
         self, test_context, source_kw, dimensionality, regions, aggregate, N_n
     ):
         test_context.model.regions = regions

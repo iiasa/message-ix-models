@@ -157,7 +157,7 @@ class TestSSPUpdate:
             ),
         ),
     )
-    @pytest.mark.parametrize("release", ("preview", "3.0", "3.0.1"))
+    @pytest.mark.parametrize("release", ("preview", "3.0", "3.0.1", "3.1"))
     def test_prepare_computer(self, test_context, source, source_kw, release):
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
