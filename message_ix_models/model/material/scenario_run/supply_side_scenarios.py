@@ -1,7 +1,8 @@
-from message_ix_models import ScenarioInfo
 import ixmp
 import message_ix
 import pandas as pd
+
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data, package_data_path
 
 """Infrastructure Supply Side Measures"""
@@ -147,7 +148,7 @@ def industry_sector_net_zero_targets(scenario):
     scenario.commit("Steel sector target added.")
 
 
-def no_substitution(scenario):
+def no_clinker_substitution(scenario):
     # Clinker substituion not allowed
     s_info = ScenarioInfo(scenario)
 

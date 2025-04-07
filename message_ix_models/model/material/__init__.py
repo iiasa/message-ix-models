@@ -14,29 +14,44 @@ from message_ix_models.model.material.data_aluminum import gen_data_aluminum
 from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
 from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
+from message_ix_models.model.material.data_infrastructure import (
+    adjust_demand_param,
+    gen_data_infrastructure,
+)
 from message_ix_models.model.material.data_methanol_new import gen_data_methanol_new
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
 from message_ix_models.model.material.data_power_sector import gen_data_power_sector
 from message_ix_models.model.material.data_steel import gen_data_steel
-from message_ix_models.model.material.data_infrastructure import gen_data_infrastructure
-from message_ix_models.model.material.data_infrastructure import adjust_demand_param
 from message_ix_models.model.material.data_util import (
+    add_bound_on_dummy_lignin,
     add_ccs_technologies,
     add_cement_bounds_2020,
     add_coal_lowerbound_2020,
     add_elec_i_ini_act,
     add_elec_lowerbound_2020,
     add_emission_accounting,
+    add_infrastructure_reporting,
     add_macro_COVID,
     add_new_ind_hist_act,
+    add_share_const_clinker_substitutes,
     gen_te_projections,
     get_ssp_soc_eco_data,
     modify_baseyear_bounds,
     modify_demand_and_hist_activity,
     modify_industry_demand,
-    add_share_const_clinker_substitutes,
-    add_infrastructure_reporting,
-    add_bound_on_dummy_lignin,
+)
+from message_ix_models.model.material.scenario_run.supply_side_scenarios import (
+    increased_recycling,
+    industry_sector_net_zero_targets,
+    keep_fuel_share,
+    limit_asphalt_recycling,
+    minimum_ccs_cement,
+    no_ccs,
+    no_clinker_substitution,
+    no_ethanol_cement,
+    no_h2_cement,
+    no_h2_steel,
+    no_methanol_cement,
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
@@ -52,20 +67,6 @@ from message_ix_models.util.compat.message_data import (
 )
 from message_ix_models.util.compat.message_data import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
-)
-
-from message_ix_models.model.material.scenario_run.supply_side_scenarios import (
-    no_substitution,
-    no_ccs,
-    no_h2_steel,
-    no_methanol_cement,
-    no_h2_cement,
-    no_ethanol_cement,
-    increased_recycling,
-    limit_asphalt_recycling,
-    industry_sector_net_zero_targets,
-    keep_fuel_share,
-    minimum_ccs_cement,
 )
 
 log = logging.getLogger(__name__)
@@ -417,7 +418,7 @@ def build_scen(
     if supply_scenario == "substitution":
         log.info("Building material substitution scenario")
         # No CCS, fuel share same as today, recycling as today
-        # Material substituion allowed.
+        # Material substitution allowed.
         no_ccs(scenario)
         limit_asphalt_recycling(scenario)
         keep_fuel_share(scenario)
@@ -430,7 +431,7 @@ def build_scen(
         # Recycling as today
         # No CCS
         log.info("Building fuel switching scenario")
-        no_substitution(scenario)
+        no_clinker_substitution(scenario)
         limit_asphalt_recycling(scenario)
         no_ccs(scenario)
     elif supply_scenario == "ccs":
@@ -438,7 +439,7 @@ def build_scen(
         # Recycling as today
         # Keep fuel share as today
         log.info("Building ccs scenario")
-        no_substitution(scenario)
+        no_clinker_substitution(scenario)
         limit_asphalt_recycling(scenario)
         keep_fuel_share(scenario)
         no_h2_steel(scenario)
@@ -453,7 +454,7 @@ def build_scen(
         # No CCS
         # Keep fuel share as today
         log.info("Building recycling scenario")
-        no_substitution(scenario)
+        no_clinker_substitution(scenario)
         increased_recycling(scenario)
         no_ccs(scenario)
         keep_fuel_share(scenario)
@@ -464,7 +465,7 @@ def build_scen(
     elif supply_scenario == "default":
         log.info("Default mode")
         limit_asphalt_recycling(scenario)
-        no_substitution(scenario)
+        no_clinker_substitution(scenario)
         keep_fuel_share(scenario)
         no_h2_steel(scenario)
         no_methanol_cement(scenario)
