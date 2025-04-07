@@ -128,26 +128,6 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
             },
         ),
     ),
-    "SSP-Update-3.0": dict(
-        pooch_args=dict(
-            base_url=f"{GH_MAIN}/ssp/",
-            registry={
-                "1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz": (
-                    "sha1:e2af7a88aeed7d0e44ceaf2dff60f891cf551517"
-                ),
-            },
-        ),
-    ),
-    "SSP-Update-3.0.1": dict(
-        pooch_args=dict(
-            base_url=f"{GH_MAIN}/ssp/",
-            registry={
-                "1710759470883-ssp_basic_drivers_release_3.0.1_full.csv.gz": (
-                    "sha1:e5c24c27ee743e79dac5a578235b35a68cd64183"
-                ),
-            },
-        ),
-    ),
 }
 
 

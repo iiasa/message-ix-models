@@ -82,7 +82,6 @@ Commonly used:
 
 .. automodule:: message_ix_models.util.config
    :members:
-   :exclude-members: Config
 
 :mod:`.util.context`
 ====================
