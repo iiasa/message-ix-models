@@ -5,7 +5,12 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_sector_data, read_timeseries, calculate_ini_new_cap, read_rel
+from message_ix_models.model.material.data_util import (
+    read_sector_data,
+    read_timeseries,
+    calculate_ini_new_cap,
+    read_rel,
+)
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import get_ssp_from_context, read_config
 from message_ix_models.util import (
@@ -14,6 +19,7 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
+
 
 def gen_mock_demand_cement(scenario):
     s_info = ScenarioInfo(scenario)
@@ -168,7 +174,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
-    data_cement = read_sector_data(scenario, "cement", "Global_cement_MESSAGE.xlsx" )
+    data_cement = read_sector_data(scenario, "cement", "Global_cement_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
     data_cement_ts = read_timeseries(scenario, "cement", "Global_cement_MESSAGE.xlsx")
     data_cement_rel = read_rel(scenario, "cement", "Global_cement_MESSAGE.xlsx")
@@ -368,7 +374,6 @@ def gen_data_cement(scenario, dry_run=False):
 
             for par_name in params:
                 if par_name == "relation_activity":
-
                     tec_list = data_cement_rel.loc[
                         (
                             (data_cement_rel["relation"] == r)
@@ -378,7 +383,6 @@ def gen_data_cement(scenario, dry_run=False):
                     ]
 
                     for tec in tec_list.unique():
-
                         mode = data_cement_rel.loc[
                             (
                                 (data_cement_rel["relation"] == r)
@@ -390,7 +394,6 @@ def gen_data_cement(scenario, dry_run=False):
                         ].values
 
                         for m in mode:
-
                             val = data_cement_rel.loc[
                                 (
                                     (data_cement_rel["relation"] == r)
@@ -402,7 +405,6 @@ def gen_data_cement(scenario, dry_run=False):
                                 "value",
                             ].values[0]
 
-
                             df = make_df(
                                 par_name,
                                 technology=tec,
@@ -410,8 +412,8 @@ def gen_data_cement(scenario, dry_run=False):
                                 unit="-",
                                 node_loc=reg,
                                 node_rel=reg,
-                                mode = m,
-                                **common_rel
+                                mode=m,
+                                **common_rel,
                             ).pipe(same_node)
 
                             results[par_name].append(df)
@@ -436,9 +438,11 @@ def gen_data_cement(scenario, dry_run=False):
     parname = "demand"
     # demand = gen_mock_demand_cement(scenario)
     # Converte to concrete demand by dividing to 0.15.
-    df_demand = material_demand_calc.derive_demand("cement", scenario, old_gdp=False, ssp=ssp)
-    df_demand['value'] = df_demand['value'] / 0.15
-    df_demand['commodity'] = 'concrete'
+    df_demand = material_demand_calc.derive_demand(
+        "cement", scenario, old_gdp=False, ssp=ssp
+    )
+    df_demand["value"] = df_demand["value"] / 0.15
+    df_demand["commodity"] = "concrete"
     results[parname].append(df_demand)
 
     # Add CCS as addon
@@ -452,12 +456,17 @@ def gen_data_cement(scenario, dry_run=False):
     technology_2 = ["clinker_wet_cement"]
     df_2 = make_df(
         parname, mode="M1", type_addon="wet_ccs_cement", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology= technology_2)
+    ).pipe(broadcast, node=nodes, technology=technology_2)
 
     technology_3 = ["rotary_kiln_wet_cement"]
     df_3 = make_df(
-        parname, mode="M1", type_addon="rotary_kiln_wet_addons", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology= technology_3)
+        parname,
+        mode="M1",
+        type_addon="rotary_kiln_wet_addons",
+        value=1,
+        unit="-",
+        **common,
+    ).pipe(broadcast, node=nodes, technology=technology_3)
 
     # technology_4 = ["rotary_kiln_dry_cement"]
     # df_4 = make_df(
@@ -469,27 +478,40 @@ def gen_data_cement(scenario, dry_run=False):
     results[parname].append(df_3)
 
     # Adding fly_ash as waste product from coal technologies
-    coal_technologies_modes = {"feedstock": ["meth_coal","meth_coal_ccs"],
-                               "fuel":      ["meth_coal","meth_coal_ccs"],
-                               "M1":        ["coal_i","sp_coal_I","coal_NH3",
-                                             "coal_NH3_ccs","coal_adv",
-                                             "coal_adv_ccs","coal_ppl",
-                                             "coal_ppl_u","coal_gas",
-                                             "coal_hpl", "h2_coal",
-                                             "h2_coal_ccs"],
-                               "high_temp": ["furnace_coal_steel",
-                                             "furnace_coal_aluminum",
-                                             "furnace_coal_cement",
-                                             "furnace_coal_petro",
-                                             "furnace_coal_refining",
-                                             "furnace_coal_resins",],
-                               "low_temp":  ["furnace_coal_steel",
-                                             "furnace_coal_aluminum",
-                                             "furnace_coal_cement",
-                                             "furnace_coal_petro",
-                                             "furnace_coal_refining",
-                                             "furnace_coal_resins",]
-                               }
+    coal_technologies_modes = {
+        "feedstock": ["meth_coal", "meth_coal_ccs"],
+        "fuel": ["meth_coal", "meth_coal_ccs"],
+        "M1": [
+            "coal_i",
+            "sp_coal_I",
+            "coal_NH3",
+            "coal_NH3_ccs",
+            "coal_adv",
+            "coal_adv_ccs",
+            "coal_ppl",
+            "coal_ppl_u",
+            "coal_gas",
+            "coal_hpl",
+            "h2_coal",
+            "h2_coal_ccs",
+        ],
+        "high_temp": [
+            "furnace_coal_steel",
+            "furnace_coal_aluminum",
+            "furnace_coal_cement",
+            "furnace_coal_petro",
+            "furnace_coal_refining",
+            "furnace_coal_resins",
+        ],
+        "low_temp": [
+            "furnace_coal_steel",
+            "furnace_coal_aluminum",
+            "furnace_coal_cement",
+            "furnace_coal_petro",
+            "furnace_coal_refining",
+            "furnace_coal_resins",
+        ],
+    }
 
     # value = (Mt coal/GWa) * (input_coal) * (fly ash as mass % of coal)
     # * (% of fly ash in total ash)
@@ -500,25 +522,33 @@ def gen_data_cement(scenario, dry_run=False):
     # % of fly ash in total ash = 0.9   (Shah et al., 2022)
     modes = coal_technologies_modes.keys()
     conversion_factor = 1.261 * 0.125 * 0.9
-    df_input = scenario.par('input')
+    df_input = scenario.par("input")
 
     for n in nodes:
         for m in modes:
             for t in coal_technologies_modes[m]:
-                df_output = df_input[(df_input['node_loc']==n) & (df_input['technology']==t)
-                & (df_input['mode']==m)]
+                df_output = df_input[
+                    (df_input["node_loc"] == n)
+                    & (df_input["technology"] == t)
+                    & (df_input["mode"] == m)
+                ]
                 if df_output.empty:
-                    print('Technology {} not found in the input table'.format(t))
+                    print("Technology {} not found in the input table".format(t))
                     continue
                 else:
-                    df_output["updated_value"] = df_output['value']*conversion_factor
-                    df_output.drop(["value"], axis=1, inplace = True)
-                    df_output.rename(columns={"node_origin":"node_dest",
-                                                         'time_origin':'time_dest',
-                                                         'updated_value':'value'}, inplace = True)
-                    df_output['level']= 'waste_material'
-                    df_output['commodity']= 'fly_ash'
-                    df_output['unit']= 'Mt'
+                    df_output["updated_value"] = df_output["value"] * conversion_factor
+                    df_output.drop(["value"], axis=1, inplace=True)
+                    df_output.rename(
+                        columns={
+                            "node_origin": "node_dest",
+                            "time_origin": "time_dest",
+                            "updated_value": "value",
+                        },
+                        inplace=True,
+                    )
+                    df_output["level"] = "waste_material"
+                    df_output["commodity"] = "fly_ash"
+                    df_output["unit"] = "Mt"
 
                     results["output"].append(df_output)
 
@@ -528,24 +558,28 @@ def gen_data_cement(scenario, dry_run=False):
     results["initial_new_capacity_up"] = pd.concat(
         [
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="clinker_dry_ccs_cement",
-                material = "cement"
+                df_demand=df_demand.copy(deep=True),
+                technology="clinker_dry_ccs_cement",
+                material="cement",
             ),
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="clinker_wet_ccs_cement",
-                material = "cement"
+                df_demand=df_demand.copy(deep=True),
+                technology="clinker_wet_ccs_cement",
+                material="cement",
             ),
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="clay_wet_cement",
-                material = "cement"
+                df_demand=df_demand.copy(deep=True),
+                technology="clay_wet_cement",
+                material="cement",
             ),
             # calculate_ini_new_cap(
             #     df_demand=df_demand.copy(deep=True), technology="clay_dry_cement",
             #     material = "cement"
             # ),
             calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True), technology="flash_calciner_cement",
-                material = "cement"
+                df_demand=df_demand.copy(deep=True),
+                technology="flash_calciner_cement",
+                material="cement",
             ),
         ]
     )

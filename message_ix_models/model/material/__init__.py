@@ -36,7 +36,7 @@ from message_ix_models.model.material.data_util import (
     modify_industry_demand,
     add_share_const_clinker_substitutes,
     add_infrastructure_reporting,
-    add_bound_on_dummy_lignin
+    add_bound_on_dummy_lignin,
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
@@ -65,7 +65,7 @@ from message_ix_models.model.material.scenario_run.supply_side_scenarios import 
     limit_asphalt_recycling,
     industry_sector_net_zero_targets,
     keep_fuel_share,
-    minimum_ccs_cement
+    minimum_ccs_cement,
 )
 
 log = logging.getLogger(__name__)
@@ -85,6 +85,7 @@ DATA_FUNCTIONS_2 = [
     # gen_data_power_sector,
     gen_data_aluminum,
 ]
+
 
 def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
@@ -140,7 +141,6 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     add_share_const_clinker_substitutes(scenario)
     add_bound_on_dummy_lignin(scenario)
 
-
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration
     # levels for the enduse technologies.
@@ -185,17 +185,18 @@ SPEC_LIST = [
     "petro_chemicals",
     # "buildings",
     # "power_sector",
-    "infrastructure"
+    "infrastructure",
 ]
 
 _SUPPLY_SCENARIOS = [
-"recycling",
-"substitution",
-"fuel_switching",
-"ccs",
-"all",
-"default"
+    "recycling",
+    "substitution",
+    "fuel_switching",
+    "ccs",
+    "all",
+    "default",
 ]
+
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
@@ -273,12 +274,18 @@ def create_bare(context, regions, dry_run):
     "--update_costs",
     default=False,
 )
-@click.option(
-    "--supply_scenario", default="none", type=click.Choice(_SUPPLY_SCENARIOS)
-)
-
+@click.option("--supply_scenario", default="none", type=click.Choice(_SUPPLY_SCENARIOS))
 @click.pass_obj
-def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_costs, supply_scenario):
+def build_scen(
+    context,
+    datafile,
+    tag,
+    mode,
+    scenario_name,
+    old_calib,
+    update_costs,
+    supply_scenario,
+):
     """Build a scenario.
 
     Use the --url option to specify the base scenario. If this scenario is on a
@@ -499,6 +506,7 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         # scenario_cbud.commit("remove cumulative years from cat_year set")
         # scenario_cbud.set("cat_year", {"type_year": "cumulative"})
 
+
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--version", default=None)
@@ -542,11 +550,12 @@ def solve_scen(
         print("Make sure to use this scenario to solve with MACRO iterations.")
         if not scenario.has_solution():
             scenario.solve(
-                model="MESSAGE", solve_options={"lpmethod": "4",
-                "scaind": "-1",
-                # "predual":"1"
-
-                }
+                model="MESSAGE",
+                solve_options={
+                    "lpmethod": "4",
+                    "scaind": "-1",
+                    # "predual":"1"
+                },
             )
             scenario.set_as_default()
 
@@ -604,10 +613,14 @@ def solve_scen(
     if not add_macro:
         # Solve
         print("Solving the scenario without MACRO")
-        scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4",
-        # "predual":"1",
-        "scaind": "-1"
-        })
+        scenario.solve(
+            model="MESSAGE",
+            solve_options={
+                "lpmethod": "4",
+                # "predual":"1",
+                "scaind": "-1",
+            },
+        )
         scenario.set_as_default()
 
 
@@ -871,11 +884,14 @@ def run_cbud_scenario(context, model, scenario, budget):
     scenario_cbud.set("cat_year", {"type_year": "cumulative"})
 
     # scenario_cbud.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
-    scenario_cbud.solve(model="MESSAGE", solve_options={
-    "scaind": -1,
-    # "predual": 1
-    })
-    scenario_cbud. set_as_default()
+    scenario_cbud.solve(
+        model="MESSAGE",
+        solve_options={
+            "scaind": -1,
+            # "predual": 1
+        },
+    )
+    scenario_cbud.set_as_default()
     return
 
 

@@ -3,21 +3,22 @@ import numpy as np
 
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
-from message_ix_models.util import (
-broadcast,
-same_node,
-package_data_path)
+from message_ix_models.util import broadcast, same_node, package_data_path
 from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 
-default_gdp_elasticity = pd.read_excel(
+default_gdp_elasticity = (
+    pd.read_excel(
         package_data_path(
             "material",
             "methanol",
             "methanol_sensitivity_pars.xlsx",
         )
-    ).set_index("par").to_dict()["value"]["nh3_elasticity"]
+    )
+    .set_index("par")
+    .to_dict()["value"]["nh3_elasticity"]
+)
 # float(0.65) # old default value
 
 
@@ -28,7 +29,7 @@ def gen_all_NH3_fert(scenario, dry_run=False):
         **gen_data_ts(scenario),
         **gen_demand(),
         **gen_land_input(scenario),
-        **gen_resid_demand_NH3(scenario, default_gdp_elasticity)
+        **gen_resid_demand_NH3(scenario, default_gdp_elasticity),
     }
 
 
@@ -61,7 +62,6 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
     act_years = act_years.drop_duplicates()
 
     for par_name in par_dict.keys():
-
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
@@ -87,8 +87,10 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
                     ),
                 )
                 df_new["year_vtg"] = df_new["year_act"] - 5 * df_new["year_vtg"]
-                #remove years that are not in scenario set
-                df_new = df_new[~df_new["year_vtg"].isin([2065, 2075, 2085, 2095, 2105])]
+                # remove years that are not in scenario set
+                df_new = df_new[
+                    ~df_new["year_vtg"].isin([2065, 2075, 2085, 2095, 2105])
+                ]
         else:
             if "year_vtg" in df_new.columns:
                 df_new = df_new.pipe(same_node).pipe(broadcast, year_vtg=vtg_years)
@@ -101,12 +103,14 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         par_dict = experiment_lower_CPA_SAS_costs(par_dict)
 
     df_lifetime = par_dict.get("technical_lifetime")
-    dict_lifetime =  ( df_lifetime.loc[:,["technology", "value"]]
-                     .set_index("technology")
-                     .to_dict()["value"] )
+    dict_lifetime = (
+        df_lifetime.loc[:, ["technology", "value"]]
+        .set_index("technology")
+        .to_dict()["value"]
+    )
 
     class missingdict(dict):
-        def __missing__(self,key):
+        def __missing__(self, key):
             return 1
 
     dict_lifetime = missingdict(dict_lifetime)
@@ -114,24 +118,27 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         if ("year_vtg" in par_dict[i].columns) & ("year_act" in par_dict[i].columns):
             df_temp = par_dict[i]
             df_temp["lifetime"] = df_temp["technology"].map(dict_lifetime)
-            df_temp = df_temp[(df_temp["year_act"] - df_temp["year_vtg"]) < df_temp["lifetime"]]
+            df_temp = df_temp[
+                (df_temp["year_act"] - df_temp["year_vtg"]) < df_temp["lifetime"]
+            ]
             par_dict[i] = df_temp.drop("lifetime", axis="columns")
     pars = ["inv_cost", "fix_cost"]
-    tec_list = ["biomass_NH3",
-                "electr_NH3",
-                "gas_NH3",
-                "coal_NH3",
-                "fueloil_NH3",
-                "biomass_NH3_ccs",
-                "gas_NH3_ccs",
-                "coal_NH3_ccs",
-                "fueloil_NH3_ccs"]
+    tec_list = [
+        "biomass_NH3",
+        "electr_NH3",
+        "gas_NH3",
+        "coal_NH3",
+        "fueloil_NH3",
+        "biomass_NH3_ccs",
+        "gas_NH3_ccs",
+        "coal_NH3_ccs",
+        "fueloil_NH3_ccs",
+    ]
     cost_conv = pd.read_excel(
-        package_data_path(
-            "material",
-            "ammonia",
-            "cost_conv_nh3.xlsx"),
-        sheet_name="Sheet1", index_col=0)
+        package_data_path("material", "ammonia", "cost_conv_nh3.xlsx"),
+        sheet_name="Sheet1",
+        index_col=0,
+    )
     for p in pars:
         conv_cost_df = pd.DataFrame()
         df = par_dict[p]
@@ -141,10 +148,12 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
             else:
                 year_col = "year_act"
 
-            df_tecs = df[df["technology"]==tec]
+            df_tecs = df[df["technology"] == tec]
             df_tecs = df_tecs.merge(cost_conv, left_on=year_col, right_index=True)
             df_tecs_nam = df_tecs[df_tecs["node_loc"] == "R12_NAM"]
-            df_tecs = df_tecs.merge(df_tecs_nam[[year_col, "value"]], left_on=year_col, right_on=year_col)
+            df_tecs = df_tecs.merge(
+                df_tecs_nam[[year_col, "value"]], left_on=year_col, right_on=year_col
+            )
             df_tecs["diff"] = df_tecs["value_x"] - df_tecs["value_y"]
             df_tecs["diff"] = df_tecs["diff"] * (1 - df_tecs["convergence"])
             df_tecs["new_val"] = df_tecs["value_x"] - df_tecs["diff"]
@@ -174,14 +183,13 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
     )
     df.groupby("parameter")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
-    #for i in par_dict.keys():
-        #par_dict[i] = par_dict[i].dropna(axis=1)
+    # for i in par_dict.keys():
+    # par_dict[i] = par_dict[i].dropna(axis=1)
 
     act_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_act"]
     act_years = act_years.drop_duplicates()
 
     for par_name in par_dict.keys():
-
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_rel"] = df["node_rel"].apply(lambda x: None if x == "all" else x)
@@ -203,10 +211,17 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
             df_all_regs = df_all_regs.apply(lambda x: same_node_if_nan(x), axis=1)
 
         if "node_loc" in df_single_regs.columns:
-            df_single_regs["node_loc"] = df_single_regs["node_loc"].apply(lambda x: None if x == "all" else x)
+            df_single_regs["node_loc"] = df_single_regs["node_loc"].apply(
+                lambda x: None if x == "all" else x
+            )
             df_new_reg_all_regs = df_single_regs[df_single_regs["node_loc"].isna()]
             df_new_reg_all_regs = df_new_reg_all_regs.pipe(broadcast, node_loc=nodes)
-            df_single_regs = pd.concat([df_single_regs[~df_single_regs["node_loc"].isna()], df_new_reg_all_regs])
+            df_single_regs = pd.concat(
+                [
+                    df_single_regs[~df_single_regs["node_loc"].isna()],
+                    df_new_reg_all_regs,
+                ]
+            )
 
         df = pd.concat([df_single_regs, df_all_regs])
 
@@ -265,10 +280,16 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
         set_exp_imp_nodes(df_new)
         par_dict[par_name] = df_new
 
-    #convert floats
-    par_dict["historical_activity"] = par_dict["historical_activity"].astype({'year_act': 'int32'})
-    par_dict["historical_new_capacity"] = par_dict["historical_new_capacity"].astype({'year_vtg': 'int32'})
-    par_dict["bound_activity_lo"] = par_dict["bound_activity_lo"].astype({'year_act': 'int32'})
+    # convert floats
+    par_dict["historical_activity"] = par_dict["historical_activity"].astype(
+        {"year_act": "int32"}
+    )
+    par_dict["historical_new_capacity"] = par_dict["historical_new_capacity"].astype(
+        {"year_vtg": "int32"}
+    )
+    par_dict["bound_activity_lo"] = par_dict["bound_activity_lo"].astype(
+        {"year_act": "int32"}
+    )
 
     return par_dict
 
@@ -307,9 +328,7 @@ def read_demand():
 
     # Read parameters in xlsx
     te_params = data = pd.read_excel(
-        package_data_path(
-            "material", "ammonia", "nh3_fertilizer_demand.xlsx"
-        ),
+        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
         sheet_name="old_TE_sheet",
         engine="openpyxl",
         nrows=72,
@@ -346,9 +365,9 @@ def read_demand():
     N_energy.gas_pct *= input_fuel[2] * CONVERSION_FACTOR_NH3_N  # NH3 / N
     N_energy.coal_pct *= input_fuel[3] * CONVERSION_FACTOR_NH3_N
     N_energy.oil_pct *= input_fuel[4] * CONVERSION_FACTOR_NH3_N
-    N_energy = pd.concat([N_energy.Region, N_energy.sum(axis=1, numeric_only=True)], axis=1).rename(
-        columns={0: "totENE", "Region": "node"}
-    )  # GWa
+    N_energy = pd.concat(
+        [N_energy.Region, N_energy.sum(axis=1, numeric_only=True)], axis=1
+    ).rename(columns={0: "totENE", "Region": "node"})  # GWa
 
     # N_trade_R12 = pd.read_csv(
     #    package_data_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
@@ -374,9 +393,7 @@ def read_demand():
         }
     )
 
-    df = N_trade_R12.loc[
-        N_trade_R12.year_act == 2010,
-    ]
+    df = N_trade_R12.loc[N_trade_R12.year_act == 2010,]
     df = df.pivot(index="node_loc", columns="type", values="value")
     NP = pd.DataFrame({"netimp": df["import"] - df.export, "demand": ND[2010]})
     NP["prod"] = NP.demand - NP.netimp
@@ -421,9 +438,9 @@ def read_demand():
     N_feed.gas_pct *= input_fuel[2] * 17 / 14
     N_feed.coal_pct *= input_fuel[3] * 17 / 14
     N_feed.oil_pct *= input_fuel[4] * 17 / 14
-    N_feed = pd.concat([N_feed.Region, N_feed.sum(axis=1, numeric_only=True)], axis=1).rename(
-        columns={0: "totENE", "Region": "node"}
-    )
+    N_feed = pd.concat(
+        [N_feed.Region, N_feed.sum(axis=1, numeric_only=True)], axis=1
+    ).rename(columns={0: "totENE", "Region": "node"})
 
     # Process the regional historical activities
 
@@ -471,9 +488,8 @@ def gen_demand():
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
     demand_fs_org = pd.read_excel(
-        package_data_path("material", "ammonia",
-                               "nh3_fertilizer_demand.xlsx"),
-        sheet_name="demand_i_feed_R12"
+        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
+        sheet_name="demand_i_feed_R12",
     )
 
     df = demand_fs_org.loc[demand_fs_org.year == 2010, :].join(
@@ -495,10 +511,9 @@ def gen_demand():
 
 
 def gen_resid_demand_NH3(scenario, gdp_elasticity):
-
     context = read_config()
     s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y #s_info.Y is only for modeling years
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
 
     def get_demand_t1_with_income_elasticity(
@@ -538,13 +553,13 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
 
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
-        region_set = 'R12_'
+        region_set = "R12_"
         dem_2020 = np.array([2.5, 2.5, 4, 7, 2.5, 5.6, 7, 2.5, 2.5, 7, 5.6, 18])
         dem_2020 = pd.Series(dem_2020)
 
     else:
         nodes.remove("R11_GLB")
-        region_set = 'R11_'
+        region_set = "R11_"
         dem_2020 = np.array([2.5, 19.5, 4, 7, 2.5, 5.6, 7, 2.5, 2.5, 7, 5.6])
         dem_2020 = pd.Series(dem_2020)
 

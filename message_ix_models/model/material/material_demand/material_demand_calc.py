@@ -12,7 +12,7 @@ from message_ix_models.model.material.data_infrastructure import get_inf_mat_dem
 CASE_SENS = "mean"
 INFRA_SCEN = "baseline"
 
-print('Adding infrastructure demand with:')
+print("Adding infrastructure demand with:")
 print(CASE_SENS)
 print(INFRA_SCEN)
 
@@ -339,28 +339,38 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
 
     # In 2020 deduct the demand from infrastructure
 
-    INPUTFILE = package_data_path("material", "infrastructure", "stocks_forecast_MESSAGE.csv")
+    INPUTFILE = package_data_path(
+        "material", "infrastructure", "stocks_forecast_MESSAGE.csv"
+    )
 
-    if material == 'cement':
-        infrastructure_demand = get_inf_mat_demand('concrete', '2020', INPUTFILE, case = CASE_SENS, infra_scenario = INFRA_SCEN)
-        infrastructure_demand['value'] *= 0.15
+    if material == "cement":
+        infrastructure_demand = get_inf_mat_demand(
+            "concrete", "2020", INPUTFILE, case=CASE_SENS, infra_scenario=INFRA_SCEN
+        )
+        infrastructure_demand["value"] *= 0.15
     else:
-        infrastructure_demand = get_inf_mat_demand(material, '2020', INPUTFILE, case = CASE_SENS, infra_scenario = INFRA_SCEN)
+        infrastructure_demand = get_inf_mat_demand(
+            material, "2020", INPUTFILE, case=CASE_SENS, infra_scenario=INFRA_SCEN
+        )
 
-    infrastructure_demand['year'] = infrastructure_demand['year'].astype('int64')
+    infrastructure_demand["year"] = infrastructure_demand["year"].astype("int64")
 
-    infrastructure_demand.rename(columns={'node':'region'}, inplace = True)
-    infrastructure_demand.drop(['commodity'], axis = 1, inplace = True)
+    infrastructure_demand.rename(columns={"node": "region"}, inplace=True)
+    infrastructure_demand.drop(["commodity"], axis=1, inplace=True)
 
     # Merge DataFrames on 'node', 'year', and 'commodity'
-    merged_df = pd.merge(df_base_demand_original, infrastructure_demand,
-    on=['region', 'year'], suffixes=('_df1', '_df2'))
+    merged_df = pd.merge(
+        df_base_demand_original,
+        infrastructure_demand,
+        on=["region", "year"],
+        suffixes=("_df1", "_df2"),
+    )
 
     # Subtract the 'value' columns
-    merged_df['value'] = merged_df['value_df1'] - merged_df['value_df2']
+    merged_df["value"] = merged_df["value_df1"] - merged_df["value_df2"]
 
     # Select relevant columns to maintain the original format
-    df_base_demand = merged_df[['region', 'year', 'value']]
+    df_base_demand = merged_df[["region", "year", "value"]]
 
     # get historical data (material consumption, pop, gdp)
     df_cons = read_hist_mat_demand(material)
@@ -400,12 +410,18 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
 
     # Make sure 2020 demand is kept as in the original data file
     # Merge df_final (filtered for year 2020) with df_other on 'region' and 'year'
-    merged_df = pd.merge(df_final[df_final['year'] == 2020], df_base_demand_original,
-                         on=['region', 'year'])
+    merged_df = pd.merge(
+        df_final[df_final["year"] == 2020],
+        df_base_demand_original,
+        on=["region", "year"],
+    )
 
     # Update df_final's demand_tot for year 2020 with the merged values
-    df_final.loc[df_final['year'] == 2020, 'demand_tot'] = df_final.loc[df_final['year'] == 2020].set_index(['region', 'year']).index.map(
-    merged_df.set_index(['region', 'year'])['value'])
+    df_final.loc[df_final["year"] == 2020, "demand_tot"] = (
+        df_final.loc[df_final["year"] == 2020]
+        .set_index(["region", "year"])
+        .index.map(merged_df.set_index(["region", "year"])["value"])
+    )
 
     # format to MESSAGEix standard
     df_final = df_final.rename({"region": "node", "demand_tot": "value"}, axis=1)

@@ -16,37 +16,47 @@ CASE_SENS = "mean"
 INFRA_SCEN = "baseline"
 INPUTFILE = "stocks_forecast_MESSAGE.csv"
 
-print('Adding infrastructure demand with:')
+print("Adding infrastructure demand with:")
 print(CASE_SENS)
 print(INFRA_SCEN)
 
-def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario = INFRA_SCEN):
 
+def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario=INFRA_SCEN):
     # Read the file and filter the given sensitivity case
-    inf_input_raw = pd.read_csv(package_data_path("material", "infrastructure", filename))
-    inf_input_raw = inf_input_raw.loc[(inf_input_raw.Sensitivity == CASE_SENS) & (inf_input_raw.Scenario == INFRA_SCEN)]
+    inf_input_raw = pd.read_csv(
+        package_data_path("material", "infrastructure", filename)
+    )
+    inf_input_raw = inf_input_raw.loc[
+        (inf_input_raw.Sensitivity == CASE_SENS)
+        & (inf_input_raw.Scenario == INFRA_SCEN)
+    ]
     inf_input_raw["Region"] = "R12_" + inf_input_raw["Region"]
 
     # Area
-    inf_input_area = inf_input_raw[
-    inf_input_raw["Variable"
-    ].str.contains( "Area")]
+    inf_input_area = inf_input_raw[inf_input_raw["Variable"].str.contains("Area")]
 
-    inf_input_area = inf_input_area.groupby(['Model','Scenario','Unit','Region']).sum(numeric_only=True).reset_index()
-    inf_input_area['Variable'] = 'Infrastructure|Area'
+    inf_input_area = (
+        inf_input_area.groupby(["Model", "Scenario", "Unit", "Region"])
+        .sum(numeric_only=True)
+        .reset_index()
+    )
+    inf_input_area["Variable"] = "Infrastructure|Area"
 
     # Demand
     inf_input_demand = inf_input_raw[
-        inf_input_raw[
-            "Variable"
-        ].str.contains(
-            "Material Demand"
-        )]
+        inf_input_raw["Variable"].str.contains("Material Demand")
+    ]
 
-    inf_input_demand['Material'] = inf_input_demand['Variable'].str.split('|').str[3]
-    inf_input_demand = inf_input_demand.groupby(['Model','Scenario','Unit','Region','Material']).sum(numeric_only=True).reset_index()
-    inf_input_demand['Variable'] = 'Material Demand|Infrastructure|' + inf_input_demand['Material']
-    inf_input_demand = inf_input_demand.drop(['Material'], axis = 1)
+    inf_input_demand["Material"] = inf_input_demand["Variable"].str.split("|").str[3]
+    inf_input_demand = (
+        inf_input_demand.groupby(["Model", "Scenario", "Unit", "Region", "Material"])
+        .sum(numeric_only=True)
+        .reset_index()
+    )
+    inf_input_demand["Variable"] = (
+        "Material Demand|Infrastructure|" + inf_input_demand["Material"]
+    )
+    inf_input_demand = inf_input_demand.drop(["Material"], axis=1)
 
     # Release
 
@@ -55,12 +65,19 @@ def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario = IN
             "Variable"
         ].str.contains(  # "Floor Space|Aluminum|Cement|Steel|Final Energy"
             "Material Release"
-        )]
+        )
+    ]
 
-    inf_input_rel['Material'] = inf_input_rel['Variable'].str.split('|').str[3]
-    inf_input_rel = inf_input_rel.groupby(['Model','Scenario','Unit','Region','Material']).sum(numeric_only=True).reset_index()
-    inf_input_rel['Variable'] = 'Material Release|Infrastructure|' + inf_input_rel['Material']
-    inf_input_rel = inf_input_rel.drop(['Material'], axis = 1)
+    inf_input_rel["Material"] = inf_input_rel["Variable"].str.split("|").str[3]
+    inf_input_rel = (
+        inf_input_rel.groupby(["Model", "Scenario", "Unit", "Region", "Material"])
+        .sum(numeric_only=True)
+        .reset_index()
+    )
+    inf_input_rel["Variable"] = (
+        "Material Release|Infrastructure|" + inf_input_rel["Material"]
+    )
+    inf_input_rel = inf_input_rel.drop(["Material"], axis=1)
 
     # Merge
 
@@ -85,9 +102,7 @@ def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario = IN
     inf_intensity_mat = inf_input_pivot.iloc[:, 2:].div(
         inf_input_pivot["Infrastructure|Area"], axis=0
     )
-    inf_intensity_mat.columns = [
-        s + "|Intensity" for s in inf_intensity_mat.columns
-    ]
+    inf_intensity_mat.columns = [s + "|Intensity" for s in inf_intensity_mat.columns]
     inf_intensity_mat = pd.concat(
         [
             inf_input_pivot[["Region", "Year"]],
@@ -96,9 +111,7 @@ def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario = IN
         axis=1,
     ).drop(columns=["Infrastructure|Area|Intensity"])
 
-    inf_intensity_mat["Infrastructure|Area"] = inf_input_pivot[
-        "Infrastructure|Area"
-    ]
+    inf_intensity_mat["Infrastructure|Area"] = inf_input_pivot["Infrastructure|Area"]
 
     # Material intensities are in kt/m2 (Mt/billion m2)
 
@@ -142,8 +155,9 @@ def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario = IN
 
     return inf_intensity_long, inf_area_long, inf_demand_long
 
+
 def get_inf_mat_demand(
-    commod, year="2020", inputfile=INPUTFILE, case=CASE_SENS, infra_scenario = INFRA_SCEN
+    commod, year="2020", inputfile=INPUTFILE, case=CASE_SENS, infra_scenario=INFRA_SCEN
 ):
     a, b, c = read_timeseries_infrastructure(inputfile, case, infra_scenario)
     if not year == "all":  # specific year
@@ -151,6 +165,7 @@ def get_inf_mat_demand(
     else:  # all years
         cc = c[(c.commodity == commod)].reset_index(drop=True)
     return cc
+
 
 def adjust_demand_param(scen):
     # scen_mat_demand = scen.par(
@@ -191,17 +206,20 @@ def adjust_demand_param(scen):
     # Add asphalt demand
 
     mat_inf_asphalt = get_inf_mat_demand(
-                'asphalt',
-                inputfile=INPUTFILE,
-                year="all",
-                case=CASE_SENS,
-                infra_scenario=INFRA_SCEN)
+        "asphalt",
+        inputfile=INPUTFILE,
+        year="all",
+        case=CASE_SENS,
+        infra_scenario=INFRA_SCEN,
+    )
     mat_inf_asphalt["year"] = mat_inf_asphalt["year"].astype(int)
-    mat_inf_asphalt['level'] = 'demand'
+    mat_inf_asphalt["level"] = "demand"
     mat_inf_asphalt["time"] = "year"
     mat_inf_asphalt["unit"] = "t"
 
-    mat_inf_asphalt = mat_inf_asphalt[~mat_inf_asphalt['year'].isin([2065, 2075, 2085, 2095, 2105])]
+    mat_inf_asphalt = mat_inf_asphalt[
+        ~mat_inf_asphalt["year"].isin([2065, 2075, 2085, 2095, 2105])
+    ]
 
     scen.add_par("demand", mat_inf_asphalt)
 
@@ -209,8 +227,8 @@ def adjust_demand_param(scen):
 
     scen.commit("Demand adjusted")
 
-def gen_data_infrastructure(scenario, dry_run=False):
 
+def gen_data_infrastructure(scenario, dry_run=False):
     # Load configuration
     context = read_config()
     config = context["material"]["infrastructure"]
@@ -257,7 +275,9 @@ def gen_data_infrastructure(scenario, dry_run=False):
     # Filter only the years in the base scenario
     data_infrastructure["year"] = data_infrastructure["year"].astype(int)
     data_infrastructure_demand["year"] = data_infrastructure_demand["year"].astype(int)
-    data_infrastructure = data_infrastructure[data_infrastructure["year"].isin(modelyears)]
+    data_infrastructure = data_infrastructure[
+        data_infrastructure["year"].isin(modelyears)
+    ]
     data_infrastructure_demand = data_infrastructure_demand[
         data_infrastructure_demand["year"].isin(modelyears)
     ]

@@ -19,7 +19,9 @@ from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import package_data_path
-from message_ix_models.tools.get_optimization_years import main as get_optimization_years
+from message_ix_models.tools.get_optimization_years import (
+    main as get_optimization_years,
+)
 
 from message_ix.report import Reporter
 from ixmp.reporting import configure
@@ -116,8 +118,16 @@ def add_macro_COVID(
             "C:/", "Users", "maczek", "Downloads", "macro", filename
         )
     else:
-        xls_file = os.path.join("C:\\", "Users", "unlu", "Documents",
-        "MyDocuments_IIASA", "Material_Flow", "macro_calibration" , filename)
+        xls_file = os.path.join(
+            "C:\\",
+            "Users",
+            "unlu",
+            "Documents",
+            "MyDocuments_IIASA",
+            "Material_Flow",
+            "macro_calibration",
+            filename,
+        )
 
     # Making a dictionary from the MACRO Excel file
     xls = pd.ExcelFile(xls_file)
@@ -1390,6 +1400,8 @@ def add_emission_accounting(scen):
     #
     # scen.add_par("emission_factor", df_em)
     # scen.commit("add methanol CO2_industry")
+
+
 def add_elec_lowerbound_2020(scen):
     # To avoid zero i_spec prices only for R12_CHN, add the below section.
     # read input parameters for relevant technology/commodity combinations for
@@ -1850,7 +1862,9 @@ def add_cement_bounds_2020(sc):
     sc.commit("added lower and upper bound for fuels for cement 2020.")
 
 
-def read_sector_data(scenario: message_ix.Scenario, sectname: str, file: str) -> pd.DataFrame:
+def read_sector_data(
+    scenario: message_ix.Scenario, sectname: str, file: str
+) -> pd.DataFrame:
     """
     Read sector data for industry with sectname
 
@@ -1883,11 +1897,11 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str, file: str) ->
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        package_data_path("material",sectname, file),
+        package_data_path("material", sectname, file),
         sheet_name=sheet_n,
     )
 
-    print(package_data_path("material",sectname, file))
+    print(package_data_path("material", sectname, file))
     # Clean the data
     data_df = data_df[
         [
@@ -1928,6 +1942,7 @@ def read_sector_data(scenario: message_ix.Scenario, sectname: str, file: str) ->
 
     return data_df
 
+
 def add_ccs_technologies(scen: message_ix.Scenario) -> None:
     """Adds the relevant CCS technologies to the co2_trans_disp and bco2_trans_disp
     relations
@@ -1954,7 +1969,7 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs",
                 "bf_ccs_steel",
-                "dri_gas_ccs_steel"
+                "dri_gas_ccs_steel",
             ],
             "emission": "CO2",
         },
@@ -2221,6 +2236,8 @@ if __name__ == "__main__":
     # df = df_inp.set_index(["technology"]).join(df).dropna()
     # df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
     # print()
+
+
 def calculate_ini_new_cap(df_demand, technology, material):
     """
     Derive initial_new_capacity_up parametrization for CCS based on cement demand
@@ -2251,108 +2268,137 @@ def calculate_ini_new_cap(df_demand, technology, material):
     df_demand["technology"] = technology
     return make_df("initial_new_capacity_up", **df_demand)
 
-def add_share_const_clinker_substitutes(scenario):
 
+def add_share_const_clinker_substitutes(scenario):
     s_info = ScenarioInfo(scenario)
     node_list = s_info.N
-    node_list.remove('R12_GLB')
-    node_list.remove('World')
+    node_list.remove("R12_GLB")
+    node_list.remove("World")
 
-    coal_technologies = scenario.par('output', filters = {"commodity":"fly_ash",
-    'level':'waste_material'})
-    modes_coal = coal_technologies['mode'].unique()
-    coal_technologies = coal_technologies['technology'].unique()
-    grinding_technologies = ['grinding_ballmill_cement', 'grinding_vertmill_cement']
-    steel_technologies_rest = ['bof_steel','eaf_steel','dri_gas_steel']
-    steel_technologies_blastf = ['bf_steel', 'bf_biomass_steel']
+    coal_technologies = scenario.par(
+        "output", filters={"commodity": "fly_ash", "level": "waste_material"}
+    )
+    modes_coal = coal_technologies["mode"].unique()
+    coal_technologies = coal_technologies["technology"].unique()
+    grinding_technologies = ["grinding_ballmill_cement", "grinding_vertmill_cement"]
+    steel_technologies_rest = ["bof_steel", "eaf_steel", "dri_gas_steel"]
+    steel_technologies_blastf = ["bf_steel", "bf_biomass_steel"]
 
-    shr_const_1 = 'share_fly_ash'
-    shr_const_2 = 'share_steel_slag'
-    shr_const_3 = 'share_bf_slag'
-    type_tec_tot_1 = 'coal_tec'
-    type_tec_tot_2 = 'steel_tec'
-    type_tec_tot_3 = 'bf_tec'
-    type_tec_shr = 'cement_tec'
+    shr_const_1 = "share_fly_ash"
+    shr_const_2 = "share_steel_slag"
+    shr_const_3 = "share_bf_slag"
+    type_tec_tot_1 = "coal_tec"
+    type_tec_tot_2 = "steel_tec"
+    type_tec_tot_3 = "bf_tec"
+    type_tec_shr = "cement_tec"
 
     scenario.check_out()
-    scenario.add_set('shares', shr_const_1)
-    scenario.add_set('shares', shr_const_2)
-    scenario.add_set('shares', shr_const_3)
-    scenario.add_cat('technology', type_tec_shr, grinding_technologies)
-    scenario.add_cat('technology', type_tec_tot_1, coal_technologies)
-    scenario.add_cat('technology', type_tec_tot_2, steel_technologies_rest)
-    scenario.add_cat('technology', type_tec_tot_3, steel_technologies_blastf)
+    scenario.add_set("shares", shr_const_1)
+    scenario.add_set("shares", shr_const_2)
+    scenario.add_set("shares", shr_const_3)
+    scenario.add_cat("technology", type_tec_shr, grinding_technologies)
+    scenario.add_cat("technology", type_tec_tot_1, coal_technologies)
+    scenario.add_cat("technology", type_tec_tot_2, steel_technologies_rest)
+    scenario.add_cat("technology", type_tec_tot_3, steel_technologies_blastf)
 
     # Total
 
     for n in node_list:
         for m in modes_coal:
-            df_1_total = pd.DataFrame({'shares': [shr_const_1],
-                           'node_share': n,
-                           'node': n,
-                           'type_tec': [type_tec_tot_1],
-                           'mode': m,
-                           'commodity': 'fly_ash',
-                           'level': 'waste_material'})
+            df_1_total = pd.DataFrame(
+                {
+                    "shares": [shr_const_1],
+                    "node_share": n,
+                    "node": n,
+                    "type_tec": [type_tec_tot_1],
+                    "mode": m,
+                    "commodity": "fly_ash",
+                    "level": "waste_material",
+                }
+            )
 
-            scenario.add_set('map_shares_commodity_total', df_1_total)
+            scenario.add_set("map_shares_commodity_total", df_1_total)
 
-    modes_steel_rest = scenario.par('output', filters = {"technology":steel_technologies_rest})
-    modes_steel_rest = modes_steel_rest['mode'].unique()
+    modes_steel_rest = scenario.par(
+        "output", filters={"technology": steel_technologies_rest}
+    )
+    modes_steel_rest = modes_steel_rest["mode"].unique()
 
     for n in node_list:
         for m in modes_steel_rest:
-            df_2_total = pd.DataFrame({'shares': [shr_const_2],
-                           'node_share': n,
-                           'node': n,
-                           'type_tec': [type_tec_tot_2],
-                           'mode': m,
-                           'commodity': 'slag_iron',
-                           'level': 'waste_material'})
-            scenario.add_set('map_shares_commodity_total', df_2_total)
+            df_2_total = pd.DataFrame(
+                {
+                    "shares": [shr_const_2],
+                    "node_share": n,
+                    "node": n,
+                    "type_tec": [type_tec_tot_2],
+                    "mode": m,
+                    "commodity": "slag_iron",
+                    "level": "waste_material",
+                }
+            )
+            scenario.add_set("map_shares_commodity_total", df_2_total)
 
-    modes_steel_blastf = scenario.par('output', filters = {"technology":steel_technologies_blastf})
-    modes_steel_blastf = modes_steel_blastf['mode'].unique()
+    modes_steel_blastf = scenario.par(
+        "output", filters={"technology": steel_technologies_blastf}
+    )
+    modes_steel_blastf = modes_steel_blastf["mode"].unique()
 
     for n in node_list:
         for m in modes_steel_blastf:
-            df_3_total = pd.DataFrame({'shares': [shr_const_3],
-                           'node_share': n,
-                           'node': n,
-                           'type_tec': [type_tec_tot_3],
-                           'mode': m,
-                           'commodity': 'slag_iron',
-                           'level': 'waste_material'})
-            scenario.add_set('map_shares_commodity_total', df_3_total)
+            df_3_total = pd.DataFrame(
+                {
+                    "shares": [shr_const_3],
+                    "node_share": n,
+                    "node": n,
+                    "type_tec": [type_tec_tot_3],
+                    "mode": m,
+                    "commodity": "slag_iron",
+                    "level": "waste_material",
+                }
+            )
+            scenario.add_set("map_shares_commodity_total", df_3_total)
 
     # Share
 
     for n in node_list:
-        df_1_share = pd.DataFrame({'shares': [shr_const_1],
-                       'node_share': n,
-                       'node': n,
-                       'type_tec': [type_tec_shr],
-                       'mode': 'M3',
-                       'commodity': 'fly_ash',
-                       'level': 'waste_material'})
-        df_2_share = pd.DataFrame({'shares': [shr_const_2],
-                       'node_share': n,
-                       'node': n,
-                       'type_tec': [type_tec_shr],
-                       'mode': 'M2',
-                       'commodity': 'granulated_slag_iron',
-                       'level': 'tertiary_material'})
-        df_3_share = pd.DataFrame({'shares': [shr_const_3],
-                       'node_share': n,
-                       'node': n,
-                       'type_tec': [type_tec_shr],
-                       'mode': 'M2',
-                       'commodity': 'granulated_slag_iron',
-                       'level': 'tertiary_material'})
+        df_1_share = pd.DataFrame(
+            {
+                "shares": [shr_const_1],
+                "node_share": n,
+                "node": n,
+                "type_tec": [type_tec_shr],
+                "mode": "M3",
+                "commodity": "fly_ash",
+                "level": "waste_material",
+            }
+        )
+        df_2_share = pd.DataFrame(
+            {
+                "shares": [shr_const_2],
+                "node_share": n,
+                "node": n,
+                "type_tec": [type_tec_shr],
+                "mode": "M2",
+                "commodity": "granulated_slag_iron",
+                "level": "tertiary_material",
+            }
+        )
+        df_3_share = pd.DataFrame(
+            {
+                "shares": [shr_const_3],
+                "node_share": n,
+                "node": n,
+                "type_tec": [type_tec_shr],
+                "mode": "M2",
+                "commodity": "granulated_slag_iron",
+                "level": "tertiary_material",
+            }
+        )
 
-        scenario.add_set('map_shares_commodity_share', df_1_share)
-        scenario.add_set('map_shares_commodity_share', df_2_share)
-        scenario.add_set('map_shares_commodity_share', df_3_share)
+        scenario.add_set("map_shares_commodity_share", df_1_share)
+        scenario.add_set("map_shares_commodity_share", df_2_share)
+        scenario.add_set("map_shares_commodity_share", df_3_share)
 
     # Add upper bound for the share constraints
 
@@ -2375,48 +2421,66 @@ def add_share_const_clinker_substitutes(scenario):
 
     for n in node_list:
         for y in years:
-            df_1 = pd.DataFrame({'shares': [shr_const_1],
-                       'node_share': n,
-                       'year_act': y,
-                       'time': 'year',
-                       'value': 0.34 ,
-                       'unit': '%'})
-            df_2 = pd.DataFrame({'shares': [shr_const_2],
-                       'node_share': n,
-                       'year_act': y,
-                       'time': 'year',
-                       'value': 0.4  ,
-                       'unit': '%'})
-            df_3 = pd.DataFrame({'shares': [shr_const_3],
-                       'node_share': n,
-                       'year_act': y,
-                       'time': 'year',
-                       'value': 0.9 ,
-                       'unit': '%'})
+            df_1 = pd.DataFrame(
+                {
+                    "shares": [shr_const_1],
+                    "node_share": n,
+                    "year_act": y,
+                    "time": "year",
+                    "value": 0.34,
+                    "unit": "%",
+                }
+            )
+            df_2 = pd.DataFrame(
+                {
+                    "shares": [shr_const_2],
+                    "node_share": n,
+                    "year_act": y,
+                    "time": "year",
+                    "value": 0.4,
+                    "unit": "%",
+                }
+            )
+            df_3 = pd.DataFrame(
+                {
+                    "shares": [shr_const_3],
+                    "node_share": n,
+                    "year_act": y,
+                    "time": "year",
+                    "value": 0.9,
+                    "unit": "%",
+                }
+            )
 
-            scenario.add_par('share_commodity_up', df_1)
-            scenario.add_par('share_commodity_up', df_2)
-            scenario.add_par('share_commodity_up', df_3)
+            scenario.add_par("share_commodity_up", df_1)
+            scenario.add_par("share_commodity_up", df_2)
+            scenario.add_par("share_commodity_up", df_3)
 
     scenario.commit("Add share constraints.")
 
+
 def get_material(variable):
-    parts = variable.split('|')
+    parts = variable.split("|")
     if len(parts) > 1:
         return parts[1]
     return None
+
 
 def calculate_ratios(df):
     # Create an empty DataFrame to hold the new rows
     new_rows = []
 
     # Group by region, year, and material to ensure matching pairs
-    grouped = df.groupby(['region', 'year', 'material'])
+    grouped = df.groupby(["region", "year", "material"])
 
     for name, group in grouped:
         # Extract the total demand and infrastructure-specific demand
-        total_demand = group.loc[group['variable'] == f'Material Demand|{name[2]}', 'value']
-        infrastructure_demand = group.loc[group['variable'] == f'Material Demand|{name[2]}|Infrastructure', 'value']
+        total_demand = group.loc[
+            group["variable"] == f"Material Demand|{name[2]}", "value"
+        ]
+        infrastructure_demand = group.loc[
+            group["variable"] == f"Material Demand|{name[2]}|Infrastructure", "value"
+        ]
 
         # Ensure both exist
         if not total_demand.empty and not infrastructure_demand.empty:
@@ -2425,14 +2489,14 @@ def calculate_ratios(df):
 
             # Create a new row dictionary
             new_row = {
-                'region': name[0],
-                'variable': 'Ratio',
-                'unit': df.loc[group.index[0], 'unit'],
-                'year': name[1],
-                'value': ratio_value,
-                'model': df.loc[group.index[0], 'model'],
-                'scenario': df.loc[group.index[0], 'scenario'],
-                'material': name[2]
+                "region": name[0],
+                "variable": "Ratio",
+                "unit": df.loc[group.index[0], "unit"],
+                "year": name[1],
+                "value": ratio_value,
+                "model": df.loc[group.index[0], "model"],
+                "scenario": df.loc[group.index[0], "scenario"],
+                "material": name[2],
             }
 
             # Append the new row to the list
@@ -2449,6 +2513,7 @@ def calculate_ratios(df):
 
     return df_with_ratios
 
+
 def add_bound_on_dummy_lignin(scenario):
     # Gobally 50 Mt lignin as by-product is produced from paper and pulp production.
     # Distribute this to regions based on the shares of paper and pulp prod.
@@ -2461,165 +2526,219 @@ def add_bound_on_dummy_lignin(scenario):
 
     scenario.check_out()
 
-    region_value_mapping = {'R12_LAM': 0.12,
-                            'R12_NAM': 0.12,
-                            'R12_PAO': 0.01,
-                            'R12_AFR': 0.005,
-                            'R12_MEA': 0.005,
-                            'R12_WEU': 0.12,
-                            'R12_EEU': 0.12,
-                            'R12_CHN': 0.3,
-                            'R12_SAS': 0.05,
-                            'R12_PAS': 0.05,
-                            'R12_RCPA': 0.05,
-                            'R12_FSU': 0.05}
-
+    region_value_mapping = {
+        "R12_LAM": 0.12,
+        "R12_NAM": 0.12,
+        "R12_PAO": 0.01,
+        "R12_AFR": 0.005,
+        "R12_MEA": 0.005,
+        "R12_WEU": 0.12,
+        "R12_EEU": 0.12,
+        "R12_CHN": 0.3,
+        "R12_SAS": 0.05,
+        "R12_PAS": 0.05,
+        "R12_RCPA": 0.05,
+        "R12_FSU": 0.05,
+    }
 
     years = get_optimization_years(scenario)
 
     for key, value in region_value_mapping.items():
-        activity_bound_lignin = pd.DataFrame({
+        activity_bound_lignin = pd.DataFrame(
+            {
                 "node_loc": key,
                 "technology": "DUMMY_lignin_supply",
                 "year_act": years,
                 "mode": "M1",
                 "time": "year",
-                "value": 50 * value ,
+                "value": 50 * value,
                 "unit": "-",
-        })
+            }
+        )
 
         scenario.add_par("bound_activity_up", activity_bound_lignin)
 
     scenario.commit("Ligning bound added")
 
-def add_infrastructure_reporting(context, scenario):
 
+def add_infrastructure_reporting(context, scenario):
     # Obtain the necessary variables from the reporting
 
-    variables = ['Emissions|CO2|Energy|Demand|Industry|Steel',
-                 'Emissions|CO2|Energy|Demand|Industry|Non-Metallic Minerals|Cement',
-                 'Emissions|CO2|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium',
-                 'Emissions|CO2|Industrial Processes|Non-Metallic Minerals|Cement',
-                 'Emissions|CO2|Industrial Processes|Non-Ferrous Metals',
-                 'Emissions|CO2|Energy|Supply|Liquids|Oil']
+    variables = [
+        "Emissions|CO2|Energy|Demand|Industry|Steel",
+        "Emissions|CO2|Energy|Demand|Industry|Non-Metallic Minerals|Cement",
+        "Emissions|CO2|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium",
+        "Emissions|CO2|Industrial Processes|Non-Metallic Minerals|Cement",
+        "Emissions|CO2|Industrial Processes|Non-Ferrous Metals",
+        "Emissions|CO2|Energy|Supply|Liquids|Oil",
+    ]
     df = scenario.timeseries()
-    df_emissions= df[df['variable'].isin(variables)]
+    df_emissions = df[df["variable"].isin(variables)]
 
     # Prepare the data.
     # Sum process and energy emissions for aluminum and cement.
     # Rename the emissions variables
 
-    df_aluminum_energy = df_emissions[df_emissions['variable'] == \
-    'Emissions|CO2|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium']
-    df_aluminum_industrial = df_emissions[df_emissions['variable'] == \
-    'Emissions|CO2|Industrial Processes|Non-Ferrous Metals']
-    df_cement_energy = df_emissions[df_emissions['variable'] == \
-    'Emissions|CO2|Energy|Demand|Industry|Non-Metallic Minerals|Cement']
-    df_cement_industrial = df_emissions[df_emissions['variable'] == \
-    'Emissions|CO2|Industrial Processes|Non-Metallic Minerals|Cement']
+    df_aluminum_energy = df_emissions[
+        df_emissions["variable"]
+        == "Emissions|CO2|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium"
+    ]
+    df_aluminum_industrial = df_emissions[
+        df_emissions["variable"]
+        == "Emissions|CO2|Industrial Processes|Non-Ferrous Metals"
+    ]
+    df_cement_energy = df_emissions[
+        df_emissions["variable"]
+        == "Emissions|CO2|Energy|Demand|Industry|Non-Metallic Minerals|Cement"
+    ]
+    df_cement_industrial = df_emissions[
+        df_emissions["variable"]
+        == "Emissions|CO2|Industrial Processes|Non-Metallic Minerals|Cement"
+    ]
 
-    df_summed_aluminum = df_aluminum_energy.groupby(['region', 'unit', \
-    'year', 'model', 'scenario']).sum().reset_index()
-    df_summed_aluminum['value'] += df_aluminum_industrial.groupby(['region', \
-    'unit', 'year', 'model', 'scenario']).sum().reset_index()['value']
+    df_summed_aluminum = (
+        df_aluminum_energy.groupby(["region", "unit", "year", "model", "scenario"])
+        .sum()
+        .reset_index()
+    )
+    df_summed_aluminum["value"] += (
+        df_aluminum_industrial.groupby(["region", "unit", "year", "model", "scenario"])
+        .sum()
+        .reset_index()["value"]
+    )
 
-    df_summed_cement = df_cement_energy.groupby(['region', 'unit', 'year', \
-    'model', 'scenario']).sum().reset_index()
-    df_summed_cement['value'] += df_cement_industrial.groupby(['region', 'unit', \
-    'year', 'model', 'scenario']).sum().reset_index()['value']
+    df_summed_cement = (
+        df_cement_energy.groupby(["region", "unit", "year", "model", "scenario"])
+        .sum()
+        .reset_index()
+    )
+    df_summed_cement["value"] += (
+        df_cement_industrial.groupby(["region", "unit", "year", "model", "scenario"])
+        .sum()
+        .reset_index()["value"]
+    )
 
-    df_summed_aluminum['variable'] = 'Total CO2 Emissions|Aluminium'
-    df_summed_cement['variable'] = 'Total CO2 Emissions|Concrete'
+    df_summed_aluminum["variable"] = "Total CO2 Emissions|Aluminium"
+    df_summed_cement["variable"] = "Total CO2 Emissions|Concrete"
 
-    df_new = pd.concat([df_emissions, df_summed_aluminum, df_summed_cement], ignore_index=True)
+    df_new = pd.concat(
+        [df_emissions, df_summed_aluminum, df_summed_cement], ignore_index=True
+    )
     df_new = df_new.sort_index()
 
-    df_new['variable'] = df_new['variable'].replace('Emissions|CO2|Energy|Supply|Liquids|Oil', \
-    'Total CO2 Emissions|Bitumen')
-    df_new['variable'] = df_new['variable'].replace('Emissions|CO2|Energy|Demand|Industry|Steel', \
-    'Total CO2 Emissions|Steel')
-    df_new['material'] = df_new['variable'].str.split('|').str[1]
-    df_new = df_new[df_new['material'] != 'CO2']
+    df_new["variable"] = df_new["variable"].replace(
+        "Emissions|CO2|Energy|Supply|Liquids|Oil", "Total CO2 Emissions|Bitumen"
+    )
+    df_new["variable"] = df_new["variable"].replace(
+        "Emissions|CO2|Energy|Demand|Industry|Steel", "Total CO2 Emissions|Steel"
+    )
+    df_new["material"] = df_new["variable"].str.split("|").str[1]
+    df_new = df_new[df_new["material"] != "CO2"]
 
     # Calculate the ratios: Infrastructure Demand / Total Material Demand
 
-    variables = ["Material Demand|Steel|Infrastructure",
-                "Material Demand|Aluminium|Infrastructure",
-                 "Material Demand|Concrete|Infrastructure",
-                 "Material Demand|Asphalt|Infrastructure",
-                 "Material Demand|Steel",
-                 "Material Demand|Aluminium",
-                 "Material Demand|Concrete",
-                 "Secondary Energy|Liquids|Oil"
-                ]
-    df_ratio= df[df['variable'].isin(variables)]
+    variables = [
+        "Material Demand|Steel|Infrastructure",
+        "Material Demand|Aluminium|Infrastructure",
+        "Material Demand|Concrete|Infrastructure",
+        "Material Demand|Asphalt|Infrastructure",
+        "Material Demand|Steel",
+        "Material Demand|Aluminium",
+        "Material Demand|Concrete",
+        "Secondary Energy|Liquids|Oil",
+    ]
+    df_ratio = df[df["variable"].isin(variables)]
 
     # Filter the rows where the variable column is equal to "Secondary Energy|Liquids|Oil"
-    condition = df_ratio['variable'] == 'Secondary Energy|Liquids|Oil'
+    condition = df_ratio["variable"] == "Secondary Energy|Liquids|Oil"
 
     # Convert refinery output from energy to Mt
     # 1 EJ =  23.5 Mt
-    df_ratio.loc[condition, 'value'] *= 23.5
-    df_ratio.loc[condition, 'unit'] = "Mt/yr"
+    df_ratio.loc[condition, "value"] *= 23.5
+    df_ratio.loc[condition, "unit"] = "Mt/yr"
 
     # Filter the rows where the variable column is equal to "Material Demand|Aspahlt|Infrastructure"
-    condition_2 = df_ratio['variable'] == 'Material Demand|Asphalt|Infrastructure'
+    condition_2 = df_ratio["variable"] == "Material Demand|Asphalt|Infrastructure"
 
-    df_ratio.loc[condition_2, 'value'] *= 0.05
+    df_ratio.loc[condition_2, "value"] *= 0.05
 
     # Change the names to make it compatible with emissions calculation
-    df_ratio['variable'] = df_ratio['variable'].replace('Secondary Energy|Liquids|Oil', \
-    'Material Demand|Bitumen')
-    df_ratio['variable'] = df_ratio['variable'].replace('Material Demand|Asphalt|Infrastructure', \
-    'Material Demand|Bitumen|Infrastructure')
+    df_ratio["variable"] = df_ratio["variable"].replace(
+        "Secondary Energy|Liquids|Oil", "Material Demand|Bitumen"
+    )
+    df_ratio["variable"] = df_ratio["variable"].replace(
+        "Material Demand|Asphalt|Infrastructure",
+        "Material Demand|Bitumen|Infrastructure",
+    )
 
-    df_ratio['material'] = df_ratio['variable'].apply(get_material)
+    df_ratio["material"] = df_ratio["variable"].apply(get_material)
     df_ratio = calculate_ratios(df_ratio)
 
     # Keep the relevant reporting variables
 
-    df_ratio['variable'] = df_ratio['variable'].replace('Material Demand|Bitumen', \
-    'Total Refinery Output')
+    df_ratio["variable"] = df_ratio["variable"].replace(
+        "Material Demand|Bitumen", "Total Refinery Output"
+    )
     variable_list = ["Total Refinery Output", "Ratio"]
     df_reporting = df_ratio[df_ratio["variable"].isin(variable_list)]
 
-    ratio_rows = df_reporting['variable'] == 'Ratio'
+    ratio_rows = df_reporting["variable"] == "Ratio"
 
     # Use this for the final reporting
-    df_reporting.loc[ratio_rows, 'variable'] = df_reporting.loc[ratio_rows, \
-    'variable'] + '|' + df_reporting.loc[ratio_rows, 'material']
+    df_reporting.loc[ratio_rows, "variable"] = (
+        df_reporting.loc[ratio_rows, "variable"]
+        + "|"
+        + df_reporting.loc[ratio_rows, "material"]
+    )
 
     # Change as Ratio|Steel etc. and keep only ratios.
-    ratio_df = df_reporting[df_reporting['variable'].str.contains('Ratio')]
+    ratio_df = df_reporting[df_reporting["variable"].str.contains("Ratio")]
 
     # Drop the 'material' column in the final reporting.
-    df_reporting = df_reporting.drop(columns=['material'])
+    df_reporting = df_reporting.drop(columns=["material"])
 
     # Multiply the ratios with df_new (emissions data frame) for the same materials
 
-    merged_df = pd.merge(df_new, ratio_df,
-                         on=['region', 'year', 'material', 'model', 'scenario'],
-                         suffixes=('_emission', '_ratio'))
+    merged_df = pd.merge(
+        df_new,
+        ratio_df,
+        on=["region", "year", "material", "model", "scenario"],
+        suffixes=("_emission", "_ratio"),
+    )
 
-    merged_df['value'] = merged_df['value_emission'] * merged_df['value_ratio']
+    merged_df["value"] = merged_df["value_emission"] * merged_df["value_ratio"]
 
-    result_df = merged_df[['region', 'variable_emission', 'unit_emission', 'year', \
-     'value', 'model', 'scenario', 'material']]
+    result_df = merged_df[
+        [
+            "region",
+            "variable_emission",
+            "unit_emission",
+            "year",
+            "value",
+            "model",
+            "scenario",
+            "material",
+        ]
+    ]
 
     # Step 4: Rename columns appropriately
-    result_df = result_df.rename(columns={'variable_emission': 'variable', \
-    'unit_emission': 'unit'})
+    result_df = result_df.rename(
+        columns={"variable_emission": "variable", "unit_emission": "unit"}
+    )
 
-    result_df['variable'] = 'Emissions|CO2|' + result_df['material'] + \
-    '|Infrastructure'
+    result_df["variable"] = "Emissions|CO2|" + result_df["material"] + "|Infrastructure"
 
-    result_df = result_df.drop(columns=['material'])
+    result_df = result_df.drop(columns=["material"])
 
     rep = Reporter.from_scenario(scenario)
     configure(units={"replace": {"-": ""}})
     df = rep.get("message::default")
 
-    demand_vacuum = df.filter(variable=["out|pre_intermediate|vacuum_residue|*", ])
+    demand_vacuum = df.filter(
+        variable=[
+            "out|pre_intermediate|vacuum_residue|*",
+        ]
+    )
     demand_vacuum = demand_vacuum.timeseries().reset_index()
 
     # Convert the unit from GWa to Mt
@@ -2630,24 +2749,29 @@ def add_infrastructure_reporting(context, scenario):
     # 1 kWh = 10^-6 / 8760 GWa
     # 1 EJ =  23.5 Mt
 
-    demand_vacuum.loc[:, demand_vacuum.select_dtypes(include='number').columns] *= 0.7424
-    demand_vacuum = demand_vacuum.rename(columns={'model': 'Model',
-                                                  'scenario': 'Scenario',
-                                                  'region': 'Region',
-                                                  'variable': 'Variable',
-                                                  'unit': 'Unit',
-                                                  })
-    demand_vacuum['Unit'] = 'Mt/yr'
-    demand_vacuum['Variable'] = 'Production|Vacuum Residue'
+    demand_vacuum.loc[:, demand_vacuum.select_dtypes(include="number").columns] *= (
+        0.7424
+    )
+    demand_vacuum = demand_vacuum.rename(
+        columns={
+            "model": "Model",
+            "scenario": "Scenario",
+            "region": "Region",
+            "variable": "Variable",
+            "unit": "Unit",
+        }
+    )
+    demand_vacuum["Unit"] = "Mt/yr"
+    demand_vacuum["Variable"] = "Production|Vacuum Residue"
 
     # Prepare the final reporting output.
-    final_df_reporting = pd.concat([df_reporting, result_df], axis = 0)
+    final_df_reporting = pd.concat([df_reporting, result_df], axis=0)
 
     # Map the region names to the usual reporting regions
 
     region_mapping = {
-        'China (R12)': 'R12_CHN',
-        'GLB region (R12)': 'World',
+        "China (R12)": "R12_CHN",
+        "GLB region (R12)": "World",
         "Eastern Europe (R12)": "R12_EEU",
         "Former Soviet Union (R12)": "R12_FSU",
         "Latin America (R12)": "R12_LAM",
@@ -2662,7 +2786,7 @@ def add_infrastructure_reporting(context, scenario):
     }
 
     region_mapping_2 = {
-        'R12_CHN|R12_CHN': 'R12_CHN',
+        "R12_CHN|R12_CHN": "R12_CHN",
         "R12_EEU|R12_EEU": "R12_EEU",
         "R12_FSU|R12_FSU": "R12_FSU",
         "R12_LAM|R12_LAM": "R12_LAM",
@@ -2677,26 +2801,31 @@ def add_infrastructure_reporting(context, scenario):
     }
 
     # Apply the mapping to the 'region' column
-    final_df_reporting['region'] = final_df_reporting['region'].map(region_mapping)
-    demand_vacuum['Region'] = demand_vacuum['Region'].map(region_mapping_2)
+    final_df_reporting["region"] = final_df_reporting["region"].map(region_mapping)
+    demand_vacuum["Region"] = demand_vacuum["Region"].map(region_mapping_2)
 
     # Convert to long format.
-    final_df_reporting = final_df_reporting.pivot(index=['region', 'variable', \
-    'unit', 'model', 'scenario'], columns='year', values='value').reset_index()
+    final_df_reporting = final_df_reporting.pivot(
+        index=["region", "variable", "unit", "model", "scenario"],
+        columns="year",
+        values="value",
+    ).reset_index()
 
     # Identify which columns should be capitalized (non-year columns)
-    non_year_columns = ['region', 'variable', 'unit', 'model', 'scenario']
+    non_year_columns = ["region", "variable", "unit", "model", "scenario"]
 
     # Capitalize only the non-year columns
-    final_df_reporting.rename(columns={col: col.capitalize() for \
-    col in non_year_columns}, inplace=True)
+    final_df_reporting.rename(
+        columns={col: col.capitalize() for col in non_year_columns}, inplace=True
+    )
 
     # Add vacuum resideu production
-    final_df_reporting = pd.concat([final_df_reporting, demand_vacuum], axis = 0)
+    final_df_reporting = pd.concat([final_df_reporting, demand_vacuum], axis=0)
 
     # Reorder the columns as desired
-    ordered_columns = ['Model', 'Scenario', 'Region', 'Variable', 'Unit'] + \
-    [col for col in final_df_reporting.columns if isinstance(col, int)]
+    ordered_columns = ["Model", "Scenario", "Region", "Variable", "Unit"] + [
+        col for col in final_df_reporting.columns if isinstance(col, int)
+    ]
     final_df_reporting = final_df_reporting[ordered_columns]
 
     # Replace NaN, -inf, and inf with 0
@@ -2705,8 +2834,10 @@ def add_infrastructure_reporting(context, scenario):
     directory = context.get_local_path("report", "materials")
     print(directory)
 
-    name = os.path.join(directory, f"additional_infrastructure_variables_{scenario.scenario}.xlsx")
-    final_df_reporting.to_excel(name, index = False)
+    name = os.path.join(
+        directory, f"additional_infrastructure_variables_{scenario.scenario}.xlsx"
+    )
+    final_df_reporting.to_excel(name, index=False)
 
     # Add these as timeseries to the scenario
 

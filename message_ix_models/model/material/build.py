@@ -13,6 +13,7 @@ from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
 log = logging.getLogger(__name__)
 
+
 def ellipsize(elements: List) -> str:
     """Generate a short string representation of `elements`.
 
@@ -23,6 +24,7 @@ def ellipsize(elements: List) -> str:
         return ", ".join(map(str, elements[:2] + ["..."] + elements[-2:]))
     else:
         return ", ".join(map(str, elements))
+
 
 def ellipsize(elements: List) -> str:
     """Generate a short string representation of `elements`.
@@ -86,7 +88,6 @@ def apply_spec(
         maybe_check_out(scenario)
 
     if spec:
-
         dump: Dict[str, pd.DataFrame] = {}  # Removed data
 
         for set_name in scenario.set_list():

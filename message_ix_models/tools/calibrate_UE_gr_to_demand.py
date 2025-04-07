@@ -25,7 +25,9 @@ manual_demand_allocation = {
 index = ["node_loc", "technology", "parameter", "year_act"]
 
 
-def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, verbose=False):
+def main(
+    scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, verbose=False
+):
     """Calibration of dynamic growth constraints for
     Useful Energy technologies.
 
@@ -59,7 +61,7 @@ def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, ve
 
     # Retrieve data for corresponding SSP
     data_filname = "SSP_UE_dyn_input.xlsx"
-    data_fil = data_path / "material" /"UE_dynamic_constraints" / data_filname
+    data_fil = data_path / "material" / "UE_dynamic_constraints" / data_filname
     mpa_data = pd.read_excel(data_fil, sheet_name="SSP_data")
     mpa_tec = mpa_data["technology"].tolist()
 
@@ -213,7 +215,9 @@ def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, ve
     )
 
     # Read data for manual overrides.
-    mpa_overrides = pd.read_excel(data_fil, sheet_name=f"{ssp}_{region}_mpa_manual_override")
+    mpa_overrides = pd.read_excel(
+        data_fil, sheet_name=f"{ssp}_{region}_mpa_manual_override"
+    )
 
     # Retrieve region prefix and adapt overrides
     region_id = list(set([x.split("_")[0] for x in get_nodes(scenario)]))[0]

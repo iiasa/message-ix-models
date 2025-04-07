@@ -51,6 +51,7 @@ from message_ix_models.util import (
     package_data_path,
 )
 
+
 def print_full(x):
     pd.set_option("display.max_rows", len(x))
     print(x)
@@ -58,7 +59,6 @@ def print_full(x):
 
 
 def change_names(s):
-
     """Change the sector names according to IMAC format."""
 
     if s == "aluminum":
@@ -69,9 +69,9 @@ def change_names(s):
         s = "Non-Metallic Minerals|Cement"
     elif s == "petro":
         s = "Chemicals|High Value Chemicals"
-    elif s == 'ammonia':
+    elif s == "ammonia":
         s = "Chemicals|Ammonia"
-    elif s == 'methanol':
+    elif s == "methanol":
         s = "Chemicals|Methanol"
     elif s == "BCA":
         s = "BC"
@@ -87,7 +87,6 @@ def change_names(s):
 
 
 def fix_excel(path_temp, path_new):
-
     """
     Fix the names of the regions or variables to be compatible
     with IAMC format. This is done in the final reported excel file
@@ -98,8 +97,8 @@ def fix_excel(path_temp, path_new):
     sheet = workbook["data"]
 
     new_workbook = openpyxl.Workbook()
-    new_sheet = new_workbook['Sheet']
-    new_sheet.title = 'data'
+    new_sheet = new_workbook["Sheet"]
+    new_sheet.title = "data"
     new_sheet = new_workbook.active
 
     replacement = {
@@ -161,7 +160,10 @@ def fix_excel(path_temp, path_new):
     }
     # Iterate over the rows and replace
     for i in range(1, ((sheet.max_row) + 1)):
-        data = [sheet.cell(row=i, column=col).value for col in range(1, ((sheet.max_column) + 1))]
+        data = [
+            sheet.cell(row=i, column=col).value
+            for col in range(1, ((sheet.max_column) + 1))
+        ]
         for index, value in enumerate(data):
             col_no = index + 1
             if value in replacement.keys():
@@ -171,15 +173,15 @@ def fix_excel(path_temp, path_new):
 
     new_workbook.save(path_new)
 
-def report_demand(df_demand, r, years):
 
+def report_demand(df_demand, r, years):
     # Infrastructure Demand
     df_demand.filter(region=r, year=years, inplace=True)
 
-    variable_steel_infra=["in|demand|steel|infrastructure|M1"]
-    variable_aluminium_infra=["in|demand|aluminum|infrastructure|M1"]
-    variable_concrete_infra=["in|demand|concrete|infrastructure|M1"]
-    variable_aspahlt_infra=["in|demand|asphalt|infrastructure|M1"]
+    variable_steel_infra = ["in|demand|steel|infrastructure|M1"]
+    variable_aluminium_infra = ["in|demand|aluminum|infrastructure|M1"]
+    variable_concrete_infra = ["in|demand|concrete|infrastructure|M1"]
+    variable_aspahlt_infra = ["in|demand|asphalt|infrastructure|M1"]
 
     df_demand.aggregate(
         "Material Demand|Steel|Infrastructure",
@@ -207,9 +209,9 @@ def report_demand(df_demand, r, years):
 
     # Total Demand
 
-    variable_steel_total=["out|demand|steel|other_EOL_steel|M1"]
-    variable_alu_total=["out|demand|aluminum|other_EOL_aluminum|M1"]
-    variable_concrete_total=["out|demand|concrete|other_EOL_cement|M1"]
+    variable_steel_total = ["out|demand|steel|other_EOL_steel|M1"]
+    variable_alu_total = ["out|demand|aluminum|other_EOL_aluminum|M1"]
+    variable_concrete_total = ["out|demand|concrete|other_EOL_cement|M1"]
 
     df_demand.aggregate(
         "Material Demand|Steel",
@@ -237,12 +239,15 @@ def report_demand(df_demand, r, years):
             "Material Demand|Steel|Infrastructure",
             "Material Demand|Aluminium|Infrastructure",
             "Material Demand|Concrete|Infrastructure",
-            "Material Demand|Asphalt|Infrastructure"], inplace = True)
+            "Material Demand|Asphalt|Infrastructure",
+        ],
+        inplace=True,
+    )
 
     return df_demand
 
-def report(context,scenario):
 
+def report(context, scenario):
     # Obtain scenario information and directory
 
     s_info = ScenarioInfo(scenario)
@@ -314,25 +319,25 @@ def report(context,scenario):
             "out|final_material|propylene|*",
             "out|secondary|fueloil|agg_ref|*",
             "out|secondary|lightoil|agg_ref|*",
-            'out|useful|i_therm|solar_i|M1',
-            'out|useful_steel|lt_heat|solar_steel|*',
-            'out|useful_aluminum|lt_heat|solar_aluminum|*',
-            'out|useful_cement|lt_heat|solar_cement|*',
-            'out|useful_petro|lt_heat|solar_petro|*',
-            'out|useful_resins|lt_heat|solar_resins|*',
+            "out|useful|i_therm|solar_i|M1",
+            "out|useful_steel|lt_heat|solar_steel|*",
+            "out|useful_aluminum|lt_heat|solar_aluminum|*",
+            "out|useful_cement|lt_heat|solar_cement|*",
+            "out|useful_petro|lt_heat|solar_petro|*",
+            "out|useful_resins|lt_heat|solar_resins|*",
             "in|final|*",
             "in|secondary|coal|coal_NH3|M1",
             "in|secondary|electr|NH3_to_N_fertil|M1",
-            'in|secondary|electr|coal_NH3|M1',
-            'in|secondary|electr|electr_NH3|M1',
-            'in|secondary|electr|gas_NH3|M1',
-            'in|secondary|fueloil|fueloil_NH3|M1',
-            'in|secondary|gas|gas_NH3|M1',
+            "in|secondary|electr|coal_NH3|M1",
+            "in|secondary|electr|electr_NH3|M1",
+            "in|secondary|electr|gas_NH3|M1",
+            "in|secondary|fueloil|fueloil_NH3|M1",
+            "in|secondary|gas|gas_NH3|M1",
             "in|secondary|coal|coal_NH3_ccs|M1",
-            'in|secondary|electr|coal_NH3_ccs|M1',
-            'in|secondary|electr|gas_NH3_ccs|M1',
-            'in|secondary|fueloil|fueloil_NH3_ccs|M1',
-            'in|secondary|gas|gas_NH3_ccs|M1',
+            "in|secondary|electr|coal_NH3_ccs|M1",
+            "in|secondary|electr|gas_NH3_ccs|M1",
+            "in|secondary|fueloil|fueloil_NH3_ccs|M1",
+            "in|secondary|gas|gas_NH3_ccs|M1",
             "in|primary|biomass|biomass_NH3|M1",
             "in|seconday|electr|biomass_NH3|M1",
             "in|primary|biomass|biomass_NH3_ccs|M1",
@@ -341,17 +346,17 @@ def report(context,scenario):
             "in|secondary|electr|fueloil_NH3|M1",
             "in|secondary|electr|fueloil_NH3_ccs|M1",
             "in|secondary|coal|meth_coal|feedstock",
-            'in|secondary|coal|meth_coal_ccs|feedstock',
-            'in|secondary|gas|meth_ng_ccs|feedstock',
+            "in|secondary|coal|meth_coal_ccs|feedstock",
+            "in|secondary|gas|meth_ng_ccs|feedstock",
             "in|secondary|gas|meth_ng|feedstock",
-            'in|secondary|electr|meth_ng|feedstock',
-            'in|secondary|electr|meth_ng_ccs|feedstock',
+            "in|secondary|electr|meth_ng|feedstock",
+            "in|secondary|electr|meth_ng_ccs|feedstock",
             "in|secondary|electr|meth_coal|feedstock",
-            'in|secondary|electr|meth_coal_ccs|feedstock',
-            'in|primary|biomass|meth_bio|feedstock',
-            'in|primary|biomass|meth_bio_ccs|feedstock',
-            'in|secondary|hydrogen|meth_h2|feedstock',
-            'in|secondary|electr|meth_h2|feedstock',
+            "in|secondary|electr|meth_coal_ccs|feedstock",
+            "in|primary|biomass|meth_bio|feedstock",
+            "in|primary|biomass|meth_bio_ccs|feedstock",
+            "in|secondary|hydrogen|meth_h2|feedstock",
+            "in|secondary|electr|meth_h2|feedstock",
             "in|desulfurized|*|steam_cracker_petro|*",
             "in|secondary_material|*|steam_cracker_petro|*",
             "in|dummy_end_of_life_1|aluminum|scrap_recovery_aluminum_1|M1",
@@ -413,64 +418,149 @@ def report(context,scenario):
 
     # Charcoal energy to material conversion
 
-    df.divide("in|final|charcoal|concrete_production_cement|M2", (0.951),
-    "in|final|charcoal|concrete_production_cement|Mt", append=True, ignore_units=True)
+    df.divide(
+        "in|final|charcoal|concrete_production_cement|M2",
+        (0.951),
+        "in|final|charcoal|concrete_production_cement|Mt",
+        append=True,
+        ignore_units=True,
+    )
 
     # Methanol input conversion from material to energy unit
 
-    df.divide("in|final_material|methanol|MTO_petro|M1", (1/0.6976),
-    "in|final_material|methanol|MTO_petro|energy", append=True, ignore_units=True)
+    df.divide(
+        "in|final_material|methanol|MTO_petro|M1",
+        (1 / 0.6976),
+        "in|final_material|methanol|MTO_petro|energy",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("in|final_material|methanol|CH2O_synth|M1", (1/0.6976),
-    "in|final_material|methanol|CH2O_synth|energy", append=True, ignore_units=True)
+    df.divide(
+        "in|final_material|methanol|CH2O_synth|M1",
+        (1 / 0.6976),
+        "in|final_material|methanol|CH2O_synth|energy",
+        append=True,
+        ignore_units=True,
+    )
 
     # Convert methanol at primary_material from energy to material unit
     # In the model this is kept as energy units to easily seperate two modes: fuel and feedstock
-    df.divide("out|primary_material|methanol|meth_coal|feedstock", 0.6976,
-    "out|primary_material|methanol|meth_coal|feedstockMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary_material|methanol|meth_coal|feedstock",
+        0.6976,
+        "out|primary_material|methanol|meth_coal|feedstockMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary_material|methanol|meth_coal_ccs|feedstock", 0.6976,
-    "out|primary_material|methanol|meth_coal_ccs|feedstockMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary_material|methanol|meth_coal_ccs|feedstock",
+        0.6976,
+        "out|primary_material|methanol|meth_coal_ccs|feedstockMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary_material|methanol|meth_ng|feedstock", 0.6976,
-    "out|primary_material|methanol|meth_ng|feedstockMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary_material|methanol|meth_ng|feedstock",
+        0.6976,
+        "out|primary_material|methanol|meth_ng|feedstockMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary_material|methanol|meth_ng_ccs|feedstock", 0.6976,
-    "out|primary_material|methanol|meth_ng_ccs|feedstockMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary_material|methanol|meth_ng_ccs|feedstock",
+        0.6976,
+        "out|primary_material|methanol|meth_ng_ccs|feedstockMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary_material|methanol|meth_bio|feedstock", 0.6976,
-    "out|primary_material|methanol|meth_bio|feedstockMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary_material|methanol|meth_bio|feedstock",
+        0.6976,
+        "out|primary_material|methanol|meth_bio|feedstockMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary_material|methanol|meth_bio_ccs|feedstock", 0.6976,
-    "out|primary_material|methanol|meth_bio_ccs|feedstockMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary_material|methanol|meth_bio_ccs|feedstock",
+        0.6976,
+        "out|primary_material|methanol|meth_bio_ccs|feedstockMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary_material|methanol|meth_h2|feedstock", 0.6976,
-    "out|primary_material|methanol|meth_h2|feedstockMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary_material|methanol|meth_h2|feedstock",
+        0.6976,
+        "out|primary_material|methanol|meth_h2|feedstockMt",
+        append=True,
+        ignore_units=True,
+    )
 
     # Convert methanol at primary from energy to material unit
     # In the model this is kept as energy units to easily seperate two modes: fuel and feedstock
-    df.divide("out|primary|methanol|meth_coal|fuel", 0.6976,
-    "out|primary|methanol|meth_coal|fuelMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary|methanol|meth_coal|fuel",
+        0.6976,
+        "out|primary|methanol|meth_coal|fuelMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary|methanol|meth_coal_ccs|fuel", 0.6976,
-    "out|primary|methanol|meth_coal_ccs|fuelMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary|methanol|meth_coal_ccs|fuel",
+        0.6976,
+        "out|primary|methanol|meth_coal_ccs|fuelMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary|methanol|meth_ng|fuel", 0.6976,
-    "out|primary|methanol|meth_ng|fuelMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary|methanol|meth_ng|fuel",
+        0.6976,
+        "out|primary|methanol|meth_ng|fuelMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary|methanol|meth_ng_ccs|fuel", 0.6976,
-    "out|primary|methanol|meth_ng_ccs|fuelMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary|methanol|meth_ng_ccs|fuel",
+        0.6976,
+        "out|primary|methanol|meth_ng_ccs|fuelMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary|methanol|meth_bio|fuel", 0.6976,
-    "out|primary|methanol|meth_bio|fuelMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary|methanol|meth_bio|fuel",
+        0.6976,
+        "out|primary|methanol|meth_bio|fuelMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary|methanol|meth_bio_ccs|fuel", 0.6976,
-    "out|primary|methanol|meth_bio_ccs|fuelMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary|methanol|meth_bio_ccs|fuel",
+        0.6976,
+        "out|primary|methanol|meth_bio_ccs|fuelMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.divide("out|primary|methanol|meth_h2|fuel", 0.6976,
-    "out|primary|methanol|meth_h2|fuelMt", append=True, ignore_units=True)
+    df.divide(
+        "out|primary|methanol|meth_h2|fuel",
+        0.6976,
+        "out|primary|methanol|meth_h2|fuelMt",
+        append=True,
+        ignore_units=True,
+    )
 
-    df.convert_unit('unknown', to='', factor=1, inplace = True)
+    df.convert_unit("unknown", to="", factor=1, inplace=True)
 
     variables = df.variable
     df.aggregate_region(variables, region="World", method=sum, append=True)
@@ -534,7 +624,7 @@ def report(context,scenario):
         df_al = df.copy()
         df_al.filter(region=r, year=years, inplace=True)
         df_al.filter(variable=["out|*|aluminum|*", "in|*|aluminum|*"], inplace=True)
-        df_al.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+        df_al.convert_unit("", to="Mt/yr", factor=1, inplace=True)
         df_al_graph = df_al.copy()
 
         df_al_graph.filter(
@@ -580,7 +670,7 @@ def report(context,scenario):
         df_steel = df.copy()
         df_steel.filter(region=r, year=years, inplace=True)
         df_steel.filter(variable=["out|*|steel|*", "in|*|steel|*"], inplace=True)
-        df_steel.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+        df_steel.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
         df_steel_graph = df_steel.copy()
         df_steel_graph.filter(
@@ -594,7 +684,10 @@ def report(context,scenario):
         if r == "World":
             df_steel.filter(variable=["out|*|steel|*", "in|*|steel|*"], inplace=True)
             df_steel_graph.filter(
-                variable=["out|final_material|steel|*",], inplace=True,
+                variable=[
+                    "out|final_material|steel|*",
+                ],
+                inplace=True,
             )
 
         df_steel_graph.plot.stack(ax=ax2)
@@ -618,10 +711,9 @@ def report(context,scenario):
             ],
             inplace=True,
         )
-        df_petro.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+        df_petro.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
         if r == "World":
-
             df_petro.filter(
                 variable=[
                     "in|final|ethanol|ethanol_to_ethylene_petro|M1",
@@ -657,9 +749,9 @@ def report(context,scenario):
         print(r)
 
         df_demand = df.copy()
-        df_demand.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+        df_demand.convert_unit("", to="Mt/yr", factor=1, inplace=True)
         df_demand_region = report_demand(df_demand, r, years)
-        df_final.append(df_demand_region, inplace = True)
+        df_final.append(df_demand_region, inplace=True)
 
         # PRODUCTION - IAMC Variables
 
@@ -679,7 +771,7 @@ def report(context,scenario):
             "out|new_scrap|aluminum|manuf_aluminum|M1",
             "in|dummy_end_of_life_1|aluminum|scrap_recovery_aluminum_1|M1",
             "in|dummy_end_of_life_2|aluminum|scrap_recovery_aluminum_2|M1",
-            "in|dummy_end_of_life_3|aluminum|scrap_recovery_aluminum_3|M1"
+            "in|dummy_end_of_life_3|aluminum|scrap_recovery_aluminum_3|M1",
         ]
 
         # Total Available Scrap:
@@ -687,9 +779,11 @@ def report(context,scenario):
         # + from power and buildings sector
 
         new_scrap_al_vars = ["out|new_scrap|aluminum|manuf_aluminum|M1"]
-        old_scrap_al_vars = ["out|dummy_end_of_life_1|aluminum|total_EOL_aluminum|M1",
-                             "out|dummy_end_of_life_2|aluminum|total_EOL_aluminum|M1",
-                             "out|dummy_end_of_life_3|aluminum|total_EOL_aluminum|M1"]
+        old_scrap_al_vars = [
+            "out|dummy_end_of_life_1|aluminum|total_EOL_aluminum|M1",
+            "out|dummy_end_of_life_2|aluminum|total_EOL_aluminum|M1",
+            "out|dummy_end_of_life_3|aluminum|total_EOL_aluminum|M1",
+        ]
 
         df_al.aggregate(
             "Production|Primary|Non-Ferrous Metals|Aluminium",
@@ -722,13 +816,13 @@ def report(context,scenario):
 
         df_al.aggregate(
             "Total Scrap|Non-Ferrous Metals|Aluminium",
-            components=new_scrap_al_vars+old_scrap_al_vars,
+            components=new_scrap_al_vars + old_scrap_al_vars,
             append=True,
         )
 
         df_al.aggregate(
             "Total Scrap|Non-Ferrous Metals",
-            components=new_scrap_al_vars+old_scrap_al_vars,
+            components=new_scrap_al_vars + old_scrap_al_vars,
             append=True,
         )
 
@@ -771,12 +865,13 @@ def report(context,scenario):
         df_bit = df.copy()
         df_bit.filter(region=r, year=years, inplace=True)
         df_bit.filter(
-            variable=["out|final_material|bitumen|bitumen_production|M1",
-                      "out|final_material|bitumen|bitumen_production|M2"
+            variable=[
+                "out|final_material|bitumen|bitumen_production|M1",
+                "out|final_material|bitumen|bitumen_production|M2",
             ],
             inplace=True,
         )
-        df_bit.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+        df_bit.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
         df_bit.to_excel("df_bit.xlsx")
 
@@ -809,11 +904,12 @@ def report(context,scenario):
 
         # STEEL
 
-        primary_steel_vars = ["out|final_material|steel|bof_steel|M1",
-                              "out|final_material|steel|bof_steel|M2",
-                              "out|final_material|steel|eaf_steel|M1",
-                              "out|final_material|steel|eaf_steel|M3"
-                              ]
+        primary_steel_vars = [
+            "out|final_material|steel|bof_steel|M1",
+            "out|final_material|steel|bof_steel|M2",
+            "out|final_material|steel|eaf_steel|M1",
+            "out|final_material|steel|eaf_steel|M3",
+        ]
 
         secondary_steel_vars = [
             "out|final_material|steel|eaf_steel|M2",
@@ -830,17 +926,29 @@ def report(context,scenario):
         old_scrap_steel_vars = ["out|dummy_end_of_life|steel|total_EOL_steel|M1"]
 
         df_steel.aggregate(
-            "Production|Primary|Steel (before sub.1)", components=primary_steel_vars, append=True,
+            "Production|Primary|Steel (before sub.1)",
+            components=primary_steel_vars,
+            append=True,
         )
 
-        df_steel.subtract("Production|Primary|Steel (before sub.1)",
-        "in|new_scrap|steel|bof_steel|M1","Production|Primary|Steel (before sub.2)", append = True)
+        df_steel.subtract(
+            "Production|Primary|Steel (before sub.1)",
+            "in|new_scrap|steel|bof_steel|M1",
+            "Production|Primary|Steel (before sub.2)",
+            append=True,
+        )
 
-        df_steel.subtract("Production|Primary|Steel (before sub.2)",
-        "in|new_scrap|steel|bof_steel|M2","Production|Primary|Steel", append = True)
+        df_steel.subtract(
+            "Production|Primary|Steel (before sub.2)",
+            "in|new_scrap|steel|bof_steel|M2",
+            "Production|Primary|Steel",
+            append=True,
+        )
 
         df_steel.aggregate(
-            "Production|Secondary|Steel", components=secondary_steel_vars, append=True,
+            "Production|Secondary|Steel",
+            components=secondary_steel_vars,
+            append=True,
         )
 
         df_steel.aggregate(
@@ -850,7 +958,9 @@ def report(context,scenario):
         )
 
         df_steel.aggregate(
-            "Collected Scrap|Steel", components=collected_scrap_steel_vars, append=True,
+            "Collected Scrap|Steel",
+            components=collected_scrap_steel_vars,
+            append=True,
         )
         df_steel.aggregate(
             "Total Scrap|Steel", components=total_scrap_steel_vars, append=True
@@ -860,9 +970,9 @@ def report(context,scenario):
             "Total Scrap|Steel|Old Scrap", components=old_scrap_steel_vars, append=True
         )
 
-        #df_steel.aggregate(
+        # df_steel.aggregate(
         #    "Total Scrap|Steel|New Scrap", components=new_scrap_steel_vars, append=True
-        #)
+        # )
 
         df_steel.filter(
             variable=[
@@ -881,35 +991,41 @@ def report(context,scenario):
 
         df_chemicals = df.copy()
         df_chemicals.filter(region=r, year=years, inplace=True)
-        df_chemicals.filter(variable=['out|secondary_material|NH3|*',
-                                      "out|final_material|ethylene|*",
-                                      "out|final_material|propylene|*",
-                                       "out|final_material|BTX|*",
-                                       'out|primary_material|methanol|*|feedstockMt',
-                                       'out|primary|methanol|*|fuelMt'
-                                       ],inplace=True)
-        df_chemicals.convert_unit('', to='Mt/yr', factor=1, inplace = True)
-        df_chemicals.convert_unit('GWa', to='Mt/yr', factor=(1/0.6976), inplace=True)
+        df_chemicals.filter(
+            variable=[
+                "out|secondary_material|NH3|*",
+                "out|final_material|ethylene|*",
+                "out|final_material|propylene|*",
+                "out|final_material|BTX|*",
+                "out|primary_material|methanol|*|feedstockMt",
+                "out|primary|methanol|*|fuelMt",
+            ],
+            inplace=True,
+        )
+        df_chemicals.convert_unit("", to="Mt/yr", factor=1, inplace=True)
+        df_chemicals.convert_unit("GWa", to="Mt/yr", factor=(1 / 0.6976), inplace=True)
 
-       # Methanol
+        # Methanol
 
-       # In Mt units
-        primary_methanol_chemical_vars = ["out|primary_material|methanol|meth_coal|feedstockMt",
-                                          "out|primary_material|methanol|meth_coal_ccs|feedstockMt",
-                                          "out|primary_material|methanol|meth_ng|feedstockMt",
-                                          "out|primary_material|methanol|meth_ng_ccs|feedstockMt",
-                                          "out|primary_material|methanol|meth_bio|feedstockMt",
-                                          "out|primary_material|methanol|meth_bio_ccs|feedstockMt",
-                                          "out|primary_material|methanol|meth_h2|feedstockMt",
-                                        ]
-        methanol_fuel_vars = ["out|primary|methanol|meth_coal|fuelMt",
-                              "out|primary|methanol|meth_coal_ccs|fuelMt",
-                              "out|primary|methanol|meth_ng|fuelMt",
-                              "out|primary|methanol|meth_ng_ccs|fuelMt",
-                              "out|primary|methanol|meth_bio|fuelMt",
-                              "out|primary|methanol|meth_bio_ccs|fuelMt",
-                              "out|primary|methanol|meth_h2|fuelMt",
-                             ]
+        # In Mt units
+        primary_methanol_chemical_vars = [
+            "out|primary_material|methanol|meth_coal|feedstockMt",
+            "out|primary_material|methanol|meth_coal_ccs|feedstockMt",
+            "out|primary_material|methanol|meth_ng|feedstockMt",
+            "out|primary_material|methanol|meth_ng_ccs|feedstockMt",
+            "out|primary_material|methanol|meth_bio|feedstockMt",
+            "out|primary_material|methanol|meth_bio_ccs|feedstockMt",
+            "out|primary_material|methanol|meth_h2|feedstockMt",
+        ]
+        methanol_fuel_vars = [
+            "out|primary|methanol|meth_coal|fuelMt",
+            "out|primary|methanol|meth_coal_ccs|fuelMt",
+            "out|primary|methanol|meth_ng|fuelMt",
+            "out|primary|methanol|meth_ng_ccs|fuelMt",
+            "out|primary|methanol|meth_bio|fuelMt",
+            "out|primary|methanol|meth_bio_ccs|fuelMt",
+            "out|primary|methanol|meth_h2|fuelMt",
+        ]
 
         methanol_total_vars = primary_methanol_chemical_vars + methanol_fuel_vars
 
@@ -940,11 +1056,21 @@ def report(context,scenario):
         # add entries for each methanol technology
         meth_tec_list = [i.replace("fuel", "M1") for i in methanol_fuel_vars]
         df_meth_individual = df_chemicals.filter(variable=meth_tec_list)
-        df_meth_individual.convert_unit('Mt/yr', to='Mt/yr', factor=(1/0.6976), inplace=True)
+        df_meth_individual.convert_unit(
+            "Mt/yr", to="Mt/yr", factor=(1 / 0.6976), inplace=True
+        )
         var_name = "Production|Methanol|"
         for i in df_meth_individual["variable"]:
-            df_meth_individual.rename({"variable": {i: i.replace("out|primary|methanol|", var_name).replace("|M1", "")}},
-            inplace=True)
+            df_meth_individual.rename(
+                {
+                    "variable": {
+                        i: i.replace("out|primary|methanol|", var_name).replace(
+                            "|M1", ""
+                        )
+                    }
+                },
+                inplace=True,
+            )
 
         # AMMONIA
 
@@ -957,7 +1083,7 @@ def report(context,scenario):
             "out|secondary_material|NH3|biomass_NH3_ccs|M1",
             "out|secondary_material|NH3|fueloil_NH3|M1",
             "out|secondary_material|NH3|fueloil_NH3_ccs|M1",
-            "out|secondary_material|NH3|electr_NH3|M1"
+            "out|secondary_material|NH3|electr_NH3|M1",
         ]
 
         df_chemicals.aggregate(
@@ -972,7 +1098,7 @@ def report(context,scenario):
             append=True,
         )
 
-       # High Value Chemicals
+        # High Value Chemicals
 
         intermediate_petro_vars = [
             "out|final_material|ethylene|ethanol_to_ethylene_petro|M1",
@@ -1006,7 +1132,11 @@ def report(context,scenario):
 
         # Totals
 
-        chemicals_vars = intermediate_petro_vars + primary_ammonia_vars + primary_methanol_chemical_vars
+        chemicals_vars = (
+            intermediate_petro_vars
+            + primary_ammonia_vars
+            + primary_methanol_chemical_vars
+        )
         df_chemicals.aggregate(
             "Production|Primary|Chemicals",
             components=chemicals_vars,
@@ -1030,7 +1160,7 @@ def report(context,scenario):
                 "Production|Primary|Chemicals|Methanol",
                 "Production|Chemicals|Methanol",
                 "Production|Fuel|Methanol",
-                'Production|Methanol'
+                "Production|Methanol",
             ],
             inplace=True,
         )
@@ -1046,21 +1176,26 @@ def report(context,scenario):
     # CEMENT
 
     for r in nodes:
-
         df_cement = df.copy()
         df_cement.filter(region=r, year=years, inplace=True)
-        df_cement.filter(variable=["out|product|concrete|*",
-                                   "out|final_material|cement|*",
-                                   "out|grinded_material|*",
-                                   "out|dummy_end_of_life|concrete|*",
-                                   "in|dummy_end_of_life|concrete",
-                                   "in|final|charcoal|concrete_production_cement|*",
-                                  ], inplace=True)
+        df_cement.filter(
+            variable=[
+                "out|product|concrete|*",
+                "out|final_material|cement|*",
+                "out|grinded_material|*",
+                "out|dummy_end_of_life|concrete|*",
+                "in|dummy_end_of_life|concrete",
+                "in|final|charcoal|concrete_production_cement|*",
+            ],
+            inplace=True,
+        )
 
         # PRODUCTION - IAMC format
 
-        concrete_vars = ["out|product|concrete|concrete_production_cement|M1",
-                         "out|product|concrete|concrete_production_cement|M2",]
+        concrete_vars = [
+            "out|product|concrete|concrete_production_cement|M1",
+            "out|product|concrete|concrete_production_cement|M2",
+        ]
 
         cement_vars = [
             "out|final_material|cement|mix_cement|M1",
@@ -1072,50 +1207,72 @@ def report(context,scenario):
         charcoal_vars = ["in|final|charcoal|concrete_production_cement|Mt"]
 
         clinker_vars = [
-        "out|grinded_material|clinker|grinding_ballmill_cement|M1",
-        "out|grinded_material|clinker|grinding_vertmill_cement|M1"
+            "out|grinded_material|clinker|grinding_ballmill_cement|M1",
+            "out|grinded_material|clinker|grinding_vertmill_cement|M1",
         ]
 
-        slag_vars = ["out|grinded_material|granulated_slag_iron|grinding_ballmill_cement|M2",
-        "out|grinded_material|granulated_slag_iron|grinding_vertmill_cement|M2"]
+        slag_vars = [
+            "out|grinded_material|granulated_slag_iron|grinding_ballmill_cement|M2",
+            "out|grinded_material|granulated_slag_iron|grinding_vertmill_cement|M2",
+        ]
 
-        flyash_vars = ["out|grinded_material|fly_ash|grinding_ballmill_cement|M3",
-        "out|grinded_material|fly_ash|grinding_vertmill_cement|M3"]
+        flyash_vars = [
+            "out|grinded_material|fly_ash|grinding_ballmill_cement|M3",
+            "out|grinded_material|fly_ash|grinding_vertmill_cement|M3",
+        ]
 
-        clay_vars = ["out|grinded_material|clay|grinding_ballmill_cement|M4",
-        "out|grinded_material|clay|grinding_vertmill_cement|M4"]
+        clay_vars = [
+            "out|grinded_material|clay|grinding_ballmill_cement|M4",
+            "out|grinded_material|clay|grinding_vertmill_cement|M4",
+        ]
 
         total_scrap_cement_vars = ["out|dummy_end_of_life|concrete|total_EOL_cement|M1"]
 
-        landfilling_cement_vars = ["in|dummy_end_of_life|concrete|landfilling_cement|M1"]
+        landfilling_cement_vars = [
+            "in|dummy_end_of_life|concrete|landfilling_cement|M1"
+        ]
 
-        recycling_cement_vars = ["in|dummy_end_of_life|concrete|recycling_cement|M1",
-                                 "in|dummy_end_of_life|concrete|recycling_cement|M2"]
+        recycling_cement_vars = [
+            "in|dummy_end_of_life|concrete|recycling_cement|M1",
+            "in|dummy_end_of_life|concrete|recycling_cement|M2",
+        ]
 
-        df_cement.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+        df_cement.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Concrete", components=concrete_vars, append=True,
+            "Production|Non-Metallic Minerals|Concrete",
+            components=concrete_vars,
+            append=True,
         )
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Charcoal Replacement", components=charcoal_vars, append=True,
+            "Production|Non-Metallic Minerals|Charcoal Replacement",
+            components=charcoal_vars,
+            append=True,
         )
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Clinker", components=clinker_vars, append=True,
+            "Production|Non-Metallic Minerals|Clinker",
+            components=clinker_vars,
+            append=True,
         )
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Slag", components=slag_vars, append=True,
+            "Production|Non-Metallic Minerals|Slag",
+            components=slag_vars,
+            append=True,
         )
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Fly Ash", components=flyash_vars, append=True,
+            "Production|Non-Metallic Minerals|Fly Ash",
+            components=flyash_vars,
+            append=True,
         )
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Calcined Clay", components=clay_vars, append=True,
+            "Production|Non-Metallic Minerals|Calcined Clay",
+            components=clay_vars,
+            append=True,
         )
 
         df_cement.aggregate(
@@ -1125,7 +1282,9 @@ def report(context,scenario):
         )
 
         df_cement.aggregate(
-            "Production|Non-Metallic Minerals|Cement", components=cement_vars, append=True,
+            "Production|Non-Metallic Minerals|Cement",
+            components=cement_vars,
+            append=True,
         )
 
         df_cement.aggregate(
@@ -1165,7 +1324,7 @@ def report(context,scenario):
                 "Production|Non-Metallic Minerals|Clinker",
                 "Production|Non-Metallic Minerals|Slag",
                 "Production|Non-Metallic Minerals|Fly Ash",
-                "Production|Non-Metallic Minerals|Calcined Clay"
+                "Production|Non-Metallic Minerals|Calcined Clay",
             ],
             inplace=True,
         )
@@ -1176,7 +1335,15 @@ def report(context,scenario):
     # HVC production, ammonia production and methanol production.
 
     print("Final Energy by fuels only non-energy use is being printed.")
-    commodities = ["gas", "liquids", "solids",'hydrogen','methanol',"all",'electr_gas']
+    commodities = [
+        "gas",
+        "liquids",
+        "solids",
+        "hydrogen",
+        "methanol",
+        "all",
+        "electr_gas",
+    ]
 
     for c in commodities:
         for r in nodes:
@@ -1185,7 +1352,8 @@ def report(context,scenario):
             # GWa to EJ/yr
             df_final_energy.convert_unit("", to="GWa", factor=1, inplace=True)
             df_final_energy.convert_unit(
-                "GWa", to="EJ/yr", factor=0.03154, inplace=True)
+                "GWa", to="EJ/yr", factor=0.03154, inplace=True
+            )
             df_final_energy.filter(region=r, year=years, inplace=True)
             df_final_energy.filter(
                 variable=["in|final|*|cokeoven_steel|*"], keep=False, inplace=True
@@ -1203,45 +1371,61 @@ def report(context,scenario):
                     "in|final|gas|gas_processing_petro|*",
                     "in|final|*|loil_fs|*",
                     "in|final|*|gas_fs|*",
-                    'in|secondary|gas|gas_NH3|M1',
-                    'in|secondary|gas|gas_NH3_ccs|M1',
-                    'in|secondary|fueloil|fueloil_NH3|M1',
-                    'in|secondary|fueloil|fueloil_NH3_ccs|M1',
-                    'in|secondary|electr|electr_NH3|M1',
-                     "in|secondary|coal|coal_NH3|M1",
-                     "in|secondary|coal|coal_NH3_ccs|M1",
-                     'in|primary|biomass|biomass_NH3_ccs|M1',
-                     'in|primary|biomass|biomass_NH3|M1',
-                     "in|final_material|methanol|MTO_petro|energy",
-                     "in|final_material|methanol|CH2O_synth|energy",
-                     'in|secondary|coal|meth_coal|feedstock',
-                     'in|secondary|coal|meth_coal_ccs|feedstock',
-                     'in|secondary|gas|meth_ng|feedstock',
-                     'in|secondary|gas|meth_ng_ccs|feedstock',
-                     'in|primary|biomass|meth_bio|feedstock',
-                     'in|primary|biomass|meth_bio_ccs|feedstock',
-                     'in|secondary|hydrogen|meth_h2|feedstock',
+                    "in|secondary|gas|gas_NH3|M1",
+                    "in|secondary|gas|gas_NH3_ccs|M1",
+                    "in|secondary|fueloil|fueloil_NH3|M1",
+                    "in|secondary|fueloil|fueloil_NH3_ccs|M1",
+                    "in|secondary|electr|electr_NH3|M1",
+                    "in|secondary|coal|coal_NH3|M1",
+                    "in|secondary|coal|coal_NH3_ccs|M1",
+                    "in|primary|biomass|biomass_NH3_ccs|M1",
+                    "in|primary|biomass|biomass_NH3|M1",
+                    "in|final_material|methanol|MTO_petro|energy",
+                    "in|final_material|methanol|CH2O_synth|energy",
+                    "in|secondary|coal|meth_coal|feedstock",
+                    "in|secondary|coal|meth_coal_ccs|feedstock",
+                    "in|secondary|gas|meth_ng|feedstock",
+                    "in|secondary|gas|meth_ng_ccs|feedstock",
+                    "in|primary|biomass|meth_bio|feedstock",
+                    "in|primary|biomass|meth_bio_ccs|feedstock",
+                    "in|secondary|hydrogen|meth_h2|feedstock",
                 ],
                 inplace=True,
             )
 
-            if c == 'all':
-                df_final_energy.filter(variable=["in|final_material|methanol|MTO_petro|energy",
-                                     "in|final_material|methanol|CH2O_synth|energy",],
-                                                keep=False,inplace=True)
-            if c == 'electr_gas':
-                df_final_energy.filter(variable=['in|secondary|electr|electr_NH3|M1',],
-                                                  inplace=True)
+            if c == "all":
+                df_final_energy.filter(
+                    variable=[
+                        "in|final_material|methanol|MTO_petro|energy",
+                        "in|final_material|methanol|CH2O_synth|energy",
+                    ],
+                    keep=False,
+                    inplace=True,
+                )
+            if c == "electr_gas":
+                df_final_energy.filter(
+                    variable=[
+                        "in|secondary|electr|electr_NH3|M1",
+                    ],
+                    inplace=True,
+                )
             if c == "gas":
-                df_final_energy.filter(variable=["in|final|gas|*",
-                                                'in|secondary|gas|gas_NH3|M1',
-                                                'in|secondary|gas|gas_NH3_ccs|M1',
-                                                'in|secondary|gas|meth_ng|feedstock',
-                                                'in|secondary|gas|meth_ng_ccs|feedstock',
-                                                'in|secondary|electr|electr_NH3|M1'],
-                                                inplace=True)
-                df_final_energy.filter(variable=["in|final|gas|gas_processing_petro|*"],
-                                                keep=False, inplace=True)
+                df_final_energy.filter(
+                    variable=[
+                        "in|final|gas|*",
+                        "in|secondary|gas|gas_NH3|M1",
+                        "in|secondary|gas|gas_NH3_ccs|M1",
+                        "in|secondary|gas|meth_ng|feedstock",
+                        "in|secondary|gas|meth_ng_ccs|feedstock",
+                        "in|secondary|electr|electr_NH3|M1",
+                    ],
+                    inplace=True,
+                )
+                df_final_energy.filter(
+                    variable=["in|final|gas|gas_processing_petro|*"],
+                    keep=False,
+                    inplace=True,
+                )
             if c == "liquids":
                 df_final_energy.filter(
                     variable=[
@@ -1253,35 +1437,43 @@ def report(context,scenario):
                         "in|final|atm_gasoil|*",
                         "in|final|vacuum_gasoil|*",
                         "in|final|naphtha|*",
-                        'in|secondary|fueloil|fueloil_NH3|M1',
-                        'in|secondary|fueloil|fueloil_NH3_ccs|M1',
-                        "in|final|gas|gas_processing_petro|*"
+                        "in|secondary|fueloil|fueloil_NH3|M1",
+                        "in|secondary|fueloil|fueloil_NH3_ccs|M1",
+                        "in|final|gas|gas_processing_petro|*",
                     ],
                     inplace=True,
                 )
             if c == "solids":
                 df_final_energy.filter(
-                    variable=["in|final|biomass|*", "in|final|coal|*",
-                              "in|secondary|coal|coal_NH3|M1",
-                              "in|secondary|coal|coal_NH3_ccs|M1",
-                              'in|primary|biomass|biomass_NH3_ccs|M1',
-                              'in|primary|biomass|biomass_NH3|M1',
-                              'in|secondary|coal|meth_coal|feedstock',
-                              'in|secondary|coal|meth_coal_ccs|feedstock',
-                              'in|primary|biomass|meth_bio|feedstock',
-                              'in|primary|biomass|meth_bio_ccs|feedstock',
-                              ], inplace=True)
+                    variable=[
+                        "in|final|biomass|*",
+                        "in|final|coal|*",
+                        "in|secondary|coal|coal_NH3|M1",
+                        "in|secondary|coal|coal_NH3_ccs|M1",
+                        "in|primary|biomass|biomass_NH3_ccs|M1",
+                        "in|primary|biomass|biomass_NH3|M1",
+                        "in|secondary|coal|meth_coal|feedstock",
+                        "in|secondary|coal|meth_coal_ccs|feedstock",
+                        "in|primary|biomass|meth_bio|feedstock",
+                        "in|primary|biomass|meth_bio_ccs|feedstock",
+                    ],
+                    inplace=True,
+                )
             if c == "hydrogen":
                 df_final_energy.filter(
                     variable=[
-                              'in|secondary|hydrogen|meth_h2|feedstock',
-                              ], inplace=True)
+                        "in|secondary|hydrogen|meth_h2|feedstock",
+                    ],
+                    inplace=True,
+                )
             if c == "methanol":
                 df_final_energy.filter(
                     variable=[
-                           "in|final_material|methanol|MTO_petro|energy",
-                           "in|final_material|methanol|CH2O_synth|energy",
-                              ], inplace=True)
+                        "in|final_material|methanol|MTO_petro|energy",
+                        "in|final_material|methanol|CH2O_synth|energy",
+                    ],
+                    inplace=True,
+                )
 
             all_flows = df_final_energy.timeseries().reset_index()
             splitted_vars = [v.split("|") for v in all_flows.variable]
@@ -1307,7 +1499,9 @@ def report(context,scenario):
 
             if c == "all":
                 df_final_energy.aggregate(
-                    "Final Energy|Non-Energy Use", components=var_sectors, append=True,
+                    "Final Energy|Non-Energy Use",
+                    components=var_sectors,
+                    append=True,
                 )
                 df_final_energy.filter(
                     variable=["Final Energy|Non-Energy Use"], inplace=True
@@ -1318,7 +1512,6 @@ def report(context,scenario):
                 df_final.append(df_final_energy, inplace=True)
 
             if c == "methanol":
-
                 df_final_energy.aggregate(
                     "Final Energy|Non-Energy Use|Other",
                     components=var_sectors,
@@ -1326,7 +1519,8 @@ def report(context,scenario):
                 )
 
                 df_final_energy.filter(
-                    variable=["Final Energy|Non-Energy Use|Other"], inplace=True,
+                    variable=["Final Energy|Non-Energy Use|Other"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -1334,7 +1528,6 @@ def report(context,scenario):
                 df_final.append(df_final_energy, inplace=True)
 
             if c == "hydrogen":
-
                 df_final_energy.aggregate(
                     "Final Energy|Non-Energy Use|Hydrogen",
                     components=var_sectors,
@@ -1342,7 +1535,8 @@ def report(context,scenario):
                 )
 
                 df_final_energy.filter(
-                    variable=["Final Energy|Non-Energy Use|Hydrogen"], inplace=True,
+                    variable=["Final Energy|Non-Energy Use|Hydrogen"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -1350,7 +1544,6 @@ def report(context,scenario):
                 df_final.append(df_final_energy, inplace=True)
 
             if c == "electr_gas":
-
                 df_final_energy.aggregate(
                     "Final Energy|Non-Energy Use|Gases|Electricity",
                     components=var_sectors,
@@ -1358,7 +1551,8 @@ def report(context,scenario):
                 )
 
                 df_final_energy.filter(
-                    variable=["Final Energy|Non-Energy Use|Gases|Electricity"], inplace=True,
+                    variable=["Final Energy|Non-Energy Use|Gases|Electricity"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -1366,7 +1560,6 @@ def report(context,scenario):
                 df_final.append(df_final_energy, inplace=True)
 
             if c == "gas":
-
                 # Can not distinguish by type Gases (natural gas, biomass, synthetic fossil, efuel)
                 # (coal_gas), from biomass (gas_bio), natural gas (gas_bal): All go into secondary level
                 # Can not be distinguished in the final level.
@@ -1377,7 +1570,8 @@ def report(context,scenario):
                 )
 
                 df_final_energy.filter(
-                    variable=["Final Energy|Non-Energy Use|Gases"], inplace=True,
+                    variable=["Final Energy|Non-Energy Use|Gases"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -1385,7 +1579,6 @@ def report(context,scenario):
                 df_final.append(df_final_energy, inplace=True)
 
             if c == "liquids":
-
                 # All liquids
                 df_final_energy.aggregate(
                     "Final Energy|Non-Energy Use|Liquids",
@@ -1396,8 +1589,9 @@ def report(context,scenario):
                 # Only bios
 
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("ethanol" in v)
-                    & ("methanol" not in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("ethanol" in v) & ("methanol" not in v))
                 ]
                 df_final_energy.aggregate(
                     "Final Energy|Non-Energy Use|Liquids|Biomass",
@@ -1427,11 +1621,7 @@ def report(context,scenario):
                 # Natural Gas Liquids (Ethane/Propane)
 
                 filter_vars = [
-                    v
-                    for v in aux2_df["variable"].values
-                    if (
-                        ("gas_proc" in v)
-                    )
+                    v for v in aux2_df["variable"].values if ("gas_proc" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -1445,7 +1635,7 @@ def report(context,scenario):
                         "Final Energy|Non-Energy Use|Liquids",
                         "Final Energy|Non-Energy Use|Liquids|Oil",
                         "Final Energy|Non-Energy Use|Liquids|Biomass",
-                        "Final Energy|Non-Energy Use|Liquids|Gas"
+                        "Final Energy|Non-Energy Use|Liquids|Gas",
                     ],
                     inplace=True,
                 )
@@ -1454,7 +1644,6 @@ def report(context,scenario):
                 )
                 df_final.append(df_final_energy, inplace=True)
             if c == "solids":
-
                 # All
                 df_final_energy.aggregate(
                     "Final Energy|Non-Energy Use|Solids",
@@ -1497,40 +1686,54 @@ def report(context,scenario):
     # has seperate input values in the model.
 
     print("Final Energy by fuels excluding non-energy use is being printed.")
-    commodities = ["electr", "gas", "hydrogen", "liquids", "solids", "heat", 'solar', "all"]
+    commodities = [
+        "electr",
+        "gas",
+        "hydrogen",
+        "liquids",
+        "solids",
+        "heat",
+        "solar",
+        "all",
+    ]
     for c in commodities:
-
         for r in nodes:
-
             df_final_energy = df.copy()
             df_final_energy.convert_unit("", to="GWa", factor=1, inplace=True)
             df_final_energy.filter(region=r, year=years, inplace=True)
             df_final_energy.filter(
-                variable=["in|final|*|cokeoven_steel|*",
-                          "in|final|co_gas|*",
-                          "in|final|bf_gas|*",
-                          "in|final|off_gas|*",
-                          "in|final|charcoal|concrete_production_cement|M2",
-                          ], keep=False, inplace=True
-             )
+                variable=[
+                    "in|final|*|cokeoven_steel|*",
+                    "in|final|co_gas|*",
+                    "in|final|bf_gas|*",
+                    "in|final|off_gas|*",
+                    "in|final|charcoal|concrete_production_cement|M2",
+                ],
+                keep=False,
+                inplace=True,
+            )
 
             if c == "electr":
-                df_final_energy.filter(variable=["in|final|electr|*",
-                                                 'in|secondary|electr|NH3_to_N_fertil|M1',
-                                                 'in|secondary|electr|coal_NH3|M1',
-                                                 'in|secondary|electr|fueloil_NH3|M1',
-                                                 'in|secondary|electr|gas_NH3|M1',
-                                                 'in|secondary|electr|coal_NH3_ccs|M1',
-                                                 'in|secondary|electr|fueloil_NH3_ccs|M1',
-                                                 'in|secondary|electr|gas_NH3_ccs|M1',
-                                                 'in|secondary|electr|biomass_NH3_ccs|M1',
-                                                 'in|secondary|electr|biomass_NH3|M1',
-                                                 'in|secondary|electr|meth_ng|feedstock',
-                                                 'in|secondary|electr|meth_ng_ccs|feedstock',
-                                                 'in|secondary|electr|meth_coal|feedstock',
-                                                 'in|secondary|electr|meth_coal_ccs|feedstock',
-                                                 'in|secondary|electr|meth_h2|feedstock'
-                                                 ], inplace=True)
+                df_final_energy.filter(
+                    variable=[
+                        "in|final|electr|*",
+                        "in|secondary|electr|NH3_to_N_fertil|M1",
+                        "in|secondary|electr|coal_NH3|M1",
+                        "in|secondary|electr|fueloil_NH3|M1",
+                        "in|secondary|electr|gas_NH3|M1",
+                        "in|secondary|electr|coal_NH3_ccs|M1",
+                        "in|secondary|electr|fueloil_NH3_ccs|M1",
+                        "in|secondary|electr|gas_NH3_ccs|M1",
+                        "in|secondary|electr|biomass_NH3_ccs|M1",
+                        "in|secondary|electr|biomass_NH3|M1",
+                        "in|secondary|electr|meth_ng|feedstock",
+                        "in|secondary|electr|meth_ng_ccs|feedstock",
+                        "in|secondary|electr|meth_coal|feedstock",
+                        "in|secondary|electr|meth_coal_ccs|feedstock",
+                        "in|secondary|electr|meth_h2|feedstock",
+                    ],
+                    inplace=True,
+                )
             if c == "gas":
                 df_final_energy.filter(variable=["in|final|gas|*"], inplace=True)
             # Do not include gasoil and naphtha feedstock
@@ -1558,37 +1761,45 @@ def report(context,scenario):
                 df_final_energy.filter(variable=["in|final|hydrogen|*"], inplace=True)
             if c == "heat":
                 df_final_energy.filter(variable=["in|final|d_heat|*"], inplace=True)
-            if c == 'solar':
-                df_final_energy.filter(variable=["out|useful|i_therm|solar_i|*",
-                                                 'out|useful_aluminum|lt_heat|solar_aluminum|*',
-                                                 'out|useful_steel|lt_heat|solar_steel|*',
-                                                 'out|useful_cement|lt_heat|solar_cement|*',
-                                                 'out|useful_petro|lt_heat|solar_petro|*',
-                                                 'out|useful_resins|lt_heat|solar_resins|*',
-                ], inplace=True)
+            if c == "solar":
+                df_final_energy.filter(
+                    variable=[
+                        "out|useful|i_therm|solar_i|*",
+                        "out|useful_aluminum|lt_heat|solar_aluminum|*",
+                        "out|useful_steel|lt_heat|solar_steel|*",
+                        "out|useful_cement|lt_heat|solar_cement|*",
+                        "out|useful_petro|lt_heat|solar_petro|*",
+                        "out|useful_resins|lt_heat|solar_resins|*",
+                    ],
+                    inplace=True,
+                )
             if c == "all":
-                df_final_energy.filter(variable=["in|final|*",
-                                                 'in|secondary|electr|NH3_to_N_fertil|M1',
-                                                 'in|secondary|electr|coal_NH3|M1',
-                                                 'in|secondary|electr|fueloil_NH3|M1',
-                                                 'in|secondary|electr|gas_NH3|M1',
-                                                 'in|secondary|electr|coal_NH3_ccs|M1',
-                                                 'in|secondary|electr|fueloil_NH3_ccs|M1',
-                                                 'in|secondary|electr|gas_NH3_ccs|M1',
-                                                 'in|secondary|electr|biomass_NH3_ccs|M1',
-                                                 'in|secondary|electr|biomass_NH3|M1',
-                                                 'out|useful|i_therm|solar_i|M1',
-                                                 'out|useful_aluminum|lt_heat|solar_aluminum|*',
-                                                 'out|useful_steel|lt_heat|solar_steel|*',
-                                                 'out|useful_cement|lt_heat|solar_cement|*',
-                                                 'out|useful_petro|lt_heat|solar_petro|*',
-                                                 'out|useful_resins|lt_heat|solar_resins|*',
-                                                  'in|secondary|electr|meth_ng_ccs|feedstock',
-                                                  'in|secondary|electr|meth_ng|feedstock',
-                                                  'in|secondary|electr|meth_coal|feedstock',
-                                                  'in|secondary|electr|meth_coal_ccs|feedstock',
-                                                  'in|secondary|electr|meth_h2|feedstock'
-                                                 ], inplace=True)
+                df_final_energy.filter(
+                    variable=[
+                        "in|final|*",
+                        "in|secondary|electr|NH3_to_N_fertil|M1",
+                        "in|secondary|electr|coal_NH3|M1",
+                        "in|secondary|electr|fueloil_NH3|M1",
+                        "in|secondary|electr|gas_NH3|M1",
+                        "in|secondary|electr|coal_NH3_ccs|M1",
+                        "in|secondary|electr|fueloil_NH3_ccs|M1",
+                        "in|secondary|electr|gas_NH3_ccs|M1",
+                        "in|secondary|electr|biomass_NH3_ccs|M1",
+                        "in|secondary|electr|biomass_NH3|M1",
+                        "out|useful|i_therm|solar_i|M1",
+                        "out|useful_aluminum|lt_heat|solar_aluminum|*",
+                        "out|useful_steel|lt_heat|solar_steel|*",
+                        "out|useful_cement|lt_heat|solar_cement|*",
+                        "out|useful_petro|lt_heat|solar_petro|*",
+                        "out|useful_resins|lt_heat|solar_resins|*",
+                        "in|secondary|electr|meth_ng_ccs|feedstock",
+                        "in|secondary|electr|meth_ng|feedstock",
+                        "in|secondary|electr|meth_coal|feedstock",
+                        "in|secondary|electr|meth_coal_ccs|feedstock",
+                        "in|secondary|electr|meth_h2|feedstock",
+                    ],
+                    inplace=True,
+                )
 
             all_flows = df_final_energy.timeseries().reset_index()
             splitted_vars = [v.split("|") for v in all_flows.variable]
@@ -1604,33 +1815,35 @@ def report(context,scenario):
             # Include only the related industry sector variables and state some
             # exceptions
             var_sectors = [
-                v for v in aux2_df["variable"].values
-                if ((
-                          (v.split('|')[3].endswith("cement"))
-                         | (v.split('|')[3].endswith("steel"))
-                         | (v.split('|')[3].endswith("aluminum"))
-                         | (v.split('|')[3].endswith("petro"))
-                         | (v.split('|')[3].endswith("resins"))
-                         | (v.split('|')[3].endswith("_i"))
-                         | (v.split('|')[3].endswith("_I"))
-                         | (('NH3') in v)
-                         | (v.split('|')[3].startswith("meth"))
-                         | (v.split('|')[3].startswith("CH2O"))
-
-                         )
+                v
+                for v in aux2_df["variable"].values
+                if (
+                    (
+                        (v.split("|")[3].endswith("cement"))
+                        | (v.split("|")[3].endswith("steel"))
+                        | (v.split("|")[3].endswith("aluminum"))
+                        | (v.split("|")[3].endswith("petro"))
+                        | (v.split("|")[3].endswith("resins"))
+                        | (v.split("|")[3].endswith("_i"))
+                        | (v.split("|")[3].endswith("_I"))
+                        | (("NH3") in v)
+                        | (v.split("|")[3].startswith("meth"))
+                        | (v.split("|")[3].startswith("CH2O"))
+                    )
+                    & (
+                        ("ethanol_to_ethylene_petro" not in v)
+                        & ("gas_processing_petro" not in v)
                         & (
-                                ("ethanol_to_ethylene_petro" not in v)
-                                & ("gas_processing_petro" not in v)
-                                & (
-                                        "in|final|atm_gasoil|steam_cracker_petro|atm_gasoil"
-                                        not in v
-                                )
-                                & (
-                                        "in|final|vacuum_gasoil|steam_cracker_petro|vacuum_gasoil"
-                                        not in v
-                                )
-                                & ("in|final|naphtha|steam_cracker_petro|naphtha" not in v)
-                        ))
+                            "in|final|atm_gasoil|steam_cracker_petro|atm_gasoil"
+                            not in v
+                        )
+                        & (
+                            "in|final|vacuum_gasoil|steam_cracker_petro|vacuum_gasoil"
+                            not in v
+                        )
+                        & ("in|final|naphtha|steam_cracker_petro|naphtha" not in v)
+                    )
+                )
             ]
             aux2_df = aux2_df[aux2_df["variable"].isin(var_sectors)]
 
@@ -1666,7 +1879,6 @@ def report(context,scenario):
                 )
                 df_final.append(df_final_energy, inplace=True)
             if c == "gas":
-
                 # Can not distinguish by type Gases (natural gas, biomass, synthetic fossil, efuel)
                 # (coal_gas), from biomass (gas_bio), natural gas (gas_bal): All go into secondary level
                 # Can not be distinguished in the final level.
@@ -1701,7 +1913,6 @@ def report(context,scenario):
                 df_final.append(df_final_energy, inplace=True)
 
             if c == "liquids":
-
                 # All liquids
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Liquids",
@@ -1712,8 +1923,9 @@ def report(context,scenario):
                 # Only bios (ethanol, methanol ?)
 
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("ethanol" in v)
-                                                              & ('methanol' not in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("ethanol" in v) & ("methanol" not in v))
                 ]
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Liquids|Biomass",
@@ -1724,8 +1936,9 @@ def report(context,scenario):
                 # Fossils
 
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("fueloil" in v)
-                                                              | ("lightoil" in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("fueloil" in v) | ("lightoil" in v))
                 ]
 
                 df_final_energy.aggregate(
@@ -1737,7 +1950,7 @@ def report(context,scenario):
                 # Other
 
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("methanol" in v))
+                    v for v in aux2_df["variable"].values if ("methanol" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -1760,7 +1973,6 @@ def report(context,scenario):
                 )
                 df_final.append(df_final_energy, inplace=True)
             if c == "solids":
-
                 # All
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Solids",
@@ -1770,8 +1982,9 @@ def report(context,scenario):
 
                 # Bio
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if
-                    (("biomass" in v) | ("charcoal" in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("biomass" in v) | ("charcoal" in v))
                 ]
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Solids|Biomass",
@@ -1781,8 +1994,9 @@ def report(context,scenario):
 
                 # Fossil
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if
-                    (("biomass" not in v) & ("charcoal" not in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("biomass" not in v) & ("charcoal" not in v))
                 ]
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Solids|Coal",
@@ -1815,7 +2029,7 @@ def report(context,scenario):
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
                 )
                 df_final.append(df_final_energy, inplace=True)
-            if c == 'solar':
+            if c == "solar":
                 df_final_energy.aggregate(
                     "Final Energy|Industry excl Non-Energy Use|Solar",
                     components=var_sectors,
@@ -1832,14 +2046,20 @@ def report(context,scenario):
 
     # FINAL ENERGY BY FUELS (Including Non-Energy Use)
     print("Final Energy by fuels including non-energy use is being printed.")
-    commodities = ["electr", "gas", "hydrogen", "liquids", "solids", "heat", "all", 'solar']
+    commodities = [
+        "electr",
+        "gas",
+        "hydrogen",
+        "liquids",
+        "solids",
+        "heat",
+        "all",
+        "solar",
+    ]
     for c in commodities:
-
         for r in nodes:
-
             df_final_energy = df.copy()
-            df_final_energy.convert_unit(
-                "", to="GWa", factor=1, inplace=True)
+            df_final_energy.convert_unit("", to="GWa", factor=1, inplace=True)
             df_final_energy.filter(region=r, year=years, inplace=True)
 
             exclude = [
@@ -1847,52 +2067,66 @@ def report(context,scenario):
                 "in|final|bf_gas|*",
                 "in|final|co_gas|*",
                 "in|final|off_gas|*",
-                'in|final|*|meth_fc_trp|*',
-                'in|final|*|meth_ic_trp|*',
-                'in|final|*|meth_i|*',
-                'in|final|*|meth_rc|*',
-                'in|final|*|sp_meth_I|*',
-                'in|final|charcoal|concrete_production_cement|M2']
+                "in|final|*|meth_fc_trp|*",
+                "in|final|*|meth_ic_trp|*",
+                "in|final|*|meth_i|*",
+                "in|final|*|meth_rc|*",
+                "in|final|*|sp_meth_I|*",
+                "in|final|charcoal|concrete_production_cement|M2",
+            ]
 
             df_final_energy.filter(variable=exclude, keep=False, inplace=True)
 
-            if c == 'solar':
-                df_final_energy.filter(variable=["out|useful|i_therm|solar_i|M1",
-                                                 "out|useful_steel|lt_heat|solar_steel|*",
-                                                 "out|useful_aluminum|lt_heat|solar_aluminum|*",
-                                                 "out|useful_cement|lt_heat|solar_cement|*",
-                                                 "out|useful_petro|lt_heat|solar_petro|*",
-                                                 "out|useful_resins|lt_heat|solar_resins|*",
-                ],
-                                                    inplace = True)
+            if c == "solar":
+                df_final_energy.filter(
+                    variable=[
+                        "out|useful|i_therm|solar_i|M1",
+                        "out|useful_steel|lt_heat|solar_steel|*",
+                        "out|useful_aluminum|lt_heat|solar_aluminum|*",
+                        "out|useful_cement|lt_heat|solar_cement|*",
+                        "out|useful_petro|lt_heat|solar_petro|*",
+                        "out|useful_resins|lt_heat|solar_resins|*",
+                    ],
+                    inplace=True,
+                )
             if c == "electr":
-                df_final_energy.filter(variable=["in|final|electr|*",
-                                                 'in|secondary|electr|NH3_to_N_fertil|M1',
-                                                 'in|secondary|electr|coal_NH3|M1',
-                                                 'in|secondary|electr|electr_NH3|M1',
-                                                 'in|secondary|electr|fueloil_NH3|M1',
-                                                 'in|secondary|electr|gas_NH3|M1',
-                                                 'in|secondary|electr|coal_NH3_ccs|M1',
-                                                 'in|secondary|electr|fueloil_NH3_ccs|M1',
-                                                 'in|secondary|electr|gas_NH3_ccs|M1',
-                                                 'in|secondary|electr|biomass_NH3_ccs|M1',
-                                                 'in|secondary|electr|biomass_NH3|M1',
-                                                 'in|secondary|electr|meth_ng|feedstock',
-                                                 'in|secondary|electr|meth_ng_ccs|feedstock',
-                                                 'in|secondary|electr|meth_coal|feedstock',
-                                                 'in|secondary|electr|meth_coal_ccs|feedstock',
-                                                 'in|secondary|electr|meth_h2|feedstock'
-                                                 ], inplace=True)
+                df_final_energy.filter(
+                    variable=[
+                        "in|final|electr|*",
+                        "in|secondary|electr|NH3_to_N_fertil|M1",
+                        "in|secondary|electr|coal_NH3|M1",
+                        "in|secondary|electr|electr_NH3|M1",
+                        "in|secondary|electr|fueloil_NH3|M1",
+                        "in|secondary|electr|gas_NH3|M1",
+                        "in|secondary|electr|coal_NH3_ccs|M1",
+                        "in|secondary|electr|fueloil_NH3_ccs|M1",
+                        "in|secondary|electr|gas_NH3_ccs|M1",
+                        "in|secondary|electr|biomass_NH3_ccs|M1",
+                        "in|secondary|electr|biomass_NH3|M1",
+                        "in|secondary|electr|meth_ng|feedstock",
+                        "in|secondary|electr|meth_ng_ccs|feedstock",
+                        "in|secondary|electr|meth_coal|feedstock",
+                        "in|secondary|electr|meth_coal_ccs|feedstock",
+                        "in|secondary|electr|meth_h2|feedstock",
+                    ],
+                    inplace=True,
+                )
             if c == "gas":
-                df_final_energy.filter(variable=["in|final|gas|*",
-                                                 'in|secondary|gas|gas_NH3|M1',
-                                                 'in|secondary|gas|gas_NH3_ccs|M1',
-                                                 'in|secondary|gas|meth_ng_ccs|feedstock',
-                                                 "in|secondary|gas|meth_ng|feedstock",
-                                                 ],
-                                       inplace=True)
-                df_final_energy.filter(variable=["in|final|gas|gas_processing_petro|*"],
-                                                keep=False, inplace=True)
+                df_final_energy.filter(
+                    variable=[
+                        "in|final|gas|*",
+                        "in|secondary|gas|gas_NH3|M1",
+                        "in|secondary|gas|gas_NH3_ccs|M1",
+                        "in|secondary|gas|meth_ng_ccs|feedstock",
+                        "in|secondary|gas|meth_ng|feedstock",
+                    ],
+                    inplace=True,
+                )
+                df_final_energy.filter(
+                    variable=["in|final|gas|gas_processing_petro|*"],
+                    keep=False,
+                    inplace=True,
+                )
             # Include gasoil and naphtha feedstock
             if c == "liquids":
                 df_final_energy.filter(
@@ -1904,9 +2138,10 @@ def report(context,scenario):
                         "in|final|vacuum_gasoil|*",
                         "in|final|naphtha|*",
                         "in|final|atm_gasoil|*",
-                        'in|secondary|fueloil|fueloil_NH3|M1',
-                        'in|secondary|fueloil|fueloil_NH3_ccs|M1',
-                        "in|final|gas|gas_processing_petro|*"],
+                        "in|secondary|fueloil|fueloil_NH3|M1",
+                        "in|secondary|fueloil|fueloil_NH3_ccs|M1",
+                        "in|final|gas|gas_processing_petro|*",
+                    ],
                     inplace=True,
                 )
             if c == "solids":
@@ -1916,61 +2151,70 @@ def report(context,scenario):
                         "in|final|coal|*",
                         "in|final|charcoal|*",
                         "in|final|coke_iron|*",
-                        'in|secondary|coal|coal_NH3|M1',
-                        'in|secondary|coal|coal_NH3_ccs|M1',
+                        "in|secondary|coal|coal_NH3|M1",
+                        "in|secondary|coal|coal_NH3_ccs|M1",
                         "in|secondary|coal|meth_coal|feedstock",
-                        'in|secondary|coal|meth_coal_ccs|feedstock',
-                        'in|primary|biomass|meth_bio|feedstock',
-                        'in|primary|biomass|meth_bio_ccs|feedstock',
-                        'in|primary|biomass|biomass_NH3_ccs|M1',
-                        'in|primary|biomass|biomass_NH3|M1'
+                        "in|secondary|coal|meth_coal_ccs|feedstock",
+                        "in|primary|biomass|meth_bio|feedstock",
+                        "in|primary|biomass|meth_bio_ccs|feedstock",
+                        "in|primary|biomass|biomass_NH3_ccs|M1",
+                        "in|primary|biomass|biomass_NH3|M1",
                     ],
                     inplace=True,
                 )
             if c == "hydrogen":
-                df_final_energy.filter(variable=["in|final|hydrogen|*",
-                                                 'in|secondary|hydrogen|meth_h2|feedstock'], inplace=True)
+                df_final_energy.filter(
+                    variable=[
+                        "in|final|hydrogen|*",
+                        "in|secondary|hydrogen|meth_h2|feedstock",
+                    ],
+                    inplace=True,
+                )
             if c == "heat":
                 df_final_energy.filter(variable=["in|final|d_heat|*"], inplace=True)
             if c == "all":
-                df_final_energy.filter(variable=["in|final|*",
-                                                 "in|secondary|coal|coal_NH3|M1",
-                                                 "in|secondary|electr|NH3_to_N_fertil|M1",
-                                                 'in|secondary|electr|coal_NH3|M1',
-                                                 'in|secondary|electr|electr_NH3|M1',
-                                                 'in|secondary|electr|gas_NH3|M1',
-                                                 'in|secondary|fueloil|fueloil_NH3|M1',
-                                                 'in|secondary|electr|fueloil_NH3|M1',
-                                                 'in|secondary|gas|gas_NH3|M1',
-                                                 "in|secondary|coal|coal_NH3_ccs|M1",
-                                                 'in|secondary|electr|coal_NH3_ccs|M1',
-                                                 'in|secondary|electr|gas_NH3_ccs|M1',
-                                                 'in|secondary|fueloil|fueloil_NH3_ccs|M1',
-                                                 'in|secondary|electr|fueloil_NH3_ccs|M1',
-                                                 'in|secondary|gas|gas_NH3_ccs|M1',
-                                                 "in|primary|biomass|biomass_NH3|M1",
-                                                 "in|secondary|electr|biomass_NH3|M1",
-                                                 "in|primary|biomass|biomass_NH3_ccs|M1",
-                                                 "in|secondary|electr|biomass_NH3_ccs|M1",
-                                                 "out|useful|i_therm|solar_i|M1",
-                                                 "out|useful_steel|lt_heat|solar_steel|*",
-                                                 "out|useful_aluminum|lt_heat|solar_aluminum|*",
-                                                 "out|useful_cement|lt_heat|solar_cement|*",
-                                                 "out|useful_petro|lt_heat|solar_petro|*",
-                                                 "out|useful_resins|lt_heat|solar_resins|*",
-                                                "in|secondary|coal|meth_coal|feedstock",
-                                                'in|secondary|coal|meth_coal_ccs|feedstock',
-                                                "in|secondary|electr|meth_coal|feedstock",
-                                                'in|secondary|electr|meth_coal_ccs|feedstock',
-                                                'in|secondary|electr|meth_ng_ccs|feedstock',
-                                                "in|secondary|electr|meth_ng|feedstock",
-                                                'in|secondary|gas|meth_ng_ccs|feedstock',
-                                                "in|secondary|gas|meth_ng|feedstock",
-                                                'in|primary|biomass|meth_bio|feedstock',
-                                                'in|primary|biomass|meth_bio_ccs|feedstock',
-                                                'in|secondary|hydrogen|meth_h2|feedstock',
-                                                'in|secondary|electr|meth_h2|feedstock',
-                                                 ], inplace=True)
+                df_final_energy.filter(
+                    variable=[
+                        "in|final|*",
+                        "in|secondary|coal|coal_NH3|M1",
+                        "in|secondary|electr|NH3_to_N_fertil|M1",
+                        "in|secondary|electr|coal_NH3|M1",
+                        "in|secondary|electr|electr_NH3|M1",
+                        "in|secondary|electr|gas_NH3|M1",
+                        "in|secondary|fueloil|fueloil_NH3|M1",
+                        "in|secondary|electr|fueloil_NH3|M1",
+                        "in|secondary|gas|gas_NH3|M1",
+                        "in|secondary|coal|coal_NH3_ccs|M1",
+                        "in|secondary|electr|coal_NH3_ccs|M1",
+                        "in|secondary|electr|gas_NH3_ccs|M1",
+                        "in|secondary|fueloil|fueloil_NH3_ccs|M1",
+                        "in|secondary|electr|fueloil_NH3_ccs|M1",
+                        "in|secondary|gas|gas_NH3_ccs|M1",
+                        "in|primary|biomass|biomass_NH3|M1",
+                        "in|secondary|electr|biomass_NH3|M1",
+                        "in|primary|biomass|biomass_NH3_ccs|M1",
+                        "in|secondary|electr|biomass_NH3_ccs|M1",
+                        "out|useful|i_therm|solar_i|M1",
+                        "out|useful_steel|lt_heat|solar_steel|*",
+                        "out|useful_aluminum|lt_heat|solar_aluminum|*",
+                        "out|useful_cement|lt_heat|solar_cement|*",
+                        "out|useful_petro|lt_heat|solar_petro|*",
+                        "out|useful_resins|lt_heat|solar_resins|*",
+                        "in|secondary|coal|meth_coal|feedstock",
+                        "in|secondary|coal|meth_coal_ccs|feedstock",
+                        "in|secondary|electr|meth_coal|feedstock",
+                        "in|secondary|electr|meth_coal_ccs|feedstock",
+                        "in|secondary|electr|meth_ng_ccs|feedstock",
+                        "in|secondary|electr|meth_ng|feedstock",
+                        "in|secondary|gas|meth_ng_ccs|feedstock",
+                        "in|secondary|gas|meth_ng|feedstock",
+                        "in|primary|biomass|meth_bio|feedstock",
+                        "in|primary|biomass|meth_bio_ccs|feedstock",
+                        "in|secondary|hydrogen|meth_h2|feedstock",
+                        "in|secondary|electr|meth_h2|feedstock",
+                    ],
+                    inplace=True,
+                )
 
             all_flows = df_final_energy.timeseries().reset_index()
             splitted_vars = [v.split("|") for v in all_flows.variable]
@@ -1989,18 +2233,18 @@ def report(context,scenario):
                 v
                 for v in aux2_df["variable"].values
                 if (
-                      (v.split('|')[3].endswith("cement"))
-                     | (v.split('|')[3].endswith("steel"))
-                     | (v.split('|')[3].endswith("aluminum"))
-                     | (v.split('|')[3].endswith("petro"))
-                     | (v.split('|')[3].endswith("resins"))
-                     | (v.split('|')[3].endswith("_i"))
-                     | (v.split('|')[3].endswith("_I"))
-                     | (('NH3') in v)
-                     | (v.split('|')[3].endswith("_fs"))
-                     | (v.split('|')[3].startswith("meth"))
-                     | (v.split('|')[3].startswith("CH2O"))
-                     )
+                    (v.split("|")[3].endswith("cement"))
+                    | (v.split("|")[3].endswith("steel"))
+                    | (v.split("|")[3].endswith("aluminum"))
+                    | (v.split("|")[3].endswith("petro"))
+                    | (v.split("|")[3].endswith("resins"))
+                    | (v.split("|")[3].endswith("_i"))
+                    | (v.split("|")[3].endswith("_I"))
+                    | (("NH3") in v)
+                    | (v.split("|")[3].endswith("_fs"))
+                    | (v.split("|")[3].startswith("meth"))
+                    | (v.split("|")[3].startswith("CH2O"))
+                )
             ]
             aux2_df = aux2_df[aux2_df["variable"].isin(var_sectors)]
 
@@ -2008,18 +2252,24 @@ def report(context,scenario):
 
             # Aggregate
 
-            if c == 'solar':
+            if c == "solar":
                 df_final_energy.aggregate(
-                    "Final Energy|Industry|Solar", components=var_sectors, append=True,
+                    "Final Energy|Industry|Solar",
+                    components=var_sectors,
+                    append=True,
                 )
-                df_final_energy.filter(variable=["Final Energy|Industry|Solar"], inplace=True)
+                df_final_energy.filter(
+                    variable=["Final Energy|Industry|Solar"], inplace=True
+                )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
                 )
                 df_final.append(df_final_energy, inplace=True)
             if c == "all":
                 df_final_energy.aggregate(
-                    "Final Energy|Industry", components=var_sectors, append=True,
+                    "Final Energy|Industry",
+                    components=var_sectors,
+                    append=True,
                 )
                 df_final_energy.filter(variable=["Final Energy|Industry"], inplace=True)
                 df_final_energy.convert_unit(
@@ -2033,7 +2283,8 @@ def report(context,scenario):
                     append=True,
                 )
                 df_final_energy.filter(
-                    variable=["Final Energy|Industry|Electricity"], inplace=True,
+                    variable=["Final Energy|Industry|Electricity"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -2044,11 +2295,14 @@ def report(context,scenario):
                 # (coal_gas), from biomass (gas_bio), natural gas (gas_bal): All go into secondary level
                 # Can not be distinguished in the final level.
                 df_final_energy.aggregate(
-                    "Final Energy|Industry|Gases", components=var_sectors, append=True,
+                    "Final Energy|Industry|Gases",
+                    components=var_sectors,
+                    append=True,
                 )
 
                 df_final_energy.filter(
-                    variable=["Final Energy|Industry|Gases"], inplace=True,
+                    variable=["Final Energy|Industry|Gases"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -2062,7 +2316,8 @@ def report(context,scenario):
                     append=True,
                 )
                 df_final_energy.filter(
-                    variable=["Final Energy|Industry|Hydrogen"], inplace=True,
+                    variable=["Final Energy|Industry|Hydrogen"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -2078,8 +2333,9 @@ def report(context,scenario):
                 )
                 # Only bios (ethanol)
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if (("ethanol" in v)
-                    & ("methanol" not in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("ethanol" in v) & ("methanol" not in v))
                 ]
                 df_final_energy.aggregate(
                     "Final Energy|Industry|Liquids|Biomass",
@@ -2107,11 +2363,7 @@ def report(context,scenario):
 
                 # Methanol
                 filter_vars = [
-                    v
-                    for v in aux2_df["variable"].values
-                    if (
-                         ("methanol" in v)
-                    )
+                    v for v in aux2_df["variable"].values if ("methanol" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -2123,11 +2375,7 @@ def report(context,scenario):
                 # Natural Gas Liquids (Ethane/Propane)
 
                 filter_vars = [
-                    v
-                    for v in aux2_df["variable"].values
-                    if (
-                        ("gas_proc" in v)
-                    )
+                    v for v in aux2_df["variable"].values if ("gas_proc" in v)
                 ]
 
                 df_final_energy.aggregate(
@@ -2142,7 +2390,7 @@ def report(context,scenario):
                         "Final Energy|Industry|Liquids|Oil",
                         "Final Energy|Industry|Liquids|Biomass",
                         "Final Energy|Industry|Liquids|Coal",
-                        "Final Energy|Industry|Liquids|Gas"
+                        "Final Energy|Industry|Liquids|Gas",
                     ],
                     inplace=True,
                 )
@@ -2153,13 +2401,16 @@ def report(context,scenario):
             if c == "solids":
                 # All
                 df_final_energy.aggregate(
-                    "Final Energy|Industry|Solids", components=var_sectors, append=True,
+                    "Final Energy|Industry|Solids",
+                    components=var_sectors,
+                    append=True,
                 )
 
                 # Bio
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if
-                    (("biomass" in v) | ("charcoal" in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("biomass" in v) | ("charcoal" in v))
                 ]
 
                 df_final_energy.aggregate(
@@ -2170,8 +2421,9 @@ def report(context,scenario):
 
                 # Fossil
                 filter_vars = [
-                    v for v in aux2_df["variable"].values if
-                    (("biomass" not in v) & ("charcoal" not in v))
+                    v
+                    for v in aux2_df["variable"].values
+                    if (("biomass" not in v) & ("charcoal" not in v))
                 ]
 
                 df_final_energy.aggregate(
@@ -2193,10 +2445,13 @@ def report(context,scenario):
                 df_final.append(df_final_energy, inplace=True)
             if c == "heat":
                 df_final_energy.aggregate(
-                    "Final Energy|Industry|Heat", components=var_sectors, append=True,
+                    "Final Energy|Industry|Heat",
+                    components=var_sectors,
+                    append=True,
                 )
                 df_final_energy.filter(
-                    variable=["Final Energy|Industry|Heat"], inplace=True,
+                    variable=["Final Energy|Industry|Heat"],
+                    inplace=True,
                 )
                 df_final_energy.convert_unit(
                     "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -2214,8 +2469,8 @@ def report(context,scenario):
         "Non-Ferrous Metals",
         "Non-Metallic Minerals",
         "Chemicals",
-        'Other Sector',
-        "construction"
+        "Other Sector",
+        "construction",
     ]
     print("Final Energy (excl non-energy use) by sector and fuel is being printed")
     for r in nodes:
@@ -2232,32 +2487,36 @@ def report(context,scenario):
                 "in|final|bf_gas|*",
                 "in|final|co_gas|*",
                 "in|final|off_gas|*",
-                "in|final|charcoal|concrete_production_cement|M2"
-                ]
+                "in|final|charcoal|concrete_production_cement|M2",
+            ]
 
             df_final_energy.filter(region=r, year=years, inplace=True)
-            df_final_energy.filter(variable=["in|final|*",
-             'out|useful|i_therm|solar_i|M1',
-             'out|useful_steel|lt_heat|solar_steel|low_temp',
-             'out|useful_aluminum|lt_heat|solar_aluminum|low_temp',
-             'out|useful_cement|lt_heat|solar_cement|low_temp',
-             'out|useful_petro|lt_heat|solar_petro|low_temp',
-             'out|useful_resins|lt_heat|solar_resins|low_temp',
-             'in|secondary|electr|NH3_to_N_fertil|M1',
-             'in|secondary|electr|coal_NH3|M1',
-             'in|secondary|electr|fueloil_NH3|M1',
-             'in|secondary|electr|gas_NH3|M1',
-             'in|secondary|electr|coal_NH3_ccs|M1',
-             'in|secondary|electr|fueloil_NH3_ccs|M1',
-             'in|secondary|electr|gas_NH3_ccs|M1',
-             'in|secondary|electr|biomass_NH3_ccs|M1',
-             'in|secondary|electr|biomass_NH3|M1',
-             'in|secondary|electr|meth_ng|feedstock',
-             'in|secondary|electr|meth_ng_ccs|feedstock',
-              'in|secondary|electr|meth_coal|feedstock',
-              'in|secondary|electr|meth_coal_ccs|feedstock',
-             'in|secondary|electr|meth_h2|feedstock'
-            ], inplace=True)
+            df_final_energy.filter(
+                variable=[
+                    "in|final|*",
+                    "out|useful|i_therm|solar_i|M1",
+                    "out|useful_steel|lt_heat|solar_steel|low_temp",
+                    "out|useful_aluminum|lt_heat|solar_aluminum|low_temp",
+                    "out|useful_cement|lt_heat|solar_cement|low_temp",
+                    "out|useful_petro|lt_heat|solar_petro|low_temp",
+                    "out|useful_resins|lt_heat|solar_resins|low_temp",
+                    "in|secondary|electr|NH3_to_N_fertil|M1",
+                    "in|secondary|electr|coal_NH3|M1",
+                    "in|secondary|electr|fueloil_NH3|M1",
+                    "in|secondary|electr|gas_NH3|M1",
+                    "in|secondary|electr|coal_NH3_ccs|M1",
+                    "in|secondary|electr|fueloil_NH3_ccs|M1",
+                    "in|secondary|electr|gas_NH3_ccs|M1",
+                    "in|secondary|electr|biomass_NH3_ccs|M1",
+                    "in|secondary|electr|biomass_NH3|M1",
+                    "in|secondary|electr|meth_ng|feedstock",
+                    "in|secondary|electr|meth_ng_ccs|feedstock",
+                    "in|secondary|electr|meth_coal|feedstock",
+                    "in|secondary|electr|meth_coal_ccs|feedstock",
+                    "in|secondary|electr|meth_h2|feedstock",
+                ],
+                inplace=True,
+            )
             df_final_energy.filter(variable=exclude, keep=False, inplace=True)
 
             # Decompose the pyam table into pandas data frame
@@ -2280,31 +2539,38 @@ def report(context,scenario):
             # To be able to report the higher level sectors.
             if s == "Non-Ferrous Metals":
                 tec = [t for t in aux2_df["technology"].values if "aluminum" in t]
-                solar_tec = ['solar_aluminum']
+                solar_tec = ["solar_aluminum"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             elif s == "Non-Metallic Minerals":
                 tec = [t for t in aux2_df["technology"].values if "cement" in t]
-                solar_tec = ['solar_cement']
+                solar_tec = ["solar_cement"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             elif s == "Chemicals":
-                tec = [t for t in aux2_df["technology"].values if (("petro" in t)
-                                                                    | ('NH3' in t)
-                                                                    | ( t.startswith('meth_')
-                                                                    & (not (t.startswith('meth_i'))))
-                                                                    |  ('CH2O'in t)
-                                                                    |  ("resins" in t))]
-                solar_tec = ['solar_petro', 'solar_resins']
+                tec = [
+                    t
+                    for t in aux2_df["technology"].values
+                    if (
+                        ("petro" in t)
+                        | ("NH3" in t)
+                        | (t.startswith("meth_") & (not (t.startswith("meth_i"))))
+                        | ("CH2O" in t)
+                        | ("resins" in t)
+                    )
+                ]
+                solar_tec = ["solar_petro", "solar_resins"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
-            elif s == 'Other Sector':
-                tec = [t for t in aux2_df["technology"].values if (
-                    ((t.endswith("_i"))
-                     | (t.endswith('_I'))))]
-                solar_tec = ['solar_i']
+            elif s == "Other Sector":
+                tec = [
+                    t
+                    for t in aux2_df["technology"].values
+                    if ((t.endswith("_i")) | (t.endswith("_I")))
+                ]
+                solar_tec = ["solar_i"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             else:
                 # Filter the technologies only for the certain industry sector
                 tec = [t for t in aux2_df["technology"].values if s in t]
-                solar_tec = ['solar_' + s]
+                solar_tec = ["solar_" + s]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
 
             s = change_names(s)
@@ -2325,12 +2591,12 @@ def report(context,scenario):
                 "liquids",
                 "liquid_bio",
                 "liquid_fossil",
-                'liquid_other',
+                "liquid_other",
                 "solids",
                 "solids_bio",
                 "solids_fossil",
                 "heat",
-                'solar',
+                "solar",
                 "all",
             ]
 
@@ -2353,17 +2619,14 @@ def report(context,scenario):
                     aggregate_name = (
                         "Final Energy|Industry excl Non-Energy Use|" + s + "|" + "Gases"
                     )
-                elif c == 'solar':
+                elif c == "solar":
                     var = np.unique(
                         aux2_df.loc[
                             aux2_df["technology"].isin(solar_tec), "variable"
                         ].values
                     ).tolist()
                     aggregate_name = (
-                        "Final Energy|Industry excl Non-Energy Use|"
-                        + s
-                        + "|"
-                        + "Solar"
+                        "Final Energy|Industry excl Non-Energy Use|" + s + "|" + "Solar"
                     )
                 elif c == "hydrogen":
                     var = np.unique(
@@ -2398,7 +2661,8 @@ def report(context,scenario):
                 elif c == "liquid_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "ethanol")), "variable",
+                            (aux2_df["commodity"] == "ethanol"),
+                            "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
@@ -2426,7 +2690,7 @@ def report(context,scenario):
                 elif c == "liquid_other":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "methanol")),
+                            (aux2_df["commodity"] == "methanol"),
                             "variable",
                         ].values
                     ).tolist()
@@ -2457,9 +2721,11 @@ def report(context,scenario):
                 elif c == "solids_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "biomass")
-                           |(aux2_df["commodity"] == "charcoal"))
-                           ,"variable"
+                            (
+                                (aux2_df["commodity"] == "biomass")
+                                | (aux2_df["commodity"] == "charcoal")
+                            ),
+                            "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
@@ -2529,7 +2795,7 @@ def report(context,scenario):
     # Only for high value chemcials there is non-energy use reported.
     # (not in aluminum, steel, cement).
 
-    sectors = ["petro",'ammonia','methanol','Chemicals|Other Sector']
+    sectors = ["petro", "ammonia", "methanol", "Chemicals|Other Sector"]
     print("Final Energy non-energy use by sector and fuel is being printed")
     for r in nodes:
         for s in sectors:
@@ -2541,24 +2807,24 @@ def report(context,scenario):
                 "in|final|gas|gas_processing_petro|M1",
                 "in|final|naphtha|steam_cracker_petro|*",
                 "in|final|vacuum_gasoil|steam_cracker_petro|*",
-                'in|secondary|electr|electr_NH3|M1',
-                'in|secondary|gas|gas_NH3|M1',
-                'in|secondary|gas|gas_NH3_ccs|M1',
-                'in|secondary|fueloil|fueloil_NH3|M1',
-                'in|secondary|fueloil|fueloil_NH3_ccs|M1',
-                 "in|secondary|coal|coal_NH3|M1",
-                 "in|secondary|coal|coal_NH3_ccs|M1",
-                 'in|primary|biomass|biomass_NH3_ccs|M1',
-                 'in|primary|biomass|biomass_NH3|M1',
-                 "in|final_material|methanol|MTO_petro|energy",
-                 "in|final_material|methanol|CH2O_synth|energy",
-                 'in|secondary|coal|meth_coal|feedstock',
-                 'in|secondary|coal|meth_coal_ccs|feedstock',
-                 'in|secondary|gas|meth_ng|feedstock',
-                 'in|secondary|gas|meth_ng_ccs|feedstock',
-                 'in|primary|biomass|meth_bio|feedstock',
-                 'in|primary|biomass|meth_bio_ccs|feedstock',
-                 'in|secondary|hydrogen|meth_h2|feedstock',
+                "in|secondary|electr|electr_NH3|M1",
+                "in|secondary|gas|gas_NH3|M1",
+                "in|secondary|gas|gas_NH3_ccs|M1",
+                "in|secondary|fueloil|fueloil_NH3|M1",
+                "in|secondary|fueloil|fueloil_NH3_ccs|M1",
+                "in|secondary|coal|coal_NH3|M1",
+                "in|secondary|coal|coal_NH3_ccs|M1",
+                "in|primary|biomass|biomass_NH3_ccs|M1",
+                "in|primary|biomass|biomass_NH3|M1",
+                "in|final_material|methanol|MTO_petro|energy",
+                "in|final_material|methanol|CH2O_synth|energy",
+                "in|secondary|coal|meth_coal|feedstock",
+                "in|secondary|coal|meth_coal_ccs|feedstock",
+                "in|secondary|gas|meth_ng|feedstock",
+                "in|secondary|gas|meth_ng_ccs|feedstock",
+                "in|primary|biomass|meth_bio|feedstock",
+                "in|primary|biomass|meth_bio_ccs|feedstock",
+                "in|secondary|hydrogen|meth_h2|feedstock",
             ]
 
             df_final_energy.filter(region=r, year=years, inplace=True)
@@ -2582,15 +2848,14 @@ def report(context,scenario):
             )
 
             # Filter the technologies only for the certain industry sector
-            if s == 'petro':
+            if s == "petro":
                 tec = [t for t in aux2_df["technology"].values if (s in t)]
-            if s == 'ammonia':
-                tec = [t for t in aux2_df["technology"].values if ('NH3' in t)]
-            if s == 'methanol':
-                tec = [t for t in aux2_df["technology"].values if ('meth_' in t)]
-            if s == 'Chemicals|Other Sector':
-                tec = [t for t in aux2_df["technology"].values if ('CH2O_synth' in t)]
-
+            if s == "ammonia":
+                tec = [t for t in aux2_df["technology"].values if ("NH3" in t)]
+            if s == "methanol":
+                tec = [t for t in aux2_df["technology"].values if ("meth_" in t)]
+            if s == "Chemicals|Other Sector":
+                tec = [t for t in aux2_df["technology"].values if ("CH2O_synth" in t)]
 
             aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
 
@@ -2609,15 +2874,15 @@ def report(context,scenario):
                 "gas",
                 "liquids",
                 "liquid_bio",
-                'liquid_oil',
+                "liquid_oil",
                 "liquid_gas",
-                'methanol',
+                "methanol",
                 "all",
-                'solids',
-                'solid_coal',
-                'solid_bio',
-                'electr_gas',
-                'hydrogen'
+                "solids",
+                "solid_coal",
+                "solid_bio",
+                "electr_gas",
+                "hydrogen",
             ]
 
             for c in commodity_list:
@@ -2625,111 +2890,129 @@ def report(context,scenario):
                     var = np.unique(
                         aux2_df.loc[aux2_df["commodity"] == "electr", "variable"].values
                     ).tolist()
-                    aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Gases|Electricity"
+                    aggregate_name = (
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Gases|Electricity"
+                    )
                 elif c == "gas":
                     var = np.unique(
-                        aux2_df.loc[(((aux2_df["commodity"] == "gas") | (aux2_df["technology"] == "electr_NH3"))
-                        & (aux2_df["technology"] != "gas_processing_petro")) , "variable"].values
+                        aux2_df.loc[
+                            (
+                                (
+                                    (aux2_df["commodity"] == "gas")
+                                    | (aux2_df["technology"] == "electr_NH3")
+                                )
+                                & (aux2_df["technology"] != "gas_processing_petro")
+                            ),
+                            "variable",
+                        ].values
                     ).tolist()
                     aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Gases"
                 elif c == "hydrogen":
                     var = np.unique(
-                        aux2_df.loc[((aux2_df["commodity"] == "hydrogen")
-                        & (aux2_df["technology"] == "meth_h2")),"variable"].values
-                    ).tolist()
-                    aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Hydrogen"
-                elif c == "methanol":
-                    var = np.unique(
                         aux2_df.loc[
                             (
-                            (aux2_df["commodity"] == "methanol")
+                                (aux2_df["commodity"] == "hydrogen")
+                                & (aux2_df["technology"] == "meth_h2")
                             ),
                             "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Other"
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Hydrogen"
                     )
+                elif c == "methanol":
+                    var = np.unique(
+                        aux2_df.loc[
+                            (aux2_df["commodity"] == "methanol"),
+                            "variable",
+                        ].values
+                    ).tolist()
+                    aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Other"
                 elif c == "liquids":
                     var = np.unique(
                         aux2_df.loc[
                             (
-                                    (aux2_df["commodity"] == "naphtha")
-                                    | (aux2_df["commodity"] == "atm_gasoil")
-                                    | (aux2_df["commodity"] == "vacuum_gasoil")
-                                    | (aux2_df["commodity"] == "ethanol")
-                                    | (aux2_df["commodity"] == "fueloil")
-                                    | (aux2_df["technology"] == "gas_processing_petro")
+                                (aux2_df["commodity"] == "naphtha")
+                                | (aux2_df["commodity"] == "atm_gasoil")
+                                | (aux2_df["commodity"] == "vacuum_gasoil")
+                                | (aux2_df["commodity"] == "ethanol")
+                                | (aux2_df["commodity"] == "fueloil")
+                                | (aux2_df["technology"] == "gas_processing_petro")
                             ),
                             "variable",
                         ].values
                     ).tolist()
 
                     aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Liquids"
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Liquids"
                     )
                 elif c == "liquid_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "ethanol")), "variable",
+                            (aux2_df["commodity"] == "ethanol"),
+                            "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Biomass"
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Biomass"
                     )
                 elif c == "liquid_oil":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "atm_gasoil") |
-                             (aux2_df["commodity"] == "naphtha") |
-                             (aux2_df["commodity"] == "vacuum_gasoil") |
-                             (aux2_df["commodity"] == "fueloil")
-                             ), "variable",
+                            (
+                                (aux2_df["commodity"] == "atm_gasoil")
+                                | (aux2_df["commodity"] == "naphtha")
+                                | (aux2_df["commodity"] == "vacuum_gasoil")
+                                | (aux2_df["commodity"] == "fueloil")
+                            ),
+                            "variable",
                         ].values
                     ).tolist()
 
                     aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Oil"
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Oil"
                     )
                 elif c == "liquid_gas":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["technology"] == "gas_processing_petro")
-                             ), "variable",
+                            (aux2_df["technology"] == "gas_processing_petro"),
+                            "variable",
                         ].values
                     ).tolist()
 
                     aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Gas"
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Gas"
                     )
-                elif c == 'solids':
-                    var = np.unique(
-                        aux2_df.loc[
-                            ((aux2_df["commodity"] == "coal") |
-                             (aux2_df["commodity"] == "biomass")), "variable",
-                        ].values
-                    ).tolist()
-                    aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Solids"
-                    )
-                elif c == 'solid_coal':
-                    var = np.unique(
-                        aux2_df.loc[
-                            ((aux2_df["commodity"] == "coal") ), "variable",
-                        ].values
-                    ).tolist()
-                    aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Solids|Coal"
-                    )
-                elif c == 'solid_bio':
+                elif c == "solids":
                     var = np.unique(
                         aux2_df.loc[
                             (
-                             (aux2_df["commodity"] == "biomass")), "variable",
+                                (aux2_df["commodity"] == "coal")
+                                | (aux2_df["commodity"] == "biomass")
+                            ),
+                            "variable",
+                        ].values
+                    ).tolist()
+                    aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Solids"
+                elif c == "solid_coal":
+                    var = np.unique(
+                        aux2_df.loc[
+                            (aux2_df["commodity"] == "coal"),
+                            "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
-                            "Final Energy|Non-Energy Use|" + s + "|" + "Solids|Biomass"
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Solids|Coal"
+                    )
+                elif c == "solid_bio":
+                    var = np.unique(
+                        aux2_df.loc[
+                            (aux2_df["commodity"] == "biomass"),
+                            "variable",
+                        ].values
+                    ).tolist()
+                    aggregate_name = (
+                        "Final Energy|Non-Energy Use|" + s + "|" + "Solids|Biomass"
                     )
                 elif c == "all":
                     var = aux2_df["variable"].tolist()
@@ -2755,7 +3038,6 @@ def report(context,scenario):
                         aggregate_list[i], components=var_list[i], append=True
                     )
 
-
             df_final_energy.filter(variable=aggregate_list, inplace=True)
             df_final_energy.convert_unit(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
@@ -2766,8 +3048,19 @@ def report(context,scenario):
 
     # For ammonia and methanol, there is no seperation for non-energy vs. energy.
 
-    sectors = ['ammonia', 'methanol', 'aluminum', 'steel', 'cement', 'petro',
-               "Non-Ferrous Metals", "Non-Metallic Minerals", "Chemicals", 'Chemicals|Other Sector', 'Other Sector']
+    sectors = [
+        "ammonia",
+        "methanol",
+        "aluminum",
+        "steel",
+        "cement",
+        "petro",
+        "Non-Ferrous Metals",
+        "Non-Metallic Minerals",
+        "Chemicals",
+        "Chemicals|Other Sector",
+        "Other Sector",
+    ]
 
     print("Final Energy non-energy and energy use by sector and fuel is being printed")
     for r in nodes:
@@ -2780,50 +3073,51 @@ def report(context,scenario):
                 "in|final|bf_gas|*",
                 "in|final|co_gas|*",
                 "in|final|off_gas|*",
-                'in|final|*|meth_fc_trp|*',
-                'in|final|*|meth_ic_trp|*',
-                'in|final|*|meth_rc|*',
-                'in|final|charcoal|concrete_production_cement|M2']
+                "in|final|*|meth_fc_trp|*",
+                "in|final|*|meth_ic_trp|*",
+                "in|final|*|meth_rc|*",
+                "in|final|charcoal|concrete_production_cement|M2",
+            ]
 
             include = [
-                'in|secondary|coal|coal_NH3|M1',
-                'in|secondary|coal|coal_NH3_ccs|M1',
-                'in|secondary|electr|coal_NH3|M1',
-                'in|secondary|electr|coal_NH3_ccs|M1',
-                'in|secondary|fueloil|fueloil_NH3|M1',
-                'in|secondary|fueloil|fueloil_NH3_ccs|M1',
-                'in|secondary|electr|fueloil_NH3|M1',
-                'in|secondary|electr|fueloil_NH3_ccs|M1',
-                'in|secondary|gas|gas_NH3|M1',
-                'in|secondary|gas|gas_NH3_ccs|M1',
-                'in|secondary|electr|gas_NH3|M1',
-                'in|secondary|electr|gas_NH3_ccs|M1',
-                'in|primary|biomass|biomass_NH3|M1',
-                'in|primary|biomass|biomass_NH3_ccs|M1',
+                "in|secondary|coal|coal_NH3|M1",
+                "in|secondary|coal|coal_NH3_ccs|M1",
+                "in|secondary|electr|coal_NH3|M1",
+                "in|secondary|electr|coal_NH3_ccs|M1",
+                "in|secondary|fueloil|fueloil_NH3|M1",
+                "in|secondary|fueloil|fueloil_NH3_ccs|M1",
+                "in|secondary|electr|fueloil_NH3|M1",
+                "in|secondary|electr|fueloil_NH3_ccs|M1",
+                "in|secondary|gas|gas_NH3|M1",
+                "in|secondary|gas|gas_NH3_ccs|M1",
+                "in|secondary|electr|gas_NH3|M1",
+                "in|secondary|electr|gas_NH3_ccs|M1",
+                "in|primary|biomass|biomass_NH3|M1",
+                "in|primary|biomass|biomass_NH3_ccs|M1",
                 "in|secondary|electr|biomass_NH3|M1",
                 "in|secondary|electr|biomass_NH3_ccs|M1",
                 "in|secondary|electr|NH3_to_N_fertil|M1",
-                'in|secondary|electr|electr_NH3|M1',
+                "in|secondary|electr|electr_NH3|M1",
                 "in|secondary|coal|meth_coal|feedstock",
-                'in|secondary|coal|meth_coal_ccs|feedstock',
+                "in|secondary|coal|meth_coal_ccs|feedstock",
                 "in|secondary|electr|meth_coal|feedstock",
-                'in|secondary|electr|meth_coal_ccs|feedstock',
-                'in|secondary|gas|meth_ng_ccs|feedstock',
+                "in|secondary|electr|meth_coal_ccs|feedstock",
+                "in|secondary|gas|meth_ng_ccs|feedstock",
                 "in|secondary|gas|meth_ng|feedstock",
                 "in|secondary|electr|meth_ng|feedstock",
-                'in|secondary|electr|meth_ng_ccs|feedstock',
-                'in|primary|biomass|meth_bio|feedstock',
-                'in|primary|biomass|meth_bio_ccs|feedstock',
-                'in|secondary|hydrogen|meth_h2|feedstock',
-                'in|secondary|electr|meth_h2|feedstock',
+                "in|secondary|electr|meth_ng_ccs|feedstock",
+                "in|primary|biomass|meth_bio|feedstock",
+                "in|primary|biomass|meth_bio_ccs|feedstock",
+                "in|secondary|hydrogen|meth_h2|feedstock",
+                "in|secondary|electr|meth_h2|feedstock",
                 "in|final_material|methanol|MTO_petro|energy",
-                'in|final|*',
-                'out|useful|i_therm|solar_i|M1',
-                'out|useful_steel|lt_heat|solar_steel|*',
-                'out|useful_cement|lt_heat|solar_cement|*',
-                'out|useful_aluminum|lt_heat|solar_aluminum|*',
-                'out|useful_petro|lt_heat|solar_steel|*',
-                'out|useful_resins|lt_heat|solar_resins|*'
+                "in|final|*",
+                "out|useful|i_therm|solar_i|M1",
+                "out|useful_steel|lt_heat|solar_steel|*",
+                "out|useful_cement|lt_heat|solar_cement|*",
+                "out|useful_aluminum|lt_heat|solar_aluminum|*",
+                "out|useful_petro|lt_heat|solar_steel|*",
+                "out|useful_resins|lt_heat|solar_resins|*",
             ]
 
             df_final_energy.filter(region=r, year=years, inplace=True)
@@ -2851,43 +3145,57 @@ def report(context,scenario):
 
             if s == "Non-Ferrous Metals":
                 tec = [t for t in aux2_df["technology"].values if "aluminum" in t]
-                solar_tec = ['solar_aluminum']
+                solar_tec = ["solar_aluminum"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             elif s == "Non-Metallic Minerals":
                 tec = [t for t in aux2_df["technology"].values if "cement" in t]
-                solar_tec = ['solar_cement']
+                solar_tec = ["solar_cement"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             elif s == "Chemicals":
-                tec = [t for t in aux2_df["technology"].values if
-                ((("petro" in t) & ("MTO_petro" not in t)) \
-                | ( t.startswith('meth_') & (not (t.startswith('meth_i')))) | ('NH3' in t) | \
-                ('resins' in t) | ('CH2O_synth' in t))]
-                solar_tec = ['solar_petro','solar_resins']
+                tec = [
+                    t
+                    for t in aux2_df["technology"].values
+                    if (
+                        (("petro" in t) & ("MTO_petro" not in t))
+                        | (t.startswith("meth_") & (not (t.startswith("meth_i"))))
+                        | ("NH3" in t)
+                        | ("resins" in t)
+                        | ("CH2O_synth" in t)
+                    )
+                ]
+                solar_tec = ["solar_petro", "solar_resins"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             elif s == "Chemicals|Other Sector":
-                tec = [t for t in aux2_df["technology"].values if (('resins' in t) \
-                | ('CH2O_synth' in t) | ('CH2O_to_resin' in t) )]
+                tec = [
+                    t
+                    for t in aux2_df["technology"].values
+                    if (("resins" in t) | ("CH2O_synth" in t) | ("CH2O_to_resin" in t))
+                ]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
-                solar_tec = ['solar_resins']
-            elif s == 'Other Sector':
-                tec = [t for t in aux2_df["technology"].values if (
-                    ((t.endswith("_i"))
-                     | (t.endswith('_I'))
-                     | (t.endswith('_fs'))))]
-                solar_tec = ['solar_i']
+                solar_tec = ["solar_resins"]
+            elif s == "Other Sector":
+                tec = [
+                    t
+                    for t in aux2_df["technology"].values
+                    if ((t.endswith("_i")) | (t.endswith("_I")) | (t.endswith("_fs")))
+                ]
+                solar_tec = ["solar_i"]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
-            elif s == 'ammonia':
-                tec = [t for t in aux2_df["technology"].values if ('NH3' in t)]
+            elif s == "ammonia":
+                tec = [t for t in aux2_df["technology"].values if ("NH3" in t)]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
-            elif s == 'methanol':
-                tec = [t for t in aux2_df["technology"].values if ( t.startswith('meth_') \
-                                                   & (not (t.startswith('meth_i'))))]
+            elif s == "methanol":
+                tec = [
+                    t
+                    for t in aux2_df["technology"].values
+                    if (t.startswith("meth_") & (not (t.startswith("meth_i"))))
+                ]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             else:
                 # Filter the technologies only for the certain industry sector
                 tec = [t for t in aux2_df["technology"].values if s in t]
                 aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
-                solar_tec = ['solar_' + s]
+                solar_tec = ["solar_" + s]
 
             s = change_names(s)
 
@@ -2908,144 +3216,150 @@ def report(context,scenario):
                 "liquid_bio",
                 "liquid_fossil",
                 "liquid_gas",
-                'liquid_other',
+                "liquid_other",
                 "solids",
                 "solids_bio",
                 "solids_fossil",
                 "heat",
-                'solar',
+                "solar",
                 "all",
             ]
 
             for c in commodity_list:
-                if c == 'electr':
+                if c == "electr":
                     var = np.unique(
                         aux2_df.loc[aux2_df["commodity"] == "electr", "variable"].values
                     ).tolist()
-                    aggregate_name = "Final Energy|Industry|" + s + "|" + 'Electricity'
+                    aggregate_name = "Final Energy|Industry|" + s + "|" + "Electricity"
                 elif c == "gas":
                     var = np.unique(
-                        aux2_df.loc[(aux2_df["commodity"] == "gas") & (aux2_df["technology"] != "gas_processing_petro"), "variable"].values
+                        aux2_df.loc[
+                            (aux2_df["commodity"] == "gas")
+                            & (aux2_df["technology"] != "gas_processing_petro"),
+                            "variable",
+                        ].values
                     ).tolist()
                     aggregate_name = "Final Energy|Industry|" + s + "|" + "Gases"
                 elif c == "solar":
                     var = np.unique(
-                        aux2_df.loc[aux2_df["technology"].isin(solar_tec), "variable"].values
+                        aux2_df.loc[
+                            aux2_df["technology"].isin(solar_tec), "variable"
+                        ].values
                     ).tolist()
                     aggregate_name = "Final Energy|Industry|" + s + "|" + "Solar"
                 elif c == "hydrogen":
                     var = np.unique(
-                        aux2_df.loc[aux2_df["commodity"] == "hydrogen", "variable"].values
+                        aux2_df.loc[
+                            aux2_df["commodity"] == "hydrogen", "variable"
+                        ].values
                     ).tolist()
                     aggregate_name = "Final Energy|Industry|" + s + "|" + "Hydrogen"
                 elif c == "liquids":
                     var = np.unique(
                         aux2_df.loc[
                             (
-                                    (aux2_df["commodity"] == "naphtha")
-                                    | (aux2_df["commodity"] == "atm_gasoil")
-                                    | (aux2_df["commodity"] == "vacuum_gasoil")
-                                    | (aux2_df["commodity"] == "ethanol")
-                                    | (aux2_df["commodity"] == "fueloil")
-                                    | (aux2_df["commodity"] == "lightoil")
-                                    | (aux2_df["commodity"] == "methanol")
-                                    | (aux2_df["technology"] == "gas_processing_petro")
+                                (aux2_df["commodity"] == "naphtha")
+                                | (aux2_df["commodity"] == "atm_gasoil")
+                                | (aux2_df["commodity"] == "vacuum_gasoil")
+                                | (aux2_df["commodity"] == "ethanol")
+                                | (aux2_df["commodity"] == "fueloil")
+                                | (aux2_df["commodity"] == "lightoil")
+                                | (aux2_df["commodity"] == "methanol")
+                                | (aux2_df["technology"] == "gas_processing_petro")
                             ),
                             "variable",
                         ].values
                     ).tolist()
 
-                    aggregate_name = (
-                            "Final Energy|Industry|" + s + "|" + "Liquids"
-                    )
+                    aggregate_name = "Final Energy|Industry|" + s + "|" + "Liquids"
                 elif c == "liquid_bio":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "ethanol")), "variable",
-                        ].values
-                    ).tolist()
-                    aggregate_name = (
-                            "Final Energy|Industry|" + s + "|" + "Liquids|Biomass"
-                    )
-                elif c == "liquid_fossil":
-                    var = np.unique(
-                        aux2_df.loc[
-                            ((aux2_df["commodity"] == "atm_gasoil") |
-                             (aux2_df["commodity"] == "naphtha") |
-                             (aux2_df["commodity"] == "vacuum_gasoil") |
-                             (aux2_df["commodity"] == "fueloil") |
-                             (aux2_df["commodity"] == "lightoil")
-                             ), "variable",
-                        ].values
-                    ).tolist()
-
-                    aggregate_name = (
-                            "Final Energy|Industry|" + s + "|" + "Liquids|Oil"
-                    )
-                elif c == "liquid_gas":
-                    var = np.unique(
-                        aux2_df.loc[
-                            (aux2_df["technology"] == "gas_processing_petro"), "variable",
-                        ].values
-                    ).tolist()
-
-                    aggregate_name = (
-                            "Final Energy|Industry|" + s + "|" + "Liquids|Gas"
-                    )
-                elif c == "liquid_other":
-                    var = np.unique(
-                        aux2_df.loc[
-                            ((aux2_df["commodity"] == "methanol")),
+                            (aux2_df["commodity"] == "ethanol"),
                             "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
-                        "Final Energy|Industry|"+ s+ "|"+ "Liquids|Other"
+                        "Final Energy|Industry|" + s + "|" + "Liquids|Biomass"
                     )
-                elif c == 'solids':
+                elif c == "liquid_fossil":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "coal") |
-                             (aux2_df["commodity"] == "biomass") |
-                             (aux2_df["commodity"] == "coke_iron") |
-                             (aux2_df["commodity"] == "charcoal")
-                             ), "variable",
+                            (
+                                (aux2_df["commodity"] == "atm_gasoil")
+                                | (aux2_df["commodity"] == "naphtha")
+                                | (aux2_df["commodity"] == "vacuum_gasoil")
+                                | (aux2_df["commodity"] == "fueloil")
+                                | (aux2_df["commodity"] == "lightoil")
+                            ),
+                            "variable",
+                        ].values
+                    ).tolist()
+
+                    aggregate_name = "Final Energy|Industry|" + s + "|" + "Liquids|Oil"
+                elif c == "liquid_gas":
+                    var = np.unique(
+                        aux2_df.loc[
+                            (aux2_df["technology"] == "gas_processing_petro"),
+                            "variable",
+                        ].values
+                    ).tolist()
+
+                    aggregate_name = "Final Energy|Industry|" + s + "|" + "Liquids|Gas"
+                elif c == "liquid_other":
+                    var = np.unique(
+                        aux2_df.loc[
+                            (aux2_df["commodity"] == "methanol"),
+                            "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
-                            "Final Energy|Industry|" + s + "|" + "Solids"
+                        "Final Energy|Industry|" + s + "|" + "Liquids|Other"
                     )
-                elif c == 'solids_bio':
+                elif c == "solids":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "biomass")
-                            | (aux2_df["commodity"] == "charcoal")
-                            ), "variable",
+                            (
+                                (aux2_df["commodity"] == "coal")
+                                | (aux2_df["commodity"] == "biomass")
+                                | (aux2_df["commodity"] == "coke_iron")
+                                | (aux2_df["commodity"] == "charcoal")
+                            ),
+                            "variable",
+                        ].values
+                    ).tolist()
+                    aggregate_name = "Final Energy|Industry|" + s + "|" + "Solids"
+                elif c == "solids_bio":
+                    var = np.unique(
+                        aux2_df.loc[
+                            (
+                                (aux2_df["commodity"] == "biomass")
+                                | (aux2_df["commodity"] == "charcoal")
+                            ),
+                            "variable",
                         ].values
                     ).tolist()
                     aggregate_name = (
-                            "Final Energy|Industry|" + s + "|" + "Solids|Biomass"
+                        "Final Energy|Industry|" + s + "|" + "Solids|Biomass"
                     )
-                elif c == 'solids_fossil':
+                elif c == "solids_fossil":
                     var = np.unique(
                         aux2_df.loc[
-                            ((aux2_df["commodity"] == "coal") |
-                            (aux2_df["commodity"] == "coke_iron")
-                            ), "variable",
+                            (
+                                (aux2_df["commodity"] == "coal")
+                                | (aux2_df["commodity"] == "coke_iron")
+                            ),
+                            "variable",
                         ].values
                     ).tolist()
-                    aggregate_name = (
-                            "Final Energy|Industry|" + s + "|" + "Solids|Coal"
-                    )
+                    aggregate_name = "Final Energy|Industry|" + s + "|" + "Solids|Coal"
                 elif c == "heat":
                     var = np.unique(
                         aux2_df.loc[
                             (aux2_df["commodity"] == "d_heat"), "variable"
                         ].values
                     ).tolist()
-                    aggregate_name = (
-                        "Final Energy|Industry|" + s + "|" + "Heat"
-                    )
+                    aggregate_name = "Final Energy|Industry|" + s + "|" + "Heat"
                 elif c == "all":
                     var = aux2_df["variable"].tolist()
                     aggregate_name = "Final Energy|Industry|" + s
@@ -3089,12 +3403,12 @@ def report(context,scenario):
         "steel",
         "petro",
         "cement",
-        'ammonia',
-        'methanol',
+        "ammonia",
+        "methanol",
         "all",
         "Chemicals",
-        'Chemicals|Other',
-        'Other Sector'
+        "Chemicals|Other",
+        "Other Sector",
     ]
 
     # CO2_industry and CO2 are reported by the legacy reporting in order to
@@ -3126,17 +3440,18 @@ def report(context,scenario):
                 # but they are excluded to be consistent with other materials emission
                 # reporting.
 
-                exclude = ['emis|CO2_industry|meth_coal|M1',
-                            'emis|CO2_industry|meth_ng|M1',
-                            'emis|CO2_industry|meth_coal_ccs|M1',
-                            'emis|CO2_industry|meth_ng_ccs|M1',
-                            'emis|CO2|meth_coal_ccs|M1',
-                            'emis|CO2|meth_ng_ccs|M1',
-                            'emis|CO2|meth_imp|M1',
-                            'emis|CO2|meth_exp|M1'
-                            ]
+                exclude = [
+                    "emis|CO2_industry|meth_coal|M1",
+                    "emis|CO2_industry|meth_ng|M1",
+                    "emis|CO2_industry|meth_coal_ccs|M1",
+                    "emis|CO2_industry|meth_ng_ccs|M1",
+                    "emis|CO2|meth_coal_ccs|M1",
+                    "emis|CO2|meth_ng_ccs|M1",
+                    "emis|CO2|meth_imp|M1",
+                    "emis|CO2|meth_exp|M1",
+                ]
 
-                df_emi.filter(variable= exclude, keep=False, inplace=True)
+                df_emi.filter(variable=exclude, keep=False, inplace=True)
 
                 # Filter the necessary variables
 
@@ -3151,14 +3466,16 @@ def report(context,scenario):
                 # "emis|CO2_industry|electr_NH3|*",'emis|CO2_industry|meth_coal|feedstock',
                 # 'emis|CO2_industry|meth_ng|feedstock','emis|CO2_industry|meth_ng_ccs|feedstock',
 
-                if e == 'CO2_industry':
-                    emi_filter = ["emis|CO2|biomass_NH3_ccs|*",
-                                  "emis|CO2|gas_NH3_ccs|*",
-                                  "emis|CO2|coal_NH3_ccs|*",
-                                  "emis|CO2|fueloil_NH3_ccs|*",
-                                  'emis|CO2|meth_coal_ccs|feedstock',
-                                  'emis|CO2|meth_ng_ccs|feedstock',
-                                  'emis|CO2_industry|*']
+                if e == "CO2_industry":
+                    emi_filter = [
+                        "emis|CO2|biomass_NH3_ccs|*",
+                        "emis|CO2|gas_NH3_ccs|*",
+                        "emis|CO2|coal_NH3_ccs|*",
+                        "emis|CO2|fueloil_NH3_ccs|*",
+                        "emis|CO2|meth_coal_ccs|feedstock",
+                        "emis|CO2|meth_ng_ccs|feedstock",
+                        "emis|CO2_industry|*",
+                    ]
 
                     df_emi.filter(variable=emi_filter, inplace=True)
                 else:
@@ -3166,13 +3483,14 @@ def report(context,scenario):
 
                     # Below variables are not reported under Industrial Process
                     # Emissions. Therefore, they are excluded.
-                    exclude = ["emis|CO2|biomass_NH3_ccs|*",
-                               "emis|CO2|gas_NH3_ccs|*",
-                               "emis|CO2|coal_NH3_ccs|*",
-                               "emis|CO2|fueloil_NH3_ccs|*",
-                               "emis|CO2|meth_coal_ccs|*",
-                               "emis|CO2|meth_ng_ccs|*"
-                               ]
+                    exclude = [
+                        "emis|CO2|biomass_NH3_ccs|*",
+                        "emis|CO2|gas_NH3_ccs|*",
+                        "emis|CO2|coal_NH3_ccs|*",
+                        "emis|CO2|fueloil_NH3_ccs|*",
+                        "emis|CO2|meth_coal_ccs|*",
+                        "emis|CO2|meth_ng_ccs|*",
+                    ]
 
                     df_emi.filter(variable=exclude, keep=False, inplace=True)
                     df_emi.filter(variable=emi_filter, inplace=True)
@@ -3180,17 +3498,17 @@ def report(context,scenario):
                 # Perform some specific unit conversions
                 if (e == "CO2") | (e == "CO2_industry"):
                     # From MtC to Mt CO2/yr
-                    df_emi.convert_unit('', to="Mt CO2/yr", factor=44/12,
-                    inplace=True)
+                    df_emi.convert_unit(
+                        "", to="Mt CO2/yr", factor=44 / 12, inplace=True
+                    )
                 elif (e == "N2O") | (e == "CF4"):
                     unit = "kt " + e + "/yr"
-                    df_emi.convert_unit('', to= unit, factor=1,
-                    inplace=True)
+                    df_emi.convert_unit("", to=unit, factor=1, inplace=True)
                 else:
                     e = change_names(e)
                     # From kt/yr to Mt/yr
                     unit = "Mt " + e + "/yr"
-                    df_emi.convert_unit("", to= unit, factor=0.001, inplace=True)
+                    df_emi.convert_unit("", to=unit, factor=0.001, inplace=True)
 
                 all_emissions = df_emi.timeseries().reset_index()
 
@@ -3222,61 +3540,64 @@ def report(context,scenario):
                             for t in aux2_df["technology"].values
                             if (
                                 (
-                                    (
-                                        ("cement" in t)
-                                        | ("steel" in t)
-                                        | ("aluminum" in t)
-                                        | ("petro" in t)
-                                    )
-                                    & ("furnace" not in t)
+                                    ("cement" in t)
+                                    | ("steel" in t)
+                                    | ("aluminum" in t)
+                                    | ("petro" in t)
                                 )
+                                & ("furnace" not in t)
                             )
                         ]
                     if (typ == "process") & (s != "all"):
                         tec = [
                             t
                             for t in aux2_df["technology"].values
-                            if ((s in t) & ("furnace" not in t) & ('NH3' not in t) \
-                            & (not (t.startswith('meth_'))))
+                            if (
+                                (s in t)
+                                & ("furnace" not in t)
+                                & ("NH3" not in t)
+                                & (not (t.startswith("meth_")))
+                            )
                         ]
                     if (typ == "demand") & (s == "Chemicals"):
                         tec = [
                             t
                             for t in aux2_df["technology"].values
-                            if ( (t.startswith('meth_') & (not (t.startswith('meth_i'))))\
-                            | ('NH3' in t) | ('MTO' in t) | ('resins' in t) | \
-                            (('petro' in t) & ('furnace' in t)))
+                            if (
+                                (t.startswith("meth_") & (not (t.startswith("meth_i"))))
+                                | ("NH3" in t)
+                                | ("MTO" in t)
+                                | ("resins" in t)
+                                | (("petro" in t) & ("furnace" in t))
+                            )
                         ]
                     if (typ == "demand") & (s == "Chemicals|Other"):
                         tec = [
-                            t
-                            for t in aux2_df["technology"].values
-                            if ('resins' in t)
-                            ]
+                            t for t in aux2_df["technology"].values if ("resins" in t)
+                        ]
                     if (typ == "demand") & (s == "Other Sector") & (e != "CO2"):
                         tec = [
                             t
                             for t in aux2_df["technology"].values
-                            if  (
-                                      (t.startswith("biomass_i"))
-                                     | (t.startswith("coal_i"))
-                                     | (t.startswith("elec_i"))
-                                     | (t.startswith("eth_i"))
-                                     | (t.startswith("foil_i"))
-                                     | (t.startswith("gas_i"))
-                                     | (t.startswith("h2_i"))
-                                     | (t.startswith("heat_i"))
-                                     | (t.startswith("hp_el_i"))
-                                     | (t.startswith("hp_gas_i"))
-                                     | (t.startswith("loil_i"))
-                                     | (t.startswith("meth_i"))
-                                     | (t.startswith("sp_coal_I"))
-                                     | (t.startswith("sp_el_I"))
-                                     | (t.startswith("sp_eth_I"))
-                                     | (t.startswith("sp_liq_I"))
-                                     | (t.startswith("sp_meth_I"))
-                                     | (t.startswith("h2_fc_I"))
-
+                            if (
+                                (t.startswith("biomass_i"))
+                                | (t.startswith("coal_i"))
+                                | (t.startswith("elec_i"))
+                                | (t.startswith("eth_i"))
+                                | (t.startswith("foil_i"))
+                                | (t.startswith("gas_i"))
+                                | (t.startswith("h2_i"))
+                                | (t.startswith("heat_i"))
+                                | (t.startswith("hp_el_i"))
+                                | (t.startswith("hp_gas_i"))
+                                | (t.startswith("loil_i"))
+                                | (t.startswith("meth_i"))
+                                | (t.startswith("sp_coal_I"))
+                                | (t.startswith("sp_el_I"))
+                                | (t.startswith("sp_eth_I"))
+                                | (t.startswith("sp_liq_I"))
+                                | (t.startswith("sp_meth_I"))
+                                | (t.startswith("h2_fc_I"))
                             )
                         ]
 
@@ -3286,51 +3607,53 @@ def report(context,scenario):
                             for t in aux2_df["technology"].values
                             if (
                                 (
-                                 (
-                                     ("cement" in t)
-                                    | ("steel" in t)
-                                    | ("aluminum" in t)
-                                    | ("petro" in t)
-
+                                    (
+                                        ("cement" in t)
+                                        | ("steel" in t)
+                                        | ("aluminum" in t)
+                                        | ("petro" in t)
                                     )
                                     & ("furnace" in t)
-                               )
-
-                                    | (
-                                              (t.startswith("biomass_i"))
-                                             | (t.startswith("coal_i"))
-                                             | (t.startswith("elec_i"))
-                                             | (t.startswith("eth_i"))
-                                             | (t.startswith("foil_i"))
-                                             | (t.startswith("gas_i"))
-                                             | (t.startswith("h2_i"))
-                                             | (t.startswith("heat_i"))
-                                             | (t.startswith("hp_el_i"))
-                                             | (t.startswith("hp_gas_i"))
-                                             | (t.startswith("loil_i"))
-                                             | (t.startswith("meth_i"))
-                                             | (t.startswith("sp_coal_I"))
-                                             | (t.startswith("sp_el_I"))
-                                             | (t.startswith("sp_eth_I"))
-                                             | (t.startswith("sp_liq_I"))
-                                             | (t.startswith("sp_meth_I"))
-                                             | (t.startswith("h2_fc_I"))
-                                            | ("DUMMY_limestone_supply_cement" in t)
-                                            | ("DUMMY_limestone_supply_steel" in t)
-                                            | ("eaf_steel" in t)
-                                            | ("DUMMY_coal_supply" in t)
-                                            | ("DUMMY_gas_supply" in t)
-                                            | ("NH3" in t)
-                                            | t.startswith('meth_')
-                                            | ("MTO" in t)
-                                            | ("resins" in t)
-                                    )
+                                )
+                                | (
+                                    (t.startswith("biomass_i"))
+                                    | (t.startswith("coal_i"))
+                                    | (t.startswith("elec_i"))
+                                    | (t.startswith("eth_i"))
+                                    | (t.startswith("foil_i"))
+                                    | (t.startswith("gas_i"))
+                                    | (t.startswith("h2_i"))
+                                    | (t.startswith("heat_i"))
+                                    | (t.startswith("hp_el_i"))
+                                    | (t.startswith("hp_gas_i"))
+                                    | (t.startswith("loil_i"))
+                                    | (t.startswith("meth_i"))
+                                    | (t.startswith("sp_coal_I"))
+                                    | (t.startswith("sp_el_I"))
+                                    | (t.startswith("sp_eth_I"))
+                                    | (t.startswith("sp_liq_I"))
+                                    | (t.startswith("sp_meth_I"))
+                                    | (t.startswith("h2_fc_I"))
+                                    | ("DUMMY_limestone_supply_cement" in t)
+                                    | ("DUMMY_limestone_supply_steel" in t)
+                                    | ("eaf_steel" in t)
+                                    | ("DUMMY_coal_supply" in t)
+                                    | ("DUMMY_gas_supply" in t)
+                                    | ("NH3" in t)
+                                    | t.startswith("meth_")
+                                    | ("MTO" in t)
+                                    | ("resins" in t)
+                                )
                             )
                         ]
 
-                    if (typ == "demand") & (s != "all") & (s != "Other Sector")\
-                    & (s != "Chemicals") & (s != "Chemicals|Other"):
-
+                    if (
+                        (typ == "demand")
+                        & (s != "all")
+                        & (s != "Other Sector")
+                        & (s != "Chemicals")
+                        & (s != "Chemicals|Other")
+                    ):
                         if s == "steel":
                             # Furnaces are not used as heat source for iron&steel
                             # Dummy supply technologies help accounting the emissions
@@ -3353,24 +3676,26 @@ def report(context,scenario):
                                 if (
                                     ((s in t) & ("furnace" in t))
                                     | ("DUMMY_limestone_supply_cement" in t)
-                                )]
+                                )
+                            ]
                         elif s == "ammonia":
                             tec = [
-                                t
-                                for t in aux2_df["technology"].values
-                                if (
-                                    ('NH3' in t))]
+                                t for t in aux2_df["technology"].values if ("NH3" in t)
+                            ]
                         elif s == "methanol":
                             tec = [
                                 t
                                 for t in aux2_df["technology"].values
                                 if (
-                                    t.startswith('meth_') & (not (t.startswith('meth_i'))))]
-                        elif s == 'petro':
+                                    t.startswith("meth_")
+                                    & (not (t.startswith("meth_i")))
+                                )
+                            ]
+                        elif s == "petro":
                             tec = [
                                 t
                                 for t in aux2_df["technology"].values
-                                if ((('petro' in t) & ("furnace" in t)) | ('MTO' in t))
+                                if ((("petro" in t) & ("furnace" in t)) | ("MTO" in t))
                             ]
                         else:
                             tec = [
@@ -3394,7 +3719,7 @@ def report(context,scenario):
                     # Aggregate names:
                     if s == "all":
                         if (typ == "demand") & (e != "CO2"):
-                            if (e != "CO2_industry"):
+                            if e != "CO2_industry":
                                 aggregate_name = (
                                     "Emissions|" + e + "|Energy|Demand|Industry"
                                 )
@@ -3404,12 +3729,12 @@ def report(context,scenario):
                                     "Emissions|" + "CO2" + "|Energy|Demand|Industry"
                                 )
                                 aggregate_list.append(aggregate_name)
-                        if ((typ == "process") & (e != "CO2_industry")) :
+                        if (typ == "process") & (e != "CO2_industry"):
                             aggregate_name = "Emissions|" + e + "|Industrial Processes"
                             aggregate_list.append(aggregate_name)
                     else:
-                        if ((typ == "demand") & (e != "CO2")):
-                            if (e != "CO2_industry"):
+                        if (typ == "demand") & (e != "CO2"):
+                            if e != "CO2_industry":
                                 aggregate_name = (
                                     "Emissions|" + e + "|Energy|Demand|Industry|" + s
                                 )
@@ -3422,7 +3747,7 @@ def report(context,scenario):
                                     + s
                                 )
                                 aggregate_list.append(aggregate_name)
-                        if ((typ == "process") & (e != "CO2_industry")):
+                        if (typ == "process") & (e != "CO2_industry"):
                             aggregate_name = (
                                 "Emissions|" + e + "|Industrial Processes|" + s
                             )
@@ -3818,8 +4143,8 @@ def report(context,scenario):
     # Scrap Release: (Buildings), Other and Power Sector
     # For cement, we dont have any other scrap represented in the model.
     # Only scrap is from power sector.
-    print('Scrap generated by sector')
-    materials = ["aluminum","steel","cement"]
+    print("Scrap generated by sector")
+    materials = ["aluminum", "steel", "cement"]
 
     for r in nodes:
         for m in materials:
@@ -3828,37 +4153,49 @@ def report(context,scenario):
 
             # filt_buildings = 'out|end_of_life|' + m + '|demolition_build|M1'
             # print(filt_buildings)
-            filt_other = 'out|end_of_life|' + m + '|other_EOL_' + m + '|M1'
-            filt_total = 'in|end_of_life|' + m + '|total_EOL_' + m + '|M1'
+            filt_other = "out|end_of_life|" + m + "|other_EOL_" + m + "|M1"
+            filt_total = "in|end_of_life|" + m + "|total_EOL_" + m + "|M1"
 
             m = change_names(m)
             # var_name_buildings = 'Total Scrap|Residential and Commercial|' + m
-            var_name_other = 'Total Scrap|Other|' + m
-            var_name_power = 'Total Scrap|Power Sector|' + m
+            var_name_other = "Total Scrap|Other|" + m
+            var_name_power = "Total Scrap|Power Sector|" + m
 
             if m != "Non-Metallic Minerals|Cement":
-                df_scrap_by_sector.aggregate(var_name_other,\
-                components=[filt_other],append=True)
+                df_scrap_by_sector.aggregate(
+                    var_name_other, components=[filt_other], append=True
+                )
 
-            # df_scrap_by_sector.aggregate(var_name_buildings,\
-            # components=[filt_buildings],append=True)
-            # 'out|end_of_life|' + m + '|demolition_build|M1',
+                # df_scrap_by_sector.aggregate(var_name_buildings,\
+                # components=[filt_buildings],append=True)
+                # 'out|end_of_life|' + m + '|demolition_build|M1',
 
-                df_scrap_by_sector.subtract(filt_total, filt_other,var_name_power,
-                axis='variable', append = True)
+                df_scrap_by_sector.subtract(
+                    filt_total, filt_other, var_name_power, axis="variable", append=True
+                )
 
-                df_scrap_by_sector.filter(variable=[
-                # var_name_buildings,
-                var_name_other, var_name_power],inplace=True)
+                df_scrap_by_sector.filter(
+                    variable=[
+                        # var_name_buildings,
+                        var_name_other,
+                        var_name_power,
+                    ],
+                    inplace=True,
+                )
             elif m == "Non-Metallic Minerals|Cement":
-                df_scrap_by_sector.aggregate(var_name_power,\
-                components=[filt_total],append=True)
+                df_scrap_by_sector.aggregate(
+                    var_name_power, components=[filt_total], append=True
+                )
 
-                df_scrap_by_sector.filter(variable=[
-                # var_name_buildings,
-                var_name_power],inplace=True)
+                df_scrap_by_sector.filter(
+                    variable=[
+                        # var_name_buildings,
+                        var_name_power
+                    ],
+                    inplace=True,
+                )
 
-            df_scrap_by_sector.convert_unit('', to='Mt/yr', factor=1, inplace = True)
+            df_scrap_by_sector.convert_unit("", to="Mt/yr", factor=1, inplace=True)
             df_final.append(df_scrap_by_sector, inplace=True)
 
     # PRICE
@@ -4118,4 +4455,4 @@ def report(context,scenario):
 
     pp.close()
     os.remove(path_temp)
-    #os.remove(path)
+    # os.remove(path)

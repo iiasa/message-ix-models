@@ -218,7 +218,9 @@ def main(
                         exceed["technology"] = "{}_{}".format(relation_technology, sets)
                         exceedings.append(exceed)
     if len(exceedings) != 0:
-        exceedings = pd.concat(exceedings, sort=True).reset_index().drop("index", axis=1)
+        exceedings = (
+            pd.concat(exceedings, sort=True).reset_index().drop("index", axis=1)
+        )
         if verbose:
             print(exceedings)
 
