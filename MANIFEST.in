@@ -6,14 +6,15 @@ prune .github
 prune message_ix_models/data/test/advance
 prune message_ix_models/data/test/gea
 prune message_ix_models/data/test/iea
+prune message_ix_models/data/test/report
 prune message_ix_models/data/test/shape
 prune message_ix_models/data/test/snapshot-*
 prune message_ix_models/data/test/ssp
+prune message_ix_models/data/test/transport
 
 # Larger package data
 # - Not distributed on PyPI.
 # - Should be fetched with Pooch from GitHub.
-exclude message_ix_models/data/ssp/*.gz
 prune message_ix_models/data/water/*
 prune message_ix_models/data/material/*
 exclude message_ix_models/data/water/*.tar.xz
