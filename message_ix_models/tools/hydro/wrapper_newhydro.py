@@ -383,13 +383,24 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
             scenario.add_par("input", dfWater)
 
             # Input the new LF and CF values to the corresponding parameters: inv_cost & renewable_capacity_factor
-        df = scenario.par(
+        df_lc = scenario.par(
             "inv_cost", {"technology": ["hydro_lc"], "node_loc": [focus_region]}
         )
-        df_fx = scenario.par(
+        # assess the growth rate from one timestep to the next
+        df_lc["pct_change"] = (
+            df_lc.groupby(["node_loc", "technology"])["value"].pct_change().fillna(0)
+        )
+
+        df_lc_fx = scenario.par(
             "fix_cost", {"technology": ["hydro_lc"], "node_loc": [focus_region]}
         )
+        df_lc_fx["pct_change"] = (
+            df_lc_fx.groupby(["node_loc", "technology"])["value"].pct_change().fillna(0)
+        )
+
         for i in newtechnames:
+            df = df_lc.copy()
+            df_fx = df_lc_fx.copy()
             df["technology"] = i
 
             # Account for two different parameter sets for climate scenarios
@@ -402,6 +413,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 invcost1 = float(CC.loc[CC.technology == i, "avgIC"])
                 invcost2 = float(CC.loc[CC.technology == i, "avgIC_2nd"])
 
+                # interpolate the cost shift between short and long term
                 # Define time steps and interpolate
                 years = [2050, 2055, 2060, 2070]
                 costs = [
@@ -431,7 +443,14 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 # df_fx.loc[df_fx.year_vtg > 2070, "value"] = (
                 #     invcost2 * 0.022
                 # )  # fixed cost = 2.2% of capital cost
-
+            print(
+                "after if", df.head()
+            )  # Check if df exists and has the expected columns
+            print("after if", df.columns)  # Ensure 'pct_change' is in the DataFrame
+            df["value"] = df["value"] * (1 + df["pct_change"])
+            df = df.drop("pct_change", axis=1)
+            df_fx["value"] = df_fx["value"] * (1 + df_fx["pct_change"])
+            df_fx = df_fx.drop("pct_change", axis=1)
             df_fx["technology"] = i
             scenario.add_par("inv_cost", df)
             scenario.add_par("fix_cost", df_fx)
@@ -571,7 +590,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     technology=i,
                     year_act=fut_years,
                     time="year",
-                    value=5,
+                    value=500,
                     unit="???",
                 )
                 scenario.add_par(param, df)
@@ -584,7 +603,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     technology=i,
                     year_act=fut_years,
                     time="year",
-                    value=5,
+                    value=10,
                     unit="???",
                 )
                 scenario.add_par(param, df)
@@ -597,7 +616,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     node_loc=focus_region,
                     technology=i,
                     year_vtg=fut_years,
-                    value=2,
+                    value=200,
                     unit="???",
                 )
                 scenario.add_par(param, df)
@@ -612,24 +631,10 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     node_loc=focus_region,
                     technology=i,
                     year_vtg=fut_years,
-                    value=0.1,
+                    value=10,
                     unit="???",
                 )
                 scenario.add_par(param, df)
-
-        # # this for all hydro tecs TO CHANGE
-        # for i in ["growth_new_capacity_up", "growth_new_capacity_lo"]:
-        #     df = scenario.par(
-        #         i, {"technology": ["coal_ppl"], "node_loc": [focus_region]}
-        #     )
-        #     df = df.loc[df.year_vtg > 2010]
-        #     df["technology"] = "hydro_1"
-        #     df["value"] = 0.1
-        #     # hydro_2
-        #     scenario.add_par(i, df)
-        #     df["technology"] = "hydro_2"
-        #     scenario.add_par(i, df)
-        # # bound act_up
 
         for param in [
             "bound_activity_up",
