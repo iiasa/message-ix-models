@@ -17,7 +17,7 @@ Another is by whether the (meta)data are **input**, **output**, or both.
 This page describes how configuration and data are handled in :mod:`message_ix_models` and :mod:`message_data`. [1]_
 In many cases it also specifies what to do for new additions to the code,
 using :ref:`RFC 2119 keywords <message-ix:prereq-rfc2119>` like **must** and **should**.
-The :doc:`HOW Work with paths to files and data </howto/path>` contains some suggested ways to handle particular situations.
+The :doc:`HOWTO Work with paths to files and data </howto/path>` contains some suggested ways to handle particular situations.
 
 .. [1] Unless specifically distinguished in the text,
    all of the following applies to *both* :mod:`message_ix_models` and :mod:`message_data`.
@@ -96,7 +96,7 @@ Specific modules for model variants, projects, tools, etc. **should…**
 
   For example, module-specific code
   that needs to understand which :doc:`node code list <pkg-data/node>` is used by the scenario on which it operates
-  should retrieve this from :attr:`.model.Config.regions`
+  **should** retrieve this from :attr:`.model.Config.regions`
   and **should not** create another key/setting to store the same information.
 
   Config settings with duplicate names **should** only be created and used when they have a different purpose or meaning than existing settings.
@@ -127,7 +127,7 @@ User cache
 Package data
    These are stored in the :file:`message_ix_models/data/` subdirectory of the `iiasa/message-ix-models <https://github.com/iiasa/message-ix-models>`_ git repository.
 
-   Some of these data are included in the packaged distributions of :mod:`message_ix_models` available on
+   Some of these data are included in the packaged distributions of :mod:`message_ix_models`
    `available on PyPI <https://pypi.org/project/message-ix-models>`_.
    Other files are omitted to keep the size of these distributions small.
 
@@ -293,7 +293,7 @@ Prefer text formats
 
 *Do not* hard-code paths
    :mod:`message_ix_models` utility functions and Config settings allow to access all the (meta)data locations described above.
-   It should not ever be necessary to use a hard-coded path;
+   It **should not** ever be necessary to use a hard-coded path;
    this is a clue that data are not in a proper location.
 
    For system-specific paths
@@ -403,7 +403,7 @@ For large files stored as :ref:`package data <package-data>` using Git LFS, thes
 Retrieve data from existing databases
 -------------------------------------
 
-These include the same IIASA ECE Program :mod:`ixmp`` databases that are used to store scenarios.
+These include the same IIASA ECE Program :mod:`ixmp` databases that are used to store scenarios.
 Documentation **must** be provided that ensures this data is reproducible:
 that is, any original sources and code to create the database used by :mod:`message_ix_models`.
 
@@ -414,6 +414,6 @@ Some other patterns exist, but **should not** be repeated in new code,
 and **should** be migrated to one of the above patterns.
 
 - SQL queries against a Oracle/JDBC database.
-  See :ref:`message_data:data-iea` (in :mod:`message_data`)
+  See :ref:`m-data:data-iea` (in :mod:`message_data`)
   and `issue #53 <https://github.com/iiasa/message_data/issues/53#issuecomment-669117393>`_
   for a description of how to replace/simplify this code.

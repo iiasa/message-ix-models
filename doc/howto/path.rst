@@ -23,7 +23,7 @@ This recursively creates subdirectories in the :ref:`local data <local-data>` di
 and creates a symlink to every file in every directory.
 Code that looks within the local data directory will then be able to locate these files.
 
-If needed, delete the directories in message-local-data and repeat the :program:`cp` call to recreated.
+If needed, delete the directories in message-local-data and repeat the :program:`cp` call to recreate.
 
 Identify the cache path used on the current system
 ==================================================
