@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
-import glob
 import inspect
 import itertools
-import os
+import logging
 import sys
 from functools import cmp_to_key
+from itertools import product
 
 import numpy as np
 import pandas as pd
+from message_ix_models.util import private_data_path
 from pandas.api.types import is_numeric_dtype
 
-from message_ix_models.util import package_data_path
-from message_ix_models.util.compat.message_data import utilities
+import message_data.tools.post_processing.iamc_tree as iamc_tree
+import message_data.tools.utilities.utilities as utilities
 
-from . import iamc_tree
+log = logging.getLogger(__name__)
 
 all_years = None
 years = None
@@ -41,6 +42,14 @@ index_order = [
 ]
 
 
+def _vintage_dtype(df: pd.DataFrame) -> pd.DataFrame:
+    """Ensure "Vintage" column has integer values and :class:`object` dtype."""
+    try:
+        return df.assign(Vintage=lambda _df: _df["Vintage"].astype(int).astype(object))
+    except KeyError:
+        return df
+
+
 def combineDict(*args):
     result = {}
     for dic in args:
@@ -55,17 +64,19 @@ def combineDict(*args):
 
 def fil(df, fil, factor, unit_out=None):
     """Uses predefined values from a fil file"""
-    inf = os.path.join(
-        package_data_path(), "report", "legacy", "fil_files", "*-{}.fil".format(fil)
-    )
-    files = glob.glob(inf)
+    fil_path = private_data_path("report", "fil_files")
+    files = fil_path.glob("*-HFC_fac.fil")
     dfs = []
+
+    # Set of short region IDs matching file names to be included
+    match = set(regions.values()) | {"GLB"}
+
     for f in files:
-        reg = os.path.basename(f).split("-")[0]
-        # Ensure that fil-files are only read for regions contained in the scenario.
-        if reg in [regions[r] for r in regions.keys()]:
-            dftmp = pd.read_csv(f)
-            dftmp["Region"] = reg
+        reg = f.name.split("-")[0]
+        if reg in match:
+            infil = fil_path / f.name
+            dftmp = pd.read_csv(infil, comment="#")
+            dftmp.loc[:, "Region"] = reg
             dfs.append(dftmp)
     df_fil = pd.concat(dfs, sort=True)
     df_fil.Region = df_fil.Region.map(
@@ -86,10 +97,10 @@ def fil(df, fil, factor, unit_out=None):
         df_fil.loc[reg] = df_fil.loc[reg].interpolate(method="index")
 
     df = df_fil.fillna(0) * df.fillna(0)
-    df["Unit"] = "???"
+    df.loc[:, "Unit"] = "???"
     if unit_out:
         for col in numcols(df):
-            df[col] = df.apply(
+            df.loc[:, col] = df.apply(
                 lambda row: row[col] * unit_conversion[row.Unit][unit_out], axis=1
             )
     df = df.drop("Unit", axis=1)
@@ -181,79 +192,6 @@ def rem_reg(df):
     return df.sort_index()
 
 
-def sum_reg(df):
-    """Overwrites glb values with the sum over regions
-
-    Parameters
-    ----------
-    df : dataframe
-
-    Returns
-    -------
-    df : dataframe
-    """
-    df_tmp = df.copy().reset_index()
-    vals = df_tmp[df_tmp.Region != "World"].set_index(["Region"]).sum().values
-    df.loc["World"] = vals
-    return df
-
-
-def globiom_glb_priceindex(ds, price, quantity, quanity_variable, y0=2005):
-    """Calculate the global price-index.
-
-    The following formulat is used and is based on the approach used in GLOBIOM.
-
-    Price-Index values are recalcualted using the following formula:
-    Laspeyres index = sum(r, p1*q0) / sum(r, q0)
-    Paasche index = sum(r, p1*q1) / sum(r, q1)
-    Fisher index = (laaspreyes * paasche) ** 0.5
-    where, p=price, q=quantity produced, r=region
-
-    Parameters
-    ----------
-    ds : :class:`message_ix.Scenario`
-    price : :class:`pandas.DataFrame`
-        Regional price information.
-    quantity : :class:`pandas.DataFrame`
-        Regional quantity information.
-    quantity_variable : string
-        Name of the `land_output` commodity used to derive quantities.
-    y0 : int (default=2005)
-        initial indexing year ie. values are 1.
-    """
-
-    # Retrive values for reference index year.
-    q0 = quantity[y0]
-
-    # Ensure that there are values for the year "y0", otherwise retrive these from
-    # the parameter land-output.
-    if q0.sum() == 0:
-        # Retrieve regional data from parameter
-        q0 = ds.par(
-            "land_output",
-            filters={
-                "commodity": quanity_variable,
-                "land_scenario": ds.set("land_scenario")[0],
-                "year": y0,
-            },
-        )
-        # Re-Format
-        q0 = q0.drop(["land_scenario", "commodity", "level", "time", "unit"], axis=1)
-        q0 = q0.rename(columns={"node": "Region"})
-        q0.Region = q0.Region.map(regions)
-        q0 = q0.pivot(index="Region", columns="year", values="value")[y0]
-
-    las = price.multiply(q0, axis=0).sum().divide(q0.sum())
-
-    paas = price.multiply(quantity).sum().divide(quantity.sum()).fillna(0)
-
-    fischer = (las * paas) ** 0.5
-
-    quantity.loc["World"] = fischer
-
-    return quantity
-
-
 def numcols(df):
     """Retrieves numeric columns of a dataframe.
 
@@ -309,19 +247,21 @@ def _convert_units(df, unit_out):
     df : dataframe
     """
 
-    cols = [c for c in numcols(df) if c != "Vintage"]
-    if cols:
-        try:
-            df[cols] = df[cols].multiply(
-                df["Unit"].apply(lambda x: unit_conversion[x][unit_out]), axis=0
-            )
-        except Exception:
-            print(
-                f"No unit conversion factor found to convert {df['Unit'].unique()[0]} to {unit_out}"
-            )
-    df.Unit = unit_out
+    dfs = pd.DataFrame()
+    units = df["Unit"].unique()
+    idx = [i for i in df.columns if i in index_order]
+    df = df.set_index(idx)
 
-    return df.sort_index()
+    # If there are no values to convert, return original dataframe
+    if df.empty:
+        return df.reset_index()
+
+    # Itterate over the units and apply conversion
+    for u in units:
+        tmp = df.xs(u, level="Unit", drop_level=False) * unit_conversion[u][unit_out]
+        dfs = pd.concat([dfs, tmp.reset_index().assign(Unit=unit_out)])
+
+    return dfs
 
 
 def cum_vals(df):
@@ -434,23 +374,66 @@ def gen_GLB(df, param, weighted_by):
     """
 
     df = df.fillna(value=0).reset_index()
-    idx = ["Model", "Scenario", "Variable", "Unit"]
     if param == "sum":
-        df_tmp = df.groupby(idx).sum(numeric_only=True).reset_index()
+        df_tmp = (
+            df.groupby(
+                [
+                    "Model",
+                    "Scenario",
+                    "Variable",
+                    "Unit",
+                ]
+            )
+            .sum(numeric_only=True)
+            .reset_index()
+        )
     elif param == "max":
-        df_tmp = df.groupby(idx).max().reset_index()
+        df_tmp = (
+            df.groupby(
+                [
+                    "Model",
+                    "Scenario",
+                    "Variable",
+                    "Unit",
+                ]
+            )
+            .max(numeric_only=True)
+            .reset_index()
+        )
     elif param == "mean":
         # Global region needs to be dropped or else it is used for calcualting
         # the mean
         df_tmp = df[df.Region != "World"]
-        df_tmp = df_tmp.groupby(idx).mean(numeric_only=True).reset_index()
+        df_tmp = (
+            df_tmp.groupby(
+                [
+                    "Model",
+                    "Scenario",
+                    "Variable",
+                    "Unit",
+                ]
+            )
+            .mean(numeric_only=True)
+            .reset_index()
+        )
     elif param == "weighted_avg":
         weighted_by = weighted_by.reset_index()
         weighted_by = weighted_by[weighted_by.Region != "World"].set_index("Region")
         df_tmp = df[df.Region != "World"]
         df_tmp = df_tmp.set_index(iamc_idx)
         df_tmp = df_tmp * weighted_by
-        df_tmp = df_tmp.reset_index().groupby(idx).sum(numeric_only=True)
+        df_tmp = (
+            df_tmp.reset_index()
+            .groupby(
+                [
+                    "Model",
+                    "Scenario",
+                    "Variable",
+                    "Unit",
+                ]
+            )
+            .sum(numeric_only=True)
+        )
         df_tmp = (df_tmp / weighted_by.sum()).fillna(0).reset_index()
 
     df_tmp.loc[:, "Region"] = globalname
@@ -521,42 +504,35 @@ def _make_emptydf(tec, vintage=None, grade=None, units="GWa"):
         index: Region, Technology, Vintage (optional), Mode, Unit,
         Grade (optional)
     """
+    # Columns of the resulting data frame
+    columns = ["Region", "Unit"]
+    if vintage:
+        columns.extend(["Technology", "Vintage", "Mode"])
+    elif grade:
+        columns.extend(["Commodity", "Grade"])
+    else:
+        columns.extend(["Technology", "Mode"])
+
+    # Common values for all rows
+    data = {
+        "Region": list(regions.keys()),
+        "Grade": "a",
+        "Mode": "M1",
+        "Unit": units,
+        "Vintage": firstmodelyear,
+    }
 
     dfs = []
     for t in tec:
-        if vintage:
-            df = pd.DataFrame(
-                data={
-                    "Region": list(regions.keys()),
-                    "Technology": t,
-                    "Vintage": firstmodelyear,
-                    "Mode": "M1",
-                    "Unit": units,
-                }
-            )
-        elif grade:
-            df = pd.DataFrame(
-                data={
-                    "Region": list(regions.keys()),
-                    "Commodity": t,
-                    "Unit": units,
-                    "Grade": "a",
-                }
-            )
-        else:
-            df = pd.DataFrame(
-                data={
-                    "Region": list(regions.keys()),
-                    "Technology": t,
-                    "Mode": "M1",
-                    "Unit": units,
-                }
-            )
-        dfs.append(df)
-    df = pd.concat(dfs, sort=True)
-    if "Vintage" in df.columns:
-        df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
-    return df.sort_index()
+        data.update(Commodity=t, Technology=t)
+        dfs.append(pd.DataFrame({k: v for k, v in data.items() if k in columns}))
+
+    # Concatenate `dfs`, or create an empty data frame
+    return (
+        (pd.concat(dfs, sort=True) if len(dfs) else pd.DataFrame([], columns=columns))
+        .pipe(_vintage_dtype)
+        .sort_index()
+    )
 
 
 def _make_zero():
@@ -577,9 +553,8 @@ def _make_zero():
     return df.sort_index()
 
 
-def _clean_up_regions(df, units=None):
-    """Converts region names from the database format into desired
-    reporting region names.
+def _clean_up_regions(df: pd.DataFrame, units=None) -> pd.DataFrame:
+    """Convert region names in `df` using `regions`.
 
     Should a region be missing, it is appended to the dataframe. values = 0.
 
@@ -588,318 +563,79 @@ def _clean_up_regions(df, units=None):
     Parameters
     ----------
     df : dataframe
-    units : string(optional, default=None)
-        inserts units into unit column which may be required for unit
-        conversion
+    units : str, optional
+        Value for "Unit" column e.g. as required for unit conversion.
 
     Returns
     -------
-    df : dataframe
+    pandas.DataFrame
         index: Region, Technology(optional) or Commodity(optional), Unit,
         Vintage(optional), Mode, Grade(optional)
     """
-    if not units:
-        if "Unit" in df.columns:
-            df_unit = df.Unit.unique()
-            if len(df_unit) > 1:
-                if verbose:
-                    print(
-                        (
-                            inspect.stack()[0][3],
-                            ": there are more than 1",
-                            "unit in the dataframe:",
-                            df_unit,
-                        )
-                    )
-                units = "GWa"
-                df.Unit = "GWa"
-                idx = [i for i in index_order if i in df.columns.tolist()]
-                df = df.groupby(idx).sum(numeric_only=True).reset_index()
-            else:
-                units = df.Unit.unique()[0]
-        else:
+    if not len(df):  # Empty data frame
+        return df
+
+    # Placeholder for columns not present
+    missing = pd.Series([None], dtype=object)
+
+    # Sorted, unique elements of certain columns; or `missing` if not present
+    technology = sorted(df.get("Technology", missing).unique())
+    commodity = sorted(df.get("Commodity", missing).unique())
+    df_regions = set(df["Region"].unique())
+    df_units = sorted(df.get("Unit", missing).unique())
+
+    if units is None:
+        if len(df_units) > 1:
+            if verbose:
+                print(
+                    f"{inspect.stack()[0][3]}: there are more than 1 unit in the "
+                    f"dataframe: {df_units}"
+                )
             units = "GWa"
 
-    # Makes exception if only a world value is available for the carbon price
-    # In MESSAGE_ix_legacy, the carbon price was returned for all regions when
-    # a budget is applied. In the January, 2018 version of MESSAGEix, only a
-    # global value is returned.
-    # Therefore the value needs to be replicated for all other regions. This is
-    # only done when there is only a single carbon price entry for the region
+            # - Assign common units.
+            # - Sum rows with identical indices but distinct units.
+            idx = list(filter(df.columns.__contains__, index_order))
+            df = df.assign(Unit=units).groupby(idx).sum().reset_index()
+        else:
+            units = df_units[0] or "GWa"
+
+    # Makes exception if only a world value is available for the carbon price. In
+    # MESSAGE_ix_legacy, the carbon price was returned for all regions when a budget is
+    # applied. In the January 2018 version of MESSAGEix, only a global value is
+    # returned. Therefore the value needs to be replicated for all other regions. This
+    # is only done when there is only a single carbon price entry for the region
     # 'World'.
-    # If there are multiple `emission`s for which a price is returned, then the
-    # order of the list below defines the order of presidence applied ot the
-    # dataframe `emission`.
-    if "Technology" in df.columns:
-        # List of different `emission`s for which a carbon price is retruned.
-        cprice_list = [
-            "TCE",
-            "TCO2",
-            "TCE_CO2",
-            "TCE_non-CO2",
-            "TCE_FFI",
-            "TCE_LU",
-            "TCE_CO2_trade",
-        ]
-        # List of "technologies" (which are in fact the `emissions`)
-        teclist = df.Technology.unique().tolist()
+    tce_techs = {"TCE", "TCE_FFI", "TCE_LU", "TCO2", "TCE_CO2", "TCE_non-CO2"}
+    if set(technology) & tce_techs and set(df.Region.unique()) == {"World"}:
+        df = pd.concat([df] + [df.copy().assign(Region=r) for r in regions], sort=True)
 
-        # Check if there is a match of the two lists
-        matchlist = [c for c in teclist if c in cprice_list]
-        if matchlist:
-            # Filter out priority from cprice_list
-            df = df.loc[df.Technology == matchlist[0]]
-
-            if df.Region.unique().tolist() == ["World"]:
-                # Filter out a single carbon_price
-                dfs = []
-                dfs.append(df)
-                for reg in regions.keys():
-                    tmp = df.copy()
-                    tmp.Region = reg
-                    dfs.append(tmp)
-                df = pd.concat(dfs, sort=True)
-
-    # Removes aggregate region 'WORLD'
+    # Discard all data for aggregate region "World"
     df = df[df["Region"] != "World"]
 
-    # for reg in list(regions.keys()):
-    for reg in regions.keys():
-        if reg not in df.Region.unique():
-            if "Technology" in df.columns:
-                for tec in df.Technology.unique():
-                    if "Mode" in df.columns:
-                        if "Vintage" in df.columns:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array(
-                                            [[reg, tec, units, firstmodelyear, "M1"]]
-                                        ),
-                                        columns=[
-                                            "Region",
-                                            "Technology",
-                                            "Unit",
-                                            "Vintage",
-                                            "Mode",
-                                        ],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                        else:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units, "M1"]]),
-                                        columns=[
-                                            "Region",
-                                            "Technology",
-                                            "Unit",
-                                            "Mode",
-                                        ],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                    elif "Unit" in df.columns:
-                        if "Vintage" in df.columns:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units, firstmodelyear]]),
-                                        columns=[
-                                            "Region",
-                                            "Technology",
-                                            "Unit",
-                                            "Vintage",
-                                        ],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                        elif "Grade" in df.columns:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units, "a"]]),
-                                        columns=[
-                                            "Region",
-                                            "Technology",
-                                            "Unit",
-                                            "Grade",
-                                        ],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                        else:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units]]),
-                                        columns=["Region", "Technology", "Unit"],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                    else:
-                        df = pd.concat(
-                            [
-                                pd.DataFrame(
-                                    np.array([[reg, tec]]),
-                                    columns=["Region", "Technology"],
-                                ),
-                                df,
-                            ],
-                            sort=True,
-                        )
+    # Common data for infill
+    data = dict(Grade="a", Mode="M1", Unit=units, Vintage=firstmodelyear)
 
-            elif "Commodity" in df.columns:
-                for tec in df.Commodity.unique():
-                    if "Mode" in df.columns:
-                        if "Vintage" in df.columns:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array(
-                                            [[reg, tec, units, firstmodelyear, "M1"]]
-                                        ),
-                                        columns=[
-                                            "Region",
-                                            "Commodity",
-                                            "Unit",
-                                            "Vintage",
-                                            "Mode",
-                                        ],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                        else:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units, "M1"]]),
-                                        columns=["Region", "Commodity", "Unit", "Mode"],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                    else:
-                        if "Vintage" in df.columns:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units, firstmodelyear]]),
-                                        columns=[
-                                            "Region",
-                                            "Commodity",
-                                            "Unit",
-                                            "Vintage",
-                                        ],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                        elif "Grade" in df.columns:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units, "a"]]),
-                                        columns=[
-                                            "Region",
-                                            "Commodity",
-                                            "Unit",
-                                            "Grade",
-                                        ],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-                        else:
-                            df = pd.concat(
-                                [
-                                    pd.DataFrame(
-                                        np.array([[reg, tec, units]]),
-                                        columns=["Region", "Commodity", "Unit"],
-                                    ),
-                                    df,
-                                ],
-                                sort=True,
-                            )
-            else:
-                if "Mode" in df.columns:
-                    if "Vintage" in df.columns:
-                        df = pd.concat(
-                            [
-                                pd.DataFrame(
-                                    np.array([[reg, units, firstmodelyear, "M1"]]),
-                                    columns=["Region", "Unit", "Vintage", "Mode"],
-                                ),
-                                df,
-                            ],
-                            sort=True,
-                        )
-                    else:
-                        df = pd.concat(
-                            [
-                                pd.DataFrame(
-                                    np.array([[reg, units, "M1"]]),
-                                    columns=["Region", "Unit", "Mode"],
-                                ),
-                                df,
-                            ],
-                            sort=True,
-                        )
-                else:
-                    if "Vintage" in df.columns:
-                        df = pd.concat(
-                            [
-                                pd.DataFrame(
-                                    np.array([[reg, units, firstmodelyear]]),
-                                    columns=["Region", "Unit", "Vintage"],
-                                ),
-                                df,
-                            ],
-                            sort=True,
-                        )
-                    elif "Grade" in df.columns:
-                        df = pd.concat(
-                            [
-                                pd.DataFrame(
-                                    np.array([[reg, units, "a"]]),
-                                    columns=["Region", "Unit", "Grade"],
-                                ),
-                                df,
-                            ],
-                            sort=True,
-                        )
-                    else:
-                        df = pd.concat(
-                            [
-                                pd.DataFrame(
-                                    np.array([[reg, units]]), columns=["Region", "Unit"]
-                                ),
-                                df,
-                            ],
-                            sort=True,
-                        )
+    # Create empty rows for Regions missing from `df`. Iterate over values for the
+    # Commodity and Region dimensions; if `df` does not have these, then c or t will be
+    # None.
+    new_rows = []
+    for c, r, t in product(
+        commodity,
+        filter(lambda _r: _r not in df_regions, regions),
+        technology,
+    ):
+        # Construct and store a new row
+        data.update(Commodity=c, Region=r, Technology=t)
+        new_rows.append(pd.DataFrame(data, index=[0]).reindex(columns=df.columns))
 
-    df.Region = df.Region.map(regions)
-    if "Vintage" in df.columns:
-        df["Vintage"] = df["Vintage"].apply(np.int64)
-        df["Vintage"] = df["Vintage"].astype("object")
-    return df.sort_index()
+    # - Combine new rows with existing data.
+    # - Map region names for all data, including original `df`.
+    return (
+        pd.concat(new_rows + [df], ignore_index=True)
+        .assign(Region=lambda _df: _df.Region.map(regions))
+        .pipe(_vintage_dtype)
+    )
 
 
 def _clean_up_vintage(ds, df, units=None):
@@ -1068,9 +804,7 @@ def _clean_up_formatting(df):
         exception of 'Vintage' which will also be part of the index
         structure. the column units is dropped
     """
-    if "Vintage" in df.columns:
-        df["Vintage"] = df["Vintage"].apply(np.int64)
-        df["Vintage"] = df["Vintage"].astype("object")
+    df = df.pipe(_vintage_dtype)
 
     yrs = [int(x) for x in numcols(df)]
 
@@ -1440,7 +1174,7 @@ def _retr_tic_data(ds, ix, param, tec, units):
     ix : string
         'True' or 'False'
     param : string
-        'historical_new_capacity' or 'CAP' (IX only)
+        'ref_capacity' or 'CAP' (IX only)
     tec : string or list
         technology name
     units : string
@@ -1491,7 +1225,7 @@ def _retr_extr_data(ds, ix, param, tec, units):
     ix : string
         'True' or 'False'
     param: string
-        'historical_extraction' or 'EXT' (IX only)
+        'ref_extraction' or 'EXT' (IX only)
     tec: string or list
         extraction technology name
     units: string
@@ -1624,7 +1358,7 @@ def _retr_nic_data(ds, ix, param, tec, units):
     ix : string
         'True' or 'False'
     param : string
-        'historical_new_capacity' or 'CAP_NEW' (IX only)
+        'ref_new_capacity' or 'CAP_NEW' (IX only)
     tec : string or list
         technology name
     units : string
@@ -1640,7 +1374,7 @@ def _retr_nic_data(ds, ix, param, tec, units):
     if ix:
         df = ds.var(param, filter)
         # add a column "year_act"
-        df["year_act"] = df["year_vtg"]
+        df.loc[:, "year_act"] = df.loc[:, "year_vtg"]
         if df.empty:
             if verbose:
                 print((inspect.stack()[0][3], ": technology", tec, "dataframe empty"))
@@ -1865,20 +1599,16 @@ def _retr_crb_prc(ds, units):
     """
 
     # Retrieve VAR - PRICE_EMISSION
-    # TODO iiasa/message_ix#726 is reworking PRICE_EMISSION_NEW to become the new PRICE_EMISSION
-    # Adjust the name here according to what you're running on
-    var = "PRICE_EMISSION"
-    df = ds.var(var, {"type_tec": ["all"]})
+    df = ds.var("PRICE_EMISSION", {"type_tec": ["all"]})
     if df.empty:
-        if var == "PRICE_EMISSION":
-            df = ds.par("tax_emission", {"type_tec": ["all"]})
-            type_emi = df.type_emission.unique().tolist()
-            if len(type_emi) > 1:
-                df = df.loc[df.type_emission == type_emi[0]]
-                print("Reporting Carbon Price for", type_emi[0])
+        df = ds.par("tax_emission", {"type_tec": ["all"]})
+        type_emi = df.type_emission.unique().tolist()
+        if len(type_emi) > 1:
+            df = df.loc[df.type_emission == type_emi[0]]
+            print("Reporting Carbon Price for", type_emi[0])
         if df.empty:
             if verbose:
-                print((inspect.stack()[0][3], f": {var} dataframe empty"))
+                print((inspect.stack()[0][3], ": PRICE_EMISSION dataframe empty"))
             df = _make_emptydf("TCE", units="US$2005/tC")
 
         else:
@@ -2029,7 +1759,7 @@ def _retr_demands(ds, ix, commodity, level, units):
     return df.sort_index()
 
 
-def _retr_emif_data(ds, ix, param, emiflt, tec, units=None):
+def _retr_emif_data(ds, ix, param, emiflt, tec):
     """Retrieves coefficient with which a technology writes into a given
     relation for a single or set of technolgies.
 
@@ -2044,8 +1774,6 @@ def _retr_emif_data(ds, ix, param, emiflt, tec, units=None):
         filters specific to emission_factor tables
     tec: string or list
         technology name
-    unit : string
-        see unit doc
 
     Returns
     -------
@@ -2072,8 +1800,6 @@ def _retr_emif_data(ds, ix, param, emiflt, tec, units=None):
             df = _drap(df, ["value", "year_act"], drop=drop)
 
     # Clean up operations
-    if units:
-        df = _convert_units(df, units)
     df = _clean_up_regions(df)
     if ix:
         df = _clean_up_vintage(ds, df, units="-")
@@ -2224,6 +1950,7 @@ def _retr_var_cost(ds):
                     " check the GAMS postproccesing in MESSAGE_run!",
                 )
             )
+
     else:
         drop = ["mrg"]
         add = {"Technology": "COST_NODAL_NET"}
@@ -2308,7 +2035,7 @@ def _retr_land_emission(ds, tec, units, convert=1):
                     " the land emulator is being used",
                 )
             )
-        df = _make_emptydf(tec)
+        sys.exit(1)
     else:
         drop = ["emission"]
         df = _drap(df, ["value", "year"], drop=drop)
@@ -2353,7 +2080,7 @@ def _retr_land_output(ds, filter, units, convert=1):
                     " the land emulator is being used",
                 )
             )
-        df = _make_emptydf(filter["commodity"])
+        sys.exit(1)
     else:
         drop = ["commodity", "level", "time"]
         df = _drap(df, ["value", "year"], drop=drop)
