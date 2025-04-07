@@ -1,0 +1,16 @@
+# 2020 energy demand for OTHER transport
+#
+# Source: Extracted from IEA EWEB, 2022 OECD edition.
+# This version includes flow=PIPELINE.
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: TJ
+#
+node,     commodity, value
+Austria,  electr,     28852.4939
+Austria,  ethanol,     1117.8672
+Austria,  fueloil,    47936.8437
+Austria,  gas,        44148.5635
+Austria,  lightoil,  181115.1895

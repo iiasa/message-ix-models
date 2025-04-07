@@ -1,0 +1,30 @@
+# Load factor (occupancy) of LDVs
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+# (Implicitly passengers per vehicle.)
+#
+scenario,    node,    year, value
+SSP(2024).1, Austria, 2020, 1.65
+SSP(2024).1, Austria, 2110, 1.8
+
+SSP(2024).2, Austria, 2020, 1.65
+SSP(2024).2, Austria, 2110, 1.5
+
+SSP(2024).3, Austria, 2020, 1.65
+SSP(2024).3, Austria, 2110, 1.5
+
+SSP(2024).4, Austria, 2020, 1.65
+SSP(2024).4, Austria, 2110, 1.7
+
+SSP(2024).5, Austria, 2020, 1.65
+SSP(2024).5, Austria, 2110, 1.5
+
+LED,         Austria, 2020, 1.650
+LED,         Austria, 2030, 1.726
+LED,         Austria, 2040, 1.802
+LED,         Austria, 2050, 1.878
+LED,         Austria, 2110, 2.201

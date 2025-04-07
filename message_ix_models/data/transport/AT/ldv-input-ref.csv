@@ -1,0 +1,10 @@
+# LDV expected fuel economy
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: GWa / (Gvehicle km)
+#
+node_loc, mode, value
+Austria,  lo,   0.0759972640276514
+Austria,  hi,   0.0696641586920137
