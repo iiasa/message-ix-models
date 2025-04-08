@@ -100,9 +100,12 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
 
     # Diff data:
     # - Outer merge.
+    # - Fill NaNs resulting from insert_nans()
     # - Compute diff and select rows where diff is larger than a certain value
-    df = df_in.merge(df_out, how="outer", on=dims, suffixes=("_in", "_out")).query(
-        "abs(value_out - value_in) > 1e-16"
+    df = (
+        df_in.merge(df_out, how="outer", on=dims, suffixes=("_in", "_out"))
+        .fillna(0)
+        .query("abs(value_out - value_in) > 1e-16")
     )
 
     # Identify the directory from which IEA EWEB data is read
@@ -110,14 +113,18 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     # True if the fuzzed test data are being used
     iea_eweb_test_data = iea_eweb_dir.match("message_ix_models/data/test/iea/web")
 
+    # All regions and "World" have modified values
+    N_reg = {METHOD.A: 13, METHOD.B: 9, METHOD.C: 13}[method]
+    assert N_reg <= len(df["Region"].unique())
+
     # Number of modified values
     N_exp = {
         (METHOD.A, False): 10280,
         (METHOD.A, True): 10280,
-        (METHOD.B, False): 4660,
-        (METHOD.B, True): 3060,
-        (METHOD.C, False): 3220,
-        (METHOD.C, True): 3220,
+        (METHOD.B, False): 5060,
+        (METHOD.B, True): 3460,
+        (METHOD.C, False): 3500,
+        (METHOD.C, True): 3500,
     }[(method, iea_eweb_test_data)]
 
     if N_exp != len(df):
@@ -155,6 +162,22 @@ def expected_variables(flag: int, method: METHOD) -> set[str]:
             }
 
     return result
+
+
+def insert_nans(
+    df: pd.DataFrame, variable_expr: str, year_cond: Callable[[Hashable], bool]
+) -> pd.DataFrame:
+    """Replace zeros with :py:`np.nan` in `df`.
+
+    This occurs only where:
+
+    1. The 'Variable' column contains a string that matches `variable_expr`.
+    2. The `year_cond` returns :any:`True` for the column name.
+    """
+    return df.where(
+        ~df.Variable.str.fullmatch(variable_expr),
+        df.replace({c: {0: np.nan} for c in filter(year_cond, df.columns)}),
+    )
 
 
 @get_computer.minimum_version
@@ -217,16 +240,6 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
     assert expected_id == result.id
 
 
-def insert_nans(
-    df: pd.DataFrame, variable_expr: str, year_cond: Callable[[Hashable], bool]
-) -> pd.DataFrame:
-    """Replace zeros with :py:`np.nan` in `df`."""
-    return df.where(
-        ~df.Variable.str.fullmatch(variable_expr),
-        df.replace({c: {0: np.nan} for c in filter(year_cond, df.columns)}),
-    )
-
-
 @get_computer.minimum_version
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(test_context, input_csv_path, method) -> None:
@@ -235,7 +248,7 @@ def test_process_df(test_context, input_csv_path, method) -> None:
     df_in = pd.read_csv(input_csv_path).pipe(
         insert_nans,
         r"Emissions\|.*\|International Aviation",
-        lambda c: c.isnumeric() and int(c) >= 2020,
+        lambda c: str(c).isnumeric() and int(c) >= 2020,
     )
 
     # Code runs
