@@ -1,6 +1,6 @@
-import re
-from typing import Any, Union
+import copy
 
+import numpy as np
 import pandas as pd
 from message_ix import make_df
 
@@ -22,7 +22,9 @@ def feed_make_df_sl(rule: dict, df: any, skip_kwargs: list[str] = []) -> pd.Data
     return kwargs
 
 
-def feed_make_df_pl(rule: dict, dfs: dict, skip_kwargs: list[str] = [], default_df_key: str = "rows") -> dict:
+def feed_make_df_pl(
+    rule: dict, dfs: dict, skip_kwargs: list[str] = [], default_df_key: str = "rows"
+) -> dict:
     """
     Feed the make_df function with the rule parameters.
     For each value call the eval_field function to evaluate the value.
@@ -38,12 +40,13 @@ def feed_make_df_pl(rule: dict, dfs: dict, skip_kwargs: list[str] = [], default_
     """
     kwargs = {k: v for k, v in rule.items() if k != "type" and k not in skip_kwargs}
 
+    df_search_terms = {df_key: f"{df_key}[" for df_key in dfs}  # precompute once
     for k, v in kwargs.items():
         if isinstance(v, str):
             # Extract dataframe name from string if present (e.g., "df_out_dist[tec]")
             df_key = default_df_key
-            for possible_df_key in dfs.keys():
-                if v.startswith(f"{possible_df_key}["):
+            for possible_df_key, search_term in df_search_terms.items():
+                if search_term in v:
                     df_key = possible_df_key
                     break
 
@@ -53,94 +56,185 @@ def feed_make_df_pl(rule: dict, dfs: dict, skip_kwargs: list[str] = [], default_
     return kwargs
 
 
-def feed_make_df(rule: dict, rule_dfs: pd.Series | pd.DataFrame | dict, skip_kwargs: list[str] = []) -> dict:
+def feed_make_df(
+    rule: dict,
+    rule_dfs: pd.Series | pd.DataFrame | dict,
+    skip_kwargs: list[str] = [],
+    default_df_key: str | None = None,
+) -> dict:
     match rule_dfs:
         case dict():
-            return feed_make_df_pl(rule, rule_dfs, skip_kwargs)
+            return feed_make_df_pl(rule, rule_dfs, skip_kwargs, default_df_key)
         case pd.Series() | pd.DataFrame():
             return feed_make_df_sl(rule, rule_dfs, skip_kwargs)
         case _:
             raise ValueError(f"Invalid input type for rule_dfs: {type(rule_dfs)}")
 
+    # Helper to reduce duplication when calling standard_operation.
+def run_standard(r: dict,
+                    base_args: dict,
+                    extra_args: dict | None = None,
+                    broadcast_year: any = None) -> pd.DataFrame:
+    """Merge base args and rule-specific pipe arguments then call standard_operation."""
 
+    args = {**base_args, **r.get("pipe", {})}
+    kwargs = {}
+    if extra_args is not None:
+        kwargs["extra_args"] = extra_args
+    if broadcast_year is not None:
+        kwargs["broadcast_year"] = broadcast_year
+    return standard_operation(rule=r, **args, **kwargs)
 
 def standard_operation(
     *,
     rule: dict,
     rule_dfs: pd.Series | pd.DataFrame | dict,
+    default_df_key: str | None = None,
     lt: pd.Series | pd.DataFrame | int | None = None,
     lt_arg: str | None = None,
     skip_kwargs: list,
-    df_node: pd.DataFrame | None = None,
-    df_node_arg: str | None = None,
-    year_wat: tuple,
-    first_year: int,
-    sub_time: tuple = None,
+    node_loc: pd.DataFrame | None = None,
+    node_loc_arg: str | None = None,
+    year_wat: tuple | None = None,
+    first_year: int | None = None,
+    sub_time: tuple | None = None,
     flag_same_time: bool = False,
     flag_same_node: bool = False,
     flag_broadcast: bool = True,
     flag_map_yv_ya_lt: bool = True,
     flag_node_loc: bool = True,
     flag_time: bool = True,
+    broadcast_year: int | None = None,
     extra_args: dict | None = None,
 ):
     """
-    Creates a DataFrame using `make_df` and applies a series of pipe operations based on various flags.
+    Creates a DataFrame using `make_df` and applies a series of
+    pipe operations based on various flags.
 
     Operations include:
       - Broadcasting with `broadcast` if flag_broadcast is True.
-      - Mapping year variables via `map_yv_ya_lt` if flag_map_yv_ya_lt is True and lt is of the appropriate type.
-      - Adding additional keyword arguments such as node location and time based on provided flags.
+      - Mapping year variables via `map_yv_ya_lt` if flag_map_yv_ya_lt is True
+        and lt is of the appropriate type.
+      - Adding additional keyword arguments such as node location and time
+        based on provided flags.
       - Optionally applying `same_time` and `same_node` functions.
     """
-    # Create the initial DataFrame.
-    out = make_df(
-        rule["type"],
-        **feed_make_df(rule, rule_dfs, skip_kwargs),
-    )
 
-    # Build pipe arguments and keyword arguments if either broadcast or mapping is enabled.
-    if flag_broadcast or flag_map_yv_ya_lt:
-        pipe_arguments = []
+    # Define helper to build the list of pipe functions/arguments.
+    def build_pipe_arguments() -> list:
+        pipe_args = []
         if flag_broadcast:
-            pipe_arguments.append(broadcast)
-
-        # Use pattern matching to determine the mapping function argument.
-        match (flag_map_yv_ya_lt, lt):
-            case (True, pd.Series() | pd.DataFrame()):
-                # Ensure lt_arg is provided to extract the proper column.
-                if lt_arg is not None:
-                    pipe_arguments.append(
-                        map_yv_ya_lt(periods=year_wat, lt=lt[lt_arg], ya=first_year)
+            pipe_args.append(broadcast)
+        if broadcast_year is not None:
+            pipe_args.append(broadcast_year)
+        if flag_map_yv_ya_lt:
+            # Use structural pattern matching on lt's type.
+            match lt:
+                case pd.Series() | pd.DataFrame():
+                    if lt_arg is not None:
+                        pipe_args.append(
+                            map_yv_ya_lt(periods=year_wat, lt=lt[lt_arg], ya=first_year)
+                        )
+                case int():
+                    pipe_args.append(
+                        map_yv_ya_lt(periods=year_wat, lt=lt, ya=first_year)
                     )
-            case (True, int()):
-                pipe_arguments.append(
-                    map_yv_ya_lt(periods=year_wat, lt=lt, ya=first_year)
+                case _:
+                    pass
+        return pipe_args
+
+    # Define helper to build additional keyword arguments.
+    def build_kw_args() -> dict:
+        kw = dict(extra_args) if extra_args is not None else {}
+        match (flag_node_loc, node_loc, node_loc_arg):
+            case (True, pd.DataFrame(), str()):
+                kw["node_loc"] = node_loc[node_loc_arg]
+            case (True, np.ndarray(), None):
+                kw["node_loc"] = node_loc
+            case (True, None, None):
+                raise ValueError(
+                    "node_loc and node_loc_arg must be provided if flag_node_loc is True"
                 )
-            case _:
-                pass
+            case (True, _, None):
+                raise ValueError(
+                    f"unexpected data type for node_loc : {type(node_loc)}"
+                )
+        if flag_time:
+            kw["time"] = sub_time
+        return kw
 
-        # Build keyword arguments (kw) based on the flags.
-        if flag_broadcast and (not flag_map_yv_ya_lt) and (not flag_time):
-            kw = dict(extra_args) if extra_args is not None else {}
-            if flag_node_loc:
-                kw["node_loc"] = df_node[df_node_arg]
-        else:
-            kw = {}
-            if extra_args is not None:
-                kw.update(extra_args)
-            if flag_node_loc and df_node is not None and df_node_arg is not None:
-                kw["node_loc"] = df_node[df_node_arg]
-            if flag_time:
-                kw["time"] = sub_time
+    # Create the initial DataFrame.
+    if default_df_key is None:
+        out = make_df(
+            rule["type"],
+            **feed_make_df(rule, rule_dfs, skip_kwargs),
+        )
+    else:
+        out = make_df(
+            rule["type"],
+            **feed_make_df(rule, rule_dfs, skip_kwargs, default_df_key),
+        )
 
-        # Apply the pipe with the constructed positional and keyword arguments.
+    # If broadcast or mapping is enabled, construct pipe arguments and keyword args.
+    if flag_broadcast or flag_map_yv_ya_lt:
+        pipe_arguments = build_pipe_arguments()
+        kw = build_kw_args()
         out = out.pipe(*pipe_arguments, **kw)
 
-    # Apply additional pipes if their corresponding flags are set.
+    # Optionally apply same_time and same_node pipes.
     if flag_same_time:
         out = out.pipe(same_time)
     if flag_same_node:
         out = out.pipe(same_node)
 
     return out
+
+
+# Helper function for deep merging
+def deep_merge(base, diff):
+    """Recursively merges diff dict into a deep copy of base dict."""
+    merged = copy.deepcopy(base)  # Start with a deep copy of base
+    for key, value in diff.items():
+        # Check if the key exists in merged and both values are dictionaries
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            # Overwrite or add the key-value pair from diff
+            merged[key] = value
+    return merged
+
+
+class Rule:
+    def return_base(self):
+        return self.base()
+
+    def return_diff(self):
+        return self.diff()
+
+    def get_rule(self):
+        result = []
+        base_dict = self.base()  # Get the base dictionary once
+        for diff_item in self.Diff:
+            if diff_item["condition"] == "SKIP":
+                continue
+            if diff_item:  # Only process non-empty dictionaries
+                # Perform a deep merge instead of shallow update
+                merged = deep_merge(base_dict, diff_item)
+                result.append(merged)
+        return result
+
+    def change_unit(self, conversion_factor: float, new_unit: str):
+        current_unit = self.base().get("unit")
+        # replace current unit with new unit without magic methods
+        self.base()["unit"] = new_unit
+        self.base().value *= conversion_factor
+
+    def __init__(self, Base=None, Diff=None):
+        self.Base = Base or {}
+        self.Diff = Diff or [{}, {}]
+
+    def base(self):
+        return self.Base
+
+    def diff(self):
+        return self.Diff
