@@ -89,8 +89,8 @@ def apply_spec(
 
     if spec:
         dump: Dict[str, pd.DataFrame] = {}  # Removed data
-
-        for set_name in scenario.set_list():
+        sets = scenario.set_list()[::-1]
+        for set_name in sets:
             # Check whether this set is mentioned at all in the spec
             if 0 == sum(map(lambda info: len(info.set[set_name]), spec.values())):
                 # Not mentioned; don't do anything
