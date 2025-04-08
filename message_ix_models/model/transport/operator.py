@@ -2,7 +2,7 @@
 
 import logging
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from functools import partial
 from itertools import product
 from operator import gt, le, lt
@@ -26,7 +26,6 @@ from message_ix_models.util import (
     MappingAdapter,
     datetime_now_with_tz,
     minimum_version,
-    nodes_ex_world,
     show_versions,
 )
 from message_ix_models.util.genno import as_quantity
@@ -71,8 +70,6 @@ __all__ = [
     "max",
     "maybe_select",
     "min",
-    "nodes_ex_world",  # Re-export from message_ix_models.util TODO do this upstream
-    "nodes_world_agg",
     "price_units",
     "quantity_from_config",
     "relabel2",
@@ -830,41 +827,6 @@ def indexers_usage(technologies: list[Code]) -> dict:
         "cg": xr.DataArray(labels["cg"], coords=[("t_new", labels["t_new"])]),
         "t": xr.DataArray(labels["t"], coords=[("t_new", labels["t_new"])]),
     }
-
-
-def nodes_world_agg(config, dim: Hashable = "nl") -> dict[Hashable, Mapping]:
-    """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
-
-    This mapping should be used with :func:`.genno.operator.aggregate`, giving the
-    argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
-
-    .. todo:: move to :mod:`message_ix_models.report.operator`.
-    """
-    result = {}
-
-    cl = get_codelist(f"node/{config['regions']}")
-    for n in cl:
-        # "World" node should have be top-level (its parent is the `cl` itself) and have
-        # some children. Countries (from pycountry) that are omitted from a mapping have
-        # no children.
-        if n.parent is cl and len(n.child):
-            name = str(n)
-
-            # FIXME Remove. This is a hack to suit the legacy reporting, which expects
-            #       global aggregates at *_GLB rather than "World".
-            new_name = f"{config['regions']}_GLB"
-            log.info(f"Aggregates for {n!r} will be labelled {new_name!r}")
-            name = new_name
-
-            # Global total as aggregate of child nodes
-            result = {name: list(map(str, n.child))}
-
-            # Also add "no-op" aggregates e.g. "R12_AFR" is the sum of ["R12_AFR"]
-            result.update({c: [c] for c in map(str, n.child)})
-
-            return {dim: result}
-
-    raise RuntimeError("Failed to identify the World node")
 
 
 def price_units(qty: "AnyQuantity") -> "AnyQuantity":
