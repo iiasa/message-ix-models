@@ -559,8 +559,18 @@ def process_df(
     # Prepare all other tasks
     c = get_computer(data.iloc[0, :], method, platform_name=platform_name)
 
-    # Input data: convert `data` to a Quantity with the appropriate structure
-    c.add(K.input, to_quantity, data, **IAMC_KW)
+    def fillna(df: pd.DataFrame) -> pd.DataFrame:
+        """Replace :py:`np.nan` with 0.0 in certain rows and columns."""
+        mask = df.Variable.str.fullmatch(
+            r"Emissions\|[^\|]+\|Energy\|Demand\|(Bunkers|Transportation).*"
+        )
+        to_fill = {c: 0.0 for c in df.columns if str(c).isnumeric() and int(c) >= 2020}
+        return df.where(~mask, df.fillna(to_fill))
+
+    # Input data: replace NaN with 0
+    c.add(K.input[0], fillna, data)
+    # Convert `data` to a Quantity with the appropriate structure
+    c.add(K.input, to_quantity, K.input[0], **IAMC_KW)
 
     # Compute and return the result
     return c.get("target")

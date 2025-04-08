@@ -1,5 +1,7 @@
+from collections.abc import Callable, Hashable
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -215,10 +217,26 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
     assert expected_id == result.id
 
 
+def insert_nans(
+    df: pd.DataFrame, variable_expr: str, year_cond: Callable[[Hashable], bool]
+) -> pd.DataFrame:
+    """Replace zeros with :py:`np.nan` in `df`."""
+    return df.where(
+        ~df.Variable.str.fullmatch(variable_expr),
+        df.replace({c: {0: np.nan} for c in filter(year_cond, df.columns)}),
+    )
+
+
 @get_computer.minimum_version
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(test_context, input_csv_path, method) -> None:
-    df_in = pd.read_csv(input_csv_path)
+    # - Read input data
+    # - Replace some 0 values with np.nan to replicate conditions in calling code.
+    df_in = pd.read_csv(input_csv_path).pipe(
+        insert_nans,
+        r"Emissions\|.*\|International Aviation",
+        lambda c: c.isnumeric() and int(c) >= 2020,
+    )
 
     # Code runs
     df_out = process_df(df_in, method=method)
