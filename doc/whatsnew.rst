@@ -44,9 +44,10 @@ SSP :ref:`ssp-2024`/ScenarioMIP
 
 Improve :mod:`.ssp.transport`:
 
-- Add :func:`~.ssp.transport.method_B` and make this the default (:pull:`259`).
-- Add :func:`~.ssp.transport.method_C` (:issue:`305`, :pull:`325`).
-- Add :func:`~.ssp.transport.process_df` (:pull:`303`).
+- Add :func:`~.ssp.transport.method_B` and make this the default (:pull:`259`, :pull:`330`).
+- Add :func:`~.ssp.transport.method_C` (:issue:`305`, :pull:`325`, :pull:`330`).
+- Add :func:`~.ssp.transport.process_df` (:pull:`303`);
+  handle data frames containing :py:`np.NaN` (:pull:`330`).
 - Adapt to revised ‘variable’ codes (:pull:`309`, :issue:`304`).
 
 Transport

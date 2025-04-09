@@ -2,7 +2,7 @@
 
 import logging
 import re
-from collections.abc import Callable, Hashable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Mapping, MutableMapping, Sequence
 from functools import reduce
 from itertools import filterfalse, product
 from typing import TYPE_CHECKING, Any, Optional, Union
@@ -48,6 +48,7 @@ __all__ = [
     "merge_data",
     "model_periods",
     "nodes_ex_world",
+    "nodes_world_agg",
     "quantity_from_iamc",
     "remove_ts",
     "select_expand",
@@ -242,6 +243,42 @@ def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:
     """
     y0 = cat_year.query("type_year == 'firstmodelyear'")["year"].item()
     return list(filter(lambda year: y0 <= year, y))
+
+
+def nodes_world_agg(
+    config: dict, *, dim: Hashable = "nl", name: Optional[str] = "{}_GLB"
+) -> Mapping[Hashable, Mapping[Hashable, list[str]]]:
+    """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
+
+    This mapping should be used with :func:`.genno.operator.aggregate`, giving the
+    argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
+    """
+    from message_ix_models.model.structure import get_codelist
+
+    cl = get_codelist(f"node/{config['regions']}")
+
+    # "World" node should have be top-level (its parent is the `cl` itself) and have
+    # some children. Countries (from pycountry) that are omitted from a mapping have no
+    # children.
+    try:
+        node = next(filter(lambda n: n.parent is cl and len(n.child), cl))
+    except StopIteration:
+        raise RuntimeError("Failed to identify a 'World' node")
+
+    if name:
+        # FIXME Remove. This is a hack to suit the legacy reporting, which expects
+        #       global aggregates at *_GLB rather than "World".
+        name = name.format(config["regions"])
+        log.info(f"Aggregates for {node!r} will be labelled {name!r}")
+    else:
+        name = node.id
+
+    # Global total as aggregate of child nodes
+    result: MutableMapping = {name: list(map(str, node.child))}
+    # Also add "no-op" aggregates e.g. "R12_AFR" is the sum of ["R12_AFR"]
+    result.update({c: [c] for c in map(str, node.child)})
+
+    return {dim: result}
 
 
 def remove_ts(

@@ -265,6 +265,7 @@ def get_computer(
     context = Context(model=ModelConfig(regions="R12"))
     # Store in `c` for reference by other operations
     c.add("context", context)
+    c.graph["config"].update(regions="R12")
 
     # Store a model name and scenario name from a single row of the data
     model_name, scenario_name = row0[["Model", "Scenario"]]
@@ -413,11 +414,15 @@ def method_B(c: "Computer") -> None:
     c.add(fe.iea[1], "aggregate", fe.iea[0], g, keep=False)
 
     # Rename dimensions
-    c.add(fe.cnt, "rename_dims", fe.iea[1], name_dict=dict(flow="t", product="c"))
+    c.add(fe.cnt[0], "rename_dims", fe.iea[1], name_dict=dict(flow="t", product="c"))
 
-    # Compute ratio
-    c.add(fe.share[0], "select", fe.cnt, indexers=dict(t="_1"), drop=True)
-    c.add(fe.share[1], "select", fe.cnt, indexers=dict(t="_2"), drop=True)
+    # Global total
+    c.add("n::world agg", "nodes_world_agg", "config", dim="n", name=None)
+    c.add(fe.cnt[1], "aggregate", fe.cnt[0], "n::world agg", keep=False)
+
+    # Ratio of _1 (DOMESAIR - AVBUNK) to _2 (TOTTRANS - AVBUNK)
+    c.add(fe.share[0], "select", fe.cnt[1], indexers=dict(t="_1"), drop=True)
+    c.add(fe.share[1], "select", fe.cnt[1], indexers=dict(t="_2"), drop=True)
     c.add(fe.share, "div", fe.share[0], fe.share[1])
 
     # Prepare remaining calculations
@@ -467,11 +472,11 @@ def method_BC_common(c: "Computer", k_fe_share: "Key") -> None:
 
     # Relabel:
     # - c[ommodity]: 'Liquids|Oil' (IAMC 'variable' component) → 'lightoil'
-    # - n[ode]: 'AFR' → 'R12_AFR' etc.
-    labels = dict(
-        c={"Liquids|Oil": "lightoil"},
-        n={n.id.partition("_")[2]: n.id for n in get_codelist("node/R12")},
-    )
+    # - n[ode]: "AFR" → "R12_AFR" etc. "World" is not changed.
+    cl = get_codelist("node/R12")
+    labels = dict(c={"Liquids|Oil": "lightoil"}, n={})
+    for n in filter(lambda n: len(n.child) and n.id != "World", cl):
+        labels["n"][n.id.partition("_")[2]] = n.id
     c.add(k.fe_in[2] / "UNIT", "relabel", k.fe_in[1] / "UNIT", labels=labels)
 
     ### Compute estimate of emissions
@@ -496,7 +501,7 @@ def method_BC_common(c: "Computer", k_fe_share: "Key") -> None:
     c.add(k.units, e_UNIT, "e::codelist")
     c.add(K.emi[2], "mul", k.emi0[1], k.units, K.bcast)
 
-    # Change labels: restore e.g. "AFR" given "R12_AFR"
+    # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
     labels = dict(n={v: k for k, v in labels["n"].items()})
     c.add(K.emi, "relabel", K.emi[2], labels=labels)
 
@@ -527,15 +532,20 @@ def method_C(c: "Computer") -> None:
     # Prepare `c` to compute the final energy share for aviation
     k = Keys(
         # Added by .transport.base.prepare_reporter()
-        base="in:nl-t-ya-c:transport+units+0",
+        base="in:nl-t-ya-c:transport+units",
         share0=f"fe share:c-nl-ya:{L}",
         share1=f"fe share:c-n-y:{L}",
     )
 
+    # Relabel "R12_GLB" (added by .report.transport.aggregate()) to "World"
+    labels = {"nl": {"R12_GLB": "World"}}
+    c.add(k.base[1], "relabel", k.base[0], labels=labels, sums=True)
+
     # Select the numerator
-    c.add(k.share0["num"], "select", k.base, indexers=dict(t=["AIR"]), drop=True)
-    # Compute the ratio
-    c.add(k.share0, "div", k.share0["num"], k.base / "t")
+    c.add(k.share0["num"], "select", k.base[1], indexers=dict(t=["AIR"]), drop=True)
+    # Ratio of AIR to the total
+    c.add(k.share0, "div", k.share0["num"], k.base[1] / "t")
+
     # Rename dimensions as expected by method_BC_common
     c.add(k.share1, "rename_dims", k.share0, name_dict={"nl": "n", "ya": "y"})
 
@@ -559,8 +569,18 @@ def process_df(
     # Prepare all other tasks
     c = get_computer(data.iloc[0, :], method, platform_name=platform_name)
 
-    # Input data: convert `data` to a Quantity with the appropriate structure
-    c.add(K.input, to_quantity, data, **IAMC_KW)
+    def fillna(df: pd.DataFrame) -> pd.DataFrame:
+        """Replace :py:`np.nan` with 0.0 in certain rows and columns."""
+        mask = df.Variable.str.fullmatch(
+            r"Emissions\|[^\|]+\|Energy\|Demand\|(Bunkers|Transportation).*"
+        )
+        to_fill = {c: 0.0 for c in df.columns if str(c).isnumeric() and int(c) >= 2020}
+        return df.where(~mask, df.fillna(to_fill))
+
+    # Input data: replace NaN with 0
+    c.add(K.input[0], fillna, data)
+    # Convert `data` to a Quantity with the appropriate structure
+    c.add(K.input, to_quantity, K.input[0], **IAMC_KW)
 
     # Compute and return the result
     return c.get("target")
