@@ -22,14 +22,32 @@ from message_ix_models.model.water.data.demand_rules import (
     URBAN_DEMAND,
     URBAN_UNCOLLECTED_WST,
     WATER_AVAILABILITY,
-    eval_field,
-    load_rules,
 )
-from message_ix_models.util import broadcast, minimum_version, package_data_path
+from message_ix_models.model.water.data.infrastructure_utils import (
+    run_standard,
+)
+from message_ix_models.model.water.utils import (
+    eval_field,
+    safe_concat,
+)
+from message_ix_models.util import minimum_version, package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
 
+
+def load_rules_special(rule: dict, df_processed: pd.DataFrame = None) -> pd.DataFrame:
+    """
+    Load a demand rule into a DataFrame. If a processed DataFrame is provided,
+    return it directly. Otherwise, construct the DataFrame using the rule's
+    string templates and the legacy make_df routine.
+    """
+    r = rule.copy()
+    skip_kwargs = ["condition", "pipe"]
+    rule_dfs = df_processed.copy()
+    base_args = {"skip_kwargs": skip_kwargs, "rule_dfs": rule_dfs}
+    df_rule = run_standard(r, base_args)
+    return df_rule
 
 @minimum_version("python 3.10")
 def get_basin_sizes(
@@ -45,7 +63,7 @@ def get_basin_sizes(
     return_tuple: tuple[Union[pd.Series, Literal[0]], Union[pd.Series, Literal[0]]] = (
         sizes_dev,
         sizes_ind,
-    )  
+    )
     return return_tuple
 
 
@@ -60,6 +78,7 @@ def set_target_rate(df: pd.DataFrame, node: str, year: int, target: float) -> No
             < target
         ):
             df.at[index, "value"] = target
+
 
 @minimum_version("message_ix 3.7")
 @minimum_version("python 3.10")
@@ -151,11 +170,10 @@ def target_rate_trt(df: pd.DataFrame, basin: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+
 def _preprocess_availability_data(
-    df: pd.DataFrame,
-    monthly: bool = False,
-    df_x: pd.DataFrame = None,
-     info = None) -> pd.DataFrame:
+    df: pd.DataFrame, monthly: bool = False, df_x: pd.DataFrame = None, info=None
+) -> pd.DataFrame:
     """
     Preprocesses availability data
 
@@ -184,6 +202,7 @@ def _preprocess_availability_data(
     df = pd.concat([df, df2210])
     df = df[df["year"].isin(info.Y)]
     return df
+
 
 @minimum_version("python 3.10")
 def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
@@ -243,12 +262,13 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
             raise ValueError(f"Invalid time period: {context.time}")
 
     df_sw = pd.read_csv(path1)
-    df_sw = _preprocess_availability_data(df_sw, monthly=monthly, df_x = df_x, info = info)
+    df_sw = _preprocess_availability_data(df_sw, monthly=monthly, df_x=df_x, info=info)
 
     df_gw = pd.read_csv(path2)
-    df_gw = _preprocess_availability_data(df_gw, monthly=monthly, df_x = df_x, info = info)
+    df_gw = _preprocess_availability_data(df_gw, monthly=monthly, df_x=df_x, info=info)
 
     return df_sw, df_gw
+
 
 @minimum_version("python 3.10")
 def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
@@ -275,55 +295,36 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
 
     df_sw, df_gw = read_water_availability(context)
     water_availability = []
-    for rule in WATER_AVAILABILITY:
-        match rule["df_source"]:
-            case "df_sw":
-                df_source = df_sw
-            case "df_gw":
-                df_source = df_gw
+    for rule in WATER_AVAILABILITY.get_rule():
+        match rule["condition"]:
+            case "sw":
+                rule_df = df_sw
+            case "gw":
+                rule_df = df_gw
             case _:
-                raise ValueError(f"Invalid df_source: {rule['df_source']}")
+                raise ValueError(f"Invalid df_source: {rule['condition']}")
 
-        dmd_df = make_df(
-            rule["type"],
-            node="B"+ eval_field(rule["node"], df_source),
-            commodity=rule["commodity"],
-            level=rule["level"],
-            year=eval_field(rule["year"], df_source),
-            time=eval_field(rule["time"], df_source),
-            value= -eval_field(rule["value"], df_source),
-            unit=rule["unit"],
-        )
+        dmd_df = load_rules_special(rule, rule_df)
         water_availability.append(dmd_df)
 
-    dmd_df = pd.concat(water_availability)
+    dmd_df = safe_concat(water_availability)
 
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x <= 0 else 0)
 
     results["demand"] = dmd_df
 
-
     share_constraints_gw = []
-    for rule in SHARE_CONSTRAINTS_GW:
+    for rule in SHARE_CONSTRAINTS_GW.get_rule():
         # share constraint lower bound on groundwater
-        if rule["df_source1"] == "df_gw" and rule["df_source2"] == "df_sw":
-            df_source1 = df_gw
-            df_source2 = df_sw
-        else:
-            raise ValueError(f"Invalid df_source: {rule['df_source1']} or {rule['df_source2']}")
-
-        df_share = make_df(
-            rule["type"],
-            shares=rule["shares"],
-            node_share="B" + eval_field(rule["node"], df_source1),
-            year_act=eval_field(rule["year"], df_source1),
-            time=eval_field(rule["time"], df_source1),
-            value=eval_field(rule["value"], df_source1, df_source2),
-            unit=rule["unit"],
+        # FIXME: Precomputing, standard function doesn't support repeated df evaluations
+        rule["value"] = eval_field(
+            rule["value"],
+            df_gw,
+            df_sw
         )
-        share_constraints_gw.append(df_share)
+        share_constraints_gw.append(load_rules_special(rule, df_gw))
 
-    share_constraints_gw = pd.concat(share_constraints_gw)
+    share_constraints_gw = safe_concat(share_constraints_gw)
     share_constraints_gw["value"] = share_constraints_gw["value"].fillna(0)
 
     results["share_commodity_lo"] = share_constraints_gw
@@ -416,26 +417,37 @@ def _preprocess_demand_data_stage1(context: "Context") -> pd.DataFrame:
     df_dmds["time"] = "year"
     # if sub-annual timesteps are used, merge with monthly data
     if "year" not in context.time:
-        PATH = package_data_path("water", "demands", "harmonized", region, "ssp2_m_water_demands.csv")
+        PATH = package_data_path(
+            "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
+        )
         df_m: pd.DataFrame = pd.read_csv(PATH)
         df_m.value *= 30  # conversion from mcm/day to mcm/month
         df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
-        df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = "urbann_withdrawal2_baseline"
-        df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = "urbann_return2_baseline"
+        df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
+            "urbann_withdrawal2_baseline"
+        )
+        df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
+            "urbann_return2_baseline"
+        )
         df_m = df_m[["year", "pid", "variable", "value", "month"]]
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
         # remove yearly parts before merging with monthly data
-        df_dmds = df_dmds[~df_dmds["variable"].isin([
-            "urban_withdrawal2_baseline",
-            "rural_withdrawal_baseline",
-            "manufacturing_withdrawal_baseline",
-            "manufacturing_return_baseline",
-            "urban_return2_baseline",
-            "rural_return_baseline",
-        ])]
-        df_dmds = pd.concat([df_dmds, df_m])
+        df_dmds = df_dmds[
+            ~df_dmds["variable"].isin(
+                [
+                    "urban_withdrawal2_baseline",
+                    "rural_withdrawal_baseline",
+                    "manufacturing_withdrawal_baseline",
+                    "manufacturing_return_baseline",
+                    "urban_return2_baseline",
+                    "rural_return_baseline",
+                ]
+            )
+        ]
+        df_dmds = safe_concat([df_dmds, df_m])
     return df_dmds
+
 
 def _preprocess_demand_data_stage2(df_dmds: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """
@@ -448,17 +460,44 @@ def _preprocess_demand_data_stage2(df_dmds: pd.DataFrame) -> dict[str, pd.DataFr
     Returns
     """
     variables_operations = {
-        "urban_withdrawal2_baseline": {"df_name": "urban_withdrawal_df", "reset_index": False},
-        "rural_withdrawal_baseline": {"df_name": "rural_withdrawal_df", "reset_index": False},
-        "manufacturing_withdrawal_baseline": {"df_name": "industrial_withdrawals_df", "reset_index": False},
-        "manufacturing_return_baseline": {"df_name": "industrial_return_df", "reset_index": False},
+        "urban_withdrawal2_baseline": {
+            "df_name": "urban_withdrawal_df",
+            "reset_index": False,
+        },
+        "rural_withdrawal_baseline": {
+            "df_name": "rural_withdrawal_df",
+            "reset_index": False,
+        },
+        "manufacturing_withdrawal_baseline": {
+            "df_name": "industrial_withdrawals_df",
+            "reset_index": False,
+        },
+        "manufacturing_return_baseline": {
+            "df_name": "industrial_return_df",
+            "reset_index": False,
+        },
         "urban_return2_baseline": {"df_name": "urban_return_df", "reset_index": True},
         "rural_return_baseline": {"df_name": "rural_return_df", "reset_index": True},
-        "urban_connection_rate_baseline": {"df_name": "urban_connection_rate_df", "reset_index": True},
-        "rural_connection_rate_baseline": {"df_name": "rural_connection_rate_df", "reset_index": True},
-        "urban_treatment_rate_baseline": {"df_name": "urban_treatment_rate_df", "reset_index": True},
-        "rural_treatment_rate_baseline": {"df_name": "rural_treatment_rate_df", "reset_index": True},
-        "urban_recycling_rate_baseline": {"df_name": "df_recycling", "reset_index": True},
+        "urban_connection_rate_baseline": {
+            "df_name": "urban_connection_rate_df",
+            "reset_index": True,
+        },
+        "rural_connection_rate_baseline": {
+            "df_name": "rural_connection_rate_df",
+            "reset_index": True,
+        },
+        "urban_treatment_rate_baseline": {
+            "df_name": "urban_treatment_rate_df",
+            "reset_index": True,
+        },
+        "rural_treatment_rate_baseline": {
+            "df_name": "rural_treatment_rate_df",
+            "reset_index": True,
+        },
+        "urban_recycling_rate_baseline": {
+            "df_name": "df_recycling",
+            "reset_index": True,
+        },
     }
     Results = {}
     for variable, attrs in variables_operations.items():
@@ -471,9 +510,9 @@ def _preprocess_demand_data_stage2(df_dmds: pd.DataFrame) -> dict[str, pd.DataFr
     return Results
 
 
-
 @minimum_version("message_ix 3.7")
 @minimum_version("python 3.10")
+# FIXME: reduce complexity 20 --> 11
 def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water sectoral demands
@@ -533,7 +572,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             df_recycling = df_recycling_sdg = target_rate_trt(df_recycling, df_basin)
         else:
             pol_scen = context.SDG
-            check_dm = df_dmds[df_dmds["variable"] == "urban_connection_rate_" + pol_scen]
+            check_dm = df_dmds[
+                df_dmds["variable"] == "urban_connection_rate_" + pol_scen
+            ]
             if check_dm.empty:
                 raise ValueError(f"policy data is missing for the {pol_scen} scenario.")
             urban_connection_rate_df = urban_connection_rate_df_sdg = df_dmds[
@@ -556,7 +597,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 df_dmds["variable"] == "urban_recycling_rate_" + pol_scen
             ]
             df_recycling.reset_index(drop=True, inplace=True)
-        all_rates_sdg = pd.concat(
+        all_rates_sdg = safe_concat(
             [
                 urban_connection_rate_df_sdg,
                 rural_connection_rate_df_sdg,
@@ -565,88 +606,106 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 df_recycling_sdg,
             ]
         )
-        all_rates_sdg["variable"] = [x.replace("baseline", pol_scen) for x in all_rates_sdg["variable"]]
-        all_rates = pd.concat([pd.concat([
-            urban_connection_rate_df,
-            rural_connection_rate_df,
-            urban_treatment_rate_df,
-            rural_treatment_rate_df,
-            df_recycling,
-        ]), all_rates_sdg])
+        all_rates_sdg["variable"] = [
+            x.replace("baseline", pol_scen) for x in all_rates_sdg["variable"]
+        ]
+        all_rates = safe_concat(
+            [
+                safe_concat(
+                    [
+                        urban_connection_rate_df,
+                        rural_connection_rate_df,
+                        urban_treatment_rate_df,
+                        rural_treatment_rate_df,
+                        df_recycling,
+                    ]
+                ),
+                all_rates_sdg,
+            ]
+        )
         save_path = package_data_path("water", "demands", "harmonized", context.regions)
         all_rates.to_csv(save_path / "all_rates_SSP2.csv", index=False)
 
     # urban water demand and return. 1e-3 from mcm to km3
     urban_dmds = []
-    for r in URBAN_DEMAND:
+    for r in URBAN_DEMAND.get_rule():
         match r["commodity"]:
             case "urban_mw":
                 urban_mw = urban_withdrawal_df.reset_index(drop=True)
                 urban_mw = urban_mw.merge(
-                    urban_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
+                    urban_connection_rate_df.drop(columns=["variable", "time"]).rename(
+                        columns={"value": "rate"}
+                    )
                 )
                 urban_mw["value"] = (1e-3 * urban_mw["value"]) * urban_mw["rate"]
 
-                urban_dmds.append(load_rules(r, urban_mw))
+                urban_dmds.append(load_rules_special(r, urban_mw))
             case "urban_disconnected":
                 urban_dis = urban_withdrawal_df.reset_index(drop=True)
                 urban_dis = urban_dis.merge(
-                    urban_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
+                    urban_connection_rate_df.drop(columns=["variable", "time"]).rename(
+                        columns={"value": "rate"}
+                    )
                 )
-                urban_dis["value"] = (1e-3 * urban_dis["value"]) * (1 - urban_dis["rate"])
-
-                urban_dmds.append(load_rules(r, urban_dis))
+                urban_dis["value"] = (1e-3 * urban_dis["value"]) * (
+                    1 - urban_dis["rate"]
+                )
+                urban_dmds.append(load_rules_special(r, urban_dis))
             case _:
                 raise ValueError(f"Invalid commodity: {r['commodity']}")
-    urban_dmds = pd.concat(urban_dmds)
+    urban_dmds = safe_concat(urban_dmds)
     dmd_df = urban_dmds
     # rural water demand and return
     rural_dmds = []
-    for r in RURAL_DEMAND:
+    for r in RURAL_DEMAND.get_rule():
         match r["commodity"]:
             case "rural_mw":
                 rural_mw = rural_withdrawal_df.reset_index(drop=True)
                 rural_mw = rural_mw.merge(
-                    rural_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
+                    rural_connection_rate_df.drop(columns=["variable", "time"]).rename(
+                        columns={"value": "rate"}
+                    )
                 )
                 rural_mw["value"] = (1e-3 * rural_mw["value"]) * rural_mw["rate"]
-
-                rural_dmds.append(load_rules(r, rural_mw))
+                rural_dmds.append(load_rules_special(r, rural_mw))
             case "rural_disconnected":
                 rural_dis = rural_withdrawal_df.reset_index(drop=True)
                 rural_dis = rural_dis.merge(
-                    rural_connection_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
+                    rural_connection_rate_df.drop(columns=["variable", "time"]).rename(
+                        columns={"value": "rate"}
+                    )
                 )
-                rural_dis["value"] = (1e-3 * rural_dis["value"]) * (1 - rural_dis["rate"])
-
-                rural_dmds.append(load_rules(r, rural_dis))
+                rural_dis["value"] = (1e-3 * rural_dis["value"]) * (
+                    1 - rural_dis["rate"]
+                )
+                rural_dmds.append(load_rules_special(r, rural_dis))
             case _:
                 raise ValueError(f"Invalid commodity: {r['commodity']}")
 
-    rural_dmds = pd.concat(rural_dmds)
-    dmd_df = pd.concat([dmd_df, rural_dmds])
+    rural_dmds = safe_concat(rural_dmds)
+    dmd_df = safe_concat([dmd_df, rural_dmds])
 
     # manufactury/ industry water demand and return
     industrial_dmds = []
-    for r in INDUSTRIAL_DEMAND:
+    for r in INDUSTRIAL_DEMAND.get_rule():
         match r["commodity"]:
             case "industry_mw":
                 # manufactury/ industry water demand and return
                 manuf_mw = industrial_withdrawals_df.reset_index(drop=True)
                 manuf_mw["value"] = 1e-3 * manuf_mw["value"]
-                industrial_dmds.append(load_rules(r, manuf_mw))
+                industrial_dmds.append(load_rules_special(r, manuf_mw))
             case "industry_uncollected_wst":
                 manuf_uncollected_wst = industrial_return_df.reset_index(drop=True)
                 manuf_uncollected_wst["value"] = 1e-3 * manuf_uncollected_wst["value"]
-                industrial_dmds.append(load_rules(r, manuf_uncollected_wst))
+                industrial_dmds.append(load_rules_special(r, manuf_uncollected_wst))
             case _:
                 raise ValueError(f"Invalid commodity: {r['commodity']}")
-    industrial_dmds = pd.concat(industrial_dmds)
-    dmd_df = pd.concat([dmd_df, industrial_dmds])
+    industrial_dmds = safe_concat(industrial_dmds)
+    dmd_df = safe_concat([dmd_df, industrial_dmds])
 
     # urban collected wastewater
     urban_collected_wst_df = []
-    for r in URBAN_COLLECTED_WST:
+    for r in URBAN_COLLECTED_WST.get_rule():
         urban_collected_wst = urban_return_df.reset_index(drop=True)
         urban_collected_wst = urban_collected_wst.merge(
             urban_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
@@ -654,14 +713,14 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         urban_collected_wst["value"] = (
         1e-3 * urban_collected_wst["value"]
         ) * urban_collected_wst["rate"]
-        urban_collected_wst_df.append(load_rules(r, urban_collected_wst))
+        urban_collected_wst_df.append(load_rules_special(r, urban_collected_wst))
 
-    urban_collected_wst_df = pd.concat(urban_collected_wst_df)
-    dmd_df = pd.concat([dmd_df, urban_collected_wst_df])
+    urban_collected_wst_df = safe_concat(urban_collected_wst_df)
+    dmd_df = safe_concat([dmd_df, urban_collected_wst_df])
 
     # rural collected wastewater
     rural_collected_wst_df = []
-    for r in RURAL_COLLECTED_WST:
+    for r in RURAL_COLLECTED_WST.get_rule():
         rural_collected_wst = rural_return_df.reset_index(drop=True)
         rural_collected_wst = rural_collected_wst.merge(
             rural_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
@@ -669,14 +728,14 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         rural_collected_wst["value"] = (
             1e-3 * rural_collected_wst["value"]
         ) * rural_collected_wst["rate"]
-        rural_collected_wst_df.append(load_rules(r, rural_collected_wst))
+        rural_collected_wst_df.append(load_rules_special(r, rural_collected_wst))
 
-    rural_collected_wst_df = pd.concat(rural_collected_wst_df)
-    dmd_df = pd.concat([dmd_df, rural_collected_wst_df])
+    rural_collected_wst_df = safe_concat(rural_collected_wst_df)
+    dmd_df = safe_concat([dmd_df, rural_collected_wst_df])
 
     # urban uncollected wastewater
     urban_uncollected_wst_df = []
-    for r in URBAN_UNCOLLECTED_WST:
+    for r in URBAN_UNCOLLECTED_WST.get_rule():
         urban_uncollected_wst = urban_return_df.reset_index(drop=True)
         urban_uncollected_wst = urban_uncollected_wst.merge(
             urban_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
@@ -684,14 +743,14 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         urban_uncollected_wst["value"] = (1e-3 * urban_uncollected_wst["value"]) * (
             1 - urban_uncollected_wst["rate"]
         )
-        urban_uncollected_wst_df.append(load_rules(r, urban_uncollected_wst))
+        urban_uncollected_wst_df.append(load_rules_special(r, urban_uncollected_wst))
 
-    urban_uncollected_wst_df = pd.concat(urban_uncollected_wst_df)
-    dmd_df = pd.concat([dmd_df, urban_uncollected_wst_df])
+    urban_uncollected_wst_df = safe_concat(urban_uncollected_wst_df)
+    dmd_df = safe_concat([dmd_df, urban_uncollected_wst_df])
 
     # rural uncollected wastewater
     rural_uncollected_wst_df = []
-    for r in RURAL_UNCOLLECTED_WST:
+    for r in RURAL_UNCOLLECTED_WST.get_rule():
         rural_uncollected_wst = rural_return_df.reset_index(drop=True)
         rural_uncollected_wst = rural_uncollected_wst.merge(
             rural_treatment_rate_df.drop(columns=["variable", "time"]).rename(columns={"value": "rate"})
@@ -699,10 +758,10 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         rural_uncollected_wst["value"] = (1e-3 * rural_uncollected_wst["value"]) * (
             1 - rural_uncollected_wst["rate"]
         )
-        rural_uncollected_wst_df.append(load_rules(r, rural_uncollected_wst))
+        rural_uncollected_wst_df.append(load_rules_special(r, rural_uncollected_wst))
 
-    rural_uncollected_wst_df = pd.concat(rural_uncollected_wst_df)
-    dmd_df = pd.concat([dmd_df, rural_uncollected_wst_df])
+    rural_uncollected_wst_df = safe_concat(rural_uncollected_wst_df)
+    dmd_df = safe_concat([dmd_df, rural_uncollected_wst_df])
 
 
     # Add 2010 & 2015 values as historical activities to corresponding technologies
@@ -745,19 +804,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     # Process historical activities using rules
     historical_activity_df = []
-    for rule in HISTORICAL_ACTIVITY:
-        hist_act = make_df(
-            rule["type"],
-            node_loc=eval_field(rule["node"], h_act),
-            technology=eval_field(rule["technology"], h_act),
-            year_act=eval_field(rule["year"], h_act),
-            mode=rule["mode"],
-            time=eval_field(rule["time"], h_act),
-            value=eval_field(rule["value"], h_act),
-            unit=rule["unit"],
-        )
-        historical_activity_df.append(hist_act)
-    results["historical_activity"] = pd.concat(historical_activity_df)
+    for rule in HISTORICAL_ACTIVITY.get_rule():
+        historical_activity_df.append(load_rules_special(rule, h_act))
+    results["historical_activity"] = safe_concat(historical_activity_df)
 
     # Process historical capacities using rules
     h_cap = h_act[h_act["year"] >= 2015]
@@ -767,38 +816,25 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         .reset_index()
     )
     historical_capacity_df = []
-    for rule in HISTORICAL_CAPACITY:
-        hist_cap = make_df(
-            rule["type"],
-            node_loc=eval_field(rule["node"], h_cap),
-            technology=eval_field(rule["technology"], h_cap),
-            year_vtg=eval_field(rule["year"], h_cap),
-            value=eval_field(rule["value"], h_cap),
-            unit=rule["unit"],
-        )
-        historical_capacity_df.append(hist_cap)
-    results["historical_new_capacity"] = pd.concat(historical_capacity_df)
+    for rule in HISTORICAL_CAPACITY.get_rule():
+        historical_capacity_df.append(load_rules_special(rule, h_cap))
+    results["historical_new_capacity"] = safe_concat(historical_capacity_df)
 
     # share constraint lower bound on urban_Water recycling
     share_constraint_df = []
-    for rule in SHARE_CONSTRAINTS_RECYCLING:
-        df_share_wat = make_df(
-            rule["type"],
-            shares=rule["shares"],
-            node_share="B" + eval_field(rule["node"], df_recycling),
-            year_act=eval_field(rule["year"], df_recycling),
-            value=eval_field(rule["value"], df_recycling),
-            unit=rule["unit"],
-    ).pipe(
-            broadcast,
-            time=pd.Series(sub_time),
-        )
+    for rule in SHARE_CONSTRAINTS_RECYCLING.get_rule():
+
+        base_args = {
+            "skip_kwargs": ["condition"],
+            "rule_dfs": df_recycling,
+            "sub_time": pd.Series(sub_time),
+        }
+        df_share_wat = run_standard(rule, base_args)
         share_constraint_df.append(df_share_wat)
-    results["share_commodity_lo"] = pd.concat(share_constraint_df)
-    results["share_commodity_lo"] = results["share_commodity_lo"][results["share_commodity_lo"]["year_act"].isin(info.Y)]
+    results["share_commodity_lo"] = safe_concat(share_constraint_df)
+    share_commodity_lo = results["share_commodity_lo"]
+    results["share_commodity_lo"] = share_commodity_lo[
+    share_commodity_lo["year_act"].isin(info.Y)]
 
 
     return results
-
-
-
