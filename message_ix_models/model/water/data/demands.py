@@ -43,9 +43,8 @@ def load_rules_special(rule: dict, df_processed: pd.DataFrame = None) -> pd.Data
     string templates and the legacy make_df routine.
     """
     r = rule.copy()
-    skip_kwargs = ["condition", "pipe"]
     rule_dfs = df_processed.copy()
-    base_args = {"skip_kwargs": skip_kwargs, "rule_dfs": rule_dfs}
+    base_args = {"rule_dfs": rule_dfs}
     df_rule = run_standard(r, base_args)
     return df_rule
 
@@ -199,7 +198,7 @@ def _preprocess_availability_data(
     df["Region"] = df["Region"].map(df_x["BCU_name"])
     df2210 = df[df["year"] == 2100].copy()
     df2210["year"] = 2110
-    df = pd.concat([df, df2210])
+    df = safe_concat([df, df2210])
     df = df[df["year"].isin(info.Y)]
     return df
 
@@ -364,7 +363,7 @@ def add_irrigation_demand(context: "Context") -> dict[str, pd.DataFrame]:
     )
     land_out_3["level"] = "irr_sugarcrops"
 
-    land_out = pd.concat([land_out_1, land_out_2, land_out_3])
+    land_out = safe_concat([land_out_1, land_out_2, land_out_3])
     land_out["commodity"] = "freshwater"
 
     land_out["value"] = 1e-3 * land_out["value"]
@@ -825,7 +824,6 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     for rule in SHARE_CONSTRAINTS_RECYCLING.get_rule():
 
         base_args = {
-            "skip_kwargs": ["condition"],
             "rule_dfs": df_recycling,
             "sub_time": pd.Series(sub_time),
         }

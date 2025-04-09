@@ -1,4 +1,6 @@
 import copy
+import warnings
+from functools import wraps
 
 import numpy as np
 import pandas as pd
@@ -70,12 +72,19 @@ def feed_make_df(
         case _:
             raise ValueError(f"Invalid input type for rule_dfs: {type(rule_dfs)}")
 
-    # Helper to reduce duplication when calling standard_operation.
-def run_standard(r: dict,
-                    base_args: dict,
-                    extra_args: dict | None = None,
-                    broadcast_year: any = None) -> pd.DataFrame:
+
+def run_standard(
+    r: dict, base_args: dict, extra_args: dict | None = None, broadcast_year: any = None
+) -> pd.DataFrame:
     """Merge base args and rule-specific pipe arguments then call standard_operation."""
+
+    match base_args.get("skip_kwargs", None):
+        case None:
+            base_args["skip_kwargs"] = ["condition", "pipe"]
+        case ["condition", "pipe"]:
+            warnings.warn("skip_kwargs is no longer required", UserWarning)
+        case _:
+            raise ValueError(f"Invalid skip_kwargs: {base_args['skip_kwargs']}")
 
     args = {**base_args, **r.get("pipe", {})}
     kwargs = {}
@@ -83,8 +92,100 @@ def run_standard(r: dict,
         kwargs["extra_args"] = extra_args
     if broadcast_year is not None:
         kwargs["broadcast_year"] = broadcast_year
-    return standard_operation(rule=r, **args, **kwargs)
+    return standard_operation(rule=r, suppress_warning=True, **args, **kwargs)
 
+
+# Define helper to build the list of pipe functions/arguments.
+def _build_pipe_arguments(
+    flag_broadcast: bool,
+    broadcast_year: int | None,
+    flag_map_yv_ya_lt: bool,
+    lt: pd.Series | pd.DataFrame | int | None,
+    lt_arg: str | None,
+    year_wat: tuple | None,
+    first_year: int | None,
+) -> list:
+    pipe_args = []
+    if flag_broadcast:
+        pipe_args.append(broadcast)
+    if broadcast_year is not None:
+        pipe_args.append(broadcast_year)
+
+        # Use structural pattern matching on lt's type.
+    match (flag_map_yv_ya_lt, lt, lt_arg):
+        case False, _, _:
+            pass
+        case True, pd.Series() | pd.DataFrame(), str():
+            pipe_args.append(
+                map_yv_ya_lt(periods=year_wat, lt=lt[lt_arg], ya=first_year)
+            )
+        case True, int(), None:
+            pipe_args.append(map_yv_ya_lt(periods=year_wat, lt=lt, ya=first_year))
+        case True, None, None:
+            raise ValueError("lt must be provided when flag_map_yv_ya_lt is True")
+
+    return pipe_args
+
+    # Define helper to build additional keyword arguments.
+
+
+def _build_kw_args(
+    flag_node_loc: bool,
+    node_loc: pd.DataFrame | np.ndarray | None,
+    node_loc_arg: str | None,
+    flag_time: bool,
+    sub_time: pd.Series | str | None,
+    extra_args: dict | None,
+) -> dict:
+    kw = dict(extra_args) if extra_args is not None else {}
+    match (flag_node_loc, node_loc, node_loc_arg):
+        case (False, _, _):
+            pass
+        case (True, pd.DataFrame(), str()):
+            kw["node_loc"] = node_loc[node_loc_arg]
+        case (True, np.ndarray(), None):
+            kw["node_loc"] = node_loc
+        case (True, None, None):
+            raise ValueError(
+                "node_loc and node_loc_arg must be provided if flag_node_loc is True"
+            )
+        case (True, _, None):
+            raise ValueError(f"unexpected data type for node_loc : {type(node_loc)}")
+
+
+    match (flag_time, sub_time):
+        case (False, _):
+            pass
+        case (True, pd.Series() | str()):
+            kw["time"] = sub_time
+        case (True, None):
+            raise ValueError("sub_time must be provided if flag_time is True")
+        case (True, _):
+            raise ValueError(f"unexpected data type for sub_time : {type(sub_time)}")
+
+    return kw
+
+
+def warn_run_standard(func):
+    """Decorator to warn users to prefer run_standard()
+    over direct standard_operation() calls."""
+
+    @wraps(func)
+    def wrapper(*args, suppress_warning: bool = False, **kwargs):
+        if not suppress_warning:
+            warnings.warn(
+                f"{func.__name__} is a lower-level API that requires more manual "
+                "parameter handling. Only use {func.__name__} if you need access to its"
+                "full functionality.",
+                UserWarning,
+                stacklevel=3,
+            )
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@warn_run_standard  # Apply the decorator to standard_operation
 def standard_operation(
     *,
     rule: dict,
@@ -97,7 +198,7 @@ def standard_operation(
     node_loc_arg: str | None = None,
     year_wat: tuple | None = None,
     first_year: int | None = None,
-    sub_time: tuple | None = None,
+    sub_time: pd.Series | str | None = None,
     flag_same_time: bool = False,
     flag_same_node: bool = False,
     flag_broadcast: bool = True,
@@ -120,67 +221,44 @@ def standard_operation(
       - Optionally applying `same_time` and `same_node` functions.
     """
 
-    # Define helper to build the list of pipe functions/arguments.
-    def build_pipe_arguments() -> list:
-        pipe_args = []
-        if flag_broadcast:
-            pipe_args.append(broadcast)
-        if broadcast_year is not None:
-            pipe_args.append(broadcast_year)
-        if flag_map_yv_ya_lt:
-            # Use structural pattern matching on lt's type.
-            match lt:
-                case pd.Series() | pd.DataFrame():
-                    if lt_arg is not None:
-                        pipe_args.append(
-                            map_yv_ya_lt(periods=year_wat, lt=lt[lt_arg], ya=first_year)
-                        )
-                case int():
-                    pipe_args.append(
-                        map_yv_ya_lt(periods=year_wat, lt=lt, ya=first_year)
-                    )
-                case _:
-                    pass
-        return pipe_args
-
-    # Define helper to build additional keyword arguments.
-    def build_kw_args() -> dict:
-        kw = dict(extra_args) if extra_args is not None else {}
-        match (flag_node_loc, node_loc, node_loc_arg):
-            case (True, pd.DataFrame(), str()):
-                kw["node_loc"] = node_loc[node_loc_arg]
-            case (True, np.ndarray(), None):
-                kw["node_loc"] = node_loc
-            case (True, None, None):
-                raise ValueError(
-                    "node_loc and node_loc_arg must be provided if flag_node_loc is True"
-                )
-            case (True, _, None):
-                raise ValueError(
-                    f"unexpected data type for node_loc : {type(node_loc)}"
-                )
-        if flag_time:
-            kw["time"] = sub_time
-        return kw
-
-    # Create the initial DataFrame.
-    if default_df_key is None:
-        out = make_df(
-            rule["type"],
-            **feed_make_df(rule, rule_dfs, skip_kwargs),
-        )
-    else:
-        out = make_df(
-            rule["type"],
-            **feed_make_df(rule, rule_dfs, skip_kwargs, default_df_key),
-        )
+    match (rule_dfs, default_df_key):
+        case (pd.Series() | pd.DataFrame(), None):
+            out = make_df(
+                rule["type"],
+                **feed_make_df(rule, rule_dfs, skip_kwargs),
+            )
+        case (dict(), str()):
+            out = make_df(
+                rule["type"],
+                **feed_make_df(rule, rule_dfs, skip_kwargs, default_df_key),
+            )
+        case (pd.Series() | pd.DataFrame(), str()):
+            raise ValueError(
+                f"Default key provided defaults to rows, but rule_dfs is a {type(rule_dfs)}"
+            )
+        case _:
+            raise ValueError(f"Invalid input type for rule_dfs: {type(rule_dfs)}")
 
     # If broadcast or mapping is enabled, construct pipe arguments and keyword args.
     if flag_broadcast or flag_map_yv_ya_lt:
-        pipe_arguments = build_pipe_arguments()
-        kw = build_kw_args()
+        pipe_arguments = _build_pipe_arguments(
+            flag_broadcast,
+            broadcast_year,
+            flag_map_yv_ya_lt,
+            lt,
+            lt_arg,
+            year_wat,
+            first_year,
+        )
+        kw = _build_kw_args(
+            flag_node_loc,
+            node_loc,
+            node_loc_arg,
+            flag_time,
+            sub_time,
+            extra_args,
+        )
         out = out.pipe(*pipe_arguments, **kw)
-
     # Optionally apply same_time and same_node pipes.
     if flag_same_time:
         out = out.pipe(same_time)
