@@ -4,10 +4,11 @@ import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.infrastructure_utils import standard_operation
-from message_ix_models.model.water.data.Irrigation_rules import (
+from message_ix_models.model.water.data.irrigation_rules import (
     INPUT_IRRIGATION_RULES,
     OUTPUT_IRRIGATION_RULES,
 )
+from message_ix_models.model.water.utils import safe_concat
 from message_ix_models.util import package_data_path
 
 
@@ -65,7 +66,7 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
             extra_args=extra_args,
             **rule["pipe"]))
 
-    inp = pd.concat(inp_list)
+    inp = safe_concat(inp_list)
     inp["year_act"] = inp["year_vtg"]
 
     results["input"] = inp
@@ -81,7 +82,7 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
             **rule["pipe"])
         )
 
-    irr_out = pd.concat(irr_out_list)
+    irr_out = safe_concat(irr_out_list)
     irr_out["year_act"] = irr_out["year_vtg"]
 
     results["output"] = irr_out

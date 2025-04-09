@@ -29,6 +29,7 @@ from message_ix_models.model.water.data.infrastructure_rules import (
     VAR_COST_RULES,
 )
 from message_ix_models.model.water.data.infrastructure_utils import standard_operation
+from message_ix_models.model.water.utils import safe_concat
 from message_ix_models.util import (
     make_matched_dfs,
     package_data_path,
@@ -92,9 +93,9 @@ def start_creating_input_dataframe(
                     standard_operation(rule=rule, rule_dfs=dfs, default_df_key= "rows",
                     lt = rows, **args_rule)
                     )
-                    return pd.concat(inp_df) # Terminates in the non-baseline case
+                    return safe_concat(inp_df) # Terminates in the non-baseline case
 
-    return pd.concat(inp_df)
+    return safe_concat(inp_df)
 
 
 def prepare_input_dataframe(
@@ -222,9 +223,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         df_elec=df_elec,
     )
 
-    results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
+    results_new = {par_name: safe_concat(dfs) for par_name, dfs in result_dc.items()}
 
-    inp_df = pd.concat([inp_df, results_new["input"]])
+    inp_df = safe_concat([inp_df, results_new["input"]])
     results["input"] = inp_df
 
     # add output dataframe
@@ -259,7 +260,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                 out_df_list.append(
                 standard_operation(rule=rule, rule_dfs=df_out_dist, lt=rows, **args))
 
-    out_df = pd.concat(out_df_list)
+    out_df =  safe_concat(out_df_list)
 
     results["output"] = out_df
 
@@ -272,7 +273,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         args = {**args, **rule["pipe"]}
         for index, rows in df_cap.iterrows():
             cap_list.append(standard_operation(rule=rule, rule_dfs=rows, lt=rows, **args))
-    cap_df = pd.concat(cap_list)
+    cap_df = safe_concat(cap_list)
     results["capacity_factor"] = cap_df
 
     # Filtering df for capacity factors
@@ -305,7 +306,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         for index, rows in df_inv.iterrows():
             fix_cost_list.append(standard_operation(rule=rule, rule_dfs= df_inv,
             lt=rows, **args))
-    fix_cost = pd.concat(fix_cost_list)
+    fix_cost = safe_concat(fix_cost_list)
     fix_cost = fix_cost[~fix_cost["technology"].isin(techs)]
 
     results["fix_cost"] = fix_cost
@@ -349,12 +350,12 @@ def _add_var_cost(
                     # Variable cost
                     var_cost_list.append(
                         standard_operation(rule=rule, rule_dfs=rows,
-                        default_df_key="rows", lt=rows, **args))
+                        lt=rows, **args))
             case (_, "!baseline_dist") if sdg != "baseline":
                 for index, rows in df_var_dist.iterrows():
                     var_cost_list.append(
                         standard_operation(rule=rule, rule_dfs=rows,
-                        default_df_key="rows", lt=rows, **args))
+                        lt=rows, **args))
             case ("baseline", "baseline_main"):
                 for index, rows in df_var.iterrows():
                     dfs = {"rows": rows, "df_var": df_var}
@@ -374,7 +375,7 @@ def _add_var_cost(
                         var_cost_list.append(
                         standard_operation(rule=rule_alt, rule_dfs=rows, lt=rows, **args))
 
-    var_cost = pd.concat(var_cost_list)
+    var_cost = safe_concat(var_cost_list)
     return var_cost
 
 def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
@@ -445,34 +446,54 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     )
 
     skip_kwargs = ["condition", "pipe"]
-
+    series_sub_time = pd.Series(sub_time)
     args = {
         "skip_kwargs": skip_kwargs,
         "node_loc": df_node,
         "year_wat": year_wat,
         "first_year": first_year,
-        "sub_time": pd.Series(sub_time),
+        "sub_time": series_sub_time,
         "node_loc_arg": "node",
         "lt_arg": "lifetime_mid",
     }
-
+    out_df = [pd.DataFrame([])]
     for rule in DESALINATION_OUTPUT_RULES.get_rule():
-        args_rule = {**args, **rule["pipe"]}
-        out_df = standard_operation(rule=rule, rule_dfs=df_desal, lt =20, **args_rule)
+        output_args ={
+            "skip_kwargs": skip_kwargs,
+            "node_loc": df_node,
+            "sub_time": series_sub_time,
+            "node_loc_arg": "node",
+            "first_year": first_year,
+            "year_wat": year_wat,
+        }
+        args_rule = {**output_args, **rule["pipe"]}
+        out_df.append(standard_operation(
+        rule=rule, rule_dfs=df_desal, lt =20, **args_rule))
+    out_df = safe_concat(out_df)
     # output dataframe linking to desal tech types
 
     extra_args_tl = {"year_vtg": year_wat}
     tl = [pd.DataFrame([])]
     for rule in  TL_DESALINATION_RULES.get_rule() :
-        args_rule = {**args, **rule["pipe"]}
+        tl_args = {
+            "skip_kwargs": skip_kwargs,
+            "node_loc": df_node,
+            "node_loc_arg": "node",
+        }
+        args_rule = {**tl_args, **rule["pipe"]}
         tl.append(standard_operation(rule=rule, rule_dfs=df_desal,
         extra_args=extra_args_tl, **args_rule))
 
 
-    tl = pd.concat(tl)
+    tl = safe_concat(tl)
     results["technical_lifetime"] = tl
     for rule in DESALINATION_HISTORICAL_CAPACITY_RULES.get_rule():
-        args_rule = {**args, **rule["pipe"]}
+        hist_cap_args = {
+            "skip_kwargs": skip_kwargs,
+            "node_loc": df_node,
+            "node_loc_arg": "node",
+        }
+        args_rule = {**hist_cap_args, **rule["pipe"]}
         df_hist_cap = standard_operation(rule=rule, rule_dfs=df_hist, **args_rule)
 
     # Divide the historical capacity by 5 since the existing data is summed over
@@ -483,7 +504,12 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # Desalination potentials are added as an upper bound
     # to limit the salinewater extraction
     for rule in DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES.get_rule():
-        args_rule = {**args, **rule["pipe"]}
+        bound_up_args = {
+            "skip_kwargs": skip_kwargs,
+            "node_loc": df_node,
+            "node_loc_arg": "node",
+        }
+        args_rule = {**bound_up_args, **rule["pipe"]}
         bound_up = standard_operation(rule=rule, rule_dfs=df_proj, **args_rule)
 
     # Making negative values zero
@@ -494,12 +520,18 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     results["bound_total_capacity_up"] = bound_up
 
     # Investment costs
+    inv_cost_list = [pd.DataFrame([])]
     for rule in DESALINATION_INV_COST_RULES.get_rule():
-        args_rule = {**args, **rule["pipe"]}
+        inv_cost_args = {
+            "skip_kwargs": skip_kwargs,
+            "node_loc": df_node,
+            "node_loc_arg": "node",
+        }
+        args_rule = {**inv_cost_args, **rule["pipe"]}
         extra_args = {"year_vtg": year_wat}
-        inv_cost = standard_operation(rule=rule, rule_dfs=df_desal,
-        extra_args=extra_args, **args_rule)
-    results["inv_cost"] = inv_cost
+        inv_cost_list.append(standard_operation(rule=rule, rule_dfs=df_desal,
+        extra_args=extra_args, **args_rule))
+    results["inv_cost"] = safe_concat(inv_cost_list)
 
     fix_cost_list = [pd.DataFrame([])]
     var_cost_list = [pd.DataFrame([])]
@@ -507,30 +539,54 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         # Fixed costs
         # Prepare dataframe for fix_cost
         for rule in FIX_COST_DESALINATION_RULES.get_rule():
-            args_rule = {**args, **rule["pipe"]}
+            fix_cost_args = {
+                "skip_kwargs": skip_kwargs,
+                "node_loc": df_node,
+                "node_loc_arg": "node",
+                "lt_arg": "lifetime_mid",
+                "first_year": first_year,
+                "year_wat": year_wat,
+            }
+            args_rule = {**fix_cost_args, **rule["pipe"]}
             fix_cost_list.append(standard_operation(rule=rule, rule_dfs=rows,
             lt = rows, **args_rule))
 
         # Variable cost
         for rule in VAR_COST_DESALINATION_RULES.get_rule():
-            if rule["condition"] != "SKIP":
-                args_rule = {**args, **rule["pipe"]}
-                var_cost_list.append(standard_operation(rule=rule,
-                rule_dfs=rows, lt = rows, **args_rule))
+            var_cost_args = {
+                "skip_kwargs": skip_kwargs,
+                "node_loc": df_node,
+                "node_loc_arg": "node",
+                "lt_arg": "lifetime_mid",
+                "sub_time": series_sub_time,
+                "first_year": first_year,
+                "year_wat": year_wat,
+            }
+            args_rule = {**var_cost_args, **rule["pipe"]}
 
-    results["var_cost"] = pd.concat(var_cost_list)
-    results["fix_cost"] = pd.concat(fix_cost_list)
+            var_cost_list.append(standard_operation(rule=rule,
+            rule_dfs=rows, lt = rows, **args_rule))
+
+    results["var_cost"] = safe_concat(var_cost_list)
+    results["fix_cost"] = safe_concat(fix_cost_list)
 
     cons_time = make_matched_dfs(tl, construction_time=3)
     results["construction_time"] = cons_time["construction_time"]
 
-    skip_kwargs = ["condition", "pipe"]
+ 
     result_dc = defaultdict(list)
     for rule in DESALINATION_INPUT_RULES2.get_rule():
+        input2_args = {
+                        "skip_kwargs": skip_kwargs,
+                        "lt_arg": "lifetime_mid",
+                        "sub_time": series_sub_time,
+                        "first_year": first_year,
+                        "year_wat": year_wat,
+                    }
         match rule["condition"]:
             case "electricity":
                 for index, rows in df_desal.iterrows():
-                    args_rule = {**args, **rule["pipe"]}
+                    args_rule = {**input2_args, **rule["pipe"]}
                     rule_dfs = {"rows": rows, "df_node": df_node}
                     inp = standard_operation(
                         rule=rule, rule_dfs=rule_dfs,
@@ -538,17 +594,16 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
                     result_dc["input"].append(inp)
                     results_new = {
-                        par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
+                        par_name: safe_concat(dfs) for par_name, dfs in result_dc.items()}
 
                     inp_df = results_new["input"]
 
             # Adding input dataframe
             case "heat":
                 df_heat = df_desal[df_desal["heat_input_mid"] > 0]
-
                 result_dc = defaultdict(list)
                 for index, rows in df_heat.iterrows():
-                    args_rule = {**args, **rule["pipe"]}
+                    args_rule = {**input2_args, **rule["pipe"]}
                     rule_dfs = {"rows": rows, "df_node": df_node}
                     inp = standard_operation(rule=rule, rule_dfs=rule_dfs,
                     default_df_key="rows", lt = rows, **args_rule)
@@ -556,7 +611,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     result_dc["input"].append(inp)
 
                     results_new = {
-                        par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
+                        par_name: safe_concat(dfs) for par_name, dfs in result_dc.items()}
                     inp_df_list =[]
                     inp_df_list.append(inp_df)
                     inp_df_list.append(results_new["input"])
@@ -565,22 +620,32 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     out_df_list.append(out_df)
             # Adding input dataframe
             case "technology":
-
+                input2_args["node_loc"] = df_node
+                input2_args["node_loc_arg"] = "node"
                 rule_output = DESALINATION_OUTPUT_RULES2.get_rule()[0]
 
                 for index, rows in df_desal.iterrows():
-                    args_rule = {**args, **rule["pipe"]}
+                    args_rule = {**input2_args, **rule["pipe"]}
                     inp_df_list.append(standard_operation(rule=rule, rule_dfs=rows,
                     lt = rows, **args_rule))
-                    inp_df = pd.concat(inp_df_list)
+                    inp_df = safe_concat(inp_df_list)
                     inp_df.dropna()
 
                     results["input"] = inp_df
-                    args_rule = {**args, **rule_output["pipe"]}
+                    output_args = {
+                        "skip_kwargs": skip_kwargs,
+                        "node_loc": df_node,
+                        "node_loc_arg": "node",
+                        "lt_arg": "lifetime_mid",
+                        "sub_time": series_sub_time,
+                        "first_year": first_year,
+                        "year_wat": year_wat,
+                    }
+                    args_rule = {**output_args, **rule_output["pipe"]}
                     out_df_list.append(
                     standard_operation(rule=rule_output, rule_dfs=rows,
                     lt = rows, **args_rule))
-                    out_df = pd.concat(out_df_list)
+                    out_df = safe_concat(out_df_list)
                     out_df.dropna()
 
                     results["output"] = out_df
@@ -589,7 +654,11 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     df_bound = df_hist[df_hist["year"] == 2015]
 
     for rule in DESALINATION_BOUND_LO_RULES.get_rule():
-        args_rule = {**args, **rule["pipe"]}
+        bound_lo_args = {
+            "skip_kwargs": skip_kwargs,
+            "sub_time": series_sub_time
+        }
+        args_rule = {**bound_lo_args, **rule["pipe"]}
         extra_args_new = {"year_act": year_wat}
         bound_lo = standard_operation(rule=rule, rule_dfs=df_bound,
         extra_args=extra_args_new, **args_rule)

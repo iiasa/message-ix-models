@@ -22,7 +22,7 @@ from message_ix_models.model.water.data.water_supply_rules import (
     SLACK_TECHNOLOGY_RULES,
     TECHNICAL_LIFETIME_RULES,
 )
-from message_ix_models.model.water.utils import map_yv_ya_lt
+from message_ix_models.model.water.utils import map_yv_ya_lt, safe_concat
 from message_ix_models.util import (
     minimum_version,
     package_data_path,
@@ -197,7 +197,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         for r in COOLING_SUPPLY_RULES.get_rule():
             df_rule = run_standard(r, base_cooling)
             cooling_outputs.append(df_rule)
-        results["output"] = pd.concat(cooling_outputs)
+        results["output"] = safe_concat(cooling_outputs)
 
     # ---- Nexus branch ----
     elif context.nexus_set == "nexus":
@@ -217,7 +217,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     df_rule = run_standard(r, base_slack)
                     slack_inputs.append(df_rule)
                 case "basin_to_reg":
-                    df_rule = run_standard(r, base_slack, extra_args={"year_vtg": year_wat})
+                    df_rule = run_standard(
+                    r, base_slack, extra_args={"year_vtg": year_wat})
                     slack_inputs.append(df_rule)
                 case "salinewater_return":
                     # Skip this technology
@@ -225,7 +226,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 case _:
                     raise ValueError(f"Invalid technology: {r['technology']}")
         # Merge slack inputs and set activity year
-        slack_inputs = pd.concat(slack_inputs)
+        slack_inputs = safe_concat(slack_inputs)
         slack_inputs["year_act"] = slack_inputs["year_vtg"]
         results["input"] = slack_inputs
 
@@ -244,12 +245,14 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             df_rule = run_standard(r, base_extract)
             extraction_inputs.append(df_rule)
         # Combine slack and extraction inputs and enforce numeric conversion
-        inp = pd.concat([slack_inputs] + extraction_inputs)
+        inp = safe_concat([slack_inputs] + extraction_inputs)
         inp["value"] = pd.to_numeric(inp["value"], errors="raise")
 
         # Global-specific scaling adjustment
         if context.type_reg == "global":
-            cond = (inp["technology"].str.contains("extract_gw_fossil")) & (inp["year_act"] == 2020) & (inp["node_loc"] == "R11_SAS")
+            cond = ((inp["technology"].str.contains("extract_gw_fossil")) &
+                   (inp["year_act"] == 2020) &
+                   (inp["node_loc"] == "R11_SAS"))
             inp.loc[cond, "value"] *= 0.5
 
         results["input"] = inp
@@ -265,21 +268,22 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         for r in EXTRACTION_OUTPUT_RULES.get_rule():
             r["type"] = "output"
             # Choose broadcast year based on technology
-            bcast = yv_ya_gw if r["technology"] in ["extract_gw_fossil", "extract_groundwater"] else yv_ya_sw
+            is_gw = r["technology"] in ["extract_gw_fossil", "extract_groundwater"]
+            bcast = yv_ya_gw if is_gw else yv_ya_sw
             if r["technology"] == "extract_salinewater":
                 df_rule = run_standard(r, base_extract_out)
             else:
                 base_extract_out["sub_time"] = pd.Series(sub_time)
                 df_rule = run_standard(r, base_extract_out, broadcast_year=bcast)
             extraction_outputs.append(df_rule)
-        results["output"] = pd.concat(extraction_outputs)
+        results["output"] = safe_concat(extraction_outputs)
 
         # Historical new capacity rules
         hist_new_cap = []
         base_hist = {"skip_kwargs": skip_kwargs, "rule_dfs": df_hist}
         for r in HISTORICAL_NEW_CAPACITY_RULES.get_rule():
             hist_new_cap.append(run_standard(r, base_hist))
-        results["historical_new_capacity"] = pd.concat(hist_new_cap)
+        results["historical_new_capacity"] = safe_concat(hist_new_cap)
 
         # Dummy basin-to-region output rules
         dummy_basin_to_reg_output = []
@@ -293,10 +297,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             df_rule["year_act"] = df_rule["year_vtg"]
             dummy_basin_to_reg_output.append(df_rule)
         if len(dummy_basin_to_reg_output) > 1:
-            dummy_basin_to_reg_output = pd.concat(dummy_basin_to_reg_output)
+            dummy_basin_to_reg_output = safe_concat(dummy_basin_to_reg_output)
         else:
             dummy_basin_to_reg_output = dummy_basin_to_reg_output[0]
-        results["output"] = pd.concat([results["output"], dummy_basin_to_reg_output])
+        results["output"] = safe_concat([results["output"], dummy_basin_to_reg_output])
         # Synchronize output activity year with vintage year
         results["output"]["year_act"] = results["output"]["year_vtg"]
 
@@ -311,7 +315,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             df_rule = run_standard(r, base_var_cost, extra_args={"year_vtg": year_wat})
             df_rule["year_act"] = df_rule["year_vtg"]
             var_costs.append(df_rule)
-        results["var_cost"] = pd.concat(var_costs)
+        results["var_cost"] = safe_concat(var_costs)
 
         # Fixed cost rules
         fix_costs = []
@@ -325,7 +329,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         }
         for r in FIXED_COST_RULES.get_rule():
             fix_costs.append(run_standard(r, base_fix_cost))
-        results["fix_cost"] = pd.concat(fix_costs)
+        results["fix_cost"] = safe_concat(fix_costs)
 
         # Share mode rules for linking basin and region water supply
         df_sw = map_basin_region_wat(context)
@@ -336,7 +340,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         }
         for r in SHARE_MODE_RULES.get_rule():
             share_outputs.append(run_standard(r, base_share))
-        results["share_mode_up"] = pd.concat(share_outputs)
+        results["share_mode_up"] = safe_concat(share_outputs)
 
         # Technical lifetime rules
         tl_list = []
@@ -348,7 +352,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         }
         for r in TECHNICAL_LIFETIME_RULES.get_rule():
             tl_list.append(run_standard(r, base_tl, extra_args={"year_vtg": year_wat}))
-        results["technical_lifetime"] = pd.concat(tl_list)
+        results["technical_lifetime"] = safe_concat(tl_list)
 
         # Investment cost rules
         inv_costs = []
@@ -360,7 +364,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         }
         for r in INVESTMENT_COST_RULES.get_rule():
             inv_costs.append(run_standard(r, base_inv, extra_args={"year_vtg": year_wat}))
-        results["inv_cost"] = pd.concat(inv_costs)
+            results["inv_cost"] = safe_concat(inv_costs)
 
     return results
 
@@ -389,7 +393,7 @@ def _e_flow_preprocess(
     df["Region"] = df["Region"].map(df_x["BCU_name"])
     df2210 = df[df["year"] == 2100].copy()
     df2210["year"] = 2110
-    df = pd.concat([df, df2210])
+    df = safe_concat([df, df2210])
     df = df[df["year"].isin(info.Y)]
 
     return df
@@ -442,7 +446,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
             base_args={"rule_dfs": df_sw, "skip_kwargs": skip_kwargs},
         )
         eflow_dmd_df.append(dmd_df)
-    dmd_df = pd.concat(eflow_dmd_df)
+    dmd_df = safe_concat(eflow_dmd_df)
     dmd_df = dmd_df[dmd_df["year"] >= 2025].reset_index(drop=True)
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x >= 0 else 0)
 
@@ -478,7 +482,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
                 "rule_dfs": df_env,
             }
             eflow_df.append(run_standard(r, base_args))
-        eflow_df = pd.concat(eflow_df)
+        eflow_df = safe_concat(eflow_df)
 
         eflow_df["value"] = eflow_df["value"].apply(lambda x: x if x >= 0 else 0)
         eflow_df = eflow_df[eflow_df["year_act"] >= 2025].reset_index(drop=True)
