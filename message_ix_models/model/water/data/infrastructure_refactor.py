@@ -1,7 +1,7 @@
 """Prepare data for adding techs related to water distribution,
 treatment in urban & rural"""
 
-from asyncio import run
+
 from collections import defaultdict
 from typing import Any
 
@@ -9,9 +9,6 @@ import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.infrastructure_rules import (
-    INPUT_DATAFRAME_STAGE1,
-    INPUT_DATAFRAME_STAGE2,
-    OUTPUT_RULES,
     CAP_RULES,
     DESALINATION_BOUND_LO_RULES,
     DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES,
@@ -22,13 +19,15 @@ from message_ix_models.model.water.data.infrastructure_rules import (
     DESALINATION_OUTPUT_RULES2,
     FIX_COST_DESALINATION_RULES,
     FIX_COST_RULES,
+    INPUT_DATAFRAME_STAGE1,
+    INPUT_DATAFRAME_STAGE2,
     INV_COST_RULES,
+    OUTPUT_RULES,
     TL_DESALINATION_RULES,
     TL_RULES,
     VAR_COST_DESALINATION_RULES,
     VAR_COST_RULES,
 )
-
 from message_ix_models.model.water.data.infrastructure_utils import standard_operation
 from message_ix_models.util import (
     make_matched_dfs,
@@ -65,7 +64,8 @@ def start_creating_input_dataframe(
                 for index, rows in df_non_elec.iterrows():
                     dfs = {"rows": rows, "df_node": df_node}
                     inp_df.append(
-                        standard_operation(rule=rule, rule_dfs=dfs, default_df_key="rows", lt = rows, **args_rule)
+                        standard_operation(rule=rule, rule_dfs=dfs,
+                        default_df_key="rows", lt = rows, **args_rule)
                     ),
 
 
@@ -74,20 +74,23 @@ def start_creating_input_dataframe(
                 for index, rows in df_dist.iterrows():
                     dfs = {"rows": rows, "df_node": df_node}
                     inp_df.append(
-                        standard_operation(rule=rule, rule_dfs=dfs, default_df_key="rows", lt = rows, **args_rule)
+                        standard_operation(rule=rule, rule_dfs=dfs,
+                        default_df_key="rows", lt = rows, **args_rule)
                     )
             case "baseline_additional", "baseline":
                 # baseline case additional
                 #takes the final row from df_dist as input
                 inp_df.append(
-                standard_operation(rule=rule, rule_dfs=df_dist.iloc[-1], lt = df_dist.iloc[-1], **args_rule)
+                standard_operation(rule=rule, rule_dfs=df_dist.iloc[-1],
+                lt = df_dist.iloc[-1], **args_rule)
                 )
             # non baseline case
             case "!baseline", _ if sdg != "baseline":
                 for index, rows in df_dist.iterrows():
                     dfs = {"rows": rows, "df_node": df_node}
                     inp_df.append(
-                    standard_operation(rule=rule, rule_dfs=dfs, default_df_key= "rows", lt = rows, **args_rule)
+                    standard_operation(rule=rule, rule_dfs=dfs, default_df_key= "rows",
+                    lt = rows, **args_rule)
                     )
                     return pd.concat(inp_df) # Terminates in the non-baseline case
 
@@ -121,15 +124,18 @@ def prepare_input_dataframe(
             match (context.SDG, rule["condition"], is_tech):
                 case _, "!baseline", True if context.SDG != "baseline":
                     args_rule = {**args, **rule["pipe"]}
-                    inp = standard_operation(rule=rule, rule_dfs=dfs, default_df_key="rows", lt = 1, **args_rule)
+                    inp = standard_operation(rule=rule, rule_dfs=dfs,
+                    default_df_key="rows", lt = 1, **args_rule)
                     result_dc["input"].append(inp)
                 case "baseline", "baseline_p1" | "baseline_p2", True:
                     args_rule = {**args, **rule["pipe"]}
-                    inp = standard_operation(rule=rule, rule_dfs=dfs, default_df_key="rows", lt = 1, **args_rule)
+                    inp = standard_operation(rule=rule, rule_dfs=dfs,
+                    default_df_key="rows", lt = 1, **args_rule)
                     result_dc["input"].append(inp)
                 case _, "non_tech", False:
                     args_rule = {**args, **rule["pipe"]}
-                    inp = standard_operation(rule=rule, rule_dfs=dfs, default_df_key="rows", lt = 1, **args_rule)
+                    inp = standard_operation(rule=rule, rule_dfs=dfs,
+                    default_df_key="rows", lt = 1, **args_rule)
                     result_dc["input"].append(inp)
 
     return result_dc
@@ -244,11 +250,14 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         match (context.SDG, rule["condition"]):
             case(_, "default"):
                 for index, rows in df_out.iterrows():
-                    out_df_list.append(standard_operation(rule=rule, rule_dfs=rows, lt=rows, **args))
+                    out_df_list.append(
+                    standard_operation(rule=rule, rule_dfs=rows, lt=rows, **args))
             case (_, "!baseline") if context.SDG != "baseline":
-                out_df_list.append(standard_operation(rule=rule, rule_dfs=df_out_dist, lt=rows, **args))
+                out_df_list.append(
+                standard_operation(rule=rule, rule_dfs=df_out_dist, lt=rows, **args))
             case ("baseline", "baseline_p1" | "baseline_p2"):
-                out_df_list.append(standard_operation(rule=rule, rule_dfs=df_out_dist, lt=rows, **args))
+                out_df_list.append(
+                standard_operation(rule=rule, rule_dfs=df_out_dist, lt=rows, **args))
 
     out_df = pd.concat(out_df_list)
 
@@ -283,7 +292,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     for rule in INV_COST_RULES.get_rule():
         args = {**args, **rule["pipe"]}
         # Prepare dataframe for investments
-        inv_cost = standard_operation(rule= rule, rule_dfs=df_inv,extra_args= extra_args, **args)
+        inv_cost = standard_operation(rule= rule, rule_dfs=df_inv,
+        extra_args= extra_args, **args)
         inv_cost = inv_cost[~inv_cost["technology"].isin(techs)]
     results["inv_cost"] = inv_cost
 
@@ -293,7 +303,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     for rule in FIX_COST_RULES.get_rule():
         args = {**args, **rule["pipe"]}
         for index, rows in df_inv.iterrows():
-            fix_cost_list.append(standard_operation(rule=rule, rule_dfs= df_inv, lt=rows, **args))
+            fix_cost_list.append(standard_operation(rule=rule, rule_dfs= df_inv,
+            lt=rows, **args))
     fix_cost = pd.concat(fix_cost_list)
     fix_cost = fix_cost[~fix_cost["technology"].isin(techs)]
 
@@ -336,23 +347,32 @@ def _add_var_cost(
             case (_, "!baseline") if sdg != "baseline":
                 for index, rows in df_var.iterrows():
                     # Variable cost
-                    var_cost_list.append(standard_operation(rule=rule, rule_dfs=rows, default_df_key="rows", lt=rows, **args))
+                    var_cost_list.append(
+                        standard_operation(rule=rule, rule_dfs=rows,
+                        default_df_key="rows", lt=rows, **args))
             case (_, "!baseline_dist") if sdg != "baseline":
                 for index, rows in df_var_dist.iterrows():
-                    var_cost_list.append(standard_operation(rule=rule, rule_dfs=rows, default_df_key="rows", lt=rows, **args))
+                    var_cost_list.append(
+                        standard_operation(rule=rule, rule_dfs=rows,
+                        default_df_key="rows", lt=rows, **args))
             case ("baseline", "baseline_main"):
                 for index, rows in df_var.iterrows():
                     dfs = {"rows": rows, "df_var": df_var}
-                    var_cost_list.append(standard_operation(rule=rule, rule_dfs=dfs, default_df_key="rows", lt=rows, **args))
+                    var_cost_list.append(
+                    standard_operation(rule=rule, rule_dfs=dfs, default_df_key="rows",
+                    lt=rows, **args))
             case ("baseline", "baseline_dist_p1" | "baseline_dist_p2"):
+                #collecting both rules because they are implemented in the same function
                 rules_baseline_dist.append(rule)
                 if len(rules_baseline_dist) == 2:
                     rule = rules_baseline_dist[0]
                     rule_alt = rules_baseline_dist[1]
                     # Apply both p1 and p2 rules for each row in df_var_dist
                     for index, rows in df_var_dist.iterrows():
-                        var_cost_list.append(standard_operation(rule=rule, rule_dfs=rows, lt=rows, **args))
-                        var_cost_list.append(standard_operation(rule=rule_alt, rule_dfs=rows, lt=rows, **args))
+                        var_cost_list.append(
+                        standard_operation(rule=rule, rule_dfs=rows, lt=rows, **args))
+                        var_cost_list.append(
+                        standard_operation(rule=rule_alt, rule_dfs=rows, lt=rows, **args))
 
     var_cost = pd.concat(var_cost_list)
     return var_cost
@@ -445,7 +465,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     tl = [pd.DataFrame([])]
     for rule in  TL_DESALINATION_RULES.get_rule() :
         args_rule = {**args, **rule["pipe"]}
-        tl.append(standard_operation(rule=rule, rule_dfs=df_desal, extra_args=extra_args_tl, **args_rule))
+        tl.append(standard_operation(rule=rule, rule_dfs=df_desal,
+        extra_args=extra_args_tl, **args_rule))
 
 
     tl = pd.concat(tl)
@@ -466,7 +487,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         bound_up = standard_operation(rule=rule, rule_dfs=df_proj, **args_rule)
 
     # Making negative values zero
-    bound_up["value"].clip(lower=0, inplace=True)
+    bound_up["value"].clip(lower=0)
     # Bound should start from 2025
     bound_up = bound_up[bound_up["year_act"] > 2020]
 
@@ -476,7 +497,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     for rule in DESALINATION_INV_COST_RULES.get_rule():
         args_rule = {**args, **rule["pipe"]}
         extra_args = {"year_vtg": year_wat}
-        inv_cost = standard_operation(rule=rule, rule_dfs=df_desal, extra_args=extra_args, **args_rule)
+        inv_cost = standard_operation(rule=rule, rule_dfs=df_desal,
+        extra_args=extra_args, **args_rule)
     results["inv_cost"] = inv_cost
 
     fix_cost_list = [pd.DataFrame([])]
@@ -486,13 +508,15 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         # Prepare dataframe for fix_cost
         for rule in FIX_COST_DESALINATION_RULES.get_rule():
             args_rule = {**args, **rule["pipe"]}
-            fix_cost_list.append(standard_operation(rule=rule, rule_dfs=rows, lt = rows, **args_rule))
+            fix_cost_list.append(standard_operation(rule=rule, rule_dfs=rows,
+            lt = rows, **args_rule))
 
         # Variable cost
         for rule in VAR_COST_DESALINATION_RULES.get_rule():
             if rule["condition"] != "SKIP":
                 args_rule = {**args, **rule["pipe"]}
-                var_cost_list.append(standard_operation(rule=rule, rule_dfs=rows, lt = rows, **args_rule))
+                var_cost_list.append(standard_operation(rule=rule,
+                rule_dfs=rows, lt = rows, **args_rule))
 
     results["var_cost"] = pd.concat(var_cost_list)
     results["fix_cost"] = pd.concat(fix_cost_list)
@@ -513,7 +537,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                         default_df_key="rows", lt = rows, **args_rule)
 
                     result_dc["input"].append(inp)
-                    results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
+                    results_new = {
+                        par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
                     inp_df = results_new["input"]
 
@@ -525,11 +550,13 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                 for index, rows in df_heat.iterrows():
                     args_rule = {**args, **rule["pipe"]}
                     rule_dfs = {"rows": rows, "df_node": df_node}
-                    inp = standard_operation(rule=rule, rule_dfs=rule_dfs, default_df_key="rows", lt = rows, **args_rule)
+                    inp = standard_operation(rule=rule, rule_dfs=rule_dfs,
+                    default_df_key="rows", lt = rows, **args_rule)
 
                     result_dc["input"].append(inp)
 
-                    results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
+                    results_new = {
+                        par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
                     inp_df_list =[]
                     inp_df_list.append(inp_df)
                     inp_df_list.append(results_new["input"])
@@ -543,15 +570,18 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
                 for index, rows in df_desal.iterrows():
                     args_rule = {**args, **rule["pipe"]}
-                    inp_df_list.append(standard_operation(rule=rule, rule_dfs=rows, lt = rows, **args_rule))
+                    inp_df_list.append(standard_operation(rule=rule, rule_dfs=rows,
+                    lt = rows, **args_rule))
                     inp_df = pd.concat(inp_df_list)
-                    inp_df.dropna(inplace=True)
+                    inp_df.dropna()
 
                     results["input"] = inp_df
                     args_rule = {**args, **rule_output["pipe"]}
-                    out_df_list.append(standard_operation(rule=rule_output, rule_dfs=rows, lt = rows, **args_rule))
+                    out_df_list.append(
+                    standard_operation(rule=rule_output, rule_dfs=rows,
+                    lt = rows, **args_rule))
                     out_df = pd.concat(out_df_list)
-                    out_df.dropna(inplace=True)
+                    out_df.dropna()
 
                     results["output"] = out_df
 
@@ -561,7 +591,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     for rule in DESALINATION_BOUND_LO_RULES.get_rule():
         args_rule = {**args, **rule["pipe"]}
         extra_args_new = {"year_act": year_wat}
-        bound_lo = standard_operation(rule=rule, rule_dfs=df_bound, extra_args=extra_args_new, **args_rule)
+        bound_lo = standard_operation(rule=rule, rule_dfs=df_bound,
+        extra_args=extra_args_new, **args_rule)
 
     bound_lo = bound_lo[bound_lo["year_act"] <= 2030]
 
