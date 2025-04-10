@@ -123,7 +123,7 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
     return result
 
 
-def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
+def adjust_cost_ratios_with_gdp_legacy(region_diff_df, config: Config):
     """Calculate adjusted region-differentiated cost ratios.
 
     This function takes in a data frame with region-differentiated cost ratios and
@@ -247,3 +247,139 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
             ]
         ]
     )
+
+def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
+    """Calculate adjusted region-differentiated cost ratios.
+
+    This function takes in a data frame with region-differentiated cost ratios and
+    calculates adjusted region-differentiated cost ratios using GDP per capita data.
+
+    Parameters
+    ----------
+    region_diff_df : pandas.DataFrame
+        Output of :func:`apply_regional_differentiation`.
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.node`,
+        :attr:`~.Config.ref_region`,
+        :attr:`~.Config.scenario`, and
+        :attr:`~.Config.scenario_version`.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+            - scenario_version: scenario version
+            - scenario: SSP scenario
+            - message_technology: message technology
+            - region: R11, R12, or R20 region
+            - year
+            - gdp_ratio_reg_to_reference: ratio of GDP per capita in respective region to
+              GDP per capita in reference region.
+            - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
+    """
+    # Import helper functions (they remain in use)
+    from .projections import _maybe_query_scenario, _maybe_query_scenario_version
+
+    # Set region context for GDP extraction
+    context = Context.get_instance(-1)
+    context.model.regions = config.node
+
+    # Retrieve and prepare GDP data (dropping totals, converting dtypes, filtering by y0,
+    # reassigning scenario_version values, and applying any scenario filters)
+    df_gdp = (
+        process_raw_ssp_data(context, config)
+        .query("year >= @config.y0")
+        .drop(columns=["total_gdp", "total_population"])
+        .assign(
+            scenario_version=lambda x: np.where(
+                x.scenario_version.str.contains("2013"),
+                "Previous (2013)",
+                "Review (2023)",
+            )
+        )
+        .astype({"year": int})
+        .pipe(_maybe_query_scenario, config)
+        .pipe(_maybe_query_scenario_version, config)
+    )
+
+    # Ensure base_year exists in GDP data; otherwise choose the earliest year and warn.
+    base_year = config.base_year
+    if base_year not in df_gdp.year.unique():
+        new_base_year = df_gdp.year.min()
+        log.warning(f"Use year={new_base_year} GDP data as proxy for {base_year}")
+        base_year = new_base_year
+
+    # --- Step 1: Calculate slope and intercept using the base-year data ---
+    # 1a. Subset GDP data to the base year and drop the year column.
+    df_base = df_gdp.query("year == @base_year").drop("year", axis=1)
+
+    # 1b. Merge the base-year GDP data with region_diff_df to get the base "reg_cost_ratio".
+    df_intermediate = df_base.merge(region_diff_df, on=["region"])
+
+    # 1c. Calculate the slope and intercept from the base-year values.
+    df_intermediate["slope"] = (df_intermediate["reg_cost_ratio"] - 1) / (
+        df_intermediate["gdp_ratio_reg_to_reference"] - 1
+    )
+    df_intermediate["intercept"] = 1 - df_intermediate["slope"]
+    # Drop the GDP ratio from the base data as it will be re-added from the full data.
+    df_intermediate = df_intermediate.drop(columns=["gdp_ratio_reg_to_reference"])
+
+    # --- Step 2: Merge full GDP data and compute adjusted cost ratios ---
+    # Merge the intermediate (base-year derived) data with the full set of GDP data;
+    # this adds yearly "gdp_ratio_reg_to_reference" values to each record.
+    df_merged = df_intermediate.merge(
+        df_gdp, on=["scenario_version", "scenario", "region"], how="right"
+    )
+    # Compute the adjusted cost ratio for all rows.
+    df_merged["reg_cost_ratio_adj"] = df_merged["slope"] * df_merged[
+        "gdp_ratio_reg_to_reference"
+    ] + df_merged["intercept"]
+    # Fill any NaNs (e.g. for the reference region) with 1.0.
+    df_merged["reg_cost_ratio_adj"] = df_merged["reg_cost_ratio_adj"].fillna(1.0)
+
+    # --- Step 3: Vectorize the constrain logic that was in _constrain_cost_ratio ---
+    # Instead of iterating per group, we extract the base-year values for each group.
+    base_values = (
+        df_merged.query("year == @base_year")
+        .loc[:, [
+            "scenario_version",
+            "scenario",
+            "region",
+            "message_technology",
+            "gdp_ratio_reg_to_reference",
+            "reg_cost_ratio_adj",
+        ]]
+        .rename(
+            columns={
+                "gdp_ratio_reg_to_reference": "base_gdp_ratio",
+                "reg_cost_ratio_adj": "base_reg_cost",
+            }
+        )
+    )
+    # Merge these base-year values back onto the main data.
+    df_merged = df_merged.merge(
+        base_values,
+        on=["scenario_version", "scenario", "region", "message_technology"],
+        how="left",
+    )
+    # For groups where the base-year GDP ratio is less than 1 and the base-year cost ratio is greater than 1,
+    # clip the reg_cost_ratio_adj to the base-year cost ratio.
+    condition = (df_merged["base_gdp_ratio"] < 1) & (df_merged["base_reg_cost"] > 1)
+    df_merged.loc[condition, "reg_cost_ratio_adj"] = df_merged.loc[
+        condition, "reg_cost_ratio_adj"
+    ].clip(upper=df_merged.loc[condition, "base_reg_cost"])
+
+    # --- Step 4: Select and return the final desired columns ---
+    return df_merged[
+        [
+            "scenario_version",
+            "scenario",
+            "message_technology",
+            "region",
+            "year",
+            "gdp_ratio_reg_to_reference",
+            "reg_cost_ratio_adj",
+        ]
+    ]
