@@ -74,6 +74,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    api/tools-messagev
    api/data-sources
    api/util
+   api/r
    api/testing
    api/workflow
 
