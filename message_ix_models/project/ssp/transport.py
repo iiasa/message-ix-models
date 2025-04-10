@@ -157,17 +157,19 @@ def e_UNIT(cl_emission: "sdmx.model.common.Codelist") -> "AnyQuantity":
         Values are everywhere 1.0, except for species such as ``N2O`` that must be
         reported in kt rather than Mt.
     """
+    # Iterate over codes in the codelist
     data = []
     for e in cl_emission:
-        try:
-            label = str(e.get_annotation(id="report").text)
-        except KeyError:
-            label = e.id
-        try:
-            unit = str(e.get_annotation(id="units").text)
-        except KeyError:
-            unit = "Mt"
-        data.append([e.id, f"{unit} {label}/yr", 1.0 if unit == "Mt" else 1e3])
+        # Retrieve info from annotations
+        i = {}
+        for k, default in {"report": e.id, "unit-species": e.id, "units": "Mt"}.items():
+            try:
+                i[k] = str(e.get_annotation(id=k).text)
+            except KeyError:
+                i[k] = default
+
+        scale_factor = 1.0 if i["units"] == "Mt" else 1e3
+        data.append([i["report"], f"{i['units']} {i['unit-species']}/yr", scale_factor])
 
     dims = "e UNIT value".split()
     return genno.Quantity(
