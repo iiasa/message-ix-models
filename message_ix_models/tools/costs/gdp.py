@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 from genno import KeySeq
+from scipy.stats import linregress
 
 from message_ix_models import Context
 
@@ -248,6 +249,7 @@ def adjust_cost_ratios_with_gdp_legacy(region_diff_df, config: Config):
         ]
     )
 
+
 def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     """Calculate adjusted region-differentiated cost ratios.
 
@@ -278,6 +280,11 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
             - gdp_ratio_reg_to_reference: ratio of GDP per capita in respective region to
               GDP per capita in reference region.
             - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
+
+    Differences from the legacy function:
+        - Uses vectorized DataFrame operations to compute slope and intercept from base-year data, reducing reliance on iterative group processing.
+        - Merges base-year GDP values directly to compute and constrain the adjusted cost ratios.
+        - Eliminates the need for an explicit group-wise constraint function by applying clipping conditions directly on the merged data.
     """
     # Import helper functions (they remain in use)
     from .projections import _maybe_query_scenario, _maybe_query_scenario_version
@@ -333,9 +340,10 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
         df_gdp, on=["scenario_version", "scenario", "region"], how="right"
     )
     # Compute the adjusted cost ratio for all rows.
-    df_merged["reg_cost_ratio_adj"] = df_merged["slope"] * df_merged[
-        "gdp_ratio_reg_to_reference"
-    ] + df_merged["intercept"]
+    df_merged["reg_cost_ratio_adj"] = (
+        df_merged["slope"] * df_merged["gdp_ratio_reg_to_reference"]
+        + df_merged["intercept"]
+    )
     # Fill any NaNs (e.g. for the reference region) with 1.0.
     df_merged["reg_cost_ratio_adj"] = df_merged["reg_cost_ratio_adj"].fillna(1.0)
 
@@ -343,14 +351,17 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     # Instead of iterating per group, we extract the base-year values for each group.
     base_values = (
         df_merged.query("year == @base_year")
-        .loc[:, [
-            "scenario_version",
-            "scenario",
-            "region",
-            "message_technology",
-            "gdp_ratio_reg_to_reference",
-            "reg_cost_ratio_adj",
-        ]]
+        .loc[
+            :,
+            [
+                "scenario_version",
+                "scenario",
+                "region",
+                "message_technology",
+                "gdp_ratio_reg_to_reference",
+                "reg_cost_ratio_adj",
+            ],
+        ]
         .rename(
             columns={
                 "gdp_ratio_reg_to_reference": "base_gdp_ratio",

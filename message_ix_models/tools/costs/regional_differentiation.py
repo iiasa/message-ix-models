@@ -1,4 +1,3 @@
-
 import logging
 from collections.abc import Mapping
 from functools import lru_cache
@@ -31,6 +30,7 @@ def get_weo_region_map(regions: str) -> Mapping[str, str]:
     # Map from the child's (node's) ID to the value of the "iea-weo-region" annotation
     return {n.id: str(n.get_annotation(id="iea-weo-region").text) for n in nodes}
 
+
 def get_weo_data_fast() -> pd.DataFrame:
     """Read in raw WEO investment/capital costs and O&M costs data.
 
@@ -38,12 +38,17 @@ def get_weo_data_fast() -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
-        
+
         - cost_type: investment or fixed O&M cost
         - weo_technology: WEO technology name
         - weo_region: WEO region
         - year: year
         - value: cost value
+
+        Changes from get_weo_data:
+        This function opens the Excel file once using pd.ExcelFile,
+        reusing the file handle to read data from multiple sheets.
+        Reducing IO overhead from repeated file access.
     """
 
     # Dict of all technologies, their Excel sheet name, and the starting row
@@ -130,12 +135,11 @@ def get_weo_data_fast() -> pd.DataFrame:
     all_cost_df = pd.concat(dfs_cost, ignore_index=True)
 
     # Replace missing values with the median cost per technology and cost type.
-    all_cost_df["value"] = all_cost_df.groupby(
-        ["weo_technology", "cost_type"]
-    )["value"].transform(lambda x: x.fillna(x.median()))
+    all_cost_df["value"] = all_cost_df.groupby(["weo_technology", "cost_type"])[
+        "value"
+    ].transform(lambda x: x.fillna(x.median()))
 
     return all_cost_df
-
 
 
 def get_weo_data() -> pd.DataFrame:
@@ -552,7 +556,9 @@ def adjust_technology_mapping(
         return module_all
 
 
-def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
+def get_weo_regional_differentiation(
+    config: "Config", flag_fast: bool = True,
+) -> pd.DataFrame:
     """Apply WEO regional differentiation.
 
     1. Retrieve WEO data using :func:`.get_weo_data`.
@@ -567,6 +573,8 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
         :attr:`~.Config.base_year`,
         :attr:`~.Config.node`, and
         :attr:`~.Config.ref_region`.
+    flag_fast : bool
+        If True calls :func:`.get_weo_data_fast`, otherwise calls :func:`.get_weo_data`.
 
     Returns
     -------
@@ -580,7 +588,10 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
     """
 
     # Grab WEO data and keep only investment costs
-    df_weo = get_weo_data()
+    if flag_fast:
+        df_weo = get_weo_data_fast()  # Using the faster version.
+    else:
+        df_weo = get_weo_data()
 
     # Even if config.base_year is greater than 2022, use 2022 WEO values
     sel_year = str(2022)
@@ -669,107 +680,6 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
 
     return df_cost_ratios
 
-def get_weo_regional_differentiation_vectorized(config: "Config") -> pd.DataFrame:
-    """Apply WEO regional differentiation.
-
-    1. Retrieve WEO data using :func:`.get_weo_data`.
-    2. Map data to MESSAGEix-GLOBIOM regions according to the :attr:`.Config.node`.
-    3. Calculate cost ratios for each region relative to the
-       :attr:`~.Config.ref_region`.
-
-    Parameters
-    ----------
-    config : .Config
-        The function responds to the fields:
-        :attr:`~.Config.base_year`,
-        :attr:`~.Config.node`, and
-        :attr:`~.Config.ref_region`.
-
-    Returns
-    -------
-    pandas.DataFrame
-        DataFrame with columns:
-
-        - message_technology: MESSAGEix technology name
-        - region: MESSAGEix region
-        - weo_ref_region_cost: WEO cost in reference region
-        - reg_cost_ratio: regional cost ratio relative to reference region
-        - weo_fix_ratio: fixed O&M cost to investment cost ratio
-    """
-
-    # Retrieve the full set of WEO data and focus on investment (and later fixed O&M) costs
-    df_weo = get_weo_data_fast()
-
-    # Even if config.base_year is greater than 2022, use 2022 WEO values
-    sel_year = "2022"
-    log.info("…using year " + sel_year + " data from WEO")
-
-    # --- FIX: Use a merge instead of dict inversion ---
-    # Get mapping: keys are MESSAGEix region IDs (message_node), and values are WEO region names.
-    mapping = get_weo_region_map(config.node)
-    # Create a DataFrame from mapping so that duplicate WEO regions for different nodes are preserved.
-    map_df = pd.DataFrame(list(mapping.items()), columns=["region", "weo_region"])
-    # Filter the WEO data for the selected year
-    df_weo_sel = df_weo[df_weo["year"] == sel_year].copy()
-    # Merge the mapping DataFrame with the filtered WEO data on the "weo_region" column.
-    df_sel_weo = map_df.merge(df_weo_sel, on="weo_region", how="inner")
-    # Rename the cost column to be consistent with later code and reindex columns in the legacy order.
-    df_sel_weo = df_sel_weo.rename(columns={"value": "weo_cost"})
-    df_sel_weo = df_sel_weo.reindex(
-        ["cost_type", "weo_technology", "weo_region", "region", "year", "weo_cost"],
-        axis=1,
-    )
-
-    # Verify that the specified reference region is contained in the data (use uppercase).
-    assert config.ref_region is not None
-    ref_region = config.ref_region.upper()
-    if ref_region not in df_sel_weo["region"].unique():
-        raise ValueError(
-            f"Reference region {ref_region} not found in WEO data. "
-            "Please specify a different reference region. "
-            f"Available regions are: {df_sel_weo['region'].unique()}"
-        )
-
-    # === Calculate regional investment cost ratio relative to reference region ===
-    # Get rows with investment costs for the reference region.
-    mask_inv = df_sel_weo["cost_type"] == "inv_cost"
-    mask_ref = mask_inv & (df_sel_weo["region"] == ref_region)
-    df_ref = (
-        df_sel_weo.loc[mask_ref, ["weo_technology", "year", "weo_cost"]]
-        .rename(columns={"weo_cost": "weo_ref_region_cost"})
-    )
-    # Get all rows with investment cost irrespective of the region.
-    inv_df = df_sel_weo.loc[mask_inv, ["weo_technology", "year", "weo_cost", "region"]]
-    # Merge to get the reference cost for each technology and year.
-    df_reg_ratios = inv_df.merge(df_ref, on=["weo_technology", "year"])
-    df_reg_ratios["reg_cost_ratio"] = df_reg_ratios["weo_cost"] / df_reg_ratios["weo_ref_region_cost"]
-    df_reg_ratios = df_reg_ratios[["weo_technology", "region", "weo_ref_region_cost", "reg_cost_ratio"]]
-
-    # === Calculate fixed O&M cost ratio relative to investment cost ===
-    # Extract investment costs for the selected year.
-    df_inv = (
-        df_sel_weo.query("cost_type == 'inv_cost' and year == @sel_year")
-        .rename(columns={"weo_cost": "inv_cost"})
-        .drop(columns=["year", "cost_type"])
-    )
-    # Extract fixed O&M costs for the selected year.
-    df_fix = (
-        df_sel_weo.query("cost_type == 'fix_cost' and year == @sel_year")
-        .rename(columns={"weo_cost": "fix_cost"})
-        .drop(columns=["year", "cost_type"])
-    )
-    # Merge investment and fixed O&M costs based on technology and region.
-    df_fom_inv = (
-        df_inv.merge(df_fix, on=["weo_technology", "weo_region", "region"])
-        .assign(weo_fix_ratio=lambda x: x.fix_cost / x.inv_cost)
-        .drop(columns=["inv_cost", "fix_cost", "weo_region"])
-    )
-
-    # === Combine the two ratios together ===
-    df_cost_ratios = df_reg_ratios.merge(df_fom_inv, on=["weo_technology", "region"])
-
-    return df_cost_ratios
-
 
 def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame:
     """Apply Intratec regional differentiation.
@@ -846,7 +756,10 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
     return df_reg_ratios
 
 
-def apply_regional_differentiation(config: "Config", vectorized: bool = True) -> pd.DataFrame:
+def apply_regional_differentiation(
+    config: "Config",
+    flag_fast: bool = True,
+) -> pd.DataFrame:
     """Apply regional differentiation depending on mapping source.
 
     1. Retrieve an adjusted technology mapping from :func:`.adjust_technology_mapping`.
@@ -865,7 +778,10 @@ def apply_regional_differentiation(config: "Config", vectorized: bool = True) ->
         :attr:`~.Config.module`,
         :attr:`~.Config.node`, and
         :attr:`~.Config.ref_region`.
-
+    flag_fast : bool
+        If True is passed to :func:`.get_weo_regional_differentiation`,
+        then :func:`.get_weo_data_fast` is called,
+        otherwise :func:`.get_weo_data` is called.
     Returns
     -------
     pandas.DataFrame
@@ -883,10 +799,8 @@ def apply_regional_differentiation(config: "Config", vectorized: bool = True) ->
     """
     df_map = adjust_technology_mapping(config.module)
     assert config.ref_region is not None
-    if vectorized:
-        df_weo = get_weo_regional_differentiation_vectorized(config)
-    else:
-        df_weo = get_weo_regional_differentiation(config)
+
+    df_weo = get_weo_regional_differentiation(config, flag_fast)
     df_intratec = get_intratec_regional_differentiation(config.node, config.ref_region)
 
     # Get mapping of technologies
