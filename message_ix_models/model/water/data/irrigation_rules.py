@@ -116,5 +116,3 @@ OUTPUT_IRRIGATION_RULES = Rule(
     ],
 )
 
-
-print(INPUT_IRRIGATION_RULES.get_rule()[0])
