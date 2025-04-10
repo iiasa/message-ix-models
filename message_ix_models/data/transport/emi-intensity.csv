@@ -1,70 +1,71 @@
 # Emissions intensity of energy use
 #
 # Sources
-# - Group 1: e-mail text from Shaohui Zhang 2024-10-09
-#   Originally supplied with units [g / kg].
-# - Group 2: e-mail attachment from Shaohui Zhang 2024-10-09
-#   "EMEP_EEA Emission factor.xlsx". These all have the following
-#   dimensions/metadata in other columns:
-#   - NFR: 1.A.3.a.ii.(i)
-#   - Sector: Civil aviation (domestic, LTO)
-#     → technology=AIR
-#   - Table: Table_3-3
-#   - Type: Tier 1 Emission Factor
-#   - Technology: NA
-#   - Fuel: Jet Gasoline and Aviation Gasoline
-#   - Abatement: (empty)
-#   - Region: NA
-#   - Pollutant → emission
-#   - CI_lower, CI_upper, Reference → preserved as comments
-#   - Unit: kg/tonne fuel, which is equivalent to g / kg fuel.
-# - Group 3: e-mail from Lena Höglund-Isaksson 2024-10-06.
-#   The units for these are kt/petajoule gasoline with [=] g / MJ.
+# 1. e-mail text from Shaohui Zhang 2024-10-09
+#    Originally supplied with units [g / kg].
+# 2. e-mail attachment from Shaohui Zhang 2024-10-09
+#    "EMEP_EEA Emission factor.xlsx". These all have the following
+#    dimensions/metadata in other columns:
+#    - NFR: 1.A.3.a.ii.(i)
+#    - Sector: Civil aviation (domestic, LTO)
+#      → technology=AIR
+#    - Table: Table_3-3
+#    - Type: Tier 1 Emission Factor
+#    - Technology: NA
+#    - Fuel: Jet Gasoline and Aviation Gasoline
+#    - Abatement: (empty)
+#    - Region: NA
+#    - Pollutant → emission
+#    - CI_lower, CI_upper, Reference → preserved as comments
+#    - Unit: kg/tonne fuel, which is equivalent to g / kg fuel.
+# 3. e-mail from Lena Höglund-Isaksson 2024-10-06.
+#    The units for these are kt/petajoule gasoline with [=] g / MJ.
 #
 # Units: g / MJ
 #
 technology, commodity, emission, value
+
+# AIR,      lightoil,  BC,        MISSING
+
+AIR,        lightoil,  CH4,      0.0005   # (3)
+
+# The low end of the range is used because the midpoint value produces negative totals.
 #
-# Group 1
+AIR,        lightoil,  CO,       0.5      # Placeholder value for debugging
+# AIR,      lightoil,  CO,      13.95     # (2)  600    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  CO,      27.90     # (2) 1200    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  CO,      55.81     # (2) 2400    g/kg “Calculated using Tier 2 method”
+
+# AIR,      lightoil,  CO2,       MISSING
+
+AIR,        lightoil,  N2O,      0.0031   # (3)
+
+# AIR,      lightoil,  NH3,       MISSING
+
+# NOx: (2) is used because (1) values are too large and produce negative totals.
 #
-AIR,        lightoil,  SO2,   0.0279  #    1.2  g/kg
-# AIR,      lightoil,  NOx,   0.3284  #   14.12 g/kg, lower end of confidence interval
-# AIR,      lightoil,  NOx,   0.3521  #   15.14 g/kg, upper end of confidence interval
-#
-# Group 2
-#
-# “Calculated using Tier 2 method”
-# - These values are used because the above are too large and produce negative totals.
-#
-# AIR,      lightoil,  NOx,   0.0465  #    2    g/kg
-AIR,        lightoil,  NOx,   0.0930  #    4    g/kg
-# AIR,      lightoil,  NOx,   0.1860  #    8    g/kg
-#
-# “Calculated using Tier 2 method”
-# - The low end of the range is used because the midpoint value produces negative totals.
-#
-AIR,        lightoil,  CO,    0.5     # Placeholder value for debugging
-# AIR,      lightoil,  CO,   13.95    #  600    g/kg
-# AIR,      lightoil,  CO,   27.90    # 1200    g/kg
-# AIR,      lightoil,  CO,   55.81    # 2400    g/kg
-#
-# “Calculated using Tier 2 method”
+# AIR,      lightoil,  NOx,      0.3284   # (1)   14.12 g/kg, lower end of confidence interval
+# AIR,      lightoil,  NOx,      0.3521   # (1)   15.14 g/kg, upper end of confidence interval
+# AIR,      lightoil,  NOx,      0.0465   # (2)    2    g/kg “Calculated using Tier 2 method”
+AIR,        lightoil,  NOx,      0.0930   # (2)    4    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  NOx,      0.1860   # (2)    8    g/kg “Calculated using Tier 2 method”
+
+# AIR,      lightoil,  OC,        MISSING
+
+# VOC:
 # - These data were provided with the code 'NMVOC', but we use the label 'VOC' to
 #   align with MESSAGEix-GLOBIOM, even though these are not strictly the same.
 # - The low end of the range is used because the midpoint value produces negative totals.
 #
-AIR,        lightoil,  VOC,   0.1     # Placeholder value for debugging
-# AIR,      lightoil,  VOC,   0.2209  #    9.5  g/kg
-# AIR,      lightoil,  VOC,   0.4419  #   19    g/kg
-# AIR,      lightoil,  VOC,   0.8837  #   38    g/kg
-#
-# “Assuming 0.05% S by mass”
-#
-# AIR,      lightoil,  SOx,   0.0116  #    0.5  g/kg
-AIR,        lightoil,  SOx,   0.0233  #    1    g/kg
-# AIR,      lightoil,  SOx,   0.0465  #    2    g/kg
-#
-# Group 3
-#
-AIR,        lightoil,  CH4,   0.0005
-AIR,        lightoil,  N2O,   0.0031
+AIR,        lightoil,  VOC,      0.1      # Placeholder value for debugging
+# AIR,      lightoil,  VOC,      0.2209   # (2)    9.5  g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  VOC,      0.4419   # (2)   19    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  VOC,      0.8837   # (2)   38    g/kg “Calculated using Tier 2 method”
+
+AIR,        lightoil,  SO2,      0.0279   # (1)    1.2  g/kg
+
+# AIR,      lightoil,  SOx,      0.0116   # (2)    0.5  g/kg “Assuming 0.05% S by mass”
+AIR,        lightoil,  SOx,      0.0233   # (2)    1    g/kg “Assuming 0.05% S by mass”
+# AIR,      lightoil,  SOx,      0.0465   # (2)    2    g/kg “Assuming 0.05% S by mass”
+
+# AIR,      lightoil,  Sulfur,    MISSING
