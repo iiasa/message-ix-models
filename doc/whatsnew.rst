@@ -49,6 +49,8 @@ Improve :mod:`.ssp.transport`:
 - Add :func:`~.ssp.transport.process_df` (:pull:`303`);
   handle data frames containing :py:`np.NaN` (:pull:`330`).
 - Adapt to revised ‘variable’ codes (:pull:`309`, :issue:`304`).
+- Expand covered emission species (:pull:`333`, :issue:`307`)
+  with values derived from `CEDS <https://www.pnnl.gov/projects/ceds>`_.
 
 Transport
 ---------

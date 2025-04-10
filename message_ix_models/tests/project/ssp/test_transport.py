@@ -1,4 +1,5 @@
 from collections.abc import Callable, Hashable
+from functools import cache
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -60,13 +61,7 @@ I_O = IN_ | OUT  # Both
 SPECIES = {"CH4", "BC", "CO", "CO2", "N2O", "NH3", "NOx", "OC", "Sulfur", "VOC"}
 
 #: Species for which no aviation-specific emission factor values are available.
-SPECIES_WITHOUT_EF = {
-    "BC",  # No emissions factor data for e=BCA
-    "CO2",
-    "NH3",
-    "OC",  # No emissions factor data for e=OCA
-    "Sulfur",  # No emissions factor data for e=SO2; only SOx
-}
+SPECIES_WITHOUT_EF: set[str] = set()
 
 
 def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
@@ -121,10 +116,10 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     N_exp = {
         (METHOD.A, False): 10280,
         (METHOD.A, True): 10280,
-        (METHOD.B, False): 5060,
-        (METHOD.B, True): 3460,
-        (METHOD.C, False): 3500,
-        (METHOD.C, True): 3500,
+        (METHOD.B, False): 10120,
+        (METHOD.B, True): 6920,
+        (METHOD.C, False): 7000,
+        (METHOD.C, True): 7000,
     }[(method, iea_eweb_test_data)]
 
     if N_exp != len(df):
@@ -143,6 +138,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
         assert iea_eweb_test_data, msg  # Negative values → fail if NOT using test data
 
 
+@cache
 def expected_variables(flag: int, method: METHOD) -> set[str]:
     """Set of expected ‘Variable’ codes according to `flag` and `method`."""
     # Shorthand
