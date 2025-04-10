@@ -25,8 +25,18 @@ INPUT_DATAFRAME_STAGE1 = Rule(
             "node_loc": "df_node[node]",
             "pipe": {"flag_node_loc": False},
         },
-        {"condition": "!baseline", "value": "rows[value_high]", "mode": "Mf", "pipe": {"flag_node_loc": True}},
-        {"condition": "baseline_main", "value": "rows[value_mid]", "mode": "M1", "pipe": {"flag_node_loc": True}},
+        {
+            "condition": "!baseline",
+            "value": "rows[value_high]",
+            "mode": "Mf",
+            "pipe": {"flag_node_loc": True}
+        },
+        {
+            "condition": "baseline_main",
+            "value": "rows[value_mid]",
+            "mode": "M1",
+            "pipe": {"flag_node_loc": True}
+        },
         {
             "condition": "baseline_additional",
             "value": "rows[value_high]",
@@ -527,6 +537,7 @@ DESALINATION_OUTPUT_RULES2 = Rule(
             "flag_same_time": True,
             "flag_same_node": True,
             "flag_time": True,
+            "flag_node_loc": True,
         },
     },
     Diff=[

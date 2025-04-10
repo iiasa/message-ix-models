@@ -10,6 +10,8 @@ from message_ix import make_df
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
+from message_ix_models.tools.costs.config import Config
+from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
@@ -18,7 +20,7 @@ from message_ix_models.util import (
     same_node,
 )
 
-log = logging.getLogger(__name__)
+log = logging.getLogger().setLevel(logging.CRITICAL)
 
 
 def missing_tech(x: pd.Series) -> pd.Series:
@@ -107,10 +109,10 @@ def shares(
 
         # Log unmatched rows
         if cooling_fraction.empty:
-            log.info(
-                f"No cooling_fraction found for node_loc: {col2}, "
-                f"technology: {x['technology']}"
-            )
+            #log.info(
+            #    f"No cooling_fraction found for node_loc: {col2}, "
+            #    f"technology: {x['technology']}"
+            #)
             cooling_fraction = pd.Series([0])
 
         # Ensure the Series is not empty before accessing its first element
@@ -192,10 +194,10 @@ def apply_act_cap_multiplier(
 
     if missing_values.any():
         print("diobo")
-        log.warning(
-            f"Missing or empty values found in {param_name}.head(1):\n"
-            f"{df[missing_values].head(1)}"
-        )
+        #log.warning(
+        #    f"Missing or empty values found in {param_name}.head(1):\n"
+        #    f"{df[missing_values].head(1)}"
+        #)
         df = df[~missing_values]  # Remove rows with missing/empty values
 
     df.drop(columns=["utype", "multiplier"], inplace=True)
@@ -226,7 +228,8 @@ def cooling_shares_SSP_from_yaml(
         with open(yaml_file_path, "r") as file:
             yaml_data = yaml.safe_load(file)
     except FileNotFoundError:
-        log.warning(f"YAML file '{FILE}' not found. Please, check your data.")
+        print(f"YAML file '{FILE}' not found. Please, check your data.")
+        #log.warning(f"YAML file '{FILE}' not found. Please, check your data.")
 
     # Read the SSP from the context
     ssp = context.ssp
@@ -237,9 +240,9 @@ def cooling_shares_SSP_from_yaml(
 
     # Validate that the SSP exists in the YAML data
     if ssp not in scenarios:
-        log.warning(
-            f"SSP '{ssp}' not found in the 'scenarios' section of the YAML file."
-        )
+        #log.warning(
+        #    f"SSP '{ssp}' not found in the 'scenarios' section of the YAML file."
+        #)
         return pd.DataFrame()
 
     # Extract data for the specified SSP
@@ -713,7 +716,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     year_list = [2020, 2010, 2030, 2050, 2000, 2080, 1990]
 
     for year in year_list:
-        log.debug(f"cool_tech() for year '{year}'")
+        #log.debug(f"cool_tech() for year '{year}'")
         # Identify missing combinations in the current aggregate
         input_cool_2015_set = set(
             zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
@@ -751,11 +754,11 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     )
     still_missing = input_cool_set - input_cool_2015_set
 
-    if still_missing:
-        log.warning(
-            f"Warning: Some combinations are still missing even after trying all "
-            f"years: {still_missing}"
-        )
+    #if still_missing:
+        #log.warning(
+        #    f"Warning: Some combinations are still missing even after trying all "
+        #    f"years: {still_missing}"
+        #)
 
     # Filter out columns that contain 'mix' in column name
     # Rename column names to match with the previous df
@@ -839,9 +842,6 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         "nuc_htemp__cl_fresh",
         "nuc_htemp__air",
     ]
-
-    from message_ix_models.tools.costs.config import Config
-    from message_ix_models.tools.costs.projections import create_cost_projections
 
     # Set config for cost projections
     # Using GDP method for cost projections

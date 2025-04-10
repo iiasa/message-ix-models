@@ -7,12 +7,24 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.demands import add_sectoral_demands as new_add_sectoral_demands
-from message_ix_models.model.water.data.demands import add_water_availability as new_add_water_availability
-from message_ix_models.model.water.data.demands import read_water_availability as new_read_water_availability
-from message_ix_models.model.water.data.demands_legacy import add_sectoral_demands as old_add_sectoral_demands
-from message_ix_models.model.water.data.demands_legacy import add_water_availability as old_add_water_availability
-from message_ix_models.model.water.data.demands_legacy import read_water_availability as old_read_water_availability
+from message_ix_models.model.water.data.demands_legacy import (
+    add_sectoral_demands as old_add_sectoral_demands,
+)
+from message_ix_models.model.water.data.demands_legacy import (
+    add_water_availability as old_add_water_availability,
+)
+from message_ix_models.model.water.data.demands_legacy import (
+    read_water_availability as old_read_water_availability,
+)
+from message_ix_models.model.water.data.demands import (
+    add_sectoral_demands as new_add_sectoral_demands,
+)
+from message_ix_models.model.water.data.demands import (
+    add_water_availability as new_add_water_availability,
+)
+from message_ix_models.model.water.data.demands import (
+    read_water_availability as new_read_water_availability,
+)
 
 #compare performance of new and old demands
 
