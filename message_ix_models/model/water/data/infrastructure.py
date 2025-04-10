@@ -764,7 +764,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         unit="km3/year",
     )
     # Making negative values zero
-    bound_up["value"].clip(lower=0, inplace=True)
+    bound_up["value"].clip(lower=0)
     # Bound should start from 2025
     bound_up = bound_up[bound_up["year_act"] > 2020]
 
