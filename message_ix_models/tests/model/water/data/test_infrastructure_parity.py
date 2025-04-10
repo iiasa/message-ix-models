@@ -11,12 +11,12 @@ from message_ix_models.model.water.data.infrastructure import (
     add_infrastructure_techs,
 )
 from message_ix_models.model.water.data.infrastructure_refactor import (
-    add_desalination as add_desalination_refactor,
-)
-from message_ix_models.model.water.data.infrastructure_refactor import (
-    add_infrastructure_techs as add_infrastructure_techs_refactor,
+    add_desalination as add_desalination_refactor_base,
 )
 
+from message_ix_models.model.water.data.infrastructure_refactor import (
+    add_infrastructure_techs as add_infrastructure_techs_refactor_base,
+)
 
 # NB: This also tests start_creating_input_dataframe() and prepare_input_dataframe()
 # from the same file since they are called by add_infrastructure_techs()
@@ -27,8 +27,8 @@ def test_add_infrastructure_techs(test_context, SDG, request):
     # something like this for every test
     test_context.SDG = SDG
     test_context.time = "year"
-    test_context.type_reg = "country"
-    test_context.regions = "ZMB"
+    test_context.type_reg = "global"
+    test_context.regions = "R11"
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
     test_context.map_ISO_c = {test_context.regions: nodes[0]}
@@ -53,24 +53,27 @@ def test_add_infrastructure_techs(test_context, SDG, request):
     test_context["water build info"] = ScenarioInfo(s)
 
     # Call the function to be tested
+    n_iter = 1
     start_time = pytime.time()
-    result = add_infrastructure_techs(context=test_context)
+    for i in range(n_iter):
+        result = add_infrastructure_techs(context=test_context)
     end_time = pytime.time()
-    #write time to file infrastructure_time.txt
+    # write time to file infrastructure_time.txt
     with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_infrastructure_techs: {end_time - start_time} seconds\n")
+        f.write(f"Time taken for add_infrastructure_techs: {(end_time - start_time)/n_iter} seconds\n")
 
     start_time = pytime.time()
-    result_refactor = add_infrastructure_techs_refactor(context=test_context)
+    for i in range(n_iter):
+        result_refactor_base = add_infrastructure_techs_refactor_base(context=test_context)
     end_time = pytime.time()
     with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_infrastructure_techs_refactor: {end_time - start_time} seconds\n")
+        f.write(f"Time taken for add_infrastructure_techs_refactor base: {(end_time - start_time)/n_iter} seconds\n")
 
     # Assert the results are identical
-    assert result.keys() == result_refactor.keys()
+    assert result.keys() == result_refactor_base.keys()
     for key in result:
         # Use pandas testing utility to compare DataFrames
-        pdt.assert_frame_equal(result[key], result_refactor[key], check_dtype=False)
+        pdt.assert_frame_equal(result[key], result_refactor_base[key], check_dtype=False)
 
 
 def test_add_desalination(test_context, request):
@@ -99,23 +102,24 @@ def test_add_desalination(test_context, request):
 
     # FIXME same as above
     test_context["water build info"] = ScenarioInfo(s)
-
+    n_iter = 1
     # Call the function to be tested
     start_time = pytime.time()
-    result = add_desalination(context=test_context)
+    for i in range(n_iter):
+        result = add_desalination(context=test_context)
     end_time = pytime.time()
     with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_desalination: {end_time - start_time} seconds\n")
+        f.write(f"Time taken for add_desalination: {(end_time - start_time)/n_iter} seconds\n")
 
     start_time = pytime.time()
-    result_refactor = add_desalination_refactor(context=test_context)
+    for i in range(n_iter):
+        result_refactor_base = add_desalination_refactor_base(context=test_context)
     end_time = pytime.time()
     with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_desalination_refactor: {end_time - start_time} seconds\n")
-
+        f.write(f"Time taken for add_desalination_refactor base: {(end_time - start_time)/n_iter} seconds\n")
 
     # Assert the results are identical
-    assert result.keys() == result_refactor.keys()
+    assert result.keys() == result_refactor_base.keys()
     for key in result:
         # Use pandas testing utility to compare DataFrames
-        pdt.assert_frame_equal(result[key], result_refactor[key], check_dtype=False)
+        pdt.assert_frame_equal(result[key], result_refactor_base[key], check_dtype=False)
