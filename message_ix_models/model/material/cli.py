@@ -38,6 +38,101 @@ def cli(ssp):
     """MESSAGEix-Materials variant."""
 
 
+@cli.command("fix_cement")
+@click.pass_obj
+def fix_cement(
+    context,
+):
+    """Build a scenario.
+
+    Use the --url option to specify the base scenario. If this scenario is on a
+    Platform stored with ixmp.JDBCBackend, it should be configured with >16 GB of
+    memory, i.e. ``jvmargs=["-Xmx16G"]``.
+    """
+
+    # Clone and set up
+    scenario = context.get_scenario().clone(
+        model=context.scenario_info["model"] + "_cement_fix",
+        scenario=context.scenario_info["scenario"],
+        keep_solution=False,
+    )
+
+    # 1) Applying fix
+    from message_ix.util import make_df
+
+    from message_ix_models.util import broadcast
+
+    def gen_missing_clinker_ratios():
+        # 2020 ratios from
+        # https://www.sciencedirect.com/science/article/pii/S1750583624002238#bib0071
+        # Appendix B
+        reg_map = {
+            "R12_AFR": 0.75,
+            "R12_CHN": 0.65,
+            "R12_EEU": 0.82,
+            "R12_FSU": 0.85,
+            "R12_LAM": 0.71,
+            "R12_MEA": 0.8,
+            "R12_NAM": 0.87,
+            "R12_PAO": 0.83,
+            "R12_PAS": 0.78,
+            "R12_RCPA": 0.78,
+            "R12_SAS": 0.7,
+            "R12_WEU": 0.74,
+        }
+        df = make_df(
+            "input",
+            node_loc=reg_map.keys(),
+            node_origin=reg_map.keys(),
+            value=reg_map.values(),
+            commodity="clinker_cement",
+            level="tertiary_material",
+            mode="M1",
+            time="year",
+            time_origin="year",
+            unit="???",
+        )
+        df = (
+            df.pipe(
+                broadcast,
+                technology=["grinding_ballmill_cement", "grinding_vertmill_cement"],
+            )
+            .pipe(broadcast, year_act=[2070, 2080])
+            .pipe(broadcast, year_vtg=[2045, 2055])
+        )
+        df = df[df["year_act"] >= df["year_vtg"]]
+        df = df[df["year_act"] - df["year_vtg"] <= 25]
+        return {"input": df}
+
+    df = gen_missing_clinker_ratios()
+    with scenario.transact():
+        scenario.add_par("input", df["input"])
+
+    # 2) Reporting
+    scenario.solve("MESSAGE-MACRO")
+    scenario.set_as_default()
+
+    # 3) Reporting (materials and legacy)
+    from message_ix_models.model.material.report.run_reporting import (
+        run as report_materials,
+    )
+
+    scenario.check_out(timeseries_only=True)
+    df = report_materials(scenario, region="R12_GLB", upload_ts=True)
+    scenario.commit("Add materials reporting")
+
+    import ixmp
+    from message_data.tools.post_processing import iamc_report_hackathon
+
+    mp = ixmp.Platform("ixmp_dev")
+    iamc_report_hackathon.report(
+        mp=mp,
+        scen=scenario,
+        merge_hist=True,
+        run_config="materials_daccs_run_config.yaml",
+    )
+
+
 @cli.command("build")
 @click.option(
     "--iea_data_path",
