@@ -78,6 +78,8 @@ def read_timeseries_infrastructure(filename, case="mean", infra_scenario="baseli
     inf_input = pd.concat([inf_input_area, inf_input_demand, inf_input_rel])
 
     inf_input.columns = inf_input.columns.map(str)
+    inf_input["2105"] = inf_input["2100"]
+    inf_input["2110"] = inf_input["2100"]
 
     inf_input_pivot = (
         inf_input.melt(
