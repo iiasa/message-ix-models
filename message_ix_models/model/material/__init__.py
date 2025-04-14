@@ -356,8 +356,14 @@ def build_scen(
         else:
             scenario = build(
                 context.get_scenario().clone(
-                    model="MESSAGEix-Materials",
-                    scenario=output_scenario_name + "_" + tag,
+                    model="MESSAGEix-Materials-GLOMIS",
+                    scenario=output_scenario_name
+                    + "_"
+                    + demand_scenario
+                    + "_"
+                    + supply_scenario
+                    + "_"
+                    + tag,
                 ),
                 context,
                 old_calib=old_calib,
