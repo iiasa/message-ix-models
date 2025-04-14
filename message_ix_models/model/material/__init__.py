@@ -41,17 +41,7 @@ from message_ix_models.model.material.data_util import (
     modify_industry_demand,
 )
 from message_ix_models.model.material.scenario_run.supply_side_scenarios import (
-    increased_recycling,
-    industry_sector_net_zero_targets,
-    keep_fuel_share,
-    limit_asphalt_recycling,
-    minimum_ccs_cement,
-    no_ccs,
-    no_clinker_substitution,
-    no_ethanol_cement,
-    no_h2_cement,
-    no_h2_steel,
-    no_methanol_cement,
+    parametrize_supply_scenario,
 )
 from message_ix_models.model.material.util import (
     excel_to_csv,
@@ -415,97 +405,7 @@ def build_scen(
         scenario.add_par("inv_cost", inv)
         scenario.commit(f"update cost assumption to: {update_costs}")
 
-    if supply_scenario == "substitution":
-        log.info("Building material substitution scenario")
-        # No CCS, fuel share same as today, recycling as today
-        # Material substitution allowed.
-        no_ccs(scenario)
-        limit_asphalt_recycling(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_h2_cement(scenario)
-        no_ethanol_cement(scenario)
-    elif supply_scenario == "fuel_switching":
-        # No material substitution
-        # Recycling as today
-        # No CCS
-        log.info("Building fuel switching scenario")
-        no_clinker_substitution(scenario)
-        limit_asphalt_recycling(scenario)
-        no_ccs(scenario)
-    elif supply_scenario == "ccs":
-        # No material substitution
-        # Recycling as today
-        # Keep fuel share as today
-        log.info("Building ccs scenario")
-        no_clinker_substitution(scenario)
-        limit_asphalt_recycling(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_ethanol_cement(scenario)
-        no_h2_cement(scenario)
-        # minimum_ccs_cement(scenario)
-    elif supply_scenario == "recycling":
-        # No material substitution
-        # Recycling increased for steel and alu.
-        # For asphalt enhanced modes are allowed. (M4,M5)
-        # No CCS
-        # Keep fuel share as today
-        log.info("Building recycling scenario")
-        no_clinker_substitution(scenario)
-        increased_recycling(scenario)
-        no_ccs(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_ethanol_cement(scenario)
-        no_h2_cement(scenario)
-    elif supply_scenario == "default":
-        log.info("Default mode")
-        limit_asphalt_recycling(scenario)
-        no_clinker_substitution(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_ethanol_cement(scenario)
-        no_h2_cement(scenario)
-    elif supply_scenario == "all":
-        increased_recycling(scenario)
-        # industry_sector_net_zero_targets(scenario)
-
-        # # Add climate budget as well
-        #
-        # budget = "1000f"
-        # budget_i = 3667
-        # name = scenario.scenario.split('_')[2]
-        # print(name)
-        #
-        # scenario_cbud = scenario.clone(
-        #     model=scenario.model,
-        #     scenario=name + "_demand_increased_supply_" + budget,
-        #     shift_first_model_year=2030,
-        # )
-        #
-        # emission_dict = {
-        #     "node": "World",
-        #     "type_emission": "TCE",
-        #     "type_tec": "all",
-        #     "type_year": "cumulative",
-        #     "unit": "???",
-        # }
-        # df = message_ix.make_df("bound_emission", value=budget_i, **emission_dict)
-        # scenario_cbud.check_out()
-        # scenario_cbud.add_par("bound_emission", df)
-        # scenario_cbud.commit("add emission bound")
-        # pre_model_yrs = scenario_cbud.set(
-        #     "cat_year", {"type_year": "cumulative", "year": [2020, 2015, 2010]}
-        # )
-        # scenario_cbud.check_out()
-        # scenario_cbud.remove_set("cat_year", pre_model_yrs)
-        # scenario_cbud.commit("remove cumulative years from cat_year set")
-        # scenario_cbud.set("cat_year", {"type_year": "cumulative"})
+    parametrize_supply_scenario(supply_scenario, scenario)
 
 
 @cli.command("solve")
