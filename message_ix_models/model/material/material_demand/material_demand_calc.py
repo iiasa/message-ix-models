@@ -6,8 +6,8 @@ from scipy.optimize import curve_fit
 
 import message_ix_models.util
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import package_data_path
 from message_ix_models.model.material.data_infrastructure import get_inf_mat_demand
+from message_ix_models.util import package_data_path
 
 CASE_SENS = "mean"
 INFRA_SCEN = "baseline"
@@ -212,7 +212,7 @@ def read_hist_mat_demand(material):
         )
     elif material == "steel":
         df_raw_cons = pd.read_excel(
-            f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
+            f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
             sheet_name="Consumption regions",
             nrows=26,
         )
@@ -245,7 +245,7 @@ def read_hist_mat_demand(material):
         )
     elif material == "cement":
         df_raw_cons = pd.read_excel(
-            f'{datapath}/{material_data[material]["dir"]}{material_data[material]["file"]}',
+            f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
             sheet_name="Regions",
             skiprows=122,
             nrows=26,
@@ -334,7 +334,7 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
 
     # get base year demand of material
     df_base_demand_original = read_base_demand(
-        f'{datapath}/{material_data[material]["dir"]}/demand_{material}.yaml'
+        f"{datapath}/{material_data[material]['dir']}/demand_{material}.yaml"
     )
 
     # In 2020 deduct the demand from infrastructure
@@ -345,12 +345,18 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
 
     if material == "cement":
         infrastructure_demand = get_inf_mat_demand(
-            "concrete", "2020", INPUTFILE, case=CASE_SENS, infra_scenario=INFRA_SCEN
+            "concrete",
+            "2020",
+            infra_scenario=INFRA_SCEN,
+            case=CASE_SENS,
         )
         infrastructure_demand["value"] *= 0.15
     else:
         infrastructure_demand = get_inf_mat_demand(
-            material, "2020", INPUTFILE, case=CASE_SENS, infra_scenario=INFRA_SCEN
+            material,
+            "2020",
+            infra_scenario=INFRA_SCEN,
+            case=CASE_SENS,
         )
 
     infrastructure_demand["year"] = infrastructure_demand["year"].astype("int64")

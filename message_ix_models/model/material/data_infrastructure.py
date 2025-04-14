@@ -13,22 +13,17 @@ from message_ix_models.util import (
 )
 
 CASE_SENS = "mean"
-INFRA_SCEN = "baseline"
 INPUTFILE = "stocks_forecast_MESSAGE.csv"
 
-print("Adding infrastructure demand with:")
-print(CASE_SENS)
-print(INFRA_SCEN)
 
-
-def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario=INFRA_SCEN):
+def read_timeseries_infrastructure(filename, case="mean", infra_scenario="baseline"):
     # Read the file and filter the given sensitivity case
     inf_input_raw = pd.read_csv(
         package_data_path("material", "infrastructure", filename)
     )
     inf_input_raw = inf_input_raw.loc[
-        (inf_input_raw.Sensitivity == CASE_SENS)
-        & (inf_input_raw.Scenario == INFRA_SCEN)
+        (inf_input_raw.Sensitivity == case)
+        & (inf_input_raw.Scenario == infra_scenario)
     ]
     inf_input_raw["Region"] = "R12_" + inf_input_raw["Region"]
 
@@ -157,9 +152,9 @@ def read_timeseries_infrastructure(filename, case=CASE_SENS, infra_scenario=INFR
 
 
 def get_inf_mat_demand(
-    commod, year="2020", inputfile=INPUTFILE, case=CASE_SENS, infra_scenario=INFRA_SCEN
+    commod, year="2020", infra_scenario="baseline", case="mean"
 ):
-    a, b, c = read_timeseries_infrastructure(inputfile, case, infra_scenario)
+    a, b, c = read_timeseries_infrastructure(INPUTFILE, case, infra_scenario)
     if not year == "all":  # specific year
         cc = c[(c.commodity == commod) & (c.year == year)].reset_index(drop=True)
     else:  # all years
@@ -167,7 +162,7 @@ def get_inf_mat_demand(
     return cc
 
 
-def adjust_demand_param(scen):
+def adjust_demand_param(scen, infra_scen):
     # scen_mat_demand = scen.par(
     #     "demand", {"level": "demand"}
     # )
@@ -207,10 +202,9 @@ def adjust_demand_param(scen):
 
     mat_inf_asphalt = get_inf_mat_demand(
         "asphalt",
-        inputfile=INPUTFILE,
         year="all",
         case=CASE_SENS,
-        infra_scenario=INFRA_SCEN,
+        infra_scenario=infra_scen,
     )
     mat_inf_asphalt["year"] = mat_inf_asphalt["year"].astype(int)
     mat_inf_asphalt["level"] = "demand"
@@ -232,6 +226,7 @@ def gen_data_infrastructure(scenario, dry_run=False):
     # Load configuration
     context = read_config()
     config = context["material"]["infrastructure"]
+    infra_scen = context["infrastructure_scenario"]
 
     # New element names for infrastructure integrations
     lev_new = config["level"]["add"][0]
@@ -246,7 +241,7 @@ def gen_data_infrastructure(scenario, dry_run=False):
         data_infrastructure,
         data_infrastructure_demand,
         data_infrastructure_mat_demand,
-    ) = read_timeseries_infrastructure(INPUTFILE, CASE_SENS, INFRA_SCEN)
+    ) = read_timeseries_infrastructure(INPUTFILE, CASE_SENS, infra_scen)
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)

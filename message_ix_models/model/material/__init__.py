@@ -78,7 +78,9 @@ DATA_FUNCTIONS_2 = [
 ]
 
 
-def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario:
+def build(
+    scenario: message_ix.Scenario, context, old_calib: bool
+) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
 
     # Get the specification
@@ -158,7 +160,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     scenario.remove_par("bound_activity_lo", df)
     scenario.commit("remove sp_el_I min bound on RCPA in 2020")
 
-    adjust_demand_param(scenario)
+    adjust_demand_param(scenario, context["infrastructure_scenario"])
 
     return scenario
 
@@ -186,6 +188,15 @@ _SUPPLY_SCENARIOS = [
     "ccs",
     "all",
     "default",
+]
+_DEMAND_SCENARIOS = [
+    "baseline",
+    "ScP2",
+    "ScP3",
+    "ScP4",
+    "ScP5",
+    "ScP6",
+    "ScP7",
 ]
 
 
@@ -265,7 +276,12 @@ def create_bare(context, regions, dry_run):
     "--update_costs",
     default=False,
 )
-@click.option("--supply_scenario", default="none", type=click.Choice(_SUPPLY_SCENARIOS))
+@click.option(
+    "--supply_scenario", default="default", type=click.Choice(_SUPPLY_SCENARIOS)
+)
+@click.option(
+    "--demand_scenario", default="baseline", type=click.Choice(_DEMAND_SCENARIOS)
+)
 @click.pass_obj
 def build_scen(
     context,
@@ -276,6 +292,7 @@ def build_scen(
     old_calib,
     update_costs,
     supply_scenario,
+    demand_scenario,
 ):
     """Build a scenario.
 
@@ -287,6 +304,8 @@ def build_scen(
     import message_ix
 
     mp = context.get_platform()
+
+    context["infrastructure_scenario"] = demand_scenario
 
     if mode == "by_url":
         # Determine the output scenario name based on the --url CLI option. If the
@@ -333,13 +352,14 @@ def build_scen(
                     scenario.add_par("bound_activity_lo", df)
                     scenario.add_par("bound_activity_up", df)
                     scenario.commit("update projections")
-            scenario = build(scenario, old_calib=old_calib)
+            scenario = build(scenario, context, old_calib=old_calib)
         else:
             scenario = build(
                 context.get_scenario().clone(
                     model="MESSAGEix-Materials",
                     scenario=output_scenario_name + "_" + tag,
                 ),
+                context,
                 old_calib=old_calib,
             )
         # Set the latest version as default
