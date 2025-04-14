@@ -9,6 +9,7 @@ from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
+
 def industry_sector_net_zero_targets(scenario):
     # Add iron and steel net zero target
 

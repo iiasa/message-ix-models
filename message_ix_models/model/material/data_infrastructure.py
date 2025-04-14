@@ -22,8 +22,7 @@ def read_timeseries_infrastructure(filename, case="mean", infra_scenario="baseli
         package_data_path("material", "infrastructure", filename)
     )
     inf_input_raw = inf_input_raw.loc[
-        (inf_input_raw.Sensitivity == case)
-        & (inf_input_raw.Scenario == infra_scenario)
+        (inf_input_raw.Sensitivity == case) & (inf_input_raw.Scenario == infra_scenario)
     ]
     inf_input_raw["Region"] = "R12_" + inf_input_raw["Region"]
 
@@ -151,9 +150,7 @@ def read_timeseries_infrastructure(filename, case="mean", infra_scenario="baseli
     return inf_intensity_long, inf_area_long, inf_demand_long
 
 
-def get_inf_mat_demand(
-    commod, year="2020", infra_scenario="baseline", case="mean"
-):
+def get_inf_mat_demand(commod, year="2020", infra_scenario="baseline", case="mean"):
     a, b, c = read_timeseries_infrastructure(INPUTFILE, case, infra_scenario)
     if not year == "all":  # specific year
         cc = c[(c.commodity == commod) & (c.year == year)].reset_index(drop=True)

@@ -9,7 +9,7 @@ def intpol(y1, y2, x1, x2, x, dataframe=False):
         Option to consider checks appropriate for dataframes/series or not.
     """
     if dataframe is False and x2 == x1 and y2 != y1:
-        print(">>> Warning <<<: No difference between x1 and x2," "returned empty!!!")
+        print(">>> Warning <<<: No difference between x1 and x2,returned empty!!!")
         return []
     elif dataframe is False and x2 == x1 and y2 == y1:
         return y1

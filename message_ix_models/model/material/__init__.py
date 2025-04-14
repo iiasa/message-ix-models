@@ -481,10 +481,11 @@ def solve_scen(
             scenario.set_as_default()
 
             # Report
-            from message_ix_models.model.material.report.reporting import report
             from message_data.tools.post_processing.iamc_report_hackathon import (
                 report as reporting,
             )
+
+            from message_ix_models.model.material.report.reporting import report
 
             # Remove existing timeseries and add material timeseries
             print("Reporting material-specific variables")
@@ -580,10 +581,11 @@ def add_building_ts(scenario_name, model_name):
 @click.pass_obj
 def run_reporting(context, remove_ts, profile, add_infra_vars):
     """Run materials, then legacy reporting."""
-    from message_ix_models.model.material.report.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
+
+    from message_ix_models.model.material.report.reporting import report
 
     # Retrieve the scenario given by the --url option
     scenario = context.get_scenario()
@@ -905,8 +907,9 @@ def test_calib(context, model_name, scenario_name):
     """
     # Clone and set up
     from message_ix import Scenario
-    from message_ix_models.model import macro
     from sdmx.model import Annotation, Code
+
+    from message_ix_models.model import macro
     from message_ix_models.util import identify_nodes
 
     mp = ixmp.Platform("ixmp_dev")
