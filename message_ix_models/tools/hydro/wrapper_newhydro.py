@@ -201,14 +201,14 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
     scenario.add_set("relation", relation_act_hydro)
     scenario.add_set("relation", relation_cap_hydro)
 
-    cat_tec = pd.DataFrame(
-        {
-            "type_tec": "powerplant_low-carbon",  # 'powerplant',
-            "technology": allhydrotech,
-        }
-    )
+    # cat_tec = pd.DataFrame(
+    #     {
+    #         "type_tec": "powerplant_low-carbon",  # 'powerplant',
+    #         "technology": allhydrotech,
+    #     }
+    # )
 
-    scenario.add_set("cat_tec", cat_tec)
+    # scenario.add_set("cat_tec", cat_tec)
 
     # %% Param inputs (Part 1 of 3).
 
@@ -566,6 +566,8 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                 if "_CHN" in focus_region and param == "growth_new_capacity_up":
                     # filter year > 2030
                     df = df.loc[df.year_vtg > 2030]
+                if param == "soft_new_capacity_up":
+                    df = df.loc[df.year_vtg < 2030]
                 scenario.add_par(param, df)
 
         # soft activity
@@ -580,6 +582,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     value=0.05 if "_up" in param else -0.05,
                     unit="???",
                 )
+                df = df.loc[df.year_act < 2030]
                 scenario.add_par(param, df)
 
         for param in ["abs_cost_activity_soft_up", "abs_cost_activity_soft_lo"]:
@@ -593,6 +596,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     value=500,
                     unit="???",
                 )
+                df = df.loc[df.year_act < 2030]
                 scenario.add_par(param, df)
 
         for param in ["level_cost_activity_soft_up", "level_cost_activity_soft_lo"]:
@@ -606,6 +610,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     value=10,
                     unit="???",
                 )
+                df = df.loc[df.year_act < 2030]
                 scenario.add_par(param, df)
         # same for capacity
 
@@ -619,6 +624,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     value=200,
                     unit="???",
                 )
+                df = df.loc[df.year_vtg < 2030]
                 scenario.add_par(param, df)
 
         for param in [
@@ -634,6 +640,7 @@ def IncorporateNewHydro(scenario, code="ensemble_2p6", reg="R11", startyear=2020
                     value=10,
                     unit="???",
                 )
+                df = df.loc[df.year_vtg < 2030]
                 scenario.add_par(param, df)
 
         for param in [
