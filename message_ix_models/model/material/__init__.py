@@ -435,34 +435,15 @@ def build_scen(
 
 
 @cli.command("solve")
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--version", default=None)
-@click.option("--model_name", default="MESSAGEix-Materials")
-@click.option(
-    "--datafile",
-    default="Global_steel_MESSAGE.xlsx",
-    metavar="INPUT",
-    help="File name for external data input",
-)
 @click.option("--add_macro", default=True)
 @click.option("--add_calibration", default=False)
 @click.pass_obj
-def solve_scen(
-    context, datafile, model_name, scenario_name, add_calibration, add_macro, version
-):
+def solve_scen(context, add_calibration, add_macro):
     """Solve a scenario.
 
     Use the --model_name and --scenario_name option to specify the scenario to solve.
     """
-    # Clone and set up
-    from message_ix import Scenario
-
-    mp = ixmp.Platform("ixmp_dev")
-    if version:
-        scenario = Scenario(mp, model_name, scenario_name, version=int(version))
-    else:
-        scenario = Scenario(mp, model_name, scenario_name)
-    # scenario = Scenario(context.get_platform(), model_name, scenario_name)
+    scenario = context.get_scenario()
 
     if scenario.has_solution():
         if not add_calibration:
