@@ -1,9 +1,10 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix import make_df
-from message_ix_models.util import broadcast, same_node, package_data_path
+from message_ix_models.util import broadcast, package_data_path, same_node
+
 from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
@@ -444,12 +445,12 @@ def read_demand():
 
     # Process the regional historical activities
 
-    fs_GLO = feedshare_GLO.copy()
-    fs_GLO.insert(1, "bio_pct", 0)
-    fs_GLO.insert(2, "elec_pct", 0)
+    fs_GLO = feedshare_GLO.copy(deep=True)
+    fs_GLO.insert(1, "bio_pct", 0.0)
+    fs_GLO.insert(2, "elec_pct", 0.0)
     # 17/14 NH3:N ratio, to get NH3 activity based on N demand => No NH3 loss assumed during production
     fs_GLO.iloc[:, 1:6] = input_fuel[5] * fs_GLO.iloc[:, 1:6]
-    fs_GLO.insert(6, "NH3_to_N", 1)
+    fs_GLO.insert(6, "NH3_to_N", 1.0)
 
     # Share of feedstocks for NH3 prodution (based on 2010 => Assumed fixed for any past years)
     feedshare = fs_GLO.sort_values(["Region"]).set_index("Region").drop("R12_GLB")

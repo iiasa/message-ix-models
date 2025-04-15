@@ -39,7 +39,7 @@ def read_timeseries_infrastructure(filename, case="mean", infra_scenario="baseli
     # Demand
     inf_input_demand = inf_input_raw[
         inf_input_raw["Variable"].str.contains("Material Demand")
-    ]
+    ].copy(deep=True)
 
     inf_input_demand["Material"] = inf_input_demand["Variable"].str.split("|").str[3]
     inf_input_demand = (
@@ -60,7 +60,7 @@ def read_timeseries_infrastructure(filename, case="mean", infra_scenario="baseli
         ].str.contains(  # "Floor Space|Aluminum|Cement|Steel|Final Energy"
             "Material Release"
         )
-    ]
+    ].copy(deep=True)
 
     inf_input_rel["Material"] = inf_input_rel["Variable"].str.split("|").str[3]
     inf_input_rel = (

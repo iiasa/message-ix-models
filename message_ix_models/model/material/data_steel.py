@@ -6,10 +6,10 @@ from message_ix import make_df
 # Get endogenous material demand from buildings interface
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
+    calculate_ini_new_cap,
     read_rel,
     read_sector_data,
     read_timeseries,
-    calculate_ini_new_cap,
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import (
@@ -420,7 +420,6 @@ def gen_data_steel(scenario, dry_run=False):
     # Load configuration
     context = read_config()
     config = context["material"]["steel"]
-    print(config)
     ssp = get_ssp_from_context(context)
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)

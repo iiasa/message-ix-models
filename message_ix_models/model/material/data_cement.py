@@ -1,15 +1,14 @@
 from collections import defaultdict
-import math
 
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
-    read_sector_data,
-    read_timeseries,
     calculate_ini_new_cap,
     read_rel,
+    read_sector_data,
+    read_timeseries,
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import get_ssp_from_context, read_config
@@ -531,25 +530,22 @@ def gen_data_cement(scenario, dry_run=False):
                     (df_input["node_loc"] == n)
                     & (df_input["technology"] == t)
                     & (df_input["mode"] == m)
-                ]
+                ].copy(deep=True)
                 if df_output.empty:
                     print("Technology {} not found in the input table".format(t))
                     continue
                 else:
-                    df_output["updated_value"] = df_output["value"] * conversion_factor
-                    df_output.drop(["value"], axis=1, inplace=True)
+                    df_output["value"] = df_output["value"] * conversion_factor
                     df_output.rename(
                         columns={
                             "node_origin": "node_dest",
                             "time_origin": "time_dest",
-                            "updated_value": "value",
                         },
                         inplace=True,
                     )
-                    df_output["level"] = "waste_material"
-                    df_output["commodity"] = "fly_ash"
-                    df_output["unit"] = "Mt"
-
+                    df_output = df_output.assign(
+                        level="waste_material", commodity="fly_ash", unit="Mt"
+                    )
                     results["output"].append(df_output)
 
     # Concatenate to one data frame per parameter

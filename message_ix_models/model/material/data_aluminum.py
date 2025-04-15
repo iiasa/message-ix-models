@@ -549,7 +549,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
     data_trade.loc[(data_trade["Region"] == "Europe"), "Value"] *= 0.7
     data_trade.loc[(data_trade["Region"] == "Europe"), "Region"] = "West Europe"
 
-    data_trade_eeu = data_trade[data_trade["Region"] == "West Europe"]
+    data_trade_eeu = data_trade[data_trade["Region"] == "West Europe"].copy(deep=True)
     data_trade_eeu["Value"] *= 0.3 / 0.7
     data_trade_eeu["Region"] = "East Europe"
 
@@ -558,7 +558,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
     # Sum Japan and Oceania as PAO
 
     condition = (data_trade["Region"] == "Japan") | (data_trade["Region"] == "Oceania")
-    data_trade_pao = data_trade.loc[condition]
+    data_trade_pao = data_trade.loc[condition].copy(deep=True)
     data_trade_pao = (
         data_trade_pao.groupby(["Variable", "Year"])["Value"].sum().reset_index()
     )
@@ -577,7 +577,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
     data_trade.loc[(data_trade["Region"] == "Other Asia"), "Value"] *= 0.5
     data_trade.loc[(data_trade["Region"] == "Other Asia"), "Region"] = "South Asia"
 
-    data_trade_pas = data_trade[data_trade["Region"] == "South Asia"]
+    data_trade_pas = data_trade[data_trade["Region"] == "South Asia"].copy(deep=True)
     data_trade_pas["Region"] = "Other Pacific Asia"
 
     data_trade = pd.concat([data_trade, data_trade_pas])
@@ -587,7 +587,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
     data_trade.loc[(data_trade["Region"] == "Other Producers"), "Value"] *= 0.5
     data_trade.loc[(data_trade["Region"] == "Other Producers"), "Region"] = "Africa"
 
-    data_trade_fsu = data_trade[data_trade["Region"] == "Africa"]
+    data_trade_fsu = data_trade[data_trade["Region"] == "Africa"].copy(deep=True)
     data_trade_fsu["Region"] = "Former Soviet Union"
 
     data_trade = pd.concat([data_trade, data_trade_fsu])
@@ -632,7 +632,7 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
     # For imports this corresponds to: USE|Inputs|Imports
 
     data_import = data_trade[data_trade["Variable"] == "USE|Inputs|Imports"]
-    data_import_hist = data_import[data_import["year_act"] <= 2015]
+    data_import_hist = data_import[data_import["year_act"] <= 2015].copy(deep=True)
     data_import_hist["technology"] = "import_aluminum"
     data_import_hist["mode"] = "M1"
     data_import_hist["time"] = "year"
@@ -642,8 +642,10 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
 
     # For exports this corresponds to: MANUFACTURING|Outputs|Exports
 
-    data_export = data_trade[data_trade["Variable"] == "MANUFACTURING|Outputs|Exports"]
-    data_export_hist = data_export[data_export["year_act"] <= 2015]
+    data_export = data_trade[
+        data_trade["Variable"] == "MANUFACTURING|Outputs|Exports"
+    ].copy(deep=True)
+    data_export_hist = data_export[data_export["year_act"] <= 2015].copy(deep=True)
     data_export_hist["technology"] = "export_aluminum"
     data_export_hist["mode"] = "M1"
     data_export_hist["time"] = "year"
@@ -681,11 +683,11 @@ def gen_data_alu_trade(scenario: message_ix.Scenario):
 
     import_chn = data_import[
         (data_import["year_act"] == 2020) & (data_import["node_loc"] == "R12_CHN")
-    ]
+    ].copy(deep=True)
 
     export_chn = data_export[
         (data_export["year_act"] == 2020) & (data_export["node_loc"] == "R12_CHN")
-    ]
+    ].copy(deep=True)
 
     # Merge the DataFrames on 'node_loc' and 'year'
     merged_df = pd.merge(

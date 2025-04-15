@@ -1,15 +1,15 @@
-import message_ix_models.util
-import pandas as pd
+from ast import literal_eval
 
+import pandas as pd
 from message_ix import make_df
+
+import message_ix_models.util
+from message_ix_models.model.material.util import read_config
 from message_ix_models.util import (
     broadcast,
-    same_node,
     package_data_path,
+    same_node,
 )
-
-from message_ix_models.model.material.util import read_config
-from ast import literal_eval
 
 context = read_config()
 
@@ -45,6 +45,9 @@ def gen_data_methanol_new(scenario):
 
 
 def broadcast_reduced_df(df, par_name):
+    import warnings
+
+    warnings.simplefilter(action="ignore", category=FutureWarning)
     df_final = df
     df_final_full = pd.DataFrame()
 
@@ -54,7 +57,7 @@ def broadcast_reduced_df(df, par_name):
         node_cols_codes = {}
         for col in node_cols:
             node_cols_codes[col] = pd.Series(
-                "".join(x for x in df_final.loc[i][col] if not x in remove).split(",")
+                "".join(x for x in df_final.loc[i][col] if x not in remove).split(",")
             )
 
         df_bc_node = make_df(par_name, **df_final.loc[i])
@@ -62,7 +65,7 @@ def broadcast_reduced_df(df, par_name):
         yr_cols_codes = {}
         yr_col_inp = [i for i in df_final.columns if "year" in i]
         yr_col_out = [i for i in df_bc_node.columns if "year" in i]
-        df_bc_node[yr_col_inp] = df_final.loc[i][yr_col_inp]
+        df_bc_node[yr_col_inp] = df_final.loc[i, yr_col_inp]
 
         for colname in node_cols:
             df_bc_node[colname] = None

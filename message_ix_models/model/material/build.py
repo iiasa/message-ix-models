@@ -1,15 +1,13 @@
 import logging
 from typing import Callable, Dict, List, Mapping, Union
 
+import pandas as pd
 from ixmp.utils import maybe_check_out, maybe_commit
 from message_ix import Scenario
-import pandas as pd
-
 from sdmx.model import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
-
 
 log = logging.getLogger(__name__)
 
@@ -135,8 +133,6 @@ def apply_spec(
             # Add elements
             add = [] if dry_run else spec["add"].set[set_name]
             for element in add:
-                print(element)
-                print(set_name)
                 scenario.add_set(
                     set_name,
                     element.id if isinstance(element, Code) else element,
