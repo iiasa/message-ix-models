@@ -194,8 +194,9 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     #   impacts.
     assert y0 == 2020, f"IEA Extended World Energy Balances: no data for y={y0}"
     rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=2019), drop=True)
+    # rep.apply(to_csv, e_fnp[0], name="debug-e-fnp-0")  # DEBUG
     rep.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
-    # TODO Dump e_fnp[1] to CSV for AJ comparison
+    # rep.apply(to_csv, e_fnp[1], name="debug-e-fnp-1")  # DEBUG
     rep.add(
         e_cnlt,
         "rename_dims",
