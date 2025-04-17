@@ -13,7 +13,9 @@ from message_ix_models.model.material.data_util import (
     read_sector_data,
     read_timeseries,
 )
-from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.material_demand.material_demand_calc import (
+    read_base_demand,
+)
 from message_ix_models.model.material.util import (
     combine_df_dictionaries,
     get_ssp_from_context,
@@ -548,12 +550,8 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     gen_data_steel_rel(data_steel_rel, results, regions, modelyears)
 
     # Create external demand param
-    parname = "demand"
-    df_2025 = pd.read_csv(package_data_path("material", "steel", "demand_2025.csv"))
-    df_demand = material_demand_calc.derive_demand("steel", scenario, ssp=ssp)
-    df_demand = df_demand[df_demand["year"] != 2025]
-    df_demand = pd.concat([df_2025, df_demand])
-    results[parname].append(df_demand)
+    df_demand = gen_demand(ssp)
+    results["demand"].append(df_demand)
 
     new_scrap_ratio = {
         "R12_AFR": 0.92,
@@ -644,7 +642,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_finishing_steel_io(s_info),
         gen_manuf_steel_io(new_scrap_ratio, s_info),
         gen_iron_ore_cost(s_info, ssp),
-        gen_bf_bound(s_info)
+        gen_bf_bound(s_info),
     )
     maybe_remove_water_tec(scenario, results)
 
@@ -1142,7 +1140,7 @@ def gen_iron_ore_cost(s_info, ssp):
         "SSP5": 80,
     }
     common = {
-        "technology":"DUMMY_ore_supply",
+        "technology": "DUMMY_ore_supply",
         "mode": "M1",
         "time": "year",
         "unit": "???",
@@ -1174,7 +1172,7 @@ def gen_bf_bound(s_info):
         "mode": ["M3", "M4"],
         "time": "year",
         "unit": "???",
-        "value": 0
+        "value": 0,
     }
     df = (
         make_df("bound_activity_up", **dimensions)
@@ -1182,3 +1180,38 @@ def gen_bf_bound(s_info):
         .pipe(broadcast, year_act=[2020, 2025])
     )
     return {"bound_activity_up": df}
+
+
+def gen_ssp_demand(ssp):
+    mapping = {
+        "SSP1": {"phi": 5, "mu": 0.1, "q": 0.01},
+        "SSP2": {"phi": 5, "mu": 0.1, "q": 0.1},
+        "SSP3": {"phi": 5, "mu": 0.05, "q": 0.25},
+        "SSP4": {"phi": 5, "mu": 0.05, "q": 0.1},
+        "SSP5": {"phi": 5, "mu": 0.1, "q": 0.5},
+    }
+    df = pd.read_parquet(
+        package_data_path("material", "steel", "demand_projections.parquet")
+    ).drop_duplicates()
+    df = df[
+        (df["SSP"] == int(ssp.replace("SSP", "")))
+        & (df["quantile"] == mapping[ssp]["q"])
+        & (df["mu"] == mapping[ssp]["mu"])
+    ]
+    df = df.rename(columns={"region": "node", "total_demand": "value"})
+    df[["commodity", "level", "time", "unit"]] = ["steel", "demand", "year", "t"]
+    df = make_df("demand", **df).round(2)
+    return df
+
+
+def gen_demand(ssp):
+    df_2025 = pd.read_csv(package_data_path("material", "steel", "demand_2025.csv"))
+    df_2020 = (
+        read_base_demand(package_data_path("material", "steel", "demand_steel.yaml"))
+        .rename(columns={"region": "node"})
+        .assign(commodity="steel", level="demand", unit="t", time="year")
+    )
+    df_demand = gen_ssp_demand(ssp)
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2020, df_2025, df_demand])
+    return df_demand
