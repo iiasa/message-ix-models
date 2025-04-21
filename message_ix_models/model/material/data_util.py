@@ -901,6 +901,9 @@ def calc_resid_ind_demand(scen: message_ix.Scenario, baseyear: int) -> pd.DataFr
     path = os.path.join(
         "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
     )
+    # Check if the file or directory actually exists
+    if not os.path.exists(path):
+        path = os.path.join("REV2022_allISO_IEA.parquet")
     Inp = pd.read_parquet(path, engine="fastparquet")
     Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
     demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
@@ -1016,6 +1019,9 @@ def get_hist_act_data(map_fname: str, years: list or None = None) -> pd.DataFram
     path = os.path.join(
         "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
     )
+    # Check if the file or directory actually exists
+    if not os.path.exists(path):
+        path = os.path.join("REV2022_allISO_IEA.parquet")
     iea_enb_df = pd.read_parquet(path, engine="fastparquet")
     if years:
         iea_enb_df = iea_enb_df[iea_enb_df["TIME"].isin(years)]
@@ -2837,6 +2843,7 @@ def add_infrastructure_reporting(context, scenario):
     name = os.path.join(
         directory, f"additional_infrastructure_variables_{scenario.scenario}.xlsx"
     )
+    name = package_data_path("material", f"additional_infrastructure_variables_{scenario.scenario}.xlsx")
     final_df_reporting.to_excel(name, index=False)
 
     # Add these as timeseries to the scenario
