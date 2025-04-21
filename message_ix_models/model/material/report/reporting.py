@@ -38,7 +38,6 @@ import xlsxwriter
 import os
 import openpyxl
 
-import plotly.graph_objects as go
 import matplotlib
 
 matplotlib.use("Agg")
