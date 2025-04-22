@@ -337,5 +337,5 @@ def gen_clinker_ratios(s_info):
         .pipe(broadcast, year_vtg=s_info.yv_ya["year_vtg"].unique())
     )
     df = df[df["year_act"] >= df["year_vtg"]]
-    df = df[df["year_act"] - df["year_vtg"] < 25]
+    df = df[df["year_act"] - df["year_vtg"] <= 25]
     return {"input": df}
