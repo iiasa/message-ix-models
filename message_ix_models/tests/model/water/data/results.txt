@@ -1,6 +1,0 @@
-New time Add Sectoral Demands: 0.3321092128753662, Old time Add Sectoral Demands: 0.29991674423217773
-New time Add Sectoral Demands: 0.34615182876586914, Old time Add Sectoral Demands: 0.3498404026031494
-New time Read Water Availability: 0.027781248092651367, Old time Read Water Availability: 0.02924823760986328
-New time Add Water Availability: 0.03456544876098633, Old time Add Water Availability: 0.034697532653808594
-New time Read Water Availability: 0.1507425308227539, Old time Read Water Availability: 0.1748030185699463
-New time Add Water Availability: 0.17680859565734863, Old time Add Water Availability: 0.20284199714660645

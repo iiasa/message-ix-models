@@ -5,8 +5,12 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.irrigation import add_irr_structure
-from message_ix_models.model.water.data.irrigation_refactor import add_irr_structure as add_irr_structure_refactor
+from message_ix_models.model.water.data.irrigation import (
+    add_irr_structure as add_irr_structure_refactor,
+)
+from message_ix_models.model.water.data.irrigation_legacy import (
+    add_irr_structure,
+)
 
 
 def test_add_irr_structure(test_context):

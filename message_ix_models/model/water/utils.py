@@ -1,3 +1,4 @@
+import copy
 import logging
 from collections import defaultdict
 from functools import lru_cache
@@ -7,13 +8,13 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import xarray as xr
-from deprecated import deprecated
-from message_ix import make_df
 from sdmx.model.v21 import Code
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import load_package_data
+from message_ix_models.util import (
+    load_package_data,
+)
 
 log = logging.getLogger(__name__)
 
@@ -168,106 +169,6 @@ def map_yv_ya_lt(
         drop=True
     )
 
-
-def key_check(rules: list[list[dict]]) -> None:
-    """Loop through rules and check if all rules have in common the keys in the DataFrame,
-    each rule is a list of dictionaries. Prove that all the rules have the same keys"""
-
-    set_of_keys = set(rules[0][0].keys())
-    for rule in rules:
-        set_of_keys = set_of_keys.intersection(set(rule[0].keys()))
-        if set_of_keys != set(rules[0][0].keys()):
-            raise ValueError(
-                f"Missing required columns: {set_of_keys - set(rules[0][0].keys())}"
-            )
-    return set_of_keys
-
-
-def eval_field(
-    expr: str, df_processed: pd.DataFrame, df_processed2: pd.DataFrame = None
-):
-    # If the expression is already a numeric literal (or any non-string type),
-    # return it directly.
-    if not isinstance(expr, str):
-        return expr
-
-    import re  # Ensure regex is available.
-
-    # Find all dataframe prefixes (e.g., "df_gw", "df_sw") that occur before a '[' character.
-    prefixes = re.findall(r"(\w+)\s*\[", expr)
-    unique_prefixes = []
-    for p in prefixes:
-        if p not in unique_prefixes:
-            unique_prefixes.append(p)
-    # No dataframe reference found; evaluate the expression as-is.
-    match len(unique_prefixes):
-        case 0:
-            return expr  # eval(expr, {}, {})
-        case 1:
-            local_context = {unique_prefixes[0]: df_processed}
-        case 2 if df_processed2 is not None:
-            local_context = {
-                unique_prefixes[0]: df_processed,
-                unique_prefixes[1]: df_processed2,
-            }
-        case _:
-            raise ValueError(
-                f"Expression '{expr}' uses more than two different dataframes: {unique_prefixes}"
-            )
-
-    # Replace instances of field-access that are missing quotes around the key.
-    def repl(match):
-        prefix = match.group(1)
-        key = match.group(2).strip()
-        # If the key is already quoted, return as is.
-        if (key.startswith("'") and key.endswith("'")) or (
-            key.startswith('"') and key.endswith('"')
-        ):
-            return f"{prefix}[{key}]"
-        else:
-            return f"{prefix}['{key}']"
-
-    # Process the expression (e.g. convert df_gw[value] to df_gw['value']).
-    new_expr = re.sub(r"(\w+)\[\s*([^\]]+?)\s*\]", repl, expr)
-
-    # Evaluate the new expression using an empty globals dict and the constructed local context.
-    return eval(new_expr, {}, local_context)
-
-
-def pre_rule_processing(df_processed: pd.DataFrame) -> pd.DataFrame:
-    """
-    Pre-process the DataFrame to prepare it for the rule evaluation.
-    """
-    # Reset the index of the DataFrame
-    df_processed = df_processed.reset_index(drop=True)
-    # Drop time, rename rate to rate_
-    df_processed = df_processed.merge()
-    # Drop the index column
-    df_processed = df_processed.drop(columns=["index"])
-    return df_processed
-
-
-@deprecated(reason="Use the new standard operation, this is a legacy function")
-def load_rules(rule: dict, df_processed: pd.DataFrame = None) -> pd.DataFrame:
-    """
-    Load a demand rule into a DataFrame. If a processed DataFrame is provided,
-    return it directly. Otherwise, construct the DataFrame using the rule's
-    string templates and the legacy make_df routine.
-    """
-    r = rule.copy()
-    df_rule = make_df(
-        r["type"],
-        node="B" + eval_field(r["node"], df_processed),
-        commodity=r["commodity"],
-        level=r["level"],
-        year=eval_field(r["year"], df_processed),
-        time=eval_field(r["time"], df_processed),
-        value=eval_field(r["value"], df_processed) * r["sign"],
-        unit=r["unit"],
-    )
-    return df_rule
-
-
 def safe_concat(input_df: list[pd.DataFrame] | pd.DataFrame) -> pd.DataFrame:
     """Optimized concatenation that avoids unnecessary operations.
     For lists with single DataFrame, returns it directly. For multiple DataFrames,
@@ -277,3 +178,73 @@ def safe_concat(input_df: list[pd.DataFrame] | pd.DataFrame) -> pd.DataFrame:
     if isinstance(input_df, list):
         return input_df[0] if len(input_df) == 1 else pd.concat(input_df, copy=False)
     return input_df
+
+# Helper function for deep merging
+def deep_merge(base, diff):
+    """Recursively merges diff dict into a deep copy of base dict."""
+    merged = copy.deepcopy(base)  # Start with a deep copy of base
+    for key, value in diff.items():
+        # Check if the key exists in merged and both values are dictionaries
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            # Overwrite or add the key-value pair from diff
+            merged[key] = value
+    return merged
+
+
+class Rule:
+    def base(self):
+        return self.Base
+
+    def diff(self):
+        return self.Diff
+
+    def get_rule(self):
+        result = []
+        base_dict = self.base()  # Get the base dictionary once
+        for diff_item in self.Diff:
+            if diff_item["condition"] == "SKIP":
+                continue
+            if diff_item:  # Only process non-empty dictionaries
+                # Perform a deep merge instead of shallow update
+                merged = deep_merge(base_dict, diff_item)
+                result.append(merged)
+        return result
+
+    def change_unit(self, conversion_factor: float, new_unit: str):
+        # replace current unit with new unit without magic methods
+        self.base()["unit"] = new_unit
+        self.base().value *= conversion_factor
+
+    def __init__(self, Base=None, Diff=None):
+        # Define default pipe flags
+        default_pipe_flags = {
+            "flag_broadcast": False,
+            "flag_map_yv_ya_lt": False,
+            "flag_same_time": False,
+            "flag_same_node": False,
+            "flag_time": False,
+            "flag_node_loc": False,
+        }
+
+        # Initialize Base and Diff
+        initialized_base = Base or {}
+        self.Diff = Diff or [{}, {}]  # Keep original Diff initialization
+
+        # Ensure 'pipe' key exists in initialized_base and is a dictionary
+        if "pipe" not in initialized_base or not isinstance(
+            initialized_base.get("pipe"), dict
+        ):
+            initialized_base["pipe"] = {}
+            # Initialize pipe if not present or not a dict
+
+        # Start with defaults and update with user-provided pipe flags
+        final_pipe_flags = default_pipe_flags.copy()
+        final_pipe_flags.update(initialized_base.get("pipe", {}))
+
+        # Update the initialized_base with the final pipe flags
+        initialized_base["pipe"] = final_pipe_flags
+
+        # Assign the processed Base to self.Base
+        self.Base = initialized_base

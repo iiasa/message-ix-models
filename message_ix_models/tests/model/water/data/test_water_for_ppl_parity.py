@@ -9,25 +9,25 @@ import pytest
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo, testing
-from message_ix_models.model.water.data.cool_tech import (
-    cool_tech as cool_tech_refactor,
-)
-
-# from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.water_for_ppl import (
-    apply_act_cap_multiplier,
-    cool_tech,
-    cooling_shares_SSP_from_yaml,
-    non_cooling_tec,
-)
 from message_ix_models.model.water.data.water_for_ppl import (
     apply_act_cap_multiplier as apply_act_cap_multiplier_refactor,
+)
+from message_ix_models.model.water.data.water_for_ppl import (
+    cool_tech as cool_tech_refactor0,
 )
 from message_ix_models.model.water.data.water_for_ppl import (
     cooling_shares_SSP_from_yaml as cooling_shares_SSP_from_yaml_refactor,
 )
 from message_ix_models.model.water.data.water_for_ppl import (
     non_cooling_tec as non_cooling_tec_refactor,
+)
+
+# from message_ix_models.model.structure import get_codes
+from message_ix_models.model.water.data.water_for_ppl_legacy import (
+    apply_act_cap_multiplier,
+    cool_tech,
+    cooling_shares_SSP_from_yaml,
+    non_cooling_tec,
 )
 
 
@@ -50,14 +50,14 @@ def assert_equal_result(legacy, refactored):
         pdt.assert_series_equal(legacy, refactored)
     else:
         raise ValueError(
-            f"Type mismatch: legacy type {type(legacy)} vs refactored type {type(refactored)}"
+            f"Type mismatch: legacy type {type(legacy)}"
+            f" vs refactored type {type(refactored)}"
         )
 
 
-@pytest.mark.asyncio
 @cool_tech.minimum_version
 @pytest.mark.parametrize("RCP", ["no_climate", "6p0"])
-async def test_cool_tec(request, test_context, RCP):
+def test_cool_tec(request, test_context, RCP):
     mp = test_context.get_platform()
     scenario_info = {
         "mp": mp,
@@ -158,27 +158,46 @@ async def test_cool_tec(request, test_context, RCP):
     # Scenario created above that sets the Scenario up with all things necessary to run
     # cool_tech(). Whatever the fix here is, it can also be applied to the failing
     # test_build::test_build().
-
- 
-
-    start_time = time.time()
-    result_legacy = cool_tech(context=test_context)
-    end_time = time.time()
-
-    with open("water_for_ppl_parity.txt", "a") as f:
-        f.write(f"Time taken for legacy cool_tech: {end_time - start_time} seconds\n")
+    profiler = cProfile.Profile()
+    profiler.enable()
 
     start_time = time.time()
-    result_refactor = await cool_tech_refactor(context=test_context)
+    result_refactor0 = cool_tech_refactor0(context=test_context)
     end_time = time.time()
+
+    profiler.disable()
+    stats = pstats.Stats(profiler)
+    with open("stats0.txt", "w") as f:
+            stats.sort_stats("cumtime").stream = f
+            stats.print_stats()
+
     with open("water_for_ppl_parity.txt", "a") as f:
         f.write(
-            f"Time taken for refactored cool_tech with async wrapping: {end_time - start_time} seconds\n"
+            "Time taken for cached cool_tech rf0 using"
+            f"asyncio: {end_time - start_time} seconds\n"
         )
 
-    assert_equal_result(result_legacy, result_refactor)
+    profiler = cProfile.Profile()
+    profiler.enable()
 
-@pytest.mark.skip(reason="Skipping non_cooling_tec test")
+    start_time = time.time()
+
+    result_legacy = cool_tech(context=test_context)
+    end_time = time.time()
+    profiler.disable()
+    stats = pstats.Stats(profiler)
+    with open("stats_baseline.txt", "w") as f:
+            stats.sort_stats("cumtime").stream = f
+            stats.print_stats()
+    with open("water_for_ppl_parity.txt", "a") as f:
+        f.write(
+            f"Time taken for baseline  cool_tech: {end_time - start_time} seconds\n"
+        )
+
+    assert_equal_result(result_legacy, result_refactor0)
+    #assert_equal_result(result_refactor0, result_refactor1)
+
+#@pytest.mark.skip(reason="Skipping non_cooling_tec test")
 def test_non_cooling_tec(request, test_context):
     mp = test_context.get_platform()
     scenario_info = {
@@ -222,7 +241,7 @@ def test_non_cooling_tec(request, test_context):
     #         "technology_group": ["cooling", "non-cooling"],
     #         "technology_name": ["cooling_tech1", "non_cooling_tech1"],
     #         "water_supply_type": ["freshwater_supply", "freshwater_supply"],
-    #         "water_withdrawal_mid_m3_per_output": [1, 2],
+    #         "water_withdrl_mid_m3_per_output": [1, 2],
     #     }
     # )
 
@@ -239,7 +258,8 @@ def test_non_cooling_tec(request, test_context):
     end_time = time.time()
     with open("water_for_ppl_parity.txt", "a") as f:
         f.write(
-            f"Time taken for refactored non_cooling_tec: {end_time - start_time} seconds\n"
+            "Time taken for refactored non_cooling_tec:"
+            f" {end_time - start_time} seconds\n"
         )
 
     assert_equal_result(result_legacy, result_refactor)
@@ -266,7 +286,7 @@ def test_non_cooling_tec(request, test_context):
         ),  # Apply capacity factors
     ],
 )
-@pytest.mark.skip(reason="Skipping apply_act_cap_multiplier test")
+#@pytest.mark.skip(reason="Skipping apply_act_cap_multiplier test")
 def test_apply_act_cap_multiplier(
     param_name: str,
     cap_fact_parent: Optional[pd.DataFrame],
@@ -295,7 +315,8 @@ def test_apply_act_cap_multiplier(
     end_time = time.time()
     with open("water_for_ppl_parity.txt", "a") as f:
         f.write(
-            f"Time taken for legacy apply_act_cap_multiplier: {end_time - start_time} seconds\n"
+            f"Time taken for legacy apply_act_cap_multiplier:"
+            f" {end_time - start_time} seconds\n"
         )
 
     start_time = time.time()
@@ -305,12 +326,13 @@ def test_apply_act_cap_multiplier(
     end_time = time.time()
     with open("water_for_ppl_parity.txt", "a") as f:
         f.write(
-            f"Time taken for refactored apply_act_cap_multiplier: {end_time - start_time} seconds\n"
+            f"Time taken for refactored apply_act_cap_multiplier:"
+            f" {end_time - start_time} seconds\n"
         )
 
     assert_equal_result(result_legacy, result_refactor)
 
-@pytest.mark.skip(reason="Skipping cooling_shares_SSP_from_yaml test")
+#@pytest.mark.skip(reason="Skipping cooling_shares_SSP_from_yaml test")
 @pytest.mark.parametrize("SSP, regions", [("SSP2", "R11"), ("LED", "R12")])
 def test_cooling_shares_SSP_from_yaml(request, test_context, SSP, regions):
     test_context.model.regions = regions
@@ -324,7 +346,8 @@ def test_cooling_shares_SSP_from_yaml(request, test_context, SSP, regions):
     end_time = time.time()
     with open("water_for_ppl_parity.txt", "a") as f:
         f.write(
-            f"Time taken for legacy cooling_shares_SSP_from_yaml: {end_time - start_time} seconds\n"
+            "Time taken for legacy cooling_shares_SSP_from_yaml:"
+            f" {end_time - start_time} seconds\n"
         )
 
     start_time = time.time()
@@ -332,7 +355,8 @@ def test_cooling_shares_SSP_from_yaml(request, test_context, SSP, regions):
     end_time = time.time()
     with open("water_for_ppl_parity.txt", "a") as f:
         f.write(
-            f"Time taken for refactored cooling_shares_SSP_from_yaml: {end_time - start_time} seconds\n"
+            "Time taken for refactored cooling_shares_SSP_from_yaml:"
+            f" {end_time - start_time} seconds\n"
         )
 
     assert_equal_result(result_legacy, result_refactor)

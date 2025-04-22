@@ -1,9 +1,6 @@
 import time as pytime
 
-import pandas as pd
 import pandas.testing as pdt
-import pytest
-from ixmp import Platform
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
@@ -52,15 +49,17 @@ def test_map_basin_region_wat(test_context):
         result_rf = new_map_basin_region_wat(test_context)
     end_time = pytime.time()
     #print time taken to results.txt
-    with open("results_new.txt", "a") as f:
-        f.write(f"Time taken for map_basin_region_wat_new: {(end_time - start_time)/n_iter} seconds\n")
+    with open("supply_parity_results.txt", "a") as f:
+        f.write(f"Time taken for map_basin_region_wat_new:"
+                f" {(end_time - start_time)/n_iter} seconds\n")
 
     start_time = pytime.time()
     for i in range(n_iter):
         result = map_basin_region_wat_legacy(test_context)
     end_time = pytime.time()
-    with open("results_new.txt", "a") as f:
-        f.write(f"Time taken for map_basin_region_wat_legacy: {(end_time - start_time)/n_iter} seconds\n")
+    with open("supply_parity_results.txt", "a") as f:
+        f.write(f"Time taken for map_basin_region_wat_legacy:"
+                f" {(end_time - start_time)/n_iter} seconds\n")
 
     #compare results
     pdt.assert_frame_equal(result_rf.sort_index(axis=0).sort_index(axis=1),
@@ -106,15 +105,17 @@ def test_add_water_supply_run(request, test_context):
     for i in range(n_iter):
         ws_legacy = add_water_supply_legacy(test_context)
     end_time = pytime.time()
-    with open("results_new.txt", "a") as f:
-        f.write(f"Time taken for legacy add_water_supply: {(end_time - start_time)/n_iter} seconds\n")
+    with open("supply_parity_results.txt", "a") as f:
+        f.write("Time taken for legacy add_water_supply: "
+                f"{(end_time - start_time)/n_iter} seconds\n")
 
     start_time = pytime.time()
     for i in range(n_iter):
         ws_refact = new_add_water_supply(test_context)
     end_time = pytime.time()
-    with open("results_new.txt", "a") as f:
-        f.write(f"Time taken for refactored add_water_supply: {(end_time - start_time)/n_iter} seconds\n")
+    with open("supply_parity_results.txt", "a") as f:
+        f.write("Time taken for refactored add_water_supply: "
+                f"{(end_time - start_time)/n_iter} seconds\n")
 
 
     # compare results
@@ -148,19 +149,21 @@ def test_add_e_flow(test_context):
 
     # Call the function to be tested
     n_iter = 10
-    start_time = pytime.time()  
+    start_time = pytime.time()
     for i in range(n_iter):
         result_rf = new_add_e_flow(test_context)
     end_time = pytime.time()
-    with open("results_new.txt", "a") as f:
-        f.write(f"Time taken for new_add_e_flow: {(end_time - start_time)/n_iter} seconds\n")
+    with open("supply_parity_results.txt", "a") as f:
+        f.write(f"Time taken for new_add_e_flow: "
+                f"{(end_time - start_time)/n_iter} seconds\n")
 
     start_time = pytime.time()
     for i in range(n_iter):
         result = add_e_flow_legacy(test_context)
     end_time = pytime.time()
-    with open("results_new.txt", "a") as f:
-        f.write(f"Time taken for add_e_flow legacy: {(end_time - start_time)/n_iter} seconds\n")
+    with open("supply_parity_results.txt", "a") as f:
+        f.write("Time taken for add_e_flow legacy: "
+                f"{(end_time - start_time)/n_iter} seconds\n")
 
     # both are dicts so compare values
     assert set(result_rf.keys()) == set(result.keys()), "parameter keys mismatch"

@@ -7,15 +7,6 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.demands_legacy import (
-    add_sectoral_demands as old_add_sectoral_demands,
-)
-from message_ix_models.model.water.data.demands_legacy import (
-    add_water_availability as old_add_water_availability,
-)
-from message_ix_models.model.water.data.demands_legacy import (
-    read_water_availability as old_read_water_availability,
-)
 from message_ix_models.model.water.data.demands import (
     add_sectoral_demands as new_add_sectoral_demands,
 )
@@ -25,27 +16,40 @@ from message_ix_models.model.water.data.demands import (
 from message_ix_models.model.water.data.demands import (
     read_water_availability as new_read_water_availability,
 )
+from message_ix_models.model.water.data.demands_legacy import (
+    add_sectoral_demands as old_add_sectoral_demands,
+)
+from message_ix_models.model.water.data.demands_legacy import (
+    add_water_availability as old_add_water_availability,
+)
+from message_ix_models.model.water.data.demands_legacy import (
+    read_water_availability as old_read_water_availability,
+)
 
-#compare performance of new and old demands
+# compare performance of new and old demands
 
 
-
-def sort_and_reset(df: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
+def sort_and_reset(
+    df: Union[pd.DataFrame, pd.Series],
+) -> Union[pd.DataFrame, pd.Series]:
     """Sort and reset DataFrame or Series index for robust comparisons."""
     if isinstance(df, pd.DataFrame):
-        return df.sort_index(axis=1).reset_index(drop=True)
+        # Sort by all columns to ensure row order doesn't affect comparison
+        return df.sort_values(by=list(df.columns)).reset_index(drop=True)
     elif isinstance(df, pd.Series):
+        # Sort Series by index
         return df.sort_index().reset_index(drop=True)
     else:
         raise TypeError(f"Expected DataFrame or Series, got {type(df)}")
+
 
 @new_add_sectoral_demands.minimum_version
 @pytest.mark.parametrize(
     ["SDG", "time"], [("baseline", "year"), ("ambitious", "month")]
 )
 
-#deactivate this test for now
-#@pytest.mark.skip(reason="passed")
+# deactivate this test for now
+# @pytest.mark.skip(reason="passed")
 def test_add_sectoral_demands(request, test_context, SDG, time):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
@@ -89,23 +93,25 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
     end_time_old = pytime.time()
     old_time = end_time_old - start_time_old
 
-    #save to a results txt file
+    # save to a results txt file
     with open("results.txt", "a") as f:
-        f.write(f"New time Add Sectoral Demands: {new_time}, Old time Add Sectoral Demands: {old_time}\n")
+        f.write(
+            f"New time Add Sectoral Demands: {new_time}, "
+            f"Old time Add Sectoral Demands: {old_time}\n"
+        )
     # First, verify that both outputs have the same keys.
     assert set(result1.keys()) == set(result2.keys())
-    
+
     # Then, assert equality of each corresponding DataFrame after sorting.
     for key in result1:
-         pd.testing.assert_frame_equal(
-             sort_and_reset(result1[key]),
-             sort_and_reset(result2[key]),
-             check_dtype=False
-         )
+        pd.testing.assert_frame_equal(
+            sort_and_reset(result1[key]),
+            sort_and_reset(result2[key]),
+            check_dtype=False,
+        )
 
 
-
-#@pytest.mark.skip(reason="passed")
+# @pytest.mark.skip(reason="passed")
 @pytest.mark.parametrize("time", ["year", "month"])
 def test_add_water_availability(test_context, time):
     # FIXME You probably want this to be part of a common setup rather than writing
@@ -128,7 +134,10 @@ def test_add_water_availability(test_context, time):
     end_time_old = pytime.time()
     old_time = end_time_old - start_time_old
     with open("results.txt", "a") as f:
-        f.write(f"New time Read Water Availability: {new_time}, Old time Read Water Availability: {old_time}\n")
+        f.write(
+            f"New time Read Water Availability: {new_time}, "
+            f"Old time Read Water Availability: {old_time}\n"
+        )
 
     start_time_new = pytime.time()
     result1 = new_add_water_availability(context=test_context)
@@ -139,20 +148,16 @@ def test_add_water_availability(test_context, time):
     end_time_old = pytime.time()
     old_time = end_time_old - start_time_old
     with open("results.txt", "a") as f:
-        f.write(f"New time Add Water Availability: {new_time}, Old time Add Water Availability: {old_time}\n")
-
+        f.write(
+            f"New time Add Water Availability: {new_time}, "
+            f"Old time Add Water Availability: {old_time}\n"
+        )
 
     assert set(result1.keys()) == set(result2.keys())
 
     for key in result1:
-
         pd.testing.assert_frame_equal(
             sort_and_reset(result1[key]),
             sort_and_reset(result2[key]),
-            check_dtype=False
+            check_dtype=False,
         )
-
-
-
-
-

@@ -1,14 +1,20 @@
-from message_ix_models.model.water.data.infrastructure_utils import Rule
+from message_ix_models.model.water.utils import Rule
+from message_ix_models.util.citation_wrapper import citation_wrapper
 
-    # Electricity values per unit of irrigation water supply
-    # Reference: Evaluation of Water and Energy Use in
-    # Pressurized Irrigation Networks in Southern Spain
-    # Diaz et al. 2011 https://ascelibrary.org/
-    # doi/10.1061/%28ASCE%29IR.1943-4774.0000338
-    # Low Value :0.04690743
-    # Average Value :0.101598174
-    # High Value : 0.017123288
-
+IRRIGATION_CONST = citation_wrapper(
+"Diaz et al. 2011",
+"https://ascelibrary.org/doi/10.1061/%28ASCE%29IR.1943-4774.0000338",
+description=(
+    "Evaluation of Water and Energy Use in Pressurized Irrigation Networks "
+    "in Southern Spain"
+),
+metadata={"Values": "Irrigation Water Supply"}
+)({
+"IDENTITY": 1,
+"ELECTRICITY_INPUT_LOW": 0.04690743, # Low value from reference
+"ELECTRICITY_INPUT_AVG": 0.101598174, # Average value from reference
+"ELECTRICITY_INPUT_HIGH": 0.017123288, # High value from reference
+})
 
 INPUT_IRRIGATION_RULES = Rule(
     Base={
@@ -23,52 +29,44 @@ INPUT_IRRIGATION_RULES = Rule(
         "mode": "M1",
         "pipe": {
             "flag_broadcast": True,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
-            "flag_same_node": False,
-            "flag_time": False,
-            "flag_node_loc": False,
         },
     },
-
     Diff=[
         {
             "condition": "default",
             "technology": "irrigation_cereal",
-            "value": 1,
+            "value": IRRIGATION_CONST["IDENTITY"],
         },
         {
             "condition": "default",
             "technology": "irrigation_oilcrops",
-            "value": 1,
+            "value": IRRIGATION_CONST["IDENTITY"],
             "mode": "M1",
         },
         {
             "condition": "default",
             "technology": "irrigation_sugarcrops",
-            "value": 1,
+            "value": IRRIGATION_CONST["IDENTITY"],
             "mode": "M1",
         },
         {
             "condition": "SKIP",
             "technology": "irrigation_sugarcrops",
-            "value": 0.04690743,
+            "value": IRRIGATION_CONST["ELECTRICITY_INPUT_LOW"],
             "mode": "M1",
         },
         {
             "condition": "SKIP",
             "technology": "irrigation_oilcrops",
-            "value": 0.04690743,
+            "value": IRRIGATION_CONST["ELECTRICITY_INPUT_LOW"],
             "mode": "M1",
         },
         {
             "condition": "SKIP",
             "technology": "irrigation_cereal",
-            "value": 0.04690743,
+            "value": IRRIGATION_CONST["ELECTRICITY_INPUT_LOW"],
             "mode": "M1",
         },
-
-
     ],
 )
 
@@ -84,35 +82,29 @@ OUTPUT_IRRIGATION_RULES = Rule(
         "node_dest": "df_node[region]",
         "pipe": {
             "flag_broadcast": True,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
-            "flag_same_node": False,
-            "flag_time": False,
-            "flag_node_loc": False,
         },
     },
     Diff=[
         {
             "condition": "default",
             "technology": "irrigation_cereal",
-            "value": 1,
+            "value": IRRIGATION_CONST["IDENTITY"],
             "level": "irr_cereal",
             "mode": "M1",
         },
         {
             "condition": "default",
             "technology": "irrigation_sugarcrops",
-            "value": 1,
+            "value": IRRIGATION_CONST["IDENTITY"],
             "level": "irr_sugarcrops",
             "mode": "M1",
         },
         {
             "condition": "default",
             "technology": "irrigation_oilcrops",
-            "value": 1,
+            "value": IRRIGATION_CONST["IDENTITY"],
             "level": "irr_oilcrops",
             "mode": "M1",
         },
     ],
 )
-

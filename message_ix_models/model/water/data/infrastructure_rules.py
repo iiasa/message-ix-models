@@ -1,7 +1,13 @@
+from message_ix_models.model.water.utils import Rule
 
-from message_ix_models.model.water.data.infrastructure_utils import Rule
+WF_CONST = {
+    "IDENTITY": 1,
+    "DESALINATION_OUTPUT_VALUE": 1,
+    "DESALINATION_TECH_LIFETIME": 20,
+    "DESALINATION_VAR_COST": 100,
+    "HIST_CAP_DIVISOR": 5,
+}
 
-# Creating an instance properly
 INPUT_DATAFRAME_STAGE1 = Rule(
     Base={
         "type": "input",
@@ -23,19 +29,18 @@ INPUT_DATAFRAME_STAGE1 = Rule(
             "value": "rows[value_mid]",
             "mode": "M1",
             "node_loc": "df_node[node]",
-            "pipe": {"flag_node_loc": False},
         },
         {
             "condition": "!baseline",
             "value": "rows[value_high]",
             "mode": "Mf",
-            "pipe": {"flag_node_loc": True}
+            "pipe": {"flag_node_loc": True},
         },
         {
             "condition": "baseline_main",
             "value": "rows[value_mid]",
             "mode": "M1",
-            "pipe": {"flag_node_loc": True}
+            "pipe": {"flag_node_loc": True},
         },
         {
             "condition": "baseline_additional",
@@ -60,8 +65,6 @@ INPUT_DATAFRAME_STAGE2 = Rule(
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
-            "flag_same_time": False,
-            "flag_same_node": False,
             "flag_time": True,
             "flag_node_loc": False,
         },
@@ -146,7 +149,6 @@ CAP_RULES = Rule(
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
             "flag_time": True,
-            "flag_same_time": False,
             "flag_same_node": True,
             "flag_node_loc": True,
         },
@@ -166,10 +168,7 @@ TL_RULES = Rule(
         "unit": "y",
         "pipe": {
             "flag_broadcast": True,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
             "flag_same_node": True,
-            "flag_time": False,
             "flag_node_loc": True,
         },
     },
@@ -188,10 +187,6 @@ INV_COST_RULES = Rule(
         "unit": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
-            "flag_same_node": False,
-            "flag_time": False,
             "flag_node_loc": True,
         },
     },
@@ -211,9 +206,6 @@ FIX_COST_RULES = Rule(
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
-            "flag_same_time": False,
-            "flag_same_node": False,
-            "flag_time": False,
             "flag_node_loc": True,
         },
     },
@@ -232,8 +224,6 @@ VAR_COST_RULES = Rule(
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
-            "flag_same_time": False,
-            "flag_same_node": False,
             "flag_time": True,
             "flag_node_loc": True,
         },
@@ -292,7 +282,7 @@ DESALINATION_OUTPUT_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_salinewater_basin",
-            "value": 1,
+            "value": WF_CONST["IDENTITY"],
         },
     ],
 )
@@ -303,10 +293,7 @@ TL_DESALINATION_RULES = Rule(
         "unit": "y",
         "pipe": {
             "flag_broadcast": True,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
             "flag_same_node": True,
-            "flag_time": False,
             "flag_node_loc": True,
         },
     },
@@ -314,7 +301,7 @@ TL_DESALINATION_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_salinewater_basin",
-            "value": 20,
+            "value": WF_CONST["DESALINATION_TECH_LIFETIME"],
         },
         {
             "condition": "default",
@@ -332,10 +319,6 @@ DESALINATION_HISTORICAL_CAPACITY_RULES = Rule(
         "year_vtg": "df_hist[year]",
         "unit": "km3/year",
         "pipe": {
-            "flag_broadcast": False,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
-            "flag_same_node": False,
             "flag_node_loc": True,
         },
     },
@@ -355,10 +338,6 @@ DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES = Rule(
         "year_act": "df_proj[year]",
         "unit": "km3/year",
         "pipe": {
-            "flag_broadcast": False,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
-            "flag_same_node": False,
             "flag_node_loc": True,
         },
     },
@@ -379,11 +358,7 @@ DESALINATION_BOUND_LO_RULES = Rule(
         "unit": "km3/year",
         "pipe": {
             "flag_broadcast": True,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
-            "flag_same_node": False,
             "flag_time": True,
-            "flag_node_loc": False,
         },
     },
     Diff=[
@@ -401,10 +376,6 @@ DESALINATION_INV_COST_RULES = Rule(
         "unit": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
-            "flag_map_yv_ya_lt": False,
-            "flag_same_time": False,
-            "flag_same_node": False,
-            "flag_time": False,
             "flag_node_loc": True,
         },
     },
@@ -424,9 +395,6 @@ FIX_COST_DESALINATION_RULES = Rule(
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
-            "flag_same_time": False,
-            "flag_same_node": False,
-            "flag_time": False,
             "flag_node_loc": True,
         },
     },
@@ -445,8 +413,6 @@ VAR_COST_DESALINATION_RULES = Rule(
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
-            "flag_same_time": False,
-            "flag_same_node": False,
             "flag_node_loc": True,
         },
     },
@@ -461,7 +427,7 @@ VAR_COST_DESALINATION_RULES = Rule(
         {
             "condition": "SKIP",
             "technology": "extract_salinewater_basin",
-            "value": 100,
+            "value": WF_CONST["DESALINATION_VAR_COST"],
             "mode": "M1",
             "pipe": {"flag_time": False},
         },
@@ -477,7 +443,6 @@ DESALINATION_INPUT_RULES2 = Rule(
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
             "flag_time": True,
-
         },
     },
     Diff=[
@@ -490,11 +455,6 @@ DESALINATION_INPUT_RULES2 = Rule(
             "time_origin": "year",
             "node_loc": "df_node[node]",
             "node_origin": "df_node[region]",
-            "pipe": {
-                "flag_same_node": False,
-                "flag_same_time": False,
-                "flag_node_loc": False,
-            },
         },
         {
             "condition": "heat",
@@ -505,16 +465,11 @@ DESALINATION_INPUT_RULES2 = Rule(
             "time_origin": "year",
             "node_loc": "df_node[node]",
             "node_origin": "df_node[region]",
-            "pipe": {
-                "flag_same_node": False,
-                "flag_same_time": False,
-                "flag_node_loc": False,
-            },
         },
         {
             "condition": "technology",
             "technology": "rows[tec]",
-            "value": 1,
+            "value": WF_CONST["IDENTITY"],
             "level": "rows[inlvl]",
             "commodity": "rows[incmd]",
             "pipe": {
@@ -544,44 +499,9 @@ DESALINATION_OUTPUT_RULES2 = Rule(
         {
             "condition": "default",
             "technology": "rows[tec]",
-            "value": 1,
+            "value": WF_CONST["IDENTITY"],
             "level": "rows[outlvl]",
             "commodity": "rows[outcmd]",
         },
     ],
 )
-
-# Add a test block for visual comparison
-if __name__ == "__main__":
-    import json
-
-    # Import the expected output from the other file
-    from message_ix_models.model.water.data.infrastructure_rules import (
-        VAR_COST_DESALINATION_RULES as VAR_COST_DESALINATION_RULES_EXPECTED_OUTPUT,
-    )
-
-    actual_output = VAR_COST_DESALINATION_RULES.get_rule()
-
-    print("--- Actual Output ---")
-    print(json.dumps(actual_output, indent=4))
-    print("\\n--- Expected Output ---")
-    print(json.dumps(VAR_COST_DESALINATION_RULES_EXPECTED_OUTPUT, indent=4))
-
-    # Optional: Use deepdiff for a more detailed comparison if installed
-    try:
-        from deepdiff import DeepDiff
-
-        # Compare the actual output with the imported expected output
-        diff = DeepDiff(VAR_COST_DESALINATION_RULES_EXPECTED_OUTPUT, actual_output, ignore_order=True)
-        print("\\n--- Differences (Expected vs Actual) ---")
-        if diff:
-            print(diff.pretty())
-        else:
-            print("No differences found.")
-    except ImportError:
-        print("\\n--- Detailed comparison requires 'deepdiff' library (pip install deepdiff) ---")
-        # Compare the actual output with the imported expected output
-        if actual_output == VAR_COST_DESALINATION_RULES_EXPECTED_OUTPUT:
-            print("Basic comparison: Outputs are identical.")
-        else:
-            print("Basic comparison: Outputs differ.")

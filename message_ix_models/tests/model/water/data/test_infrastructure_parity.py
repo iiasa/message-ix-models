@@ -1,3 +1,5 @@
+import cProfile
+import pstats
 import time as pytime
 
 import pandas.testing as pdt
@@ -7,16 +9,16 @@ from message_ix import Scenario
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.infrastructure import (
+    add_desalination as add_desalination_refactor,
+)
+from message_ix_models.model.water.data.infrastructure import (
+    add_infrastructure_techs as add_infrastructure_techs_refactor,
+)
+from message_ix_models.model.water.data.infrastructure_legacy import (
     add_desalination,
     add_infrastructure_techs,
 )
-from message_ix_models.model.water.data.infrastructure_refactor import (
-    add_desalination as add_desalination_refactor_base,
-)
 
-from message_ix_models.model.water.data.infrastructure_refactor import (
-    add_infrastructure_techs as add_infrastructure_techs_refactor_base,
-)
 
 # NB: This also tests start_creating_input_dataframe() and prepare_input_dataframe()
 # from the same file since they are called by add_infrastructure_techs()
@@ -53,27 +55,38 @@ def test_add_infrastructure_techs(test_context, SDG, request):
     test_context["water build info"] = ScenarioInfo(s)
 
     # Call the function to be tested
-    n_iter = 1
-    start_time = pytime.time()
-    for i in range(n_iter):
-        result = add_infrastructure_techs(context=test_context)
-    end_time = pytime.time()
-    # write time to file infrastructure_time.txt
-    with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_infrastructure_techs: {(end_time - start_time)/n_iter} seconds\n")
 
-    start_time = pytime.time()
-    for i in range(n_iter):
-        result_refactor_base = add_infrastructure_techs_refactor_base(context=test_context)
-    end_time = pytime.time()
-    with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_infrastructure_techs_refactor base: {(end_time - start_time)/n_iter} seconds\n")
+
+    # Profile original function
+    profiler = cProfile.Profile()
+    profiler.enable()
+    result = add_infrastructure_techs(context=test_context)
+    profiler.disable()
+
+    # Save profile stats to file
+    with open('add_infrastructure_techs_profile.txt', 'w') as f:
+        stats = pstats.Stats(profiler, stream=f)
+        stats.sort_stats('cumtime')
+        stats.print_stats()
+
+    # Profile refactored function
+    profiler = cProfile.Profile()
+    profiler.enable()
+    result_refactor = add_infrastructure_techs_refactor(context=test_context)
+    profiler.disable()
+
+    # Save profile stats to file
+    with open('add_infrastructure_techs_refactor.txt', 'w') as f:
+        stats = pstats.Stats(profiler, stream=f)
+        stats.sort_stats('cumtime')
+        stats.print_stats()
 
     # Assert the results are identical
-    assert result.keys() == result_refactor_base.keys()
+    assert result.keys() == result_refactor.keys()
     for key in result:
         # Use pandas testing utility to compare DataFrames
-        pdt.assert_frame_equal(result[key], result_refactor_base[key], check_dtype=False)
+        pdt.assert_frame_equal(
+            result[key], result_refactor[key], check_dtype=False)
 
 
 def test_add_desalination(test_context, request):
@@ -109,17 +122,20 @@ def test_add_desalination(test_context, request):
         result = add_desalination(context=test_context)
     end_time = pytime.time()
     with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_desalination: {(end_time - start_time)/n_iter} seconds\n")
+        f.write("Time taken for add_desalination: "
+                f"{(end_time - start_time)/n_iter} seconds\n")
 
     start_time = pytime.time()
     for i in range(n_iter):
-        result_refactor_base = add_desalination_refactor_base(context=test_context)
+        result_refactor = add_desalination_refactor(context=test_context)
     end_time = pytime.time()
     with open("infrastructure_time.txt", "a") as f:
-        f.write(f"Time taken for add_desalination_refactor base: {(end_time - start_time)/n_iter} seconds\n")
+        f.write("Time taken for add_desalination_refactor base: "
+                f"{(end_time - start_time)/n_iter} seconds\n")
 
     # Assert the results are identical
-    assert result.keys() == result_refactor_base.keys()
+    assert result.keys() == result_refactor.keys()
     for key in result:
         # Use pandas testing utility to compare DataFrames
-        pdt.assert_frame_equal(result[key], result_refactor_base[key], check_dtype=False)
+        pdt.assert_frame_equal(
+            result[key], result_refactor[key], check_dtype=False)

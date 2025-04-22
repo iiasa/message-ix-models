@@ -1,7 +1,6 @@
 """Prepare data for adding demands"""
 
 import os
-import builtins
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, Union
 
