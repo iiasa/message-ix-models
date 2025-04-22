@@ -272,7 +272,7 @@ def report(context, scenario):
         nodes.remove("R12_GLB*")
 
     # Path for materials reporting output
-    directory = package_data_path("materials", "report")
+    directory = package_data_path("material", "report")
     directory.mkdir(exist_ok=True)
 
     # Generate message_ix level reporting and dump to an excel file.
