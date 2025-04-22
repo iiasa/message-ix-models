@@ -568,6 +568,8 @@ def add_building_ts(scenario_name, model_name):
 @click.pass_obj
 def run_reporting(context, remove_ts, profile, add_infra_vars):
     """Run materials, then legacy reporting."""
+    import warnings
+    warnings.simplefilter(action="ignore", category=FutureWarning)
     from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
