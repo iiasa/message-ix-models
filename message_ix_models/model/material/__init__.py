@@ -746,15 +746,9 @@ def modify_costs_with_tool(context, scen_name, ssp):
 
 
 @cli.command("run_cbud_scenario")
-@click.option(
-    "--scenario",
-    default="baseline_prep_lu_bkp_solved_materials_2025_macro",
-    help="description of carbon budget for mitigation target",
-)
 @click.option("--budget", default="1000f")
-@click.option("--model", default="MESSAGEix-Materials")
 @click.pass_obj
-def run_cbud_scenario(context, model, scenario, budget):
+def run_cbud_scenario(context, budget):
     import message_ix
 
     if budget == "1000f":
@@ -765,8 +759,7 @@ def run_cbud_scenario(context, model, scenario, budget):
         print("chosen budget not available yet please choose 650f or 1000f")
         return
 
-    mp = ixmp.Platform("ixmp_dev")
-    base = message_ix.Scenario(mp, model, scenario=scenario)
+    base = context.get_scenario()
     scenario_cbud = base.clone(
         model=base.model,
         scenario=base.scenario + "_" + budget,
