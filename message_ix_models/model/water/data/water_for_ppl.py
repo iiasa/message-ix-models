@@ -42,7 +42,7 @@ COOL_CONST = {
 def _prepare_share_constraints(
     input_cool: pd.DataFrame, FILE1: str, info: pd.DataFrame, results: dict
 ) -> tuple[pd.DataFrame, dict]:
-    """Process calibration data and prepare share constraints for cooling technologies."""
+    """Process calibration data and prepare share constraints for cool tech"""
     # costs and historical parameters
     PATH = package_data_path("water", "ppl_cooling_tech", FILE1)
     cost = pd.read_csv(PATH)

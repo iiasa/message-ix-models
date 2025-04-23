@@ -232,7 +232,8 @@ def cooling_shares_SSP_from_yaml(
         ]
         for share, value in share_data.items():
             # Create a DataFrame for the current region and share
-            # Need to pass [share] and [value] as a DF else our DSL engine will not work.
+            # Need to pass [share] and [value] as a DF else our DSL engine
+            # will not work.
             df_share = pd.DataFrame(
                 {
                     "shares": [share],
