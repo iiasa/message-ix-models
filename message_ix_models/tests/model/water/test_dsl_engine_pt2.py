@@ -602,7 +602,7 @@ def test_desalination_output_rules(supply_test_data):
     # Arguments needed for the pipe flags in the rule
     output_args = {
         "lt": 20,  # technical lifetime from rule/legacy
-        "rule_dfs": {}, #Api still expects a dict even though we
+        "rule_dfs": {},  # Api still expects a dict even though we
         # are not evaluating any rule
         "node_loc": df_node["node"],
         "sub_time": sub_time,  # DSL expects Series/list directly

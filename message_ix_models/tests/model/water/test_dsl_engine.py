@@ -207,6 +207,7 @@ def test_build_kw_args_node_loc_error_none():
             extra_args=None,
         )
 
+
 def test_build_kw_args_time_flag_false():
     # When flag_time is False, no time key should be added.
     kw = _build_kw_args(
