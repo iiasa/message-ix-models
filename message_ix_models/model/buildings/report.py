@@ -17,8 +17,8 @@ import pandas as pd
 from genno import Key, operator
 from iam_units import registry
 from message_ix_models import Context, Spec
-from message_ix_models.model.transport.operator import nodes_world_agg
 from message_ix_models.report import iamc as add_iamc
+from message_ix_models.report.operator import nodes_world_agg
 from message_ix_models.report.util import add_replacements
 
 from . import Config
@@ -243,10 +243,10 @@ def buildings_filters1(years: List) -> Dict:
     return dict(l=["final"], ya=years)
 
 
-def buildings_agg0(spec: Spec, config: Dict) -> Dict:
+def buildings_agg0(spec: Spec, config: dict) -> dict:
     """Return mapping for buildings aggregation."""
-    result = nodes_world_agg(config)
-    result["t"] = get_tech_groups(spec, include="enduse")
+    result = dict(nodes_world_agg(config))
+    result["t"] = get_tech_groups(spec, include="enduse")  # type: ignore [assignment]
 
     log.info(f"Will aggregate:\n{result!r}")
 
