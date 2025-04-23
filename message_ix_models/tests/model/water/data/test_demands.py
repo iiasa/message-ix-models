@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 from message_ix import Scenario
 
@@ -9,7 +11,13 @@ from message_ix_models.model.water.data.demands import (
     add_water_availability,
 )
 
+# Version check for Python 3.10+
+PYTHON_310_PLUS = sys.version_info >= (3, 10)
 
+
+@pytest.mark.xfail(
+    not PYTHON_310_PLUS, reason="Pattern matching requires Python 3.10+", strict=True
+)
 @add_sectoral_demands.minimum_version
 @pytest.mark.parametrize(
     ["SDG", "time"], [("baseline", "year"), ("ambitious", "month")]
@@ -78,6 +86,9 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
     )
 
 
+@pytest.mark.xfail(
+    not PYTHON_310_PLUS, reason="Pattern matching requires Python 3.10+", strict=True
+)
 @pytest.mark.parametrize("time", ["year", "month"])
 def test_add_water_availability(test_context, time):
     # FIXME You probably want this to be part of a common setup rather than writing
