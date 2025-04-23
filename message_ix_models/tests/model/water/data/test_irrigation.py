@@ -1,8 +1,19 @@
+import sys
+
+import pytest
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.irrigation import add_irr_structure
+
+
+@pytest.mark.xfail(
+    sys.version_info < (3, 10),
+    reason="Python 3.9 does not support the required features",
+)
+def xfail_python_older_than_3_10():
+    pass
 
 
 def test_add_irr_structure(test_context):
