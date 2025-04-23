@@ -1,3 +1,4 @@
+import copy
 import logging
 from collections import defaultdict
 from functools import lru_cache
@@ -11,7 +12,9 @@ from sdmx.model.v21 import Code
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import load_package_data
+from message_ix_models.util import (
+    load_package_data,
+)
 
 log = logging.getLogger(__name__)
 
@@ -165,3 +168,85 @@ def map_yv_ya_lt(
     return df.loc[(ya <= df.year_act) & (df.year_act - df.year_vtg <= lt)].reset_index(
         drop=True
     )
+
+
+def safe_concat(input_df: list[pd.DataFrame] | pd.DataFrame) -> pd.DataFrame:
+    """Optimized concatenation that avoids unnecessary operations.
+    For lists with single DataFrame, returns it directly. For multiple DataFrames,
+    uses pd.concat with copy=False to avoid duplicating data. Handles single
+    DataFrame inputs by returning them unchanged.
+    """
+    if isinstance(input_df, list):
+        return input_df[0] if len(input_df) == 1 else pd.concat(input_df, copy=False)
+    return input_df
+
+
+# Helper function for deep merging
+def deep_merge(base, diff):
+    """Recursively merges diff dict into a deep copy of base dict."""
+    merged = copy.deepcopy(base)  # Start with a deep copy of base
+    for key, value in diff.items():
+        # Check if the key exists in merged and both values are dictionaries
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            # Overwrite or add the key-value pair from diff
+            merged[key] = value
+    return merged
+
+
+class Rule:
+    def base(self):
+        return self.Base
+
+    def diff(self):
+        return self.Diff
+
+    def get_rule(self):
+        result = []
+        base_dict = self.base()  # Get the base dictionary once
+        for diff_item in self.Diff:
+            if diff_item["condition"] == "SKIP":
+                continue
+            if diff_item:  # Only process non-empty dictionaries
+                # Perform a deep merge instead of shallow update
+                merged = deep_merge(base_dict, diff_item)
+                result.append(merged)
+        return result
+
+    def change_unit(self, conversion_factor: float, new_unit: str):
+        # replace current unit with new unit without magic methods
+        self.base()["unit"] = new_unit
+        self.base().value *= conversion_factor
+
+    def __init__(self, Base=None, Diff=None):
+        # Define default pipe flags
+        default_pipe_flags = {
+            "flag_broadcast": False,
+            "flag_map_yv_ya_lt": False,
+            "flag_same_time": False,
+            "flag_same_node": False,
+            "flag_time": False,
+            "flag_node_loc": False,
+        }
+
+        # Initialize Base and Diff
+        initialized_base = Base or {}
+        self.Diff = Diff or [{}, {}]  # Keep original Diff initialization
+
+        # Ensure 'pipe' key exists in initialized_base and is a dictionary
+        if "pipe" not in initialized_base or not isinstance(
+            initialized_base.get("pipe"), dict
+        ):
+            initialized_base["pipe"] = {}
+            # Initialize pipe if not present or not a dict
+
+        # Start with defaults and update with user-provided pipe flags
+        final_pipe_flags = default_pipe_flags.copy()
+        final_pipe_flags.update(initialized_base.get("pipe", {}))
+
+        # Update the initialized_base with the final pipe flags
+        initialized_base["pipe"] = final_pipe_flags
+
+        # Assign the processed Base to self.Base
+        self.Base = initialized_base
