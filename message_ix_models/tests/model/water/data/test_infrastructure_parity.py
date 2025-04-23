@@ -1,34 +1,36 @@
-import sys
+import cProfile
+import pstats
+import time as pytime
 
+import pandas.testing as pdt
 import pytest
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.infrastructure import (
+    add_desalination as add_desalination_refactor,
+)
+from message_ix_models.model.water.data.infrastructure import (
+    add_infrastructure_techs as add_infrastructure_techs_refactor,
+)
+from message_ix_models.model.water.data.infrastructure_legacy import (
     add_desalination,
     add_infrastructure_techs,
 )
 
 
-@pytest.mark.xfail(
-    sys.version_info < (3, 10),
-    reason="Python 3.9 does not support the required features",
-)
-def xfail_python_older_than_3_10():
-    pass
-
-
 # NB: This also tests start_creating_input_dataframe() and prepare_input_dataframe()
 # from the same file since they are called by add_infrastructure_techs()
+# @pytest.mark.skip(reason="already tested")
 @pytest.mark.parametrize("SDG", ["baseline", "not_baseline"])
 def test_add_infrastructure_techs(test_context, SDG, request):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     test_context.SDG = SDG
     test_context.time = "year"
-    test_context.type_reg = "country"
-    test_context.regions = "ZMB"
+    test_context.type_reg = "global"
+    test_context.regions = "R11"
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
     test_context.map_ISO_c = {test_context.regions: nodes[0]}
@@ -53,46 +55,36 @@ def test_add_infrastructure_techs(test_context, SDG, request):
     test_context["water build info"] = ScenarioInfo(s)
 
     # Call the function to be tested
-    result = add_infrastructure_techs(context=test_context)
 
-    # Assert the results
-    assert isinstance(result, dict)
-    assert "input" in result
-    assert "output" in result
-    assert all(
-        col in result["input"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_origin",
-            "node_origin",
-            "node_loc",
-            "year_vtg",
-            "year_act",
-        ]
-    )
-    assert all(
-        col in result["output"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_dest",
-            "node_loc",
-            "node_dest",
-            "year_vtg",
-            "year_act",
-        ]
-    )
+    # Profile original function
+    profiler = cProfile.Profile()
+    profiler.enable()
+    result = add_infrastructure_techs(context=test_context)
+    profiler.disable()
+
+    # Save profile stats to file
+    with open("add_infrastructure_techs_profile.txt", "w") as f:
+        stats = pstats.Stats(profiler, stream=f)
+        stats.sort_stats("cumtime")
+        stats.print_stats()
+
+    # Profile refactored function
+    profiler = cProfile.Profile()
+    profiler.enable()
+    result_refactor = add_infrastructure_techs_refactor(context=test_context)
+    profiler.disable()
+
+    # Save profile stats to file
+    with open("add_infrastructure_techs_refactor.txt", "w") as f:
+        stats = pstats.Stats(profiler, stream=f)
+        stats.sort_stats("cumtime")
+        stats.print_stats()
+
+    # Assert the results are identical
+    assert result.keys() == result_refactor.keys()
+    for key in result:
+        # Use pandas testing utility to compare DataFrames
+        pdt.assert_frame_equal(result[key], result_refactor[key], check_dtype=False)
 
 
 def test_add_desalination(test_context, request):
@@ -121,45 +113,30 @@ def test_add_desalination(test_context, request):
 
     # FIXME same as above
     test_context["water build info"] = ScenarioInfo(s)
-
+    n_iter = 1
     # Call the function to be tested
-    result = add_desalination(context=test_context)
+    start_time = pytime.time()
+    for i in range(n_iter):
+        result = add_desalination(context=test_context)
+    end_time = pytime.time()
+    with open("infrastructure_time.txt", "a") as f:
+        f.write(
+            "Time taken for add_desalination: "
+            f"{(end_time - start_time) / n_iter} seconds\n"
+        )
 
-    # Assert the results
-    assert isinstance(result, dict)
-    assert "input" in result
-    assert "output" in result
-    assert all(
-        col in result["input"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_origin",
-            "node_origin",
-            "node_loc",
-            "year_vtg",
-            "year_act",
-        ]
-    )
-    assert all(
-        col in result["output"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_dest",
-            "node_loc",
-            "node_dest",
-            "year_vtg",
-            "year_act",
-        ]
-    )
+    start_time = pytime.time()
+    for i in range(n_iter):
+        result_refactor = add_desalination_refactor(context=test_context)
+    end_time = pytime.time()
+    with open("infrastructure_time.txt", "a") as f:
+        f.write(
+            "Time taken for add_desalination_refactor base: "
+            f"{(end_time - start_time) / n_iter} seconds\n"
+        )
+
+    # Assert the results are identical
+    assert result.keys() == result_refactor.keys()
+    for key in result:
+        # Use pandas testing utility to compare DataFrames
+        pdt.assert_frame_equal(result[key], result_refactor[key], check_dtype=False)
