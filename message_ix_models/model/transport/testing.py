@@ -50,6 +50,12 @@ MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
         "gh-288": pytest.mark.xfail(
             reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/288",
         ),
+        "gh-337": pytest.mark.xfail(
+            reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/337."
+            " These  tests fail as a result of "
+            "https://github.com/iiasa/message_ix/pull/924 and require updates to "
+            "constraint parameter values."
+        ),
     },
     testing.MARK,
 )
