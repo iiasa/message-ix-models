@@ -103,7 +103,7 @@ cokeoven_steel,output,R12_RCPA,final,co_gas,,M1,GWa,0.06666666666666667,"ratio d
 cokeoven_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,322.94898696281075,,
 cokeoven_steel,capacity_factor,R12_RCPA,,,,,%,0.701,,
 cokeoven_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
-dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.45,"https://2024.aisusteel.org/wp-content/uploads/2024/10/Dr-John-Atherton_IIMA.pdf Slide 10",
+dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.7,"https://2024.aisusteel.org/wp-content/uploads/2024/10/Dr-John-Atherton_IIMA.pdf Slide 10",
 # dri_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,14.689999999999998,Variable O&M cost. Convert from 2000 USD to 2005 USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=145,IEA ETSAP - Technology Brief
 dri_steel,capacity_factor,R12_RCPA,,,,,%,0.95,,
 dri_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
@@ -113,7 +113,7 @@ dri_gas_steel,input,R12_RCPA,dummy_emission,gas,,M1,GWa/Mt,0.33,"Important: This
 dri_gas_steel,output,R12_RCPA,waste_material,slag_iron,,M1,Mt,0.085,,
 dri_gas_steel,output,R12_RCPA,tertiary_material,sponge_iron,,M1,Mt/Mt,1.0,,
 # dri_gas_steel,output,R12_RCPA,water_supply,water,,M1,Mm3/Mt,690.0,,
-dri_h2_steel,input,R12_RCPA,final,hydrogen,,M1,Gwa/Mt,0.22656164383561642,"Average: 664 Nm3/Tdri (standard conditions, 0C, 1atmosphere)-->59.6 kg H2 (https://h2tools.org/hyarc/calculator-tools/hydrogen-conversions-calculator). 59.6 kg-->1984.68 kWh (https://stargatehydrogen.com/documents-and-tools/hydrogen-calculators/)","Wang et al.,2021: Hydrogen direct reduction (H-DR) in steel industry—An overview of challenges and oppurtunities (800 Nm3/tDRI), PBL (528 Nm3/t-DRI, https://www.pbl.nl/sites/default/files/downloads/pbl-2019-decarbonisation-options-for-the-dutch-steel-industry_3723.pdf)
+dri_h2_steel,input,R12_RCPA,final,hydrogen,,M1,Gwa/Mt,0.239,"Average: 664 Nm3/Tdri (standard conditions, 0C, 1atmosphere)-->59.6 kg H2 (https://h2tools.org/hyarc/calculator-tools/hydrogen-conversions-calculator). 59.6 kg-->1984.68 kWh (https://stargatehydrogen.com/documents-and-tools/hydrogen-calculators/)","Wang et al.,2021: Hydrogen direct reduction (H-DR) in steel industry—An overview of challenges and oppurtunities (800 Nm3/tDRI), PBL (528 Nm3/t-DRI, https://www.pbl.nl/sites/default/files/downloads/pbl-2019-decarbonisation-options-for-the-dutch-steel-industry_3723.pdf)
 "
 dri_h2_steel,input,R12_RCPA,useful_steel,ht_heat,,M1,Gwa/Mt,0.0,1606 MJ/t DRI. We can assume that heat is recovered from DRI furnace.,"Devlin et al., 2023"
 dri_h2_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,6.8493150684931506e-09,0.06 MWh/ tDRI. To bring the hydrogen to the right pressure,"Devlin et al., 2023"
