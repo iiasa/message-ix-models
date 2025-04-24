@@ -16,6 +16,7 @@ from message_ix_models.model.transport import (
     freight,
     key,
     ldv,
+    other,
     passenger,
     report,
     structure,
@@ -398,6 +399,9 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
                 "technical_lifetime",
             }
         ),
+    ),
+    other.TARGET: (
+        ContainsDataForParameters({"bound_activity_lo", "bound_activity_up", "input"}),
     ),
     passenger.TARGET: (
         ContainsDataForParameters(
