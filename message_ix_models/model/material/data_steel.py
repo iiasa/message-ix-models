@@ -643,6 +643,9 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_manuf_steel_io(new_scrap_ratio, s_info),
         gen_iron_ore_cost(s_info, ssp),
         gen_bf_bound(s_info),
+        read_hist_cap("eaf"),
+        read_hist_cap("bof"),
+        read_hist_cap("bf"),
     )
     maybe_remove_water_tec(scenario, results)
 
@@ -1215,3 +1218,13 @@ def gen_demand(ssp):
     df_demand = df_demand[df_demand["year"] != 2025]
     df_demand = pd.concat([df_2020, df_2025, df_demand])
     return df_demand
+
+
+def read_hist_cap(tec):
+    df = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", f"{tec}_capacity.csv"
+        )
+    )
+    df = df[df["year_vtg"] < 2020]
+    return {"historical_new_capacity": df}
