@@ -1,4 +1,5 @@
 import logging
+from contextlib import nullcontext
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -6,7 +7,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport import build, key
+from message_ix_models.model.transport import Config, build, key
 from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
@@ -16,9 +17,11 @@ from message_ix_models.model.transport.testing import (
 )
 from message_ix_models.report import prepare_reporter, sim
 from message_ix_models.testing import GHA
+from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
     import message_ix
+    from genno.types import KeyLike
 
 log = logging.getLogger(__name__)
 
@@ -51,6 +54,60 @@ def test_configure_legacy():
     # Resulting lists have the expected length, or are unaltered
     for k, v in config.items():
         assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
+
+
+@pytest.mark.ece_db
+@pytest.mark.parametrize(
+    "url, key, verbosity",
+    (
+        (
+            "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12 ci nightly/SSP_2024.2 baseline#726",  # noqa: E501
+            "base model data",
+            1,
+        ),
+    ),
+)
+def test_debug(
+    request, tmp_path, test_context, url, verbosity: int, key: "KeyLike"
+):  # pragma: no cover
+    """Test for debugging reporting of specific MESSAGEix-Transport scenarios.
+
+    Similar to :func:`.transport.test_build.test_debug`.
+
+    This **should** be invoked using the :program:`pytest … --ixmp-user-config` option.
+
+    Parameters
+    ----------
+    key :
+       Key to be reported. This should *not* be the default/general key, as that would
+       result in updated time series being stored on the scenario at `url`.
+    """
+    # Populate test_context.transport
+    Config.from_context(test_context)
+
+    test_context.core.handle_cli_args(url=url, verbose=bool(verbosity))
+    test_context.report.key = key
+    test_context.report.register("model.transport")
+
+    with nullcontext() if verbosity > 1 else silence_log("genno message_ix_models"):
+        rep, _key = prepare_reporter(test_context)
+
+    assert key == _key
+
+    # Show what will be computed
+    # verbosity = True  # DEBUG Force printing the description even if verbosity == 0
+    if verbosity:
+        print(rep.describe(key))
+
+    # return  # DEBUG Exit before doing any computation
+
+    # Reporting `key` succeeds
+    tmp = rep.get(key)
+
+    # DEBUG Handle a subset of the result for inspection
+    # print(tmp)
+
+    del tmp
 
 
 @MARK[7]
