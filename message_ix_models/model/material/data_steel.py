@@ -24,6 +24,7 @@ from message_ix_models.model.material.data_util import (
 from message_ix_models.model.material.demand import (
     read_base_demand,
 )
+from message_ix_models.model.material.demand.math_util import weibull_scrap_release
 from message_ix_models.model.material.util import (
     get_ssp_from_context,
     maybe_remove_water_tec,
@@ -253,6 +254,10 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
     )
 
+    df_fin_use_r12 = get_consumption_ts("SSP2")
+    scrap_avail = get_weibull_scrap_release(df_fin_use_r12)
+    demand = gen_demand("SSP2")
+
     merge_data(
         results,
         gen_dri_act_bound(),
@@ -273,6 +278,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         read_hist_cap("bof"),
         read_hist_cap("bf"),
         gen_emi_rel_data(s_info, "steel"),
+        calculate_scrap_demand_ratio(demand, scrap_avail),
     )
     maybe_remove_water_tec(scenario, results)
 
@@ -1269,3 +1275,85 @@ def read_hist_cap(tec: Literal["eaf", "bof", "bf"]) -> dict[str, pd.DataFrame]:
     )
     df = df[df["year_vtg"] < 2020]
     return {"historical_new_capacity": df}
+
+
+def get_consumption_ts(ssp):
+    mapping = {
+        "SSP1": {"phi": 5, "mu": 0.1, "q": 0.01},
+        "SSP2": {"phi": 5, "mu": 0.1, "q": 0.1},
+        "SSP3": {"phi": 5, "mu": 0.05, "q": 0.25},
+        "SSP4": {"phi": 5, "mu": 0.05, "q": 0.1},
+        "SSP5": {"phi": 5, "mu": 0.1, "q": 0.5},
+    }
+    cons_hist = pd.read_csv(
+        package_data_path("material", "steel", "historic_demand.csv")
+    )
+    cons_hist.columns = [
+        int(col) if col.isdigit() else col for col in cons_hist.columns
+    ]
+    cons_proj = pd.read_parquet(
+        package_data_path("material", "steel", "demand_projections.parquet")
+    )
+    cons_proj = cons_proj[
+        (cons_proj["SSP"] == int(ssp.replace("SSP", "")))
+        & (cons_proj["quantile"] == mapping[ssp]["q"])
+        & (cons_proj["mu"] == mapping[ssp]["mu"])
+    ]
+    cons_proj = cons_proj.rename(columns={"region": "R12"}).pivot_table(
+        index=["R12"], columns="year", values="total_demand"
+    )
+    cons_all = cons_hist.set_index("R12").div(1000).join(cons_proj)
+    return cons_all
+
+
+def get_weibull_scrap_release(
+    df_fin_use_r12, lambda_param=40, beta=1.7, recovery_factor=0.85
+):
+    df = df_fin_use_r12.copy(deep=True)
+    # interpolate years between projection year bins
+    df[[i for i in range(2023, 2110) if i not in df_fin_use_r12.columns]] = None
+    df = df[sorted(df.columns)]
+    df = df.astype(float).T.interpolate()
+    # apply weibull distribution to each region
+    for col in df.columns:
+        df[col] = weibull_scrap_release(df[col], lambda_param, beta)
+
+    # assign each year to projection year bins and
+    # take mean as representative scrap release
+    bins = [i for i in range(2016, 2060, 5)] + [i for i in range(2061, 2115, 10)]
+    labels = [i for i in range(2020, 2060, 5)] + [i for i in range(2060, 2115, 10)]
+
+    # Create a new column with bin labels
+    df["year_vtg"] = pd.cut(df.index, bins=bins, labels=labels, right=False)
+    scrap_projection = df.groupby("year_vtg").sum()
+    scrap_projection.loc[:2060] = scrap_projection.loc[:2060].div(5).round(1)
+    scrap_projection.loc[2070:] = scrap_projection.loc[2070:].div(10).round(1)
+    scrap_projection = scrap_projection.mul(recovery_factor).round(1)
+    scrap_projection = (
+        scrap_projection.melt(ignore_index=False)
+        .reset_index()
+        .rename(columns={"R12": "node", "year_vtg": "year"})
+    )
+    return scrap_projection
+
+
+def calculate_scrap_demand_ratio(demand, scrap):
+    ratio = (
+        scrap.set_index(["node", "year"])
+        .div(demand.set_index(["node", "year"]))
+        .dropna(axis=1)
+        .reset_index()
+        .rename(columns={"node": "node_loc", "year": "year_act"})
+    )
+    dims = {
+        "technology": "other_EOL_steel",
+        "level": "end_of_life",
+        "mode": "M1",
+        "commodity": "steel",
+        "time": "year",
+        "time_dest": "year",
+        "unit": "-",
+    }
+    df = make_df("output", **ratio, **dims).pipe(same_node).round(5)
+    df["year_vtg"] = df["year_act"]
+    return {"output": df}
