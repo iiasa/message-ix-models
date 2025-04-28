@@ -2,7 +2,7 @@ from shutil import copyfile
 
 import pytest
 
-from message_ix_models.project.edits import gen_demand, pasta_native_to_sdmx
+from message_ix_models.project.edits import PASTA, gen_demand, pasta_native_to_sdmx
 from message_ix_models.util import package_data_path
 
 
@@ -13,6 +13,11 @@ def test_pasta_data(test_context):
     target = test_context.get_local_path(*parts)
     target.parent.mkdir(parents=True, exist_ok=True)
     copyfile(package_data_path("test", *parts), target)
+
+
+class TestPASTA:
+    def test_init(self) -> None:
+        PASTA("PASTA", {})
 
 
 def test_pasta_native_to_sdmx(test_context, test_pasta_data):
