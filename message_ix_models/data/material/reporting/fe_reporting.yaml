@@ -379,9 +379,21 @@ vars:
 
   Other Sector|Electricity|Specific:
     filter:
-      { technology: sp_el_I, mode: M1, commodity: electr, level: final }
+      { technology: [sp_el_I, sp_el_I_RT], mode: M1, commodity: [electr, final_RT], level: final }
     short:
       fe_pe_other_el_sp
+
+  Other Sector|Electricity|Specific|Rooftop:
+    filter:
+      { technology: sp_el_I_RT, mode: M1, commodity: final_RT, level: final }
+    short:
+      fe_pe_other_el_sp_rt
+
+  Other Sector|Electricity|Specific|Other:
+    filter:
+      { technology: sp_el_I, mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_other_el_sp_oth
 
   Other Sector|Gases|Gas:
     filter:
