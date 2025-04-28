@@ -103,8 +103,8 @@ cokeoven_steel,output,R12_RCPA,final,co_gas,,M1,GWa,0.06666666666666667,"ratio d
 cokeoven_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,322.94898696281075,,
 cokeoven_steel,capacity_factor,R12_RCPA,,,,,%,0.701,,
 cokeoven_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
-dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.7,"IEA ETSAP, (Otto et al., 2017)",
 dri_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,14.689999999999998,Variable O&M cost. Convert from 2000 USD to 2005 USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=145,IEA ETSAP - Technology Brief
+dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.45,"https://2024.aisusteel.org/wp-content/uploads/2024/10/Dr-John-Atherton_IIMA.pdf Slide 10",
 dri_steel,capacity_factor,R12_RCPA,,,,,%,0.95,,
 dri_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
 dri_gas_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.014700913242009133,,
