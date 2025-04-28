@@ -634,19 +634,9 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_dri_act_bound(),
         gen_dri_cap_calibration(),
         gen_dri_coal_model(s_info),
-    )
-
-    maybe_remove_water_tec(scenario, results)
-
-    results = combine_df_dictionaries(
-        results,
         get_scrap_prep_cost(s_info, ssp),
         gen_max_recycling_rel(s_info, ssp),
         gen_grow_cap_up(s_info, ssp),
-    )
-
-    results = combine_df_dictionaries(
-        results,
         gen_2020_calibration_relation(s_info, "eaf"),
         gen_2020_calibration_relation(s_info, "bof"),
         gen_2020_calibration_relation(s_info, "bf"),
@@ -654,7 +644,9 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_finishing_steel_io(s_info),
         gen_manuf_steel_io(new_scrap_ratio, s_info),
         gen_iron_ore_cost(s_info, ssp),
+        gen_bf_bound(s_info)
     )
+    maybe_remove_water_tec(scenario, results)
 
     if ssp == "SSP1":
         df_tmp = results["relation_activity"]
@@ -1174,3 +1166,19 @@ def gen_iron_ore_cost(s_info, ssp):
         .assign(year_vtg=lambda x: x.year_act)
     )
     return {"var_cost": df}
+
+
+def gen_bf_bound(s_info):
+    dimensions = {
+        "technology": "bf_steel",
+        "mode": ["M3", "M4"],
+        "time": "year",
+        "unit": "???",
+        "value": 0
+    }
+    df = (
+        make_df("bound_activity_up", **dimensions)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_act=[2020, 2025])
+    )
+    return {"bound_activity_up": df}
