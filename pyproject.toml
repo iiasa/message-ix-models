@@ -68,8 +68,8 @@ migrate = [
 ]
 report = ["plotnine", "xlsxwriter"]
 tests = [
-  # For nbclient, thus nbformat
-  "ixmp[tests]",
+  "ixmp[tests]",  # TODO Remove once message_ix[tests] depends on ixmp[tests]
+  "message-ix[tests]",
   "message_ix_models[report,transport]",
   "pytest",
   "pytest-cov",
