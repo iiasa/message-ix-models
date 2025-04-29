@@ -57,7 +57,7 @@ bf_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,6.6e-05,"Wu etal., 2015",
 bf_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,https://energy.nl/data/steelmaking-with-top-gas-recycling-blast-furnace-tgr-bf-ulcos-blast-furnace-oxygen-blast-furnace-with-ccs/
 bf_biomass_steel,input,R12_RCPA,final,charcoal,,M1,GWa/Mt,0.579,Mini-blast furnace. (640 kg/t --> 0.608 Gwa/Mt  or 586.7 -->0.55 Gwa/Mt),"Ershov et al., 2009; Nogami et al., 2004"
 bf_biomass_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.017669345610110986,Use same as M1 unless other data is found,
-bf_biomass_steel,input,R12_RCPA,final,off_gas,,M1,GWa,4.319339218866749e-07,Same amount that comes out of charcoal production,
+# bf_biomass_steel,input,R12_RCPA,final,off_gas,,M1,GWa,4.319339218866749e-07,Same amount that comes out of charcoal production,
 bf_biomass_steel,input,R12_RCPA,primary_material,ore_iron,,M1,Mt/Mt,1.459,One of the most remarkable features of this system compared to the modern ironmaking systems is excluding sintering and/or pelletizing processes.,"Nogami et al., 2004"
 # bf_biomass_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,0.98,Use same as M1 unless other data is found,
 # bf_biomass_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,19.13,,
@@ -116,7 +116,7 @@ dri_gas_steel,output,R12_RCPA,tertiary_material,sponge_iron,,M1,Mt/Mt,1.0,,
 dri_h2_steel,input,R12_RCPA,final,hydrogen,,M1,Gwa/Mt,0.239,"Average: 664 Nm3/Tdri (standard conditions, 0C, 1atmosphere)-->59.6 kg H2 (https://h2tools.org/hyarc/calculator-tools/hydrogen-conversions-calculator). 59.6 kg-->1984.68 kWh (https://stargatehydrogen.com/documents-and-tools/hydrogen-calculators/)","Wang et al.,2021: Hydrogen direct reduction (H-DR) in steel industry—An overview of challenges and oppurtunities (800 Nm3/tDRI), PBL (528 Nm3/t-DRI, https://www.pbl.nl/sites/default/files/downloads/pbl-2019-decarbonisation-options-for-the-dutch-steel-industry_3723.pdf)
 "
 dri_h2_steel,input,R12_RCPA,useful_steel,ht_heat,,M1,Gwa/Mt,0.0,1606 MJ/t DRI. We can assume that heat is recovered from DRI furnace.,"Devlin et al., 2023"
-dri_h2_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,6.8493150684931506e-09,0.06 MWh/ tDRI. To bring the hydrogen to the right pressure,"Devlin et al., 2023"
+# dri_h2_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,6.8493150684931506e-09,0.06 MWh/ tDRI. To bring the hydrogen to the right pressure,"Devlin et al., 2023"
 dri_h2_steel,output,R12_RCPA,tertiary_material,sponge_iron,,M1,Mt/Mt,1.0,,
 # dri_h2_steel,output,R12_RCPA,water_supply,water,,M1,Mm3/Mt,690.0,for now assume same as natural gas as used by Jihoon. If necessary we can later find a more specific number for water vapour which is the result of this process,
 dri_h2_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,6.0,It is not specified if this is fixed or variable but just as maintenece. 3% of CAPEX.,"Toktarova et al., 2021"
@@ -224,7 +224,7 @@ prep_secondary_steel_3,output,R12_RCPA,new_scrap,steel,,M1,Mt,1.0,,
 prod_charcoal_steel,input,R12_RCPA,primary,biomass,,M1,GWa,3.6,"Energy content of wood: 18MJ/kg, Energy content of charcoal: 30 MJ/kg​, 1kg charcoal with energy content 30 MJ --> 6 kg wood required (6x18=108MJ energy content)​
 Loss: From 108 MJ to 30 MJ ",https://energypedia.info/wiki/Charcoal_Production#Basics_on_Charcoal​
 prod_charcoal_steel,output,R12_RCPA,final,charcoal,,M1,GWa,1.0,,
-prod_charcoal_steel,output,R12_RCPA,final,off_gas,,M1,GWa,7.459998650892485e-07,586.7 kg charcoal generates 1981 Nm3 off-gas with 6.55 MJ/m3,"Nogami et al., 2004"
+# prod_charcoal_steel,output,R12_RCPA,final,off_gas,,M1,GWa,7.459998650892485e-07,586.7 kg charcoal generates 1981 Nm3 off-gas with 6.55 MJ/m3,"Nogami et al., 2004"
 prod_charcoal_steel,inv_cost,R12_RCPA,,,,,MUSD/GWa,69.65888750902526,72.6 2015euro/t for EU28 ,"(Mandova et al., 2018) Convert from 2015 euro to 2005 usd, convert from usd/t to MUSD/Gwa"
 prod_charcoal_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,3.4829443754512632,3.63 euro/t/yr mentioned as O&M ,"(Mandova et al., 2018)"
 prod_charcoal_steel,emission_factor,R12_RCPA,,,CO,M1,ktCO/GWa,165.50180505415167,"157 g/kg charcoal, 1kg=30 MJ","Sparrevik et al., 2015"
