@@ -1,9 +1,10 @@
 import logging
 import re
 from collections import defaultdict
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from copy import deepcopy
 from itertools import product
-from typing import Dict, Iterable, List, Mapping, Sequence, cast
+from typing import TYPE_CHECKING, cast
 
 import message_ix
 import pandas as pd
@@ -30,6 +31,10 @@ from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
+    from message_ix_models.types import MutableParameterData, ParameterData
+
 log = logging.getLogger(__name__)
 
 #: STURM commodity names to be converted for use in MESSAGEix-Materials; see
@@ -55,7 +60,7 @@ BUILD_COMM_CONVERT = [
 MATERIALS = ["steel", "cement", "aluminum"]
 
 
-def adapt_emission_factors(data: Dict[str, pd.DataFrame]):
+def adapt_emission_factors(data: "MutableParameterData") -> None:
     """Adapt ``relation_activity`` values in `data` that represent emission factors.
 
     In MESSAGEix-GLOBIOM, ``relation_activity`` entries for, for instance, r=CO_Emission
@@ -151,7 +156,7 @@ def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
     return result[~result["node"].str.endswith("_GLB")]
 
 
-def get_techs(spec: Spec, commodity=None) -> List[str]:
+def get_techs(spec: Spec, commodity=None) -> list[str]:
     """Return a list of buildings technologies."""
     codes: Iterable[Code] = spec.add.set["technology"]
     if commodity:
@@ -246,7 +251,7 @@ def get_tech_groups(
     return techs
 
 
-def load_config(context):
+def load_config(context: Context) -> None:
     """Load MESSAGEix-Buildings configuration from file and store on `context`.
 
     Model structure information is loaded from :file:`data/buildings/set.yaml` and
@@ -259,7 +264,7 @@ def load_config(context):
     if "buildings spec" in context:
         return
 
-    set_info = load_private_data("buildings", "set.yaml")
+    set_info = cast("MutableMapping", load_private_data("buildings", "set.yaml"))
 
     # Generate set elements from a product of others
     for set_name, info in set_info.items():
@@ -301,7 +306,15 @@ def load_config(context):
     context["buildings spec"] = s
 
 
-def bio_backstop(scen, nodes=["R12_AFR", "R12_SAS"]):
+# def merge_data(
+#     base: MutableMapping[str, pd.DataFrame], *others: Mapping[str, pd.DataFrame]
+# ) -> None:
+#     import message_ix_models.util
+
+#     message_ix_models.util.merge_data(base, *others)
+
+
+def bio_backstop(scen: "Scenario", nodes=["R12_AFR", "R12_SAS"]) -> "ParameterData":
     """Create a backstop supply of (biomass, primary) to avoid infeasibility.
 
     This is not currently in use; see comments in :func:`prepare_data`.
@@ -329,7 +342,7 @@ def bio_backstop(scen, nodes=["R12_AFR", "R12_SAS"]):
 
         data[name].append(scen.par(name, filters=filters).assign(**values))
 
-    result = {k: pd.concat(v) for k, v in data.items()}
+    result: "ParameterData" = {k: pd.concat(v) for k, v in data.items()}
 
     log.debug(repr(result))
 
@@ -337,10 +350,10 @@ def bio_backstop(scen, nodes=["R12_AFR", "R12_SAS"]):
 
 
 def scale_and_replace(
-    scenario: message_ix.Scenario,
-    replace: Dict,
+    scenario: "Scenario",
+    replace: dict,
     q_scale: Quantity,
-    relations: List[str],
+    relations: list[str],
     relax: float = 0.0,
 ) -> Mapping[str, pd.DataFrame]:
     """Return scaled parameter data for certain technologies.
@@ -460,12 +473,12 @@ def prepare_data(
     sturm_r: pd.DataFrame,
     sturm_c: pd.DataFrame,
     with_materials: bool,
-    relations: List[str],
-) -> Dict[str, pd.DataFrame]:
+    relations: list[str],
+) -> "ParameterData":
     """Derive data for MESSAGEix-Buildings from `scenario`."""
 
     # Data frames for each parameter
-    result: Dict[str, pd.DataFrame] = dict()
+    result: "MutableParameterData" = dict()
 
     # Mapping from original to generated commodity names
     c_map = {f"rc_{name}": f"afofi_{name}" for name in ("spec", "therm")}
@@ -475,7 +488,7 @@ def prepare_data(
     c_share = get_afofi_commodity_shares()
 
     # Retrieve existing demands
-    filters: Dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
+    filters: dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
     afofi_dd = data_for_quantity(
         "par", "demand", "value", scenario, config=dict(filters=filters)
     )
@@ -511,7 +524,8 @@ def prepare_data(
 
         merge_data(
             result,
-            scale_and_replace(
+            # TODO Remove exclusion once message-ix-models >2025.1.10 is released
+            scale_and_replace(  # type: ignore [arg-type]
                 scenario, replace, t_shares, relations=relations, relax=0.05
             ),
         )
@@ -558,9 +572,9 @@ def prepare_data(
     # - Concatenate data frames together.
     # - Adapt relation_activity values that represent emission factors.
     # - Merge to results.
-    merge_data(
-        result, adapt_emission_factors({k: pd.concat(v) for k, v in data.items()})
-    )
+    tmp = {k: pd.concat(v) for k, v in data.items()}
+    adapt_emission_factors(tmp)
+    merge_data(result, tmp)
 
     log.info(
         "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in result.items())
@@ -577,7 +591,7 @@ def prepare_data(
     return result
 
 
-def prune_spec(spec: Spec, data: Dict[str, pd.DataFrame]) -> None:
+def prune_spec(spec: Spec, data: "ParameterData") -> None:
     """Remove extraneous entries from `spec`."""
     for name in ("commodity", "technology"):
         values = set(data["input"][name]) | set(data["output"][name])
@@ -666,7 +680,7 @@ def materials(
     info: ScenarioInfo,
     sturm_r: pd.DataFrame,
     sturm_c: pd.DataFrame,
-) -> Dict[str, pd.DataFrame]:
+) -> "ParameterData":
     """Integrate MESSAGEix-Buildings with MESSAGEix-Materials.
 
     This function prepares data for `scenario` to work with :mod:`.model.material`.
