@@ -109,7 +109,7 @@ def quiet_genno(caplog):
 @mark.parametrize(
     "build",
     (
-        True,  # Run .transport.build.main()
+        pytest.param(True, marks=MARK["gh-339"]),  # Run .transport.build.main()
         False,  # Use data from an Excel export
     ),
 )
@@ -143,6 +143,7 @@ def test_simulated_solution(request, test_context, build, regions="R12", years="
 
 
 @build.get_computer.minimum_version
+@MARK["gh-339"]
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
     "plot_name",
