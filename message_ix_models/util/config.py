@@ -5,7 +5,7 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from hashlib import blake2s
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Hashable, Optional, Union
+from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
 
 import ixmp
 
@@ -14,6 +14,7 @@ from .scenarioinfo import ScenarioInfo
 
 if TYPE_CHECKING:
     import message_ix
+    from ixmp.types import PlatformArgs
 
 log = logging.getLogger(__name__)
 
@@ -180,8 +181,11 @@ class Config:
     #: Like :attr:`url`, used by e.g. :meth:`.clone_to_dest`.
     dest: Optional[str] = None
 
+    # NB the below works around python/mypy#5723
     #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
-    dest_platform: MutableMapping[str, str] = field(default_factory=dict)
+    dest_platform: "PlatformArgs" = field(
+        default_factory=lambda: cast("PlatformArgs", dict())
+    )
 
     #: Like :attr:`scenario_info`, used by e.g. :meth:`.clone_to_dest`.
     dest_scenario: MutableMapping[str, str] = field(default_factory=dict)
@@ -196,9 +200,12 @@ class Config:
     #: configuration file.
     local_data: Path = field(default_factory=_local_data_factory)
 
+    # NB the below works around python/mypy#5723
     #: Keyword arguments—especially `name`—for the :class:`ixmp.Platform` constructor,
     #: from the :program:`--platform` or :program:`--url` CLI option.
-    platform_info: MutableMapping[str, str] = field(default_factory=dict)
+    platform_info: "PlatformArgs" = field(
+        default_factory=lambda: cast("PlatformArgs", dict())
+    )
 
     # Private reference to an ixmp.Platform
     _mp: Optional["ixmp.Platform"] = None
