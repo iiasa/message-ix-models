@@ -21,6 +21,10 @@ level_2:
     short: fe_pe_el
     components:
       [ fe_pe_cement_el, fe_pe_aluminum_el, fe_pe_steel_el, fe_pe_other_el ]
+  Electricity|Solar:
+    short: fe_pe_el_rt
+    components:
+      [ fe_pe_other_el_sp_rt ]
   Gases|Gas:
     short: fe_pe_gas
     components:
