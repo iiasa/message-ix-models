@@ -60,8 +60,6 @@ class GEA(ExoDataSource):
         self.path = path_fallback(
             "gea", "GEADB_ARCHIVE_20171108.zip", where="private test"
         )
-        if "test" in self.path.parts:
-            log.warning(f"Reading random data from {self.path}")
 
         # Assemble query
         self.query = " and ".join(

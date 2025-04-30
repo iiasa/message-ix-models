@@ -72,8 +72,6 @@ class GFEI(ExoDataSource):
         self.path = path_fallback(
             "transport", "GFEI_FE_by_Powertrain_2017.csv", where="private test"
         )
-        if "test" in self.path.parts:
-            log.warning(f"Reading random data from {self.path}")
 
     def __call__(self):
         import genno.operator

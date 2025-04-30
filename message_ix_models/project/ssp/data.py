@@ -105,8 +105,6 @@ class SSPOriginal(ExoDataSource):
 
         # Identify input data path
         self.path = path_fallback("ssp", self.filename, where=WHERE)
-        if "test" in self.path.parts:
-            log.warning(f"Read random data from {self.path}")
 
         # Assemble a query string
         extra = "d" if ssp_id == "4" and model == "IIASA-WiC POP" else ""
@@ -210,8 +208,6 @@ class SSPUpdate(ExoDataSource):
 
         # Identify input data path
         self.path = path_fallback("ssp", self.filename[release], where=WHERE)
-        if "test" in self.path.parts:
-            log.warning(f"Read random data from {self.path}")
 
         # Assemble and store a query string
         self.query = f"Scenario in {scenarios!r} and Variable == '{measure}'" + (
