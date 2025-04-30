@@ -98,6 +98,7 @@ exclude_also = [
 
 [tool.coverage.run]
 omit = [
+  "message_ix_models/project/ssp/script/*",
   # The single existing test is far from enough
   "message_ix_models/report/legacy/*",
   "message_ix_models/util/migrate.py",
@@ -171,8 +172,9 @@ exclude = [
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
 # Exceptions:
-# - .tools.wb.assign_income_groups(): 12 > 11
-# - .util.sdmx.as_codes(): 13 > 11
+# 30  .project.ssp.script.util.shares.main()
+# 12  .tools.wb.assign_income_groups()
+# 13  .util.sdmx.as_codes()
 mccabe.max-complexity = 11
 
 [tool.setuptools]

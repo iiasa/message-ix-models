@@ -7,6 +7,7 @@ def modify_rc_bounds(s_original, s_target, mod_years):
     act_bio = s_original.var(
         "ACT", filters={"technology": "biomass_rc", "node_loc": "R12_SAS"}
     )
+    del act_bio  # NB Currently unused
 
     # get ACT for loil_rc in SAS
     act_loil_sas = s_original.var(
@@ -204,7 +205,7 @@ def add_steel_sector_nze(s, steel_target_array):
             "relation": "steel_sector_target",
             "node_rel": "R12_GLB",
             "year_rel": [2070, 2080, 2090, 2100],
-            "value": steel_target_array,  # slack values given from Gamze, added manually
+            "value": steel_target_array,  # Slack values from Gamze, added manually
             "unit": "???",
         }
     )
