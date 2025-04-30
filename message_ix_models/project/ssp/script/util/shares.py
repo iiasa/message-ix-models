@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 
 
-def main(
+# FIXME Reduce complexity from 30 → ≤ 11
+def main(  # noqa: C901
     scen,
     path_UE_share_input,
     ssp="SSP2",
