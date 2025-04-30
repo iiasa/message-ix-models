@@ -90,8 +90,6 @@ class SHAPE(ExoDataSource):
             f"{self.measure}_v{version.replace('.', 'p')}{info['suffix']}",
             where="private test",
         )
-        if "test" in self.path.parts:
-            log.warning(f"Reading random data from {self.path}")
 
         variable = info.get("variable", self.measure)
         self.query = " and ".join(

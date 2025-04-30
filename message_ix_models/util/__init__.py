@@ -681,7 +681,7 @@ def path_fallback(
     ValueError
         If `where` is empty or `parts` are not found in any of the indicated locations.
     """
-    dirs = []
+    dirs, test_dir = [], None
     for item in where.split() if isinstance(where, str) else where:
         if isinstance(item, str):
             if item == "cache":
@@ -693,7 +693,8 @@ def path_fallback(
             elif item == "private":
                 dirs.append(private_data_path())
             elif item == "test":
-                dirs.append(package_data_path("test"))
+                test_dir = package_data_path("test")
+                dirs.append(test_dir)
         else:
             dirs.append(item)
 
@@ -701,12 +702,16 @@ def path_fallback(
         if not path.exists():
             once(log, logging.DEBUG, f"Not found: {path}")
             continue
+        elif test_dir and path.is_relative_to(test_dir):
+            msg = f"Reading test (fuzzed, random, and/or partial) data from {path}"
+            once(log, logging.WARNING, msg)
         return path
 
-    if not dirs:
-        raise ValueError(f"No directories identified among {where!r}")
-    else:
-        raise ValueError(f"'{Path(*parts)!s}' not found in any of {dirs}")
+    raise ValueError(
+        f"No directories identified among {where!r}"
+        if not dirs
+        else f"'{Path(*parts)!s}' not found in any of {dirs}"
+    )
 
 
 def replace_par_data(
