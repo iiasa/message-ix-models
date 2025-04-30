@@ -1,3 +1,13 @@
+"""Functions used in :mod:`.project.ssp.script.scenarios`.
+
+Originally added via :pull:`235`, cherry-picked and merged in :pull:`340`.
+
+.. todo::
+   - Move to another location as appropriate.
+   - Add tests.
+   - Improve documentation.
+"""
+
 import numpy as np
 import pandas as pd
 

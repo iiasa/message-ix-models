@@ -1,3 +1,14 @@
+"""Script for SSP/ScenarioMIP ‘very low’ scenario.
+
+Originally added via :pull:`235`, cherry-picked and merged in :pull:`340`.
+
+.. todo::
+   - Collect code in a function.
+   - Expose function through the CLI.
+   - Add tests.
+   - Add documentation.
+"""
+
 import os
 
 import ixmp  # type: ignore
