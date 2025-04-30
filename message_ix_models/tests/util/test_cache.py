@@ -7,7 +7,6 @@ import xarray as xr
 from genno.caching import hash_args
 from ixmp.testing import assert_logs
 
-import message_ix_models.util.cache
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import cached
 
@@ -26,13 +25,7 @@ class TestEncoder:
 
 
 def test_cached(caplog, test_context, tmp_path):
-    """:func:`.cached` works as expected.
-
-    .. todo:: test behaviour when :data:`.SKIP_CACHE` is :obj:`True`
-    """
-    # Clear seen paths, so that log message below is guaranteed to occur
-    message_ix_models.util.cache.PATHS_SEEN.clear()
-
+    """:func:`.cached` works as expected."""
     # Store in the temporary directory for this session, to avoid collisions across
     # sessions
     test_context.cache_path = tmp_path.joinpath("cache")
@@ -50,8 +43,6 @@ def test_cached(caplog, test_context, tmp_path):
 
     # Docstring is modified
     assert "Data returned by this function is cached" in func0.__doc__
-    # Message is logged
-    assert f"func0() will cache in {tmp_path.joinpath('cache')}" in caplog.messages
 
     @cached
     def func1(x=1, y=2, **kwargs):
