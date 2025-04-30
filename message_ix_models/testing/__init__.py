@@ -231,6 +231,56 @@ def mix_models_cli(session_context, tmp_env):
     yield CliRunner(cli.main, cli.__name__, env=tmp_env)
 
 
+@pytest.fixture
+def iea_eei_user_data(pytestconfig, monkeypatch) -> None:
+    """Temporarily allow :class:`.IEA_EEI` to find user data."""
+    from message_ix_models.tools.iea.eei import IEA_EEI
+
+    monkeypatch.setattr(
+        IEA_EEI, "where", IEA_EEI.where + [pytestconfig.user_local_data]
+    )
+
+
+@pytest.fixture
+def iea_eweb_test_data(monkeypatch, session_context) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data.
+
+    `session_context` is required in order to set the cache path in the test
+    environment.
+    """
+    from message_ix_models.tools.iea.web import IEA_EWEB
+
+    monkeypatch.setattr(IEA_EWEB, "use_test_data", True)
+
+
+@pytest.fixture
+def iea_eweb_user_data(pytestconfig, monkeypatch) -> None:  # pragma: no cover
+    """Temporarily allow :class:`.IEA_EWEB` to find user data."""
+    from message_ix_models.tools.iea.web import IEA_EWEB
+
+    monkeypatch.setattr(
+        IEA_EWEB, "where", IEA_EWEB.where + [pytestconfig.user_local_data]
+    )
+
+
+@pytest.fixture
+def ssp_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+
+    for cls in SSPOriginal, SSPUpdate:
+        monkeypatch.setattr(cls, "use_test_data", True)
+
+
+@pytest.fixture
+def ssp_user_data(pytestconfig, monkeypatch) -> None:
+    """Temporarily allow :class:`.SSPOriginal`/:class:`.SSPUpdate` to find user data."""
+    from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+
+    for cls in SSPOriginal, SSPUpdate:
+        monkeypatch.setattr(cls, "where", cls.where + [pytestconfig.user_local_data])
+
+
 # Testing utility functions
 
 

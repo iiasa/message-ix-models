@@ -39,6 +39,8 @@ class GEA(ExoDataSource):
     #: By default, do not interpolate.
     interpolate = False
 
+    where = ["private"]
+
     def __init__(self, source, source_kw):
         if source != self.id:
             raise ValueError(source)
@@ -58,7 +60,7 @@ class GEA(ExoDataSource):
 
         # Identify input data path
         self.path = path_fallback(
-            "gea", "GEADB_ARCHIVE_20171108.zip", where="private test"
+            "gea", "GEADB_ARCHIVE_20171108.zip", where=self._where()
         )
 
         # Assemble query

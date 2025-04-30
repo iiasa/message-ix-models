@@ -36,7 +36,7 @@ _FLOW = [
 
 @IEA_EWEB.transform.minimum_version
 class TestIEA_EWEB:
-    # Uncomment the following line to use the full data files from a local copy
+    @pytest.mark.usefixtures("web_test_data")
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
     @pytest.mark.parametrize(
         "source_kw",
