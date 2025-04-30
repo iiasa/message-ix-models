@@ -72,6 +72,7 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
 #: not implemented.
 NIE = pytest.mark.xfail(raises=NotImplementedError)
 
+CACHE_PATH_STASH = pytest.StashKey[Path]()
 
 # pytest hooks
 
@@ -101,6 +102,26 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """Identify the path to be used for cached local data.
+
+    If :program:`pytest --local-cache` was given, pick up the existing setting from the
+    user's environment. Otherwise, use a pytest-managed cache directory that persists
+    across test sessions.
+    """
+    if session.config.option.local_cache:
+        session.config.stash[CACHE_PATH_STASH] = Context.only().core.cache_path
+    else:
+        session.config.stash[CACHE_PATH_STASH] = Path(
+            session.config.cache.mkdir("cache")
+        )
+
+
+def pytest_report_header(config, start_path) -> str:
+    """Add the ixmp configuration to the pytest report header."""
+    return f"message-ix-models cache path: {config.stash[CACHE_PATH_STASH]}"
+
+
 # Fixtures
 
 
@@ -124,22 +145,13 @@ def session_context(pytestconfig, tmp_env):
       the :ref:`pytest tmp_path directory <pytest:tmp_path>`.
 
     """
-    from platformdirs import user_cache_path
-
     ctx = Context.only()
 
     # Temporary, empty local directory for local data
     session_tmp_dir = Path(pytestconfig._tmp_path_factory.mktemp("data"))
 
-    # Set the cache path according to whether pytest --local-cache was given. If True,
-    # pick up the existing setting from the user environment. If False, use a pytest-
-    # managed cache directory that persists across test sessions.
-    ctx.cache_path = (
-        user_cache_path("message-ix-models", ensure_exists=True)
-        if pytestconfig.option.local_cache
-        # TODO use pytestconfig.cache.mkdir() when pytest >= 6.3 is available
-        else Path(pytestconfig.cache.makedir("cache"))
-    )
+    # Apply the cache path determined in pytest_sessionstart(), above
+    ctx.core.cache_path = pytestconfig.stash[CACHE_PATH_STASH]
 
     # Store current .util.config.Config.local_data setting from the user's configuration
     pytestconfig.user_local_data = ctx.core.local_data
