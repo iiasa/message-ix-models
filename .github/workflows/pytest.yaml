@@ -77,7 +77,7 @@ jobs:
         path: message-static-data
         ssh-key: ${{ secrets.MESSAGE_STATIC_DATA_PRIVATE_KEY }}
         lfs: true
-        # Only check out the following directories, in order to limit bandwith usage:
+        # Only check out the following directories, in order to limit bandwidth usage:
         sparse-checkout: |
           iea/eei
           ssp
@@ -125,8 +125,10 @@ jobs:
     - name: Cache test data
       uses: actions/cache@v4
       with:
-        path: message-local-data
-        key: ${{ matrix.os }}
+        path: |
+          local-data
+          .pytest_cache/d
+        key: local-data-${{ matrix.os }}-upstream-${{ matrix.version.upstream }}
 
     - name: Check out message-ix-models
       uses: francisbilham11/action-cached-lfs-checkout@v3
@@ -195,12 +197,12 @@ jobs:
 
     - name: Configure local data path
       run: |
-        mkdir -p message-local-data/cache
-        mix-models config set "message local data" "$(realpath message-local-data)"
+        mkdir -p local-data
+        mix-models config set "message local data" "$(realpath local-data)"
         mix-models config show
         # Symlink message-static-data into local data path
-        mkdir -p ${{ github.workspace }}/message-local-data
-        cp -rsv $(realpath message-static-data)/* message-local-data/
+        mkdir -p ${{ github.workspace }}/local-data
+        cp -rsv $(realpath message-static-data)/* local-data/
 
     - name: Run test suite using pytest
       run: |
