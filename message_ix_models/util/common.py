@@ -13,6 +13,8 @@ from ._logging import once
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
+    from .context import Context
+
 log = logging.getLogger(__name__)
 
 try:
@@ -224,7 +226,7 @@ def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs messag
     return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts)
 
 
-def local_data_path(*parts) -> Path:
+def local_data_path(*parts, context: Optional["Context"] = None) -> Path:
     """Construct a path for local data.
 
     The setting ``message local data`` in the user's :ref:`ixmp configuration file
@@ -240,10 +242,11 @@ def local_data_path(*parts) -> Path:
     --------
     :ref:`Choose locations for data <local-data>`
     """
-    import ixmp
+    from .context import Context
 
-    # The default value, Path.cwd(), is set in context.py
-    return _make_path(Path(ixmp.config.get("message local data")), *parts)
+    ctx = context or Context.get_instance(-1)
+
+    return ctx.core.local_data.joinpath(*parts)
 
 
 def package_data_path(*parts) -> Path:
