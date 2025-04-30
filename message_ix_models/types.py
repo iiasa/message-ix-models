@@ -31,6 +31,9 @@ ParameterData = Mapping[str, pd.DataFrame]
 MutableParameterData = MutableMapping[str, pd.DataFrame]
 
 
+# For sdmx1
+
+
 class AnnotableArtefactArgs(TypedDict, total=False):
     annotations: list[sdmx.model.common.BaseAnnotation]
 
