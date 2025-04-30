@@ -16,12 +16,13 @@ from collections.abc import Callable
 from dataclasses import is_dataclass
 from enum import Enum
 from types import FunctionType
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
 import genno.caching
 import ixmp
 import sdmx.model
 import xarray as xr
+from genno import Computer
 
 from message_ix_models.types import AnyQuantity
 
@@ -29,20 +30,11 @@ from ._dataclasses import asdict
 from .context import Context
 from .scenarioinfo import ScenarioInfo
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
-
 log = logging.getLogger(__name__)
 
-
-#: Controls whether cached data is returned for functions decorated with
-#: :func:`.cached`. Set to :obj:`True` to force reload.
-SKIP_CACHE = False
-
-# Paths already logged, to decrease verbosity
-PATHS_SEEN: set["Path"] = set()
-
+# Computer to store the config used by the decorator. See .util.config.Config.cache_path
+# and .cache_skip that update the contents.
+COMPUTER = Computer()
 
 # Show genno how to hash function arguments seen in message_ix_models
 
@@ -109,28 +101,17 @@ def cached(func: Callable) -> Callable:
     """Decorator to cache the return value of a function `func`.
 
     On a first call, the data requested is returned and also cached under
-    :meth:`.Context.get_cache_path`. On subsequent calls, if the cache exists, it is
-    used instead of calling the (possibly slow) `func`.
+    :meth:`.Config.cache_path`. On subsequent calls, if the cache exists, it is used
+    instead of calling the (possibly slow) `func`.
 
-    When :data:`.SKIP_CACHE` is true, `func` is always called.
+    When :attr:`.Config.cache_skip` is :any:`True`, `func` is always called.
 
     See also
     --------
     :doc:`genno:cache` in the :mod:`genno` documentation
     """
-    # Determine and create the cache path
-    cache_path = Context.get_instance(-1).core.cache_path
-    assert cache_path
-
-    if cache_path not in PATHS_SEEN:
-        log.debug(f"{func.__name__}() will cache in {cache_path}")
-        PATHS_SEEN.add(cache_path)
-        cache_path.mkdir(parents=True, exist_ok=True)
-
-    # Use the genno internals to wrap the function.
-    cached_load = genno.caching.decorate(
-        func, cache_path=cache_path, cache_skip=SKIP_CACHE
-    )
+    # Use the genno internals to wrap the function
+    cached_load = genno.caching.decorate(func, computer=COMPUTER)
 
     if cached_load.__doc__ is not None:
         # Determine the indent
