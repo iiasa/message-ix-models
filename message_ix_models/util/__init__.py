@@ -21,7 +21,7 @@ import pint
 from platformdirs import user_cache_path
 
 from ._convert_units import convert_units
-from ._logging import mark_time, preserve_log_level, silence_log
+from ._logging import mark_time, once, preserve_log_level, silence_log
 from .cache import cached
 from .common import (
     HAS_MESSAGE_DATA,
@@ -699,7 +699,7 @@ def path_fallback(
 
     for path in [d.joinpath(*parts) for d in dirs]:
         if not path.exists():
-            log.debug(f"Not found: {path}")
+            once(log, logging.DEBUG, f"Not found: {path}")
             continue
         return path
 

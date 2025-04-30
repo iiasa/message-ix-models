@@ -8,6 +8,8 @@ import pandas as pd
 from genno import Quantity
 from genno.operator import concat
 
+from ._logging import once
+
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
@@ -23,6 +25,12 @@ else:  # pragma: no cover  (needs message_data)
     MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
     HAS_MESSAGE_DATA = True
 
+__all__ = [
+    "HAS_MESSAGE_DATA",
+    "Adapter",
+    "MappingAdapter",
+]
+
 # Directory containing message_ix_models.__init__
 MESSAGE_MODELS_PATH = Path(__file__).parents[1]
 
@@ -31,13 +39,6 @@ PACKAGE_DATA: dict[str, Any] = dict()
 
 #: Data already loaded with :func:`load_private_data`.
 PRIVATE_DATA: dict[str, Any] = dict()
-
-
-__all__ = [
-    "HAS_MESSAGE_DATA",
-    "Adapter",
-    "MappingAdapter",
-]
 
 
 class Adapter:
@@ -288,5 +289,5 @@ def private_data_path(*parts) -> Path:
         from .context import Context
 
         base = Context.get_instance(-1).get_local_path()
-        log.warning(f"message_data not installed; fall back to {base}")
+        once(log, logging.WARNING, f"message_data not installed; fall back to {base}")
         return base.joinpath(*parts)
