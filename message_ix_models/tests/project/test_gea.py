@@ -1,7 +1,7 @@
 import pytest
 from genno import Computer
 
-from message_ix_models.project.gea.data import GEA  # noqa: F401
+from message_ix_models.project.gea.data import GEA
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import HAS_MESSAGE_DATA as FULL
 
@@ -9,7 +9,14 @@ M = "Final Energy|Transportation|Total"
 S = "geama_450_btr_nsink"
 
 
+@pytest.fixture
+def gea_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    monkeypatch.setattr(GEA, "use_test_data", True)
+
+
 class TestGEA:
+    @pytest.mark.usefixtures("gea_test_data")
     @pytest.mark.parametrize(
         "source_kw",
         (

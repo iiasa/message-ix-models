@@ -1,11 +1,18 @@
 import pytest
 from genno import Computer
 
-from message_ix_models.project.advance.data import ADVANCE  # noqa: F401
+from message_ix_models.project.advance.data import ADVANCE
 from message_ix_models.tools.exo_data import prepare_computer
 
 
+@pytest.fixture
+def advance_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    monkeypatch.setattr(ADVANCE, "use_test_data", True)
+
+
 class TestADVANCE:
+    @pytest.mark.usefixtures("advance_test_data")
     @pytest.mark.parametrize(
         "source_kw, dimensionality",
         (

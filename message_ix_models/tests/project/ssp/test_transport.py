@@ -109,7 +109,9 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     )
 
     # Identify the directory from which IEA EWEB data is read
-    iea_eweb_dir = web.dir_fallback(web.FILES[("IEA", "2024")][0])
+    iea_eweb_dir = web.dir_fallback(
+        web.FILES[("IEA", "2024")][0], where=web.IEA_EWEB._where()
+    )
     # True if the fuzzed test data are being used
     iea_eweb_test_data = iea_eweb_dir.match("message_ix_models/data/test/iea/web")
 

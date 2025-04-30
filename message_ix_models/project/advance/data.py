@@ -5,12 +5,7 @@ from genno import Computer, Key
 
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.tools.iamc import iamc_like_data_for_query
-from message_ix_models.util import (
-    HAS_MESSAGE_DATA,
-    iter_keys,
-    package_data_path,
-    private_data_path,
-)
+from message_ix_models.util import iter_keys, path_fallback
 
 __all__ = [
     "ADVANCE",
@@ -89,6 +84,8 @@ class ADVANCE(ExoDataSource):
 
     id = "ADVANCE"
 
+    where = ["private"]
+
     def __init__(self, source, source_kw):
         if not source == self.id:
             raise ValueError(source)
@@ -125,12 +122,7 @@ class ADVANCE(ExoDataSource):
         log.debug(query)
 
         # Expected location of the ADVANCE WP2 data snapshot.
-        parts = LOCATION
-        if HAS_MESSAGE_DATA:
-            path = private_data_path(*parts)
-        else:
-            path = package_data_path("test", *parts)
-            log.warning(f"Reading random data from {path}")
+        path = path_fallback(*LOCATION, where=self._where())
 
         return iamc_like_data_for_query(
             path, query, archive_member=NAME, non_iso_3166="keep"
