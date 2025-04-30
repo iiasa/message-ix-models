@@ -22,12 +22,22 @@ ixmp.config.register("no message_data", bool, False)
 ixmp.config.register("message local data", Path, Path.cwd())
 
 
-def _local_data_factory():
-    """Default values for :attr:`.Config.local_data."""
+def _cache_path_factory() -> Path:
+    """Default value for :attr:`.Config.cache_path."""
+    from platformdirs import user_cache_path
+
+    return user_cache_path("message-ix-models", ensure_exists=True)
+
+
+def _local_data_factory() -> Path:
+    """Default value for :attr:`.Config.local_data."""
+    from platformdirs import user_data_path
+
     return (
         Path(
-            os.environ.get("MESSAGE_LOCAL_DATA", None)
+            os.environ.get("MESSAGE_LOCAL_DATA", "")
             or ixmp.config.get("message local data")
+            or user_data_path("message-ix-models")
         )
         .expanduser()
         .resolve()
@@ -172,7 +182,7 @@ class Config:
     #: The :program:`--cache-path` CLI option modifies this value.
     #:
     #: See also :ref:`cache-data`.
-    cache_path: Optional[Path] = None
+    cache_path: Path = field(default_factory=_cache_path_factory)
 
     #: Paths of files containing debug outputs. See
     #: :meth:`.Context.write_debug_archive`.
@@ -226,12 +236,6 @@ class Config:
     #: Flag for causing verbose output to logs or stdout. Different modules will respect
     #: :attr:`verbose` in distinct ways.
     verbose: bool = False
-
-    def __post_init__(self):
-        if self.cache_path is None:
-            from platformdirs import user_cache_path
-
-            self.cache_path = user_cache_path("message-ix-models", ensure_exists=True)
 
     def __deepcopy__(self, memo):
         # Hide "_mp" from the copy
