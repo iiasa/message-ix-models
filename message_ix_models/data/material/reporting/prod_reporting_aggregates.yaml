@@ -27,7 +27,7 @@ level_2:
   Chemicals|Ammonia:
     short: prod_nh3
     components:
-      [ prod_nh3_gas_tot, prod_nh3_coal_tot, prod_nh3_bio_tot, prod_nh3_oil_tot ]
+      [ prod_nh3_gas_tot, prod_nh3_coal_tot, prod_nh3_bio_tot, prod_nh3_oil_tot, prod_nh3_h2 ]
   Chemicals|Methanol:
     short: prod_meth
     components:
