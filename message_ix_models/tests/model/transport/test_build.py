@@ -430,15 +430,16 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
 @pytest.mark.parametrize(
     "build_kw",
     (
-        dict(regions="R11", years="A"),
-        dict(regions="R11", years="B"),
-        dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
-        dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
+        # commented: Reduce runtimes of GitHub Actions jobs
+        # dict(regions="R11", years="A"),
+        # dict(regions="R11", years="B"),
+        # dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
+        # dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
         dict(regions="R12", years="B"),
-        dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
+        # dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
         dict(regions="R12", years="B", options=dict(project={"LED": True})),
-        param(dict(regions="R14", years="B"), marks=MARK[9]),
-        param(dict(regions="ISR", years="A"), marks=MARK[3]),
+        # param(dict(regions="R14", years="B"), marks=MARK[9]),
+        # param(dict(regions="ISR", years="A"), marks=MARK[3]),
     ),
 )
 def test_debug(
