@@ -5,13 +5,16 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from copy import deepcopy
 from operator import itemgetter
-from typing import Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 from genno import Computer, Key, Quantity, quote
 from genno.core.key import single_key
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 __all__ = [
     "MEASURES",
@@ -60,6 +63,13 @@ class ExoDataSource(ABC):
     #: :any:`True` if :meth:`.transform` should interpolate data on the |y| dimension.
     interpolate: bool = True
 
+    #: :any:`True` to allow the class to look up and use test data. If no test data
+    #: exists, this setting has no effect.
+    use_test_data: bool = False
+
+    #: :py:`where` keyword argument to :func:`.path_fallback`.
+    where: list[Union[str, "Path"]] = []
+
     @abstractmethod
     def __init__(self, source: str, source_kw: Mapping) -> None:
         """Handle `source` and `source_kw`.
@@ -97,6 +107,11 @@ class ExoDataSource(ABC):
         the code **must** transform these, make appropriate selections, etc.
         """
         raise NotImplementedError
+
+    @classmethod
+    def _where(self) -> list[Union[str, "Path"]]:
+        """Helper for :py:`__init__()` methods in subclasses."""
+        return self.where + (["test"] if self.use_test_data else [])
 
     def get_keys(self) -> tuple[Key, Key]:
         """Return the target keys for the (1) raw and (2) transformed data.
@@ -223,7 +238,7 @@ def prepare_computer(
             # Instantiate a Source object to provide this data
             source_obj = cls(source, deepcopy(source_kw or dict()))
         # except Exception as e:  # For debugging
-        #     log.debug(repr(e))
+        #     log.debug(f"{cls} → {e!r}")
         except Exception:
             pass  # Class does not recognize the arguments
 
