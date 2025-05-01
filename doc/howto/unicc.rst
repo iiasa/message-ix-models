@@ -904,7 +904,7 @@ However, this will show a lot of information, so it might be better to run a mor
    sacct --format=jobid,MaxRSS,MaxVMSize,start,end,CPUTimeRAW,NodeList
 
 Resources to request for reducing MESSAGEix run time
----------------------------------------------------
+----------------------------------------------------
 
 The following information is based on non-scientific "testing" (goofing around), so take it with a grain of salt.
 I have found that requesting more CPUs per task can help reduce the run time of a MESSAGEix solve.

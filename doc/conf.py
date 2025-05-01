@@ -223,10 +223,12 @@ linkcode_github_repo_slug = "iiasa/message-ix-models"
 
 napoleon_preprocess_types = True
 napoleon_type_aliases = {
+    # Python standard library
     "iterable": ":class:`~collections.abc.Iterable`",
     "sequence": ":class:`~collections.abc.Sequence`",
-    "Path": ":class:`~pathlib.Path`",
     "PathLike": ":class:`os.PathLike`",
+    # genno
+    "AnyQuantity": ":data:`~genno.core.quantity.AnyQuantity`",
 }
 
 # -- Options for sphinx.ext.todo -------------------------------------------------------

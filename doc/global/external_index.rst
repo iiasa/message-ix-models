@@ -1,5 +1,5 @@
 MESSAGE-GLOBIOM
-====
+***************
 
 MESSAGE-GLOBIOM combines the global energy systems model MESSAGE and the
 land~use model GLOBIOM into a consistent Integrated Assessment Modeling (IAM)
