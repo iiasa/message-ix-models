@@ -8,7 +8,7 @@ from genno.caching import hash_args
 from ixmp.testing import assert_logs
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import cached
+from message_ix_models.util import cache, cached
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,26 @@ class TestEncoder:
         assert expected == hash_args(codes0, bar="baz") == hash_args(codes1, bar="baz")
 
 
-def test_cached(caplog, test_context, tmp_path):
+def test_cache_skip(test_context) -> None:
+    """:attr:`.Config.cache_skip` updates :data:`.cache.COMPUTER`."""
+    pre = cache.COMPUTER.graph["config"].get("cache_skip")
+
+    try:
+        test_context.core.cache_skip = True
+
+        assert cache.COMPUTER.graph["config"]["cache_skip"] is True
+
+        test_context.core.cache_skip = False
+
+        assert cache.COMPUTER.graph["config"]["cache_skip"] is False
+    finally:
+        if pre is None:
+            cache.COMPUTER.graph["config"].pop("cache_skip")
+        else:
+            cache.COMPUTER.graph["config"]["cache_skip"] = pre
+
+
+def test_cached(caplog, test_context, tmp_path) -> None:
     """:func:`.cached` works as expected."""
     # Store in the temporary directory for this session, to avoid collisions across
     # sessions
@@ -42,7 +61,7 @@ def test_cached(caplog, test_context, tmp_path):
             return f"{id(ctx)}, {a + b}"
 
     # Docstring is modified
-    assert "Data returned by this function is cached" in func0.__doc__
+    assert "Data returned by this function is cached" in (func0.__doc__ or "")
 
     @cached
     def func1(x=1, y=2, **kwargs):
