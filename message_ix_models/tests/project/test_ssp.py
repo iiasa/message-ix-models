@@ -133,7 +133,10 @@ class TestSSPOriginal:
 
 
 class TestSSPUpdate:
-    @pytest.mark.usefixtures("ssp_test_data")
+    @pytest.mark.usefixtures(
+        "ssp_test_data",  # For release=preview
+        "ssp_user_data",  # For other values of `release`
+    )
     @pytest.mark.parametrize(
         "source",
         (

@@ -10,10 +10,12 @@ from pytest import param
 
 from message_ix_models.model.transport import build, testing
 from message_ix_models.model.transport.ldv import TARGET, constraint_data
-from message_ix_models.model.transport.testing import assert_units
+from message_ix_models.model.transport.testing import MARK, assert_units
 from message_ix_models.project.navigate import T35_POLICY
 
 log = logging.getLogger(__name__)
+
+pytestmark = MARK[10]
 
 
 @build.get_computer.minimum_version

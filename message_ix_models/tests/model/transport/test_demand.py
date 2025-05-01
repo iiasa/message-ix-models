@@ -16,6 +16,9 @@ from message_ix_models.project.ssp import SSP_2017, SSP_2024
 log = logging.getLogger(__name__)
 
 
+pytestmark = MARK[10]
+
+
 @pytest.mark.parametrize("regions", ["R11", "R14", "ISR"])
 @pytest.mark.parametrize("years", ["A", "B"])
 def test_demand_dummy(test_context, regions, years):

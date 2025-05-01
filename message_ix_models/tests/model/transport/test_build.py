@@ -79,6 +79,7 @@ def test_make_spec(regions_arg, regions_exp, years):
     assert expected == spec["require"].set["node"]
 
 
+@MARK[10]
 @MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
@@ -425,6 +426,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
 
 
 @build.get_computer.minimum_version
+@MARK[10]
 @pytest.mark.parametrize(
     "build_kw",
     (

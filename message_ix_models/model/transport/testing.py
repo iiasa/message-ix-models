@@ -47,6 +47,7 @@ MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
             reason="Graphviz missing on macos-13 GitHub Actions runners",
         ),
         9: pytest.mark.xfail(reason="Missing R14 input data/config"),
+        10: pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data"),
         "gh-288": pytest.mark.xfail(
             reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/288",
         ),
