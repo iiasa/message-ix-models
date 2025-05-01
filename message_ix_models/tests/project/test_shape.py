@@ -4,6 +4,8 @@ import pytest
 from message_ix_models.project.shape.data import SHAPE
 from message_ix_models.tools.exo_data import prepare_computer
 
+pytestmark = pytest.mark.usefixtures("shape_test_data")
+
 
 @pytest.fixture
 def shape_test_data(monkeypatch) -> None:
@@ -12,7 +14,6 @@ def shape_test_data(monkeypatch) -> None:
 
 
 class TestSHAPE:
-    @pytest.mark.usefixtures("shape_test_data")
     @pytest.mark.parametrize(
         "source_kw, dimensionality",
         (

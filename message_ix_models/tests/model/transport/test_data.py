@@ -129,6 +129,7 @@ def test_get_chn_ind_pop():
 
 
 @build.get_computer.minimum_version
+@MARK[10]
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions",

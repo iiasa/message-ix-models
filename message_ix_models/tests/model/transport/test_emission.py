@@ -5,10 +5,12 @@ from message_ix import make_df
 
 from message_ix_models.model.transport import Config, DataSourceConfig, build, testing
 from message_ix_models.model.transport.emission import ef_for_input, get_emissions_data
+from message_ix_models.model.transport.testing import MARK
 from message_ix_models.util import broadcast, same_node
 
 
 @build.get_computer.minimum_version
+@MARK[10]
 def test_ef_for_input(test_context):
     # Generate a test "input" data frame
     _, info = testing.configure_build(test_context, regions="R11", years="B")

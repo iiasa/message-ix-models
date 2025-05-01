@@ -27,6 +27,7 @@ def test_make_spec(regions_arg, regions_exp, material):
     assert expected == spec["require"].set["node"]
 
 
+@pytest.mark.usefixtures("ssp_user_data")
 @pytest.mark.parametrize(
     "regions, years, relations, solve",
     [
