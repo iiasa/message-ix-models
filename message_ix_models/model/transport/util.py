@@ -32,7 +32,7 @@ def has_input_commodity(technology: "Code", commodity: str) -> bool:
         return False
 
 
-def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
+def region_path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     """Return a :class:`.Path` constructed from `parts`.
 
     If ``context.model.regions`` (or a string value as the first argument) is defined

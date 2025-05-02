@@ -11,7 +11,7 @@ from message_ix import make_df
 
 from message_ix_models.util import package_data_path
 
-from .util import path_fallback
+from .util import region_path_fallback
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
@@ -26,7 +26,7 @@ def get_emissions_data(context: "Context") -> "ParameterData":
     """Load emissions data from a file."""
 
     fn = f"{context.transport.data_source.emissions}-emission_factor.csv"
-    qty = load_file(path_fallback(context, "emi", fn))
+    qty = load_file(region_path_fallback(context, "emi", fn))
 
     return dict(emission_factor=qty.to_dataframe())
 
