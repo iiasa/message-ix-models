@@ -243,23 +243,6 @@ class Config(ConfigHelper):
     #: of :file:`set.yaml` and :file:`technology.yaml`.
     spec: Spec = field(default_factory=Spec)
 
-    #: Speeds of transport modes. The labels on the 't' dimension must match
-    #: :attr:`demand_modes`. Source: Schäefer et al. (2010)
-    #:
-    #: .. note:: Temporarily ignored for :pull:`551`; data are read instead from
-    #:    :file:`speed.csv`.
-    speeds: Quantity = quantity_field(
-        {
-            "_dim": "t",
-            "_unit": "km / hour",
-            "LDV": 54.5,  # = 31 + 78 / 2
-            "2W": 31,
-            "AIR": 270,
-            "BUS": 19,
-            "RAIL": 35,
-        }
-    )
-
     #: Enum member indicating a Shared Socioeconomic Pathway, if any, to use for
     #: exogenous data.
     ssp: ssp_field = ssp_field(default=SSP_2024["2"])
