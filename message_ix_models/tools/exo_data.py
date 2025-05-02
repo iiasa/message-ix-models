@@ -110,7 +110,11 @@ class ExoDataSource(ABC):
 
     @classmethod
     def _where(self) -> list[Union[str, "Path"]]:
-        """Helper for :py:`__init__()` methods in subclasses."""
+        """Helper for :py:`__init__()` methods in subclasses.
+
+        Return :attr:`where`, but if :attr:`use_test_data` is :any:`True`, also append
+        :py:`["test"]`.
+        """
         return self.where + (["test"] if self.use_test_data else [])
 
     def get_keys(self) -> tuple[Key, Key]:

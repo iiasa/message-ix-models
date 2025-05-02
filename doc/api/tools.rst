@@ -58,6 +58,7 @@ Exogenous data (:mod:`.tools.exo_data`)
 
 .. autoclass:: ExoDataSource
    :members:
+   :private-members: _where
    :special-members: __init__, __call__
 
 .. currentmodule:: message_ix_models.tools.advance
