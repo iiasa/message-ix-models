@@ -163,6 +163,7 @@ NON_COOL_INPUT_RULES = Rule(
             "value": "n_cool_df_merge['value_y']",
             "level": "water_supply",
             "commodity": "freshwater",
+            "time_origin": "year",
             "mode": "M1",
             "time": "year",
             "year_vtg": "n_cool_df_merge['year_vtg'].astype(int)",

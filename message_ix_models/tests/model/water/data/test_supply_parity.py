@@ -88,7 +88,7 @@ def test_add_water_supply_run(request, test_context):
     test_context.RCP = "2p6"
     test_context.REL = "med"
     test_context.time = "year"
-    test_context.nexus_set = "nexus"
+    test_context.nexus_set = "cooling"
 
     mp = test_context.get_platform()
     scenario_info = {

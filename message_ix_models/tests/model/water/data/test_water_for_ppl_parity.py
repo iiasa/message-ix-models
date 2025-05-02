@@ -1,5 +1,3 @@
-import cProfile
-import pstats
 import time
 from typing import Optional
 
@@ -133,7 +131,7 @@ def test_cool_tec(request, test_context, RCP):
     test_context.type_reg = "global"
     test_context.regions = "R11"
     test_context.time = "year"
-    test_context.nexus_set = "nexus"
+    test_context.nexus_set = "cooling"
     # TODO add
     test_context.update(
         RCP=RCP,
@@ -158,41 +156,10 @@ def test_cool_tec(request, test_context, RCP):
     # Scenario created above that sets the Scenario up with all things necessary to run
     # cool_tech(). Whatever the fix here is, it can also be applied to the failing
     # test_build::test_build().
-    profiler = cProfile.Profile()
-    profiler.enable()
 
-    start_time = time.time()
     result_refactor0 = cool_tech_refactor0(context=test_context)
-    end_time = time.time()
-
-    profiler.disable()
-    stats = pstats.Stats(profiler)
-    with open("stats0.txt", "w") as f:
-        stats.sort_stats("cumtime").stream = f
-        stats.print_stats()
-
-    with open("water_for_ppl_parity.txt", "a") as f:
-        f.write(
-            "Time taken for cached cool_tech rf0 using"
-            f"asyncio: {end_time - start_time} seconds\n"
-        )
-
-    profiler = cProfile.Profile()
-    profiler.enable()
-
-    start_time = time.time()
 
     result_legacy = cool_tech(context=test_context)
-    end_time = time.time()
-    profiler.disable()
-    stats = pstats.Stats(profiler)
-    with open("stats_baseline.txt", "w") as f:
-        stats.sort_stats("cumtime").stream = f
-        stats.print_stats()
-    with open("water_for_ppl_parity.txt", "a") as f:
-        f.write(
-            f"Time taken for baseline  cool_tech: {end_time - start_time} seconds\n"
-        )
 
     assert_equal_result(result_legacy, result_refactor0)
     # assert_equal_result(result_refactor0, result_refactor1)
