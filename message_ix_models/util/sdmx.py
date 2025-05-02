@@ -367,11 +367,11 @@ class Dataflow:
     ) -> tuple["KeyLike", ...]:
         """Prepare `c` to read data from a file at :attr:`.path`."""
         # TODO Use a package-wide utility or a callback
-        from message_ix_models.model.transport.util import path_fallback
+        from message_ix_models.model.transport.util import region_path_fallback
 
         # Identify the path
         try:
-            path = path_fallback(context, self.path)
+            path = region_path_fallback(context, self.path)
         except FileNotFoundError:
             if self.required:
                 raise
