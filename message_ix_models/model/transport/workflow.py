@@ -267,7 +267,7 @@ def generate(
         # This block copied from message_data.projects.navigate.workflow
         if config.policy:
             # Add a carbon tax
-            name = wf.add_step(f"{label} with tax", name, tax_emission, price=1000.0)
+            name = wf.add_step(f"{label} with tax", name, tax_emission, price=10.0)
 
         # 'Simulate' build and produce debug outputs
         debug.append(f"{label} debug build")
