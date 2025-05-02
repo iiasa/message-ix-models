@@ -36,7 +36,7 @@ _FLOW = [
 
 @IEA_EWEB.transform.minimum_version
 class TestIEA_EWEB:
-    # Uncomment the following line to use the full data files from a local copy
+    @pytest.mark.usefixtures("iea_eweb_test_data")
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
     @pytest.mark.parametrize(
         "source_kw",
@@ -165,9 +165,10 @@ def test_load_data(test_context, tmp_path, provider, edition):
     assert (set(DIMS) & {"Value"}) < set(result.columns)
 
 
+@pytest.mark.usefixtures("iea_eweb_test_data")
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_generate_code_lists(tmp_path, provider, edition):
-    # generate_code_lists() runs
+    """:func:`.generate_code_lists` runs."""
     generate_code_lists(provider, edition, tmp_path)
 
 

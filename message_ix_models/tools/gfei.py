@@ -58,6 +58,8 @@ class GFEI(ExoDataSource):
     #: By default, do not interpolate.
     interpolate = False
 
+    where = ["private"]
+
     def __init__(self, source, source_kw):
         if source != self.id:
             raise ValueError(source)
@@ -70,10 +72,8 @@ class GFEI(ExoDataSource):
         self.name = "fuel economy"
 
         self.path = path_fallback(
-            "transport", "GFEI_FE_by_Powertrain_2017.csv", where="private test"
+            "transport", "GFEI_FE_by_Powertrain_2017.csv", where=self._where()
         )
-        if "test" in self.path.parts:
-            log.warning(f"Reading random data from {self.path}")
 
     def __call__(self):
         import genno.operator

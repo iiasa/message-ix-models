@@ -109,7 +109,9 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     )
 
     # Identify the directory from which IEA EWEB data is read
-    iea_eweb_dir = web.dir_fallback(web.FILES[("IEA", "2024")][0])
+    iea_eweb_dir = web.dir_fallback(
+        web.FILES[("IEA", "2024")][0], where=web.IEA_EWEB._where()
+    )
     # True if the fuzzed test data are being used
     iea_eweb_test_data = iea_eweb_dir.match("message_ix_models/data/test/iea/web")
 
@@ -241,6 +243,7 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
 
 
 @get_computer.minimum_version
+@pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data")
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(test_context, input_csv_path, method) -> None:
     # - Read input data
@@ -259,6 +262,7 @@ def test_process_df(test_context, input_csv_path, method) -> None:
 
 
 @get_computer.minimum_version
+@pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data")
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""

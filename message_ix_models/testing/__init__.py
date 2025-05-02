@@ -72,6 +72,7 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
 #: not implemented.
 NIE = pytest.mark.xfail(raises=NotImplementedError)
 
+CACHE_PATH_STASH = pytest.StashKey[Path]()
 
 # pytest hooks
 
@@ -101,6 +102,26 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """Identify the path to be used for cached local data.
+
+    If :program:`pytest --local-cache` was given, pick up the existing setting from the
+    user's environment. Otherwise, use a pytest-managed cache directory that persists
+    across test sessions.
+    """
+    if session.config.option.local_cache:
+        session.config.stash[CACHE_PATH_STASH] = Context.only().core.cache_path
+    else:
+        session.config.stash[CACHE_PATH_STASH] = Path(
+            session.config.cache.mkdir("cache")
+        )
+
+
+def pytest_report_header(config, start_path) -> str:
+    """Add the ixmp configuration to the pytest report header."""
+    return f"message-ix-models cache path: {config.stash[CACHE_PATH_STASH]}"
+
+
 # Fixtures
 
 
@@ -124,28 +145,19 @@ def session_context(pytestconfig, tmp_env):
       the :ref:`pytest tmp_path directory <pytest:tmp_path>`.
 
     """
-    from platformdirs import user_cache_path
-
     ctx = Context.only()
 
     # Temporary, empty local directory for local data
     session_tmp_dir = Path(pytestconfig._tmp_path_factory.mktemp("data"))
 
-    # Set the cache path according to whether pytest --local-cache was given. If True,
-    # pick up the existing setting from the user environment. If False, use a pytest-
-    # managed cache directory that persists across test sessions.
-    ctx.cache_path = (
-        user_cache_path("message-ix-models", ensure_exists=True)
-        if pytestconfig.option.local_cache
-        # TODO use pytestconfig.cache.mkdir() when pytest >= 6.3 is available
-        else Path(pytestconfig.cache.makedir("cache"))
-    )
+    # Apply the cache path determined in pytest_sessionstart(), above
+    ctx.core.cache_path = pytestconfig.stash[CACHE_PATH_STASH]
 
     # Store current .util.config.Config.local_data setting from the user's configuration
-    uld = pytestconfig.user_local_data = ctx.core.local_data
+    pytestconfig.user_local_data = ctx.core.local_data
 
     # Other local data in the temporary directory for this session only
-    sld = ctx.core.local_data = session_tmp_dir
+    ctx.core.local_data = session_tmp_dir
 
     # Also set the "message local data" key in the ixmp config
     ixmp_config.set("message local data", session_tmp_dir)
@@ -157,17 +169,6 @@ def session_context(pytestconfig, tmp_env):
 
         # Create some subdirectories
         util.MESSAGE_DATA_PATH.joinpath("data", "tests").mkdir(parents=True)
-
-    # Symlink some paths from the user's local data into parallel subpaths of the test
-    # local data directory
-    for parts in (
-        ("iea",),
-        ("ssp",),
-    ):
-        target = uld.joinpath(*parts)
-        path = sld.joinpath(*parts)
-        log.info(f"Symlink {path} -> {target}")
-        path.symlink_to(target)
 
     # Add a platform connected to an in-memory database
     platform_name = "message-ix-models"
@@ -229,6 +230,56 @@ def mix_models_cli(session_context, tmp_env):
     from message_ix_models.util.click import CliRunner
 
     yield CliRunner(cli.main, cli.__name__, env=tmp_env)
+
+
+@pytest.fixture
+def iea_eei_user_data(pytestconfig, monkeypatch) -> None:
+    """Temporarily allow :class:`.IEA_EEI` to find user data."""
+    from message_ix_models.tools.iea.eei import IEA_EEI
+
+    monkeypatch.setattr(
+        IEA_EEI, "where", IEA_EEI.where + [pytestconfig.user_local_data]
+    )
+
+
+@pytest.fixture
+def iea_eweb_test_data(monkeypatch, session_context) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data.
+
+    `session_context` is required in order to set the cache path in the test
+    environment.
+    """
+    from message_ix_models.tools.iea.web import IEA_EWEB
+
+    monkeypatch.setattr(IEA_EWEB, "use_test_data", True)
+
+
+@pytest.fixture
+def iea_eweb_user_data(pytestconfig, monkeypatch) -> None:  # pragma: no cover
+    """Temporarily allow :class:`.IEA_EWEB` to find user data."""
+    from message_ix_models.tools.iea.web import IEA_EWEB
+
+    monkeypatch.setattr(
+        IEA_EWEB, "where", IEA_EWEB.where + [pytestconfig.user_local_data]
+    )
+
+
+@pytest.fixture
+def ssp_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+
+    for cls in SSPOriginal, SSPUpdate:
+        monkeypatch.setattr(cls, "use_test_data", True)
+
+
+@pytest.fixture
+def ssp_user_data(pytestconfig, monkeypatch) -> None:
+    """Temporarily allow :class:`.SSPOriginal`/:class:`.SSPUpdate` to find user data."""
+    from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+
+    for cls in SSPOriginal, SSPUpdate:
+        monkeypatch.setattr(cls, "where", cls.where + [pytestconfig.user_local_data])
 
 
 # Testing utility functions

@@ -65,6 +65,8 @@ class SHAPE(ExoDataSource):
 
     id = "SHAPE"
 
+    where = ["private"]
+
     def __init__(self, source, source_kw):
         if source != self.id:
             raise ValueError(source)
@@ -85,13 +87,8 @@ class SHAPE(ExoDataSource):
         version = version.replace("latest", info["latest"])
 
         # Construct path to data file
-        self.path = path_fallback(
-            "shape",
-            f"{self.measure}_v{version.replace('.', 'p')}{info['suffix']}",
-            where="private test",
-        )
-        if "test" in self.path.parts:
-            log.warning(f"Reading random data from {self.path}")
+        filename = f"{self.measure}_v{version.replace('.', 'p')}{info['suffix']}"
+        self.path = path_fallback("shape", filename, where=self._where())
 
         variable = info.get("variable", self.measure)
         self.query = " and ".join(

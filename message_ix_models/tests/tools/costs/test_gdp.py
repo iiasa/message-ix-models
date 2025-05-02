@@ -11,6 +11,8 @@ from message_ix_models.tools.costs.regional_differentiation import (
     apply_regional_differentiation,
 )
 
+pytestmark = pytest.mark.usefixtures("ssp_user_data")
+
 
 @pytest.mark.parametrize("node", ("R11", "R12"))
 def test_process_raw_ssp_data(test_context, node) -> None:

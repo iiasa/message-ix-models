@@ -103,8 +103,9 @@ def quiet_genno(caplog):
     caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
-@MARK[7]
 @build.get_computer.minimum_version
+@MARK[10]
+@MARK[7]
 @mark.usefixtures("quiet_genno")
 @mark.parametrize(
     "build",
@@ -170,6 +171,7 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
 
 @pytest.mark.xfail(condition=GHA, reason="Temporary, for #213; fails on GitHub Actions")
 @sim.to_simulate.minimum_version
+@MARK[10]
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:

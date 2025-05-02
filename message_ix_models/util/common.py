@@ -8,8 +8,12 @@ import pandas as pd
 from genno import Quantity
 from genno.operator import concat
 
+from ._logging import once
+
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
+
+    from .context import Context
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +27,12 @@ else:  # pragma: no cover  (needs message_data)
     MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
     HAS_MESSAGE_DATA = True
 
+__all__ = [
+    "HAS_MESSAGE_DATA",
+    "Adapter",
+    "MappingAdapter",
+]
+
 # Directory containing message_ix_models.__init__
 MESSAGE_MODELS_PATH = Path(__file__).parents[1]
 
@@ -31,13 +41,6 @@ PACKAGE_DATA: dict[str, Any] = dict()
 
 #: Data already loaded with :func:`load_private_data`.
 PRIVATE_DATA: dict[str, Any] = dict()
-
-
-__all__ = [
-    "HAS_MESSAGE_DATA",
-    "Adapter",
-    "MappingAdapter",
-]
 
 
 class Adapter:
@@ -223,7 +226,7 @@ def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs messag
     return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts)
 
 
-def local_data_path(*parts) -> Path:
+def local_data_path(*parts, context: Optional["Context"] = None) -> Path:
     """Construct a path for local data.
 
     The setting ``message local data`` in the user's :ref:`ixmp configuration file
@@ -239,10 +242,11 @@ def local_data_path(*parts) -> Path:
     --------
     :ref:`Choose locations for data <local-data>`
     """
-    import ixmp
+    from .context import Context
 
-    # The default value, Path.cwd(), is set in context.py
-    return _make_path(Path(ixmp.config.get("message local data")), *parts)
+    ctx = context or Context.get_instance(-1)
+
+    return ctx.core.local_data.joinpath(*parts)
 
 
 def package_data_path(*parts) -> Path:
@@ -288,5 +292,5 @@ def private_data_path(*parts) -> Path:
         from .context import Context
 
         base = Context.get_instance(-1).get_local_path()
-        log.warning(f"message_data not installed; fall back to {base}")
+        once(log, logging.WARNING, f"message_data not installed; fall back to {base}")
         return base.joinpath(*parts)
