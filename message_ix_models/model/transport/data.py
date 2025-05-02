@@ -571,6 +571,12 @@ class_ldv = _input_dataflow(
     required=False,
 )
 
+constraint_dynamic = _input_dataflow(
+    key="constraint-dynamic:t-c-name",
+    name="Values for dynamic constraints",
+    units="dimensionless",
+)
+
 disutility = _input_dataflow(
     key="disutility:n-cg-t-y:per vehicle",
     name="Disutility cost of LDV usage",

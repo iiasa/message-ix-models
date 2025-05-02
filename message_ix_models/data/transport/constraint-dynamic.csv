@@ -1,0 +1,42 @@
+# Values for dynamic constraints.
+#
+# Sources:
+#
+# - Values for LDV and P ex LDV previously in
+#   .transport.config.Config.constraint; see git blame.
+# - initial_* values are arbitrary.
+#
+# Units: dimensionless
+#
+technology,      commodity, name,                    value
+F RAIL,          *,         growth_activity_lo,      -0.0192
+F RAIL,          electr,    growth_activity_lo,       0.0
+
+F RAIL,          *,         growth_new_capacity_up,   0.0192
+F RAIL,          *,         initial_new_capacity_up,  2.0
+
+F ROAD,          *,         growth_activity_lo,      -0.0192
+F ROAD,          electr,    growth_activity_lo,       0.0
+F ROAD,          lightoil,  growth_activity_lo,      -0.0371
+
+F ROAD,          *,         growth_new_capacity_up,   0.0192
+F ROAD,          *,         initial_new_capacity_up,  2.0
+
+LDV,             *,         growth_activity_lo,      -0.0192
+
+LDV,             *,         growth_new_capacity_up,   0.0539
+LDV,             *,         initial_new_capacity_up,  2.0
+
+LDV usage,       *,         growth_activity_up,       0.0539
+LDV usage,       *,         initial_activity_up,      1000000
+
+P ex LDV,        *,         growth_activity_lo,      -0.0192
+P ex LDV,        electr,    growth_activity_lo,       0.0
+
+P ex LDV,        *,         growth_activity_up,       0.0371
+P ex LDV,        *,         initial_activity_up,      2.0
+
+P ex LDV,        *,         growth_new_capacity_up,   0.0192
+P ex LDV,        *,         initial_new_capacity_up,  2.0
+
+historical-only, *,         bound_new_capacity_up,    0.0
