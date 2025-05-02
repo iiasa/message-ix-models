@@ -73,6 +73,7 @@ tests = [
   "message_ix_models[report,transport]",
   "pytest",
   "pytest-cov",
+  "pytest-timeout",
   "pytest-xdist",
 ]
 transport = [
