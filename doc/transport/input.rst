@@ -117,6 +117,7 @@ Quick links to each of the data flows:
 :data:`~.data.age_ldv`
 :data:`~.data.cap_new_ldv`
 :data:`~.data.class_ldv`
+:data:`~.data.constraint_dynamic`
 :data:`~.data.disutility`
 :data:`~.data.demand_scale`
 :data:`~.data.elasticity_f`
@@ -176,6 +177,30 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.age_ldv
 .. autodata:: message_ix_models.model.transport.data.cap_new_ldv
 .. autodata:: message_ix_models.model.transport.data.class_ldv
+.. autodata:: message_ix_models.model.transport.data.constraint_dynamic
+
+   The values for ``growth_*`` are allowable *annual* decrease or increase (respectively)
+   in activity of each technology.
+   For example,
+   a value of 0.01 means the activity may increase by 1% from one year to the next.
+   For periods of length >1 year, MESSAGE compounds the value.
+   Some values used include:
+
+   - ±0.0192 = (1.1 ^ (1 / 5)) - 1.0; or ±10% each 5 years.
+   - ±0.0371 = (1.2 ^ (1 / 5)) - 1.0; or ±20% each 5 years.
+   - ±0.0539 = (1.3 ^ (1 / 5)) - 1.0; or ±30% each 5 years.
+   - ±0.0696 = (1.4 ^ (1 / 5)) - 1.0; or ±40% each 5 years.
+
+   Values for ``initial_*_up`` are initial values for growth constraints.
+   If these values are not large enough,
+   they can cause infeasibilities in the base period
+   for technologies that do not have ``historical_activity``.
+
+   See also:
+
+   - :func:`ldv.constraint_data` that handles values for :py:`technology="LDV"`.
+   - :func:`non_ldv.growth_new_capacity` that handles values for :py:`technology="P ex LDV"`.
+
 .. autodata:: message_ix_models.model.transport.data.disutility
 .. autodata:: message_ix_models.model.transport.data.demand_scale
 .. autodata:: message_ix_models.model.transport.data.elasticity_f
@@ -247,6 +272,9 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.pop_share_driver
 .. autodata:: message_ix_models.model.transport.data.population_suburb_share
 .. autodata:: message_ix_models.model.transport.data.speed
+
+   In MESSAGE(V)-Transport, values from Schäefer et al. (2010) were used.
+
 .. autodata:: message_ix_models.model.transport.data.t_share_ldv
 
 Other data sources
