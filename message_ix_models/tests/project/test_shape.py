@@ -1,8 +1,16 @@
 import genno
 import pytest
 
-from message_ix_models.project.shape.data import SHAPE  # noqa: F401
+from message_ix_models.project.shape.data import SHAPE
 from message_ix_models.tools.exo_data import prepare_computer
+
+pytestmark = pytest.mark.usefixtures("shape_test_data")
+
+
+@pytest.fixture
+def shape_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    monkeypatch.setattr(SHAPE, "use_test_data", True)
 
 
 class TestSHAPE:

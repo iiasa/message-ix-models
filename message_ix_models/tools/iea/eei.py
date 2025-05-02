@@ -137,6 +137,8 @@ class IEA_EEI(ExoDataSource):
     #: By default, do not interpolate.
     interpolate = False
 
+    where = ["local", "private"]
+
     def __init__(self, source, source_kw):
         if source != self.id:
             raise ValueError(source)
@@ -151,7 +153,7 @@ class IEA_EEI(ExoDataSource):
             "iea",
             "eei",
             "Energyefficiencyindicators_2020-extended.xlsx",
-            where="local private test",
+            where=self._where(),
         )
 
         # Prepare query

@@ -5,8 +5,8 @@ from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, TypeVar, Union
 
-from message_ix_models.util import local_data_path, package_data_path
-from message_ix_models.util.config import ConfigHelper
+from message_ix_models.util import package_data_path
+from message_ix_models.util.config import ConfigHelper, _local_data_factory
 
 if TYPE_CHECKING:
     import genno
@@ -79,8 +79,8 @@ class Config(ConfigHelper):
     key: Optional["KeyLike"] = None
 
     #: Directory for output.
-    output_dir: Optional[Path] = field(
-        default_factory=lambda: local_data_path("report")
+    output_dir: Path = field(
+        default_factory=lambda: _local_data_factory().joinpath("report")
     )
 
     #: :data:`True` to use an output directory based on the scenario's model name and

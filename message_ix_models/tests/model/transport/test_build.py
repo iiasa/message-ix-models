@@ -79,6 +79,7 @@ def test_make_spec(regions_arg, regions_exp, years):
     assert expected == spec["require"].set["node"]
 
 
+@MARK[10]
 @MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
@@ -425,18 +426,20 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
 
 
 @build.get_computer.minimum_version
+@MARK[10]
 @pytest.mark.parametrize(
     "build_kw",
     (
-        dict(regions="R11", years="A"),
-        dict(regions="R11", years="B"),
-        dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
-        dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
+        # commented: Reduce runtimes of GitHub Actions jobs
+        # dict(regions="R11", years="A"),
+        # dict(regions="R11", years="B"),
+        # dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
+        # dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
         dict(regions="R12", years="B"),
-        dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
+        # dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
         dict(regions="R12", years="B", options=dict(project={"LED": True})),
-        param(dict(regions="R14", years="B"), marks=MARK[9]),
-        param(dict(regions="ISR", years="A"), marks=MARK[3]),
+        # param(dict(regions="R14", years="B"), marks=MARK[9]),
+        # param(dict(regions="ISR", years="A"), marks=MARK[3]),
     ),
 )
 def test_debug(

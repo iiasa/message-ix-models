@@ -22,12 +22,29 @@ ixmp.config.register("no message_data", bool, False)
 ixmp.config.register("message local data", Path, Path.cwd())
 
 
-def _local_data_factory():
-    """Default values for :attr:`.Config.local_data."""
+def _cache_path_factory() -> Path:
+    """Default value for :attr:`.Config.cache_path."""
+    from platformdirs import user_cache_path
+
     return (
         Path(
-            os.environ.get("MESSAGE_LOCAL_DATA", None)
+            os.environ.get("MESSAGE_MODELS_CACHE", "")
+            or user_cache_path("message-ix-models", ensure_exists=True)
+        )
+        .expanduser()
+        .resolve()
+    )
+
+
+def _local_data_factory() -> Path:
+    """Default value for :attr:`.Config.local_data."""
+    from platformdirs import user_data_path
+
+    return (
+        Path(
+            os.environ.get("MESSAGE_LOCAL_DATA", "")
             or ixmp.config.get("message local data")
+            or user_data_path("message-ix-models")
         )
         .expanduser()
         .resolve()
@@ -87,7 +104,7 @@ class ConfigHelper:
             to a :file:`.yaml` file containing a top-level mapping.
         fail : str
             if "raise" (the default), any names in `path` which do not match attributes
-            of the dataclass raise a ValueError. Ottherwise, a message is logged.
+            of the dataclass raise a ValueError. Otherwise, a message is logged.
         """
         if path.suffix == ".yaml":
             import yaml
@@ -166,13 +183,11 @@ class ConfigHelper:
 class Config:
     """Core/top-level settings for :mod:`message_ix_models` and :mod:`message_data`."""
 
-    #: Base path for cached data. By default, the directory :file:`message-ix-models`
-    #: within the directory given by :func:`.platformdirs.user_cache_path`. This **may**
-    #: be something like :file:`$HOME/.cache/message-ix-models/`.
-    #: The :program:`--cache-path` CLI option modifies this value.
-    #:
-    #: See also :ref:`cache-data`.
-    cache_path: Optional[Path] = None
+    # See cache_path(), below
+    _cache_path: Path = field(default_factory=_cache_path_factory)
+
+    # See cache_skip(), below
+    _cache_skip: bool = False
 
     #: Paths of files containing debug outputs. See
     #: :meth:`.Context.write_debug_archive`.
@@ -227,12 +242,6 @@ class Config:
     #: :attr:`verbose` in distinct ways.
     verbose: bool = False
 
-    def __post_init__(self):
-        if self.cache_path is None:
-            from platformdirs import user_cache_path
-
-            self.cache_path = user_cache_path("message-ix-models", ensure_exists=True)
-
     def __deepcopy__(self, memo):
         # Hide "_mp" from the copy
         mp = self._mp
@@ -246,6 +255,36 @@ class Config:
 
         # Create the copy
         return type(self)(**data)
+
+    @property
+    def cache_path(self) -> Path:
+        """Base path for cached data.
+
+        By default, the directory :file:`message-ix-models` within the directory given
+        by :func:`.platformdirs.user_cache_path`. This may be something like
+        :file:`$HOME/.cache/message-ix-models/`. The :program:`--cache-path` CLI option
+        modifies this value.
+
+        See also :ref:`cache-data`.
+        """
+        return self._cache_path
+
+    @cache_path.setter
+    def cache_path(self, value: Path) -> None:
+        from . import cache
+
+        cache.COMPUTER.graph["config"]["cache_path"] = self._cache_path = value
+
+    @property
+    def cache_skip(self) -> bool:
+        """:any:`True` to skip caching. See :func:`.cached`."""
+        return self._cache_skip
+
+    @cache_skip.setter
+    def cache_skip(self, value: bool) -> None:
+        from . import cache
+
+        cache.COMPUTER.graph["config"]["cache_skip"] = self._cache_skip = value
 
     def close_db(self) -> None:
         """Close the database connection for the Platform given by :meth:`get_platform`.

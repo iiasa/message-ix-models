@@ -11,18 +11,6 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-#: :py:`where` argument to :func:`path_fallback`, used by both :class:`.SSPOriginal` and
-#: :class:`.SSPUpdate`. In order:
-#:
-#: 1. Currently data is stored in message-static-data, cloned and linked from within the
-#:    user's 'local' data directory.
-#: 2. Previously some files were stored directly within message_ix_models (available in
-#:    an editable install from a clone of the git repository, 'package') or in
-#:    :mod:`message_data` ('private'). These settings are only provided for backward
-#:    compatibility.
-#: 3. If the above are not available, use the fuzzed/random test data ('test').
-WHERE = "local package private test"
-
 
 @register_source
 class SSPOriginal(ExoDataSource):
@@ -81,6 +69,18 @@ class SSPOriginal(ExoDataSource):
     #: Replacements to apply when loading the data.
     replace = {"billion US$2005/yr": "billion USD_2005/yr"}
 
+    #: :py:`where` argument to :func:`path_fallback`. In order:
+    #:
+    #: 1. Currently data is stored in message-static-data, cloned and linked from within
+    #:    the user's 'local' data directory.
+    #: 2. Previously some files were stored directly within message_ix_models (available
+    #:    in an editable install from a clone of the git repository, 'package') or in
+    #:    :mod:`message_data` ('private'). These settings are only provided for backward
+    #:    compatibility.
+    #:
+    #: Fuzzed/random test data ('test') is also available, but not enabled by default.
+    where = ["local", "package", "private"]
+
     def __init__(self, source, source_kw):
         s = "ICONICS:SSP(2017)."
         if not source.startswith(s):
@@ -104,9 +104,7 @@ class SSPOriginal(ExoDataSource):
         self.raise_on_extra_kw(source_kw)
 
         # Identify input data path
-        self.path = path_fallback("ssp", self.filename, where=WHERE)
-        if "test" in self.path.parts:
-            log.warning(f"Read random data from {self.path}")
+        self.path = path_fallback("ssp", self.filename, where=self._where())
 
         # Assemble a query string
         extra = "d" if ssp_id == "4" and model == "IIASA-WiC POP" else ""
@@ -156,6 +154,9 @@ class SSPUpdate(ExoDataSource):
         "3.1": "1721734326790-ssp_basic_drivers_release_3.1_full.csv.gz",
         "preview": "SSP-Review-Phase-1.csv.gz",
     }
+
+    #: See :attr:`SSPOriginal.where`.
+    where = ["local", "package", "private"]
 
     def __init__(self, source, source_kw):
         s = "ICONICS:SSP(2024)."
@@ -209,9 +210,7 @@ class SSPUpdate(ExoDataSource):
             raise ValueError(release)
 
         # Identify input data path
-        self.path = path_fallback("ssp", self.filename[release], where=WHERE)
-        if "test" in self.path.parts:
-            log.warning(f"Read random data from {self.path}")
+        self.path = path_fallback("ssp", self.filename[release], where=self._where())
 
         # Assemble and store a query string
         self.query = f"Scenario in {scenarios!r} and Variable == '{measure}'" + (

@@ -69,6 +69,7 @@ CHECKS: dict["KeyLike", list[Check]] = {
 
 
 @build.get_computer.minimum_version
+@testing.MARK[10]
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions, N_node",

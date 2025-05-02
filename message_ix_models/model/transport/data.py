@@ -150,7 +150,7 @@ class MaybeAdaptR11Source(ExoDataSource):
     _adapter: Optional[Callable] = None
 
     def __init__(self, source, source_kw):
-        from .util import path_fallback
+        from .util import region_path_fallback
 
         # Check that the given measure is supported by the current class
         if not source == self.id:
@@ -175,11 +175,11 @@ class MaybeAdaptR11Source(ExoDataSource):
 
         filename = self.filename[measure]
         try:
-            self.path = path_fallback(nodes, filename)
+            self.path = region_path_fallback(nodes, filename)
             self._repr = f"Load {self.path}"
         except FileNotFoundError:
             log.info(f"Fall back to R11 data for {self.measure}")
-            self.path = path_fallback("R11", filename)
+            self.path = region_path_fallback("R11", filename)
 
             # Identify an adapter that can convert data from R11 to `nodes`
             self._adapter = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(nodes)

@@ -1,5 +1,3 @@
-from copy import copy
-
 import pytest
 from genno import Computer
 
@@ -7,11 +5,11 @@ from message_ix_models.project.ssp import (
     SSP,
     SSP_2017,
     SSP_2024,
+    data,  # noqa: F401 —only to ensure SSPOriginal and SSPUpdate are registered
     generate,
     parse,
     ssp_field,
 )
-from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
 from message_ix_models.tools.exo_data import prepare_computer
 
 
@@ -91,6 +89,7 @@ def test_cli(mix_models_cli):
 
 
 class TestSSPOriginal:
+    @pytest.mark.usefixtures("ssp_test_data")
     @pytest.mark.parametrize(
         "source",
         (
@@ -134,6 +133,10 @@ class TestSSPOriginal:
 
 
 class TestSSPUpdate:
+    @pytest.mark.usefixtures(
+        "ssp_test_data",  # For release=preview
+        "ssp_user_data",  # For other values of `release`
+    )
     @pytest.mark.parametrize(
         "source",
         (
@@ -164,8 +167,7 @@ class TestSSPUpdate:
         test_context.model.regions = "R14"
 
         # Set the release
-        source_kw = copy(source_kw)
-        source_kw.update(release=release)
+        source_kw = source_kw | dict(release=release)
 
         c = Computer()
 

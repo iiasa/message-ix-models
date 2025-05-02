@@ -149,13 +149,6 @@ class TRANSFORM(Flag):
             return True
 
 
-#: Location of :data:`.FILES`; :py:`where=` argument to :func:`.path_fallback`.
-#:
-#: .. todo:: Change to :py:`"local test"`` after adjusting :file:`transport.yaml`
-#:    workflow in :mod:`.message_data`.
-WHERE = "local private test"
-
-
 @register_source
 class IEA_EWEB(ExoDataSource):
     """Provider of exogenous data from the IEA Extended World Energy Balances.
@@ -189,6 +182,8 @@ class IEA_EWEB(ExoDataSource):
     id = "IEA_EWEB"
 
     key = Key("energy:n-y-product-flow:iea")
+
+    where = ["local"]
 
     def __init__(self, source, source_kw):
         """Initialize the data source."""
@@ -227,7 +222,7 @@ class IEA_EWEB(ExoDataSource):
 
         # Identify a location that contains the files for the given (provider, edition)
         # Parent directory relative to which `files` are found
-        self.path = dir_fallback("iea", files[0], where=WHERE)
+        self.path = dir_fallback("iea", files[0], where=self._where())
 
     def __call__(self):
         """Load and process the data."""
@@ -446,7 +441,7 @@ def generate_code_lists(
 
     # Read the data
     files = FILES[(provider, edition)]
-    path = dir_fallback("iea", files[0], where=WHERE)
+    path = dir_fallback("iea", files[0], where=IEA_EWEB._where())
     data = iea_web_data_for_query(path, *files, query_expr="TIME > 0")
 
     for concept_id in ("COUNTRY", "FLOW", "PRODUCT"):
@@ -466,7 +461,7 @@ def dir_fallback(*parts, **kwargs) -> Path:
     this part is located.
     """
     f = Path(parts[-1])
-    return path_fallback("iea", "web", f, where=WHERE).parents[len(f.parts) - 1]
+    return path_fallback("iea", "web", f, **kwargs).parents[len(f.parts) - 1]
 
 
 def get_mapping(provider: str, edition: str) -> "MappingAdapter":

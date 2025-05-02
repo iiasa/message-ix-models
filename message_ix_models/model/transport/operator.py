@@ -268,7 +268,7 @@ def broadcast_t_c_l(
 def broadcast_y_yv_ya(
     y: list[int], y_include: list[int], *, method: str = "product"
 ) -> "AnyQuantity":
-    """Return a quantity for broadcasting y to (yv, ya).
+    r"""Return a quantity for broadcasting y to (yv, ya).
 
     This omits all :math:`y^V \notin y^{include}`.
 

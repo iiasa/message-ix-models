@@ -18,10 +18,9 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Protocol, Union
 import message_ix
 import pandas as pd
 import pint
-from platformdirs import user_cache_path
 
 from ._convert_units import convert_units
-from ._logging import mark_time, preserve_log_level, silence_log
+from ._logging import mark_time, once, preserve_log_level, silence_log
 from .cache import cached
 from .common import (
     HAS_MESSAGE_DATA,
@@ -43,6 +42,8 @@ if TYPE_CHECKING:
     import genno
 
     from message_ix_models.types import MutableParameterData, ParameterData
+
+    from .context import Context
 
 __all__ = [
     "HAS_MESSAGE_DATA",
@@ -643,6 +644,7 @@ def minimum_version(
 def path_fallback(
     *parts: Union[str, Path],
     where: Union[str, list[Union[str, Path]]] = "",
+    context: Optional["Context"] = None,
 ) -> Path:
     """Locate a path constructed from `parts` found in the first of several directories.
 
@@ -656,10 +658,12 @@ def path_fallback(
     where :
         Either:
 
-        - :class:`str` containing one or more of:
+        - :class:`str` containing one or more of the following, separated by white
+          space:
 
           - "cache": locate `parts` in the :mod:`message_ix_models` cache directory.
-          - "local": locate `parts in the user's local data directory (same as
+            See :attr:`.Config.cache_path`.
+          - "local": locate `parts` in the user's local data directory (same as
             :func:`local_data_path`).
           - "package": locate `parts` in :mod:`message_ix_models` package data (same
             as :func:`.package_data_path`).
@@ -681,32 +685,40 @@ def path_fallback(
     ValueError
         If `where` is empty or `parts` are not found in any of the indicated locations.
     """
-    dirs = []
+    from .context import Context
+
+    context = context or Context.get_instance(-1)
+    dirs, test_dir = [], None
     for item in where.split() if isinstance(where, str) else where:
         if isinstance(item, str):
             if item == "cache":
-                dirs.append(user_cache_path("message-ix-models"))
+                dirs.append(context.core.cache_path)
             elif item == "local":
-                dirs.append(local_data_path())
+                dirs.append(context.core.local_data)
             elif item == "package":
                 dirs.append(package_data_path())
             elif item == "private":
                 dirs.append(private_data_path())
             elif item == "test":
-                dirs.append(package_data_path("test"))
+                test_dir = package_data_path("test")
+                dirs.append(test_dir)
         else:
             dirs.append(item)
 
     for path in [d.joinpath(*parts) for d in dirs]:
         if not path.exists():
-            log.debug(f"Not found: {path}")
+            once(log, logging.DEBUG, f"Not found: {path}")
             continue
+        elif test_dir and path.is_relative_to(test_dir):
+            msg = f"Reading test (fuzzed, random, and/or partial) data from {path}"
+            once(log, logging.WARNING, msg)
         return path
 
-    if not dirs:
-        raise ValueError(f"No directories identified among {where!r}")
-    else:
-        raise ValueError(f"'{Path(*parts)!s}' not found in any of {dirs}")
+    raise ValueError(
+        f"No directories identified among {where!r}"
+        if not dirs
+        else f"'{Path(*parts)!s}' not found in any of {dirs}"
+    )
 
 
 def replace_par_data(

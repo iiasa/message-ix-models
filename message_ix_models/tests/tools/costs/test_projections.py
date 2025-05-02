@@ -6,6 +6,8 @@ from message_ix_models.model.structure import get_codelist
 from message_ix_models.tools.costs import Config, create_cost_projections
 from message_ix_models.util import add_par_data
 
+pytestmark = pytest.mark.usefixtures("ssp_user_data")
+
 
 @pytest.mark.parametrize(
     "config, exp_fix, exp_inv",

@@ -2,10 +2,17 @@ import pytest
 from genno import Computer
 
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.tools.gfei import GFEI  # noqa: F401
+from message_ix_models.tools.gfei import GFEI
+
+
+@pytest.fixture
+def gfei_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    monkeypatch.setattr(GFEI, "use_test_data", True)
 
 
 class TestGFEI:
+    @pytest.mark.usefixtures("gfei_test_data")
     @pytest.mark.parametrize(
         "regions, aggregate, N_n, size",
         (

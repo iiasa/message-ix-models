@@ -16,6 +16,8 @@ Next release
   - :py:`transform="C"` / :func:`.transform_C` (:issue:`229`, :pull:`300`).
   - The :class:`~.web.TRANSFORM` enumeration for specifying and validating multiple transformations.
 
+- Improve :class:`.ExoDataSource` with :attr:`~.ExoDataSource.use_test_data`,
+  :attr:`~.ExoDataSource.where`, and :meth:`~.ExoDataSource._where` (:pull:`341`).
 - New class :class:`.Dataflow` for describing input and/or output data flows (:pull:`300`) that are read from file and attached to a :class:`.Computer`.
   Generalized from former :py:`.transport.files.ExogenousDataFile`.
 - New method :meth:`.Config.regions_from_scenario` (:pull:`300`),
@@ -29,8 +31,19 @@ Next release
   - :func:`.check.verbose_check` (:pull:`300`).
 
 - Display entire result quantity in :func:`.report.report` / :program:`mix-models report` with :py:`verbose=True` (:pull:`300`).
+- New test fixtures (:pull:`341`):
+  :func:`.advance_test_data`,
+  :func:`.gea_test_data`,
+  :func:`.gfei_test_data`,
+  :func:`.iea_eei_user_data`,
+  :func:`.iea_eweb_test_data`,
+  :func:`.iea_eweb_user_data`,
+  :func:`.shape_test_data`,
+  :func:`.ssp_test_data`,
+  :func:`.ssp_user_data`.
 - Bug fix: :program:`mix-models --verbose` command-line option was not stored on :class:`.Context`/:class:`~.util.Config` (:pull:`300`).
-- Bug fix: adjust or guard some Python usage that was not compatible with Python 3.9—the earliest version supported by :mod:`message_ix_models` (:pull:`295`, :issue:`294`).
+- Bug fix: adjust or guard some Python usage that was not compatible with Python 3.9
+  —the earliest version supported by :mod:`message_ix_models` (:pull:`295`, :issue:`294`).
 - Drop obsolete :py:`series_of_pint_quantity()` (:pull:`289`).
 
 By topic:
@@ -107,6 +120,8 @@ Documentation
   :doc:`project/uptake` (:pull:`282`, :pull:`312`).
 - Expand the :ref:`costs-usage` section of the :mod:`.tools.costs` documentation to describe the requirement for SSP input data (:issue:`313`, :pull:`322`).
 - Reorganize and improve the :doc:`data` documentation page (:pull:`326`).
+
+.. _v2025.1.10:
 
 v2025.1.10
 ==========

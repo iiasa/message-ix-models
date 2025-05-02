@@ -11,8 +11,11 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
-from typing import Optional, Union, cast
+from typing import TYPE_CHECKING, Optional, Union, cast
 from warnings import warn
+
+if TYPE_CHECKING:
+    from logging import Logger, LogRecord
 
 # NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
@@ -62,7 +65,7 @@ class Formatter(logging.Formatter):
         except ImportError:  # pragma: no cover
             pass  # Not installed
 
-    def format(self, record):
+    def format(self, record: "LogRecord") -> str:
         """Format `record`.
 
         Records are formatted like::
@@ -89,6 +92,18 @@ class Formatter(logging.Formatter):
         return f"{prefix}{record.funcName}{self.RESET_ALL}  {record.getMessage()}"
 
 
+class OnceFilter(logging.Filter):
+    """Log filter that rejects matching messages `msg`."""
+
+    __slots__ = ("msg",)
+
+    def __init__(self, msg: str) -> None:
+        self.msg = msg
+
+    def filter(self, record: "LogRecord") -> bool:
+        return not record.msg == self.msg
+
+
 class QueueHandler(logging.handlers.QueueHandler):
     # For typing with Python ≤ 3.11 only; from 3.12 this attribute is described
     listener: "QueueListener"
@@ -97,7 +112,7 @@ class QueueHandler(logging.handlers.QueueHandler):
 class QueueListener(logging.handlers.QueueListener):
     """:class:`.logging.QueueListener` with a :meth:`.flush` method."""
 
-    def flush(self):
+    def flush(self) -> None:
         """Flush the queue: join the listener/monitor thread and then restart."""
         if self._thread is not None:
             super().stop()
@@ -109,12 +124,12 @@ class SilenceFilter(logging.Filter):
 
     __slots__ = ("level", "name_expr")
 
-    def __init__(self, names: str, level: int):
+    def __init__(self, names: str, level: int) -> None:
         self.level = level
         # Compile a regular expression for the name
         self.name_re = re.compile("|".join(map(re.escape, sorted(names.split()))))
 
-    def filter(self, record) -> bool:
+    def filter(self, record: "LogRecord") -> bool:
         return not (record.levelno < self.level and self.name_re.match(record.name))
 
 
@@ -146,6 +161,24 @@ def mark_time(quiet: bool = False) -> None:
         logging.getLogger(__name__).info(
             f" +{_TIMES[-1] - _TIMES[-2]:.1f} = {_TIMES[-1]:.1f} seconds"
         )
+
+
+def once(logger: "Logger", level: int, *args, **kwargs) -> None:
+    """Log a message only once.
+
+    The message indicated by `args` and `kwargs` is logged on `logger` at the given
+    `level`. Then, a filter is added to the `logger` that rejects the same message if
+    logged again, whether through :func:`once` or directly.
+    """
+    # Ensure record.funcName, as seen by Formatter.format() above, reflects the function
+    # that called once()
+    kwargs.setdefault("stacklevel", 2)
+
+    # Actually log the message
+    logger.log(level, *args, **kwargs)
+
+    # Add a filter to `logger` to ignore matching messages in the future
+    logger.addFilter(OnceFilter(args[0]))
 
 
 @contextmanager
@@ -182,7 +215,7 @@ def preserve_log_level():
         main_log.setLevel(level)
 
 
-def configure():
+def configure() -> None:
     """Apply logging configuration."""
     # NB We do this programmatically as logging.config.dictConfig()'s automatic steps
     #    require adjustments that end up being more verbose and less clear.
@@ -208,7 +241,7 @@ def configure():
     h_file.setFormatter(Formatter(use_colour=False))
 
     # Queue handler
-    queue = SimpleQueue()
+    queue: "SimpleQueue" = SimpleQueue()
     _HANDLER["queue"] = h_queue = QueueHandler(queue)
     logging.root.addHandler(h_queue)
 
