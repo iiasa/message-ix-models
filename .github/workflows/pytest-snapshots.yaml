@@ -38,7 +38,7 @@ jobs:
     - name: Set up uv, Python
       uses: astral-sh/setup-uv@v6
       with:
-        cache-dependency-glob: "**/pyproject.toml"
+        activate-environment: true
         python-version: ${{ env.python-version }}
 
     - uses: iiasa/actions/setup-gams@main
@@ -47,8 +47,6 @@ jobs:
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
-      with:
-        macos-skip-brew-update: true
 
     - name: Install packages and dependencies
       # By default, install:
