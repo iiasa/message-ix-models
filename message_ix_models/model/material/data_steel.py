@@ -1193,6 +1193,8 @@ def gen_ssp_demand(ssp):
         "SSP4": {"phi": 5, "mu": 0.05, "q": 0.1},
         "SSP5": {"phi": 5, "mu": 0.1, "q": 0.5},
     }
+    if ssp == "LED":
+        ssp = "SSP1"
     df = pd.read_parquet(
         package_data_path("material", "steel", "demand_projections.parquet")
     ).drop_duplicates()
