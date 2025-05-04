@@ -2,11 +2,11 @@
 
 import logging
 import re
-from collections.abc import Sequence
+from collections.abc import Hashable, Sequence
 from functools import partial
 from itertools import product
 from operator import gt, le, lt
-from typing import TYPE_CHECKING, Any, Hashable, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union, cast
 
 import genno
 import numpy as np
