@@ -63,10 +63,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
         "bound_new_capacity_lo",
         "bound_new_capacity_up",
         "capacity_factor",
-        "growth_activity_lo",
-        "growth_activity_up",
         "historical_new_capacity",
-        "initial_activity_up",
         "input",
         "output",
         "technical_lifetime",
@@ -126,7 +123,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     # TODO Include unit checks, above, in this collection
     par_info: Mapping[str, tuple[bool, Optional[list[int]], int]] = {
         "bound_new_capacity_lo": (False, [info.y0], 1),
-        "bound_new_capacity_up": (False, info.Y, 1),
+        "bound_new_capacity_up": (False, [info.y0], 1),
         "emission_factor": (True, None, 0),
         "historical_new_capacity": (
             True,
