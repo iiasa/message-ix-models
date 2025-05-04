@@ -298,7 +298,7 @@ def N_node(request) -> int:
         param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
         param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
-        param("R12", "B", False, "IKARUS", True, marks=MARK["gh-337"]),
+        ("R12", "B", False, "IKARUS", True),
         # R14, A
         param(
             "R14",

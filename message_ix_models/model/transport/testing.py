@@ -41,25 +41,12 @@ MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
         ),
         3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
         4: pytest.mark.xfail(reason="Currently unsupported"),
-        # Tests that fail with data that cannot be migrated from message_data
         7: pytest.mark.xfail(
             condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
             reason="Graphviz missing on macos-13 GitHub Actions runners",
         ),
         9: pytest.mark.xfail(reason="Missing R14 input data/config"),
         10: pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data"),
-        "gh-288": pytest.mark.xfail(
-            reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/288",
-        ),
-        "gh-337": pytest.mark.xfail(
-            reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/337."
-            " These tests fail as a result of "
-            "https://github.com/iiasa/message_ix/pull/924 and require updates to "
-            "constraint parameter values."
-        ),
-        "gh-339": pytest.mark.xfail(
-            reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/339."
-        ),
     },
     testing.MARK,
 )
