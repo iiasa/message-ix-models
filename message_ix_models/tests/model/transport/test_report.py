@@ -116,7 +116,7 @@ def test_debug(
     "regions, years",
     (
         param("R11", "A", marks=make_mark[2](ValueError)),
-        param("R12", "B", marks=MARK["gh-337"]),
+        ("R12", "B"),
         param("R14", "A", marks=MARK[9]),
         param("ISR", "A", marks=MARK[3]),
     ),
@@ -167,7 +167,7 @@ def quiet_genno(caplog):
 @mark.parametrize(
     "build",
     (
-        pytest.param(True, marks=MARK["gh-339"]),  # Run .transport.build.main()
+        True,  # Run .transport.build.main()
         False,  # Use data from an Excel export
     ),
 )
@@ -201,7 +201,6 @@ def test_simulated_solution(request, test_context, build, regions="R12", years="
 
 
 @build.get_computer.minimum_version
-@MARK["gh-339"]
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
     "plot_name",
