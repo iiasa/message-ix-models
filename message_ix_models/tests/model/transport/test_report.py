@@ -16,7 +16,6 @@ from message_ix_models.model.transport.testing import (
     simulated_solution,
 )
 from message_ix_models.report import prepare_reporter, sim
-from message_ix_models.testing import GHA
 from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
@@ -24,6 +23,13 @@ if TYPE_CHECKING:
     from genno.types import KeyLike
 
 log = logging.getLogger(__name__)
+
+
+@pytest.fixture
+def quiet_genno(caplog):
+    """Quiet some log messages from genno via by :func:`.reporting.prepare_reporter`."""
+    caplog.set_level(logging.WARNING, logger="genno.config")
+    caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
 @pytest.mark.xfail(
@@ -110,6 +116,7 @@ def test_debug(
     del tmp
 
 
+@MARK[10]
 @MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
@@ -121,7 +128,7 @@ def test_debug(
         param("ISR", "A", marks=MARK[3]),
     ),
 )
-def test_report_bare_solved(request, test_context, tmp_path, regions, years):
+def test_bare(request, test_context, tmp_path, regions, years):
     """Run MESSAGEix-Transport–specific reporting."""
     from message_ix_models.model.transport.report import callback
     from message_ix_models.report import Config
@@ -153,13 +160,6 @@ def test_report_bare_solved(request, test_context, tmp_path, regions, years):
     rep.get(key)
 
 
-@pytest.fixture
-def quiet_genno(caplog):
-    """Quiet some log messages from genno via by :func:`.reporting.prepare_reporter`."""
-    caplog.set_level(logging.WARNING, logger="genno.config")
-    caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
-
-
 @build.get_computer.minimum_version
 @MARK[10]
 @MARK[7]
@@ -171,7 +171,7 @@ def quiet_genno(caplog):
         False,  # Use data from an Excel export
     ),
 )
-def test_simulated_solution(request, test_context, build, regions="R12", years="B"):
+def test_simulated(request, test_context, build, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context, build)
@@ -200,35 +200,9 @@ def test_simulated_solution(request, test_context, build, regions="R12", years="
     assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
-@build.get_computer.minimum_version
-@mark.usefixtures("quiet_genno")
-@pytest.mark.parametrize(
-    "plot_name",
-    # # All plots
-    # list(PLOTS.keys()),
-    # Only a subset
-    [
-        # "energy-by-cmdty",
-        "stock-ldv",
-        # "stock-non-ldv",
-    ],
-)
-def test_plot_simulated(request, test_context, plot_name, regions="R12", years="B"):
-    """Plots are generated correctly using simulated data."""
-    test_context.update(regions=regions, years=years)
-    log.debug(f"test_plot_simulated: {test_context.regions = }")
-    rep = simulated_solution(request, test_context, build=True)
-
-    # print(rep.describe(f"plot {plot_name}"))  # DEBUG
-
-    # Succeeds
-    rep.get(f"plot {plot_name}")
-
-
-@pytest.mark.xfail(condition=GHA, reason="Temporary, for #213; fails on GitHub Actions")
 @sim.to_simulate.minimum_version
 @MARK[10]
-def test_iamc_simulated(
+def test_simulated_iamc(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:
     test_context.update(regions=regions, years=years)
@@ -273,3 +247,29 @@ def test_iamc_simulated(
     } <= set(ts["variable"].unique())
 
     del result
+
+
+@build.get_computer.minimum_version
+@MARK[10]
+@mark.usefixtures("quiet_genno")
+@pytest.mark.parametrize(
+    "plot_name",
+    # # All plots
+    # list(PLOTS.keys()),
+    # Only a subset
+    [
+        # "energy-by-cmdty",
+        "stock-ldv",
+        # "stock-non-ldv",
+    ],
+)
+def test_simulated_plot(request, test_context, plot_name, regions="R12", years="B"):
+    """Plots are generated correctly using simulated data."""
+    test_context.update(regions=regions, years=years)
+    log.debug(f"test_plot_simulated: {test_context.regions = }")
+    rep = simulated_solution(request, test_context, build=True)
+
+    # print(rep.describe(f"plot {plot_name}"))  # DEBUG
+
+    # Succeeds
+    rep.get(f"plot {plot_name}")
