@@ -7,6 +7,7 @@ import genno
 import pandas as pd
 from genno import Key, quote
 
+from . import util
 from .key import exo, fv
 
 if TYPE_CHECKING:
@@ -15,19 +16,19 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: Shorthand for tags on keys.
 Oi = "::O+ixmp"
+
+#: Common, fixed values for some dimensions of MESSAGE parameters.
+COMMON = util.COMMON | dict(level="final")
+
+#: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
+#: quantities.
+DIMS = util.DIMS | dict(node_loc="n", node_origin="n", year_act="y", year_vtg="y")
+DIMS.pop("level", None)
+
+#: Target key that collects all data generated in this module.
 TARGET = "transport::O+ixmp"
-
-COMMON = dict(level="final", mode="all", time_origin="year", time="year")
-
-DIMS = dict(
-    commodity="c",
-    node_loc="n",
-    node_origin="n",
-    technology="t",
-    year_act="y",
-    year_vtg="y",
-)
 
 
 def prepare_computer(c: "Computer") -> None:

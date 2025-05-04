@@ -13,33 +13,18 @@ from message_ix_models.report.key import GDP
 from message_ix_models.util import convert_units, make_matched_dfs, same_node, same_time
 from message_ix_models.util.genno import Collector
 
+from . import util
 from .demand import _DEMAND_KW
 from .key import bcast_tcl, bcast_y, exo, fv, fv_cny, n, y
-from .util import EXTRAPOLATE, wildcard
+from .util import COMMON, EXTRAPOLATE, wildcard
 
 if TYPE_CHECKING:
     from genno import Computer
 
-#: Fixed values for some dimensions of some :mod:`message_ix` parameters.
-COMMON = dict(
-    mode="all",
-    time="year",
-    time_dest="year",
-    time_origin="year",
-)
 
 #: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
 #: quantities.
-DIMS = dict(
-    node_loc="n",
-    node_dest="n",
-    node_origin="n",
-    year_vtg="yv",
-    year_act="ya",
-    technology="t",
-    commodity="c",
-    level="l",
-)
+DIMS = util.DIMS | dict(node_loc="n", node_dest="n", node_origin="n")
 
 NTY = tuple("nty")
 

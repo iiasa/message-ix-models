@@ -23,10 +23,11 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.genno import Collector
 
+from . import util
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
 from .key import activity_ldv_full, bcast_tcl, bcast_y, exo
-from .util import EXTRAPOLATE, wildcard
+from .util import COMMON, EXTRAPOLATE, wildcard
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
@@ -40,23 +41,12 @@ log = logging.getLogger(__name__)
 #: Shorthand for tags on keys.
 Li = "::LDV+ixmp"
 
-#: Mapping from short dimension IDs to MESSAGE index names.
-DIMS = dict(
-    commodity="c",
-    level="l",
-    node_dest="n",
-    node_loc="n",
-    node_origin="n",
-    technology="t",
-    year_act="ya",
-    year_vtg="yv",
-)
-
-#: Common, fixed values for :func:`.prepare_tech_econ` and :func:`.get_dummy`.
-COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
+#: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
+#: quantities.
+DIMS = util.DIMS | dict(node_dest="n", node_loc="n", node_origin="n")
 
 #: Target key that collects all data generated in this module.
-TARGET = "transport::LDV+ixmp"
+TARGET = f"transport{Li}"
 
 
 @exo_data.register_source
