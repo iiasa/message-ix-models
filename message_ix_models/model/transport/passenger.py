@@ -59,7 +59,7 @@ Pi = "::P+ixmp"
 
 TARGET = "transport::P+ixmp"
 
-collect = Collector(TARGET, "{}::F+ixmp".format)
+collect = Collector(TARGET, "{}::P+ixmp".format)
 
 
 def prepare_computer(c: Computer):
