@@ -135,14 +135,20 @@ class MappingAdapter(Adapter):
         cls,
         *values: dict[str, Sequence[str]],
         dims: Sequence[str],
+        map_leaves: bool = True,
+        # Passed to __init__
         on_missing: Optional[Literal["log", "raise", "warn"]],
     ) -> "MappingAdapter":
         """Construct a MappingAdapter from sequences of :class:`dict` and dimensions."""
         maps: dict[str, list[tuple[str, str]]] = dict()
         for dim, v in zip(dims, values):
             maps[dim] = []
+            dim_all = set()
             for group, labels in v.items():
                 maps[dim].extend((group, label) for label in labels)
+                dim_all |= set(labels)
+            if map_leaves:
+                maps[dim].extend((label, label) for label in dim_all)
 
         return cls(maps, on_missing=on_missing)
 
