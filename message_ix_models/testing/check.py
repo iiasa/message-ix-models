@@ -103,10 +103,17 @@ class ContainsDataForParameters(Check):
     def run(self, obj):
         if self.parameter_names:
             if self.parameter_names != set(obj):
-                return (
-                    False,
-                    f"Parameters {sorted(set(obj))} != {sorted(self.parameter_names)}",
+                both = self.parameter_names & set(obj)
+                msg = (
+                    f"{len(both)}/{len(self.parameter_names)} expected parameters are"
+                    " present"
                 )
+                if missing := self.parameter_names - set(obj):
+                    msg += f"\nExpected but missing parameters: {missing}"
+                if extra := set(obj) - self.parameter_names:
+                    msg += f"\nUnexpected, extra parameters: {extra}"
+
+                return (False, msg)
             else:
                 N = len(self.parameter_names)
                 return True, f"{N}/{N} expected parameters are present"
