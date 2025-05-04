@@ -614,4 +614,4 @@ def select_transport_techs(c: "Computer") -> None:
     for key in map(lambda name: c.infer_keys(f"{name}:*"), SELECT):
         c.add(key + "transport all", "select", key, "t::transport all", sums=True)
         c.add(key + "ldv", "select", key, "t::transport LDV", sums=True)
-        c.add(key + "non-ldv", "select", key, "t::transport non-ldv", sums=True)
+        c.add(key + "non-ldv", "select", key, "t::transport P ex LDV", sums=True)
