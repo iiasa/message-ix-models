@@ -12,6 +12,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import (
     Config,
     build,
+    constraint,
     disutility,
     freight,
     key,
@@ -136,23 +137,31 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         HasUnits("dimensionless"),
         HasCoords({"commodity": ["transport F RAIL vehicle"]}),
     ),
-    "output::F+ixmp": (
-        HasCoords(
-            {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
-        ),
-    ),
-    # .freight.other()
-    "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
-    "transport::F+ixmp": (
+    #
+    # From .constraint
+    constraint.TARGET: (
         ContainsDataForParameters(
             {
-                "capacity_factor",
-                "demand",
+                "bound_new_capacity_up",
                 "growth_activity_lo",
                 "growth_activity_up",
+                "growth_new_capacity_lo",
                 "growth_new_capacity_up",
+                "initial_activity_lo",
                 "initial_activity_up",
+                "initial_new_capacity_lo",
                 "initial_new_capacity_up",
+            }
+        ),
+    ),
+    #
+    # From .freight
+    # The following replicates a deleted .transport.test_data.test_get_freight_data()
+    freight.TARGET: (
+        ContainsDataForParameters(
+            {
+                "demand",
+                "capacity_factor",
                 "input",
                 "output",
                 "technical_lifetime",
@@ -160,6 +169,13 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         ),
         # HasCoords({"technology": ["f rail electr"]}),
     ),
+    "output::F+ixmp": (
+        HasCoords(
+            {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
+        ),
+    ),
+    # .freight.other()
+    "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
     #
     # The following are intermediate checks formerly in .test_demand.test_exo
     "mode share:n-t-y:base": (HasUnits(""),),
@@ -208,33 +224,13 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
                 "capacity_factor",
                 "emission_factor",
                 "fix_cost",
-                "growth_activity_lo",
-                "growth_activity_up",
                 "historical_new_capacity",
-                "initial_activity_up",
                 "input",
                 "inv_cost",
                 "output",
                 "relation_activity",
                 "technical_lifetime",
                 "var_cost",
-            }
-        ),
-    ),
-    # The following replicates a deleted .transport.test_data.test_get_freight_data()
-    freight.TARGET: (
-        ContainsDataForParameters(
-            {
-                "demand",
-                "capacity_factor",
-                "growth_activity_lo",
-                "growth_activity_up",
-                "growth_new_capacity_up",
-                "initial_activity_up",
-                "initial_new_capacity_up",
-                "input",
-                "output",
-                "technical_lifetime",
             }
         ),
     ),
@@ -249,11 +245,6 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
                 "capacity_factor",
                 # "emission_factor",
                 "fix_cost",
-                "growth_activity_lo",
-                "growth_activity_up",
-                "growth_new_capacity_up",
-                "initial_activity_up",
-                "initial_new_capacity_up",
                 "input",
                 "inv_cost",
                 "output",
