@@ -6,7 +6,6 @@ from operator import itemgetter
 from typing import TYPE_CHECKING, Any, cast
 
 import genno
-import pandas as pd
 from genno import Computer, Key, Keys
 from genno.core.key import single_key
 from message_ix import make_df
@@ -224,9 +223,6 @@ def prepare_computer(c: Computer):
             fix_cost=Key("fix_cost:n-t-y:LDV+exo"),
         )
 
-    # Constraints
-    collect("constraints", constraint_data, "context")
-
     # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
     if config.ldv_stock_method == "A":
         # Data from file ldv-new-capacity.csv
@@ -373,65 +369,6 @@ def get_dummy(context) -> "ParameterData":
     # Add matching data for 'capacity_factor' and 'var_cost'
     data = make_matched_dfs(output, capacity_factor=1.0, var_cost=1.0)
     data["output"] = output
-
-    return data
-
-
-def constraint_data(context) -> "ParameterData":
-    """Return constraints on light-duty vehicle technology activity and usage.
-
-    Responds to the :attr:`.Config.constraint` key :py:`"LDV growth_activity"`; see
-    description there.
-    """
-    config: "Config" = context.transport
-
-    # Information about the target structure
-    info = config.base_model_info
-    years = info.Y[1:]
-
-    # Technologies as a hierarchical code list
-    techs = config.spec.add.set["technology"]
-    ldv_techs = techs[techs.index("LDV")].child
-
-    # All technologies in the spec, as strings
-    all_techs = list(map(str, techs))
-
-    # List of technologies to constrain, including the LDV technologies, plus the
-    # corresponding "X usage by CG" pseudo-technologies
-    constrained: list[Code] = []
-    for t in map(str, ldv_techs):
-        constrained.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
-
-    data: dict[str, pd.DataFrame] = dict()
-    for bound in "lo", "up":
-        name = f"growth_activity_{bound}"
-
-        # Retrieve the constraint value from configuration
-        value = config.constraint[f"LDV {name}"]
-
-        # Assemble the data
-        data[name] = make_df(
-            name, value=value, year_act=years, time="year", unit="-"
-        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
-
-        if bound == "lo":
-            continue
-
-        # Add initial_activity_up values allowing usage to begin in any period
-        name = f"initial_activity_{bound}"
-        data[name] = make_df(
-            name, value=1e6, year_act=years, time="year", unit="-"
-        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
-
-    # Prevent new capacity from being constructed for techs annotated
-    # "historical-only: True"
-    historical_only_techs = list(
-        filter(lambda t: t.eval_annotation("historical-only") is True, techs)
-    )
-    name = "bound_new_capacity_up"
-    data[name] = make_df(name, year_vtg=info.Y, value=0.0, unit="-").pipe(
-        broadcast, node_loc=info.N[1:], technology=historical_only_techs
-    )
 
     return data
 

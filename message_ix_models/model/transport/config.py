@@ -49,33 +49,6 @@ class Config(ConfigHelper):
     #: Information about the base model.
     base_model_info: ScenarioInfo = field(default_factory=ScenarioInfo)
 
-    #: Values for constraints.
-    #:
-    #: "LDV growth_activity_lo", "LDV growth_activity_up"
-    #:    Allowable *annual* decrease or increase (respectively) in activity of each LDV
-    #:    technology. For example, a value of 0.01 means the activity may increase by 1%
-    #:    from one year to the next. For periods of length >1 year, MESSAGE compounds
-    #:    the value. Defaults are multiples of 0.0192 = (1.1 ^ 0.2) - 1.0; or ±10% each
-    #:    5 years. See :func:`ldv.constraint_data`.
-    #: "non-LDV growth_new_capacity_up"
-    #:    Allowable annual increase in new capacity (roughly, sales) of each technology
-    #:    for transport modes *other than* LDV. See :func:`non_ldv.growth_new_capacity`.
-    #: "* initial_*_up"
-    #:    Base value for growth constraints. These values are arbitrary.
-    constraint: dict = field(
-        default_factory=lambda: {
-            "LDV growth_activity_lo": -0.0192,
-            "LDV growth_activity_up": 0.0192 * 3.0,
-            "non-LDV growth_activity_lo": -0.0192 * 1.0,
-            "non-LDV growth_activity_up": 0.0192 * 2.0,
-            "non-LDV growth_new_capacity_up": 0.0192 * 1.0,
-            # NB If these values are not large enough, they can cause infeasibilities in
-            #    the base period for technologies that do not have historical_activity
-            "non-LDV initial_activity_up": 2.0,
-            "non-LDV initial_new_capacity_up": 2.0,
-        }
-    )
-
     #: Scaling factors for costs.
     #:
     #: ``ldv nga``
