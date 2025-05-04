@@ -15,7 +15,11 @@ from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.util import either_dict_or_kwargs, minimum_version
+from message_ix_models.util import (
+    MappingAdapter,
+    either_dict_or_kwargs,
+    minimum_version,
+)
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
@@ -438,18 +442,27 @@ def add_structure(c: Computer) -> None:
         tasks.append((k, partial(broadcast_y_yv_ya, method=method), base, base))
 
     # Groups of technologies and indexers
+    tasks.append(("t::transport groups", quote(t_groups)))
+
     # FIXME Combine or disambiguate these keys
     for id, techs in t_groups.items():
-        tasks += [
-            # Indexer-form of technology groups
-            (f"t::transport {id}", quote(dict(t=techs))),
-            # List form of technology groups
-            (f"t::{id}", quote(techs)),
-        ]
+        # Indexer-form of technology groups
+        tasks.append((f"t::transport {id}", quote(dict(t=techs))))
+        # List form of technology groups
+        tasks.append((f"t::{id}", quote(techs)))
 
     # - Change each task from single-tuple form to (args, kwargs) with strict=True.
     # - Add all to the Computer, making 2 passes.
     c.add_queue(map(lambda t: (t, dict(strict=True)), tasks), max_tries=2, fail="raise")
+
+    # MappingAdapter from transport technology group labels to individual technologies
+    c.add(
+        "t::transport map",
+        MappingAdapter.from_dicts,
+        "t::transport groups",
+        dims=("t",),
+        on_missing="raise",
+    )
 
 
 @minimum_version("message_ix 3.8; genno 1.28")
