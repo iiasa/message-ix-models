@@ -53,11 +53,11 @@ Source: Extracted from IEA EWEB, 2022 OECD edition
 Units: TJ
 """
 
-#: Shorthand for tags on keys
-Oi = "::O+ixmp"
+#: Shorthand for tags on keys.
 Pi = "::P+ixmp"
 
-TARGET = "transport::P+ixmp"
+#: Target key that collects all data generated in this module.
+TARGET = f"transport{Pi}"
 
 collect = Collector(TARGET, "{}::P+ixmp".format)
 
