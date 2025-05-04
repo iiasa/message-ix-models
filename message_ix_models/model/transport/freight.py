@@ -1,36 +1,24 @@
 """Freight transport data."""
 
-from collections import defaultdict
 from functools import partial
 from operator import itemgetter
 from typing import TYPE_CHECKING
 
 import genno
 import numpy as np
-import pandas as pd
 from genno import Key, literal
 from iam_units import registry
-from message_ix import make_df
 
 from message_ix_models.report.key import GDP
-from message_ix_models.util import (
-    broadcast,
-    convert_units,
-    make_matched_dfs,
-    same_node,
-    same_time,
-)
+from message_ix_models.util import convert_units, make_matched_dfs, same_node, same_time
 from message_ix_models.util.genno import Collector
 
 from .demand import _DEMAND_KW
 from .key import bcast_tcl, bcast_y, exo, fv, fv_cny, n, y
-from .util import EXTRAPOLATE, has_input_commodity, wildcard
+from .util import EXTRAPOLATE, wildcard
 
 if TYPE_CHECKING:
     from genno import Computer
-    from sdmx.model.common import Code
-
-    from message_ix_models.model.transport import Config
 
 #: Fixed values for some dimensions of some :mod:`message_ix` parameters.
 COMMON = dict(
@@ -60,77 +48,6 @@ TARGET = "transport::F+ixmp"
 
 
 collect = Collector(TARGET, "{}::F+ixmp".format)
-
-
-def constraint_data(
-    t_all, nodes, years: list[int], genno_config: dict
-) -> dict[str, pd.DataFrame]:
-    """Return constraints on growth of ACT and CAP_NEW for non-LDV technologies.
-
-    Responds to the :attr:`.Config.constraint` keys :py:`"non-LDV *"`; see description
-    there.
-    """
-    # Retrieve transport configuration
-    config: "Config" = genno_config["transport"]
-
-    # Freight modes
-    modes = ["F ROAD", "F RAIL"]
-
-    # Sets of technologies to constrain
-    # All technologies under the non-LDV modes
-    t_0: set["Code"] = set(filter(lambda t: t.parent and t.parent.id in modes, t_all))
-    # Only the technologies that input c=electr
-    t_1: set["Code"] = set(
-        filter(partial(has_input_commodity, commodity="electr"), t_0)
-    )
-    # Only the technologies that input c=gas
-    t_2: set["Code"] = set(filter(partial(has_input_commodity, commodity="gas"), t_0))
-
-    assert all(len(t) for t in (t_0, t_1, t_2)), "Technology groups are empty"
-
-    common = dict(year_act=years, year_vtg=years, time="year", unit="-")
-    dfs = defaultdict(list)
-
-    # Iterate over:
-    # 1. Parameter name
-    # 2. Set of technologies to be constrained.
-    # 3. A fixed value, if any, to be used.
-    for name, techs, fixed_value in (
-        # These 2 entries set:
-        # - 0 for the t_1 (c=electr) technologies
-        # - The value from config for all others
-        ("growth_activity_lo", list(t_0 - t_1), np.nan),
-        ("growth_activity_lo", list(t_1), 0.0),
-        # This 1 entry sets the value from config for all technologies
-        # ("growth_activity_lo", t_0, np.nan),
-        # This entry sets the value from config for certain technologies
-        ("growth_activity_up", list(t_1 | t_2), np.nan),
-        # For this parameter, no differentiation
-        ("growth_new_capacity_up", list(t_0), np.nan),
-    ):
-        # Use the fixed_value, if any, or a value from configuration
-        value = np.nan_to_num(fixed_value, nan=config.constraint[f"non-LDV {name}"])
-
-        # Assemble the data
-        dfs[name].append(
-            make_df(name, value=value, **common).pipe(
-                broadcast, node_loc=nodes, technology=techs
-            )
-        )
-
-        # Add initial_* values corresponding to growth_{activity,new_capacity}_up, to
-        # set the starting point of dynamic constraints.
-        if name.endswith("_up"):
-            name_init = name.replace("growth", "initial")
-            value = config.constraint[f"non-LDV {name_init}"]
-            for n, df in make_matched_dfs(dfs[name][-1], **{name_init: value}).items():
-                dfs[n].append(df)
-
-    result = {k: pd.concat(v) for k, v in dfs.items()}
-
-    assert not any(v.isna().any(axis=None) for v in result.values()), "Missing labels"
-
-    return result
 
 
 def demand(c: "Computer") -> None:
@@ -213,9 +130,6 @@ def prepare_computer(c: "Computer") -> None:
     tech_econ(c)
     usage(c)
     demand(c)
-
-    # Add a task to call constraint_data()
-    collect("constraints", constraint_data, "t::transport", n, y, "config")
 
 
 def tech_econ(c: "Computer") -> None:
