@@ -34,16 +34,16 @@ consumer_group:
       name: "{area_type.name}, {attitude.name}, {driver_type.name}"
 
 relation:
-  # Relations for which data should be adapted in order to integrate with legacy
-  # reporting, per "20221129_relation_comparison.xlsx"
+  # - Relations for which data should be adapted in order to integrate with legacy
+  #   reporting, per "20221129_relation_comparison.xlsx"
+  # - Between SSP_SSP*_v2.1 and SSP_SSP*_v5.0, the relations "CH4_Emission" and
+  #   "N2O_Emission" were removed.
   require:
   - BCA_Emission
-  - CH4_Emission
   - CO2_trp
   - CO_Emission
   - HFC_Emission
   - HFC_mobile_red
-  - N2O_Emission
   - NH3_Emission
   - NOx_Emission
   - OCA_Emission
