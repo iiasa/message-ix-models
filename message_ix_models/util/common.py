@@ -129,6 +129,22 @@ class MappingAdapter(Adapter):
         self.maps = maps
         self.on_missing = on_missing
 
+    @classmethod
+    def from_dicts(
+        cls,
+        *values: dict[str, Sequence[str]],
+        dims: Sequence[str],
+        on_missing: Optional[Literal["log", "raise", "warn"]],
+    ) -> "MappingAdapter":
+        """Construct a MappingAdapter from sequences of :class:`dict` and dimensions."""
+        maps: dict[str, list[tuple[str, str]]] = dict()
+        for dim, v in zip(dims, values):
+            maps[dim] = []
+            for group, labels in v.items():
+                maps[dim].extend((group, label) for label in labels)
+
+        return cls(maps, on_missing=on_missing)
+
     def adapt(self, qty: "TQuantity") -> "TQuantity":
         result = qty
         coords = qty.coords
