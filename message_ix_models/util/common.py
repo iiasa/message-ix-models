@@ -3,7 +3,8 @@ from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from importlib.util import find_spec
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Literal, Optional, cast
+from warnings import warn
 
 import pandas as pd
 from genno import Quantity
@@ -12,7 +13,7 @@ from genno.operator import concat
 from ._logging import once
 
 if TYPE_CHECKING:
-    from genno.types import AnyQuantity
+    from genno.types import TQuantity
 
     from .context import Context
 
@@ -82,7 +83,7 @@ class Adapter:
             raise TypeError(type(data))
 
     @abstractmethod
-    def adapt(self, qty: "AnyQuantity") -> "AnyQuantity":
+    def adapt(self, qty: "TQuantity") -> "TQuantity":
         """Adapt data."""
 
 
@@ -94,6 +95,14 @@ class MappingAdapter(Adapter):
     maps : dict of sequence of tuple
         Keys are names of dimensions. Values are sequences of 2-tuples; each tuple
         consists of an original label and a target label.
+    on_missing :
+        If provided (default :any:`None`), perform the given action if `maps` do not
+        contain all the labels in the respective dimensions of each Quantity passed to
+        :meth:`adapt`:
+
+        - "log": log a message on level :data:`logging.WARNING`.
+        - "raise": raise :class:`RuntimeError`.
+        - "warn": emit :class:`RuntimeWarning`.
 
     Examples
     --------
@@ -109,22 +118,50 @@ class MappingAdapter(Adapter):
     """
 
     maps: Mapping
+    on_missing: Optional[Literal["log", "raise", "warn"]] = None
 
-    def __init__(self, maps: Mapping[str, Sequence[tuple[str, str]]]):
+    def __init__(
+        self,
+        maps: Mapping[str, Sequence[tuple[str, str]]],
+        *,
+        on_missing: Optional[Literal["log", "raise", "warn"]] = None,
+    ) -> None:
         self.maps = maps
+        self.on_missing = on_missing
 
-    def adapt(self, qty: "AnyQuantity") -> "AnyQuantity":
+    def adapt(self, qty: "TQuantity") -> "TQuantity":
         result = qty
         coords = qty.coords
 
         for dim, labels in self.maps.items():
-            if dim not in qty.dims:  # type: ignore [attr-defined]
+            if dim not in qty.dims:
                 continue
+
+            dim_coords = set(coords[dim].data)
+
+            # Check for coords in the data that are missing from `maps`.
+            # Skip if on_missing is None.
+            if (
+                missing := (dim_coords - {a for (a, b) in labels})
+                if self.on_missing
+                else set()
+            ):
+                msg = (
+                    f"Original coords {dim}={missing} not mapped to any coords and "
+                    f"{'would be' if self.on_missing == 'raise' else 'are'} dropped"
+                )
+                if self.on_missing == "log":
+                    log.warning(msg)
+                elif self.on_missing == "raise":
+                    raise RuntimeError(msg)
+                elif self.on_missing == "warn":
+                    warn(msg, RuntimeWarning, stacklevel=2)
+
             result = concat(
                 *[
                     result.sel({dim: a}, drop=True).expand_dims({dim: [b]})
                     for (a, b) in labels
-                    if a in coords[dim]  # Skip `label` if not in `dim` of `qty`
+                    if a in dim_coords  # Skip `label` if not in `dim` of `qty`
                 ]
             )
 
