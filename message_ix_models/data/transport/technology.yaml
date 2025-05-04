@@ -528,6 +528,14 @@ P: # Passenger modes
   - LDV
   - RAIL
 
+P ex LDV:
+  name: non-LDV passenger
+  child:
+  - 2W
+  - AIR
+  - BUS
+  - RAIL
+
 transport other coal: {input: {commodity: coal}}
 transport other electr: {input: {commodity: electr}}
 transport other fueloil: {input: {commodity: fueloil}}
