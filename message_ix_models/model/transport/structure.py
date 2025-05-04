@@ -42,7 +42,22 @@ TEMPLATE = Code(
 def get_technology_groups(
     technologies: Union[Spec, ScenarioInfo, Sequence["Code"]],
 ) -> dict[str, list[str]]:
-    """Subsets of transport technologies for aggregation and filtering."""
+    """Subsets of transport technologies for aggregation, mapping, and filtering.
+
+    Returns
+    -------
+    dict
+        Values are lists of transport technologies (|t|) that appear in the model.
+        Keys include:
+
+          - Codes from :file:`transport/technology.yaml` with children. These can be
+            modes, services, groups of either, or other groups of technologies. Children
+            are processed recursively to obtain |t| elements.
+          - "historical-only": includes technologies where this annotation exists and
+            is set to :any:`True`.
+          - "LDV usage": includes the technologies generated using :data:`TEMPLATE`.
+            See :func:`make_spec`.
+    """
     if isinstance(technologies, Spec):
         t_list: Sequence["Code"] = technologies.add.set["technology"]
     elif isinstance(technologies, ScenarioInfo):
@@ -50,26 +65,30 @@ def get_technology_groups(
     else:
         t_list = technologies
 
-    result: dict[str, list[str]] = {"non-ldv": []}
+    result: dict[str, list[str]] = {"historical-only": [], "LDV usage": []}
 
-    # Recursively collect leaf IDs
     def _leaf_ids(node) -> list[str]:
+        """Recursively collect leaf IDs."""
         return list(
             chain(*[_leaf_ids(c) if len(c.child) else (c.id,) for c in node.child])
         )
 
-    # Only include those technologies with children
-    for tech in filter(lambda t: len(t.child), t_list):
-        result[tech.id] = _leaf_ids(tech)
-        # Store non-LDV technologies
-        # FIXME This is actually "P ex LDV"; label as such
-        if tech.id != "LDV":
-            result["non-ldv"].extend(result[tech.id])
+    for tech in t_list:
+        if len(tech.child):
+            # Code with child codes → a group of technologies → store all the leaf IDs
+            result[tech.id] = _leaf_ids(tech)
+        else:
+            # Code without children = an individual technology → add to certain groups
+            if tech.eval_annotation(id="historical-only") is True:
+                result["historical-only"].append(tech.id)
+            if tech.eval_annotation(id="is-disutility") is True:
+                result["LDV usage"].append(tech.id)
 
     return result
 
 
 def make_spec(regions: str) -> Spec:
+    """Return the structural :class:`Spec` for MESSAGEix-Transport."""
     sets: dict[str, Any] = dict()
 
     # Overrides specific to regional versions
