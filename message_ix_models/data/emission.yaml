@@ -1,6 +1,14 @@
+# Annotations appearing in this code list:
+#
+# - report: label used in IAMC 'variable' names. Default: the code ID.
+# - unit: mass units only for reporting. Default: "Mt".
+# - unit-species: species used in a IAMC 'unit' expression such as "Mt XX/yr".
+#   Default: the code ID.
+
 BCA:
   name: Black carbon
   report: BC
+  unit-species: BC
 
 CH4:
   name: Methane
@@ -20,10 +28,12 @@ NH3:
 
 NOx:
   name: Nitrogen oxides
+  # unit-species: NO2
 
 OCA:
   name: Organic carbon
   report: OC
+  unit-species: OC
 
 SO2:
   name: Sulfur dioxide
