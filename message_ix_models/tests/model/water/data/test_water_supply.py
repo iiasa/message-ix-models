@@ -1,15 +1,24 @@
+import sys
+
 import pandas as pd
+import pytest
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.water_supply import (
+from message_ix_models.model.water.data.water_supply_legacy import (
     add_e_flow,
     add_water_supply,
     map_basin_region_wat,
 )
 
+# Version check for Python 3.10+
+PYTHON_310_PLUS = sys.version_info >= (3, 10)
 
+
+@pytest.mark.xfail(
+    not PYTHON_310_PLUS, reason="Pattern matching requires Python 3.10+", strict=True
+)
 @map_basin_region_wat.minimum_version
 def test_map_basin_region_wat(test_context):
     # FIXME You probably want this to be part of a common setup rather than writing
