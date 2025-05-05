@@ -44,6 +44,7 @@ log = logging.getLogger(__name__)
 __all__ = [
     "add_par_data",
     "broadcast_wildcard",
+    "call",
     "codelist_to_groups",
     "compound_growth",
     "exogenous_data",
@@ -106,6 +107,11 @@ def broadcast_wildcard(
 
     # Construct a MappingAdapter and apply to `qty`
     return MappingAdapter(mapping)(qty)
+
+
+def call(callable, *args, **kwargs):
+    """Invoke a callable on other arguments."""
+    return callable(*args, **kwargs)
 
 
 def codelist_to_groups(
