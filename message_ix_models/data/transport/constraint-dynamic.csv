@@ -33,8 +33,8 @@ LDV usage,       *,         initial_activity_up,      1000000
 P ex LDV,        *,         growth_activity_lo,      -0.0192
 P ex LDV,        electr,    growth_activity_lo,       0.0
 
-P ex LDV,        *,         growth_activity_up,       0.0371
-P ex LDV,        *,         initial_activity_up,      2.0
+# P ex LDV,      *,         growth_activity_up,       0.0371
+# P ex LDV,      *,         initial_activity_up,      2.0
 
 P ex LDV,        *,         growth_new_capacity_up,   0.0192
 P ex LDV,        *,         initial_new_capacity_up,  2.0
