@@ -54,6 +54,7 @@ def assert_equal_result(legacy, refactored):
 
 
 @cool_tech.minimum_version
+@pytest.mark.usefixtures("ssp_user_data")
 @pytest.mark.parametrize("RCP", ["no_climate", "6p0"])
 def test_cool_tec(request, test_context, RCP):
     mp = test_context.get_platform()
@@ -131,7 +132,7 @@ def test_cool_tec(request, test_context, RCP):
     test_context.type_reg = "global"
     test_context.regions = "R11"
     test_context.time = "year"
-    test_context.nexus_set = "cooling"
+    test_context.nexus_set = "nexus"
     # TODO add
     test_context.update(
         RCP=RCP,
