@@ -140,7 +140,7 @@ def built_transport(
 
     if solved and not scenario.has_solution():
         log.info(f"Solve '{scenario.model}/{scenario.scenario}'")
-        scenario.solve(solve_options=dict(lpmethod=4))
+        scenario.solve(solve_options=dict(iis=1, lpmethod=4))
 
     log.info(f"Clone to '{model_name}/{request.node.name}'")
     result = scenario.clone(scenario=request.node.name, keep_solution=solved)
