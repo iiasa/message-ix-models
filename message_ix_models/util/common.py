@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
+from functools import cache
 from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Optional, cast
@@ -118,7 +119,7 @@ class MappingAdapter(Adapter):
     """
 
     maps: Mapping
-    on_missing: Optional[Literal["log", "raise", "warn"]] = None
+    on_missing: Optional[Literal["log", "raise", "warn"]]
 
     def __init__(
         self,
@@ -182,6 +183,75 @@ class MappingAdapter(Adapter):
             )
 
         return result
+
+
+class WildcardAdapter(Adapter):
+    """Adapt data using by broadcasting wildcard ("*") entries for 1 dimension."""
+
+    dim: str
+    coords: set[str]
+
+    def __init__(self, dim: str, coords: Sequence[str]) -> None:
+        self.dim = dim
+        self.coords = set(coords)
+
+    @cache
+    def _coord_map(self, labels: tuple[str]) -> pd.DataFrame:
+        """Cached helper returning a data frame with two columns:
+
+        - :py:`self.dim` with original coords along :attr:`dim`, including the wildcard
+          "*".
+        - "__new" with the full set of :attr:`coords`.
+        """
+        _l = set(labels) - {"*"}
+        # Missing coords to be filled using wildcard
+        to_wildcard = self.coords - _l
+        # Mapping from existing labels to labels to appear in result
+        return pd.DataFrame(
+            [[c, c] for c in _l] + [["*", c] for c in to_wildcard],
+            columns=[self.dim, "__new"],
+        )
+
+    def adapt(self, qty: "TQuantity") -> "TQuantity":
+        # Identify the dimensions to group on
+        groupby_dims = list(qty.dims) + ["__preserve"]
+        groupby_dims.remove(self.dim)
+
+        def wildcard_group(x: pd.DataFrame) -> pd.DataFrame:
+            """Apply the wildcard operation to group data frame `x`."""
+            # Coordinates for `self.dim` appearing in the group
+            c_in_group = tuple(sorted(x[self.dim].unique()))
+
+            if "*" not in c_in_group:
+                # Nothing to wildcard in this group
+                result = x
+            else:
+                # - Retrieve a _coord_map for this group.
+                # - (Outer) merge with `x`.
+                # - Replace original `self.dim` column with "__new".
+                result = (
+                    x.merge(self._coord_map(c_in_group), on=self.dim)
+                    .drop(self.dim, axis=1)
+                    .rename(columns={"__new": self.dim})
+                )
+
+            # Make `self.dim` an index level
+            return result.set_index(self.dim)
+
+        # - Convert to pd.DataFrame, reset index to columns.
+        # - Group on `groupby_dims`.
+        # - Apply wildcard_group().
+        # - Convert back to Quantity.
+        q_result = type(qty)(
+            qty.to_frame()
+            .reset_index()
+            .assign(__preserve="")
+            .groupby(groupby_dims)
+            .apply(wildcard_group, include_groups=False)
+            .droplevel("__preserve")
+            .iloc[:, 0]
+        )
+        return qty._keep(q_result, attrs=True, name=True, units=True)
 
 
 def _load(
