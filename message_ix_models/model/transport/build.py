@@ -17,6 +17,7 @@ from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.util import (
     MappingAdapter,
+    WildcardAdapter,
     either_dict_or_kwargs,
     minimum_version,
 )
@@ -407,6 +408,11 @@ def add_structure(c: Computer) -> None:
         (
             "c::transport+base",
             quote(list(map(str, spec.add.set["commodity"] + info.set["commodity"]))),
+        ),
+        (
+            "c::transport wildcard",
+            lambda coords: WildcardAdapter("c", coords),
+            "c::transport+base",
         ),
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
