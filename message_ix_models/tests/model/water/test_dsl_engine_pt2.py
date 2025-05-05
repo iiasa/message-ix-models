@@ -5,7 +5,7 @@ import pandas.testing as pdt
 import pytest
 from message_ix import make_df
 
-from message_ix_models.model.water.dsl_engine import run_standard
+from message_ix_models.model.water.dsl_engine import build_standard
 from message_ix_models.model.water.utils import map_yv_ya_lt
 from message_ix_models.tests.model.water.rules_test import (
     COOL_TECH_OUTPUT_RULES,
@@ -89,7 +89,7 @@ def test_industrial_demand_rule():
     # Run the DSL engine
     results = []
     for rule in INDUSTRIAL_DEMAND.get_rule():
-        result_df = run_standard(rule, {"rule_dfs": input_dfs})
+        result_df = build_standard(rule, {"rule_dfs": input_dfs})
         results.append(result_df)
     result_df = pd.concat(results, ignore_index=True)
 
@@ -153,7 +153,7 @@ def test_water_availability_rule():
     # Run the DSL engine
     results = []
     for rule in WATER_AVAILABILITY.get_rule():
-        result_df = run_standard(rule, {"rule_dfs": input_dfs})
+        result_df = build_standard(rule, {"rule_dfs": input_dfs})
         results.append(result_df)
     result_df = pd.concat(results, ignore_index=True)
 
@@ -206,7 +206,7 @@ def test_share_constraints_gw_rule():
     input_dfs = {"df_sw": df_sw, "df_gw": df_gw}
     results = []
     for rule in SHARE_CONSTRAINTS_GW.get_rule():
-        result_df = run_standard(rule, {"rule_dfs": input_dfs})
+        result_df = build_standard(rule, {"rule_dfs": input_dfs})
         results.append(result_df)
     result_df = pd.concat(results, ignore_index=True)
 
@@ -358,10 +358,12 @@ def test_slack_technology_rules(supply_test_data):
     for r in SLACK_TECHNOLOGY_RULES.get_rule():
         match r["technology"]:
             case "return_flow" | "gw_recharge":
-                df_rule = run_standard(r, base_slack)
+                df_rule = build_standard(r, base_slack)
                 slack_inputs.append(df_rule)
             case "basin_to_reg":
-                df_rule = run_standard(r, base_slack, extra_args={"year_vtg": year_wat})
+                df_rule = build_standard(
+                    r, base_slack, extra_args={"year_vtg": year_wat}
+                )
                 slack_inputs.append(df_rule)
             case "salinewater_return":
                 continue  # Skip this technology
@@ -472,7 +474,7 @@ def test_extraction_input_rules(supply_test_data):
             "broadcast_year": bcast,
             "sub_time": sub_time,
         }
-        df_rule = run_standard(r, base_extract)
+        df_rule = build_standard(r, base_extract)
         extraction_inputs.append(df_rule)
     extraction_df = pd.concat(extraction_inputs, ignore_index=True)
 
@@ -510,7 +512,7 @@ def test_share_mode_rules(supply_test_data):
     input_dfs = {"df_sw": df_sw}
     results = []
     for rule in SHARE_MODE_RULES.get_rule():
-        result_df = run_standard(rule, {"rule_dfs": input_dfs})
+        result_df = build_standard(rule, {"rule_dfs": input_dfs})
         results.append(result_df)
     result_df = pd.concat(results, ignore_index=True)
 
@@ -551,7 +553,7 @@ def test_e_flow_rules_bound(supply_test_data):
     input_dfs = {"df_env": df_env}
     results = []
     for rule in E_FLOW_RULES_BOUND.get_rule():
-        result_df = run_standard(rule, {"rule_dfs": input_dfs})
+        result_df = build_standard(rule, {"rule_dfs": input_dfs})
         # Apply post-processing similar to legacy if needed by the rule itself
         # (e.g., filtering by year >= 2025 if not handled by rule engine)
         # result_df = result_df[result_df["year_act"] >= 2025].reset_index(drop=True)
@@ -612,7 +614,7 @@ def test_desalination_output_rules(supply_test_data):
     }
     results = []
     for rule in DESALINATION_OUTPUT_RULES.get_rule():
-        result_df = run_standard(rule, output_args)
+        result_df = build_standard(rule, output_args)
         results.append(result_df)
     result_df = pd.concat(results, ignore_index=True)
 
@@ -766,7 +768,7 @@ def test_cool_tech_output_rules(cool_tech_test_data):
 
             if current_condition == "default":
                 # Pass only input_cool for the default rule
-                default_result_df = run_standard(rule, {"rule_dfs": input_cool})
+                default_result_df = build_standard(rule, {"rule_dfs": input_cool})
                 all_results.append(default_result_df)  # Append default results
 
             elif current_condition == "nexus":
@@ -797,7 +799,7 @@ def test_cool_tech_output_rules(cool_tech_test_data):
                             "node_dest": bs,
                             "time_dest": data["sub_time"],  # Pass the series directly
                         }
-                        results_nexus_run = run_standard(
+                        results_nexus_run = build_standard(
                             rule, {"rule_dfs": current_rule_dfs}, extra_args=extra_args
                         )
 

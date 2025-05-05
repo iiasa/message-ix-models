@@ -21,7 +21,7 @@ from message_ix_models.model.water.data.demand_rules import (
     URBAN_WST,
     WATER_AVAILABILITY,
 )
-from message_ix_models.model.water.dsl_engine import run_standard
+from message_ix_models.model.water.dsl_engine import build_standard
 from message_ix_models.model.water.utils import safe_concat
 from message_ix_models.util import minimum_version, package_data_path
 
@@ -31,13 +31,13 @@ if TYPE_CHECKING:
 
 def load_rules_special(rule: dict, df_processed: pd.DataFrame = None) -> pd.DataFrame:
     """
-    Wrapper on run_standard, since most demand rules don't require additional
+    Wrapper on build_standard, since most demand rules don't require additional
     arguments.
     """
     r = rule.copy()
     rule_dfs = df_processed.copy()
     base_args = {"rule_dfs": rule_dfs}
-    df_rule = run_standard(r, base_args)
+    df_rule = build_standard(r, base_args)
     return df_rule
 
 
@@ -695,7 +695,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             "rule_dfs": df_recycling,
             "sub_time": pd.Series(sub_time),
         }
-        df_share_wat = run_standard(rule, base_args)
+        df_share_wat = build_standard(rule, base_args)
         share_constraint_df.append(df_share_wat)
 
     share_commodity_lo = safe_concat(share_constraint_df)

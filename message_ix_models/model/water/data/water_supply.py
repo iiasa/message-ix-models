@@ -21,7 +21,7 @@ from message_ix_models.model.water.data.water_supply_rules import (
     SLACK_TECHNOLOGY_RULES,
     TECHNICAL_LIFETIME_RULES,
 )
-from message_ix_models.model.water.dsl_engine import run_standard
+from message_ix_models.model.water.dsl_engine import build_standard
 from message_ix_models.model.water.utils import (
     map_yv_ya_lt,
     safe_concat,
@@ -143,7 +143,7 @@ def _process_cooling_supply(
         "node_loc": node_region,
     }  # no dfs used in cooling rules
     for r in COOLING_SUPPLY_RULES.get_rule():
-        df_rule = run_standard(r, base_cooling)
+        df_rule = build_standard(r, base_cooling)
         cooling_outputs.append(df_rule)
     results["output"] = safe_concat(cooling_outputs)
     return results
@@ -163,10 +163,12 @@ def _process_slack_rules(
     for r in SLACK_TECHNOLOGY_RULES.get_rule():
         match r["technology"]:
             case "return_flow" | "gw_recharge":
-                df_rule = run_standard(r, base_slack)
+                df_rule = build_standard(r, base_slack)
                 slack_inputs.append(df_rule)
             case "basin_to_reg":
-                df_rule = run_standard(r, base_slack, extra_args={"year_vtg": year_wat})
+                df_rule = build_standard(
+                    r, base_slack, extra_args={"year_vtg": year_wat}
+                )
                 slack_inputs.append(df_rule)
             case "salinewater_return":
                 continue  # Skip this technology
@@ -194,7 +196,7 @@ def _process_extraction_input_rules(
             "broadcast_year": bcast,
             "sub_time": sub_time_series,
         }
-        df_rule = run_standard(r, base_extract)
+        df_rule = build_standard(r, base_extract)
         extraction_inputs.append(df_rule)
     return safe_concat(extraction_inputs)
 
@@ -233,10 +235,10 @@ def _process_extraction_output_rules(
         bcast = yv_ya_gw if is_gw else yv_ya_sw
         current_base = base_extract_out.copy()
         if r["technology"] == "extract_salinewater":
-            df_rule = run_standard(r, current_base)
+            df_rule = build_standard(r, current_base)
         else:
             current_base["sub_time"] = sub_time_series
-            df_rule = run_standard(r, current_base, broadcast_year=bcast)
+            df_rule = build_standard(r, current_base, broadcast_year=bcast)
         extraction_outputs.append(df_rule)
     return safe_concat(extraction_outputs)
 
@@ -246,7 +248,7 @@ def _process_hist_cap_rules(df_hist: pd.DataFrame) -> pd.DataFrame:
     """Processes historical new capacity rules."""
     return safe_concat(
         [
-            run_standard(r, {"rule_dfs": df_hist})
+            build_standard(r, {"rule_dfs": df_hist})
             for r in HISTORICAL_NEW_CAPACITY_RULES.get_rule()
         ]
     )
@@ -260,7 +262,7 @@ def _process_dummy_basin_output_rules(
     dummy_outputs = []
     base_dummy = {"rule_dfs": df_node, "sub_time": sub_time_series}
     for r in DUMMY_BASIN_TO_REG_OUTPUT_RULES.get_rule():
-        df_rule = run_standard(r, base_dummy, extra_args={"year_vtg": year_wat})
+        df_rule = build_standard(r, base_dummy, extra_args={"year_vtg": year_wat})
         df_rule["year_act"] = df_rule["year_vtg"]
         dummy_outputs.append(df_rule)
     return safe_concat(dummy_outputs) if len(dummy_outputs) > 1 else dummy_outputs[0]
@@ -274,7 +276,7 @@ def _process_var_cost_rules(
     var_costs = []
     base_var_cost = {"rule_dfs": df_node, "sub_time": sub_time_series}
     for r in DUMMY_VARIABLE_COST_RULES.get_rule():
-        df_rule = run_standard(r, base_var_cost, extra_args={"year_vtg": year_wat})
+        df_rule = build_standard(r, base_var_cost, extra_args={"year_vtg": year_wat})
         df_rule["year_act"] = df_rule["year_vtg"]
         var_costs.append(df_rule)
     return safe_concat(var_costs)
@@ -292,7 +294,7 @@ def _process_fix_cost_rules(
         "broadcast_year": yv_ya_gw,
     }
     return safe_concat(
-        [run_standard(r, base_fix_cost) for r in FIXED_COST_RULES.get_rule()]
+        [build_standard(r, base_fix_cost) for r in FIXED_COST_RULES.get_rule()]
     )
 
 
@@ -302,7 +304,7 @@ def _process_share_mode_rules(context: "Context") -> pd.DataFrame:
     df_sw = map_basin_region_wat(context)
     base_share = {"rule_dfs": df_sw}
     return safe_concat(
-        [run_standard(r, base_share) for r in SHARE_MODE_RULES.get_rule()]
+        [build_standard(r, base_share) for r in SHARE_MODE_RULES.get_rule()]
     )
 
 
@@ -312,7 +314,7 @@ def _process_tl_rules(df_node: pd.DataFrame, year_wat: tuple) -> pd.DataFrame:
     base_tl = {"rule_dfs": df_node, "node_loc": df_node["node"]}
     return safe_concat(
         [
-            run_standard(r, base_tl, extra_args={"year_vtg": year_wat})
+            build_standard(r, base_tl, extra_args={"year_vtg": year_wat})
             for r in TECHNICAL_LIFETIME_RULES.get_rule()
         ]
     )
@@ -324,7 +326,7 @@ def _process_inv_cost_rules(df_node: pd.DataFrame, year_wat: tuple) -> pd.DataFr
     base_inv = {"rule_dfs": df_node, "node_loc": df_node["node"]}
     return safe_concat(
         [
-            run_standard(r, base_inv, extra_args={"year_vtg": year_wat})
+            build_standard(r, base_inv, extra_args={"year_vtg": year_wat})
             for r in INVESTMENT_COST_RULES.get_rule()
         ]
     )
@@ -556,7 +558,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
 
     eflow_dmd_df = []
     for r in E_FLOW_RULES_DMD.get_rule():
-        dmd_df = run_standard(
+        dmd_df = build_standard(
             r,
             base_args={"rule_dfs": df_sw},
         )
@@ -595,7 +597,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
             base_args = {
                 "rule_dfs": df_env,
             }
-            eflow_df.append(run_standard(r, base_args))
+            eflow_df.append(build_standard(r, base_args))
         eflow_df = safe_concat(eflow_df)
 
         eflow_df["value"] = eflow_df["value"].apply(lambda x: x if x >= 0 else 0)

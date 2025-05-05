@@ -1,10 +1,17 @@
 from message_ix_models.model.water.utils import Rule
 
+# Constants for cooling technologies
 CT_CONST = {
     "cool_tech_lifetime": 30,
     "cool_tech_output_default": 1,
 }
 
+"""
+Rules defining input parameters for cooling technologies.
+Specifies inputs of electricity (secondary level), freshwater (water_supply level),
+and saline water (saline_supply level) based on parent technology data.
+Used in `cool_tech` function within `water_for_ppl.py`.
+"""
 COOL_TECH_INPUT_RULES = Rule(
     Base={
         "type": "input",
@@ -54,6 +61,11 @@ COOL_TECH_INPUT_RULES = Rule(
     ],
 )
 
+"""
+Rule defining emission factors for cooling technologies.
+Specifically assigns 'fresh_return' emissions based on return flow values.
+Used in `cool_tech` function within `water_for_ppl.py`.
+"""
 COOL_TECH_EMISSION_RULES = Rule(
     Base={
         "type": "emission_factor",
@@ -73,6 +85,12 @@ COOL_TECH_EMISSION_RULES = Rule(
     ],
 )
 
+"""
+Rules defining output parameters for cooling technologies.
+Handles the main output commodity (derived from technology name) and,
+conditionally ('nexus' setting), the return flow to surfacewater basins.
+Used in `cool_tech` function within `water_for_ppl.py`.
+"""
 COOL_TECH_OUTPUT_RULES = Rule(
     Base={
         "type": "output",
@@ -112,7 +130,12 @@ COOL_TECH_OUTPUT_RULES = Rule(
     ],
 )
 
-
+"""
+Rule defining the addon conversion relationship between parent power plant
+technologies and their associated cooling addons.
+Specifies the cooling fraction as the conversion value.
+Used in `cool_tech` function within `water_for_ppl.py`.
+"""
 COOL_TECH_ADDON_RULES = Rule(
     Base={
         "type": "addon_conversion",
@@ -133,6 +156,11 @@ COOL_TECH_ADDON_RULES = Rule(
     ],
 )
 
+"""
+Rule defining the technical lifetime for cooling technologies.
+Applies a constant lifetime defined in `CT_CONST`.
+Used in `cool_tech` function within `water_for_ppl.py`.
+"""
 COOL_TECH_LIFETIME_RULES = Rule(
     Base={
         "type": "technical_lifetime",
@@ -151,6 +179,11 @@ COOL_TECH_LIFETIME_RULES = Rule(
     ],
 )
 
+"""
+Rule defining water input for non-cooling power plant technologies.
+Maps water withdrawal values to the 'input' parameter.
+Used in `non_cooling_tec` function within `water_for_ppl.py`.
+"""
 NON_COOL_INPUT_RULES = Rule(
     Base={
         "type": "input",
@@ -174,6 +207,10 @@ NON_COOL_INPUT_RULES = Rule(
     ],
 )
 
+"""
+Rule defining upper bounds on commodity shares ('share_commodity_up').
+Used in cooling_shares_SSP_from_yaml function.
+"""
 COOL_SHARE_RULES = Rule(
     Base={
         "type": "share_commodity_up",

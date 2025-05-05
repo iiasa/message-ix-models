@@ -1,13 +1,19 @@
 from message_ix_models.model.water.utils import Rule
 
+# Constants for water infrastructure rules
 WF_CONST = {
     "IDENTITY": 1,
     "DESALINATION_OUTPUT_VALUE": 1,
-    "DESALINATION_TECH_LIFETIME": 20,
-    "DESALINATION_VAR_COST": 100,
+    "DESALINATION_TECH_LIFETIME": 20,  # used a lot so defined as constant
+    "DESALINATION_VAR_COST": 100,  # same as above
     "HIST_CAP_DIVISOR": 5,
 }
 
+"""
+These rules are used in start_creating_input_dataframe
+they are grouped together because
+they are all used in the same function
+"""
 INPUT_DATAFRAME_STAGE1 = Rule(
     Base={
         "type": "input",
@@ -50,7 +56,11 @@ INPUT_DATAFRAME_STAGE1 = Rule(
         },
     ],
 )
-
+"""
+These rules are used in prepare_input_dataframe,
+they are grouped together because
+they are all used in the same function
+"""
 INPUT_DATAFRAME_STAGE2 = Rule(
     Base={
         "type": "input",
@@ -91,6 +101,12 @@ INPUT_DATAFRAME_STAGE2 = Rule(
     ],
 )
 
+"""
+These rules are used in calculate_infra_output,
+default is always used,
+SDG when SDG is run and baseline_main,
+baseline_p1 and baseline_p2 when baseline is run via cli.
+"""
 OUTPUT_RULES = Rule(
     Base={
         "type": "output",
@@ -140,6 +156,9 @@ OUTPUT_RULES = Rule(
     ],
 )
 
+"""
+Capacity factor rules for water infrastructure technologies.
+"""
 CAP_RULES = Rule(
     Base={
         "type": "capacity_factor",
@@ -161,6 +180,9 @@ CAP_RULES = Rule(
     ],
 )
 
+"""
+Technical lifetime rules for water infrastructure technologies.
+"""
 TL_RULES = Rule(
     Base={
         "type": "technical_lifetime",
@@ -180,6 +202,9 @@ TL_RULES = Rule(
     ],
 )
 
+"""
+Investment cost rules for water infrastructure technologies.
+"""
 INV_COST_RULES = Rule(
     Base={
         "type": "inv_cost",
@@ -198,6 +223,9 @@ INV_COST_RULES = Rule(
     ],
 )
 
+"""
+Fixed operating cost rules for water infrastructure technologies.
+"""
 FIX_COST_RULES = Rule(
     Base={
         "type": "fix_cost",
@@ -216,7 +244,10 @@ FIX_COST_RULES = Rule(
         },
     ],
 )
-
+"""
+Variable operating cost rules for water infrastructure technologies under SDG
+and baseline conditions, which includes baseline and baseline distributed.
+"""
 VAR_COST_RULES = Rule(
     Base={
         "type": "var_cost",
@@ -262,6 +293,9 @@ VAR_COST_RULES = Rule(
     ],
 )
 
+"""
+Output rule for desalination facilities at basin level.
+"""
 DESALINATION_OUTPUT_RULES = Rule(
     Base={
         "type": "output",
@@ -287,6 +321,9 @@ DESALINATION_OUTPUT_RULES = Rule(
     ],
 )
 
+"""
+Technical lifetime rules for desalination facilities.
+"""
 TL_DESALINATION_RULES = Rule(
     Base={
         "type": "technical_lifetime",
@@ -311,6 +348,9 @@ TL_DESALINATION_RULES = Rule(
     ],
 )
 
+"""
+Historical new capacity rule for desalination facilities.
+"""
 DESALINATION_HISTORICAL_CAPACITY_RULES = Rule(
     Base={
         "type": "historical_new_capacity",
@@ -330,6 +370,9 @@ DESALINATION_HISTORICAL_CAPACITY_RULES = Rule(
     ],
 )
 
+"""
+Upper bound capacity rule for desalination facilities.
+"""
 DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES = Rule(
     Base={
         "type": "bound_total_capacity_up",
@@ -349,6 +392,9 @@ DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES = Rule(
     ],
 )
 
+"""
+Lower bound activity rule for desalination facilities.
+"""
 DESALINATION_BOUND_LO_RULES = Rule(
     Base={
         "type": "bound_activity_lo",
@@ -369,6 +415,9 @@ DESALINATION_BOUND_LO_RULES = Rule(
     ],
 )
 
+"""
+Investment cost rules for desalination technologies.
+"""
 DESALINATION_INV_COST_RULES = Rule(
     Base={
         "type": "inv_cost",
@@ -387,6 +436,9 @@ DESALINATION_INV_COST_RULES = Rule(
     ],
 )
 
+"""
+Fixed cost rules for desalination technologies.
+"""
 FIX_COST_DESALINATION_RULES = Rule(
     Base={
         "type": "fix_cost",
@@ -406,6 +458,10 @@ FIX_COST_DESALINATION_RULES = Rule(
     ],
 )
 
+"""
+Variable operating cost rule for desalination technologies.
+SKIP here was previously commented out, can be removed if not needed.
+"""
 VAR_COST_DESALINATION_RULES = Rule(
     Base={
         "type": "var_cost",
@@ -434,6 +490,9 @@ VAR_COST_DESALINATION_RULES = Rule(
     ],
 )
 
+"""
+Input requirement rules for desalination technologies (electricity, heat, process).
+"""
 DESALINATION_INPUT_RULES2 = Rule(
     Base={
         "type": "input",
@@ -481,6 +540,9 @@ DESALINATION_INPUT_RULES2 = Rule(
     ],
 )
 
+"""
+Secondary output rules for desalination technologies mapping product flow.
+"""
 DESALINATION_OUTPUT_RULES2 = Rule(
     Base={
         "type": "output",

@@ -167,7 +167,7 @@ def feed_make_df(
 
 
 @minimum_version("python 3.10")
-def run_standard(
+def build_standard(
     r: dict, base_args: dict, extra_args: dict | None = None, broadcast_year: Any = None
 ) -> pd.DataFrame:
     """Merge base args and rule-specific pipe arguments then call standard_operation.
@@ -305,7 +305,7 @@ def _build_kw_args(
     return kw
 
 
-def warn_run_standard(func):
+def warn_build_standard(func):
     """Decorator to warn users to prefer run_standard()
     over direct standard_operation() calls."""
 
@@ -325,7 +325,7 @@ def warn_run_standard(func):
 
 
 @minimum_version("python 3.10")
-@warn_run_standard  # Apply the decorator to standard_operation
+@warn_build_standard  # Apply the decorator to standard_operation
 def standard_operation(
     *,
     rule: dict,

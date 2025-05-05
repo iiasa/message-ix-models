@@ -1,5 +1,8 @@
 from message_ix_models.model.water.utils import Rule
 
+"""
+Water Demand Constants
+"""
 WD_CONST = {
     "IDENTITY": 1,
     "NEGATIVE_MULTIPLIER": -1,
@@ -9,10 +12,15 @@ WD_CONST = {
 }
 
 
+"""
+Rules for urban water demand (municipal connected and disconnected).
+Used in `add_sectoral_demands`.
+"""
 URBAN_DEMAND = Rule(
     Base={
         "type": "demand",
         "unit": "km3/year",
+        "unit_in": "MCM/year",
         "level": "final",
     },
     Diff=[
@@ -35,6 +43,10 @@ URBAN_DEMAND = Rule(
     ],
 )
 
+"""
+Rules for rural water demand (municipal connected and disconnected).
+Used in `add_sectoral_demands`.
+"""
 RURAL_DEMAND = Rule(
     Base={
         "type": "demand",
@@ -61,6 +73,11 @@ RURAL_DEMAND = Rule(
     ],
 )
 
+"""
+Rules for industrial water demand and
+uncollected wastewater (treated as negative demand).
+Used in `add_sectoral_demands`.
+"""
 INDUSTRIAL_DEMAND = Rule(
     Base={
         "type": "demand",
@@ -74,8 +91,8 @@ INDUSTRIAL_DEMAND = Rule(
             "commodity": "industry_mw",
             "year": "manuf_mw[year]",
             "time": "manuf_mw[time]",
-            "value": f"manuf_mw[value] * {WD_CONST['UNIT_CONVERSION']}",
-        },
+            "value": "manuf_mw[value] * {UNIT_CONVERSION}".format(**WD_CONST),
+        },  # .format notation for clarity
         {
             "condition": "default",
             "node": "'B' + manuf_uncollected_wst[node]",
@@ -83,14 +100,19 @@ INDUSTRIAL_DEMAND = Rule(
             "year": "manuf_uncollected_wst[year]",
             "time": "manuf_uncollected_wst[time]",
             "value": (
-                f"manuf_uncollected_wst[value] * {WD_CONST['UNIT_CONVERSION']}"
-                f" * {WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "manuf_uncollected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         },
     ],
 )
 
 
+"""
+Rules for urban wastewater (collected and uncollected), represented as negative demands.
+Used in `add_sectoral_demands`.
+"""
 URBAN_WST = Rule(
     Base={
         "type": "demand",
@@ -105,9 +127,9 @@ URBAN_WST = Rule(
             "year": "urban_collected_wst[year]",
             "time": "urban_collected_wst[time]",
             "value": (
-                f"urban_collected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "urban_collected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         },
         {
@@ -117,14 +139,18 @@ URBAN_WST = Rule(
             "year": "urban_uncollected_wst[year]",
             "time": "urban_uncollected_wst[time]",
             "value": (
-                f"urban_uncollected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "urban_uncollected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         },
     ],
 )
 
+"""
+Rule for urban collected wastewater, represented as a negative demand.
+Used in `add_sectoral_demands`.
+"""
 URBAN_COLLECTED_WST = Rule(
     Base={
         "type": "demand",
@@ -139,15 +165,19 @@ URBAN_COLLECTED_WST = Rule(
             "year": "urban_collected_wst[year]",
             "time": "urban_collected_wst[time]",
             "value": (
-                f"urban_collected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "urban_collected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         }
     ],
 )
 
 
+"""
+Rule for urban uncollected wastewater, represented as a negative demand.
+Used in `add_sectoral_demands`.
+"""
 URBAN_UNCOLLECTED_WST = Rule(
     Base={
         "type": "demand",
@@ -162,14 +192,18 @@ URBAN_UNCOLLECTED_WST = Rule(
             "year": "urban_uncollected_wst[year]",
             "time": "urban_uncollected_wst[time]",
             "value": (
-                f"urban_uncollected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "urban_uncollected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         }
     ],
 )
 
+"""
+Rules for rural wastewater (collected and uncollected), represented as negative demands.
+Used in `add_sectoral_demands`.
+"""
 RURAL_WST = Rule(
     Base={
         "type": "demand",
@@ -184,9 +218,9 @@ RURAL_WST = Rule(
             "year": "rural_collected_wst[year]",
             "time": "rural_collected_wst[time]",
             "value": (
-                f"rural_collected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "rural_collected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         },
         {
@@ -197,15 +231,19 @@ RURAL_WST = Rule(
             "year": "rural_uncollected_wst[year]",
             "time": "rural_uncollected_wst[time]",
             "value": (
-                f"rural_uncollected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "rural_uncollected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         },
     ],
 )
 
 
+"""
+Rule for rural collected wastewater, represented as a negative demand.
+Used in `add_sectoral_demands`.
+"""
 RURAL_COLLECTED_WST = Rule(
     Base={
         "type": "demand",
@@ -220,13 +258,17 @@ RURAL_COLLECTED_WST = Rule(
             "year": "rural_collected_wst[year]",
             "time": "rural_collected_wst[time]",
             "value": (
-                f"rural_collected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "rural_collected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         }
     ],
 )
+"""
+Rule for rural uncollected wastewater, represented as a negative demand.
+Used in `add_sectoral_demands`.
+"""
 RURAL_UNCOLLECTED_WST = Rule(
     Base={
         "type": "demand",
@@ -241,14 +283,18 @@ RURAL_UNCOLLECTED_WST = Rule(
             "year": "rural_uncollected_wst[year]",
             "time": "rural_uncollected_wst[time]",
             "value": (
-                f"rural_uncollected_wst[value] * "
-                f"{WD_CONST['UNIT_CONVERSION']} * "
-                f"{WD_CONST['NEGATIVE_MULTIPLIER']}"
+                "rural_uncollected_wst[value] * "
+                "{UNIT_CONVERSION} * "
+                "{NEGATIVE_MULTIPLIER}".format(**WD_CONST)
             ),
         }
     ],
 )
 
+"""
+Rule for historical activity.
+Used in `add_sectoral_demands`.
+"""
 HISTORICAL_ACTIVITY = Rule(
     Base={
         "type": "historical_activity",
@@ -267,6 +313,11 @@ HISTORICAL_ACTIVITY = Rule(
     ],
 )
 
+"""
+Rule for historical new capacity, derived from historical activity.
+Note the division by HIST_CAP_DIVISOR to annualize 5-year data.
+Used in `add_sectoral_demands`.
+"""
 HISTORICAL_CAPACITY = Rule(
     Base={
         "type": "historical_new_capacity",
@@ -278,12 +329,16 @@ HISTORICAL_CAPACITY = Rule(
             "node_loc": "h_cap[node]",
             "technology": "h_cap[commodity]",
             "year_vtg": "h_cap[year]",
-            "value": f"h_cap[value] / {WD_CONST['HIST_CAP_DIVISOR']}",
+            "value": "h_cap[value] / {HIST_CAP_DIVISOR}".format(**WD_CONST),
         }
     ],
 )
 
 
+"""
+Rule for setting lower bound share constraints on water recycling.
+Used in `add_sectoral_demands`.
+"""
 SHARE_CONSTRAINTS_RECYCLING = Rule(
     Base={
         "type": "share_commodity_lo",
@@ -305,6 +360,10 @@ SHARE_CONSTRAINTS_RECYCLING = Rule(
     ],
 )
 
+"""
+Rules for water availability (surface and groundwater), represented as negative demands.
+Used in `add_water_availability`.
+"""
 WATER_AVAILABILITY = Rule(
     Base={
         "type": "demand",
@@ -318,7 +377,7 @@ WATER_AVAILABILITY = Rule(
             "level": "water_avail_basin",
             "year": "df_sw[year]",
             "time": "df_sw[time]",
-            "value": f"df_sw[value] * {WD_CONST['NEGATIVE_MULTIPLIER']}",
+            "value": "df_sw[value] * {NEGATIVE_MULTIPLIER}".format(**WD_CONST),
         },
         {
             "condition": "gw",
@@ -327,12 +386,17 @@ WATER_AVAILABILITY = Rule(
             "level": "water_avail_basin",
             "year": "df_gw[year]",
             "time": "df_gw[time]",
-            "value": f"df_gw[value] * {WD_CONST['NEGATIVE_MULTIPLIER']}",
+            "value": "df_gw[value] * {NEGATIVE_MULTIPLIER}".format(**WD_CONST),
         },
     ],
 )
 
 
+"""
+Rule for setting lower bound share constraints on groundwater withdrawal.
+Includes a safety multiplier (SHARE_GW_MULT) to avoid infeasibility.
+Used in `add_water_availability`.
+"""
 SHARE_CONSTRAINTS_GW = Rule(
     Base={
         "type": "share_commodity_lo",
@@ -346,9 +410,9 @@ SHARE_CONSTRAINTS_GW = Rule(
             "year_act": "df_gw[year]",
             "time": "df_gw[time]",
             "value": (
-                f"df_gw[value] / "
-                f"(df_sw[value] + df_gw[value]) * "
-                f"{WD_CONST['SHARE_GW_MULT']}"
+                "df_gw[value] / (df_sw[value] + df_gw[value]) * {SHARE_GW_MULT}".format(
+                    **WD_CONST
+                )
             ),
             "unit": "-",
         }

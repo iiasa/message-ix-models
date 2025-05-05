@@ -27,7 +27,7 @@ from message_ix_models.model.water.data.infrastructure_rules import (
     VAR_COST_DESALINATION_RULES,
     VAR_COST_RULES,
 )
-from message_ix_models.model.water.dsl_engine import run_standard
+from message_ix_models.model.water.dsl_engine import build_standard
 from message_ix_models.model.water.utils import safe_concat
 from message_ix_models.util import make_matched_dfs, minimum_version, package_data_path
 
@@ -59,7 +59,7 @@ def start_creating_input_dataframe(
                     current_args = args.copy()
                     current_args["rule_dfs"] = {"rows": rows, "df_node": df_node}
                     current_args["lt"] = rows["technical_lifetime_mid"]
-                    inp_df.append(run_standard(r=rule, base_args=current_args))
+                    inp_df.append(build_standard(r=rule, base_args=current_args))
 
             case "baseline_main", "baseline":
                 # baseline case
@@ -67,7 +67,7 @@ def start_creating_input_dataframe(
                     current_args = args.copy()
                     current_args["rule_dfs"] = {"rows": rows, "df_node": df_node}
                     current_args["lt"] = rows["technical_lifetime_mid"]
-                    inp_df.append(run_standard(r=rule, base_args=current_args))
+                    inp_df.append(build_standard(r=rule, base_args=current_args))
             case "baseline_additional", "baseline":
                 # baseline case additional
                 # takes the final row from df_dist as input
@@ -75,14 +75,14 @@ def start_creating_input_dataframe(
                 rows = df_dist.iloc[-1]
                 current_args["rule_dfs"] = rows
                 current_args["lt"] = rows["technical_lifetime_mid"]
-                inp_df.append(run_standard(r=rule, base_args=current_args))
+                inp_df.append(build_standard(r=rule, base_args=current_args))
             # non baseline case
             case "!baseline", _ if sdg != "baseline":
                 for index, rows in df_dist.iterrows():
                     current_args = args.copy()
                     current_args["rule_dfs"] = {"rows": rows, "df_node": df_node}
                     current_args["lt"] = rows["technical_lifetime_mid"]
-                    inp_df.append(run_standard(r=rule, base_args=current_args))
+                    inp_df.append(build_standard(r=rule, base_args=current_args))
                     return safe_concat(inp_df)  # Terminates in the non-baseline case
 
     return safe_concat(inp_df)
@@ -115,13 +115,13 @@ def prepare_input_dataframe(
         for rule in INPUT_DATAFRAME_STAGE2.get_rule():
             match (context.SDG, rule["condition"], is_tech):
                 case _, "!baseline", True if context.SDG != "baseline":
-                    inp = run_standard(r=rule, base_args=args)
+                    inp = build_standard(r=rule, base_args=args)
                     result_dc["input"].append(inp)
                 case "baseline", "baseline_p1" | "baseline_p2", True:
-                    inp = run_standard(r=rule, base_args=args)
+                    inp = build_standard(r=rule, base_args=args)
                     result_dc["input"].append(inp)
                 case _, "non_tech", False:
-                    inp = run_standard(r=rule, base_args=args)
+                    inp = build_standard(r=rule, base_args=args)
                     result_dc["input"].append(inp)
     return result_dc
 
@@ -247,7 +247,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         current_args = args_out.copy()
         current_args["rule_dfs"] = df_tl
         tl_list.append(
-            run_standard(r=rule, base_args=current_args, extra_args=extra_args)
+            build_standard(r=rule, base_args=current_args, extra_args=extra_args)
         )
     tl = safe_concat(tl_list)
     results["technical_lifetime"] = tl
@@ -262,7 +262,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         current_args = args_out.copy()
         current_args["rule_dfs"] = df_inv
         # Prepare dataframe for investments
-        inv_cost = run_standard(r=rule, base_args=current_args, extra_args=extra_args)
+        inv_cost = build_standard(r=rule, base_args=current_args, extra_args=extra_args)
         inv_cost = inv_cost[~inv_cost["technology"].isin(techs)]
     results["inv_cost"] = inv_cost
 
@@ -274,7 +274,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
             current_args = args_out.copy()
             current_args["rule_dfs"] = df_inv
             current_args["lt"] = rows["technical_lifetime_mid"]
-            fix_cost_list.append(run_standard(r=rule, base_args=current_args))
+            fix_cost_list.append(build_standard(r=rule, base_args=current_args))
     fix_cost = safe_concat(fix_cost_list)
     fix_cost = fix_cost[~fix_cost["technology"].isin(techs)]
 
@@ -319,19 +319,19 @@ def _calculate_infra_output(
                     current_args = args.copy()
                     current_args["rule_dfs"] = rows
                     current_args["lt"] = rows["technical_lifetime_mid"]
-                    out_df_list.append(run_standard(r=rule, base_args=current_args))
+                    out_df_list.append(build_standard(r=rule, base_args=current_args))
             case (_, "!baseline") if context.SDG != "baseline":
                 current_args = args.copy()
                 current_args["rule_dfs"] = df_out_dist
                 # Use lifetime from df_out as it seems to be the intended fallback
                 current_args["lt"] = df_out.iloc[-1]["technical_lifetime_mid"]
-                out_df_list.append(run_standard(r=rule, base_args=current_args))
+                out_df_list.append(build_standard(r=rule, base_args=current_args))
             case ("baseline", "baseline_p1" | "baseline_p2"):
                 current_args = args.copy()
                 current_args["rule_dfs"] = df_out_dist
                 # Use lifetime from df_out as it seems to be the intended fallback
                 current_args["lt"] = df_out.iloc[-1]["technical_lifetime_mid"]
-                out_df_list.append(run_standard(r=rule, base_args=current_args))
+                out_df_list.append(build_standard(r=rule, base_args=current_args))
     return safe_concat(out_df_list)
 
 
@@ -346,7 +346,7 @@ def _calculate_infra_cap_factor(
             current_args = args.copy()
             current_args["rule_dfs"] = rows
             current_args["lt"] = rows["technical_lifetime_mid"]
-            cap_list.append(run_standard(r=rule, base_args=current_args))
+            cap_list.append(build_standard(r=rule, base_args=current_args))
     return safe_concat(cap_list)
 
 
@@ -376,20 +376,20 @@ def _add_var_cost(
                     current_args = args.copy()
                     current_args["rule_dfs"] = rows
                     current_args["lt"] = rows["technical_lifetime_mid"]
-                    var_cost_list.append(run_standard(r=rule, base_args=current_args))
+                    var_cost_list.append(build_standard(r=rule, base_args=current_args))
             case (_, "!baseline_dist") if sdg != "baseline":
                 for index, rows in df_var_dist.iterrows():
                     current_args = args.copy()
                     current_args["rule_dfs"] = rows
                     current_args["lt"] = rows["technical_lifetime_mid"]
-                    var_cost_list.append(run_standard(r=rule, base_args=current_args))
+                    var_cost_list.append(build_standard(r=rule, base_args=current_args))
             case ("baseline", "baseline_main"):
                 for index, rows in df_var.iterrows():
                     dfs = {"rows": rows, "df_var": df_var}
                     current_args = args.copy()
                     current_args["rule_dfs"] = dfs
                     current_args["lt"] = rows["technical_lifetime_mid"]
-                    var_cost_list.append(run_standard(r=rule, base_args=current_args))
+                    var_cost_list.append(build_standard(r=rule, base_args=current_args))
             case ("baseline", "baseline_dist_p1" | "baseline_dist_p2"):
                 # collecting both rules because they are implemented in the same
                 # function
@@ -403,13 +403,13 @@ def _add_var_cost(
                         current_args["rule_dfs"] = rows
                         current_args["lt"] = rows["technical_lifetime_mid"]
                         var_cost_list.append(
-                            run_standard(r=rule, base_args=current_args)
+                            build_standard(r=rule, base_args=current_args)
                         )
                         current_args_alt = args.copy()
                         current_args_alt["rule_dfs"] = rows
                         current_args_alt["lt"] = rows["technical_lifetime_mid"]
                         var_cost_list.append(
-                            run_standard(r=rule_alt, base_args=current_args_alt)
+                            build_standard(r=rule_alt, base_args=current_args_alt)
                         )
 
     var_cost = safe_concat(var_cost_list)
@@ -431,7 +431,7 @@ def _calculate_desal_output(
             "year_wat": year_wat,
             "lt": lt,
         }
-        out_df.append(run_standard(r=rule, base_args=output_args))
+        out_df.append(build_standard(r=rule, base_args=output_args))
     return safe_concat(out_df)
 
 
@@ -444,7 +444,7 @@ def _calculate_desal_tl(df_desal, df_node, year_wat):
             "rule_dfs": df_desal,
             "node_loc": df_node["node"],
         }
-        tl.append(run_standard(r=rule, base_args=tl_args, extra_args=extra_args_tl))
+        tl.append(build_standard(r=rule, base_args=tl_args, extra_args=extra_args_tl))
     return safe_concat(tl)
 
 
@@ -455,7 +455,7 @@ def _calculate_desal_hist_cap(df_hist, df_node):
             "rule_dfs": df_hist,
             "node_loc": df_node["node"],
         }
-        df_hist_cap = run_standard(r=rule, base_args=hist_cap_args)
+        df_hist_cap = build_standard(r=rule, base_args=hist_cap_args)
 
     # Divide the historical capacity by 5 since the existing data is summed over
     # 5 years and model needs per year
@@ -470,7 +470,7 @@ def _calculate_desal_bound_up(df_proj, df_node):
             "rule_dfs": df_proj,
             "node_loc": df_node["node"],
         }
-        bound_up = run_standard(r=rule, base_args=bound_up_args)
+        bound_up = build_standard(r=rule, base_args=bound_up_args)
 
     # Making negative values zero
     bound_up["value"] = bound_up["value"].clip(lower=0)
@@ -489,7 +489,7 @@ def _calculate_desal_inv_cost(df_desal, df_node, year_wat):
         }
         extra_args = {"year_vtg": year_wat}
         inv_cost_list.append(
-            run_standard(r=rule, base_args=inv_cost_args, extra_args=extra_args)
+            build_standard(r=rule, base_args=inv_cost_args, extra_args=extra_args)
         )
     return safe_concat(inv_cost_list)
 
@@ -513,7 +513,7 @@ def _calculate_desal_fix_var_cost(
                 "first_year": first_year,
                 "year_wat": year_wat,
             }
-            fix_cost_list.append(run_standard(r=rule, base_args=fix_cost_args))
+            fix_cost_list.append(build_standard(r=rule, base_args=fix_cost_args))
 
         # Variable cost
         for rule in VAR_COST_DESALINATION_RULES.get_rule():
@@ -525,7 +525,7 @@ def _calculate_desal_fix_var_cost(
                 "first_year": first_year,
                 "year_wat": year_wat,
             }
-            var_cost_list.append(run_standard(r=rule, base_args=var_cost_args))
+            var_cost_list.append(build_standard(r=rule, base_args=var_cost_args))
 
     fix_cost = safe_concat(fix_cost_list)
     var_cost = safe_concat(var_cost_list)
@@ -557,7 +557,7 @@ def _calculate_desal_input_output(
                     elec_args = input2_base_args.copy()
                     elec_args["rule_dfs"] = {"rows": rows, "df_node": df_node}
                     elec_args["lt"] = rows["lifetime_mid"]
-                    inp = run_standard(r=rule, base_args=elec_args)
+                    inp = build_standard(r=rule, base_args=elec_args)
                     current_input_list.append(inp)
                 inp_df_list.append(safe_concat(current_input_list))
 
@@ -567,7 +567,7 @@ def _calculate_desal_input_output(
                     heat_args = input2_base_args.copy()
                     heat_args["rule_dfs"] = {"rows": rows, "df_node": df_node}
                     heat_args["lt"] = rows["lifetime_mid"]
-                    inp = run_standard(r=rule, base_args=heat_args)
+                    inp = build_standard(r=rule, base_args=heat_args)
                     current_input_list.append(inp)
                 inp_df_list.append(safe_concat(current_input_list))
 
@@ -580,7 +580,9 @@ def _calculate_desal_input_output(
                     tech_args["rule_dfs"] = {"rows": rows, "df_node": df_node}
                     tech_args["lt"] = lt
                     tech_args["node_loc"] = df_node["node"]
-                    current_input_list.append(run_standard(r=rule, base_args=tech_args))
+                    current_input_list.append(
+                        build_standard(r=rule, base_args=tech_args)
+                    )
 
                     output_args = {
                         "rule_dfs": rows,
@@ -591,7 +593,7 @@ def _calculate_desal_input_output(
                         "year_wat": year_wat,
                     }
                     current_output_list.append(
-                        run_standard(r=rule_output_tech, base_args=output_args)
+                        build_standard(r=rule_output_tech, base_args=output_args)
                     )
                 inp_df_list.append(safe_concat(current_input_list))
                 out_df_list.append(safe_concat(current_output_list))
@@ -615,7 +617,7 @@ def _calculate_desal_bound_lo(df_hist, series_sub_time, year_wat):
             "sub_time": series_sub_time,
         }
         extra_args_new = {"year_act": year_wat}
-        bound_lo = run_standard(
+        bound_lo = build_standard(
             r=rule, base_args=bound_lo_args, extra_args=extra_args_new
         )
 

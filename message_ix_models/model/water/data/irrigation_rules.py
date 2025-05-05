@@ -1,6 +1,10 @@
 from message_ix_models.model.water.utils import Rule
 from message_ix_models.util.citation_wrapper import citation_wrapper
 
+"""
+Using citation wrapper here to store the citation info
+along with the constants for irrigation
+"""
 IRRIGATION_CONST = citation_wrapper(
     "Diaz et al. 2011",
     "https://ascelibrary.org/doi/10.1061/%28ASCE%29IR.1943-4774.0000338",
@@ -18,6 +22,13 @@ IRRIGATION_CONST = citation_wrapper(
     }
 )
 
+"""
+Rules defining inputs for irrigation technologies.
+SKIP conditions were originally commented out, they can
+be deleted if no longer needed. Currently they are
+skipped.
+Used in `add_irr_structure`.
+"""
 INPUT_IRRIGATION_RULES = Rule(
     Base={
         "type": "input",
@@ -72,7 +83,10 @@ INPUT_IRRIGATION_RULES = Rule(
     ],
 )
 
-
+"""
+Rules defining outputs for irrigation technologies.
+Used in `add_irr_structure`.
+"""
 OUTPUT_IRRIGATION_RULES = Rule(
     Base={
         "type": "output",

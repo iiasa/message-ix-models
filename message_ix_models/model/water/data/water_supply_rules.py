@@ -4,31 +4,38 @@ from message_ix_models.model.water.utils import Rule
 # these templates are used to declare the supply transformation logic.
 # dynamic values (e.g. years, node locations) are filled in within j.
 
+"""
+Water Supply Constants
+"""
 WS_CONST = {
     # Input/Output Coefficients (Dimensionless)
     "IDENTITY": 1,
-    # Electricity Input (Final commodity per km3)
-    "SW_ELEC_IN": 0.018835616,
+    "SW_ELEC_IN": 0.018835616,  # Surfacewater electricity input
     "GW_ADD_ELEC_IN": 0.043464579,  # Added to depth-dependent pumping cost
     "FOSSIL_GW_ELEC_MULT": 2,  # Multiplies (depth-dependent + additional) GW cost
-    # Technical Lifetimes (Years)
-    "SW_LIFETIME": 50,
+    "SW_LIFETIME": 50,  # Technical Lifetimes (Years)
     "GW_LIFETIME": 20,  # Also applies to fossil GW
     # Investment Costs (USD/km3 annual capacity)
-    "SW_INV_COST": 155.57,
-    "GW_INV_COST": 54.52,
+    "SW_INV_COST": 155.57,  # Surfacewater investment cost
+    "GW_INV_COST": 54.52,  # Groundwater investment cost
     "FOSSIL_GW_INV_MULT": 150,  # Multiplies GW investment cost
     # Historical Capacity Calculation
     "HIST_CAP_DIV": 5,  # Divisor for annualizing historical capacity
     # Variable Costs (USD/km3)
-    "BASIN_REG_VAR_COST": 20,
+    "BASIN_REG_VAR_COST": 20,  # Basin to region variable cost
     "SW_VAR_COST": 0.0001,  # Note: Rule marked as SKIP
     "GW_VAR_COST": 0.001,  # Note: Rule marked as SKIP
     # Fixed Costs (USD/km3 annual capacity)
-    "FOSSIL_GW_FIX_COST": 300,
+    "FOSSIL_GW_FIX_COST": 300,  # Fossil groundwater fixed cost
 }
 
 
+"""
+Rules for slack technologies
+(return_flow, gw_recharge, basin_to_reg, salinewater_return).
+Defines input parameters for these technologies.
+Used in `_process_slack_rules` within `add_water_supply`.
+"""
 SLACK_TECHNOLOGY_RULES = Rule(
     Base={
         "type": "input",
@@ -112,6 +119,12 @@ SLACK_TECHNOLOGY_RULES = Rule(
 )
 
 
+"""
+Rules defining outputs for cooling-related water extraction technologies.
+Specifies the output commodity and level for surface, ground,
+and saline water extraction.
+Used in `_process_cooling_supply` within `add_water_supply`.
+"""
 COOLING_SUPPLY_RULES = Rule(
     Base={
         "type": "output",
@@ -151,6 +164,13 @@ COOLING_SUPPLY_RULES = Rule(
     ],
 )
 
+"""
+Rules defining inputs for water extraction technologies
+(surface, ground, fossil ground). Includes inputs from
+water sources (basin commodities) and electricity (final commodity).
+Specifies electricity intensity, including depth-dependent costs for groundwater.
+Used in `_process_extraction_input_rules` within `add_water_supply`.
+"""
 EXTRACTION_INPUT_RULES = Rule(
     Base={
         "type": "input",
@@ -207,7 +227,9 @@ EXTRACTION_INPUT_RULES = Rule(
             "condition": "default",
             "technology": "extract_groundwater",
             "level": "final",
-            "value": f"df_gwt['GW_per_km3_per_year'] + {WS_CONST['GW_ADD_ELEC_IN']}",
+            "value": "df_gwt['GW_per_km3_per_year'] + {GW_ADD_ELEC_IN}".format(
+                **WS_CONST
+            ),  # .format notation for clarity
             "commodity": "electr",
             "mode": "M1",
             "time_origin": "year",
@@ -223,9 +245,8 @@ EXTRACTION_INPUT_RULES = Rule(
             "technology": "extract_gw_fossil",
             "level": "final",
             "value": (
-                f"{WS_CONST['FOSSIL_GW_ELEC_MULT']} * "
-                f"(df_gwt['GW_per_km3_per_year'] + "
-                f"{WS_CONST['GW_ADD_ELEC_IN']})"
+                "{FOSSIL_GW_ELEC_MULT} * "
+                "(df_gwt['GW_per_km3_per_year'] + {GW_ADD_ELEC_IN})".format(**WS_CONST)
             ),
             "commodity": "electr",
             "mode": "M1",
@@ -241,6 +262,10 @@ EXTRACTION_INPUT_RULES = Rule(
 )
 
 
+"""
+Rules defining the technical lifetime for water extraction technologies.
+Used in `_process_tl_rules` within `add_water_supply`.
+"""
 TECHNICAL_LIFETIME_RULES = Rule(
     Base={
         "type": "technical_lifetime",
@@ -271,6 +296,11 @@ TECHNICAL_LIFETIME_RULES = Rule(
 )
 
 
+"""
+Rules defining the investment costs for water extraction technologies.
+Includes multipliers for fossil groundwater extraction.
+Used in `_process_inv_cost_rules` within `add_water_supply`.
+"""
 INVESTMENT_COST_RULES = Rule(
     Base={
         "type": "inv_cost",
@@ -300,6 +330,11 @@ INVESTMENT_COST_RULES = Rule(
 )
 
 
+"""
+Rules defining upper bounds on the share of activity ('share_mode_up') for the
+'basin_to_reg' technology, based on regional water availability shares.
+Used in `_process_share_mode_rules` within `add_water_supply`.
+"""
 SHARE_MODE_RULES = Rule(
     Base={
         "type": "share_mode_up",
@@ -320,6 +355,12 @@ SHARE_MODE_RULES = Rule(
 )
 
 
+"""
+Rules defining historical new capacity for surface and
+groundwater extraction technologies.
+Annualizes historical capacity data using HIST_CAP_DIV.
+Used in `_process_hist_cap_rules` within `add_water_supply`.
+"""
 HISTORICAL_NEW_CAPACITY_RULES = Rule(
     Base={
         "type": "historical_new_capacity",
@@ -331,17 +372,27 @@ HISTORICAL_NEW_CAPACITY_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_surfacewater",
-            "value": f"df_hist['hist_cap_sw_km3_year'] / {WS_CONST['HIST_CAP_DIV']}",
+            "value": "df_hist['hist_cap_sw_km3_year'] / {HIST_CAP_DIV}".format(
+                **WS_CONST
+            ),
         },
         {
             "condition": "default",
             "technology": "extract_groundwater",
-            "value": f"df_hist['hist_cap_gw_km3_year'] / {WS_CONST['HIST_CAP_DIV']}",
+            "value": "df_hist['hist_cap_gw_km3_year'] / {HIST_CAP_DIV}".format(
+                **WS_CONST
+            ),
         },
     ],
 )
 
 
+"""
+Rules defining outputs for water extraction technologies
+(surface, ground, fossil ground, saline). Specifies the destination commodity and
+level for each extraction type.
+Used in `_process_extraction_output_rules` within `add_water_supply`.
+"""
 EXTRACTION_OUTPUT_RULES = Rule(
     Base={
         "type": "output",
@@ -414,6 +465,11 @@ EXTRACTION_OUTPUT_RULES = Rule(
     ],
 )
 
+"""
+Rules defining the output for the dummy 'basin_to_reg' technology.
+This represents the transfer of freshwater from basin level to regional supply level.
+Used in `_process_dummy_basin_output_rules` within `add_water_supply`.
+"""
 DUMMY_BASIN_TO_REG_OUTPUT_RULES = Rule(
     Base={
         "type": "output",
@@ -438,6 +494,11 @@ DUMMY_BASIN_TO_REG_OUTPUT_RULES = Rule(
     ],
 )
 
+"""
+Rules defining variable costs for water supply technologies.
+Includes costs for the 'basin_to_reg' transfer and skipped costs for extraction.
+Used in `_process_var_cost_rules` within `add_water_supply`.
+"""
 DUMMY_VARIABLE_COST_RULES = Rule(
     Base={
         "type": "var_cost",
@@ -475,6 +536,10 @@ DUMMY_VARIABLE_COST_RULES = Rule(
 )
 
 
+"""
+Rule defining the fixed O&M costs for fossil groundwater extraction.
+Used in `_process_fix_cost_rules` within `add_water_supply`.
+"""
 FIXED_COST_RULES = Rule(
     Base={
         "type": "fix_cost",
@@ -494,6 +559,11 @@ FIXED_COST_RULES = Rule(
     ],
 )
 
+"""
+Rule defining environmental flow requirements as a
+demand on surfacewater basin resources.
+Used in `add_e_flow`.
+"""
 E_FLOW_RULES_DMD = Rule(
     Base={
         "type": "demand",
@@ -512,6 +582,11 @@ E_FLOW_RULES_DMD = Rule(
     ],
 )
 
+"""
+Rule defining environmental flow requirements as a lower bound on the activity
+of the 'return_flow' technology.
+Used in `add_e_flow`.
+"""
 E_FLOW_RULES_BOUND = Rule(
     Base={
         "type": "bound_activity_lo",

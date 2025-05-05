@@ -7,7 +7,7 @@ from message_ix_models.model.water.data.irrigation_rules import (
     INPUT_IRRIGATION_RULES,
     OUTPUT_IRRIGATION_RULES,
 )
-from message_ix_models.model.water.dsl_engine import run_standard
+from message_ix_models.model.water.dsl_engine import build_standard
 from message_ix_models.model.water.utils import safe_concat
 from message_ix_models.util import package_data_path
 
@@ -57,7 +57,7 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     current_args = {"rule_dfs": df_node}
     for rule in INPUT_IRRIGATION_RULES.get_rule():
         inp_list.append(
-            run_standard(r=rule, base_args=current_args, extra_args=extra_args)
+            build_standard(r=rule, base_args=current_args, extra_args=extra_args)
         )
 
     inp = safe_concat(inp_list)
@@ -68,7 +68,7 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     irr_out_list = []
     for rule in OUTPUT_IRRIGATION_RULES.get_rule():
         irr_out_list.append(
-            run_standard(r=rule, base_args=current_args, extra_args=extra_args)
+            build_standard(r=rule, base_args=current_args, extra_args=extra_args)
         )
 
     irr_out = safe_concat(irr_out_list)
