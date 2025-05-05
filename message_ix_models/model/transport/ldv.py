@@ -363,24 +363,33 @@ def get_dummy(context) -> "ParameterData":
     return data
 
 
-def stock(c: Computer) -> Key:
-    """Prepare `c` to compute base-period stock and historical sales."""
+def stock(c: Computer, *, margin: float = 0.2) -> Key:
+    """Prepare `c` to compute base-period stock and historical sales.
+
+    Parameters
+    ----------
+    margin :
+        Fractional margin by which to increase the resulting sales values. Because these
+        values are used to compute ``historical_new_capacity`` and
+        ``bound_new_capacity_{lo,up}``, this relaxes the resulting constraints on LDV
+        technologies in the first model period.
+    """
     from .key import ldv_ny
 
-    k = Key("stock:n-y:LDV")
+    k = Keys(stock="stock:n-y:LDV", sales="sales:n-t-y:LDV", result="sales:nl-t-yv:LDV")
 
     # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
     #   load factor (occupancy) to obtain implied stock.
     # - Correct units: "load factor ldv:n-y" is dimensionless, should be
     #   passenger/vehicle
     # - Select only the base-period value.
-    c.add(k[0], "div", ldv_ny + "total", activity_ldv_full)
-    c.add(k[1], "div", k[0], "load factor ldv:n-y:exo")
-    c.add(k[2], "div", k[1], genno.Quantity(1.0, units="passenger / vehicle"))
-    c.add(k[3] / "y", "select", k[2], "y0::coord")
+    c.add(k.stock[0], "div", ldv_ny + "total", activity_ldv_full)
+    c.add(k.stock[1], "div", k.stock[0], exo.load_factor_ldv / "scenario")
+    c.add(k.stock[2], "div", k.stock[1], genno.Quantity(1.0, units="passenger/vehicle"))
+    c.add(k.stock[3] / "y", "select", k.stock[2], "y0::coord")
 
     # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
-    c.add("stock:n-t:LDV", "mul", k[3] / "y", exo.t_share_ldv)
+    c.add(k.stock, "mul", k.stock[3] / "y", exo.t_share_ldv)
 
     # TODO Move the following 4 calls to .build.add_structure() or similar
     # Identify the subset of periods up to and including y0
@@ -399,25 +408,18 @@ def stock(c: Computer) -> Key:
 
     # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
     # multi-year periods)
-    c.add("sales fraction:n-t-y:LDV", "sales_fraction_annual", exo.age_ldv)
+    c.add(k.sales["fraction"], "sales_fraction_annual", exo.age_ldv)
     # Absolute sales in preceding years
-    c.add("sales:n-t-y:LDV+annual", "mul", "stock:n-t:LDV", "sales fraction:n-t-y:LDV")
+    c.add(k.sales["annual"], "mul", k.stock, k.sales["fraction"], 1.0 + margin)
     # Aggregate to model periods; total sales across the period
-    c.add(
-        "sales:n-t-y:LDV+total",
-        "aggregate",
-        "sales:n-t-y:LDV+annual",
-        "y::annual agg",
-        keep=False,
-    )
+    c.add(k.sales["total"], "aggregate", k.sales["annual"], "y::annual agg", keep=False)
     # Divide by duration_period for the equivalent of CAP_NEW/historical_new_capacity
-    c.add("sales:n-t-y:LDV", "div", "sales:n-t-y:LDV+total", "duration_period:y")
+    c.add(k.sales, "div", k.sales["total"], "duration_period:y")
 
     # Rename dimensions to match those expected in prepare_computer(), above
-    k_result = Key("sales:nl-t-yv:LDV")
-    c.add(k_result, "rename_dims", "sales:n-t-y:LDV", name_dict={"n": "nl", "y": "yv"})
+    c.add(k.result, "rename_dims", k.sales, name_dict={"n": "nl", "y": "yv"})
 
-    return k_result
+    return k.result
 
 
 def usage_data(
