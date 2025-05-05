@@ -1059,7 +1059,7 @@ def gen_bof_pig_input(s_info):
         .pipe(broadcast, year_vtg=years)
     )
     df_all = pd.concat([df, df_other, df_chn, df_eeu, df3])
-    df_all = df_all[df_all["year_act"] - df_all["year_vtg"] < 30]
+    df_all = df_all[df_all["year_act"] - df_all["year_vtg"] <= 30]
     return {"input": df_all}
 
 
