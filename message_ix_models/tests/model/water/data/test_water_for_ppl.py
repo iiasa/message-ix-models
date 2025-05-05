@@ -8,7 +8,7 @@ from message_ix import Scenario
 from message_ix_models import ScenarioInfo, testing
 
 # from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.data.water_for_ppl import (
+from message_ix_models.model.water.data.water_for_ppl_legacy import (
     apply_act_cap_multiplier,
     cool_tech,
     cooling_shares_SSP_from_yaml,
