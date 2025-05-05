@@ -396,6 +396,9 @@ def test_replace_par_data(caplog, test_context):
     # Generate a scenario. This scenario has 3 data points in each of "input" and
     # "output" with technology="transport_from_seattle".
     s = make_dantzig(test_context.get_platform())
+    from icecream import ic
+
+    ic(s.url, s.set("node"))
 
     # Arguments to replace_par_data()
     parameters = ["input", "output"]
@@ -419,6 +422,9 @@ def test_replace_par_data(caplog, test_context):
 def test_strip_par_data(caplog, test_context):
     """Test the "dry run" feature of :func:`.strip_par_data`."""
     s = make_dantzig(test_context.get_platform())
+    from icecream import ic
+
+    ic(s.url, s.set("node"))
 
     N = len(s.par("output"))
     strip_par_data(s, "technology", "canning_plant", dry_run=True, dump=dict())

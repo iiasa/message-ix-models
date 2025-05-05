@@ -3,6 +3,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 import pint
 from iam_units import registry
+from icecream import ic
 
 from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.config import Config
@@ -31,3 +32,5 @@ Context()
 
 # Use this finder only if others fail
 sys.meta_path.append(MessageDataFinder())
+
+ic.configureOutput(includeContext=True)

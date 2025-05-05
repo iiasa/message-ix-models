@@ -175,6 +175,9 @@ def test_simulated(request, test_context, build, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context, build)
+    from icecream import ic
+
+    ic(rep.graph["scenario"].url, rep.graph["scenario"].set("node"))
 
     # A quantity for a MESSAGEix variable was added and can be retrieved
     k = rep.full_key("ACT")
