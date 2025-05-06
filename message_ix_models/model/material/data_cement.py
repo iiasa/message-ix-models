@@ -295,7 +295,7 @@ def gen_grow_cap_up(s_info, ssp):
 
 def read_furnace_2020_bound():
     df = pd.read_csv(package_data_path("material", "cement", "cement_bound_2020.csv"))
-    return {"bound_activity_lo": df}
+    return {"bound_activity_lo": df, "bound_activity_up": df}
 
 
 def gen_clinker_ratios(s_info):
