@@ -294,7 +294,13 @@ def gen_grow_cap_up(s_info, ssp):
 
 
 def read_furnace_2020_bound():
-    df = pd.read_csv(package_data_path("material", "cement", "cement_bound_2020.csv"))
+    df2020 = pd.read_csv(
+        package_data_path("material", "cement", "cement_bound_2020.csv")
+    )
+    df2025 = pd.read_csv(
+        package_data_path("material", "cement", "cement_bound_2025.csv")
+    )
+    df = pd.concat([df2020, df2025])
     return {"bound_activity_lo": df, "bound_activity_up": df}
 
 
