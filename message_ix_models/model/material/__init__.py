@@ -160,7 +160,7 @@ def build(
     scenario.remove_par("bound_activity_lo", df)
     scenario.commit("remove sp_el_I min bound on RCPA in 2020")
 
-    adjust_demand_param(scenario, context["infrastructure_scenario"])
+    # adjust_demand_param(scenario, context["infrastructure_scenario"])
 
     return scenario
 
