@@ -1,0 +1,131 @@
+# Configuration for message_data.tools.utilities.generate_inter_pipe
+# Fill in the config to generate bare sheets to collect inter pipe data
+
+# Put the scenario information here. 
+scenario:
+  start_model: 
+  #  - SSP_SSP2_v2.1
+  # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
+  start_scen:
+    - baseline_DEFAULT
+  target_model:
+    - MESSAGEix-GLOBIOM_GEI5
+  target_scen:
+    - baseline_uhv
+
+# How many nodes are there?
+# nodes:
+#   - R11
+#   - R12
+#   - R5 
+# Except R5, determined by the nodes in the start_scen. 
+
+# How would you name the pipe technologies?
+# The pipe technology is the technology that is used to transport the commodity from one node to another.
+pipe_tech:
+  tech_mother_pipe: # What is the mother pipe technology?
+    - elec_t_d
+  tech_shorten_mother_pipe: # What is the shorten name of the mother pipe technology?
+    - elec
+  tech_suffix_pipe: # What is the suffix of the pipe technology?
+    - uhv
+  tech_number_pipe: # How many types for pipe technologies (with different investment costs) are there?
+    - 1
+  commodity_mother_pipe: # What is the mother commodity?
+    - electr
+  commodity_suffix_pipe: # What is the suffix of the commodity?
+    - gei
+  level_mother_pipe: # What is the mother level?
+    - secondary
+  level_shorten_mother_pipe: # What is the shorten name of the mother level?
+    - elec
+  level_suffix_pipe: # What is the suffix of the level?
+    - gei
+
+  # TODO: Par list reading from config
+  # feature_pipe: # What are the features of the pipe technology that need to be additionally defined?
+  #   - input
+  #   - output
+  #   - technical_lifetime
+  #   - inv_cost
+  #   - fix_cost
+  #   - var_cost
+  #   - capacity_factor
+
+  # The balance relation (pipe -> pipe_group, i.e, grouping specific exporting pipe technologies) will be generated automatically. 
+
+# How would you name the pipe supply technologies?
+# The pipe supply technology is the technology that feed commodity to the pipe technology.
+pipe_supplytech:
+  tech_mother_supply: # What is the mother pipe supply technology?
+    - solar_res1
+    - solar_res2
+    - solar_res3
+    - solar_res4
+    - solar_res5
+    - solar_res6
+    - solar_res7
+    - solar_res8
+    - solar_cv1
+    - solar_cv2
+    - solar_cv3
+    - solar_cv4
+    # - solar_pv_ppl 
+    - wind_res1
+    - wind_res2
+    - wind_res3
+    - wind_res4
+    - wind_cv1
+    - wind_cv2
+    - wind_cv3
+    - wind_cv4
+    # - wind_ppl 
+    - hydro_lc
+    # - hydro_hc
+    - hydro_ppl
+    # historical technologies not included
+  tech_suffix_supply: # What is the suffix of the pipe supply technology?
+    - gei
+  tech_number_supply: # How many types for pipe supply technologies (with different investment costs) are there?
+    - 1
+  commodity_mother_supply: # What is the mother commodity?
+    - electr
+  commodity_suffix_supply: # What is the suffix of the commodity?
+    - gei
+  level_mother_supply: # What is the mother level?
+    - final
+  level_mother_shorten_supply: # What is the shorten name of the mother level?
+    - elec
+  level_suffix_supply: # What is the suffix of the level?
+    - gei
+  # Check: if level_mother_shorten_supply_level_suffix_supply is same as 
+  # level_shorten_mother_pipe_level_suffix_pipe
+
+  # Feature_supply: # What are the features of the pipe supply technology that need to be additionally defined?
+    - input
+    - output
+    - technical_lifetime
+    - inv_cost
+    - fix_cost
+    - var_cost
+    - capacity_factor
+
+  # The balance relation (pipe_supply -> pipe, i.e, pipe_supply techs contribute to pipe) will be generated automatically. 
+
+first_model_year:
+  - 2030
+
+spec: # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
+  spec_tech_pipe: # True or False.
+    - True # A sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
+  spec_tech_pipe_group: 
+    - True # A sheet to specify groups of pipe technologies. 
+  spec_supply_pipe_group: 
+    - True # A sheet to specify groups of pipe supply technologies.     
+    
+
+
+
+
+
+
