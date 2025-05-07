@@ -136,6 +136,10 @@ class TestScenarioInfo:
         mp = test_context.get_platform()
         scenario = make_dantzig(mp, multi_year=True)
 
+        from icecream import ic
+
+        ic(scenario.url, scenario.set("node"))
+
         # ScenarioInfo can be initialized from the scenario
         info = ScenarioInfo(scenario)
 

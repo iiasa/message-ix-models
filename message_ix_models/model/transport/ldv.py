@@ -6,7 +6,6 @@ from operator import itemgetter
 from typing import TYPE_CHECKING, Any, cast
 
 import genno
-import pandas as pd
 from genno import Computer, Key, Keys
 from genno.core.key import single_key
 from message_ix import make_df
@@ -24,10 +23,11 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.genno import Collector
 
+from . import util
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
 from .key import activity_ldv_full, bcast_tcl, bcast_y, exo
-from .util import EXTRAPOLATE, wildcard
+from .util import COMMON, EXTRAPOLATE, wildcard
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
@@ -41,23 +41,12 @@ log = logging.getLogger(__name__)
 #: Shorthand for tags on keys.
 Li = "::LDV+ixmp"
 
-#: Mapping from short dimension IDs to MESSAGE index names.
-DIMS = dict(
-    commodity="c",
-    level="l",
-    node_dest="n",
-    node_loc="n",
-    node_origin="n",
-    technology="t",
-    year_act="ya",
-    year_vtg="yv",
-)
-
-#: Common, fixed values for :func:`.prepare_tech_econ` and :func:`.get_dummy`.
-COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
+#: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
+#: quantities.
+DIMS = util.DIMS | dict(node_dest="n", node_loc="n", node_origin="n")
 
 #: Target key that collects all data generated in this module.
-TARGET = "transport::LDV+ixmp"
+TARGET = f"transport{Li}"
 
 
 @exo_data.register_source
@@ -224,9 +213,6 @@ def prepare_computer(c: Computer):
             fix_cost=Key("fix_cost:n-t-y:LDV+exo"),
         )
 
-    # Constraints
-    collect("constraints", constraint_data, "context")
-
     # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
     if config.ldv_stock_method == "A":
         # Data from file ldv-new-capacity.csv
@@ -377,83 +363,33 @@ def get_dummy(context) -> "ParameterData":
     return data
 
 
-def constraint_data(context) -> "ParameterData":
-    """Return constraints on light-duty vehicle technology activity and usage.
+def stock(c: Computer, *, margin: float = 0.2) -> Key:
+    """Prepare `c` to compute base-period stock and historical sales.
 
-    Responds to the :attr:`.Config.constraint` key :py:`"LDV growth_activity"`; see
-    description there.
+    Parameters
+    ----------
+    margin :
+        Fractional margin by which to increase the resulting sales values. Because these
+        values are used to compute ``historical_new_capacity`` and
+        ``bound_new_capacity_{lo,up}``, this relaxes the resulting constraints on LDV
+        technologies in the first model period.
     """
-    config: "Config" = context.transport
-
-    # Information about the target structure
-    info = config.base_model_info
-    years = info.Y[1:]
-
-    # Technologies as a hierarchical code list
-    techs = config.spec.add.set["technology"]
-    ldv_techs = techs[techs.index("LDV")].child
-
-    # All technologies in the spec, as strings
-    all_techs = list(map(str, techs))
-
-    # List of technologies to constrain, including the LDV technologies, plus the
-    # corresponding "X usage by CG" pseudo-technologies
-    constrained: list[Code] = []
-    for t in map(str, ldv_techs):
-        constrained.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
-
-    data: dict[str, pd.DataFrame] = dict()
-    for bound in "lo", "up":
-        name = f"growth_activity_{bound}"
-
-        # Retrieve the constraint value from configuration
-        value = config.constraint[f"LDV {name}"]
-
-        # Assemble the data
-        data[name] = make_df(
-            name, value=value, year_act=years, time="year", unit="-"
-        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
-
-        if bound == "lo":
-            continue
-
-        # Add initial_activity_up values allowing usage to begin in any period
-        name = f"initial_activity_{bound}"
-        data[name] = make_df(
-            name, value=1e6, year_act=years, time="year", unit="-"
-        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
-
-    # Prevent new capacity from being constructed for techs annotated
-    # "historical-only: True"
-    historical_only_techs = list(
-        filter(lambda t: t.eval_annotation("historical-only") is True, techs)
-    )
-    name = "bound_new_capacity_up"
-    data[name] = make_df(name, year_vtg=info.Y, value=0.0, unit="-").pipe(
-        broadcast, node_loc=info.N[1:], technology=historical_only_techs
-    )
-
-    return data
-
-
-def stock(c: Computer) -> Key:
-    """Prepare `c` to compute base-period stock and historical sales."""
     from .key import ldv_ny
 
-    k = Key("stock:n-y:LDV")
+    k = Keys(stock="stock:n-y:LDV", sales="sales:n-t-y:LDV", result="sales:nl-t-yv:LDV")
 
     # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
     #   load factor (occupancy) to obtain implied stock.
     # - Correct units: "load factor ldv:n-y" is dimensionless, should be
     #   passenger/vehicle
     # - Select only the base-period value.
-    c.add(k[0], "div", ldv_ny + "total", activity_ldv_full)
-    c.add(k[1], "div", k[0], "load factor ldv:n-y:exo")
-    c.add(k[2], "div", k[1], genno.Quantity(1.0, units="passenger / vehicle"))
-    c.add(k[3] / "y", "select", k[2], "y0::coord")
+    c.add(k.stock[0], "div", ldv_ny + "total", activity_ldv_full)
+    c.add(k.stock[1], "div", k.stock[0], exo.load_factor_ldv / "scenario")
+    c.add(k.stock[2], "div", k.stock[1], genno.Quantity(1.0, units="passenger/vehicle"))
+    c.add(k.stock[3] / "y", "select", k.stock[2], "y0::coord")
 
     # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
-    c.add("stock:n-t:LDV", "mul", k[3] / "y", exo.t_share_ldv)
+    c.add(k.stock, "mul", k.stock[3] / "y", exo.t_share_ldv)
 
     # TODO Move the following 4 calls to .build.add_structure() or similar
     # Identify the subset of periods up to and including y0
@@ -472,25 +408,18 @@ def stock(c: Computer) -> Key:
 
     # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
     # multi-year periods)
-    c.add("sales fraction:n-t-y:LDV", "sales_fraction_annual", exo.age_ldv)
+    c.add(k.sales["fraction"], "sales_fraction_annual", exo.age_ldv)
     # Absolute sales in preceding years
-    c.add("sales:n-t-y:LDV+annual", "mul", "stock:n-t:LDV", "sales fraction:n-t-y:LDV")
+    c.add(k.sales["annual"], "mul", k.stock, k.sales["fraction"], 1.0 + margin)
     # Aggregate to model periods; total sales across the period
-    c.add(
-        "sales:n-t-y:LDV+total",
-        "aggregate",
-        "sales:n-t-y:LDV+annual",
-        "y::annual agg",
-        keep=False,
-    )
+    c.add(k.sales["total"], "aggregate", k.sales["annual"], "y::annual agg", keep=False)
     # Divide by duration_period for the equivalent of CAP_NEW/historical_new_capacity
-    c.add("sales:n-t-y:LDV", "div", "sales:n-t-y:LDV+total", "duration_period:y")
+    c.add(k.sales, "div", k.sales["total"], "duration_period:y")
 
     # Rename dimensions to match those expected in prepare_computer(), above
-    k_result = Key("sales:nl-t-yv:LDV")
-    c.add(k_result, "rename_dims", "sales:n-t-y:LDV", name_dict={"n": "nl", "y": "yv"})
+    c.add(k.result, "rename_dims", k.sales, name_dict={"n": "nl", "y": "yv"})
 
-    return k_result
+    return k.result
 
 
 def usage_data(

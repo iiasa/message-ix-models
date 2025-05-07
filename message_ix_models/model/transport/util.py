@@ -16,6 +16,19 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: Common, fixed values for some dimensions of MESSAGE parameters.
+COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
+
+#: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
+#: quantities.
+DIMS = dict(
+    node_loc="nl",
+    year_vtg="yv",
+    year_act="ya",
+    technology="t",
+    commodity="c",
+    level="l",
+)
 
 #: Keyword arguments for :func:`genno.operator.interpolate`.
 EXTRAPOLATE = dict(kwargs=dict(fill_value="extrapolate"))

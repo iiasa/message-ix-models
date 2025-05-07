@@ -33,7 +33,11 @@ def c() -> Computer:
 @pytest.fixture
 def scenario(test_context):
     mp = test_context.get_platform()
-    yield make_dantzig(mp)
+    tmp = make_dantzig(mp)
+    from icecream import ic
+
+    ic(tmp.url, tmp.set("node"))
+    yield tmp
 
 
 def test_compound_growth():

@@ -2,7 +2,14 @@
 
 import logging
 import re
-from collections.abc import Callable, Hashable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Hashable,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from functools import reduce
 from itertools import filterfalse, product
 from typing import TYPE_CHECKING, Any, Optional, Union
@@ -37,6 +44,7 @@ log = logging.getLogger(__name__)
 __all__ = [
     "add_par_data",
     "broadcast_wildcard",
+    "call",
     "codelist_to_groups",
     "compound_growth",
     "exogenous_data",
@@ -51,6 +59,7 @@ __all__ = [
     "nodes_world_agg",
     "quantity_from_iamc",
     "remove_ts",
+    "select_allow_empty",
     "select_expand",
     "share_curtailment",
 ]
@@ -98,6 +107,11 @@ def broadcast_wildcard(
 
     # Construct a MappingAdapter and apply to `qty`
     return MappingAdapter(mapping)(qty)
+
+
+def call(callable, *args, **kwargs):
+    """Invoke a callable on other arguments."""
+    return callable(*args, **kwargs)
 
 
 def codelist_to_groups(
@@ -378,6 +392,28 @@ def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":
     assert 1 == len(unique_units)
     subset.units = unique_units[0]
     return subset.sel(Unit=unique_units[0], drop=True)
+
+
+def select_allow_empty(
+    qty: "TQuantity",
+    indexers: Mapping[Hashable, Iterable[Hashable]],
+    *,
+    inverse: bool = False,
+    drop: bool = False,
+) -> "TQuantity":
+    """:func:`genno.operator.select` allowing for missing data.
+
+    If *any* of the `indexers` are missing from `qty`, return an empty Quantity with the
+    same dimensions as `qty`.
+
+    .. todo:: Move upstream to :mod:`genno`.
+    """
+    import genno.operator
+
+    try:
+        return genno.operator.select(qty, indexers=indexers, inverse=inverse, drop=drop)
+    except KeyError:
+        return genno.Quantity([], coords={d: [] for d in qty.dims})
 
 
 def select_expand(

@@ -250,11 +250,6 @@ FR_ICE_L:
   input: {commodity: lightoil}
   report: FRT_ICE_L
 
-FR_ICG:
-  description: Internal combustion engine freight truck using natural gas
-  input: {commodity: gas}
-  report: FRT_ICG
-
 FR_ICAe:
   description: Internal combustion engine freight truck using biofuels
   input: {commodity: ethanol}
@@ -271,22 +266,34 @@ FR_FCH:
   input: {commodity: hydrogen}
   report: FRT_HFC
 
-FR_FCg:
-  description: >-
-    Hybridized fuel cell freight truck using natural gas via steam reformation
-  input: {commodity: gas}
-  report: FRT_GFC
-
-FR_FCm:
-  description: >-
-    Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
-    via steam reformation
-  input: {commodity: methanol}
-  report: FRT_MFC
-
 f road electr:
   name: Freight road vehicle powered by electricity
   input: {commodity: electr}
+
+f road gas fc:
+  description: >-
+    Hybridized fuel cell freight truck using natural gas via steam reformation.
+
+    Previous ID: FR_FCg.
+  input: {commodity: gas}
+  report: FRT_GFC
+
+f road gas ic:
+  description: >-
+    Internal combustion engine freight truck using natural gas.
+
+    Previous ID: FR_ICG.
+  input: {commodity: gas}
+  report: FRT_ICG
+
+f road methanol:
+  description: >-
+    Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
+    via steam reformation.
+
+    Previous ID: FR_FCm
+  input: {commodity: methanol}
+  report: FRT_MFC
 
 f rail electr:
   name: Freight rail powered by electricity
@@ -445,14 +452,14 @@ F ROAD:
     In MESSAGE-V, the output of all freight technologies was labelled: f-u
   child:
   - f road electr
-  - FR_FCg
+  - f road gas fc
+  - f road gas ic
+  - f road methanol
   - FR_FCH
-  - FR_FCm
   - FR_ICAe
   - FR_ICE_H
   - FR_ICE_L
   - FR_ICE_M
-  - FR_ICG
   - FR_ICH
   units: Gv km
   output: {commodity: transport F ROAD vehicle, level: useful}
@@ -519,6 +526,14 @@ P: # Passenger modes
   - AIR
   - BUS
   - LDV
+  - RAIL
+
+P ex LDV:
+  name: non-LDV passenger
+  child:
+  - 2W
+  - AIR
+  - BUS
   - RAIL
 
 transport other coal: {input: {commodity: coal}}

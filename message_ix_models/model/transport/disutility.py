@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from genno import Key, Quantity, quote
 
+from . import util
 from .key import activity_ldv_full, exo
 from .util import EXTRAPOLATE
 
@@ -10,11 +11,10 @@ if TYPE_CHECKING:
 
 # - Use y for both year_vtg and year_act. This is because the usage pseudo-
 #   technologies are ephemeral: only existing for year_vtg == year_act.
-COMMON = dict(
+COMMON = util.COMMON | dict(
     commodity="disutility",
     level="useful",  # TODO Read this from the spec or template
     mode="all",
-    time="year",
     time_origin="year",
 )
 DIMS = dict(node_loc="n", node_origin="n", technology="t", year_vtg="y", year_act="y")

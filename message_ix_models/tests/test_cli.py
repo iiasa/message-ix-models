@@ -41,6 +41,9 @@ def test_cli_export_test_data(monkeypatch, tmp_path, test_context, mix_models_cl
     platform = "local"
     mp = ixmp.Platform(platform)
     scen = make_dantzig(mp)
+    from icecream import ic
+
+    ic(scen.url, scen.set("node"))
 
     # URL
     url = f"ixmp://{platform}/{scen.model}/{scen.scenario}#{scen.version}"
