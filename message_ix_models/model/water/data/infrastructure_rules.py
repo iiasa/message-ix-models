@@ -1,13 +1,14 @@
-from message_ix_models.model.water.utils import Rule
+from message_ix_models.model.water.rules import Constants, Rule
 
 # Constants for water infrastructure rules
-WF_CONST = {
-    "IDENTITY": 1,
-    "DESALINATION_OUTPUT_VALUE": 1,
-    "DESALINATION_TECH_LIFETIME": 20,  # used a lot so defined as constant
-    "DESALINATION_VAR_COST": 100,  # same as above
-    "HIST_CAP_DIVISOR": 5,
-}
+WF_CONST_BASE_DATA = [
+    ("IDENTITY", 1, "-"),
+    ("DESALINATION_OUTPUT_VALUE", 1, "-"),
+    ("DESALINATION_TECH_LIFETIME", 20, "y"),
+    ("DESALINATION_VAR_COST", 100, "USD/km3"),
+    ("HIST_CAP_DIVISOR", 5, "-"),
+]
+WF_CONST = Constants(WF_CONST_BASE_DATA)
 
 """
 These rules are used in start_creating_input_dataframe
@@ -19,6 +20,7 @@ INPUT_DATAFRAME_STAGE1 = Rule(
         "type": "input",
         "technology": "rows[tec]",
         "unit": "-",
+        "unit_in": "-",
         "level": "rows[inlvl]",
         "commodity": "rows[incmd]",
         "pipe": {
@@ -55,17 +57,19 @@ INPUT_DATAFRAME_STAGE1 = Rule(
             "pipe": {"flag_node_loc": True},
         },
     ],
+    constants_manager=WF_CONST,
 )
 """
 These rules are used in prepare_input_dataframe,
 they are grouped together because
-they are all used in the same function
+they are all used in the same function. GWh/MCM is the unit.
 """
 INPUT_DATAFRAME_STAGE2 = Rule(
     Base={
         "type": "input",
         "technology": "rows[tec]",
-        "unit": "-",
+        "unit": "GWh/MCM",
+        "unit_in": "GWh/MCM",
         "level": "final",
         "commodity": "electr",
         "mode": "Mf",
@@ -99,6 +103,7 @@ INPUT_DATAFRAME_STAGE2 = Rule(
             "mode": "M1",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -111,6 +116,7 @@ OUTPUT_RULES = Rule(
     Base={
         "type": "output",
         "unit": "-",
+        "unit_in": "-",
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
@@ -154,6 +160,7 @@ OUTPUT_RULES = Rule(
             "mode": "Mf",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -164,6 +171,7 @@ CAP_RULES = Rule(
         "type": "capacity_factor",
         "technology": "rows[tec]",
         "unit": "%",
+        "unit_in": "%",
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
@@ -178,6 +186,7 @@ CAP_RULES = Rule(
             "value": "rows[capacity_factor_mid]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -188,6 +197,7 @@ TL_RULES = Rule(
         "type": "technical_lifetime",
         "technology": "rows[tec]",
         "unit": "y",
+        "unit_in": "y",
         "pipe": {
             "flag_broadcast": True,
             "flag_same_node": True,
@@ -200,6 +210,7 @@ TL_RULES = Rule(
             "value": "rows[technical_lifetime_mid]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -209,7 +220,8 @@ INV_COST_RULES = Rule(
     Base={
         "type": "inv_cost",
         "technology": "rows[tec]",
-        "unit": "USD/km3",
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
             "flag_node_loc": True,
@@ -221,6 +233,7 @@ INV_COST_RULES = Rule(
             "value": "rows[investment_mid]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -230,7 +243,8 @@ FIX_COST_RULES = Rule(
     Base={
         "type": "fix_cost",
         "technology": "rows[tec]",
-        "unit": "USD/km3",
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
@@ -243,6 +257,7 @@ FIX_COST_RULES = Rule(
             "value": "rows[fix_cost_mid]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 """
 Variable operating cost rules for water infrastructure technologies under SDG
@@ -251,7 +266,8 @@ and baseline conditions, which includes baseline and baseline distributed.
 VAR_COST_RULES = Rule(
     Base={
         "type": "var_cost",
-        "unit": "USD/km3",
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
@@ -291,6 +307,7 @@ VAR_COST_RULES = Rule(
             "mode": "Mf",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -299,7 +316,8 @@ Output rule for desalination facilities at basin level.
 DESALINATION_OUTPUT_RULES = Rule(
     Base={
         "type": "output",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
         "level": "water_avail_basin",
         "commodity": "salinewater_basin",
         "mode": "M1",
@@ -316,9 +334,10 @@ DESALINATION_OUTPUT_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_salinewater_basin",
-            "value": WF_CONST["IDENTITY"],
+            "value": "IDENTITY",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -328,6 +347,7 @@ TL_DESALINATION_RULES = Rule(
     Base={
         "type": "technical_lifetime",
         "unit": "y",
+        "unit_in": "y",
         "pipe": {
             "flag_broadcast": True,
             "flag_same_node": True,
@@ -338,7 +358,7 @@ TL_DESALINATION_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_salinewater_basin",
-            "value": WF_CONST["DESALINATION_TECH_LIFETIME"],
+            "value": "DESALINATION_TECH_LIFETIME",
         },
         {
             "condition": "default",
@@ -346,6 +366,7 @@ TL_DESALINATION_RULES = Rule(
             "value": "df_desal[lifetime_mid]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -357,7 +378,8 @@ DESALINATION_HISTORICAL_CAPACITY_RULES = Rule(
         "node_loc": "'B' + df_hist[BCU_name]",
         "technology": "df_hist[tec_type]",
         "year_vtg": "df_hist[year]",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
         "pipe": {
             "flag_node_loc": True,
         },
@@ -368,6 +390,7 @@ DESALINATION_HISTORICAL_CAPACITY_RULES = Rule(
             "value": "df_hist[cap_km3_year]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -379,7 +402,8 @@ DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES = Rule(
         "node_loc": "'B' + df_proj[BCU_name]",
         "technology": "extract_salinewater_basin",
         "year_act": "df_proj[year]",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
         "pipe": {
             "flag_node_loc": True,
         },
@@ -390,6 +414,7 @@ DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES = Rule(
             "value": "df_proj[cap_km3_year]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -401,7 +426,8 @@ DESALINATION_BOUND_LO_RULES = Rule(
         "node_loc": "'B' + df_bound[BCU_name]",
         "technology": "df_bound[tec_type]",
         "mode": "M1",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
         "pipe": {
             "flag_broadcast": True,
             "flag_time": True,
@@ -413,6 +439,7 @@ DESALINATION_BOUND_LO_RULES = Rule(
             "value": "df_bound[cap_km3_year]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -422,7 +449,8 @@ DESALINATION_INV_COST_RULES = Rule(
     Base={
         "type": "inv_cost",
         "technology": "df_desal[tec]",
-        "unit": "USD/km3",
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
             "flag_node_loc": True,
@@ -434,6 +462,7 @@ DESALINATION_INV_COST_RULES = Rule(
             "value": "df_desal[inv_cost_mid]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -443,7 +472,8 @@ FIX_COST_DESALINATION_RULES = Rule(
     Base={
         "type": "fix_cost",
         "technology": "df_desal[tec]",
-        "unit": "USD/km3",
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
@@ -456,6 +486,7 @@ FIX_COST_DESALINATION_RULES = Rule(
             "value": "df_desal[fix_cost_mid]",
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -465,7 +496,8 @@ SKIP here was previously commented out, can be removed if not needed.
 VAR_COST_DESALINATION_RULES = Rule(
     Base={
         "type": "var_cost",
-        "unit": "USD/km3",
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
             "flag_map_yv_ya_lt": True,
@@ -483,11 +515,12 @@ VAR_COST_DESALINATION_RULES = Rule(
         {
             "condition": "SKIP",
             "technology": "extract_salinewater_basin",
-            "value": WF_CONST["DESALINATION_VAR_COST"],
+            "value": "DESALINATION_VAR_COST",
             "mode": "M1",
             "pipe": {"flag_time": False},
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -497,6 +530,7 @@ DESALINATION_INPUT_RULES2 = Rule(
     Base={
         "type": "input",
         "unit": "-",
+        "unit_in": "-",
         "mode": "M1",
         "pipe": {
             "flag_broadcast": True,
@@ -528,7 +562,7 @@ DESALINATION_INPUT_RULES2 = Rule(
         {
             "condition": "technology",
             "technology": "rows[tec]",
-            "value": WF_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "level": "rows[inlvl]",
             "commodity": "rows[incmd]",
             "pipe": {
@@ -538,6 +572,7 @@ DESALINATION_INPUT_RULES2 = Rule(
             },
         },
     ],
+    constants_manager=WF_CONST,
 )
 
 """
@@ -547,6 +582,7 @@ DESALINATION_OUTPUT_RULES2 = Rule(
     Base={
         "type": "output",
         "unit": "-",
+        "unit_in": "-",
         "mode": "M1",
         "pipe": {
             "flag_broadcast": True,
@@ -561,9 +597,10 @@ DESALINATION_OUTPUT_RULES2 = Rule(
         {
             "condition": "default",
             "technology": "rows[tec]",
-            "value": WF_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "level": "rows[outlvl]",
             "commodity": "rows[outcmd]",
         },
     ],
+    constants_manager=WF_CONST,
 )

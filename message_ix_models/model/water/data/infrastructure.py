@@ -112,6 +112,7 @@ def prepare_input_dataframe(
         dfs = {"rows": rows, "df_node": df_node}
         args["rule_dfs"] = dfs
         is_tech = rows["tec"] in techs
+        # INPUT_DATAFRAME_STAGE2.change_unit("GWh/km3")
         for rule in INPUT_DATAFRAME_STAGE2.get_rule():
             match (context.SDG, rule["condition"], is_tech):
                 case _, "!baseline", True if context.SDG != "baseline":
@@ -258,6 +259,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     # Investment costs
     df_inv = df.dropna(subset=["investment_mid"])
     extra_args = {"year_vtg": year_wat}
+    # INV_COST_RULES.change_unit("USD/km3")
     for rule in INV_COST_RULES.get_rule():
         current_args = args_out.copy()
         current_args["rule_dfs"] = df_inv
@@ -269,6 +271,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     # Fixed costs
     # Prepare data frame for fix_cost
     fix_cost_list = [pd.DataFrame([])]
+    # FIX_COST_RULES.change_unit("USD/km3")
     for rule in FIX_COST_RULES.get_rule():
         for index, rows in df_inv.iterrows():
             current_args = args_out.copy()
@@ -367,6 +370,7 @@ def _add_var_cost(
     # baseline_dist_p1 and baseline_dist_p2
     # Handle non-baseline case
     rows = pd.Series()  # dummy series
+    # VAR_COST_RULES.change_unit("USD/km3")
     for rule in VAR_COST_RULES.get_rule():
         args = {**args, **rule["pipe"]}
         match (sdg, rule["condition"]):
@@ -422,6 +426,7 @@ def _calculate_desal_output(
 ):
     """Calculate desalination output parameters."""
     out_df = [pd.DataFrame([])]
+    # DESALINATION_OUTPUT_RULES.change_unit("km3/year")
     for rule in DESALINATION_OUTPUT_RULES.get_rule():
         output_args = {
             "rule_dfs": df_desal,
@@ -450,6 +455,7 @@ def _calculate_desal_tl(df_desal, df_node, year_wat):
 
 def _calculate_desal_hist_cap(df_hist, df_node):
     """Calculate desalination historical capacity parameters."""
+    # DESALINATION_HISTORICAL_CAPACITY_RULES.change_unit("km3/year")
     for rule in DESALINATION_HISTORICAL_CAPACITY_RULES.get_rule():
         hist_cap_args = {
             "rule_dfs": df_hist,
@@ -465,6 +471,7 @@ def _calculate_desal_hist_cap(df_hist, df_node):
 
 def _calculate_desal_bound_up(df_proj, df_node):
     """Calculate desalination upper bound capacity parameters."""
+    # DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES.change_unit("km3/year")
     for rule in DESALINATION_BOUND_TOTAL_CAPACITY_UP_RULES.get_rule():
         bound_up_args = {
             "rule_dfs": df_proj,
@@ -482,6 +489,7 @@ def _calculate_desal_bound_up(df_proj, df_node):
 def _calculate_desal_inv_cost(df_desal, df_node, year_wat):
     """Calculate desalination investment cost parameters."""
     inv_cost_list = [pd.DataFrame([])]
+    # DESALINATION_INV_COST_RULES.change_unit("USD/km3")
     for rule in DESALINATION_INV_COST_RULES.get_rule():
         inv_cost_args = {
             "rule_dfs": df_desal,
@@ -505,6 +513,7 @@ def _calculate_desal_fix_var_cost(
         node_loc = df_node["node"]
 
         # Fixed costs
+        # FIX_COST_DESALINATION_RULES.change_unit("USD/km3")
         for rule in FIX_COST_DESALINATION_RULES.get_rule():
             fix_cost_args = {
                 "rule_dfs": rows,
@@ -516,6 +525,7 @@ def _calculate_desal_fix_var_cost(
             fix_cost_list.append(build_standard(r=rule, base_args=fix_cost_args))
 
         # Variable cost
+        # VAR_COST_DESALINATION_RULES.change_unit("USD/km3")
         for rule in VAR_COST_DESALINATION_RULES.get_rule():
             var_cost_args = {
                 "rule_dfs": rows,
@@ -610,7 +620,7 @@ def _calculate_desal_input_output(
 def _calculate_desal_bound_lo(df_hist, series_sub_time, year_wat):
     """Calculate desalination lower bound activity parameters."""
     df_bound = df_hist[df_hist["year"] == 2015]
-
+    # DESALINATION_BOUND_LO_RULES.change_unit("km3/year")
     for rule in DESALINATION_BOUND_LO_RULES.get_rule():
         bound_lo_args = {
             "rule_dfs": df_bound,
