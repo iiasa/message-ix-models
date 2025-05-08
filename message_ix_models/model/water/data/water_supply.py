@@ -142,6 +142,8 @@ def _process_cooling_supply(
         "rule_dfs": {"df_node": dummy_df, "runtime_vals": {"year_wat": year_wat}},
         "node_loc": node_region,
     }  # no dfs used in cooling rules
+
+    # COOLING_SUPPLY_RULES.change_unit("km3")
     for r in COOLING_SUPPLY_RULES.get_rule():
         df_rule = build_standard(r, base_cooling)
         cooling_outputs.append(df_rule)
@@ -246,6 +248,7 @@ def _process_extraction_output_rules(
 # Helper for processing historical new capacity rules
 def _process_hist_cap_rules(df_hist: pd.DataFrame) -> pd.DataFrame:
     """Processes historical new capacity rules."""
+    # HISTORICAL_NEW_CAPACITY_RULES.change_unit("km3/year")
     return safe_concat(
         [
             build_standard(r, {"rule_dfs": df_hist})
@@ -293,6 +296,7 @@ def _process_fix_cost_rules(
         "node_loc": df_node["node"],
         "broadcast_year": yv_ya_gw,
     }
+    # FIXED_COST_RULES.change_unit("USD/km3")
     return safe_concat(
         [build_standard(r, base_fix_cost) for r in FIXED_COST_RULES.get_rule()]
     )
@@ -323,6 +327,7 @@ def _process_tl_rules(df_node: pd.DataFrame, year_wat: tuple) -> pd.DataFrame:
 # Helper for processing investment cost rules
 def _process_inv_cost_rules(df_node: pd.DataFrame, year_wat: tuple) -> pd.DataFrame:
     """Processes investment cost rules."""
+    # INVESTMENT_COST_RULES.change_unit("USD/km3")
     base_inv = {"rule_dfs": df_node, "node_loc": df_node["node"]}
     return safe_concat(
         [
@@ -557,6 +562,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     df_x = pd.read_csv(PATH)
 
     eflow_dmd_df = []
+    # E_FLOW_RULES_DMD.change_unit("km3/year")
     for r in E_FLOW_RULES_DMD.get_rule():
         dmd_df = build_standard(
             r,
@@ -593,6 +599,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     if context.SDG != "baseline":
         # dataframe to put constraints on env flows
         eflow_df = []
+        # E_FLOW_RULES_BOUND.change_unit("km3/year")
         for r in E_FLOW_RULES_BOUND.get_rule():
             base_args = {
                 "rule_dfs": df_env,

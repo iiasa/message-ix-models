@@ -1,33 +1,24 @@
-from message_ix_models.model.water.utils import Rule
+from message_ix_models.model.water.rules import Constants, Rule
 
-# ----------------- DSL rule templates -----------------
-# these templates are used to declare the supply transformation logic.
-# dynamic values (e.g. years, node locations) are filled in within j.
+# Base definitions of constants
+WS_CONST_BASE_DATA = [
+    ("IDENTITY", 1, "-"),
+    ("SW_ELEC_IN", 0.018835616, "-"),  # ratio so no unit
+    ("GNW_ADD_ELEC_IN", 0.043464579, "-"),  # GNW to avoid confusion w GW
+    ("FOSSIL_GNW_ELEC_MULT", 2, "-"),
+    ("SW_LIFETIME", 50, "y"),
+    ("GNW_LIFETIME", 20, "y"),
+    ("SW_INV_COST", 155.57, "USD/km3"),
+    ("GNW_INV_COST", 54.52, "USD/km3"),
+    ("FOSSIL_GNW_INV_MULT", 150, "-"),
+    ("HIST_CAP_DIV", 5, "-"),
+    ("BASIN_REG_VAR_COST", 20, "USD/km3"),
+    ("SW_VAR_COST", 0.0001, "USD/km3"),
+    ("GNW_VAR_COST", 0.001, "USD/km3"),
+    ("FOSSIL_GNW_FIX_COST", 300, "USD/km3"),
+]
 
-"""
-Water Supply Constants
-"""
-WS_CONST = {
-    # Input/Output Coefficients (Dimensionless)
-    "IDENTITY": 1,
-    "SW_ELEC_IN": 0.018835616,  # Surfacewater electricity input
-    "GW_ADD_ELEC_IN": 0.043464579,  # Added to depth-dependent pumping cost
-    "FOSSIL_GW_ELEC_MULT": 2,  # Multiplies (depth-dependent + additional) GW cost
-    "SW_LIFETIME": 50,  # Technical Lifetimes (Years)
-    "GW_LIFETIME": 20,  # Also applies to fossil GW
-    # Investment Costs (USD/km3 annual capacity)
-    "SW_INV_COST": 155.57,  # Surfacewater investment cost
-    "GW_INV_COST": 54.52,  # Groundwater investment cost
-    "FOSSIL_GW_INV_MULT": 150,  # Multiplies GW investment cost
-    # Historical Capacity Calculation
-    "HIST_CAP_DIV": 5,  # Divisor for annualizing historical capacity
-    # Variable Costs (USD/km3)
-    "BASIN_REG_VAR_COST": 20,  # Basin to region variable cost
-    "SW_VAR_COST": 0.0001,  # Note: Rule marked as SKIP
-    "GW_VAR_COST": 0.001,  # Note: Rule marked as SKIP
-    # Fixed Costs (USD/km3 annual capacity)
-    "FOSSIL_GW_FIX_COST": 300,  # Fossil groundwater fixed cost
-}
+WS_CONST = Constants(WS_CONST_BASE_DATA)
 
 
 """
@@ -35,12 +26,14 @@ Rules for slack technologies
 (return_flow, gw_recharge, basin_to_reg, salinewater_return).
 Defines input parameters for these technologies.
 Used in `_process_slack_rules` within `add_water_supply`.
+All units are dimensionless.
 """
 SLACK_TECHNOLOGY_RULES = Rule(
     Base={
         "type": "input",
         "condition": "Nexus",
         "unit": "-",
+        "unit_in": "-",
         "pipe": {
             "flag_broadcast": True,
             "flag_time": True,
@@ -48,11 +41,8 @@ SLACK_TECHNOLOGY_RULES = Rule(
     },
     Diff=[
         {
-            "type": "input",
-            "condition": "Nexus",
             "technology": "return_flow",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "-",
+            "value": "IDENTITY",
             "level": "water_avail_basin",
             "commodity": "surfacewater_basin",
             "mode": "M1",
@@ -65,11 +55,8 @@ SLACK_TECHNOLOGY_RULES = Rule(
             },
         },
         {
-            "type": "input",
-            "condition": "Nexus",
             "technology": "gw_recharge",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "-",
+            "value": "IDENTITY",
             "level": "water_avail_basin",
             "commodity": "groundwater_basin",
             "mode": "M1",
@@ -82,11 +69,8 @@ SLACK_TECHNOLOGY_RULES = Rule(
             },
         },
         {
-            "type": "input",
-            "condition": "Nexus",
             "technology": "basin_to_reg",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "-",
+            "value": "IDENTITY",
             "level": "water_supply_basin",
             "commodity": "freshwater_basin",
             "mode": "df_node[mode]",
@@ -97,11 +81,9 @@ SLACK_TECHNOLOGY_RULES = Rule(
             },
         },
         {
-            "type": "input",
             "condition": "SKIP",
             "technology": "salinewater_return",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "-",
+            "value": "IDENTITY",
             "level": "water_avail_basin",
             "commodity": "salinewater_basin",
             "mode": "M1",
@@ -116,6 +98,7 @@ SLACK_TECHNOLOGY_RULES = Rule(
             },
         },
     ],
+    constants_manager=WS_CONST,
 )
 
 
@@ -124,12 +107,14 @@ Rules defining outputs for cooling-related water extraction technologies.
 Specifies the output commodity and level for surface, ground,
 and saline water extraction.
 Used in `_process_cooling_supply` within `add_water_supply`.
+Input unit assumed to be km3.
 """
 COOLING_SUPPLY_RULES = Rule(
     Base={
         "type": "output",
-        "value": WS_CONST["IDENTITY"],
-        "unit": "km3",
+        "value": "IDENTITY",
+        "unit": "MCM",
+        "unit_in": "km3",
         "year_vtg": "runtime_vals[year_wat]",
         "year_act": "runtime_vals[year_wat]",
         "mode": "M1",
@@ -162,6 +147,7 @@ COOLING_SUPPLY_RULES = Rule(
             "commodity": "saline_ppl",
         },
     ],
+    constants_manager=WS_CONST,
 )
 
 """
@@ -175,6 +161,7 @@ EXTRACTION_INPUT_RULES = Rule(
     Base={
         "type": "input",
         "unit": "-",
+        "unit_in": "-",
         "mode": "M1",
     },
     Diff=[
@@ -182,7 +169,7 @@ EXTRACTION_INPUT_RULES = Rule(
             "condition": "default",
             "technology": "extract_surfacewater",
             "level": "water_avail_basin",
-            "value": WS_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "commodity": "surfacewater_basin",
             "mode": "M1",
             "node_origin": "df_node[node]",
@@ -197,7 +184,7 @@ EXTRACTION_INPUT_RULES = Rule(
             "condition": "default",
             "technology": "extract_groundwater",
             "level": "water_avail_basin",
-            "value": WS_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "commodity": "groundwater_basin",
             "mode": "M1",
             "node_origin": "df_node[node]",
@@ -212,7 +199,7 @@ EXTRACTION_INPUT_RULES = Rule(
             "condition": "default",
             "technology": "extract_surfacewater",
             "level": "final",
-            "value": WS_CONST["SW_ELEC_IN"],
+            "value": "SW_ELEC_IN",
             "commodity": "electr",
             "mode": "M1",
             "time_origin": "year",
@@ -227,9 +214,8 @@ EXTRACTION_INPUT_RULES = Rule(
             "condition": "default",
             "technology": "extract_groundwater",
             "level": "final",
-            "value": "df_gwt['GW_per_km3_per_year'] + {GW_ADD_ELEC_IN}".format(
-                **WS_CONST
-            ),  # .format notation for clarity
+            "value": "df_gwt['GW_per_km3_per_year'] + {GNW_ADD_ELEC_IN}",
+            # GW is gigawatt not groundwater
             "commodity": "electr",
             "mode": "M1",
             "time_origin": "year",
@@ -244,10 +230,9 @@ EXTRACTION_INPUT_RULES = Rule(
             "condition": "default",
             "technology": "extract_gw_fossil",
             "level": "final",
-            "value": (
-                "{FOSSIL_GW_ELEC_MULT} * "
-                "(df_gwt['GW_per_km3_per_year'] + {GW_ADD_ELEC_IN})".format(**WS_CONST)
-            ),
+            "value": "{FOSSIL_GNW_ELEC_MULT} * (df_gwt['GW_per_km3_per_year']"
+            + " + {GNW_ADD_ELEC_IN})",
+            # GW is gigawatt not groundwater
             "commodity": "electr",
             "mode": "M1",
             "node_origin": "df_node[region]",
@@ -259,17 +244,19 @@ EXTRACTION_INPUT_RULES = Rule(
             },
         },
     ],
+    constants_manager=WS_CONST,
 )
-
 
 """
 Rules defining the technical lifetime for water extraction technologies.
 Used in `_process_tl_rules` within `add_water_supply`.
+Units are years.
 """
 TECHNICAL_LIFETIME_RULES = Rule(
     Base={
         "type": "technical_lifetime",
         "unit": "y",
+        "unit_in": "y",
         "pipe": {
             "flag_broadcast": True,
             "flag_same_node": True,
@@ -280,19 +267,20 @@ TECHNICAL_LIFETIME_RULES = Rule(
         {
             "condition": None,
             "technology": "extract_surfacewater",
-            "value": WS_CONST["SW_LIFETIME"],
+            "value": "SW_LIFETIME",
         },
         {
             "condition": None,
             "technology": "extract_groundwater",
-            "value": WS_CONST["GW_LIFETIME"],
+            "value": "GNW_LIFETIME",
         },
         {
             "condition": None,
             "technology": "extract_gw_fossil",
-            "value": WS_CONST["GW_LIFETIME"],
+            "value": "GNW_LIFETIME",
         },
     ],
+    constants_manager=WS_CONST,
 )
 
 
@@ -300,11 +288,13 @@ TECHNICAL_LIFETIME_RULES = Rule(
 Rules defining the investment costs for water extraction technologies.
 Includes multipliers for fossil groundwater extraction.
 Used in `_process_inv_cost_rules` within `add_water_supply`.
+Units are USD/MCM (implicitly per year capacity).
 """
 INVESTMENT_COST_RULES = Rule(
     Base={
         "type": "inv_cost",
-        "unit": "USD/km3",  # Unit likely USD/(km3/year)
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
         "pipe": {
             "flag_broadcast": True,
             "flag_node_loc": True,
@@ -314,19 +304,20 @@ INVESTMENT_COST_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_surfacewater",
-            "value": WS_CONST["SW_INV_COST"],
+            "value": "SW_INV_COST",
         },
         {
             "condition": "default",
             "technology": "extract_groundwater",
-            "value": WS_CONST["GW_INV_COST"],
+            "value": "GNW_INV_COST",
         },
         {
             "condition": "default",
             "technology": "extract_gw_fossil",
-            "value": WS_CONST["GW_INV_COST"] * WS_CONST["FOSSIL_GW_INV_MULT"],
+            "value": "{GNW_INV_COST} * {FOSSIL_GNW_INV_MULT}",
         },
     ],
+    constants_manager=WS_CONST,
 )
 
 
@@ -334,11 +325,13 @@ INVESTMENT_COST_RULES = Rule(
 Rules defining upper bounds on the share of activity ('share_mode_up') for the
 'basin_to_reg' technology, based on regional water availability shares.
 Used in `_process_share_mode_rules` within `add_water_supply`.
+Units are dimensionless.
 """
 SHARE_MODE_RULES = Rule(
     Base={
         "type": "share_mode_up",
         "unit": "%",
+        "unit_in": "%",
     },
     Diff=[
         {
@@ -360,11 +353,13 @@ Rules defining historical new capacity for surface and
 groundwater extraction technologies.
 Annualizes historical capacity data using HIST_CAP_DIV.
 Used in `_process_hist_cap_rules` within `add_water_supply`.
+Units are MCM/year.
 """
 HISTORICAL_NEW_CAPACITY_RULES = Rule(
     Base={
         "type": "historical_new_capacity",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
         "node_loc": "df_hist['BCU_name']",
         "year_vtg": 2015,
     },
@@ -372,18 +367,15 @@ HISTORICAL_NEW_CAPACITY_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_surfacewater",
-            "value": "df_hist['hist_cap_sw_km3_year'] / {HIST_CAP_DIV}".format(
-                **WS_CONST
-            ),
+            "value": "df_hist['hist_cap_sw_km3_year'] / {HIST_CAP_DIV}",
         },
         {
             "condition": "default",
             "technology": "extract_groundwater",
-            "value": "df_hist['hist_cap_gw_km3_year'] / {HIST_CAP_DIV}".format(
-                **WS_CONST
-            ),
+            "value": "df_hist['hist_cap_gw_km3_year'] / {HIST_CAP_DIV}",
         },
     ],
+    constants_manager=WS_CONST,
 )
 
 
@@ -392,11 +384,14 @@ Rules defining outputs for water extraction technologies
 (surface, ground, fossil ground, saline). Specifies the destination commodity and
 level for each extraction type.
 Used in `_process_extraction_output_rules` within `add_water_supply`.
+Units are mixed (dimensionless and MCM).
 """
 EXTRACTION_OUTPUT_RULES = Rule(
     Base={
         "type": "output",
         "mode": "M1",
+        "unit": "-",
+        "unit_in": "-",
         "pipe": {
             "flag_broadcast": True,
         },
@@ -405,8 +400,7 @@ EXTRACTION_OUTPUT_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_surfacewater",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "-",
+            "value": "IDENTITY",
             "level": "water_supply_basin",
             "commodity": "freshwater_basin",
             "node_loc": "df_node['node']",
@@ -419,8 +413,7 @@ EXTRACTION_OUTPUT_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_groundwater",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "-",
+            "value": "IDENTITY",
             "level": "water_supply_basin",
             "commodity": "freshwater_basin",
             "node_loc": "df_node['node']",
@@ -433,8 +426,7 @@ EXTRACTION_OUTPUT_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_gw_fossil",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "-",
+            "value": "IDENTITY",
             "level": "water_supply_basin",
             "commodity": "freshwater_basin",
             "node_loc": "df_node['node']",
@@ -448,8 +440,9 @@ EXTRACTION_OUTPUT_RULES = Rule(
         {
             "condition": "default",
             "technology": "extract_salinewater",
-            "value": WS_CONST["IDENTITY"],
-            "unit": "km3",
+            "value": "IDENTITY",
+            "unit": "MCM",
+            "unit_in": "km3",
             "year_vtg": "runtime_vals[year_wat]",
             "year_act": "runtime_vals[year_wat]",
             "level": "saline_supply",
@@ -463,17 +456,20 @@ EXTRACTION_OUTPUT_RULES = Rule(
             },
         },
     ],
+    constants_manager=WS_CONST,
 )
 
 """
 Rules defining the output for the dummy 'basin_to_reg' technology.
 This represents the transfer of freshwater from basin level to regional supply level.
 Used in `_process_dummy_basin_output_rules` within `add_water_supply`.
+Units are dimensionless.
 """
 DUMMY_BASIN_TO_REG_OUTPUT_RULES = Rule(
     Base={
         "type": "output",
         "unit": "-",
+        "unit_in": "-",
         "pipe": {
             "flag_broadcast": True,
             "flag_time": True,
@@ -483,7 +479,7 @@ DUMMY_BASIN_TO_REG_OUTPUT_RULES = Rule(
         {
             "condition": "default",
             "technology": "basin_to_reg",
-            "value": WS_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "level": "water_supply",
             "commodity": "freshwater",
             "time_dest": "year",
@@ -492,23 +488,26 @@ DUMMY_BASIN_TO_REG_OUTPUT_RULES = Rule(
             "node_dest": "df_node['region']",
         }
     ],
+    constants_manager=WS_CONST,
 )
 
 """
 Rules defining variable costs for water supply technologies.
 Includes costs for the 'basin_to_reg' transfer and skipped costs for extraction.
 Used in `_process_var_cost_rules` within `add_water_supply`.
+Units are mixed USD/MCM annualized.
 """
 DUMMY_VARIABLE_COST_RULES = Rule(
     Base={
         "type": "var_cost",
-        "unit": "-",  # Unit likely USD/km3
     },
     Diff=[
         {
             "condition": "default",
             "technology": "basin_to_reg",
-            "value": WS_CONST["BASIN_REG_VAR_COST"],
+            "value": "BASIN_REG_VAR_COST",
+            "unit": "USD/MCM",
+            "unit_in": "USD/km3",
             "mode": "df_node['mode']",
             "node_loc": "df_node['region']",
             "pipe": {
@@ -519,55 +518,62 @@ DUMMY_VARIABLE_COST_RULES = Rule(
         {
             "condition": "SKIP",
             "technology": "extract_surfacewater",
-            "value": WS_CONST["SW_VAR_COST"],
-            "unit": "USD/km3",
+            "value": "SW_VAR_COST",
+            "unit": "USD/MCM",
+            "unit_in": "USD/km3",
             "mode": "M1",
             "time": "year",
         },
         {
             "condition": "SKIP",
             "technology": "extract_groundwater",
-            "value": WS_CONST["GW_VAR_COST"],
-            "unit": "USD/km3",
+            "value": "GNW_VAR_COST",
+            "unit": "USD/MCM",
+            "unit_in": "USD/km3",
             "mode": "M1",
             "time": "year",
         },
     ],
+    constants_manager=WS_CONST,
 )
 
 
 """
 Rule defining the fixed O&M costs for fossil groundwater extraction.
 Used in `_process_fix_cost_rules` within `add_water_supply`.
+Units are USD/MCM (implicitly per year capacity).
 """
 FIXED_COST_RULES = Rule(
     Base={
         "type": "fix_cost",
-        "unit": "USD/km3",
+        "unit": "USD/MCM",
+        "unit_in": "USD/km3",
     },
     Diff=[
         {
             "condition": None,
             "technology": "extract_gw_fossil",
-            "value": WS_CONST["FOSSIL_GW_FIX_COST"],
-            "unit": "USD/km3",
+            "value": "FOSSIL_GNW_FIX_COST",
             "pipe": {
                 "flag_broadcast": True,
                 "flag_node_loc": True,
             },
         }
     ],
+    constants_manager=WS_CONST,
 )
 
 """
 Rule defining environmental flow requirements as a
 demand on surfacewater basin resources.
 Used in `add_e_flow`.
+Units are MCM/year.
 """
 E_FLOW_RULES_DMD = Rule(
     Base={
         "type": "demand",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
     },
     Diff=[
         {
@@ -580,17 +586,20 @@ E_FLOW_RULES_DMD = Rule(
             "value": "df_sw[value]",
         }
     ],
+    constants_manager=WS_CONST,
 )
 
 """
 Rule defining environmental flow requirements as a lower bound on the activity
 of the 'return_flow' technology.
 Used in `add_e_flow`.
+Units are MCM/year.
 """
 E_FLOW_RULES_BOUND = Rule(
     Base={
         "type": "bound_activity_lo",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
     },
     Diff=[
         {
@@ -603,4 +612,5 @@ E_FLOW_RULES_BOUND = Rule(
             "value": "df_env[value]",
         }
     ],
+    constants_manager=WS_CONST,
 )
