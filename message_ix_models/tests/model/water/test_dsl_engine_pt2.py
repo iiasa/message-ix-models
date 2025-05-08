@@ -397,7 +397,7 @@ def test_extraction_input_rules(supply_test_data):
         make_df(
             "input",
             technology="extract_surfacewater",
-            value=WS_CONST["IDENTITY"],
+            value=WS_CONST_DICT["IDENTITY"],
             unit="-",
             level="water_avail_basin",
             commodity="surfacewater_basin",
@@ -413,7 +413,7 @@ def test_extraction_input_rules(supply_test_data):
         make_df(
             "input",
             technology="extract_groundwater",
-            value=WS_CONST["IDENTITY"],
+            value=WS_CONST_DICT["IDENTITY"],
             unit="-",
             level="water_avail_basin",
             commodity="groundwater_basin",
@@ -428,7 +428,7 @@ def test_extraction_input_rules(supply_test_data):
     inp3 = make_df(
         "input",
         technology="extract_surfacewater",
-        value=WS_CONST["SW_ELEC_IN"],
+        value=WS_CONST_DICT["SW_ELEC_IN"],
         unit="-",
         level="final",
         commodity="electr",
@@ -441,7 +441,7 @@ def test_extraction_input_rules(supply_test_data):
     inp4 = make_df(
         "input",
         technology="extract_groundwater",
-        value=df_gwt["GW_per_km3_per_year"] + WS_CONST["GW_ADD_ELEC_IN"],
+        value=df_gwt["GW_per_km3_per_year"] + WS_CONST_DICT["GW_ADD_ELEC_IN"],
         unit="-",
         level="final",
         commodity="electr",
@@ -454,8 +454,8 @@ def test_extraction_input_rules(supply_test_data):
     inp5 = make_df(
         "input",
         technology="extract_gw_fossil",
-        value=(df_gwt["GW_per_km3_per_year"] + WS_CONST["GW_ADD_ELEC_IN"])
-        * WS_CONST["FOSSIL_GW_ELEC_MULT"],
+        value=(df_gwt["GW_per_km3_per_year"] + WS_CONST_DICT["GW_ADD_ELEC_IN"])
+        * WS_CONST_DICT["FOSSIL_GW_ELEC_MULT"],
         unit="-",
         level="final",
         commodity="electr",
