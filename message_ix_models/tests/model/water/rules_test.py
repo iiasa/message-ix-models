@@ -578,4 +578,3 @@ def test_get_conversion_factor_errors():
         ValueError, match="Dimension mismatch: cannot convert from GWa .* to m3 .*"
     ):
         get_conversion_factor("GWa", "m3")  # Energy to Volume
-

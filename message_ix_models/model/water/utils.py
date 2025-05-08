@@ -178,4 +178,3 @@ def safe_concat(input_df: list[pd.DataFrame] | pd.DataFrame) -> pd.DataFrame:
     if isinstance(input_df, list):
         return input_df[0] if len(input_df) == 1 else pd.concat(input_df, copy=False)
     return input_df
-

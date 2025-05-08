@@ -22,6 +22,9 @@ from message_ix_models.tests.model.water.rules_test import (
 )
 from message_ix_models.util import broadcast, same_node, same_time
 
+WD_CONST_DICT = WD_CONST.as_dict()
+WS_CONST_DICT = WS_CONST.as_dict()
+
 
 @pytest.mark.xfail(
     sys.version_info < (3, 10),
@@ -65,7 +68,7 @@ def test_industrial_demand_rule():
         level="final",
         year=manuf_mw["year"],
         time=manuf_mw["time"],
-        value=manuf_mw["value"] * WD_CONST["UNIT_CONVERSION"],
+        value=manuf_mw["value"] * 1e-3,
         unit="km3/year",
     )
 
@@ -78,8 +81,8 @@ def test_industrial_demand_rule():
         year=manuf_uncollected_wst["year"],
         time=manuf_uncollected_wst["time"],
         value=manuf_uncollected_wst["value"]
-        * WD_CONST["UNIT_CONVERSION"]
-        * WD_CONST["NEGATIVE_MULTIPLIER"],
+        * 1e-3
+        * WD_CONST_DICT["NEGATIVE_MULTIPLIER"],
         unit="km3/year",
     )
 
@@ -132,7 +135,7 @@ def test_water_availability_rule():
         level="water_avail_basin",
         year=df_sw["year"],
         time=df_sw["time"],
-        value=df_sw["value"] * WD_CONST["NEGATIVE_MULTIPLIER"],
+        value=df_sw["value"] * WD_CONST_DICT["NEGATIVE_MULTIPLIER"],
         unit="km3/year",
     )
 
@@ -144,7 +147,7 @@ def test_water_availability_rule():
         level="water_avail_basin",
         year=df_gw["year"],
         time=df_gw["time"],
-        value=df_gw["value"] * WD_CONST["NEGATIVE_MULTIPLIER"],
+        value=df_gw["value"] * WD_CONST_DICT["NEGATIVE_MULTIPLIER"],
         unit="km3/year",
     )
     expected_df = pd.concat([expected_part1, expected_part2], ignore_index=True)
@@ -196,7 +199,7 @@ def test_share_constraints_gw_rule():
         time=df_gw["time"],
         value=df_gw["value"]
         / (df_sw["value"] + df_gw["value"])
-        * WD_CONST["SHARE_GW_MULT"],
+        * WD_CONST_DICT["SHARE_GW_MULT"],
         unit="-",
     )
     # --- End Ground Truth ---
@@ -296,7 +299,7 @@ def test_slack_technology_rules(supply_test_data):
         make_df(
             "input",
             technology="return_flow",
-            value=WS_CONST["IDENTITY"],
+            value=1.0,
             unit="-",
             level="water_avail_basin",
             commodity="surfacewater_basin",
@@ -313,7 +316,7 @@ def test_slack_technology_rules(supply_test_data):
         make_df(
             "input",
             technology="gw_recharge",
-            value=WS_CONST["IDENTITY"],
+            value=1.0,
             unit="-",
             level="water_avail_basin",
             commodity="groundwater_basin",
@@ -330,7 +333,7 @@ def test_slack_technology_rules(supply_test_data):
         make_df(
             "input",
             technology="basin_to_reg",
-            value=WS_CONST["IDENTITY"],
+            value=1.0,
             unit="-",
             level="water_supply_basin",
             commodity="freshwater_basin",
@@ -529,9 +532,6 @@ def test_e_flow_rules_bound(supply_test_data):
     df_env = data["df_env"]
 
     # --- Ground Truth Calculation (using make_df like legacy) ---
-    # Compare with water_supply_legacy.py lines 848-860
-    # NB: Legacy code applies this only if context.SDG != "baseline"
-    # We assume that condition is met for the test.
     expected_df = make_df(
         "bound_activity_lo",
         node_loc="B" + df_env["Region"].astype(str),
@@ -543,10 +543,6 @@ def test_e_flow_rules_bound(supply_test_data):
         unit="km3/year",
     )
 
-    # Legacy code also has a capping logic based on demand (lines 862-868)
-    # This test focuses only on the make_df part.
-    # Capping test would require df_dmd data and separate logic.
-
     # --- End Ground Truth ---
 
     # Run the DSL engine
@@ -554,9 +550,6 @@ def test_e_flow_rules_bound(supply_test_data):
     results = []
     for rule in E_FLOW_RULES_BOUND.get_rule():
         result_df = build_standard(rule, {"rule_dfs": input_dfs})
-        # Apply post-processing similar to legacy if needed by the rule itself
-        # (e.g., filtering by year >= 2025 if not handled by rule engine)
-        # result_df = result_df[result_df["year_act"] >= 2025].reset_index(drop=True)
         results.append(result_df)
     result_df = pd.concat(results, ignore_index=True)
 
@@ -580,9 +573,8 @@ def test_desalination_output_rules(supply_test_data):
     expected_df = (
         make_df(
             "output",
-            # node_loc is added by the broadcast call below, matching legacy
             technology="extract_salinewater_basin",
-            value=1,
+            value=1.0,
             unit="km3/year",
             level="water_avail_basin",
             commodity="salinewater_basin",
@@ -610,7 +602,6 @@ def test_desalination_output_rules(supply_test_data):
         "sub_time": sub_time,  # DSL expects Series/list directly
         "first_year": first_year,
         "year_wat": year_wat,
-        # rule_dfs is not needed here as the rule value is constant
     }
     results = []
     for rule in DESALINATION_OUTPUT_RULES.get_rule():
@@ -701,18 +692,15 @@ def test_cool_tech_output_rules(cool_tech_test_data):
         year_act=input_cool["year_act"],
         mode=input_cool["mode"],
         node_dest=input_cool["node_origin"],
-        commodity=input_cool["technology_name"]
-        .str.split("__")
-        .str[1],  # Legacy uses .str.get(1) which is equivalent
+        commodity=input_cool["technology_name"].str.split("__").str[1],
         level="share",
         time="year",
         time_dest="year",
-        value=1,  # Legacy uses CT_CONST["cool_tech_output_default"] which is 1
+        value=1,
         unit="-",
     )
 
     # Part 2: Nexus output (level='water_avail_basin')
-    # Simulate the loop and broadcast/merge from legacy
     expected_part2_list = []
 
     for nn in icfb_df.node_loc.unique():
@@ -730,11 +718,11 @@ def test_cool_tech_output_rules(cool_tech_test_data):
             level="water_avail_basin",
             time="year",
             value=icfb_df["value_return"],
-            unit="MCM/GWa",  # Legacy used MCM/GWa, rule uses M CM/GWa
+            unit="MCM/GWa",
         ).pipe(
             broadcast,
             node_dest=bs,
-            time_dest=pd.Series(sub_time),  # Legacy passes pd.Series(sub_time)
+            time_dest=pd.Series(sub_time),
         )
         # Merge with basin shares (df_sw)
         out_t = out_t.merge(df_sw, how="left")
@@ -744,8 +732,6 @@ def test_cool_tech_output_rules(cool_tech_test_data):
         expected_part2_list.append(out_t)
 
         expected_part2 = pd.concat(expected_part2_list, ignore_index=True)
-        # Legacy drops NA after merge, but our merge setup shouldn't create NAs here
-        # Legacy resets index
 
         expected_df = pd.concat([expected_part1, expected_part2], ignore_index=True)
         # --- Apply dropna to match legacy behaviour ---
@@ -787,9 +773,6 @@ def test_cool_tech_output_rules(cool_tech_test_data):
                             "df_node": rule_dfs_base["df_node"],
                             "df_sw": rule_dfs_base["df_sw"],
                         }
-                        # The broadcast in legacy happens *after* make_df.
-                        # The rule itself has "flag_broadcast": True.
-                        # We need to provide the target dimensions for broadcasting.
                         bs = list(
                             rule_dfs_base["df_node"][
                                 rule_dfs_base["df_node"]["region"] == nn
@@ -822,9 +805,7 @@ def test_cool_tech_output_rules(cool_tech_test_data):
                         nexus_result_df = nexus_result_df.dropna(
                             subset=["value"]
                         )  # Match legacy dropna
-                        if (
-                            not nexus_result_df.empty
-                        ):  # Only append if not empty after dropna
+                        if not nexus_result_df.empty:
                             all_results.append(
                                 nexus_result_df
                             )  # Append processed nexus results
