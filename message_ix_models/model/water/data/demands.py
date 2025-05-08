@@ -251,6 +251,7 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     df_sw, df_gw = read_water_availability(context)
     water_availability = []
     avail_dfs = {"df_sw": df_sw, "df_gw": df_gw}
+    # WATER_AVAILABILITY.change_unit("km3/year")
     for rule in WATER_AVAILABILITY.get_rule():
         water_availability.append(load_rules_special(rule, avail_dfs))
     dmd_df = safe_concat(water_availability)
@@ -620,6 +621,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             _rate_value_adjustment(urban_withdrawal_df, urban_conn_rate_df),
         )
     )
+    # URBAN_DEMAND.change_unit("km3/year")
     for r in URBAN_DEMAND.get_rule():
         urban_dmds.append(load_rules_special(r, dfs_urban))
     all_demands.append(safe_concat(urban_dmds))
@@ -632,6 +634,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             _rate_value_adjustment(rural_withdrawal_df, rural_conn_rate_df),
         )
     )
+    # RURAL_DEMAND.change_unit("km3/year")
     for r in RURAL_DEMAND.get_rule():
         rural_dmds.append(load_rules_special(r, dfs_rural))
     all_demands.append(safe_concat(rural_dmds))
@@ -642,6 +645,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         "manuf_mw": industrial_withdrawals_df.reset_index(drop=True),
         "manuf_uncollected_wst": industrial_return_df.reset_index(drop=True),
     }
+    # INDUSTRIAL_DEMAND.change_unit("km3/year")
     for r in INDUSTRIAL_DEMAND.get_rule():
         industrial_dmds.append(load_rules_special(r, dfs_industrial))
     all_demands.append(safe_concat(industrial_dmds))
@@ -654,6 +658,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             _rate_value_adjustment(urban_return_df, urban_treat_rate_df),
         )
     )
+    # URBAN_WST.change_unit("km3/year")
     for r in URBAN_WST.get_rule():
         urban_coll_wst_df.append(load_rules_special(r, dfs_urban_wst))
     all_demands.append(safe_concat(urban_coll_wst_df))
@@ -666,6 +671,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             _rate_value_adjustment(rural_return_df, rural_treat_rate_df),
         )
     )
+    # RURAL_WST.change_unit("km3/year")
     for r in RURAL_WST.get_rule():
         rural_coll_wst_df.append(load_rules_special(r, dfs_rural_wst))
     all_demands.append(safe_concat(rural_coll_wst_df))
@@ -740,6 +746,7 @@ def _process_historical_activity(h_act: pd.DataFrame) -> pd.DataFrame:
 
     # Process historical activities using rules
     historical_activity_df = []
+    # HISTORICAL_ACTIVITY.change_unit("km3/year")
     for rule in HISTORICAL_ACTIVITY.get_rule():
         historical_activity_df.append(load_rules_special(rule, h_act))
 
@@ -755,6 +762,7 @@ def _process_historical_capacity(h_act: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
     historical_capacity_df = []
+    # HISTORICAL_CAPACITY.change_unit("km3/year")
     for rule in HISTORICAL_CAPACITY.get_rule():
         historical_capacity_df.append(load_rules_special(rule, h_cap))
     return safe_concat(historical_capacity_df)
