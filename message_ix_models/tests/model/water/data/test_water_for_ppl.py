@@ -1,3 +1,4 @@
+import sys
 from typing import Optional
 
 import pandas as pd
@@ -13,6 +14,14 @@ from message_ix_models.model.water.data.water_for_ppl import (
     cooling_shares_SSP_from_yaml,
     non_cooling_tec,
 )
+
+
+@pytest.mark.xfail(
+    sys.version_info < (3, 10),
+    reason="Python 3.9 does not support the required features",
+)
+def xfail_python_older_than_3_10():
+    pass
 
 
 @cool_tech.minimum_version
