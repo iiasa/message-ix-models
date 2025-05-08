@@ -1,25 +1,28 @@
-from message_ix_models.model.water.utils import Rule
-from message_ix_models.util.citation_wrapper import citation_wrapper
+from message_ix_models.model.water.rules import Constants, Rule
 
-"""
-Using citation wrapper here to store the citation info
-along with the constants for irrigation
-"""
-IRRIGATION_CONST = citation_wrapper(
-    "Diaz et al. 2011",
-    "https://ascelibrary.org/doi/10.1061/%28ASCE%29IR.1943-4774.0000338",
-    description=(
-        "Evaluation of Water and Energy Use in Pressurized Irrigation Networks "
-        "in Southern Spain"
-    ),
-    metadata={"Values": "Irrigation Water Supply"},
-)(
+# Define the raw constant data: list of (name, value, unit)
+IRRIGATION_CONST_VALUES = [
+    ("IDENTITY", 1, "-"),
+    ("ELECTRICITY_INPUT_LOW", 0.04690743, "-"),
+    ("ELECTRICITY_INPUT_AVG", 0.101598174, "-"),
+    ("ELECTRICITY_INPUT_HIGH", 0.017123288, "-"),
+]
+
+citations = [
     {
-        "IDENTITY": 1,
-        "ELECTRICITY_INPUT_LOW": 0.04690743,  # Low value from reference
-        "ELECTRICITY_INPUT_AVG": 0.101598174,  # Average value from reference
-        "ELECTRICITY_INPUT_HIGH": 0.017123288,  # High value from reference
-    }
+        "citation": "Diaz et al. 2011",
+        "doi": "https://ascelibrary.org/doi/10.1061/%28ASCE%29IR.1943-4774.0000338",
+        "description": (
+            "Evaluation of Water and Energy Use in Pressurized Irrigation Networks "
+            "in Southern Spain"
+        ),
+    },
+]
+
+# Instantiate Constants with data and citation metadata
+IRRIGATION_CONST = Constants(
+    data=IRRIGATION_CONST_VALUES,
+    citations=citations,
 )
 
 """
@@ -33,6 +36,7 @@ INPUT_IRRIGATION_RULES = Rule(
     Base={
         "type": "input",
         "unit": "-",
+        "unit_in": "-",
         "level": "water_supply",
         "commodity": "freshwater",
         "time": "year",
@@ -48,39 +52,40 @@ INPUT_IRRIGATION_RULES = Rule(
         {
             "condition": "default",
             "technology": "irrigation_cereal",
-            "value": IRRIGATION_CONST["IDENTITY"],
+            "value": "IDENTITY",
         },
         {
             "condition": "default",
             "technology": "irrigation_oilcrops",
-            "value": IRRIGATION_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "mode": "M1",
         },
         {
             "condition": "default",
             "technology": "irrigation_sugarcrops",
-            "value": IRRIGATION_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "mode": "M1",
         },
         {
             "condition": "SKIP",
             "technology": "irrigation_sugarcrops",
-            "value": IRRIGATION_CONST["ELECTRICITY_INPUT_LOW"],
+            "value": "ELECTRICITY_INPUT_LOW",
             "mode": "M1",
         },
         {
             "condition": "SKIP",
             "technology": "irrigation_oilcrops",
-            "value": IRRIGATION_CONST["ELECTRICITY_INPUT_LOW"],
+            "value": "ELECTRICITY_INPUT_LOW",
             "mode": "M1",
         },
         {
             "condition": "SKIP",
             "technology": "irrigation_cereal",
-            "value": IRRIGATION_CONST["ELECTRICITY_INPUT_LOW"],
+            "value": "ELECTRICITY_INPUT_LOW",
             "mode": "M1",
         },
     ],
+    constants_manager=IRRIGATION_CONST,
 )
 
 """
@@ -90,7 +95,8 @@ Used in `add_irr_structure`.
 OUTPUT_IRRIGATION_RULES = Rule(
     Base={
         "type": "output",
-        "unit": "km3/year",
+        "unit": "MCM/year",
+        "unit_in": "km3/year",
         "commodity": "freshwater",
         "time": "year",
         "time_dest": "year",
@@ -104,23 +110,24 @@ OUTPUT_IRRIGATION_RULES = Rule(
         {
             "condition": "default",
             "technology": "irrigation_cereal",
-            "value": IRRIGATION_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "level": "irr_cereal",
             "mode": "M1",
         },
         {
             "condition": "default",
             "technology": "irrigation_sugarcrops",
-            "value": IRRIGATION_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "level": "irr_sugarcrops",
             "mode": "M1",
         },
         {
             "condition": "default",
             "technology": "irrigation_oilcrops",
-            "value": IRRIGATION_CONST["IDENTITY"],
+            "value": "IDENTITY",
             "level": "irr_oilcrops",
             "mode": "M1",
         },
     ],
+    constants_manager=IRRIGATION_CONST,
 )

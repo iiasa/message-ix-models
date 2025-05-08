@@ -66,6 +66,7 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     results["input"] = inp
 
     irr_out_list = []
+    # OUTPUT_IRRIGATION_RULES.change_unit("km3/year")
     for rule in OUTPUT_IRRIGATION_RULES.get_rule():
         irr_out_list.append(
             build_standard(r=rule, base_args=current_args, extra_args=extra_args)
