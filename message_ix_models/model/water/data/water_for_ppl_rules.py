@@ -1,10 +1,12 @@
-from message_ix_models.model.water.utils import Rule
+from message_ix_models.model.water.rules import Constants, Rule
 
-# Constants for cooling technologies
-CT_CONST = {
-    "cool_tech_lifetime": 30,
-    "cool_tech_output_default": 1,
-}
+# Cooling Technology Constants
+CT_CONST_BASE_DATA = [
+    ("CT_LIFETIME", 30, "y"),
+    ("CT_OUTPUT_DEFAULT", 1, "-"),
+]
+CT_CONST = Constants(CT_CONST_BASE_DATA)
+
 
 """
 Rules defining input parameters for cooling technologies.
@@ -31,6 +33,7 @@ COOL_TECH_INPUT_RULES = Rule(
             "level": "secondary",
             "value": "electr[value_cool]",
             "unit": "GWa",
+            "unit_in": "GWa",
         },
         {
             "condition": "default",
@@ -44,6 +47,7 @@ COOL_TECH_INPUT_RULES = Rule(
             "level": "water_supply",
             "value": "icmse_df[value_cool]",
             "unit": "MCM/GWa",
+            "unit_in": "MCM/GWa",
         },
         {
             "condition": "default",
@@ -57,6 +61,7 @@ COOL_TECH_INPUT_RULES = Rule(
             "level": "saline_supply",
             "value": "saline_df[value_cool]",
             "unit": "MCM/GWa",
+            "unit_in": "MCM/GWa",
         },
     ],
 )
@@ -70,6 +75,7 @@ COOL_TECH_EMISSION_RULES = Rule(
     Base={
         "type": "emission_factor",
         "unit": "MCM/GWa",
+        "unit_in": "MCM/GWa",
     },
     Diff=[
         {
@@ -108,8 +114,9 @@ COOL_TECH_OUTPUT_RULES = Rule(
             "level": "share",
             "time": "year",
             "time_dest": "year",
-            "value": CT_CONST["cool_tech_output_default"],
+            "value": "CT_OUTPUT_DEFAULT",
             "unit": "-",
+            "unit_in": "-",
         },
         {
             "condition": "nexus",
@@ -123,11 +130,13 @@ COOL_TECH_OUTPUT_RULES = Rule(
             "time": "year",
             "value": "icfb_df[value_return]",
             "unit": "MCM/GWa",
+            "unit_in": "MCM/GWa",
             "pipe": {
                 "flag_broadcast": True,
             },
         },
     ],
+    constants_manager=CT_CONST,
 )
 
 """
@@ -152,6 +161,7 @@ COOL_TECH_ADDON_RULES = Rule(
             "type_addon": "adon_df[tech]",
             "value": "adon_df[cooling_fraction]",
             "unit": "-",
+            "unit_in": "-",
         }
     ],
 )
@@ -173,10 +183,12 @@ COOL_TECH_LIFETIME_RULES = Rule(
         {
             "condition": "default",
             "technology": "inp['technology'].drop_duplicates()",
-            "value": CT_CONST["cool_tech_lifetime"],
+            "value": "CT_LIFETIME",
             "unit": "year",
+            "unit_in": "year",
         }
     ],
+    constants_manager=CT_CONST,
 )
 
 """
@@ -188,6 +200,7 @@ NON_COOL_INPUT_RULES = Rule(
     Base={
         "type": "input",
         "unit": "MCM/GWa",
+        "unit_in": "MCM/GWa",
     },
     Diff=[
         {
@@ -225,6 +238,7 @@ COOL_SHARE_RULES = Rule(
             "time": "df_share['time']",
             "value": "df_share['value']",
             "unit": "-",
+            "unit_in": "-",
         }
     ],
 )
