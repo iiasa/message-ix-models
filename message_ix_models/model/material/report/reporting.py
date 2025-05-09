@@ -23,38 +23,25 @@ Material_global_grpahs.pdf
 
 # PACKAGES
 
-from ixmp import Platform
-from message_ix import Scenario
-from message_ix.report import Reporter
-from ixmp.reporting import configure
-from message_ix_models import ScenarioInfo
-from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
-from message_data.model.material.util import read_config
-
-import pandas as pd
-import numpy as np
-import pyam
-import xlsxwriter
 import os
-import openpyxl
 
 import matplotlib
+import numpy as np
+import pandas as pd
+import pyam
+import xlsxwriter
+from ixmp.report import configure
+from message_ix.report import Reporter
+
+from message_ix_models import ScenarioInfo
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
-
-from pyam.plotting import OUTSIDE_LEGEND
 from matplotlib.backends.backend_pdf import PdfPages
 
 from message_ix_models.util import (
     package_data_path,
 )
-
-
-def print_full(x):
-    pd.set_option("display.max_rows", len(x))
-    print(x)
-    pd.reset_option("display.max_rows")
 
 
 def change_names(s):
@@ -85,20 +72,13 @@ def change_names(s):
     return s
 
 
-def fix_excel(path_temp, path_new):
+def fix_excel(df):
     """
     Fix the names of the regions or variables to be compatible
     with IAMC format. This is done in the final reported excel file
     (path_temp) and written to a new excel file (path_new).
     """
     # read Excel file and sheet by name
-    workbook = openpyxl.load_workbook(path_temp)
-    sheet = workbook["data"]
-
-    new_workbook = openpyxl.Workbook()
-    new_sheet = new_workbook["Sheet"]
-    new_sheet.title = "data"
-    new_sheet = new_workbook.active
 
     replacement = {
         "CO2_industry": "CO2",
@@ -149,28 +129,21 @@ def fix_excel(path_temp, path_new):
         "R12_WEU": "R12_WEU",
         "R12_CHN": "R12_CHN",
         "World": "R12_GLB",
+        "BCA": "BC",
+        "OCA": "OC",
+    }
+    columns = {
         "model": "Model",
         "scenario": "Scenario",
         "variable": "Variable",
         "region": "Region",
         "unit": "Unit",
-        "BCA": "BC",
-        "OCA": "OC",
     }
-    # Iterate over the rows and replace
-    for i in range(1, ((sheet.max_row) + 1)):
-        data = [
-            sheet.cell(row=i, column=col).value
-            for col in range(1, ((sheet.max_column) + 1))
-        ]
-        for index, value in enumerate(data):
-            col_no = index + 1
-            if value in replacement.keys():
-                new_sheet.cell(row=i, column=col_no).value = replacement.get(value)
-            else:
-                new_sheet.cell(row=i, column=col_no).value = value
+    # Iterate over the rows and replaced
+    df = df.replace(replacement)
+    df = df.rename(columns=columns)
 
-    new_workbook.save(path_new)
+    return df
 
 
 def report_demand(df_demand, r, years):
@@ -246,7 +219,7 @@ def report_demand(df_demand, r, years):
     return df_demand
 
 
-def report(context, scenario):
+def report(scenario, print_to_excel=False):  # noqa: C901
     # Obtain scenario information and directory
 
     s_info = ScenarioInfo(scenario)
@@ -276,21 +249,14 @@ def report(context, scenario):
     directory.mkdir(exist_ok=True)
 
     # Generate message_ix level reporting and dump to an excel file.
-
     rep = Reporter.from_scenario(scenario)
     configure(units={"replace": {"-": ""}})
     df = rep.get("message::default")
-    name = os.path.join(directory, f"message_ix_reporting_{scenario.scenario}.xlsx")
-    df.to_excel(name)
+    report = df.timeseries().reset_index()
     print("message_ix level reporting generated")
-
-    # Obtain a pyam dataframe / filter / global aggregation
-
-    path = os.path.join(directory, f"message_ix_reporting_{scenario.scenario}.xlsx")
-    report = pd.read_excel(path)
-    report.Unit.fillna("", inplace=True)
-    df_pyam = pyam.IamDataFrame(report)
-    df = df_pyam.filter(region=nodes, year=years)
+    report.unit.fillna("", inplace=True)
+    df = pyam.IamDataFrame(report)
+    df.filter(region=nodes, year=years, inplace=True)
     df.filter(
         variable=[
             "out|new_scrap|aluminum|*",
@@ -562,11 +528,7 @@ def report(context, scenario):
     df.convert_unit("unknown", to="", factor=1, inplace=True)
 
     variables = df.variable
-    df.aggregate_region(variables, region="World", method=sum, append=True)
-
-    name = os.path.join(directory, "check.xlsx")
-    df.to_excel(name)
-    print("Necessary variables are filtered")
+    df.aggregate_region(variables, region="World", method="sum", append=True)
 
     # Obtain the model and scenario name
     model_name = df.model[0]
@@ -744,8 +706,8 @@ def report(context, scenario):
 
         # Material Demand
 
-        print("region")
-        print(r)
+        # print("region")
+        # print(r)
 
         df_demand = df.copy()
         df_demand.convert_unit("", to="Mt/yr", factor=1, inplace=True)
@@ -872,7 +834,7 @@ def report(context, scenario):
         )
         df_bit.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
-        df_bit.to_excel("df_bit.xlsx")
+        # df_bit.to_excel("df_bit.xlsx")
 
         bitumen_var = [
             "out|final_material|bitumen|bitumen_production|M1",
@@ -4424,17 +4386,12 @@ def report(context, scenario):
     # Trade
     # ....................
 
-    path_temp = os.path.join(directory, "temp_new_reporting.xlsx")
-    df_final.to_excel(path_temp, sheet_name="data", iamc_index=False)
-
     excel_name_new = "New_Reporting_" + model_name + "_" + scenario_name + ".xlsx"
     path_new = os.path.join(directory, excel_name_new)
-
-    print(path_temp)
-    print(path_new)
-    fix_excel(path_temp, path_new)
+    df_final = fix_excel(df_final.timeseries().reset_index())
     print("New reporting file generated.")
-    df_final = pd.read_excel(path_new)
+    if print_to_excel:
+        df_final.to_excel(path_new)
 
     # df_resid = pd.read_csv(path_resid)
     # df_resid["Model"] = model_name
@@ -4451,7 +4408,13 @@ def report(context, scenario):
     # scenario.add_timeseries(df_comm)
     print("Finished uploading timeseries")
     scenario.commit("Reporting uploaded as timeseries")
-
     pp.close()
-    os.remove(path_temp)
-    # os.remove(path)
+
+
+if __name__ == '__main__':
+    import ixmp
+    import message_ix
+
+    mp = ixmp.Platform('local2')
+    scen = message_ix.Scenario(mp, 'MESSAGEix-Materials', 'baseline')
+    report(scen)

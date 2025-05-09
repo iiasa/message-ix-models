@@ -564,9 +564,8 @@ def add_building_ts(scenario_name, model_name):
     default=False,
     help="If True additional variables related to infrastructure model is added.",
 )
-@click.option("--profile", default=False)
 @click.pass_obj
-def run_reporting(context, remove_ts, profile, add_infra_vars):
+def run_reporting(context, remove_ts, add_infra_vars):
     """Run materials, then legacy reporting."""
     import warnings
     warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -592,45 +591,12 @@ def run_reporting(context, remove_ts, profile, add_infra_vars):
         else:
             print("There are no timeseries to be removed.")
     else:
-        if profile:
-            import atexit
-            import cProfile
-            import io
-            import pstats
-
-            print("Profiling...")
-            pr = cProfile.Profile()
-            pr.enable()
-            print("Reporting material-specific variables")
-            report(context, scenario)
-            print("Reporting standard variables")
-            reporting(
-                mp,
-                scenario,
-                "False",
-                scenario.model,
-                scenario.scenario,
-                merge_hist=True,
-                merge_ts=True,
-                run_config="materials_run_config.yaml",
-            )
-
-            def exit():
-                pr.disable()
-                print("Profiling completed")
-                s = io.StringIO()
-                pstats.Stats(pr, stream=s).sort_stats("cumulative").dump_stats(
-                    "profiling.dmp"
-                )
-                print(s.getvalue())
-
-            atexit.register(exit)
         if add_infra_vars:
             add_infrastructure_reporting(context, scenario)
 
         # Remove existing timeseries and add material timeseries
         print("Reporting material-specific variables")
-        report(context, scenario)
+        report(scenario)
         print("Reporting standard variables")
         reporting(
             mp,
