@@ -979,13 +979,14 @@ def parametrize_supply_scenario(supply_scenario, scenario):
         no_h2_cement(scenario)
     elif supply_scenario == "default":
         log.info("Default mode")
-        limit_asphalt_recycling(scenario)
         no_clinker_substitution(scenario)
+        limit_asphalt_recycling(scenario)
         keep_fuel_share(scenario)
         no_h2_steel(scenario)
         no_methanol_cement(scenario)
         no_ethanol_cement(scenario)
         no_h2_cement(scenario)
+        no_ccs(scenario)
     elif supply_scenario == "all":
         increased_recycling(scenario)
         # industry_sector_net_zero_targets(scenario)
