@@ -484,10 +484,15 @@ def gen_data_petro_chemicals(
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
     ]
-    demand_hvc = material_demand_calc.gen_demand_petro(
+    df_demand = material_demand_calc.gen_demand_petro(
         scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
-    results["demand"].append(demand_hvc)
+    df_2025 = pd.read_csv(
+        package_data_path("material", "petrochemicals", "demand_2025.csv")
+    )
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
+    results["demand"].append(df_demand)
 
     # Special treatment for time-varying params
     tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
