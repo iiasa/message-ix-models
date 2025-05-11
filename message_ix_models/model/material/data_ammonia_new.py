@@ -540,9 +540,14 @@ def gen_resid_demand_NH3(scenario: message_ix.Scenario) -> dict[str, pd.DataFram
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
     ]
+    df_2025 = pd.read_csv(
+        package_data_path("material", "ammonia", "demand_2025.csv")
+    )
     df_residual = material_demand_calc.gen_demand_petro(
         scenario, "NH3", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
+    df_residual = df_residual[df_residual["year"] != 2025]
+    df_residual = pd.concat([df_2025, df_residual])
 
     return {"demand": df_residual}
 
