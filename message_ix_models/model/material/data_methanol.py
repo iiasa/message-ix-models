@@ -1,11 +1,10 @@
 from ast import literal_eval
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 import pandas as pd
 import yaml
 from message_ix import make_df
 
-import message_ix_models.util
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
     gen_chemicals_co2_ind_factors,
@@ -13,7 +12,12 @@ from message_ix_models.model.material.data_util import (
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import combine_df_dictionaries, read_config
-from message_ix_models.util import broadcast, nodes_ex_world, same_node
+from message_ix_models.util import (
+    broadcast,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
+)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -45,7 +49,7 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     """
     context = read_config()
     df_pars = pd.read_excel(
-        message_ix_models.util.package_data_path(
+        package_data_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
         ),
         sheet_name="Sheet1",
@@ -54,7 +58,7 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     pars = df_pars.set_index("par").to_dict()["value"]
     if pars["mtbe_scenario"] == "phase-out":
         pars_dict = pd.read_excel(
-            message_ix_models.util.package_data_path(
+            package_data_path(
                 "material", "methanol", "methanol_techno_economic.xlsx"
             ),
             sheet_name=None,
@@ -62,7 +66,7 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         )
     else:
         pars_dict = pd.read_excel(
-            message_ix_models.util.package_data_path(
+            package_data_path(
                 "material", "methanol", "methanol_techno_economic_high_demand.xlsx"
             ),
             sheet_name=None,
@@ -73,7 +77,7 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         pars_dict[i] = unpivot_input_data(pars_dict[i], i)
     # TODO: only temporary hack to ensure SSP_dev compatibility
     if "SSP_dev" in scenario.model:
-        file_path = message_ix_models.util.package_data_path(
+        file_path = package_data_path(
             "material", "methanol", "missing_rels.yaml"
         )
 
@@ -85,13 +89,18 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[context["ssp"]]
     ]
-    df_final = material_demand_calc.gen_demand_petro(
+    df_2025 = pd.read_csv(
+        package_data_path("material", "methanol", "demand_2025.csv")
+    )
+    df_demand = material_demand_calc.gen_demand_petro(
         scenario, "methanol", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
-    df_final["value"] = df_final["value"].apply(
+    df_demand["value"] = df_demand["value"].apply(
         lambda x: x * pars["methanol_resid_demand_share"]
     )
-    pars_dict["demand"] = df_final
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
+    pars_dict["demand"] = df_demand
 
     s_info = ScenarioInfo(scenario)
     downstream_tec_pars = gen_meth_fs_downstream(s_info)
