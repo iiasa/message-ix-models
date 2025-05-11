@@ -1,0 +1,13 @@
+node,commodity,level,year,time,value,unit
+R12_AFR,methanol,demand,2025,year,0.6437125259225385,t
+R12_CHN,methanol,demand,2025,year,83.4398718653732,t
+R12_EEU,methanol,demand,2025,year,1.8738267356744767,t
+R12_FSU,methanol,demand,2025,year,3.439439876055323,t
+R12_LAM,methanol,demand,2025,year,3.169745811139945,t
+R12_MEA,methanol,demand,2025,year,3.8137629836445663,t
+R12_NAM,methanol,demand,2025,year,10.194960935440516,t
+R12_PAO,methanol,demand,2025,year,2.26845340595827,t
+R12_PAS,methanol,demand,2025,year,9.722946298369182,t
+R12_RCPA,methanol,demand,2025,year,0.7034326872676644,t
+R12_SAS,methanol,demand,2025,year,4.4452928433924335,t
+R12_WEU,methanol,demand,2025,year,9.124409617262367,t
