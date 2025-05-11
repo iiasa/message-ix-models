@@ -1,0 +1,13 @@
+node,commodity,level,year,time,value,unit
+R12_AFR,aluminum,demand,2025,year,3.390494404119991,t
+R12_EEU,aluminum,demand,2025,year,5.7040045876326255,t
+R12_FSU,aluminum,demand,2025,year,5.417485073347417,t
+R12_LAM,aluminum,demand,2025,year,3.92917152614197,t
+R12_MEA,aluminum,demand,2025,year,3.46029608341049,t
+R12_NAM,aluminum,demand,2025,year,15.161147392128369,t
+R12_PAO,aluminum,demand,2025,year,3.903741922598367,t
+R12_PAS,aluminum,demand,2025,year,6.760166458897411,t
+R12_SAS,aluminum,demand,2025,year,6.400692003394531,t
+R12_WEU,aluminum,demand,2025,year,7.678680255487364,t
+R12_CHN,aluminum,demand,2025,year,34.61849606267114,t
+R12_RCPA,aluminum,demand,2025,year,2.209764908059664,t
