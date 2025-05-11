@@ -305,8 +305,12 @@ def gen_data_generic(
         )
     )
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-
-    return results
+    reduced_pdict = {}
+    for k,v in results.items():
+        if {"year_act", "year_vtg"}.issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+    return reduced_pdict
 
 
 def get_thermal_industry_emi_coefficients(scen: message_ix.Scenario) -> pd.DataFrame:
