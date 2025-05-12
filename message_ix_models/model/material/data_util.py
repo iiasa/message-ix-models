@@ -2048,9 +2048,12 @@ def read_timeseries(
     material = f"{material}/{ssp}" if ssp else material
     # Read the file
 
-    df = pd.read_excel(
-        package_data_path("material", material, filename), sheet_name=sheet_n
-    )
+    if filename.endswith(".csv"):
+        df = pd.read_csv(package_data_path("material", material, filename))
+    else:
+        df = pd.read_excel(
+            package_data_path("material", material, filename), sheet_name=sheet_n
+        )
 
     import numbers
 
@@ -2106,11 +2109,12 @@ def read_rel(scenario: message_ix.Scenario, material: str, ssp: str or None, fil
         sheet_n = "relations_R11"
     material = f"{material}/{ssp}" if ssp else material
     # Read the file
-    data_rel = pd.read_excel(
-        package_data_path("material", material, filename),
-        sheet_name=sheet_n,
-    )
-
+    if filename.endswith(".csv"):
+        data_rel = pd.read_csv(package_data_path("material", material, filename))
+    else:
+        data_rel = pd.read_excel(
+            package_data_path("material", material, filename), sheet_name=sheet_n
+        )
     return data_rel
 
 

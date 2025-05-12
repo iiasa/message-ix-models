@@ -1,0 +1,273 @@
+region,technology,parameter,Unit,value,availability,Description,Source
+R12_LAM,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.919,1985,,
+R12_EEU,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.919,1985,,
+R12_AFR,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.919,1985,,
+R12_FSU,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.919,1985,,
+R12_WEU,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.94,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),
+R12_PAS,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.919,1985,,
+R12_SAS,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.65,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_PAO,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.94,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_NAM,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.94,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_MEA,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.65,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_CHN,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.919,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,soderberg_aluminum,input|electr|final,GWyr/MtonAl,1.919,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,soderberg_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,soderberg_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,to match the final energy they are assumed less efficient (1.65 - 1.940),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_SAS,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.47,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_PAS,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.63,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_LAM,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.63,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_MEA,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.47,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_EEU,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.63,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_CHN,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.76,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.76,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_AFR,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.63,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_FSU,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.63,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_NAM,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.76,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_PAO,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.76,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_WEU,prebake_aluminum,input|electr|final,GWyr/MtonAl,1.76,1985,to match the final energy they are assumed less efficient based on the range provided by IEA (1.47 - 1.76),IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_CHN,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_SAS,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_PAS,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_LAM,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_MEA,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_EEU,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_AFR,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_FSU,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_NAM,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_PAO,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_WEU,prebake_aluminum,input|alumina|secondary_material,Mton/MtonAl,1.915,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_CHN,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_SAS,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_PAS,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_LAM,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_MEA,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_EEU,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_AFR,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_FSU,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_NAM,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_PAO,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_WEU,prebake_aluminum,output|aluminum|final_material,MtonAl,1.0,1985,,
+R12_RCPA,secondary_aluminum,input|ht_heat|useful_aluminum,GWyr/MtonAl,0.088787414,1985,Converted from 2.8 GJ/t,https://publications.jrc.ec.europa.eu/repository/handle/JRC96680
+R12_RCPA,secondary_aluminum,input|aluminum|new_scrap,Mton/MtonAl,1.0,1985,,
+R12_RCPA,secondary_aluminum,output|aluminum|final_material,MtonAl,0.9,1985,,
+R12_RCPA,prep_secondary_aluminum_1,input|aluminum|old_scrap_1,Mton/MtonAl,1.0,1985,Treats the cheapest level of scrap,
+R12_RCPA,prep_secondary_aluminum_1,output|aluminum|new_scrap,MtonAl,1.0,1985,,
+R12_RCPA,prep_secondary_aluminum_2,input|aluminum|old_scrap_2,Mton/MtonAl,1.0,1985,treats medium price level of scrap,
+R12_RCPA,prep_secondary_aluminum_2,output|aluminum|new_scrap,MtonAl,1.0,1985,,
+R12_RCPA,prep_secondary_aluminum_3,input|aluminum|old_scrap_3,Mton/MtonAl,1.0,1985,treats highest price level of scrap,
+R12_RCPA,prep_secondary_aluminum_3,output|aluminum|new_scrap,MtonAl,1.0,1985,,
+R12_RCPA,finishing_aluminum,input|aluminum|final_material,Mton/MtonAl,1.0,1985,,
+R12_RCPA,finishing_aluminum,output|aluminum|useful_material,MtonAl,0.971,1985,,"IAI - Global cycle 2018, https://alucycle.world-aluminium.org/public-access/"
+R12_CHN,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_CHN,manuf_aluminum,output|aluminum|product,,0.866,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_CHN,manuf_aluminum,output|aluminum|new_scrap,,0.134,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_RCPA,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_RCPA,manuf_aluminum,output|aluminum|product,,0.866,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_RCPA,manuf_aluminum,output|aluminum|new_scrap,,0.134,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_EEU,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_EEU,manuf_aluminum,output|aluminum|product,,0.868,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_EEU,manuf_aluminum,output|aluminum|new_scrap,,0.132,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_WEU,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_WEU,manuf_aluminum,output|aluminum|product,,0.868,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_WEU,manuf_aluminum,output|aluminum|new_scrap,,0.132,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_PAO,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_PAO,manuf_aluminum,output|aluminum|product,,0.894,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_PAO,manuf_aluminum,output|aluminum|new_scrap,,0.106,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_MEA,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_MEA,manuf_aluminum,output|aluminum|product,,0.866,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_MEA,manuf_aluminum,output|aluminum|new_scrap,,0.134,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_NAM,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_NAM,manuf_aluminum,output|aluminum|product,,0.83,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_NAM,manuf_aluminum,output|aluminum|new_scrap,,0.17,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_PAS,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_PAS,manuf_aluminum,output|aluminum|product,,0.85,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_PAS,manuf_aluminum,output|aluminum|new_scrap,,0.15,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_SAS,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_SAS,manuf_aluminum,output|aluminum|product,,0.85,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_SAS,manuf_aluminum,output|aluminum|new_scrap,,0.15,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_LAM,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_LAM,manuf_aluminum,output|aluminum|product,,0.87,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_LAM,manuf_aluminum,output|aluminum|new_scrap,,0.13,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_FSU,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_FSU,manuf_aluminum,output|aluminum|product,,0.87,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_FSU,manuf_aluminum,output|aluminum|new_scrap,,0.13,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_AFR,manuf_aluminum,input|aluminum|useful_material,,1.0,1985,,
+R12_AFR,manuf_aluminum,output|aluminum|product,,0.87,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_AFR,manuf_aluminum,output|aluminum|new_scrap,,0.13,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_PAS,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_PAS,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_PAS,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_PAS,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_PAS,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_PAS,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_SAS,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_SAS,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_SAS,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_SAS,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_SAS,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_SAS,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_PAO,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_PAO,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_PAO,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_PAO,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_PAO,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_PAO,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_AFR,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_AFR,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_AFR,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_AFR,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_AFR,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_AFR,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_NAM,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_NAM,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_NAM,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_NAM,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_NAM,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_NAM,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_FSU,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_FSU,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_FSU,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_FSU,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_FSU,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_FSU,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_WEU,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_WEU,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_WEU,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_WEU,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_WEU,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_WEU,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_EEU,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_EEU,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_EEU,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_EEU,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_EEU,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_EEU,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_LAM,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_LAM,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_LAM,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_LAM,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_LAM,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_LAM,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_MEA,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_MEA,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_MEA,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_MEA,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_MEA,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_CHN,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_RCPA,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_RCPA,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,,
+R12_RCPA,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_RCPA,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_RCPA,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_RCPA,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_CHN,scrap_recovery_aluminum_1,input|aluminum|dummy_end_of_life_1,,1.0,1985,,
+R12_CHN,scrap_recovery_aluminum_1,output|aluminum|old_scrap_1,,1.0,1985,availability of the scrap grade (0.25),"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_CHN,scrap_recovery_aluminum_2,input|aluminum|dummy_end_of_life_2,,1.0,1985,,
+R12_CHN,scrap_recovery_aluminum_2,output|aluminum|old_scrap_2,,1.0,1985,,
+R12_CHN,scrap_recovery_aluminum_3,input|aluminum|dummy_end_of_life_3,,1.0,1985,,
+R12_CHN,scrap_recovery_aluminum_3,output|aluminum|old_scrap_3,,1.0,1985,,
+R12_CHN,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_RCPA,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_EEU,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_WEU,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_PAO,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_MEA,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_NAM,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_PAS,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_SAS,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_LAM,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,"IAI - Global cycle 2017, https://alucycle.world-aluminium.org/public-access/"
+R12_FSU,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,
+R12_AFR,other_EOL_aluminum,output|aluminum|demand,,1.0,1985,,
+R12_RCPA,DUMMY_bauxite_supply,output|bauxite|primary_material,Mton,1.0,1985,,
+R12_RCPA,prebake_aluminum,inv_cost,MUS2005/MtonAl,4081.2826114431177,1985,There are higher values in IEA ETSAP report- new point feeder prebaked green site. Between 5320 2010USD - 6650 2010USD,TEPCO report (Investigation of emission reduction and uncertainties of global electrification scenarios). 2640 US$1990 / t.  https://www.inflationtool.com/us-dollar
+R12_RCPA,soderberg_aluminum,inv_cost,MUS2005/MtonAl,3060.9619585823384,1985,No updated values found,TEPCO report (Investigation of emission reduction and uncertainties of global electrification scenarios). 1980 US$1990 / t. https://www.inflationtool.com/us-dollar
+R12_RCPA,prebake_aluminum,fix_cost,MUS2005/MtonAl,480.3871993065087,1985,190  - 690 euro / t. 2010 EUR to USD in 2010: 1.33,(IEA ETSAP - 2012). https://www.statista.com/statistics/412794/euro-to-u-s-dollar-annual-average-exchange-rate/
+R12_RCPA,soderberg_aluminum,fix_cost,MUS2005/MtonAl,480.3871993065087,1985,,own calculation
+R12_RCPA,prebake_aluminum,technical_lifetime,yr,30.0,1985,,
+R12_RCPA,soderberg_aluminum,technical_lifetime,yr,30.0,1985,,
+R12_RCPA,prep_secondary_aluminum_1,capacity_factor,,1.0,1985,,
+R12_RCPA,prep_secondary_aluminum_2,capacity_factor,,1.0,1985,,
+R12_RCPA,prep_secondary_aluminum_3,capacity_factor,,1.0,1985,,
+R12_RCPA,prebake_aluminum,emission_factor|CO2,MtC / MtAl,0.44999999999999996,1985,coming from consumption of anodes,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,soderberg_aluminum,emission_factor|CO2,MtC / MtAl,0.47727272727272724,1985,,https://iea-etsap.org/E-TechDS/PDF/I10_AlProduction_ER_March2012_Final%20GSOK.pdf
+R12_RCPA,prebake_aluminum,emission_factor|CF4,ktCF4 / MtAl,0.195,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,soderberg_aluminum,emission_factor|CF4,ktCF4 / MtAl,0.275,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,prebake_aluminum,emission_factor|SO2,ktSO2 / MtAl,2.19,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,soderberg_aluminum,emission_factor|SO2,ktSO2 / MtAl,2.25,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
+R12_RCPA,prebake_aluminum,capacity_factor,,1.0,1985,,
+R12_RCPA,soderberg_aluminum,capacity_factor,,1.0,1985,,
+R12_GLB,trade_aluminum,input|aluminum|export,,1.0,1985,,
+R12_GLB,trade_aluminum,output|aluminum|import,,1.0,1985,,
+R12_GLB,trade_aluminum,var_cost,MUSD/Mt,30.0,1985,same assumption as iron and steel implementation ,
+R12_RCPA,import_aluminum,input|aluminum|import,,1.0,1985,,
+R12_RCPA,import_aluminum,output|aluminum|product,,1.0,1985,,
+R12_RCPA,export_aluminum,input|aluminum|product,,1.0,1985,,
+R12_RCPA,export_aluminum,output|aluminum|export,,1.0,1985,,
+R12_RCPA,export_aluminum,inv_cost,MUSD/Mt,500.0,1985,existing MESSAGEix value,
+R12_RCPA,export_aluminum,technical_lifetime,,30.0,1985,existing MESSAGEix value for coal_exp,
+R12_EEU,soderberg_aluminum,growth_activity_lo,,-0.2,2025,otherwise production is zero,
+R12_EEU,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_NAM,soderberg_aluminum,growth_activity_lo,,-0.2,2025,otherwise production is zero,
+R12_NAM,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_PAO,soderberg_aluminum,growth_activity_lo,,-0.2,2025,otherwise production is zero,
+R12_PAO,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_PAS,soderberg_aluminum,growth_activity_lo,,-0.2,2025,otherwise production is zero,
+R12_PAS,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_SAS,soderberg_aluminum,growth_activity_lo,,-0.2,2025,otherwise production is zero,
+R12_SAS,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_WEU,soderberg_aluminum,growth_activity_lo,,-0.2,2025,it suddenly goes to zero in 2050.,
+R12_WEU,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_CHN,soderberg_aluminum,growth_activity_lo,,-0.2,2025,,
+R12_CHN,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_RCPA,soderberg_aluminum,growth_activity_lo,,-0.2,2025,,
+R12_RCPA,prebake_aluminum,growth_activity_lo,,-0.1,2025,,
+R12_AFR,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_AFR,prebake_aluminum,growth_activity_up,,0.05,2025,,
+R12_LAM,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_LAM,prebake_aluminum,growth_activity_up,,0.05,2025,,
+R12_WEU,prebake_aluminum,growth_activity_up,,0.05,2025,,
+R12_EEU,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_PAS,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_SAS,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_FSU,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_MEA,prebake_aluminum,growth_activity_up,,0.05,2025,,
+R12_MEA,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_NAM,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_PAO,soderberg_aluminum,growth_activity_up,,0.05,2025,,
+R12_CHN,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_RCPA,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_EEU,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_WEU,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_PAO,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_MEA,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_NAM,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_PAS,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_SAS,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_LAM,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,IAI 2017
+R12_FSU,other_EOL_aluminum,input|aluminum|product,,1.0,1985,same as EEU,
+R12_AFR,other_EOL_aluminum,input|aluminum|product,,1.0,1985,,
+R12_CHN,other_EOL_aluminum,output|aluminum|end_of_life,,0.22500000000000003,1985,This number describes the percentage of the end-of-life products that are available from what is produced that year,IAI 2017
+R12_RCPA,other_EOL_aluminum,output|aluminum|end_of_life,,0.22500000000000003,1985,This number describes the percentage of the end-of-life products that are available from what is produced that year,IAI 2017
+R12_EEU,other_EOL_aluminum,output|aluminum|end_of_life,,0.393,1985,,IAI 2017
+R12_WEU,other_EOL_aluminum,output|aluminum|end_of_life,,0.393,1985,,IAI 2017
+R12_PAO,other_EOL_aluminum,output|aluminum|end_of_life,,0.41700000000000004,1985,,IAI 2017
+R12_MEA,other_EOL_aluminum,output|aluminum|end_of_life,,0.401,1985,,IAI 2017
+R12_NAM,other_EOL_aluminum,output|aluminum|end_of_life,,0.457,1985,,IAI 2017
+R12_PAS,other_EOL_aluminum,output|aluminum|end_of_life,,0.193,1985,,IAI 2017
+R12_SAS,other_EOL_aluminum,output|aluminum|end_of_life,,0.193,1985,,IAI 2017
+R12_LAM,other_EOL_aluminum,output|aluminum|end_of_life,,0.5449999999999999,1985,,IAI 2017
+R12_FSU,other_EOL_aluminum,output|aluminum|end_of_life,,0.393,1985,same as EEU,
+R12_AFR,other_EOL_aluminum,output|aluminum|end_of_life,,0.22500000000000003,1985,,
+R12_RCPA,total_EOL_aluminum,input|aluminum|end_of_life,,1.0,1985,collect the total amount of EOL,
+R12_RCPA,total_EOL_aluminum,output|aluminum|dummy_end_of_life_1,,0.25,1985,availability of different scrap quality levels,
+R12_RCPA,total_EOL_aluminum,output|aluminum|dummy_end_of_life_2,,0.5,1985,,
+R12_RCPA,total_EOL_aluminum,output|aluminum|dummy_end_of_life_3,,0.25,1985,,
+R12_RCPA,refining_aluminum,input|electr|final,GWyr/MtonAlumina,0.017123287671232876,2020, 150 kWh/t Al2O3,https://en.wikipedia.org/wiki/Bayer_process#cite_note-15
+R12_LAM,refining_aluminum,input|bauxite|primary_material,Mt/Mt,2.7777777777777777,2020,1.7–3.3 tonnes to produce 0.91 tonnes ,https://www.sciencedirect.com/science/article/pii/S0927775798007985?via%3Dihub
+R12_LAM,refining_aluminum,output|alumina|secondary_material,Mt/Mt,1.0,2020,,
+R12_RCPA,secondary_aluminum,growth_activity_lo,,-0.05,2025,,
+R12_RCPA,export_alumina,inv_cost,MUSD/Mt,500.0,1985,existing MESSAGEix value,
+R12_RCPA,export_alumina,technical_lifetime,,30.0,1985,existing MESSAGEix value for coal_exp,
+R12_GLB,trade_alumina,var_cost,MUSD/Mt,30.0,1985,same assumption as iron and steel implementation,
