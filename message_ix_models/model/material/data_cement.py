@@ -272,12 +272,12 @@ def gen_data_cement(
 
 def gen_grow_cap_up(s_info, ssp):
     ssp_vals = {
-        "LED": 0.0009,
-        "SSP1": 0.0009,
-        "SSP2": 0.0009,
-        "SSP3": 0.0007,
-        "SSP4": 0.0010,
-        "SSP5": 0.0010,
+        "LED": 0.05,
+        "SSP1": 0.05,
+        "SSP2": 0.1,
+        "SSP3": 0.15,
+        "SSP4": 0.15,
+        "SSP5": 0.15,
     }
 
     df = (
