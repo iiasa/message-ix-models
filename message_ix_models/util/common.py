@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
+from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, cast
 
@@ -17,23 +18,19 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-try:
-    import message_data
-except ImportError:
-    MESSAGE_DATA_PATH: Optional[Path] = None
-    HAS_MESSAGE_DATA = False
-else:  # pragma: no cover  (needs message_data)
-    # Root directory of the message_data repository.
-    MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
+#: :any:`True` if :mod:`message_data` is installed.
+HAS_MESSAGE_DATA = False
+
+#: Root directory of the :mod:`message_data` repository. This package is always
+#: installed from source.
+MESSAGE_DATA_PATH: Optional[Path] = None
+
+if _spec := find_spec("message_data"):  # pragma: no cover
     HAS_MESSAGE_DATA = True
+    assert _spec.origin is not None
+    MESSAGE_DATA_PATH = Path(_spec.origin).parents[1]
 
-__all__ = [
-    "HAS_MESSAGE_DATA",
-    "Adapter",
-    "MappingAdapter",
-]
-
-# Directory containing message_ix_models.__init__
+#: Directory containing message_ix_models.__init__.
 MESSAGE_MODELS_PATH = Path(__file__).parents[1]
 
 #: Package data already loaded with :func:`load_package_data`.
