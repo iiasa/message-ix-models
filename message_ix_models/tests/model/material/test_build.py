@@ -36,10 +36,15 @@ _MARKS = [
     # seconds (20 minutes). Always SKIP.
     pytest.mark.skipif(_C1, reason="Slow/Java heap space error"),
     # On macOS, the test occasionally times out the run (~360 minutes = 21600 seconds).
-    # When it passes, it does so in ~700 seconds. Time out after a +20% margin, and
-    # XFAIL if this timeout occurs.
-    pytest.mark.xfail(_C2, reason="Times out"),
-    pytest.mark.timeout(700 * 1.2 if _C2 else 0),
+    # When it passes, it does so in ~700 seconds.
+    #
+    # # Time out after a +20% margin, and XFAIL if this timeout occurs.
+    # pytest.mark.xfail(_C2, reason="Times out"),
+    # pytest.mark.timeout(700 * 1.2 if _C2 else 0),
+    #
+    # Skip unconditionally. See
+    # https://github.com/iiasa/message-ix-models/pull/346#issuecomment-2873056272
+    pytest.mark.skipif(_C2, reason="Times out"),
 ]
 
 
