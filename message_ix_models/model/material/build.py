@@ -179,6 +179,19 @@ def calibrate_existing_constraints(scenario: message_ix.Scenario):
 
     add_elec_i_ini_act(scenario)
 
+    # remove scrap constraint for aluminum recycling in base year
+    df_scrap_inp = scenario.par(
+        "input",
+        filters={
+            "technology": "secondary_aluminum",
+            "commodity": "aluminum",
+            "year_act": 2020,
+        },
+    )
+    with scenario.transact():
+        scenario.remove_par("input", df_scrap_inp)
+
+
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
