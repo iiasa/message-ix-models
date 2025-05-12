@@ -9,6 +9,7 @@ from collections.abc import Callable, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
+from importlib.metadata import version
 from pathlib import Path
 from typing import Literal, Optional, Union, cast
 
@@ -423,10 +424,14 @@ class CliRunner:
         cp = subprocess.run(all_args, capture_output=True, env=self.env, **kwargs)
 
         # Convert to a click.testing.Result
+
+        # Mandatory argument introduced in click 8.2
+        kw = dict(output_bytes=bytes()) if version("click") >= "8.2" else {}
         return click.testing.Result(
             runner=cast(click.testing.CliRunner, self),
             stdout_bytes=cp.stdout or bytes(),
             stderr_bytes=cp.stderr or bytes(),
+            **kw,
             return_value=None,
             exit_code=cp.returncode,
             exception=None,
