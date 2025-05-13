@@ -804,6 +804,7 @@ def gen_hist_new_cap(s_info):
     dict
         Dictionary with 'historical_new_capacity' and 'fixed_new_capacity' DataFrames.
     """
+    # NB Because this is (older) .xls and not .xlsx, the 'xlrd' package is required
     df_cap = pd.read_excel(
         package_data_path(
             "material", "aluminum", "raw", "smelters-with 2022 projection.xls"

@@ -62,6 +62,7 @@ docs = [
   "sphinxcontrib-bibtex",
 ]
 iea-web = ["dask[dataframe]"]
+material = ["xlrd"]
 migrate = [
   "git-filter-repo",
   "GitPython",
@@ -70,7 +71,7 @@ report = ["plotnine", "xlsxwriter"]
 tests = [
   "ixmp[tests]",  # TODO Remove once message_ix[tests] depends on ixmp[tests]
   "message-ix[tests]",
-  "message_ix_models[report,transport]",
+  "message_ix_models[material,report,transport]",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
