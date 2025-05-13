@@ -6,6 +6,7 @@ try:
     from base64 import b32hexencode as b32encode
 except ImportError:
     from base64 import b32encode
+import platform
 from collections.abc import Generator, Hashable
 from copy import deepcopy
 from pathlib import Path
@@ -60,6 +61,10 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
     0: pytest.mark.xfail(
         condition=GHA,
         reason="GitHub-hosted runner has no access to IIASA-internal databases",
+    ),
+    1: pytest.mark.xfail(
+        condition=GHA and platform.system() == "Darwin",
+        reason="Graphviz not available for GitHub Actions jobs on macOS",
     ),
     "sdmx#230": pytest.mark.xfail(
         condition=GHA,
@@ -290,7 +295,8 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
 
     The Scenario has a model name like "MESSAGEix-GLOBIOM [regions] Y[years]", for
     instance "MESSAGEix-GLOBIOM R14 YB" (see :func:`.bare.name`) and a scenario name
-    either from :py:`request.node.name` or "baseline" plus a random string.
+    either from :py:`request.node.name` or "baseline" plus a random string of 5
+    characters.
 
     This function should:
 
@@ -338,7 +344,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     try:
         new_name = request.node.name
     except AttributeError:
-        # Generate a new scenario name with a random part
+        # Generate a new scenario name with a random part, length 5 characters
         new_name = f"baseline {b32encode(randbytes(3)).decode().rstrip('=').lower()}"
 
     log.info(f"Clone to '{model_name}/{new_name}'")
