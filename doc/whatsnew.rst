@@ -18,16 +18,22 @@ Next release
 
 - Improve :class:`.ExoDataSource` with :attr:`~.ExoDataSource.use_test_data`,
   :attr:`~.ExoDataSource.where`, and :meth:`~.ExoDataSource._where` (:pull:`341`).
+- Improve :class:`.MappingAdapter` with :py:`on_missing=…` option (:pull:`328`).
 - New class :class:`.Dataflow` for describing input and/or output data flows (:pull:`300`) that are read from file and attached to a :class:`.Computer`.
   Generalized from former :py:`.transport.files.ExogenousDataFile`.
 - New method :meth:`.Config.regions_from_scenario` (:pull:`300`),
   extracted/generalized from :meth:`.transport.Config.from_context`.
-- New general-purpose :mod:`genno` operators in :mod:`.report.operator`: :func:`.broadcast_wildcard` and :func:`.merge_data` (:pull:`300`),
-  extracted/generalized from :mod:`.transport.operator`.
+- New general-purpose :mod:`genno` operators in :mod:`.report.operator`:
+
+  - :func:`.broadcast_wildcard` and :func:`.merge_data` (:pull:`300`),
+    extracted/generalized from :mod:`.transport.operator`.
+  - :func:`~.operator.call`, :func:`~.operator.select_allow_empty` (:pull:`328`).
+
 - New utilities:
 
   - :class:`.genno.Collector` (:pull:`300`).
   - :class:`.sdmx.AnnotationsMixIn` (:pull:`259`).
+  - :class:`.util.WildcardAdapter` (:pull:`328`).
   - :func:`.check.verbose_check` (:pull:`300`).
 
 - Display entire result quantity in :func:`.report.report` / :program:`mix-models report` with :py:`verbose=True` (:pull:`300`).
@@ -68,10 +74,11 @@ SSP :ref:`ssp-2024`/ScenarioMIP
 Transport
 ---------
 
-Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`).
+Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`, :pull:`328`).
 
 - Adjust constraints on :py:`t="conm_ar"`.
 - Drop some :attr:`.minimum_activity` entries; recompute values and add to :data:`.act_non_ldv`.
+- Use :func:`message_ix.tools.migrate.initial_new_capacity_up_v311` in :mod:`.transport.workflow`.
 - Improve freight representation:
 
   - Adjust freight activity, freight and passenger mode shares for some regions.
@@ -79,10 +86,26 @@ Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`).
   - Fix alignment of freight technology outputs with demand |l|.
   - Add :data:`.elasticity_f`, analogous to :data:`.elasticity_p`.
     See :func:`.freight.demand`.
+  - Simplify some technology IDs using the pattern ``f road {input commodity}``
 
 - Implement LED override using exogenous passenger activity data from :ref:`transport-pdt-cap-proj`.
-- Update input data for :data:`.elasticity_p`, :data:`ikarus_inv_cost`, :data:`.inv_cost_ldv`, :data:`.mode_share_freight`, :data:`.pdt_cap_ref`, :data:`.speed`, .
-- Add LED-specific parametrization for :data:`.activity_ldv`, :data:`lifetime_ldv`, :data:`.load_factor_ldv`, :data:`pdt_cap_proj`, .
+- New input data flow :data:`.constraint_dynamic`,
+  replacing former :py:`transport.Config.constraint` setting,
+  and module :mod:`.transport.constraint`,
+  replacing parallel functions in :mod:`~.transport.freight`,
+  :mod:`~.transport.ldv`, and
+  :mod:`~.transport.passenger`.
+- Update input data for :data:`.activity_freight`,
+  :data:`.elasticity_p`,
+  :data:`.ikarus_inv_cost`,
+  :data:`.inv_cost_ldv`,
+  :data:`.mode_share_freight`,
+  :data:`.pdt_cap_ref`, and
+  :data:`.speed`.
+- Add LED-specific parametrization for :data:`.activity_ldv`,
+  :data:`.lifetime_ldv`,
+  :data:`.load_factor_ldv`, and
+  :data:`.pdt_cap_proj`.
 - Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
 - Generate SDMX-ML structural metadata, including data flow definitions, and SDMX-{CSV,ML} data outputs for certain reported quantities.
 

@@ -1,26 +1,12 @@
-import platform
 import re
 from typing import Optional
 
-import ixmp
 import pytest
 from message_ix import make_df
 
 from message_ix_models import Workflow, testing
-from message_ix_models.testing import GHA
+from message_ix_models.testing import MARK
 from message_ix_models.workflow import WorkflowStep, make_click_command, solve
-
-MARK = {
-    0: pytest.mark.skipif(
-        condition=ixmp.__version__ < "3.5",
-        reason="ixmp.TimeSeries.url not available prior to ixmp 3.5.0",
-    ),
-    1: pytest.mark.xfail(
-        condition=GHA and platform.system() == "Darwin",
-        reason="Graphviz not available for GitHub Actions jobs on macOS",
-    ),
-}
-
 
 # Functions for WorkflowSteps
 
@@ -95,7 +81,6 @@ def _wf(
     return wf
 
 
-@MARK[0]
 @MARK[1]
 def test_make_click_command(mix_models_cli) -> None:
     import click
@@ -132,7 +117,6 @@ def test_make_click_command(mix_models_cli) -> None:
             assert output in result.output
 
 
-@MARK[0]
 def test_workflow(caplog, request, test_context, wf) -> None:
     # Retrieve some information from the fixture
     mp = wf.graph.pop("_base_platform")
@@ -157,9 +141,11 @@ def test_workflow(caplog, request, test_context, wf) -> None:
 
     # Log messages reflect workflow steps executed
     start_index = 1 if caplog.messages[0].startswith("Cull") else 0
-    # This setting obtains the value R11 on some Windows GHA jobs, but is otherwise R14.
-    # TODO Debug and fix.
-    m = f"MESSAGEix-GLOBIOM {test_context.model.regions} YB 33029"
+    # Expression for the model name:
+    # - The setting obtains different values on different GHA jobs
+    # - The suffix after YB is a random Base32 or Base32hex string, in lower case,
+    #   length 5.
+    m = f"MESSAGEix-GLOBIOM {test_context.model.regions} YB [0-9a-f]{{5}}"
     messages = [
         f"Loaded ixmp://{mp}/{m}/test_workflow#1",
         f"Step runs on ixmp://{mp}/{m}/test_workflow#1",

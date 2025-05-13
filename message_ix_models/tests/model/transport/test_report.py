@@ -1,4 +1,5 @@
 import logging
+from contextlib import nullcontext
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -6,7 +7,7 @@ import pytest
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport import build, key
+from message_ix_models.model.transport import Config, build, key
 from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
@@ -15,12 +16,20 @@ from message_ix_models.model.transport.testing import (
     simulated_solution,
 )
 from message_ix_models.report import prepare_reporter, sim
-from message_ix_models.testing import GHA
+from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
     import message_ix
+    from genno.types import KeyLike
 
 log = logging.getLogger(__name__)
+
+
+@pytest.fixture
+def quiet_genno(caplog):
+    """Quiet some log messages from genno via by :func:`.reporting.prepare_reporter`."""
+    caplog.set_level(logging.WARNING, logger="genno.config")
+    caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
 @pytest.mark.xfail(
@@ -53,18 +62,73 @@ def test_configure_legacy():
         assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
 
 
+@pytest.mark.ece_db
+@pytest.mark.parametrize(
+    "url, key, verbosity",
+    (
+        (
+            "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12 ci nightly/SSP_2024.2 baseline#726",  # noqa: E501
+            "base model data",
+            1,
+        ),
+    ),
+)
+def test_debug(
+    request, tmp_path, test_context, url, verbosity: int, key: "KeyLike"
+):  # pragma: no cover
+    """Test for debugging reporting of specific MESSAGEix-Transport scenarios.
+
+    Similar to :func:`.transport.test_build.test_debug`.
+
+    This **should** be invoked using the :program:`pytest … --ixmp-user-config` option.
+
+    Parameters
+    ----------
+    key :
+       Key to be reported. This should *not* be the default/general key, as that would
+       result in updated time series being stored on the scenario at `url`.
+    """
+    # Populate test_context.transport
+    Config.from_context(test_context)
+
+    test_context.core.handle_cli_args(url=url, verbose=bool(verbosity))
+    test_context.report.key = key
+    test_context.report.register("model.transport")
+
+    with nullcontext() if verbosity > 1 else silence_log("genno message_ix_models"):
+        rep, _key = prepare_reporter(test_context)
+
+    assert key == _key
+
+    # Show what will be computed
+    # verbosity = True  # DEBUG Force printing the description even if verbosity == 0
+    if verbosity:
+        print(rep.describe(key))
+
+    # return  # DEBUG Exit before doing any computation
+
+    # Reporting `key` succeeds
+    tmp = rep.get(key)
+
+    # DEBUG Handle a subset of the result for inspection
+    # print(tmp)
+
+    del tmp
+
+
+@MARK[10]
 @MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years",
     (
         param("R11", "A", marks=make_mark[2](ValueError)),
-        param("R12", "B", marks=MARK["gh-337"]),
+        ("R12", "B"),
         param("R14", "A", marks=MARK[9]),
         param("ISR", "A", marks=MARK[3]),
     ),
 )
-def test_report_bare_solved(request, test_context, tmp_path, regions, years):
+def test_bare(request, test_context, tmp_path, regions, years):
     """Run MESSAGEix-Transport–specific reporting."""
     from message_ix_models.model.transport.report import callback
     from message_ix_models.report import Config
@@ -96,13 +160,6 @@ def test_report_bare_solved(request, test_context, tmp_path, regions, years):
     rep.get(key)
 
 
-@pytest.fixture
-def quiet_genno(caplog):
-    """Quiet some log messages from genno via by :func:`.reporting.prepare_reporter`."""
-    caplog.set_level(logging.WARNING, logger="genno.config")
-    caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
-
-
 @build.get_computer.minimum_version
 @MARK[10]
 @MARK[7]
@@ -110,11 +167,11 @@ def quiet_genno(caplog):
 @mark.parametrize(
     "build",
     (
-        pytest.param(True, marks=MARK["gh-339"]),  # Run .transport.build.main()
+        pytest.param(True, marks=make_mark["gh"](328)),  # Run .transport.build.main()
         False,  # Use data from an Excel export
     ),
 )
-def test_simulated_solution(request, test_context, build, regions="R12", years="B"):
+def test_simulated(request, test_context, build, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context, build)
@@ -143,36 +200,10 @@ def test_simulated_solution(request, test_context, build, regions="R12", years="
     assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
-@build.get_computer.minimum_version
-@MARK["gh-339"]
-@mark.usefixtures("quiet_genno")
-@pytest.mark.parametrize(
-    "plot_name",
-    # # All plots
-    # list(PLOTS.keys()),
-    # Only a subset
-    [
-        # "energy-by-cmdty",
-        "stock-ldv",
-        # "stock-non-ldv",
-    ],
-)
-def test_plot_simulated(request, test_context, plot_name, regions="R12", years="B"):
-    """Plots are generated correctly using simulated data."""
-    test_context.update(regions=regions, years=years)
-    log.debug(f"test_plot_simulated: {test_context.regions = }")
-    rep = simulated_solution(request, test_context, build=True)
-
-    # print(rep.describe(f"plot {plot_name}"))  # DEBUG
-
-    # Succeeds
-    rep.get(f"plot {plot_name}")
-
-
-@pytest.mark.xfail(condition=GHA, reason="Temporary, for #213; fails on GitHub Actions")
 @sim.to_simulate.minimum_version
 @MARK[10]
-def test_iamc_simulated(
+@make_mark["gh"](328)
+def test_simulated_iamc(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:
     test_context.update(regions=regions, years=years)
@@ -217,3 +248,30 @@ def test_iamc_simulated(
     } <= set(ts["variable"].unique())
 
     del result
+
+
+@build.get_computer.minimum_version
+@MARK[10]
+@make_mark["gh"](328)
+@mark.usefixtures("quiet_genno")
+@pytest.mark.parametrize(
+    "plot_name",
+    # # All plots
+    # list(PLOTS.keys()),
+    # Only a subset
+    [
+        # "energy-by-cmdty",
+        "stock-ldv",
+        # "stock-non-ldv",
+    ],
+)
+def test_simulated_plot(request, test_context, plot_name, regions="R12", years="B"):
+    """Plots are generated correctly using simulated data."""
+    test_context.update(regions=regions, years=years)
+    log.debug(f"test_plot_simulated: {test_context.regions = }")
+    rep = simulated_solution(request, test_context, build=True)
+
+    # print(rep.describe(f"plot {plot_name}"))  # DEBUG
+
+    # Succeeds
+    rep.get(f"plot {plot_name}")

@@ -1,18 +1,21 @@
 import logging
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
+from functools import cache
 from importlib.util import find_spec
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Literal, Optional, cast
+from warnings import warn
 
 import pandas as pd
 from genno import Quantity
 from genno.operator import concat
 
 from ._logging import once
+from .importlib import minimum_version
 
 if TYPE_CHECKING:
-    from genno.types import AnyQuantity
+    from genno.types import TQuantity
 
     from .context import Context
 
@@ -82,7 +85,7 @@ class Adapter:
             raise TypeError(type(data))
 
     @abstractmethod
-    def adapt(self, qty: "AnyQuantity") -> "AnyQuantity":
+    def adapt(self, qty: "TQuantity") -> "TQuantity":
         """Adapt data."""
 
 
@@ -94,6 +97,14 @@ class MappingAdapter(Adapter):
     maps : dict of sequence of tuple
         Keys are names of dimensions. Values are sequences of 2-tuples; each tuple
         consists of an original label and a target label.
+    on_missing :
+        If provided (default :any:`None`), perform the given action if `maps` do not
+        contain all the labels in the respective dimensions of each Quantity passed to
+        :meth:`adapt`:
+
+        - "log": log a message on level :data:`logging.WARNING`.
+        - "raise": raise :class:`RuntimeError`.
+        - "warn": emit :class:`RuntimeWarning`.
 
     Examples
     --------
@@ -109,26 +120,146 @@ class MappingAdapter(Adapter):
     """
 
     maps: Mapping
+    on_missing: Optional[Literal["log", "raise", "warn"]]
 
-    def __init__(self, maps: Mapping[str, Sequence[tuple[str, str]]]):
+    def __init__(
+        self,
+        maps: Mapping[str, Sequence[tuple[str, str]]],
+        *,
+        on_missing: Optional[Literal["log", "raise", "warn"]] = None,
+    ) -> None:
         self.maps = maps
+        self.on_missing = on_missing
 
-    def adapt(self, qty: "AnyQuantity") -> "AnyQuantity":
+    @classmethod
+    def from_dicts(
+        cls,
+        *values: dict[str, Sequence[str]],
+        dims: Sequence[str],
+        map_leaves: bool = True,
+        # Passed to __init__
+        on_missing: Optional[Literal["log", "raise", "warn"]],
+    ) -> "MappingAdapter":
+        """Construct a MappingAdapter from sequences of :class:`dict` and dimensions."""
+        maps: dict[str, list[tuple[str, str]]] = dict()
+        for dim, v in zip(dims, values):
+            maps[dim] = []
+            dim_all = set()
+            for group, labels in v.items():
+                maps[dim].extend((group, label) for label in labels)
+                dim_all |= set(labels)
+            if map_leaves:
+                maps[dim].extend((label, label) for label in dim_all)
+
+        return cls(maps, on_missing=on_missing)
+
+    def adapt(self, qty: "TQuantity") -> "TQuantity":
         result = qty
         coords = qty.coords
 
         for dim, labels in self.maps.items():
-            if dim not in qty.dims:  # type: ignore [attr-defined]
+            if dim not in qty.dims:
                 continue
+
+            dim_coords = set(coords[dim].data)
+
+            # Check for coords in the data that are missing from `maps`.
+            # Skip if on_missing is None.
+            if (
+                missing := (dim_coords - {a for (a, b) in labels})
+                if self.on_missing
+                else set()
+            ):
+                msg = (
+                    f"Original coords {dim}={missing} not mapped to any coords and "
+                    f"{'would be' if self.on_missing == 'raise' else 'are'} dropped"
+                )
+                if self.on_missing == "log":
+                    log.warning(msg)
+                elif self.on_missing == "raise":
+                    raise RuntimeError(msg)
+                elif self.on_missing == "warn":
+                    warn(msg, RuntimeWarning, stacklevel=2)
+
             result = concat(
                 *[
                     result.sel({dim: a}, drop=True).expand_dims({dim: [b]})
                     for (a, b) in labels
-                    if a in coords[dim]  # Skip `label` if not in `dim` of `qty`
+                    if a in dim_coords  # Skip `label` if not in `dim` of `qty`
                 ]
             )
 
         return result
+
+
+class WildcardAdapter(Adapter):
+    """Adapt data using by broadcasting wildcard ("*") entries for 1 dimension."""
+
+    dim: str
+    coords: set[str]
+
+    def __init__(self, dim: str, coords: Sequence[str]) -> None:
+        self.dim = dim
+        self.coords = set(coords)
+
+    @cache
+    def _coord_map(self, labels: tuple[str]) -> pd.DataFrame:
+        """Cached helper returning a data frame with two columns:
+
+        - :py:`self.dim` with original coords along :attr:`dim`, including the wildcard
+          "*".
+        - "__new" with the full set of :attr:`coords`.
+        """
+        _l = set(labels) - {"*"}
+        # Missing coords to be filled using wildcard
+        to_wildcard = self.coords - _l
+        # Mapping from existing labels to labels to appear in result
+        return pd.DataFrame(
+            [[c, c] for c in _l] + [["*", c] for c in to_wildcard],
+            columns=[self.dim, "__new"],
+        )
+
+    @minimum_version("genno 1.25")
+    def adapt(self, qty: "TQuantity") -> "TQuantity":
+        # Identify the dimensions to group on
+        groupby_dims = list(qty.dims) + ["__preserve"]
+        groupby_dims.remove(self.dim)
+
+        def wildcard_group(x: pd.DataFrame) -> pd.DataFrame:
+            """Apply the wildcard operation to group data frame `x`."""
+            # Coordinates for `self.dim` appearing in the group
+            c_in_group = tuple(sorted(x[self.dim].unique()))
+
+            if "*" not in c_in_group:
+                # Nothing to wildcard in this group
+                result = x
+            else:
+                # - Retrieve a _coord_map for this group.
+                # - (Outer) merge with `x`.
+                # - Replace original `self.dim` column with "__new".
+                result = (
+                    x.merge(self._coord_map(c_in_group), on=self.dim)
+                    .drop(self.dim, axis=1)
+                    .rename(columns={"__new": self.dim})
+                )
+
+            # Make `self.dim` an index level
+            return result.set_index(self.dim)
+
+        # - Convert to pd.DataFrame, reset index to columns.
+        # - Group on `groupby_dims`.
+        # - Apply wildcard_group().
+        # - Convert back to Quantity.
+        q_result = type(qty)(
+            qty.to_frame()
+            .reset_index()
+            .assign(__preserve="")
+            .groupby(groupby_dims)
+            .apply(wildcard_group, include_groups=False)
+            .droplevel("__preserve")
+            .iloc[:, 0]
+        )
+        return qty._keep(q_result, attrs=True, name=True, units=True)
 
 
 def _load(

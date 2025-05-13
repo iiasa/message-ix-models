@@ -124,7 +124,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
         (METHOD.A, False): 10280,
         (METHOD.A, True): 10280,
         (METHOD.B, False): 5060,
-        (METHOD.B, True): 3460,
+        (METHOD.B, True): 3860,
         (METHOD.C, False): 3500,
         (METHOD.C, True): 3500,
     }[(method, iea_eweb_test_data)]
