@@ -2079,7 +2079,9 @@ def read_timeseries(
     return df
 
 
-def read_rel(scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str)-> pd.DataFrame:
+def read_rel(
+    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
+) -> pd.DataFrame:
     """
     Read relation_* type parameter data for specific industry
 

@@ -1,3 +1,10 @@
+"""
+Data and parameter generation for the aluminum sector in MESSAGEix-Materials model.
+
+This module provides functions to read, process, and generate parameter data
+for aluminum technologies, demand, trade, and related constraints.
+"""
+
 import os
 from collections import defaultdict
 from collections.abc import Iterable
@@ -30,21 +37,21 @@ from message_ix_models.util import (
 def read_data_aluminum(
     scenario: message_ix.Scenario,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Read and clean data from :file:`aluminum_techno_economic.xlsx`.
+    """Read and clean data from aluminum techno-economic and timeseries files.
 
     Parameters
     ----------
-    scenario: message_ix.Scenario
-        Scenario instance to build aluminum on
+    scenario : message_ix.Scenario
+        Scenario instance to build aluminum on.
+
     Returns
     -------
     tuple of three pd.DataFrames
-        returns aluminum data in three separate groups
-        time indepenendent parameters, relation parameters and time dependent parameters
+        Aluminum data in three separate groups:
+        - time independent parameters,
+        - relation parameters,
+        - time dependent parameters.
     """
-
-    # Ensure config is loaded, get the context
-    s_info = ScenarioInfo(scenario)
 
     # Read the file
     data_alu = pd.read_csv(package_data_path("material", "aluminum", "data_R12.csv"))
@@ -65,19 +72,19 @@ def read_data_aluminum(
 
 
 def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> dict[str, pd.DataFrame]:
-    """
-    Generates time variable parameter data for aluminum sector
+    """Generate time-variable parameter data for the aluminum sector.
+
     Parameters
     ----------
-    data: pd.DataFrame
-        time variable data from input file
-    nodes: list
-        regions of model
+    data : pd.DataFrame
+        Time-variable data from input file.
+    nodes : list
+        Regions of the model.
 
     Returns
     -------
     dict[str, pd.DataFrame]
-        key-value pairs of parameter names and parameter data
+        Key-value pairs of parameter names and parameter data.
     """
     tec_ts = set(data.technology)  # set of tecs in timeseries sheet
     common = dict(
@@ -140,6 +147,20 @@ def gen_data_alu_ts(data: pd.DataFrame, nodes: list) -> dict[str, pd.DataFrame]:
 
 
 def gen_data_alu_rel(data: pd.DataFrame, years: list) -> dict[str, pd.DataFrame]:
+    """Generate relation parameter data for the aluminum sector.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Relation data from input file.
+    years : list
+        Model years.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        Key-value pairs of relation parameter names and data.
+    """
     par_dict = defaultdict(list)
     regions = set(data["Region"].values)
     for reg in regions:
@@ -230,6 +251,36 @@ def assign_input_outpt(
     yv_ya: pd.DataFrame,
     nodes,
 ):
+    """Assign input/output or emission_factor parameters for aluminum technologies.
+
+    Parameters
+    ----------
+    split : list
+        Split parameter name.
+    param_name : str
+        Parameter name.
+    regions : pd.DataFrame
+        Regions for the parameter.
+    val : pd.Series
+        Parameter values.
+    t : str
+        Technology name.
+    rg : str
+        Region.
+    glb_reg : str
+        Global region.
+    common : dict
+        Common parameter dictionary.
+    yv_ya : pd.DataFrame
+        Year vintage/active combinations.
+    nodes : list
+        Model nodes.
+
+    Returns
+    -------
+    pd.DataFrame
+        Parameter DataFrame.
+    """
     # Assign commodity and level names
     # Later mod can be added
     com = split[1]
@@ -327,6 +378,28 @@ def gen_data_alu_const(
     yv_ya: pd.DataFrame,
     nodes: list[str],
 ):
+    """Generate time-independent (constant) parameter data for aluminum technologies.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Constant parameter data.
+    config : dict
+        Technology configuration.
+    glb_reg : str
+        Global region.
+    years : Iterable
+        Model years.
+    yv_ya : pd.DataFrame
+        Year vintage/active combinations.
+    nodes : list[str]
+        Model nodes.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        Key-value pairs of parameter names and parameter data.
+    """
     results = defaultdict(list)
     for t in config["technology"]["add"]:
         t = t.id
@@ -420,19 +493,19 @@ def gen_data_alu_const(
 def gen_data_aluminum(
     scenario: message_ix.Scenario, dry_run: bool = False
 ) -> dict[str, pd.DataFrame]:
-    """
+    """Generate all MESSAGEix parameter data for the aluminum sector.
 
     Parameters
     ----------
-    scenario: message_ix.Scenario
-        Scenario instance to build aluminum model on
-    dry_run: bool
-        *not implemented*
+    scenario : message_ix.Scenario
+        Scenario instance to build aluminum model on.
+    dry_run : bool
+        *Not implemented.*
+
     Returns
     -------
-    dict[pd.DataFrame]
-        dict with MESSAGEix parameters as keys and parametrization as values
-        stored in pd.DataFrame
+    dict[str, pd.DataFrame]
+        Dictionary with MESSAGEix parameters as keys and parametrization as values.
     """
     context = read_config()
     config = context["material"]["aluminum"]
@@ -495,6 +568,20 @@ def gen_data_aluminum(
 
 
 def gen_demand(scenario, ssp):
+    """Generate aluminum demand parameter data.
+
+    Parameters
+    ----------
+    scenario : message_ix.Scenario
+        Scenario instance.
+    ssp : str
+        Shared Socioeconomic Pathway.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'demand' parameter DataFrame.
+    """
     parname = "demand"
     demand_dict = {}
     df_2025 = pd.read_csv(package_data_path("material", "aluminum", "demand_2025.csv"))
@@ -506,6 +593,18 @@ def gen_demand(scenario, ssp):
 
 
 def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
+    """Generate trade-related parameter data for aluminum.
+
+    Parameters
+    ----------
+    scenario : message_ix.Scenario
+        Scenario instance.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        Key-value pairs of trade parameter names and data.
+    """
     results = defaultdict(list)
 
     data_trade = pd.read_csv(
@@ -693,6 +792,18 @@ def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]
 
 
 def gen_hist_new_cap(s_info):
+    """Generate historical new capacity data for aluminum smelters.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'historical_new_capacity' and 'fixed_new_capacity' DataFrames.
+    """
     df_cap = pd.read_excel(
         package_data_path(
             "material", "aluminum", "raw", "smelters-with 2022 projection.xls"
@@ -777,6 +888,20 @@ def gen_hist_new_cap(s_info):
 
 
 def compute_differences(df, ref_col):
+    """Compute positive differences between columns and a reference column.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with columns to compare.
+    ref_col : int or str
+        Reference column.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame of positive differences.
+    """
     # Initialize a DataFrame to store differences
     differences = df[ref_col].to_frame()
 
@@ -801,6 +926,18 @@ def compute_differences(df, ref_col):
 
 
 def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
+    """Load and format BGS production data for aluminum or alumina.
+
+    Parameters
+    ----------
+    commodity : Literal["aluminum", "alumina"]
+        Commodity to load.
+
+    Returns
+    -------
+    pd.DataFrame
+        Formatted production data.
+    """
     bgs_data_path = package_data_path(
         "material", "aluminum", "raw", "bgs_production", commodity
     )
@@ -852,6 +989,13 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
 
 
 def gen_smelting_hist_act():
+    """Generate historical activity and bounds for aluminum smelting technologies.
+
+    Returns
+    -------
+    dict
+        Dict with 'historical_activity', 'bound_activity_up', and 'bound_activity_lo'.
+    """
     df_prim = load_bgs_data("aluminum")
     df_prim_r12 = df_prim.groupby("R12").sum(numeric_only=True).div(10**6)
 
@@ -909,6 +1053,13 @@ def gen_smelting_hist_act():
 
 
 def gen_refining_hist_act():
+    """Generate historical activity and 2020 bounds for alumina refining technologies.
+
+    Returns
+    -------
+    dict
+        Dict with 'historical_activity', 'bound_activity_lo', and 'bound_activity_up'.
+    """
     df_ref = load_bgs_data("alumina")
     df_ref_r12 = df_ref.groupby("R12").sum(numeric_only=True).div(10**6)
 
@@ -937,8 +1088,19 @@ def gen_refining_hist_act():
 
 
 def gen_alumina_trade_tecs(s_info):
+    """Generate trade technology parameter data for alumina.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+
+    Returns
+    -------
+    dict
+        Dictionary of trade technology parameter DataFrames.
+    """
     modelyears = s_info.Y
-    yv_ya = s_info.yv_ya
     nodes = nodes_ex_world(s_info.N)
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
 
@@ -994,6 +1156,18 @@ def gen_alumina_trade_tecs(s_info):
 
 
 def gen_2020_growth_constraints(s_info):
+    """Generate 2020 growth constraints for soderberg aluminum smelters.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'growth_activity_up' DataFrame.
+    """
     common = {
         "technology": "soderberg_aluminum",
         "time": "year",
@@ -1008,7 +1182,19 @@ def gen_2020_growth_constraints(s_info):
 
 
 def calibrate_2020_furnaces(s_info):
-    fname = "MetallurgicalAluminaRefiningFuelConsumption_1985-2023_File_8CountryOrRegion.csv"
+    """Calibrate 2020 furnace activity for aluminum refining by fuel.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'bound_activity_lo' and 'bound_activity_up' DataFrames.
+    """
+    fname = "MetallurgicalAluminaRefiningFuelConsumption_1985-2023.csv"
     iai_ref_map = {
         "Africa & Asia (ex China)": [
             "Azerbaijan",
@@ -1090,7 +1276,9 @@ def calibrate_2020_furnaces(s_info):
     df_ref["IAI"] = df_ref[0].fillna("Estimated Unreported")
     df_ref = df_ref.drop(columns=0)
 
-    df_ref_en = pd.read_csv(package_data_path("material", "aluminum", "raw", fname), sep=";")
+    df_ref_en = pd.read_csv(
+        package_data_path("material", "aluminum", "raw", fname), sep=";"
+    )
     df_ref_en["Year"] = (
         df_ref_en["Period from"].str.split("-", expand=True)[0].astype(int)
     )
@@ -1147,6 +1335,18 @@ def calibrate_2020_furnaces(s_info):
 
 
 def gen_refining_input(s_info):
+    """Generate input parameter for aluminum refining technology.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'input' parameter DataFrame.
+    """
     # read IAI refining statistics and format
     path = package_data_path("material", "aluminum")
     df_ref_int = pd.read_csv(path.joinpath("alu_ref_int_1985_2023.csv"), sep=";")
@@ -1212,6 +1412,18 @@ def gen_refining_input(s_info):
 
 
 def gen_trade_growth_constraints(s_info):
+    """Generate growth and initial activity constraints for aluminum and alumina trade.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+
+    Returns
+    -------
+    dict
+        Dictionary of growth and initial activity constraints.
+    """
     par_dict1 = {}
     par_dict2 = {}
     aluminum_tecs = ["export_aluminum"]
@@ -1240,6 +1452,20 @@ def gen_trade_growth_constraints(s_info):
 
 
 def gen_max_recycling_rel(s_info, ssp):
+    """Generate parametrization for maximum recycling relation.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+    ssp : str
+        Shared Socioeconomic Pathway.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'relation_activity' DataFrame.
+    """
     ssp_vals = {
         "LED": -0.98,
         "SSP1": -0.98,
@@ -1268,6 +1494,20 @@ def gen_max_recycling_rel(s_info, ssp):
 
 
 def gen_scrap_prep_heat(s_info, ssp):
+    """Generate heat input parametrization for aluminum scrap preparation.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+    ssp : str
+        Shared Socioeconomic Pathway.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'input' parameter DataFrame.
+    """
     # Converted from 1.4 GJ/t,https://publications.jrc.ec.europa.eu/repository/handle/JRC96680
     ssp_vals = {
         "LED": [0.044394, 0.044394, 0.044394],
@@ -1303,6 +1543,20 @@ def gen_scrap_prep_heat(s_info, ssp):
 
 
 def get_scrap_prep_cost(s_info, ssp):
+    """Generate variable cost parametrization for aluminum scrap preparation.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+    ssp : str
+        Shared Socioeconomic Pathway.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'var_cost' parameter DataFrame.
+    """
     years = s_info.Y
     ref_tec_ssp = {
         "LED": "prep_secondary_aluminum_1",
