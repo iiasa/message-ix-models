@@ -12,6 +12,7 @@ from genno import Quantity
 from genno.operator import concat
 
 from ._logging import once
+from .importlib import minimum_version
 
 if TYPE_CHECKING:
     from genno.types import TQuantity
@@ -218,6 +219,7 @@ class WildcardAdapter(Adapter):
             columns=[self.dim, "__new"],
         )
 
+    @minimum_version("genno 1.25")
     def adapt(self, qty: "TQuantity") -> "TQuantity":
         # Identify the dimensions to group on
         groupby_dims = list(qty.dims) + ["__preserve"]
