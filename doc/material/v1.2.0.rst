@@ -1,0 +1,59 @@
+Version 1.2.0 (Month X, 2025)
+-------------------------------
+Preview of the Upcoming MESSAGEix-Materials Release
+
+This upcoming release of MESSAGEix-Materials introduces significant enhancements to the current model.
+It features improved calibration and updated parameterization, drawing on the latest statistics and findings from recent literature.
+Most of these updates reflect developments made during the ScenarioMIP project.
+
+Model changes
+~~~~~~~~~~~~~
+
+**Iron & steel sector**
+
+*To be merged from ssp-dev*
+
+**Non metallic minerals sector**
+
+*To be merged from ssp-dev*
+
+**Non ferrous metals sector**
+
+- Trade representation for alumina has been implemented
+- The aluminum has been fixed in 2025 independent of SSP setting
+- The 2020 aluminum demand was slightly revised in some regions
+- The energy intensity of alumina refining was revised and differentiated by region based on IAI data
+- The fuel use for alumina refining in 2020 was calibrated based on IAI data
+- The energy intensity of aluminum smelting was revised and differentiated by region based on IAI data
+- The historical smelting capacity was calibrated based on an accurate global capacity data set
+- The historical smelting and refining activity in 2020 was calibrated based on BGS statistics
+- The maximum recyclable aluminum scrap ratio is now differentiated by SSP
+- The heat requirement and cost for aluminum scrap preparation is now differentiated by SSP
+
+**Power sector**
+
+**Demand generator**
+
+*To be merged from ssp-dev*
+
+**Other**
+
+*To be merged from ssp-dev*
+
+
+
+CLI changes
+~~~~~~~~~~~
+
+
+
+Deprecations
+~~~~~~~~~~~~~
+
+New features
+~~~~~~~~~~~~
+
+**Bug Fixes**
+
+
+**Compatibility**
