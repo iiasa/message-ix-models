@@ -169,7 +169,7 @@ def test_bare(request, test_context, tmp_path, regions, years):
 @mark.parametrize(
     "build",
     (
-        pytest.param(True, marks=make_mark["gh"](328)),  # Run .transport.build.main()
+        True,  # Run .transport.build.main()
         False,  # Use data from an Excel export
     ),
 )
@@ -206,7 +206,6 @@ def test_simulated(
 
 @build.get_computer.minimum_version
 @MARK[10]
-@make_mark["gh"](328)
 def test_simulated_iamc(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:
@@ -256,7 +255,6 @@ def test_simulated_iamc(
 
 @build.get_computer.minimum_version
 @MARK[10]
-@make_mark["gh"](328)
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
     "plot_name",
