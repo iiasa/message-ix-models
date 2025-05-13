@@ -3,6 +3,7 @@ import pytest
 from message_ix_models.model.transport.workflow import generate
 
 
+@generate.minimum_version
 @pytest.mark.parametrize(
     "base_scenario",
     (

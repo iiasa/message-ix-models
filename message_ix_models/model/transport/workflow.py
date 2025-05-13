@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 from genno import KeyExistsError
 
 from message_ix_models.model.workflow import Config as WorkflowConfig
+from message_ix_models.util import minimum_version
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -171,6 +172,7 @@ def tax_emission(context: "Context", scenario: "Scenario", price: float) -> "Sce
     return navigate_workflow.tax_emission(context, scenario, price)
 
 
+@minimum_version("message_ix 3.10.1.dev0")  # Changes that will be released in 3.11
 def generate(
     context: "Context",
     *,
