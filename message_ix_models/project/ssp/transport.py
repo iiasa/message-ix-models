@@ -157,17 +157,19 @@ def e_UNIT(cl_emission: "sdmx.model.common.Codelist") -> "AnyQuantity":
         Values are everywhere 1.0, except for species such as ``N2O`` that must be
         reported in kt rather than Mt.
     """
+    # Iterate over codes in the codelist
     data = []
     for e in cl_emission:
-        try:
-            label = str(e.get_annotation(id="report").text)
-        except KeyError:
-            label = e.id
-        try:
-            unit = str(e.get_annotation(id="units").text)
-        except KeyError:
-            unit = "Mt"
-        data.append([e.id, f"{unit} {label}/yr", 1.0 if unit == "Mt" else 1e3])
+        # Retrieve info from annotations
+        i = {}
+        for k, default in {"report": e.id, "unit-species": e.id, "units": "Mt"}.items():
+            try:
+                i[k] = str(e.get_annotation(id=k).text)
+            except KeyError:
+                i[k] = default
+
+        scale_factor = 1.0 if i["units"] == "Mt" else 1e3
+        data.append([i["report"], f"{i['units']} {i['unit-species']}/yr", scale_factor])
 
     dims = "e UNIT value".split()
     return genno.Quantity(
@@ -285,9 +287,22 @@ def get_computer(
     # - Update it using the `sc`.
     # - Retrieve a 'label' used to construct a target scenario URL.
     label_full = TransportConfig.from_context(context).use_scenario_code(sc)[1]
-    # - Construct the target scenario URL.
-    # - Use it to update context.core.scenario_info.
+    # Construct the target scenario URL
     url = workflow.scenario_url(context, label_full)
+    # Optionally apply a regex substitution
+    URL_SUB = {
+        "LED-SSP1": ("$", "#102"),  # Point to a specific version
+        "LED-SSP2": ("$", "#108"),
+        "SSP1": ("$", "#652"),
+        "SSP2": ("$", "#695"),
+        "SSP3": ("$", "#569"),
+        "SSP4": ("$", "#525"),
+        "SSP5": ("$", "#522"),  # Other scenario name
+        # "SSP5": ("(SSP_2024.5) baseline$", r"\1 baseline#525"),  # Other scenario name
+    }
+    if pattern_repl := URL_SUB.get(sc.id):
+        url = re.sub(pattern_repl[0], pattern_repl[1], url)
+    # Use the URL to update context.core.scenario_info
     context.handle_cli_args(url=url)
 
     log.info(f"method 'C' will use data from {url}")
