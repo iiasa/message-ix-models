@@ -9,7 +9,7 @@ from genno.testing import assert_units
 from pytest import param
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import Config, build, demand, testing
+from message_ix_models.model.transport import Config, build, demand, testing, workflow
 from message_ix_models.model.transport.testing import MARK, make_mark
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
@@ -233,6 +233,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 
 @MARK[7]
 @build.get_computer.minimum_version
+@workflow.generate.minimum_version
 @pytest.mark.parametrize(
     "nodes, target",
     [

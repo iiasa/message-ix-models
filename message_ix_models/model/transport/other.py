@@ -7,6 +7,7 @@ import genno
 import pandas as pd
 from genno import Key, quote
 
+from . import util
 from .key import exo, fv
 
 if TYPE_CHECKING:
@@ -15,7 +16,18 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: Shorthand for tags on keys.
 Oi = "::O+ixmp"
+
+#: Common, fixed values for some dimensions of MESSAGE parameters.
+COMMON = util.COMMON | dict(level="final")
+
+#: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
+#: quantities.
+DIMS = util.DIMS | dict(node_loc="n", node_origin="n", year_act="y", year_vtg="y")
+DIMS.pop("level", None)
+
+#: Target key that collects all data generated in this module.
 TARGET = "transport::O+ixmp"
 
 
@@ -30,7 +42,11 @@ def prepare_computer(c: "Computer") -> None:
 
     if base not in c:
         log.warning(f"No key {base!r} → no data for 'transport other *' techs")
-        c.add(TARGET, quote(dict()))
+
+        names = "bound_activity_lo bound_activity_up input".split()
+        c.add(TARGET, quote(dict.fromkeys(names)))
+        c.add("transport_data", __name__, key=TARGET)
+
         return
 
     def broadcast_other_transport(technologies) -> "AnyQuantity":
@@ -54,17 +70,7 @@ def prepare_computer(c: "Computer") -> None:
     c.add(k_cnty[1], "convert_units", k_cnty[0], units="GWa")
 
     # Common dimension mapping and fixed labels for bound_activity_{lo,up} and input
-    kw = dict(
-        dims=dict(
-            commodity="c",
-            node_loc="n",
-            node_origin="n",
-            technology="t",
-            year_act="y",
-            year_vtg="y",
-        ),
-        common=dict(level="final", mode="all", time_origin="year", time="year"),
-    )
+    kw = dict(dims=DIMS, common=COMMON)
 
     # Produce MESSAGE parameters bound_activity_{lo,up}:nl-t-ya-m-h
     k_bal = Key(f"bound_activity_lo{Oi}")
@@ -81,4 +87,8 @@ def prepare_computer(c: "Computer") -> None:
     k_input = Key(f"input{Oi}")
     c.add(k_input, "as_message_df", k_cnty.last, name=k_input.name, **kw)
 
+    # Merge data together
     c.add(TARGET, "merge_data", k_bal, k_bau, k_input)
+
+    # Connect `TARGET` to the "add transport data" key
+    c.add("transport_data", __name__, key=TARGET)

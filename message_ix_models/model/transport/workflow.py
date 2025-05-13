@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 from genno import KeyExistsError
 
 from message_ix_models.model.workflow import Config as WorkflowConfig
+from message_ix_models.util import minimum_version
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -19,8 +20,13 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-# Use lpmethod=4, scaind=1 to overcome LP status 5 (optimal with unscaled
-# infeasibilities) when running on SSP(2024) base scenarios
+#: Default :class:`.workflow.Config` for solving MESSAGEix-Transport.
+#:
+#: - :py:`lpmethod=4, scaind=1` to overcome LP status 5 (optimal with unscaled
+#:   infeasibilities) when running on SSP(2024) base scenarios.
+#: - :py:`iis=1` to display verbose conflict information on infeasibility.
+#: - :py:`tilim=45 * 60` to limit runtime to 45 minutes on IIASA-hosted GitHub Actions
+#:   runners.
 SOLVE_CONFIG = WorkflowConfig(
     reserve_margin=False,
     solve=dict(
@@ -166,6 +172,7 @@ def tax_emission(context: "Context", scenario: "Scenario", price: float) -> "Sce
     return navigate_workflow.tax_emission(context, scenario, price)
 
 
+@minimum_version("message_ix 3.10.1.dev0")  # Changes that will be released in 3.11
 def generate(
     context: "Context",
     *,
@@ -173,6 +180,8 @@ def generate(
     dry_run: bool = False,
     **options,
 ) -> "Workflow":
+    from message_ix.tools.migrate import initial_new_capacity_up_v311
+
     from message_ix_models import Workflow
     from message_ix_models.model.workflow import solve
     from message_ix_models.report import report
@@ -248,6 +257,13 @@ def generate(
             target=target_url,
             clone=True,
             config=config,
+        )
+
+        # Adjust initial_new_capacity_up values for message_ix#924
+        name = wf.add_step(
+            f"{label} incu adjusted",
+            name,
+            lambda _, s: initial_new_capacity_up_v311(s, safety_factor=1.05),
         )
 
         # This block copied from message_data.projects.navigate.workflow

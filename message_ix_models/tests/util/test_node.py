@@ -2,7 +2,6 @@
 
 import re
 
-import pandas as pd
 import pytest
 from genno import Quantity
 from message_ix import Scenario, make_df
@@ -15,24 +14,6 @@ from message_ix_models.util import (
     broadcast,
     identify_nodes,
 )
-from message_ix_models.util.node import MappingAdapter
-
-
-def test_mapping_adapter():
-    """Generic test of MappingAdapter."""
-    a = MappingAdapter({"foo": [("a", "x"), ("a", "y"), ("b", "z")]})
-
-    columns = ["foo", "bar", "value"]
-
-    df = pd.DataFrame([["a", "m", 1], ["b", "n", 2]], columns=columns)
-
-    result = a(df)
-
-    assert all(columns + ["unit"] == result.columns)
-
-    with pytest.raises(TypeError):
-        a(1.2)
-
 
 PAR = "technical_lifetime"
 VALUE = [0.1, 0.2]

@@ -1,10 +1,14 @@
 """Load model and project code from :mod:`message_data`."""
 
 import re
+from collections.abc import Callable, Iterable
+from functools import update_wrapper
 from importlib import util
 from importlib.abc import MetaPathFinder
 from importlib.machinery import ModuleSpec, SourceFileLoader
+from importlib.metadata import version
 from logging import INFO, getLogger
+from typing import Optional
 
 from ._logging import once
 
@@ -73,3 +77,76 @@ class MessageDataFinder(MetaPathFinder):
             new_spec.submodule_search_locations = spec.submodule_search_locations
 
             return new_spec
+
+
+def minimum_version(
+    expr: str, raises: Optional[Iterable[type[Exception]]] = None
+) -> Callable:
+    """Decorator for functions that require a minimum version of some upstream package.
+
+    If the decorated function is called and the condition in `expr` is not met,
+    :class:`.NotImplementedError` is raised with an informative message.
+
+    The decorated function gains an attribute :py:`.minimum_version`, a pytest
+    MarkDecorator that can be used on associated test code. This marks the test as
+    XFAIL, raising :class:`.NotImplementedError` (directly); :class:`.RuntimeError` or
+    :class:`.AssertionError` (for instance, via :mod:`.click` test utilities), or any
+    of the classes given in the `raises` argument.
+
+    See :func:`.prepare_reporter` / :func:`.test_prepare_reporter` for a usage example.
+
+    Parameters
+    ----------
+    expr :
+        Like "pkgA 1.2.3.post0; pkgB 2025.2". The condition for the decorated function
+        is that the installed version must be equal to or greater than this version.
+    """
+    from platform import python_version
+
+    from packaging.version import parse
+
+    # Handle `expr`, updating `condition` and `message`
+    condition, message = False, " with "
+    for spec in expr.split(";"):
+        package, v_min = spec.strip().split(" ")
+        v_package = python_version() if package == "python" else version(package)
+        if parse(v_package) < parse(v_min):
+            condition = True
+            message += f"{package} {v_package} < {v_min}"
+
+    # Create the decorator
+    def decorator(func):
+        name = f"{func.__module__}.{func.__name__}()"
+
+        # Wrap `func`
+        def wrapper(*args, **kwargs):
+            if condition:
+                raise NotImplementedError(f"{name}{message}.")
+            return func(*args, **kwargs)
+
+        update_wrapper(wrapper, func)
+
+        try:
+            import pytest
+
+            # Create a MarkDecorator and store as an attribute of "wrapper"
+            setattr(
+                wrapper,
+                "minimum_version",
+                pytest.mark.xfail(
+                    condition=condition,
+                    raises=(
+                        NotImplementedError,  # Raised directly, above
+                        AssertionError,  # e.g. through CliRunner.assert_exit_0()
+                        RuntimeError,  # e.g. through genno.Computer
+                    )
+                    + tuple(raises or ()),  # Other exception classes
+                    reason=f"Not supported{message}",
+                ),
+            )
+        except ImportError:
+            pass  # Pytest not present; testing is not happening
+
+        return wrapper
+
+    return decorator
