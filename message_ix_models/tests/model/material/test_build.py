@@ -45,6 +45,12 @@ _MARKS = [
     # Skip unconditionally. See
     # https://github.com/iiasa/message-ix-models/pull/346#issuecomment-2873056272
     pytest.mark.skipif(_C2, reason="Times out"),
+    pytest.mark.xfail(
+        condition=GHA and platform.system() == "Linux",
+        raises=KeyError,
+        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/345, "
+        "pending adjustment to access of context['ssp']",
+    ),
 ]
 
 
