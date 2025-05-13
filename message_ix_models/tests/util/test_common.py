@@ -45,6 +45,7 @@ class TestMappingAdapter:
         assert (3, 2) == result.shape
 
 
+@WildcardAdapter.adapt.minimum_version
 class TestWildcardAdapter:
     def test_0(self) -> None:
         """Wildcard along one dimension."""
