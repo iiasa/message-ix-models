@@ -51,12 +51,17 @@ MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
     testing.MARK,
 )
 
-make_mark: dict[int, Callable[..., pytest.MarkDecorator]] = {
+make_mark: dict[Hashable, Callable[..., pytest.MarkDecorator]] = {
     2: lambda t: pytest.mark.xfail(
         reason="Missing input data/assumptions for this node codelist", raises=t
     ),
     5: lambda f: pytest.mark.xfail(
         raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
+    ),
+    "gh": lambda f: pytest.mark.xfail(
+        condition=GHA,
+        reason=f"Temporary, for https://github.com/iiasa/message-ix-models/pull/{f}:"
+        " fails on GHA, but not locally",
     ),
 }
 
