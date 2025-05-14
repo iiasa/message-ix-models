@@ -1,10 +1,15 @@
-def main(scen):
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
+
+
+def main(scen: "Scenario") -> None:
     """Adds alternative emission_types for constraints.
 
-    Add alternative emission_types (TCE_CO2 and TCE_non-CO2)
-    so that constraints for both CO2 and non-CO2 GHGs can be
-    separately defined. All relevant emission factors are
-    added.
+    Add alternative emission_types (TCE_CO2 and TCE_non-CO2) so that constraints for
+    both CO2 and non-CO2 GHGs can be separately defined. All relevant emission factors
+    are added.
 
     Parameters
     ----------
