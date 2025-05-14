@@ -35,11 +35,7 @@ env:
       "SSP4",
       "SSP4 policy",
       "SSP5",
-      "SSP5 policy",
-      "EDITS-CA",
-      "EDITS-HA",
-      "LED-SSP1",
-      "LED-SSP2"
+      "SSP5 policy"
     ]
 
   # Currently disabled:
@@ -49,8 +45,8 @@ env:
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
   # push:
   #   branches: [ main ]
   schedule:
