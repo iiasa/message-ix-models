@@ -11,7 +11,9 @@ from sdmx.model.v21 import Code
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import load_package_data
+from message_ix_models.util import (
+    load_package_data,
+)
 
 log = logging.getLogger(__name__)
 
@@ -165,3 +167,14 @@ def map_yv_ya_lt(
     return df.loc[(ya <= df.year_act) & (df.year_act - df.year_vtg <= lt)].reset_index(
         drop=True
     )
+
+
+def safe_concat(input_df: list[pd.DataFrame] | pd.DataFrame) -> pd.DataFrame:
+    """Optimized concatenation that avoids unnecessary operations.
+    For lists with single DataFrame, returns it directly. For multiple DataFrames,
+    uses pd.concat with copy=False to avoid duplicating data. Handles single
+    DataFrame inputs by returning them unchanged.
+    """
+    if isinstance(input_df, list):
+        return input_df[0] if len(input_df) == 1 else pd.concat(input_df, copy=False)
+    return input_df

@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 from message_ix import Scenario
 
@@ -7,6 +9,14 @@ from message_ix_models.model.water.data.infrastructure import (
     add_desalination,
     add_infrastructure_techs,
 )
+
+
+@pytest.mark.xfail(
+    sys.version_info < (3, 10),
+    reason="Python 3.9 does not support the required features",
+)
+def xfail_python_older_than_3_10():
+    pass
 
 
 # NB: This also tests start_creating_input_dataframe() and prepare_input_dataframe()
