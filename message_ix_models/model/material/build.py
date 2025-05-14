@@ -13,7 +13,6 @@ from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol import gen_data_methanol
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
-from message_ix_models.model.material.data_power_sector import gen_data_power_sector
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
     add_ccs_technologies,
@@ -47,14 +46,14 @@ from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
+    gen_data_aluminum,
     gen_data_methanol,
     gen_all_NH3_fert,
     gen_data_generic,
     gen_data_steel,
     gen_data_cement,
     gen_data_petro_chemicals,
-    gen_data_power_sector,
-    gen_data_aluminum,
+    # gen_data_power_sector,
 ]
 
 # add as needed/implemented
@@ -178,6 +177,25 @@ def calibrate_existing_constraints(scenario: message_ix.Scenario):
     scenario.commit("remove sp_el_I min bound on RCPA in 2020")
 
     add_elec_i_ini_act(scenario)
+
+    # remove scrap constraint for aluminum recycling in base year
+    df_scrap_inp = scenario.par(
+        "input",
+        filters={
+            "technology": "secondary_aluminum",
+            "commodity": "aluminum",
+            "year_act": 2020,
+        },
+    )
+    with scenario.transact():
+        scenario.remove_par("input", df_scrap_inp)
+
+    df_out_scrap = scenario.par(
+        "output",
+        filters={"level": "new_scrap", "commodity": "aluminum", "year_act": 2020},
+    )
+    with scenario.transact():
+        scenario.remove_par("output", df_out_scrap)
 
 
 def get_spec() -> Mapping[str, ScenarioInfo]:

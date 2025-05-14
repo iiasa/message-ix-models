@@ -78,6 +78,11 @@ SSP :ref:`ssp-2024`/ScenarioMIP
 - Expand covered emission species (:pull:`333`, :issue:`307`)
   with values derived from `CEDS <https://www.pnnl.gov/projects/ceds>`_.
 
+Materials
+---------
+
+- Improve and extend :doc:`/material/index` (:pull:`245`).
+
 Transport
 ---------
 
