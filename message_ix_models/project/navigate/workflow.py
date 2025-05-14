@@ -9,10 +9,14 @@ from typing import TYPE_CHECKING, Dict, Generator, List, Mapping, Optional, Tupl
 from genno import KeyExistsError
 from genno.caching import hash_args
 from message_ix import Scenario, make_df
+
 from message_ix_models import Context
+from message_ix_models.model import buildings
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport.build import main as build_transport
 from message_ix_models.model.workflow import Config as WfConfig
+from message_ix_models.model.workflow import solve
+from message_ix_models.project.engage import workflow as engage
 from message_ix_models.project.navigate import get_policy_config
 from message_ix_models.util import (
     add_par_data,
@@ -21,10 +25,6 @@ from message_ix_models.util import (
     replace_par_data,
 )
 from message_ix_models.workflow import Workflow
-
-from message_data.model import buildings
-from message_data.model.workflow import solve
-from message_data.projects.engage import workflow as engage
 
 from .report import gen_config
 
@@ -195,7 +195,7 @@ def build_solve_buildings(
     config: Optional[dict] = None,
 ) -> Scenario:
     """Workflow steps 5–7."""
-    from message_data.model.buildings import sturm
+    from message_ix_models.model.buildings import sturm
 
     _strip(scenario)
 
@@ -234,11 +234,11 @@ def avoid_locking(scenario: Scenario):
 
 def add_macro(context: Context, scenario: Scenario) -> Scenario:
     """Invoke :meth:`.Scenario.add_macro`."""
-    from message_ix_models.model import macro
-    from message_ix_models.model.build import _add_unit
     from sdmx.model import Annotation, Code
 
-    from message_data.model.buildings.rc_afofi import get_afofi_commodity_shares
+    from message_ix_models.model import macro
+    from message_ix_models.model.build import _add_unit
+    from message_ix_models.model.buildings.rc_afofi import get_afofi_commodity_shares
 
     log_scenario_info("add_macro 1", scenario)
 
@@ -443,11 +443,10 @@ def compute_minimum_emissions(
     context: Context, scenario: Scenario, from_period=2020, to_period=2025, k=0.95
 ):
     """Limit global CO2 emissions in `to_period` to `k` × emissions in `from_period`."""
-    from numpy.testing import assert_allclose
-
     from message_data.projects.engage.runscript_main import (
         glb_co2_relation as RELATION_GLOBAL_CO2,
     )
+    from numpy.testing import assert_allclose
 
     years = [from_period, to_period]
 
@@ -577,7 +576,8 @@ def iter_scenarios(
         yield tuple([label] + info)  # type: ignore [misc]
 
 
-def generate(context: Context) -> Workflow:
+# FIXME Reduce complexity from 13 to ≤11
+def generate(context: Context) -> Workflow:  # noqa: C901
     """Create the NAVIGATE workflow for T3.5, T6.1, and T6.2."""
     # NB Step numbers below ("Step 1") refer to the list of steps in the documentation.
     #    This list is not yet updated to include many intermediate steps with

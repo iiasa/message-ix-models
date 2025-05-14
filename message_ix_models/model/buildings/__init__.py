@@ -14,11 +14,11 @@ import message_ix
 import numpy as np
 import pandas as pd
 from message_ix import Scenario, make_df
+
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.workflow import Config as SolveConfig
 from message_ix_models.util import identify_nodes, local_data_path
 from message_ix_models.util._logging import mark_time
-
-from message_data.model.workflow import Config as SolveConfig
 
 from . import build, sturm
 from .build import get_prices

@@ -1,10 +1,10 @@
 """Command-line interface for MESSAGEix-Buildings."""
 
 import click
+
+from message_ix_models.project.navigate.cli import _SCENARIO
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
-
-from message_data.projects.navigate.cli import _SCENARIO
 
 from . import Config, build_and_solve, sturm
 

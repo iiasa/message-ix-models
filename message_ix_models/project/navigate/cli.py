@@ -3,6 +3,7 @@
 import logging
 
 import click
+
 from message_ix_models.project.navigate import Config
 from message_ix_models.util.click import PARAMS
 from message_ix_models.workflow import make_click_command
@@ -58,9 +59,8 @@ cli.add_command(
 def check_budget(context):
     import numpy as np
     import pandas as pd
-    from message_ix import Scenario
-
     from message_data.tools import interpolate_budget
+    from message_ix import Scenario
 
     # Model name
     # TODO make this configurable

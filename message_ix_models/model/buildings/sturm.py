@@ -7,6 +7,7 @@ import subprocess
 from typing import Mapping, MutableMapping, Tuple
 
 import pandas as pd
+
 from message_ix_models import Context
 
 log = logging.getLogger(__name__)
