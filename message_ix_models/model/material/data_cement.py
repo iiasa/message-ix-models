@@ -546,7 +546,7 @@ def gen_data_cement(scenario, dry_run=False):
                     df_output = df_output.assign(
                         level="waste_material", commodity="fly_ash", unit="Mt"
                     )
-                    results["output"].append(df_output)
+                    results["output"].append(df_output[df_output.value > 0])
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
