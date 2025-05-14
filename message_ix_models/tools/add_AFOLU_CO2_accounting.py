@@ -1,46 +1,51 @@
+from typing import TYPE_CHECKING, Optional
+
 import pandas as pd
 
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import nodes_ex_world
+
 from .add_CO2_emission_constraint import main as add_CO2_emission_constraint
-from .get_nodes import get_nodes
-from .get_optimization_years import main as get_optimization_years
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
 
 def add_AFOLU_CO2_accounting(
-    scen, relation_name, reg="R11_GLB", constraint_value=None
-):
-    """Adds regional CO2 entries from AFOLU to a generic relation in a
-    specified region.
+    scen: "Scenario",
+    relation_name: str,
+    reg: str = "R11_GLB",
+    constraint_value: Optional[float] = None,
+) -> None:
+    """Add regional CO2 entries from AFOLU to a generic relation in a specified region.
 
-    Specifically for the land_use sceanrios: For each land_use scenario
-    a new commodity is created on a new `level` "LU".  Each land_use
-    scenario has an output of "1" onto their commodity.  For each of
-    these commodities (which are set to = 0), there is a corresponding
-    new technology which has an input of "1" and an entry into the
-    relation, which corresponds to the the CO2 emissions of the land_use
-    pathway. This complicated setup is required, because Land-use
-    scenarios only have a single entry in the emission factor TCE,
-    which is the sum of all land-use realted emissions.
+    Specifically for the land_use sceanrios: For each land_use scenario a new commodity
+    is created on a new `level` "LU".  Each land_use scenario has an output of "1" onto
+    their commodity. For each of these commodities (which are set to = 0), there is a
+    corresponding new technology which has an input of "1" and an entry into the
+    relation, which corresponds to the the CO2 emissions of the land_use pathway. This
+    complicated setup is required, because Land-use scenarios only have a single entry
+    in the emission factor TCE, which is the sum of all land-use related emissions.
 
     Parameters
     ----------
-    scen : :class:`message_ix.Scenario`
-        scenario to which changes should be applied
-    relation_name: str
-        name of the generic relation for which the limit should be set
-    glb_reg : str (Default='R11_GLB')
-        node in scen to which constraitn should be applied
-    constraint_value: number (optional)
-        value for which the lower constraint should be set
+    scen :
+        Scenario to which changes should be applied.
+    relation_name :
+        Name of the generic relation for which the limit should be set.
+    glb_reg :
+        Node in `scen` to which constraint should be applied.
+    constraint_value :
+        Value for which the lower constraint should be set.
     """
     glb_reg = reg
-    
+
     if relation_name not in scen.set("relation").tolist():
-        scen.check_out()
-        scen.add_set("relation", relation_name)
-        scen.commit(
-            "relation {} for limiting".format(relation_name)
-            + " regional CO2 emissions at the global level added"
-        )
+        with scen.transact(
+            f"relation {relation_name!r} for limiting regional CO2 emissions at the "
+            "global level added"
+        ):
+            scen.add_set("relation", relation_name)
 
     if constraint_value:
         add_CO2_emission_constraint(
@@ -73,10 +78,11 @@ def add_AFOLU_CO2_accounting(
     scen.add_par("land_output", df_land_output)
 
     # Add technology `input` and `relation_activity` parameter
-    for reg in get_nodes(scen):
+    info = ScenarioInfo(scen)
+    for reg in nodes_ex_world(info.N):
         if reg == glb_reg:
             continue
-        for y in get_optimization_years(scen):
+        for y in info.Y:
             for s in ls:
                 if s.find("BIO0N") >= 0:
                     continue
