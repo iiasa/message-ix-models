@@ -49,7 +49,7 @@ def add_AFOLU_CO2_accounting(
 
     if constraint_value:
         add_CO2_emission_constraint(
-            scen, relation_name, constraint_value, type_rel="lower"
+            scen, relation_name, constraint_value, type_rel="lower", reg=reg
         )
 
     # Add entires into sets required for the generation of the constraint
