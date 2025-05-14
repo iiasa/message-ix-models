@@ -1391,11 +1391,14 @@ def add_emission_accounting(scen: message_ix.Scenario) -> None:
         },
     )
     CF4_red_add.drop(["year_vtg", "emission"], axis=1, inplace=True)
-    CF4_red_add["relation"] = "CF4_alm_red"
     CF4_red_add["unit"] = "???"
     CF4_red_add["year_rel"] = CF4_red_add["year_act"]
     CF4_red_add["node_rel"] = CF4_red_add["node_loc"]
+    CF4_red_add["relation"] = "CF4_Emission"
+    scen.add_par("relation_activity", CF4_red_add)
 
+    CF4_red_add["relation"] = "CF4_alm_red"
+    CF4_red_add["value"] *= 1000
     scen.add_par("relation_activity", CF4_red_add)
     scen.commit("CF4 relations corrected.")
 
@@ -2006,7 +2009,7 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
 
 # Read in time-dependent parameters
 def read_timeseries(
-    scenario: message_ix.Scenario, material: str, filename: str
+    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
 ) -> pd.DataFrame:
     """
     Read "timeseries" type data from a sector specific xlsx input file
@@ -2014,6 +2017,8 @@ def read_timeseries(
 
     Parameters
     ----------
+    ssp: str
+        if timeseries is available for different SSPs, the respective file is selected
     scenario: message_ix.Scenario
         scenario used to get structural information like
         model regions and years
@@ -2040,10 +2045,15 @@ def read_timeseries(
     else:
         sheet_n = "timeseries_R11"
 
+    material = f"{material}/{ssp}" if ssp else material
     # Read the file
-    df = pd.read_excel(
-        package_data_path("material", material, filename), sheet_name=sheet_n
-    )
+
+    if filename.endswith(".csv"):
+        df = pd.read_csv(package_data_path("material", material, filename))
+    else:
+        df = pd.read_excel(
+            package_data_path("material", material, filename), sheet_name=sheet_n
+        )
 
     import numbers
 
@@ -2070,13 +2080,15 @@ def read_timeseries(
 
 
 def read_rel(
-    scenario: message_ix.Scenario, material: str, filename: str
+    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
 ) -> pd.DataFrame:
     """
     Read relation_* type parameter data for specific industry
 
     Parameters
     ----------
+    ssp: str
+        if relations are available for different SSPs, the respective file is selected
     scenario:
         scenario used to get structural information like
     material: str
@@ -2097,13 +2109,14 @@ def read_rel(
         sheet_n = "relations_R12"
     else:
         sheet_n = "relations_R11"
-
+    material = f"{material}/{ssp}" if ssp else material
     # Read the file
-    data_rel = pd.read_excel(
-        package_data_path("material", material, filename),
-        sheet_name=sheet_n,
-    )
-
+    if filename.endswith(".csv"):
+        data_rel = pd.read_csv(package_data_path("material", material, filename))
+    else:
+        data_rel = pd.read_excel(
+            package_data_path("material", material, filename), sheet_name=sheet_n
+        )
     return data_rel
 
 
