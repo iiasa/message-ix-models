@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 from message_ix import Scenario, make_df
+
 from message_ix_models.util import (
     ScenarioInfo,
     broadcast,
     nodes_ex_world,
     private_data_path,
 )
-
-from message_data.tools.utilities import get_nodes, get_optimization_years
 
 if TYPE_CHECKING:
     from typing import Sequence, TypedDict
@@ -44,6 +43,7 @@ def add_CCS_constraint(
     # CCS technologies to put a limit to the overall CCS activity.
     node = "R12_GLB"
     relation = "global_co2_trans"
+    info = ScenarioInfo(scen)
 
     # Prepare data
     # - Select values for some existing relations
@@ -73,7 +73,7 @@ def add_CCS_constraint(
     # activity of CCS technologies is expressed in the latter units.
     value = maximum_value * (10**3) * (12 / 44)
 
-    years = filter(lambda x: x >= 2030, get_optimization_years(scen))
+    years = filter(lambda x: x >= 2030, info.Y)
 
     with scen.transact(
         f"Add {type_rel} limit of {maximum_value} Gt CO₂ / year for CO2 emissions "
@@ -307,7 +307,7 @@ def add_LED_setup(scen: Scenario):
 
     # Information about the scenario
     info = ScenarioInfo(scen)
-    node_list = get_nodes(scen)
+    node_list = nodes_ex_world(info.N)
 
     # Common arguments for pd.DataFrame.melt
     melt_args: "MeltKwArgs" = dict(

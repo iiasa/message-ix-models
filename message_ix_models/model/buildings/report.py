@@ -16,6 +16,7 @@ import message_ix
 import pandas as pd
 from genno import Key, operator
 from iam_units import registry
+
 from message_ix_models import Context, Spec
 from message_ix_models.report import iamc as add_iamc
 

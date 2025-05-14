@@ -12,6 +12,8 @@ from genno import Quantity
 from genno.operator import mul, relabel, rename_dims
 from ixmp.report.operator import data_for_quantity
 from message_ix.report.operator import as_message_df
+from sdmx.model.v21 import Annotation, Code
+
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
 from message_ix_models.model.structure import (
@@ -25,7 +27,6 @@ from message_ix_models.util import (
     merge_data,
     nodes_ex_world,
 )
-from sdmx.model.v21 import Annotation, Code
 
 from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
 
@@ -33,6 +34,7 @@ from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+
     from message_ix_models.types import MutableParameterData, ParameterData
 
 log = logging.getLogger(__name__)
