@@ -1,18 +1,20 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 import pandas.testing as pdt
-from message_data.tools.utilities import (
-    add_budget,
-    adjust_curtailment_cap_to_act,
-    update_CO2_td_cost,
-)
-from message_data.tools.utilities.update_fix_and_inv_cost import add_missing_years
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.testing import bare_res
+from message_ix_models.testing import MARK, bare_res
+from message_ix_models.tools.add_budget import main as add_budget
+
+if TYPE_CHECKING:
+    from pytest import FixtureRequest
+
+    from message_ix_models import Context
 
 
-def test_add_budget(request, test_context):
+def test_add_budget(request: "FixtureRequest", test_context: "Context") -> None:
     # Create a empty Scenario (no data) with the RES structure for R14 (using test
     # utilities)
     test_context.regions = "R14"
@@ -57,7 +59,10 @@ def test_add_budget(request, test_context):
     )
 
 
+@MARK[2]  # Migrated with this test module prior to the code itself
 def test_add_missing_years(request, test_context):
+    from message_data.tools.utilities.update_fix_and_inv_cost import add_missing_years
+
     # Create a empty Scenario (no data) with the RES structure for R14 (using test
     # utilities)
     test_context.regions = "R11"
@@ -96,7 +101,10 @@ def test_add_missing_years(request, test_context):
     assert df.xs(2095, level=3)["value1"][0] == 15
 
 
+@MARK[2]  # Migrated with this test module prior to the code itself
 def test_co2_td_cost(request, test_context):
+    from message_data.tools.utilities import update_CO2_td_cost
+
     # Create a empty Scenario (no data) with the RES structure for R14 (using test
     # utilities)
     test_context.regions = "R11"
@@ -111,7 +119,10 @@ def test_co2_td_cost(request, test_context):
     assert all(df["value"] == 150)
 
 
+@MARK[2]  # Migrated with this test module prior to the code itself
 def test_adjust_curtailment_cap_to_act(request, test_context):
+    from message_data.tools.utilities import adjust_curtailment_cap_to_act
+
     # Create a empty Scenario (no data) with the RES structure for R14 (using test
     # utilities)
     test_context.regions = "R11"

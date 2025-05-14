@@ -1,26 +1,32 @@
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING, Literal, Optional
 
 import ixmp
 import pytest
+
 from message_ix_models import testing
 from message_ix_models.project.navigate import T35_POLICY, Config
+from message_ix_models.project.navigate.report import _scenario_name
+from message_ix_models.project.navigate.workflow import add_macro
 
-from message_data.projects.navigate.report import _scenario_name
-from message_data.projects.navigate.workflow import add_macro
+if TYPE_CHECKING:
+    from pytest import FixtureRequest
+
+    from message_ix_models import Context
 
 
 @pytest.fixture(scope="session")
-def message_buildings_dir():
+def message_buildings_dir() -> None:
     """Create :attr:`.buildings.Config.code_dir, if it does not exist."""
     code_dir = Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
     if not code_dir.exists():
         code_dir.mkdir(parents=True, exist_ok=True)
 
 
-@pytest.mark.xfail(reason="TEMPORARY for #442; updated in #440")
+@pytest.mark.xfail(reason="TEMPORARY for message_data#442; updated in message_data#440")
 @pytest.mark.usefixtures("message_buildings_dir")
-def test_generate_workflow(test_context):
+def test_generate_workflow(test_context: "Context") -> None:
     from message_data.projects.navigate.workflow import generate
 
     # Set an empty value
@@ -73,7 +79,7 @@ BLOCKS = [
 
 @pytest.mark.xfail(reason="TEMPORARY for #442; updated in #440")
 @pytest.mark.usefixtures("message_buildings_dir", "test_context")
-def test_generate_workflow_cli(mix_models_cli):
+def test_generate_workflow_cli(mix_models_cli) -> None:
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
 
     # CLI command to run
@@ -110,14 +116,19 @@ def test_generate_workflow_cli(mix_models_cli):
         ("navigate", "baseline", None),
     ),
 )
-def test_scenario_name(test_context, dsd, input, expected):
+def test_scenario_name(
+    test_context: "Context",
+    dsd: Literal["iiasa-ece", "navigate"],
+    input: str,
+    expected: Optional[str],
+) -> None:
     test_context.setdefault("navigate", Config(dsd=dsd))
     assert expected == _scenario_name(test_context, input)
 
 
 @pytest.mark.skipif(testing.GHA, reason="Crashes pytest on GitHub Actions runners")
 @pytest.mark.xfail(reason="Bare RES lacks detail sufficient for add_macro()")
-def test_add_macro(request, test_context):
+def test_add_macro(request: "FixtureRequest", test_context: "Context") -> None:
     test_context.regions = "R12"
     scenario = testing.bare_res(request, test_context, solved=True)
     add_macro(test_context, scenario)
@@ -137,5 +148,5 @@ class TestT35_POLICY:
             ),
         ),
     )
-    def test_parse(self, value, expected):
+    def test_parse(self, value: str, expected: Optional[int]) -> None:
         assert expected is T35_POLICY.parse(value)

@@ -66,6 +66,10 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         condition=GHA and platform.system() == "Darwin",
         reason="Graphviz not available for GitHub Actions jobs on macOS",
     ),
+    2: pytest.mark.xfail(
+        condition=not util.HAS_MESSAGE_DATA,
+        reason="Not yet migrated from message_data",
+    ),
     "sdmx#230": pytest.mark.xfail(
         condition=GHA,
         reason="https://github.com/khaeru/sdmx/issues/230",

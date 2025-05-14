@@ -1,15 +1,22 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from message_ix import make_df
-from message_ix_models import testing
-from message_ix_models.util import ScenarioInfo, broadcast
 
-from message_data.projects.navigate.wp2.util import (
+from message_ix_models import testing
+from message_ix_models.project.navigate.wp2.util import (
     TECHS,
     add_CCS_constraint,
     add_electrification_share,
     add_LED_setup,
     limit_h2,
 )
+from message_ix_models.util import ScenarioInfo, broadcast
+
+if TYPE_CHECKING:
+    from pytest import FixtureRequest
+
+    from message_ix_models import Context
 
 # The functions are only tested for this combination of settings
 BARE_RES = dict(
@@ -18,7 +25,7 @@ BARE_RES = dict(
 )
 
 
-def test_add_CCS_constraint(request, test_context):
+def test_add_CCS_constraint(request: "FixtureRequest", test_context: "Context") -> None:
     ctx = test_context
     ctx.update(**BARE_RES)
     scenario = testing.bare_res(request, ctx)
@@ -36,7 +43,9 @@ def test_add_CCS_constraint(request, test_context):
 
 
 @pytest.mark.parametrize("kind", ["lo", "up"])
-def test_add_electrification_share(request, test_context, kind):
+def test_add_electrification_share(
+    request: "FixtureRequest", test_context: "Context", kind: str
+) -> None:
     ctx = test_context
     ctx.update(**BARE_RES)
     scenario = testing.bare_res(request, ctx)
@@ -60,7 +69,7 @@ def test_add_electrification_share(request, test_context, kind):
     add_electrification_share(scenario, kind)
 
 
-def test_add_LED_setup(request, test_context):
+def test_add_LED_setup(request: "FixtureRequest", test_context: "Context") -> None:
     ctx = test_context
     ctx.update(**BARE_RES)
     scenario = testing.bare_res(request, ctx)
@@ -128,7 +137,7 @@ def test_add_LED_setup(request, test_context):
     assert "???" not in df.unit.unique()
 
 
-def test_limit_h2(request, test_context):
+def test_limit_h2(request: "FixtureRequest", test_context: "Context") -> None:
     ctx = test_context
     ctx.update(**BARE_RES)
     scenario = testing.bare_res(request, ctx)
