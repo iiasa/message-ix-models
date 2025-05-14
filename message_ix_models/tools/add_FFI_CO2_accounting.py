@@ -1,22 +1,32 @@
+from typing import TYPE_CHECKING, Optional
+
 from .add_CO2_emission_constraint import main as add_CO2_emission_constraint
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
-def main(scen, relation_name, reg="R11_GLB", constraint_value=None):
+
+def main(
+    scen: "Scenario",
+    relation_name: str,
+    reg: str = "R11_GLB",
+    constraint_value: Optional[float] = None,
+) -> None:
     """Adds accounting possibility for CO2 emissions from FFI.
 
-    The constraint on FFI CO2 emissions can be added to a generic
-    relation in a specified region.
+    The constraint on FFI CO2 emissions can be added to a generic relation in a
+    specified region.
 
     Parameters
     ----------
-    scen : :class:`message_ix.Scenario`
-        scenario to which changes should be applied
-    relation_name: str
-        name of the generic relation for which the limit should be set
-    reg : str (Default='R11_GLB')
-        node in scen to which constraitn should be applied
-    constraint_value: number (optional)
-        value for which the lower constraint should be set
+    scen :
+        Scenario to which changes should be applied.
+    relation_name :
+        Name of the generic relation for which the limit should be set.
+    reg :
+        Node in `scen` to which constraint should be applied.
+    constraint_value :
+        Value for which the lower constraint should be set.
     """
 
     if relation_name not in scen.set("relation").tolist():
