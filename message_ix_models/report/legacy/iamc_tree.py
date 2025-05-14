@@ -2,7 +2,7 @@ import re
 
 import pandas as pd
 
-from message_ix_models.util.compat.message_data import utilities
+from message_data.tools.utilities import utilities
 
 _col = "Variable"
 
