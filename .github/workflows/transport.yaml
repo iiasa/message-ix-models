@@ -3,7 +3,7 @@ name: MESSAGEix-Transport
 env:
   # The repository, ref (branch), and workflow file name to dispatch
   target-repo: iiasa/message_data
-  target-ref: dev
+  target-ref: transport/2025-w24
   target-workflow: transport
 
   # Starting point of the workflow.
@@ -49,8 +49,8 @@ env:
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
   # push:
   #   branches: [ main ]
   schedule:
