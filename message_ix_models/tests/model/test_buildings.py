@@ -1,16 +1,26 @@
 from collections import namedtuple
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from message_data.model.buildings import Config, _mpd, sturm
-from message_data.model.buildings.build import get_spec, get_tech_groups, get_techs
-from message_data.model.buildings.report import (
+from message_ix_models.model.buildings import Config, _mpd, sturm
+from message_ix_models.model.buildings.build import get_spec, get_tech_groups, get_techs
+from message_ix_models.model.buildings.report import (
     configure_legacy_reporting,
     report2,
     report3,
 )
+from message_ix_models.util import package_data_path
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from message_ix import Scenario
+
+    from message_ix_models import Context
 
 MARK = {
     0: pytest.mark.xfail(
@@ -20,7 +30,7 @@ MARK = {
 
 
 @pytest.fixture(scope="function")
-def buildings_context(test_context):
+def buildings_context(test_context: "Context") -> Generator["Context", None, None]:
     """A version of :func:`.test_context` with a :class:`.buildings.Config` stored."""
     test_context["buildings"] = Config(sturm_scenario="")
 
@@ -30,7 +40,7 @@ def buildings_context(test_context):
 
 
 @pytest.mark.parametrize("commodity", [None, "gas"])
-def test_get_techs(buildings_context, commodity):
+def test_get_techs(buildings_context: "Context", commodity: Optional[str]) -> None:
     ctx = buildings_context
     ctx.regions = "R12"
     spec = get_spec(ctx)
@@ -60,7 +70,9 @@ def test_get_techs(buildings_context, commodity):
         ),
     ),
 )
-def test_get_tech_groups(test_context, args, present, absent):
+def test_get_tech_groups(
+    test_context: "Context", args: dict, present: set[str], absent: set[str]
+) -> None:
     test_context.buildings = Config(sturm_scenario="")
     test_context.regions = "R12"
 
@@ -82,8 +94,8 @@ def test_get_tech_groups(test_context, args, present, absent):
 
 
 @MARK[0]
-def test_configure_legacy_reporting(buildings_context):
-    config = dict()
+def test_configure_legacy_reporting(buildings_context: "Context") -> None:
+    config: dict[str, Any] = dict()
 
     configure_legacy_reporting(config)
 
@@ -92,7 +104,7 @@ def test_configure_legacy_reporting(buildings_context):
     assert "h2_fc_afofi" in config["rc h2"]
 
 
-def test_mpd():
+def test_mpd() -> None:
     columns = ["node", "commodity", "year", "value"]
 
     # Function runs
@@ -108,10 +120,10 @@ def test_mpd():
     assert np.isnan(_mpd(c, c, "value"))
 
 
-def test_report3(test_data_path):
+def test_report3() -> None:
     # Mock contents of the Reporter
-    s = namedtuple("Scenario", "scenario")("baseline")
-    config = {"sturm output path": test_data_path.joinpath("buildings", "sturm")}
+    s = cast("Scenario", namedtuple("Scenario", "scenario")("baseline"))
+    config = {"sturm output path": package_data_path("test", "buildings", "sturm")}
 
     sturm_rep = report2(s, config)
     result = report3(s, sturm_rep)
@@ -122,7 +134,9 @@ def test_report3(test_data_path):
 
 @pytest.mark.skip(reason="Slow")
 @pytest.mark.parametrize("sturm_method", ["rpy2", "Rscript"])
-def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
+def test_sturm_run(
+    tmp_path: "Path", test_context: "Context", test_data_path: "Path", sturm_method: str
+) -> None:
     """Test that STURM can be run by either method."""
     test_context.model.regions = "R12"
     test_context.buildings = Config(
@@ -170,5 +184,5 @@ def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
         ("NAV_Dem-NPi-act-tec", "NPi-LowCE_ENGAGE_20C_step-3+B"),
     ],
 )
-def test_sturm_scenario_name(input, expected):
+def test_sturm_scenario_name(input: str, expected: str) -> None:
     assert expected == sturm.scenario_name(input)
