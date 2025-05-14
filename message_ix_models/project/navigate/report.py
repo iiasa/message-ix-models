@@ -5,18 +5,20 @@ import re
 from datetime import date
 from itertools import count, product
 from pathlib import Path
-from typing import Callable, Collection, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Collection, Dict, Optional
 
 import pandas as pd
 from message_ix import Reporter, Scenario
+from sdmx.model.v21 import Code
+
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.project.navigate import iter_scenario_codes
 from message_ix_models.report.util import copy_ts
 from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
-from sdmx.model.v21 import Code
 
-from message_data.tools.prep_submission import Config, ScenarioConfig
+if TYPE_CHECKING:
+    import message_data.tools.prep_submission
 
 log = logging.getLogger(__name__)
 
@@ -194,7 +196,7 @@ UNIT_MAP = {
 
 def gen_config(
     context: Context, workflow_dir: Path, scenarios: Collection[Scenario]
-) -> Config:
+) -> "message_data.tools.prep_submission.Config":
     """Generate configuration for :mod:`.prep_submission`.
 
     Parameters
@@ -204,6 +206,8 @@ def gen_config(
     scenarios
         Collection of scenarios.
     """
+    from message_data.tools.prep_submission import Config, ScenarioConfig
+
     # Identify the file path for output
     today = date.today().strftime("%Y-%m-%d")
     dsd_label = "" if context.navigate.dsd == "navigate" else f"_{context.navigate.dsd}"

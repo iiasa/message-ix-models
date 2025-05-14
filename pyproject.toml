@@ -173,6 +173,7 @@ exclude = [
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
 # Exceptions:
+# 13  .project.navigate.workflow.generate()
 # 30  .project.ssp.script.util.shares.main()
 # 12  .tools.wb.assign_income_groups()
 # 13  .util.sdmx.as_codes()
