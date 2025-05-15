@@ -26,6 +26,37 @@ from .build import get_prices
 log = logging.getLogger(__name__)
 
 
+def _code_dir_factory() -> Path:
+    """Return the default value for :attr:`.Config.code_dir`.
+
+    In order of precedence:
+
+    1. The directory where :mod:`message_ix_buildings` is installed.
+    2. The :mod:`ixmp` configuration key ``message buildings dir``, if set. The older,
+       private MESSAGE_Buildings repository is not an installable Python package, so it
+       cannot be imported without information on its location.
+
+       This key can be set in the local :ref:`ixmp configuration file
+       <ixmp:configuration>`.
+    3. A directory named :file:`./buildings` in the parent of the directory containing
+       :mod:`message_ix_models`.
+    """
+    from importlib.util import find_spec
+
+    from message_ix_models.util import MESSAGE_MODELS_PATH
+
+    if spec := find_spec("message_ix_buildings"):
+        assert spec.origin is not None
+        return Path(spec.origin).parent
+
+    try:
+        return Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
+    except AttributeError:
+        pass  # Not set
+
+    return MESSAGE_MODELS_PATH.parents[1].joinpath("buildings")
+
+
 @dataclass
 class Config:
     """Configuration options for :mod:`.buildings` code.
@@ -35,8 +66,7 @@ class Config:
     Raises
     ------
     FileNotFoundError
-        if the "message buildings dir" configuration key (or its default value; see
-        :attr:`code_dir`) does not point to a valid location.
+        if :attr:`code_dir` points to a non-existent directory.
     """
 
     #: Name or ID of STURM scenario to run.
@@ -48,15 +78,10 @@ class Config:
     #: :obj:`True` if the base scenario should be cloned.
     clone: bool = False
 
-    #: Path to the MESSAGE_Buildings code and data. This repository is not an
-    #: installable Python package, so it cannot be imported without information on its
-    #: location.
+    #: Path to the MESSAGEix-Buildings code and data.
     #:
-    #: The key ``message buildings dir`` can be set in the user's :ref:`ixmp
-    #: configuration file <ixmp:configuration>`; if not set, it defaults to a directory
-    #: named "buildings" located in the same parent directory that contains
-    #: :mod:`message_data`.
-    code_dir: Optional[Path] = None
+    #: If not set explicitly, this is populated using :func:`_code_dir_factory`.
+    code_dir: Path = field(default_factory=_code_dir_factory)
 
     #: Maximum number of iterations of the ACCESS–STURM–MESSAGE loop. Set to 1 for
     #: once-through mode.
@@ -90,20 +115,8 @@ class Config:
     sturm_method: str = "Rscript"
 
     def __post_init__(self):
-        try:
-            self.code_dir = self.code_dir or (
-                Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
-            )
-        except KeyError:
-            raise RuntimeError(
-                'message_data.model.buildings requires the "message buildings dir" '
-                "configuration key to be set. See the documentation."
-            )
-
         if not self.code_dir.exists():
-            raise FileNotFoundError(
-                f"MESSAGE_Buildings code directory not found at {self.code_dir}"
-            )
+            raise FileNotFoundError(f"MESSAGEix-Buildings not found at {self.code_dir}")
 
     def set_output_path(self, context: Context):
         # Base path for output during iterations
