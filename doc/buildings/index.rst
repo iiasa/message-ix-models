@@ -1,6 +1,8 @@
 MESSAGEix-Buildings
 *******************
 
+.. caution:: |gh-350|
+
 MESSAGEix-Buildings refers to a set of models including a specific configuration of MESSAGEix-GLOBIOM.
 
 Code is maintained in the `iiasa/MESSAGE_Buildings <https://github.com/iiasa/MESSAGE_Buildings>`_ repository.
@@ -181,13 +183,13 @@ Configuration
 The class :class:`.buildings.Config` defines all the options to which the code responds, as well as default values.
 Values given in code or on the command line will override these.
 
-.. autoclass:: message_data.model.buildings.Config
+.. autoclass:: message_ix_models.model.buildings.Config
    :members:
 
 Code reference
 ==============
 
-.. currentmodule:: message_data.model
+.. currentmodule:: message_ix_models.model
 
 .. autosummary::
    :toctree: _autosummary

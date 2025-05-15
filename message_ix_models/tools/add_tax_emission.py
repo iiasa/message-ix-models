@@ -1,3 +1,8 @@
+"""Add a global CO2 price to `scen`.
+
+.. caution:: |gh-350|
+"""
+
 import logging
 from typing import TYPE_CHECKING
 
@@ -10,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def main(scen: "Scenario", price: float, conversion_factor: float = 44 / 12) -> None:
-    """Adds a global CO2 price to a scenario.
+    """Add a global CO2 price to `scen`.
 
     A global carbon price is implemented with an annual growth rate equal to the
     discount rate.

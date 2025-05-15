@@ -1,3 +1,8 @@
+"""Add alternative emission_types for constraints.
+
+.. caution:: |gh-350|
+"""
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -5,7 +10,7 @@ if TYPE_CHECKING:
 
 
 def main(scen: "Scenario") -> None:
-    """Adds alternative emission_types for constraints.
+    """Add alternative emission_types for constraints.
 
     Add alternative emission_types (TCE_CO2 and TCE_non-CO2) so that constraints for
     both CO2 and non-CO2 GHGs can be separately defined. All relevant emission factors

@@ -1,3 +1,8 @@
+"""Remove all ``tax_emission`` and ``bound_emission`` from a given scenario.
+
+.. caution:: |gh-350|
+"""
+
 from typing import TYPE_CHECKING
 
 from message_ix_models import ScenarioInfo
@@ -7,7 +12,7 @@ if TYPE_CHECKING:
 
 
 def main(scen: "Scenario", remove_all: bool = False) -> None:
-    """Removes all ``tax_emission`` and ``bound_emission`` from a given scenario.
+    """Remove all ``tax_emission`` and ``bound_emission`` from a given scenario.
 
     Parameters
     ----------

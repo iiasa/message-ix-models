@@ -1,3 +1,8 @@
+"""Add bound for generic relation at the global level.
+
+.. caution:: |gh-350|
+"""
+
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -15,7 +20,7 @@ def main(
     type_rel: str,
     reg: str = "R11_GLB",
 ) -> None:
-    """Adds bound for generic relation at the global level.
+    """Add bound for generic relation at the global level.
 
     This specific bound added to the scenario can be used to account for CO2 emissions.
 
