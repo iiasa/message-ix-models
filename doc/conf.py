@@ -82,6 +82,12 @@ rst_prolog = r"""
 .. |y0| replace:: :math:`y_0`
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
+
+.. |gh-350| replace::
+   This documentation and the related code was migrated from :mod:`message_data` ``dev``
+   branch as of commit 8213e6c (2025-05-08) in :pull:`350`.
+   It does not reflect further changes made on the :mod:`message_data` ``main`` branch,
+   other related branches, or in forks or other repositories.
 """
 
 

@@ -85,6 +85,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    :caption: Model variants
 
    global/index
+   buildings/index
    material/index
    transport/index
    water/index
@@ -101,6 +102,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    project/ecemf
    project/edits
    project/elevate
+   project/engage
    project/gea
    project/geidco
    project/genie

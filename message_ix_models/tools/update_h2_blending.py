@@ -1,3 +1,8 @@
+"""Revise hydrogen-blending constraints.
+
+.. caution:: |gh-350|
+"""
+
 from typing import TYPE_CHECKING
 
 from message_ix_models import ScenarioInfo

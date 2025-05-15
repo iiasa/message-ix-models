@@ -1,3 +1,8 @@
+"""Add accounting possibility for CO2 emissions from FFI.
+
+.. caution:: |gh-350|
+"""
+
 from typing import TYPE_CHECKING, Optional
 
 from .add_CO2_emission_constraint import main as add_CO2_emission_constraint
@@ -12,7 +17,7 @@ def main(
     reg: str = "R11_GLB",
     constraint_value: Optional[float] = None,
 ) -> None:
-    """Adds accounting possibility for CO2 emissions from FFI.
+    """Add accounting possibility for CO2 emissions from FFI.
 
     The constraint on FFI CO2 emissions can be added to a generic relation in a
     specified region.

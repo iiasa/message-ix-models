@@ -1,3 +1,8 @@
+"""Add regional CO2 entries from AFOLU to a generic relation in a specified region.
+
+.. caution:: |gh-350|
+"""
+
 from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
