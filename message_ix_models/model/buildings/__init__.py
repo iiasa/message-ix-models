@@ -7,7 +7,7 @@ ACCESS and STURM and MESSAGEix itself.
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, cast
+from typing import Any, Optional, cast
 
 import ixmp
 import message_ix
@@ -74,7 +74,7 @@ class Config:
 
     #: Keyword arguments for :meth:`.message_ix.Scenario.solve`. Set
     #: `model="MESSAGE_MACRO"` to solve scenarios using MESSAGE_MACRO.
-    solve: Dict[str, Any] = field(default_factory=lambda: dict(model="MESSAGE"))
+    solve: dict[str, Any] = field(default_factory=lambda: dict(model="MESSAGE"))
 
     #: Similar to `solve`, but using another config class
     solve_config: SolveConfig = field(

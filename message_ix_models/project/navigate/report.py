@@ -2,10 +2,11 @@
 
 import logging
 import re
+from collections.abc import Callable, Collection
 from datetime import date
 from itertools import count, product
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Collection, Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 from message_ix import Reporter, Scenario
@@ -371,7 +372,7 @@ def legacy_output_path(base_path: Path, scenario: Scenario) -> Path:
     return base_path.joinpath(f"{scenario.model}_{scenario.scenario}.xlsx")
 
 
-def return_func_dict() -> Dict[str, Callable]:
+def return_func_dict() -> dict[str, Callable]:
     """Hook for legacy reporting.
 
     This function contains a crude hack. :func:`.iamc_report_hackathon.report`, per a
