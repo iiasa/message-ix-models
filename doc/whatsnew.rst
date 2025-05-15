@@ -47,6 +47,16 @@ Next release
   :func:`.shape_test_data`,
   :func:`.ssp_test_data`,
   :func:`.ssp_user_data`.
+- Migrate code, data, and documentation for :doc:`buildings/index`, :doc:`ENGAGE project <project/engage>`, :doc:`NAVIGATE project <project/navigate>`, and 9 :mod:`.tools` submodules (:pull:`350`, :pull:`351`):
+  :mod:`.add_AFOLU_CO2_accounting`,
+  :mod:`.add_CO2_emission_constraint`,
+  :mod:`.add_FFI_CO2_accounting`,
+  :mod:`.add_alternative_TCE_accounting`,
+  :mod:`.add_budget`,
+  :mod:`.add_emission_trajectory`,
+  :mod:`.add_tax_emission`,
+  :mod:`.remove_emission_bounds`, and
+  :mod:`.update_h2_blending`.
 - Bug fix: :program:`mix-models --verbose` command-line option was not stored on :class:`.Context`/:class:`~.util.Config` (:pull:`300`).
 - Bug fix: adjust or guard some Python usage that was not compatible with Python 3.9
   —the earliest version supported by :mod:`message_ix_models` (:pull:`295`, :issue:`294`).

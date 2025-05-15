@@ -1,3 +1,8 @@
+"""Add a budget constraint to a given region.
+
+.. caution:: |gh-350|
+"""
+
 import logging
 from typing import TYPE_CHECKING
 
@@ -17,7 +22,7 @@ def main(
     region: str = "World",
     unit: str = "tC",
 ) -> None:
-    """Adds a budget constraint to a given region.
+    """Add a budget constraint to a given region.
 
     Parameters
     ----------

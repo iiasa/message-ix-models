@@ -1,3 +1,8 @@
+"""Modify `scen` to include an emission bound.
+
+.. caution:: |gh-350|
+"""
+
 from typing import TYPE_CHECKING
 
 import pandas as pd

@@ -110,3 +110,24 @@ World Bank structures (:mod:`.tools.wb`)
 
 .. automodule:: message_ix_models.tools.wb
    :members:
+
+
+Tools for scenario manipulation
+===============================
+
+.. currentmodule:: message_ix_models.tools
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   add_AFOLU_CO2_accounting
+   add_CO2_emission_constraint
+   add_FFI_CO2_accounting
+   add_alternative_TCE_accounting
+   add_budget
+   add_emission_trajectory
+   add_tax_emission
+   remove_emission_bounds
+   update_h2_blending
