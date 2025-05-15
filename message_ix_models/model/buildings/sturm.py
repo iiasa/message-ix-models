@@ -4,7 +4,7 @@ import gc
 import logging
 import re
 import subprocess
-from typing import Mapping, MutableMapping, Tuple
+from collections.abc import Mapping, MutableMapping
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 def run(
     context: Context, prices: pd.DataFrame, first_iteration: bool
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM, either using rpy2 or via Rscript.
 
     Returns
@@ -75,7 +75,7 @@ def run(
 
 def _sturm_rpy2(
     context: Context, prices: pd.DataFrame, args: MutableMapping, first_iteration: bool
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM using :mod:`rpy2`."""
     import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
@@ -106,7 +106,7 @@ def _sturm_rpy2(
 
 def _sturm_rscript(
     context: Context, prices: pd.DataFrame, args: Mapping, first_iteration: bool
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM using :mod:`subprocess` and :program:`Rscript`."""
     # Retrieve info from the Context object
     config = context.buildings

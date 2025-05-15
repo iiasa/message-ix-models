@@ -10,7 +10,6 @@ import logging
 import re
 from functools import lru_cache, partial
 from itertools import product
-from typing import Dict, List
 
 import message_ix
 import pandas as pd
@@ -231,7 +230,7 @@ def var_name(df: pd.DataFrame, expr: str) -> pd.DataFrame:
 # Reporting operators/atomic steps
 
 
-def buildings_filters0(all_techs: List[str], years: List) -> Dict:
+def buildings_filters0(all_techs: list[str], years: list) -> dict:
     """Return filters for buildings reporting."""
     # Regular expression to match technology IDs relevant for buildings reporting
     tech_re = re.compile("(resid|comm).*(apps|cool|cook|heat|hotwater)")
@@ -243,7 +242,7 @@ def buildings_filters0(all_techs: List[str], years: List) -> Dict:
     )
 
 
-def buildings_filters1(years: List) -> Dict:
+def buildings_filters1(years: list) -> dict:
     """Return filters for buildings reporting."""
     return dict(l=["final"], ya=years)
 

@@ -1,10 +1,11 @@
 import logging
 import pickle
 import re
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Generator, List, Mapping, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 from genno import KeyExistsError
 from genno.caching import hash_args
@@ -319,7 +320,7 @@ def report(
     context: Context,
     scenario: Scenario,
     *,
-    other_scenario_info: Optional[Dict] = None,
+    other_scenario_info: Optional[dict] = None,
     use_legacy_reporting: bool = True,
 ) -> Scenario:
     """Workflow steps 8–10.
@@ -492,7 +493,7 @@ def compute_minimum_emissions(
     _cache(context, scenario, "limit-drop", {name: df})
 
 
-def add_minimum_emissions(context, scenario, info: Dict):
+def add_minimum_emissions(context, scenario, info: dict) -> None:
     from message_data.projects.engage.runscript_main import (
         glb_co2_relation as RELATION_GLOBAL_CO2,
     )
@@ -535,7 +536,7 @@ def tax_emission(context: Context, scenario: Scenario, price: float):
 
 def iter_scenarios(
     context, filters
-) -> Generator[Tuple[str, Optional[str], Optional[str], Optional[str]], None, None]:
+) -> Generator[tuple[str, Optional[str], Optional[str], Optional[str]], None, None]:
     """Iterate over filtered scenario codes while unpacking information.
 
     Yields a sequence of 4-tuples:
@@ -560,7 +561,7 @@ def iter_scenarios(
         assert match
         label = match.group(2)
 
-        info: List[Optional[str]] = []
+        info: list[Optional[str]] = []
 
         # Values for 3 annotations
         for name in ("climate_policy", "T35_policy", "WP6_production"):
@@ -597,7 +598,7 @@ def generate(context: Context) -> Workflow:  # noqa: C901
     # Mapping from short IDs → 2-tuple with:
     # 1. Name of the final step in the policy sequence (if any).
     # 2. Args for report(…, other_scenario_info=…) —either None or model/scenario name.
-    to_report: Dict[str, Tuple[str, Optional[Mapping]]] = {}
+    to_report: dict[str, tuple[str, Optional[Mapping]]] = {}
 
     # Step 1
     wf.add_step(
@@ -838,8 +839,8 @@ def generate(context: Context) -> Workflow:  # noqa: C901
 
 
 def add_reporting_steps(
-    wf: Workflow, to_report: Mapping[str, Tuple[str, Optional[Mapping]]]
-) -> List[str]:
+    wf: Workflow, to_report: Mapping[str, tuple[str, Optional[Mapping]]]
+) -> list[str]:
     """Add reporting and prep-solution steps to `wf` for each item in `to_report`.
 
     .. todo:: Migrate to :mod:`message_ix_models`.
