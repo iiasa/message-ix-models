@@ -16,8 +16,8 @@ commodities; or activities of the technologies producing these commodities.
 unpublished) iiasa/MESSAGE_Buildings repository.
 """
 
+from collections.abc import Iterable
 from functools import lru_cache
-from typing import Iterable, Tuple
 
 import pandas as pd
 from genno import Quantity
@@ -88,7 +88,7 @@ def get_afofi_technology_shares(
 
 
 @lru_cache
-def return_PERC_AFOFI() -> Tuple[pd.DataFrame, pd.DataFrame]:
+def return_PERC_AFOFI() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Query the ECE IEA database and return the share of AFOFI in RC.
 
     This function copied 2023-07-11 from iiasa/MESSAGE_Buildings @ 7fb0e6fd.
