@@ -7,28 +7,20 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, field, replace
 from enum import Flag, auto
 from functools import lru_cache, reduce
-from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
-import ixmp
 import yaml
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
 
 from message_ix_models.model.workflow import Config as WfConfig
 from message_ix_models.project.engage.workflow import PolicyConfig
-from message_ix_models.util import MESSAGE_MODELS_PATH, as_codes
+from message_ix_models.util import as_codes, package_data_path
 
 if TYPE_CHECKING:
     from sdmx.model.common import BaseAnnotation
 
 log = logging.getLogger(__name__)
-
-ixmp.config.register(
-    "navigate workflow dir",
-    Path,
-    cast(Path, MESSAGE_MODELS_PATH).parent.joinpath("navigate-workflow"),
-)
 
 
 class T35_POLICY(Flag):
@@ -207,11 +199,23 @@ EXTRA_SCENARIOS = [
 
 @lru_cache()
 def _read() -> list[Code]:
-    """Read the codes from the NAVIGATE workflow directory."""
-    workflow_dir = Path(ixmp.config.get("navigate workflow dir")).expanduser().resolve()
+    """Read the codes from the NAVIGATE workflow directory.
 
-    # Use the particular path scheme of Scenario Explorer config repositories
-    path = workflow_dir.joinpath("definitions", "scenario", "scenarios.yaml")
+    This function previously used a separate clone of the (private, non-installable)
+    https://github.com/iiasa/navigate-workflow repository.
+
+    It currently uses a copy of the file from this repository, stored within
+    :file:`message_ix_models/data/navigate`.
+    """
+    # Previous location
+    # workflow_dir = Path(
+    #     ixmp.config.get("navigate workflow dir")
+    # ).expanduser().resolve()
+    #
+    # # Use the particular path scheme of Scenario Explorer config repositories
+    # path = workflow_dir.joinpath("definitions", "scenario", "scenarios.yaml")
+
+    path = package_data_path("navigate", "scenarios.yaml")
     log.info(f"Read scenarios from {path}")
     with open(path) as f:
         _content = yaml.safe_load(f)
