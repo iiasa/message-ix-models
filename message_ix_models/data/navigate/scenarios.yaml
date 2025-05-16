@@ -1,0 +1,473 @@
+# The following annotation IDs are used throughout this file:
+#
+# - navigate_task: NAVIGATE task or work package with which a scenario is
+#   associated.
+# - navigate_climate_policy: climate policies/protocol used in a scenario. Must
+#   be one of the following:
+#   - 15C: 1.5°C stabilization
+#   - 20C: 2.0°C stabilization
+#   - "20C T6.2": special form of 2.0°C stabilization used in Task 6.2. The
+#     scenario uses emissions prices equivalent to those obtained in the
+#     scenario "PEP-2C-Default". That scenario in turn uses "20C", above.
+#   - NPi: National policies implemented
+#
+# Other annotation IDs are only used for scenarios associated with certain
+# tasks/work packages:
+#
+# - navigate_T35_policy: Task 3.5 demand-side policies/protocol used in a
+#   scenario. Must be zero (i.e. none implemented) or more of the following,
+#   separated by "+":
+#   - act: Activity reduction & activity shift
+#   - ele: Electrification and fuel shift
+#   - tec: Technological improvements - energy efficiency
+# - navigate_WP6_production: WP6 supply-side protocol; must be either "default"
+#   or "advanced".
+#
+- DIAG-Base
+- DIAG-C30-const
+- DIAG-C80-const
+- DIAG-C30-gr5
+- DIAG-C80-gr5
+- DIAG-C0to30-const
+- DIAG-C0to30-gr5
+- DIAG-C0to80-gr5
+- DIAG-C80-lin
+- DIAG-BFC1000
+- DIAG-BHC1000
+- DIAG-Base-def
+- DIAG-C0to80-const
+- DIAG-C0to80-ant
+- DIAG-C0to80-late
+- DIAG-C30-hybrid
+- DIAG-BFC1800
+- DIAG-BHC1200
+- ADVANCE_DIAG-Base
+- ADVANCE_DIAG-C30-const
+- ADVANCE_DIAG-C80-const
+- ADVANCE_DIAG-C30-gr5
+- ADVANCE_DIAG-C80-gr5
+- ADVANCE_DIAG-C0to30-const
+- ADVANCE_DIAG-C0to30-gr5
+- ADVANCE_DIAG-C0to80-gr5
+- ADVANCE_DIAG-C80-lin
+- ADVANCE_DIAG-BFC1000
+- ADVANCE_DIAG-BHC1000
+- ADVANCE_DIAG-Base-def
+- ADVANCE_DIAG-C0to80-const
+- ADVANCE_DIAG-C0to80-ant
+- ADVANCE_DIAG-C0to80-late
+- ADVANCE_DIAG-C30-hybrid
+- ADVANCE_DIAG-BFC1800
+- ADVANCE_DIAG-BHC1200
+- WP4_distOFF_REF
+- WP4_distOFF_WB2C
+- WP4_distON_REF
+- WP4_distON_WB2C
+- WP4_distON_WB2C_redist
+- WP4_distON_REF_impact
+- WP4_distON_WB2C_impact
+- WP4_distON_WB2C_impact_redist
+- SSP2-noCF
+- SSP2-CF
+- SSP2-SDG-noCF
+- SSP2-SDG-CF
+- SSP2-26-SDG-CF
+- SSP2-26-CF
+- SSP2-CF-IP
+- SSP2-CF-IP-noGDP
+- SSP2-CF-H
+- SSP2-26-noCF
+- SSP2-26-CF-IP
+
+- NAV_Ind_NPi:
+    navigate_task: T2.4
+    navigate_climate_policy: NPi
+- NAV_Ind_650:
+    navigate_task: T2.4
+- NAV_Ind_1150:
+    navigate_task: T2.4
+- NAV_Ind_Elec650:
+    navigate_task: T2.4
+- NAV_Ind_Elec1150:
+    navigate_task: T2.4
+- NAV_Ind_Comb650:
+    navigate_task: T2.4
+- NAV_Ind_Comb1150:
+    navigate_task: T2.4
+- NAV_Ind_LMD650:
+    navigate_task: T2.4
+- NAV_Ind_LMD1150:
+    navigate_task: T2.4
+
+- NAV_SSP2-noCF:
+    navigate_task: WP5
+- NAV_SSP2-CF:
+    navigate_task: WP5
+- NAV_SSP2-SDG-noCF:
+    navigate_task: WP5
+- NAV_SSP2-SDG-CF:
+    navigate_task: WP5
+- NAV_SSP2-26-SDG-CF:
+    navigate_task: WP5
+- NAV_SSP2-26-CF:
+    navigate_task: WP5
+- NAV_SSP2-CF-IP:
+    navigate_task: WP5
+- NAV_SSP2-CF-IP-noGDP:
+    navigate_task: WP5
+- NAV_SSP2-CF-H:
+    navigate_task: WP5
+- NAV_SSP2-26-noCF:
+    navigate_task: WP5
+- NAV_SSP2-26-CF-IP:
+    navigate_task: WP5
+
+- NAV_Dem-NPi-ref:
+    description: |
+      The Task 3.5 protocol [link redacted] gives the meaning of the
+      "navigate_T35_policy" annotation.
+    navigate_task: T3.5
+    navigate_climate_policy: NPi
+    navigate_T35_policy: ""  # Empty string = no switches active
+- NAV_Dem-NPi-act:
+    navigate_task: T3.5
+    navigate_climate_policy: NPi
+    navigate_T35_policy: act
+- NAV_Dem-20C-ref:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: ""
+- NAV_Dem-15C-ref:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: ""
+- NAV_Dem-20C-act_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: act
+- NAV_Dem-15C-act_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act
+- NAV_Dem-NPi-tec:
+    navigate_task: T3.5
+    navigate_climate_policy: NPi
+    navigate_T35_policy: tec
+- NAV_Dem-20C-tec_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: tec
+- NAV_Dem-15C-tec_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: tec
+- NAV_Dem-NPi-ele:
+    navigate_task: T3.5
+    navigate_climate_policy: NPi
+    navigate_T35_policy: ele
+- NAV_Dem-20C-ele_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: ele
+- NAV_Dem-15C-ele_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: ele
+- NAV_Dem-NPi-all:
+    navigate_task: T3.5
+    navigate_climate_policy: NPi
+    navigate_T35_policy: act+ele+tec
+- NAV_Dem-20C-all_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: act+ele+tec
+- NAV_Dem-15C-all_u:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act+ele+tec
+- NAV_Dem-20C-all_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: act+ele+tec
+- NAV_Dem-15C-all_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act+ele+tec
+- NAV_Dem-NPi-tec_d:
+    navigate_task: T3.5
+    navigate_climate_policy: NPi
+    navigate_T35_policy: tec
+- NAV_Dem-20C-tec_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: tec
+- NAV_Dem-15C-tec_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: tec
+- NAV_Dem-20C-ele_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: ele
+- NAV_Dem-15C-ele_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: ele
+- NAV_Dem-20C-act_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 20C
+    navigate_T35_policy: "?"
+- NAV_Dem-15C-act_d:
+    navigate_task: T3.5
+    navigate_climate_policy: 15C
+    navigate_T35_policy: "?"
+
+- PC-15C-Default:
+    navigate_task: T6.1
+    navigate_climate_policy: 15C
+    navigate_T35_policy: ""
+    navigate_WP6_production: default
+- PC-15C-AdvPE:
+    navigate_task: T6.1
+    navigate_climate_policy: 15C
+    navigate_T35_policy: ele
+    navigate_WP6_production: advanced
+- PC-15C-LowCE:
+    navigate_task: T6.1
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act+tec
+    navigate_WP6_production: default
+- PC-15C-AllEn:
+    navigate_task: T6.1
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act+ele+tec
+    navigate_WP6_production: advanced
+- PC-15C-LowCEL:
+    navigate_task: T6.1
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act+tec
+    navigate_WP6_production: default
+- PC-15C-AdvPEL:
+    navigate_task: T6.1
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act+ele+tec
+    navigate_WP6_production: advanced
+- PC-15C-AllEnL:
+    navigate_task: T6.1
+    navigate_climate_policy: 15C
+    navigate_T35_policy: act+ele+tec
+    navigate_WP6_production: advanced
+
+# Task 6.2 original set
+- PEP-2C-AllOff:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-VRE:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-Elec:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-HighTech:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-Land:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-DemEffEn:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-DemSuffEn:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-DemLand:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+- PEP-2C-AllOn:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+
+# Task 6.2 as revised 2022-11
+- PEP-2C-Default:
+    navigate_task: T6.2
+    navigate_climate_policy: 20C
+    navigate_T35_policy: ""
+    navigate_WP6_production: default
+- PEP-2C-AdvPE:
+    navigate_task: T6.2
+    navigate_climate_policy: "20C T6.2"
+    navigate_T35_policy: ele
+    navigate_WP6_production: advanced
+- PEP-2C-LowCE:
+    navigate_task: T6.2
+    navigate_climate_policy: "20C T6.2"
+    navigate_T35_policy: act+tec
+    navigate_WP6_production: default
+- PEP-2C-AllEn:
+    navigate_task: T6.2
+    navigate_climate_policy: "20C T6.2"
+    navigate_T35_policy: act+ele+tec
+    navigate_WP6_production: advanced
+- PEP-2C-AllEnL:
+    navigate_task: T6.2
+    navigate_climate_policy: "20C T6.2"
+    navigate_T35_policy: act+ele+tec
+    navigate_WP6_production: advanced
+
+- PEP-1p5C-AllOff:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-VRE:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-Elec:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-HighTech:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-Land:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-DemEffEn:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-DemSuffEn:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-DemLand:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+- PEP-1p5C-AllOn:
+    navigate_task: T6.2
+    navigate_climate_policy: 15C
+
+- PEP-NPi:
+    navigate_task: T6.2
+    navigate_climate_policy: NPi
+    navigate_T35_policy: ""
+    navigate_WP6_production: default
+
+- SUP_NPi_Default:
+    navigate_task: T2.6
+    navigate_climate_policy: NPi
+- SUP_2C_Default:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_1p5C_Default:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_2C_Regional:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_1p5C_Regional:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Elec:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Elec_LimNuc:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Elec_LimCCS:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Elec_HighVRE:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Elec_OptMAC:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_2C_Elec:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Elec_LimNuc:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Elec_LimCCS:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Elec_HighVRE:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Elec_OptMAC:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_1p5C_P2X_LimNuc:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_P2X_LimCCS:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_P2X_HighVRE:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_P2X_OptMAC:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_H2_LimNuc:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_H2_LimCCS:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_H2_HighVRE:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_H2_OptMAC:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Comb:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Comb_LimNuc:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Comb_LimCCS:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Comb_HighVRE:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_1p5C_Comb_OptMAC:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_2C_Comb:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Comb_LimNuc:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Comb_LimCCS:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Comb_HighVRE:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Comb_OptMAC:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_2C_Lab:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_1p5C_Lab:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_2C_Lump:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_1p5C_Lump:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_2C_VAT:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_1p5C_VAT:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C
+- SUP_2C_Prod:
+    navigate_task: T2.6
+    navigate_climate_policy: 20C
+- SUP_1p5C_Prod:
+    navigate_task: T2.6
+    navigate_climate_policy: 15C

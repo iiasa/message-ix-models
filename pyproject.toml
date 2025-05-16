@@ -54,6 +54,7 @@ repository = "https://github.com/iiasa/message-ix-models"
 documentation = "https://docs.messageix.org/models"
 
 [project.optional-dependencies]
+buildings = ["jaydebeapi"]
 docs = [
   # sphinx.ext.autosummary covers the test suite, so all test requirements
   "message_ix_models[tests]",
@@ -71,7 +72,7 @@ report = ["plotnine", "xlsxwriter"]
 tests = [
   "ixmp[tests]",  # TODO Remove once message_ix[tests] depends on ixmp[tests]
   "message-ix[tests]",
-  "message_ix_models[material,report,transport]",
+  "message_ix_models[buildings,material,report,transport]",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
@@ -173,6 +174,7 @@ exclude = [
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
 # Exceptions:
+# 13  .project.navigate.workflow.generate()
 # 30  .project.ssp.script.util.shares.main()
 # 12  .tools.wb.assign_income_groups()
 # 13  .util.sdmx.as_codes()
