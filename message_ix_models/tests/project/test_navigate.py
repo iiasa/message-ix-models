@@ -1,14 +1,12 @@
 import re
-from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 
-import ixmp
 import pytest
 
 from message_ix_models import testing
 from message_ix_models.project.navigate import T35_POLICY, Config
 from message_ix_models.project.navigate.report import _scenario_name
-from message_ix_models.project.navigate.workflow import add_macro
+from message_ix_models.project.navigate.workflow import add_macro, generate
 
 if TYPE_CHECKING:
     from pytest import FixtureRequest
@@ -16,40 +14,28 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 
-@pytest.fixture(scope="session")
-def message_buildings_dir() -> None:
-    """Create :attr:`.buildings.Config.code_dir, if it does not exist."""
-    code_dir = Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
-    if not code_dir.exists():
-        code_dir.mkdir(parents=True, exist_ok=True)
-
-
-@pytest.mark.xfail(reason="TEMPORARY for message_data#442; updated in message_data#440")
-@pytest.mark.usefixtures("message_buildings_dir")
 def test_generate_workflow(test_context: "Context") -> None:
-    from message_data.projects.navigate.workflow import generate
-
-    # Set an empty value
-    test_context["navigate_scenario"] = None
+    # Use default configuration
+    test_context.navigate = Config()
 
     # Same as in test_generate_workflow_cli
     wf = generate(test_context)
-    wf.truncate("M built")
+    wf.truncate("M T3.5 built")
 
     # Check the pre-requisite steps of some workflow steps. This is the 2nd entry in the
     # dask task tuple in wf.graph.
     assert wf.graph["MT NPi-ref solved"][2] == "MT NPi-ref built"
-    assert wf.graph["MT NPi-ref built"][2] == "M built"
+    assert wf.graph["MT NPi-ref built"][2] == "M T3.5 + GLOBIOM"
 
-    # Workflow is truncated at "M built"
-    assert wf.graph["M built"][2] is None
-    assert wf.graph["M built"][0].scenario_info == dict(
+    # Workflow is truncated at "M T3.5 built"
+    assert wf.graph["M T3.5 built"][2] is None
+    assert wf.graph["M T3.5 built"][0].scenario_info == dict(
         model="MESSAGEix-Materials", scenario="baseline_DEFAULT_NAVIGATE"
     )
 
     for s in ("act", "all", "ele", "ref", "tec"):
-        # Depends on the corresponding solved BMT model
-        assert wf.graph[f"NPi-{s} reported"][2] == f"BMT NPi-{s} solved"
+        # Depends on the corresponding solved BMT model + a following step
+        assert wf.graph[f"NPi-{s} reported"][2] == f"NPi-{s} 2025 limit computed"
 
         # Scenario name as expected
         assert wf.graph[f"BMT NPi-{s} solved"][0].scenario_info == dict(
@@ -62,33 +48,38 @@ def test_generate_workflow(test_context: "Context") -> None:
 # displays "MT solved" and its subtree may vary.
 _context = r"'context' \(above\)"
 BLOCKS = [
-    "Truncate workflow at 'M built'",
+    "Truncate workflow at 'M T3.5 built'",
     rf"""
-        - 'MT NPi-ref solved':
-          - <Step solve\(\)>
-          - {_context}
-          - 'MT NPi-ref built':
-            - <Step build_transport\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12 \(NAVIGATE\)/NPi-ref>
-            - {_context}
-            - 'M built':
-              - <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
-              - {_context}
-              - None""",  # noqa: E501
+(\s+)- 'MT NPi-ref solved':
+  \1- <Step solve\(\)>
+  \1- {_context}
+  \1- 'MT NPi-ref built':
+    \1- <Step main\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12 \(NAVIGATE\)/NPi-ref>
+    \1- {_context}""",
+    rf"""
+(\s+)- 'M T3.5 built':
+  \1- <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
+  \1- {_context}
+  \1- None""",
 ]
 
 
-@pytest.mark.xfail(reason="TEMPORARY for #442; updated in #440")
-@pytest.mark.usefixtures("message_buildings_dir", "test_context")
-def test_generate_workflow_cli(mix_models_cli) -> None:
+@testing.MARK[1]
+def test_generate_workflow_cli(test_context, mix_models_cli) -> None:
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
 
     # CLI command to run
-    cmd = ["navigate", "run", "--from=M built", "--dry-run", "report all"]
+    cmd = ["navigate", "run", "--from=M T3.5 built", "--dry-run", "all reported"]
     result = mix_models_cli.invoke(cmd)
+    assert 0 == result.exit_code, result.output
 
     # Workflow has the expected scenarios in it
     for b in BLOCKS:
-        assert re.search(b, result.output, flags=re.DOTALL), result.output
+        if re.search(b, result.output, flags=re.DOTALL):
+            continue
+        else:  # pragma: no cover
+            print(result.output)
+            assert False, f"No match for: {b!r}"
 
 
 @pytest.mark.parametrize(
