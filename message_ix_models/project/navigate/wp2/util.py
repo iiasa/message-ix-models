@@ -9,7 +9,7 @@ from message_ix_models.util import (
     ScenarioInfo,
     broadcast,
     nodes_ex_world,
-    private_data_path,
+    path_fallback,
 )
 
 if TYPE_CHECKING:
@@ -316,7 +316,7 @@ def add_LED_setup(scen: Scenario):
     # Common arguments for pd.DataFrame.rename
     rename_cols = {"TECHNOLOGY": "technology", "REGION": "node_loc"}
 
-    data_path = private_data_path("alps")
+    data_path = path_fallback("alps", where="package local")
 
     scen.check_out()
 
