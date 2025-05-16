@@ -10,8 +10,17 @@ import message_ix
 import pandas as pd
 from genno import Quantity
 from genno.operator import mul, relabel, rename_dims
-from ixmp.report.operator import data_for_quantity
-from message_ix.report.operator import as_message_df
+
+try:
+    from ixmp.report.operator import data_for_quantity
+    from message_ix.report.operator import as_message_df
+except ImportError:  # ixmp/message_ix v3.7.0
+    from ixmp.reporting.computations import (  # type: ignore [import-not-found,no-redef]
+        data_for_quantity,
+    )
+    from message_ix.reporting.computations import (  # type: ignore [import-not-found,no-redef]
+        as_message_df,
+    )
 from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import Context, ScenarioInfo, Spec
