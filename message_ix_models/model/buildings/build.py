@@ -22,7 +22,7 @@ from message_ix_models.model.structure import (
     get_region_codes,
 )
 from message_ix_models.util import (
-    load_private_data,
+    load_package_data,
     make_io,
     merge_data,
     nodes_ex_world,
@@ -266,7 +266,7 @@ def load_config(context: Context) -> None:
     if "buildings spec" in context:
         return
 
-    set_info = cast("MutableMapping", load_private_data("buildings", "set.yaml"))
+    set_info = cast("MutableMapping", load_package_data("buildings", "set.yaml"))
 
     # Generate set elements from a product of others
     for set_name, info in set_info.items():
