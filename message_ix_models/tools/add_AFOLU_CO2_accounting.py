@@ -1,54 +1,105 @@
-"""Add regional CO2 entries from AFOLU to a generic relation in a specified region.
+"""Add ``land_output`` and set entries for accounting AFOLU emissions of CO2."""
 
-.. caution:: |gh-350|
-"""
-
+import logging
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from message_ix import Scenario
 
+log = logging.getLogger(__name__)
+
 
 def add_AFOLU_CO2_accounting(
     scen: "Scenario",
     relation_name: str,
-    glb_reg: str = "R11_GLB",
-    constraint_value: Optional[float] = None,
     emission: str = "LU_CO2_orig",
     level: str = "LU",
-    suffix=None,
+    suffix: Optional[str] = None,
+    *,
+    # Unused/deprecated parameters
+    constraint_value: Optional[float] = None,
+    glb_reg: Optional[str] = None,
+    reg: Optional[str] = None,
 ) -> None:
-    """Add regional CO2 entries from AFOLU to a generic relation in a specified region.
+    """Add ``land_output`` and set entries for accounting AFOLU emissions of CO2.
 
-    Specifically for the land_use scenarios: For each land_use scenario a new commodity
-    is created on a new `level` "LU".  Each land_use scenario has an output of "1" onto
-    their commodity. For each of these commodities (which are set to = 0), there is a
-    corresponding new technology which has an input of "1" and an entry into the
-    relation, which corresponds to the the CO2 emissions of the land_use pathway. This
-    complicated setup is required, because Land-use scenarios only have a single entry
-    in the emission factor TCE, which is the sum of all land-use related emissions.
+    The function has the following effects on `scen`:
 
-    The default configuration applies to CO2.
+    1. A ``relation`` set member `relation_name` is added. However, **no data** for this
+       relation is added or changed.
+    2. A ``level`` set member `level` is added.
+    3. For every member of set ``land_scenario``:
+
+       a. Members with the same ID are added to the sets ``commodity`` and
+          ``technology``. If `suffix` is given, it is appended to these added members.
+       b. A ``balance_equality`` set member is added for the commodity and `level`.
+
+    4. Data in ``land_output`` are:
+
+       - Retrieved where :py:`commodity=emission`. With the default value of `emission`
+         "LU_CO2_orig", the configuration.
+       - Modified to set `level`, value 1.0, unit "%", and replace the commodity label
+         with ``{land_scenario}{suffix}``, using the value of land_scenario from the
+         respective row.
+       - Added to `scen`.
+
+    This structure and data interact with other data that are **not** configured by this
+    function, whereby:
+
+    - The technologies added in 3(a) receive ``input`` from the respective commodities.
+      This, combined with the ``balance_equality`` setting, ensure that the ``ACT`` of
+      these technologies is exactly equal to the corresponding ``LAND``.
+    - The technologies in turn have entries into a relation that is used for other
+      purposes.
+
+    This complicated setup is required, because land-use scenarios only have a single
+    entry in the emission factor TCE, which is the sum of all land-use related
+    emissions.
+
+    .. versionchanged:: :pull:`354`
+
+       - The function no longer sets values of ``relation_activity`` or ``input``.
+       - Parameters `constraint_value` and `glb_reg` are ignored.
 
     Parameters
     ----------
     scen :
         Scenario to which changes should be applied.
     relation_name :
-        Name of the generic relation for which the limit should be set.
-    glb_reg :
-        Node in `scen` to which constraint should be applied.
+        Name of a generic relation.
+    emission :
+        Commodity name for filtering ``land_output`` data.
+    level :
+        Level for added ``land_output`` data.
+    suffix :
+        Optional suffix for added commodity and level names.
+
+    Other parameters
+    ----------------
     constraint_value :
-        Value for which the lower constraint should be set.
-    emission : str (default="LU_CO2_orig")
-        Name of the `land_output` which should be accounted in the relation.
-    level : str (default="LU")
-        Name of the level onto which duplicate `land_output` should be parametrized for.
-    suffix : str
-        The suffix will be applied to all uses of the land-use scenario names e.g. for
-        helper technologies or commodities.
+        Deprecated, unused.
+    glb_reg :
+        Deprecated, unused.
+    reg :
+        Deprecated, unused.
+
+    Raises
+    ------
+    ValueError
+        if there is no ``land_output`` data for :py:`commodity=emission`.
     """
-    with scen.transact("Add relation based land-use TCE emission accounting"):
+    if constraint_value is not None:
+        log.warning(
+            f"Argument add_AFOLU_CO2_accounting(…, constraint_value={constraint_value})"
+            " is ignored"
+        )
+    if glb_reg is not None:
+        log.warning(
+            f"Argument add_AFOLU_CO2_accounting(…, glb_reg={constraint_value}) is"
+            " ignored"
+        )
+
+    with scen.transact("Add land_output entries for "):
         # Add relation to set
         if relation_name not in scen.set("relation").tolist():
             scen.add_set("relation", relation_name)
@@ -57,12 +108,12 @@ def add_AFOLU_CO2_accounting(
         if level not in scen.set("level"):
             scen.add_set("level", level)
 
-        # Add commodities to set and set commodities to equal
-        ls = scen.set("land_scenario").tolist()
-        ls = [f"{s}{suffix}" for s in ls] if suffix else ls
+        # Add commodities and technologies to sets
+        ls = [f"{s}{suffix or ''}" for s in scen.set("land_scenario").tolist()]
         scen.add_set("commodity", ls)
         scen.add_set("technology", ls)
 
+        # Enforce commodity balance equal (implicitly, to zero)
         for commodity in ls:
             scen.add_set("balance_equality", [commodity, level])
 
