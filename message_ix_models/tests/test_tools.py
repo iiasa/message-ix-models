@@ -34,7 +34,8 @@ def scenario(request: "FixtureRequest", test_context: "Context") -> "Scenario":
     return bare_res(request, test_context, solved=False)
 
 
-def test_add_AFOLU_CO2_accounting(scenario: "Scenario") -> None:
+def test_add_AFOLU_CO2_accounting_A(scenario: "Scenario") -> None:
+    """:attr:`add_AFOLU_CO2_accounting.METHOD.A`."""
     info = ScenarioInfo(scenario)
 
     commodity = ["LU_CO2"]
@@ -63,11 +64,74 @@ def test_add_AFOLU_CO2_accounting(scenario: "Scenario") -> None:
     add_AFOLU_CO2_accounting.add_AFOLU_CO2_accounting(
         scenario,
         relation_name="CO2_Emission_Global_Total",
-        glb_reg="R12_GLB",  # NB Previously 'reg'
+        reg="R12_GLB",  # NB Previously 'reg'
         constraint_value=1.0,
+        method=add_AFOLU_CO2_accounting.METHOD.A,
     )
 
-    # TODO Add assertions about modified structure & data
+
+def test_add_AFOLU_CO2_accounting_B(scenario: "Scenario") -> None:
+    """:attr:`add_AFOLU_CO2_accounting.METHOD.B`."""
+    info = ScenarioInfo(scenario)
+
+    # commodity in expected land_output data = `emission` parameter to the function
+    commodity = "LU_CO2_orig"
+    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
+
+    land_output = make_df(
+        "land_output",
+        commodity=commodity,
+        level="primary",
+        value=123.4,
+        unit="-",
+        time="year",
+    ).pipe(broadcast, year=info.Y, node=info.N, land_scenario=land_scenario)
+
+    with scenario.transact("Prepare for test of add_AFOLU_CO2_accounting()"):
+        scenario.add_set("commodity", commodity)
+        scenario.add_set("land_scenario", land_scenario)
+        scenario.add_par("land_output", land_output)
+
+    # Other parameter values
+    relation_name = "CO2_Emission_Global_Total"
+    level = "LU"
+    suffix = "_foo"
+
+    # Function runs without error
+    add_AFOLU_CO2_accounting.add_AFOLU_CO2_accounting(
+        scenario,
+        relation_name=relation_name,
+        emission=commodity,
+        level=level,
+        suffix=suffix,
+    )
+
+    exp = [f"{x}{suffix}" for x in land_scenario]
+
+    # relation_name is present
+    assert relation_name in set(scenario.set("relation"))
+
+    # Commodity and technology sets have expected added elements
+    assert set(exp) <= set(scenario.set("commodity"))
+    assert set(exp) <= set(scenario.set("technology"))
+
+    # balance_quality entries are present
+    pdt.assert_frame_equal(
+        pd.DataFrame([[c, level] for c in exp], columns=["commodity", "level"]),
+        scenario.set("balance_equality").sort_values("commodity"),
+    )
+
+    data_post = scenario.par("land_output", filters={"commodity": list(exp)})
+
+    # 1 row of data was added for every row of original land_input
+    assert len(land_output) == len(data_post)
+
+    # 'level' and 'value' as expected
+    assert {level} == set(data_post.level.unique())
+    assert (1.0 == data_post.value).all()
+
+    # 'commodity' corresponds to 'land_scenario'
+    assert (data_post.land_scenario + suffix == data_post.commodity).all()
 
 
 def test_add_CO2_emission_constraint(scenario: "Scenario") -> None:
