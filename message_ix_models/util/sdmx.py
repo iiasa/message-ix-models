@@ -5,11 +5,14 @@ import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, fields
 from datetime import datetime
-from enum import Enum, Flag
+from enum import Enum, Flag, auto
+
+# TODO Remove when Python 3.10 is no longer supported
+from enum import EnumMeta as EnumType
 from functools import cache
 from importlib.metadata import version
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING, Generic, Optional, TypeVar, Union, cast
 from warnings import warn
 
 import sdmx
@@ -25,7 +28,6 @@ from .context import Context
 
 if TYPE_CHECKING:
     from os import PathLike
-    from typing import TypeVar
 
     import pint
     from genno import Computer, Key
@@ -36,10 +38,10 @@ if TYPE_CHECKING:
     # TODO Use "from typing import Self" once Python 3.11 is the minimum supported
     Self = TypeVar("Self", bound="AnnotationsMixIn")
 
+
 log = logging.getLogger(__name__)
 
 CodeLike = Union[str, common.Code]
-
 
 #: Collection of :class:`.Dataflow` instances.
 DATAFLOW: dict[str, "Dataflow"] = {}
@@ -399,19 +401,71 @@ class Dataflow:
         # template =
 
 
-class URNLookupEnum(Enum):
-    """:class:`.Enum` subclass that allows looking up members using a URN."""
+T = TypeVar("T", bound=Enum)
 
-    _ignore_ = "_urn_name"
-    _urn_name: dict
 
-    def __init_subclass__(cls):
-        cls._urn_name = dict()
-
+# TODO Replace with URNLookupMixin[T] once Python 3.10 is no longer supported
+class URNLookupMixin(Generic[T]):
     @classmethod
-    def by_urn(cls, urn: str):
+    def by_urn(cls, urn: str) -> T:
         """Return the :class:`.Enum` member given its `urn`."""
-        return cls[cls.__dict__["_urn_name"][urn]]
+        name = cls.__dict__["_urn_name"][urn]
+        return cls.__dict__["_member_map_"][name]
+
+
+class URNLookupEnum(URNLookupMixin, Enum):
+    """Class constructed by ItemSchemeEnumType."""
+
+
+class ItemSchemeEnumType(EnumType):
+    @classmethod
+    def __prepare__(metacls, cls, bases, **kwgs):
+        return {}
+
+    def __init__(cls, *args, **kwds):
+        super(ItemSchemeEnumType, cls).__init__(*args)
+
+    def __new__(metacls, cls, bases, dct, **kwargs) -> type["URNLookupEnum"]:
+        # Retrieve the item scheme
+        scheme = dct.pop("_get_item_scheme")(None)
+        if not isinstance(scheme, common.ItemScheme):
+            raise RuntimeError(
+                f"Callback for {cls} returned {scheme}; expected ItemScheme"
+            )
+
+        # Prepend URNLookupMixin to the base class(es); use Enum as a default
+        bases = (URNLookupMixin,) + (bases or (Enum,))
+
+        # Prepare the EnumDict for creating the class
+        enum_dct = super(ItemSchemeEnumType, metacls).__prepare__(cls, bases, **kwargs)
+        # Transfer class dct private members
+        enum_dct.update(dct)
+
+        # Populate the class member dictionary and URN → member name mapping
+        _urn_name = dict()
+
+        if any(issubclass(c, Flag) for c in bases):
+            # Ensure the 0 member is NONE, not any of the codes
+            enum_dct["NONE"] = 0
+        for i, item in enumerate(scheme, start=1):
+            _urn_name[item.urn] = item.id
+            enum_dct[item.id] = auto()
+
+        # Create the class
+        enum_class = cast(
+            type["URNLookupEnum"],
+            super(ItemSchemeEnumType, metacls).__new__(
+                metacls, cls, bases, enum_dct, **kwargs
+            ),
+        )
+
+        # Store the _urn_name mapping
+        setattr(enum_class, "_urn_name", _urn_name)
+
+        return enum_class
+
+    # NB Provided solely to satisfy mypy, never called
+    def by_urn(self, urn: str) -> "URNLookupEnum": ...  # type: ignore [empty-body]
 
 
 # FIXME Reduce complexity from 13 → ≤11
@@ -710,26 +764,6 @@ def get_version(with_dev: Optional[bool] = True) -> str:
     tmp, *_ = version(__package__.split(".")[0]).partition("+" if with_dev else ".dev")
 
     return str(common.Version(tmp))
-
-
-def make_enum(urn, base=URNLookupEnum):
-    """Create an :class:`.enum.Enum` (or `base`) with members from codelist `urn`."""
-    # Read the code list
-    cl = read(urn)
-
-    # Ensure the 0 member is NONE, not any of the codes
-    names = ["NONE"] if issubclass(base, Flag) else []
-    names.extend(code.id for code in cl)
-
-    # Create the class
-    result = base(urn, names)
-
-    if issubclass(base, URNLookupEnum):
-        # Populate the URN → member name mapping
-        for code in cl:
-            result._urn_name[code.urn] = code.id
-
-    return result
 
 
 def read(urn: str, base_dir: Optional["PathLike"] = None):
