@@ -193,6 +193,7 @@ jobs:
           "dask < 2025.4.0" \
           "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.version.upstream }}" \
           "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.version.upstream }}" \
+          "message-ix-buildings @ git+https://github.com/iiasa/message-ix-buildings@main" \
           .[docs,tests]
 
     - name: Configure local data path
