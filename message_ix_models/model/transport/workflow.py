@@ -143,22 +143,19 @@ def short_hash(value: str) -> str:
 def tax_emission(context: "Context", scenario: "Scenario", price: float) -> "Scenario":
     """Add emission tax.
 
-    This function calls code from :mod:`message_data.projects.navigate.workflow`,
-    :mod:`message_data.tools.utilities`, and other non-public locations. It cannot be
-    used without access to those codes.
+    See also
+    --------
+    message_ix_models.project.engage.workflow.step_0
+    message_ix_models.project.navigate.workflow.tax_emission
     """
     from message_ix import make_df
 
+    from message_ix_models.model.workflow import step_0
+    from message_ix_models.project.navigate import workflow as navigate_workflow
     from message_ix_models.util import broadcast
 
-    try:
-        from message_data.projects.engage import workflow as engage_workflow
-        from message_data.projects.navigate import workflow as navigate_workflow
-    except ImportError:
-        raise RuntimeError("Requires non-public code from message_data")
-
-    # Add ENGAGE-style emissions accounting
-    scenario = engage_workflow.step_0(context, scenario)
+    # Prepare emissions accounting for carbon pricing
+    scenario = step_0(context, scenario)
 
     # Add values for the MACRO 'drate' parameter.
     # message_data.tools.utilities.add_tax_emission() refers to this parameter, rather
@@ -266,7 +263,7 @@ def generate(
             lambda _, s: initial_new_capacity_up_v311(s, safety_factor=1.05),
         )
 
-        # This block copied from message_data.projects.navigate.workflow
+        # This block copied from message_ix_models.project.navigate.workflow
         if config.policy:
             # Add a carbon tax
             name = wf.add_step(f"{label} with tax", name, tax_emission, price=1000.0)
