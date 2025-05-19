@@ -42,7 +42,8 @@ def test_enum():
     # Same SSP ID from different enums are not equivalent
     assert SSP_2017["1"] != SSP_2024["1"]
     assert SSP_2017["1"] is not SSP_2024["1"]
-    assert SSP["1"] != SSP_2024["1"]
+    # NB Ignored because of https://github.com/python/mypy/issues/7568
+    assert SSP["1"] != SSP_2024["1"]  # type: ignore [misc]
 
 
 @pytest.mark.parametrize(
