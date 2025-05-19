@@ -63,7 +63,7 @@ def test_add_AFOLU_CO2_accounting(scenario: "Scenario") -> None:
     add_AFOLU_CO2_accounting.add_AFOLU_CO2_accounting(
         scenario,
         relation_name="CO2_Emission_Global_Total",
-        reg="R12_GLB",
+        glb_reg="R12_GLB",  # NB Previously 'reg'
         constraint_value=1.0,
     )
 
