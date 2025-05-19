@@ -1,8 +1,11 @@
 import logging
 import re
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from .structure import SSP, SSP_2017, SSP_2024, generate
+
+if TYPE_CHECKING:
+    from message_ix_models.util.sdmx import URNLookupEnum
 
 __all__ = [
     "SSP",
@@ -38,7 +41,7 @@ class ssp_field:
     def __set_name__(self, owner, name):
         self._name = "_" + name
 
-    def __get__(self, obj, type) -> Union[SSP_2017, SSP_2024]:
+    def __get__(self, obj, type) -> "URNLookupEnum":
         if obj is None:
             return None  # type: ignore [return-value]
 
