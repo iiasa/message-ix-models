@@ -683,26 +683,26 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     cost.drop(columns="share", inplace=True)
     share_long["time"] = "year"
     share_long["unit"] = "-"
-    share_calib = share_long.copy()
-    # Expand for years [2020, 2025]
-    share_calib = share_calib.loc[share_calib.index.repeat(2)].reset_index(drop=True)
-    years_calib = [2020, 2025]
-    share_calib["year_act"] = years_calib * (len(share_calib) // 2)
-    # take year in info.N but not years_calib
-    years_fut = [year for year in info.Y if year not in years_calib]
-    share_fut = share_long.copy()
-    share_fut = share_fut.loc[share_fut.index.repeat(len(years_fut))].reset_index(
-        drop=True
-    )
-    share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
-    # filter only shares that contain "ot_saline"
-    share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
-    # if value < 0.4 set to 0.4, not so allow too much saline where there is no
-    share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
-    # keep only after 2050
-    share_fut = share_fut[share_fut["year_act"] >= 2050]
-    # append share_calib and (share_fut only to add constraints on ot_saline)
-    results["share_commodity_up"] = pd.concat([share_calib])
+    # share_calib = share_long.copy()
+    # # Expand for years [2020, 2025]
+    # share_calib = share_calib.loc[share_calib.index.repeat(2)].reset_index(drop=True)
+    # years_calib = [2020, 2025]
+    # share_calib["year_act"] = years_calib * (len(share_calib) // 2)
+    # # take year in info.N but not years_calib
+    # years_fut = [year for year in info.Y if year not in years_calib]
+    # share_fut = share_long.copy()
+    # share_fut = share_fut.loc[share_fut.index.repeat(len(years_fut))].reset_index(
+    #     drop=True
+    # )
+    # share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
+    # # filter only shares that contain "ot_saline"
+    # share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
+    # # if value < 0.4 set to 0.4, not so allow too much saline where there is no
+    # share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
+    # # keep only after 2050
+    # share_fut = share_fut[share_fut["year_act"] >= 2050]
+    # # append share_calib and (share_fut only to add constraints on ot_saline)
+    # results["share_commodity_up"] = pd.concat([share_calib])
 
     # Filtering out 2015 data to use for historical values
     input_cool_2015 = input_cool[
@@ -968,9 +968,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     if not df_share.empty:
         # pd concat to the existing results["share_commodity_up"]
-        results["share_commodity_up"] = pd.concat(
-            [results["share_commodity_up"], df_share], ignore_index=True
-        )
+        results["share_commodity_up"] = pd.concat([df_share], ignore_index=True)
 
     return results
 
