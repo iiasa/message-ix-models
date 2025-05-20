@@ -383,8 +383,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     inv_cost = make_df(
         "inv_cost",
         technology=df_inv["tec"],
-        value=df_inv["investment_mid"],
-        unit="USD/km3",
+        value=df_inv["investment_mid"] / 1e3,
+        unit="USD/MCM",
     ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
     inv_cost = inv_cost[~inv_cost["technology"].isin(techs)]
     results["inv_cost"] = inv_cost
@@ -401,8 +401,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "fix_cost",
                     technology=df_inv["tec"],
-                    value=df_inv["fix_cost_mid"],
-                    unit="USD/km3",
+                    value=df_inv["fix_cost_mid"] / 1e3,
+                    unit="USD/MCM",
                 ).pipe(
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
@@ -430,8 +430,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_mid"],
-                        unit="USD/km3",
+                        value=rows["var_cost_mid"] / 1e3,
+                        unit="USD/MCM",
                         mode="M1",
                     ).pipe(
                         broadcast,
@@ -452,8 +452,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_high"],
-                        unit="USD/km3",
+                        value=rows["var_cost_high"] / 1e3,
+                        unit="USD/MCM",
                         mode="Mf",
                     ).pipe(
                         broadcast,
@@ -475,8 +475,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=df_var["var_cost_mid"],
-                        unit="USD/km3",
+                        value=df_var["var_cost_mid"] / 1e3,
+                        unit="USD/MCM",
                         mode="M1",
                     ).pipe(
                         broadcast,
@@ -496,8 +496,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_mid"],
-                        unit="USD/km3",
+                        value=rows["var_cost_mid"] / 1e3,
+                        unit="USD/MCM",
                         mode="M1",
                     ).pipe(
                         broadcast,
@@ -516,8 +516,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_high"],
-                        unit="USD/km3",
+                        value=rows["var_cost_high"] / 1e3,
+                        unit="USD/MCM",
                         mode="Mf",
                     ).pipe(
                         broadcast,
@@ -552,7 +552,7 @@ def prepare_input_dataframe(
                     "input",
                     technology=rows["tec"],
                     value=rows["value_high"],
-                    unit="-",
+                    unit="GWh/MCM",
                     level="final",
                     commodity="electr",
                     mode="Mf",
@@ -576,7 +576,7 @@ def prepare_input_dataframe(
                     "input",
                     technology=rows["tec"],
                     value=rows["value_high"],
-                    unit="-",
+                    unit="GWh/MCM",
                     level="final",
                     commodity="electr",
                     mode="Mf",
@@ -601,7 +601,7 @@ def prepare_input_dataframe(
                             "input",
                             technology=rows["tec"],
                             value=rows["value_mid"],
-                            unit="-",
+                            unit="GWh/MCM",
                             level="final",
                             commodity="electr",
                             mode="M1",
@@ -623,7 +623,7 @@ def prepare_input_dataframe(
                 "input",
                 technology=rows["tec"],
                 value=rows["value_mid"],
-                unit="-",
+                unit="GWh/MCM",
                 level="final",
                 commodity="electr",
                 mode="M1",
@@ -711,8 +711,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         make_df(
             "output",
             technology="extract_salinewater_basin",
-            value=1,
-            unit="km3/year",
+            value=1e3,
+            unit="MCM/year",
             level="water_avail_basin",
             commodity="salinewater_basin",
             mode="M1",
@@ -744,8 +744,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         node_loc="B" + df_hist["BCU_name"],
         technology=df_hist["tec_type"],
         year_vtg=df_hist["year"],
-        value=df_hist["cap_km3_year"],
-        unit="km3/year",
+        value=df_hist["cap_km3_year"] * 1e3,
+        unit="MCM/year",
     )
     # Divide the historical capacity by 5 since the existing data is summed over
     # 5 years and model needs per year
@@ -760,11 +760,11 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         node_loc="B" + df_proj["BCU_name"],
         technology="extract_salinewater_basin",
         year_act=df_proj["year"],
-        value=df_proj["cap_km3_year"],
-        unit="km3/year",
+        value=df_proj["cap_km3_year"] * 1e3,
+        unit="MCM/year",
     )
     # Making negative values zero
-    bound_up["value"].clip(lower=0, inplace=True)
+    bound_up["value"].clip(lower=0)
     # Bound should start from 2025
     bound_up = bound_up[bound_up["year_act"] > 2020]
 
@@ -773,8 +773,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     inv_cost = make_df(
         "inv_cost",
         technology=df_desal["tec"],
-        value=df_desal["inv_cost_mid"],
-        unit="USD/km3",
+        value=df_desal["inv_cost_mid"] / 1e3,
+        unit="USD/MCM",
     ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
 
     results["inv_cost"] = inv_cost
@@ -790,8 +790,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "fix_cost",
                     technology=rows["tec"],
-                    value=rows["fix_cost_mid"],
-                    unit="USD/km3",
+                    value=rows["fix_cost_mid"] / 1e3,
+                    unit="USD/MCM",
                 ).pipe(
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
@@ -809,8 +809,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
-                    value=rows["var_cost_mid"],
-                    unit="USD/km3",
+                    value=rows["var_cost_mid"] / 1e3,
+                    unit="USD/MCM",
                     mode="M1",
                 ).pipe(
                     broadcast,
@@ -978,8 +978,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         node_loc="B" + df_bound["BCU_name"],
         technology=df_bound["tec_type"],
         mode="M1",
-        value=df_bound["cap_km3_year"],
-        unit="km3/year",
+        value=df_bound["cap_km3_year"] * 1e3,
+        unit="MCM/year",
     ).pipe(
         broadcast,
         year_act=year_wat,

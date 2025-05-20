@@ -168,8 +168,8 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     irr_out = make_df(
         "output",
         technology="irrigation_cereal",
-        value=1,
-        unit="km3/year",
+        value=1e3,
+        unit="mcm/year",
         level="irr_cereal",
         commodity="freshwater",
         mode="M1",
@@ -185,8 +185,8 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
             make_df(
                 "output",
                 technology="irrigation_sugarcrops",
-                value=1,
-                unit="km3/year",
+                value=1e3,
+                unit="mcm/year",
                 level="irr_sugarcrops",
                 commodity="freshwater",
                 mode="M1",
@@ -207,8 +207,8 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
             make_df(
                 "output",
                 technology="irrigation_oilcrops",
-                value=1,
-                unit="km3/year",
+                value=1e3,
+                unit="mcm/year",
                 level="irr_oilcrops",
                 commodity="freshwater",
                 mode="M1",
