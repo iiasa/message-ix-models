@@ -1,6 +1,7 @@
 from typing import List, Union
 
 import message_ix
+import numpy as np
 import pandas as pd
 import pyam
 from message_ix.report import Reporter
@@ -370,6 +371,7 @@ def split_fe_other(
                 variable=f"Share|{c}-methanol",
             )
         )
+        to_append = pyam.IamDataFrame(to_append.data.replace([np.inf, -np.inf], 0))
         py_df_all = pyam.concat([py_df_all, to_append])
         updated_rows = []
 
