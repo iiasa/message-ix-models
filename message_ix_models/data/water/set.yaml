@@ -1226,6 +1226,7 @@ cooling:
     add:
     - km3/GWa
     - MCM/GWa
+    - MCM/year
     - km3
     - km3/year
 
@@ -1359,4 +1360,8 @@ nexus:
   unit:
     add:
     - USD/km3
+    - MCM/year
+    - MCM/GWa
+    - USD/MCM
+
 
