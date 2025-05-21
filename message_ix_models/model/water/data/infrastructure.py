@@ -164,7 +164,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     # load the scenario from context
     scen = context.get_scenario()
 
-    year_wat = (2010, 2015, *info.Y)
+    year_wat = (*range(2010, info.Y[0] + 1, 5), *info.Y)
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear
@@ -667,7 +667,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # load the scenario from context
     scen = context.get_scenario()
 
-    year_wat = (2010, 2015, *info.Y)
+    year_wat = (*range(2010, info.Y[0] + 1, 5), *info.Y)
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear

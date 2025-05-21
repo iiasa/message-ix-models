@@ -148,9 +148,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     # scen = context.get_scenario()
     scen = Scenario(context.get_platform(), **context.core.scenario_info)
 
-    # year_wat = (2010, 2015)
     fut_year = info.Y
-    year_wat = (2010, 2015, *info.Y)
+    year_wat = (*range(2010, info.Y[0] + 1, 5), *info.Y)
+    last_vtg_yr = info.Y[0] - 5
     sub_time = context.time
     print(sub_time)
 
@@ -576,7 +576,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             technology="extract_surfacewater",
             value=1e3 * df_hist["hist_cap_sw_km3_year"] / 5,  # n period
             unit="MCM/year",
-            year_vtg=2015,
+            year_vtg=last_vtg_yr,
         )
 
         hist_new_cap = pd.concat(
@@ -588,7 +588,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     technology="extract_groundwater",
                     value=1e3 * df_hist["hist_cap_gw_km3_year"] / 5,
                     unit="MCM/year",
-                    year_vtg=2015,
+                    year_vtg=last_vtg_yr,
                 ),
             ]
         )
@@ -738,7 +738,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "inv_cost",
                     technology="extract_gw_fossil",
-                    value=(54.52 * 150)/1e3 ,  # assume higher as normal GW
+                    value=(54.52 * 150) / 1e3,  # assume higher as normal GW
                     unit="USD/MCM",
                 ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
             ]
