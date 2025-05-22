@@ -199,7 +199,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             make_df(
                 "output",
                 technology="extract_surfacewater",
-                value=1e3,
+                value=1,
                 unit="MCM",
                 year_vtg=year_wat,
                 year_act=year_wat,
@@ -221,7 +221,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "output",
                     technology="extract_groundwater",
-                    value=1e3,
+                    value=1,
                     unit="MCM",
                     year_vtg=year_wat,
                     year_act=year_wat,
@@ -243,7 +243,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "output",
                     technology="extract_salinewater",
-                    value=1e3,
+                    value=1,
                     unit="MCM",
                     year_vtg=year_wat,
                     year_act=year_wat,
@@ -554,7 +554,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "output",
                     technology="extract_salinewater",
-                    value=1e3,
+                    value=1,
                     unit="MCM",
                     year_vtg=year_wat,
                     year_act=year_wat,

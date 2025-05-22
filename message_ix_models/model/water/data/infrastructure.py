@@ -711,7 +711,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         make_df(
             "output",
             technology="extract_salinewater_basin",
-            value=1e3,
+            value=1,
             unit="MCM/year",
             level="water_avail_basin",
             commodity="salinewater_basin",

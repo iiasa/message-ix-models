@@ -168,7 +168,7 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     irr_out = make_df(
         "output",
         technology="irrigation_cereal",
-        value=1e3,
+        value=1,
         unit="MCM/year",
         level="irr_cereal",
         commodity="freshwater",
