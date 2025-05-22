@@ -33,9 +33,17 @@ DIMS = "e n t y UNIT".split()
 EXPR_EMI = re.compile(
     r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|(?P<t>(Bunkers|Transportation).*)$"
 )
+
 #: Expression used to select and extract :math:`(c)` dimension coordinates from variable
 #: codes in :func:`v_to_fe_coords`.
-EXPR_FE = re.compile(r"^Final Energy\|Transportation\|(?P<c>Liquids\|Oil)$")
+EXPR_FE = re.compile(
+    r"""^Final.Energy\|
+    (?P<t>Bunkers(\|International.Aviation)?|(Transportation(|.\(w/.bunkers\))))
+    \|?
+    (?P<c>|Liquids\|Oil)
+    $""",
+    flags=re.VERBOSE,
+)
 
 #: Keywords for :func:`.iamc_like_data_for_query` / :func:`.to_quantity`.
 IAMC_KW = dict(non_iso_3166="keep", query="Model != ''", unique="MODEL SCENARIO")
