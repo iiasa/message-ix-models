@@ -12,6 +12,7 @@ from message_ix_models.project.ssp.transport import (
     get_scenario_code,
     process_df,
     process_file,
+    v_to_fe_coords,
 )
 from message_ix_models.testing import MARK
 from message_ix_models.tools.iea import web
@@ -279,3 +280,31 @@ def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
 
     # Output satisfies expectations
     check(df_in, df_out, method)
+
+
+@pytest.mark.parametrize(
+    "value, exp",
+    (
+        ("Final Energy|Bunkers", {"c": "", "t": "Bunkers"}),
+        (
+            "Final Energy|Bunkers|International Aviation",
+            {"c": "", "t": "Bunkers|International Aviation"},
+        ),
+        ("Final Energy|Bunkers|Liquids|Oil", {"c": "Liquids|Oil", "t": "Bunkers"}),
+        (
+            "Final Energy|Transportation (w/ bunkers)",
+            {"c": "", "t": "Transportation (w/ bunkers)"},
+        ),
+        (
+            "Final Energy|Transportation (w/ bunkers)|Liquids|Oil",
+            {"c": "Liquids|Oil", "t": "Transportation (w/ bunkers)"},
+        ),
+        ("Final Energy|Transportation", {"c": "", "t": "Transportation"}),
+        (
+            "Final Energy|Transportation|Liquids|Oil",
+            {"c": "Liquids|Oil", "t": "Transportation"},
+        ),
+    ),
+)
+def test_v_to_fe_coords(value: str, exp) -> None:
+    assert exp == v_to_fe_coords(value)
