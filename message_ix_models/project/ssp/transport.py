@@ -291,13 +291,13 @@ def get_computer(
     url = workflow.scenario_url(context, label_full)
     # Optionally apply a regex substitution
     URL_SUB = {
-        "LED-SSP1": ("$", "#102"),  # Point to a specific version
-        "LED-SSP2": ("$", "#108"),
-        "SSP1": ("$", "#652"),
-        "SSP2": ("$", "#695"),
-        "SSP3": ("$", "#569"),
-        "SSP4": ("$", "#525"),
-        "SSP5": ("$", "#522"),  # Other scenario name
+        "LED-SSP1": ("$", "#125"),  # Point to a specific version
+        "LED-SSP2": ("$", "#130"),
+        "SSP1": ("$", "#682"),
+        "SSP2": ("$", "#747"),
+        "SSP3": ("$", "#602"),
+        "SSP4": ("$", "#555"),
+        "SSP5": ("$", "#569"),  # Other scenario name
         # "SSP5": ("(SSP_2024.5) baseline$", r"\1 baseline#525"),  # Other scenario name
     }
     if pattern_repl := URL_SUB.get(sc.id):
