@@ -633,7 +633,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
                     value=icfb_df["value_return"],
                     unit="MCM/GWa",
                 )
-                .pipe(broadcast, node_dest=bs, time_dest=sub_time)
+                .pipe(broadcast, node_dest=bs, time_dest= pd.Series(sub_time))
                 .merge(df_sw, how="left")
             )
             # multiply by basin water availability share
