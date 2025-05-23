@@ -644,8 +644,8 @@ def method_C(c: "Computer") -> None:
     labels = {"nl": {"R12_GLB": "World"}}
     c.add(k.base[1], "relabel", k.base[0], labels=labels, sums=True)
 
-    # Select the numerator
-    c.add(k.share0["num"], "select", k.base[1], indexers=dict(t=["AIR"]), drop=True)
+    # Select the numerator; drop the 't' dimension
+    c.add(k.share0["num"], "select", k.base[1], indexers=dict(t="AIR"), drop=True)
     # Ratio of AIR to the total
     c.add(k.share0, "div", k.share0["num"], k.base[1] / "t")
 
