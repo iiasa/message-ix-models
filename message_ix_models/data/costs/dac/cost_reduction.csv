@@ -1,0 +1,7 @@
+# Cost reduction in 2100,,,,,
+# ,,,,,
+# Units: %  ,,,,,
+message_technology,very_low,low,medium,high,very_high
+dac_lt,0.1,0.3,0.5,0.7,0.9
+dac_hte,0.1,0.3,0.5,0.7,0.9
+dac_htg,0.1,0.3,0.5,0.7,0.9
