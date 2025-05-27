@@ -6,10 +6,10 @@ from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from genno import Computer
+from ixmp.util import parse_url
 from message_ix import Scenario
 
 from message_ix_models.util.context import Context
-from message_ix_models.util.ixmp import parse_url
 
 if TYPE_CHECKING:
     from click import Command
