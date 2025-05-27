@@ -6,9 +6,9 @@ Next release
 
 - In accordance with the :ref:`policy-upstream-versions`:
 
-  - :mod:`message_ix_models` supports and is tested against :mod:`ixmp` and :mod:`message_ix_models` version 3.10.0 (:pull:`299`).
-  - Support for :mod:`ixmp` and :mod:`message_ix` versions 3.4, 3.5, and 3.6 is dropped  (:pull:`288`, :pull:`289`).
-    The minimum supported version of both packages is 3.7.0.
+  - :mod:`message_ix_models` supports and is tested against :mod:`ixmp` and :mod:`message_ix_models` versions 3.10 (:pull:`299`) and 3.11 (:pull:`356`).
+  - Support for :mod:`ixmp` and :mod:`message_ix` versions 3.4, 3.5, 3.6, and 3.7 is dropped  (:pull:`288`, :pull:`289`, :pull:`356`).
+    The minimum supported version of both packages is 3.8.0.
 
 - Update :class:`.IEA_EWEB` to support:
 
