@@ -33,9 +33,10 @@ requires-python = ">=3.9"
 dependencies = [
   "click",
   "colorama",
-  # When the minimum is greater than the minimum via message_ix; e.g.
-  # message_ix >= 3.4.0 → ixmp >= 3.4.0 → genno >= 1.6.0",
-  "genno >= 1.24.0",
+  # When the minimum is greater than the minimum via message_ix. Currently:
+  # - message_ix >= 3.8.0 → ixmp >= 3.8.0 → genno >= 1.16"
+  # - message_ix >= 3.8.0 → genno >= 1.18.1"
+  "genno >= 1.25",
   "iam_units >= 2023.9.11",
   "message_ix >= 3.8",
   "pooch",
