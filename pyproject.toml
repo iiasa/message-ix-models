@@ -49,9 +49,10 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://github.com/iiasa/message-ix-models"
-repository = "https://github.com/iiasa/message-ix-models"
-documentation = "https://docs.messageix.org/models"
+Documentation = "https://docs.messageix.org/models"
+"Release notes" = "https://docs.messageix.org/projects/models/en/stable/whatsnew.html"
+Repository = "https://github.com/iiasa/message-ix-models"
+"Issue tracker" = "https://github.com/iiasa/message-ix-models/issues"
 
 [project.optional-dependencies]
 buildings = ["jaydebeapi"]
