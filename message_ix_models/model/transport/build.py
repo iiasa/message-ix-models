@@ -471,7 +471,7 @@ def add_structure(c: Computer) -> None:
     )
 
 
-@minimum_version("message_ix 3.8; genno 1.28")
+@minimum_version("genno 1.28")
 def get_computer(
     context: Context,
     obj: Optional[Computer] = None,

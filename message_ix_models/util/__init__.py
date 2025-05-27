@@ -745,7 +745,8 @@ def show_versions() -> str:
     """Output of :func:`ixmp.show_versions`, as a :class:`str`."""
     from io import StringIO
 
-    from . import ixmp
+    import ixmp
+
     from ._logging import preserve_log_handlers
 
     # Retrieve package versions
