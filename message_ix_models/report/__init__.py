@@ -2,14 +2,13 @@ import logging
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
-from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
 import genno.config
 import yaml
-from genno import Key, KeyExistsError
+from genno import Key
 from genno.compat.pyam import iamc as handle_iamc
 from genno.core.key import single_key
 from ixmp.util import discard_on_error
@@ -368,14 +367,3 @@ def defaults(rep: Reporter, context: Context) -> None:
     # Add mappings for conversions to IAMC data structures
     add_replacements("c", get_codes("commodity"))
     add_replacements("t", get_codes("technology"))
-
-    # Ensure "y::model" and "y0" are present
-    # TODO remove this once message-ix-models depends on message_ix > 3.7.0 at minimum
-    for comp in (
-        ("y::model", "model_periods", "y", "cat_year"),
-        ("y0", itemgetter(0), "y::model"),
-    ):
-        try:
-            rep.add(*comp, strict=True)
-        except KeyExistsError:
-            pass  # message_ix > 3.7.0; these are already defined
