@@ -7,16 +7,9 @@ from message_ix import Scenario, make_df
 from message_ix_models import Context
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import map_yv_ya_lt
-from message_ix_models.util import (
-    broadcast,
-    minimum_version,
-    package_data_path,
-    same_node,
-    same_time,
-)
+from message_ix_models.util import broadcast, package_data_path, same_node, same_time
 
 
-@minimum_version("message_ix 3.7")
 def map_basin_region_wat(context: "Context") -> pd.DataFrame:
     """
     Calculate share of water availability of basins per each parent region.
