@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Optional, cast
 import pandas as pd
 from genno import Computer, Key, Quantity
 from genno.core.key import single_key
+from ixmp.report.common import RENAME_DIMS
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
@@ -30,7 +31,6 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
-from message_ix_models.util.ixmp import rename_dims
 from message_ix_models.util.sdmx import DATAFLOW, STORE, Dataflow
 
 if TYPE_CHECKING:
@@ -88,7 +88,7 @@ class IEA_Future_of_Trucks(ExoDataSource):
     def __call__(self):
         from genno.operator import load_file
 
-        return load_file(self.path, dims=rename_dims())
+        return load_file(self.path, dims=RENAME_DIMS)
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         import xarray as xr
@@ -168,7 +168,7 @@ class MaybeAdaptR11Source(ExoDataSource):
         self.scenario = source_kw.pop("scenario", None)
 
         # Dimensions for loaded data
-        self.dims = deepcopy(rename_dims())
+        self.dims = deepcopy(RENAME_DIMS)
         self.dims["scenario"] = "scenario"
 
         self.raise_on_extra_kw(source_kw)

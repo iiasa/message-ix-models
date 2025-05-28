@@ -1,6 +1,6 @@
 import logging
 from collections import ChainMap, defaultdict
-from collections.abc import Collection, Mapping, MutableMapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from functools import partial, singledispatch
 from itertools import count
@@ -365,24 +365,6 @@ def iter_keys(base: "genno.Key") -> KeyIterator:
     return partial(next, map(lambda i: base + str(i), count()))
 
 
-def iter_parameters(set_name, scenario: Optional["message_ix.Scenario"] = None):
-    """Iterate over MESSAGEix parameters with *set_name* as a dimension.
-
-    .. deprecated:: 2023.11
-       Use :meth:`ixmp.Scenario.par_list` with the :py:`indexed_by=...` argument
-       instead.
-    """
-    try:
-        assert scenario is not None
-        yield from scenario.items(indexed_by=set_name, par_data=False)
-    except (TypeError, AssertionError):  # ixmp < 3.8.0
-        import message_ix.models
-
-        for name, info in message_ix.models.MESSAGE_ITEMS.items():
-            if info["ix_type"] == "par" and set_name in info["idx_sets"]:
-                yield name
-
-
 def make_io(
     src: tuple[str, str, str],
     dest: tuple[str, str, str],
@@ -745,7 +727,8 @@ def show_versions() -> str:
     """Output of :func:`ixmp.show_versions`, as a :class:`str`."""
     from io import StringIO
 
-    from . import ixmp
+    import ixmp
+
     from ._logging import preserve_log_handlers
 
     # Retrieve package versions
@@ -791,14 +774,14 @@ def strip_par_data(  # noqa: C901
     total = 0  # Total observations stripped
 
     if dump is None:
-        pars = []  # Don't iterate over parameters unless dumping
+        pars: Iterable[str] = []  # Don't iterate over parameters unless dumping
     else:
         log.info(
             f"Remove data with {set_name}={element!r}"
             + (" (DRY RUN)" if dry_run else "")
         )
         # Iterate over parameters with ≥1 dimensions indexed by `set_name`
-        pars = iter_parameters(set_name, scenario=scenario)
+        pars = scenario.items(indexed_by=set_name, par_data=False)
 
     for par_name in pars:
         if par_name not in par_list:  # pragma: no cover

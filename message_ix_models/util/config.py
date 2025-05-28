@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
 
 import ixmp
+from ixmp.util import parse_url
 
 from ._dataclasses import asdict
 from .scenarioinfo import ScenarioInfo
@@ -371,8 +372,6 @@ class Config:
         :attr:`scenario_info`, and/or :attr:`url` settings.
         """
         from click import BadOptionUsage
-
-        from .ixmp import parse_url
 
         self.verbose = verbose
 

@@ -33,11 +33,12 @@ requires-python = ">=3.9"
 dependencies = [
   "click",
   "colorama",
-  # When the minimum is greater than the minimum via message_ix; e.g.
-  # message_ix >= 3.4.0 → ixmp >= 3.4.0 → genno >= 1.6.0",
-  "genno >= 1.24.0",
+  # When the minimum is greater than the minimum via message_ix. Currently:
+  # - message_ix >= 3.8.0 → ixmp >= 3.8.0 → genno >= 1.16"
+  # - message_ix >= 3.8.0 → genno >= 1.18.1"
+  "genno >= 1.25",
   "iam_units >= 2023.9.11",
-  "message_ix >= 3.7.0",
+  "message_ix >= 3.8",
   "pooch",
   "pyam-iamc >= 0.6",
   "pyarrow",
@@ -49,9 +50,10 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://github.com/iiasa/message-ix-models"
-repository = "https://github.com/iiasa/message-ix-models"
-documentation = "https://docs.messageix.org/models"
+Documentation = "https://docs.messageix.org/models"
+"Release notes" = "https://docs.messageix.org/projects/models/en/stable/whatsnew.html"
+Repository = "https://github.com/iiasa/message-ix-models"
+"Issue tracker" = "https://github.com/iiasa/message-ix-models/issues"
 
 [project.optional-dependencies]
 buildings = ["jaydebeapi"]

@@ -10,7 +10,6 @@ from message_ix.models import MACRO
 from tqdm import tqdm
 
 from message_ix_models import Spec
-from message_ix_models.util import minimum_version
 from message_ix_models.util.pooch import SOURCE, fetch
 
 from .build import apply_spec
@@ -101,7 +100,6 @@ def read_excel(scenario: Scenario, path: Path) -> None:
             scenario.add_par(name, data)
 
 
-@minimum_version("message_ix 3.5")
 def load(
     scenario: Scenario, snapshot_id: int, extra_cache_path: Optional[str] = None
 ) -> None:

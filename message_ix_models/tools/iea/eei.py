@@ -13,7 +13,7 @@ import plotnine as p9
 
 from message_ix_models import Context
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
-from message_ix_models.util import cached, minimum_version, path_fallback
+from message_ix_models.util import cached, path_fallback
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -189,7 +189,6 @@ class IEA_EEI(ExoDataSource):
             unique_units_from_dim, dim="UNIT_MEASURE"
         )
 
-    @minimum_version("genno 1.25")
     def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
         k = super().transform(c, base_key)
 

@@ -172,7 +172,7 @@ def tax_emission(context: "Context", scenario: "Scenario", price: float) -> "Sce
     return navigate_workflow.tax_emission(context, scenario, price)
 
 
-@minimum_version("message_ix 3.10.1.dev0")  # Changes that will be released in 3.11
+@minimum_version("message_ix 3.11")
 def generate(
     context: "Context",
     *,
