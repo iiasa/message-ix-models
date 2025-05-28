@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2025.5.28
+==========
 
 - In accordance with the :ref:`policy-upstream-versions`:
 
