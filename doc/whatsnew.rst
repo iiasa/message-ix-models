@@ -94,7 +94,7 @@ SSP :ref:`ssp-2024`/ScenarioMIP
 Materials
 ---------
 
-- Improve and extend :doc:`/material/index` (:pull:`245`).
+- Improve and extend :doc:`/material/index` (:pull:`345`).
 
 Transport
 ---------
