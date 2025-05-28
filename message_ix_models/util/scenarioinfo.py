@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, Optional
 import pandas as pd
 import pint
 import sdmx.model.v21 as sdmx_model
-
-from .ixmp import parse_url
+from ixmp.util import parse_url
 
 if TYPE_CHECKING:
     from message_ix import Scenario

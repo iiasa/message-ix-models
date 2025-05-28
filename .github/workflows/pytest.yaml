@@ -98,22 +98,22 @@ jobs:
         # - Latest supported Python version for those or other dependencies.
         # Minimum version given in pyproject.toml + earlier version of Python
         # For this job only, the oldest version of Python supported by message-ix-models
-        - { upstream: v3.7.0, python: "3.9" }  # Released 2023-05-17
-        - { upstream: v3.8.0, python: "3.12" }  # 2024-01-12
-        - { upstream: v3.9.0, python: "3.13" }  # 2024-06-04
-        # Latest released version + latest released Python
+        - { upstream: v3.8.0,  python: "3.9"  }  # Released 2024-01-12
+        - { upstream: v3.9.0,  python: "3.13" }  # 2024-06-04
         - { upstream: v3.10.0, python: "3.13" }  # 2025-02-21
+        # Latest released version + latest released Python
+        - { upstream: v3.11.0, python: "3.13" }  # 2025-05-27
         # Development version + latest released Python
-        - { upstream: main,   python: "3.13" }
+        - { upstream: main,    python: "3.13" }
 
         exclude:
         # Specific version combinations that are invalid / not to be used
         # These versions of ixmp are not able locate the arm64 GAMS API binaries
-        - { os: macos-latest, version: { upstream: v3.7.0 }}
         - { os: macos-latest, version: { upstream: v3.8.0 }}
         - { os: macos-latest, version: { upstream: v3.9.0 }}
         # Redundant with macos-latest
         - { os: macos-13, version: { upstream: v3.10.0 }}
+        - { os: macos-13, version: { upstream: v3.11.0 }}
         - { os: macos-13, version: { upstream: main }}
 
       fail-fast: false
@@ -171,7 +171,6 @@ jobs:
         if version_string != "main":
             v, result = parse(version_string), []
             for condition, dependency in (
-                (v <= Version("v3.7.0"), "genno < 1.25"),  # Upstream versions < 3.8.0 import genno.computations, removed in 1.25.0 (#156)
                 (v < Version("v3.9.0"), "pytest == 8.0.0"),  # Upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0 (#155)
             ):
                 result.extend([f'"{dependency}"'] if condition else [])

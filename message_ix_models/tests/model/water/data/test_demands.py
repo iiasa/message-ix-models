@@ -10,7 +10,6 @@ from message_ix_models.model.water.data.demands import (
 )
 
 
-@add_sectoral_demands.minimum_version
 @pytest.mark.parametrize(
     ["SDG", "time"], [("baseline", "year"), ("ambitious", "month")]
 )

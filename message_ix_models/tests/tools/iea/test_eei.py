@@ -3,7 +3,6 @@ import pandas as pd
 import pytest
 
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.tools.iea.eei import IEA_EEI
 
 # Infill data for R12 nodes not present in the IEA data
 # NB these are hand-picked as of 2022-07-20 so that the ratio of freight activity / GDP
@@ -26,7 +25,6 @@ R12_MAP = [
 
 
 class TestIEA_EEI:
-    @IEA_EEI.transform.minimum_version
     @pytest.mark.usefixtures("iea_eei_user_data")
     @pytest.mark.parametrize(
         "source_kw, dimensionality",

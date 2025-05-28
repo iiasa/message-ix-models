@@ -233,7 +233,7 @@ def finalize(
     )
 
 
-@minimum_version("genno 1.28")
+@minimum_version("message_ix_models.model.transport.build.get_computer")
 def get_computer(
     row0: "pd.Series", method: METHOD, *, platform_name: Optional[str] = None
 ) -> "Computer":

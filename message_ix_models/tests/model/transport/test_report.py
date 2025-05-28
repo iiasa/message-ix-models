@@ -15,7 +15,7 @@ from message_ix_models.model.transport.testing import (
     make_mark,
     simulated_solution,
 )
-from message_ix_models.report import prepare_reporter, sim
+from message_ix_models.report import prepare_reporter
 from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
@@ -200,7 +200,7 @@ def test_simulated(request, test_context, build, regions="R12", years="B"):
     assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
-@sim.to_simulate.minimum_version
+@build.get_computer.minimum_version
 @MARK[10]
 @make_mark["gh"](328)
 def test_simulated_iamc(

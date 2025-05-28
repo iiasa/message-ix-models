@@ -3,6 +3,7 @@ from dataclasses import InitVar, dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 from genno import Quantity
+from genno.operator import as_quantity
 
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
@@ -10,7 +11,6 @@ from message_ix_models.project.ssp import SSP_2024, ssp_field
 from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
 from message_ix_models.util import package_data_path
 from message_ix_models.util.config import ConfigHelper
-from message_ix_models.util.genno import as_quantity
 from message_ix_models.util.sdmx import AnnotationsMixIn
 
 if TYPE_CHECKING:
