@@ -985,60 +985,6 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
     )
     scenario.commit("add bound for thermal electr use in cement")
 
-    # relax 2020 growth constraint for RCPA to avoid infeasibility
-    scenario.check_out()
-    df = scenario.par(
-        "growth_activity_up", filters={"node_loc": "R12_RCPA", "year_act": 2020}
-    )
-    df = df[
-        (df["technology"].str.endswith("_i")) | (df["technology"].str.endswith("_I"))
-    ]
-    df["value"] = 5
-    scenario.add_par("growth_activity_up", df)
-    scenario.commit("remove growth constraints in RCPA industry")
-
-    # remove sp_eth_I historical activity, which is most likely from old scenario runs
-    df = scenario.par("historical_activity", filters={"technology": "sp_eth_I"})
-    scenario.check_out()
-    scenario.remove_par("historical_activity", df)
-    scenario.commit("remove sp_eth_I hist act from 2015")
-
-    # correct wrong Viet Nam IEA numbers
-    df = scenario.par(
-        "historical_activity",
-        filters={"node_loc": "R12_RCPA", "technology": "sp_el_I", "year_act": 2015},
-    )
-    df["value"] = 7
-    scenario.check_out()
-    scenario.add_par("historical_activity", df)
-    scenario.commit("increase wrong RCPA hist act in 2015")
-
-    df = scenario.par(
-        "initial_activity_up",
-        filters={
-            "node_loc": "R12_RCPA",
-            "year_act": 2020,
-            "technology": "loil_i",
-        },
-    )
-    df["value"] = 0.058
-    scenario.check_out()
-    scenario.add_par("initial_activity_up", df)
-    scenario.commit("add loil_i ini act for RCPA 2020")
-
-    df = scenario.par(
-        "growth_activity_lo",
-        filters={
-            "node_loc": "R12_FSU",
-            "year_act": 2020,
-            "technology": "loil_i",
-        },
-    )
-    df["value"] = -5
-    scenario.check_out()
-    scenario.add_par("growth_activity_lo", df)
-    scenario.commit("fix loil_i gro lo for FSU 2020")
-
     for bound in ["up", "lo"]:
         par = f"bound_activity_{bound}"
         df = scenario.par(par, filters={"year_act": 2020})
@@ -1062,73 +1008,6 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
     scenario.check_out()
     scenario.remove_par("historical_activity", df)
     scenario.commit("remove elec_i hist act")
-
-    df = scenario.par(
-        "growth_activity_lo",
-        filters={
-            "node_loc": ["R12_CHN"],
-            "year_act": 2020,
-            "technology": "coal_i",
-        },
-    )
-    df["value"] = -0.1
-    scenario.check_out()
-    scenario.add_par("growth_activity_lo", df)
-    scenario.commit("decrease gro lo for coal_ i CHN 2020")
-
-    df = scenario.par(
-        "growth_activity_lo",
-        filters={
-            "node_loc": ["R12_LAM"],
-            "year_act": 2020,
-            "technology": "gas_i",
-        },
-    )
-    df["value"] = -0.04
-    scenario.check_out()
-    scenario.add_par("growth_activity_lo", df)
-    scenario.commit("decrease gro lo for gas_i LAM 2020")
-
-    df = scenario.par(
-        "growth_activity_lo",
-        filters={
-            "node_loc": ["R12_RCPA"],
-            "year_act": 2020,
-            "technology": "foil_i",
-        },
-    )
-    df["value"] = -0.1
-    scenario.check_out()
-    scenario.add_par("growth_activity_lo", df)
-    scenario.commit("decrease gro lo for foil_i RCPA 2020")
-
-    df = scenario.par(
-        "growth_activity_up",
-        filters={
-            "node_loc": ["R12_CHN"],
-            "year_act": 2020,
-            "technology": ["loil_i", "gas_i"],
-        },
-    )
-    df["value"] *= 4
-    scenario.check_out()
-    scenario.add_par("growth_activity_up", df)
-    scenario.commit("increase gro up for loil_i/gas_i CHN 2020")
-
-    df = scenario.par(
-        "growth_activity_up",
-        filters={
-            "node_loc": ["R12_CHN"],
-            "year_act": 2020,
-            "technology": ["loil_i", "gas_i", "heat_i"],
-        },
-    )
-    df["value"] = 5
-    scenario.check_out()
-    scenario.add_par("growth_activity_up", df)
-    scenario.commit("increase gro up for loil_i/gas_i/heat_i CHN 2020")
-
-    return
 
 
 def gen_plastics_emission_factors(
