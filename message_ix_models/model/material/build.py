@@ -160,14 +160,6 @@ def calibrate_existing_constraints(
     # NOTE: changing demand affects the market penetration
     # levels for the end-use technologies.
     # FIXME: context.ssp only works for SSP1/2/3 currently missing SSP4/5
-    calibrate_UE_gr_to_demand(
-        scenario,
-        s_info,
-        data_path=package_data_path("material"),
-        ssp="SSP2",
-        region=identify_nodes(scenario),
-    )
-    calibrate_UE_share_constraints(scenario, s_info)
 
     calibrate_for_SSPs(scenario)
 
