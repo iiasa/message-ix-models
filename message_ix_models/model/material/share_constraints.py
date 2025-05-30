@@ -413,7 +413,7 @@ def add_industry_coal_shr_constraint(scen: "Scenario"):
         other_ind_th_tecs,
         ["coal_i"],
         share_reg_values,
-        years=scen.yv_ya()["year_act"].drop_duplicates()[1:],
+        years=scen.yv_ya()["year_act"].drop_duplicates()[2:],
     )
 
 
@@ -435,7 +435,7 @@ def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp: str):
         "SSP5": 2050,
         "LED": 2035,
     }
-    start_year = 2025
+    start_year = 2030
     end_years = pd.DataFrame(index=list(end_year.keys()), data=end_year.values())
     end_vals = pd.DataFrame(
         index=list(ssp_lt_heat_shr_end.keys()), data=ssp_lt_heat_shr_end.values()
