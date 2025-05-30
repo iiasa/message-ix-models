@@ -817,14 +817,6 @@ def get_hist_act(scen, years, data_file_path=None, use_cached=False):
                     ),
                 ]
             )
-        df = df.rename(
-            columns={
-                "TIME": "year_act",
-                "R12": "node_loc",
-                "TECHNOLOGY": "technology",
-                "Value": "value",
-            }
-        )
     else:
         df = get_2020_industry_activity(years, data_file_path)
         ind_tecs = [
@@ -876,13 +868,21 @@ def get_hist_act(scen, years, data_file_path=None, use_cached=False):
 def gen_other_ind_demands(ssp):
     demands = {}
     for comm in ["i_therm", "i_spec"]:
+        df_fixed = pd.read_csv(
+            package_data_path(
+                "material", "other", "activity", f"{comm}_tecs_hist_act.csv"
+            )
+        ).rename(columns={"year_act": "year", "node_loc": "node"})
+        df_fixed = (
+            df_fixed[df_fixed["year"].isin([2020, 2025])]
+            .groupby(["node", "year"])
+            .sum(numeric_only=True).round(3)
+            .reset_index()
+        )
         df = pd.read_csv(
             package_data_path("material", "other", "demand", f"{comm}_{ssp}.csv")
         ).rename(columns={"year_act": "year", "0": "value", "node_loc": "node"})
-        df_2025 = pd.read_csv(
-            package_data_path("material", "other", "demand", f"{comm}_SSP2.csv")
-        ).rename(columns={"year_act": "year", "0": "value", "node_loc": "node"})
-        df = pd.concat([df[df["year"]!=2025], df_2025[df_2025["year"]==2025]])
+        df = pd.concat([df[df["year"].ge(2030)], df_fixed]).sort_values(["node","year"])
         df["commodity"] = comm
         df["time"] = "year"
         df["unit"] = "GWa"
@@ -892,6 +892,7 @@ def gen_other_ind_demands(ssp):
 
 
 if __name__ == "__main__":
+    get_hist_act(None, [2020], use_cached=True)
     gen_other_ind_demands("SSP3")
     import ixmp
     import message_ix
