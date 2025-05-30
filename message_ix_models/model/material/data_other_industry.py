@@ -833,6 +833,17 @@ def get_hist_act(scen, years, data_file_path=None, use_cached=False):
         df = df.div(inp["efficiency"], axis=0).dropna()
 
         df = df.reset_index().rename(columns={"Value": "value"})
+    df_rt = scen.par(
+        "bound_activity_up", filters={"technology": "sp_el_I_RT"}
+    ).set_index(["node_loc", "year_act"])["value"]
+    df_sp_el = (
+        df[df["technology"] == "sp_el_I"]
+        .set_index(["node_loc", "year_act"])["value"]
+        .sub(df_rt, fill_value=0)
+        .reset_index()
+    )
+    df_sp_el.assign(technology="sp_el_I", inplace=True)
+    df = df[df["technology"] != "sp_el_I"]
     df["mode"] = "M1"
     df["unit"] = "GWa"
     df["time"] = "year"
@@ -876,13 +887,16 @@ def gen_other_ind_demands(ssp):
         df_fixed = (
             df_fixed[df_fixed["year"].isin([2020, 2025])]
             .groupby(["node", "year"])
-            .sum(numeric_only=True).round(3)
+            .sum(numeric_only=True)
+            .round(3)
             .reset_index()
         )
         df = pd.read_csv(
             package_data_path("material", "other", "demand", f"{comm}_{ssp}.csv")
         ).rename(columns={"year_act": "year", "0": "value", "node_loc": "node"})
-        df = pd.concat([df[df["year"].ge(2030)], df_fixed]).sort_values(["node","year"])
+        df = pd.concat([df[df["year"].ge(2030)], df_fixed]).sort_values(
+            ["node", "year"]
+        )
         df["commodity"] = comm
         df["time"] = "year"
         df["unit"] = "GWa"
@@ -892,16 +906,13 @@ def gen_other_ind_demands(ssp):
 
 
 if __name__ == "__main__":
-    get_hist_act(None, [2020], use_cached=True)
-    gen_other_ind_demands("SSP3")
     import ixmp
     import message_ix
 
     mp = ixmp.Platform("ixmp_dev")
     scen = message_ix.Scenario(
-        mp, "SSP_dev_SSP2_v0.1_Blv0.18", "baseline_prep_lu_bkp_solved_materials_W34"
+        mp, "SSP_SSP2_v6.0", "baseline_DEFAULT"
     )
-
     dfs = get_hist_act(
         scen,
         [2015, 2020],
