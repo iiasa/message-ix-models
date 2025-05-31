@@ -1,4 +1,3 @@
-import os
 from collections.abc import Mapping
 from functools import lru_cache
 from typing import TYPE_CHECKING, Literal, Optional
@@ -73,31 +72,6 @@ def add_macro_materials(
     scen = scen.add_macro(data, check_convergence=check_converge)
 
     return scen
-
-
-def modify_baseyear_bounds(scen: message_ix.Scenario) -> None:
-    # TODO: instead of removing bounds, bounds should be updated with IEA data
-    scen.check_out()
-    th_tecs_to_keep = ["solar_i", "biomass_i"]
-    for substr in ["up", "lo"]:
-        df = scen.par(f"bound_activity_{substr}")
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_fs")) & (df["year_act"] == 2020)],
-        )
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[
-                (df["technology"].str.endswith("_i"))
-                & (df["year_act"] == 2020)
-                & ~(df["technology"].isin(th_tecs_to_keep))
-            ],
-        )
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_I")) & (df["year_act"] == 2020)],
-        )
-    scen.commit(comment="remove base year industry tec bounds")
 
 
 @lru_cache
@@ -200,6 +174,41 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
     )
     MAP = MAP.drop_duplicates()
     return MAP
+
+
+def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
+    """Adds the relevant CCS technologies to the co2_trans_disp and bco2_trans_disp
+    relations
+
+    Parameters
+    ----------
+    scen: message_ix.Scenario
+        Scenario instance to add CCS emission factor parametrization to
+    """
+
+    # The relation coefficients for CO2_Emision and bco2_trans_disp and
+    # co2_trans_disp are both MtC. The emission factor for CCS add_ccs_technologies
+    # are specified in MtC as well.
+    co2_trans_relation = scen.par(
+        "emission_factor",
+        filters={
+            "technology": [
+                "clinker_dry_ccs_cement",
+                "clinker_wet_ccs_cement",
+            ],
+            "emission": "CO2",
+        },
+    )
+
+    co2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
+    co2_trans_relation["relation"] = "co2_trans_disp"
+    co2_trans_relation["node_rel"] = co2_trans_relation["node_loc"]
+    co2_trans_relation["year_rel"] = co2_trans_relation["year_act"]
+    co2_trans_relation["unit"] = "???"
+
+    scen.check_out()
+    scen.add_par("relation_activity", co2_trans_relation)
+    scen.commit("New CCS technologies added to the CO2 accounting relations.")
 
 
 def add_emission_accounting(scen: message_ix.Scenario) -> None:
@@ -566,466 +575,6 @@ def add_emission_accounting(scen: message_ix.Scenario) -> None:
     # scen.commit("add methanol CO2_industry")
 
 
-def add_elec_lowerbound_2020(scen: message_ix.Scenario) -> None:
-    # To avoid zero i_spec prices only for R12_CHN, add the below section.
-    # read input parameters for relevant technology/commodity combinations for
-    # converting betwen final and useful energy
-
-    input_residual_electricity = scen.par(
-        "input",
-        filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"},
-    )
-
-    # read processed final energy data from IEA extended energy balances
-    # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
-
-    final = pd.read_csv(
-        package_data_path("material", "other", "residual_industry_2019.csv")
-    )
-
-    # downselect needed fuels and sectors
-    final_residual_electricity = final.query(
-        'MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"'
-    )
-
-    # join final energy data from IEA energy balances and input coefficients
-    # from final-to-useful technologies from MESSAGEix
-    bound_residual_electricity = pd.merge(
-        input_residual_electricity,
-        final_residual_electricity,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    # derive useful energy values by dividing final energy by
-    # input coefficient from final-to-useful technologies
-    bound_residual_electricity["value"] = (
-        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
-    )
-
-    # downselect dataframe columns for MESSAGEix parameters
-    bound_residual_electricity = bound_residual_electricity.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-    # rename columns if necessary
-    bound_residual_electricity.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    # Decrease 20% to aviod zero prices (the issue continiues otherwise)
-    bound_residual_electricity["value"] = bound_residual_electricity["value"] * 0.8
-    bound_residual_electricity = bound_residual_electricity[
-        bound_residual_electricity["node_loc"] == "R12_CHN"
-    ]
-
-    scen.check_out()
-
-    # add parameter dataframes to ixmp
-    scen.add_par("bound_activity_lo", bound_residual_electricity)
-
-    # Remove the previous bounds
-    remove_par_lo = scen.par(
-        "growth_activity_lo",
-        filters={"technology": "sp_el_I", "year_act": 2020, "node_loc": "R12_CHN"},
-    )
-    scen.remove_par("growth_activity_lo", remove_par_lo)
-
-    scen.commit("added lower bound for activity of residual electricity technologies")
-
-
-def add_coal_lowerbound_2020(sc: message_ix.Scenario) -> None:
-    """Set lower bounds for coal and i_spec as a calibration for 2020"""
-
-    final_resid = pd.read_csv(
-        package_data_path("material", "other", "residual_industry_2019.csv")
-    )
-
-    # read input parameters for relevant technology/commodity combinations
-    # for converting betwen final and useful energy
-    input_residual_coal = sc.par(
-        "input",
-        filters={"technology": "coal_i", "year_vtg": "2020", "year_act": "2020"},
-    )
-    input_cement_coal = sc.par(
-        "input",
-        filters={
-            "technology": "furnace_coal_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-    input_residual_electricity = sc.par(
-        "input",
-        filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"},
-    )
-
-    # downselect needed fuels and sectors
-    final_residual_coal = final_resid.query(
-        'MESSAGE_fuel=="coal" & MESSAGE_sector=="industry_residual"'
-    )
-    final_cement_coal = final_resid.query(
-        'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
-    )
-    final_residual_electricity = final_resid.query(
-        'MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"'
-    )
-
-    # join final energy data from IEA energy balances and input
-    # coefficients from final-to-useful technologies from MESSAGEix
-    bound_coal = pd.merge(
-        input_residual_coal,
-        final_residual_coal,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-    bound_cement_coal = pd.merge(
-        input_cement_coal,
-        final_cement_coal,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-    bound_residual_electricity = pd.merge(
-        input_residual_electricity,
-        final_residual_electricity,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    # derive useful energy values by dividing final energy
-    # by input coefficient from final-to-useful technologies
-    bound_coal["value"] = bound_coal["Value"] / bound_coal["value"]
-    bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
-    bound_residual_electricity["value"] = (
-        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
-    )
-
-    # downselect dataframe columns for MESSAGEix parameters
-    bound_coal = bound_coal.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-    bound_cement_coal = bound_cement_coal.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-    bound_residual_electricity = bound_residual_electricity.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-
-    # rename columns if necessary
-    bound_coal.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-    bound_cement_coal.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-    bound_residual_electricity.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    # (Artificially) lower bounds when i_spec act is too close
-    # to the bounds (avoid 0-price for macro calibration)
-    more = ["R12_MEA", "R12_EEU", "R12_SAS", "R12_PAS"]
-    # import pdb; pdb.set_trace()
-    bound_residual_electricity.loc[
-        bound_residual_electricity.node_loc.isin(["R12_PAO"]), "value"
-    ] *= 0.80
-    bound_residual_electricity.loc[
-        bound_residual_electricity.node_loc.isin(more), "value"
-    ] *= 0.85
-
-    sc.check_out()
-
-    # add parameter dataframes to ixmp
-    sc.add_par("bound_activity_lo", bound_coal)
-    # sc.add_par("bound_activity_lo", bound_cement_coal)
-    sc.add_par("bound_activity_lo", bound_residual_electricity)
-
-    # commit scenario to ixmp backend
-    sc.commit(
-        "added lower bound for activity of residual industrial coal"
-        "and cement coal furnace technologies and "
-        "adjusted 2020 residual industrial electricity demand"
-    )
-
-
-def add_cement_bounds_2020(sc: message_ix.Scenario) -> None:
-    """Set lower and upper bounds for gas and oil as a calibration for 2020"""
-
-    final_resid = pd.read_csv(
-        package_data_path("material", "other", "residual_industry_2019.csv")
-    )
-
-    input_cement_foil = sc.par(
-        "input",
-        filters={
-            "technology": "furnace_foil_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-
-    input_cement_loil = sc.par(
-        "input",
-        filters={
-            "technology": "furnace_loil_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-
-    input_cement_gas = sc.par(
-        "input",
-        filters={
-            "technology": "furnace_gas_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-
-    input_cement_biomass = sc.par(
-        "input",
-        filters={
-            "technology": "furnace_biomass_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-
-    input_cement_coal = sc.par(
-        "input",
-        filters={
-            "technology": "furnace_coal_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-
-    # downselect needed fuels and sectors
-    final_cement_foil = final_resid.query(
-        'MESSAGE_fuel=="foil" & MESSAGE_sector=="cement"'
-    )
-
-    final_cement_loil = final_resid.query(
-        'MESSAGE_fuel=="loil" & MESSAGE_sector=="cement"'
-    )
-
-    final_cement_gas = final_resid.query(
-        'MESSAGE_fuel=="gas" & MESSAGE_sector=="cement"'
-    )
-
-    final_cement_biomass = final_resid.query(
-        'MESSAGE_fuel=="biomass" & MESSAGE_sector=="cement"'
-    )
-
-    final_cement_coal = final_resid.query(
-        'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
-    )
-
-    # join final energy data from IEA energy balances and input coefficients
-    # from final-to-useful technologies from MESSAGEix
-    bound_cement_loil = pd.merge(
-        input_cement_loil,
-        final_cement_loil,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    bound_cement_foil = pd.merge(
-        input_cement_foil,
-        final_cement_foil,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    bound_cement_gas = pd.merge(
-        input_cement_gas,
-        final_cement_gas,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    bound_cement_biomass = pd.merge(
-        input_cement_biomass,
-        final_cement_biomass,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    bound_cement_coal = pd.merge(
-        input_cement_coal,
-        final_cement_coal,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    # derive useful energy values by dividing final energy
-    # by input coefficient from final-to-useful technologies
-    bound_cement_loil["value"] = bound_cement_loil["Value"] / bound_cement_loil["value"]
-    bound_cement_foil["value"] = bound_cement_foil["Value"] / bound_cement_foil["value"]
-    bound_cement_gas["value"] = bound_cement_gas["Value"] / bound_cement_gas["value"]
-    bound_cement_biomass["value"] = (
-        bound_cement_biomass["Value"] / bound_cement_biomass["value"]
-    )
-    bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
-
-    # downselect dataframe columns for MESSAGEix parameters
-    bound_cement_loil = bound_cement_loil.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-
-    bound_cement_foil = bound_cement_foil.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-
-    bound_cement_gas = bound_cement_gas.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-
-    bound_cement_biomass = bound_cement_biomass.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-
-    bound_cement_coal = bound_cement_coal.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-
-    # rename columns if necessary
-    bound_cement_loil.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    bound_cement_foil.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    bound_cement_gas.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    bound_cement_biomass.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    bound_cement_coal.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    sc.check_out()
-    nodes = bound_cement_loil["node_loc"].values
-    years = bound_cement_loil["year_act"].values
-
-    # add parameter dataframes to ixmp
-    sc.add_par("bound_activity_up", bound_cement_loil)
-    sc.add_par("bound_activity_up", bound_cement_foil)
-    # sc.add_par("bound_activity_lo", bound_cement_gas)
-    sc.add_par("bound_activity_up", bound_cement_gas)
-    sc.add_par("bound_activity_up", bound_cement_biomass)
-    sc.add_par("bound_activity_up", bound_cement_coal)
-
-    for n in nodes:
-        bound_cement_meth = pd.DataFrame(
-            {
-                "node_loc": n,
-                "technology": "furnace_methanol_cement",
-                "year_act": years,
-                "mode": "high_temp",
-                "time": "year",
-                "value": 0,
-                "unit": "???",
-            }
-        )
-
-        sc.add_par("bound_activity_lo", bound_cement_meth)
-        sc.add_par("bound_activity_up", bound_cement_meth)
-
-    for n in nodes:
-        bound_cement_eth = pd.DataFrame(
-            {
-                "node_loc": n,
-                "technology": "furnace_ethanol_cement",
-                "year_act": years,
-                "mode": "high_temp",
-                "time": "year",
-                "value": 0,
-                "unit": "???",
-            }
-        )
-
-        sc.add_par("bound_activity_lo", bound_cement_eth)
-        sc.add_par("bound_activity_up", bound_cement_eth)
-
-    # commit scenario to ixmp backend
-    sc.commit("added lower and upper bound for fuels for cement 2020.")
-
-
 def read_sector_data(
     scenario: message_ix.Scenario, sectname: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
@@ -1108,56 +657,6 @@ def read_sector_data(
     return data_df
 
 
-def add_ccs_technologies(scen: message_ix.Scenario) -> None:
-    """Adds the relevant CCS technologies to the co2_trans_disp and bco2_trans_disp
-    relations
-
-    Parameters
-    ----------
-    scen: message_ix.Scenario
-        Scenario instance to add CCS emission factor parametrization to
-    """
-
-    # The relation coefficients for CO2_Emision and bco2_trans_disp and
-    # co2_trans_disp are both MtC. The emission factor for CCS add_ccs_technologies
-    # are specified in MtC as well.
-    bco2_trans_relation = scen.par(
-        "emission_factor", filters={"technology": "biomass_NH3_ccs", "emission": "CO2"}
-    )
-    co2_trans_relation = scen.par(
-        "emission_factor",
-        filters={
-            "technology": [
-                "clinker_dry_ccs_cement",
-                "clinker_wet_ccs_cement",
-                "gas_NH3_ccs",
-                "coal_NH3_ccs",
-                "fueloil_NH3_ccs",
-                "bf_ccs_steel",
-                "dri_gas_ccs_steel",
-            ],
-            "emission": "CO2",
-        },
-    )
-
-    bco2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
-    bco2_trans_relation["relation"] = "bco2_trans_disp"
-    bco2_trans_relation["node_rel"] = bco2_trans_relation["node_loc"]
-    bco2_trans_relation["year_rel"] = bco2_trans_relation["year_act"]
-    bco2_trans_relation["unit"] = "???"
-
-    co2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
-    co2_trans_relation["relation"] = "co2_trans_disp"
-    co2_trans_relation["node_rel"] = co2_trans_relation["node_loc"]
-    co2_trans_relation["year_rel"] = co2_trans_relation["year_act"]
-    co2_trans_relation["unit"] = "???"
-
-    scen.check_out()
-    scen.add_par("relation_activity", bco2_trans_relation)
-    scen.add_par("relation_activity", co2_trans_relation)
-    scen.commit("New CCS technologies added to the CO2 accounting relations.")
-
-
 def read_timeseries(
     scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
@@ -1237,7 +736,7 @@ def read_timeseries(
 
 
 def read_rel(
-    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
+    scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
     """
     Read relation_* type parameter data for specific industry
@@ -1435,113 +934,6 @@ def calculate_ini_new_cap(
     return make_df("initial_new_capacity_up", **tmp)
 
     del scalar, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above
-
-
-def calibrate_t_d_tecs(scenario: "Scenario"):
-    # ------------------------------------------------------
-    # Revise t_d historical_activity and 2020 activity bounds
-    # ------------------------------------------------------
-
-    # The activity of the t_d technologies is adjusted to fit
-    # with the historical_activity/bda_lo calibration for all
-    # technologies which take from the output commodity/level.
-
-    tecs = [t for t in scenario.set("technology").tolist() if t.find("t_d") >= 0]
-    td = (
-        scenario.par("output", filters={"technology": tecs})[
-            ["node_loc", "technology", "commodity", "level"]
-        ]
-        .drop_duplicates()
-        .reset_index()
-        .drop("index", axis=1)
-    )
-    update_df = pd.DataFrame()
-    for i in td.index:
-        try:
-            row = td.iloc[i]
-        except Exception:
-            here = 1  # noqa: F841 —for debugging?
-        # Retrieve input of techologies which take from the commodity/level.
-        inp = scenario.par(
-            "input",
-            filters={
-                "node_loc": row.node_loc,
-                "commodity": row.commodity,
-                "level": row.level,
-            },
-        )
-
-        # Retrieve historical and calibrated activity as bound_activity_lo
-        # and combine the two.
-        histact = scenario.par(
-            "historical_activity",
-            filters={
-                "node_loc": row.node_loc,
-                "technology": inp.technology.unique().tolist(),
-            },
-        )
-        act = scenario.par(
-            "bound_activity_lo",
-            filters={
-                "node_loc": row.node_loc,
-                "technology": inp.technology.unique().tolist(),
-                "year_act": 2020,
-            },
-        )
-
-        act = (
-            pd.concat([histact, act])
-            .sort_values(by=["node_loc", "technology", "year_act"])
-            .set_index(["node_loc", "technology", "year_act"])
-        )
-
-        # Multiply the activity data with the input efficiencies to derive total energy
-        # requirements
-        act["eff"] = (
-            inp.loc[
-                (inp.year_vtg == inp.year_act)
-                & (inp.node_loc == row.node_loc)
-                & (inp.technology.isin(act.reset_index().technology.unique().tolist()))
-                & (inp.year_act.isin(act.reset_index().year_act.unique().tolist()))
-            ]
-            .set_index(["node_loc", "technology", "year_act"])
-            .value
-        )
-
-        # Backfill any missing values
-        act["eff"] = act["eff"].bfill()
-
-        act["fe"] = act["eff"] * act["value"]
-
-        # Aggregate the final energy data and assign the t_d technology name
-        df = act.copy()
-        df = (
-            df.reset_index()
-            .groupby(["node_loc", "year_act"])
-            .sum(numeric_only=True)[["fe"]]
-            .rename(columns={"fe": "value"})
-            .assign(unit="GWa", technology=row.technology, mode="M1", time="year")
-            .reset_index()
-        )
-
-        update_df = pd.concat([update_df, df])
-
-    update_df = update_df.reset_index().drop("index", axis=1)
-
-    # Make a manual adjusment to "gas_t_d_ch4".
-    # Because is has the same output as "gas_t_d", it will also get the
-    # the same historical_acitivty, therefore it is set to zero.
-    update_df.loc[update_df.technology == "gas_t_d_ch4", "value"] = 0
-
-    # Add data as historical_activity and bound_activity_lo/up (*1.005)
-    with scenario.transact("Calibrate t_d technology"):
-        hist_df = update_df.copy()
-        hist_df = hist_df.loc[hist_df.year_act < scenario.firstmodelyear]
-        scenario.add_par("historical_activity", hist_df)
-
-        scenario.add_par("bound_activity_lo", update_df)
-        update_df.value *= 1.005
-        scenario.add_par("bound_activity_up", update_df)
 
 
 def add_water_par_data(scenario: "Scenario") -> None:
