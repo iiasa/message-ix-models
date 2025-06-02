@@ -177,13 +177,9 @@ def gen_data_cement(
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_cement = read_sector_data(
-        scenario, "cement", None, "cement_R12.csv"
-    )
+    data_cement = read_sector_data(scenario, "cement", None, "cement_R12.csv")
     # Special treatment for time-dependent Parameters
-    data_cement_ts = read_timeseries(
-        scenario, "cement", None, "timeseries_R12.csv"
-    )
+    data_cement_ts = read_timeseries(scenario, "cement", None, "timeseries_R12.csv")
     tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
@@ -399,7 +395,9 @@ def gen_data_cement(
             ),
         ]
     )
-    results = combine_df_dictionaries(results, gen_grow_cap_up(s_info, ssp))
+    results = combine_df_dictionaries(
+        results, gen_grow_cap_up(s_info, ssp), read_furnace_2020_bound()
+    )
 
     reduced_pdict = {}
     for k, v in results.items():
@@ -431,3 +429,8 @@ def gen_grow_cap_up(s_info, ssp):
         .pipe(broadcast, year_vtg=s_info.Y)
     )
     return {"growth_new_capacity_up": df}
+
+
+def read_furnace_2020_bound():
+    df = pd.read_csv(package_data_path("material", "cement", "cement_bound_2020.csv"))
+    return {"bound_activity_lo": df}
