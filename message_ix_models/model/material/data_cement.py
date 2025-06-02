@@ -1,3 +1,10 @@
+"""
+Data and parameter generation for the cement sector in MESSAGEix-Materials model.
+
+This module provides functions to read, process, and generate parameter data
+for ammonia fertilizer technologies demand, and related constraints.
+"""
+
 from collections import defaultdict
 
 import message_ix
@@ -27,7 +34,17 @@ from message_ix_models.util import (
 def gen_data_cement(
     scenario: message_ix.Scenario, dry_run: bool = False
 ) -> dict[str, pd.DataFrame]:
-    """Generate data for materials representation of cement industry."""
+    """Generate data for materials representation of cement industry.
+
+    Parameters
+    ----------
+    scenario : message_ix.Scenario
+    dry_run : bool
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+    """
     # Load configuration
     context = read_config()
     config = read_config()["material"]["cement"]
@@ -219,22 +236,6 @@ def gen_data_cement(
     df_demand = pd.concat([df_2025, df_demand])
     results[parname].append(df_demand)
 
-    # Add CCS as addon
-    parname = "addon_conversion"
-
-    technology_1 = ["clinker_dry_cement"]
-    df_1 = make_df(
-        parname, mode="M1", type_addon="dry_ccs_cement", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology=technology_1)
-
-    technology_2 = ["clinker_wet_cement"]
-    df_2 = make_df(
-        parname, mode="M1", type_addon="wet_ccs_cement", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology=technology_2)
-
-    results[parname].append(df_1)
-    results[parname].append(df_2)
-
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
@@ -259,18 +260,88 @@ def gen_data_cement(
         gen_grow_cap_up(s_info, ssp),
         read_furnace_2020_bound(),
         gen_clinker_ratios(s_info),
+        gen_addon_conv_ccs(nodes, s_info.Y),
     )
+    results = drop_redundant_rows(results)
+    return results
 
+
+def drop_redundant_rows(results: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Drop rows, where the difference between year_act and
+    year_vtg is larger than 25 years.
+
+    Parameters
+    ----------
+    results : dict[str, pd.DataFrame]
+        A dictionary of dataframes with parameter data as keys
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+    """
     reduced_pdict = {}
     for k, v in results.items():
-        if set(["year_act", "year_vtg"]).issubset(v.columns):
+        if {"year_act", "year_vtg"}.issubset(v.columns):
             v = v[(v["year_act"] - v["year_vtg"]) <= 25]
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
 
     return reduced_pdict
 
 
-def gen_grow_cap_up(s_info, ssp):
+def gen_addon_conv_ccs(nodes, years) -> dict[str, pd.DataFrame]:
+    """Generate addon conversion parameters for clinker CCS cement.
+
+    Parameters
+    ----------
+    nodes : list[str]
+    years : list[int]
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+    """
+    df = make_df(
+        "addon_conversion",
+        mode="M1",
+        technology="clinker_dry_cement",
+        type_addon="dry_ccs_cement",
+        value=1,
+        unit="-",
+        time="year",
+    )
+    df = pd.concat(
+        [
+            df,
+            df.replace(
+                {
+                    "type_addon": {"dry_ccs_cement": "wet_ccs_cement"},
+                    "technology": {"clinker_dry_cement": "clinker_wet_cement"},
+                }
+            ),
+        ]
+    )
+    df = df.pipe(
+        broadcast,
+        node=nodes,
+        year_act=years,
+        year_vtg=years,
+    )
+    df = df[df["year_act"] - df["year_vtg"] >= 0]
+    return {"addon_conversion": df}
+
+
+def gen_grow_cap_up(s_info, ssp) -> dict[str, pd.DataFrame]:
+    """Generate growth constraints for new clinker CCS capacity.
+
+    Parameters
+    ----------
+    s_info: ScenarioInfo
+    ssp : str
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+    """
     ssp_vals = {
         "LED": 0.05,
         "SSP1": 0.05,
@@ -293,7 +364,13 @@ def gen_grow_cap_up(s_info, ssp):
     return {"growth_new_capacity_up": df}
 
 
-def read_furnace_2020_bound():
+def read_furnace_2020_bound() -> dict[str, pd.DataFrame]:
+    """Reads the 2020 bound activity data for cement.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+    """
     df2020 = pd.read_csv(
         package_data_path("material", "cement", "cement_bound_2020.csv")
     )
@@ -304,10 +381,22 @@ def read_furnace_2020_bound():
     return {"bound_activity_lo": df, "bound_activity_up": df}
 
 
-def gen_clinker_ratios(s_info):
-    # 2020 ratios from
-    # https://www.sciencedirect.com/science/article/pii/S1750583624002238#bib0071
-    # Appendix B
+def gen_clinker_ratios(s_info) -> dict[str, pd.DataFrame]:
+    """Generate regionally differentiated clinker input for cement production.
+
+    2020 ratios taken from
+    https://www.sciencedirect.com/science/article/pii/S1750583624002238#bib0071
+    Appendix B
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+    """
+
     reg_map = {
         "R12_AFR": 0.75,
         "R12_CHN": 0.65,
