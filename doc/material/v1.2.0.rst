@@ -15,7 +15,11 @@ Model changes
 
 **Non metallic minerals sector**
 
-*To be merged from ssp-dev*
+- Clinker input for cement production is now differentiated by region based on literature data
+- 2020 and 2025 demand calibrated based on recent statistics, independent of SSP
+- Previous fuel use calibration was updated based on most recent data
+- Growth constraints for clinker CCS capacity are differentiated by SSP
+- The energy requirement for clinker CCS was adjusted based on recent literature
 
 **Non ferrous metals sector**
 
@@ -45,13 +49,22 @@ Model changes
 CLI changes
 ~~~~~~~~~~~
 
-
+- The `--datafile` options has been removed from the material-ix commands, as it is no longer needed.
 
 Deprecations
 ~~~~~~~~~~~~~
 
+
+
 New features
 ~~~~~~~~~~~~
+
+The following xlsx files have been replaced by multiple csv files for each sheet to facilitate version control and readability:
+
+- `aluminum_techno_economic.xlsx`
+- `Global_cement_MESSAGE.xlsx`
+
+The files are currently still available for reference, but will be removed in a future release.
 
 **Bug Fixes**
 
