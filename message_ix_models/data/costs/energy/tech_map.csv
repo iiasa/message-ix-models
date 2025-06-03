@@ -36,6 +36,9 @@ gas_i,weo,gas_turbine,97,,1985
 gas_ppl,weo,gas_turbine,1205,,2005
 geo_hpl,weo,geothermal,1500,,1986
 geo_ppl,weo,geothermal,2928,,2005
+h2_alkaline,weo,csp,1400,,2010
+h2_pem,weo,csp,1750,,2020
+h2_soec,weo,csp,2800,,2020
 h2_bio,weo,igcc,3744,,2020
 h2_bio_ccs,weo,igcc,3824,,2030
 h2_coal,weo,igcc,2163,,2010
