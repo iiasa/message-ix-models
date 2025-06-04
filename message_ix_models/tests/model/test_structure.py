@@ -195,7 +195,7 @@ class TestGetCodes:
         data = get_codes("technology")
 
         # Check the length of the returned dataframe
-        assert len(data) == 390
+        assert len(data) == 399
 
         # Get info on a certain technology
         h2_fc_trp = data[data.index("h2_fc_trp")]
