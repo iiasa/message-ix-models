@@ -842,8 +842,9 @@ def get_hist_act(scen, years, data_file_path=None, use_cached=False):
         .sub(df_rt, fill_value=0)
         .reset_index()
     )
-    df_sp_el.assign(technology="sp_el_I", inplace=True)
+    df_sp_el = df_sp_el.assign(technology="sp_el_I")
     df = df[df["technology"] != "sp_el_I"]
+    df = pd.concat([df, df_sp_el])
     df["mode"] = "M1"
     df["unit"] = "GWa"
     df["time"] = "year"
@@ -910,9 +911,7 @@ if __name__ == "__main__":
     import message_ix
 
     mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "SSP_SSP2_v6.0", "baseline_DEFAULT"
-    )
+    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.0", "baseline_DEFAULT")
     dfs = get_hist_act(
         scen,
         [2015, 2020],
