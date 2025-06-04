@@ -1,22 +1,87 @@
 import logging
 import re
-from typing import Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
+import genno
 import pandas as pd
-from genno import Quantity
+from genno import Key
 from genno import operator as g
 from iam_units import convert_gwp
 from message_ix import Scenario, make_df
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import package_data_path
 
 from .structure import get_codes
 
+if TYPE_CHECKING:
+    from genno.types import AnyQuantity
+
 log = logging.getLogger(__name__)
 
 
-def get_emission_factors(units: Optional[str] = None) -> Quantity:
+class PRICE_EMISSION(ExoDataSource):
+    """Provider of exogenous data for ``PRICE_EMISSION``.
+
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    following `source_kw`:
+
+    - :py:`base_path`: a :class:`.Path` containing (a) data file(s).
+    - :py:`scenario_info`: a :class:`.ScenarioInfo`. :attr:`.ScenarioInfo.path` is used
+      to construct a file path.
+
+
+    Example
+    -------
+    >>> keys = prepare_computer(
+    ...     context,
+    ...     computer,
+    ...     source="message_ix_models.model.emissions.PRICE_EMISSION",
+    ...     source_kw=dict(
+    ...         base_path=package_data_path("transport", "R12", "price-emission),
+    ...         scenario_info=ScenarioInfo.from_url("SSP_LED_v5.3.1/baseline_1000f#1"),
+    ...     ),
+    ... )
+    >>> result = computer.get(keys[0])
+
+    """
+
+    id = f"{__name__}.PRICE_EMISSION"
+    key = Key("PRICE_EMISSION:n-type_emission-type_tec-y:exo")
+    aggregate = False
+    interpolate = False
+
+    def __init__(self, source, source_kw) -> None:
+        if not source == self.id:
+            raise ValueError
+
+        si: "ScenarioInfo" = source_kw.pop("scenario_info")
+
+        base_path = Path(source_kw.pop("base_path"))
+        self.path = base_path.joinpath(f"{si.path}.csv")
+        if not self.path.exists():
+            msg = f"No file in {self.path.parent} for {si.url}"
+            log.error(msg)
+            raise ValueError(msg)
+
+        self.raise_on_extra_kw(source_kw)
+
+    def __call__(self):
+        from genno.operator import load_file
+        from ixmp.report.common import RENAME_DIMS
+
+        # Map e.g. "type_tec" → "type_tec", even if not in RENAME_DIMS
+        dims = {d: d for d in self.key.dims} | RENAME_DIMS
+
+        return load_file(self.path, dims=dims)
+
+
+register_source(PRICE_EMISSION)
+
+
+def get_emission_factors(units: Optional[str] = None) -> "AnyQuantity":
     """Return carbon emission factors.
 
     Values are from the file :file:`message_ix_models/data/ipcc/1996_v3_t1-2.csv`, in
@@ -67,7 +132,9 @@ def get_emission_factors(units: Optional[str] = None) -> Quantity:
     # Manually insert a value for methanol
     result = g.concat(
         result,
-        Quantity(pd.Series(17.4, pd.Index(["methanol"], name="c")), units=result.units),
+        genno.Quantity(
+            pd.Series(17.4, pd.Index(["methanol"], name="c")), units=result.units
+        ),
     )
 
     result.attrs["species"] = "C"
@@ -82,7 +149,9 @@ def get_emission_factors(units: Optional[str] = None) -> Quantity:
         gwp_factor, to_units = 1.0, result.units
 
     # Multiply by the GWP factor; let genno/pint handle other conversion
-    return result.pipe(g.mul, Quantity(gwp_factor)).pipe(g.convert_units, to_units)
+    return result.pipe(g.mul, genno.Quantity(gwp_factor)).pipe(
+        g.convert_units, to_units
+    )
 
 
 def add_tax_emission(
