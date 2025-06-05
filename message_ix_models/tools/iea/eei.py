@@ -159,7 +159,7 @@ class IEA_EEI(ExoDataSource):
         # Prepare query
         self.query = f"INDICATOR == {measure!r}"
         self.measure = "INDICATOR"
-        self.name = measure.lower()
+        self.options.name = measure.lower()
 
         # Determine whether to perform a weighted average operation
         self.weights = None
