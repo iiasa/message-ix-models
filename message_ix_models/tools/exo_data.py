@@ -4,11 +4,13 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from copy import deepcopy
+from dataclasses import dataclass
 from operator import itemgetter
 from typing import TYPE_CHECKING, Optional, Union
+from warnings import warn
 
-from genno import Computer, Key, Quantity, quote
-from genno.core.key import single_key
+from genno import Key, quote
+from genno.core.key import iter_keys, single_key
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
@@ -16,9 +18,15 @@ from message_ix_models.model.structure import get_codes
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from genno import Computer
+    from genno.types import AnyQuantity
+
+    from message_ix_models import Context
+
 __all__ = [
     "MEASURES",
     "SOURCES",
+    "BaseOptions",
     "DemoSource",
     "ExoDataSource",
     "prepare_computer",
@@ -37,31 +45,62 @@ MEASURES = ("GDP", "POP")
 SOURCES: dict[str, type["ExoDataSource"]] = {}
 
 
+@dataclass
+class BaseOptions:
+    """Options for a ExoDataSource subclass instance.
+
+    See :attr:`ExoDataSource.Options`.
+    """
+
+    #: :any:`True` if :meth:`ExoDataSource.transform` should aggregate data on the |n|
+    #: dimension.
+    aggregate: bool = True
+
+    #: :any:`True` if :meth:`ExoDataSource.transform` should interpolate data on the |y|
+    #: dimension.
+    interpolate: bool = True
+
+    #: Name for the returned :class:`.Key`/:class:`.Quantity`. Optional. See
+    #: :meth:`ExoDataSource.get_keys`.
+    name: str = ""
+
+    @classmethod
+    def from_args(cls, source_id: str, *args, **kwargs):
+        """Helper for old-style configuration."""
+        if 2 == len(args) and not kwargs:
+            # Old-style source, source_kw as positional args
+            assert source_id == args[0]
+            return cls(**args[1])
+        elif set(kwargs) == {"source", "source_kw"} and not args:
+            # Old-style source, source_kw as keyword args
+            assert source_id == kwargs["source"]
+            return cls(**kwargs["source_kw"])
+        else:
+            assert 0 == len(args)
+            return cls(**kwargs)
+
+
 class ExoDataSource(ABC):
     """Base class for sources of exogenous data."""
 
-    #: Identifier for this particular source.
-    id: str = ""
+    #: Subclass of :class:`BaseOptions` that contains per-instance options for this data
+    #: source.
+    Options: type[BaseOptions] = BaseOptions
 
-    #: Key for the returned :class:`.Quantity`. Optional. See :meth:`get_keys`.
+    #: Instance of the :attr:`Options` class.
+    options: BaseOptions
+
+    #: Key for the returned :class:`.Quantity`. See :meth:`get_keys`. Optional in
+    #: subclasses.
     key: Optional[Key] = None
 
-    #: Name for the returned :class:`.Key`/:class:`.Quantity`. Optional. See
-    #: :meth:`get_keys`.
-    name: str = ""
-
-    #: Primary measure.
+    #: Primary measure. See :meth:`get_keys`. Optional in subclasses.
     measure = ""
 
-    #: Optional additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
-    #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`.
+    #: Additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
+    #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`. Optional in
+    #: subclasses.
     extra_dims: tuple[str, ...] = ()
-
-    #: :any:`True` if :meth:`.transform` should aggregate data on the |n| dimension.
-    aggregate: bool = True
-
-    #: :any:`True` if :meth:`.transform` should interpolate data on the |y| dimension.
-    interpolate: bool = True
 
     #: :any:`True` to allow the class to look up and use test data. If no test data
     #: exists, this setting has no effect.
@@ -70,36 +109,40 @@ class ExoDataSource(ABC):
     #: :py:`where` keyword argument to :func:`.path_fallback`.
     where: list[Union[str, "Path"]] = []
 
+    #: Deprecated: identifier for this particular source.
+    id: str = ""
+
     @abstractmethod
-    def __init__(self, source: str, source_kw: Mapping) -> None:
-        """Handle `source` and `source_kw`.
+    def __init__(self, *args, **kwargs) -> None:
+        """Create an instance and prepare.
 
         An implementation **must**:
 
-        - Raise :class:`ValueError` if it does not recognize or cannot handle the
-          arguments in `source` or `source_kw`.
-        - Recognize and handle (if possible) a "measure" keyword in `source_kw` from
-          :data:`MEASURES`.
+        1. Raise an exception if it does not recognize or cannot handle the arguments.
 
         It **may**:
 
-        - Transform these into other values, for instance by mapping certain values to
-          others, applying regular expressions, or other operations.
-        - Store those values as instance attributes for use in :meth:`__call__`.
-        - Set :attr:`name` and/or :attr:`extra_dims` to control the behaviour of
-          :func:`.prepare_computer`.
-        - Log messages that give information that may help to debug a
-          :class:`ValueError` for `source` or `source_kw` that cannot be handled.
+        2. Populate :attr:`options` with an instance of :attr:`Options`.
+        3. Recognize and handle (if possible) a "measure" `kwarg` from :data:`MEASURES`.
+        4. Transform arguments into other values, for instance by mapping certain values
+           to others, applying regular expressions, or other operations.
+        5. Store those values as instance attributes for use in :meth:`__call__`.
+        6. Set :attr:`~.BaseOptions.name` and/or :attr:`extra_dims` to control the
+           behaviour of :meth:`get_keys`.
+        7. Log messages that give information that helps to debug an exception per (1).
 
-        It **should not** actually load data or perform any time- or memory-intensive
-        operations; these should only be triggered by :meth:`.__call__`.
+        It **should not** perform any time- or memory-intensive operations, such as
+        actually loading or fetching data. These should only be triggered by
+        :meth:`.__call__`.
         """
-
         raise ValueError
 
     @abstractmethod
-    def __call__(self) -> Quantity:
+    def __call__(self) -> "AnyQuantity":
         r"""Return the data.
+
+        Concrete implementations in subclasses **may** load data from file, generate
+        data, or anything else.
 
         The Quantity returned by this method **must** have dimensions
         :math:`(n, y) \cup \text{extra_dims}`. If the original/upstream/raw data has
@@ -117,6 +160,50 @@ class ExoDataSource(ABC):
         """
         return self.where + (["test"] if self.use_test_data else [])
 
+    @classmethod
+    def add_tasks(
+        cls, c: "Computer", *args, context: "Context", strict: bool = True, **kwargs
+    ) -> tuple:
+        """Add tasks to `c` to provide and transform the data.
+
+        .. todo:: Add option/steps to index to a particular label on the |n| dimension.
+
+        Returns
+        -------
+        tuple
+            with 2 keys:
+
+            1. Key that retrieves the transformed data.
+            2. Key with the data indexed to |y0|.
+        """
+        source = cls(*args, **kwargs)
+
+        add_structure(c, context=context, strict=strict)
+
+        # Retrieve the keys that will refer to the raw and transformed data
+        k_raw, k = source.get_keys()
+
+        # Keys to return
+        keys = [k]
+
+        # Retrieve the raw data by invoking ExoDataSource.__call__
+        c.add(k_raw, source.__call__)
+
+        # Allow the transform() or a subclass override to add further tasks that
+        # transform the data. The default implementation aggregates, then interpolates.
+        key = source.transform(c, k_raw)
+
+        # Alias `key` -> `k`
+        if k != key:
+            c.add(k, key)
+
+        # Index to y0
+        k_y0 = k + "y0_indexed"
+        c.add(k_y0, "index_to", k, "y0::coord")
+        keys.append(k_y0)
+
+        return tuple(keys)
+
     def get_keys(self) -> tuple[Key, Key]:
         """Return the target keys for the (1) raw and (2) transformed data.
 
@@ -126,13 +213,13 @@ class ExoDataSource(ABC):
         1. :attr:`.key`, if any, or
         2. Constructed from:
 
-           - :attr:`.name` or :attr:`.measure` in lower-case.
+           - :attr:`~BaseOptions.name` or :attr:`.measure` in lower-case.
            - The dimensions :math:`(n, y)`, plus any :attr:`.extra_dims`.
 
         The key for the raw data is the same, with :attr`.id` as an extra tag.
         """
         k = self.key or Key(
-            self.name or self.measure.lower(), ("n", "y") + self.extra_dims
+            self.options.name or self.measure.lower(), ("n", "y") + self.extra_dims
         )
         return k + self.id, k
 
@@ -148,19 +235,20 @@ class ExoDataSource(ABC):
 
         The default implementation:
 
-        1. If :attr:`.aggregate` is :any:`True`, aggregates the data (
+        1. If :attr:`~BaseOptions.aggregate` is :any:`True`, aggregates the data (
            :func:`.genno.operator.aggregate`) on the |n| dimension using the key
            "n::groups".
-        2. If :attr:`.interpolate` is :any:`True`, interpolates the data (
+        2. If :attr:`~BaseOptions.interpolate` is :any:`True`, interpolates the data (
            :func:`.genno.operator.interpolate`) on the |y| dimension using "y::coords".
         """
         k = base_key
+
         # Aggregate
-        if self.aggregate:
+        if self.options.aggregate:
             k = single_key(c.add(k + "1", "aggregate", k, "n::groups", keep=False))
 
         # Interpolate to the desired set of periods
-        if self.interpolate:
+        if self.options.interpolate:
             kw = dict(fill_value="extrapolate")
             k = single_key(c.add(k + "2", "interpolate", k, "y::coords", kwargs=kw))
 
@@ -169,87 +257,29 @@ class ExoDataSource(ABC):
     def raise_on_extra_kw(self, kwargs) -> None:
         """Helper for subclasses to handle the `source_kw` argument.
 
-        1. Store :attr:`.aggregate` and :attr:`.interpolate`, if they remain in
-           `kwargs`.
-        2. Raise :class:`ValueError` if there are any other, unhandled keyword arguments
+        1. Store :attr:`~BaseOptions.aggregate` and :attr:`~BaseOptions.interpolate`, if
+           they remain in `kwargs`.
+        2. Raise :class:`TypeError` if there are any other, unhandled keyword arguments
            in `kwargs`.
+
+        .. deprecated::
+           :class:`.ExoDataSource` subclasses should instead, in their :py:`__init__()`
+           method, use :attr:`Options` that inherit from :class:`BaseOptions`
         """
-        self.aggregate = kwargs.pop("aggregate", self.aggregate)
-        self.interpolate = kwargs.pop("interpolate", self.interpolate)
-        self.name = kwargs.pop("name", self.name)
+        if not hasattr(self, "options"):
+            kwargs.setdefault("aggregate", getattr(self, "aggregate", True))
+            kwargs.setdefault("interpolate", getattr(self, "interpolate", True))
+            kwargs.setdefault("name", getattr(self, "name", None))
 
-        if len(kwargs):
-            log.error(
-                f"Unhandled extra keyword arguments for {type(self).__name__}: "
-                + repr(kwargs)
-            )
-            raise ValueError(kwargs)
+            # Raises exception on extra/unrecognized `kwargs`
+            self.options = self.Options(**kwargs)
 
 
-def prepare_computer(
-    context,
-    c: "Computer",
-    source="test",
-    source_kw: Optional[Mapping] = None,
-    *,
-    strict: bool = True,
-) -> tuple[Key, ...]:
-    """Prepare `c` to compute GDP, population, or other exogenous data.
+def add_structure(c: "Computer", *, context: "Context", strict: bool = True) -> None:
+    """Add structural information to `c`.
 
-    Check each :class:`ExoDataSource` in :data:`SOURCES` to determine whether it
-    recognizes and can handle `source` and `source_kw`. If a source is identified, add
-    tasks to `c` that retrieve and process data into a :class:`.Quantity` with, at
-    least, dimensions :math:`(n, y)`.
-
-    Parameters
-    ----------
-    source : str
-        Identifier of the source, possibly with other information to be handled by a
-        :class:`ExoDataSource`.
-    source_kw : dict, optional
-        Keyword arguments for a Source class. These can include indexers, selectors, or
-        other information needed by the source class to identify the data to be
-        returned.
-
-        If the key "measure" is present, it **should** be one of :data:`MEASURES`.
-    strict : bool, optional
-        Raise an exception if any of the keys to be added already exist.
-
-    Returns
-    -------
-    tuple of .Key
-
-    Raises
-    ------
-    ValueError
-        if no source is registered which can handle `source` and `source_kw`.
+    Helper for :meth:`ExoDataSource.add_tasks` and :func:`prepare_computer`.
     """
-    # Handle arguments
-    source_kw = source_kw or dict()
-    if measure := source_kw.get("measure"):
-        # commented: quiet logging; MEASURES is not automatically updated to include the
-        # IDs of measures recognized by additional SOURCES
-        # TODO Remove use of this variable, below, by ensuring that source_obj.name is
-        #      always present
-        # if measure not in MEASURES:
-        #     log.debug(f"source keyword {measure = } not in recognized {MEASURES}")
-        del measure
-
-    # Look up input data flow
-    source_obj = None
-    for cls in SOURCES.values():
-        try:
-            # Instantiate a Source object to provide this data
-            source_obj = cls(source, deepcopy(source_kw or dict()))
-        # except Exception as e:  # For debugging
-        #     log.debug(f"{cls} → {e!r}")
-        except Exception:
-            pass  # Class does not recognize the arguments
-
-    if source_obj is None:
-        raise ValueError(f"No source found that can handle {source!r}")
-
-    # Add structural information to the Computer
     c.require_compat("message_ix_models.report.operator")
     c.graph.setdefault("context", context)
 
@@ -275,38 +305,94 @@ def prepare_computer(
     c.add("yv::coords", lambda years: dict(yv=years), "y")
     c.add("y0::coord", lambda year: dict(y=year), "y0")
 
-    # Retrieve the keys that will refer to the raw and transformed data
-    k_raw, k = source_obj.get_keys()
 
-    # Keys to return
-    keys = [k]
+def prepare_computer(
+    context,
+    c: "Computer",
+    source="test",
+    source_kw: Optional[Mapping] = None,
+    *,
+    strict: bool = True,
+) -> tuple[Key, ...]:
+    """Prepare `c` to compute GDP, population, or other exogenous data.
 
-    # Retrieve the raw data by invoking ExoDataSource.__call__
-    c.add(k_raw, source_obj)
+    Check each :class:`ExoDataSource` in :data:`SOURCES` to determine whether it
+    recognizes and can handle `source` and `source_kw`. If a source is identified, add
+    tasks to `c` that retrieve and process data into a :class:`.Quantity` with, at
+    least, dimensions :math:`(n, y)`.
 
-    # Allow the class to add further tasks that transform the data. See
-    # ExoDataSource.transform() for the default: aggregate, then interpolate.
-    key = source_obj.transform(c, k_raw)
+    .. deprecated::
+       Use :meth:`ExoDataSource.add_tasks` instead, like so:
 
-    # Alias `key` -> `k`
-    c.add(k, key)
+       .. code-block:: python
 
-    # Index to y0
-    k_y0 = k + "y0_indexed"
-    c.add(k_y0, "index_to", k, "y0::coord")
-    keys.append(k_y0)
+          from example import DataSource
 
-    # TODO Index to a particular label on the "n" dimension
-    # TODO Index on both "n" and "y"
+          c.apply(DataSource.add_tasks, context=context, **source_kw)
 
-    return tuple(keys)
+    Parameters
+    ----------
+    source : str
+        Identifier of the source, possibly with other information to be handled by a
+        :class:`ExoDataSource`.
+    source_kw : dict, optional
+        Keyword arguments for a Source class. These can include indexers, selectors, or
+        other information needed by the source class to identify the data to be
+        returned.
+
+        If the key "measure" is present, it **should** be one of :data:`MEASURES`.
+    strict : bool, optional
+        Raise an exception if any of the keys to be added already exist.
+
+    Returns
+    -------
+    tuple of .Key
+        See :meth:`ExoDataSource.add_tasks`.
+
+    Raises
+    ------
+    ValueError
+        if no source is registered which can handle `source` and `source_kw`.
+    """
+    # Handle arguments
+    source_kw = source_kw or dict()
+
+    # Look up input data flow
+    for cls in SOURCES.values():
+        try:
+            keys = c.apply(
+                cls.add_tasks,
+                source=source,
+                source_kw=deepcopy(source_kw),
+                context=context,
+            )
+        except Exception:
+            pass  # Class does not recognize the arguments
+        # except Exception as e:  # For debugging
+        #     log.debug(f"{cls} → {e!r}")
+        else:
+            warn(
+                f"prepare_computer(…, c, {source!r}, source_kw); instead use "
+                f"c.apply({cls.__name__}.add_tasks, context=…, **source_kw)",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return tuple(iter_keys(keys))
+
+    raise ValueError(
+        f"No source found that can handle {source=!r}, {source_kw=!r} among:\n  "
+        + "\n  ".join(sorted(SOURCES))
+    )
 
 
-def register_source(cls: type[ExoDataSource]) -> type[ExoDataSource]:
+def register_source(
+    cls: type[ExoDataSource], *, id: Optional[str] = None
+) -> type[ExoDataSource]:
     """Register :class:`.ExoDataSource` `cls` as a source of exogenous data."""
-    if cls.id in SOURCES:
-        raise ValueError(f"{SOURCES[cls.id]} already registered for id {cls.id!r}")
-    SOURCES[cls.id] = cls
+    id_ = id or cls.id
+    if id_ in SOURCES:
+        raise ValueError(f"{SOURCES[id_]} already registered for ID {id_!r}")
+    SOURCES[id_] = cls
     return cls
 
 
@@ -337,7 +423,7 @@ class DemoSource(ExoDataSource):
         self.measure = source_kw["measure"]
         self.indexers.update(v={"POP": "Population", "GDP": "GDP"}[self.measure])
 
-    def __call__(self) -> Quantity:
+    def __call__(self) -> "AnyQuantity":
         from genno.operator import select
 
         # - Retrieve the data.
