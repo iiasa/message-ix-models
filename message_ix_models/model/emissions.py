@@ -1,5 +1,6 @@
 import logging
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -11,7 +12,7 @@ from iam_units import convert_gwp
 from message_ix import Scenario, make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.util import package_data_path
 
 from .structure import get_codes
@@ -22,51 +23,42 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+@dataclass
+class Options(BaseOptions):
+    """Options for :class:`PRICE_EMISSION`."""
+
+    #: Override parent class default of :any:`True`.
+    aggregate: bool = False
+    #: Override parent class default of :any:`True`.
+    interpolate: bool = False
+
+    #: Path containing CSV data files, for instance :py:`package_data_path("transport",
+    #: "R12", "price-emission)`.
+    base_path: Path = field(default_factory=Path.cwd)
+
+    #: Information about a scenario used to construct a file name. Specifically, the
+    #: file name :file:`{scenario_info.path}.csv` is used. See
+    #: :attr:`~.ScenarioInfo.path`.
+    scenario_info: "ScenarioInfo" = field(default_factory=ScenarioInfo)
+
+
 class PRICE_EMISSION(ExoDataSource):
-    """Provider of exogenous data for ``PRICE_EMISSION``.
+    """Provider of exogenous data for ``PRICE_EMISSION``."""
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    following `source_kw`:
+    Options = Options
 
-    - :py:`base_path`: a :class:`.Path` containing (a) data file(s).
-    - :py:`scenario_info`: a :class:`.ScenarioInfo`. :attr:`.ScenarioInfo.path` is used
-      to construct a file path.
-
-
-    Example
-    -------
-    >>> keys = prepare_computer(
-    ...     context,
-    ...     computer,
-    ...     source="message_ix_models.model.emissions.PRICE_EMISSION",
-    ...     source_kw=dict(
-    ...         base_path=package_data_path("transport", "R12", "price-emission),
-    ...         scenario_info=ScenarioInfo.from_url("SSP_LED_v5.3.1/baseline_1000f#1"),
-    ...     ),
-    ... )
-    >>> result = computer.get(keys[0])
-
-    """
-
-    id = f"{__name__}.PRICE_EMISSION"
     key = Key("PRICE_EMISSION:n-type_emission-type_tec-y:exo")
-    aggregate = False
-    interpolate = False
 
-    def __init__(self, source, source_kw) -> None:
-        if not source == self.id:
-            raise ValueError
+    def __init__(self, *args, **kwargs) -> None:
+        opts = self.options = self.Options.from_args(
+            f"{__name__}.PRICE_EMISSION", *args, **kwargs
+        )
 
-        si: "ScenarioInfo" = source_kw.pop("scenario_info")
-
-        base_path = Path(source_kw.pop("base_path"))
-        self.path = base_path.joinpath(f"{si.path}.csv")
+        self.path = opts.base_path.joinpath(f"{opts.scenario_info.path}.csv")
         if not self.path.exists():
-            msg = f"No file in {self.path.parent} for {si.url}"
+            msg = f"No file in {self.path.parent} for {opts.scenario_info.url}"
             log.error(msg)
             raise ValueError(msg)
-
-        self.raise_on_extra_kw(source_kw)
 
     def __call__(self):
         from genno.operator import load_file
@@ -78,7 +70,7 @@ class PRICE_EMISSION(ExoDataSource):
         return load_file(self.path, dims=dims)
 
 
-register_source(PRICE_EMISSION)
+register_source(PRICE_EMISSION, id=f"{__name__}.PRICE_EMISSION")
 
 
 def get_emission_factors(units: Optional[str] = None) -> "AnyQuantity":
