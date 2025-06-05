@@ -6,42 +6,57 @@ from message_ix import make_df
 from message_ix.models import MACRO
 
 from message_ix_models import ScenarioInfo, testing
-from message_ix_models.model.emissions import add_tax_emission, get_emission_factors
+from message_ix_models.model.emissions import (
+    PRICE_EMISSION,
+    add_tax_emission,
+    get_emission_factors,
+)
 from message_ix_models.testing import bare_res
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import package_data_path
 
 
 class TestPRICE_EMISSION:
-    params = (
-        pytest.param(
-            dict(scenario_info=ScenarioInfo()),
-            (),
-            marks=pytest.mark.xfail(raises=ValueError),
-        ),
+    @pytest.mark.parametrize(
+        "source_kw, shape",
         (
-            dict(
-                scenario_info=ScenarioInfo.from_url("SSP_LED_v5.3.1/baseline_1000f#1")
+            pytest.param(
+                dict(scenario_info=ScenarioInfo()),
+                (),
+                marks=pytest.mark.xfail(raises=ValueError),
             ),
-            (2, 2, 2, 12),
+            (
+                dict(
+                    scenario_info=ScenarioInfo.from_url(
+                        "SSP_LED_v5.3.1/baseline_1000f#1"
+                    )
+                ),
+                (2, 2, 2, 12),
+            ),
         ),
     )
-
-    @pytest.mark.parametrize("source_kw, shape", params)
-    def test_prepare_computer(
-        self, request, test_context, source_kw, shape, regions="R12"
+    @pytest.mark.parametrize("method", ("apply", "prepare_computer"))
+    def test_add_tasks(
+        self, request, test_context, source_kw, shape, method, regions="R12"
     ) -> None:
         test_context.model.regions = regions
 
-        source = "message_ix_models.model.emissions.PRICE_EMISSION"
         source_kw.update(
             base_path=package_data_path("transport", regions, "price-emission")
         )
 
         c = genno.Computer()
 
-        # Tasks are added to the computer
-        keys = prepare_computer(test_context, c, source, source_kw)
+        if method == "apply":
+            # Current method for adding tasks
+            keys = c.apply(PRICE_EMISSION.add_tasks, context=test_context, **source_kw)
+        elif method == "prepare_computer":
+            # Old method for adding tasks
+            source = "message_ix_models.model.emissions.PRICE_EMISSION"
+            keys = prepare_computer(test_context, c, source, source_kw)
+
+        # Tasks are added to the graph
+        assert isinstance(keys, tuple) and len(keys)
 
         # Key has expected dimensions
         exp = Key("PRICE_EMISSION:n-type_emission-type_tec-y:exo")
