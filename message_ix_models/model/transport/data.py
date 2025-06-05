@@ -203,7 +203,7 @@ class MaybeAdaptR11Source(ExoDataSource):
     def get_keys(self) -> tuple[Key, Key]:
         """Return the target keys for the (1) raw and (2) transformed data."""
         k = self.key or Key(
-            self.name or self.measure.lower(), ("n", "y") + self.extra_dims
+            self.options.name or self.measure.lower(), ("n", "y") + self.extra_dims
         )
         return (k * "scenario" + self.id, k)
 
