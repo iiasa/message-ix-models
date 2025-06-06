@@ -1,11 +1,13 @@
 import logging
-from copy import copy
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from genno import Computer, Key
-
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.tools.iamc import iamc_like_data_for_query
-from message_ix_models.util import iter_keys, path_fallback
+from message_ix_models.util import path_fallback
+
+if TYPE_CHECKING:
+    from genno.types import AnyQuantity
 
 __all__ = [
     "ADVANCE",
@@ -25,34 +27,8 @@ NAME = "advance_compare_20171018-134445.csv"
 class ADVANCE(ExoDataSource):
     """Provider of exogenous data from the ADVANCE project database.
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    arguments:
-
-    - `source`: "ADVANCE"
-    - `source_kw` including:
-
-      - "model": one of 12 codes including "MESSAGE".
-      - "measure": one of 3080 codes for the "VARIABLE" dimension.
-      - "scenario": one of 51 codes including "ADV3TRAr2_Base".
-      - "name", optional: override :attr:`.ExoDataSource.name`.
-      - "aggregate", optional: if :any:`True`, aggregate data from the ADVANCE native
-        regions using ``n::groups`` (same behaviour as the base class). Otherwise, do
-        not aggregate.
-
     Example
     -------
-    >>> keys = prepare_computer(
-    ...     context,
-    ...     computer,
-    ...     source="ADVANCE",
-    ...     source_kw=dict(
-    ...         measure="Transport|Service demand|Road|Freight",
-    ...         model="MESSAGE",
-    ...         scenario="ADV3TRAr2_Base",
-    ...     ),
-    ... )
-    >>> result = computer.get(keys[0])
-
     Load the metadata packaged with :mod:`message_ix_models` to identify usable
     `source_kw`:
 
@@ -82,69 +58,44 @@ class ADVANCE(ExoDataSource):
      'iPETS V.1.5': <Code iPETS V.1.5>}
     """
 
-    id = "ADVANCE"
+    @dataclass
+    class Options(BaseOptions):
+        #: If :any:`True`, aggregate data from the ADVANCE native regions using
+        #: ``n::groups`` (same behaviour as the base class). Otherwise, do not
+        #: aggregate.
+        aggregate: bool = True
+
+        #: One of 3080 codes for the "VARIABLE" dimension.
+        measure: str = ""
+
+        #: One of 12 codes including "MESSAGE".
+        model: str = ""
+
+        #: One of 51 codes including "ADV3TRAr2_Base".
+        scenario: str = ""
 
     where = ["private"]
 
-    def __init__(self, source, source_kw):
-        if not source == self.id:
-            raise ValueError(source)
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
 
         # Map the `measure` keyword to a string appearing in the data
-        _kw = copy(source_kw)
-        self.measure = _kw.pop("measure")
-        self.variable = {
-            "GDP": "GDP|PPP",
-            "POP": "Population",
-        }.get(self.measure, self.measure)
-
-        # Store the model and scenario ID
-        self.model = _kw.pop("model", None)
-        self.scenario = _kw.pop("scenario", None)
-
-        # Set the name of the returned quantity
-        self.name = _kw.pop("name", "")
-
-        self.aggregate = _kw.pop("aggregate", True)
-
-        if len(_kw):
-            raise ValueError(_kw)
-
-    def __call__(self):
-        # Assemble a query string
-        query = " and ".join(
-            [
-                f"SCENARIO == {self.scenario!r}",
-                f"VARIABLE == {self.variable!r}",
-                f"MODEL == {self.model!r}" if self.model else "True",
-            ]
+        opt.name = variable = {"GDP": "GDP|PPP", "POP": "Population"}.get(
+            opt.measure, opt.measure
         )
-        log.debug(query)
+
+        # Assemble a query string
+        self.query = (
+            f"SCENARIO == {opt.scenario!r} and VARIABLE == {variable!r} and "
+            + (f"MODEL == {opt.model!r}" if opt.model else "True")
+        )
+        log.debug(self.query)
 
         # Expected location of the ADVANCE WP2 data snapshot.
-        path = path_fallback(*LOCATION, where=self._where())
+        self.path = path_fallback(*LOCATION, where=self._where())
+        super().__init__()
 
+    def get(self) -> "AnyQuantity":
         return iamc_like_data_for_query(
-            path, query, archive_member=NAME, non_iso_3166="keep"
+            self.path, self.query, archive_member=NAME, non_iso_3166="keep"
         )
-
-    def transform(self, c: "Computer", base_key: Key) -> Key:
-        """Prepare `c` to transform raw data from `base_key`.
-
-        Unlike the base class version, this implementation only adds the aggregation
-        step if :attr:`.aggregate` is :any:`True`.
-        """
-        k = iter_keys(base_key)
-
-        k1 = base_key
-        if self.aggregate:
-            # Aggregate
-            k1 = k()
-            c.add(k1, "aggregate", base_key, "n::groups", keep=False)
-
-        # Interpolate to the desired set of periods
-        kw = dict(fill_value="extrapolate")
-        k2 = k()
-        c.add(k2, "interpolate", k1, "y::coords", kwargs=kw)
-
-        return k2

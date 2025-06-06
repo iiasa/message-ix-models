@@ -42,6 +42,7 @@ class Options(BaseOptions):
     scenario_info: "ScenarioInfo" = field(default_factory=ScenarioInfo)
 
 
+@register_source
 class PRICE_EMISSION(ExoDataSource):
     """Provider of exogenous data for ``PRICE_EMISSION``."""
 
@@ -60,7 +61,7 @@ class PRICE_EMISSION(ExoDataSource):
             log.error(msg)
             raise ValueError(msg)
 
-    def __call__(self):
+    def get(self) -> "AnyQuantity":
         from genno.operator import load_file
         from ixmp.report.common import RENAME_DIMS
 
@@ -68,9 +69,6 @@ class PRICE_EMISSION(ExoDataSource):
         dims = {d: d for d in self.key.dims} | RENAME_DIMS
 
         return load_file(self.path, dims=dims)
-
-
-register_source(PRICE_EMISSION, id=f"{__name__}.PRICE_EMISSION")
 
 
 def get_emission_factors(units: Optional[str] = None) -> "AnyQuantity":
