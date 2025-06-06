@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from genno import Computer
 
@@ -5,12 +7,14 @@ from message_ix_models.project.ssp import (
     SSP,
     SSP_2017,
     SSP_2024,
-    data,  # noqa: F401 —only to ensure SSPOriginal and SSPUpdate are registered
     generate,
     parse,
     ssp_field,
 )
-from message_ix_models.tools.exo_data import prepare_computer
+from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 def test_generate(tmp_path, test_context):
@@ -109,18 +113,20 @@ class TestSSPOriginal:
             # Excess keyword arguments
             pytest.param(
                 dict(measure="GDP", model="OECD Env-Growth", foo="bar"),
-                marks=pytest.mark.xfail(raises=ValueError),
+                marks=pytest.mark.xfail(raises=TypeError),
             ),
         ),
     )
-    def test_prepare_computer(self, test_context, source, source_kw):
+    def test_add_tasks(self, test_context: "Context", source, source_kw: dict) -> None:
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
 
         c = Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = SSPOriginal.add_tasks(
+            c, context=test_context, source=source, **source_kw
+        )
 
         # Preparation of data runs successfully
         result = c.get(keys[0])
@@ -157,12 +163,14 @@ class TestSSPUpdate:
             # Excess keyword arguments
             pytest.param(
                 dict(measure="POP", foo="bar"),
-                marks=pytest.mark.xfail(raises=ValueError),
+                marks=pytest.mark.xfail(raises=TypeError),
             ),
         ),
     )
     @pytest.mark.parametrize("release", ("preview", "3.0", "3.0.1", "3.1"))
-    def test_prepare_computer(self, test_context, source, source_kw, release):
+    def test_add_tasks(
+        self, test_context: "Context", source: str, source_kw: dict, release: str
+    ) -> None:
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
@@ -172,7 +180,7 @@ class TestSSPUpdate:
 
         c = Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = SSPUpdate.add_tasks(c, context=test_context, source=source, **source_kw)
 
         # Preparation of data runs successfully
         result = c.get(keys[0])
