@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pytest
-from genno import Computer
+from genno import Computer, Key
 
 from message_ix_models.project.gea.data import GEA
-from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import HAS_MESSAGE_DATA as FULL
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 M = "Final Energy|Transportation|Total"
 S = "geama_450_btr_nsink"
@@ -40,17 +44,23 @@ class TestGEA:
             ("R12", True, 2 if FULL else 0, 22 if FULL else 0),
         ),
     )
-    def test_prepare_computer(
-        self, test_context, source_kw, regions, aggregate, N_n, size
-    ):
+    def test_add_tasks(
+        self,
+        test_context: "Context",
+        source_kw: dict,
+        regions: str,
+        aggregate: bool,
+        N_n: int,
+        size: int,
+    ) -> None:
         test_context.model.regions = regions
 
         c = Computer()
 
-        source = "GEA"
         source_kw.update(aggregate=aggregate)
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = GEA.add_tasks(c, context=test_context, **source_kw)
+        assert all(isinstance(k, Key) for k in keys)
 
         # Keys have expected names
         assert source_kw["measure"].lower() == keys[0].name

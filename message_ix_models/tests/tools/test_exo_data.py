@@ -15,13 +15,21 @@ if TYPE_CHECKING:
 
 
 class TestDemoSource:
+    @pytest.mark.parametrize("method", ("apply", "call"))
     @pytest.mark.parametrize("regions, N_n", [("R12", 12), ("R14", 14)])
-    def test_add_tasks(self, test_context: "Context", regions, N_n) -> None:
+    def test_add_tasks(
+        self, test_context: "Context", method: str, regions: str, N_n: int
+    ) -> None:
         test_context.model.regions = regions
 
         c = Computer()
 
-        keys = c.apply(DemoSource.add_tasks, measure="POP", scenario="s1")
+        if method == "apply":
+            keys = c.apply(DemoSource.add_tasks, measure="POP", scenario="s1")
+        elif method == "call":
+            keys = DemoSource.add_tasks(
+                c, context=test_context, measure="POP", scenario="s1"
+            )
 
         # Computation of data runs successfully
         result = c.get(keys[-1])
@@ -45,7 +53,7 @@ class TestExoDataSource:
 
 
 @pytest.mark.parametrize("regions, N_n", [("R12", 12), ("R14", 14)])
-def test_prepare_computer(test_context, regions, N_n) -> None:
+def test_deprecated_prepare_computer(test_context, regions, N_n) -> None:
     """:func:`.exo_data.prepare_computer` works as intended."""
     test_context.model.regions = regions
 
@@ -67,7 +75,7 @@ def test_prepare_computer(test_context, regions, N_n) -> None:
     assert 14 == len(result.coords["y"])
 
 
-def test_prepare_computer_exc(test_context: "Context") -> None:
+def test_deprecated_prepare_computer_exc(test_context: "Context") -> None:
     """Exceptions raised from :func:`prepare_computer`."""
     c = Computer()
 
