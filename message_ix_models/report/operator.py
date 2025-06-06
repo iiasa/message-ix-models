@@ -17,19 +17,16 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 import genno
 import ixmp
 import pandas as pd
-from genno.core.operator import Operator
 from genno.operator import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 
-from message_ix_models import Context
 from message_ix_models.util import MappingAdapter, add_par_data, nodes_ex_world
 
 if TYPE_CHECKING:
     from pathlib import Path
     from typing import Protocol
 
-    from genno import Computer, Key
     from genno.types import AnyQuantity, TQuantity
     from sdmx.model.v21 import Code
 
@@ -47,7 +44,6 @@ __all__ = [
     "call",
     "codelist_to_groups",
     "compound_growth",
-    "exogenous_data",
     "filter_ts",
     "from_url",
     "get_ts",
@@ -145,28 +141,6 @@ def compound_growth(qty: "TQuantity", dim: str) -> "TQuantity":
     # - Shift, so the value at index d is the growth relative to the prior index d-1
     # - Fill in 1.0 for the first index.
     return pow(qty, type(qty)(dur)).cumprod(dim).shift({dim: 1}).fillna(1.0)
-
-
-@Operator.define()
-def exogenous_data():
-    """No action.
-
-    This exists to connect :func:`.exo_data.prepare_computer` to
-    :meth:`genno.Computer.add`.
-    """
-    pass  # pragma: no cover
-
-
-@exogenous_data.helper
-def add_exogenous_data(
-    func, c: "Computer", *, context=None, source=None, source_kw=None
-) -> tuple["Key", ...]:
-    """Prepare `c` to compute exogenous data from `source`."""
-    from message_ix_models.tools.exo_data import prepare_computer
-
-    return prepare_computer(
-        context or Context.get_instance(-1), c, source=source, source_kw=source_kw
-    )
 
 
 def filter_ts(df: pd.DataFrame, expr: re.Pattern, *, column="variable") -> pd.DataFrame:
