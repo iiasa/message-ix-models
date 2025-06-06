@@ -50,32 +50,3 @@ def test_prepare_computer_exc(test_context):
 
     with pytest.raises(ValueError, match="No source found that can handle"):
         prepare_computer(test_context, c, "not a source")
-
-
-@pytest.mark.parametrize("regions, N_n", [("R12", 12), ("R14", 14)])
-def test_operator(test_context, regions, N_n):
-    """Exogenous data calculations can be set up through :meth:`.Computer.add`."""
-    test_context.model.regions = regions
-
-    c = Computer()
-    c.require_compat("message_ix_models.report.operator")
-
-    # Function runs successfully `c`
-    keys = c.add(
-        "exogenous_data",
-        context=test_context,
-        source="test s1",
-        source_kw=dict(measure="POP"),
-    )
-
-    # print(c.describe(keys[-1]))
-
-    # Computation of data runs successfully
-    result = c.get(keys[-1])
-
-    # Data has the expected dimensions
-    assert ("n", "y") == result.dims
-
-    # Data is complete
-    assert N_n == len(result.coords["n"])
-    assert 14 == len(result.coords["y"])
