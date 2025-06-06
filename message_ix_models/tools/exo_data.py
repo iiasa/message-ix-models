@@ -450,38 +450,46 @@ def register_source(
 
 @register_source
 class DemoSource(ExoDataSource):
-    """Example source of exogenous population and GDP data.
+    """Example source of exogenous population and GDP data."""
 
-    Parameters
-    ----------
-    source : str
-        **Must** be like ``test s1``, where "s1" is a scenario ID from ("s0"…"s4").
-    source_kw : dict
-        **Must** contain an element "measure", one of :data:`MEASURES`.
-    """
+    @dataclass
+    class Options(BaseOptions):
+        scenario: str = ""
 
-    id = "DEMO"
+    def __init__(self, *args, **kwargs) -> None:
+        # Handle old-style positional or keyword arg like source="test s1", where "s1"
+        # is the value for Options.scenario
+        if args:
+            source = args[0]
+        elif source := kwargs.get("source"):
+            pass
 
-    def __init__(self, source, source_kw):
-        if not source.startswith("test "):
-            # Don't recognize this `source` string → can't provide data
-            raise ValueError(source)
+        if source:
+            prefix = "test "
+            _, source_id, scenario = source.rpartition(prefix)
+            if not source_id == prefix:
+                # Don't recognize this `source` string → can't provide data
+                raise ValueError(source)
+        else:
+            scenario = None
 
-        # Select the data according to the `source`; in this case, scenario
-        *parts, scenario = source.partition("test ")
-        self.indexers = dict(s=scenario)
+        opt = self.options = self.Options.from_args(source, *args, **kwargs)
 
+        # Use an explicit scenario ID or part of "source_id"
         # Map from the measure ID to a variable name
-        self.measure = source_kw.pop("measure")
-        self.indexers.update(v={"POP": "Population", "GDP": "GDP"}[self.measure])
-        super().__init__(**source_kw)
+        self.indexers = dict(
+            s=opt.scenario or scenario,
+            v={"POP": "Population", "GDP": "GDP"}[opt.measure],
+        )
 
-    def __call__(self) -> "AnyQuantity":
+        super().__init__()
+
+    def get(self) -> "AnyQuantity":
         from genno.operator import select
 
         # - Retrieve the data.
         # - Apply the prepared indexers.
-        return self.random_data().pipe(select, self.indexers, drop=True)
+        return self.random_data().pipe(select, self.indexers, drop=True)  # type: ignore [arg-type]
 
     @staticmethod
     def random_data() -> "AnyQuantity":
