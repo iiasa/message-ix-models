@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from genno import Computer
 
 from message_ix_models.project.advance.data import ADVANCE
-from message_ix_models.tools.exo_data import prepare_computer
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 @pytest.fixture
@@ -36,20 +40,24 @@ class TestADVANCE:
             pytest.param(
                 dict(measure="GDP", model="not a model", foo="bar"),
                 None,
-                marks=pytest.mark.xfail(raises=ValueError),
+                marks=pytest.mark.xfail(raises=TypeError),
             ),
         ),
     )
     @pytest.mark.parametrize("regions, N_n", (("ADVANCE", 7), ("R12", 4)))
-    def test_prepare_computer(
-        self, test_context, source_kw, dimensionality, regions, N_n
-    ):
-        source = "ADVANCE"
+    def test_add_tasks(
+        self,
+        test_context: "Context",
+        source_kw: dict,
+        dimensionality: dict[str, int],
+        regions: str,
+        N_n: int,
+    ) -> None:
         test_context.model.regions = regions
 
         c = Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = c.apply(ADVANCE.add_tasks, context=test_context, **source_kw)
 
         # Preparation of data runs successfully
         result = c.get(keys[0])
