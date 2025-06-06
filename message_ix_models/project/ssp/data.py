@@ -1,6 +1,8 @@
 import logging
+from dataclasses import dataclass
+from typing import Union
 
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.tools.iamc import iamc_like_data_for_query
 from message_ix_models.util import path_fallback
 
@@ -12,8 +14,64 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
+class SSPDataSource(ExoDataSource):
+    """Common base class for :class:`.SSPOriginal` and :class:`.SSPUpdate`."""
+
+    @dataclass
+    class Options(BaseOptions):
+        #: Model name.
+        model: str = ""
+
+        #: Partial URN for a code in the SSP code list, e.g. "ICONICS:SSP(2017).1".
+        source: str = ""
+
+        #: Short id of the SSP, e.g. "1".
+        ssp_id: str = ""
+
+        def handle_source(self, prefix: str) -> None:
+            """Check that :attr:`source` starts with `prefix`; update :attr:`ssp_id`."""
+            if not self.source:
+                return
+
+            prefix += "."
+            _, sep, ssp_id = self.source.rpartition(prefix)
+
+            if sep != prefix:
+                raise ValueError(f"{self.source!r} does not start with {prefix!r}")
+            elif self.ssp_id and self.ssp_id != ssp_id:  # Mismatch
+                raise ValueError(
+                    f"Mismatch: {self.source=!r} != {prefix!r} + {self.ssp_id=!r}"
+                )
+
+            self.ssp_id = ssp_id
+
+    options: Options
+
+    #: Alias from short measure IDs to IAMC 'variable'.
+    variable = {"GDP": "GDP|PPP", "POP": "Population"}
+
+    #: Replacements.
+    replace: dict[str, Union[str, dict[str, str]]] = {}
+
+    #: :py:`where` argument to :func:`path_fallback`. In order:
+    #:
+    #: 1. Currently data is stored in message-static-data, cloned and linked from within
+    #:    the user's 'local' data directory.
+    #: 2. Previously some files were stored directly within message_ix_models (available
+    #:    in an editable install from a clone of the git repository, 'package') or in
+    #:    :mod:`message_data` ('private'). These settings are only provided for backward
+    #:    compatibility.
+    #:
+    #: Fuzzed/random test data ('test') is also available, but not enabled by default.
+    where = ["local", "package", "private"]
+
+    def get(self):
+        # Use prepared path, query, and replacements
+        return iamc_like_data_for_query(self.path, self.query, replace=self.replace)
+
+
 @register_source
-class SSPOriginal(ExoDataSource):
+class SSPOriginal(SSPDataSource):
     """Provider of exogenous data from the original SSP database.
 
     This database is accessible from https://tntcat.iiasa.ac.at/SspDb/dsd.
@@ -51,8 +109,6 @@ class SSPOriginal(ExoDataSource):
     >>> result = computer.get(keys[0])
     """
 
-    id = "SSP"
-
     #: Name of file containing the data.
     filename = "SspDb_country_data_2013-06-12.csv.zip"
 
@@ -69,57 +125,31 @@ class SSPOriginal(ExoDataSource):
     #: Replacements to apply when loading the data.
     replace = {"billion US$2005/yr": "billion USD_2005/yr"}
 
-    #: :py:`where` argument to :func:`path_fallback`. In order:
-    #:
-    #: 1. Currently data is stored in message-static-data, cloned and linked from within
-    #:    the user's 'local' data directory.
-    #: 2. Previously some files were stored directly within message_ix_models (available
-    #:    in an editable install from a clone of the git repository, 'package') or in
-    #:    :mod:`message_data` ('private'). These settings are only provided for backward
-    #:    compatibility.
-    #:
-    #: Fuzzed/random test data ('test') is also available, but not enabled by default.
-    where = ["local", "package", "private"]
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
+        opt.handle_source("ICONICS:SSP(2017)")
 
-    def __init__(self, source, source_kw):
-        s = "ICONICS:SSP(2017)."
-        if not source.startswith(s):
-            raise ValueError(source)
+        super().__init__()  # Create .key
 
-        *parts, ssp_id = source.partition(s)
-
-        # Map the `measure` keyword to a string appearing in the data
-        self.measure = source_kw.pop("measure")
-        measure = {
-            "GDP": "GDP|PPP",
-            "POP": "Population",
-        }[self.measure]
-
-        # Store the model ID, if any
-        model = source_kw.pop("model", None)
+        # Map the `measure` option to an IAMC 'variable' label appearing in the data
+        v = self.variable[opt.measure]
 
         # Determine the date based on the model ID. There is a 1:1 correspondence.
-        date = self.model_date[model]
-
-        self.raise_on_extra_kw(source_kw)
+        date = self.model_date[opt.model]
 
         # Identify input data path
         self.path = path_fallback("ssp", self.filename, where=self._where())
 
         # Assemble a query string
-        extra = "d" if ssp_id == "4" and model == "IIASA-WiC POP" else ""
+        extra = "d" if opt.ssp_id == "4" and opt.model == "IIASA-WiC POP" else ""
         self.query = (
-            f"SCENARIO == 'SSP{ssp_id}{extra}_v9_{date}' and VARIABLE == '{measure}'"
-            + (f" and MODEL == '{model}'" if model else "")
+            f"SCENARIO == 'SSP{opt.ssp_id}{extra}_v9_{date}' and VARIABLE == {v!r} and "
+            + (f"MODEL == {opt.model!r}" if opt.model else "True")
         )
-
-    def __call__(self):
-        # Use prepared path, query, and replacements
-        return iamc_like_data_for_query(self.path, self.query, replace=self.replace)
 
 
 @register_source
-class SSPUpdate(ExoDataSource):
+class SSPUpdate(SSPDataSource):
     """Provider of exogenous data from the SSP Update database.
 
     This database is accessible from https://data.ece.iiasa.ac.at/ssp.
@@ -145,7 +175,12 @@ class SSPUpdate(ExoDataSource):
     >>> result = computer.get(keys[0])
     """
 
-    id = "SSP update"
+    @dataclass
+    class Options(SSPDataSource.Options):
+        #: Release.
+        release: str = ""
+
+    options: Options
 
     #: File names containing the data, according to the release.
     filename = {
@@ -155,68 +190,50 @@ class SSPUpdate(ExoDataSource):
         "preview": "SSP-Review-Phase-1.csv.gz",
     }
 
-    #: See :attr:`SSPOriginal.where`.
-    where = ["local", "package", "private"]
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
+        opt.handle_source("ICONICS:SSP(2024)")
 
-    def __init__(self, source, source_kw):
-        s = "ICONICS:SSP(2024)."
-        if not source.startswith(s):
-            raise ValueError(source)
+        super().__init__()  # Create .key
 
-        *parts, ssp_id = source.partition(s)
-
-        # Map the `measure` keyword to a 'Variable' dimension code
-        self.measure = source_kw.pop("measure")
-        measure = {
-            "GDP": "GDP|PPP",
-            "POP": "Population",
-        }[self.measure]
-
-        # Store the model code, if any
-        model = source_kw.pop("model", None)
-
-        # Identify the data release date/version/label
-        release = source_kw.pop("release", "3.0")
-
-        self.raise_on_extra_kw(source_kw)
+        # Map the `measure` option to an IAMC 'variable' label appearing in the data
+        v = self.variable[opt.measure]
 
         # Replacements to apply, if any
         self.replace = {}
 
         # Prepare query pieces
-        models = []
+        models: list[str] = []
         scenarios = []
 
-        if release in ("3.1", "3.0.1", "3.0"):
-            scenarios.append(f"SSP{ssp_id}")
+        if opt.release in ("3.1", "3.0.1", "3.0"):
+            scenarios.append(f"SSP{opt.ssp_id}")
 
-            if measure == "GDP|PPP":
+            if opt.measure == "GDP":
                 # Configure to prepend (m="OECD…", s="Historical Reference")
                 # observations to series
-                models.extend({model, "OECD ENV-Growth 2023"})
+                models.extend({opt.model, "OECD ENV-Growth 2023"})
                 scenarios.append("Historical Reference")
                 self.replace.update(
-                    Model={"OECD ENV-Growth 2023": model},
+                    Model={"OECD ENV-Growth 2023": opt.model},
                     Scenario={"Historical Reference": scenarios[0]},
                 )
-        elif release == "preview":
-            models.extend([model] if model is not None else [])
-            scenarios.append(f"SSP{ssp_id} - Review Phase 1")
+        elif opt.release == "preview":
+            models.extend([opt.model] if opt.model else [])
+            scenarios.append(f"SSP{opt.ssp_id} - Review Phase 1")
         else:
             log.error(
-                f"{release = } invalid for {type(self)}; expected one of: "
+                f"{opt.release = } invalid for {type(self)}; expected one of: "
                 f"{set(self.filename)}"
             )
-            raise ValueError(release)
+            raise ValueError(opt.release)
 
         # Identify input data path
-        self.path = path_fallback("ssp", self.filename[release], where=self._where())
-
-        # Assemble and store a query string
-        self.query = f"Scenario in {scenarios!r} and Variable == '{measure}'" + (
-            f"and Model in {models!r}" if models else ""
+        self.path = path_fallback(
+            "ssp", self.filename[opt.release], where=self._where()
         )
 
-    def __call__(self):
-        # Use prepared path, query, and replacements
-        return iamc_like_data_for_query(self.path, self.query, replace=self.replace)
+        # Assemble and store a query string
+        self.query = f"Scenario in {scenarios!r} and Variable == {v!r} and " + (
+            f"Model in {models!r}" if models else "True"
+        )

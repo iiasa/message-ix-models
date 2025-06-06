@@ -60,7 +60,6 @@ class LDV(MaybeAdaptR11Source):
        "fix_cost", or "inv_cost"), "nodes", and "scenario".
     """
 
-    id = __name__
     measures = {"inv_cost", "fuel economy", "fix_cost"}
 
     #: Names of expected files given :attr:`measure`.
@@ -70,10 +69,10 @@ class LDV(MaybeAdaptR11Source):
         "fix_cost": "ldv-fix_cost.csv",
     }
 
-    def __init__(self, source, source_kw) -> None:
-        super().__init__(source, source_kw)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         # Use "exo" tag on the target key, to align with existing code in this module
-        self.key = Key(f"{self.measure}:n-t-y:LDV+exo")
+        self.key = Key(f"{self.options.measure}:n-t-y:LDV+exo")
 
 
 collect = Collector(TARGET, "{}::LDV+ixmp".format)
