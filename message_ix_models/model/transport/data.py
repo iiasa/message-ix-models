@@ -6,7 +6,7 @@ See :ref:`transport-data-files` for documentation of the input data flows.
 import logging
 from collections import defaultdict
 from collections.abc import Callable, Iterator, Mapping
-from copy import deepcopy
+from dataclasses import dataclass
 from functools import cache, partial
 from itertools import chain
 from operator import le
@@ -20,7 +20,7 @@ from ixmp.report.common import RENAME_DIMS
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource
 from message_ix_models.util import (
     adapt_R11_R12,
     adapt_R11_R14,
@@ -37,6 +37,7 @@ from message_ix_models.util.sdmx import DATAFLOW, STORE, Dataflow
 if TYPE_CHECKING:
     import sdmx.message
     import sdmx.model.common
+    from genno.types import AnyQuantity
     from sdmx.model.v21 import Code
 
 log = logging.getLogger(__name__)
@@ -61,32 +62,33 @@ class IEA_Future_of_Trucks(ExoDataSource):
     Parameters
     ----------
     measure : int
-        One of:
-
-        1. energy intensity of vehicle distance travelled
-        2. load
-        3. energy intensity of freight service (mass × distance)
+        One of the keys of ;attr:`name_unit`.
     """
 
-    id = "iea-future-of-trucks"
+    @dataclass
+    class Options(BaseOptions):
+        measure: str = "0"
+        convert_units: Optional[str] = None
 
-    convert_units: Optional[str] = None
+    options: Options
 
-    _name_unit = {
+    #: Mapping from :attr:`Options.measure` to name and unit.
+    name_unit = {
         1: ("energy intensity of VDT", "GWa / (Gv km)"),
         2: ("load factor", None),
         3: ("energy intensity of FV", None),
     }
 
-    def __init__(self, source, source_kw):
-        if not source == "IEA Future of Trucks":
-            raise ValueError
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
 
-        self.measure = source_kw.pop("measure")
-        self.name, self._unit = self._name_unit[self.measure]
-        self.path = package_data_path("transport", f"iea-2017-t4-{self.measure}.csv")
+        self.options.name, self._unit = self.name_unit[int(self.options.measure)]
+        self.path = package_data_path(
+            "transport", f"iea-2017-t4-{self.options.measure}.csv"
+        )
+        super().__init__()
 
-    def __call__(self):
+    def get(self) -> "AnyQuantity":
         from genno.operator import load_file
 
         return load_file(self.path, dims=RENAME_DIMS)
@@ -122,13 +124,15 @@ class IEA_Future_of_Trucks(ExoDataSource):
         # Add tasks
         k = base_key
         # Map from IEA source nodes to target nodes
-        c.add(k + "1", "map_as_qty", map_node, [])
-        c.add(k + "2", "broadcast_map", base_key, k + "1", rename={"n2": "n"})
+        c.add(k[1], "map_as_qty", map_node, [])
+        c.add(k[2], "broadcast_map", base_key, k[1], rename={"n2": "n"})
         # Weight by share of freight activity
-        result = c.add(k + "3", "sum", k + "2", weights=share, dimensions=["t"])
+        result = c.add(k[3], "sum", k[2], weights=share, dimensions=["t"])
 
-        if self.convert_units:
-            result = c.add(k + "4", "convert_units", k + "3", units=self.convert_units)
+        if self.options.convert_units:
+            result = c.add(
+                k[4], "convert_units", k[3], units=self.options.convert_units
+            )
 
         return single_key(result)
 
@@ -142,6 +146,16 @@ class MaybeAdaptR11Source(ExoDataSource):
        Must include exactly the keys "measure", "nodes", and "scenario".
     """
 
+    @dataclass
+    class Options(BaseOptions):
+        #: ID of the node code list.
+        nodes: str = ""
+
+        #: Scenario identifier.
+        scenario: str = ""
+
+    options: Options
+
     #: Set of measures recognized by a subclass.
     measures: set[str] = set()
 
@@ -150,74 +164,56 @@ class MaybeAdaptR11Source(ExoDataSource):
 
     _adapter: Optional[Callable] = None
 
-    def __init__(self, source, source_kw):
+    def __init__(self, *args, **kwargs) -> None:
         from .util import region_path_fallback
 
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
+        super().__init__()  # Create .key
+
         # Check that the given measure is supported by the current class
-        if not source == self.id:
-            raise ValueError(source)
-        measure = source_kw.pop("measure", None)
-        if measure not in self.measures:
-            raise ValueError(measure)
-        else:
-            self.measure = measure
-
-        # ID of the node code list
-        nodes = source_kw.pop("nodes")
-
-        # Scenario identifier
-        self.scenario = source_kw.pop("scenario", None)
+        if opt.measure not in self.measures:
+            raise ValueError(opt.measure)
 
         # Dimensions for loaded data
-        self.dims = deepcopy(RENAME_DIMS)
-        self.dims["scenario"] = "scenario"
+        self.dims = RENAME_DIMS | dict(scenario="scenario")
 
-        self.raise_on_extra_kw(source_kw)
-
-        filename = self.filename[measure]
+        filename = self.filename[opt.measure]
         try:
-            self.path = region_path_fallback(nodes, filename)
+            self.path = region_path_fallback(opt.nodes, filename)
             self._repr = f"Load {self.path}"
         except FileNotFoundError:
-            log.info(f"Fall back to R11 data for {self.measure}")
+            log.info(f"Fall back to R11 data for {self.options.measure}")
             self.path = region_path_fallback("R11", filename)
+            self._repr = f"Load {self.path} and adapt R11 → {opt.nodes}"
 
             # Identify an adapter that can convert data from R11 to `nodes`
-            self._adapter = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(nodes)
-            self._repr = f"Load {self.path} and adapt R11 → {nodes}"
-
+            self._adapter = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(opt.nodes)
             if self._adapter is None:
-                log.warning(
-                    f"Not implemented: transform {self.id} data from 'R11' to {nodes!r}"
+                msg = (
+                    f"transform {type(self).__name__} data from 'R11' to {opt.nodes!r}"
                 )
-                raise NotImplementedError
+                log.warning(f"Not implemented: {msg}")
+                raise NotImplementedError(msg)
 
-    def __call__(self):
+    def get(self) -> "AnyQuantity":
         from genno.operator import load_file
 
-        return load_file(self.path, dims=self.dims, name=self.measure)
+        return load_file(self.path, dims=self.dims, name=self.options.measure)
 
     def __repr__(self) -> str:
         return self._repr
 
-    def get_keys(self) -> tuple[Key, Key]:
-        """Return the target keys for the (1) raw and (2) transformed data."""
-        k = self.key or Key(
-            self.options.name or self.measure.lower(), ("n", "y") + self.extra_dims
-        )
-        return (k * "scenario" + self.id, k)
-
     def transform(self, c: "Computer", base_key: Key) -> Key:
         # Apply self.adapt, if any
         if self._adapter:
-            k0 = base_key + "0"
-            c.add(base_key + "0", self._adapter, base_key)
+            k0 = base_key[0]
+            c.add(base_key[0], self._adapter, base_key)
         else:
             k0 = base_key
 
         # Select on the 'scenario' dimension, if any
-        k1 = k0 / "scenario" + "1"
-        c.add(k1, "maybe_select", k0, indexers={"scenario": self.scenario})
+        k1 = (k0 / "scenario")[1]
+        c.add(k1, "maybe_select", k0, indexers={"scenario": self.options.scenario})
 
         return k1
 
@@ -235,15 +231,6 @@ class MERtoPPP(MaybeAdaptR11Source):
     id = "transport MERtoPPP"
     measures = {"MERtoPPP"}
     filename = {"MERtoPPP": "mer-to-ppp.csv"}
-
-
-# Attempt to register each source; tolerate exceptions if the model is re-imported
-# FIXME Should not be necessary; improve register_source upstream
-for cls in IEA_Future_of_Trucks, MERtoPPP:
-    try:
-        register_source(cls)  # type: ignore [type-abstract]
-    except ValueError as e:
-        log.info(str(e))
 
 
 def collect_structures() -> "sdmx.message.StructureMessage":
