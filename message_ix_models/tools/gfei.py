@@ -1,17 +1,18 @@
 """Handle data from the Global Fuel Economy Initiative (GFEI)."""
 
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import genno
 import plotnine as p9
 
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.util import path_fallback
 
 if TYPE_CHECKING:
-    from genno import Computer
-    from genno.types import AnyQuantity
+    from genno import Computer, Key
+    from genno.types import AnyQuantity, TQuantity
 
     from message_ix_models import Context
 
@@ -50,37 +51,37 @@ class GFEI(ExoDataSource):
        automatically.
     """
 
-    id = "GFEI"
+    @dataclass
+    class Options(BaseOptions):
+        #: By default, do not aggregate.
+        aggregate: bool = False
+        #: By default, do not interpolate.
+        interpolate: bool = False
 
-    #: By default, do not aggregate.
-    aggregate = False
+        #: Name for the returned quantity.
+        name: str = "fuel economy"
 
-    #: By default, do not interpolate.
-    interpolate = False
+        #: Also generate diagnostic plots.
+        plot: bool = False
+
+    options: Options
 
     where = ["private"]
 
-    def __init__(self, source, source_kw):
-        if source != self.id:
-            raise ValueError(source)
-
-        self.plot = source_kw.pop("plot", False)
-
-        self.raise_on_extra_kw(source_kw)
-
-        # Set the name of the returned quantity
-        self.name = "fuel economy"
-
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args("GFEI", *args, **kwargs)
         self.path = path_fallback(
             "transport", "GFEI_FE_by_Powertrain_2017.csv", where=self._where()
         )
+        assert self.path.exists()
+        super().__init__()
 
-    def __call__(self):
+    def get(self) -> "AnyQuantity":
         import genno.operator
 
         from message_ix_models.util.pycountry import iso_3166_alpha_3
 
-        def relabel_n(qty: "AnyQuantity") -> "AnyQuantity":
+        def relabel_n(qty: "TQuantity") -> "TQuantity":
             labels = {n: iso_3166_alpha_3(n) for n in qty.coords["n"].data}
             return genno.operator.relabel(qty, {"n": labels})
 
@@ -96,20 +97,20 @@ class GFEI(ExoDataSource):
             .pipe(genno.operator.convert_units, "MJ / (vehicle km)")
         )
 
-    def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
+    def transform(self, c: "Computer", base_key: "Key") -> "Key":
         """Prepare `c` to transform raw data from `base_key`."""
-        ks = genno.KeySeq(super().transform(c, base_key))
+        k = super().transform(c, base_key)
 
-        if self.plot:
+        if self.options.plot:
             # Path for debug output
             context: "Context" = c.graph["context"]
             debug_path = context.get_local_path("debug")
             debug_path.mkdir(parents=True, exist_ok=True)
             c.configure(output_dir=debug_path)
 
-            c.add(f"plot {self.id} debug", Plot, ks.base)
+            c.add("plot GFEI debug", Plot, k)
 
-        return ks.base
+        return k
 
 
 class Plot(genno.compat.plotnine.Plot):
