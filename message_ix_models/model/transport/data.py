@@ -12,8 +12,9 @@ from itertools import chain
 from operator import le
 from typing import TYPE_CHECKING, Optional, cast
 
+import genno
 import pandas as pd
-from genno import Computer, Key, Quantity
+from genno import Computer, Key
 from genno.core.key import single_key
 from ixmp.report.common import RENAME_DIMS
 from message_ix import make_df
@@ -114,7 +115,7 @@ class IEA_Future_of_Trucks(ExoDataSource):
         )[["n", "n2"]]
 
         # Share of freight activity; transcribed from figure 18, page 38
-        share = Quantity(
+        share = genno.Quantity(
             xr.DataArray([0.1, 0.3, 0.6], coords=[("t", ["LCV", "MFT", "HFT"])])
         )
 
@@ -202,7 +203,7 @@ class MaybeAdaptR11Source(ExoDataSource):
     def get_keys(self) -> tuple[Key, Key]:
         """Return the target keys for the (1) raw and (2) transformed data."""
         k = self.key or Key(
-            self.name or self.measure.lower(), ("n", "y") + self.extra_dims
+            self.options.name or self.measure.lower(), ("n", "y") + self.extra_dims
         )
         return (k * "scenario" + self.id, k)
 
