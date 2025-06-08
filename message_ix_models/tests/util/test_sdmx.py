@@ -35,7 +35,6 @@ class TestDataflow:
 
     # TODO Use a broader-scoped context to allow (scope="class")
     @pytest.fixture
-    @pytest.mark.usefixtures("ssp_test_data")
     def build_computer(self, test_context):
         """A :class:`.Computer` from :func:`.configure_build`.
 
@@ -76,7 +75,7 @@ class TestDataflow:
         assert () == result
 
     @build.get_computer.minimum_version
-    @pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data")
+    @testing.MARK[10]
     @pytest.mark.parametrize(
         "file",
         [f for f in DATAFLOW.values() if f.intent & Dataflow.FLAG.IN],
