@@ -223,8 +223,11 @@ def prepare_techs(c: "Computer", technologies: list["Code"]) -> None:
     for t in technologies:
         # Assemble information about `t` from its annotations
         info: dict[str, Any] = dict(id=t.id)
-        # Sector
-        info["sector"] = str(t.get_annotation(id="sector").text)
+        try:
+            # Sector
+            info["sector"] = str(t.get_annotation(id="sector").text)
+        except KeyError:  # No such annotation
+            info["sector"] = None
         try:
             # Input commodity and level
             info["c_in"], info["l_in"] = t.eval_annotation("input")
