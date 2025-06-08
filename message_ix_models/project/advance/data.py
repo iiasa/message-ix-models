@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 #: Expected location of the ADVANCE WP2 data snapshot.
-LOCATION = "advance", "advance_compare_20171018-134445.csv.zip"
+LOCATION = "advance", "advance_compare_20171018-134445.csv.xz"
 
 #: Name of the data file within the archive.
 NAME = "advance_compare_20171018-134445.csv"
@@ -74,7 +74,10 @@ class ADVANCE(ExoDataSource):
         #: One of 51 codes including "ADV3TRAr2_Base".
         scenario: str = ""
 
-    where = ["private"]
+    #: :py:`where` argument to :func:`path_fallback`, used to identify the directory
+    #: containing :data:`LOCATION`. Currently data is stored in message-static-data,
+    #: cloned and linked from within the user's 'local' data directory.
+    where = ["local"]
 
     def __init__(self, *args, **kwargs) -> None:
         opt = self.options = self.Options.from_args(self, *args, **kwargs)
@@ -93,7 +96,8 @@ class ADVANCE(ExoDataSource):
 
         # Expected location of the ADVANCE WP2 data snapshot.
         self.path = path_fallback(*LOCATION, where=self._where())
-        super().__init__()
+
+        super().__init__()  # Create .key
 
     def get(self) -> "AnyQuantity":
         return iamc_like_data_for_query(
