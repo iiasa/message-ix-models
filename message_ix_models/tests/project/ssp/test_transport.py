@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from message_ix_models.model.transport.testing import MARK as MARK_TRANSPORT
 from message_ix_models.project.ssp.transport import (
     METHOD,
     get_computer,
@@ -257,7 +258,7 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
 
 
 @get_computer.minimum_version
-@pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data")
+@MARK_TRANSPORT[10]
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(test_context, input_csv_path, method) -> None:
     # - Read input data
@@ -276,7 +277,7 @@ def test_process_df(test_context, input_csv_path, method) -> None:
 
 
 @get_computer.minimum_version
-@pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data")
+@MARK_TRANSPORT[10]
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""
