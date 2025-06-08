@@ -244,6 +244,14 @@ def mix_models_cli(session_context, tmp_env):
 
 
 @pytest.fixture
+def advance_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    from message_ix_models.project.advance.data import ADVANCE
+
+    monkeypatch.setattr(ADVANCE, "use_test_data", True)
+
+
+@pytest.fixture
 def iea_eei_user_data(pytestconfig, monkeypatch) -> None:
     """Temporarily allow :class:`.IEA_EEI` to find user data."""
     from message_ix_models.tools.iea.eei import IEA_EEI
