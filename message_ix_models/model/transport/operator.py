@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     import sdmx.message
-    from genno.types import AnyQuantity
+    from genno.types import AnyQuantity, TQuantity
     from message_ix import Scenario
     from xarray.core.types import Dims
 
@@ -718,7 +718,7 @@ def max(
     return qty.groupby(level=dim).max()  # type: ignore
 
 
-def maybe_select(qty: "AnyQuantity", *, indexers: dict) -> "AnyQuantity":
+def maybe_select(qty: "TQuantity", *, indexers: dict) -> "TQuantity":
     """Select from `qty` if possible, using :py:`"*"` wildcard.
 
     Same as :func:`genno.operator.select`, except:
@@ -828,7 +828,7 @@ def indexers_usage(technologies: list[Code]) -> dict:
     }
 
 
-def price_units(qty: "AnyQuantity") -> "AnyQuantity":
+def price_units(qty: "TQuantity") -> "TQuantity":
     """Forcibly adjust price units, if necessary."""
     target = "USD_2010 / km"
     if not qty.units.is_compatible_with(target):
@@ -847,7 +847,7 @@ def quantity_from_config(
     return result
 
 
-def relabel2(qty: "AnyQuantity", new_dims: dict):
+def relabel2(qty: "TQuantity", new_dims: dict) -> "TQuantity":
     """Replace dimensions with new ones using label templates.
 
     .. todo:: Choose a more descriptive name.
@@ -935,7 +935,7 @@ def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
     )
 
 
-def sales_fraction_annual(age: "AnyQuantity") -> "AnyQuantity":
+def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
     """Return fractions of current vehicle stock that should be added in prior years.
 
     Parameters
