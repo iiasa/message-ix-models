@@ -12,7 +12,6 @@ from message_ix import make_df
 from sdmx.model.common import Code
 
 from message_ix_models.model import disutility
-from message_ix_models.tools import exo_data
 from message_ix_models.util import (
     ScenarioInfo,
     broadcast,
@@ -49,7 +48,6 @@ DIMS = util.DIMS | dict(node_dest="n", node_loc="n", node_origin="n")
 TARGET = f"transport{Li}"
 
 
-@exo_data.register_source
 class LDV(MaybeAdaptR11Source):
     """Provider of exogenous data on LDVs.
 
@@ -110,11 +108,9 @@ def prepare_computer(c: Computer):
 
     # Use .tools.exo_data.prepare_computer() to add tasks that load, adapt, and select
     # the appropriate data
-    kw0 = dict(nodes=context.model.regions, scenario=str(config.ssp))
+    kw0 = dict(nodes=context.model.regions, scenario=config.ssp.urn.partition("=")[2])
     for kw0["measure"] in LDV.measures:
-        exo_data.prepare_computer(
-            context, c, source=__name__, source_kw=kw0, strict=False
-        )
+        LDV.add_tasks(c, context=context, **kw0, strict=False)
 
     # Insert a scaling factor that varies according to SSP
     c.apply(

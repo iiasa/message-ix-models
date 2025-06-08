@@ -39,7 +39,10 @@ MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
         1: pytest.mark.skip(
             reason="Currently only possible with regions=R12 input data/config",
         ),
-        3: pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
+        3: pytest.mark.xfail(
+            raises=NotImplementedError,
+            reason="Missing ISR/mer-to-ppp.csv + not supported by MaybeAdaptR11Source",
+        ),
         4: pytest.mark.xfail(reason="Currently unsupported"),
         7: pytest.mark.xfail(
             condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
