@@ -4,13 +4,13 @@ from message_ix_models.util import MESSAGE_MODELS_PATH, package_data_path
 
 
 def test_describe(test_context):
-    import zipfile
+    import tarfile
 
     import pandas as pd
 
     path = package_data_path("test", *LOCATION)
-    with zipfile.ZipFile(path) as zf:
-        data = pd.read_csv(zf.open(NAME), engine="pyarrow").rename(
+    with tarfile.open(path, "r:*") as tf:
+        data = pd.read_csv(tf.extractfile(NAME), engine="pyarrow").rename(
             columns=lambda c: c.upper()
         )
 
