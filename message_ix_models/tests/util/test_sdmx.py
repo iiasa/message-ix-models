@@ -19,6 +19,7 @@ from message_ix_models.util.sdmx import (
     DATAFLOW,
     Dataflow,
     ItemSchemeEnumType,
+    URNLookupEnum,
     eval_anno,
     read,
 )
@@ -138,7 +139,7 @@ class TestItemSchemeEnum:
         ),
     )
     def test_new_class(self, urn: str, expected: str) -> None:
-        class Foo(metaclass=ItemSchemeEnumType):
+        class Foo(URNLookupEnum, metaclass=ItemSchemeEnumType):
             def _get_item_scheme(self):
                 return read(urn)
 

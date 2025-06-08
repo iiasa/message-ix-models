@@ -8,7 +8,13 @@ import sdmx
 import sdmx.urn
 from sdmx.model import common, v21
 
-from message_ix_models.util.sdmx import ItemSchemeEnumType, read, register_agency, write
+from message_ix_models.util.sdmx import (
+    ItemSchemeEnumType,
+    URNLookupEnum,
+    read,
+    register_agency,
+    write,
+)
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -183,7 +189,7 @@ def generate(context: "Context", base_dir: Optional["PathLike"] = None):
         write(cl, base_dir)
 
 
-class SSP_2017(metaclass=ItemSchemeEnumType):
+class SSP_2017(URNLookupEnum, metaclass=ItemSchemeEnumType):
     """Enumeration of codes for SSP 2017 edition."""
 
     def _get_item_scheme(self):
@@ -193,7 +199,7 @@ class SSP_2017(metaclass=ItemSchemeEnumType):
 SSP = SSP_2017
 
 
-class SSP_2024(metaclass=ItemSchemeEnumType):
+class SSP_2024(URNLookupEnum, metaclass=ItemSchemeEnumType):
     """Enumeration of codes for SSP 2024 edition."""
 
     def _get_item_scheme(self):
