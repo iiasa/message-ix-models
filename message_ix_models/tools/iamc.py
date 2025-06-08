@@ -140,8 +140,9 @@ def iamc_like_data_for_query(
     Parameters
     ----------
     archive_member : bool, optional
-        If given, `path` may be an archive with 2 or more members. The member named by
-        `archive_member` is extracted and read.
+        If given, `path` may be a tar or ZIP archive with 1 or more members. The member
+        named by `archive_member` is extracted and read using :class:`tarfile.TarFile`
+        or :class:`zipfile.ZipFile`.
 
     Returns
     -------
@@ -152,11 +153,18 @@ def iamc_like_data_for_query(
 
     # Identify the source object/buffer to read from
     if archive_member:
-        # A single member in a ZIP archive that has >1 members
-        import zipfile
+        if path.suffix.rpartition(".")[2] in ("gz", "xz"):
+            # A single member in an LZMA-compressed tar archive that has ≥1 members
+            import tarfile
 
-        zf = zipfile.ZipFile(path)
-        source: Any = zf.open(archive_member)
+            tf = tarfile.open(path, mode="r:*")
+            source: Any = tf.extractfile(archive_member)
+        else:
+            # A single member in a ZIP archive that has ≥1 members
+            import zipfile
+
+            zf = zipfile.ZipFile(path)
+            source = zf.open(archive_member)
     else:
         # A direct path, possibly compressed
         source = path
