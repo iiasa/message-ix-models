@@ -406,11 +406,22 @@ T = TypeVar("T", bound=Enum)
 
 # TODO Replace with URNLookupMixin[T] once Python 3.10 is no longer supported
 class URNLookupMixin(Generic[T]):
+    name: str
+    _member_map_: dict[str, T]
+    _urn_name: dict[str, str]
+
     @classmethod
     def by_urn(cls, urn: str) -> T:
         """Return the :class:`.Enum` member given its `urn`."""
-        name = cls.__dict__["_urn_name"][urn]
-        return cls.__dict__["_member_map_"][name]
+        return cls._member_map_[cls._urn_name[urn]]
+
+    @property
+    def urn(self) -> str:
+        """Return the URN for an Enum member."""
+        for result, name in self._urn_name.items():
+            if name == self.name:
+                break
+        return result
 
 
 class URNLookupEnum(URNLookupMixin, Enum):
@@ -432,9 +443,6 @@ class ItemSchemeEnumType(EnumType):
             raise RuntimeError(
                 f"Callback for {cls} returned {scheme}; expected ItemScheme"
             )
-
-        # Prepend URNLookupMixin to the base class(es); use Enum as a default
-        bases = (URNLookupMixin,) + (bases or (Enum,))
 
         # Prepare the EnumDict for creating the class
         enum_dct = super(ItemSchemeEnumType, metacls).__prepare__(cls, bases, **kwargs)
@@ -463,9 +471,6 @@ class ItemSchemeEnumType(EnumType):
         setattr(enum_class, "_urn_name", _urn_name)
 
         return enum_class
-
-    # NB Provided solely to satisfy mypy, never called
-    def by_urn(self, urn: str) -> "URNLookupEnum": ...  # type: ignore [empty-body]
 
 
 # FIXME Reduce complexity from 13 → ≤11
