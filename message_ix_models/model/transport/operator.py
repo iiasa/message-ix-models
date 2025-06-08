@@ -778,9 +778,9 @@ def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"
     """Indexer for the ``scenario`` dimension.
 
     If `with_LED` **and** :py:`config.project["LDV"] = True`, then the single label is
-    "LED". Otherwise it is the short form of the :attr:`.transport.config.Config.ssp`
-    code, e.g. "SSP1". In other words, this treats "LDV" as mutually exclusive with an
-    SSP scenario identifier (instead of orthogonal).
+    "LED". Otherwise it is the final part of the :attr:`.transport.config.Config.ssp`
+    URN, e.g. "SSP(2024).1". In other words, this treats "LDV" as mutually exclusive
+    with an SSP scenario identifier (instead of orthogonal).
 
     Parameters
     ----------
@@ -794,7 +794,7 @@ def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"
     return dict(
         scenario="LED"
         if (with_LED and c.project.get("LED", False))
-        else repr(c.ssp).split(":")[1]
+        else c.ssp.urn.rpartition(":")[2]
     )
 
 
@@ -971,7 +971,7 @@ def scenario_codes() -> list[str]:
     """
     from message_ix_models.project.ssp import SSP_2024
 
-    return [repr(c).split(":")[1] for c in SSP_2024] + ["LED"]
+    return [c.urn.rpartition(":")[2] for c in SSP_2024] + ["LED"]
 
 
 def share_weight(
