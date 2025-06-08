@@ -30,6 +30,11 @@ from .structure import get_technology_groups
 
 if TYPE_CHECKING:
     import pathlib
+    from typing import TypedDict
+
+    from message_ix_models.tools.exo_data import ExoDataSource
+
+    AddTasksKw = TypedDict("AddTasksKw", {"context": Context, "strict": bool})
 
 
 log = logging.getLogger(__name__)
@@ -152,12 +157,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     --------
     :doc:`/reference/model/transport/input`
     """
-    # Ensure that the SSPOriginal and SSPUpdate data providers are available
-    import message_ix_models.project.advance.data  # noqa: F401
-    import message_ix_models.project.ssp.data  # noqa: F401
+    from message_ix_models.project.advance.data import ADVANCE
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
-    from message_ix_models.tools.exo_data import prepare_computer
-    from message_ix_models.tools.iea.web import TRANSFORM
+    from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+    from message_ix_models.tools.iea.web import IEA_EWEB, TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
@@ -169,50 +172,52 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     context = c.graph["context"]
     config: "Config" = c.graph["config"]["transport"]
 
+    # Common arguments for ExoDataSource.add_tasks(…)
+    c_s: "AddTasksKw" = dict(context=context, strict=False)
+
     # Identify appropriate source keyword arguments for loading GDP and population data
-    source = str(config.ssp)
     if config.ssp in SSP_2017:
+        cls: type["ExoDataSource"] = SSPOriginal
         source_kw: tuple[dict[str, Any], ...] = (
             dict(measure="GDP", model="IIASA GDP"),
             dict(measure="POP", model="IIASA GDP"),
         )
     elif config.ssp in SSP_2024:
+        cls = SSPUpdate
         source_kw = (
-            dict(measure="GDP", model="IIASA GDP 2023"),
-            dict(measure="POP"),
+            dict(measure="GDP", model="IIASA GDP 2023", release="3.1"),
+            dict(measure="POP", release="3.1"),
         )
 
     for kw in source_kw:
-        keys[kw["measure"]] = prepare_computer(
-            context, c, source, source_kw=kw, strict=False
-        )
+        keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
+
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
-    prepare_computer(context, c, "transport MERtoPPP", source_kw=kw, strict=False)
+    data.MERtoPPP.add_tasks(c, **kw, **c_s)
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
     kw = dict(provider="IEA", edition="2024", regions=context.model.regions)
     if context.model.regions == "R12":
         kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
-    prepare_computer(context, c, "IEA_EWEB", source_kw=kw, strict=False)
+    IEA_EWEB.add_tasks(c, **kw, **c_s)
 
     # Add IEA Future of Trucks data
     for kw in dict(measure=1), dict(measure=2):
-        prepare_computer(context, c, "IEA Future of Trucks", source_kw=kw, strict=False)
+        data.IEA_Future_of_Trucks.add_tasks(c, **kw, **c_s)
 
     # Add ADVANCE data
-    common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)
+    adv_common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)
     for n, m, u in (
         ("pdt ldv", "Transport|Service demand|Road|Passenger|LDV", "Gp km / a"),
         ("fv", "Transport|Service demand|Road|Freight", "Gt km"),
     ):
         # Add the base data
-        kw = dict(measure=m, name=f"advance {n}")
-        kw.update(common)
-        k, *_ = prepare_computer(context, c, "ADVANCE", source_kw=kw, strict=False)
+        kw = adv_common | dict(measure=m, name=f"advance {n}")
+        keys_advance = ADVANCE.add_tasks(c, **kw, **c_s)
         # Broadcast to R12
-        c.add(f"{n}:n:advance", "broadcast_advance", k, "y0", "config")
+        c.add(f"{n}:n:advance", "broadcast_advance", keys_advance[0], "y0", "config")
 
     # Alias for other computations which expect the upper-case name
     c.add("MERtoPPP:n-y", "mertoppp:n-y")
