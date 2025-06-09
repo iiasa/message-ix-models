@@ -842,6 +842,9 @@ def register_agency(agency: "common.Agency") -> "common.AgencyScheme":
     else:
         as_.append(agency)
 
+    # Ensure URN is populated
+    agency.urn = agency.urn or sdmx.urn.make(agency, as_)
+
     log.info(f"Updated {as_!r}")
 
     # Write to file again
