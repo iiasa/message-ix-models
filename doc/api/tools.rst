@@ -101,40 +101,6 @@ Exogenous data (:mod:`.tools.exo_data`)
    .. deprecated:: 2025-06-06
       Use :py:`c.apply(SOURCE.add_tasks, …)` as shown above.
 
-.. currentmodule:: message_ix_models.tools.advance
-
-ADVANCE data (:mod:`.tools.advance`)
-====================================
-
-.. deprecated:: 2023.11
-   Use :mod:`.project.advance` instead.
-
-.. autosummary::
-   get_advance_data
-   advance_data
-
-.. autodata:: LOCATION
-
-This is a location relative to a parent directory.
-The specific parent directory depends on whether :mod:`message_data` is available:
-
-Without :mod:`message_data`:
-   The code finds the data within :ref:`local-data` (see discussion there for how to configure this location).
-   Users should:
-
-   1. Visit https://tntcat.iiasa.ac.at/ADVANCEWP2DB/dsd?Action=htmlpage&page=about and register for access to the data.
-   2. Log in.
-   3. Download the snapshot with the file name given in :data:`LOCATION` to a subdirectory :file:`advance/` within their local data directory.
-
-With :mod:`message_data`:
-   The code finds the data within :ref:`private-data`.
-   The snapshot is stored directly in the repository using Git LFS.
-
-.. automodule:: message_ix_models.tools.advance
-   :members:
-   :exclude-members: LOCATION
-   :private-members:
-
 .. currentmodule:: message_ix_models.tools.iamc
 
 IAMC data structures (:mod:`.tools.iamc`)
