@@ -14,8 +14,8 @@ from message_ix import Reporter, Scenario
 import message_ix_models.report
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
-from message_ix_models.testing import GHA, bare_res
-from message_ix_models.util import identify_nodes, silence_log
+from message_ix_models.testing import GHA, SOLVE_OPTIONS, bare_res
+from message_ix_models.util import silence_log
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, build
@@ -114,24 +114,34 @@ def configure_build(
 
 
 def built_transport(
-    request,
+    request: "pytest.FixtureRequest",
     context: "Context",
     options: Optional[dict] = None,
     solved: bool = False,
     quiet: bool = True,
 ) -> Scenario:
     """Analogous to :func:`.testing.bare_res`, with transport detail added."""
-    options = options or dict()
-
-    # Retrieve (maybe generate) the bare RES with the same settings
+    # Retrieve (generate if necessary) a bare scenario with the same settings
     res = bare_res(request, context, solved)
 
     # Derive the name for the transport scenario
     model_name = res.model.replace("-GLOBIOM", "-Transport")
 
     try:
+        # Load an existing transport scenario
         scenario = Scenario(res.platform, model_name, "baseline")
-    except ValueError:
+
+        # NB Unclear why, but on GitHub Actions scenarios like
+        #    'MESSAGEix-Transport R12 YB 3594a/baseline#1' are sometimes returned with
+        #    contents resembling make_dantzig(). Don't allow these to be used.
+        assert set(res.set("node")) == set(scenario.set("node"))
+    except (AssertionError, ValueError, RuntimeError) as e:
+        if isinstance(e, AssertionError):
+            log.warning(
+                f"Loaded {scenario.url!r} has nodes {sorted(scenario.set('node'))} != "
+                f"{sorted(res.set('node'))} → discard"
+            )
+
         log.info(f"Create '{model_name}/baseline' for testing")
 
         # Optionally silence logs for code used via build.main()
@@ -143,17 +153,18 @@ def built_transport(
 
         with log_cm:
             scenario = res.clone(model=model_name)
-            build.main(context, scenario, options)
+            build.main(context, scenario, options or {})
     else:
-        # Loaded existing Scenario; ensure config files are loaded on `context`
-        Config.from_context(context, options=options)
+        # Loaded existing Scenario; ensure context.transport has a full/matching Config
+        Config.from_context(context, options=options or {})
 
-    if solved and not scenario.has_solution():
-        log.info(f"Solve '{scenario.model}/{scenario.scenario}'")
-        scenario.solve(solve_options=dict(iis=1, lpmethod=4))
-
+    # Fresh clone with a name matching `request`
     log.info(f"Clone to '{model_name}/{request.node.name}'")
     result = scenario.clone(scenario=request.node.name, keep_solution=solved)
+
+    if solved and not result.has_solution():
+        log.info(f"Solve {result.url}")
+        result.solve(**SOLVE_OPTIONS)
 
     # DEBUG Dump the scenario to a temporary path
     # si = ScenarioInfo(scenario)
@@ -161,17 +172,6 @@ def built_transport(
     # dump_path = tmp_path.joinpath(f"{si.path}.xlsx")
     # log.info(f"Dump to {dump_path}")
     # result.to_excel(dump_path)
-
-    if (
-        GHA
-        and platform.system() == "Darwin"
-        and identify_nodes(result) != context.model.regions
-    ):
-        pytest.xfail(
-            reason="Known issue on GitHub Actions macOS runners: result has nodes "
-            f"{identify_nodes(result) = !r} != {identify_nodes(res) = !r} == "
-            f"{context.model.regions = !r}"
-        )
 
     return result
 
@@ -213,7 +213,6 @@ def simulated_solution(
 
         # Create a reporter
         rep = Reporter.from_scenario(scenario)
-
     else:
         # Create a Reporter with the contents of a file
         model_name = bare.name(context, unique=True).replace("-GLOBIOM", "-Transport")
@@ -256,7 +255,5 @@ def simulated_solution(
     # Prepare the reporter
     with silence_log("genno", logging.CRITICAL):
         message_ix_models.report.prepare_reporter(context, reporter=rep)
-
-    log.debug(f"simulated_solution: {context.regions = }")
 
     return rep
