@@ -85,6 +85,8 @@ NIE = pytest.mark.xfail(raises=NotImplementedError)
 
 CACHE_PATH_STASH = pytest.StashKey[Path]()
 
+SOLVE_OPTIONS = dict(solve_options=dict(iis=1, lpmethod=4), quiet=True)
+
 # pytest hooks
 
 
@@ -304,7 +306,9 @@ def ssp_user_data(pytestconfig, monkeypatch) -> None:
 # Testing utility functions
 
 
-def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scenario:
+def bare_res(
+    request: "pytest.FixtureRequest", context: "Context", solved: bool = False
+) -> message_ix.Scenario:
     """Return or create a :class:`.Scenario` containing the bare RES for use in testing.
 
     The Scenario has a model name like "MESSAGEix-GLOBIOM [regions] Y[years]", for
@@ -337,32 +341,23 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     from message_ix_models.model import bare
 
     # Model name: standard "MESSAGEix-GLOBIOM R12 YB" plus a suffix
-    log.info(f"bare_res: {context.model.regions = }")
     model_name = bare.name(context, unique=True)
 
-    mp = context.get_platform()
-
     try:
-        base = message_ix.Scenario(mp, model_name, "baseline")
+        base = message_ix.Scenario(context.get_platform(), model_name, "baseline")
     except ValueError:
         log.info(f"Create '{model_name}/baseline' for testing")
         context.scenario_info.update(model=model_name, scenario="baseline")
         base = bare.create_res(context)
 
-    log.info(f"base.set('node') = {' '.join(sorted(base.set('node')))}")
+    log.info(f"Clone to '{model_name}/{request.node.name}'")
+    scenario = base.clone(scenario=request.node.name, keep_solution=solved)
 
-    if solved and not base.has_solution():
-        log.info("Solve")
-        base.solve(solve_options=dict(lpmethod=4), quiet=True)
+    if solved and not scenario.has_solution():
+        log.info(f"Solve {scenario.url}")
+        scenario.solve(**SOLVE_OPTIONS)
 
-    try:
-        new_name = request.node.name
-    except AttributeError:
-        # Generate a new scenario name with a random part, length 5 characters
-        new_name = f"baseline {b32encode(randbytes(3)).decode().rstrip('=').lower()}"
-
-    log.info(f"Clone to '{model_name}/{new_name}'")
-    return base.clone(scenario=new_name, keep_solution=solved)
+    return scenario
 
 
 def export_test_data(context: Context):
