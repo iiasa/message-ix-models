@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     import message_ix
     from genno.types import KeyLike
 
+    from message_ix_models import Context
+
 log = logging.getLogger(__name__)
 
 
@@ -171,7 +173,9 @@ def test_bare(request, test_context, tmp_path, regions, years):
         False,  # Use data from an Excel export
     ),
 )
-def test_simulated(request, test_context, build, regions="R12", years="B"):
+def test_simulated(
+    request, test_context: "Context", build: bool, regions="R12", years="B"
+) -> None:
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context, build)
