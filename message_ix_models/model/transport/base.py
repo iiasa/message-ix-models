@@ -15,14 +15,19 @@ from message_ix_models.util import minimum_version
 
 from .key import gdp_exo
 from .key import report as k_report
+from .util import EXTRAPOLATE
 
 if TYPE_CHECKING:
+    from collections.abc import Hashable, Iterable
+
     import message_ix
     from genno.core.key import KeyLike
-    from genno.types import AnyQuantity
+    from genno.types import AnyQuantity, TQuantity
+
+    Coords = dict[Hashable, Iterable[Hashable]]
 
 #: Key to trigger the computations set up by :func:`.prepare_computer`
-RESULT_KEY = "base model data"
+TARGET = "base model data"
 
 FE_HEADER = """Final energy input to transport technologies.
 
@@ -54,16 +59,42 @@ UE_SHARE_HEADER = (
 
 
 def align_and_fill(
-    qty: "AnyQuantity", ref: "AnyQuantity", value: float = 1.0
-) -> "AnyQuantity":
+    qty: "TQuantity", ref: "TQuantity", value: float = 1.0
+) -> "TQuantity":
     """Align `qty` with `ref`, and fill with `value`.
 
     The result is guaranteed to have a value for every key in `ref`.
     """
-    return genno.Quantity(
+    return type(qty)(
         pd.DataFrame.from_dict(
             {"ref": ref.to_series(), "data": qty.to_series()}
         ).fillna(value)["data"]
+    )
+
+
+def fixed_scale_1(
+    qty: "TQuantity", *, commodity: str, technology: str, value: float = 1.0
+) -> "TQuantity":
+    """Fix certain values for scale-1."""
+    from genno.operator import concat, select
+
+    # Coords of `qty`
+    dims = {d: v.data for d, v in qty.coords.items()}
+
+    # Coords excepting `commodity` and `technology`
+    c_other: "Coords" = dict(c=sorted(set(dims["c"]) - {commodity}))
+    t_other: "Coords" = dict(t=sorted(set(dims["t"]) - {technology}))
+    # Dimensions for the fixed values
+    dims.update(c=[commodity], t=[technology])
+
+    # Concatenate:
+    # 1. Values for all technologies other than `technology`.
+    # 2. Values for `technology` and all commodities other than `commodity`.
+    # 3. Fixed values for (t=technology, c=commodity).
+    return concat(
+        select(qty, t_other),
+        select(qty, dict(t=["technology"]) | c_other),
+        type(qty)(value).expand_dims(dims),
     )
 
 
@@ -100,7 +131,7 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
 
         return column
 
-    def clip_nan(qty: "AnyQuantity", coord: Any) -> "AnyQuantity":
+    def clip_nan(qty: "TQuantity", coord: Any) -> "TQuantity":
         """Clip values below the value for `ya`, replacing with :any:`numpy.nan`.
 
         Only the first contiguous block of values below the value for `ya` are clipped.
@@ -114,7 +145,7 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
         # - Reorder and sort index.
         # - Compute condition for clipping.
         # - Return clipped values.
-        return genno.Quantity(
+        return type(qty)(
             qty.sel({dim: coord})
             .expand_dims({dim: qty.coords[dim].data})
             .to_series()
@@ -147,7 +178,7 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
 def prepare_reporter(rep: "message_ix.Reporter") -> str:
     """Add tasks that produce data to parametrize transport in MESSAGEix-GLOBIOM.
 
-    Returns :data:`.RESULT_KEY`. Retrieving the key results in the creation of files in
+    Returns :data:`.TARGET`. Retrieving the key results in the creation of files in
     the reporting output directory for the :class:`.Scenario` being reported (see
     :func:`.make_output_path`):
 
@@ -170,9 +201,9 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Add an empty list; invoking this key will trigger calculation of all the keys
     # below added to the list
-    rep.add(RESULT_KEY, [])
+    rep.add(TARGET, [])
     # Add this result key to the list of all reporting keys
-    rep.graph[k_report.all].append(RESULT_KEY)
+    rep.graph[k_report.all].append(TARGET)
 
     # Create output subdirectory for base model files
     rep.graph["config"]["output_dir"].joinpath("base").mkdir(
@@ -224,25 +255,23 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # Restore original "t" labels to scale-1
     rep.add(s1[5], "select", s1[4], "indexers::iea to transport")
     rep.add(s1[6], "rename_dims", s1[5], quote(dict(t_new="t")))
-    # Interpolate the scaling factor from computed value in ya=y₀ to 1.0 in ya ≥ 2050
-    rep.add(s1[7], lambda q: q.expand_dims(ya=[y0]), s1[6])
-    rep.add(s1[8], lambda q: q.expand_dims(ya=[2050]).clip(1.0, 1.0), s1[6])
-    rep.add(s1[9], lambda q: q.expand_dims(ya=[2110]).clip(1.0, 1.0), s1[6])
-    rep.add(s1[10], "concat", s1[7], s1[8], s1[9])
-    rep.add("ya::coord", lambda v: {"ya": v}, "y::model")
-    rep.add(
-        s1[11],
-        "interpolate",
-        s1[10],
-        "ya::coord",
-        kwargs=dict(fill_value="extrapolate"),
-    )
 
-    rep.apply(to_csv, s1[11], name=f"{s1.name} blend", header_comment=SCALE_1_HEADER)
+    # Force scale-1 factor to 1.0 for (t=F ROAD, c=gas)
+    rep.add(s1[7], fixed_scale_1, s1[6], commodity="gas", technology="F ROAD")
+
+    # Interpolate the scaling factor from computed value in ya=y₀ to 1.0 in ya ≥ 2050
+    rep.add(s1[8], lambda q: q.expand_dims(ya=[y0]), s1[7])
+    rep.add(s1[9], lambda q: q.expand_dims(ya=[2050]).clip(1.0, 1.0), s1[7])
+    rep.add(s1[10], lambda q: q.expand_dims(ya=[2110]).clip(1.0, 1.0), s1[7])
+    rep.add(s1[11], "concat", s1[8], s1[9], s1[10])
+    rep.add("ya::coord", lambda v: {"ya": v}, "y::model")
+    rep.add(s1[12], "interpolate", s1[11], "ya::coord", **EXTRAPOLATE)
+
+    rep.apply(to_csv, s1[12], name=f"{s1.name} blend", header_comment=SCALE_1_HEADER)
 
     # Correct MESSAGEix-Transport outputs for the MESSAGEix-base model using the high-
     # resolution scaling factor
-    rep.add(k["s1"], "div", k, s1[11])
+    rep.add(k["s1"], "div", k, s1[12])
 
     # Scaling factor 2: ratio of total of scaled data to IEA total
     rep.add(k[2] / "ya", "select", k["s1"], indexers=dict(ya=y0), drop=True, sums=True)
@@ -338,7 +367,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
         rep.apply(to_csv, key + "1", name=name, header_key=k_header)
 
-    return RESULT_KEY
+    return TARGET
 
 
 def share_constraints(c: Computer, k_fe: "genno.Key", k_ue: "genno.Key") -> None:
@@ -427,7 +456,7 @@ def to_csv(
         # kwargs supplied as keyword arguments to to_csv()/Computer.apply()
         c.add(csv, "write_report", base, path, kwargs=write_kw)
 
-    c.graph[RESULT_KEY].append(csv)
+    c.graph[TARGET].append(csv)
 
 
 def format_share_constraints(
