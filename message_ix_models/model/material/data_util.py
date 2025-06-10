@@ -2808,6 +2808,10 @@ def add_infrastructure_reporting(context, scenario):
     # Replace NaN, -inf, and inf with 0
     final_df_reporting.replace([np.inf, -np.inf, np.nan], 0, inplace=True)
 
+    final_df_reporting.to_csv(
+        f"{package_data_path('material', 'report', scenario.scenario)}.csv"
+    )
+
     # Add these as timeseries to the scenario
     scenario.check_out(timeseries_only=True)
     print("Starting to upload timeseries")

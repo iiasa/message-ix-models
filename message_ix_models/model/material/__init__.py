@@ -568,6 +568,7 @@ def add_building_ts(scenario_name, model_name):
 def run_reporting(context, remove_ts, add_infra_vars):
     """Run materials, then legacy reporting."""
     import warnings
+
     warnings.simplefilter(action="ignore", category=FutureWarning)
     from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
@@ -591,10 +592,6 @@ def run_reporting(context, remove_ts, add_infra_vars):
         else:
             print("There are no timeseries to be removed.")
     else:
-        if add_infra_vars:
-            add_infrastructure_reporting(context, scenario)
-
-        # Remove existing timeseries and add material timeseries
         print("Reporting material-specific variables")
         report(scenario)
         print("Reporting standard variables")
@@ -608,9 +605,8 @@ def run_reporting(context, remove_ts, add_infra_vars):
             merge_ts=True,
             run_config="materials_run_config.yaml",
         )
-        # util.prepare_xlsx_for_explorer(
-        #     Path(os.getcwd()).parents[0].joinpath(
-        #         "reporting_output", scenario.model+"_"+scenario.scenario+".xlsx"))
+        if add_infra_vars:
+            add_infrastructure_reporting(context, scenario)
 
 
 @cli.command("report-2")
