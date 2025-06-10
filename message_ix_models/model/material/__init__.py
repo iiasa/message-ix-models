@@ -595,19 +595,19 @@ def run_reporting(context, remove_ts, add_infra_vars):
             add_infrastructure_reporting(context, scenario)
 
         # Remove existing timeseries and add material timeseries
-        print("Reporting material-specific variables")
-        report(scenario)
-        print("Reporting standard variables")
-        reporting(
-            mp,
-            scenario,
-            "False",
-            scenario.model,
-            scenario.scenario,
-            merge_hist=True,
-            merge_ts=True,
-            run_config="materials_run_config.yaml",
-        )
+        # print("Reporting material-specific variables")
+        # report(scenario)
+        # print("Reporting standard variables")
+        # reporting(
+        #     mp,
+        #     scenario,
+        #     "False",
+        #     scenario.model,
+        #     scenario.scenario,
+        #     merge_hist=True,
+        #     merge_ts=True,
+        #     run_config="materials_run_config.yaml",
+        # )
         # util.prepare_xlsx_for_explorer(
         #     Path(os.getcwd()).parents[0].joinpath(
         #         "reporting_output", scenario.model+"_"+scenario.scenario+".xlsx"))

@@ -3,10 +3,12 @@ from typing import TYPE_CHECKING, Literal
 
 import ixmp
 import message_ix
-from message_ix import make_df
 import numpy as np
 import pandas as pd
 from genno import Computer
+from ixmp.reporting import configure
+from message_ix import make_df
+from message_ix.report import Reporter
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import (
@@ -18,13 +20,10 @@ from message_ix_models.model.material.util import (
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.util import package_data_path
 from message_ix_models.tools.get_optimization_years import (
     main as get_optimization_years,
 )
-
-from message_ix.report import Reporter
-from ixmp.reporting import configure
+from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -2808,9 +2807,13 @@ def add_infrastructure_reporting(context, scenario):
     # Replace NaN, -inf, and inf with 0
     final_df_reporting.replace([np.inf, -np.inf, np.nan], 0, inplace=True)
 
+    final_df_reporting.to_csv(
+        f"{package_data_path('material', 'report', scenario.scenario)}.csv"
+    )
+
     # Add these as timeseries to the scenario
-    scenario.check_out(timeseries_only=True)
-    print("Starting to upload timeseries")
-    print(final_df_reporting.head())
-    scenario.add_timeseries(final_df_reporting)
-    scenario.commit("Infrastructure reporting uploaded as timeseries")
+    # scenario.check_out(timeseries_only=True)
+    # print("Starting to upload timeseries")
+    # print(final_df_reporting.head())
+    # scenario.add_timeseries(final_df_reporting)
+    # scenario.commit("Infrastructure reporting uploaded as timeseries")
