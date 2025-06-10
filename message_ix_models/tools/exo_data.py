@@ -319,12 +319,12 @@ class ExoDataSource(ABC):
 
         # Aggregate
         if self.options.aggregate:
-            k = single_key(c.add(k + "1", "aggregate", k, "n::groups", keep=False))
+            k = single_key(c.add(k[1], "aggregate", k, "n::groups", keep=False))
 
         # Interpolate to the desired set of periods
         if self.options.interpolate:
             kw = dict(fill_value="extrapolate")
-            k = single_key(c.add(k + "2", "interpolate", k, "y::coords", kwargs=kw))
+            k = single_key(c.add(k[2], "interpolate", k, "y::coords", kwargs=kw))
 
         return k
 
