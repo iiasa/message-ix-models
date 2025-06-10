@@ -183,10 +183,16 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
             dict(measure="POP", model="IIASA GDP"),
         )
     elif config.ssp in SSP_2024:
-        cls = SSPUpdate
+        cls, r = SSPUpdate, dict(release="3.2.beta")
         source_kw = (
-            dict(measure="GDP", model="IIASA GDP 2023", release="3.1"),
-            dict(measure="POP", release="3.1"),
+            dict(
+                measure="GDP",
+                # model="IIASA GDP 2023",  # with release="3.1"
+                model="OECD ENV-Growth 2025",  # with release="3.2.beta"
+                unit="billion USD_2017/yr",
+            )
+            | r,
+            dict(measure="POP") | r,
         )
 
     for kw in source_kw:
