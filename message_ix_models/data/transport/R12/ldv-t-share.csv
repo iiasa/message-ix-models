@@ -10,7 +10,6 @@
 # Units: dimensionless
 #
 node,technology,value
-node,technology,value
 R12_AFR,ELC_100,0.0001
 R12_AFR,HFC_ptrp,0.001
 R12_AFR,IAHe_ptrp,0.003
