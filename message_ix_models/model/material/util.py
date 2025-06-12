@@ -307,14 +307,14 @@ def update_macro_calib_file(
     if extrapolate:
         df["node"] = pd.Categorical(df["node"], nodes)
         df = df[df["year"].isin(years_cost)].groupby(["node"]).apply(cost_fit)
-        ws = wb.get_sheet_by_name("cost_ref")
+        ws = wb["cost_ref"]
         for i in range(2, 14):
             ws[f"A{i}"].value = nodes[i - 2]
             ws[f"B{i}"].value = df.values[i - 2]
     else:
         vals = df[df["year"] == fmy + 5]["lvl"].values
         nodes = df["node"].values
-        ws = wb.get_sheet_by_name("cost_ref")
+        ws = wb["cost_ref"]
         for i in range(2, 14):
             ws[f"A{i}"].value = nodes
             ws[f"B{i}"].value = (vals[i - 2] / 1000).round(3)
@@ -336,11 +336,19 @@ def update_macro_calib_file(
 
     # demand_ref
     df = scenario.par("demand", filters={"commodity": comms, "year": fmy})
-    ws = wb.get_sheet_by_name("demand_ref")
+    ws = wb["demand_ref"]
     for i in range(2, 62):
         ws[f"A{i}"].value = df.node.values[i - 2]
         ws[f"B{i}"].value = df.commodity.values[i - 2]
         ws[f"C{i}"].value = df.value.values[i - 2]
+
+    ws = wb["gdp_calibrate"]
+    gdp = scenario.par("bound_activity_up", filters={"technology": "GDP"})
+    gdp = gdp[gdp["year_act"] >= 2015].sort_values(["node_loc", "year_act"])
+    for i in range(2, len(gdp.index) + 2):
+        ws[f"A{i}"].value = gdp.year_act.values[i - 2]
+        ws[f"B{i}"].value = gdp.node_loc.values[i - 2]
+        ws[f"C{i}"].value = gdp.value.values[i - 2]
 
     wb.save(path)
 
