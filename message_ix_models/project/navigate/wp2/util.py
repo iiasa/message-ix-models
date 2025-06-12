@@ -1,6 +1,7 @@
 import logging
+from collections.abc import Callable
 from functools import lru_cache
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Union
 
 import pandas as pd
 from message_ix import Scenario, make_df
@@ -375,7 +376,7 @@ def add_LED_setup(scen: Scenario):
 
     melt_args["id_vars"].append("RELATION")  # type: ignore [attr-defined]
     rename_cols.update(RELATION="relation", year_vtg="year_act")
-    assign_args = dict(
+    assign_args: dict[str, Union[str, Callable[[pd.DataFrame], pd.Series]]] = dict(
         unit="???",
         mode="M1",
         node_rel=lambda df: df.node_loc,
