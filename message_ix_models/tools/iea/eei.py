@@ -4,19 +4,22 @@
 
 import logging
 import re
-from typing import TYPE_CHECKING, Literal
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal, Optional
 
 import genno
 import numpy as np
 import pandas as pd
 import plotnine as p9
+from genno import Key
 
 from message_ix_models import Context
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.util import cached, path_fallback
 
 if TYPE_CHECKING:
     from genno import Computer
+    from genno.types import AnyQuantity
 
 log = logging.getLogger(__name__)
 
@@ -113,42 +116,30 @@ WAVG_MAP = {
 
 @register_source
 class IEA_EEI(ExoDataSource):
-    """Provider of exogenous data from the IEA Energy Efficiency Indicators data source.
+    """Provider of exogenous data from the IEA Energy Efficiency Indicators source."""
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    arguments:
+    @dataclass
+    class Options(BaseOptions):
+        #: By default, do not aggregate.
+        aggregate: bool = False
 
-    - `source`: "IEA_EEI".
-    - `source_kw` including:
+        #: By default, do not interpolate.
+        interpolate: bool = False
 
-      - `measure`: name of a measure or indicator in the data.
-      - `broadcast_map` (optional): name of a :class:`.Key` containing a mapping for
-        :func:`genno.operator.broadcast_map`.
-      - `plot` (optional, default :any:`False`): add a task with the key
-        "plot IEA_EEI debug" to generate diagnostic plot using :class:`.Plot`.
-      - `aggregate`, `interpolate`: see :meth:`.ExoDataSource.transform`.
-    """
+        #: Name of a :class:`.Key` containing a mapping for
+        #: :func:`genno.operator.broadcast_map`.
+        broadcast_map: Optional["Key"] = None
 
-    id = "IEA EEI"
+        #: Add a task with the key "plot IEA_EEI debug" to generate diagnostic plot
+        #: using :class:`.Plot`.
+        plot: bool = False
 
-    #: By default, do not aggregate.
-    aggregate = False
-
-    #: By default, do not interpolate.
-    interpolate = False
+    options: Options
 
     where = ["local", "private"]
 
-    def __init__(self, source, source_kw):
-        if source != self.id:
-            raise ValueError(source)
-
-        measure = source_kw.pop("measure", None)
-        self.broadcast_map = source_kw.pop("broadcast_map", None)
-        self.plot = source_kw.pop("plot", False)
-
-        self.raise_on_extra_kw(source_kw)
-
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
         self.path = path_fallback(
             "iea",
             "eei",
@@ -157,17 +148,15 @@ class IEA_EEI(ExoDataSource):
         )
 
         # Prepare query
-        self.query = f"INDICATOR == {measure!r}"
-        self.measure = "INDICATOR"
-        self.name = measure.lower()
+        self.query = f"INDICATOR == {opt.measure!r}"
 
         # Determine whether to perform a weighted average operation
         self.weights = None
-        if False:  # pragma: no cover
-            # TODO This code never executes; update and reactivate
-            pass
 
-    def __call__(self):
+        # Construct .key
+        super().__init__()
+
+    def get(self) -> "AnyQuantity":
         from genno.operator import unique_units_from_dim
 
         tmp = (
@@ -182,34 +171,34 @@ class IEA_EEI(ExoDataSource):
         dims = [
             c
             for c, s in tmp.items()
-            if (c not in {"value", self.measure} and set(s.unique()) != {"__NA"})
+            if (c not in {"value", "INDICATOR"} and set(s.unique()) != {"__NA"})
         ]
 
         return genno.Quantity(tmp.set_index(dims)["value"]).pipe(
             unique_units_from_dim, dim="UNIT_MEASURE"
         )
 
-    def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
+    def transform(self, c: "Computer", base_key: "Key") -> "Key":
         k = super().transform(c, base_key)
 
-        if self.broadcast_map:
-            k_map = genno.Key(self.broadcast_map)
+        if self.options.broadcast_map:
+            k_map = Key(self.options.broadcast_map)
             rename = {k_map.dims[1]: k_map.dims[0]}
-            c.add(k + "0", "broadcast_map", k, self.broadcast_map, rename=rename)
-            k = k + "0"
+            c.add(k[0], "broadcast_map", k, k_map, rename=rename)
+            k = k[0]
 
         if self.weights:
             # TODO Add operations for computing a weighted mean
-            pass
+            raise NotImplementedError
 
-        if self.plot:
+        if self.options.plot:
             # Path for debug output
             context: "Context" = c.graph["context"]
             debug_path = context.get_local_path("debug")
             debug_path.mkdir(parents=True, exist_ok=True)
             c.configure(output_dir=debug_path)
 
-            c.add(f"plot {self.id} debug", Plot, k)
+            c.add(f"plot {type(self).__name__} debug", Plot, k)
 
         return k
 

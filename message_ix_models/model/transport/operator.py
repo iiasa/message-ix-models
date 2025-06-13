@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     import sdmx.message
-    from genno.types import AnyQuantity
+    from genno.types import AnyQuantity, TQuantity
     from message_ix import Scenario
     from xarray.core.types import Dims
 
@@ -718,7 +718,7 @@ def max(
     return qty.groupby(level=dim).max()  # type: ignore
 
 
-def maybe_select(qty: "AnyQuantity", *, indexers: dict) -> "AnyQuantity":
+def maybe_select(qty: "TQuantity", *, indexers: dict) -> "TQuantity":
     """Select from `qty` if possible, using :py:`"*"` wildcard.
 
     Same as :func:`genno.operator.select`, except:
@@ -778,9 +778,9 @@ def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"
     """Indexer for the ``scenario`` dimension.
 
     If `with_LED` **and** :py:`config.project["LDV"] = True`, then the single label is
-    "LED". Otherwise it is the short form of the :attr:`.transport.config.Config.ssp`
-    code, e.g. "SSP1". In other words, this treats "LDV" as mutually exclusive with an
-    SSP scenario identifier (instead of orthogonal).
+    "LED". Otherwise it is the final part of the :attr:`.transport.config.Config.ssp`
+    URN, e.g. "SSP(2024).1". In other words, this treats "LDV" as mutually exclusive
+    with an SSP scenario identifier (instead of orthogonal).
 
     Parameters
     ----------
@@ -794,7 +794,7 @@ def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"
     return dict(
         scenario="LED"
         if (with_LED and c.project.get("LED", False))
-        else repr(c.ssp).split(":")[1]
+        else c.ssp.urn.rpartition(":")[2]
     )
 
 
@@ -828,7 +828,7 @@ def indexers_usage(technologies: list[Code]) -> dict:
     }
 
 
-def price_units(qty: "AnyQuantity") -> "AnyQuantity":
+def price_units(qty: "TQuantity") -> "TQuantity":
     """Forcibly adjust price units, if necessary."""
     target = "USD_2010 / km"
     if not qty.units.is_compatible_with(target):
@@ -847,7 +847,7 @@ def quantity_from_config(
     return result
 
 
-def relabel2(qty: "AnyQuantity", new_dims: dict):
+def relabel2(qty: "TQuantity", new_dims: dict) -> "TQuantity":
     """Replace dimensions with new ones using label templates.
 
     .. todo:: Choose a more descriptive name.
@@ -935,7 +935,7 @@ def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
     )
 
 
-def sales_fraction_annual(age: "AnyQuantity") -> "AnyQuantity":
+def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
     """Return fractions of current vehicle stock that should be added in prior years.
 
     Parameters
@@ -971,7 +971,7 @@ def scenario_codes() -> list[str]:
     """
     from message_ix_models.project.ssp import SSP_2024
 
-    return [repr(c).split(":")[1] for c in SSP_2024] + ["LED"]
+    return [c.urn.rpartition(":")[2] for c in SSP_2024] + ["LED"]
 
 
 def share_weight(

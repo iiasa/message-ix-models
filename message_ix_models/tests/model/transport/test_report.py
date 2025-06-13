@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     import message_ix
     from genno.types import KeyLike
 
+    from message_ix_models import Context
+
 log = logging.getLogger(__name__)
 
 
@@ -167,11 +169,13 @@ def test_bare(request, test_context, tmp_path, regions, years):
 @mark.parametrize(
     "build",
     (
-        pytest.param(True, marks=make_mark["gh"](328)),  # Run .transport.build.main()
+        True,  # Run .transport.build.main()
         False,  # Use data from an Excel export
     ),
 )
-def test_simulated(request, test_context, build, regions="R12", years="B"):
+def test_simulated(
+    request, test_context: "Context", build: bool, regions="R12", years="B"
+) -> None:
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context, build)
@@ -202,7 +206,6 @@ def test_simulated(request, test_context, build, regions="R12", years="B"):
 
 @build.get_computer.minimum_version
 @MARK[10]
-@make_mark["gh"](328)
 def test_simulated_iamc(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:
@@ -252,7 +255,6 @@ def test_simulated_iamc(
 
 @build.get_computer.minimum_version
 @MARK[10]
-@make_mark["gh"](328)
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
     "plot_name",

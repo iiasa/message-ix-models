@@ -1,15 +1,17 @@
 """Handle data from the Global Energy Assessment (GEA)."""
 
 import logging
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.tools.iamc import iamc_like_data_for_query
 from message_ix_models.util import package_data_path, path_fallback
 
 if TYPE_CHECKING:
-    import genno
+    from genno import Computer, Key
+    from genno.types import AnyQuantity
     from sdmx.model.common import Code
 
 log = logging.getLogger(__name__)
@@ -19,44 +21,38 @@ log = logging.getLogger(__name__)
 class GEA(ExoDataSource):
     """Provider of exogenous data from the GEA data source.
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    arguments:
-
-    - `source`: "GEA".
-    - `source_kw` including:
-
-      - `model`, `scenario`: model name and scenario name. See
-        :func:`.get_model_scenario`.
-      - `measure`: See the source data for details.
-      - `aggregate`, `interpolate`: see :meth:`.ExoDataSource.transform`.
+    Per :attr:`Options.measure`, see the source data for details.
     """
 
-    id = "GEA"
+    @dataclass
+    class Options(BaseOptions):
+        #: By default, do not aggregate.
+        aggregate: bool = False
 
-    #: By default, do not aggregate.
-    aggregate = False
+        #: By default, do not interpolate.
+        interpolate: bool = False
 
-    #: By default, do not interpolate.
-    interpolate = False
+        #: Model name.
+        model: str = ""
+
+        #: Scenario name.
+        scenario: str = ""
+
+    options: Options
 
     where = ["private"]
 
-    def __init__(self, source, source_kw):
-        if source != self.id:
-            raise ValueError(source)
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
 
-        # Pieces for query
-        model = source_kw.pop("model", None)
-        scenario = source_kw.pop("scenario", None)
-        self.measure = variable = source_kw.pop("measure")
+        # Set .key
+        super().__init__()
 
         # Check for a valid (model, scenario) combination
-        check = (model, scenario)
+        check = (opt.model, opt.scenario)
         if check not in get_model_scenario():
             log.error(f"No data for (model, scenario) = {check!r}")
             raise ValueError(check)
-
-        self.raise_on_extra_kw(source_kw)
 
         # Identify input data path
         self.path = path_fallback(
@@ -64,15 +60,11 @@ class GEA(ExoDataSource):
         )
 
         # Assemble query
-        self.query = " and ".join(
-            [
-                f"MODEL == {model!r}" if model else "True",
-                f"SCENARIO == {scenario!r}",
-                f"VARIABLE == {variable!r}",
-            ]
-        )
+        self.query = (
+            f"MODEL == {opt.model!r}" if opt.model else "True"
+        ) + f" and SCENARIO == {opt.scenario!r} and VARIABLE == {opt.measure!r}"
 
-    def __call__(self):
+    def get(self) -> "AnyQuantity":
         return iamc_like_data_for_query(
             self.path,
             self.query,
@@ -80,7 +72,7 @@ class GEA(ExoDataSource):
             non_iso_3166="keep",
         )
 
-    def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
+    def transform(self, c: "Computer", base_key: "Key") -> "Key":
         """Prepare `c` to transform raw data from `base_key`.
 
         Compared to :meth:`.ExoDataSource.transform`, this version:
@@ -105,6 +97,8 @@ def get_model_scenario() -> set[tuple[str, str]]:
     """Return a set of valid GEA (model name, scenario name) combinations.
 
     These are read from :file:`data/gea/model-scenario.json`.
+
+    .. todo:: Convert to :class:`~sdmx.model.common.Codelist`.
     """
     import json
 
