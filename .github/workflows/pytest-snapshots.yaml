@@ -61,6 +61,7 @@ jobs:
         uv pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ env.upstream }}"
         # uv pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ env.upstream }}"
         uv pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@issue/723"
+        uv pip install --upgrade "message-ix-buildings @ git+https://github.com/iiasa/message-ix-buildings@main" 
 
         uv pip install .[docs,tests] dask[dataframe]
 
