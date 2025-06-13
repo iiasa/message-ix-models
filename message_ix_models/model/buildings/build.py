@@ -792,7 +792,7 @@ def materials(
             .rename(columns={"value": new_col})
             .assign(
                 commodity=lambda _df: _df.commodity.str.extract(
-                    f"{rc}_mat_demand_(cement|steel|aluminum)"
+                    f"{rc}_mat_demand_(cement|steel|aluminum)", expand=False
                 )
             )
             .dropna(subset=["commodity"])
