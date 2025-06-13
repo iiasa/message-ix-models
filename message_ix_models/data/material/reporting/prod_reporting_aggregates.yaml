@@ -1,0 +1,116 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  out
+
+iamc_prefix:
+  Production|
+
+common:
+  unit: Mt/yr
+
+level_4:
+  Chemicals:
+    short: prod_chem
+    components:
+      [ prod_hvc, prod_nh3, prod_meth ]
+
+level_3:
+  Chemicals|High-Value Chemicals:
+    short: prod_hvc
+    components:
+      [ prod_ethy, prod_propy, prod_btx]
+
+level_2:
+  Chemicals|Ammonia:
+    short: prod_nh3
+    components:
+      [ prod_nh3_gas_tot, prod_nh3_coal_tot, prod_nh3_bio_tot, prod_nh3_oil_tot, prod_nh3_h2 ]
+  Chemicals|Methanol:
+    short: prod_meth
+    components:
+      [ prod_meth_gas_tot, prod_meth_coal_tot, prod_meth_bio_tot, prod_meth_h2 ]
+  Chemicals|High-Value Chemicals|Ethylene:
+    short: prod_ethy
+    components:
+      [ prod_ethy_sc, prod_ethy_bio, prod_ethy_oth]
+  Chemicals|High-Value Chemicals|Propylene:
+    short: prod_propy
+    components:
+      [ prod_propy_sc, prod_propy_oth, prod_propy_cc_prop]
+  Chemicals|High-Value Chemicals|BTX:
+    short: prod_btx
+    components:
+      [ prod_btx_sc, prod_btx_ref]
+
+level_1:
+  Chemicals|Ammonia|Gases:
+    short: prod_nh3_gas_tot
+    components: [ prod_nh3_gas, prod_nh3_gas_ccs ]
+  Chemicals|Ammonia|Coal:
+    short: prod_nh3_coal_tot
+    components: [ prod_nh3_coal, prod_nh3_coal_ccs ]
+  Chemicals|Ammonia|Biomass:
+    short: prod_nh3_bio_tot
+    components: [ prod_nh3_bio, prod_nh3_bio_ccs ]
+  Chemicals|Ammonia|Oil:
+    short: prod_nh3_oil_tot
+    components: [ prod_nh3_oil, prod_nh3_oil_ccs ]
+
+  Chemicals|Methanol|Gases:
+    short: prod_meth_gas_tot
+    components: [ prod_meth_gas, prod_meth_gas_ccs ]
+  Chemicals|Methanol|Coal:
+    short: prod_meth_coal_tot
+    components: [ prod_meth_coal, prod_meth_coal_ccs ]
+  Chemicals|Methanol|Biomass:
+    short: prod_meth_bio_tot
+    components: [ prod_meth_bio, prod_meth_bio_ccs]
+
+  Chemicals|High-Value Chemicals|Ethylene|Steam Cracking:
+    short: prod_ethy_sc
+    components: [ prod_ethy_sc_naphtha, prod_ethy_sc_ago, prod_ethy_sc_vgo, prod_ethy_sc_eth, prod_ethy_sc_prop]
+  Chemicals|High-Value Chemicals|Propylene|Steam Cracking:
+    short: prod_propy_sc
+    components:
+      [ prod_propy_sc_naphtha, prod_propy_sc_ago, prod_propy_sc_vgo, prod_propy_sc_eth, prod_propy_cc_prop]
+  Chemicals|High-Value Chemicals|BTX:
+    short: prod_btx_sc
+    components:
+      [ prod_btx_sc_naphtha, prod_btx_sc_ago, prod_btx_sc_vgo, prod_btx_sc_eth, prod_btx_sc_prop]
+
+  # cement
+  Non-Metallic Minerals|Cement:
+    short: fe_pe_cement_el
+    components:
+      [prod_cement_bmill, prod_cement_vmill]
+  Non-Metallic Minerals|Clinker:
+    short: prod_clinker
+    components:
+      [ prod_clinker_wet, prod_clinker_dry ]
+
+  # aluminum
+  Non-Ferrous Metals|Aluminium:
+    short: prod_alu
+    components:
+      [ prod_alu_prim, prod_alu_sec ]
+
+  #steel
+  Steel:
+    short: prod_steel
+    components:
+      [ prod_steel_prim_eaf, prod_steel_sec_eaf ]
+  Iron and Steel|Steel:
+    short: prod_steel
+    components:
+      [ prod_steel_prim_eaf, prod_steel_sec_eaf ]
+  Iron and Steel|Steel|Secondary:
+    short: prod_steel_sec
+    components:
+      [ prod_steel_sec_eaf ]
+  Iron and Steel|Steel|Primary:
+    short: prod_steel_prim
+    components:
+      [ prod_steel_prim_eaf ]
