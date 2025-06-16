@@ -36,13 +36,8 @@ from message_ix_models.model.material.util import (
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import (
     add_par_data,
-    identify_nodes,
     load_package_data,
     package_data_path,
-)
-from message_ix_models.util.compat.message_data import (
-    calibrate_UE_gr_to_demand,
-    calibrate_UE_share_constraints,
 )
 from message_ix_models.util.compat.message_data import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
@@ -124,7 +119,10 @@ def build(
     else:
         scenario.check_out()
         for k, v in gen_other_ind_demands(get_ssp_from_context(context)).items():
-            scenario.add_par("demand", v)
+            scenario.add_par(
+                "demand",
+                v[v["year"].isin(scen.vintage_and_active_years()["year_act"].unique())],
+            )
         scenario.commit("add new other industry demands")
         # overwrite non-Materials industry technology calibration
         calib_data = get_hist_act(

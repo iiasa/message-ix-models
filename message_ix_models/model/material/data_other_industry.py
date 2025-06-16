@@ -891,22 +891,19 @@ def gen_other_ind_demands(ssp):
             .sum(numeric_only=True)
             .round(3)
             .reset_index()
-        )
+        ).assign(level="useful", commodity=comm, time="year", unit="GWa")
         df = pd.read_csv(
             package_data_path("material", "other", "demand", f"{comm}_{ssp}.csv")
-        ).rename(columns={"year_act": "year", "0": "value", "node_loc": "node"})
+        )
         df = pd.concat([df[df["year"].ge(2030)], df_fixed]).sort_values(
             ["node", "year"]
         )
-        df["commodity"] = comm
-        df["time"] = "year"
-        df["unit"] = "GWa"
-        df["level"] = "useful"
         demands[comm] = df.copy(deep=True)
     return demands
 
 
 if __name__ == "__main__":
+    gen_other_ind_demands("SSP2")
     import ixmp
     import message_ix
 
