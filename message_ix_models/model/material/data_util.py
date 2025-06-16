@@ -1004,10 +1004,10 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
     scenario.check_out()
     scenario.remove_par("historical_activity", df)
     scenario.commit("remove elec_i hist act")
-    df = scenario.par("historical_activity", filters={"technology": "elec_i"})
+    df = scenario.par("historical_new_capacity", filters={"technology": "elec_i"})
     scenario.check_out()
-    scenario.remove_par("historical_activity", df)
-    scenario.commit("remove elec_i hist act")
+    scenario.remove_par("historical_new_capacity", df)
+    scenario.commit("remove elec_i hist capacity")
 
 
 def gen_plastics_emission_factors(
