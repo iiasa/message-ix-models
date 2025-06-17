@@ -55,7 +55,7 @@ oil_shipped_trade:
     oil
   trade_tech_suffix:
   trade_tech_number:
-    1
+    2
   trade_commodity:
     crudeoil
   trade_commodity_suffix:
