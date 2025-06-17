@@ -121,7 +121,11 @@ def build(
         for k, v in gen_other_ind_demands(get_ssp_from_context(context)).items():
             scenario.add_par(
                 "demand",
-                v[v["year"].isin(scen.vintage_and_active_years()["year_act"].unique())],
+                v[
+                    v["year"].isin(
+                        scenario.vintage_and_active_years()["year_act"].unique()
+                    )
+                ],
             )
         scenario.commit("add new other industry demands")
         # overwrite non-Materials industry technology calibration
