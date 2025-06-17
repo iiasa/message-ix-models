@@ -4,7 +4,7 @@
 # Put the scenario information here. 
 scenario:
   start_model: 
-  #  - SSP_SSP2_v2.1
+    - SSP_SSP2_v2.1
   # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
   start_scen:
     - baseline_DEFAULT

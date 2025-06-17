@@ -1,0 +1,54 @@
+# Electricity via UHV lines
+elec_piped_trade:
+  base_trade_technology:
+    elec_t_d
+  trade_technology:
+    elec
+  trade_tech_suffix:
+    uhv
+  trade_tech_number:
+    1
+  trade_commodity:
+    electr
+  trade_commodity_suffix:
+    gei
+  trade_form:
+    pipe
+  export_level:
+    final
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technology:
+    pipe
+  flow_tech_suffix:
+  supply_technologies:
+    - solar_res1
+    - solar_res2
+    - solar_res3
+    - solar_res4
+    - solar_res5
+    - solar_res6
+    - solar_res7
+    - solar_res8
+    - solar_cv1
+    - solar_cv2
+    - solar_cv3
+    - solar_cv4
+    # - solar_pv_ppl 
+    - wind_res1
+    - wind_res2
+    - wind_res3
+    - wind_res4
+    - wind_cv1
+    - wind_cv2
+    - wind_cv3
+    - wind_cv4
+    # - wind_ppl 
+    - hydro_lc
+    # - hydro_hc
+    - hydro_ppl
+    # historical technologies not included
+  specify_network:
+    True 
