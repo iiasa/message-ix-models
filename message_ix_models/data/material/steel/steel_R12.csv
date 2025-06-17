@@ -1,0 +1,268 @@
+Technology,Parameter,Region,Level,Commodity,Species,Mode,Units,Value,Comment,Source
+bf_steel,input,R12_RCPA,final,charcoal,,M3,GWa/Mt,0.19,See https://iiasahub.sharepoint.com/:p:/r/sites/eceprog/_layouts/15/Doc.aspx?sourcedoc=%7B14F8F8D4-C873-4D16-9FA4-443086497685%7D&file=Iron%26Steel.pptx&action=edit&mobileredirect=true,
+bf_steel,input,R12_RCPA,final,charcoal,,M4,GWa/Mt,0.19,See https://iiasahub.sharepoint.com/:p:/r/sites/eceprog/_layouts/15/Doc.aspx?sourcedoc=%7B14F8F8D4-C873-4D16-9FA4-443086497685%7D&file=Iron%26Steel.pptx&action=edit&mobileredirect=true,
+bf_steel,input,R12_RCPA,final,coal,,M1,GWa/Mt,0.17248059360730594,Average of 4.67 PJ/Mt and 6.2 PJ/Mt. (pulverized or dust coal),"Otto et al., 2017 and IEA ETSAP"
+bf_steel,input,R12_RCPA,final,coal,,M2,GWa/Mt,0.1581997716894977,Average of 5.58 PJ/Mt and 4.39 PJ/Mt,"Otto et al., 2017 and IEA ETSAP"
+bf_steel,input,R12_RCPA,final,coal,,M3,GWa/Mt,0.1,See https://iiasahub.sharepoint.com/:p:/r/sites/eceprog/_layouts/15/Doc.aspx?sourcedoc=%7B14F8F8D4-C873-4D16-9FA4-443086497685%7D&file=Iron%26Steel.pptx&action=edit&mobileredirect=true,
+bf_steel,input,R12_RCPA,dummy_emission,coal,,M1,GWa/Mt,0.17248059360730594,,
+bf_steel,input,R12_RCPA,dummy_emission,coal,,M2,GWa/Mt,0.1581997716894977,Important: This assumes all coal is turned into emissions. We cant directly deduct reduced emissions as this is energy units. In reporting CO2_Emission should be used to deduct from this amount. ,"IEA ETSAP - Technology Brief, 5.58PJ coal/MT steel"
+bf_steel,input,R12_RCPA,dummy_emission,coal,,M3,GWa/Mt,0.1,,
+bf_steel,input,R12_RCPA,final,co_gas,,M1,GWa/Mt,0.02073363774733638,Keep the share coming out CO,
+bf_steel,input,R12_RCPA,final,co_gas,,M2,GWa/Mt,0.02073363774733638,Keep the share coming out CO,
+bf_steel,input,R12_RCPA,final,co_gas,,M3,GWa/Mt,0.02073363774733638,For now assume the same as M1 unless other data found,
+bf_steel,input,R12_RCPA,final,co_gas,,M4,GWa/Mt,0.02073363774733638,Assume the same as M2 unless other data is found.,
+bf_steel,input,R12_RCPA,final,coke_iron,,M1,GWa/Mt,0.3110045662100457,Average of 9.3 PJ/Mt and 10.3 PJ/Mt,"Otto et al., 2017 and IEA ETSAP"
+bf_steel,input,R12_RCPA,final,coke_iron,,M2,GWa/Mt,0.21468835616438353,Less coke is used in TGR-BF process. Experimentation in prototype scale oxygen blast furnaces showed 200-230 kg/ton hot metal as minimum feasible coke rate.,"IEA ETSAP - Technology Brief and Perpinan et al.,2023, Otto et al., 2017"
+bf_steel,input,R12_RCPA,final,coke_iron,,M3,GWa/Mt,0.19,See https://iiasahub.sharepoint.com/:p:/r/sites/eceprog/_layouts/15/Doc.aspx?sourcedoc=%7B14F8F8D4-C873-4D16-9FA4-443086497685%7D&file=Iron%26Steel.pptx&action=edit&mobileredirect=true,
+bf_steel,input,R12_RCPA,final,coke_iron,,M4,GWa/Mt,0.18,See https://iiasahub.sharepoint.com/:p:/r/sites/eceprog/_layouts/15/Doc.aspx?sourcedoc=%7B14F8F8D4-C873-4D16-9FA4-443086497685%7D&file=Iron%26Steel.pptx&action=edit&mobileredirect=true,
+bf_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.017669345610110986,,"https://iiasahub-my.sharepoint.com/personal/min_iiasa_ac_at/_layouts/OneNote.aspx?id=%2Fpersonal%2Fmin_iiasa_ac_at%2FDocuments%2FJihoon%20%40%20IIASA&wd=target%28Iron-Steel.one%7C1237802F-59E5-42B4-BD96-84A3C2F166AD%2FProduction%20Processes%7C8D1CB766-0FAF-47A9-94C8-966FAA420195%2F%29
+onenote:https://iiasahub-my.sharepoint.com/personal/min_iiasa_ac_at/Documents/Jihoon%20@%20IIASA/Iron-Steel.one#Production%20Processes&section-id={1237802F-59E5-42B4-BD96-84A3C2F166AD}&page-id={8D1CB766-0FAF-47A9-94C8-966FAA420195}&end"
+bf_steel,input,R12_RCPA,final,electr,,M2,GWa/Mt,0.017669345610110986,Same as M1,"Perpinan et al.,2023"
+bf_steel,input,R12_RCPA,final,electr,,M3,GWa/Mt,0.017669345610110986,For now assume the same as M1 unless other data found,
+bf_steel,input,R12_RCPA,final,electr,,M4,GWa/Mt,0.017669345610110986,Assume the same as M2 unless other data is found.,
+bf_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,0.155,,IEA ETSAP - Technology Brief
+bf_steel,input,R12_RCPA,secondary_material,pellet_iron,,M2,Mt/Mt,0.04,,IEA ETSAP - Technology Brief
+bf_steel,input,R12_RCPA,secondary_material,pellet_iron,,M3,Mt/Mt,0.155,,
+bf_steel,input,R12_RCPA,secondary_material,pellet_iron,,M4,Mt/Mt,0.04,,
+bf_steel,input,R12_RCPA,secondary_material,sinter_iron,,M1,Mt/Mt,1.34,,IEA ETSAP - Technology Brief
+bf_steel,input,R12_RCPA,secondary_material,sinter_iron,,M2,Mt/Mt,1.58,,IEA ETSAP - Technology Brief
+bf_steel,input,R12_RCPA,secondary_material,sinter_iron,,M3,Mt/Mt,1.34,,
+bf_steel,input,R12_RCPA,secondary_material,sinter_iron,,M4,Mt/Mt,1.58,,
+# bf_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,0.98,http://www.coalstudy.com/zixun/tiekuang/15169.html,
+# bf_steel,input,R12_RCPA,water_supply,freshwater_supply,,M2,Mm3/Mt,0.98,http://www.coalstudy.com/zixun/tiekuang/15169.html,
+# bf_steel,input,R12_RCPA,water_supply,freshwater_supply,,M3,Mm3/Mt,0.98,For now assume the same as M1 unless other data found,
+# bf_steel,input,R12_RCPA,water_supply,freshwater_supply,,M4,Mm3/Mt,0.98,Assume the same as M2 unless other data is found.,
+# bf_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,19.13,,
+# bf_steel,input,R12_RCPA,water_supply,water,,M2,Mm3/Mt,19.13,,
+# bf_steel,input,R12_RCPA,water_supply,water,,M3,Mm3/Mt,19.13,,
+# bf_steel,input,R12_RCPA,water_supply,water,,M4,Mm3/Mt,19.13,Assume the same as M2 unless other data is found.,
+bf_steel,output,R12_RCPA,tertiary_material,pig_iron,,M1,Mt,1.0,,
+bf_steel,output,R12_RCPA,tertiary_material,pig_iron,,M3,Mt,1.0,,
+bf_steel,output,R12_RCPA,tertiary_material,pig_iron_dummy,,M2,Mt,1.0,,
+bf_steel,output,R12_RCPA,tertiary_material,pig_iron_dummy,,M4,Mt,1.0,,
+bf_steel,output,R12_RCPA,final,bf_gas,,M1,GWa,0.12644874429223746,Average value,"IEA ETSAP and Otto et al., 2017"
+bf_steel,output,R12_RCPA,final,bf_gas,,M2,GWa,0.03281415525114155,"Average value. The specific reduction in blast furnace gas (BFG) output can vary depending on the design and operational parameters of the blast furnace, as well as the extent to which TGR is implemented.","IEA ETSAP and Otto et al., 2017"
+bf_steel,output,R12_RCPA,final,bf_gas,,M3,GWa,0.12644874429223746,Assume same as M1 unless other data is found,
+bf_steel,output,R12_RCPA,final,bf_gas,,M4,GWa,0.03281415525114155,Assume the same as M2 unless other data is found.,
+bf_steel,output,R12_RCPA,waste_material,slag_iron,,M1,Mt,0.25,,IEA ETSAP
+bf_steel,output,R12_RCPA,waste_material,slag_iron,,M2,Mt,0.195,22% less coke+coal is used. Decrease the slag by that %,IEA ETSAP
+bf_steel,output,R12_RCPA,waste_material,slag_iron,,M4,Mt,0.195,Assume the same as M2 unless other data is found.,
+bf_steel,output,R12_RCPA,waste_material,slag_iron,,M3,Mt,0.25,Assume same as M1 unless other data is found,
+bf_steel,capacity_factor,R12_RCPA,,,,,%,0.87,,TNO
+bf_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,2.37,"https://www.exchangerates.org.uk/EUR-USD-spot-exchange-rates-history-2010.html, https://www.in2013dollars.com/us/inflation/2010?endYear=2005&amount=2.65","IEA ETSAP, variable O&M cost"
+bf_steel,var_cost,R12_RCPA,,,,M2,MUSD/Mt,2.37,Assume same as M1 unless other data is found,
+bf_steel,var_cost,R12_RCPA,,,,M3,MUSD/Mt,2.607,"Assumed 10% increase unless other data found.  Suopajarvi et al., 2017 mentions cost increase without quantifying.",
+bf_steel,var_cost,R12_RCPA,,,,M4,MUSD/Mt,2.607,"Assumed 10% increase unless other data found.  Suopajarvi et al., 2017 mentions cost increase without quantifying.",
+bf_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,6.6e-05,"Wu etal., 2015",
+bf_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,https://energy.nl/data/steelmaking-with-top-gas-recycling-blast-furnace-tgr-bf-ulcos-blast-furnace-oxygen-blast-furnace-with-ccs/
+bf_biomass_steel,input,R12_RCPA,final,charcoal,,M1,GWa/Mt,0.579,Mini-blast furnace. (640 kg/t --> 0.608 Gwa/Mt  or 586.7 -->0.55 Gwa/Mt),"Ershov et al., 2009; Nogami et al., 2004"
+bf_biomass_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.017669345610110986,Use same as M1 unless other data is found,
+# bf_biomass_steel,input,R12_RCPA,final,off_gas,,M1,GWa,4.319339218866749e-07,Same amount that comes out of charcoal production,
+bf_biomass_steel,input,R12_RCPA,primary_material,ore_iron,,M1,Mt/Mt,1.459,One of the most remarkable features of this system compared to the modern ironmaking systems is excluding sintering and/or pelletizing processes.,"Nogami et al., 2004"
+# bf_biomass_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,0.98,Use same as M1 unless other data is found,
+# bf_biomass_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,19.13,,
+bf_biomass_steel,output,R12_RCPA,waste_material,slag_iron,,M1,Mt,0.135,,"Ershov et al., 2009"
+bf_biomass_steel,output,R12_RCPA,tertiary_material,pig_iron,,M1,Mt,1.0,,
+bf_biomass_steel,output,R12_RCPA,final,bf_gas,,M1,GWa,0.17233095110557953,"1739 Nm3/thm (coke + coal), 2370 Nm3/thm (charcoal). Apply the ratio","Exergy Analysis of Charcoal Charging Operation of Blast Furnace, Nogami et al., 2004"
+bf_biomass_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,110.0,,"Ershov et al., 2009"
+bf_biomass_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,11.89,,
+bf_biomass_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,2.607,"Assumed 10% increase unless other data found.  Suopajarvi et al., 2017 mentions cost increase without quantifying.",
+bf_biomass_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,
+bf_ccs_steel,input,R12_RCPA,final,electr,,M2,GWa/Mt,0.036773059360730595,Additional electricity needed for CCS and oxygen unit,"Average of IEA ETSAP, 2010, Otto et al., 2017 and Perpinan et al., 2023"
+bf_ccs_steel,output,R12_RCPA,tertiary_material,pig_iron,,M2,Mt,1.0,,
+bf_ccs_steel,input,R12_RCPA,tertiary_material,pig_iron_dummy,,M2,Mt,1.0,,
+bf_ccs_steel,var_cost,R12_RCPA,,,,M2,MUSD/Mt,3.5511000000000004,Additional cost from TGR CCS. Converted from 2010 euro to 2005 USD,IEA ETSAP - Technology Brief
+bf_ccs_steel,emission_factor,R12_RCPA,,,CO2,M2,MtC/Mt,-0.2136818181818184,Range between 0.7 -  0.867,"Otto et al., 2017; Fan & Friedmann, 2021; TNO"
+bf_ccs_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,TNO
+bf_ccs_steel,capacity_factor,R12_RCPA,,,,,%,0.9,,
+bf_ccs_steel,growth_new_capacity_up,R12_RCPA,,,,M2,,0.001,,Same as CCS cement
+bof_steel,input,R12_RCPA,final,bf_gas,,M1,GWa/Mt,0.12036704115994547,Keep the share coming out BF. It is assumed that blast furnace gas is enough to perform downstream activities in M1 of blast furnace. ,
+bof_steel,input,R12_RCPA,final,bf_gas,,M2,GWa/Mt,0.03123591932723895,Keep the share coming out BF in M2. Even though there is less bf_gas the calorific value of M2 bf_gas is higher. The rest is penalized by increased electricity.,
+bof_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.030422476341427765,,
+bof_steel,input,R12_RCPA,final,electr,,M2,GWa/Mt,0.06596585533686158,M1 + penalty due to decrease of blast furnace gas,
+# bof_steel,input,R12_RCPA,new_scrap,steel,,M1,Mt/Mt,0.17,,
+# bof_steel,input,R12_RCPA,new_scrap,steel,,M2,Mt/Mt,0.17,,
+# bof_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,0.77,,
+# bof_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,10.84,,
+# bof_steel,input,R12_RCPA,water_supply,freshwater_supply,,M2,Mm3/Mt,0.8,,
+# bof_steel,input,R12_RCPA,water_supply,water,,M2,Mm3/Mt,10.84,,
+bof_steel,output,R12_RCPA,final_material,steel,,M1,Mt,1.0,,
+bof_steel,output,R12_RCPA,final_material,steel,,M2,Mt,1.0,,
+bof_steel,output,R12_RCPA,waste_material,slag_iron,,M1,Mt,0.085,,
+bof_steel,output,R12_RCPA,waste_material,slag_iron,,M2,Mt,0.085,,
+bof_steel,emission_factor,R12_RCPA,,,PM2p5,M2,Mt/Mt,0.00018449999999999999,"Wu etal., 2015",
+bof_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,0.00018449999999999999,"Wu etal., 2015",
+bof_steel,capacity_factor,R12_RCPA,,,,,%,0.798,,
+bof_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+cokeoven_steel,input,R12_RCPA,dummy_emission,coal,,M1,GWa/GWa,1.1302552821066614,,
+cokeoven_steel,input,R12_RCPA,final,coal,,M1,GWa/GWa,1.3333333333333333,"IEA balance 2018 ""Coke ovens"" EJ share",
+# cokeoven_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/GWa,0.02537,,
+# cokeoven_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/GWa,0.5073570776255708,,
+cokeoven_steel,output,R12_RCPA,final,coke_iron,,M1,GWa,1.0,,
+cokeoven_steel,output,R12_RCPA,final,co_gas,,M1,GWa,0.06666666666666667,"ratio derived from IEA balance 2018 (world), FE COG output ~1.3EJ, coal input to CO  ~26EJ ",
+cokeoven_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,322.94898696281075,,
+cokeoven_steel,capacity_factor,R12_RCPA,,,,,%,0.701,,
+cokeoven_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.7,"https://2024.aisusteel.org/wp-content/uploads/2024/10/Dr-John-Atherton_IIMA.pdf Slide 10",
+# dri_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,14.689999999999998,Variable O&M cost. Convert from 2000 USD to 2005 USD. https://www.in2013dollars.com/us/inflation/2000?endYear=2005&amount=145,IEA ETSAP - Technology Brief
+dri_steel,capacity_factor,R12_RCPA,,,,,%,0.95,,
+dri_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+dri_gas_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.014700913242009133,,
+dri_gas_steel,input,R12_RCPA,final,gas,,M1,GWa/Mt,0.33,, http://www.iipinetwork.org/wp-content/Ietd/content/direct-reduced-iron.html 
+dri_gas_steel,input,R12_RCPA,dummy_emission,gas,,M1,GWa/Mt,0.33,"Important: This assumes all gas is turned into emissions. We cant directly deduct reduced emissions as this is energy units. In reporting, CO2_Emission should be used to deduct from this amount. ", http://www.iipinetwork.org/wp-content/Ietd/content/direct-reduced-iron.html 
+dri_gas_steel,output,R12_RCPA,waste_material,slag_iron,,M1,Mt,0.085,,
+dri_gas_steel,output,R12_RCPA,tertiary_material,sponge_iron,,M1,Mt/Mt,1.0,,
+# dri_gas_steel,output,R12_RCPA,water_supply,water,,M1,Mm3/Mt,690.0,,
+dri_h2_steel,input,R12_RCPA,final,hydrogen,,M1,Gwa/Mt,0.239,"Average: 664 Nm3/Tdri (standard conditions, 0C, 1atmosphere)-->59.6 kg H2 (https://h2tools.org/hyarc/calculator-tools/hydrogen-conversions-calculator). 59.6 kg-->1984.68 kWh (https://stargatehydrogen.com/documents-and-tools/hydrogen-calculators/)","Wang et al.,2021: Hydrogen direct reduction (H-DR) in steel industry—An overview of challenges and oppurtunities (800 Nm3/tDRI), PBL (528 Nm3/t-DRI, https://www.pbl.nl/sites/default/files/downloads/pbl-2019-decarbonisation-options-for-the-dutch-steel-industry_3723.pdf)
+"
+dri_h2_steel,input,R12_RCPA,useful_steel,ht_heat,,M1,Gwa/Mt,0.0,1606 MJ/t DRI. We can assume that heat is recovered from DRI furnace.,"Devlin et al., 2023"
+# dri_h2_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,6.8493150684931506e-09,0.06 MWh/ tDRI. To bring the hydrogen to the right pressure,"Devlin et al., 2023"
+dri_h2_steel,output,R12_RCPA,tertiary_material,sponge_iron,,M1,Mt/Mt,1.0,,
+# dri_h2_steel,output,R12_RCPA,water_supply,water,,M1,Mm3/Mt,690.0,for now assume same as natural gas as used by Jihoon. If necessary we can later find a more specific number for water vapour which is the result of this process,
+dri_h2_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,6.0,It is not specified if this is fixed or variable but just as maintenece. 3% of CAPEX.,"Toktarova et al., 2021"
+dri_h2_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,average,"20 y (Pimm et al., 2021; IEA ETSAP), 40 y (Toktarova et al., 2021) (Lopez at al., 2022)​"
+dri_gas_ccs_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.005139100698630137,0.34 GJ/tCO2 converted,"Gielen, 2003"
+dri_gas_ccs_steel,output,R12_RCPA,dummy_ccs,gas,,M1,GWa/Mt,0.33,To be used in the materials_tables.py. This will keep track of how much gas is used as input in CCS technology which needs to be deducted from _inp_nonccs_gas_tecs,Same as CCS cement
+dri_gas_ccs_steel,emission_factor,R12_RCPA,,,CO2,M1,MtC/Mt,-0.13,"0.5 t/DRI (midrex tehcnical boruchure), 85% capture rate (IEA, CCS Working Group)",
+dri_gas_ccs_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,Figure 2.11 of IEA Iron and Steel Technology Roadmap
+dri_gas_ccs_steel,capacity_factor,R12_RCPA,,,,,%,0.9,,
+dri_gas_ccs_steel,growth_new_capacity_up,R12_RCPA,,,,M1,,0.001,,
+DUMMY_coal_supply,output,R12_RCPA,dummy_emission,coal,,M1,Mt,1.0,,
+DUMMY_coal_supply,emission_factor,R12_RCPA,,,CO2_industry,M1,MtC/Gwa,0.814,,
+DUMMY_gas_supply,output,R12_RCPA,dummy_emission,gas,,M1,Mt,1.0,,
+DUMMY_gas_supply,emission_factor,R12_RCPA,,,CO2_industry,M1,MtC/Gwa,0.482,,
+DUMMY_limestone_supply_steel,output,R12_RCPA,primary_material,limestone_iron,,M1,Mt/Mt,1.0,,
+DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,CO2,M1,MtC/Mt,0.12,,
+DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,NOx,M1,kt/Mt,1.75,,
+DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,SO2,M1,kt/Mt,0.9790000000000001,,
+DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,0.000332,,
+DUMMY_ore_supply,output,R12_RCPA,primary_material,ore_iron,,M1,Mt/Mt,1.0,,
+# DUMMY_water_supply,output,R12_RCPA,water_supply,water,,M1,Mt/Mt,1.0,,
+# DUMMY_water_supply,var_cost,R12_RCPA,,,,M1,MUSD/Mt,0.1,,
+eaf_steel,input,R12_RCPA,tertiary_material,pig_iron,,M1,Mt/Mt,1.05,,
+eaf_steel,input,R12_RCPA,final,gas,,M1,Mt/Mt,0.002,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.0796461187214612,IEA ESTAP 2010,
+eaf_steel,input,R12_RCPA,primary_material,limestone_iron,,M1,Mt/Mt,0.012,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,input,R12_RCPA,new_scrap,steel,,M2,Mt/Mt,1.02,,
+eaf_steel,input,R12_RCPA,final,gas,,M2,Mt/Mt,0.002,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,input,R12_RCPA,final,electr,,M2,GWa/Mt,0.0796461187214612,IEA ESTAP 2010,
+eaf_steel,input,R12_RCPA,primary_material,limestone_iron,,M2,Mt/Mt,0.012,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,input,R12_RCPA,tertiary_material,sponge_iron,,M3,Mt/Mt,1.05,,
+eaf_steel,input,R12_RCPA,final,gas,,M3,Mt/Mt,0.002,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,input,R12_RCPA,final,electr,,M3,GWa/Mt,0.0796461187214612,IEA ESTAP 2010,
+eaf_steel,input,R12_RCPA,primary_material,limestone_iron,,M3,Mt/Mt,0.012,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,input,R12_RCPA,dummy_emission,gas,,M1,Mt/Mt,0.002,,
+eaf_steel,input,R12_RCPA,dummy_emission,gas,,M2,Mt/Mt,0.002,,
+eaf_steel,input,R12_RCPA,dummy_emission,gas,,M3,Mt/Mt,0.002,,
+eaf_steel,output,R12_RCPA,final_material,steel,,M1,Mt,1.0,,
+eaf_steel,output,R12_RCPA,waste_material,slag_iron,,M1,Mt,0.09,From China,
+eaf_steel,output,R12_RCPA,final_material,steel,,M2,Mt,1.0,,
+eaf_steel,output,R12_RCPA,waste_material,slag_iron,,M2,Mt,0.09,From China,
+eaf_steel,output,R12_RCPA,final_material,steel,,M3,Mt,1.0,,
+eaf_steel,output,R12_RCPA,waste_material,slag_iron,,M3,Mt,0.09,From China,
+eaf_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,42.2674,Variable O&M cost,IEA ESTAP 2010
+eaf_steel,var_cost,R12_RCPA,,,,M2,MUSD/Mt,42.2674,Variable O&M cost,IEA ESTAP 2010
+eaf_steel,var_cost,R12_RCPA,,,,M3,MUSD/Mt,42.2674,Variable O&M cost,IEA ESTAP 2010
+eaf_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,0.000762,"Wu etal., 2015",
+eaf_steel,emission_factor,R12_RCPA,,,NOx,M1,kt/Mt,0.18000000000000002,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,emission_factor,R12_RCPA,,,SO2,M1,kt/Mt,0.08,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,emission_factor,R12_RCPA,,,PM2p5,M2,Mt/Mt,0.000762,"Wu etal., 2015",
+eaf_steel,emission_factor,R12_RCPA,,,NOx,M2,kt/Mt,0.18000000000000002,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,emission_factor,R12_RCPA,,,SO2,M2,kt/Mt,0.08,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,emission_factor,R12_RCPA,,,PM2p5,M3,Mt/Mt,0.000762,"Wu etal., 2015",
+eaf_steel,emission_factor,R12_RCPA,,,NOx,M3,kt/Mt,0.18000000000000002,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,emission_factor,R12_RCPA,,,SO2,M3,kt/Mt,0.08,IEA ESTAP 2010: http://www.iea-etsap.org/web/e-techds/pdf/i02-iron&steel-gs-ad-gct.pdf,
+eaf_steel,capacity_factor,R12_RCPA,,,,,%,0.811,,
+eaf_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+export_steel,input,R12_RCPA,useful_material,steel,,M1,,1.0,,
+export_steel,output,R12_RCPA,export,steel,,M1,,1.0,,
+export_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,existing MESSAGE value for coal_exp,
+finishing_steel,input,R12_RCPA,final,coal,,M1,GWa/Mt,0.0,Assumed recovered heat,
+# finishing_steel,input,R12_RCPA,final,coke_iron,,M1,GWa/Mt,0.0,Assumed recovered heat,
+finishing_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.011004,set as similar to other stages,
+# finishing_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,0.76,,
+finishing_steel,input,R12_RCPA,final_material,steel,,M1,Mt/Mt,1.0,,
+# finishing_steel,output,R12_RCPA,useful_material,steel,,M1,Mt,1.0,,
+# finishing_steel,output,R12_RCPA,new_scrap,steel,,M1,Mt,0.049,,
+# finishing_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,228.92,,
+# finishing_steel,fix_cost,R12_RCPA,,,,,MUSD/Mt,22.89,,
+finishing_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,150,Arbitrary Assumption,
+finishing_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,1.2e-05,"Wu etal., 2015",
+# finishing_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,17.72,,
+# finishing_steel,capacity_factor,R12_RCPA,,,,,%,0.7997,,
+finishing_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+# finishing_steel,input,R12_RCPA,dummy_emission,coal,,M1,GWa/Mt,0.0,,
+import_steel,input,R12_RCPA,import,steel,,M1,,1.0,,
+import_steel,output,R12_RCPA,useful_material,steel,,M1,,1.0,,
+manuf_steel,input,R12_RCPA,useful_material,steel,,M1,Mt/Mt,1.0,Arbitrary,
+# manuf_steel,output,R12_RCPA,product,steel,,M1,Mt,0.95,,
+# manuf_steel,output,R12_RCPA,new_scrap,steel,,M1,Mt,0.05,,
+# manuf_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,228.92,Arbitrary,
+# manuf_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,0.91,Arbitrary,
+manuf_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+other_EOL_steel,input,R12_RCPA,product,steel,,M1,,1.0,,
+other_EOL_steel,output,R12_RCPA,demand,steel,,M1,Mt,1.0,Dummy  duplicate output for demand specification,
+pellet_steel,input,R12_RCPA,final,coke_iron,,M1,GWa/Mt,0.0,Assumed recovered gas COG,
+pellet_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.004027932854615403,China_steel_eet.xlsx,
+# pellet_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,0.83,,
+pellet_steel,input,R12_RCPA,primary_material,ore_iron,,M1,Mt/Mt,1.1857707509881423,,
+pellet_steel,output,R12_RCPA,secondary_material,pellet_iron,,M1,Mt,1.0,,
+pellet_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,1.76,,
+# pellet_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,0.9,,
+pellet_steel,capacity_factor,R12_RCPA,,,,,%,0.867,,
+pellet_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,0.000103,"Wu etal., 2015",
+pellet_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+prep_secondary_steel_1,input,R12_RCPA,useful_steel,ht_heat,,M1,GWa/Mt,0.0,Assumed recovered heat,
+prep_secondary_steel_1,input,R12_RCPA,old_scrap_1,steel,,M1,Mt,1.0,Assume no loss in this step,
+prep_secondary_steel_1,output,R12_RCPA,new_scrap,steel,,M1,Mt,1.0,,
+prep_secondary_steel_2,input,R12_RCPA,useful_steel,ht_heat,,M1,GWa/Mt,0.0,Assumed recovered heat,
+prep_secondary_steel_2,input,R12_RCPA,old_scrap_2,steel,,M1,Mt,1.0,,
+prep_secondary_steel_2,output,R12_RCPA,new_scrap,steel,,M1,Mt,1.0,,
+prep_secondary_steel_3,input,R12_RCPA,useful_steel,ht_heat,,M1,GWa/Mt,0.0,Assumed recovered heat,
+prep_secondary_steel_3,input,R12_RCPA,old_scrap_3,steel,,M1,Mt,1.0,,
+prep_secondary_steel_3,output,R12_RCPA,new_scrap,steel,,M1,Mt,1.0,,
+prod_charcoal_steel,input,R12_RCPA,primary,biomass,,M1,GWa,3.6,"Energy content of wood: 18MJ/kg, Energy content of charcoal: 30 MJ/kg​, 1kg charcoal with energy content 30 MJ --> 6 kg wood required (6x18=108MJ energy content)​
+Loss: From 108 MJ to 30 MJ ",https://energypedia.info/wiki/Charcoal_Production#Basics_on_Charcoal​
+prod_charcoal_steel,output,R12_RCPA,final,charcoal,,M1,GWa,1.0,,
+# prod_charcoal_steel,output,R12_RCPA,final,off_gas,,M1,GWa,7.459998650892485e-07,586.7 kg charcoal generates 1981 Nm3 off-gas with 6.55 MJ/m3,"Nogami et al., 2004"
+prod_charcoal_steel,inv_cost,R12_RCPA,,,,,MUSD/GWa,69.65888750902526,72.6 2015euro/t for EU28 ,"(Mandova et al., 2018) Convert from 2015 euro to 2005 usd, convert from usd/t to MUSD/Gwa"
+prod_charcoal_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,3.4829443754512632,3.63 euro/t/yr mentioned as O&M ,"(Mandova et al., 2018)"
+prod_charcoal_steel,emission_factor,R12_RCPA,,,CO,M1,ktCO/GWa,165.50180505415167,"157 g/kg charcoal, 1kg=30 MJ","Sparrevik et al., 2015"
+prod_charcoal_steel,emission_factor,R12_RCPA,,,CH4,M1,ktCH4/GWa,25.299638989169683,"24 g/kg charcoal, 1kg=30 MJ","Sparrevik et al., 2015"
+prod_charcoal_steel,emission_factor,R12_RCPA,,,VOC,M1,ktVOC/GWa,6.430324909747294,"6.1 g/kg charcoal, 1kg=30 MJ","Sparrevik et al., 2015"
+prod_charcoal_steel,emission_factor,R12_RCPA,,,NOx,M1,ktNOx/GWa,1.8974729241877262,"1.8 g/kg charcoal, 1kg=30 MJ","Sparrevik et al., 2015"
+prod_charcoal_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,
+scrap_recovery_steel_1,input,R12_RCPA,dummy_end_of_life_1,steel,,M1,Mt,1.0,,
+scrap_recovery_steel_2,input,R12_RCPA,dummy_end_of_life_2,steel,,M1,Mt,1.0,,
+scrap_recovery_steel_3,input,R12_RCPA,dummy_end_of_life_3,steel,,M1,Mt,1.0,"https://www.steelsustainability.org/recycling#:~:text=Steel%20is%20the%20most%20recycled,2014%2C%20stood%20at%2086%20percent.",https://worldsteel.org/media-centre/blog/2018/future-of-global-scrap-availability/
+scrap_recovery_steel_1,output,R12_RCPA,old_scrap_1,steel,,M1,Mt,1.0,availability ,
+scrap_recovery_steel_2,output,R12_RCPA,old_scrap_2,steel,,M1,Mt,1.0,availability ,
+scrap_recovery_steel_3,output,R12_RCPA,old_scrap_3,steel,,M1,Mt,1.0,availability ,
+sinter_steel,input,R12_RCPA,final,coal,,M1,GWa/Mt,0.021269219721194058,,
+sinter_steel,input,R12_RCPA,final,coke_iron,,M1,GWa/Mt,0.0,Assumed recovered gas COG,
+sinter_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.011004152473886364,China_steel_eet.xlsx,
+# sinter_steel,input,R12_RCPA,water_supply,freshwater_supply,,M1,Mm3/Mt,3.01,,
+sinter_steel,input,R12_RCPA,primary_material,limestone_iron,,M1,Mt/Mt,0.07079740232087725,,
+sinter_steel,input,R12_RCPA,primary_material,ore_iron,,M1,Mt/Mt,1.0923027786649633,,
+sinter_steel,input,R12_RCPA,dummy_emission,coal,,M1,GWa/Mt,0.021269219721194058,,
+sinter_steel,output,R12_RCPA,secondary_material,sinter_iron,,M1,Mt,1.0,,
+sinter_steel,emission_factor,R12_RCPA,,,NOx,M1,kt/Mt,0.5,,
+sinter_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,0.00027400000000000005,"Wu etal., 2015",
+sinter_steel,emission_factor,R12_RCPA,,,SO2,M1,kt/Mt,1.827,,
+sinter_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,1.99,,
+# sinter_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/Mt,18.81,,
+sinter_steel,capacity_factor,R12_RCPA,,,,,%,0.878,,
+sinter_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
+# slag_granulator_steel,inv_cost,R12_RCPA,,,,,MUSD/Mt,28.0,"​4000 Indian Rupee = 47.95 USD, round to 50. 10% mark up. 3%opex​, 43.65 USD/t * --> 28 2005USD",https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
+# slag_granulator_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,0.85,1.35 USD/t --> to 2005 USD -->0.85 2005USD,https://www.indiamart.com/proddetail/ground-granulated-blast-furnace-slag-6256322097.html?pos=1&pla=n
+# slag_granulator_steel,input,R12_RCPA,waste_material,slag_iron,,M1,Mt/Mt,1.0,,
+# slag_granulator_steel,output,R12_RCPA,tertiary_material,granulated_slag_iron,,M1,Mt/Mt,1.0,,
+# slag_granulator_steel,input,R12_RCPA,final,electr,,M1,Gwa/Mt,0.014840182648401824,130 kwh for drying,https://www.energy-innovation-austria.at/article/forwaerts-2-0-2/?lang=en
+# slag_granulator_steel,technical_lifetime,R12_RCPA,,,,M1,,30.0,,Assumed
+total_EOL_steel,output,R12_RCPA,dummy_end_of_life_1,steel,,M1,,0.25,,
+total_EOL_steel,output,R12_RCPA,dummy_end_of_life_2,steel,,M1,,0.5,,
+total_EOL_steel,output,R12_RCPA,dummy_end_of_life_3,steel,,M1,,0.25,,
+total_EOL_steel,input,R12_RCPA,end_of_life,steel,,M1,,1.0,,
+trade_steel,output,R12_GLB,import,steel,,M1,,1.0,,
+trade_steel,var_cost,R12_GLB,,,,M1,MUSD/Mt,20.0,https://www.hellenicshippingnews.com/wp-content/uploads/2017/11/Market-dry-bulk-freight-rates.jpg,
+trade_steel,input,R12_GLB,export,steel,,M1,,1.01,,
