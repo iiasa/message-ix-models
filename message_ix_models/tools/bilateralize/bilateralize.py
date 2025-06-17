@@ -146,7 +146,7 @@ def build_parameterdf(
     
     return df
 #%% Main function to generate bare sheets
-def inter_pipe_bare(
+def generate_bare_sheets(
     config_name: str = None,
 ):
     """
@@ -222,17 +222,14 @@ def inter_pipe_bare(
     base_scenario = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
     
     log.info(f"Loaded scenario: {start_model}/{start_scen}")
-
-   # Generate export pipe technology: name techs and levels
-   # set_tech = []
-   # set_level = []
-   # set_relation = []
     
     # Generate folder for each trade technology
     for tec in covered_tec:
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
         if not os.path.isdir(tecpath):
             os.makedirs(tecpath)
+        if not os.path.isdir(os.path.join(tecpath, 'use_files')):
+            os.makedirs(os.path.join(tecpath, 'use_files'))
             
     # Generate full combination of nodes to build technology-specific network
     nodes_base_scenario = base_scenario.set("node")
@@ -256,8 +253,13 @@ def inter_pipe_bare(
         node_df_tec['export_technology'] = node_df_tec['export_technology'] + '_' +\
                                            node_df_tec['importer'].str.lower().str.split('_').str[1]
         if (trade_tech_number[tec] != None) & (trade_tech_number[tec] != 1): 
-            node_df_tec['export_technology'] = node_df_tec['export_technology'] + '_' + str(trade_tech_number[tec])
-        
+            ndt_out = pd.DataFrame()
+            for i in list(range(1, trade_tech_number[tec] + 1)):
+                ndt = node_df_tec.copy()
+                ndt['export_technology'] = ndt['export_technology'] + '_' + str(i)
+                ndt_out = pd.concat([ndt_out, ndt])
+            node_df_tec = ndt_out.copy()
+            
         node_df_tec['import_technology'] = trade_technology[tec] + '_imp'
         node_df_tec['INCLUDE? (No=0, Yes=1)'] = ''
         
@@ -324,9 +326,8 @@ def inter_pipe_bare(
     
         df = pd.concat([input_trade, input_imports])
         
-        df.to_csv(os.path.join(config_dir, tec, "input_edit.csv"), index=False)
+        df.to_csv(os.path.join(config_dir, tec, "input.csv"), index=False)
         log.info(f"Input pipe exp csv generated at: {os.path.join(config_dir, tec)}.")
-        input_df = df.copy()
 
     # Create base file: output
     for tec in covered_tec:
@@ -368,9 +369,8 @@ def inter_pipe_bare(
     
         df = pd.concat([output_trade, output_imports])
         
-        df.to_csv(os.path.join(config_dir, tec, "output_edit.csv"), index=False)
+        df.to_csv(os.path.join(config_dir, tec, "output.csv"), index=False)
         log.info(f"Output csv generated at: {os.path.join(config_dir, tec)}.")
-        output_df = df.copy()    
         
     # Create base file: technical_lifetime
     for tec in covered_tec: # TODO: Check on why import technologies do not have technical lifetimes in base
@@ -378,9 +378,8 @@ def inter_pipe_bare(
                                    columndict = {'year_vtg': 'broadcast',
                                                  'value': None,
                                                  'unit': 'y'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "technical_lifetime_edit.csv"), index=False)
+        outdf.to_csv(os.path.join(config_dir, tec, "technical_lifetime.csv"), index=False)
         log.info(f"Technical Lifetime csv generated at: {os.path.join(config_dir, tec)}.")
-        tec_lt_df = outdf.copy()
 
     # Create base file: inv_cost
     for tec in covered_tec: #TODO: Imports do not have investment costs in global pool setup
@@ -388,10 +387,8 @@ def inter_pipe_bare(
                                    columndict = {'year_vtg': 'broadcast',
                                                  'value': None,
                                                  'unit': 'USD/GWa'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "inv_cost_edit.csv"), index=False)
-        log.info(f"Investment cost csv generated at: {os.path.join(config_dir, tec)}.")
-        inv_cost_df = outdf.copy()
-        
+        outdf.to_csv(os.path.join(config_dir, tec, "inv_cost.csv"), index=False)
+        log.info(f"Investment cost csv generated at: {os.path.join(config_dir, tec)}.")        
       
     # Create base file: fix_cost
     for tec in covered_tec: #TODO: Global pool technologies do not have fixed costs in base scenario
@@ -400,20 +397,18 @@ def inter_pipe_bare(
                                                  'year_act': 'broadcast',
                                                  'value': None,
                                                  'unit': 'USD/GWa'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "fix_cost_edit.csv"), index=False)
+        outdf.to_csv(os.path.join(config_dir, tec, "fix_cost.csv"), index=False)
         log.info(f"Fixed cost csv generated at: {os.path.join(config_dir, tec)}.")
-        fix_cost_df = outdf.copy()
 
     # Create base file: var_cost
-    for tec in covered_tec: #TODO: Global pool technologies do not have fixed costs in base scenario
+    for tec in covered_tec:
         outdf =  build_parameterdf(network_df = network_setup[tec], 
                                    columndict = {'year_vtg': 'broadcast',
                                                  'year_act': 'broadcast',
                                                  'value': None,
                                                  'unit': 'USD/GWa'})   
-    outdf.to_csv(os.path.join(config_dir, tec, "var_cost_edit.csv"), index=False)
-    log.info(f"Variable cost csv generated at: {os.path.join(config_dir, tec)}.")
-    var_cost_df = outdf.copy()
+        outdf.to_csv(os.path.join(config_dir, tec, "var_cost.csv"), index=False)
+        log.info(f"Variable cost csv generated at: {os.path.join(config_dir, tec)}.")
 
     # Create base file: capacity_factor (DOES NOT REQUIRE EDIT)
     for tec in covered_tec: 
@@ -422,213 +417,211 @@ def inter_pipe_bare(
                                                  'year_act': 'broadcast',
                                                  'value': 1,
                                                  'unit': '%'})   
-    outdf.to_csv(os.path.join(config_dir, tec, "capacity_factor.csv"), index=False) # Does not require edit
-    log.info(f"Capacity factor csv generated at: {os.path.join(config_dir, tec)}.")
-    cap_factor_df = outdf.copy()
+        outdf.to_csv(os.path.join(config_dir, tec, "capacity_factor.csv"), index=False) # Does not require edit
+        log.info(f"Capacity factor csv generated at: {os.path.join(config_dir, tec)}.")
 
     # Create base file: Relation to aggregate exports so global level can be calculated/calibrated
     for tec in covered_tec:
-        template = get_template(base_scenario, "input", base_trade_technology[tec])
+        template = get_template(base_scenario, "relation_activity", base_trade_technology[tec])
   
-        # Trade Level
         df = network_setup[tec][['exporter', 'export_technology']]
-        df = df.rename(columns = {'exporter': 'node_origin',
+        df = df.rename(columns = {'exporter': 'node_loc',
                                   'export_technology': 'technology'})
-        df['node_loc'] = df['node_origin']
-        df["year_vtg"] = "broadcast"
+        df['node_rel'] = df['node_loc']
+        df["year_rel"] = "broadcast"
         df["year_act"] = "broadcast"
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
-        df["level"] = export_level[tec]
-        df["value"] = None
-        df['time'] = 'year'
-        df['time_origin'] = 'year'
-        df['unit'] = None
+        df["value"] = 1
+        df['unit'] = '???'
+        df['relation'] = trade_technology[tec] + '_exp_global'
         df = df[template.columns]
-        input_trade = df.copy()
+        df.to_csv(os.path.join(config_dir, tec, "relation_activity_global_aggregate.csv"), index=False)
+        log.info(f"Relation activity (global aggregatin) csv generated at: {os.path.join(config_dir, tec)}.")
         
-    spec_tech_pipe_group = str(
-        config.get("spec", {}).get("spec_tech_pipe_group", [])[0]
-    )
-    if spec_tech_pipe_group == "True":
-        try:
-            relation_tech_group = pd.read_csv(
-                Path(package_data_path("inter_pipe"))
-                / "relation_activity_pipe_group.csv"
-            )
-        except FileNotFoundError:
-            spec_tech_group = {
-                "relation": ["example_group"],
-                "node_rel": ["R12_AFR"],
-                "year_rel": ["broadcast"],
-                "node_loc": ["R12_AFR"],
-                "technology": ["example_tech"],
-                "year_act": ["broadcast"],
-                "mode": ["M1"],
-                "value": [1.0],
-                "unit": ["???"],
-            }
-            relation_tech_group = pd.DataFrame(spec_tech_group)
-            relation_tech_group.to_csv(
-                os.path.join(config_dir, "relation_activity_pipe_group_edit.csv"),
-                index=False,
-            )
-            raise Exception(
-                "The function stopped. Sheet relation_activity_pipe_group.csv has been generated. Fill in the specific pairs first and run again."
-            )
-    elif spec_tech_pipe_group == "False":
-        pass  # TODO: adding general function, group all pipe technologies to inter, linking inter to pipe supply techs
-    else:
-        raise Exception("Please use True or False.")
-    df = relation_tech_group.copy()
-    set_tech.extend(df["technology"].unique())
-    set_relation.extend(df["relation"].unique())
+    # Create base file: relation to link all pipelines/routes to an exporter
+    for tec in covered_tec:
+        template = get_template(base_scenario, "relation_activity", base_trade_technology[tec])
+         
+        df = network_setup[tec][['exporter', 'export_technology']]
+        df = df.rename(columns = {'exporter': 'node_loc',
+                                  'export_technology': 'technology'})
+        df['node_rel'] = df['node_loc']
+        df["year_rel"] = "broadcast"
+        df["year_act"] = "broadcast"
+        df["mode"] = "M1"
+        df["commodity"] = trade_commodity[tec]
+        df["value"] = 1
+        df['unit'] = '???'
+        df['relation'] = trade_technology[tec] + '_exp_from_' + df['node_loc'].str.lower().str.split('_').str[1]
+        df = df[template.columns]
+        df.to_csv(os.path.join(config_dir, tec, "relation_activity_regionalexp.csv"), index=False)
+        log.info(f"Relation activity (regional exports) csv generated at: {os.path.join(config_dir, tec)}.")
+        
+    # Create base file: relation to link all pipelines/routes to an importer
+    for tec in covered_tec:
+        template = get_template(base_scenario, "relation_activity", base_trade_technology[tec])
+         
+        df = network_setup[tec][['importer', 'import_technology']]
+        df = df.rename(columns = {'importer': 'node_loc',
+                                  'import_technology': 'technology'})
+        df['node_rel'] = df['node_loc']
+        df["year_rel"] = "broadcast"
+        df["year_act"] = "broadcast"
+        df["mode"] = "M1"
+        df["commodity"] = trade_commodity[tec]
+        df["value"] = 1
+        df['unit'] = '???'
+        df['relation'] = trade_technology[tec] + '_imp_to_' + df['node_loc'].str.lower().str.split('_').str[1]
+        df = df[template.columns]
+        df.to_csv(os.path.join(config_dir, tec, "relation_activity_regionalimp.csv"), index=False)
+        log.info(f"Relation activity (regional imports) csv generated at: {os.path.join(config_dir, tec)}.")
+#%% Build out bare sheets
+def build_parameter_sheets(config_name: str = None):
+    """
+    Read the input csv files and build the tech sets and parameters.
 
-    # Generate pipe supply technology: name techs and levels
-    node_name_base = base.set("node")
-    node_name = {
-        node
-        for node in node_name_base
-        if node.lower() != "world" and "glb" not in node.lower()
-    }
-    tech_supply_name = [
-        f"{tech}_{tech_suffix_supply[0]}" for tech in tech_mother_supply
+    Args:
+        config_name (str, optional): Name of the config file.
+            If None, uses default config from data/inter_pipe/config.yaml
+    """
+    # Read all CSV files that do not contain "edit" in the name
+    csv_files = [
+        f
+        for f in Path(package_data_path("inter_pipe")).glob("*.csv")
+        if "edit" not in f.name
+    ]
+    data_dict = {}
+    for csv_file in csv_files:
+        key = csv_file.stem
+        data_dict[key] = pd.read_csv(csv_file)
+
+    # Load the config
+    if config_name is None:
+        config_name = "inter_pipe"
+    full_path = package_data_path("inter_pipe", "config.yaml")
+    config = load_config(full_path)
+    log.info(f"Loading config from: {full_path}")
+
+    # Generate par_list and set_list
+    par_list = [
+        "input",
+        "output",
+        "technical_lifetime",
+        "inv_cost",
+        "fix_cost",
+        "var_cost",
+        "capacity_factor",
+        "relation_activity",
+        "relation_upper",
+        "relation_lower",
+    ]
+    set_list = [
+        "technology",
+        # "commodity",
+        "level",
+        "relation",
     ]
 
-    # Generate pipe supply technology: sheet output_pipe_supply (no need to edit)
-    template = get_template(base, "output", tech_mother_supply[0])
-    df = pd.DataFrame(
-        {
-            "node_loc": [node for node in node_name for _ in tech_supply_name],
-            "technology": [tech for _ in node_name for tech in tech_supply_name],
-        }
-    )
-    copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["mode"] = "M1"
-    df["node_dest"] = df["node_loc"]
-    df["commodity"] = commodity_mother_supply[0]
-    df["level"] = f"{level_mother_shorten_supply[0]}_{level_suffix_supply[0]}"
-    df["value"] = 1
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "output_pipe_supply.csv"), index=False)
-    log.info(f"Output pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    set_level.extend(df["level"].unique())
-    output_pipe_supply = df.copy()
+    # Broadcast the data
+    ya_list = [
+        2030,
+        2035,
+        2040,
+        2045,
+        2050,
+        2055,
+        2060,
+        2070,
+        2080,
+        2090,
+        2100,
+        2110,
+    ]  # TODO: get from config
+    for i in data_dict.keys():
+        if "year_rel" in data_dict[i].columns:
+            if data_dict[i]["year_rel"].iloc[0] == "broadcast":
+                data_dict[i] = broadcast_yl(data_dict[i], ya_list)
+                data_dict[i]["year_act"] = data_dict[i]["year_rel"]
+                log.info(f"Parameter {i} Broadcasted.")
+        else:
+            pass
+        if "year_vtg" in data_dict[i].columns and "year_act" in data_dict[i].columns:
+            if (
+                data_dict[i]["year_vtg"].iloc[0] == "broadcast"
+                and data_dict[i]["year_act"].iloc[0] == "broadcast"
+            ):
+                data_dict[i] = broadcast_yv_ya(data_dict[i], ya_list)
+                log.info(f"Parameter {i} Broadcasted.")
+            elif (
+                data_dict[i]["year_vtg"].iloc[0] == "broadcast"
+                and data_dict[i]["year_act"].iloc[0] != "broadcast"
+            ):
+                data_dict[i] = broadcast_yv(data_dict[i], ya_list)
+                log.info(f"Parameter {i} Broadcasted.")
+        else:
+            pass
 
-    # Generate pipe supply technology: sheet technical_lifetime_pipe_supply (no need to edit)
-    df = base.par("technical_lifetime", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(
-        os.path.join(config_dir, "technical_lifetime_pipe_supply.csv"), index=False
-    )
-    log.info(f"Technical lifetime pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    technical_lifetime_pipe_supply = df.copy()
-
-    # Generate pipe supply technology: sheet inv_cost_pipe_supply (no need to edit)
-    df = base.par("inv_cost", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
-    df["value"] = df["value"] * 1  # TODO: debugging
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "inv_cost_pipe_supply.csv"), index=False)
-    log.info(f"Inv cost pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    inv_cost_pipe_supply = df.copy()
-
-    # Generate pipe supply technology: sheet fix_cost_pipe_supply (no need to edit)
-    df = base.par("fix_cost", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
-    df["value"] = df["value"] * 1  # TODO: debugging
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "fix_cost_pipe_supply.csv"), index=False)
-    log.info(f"Fix cost pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    fix_cost_pipe_supply = df.copy()
-
-    # Generate pipe supply technology: sheet var_cost_pipe_supply (no need to edit)
-    df = base.par("var_cost", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
-    df["value"] = df["value"] * 1  # TODO: debugging
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "var_cost_pipe_supply.csv"), index=False)
-    log.info(f"Var cost pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    var_cost_pipe_supply = df.copy()
-
-    # Generate pipe supply technology: sheet capacity_factor_pipe_supply (no need to edit)
-    df = base.par("capacity_factor", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "capacity_factor_pipe_supply.csv"), index=False)
-    log.info(f"Capacity factor pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    capacity_factor_pipe_supply = df.copy()
-
-    # Generate key relation: pipe_supply -> pipe, i.e, pipe_supply techs contribute to pipe (group)
-    spec_supply_pipe_group = str(
-        config.get("spec", {}).get("spec_supply_pipe_group", [])[0]
-    )
-    if spec_supply_pipe_group == "True":
-        try:
-            relation_tech_group = pd.read_csv(
-                Path(package_data_path("inter_pipe"))
-                / "relation_activity_supply_group.csv"
+    # Generate relation upper and lower
+    for i in [k for k in data_dict.keys() if "relation_activity" in k]:
+        if i != "relation_activity_ori":
+            key_name = i
+            df = data_dict[i][["relation", "node_rel", "year_rel", "unit"]].assign(
+                value=0
             )
-        except FileNotFoundError:
-            template_group = {
-                "relation": ["example_group"],
-                "node_rel": ["R12_AFR"],
-                "year_rel": ["broadcast"],
-                "node_loc": ["R12_AFR"],
-                "technology": ["example_tech"],
-                "year_act": ["broadcast"],
-                "mode": ["M1"],
-                "value": [1.0],
-                "unit": ["???"],
-            }
-            relation_tech_group = pd.DataFrame(template_group)
-            relation_tech_group.to_csv(
-                os.path.join(config_dir, "relation_activity_supply_group_edit.csv"),
-                index=False,
-            )
-            raise Exception(
-                "The function stopped. Sheet relation_activity_supply_group.csv has been generated. Fill in the specific pairs first and run again."
-            )
-    elif spec_supply_pipe_group == "False":
-        pass  # TODO: adding general funtion, group all pipe technologies to inter, linking inter to pipe supply techs
-    else:
-        raise Exception("Please use True or False.")
-    df = relation_tech_group.copy()
-    set_tech.extend(df["technology"].unique())
-    set_relation.extend(df["relation"].unique())
+            df = broadcast_yl(df, ya_list)
+            key_name_upper = key_name.replace("activity", "upper")
+            data_dict[key_name_upper] = df.copy()
 
-    # Generate technology set sheet (no need to edit)
-    technology = list(set(set_tech))
-    df = pd.DataFrame({"technology": technology})
-    df.to_csv(os.path.join(config_dir, "technology.csv"), index=False)
-    log.info(f"Set technology csv generated.")
+            key_name_lower = key_name.replace("activity", "lower")
+            data_dict[key_name_lower] = df.copy()
+        else:
+            pass
 
-    # Generate commodity set sheet (no need to edit)
+    # Load the scenario
+    start_model = str(config.get("scenario", {}).get("start_model", [])[0])
+    start_scen = str(config.get("scenario", {}).get("start_scen", [])[0])
+    if not start_model or not start_scen:
+        error_msg = (
+            "Config must contain 'scenario.start_model' and 'scenario.start_scen'\n"
+            f"Please check the config file at: {full_path}"
+        )
+        log.error(error_msg)
+        raise ValueError(error_msg)
+    base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+    log.info(f"Loaded scenario: {start_model}/{start_scen}")
 
-    # Generate level set sheet (no need to edit)
-    level = list(set(set_level))
-    df = pd.DataFrame({"level": level})
-    df.to_csv(os.path.join(config_dir, "level.csv"), index=False)
-    log.info(f"Set level csv generated.")
+    # Clone scenario
+    target_model = str(config.get("scenario", {}).get("target_model", [])[0])
+    target_scen = str(config.get("scenario", {}).get("target_scen", [])[0])
+    scen = base.clone(target_model, target_scen, keep_solution=False)
+    scen.set_as_default()
+    log.info("Scenario cloned.")
 
-    # Generate relation set sheet (no need to edit)
-    relation = list(set(set_relation))
-    df = pd.DataFrame({"relation": relation})
-    df.to_csv(os.path.join(config_dir, "relation.csv"), index=False)
-    log.info(f"Set relation csv generated.")
+    # Add set and parameter
+    with scen.transact("Added"):
+        for i in set_list:
+            if i in data_dict:
+                i_str = (
+                    data_dict[i]
+                    .apply(lambda row: row.astype(str).str.cat(sep=", "), axis=1)
+                    .tolist()
+                )  # str or list of str only
+                scen.add_set(i, i_str)
+                log.info(f"Set {i} added.")
+            else:
+                pass
+        for i in par_list:
+            # Find all keys in data_dict that contain the parameter name
+            matching_keys = [k for k in data_dict.keys() if i in k]
+            if matching_keys:
+                # Combine all matching DataFrames
+                combined_df = pd.concat(
+                    [data_dict[k] for k in matching_keys], ignore_index=True
+                )
+                scen.add_par(i, combined_df)
+                log.info(f"Parameter {i} from {matching_keys} added.")
+            else:
+                pass
 
-    # # Keep track of all csv files
-    # csv_files = []
-    # csv_files.append(os.path.join(config_dir, "input_pipe_exp.csv")) #TODO: might be nice to have a csv list
-
-    # return csv_files
-
+    return scen
