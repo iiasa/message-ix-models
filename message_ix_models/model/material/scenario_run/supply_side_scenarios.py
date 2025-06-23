@@ -1,10 +1,10 @@
 import logging
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
-from typing import TYPE_CHECKING
 
 """Infrastructure Supply Side Measures"""
 
@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+
 
 def industry_sector_net_zero_targets(scenario: "Scenario"):
     # Add iron and steel net zero target
@@ -892,6 +893,7 @@ def keep_fuel_share(scenario: "Scenario"):
 
 def minimum_ccs_cement(scenario: "Scenario"):
     # CCS cement use should be minimum as in the paper scenarios (2degrees_2207_2025_macro)
+    # Not in use at the moment
 
     s_info = ScenarioInfo(scenario)
 
@@ -932,96 +934,61 @@ def minimum_ccs_cement(scenario: "Scenario"):
     scenario.commit("Model changes made.")
 
 
-def parametrize_supply_scenario(supply_scenario: str, scenario: "Scenario"):
-    if supply_scenario == "substitution":
-        log.info("Building material substitution scenario")
-        # No CCS, fuel share same as today, recycling as today
-        # Material substitution allowed.
-        no_ccs(scenario)
-        limit_asphalt_recycling(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_h2_cement(scenario)
-        no_ethanol_cement(scenario)
-    elif supply_scenario == "fuel_switching":
-        # No material substitution
-        # Recycling as today
-        # No CCS
-        log.info("Building fuel switching scenario")
-        no_clinker_substitution(scenario)
-        limit_asphalt_recycling(scenario)
-        no_ccs(scenario)
-    elif supply_scenario == "ccs":
-        # No material substitution
-        # Recycling as today
-        # Keep fuel share as today
-        log.info("Building ccs scenario")
-        no_clinker_substitution(scenario)
-        limit_asphalt_recycling(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_ethanol_cement(scenario)
-        no_h2_cement(scenario)
-        # minimum_ccs_cement(scenario)
-    elif supply_scenario == "recycling":
-        # No material substitution
-        # Recycling increased for steel and alu.
-        # For asphalt enhanced modes are allowed. (M4,M5)
-        # No CCS
-        # Keep fuel share as today
-        log.info("Building recycling scenario")
-        no_clinker_substitution(scenario)
-        increased_recycling(scenario)
-        no_ccs(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_ethanol_cement(scenario)
-        no_h2_cement(scenario)
-    elif supply_scenario == "default":
-        log.info("Default mode")
-        no_clinker_substitution(scenario)
-        limit_asphalt_recycling(scenario)
-        keep_fuel_share(scenario)
-        no_h2_steel(scenario)
-        no_methanol_cement(scenario)
-        no_ethanol_cement(scenario)
-        no_h2_cement(scenario)
-        no_ccs(scenario)
-    elif supply_scenario == "all":
-        increased_recycling(scenario)
-        # industry_sector_net_zero_targets(scenario)
+def fuel_switch_constraints(scenario: "Scenario"):
+    keep_fuel_share(scenario)
+    no_h2_steel(scenario)
+    no_methanol_cement(scenario)
+    no_ethanol_cement(scenario)
+    no_h2_cement(scenario)
 
-        # # Add climate budget as well
-        #
-        # budget = "1000f"
-        # budget_i = 3667
-        # name = scenario.scenario.split('_')[2]
-        # print(name)
-        #
-        # scenario_cbud = scenario.clone(
-        #     model=scenario.model,
-        #     scenario=name + "_demand_increased_supply_" + budget,
-        #     shift_first_model_year=2030,
-        # )
-        #
-        # emission_dict = {
-        #     "node": "World",
-        #     "type_emission": "TCE",
-        #     "type_tec": "all",
-        #     "type_year": "cumulative",
-        #     "unit": "???",
-        # }
-        # df = message_ix.make_df("bound_emission", value=budget_i, **emission_dict)
-        # scenario_cbud.check_out()
-        # scenario_cbud.add_par("bound_emission", df)
-        # scenario_cbud.commit("add emission bound")
-        # pre_model_yrs = scenario_cbud.set(
-        #     "cat_year", {"type_year": "cumulative", "year": [2020, 2015, 2010]}
-        # )
-        # scenario_cbud.check_out()
-        # scenario_cbud.remove_set("cat_year", pre_model_yrs)
-        # scenario_cbud.commit("remove cumulative years from cat_year set")
-        # scenario_cbud.set("cat_year", {"type_year": "cumulative"})
+
+def parametrize_supply_scenario(supply_scenario: str, scenario: "Scenario"):
+    #  "substitution":
+    # No CCS, fuel share same as today, recycling as today
+
+    # "fuel_switching":
+    # No material substitution
+    # Recycling as today
+    # No CCS
+
+    #  "ccs":
+    # No material substitution
+    # Recycling as today
+    # Keep fuel share as today
+
+    # "recycling":
+    # No material substitution
+    # Recycling increased for steel and alu.
+    # For asphalt enhanced modes are allowed. (M4,M5)
+    # No CCS
+    # Keep fuel share as today
+
+    func_map = {
+        no_clinker_substitution: ["default", "fuel_switching", "ccs", "recycling"],
+        limit_asphalt_recycling: [
+            "default",
+            "substitution",
+            "fuel_switching",
+            "ccs",
+        ],
+        no_ccs: [
+            "default",
+            "substitution",
+            "fuel_switching",
+            "recycling",
+        ],
+        fuel_switch_constraints: [
+            "default",
+            "substitution",
+            "ccs",
+            "recycling",
+        ],
+        increased_recycling: [
+            "all",
+            "recycling",
+        ],
+    }
+    log.info(f"Building {supply_scenario} supply scenario")
+    for func, str_list in func_map.items():
+        if supply_scenario in str_list:
+            func(scenario)
