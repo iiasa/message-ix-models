@@ -1,14 +1,25 @@
 """Common steps for workflows."""
 
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional
 
 from message_ix import Scenario
 
+from message_ix_models.util import identify_nodes
 from message_ix_models.util.config import ConfigHelper
 
 if TYPE_CHECKING:
+    from typing import TypedDict
+
     from message_ix_models import Context
+
+    class CommonArgs(TypedDict):
+        relation_name: str
+        reg: str
+
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -95,5 +106,60 @@ def solve(
     if set_as_default:
         # Solve was successful; set default version
         scenario.set_as_default()
+
+    return scenario
+
+
+def step_0(context: "Context", scenario: "Scenario", **kwargs) -> "Scenario":
+    """Preparation for climate policy workflows.
+
+    This is similar to (and shares the name of) :func:`.project.engage.workflow.step_0`,
+    but uses settings specific to the model structure used in :mod:`.project.ssp` /
+    ScenarioMIP7.
+
+    In particular:
+
+    - :func:`.add_AFOLU_CO2_accounting` is called with the default `method`, currently
+      :attr:`METHOD.B <.add_AFOLU_CO2_accounting.METHOD.B>`_.
+    - :func:`.add_alternative_TCE_accounting` is called with the default `method`,
+      currently :attr:`METHOD.B <.add_alternative_TCE_account.METHOD.B>`_.
+
+    .. todo:: Merge :func:`.project.engage.workflow.step_0` into this function and
+       generalize with appropriate options/parameters.
+    """
+    from message_ix_models.tools import (
+        add_AFOLU_CO2_accounting,
+        add_alternative_TCE_accounting,
+        add_CO2_emission_constraint,
+        add_FFI_CO2_accounting,
+        remove_emission_bounds,
+    )
+
+    try:
+        scenario.remove_solution()
+    except ValueError:
+        pass  # Solution did not exist
+
+    remove_emission_bounds.main(scenario)
+
+    # Identify the node codelist used by `scenario` (in case it is not set on `context`)
+    context.model.regions = identify_nodes(scenario)
+
+    kw: "CommonArgs" = dict(
+        relation_name=context.model.relation_global_co2,
+        reg=f"{context.model.regions}_GLB",
+    )
+
+    # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
+    log.info("Add separate FFI and AFOLU CO2 accounting")
+    add_FFI_CO2_accounting.main(scenario, **kw, constraint_value=None)
+    add_AFOLU_CO2_accounting.add_AFOLU_CO2_accounting(scenario, **kw)
+
+    log.info("Add alternative TCE accounting")
+    add_alternative_TCE_accounting.main(scenario)
+
+    add_CO2_emission_constraint.main(
+        scenario, **kw, constraint_value=0.0, type_rel="lower"
+    )
 
     return scenario
