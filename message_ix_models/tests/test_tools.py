@@ -158,7 +158,8 @@ def test_add_FFI_CO2_accounting(scenario: "Scenario") -> None:
     # TODO Add assertions about modified structure & data
 
 
-def test_add_alternative_TCE_accounting(scenario: "Scenario") -> None:
+def test_add_alternative_TCE_accounting_A(scenario: "Scenario") -> None:
+    """:attr:`add_alternative_TCE_accounting.METHOD.A`."""
     info = ScenarioInfo(scenario)
 
     emission = ["LU_CO2", "TCE"]
@@ -173,14 +174,49 @@ def test_add_alternative_TCE_accounting(scenario: "Scenario") -> None:
         land_scenario=land_scenario,
     )
 
-    with scenario.transact("Prepare for test of add_AFOLU_CO2_accounting()"):
+    with scenario.transact("Prepare for test of add_alternative_TCE_accounting()"):
         scenario.add_set("emission", emission)
         scenario.add_set("land_scenario", land_scenario)
         scenario.add_set("node", node)
         scenario.add_par("land_emission", land_emission)
 
     # Function runs without error
-    add_alternative_TCE_accounting.main(scenario)
+    add_alternative_TCE_accounting.main(
+        scenario, method=add_alternative_TCE_accounting.METHOD.A
+    )
+
+    # TODO Add assertions about modified structure & data
+
+
+def test_add_alternative_TCE_accounting_B(scenario: "Scenario") -> None:
+    """:attr:`add_alternative_TCE_accounting.METHOD.B`.
+
+    Currently the only thing that differs versus the _A test is "LU_CO2_orig" instead
+    of "LU_CO2".
+    """
+    info = ScenarioInfo(scenario)
+
+    emission = ["LU_CO2_orig", "TCE"]
+    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
+    node = ["R12_GLB"]
+
+    land_emission = make_df("land_emission", value=1.0, unit="-").pipe(
+        broadcast,
+        emission=emission,
+        year=info.Y,
+        node=info.N + node,
+        land_scenario=land_scenario,
+    )
+
+    with scenario.transact("Prepare for test of add_alternative_TCE_accounting()"):
+        scenario.add_set("emission", emission)
+        scenario.add_set("land_scenario", land_scenario)
+        scenario.add_set("node", node)
+        scenario.add_par("land_emission", land_emission)
+
+    # Function runs without error
+    te_all = ["TCE_CO2_FFI", "TCE_CO2", "TCE_non-CO2", "TCE_other"]
+    add_alternative_TCE_accounting.main(scenario, type_emission=te_all, use_gains=True)
 
     # TODO Add assertions about modified structure & data
 
