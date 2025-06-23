@@ -4,13 +4,16 @@ import pandas as pd
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
+from typing import TYPE_CHECKING
 
 """Infrastructure Supply Side Measures"""
 
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
-def industry_sector_net_zero_targets(scenario):
+def industry_sector_net_zero_targets(scenario: "Scenario"):
     # Add iron and steel net zero target
 
     s_info = ScenarioInfo(scenario)
@@ -150,7 +153,7 @@ def industry_sector_net_zero_targets(scenario):
     scenario.commit("Steel sector target added.")
 
 
-def no_clinker_substitution(scenario):
+def no_clinker_substitution(scenario: "Scenario"):
     # Clinker substituion not allowed
     s_info = ScenarioInfo(scenario)
 
@@ -194,7 +197,7 @@ def no_clinker_substitution(scenario):
     scenario.commit("Model changes made.")
 
 
-def no_ccs(scenario):
+def no_ccs(scenario: "Scenario"):
     # CCS is not allowed across industry
     # Accelerated carbonation not allowed, 'recycling_cement':['M2']
 
@@ -243,7 +246,7 @@ def no_ccs(scenario):
     scenario.commit("Model changes made.")
 
 
-def no_h2_steel(scenario):
+def no_h2_steel(scenario: "Scenario"):
     # CCS is not allowed across industry
     # Accelerated carbonation not allowed, 'recycling_cement':['M2']
 
@@ -277,7 +280,7 @@ def no_h2_steel(scenario):
     scenario.commit("Model changes made.")
 
 
-def no_methanol_cement(scenario):
+def no_methanol_cement(scenario: "Scenario"):
     # CCS is not allowed across industry
     # Accelerated carbonation not allowed, 'recycling_cement':['M2']
 
@@ -310,7 +313,7 @@ def no_methanol_cement(scenario):
     scenario.commit("Model changes made.")
 
 
-def no_h2_cement(scenario):
+def no_h2_cement(scenario: "Scenario"):
     # CCS is not allowed across industry
     # Accelerated carbonation not allowed, 'recycling_cement':['M2']
 
@@ -343,7 +346,7 @@ def no_h2_cement(scenario):
     scenario.commit("Model changes made.")
 
 
-def no_ethanol_cement(scenario):
+def no_ethanol_cement(scenario: "Scenario"):
     # CCS is not allowed across industry
     # Accelerated carbonation not allowed, 'recycling_cement':['M2']
 
@@ -376,7 +379,7 @@ def no_ethanol_cement(scenario):
     scenario.commit("Model changes made.")
 
 
-def increased_recycling(scenario):
+def increased_recycling(scenario: "Scenario"):
     s_info = ScenarioInfo(scenario)
 
     nodes = s_info.N
@@ -459,7 +462,7 @@ def increased_recycling(scenario):
     scenario.commit("Increased recycling limits")
 
 
-def limit_asphalt_recycling(scenario):
+def limit_asphalt_recycling(scenario: "Scenario"):
     # Increased recycling modes (M4,M5) are not allowed.
     # M4: Bitumen same, 50% aggregates replaces with RAP
     # M5: Bitumen reduced via rejuvenator agents, 90% RAP
@@ -493,7 +496,7 @@ def limit_asphalt_recycling(scenario):
     scenario.commit("Model changes made.")
 
 
-def keep_fuel_share(scenario):
+def keep_fuel_share(scenario: "Scenario"):
     # Fuel shares are calculated based on baseline demand, defaut supply scenario
     # "df_ratios_final.xlsx" is used, produced by shares_of_current_fuel.ipynb
 
@@ -887,7 +890,7 @@ def keep_fuel_share(scenario):
                     scenario.commit("Share constraints added")
 
 
-def minimum_ccs_cement(scenario):
+def minimum_ccs_cement(scenario: "Scenario"):
     # CCS cement use should be minimum as in the paper scenarios (2degrees_2207_2025_macro)
 
     s_info = ScenarioInfo(scenario)
@@ -929,7 +932,7 @@ def minimum_ccs_cement(scenario):
     scenario.commit("Model changes made.")
 
 
-def parametrize_supply_scenario(supply_scenario, scenario):
+def parametrize_supply_scenario(supply_scenario: str, scenario: "Scenario"):
     if supply_scenario == "substitution":
         log.info("Building material substitution scenario")
         # No CCS, fuel share same as today, recycling as today
