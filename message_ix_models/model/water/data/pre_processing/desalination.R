@@ -1,12 +1,8 @@
 # Desalination
 rm(list = ls())
 require(reshape)
-require(rgdal)
-require(raster)
-require(rgeos)
 require(countrycode)
 require(RCurl)
-require(xlsx)
 
 require(maptools)
 require(ncdf4)
@@ -31,47 +27,6 @@ library(tidyverse)
 # 3. set upperbound for desalination expansion/speed of growth
 
 model_years <- c(1990, 1995, 2000, 2005, 2010, 2015)
-# define region
-
-#### not needed####
-# Load in the cleaned desal database from Hanasaki et al 2016 and add MESSAGE regions
-reg.spdf <- readOGR("P:/ene.model/data/desalination", "REGION_dissolved", verbose = FALSE) # old
-global_desal.spdf <- spTransform(readOGR("P:/ene.model/NEST/desalination/Hanasaki_et_al_2015", "global_desalination_plants"), crs(reg.spdf))
-global_desal.spdf@data$region <- over(global_desal.spdf, reg.spdf[, which(names(reg.spdf) == "REGION")])$REGION
-global_desal.spdf <- global_desal.spdf[-1 * which(is.na(global_desal.spdf@data$region)), ]
-global_desal.spdf@data$msg_vintage <- sapply(global_desal.spdf@data$online, function(x) {
-  as.numeric(model_years[which.min((as.numeric(model_years) - x)^2)])
-})
-global_desal.spdf@data$technology_2 <- sapply(global_desal.spdf@data$technology, function(x) {
-  if (grepl("MSF", x) | grepl("MED", x)) {
-    return("distillation")
-  } else {
-    return("membrane")
-  }
-})
-
-# From : Chart 1.1 in 'Executive Summary Desalination Technology Markets Global Demand Drivers, Technology Issues, Competitive Landscape, and Market Forecasts'
-# Global desalination capacity in 2010 was approx. 24 km3 / year
-global_desal.spdf@data$m3_per_day <- global_desal.spdf@data$m3_per_day * (24 / (sum(global_desal.spdf@data$m3_per_day) * 365 / 1e9))
-
-region <- unique(global_desal.spdf$region)
-# Match to message vintaging and regions, km3/years
-historical_desal_capacity.list <- lapply(c("membrane", "distillation"), function(tt) {
-  temp <- data.frame(do.call(cbind, lapply(region, function(reg) {
-    sapply(unique(global_desal.spdf@data$msg_vintage)[
-      order(unique(global_desal.spdf@data$msg_vintage))
-    ], function(y) {
-      (365 / 1e9) * max(0, sum(global_desal.spdf@data$m3_per_day[
-        which(global_desal.spdf@data$msg_vintage == y & global_desal.spdf@data$region == reg &
-          global_desal.spdf@data$technology_2 == tt)
-      ], na.rm = TRUE), na.rm = TRUE)
-    })
-  })))
-  names(temp) <- region
-  row.names(temp) <- unique(global_desal.spdf@data$msg_vintage)[order(unique(global_desal.spdf@data$msg_vintage))]
-  return(temp)
-})
-names(historical_desal_capacity.list) <- c("membrane", "distillation")
 
 #### from here ####
 
@@ -347,8 +302,8 @@ hist(gov_eff$gov_norm)
 # without log, it has a normal distribution
 
 # WSI from Ed
-wsi_hist <- read.xlsx("P:/ene.model/data/Water/water_stress_cc/ISO_water_stress/wsi_tables_hist_new.xlsx",
-  sheetIndex = 1
+wsi_hist <- read_excel("P:/ene.model/data/Water/water_stress_cc/ISO_water_stress/wsi_tables_hist_new.xlsx",
+  sheet = 1
 )
 
 wsi.df <- wsi_hist %>%
@@ -466,8 +421,8 @@ vif(lm1)
 # remove gov.eff,ru.law,reg.qual  highest value
 
 predictions <- lm1 %>% predict(test.data)
-RMSE(predictions, test.data$log_desal)
-R2(predictions, test.data$log_desal)
+# RMSE(predictions, test.data$log_desal)
+# R2(predictions, test.data$log_desal)
 # plot prediction
 pred1 <- test.data %>% bind_cols(prediction = predictions)
 
@@ -531,7 +486,7 @@ plmtest(lm3, c("time"), type = ("bp"))
 
 # store models
 # manually select model names
-model_names <- c("lm1", "lm2", "lm3")
+model_names <- c("lm1", "lm3") #  "lm2",
 
 # create a list based on models names provided
 list_models <- lapply(model_names, get)
@@ -604,21 +559,21 @@ adjust_fe <- function(fe) {
 }
 
 # lm2
-lm2_es <- tidy(lm2)
-
-c1l2 <- get_estimate(lm2_es, "log_gdp")$estimate
-# c2l2  <- get_estimate(lm2_es,'pol.stab')$estimate
-c3l2 <- get_estimate(lm2_es, "gov")$estimate
-c4l2 <- get_estimate(lm2_es, "log_wsi")$estimate
-c5l2 <- get_estimate(lm2_es, "log_coast")$estimate
-
-cntry.fe2 <- lm2_es %>%
-  filter(grepl("factor", term)) %>%
-  dplyr::rename(iso3 = term, fe = estimate) %>%
-  mutate(iso3 = gsub("[factor(iso3)]", "", iso3)) %>%
-  select(iso3, fe)
-
-fe2 <- adjust_fe(cntry.fe2)
+# lm2_es <- tidy(lm2)
+# 
+# c1l2 <- get_estimate(lm2_es, "log_gdp")$estimate
+# # c2l2  <- get_estimate(lm2_es,'pol.stab')$estimate
+# c3l2 <- get_estimate(lm2_es, "gov")$estimate
+# c4l2 <- get_estimate(lm2_es, "log_wsi")$estimate
+# c5l2 <- get_estimate(lm2_es, "log_coast")$estimate
+# 
+# cntry.fe2 <- lm2_es %>%
+#   filter(grepl("factor", term)) %>%
+#   dplyr::rename(iso3 = term, fe = estimate) %>%
+#   mutate(iso3 = gsub("[factor(iso3)]", "", iso3)) %>%
+#   select(iso3, fe)
+# 
+# fe2 <- adjust_fe(cntry.fe2)
 
 # lm3
 lm3_es <- tidy(lm3)
@@ -639,48 +594,48 @@ cntry.fe3 <- fixef(lm3) %>%
 fe3 <- adjust_fe(cntry.fe3)
 
 # plot
-fe2 %>%
-  filter(iso3 == "CHN") %>%
-  filter(scenario != "SSP4") %>%
-  ggplot(aes(x = year, y = fe_adj, color = scenario)) +
-  geom_line(size = 1) +
-  labs(y = "Fixed effect", x = "China")
+# fe2 %>%
+#   filter(iso3 == "CHN") %>%
+#   filter(scenario != "SSP4") %>%
+#   ggplot(aes(x = year, y = fe_adj, color = scenario)) +
+#   geom_line(size = 1) +
+#   labs(y = "Fixed effect", x = "China")
 
 # tests
 test.res <- master %>%
-  left_join(cntry.fe2 %>% dplyr::rename(fe2 = fe)) %>%
+  # left_join(cntry.fe2 %>% dplyr::rename(fe2 = fe)) %>%
   left_join(cntry.fe3 %>% dplyr::rename(fe3 = fe))
 
 projected <- test.res %>%
   mutate(
-    log_desal2 = log_gdp * (c1l2) + gov * (c3l2) + log_wsi * (c4l2) + log_coast * (c5l2) + fe2,
+    # log_desal2 = log_gdp * (c1l2) + gov * (c3l2) + log_wsi * (c4l2) + log_coast * (c5l2) + fe2,
     log_desal3 = log_gdp * (c1l3) + gov * (c3l3) + log_wsi * (c4l3) + fe3
   )
 
 # plot
 ggplot(projected %>% filter(iso3 %in% c("USA", "ARE", "SAU", "ESP", "KWT", "QAT"))) +
   geom_line(aes(x = year, y = exp(log_desal)), color = "black") +
-  geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
+  # geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
   geom_line(aes(x = year, y = exp(log_desal3)), color = "red") +
   facet_wrap(~iso3) +
   theme_bw()
 
 # check master, which variables are driving drop in projections for ARE, SAU, KWT
-ggplot() +
-  geom_line(data = projected %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_desal2), color = "grey", size = 2) +
-  geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_desal), color = "black") +
-  geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_gdp), color = "blue") +
-  geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_wsi), color = "red") +
-  geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = gov), color = "green") +
-  facet_wrap(~iso3) +
-  theme_bw()
+# ggplot() +
+#   geom_line(data = projected %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_desal2), color = "grey", size = 2) +
+#   geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_desal), color = "black") +
+#   geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_gdp), color = "blue") +
+#   geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = log_wsi), color = "red") +
+#   geom_line(data = master %>% filter(iso3 %in% c("ARE", "SAU", "KWT", "QAT")), aes(x = year, y = gov), color = "green") +
+#   facet_wrap(~iso3) +
+#   theme_bw()
 
 ggplot(projected %>% filter(
   iso3 %in% quantiles[quantiles$quant == "q1_3", ]$iso3,
   !iso3 %in% c("USA", "ARE", "SAU", "ESP", "KWT", "QAT")
 )) +
   geom_line(aes(x = year, y = exp(log_desal)), color = "black") +
-  geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
+  # geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
   geom_line(aes(x = year, y = exp(log_desal3)), color = "red") +
   facet_wrap(~iso3) +
   theme_bw()
@@ -690,14 +645,14 @@ ggplot(projected %>% filter(
   !iso3 %in% c("USA", "ARE", "SAU", "ESP", "KWT", "QAT")
 )) +
   geom_line(aes(x = year, y = exp(log_desal)), color = "black") +
-  geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
+  # geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
   geom_line(aes(x = year, y = exp(log_desal3)), color = "red") +
   facet_wrap(~iso3) +
   theme_bw()
 
 ggplot(projected %>% filter(iso3 %in% quantiles[quantiles$quant == "q3_3", ]$iso3)) +
   geom_line(aes(x = year, y = exp(log_desal)), color = "black") +
-  geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
+  # geom_line(aes(x = year, y = exp(log_desal2)), color = "blue") +
   geom_line(aes(x = year, y = exp(log_desal3)), color = "red") +
   facet_wrap(~iso3) +
   theme_bw()
@@ -708,21 +663,31 @@ ggplot(projected %>% filter(iso3 %in% quantiles[quantiles$quant == "q3_3", ]$iso
 ###########################
 
 #### TAKE MESSAGE REGION-BASIN structure ####
-reg <- "R11" # or R12 or a ISO3
+reg <- "R12" # or R12 or a ISO3
 scen <- "SSP2"
 if (!reg %in% master$iso3) {
   print(paste0("ATTENTION ", reg, " is not in the dataset, continue only if its is a non-country (e.g. R11)"))
 }
-basin_by_region.spdf <- readOGR("P:/ene.model/NEST/delineation/data/delineated_basins_new",
-  paste0("basins_by_region_simpl_", reg),
-  verbose = FALSE
-)
-row.names(basin_by_region.spdf@data) <- 1:length(basin_by_region.spdf$BASIN)
 
-# Gadm country deineation
-countries.spdf <- readOGR("P:/ene.general/Water/global_basin_modeling/basin_delineation/data/country_delineation/gadm/output_data", "gadm_country_boundaries", verbose = FALSE)
-countries.spdf@data$ID <- as.numeric(countrycode(countries.spdf@data$ISO, "iso3c", "iso3n"))
-countries.spdf <- countries.spdf[, c("ID", "ISO", "NAME", "REGION", "STATUS", "CONTINENT")]
+library(sf)
+library(terra)
+library(dplyr)
+library(tidyr)
+library(countrycode)
+library(ncdf4)
+library(ggplot2)
+
+# Read basin by region shapefile
+basin_path <- paste0("P:/ene.model/NEST/delineation/data/delineated_basins_new/basins_by_region_simpl_", reg, ".shp")
+basin_by_region_sf  <- st_read(basin_path, quiet = TRUE)
+sf::sf_use_s2(FALSE)
+
+# Read country boundaries
+country_path <- "P:/ene.general/Water/global_basin_modeling/basin_delineation/data/country_delineation/gadm/output_data/gadm_country_boundaries.shp"
+countries_sf <- st_read(country_path, quiet = TRUE) %>%
+  mutate(ID = as.numeric(countrycode(ISO, "iso3c", "iso3n"))) %>%
+  select(ID, ISO, NAME, REGION, STATUS, CONTINENT)
+countries_sf <- st_make_valid(countries_sf)
 
 # read in raster from ED. ATTENTION 2100 and 2110 missing
 ## Set path data folder in message_ix working copy
@@ -730,59 +695,66 @@ msg_data <- paste0("P:/ene.model/NEST")
 data_path <- path.expand(msg_data)
 RCPs <- c("no_climate", "2p6", "6p0")
 
-nc <- nc_open(paste0(data_path, "/water_scarcity/wsi_memean_ssp2_rcp6p0.nc"), verbose = FALSE)
-watstress.brick <- brick(paste0(data_path, "/water_scarcity/wsi_memean_ssp2_rcp6p0.nc"))
-
-ras1 <- watstress.brick$X2010s
+# -- Step 1: Load NetCDF and create points from initial raster
+nc_path <- file.path(data_path, "water_scarcity", "wsi_memean_ssp2_rcp6p0.nc")
+watstress_rast <- rast(nc_path)
+ras1 <- watstress_rast$`__xarray_dataarray_variable___period=_1`
 plot(ras1)
-start.spdf <- rasterToPoints(ras1, spatial = TRUE)
 
-writeOGR(
-  start.spdf,
-  "P:/ene.model/NEST/desalination",
-  paste0("WSI_check"),
-  driver = "ESRI Shapefile",
-  overwrite_layer = TRUE
-)
-start.spdf$X2010s <- NULL
+start_pts <- as.points(ras1, na.rm = TRUE)
+start_pts_sf <- st_as_sf(start_pts)
 
-basin_info <- over(start.spdf, basin_by_region.spdf)
-country_info <- over(start.spdf, countries.spdf)
+# Save to shapefile
+st_write(start_pts_sf, "P:/ene.model/NEST/desalination/WSI_check.shp", delete_layer = TRUE)
+start_pts_sf$`__xarray_dataarray_variable___period=_1` <- NULL
+
+start_pts_sf <- st_transform(start_pts_sf, crs = st_crs(basin_by_region_sf))
+countries_sf <- st_transform(countries_sf, crs = st_crs(basin_by_region_sf))
+
+start_pts_sf <- start_pts_sf %>%
+  st_join(basin_by_region_sf %>% select(BCU_name), join = st_intersects) %>%
+  st_join(countries_sf %>% select(ISO), join = st_intersects) %>%
+  rename(iso3 = ISO) %>% 
+  drop_na()
 
 for (rcp in RCPs) {
   print(paste0("RCP: ", rcp))
-  if (rcp == "2p6") {
-    nc <- nc_open(paste0(data_path, "/water_scarcity/wsi_memean_ssp1_rcp4p5.nc"), verbose = FALSE)
-    watstress.brick <- brick(paste0(data_path, "/water_scarcity/wsi_memean_ssp1_rcp4p5.nc"))
+  nc_path <- if (rcp == "2p6") {
+    file.path(data_path, "water_scarcity", "wsi_memean_ssp1_rcp4p5.nc")
   } else {
-    nc <- nc_open(paste0(data_path, "/water_scarcity/wsi_memean_ssp2_rcp6p0.nc"), verbose = FALSE)
-    watstress.brick <- brick(paste0(data_path, "/water_scarcity/wsi_memean_ssp2_rcp6p0.nc"))
+    file.path(data_path, "water_scarcity", "wsi_memean_ssp2_rcp6p0.nc")
   }
-
-  ras1 <- watstress.brick$X2010s
-  plot(ras1)
-  start.spdf <- rasterToPoints(ras1, spatial = TRUE)
-  start.spdf$X2010s <- NULL
+  
+  watstress_rast <- rast(nc_path)
   initial_years <- seq(2010, 2090, 5)
-
-  for (i in seq(1:nlayers(watstress.brick))) {
-    r <- raster(watstress.brick, layer = i)
-    proj4string(r) <- proj4string(watstress.brick)
-    yr <- as.numeric(gsub("X", "", gsub("s", "", names(r))))
+  
+  start_year <- 2020
+  interval <- 5
+  pts_all <- start_pts_sf
+  
+  for (i in 1:nlyr(watstress_rast)) {
+    r <- watstress_rast[[i]]
+    yr <- start_year + (i - 1) * interval
+    print(yr)
     if (yr %in% initial_years) {
-      column_name <- paste0("WSI.", yr)
-      start.spdf@data[, column_name] <- raster::extract(r, start.spdf)
-      # there are 876 Na values, we set them = 0
-      start.spdf@data[column_name][is.na(start.spdf@data[column_name])] <- 0
-    } else {}
+      colname <- paste0("WSI.", yr)
+      print(colname)
+      values <- terra::extract(r, vect(pts_all))[,2]
+      values[is.na(values)] <- 0
+      pts_all[[colname]] <- values
+    }
   }
-
-  data.spdf <- start.spdf
-  data.spdf@data <- data.spdf@data %>%
-    bind_cols(
-      basin_info %>% select(BCU_name),
-      country_info %>% select(ISO) %>% dplyr::rename(iso3 = ISO)
-    )
+  
+  # -- Reshape WSI
+  data.df <- pts_all %>%
+    st_drop_geometry() %>%
+    select(BCU_name, iso3, starts_with("WSI.")) %>%
+    mutate(x = st_coordinates(pts_all)[,1],
+           y = st_coordinates(pts_all)[,2]) %>%
+    pivot_longer(cols = starts_with("WSI."),
+                 names_to = "year", values_to = "wsi") %>%
+    mutate(year = as.numeric(gsub("WSI.", "", year))) %>%
+    drop_na()
 
   map_years <- rbind(
     data.frame(my = initial_years) %>% mutate(sy = my - 2),
@@ -792,13 +764,7 @@ for (rcp in RCPs) {
     data.frame(my = initial_years) %>% mutate(sy = my + 2)
   ) %>%
     arrange(my)
-
-  # - makje a df with coordinates and years as columns
-  data.df <- cbind(data.spdf@coords, data.spdf@data) %>%
-    select(BCU_name, iso3, everything()) %>%
-    gather(key = year, value = wsi, 5:19) %>%
-    mutate(year = as.numeric(gsub("WSI.", "", year))) %>%
-    drop_na()
+  
   # - get national GDP, national governance indicator. point wsi and national coast values (as in regression)
   # - mask out points not in coast area
   # - project and make basin average
@@ -999,7 +965,7 @@ comp <- comp %>%
 
 # output
 write.csv(comp %>% select(BCU_name, rcp, year, cap_km3_year),
-  paste0("P:/ene.model/NEST/desalination/projected_desalination_potential_km3_year_", reg, ".csv"),
+  paste0("P:/ene.model/NEST/desalination/projected_desalination_potential_km3_year_", reg, "_new.csv"),
   row.names = F
 )
 
@@ -1039,10 +1005,15 @@ hist_cap.df <- hist_cap.df %>%
   ungroup() %>%
   rename(year = my)
 
-hist_cap.spdf <- hist_cap.df
-coordinates(hist_cap.spdf) <- ~ lon + lat
-proj4string(hist_cap.spdf) <- crs(basin_by_region.spdf)
-basin_info_desal <- over(hist_cap.spdf, basin_by_region.spdf)
+hist_cap_sf <- st_as_sf(hist_cap.df, coords = c("lon", "lat"), crs = st_crs(basin_by_region_sf))
+# do the spatial join (replacing `over`)
+# Get intersection matrix
+join_ix <- st_intersects(hist_cap_sf, basin_by_region_sf)
+# Pick only the first match (like over() used to do)
+matched_rows <- sapply(join_ix, function(x) if (length(x) > 0) x[1] else NA)
+
+# Get attributes from polygons
+basin_info_desal <- basin_by_region_sf[matched_rows, ]
 
 hist_cap.out <- hist_cap.df %>%
   bind_cols(basin_info_desal) %>%
@@ -1087,28 +1058,30 @@ hist_cap.out <- hist_cap.out %>%
   select(-Xhist)
 
 write.csv(hist_cap.out,
-  paste0("P:/ene.model/NEST/desalination/historical_capacity_desalination_km3_year_", reg, ".csv"),
+  paste0("P:/ene.model/NEST/desalination/historical_capacity_desalination_km3_year_", reg, "_new.csv"),
   row.names = F
 )
 
 # for countries with no desalination"))
-hist_cap.out2 <- data.frame(BCU_name = basin_by_region.spdf$BCU_name) %>%
+hist_cap.out2 <- basin_by_region_sf %>%
+  st_drop_geometry() %>%                 # keep only attributes
+  distinct(BCU_name) %>%                 # make sure BCU_name is unique
   crossing(year = c(2010, 2015)) %>%
   crossing(tec_type = c("membrane", "distillation")) %>%
   mutate(cap_km3_year = 0)
 
 write.csv(hist_cap.out,
-  paste0("P:/ene.model/NEST/desalination/historical_capacity_desalination_km3_year_", reg, ".csv"),
+  paste0("P:/ene.model/NEST/desalination/historical_capacity_desalination_km3_year_", reg, "_new.csv"),
   row.names = F
 )
 
-# projection
-comp2 <- data.frame(BCU_name = basin_by_region.spdf$BCU_name) %>%
-  crossing(rcp = RCPs) %>%
-  crossing(year = seq(2020, 2090, 5)) %>%
-  mutate(cap_km3_year = 0.001)
-
-write.csv(comp2 %>% select(BCU_name, rcp, year, cap_km3_year),
-  paste0("P:/ene.model/NEST/desalination/projected_desalination_potential_km3_year_", reg, ".csv"),
-  row.names = F
-)
+# projection (probably obsolete)
+# comp2 <- data.frame(BCU_name = basin_by_region.spdf$BCU_name) %>%
+#   crossing(rcp = RCPs) %>%
+#   crossing(year = seq(2020, 2090, 5)) %>%
+#   mutate(cap_km3_year = 0.001)
+# 
+# write.csv(comp2 %>% select(BCU_name, rcp, year, cap_km3_year),
+#   paste0("P:/ene.model/NEST/desalination/projected_desalination_potential_km3_year_", reg, ".csv"),
+#   row.names = F
+# )
