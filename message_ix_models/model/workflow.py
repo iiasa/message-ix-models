@@ -27,7 +27,7 @@ class Config(ConfigHelper):
     """Common configuration for model workflows across projects.
 
     Currently, the three settings are understood by :func:`solve`, which is used in
-    ENGAGE, NAVIGATE, and possibly other workflows.
+    ENGAGE, NAVIGATE, :mod:`.transport.workflow`, and possibly other workflows.
     """
 
     #: Information on an optional, other scenario from which to copy demand data in
@@ -111,18 +111,22 @@ def solve(
 
 
 def step_0(context: "Context", scenario: "Scenario", **kwargs) -> "Scenario":
-    """Preparation for climate policy workflows.
+    """Preparation step for climate policy workflows.
 
     This is similar to (and shares the name of) :func:`.project.engage.workflow.step_0`,
-    but uses settings specific to the model structure used in :mod:`.project.ssp` /
-    ScenarioMIP7.
+    but uses settings specific to the model structure used in |ssp-scenariomip| at (5)
+    and (6).
 
-    In particular:
-
-    - :func:`.add_AFOLU_CO2_accounting` is called with the default `method`, currently
-      :attr:`METHOD.B <.add_AFOLU_CO2_accounting.METHOD.B>`_.
-    - :func:`.add_alternative_TCE_accounting` is called with the default `method`,
-      currently :attr:`METHOD.B <.add_alternative_TCE_account.METHOD.B>`_.
+    1. Remove the model solution.
+    2. Call :mod:`.remove_emission_bounds`.
+    3. Update :attr:`.Config.regions` to match `scenario`.
+    4. Call :mod:`.add_FFI_CO2_accounting`.
+    5. Call :func:`.add_AFOLU_CO2_accounting` with the default `method`, currently
+       :attr:`METHOD.B <.add_AFOLU_CO2_accounting.METHOD.B>`.
+    6. Call :mod:`.add_alternative_TCE_accounting` with the default `method`,
+       currently :attr:`METHOD.B <.add_alternative_TCE_accounting.METHOD.B>`.
+    7. Call :mod:`.add_CO2_emission_constraint` with :py:`constraint_value=0,
+       type_rel="lower"`, effectively preventing negative emissions.
 
     .. todo:: Merge :func:`.project.engage.workflow.step_0` into this function and
        generalize with appropriate options/parameters.

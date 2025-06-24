@@ -1,8 +1,13 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Update :mod:`.add_AFOLU_CO2_accounting`
+  and :mod:`.add_alternative_TCE_accounting`
+  for |ssp-scenariomip| (:pull:`354`).
+- New workflow step :func:`.model.workflow.step_0` (:pull:`354`).
 
 v2025.5.28
 ==========

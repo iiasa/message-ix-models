@@ -88,6 +88,9 @@ rst_prolog = r"""
    branch as of commit 8213e6c (2025-05-08) in :pull:`350`.
    It does not reflect further changes made on the :mod:`message_data` ``main`` branch,
    other related branches, or in forks or other repositories.
+
+.. |ssp-scenariomip| replace::
+   :ref:`SSP 2023–2025 <ssp-2024>` / :doc:`/project/scenariomip`
 """
 
 

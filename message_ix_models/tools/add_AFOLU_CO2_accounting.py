@@ -22,7 +22,7 @@ class METHOD(Enum):
     #: Version for e.g. :mod:`project.navigate`.
     A = auto()
 
-    #: Version subsequent to :pull:`354` and ScenarioMIP7/SSP 2024 update.
+    #: Version for |ssp-scenariomip| (:pull:`354`).
     B = auto()
 
 

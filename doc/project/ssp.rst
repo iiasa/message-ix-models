@@ -9,8 +9,8 @@ For the 2023–2025 update process:
 
 .. warning::
 
-   The 2024 SSP update is **under development**.
-   For details, see:
+   The 2023–2025 SSP update is **under development**.
+   For details see, among others:
 
    - Tracking issue :issue:`234`.
    - `Issues and PRs labeled 'p:SSP-2024' <https://github.com/iiasa/message-ix-models/issues?q=label%3Ap:SSP-2024>`_ on the :mod:`.message_ix_models` GitHub repository.
