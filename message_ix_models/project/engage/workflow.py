@@ -180,9 +180,9 @@ def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
     Compare :func:`.model.workflow.step_0`. In this function:
 
     - :func:`.add_AFOLU_CO2_accounting` is called with :attr:`METHOD.A
-      <.add_AFOLU_CO2_accounting.METHOD.A>`_, which is no longer the default.
+      <.add_AFOLU_CO2_accounting.METHOD.A>`, which is no longer the default.
     - :func:`.add_alternative_TCE_accounting` is called with :attr:`METHOD.A
-      <.add_alternative_TCE_account.METHOD.A>`_, which is no longer the default.
+      <.add_alternative_TCE_accounting.METHOD.A>`, which is no longer the default.
     """
     from message_ix_models.tools import (
         add_AFOLU_CO2_accounting,

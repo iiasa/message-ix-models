@@ -1,7 +1,4 @@
-"""Add alternative emission_types for constraints.
-
-.. caution:: |gh-350|
-"""
+"""Add structure and data for emission constraints."""
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -32,13 +29,21 @@ class METHOD(Enum):
     #: Version for e.g. :mod:`project.navigate`.
     A = auto()
 
-    #: Version subsequent to :pull:`354` and ScenarioMIP7/SSP 2024 update.
+    #: Version for |ssp-scenariomip| (:pull:`354`).
     B = auto()
 
 
 @dataclass
 class Data:
-    """Data and options for :func:`main`."""
+    """Data and options for :func:`main`.
+
+    Raises
+    ------
+    ValueError
+        if `type_emission` includes any not in :data:`TYPE_EMISSION`.
+    NotImplementedError
+        if :py:`use_gains=True` and `method` is :attr:`METHOD.A`.
+    """
 
     # Arguments to main()
     scenario: "Scenario"
@@ -68,6 +73,7 @@ class Data:
 
     @property
     def t_CO2(self) -> "Series":
+        """Mask of rows in :attr:`emi_fac` where "CO2" is in the technology ID."""
         return self.emi_fac.technology.str.contains("CO2")
 
 
@@ -78,18 +84,29 @@ def main(
     type_emission: list[str] = ["TCE_CO2", "TCE_non-CO2"],
     use_gains: bool = False,
 ) -> None:
-    """Add alternative emission_types for constraints.
+    """Add structure and data for emission constraints.
 
-    Add alternative emission_types (TCE_CO2 and TCE_non-CO2) so that constraints for
-    both CO2 and non-CO2 GHGs can be separately defined. All relevant emission factors
-    are added.
+    Add all `type_emission` so that constraints for CO₂ and non-CO₂ GHGs can be
+    separately defined. According to `type_emission`, parameter data for
+    ``emission_factor``, ``emission_scaling``, and/or ``land_emission`` are added by
+    calling functions :py:`handle_TCE_*`.
 
     Parameters
     ----------
     scen : :class:`message_ix.Scenario`
         scenario to which changes should be applied
+    method :
+        A member of the :class:`METHOD` enumeration.
     type_emission :
         Emission types to be modified. Zero or more of :data:`TYPE_EMISSION`.
+    use_gains :
+        Affects :func:`handle_TCE_non_CO2` only.
+
+    See also
+    --------
+    handle_TCE_CO2
+    handle_TCE_non_CO2
+    handle_TCE_other
     """
     # Check arguments, retrieve some data used in multiple places
     data = Data(scen, method, type_emission, use_gains)
@@ -115,7 +132,13 @@ def main(
 
 
 def handle_TCE_CO2(scen: "Scenario", data: Data) -> None:
-    """Create emission factor from land_output 'LU_CO2'."""
+    """Add ``land_emission`` data for emission="TCE_CO2" based on data for :attr:`e_lu`.
+
+    Raises
+    ------
+    ValueError
+        if "TCE_CO2" is in :py:`data.type_emission` **and** :py:`data.lu_co2` is empty.
+    """
     te = "TCE_CO2"
     if te not in data.type_emission:
         return
@@ -126,6 +149,10 @@ def handle_TCE_CO2(scen: "Scenario", data: Data) -> None:
 
 
 def handle_TCE_non_CO2(scen: "Scenario", data: Data) -> None:
+    """Add parameter data for emission="TCE_non-CO2".
+
+    Data for ``emission_factor``, ``emission_scaling``, and ``land_emission`` are added.
+    """
     te = "TCE_non-CO2"
     if te not in data.type_emission:
         return
@@ -188,11 +215,13 @@ def handle_TCE_non_CO2(scen: "Scenario", data: Data) -> None:
 
 
 def handle_TCE_other(scen: "Scenario", data: Data) -> None:
-    """Handle ``TCE_other``.
+    """Add parameter data for emission="TCE_other".
 
     Create emission accounting for land-use CO2 and non-CO2 GHGs and FFI-non-CO2 GHGs
     and shipping related emissions. Non-CO2 GHGs are already included when copying
     emission_factor TCE-non-CO2 hence we only need to copy shipping CO2 emissions.
+
+    Data for ``emission_factor`` and ``land_emission`` are added.
     """
     te = "TCE_other"
     if te not in data.type_emission:
