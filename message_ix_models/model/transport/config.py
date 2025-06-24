@@ -1,4 +1,6 @@
 import logging
+import re
+from copy import deepcopy
 from dataclasses import InitVar, dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
@@ -13,10 +15,64 @@ from message_ix_models.util import package_data_path
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.sdmx import AnnotationsMixIn
 
+from .policy import ExogenousEmissionPrice, TaxEmission
+
 if TYPE_CHECKING:
     from sdmx.model import common
 
+    from message_ix_models.tools.policy import Policy
+
+
 log = logging.getLogger(__name__)
+
+#: All files in :file:`data/transport/R12/price-emission/`.
+PRICE_EMISSION_URL = {
+    # "LED-SSP2": "SSP_LED_v5.3.1/baseline_1000f_v1",
+    # "LED-SSP2": "SSP_LED_v5.3.1/INDC2030i_SSP2 - Very Low Emissions_v1",
+    "LED-SSP2": "SSP_LED_v5.3.1/SSP2 - Very Low Emissions_v2",
+    # "SSP1": "SSP_SSP1_v5.3.1/baseline_1000f_v1",
+    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Low Emissions_a_v1",
+    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Low Emissions_v1",
+    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Very Low Emissions_v1",
+    # "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Low Emissions_a_v2",
+    "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Low Emissions_v2",
+    # "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Very Low Emissions_v2",
+    # "SSP2": "SSP_SSP2_v5.3.1/baseline_1000f_v2",
+    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_10_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_110_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_15_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_20_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_25_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_50_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_5_v3",
+    # "SSP2": "SSP_SSP2_v5.3.1/INDC2030i_SSP2 - Low Emissions_a_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/INDC2030i_SSP2 - Low Emissions_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/npiref2035_low_dem_scen2_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/NPIREF_price_cap_5$_bkp_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Low Overshootf_price_cap_5$_bkp_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Low Overshootf_v3",
+    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Medium-Low Emissionsf_v1",
+    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_v10",
+    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Emissions_a_v2",
+    "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Emissions_v2",
+    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Overshoot_v2",
+    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium Emissions_a_v2",
+    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium Emissions_v2",
+    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium-Low Emissions_v2",
+    "SSP3": "SSP_SSP3_v5.3.1/baseline_1000f_v1",
+    # "SSP4": "SSP_SSP4_v5.3.1/baseline_1000f_v1",
+    # "SSP4": "SSP_SSP4_v5.3.1/NPi2030_v1",
+    # "SSP4": "SSP_SSP4_v5.3.1/NPiREF_SSP4 - Low Overshootf_v1",
+    # "SSP4": "SSP_SSP4_v5.3.1/NPiREF_v1",
+    "SSP4": "SSP_SSP4_v5.3.1/SSP4 - Low Overshoot_v2",
+    # "SSP5": "SSP_SSP5_v5.3.1/baseline_1000f_v2",
+    # "SSP5": "SSP_SSP5_v5.3.1/baseline2055_low_dem_scen_v1",
+    # "SSP5": "SSP_SSP5_v5.3.1/baseline2060_low_dem_scen_v2",
+    # "SSP5": "SSP_SSP5_v5.3.1/NPi2030_v1",
+    # "SSP5": "SSP_SSP5_v5.3.1/NPiREF_SSP5 - Low Overshootf_v1",
+    # "SSP5": "SSP_SSP5_v5.3.1/NPiREF_v1",
+    "SSP5": "SSP_SSP5_v5.3.1/SSP5 - Low Overshoot_v2",
+}
 
 
 @dataclass
@@ -187,11 +243,9 @@ class Config(ConfigHelper):
     #: appearing in MA³T.
     node_to_census_division: dict = field(default_factory=dict)
 
-    #: **Temporary** setting for the SSP 2024 project: indicates whether the base
-    #: scenario used is a policy (carbon pricing) scenario, or not. This currently does
-    #: not affect *any* behaviour of :mod:`~message_ix_models.model.transport` except
-    #: the selection of a base scenario via :func:`.base_scenario_url`.
-    policy: bool = False
+    #: Instances of :class:`.Policy` subclasses applicable in a workflow or to a
+    #: scenario.
+    policy: set["Policy"] = field(default_factory=set)
 
     #: Flags for distinct scenario features according to projects. In addition to
     #: providing values directly, this can be set by passing :attr:`futures_scenario` or
@@ -383,21 +437,18 @@ class Config(ConfigHelper):
         self.ssp = SSP_2024.by_urn(sca.SSP_URN)
 
         # Store settings on the Config instance
+        self.base_scenario_url = sca.base_scenario_URL
+
+        if sca.policy:
+            self.policy.add(sca.policy)
+
         self.project["LED"] = sca.is_LED_scenario
         self.project["EDITS"] = {"activity": sca.EDITS_activity_id}
 
-        self.base_scenario_url = sca.base_scenario_URL
-
         # Construct labels including the SSP code and policy identifier
-        # ‘Short’ label used for workflow steps
-        label = f"{code.id}{' policy' if self.policy else ''}"
-        # ‘Full’ label used in the scenario name
-        if not sca.is_LED_scenario and sca.EDITS_activity_id is None:
-            label_full = f"SSP_2024.{self.ssp.name}"
-        else:
-            label_full = label
-
-        return label, label_full
+        # 1. ‘Short’ label used for workflow steps
+        # 2. ‘Full’ label used in the scenario name
+        return code.id, re.sub("^SSP", "SSP_2024.", code.id)
 
 
 @dataclass
@@ -408,6 +459,15 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
     is_LED_scenario: bool
     EDITS_activity_id: Optional[str]
     base_scenario_URL: str
+    policy: Optional["Policy"]
+
+    @classmethod
+    def from_obj(cls, obj, globals=None):
+        globals = (globals or {}) | dict(
+            TaxEmission=TaxEmission,
+            ExogenousEmissionPrice=ExogenousEmissionPrice,
+        )
+        return super().from_obj(obj, globals=globals)
 
 
 def get_cl_scenario() -> "common.Codelist":
@@ -435,7 +495,9 @@ def get_cl_scenario() -> "common.Codelist":
     )
 
 
-def refresh_cl_scenario(cl: Optional["common.Codelist"] = None) -> "common.Codelist":
+def refresh_cl_scenario(
+    existing: Optional["common.Codelist"] = None,
+) -> "common.Codelist":
     """Refresh ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
 
     The code list is entirely regenerated. If it is different from `cl`, the new
@@ -449,10 +511,10 @@ def refresh_cl_scenario(cl: Optional["common.Codelist"] = None) -> "common.Codel
     IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
     cl_ssp_2024 = read("ICONICS:SSP(2024)")
 
-    candidate: "common.Codelist" = common.Codelist(
+    cl: "common.Codelist" = common.Codelist(
         id="CL_TRANSPORT_SCENARIO",
         maintainer=IIASA_ECE,
-        version="1.0.0",
+        version="1.1.0",
         is_external_reference=False,
         is_final=False,
     )
@@ -467,39 +529,50 @@ def refresh_cl_scenario(cl: Optional["common.Codelist"] = None) -> "common.Codel
     #   latest in this sequence for which y₀=2020, rather than 2030.
     base_url = "ixmp://ixmp-dev/SSP_SSP{}_v5.0/baseline_DEFAULT_step_13"
 
-    def _a(c, led, edits):
-        """Shorthand to generate the annotations."""
-        return ScenarioCodeAnnotations(
-            c.urn, led, edits, base_url.format(c.id)
-        ).get_annotations(dict)
+    def _code(id, name, c, led, edits):
+        """Shorthand for creating a code."""
+        sca = ScenarioCodeAnnotations(c.urn, led, edits, base_url.format(c.id), None)
+        return common.Code(id=id, name=name, **sca.get_annotations(dict))
 
+    # SSP baselines and policies
     for ssp_code in cl_ssp_2024:
-        candidate.append(
-            common.Code(id=f"SSP{ssp_code.id}", **_a(ssp_code, False, None))
-        )
+        c_base = _code(f"SSP{ssp_code.id}", "", ssp_code, False, None)
+        cl.append(c_base)
 
+        # Simple carbon tax
+        c = deepcopy(c_base)
+        c.get_annotation(id="policy").text = repr(TaxEmission(1000.0))
+        c.id += " tax"
+        cl.append(c)
+
+        # PRICE_EMISSION from exogenous data file
+        c = deepcopy(c_base)
+        c.get_annotation(id="policy").text = repr(
+            ExogenousEmissionPrice("ixmp://ixmp-dev/" + PRICE_EMISSION_URL[c.id])
+        )
+        c.id += " exo price"
+        cl.append(c)
+
+    # LED
+    name_template = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
     for ssp in ("1", "2"):
         ssp_code = cl_ssp_2024[ssp]
-        candidate.append(
-            common.Code(
-                id=f"LED-SSP{ssp_code.id}",
-                name=f"Low Energy Demand/High-with-Low scenario with SSP{ssp_code.id} "
-                "demographics",
-                **_a(ssp_code, True, None),
-            )
-        )
+        name = name_template.format(ssp_code.id)
+        cl.append(_code(f"LED-SSP{ssp_code.id}", name_template, ssp_code, True, None))
 
+    # EDITS
+    ssp_code = cl_ssp_2024["2"]
+    name_template = "EDITS scenario with ITF PASTA {!r} activity"
     for id_, name in (("CA", "Current Ambition"), ("HA", "High Ambition")):
-        candidate.append(
-            common.Code(
-                id=f"EDITS-{id_}",
-                name=f"EDITS scenario with ITF PASTA {id_!r} activity",
-                **_a(cl_ssp_2024["2"], False, id_),
-            )
+        cl.append(
+            _code(f"EDITS-{id_}", name_template.format(id_), ssp_code, False, id_)
         )
 
-    if cl is None or not candidate.compare(cl, strict=True):
-        write(candidate)
-        return candidate
-    else:
+    # FIXME This condition may appear to be always False, because the date/time differs.
+    #       Adjust upstream (in sdmx1) to ignore this difference.
+    if existing is None or not cl.compare(existing, strict=True):
+        # No existing code list or new code list differs from existing
+        write(cl)
         return cl
+    else:
+        return existing
