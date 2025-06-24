@@ -1,12 +1,12 @@
 import logging
 from copy import deepcopy
 from hashlib import blake2s
-from itertools import product
 from typing import TYPE_CHECKING, Literal, Optional
 
 from genno import KeyExistsError
 
 from message_ix_models.model.workflow import Config as WorkflowConfig
+from message_ix_models.tools.policy import single_policy_of_type
 from message_ix_models.util import minimum_version
 
 if TYPE_CHECKING:
@@ -185,6 +185,7 @@ def generate(
 
     from . import build
     from .config import Config, get_cl_scenario
+    from .policy import ExogenousEmissionPrice, TaxEmission
     from .report import multi
 
     # Handle CLI options
@@ -208,28 +209,18 @@ def generate(
     # Collections of step names
     debug, reported, targets = [], [], []
 
-    # Iterate over all (ssp, policy) combinations
-    cl_scenario = get_cl_scenario()
-
-    for scenario_code, policy in product(cl_scenario, (False, True)):
+    # Iterate over all scenarios in IIASA_ECE:CL_TRANSPORT_SCENARIO
+    for scenario_code in get_cl_scenario():
         # Make a copy of the base .transport.Config for this particular workflow branch
         config = deepcopy(context.transport)
 
         # Update the .transport.Config from the `scenario_code` and `policy`
-        config.policy = policy
         label, label_full = config.use_scenario_code(scenario_code)
-
-        # Retrieve updated values
-        is_LED = config.project["LED"]
-        EDITS_activity = config.project["EDITS"]["activity"]
-
-        if config.policy and (is_LED or EDITS_activity is not None):  # TEMPORARY
-            log.info(f"({label_full}, {config.policy=}) → skip")
-            continue
 
         # Identify the base scenario
         base_url = base_scenario_url(context, config, base_scenario_method)
-        log.info(f"({label_full}, {config.policy=}) → {base_url=}")
+        # log.debug(f"Base scenario for scenario={label_full!r}: {base_url}")
+        # log.debug(f"{config.policy = }")
 
         # Name of the base step
         base = f"base {short_hash(base_url)}"
@@ -263,10 +254,11 @@ def generate(
             lambda _, s: initial_new_capacity_up_v311(s, safety_factor=1.05),
         )
 
-        # This block copied from message_ix_models.project.navigate.workflow
-        if config.policy:
-            # Add a carbon tax
-            name = wf.add_step(f"{label} with tax", name, tax_emission, price=1000.0)
+        # Add step(s) to implement policies
+        if p0 := single_policy_of_type(config.policy, TaxEmission):
+            name = wf.add_step(f"{label} added", name, tax_emission, price=p0.value)
+        elif p1 := single_policy_of_type(config.policy, ExogenousEmissionPrice):
+            log.info(f"Not implemented: {p1}")
 
         # 'Simulate' build and produce debug outputs
         debug.append(f"{label} debug build")
