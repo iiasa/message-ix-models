@@ -78,12 +78,14 @@ class AnnotationsMixIn:
             return dict(annotations=result)
 
     @classmethod
-    def from_obj(cls: type["Self"], obj: common.AnnotableArtefact) -> "Self":
+    def from_obj(
+        cls: type["Self"], obj: common.AnnotableArtefact, globals: Optional[dict] = None
+    ) -> "Self":
         """Return a new instance of `cls` given an AnnotableArtefact `obj`."""
         args = []
         for f in fields(cls):
             anno_id = f.name.replace("_", "-")
-            args.append(obj.eval_annotation(id=anno_id))
+            args.append(obj.eval_annotation(id=anno_id, globals=globals))
 
         return cls(*args)
 
