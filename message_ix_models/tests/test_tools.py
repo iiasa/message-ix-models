@@ -34,6 +34,28 @@ def scenario(request: "FixtureRequest", test_context: "Context") -> "Scenario":
     return bare_res(request, test_context, solved=False)
 
 
+def afolu_co2_accounting_test_data(
+    scenario: "Scenario", commodity: str, land_scenario: list[str]
+) -> "pd.DataFrame":
+    info = ScenarioInfo(scenario)
+
+    land_output = make_df(
+        "land_output",
+        commodity=commodity,
+        level="primary",
+        value=123.4,
+        unit="-",
+        time="year",
+    ).pipe(broadcast, year=info.Y, node=info.N, land_scenario=land_scenario)
+
+    with scenario.transact("Prepare for test of add_AFOLU_CO2_accounting()"):
+        scenario.add_set("commodity", commodity)
+        scenario.add_set("land_scenario", land_scenario)
+        scenario.add_par("land_output", land_output)
+
+    return land_output
+
+
 def test_add_AFOLU_CO2_accounting_A(scenario: "Scenario") -> None:
     """:attr:`add_AFOLU_CO2_accounting.METHOD.A`."""
     info = ScenarioInfo(scenario)
@@ -72,25 +94,8 @@ def test_add_AFOLU_CO2_accounting_A(scenario: "Scenario") -> None:
 
 def test_add_AFOLU_CO2_accounting_B(scenario: "Scenario") -> None:
     """:attr:`add_AFOLU_CO2_accounting.METHOD.B`."""
-    info = ScenarioInfo(scenario)
-
-    # commodity in expected land_output data = `emission` parameter to the function
-    commodity = "LU_CO2_orig"
-    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
-
-    land_output = make_df(
-        "land_output",
-        commodity=commodity,
-        level="primary",
-        value=123.4,
-        unit="-",
-        time="year",
-    ).pipe(broadcast, year=info.Y, node=info.N, land_scenario=land_scenario)
-
-    with scenario.transact("Prepare for test of add_AFOLU_CO2_accounting()"):
-        scenario.add_set("commodity", commodity)
-        scenario.add_set("land_scenario", land_scenario)
-        scenario.add_par("land_output", land_output)
+    # commodity in expected land_output data == `emission` parameter to the function
+    commodity, land_scenario, land_output = add_AFOLU_CO2_accounting.test_data(scenario)
 
     # Other parameter values
     relation_name = "CO2_Emission_Global_Total"
@@ -160,25 +165,7 @@ def test_add_FFI_CO2_accounting(scenario: "Scenario") -> None:
 
 def test_add_alternative_TCE_accounting_A(scenario: "Scenario") -> None:
     """:attr:`add_alternative_TCE_accounting.METHOD.A`."""
-    info = ScenarioInfo(scenario)
-
-    emission = ["LU_CO2", "TCE"]
-    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
-    node = ["R12_GLB"]
-
-    land_emission = make_df("land_emission", value=1.0, unit="-").pipe(
-        broadcast,
-        emission=emission,
-        year=info.Y,
-        node=info.N + node,
-        land_scenario=land_scenario,
-    )
-
-    with scenario.transact("Prepare for test of add_alternative_TCE_accounting()"):
-        scenario.add_set("emission", emission)
-        scenario.add_set("land_scenario", land_scenario)
-        scenario.add_set("node", node)
-        scenario.add_par("land_emission", land_emission)
+    add_alternative_TCE_accounting.test_data(scenario, emission=["LU_CO2", "TCE"])
 
     # Function runs without error
     add_alternative_TCE_accounting.main(
@@ -194,25 +181,7 @@ def test_add_alternative_TCE_accounting_B(scenario: "Scenario") -> None:
     Currently the only thing that differs versus the _A test is "LU_CO2_orig" instead
     of "LU_CO2".
     """
-    info = ScenarioInfo(scenario)
-
-    emission = ["LU_CO2_orig", "TCE"]
-    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
-    node = ["R12_GLB"]
-
-    land_emission = make_df("land_emission", value=1.0, unit="-").pipe(
-        broadcast,
-        emission=emission,
-        year=info.Y,
-        node=info.N + node,
-        land_scenario=land_scenario,
-    )
-
-    with scenario.transact("Prepare for test of add_alternative_TCE_accounting()"):
-        scenario.add_set("emission", emission)
-        scenario.add_set("land_scenario", land_scenario)
-        scenario.add_set("node", node)
-        scenario.add_par("land_emission", land_emission)
+    add_alternative_TCE_accounting.test_data(scenario, emission=["LU_CO2_orig", "TCE"])
 
     # Function runs without error
     te_all = ["TCE_CO2_FFI", "TCE_CO2", "TCE_non-CO2", "TCE_other"]
