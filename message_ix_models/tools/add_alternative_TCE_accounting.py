@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from message_ix import make_df
 
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import broadcast
 
 if TYPE_CHECKING:
@@ -238,3 +239,30 @@ def handle_TCE_other(scen: "Scenario", data: Data) -> None:
     # Add accounting for shipping related CO2 emissions
     filters = dict(emission=["TCE_CO2"], technology=["CO2s_TCE", "CO2t_TCE"])
     scen.add_par(EF, scen.par(EF, filters=filters).assign(emission=te))
+
+
+def test_data(
+    scenario: "Scenario", emission: list[str] = ["LU_CO2_orig", "TCE"]
+) -> None:
+    """Add minimal data for testing to `scenario`.
+
+    This includes a bare minimum of data such that :func:`main` runs without error.
+    """
+    info = ScenarioInfo(scenario)
+
+    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
+    node = ["R12_GLB"]
+
+    land_emission = make_df("land_emission", value=1.0, unit="-").pipe(
+        broadcast,
+        emission=emission,
+        year=info.Y,
+        node=info.N + node,
+        land_scenario=land_scenario,
+    )
+
+    with scenario.transact("Prepare for test of add_alternative_TCE_accounting()"):
+        scenario.add_set("emission", emission)
+        scenario.add_set("land_scenario", land_scenario)
+        scenario.add_set("node", node)
+        scenario.add_par("land_emission", land_emission)

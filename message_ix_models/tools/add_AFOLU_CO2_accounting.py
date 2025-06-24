@@ -248,3 +248,31 @@ def add_par_A(
         suffixes=("_left", ""),
     )[tmp.columns]
     scen.add_par(name, df)
+
+
+def test_data(scenario: "Scenario") -> tuple[str, list[str], "DataFrame"]:
+    """Add minimal data for testing to `scenario`.
+
+    This includes a bare minimum of data such that :func:`add_AFOLU_CO2_accounting` runs
+    without error.
+    """
+    info = ScenarioInfo(scenario)
+
+    commodity = "LU_CO2_orig"
+    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
+
+    land_output = make_df(
+        "land_output",
+        commodity=commodity,
+        level="primary",
+        value=123.4,
+        unit="-",
+        time="year",
+    ).pipe(broadcast, year=info.Y, node=info.N, land_scenario=land_scenario)
+
+    with scenario.transact("Prepare for test of add_AFOLU_CO2_accounting()"):
+        scenario.add_set("commodity", commodity)
+        scenario.add_set("land_scenario", land_scenario)
+        scenario.add_par("land_output", land_output)
+
+    return commodity, land_scenario, land_output
