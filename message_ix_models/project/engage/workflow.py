@@ -10,29 +10,36 @@ adapted to be reusable, particularly in the Workflow pattern used in e.g.
 import logging
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
-from typing import Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from iam_units import convert_gwp
 from message_ix import Scenario
 
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.model.workflow import Config, solve
-from message_ix_models.util import broadcast, identify_nodes
+from message_ix_models.model import workflow as model_workflow
+from message_ix_models.util import HAS_MESSAGE_DATA, broadcast, identify_nodes
 from message_ix_models.workflow import Workflow
 
-try:
-    # NB These modules have not been migrated from message_data.projects.engage
-    from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
-    from .scenario_runner import ScenarioRunner
-except ImportError:
-    RELATION_GLOBAL_CO2 = ""
+if TYPE_CHECKING:
+    from typing import TypedDict
+
+    class CommonArgs(TypedDict):
+        relation_name: str
+        reg: str
+
+
+if HAS_MESSAGE_DATA:
+    # NB This module has not been migrated from message_data.projects.engage.
+    from message_data.projects.engage.scenario_runner import ScenarioRunner
+else:
     ScenarioRunner = type("ScenarioRunner", (), {})
+
 
 log = logging.getLogger(__name__)
 
 
 @dataclass
-class PolicyConfig(Config):
+class PolicyConfig(model_workflow.Config):
     """Configuration for the 3-step ENGAGE workflow for climate policy scenarios."""
 
     #: Label of the climate policy scenario, often related to a global carbon budget in
@@ -169,8 +176,15 @@ def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
 
     These operations must occur no matter which combinations of 1 or more of
     :func:`step_1`, :func:`step_2`, and/or :func:`step_3` are to be run on `scenario`.
+
+    Compare :func:`.model.workflow.step_0`. In this function:
+
+    - :func:`.add_AFOLU_CO2_accounting` is called with :attr:`METHOD.A
+      <.add_AFOLU_CO2_accounting.METHOD.A>`, which is no longer the default.
+    - :func:`.add_alternative_TCE_accounting` is called with :attr:`METHOD.A
+      <.add_alternative_TCE_accounting.METHOD.A>`, which is no longer the default.
     """
-    from message_data.tools.utilities import (
+    from message_ix_models.tools import (
         add_AFOLU_CO2_accounting,
         add_alternative_TCE_accounting,
         add_CO2_emission_constraint,
@@ -183,22 +197,31 @@ def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
     except ValueError:
         pass  # Solution did not exist
 
-    remove_emission_bounds(scenario)
+    remove_emission_bounds.main(scenario)
 
     # Identify the node codelist used by `scenario` (in case it is not set on `context`)
     context.model.regions = identify_nodes(scenario)
 
-    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
+    kw: "CommonArgs" = dict(
+        relation_name=context.model.relation_global_co2,
+        reg=f"{context.model.regions}_GLB",
+    )
 
     # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
     log.info("Add separate FFI and AFOLU CO2 accounting")
-    add_FFI_CO2_accounting(scenario, **kw)
-    add_AFOLU_CO2_accounting(scenario, **kw)
+    add_FFI_CO2_accounting.main(scenario, **kw)
+    add_AFOLU_CO2_accounting.add_AFOLU_CO2_accounting(
+        scenario, method=add_AFOLU_CO2_accounting.METHOD.A, **kw
+    )
 
     log.info("Add alternative TCE accounting")
-    add_alternative_TCE_accounting(scenario)
+    add_alternative_TCE_accounting.main(
+        scenario, method=add_alternative_TCE_accounting.METHOD.A
+    )
 
-    add_CO2_emission_constraint(scenario, **kw, constraint_value=0.0, type_rel="lower")
+    add_CO2_emission_constraint.main(
+        scenario, **kw, constraint_value=0.0, type_rel="lower"
+    )
 
     return scenario
 
@@ -226,7 +249,7 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
 def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenario:
     """Step 2 of the ENGAGE climate policy workflow."""
-    from message_data.tools.utilities import add_emission_trajectory
+    from message_ix_models.tools import add_emission_trajectory
 
     # Retrieve a pandas.DataFrame with the CO2 emissions trajectory
     #
@@ -245,7 +268,7 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
         pass  # Solution did not exist
 
     # Add this trajectory as bound_emission values
-    add_emission_trajectory(
+    add_emission_trajectory.main(
         scenario,
         data=df,
         type_emission="TCE_CO2",
@@ -255,9 +278,8 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
     with scenario.transact(message="Remove lower bound on global total CO₂ emissions"):
         name = "relation_lower"
-        scenario.remove_par(
-            name, scenario.par(name, filters={"relation": [RELATION_GLOBAL_CO2]})
-        )
+        filters = dict(relation=[context.model.relation_global_co2])
+        scenario.remove_par(name, scenario.par(name, filters=filters))
 
     return scenario
 
@@ -305,9 +327,8 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
         # As in step_2, remove the lower bound on global CO2 emissions. This is
         # necessary if step_2 was not run (for instance, NAVIGATE T6.2 protocol)
         name = "relation_lower"
-        scenario.remove_par(
-            name, scenario.par(name, filters={"relation": [RELATION_GLOBAL_CO2]})
-        )
+        filters = dict(relation=[context.model.relation_global_co2])
+        scenario.remove_par(name, scenario.par(name, filters=filters))
 
     return scenario
 
@@ -391,7 +412,7 @@ def add_steps(
             # Add a step to solve the scenario (except for after step_0); update the
             # step name for the next loop iteration
             s = workflow.add_step(
-                f"{s} solved", s, solve, config=cfg, set_as_default=True
+                f"{s} solved", s, model_workflow.solve, config=cfg, set_as_default=True
             )
 
     # Return the name of the last of the added steps

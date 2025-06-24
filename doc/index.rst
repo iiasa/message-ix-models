@@ -49,6 +49,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
 - :doc:`api/model-build`
 - :doc:`api/model-emissions`
 - :doc:`api/model-snapshot`
+- :doc:`api/model-workflow`
 - :doc:`api/disutility`
 - :doc:`api/report/index`
 - :doc:`api/tools`
@@ -68,6 +69,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    api/model-build
    api/model-emissions
    api/model-snapshot
+   api/model-workflow
    api/disutility
    api/report/index
    api/tools
