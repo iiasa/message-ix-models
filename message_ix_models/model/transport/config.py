@@ -524,10 +524,11 @@ def refresh_cl_scenario(
     #   - 2025-02-20: update to _v2.1 per discussion with OF. At this point _v2.3 is the
     #     latest appearing in the database.
     #   - 2025-05-05: update to _v5.0.
+    #   - 2025-06-24: update to _v6.1.
     # - The scenario names appear to form a sequence from "baseline_DEFAULT" to
     #   "baseline_DEFAULT_step_15" and finally "baseline". The one used below is the
     #   latest in this sequence for which y₀=2020, rather than 2030.
-    base_url = "ixmp://ixmp-dev/SSP_SSP{}_v5.0/baseline_DEFAULT_step_13"
+    base_url = "ixmp://ixmp-dev/SSP_SSP{}_v6.1/baseline_DEFAULT_step_13"
 
     def _code(id, name, c, led, edits):
         """Shorthand for creating a code."""
