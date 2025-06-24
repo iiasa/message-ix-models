@@ -38,6 +38,13 @@ class Config(ConfigHelper):
     #: at :doc:`/pkg-data/relation`.
     relations: str = "A"
 
+    #: ID of the relation used to constrain global total CO₂ emissions. A code with this
+    #: ID **must** be in the code list identified by :attr:`relations`.
+    #:
+    #: In :mod:`message_data`, this ID was stored in the module data variable
+    #: :py:`message_data.projects.engage.runscript_main.RELATION_GLOBAL_CO2`.
+    relation_global_co2: str = "CO2_Emission_Global_Total"
+
     #: The 'year' codelist (time periods) to use, Must be one of the lists of periods
     #: described at :doc:`/pkg-data/year`.
     years: str = "B"

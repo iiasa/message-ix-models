@@ -34,7 +34,30 @@ def scenario(request: "FixtureRequest", test_context: "Context") -> "Scenario":
     return bare_res(request, test_context, solved=False)
 
 
-def test_add_AFOLU_CO2_accounting(scenario: "Scenario") -> None:
+def afolu_co2_accounting_test_data(
+    scenario: "Scenario", commodity: str, land_scenario: list[str]
+) -> "pd.DataFrame":
+    info = ScenarioInfo(scenario)
+
+    land_output = make_df(
+        "land_output",
+        commodity=commodity,
+        level="primary",
+        value=123.4,
+        unit="-",
+        time="year",
+    ).pipe(broadcast, year=info.Y, node=info.N, land_scenario=land_scenario)
+
+    with scenario.transact("Prepare for test of add_AFOLU_CO2_accounting()"):
+        scenario.add_set("commodity", commodity)
+        scenario.add_set("land_scenario", land_scenario)
+        scenario.add_par("land_output", land_output)
+
+    return land_output
+
+
+def test_add_AFOLU_CO2_accounting_A(scenario: "Scenario") -> None:
+    """:attr:`add_AFOLU_CO2_accounting.METHOD.A`."""
     info = ScenarioInfo(scenario)
 
     commodity = ["LU_CO2"]
@@ -63,11 +86,57 @@ def test_add_AFOLU_CO2_accounting(scenario: "Scenario") -> None:
     add_AFOLU_CO2_accounting.add_AFOLU_CO2_accounting(
         scenario,
         relation_name="CO2_Emission_Global_Total",
-        reg="R12_GLB",
+        reg="R12_GLB",  # NB Previously 'reg'
         constraint_value=1.0,
+        method=add_AFOLU_CO2_accounting.METHOD.A,
     )
 
-    # TODO Add assertions about modified structure & data
+
+def test_add_AFOLU_CO2_accounting_B(scenario: "Scenario") -> None:
+    """:attr:`add_AFOLU_CO2_accounting.METHOD.B`."""
+    # commodity in expected land_output data == `emission` parameter to the function
+    commodity, land_scenario, land_output = add_AFOLU_CO2_accounting.test_data(scenario)
+
+    # Other parameter values
+    relation_name = "CO2_Emission_Global_Total"
+    level = "LU"
+    suffix = "_foo"
+
+    # Function runs without error
+    add_AFOLU_CO2_accounting.add_AFOLU_CO2_accounting(
+        scenario,
+        relation_name=relation_name,
+        emission=commodity,
+        level=level,
+        suffix=suffix,
+    )
+
+    exp = [f"{x}{suffix}" for x in land_scenario]
+
+    # relation_name is present
+    assert relation_name in set(scenario.set("relation"))
+
+    # Commodity and technology sets have expected added elements
+    assert set(exp) <= set(scenario.set("commodity"))
+    assert set(exp) <= set(scenario.set("technology"))
+
+    # balance_quality entries are present
+    pdt.assert_frame_equal(
+        pd.DataFrame([[c, level] for c in exp], columns=["commodity", "level"]),
+        scenario.set("balance_equality").sort_values("commodity"),
+    )
+
+    data_post = scenario.par("land_output", filters={"commodity": list(exp)})
+
+    # 1 row of data was added for every row of original land_input
+    assert len(land_output) == len(data_post)
+
+    # 'level' and 'value' as expected
+    assert {level} == set(data_post.level.unique())
+    assert (1.0 == data_post.value).all()
+
+    # 'commodity' corresponds to 'land_scenario'
+    assert (data_post.land_scenario + suffix == data_post.commodity).all()
 
 
 def test_add_CO2_emission_constraint(scenario: "Scenario") -> None:
@@ -94,29 +163,29 @@ def test_add_FFI_CO2_accounting(scenario: "Scenario") -> None:
     # TODO Add assertions about modified structure & data
 
 
-def test_add_alternative_TCE_accounting(scenario: "Scenario") -> None:
-    info = ScenarioInfo(scenario)
-
-    emission = ["LU_CO2", "TCE"]
-    land_scenario = ["BIO00GHG000", "BIO06GHG3000"]
-    node = ["R12_GLB"]
-
-    land_emission = make_df("land_emission", value=1.0, unit="-").pipe(
-        broadcast,
-        emission=emission,
-        year=info.Y,
-        node=info.N + node,
-        land_scenario=land_scenario,
-    )
-
-    with scenario.transact("Prepare for test of add_AFOLU_CO2_accounting()"):
-        scenario.add_set("emission", emission)
-        scenario.add_set("land_scenario", land_scenario)
-        scenario.add_set("node", node)
-        scenario.add_par("land_emission", land_emission)
+def test_add_alternative_TCE_accounting_A(scenario: "Scenario") -> None:
+    """:attr:`add_alternative_TCE_accounting.METHOD.A`."""
+    add_alternative_TCE_accounting.test_data(scenario, emission=["LU_CO2", "TCE"])
 
     # Function runs without error
-    add_alternative_TCE_accounting.main(scenario)
+    add_alternative_TCE_accounting.main(
+        scenario, method=add_alternative_TCE_accounting.METHOD.A
+    )
+
+    # TODO Add assertions about modified structure & data
+
+
+def test_add_alternative_TCE_accounting_B(scenario: "Scenario") -> None:
+    """:attr:`add_alternative_TCE_accounting.METHOD.B`.
+
+    Currently the only thing that differs versus the _A test is "LU_CO2_orig" instead
+    of "LU_CO2".
+    """
+    add_alternative_TCE_accounting.test_data(scenario, emission=["LU_CO2_orig", "TCE"])
+
+    # Function runs without error
+    te_all = ["TCE_CO2_FFI", "TCE_CO2", "TCE_non-CO2", "TCE_other"]
+    add_alternative_TCE_accounting.main(scenario, type_emission=te_all, use_gains=True)
 
     # TODO Add assertions about modified structure & data
 
