@@ -153,3 +153,6 @@ cache/
 
 # Scratch files
 *scratch*
+
+# GDX
+*/bilateralize/data/gdx/*
