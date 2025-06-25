@@ -2,8 +2,8 @@
 
 import logging
 import zipfile
-from collections.abc import Iterable
-from copy import copy
+from collections.abc import Hashable, Iterable, Mapping
+from dataclasses import dataclass
 from enum import Flag
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
@@ -15,7 +15,7 @@ from genno.operator import concat
 from platformdirs import user_cache_path
 
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.util import (
     cached,
     minimum_version,
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     import os
 
     import genno
-    from genno.types import TQuantity
+    from genno.types import AnyQuantity, TQuantity
 
     from message_ix_models.util.common import MappingAdapter
 
@@ -151,98 +151,90 @@ class TRANSFORM(Flag):
 
 @register_source
 class IEA_EWEB(ExoDataSource):
-    """Provider of exogenous data from the IEA Extended World Energy Balances.
+    """Provider of exogenous data from the IEA Extended World Energy Balances."""
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    following `source_kw`:
+    @dataclass
+    class Options(BaseOptions):
+        #: Either 'IEA' or 'OECD'. See :data:`.FILES`.
+        provider: str = ""
 
-    - :py:`provider`: Either 'IEA' or 'OECD'. See :data:`.FILES`.
-    - :py:`edition`: one of '2021', '2022', or '2023'. See :data:`.FILES`.
-    - :py:`product` (optional): :class:`str` or :class:`list` of :class:`str`. Select
-      only these labels from the 'PRODUCT' dimension.
-    - :py:`flow` (optional): :class:`str` or :class:`list` of :class:`str`. Select only
-      these labels from the 'FLOW' dimension.
-    - :py:`transform` (optional): either "A" (default) or "B". See :meth:`.transform`.
-    - :py:`regions`: **must** also be given with the value :py:`"R12"` if giving
-      :py:`transform="B"`.
+        #: one of '2021', '2022', or '2023'. See :data:`.FILES`.
+        edition: str = ""
 
-    Example
-    -------
-    >>> keys = prepare_computer(
-    ...     context,
-    ...     computer,
-    ...     source="IEA_EWEB",
-    ...     source_kw=dict(
-    ...         provider="OECD", edition="2022", product="CHARCOAL", flow="RESIDENT"
-    ...     ),
-    ... )
-    >>> result = computer.get(keys[0])
-    """
+        #: Select only these labels from the 'PRODUCT' dimension.
+        product: Union[str, list[str]] = ""
 
-    id = "IEA_EWEB"
+        #: Select only these labels from the 'FLOW' dimension.
+        flow: Union[str, list[str]] = ""
+
+        #: Either "A" (default) or "B". See :meth:`.transform`.
+        transform: TRANSFORM = TRANSFORM.DEFAULT
+
+        #: **Must** also be given with the value :py:`"R12"` if giving
+        #: :py:`transform="B"`.
+        regions: str = ""
+
+    options: Options
 
     key = Key("energy:n-y-product-flow:iea")
 
     where = ["local"]
 
-    def __init__(self, source, source_kw):
-        """Initialize the data source."""
-        if source != self.id:
-            raise ValueError(source)
+    def __init__(self, *args, **kwargs):
+        self.options = self.Options.from_args("IEA_EWEB", *args, **kwargs)
 
-        _kw = copy(source_kw)
-
-        p = self.provider = _kw.pop("provider", None)
-        e = self.edition = _kw.pop("edition", None)
+        # Identify the files to be loaded
+        p, e = self.options.provider, self.options.edition
         try:
             files = FILES[(p, e)]
         except KeyError:
             raise ValueError(f"No IEA data files for (provider={p!r}, edition={e!r})")
 
+        # Identify a path that contains the files for the given (provider, edition)
+        # Parent directory relative to which `files` are found
+        self.path = dir_fallback("iea", files[0], where=self._where())
+
         self.indexers = dict(MEASURE="TJ")
-        if product := _kw.pop("product", None):
-            self.indexers.update(product=product)
-        if flow := _kw.pop("flow", None):
-            self.indexers.update(flow=flow)
+        if self.options.product:
+            self.indexers.update(product=self.options.product)
+        if self.options.flow:
+            self.indexers.update(flow=self.options.flow)
 
-        # Handle the 'transform' keyword
-        self.transform_method = TRANSFORM.from_value(_kw.pop("transform", None))
+        # Handle the 'transform' option
+        self.transform_method = TRANSFORM.from_value(self.options.transform)
 
-        regions = _kw.pop("regions", None)
         if self.transform_method & TRANSFORM.B:
             msg = "TRANSFORM.B only supported for "
             if (p, e) != ("IEA", "2024"):
                 raise ValueError(
                     f"{msg}(provider='IEA', edition='2024'); got {(p, e)!r}"
                 )
-            elif regions != "R12":
-                raise ValueError(f"{msg}regions='R12'; got {regions!r}")
+            elif self.options.regions != "R12":
+                raise ValueError(f"{msg}regions='R12'; got {self.options.regions!r}")
 
-        self.raise_on_extra_kw(_kw)
-
-        # Identify a location that contains the files for the given (provider, edition)
-        # Parent directory relative to which `files` are found
-        self.path = dir_fallback("iea", files[0], where=self._where())
-
-    def __call__(self):
+    def get(self) -> "AnyQuantity":
         """Load and process the data."""
         # - Load the data.
         # - Convert to pd.Series, then genno.Quantity.
         # - Map dimensions.
         # - Apply `indexers` to select.
+        opt = self.options
+        load_kw = dict(provider=opt.provider, edition=opt.edition, path=self.path)
+        rename: Mapping[Hashable, Hashable] = {
+            "COUNTRY": "n",
+            "TIME": "y",
+            "FLOW": "flow",
+            "PRODUCT": "product",
+        }
+
         return (
-            genno.Quantity(
-                load_data(
-                    provider=self.provider, edition=self.edition, path=self.path
-                ).set_index(DIMS)["Value"],
-                units="TJ",
-            )
-            .rename({"COUNTRY": "n", "TIME": "y", "FLOW": "flow", "PRODUCT": "product"})
+            genno.Quantity(load_data(**load_kw).set_index(DIMS)["Value"], units="TJ")
+            .rename(rename)
             .sel(self.indexers, drop=True)
         )
 
     @minimum_version("genno 1.28")
-    def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
+    def transform(self, c: "genno.Computer", base_key: "Key") -> "Key":
         """Prepare `c` to transform raw data from `base_key`.
 
         1. Map IEA ``COUNTRY`` codes to ISO 3166-1 alpha-3 codes, where such mapping
@@ -263,21 +255,21 @@ class IEA_EWEB(ExoDataSource):
         This method does *not* prepare interpolation or aggregation on |y|.
         """
         # Map values like RUSSIA appearing in the (IEA, 2024) edition to e.g. RUS
-        adapter = get_mapping(self.provider, self.edition)
+        adapter = get_mapping(self.options.provider, self.options.edition)
         k, result = base_key, base_key["agg"]
         c.add(k[0], adapter, k)
 
         if self.transform_method & TRANSFORM.A:
             # Key for aggregation groups: hierarchy from the standard code lists,
             # already added by .exo_data.prepare_computer()
-            k_n_agg = Key("n", (), "groups")
+            k_n_agg = Key("n::groups")
             c.add(k[1], k[0])
         elif self.transform_method & TRANSFORM.B:
             # Derive intermediate values "_IIASA_{AFR,PAS,SAS}"
             c.add(k[1], transform_B, k[0])
 
             # Add groups for aggregation, including these intermediate values
-            k_n_agg = Key("n", (), f"groups+{self.id}")
+            k_n_agg = Key("n::groups+IEA_EWEB")
             c.add(k_n_agg, get_node_groups_B)
 
         if self.transform_method & TRANSFORM.C:
@@ -285,6 +277,7 @@ class IEA_EWEB(ExoDataSource):
 
         # Aggregate on 'n' dimension using the `k_n_agg`
         c.add(result, "aggregate", k.last, k_n_agg, keep=False)
+
         return result
 
 

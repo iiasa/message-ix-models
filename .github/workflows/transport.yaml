@@ -3,7 +3,7 @@ name: MESSAGEix-Transport
 env:
   # The repository, ref (branch), and workflow file name to dispatch
   target-repo: iiasa/message_data
-  target-ref: dev
+  target-ref: transport/2025-w24
   target-workflow: transport
 
   # Starting point of the workflow.
@@ -26,20 +26,8 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "SSP1",
-      "SSP1 policy",
-      "SSP2",
-      "SSP2 policy",
       "SSP3",
-      "SSP3 policy",
-      "SSP4",
-      "SSP4 policy",
-      "SSP5",
-      "SSP5 policy",
-      "EDITS-CA",
-      "EDITS-HA",
-      "LED-SSP1",
-      "LED-SSP2"
+      "LED-SSP1"
     ]
 
   # Currently disabled:
@@ -49,8 +37,8 @@ env:
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
   # push:
   #   branches: [ main ]
   schedule:
