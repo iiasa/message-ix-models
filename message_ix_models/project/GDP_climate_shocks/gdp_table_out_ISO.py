@@ -17,12 +17,15 @@ import pandas as pd
 import pyam
 import xarray as xr
 from dask.diagnostics import ProgressBar
-from message_ix_models.util import private_data_path
-from rime.core import RegionArray  # -*- coding: utf-8 -*-
-from rime.core import GMTPathway
+from rime.core import (
+    GMTPathway,
+    RegionArray,  # -*- coding: utf-8 -*-
+)
 from rime.process_config import *
 from rime.rime_functions import *
 from rime.utils import *
+
+from message_ix_models.util import private_data_path
 
 
 def run_rime(
@@ -36,7 +39,7 @@ def run_rime(
     Run RIME for a given scenario
     """
 
-    wdir = f"C:\\Users\\{user}\\IIASA\\ECE.prog - Research Theme - NEXUS\\GDP_damages\\"
+    wdir = f"C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
     # for local debuggin TEMP
     # wdir = f"/mnt/c/Users/byers/IIASA/ECE.prog - Documents/Research Theme - NEXUS/GDP_damages/"
     # prefixes = ["Waidelich", "Burke"]
