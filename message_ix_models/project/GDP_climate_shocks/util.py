@@ -1,4 +1,5 @@
 # util file
+import gc
 import logging
 import os
 
@@ -6,14 +7,14 @@ import numpy as np
 import pandas as pd
 import pyam
 import yaml
-import gc
-from message_ix_models.util import package_data_path, private_data_path
-from pycountry_convert import country_name_to_country_alpha3
-
 from message_data.tools.post_processing.iamc_report_hackathon import (
     report as legacy_reporting,
 )
 from message_data.tools.prep_submission import main as prep_submission
+from message_data.tools.utilities import add_slack
+from pycountry_convert import country_name_to_country_alpha3
+
+from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
@@ -301,9 +302,9 @@ def apply_growth_rates(sc, gdp_change_df):
     values_2100 = growth_diff_df.loc[growth_diff_df["year"] == 2100, "growth_diff"]
 
     # Assign these values to year 2110
-    growth_diff_df.loc[growth_diff_df["year"] == 2110, "growth_diff"] = (
-        values_2100.values
-    )
+    growth_diff_df.loc[
+        growth_diff_df["year"] == 2110, "growth_diff"
+    ] = values_2100.values
     # get the grow parameter from the scenarios
     grow_par = sc.par("grow").copy()
     merge_grow = grow_par.merge(growth_diff_df, on=["node", "year"], how="left")
@@ -318,6 +319,33 @@ def apply_growth_rates(sc, gdp_change_df):
     logging.info(
         f"Growth rate shock applied to {sc.model} {sc.scenario}. Ready to solve."
     )
-    del gdp_calibrate, gdp_change_df, gdp_impact, growth_diff_df, values_2100, merge_grow
+    del (
+        gdp_calibrate,
+        gdp_change_df,
+        gdp_impact,
+        growth_diff_df,
+        values_2100,
+        merge_grow,
+    )
     gc.collect()
     return
+
+
+def add_slack_ix(sc):
+    slack = {
+        "growth_activity_up": {
+            "a": ["R11_NAM", "eth_imp", 2030, 27, "M1"],
+            "b": ["R11_NAM", "g_ppl_co2scr", 2030, 26, "M1"],
+            "c": ["R11_NAM", "bco2_tr_dis", 2030, 12, "M1"],
+            "d": ["R11_SAS", "eth_ic_trp", 2030, 7, "M1"],
+            "e": ["R11_NAM", "coal_adv_ccs", 2030, 6, "M1"],
+            "f": ["R11_NAM", "cement_co2scr", 2030, 5, "M1"],
+            "g": ["R11_NAM", "leak_repair", 2030, 1, "M1"],
+        },
+        "bound_activity_up": {
+            "a": ["R11_NAM", "RCspec_5", 2030, 3.5, "M1"],
+            "b": ["R11_NAM", "recycling_gas1", 2030, 0.5, "M1"],
+        },
+    }
+
+    add_slack(sc, slack)
