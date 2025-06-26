@@ -15,7 +15,17 @@ scenario:
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
   #- elec_piped
-  - oil_shipped
+  #- oil_shipped
+  - gas_piped
+
+# TRADE LIFETIMES
+trade_lifetimes:
+  #elec_piped:
+  #  10
+  #oil_shipped:
+  #  40
+  gas_piped:
+    40
 
 # PARAMETERS THAT NEED TO BE DEFINED
 define_parameters:
@@ -46,7 +56,10 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   supply_technologies: # Technologies the supply the traded commodity
   # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
   specify_network: # If true, produces sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
-   
+  year_act: # List of years to include in year_act
+  year_vtg: # List of years to include in year_vtg
+  tracked_emissions: # List of tracked emission types
+
 # Oil exports
 oil_shipped_trade:
   base_trade_technology:
@@ -55,7 +68,7 @@ oil_shipped_trade:
     oil
   trade_tech_suffix:
   trade_tech_number:
-    2
+    1
   trade_commodity:
     crudeoil
   trade_commodity_suffix:
@@ -66,7 +79,7 @@ oil_shipped_trade:
   trade_level:
     shipped
   import_level:
-    primary
+    secondary
   flow_technology:
     shipping
   flow_tech_suffix:
@@ -82,3 +95,111 @@ oil_shipped_trade:
   # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
   specify_network:
     False
+  year_act_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+  year_vtg_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+
+# Pipeline gas exports
+gas_piped_trade:
+  base_trade_technology:
+    gas_bal
+  trade_technology:
+    gas
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    gas
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    primary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technology:
+    pipe
+  flow_tech_suffix:
+  supply_technologies:
+    - gas_extr_1
+    - gas_extr_2
+    - gas_extr_3
+    - gas_extr_4
+    - gas_extr_5
+    - gas_extr_6
+    - gas_extr_7
+  # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
+  specify_network:
+    True
+  year_act_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+  year_vtg_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+  tracked_emissions:
+    - CH4_GAS_TRANS&STORE
+    - TCE
+    - TCE_non-CO2
+    - TCE_other
