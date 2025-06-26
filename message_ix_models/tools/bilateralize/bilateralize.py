@@ -15,9 +15,6 @@ import itertools
 from pathlib import Path
 from message_ix_models.util import package_data_path
 
-# Connect to ixmp
-mp = ixmp.Platform()
-
 #%% Get logger
 def get_logger(name: str):
     # Set the logging level to INFO (will show INFO and above messages)
@@ -35,35 +32,21 @@ def get_logger(name: str):
     log.addHandler(handler)
 
     return log
-log = get_logger(__name__)
 #%% Load config yaml
 def load_config(full_path):
     with open(full_path, "r") as f:
         config = yaml.safe_load(f) # safe_load is recommended over load for security
     
     return config
-#%% Search for trade technology in base scenario. If exists, build template.
-def get_template(scen_base, par_name, base_trade_technology):
-    template = pd.DataFrame()
-    template = (
-        scen_base.par(par_name, filters={"technology": base_trade_technology})
-        .head()
-        .iloc[0]
-        .to_frame()
-        .T
-    )
-    if template.empty:
-        log.warning(
-            f"Technology {base_trade_technology} does not have {par_name} in {scen_base}."
-        )
-    return template
 #%% Copy columns from template, if exists
 def copy_template_columns(df, template, exclude_cols=["node_loc", "technology"]):
     for col in template.columns:
         if col not in exclude_cols:
             df[col] = template[col].iloc[0]
 #%% Broadcast years to create vintage-activity year pairs.
-def broadcast_yv_ya(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
+def broadcast_yv_ya(df: pd.DataFrame, 
+                    ya_list: list[int],
+                    tec_lifetime: int):
     """
     Broadcast years to create vintage-activity year pairs.
 
@@ -84,8 +67,9 @@ def broadcast_yv_ya(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
     for _, row in df.iterrows():
         # For each activity year
         for ya in ya_list:
-            # Get all vintage years that are <= activity year
+            # Get all vintage years that are <= activity year for a period < technical lifetime
             yv_list = [yv for yv in ya_list if yv <= ya]
+            yv_list = [yv for yv in yv_list if yv >= ya-tec_lifetime]
 
             # Create new rows for each vintage year
             for yv in yv_list:
@@ -97,6 +81,7 @@ def broadcast_yv_ya(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
     result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
     result_df = result_df[result_df["year_vtg"] != "broadcast"]
     return result_df
+
 #%% Broadcast vintage years
 def broadcast_yv(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
     """Broadcast vintage years."""
@@ -108,7 +93,7 @@ def broadcast_yv(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
             all_new_rows.append(new_row)
     result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
     result_df = result_df[result_df["year_vtg"] != "broadcast"]
-    return result_df
+    return result_df.drop_duplicates()
 #%% Broadcast relation years
 def broadcast_yl(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
     """Broadcast relation years."""
@@ -120,7 +105,26 @@ def broadcast_yl(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
             all_new_rows.append(new_row)
     result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
     result_df = result_df[result_df["year_rel"] != "broadcast"]
-    return result_df
+    return result_df.drop_duplicates()
+#%% Broadcast activity years
+def broadcast_ya(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
+    """Broadcast vintage years."""
+    all_new_rows = []
+    for _, row in df.iterrows():
+        for ya in ya_list:
+            new_row = row.copy()
+            new_row["year_act"] = int(ya)
+            all_new_rows.append(new_row)
+    result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
+    result_df = result_df[result_df["year_act"] != "broadcast"]
+    return result_df.drop_duplicates()
+#%% Write just the GDX files
+def save_to_gdx(mp, scenario, output_path):
+    from ixmp.backend import ItemType
+    mp._backend.write_file(output_path,
+                           ItemType.SET | ItemType.PAR,
+                           filters={"scenario": scenario},
+                           )
 #%% Build base parameter dataframe based on network dataframe
 def build_parameterdf(
         network_df: pd.DataFrame,
@@ -147,8 +151,8 @@ def build_parameterdf(
     return df
 #%% Main function to generate bare sheets
 def generate_bare_sheets(
-    config_name: str = None,
-):
+        log, mp,
+        config_name: str = None,):
     """
     Generate bare sheets to collect (minimum) parameters
 
@@ -187,6 +191,7 @@ def generate_bare_sheets(
     supply_technologies = {}
     specify_network = {}
     trade_tech_number = {}
+    tracked_emissions = {}
     
     for tec in covered_tec:
         tec_dict = config.get(tec + '_trade', {})
@@ -205,6 +210,8 @@ def generate_bare_sheets(
         supply_technologies[tec] = tec_dict['supply_technologies']
         specify_network[tec] = tec_dict['specify_network']
         trade_tech_number[tec] = tec_dict['trade_tech_number']
+        tracked_emissions[tec] = tec_dict['tracked_emissions']
+        
     # Load the scenario
     start_model = scenario_info['start_model']
     start_scen = scenario_info['start_scen']
@@ -230,6 +237,10 @@ def generate_bare_sheets(
             os.makedirs(tecpath)
         if not os.path.isdir(os.path.join(tecpath, 'use_files')):
             os.makedirs(os.path.join(tecpath, 'use_files'))
+        if not os.path.isdir(os.path.join(tecpath, 'edit_files')):
+            os.makedirs(os.path.join(tecpath, 'edit_files'))   
+        if not os.path.isdir(os.path.join(tecpath, 'bare_files')):
+            os.makedirs(os.path.join(tecpath, 'bare_files'))
             
     # Generate full combination of nodes to build technology-specific network
     nodes_base_scenario = base_scenario.set("node")
@@ -266,9 +277,9 @@ def generate_bare_sheets(
         if specify_network[tec] == True:
             try:
                 specify_network_tec = pd.read_csv(
-                    Path(package_data_path("bilateralize"))/("specify_network_" + tec + ".csv"))
+                    os.path.join(config_dir, tec, "specify_network_" + tec + ".csv"))
             except FileNotFoundError:
-                node_df_tec.to_csv(os.path.join(config_dir, "specify_network_" + tec + ".csv"), 
+                node_df_tec.to_csv(os.path.join(config_dir, tec, "specify_network_" + tec + ".csv"), 
                                    index=False)
                 raise Exception(
                     "The function stopped. Sheet specify_network_" + tec + ".csv has been generated. " +
@@ -284,12 +295,10 @@ def generate_bare_sheets(
         else:
             raise Exception("Please use True or False.")
         
-        network_setup[tec] = specify_network_tec
+        network_setup[tec] = specify_network_tec[specify_network_tec['INCLUDE? (No=0, Yes=1)'] == 1]
 
     # Create bare file: input
-    for tec in covered_tec:
-        template = get_template(base_scenario, "input", base_trade_technology[tec])
-  
+    for tec in covered_tec:  
         # Trade Level
         df = network_setup[tec][['exporter', 'export_technology']]
         df = df.rename(columns = {'exporter': 'node_origin',
@@ -304,50 +313,54 @@ def generate_bare_sheets(
         df['time'] = 'year'
         df['time_origin'] = 'year'
         df['unit'] = None
-        df = df[template.columns]
+        df = df[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act',
+                 'mode', 'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
         input_trade = df.copy()
         
         # Import Level
-        df = network_setup[tec][['exporter', 'importer', 'import_technology']]
-        df = df.rename(columns = {'exporter': 'node_origin',
+        df = network_setup[tec][['exporter', 'export_technology', 'importer', 'import_technology']]
+        df = df.rename(columns = {#'exporter': 'node_origin',
                                   'importer': 'node_loc',
                                   'import_technology': 'technology'})
+        df["node_origin"] = df["node_loc"]
         df["year_vtg"] = "broadcast"
         df["year_act"] = "broadcast"
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
+        #df["commodity"] = trade_commodity[tec] + '-' + df["export_technology"].str[-3:]
         df["level"] = trade_level[tec]
-        df["value"] = 1 # DOES NOT REQUIRE EDIT
+        df["value"] = None
         df['time'] = 'year'
         df['time_origin'] = 'year'
         df['unit'] = None
-        df = df[template.columns]
+        df = df[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act',
+                 'mode', 'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
         input_imports = df.copy()
     
         df = pd.concat([input_trade, input_imports])
         
-        df.to_csv(os.path.join(config_dir, tec, "input.csv"), index=False)
+        df.to_csv(os.path.join(config_dir, tec, "edit_files", "input.csv"), index=False)
         log.info(f"Input pipe exp csv generated at: {os.path.join(config_dir, tec)}.")
 
     # Create base file: output
-    for tec in covered_tec:
-        template = get_template(base_scenario, "output", base_trade_technology[tec])
-  
+    for tec in covered_tec:  
         # Trade Level
-        df = network_setup[tec][['exporter', 'export_technology']]
+        df = network_setup[tec][['exporter', 'importer', 'export_technology']]
         df = df.rename(columns = {'exporter': 'node_loc',
+                                  'importer': 'node_dest',
                                   'export_technology': 'technology'})
-        df['node_dest'] = df['node_loc']
+        #df['node_dest'] = df['node_loc']
         df["year_vtg"] = "broadcast"
         df["year_act"] = "broadcast"
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
+        #df["commodity"] = trade_commodity[tec] + '-' + df["technology"].str[-3:]
         df["level"] = trade_level[tec]
         df["value"] = None
         df['time'] = 'year'
         df['time_dest'] = 'year'
         df['unit'] = None
-        df = df[template.columns]
+        #df = df[template.columns]
         output_trade = df.copy()
         
         # Import Level
@@ -364,12 +377,12 @@ def generate_bare_sheets(
         df['time'] = 'year'
         df['time_dest'] = 'year'
         df['unit'] = None
-        df = df[template.columns]
+        #df = df[template.columns]
         output_imports = df.copy()
     
         df = pd.concat([output_trade, output_imports])
         
-        df.to_csv(os.path.join(config_dir, tec, "output.csv"), index=False)
+        df.to_csv(os.path.join(config_dir, tec, "edit_files", "output.csv"), index=False)
         log.info(f"Output csv generated at: {os.path.join(config_dir, tec)}.")
         
     # Create base file: technical_lifetime
@@ -378,7 +391,7 @@ def generate_bare_sheets(
                                    columndict = {'year_vtg': 'broadcast',
                                                  'value': None,
                                                  'unit': 'y'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "technical_lifetime.csv"), index=False)
+        outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "technical_lifetime.csv"), index=False)
         log.info(f"Technical Lifetime csv generated at: {os.path.join(config_dir, tec)}.")
 
     # Create base file: inv_cost
@@ -386,8 +399,8 @@ def generate_bare_sheets(
         outdf =  build_parameterdf(network_df = network_setup[tec], 
                                    columndict = {'year_vtg': 'broadcast',
                                                  'value': None,
-                                                 'unit': 'USD/GWa'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "inv_cost.csv"), index=False)
+                                                 'unit': 'USD/GWa'})
+        outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "inv_cost.csv"), index=False)
         log.info(f"Investment cost csv generated at: {os.path.join(config_dir, tec)}.")        
       
     # Create base file: fix_cost
@@ -397,7 +410,7 @@ def generate_bare_sheets(
                                                  'year_act': 'broadcast',
                                                  'value': None,
                                                  'unit': 'USD/GWa'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "fix_cost.csv"), index=False)
+        outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "fix_cost.csv"), index=False)
         log.info(f"Fixed cost csv generated at: {os.path.join(config_dir, tec)}.")
 
     # Create base file: var_cost
@@ -406,9 +419,26 @@ def generate_bare_sheets(
                                    columndict = {'year_vtg': 'broadcast',
                                                  'year_act': 'broadcast',
                                                  'value': None,
-                                                 'unit': 'USD/GWa'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "var_cost.csv"), index=False)
+                                                 'unit': 'USD/GWa',
+                                                 'mode': 'M1',
+                                                 'time': 'year'})   
+        outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "var_cost.csv"), index=False)
         log.info(f"Variable cost csv generated at: {os.path.join(config_dir, tec)}.")
+
+    # Create base file: historical activity
+    for tec in covered_tec:
+        outdf = pd.DataFrame()
+        for y in [2020, 2025]:
+            ydf =  build_parameterdf(network_df = network_setup[tec], 
+                                     columndict = {'year_act': y,
+                                                   'value': None,
+                                                   'unit': 'GWa',
+                                                   'mode': 'M1',
+                                                   'time': 'year'})   
+            outdf = pd.concat([outdf, ydf])
+        outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "historical_activity.csv"), index=False)
+        log.info(f"Historical activity csv generated at: {os.path.join(config_dir, tec)}.")
+
 
     # Create base file: capacity_factor (DOES NOT REQUIRE EDIT)
     for tec in covered_tec: 
@@ -416,14 +446,136 @@ def generate_bare_sheets(
                                    columndict = {'year_vtg': 'broadcast',
                                                  'year_act': 'broadcast',
                                                  'value': 1,
-                                                 'unit': '%'})   
-        outdf.to_csv(os.path.join(config_dir, tec, "capacity_factor.csv"), index=False) # Does not require edit
+                                                 'unit': '%',
+                                                 'time': 'year'})   
+        outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "capacity_factor.csv"), index=False) # Does not require edit
         log.info(f"Capacity factor csv generated at: {os.path.join(config_dir, tec)}.")
+    
+    # Create base file: initial activity
+    for t in ['lo', 'up']:
+        for tec in covered_tec: 
+            outdf =  build_parameterdf(network_df = network_setup[tec], 
+                                       columndict = {'year_act': 'broadcast',
+                                                     'value': 2,
+                                                     'unit': 'GWa',
+                                                     'time': 'year'})   
+            outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "initial_activity_" + t + ".csv"), index=False) # Does not require edit
+            log.info(f"Initial activity (" + t + ") csv generated at: {os.path.join(config_dir, tec)}.")
+            
+    # Create base file: abs_cost_activity_soft_up/lo
+    for t in ['lo', 'up']:
+        for tec in covered_tec: 
+            outdf =  build_parameterdf(network_df = network_setup[tec], 
+                                       columndict = {'year_act': 'broadcast',
+                                                     'value': None,
+                                                     'unit': 'GWa',
+                                                     'time': 'year'})   
+            outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "abs_cost_activity_soft_" + t + ".csv"), index=False) # Does not require edit
+            log.info(f"Soft activity cost constraints (" + t + ") csv generated at: {os.path.join(config_dir, tec)}.")    
 
+    # Create base file: emission_factor
+    if tracked_emissions[tec] != None:
+        for tec in covered_tec: 
+            outdf = pd.DataFrame()
+            for emission_type in tracked_emissions[tec]: 
+                edf =  build_parameterdf(network_df = network_setup[tec], 
+                                         columndict = {'year_vtg': 'broadcast',
+                                                       'year_act': 'broadcast',
+                                                       'value': None,
+                                                       'unit': None,
+                                                       'emission': emission_type,
+                                                       'mode': 'M1'})
+                outdf = pd.concat([outdf, edf])
+            outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "emission_factor.csv"), index=False) # Does not require edit
+            log.info(f"Emission factor csv generated at: {os.path.join(config_dir, tec)}.")
+        
+    # Create base file: growth_activity_up/lo
+    for t in ['lo', 'up']:
+        for tec in covered_tec: 
+            outdf =  build_parameterdf(network_df = network_setup[tec], 
+                                       columndict = {'year_act': 'broadcast',
+                                                     'value': None,
+                                                     'unit': 'GWa',
+                                                     'time': 'year'})   
+            outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "growth_activity_" + t + ".csv"), index=False) # Does not require edit
+            log.info(f"Growth activity constraints (" + t + ") csv generated at: {os.path.join(config_dir, tec)}.")    
+            
+    # Create base file: level_cost_activity_up/lo
+    for t in ['lo', 'up']:
+        for tec in covered_tec: 
+            outdf =  build_parameterdf(network_df = network_setup[tec], 
+                                       columndict = {'year_act': 'broadcast',
+                                                     'value': None,
+                                                     'unit': 'GWa',
+                                                     'time': 'year'})   
+            outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "level_cost_activity_soft_" + t + ".csv"), index=False) # Does not require edit
+            log.info(f"Levelized cost activity constraints (" + t + ") csv generated at: {os.path.join(config_dir, tec)}.")    
+
+    # Create base file: soft_activity_up/lo
+    for t in ['lo', 'up']:
+        for tec in covered_tec: 
+            outdf =  build_parameterdf(network_df = network_setup[tec], 
+                                       columndict = {'year_act': 'broadcast',
+                                                     'value': None,
+                                                     'unit': 'GWa',
+                                                     'time': 'year'})   
+            outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "soft_activity_" + t + ".csv"), index=False) # Does not require edit
+            log.info(f"Soft activity constraints (" + t + ") csv generated at: {os.path.join(config_dir, tec)}.")    
+    
+    # Replicate base file: For gas- imports require relation to domestic_coal and domestic_gas
+    for tec in covered_tec:  
+        if tec in ['gas_piped']:
+            for r in ['domestic_coal', 'domestic_gas']:
+                df = network_setup[tec][['importer', 'import_technology']]
+                df = df.rename(columns = {'importer': 'node_loc',
+                                          'import_technology': 'technology'})
+                df['node_rel'] = df['node_loc']
+                df["year_rel"] = "broadcast"
+                df["year_act"] = "broadcast"
+                df["mode"] = "M1"
+                df["commodity"] = trade_commodity[tec]
+                df["value"] = -1
+                df['unit'] = '???'
+                df['relation'] = r
+                df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_" + r + ".csv"), index=False)
+                log.info(f"Relation activity (" + r + ") csv generated at: {os.path.join(config_dir, tec)}.")
+                   
+    # Replicate base file: Relation for CO2 emissions accounting
+    for tec in covered_tec:  
+        df = network_setup[tec][['exporter', 'export_technology']]
+        df = df.rename(columns = {'exporter': 'node_loc',
+                                  'export_technology': 'technology'})
+        df['node_rel'] = df['node_loc']
+        df["year_rel"] = "broadcast"
+        df["year_act"] = "broadcast"
+        df["mode"] = "M1"
+        df["commodity"] = trade_commodity[tec]
+        df["value"] = None
+        df['unit'] = '???'
+        df['relation'] = 'CO2_Emission'
+       # df = df[template.columns]
+        df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_CO2_emission.csv"), index=False)
+        log.info(f"Relation activity (global aggregatin) csv generated at: {os.path.join(config_dir, tec)}.")
+    
+    # Replicate base file: Relation for primary energy total accounting
+    for tec in covered_tec:  
+        df = network_setup[tec][['exporter', 'export_technology']]
+        df = df.rename(columns = {'exporter': 'node_loc',
+                                  'export_technology': 'technology'})
+        df['node_rel'] = df['node_loc']
+        df["year_rel"] = "broadcast"
+        df["year_act"] = "broadcast"
+        df["mode"] = "M1"
+        df["commodity"] = trade_commodity[tec]
+        df["value"] = -1
+        df['unit'] = '???'
+        df['relation'] = 'PE_total_traditional'
+      #  df = df[template.columns]
+        df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_PE_total_traditional.csv"), index=False)
+        log.info(f"Relation activity (global aggregatin) csv generated at: {os.path.join(config_dir, tec)}.")
+        
     # Create base file: Relation to aggregate exports so global level can be calculated/calibrated
-    for tec in covered_tec:
-        template = get_template(base_scenario, "relation_activity", base_trade_technology[tec])
-  
+    for tec in covered_tec:  
         df = network_setup[tec][['exporter', 'export_technology']]
         df = df.rename(columns = {'exporter': 'node_loc',
                                   'export_technology': 'technology'})
@@ -435,14 +587,12 @@ def generate_bare_sheets(
         df["value"] = 1
         df['unit'] = '???'
         df['relation'] = trade_technology[tec] + '_exp_global'
-        df = df[template.columns]
-        df.to_csv(os.path.join(config_dir, tec, "relation_activity_global_aggregate.csv"), index=False)
+      #  df = df[template.columns]
+        df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_global_aggregate.csv"), index=False)
         log.info(f"Relation activity (global aggregatin) csv generated at: {os.path.join(config_dir, tec)}.")
         
     # Create base file: relation to link all pipelines/routes to an exporter
-    for tec in covered_tec:
-        template = get_template(base_scenario, "relation_activity", base_trade_technology[tec])
-         
+    for tec in covered_tec:         
         df = network_setup[tec][['exporter', 'export_technology']]
         df = df.rename(columns = {'exporter': 'node_loc',
                                   'export_technology': 'technology'})
@@ -454,14 +604,12 @@ def generate_bare_sheets(
         df["value"] = 1
         df['unit'] = '???'
         df['relation'] = trade_technology[tec] + '_exp_from_' + df['node_loc'].str.lower().str.split('_').str[1]
-        df = df[template.columns]
-        df.to_csv(os.path.join(config_dir, tec, "relation_activity_regionalexp.csv"), index=False)
+       #df = df[template.columns]
+        df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_regionalexp.csv"), index=False)
         log.info(f"Relation activity (regional exports) csv generated at: {os.path.join(config_dir, tec)}.")
         
     # Create base file: relation to link all pipelines/routes to an importer
-    for tec in covered_tec:
-        template = get_template(base_scenario, "relation_activity", base_trade_technology[tec])
-         
+    for tec in covered_tec:         
         df = network_setup[tec][['importer', 'import_technology']]
         df = df.rename(columns = {'importer': 'node_loc',
                                   'import_technology': 'technology'})
@@ -473,155 +621,217 @@ def generate_bare_sheets(
         df["value"] = 1
         df['unit'] = '???'
         df['relation'] = trade_technology[tec] + '_imp_to_' + df['node_loc'].str.lower().str.split('_').str[1]
-        df = df[template.columns]
-        df.to_csv(os.path.join(config_dir, tec, "relation_activity_regionalimp.csv"), index=False)
+       # df = df[template.columns]
+        df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_regionalimp.csv"), index=False)
         log.info(f"Relation activity (regional imports) csv generated at: {os.path.join(config_dir, tec)}.")
+        
+        mp.close_db()
 #%% Build out bare sheets
-def build_parameter_sheets(config_name: str = None):
+def build_parameter_sheets(log, config_name: str = None):
     """
     Read the input csv files and build the tech sets and parameters.
 
     Args:
         config_name (str, optional): Name of the config file.
-            If None, uses default config from data/inter_pipe/config.yaml
+            If None, uses default config from data/bilateralize/config.yaml
     """
-    # Read all CSV files that do not contain "edit" in the name
-    csv_files = [
-        f
-        for f in Path(package_data_path("inter_pipe")).glob("*.csv")
-        if "edit" not in f.name
-    ]
-    data_dict = {}
-    for csv_file in csv_files:
-        key = csv_file.stem
-        data_dict[key] = pd.read_csv(csv_file)
-
-    # Load the config
+    # Load config
     if config_name is None:
-        config_name = "inter_pipe"
-    full_path = package_data_path("inter_pipe", "config.yaml")
+        config_name = "config.yaml"
+        
+    full_path = package_data_path("bilateralize", config_name)
+    
+    config_dir = os.path.dirname(full_path)
     config = load_config(full_path)
-    log.info(f"Loading config from: {full_path}")
+    
+    covered_tec = config.get('covered_trade_technologies', {})
+    trade_lifetimes = config.get('trade_lifetimes', {})
+    
+    outdict = dict()
+    
+    for tec in covered_tec:
+        config_tec = config.get(tec + '_trade', {})
+        
+        tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
+        csv_files = [f for f in Path(os.path.join(tecpath, 'bare_files')).glob("*.csv")]
+    
+        data_dict = {}
+        for csv_file in csv_files:
+            key = csv_file.stem
+            data_dict[key] = pd.read_csv(csv_file)
 
-    # Generate par_list and set_list
-    par_list = [
-        "input",
-        "output",
-        "technical_lifetime",
-        "inv_cost",
-        "fix_cost",
-        "var_cost",
-        "capacity_factor",
-        "relation_activity",
-        "relation_upper",
-        "relation_lower",
-    ]
-    set_list = [
-        "technology",
-        # "commodity",
-        "level",
-        "relation",
-    ]
+        # Broadcast the data   
+        ya_list = config_tec.get('year_act_list', [])
+        yv_list = config_tec.get('year_vtg_list', [])
+        tec_lt = trade_lifetimes[tec]
+        
+        for i in data_dict.keys():
+            if "year_rel" in data_dict[i].columns:
+                if data_dict[i]["year_rel"].iloc[0] == "broadcast":
+                    data_dict[i] = broadcast_yl(data_dict[i], ya_list)
+                    data_dict[i]["year_act"] = data_dict[i]["year_rel"]
+            else:
+                pass
+            
+            if "year_vtg" in data_dict[i].columns and "year_act" in data_dict[i].columns:
+                if (data_dict[i]["year_vtg"].iloc[0] == "broadcast"
+                    and data_dict[i]["year_act"].iloc[0] == "broadcast"):
+                    log.info(f"Parameter {i} broadcasted for yv and ya.")
+                    data_dict[i] = broadcast_yv_ya(data_dict[i], ya_list, tec_lifetime = tec_lt)
+                elif (data_dict[i]["year_vtg"].iloc[0] == "broadcast"
+                    and data_dict[i]["year_act"].iloc[0] != "broadcast"):
+                    log.info(f"Parameter {i} broadcasted for yv.")
+                    data_dict[i] = broadcast_yv(data_dict[i], ya_list)
+            elif "year_vtg" in data_dict[i].columns and "year_act" not in data_dict[i].columns:
+                if data_dict[i]["year_vtg"].iloc[0] == "broadcast":
+                    log.info(f"Parameter {i} broadcasted for yv.")
+                    data_dict[i] = broadcast_yv(data_dict[i], yv_list) 
+            elif "year_vtg" not in data_dict[i].columns and "year_act" in data_dict[i].columns:
+                if data_dict[i]["year_act"].iloc[0] == "broadcast":
+                    log.info(f"Parameter {i} broadcasted for ya.")
+                    data_dict[i] = broadcast_ya(data_dict[i], ya_list)                    
+            else:
+                pass
 
-    # Broadcast the data
-    ya_list = [
-        2030,
-        2035,
-        2040,
-        2045,
-        2050,
-        2055,
-        2060,
-        2070,
-        2080,
-        2090,
-        2100,
-        2110,
-    ]  # TODO: get from config
-    for i in data_dict.keys():
-        if "year_rel" in data_dict[i].columns:
-            if data_dict[i]["year_rel"].iloc[0] == "broadcast":
-                data_dict[i] = broadcast_yl(data_dict[i], ya_list)
-                data_dict[i]["year_act"] = data_dict[i]["year_rel"]
-                log.info(f"Parameter {i} Broadcasted.")
-        else:
-            pass
-        if "year_vtg" in data_dict[i].columns and "year_act" in data_dict[i].columns:
-            if (
-                data_dict[i]["year_vtg"].iloc[0] == "broadcast"
-                and data_dict[i]["year_act"].iloc[0] == "broadcast"
-            ):
-                data_dict[i] = broadcast_yv_ya(data_dict[i], ya_list)
-                log.info(f"Parameter {i} Broadcasted.")
-            elif (
-                data_dict[i]["year_vtg"].iloc[0] == "broadcast"
-                and data_dict[i]["year_act"].iloc[0] != "broadcast"
-            ):
-                data_dict[i] = broadcast_yv(data_dict[i], ya_list)
-                log.info(f"Parameter {i} Broadcasted.")
-        else:
-            pass
+        # Imports do not vintage
+        for par in ['capacity_factor', 'input', 'output']:
+            vdf = data_dict[par]
+            vdf = vdf[((vdf['technology'].str.contains('_imp')) & (vdf['year_vtg'] == vdf['year_act']))|\
+                      (vdf['technology'].str.contains('_exp_'))]
+            data_dict[par] = vdf
+        
+        # Generate relation upper and lower
+        # for i in [k for k in data_dict.keys() if "relation_activity" in k]:
+        #     key_name = i
+        #     df = data_dict[i]
+        #     df = broadcast_yl(df, ya_list)
+            
+        #     key_name_upper = key_name.replace("activity", "upper")
+        #     data_dict[key_name_upper] = df.copy()
+    
+        #     key_name_lower = key_name.replace("activity", "lower")
+        #     data_dict[key_name_lower] = df.copy()
+            
+        #     log.info(f"Relation upper/lower generated for " + i)
 
-    # Generate relation upper and lower
-    for i in [k for k in data_dict.keys() if "relation_activity" in k]:
-        if i != "relation_activity_ori":
-            key_name = i
-            df = data_dict[i][["relation", "node_rel", "year_rel", "unit"]].assign(
-                value=0
-            )
-            df = broadcast_yl(df, ya_list)
-            key_name_upper = key_name.replace("activity", "upper")
-            data_dict[key_name_upper] = df.copy()
-
-            key_name_lower = key_name.replace("activity", "lower")
-            data_dict[key_name_lower] = df.copy()
-        else:
-            pass
-
+        outdict[tec] = data_dict
+    
+    return outdict
+#%% Clone and update scenario
+def clone_and_update(trade_dict, 
+                     log, mp, 
+                     solve = False,
+                     to_gdx = False,
+                     config_name: str = None):
+    # Load config
+    if config_name is None:
+        config_name = "config.yaml"
+    full_path = package_data_path("bilateralize", config_name)
+    config_dir = os.path.dirname(full_path)
+    config = load_config(full_path)
+       
     # Load the scenario
-    start_model = str(config.get("scenario", {}).get("start_model", [])[0])
-    start_scen = str(config.get("scenario", {}).get("start_scen", [])[0])
+    mp = ixmp.Platform()
+    start_model = config.get("scenario", {}).get("start_model")
+    start_scen = config.get("scenario", {}).get("start_scen")
+     
     if not start_model or not start_scen:
         error_msg = (
             "Config must contain 'scenario.start_model' and 'scenario.start_scen'\n"
-            f"Please check the config file at: {full_path}"
-        )
+            f"Please check the config file at: {full_path}")
         log.error(error_msg)
         raise ValueError(error_msg)
+    
     base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
     log.info(f"Loaded scenario: {start_model}/{start_scen}")
-
+     
     # Clone scenario
-    target_model = str(config.get("scenario", {}).get("target_model", [])[0])
-    target_scen = str(config.get("scenario", {}).get("target_scen", [])[0])
+    target_model = config.get("scenario", {}).get("target_model", [])
+    target_scen = config.get("scenario", {}).get("target_scen", [])
     scen = base.clone(target_model, target_scen, keep_solution=False)
     scen.set_as_default()
     log.info("Scenario cloned.")
+    
+    # Add sets and parameters for each covered technology
+    covered_tec = config.get('covered_trade_technologies')
+    
+    for tec in covered_tec:
+        
+        # Remove existing technologies related to trade
+        base_tec = [config.get(tec + '_trade').get('trade_technology') + '_exp', # These may not exist but in case they do...
+                    config.get(tec + '_trade').get('trade_technology') + '_imp']#,
+                    #config.get(tec + '_trade').get('trade_technology') + '_bal']
+        if tec == 'gas_piped':
+            base_tec = base_tec + [i for i in scen.set('technology') if 
+                                   config.get(tec + '_trade').get('trade_technology') + '_exp_' in i]
+        base_tec = list(set(base_tec))
+        
+        with scen.transact("Remove base trade technologies for " + tec):
+            for t in base_tec:
+                if t in list(scen.set('technology')):
+                    log.info('Removing base technology...' + t)
+                    scen.remove_set('technology', t)
+                    
+        # Add to sets: technology, level, commodity
+        new_sets = dict()
+        for s in ['technology', 'level', 'commodity']:
+            setlist = set(list(trade_dict[tec]['input'][s].unique()) +\
+                          list(trade_dict[tec]['output'][s].unique()))
+            setlist = list(setlist)
+            
+            new_sets[s] = setlist
+        
+        with scen.transact("Add new sets for " + tec):
+            for s in ['technology', 'level', 'commodity']:
+                base_set = list(scen.set(s))
+                for i in new_sets[s]:
+                    if i not in base_set:
+                        log.info("Adding set: " + s + "..." + i)
+                        scen.add_set(s, i)
+                    else:
+                        pass
+                
+        # Add parameters
+        new_parameter_list = [i for i in trade_dict[tec].keys()
+                              if 'relation_' not in i] # do relation activity/lower/upper separately
 
-    # Add set and parameter
-    with scen.transact("Added"):
-        for i in set_list:
-            if i in data_dict:
-                i_str = (
-                    data_dict[i]
-                    .apply(lambda row: row.astype(str).str.cat(sep=", "), axis=1)
-                    .tolist()
-                )  # str or list of str only
-                scen.add_set(i, i_str)
-                log.info(f"Set {i} added.")
-            else:
-                pass
-        for i in par_list:
-            # Find all keys in data_dict that contain the parameter name
-            matching_keys = [k for k in data_dict.keys() if i in k]
-            if matching_keys:
-                # Combine all matching DataFrames
-                combined_df = pd.concat(
-                    [data_dict[k] for k in matching_keys], ignore_index=True
-                )
-                scen.add_par(i, combined_df)
-                log.info(f"Parameter {i} from {matching_keys} added.")
-            else:
-                pass
-
-    return scen
+        with scen.transact("Add new parameters for " + tec):
+            for p in new_parameter_list:
+                pardf = trade_dict[tec][p]
+                pardf = pardf[pardf['value'].isnull() == False]
+                log.info('Adding parameter for ' + tec + ': ' + p)
+                scen.add_par(p, pardf)
+    
+        # Relation activity, upper, and lower
+        if 'relation' in trade_dict[tec].keys():
+            for rel_par in ['relation_activity', 'relation_upper', 'relation_lower']:
+                rel_par_df = pd.DataFrame()
+                rel_par_list = [i for i in trade_dict[tec].keys()
+                                if rel_par in i]
+                for r in rel_par_list:
+                    rel_par_df = pd.concat([rel_par_df, trade_dict[tec][r]])
+                
+                if rel_par == 'relation_activity':
+                    with scen.transact('Adding new relation sets'):
+                        new_relations = list(rel_par_df['relation'].unique())
+                        for nr in new_relations:
+                            if nr not in scen.set('relation').unique():
+                                scen.add_set('relation', nr)
+                        
+                with scen.transact('Add ' + rel_par + ' for ' + tec):
+                    log.info('Adding ' + rel_par + ' for ' + tec)
+                    rel_par_df = rel_par_df[rel_par_df['value'].isnull() == False]
+                    scen.add_par('relation_activity', rel_par_df)
+                    
+    if (to_gdx == True) & (solve == False):
+        save_to_gdx(mp = mp,
+                    scenario = scen,
+                    output_path = Path(os.path.join(config_dir, 'gdx', 'MsgData_'+ target_model + '_' + target_scen + '.gdx')))     
+        
+    if solve == True:
+        solver = "MESSAGE"
+        scen.solve(solver, solve_options=dict(lpmethod=4))
+        
+        print("Unlock run ID of the scenario")
+        runid = scen.run_id()
+        mp._backend.jobj.unlockRunid(runid)                    
