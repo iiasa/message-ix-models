@@ -1,0 +1,16 @@
+node_loc,technology,node_rel,year_rel,year_act,mode,commodity,value,unit,relation
+R12_AFR,gas_exp_eeu,R12_AFR,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_AFR,gas_exp_weu,R12_AFR,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_MEA,gas_exp_afr,R12_MEA,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_MEA,gas_exp_sas,R12_MEA,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_MEA,gas_exp_rcpa,R12_MEA,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_MEA,gas_exp_chn,R12_MEA,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_MEA,gas_exp_eeu,R12_MEA,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_MEA,gas_exp_weu,R12_MEA,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_LAM,gas_exp_nam,R12_LAM,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_FSU,gas_exp_sas,R12_FSU,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_FSU,gas_exp_rcpa,R12_FSU,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_FSU,gas_exp_chn,R12_FSU,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_FSU,gas_exp_pao,R12_FSU,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_FSU,gas_exp_eeu,R12_FSU,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
+R12_FSU,gas_exp_weu,R12_FSU,broadcast,broadcast,M1,gas,-0.507368,???,CO2_Emission
