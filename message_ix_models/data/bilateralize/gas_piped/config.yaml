@@ -1,0 +1,72 @@
+# Pipeline gas exports
+gas_piped_trade:
+  base_trade_technology:
+    gas_t_d
+  trade_technology:
+    gas
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    gas
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    primary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technology:
+    pipe
+  flow_tech_suffix:
+  supply_technologies:
+    - gas_extr_1
+    - gas_extr_2
+    - gas_extr_3
+    - gas_extr_4
+    - gas_extr_5
+    - gas_extr_6
+    - gas_extr_7
+  # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
+  specify_network:
+    True
+  year_act_list:
+    - 2000
+    - 2005
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+  year_vtg_list:
+    - 2000
+    - 2005
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
