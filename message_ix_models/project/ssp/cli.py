@@ -31,7 +31,7 @@ def gen_structures(context, **kwargs):
 @click.argument("path_in", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument(
     "path_out",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(exists=False, dir_okay=False, path_type=Path),
     required=False,
 )
 @click.pass_obj
