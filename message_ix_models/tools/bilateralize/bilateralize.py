@@ -319,15 +319,13 @@ def generate_bare_sheets(
         
         # Import Level
         df = network_setup[tec][['exporter', 'export_technology', 'importer', 'import_technology']]
-        df = df.rename(columns = {#'exporter': 'node_origin',
-                                  'importer': 'node_loc',
+        df = df.rename(columns = {'importer': 'node_loc',
                                   'import_technology': 'technology'})
         df["node_origin"] = df["node_loc"]
         df["year_vtg"] = "broadcast"
         df["year_act"] = "broadcast"
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
-        #df["commodity"] = trade_commodity[tec] + '-' + df["export_technology"].str[-3:]
         df["level"] = trade_level[tec]
         df["value"] = None
         df['time'] = 'year'
@@ -349,18 +347,15 @@ def generate_bare_sheets(
         df = df.rename(columns = {'exporter': 'node_loc',
                                   'importer': 'node_dest',
                                   'export_technology': 'technology'})
-        #df['node_dest'] = df['node_loc']
         df["year_vtg"] = "broadcast"
         df["year_act"] = "broadcast"
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
-        #df["commodity"] = trade_commodity[tec] + '-' + df["technology"].str[-3:]
         df["level"] = trade_level[tec]
         df["value"] = None
         df['time'] = 'year'
         df['time_dest'] = 'year'
         df['unit'] = None
-        #df = df[template.columns]
         output_trade = df.copy()
         
         # Import Level
@@ -377,7 +372,6 @@ def generate_bare_sheets(
         df['time'] = 'year'
         df['time_dest'] = 'year'
         df['unit'] = None
-        #df = df[template.columns]
         output_imports = df.copy()
     
         df = pd.concat([output_trade, output_imports])
@@ -553,7 +547,6 @@ def generate_bare_sheets(
         df["value"] = None
         df['unit'] = '???'
         df['relation'] = 'CO2_Emission'
-       # df = df[template.columns]
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_CO2_emission.csv"), index=False)
         log.info(f"Relation activity (global aggregatin) csv generated at: {os.path.join(config_dir, tec)}.")
     
@@ -570,7 +563,6 @@ def generate_bare_sheets(
         df["value"] = -1
         df['unit'] = '???'
         df['relation'] = 'PE_total_traditional'
-      #  df = df[template.columns]
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_PE_total_traditional.csv"), index=False)
         log.info(f"Relation activity (global aggregatin) csv generated at: {os.path.join(config_dir, tec)}.")
         
@@ -587,7 +579,6 @@ def generate_bare_sheets(
         df["value"] = 1
         df['unit'] = '???'
         df['relation'] = trade_technology[tec] + '_exp_global'
-      #  df = df[template.columns]
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_global_aggregate.csv"), index=False)
         log.info(f"Relation activity (global aggregatin) csv generated at: {os.path.join(config_dir, tec)}.")
         
@@ -604,7 +595,6 @@ def generate_bare_sheets(
         df["value"] = 1
         df['unit'] = '???'
         df['relation'] = trade_technology[tec] + '_exp_from_' + df['node_loc'].str.lower().str.split('_').str[1]
-       #df = df[template.columns]
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_regionalexp.csv"), index=False)
         log.info(f"Relation activity (regional exports) csv generated at: {os.path.join(config_dir, tec)}.")
         
@@ -621,7 +611,6 @@ def generate_bare_sheets(
         df["value"] = 1
         df['unit'] = '???'
         df['relation'] = trade_technology[tec] + '_imp_to_' + df['node_loc'].str.lower().str.split('_').str[1]
-       # df = df[template.columns]
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_regionalimp.csv"), index=False)
         log.info(f"Relation activity (regional imports) csv generated at: {os.path.join(config_dir, tec)}.")
         
@@ -760,7 +749,7 @@ def clone_and_update(trade_dict,
         # Remove existing technologies related to trade
         base_tec = [config.get(tec + '_trade').get('trade_technology') + '_exp', # These may not exist but in case they do...
                     config.get(tec + '_trade').get('trade_technology') + '_imp']#,
-                    #config.get(tec + '_trade').get('trade_technology') + '_bal']
+                   # config.get(tec + '_trade').get('trade_technology') + '_bal']
         if tec == 'gas_piped':
             base_tec = base_tec + [i for i in scen.set('technology') if 
                                    config.get(tec + '_trade').get('trade_technology') + '_exp_' in i]
