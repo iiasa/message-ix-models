@@ -6,6 +6,7 @@ for ammonia fertilizer technologies demand, and related constraints.
 """
 
 from collections import defaultdict
+from collections.abc import MutableMapping
 
 import message_ix
 import pandas as pd
@@ -59,7 +60,7 @@ def gen_data_cement(
     tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
+    results: MutableMapping[str, list[pd.DataFrame]] = defaultdict(list)
 
     # For each technology there are different input and output combinations
     # Iterate over technologies
