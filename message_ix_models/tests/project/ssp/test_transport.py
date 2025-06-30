@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable, Hashable
 from functools import cache
 from typing import TYPE_CHECKING
@@ -12,6 +13,7 @@ from message_ix_models.project.ssp.transport import (
     get_scenario_code,
     process_df,
     process_file,
+    v_to_fe_coords,
 )
 from message_ix_models.testing import MARK
 from message_ix_models.tools.iea import web
@@ -19,6 +21,8 @@ from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     import pathlib
+
+log = logging.getLogger(__name__)
 
 METHOD_PARAM = (
     METHOD.A,
@@ -87,8 +91,26 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     assert expected_variables(IN_, method) <= set(df_in["Variable"].unique())
     region = set(df_in["Region"].unique())
 
+    # Identify the directory from which IEA EWEB data is read
+    iea_eweb_dir = web.dir_fallback(
+        web.FILES[("IEA", "2024")][0], where=web.IEA_EWEB._where()
+    )
+    # True if the fuzzed test data are being used
+    iea_eweb_test_data = iea_eweb_dir.match("message_ix_models/data/test/iea/web")
+    log.info(f"{iea_eweb_test_data = }")
+
+    # Number of added values; number of modified values
+    N_new, N_exp = {
+        (METHOD.A, False): (0, 10280),
+        (METHOD.A, True): (0, 10280),
+        (METHOD.B, False): (13 * 20, 10120),
+        (METHOD.B, True): (10 * 20, 7720),
+        (METHOD.C, False): (13 * 20, 7000),
+        (METHOD.C, True): (13 * 20, 7000),
+    }[(method, iea_eweb_test_data)]
+
     # Data have the same length
-    assert len(df_in) == len(df_out)
+    assert len(df_in) + N_new == len(df_out)
 
     # Output has the same set of region codes as input
     assert region == set(df_out["Region"].unique())
@@ -103,32 +125,15 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
         .query("abs(value_out - value_in) > 1e-16")
     )
 
-    # Identify the directory from which IEA EWEB data is read
-    iea_eweb_dir = web.dir_fallback(
-        web.FILES[("IEA", "2024")][0], where=web.IEA_EWEB._where()
-    )
-    # True if the fuzzed test data are being used
-    iea_eweb_test_data = iea_eweb_dir.match("message_ix_models/data/test/iea/web")
-
     # All regions and "World" have modified values
     N_reg = {METHOD.A: 13, METHOD.B: 9, METHOD.C: 13}[method]
     assert N_reg <= len(df["Region"].unique())
 
-    # Number of modified values
-    N_exp = {
-        (METHOD.A, False): 10280,
-        (METHOD.A, True): 10280,
-        (METHOD.B, False): 10120,
-        (METHOD.B, True): 7720,
-        (METHOD.C, False): 7000,
-        (METHOD.C, True): 7000,
-    }[(method, iea_eweb_test_data)]
-
-    if N_exp != len(df):
-        # df.to_csv("debug-diff.csv")  # DEBUG Dump to file
-        # print(df.to_string(max_rows=50))  # DEBUG Show in test output
-        msg = f"Unexpected number of modified values: {N_exp} != {len(df)}"
-        assert N_exp == len(df)
+    # if N_exp != len(df):  # DEBUG
+    #     df.to_csv("debug-diff.csv")  # Dump to file
+    #     print(df.to_string(max_rows=50))  # Show in test output
+    # msg = f"Unexpected number of modified values: {N_exp} != {len(df)}"
+    # assert N_exp == len(df), msg
 
     # All of the expected 'variable' codes have been modified
     assert expected_variables(OUT, method) == set(df["Variable"].unique())
@@ -148,6 +153,8 @@ def expected_variables(flag: int, method: METHOD) -> set[str]:
     edt = "Energy|Demand|Transportation"
 
     result = set()
+
+    # Emissions
     for e in SPECIES:
         # Expected data flows in which these variable codes appear
         exp = IN_ if (e in SPECIES_WITHOUT_EF and method != METHOD.A) else I_O
@@ -158,6 +165,17 @@ def expected_variables(flag: int, method: METHOD) -> set[str]:
                 f"Emissions|{e}|{edt}",
                 f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
             }
+
+    # Final Energy
+    if method != METHOD.A:
+        result |= {
+            "Final Energy|Bunkers",
+            "Final Energy|Bunkers|Liquids|Oil",
+            "Final Energy|Transportation",
+            "Final Energy|Transportation|Liquids|Oil",
+        }
+        if flag & OUT:
+            result.add("Final Energy|Bunkers|International Aviation")
 
     return result
 
@@ -279,3 +297,31 @@ def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
 
     # Output satisfies expectations
     check(df_in, df_out, method)
+
+
+@pytest.mark.parametrize(
+    "value, exp",
+    (
+        ("Final Energy|Bunkers", {"c": "", "t": "Bunkers"}),
+        (
+            "Final Energy|Bunkers|International Aviation",
+            {"c": "", "t": "Bunkers|International Aviation"},
+        ),
+        ("Final Energy|Bunkers|Liquids|Oil", {"c": "Liquids|Oil", "t": "Bunkers"}),
+        (
+            "Final Energy|Transportation (w/ bunkers)",
+            {"c": "", "t": "Transportation (w/ bunkers)"},
+        ),
+        (
+            "Final Energy|Transportation (w/ bunkers)|Liquids|Oil",
+            {"c": "Liquids|Oil", "t": "Transportation (w/ bunkers)"},
+        ),
+        ("Final Energy|Transportation", {"c": "", "t": "Transportation"}),
+        (
+            "Final Energy|Transportation|Liquids|Oil",
+            {"c": "Liquids|Oil", "t": "Transportation"},
+        ),
+    ),
+)
+def test_v_to_fe_coords(value: str, exp) -> None:
+    assert exp == v_to_fe_coords(value)

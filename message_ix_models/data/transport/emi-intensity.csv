@@ -26,13 +26,15 @@
 #    - the code “Sulfur” with units “Mt SO2/yr”.
 #    - the code “NOx” with units “Mt NO2/yr”.
 #
-#    See https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1744277852653529
+#    See:
+#    - https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1744277852653529
+#    - https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1750938340070669
 #
 # Units: g / MJ
 #
 technology, commodity, emission, value
 
-AIR,        lightoil,  BC,       0.001430 # (4)
+AIR,        lightoil,  BC,       0.001497 # (4)
 
 # (3) is used because the (4) is (nearly) zero.
 AIR,        lightoil,  CH4,      0.0005   # (3)
@@ -43,14 +45,14 @@ AIR,        lightoil,  CH4,      0.0005   # (3)
 # AIR,      lightoil,  CO,      13.95     # (2)  600    g/kg “Calculated using Tier 2 method”
 # AIR,      lightoil,  CO,      27.90     # (2) 1200    g/kg “Calculated using Tier 2 method”
 # AIR,      lightoil,  CO,      55.81     # (2) 2400    g/kg “Calculated using Tier 2 method”
-AIR,        lightoil,  CO,       0.088798 # (4)
+AIR,        lightoil,  CO,       0.091096 # (4)
 
-AIR,        lightoil,  CO2,    111.053342 # (4)
+AIR,        lightoil,  CO2,    118.077374 # (4)
 
 AIR,        lightoil,  N2O,      0.0031   # (3)
-# AIR,      lightoil,  N2O,      3.635365 # (4)
+# AIR,      lightoil,  N2O,      3.808586 # (4)
 
-AIR,        lightoil,  NH3,      0.005857 # (4)
+AIR,        lightoil,  NH3,      0.006133 # (4)
 
 # NOx:
 # - (2) is used because (1) and (4) values are too large and yield negative totals.
@@ -60,12 +62,12 @@ AIR,        lightoil,  NH3,      0.005857 # (4)
 # AIR,      lightoil,  NOx,      0.0465   # (2)    2    g/kg “Calculated using Tier 2 method”
 AIR,        lightoil,  NOx,      0.0930   # (2)    4    g/kg “Calculated using Tier 2 method”
 # AIR,      lightoil,  NOx,      0.1860   # (2)    8    g/kg “Calculated using Tier 2 method”
-# AIR,      lightoil,  NOx,      0.456715 # (4)
+# AIR,      lightoil,  NOx,      0.479172 # (4)
 
-AIR,        lightoil,  OC,       0.000709 # (4)
+AIR,        lightoil,  OC,       0.000743 # (4)
 
 AIR,        lightoil,  Sulfur,   0.0279   # (1)    1.2  g/kg
-# AIR,      lightoil,  Sulfur,   0.040058 # (4) “Sulfur” in upstream data with “SO2” in units
+# AIR,      lightoil,  Sulfur,   0.041980 # (4) “Sulfur” in upstream data with “SO2” in units
 
 # AIR,      lightoil,  SOx,      0.0116   # (2)    0.5  g/kg “Assuming 0.05% S by mass”
 AIR,        lightoil,  SOx,      0.0233   # (2)    1    g/kg “Assuming 0.05% S by mass”
@@ -79,4 +81,4 @@ AIR,        lightoil,  SOx,      0.0233   # (2)    1    g/kg “Assuming 0.05% S
 # AIR,      lightoil,  VOC,      0.2209   # (2)    9.5  g/kg “Calculated using Tier 2 method”
 # AIR,      lightoil,  VOC,      0.4419   # (2)   19    g/kg “Calculated using Tier 2 method”
 # AIR,      lightoil,  VOC,      0.8837   # (2)   38    g/kg “Calculated using Tier 2 method”
-AIR,        lightoil,  VOC,      0.013246 # (4)
+AIR,        lightoil,  VOC,      0.013759 # (4)
