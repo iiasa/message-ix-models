@@ -69,7 +69,8 @@ def gen_data_cement(
     nodes = nodes_ex_world(s_info.N)
 
     for t in config["technology"]["add"]:
-        t = t.id
+        # Retrieve the id if `t` is a Code instance; otherwise use str
+        t = getattr(t, "id", t)
         params = data_cement.loc[(data_cement["technology"] == t), "parameter"].unique()
 
         # Special treatment for time-varying params
