@@ -1,0 +1,138 @@
+relation,parameter,technology,Region,value,Units
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_RCPA,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_RCPA,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_RCPA,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_CHN,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_CHN,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_CHN,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_EEU,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_EEU,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_EEU,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_WEU,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_WEU,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_WEU,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_FSU,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_FSU,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_FSU,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_LAM,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_LAM,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_LAM,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_MEA,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_MEA,-0.01,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_MEA,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_SAS,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_SAS,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_SAS,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_PAS,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_PAS,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_PAS,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_NAM,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_NAM,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_NAM,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_PAO,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_PAO,-0.5,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_PAO,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_AFR,1.0,
+minimum_recycling_steel,relation_activity,total_EOL_steel,R12_AFR,-0.3,minimum recycling rate after 2020
+minimum_recycling_steel,relation_lower,,R12_AFR,0.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_RCPA,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_CHN,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_EEU,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_WEU,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_FSU,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_LAM,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_MEA,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_SAS,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_PAS,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_NAM,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_PAO,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_AFR,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_RCPA,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_WEU,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_FSU,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_LAM,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_MEA,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_SAS,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_PAS,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_NAM,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_PAO,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_AFR,1.0,
+max_global_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_CHN,1.0,maximum global scrap used in 2020
+max_global_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_CHN,1.0,maximum global scrap used in 2020
+max_global_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_CHN,1.0,maximum global scrap used in 2020
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_RCPA,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_CHN,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_EEU,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_WEU,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_FSU,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_LAM,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_MEA,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_SAS,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_PAS,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_NAM,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_PAO,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_1,R12_AFR,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_RCPA,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_CHN,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_EEU,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_WEU,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_FSU,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_LAM,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_MEA,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_SAS,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_PAS,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_NAM,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_PAO,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_2,R12_AFR,1.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_RCPA,1.0,
+max_regional_recycling_steel,relation_upper,,R12_RCPA,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_CHN,1.0,
+max_regional_recycling_steel,relation_upper,,R12_CHN,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_EEU,1.0,
+max_regional_recycling_steel,relation_upper,,R12_EEU,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_WEU,1.0,
+max_regional_recycling_steel,relation_upper,,R12_WEU,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_FSU,1.0,
+max_regional_recycling_steel,relation_upper,,R12_FSU,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_LAM,1.0,
+max_regional_recycling_steel,relation_upper,,R12_LAM,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_MEA,1.0,
+max_regional_recycling_steel,relation_upper,,R12_MEA,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_SAS,1.0,
+max_regional_recycling_steel,relation_upper,,R12_SAS,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_PAS,1.0,
+max_regional_recycling_steel,relation_upper,,R12_PAS,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_NAM,1.0,
+max_regional_recycling_steel,relation_upper,,R12_NAM,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_PAO,1.0,
+max_regional_recycling_steel,relation_upper,,R12_PAO,0.0,
+max_regional_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_AFR,1.0,
+max_regional_recycling_steel,relation_upper,,R12_AFR,0.0,
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_RCPA,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_CHN,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_EEU,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_WEU,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_FSU,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_LAM,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_MEA,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_SAS,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_PAS,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_NAM,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_PAO,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,bf_ccs_steel,R12_AFR,-0.2136818181818184,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_RCPA,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_CHN,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_EEU,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_WEU,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_FSU,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_LAM,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_MEA,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_SAS,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_PAS,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_NAM,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_PAO,-0.13,copied from CO2 entry from steel_R12
+co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_AFR,-0.13,copied from CO2 entry from steel_R12
+max_global_recycling_steel,relation_lower,,R12_CHN,630.0,
+max_global_recycling_steel,relation_upper,,R12_CHN,630.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_CHN,1.0,
+minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_EEU,1.0,
