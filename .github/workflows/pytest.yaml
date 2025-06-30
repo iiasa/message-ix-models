@@ -171,7 +171,8 @@ jobs:
         if version_string != "main":
             v, result = parse(version_string), []
             for condition, dependency in (
-                (v < Version("v3.9.0"), "pytest == 8.0.0"),  # Upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0 (#155)
+                (v < Version("v3.9"), "pytest == 8.0.0"),  # Upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0 (#155)
+                (Version("v3.8") < v < Version("v3.11"), "ixmp4 < 0.11"),  # https://github.com/iiasa/message-ix-models/issues/366
             ):
                 result.extend([f'"{dependency}"'] if condition else [])
 
