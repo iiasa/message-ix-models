@@ -1,0 +1,113 @@
+# IEA Conversion Factors
+
+# IEA Country to R12 Region
+IEA_to_message:
+  Algeria:
+    R12:
+      -R12_MEA
+    ISO:
+      DZA
+  Australia:
+    R12:
+      -R12_PAO
+    ISO:
+      AUS
+  Brazil:
+    R12:
+      -R12_LAM
+    ISO:
+      BRA
+  Canada:
+    R12:
+      -R12_NAM
+    ISO:
+      CAN
+  China:
+    R12:
+      -R12_CHN
+    ISO:
+      CHN
+  Colombia:
+    R12:
+      -R12_LAM
+    ISO:
+      COL
+  India:
+    R12:
+      -R12_SAS
+    ISO:
+      IND
+  Indonesia:
+    R12:
+      -R12_PAS
+    ISO:
+      IDN
+  Iran:
+    R12:
+      -R12_MEA
+    ISO:
+      IRN
+  Iraq:
+    R12:
+      -R12_MEA
+    ISO:
+      IRQ
+  Kazakhstan:
+    R12:
+      -R12_FSU
+    ISO:
+      KAZ
+  Kuwait:
+    R12:
+      -R12_MEA
+    ISO:
+      KWT
+  Norway:
+    R12:
+      -R12_WEU
+    ISO:
+      NOR
+  Poland:
+    R12:
+      -R12_WEU
+    ISO:
+      POL
+  OECD Americas:
+    R12:
+      -R12_LAM
+      -R12_NAM
+    ISO:  
+  OECD Asia Oceania:
+    R12:
+      -R12_PAO
+    ISO:   
+  Qatar:
+    R12:
+      -R12_MEA
+    ISO:
+      QAT
+  Russian Federation:
+    R12:
+      -R12_FSU
+    ISO:
+      RUS
+  Saudi Arabia:
+    R12:
+      -R12_MEA
+    ISO:
+      SAU
+  South Africa:
+    R12:
+      -R12_AFR
+    ISO:
+      ZAF
+  United Arab Emirates:
+    R12:
+      -R12_MEA
+    ISO:
+      ARE
+  United States:
+    R12:
+      -R12_NAM
+    ISO:
+      USA
