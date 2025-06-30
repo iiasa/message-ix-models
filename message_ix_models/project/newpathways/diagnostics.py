@@ -16,7 +16,6 @@ import plotly.graph_objects as go
 from message_ix_models.util import package_data_path
 #from message_data.tools.post_processing import iamc_report_hackathon
 from ixmp import Platform
-#from ixmp.report import configure, Key, Reporter
 
 # Connect to ixmp
 mp = ixmp.Platform()
@@ -24,22 +23,13 @@ mp = ixmp.Platform()
 full_path = package_data_path("bilateralize", "config.yaml")
 config_dir = os.path.dirname(full_path)
 
-# def report_scenario(mp, model_name, scenario_name):
-#     scen = message_ix.Scenario(mp, 
-#                                model=model_name, 
-#                                scenario=scenario_name)
-    
-#     iamc_report_hackathon.report(mp=mp, 
-#                                  scen=scenario_name, 
-#                                  merge_hist=False, 
-#                                  run_config="materials_daccs_run_config.yaml")
-
 # Run Reporter
 def activity_to_csv(base_export_tec,
                     base_import_tec,
                     model_name, 
                     scenario_name):
     
+    mp = ixmp.Platform()
     scen = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
 
     activity = scen.var("ACT")
@@ -65,18 +55,16 @@ def activity_to_csv(base_export_tec,
                    index = False)
 
 # Retrieve trade flow activities
-# activity_to_csv(base_export_tec = 'gas_exp', base_import_tec = 'gas_imp',
-#                 model_name = 'NP_SSP2', scenario_name = 'base_scenario')
-# activity_to_csv(base_export_tec = 'gas_exp', base_import_tec = 'gas_imp',
-#                 model_name = 'NP_SSP2', scenario_name = 'test')
+activity_to_csv(base_export_tec = "gas_exp", base_import_tec = "gas_imp",
+                model_name = "SSP_SSP2_v5.3", scenario_name = "baseline_DEFAULT")
+activity_to_csv(base_export_tec = "gas_exp", base_import_tec = "gas_imp",
+                model_name = "NP_SSP2", scenario_name = "test")
 
 # Build Sankey
-model_name = 'NP_SSP2',
-scenario_name = 'test'
-base_export_tec = 'gas_exp'
-
-def build_sankey(base_export_tec,
-                 model_name, scenario_name):
+def build_sankey(base_export_tec, year_list,
+                 model_name, scenario_name,
+                 out_title):
+    
     scen = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
     
     activity = scen.var("ACT")
@@ -94,28 +82,39 @@ def build_sankey(base_export_tec,
     
     unique_source = list(set(list(sdf['EXPORTER']) + list(sdf['IMPORTER'])))
     mapdict = {k: v for v, k in enumerate(unique_source)}
-    linksdf = sdf[sdf['YEAR'] == 2030].copy()
-    linksdf = linksdf[['EXPORTER', 'IMPORTER', 'LEVEL']]
-    linksdf = linksdf.rename(columns = {'EXPORTER': 'source',
-                                        'IMPORTER': 'target',
-                                        'LEVEL': 'value'})
     
-    linksdf['source'] = linksdf['source'].map(mapdict)
-    linksdf['target'] = linksdf['target'].map(mapdict)
-    link_dict = linksdf.to_dict(orient = 'list')
+    for year in year_list:
+        linksdf = sdf[sdf['YEAR'] == year].copy()
+        linksdf = linksdf[['EXPORTER', 'IMPORTER', 'LEVEL']]
+        linksdf = linksdf.rename(columns = {'EXPORTER': 'source',
+                                            'IMPORTER': 'target',
+                                            'LEVEL': 'value'})
+        
+        linksdf['source'] = linksdf['source'].map(mapdict)
+        linksdf['target'] = linksdf['target'].map(mapdict)
+        link_dict = linksdf.to_dict(orient = 'list')
+        
+        #Sankey Diagram Code 
+        fig = go.Figure(data=[go.Sankey(
+            node = dict(
+                pad = 15,
+                thickness = 20,
+                line = dict(color = "black", width = 0.5),
+                label = unique_source,),
+            link = dict(
+                source = link_dict["source"],
+                target = link_dict["target"],
+                value = link_dict["value"],
+          ))])
+        
+        fig.update_layout(title_text=out_title + '(' + str(year) + ')', font_size=10,width=1000, height=600)
+        fig.write_image(os.path.join(config_dir, 'diagnostics', 'figures', base_export_tec + '_' + model_name + '_' + scenario_name + '_' + str(year) + '.png'))
     
-    #Sankey Diagram Code 
-    fig = go.Figure(data=[go.Sankey(
-        node = dict(
-            pad = 15,
-            thickness = 20,
-            line = dict(color = "black", width = 0.5),
-            label = unique_source,),
-        link = dict(
-            source = link_dict["source"],
-            target = link_dict["target"],
-            value = link_dict["value"],
-      ))])
     
-    fig.update_layout(title_text="TEST", font_size=10,width=1000, height=600)
-    fig.write_image(os.path.join(config_dir, 'diagnostics', 'gas_exp' + '_' + 'NP_SSP2' + '_' + 'base_scenario' + '.png'))
+build_sankey(base_export_tec = "gas_exp", year_list = [2030, 2040, 2050, 2100],
+             model_name = "NP_SSP2", scenario_name = "test",
+             out_title = "Pipeline Gas, after bilateralization ")
+    
+build_sankey(base_export_tec = "gas_exp", year_list = [2030, 2040, 2050, 2100],
+             model_name = "NP_SSP2", scenario_name = "baseline",
+             out_title = "Pipeline Gas, before bilateralization ")
