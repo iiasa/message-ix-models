@@ -36,6 +36,9 @@ These can be used to uniquely identify both an SSP narrative *and* the set in wh
 .. automodule:: message_ix_models.project.ssp
    :members:
 
+.. automodule:: message_ix_models.project.ssp.cli
+   :members:
+
 Data
 ====
 
@@ -95,7 +98,15 @@ Transport
       …produces a file :file:`SSP_SSP2_v2.1_baseline_out.xlsx` in the same directory.
 
    2. To process an existing :class:`pandas.DataFrame` from other code, call :func:`.process_df`,
-      passing the input dataframe and the `method` parameter.
+      passing the input data frame and the `method` parameter.
+
+   As of 2026-06-30 / :pull:`355`, ‘variable’ codes handled include::
+
+       Final Energy|Bunkers
+       Final Energy|Bunkers|International Aviation
+       Final Energy|Bunkers|Liquids|Oil
+       Final Energy|Transportation
+       Final Energy|Transportation|Liquids|Oil
 
    As of 2025-03-07 / :pull:`309`, the set of required "variable" codes handled includes::
 
@@ -114,3 +125,7 @@ Transport
    - The code is tested on :file:`.xlsx` files in the (internal) directories under `SharePoint > ECE > Documents > SharedSocioeconomicPathways2023 > Scenario_Vetting <https://iiasahub.sharepoint.com/sites/eceprog/Shared%20Documents/Forms/AllItems.aspx?csf=1&web=1&e=APKv0Z&CID=23fa0a51%2Dc303%2D4381%2D8c6d%2D143305cbc5a1&FolderCTID=0x012000AA9481BF7BE9264E85B14105F7F082FF&id=%2Fsites%2Feceprog%2FShared%20Documents%2FSharedSocioEconomicPathways2023%2FScenario%5FVetting&viewid=956acd8a%2De1e7%2D4ae9%2Dab1b%2D0506911bae11>`_,
      for example :file:`v2.1_Internal_version_Dec13_2024/Reporting_output/SSP_SSP2_v2.1_baseline.xlsx`
      or :file:`v2.3_v2.4_Submission_Mar01_2025/Scenario_Reporting_Files/SSP_LED_v2.3.1_baseline.xlsx`
+
+   - The CLI command :program:`mix-models ssp ceds-data-for-transport` generates values
+     that can be used to update :file:`data/transport/emi-intensity.csv`.
+     See :func:`.ceds_data_for_transport` for details.

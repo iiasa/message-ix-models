@@ -8,6 +8,11 @@ Next release
   and :mod:`.add_alternative_TCE_accounting`
   for |ssp-scenariomip| (:pull:`354`).
 - New workflow step :func:`.model.workflow.step_0` (:pull:`354`).
+- Improve :mod:`.ssp.transport` (:pull:`355`):
+
+  - Modify data for variable=“Final Energy|Bunkers|International Aviation” and related (:issue:`308`).
+  - Omit year=2020 from modified data.
+  - New CLI utility :program:`mix-models ssp ceds-data-for-transport`.
 
 v2025.5.28
 ==========
