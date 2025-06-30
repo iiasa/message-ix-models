@@ -322,7 +322,7 @@ def assign_input_outpt(
         year_vtg = sorted(set(yv_ya.year_vtg.values))
         # Collect the values for the combination of vintage and
         # active years.
-        input_values_all = []
+        input_values_all: list[float] = []
         for yr_v in year_vtg:
             # The initial year efficiency value
             input_values_temp = [val[regions[regions == rg].index[0]]]
