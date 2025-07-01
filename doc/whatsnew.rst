@@ -8,6 +8,11 @@ Next release
   and :mod:`.add_alternative_TCE_accounting`
   for |ssp-scenariomip| (:pull:`354`).
 - New workflow step :func:`.model.workflow.step_0` (:pull:`354`).
+- Improve and extend :doc:`/material/index`.
+  See :doc:`/model/material/v1.2.0` for details.
+
+  - Improve :mod:`.material.data_cement` (:pull:`361`).
+
 - Improve :mod:`.ssp.transport` (:pull:`355`):
 
   - Modify data for variable=“Final Energy|Bunkers|International Aviation” and related (:issue:`308`).
