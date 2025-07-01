@@ -17,7 +17,6 @@ from message_ix_models.model.material.util import (
 from message_ix_models.model.structure import get_region_codes
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
-from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
@@ -2207,26 +2206,19 @@ def get_ssp_soc_eco_data(
         DataFrame with SSP indicator data in "bound_activity_*" parameter
         format
     """
-    from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
+    from message_ix_models.project.ssp.data import SSPUpdate
 
     c = Computer()
-    keys = prepare_computer(
-        context,
-        c,
-        source="ICONICS:SSP(2024).2",
-        source_kw=dict(measure=measure, model=model),
+    keys = SSPUpdate.add_tasks(
+        c, context=context, release="3.1", measure=measure, model=model, ssp_id="2"
     )
-    df = (
+    return (
         c.get(keys[0])
         .to_dataframe()
         .reset_index()
         .rename(columns={"n": "node_loc", "y": "year_act"})
+        .assign(mode="P", technology=tec, time="year", unit="GWa")
     )
-    df["mode"] = "P"
-    df["time"] = "year"
-    df["unit"] = "GWa"
-    df["technology"] = tec
-    return df
 
 
 def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:

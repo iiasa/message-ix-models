@@ -516,20 +516,22 @@ def add_minimum_emissions(context, scenario, info: dict) -> None:
     scenario.set_as_default()
 
 
-def tax_emission(context: Context, scenario: Scenario, price: float):
-    """Workflow callable for :mod:`.tools.utilities.add_tax_emission`."""
-    # NB this requires the emissions accounting established by .engage.workflow.step_0.
-    #    In generate() in this file, that function is called earlier in the workflow.
+def tax_emission(context: Context, scenario: Scenario, price: float) -> "Scenario":
+    """Workflow callable for :mod:`.tools.utilities.add_tax_emission`.
 
-    # from message_data.projects.engage.workflow import step_0
-    from message_data.tools.utilities import add_tax_emission
+    .. note:: This requires the emissions accounting established by either
+       :func:`.engage.workflow.step_0` or :func:`.model.workflow.step_0`.
+
+       In :func:`.generate` in this file, the former is called earlier in the workflow.
+    """
+    from message_ix_models.tools import add_tax_emission
 
     try:
         scenario.remove_solution()
     except ValueError:
         pass
 
-    add_tax_emission(scenario, price)
+    add_tax_emission.main(scenario, price)
 
     return scenario
 

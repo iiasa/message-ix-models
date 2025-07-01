@@ -72,13 +72,15 @@ migrate = [
 ]
 report = ["plotnine", "xlsxwriter"]
 tests = [
-  "ixmp[tests]",  # TODO Remove once message_ix[tests] depends on ixmp[tests]
   "message-ix[tests]",
   "message_ix_models[buildings,material,report,transport]",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
   "pytest-xdist",
+  # On RTD, pip tries to build this version from .tar.gz, but
+  # it contains packaging errors that cause the job to error.
+  "gamsapi > 47.6.0",
 ]
 transport = [
   "message-ix-models[iea-web,report]",

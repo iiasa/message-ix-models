@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 import genno
 import pandas as pd
 import pytest
 
-from message_ix_models.tools.exo_data import prepare_computer
+from message_ix_models.tools.iea.eei import IEA_EEI
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 # Infill data for R12 nodes not present in the IEA data
 # NB these are hand-picked as of 2022-07-20 so that the ratio of freight activity / GDP
@@ -45,19 +50,24 @@ class TestIEA_EEI:
             ("R12", True, 5),
         ),
     )
-    def test_prepare_computer(
-        self, test_context, source_kw, dimensionality, regions, aggregate, N_n
-    ):
+    def test_add_tasks(
+        self,
+        test_context: "Context",
+        source_kw: dict,
+        dimensionality: set[str],
+        regions: str,
+        aggregate: bool,
+        N_n: int,
+    ) -> None:
         test_context.model.regions = regions
 
-        source = "IEA EEI"
         source_kw.update(aggregate=aggregate)
 
         c = genno.Computer()
         s = pd.Series(1.0, index=pd.MultiIndex.from_tuples(R12_MAP, names=["n", "n2"]))
         c.add("bc:n-n2", genno.Quantity(s))
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = IEA_EEI.add_tasks(c, context=test_context, **source_kw)
 
         # Keys have informative names
         assert "passenger load factor" == keys[0].name

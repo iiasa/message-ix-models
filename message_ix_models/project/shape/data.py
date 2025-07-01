@@ -1,16 +1,28 @@
 """Handle data from the SHAPE project."""
 
 import logging
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from message_ix_models.tools.exo_data import ExoDataSource, register_source
+from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
 from message_ix_models.tools.iamc import iamc_like_data_for_query
 from message_ix_models.util import path_fallback
+
+if TYPE_CHECKING:
+    from typing import NotRequired, TypedDict
+
+    from genno.types import AnyQuantity
+
+    Info = TypedDict(
+        "Info",
+        {"latest": str, "suffix": str, "variable": str, "drop": NotRequired[list[str]]},
+    )
 
 log = logging.getLogger(__name__)
 
 #: Information about data file version, suffixes, "variable" codes, and extra columns to
 #: drop.
-INFO = {
+INFO: dict[str, "Info"] = {
     "gdp": dict(
         latest="1.2",
         suffix=".mif",
@@ -49,70 +61,66 @@ UNITS = {
 
 @register_source
 class SHAPE(ExoDataSource):
-    """Provider of exogenous data from the SHAPE project data source.
+    """Provider of exogenous data from the SHAPE project data source."""
 
-    To use data from this source, call :func:`.exo_data.prepare_computer` with the
-    arguments:
+    @dataclass
+    class Options(BaseOptions):
+        #: Must be one of the keys of :data:`.INFO`.
+        measure: str = ""
 
-    - `source`: "SHAPE".
-    - `source_kw` including:
+        #: Version of the data, either "latest" or a string like "1.2".
+        version: str = "latest"
 
-      - `measure`: one of the keys of :data:`.INFO`.
-      - `version` (optional): "latest" (default) or a version string like "1.2".
-      - `scenario`: one of the SHAPE "SDP" scenario names.
-      - `aggregate`, `interpolate`: see :meth:`.ExoDataSource.transform`.
-    """
+        #: One of the SHAPE "SDP" scenario names.
+        scenario: str = ""
 
-    id = "SHAPE"
+    options: Options
 
     where = ["private"]
 
-    def __init__(self, source, source_kw):
-        if source != self.id:
-            raise ValueError(source)
-
-        self.measure = source_kw.pop("measure", None)
-        version = source_kw.pop("version", "latest")
-        scenario = source_kw.pop("scenario", None)
-
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
         try:
             # Retrieve information about the `quantity`
-            info = INFO[self.measure]
+            info = INFO[opt.measure]
         except KeyError:
             raise ValueError(f"measure must be one of {sorted(INFO.keys())}")
 
-        self.raise_on_extra_kw(source_kw)
-
         # Choose the version: replace "latest" with the actual version
-        version = version.replace("latest", info["latest"])
+        version = opt.version.replace("latest", info["latest"])
 
         # Construct path to data file
-        filename = f"{self.measure}_v{version.replace('.', 'p')}{info['suffix']}"
+        filename = f"{opt.measure}_v{version.replace('.', 'p')}{info['suffix']}"
         self.path = path_fallback("shape", filename, where=self._where())
 
-        variable = info.get("variable", self.measure)
-        self.query = " and ".join(
-            [
-                f"Scenario == {scenario!r}" if scenario else "True",
-                f"Variable == {variable!r}",
-            ]
-        )
+        # Query for iamc_like_data_for_query()
+        variable = info.get("variable", opt.measure)
+        self.query = (
+            f"Scenario == {opt.scenario!r}" if opt.scenario else "True"
+        ) + f" and Variable == {variable!r}"
 
         self.to_drop = info.get("drop", [])
-        if scenario:
-            self.unique = "MODEL SCENARIO VARIABLE UNIT"
+        self.unique = "MODEL VARIABLE UNIT"
+        if opt.scenario:
+            # Require a unique scenario
+            self.unique += " SCENARIO"
         else:
-            self.unique = "MODEL VARIABLE UNIT"
-            self.extra_dims = ("SCENARIO",)
+            # Result will have a "SCENARIO" dimension
+            self.options.dims += ("SCENARIO",)
 
-    def __call__(self):
-        # - Read the file. Use ";" for .mif files; set columns as index on load.
-        # - Drop columns "Model" (meaningless); others from `info`.
-        # - Drop empty columns (final column in .mif files).
-        # - Convert column labels to integer.
-        # - Stack to long format.
-        # - Apply final column names.
-        # data = shape_data_from_file(self.path, self.drop)
+        # Create .key
+        super().__init__()
+
+    def get(self) -> "AnyQuantity":
+        """Load the data.
+
+        1. Read the file. Use ";" for .mif files; set columns as index on load.
+        2. Drop columns "Model" (meaningless); others from `info`.
+        3. Drop empty columns (final column in .mif files).
+        4. Convert column labels to integer.
+        5. Stack to long format.
+        6. Apply final column names.
+        """
         return iamc_like_data_for_query(
             self.path,
             self.query,

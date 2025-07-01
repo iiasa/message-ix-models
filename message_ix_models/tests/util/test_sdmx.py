@@ -1,5 +1,6 @@
 import logging
 import re
+import sys
 
 import genno
 import pytest
@@ -14,7 +15,14 @@ from message_ix_models.model.transport import (
     data,  # noqa: F401
     testing,
 )
-from message_ix_models.util.sdmx import DATAFLOW, Dataflow, eval_anno, make_enum, read
+from message_ix_models.util.sdmx import (
+    DATAFLOW,
+    Dataflow,
+    ItemSchemeEnumType,
+    URNLookupEnum,
+    eval_anno,
+    read,
+)
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +36,6 @@ class TestDataflow:
 
     # TODO Use a broader-scoped context to allow (scope="class")
     @pytest.fixture
-    @pytest.mark.usefixtures("ssp_test_data")
     def build_computer(self, test_context):
         """A :class:`.Computer` from :func:`.configure_build`.
 
@@ -69,7 +76,7 @@ class TestDataflow:
         assert () == result
 
     @build.get_computer.minimum_version
-    @pytest.mark.usefixtures("iea_eweb_test_data", "ssp_user_data")
+    @testing.MARK[10]
     @pytest.mark.parametrize(
         "file",
         [f for f in DATAFLOW.values() if f.intent & Dataflow.FLAG.IN],
@@ -116,6 +123,71 @@ class TestDataflow:
         assert isinstance(any_df.units, pint.Unit)
 
 
+_urn_prefix = "urn:sdmx:org.sdmx.infomodel"
+
+
+class TestItemSchemeEnum:
+    @pytest.mark.parametrize(
+        "urn, expected",
+        (
+            ("ICONICS:SSP(2017)", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2017).1"),
+            ("ICONICS:SSP(2024)", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2024).1"),
+            ("SSP(2017)", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2017).1"),
+            ("SSP(2024)", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2024).1"),
+            ("SSP", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2017).1"),
+            ("AGENCIES", f"{_urn_prefix}.base.Agency=IIASA_ECE:AGENCIES(0.1).IEA"),
+        ),
+    )
+    def test_new_class(self, urn: str, expected: str) -> None:
+        class Foo(URNLookupEnum, metaclass=ItemSchemeEnumType):
+            def _get_item_scheme(self):
+                return read(urn)
+
+        # A known URN retrieves an enumeration member
+        f = Foo.by_urn(expected)
+        assert isinstance(f, Foo)
+
+    def test_bases(self) -> None:
+        """:func:`.make_enum` works with :class:`~enum.Flag` and subclasses."""
+        from enum import Flag, IntFlag
+
+        class E1(Flag, metaclass=ItemSchemeEnumType):
+            def _get_item_scheme(self):
+                return read("ICONICS:SSP(2017)")
+
+        # Values are bitwise flags
+        assert not isinstance(E1["1"], int)
+
+        def _exp_max_value(cls) -> int:
+            """Expected maximum value.
+
+            Currently the NONE value counts towards len(cls) with Python 3.9, but not
+            with Python 3.13. It's unclear why.
+            """
+            L = len(cls) - 1 - (0 if sys.version_info >= (3, 10) else 1)
+            return 2**L
+
+        # Expected maximum value
+        assert _exp_max_value(E1) == max(member.value for member in E1)
+
+        # Flags can be combined
+        flags = E1["1"] | E1["2"]
+        assert E1["1"] & flags
+        assert E1["2"] & flags
+        assert not (E1["3"] & flags)
+
+        # Similar, with IntFlag
+        class E2(IntFlag, metaclass=ItemSchemeEnumType):
+            def _get_item_scheme(self):
+                return read("IIASA_ECE:AGENCIES(0.1)")
+
+        # Values are ints
+        assert isinstance(E2["IIASA_ECE"], int)
+
+        # Expected maximum value
+        assert _exp_max_value(E2) == max(member.value for member in E2)
+
+
 def test_eval_anno(caplog, recwarn):
     c = Code()
 
@@ -140,60 +212,6 @@ def test_eval_anno(caplog, recwarn):
         assert 7 == eval_anno(c, id="qux")
 
 
-def test_make_enum0():
-    """:func:`.make_enum` works with :class:`~enum.Flag` and subclasses."""
-    from enum import Flag, IntFlag
-
-    E = make_enum("ICONICS:SSP(2017)", base=Flag)
-
-    # Values are bitwise flags
-    assert not isinstance(E["1"], int)
-
-    # Expected length
-    assert 2 ** (len(E) - 1) == list(E)[-1].value
-
-    # Flags can be combined
-    flags = E["1"] | E["2"]
-    assert E["1"] & flags
-    assert E["2"] & flags
-    assert not (E["3"] & flags)
-
-    # Similar, with IntFlag
-    E = make_enum("IIASA_ECE:AGENCIES(0.1)", base=IntFlag)
-
-    # Values are ints
-    assert isinstance(E["IIASA_ECE"], int)
-
-    # Expected length
-    assert 2 ** (len(E) - 1) == list(E)[-1].value
-
-
-_urn_prefix = "urn:sdmx:org.sdmx.infomodel.codelist"
-
-
-@pytest.mark.parametrize(
-    "urn, expected",
-    (
-        ("ICONICS:SSP(2017)", f"{_urn_prefix}.Code=ICONICS:SSP(2017).1"),
-        ("ICONICS:SSP(2024)", f"{_urn_prefix}.Code=ICONICS:SSP(2024).1"),
-        ("SSP(2017)", f"{_urn_prefix}.Code=ICONICS:SSP(2017).1"),
-        ("SSP(2024)", f"{_urn_prefix}.Code=ICONICS:SSP(2024).1"),
-        ("SSP", f"{_urn_prefix}.Code=ICONICS:SSP(2017).1"),
-        pytest.param(
-            "AGENCIES",
-            f"{_urn_prefix}.Agency=IIASA_ECE:AGENCIES(0.1).IEA",
-            marks=pytest.mark.xfail(raises=KeyError, reason="XML needs update"),
-        ),
-    ),
-)
-def test_make_enum1(urn, expected):
-    # make_enum() runs
-    E = make_enum(urn)
-
-    # A known URN retrieves an enumeration member
-    E.by_urn(expected)
-
-
 @pytest.mark.parametrize(
     "urn, expected",
     (
@@ -203,14 +221,16 @@ def test_make_enum1(urn, expected):
         ("SSP(2024)", "Codelist=ICONICS:SSP(2024)"),
         ("SSP", "Codelist=ICONICS:SSP(2017)"),
         ("AGENCIES", "AgencyScheme=IIASA_ECE:AGENCIES(0.1)"),
+        ("IIASA_ECE:AGENCIES", "AgencyScheme=IIASA_ECE:AGENCIES(0.1)"),
+        ("IIASA_ECE:AGENCIES(0.1)", "AgencyScheme=IIASA_ECE:AGENCIES(0.1)"),
     ),
 )
-def test_read0(urn, expected):
+def test_read0(urn: str, expected: str) -> None:
     obj = read(urn)
     assert expected in obj.urn
 
 
-def test_read1():
+def test_read1() -> None:
     SSPS = read("ssp")
 
     # Identify an SSP by matching strings in its name

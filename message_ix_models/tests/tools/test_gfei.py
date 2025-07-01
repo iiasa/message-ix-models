@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from genno import Computer
 
-from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.tools.gfei import GFEI
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 @pytest.fixture
@@ -20,15 +24,21 @@ class TestGFEI:
             ("R12", True, 11, 77),
         ),
     )
-    def test_prepare_computer(self, test_context, regions, aggregate, N_n, size):
+    def test_add_tasks(
+        self,
+        test_context: "Context",
+        regions: str,
+        aggregate: bool,
+        N_n: int,
+        size: int,
+    ) -> None:
         test_context.model.regions = regions
 
-        source = "GFEI"
         source_kw = dict(aggregate=aggregate, plot=True)
 
         c = Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = GFEI.add_tasks(c, context=test_context, **source_kw)
 
         # Preparation of data and plotting runs successfully
         c.add("tmp", [keys[0], "plot GFEI debug"])
