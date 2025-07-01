@@ -58,7 +58,7 @@ They can be turned on and off individually under ``DATA_FUNCTIONS`` in :mod:`__i
 .. automodule:: message_ix_models.model.material.data_methanol
   :members:
 
-Build and Solve the model from CLI
+Build and solve the model from CLI
 ==================================
 
 Note: To include material stocks from power sector message_ix should be the following
@@ -93,7 +93,6 @@ It is also possible to shift the first model year and solve a clone with shifted
 If ``--shift_model_year`` is set together with the macro options the model year will be shifted before the MACRO calibration.
 
 All three options are :any:`False` by default.
-
 
 Reporting
 =========
@@ -268,25 +267,19 @@ The code relies on the following input files, stored in :file:`data/material/`:
    Default conversion factors for GDP MER to PPP used in MESSAGEix-GLOBIOM SSP2 scenarios.
    Used to create demand projections for steel/cement/aluminum/chemicals if GDP_PPP data is not in scenario
 
-
-
 :file:`material/set.yaml`
-----------------------------
+-------------------------
 
 .. literalinclude:: ../../message_ix_models/data/material/set.yaml
    :language: yaml
 
-
 Release notes
 =============
 
-
 This is the list of changes to MESSAGEix-Materials between each release.
-
-
-**Version 1.1.0**
 
 .. toctree::
    :maxdepth: 2
 
    v1.1.0
+   v1.2.0

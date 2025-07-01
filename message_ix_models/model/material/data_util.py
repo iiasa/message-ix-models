@@ -1619,7 +1619,7 @@ def add_coal_lowerbound_2020(sc: message_ix.Scenario) -> None:
 
     # add parameter dataframes to ixmp
     sc.add_par("bound_activity_lo", bound_coal)
-    sc.add_par("bound_activity_lo", bound_cement_coal)
+    # sc.add_par("bound_activity_lo", bound_cement_coal)
     sc.add_par("bound_activity_lo", bound_residual_electricity)
 
     # commit scenario to ixmp backend
@@ -1839,7 +1839,7 @@ def add_cement_bounds_2020(sc: message_ix.Scenario) -> None:
     # add parameter dataframes to ixmp
     sc.add_par("bound_activity_up", bound_cement_loil)
     sc.add_par("bound_activity_up", bound_cement_foil)
-    sc.add_par("bound_activity_lo", bound_cement_gas)
+    # sc.add_par("bound_activity_lo", bound_cement_gas)
     sc.add_par("bound_activity_up", bound_cement_gas)
     sc.add_par("bound_activity_up", bound_cement_biomass)
     sc.add_par("bound_activity_up", bound_cement_coal)
@@ -1881,22 +1881,23 @@ def add_cement_bounds_2020(sc: message_ix.Scenario) -> None:
 
 
 def read_sector_data(
-    scenario: message_ix.Scenario, sectname: str, file: str
+    scenario: message_ix.Scenario, sectname: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
-    """
-    Read sector data for industry with sectname
+    """Read sector data for industry with `sectname`.
 
     Parameters
     ----------
-    scenario: message_ix.Scenario
-
-    sectname: sectname
-        name of industry sector
+    scenario :
+    sectname :
+        Name of industry sector.
+    ssp :
+        If sector data should be read from an SSP-specific file.
+    filename :
+        Name of input file with suffix.
 
     Returns
     -------
     pd.DataFrame
-
     """
     # Read in technology-specific parameters from input xlsx
     # Now used for steel and cement, which are in one file
@@ -1910,11 +1911,15 @@ def read_sector_data(
     else:
         sheet_n = sectname + "_R11"
 
-    # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
-    data_df = pd.read_excel(
-        package_data_path("material", sectname, file),
-        sheet_name=sheet_n,
-    )
+    if filename.endswith(".csv"):
+        data_df = pd.read_csv(
+            package_data_path("material", sectname, filename), comment="#"
+        )
+    else:
+        data_df = pd.read_excel(
+            package_data_path("material", sectname, ssp, filename),
+            sheet_name=sheet_n,
+        )
 
     # Clean the data
     data_df = data_df[
@@ -2009,23 +2014,23 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
 
 # Read in time-dependent parameters
 def read_timeseries(
-    scenario: message_ix.Scenario, material: str, ssp: str or None, filename: str
+    scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
-    """
-    Read "timeseries" type data from a sector specific xlsx input file
-    to DataFrame and format according to MESSAGEix standard
+    """Read ‘time-series’ data from a material-specific `filename`.
+
+    Read "timeseries" type data from a sector-specific input file to data frame and
+    format as MESSAGE parameter data.
 
     Parameters
     ----------
-    ssp: str
-        if timeseries is available for different SSPs, the respective file is selected
-    scenario: message_ix.Scenario
-        scenario used to get structural information like
-        model regions and years
-    material: str
-        name of material folder where xlsx is located
-    filename:
-        name of xlsx file
+    scenario :
+        Scenario used to get structural information like model regions and years.
+    material :
+        Name of material folder (**‘sector’**) where `filename` is located.
+    ssp :
+        If timeseries is available for different SSPs, the respective file is selected.
+    filename :
+        Name of data file including :file:`.csv` or :file:`.xlsx` suffix.
 
     Returns
     -------
@@ -2050,6 +2055,13 @@ def read_timeseries(
 
     if filename.endswith(".csv"):
         df = pd.read_csv(package_data_path("material", material, filename))
+
+        # Function to convert string to integer if it is a digit
+        def convert_if_digit(col_name):
+            return int(col_name) if col_name.isdigit() else col_name
+
+        # Apply the function to the DataFrame column names
+        df = df.rename(columns=convert_if_digit)
     else:
         df = pd.read_excel(
             package_data_path("material", material, filename), sheet_name=sheet_n
@@ -2237,29 +2249,35 @@ def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
 
 
 def calculate_ini_new_cap(
-    df_demand: pd.DataFrame, technology: str, material: str
+    df_demand: pd.DataFrame, technology: str, material: str, ssp: str
 ) -> pd.DataFrame:
-    """
-    Derive initial_new_capacity_up parametrization for CCS based on cement demand
-    projection
+    """Derive ``initial_new_capacity_up`` data for CCS from projected cement demand.
+
     Parameters
     ----------
-    df_demand: pd.DataFrame
-        DataFrame containing "demand" MESSAGEix parametrization
-    technology: str
-        name of CCS technology to be parametrized
-    material: str
-        name of the material/industry sector
+    df_demand :
+        DataFrame containing "demand" MESSAGEix parametrization.
+    technology :
+        Name of CCS technology to be parametrized.
+    material :
+        Name of the material/industry sector.
+
     Returns
     -------
-    DataFrame formatted to "initial_new_capacity_up" columns
+    pd.DataFrame
+        Formatted to "initial_new_capacity_up" columns.
     """
 
     SCALER = 0.005
 
     CLINKER_RATIO = 0.72 if material == "cement" else 1
-    df_demand["value"] *= CLINKER_RATIO * SCALER
 
-    df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
-    df_demand["technology"] = technology
-    return make_df("initial_new_capacity_up", **df_demand)
+    tmp = (
+        df_demand.eval("value = value * @CLINKER_RATIO * @SCALER")
+        .rename(columns={"node": "node_loc", "year": "year_vtg"})
+        .assign(technology=technology)
+    )
+
+    return make_df("initial_new_capacity_up", **tmp)
+
+    del SCALER, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above

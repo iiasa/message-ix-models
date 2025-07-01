@@ -32,7 +32,7 @@ ssp_mode_map = {
     "SSP2": "normal",
     "SSP3": "high",
     "SSP4": "normal",
-    "SSP5": "high",
+    "SSP5": "highest",
     "LED": "low",
 }
 
@@ -49,7 +49,12 @@ mode_modifiers_dict = {
     },
     "high": {
         "steel": {"a": 1.3, "b": 1},
-        "cement": {"a": 1.3},
+        "cement": {"a": 1.2, "b": 1.5},
+        "aluminum": {"a": 1.4, "b": 1.3},
+    },
+    "highest": {
+        "steel": {"a": 1.3, "b": 1},
+        "cement": {"a": 1.8, "b": 4},
         "aluminum": {"a": 1.3, "b": 1},
     },
 }
@@ -317,7 +322,7 @@ def read_gdp_ppp_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
 def derive_demand(
     material: Literal["cement", "steel", "aluminum"],
     scen: message_ix.Scenario,
-    ssp: Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "SSP2",
+    ssp: Union[Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"], str] = "SSP2",
 ):
     datapath = message_ix_models.util.package_data_path("material")
 
