@@ -2271,8 +2271,13 @@ def calculate_ini_new_cap(
     SCALER = 0.005
 
     CLINKER_RATIO = 0.72 if material == "cement" else 1
-    df_demand["value"] *= CLINKER_RATIO * SCALER
 
-    df_demand = df_demand.rename(columns={"node": "node_loc", "year": "year_vtg"})
-    df_demand["technology"] = technology
-    return make_df("initial_new_capacity_up", **df_demand)
+    tmp = (
+        df_demand.eval("value = value * @CLINKER_RATIO * @SCALER")
+        .rename(columns={"node": "node_loc", "year": "year_vtg"})
+        .assign(technology=technology)
+    )
+
+    return make_df("initial_new_capacity_up", **tmp)
+
+    del SCALER, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above
