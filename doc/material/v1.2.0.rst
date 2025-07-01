@@ -1,5 +1,6 @@
 Version 1.2.0 (Month X, 2025)
--------------------------------
+*****************************
+
 Preview of the Upcoming MESSAGEix-Materials Release
 
 This upcoming release of MESSAGEix-Materials introduces significant enhancements to the current model.
@@ -7,21 +8,24 @@ It features improved calibration and updated parameterization, drawing on the la
 Most of these updates reflect developments made during the ScenarioMIP project.
 
 Model changes
-~~~~~~~~~~~~~
+=============
 
-**Iron & steel sector**
+Iron & steel sector
+-------------------
 
 *To be merged from ssp-dev*
 
-**Non metallic minerals sector**
+Non metallic minerals sector
+----------------------------
 
-- Clinker input for cement production is now differentiated by region based on literature data
-- 2020 and 2025 demand calibrated based on recent statistics, independent of SSP
-- Previous fuel use calibration was updated based on most recent data
-- Growth constraints for clinker CCS capacity are differentiated by SSP
-- The energy requirement for clinker CCS was adjusted based on recent literature
+- Clinker input for cement production is now differentiated by region based on literature data.
+- 2020 and 2025 demand calibrated based on recent statistics, independent of SSP.
+- Previous fuel use calibration was updated based on most recent data.
+- Growth constraints for clinker CCS capacity are differentiated by SSP.
+- The energy requirement for clinker CCS was adjusted based on recent literature.
 
-**Non ferrous metals sector**
+Non ferrous metals sector
+-------------------------
 
 - Trade representation for alumina has been implemented
 - The aluminum has been fixed in 2025 independent of SSP setting
@@ -34,39 +38,39 @@ Model changes
 - The maximum recyclable aluminum scrap ratio is now differentiated by SSP
 - The heat requirement and cost for aluminum scrap preparation is now differentiated by SSP
 
-**Power sector**
+Power sector
+------------
 
-**Demand generator**
-
-*To be merged from ssp-dev*
-
-**Other**
+Demand generator
+----------------
 
 *To be merged from ssp-dev*
 
+Other
+-----
 
+*To be merged from ssp-dev*
 
 CLI changes
-~~~~~~~~~~~
+===========
 
 - The `--datafile` options has been removed from the material-ix commands, as it is no longer needed.
 
 Deprecations
-~~~~~~~~~~~~~
-
-
+============
 
 New features
-~~~~~~~~~~~~
+============
 
 The following xlsx files have been replaced by multiple csv files for each sheet to facilitate version control and readability:
 
-- `aluminum_techno_economic.xlsx`
-- `Global_cement_MESSAGE.xlsx`
+- :file:`aluminum_techno_economic.xlsx`
+- :file:`Global_cement_MESSAGE.xlsx`
 
 The files are currently still available for reference, but will be removed in a future release.
 
-**Bug Fixes**
+Bug Fixes
+---------
 
-
-**Compatibility**
+Compatibility
+-------------
