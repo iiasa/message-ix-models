@@ -8,15 +8,6 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import (
-    calculate_ini_new_cap,
-    read_sector_data,
-    read_timeseries,
-)
-from message_ix_models.model.material.material_demand.material_demand_calc import (
-    derive_demand,
-)
-from message_ix_models.model.material.util import get_ssp_from_context, read_config
 from message_ix_models.util import (
     broadcast,
     merge_data,
@@ -24,6 +15,16 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
+
+from .data_util import (
+    calculate_ini_new_cap,
+    read_sector_data,
+    read_timeseries,
+)
+from .material_demand.material_demand_calc import (
+    derive_demand,
+)
+from .util import get_ssp_from_context, read_config
 
 if TYPE_CHECKING:
     from message_ix import Scenario
