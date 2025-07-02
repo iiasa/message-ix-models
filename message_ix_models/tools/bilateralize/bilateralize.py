@@ -690,18 +690,18 @@ def build_parameter_sheets(log, config_name: str = None):
             data_dict[par] = vdf
         
         # Generate relation upper and lower
-        # for i in [k for k in data_dict.keys() if "relation_activity" in k]:
-        #     key_name = i
-        #     df = data_dict[i]
-        #     df = broadcast_yl(df, ya_list)
+        for i in [k for k in data_dict.keys() if "relation_activity" in k]:
+            key_name = i
+            df = data_dict[i]
+            df = broadcast_yl(df, ya_list)
             
-        #     key_name_upper = key_name.replace("activity", "upper")
-        #     data_dict[key_name_upper] = df.copy()
+            key_name_upper = key_name.replace("activity", "upper")
+            data_dict[key_name_upper] = df.copy()
     
-        #     key_name_lower = key_name.replace("activity", "lower")
-        #     data_dict[key_name_lower] = df.copy()
+            key_name_lower = key_name.replace("activity", "lower")
+            data_dict[key_name_lower] = df.copy()
             
-        #     log.info(f"Relation upper/lower generated for " + i)
+            log.info(f"Relation upper/lower generated for " + i)
 
         outdict[tec] = data_dict
     
@@ -748,8 +748,7 @@ def clone_and_update(trade_dict,
         
         # Remove existing technologies related to trade
         base_tec = [config.get(tec + '_trade').get('trade_technology') + '_exp', # These may not exist but in case they do...
-                    config.get(tec + '_trade').get('trade_technology') + '_imp']#,
-                   # config.get(tec + '_trade').get('trade_technology') + '_bal']
+                    config.get(tec + '_trade').get('trade_technology') + '_imp']
         if tec == 'gas_piped':
             base_tec = base_tec + [i for i in scen.set('technology') if 
                                    config.get(tec + '_trade').get('trade_technology') + '_exp_' in i]
