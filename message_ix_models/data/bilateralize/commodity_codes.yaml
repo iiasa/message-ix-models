@@ -1,0 +1,144 @@
+# UN Comtrade HS6 code to IEA conversion factors
+
+Biomass:
+  HS:
+    - '2703'
+  MESSAGE Commodity: biomass
+  IEA-WEB:
+    - PRIMSBIO
+    - PEAT_PRODUCTS
+    - PRIMARY_SOLID_BIOFUEL
+    - WASTE_MUNICIPAL_REN
+
+Coal:
+  HS:
+    - '270111'
+    - '270112'
+    - '270119'
+    - '2702'
+    - '2704'
+    - '2706'
+  MESSAGE Commodity: coal
+  IEA-WEB:
+    - ANTCOAL
+    - ANTHRACITE
+    - BITCOAL
+    - BKB
+    - BLFURGS
+    - BROWN
+    - BROWNCOAL_ND
+    - COALTAR
+    - COKCOAL
+    - COKEOVGS
+    - GASCOKE
+    - GASWKSGS
+    - HARDCOAL
+    - INDWASTE
+    - LIGNITE
+    - MANGAS
+    - MUNWASTEN
+    - OVENCOKE
+    - PATFUEL
+    - PEAT
+    - SUBCOAL
+    - CHARCOAL
+    - COAL_TAR
+    - COKE_OVEN_COKE_OTH
+    - COKING_COAL
+    - HARDCOAL_ND
+    - BLAST_FURNACE_GAS
+    - COKE_OVEN_GAS
+    - GASWORKS_GAS
+    - GAS_COKE
+    - OTH_BITCOAL
+    - OTH_RECOVGASES
+    - SUB_BITCOAL
+
+Crude Oil:
+  HS: 
+    - '2709'
+  MESSAGE Commodity: crudeoil 
+  IEA-WEB: 
+    - CRUDE_OIL
+    - OIL_SHALE
+
+Ethanol:
+  HS:
+    - '2207'
+    - '3826'
+  MESSAGE Commodity: ethanol
+  IEA-WEB: 
+    - BIODIESEL
+    - BIOGASOL
+    - BIOJETKERO
+    - OBIOLIQ
+    - BIOFUEL_NONSPEC
+    - BIOGASES
+    - BIOGASOLINE
+    - KEROSENE_JET_BIO
+    - LIQBIOFUEL_OTHER
+
+Fuel Oil:
+  HS:
+    - '2712'
+    - '2713'
+  MESSAGE Commodity: fueloil
+  IEA-WEB: 
+    - BITUMEN
+    - PARWAX
+    - PETCOKE
+    - RESFUEL
+    - FUEL_OIL_RESIDUAL
+    - PARAFFIN_WAXES
+    - PATENT_FUEL
+    - PETROLEUM_COKE
+
+Liquid Hydrogen:
+  HS:
+    - '280410' # hydrogen
+  MESSAGE Commodity: liquidh2
+  IEA-WEB: 
+    -
+
+Light Oil:
+  HS:
+    - '270120'
+    - '2710'
+    - '271111'
+    - '271112'
+    - '271129'
+    - '290110'
+    - '381121'
+  MESSAGE Commodity: lightoil
+  IEA-WEB: 
+    - AVGAS
+    - AVIATION_GASOLINE
+    - ETHANE
+    - JETGAS
+    - LPG
+    - LUBRIC
+    - NAPHTHA
+    - NONBIODIES
+    - NONBIOGASO
+    - NONBIOJETK
+    - ONONSPEC
+    - OTHKERO
+    - REFINGAS
+    - WHITESP
+    - GASOLINE_JET
+    - KEROSENE_JET_NONBIO
+    - KEROSENE_OTHER
+    - LUBRICANTS
+    - MOTOR_GASOLINE_NONBIO
+    - REFINERY_FEEDSTOCKS
+    - REFINERY_GAS
+    - WHITE_SPIRIT
+    - GAS_DIESEL_OIL_NONBIO
+    - OTH_SEC_OIL_PRODS_ND
+
+LNG:
+  HS:
+    - '271111' # LNG
+  MESSAGE Commodity: lng
+  IEA-WEB: 
+    -
