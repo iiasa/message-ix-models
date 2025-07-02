@@ -60,7 +60,7 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   year_vtg: # List of years to include in year_vtg
   tracked_emissions: # List of tracked emission types
 
-# Oil exports
+### Oil exports
 oil_shipped_trade:
   base_trade_technology:
     oil_trd
@@ -130,7 +130,7 @@ oil_shipped_trade:
     - 2100
     - 2110
 
-# Pipeline gas exports
+### Pipeline gas exports
 gas_piped_trade:
   base_trade_technology:
     gas_bal
