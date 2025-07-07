@@ -1,0 +1,78 @@
+format: 1
+
+title: Materials + transport representation in MESSAGEix
+description: |-
+  These are the data required to parametrize a representation of materials use
+  in the transport sector, i.e. the integration of MESSAGEix-Materials and
+  MESSAGEix-Transport.
+provider:
+  organisation: International Institute for Applied Systems Analysis (IIASA)
+  contact: xum@iiasa.ac.at; lorenzo.usai@ntnu.no; kishimot@iiasa.ac.at
+
+classifiers:
+- "Kind :: Model input"
+
+dimension:
+  time: 
+    scope: 1990 to 2100
+    resolution: 5- or 10-year periods
+    description: |-
+      Historical data (1990-2020) + projections. This is aligned with XM's approach.
+      In this case, from 1990 to 2010 the additions, capacity etc., will be 0
+      due to the lack of EVs and PHEVs in the fleet. Data from 2010 to 2020 based on 
+      historical yearly statistics. 
+  space: 
+    scope: global
+    resolution: R11
+    description: |-
+      See https://docs.messageix.org/projects/models2/en/latest/pkg-data/node.html
+      or https://github.com/iiasa/message-ix-models/blob/main/message_ix_models/data/node/R11.yaml 
+  powertrain_type:
+    scope: All powertrain technologies  
+    resolution: Powertrain technologies included in MESSAGEix (ICEV,BEV,PHEV,FCEV) 
+    description: |-
+      Even though for this analysis only PHEV and BEVs are relevant, 
+      we should probably take into account all powertrain technologies
+  battery_technology: 
+    scope: BEVs and PHEVs
+    description: Battery technology/chemistry that can be used by electric vehicles
+    resolution: |-
+      Three families of battery chemistries for current fleet of vehicles (NCA, NMC, LFP)
+      Possibly, think about two battery chemistries that may be used in the future. Candidates:
+        - Li-air
+        - Li-S 
+  vehicle_segment: 
+    scope: size of ELDVs
+    description: The vehicle class , which will affect the battery size 
+    resolution: |-
+      Confirm with Paul which vehicle segments are available in MESSAGEix-Transport
+      I suppose: micro, medium, SUV. I might be wrong. To each vehicle segment
+      a given battery size has to be assigned, based on current real fleet data
+      and then projected until 2050
+  material_type: 
+    scope: Relevant materials used in Li-ion batteries
+    resolution: |-
+      4-point scale: Lithium, Cobalt, Nickel, Graphite. These are the 4 materials
+      of interest, however it may be necessary to include also copper, since in one pathway
+      Co is a by-product of Cu extraction. 
+
+measure: 
+  battery_size:
+    description: size of battery per vehicle segment and battery technology
+material_intensity:
+  description: Amount of material required per kWh of storage capacity in each battery type
+
+quantity:
+- measure: battery_size
+  dimensions: [time,space,powertrain_type,vehicle segment]
+  units: kWh
+  description: |-
+    Size of the battery, measured in kWh, for a given combination of powertrain technology
+    and vehicle size.
+
+- measure: material_intensity
+  dimensions: [time, battery_technology, material_type]
+  units: kg/kWh
+  description: |- 
+    This captures the material intensity (Li,Co,Ni,C) of the different battery technologies 
+    analysed per kWh of storage capacity.
