@@ -8,9 +8,11 @@ scenario:
   target_model:
     NP_SSP2
   target_scen:
-    test
+    pipelines_only
   first_model_year:
     2030
+  regions:
+    R12
 
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
@@ -53,6 +55,9 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   import_level: # Level that converts from trade to use
   flow_technology: # Technology for piping/shipping, etc. (e.g., pipe, shipping)
   flow_tech_suffix: # Flow technology suffix (e.g., liquid for oil/LNG, solid for biomass/coal)
+  flow_constraint: # Is the flow technology constrained at the global level (i.e. maritime shipping) or bilaterally (pipelines)?
+  flow_commodity_input: # What are the commodities required for flow technology (e.g., gas and steel for gas pipelines)
+  flow_commodity_output: # What is the flow service provided (e.g., gas_pipeline_capacity)
   supply_technologies: # Technologies the supply the traded commodity
   # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
   specify_network: # If true, produces sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
@@ -60,82 +65,12 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   year_vtg: # List of years to include in year_vtg
   tracked_emissions: # List of tracked emission types
 
-### Oil exports
-oil_shipped_trade:
-  base_trade_technology:
-    oil_trd
-  trade_technology:
-    oil
-  trade_tech_suffix:
-  trade_tech_number:
-    1
-  trade_commodity:
-    crudeoil
-  trade_commodity_suffix:
-  trade_form:
-    shp
-  export_level:
-    primary
-  trade_level:
-    shipped
-  import_level:
-    secondary
-  flow_technology:
-    shipping
-  flow_tech_suffix:
-    liquid
-  supply_technologies:
-    - oil_extr_1
-    - oil_extr_2
-    - oil_extr_3
-    - oil_extr_4
-    - oil_extr_5
-    - oil_extr_6
-    - oil_extr_7
-  # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
-  specify_network:
-    False
-  year_act_list:
-    - 2010
-    - 2015
-    - 2020
-    - 2025
-    - 2030
-    - 2035
-    - 2040
-    - 2045
-    - 2050
-    - 2055
-    - 2060
-    - 2070
-    - 2080
-    - 2090
-    - 2100
-    - 2110
-  year_vtg_list:
-    - 2010
-    - 2015
-    - 2020
-    - 2025
-    - 2030
-    - 2035
-    - 2040
-    - 2045
-    - 2050
-    - 2055
-    - 2060
-    - 2070
-    - 2080
-    - 2090
-    - 2100
-    - 2110
-
 ### Pipeline gas exports
 gas_piped_trade:
   base_trade_technology:
     gas_bal
   trade_technology:
-    gas
+    gas_piped
   trade_tech_suffix:
   trade_tech_number:
     1
@@ -153,6 +88,13 @@ gas_piped_trade:
   flow_technology:
     pipe
   flow_tech_suffix:
+  flow_commodity_input:
+    - gas
+    - steel
+  flow_commodity_output:
+    gas_pipeline_capacity
+  flow_constraint:
+    bilateral
   supply_technologies:
     - gas_extr_1
     - gas_extr_2
