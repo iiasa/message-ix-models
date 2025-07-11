@@ -152,7 +152,8 @@ def build_parameterdf(
 #%% Main function to generate bare sheets
 def generate_bare_sheets(
         log, mp,
-        config_name: str = None,):
+        config_name: str = None,
+        message_regions: str = 'R12'):
     """
     Generate bare sheets to collect (minimum) parameters
 
@@ -188,6 +189,9 @@ def generate_bare_sheets(
     import_level = {}
     flow_technology = {}
     flow_tech_suffix = {}
+    flow_constraint = {}
+    flow_commodity_input = {}
+    flow_commodity_output = {}
     supply_technologies = {}
     specify_network = {}
     trade_tech_number = {}
@@ -207,6 +211,9 @@ def generate_bare_sheets(
         import_level[tec] = tec_dict['import_level']
         flow_technology[tec] = tec_dict['flow_technology']
         flow_tech_suffix[tec] = tec_dict['flow_tech_suffix']
+        flow_commodity_input[tec] = tec_dict['flow_commodity_input']
+        flow_commodity_output[tec] = tec_dict['flow_commodity_output']
+        flow_constraint[tec] = tec_dict['flow_constraint']
         supply_technologies[tec] = tec_dict['supply_technologies']
         specify_network[tec] = tec_dict['specify_network']
         trade_tech_number[tec] = tec_dict['trade_tech_number']
@@ -218,15 +225,15 @@ def generate_bare_sheets(
     target_model = scenario_info['target_model']
     target_scen = scenario_info['target_scen']
     
-    if not start_model or not start_scen:
-        error_msg = (
-            "Config must contain 'scenario.start_model' and 'scenario.start_scen'\n"
-            f"Please check the config file at: {full_path}"
-        )
-        log.error(error_msg)
-        raise ValueError(error_msg)
+    # if not start_model or not start_scen:
+    #     error_msg = (
+    #         "Config must contain 'scenario.start_model' and 'scenario.start_scen'\n"
+    #         f"Please check the config file at: {full_path}"
+    #     )
+    #     log.error(error_msg)
+    #     raise ValueError(error_msg)
         
-    base_scenario = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+   # base_scenario = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
     
     log.info(f"Loaded scenario: {start_model}/{start_scen}")
     
@@ -235,18 +242,25 @@ def generate_bare_sheets(
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
         if not os.path.isdir(tecpath):
             os.makedirs(tecpath)
-        if not os.path.isdir(os.path.join(tecpath, 'use_files')):
-            os.makedirs(os.path.join(tecpath, 'use_files'))
         if not os.path.isdir(os.path.join(tecpath, 'edit_files')):
             os.makedirs(os.path.join(tecpath, 'edit_files'))   
+        if not os.path.isdir(os.path.join(tecpath, 'edit_files', 'flow_technology')):
+            os.makedirs(os.path.join(tecpath, 'edit_files', 'flow_technology'))
         if not os.path.isdir(os.path.join(tecpath, 'bare_files')):
             os.makedirs(os.path.join(tecpath, 'bare_files'))
+        if not os.path.isdir(os.path.join(tecpath, 'bare_files', 'flow_technology')):
+            os.makedirs(os.path.join(tecpath, 'bare_files', 'flow_technology'))    
             
     # Generate full combination of nodes to build technology-specific network
-    nodes_base_scenario = base_scenario.set("node")
+    node_path = package_data_path("bilateralize", message_regions + "_node_list.yaml")
+    with open(node_path, "r") as f:
+        node_set = yaml.safe_load(f) 
+    node_set = [r for r in node_set.keys() if r not in ['World', 'GLB']]
+
+    # nodes_base_scenario = base_scenario.set("node")
     
-    node_set = {node for node in nodes_base_scenario
-                if node.lower() != "world" and "glb" not in node.lower()} # Exclude GLB/World node
+    # node_set = {node for node in nodes_base_scenario
+    #             if node.lower() != "world" and "glb" not in node.lower()} # Exclude GLB/World node
     
     node_df = pd.DataFrame(itertools.product(node_set, node_set))
     node_df.columns = ['exporter', 'importer']
@@ -422,7 +436,7 @@ def generate_bare_sheets(
     # Create base file: historical activity
     for tec in covered_tec:
         outdf = pd.DataFrame()
-        for y in [2020, 2025]:
+        for y in list(range(2000, 2025, 5)):
             ydf =  build_parameterdf(network_df = network_setup[tec], 
                                      columndict = {'year_act': y,
                                                    'value': None,
@@ -613,8 +627,134 @@ def generate_bare_sheets(
         df['relation'] = trade_technology[tec] + '_imp_to_' + df['node_loc'].str.lower().str.split('_').str[1]
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "relation_activity_regionalimp.csv"), index=False)
         log.info(f"Relation activity (regional imports) csv generated at: {os.path.join(config_dir, tec)}.")
+    
+    ## FLOW TECHNOLOGY
+
+    # Create bare file: input
+    for tec in covered_tec:  
+        if flow_tech_suffix[tec] != None:
+            full_flow_tec = tec + '_' + flow_technology[tec] + '_' + flow_tech_suffix[tec]
+        else:
+            full_flow_tec = tec + '_' + flow_technology[tec]
+            
+        df = network_setup[tec][['exporter', 'importer']].copy()
         
-        mp.close_db()
+        if flow_constraint[tec] == 'bilateral':
+            df['technology'] = full_flow_tec + '_' + df['importer'].str.lower().str.split('_').str[1]
+        elif flow_constraint[tec] == 'global':
+            df['technology'] = full_flow_tec + '_glb'
+
+        df["year_vtg"] = "broadcast"
+        df["year_act"] = "broadcast"
+        df["mode"] = "M1"
+        df["level"] = None
+        df["value"] = None
+        df['time'] = 'year'
+        df['time_origin'] = 'year'
+        df['time_dest'] = 'year'
+        df['unit'] = None
+        
+        input_df = pd.DataFrame()
+        for c in flow_commodity_input[tec]:
+            cdf = df.copy()
+            cdf['commodity'] = c
+            input_df = pd.concat([input_df, cdf])
+        
+        input_df['node_loc'] = input_df['exporter']
+        input_df['node_origin'] = input_df['exporter']
+        
+        input_df = input_df[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act',
+                             'mode', 'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
+
+        input_df.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "input.csv"), index=False)
+        log.info(f"Input flow csv generated at: {os.path.join(config_dir, tec)}.")
+
+    # Create base file: output
+        output_df = df.copy()
+        output_df['commodity'] = flow_commodity_output[tec]
+        output_df['node_loc'] = output_df['exporter']
+        output_df['node_dest'] = output_df['importer']
+        
+        output_df = output_df[['node_loc', 'node_dest', 'technology', 'year_vtg', 'year_act',
+                              'mode', 'commodity', 'level', 'value', 'time', 'time_dest', 'unit']]
+        
+        output_df.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "output.csv"), index=False)
+        log.info(f"Output csv generated at: {os.path.join(config_dir, tec)}.")
+    
+    # Create base file: investment cost for flow technology
+        inv_df =  build_parameterdf(network_df = network_setup[tec], 
+                                    columndict = {'year_vtg': 'broadcast',
+                                                  'value': None,
+                                                  'unit': 'USD/km'})
+        inv_df = inv_df[inv_df['technology'] != tec + '_imp']
+        inv_df['technology'] =  full_flow_tec + '_' + inv_df['technology'].str.lower().str.split('_').str[-1]
+        
+        inv_df.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "inv_cost.csv"), index=False)
+        log.info(f"Investment cost csv generated at: {os.path.join(config_dir, tec)}.")  
+    
+    # Create base file: capacity factor for flow technology
+        cfdf =  build_parameterdf(network_df = network_setup[tec], 
+                                  columndict = {'year_vtg': 'broadcast',
+                                                'year_act': 'broadcast',
+                                                'value': 1,
+                                                'unit': '%',
+                                                'time': 'year'})   
+        cfdf = cfdf[cfdf['technology'] != tec + '_imp']
+        cfdf['technology'] =  full_flow_tec + '_' + cfdf['technology'].str.lower().str.split('_').str[-1]
+        
+        cfdf.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "capacity_factor.csv"), index=False) # Does not require edit
+        log.info(f"Capacity factor csv generated at: {os.path.join(config_dir, tec)}.")
+        
+    # Create base file: technical lifetime for flow technolgoy
+        tecdf =  build_parameterdf(network_df = network_setup[tec], 
+                                   columndict = {'year_vtg': 'broadcast',
+                                                 'value': None,
+                                                 'unit': 'y'})  
+        tecdf = tecdf[tecdf['technology'] != tec + '_imp']
+        tecdf['technology'] =  full_flow_tec + '_' + tecdf['technology'].str.lower().str.split('_').str[-1]
+        
+        tecdf.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "technical_lifetime.csv"), index=False)
+        log.info(f"Technical Lifetime csv generated at: {os.path.join(config_dir, tec)}.")
+      
+    # Create relation to link exports to the flow technology       
+        df = network_setup[tec][['exporter', 'importer', 'export_technology']]
+        df = df.rename(columns = {'exporter': 'node_loc',
+                                  'export_technology': 'technology'})
+        
+        df["year_rel"] = "broadcast"
+        df["year_act"] = "broadcast"
+        df["mode"] = "M1"
+        df["commodity"] = trade_commodity[tec]
+        df["value"] = None
+        df['unit'] = None
+        
+        if flow_constraint[tec] == 'bilateral':
+           # df['node_rel'] = df['importer']
+            df['relation'] = full_flow_tec + '_' + df['importer'].str.lower().str.split('_').str[1]
+        elif flow_constraint[tec] == 'global': #TODO: Test global
+           # df['node_rel'] = message_regions + '_GLB'
+            df['relation'] = full_flow_tec + '_GLB'
+        
+        df['node_rel'] = df['node_loc']
+        
+        trade_df = df.copy()
+        flow_df = df.copy()
+        
+        if flow_constraint[tec] == 'bilateral':
+            flow_df['technology'] = full_flow_tec + '_' + flow_df['importer'].str.lower().str.split('_').str[1]
+        elif flow_constraint[tec] == 'global': #TODO: Test global            
+            flow_df['technology'] = full_flow_tec
+        
+        dfcol = ['node_loc', 'technology', 'node_rel', 'relation',
+                 'year_rel', 'year_act', 'mode', 'commodity', 'value', 'unit']
+        trade_df = trade_df[dfcol]
+        flow_df = flow_df[dfcol]
+        
+        outdf = pd.concat([trade_df, flow_df])
+        
+        outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "relation_activity_flow.csv"), index=False)
+        
+        log.info(f"Relation activity (flow) csv generated at: {os.path.join(config_dir, tec)}.")
 #%% Build out bare sheets
 def build_parameter_sheets(log, config_name: str = None):
     """
@@ -642,67 +782,82 @@ def build_parameter_sheets(log, config_name: str = None):
         config_tec = config.get(tec + '_trade', {})
         
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
-        csv_files = [f for f in Path(os.path.join(tecpath, 'bare_files')).glob("*.csv")]
-    
+        
         data_dict = {}
-        for csv_file in csv_files:
-            key = csv_file.stem
-            data_dict[key] = pd.read_csv(csv_file)
+        data_dict['trade'] = {}
+        data_dict['flow'] = {}
+        
+        for ty in ['trade', 'flow']:
+            if ty == 'trade': tpath = os.path.join(tecpath, 'bare_files')
+            if ty == 'flow': tpath = os.path.join(tecpath, 'bare_files', 'flow_technology')
+            
+            csv_files = [f for f in Path(tpath).glob("*.csv")]
+        
+            for csv_file in csv_files:
+                key = csv_file.stem
+                data_dict[ty][key] = pd.read_csv(csv_file)
 
         # Broadcast the data   
         ya_list = config_tec.get('year_act_list', [])
         yv_list = config_tec.get('year_vtg_list', [])
         tec_lt = trade_lifetimes[tec]
         
-        for i in data_dict.keys():
-            if "year_rel" in data_dict[i].columns:
-                if data_dict[i]["year_rel"].iloc[0] == "broadcast":
-                    data_dict[i] = broadcast_yl(data_dict[i], ya_list)
-                    data_dict[i]["year_act"] = data_dict[i]["year_rel"]
-            else:
-                pass
-            
-            if "year_vtg" in data_dict[i].columns and "year_act" in data_dict[i].columns:
-                if (data_dict[i]["year_vtg"].iloc[0] == "broadcast"
-                    and data_dict[i]["year_act"].iloc[0] == "broadcast"):
-                    log.info(f"Parameter {i} broadcasted for yv and ya.")
-                    data_dict[i] = broadcast_yv_ya(data_dict[i], ya_list, tec_lifetime = tec_lt)
-                elif (data_dict[i]["year_vtg"].iloc[0] == "broadcast"
-                    and data_dict[i]["year_act"].iloc[0] != "broadcast"):
-                    log.info(f"Parameter {i} broadcasted for yv.")
-                    data_dict[i] = broadcast_yv(data_dict[i], ya_list)
-            elif "year_vtg" in data_dict[i].columns and "year_act" not in data_dict[i].columns:
-                if data_dict[i]["year_vtg"].iloc[0] == "broadcast":
-                    log.info(f"Parameter {i} broadcasted for yv.")
-                    data_dict[i] = broadcast_yv(data_dict[i], yv_list) 
-            elif "year_vtg" not in data_dict[i].columns and "year_act" in data_dict[i].columns:
-                if data_dict[i]["year_act"].iloc[0] == "broadcast":
-                    log.info(f"Parameter {i} broadcasted for ya.")
-                    data_dict[i] = broadcast_ya(data_dict[i], ya_list)                    
-            else:
-                pass
+        for ty in ['trade', 'flow']:
+            for i in data_dict[ty].keys():
+                if "year_rel" in data_dict[ty][i].columns:
+                    if data_dict[ty][i]["year_rel"].iloc[0] == "broadcast":
+                        data_dict[ty][i] = broadcast_yl(data_dict[ty][i], ya_list)
+                        data_dict[ty][i]["year_act"] = data_dict[ty][i]["year_rel"]
+                else:
+                    pass
+                
+                if "year_vtg" in data_dict[ty][i].columns and "year_act" in data_dict[ty][i].columns:
+                    if (data_dict[ty][i]["year_vtg"].iloc[0] == "broadcast"
+                        and data_dict[ty][i]["year_act"].iloc[0] == "broadcast"):
+                        log.info(f"Parameter {i} in {ty} broadcasted for yv and ya.")
+                        data_dict[ty][i] = broadcast_yv_ya(data_dict[ty][i], ya_list, tec_lifetime = tec_lt)
+                    elif (data_dict[ty][i]["year_vtg"].iloc[0] == "broadcast"
+                        and data_dict[ty][i]["year_act"].iloc[0] != "broadcast"):
+                        log.info(f"Parameter {i} in {ty} broadcasted for yv.")
+                        data_dict[ty][i] = broadcast_yv(data_dict[ty][i], ya_list)
+                elif "year_vtg" in data_dict[ty][i].columns and "year_act" not in data_dict[ty][i].columns:
+                    if data_dict[ty][i]["year_vtg"].iloc[0] == "broadcast":
+                        log.info(f"Parameter {i} in {ty} broadcasted for yv.")
+                        data_dict[ty][i] = broadcast_yv(data_dict[ty][i], yv_list) 
+                elif "year_vtg" not in data_dict[ty][i].columns and "year_act" in data_dict[ty][i].columns:
+                    if data_dict[ty][i]["year_act"].iloc[0] == "broadcast":
+                        log.info(f"Parameter {i} in {ty} broadcasted for ya.")
+                        data_dict[ty][i] = broadcast_ya(data_dict[ty][i], ya_list)                    
+                else:
+                    pass
 
         # Imports do not vintage
         for par in ['capacity_factor', 'input', 'output']:
-            vdf = data_dict[par]
+            vdf = data_dict['trade'][par]
             vdf = vdf[((vdf['technology'].str.contains('_imp')) & (vdf['year_vtg'] == vdf['year_act']))|\
                       (vdf['technology'].str.contains('_exp_'))]
-            data_dict[par] = vdf
+            data_dict['trade'][par] = vdf
         
-        # Generate relation upper and lower
-        for i in [k for k in data_dict.keys() if "relation_activity" in k]:
-            key_name = i
-            df = data_dict[i]
-            df = broadcast_yl(df, ya_list)
-            
-            key_name_upper = key_name.replace("activity", "upper")
-            data_dict[key_name_upper] = df.copy()
-    
-            key_name_lower = key_name.replace("activity", "lower")
-            data_dict[key_name_lower] = df.copy()
-            
-            log.info(f"Relation upper/lower generated for " + i)
-
+        # Generate relation upper and lower # TODO: Update when relations come up
+        # for ty in ['trade', 'flow']:
+        #     for i in [k for k in data_dict[ty].keys() if "relation_activity" in k]:
+        #         key_name = i
+        #         df = data_dict[ty][i]
+        #         df = broadcast_yl(df, ya_list)
+                
+        #         key_name_upper = key_name.replace("activity", "upper")
+        #         data_dict[ty][key_name_upper] = df.copy()
+        
+        #         key_name_lower = key_name.replace("activity", "lower")
+        #         data_dict[ty][key_name_lower] = df.copy()
+                
+        #         log.info(f"Relation upper/lower generated for " + i)
+        
+        # Generate relation lower bound for flow technologies
+        df = data_dict['flow']['relation_activity_flow'].copy()
+        df['value'] = 0
+        data_dict['flow']['relation_lower_flow'] = df
+        
         outdict[tec] = data_dict
     
     return outdict
@@ -763,8 +918,10 @@ def clone_and_update(trade_dict,
         # Add to sets: technology, level, commodity
         new_sets = dict()
         for s in ['technology', 'level', 'commodity']:
-            setlist = set(list(trade_dict[tec]['input'][s].unique()) +\
-                          list(trade_dict[tec]['output'][s].unique()))
+            setlist = set(list(trade_dict[tec]['trade']['input'][s].unique()) +\
+                          list(trade_dict[tec]['trade']['output'][s].unique()) +\
+                          list(trade_dict[tec]['flow']['input'][s].unique()) +\
+                          list(trade_dict[tec]['flow']['output'][s].unique()))
             setlist = list(setlist)
             
             new_sets[s] = setlist
@@ -780,36 +937,50 @@ def clone_and_update(trade_dict,
                         pass
                 
         # Add parameters
-        new_parameter_list = [i for i in trade_dict[tec].keys()
-                              if 'relation_' not in i] # do relation activity/lower/upper separately
+        new_parameter_list = list(set([i for i in list(trade_dict[tec]['trade'].keys()) + list(trade_dict[tec]['flow'].keys())
+                                       if 'relation_' not in i])) # do relation activity/lower/upper separately
 
         with scen.transact("Add new parameters for " + tec):
             for p in new_parameter_list:
-                pardf = trade_dict[tec][p]
-                pardf = pardf[pardf['value'].isnull() == False]
                 log.info('Adding parameter for ' + tec + ': ' + p)
+                pardf = pd.DataFrame()
+                if trade_dict[tec]['trade'].get(p) is not None:
+                    log.info('... parameter added for trade technology')
+                    pardf = pd.concat([pardf, trade_dict[tec]['trade'][p]])
+                if trade_dict[tec]['flow'].get(p) is not None: 
+                    log.info('... parameter added for flow technology')
+                    pardf = pd.concat([pardf, trade_dict[tec]['flow'][p]])
+                pardf = pardf[pardf['value'].isnull() == False]
                 scen.add_par(p, pardf)
     
         # Relation activity, upper, and lower
-        if 'relation' in trade_dict[tec].keys():
+        rel_parameter_list = list(set([i for i in list(trade_dict[tec]['trade'].keys()) + list(trade_dict[tec]['flow'].keys())
+                                       if 'relation_' in i]))
+
+        if len(rel_parameter_list) > 0:
             for rel_par in ['relation_activity', 'relation_upper', 'relation_lower']:
                 rel_par_df = pd.DataFrame()
-                rel_par_list = [i for i in trade_dict[tec].keys()
-                                if rel_par in i]
-                for r in rel_par_list:
-                    rel_par_df = pd.concat([rel_par_df, trade_dict[tec][r]])
                 
+                rel_par_list = list(set([i for i in list(trade_dict[tec]['trade'].keys()) + list(trade_dict[tec]['flow'].keys())
+                                         if rel_par in i]))
+                
+                for r in rel_par_list:
+                    if r in list(trade_dict[tec]['trade'].keys()):
+                        rel_par_df = pd.concat([rel_par_df, trade_dict[tec]['trade'][r]])
+                    if r in list(trade_dict[tec]['flow'].keys()):
+                        rel_par_df = pd.concat([rel_par_df, trade_dict[tec]['flow'][r]])
+            
                 if rel_par == 'relation_activity':
                     with scen.transact('Adding new relation sets'):
                         new_relations = list(rel_par_df['relation'].unique())
                         for nr in new_relations:
                             if nr not in scen.set('relation').unique():
                                 scen.add_set('relation', nr)
-                        
-                with scen.transact('Add ' + rel_par + ' for ' + tec):
-                    log.info('Adding ' + rel_par + ' for ' + tec)
-                    rel_par_df = rel_par_df[rel_par_df['value'].isnull() == False]
-                    scen.add_par('relation_activity', rel_par_df)
+                if len(rel_par_df) > 0:       
+                    with scen.transact('Add ' + rel_par + ' for ' + tec):
+                        log.info('Adding ' + rel_par + ' for ' + tec)
+                        rel_par_df = rel_par_df[rel_par_df['value'].isnull() == False]
+                        scen.add_par(rel_par, rel_par_df)
                     
     if (to_gdx == True) & (solve == False):
         save_to_gdx(mp = mp,
