@@ -154,5 +154,7 @@ cache/
 # Scratch files
 *scratch*
 
-# GDX
+# GDX and input files
 */bilateralize/data/gdx/*
+*/bilateralize/data/gas_piped/*
+*/bilateralize/data/diagnostics/*
