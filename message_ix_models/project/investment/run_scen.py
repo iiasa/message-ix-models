@@ -1,7 +1,7 @@
 import os
 import pandas as pd
-import message_ix
-import ixmp
+import message_ix # type: ignore
+import ixmp # type: ignore
 import logging
 import sys
 
@@ -53,8 +53,8 @@ tech_list = [
 ]
 
 # Specify scenario
-model_ori = "SSP_SSP2_v2.1"
-scen_ori = "baseline_1000f"
+model_ori = "SSP_SSP2_v2.1" # latest version "SSP_SSP2_v6.1"
+scen_ori = "baseline_1000f" # latest version "SSP2 - Low Emissions"
 model_tgt = "MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
 scen_tgt = "baseline_1000f_inv_base"
 
@@ -68,7 +68,7 @@ folder_path = package_data_path("investment")
 inv_cost.to_csv(os.path.join(str(folder_path), "inv_cost_ori.csv"), index=False)
 
 # Function that generate new inv_cost # Dummy
-def imple_coc():
+def imple_coc(): # type: ignore
     try:
         inv_cost_ori = pd.read_csv(package_data_path("investment", "inv_cost_ori.csv"))
     except:
@@ -83,28 +83,31 @@ def imple_coc():
     A = 0.1
 
     inv_cost = inv_cost_ori[inv_cost_ori["year_vtg"] >= 2020].copy()
-    mask_2020 = inv_cost["year_vtg"] == 2020
-    inv_cost["coc_base"] = 0.0
-    inv_cost["non_coc_base"] = 0.0
-    inv_cost.loc[mask_2020, "coc_base"] = inv_cost.loc[mask_2020, "value"] * A
-    coc_base_2020 = inv_cost.loc[mask_2020].set_index(["node_loc", "technology"])["coc_base"]
-    inv_cost.loc[~mask_2020, "coc_base"] = inv_cost.loc[~mask_2020].set_index(["node_loc", "technology"]).index.map(coc_base_2020)
+    # mask_2020 = inv_cost["year_vtg"] == 2020
+    # inv_cost["coc_base"] = 0.0
+    # inv_cost["non_coc_base"] = 0.0
+    # inv_cost.loc[mask_2020, "coc_base"] = inv_cost.loc[mask_2020, "value"] * A
+    # coc_base_2020 = inv_cost.loc[mask_2020].set_index(["node_loc", "technology"])["coc_base"]
+    # inv_cost.loc[~mask_2020, "coc_base"] = inv_cost.loc[~mask_2020].set_index(["node_loc", "technology"]).index.map(coc_base_2020)
     
-    inv_cost["non_coc_base"] = inv_cost["value"] - inv_cost["coc_base"]
-    non_coc_base_2020 = (
-        inv_cost[mask_2020]
-        .set_index(["node_loc", "technology"])["non_coc_base"]
-    )
-    inv_cost["non_coc_base_2020"] = inv_cost.set_index(["node_loc", "technology"]).index.map(non_coc_base_2020)
-    inv_cost["non_coc_base_growth"] = (
-        inv_cost["non_coc_base"] / inv_cost["non_coc_base_2020"]
-    )
+    # inv_cost["non_coc_base"] = inv_cost["value"] - inv_cost["coc_base"]
+    # non_coc_base_2020 = (
+    #     inv_cost[mask_2020]
+    #     .set_index(["node_loc", "technology"])["non_coc_base"] # type: ignore
+    # )
+    # inv_cost["non_coc_base_2020"] = inv_cost.set_index(["node_loc", "technology"]).index.map(non_coc_base_2020)
+    # inv_cost["non_coc_base_growth"] = (
+    #     inv_cost["non_coc_base"] / inv_cost["non_coc_base_2020"]
+    # )
 
     # Then try different approaches with coc and non_coc, and refill value
 
     # Output
+    columns_to_keep = ['node_loc', 'technology', 'year_vtg', 'value', 'unit'] # specify the dimensions of the output
+    inv_cost_out = inv_cost[columns_to_keep]
+
     folder_path = package_data_path("investment")
-    inv_cost.to_csv(os.path.join(str(folder_path), "inv_cost.csv"), index=False)
+    inv_cost_out.to_csv(os.path.join(str(folder_path), "inv_cost.csv"), index=False) # type: ignore
 
 # Function that implements new CoC (read inv_cost)
 def imple_coc(scen):
