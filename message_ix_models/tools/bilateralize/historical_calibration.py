@@ -232,7 +232,7 @@ def import_iea_gas():
 
     ngd['MESSAGE COMMODITY'] = ''
     ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'LNGTJ', 'lng', ngd['MESSAGE COMMODITY'])
-    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'PIPETJ', 'gas', ngd['MESSAGE COMMODITY'])
+    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'PIPETJ', 'gas_piped', ngd['MESSAGE COMMODITY'])
     
     cf_cw = pd.read_csv(os.path.join(iea_web_path, "CONV_country_codes.csv"))
     for t in ['EXPORTER', 'IMPORTER']:
@@ -280,7 +280,7 @@ def check_iea_balances(indf):
     iea = iea.merge(ieacw, left_on = 'REGION', right_on = 'REGION', how = 'left')
     iea['IEA-WEB VALUE'] = np.where(iea['FLOW'] == 'EXPORTS', iea['IEA-WEB VALUE'] * -1, iea['IEA-WEB VALUE'])
         
-    indf = indf[indf['MESSAGE COMMODITY'].isin(['gas', 'lng']) == False].copy() # LNG and pipe gas are directly from IEA
+    indf = indf[indf['MESSAGE COMMODITY'].isin(['gas_piped', 'lng']) == False].copy() # LNG and pipe gas are directly from IEA
     
     dict_dir = package_data_path("bilateralize", 'commodity_codes.yaml')
     with open(dict_dir, "r") as f:
@@ -306,17 +306,14 @@ def check_iea_balances(indf):
     exports['DIFFERENCE'] = (exports['ENERGY (TJ)'] - exports['IEA-WEB VALUE'])/exports['IEA-WEB VALUE']
     imports['DIFFERENCE'] = (imports['ENERGY (TJ)'] - imports['IEA-WEB VALUE'])/imports['IEA-WEB VALUE']
 
-    outdir = package_data_path("bilateralize", 'config.yaml')
-    exports.write_csv(os.path.join(outdir, 'historical_calibration', 'iea_calibration_exports.csv'))
-    imports.write_csv(os.path.join(outdir, 'historical_calibration', 'iea_calibration_imports.csv'))
+    outdir = package_data_path("bilateralize")
+    exports.to_csv(os.path.join(outdir, 'diagnostics', 'iea_calibration_exports.csv'))
+    imports.to_csv(os.path.join(outdir, 'diagnostics', 'iea_calibration_imports.csv'))
     
     
 # Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe
 def reformat_to_parameter(indf, message_regions):
-    
-    message_regions = "R12"
-    indf = tradedf.copy()
-    
+
     dict_dir = package_data_path("bilateralize", message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f) 
@@ -331,6 +328,7 @@ def reformat_to_parameter(indf, message_regions):
     # Collapse to regional level
     indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])['ENERGY (TJ)'].sum().reset_index()
     indf = indf[(indf['EXPORTER REGION'] != '') & (indf['IMPORTER REGION'] != '')]
+    indf = indf[indf['EXPORTER REGION'] != indf['IMPORTER REGION']]
     
     # Add MESSAGE columns for exports
     exdf = indf.copy()
@@ -362,15 +360,17 @@ def reformat_to_parameter(indf, message_regions):
     outdf = pd.concat([exdf, imdf])
     
     return outdf
+
 # Run all
-def build_historical_activity(message_regions):
-    
-    generate_cfdict(message_regions = "R12")
-    
+def build_historical_activity(message_regions = 'R12'):
+        
+    if reimport_IEA == True:
+        generate_cfdict(message_regions = message_regions)    
+        import_iea_balances()
     if reimport_BACI == True:
         import_uncomtrade()
         
-    bacidf = convert_trade(message_regions = 'R12')
+    bacidf = convert_trade(message_regions = message_regions)
     bacidf = bacidf[bacidf['MESSAGE COMMODITY'] != 'lng'] # Get LNG from IEA instead
 
     ngdf = import_iea_gas()
@@ -380,15 +380,14 @@ def build_historical_activity(message_regions):
                            right_on = ['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'],
                            how = 'outer')
     tradedf['ENERGY (TJ)'] = tradedf['ENERGY (TJ)_x']
-    tradedf['ENERGY (TJ)'] = np.where(tradedf['MESSAGE COMMODITY'].isin(['lng', 'gas']),
+    tradedf['ENERGY (TJ)'] = np.where(tradedf['MESSAGE COMMODITY'].isin(['lng', 'gas_piped']),
                                       tradedf['ENERGY (TJ)_y'], tradedf['ENERGY (TJ)'])
     tradedf['ENERGY (TJ)'] = tradedf['ENERGY (TJ)'].astype(float)
     tradedf = tradedf[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)']].reset_index()
-    
-    if reimport_IEA == True:
-        import_iea_balances()
 
     check_iea_balances(indf = tradedf)
 
-    reformat_to_parameter(indf = tradedf, 
-                          message_regions = 'R12')
+    outdf = reformat_to_parameter(indf = tradedf, 
+                                  message_regions = message_regions)
+    
+    return outdf
