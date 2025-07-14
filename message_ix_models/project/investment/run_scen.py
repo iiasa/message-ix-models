@@ -37,7 +37,7 @@ par_list = [
 # check here
 # https://github.com/iiasa/message-ix-models/blob/main/message_ix_models/data/technology.yaml
 tech_list = [
-    "coal_ppl", "ucoal_ppl", "coal_adv", "coal_adv_ccs",
+    "coal_ppl", "coal_ppl_u", "coal_adv", "coal_adv_ccs",
     "igcc", "igcc_ccs",
     "foil_ppl", "loil_ppl", "loil_cc",
     "gas_ppl", "gas_ct", "gas_cc", "gas_cc_ccs",
@@ -45,6 +45,8 @@ tech_list = [
     "geo_ppl",
     "solar_res1", "solar_res2", "solar_res3", "solar_res4",
     "solar_res5", "solar_res6", "solar_res7", "solar_res8",
+    "solar_res_RT1", "solar_res_RT2", "solar_res_RT3", "solar_res_RT4",
+    "solar_res_RT5", "solar_res_RT6", "solar_res_RT7", "solar_res_RT8",
     "csp_sm1_res1", "csp_sm1_res2", "csp_sm1_res3", "csp_sm1_res4",
     "csp_sm1_res5", "csp_sm1_res6", "csp_sm1_res7",
     "wind_res1", "wind_res2", "wind_res3", "wind_res4",
@@ -53,10 +55,10 @@ tech_list = [
 ]
 
 # Specify scenario
-model_ori = "SSP_SSP2_v2.1" # latest version "SSP_SSP2_v6.1"
-scen_ori = "baseline_1000f" # latest version "SSP2 - Low Emissions"
+model_ori = "SSP_SSP2_v6.1" # latest version "SSP_SSP2_v6.1"
+scen_ori = "SSP2 - Low Emissions" # latest version "SSP2 - Low Emissions"
 model_tgt = "MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
-scen_tgt = "baseline_1000f_inv_base"
+scen_tgt = "baseline_ssp6.1_low_base"
 
 # Load scenario
 base = message_ix.Scenario(mp, model=model_ori, scenario=scen_ori)
@@ -68,7 +70,7 @@ folder_path = package_data_path("investment")
 inv_cost.to_csv(os.path.join(str(folder_path), "inv_cost_ori.csv"), index=False)
 
 # Function that generate new inv_cost # Dummy
-def imple_coc(): # type: ignore
+def gene_coc(): # type: ignore
     try:
         inv_cost_ori = pd.read_csv(package_data_path("investment", "inv_cost_ori.csv"))
     except:
@@ -147,7 +149,7 @@ scen.set_as_default()
 log.info("Scenario cloned.")
 
 # Generate new parameters
-# imple_coc()
+gene_coc()
 
 # Apply scenario settings
 imple_coc(scen)
@@ -165,7 +167,7 @@ message_ix.models.DEFAULT_CPLEX_OPTIONS = {
 }
 
 # Specify solver
-solver = "MESSAGE"  # solver = "MESSAGE-MACRO"
+solver = "MESSAGE"  # after having some solved runs, try using solver = "MESSAGE-MACRO"
 
 # Solve scenario
 scen.solve(solver)
