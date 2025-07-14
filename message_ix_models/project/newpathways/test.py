@@ -41,7 +41,8 @@ trade_dict = build_parameter_sheets(log=log)
 
 # Historical calibration for trade technology
 histdf = build_historical_activity('R12')
-histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020])]
+histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
+histdf['year_act'] = np.where(histdf['year_act'] == 2023, 2025, histdf['year_act']) # TODO: Assume 2023 values FOR NOW 
 histdf = histdf[histdf['value'] > 0]
 
 covered_tec = config['covered_trade_technologies']
@@ -61,11 +62,11 @@ for tec in [i for i in covered_tec if 'piped' in i]:
     histdf['node_loc'] = histdf['EXPORTER']
     histdf['importer'] = histdf['IMPORTER'].str.replace(config['scenario']['regions'] + '_', '').str.lower()
     histdf['technology'] = histdf['trade_technology'] + '_' + histdf['flow_technology'] + '_' + histdf['importer']
-    histdf['year_act'] = 2020 # last historical year
+    histdf['year_act'] = 2025 # last historical year
     histdf['mode'] = 'M1'
     histdf['time'] = 'year'
-    histdf['value'] = histdf['Capacity (GWa)']
-    histdf['unit'] = 'GWa'
+    histdf['value'] = histdf['LengthMergedKm']
+    histdf['unit'] = 'km'
     histdf = histdf[['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit']]
     
     trade_dict[tec]['flow']['historical_activity'] = histdf
@@ -75,21 +76,20 @@ for tec in [i for i in covered_tec if 'piped' in i]:
 # tdf = pd.read_csv(os.path.join(package_data_path("bilateralize"), "gas_piped", "bare_files", "emission_factor.csv"))
 # trade_dict['gas_piped']['trade']['emission_factor'] = tdf
 
-# Set WEU imports of piped gas from FSU to 0 in 2025
-tdf = trade_dict['gas_piped']['trade']['historical_activity']
-add_df = {'node_loc': ['R12_FSU'],
-          'technology': ['gas_exp_weu'],
-          'year_act': [2025],
-          'mode': ['M1'],
-          'time': ['year'],
-          'value': [0],
-          'unit': ['GWa']}
-tdf = pd.concat([tdf, pd.DataFrame.from_dict(add_df)])
-trade_dict['gas_piped']['trade']['historical_activity'] = tdf.reset_index(drop = True)
+# Set WEU imports of piped gas from FSU to 0 in 2025 #TODO: Check, as there are some exports
+# tdf = trade_dict['gas_piped']['trade']['historical_activity']
+# add_df = {'node_loc': ['R12_FSU'],
+#           'technology': ['gas_piped_exp_weu'],
+#           'year_act': [2025],
+#           'mode': ['M1'],
+#           'time': ['year'],
+#           'value': [0],
+#           'unit': ['GWa']}
+# tdf = pd.concat([tdf, pd.DataFrame.from_dict(add_df)])
+# trade_dict['gas_piped']['trade']['historical_activity'] = tdf.reset_index(drop = True)
 
 # Update scenario
 clone_and_update(trade_dict=trade_dict,
                  log=log,
                  mp=mp, 
-                 to_gdx = True,
-                 solve = False)
+                 solve = True)
