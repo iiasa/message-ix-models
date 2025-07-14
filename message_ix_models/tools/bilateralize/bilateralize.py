@@ -838,21 +838,6 @@ def build_parameter_sheets(log, config_name: str = None):
                       (vdf['technology'].str.contains('_exp_'))]
             data_dict['trade'][par] = vdf
         
-        # Generate relation upper and lower # TODO: Update when relations come up
-        # for ty in ['trade', 'flow']:
-        #     for i in [k for k in data_dict[ty].keys() if "relation_activity" in k]:
-        #         key_name = i
-        #         df = data_dict[ty][i]
-        #         df = broadcast_yl(df, ya_list)
-                
-        #         key_name_upper = key_name.replace("activity", "upper")
-        #         data_dict[ty][key_name_upper] = df.copy()
-        
-        #         key_name_lower = key_name.replace("activity", "lower")
-        #         data_dict[ty][key_name_lower] = df.copy()
-                
-        #         log.info(f"Relation upper/lower generated for " + i)
-        
         # Generate relation lower bound for flow technologies
         df = data_dict['flow']['relation_activity_flow'].copy()
         df['value'] = 0
@@ -866,7 +851,8 @@ def clone_and_update(trade_dict,
                      log, mp, 
                      solve = False,
                      to_gdx = False,
-                     config_name: str = None):
+                     config_name: str = None,
+                     gdx_location: str = os.path.join("H:", "script", "message_ix", "message_ix", "model", "data")):     
     # Load config
     if config_name is None:
         config_name = "config.yaml"
@@ -902,11 +888,11 @@ def clone_and_update(trade_dict,
     for tec in covered_tec:
         
         # Remove existing technologies related to trade
-        base_tec = [config.get(tec + '_trade').get('trade_technology') + '_exp', # These may not exist but in case they do...
-                    config.get(tec + '_trade').get('trade_technology') + '_imp']
+        base_tec = [config.get(tec + '_trade').get('trade_commodity') + '_exp', # These may not exist but in case they do...
+                    config.get(tec + '_trade').get('trade_commodity') + '_imp']
         if tec == 'gas_piped':
             base_tec = base_tec + [i for i in scen.set('technology') if 
-                                   config.get(tec + '_trade').get('trade_technology') + '_exp_' in i]
+                                   config.get(tec + '_trade').get('trade_commodity') + '_exp_' in i]
         base_tec = list(set(base_tec))
         
         with scen.transact("Remove base trade technologies for " + tec):
@@ -919,9 +905,11 @@ def clone_and_update(trade_dict,
         new_sets = dict()
         for s in ['technology', 'level', 'commodity']:
             setlist = set(list(trade_dict[tec]['trade']['input'][s].unique()) +\
-                          list(trade_dict[tec]['trade']['output'][s].unique()) +\
-                          list(trade_dict[tec]['flow']['input'][s].unique()) +\
-                          list(trade_dict[tec]['flow']['output'][s].unique()))
+                          list(trade_dict[tec]['trade']['output'][s].unique()))
+                
+            if "input" in trade_dict[tec]['flow'].keys():
+                setlist = setlist.union(set(list(trade_dict[tec]['flow']['input'][s].unique()) +\
+                                            list(trade_dict[tec]['flow']['output'][s].unique())))
             setlist = list(setlist)
             
             new_sets[s] = setlist
@@ -985,7 +973,7 @@ def clone_and_update(trade_dict,
     if (to_gdx == True) & (solve == False):
         save_to_gdx(mp = mp,
                     scenario = scen,
-                    output_path = Path(os.path.join(config_dir, 'gdx', 'MsgData_'+ target_model + '_' + target_scen + '.gdx')))     
+                    output_path = Path(os.path.join(gdx_location, 'MsgData_'+ target_model + '_' + target_scen + '.gdx')))     
         
     if solve == True:
         solver = "MESSAGE"
