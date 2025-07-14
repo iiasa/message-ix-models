@@ -43,7 +43,7 @@ def build_sankeydf(commodities:dict,
                                commodities[c],
                                sdf['fuel'])
         
-    sdf['importer'] = 'R12_' + sdf['technology'].str.upper().str.split('_').str[2]
+    sdf['importer'] = 'R12_' + sdf['technology'].str.upper().str.split('_').str[-1]
     sdf = sdf.rename(columns = {'node_loc': 'exporter',
                                 'lvl': 'value',
                                 'year_act': 'year'})
@@ -51,7 +51,7 @@ def build_sankeydf(commodities:dict,
     
     return sdf
 
-sankeydf = build_sankeydf(commodities = {'gas': 'Pipeline Gas'},
+sankeydf = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas'},
                           model_name = "NP_SSP2", scenario_name = "pipelines_only")
 
 
