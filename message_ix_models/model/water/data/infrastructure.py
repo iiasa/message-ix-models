@@ -197,8 +197,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     )
 
     # Reading water distribution mapping from csv
-    path = package_data_path("water", "infrastructure", "water_distribution.xlsx")
-    df = pd.read_excel(path)
+    path = package_data_path("water", "infrastructure", "water_distribution.csv")
+    df = pd.read_csv(path)
 
     techs = [
         "urban_t_d",
@@ -688,13 +688,16 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # load the scenario from context
     scen = context.get_scenario()
 
+    # Create ScenarioInfo object for get_vintage_and_active_years
+    scenario_info = ScenarioInfo(scen)
+
     year_wat = (2010, 2015, *info.Y)
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear
 
     # Reading water distribution mapping from csv
-    path = package_data_path("water", "infrastructure", "desalination.xlsx")
+    path = package_data_path("water", "infrastructure", "desalination.csv")
     path2 = package_data_path(
         "water",
         "infrastructure",
@@ -706,7 +709,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         f"projected_desalination_potential_km3_year_{context.regions}.csv",
     )
     # Reading dataframes
-    df_desal = pd.read_excel(path)
+    df_desal = pd.read_csv(path)
     df_hist = pd.read_csv(path2)
     df_proj = pd.read_csv(path3)
     df_proj = df_proj[df_proj["rcp"] == f"{context.RCP}"]
