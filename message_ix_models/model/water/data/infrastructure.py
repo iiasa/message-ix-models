@@ -39,7 +39,7 @@ def start_creating_input_dataframe(
                         "input",
                         technology=rows["tec"],
                         value=rows["value_mid"],
-                        unit="-",
+                        unit="MCM",  # MCM as all non elec technology have water as input
                         level=rows["inlvl"],
                         commodity=rows["incmd"],
                         mode="M1",
@@ -380,11 +380,13 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     df_inv = df.dropna(subset=["investment_mid"])
 
     # Prepare dataframe for investments
+    # The csv doesn't mention it but the units are
+    # likely USD/(m^3* day) which we convert to USD/(MCM*year)
     inv_cost = make_df(
         "inv_cost",
         technology=df_inv["tec"],
-        value=df_inv["investment_mid"],
-        unit="USD/km3",
+        value=df_inv["investment_mid"] * USD_M3DAY_TO_USD_MCM,
+        unit="USD/MCM",
     ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
     inv_cost = inv_cost[~inv_cost["technology"].isin(techs)]
     results["inv_cost"] = inv_cost
@@ -537,22 +539,22 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 def prepare_input_dataframe(
     context: "Context",
     sub_time,
-    year_wat: tuple,
-    first_year: int,
+    scenario_info: ScenarioInfo,
     df_node: pd.DataFrame,
     techs: list[str],
     df_elec: pd.DataFrame,
 ) -> defaultdict[Any, list]:
     result_dc = defaultdict(list)
-
+    # Unit assumed to be GWa/Km3,
+    # which is the only explanation as to how the model solved.
     for _, rows in df_elec.iterrows():
         if rows["tec"] in techs:
             if context.SDG != "baseline":
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"],
-                    unit="-",
+                    value=rows["value_high"] / 1e3,
+                    unit="GWa/MCM",
                     level="final",
                     commodity="electr",
                     mode="Mf",
@@ -575,8 +577,8 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"],
-                    unit="-",
+                    value=rows["value_high"] / 1e3,
+                    unit="GWa/MCM",
                     level="final",
                     commodity="electr",
                     mode="Mf",
@@ -600,8 +602,8 @@ def prepare_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_mid"],
-                            unit="-",
+                            value=rows["value_mid"] / 1e3,
+                            unit="GWa/MCM",
                             level="final",
                             commodity="electr",
                             mode="M1",
@@ -622,8 +624,8 @@ def prepare_input_dataframe(
             inp = make_df(
                 "input",
                 technology=rows["tec"],
-                value=rows["value_mid"],
-                unit="-",
+                value=rows["value_mid"] / 1e3,
+                unit="GWa/MCM",
                 level="final",
                 commodity="electr",
                 mode="M1",
@@ -744,12 +746,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         node_loc="B" + df_hist["BCU_name"],
         technology=df_hist["tec_type"],
         year_vtg=df_hist["year"],
-        value=df_hist["cap_km3_year"],
-        unit="km3/year",
+        value=df_hist["cap_km3_year"] * KM3_TO_MCM / ANNUAL_CAPACITY_FACTOR,
+        unit="MCM/year",
     )
-    # Divide the historical capacity by 5 since the existing data is summed over
-    # 5 years and model needs per year
-    df_hist_cap["value"] = df_hist_cap["value"] / 5
 
     results["historical_new_capacity"] = df_hist_cap
 
@@ -760,8 +759,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         node_loc="B" + df_proj["BCU_name"],
         technology="extract_salinewater_basin",
         year_act=df_proj["year"],
-        value=df_proj["cap_km3_year"],
-        unit="km3/year",
+        value=df_proj["cap_km3_year"] * KM3_TO_MCM,
+        unit="MCM/year",
     )
     # Making negative values zero
     bound_up["value"].clip(lower=0, inplace=True)
@@ -773,8 +772,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     inv_cost = make_df(
         "inv_cost",
         technology=df_desal["tec"],
-        value=df_desal["inv_cost_mid"],
-        unit="USD/km3",
+        value=df_desal["inv_cost_mid"] * USD_M3DAY_TO_USD_MCM,
+        unit="USD/MCM",
     ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
 
     results["inv_cost"] = inv_cost
@@ -826,8 +825,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     #     make_df(
     #     "var_cost",
     #     technology='extract_salinewater_basin',
-    #     value= 100,
-    #     unit="USD/km3",
+    #     value= 100/1e3,
+    #     unit="USD/MCM",
     #     mode="M1",
     #     time="year",
     # ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat, node_loc=df_node["node"])
@@ -864,8 +863,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         inp = make_df(
             "input",
             technology=rows["tec"],
-            value=rows["electricity_input_mid"],
-            unit="-",
+            value=rows["electricity_input_mid"] / 1e3,
+            unit="GWa/MCM",
             level="final",
             commodity="electr",
             mode="M1",
@@ -893,8 +892,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         inp = make_df(
             "input",
             technology=rows["tec"],
-            value=rows["heat_input_mid"],
-            unit="-",
+            value=rows["heat_input_mid"] / 1e3,
+            unit="GWa/MCM",
             level="final",
             commodity="d_heat",
             mode="M1",
@@ -978,8 +977,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         node_loc="B" + df_bound["BCU_name"],
         technology=df_bound["tec_type"],
         mode="M1",
-        value=df_bound["cap_km3_year"],
-        unit="km3/year",
+        value=df_bound["cap_km3_year"] * KM3_TO_MCM,
+        unit="MCM/year",
     ).pipe(
         broadcast,
         year_act=year_wat,
