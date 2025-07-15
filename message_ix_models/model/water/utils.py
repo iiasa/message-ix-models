@@ -1,4 +1,5 @@
 import logging
+from warnings import warn
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
@@ -122,6 +123,47 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
         return row
 
     return df.apply(func, axis=1)
+
+
+def get_vintage_and_active_years(info, technical_lifetime: int | None) -> pd.DataFrame:
+    """Calculate valid vintage-activity year combinations without scenario dependency.
+
+    This implements similar logic as scenario.vintage_and_active_years() but
+    uses the technical lifetime data directly instead of requiring it to be in
+    the scenario first.
+
+    Parameters
+    ----------
+    info : ScenarioInfo
+        Contains the base yv_ya combinations and duration_period data
+    technical_lifetime : int, optional
+        Technical lifetime in years. If None, returns all combinations.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ['year_vtg', 'year_act'] containing valid combinations
+    """
+    # Get base yv_ya from ScenarioInfo property
+    yv_ya = info.yv_ya
+
+    # If no technical lifetime specified or is nan, return all combinations
+    if technical_lifetime is None or pd.isna(technical_lifetime):
+        warn(
+            """no technical_lifetime provided,
+            using all year vintage year active combinations""",
+            UserWarning,
+        )
+        return yv_ya
+    # Apply simple lifetime logic: year_act - year_vtg <= technical_lifetime
+
+    condition_values = yv_ya["year_act"] - yv_ya["year_vtg"]
+
+    valid_mask = condition_values <= technical_lifetime
+
+    result = yv_ya[valid_mask].reset_index(drop=True)
+
+    return result
 
 
 def map_yv_ya_lt(
