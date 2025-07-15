@@ -172,6 +172,7 @@ submodules = [
     "message_ix_models.testing.cli",
     "message_ix_models.util.pooch",
     "message_ix_models.util.slurm",
+    "message_ix_models.model.bmt.cli",
 ]
 
 try:
