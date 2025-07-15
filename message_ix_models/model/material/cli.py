@@ -54,6 +54,13 @@ def build_scen(
     update_costs,
     power_sector,
 ):
+    # Collect CLI options and store themin context.material
+    context.material = {
+        "old_calib": old_calib,
+        "iea_data_path": iea_data_path,
+        "modify_existing_constraints": True,  # Default value from build() function
+    }
+
     """Build a scenario.
 
     Use the --url option to specify the base scenario. If this scenario is on a
