@@ -273,3 +273,60 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
         ) from None
 
     return s
+
+# same as build(), but context-based
+def build_M(
+    context: Context,
+    scenario: message_ix.Scenario,
+) -> message_ix.Scenario:
+    """Set up materials accounting on `scenario`."""
+
+    # Read config and save to context.material
+    from message_ix_models.model.material.config import Config
+    config = Config()
+    context.material = config
+
+    node_suffix = context.model.regions
+
+    if node_suffix != "R12":
+        raise NotImplementedError(
+            "MESSAGEix-Materials is currently only supporting"
+            " MESSAGEix-GLOBIOM R12 regions"
+        )
+
+    if f"{node_suffix}_GLB" not in list(scenario.platform.regions().region):
+        # Required for material trade model
+        # TODO Include this in the spec, while not using it as a value for `node_loc`
+        scenario.platform.add_region(f"{node_suffix}_GLB", "region", "World")
+
+    # Get the specification and apply to the base scenario
+    spec = make_spec(node_suffix)
+    apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
+
+    water_dict = pd.read_excel(
+        package_data_path("material", "other", "water_tec_pars.xlsx"),
+        sheet_name=None,
+    )
+    scenario.check_out()
+    for par in water_dict.keys():
+        scenario.add_par(par, water_dict[par])
+    scenario.commit("add missing water tecs")
+
+    # Adjust exogenous energy demand to incorporate the endogenized sectors
+    # Adjust the historical activity of the useful level industry technologies
+    # Coal calibration 2020
+    add_ccs_technologies(scenario)
+    if context.material.old_calib:
+        modify_demand_and_hist_activity(scenario)
+    else:
+        modify_baseyear_bounds(scenario)
+        last_hist_year = scenario.par("historical_activity")["year_act"].max()
+        modify_industry_demand(scenario, last_hist_year, context.material.iea_data_path)
+        add_new_ind_hist_act(scenario, [last_hist_year], context.material.iea_data_path)
+        add_emission_accounting(scenario)
+
+    if context.material.modify_existing_constraints:
+        calibrate_existing_constraints(scenario)
+
+    return scenario
+
