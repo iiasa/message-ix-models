@@ -306,10 +306,12 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
     else:
         df = cap_fact["capacity_factor"]
         # reading ppl cooling impact dataframe
-        path = package_data_path(
-            "water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx"
+        file_name = package_data_path(
+            "water",
+            "ppl_cooling_tech",
+            f"power_plant_cooling_impact_MESSAGE_{context.regions}_{context.RCP}.csv",
         )
-        df_impact = pd.read_excel(path, sheet_name=f"{context.regions}_{context.RCP}")
+        df_impact = pd.read_csv(file_name)
 
         for n in df_impact["node"]:
             conditions = [
