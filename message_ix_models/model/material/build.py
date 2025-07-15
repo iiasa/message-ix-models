@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from typing import Any, Optional
 
 import message_ix
+import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.build import apply_spec
@@ -84,12 +85,66 @@ def add_data(scenario: message_ix.Scenario, dry_run: bool = False) -> None:
     log.info("done")
 
 
+def add_digsy_data(
+    scenario: message_ix.Scenario, dry_run: bool = False, digsy_scenario="baseline"
+) -> None:
+    """Populate `scenario` with MESSAGEix-Materials data."""
+    from message_ix_models.project.digsy.data import (
+        apply_industry_modifiers,
+        get_industry_modifiers,
+    )
+
+    mapping = {
+        gen_data_cement: "Cement",
+        gen_data_steel: "Iron & Steel",
+        gen_data_petro_chemicals: "Petrochemicals",
+        gen_data_aluminum: "Aluminium",
+    }
+    mods = get_industry_modifiers(digsy_scenario)
+    for func in DATA_FUNCTIONS:
+        # Generate or load the data and add to the Scenario
+        log.info(f"from {func.__name__}()")
+        if func in mapping:
+            data = apply_industry_modifiers(
+                mods[mods["sector"] == mapping[func]], func(scenario)
+            )
+        else:
+            data = func(scenario)
+        data = {k: v for k, v in data.items() if not v.empty}
+        add_par_data(scenario, data, dry_run=dry_run)
+    log.info("done")
+
+
+def get_resid_demands(context, digsy_scenario):
+    from message_ix_models.project.digsy.data import (
+        apply_industry_modifiers,
+        get_industry_modifiers,
+    )
+
+    resid_demands = {
+        "demand": pd.concat(
+            gen_other_ind_demands(get_ssp_from_context(context)).values()
+        )
+    }
+
+    if digsy_scenario != "baseline":
+        mods = get_industry_modifiers(digsy_scenario)
+        resid_demands_modified = dict()
+        resid_demands_modified = apply_industry_modifiers(
+            mods, resid_demands
+        )
+        return resid_demands_modified
+    else:
+        return resid_demands
+
+
 def build(
     context: Context,
     scenario: message_ix.Scenario,
     old_calib: bool,
     modify_existing_constraints: bool = True,
     iea_data_path: Optional[str] = None,
+    digsy_scenario: str = "baseline",
 ) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
     node_suffix = context.model.regions
@@ -107,18 +162,19 @@ def build(
 
     # Get the specification and apply to the base scenario
     spec = make_spec(node_suffix)
-    apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
+    apply_spec(scenario, spec, add_digsy_data, fast=True)  # dry_run=True
 
     add_water_par_data(scenario)
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
+    resid_demands = get_resid_demands(digsy_scenario)
     if old_calib:
         modify_demand_and_hist_activity(scenario)
     else:
         scenario.check_out()
-        for k, v in gen_other_ind_demands(get_ssp_from_context(context)).items():
+        for k, v in resid_demands.items():
             scenario.add_par(
                 "demand",
                 v[
