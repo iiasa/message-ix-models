@@ -190,6 +190,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     # Reference to the water configuration
     info = context["water build info"]
+    year_vtgs = tuple(range(2010, info.Y[0], 5))
 
     # defines path to read in demand data
     region = f"{context.regions}"
@@ -620,7 +621,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         ]
     )
     # Add 2010 & 2015 values as historical activities to corresponding technologies
-    h_act = dmd_df[dmd_df["year"].isin([2010, 2015])]
+    h_act = dmd_df[dmd_df["year"].isin(year_vtgs)]
 
     dmd_df = dmd_df[dmd_df["year"].isin(info.Y)]
     results["demand"] = dmd_df
@@ -669,7 +670,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     )
     results["historical_activity"] = hist_act
 
-    h_cap = h_act[h_act["year"] >= 2015]
+    h_cap = h_act[h_act["year"] >= year_vtgs[0]]
     h_cap = (
         h_cap.groupby(["node", "commodity", "level", "year", "unit"])["value"]
         .sum()
