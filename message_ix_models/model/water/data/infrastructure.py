@@ -5,10 +5,11 @@ from collections import defaultdict
 from typing import Any
 
 import pandas as pd
+from iam_units import registry
 from message_ix import make_df
 
-from message_ix_models import Context
-from message_ix_models.model.water.utils import map_yv_ya_lt
+from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.water.utils import get_vintage_and_active_years
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
@@ -17,14 +18,21 @@ from message_ix_models.util import (
     same_time,
 )
 
+# Convert USD/(m³/day) to USD/MCM: m³/day * 365 days/year / 1e6 m³/MCM
+USD_M3DAY_TO_USD_MCM = (registry("m^3/day").to("m^3/year").magnitude) / 1e6
+ANNUAL_CAPACITY_FACTOR = 5  # Convert 5-year capacity to annual
+# Convert km³ to MCM: 1 km³ = 1e9 m³, 1 MCM = 1e6 m³, so factor = 1000
+KM3_TO_MCM = registry("1 km^3").to("meter^3").magnitude / 1e6  # km³ to MCM conversion
+
+GWh_to_GWa = registry("1 GWh").to("GWa").magnitude
+
 
 def start_creating_input_dataframe(
     sdg: str,
     df_node: pd.DataFrame,
     df_non_elec: pd.DataFrame,
     df_dist: pd.DataFrame,
-    year_wat: tuple,
-    first_year: int,
+    scenario_info: ScenarioInfo,
     sub_time,
 ) -> pd.DataFrame:
     """Creates an input pd.DataFrame and adds some data to it."""
@@ -47,8 +55,8 @@ def start_creating_input_dataframe(
                     )
                     .pipe(
                         broadcast,
-                        map_yv_ya_lt(
-                            year_wat, rows["technical_lifetime_mid"], first_year
+                        get_vintage_and_active_years(
+                            scenario_info, rows["technical_lifetime_mid"]
                         ),
                         time=sub_time,
                     )
@@ -67,15 +75,15 @@ def start_creating_input_dataframe(
                             "input",
                             technology=rows["tec"],
                             value=rows["value_high"],
-                            unit="-",
+                            unit="MCM",
                             level=rows["inlvl"],
                             commodity=rows["incmd"],
                             mode="Mf",
                         )
                         .pipe(
                             broadcast,
-                            map_yv_ya_lt(
-                                year_wat, rows["technical_lifetime_mid"], first_year
+                            get_vintage_and_active_years(
+                                scenario_info, rows["technical_lifetime_mid"]
                             ),
                             node_loc=df_node["node"],
                             time=sub_time,
@@ -95,15 +103,15 @@ def start_creating_input_dataframe(
                             "input",
                             technology=rows["tec"],
                             value=rows["value_mid"],
-                            unit="-",
+                            unit="MCM",
                             level=rows["inlvl"],
                             commodity=rows["incmd"],
                             mode="M1",
                         )
                         .pipe(
                             broadcast,
-                            map_yv_ya_lt(
-                                year_wat, rows["technical_lifetime_mid"], first_year
+                            get_vintage_and_active_years(
+                                scenario_info, rows["technical_lifetime_mid"]
                             ),
                             node_loc=df_node["node"],
                             time=sub_time,
@@ -122,14 +130,16 @@ def start_creating_input_dataframe(
                     "input",
                     technology=rows["tec"],
                     value=rows["value_high"],
-                    unit="-",
+                    unit="MCM",
                     level=rows["inlvl"],
                     commodity=rows["incmd"],
                     mode="Mf",
                 )
                 .pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    get_vintage_and_active_years(
+                        scenario_info, rows["technical_lifetime_mid"]
+                    ),
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
@@ -163,6 +173,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     sub_time = context.time
     # load the scenario from context
     scen = context.get_scenario()
+
+    # Create ScenarioInfo object for get_vintage_and_active_years
+    scenario_info = ScenarioInfo(scen)
 
     year_wat = (2010, 2015, *info.Y)
 
@@ -205,16 +218,14 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         df_node=df_node,
         df_non_elec=df_non_elec,
         df_dist=df_dist,
-        year_wat=year_wat,
-        first_year=first_year,
+        scenario_info=scenario_info,
         sub_time=sub_time,
     )
 
     result_dc = prepare_input_dataframe(
         context=context,
         sub_time=sub_time,
-        year_wat=year_wat,
-        first_year=first_year,
+        scenario_info=scenario_info,
         df_node=df_node,
         techs=techs,
         df_elec=df_elec,
@@ -241,15 +252,15 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         "output",
                         technology=rows["tec"],
                         value=rows["out_value_mid"],
-                        unit="-",
+                        unit="MCM",
                         level=rows["outlvl"],
                         commodity=rows["outcmd"],
                         mode="M1",
                     )
                     .pipe(
                         broadcast,
-                        map_yv_ya_lt(
-                            year_wat, rows["technical_lifetime_mid"], first_year
+                        get_vintage_and_active_years(
+                            scenario_info, rows["technical_lifetime_mid"]
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -268,14 +279,16 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     "output",
                     technology=df_out_dist["tec"],
                     value=df_out_dist["out_value_mid"],
-                    unit="-",
+                    unit="MCM",
                     level=df_out_dist["outlvl"],
                     commodity=df_out_dist["outcmd"],
                     mode="Mf",
                 )
                 .pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    get_vintage_and_active_years(
+                        scenario_info, rows["technical_lifetime_mid"]
+                    ),
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
@@ -291,14 +304,16 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     "output",
                     technology=df_out_dist["tec"],
                     value=df_out_dist["out_value_mid"],
-                    unit="-",
+                    unit="MCM",
                     level=df_out_dist["outlvl"],
                     commodity=df_out_dist["outcmd"],
                     mode="M1",
                 )
                 .pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    get_vintage_and_active_years(
+                        scenario_info, rows["technical_lifetime_mid"]
+                    ),
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
@@ -313,14 +328,16 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     "output",
                     technology=df_out_dist["tec"],
                     value=df_out_dist["out_value_mid"],
-                    unit="-",
+                    unit="MCM",
                     level=df_out_dist["outlvl"],
                     commodity=df_out_dist["outcmd"],
                     mode="Mf",
                 )
                 .pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    get_vintage_and_active_years(
+                        scenario_info, rows["technical_lifetime_mid"]
+                    ),
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
@@ -347,7 +364,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                 )
                 .pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    get_vintage_and_active_years(
+                        scenario_info, rows["technical_lifetime_mid"]
+                    ),
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
@@ -403,11 +422,13 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "fix_cost",
                     technology=df_inv["tec"],
-                    value=df_inv["fix_cost_mid"],
-                    unit="USD/km3",
+                    value=df_inv["fix_cost_mid"] * USD_M3DAY_TO_USD_MCM,
+                    unit="USD/MCM",
                 ).pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    get_vintage_and_active_years(
+                        scenario_info, rows["technical_lifetime_mid"]
+                    ),
                     node_loc=df_node["node"],
                 ),
             ]
@@ -432,13 +453,13 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_mid"],
-                        unit="USD/km3",
+                        value=rows["var_cost_mid"] * USD_M3DAY_TO_USD_MCM,
+                        unit="USD/MCM",
                         mode="M1",
                     ).pipe(
                         broadcast,
-                        map_yv_ya_lt(
-                            year_wat, rows["technical_lifetime_mid"], first_year
+                        get_vintage_and_active_years(
+                            scenario_info, rows["technical_lifetime_mid"]
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -454,13 +475,13 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_high"],
-                        unit="USD/km3",
+                        value=rows["var_cost_high"] * USD_M3DAY_TO_USD_MCM,
+                        unit="USD/MCM",
                         mode="Mf",
                     ).pipe(
                         broadcast,
-                        map_yv_ya_lt(
-                            year_wat, rows["technical_lifetime_mid"], first_year
+                        get_vintage_and_active_years(
+                            scenario_info, rows["technical_lifetime_mid"]
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -477,13 +498,13 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=df_var["var_cost_mid"],
-                        unit="USD/km3",
+                        value=df_var["var_cost_mid"] * USD_M3DAY_TO_USD_MCM,
+                        unit="USD/MCM",
                         mode="M1",
                     ).pipe(
                         broadcast,
-                        map_yv_ya_lt(
-                            year_wat, rows["technical_lifetime_mid"], first_year
+                        get_vintage_and_active_years(
+                            scenario_info, rows["technical_lifetime_mid"]
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -498,13 +519,13 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_mid"],
-                        unit="USD/km3",
+                        value=rows["var_cost_mid"] * USD_M3DAY_TO_USD_MCM,
+                        unit="USD/MCM",
                         mode="M1",
                     ).pipe(
                         broadcast,
-                        map_yv_ya_lt(
-                            year_wat, rows["technical_lifetime_mid"], first_year
+                        get_vintage_and_active_years(
+                            scenario_info, rows["technical_lifetime_mid"]
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -518,13 +539,13 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     make_df(
                         "var_cost",
                         technology=rows["tec"],
-                        value=rows["var_cost_high"],
-                        unit="USD/km3",
+                        value=rows["var_cost_high"] * USD_M3DAY_TO_USD_MCM,
+                        unit="USD/MCM",
                         mode="Mf",
                     ).pipe(
                         broadcast,
-                        map_yv_ya_lt(
-                            year_wat, rows["technical_lifetime_mid"], first_year
+                        get_vintage_and_active_years(
+                            scenario_info, rows["technical_lifetime_mid"]
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -563,11 +584,10 @@ def prepare_input_dataframe(
                     node_origin=df_node["region"],
                 ).pipe(
                     broadcast,
-                    map_yv_ya_lt(
-                        year_wat,
+                    get_vintage_and_active_years(
+                        scenario_info,
                         # 1 because elec commodities don't have technical lifetime
                         1,
-                        first_year,
                     ),
                     time=sub_time,
                 )
@@ -587,11 +607,10 @@ def prepare_input_dataframe(
                     node_origin=df_node["region"],
                 ).pipe(
                     broadcast,
-                    map_yv_ya_lt(
-                        year_wat,
+                    get_vintage_and_active_years(
+                        scenario_info,
                         # 1 because elec commodities don't have technical lifetime
                         1,
-                        first_year,
                     ),
                     time=sub_time,
                 )
@@ -613,7 +632,7 @@ def prepare_input_dataframe(
                         ).pipe(
                             broadcast,
                             # 1 because elec commodities don't have technical lifetime
-                            map_yv_ya_lt(year_wat, 1, first_year),
+                            get_vintage_and_active_years(scenario_info, 1),
                             time=sub_time,
                         ),
                     ]
@@ -634,7 +653,7 @@ def prepare_input_dataframe(
                 node_origin=df_node["region"],
             ).pipe(
                 broadcast,
-                map_yv_ya_lt(year_wat, 1, first_year),
+                get_vintage_and_active_years(scenario_info, 1),
                 time=sub_time,
             )
 
@@ -714,14 +733,14 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
             "output",
             technology="extract_salinewater_basin",
             value=1,
-            unit="km3/year",
+            unit="MCM/year",
             level="water_avail_basin",
             commodity="salinewater_basin",
             mode="M1",
         )
         .pipe(
             broadcast,
-            map_yv_ya_lt(year_wat, 20, first_year),
+            get_vintage_and_active_years(scenario_info, 20),
             node_loc=df_node["node"],
             time=pd.Series(sub_time),
         )
@@ -789,11 +808,11 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "fix_cost",
                     technology=rows["tec"],
-                    value=rows["fix_cost_mid"],
-                    unit="USD/km3",
+                    value=rows["fix_cost_mid"] * USD_M3DAY_TO_USD_MCM,
+                    unit="USD/MCM",
                 ).pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
+                    get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
                     node_loc=df_node["node"],
                 ),
             ]
@@ -808,12 +827,12 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
-                    value=rows["var_cost_mid"],
-                    unit="USD/km3",
+                    value=rows["var_cost_mid"] * USD_M3DAY_TO_USD_MCM,
+                    unit="USD/MCM",
                     mode="M1",
                 ).pipe(
                     broadcast,
-                    map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
+                    get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
                     node_loc=df_node["node"],
                     time=pd.Series(sub_time),
                 ),
@@ -873,7 +892,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
             node_origin=df_node["region"],
         ).pipe(
             broadcast,
-            map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
+            get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
             time=pd.Series(sub_time),
         )
 
@@ -902,7 +921,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
             node_origin=df_node["region"],
         ).pipe(
             broadcast,
-            map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
+            get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
             time=pd.Series(sub_time),
         )
 
@@ -922,14 +941,16 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                         "input",
                         technology=rows["tec"],
                         value=1,
-                        unit="-",
+                        unit="MCM",
                         level=rows["inlvl"],
                         commodity=rows["incmd"],
                         mode="M1",
                     )
                     .pipe(
                         broadcast,
-                        map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
+                        get_vintage_and_active_years(
+                            scenario_info, rows["lifetime_mid"]
+                        ),
                         node_loc=df_node["node"],
                         time=pd.Series(sub_time),
                     )
@@ -951,14 +972,16 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                         "output",
                         technology=rows["tec"],
                         value=1,
-                        unit="-",
+                        unit="MCM",
                         level=rows["outlvl"],
                         commodity=rows["outcmd"],
                         mode="M1",
                     )
                     .pipe(
                         broadcast,
-                        map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
+                        get_vintage_and_active_years(
+                            scenario_info, rows["lifetime_mid"]
+                        ),
                         node_loc=df_node["node"],
                         time=pd.Series(sub_time),
                     )
