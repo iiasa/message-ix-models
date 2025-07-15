@@ -1,0 +1,60 @@
+ICT_input_file: "DIGSY-MESSAGE_ICTs.xls"
+
+# config for DIGSY industry input data
+industry_input:
+  # old original config
+  #  file_name: DIGSY-MESSAGE_Industry_v4.xlsx
+  #  sheet_name: Final_modifier
+  file_name: Final Modifier_Industry_adj.xlsx
+  sheet_name: in
+
+# mapping of DIGSY modifier names to MESSAGEix parameters
+subsector_message_map:
+  OtherElectric:
+    commodity: i_spec
+    par: demand
+  OtherThermal:
+    commodity: i_therm
+    par: demand
+  integrated cold rolling and finishing:
+    technology: finishing_steel
+    par: input
+    commodity: electr
+  cold rolling:
+    technology: finishing_steel
+    par: input
+    commodity: electr
+  ethylene production:
+    technology: steam_cracker_petro
+    par: input
+    commodity:
+      - ht_heat
+      - electr
+  calcination (alumina refinery):
+    technology: refining_aluminum
+    par: input
+    commodity: ht_heat
+  smelting (all plant types):
+    technology: prebake_aluminum
+    par: input
+    commodity: electr
+  vertical mill (dry process):
+    technology: raw_meal_prep_cement
+    par: input
+    commodity: electr
+  clinker production (all kilns):
+    technology: clinker_dry_cement
+    par: input
+    commodity:
+      - ht_heat
+      - electr
+  cement raw-mix blending:
+    technology: raw_meal_prep_cement
+    par: input
+    commodity: electr
+  cement mill (grinding):
+    technology:
+      - grinding_vertmill_cement
+      - grinding_ballmill_cement
+    par: input
+    commodity: electr
