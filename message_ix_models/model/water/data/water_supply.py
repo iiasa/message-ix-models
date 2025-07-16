@@ -752,6 +752,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
 
         results["fix_cost"] = fix_cost
 
+        # Remove duplicates and NaN values from all DataFrames in results
+        for key, df in results.items():
+            results[key] = df.dropna().drop_duplicates().reset_index(drop=True)
     return results
 
 

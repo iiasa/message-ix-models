@@ -170,7 +170,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
     # define an empty dictionary
     results = {}
-    sub_time = context.time
+    sub_time = pd.Series(context.time)
     # load the scenario from context
     scen = context.get_scenario()
 
@@ -234,7 +234,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
     inp_df = pd.concat([inp_df, results_new["input"]])
-    # inp_df.dropna(inplace = True)
+    # Remove duplicates from input data
+    if not inp_df.empty:
+        inp_df = inp_df.dropna().drop_duplicates().dropna().reset_index(drop=True)
     results["input"] = inp_df
 
     # add output dataframe
@@ -554,6 +556,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
             )
         results["var_cost"] = var_cost
 
+    # Remove duplicates from all DataFrames in results
+    for key, df in results.items():
+        results[key] = df.dropna().drop_duplicates().reset_index(drop=True)
     return results
 
 
@@ -681,7 +686,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     """
     # define an empty dictionary
     results = {}
-    sub_time = context.time
+    sub_time = pd.Series(context.time)
     # Reference to the water configuration
     info = context["water build info"]
 
@@ -1017,4 +1022,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
     results["bound_activity_lo"] = bound_lo
 
+    # Remove duplicates from all DataFrames in results
+    for key, df in results.items():
+        results[key] = df.dropna().drop_duplicates().reset_index(drop=True)
     return results
