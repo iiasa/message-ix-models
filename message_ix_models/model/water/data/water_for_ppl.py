@@ -290,7 +290,6 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
     inp : pd.DataFrame
         The DataFrame representing the "input" parameter.
     context : .Context
-        The general context in which the function is run.
 
     Returns
     -------
@@ -340,7 +339,7 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
 
 
 # water & electricity for cooling technologies
-def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
+def cool_tech(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and
     then cooling fractions are calculated by using the data from
@@ -352,6 +351,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     Parameters
     ----------
     context : .Context
+    scenario : .Scenario, optional
+        Scenario to use. If not provided, uses context.get_scenario().
 
     Returns
     -------
@@ -407,7 +408,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         .drop(columns=1)
     )
 
-    scen = context.get_scenario()
+    scen = scenario if scenario is not None else context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
@@ -717,6 +718,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         log.debug(f"cool_tech() for year '{year}'")
         # Identify missing combinations in the current aggregate
         input_cool_2015_set = set(
+            # FIXME : This should have been a one off script for debugging.
             zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
         )
         missing_combinations = input_cool_set - input_cool_2015_set
@@ -748,6 +750,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     # Final check if there are still missing combinations
     input_cool_2015_set = set(
+        # FIXME : This should have been a one off script for debugging.
         zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
     )
     still_missing = input_cool_set - input_cool_2015_set
@@ -975,7 +978,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
 
 # Water use & electricity for non-cooling technologies
-def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
+def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
     """Process data for water usage of power plants (non-cooling technology related).
     Water withdrawal values for power plants are read in from
     ``tech_water_performance_ssp_msg.csv``
@@ -983,6 +986,8 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
     Parameters
     ----------
     context : .Context
+    scenario : .Scenario, optional
+        Scenario to use. If not provided, uses context.get_scenario().
 
     Returns
     -------
@@ -1011,7 +1016,7 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
         & (df["water_supply_type"] == "freshwater_supply")
     ]
 
-    scen = context.get_scenario()
+    scen = scenario if scenario is not None else context.get_scenario()
     tec_lt = scen.par("technical_lifetime")
     all_tech = list(tec_lt["technology"].unique())
     # all_tech = list(scen.set("technology"))
