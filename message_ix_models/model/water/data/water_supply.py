@@ -1,15 +1,14 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-from iam_units import registry
 import numpy as np
 import pandas as pd
-from message_ix import Scenario, make_df
+from iam_units import registry
+from message_ix import make_df
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import get_vintage_and_active_years
 from message_ix_models.util import broadcast, package_data_path, same_node, same_time
-
 
 GWh_to_GWa = registry("1 GWh").to("GWa").magnitude
 
@@ -149,8 +148,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     last_vtg_yr = info.Y[0] - 5
     sub_time = context.time
     scen_info = ScenarioInfo(scen)
-    # first activity year for all water technologies is 2020
-    first_year = scen.firstmodelyear
 
     print(" future year = ", fut_year)
     print(" year_wat = ", year_wat)

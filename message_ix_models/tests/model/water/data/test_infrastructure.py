@@ -80,12 +80,12 @@ def test_add_infrastructure_techs(test_context, SDG, request):
     # Check that time values are not individual characters (common bug)
     input_time_values = result["input"]["time"].unique()
     assert not any(len(str(val)) == 1 for val in input_time_values), (
-        f"Input DataFrame contains single-character time values: {input_time_values}. "
+        f"Input DataFrame contains time values: {input_time_values}. "
     )
 
     output_time_values = result["output"]["time"].unique()
     assert not any(len(str(val)) == 1 for val in output_time_values), (
-        f"Output DataFrame contains single-character time values: {output_time_values}. "
+        f"Output DataFrame contains time values: {output_time_values}. "
     )
 
     input_duplicates = result["input"].duplicated().sum()

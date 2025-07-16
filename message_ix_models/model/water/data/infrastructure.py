@@ -47,7 +47,8 @@ def start_creating_input_dataframe(
                         "input",
                         technology=rows["tec"],
                         value=rows["value_mid"],
-                        unit="MCM",  # MCM as all non elec technology have water as input
+                        unit="MCM",
+                        # MCM as all non elec technology have water as input
                         level=rows["inlvl"],
                         commodity=rows["incmd"],
                         mode="M1",
@@ -179,9 +180,6 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
     year_wat = (*range(2010, info.Y[0] + 1, 5), *info.Y)
 
-    # first activity year for all water technologies is 2020
-    first_year = scen.firstmodelyear
-
     # reading basin_delineation
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
     PATH = package_data_path("water", "delineation", FILE2)
@@ -234,10 +232,6 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
     inp_df = pd.concat([inp_df, results_new["input"]])
-    # Remove duplicates from input data
-    if not inp_df.empty:
-        inp_df = inp_df.dropna().drop_duplicates().dropna().reset_index(drop=True)
-    results["input"] = inp_df
 
     # add output dataframe
     df_out = df[~df["outcmd"].isna()]
@@ -436,9 +430,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-        fix_cost = fix_cost[~fix_cost["technology"].isin(techs)]
+    fix_cost = fix_cost[~fix_cost["technology"].isin(techs)]
 
-        results["fix_cost"] = fix_cost
+    results["fix_cost"] = fix_cost
 
     df_var = df_inv[~df_inv["tec"].isin(techs)]
     df_var_dist = df_inv[df_inv["tec"].isin(techs)]
@@ -571,7 +565,8 @@ def prepare_input_dataframe(
     df_elec: pd.DataFrame,
 ) -> defaultdict[Any, list]:
     result_dc = defaultdict(list)
-    # Unit assumed to be GWa/Km3,
+    # Unit 1 KWh/m^3 = 10^3 GWh/Km^3 = 1 GWh/MCM,
+    # Parkinson et al.
     # which is the only explanation as to how the model solved.
     for _, rows in df_elec.iterrows():
         if rows["tec"] in techs:
@@ -579,7 +574,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] / 1e3,
+                    value=rows["value_high"] * GWh_to_GWa,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -602,7 +597,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] / 1e3,
+                    value=rows["value_high"] * GWh_to_GWa,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -626,7 +621,7 @@ def prepare_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_mid"] / 1e3,
+                            value=rows["value_mid"] * GWh_to_GWa,
                             unit="GWa/MCM",
                             level="final",
                             commodity="electr",
@@ -648,7 +643,7 @@ def prepare_input_dataframe(
             inp = make_df(
                 "input",
                 technology=rows["tec"],
-                value=rows["value_mid"] / 1e3,
+                value=rows["value_mid"] * GWh_to_GWa,
                 unit="GWa/MCM",
                 level="final",
                 commodity="electr",
@@ -696,9 +691,6 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # Create ScenarioInfo object for get_vintage_and_active_years
     scenario_info = ScenarioInfo(scen)
     year_wat = (*range(2010, info.Y[0] + 1, 5), *info.Y)
-
-    # first activity year for all water technologies is 2020
-    first_year = scen.firstmodelyear
 
     # Reading water distribution mapping from csv
     path = package_data_path("water", "infrastructure", "desalination.csv")
