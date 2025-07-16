@@ -969,9 +969,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     if not df_share.empty:
         # pd concat to the existing results["share_commodity_up"]
-        results["share_commodity_up"] = pd.concat(
-            [results["share_commodity_up"], df_share], ignore_index=True
-        )
+        results["share_commodity_up"] = pd.concat([df_share], ignore_index=True)
 
     return results
 
