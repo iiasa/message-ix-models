@@ -85,6 +85,33 @@ def test_add_water_supply(request, test_context):
     for df in result.values():
         assert isinstance(df, pd.DataFrame)
 
+    # Check for NaN values in input and output DataFrames
+    assert not result["input"]["value"].isna().any(), (
+        "Input DataFrame contains NaN values"
+    )
+    assert not result["output"]["value"].isna().any(), (
+        "Output DataFrame contains NaN values"
+    )
+    # Check that time values are not individual characters (common bug)
+    input_time_values = result["input"]["time"].unique()
+    assert not any(len(str(val)) == 1 for val in input_time_values), (
+        f"Input DataFrame contains time values: {input_time_values}. "
+    )
+
+    output_time_values = result["output"]["time"].unique()
+    assert not any(len(str(val)) == 1 for val in output_time_values), (
+        f"Output DataFrame contains time values: {output_time_values}. "
+    )
+    input_duplicates = result["input"].duplicated().sum()
+    assert input_duplicates == 0, (
+        f"Input DataFrame contains {input_duplicates} duplicate rows"
+    )
+
+    output_duplicates = result["output"].duplicated().sum()
+    assert output_duplicates == 0, (
+        f"Output DataFrame contains {output_duplicates} duplicate rows"
+    )
+
 
 def test_add_e_flow(test_context):
     # FIXME You probably want this to be part of a common setup rather than writing
