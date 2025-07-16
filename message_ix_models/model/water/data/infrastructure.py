@@ -571,7 +571,8 @@ def prepare_input_dataframe(
     df_elec: pd.DataFrame,
 ) -> defaultdict[Any, list]:
     result_dc = defaultdict(list)
-    # Unit assumed to be GWa/Km3,
+    # Unit 1 KWh/m^3 = 10^3 GWh/Km^3 = 1 GWh/MCM,
+    # Parkinson et al.
     # which is the only explanation as to how the model solved.
     for _, rows in df_elec.iterrows():
         if rows["tec"] in techs:
@@ -579,7 +580,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] / 1e3,
+                    value=rows["value_high"] * GWh_to_GWa,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -602,7 +603,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] / 1e3,
+                    value=rows["value_high"] * GWh_to_GWa,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -626,7 +627,7 @@ def prepare_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_mid"] / 1e3,
+                            value=rows["value_mid"] * GWh_to_GWa,
                             unit="GWa/MCM",
                             level="final",
                             commodity="electr",
@@ -648,7 +649,7 @@ def prepare_input_dataframe(
             inp = make_df(
                 "input",
                 technology=rows["tec"],
-                value=rows["value_mid"] / 1e3,
+                value=rows["value_mid"] * GWh_to_GWa,
                 unit="GWa/MCM",
                 level="final",
                 commodity="electr",
