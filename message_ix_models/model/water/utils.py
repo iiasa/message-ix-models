@@ -1,9 +1,9 @@
 import logging
-from warnings import warn
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
 from typing import Optional
+from warnings import warn
 
 import numpy as np
 import pandas as pd
