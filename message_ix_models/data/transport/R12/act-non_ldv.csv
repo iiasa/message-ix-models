@@ -3,12 +3,12 @@
 # Units: dimensionless
 #
 node,     technology,    year, value
-R12_AFR,  f road electr, 2020, 0.01
+R12_AFR,  f road electr, 2020, 0.001
 R12_AFR,  FCg_bus,       2020, 0.036
 R12_AFR,  f road gas fc, 2020, 0.000036
 R12_AFR,  f road gas ic, 2020, 0.00036
 R12_AFR,  ICG_bus,       2020, 0.0036
-R12_CHN,  f road electr, 2020, 0.036
+R12_CHN,  f road electr, 2020, 0.05
 R12_CHN,  FCg_bus,       2020, 4.56
 R12_CHN,  f road gas fc, 2020, 4.56
 R12_CHN,  f road gas ic, 2020, 4.56
@@ -18,12 +18,12 @@ R12_EEU,  FCg_bus,       2020, 0.470
 R12_EEU,  f road gas fc, 2020, 0.470
 R12_EEU,  f road gas ic, 2020, 0.470
 R12_EEU,  ICG_bus,       2020, 0.470
-R12_FSU,  f road electr, 2020, 0.01
+R12_FSU,  f road electr, 2020, 0.007
 R12_FSU,  FCg_bus,       2020, 3.93
 R12_FSU,  f road gas fc, 2020, 3.93
 R12_FSU,  f road gas ic, 2020, 3.93
 R12_FSU,  ICG_bus,       2020, 3.93
-R12_LAM,  f road electr, 2020, 0.01
+R12_LAM,  f road electr, 2020, 0.035
 R12_LAM,  FCg_bus,       2020, 5.28
 R12_LAM,  f road gas fc, 2020, 5.28
 R12_LAM,  f road gas ic, 2020, 5.28
@@ -38,12 +38,12 @@ R12_NAM,  FCg_bus,       2020, 0.012
 R12_NAM,  f road gas fc, 2020, 0.001
 R12_NAM,  f road gas ic, 2020, 0.012
 R12_NAM,  ICG_bus,       2020, 0.012
-R12_PAO,  f road electr, 2020, 0.01
+R12_PAO,  f road electr, 2020, 0.001
 R12_PAO,  FCg_bus,       2020, 0.0019
 R12_PAO,  f road gas fc, 2020, 0.0019
 R12_PAO,  f road gas ic, 2020, 0.0019
 R12_PAO,  ICG_bus,       2020, 0.0019
-R12_PAS,  f road electr, 2020, 0.01
+R12_PAS,  f road electr, 2020, 0.004
 R12_PAS,  FCg_bus,       2020, 0.178
 R12_PAS,  f road gas fc, 2020, 0.178
 R12_PAS,  f road gas ic, 2020, 0.178
@@ -53,7 +53,7 @@ R12_RCPA, FCg_bus,       2020, 0.0088
 R12_RCPA, f road gas fc, 2020, 0.0088
 R12_RCPA, f road gas ic, 2020, 0.0088
 R12_RCPA, ICG_bus,       2020, 0.0088
-R12_SAS,  f road electr, 2020, 0.01
+R12_SAS,  f road electr, 2020, 0.00001
 R12_SAS,  FCg_bus,       2020, 4.41
 R12_SAS,  f road gas fc, 2020, 4.41
 R12_SAS,  f road gas ic, 2020, 4.41
