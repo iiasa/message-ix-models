@@ -11,11 +11,6 @@ cooling:
       Sea water extraction used specifically for cooling technologies requiring seawater
     input: { commodity: saline_supply_ppl }
 
-  extract_salinewater:
-    description: >-
-      Sea water extraction used for cooling technologies requiring seawater
-    input: { commodity: saline_supply_ppl }
-
   extract_groundwater:
     description: >-
       Groundwater extraction technology
