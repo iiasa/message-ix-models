@@ -6,6 +6,7 @@ Bilateralize trade flows
 import os
 import sys
 import pandas as pd
+import numpy as np
 import logging
 import yaml
 import message_ix
@@ -190,7 +191,8 @@ def generate_bare_sheets(
     flow_technology = {}
     flow_tech_suffix = {}
     flow_constraint = {}
-    flow_commodity_input = {}
+    flow_fuel_input = {}
+    flow_material_input = {}
     flow_commodity_output = {}
     supply_technologies = {}
     specify_network = {}
@@ -211,7 +213,8 @@ def generate_bare_sheets(
         import_level[tec] = tec_dict['import_level']
         flow_technology[tec] = tec_dict['flow_technology']
         flow_tech_suffix[tec] = tec_dict['flow_tech_suffix']
-        flow_commodity_input[tec] = tec_dict['flow_commodity_input']
+        flow_fuel_input[tec] = tec_dict['flow_fuel_input']
+        flow_material_input[tec] = tec_dict['flow_material_input']
         flow_commodity_output[tec] = tec_dict['flow_commodity_output']
         flow_constraint[tec] = tec_dict['flow_constraint']
         supply_technologies[tec] = tec_dict['supply_technologies']
@@ -323,10 +326,10 @@ def generate_bare_sheets(
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
         df["level"] = export_level[tec]
-        df["value"] = None
+        df["value"] = 1
         df['time'] = 'year'
         df['time_origin'] = 'year'
-        df['unit'] = None
+        df['unit'] = 'GWa'
         df = df[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act',
                  'mode', 'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
         input_trade = df.copy()
@@ -341,15 +344,15 @@ def generate_bare_sheets(
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
         df["level"] = trade_level[tec]
-        df["value"] = None
+        df["value"] = 1
         df['time'] = 'year'
         df['time_origin'] = 'year'
-        df['unit'] = None
+        df['unit'] = 'GWa'
         df = df[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act',
                  'mode', 'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
         input_imports = df.copy()
     
-        df = pd.concat([input_trade, input_imports])
+        df = pd.concat([input_trade, input_imports]).drop_duplicates()
         
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "input.csv"), index=False)
         log.info(f"Input pipe exp csv generated at: {os.path.join(config_dir, tec)}.")
@@ -366,10 +369,10 @@ def generate_bare_sheets(
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
         df["level"] = trade_level[tec]
-        df["value"] = None
+        df["value"] = 1
         df['time'] = 'year'
         df['time_dest'] = 'year'
-        df['unit'] = None
+        df['unit'] = 'GWa'
         output_trade = df.copy()
         
         # Import Level
@@ -382,13 +385,13 @@ def generate_bare_sheets(
         df["mode"] = "M1"
         df["commodity"] = trade_commodity[tec]
         df["level"] = import_level[tec]
-        df["value"] = 1 # DOES NOT REQUIRE EDIT
+        df["value"] = 1
         df['time'] = 'year'
         df['time_dest'] = 'year'
-        df['unit'] = None
+        df['unit'] = 'GWa'
         output_imports = df.copy()
     
-        df = pd.concat([output_trade, output_imports])
+        df = pd.concat([output_trade, output_imports]).drop_duplicates()
         
         df.to_csv(os.path.join(config_dir, tec, "edit_files", "output.csv"), index=False)
         log.info(f"Output csv generated at: {os.path.join(config_dir, tec)}.")
@@ -629,20 +632,19 @@ def generate_bare_sheets(
         log.info(f"Relation activity (regional imports) csv generated at: {os.path.join(config_dir, tec)}.")
     
     ## FLOW TECHNOLOGY
-
     # Create bare file: input
     for tec in covered_tec:  
         if flow_tech_suffix[tec] != None:
-            full_flow_tec = tec + '_' + flow_technology[tec] + '_' + flow_tech_suffix[tec]
+            full_flow_tec = flow_technology[tec] + '_' + flow_tech_suffix[tec]
         else:
-            full_flow_tec = tec + '_' + flow_technology[tec]
-            
+            full_flow_tec = flow_technology[tec]
+           
         df = network_setup[tec][['exporter', 'importer']].copy()
         
         if flow_constraint[tec] == 'bilateral':
             df['technology'] = full_flow_tec + '_' + df['importer'].str.lower().str.split('_').str[1]
         elif flow_constraint[tec] == 'global':
-            df['technology'] = full_flow_tec + '_glb'
+            df['technology'] = full_flow_tec
 
         df["year_vtg"] = "broadcast"
         df["year_act"] = "broadcast"
@@ -655,28 +657,60 @@ def generate_bare_sheets(
         df['unit'] = None
         
         input_df = pd.DataFrame()
-        for c in flow_commodity_input[tec]:
+        for c in flow_fuel_input[tec] + flow_material_input[tec]:
             cdf = df.copy()
             cdf['commodity'] = c
+            if c in flow_fuel_input[tec]: cdf['unit'] = 'GWa'
+            elif c in flow_material_input[tec]: cdf['unit'] = 'Mt'
+            
             input_df = pd.concat([input_df, cdf])
-        
+            
         input_df['node_loc'] = input_df['exporter']
         input_df['node_origin'] = input_df['exporter']
         
+        if flow_constraint[tec] == 'global':
+            input_df['technology'] = np.where(input_df['commodity'].isin(flow_fuel_input[tec]),
+                                              'fuel_' + full_flow_tec,
+                                              input_df['technology'])
+            input_df['technology'] = np.where(input_df['commodity'].isin(flow_material_input[tec]),
+                                              'material_input_' + full_flow_tec,
+                                              input_df['technology'])
+            for f in ['fuel', 'material']:
+                tdf = input_df.copy()
+                tdf['technology'] = full_flow_tec
+                tdf['node_loc'] = message_regions + '_GLB'
+                tdf['node_origin'] = message_regions + '_GLB'
+                #if f == 'fuel': tdf['commodity'] = 'bunker_fuel'
+                #if f == 'material': tdf['commodity'] = 'shipping_material'
+                input_df = pd.concat([input_df, tdf])
+                
         input_df = input_df[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act',
-                             'mode', 'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
+                             'mode', 'commodity', 'level', 'value', 'time', 'time_origin', 'unit']].drop_duplicates()
 
         input_df.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "input.csv"), index=False)
         log.info(f"Input flow csv generated at: {os.path.join(config_dir, tec)}.")
 
     # Create base file: output
-        output_df = df.copy()
-        output_df['commodity'] = flow_commodity_output[tec]
-        output_df['node_loc'] = output_df['exporter']
-        output_df['node_dest'] = output_df['importer']
-        
+        if flow_constraint[tec] == 'bilateral':
+            output_df = df.copy()
+            output_df['commodity'] = flow_commodity_output[tec]
+            output_df['node_loc'] = output_df['exporter']
+            output_df['node_dest'] = output_df['importer']
+            output_df['unit'] = 'km'
+        elif flow_constraint[tec] == 'global':
+            output_df = input_df.copy()
+            output_df['node_dest'] = message_regions + '_GLB'
+            output_df['time_dest'] = 'year'
+            # output_df['commodity'] = np.where(output_df['technology'] == 'fuel_' + full_flow_tec,
+            #                                   'bunker_fuel', output_df['commodity'])
+            # output_df['commodity'] = np.where(output_df['technology'] == 'material_input_' + full_flow_tec,
+            #                                   'shipping_material', output_df['commodity'])
+            output_df['commodity'] = np.where(output_df['technology'] == full_flow_tec,
+                                              flow_commodity_output[tec], output_df['commodity'])
+            #output_df['unit'] = 'Mt-km'
+            
         output_df = output_df[['node_loc', 'node_dest', 'technology', 'year_vtg', 'year_act',
-                              'mode', 'commodity', 'level', 'value', 'time', 'time_dest', 'unit']]
+                              'mode', 'commodity', 'level', 'value', 'time', 'time_dest', 'unit']].drop_duplicates()
         
         output_df.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "output.csv"), index=False)
         log.info(f"Output csv generated at: {os.path.join(config_dir, tec)}.")
@@ -687,8 +721,14 @@ def generate_bare_sheets(
                                                   'value': None,
                                                   'unit': 'USD/km'})
         inv_df = inv_df[inv_df['technology'] != tec + '_imp']
-        inv_df['technology'] =  full_flow_tec + '_' + inv_df['technology'].str.lower().str.split('_').str[-1]
         
+        if flow_constraint[tec] == 'bilateral':
+            inv_df['technology'] =  full_flow_tec + '_' + inv_df['technology'].str.lower().str.split('_').str[-1]
+        elif flow_constraint[tec] == 'global':
+            inv_df['technology'] = full_flow_tec
+            inv_df['node_loc'] = message_regions + '_GLB'
+            
+        inv_df = inv_df.drop_duplicates()
         inv_df.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "inv_cost.csv"), index=False)
         log.info(f"Investment cost csv generated at: {os.path.join(config_dir, tec)}.")  
     
@@ -700,7 +740,13 @@ def generate_bare_sheets(
                                                 'unit': '%',
                                                 'time': 'year'})   
         cfdf = cfdf[cfdf['technology'] != tec + '_imp']
-        cfdf['technology'] =  full_flow_tec + '_' + cfdf['technology'].str.lower().str.split('_').str[-1]
+        
+        if flow_constraint[tec] == 'bilateral':
+            cfdf['technology'] =  full_flow_tec + '_' + cfdf['technology'].str.lower().str.split('_').str[-1]     
+        elif flow_constraint[tec] == 'global':
+            cfdf['technology'] = full_flow_tec
+        
+        cfdf = cfdf.drop_duplicates()
         
         cfdf.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "capacity_factor.csv"), index=False) # Does not require edit
         log.info(f"Capacity factor csv generated at: {os.path.join(config_dir, tec)}.")
@@ -711,7 +757,13 @@ def generate_bare_sheets(
                                                  'value': None,
                                                  'unit': 'y'})  
         tecdf = tecdf[tecdf['technology'] != tec + '_imp']
-        tecdf['technology'] =  full_flow_tec + '_' + tecdf['technology'].str.lower().str.split('_').str[-1]
+        if flow_constraint[tec] == 'bilateral':
+            tecdf['technology'] =  full_flow_tec + '_' + tecdf['technology'].str.lower().str.split('_').str[-1]     
+        elif flow_constraint[tec] == 'global':
+            tecdf['technology'] = full_flow_tec
+            tecdf['node_loc'] = message_regions + '_GLB'
+        
+        tecdf = tecdf.drop_duplicates()
         
         tecdf.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "technical_lifetime.csv"), index=False)
         log.info(f"Technical Lifetime csv generated at: {os.path.join(config_dir, tec)}.")
@@ -727,30 +779,46 @@ def generate_bare_sheets(
         df["commodity"] = trade_commodity[tec]
         df["value"] = None
         df['unit'] = None
+
+        df['node_rel'] = df['node_loc'] # Override flow for globally constrained relations
         
         if flow_constraint[tec] == 'bilateral':
-           # df['node_rel'] = df['importer']
             df['relation'] = full_flow_tec + '_' + df['importer'].str.lower().str.split('_').str[1]
-        elif flow_constraint[tec] == 'global': #TODO: Test global
-           # df['node_rel'] = message_regions + '_GLB'
-            df['relation'] = full_flow_tec + '_GLB'
-        
-        df['node_rel'] = df['node_loc']
-        
+        elif flow_constraint[tec] == 'global':
+            df['relation'] = full_flow_tec
+                
         trade_df = df.copy()
         flow_df = df.copy()
         
         if flow_constraint[tec] == 'bilateral':
             flow_df['technology'] = full_flow_tec + '_' + flow_df['importer'].str.lower().str.split('_').str[1]
-        elif flow_constraint[tec] == 'global': #TODO: Test global            
+        
+        elif flow_constraint[tec] == 'global':    
+            distance_df = pd.read_excel(os.path.join(config_dir, "distances.xlsx"), sheet_name = 'dummy') #TODO: Update dummy to distances
+            energycontent_df = pd.read_excel(os.path.join(config_dir, "specific_energy.xlsx"))
+            energycontent = energycontent_df[energycontent_df['Commodity'] == trade_commodity[tec]]['Specific Energy (GWa/Mt)'][0]
+            
+            multiplier_df = distance_df.copy()
+            multiplier_df['node_loc'] = multiplier_df['node_rel'] = multiplier_df['exporter']
+            multiplier_df['technology'] = trade_technology[tec] + '_exp_' + multiplier_df['importer'].str.lower().str.split('_').str[1]
+            multiplier_df['energy_content'] = energycontent
+            multiplier_df['multiplier'] = multiplier_df['distance'] / multiplier_df['energy_content'] #Mt-km/GWa
+            multiplier_df = multiplier_df[['node_loc', 'node_rel', 'technology', 'multiplier']].drop_duplicates()
+            
+            trade_df = trade_df.merge(multiplier_df, left_on = ['node_loc', 'node_rel', 'technology'],
+                                      right_on = ['node_loc', 'node_rel', 'technology'], how = 'left')
+            trade_df['value'] = trade_df['multiplier']
+            
             flow_df['technology'] = full_flow_tec
+            flow_df['node_rel'] = flow_df['node_loc'] = message_regions + '_GLB'
+            flow_df['value'] = 1
         
         dfcol = ['node_loc', 'technology', 'node_rel', 'relation',
                  'year_rel', 'year_act', 'mode', 'commodity', 'value', 'unit']
         trade_df = trade_df[dfcol]
         flow_df = flow_df[dfcol]
         
-        outdf = pd.concat([trade_df, flow_df])
+        outdf = pd.concat([trade_df, flow_df]).drop_duplicates()
         
         outdf.to_csv(os.path.join(config_dir, tec, "edit_files", "flow_technology", "relation_activity_flow.csv"), index=False)
         
@@ -778,6 +846,9 @@ def build_parameter_sheets(log, config_name: str = None):
     
     outdict = dict()
     
+    ya_list = config['timeframes']['year_act_list']
+    yv_list = config['timeframes']['year_vtg_list']
+    
     for tec in covered_tec:
         config_tec = config.get(tec + '_trade', {})
         
@@ -798,12 +869,11 @@ def build_parameter_sheets(log, config_name: str = None):
                 data_dict[ty][key] = pd.read_csv(csv_file)
 
         # Broadcast the data   
-        ya_list = config_tec.get('year_act_list', [])
-        yv_list = config_tec.get('year_vtg_list', [])
         tec_lt = trade_lifetimes[tec]
         
         for ty in ['trade', 'flow']:
             for i in data_dict[ty].keys():
+                print(i)
                 if "year_rel" in data_dict[ty][i].columns:
                     if data_dict[ty][i]["year_rel"].iloc[0] == "broadcast":
                         data_dict[ty][i] = broadcast_yl(data_dict[ty][i], ya_list)
@@ -969,7 +1039,18 @@ def clone_and_update(trade_dict,
                         log.info('Adding ' + rel_par + ' for ' + tec)
                         rel_par_df = rel_par_df[rel_par_df['value'].isnull() == False]
                         scen.add_par(rel_par, rel_par_df)
-                    
+        
+        # Update bunker fuels
+        bunker_tec = config.get(tec + '_trade').get('bunker_technology')
+        if bunker_tec != None:
+            bunkerdf_in = scen.par('input', filters = {'technology': bunker_tec})
+            bunkerdf_out = bunkerdf_in.copy()
+            bunkerdf_out['level'] = 'bunker'
+            with scen.transact('Update bunker fuel for' + tec):
+                log.info('Updating bunker level for ' + tec)
+                scen.remove_par('input', bunkerdf_in)
+                scen.add_par('input', bunkerdf_out)
+            
     if (to_gdx == True) & (solve == False):
         save_to_gdx(mp = mp,
                     scenario = scen,
