@@ -231,7 +231,7 @@ def import_iea_gas():
     ngd['ENERGY (TJ)'] = ngd['ENERGY (TJ)'].astype(float)
 
     ngd['MESSAGE COMMODITY'] = ''
-    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'LNGTJ', 'lng', ngd['MESSAGE COMMODITY'])
+    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'LNGTJ', 'LNG_shipped', ngd['MESSAGE COMMODITY'])
     ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'PIPETJ', 'gas_piped', ngd['MESSAGE COMMODITY'])
     
     cf_cw = pd.read_csv(os.path.join(iea_web_path, "CONV_country_codes.csv"))
@@ -280,7 +280,7 @@ def check_iea_balances(indf):
     iea = iea.merge(ieacw, left_on = 'REGION', right_on = 'REGION', how = 'left')
     iea['IEA-WEB VALUE'] = np.where(iea['FLOW'] == 'EXPORTS', iea['IEA-WEB VALUE'] * -1, iea['IEA-WEB VALUE'])
         
-    indf = indf[indf['MESSAGE COMMODITY'].isin(['gas_piped', 'lng']) == False].copy() # LNG and pipe gas are directly from IEA
+    indf = indf[indf['MESSAGE COMMODITY'].isin(['gas_piped', 'LNG_shipped']) == False].copy() # LNG and pipe gas are directly from IEA
     
     dict_dir = package_data_path("bilateralize", 'commodity_codes.yaml')
     with open(dict_dir, "r") as f:
@@ -371,7 +371,7 @@ def build_historical_activity(message_regions = 'R12'):
         import_uncomtrade()
         
     bacidf = convert_trade(message_regions = message_regions)
-    bacidf = bacidf[bacidf['MESSAGE COMMODITY'] != 'lng'] # Get LNG from IEA instead
+    bacidf = bacidf[bacidf['MESSAGE COMMODITY'] != 'LNG_shipped'] # Get LNG from IEA instead
 
     ngdf = import_iea_gas()
 
@@ -380,7 +380,7 @@ def build_historical_activity(message_regions = 'R12'):
                            right_on = ['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'],
                            how = 'outer')
     tradedf['ENERGY (TJ)'] = tradedf['ENERGY (TJ)_x']
-    tradedf['ENERGY (TJ)'] = np.where(tradedf['MESSAGE COMMODITY'].isin(['lng', 'gas_piped']),
+    tradedf['ENERGY (TJ)'] = np.where(tradedf['MESSAGE COMMODITY'].isin(['LNG_shipped', 'gas_piped']),
                                       tradedf['ENERGY (TJ)_y'], tradedf['ENERGY (TJ)'])
     tradedf['ENERGY (TJ)'] = tradedf['ENERGY (TJ)'].astype(float)
     tradedf = tradedf[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)']].reset_index()
