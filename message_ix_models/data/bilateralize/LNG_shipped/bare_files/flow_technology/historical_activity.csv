@@ -1,0 +1,7 @@
+node_loc,technology,year_act,value,unit,mode,time
+R12_GLB,LNG_tanker,2000,4.5E+11,Mt-km,M1,year
+R12_GLB,LNG_tanker,2005,4.5E+11,Mt-km,M1,year
+R12_GLB,LNG_tanker,2010,4.5E+11,Mt-km,M1,year
+R12_GLB,LNG_tanker,2015,4.5E+11,Mt-km,M1,year
+R12_GLB,LNG_tanker,2020,4.5E+11,Mt-km,M1,year
+R12_GLB,LNG_tanker,2025,4.5E+11,Mt-km,M1,year

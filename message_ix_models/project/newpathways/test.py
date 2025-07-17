@@ -30,7 +30,7 @@ mp = ixmp.Platform()
 log = get_logger(__name__)
 
 # Generate bare sheets
-generate_bare_sheets(log=log, mp=mp)
+#generate_bare_sheets(log=log, mp=mp)
 
 # Import calibration files from Global Energy Monitor
 import_gem(gas_pipeline_file, gas_pipeline_sheet, 
@@ -61,7 +61,7 @@ for tec in [i for i in covered_tec if 'piped' in i]:
     histdf = pd.read_csv(os.path.join(config_dir, tec, 'GEM', 'GEM.csv'))
     histdf['node_loc'] = histdf['EXPORTER']
     histdf['importer'] = histdf['IMPORTER'].str.replace(config['scenario']['regions'] + '_', '').str.lower()
-    histdf['technology'] = histdf['trade_technology'] + '_' + histdf['flow_technology'] + '_' + histdf['importer']
+    histdf['technology'] = config[tec + '_trade']['flow_technology'] + '_' + histdf['importer']
     histdf['year_act'] = 2025 # last historical year
     histdf['mode'] = 'M1'
     histdf['time'] = 'year'
@@ -88,8 +88,15 @@ for tec in [i for i in covered_tec if 'piped' in i]:
 # tdf = pd.concat([tdf, pd.DataFrame.from_dict(add_df)])
 # trade_dict['gas_piped']['trade']['historical_activity'] = tdf.reset_index(drop = True)
 
+## DELETE BELOW
+# basedict = trade_dict['LNG_shipped']['flow']
+# trade_dict['LNG_shipped']['flow'] = dict()
+# for par in [r for r in basedict.keys() if 'relation' not in r]:
+#     trade_dict['LNG_shipped']['flow'][par] = basedict[par]
+    
 # Update scenario
 clone_and_update(trade_dict=trade_dict,
                  log=log,
                  mp=mp, 
-                 solve = True)
+                 to_gdx = True,
+                 solve = False)
