@@ -1,0 +1,14 @@
+node_loc,technology,year_vtg,value,unit
+R12_GLB,LNG_tanker,broadcast,40,y
+R12_AFR,fuel_bunker,broadcast,10,y
+R12_RCPA,fuel_bunker,broadcast,10,y
+R12_CHN,fuel_bunker,broadcast,10,y
+R12_EEU,fuel_bunker,broadcast,10,y
+R12_FSU,fuel_bunker,broadcast,10,y
+R12_LAM,fuel_bunker,broadcast,10,y
+R12_MEA,fuel_bunker,broadcast,10,y
+R12_NAM,fuel_bunker,broadcast,10,y
+R12_PAO,fuel_bunker,broadcast,10,y
+R12_PAS,fuel_bunker,broadcast,10,y
+R12_SAS,fuel_bunker,broadcast,10,y
+R12_WEU,fuel_bunker,broadcast,10,y
