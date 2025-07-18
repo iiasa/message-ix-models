@@ -1,11 +1,22 @@
 # script to add GDP scock to the MESSAGE-MACRO model
 # author: Adriano Vinca, 12.2023
 
+# for interactive use
+import os
+import sys
+
+from message_ix_models.util import package_data_path, private_data_path
+
+# from package_data_path 1 level up, then /projects/GDP_impacts
+script_dir = package_data_path().parent / "project/GDP_climate_shocks"
+script_dir_str = str(script_dir)
+
+if script_dir_str not in sys.path:
+    sys.path.insert(0, script_dir_str)
 import gc
 
 #### preamble ####
 import logging
-import os
 import tracemalloc
 
 import ixmp as ix
@@ -13,8 +24,8 @@ import message_ix
 import psutil
 from call_climate_processor import read_magicc_output, run_climate_processor
 from gdp_table_out_ISO import run_rime
-from message_ix_models.util import private_data_path
 from util import (
+    add_slack_ix,
     apply_growth_rates,
     regional_gdp_impacts,
     run_emi_reporting,
@@ -92,12 +103,12 @@ log_memory_usage()
 modelName = "ENGAGE_SSP2_v4.1.8.3.1_T4.5v2_r3.1"
 model_name_clone = "ENGAGE_SSP2_T4.5_GDP_CI_2025"
 scens_ref = [
-    "NPi2020"
+    "INDC2030i"
 ]  # "NPi2020", "EN_NPi2020_600f", "EN_NPi2020_1000f", "EN_NPi2020_1600f",
 # "EN_NPi2020_2000f", "EN_NPi2020_2400"
 SSP = "SSP2"
 run_mode = "MESSAGE-MACRO"
-damage_model = ["Waidelich", "Kotz"]  # "Burke", "Waidelich", "Kotz"
+damage_model = ["Kotz"]  # "Burke", "Waidelich", "Kotz"
 percentiles = [17]  # 50, 5, 95
 # it seems that 5 pp generates unscaled infeasibilities, requires  "barcrossalg": "2"
 
@@ -125,6 +136,9 @@ for scenario in scens_ref:
             keep_solution=False,
             shift_first_model_year=2030,
         )
+        if "INDC2030" in scenario:
+            log.info("Adding slack to scenario with INDC2030")
+            add_slack_ix(sc0)
         # solve the scenario without climate impacts
         sc0.solve(solve_options={"lpmethod": "4"}, model="MESSAGE")
         log_memory_usage()
@@ -171,6 +185,9 @@ for scenario in scens_ref:
                 # extract gdp impacts, aggregate at the regional level and apply to the model
                 gdp_change_df = regional_gdp_impacts(sc_str_full, dam_mod, it, SSP, pp)
                 apply_growth_rates(scs, gdp_change_df)
+                if "INDC2030" in scenario:
+                    log.info("Adding slack to scenario with INDC2030")
+                    add_slack_ix(scs)
                 scs.solve(
                     solve_options={"lpmethod": "4", "barcrossalg": "2"},
                     model=run_mode,  # "barcrossalg": "2"

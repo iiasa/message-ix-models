@@ -1,0 +1,35 @@
+# config file for GDP_climate_shocks
+rime_path: "C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
+model_name: SSP_SSP2_v2.1_ES
+model_name_clone: ENGAGE_SSP2_T4.5_GDP_CI_2025
+ssp: SSP2
+scens_ref:
+  - NPi2020_700fm
+damage_model:
+  - Waidelich
+  - Kotz
+  - Burke
+percentiles:
+  - 50
+shift_year: Null  # or 2030 if you want to force a shift
+regions:
+  - R12
+magicc_input_path: "C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\magicc_rime\\scenario_set_reporting_emi.csv"
+magicc_input_list: "C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\magicc_rime\\scenario_set_summary 4.csv"
+
+# config file for GDP_climate_shocks
+# rime_path: "C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
+# model_name: ENGAGE_SSP2_v4.1.8.3.1_T4.5v2_r3.1
+# model_name_clone: ENGAGE_SSP2_T4.5_GDP_CI_2025
+# ssp: SSP2
+# scens_ref:
+#   - INDC2030i
+# damage_model:
+#   - Waidelich
+#   - Kotz
+# percentiles:
+#   - 50
+# shift_year: 2030  # or 2030 if you want to force a shift
+# regions:
+#   - R11
+# magicc_input_path: "C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\magicc_rime\\scenario_set_reporting.xlsx"
