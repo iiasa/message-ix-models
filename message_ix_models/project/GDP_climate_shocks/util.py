@@ -151,7 +151,7 @@ def prep_sub_GDP_shock():  # NOT USED
     )
 
 
-def regional_gdp_impacts(sc_string, damage_model, it, SSP, pp=50):
+def regional_gdp_impacts(sc_string, damage_model, it, SSP, regions, pp=50):
     """
     This function calculates the regional GDP impacts of climate change using the RIME model.
 
@@ -165,6 +165,10 @@ def regional_gdp_impacts(sc_string, damage_model, it, SSP, pp=50):
         The iteration number.
     SSP : str
         The Shared Socioeconomic Pathway (SSP) to use.
+    regions : list
+        A list of region names.
+    pp : int
+        The percentile to use.
 
     Returns
     -------
@@ -206,7 +210,7 @@ def regional_gdp_impacts(sc_string, damage_model, it, SSP, pp=50):
     gdp_region_df.columns = ["variable", "unit", "year", "GDPNoCC", "iso3"]
 
     # Step 2: Load the YAML file
-    yaml_file_path = package_data_path("node", "R11.yaml")
+    yaml_file_path = package_data_path("node", f"{regions}.yaml")
     with open(yaml_file_path, "r", encoding="utf-8") as file:
         yaml_data = yaml.safe_load(file)
 

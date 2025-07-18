@@ -17,10 +17,8 @@ import pandas as pd
 import pyam
 import xarray as xr
 from dask.diagnostics import ProgressBar
-from rime.core import (
-    GMTPathway,
-    RegionArray,  # -*- coding: utf-8 -*-
-)
+from rime.core import RegionArray  # -*- coding: utf-8 -*-
+from rime.core import GMTPathway
 from rime.process_config import *
 from rime.rime_functions import *
 from rime.utils import *
@@ -32,14 +30,30 @@ def run_rime(
     sc_string,  # just scenario without damage model and iter
     dam_mod,
     it,
-    user,
+    wdir,
     pp=50,
 ):
     """
     Run RIME for a given scenario
+
+    Parameters
+    ----------
+    sc_string : str
+        The name of the scenario.
+    dam_mod : str
+        The name of the damage model to use.
+    it : int
+        The iteration number.
+    wdir : str
+        The working directory.
+
+    Returns
+    -------
+    agg_gdp_pc_df : pd.DataFrame
+        The aggregated regional GDP impacts of climate change.
     """
 
-    wdir = f"C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
+    # wdir = f"C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
     # for local debuggin TEMP
     # wdir = f"/mnt/c/Users/byers/IIASA/ECE.prog - Documents/Research Theme - NEXUS/GDP_damages/"
     # prefixes = ["Waidelich", "Burke"]
