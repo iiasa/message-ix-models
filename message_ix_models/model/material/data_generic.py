@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 
 import pandas as pd
@@ -13,6 +14,8 @@ from message_ix_models.util import (
 
 from .data_util import read_timeseries
 from .util import read_config
+
+log = logging.getLogger(__name__)
 
 
 def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
@@ -65,18 +68,21 @@ def gen_data_generic(
     # Do not parametrize GLB region the same way
     nodes = nodes_ex_world(s_info.N)
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
-
     for t in config["technology"]["add"]:
         t = t.id
+
+        # Select the subset of data associated with this technology
+        # TODO Use `for data_generic.groupby("technology")` above
+        group_df = data_generic.query("technology == @t")
+        if group_df.empty:
+            log.warning(f"No data for {t!r}")
+            continue
+
         # years = s_info.Y
-        params = data_generic.loc[
-            (data_generic["technology"] == t), "parameter"
-        ].values.tolist()
+        params = group_df["parameter"].values.tolist()
 
         # Availability year of the technology
-        av = data_generic.loc[(data_generic["technology"] == t), "availability"].values[
-            0
-        ]
+        av = group_df["availability"].values[0]
         modelyears = [year for year in modelyears if year >= av]
         yva = yv_ya.loc[yv_ya.year_vtg >= av,]
 
@@ -85,13 +91,7 @@ def gen_data_generic(
             split = par.split("|")
             param_name = split[0]
 
-            val = data_generic.loc[
-                (
-                    (data_generic["technology"] == t)
-                    & (data_generic["parameter"] == par)
-                ),
-                "value",
-            ].values[0]
+            val = group_df.query("parameter == @par")["value"].values[0]
 
             # Common parameters for all input and output tables
             # year_act is none at the moment
