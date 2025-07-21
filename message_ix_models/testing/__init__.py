@@ -409,7 +409,7 @@ def export_test_data(context: Context):
     log.info(f"Export test data to {dest_file}")
     scen.to_excel(
         tmp_file,
-        filters={
+        filters={  # type: ignore [arg-type]
             "technology": technology,
             "node": nodes,
             "node_dest": nodes,
