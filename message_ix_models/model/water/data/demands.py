@@ -7,22 +7,13 @@ from typing import TYPE_CHECKING, Literal, Union
 import numpy as np
 import pandas as pd
 import xarray as xr
-from iam_units import registry
 from message_ix import make_df
 
+from message_ix_models.model.water.utils import KM3_TO_MCM
 from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
-
-    # Unit conversions
-MONTHLY_CONVERSION = (
-    (30 * registry.day / registry.month).to_base_units().magnitude
-)  # MCM/day to MCM/month
-KM3_2_MCM = (
-    registry("1 km^3").to("meter^3").magnitude / 1e6
-    # Convert km³/year to MCM/year (1 km³ = 1e9 m³, 1 MCM = 1e6 m³, so factor = 1000)
-)
 
 
 def get_basin_sizes(
@@ -665,7 +656,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         year_act=h_act["year"],
         mode="M1",
         time=h_act["time"],
-        value=h_act["value"] * KM3_2_MCM,
+        value=h_act["value"] * KM3_TO_MCM,
         unit="MCM/year",
     )
     results["historical_activity"] = hist_act
@@ -682,7 +673,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         node_loc=h_cap["node"],
         technology=h_cap["commodity"],
         year_vtg=h_cap["year"],
-        value=h_cap["value"] / 5 * KM3_2_MCM,
+        value=h_cap["value"] / 5 * KM3_TO_MCM,
         unit="MCM/year",
     )
 
@@ -914,7 +905,7 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
         level="water_avail_basin",
         year=df_sw["year"],
         time=df_sw["time"],
-        value=-df_sw["value"] * KM3_2_MCM,
+        value=-df_sw["value"] * KM3_TO_MCM,
         unit="MCM/year",
     )
 
@@ -928,7 +919,7 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
                 level="water_avail_basin",
                 year=df_gw["year"],
                 time=df_gw["time"],
-                value=-df_gw["value"] * KM3_2_MCM,
+                value=-df_gw["value"] * KM3_TO_MCM,
                 unit="MCM/year",
             ),
         ]
@@ -994,7 +985,7 @@ def add_irrigation_demand(context: "Context") -> dict[str, pd.DataFrame]:
     land_out["commodity"] = "freshwater"
 
     land_out["value"] = land_out["value"]
-    # FIX-ME : check if input is already in MCM as we are assumptions
+    # FIXME : check if input is already in MCM as we are assumptions
 
     # take land_out edited and add as a demand in  land_input
     results["land_input"] = land_out

@@ -5,9 +5,9 @@ from itertools import product
 from typing import Optional
 from warnings import warn
 
-import numpy as np
 import pandas as pd
 import xarray as xr
+from iam_units import registry
 from sdmx.model.v21 import Code
 
 from message_ix_models import Context
@@ -23,6 +23,24 @@ METADATA = [
     ("water", "set"),
     ("water", "technology"),
 ]
+
+# Conversion factors used in the water module
+
+MONTHLY_CONVERSION = (
+    (30 * registry.day / registry.month).to_base_units().magnitude
+)  # MCM/day to MCM/month
+# Convert USD/(m³/day) to USD/MCM: m³/day * 365 days/year / 1e6 m³/MCM
+USD_M3DAY_TO_USD_MCM = (registry("m^3/day").to("m^3/year").magnitude) / 1e6
+USD_KM3_TO_USD_MCM = registry("USD/km^3").to("USD/m^3").magnitude * 1e6
+GWa_KM3_TO_GWa_MCM = registry("GWa/km^3").to("GWa/m^3").magnitude * 1e6
+ANNUAL_CAPACITY_FACTOR = 5  # Convert 5-year capacity to annual
+# Convert km³ to MCM: 1 km³ = 1e9 m³, 1 MCM = 1e6 m³, so factor = 1000
+KM3_TO_MCM = registry("1 km^3").to("meter^3").magnitude / 1e6  # km³ to MCM conversion
+kWh_m3_TO_GWa_MCM = registry("kWh/m^3").to("GWa/m^3").magnitude * 1e6
+
+# Convert m3/GJ to MCM/GWa
+m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
+# MCM not standard so have to remember to divide by 1e6 each time.
 
 
 def read_config(context: Optional[Context] = None):

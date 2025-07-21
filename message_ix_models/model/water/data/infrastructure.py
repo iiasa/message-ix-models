@@ -5,11 +5,16 @@ from collections import defaultdict
 from typing import Any
 
 import pandas as pd
-from iam_units import registry
 from message_ix import make_df
 
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.model.water.utils import get_vintage_and_active_years
+from message_ix_models.model.water.utils import (
+    ANNUAL_CAPACITY_FACTOR,
+    KM3_TO_MCM,
+    USD_M3DAY_TO_USD_MCM,
+    get_vintage_and_active_years,
+    kWh_m3_TO_GWa_MCM,
+)
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
@@ -17,14 +22,6 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
-
-# Convert USD/(m³/day) to USD/MCM: m³/day * 365 days/year / 1e6 m³/MCM
-USD_M3DAY_TO_USD_MCM = (registry("m^3/day").to("m^3/year").magnitude) / 1e6
-ANNUAL_CAPACITY_FACTOR = 5  # Convert 5-year capacity to annual
-# Convert km³ to MCM: 1 km³ = 1e9 m³, 1 MCM = 1e6 m³, so factor = 1000
-KM3_TO_MCM = registry("1 km^3").to("meter^3").magnitude / 1e6  # km³ to MCM conversion
-
-GWh_to_GWa = registry("1 GWh").to("GWa").magnitude
 
 
 def start_creating_input_dataframe(
@@ -574,7 +571,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] * GWh_to_GWa,
+                    value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -597,7 +594,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] * GWh_to_GWa,
+                    value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -621,7 +618,7 @@ def prepare_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_mid"] * GWh_to_GWa,
+                            value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
                             unit="GWa/MCM",
                             level="final",
                             commodity="electr",
@@ -643,7 +640,7 @@ def prepare_input_dataframe(
             inp = make_df(
                 "input",
                 technology=rows["tec"],
-                value=rows["value_mid"] * GWh_to_GWa,
+                value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
                 unit="GWa/MCM",
                 level="final",
                 commodity="electr",

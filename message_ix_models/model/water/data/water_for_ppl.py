@@ -6,11 +6,11 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import yaml
-from iam_units import registry
 from message_ix import make_df
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
+from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
@@ -19,10 +19,6 @@ from message_ix_models.util import (
 )
 
 log = logging.getLogger(__name__)
-
-# Convert m3/GJ to MCM/GWa
-m3_GJ_2_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
-# MCM not standard so have to remember to divide by 1e6 each time.
 
 
 def missing_tech(x: pd.Series) -> pd.Series:
@@ -461,7 +457,7 @@ def cool_tech(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
     # this refers to activity per cooling requirement (heat)
     input_cool["value_cool"] = (
         input_cool["water_withdrawal_mid_m3_per_output"]
-        * m3_GJ_2_MCM_GWa
+        * m3_GJ_TO_MCM_GWa
         / input_cool["cooling_fraction"]
     )
     # set to 1e-6 if value_cool is negative
@@ -1029,7 +1025,7 @@ def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame
     non_cool_df = non_cool_df.rename(columns={"technology_name": "technology"})
 
     non_cool_df["value"] = (
-        non_cool_df["water_withdrawal_mid_m3_per_output"] * m3_GJ_2_MCM_GWa
+        non_cool_df["water_withdrawal_mid_m3_per_output"] * m3_GJ_TO_MCM_GWa
     )  # Conversion factor
 
     non_cool_tech = list(non_cool_df["technology"].unique())
