@@ -439,10 +439,10 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
     # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel = read_sector_data(scenario, "steel", "", "Global_steel_MESSAGE.xlsx")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel", "Global_steel_MESSAGE.xlsx")
-    data_steel_rel = read_rel(scenario, "steel", "Global_steel_MESSAGE.xlsx")
+    data_steel_ts = read_timeseries(scenario, "steel", "", "Global_steel_MESSAGE.xlsx")
+    data_steel_rel = read_rel(scenario, "steel", "", "Global_steel_MESSAGE.xlsx")
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 
@@ -576,11 +576,13 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
                 df_demand=df_demand.copy(deep=True),
                 technology="dri_gas_ccs_steel",
                 material="steel",
+                ssp="FIXME",
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True),
                 technology="bf_ccs_steel",
                 material="steel",
+                ssp="FIXME",
             ),
         ]
     )
