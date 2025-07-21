@@ -2,15 +2,23 @@
 
 import numpy as np
 import pandas as pd
-from iam_units import registry
 from message_ix import make_df
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.water.data.demands import read_water_availability
-from message_ix_models.model.water.utils import get_vintage_and_active_years
-from message_ix_models.util import broadcast, package_data_path, same_node, same_time
-
-GWh_to_GWa = registry("1 GWh").to("GWa").magnitude
+from message_ix_models.model.water.utils import (
+    ANNUAL_CAPACITY_FACTOR,
+    KM3_TO_MCM,
+    USD_KM3_TO_USD_MCM,
+    GWa_KM3_TO_GWa_MCM,
+    get_vintage_and_active_years,
+)
+from message_ix_models.util import (
+    broadcast,
+    package_data_path,
+    same_node,
+    same_time,
+)
 
 
 def map_basin_region_wat(context: "Context") -> pd.DataFrame:
@@ -401,7 +409,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "input",
                     technology="extract_surfacewater",
-                    value=0.018835616 / 1e3,
+                    value=0.018835616 * GWa_KM3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -423,7 +431,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "input",
                     technology="extract_groundwater",
-                    value=(df_gwt["GW_per_km3_per_year"] + 0.043464579) / 1e3,
+                    value=(df_gwt["GW_per_km3_per_year"] + 0.043464579)
+                    * GWa_KM3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -446,7 +455,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     "input",
                     technology="extract_gw_fossil",
                     value=((df_gwt["GW_per_km3_per_year"] + 0.043464579) * 2)
-                    / 1e3,  # twice as much normal gw
+                    * GWa_KM3_TO_GWa_MCM,  # twice as much normal gw
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -568,7 +577,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             "historical_new_capacity",
             node_loc=df_hist["BCU_name"],
             technology="extract_surfacewater",
-            value=1e3 * df_hist["hist_cap_sw_km3_year"] / 5,  # n period
+            value=KM3_TO_MCM
+            * df_hist["hist_cap_sw_km3_year"]
+            / ANNUAL_CAPACITY_FACTOR,  # n period
             unit="MCM/year",
             year_vtg=last_vtg_yr,
         )
@@ -580,7 +591,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     "historical_new_capacity",
                     node_loc=df_hist["BCU_name"],
                     technology="extract_groundwater",
-                    value=1e3 * df_hist["hist_cap_gw_km3_year"] / 5,
+                    value=KM3_TO_MCM
+                    * df_hist["hist_cap_gw_km3_year"]
+                    / ANNUAL_CAPACITY_FACTOR,
                     unit="MCM/year",
                     year_vtg=last_vtg_yr,
                 ),
@@ -618,7 +631,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             technology="basin_to_reg",
             mode=df_node["mode"],
             node_loc=df_node["region"],
-            value=20 / 1e3,
+            value=20 * USD_KM3_TO_USD_MCM,
             unit="USD/MCM",
         ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
         var["year_act"] = var["year_vtg"]
@@ -710,7 +723,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         inv_cost = make_df(
             "inv_cost",
             technology="extract_surfacewater",
-            value=155.57 / 1e3,
+            value=155.57 * USD_KM3_TO_USD_MCM,
             unit="USD/MCM",
         ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
 
@@ -720,7 +733,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "inv_cost",
                     technology="extract_groundwater",
-                    value=54.52 / 1e3,
+                    value=54.52 * USD_KM3_TO_USD_MCM,
                     unit="USD/MCM",
                 ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
             ]
@@ -732,7 +745,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "inv_cost",
                     technology="extract_gw_fossil",
-                    value=(54.52 * 150) / 1e3,  # assume higher as normal GW
+                    value=(54.52 * 150) * USD_KM3_TO_USD_MCM,
+                    # assume higher as normal GW
                     unit="USD/MCM",
                 ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
             ]
@@ -743,7 +757,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         fix_cost = make_df(
             "fix_cost",
             technology="extract_gw_fossil",
-            value=300 / 1e3,  # assumed
+            value=300 * USD_KM3_TO_USD_MCM,  # assumed
             unit="USD/MCM",
         ).pipe(broadcast, yv_ya_gw, node_loc=df_node["node"])
 
@@ -799,7 +813,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         level="water_avail_basin",
         year=df_sw["year"],
         time=df_sw["time"],
-        value=df_sw["value"] * 1e3,
+        value=df_sw["value"] * KM3_TO_MCM,
         unit="MCM/year",
     )
     dmd_df = dmd_df[dmd_df["year"] >= 2025].reset_index(drop=True)
@@ -862,7 +876,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
             year_act=df_env["year"],
             mode="M1",
             time=df_env["time"],
-            value=df_env["value"] * 1e3,
+            value=df_env["value"] * KM3_TO_MCM,
             unit="MCM/year",
         )
 
