@@ -685,6 +685,8 @@ def cool_tech(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
     cost.drop(columns="share", inplace=True)
     share_long["time"] = "year"
     share_long["unit"] = "-"
+    # FIXME : Temporarily commenting out share calib constraints.
+    # Causes 4X size explosion. Likely problematic.
     # share_calib = share_long.copy()
     # # Expand for years [2020, 2025]
     # share_calib = share_calib.loc[share_calib.index.repeat(2)].reset_index(drop=True)
