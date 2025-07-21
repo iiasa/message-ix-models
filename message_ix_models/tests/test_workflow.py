@@ -174,7 +174,7 @@ def test_workflow(
         "Execute <function changes_b at [^>]*>",
         f"…nothing returned, workflow will continue with {m}/test_workflow#1",
         f"Step runs on ixmp://{mp}/{m}/test_workflow#1",
-        "  with context.dest_scenario={'model': 'foo', 'scenario': 'bar'}",
+        "  with context.dest_scenario={(('model': 'foo'|'scenario': 'bar')(, )?){2}}",
         "Clone to foo/bar",
         "Execute <function solve at [^>]*>",
     ]

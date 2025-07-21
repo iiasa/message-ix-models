@@ -3,7 +3,7 @@
 import logging
 import re
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
 from genno import Computer
 from ixmp.util import parse_url
@@ -13,6 +13,7 @@ from message_ix_models.util.context import Context
 
 if TYPE_CHECKING:
     from click import Command
+    from ixmp.types import PlatformInfo, TimeSeriesIdentifiers
 
 log = logging.getLogger(__name__)
 
@@ -53,10 +54,10 @@ class WorkflowStep:
     kwargs: dict
 
     #: Target platform name and additional options.
-    platform_info: dict
+    platform_info: Union["PlatformInfo", dict]
 
     #: Target model name, scenario name, and optional version.
-    scenario_info: dict
+    scenario_info: Union[dict, "TimeSeriesIdentifiers"]
 
     def __init__(
         self, action: Optional[CallbackType], target=None, clone=False, **kwargs
@@ -102,15 +103,15 @@ class WorkflowStep:
         if self.clone is not False:
             # Clone to target model/scenario name
             log.info("Clone to {model}/{scenario}".format(**self.scenario_info))
-            kw = self.scenario_info.copy()
+            clone_kw = dict(self.scenario_info)  # Create a copy and discard type info
             # If clone contains keyword arguments, e.g. shift_first_model_year, use them
             # NB user code should give clone = dict(keep_solution=True) if desired
-            kw.update(
+            clone_kw.update(
                 self.clone
                 if isinstance(self.clone, dict)
                 else dict(keep_solution=False)
             )
-            s = s.clone(**kw)
+            s = s.clone(**clone_kw)
 
         if not self.action:
             return s
@@ -236,6 +237,16 @@ class Workflow(Computer):
 
         # Replace the existing step
         self.add_single(name, step, "context", None)
+
+    @overload
+    def guess_target(
+        self, step_name: str, kind: Literal["scenario"]
+    ) -> tuple["TimeSeriesIdentifiers", str]: ...
+
+    @overload
+    def guess_target(
+        self, step_name: str, kind: Literal["platform"]
+    ) -> tuple["PlatformInfo", str]: ...
 
     def guess_target(
         self, step_name: str, kind: Literal["platform", "scenario"] = "scenario"

@@ -15,7 +15,7 @@ from .scenarioinfo import ScenarioInfo
 
 if TYPE_CHECKING:
     import message_ix
-    from ixmp.types import PlatformArgs
+    from ixmp.types import PlatformInfo
 
 log = logging.getLogger(__name__)
 
@@ -203,8 +203,8 @@ class Config:
 
     # NB the below works around python/mypy#5723
     #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
-    dest_platform: "PlatformArgs" = field(
-        default_factory=lambda: cast("PlatformArgs", dict())
+    dest_platform: "PlatformInfo" = field(
+        default_factory=lambda: cast("PlatformInfo", dict())
     )
 
     #: Like :attr:`scenario_info`, used by e.g. :meth:`.clone_to_dest`.
@@ -223,8 +223,8 @@ class Config:
     # NB the below works around python/mypy#5723
     #: Keyword arguments—especially `name`—for the :class:`ixmp.Platform` constructor,
     #: from the :program:`--platform` or :program:`--url` CLI option.
-    platform_info: "PlatformArgs" = field(
-        default_factory=lambda: cast("PlatformArgs", dict())
+    platform_info: "PlatformInfo" = field(
+        default_factory=lambda: cast("PlatformInfo", dict())
     )
 
     # Private reference to an ixmp.Platform

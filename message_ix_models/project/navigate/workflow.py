@@ -810,9 +810,8 @@ def generate(context: Context) -> Workflow:  # noqa: C901
         #    invokes transfer_demands(); see comment there.
         sc = WfConfig(solve=config.solve, reserve_margin=False)
         # If running ENGAGE sub-workflow, copy demands from the latest step
-        sc.demand_scenario.update(
-            info if isinstance(config, engage.PolicyConfig) else {}
-        )
+        if isinstance(config, engage.PolicyConfig):
+            sc.demand_scenario.update(info)
         sc.solve["solve_options"].setdefault("predual", 1)
 
         # - Use the same NAVIGATE buildings scenario as the `base`.
