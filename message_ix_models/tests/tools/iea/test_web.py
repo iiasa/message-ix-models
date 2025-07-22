@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from genno import Computer
 
-from message_ix_models.testing import GHA
+from message_ix_models.testing import GHA, MARK
 from message_ix_models.tools.iea.web import (
     DIMS,
     IEA_EWEB,
@@ -150,6 +150,7 @@ PROVIDER_EDITION = (
 )
 
 
+@MARK["#375"]
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_load_data(test_context, tmp_path, provider, edition):
     # # Store in the temporary directory for this test

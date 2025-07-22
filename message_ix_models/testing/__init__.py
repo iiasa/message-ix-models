@@ -72,6 +72,12 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         condition=not util.HAS_MESSAGE_DATA,
         reason="Not yet migrated from message_data",
     ),
+    "#375": pytest.mark.flaky(
+        reruns=3,
+        rerun_delay=2,
+        condition=GHA,
+        reason="https://github.com/iiasa/message-ix-models/issues/375",
+    ),
     "sdmx#230": pytest.mark.xfail(
         condition=GHA,
         reason="https://github.com/khaeru/sdmx/issues/230",

@@ -257,8 +257,9 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
     assert expected_id == result.id
 
 
-@get_computer.minimum_version
+@MARK["#375"]
 @MARK_TRANSPORT[10]
+@get_computer.minimum_version
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(test_context, input_csv_path, method) -> None:
     # - Read input data
