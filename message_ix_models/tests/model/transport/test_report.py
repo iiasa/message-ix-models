@@ -1,9 +1,11 @@
 import logging
 from contextlib import nullcontext
 from copy import deepcopy
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pytest
+from packaging.version import Version as V
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
@@ -16,6 +18,7 @@ from message_ix_models.model.transport.testing import (
     simulated_solution,
 )
 from message_ix_models.report import prepare_reporter
+from message_ix_models.testing import GHA
 from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
@@ -204,6 +207,10 @@ def test_simulated(
     assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
+@pytest.mark.skipif(
+    GHA and (V("3.8") < V(version("ixmp")) < V("3.11")),
+    reason="Fails on GHA with ixmp/message_ix v3.9 and v3.10 or their dependencies",
+)
 @build.get_computer.minimum_version
 @MARK[10]
 def test_simulated_iamc(
