@@ -72,6 +72,12 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         condition=not util.HAS_MESSAGE_DATA,
         reason="Not yet migrated from message_data",
     ),
+    "#375": pytest.mark.flaky(
+        reruns=3,
+        rerun_delay=2,
+        condition=GHA,
+        reason="https://github.com/iiasa/message-ix-models/issues/375",
+    ),
     "sdmx#230": pytest.mark.xfail(
         condition=GHA,
         reason="https://github.com/khaeru/sdmx/issues/230",
@@ -83,7 +89,14 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
 #: not implemented.
 NIE = pytest.mark.xfail(raises=NotImplementedError)
 
-CACHE_PATH_STASH = pytest.StashKey[Path]()
+#: Keys for :py:`pytestconfig.stash`.
+KEY = {
+    "cache-path": pytest.StashKey[Path](),
+    "user-local-data": pytest.StashKey[Path](),
+}
+
+
+SOLVE_OPTIONS = dict(solve_options=dict(iis=1, lpmethod=4), quiet=True)
 
 # pytest hooks
 
@@ -120,17 +133,21 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     user's environment. Otherwise, use a pytest-managed cache directory that persists
     across test sessions.
     """
-    if session.config.option.local_cache:
-        session.config.stash[CACHE_PATH_STASH] = Context.only().core.cache_path
-    else:
-        session.config.stash[CACHE_PATH_STASH] = Path(
-            session.config.cache.mkdir("cache")
-        )
+    config = Context.only().core
+
+    session.config.stash[KEY["cache-path"]] = (
+        config.cache_path
+        if session.config.option.local_cache
+        else Path(session.config.cache.mkdir("cache"))
+    )
+
+    # Store current .Config.local_data value from the user's configuration
+    session.config.stash[KEY["user-local-data"]] = config.local_data
 
 
 def pytest_report_header(config, start_path) -> str:
     """Add the ixmp configuration to the pytest report header."""
-    return f"message-ix-models cache path: {config.stash[CACHE_PATH_STASH]}"
+    return f"message-ix-models cache path: {config.stash[KEY['cache-path']]}"
 
 
 # Fixtures
@@ -162,10 +179,7 @@ def session_context(pytestconfig, tmp_env):
     session_tmp_dir = Path(pytestconfig._tmp_path_factory.mktemp("data"))
 
     # Apply the cache path determined in pytest_sessionstart(), above
-    ctx.core.cache_path = pytestconfig.stash[CACHE_PATH_STASH]
-
-    # Store current .util.config.Config.local_data setting from the user's configuration
-    pytestconfig.user_local_data = ctx.core.local_data
+    ctx.core.cache_path = pytestconfig.stash[KEY["cache-path"]]
 
     # Other local data in the temporary directory for this session only
     ctx.core.local_data = session_tmp_dir
@@ -244,12 +258,20 @@ def mix_models_cli(session_context, tmp_env):
 
 
 @pytest.fixture
+def advance_test_data(monkeypatch) -> None:
+    """Temporarily allow :func:`path_fallback` to find test data."""
+    from message_ix_models.project.advance.data import ADVANCE
+
+    monkeypatch.setattr(ADVANCE, "use_test_data", True)
+
+
+@pytest.fixture
 def iea_eei_user_data(pytestconfig, monkeypatch) -> None:
     """Temporarily allow :class:`.IEA_EEI` to find user data."""
     from message_ix_models.tools.iea.eei import IEA_EEI
 
     monkeypatch.setattr(
-        IEA_EEI, "where", IEA_EEI.where + [pytestconfig.user_local_data]
+        IEA_EEI, "where", IEA_EEI.where + [pytestconfig.stash[KEY["user-local-data"]]]
     )
 
 
@@ -271,7 +293,9 @@ def iea_eweb_user_data(pytestconfig, monkeypatch) -> None:  # pragma: no cover
     from message_ix_models.tools.iea.web import IEA_EWEB
 
     monkeypatch.setattr(
-        IEA_EWEB, "where", IEA_EWEB.where + [pytestconfig.user_local_data]
+        IEA_EWEB,
+        "where",
+        IEA_EWEB.where + [pytestconfig.stash[KEY["user-local-data"]]],
     )
 
 
@@ -290,13 +314,17 @@ def ssp_user_data(pytestconfig, monkeypatch) -> None:
     from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
 
     for cls in SSPOriginal, SSPUpdate:
-        monkeypatch.setattr(cls, "where", cls.where + [pytestconfig.user_local_data])
+        monkeypatch.setattr(
+            cls, "where", cls.where + [pytestconfig.stash[KEY["user-local-data"]]]
+        )
 
 
 # Testing utility functions
 
 
-def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scenario:
+def bare_res(
+    request: "pytest.FixtureRequest", context: "Context", solved: bool = False
+) -> message_ix.Scenario:
     """Return or create a :class:`.Scenario` containing the bare RES for use in testing.
 
     The Scenario has a model name like "MESSAGEix-GLOBIOM [regions] Y[years]", for
@@ -329,32 +357,23 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     from message_ix_models.model import bare
 
     # Model name: standard "MESSAGEix-GLOBIOM R12 YB" plus a suffix
-    log.info(f"bare_res: {context.model.regions = }")
     model_name = bare.name(context, unique=True)
 
-    mp = context.get_platform()
-
     try:
-        base = message_ix.Scenario(mp, model_name, "baseline")
+        base = message_ix.Scenario(context.get_platform(), model_name, "baseline")
     except ValueError:
         log.info(f"Create '{model_name}/baseline' for testing")
         context.scenario_info.update(model=model_name, scenario="baseline")
         base = bare.create_res(context)
 
-    log.info(f"base.set('node') = {' '.join(sorted(base.set('node')))}")
+    log.info(f"Clone to '{model_name}/{request.node.name}'")
+    scenario = base.clone(scenario=request.node.name, keep_solution=solved)
 
-    if solved and not base.has_solution():
-        log.info("Solve")
-        base.solve(solve_options=dict(lpmethod=4), quiet=True)
+    if solved and not scenario.has_solution():
+        log.info(f"Solve {scenario.url}")
+        scenario.solve(**SOLVE_OPTIONS)
 
-    try:
-        new_name = request.node.name
-    except AttributeError:
-        # Generate a new scenario name with a random part, length 5 characters
-        new_name = f"baseline {b32encode(randbytes(3)).decode().rstrip('=').lower()}"
-
-    log.info(f"Clone to '{model_name}/{new_name}'")
-    return base.clone(scenario=new_name, keep_solution=solved)
+    return scenario
 
 
 def export_test_data(context: Context):
@@ -396,7 +415,7 @@ def export_test_data(context: Context):
     log.info(f"Export test data to {dest_file}")
     scen.to_excel(
         tmp_file,
-        filters={
+        filters={  # type: ignore [arg-type]
             "technology": technology,
             "node": nodes,
             "node_dest": nodes,

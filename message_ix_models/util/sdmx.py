@@ -5,11 +5,14 @@ import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, fields
 from datetime import datetime
-from enum import Enum, Flag
+from enum import Enum, Flag, auto
+
+# TODO Remove when Python 3.10 is no longer supported
+from enum import EnumMeta as EnumType
 from functools import cache
 from importlib.metadata import version
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING, Generic, Optional, TypeVar, Union, cast
 from warnings import warn
 
 import sdmx
@@ -25,7 +28,6 @@ from .context import Context
 
 if TYPE_CHECKING:
     from os import PathLike
-    from typing import TypeVar
 
     import pint
     from genno import Computer, Key
@@ -36,10 +38,10 @@ if TYPE_CHECKING:
     # TODO Use "from typing import Self" once Python 3.11 is the minimum supported
     Self = TypeVar("Self", bound="AnnotationsMixIn")
 
+
 log = logging.getLogger(__name__)
 
 CodeLike = Union[str, common.Code]
-
 
 #: Collection of :class:`.Dataflow` instances.
 DATAFLOW: dict[str, "Dataflow"] = {}
@@ -76,12 +78,14 @@ class AnnotationsMixIn:
             return dict(annotations=result)
 
     @classmethod
-    def from_obj(cls: type["Self"], obj: common.AnnotableArtefact) -> "Self":
+    def from_obj(
+        cls: type["Self"], obj: common.AnnotableArtefact, globals: Optional[dict] = None
+    ) -> "Self":
         """Return a new instance of `cls` given an AnnotableArtefact `obj`."""
         args = []
         for f in fields(cls):
             anno_id = f.name.replace("_", "-")
-            args.append(obj.eval_annotation(id=anno_id))
+            args.append(obj.eval_annotation(id=anno_id, globals=globals))
 
         return cls(*args)
 
@@ -399,19 +403,96 @@ class Dataflow:
         # template =
 
 
-class URNLookupEnum(Enum):
-    """:class:`.Enum` subclass that allows looking up members using a URN."""
+T = TypeVar("T", bound=Enum)
 
-    _ignore_ = "_urn_name"
-    _urn_name: dict
 
-    def __init_subclass__(cls):
-        cls._urn_name = dict()
+# TODO Replace with URNLookupMixin[T] once Python 3.10 is no longer supported
+class URNLookupMixin(Generic[T]):
+    """:class:`.Enum` mix-in class for looking up members by URN/retrieving URNs."""
+
+    name: str
+    _member_map_: dict[str, T]
+    _urn_name: dict[str, str]
 
     @classmethod
-    def by_urn(cls, urn: str):
+    def by_urn(cls, urn: str) -> T:
         """Return the :class:`.Enum` member given its `urn`."""
-        return cls[cls.__dict__["_urn_name"][urn]]
+        return cls._member_map_[cls._urn_name[urn]]
+
+    @property
+    def urn(self) -> str:
+        """Return the URN for an Enum member."""
+        for result, name in self._urn_name.items():
+            if name == self.name:
+                break
+        return result
+
+
+class URNLookupEnum(URNLookupMixin, Enum):
+    """Class constructed by ItemSchemeEnumType."""
+
+
+class ItemSchemeEnumType(EnumType):
+    """Metaclass for :class:`.Enum` tied to an SDMX :class:`.ItemScheme`.
+
+    A class constructed using this metaclass **must** have a method
+    :py:`_get_item_scheme()` that returns a :class:`sdmx.model.common.ItemScheme`. The
+    items in the item scheme become the members of the enumeration.
+
+    Example
+    -------
+    >>> from message_ix_models.util.sdmx import read
+    >>> class EXAMPLE(URNLookupEnum, metaclass=ItemSchemeEnumType):
+    ...
+    ...     def _get_item_scheme(self):
+    ...        return read("AGENCY:CODELIST_ID(1.2.3)")
+
+    …creates a new subclass of :class:`.Enum` that has the methods and properties of
+    :class:`.URNLookupMixin`.
+    """
+
+    @classmethod
+    def __prepare__(metacls, cls, bases, **kwgs):
+        return {}
+
+    def __init__(cls, *args, **kwds):
+        super(ItemSchemeEnumType, cls).__init__(*args)
+
+    def __new__(metacls, cls, bases, dct, **kwargs) -> type["URNLookupEnum"]:
+        # Retrieve the item scheme
+        scheme = dct.pop("_get_item_scheme")(None)
+        if not isinstance(scheme, common.ItemScheme):
+            raise RuntimeError(
+                f"Callback for {cls} returned {scheme}; expected ItemScheme"
+            )
+
+        # Prepare the EnumDict for creating the class
+        enum_dct = super(ItemSchemeEnumType, metacls).__prepare__(cls, bases, **kwargs)
+        # Transfer class dct private members
+        enum_dct.update(dct)
+
+        # Populate the class member dictionary and URN → member name mapping
+        _urn_name = dict()
+
+        if any(issubclass(c, Flag) for c in bases):
+            # Ensure the 0 member is NONE, not any of the codes
+            enum_dct["NONE"] = 0
+        for i, item in enumerate(scheme, start=1):
+            _urn_name[item.urn] = item.id
+            enum_dct[item.id] = auto()
+
+        # Create the class
+        enum_class = cast(
+            type["URNLookupEnum"],
+            super(ItemSchemeEnumType, metacls).__new__(
+                metacls, cls, bases, enum_dct, **kwargs
+            ),
+        )
+
+        # Store the _urn_name mapping
+        setattr(enum_class, "_urn_name", _urn_name)
+
+        return enum_class
 
 
 # FIXME Reduce complexity from 13 → ≤11
@@ -712,26 +793,6 @@ def get_version(with_dev: Optional[bool] = True) -> str:
     return str(common.Version(tmp))
 
 
-def make_enum(urn, base=URNLookupEnum):
-    """Create an :class:`.enum.Enum` (or `base`) with members from codelist `urn`."""
-    # Read the code list
-    cl = read(urn)
-
-    # Ensure the 0 member is NONE, not any of the codes
-    names = ["NONE"] if issubclass(base, Flag) else []
-    names.extend(code.id for code in cl)
-
-    # Create the class
-    result = base(urn, names)
-
-    if issubclass(base, URNLookupEnum):
-        # Populate the URN → member name mapping
-        for code in cl:
-            result._urn_name[code.urn] = code.id
-
-    return result
-
-
 def read(urn: str, base_dir: Optional["PathLike"] = None):
     """Read SDMX object from package data given its `urn`."""
     # Identify a path that matches `urn`
@@ -802,6 +863,9 @@ def register_agency(agency: "common.Agency") -> "common.AgencyScheme":
         as_.items[agency.id] = agency
     else:
         as_.append(agency)
+
+    # Ensure URN is populated
+    agency.urn = agency.urn or sdmx.urn.make(agency, as_)
 
     log.info(f"Updated {as_!r}")
 

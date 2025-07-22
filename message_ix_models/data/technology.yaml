@@ -3109,3 +3109,39 @@ LH2_bunker:
   sector: shipping
   input: [lh2, final]
   output: [shipping, useful]
+
+LH2_tobunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+LNG_occ_bunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+LNG_tobunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+NH3_tobunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+eth_tobunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+foil_occ_bunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+loil_occ_bunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+loil_tobunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers
+
+meth_tobunker:
+  description: Added in the ScenarioMIP7/SSP2024 project.
+  type: bunkers

@@ -1,4 +1,5 @@
 import logging
+from itertools import product
 
 import numpy as np
 import pandas as pd
@@ -37,8 +38,7 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
     import xarray as xr
     from genno import Computer, Key, Quantity, quote
 
-    from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
-    from message_ix_models.tools.exo_data import prepare_computer
+    from message_ix_models.project.ssp.data import SSPUpdate
 
     # Computer to hold computations
     c = Computer()
@@ -56,26 +56,28 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
 
     # Keys prepared in the loop
     keys = defaultdict(list)
-    for n in "12345":
-        # Source/scenario identifier
-        ssp = f"ICONICS:SSP(2024).{n}"
-
+    for ssp_id, (measure, model) in product(
+        "12345", (("POP", "IIASA-WiC POP 2023"), ("GDP", "OECD ENV-Growth 2023"))
+    ):
         # Add a quantity for broadcasting
-        c.add(f"SSP{n}:scenario", broadcast_qty(f"SSP{n}"))
+        c.add(f"SSP{ssp_id}:scenario", broadcast_qty(f"SSP{ssp_id}"))
 
-        # Both population and GDP data
-        for source_kw in (
-            dict(measure="POP", model="IIASA-WiC POP 2023", name=f"_pop {n}"),
-            dict(measure="GDP", model="OECD ENV-Growth 2023", name=f"_gdp {n}"),
-        ):
-            m = source_kw["measure"].lower()
+        # Prepare SSPUpdate.Options
+        m = measure.lower()
+        kw = dict(
+            measure=measure,
+            model=model,
+            ssp_id=ssp_id,
+            name=f"_{m} {ssp_id}",
+            release="3.1",  # Use the 3.1 release of the data
+        )
 
-            # Add tasks to `c` that retrieve and (partly) process data from the database
-            key, *_ = prepare_computer(context, c, ssp, source_kw, strict=False)
+        # Add tasks to `c` that retrieve and (partly) process data from the database
+        key, *_ = SSPUpdate.add_tasks(c, context=context, strict=False, **kw)
 
-            # Add a "scenario" dimension
-            for label in [f"SSP{n}"] + (["LED"] if n == "2" else []):
-                keys[m].append(c.add(f"{m} {label}", "mul", key, f"{label}:scenario"))
+        # Add a "scenario" dimension
+        for label in [f"SSP{ssp_id}"] + (["LED"] if ssp_id == "2" else []):
+            keys[m].append(c.add(f"{m} {label}", "mul", key, f"{label}:scenario"))
 
     # Concatenate single-scenario data
     k_pop = Key("pop", dims)

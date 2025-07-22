@@ -30,70 +30,76 @@ Exogenous data (:mod:`.tools.exo_data`)
    :members:
    :exclude-members: ExoDataSource, prepare_computer
 
+   The tools in this module support use of data from arbitrary sources and formats in model-building code.
+   For each source/format, a subclass of :class:`.ExoDataSource` adds tasks to a :class:`genno.Computer`
+   that retrieve/load and transform the source data into :class:`genno.Quantity`.
+
+   An example using one such class, :class:`message_ix_models.project.advance.data.ADVANCE`.
+
+   .. code-block:: python
+
+      from genno import Computer
+
+      from message_ix_models.project.advance.data import ADVANCE
+
+      # Keyword arguments corresponding to ADVANCE.Options
+      kw = dict(
+          measure="Transport|Service demand|Road|Passenger|LDV",
+          model="MESSAGE",
+          scenario="ADV3TRAr2_Base",
+      )
+
+      # Add tasks to retrieve and transform data
+      c = Computer()
+      keys = c.apply(ADVANCE, context=context, **kw)
+
+      # Retrieve some of the data
+      q_result = c.get(keys[0])
+
+      # Pass the data into further calculations
+      c.add("derived", "mul", keys[1], k_other)
+
    .. autosummary::
 
       MEASURES
       SOURCES
+      BaseOptions
       DemoSource
       ExoDataSource
+      add_structure
       iamc_like_data_for_query
       prepare_computer
       register_source
 
-.. autofunction:: prepare_computer
-
-   The first returned key, like ``{measure}:n-y``, triggers the following computations:
-
-   1. Load data by invoking a :class:`ExoDataSource`.
-   2. Aggregate on the |n| (node) dimension according to :attr:`.Config.regions`.
-   3. Interpolate on the |y| (year) dimension according to :attr:`.Config.years`.
-
-   Additional key(s) include:
-
-   - ``{measure}:n-y:y0 indexed``: same as ``{measure}:n-y``, indexed to values as of |y0| (the first model year).
-
-   See particular data source classes, like :class:`.SSPOriginal`, for particular examples of usage.
-
-   .. todo:: Extend to also prepare to compute values indexed to a particular |n|.
-
 .. autoclass:: ExoDataSource
    :members:
    :private-members: _where
-   :special-members: __init__, __call__
+   :special-members: __init__
 
-.. currentmodule:: message_ix_models.tools.advance
+   As an abstract class ExoDataSource **must** be subclassed to be used.
+   Concrete subclasses **must** implement at least the :meth:`~ExoDataSource.get` method
+   that performs the loading of the raw data when executed,
+   and **may** override others, as described below.
 
-ADVANCE data (:mod:`.tools.advance`)
-====================================
+   The class method :meth:`.ExoDataSource.add_tasks` adds tasks to a :class:`genno.Computer`.
+   It returns a :class:`genno.Key` that refers to the loaded and transformed data.
+   This method usually **should not** be modified for subclasses.
 
-.. deprecated:: 2023.11
-   Use :mod:`.project.advance` instead.
+   The behaviour of a subclass can be customized in these ways:
 
-.. autosummary::
-   get_advance_data
-   advance_data
+   1. Create a subclass of :class:`.BaseOptions`
+      and set it as the :attr:`~.ExoDataSource.Options` class attribute.
+   2. Override :meth:`~.ExoDataSource.__init__`,
+      which receives keyword arguments via :meth:`.add_tasks`.
+   3. Override :meth:`~.ExoDataSource.transform`,
+      which is called to add further tasks which will transform the data.
 
-.. autodata:: LOCATION
+   See the documentation for these methods and attributes for further details.
 
-This is a location relative to a parent directory.
-The specific parent directory depends on whether :mod:`message_data` is available:
+.. autofunction:: prepare_computer
 
-Without :mod:`message_data`:
-   The code finds the data within :ref:`local-data` (see discussion there for how to configure this location).
-   Users should:
-
-   1. Visit https://tntcat.iiasa.ac.at/ADVANCEWP2DB/dsd?Action=htmlpage&page=about and register for access to the data.
-   2. Log in.
-   3. Download the snapshot with the file name given in :data:`LOCATION` to a subdirectory :file:`advance/` within their local data directory.
-
-With :mod:`message_data`:
-   The code finds the data within :ref:`private-data`.
-   The snapshot is stored directly in the repository using Git LFS.
-
-.. automodule:: message_ix_models.tools.advance
-   :members:
-   :exclude-members: LOCATION
-   :private-members:
+   .. deprecated:: 2025-06-06
+      Use :py:`c.apply(SOURCE.add_tasks, …)` as shown above.
 
 .. currentmodule:: message_ix_models.tools.iamc
 
@@ -101,6 +107,14 @@ IAMC data structures (:mod:`.tools.iamc`)
 =========================================
 
 .. automodule:: message_ix_models.tools.iamc
+   :members:
+
+.. currentmodule:: message_ix_models.tools.policy
+
+Policies (:mod:`.tools.policy`)
+===============================
+
+.. automodule:: message_ix_models.tools.policy
    :members:
 
 .. _tools-wb:

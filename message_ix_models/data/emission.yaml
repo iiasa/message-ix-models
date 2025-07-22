@@ -39,6 +39,10 @@ SO2:
   name: Sulfur dioxide
   report: Sulfur
 
+TCE:
+  name: (missing)
+  type: TCE
+
 VOC:
   name: Volatile organic compounds
 
@@ -79,7 +83,6 @@ VOC:
 # SF6
 # SO2_LandUseChangeEM
 # SO2_SavanBurnEM
-# TCE
 # TCE_CO2
 # TCE_non-CO2
 # VOC_LandUseChangeEM

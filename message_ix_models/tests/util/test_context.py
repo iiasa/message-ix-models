@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import platform
 import re
 from copy import deepcopy
@@ -14,6 +13,7 @@ from message_ix import Scenario
 
 from message_ix_models import Context
 from message_ix_models.model import transport
+from message_ix_models.testing import GHA
 from message_ix_models.util.scenarioinfo import ScenarioInfo
 
 
@@ -143,7 +143,7 @@ class TestContext:
     @pytest.mark.flaky(
         reruns=5,
         rerun_delay=2,
-        condition="GITHUB_ACTIONS" in os.environ and platform.system() == "Darwin",
+        condition=GHA and platform.system() == "Darwin",
         reason="Flaky; see iiasa/message-ix-models#112",
     )
     def test_set_scenario(self, test_context):
