@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2025.7.23
+==========
 
 - Update :mod:`.add_AFOLU_CO2_accounting`
   and :mod:`.add_alternative_TCE_accounting`
