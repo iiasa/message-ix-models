@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 import genno
 import pytest
 
 from message_ix_models.project.shape.data import SHAPE
-from message_ix_models.tools.exo_data import prepare_computer
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 pytestmark = pytest.mark.usefixtures("shape_test_data")
 
@@ -35,17 +39,22 @@ class TestSHAPE:
             ("R12", False, 183),
         ),
     )
-    def test_prepare_computer(
-        self, test_context, source_kw, dimensionality, regions, aggregate, N_n
-    ):
+    def test_add_tasks(
+        self,
+        test_context: "Context",
+        source_kw: dict,
+        dimensionality: dict,
+        regions: str,
+        aggregate: bool,
+        N_n: int,
+    ) -> None:
         test_context.model.regions = regions
 
-        source = "SHAPE"
         source_kw.update(aggregate=aggregate)
 
         c = genno.Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = SHAPE.add_tasks(c, context=test_context, **source_kw)
 
         # Key has an informative name
         assert source_kw["measure"] == keys[0].name
@@ -83,17 +92,16 @@ class TestSHAPE:
         (("urbanisation", None), 11001),
     ],
 )
-def test_get_shape_data(test_context, args, size):
+def test_get_shape_data(test_context: "Context", args: tuple, size: int) -> None:
     test_context.model.regions = "R12"
 
-    source = "SHAPE"
     source_kw = dict(measure=args[0], aggregate=False, interpolate=False)
     if args[1]:
         source_kw.update(version=args[1])
 
     c = genno.Computer()
 
-    keys = prepare_computer(test_context, c, source, source_kw)
+    keys = SHAPE.add_tasks(c, context=test_context, **source_kw)
 
     # Preparation of data runs successfully
     result = c.get(keys[0])

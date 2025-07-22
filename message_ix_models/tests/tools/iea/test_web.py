@@ -1,13 +1,13 @@
 """Tests of :mod:`.tools`."""
 
 import logging
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
 from genno import Computer
 
-from message_ix_models.testing import GHA
-from message_ix_models.tools.exo_data import prepare_computer
+from message_ix_models.testing import GHA, MARK
 from message_ix_models.tools.iea.web import (
     DIMS,
     IEA_EWEB,
@@ -17,6 +17,9 @@ from message_ix_models.tools.iea.web import (
     load_data,
 )
 from message_ix_models.util import HAS_MESSAGE_DATA
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +40,6 @@ _FLOW = [
 @IEA_EWEB.transform.minimum_version
 class TestIEA_EWEB:
     @pytest.mark.usefixtures("iea_eweb_test_data")
-    @pytest.mark.parametrize("source", ("IEA_EWEB",))
     @pytest.mark.parametrize(
         "source_kw",
         (
@@ -48,7 +50,7 @@ class TestIEA_EWEB:
             dict(provider="OECD", edition="2022", flow=_FLOW),
             pytest.param(
                 dict(provider="IEA", edition="2023", extra_kw="FOO"),
-                marks=pytest.mark.xfail(raises=ValueError),
+                marks=pytest.mark.xfail(raises=TypeError),
             ),
             dict(provider="IEA", edition="2024", flow=["AVBUNK"]),
             pytest.param(
@@ -67,14 +69,14 @@ class TestIEA_EWEB:
             ),
         ),
     )
-    def test_prepare_computer(self, test_context, source, source_kw):
+    def test_add_tasks(self, test_context: "Context", source_kw: dict) -> None:
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
 
         c = Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = IEA_EWEB.add_tasks(c, context=test_context, **source_kw)
 
         # Preparation of data runs successfully
         result = c.get(keys[0])
@@ -148,6 +150,7 @@ PROVIDER_EDITION = (
 )
 
 
+@MARK["#375"]
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_load_data(test_context, tmp_path, provider, edition):
     # # Store in the temporary directory for this test

@@ -1,16 +1,20 @@
+from typing import TYPE_CHECKING
+
 import pytest
-from genno import Computer
+from genno import ComputationError, Computer
 
 from message_ix_models.project.ssp import (
     SSP,
     SSP_2017,
     SSP_2024,
-    data,  # noqa: F401 —only to ensure SSPOriginal and SSPUpdate are registered
     generate,
     parse,
     ssp_field,
 )
-from message_ix_models.tools.exo_data import prepare_computer
+from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 def test_generate(tmp_path, test_context):
@@ -42,7 +46,8 @@ def test_enum():
     # Same SSP ID from different enums are not equivalent
     assert SSP_2017["1"] != SSP_2024["1"]
     assert SSP_2017["1"] is not SSP_2024["1"]
-    assert SSP["1"] != SSP_2024["1"]
+    # NB Ignored because of https://github.com/python/mypy/issues/7568
+    assert SSP["1"] != SSP_2024["1"]  # type: ignore [misc]
 
 
 @pytest.mark.parametrize(
@@ -108,18 +113,20 @@ class TestSSPOriginal:
             # Excess keyword arguments
             pytest.param(
                 dict(measure="GDP", model="OECD Env-Growth", foo="bar"),
-                marks=pytest.mark.xfail(raises=ValueError),
+                marks=pytest.mark.xfail(raises=TypeError),
             ),
         ),
     )
-    def test_prepare_computer(self, test_context, source, source_kw):
+    def test_add_tasks(self, test_context: "Context", source, source_kw: dict) -> None:
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
 
         c = Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = SSPOriginal.add_tasks(
+            c, context=test_context, source=source, **source_kw
+        )
 
         # Preparation of data runs successfully
         result = c.get(keys[0])
@@ -148,30 +155,55 @@ class TestSSPUpdate:
         ),
     )
     @pytest.mark.parametrize(
-        "source_kw",
+        "release, measure, model",
         (
-            dict(measure="POP"),
-            dict(measure="GDP", model="IIASA GDP 2023"),
-            dict(measure="GDP", model="OECD ENV-Growth 2023"),
-            # Excess keyword arguments
+            ("preview", "GDP", "OECD ENV-Growth 2023"),
+            ("preview", "GDP", "IIASA GDP 2023"),
+            ("preview", "POP", ""),
+            ("3.0", "GDP", "OECD ENV-Growth 2023"),
+            ("3.0", "GDP", "IIASA GDP 2023"),
+            ("3.0", "POP", ""),
+            ("3.0.1", "GDP", "OECD ENV-Growth 2023"),
+            ("3.0.1", "GDP", "IIASA GDP 2023"),
+            ("3.0.1", "POP", ""),
+            ("3.1", "GDP", "OECD ENV-Growth 2023"),
+            ("3.1", "GDP", "IIASA GDP 2023"),
+            ("3.1", "POP", ""),
+            ("3.2.beta", "GDP", "OECD ENV-Growth 2025"),
             pytest.param(
-                dict(measure="POP", foo="bar"),
-                marks=pytest.mark.xfail(raises=ValueError),
+                "3.2.beta",
+                "GDP",
+                "IIASA GDP 2025",
+                marks=pytest.mark.xfail(raises=ComputationError, reason="No data"),
             ),
+            ("3.2.beta", "POP", ""),
         ),
     )
-    @pytest.mark.parametrize("release", ("preview", "3.0", "3.0.1", "3.1"))
-    def test_prepare_computer(self, test_context, source, source_kw, release):
+    def test_add_tasks(
+        self,
+        test_context: "Context",
+        source: str,
+        release: str,
+        measure: str,
+        model: str,
+    ) -> None:
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
 
-        # Set the release
-        source_kw = source_kw | dict(release=release)
+        # Prepare source_kw
+        source_kw = dict(release=release, measure=measure)
+        if model:
+            source_kw.update(model=model)
+        if release in ("3.2.beta",) and measure == "GDP":
+            # Disambiguate units for this release
+            source_kw["unit"] = "billion USD_2017/yr"
 
         c = Computer()
 
-        keys = prepare_computer(test_context, c, source, source_kw)
+        keys = SSPUpdate.add_tasks(
+            c, context=test_context, strict=True, source=source, **source_kw
+        )
 
         # Preparation of data runs successfully
         result = c.get(keys[0])
@@ -182,3 +214,14 @@ class TestSSPUpdate:
         # Data is complete
         assert 14 == len(result.coords["n"])
         assert 14 == len(result.coords["y"])
+
+        if release == "preview":
+            return  # Fuzzed/random data, not meaningful
+
+        # Check for apparent double-counting: if in 2025, values will be at least twice
+        # the 2020 values; if in 2020, roughly the opposite
+
+        ratio = (result.sel(y=2025) / result.sel(y=2020)).to_series()
+        check = (ratio < 0.55) | (1.9 < ratio)
+
+        assert not check.any(), f"Possible double-counting:\n{ratio[check].to_string()}"

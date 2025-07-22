@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import pytest
 from message_ix import make_df
@@ -8,16 +8,24 @@ from message_ix_models import Workflow, testing
 from message_ix_models.testing import MARK
 from message_ix_models.workflow import WorkflowStep, make_click_command, solve
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
+
+    from message_ix_models import Context
+    from message_ix_models.util.click import CliRunner
+
+_REQUEST: Optional["pytest.FixtureRequest"] = None
+
 # Functions for WorkflowSteps
 
 
-def changes_a(c, s) -> None:
+def changes_a(c: "Context", s: "Scenario") -> None:
     """Change a scenario by modifying structure data, but not data."""
     with s.transact():
         s.add_set("technology", "test_tech")
 
 
-def changes_b(c, s, value=None) -> None:
+def changes_b(c: "Context", s: "Scenario", value: Optional[float] = None) -> None:
     """Change a scenario by modifying parameter data, but not structure."""
     with s.transact():
         s.add_par(
@@ -34,7 +42,7 @@ def changes_b(c, s, value=None) -> None:
 
 
 class TestWorkflowStep:
-    def test_call(self, test_context) -> None:
+    def test_call(self, test_context: "Context") -> None:
         def action(c, s):
             pass  # pragma: no cover
 
@@ -48,17 +56,20 @@ class TestWorkflowStep:
 
 
 @pytest.fixture(scope="function")
-def wf(request, test_context) -> Workflow:
+def wf(request: "pytest.FixtureRequest", test_context: "Context") -> Workflow:
     return _wf(test_context, request=request)
 
 
 def _wf(
-    context,
+    context: "Context",
     *,
     base_url: Optional[str] = None,
     base_platform: Optional[str] = None,
-    request=None,
-):
+    request: Optional["pytest.FixtureRequest"] = None,
+) -> "Workflow":
+    request = request or _REQUEST
+    assert request is not None
+
     if base_url is base_platform is None:
         base_scenario = testing.bare_res(request, context, solved=False)
         base_platform = base_scenario.platform.name
@@ -82,11 +93,17 @@ def _wf(
 
 
 @MARK[1]
-def test_make_click_command(mix_models_cli) -> None:
+def test_make_click_command(
+    request: "pytest.FixtureRequest", mix_models_cli: "CliRunner"
+) -> None:
     import click
 
     from message_ix_models.cli import cli_test_group
     from message_ix_models.util.click import temporary_command
+
+    # Allow _wf() to access request.node.name
+    global _REQUEST
+    _REQUEST = request
 
     # make_click_command() runs and generates a command
     name = "make-click-command"
@@ -117,7 +134,9 @@ def test_make_click_command(mix_models_cli) -> None:
             assert output in result.output
 
 
-def test_workflow(caplog, request, test_context, wf) -> None:
+def test_workflow(
+    caplog, request: "pytest.FixtureRequest", test_context: "Context", wf: "Workflow"
+) -> None:
     # Retrieve some information from the fixture
     mp = wf.graph.pop("_base_platform")
 
@@ -155,7 +174,7 @@ def test_workflow(caplog, request, test_context, wf) -> None:
         "Execute <function changes_b at [^>]*>",
         f"…nothing returned, workflow will continue with {m}/test_workflow#1",
         f"Step runs on ixmp://{mp}/{m}/test_workflow#1",
-        "  with context.dest_scenario={'model': 'foo', 'scenario': 'bar'}",
+        "  with context.dest_scenario={(('model': 'foo'|'scenario': 'bar')(, )?){2}}",
         "Clone to foo/bar",
         "Execute <function solve at [^>]*>",
     ]

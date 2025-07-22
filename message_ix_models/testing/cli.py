@@ -10,7 +10,7 @@ def cli():
 
 
 FILENAMES = [
-    "advance/advance_compare_20171018-134445.csv.zip",
+    "advance/advance_compare_20171018-134445.csv.xz",
     "edits/pasta.csv",
     "gea/GEADB_ARCHIVE_20171108.zip",
     "iea/372f7e29-en.zip",

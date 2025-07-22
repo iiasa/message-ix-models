@@ -330,10 +330,10 @@ def derive_demand(
     df_pop = read_pop_from_scen(scen)
     if df_pop.empty:
         log.info(
-            "Scenario does not provide Population projections. Reading default"
+            "Scenario does not provide Population projections. Reading default "
             "timeseries instead"
         )
-        ctx = Context()
+        ctx = Context.get_instance(-1)
         ctx.update(regions="R12")
         df_pop = (
             get_ssp_soc_eco_data(ctx, "IIASA", "POP", "Population")
