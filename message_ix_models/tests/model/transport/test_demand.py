@@ -231,6 +231,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
     assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
 
 
+@MARK["#375"]
 @MARK[7]
 @build.get_computer.minimum_version
 @workflow.generate.minimum_version
