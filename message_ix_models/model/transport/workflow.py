@@ -33,7 +33,7 @@ SOLVE_CONFIG = WorkflowConfig(
         model="MESSAGE",
         solve_options=dict(
             iis=1,
-            lpmethod=4,
+            lpmethod=6,
             scaind=1,
             tilim=45 * 60,
         ),
