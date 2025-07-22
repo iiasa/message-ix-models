@@ -12,6 +12,7 @@ from message_ix_models.model.water.utils import (
     ANNUAL_CAPACITY_FACTOR,
     KM3_TO_MCM,
     USD_M3DAY_TO_USD_MCM,
+    GWa_KM3_TO_GWa_MCM,
     get_vintage_and_active_years,
     kWh_m3_TO_GWa_MCM,
 )
@@ -547,6 +548,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
             )
         results["var_cost"] = var_cost
 
+    # Add the input dataframe to results
+    results["input"] = inp_df
+
     # Remove duplicates from all DataFrames in results
     for key, df in results.items():
         results[key] = df.dropna().drop_duplicates().reset_index(drop=True)
@@ -840,7 +844,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     #     make_df(
     #     "var_cost",
     #     technology='extract_salinewater_basin',
-    #     value= 100/1e3,
+    #     value= 100 * GWa_KM3_TO_GWa_MCM,
     #     unit="USD/MCM",
     #     mode="M1",
     #     time="year",
@@ -878,7 +882,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         inp = make_df(
             "input",
             technology=rows["tec"],
-            value=rows["electricity_input_mid"] / 1e3,
+            value=rows["electricity_input_mid"] * GWa_KM3_TO_GWa_MCM,
             unit="GWa/MCM",
             level="final",
             commodity="electr",
@@ -907,7 +911,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         inp = make_df(
             "input",
             technology=rows["tec"],
-            value=rows["heat_input_mid"] / 1e3,
+            value=rows["heat_input_mid"] * GWa_KM3_TO_GWa_MCM,
             unit="GWa/MCM",
             level="final",
             commodity="d_heat",
