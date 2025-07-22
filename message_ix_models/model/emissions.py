@@ -32,8 +32,10 @@ class Options(BaseOptions):
     #: Override parent class default of :any:`True`.
     interpolate: bool = False
 
-    #: Path containing CSV data files, for instance :py:`package_data_path("transport",
-    #: "R12", "price-emission)`.
+    #: Path containing CSV data files. For example:
+    #:
+    #: .. code-block:: python
+    #:    package_data_path("transport", "R12", "price-emission")
     base_path: Path = field(default_factory=Path.cwd)
 
     #: Information about a scenario used to construct a file name. Specifically, the

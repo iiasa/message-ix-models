@@ -7,17 +7,74 @@ Next release
 - Update :mod:`.add_AFOLU_CO2_accounting`
   and :mod:`.add_alternative_TCE_accounting`
   for |ssp-scenariomip| (:pull:`354`).
+- New module :mod:`.tools.policy` for representing ‘policy’ information (:pull:`349`).
 - New workflow step :func:`.model.workflow.step_0` (:pull:`354`).
+
+By topic:
+
+.. contents::
+   :local:
+   :backlinks: none
+
+Base model and variants
+-----------------------
+
+- Add ``TCE`` to :ref:`emission-yaml` (:pull:`349`).
+- Add 9 ``*_bunker`` technologies to :ref:`technology-yaml` (:pull:`349`).
 - Improve and extend :doc:`/material/index`.
-  See :doc:`/model/material/v1.2.0` for details.
+  See :doc:`/material/v1.2.0` for details.
 
   - Improve :mod:`.material.data_cement` (:pull:`361`).
 
+- Improve :doc:`/transport/index` (:pull:`349`).
+
+  - Use version "3.2.beta" of SSP socioeconomic data.
+  - Force scale-1 to 1.0 for (technology=F ROAD, commodity=gas).
+  - :attr:`Config.policy <.transport.config.Config.policy>` is a :class:`set` of :class:`.Policy` instances,
+    instead of :class:`bool`.
+  - New classes :class:`~.transport.policy.ExogenousEmissionPrice`, :class:`~.transport.policy.TaxEmission`.
+  - Add version 1.1.0 of the ``IIASA_ECE:CL_TRANSPORT_SCENARIO`` code list.
+  - Update input data for :data:`.act_non_ldv`,
+    :data:`.activity_freight`,
+    :data:`.elasticity_f`,
+    :data:`.load_factor_ldv`,
+    passenger mode share,
+    :data:`.pdt_cap`,
+    :data:`.pdt_cap_ref`, and
+    :data:`.t_share_ldv`.
+  - Add snapshot/reference ``PRICE_EMISSION`` data from |ssp-scenariomip| scenarios.
+- New :class:`.model.emissions.PRICE_EMISSION` to use snapshot data from file (:pull:`349`).
+
+Projects and applications
+-------------------------
+
+- Update :mod:`.navigate.workflow` (:pull:`349`).
+  :func:`~.navigate.workflow.tax_emission` uses :mod:`message_ix_models.tools.add_tax_emission`,
+  not the version in :mod:`message_data`.
+- :class:`.SSPUpdate` supports version "3.2.beta" of the SSP socioeconomic data (:pull:`349`).
 - Improve :mod:`.ssp.transport` (:pull:`355`):
 
   - Modify data for variable=“Final Energy|Bunkers|International Aviation” and related (:issue:`308`).
   - Omit year=2020 from modified data.
   - New CLI utility :program:`mix-models ssp ceds-data-for-transport`.
+
+Utilities, tools, and housekeeping
+----------------------------------
+
+- Simplify API and usage of :class:`.ExoDataSource` and its subclasses (:pull:`349`).
+
+  - Most data source classes now have a corresponding :class:`.BaseOptions` subclass
+    that indicate the options/arguments understood by that data source.
+  - Adjust existing ExoDataSource classes and usage.
+
+- Improve :class:`.URNLookupEnum`, add :class:`.ItemSchemeEnumType`
+  and use these for :any:`.SSP_2017` and :any:`SSP_2024` (:pull:`349`).
+  This class supports type checking and use of SDMX item scheme members as Python :class:`.Enum` members.
+- Recompress :doc:`/project/advance` using LZMA (:pull:`349`).
+- Remove :py:`message_ix_model.tools.advance` (:pull:`349`)
+  that had been deprecated since :ref:`v2023.11.24`.
+- :func:`.iamc_like_data_for_query` handles LZMA-compressed TAR files (:pull:`349`).
+- Adjust type hints for `iiasa/ixmp#581 <https://github.com/iiasa/ixmp/pull/581>`_ (:pull:`349`).
 
 v2025.5.28
 ==========
@@ -361,6 +418,8 @@ v2024.1.29
 - Add :ref:`tools-wb` and :func:`.assign_income_groups` to assign MESSAGE regions to World Bank income groups (:pull:`144`).
 - Adjust :mod:`.report.compat` for genno version 1.22 (:issue:`141`, :pull:`142`).
 - Raise informative exception from :meth:`.ScenarioInfo.io_units` (:pull:`151`).
+
+.. _v2023.11.24:
 
 v2023.11.24
 ===========

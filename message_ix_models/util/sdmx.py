@@ -408,6 +408,8 @@ T = TypeVar("T", bound=Enum)
 
 # TODO Replace with URNLookupMixin[T] once Python 3.10 is no longer supported
 class URNLookupMixin(Generic[T]):
+    """:class:`.Enum` mix-in class for looking up members by URN/retrieving URNs."""
+
     name: str
     _member_map_: dict[str, T]
     _urn_name: dict[str, str]
@@ -431,6 +433,24 @@ class URNLookupEnum(URNLookupMixin, Enum):
 
 
 class ItemSchemeEnumType(EnumType):
+    """Metaclass for :class:`.Enum` tied to an SDMX :class:`.ItemScheme`.
+
+    A class constructed using this metaclass **must** have a method
+    :py:`_get_item_scheme()` that returns a :class:`sdmx.model.common.ItemScheme`. The
+    items in the item scheme become the members of the enumeration.
+
+    Example
+    -------
+    >>> from message_ix_models.util.sdmx import read
+    >>> class EXAMPLE(URNLookupEnum, metaclass=ItemSchemeEnumType):
+    ...
+    ...     def _get_item_scheme(self):
+    ...        return read("AGENCY:CODELIST_ID(1.2.3)")
+
+    …creates a new subclass of :class:`.Enum` that has the methods and properties of
+    :class:`.URNLookupMixin`.
+    """
+
     @classmethod
     def __prepare__(metacls, cls, bases, **kwgs):
         return {}
