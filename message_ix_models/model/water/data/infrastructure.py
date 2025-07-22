@@ -684,7 +684,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
     # load the scenario from context
     scen = context.get_scenario()
-
+    firstyear = scen.firstmodelyear
     # Create ScenarioInfo object for get_vintage_and_active_years
     scenario_info = ScenarioInfo(scen)
     year_wat = (*range(2010, info.Y[0] + 1, 5), *info.Y)
@@ -780,7 +780,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # Making negative values zero
     bound_up["value"].clip(lower=0, inplace=True)
     # Bound should start from 2025
-    bound_up = bound_up[bound_up["year_act"] > 2020]
+    bound_up = bound_up[bound_up["year_act"] >= firstyear]
 
     results["bound_total_capacity_up"] = bound_up
     # Investment costs
@@ -990,7 +990,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         results["output"] = out_df
 
     # putting a lower bound on desalination tecs based on hist capacities
-    df_bound = df_hist[df_hist["year"] == 2025]
+    df_bound = df_hist[df_hist["year"] == firstyear]
     bound_lo = make_df(
         "bound_activity_lo",
         node_loc="B" + df_bound["BCU_name"],
@@ -1004,7 +1004,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         time=pd.Series(sub_time),
     )
 
-    bound_lo = bound_lo[bound_lo["year_act"] <= 2040]
+    bound_lo = bound_lo[bound_lo["year_act"] <= firstyear + 15]
     # Divide the histroical capacity by 5 since the existing data is summed over
     # 5 years and model needs per year
     bound_lo["value"] = bound_lo["value"] / 5
