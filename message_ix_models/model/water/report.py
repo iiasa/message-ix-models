@@ -966,10 +966,14 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 "GWa",
             ],
             ["Final Energy|Commercial|Water|Irrigation", electr_irr, "GWa"],
-            ["Final Energy|Commercial|Water|Treatment", electr_rural_trt, "GWa"],
+            [
+                "Final Energy|Commercial|Water|Treatment",
+                electr_rural_trt + electr_urban_trt,
+                "GWa",
+            ],
             [
                 "Final Energy|Commercial|Water|Treatment|Rural",
-                electr_urban_trt + electr_rural_trt,
+                electr_rural_trt,
                 "GWa",
             ],
             ["Final Energy|Commercial|Water|Treatment|Urban", electr_urban_trt, "GWa"],
@@ -989,7 +993,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             ],
             [
                 "Final Energy|Commercial|Water|Transfer|Rural",
-                electr_rural_t_d + electr_urban_t_d_eff,
+                electr_rural_t_d + electr_rural_t_d_eff,
                 "GWa",
             ],
             [
@@ -1204,7 +1208,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             ],
             [
                 "Total Operation Management Cost|Infrastructure|Water| Distribution",
-                rural_dist_totalom + rural_dist_totalom,
+                rural_dist_totalom + urban_dist_totalom,
                 "million US$2010/yr",
             ],
             [
