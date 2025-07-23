@@ -303,7 +303,8 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
 
     if context.SDG != "baseline":
         # only if SDG exactly equal to SDG, otherwise other policies are possible
-        if context.SDG == "SDG":
+        pol_scen = context.SDG
+        if pol_scen == "SDG":
             # reading basin mapping to countries
             FILE2 = f"basins_country_{context.regions}.csv"
             PATH = package_data_path("water", "delineation", FILE2)
@@ -330,8 +331,6 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             df_recycling = df_recycling_sdg = target_rate_trt(df_recycling, df_basin)
 
         else:
-            pol_scen = context.SDG
-
             # check if data is there
             check_dm = df_dmds[
                 df_dmds["variable"] == "urban_connection_rate_" + pol_scen
