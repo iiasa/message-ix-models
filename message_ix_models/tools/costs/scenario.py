@@ -1,113 +1,112 @@
 import logging
+from typing import TYPE_CHECKING
 
-import message_ix
-import pandas as pd
-
-from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
+from message_ix_models.util import add_par_data
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
+    from pandas import DataFrame
+
+    from message_ix_models.tools.costs.config import Config
 
 log = logging.getLogger(__name__)
 
 
+def _replace_inner(group: "DataFrame", par: str, base_year: int) -> "DataFrame":
+    if par == "inv_cost":
+        base_year_value = group.loc[group["year_vtg"] == base_year, "value"]
+        if not base_year_value.empty:
+            group.loc[group["year_vtg"] < base_year, "value"] = base_year_value.iloc[0]
+    elif par == "fix_cost":
+        for year_vtg in group["year_vtg"].unique():
+            if year_vtg < base_year:
+                for year_act in group["year_act"].unique():
+                    # If year_act is greater than or equal to base_year, replace the
+                    # value with the year_vtg = base year value at the same year_act
+                    if year_act >= base_year:
+                        base_year_value = group.loc[
+                            (group["year_vtg"] == base_year)
+                            & (group["year_act"] == year_act),
+                            "value",
+                        ]
+                        if not base_year_value.empty:
+                            group.loc[
+                                (group["year_vtg"] == year_vtg)
+                                & (group["year_act"] == year_act),
+                                "value",
+                            ] = base_year_value.iloc[0]
+                    # If year_act is less than base_year, replace the value with the
+                    # base year value at year_vtg = base_year and year_act = base_year
+                    elif year_act < base_year:
+                        base_year_value = group.loc[
+                            (group["year_vtg"] == base_year)
+                            & (group["year_act"] == base_year),
+                            "value",
+                        ]
+                        if not base_year_value.empty:
+                            group.loc[
+                                (group["year_vtg"] == year_vtg)
+                                & (group["year_act"] == year_act),
+                                "value",
+                            ] = base_year_value.iloc[0]
+    return group
+
+
 def replace_pre_base_year_cost(
-    scen: message_ix.Scenario, config: Config, par: str
-) -> pd.DataFrame:
-    """
-    Replace cost values with the base year value for years before the base year.
-    The base year is specified in the Config object.
+    scen: "Scenario", config: "Config", par: str
+) -> "DataFrame":
+    """Replace cost values with the base year value for years before the base year.
+
+    The base year is specified via `config`.
+
     Parameters
     ----------
-    scen: message_ix.Scenario
+    scen :
         The scenario object containing the parameter data.
-    config: Config
-        Config object, from `tools.costs`, which has the `base_year` parameter.
-    par: str
+    config :
+        with :attr:`.Config.base_year` set.
+    par :
         The cost parameter to be modified. Must be either 'inv_cost' or 'fix_cost'.
+
     Returns
     -------
     pandas.DataFrame
         The modified parameter data with pre-base year values replaced.
+
     Raises
     ------
     ValueError
         If the parameter is not 'inv_cost' or 'fix_cost'.
     """
-    df = scen.par(par)
-    base_year = config.base_year
-
-    def replace_values(group):
-        if par == "inv_cost":
-            base_year_value = group.loc[group["year_vtg"] == base_year, "value"]
-            if not base_year_value.empty:
-                group.loc[group["year_vtg"] < base_year, "value"] = (
-                    base_year_value.iloc[0]
-                )
-        elif par == "fix_cost":
-            for year_vtg in group["year_vtg"].unique():
-                if year_vtg < base_year:
-                    for year_act in group["year_act"].unique():
-                        # If year_act is greater than or equal to base_year,
-                        # replace the value
-                        # with the year_vtg = base year value at the same year_act
-                        if year_act >= base_year:
-                            base_year_value = group.loc[
-                                (group["year_vtg"] == base_year)
-                                & (group["year_act"] == year_act),
-                                "value",
-                            ]
-                            if not base_year_value.empty:
-                                group.loc[
-                                    (group["year_vtg"] == year_vtg)
-                                    & (group["year_act"] == year_act),
-                                    "value",
-                                ] = base_year_value.iloc[0]
-                        # If year_act is less than base_year, replace the value with
-                        # the base year value
-                        # at year_vtg = base_year and year_act = base_year
-                        elif year_act < base_year:
-                            base_year_value = group.loc[
-                                (group["year_vtg"] == base_year)
-                                & (group["year_act"] == base_year),
-                                "value",
-                            ]
-                            if not base_year_value.empty:
-                                group.loc[
-                                    (group["year_vtg"] == year_vtg)
-                                    & (group["year_act"] == year_act),
-                                    "value",
-                                ] = base_year_value.iloc[0]
-        return group
-
-    if par == "inv_cost":
-        return (
-            df.groupby(["technology", "node_loc"])
-            .apply(replace_values)
-            .reset_index(drop=2)
-        )
-    elif par == "fix_cost":
-        return (
-            df.groupby(["technology", "node_loc"])
-            .apply(replace_values)
-            .reset_index(drop=2)
-            .sort_values(["year_vtg", "year_act"])
-        )
-    else:
+    if par not in ("fix_cost", "inv_cost"):
         raise ValueError("Parameter must be either 'inv_cost' or 'fix_cost'")
 
+    return (
+        scen.par(par)
+        .groupby(["technology", "node_loc"])
+        .apply(_replace_inner, par=par, base_year=config.base_year)
+        .reset_index(drop=2)
+        .sort_values(["year_vtg"] + (["year_act"] if par == "fix_cost" else []))
+    )
 
-def filter_fix_cost_by_lifetime(scen: message_ix.Scenario) -> pd.DataFrame:
-    """
-    Filter the fixed cost parameter by the technical lifetime of technologies.
+
+def filter_fix_cost_by_lifetime(scen: "Scenario") -> "DataFrame":
+    """Filter the fixed cost parameter by the technical lifetime of technologies.
+
     This function retrieves the 'technical_lifetime' and 'fix_cost' parameters from the
-    given scenario object, merges them to associate the lifetime with each
-    technology-node_loc-year_vtg combination, and filters the fixed costs based on the
+    given scenario object, merges them to associate the lifetime with each (node_loc,
+    technology, year_vtg) combination, and filters the fixed costs based on the
     lifetime. Meaning, only fix_cost values that are within the lifetime of the
     technology are retained.
+
     If a combination is missing lifetime data, the fixed cost is retained for all years.
+
     Parameters
     ----------
-    scen: message_ix.Scenario
+    scen :
         The scenario object from which to retrieve parameters.
+
     Returns
     -------
     pandas.DataFrame
@@ -117,18 +116,19 @@ def filter_fix_cost_by_lifetime(scen: message_ix.Scenario) -> pd.DataFrame:
     lifetime_df = scen.par("technical_lifetime")
     # Retrieve the fix_cost parameter
     fix_cost_df = scen.par("fix_cost")
-    # Merge fix_cost with lifetime to get the lifetime for each
-    # technology-node_loc combination
+
+    # Merge fix_cost with lifetime to get the lifetime for each (node_loc, technology)
+    columns = ["node_loc", "technology", "year_vtg"]
     merged_df = fix_cost_df.merge(
-        lifetime_df,
-        on=["technology", "node_loc", "year_vtg"],
-        suffixes=("", "_lifetime"),
-        how="left",
+        lifetime_df, on=columns, suffixes=("", "_lifetime"), how="left"
     )
-    # Identify combinations of node_loc, technology, and year_vtg that are missing lifetime data
+
+    # Identify combinations of node_loc, technology, and year_vtg that are missing
+    # lifetime data
     missing_lifetime = merged_df[merged_df["value_lifetime"].isna()][
-        ["technology", "node_loc", "year_vtg"]
+        columns
     ].drop_duplicates()
+
     # Filter fix_cost based on the lifetime
     filtered_fix_cost = merged_df[
         (
@@ -138,73 +138,57 @@ def filter_fix_cost_by_lifetime(scen: message_ix.Scenario) -> pd.DataFrame:
                 <= merged_df["year_vtg"] + merged_df["value_lifetime"]
             )
         )
-        | merged_df[["technology", "node_loc", "year_vtg"]]
-        .isin(missing_lifetime)
-        .all(axis=1)
+        | merged_df[columns].isin(missing_lifetime).all(axis=1)
     ]
+
     # Drop the extra lifetime columns
-    filtered_fix_cost = filtered_fix_cost.drop(
-        columns=["value_lifetime", "unit_lifetime"]
-    )
-    return filtered_fix_cost
+    return filtered_fix_cost.drop(columns=["value_lifetime", "unit_lifetime"])
 
 
-def update_scenario_costs(scen: message_ix.Scenario, config: Config):
-    """
-    Update investment and fixed costs in a MESSAGEix scenario based on cost projections.
+def update_scenario_costs(scen: "Scenario", config: "Config"):
+    """Update investment and fixed costs in `scen` based on cost projections.
+
     This function performs the following steps:
-    1. Retrieves cost projections using the provided configuration.
-    2. Filters the cost projections to include only the technologies
-    that exist in the scenario.
-    3. Updates the scenario's investment and fixed costs with the filtered projections.
-    4. Replaces pre-base year values with base year values
-    for both investment and fixed costs.
-    5. Filters the fixed costs based on the technical lifetime of the technologies.
-    6. Updates the scenario with the filtered fixed costs.
+
+    1. Retrieve cost projections using the provided `config`.
+    2. Filter (1) to include only the technologies that exist in `scen`.
+    3. Update the scenario's investment and fixed costs with the (2).
+    4. Replace pre-base year values with base year values for both investment and fixed
+       costs.
+    5. Filter fixed costs based on the technical lifetime of the technologies.
+    6. Updates the scenario with (6).
+
     Parameters
     ----------
-    scen: message_ix.Scenario
-        The MESSAGEix scenario to be updated.
-    config: Config
-        Config object containing the cost projection settings.
+    scen :
+        Scenario to be updated.
+    config :
+        Cost projection settings, passed to :func:`create_cost_projections`.
     """
-    # Get cost projections
-    log.info("Creating cost projections")
-    cost_projections = create_cost_projections(config)
-
     # Retrieve model technologies
     model_tec_set = list(scen.set("technology"))
 
-    # Filter inv_cost and fix_cost based on model technologies
-    log.info("Filtering cost projections based on model technologies")
-    inv = (
-        cost_projections["inv_cost"][
-            cost_projections["inv_cost"]["technology"].isin(model_tec_set)
-        ]
-        .drop(columns={"scenario_version", "scenario"})
+    log.info("Create cost projections and filter for model technologies")
+    data = {
+        par_name: df[df.technology.isin(model_tec_set)]
+        .drop(columns=["scenario", "scenario_version"])
         .drop_duplicates()
-    )
-    fix = (
-        cost_projections["fix_cost"][
-            cost_projections["fix_cost"]["technology"].isin(model_tec_set)
-        ]
-        .drop(columns=["scenario_version", "scenario"])
-        .drop_duplicates()
-    )
+        for par_name, df in create_cost_projections(config).items()
+    }
 
-    # Update inv_cost and fix_cost in scenario
-    log.info("Updating inv_cost and fix_cost in scenario")
-    with scen.transact("Update inv_cost and fix_cost"):
-        scen.add_par("inv_cost", inv)
-        scen.add_par("fix_cost", fix)
+    msg = "Update fix_cost and inv_cost"
+    log.info(msg)
+    with scen.transact(msg):
+        add_par_data(scen, data)
 
-    # Replace pre-base year values with base year values for inv_cost and fix_cost
-    log.info("Get new costs with pre-base year values replaced")
-    updated_inv_cost = replace_pre_base_year_cost(scen, config, "inv_cost")
-    updated_fix_cost = replace_pre_base_year_cost(scen, config, "fix_cost")
+    # Replace pre-base year values with base year values
+    data = {
+        k: replace_pre_base_year_cost(scen, config, k) for k in ("fix_cost", "inv_cost")
+    }
 
-    # Update the scenario with the new values
-    log.info("Updating scenario with new pre-base year costs")
-    with scen.transact("Replace pre-base year costs"):
-        scen.add_par("inv_cost", updated_inv_cost)
-        scen.add_par("fix_cost", updated_fix_cost)
+    msg = f"Update pre-{config.base_year} cost values"
+    log.info(msg)
+    with scen.transact(msg):
+        add_par_data(scen, data)
+
+    del model_tec_set
