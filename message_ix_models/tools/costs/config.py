@@ -1,7 +1,26 @@
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Literal, Optional
 
 from message_ix_models import ScenarioInfo
+
+
+class MODULE(Enum):
+    """Supported values for :attr:`.Config.module`."""
+
+    #: Mostly electric power technologies, as well as a few other supply-side
+    #: technologies.
+    #:
+    #: This can be considered the "base" module, corresponding to the "base"
+    #: version of MESSAGEix-GLOBIOM, as it contains the most technologies.
+    energy = auto()
+
+    #: Technologies conceived as part of the materials and industry sectors.
+    #: This member can be used with :mod:`message_ix_models.model.materials`.
+    materials = auto()
+
+    #: Cooling technologies for power plants.
+    cooling = auto()
 
 
 @dataclass
