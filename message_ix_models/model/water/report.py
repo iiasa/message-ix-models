@@ -592,6 +592,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         "total om cost|distillation",
     ]
 
+    extrt_sw_om = ["total om cost|extract_surfacewater"]
+    extrt_gw_om = ["total om cost|extract_groundwater"]
     extrt_fgw_om = ["total om cost|extract_gw_fossil"]
 
     urban_infrastructure_totalom = [
@@ -1038,11 +1040,6 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 "million US$2010/yr",
             ],
             [
-                "Investment|Infrastructure|Water|Other",
-                extrt_sw_inv + extrt_gw_inv + extrt_fgw_inv,
-                "million US$2010/yr",
-            ],
-            [
                 "Investment|Infrastructure|Water|Extraction|Surface",
                 extrt_sw_inv,
                 "million US$2010/yr",
@@ -1169,7 +1166,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             ],
             [
                 "Total Operation Management Cost|Infrastructure|Water|Extraction",
-                extrt_fgw_om,
+                extrt_sw_om + extrt_gw_om + extrt_fgw_om,
                 "million US$2010/yr",
             ],
             [
