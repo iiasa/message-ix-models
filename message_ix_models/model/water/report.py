@@ -675,8 +675,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     electr_rural_recycle = ["in|final|electr|rural_recycle|M1"]
     electr_saline = [
         "in|final|electr|distillation|M1",
-        "in|final|electr|distillation|M1",
-    ]
+        "in|final|electr|membrane|M1",
+    ]  # FIX-ME Report membrane energy input too!
 
     electr_urban_t_d = ["in|final|electr|urban_t_d|M1"]
     electr_urban_t_d_eff = ["in|final|electr|urban_t_d|Mf"]
