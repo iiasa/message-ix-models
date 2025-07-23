@@ -143,7 +143,9 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
     return df.apply(func, axis=1)
 
 
-def get_vintage_and_active_years(info, technical_lifetime: int | None) -> pd.DataFrame:
+def get_vintage_and_active_years(
+    info, technical_lifetime: Optional[int] = None
+) -> pd.DataFrame:
     """Calculate valid vintage-activity year combinations without scenario dependency.
 
     This implements similar logic as scenario.vintage_and_active_years() but
