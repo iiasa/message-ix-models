@@ -985,7 +985,7 @@ def add_irrigation_demand(context: "Context") -> dict[str, pd.DataFrame]:
     land_out["commodity"] = "freshwater"
 
     land_out["value"] = land_out["value"]
-    # FIXME : check if input is already in MCM as we are assumptions
+    # Input from Globiom is already in MCM
 
     # take land_out edited and add as a demand in  land_input
     results["land_input"] = land_out
