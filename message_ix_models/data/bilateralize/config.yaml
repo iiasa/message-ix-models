@@ -175,9 +175,10 @@ LNG_shipped_trade: # Name of covered trade technology (e.g., oil)
     LNG_tanker
   flow_tech_suffix:
   flow_constraint:
-    bilateral
+    global
   flow_fuel_input:
     - LNG
+    - fueloil
   flow_material_input:
   flow_commodity_output:
     LNG_tanker_capacity
