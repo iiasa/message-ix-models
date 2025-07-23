@@ -72,7 +72,7 @@ class Config:
     method: Literal["constant", "convergence", "gdp"] = "gdp"
 
     #: Model variant for which to project costs.
-    module: Literal["energy", "materials", "cooling"] = "energy"
+    module: MODULE = MODULE.energy
 
     #: Use vintages.
     #:

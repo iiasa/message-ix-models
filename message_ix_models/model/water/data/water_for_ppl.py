@@ -838,13 +838,13 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         "nuc_htemp__air",
     ]
 
-    from message_ix_models.tools.costs.config import Config
+    from message_ix_models.tools.costs.config import MODULE, Config
     from message_ix_models.tools.costs.projections import create_cost_projections
 
     # Set config for cost projections
     # Using GDP method for cost projections
     cfg = Config(
-        module="cooling", scenario=context.ssp, method="gdp", node=context.regions
+        module=MODULE.cooling, scenario=context.ssp, method="gdp", node=context.regions
     )
 
     # Get projected investment and fixed o&m costs
