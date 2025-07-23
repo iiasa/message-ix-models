@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from message_ix_models.tools.costs import Config
+from message_ix_models.tools.costs import MODULE, Config
 from message_ix_models.tools.costs.regional_differentiation import (
     adjust_technology_mapping,
     apply_regional_differentiation,
@@ -72,16 +72,20 @@ def test_get_intratec_data() -> None:
 @pytest.mark.parametrize(
     "module, t_exp, rds_exp",
     (
-        ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}, {"weo"}),
-        ("materials", {"biomass_NH3", "meth_h2", "furnace_foil_steel"}, {"energy"}),
+        (MODULE.energy, {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}, {"weo"}),
         (
-            "cooling",
+            MODULE.materials,
+            {"biomass_NH3", "meth_h2", "furnace_foil_steel"},
+            {"energy"},
+        ),
+        (
+            MODULE.cooling,
             {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"},
             {"energy"},
         ),
     ),
 )
-def test_get_raw_technology_mapping(module, t_exp, rds_exp) -> None:
+def test_get_raw_technology_mapping(module: MODULE, t_exp, rds_exp) -> None:
     # Function runs without error
     result = get_raw_technology_mapping(module)
 
@@ -92,15 +96,15 @@ def test_get_raw_technology_mapping(module, t_exp, rds_exp) -> None:
     assert rds_exp <= set(result.reg_diff_source.unique())
 
 
-@pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
-def test_adjust_technology_mapping(module) -> None:
-    energy_raw = get_raw_technology_mapping("energy")
+@pytest.mark.parametrize("module", list(MODULE))
+def test_adjust_technology_mapping(module: MODULE) -> None:
+    energy_raw = get_raw_technology_mapping(MODULE.energy)
 
     # Function runs without error
     result = adjust_technology_mapping(module)
 
     # For module="energy", adjustment has no effect; output data are the same
-    if module == "energy":
+    if module == MODULE.energy:
         assert energy_raw.equals(result)
 
     # The "energy" regional differentiation source is not present in the result data
@@ -113,12 +117,12 @@ def test_adjust_technology_mapping(module) -> None:
 @pytest.mark.parametrize(
     "module, t_exp",
     (
-        ("energy", {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}),
-        ("materials", {"biomass_NH3", "meth_h2", "furnace_foil_steel"}),
-        ("cooling", {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}),
+        (MODULE.energy, {"coal_ppl", "gas_ppl", "gas_cc", "solar_res1"}),
+        (MODULE.materials, {"biomass_NH3", "meth_h2", "furnace_foil_steel"}),
+        (MODULE.cooling, {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}),
     ),
 )
-def test_apply_regional_differentiation(module, t_exp) -> None:
+def test_apply_regional_differentiation(module: MODULE, t_exp) -> None:
     """Regional differentiation is applied correctly for each `module`."""
     config = Config(module=module)
 
