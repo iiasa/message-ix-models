@@ -71,7 +71,7 @@ class Config:
     #: - "gdp": uses :func:`.create_projections_gdp`.
     method: Literal["constant", "convergence", "gdp"] = "gdp"
 
-    #: Model variant for which to project costs.
+    #: Model variant for which to project costs. A member of :class:`.MODULE`.
     module: MODULE = MODULE.energy
 
     #: Use vintages.

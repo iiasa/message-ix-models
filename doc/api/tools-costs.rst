@@ -36,31 +36,33 @@ Non-reference regions
 Modules and model variants
 ==========================
 
-Within the context of the tool, the term **module** (specified by :attr:`.Config.module`) is used to mean input data for particular *sets of technologies*.
-These correspond to subsets of all the technologies in MESSAGEix-GLOBIOM models—either the base model or model variants. [3]_
-Currently, :mod:`.tools.costs` supports two module :attr:`~.Config.module` settings:
+Within the context of the tool,
+the term **‘module’** is used to refer to input data for particular *sets of technologies*.
+These correspond to subsets of all the technologies in MESSAGEix-GLOBIOM models
+—either the base model or model variants.
+The tool supports all the modules enumerated by :class:`.costs.MODULE`;
+these are specified by setting :attr:`.Config.module` on a new or existing instance.
+See the documentation of :class:`.MODULE` for longer descriptions of the scope of each.
 
-"energy"
-   Mostly electric power technologies, as well as a few other supply-side technologies.
-
-   This can be considered the "base" module, corresponding to the "base" version of MESSAGEix-GLOBIOM, as it contains the most technologies.
-
-"materials"
-   Technologies conceived as part of the materials and industry sectors.
-
-"cooling"
-   Cooling technologies for power plants.
+.. note::
+   This usage of “module” differs from the meaning of a “Python module”.
+   For instance, :mod:`message_ix_models.model.water` is a *Python module* for MESSAGEix-Nexus.
+   If the setting :py:`.costs.Config.module = MODULE.water` existed,
+   this *could*, but would *not necessarily*,
+   refer to input data for projecting investment and fixed costs of water technologies
+   that are defined in :mod:`message_ix_models.model.water`.
+   The existence of any Python module does not imply that it is supported by :mod:`.tools.costs`.
 
 Data and files for a particular module can refer to other modules.
-This allows for values or settings for "materials" and other technologies to be assumed to match the values and settings used for the referenced "energy"-module technologies.
-
-.. [3] This usage of “module” differs from the meaning of a “Python module”.
-   For instance, :mod:`message_ix_models.model.water` is a *Python module* for MESSAGEix-Nexus.
-   If the setting :py:`.costs.Config.module = "water"` were added, this *might* refer to input data for projecting investment and fixed costs of water technologies that are defined in :mod:`message_ix_models.model.water`—but not necessarily.
+This allows to implement the assumption that values or settings for certain technologies in,
+for instance, :attr:`.MODULE.materials`,
+match the values and settings used for certain referenced :attr:`.MODULE.energy` technologies.
 
 To add a new module, the following steps are required:
 
-- In :file:`message_ix_models/data/costs/`, create another subdirectory with the name of the new module, for instance :file:`message_ix_models/data/costs/[module]/`.
+- Add a new member to the :class:`.MODULE` enumeration.
+  The name of the member is the name of the module.
+- In :file:`message_ix_models/data/costs/`, create another subdirectory with same name, for instance :file:`message_ix_models/data/costs/[module]/`.
 - Add the following files to the new directory:
 
   :file:`first_year_[module].csv`
@@ -84,16 +86,25 @@ To add a new module, the following steps are required:
      - "base_year_reference_region_cost": the base year cost for the technology in the reference region.
      - "fix_ratio": the ratio of fixed O&M costs to investment costs for the technology.
 
-- Add the new module to the allowed values of :attr:`.Config.module`.
-
 Please note that the following assumptions are made in technology costs mapping:
 
-- If a technology is mapped to a technology in the "energy" module, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
-- If a non-"energy" module (such as "materials" or "cooling") technology has :py:`reg_diff_source="energy"` and the "base_year_reference_region_cost" is not empty, then the "base_year_reference_region_cost" in :file:`tech_map_[module].csv` is used as the base year cost for the technology in the reference region.
-  If the "base_year_reference_region_cost" is empty, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
-- If using a non-"energy" module (such as "materials" or "cooling"), if a technology that is specified in :file:`tech_map_materials.csv` already exists in :file:`tech_map_energy.csv`, then the reference region cost is taken from :file:`tech_map_materials.csv`.
-- If a technology in a module is not mapped to any source of regional differentiation, then no cost reduction over the years is applied to the technology.
-- If a technology has a non-empty "base_year_reference_region_cost" but is not mapped to any source of regional differentiation, then assume no regional differentiation and use the reference region base year cost as the base year cost for all regions.
+- If a technology is mapped to a technology in the "energy" module,
+  then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
+- If a non-"energy" module (such as "materials" or "cooling") technology has :py:`reg_diff_source="energy"`
+  and the "base_year_reference_region_cost" is not empty,
+  then the "base_year_reference_region_cost" in :file:`tech_map_[module].csv` is used
+  as the base year cost for the technology in the reference region.
+  If the "base_year_reference_region_cost" is empty,
+  then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
+- If using a non-"energy" module (such as "materials" or "cooling"),
+  and a technology that is specified in :file:`tech_map_materials.csv` already exists in :file:`tech_map_energy.csv`,
+  then the reference region cost is taken from :file:`tech_map_materials.csv`.
+- If a technology in a module is not mapped to any source of regional differentiation,
+  then no cost reduction over the years is applied to the technology.
+- If a technology has a non-empty "base_year_reference_region_cost"
+  but is not mapped to any source of regional differentiation,
+  then assume no regional differentiation
+  and use the reference region base year cost as the base year cost for all regions.
 
 Data sources
 ============
