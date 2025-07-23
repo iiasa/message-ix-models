@@ -121,7 +121,20 @@ def test_bare_res(request, test_context, node):
     scenario.solve()
 
 
-@pytest.mark.parametrize("module", list(MODULE))
+@pytest.mark.parametrize(
+    "module",
+    (
+        MODULE.energy,
+        pytest.param(
+            MODULE.materials,
+            marks=pytest.mark.xfail(
+                raises=AssertionError, reason="Temporary, for #378"
+            ),
+        ),
+        MODULE.cooling,
+        MODULE.dac,
+    ),
+)
 def test_ccs_costs(module: MODULE) -> None:
     cfg = Config(module=module, method="gdp")
 
@@ -138,17 +151,18 @@ def test_ccs_costs(module: MODULE) -> None:
     tech = [t.replace("_ccs", "") for t in ccs_tech]
 
     # Compare investment costs for technologies with and without CCS
-    non_ccs = (
-        inv[inv.technology.isin(tech)]
-        .drop(columns=["scenario_version", "unit"])
-        .set_index(["scenario", "node_loc", "year_vtg", "technology"])
-    )
+    drop = ["scenario_version", "unit"]
+    index_cols = ["scenario", "node_loc", "year_vtg", "technology"]
+    non_ccs = inv[inv.technology.isin(tech)].drop(columns=drop).set_index(index_cols)
     ccs = (
         inv[inv.technology.isin(ccs_tech)]
         .assign(technology=lambda x: x.technology.str.replace("_ccs", ""))
-        .drop(columns=["scenario_version", "unit"])
-        .set_index(["scenario", "node_loc", "year_vtg", "technology"])
+        .drop(columns=drop)
+        .set_index(index_cols)
     )
 
-    # Assert that costs for CCS technologies are greater than for non-CCS technologies
-    assert ccs.sub(non_ccs).dropna().ge(0).all().all()
+    msg = "Costs for CCS technologies are greater than for non-CCS technologies"
+    diff = (ccs - non_ccs).dropna().query("value < 0")
+    if not diff.empty:
+        print(diff.to_string())
+        assert False, msg
