@@ -146,7 +146,7 @@ def report_iam_definition(
         "Water Resource|Surface Water",
         inplace=True,
     )
-    df_dmd["unit"] = "km3"
+    df_dmd["unit"] = "MCM"
     df_dmd1 = pyam.IamDataFrame(df_dmd)
 
     if not suban:
@@ -523,7 +523,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     extrt_sw_inv = ["inv cost|extract_surfacewater"]
     extrt_gw_inv = ["inv cost|extract_groundwater"]
     # Calculating fossil groundwater invwatments
-    # 163.56 million USD/km3 x 2 times the reneewable gw costs
+    # 163.56 million USD/MCM x 2 times the reneewable gw costs
 
     report_iam = report_iam.append(
         report_iam.multiply(
@@ -731,30 +731,30 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     # mapping for aggregation
     map_agg_pd = pd.DataFrame(
         [
-            ["Water Extraction", extract_gw + extract_fgw + extract_sw, "km3/yr"],
-            ["Water Extraction|Groundwater", extract_gw, "km3/yr"],
-            ["Water Extraction|Brackish Water", extract_fgw, "km3/yr"],
-            ["Water Extraction|Surface Water", extract_sw, "km3/yr"],
+            ["Water Extraction", extract_gw + extract_fgw + extract_sw, "MCM/yr"],
+            ["Water Extraction|Groundwater", extract_gw, "MCM/yr"],
+            ["Water Extraction|Brackish Water", extract_fgw, "MCM/yr"],
+            ["Water Extraction|Surface Water", extract_sw, "MCM/yr"],
             [
                 "Water Extraction|Seawater",
                 extract_saline_basin + extract_saline_region,
-                "km3/yr",
+                "MCM/yr",
             ],
-            ["Water Extraction|Seawater|Desalination", extract_saline_basin, "km3/yr"],
-            ["Water Extraction|Seawater|Cooling", extract_saline_region, "km3/yr"],
-            ["Water Desalination", desal_membrane + desal_distill, "km3/yr"],
-            ["Water Desalination|Membrane", desal_membrane, "km3/yr"],
-            ["Water Desalination|Distillation", desal_distill, "km3/yr"],
+            ["Water Extraction|Seawater|Desalination", extract_saline_basin, "MCM/yr"],
+            ["Water Extraction|Seawater|Cooling", extract_saline_region, "MCM/yr"],
+            ["Water Desalination", desal_membrane + desal_distill, "MCM/yr"],
+            ["Water Desalination|Membrane", desal_membrane, "MCM/yr"],
+            ["Water Desalination|Distillation", desal_distill, "MCM/yr"],
             [
                 "Water Transfer",
                 urban_transfer
                 + rural_transfer
                 + urban_transfer_eff
                 + rural_transfer_eff,
-                "km3/yr",
+                "MCM/yr",
             ],
-            ["Water Transfer|Urban", urban_transfer + urban_transfer_eff, "km3/yr"],
-            ["Water Transfer|Rural", rural_transfer + rural_transfer_eff, "km3/yr"],
+            ["Water Transfer|Urban", urban_transfer + urban_transfer_eff, "MCM/yr"],
+            ["Water Transfer|Rural", rural_transfer + rural_transfer_eff, "MCM/yr"],
             [
                 "Water Withdrawal",
                 region_withdr
@@ -768,14 +768,14 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 + urban_mwdem_unconnected
                 + urban_mwdem_unconnected_eff
                 + industry_mwdem_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
-            ["Water Withdrawal|Energy techs & Irrigation", region_withdr, "km3/yr"],
-            # ["Water Withdrawal|Irrigation", irr_c + irr_o + irr_s, "km3/yr"],
-            ["Water Withdrawal|Irrigation|Cereal", irr_c, "km3/yr"],
-            ["Water Withdrawal|Irrigation|Oil Crops", irr_o, "km3/yr"],
-            ["Water Withdrawal|Irrigation|Sugar Crops", irr_s, "km3/yr"],
-            ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "km3/yr"],
+            ["Water Withdrawal|Energy techs & Irrigation", region_withdr, "MCM/yr"],
+            # ["Water Withdrawal|Irrigation", irr_c + irr_o + irr_s, "MCM/yr"],
+            ["Water Withdrawal|Irrigation|Cereal", irr_c, "MCM/yr"],
+            ["Water Withdrawal|Irrigation|Oil Crops", irr_o, "MCM/yr"],
+            ["Water Withdrawal|Irrigation|Sugar Crops", irr_s, "MCM/yr"],
+            ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "MCM/yr"],
             [
                 "Capacity Additions|Infrastructure|Water",
                 rural_infrastructure
@@ -787,22 +787,22 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 + rural_unconnected
                 + urban_unconnected
                 + industry_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction",
                 extrt_sw_cap + extrt_gw_cap + extrt_fgw_cap,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction|Surface Water",
                 extrt_sw_cap,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction|Groundwater",
                 extrt_gw_cap + extrt_fgw_cap,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 (
@@ -810,60 +810,60 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                     " Additions|Infrastructure|Water|Extraction|Groundwater|Renewable"
                 ),
                 extrt_gw_cap,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction|Groundwater|Fossil",
                 extrt_fgw_cap,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Rural",
                 rural_infrastructure,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Urban",
                 urban_infrastructure,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Industrial",
                 industry_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Urban",
                 urban_treatment_recycling,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Rural",
                 rural_treatment_recycling,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Distribution|Rural",
                 rural_dist,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Distribution|Urban",
                 urban_dist,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Unconnected|Rural",
                 rural_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Unconnected|Urban",
                 urban_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
-            ["Freshwater|Environmental Flow", env_flow, "km3/yr"],
-            ["Groundwater Recharge", gw_recharge, "km3/yr"],
+            ["Freshwater|Environmental Flow", env_flow, "MCM/yr"],
+            ["Groundwater Recharge", gw_recharge, "MCM/yr"],
             [
                 "Water Withdrawal|Municipal Water",
                 rural_mwdem_unconnected
@@ -874,54 +874,54 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 + urban_mwdem_unconnected_eff
                 + urban_mwdem_connected
                 + urban_mwdem_connected_eff,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Rural",
                 rural_mwdem_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Rural Eff",
                 rural_mwdem_unconnected_eff,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Rural",
                 rural_mwdem_connected,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Rural Eff",
                 rural_mwdem_connected_eff,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Urban",
                 urban_mwdem_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Urban Eff",
                 urban_mwdem_unconnected_eff,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Urban",
                 urban_mwdem_connected,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Urban Eff",
                 urban_mwdem_connected_eff,
-                "km3/yr",
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Industrial Water|Unconnected",
                 industry_mwdem_unconnected,
-                "km3/yr",
+                "MCM/yr",
             ],
-            # ["Water Withdrawal|Irrigation", irr_water, "km3/yr"],
+            # ["Water Withdrawal|Irrigation", irr_water, "MCM/yr"],
             [
                 "Final Energy|Commercial",
                 electr_saline
@@ -1001,24 +1001,24 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             [
                 "Water Waste|Collected",
                 urban_collctd_wstwtr + rural_collctd_wstwtr,
-                "km3/yr",
+                "MCM/yr",
             ],
-            ["Water Waste|Collected|Urban", urban_collctd_wstwtr, "km3/yr"],
-            ["Water Waste|Collected|Rural", rural_collctd_wstwtr, "km3/yr"],
+            ["Water Waste|Collected|Urban", urban_collctd_wstwtr, "MCM/yr"],
+            ["Water Waste|Collected|Rural", rural_collctd_wstwtr, "MCM/yr"],
             [
                 "Water Waste|Treated",
                 urban_treated_wstwtr + rural_treated_wstwtr,
-                "km3/yr",
+                "MCM/yr",
             ],
-            ["Water Waste|Treated|Urban", urban_treated_wstwtr, "km3/yr"],
-            ["Water Waste|Treated|Rural", rural_treated_wstwtr, "km3/yr"],
+            ["Water Waste|Treated|Urban", urban_treated_wstwtr, "MCM/yr"],
+            ["Water Waste|Treated|Rural", rural_treated_wstwtr, "MCM/yr"],
             [
                 "Water Waste|Reuse",
                 urban_wstwtr_recycle + rural_wstwtr_recycle,
-                "km3/yr",
+                "MCM/yr",
             ],
-            ["Water Waste|Reuse|Urban", urban_wstwtr_recycle, "km3/yr"],
-            ["Water Waste|Reuse|Rural", rural_wstwtr_recycle, "km3/yr"],
+            ["Water Waste|Reuse|Urban", urban_wstwtr_recycle, "MCM/yr"],
+            ["Water Waste|Reuse|Rural", rural_wstwtr_recycle, "MCM/yr"],
             [
                 "Investment|Infrastructure|Water",
                 rural_infrastructure_inv
@@ -1263,7 +1263,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     wp = sc.var(
         "PRICE_COMMODITY", {"commodity": ["urban_mw", "rural_mw", "freshwater"]}
     )
-    wp["value"] = wp["lvl"] / 1000
+    wp["value"] = wp["lvl"]
     wp["unit"] = "US$2010/m3"
     wp = wp.rename(columns={"node": "region"})
     # get withdrawals for weighted mean
