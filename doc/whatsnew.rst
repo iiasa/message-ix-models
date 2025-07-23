@@ -1,8 +1,20 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Improve :mod:`.tools.costs` for |ssp-scenariomip| (:pull:`378`).
+
+  - :attr:`Config.module <.tools.costs.Config.module>` is no longer a :class:`str`
+    but a member of a new enumeration :class:`~.costs.MODULE`.
+  - :py:`Config.final_year` is replaced by :attr:`.Config.final_model_year`
+    and :attr:`.Config.final_projection_year`.
+  - Add :attr:`.costs.MODULE.dac` and associated input data.
+  - New submodule :mod:`.tools.costs.scenario` for TODO COMPLETE.
+  - Update costs data.
+
+- Add 23 technologies used in |ssp-scenariomip| to :ref:`technology-yaml` (:pull:`378`).
 
 v2025.7.23
 ==========
