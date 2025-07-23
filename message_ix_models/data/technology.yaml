@@ -62,6 +62,15 @@ CO2_TCE:
   sector: dummy
   output: [dummy, primary]
 
+dac_lt:
+  description: FIXME Something related to direct air capture?
+
+dac_hte:
+  description: FIXME Something related to direct air capture?
+
+dac_htg:
+  description: FIXME Something related to direct air capture?
+
 dom_total:
   name: dom_total
   description: Used in balance equation for domestic energy supply and in the equation for constraining net imports
@@ -633,6 +642,72 @@ solar_res_hist_2020:
   sector: electricity
   output: [electr, secondary]
 
+solar_res_hist_2025:
+  description: Currently installed solar electricity capacity with 2025 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_rt_hist_2000:
+  description: Currently installed rooftop solar electricity capacity with 2000 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_rt_hist_2005:
+  description: Currently installed rooftop solar electricity capacity with 2005 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_rt_hist_2010:
+  description: Currently installed rooftop solar electricity capacity with 2010 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_rt_hist_2015:
+  description: Currently installed rooftop solar electricity capacity with 2015 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_rt_hist_2020:
+  description: Currently installed rooftop solar electricity capacity with 2020 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_rt_hist_2025:
+  description: Currently installed rooftop solar electricity capacity with 2025 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res_RT1:
+  description: FIXME Something related to rooftop solar?
+
+solar_res_RT2:
+  description: FIXME Something related to rooftop solar?
+
+solar_res_RT3:
+  description: FIXME Something related to rooftop solar?
+
+solar_res_RT4:
+  description: FIXME Something related to rooftop solar?
+
+solar_res_RT5:
+  description: FIXME Something related to rooftop solar?
+
+solar_res_RT6:
+  description: FIXME Something related to rooftop solar?
+
+solar_res_RT7:
+  description: FIXME Something related to rooftop solar?
+
+solar_res_RT8:
+  description: FIXME Something related to rooftop solar?
+
 solar_th_ppl:
   name: solar_th_ppl
   description: Solar thermal power plant with storage
@@ -773,6 +848,12 @@ wind_res_hist_2020:
   sector: electricity
   output: [electr, secondary]
 
+wind_res_hist_2025:
+  description: Currently installed wind onshore capacity with 2025 year bin.
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
 wind_ppf:
   name: wind_ppf
   description: Wind power plant offshore (provides capacity only)
@@ -847,6 +928,13 @@ wind_ref_hist_2015:
 wind_ref_hist_2020:
   name: wind_ref_hist_2020
   description: Currently installed wind offshore capacity with 2020 year bin
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref_hist_2025:
+  name: wind_ref_hist_2025
+  description: Currently installed wind offshore capacity with 2025 year bin.
   type: secondary
   sector: electricity
   output: [electr, secondary]
