@@ -3,7 +3,7 @@ from message_ix import make_df
 
 from message_ix_models import testing
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.tools.costs import Config, create_cost_projections
+from message_ix_models.tools.costs import MODULE, Config, create_cost_projections
 from message_ix_models.util import add_par_data
 
 pytestmark = pytest.mark.usefixtures("ssp_user_data")
@@ -19,7 +19,10 @@ pytestmark = pytest.mark.usefixtures("ssp_user_data")
         ),
         (
             Config(
-                module="materials", method="convergence", scenario="SSP2", format="iamc"
+                module=MODULE.materials,
+                method="convergence",
+                scenario="SSP2",
+                format="iamc",
             ),
             {
                 "Variable": {
@@ -37,7 +40,7 @@ pytestmark = pytest.mark.usefixtures("ssp_user_data")
             },
         ),
         (
-            Config(module="cooling", method="gdp", node="R12", scenario="SSP5"),
+            Config(module=MODULE.cooling, method="gdp", node="R12", scenario="SSP5"),
             {"technology": {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}},
             {"technology": {"coal_ppl__cl_fresh", "gas_cc__air", "nuc_lc__ot_fresh"}},
         ),
@@ -118,8 +121,8 @@ def test_bare_res(request, test_context, node):
     scenario.solve()
 
 
-@pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
-def test_ccs_costs(module):
+@pytest.mark.parametrize("module", list(MODULE))
+def test_ccs_costs(module: MODULE) -> None:
     cfg = Config(module=module, method="gdp")
 
     # Function runs without error

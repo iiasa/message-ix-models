@@ -2,7 +2,6 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 from itertools import product
-from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -11,7 +10,7 @@ from iam_units import registry
 from message_ix_models.util import package_data_path
 from message_ix_models.util.node import adapt_R11_R12
 
-from .config import Config
+from .config import MODULE, Config
 
 log = logging.getLogger(__name__)
 
@@ -171,9 +170,7 @@ def get_intratec_data() -> pd.DataFrame:
     return pd.read_csv(file, comment="#", skipinitialspace=True)
 
 
-def get_raw_technology_mapping(
-    module: Literal["energy", "materials", "cooling"],
-) -> pd.DataFrame:
+def get_raw_technology_mapping(module: "MODULE") -> pd.DataFrame:
     """Retrieve a technology mapping for `module`.
 
     The data are read from a CSV file at :file:`data/{module}/tech_map.csv`.
@@ -197,7 +194,7 @@ def get_raw_technology_mapping(
     pandas.DataFrame
     """
 
-    path = package_data_path("costs", module, "tech_map.csv")
+    path = package_data_path("costs", module.name, "tech_map.csv")
     return pd.read_csv(path, comment="#")
 
 
@@ -234,9 +231,7 @@ def subset_module_map(raw_map):
     return sub_map
 
 
-def adjust_technology_mapping(
-    module: Literal["energy", "materials", "cooling"],
-) -> pd.DataFrame:
+def adjust_technology_mapping(module: "MODULE") -> pd.DataFrame:
     """Adjust technology mapping based on sources and assumptions.
 
     Parameters
@@ -257,9 +252,9 @@ def adjust_technology_mapping(
           of the technology in the reference region (in 2005 USD).
     """
 
-    raw_map_energy = get_raw_technology_mapping("energy")
+    raw_map_energy = get_raw_technology_mapping(MODULE.energy)
 
-    if module == "energy":
+    if module == MODULE.energy:
         return raw_map_energy
 
     else:
@@ -373,7 +368,7 @@ def adjust_technology_mapping(
 
         # If module == "materials", then get materials_map_intratec
         # and concatenate with module_all
-        if module == "materials":
+        if module == MODULE.materials:
             # Get technologies that are mapped to Intratec AND have a base year cost
             # Assign map_techonology as "all"
             materials_map_intratec = sub_map_module.query(
@@ -745,7 +740,7 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         )
     )
 
-    # TODO: Change from using intratec source as list of regions
+    # TODO Change from using intratec source as list of regions
     un_reg = pd.DataFrame(
         {"region": filt_intratec.region.unique(), "reg_cost_ratio": 1, "key": "z"}
     )

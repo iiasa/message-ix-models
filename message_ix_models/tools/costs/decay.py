@@ -1,17 +1,16 @@
 import os
-from typing import Literal
 
 import numpy as np
 import pandas as pd
 
 from message_ix_models.util import package_data_path
 
-from .config import Config
+from .config import MODULE, Config
 from .regional_differentiation import get_raw_technology_mapping, subset_module_map
 
 
 def _get_module_scenarios_reduction(
-    module: Literal["energy", "materials", "cooling"],
+    module: "MODULE",
     energy_map_df: pd.DataFrame,
     tech_map_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -65,8 +64,8 @@ def _get_module_scenarios_reduction(
         .reset_index(drop=True)
     )
 
-    if module != "energy":
-        ffile = package_data_path("costs", module, "scenarios_reduction.csv")
+    if module != MODULE.energy:
+        ffile = package_data_path("costs", module.name, "scenarios_reduction.csv")
 
         # if file exists, read it
         # else, scenarios_joined is the same as scenarios_energy
@@ -156,11 +155,11 @@ def _get_module_scenarios_reduction(
             .reset_index(drop=True)
         )
 
-    return scenarios_all if module != "energy" else scenarios_energy
+    return scenarios_all if module != MODULE.energy else scenarios_energy
 
 
 def _get_module_cost_reduction(
-    module: Literal["energy", "materials", "cooling"],
+    module: "MODULE",
     energy_map_df: pd.DataFrame,
     tech_map_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -209,8 +208,8 @@ def _get_module_cost_reduction(
         .reset_index(drop=True)
     )
 
-    if module != "energy":
-        ffile = package_data_path("costs", module, "cost_reduction.csv")
+    if module != MODULE.energy:
+        ffile = package_data_path("costs", module.name, "cost_reduction.csv")
 
         if os.path.exists(ffile):
             reduction_module = pd.read_csv(ffile, comment="#")
@@ -289,18 +288,18 @@ def _get_module_cost_reduction(
             .reset_index(drop=True)
         )
 
-    return reduction_all if module != "energy" else reduction_energy
+    return reduction_all if module != MODULE.energy else reduction_energy
 
 
 # create function to get technology reduction scenarios data
 def get_technology_reduction_scenarios_data(
-    first_year: int, module: Literal["energy", "materials", "cooling"]
+    first_year: int, module: "MODULE"
 ) -> pd.DataFrame:
     # Get full list of technologies from mapping
-    tech_map = energy_map = get_raw_technology_mapping("energy")
+    tech_map = energy_map = get_raw_technology_mapping(MODULE.energy)
 
     # if module is not energy, run subset_module_map
-    if module != "energy":
+    if module != MODULE.energy:
         module_map = get_raw_technology_mapping(module)
         module_sub = subset_module_map(module_map)
 

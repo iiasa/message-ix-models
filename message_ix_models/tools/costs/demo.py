@@ -1,4 +1,4 @@
-from message_ix_models.tools.costs.config import Config
+from message_ix_models.tools.costs.config import MODULE, Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 
 # Example 1: Get cost projections for all scenarios in R12,
@@ -16,7 +16,7 @@ from message_ix_models.tools.costs.projections import create_cost_projections
 # - fom_rate=0,
 # - format="message",
 # - method="gdp",
-# - module="energy",
+# - module=MODULE.energy,
 # - use_vintages=False,
 # - node="R12",
 # - ref_region —automatically determined from node
@@ -58,7 +58,7 @@ r11_energy_convergence["fix_cost"]
 
 
 cfg = Config(
-    module="materials",
+    module=MODULE.materials,
     scenario="SSP2",
 )
 
