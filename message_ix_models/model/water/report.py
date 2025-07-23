@@ -322,7 +322,7 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
         # CHANGE TO URBAN AND RURAL POP
         pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
         # ONLY R11!!! Need to fix when updating the reporting to work with any region
-        pop_tot = pop_tot[-(pop_tot.region == "GLB region (R11)")]
+        pop_tot = pop_tot[pop_tot.region != "GLB region (R11)"]
         pop_reg = np.unique(pop_tot["region"])
         # need to change names
         reg_map = mp2.regions()
@@ -757,6 +757,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 "Water Withdrawal",
                 region_withdr
                 + rural_mwdem_unconnected
+                rural_mwdem_unconnected
                 + rural_mwdem_unconnected_eff
                 + rural_mwdem_connected
                 + rural_mwdem_connected_eff
@@ -1374,8 +1375,9 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     report_pd = report_pd[-report_pd.variable.isin(water_hydro_var)]
 
     # add water population
-    pop_sdg6 = pop_water_access(sc, reg, sdgs)
-    report_pd = pd.concat([report_pd, pop_sdg6])
+    if sdgs != "baseline":
+        pop_sdg6 = pop_water_access(sc, reg, sdgs)
+        report_pd = pd.concat([report_pd, pop_sdg6])
 
     # add units
     for index, row in map_agg_pd.iterrows():
