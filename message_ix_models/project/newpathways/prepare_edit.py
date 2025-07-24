@@ -36,9 +36,11 @@ log = get_logger(__name__)
 generate_bare_sheets(log=log, message_regions = message_regions)
 
 # Import calibration files from Global Energy Monitor
-import_gem(gas_pipeline_file, gas_pipeline_sheet, 
-          trade_technology = "gas_piped", flow_technology = "pipe",
-          project_name = 'newpathways', config_name = 'config.yaml')
+import_gem(input_file = gas_pipeline_file, 
+           input_sheet = gas_pipeline_sheet, 
+           trade_technology = "gas_piped",
+           flow_technology = "gas_pipe",
+           project_name = 'newpathways', config_name = 'config.yaml')
 
 # Add MariTEAM calibration for maritime shipping
 calibrate_mariteam(covered_tec,
