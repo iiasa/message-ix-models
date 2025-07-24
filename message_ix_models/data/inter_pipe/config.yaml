@@ -4,14 +4,14 @@
 # Put the scenario information here. 
 scenario:
   start_model: 
-  #  - SSP_SSP2_v2.1
+    - SSP_SSP2_v6.1
   # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
   start_scen:
     - baseline_DEFAULT
   target_model:
-    - MESSAGEix-GLOBIOM_GEI5
+    - MixG_GEIDCO5_SSP2_v6.1
   target_scen:
-    - baseline_uhv
+    - Base_RCP7_int_noIBWT # then EN1000f_RCP26_int_noIBWT for mitigation scenario
 
 # How many nodes are there?
 # nodes:
@@ -44,13 +44,15 @@ pipe_tech:
 
   # TODO: Par list reading from config
   # feature_pipe: # What are the features of the pipe technology that need to be additionally defined?
-  #   - input
-  #   - output
-  #   - technical_lifetime
-  #   - inv_cost
-  #   - fix_cost
-  #   - var_cost
-  #   - capacity_factor
+    - input
+    - output
+    - technical_lifetime
+    - inv_cost
+    - fix_cost
+    - var_cost
+    - capacity_factor
+    # - growth_capacity_up
+    # - growth_capacity_lo
 
   # The balance relation (pipe -> pipe_group, i.e, grouping specific exporting pipe technologies) will be generated automatically. 
 
