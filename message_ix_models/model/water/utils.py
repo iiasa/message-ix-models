@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from warnings import warn
 
 import pandas as pd

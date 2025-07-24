@@ -1,7 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 import pandas as pd
@@ -303,12 +303,12 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
     else:
         df = cap_fact["capacity_factor"]
         # reading ppl cooling impact dataframe
-        file_name = package_data_path(
+        file_path = package_data_path(
             "water",
             "ppl_cooling_tech",
             f"power_plant_cooling_impact_MESSAGE_{context.regions}_{context.RCP}.csv",
         )
-        df_impact = pd.read_csv(file_name)
+        df_impact = pd.read_csv(file_path)
 
         for n in df_impact["node"]:
             conditions = [
@@ -408,6 +408,7 @@ def cool_tech(
         .drop(columns=1)
     )
 
+    scen = scenario or context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
