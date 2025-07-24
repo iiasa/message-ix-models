@@ -30,6 +30,117 @@ def get_weo_region_map(regions: str) -> Mapping[str, str]:
     return {n.id: str(n.get_annotation(id="iea-weo-region").text) for n in nodes}
 
 
+def get_weo_data_fast() -> pd.DataFrame:
+    """Read in raw WEO investment/capital costs and O&M costs data.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+
+        - cost_type: investment or fixed O&M cost
+        - weo_technology: WEO technology name
+        - weo_region: WEO region
+        - year: year
+        - value: cost value
+
+        Changes from get_weo_data:
+        This function opens the Excel file once using pd.ExcelFile,
+        reusing the file handle to read data from multiple sheets.
+        Reducing IO overhead from repeated file access.
+    """
+
+    # Dict of all technologies, their Excel sheet name, and the starting row
+    DICT_TECH_ROWS = {
+        "bioenergy_ccus": ["Renewables", 99],
+        "bioenergy_cofiring": ["Renewables", 79],
+        "bioenergy_large": ["Renewables", 69],
+        "bioenergy_medium_chp": ["Renewables", 89],
+        "ccgt": ["Gas", 9],
+        "ccgt_ccs": ["Fossil fuels equipped with CCUS", 29],
+        "ccgt_chp": ["Gas", 29],
+        "csp": ["Renewables", 109],
+        "fuel_cell": ["Gas", 39],
+        "gas_turbine": ["Gas", 19],
+        "geothermal": ["Renewables", 119],
+        "hydropower_large": ["Renewables", 49],
+        "hydropower_small": ["Renewables", 59],
+        "igcc": ["Coal", 39],
+        "igcc_ccs": ["Fossil fuels equipped with CCUS", 19],
+        "marine": ["Renewables", 129],
+        "nuclear": ["Nuclear", 9],
+        "pulverized_coal_ccs": ["Fossil fuels equipped with CCUS", 9],
+        "solarpv_buildings": ["Renewables", 19],
+        "solarpv_large": ["Renewables", 9],
+        "steam_coal_subcritical": ["Coal", 9],
+        "steam_coal_supercritical": ["Coal", 19],
+        "steam_coal_ultrasupercritical": ["Coal", 29],
+        "wind_offshore": ["Renewables", 39],
+        "wind_onshore": ["Renewables", 29],
+    }
+
+    # Dict of cost types to read and columns specification
+    DICT_COST_COLS = {"inv_cost": "A,B:D", "fix_cost": "A,F:H"}
+
+    # Set the file path for the raw IEA WEO cost data Excel file
+    file_path = package_data_path(
+        "iea", "WEO_2023_PG_Assumptions_STEPSandNZE_Scenario.xlsx"
+    )
+
+    # Retrieve conversion factor from 2022 USD to 2005 USD
+    conversion_factor = registry("1.0 USD_2022").to("USD_2005").magnitude
+
+    dfs_cost = []
+    # Open the Excel file once for all reads
+    with pd.ExcelFile(file_path) as xls:
+        # Loop over each technology and cost type combination
+        for tech_key, cost_key in product(DICT_TECH_ROWS, DICT_COST_COLS):
+            sheet_name, skiprow_val = DICT_TECH_ROWS[tech_key]
+            cols_range = DICT_COST_COLS[cost_key]
+            # Read data with na_values so "n.a." becomes NaN
+            df = (
+                pd.read_excel(
+                    xls,
+                    sheet_name=sheet_name,
+                    header=None,
+                    skiprows=skiprow_val,
+                    nrows=9,
+                    usecols=cols_range,
+                    na_values=["n.a."],
+                )
+                .set_axis(["weo_region", "2022", "2030", "2050"], axis=1)
+                .melt(id_vars=["weo_region"], var_name="year", value_name="value")
+                .assign(
+                    weo_technology=tech_key,
+                    cost_type=cost_key,
+                    units="usd_per_kw",
+                )
+                .reindex(
+                    [
+                        "cost_type",
+                        "weo_technology",
+                        "weo_region",
+                        "year",
+                        "units",
+                        "value",
+                    ],
+                    axis=1,
+                )
+                .assign(value=lambda x: x.value * conversion_factor)
+            )
+            dfs_cost.append(df)
+
+    # By setting ignore_index=True we create a clean, continuous RangeIndex
+    all_cost_df = pd.concat(dfs_cost, ignore_index=True)
+
+    # Replace missing values with the median cost per technology and cost type.
+    all_cost_df["value"] = all_cost_df.groupby(["weo_technology", "cost_type"])[
+        "value"
+    ].transform(lambda x: x.fillna(x.median()))
+
+    return all_cost_df
+
+
 def get_weo_data() -> pd.DataFrame:
     """Read in raw WEO investment/capital costs and O&M costs data.
 
@@ -440,7 +551,9 @@ def adjust_technology_mapping(module: "MODULE") -> pd.DataFrame:
         return module_all
 
 
-def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
+def get_weo_regional_differentiation(
+    config: "Config", flag_fast: bool = True,
+) -> pd.DataFrame:
     """Apply WEO regional differentiation.
 
     1. Retrieve WEO data using :func:`.get_weo_data`.
@@ -455,6 +568,8 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
         :attr:`~.Config.base_year`,
         :attr:`~.Config.node`, and
         :attr:`~.Config.ref_region`.
+    flag_fast : bool
+        If True calls :func:`.get_weo_data_fast`, otherwise calls :func:`.get_weo_data`.
 
     Returns
     -------
@@ -468,7 +583,10 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
     """
 
     # Grab WEO data and keep only investment costs
-    df_weo = get_weo_data()
+    if flag_fast:
+        df_weo = get_weo_data_fast()  # Using the faster version.
+    else:
+        df_weo = get_weo_data()
 
     # Even if config.base_year is greater than 2022, use 2022 WEO values
     sel_year = str(2022)
@@ -633,7 +751,10 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
     return df_reg_ratios
 
 
-def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
+def apply_regional_differentiation(
+    config: "Config",
+    flag_fast: bool = True,
+) -> pd.DataFrame:
     """Apply regional differentiation depending on mapping source.
 
     1. Retrieve an adjusted technology mapping from :func:`.adjust_technology_mapping`.
@@ -652,7 +773,10 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         :attr:`~.Config.module`,
         :attr:`~.Config.node`, and
         :attr:`~.Config.ref_region`.
-
+    flag_fast : bool
+        If True is passed to :func:`.get_weo_regional_differentiation`,
+        then :func:`.get_weo_data_fast` is called,
+        otherwise :func:`.get_weo_data` is called.
     Returns
     -------
     pandas.DataFrame
@@ -670,7 +794,8 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
     """
     df_map = adjust_technology_mapping(config.module)
     assert config.ref_region is not None
-    df_weo = get_weo_regional_differentiation(config)
+
+    df_weo = get_weo_regional_differentiation(config, flag_fast)
     df_intratec = get_intratec_regional_differentiation(config.node, config.ref_region)
 
     # Get mapping of technologies
