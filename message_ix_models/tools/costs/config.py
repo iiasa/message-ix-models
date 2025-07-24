@@ -1,7 +1,29 @@
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Literal, Optional
 
 from message_ix_models import ScenarioInfo
+
+
+class MODULE(Enum):
+    """Supported values for :attr:`.Config.module`."""
+
+    #: Mostly electric power technologies, as well as a few other supply-side
+    #: technologies.
+    #:
+    #: This can be considered the "base" module, corresponding to the "base"
+    #: version of MESSAGEix-GLOBIOM, as it contains the most technologies.
+    energy = auto()
+
+    #: Technologies conceived as part of the materials and industry sectors.
+    #: This member can be used with :mod:`message_ix_models.model.materials`.
+    materials = auto()
+
+    #: Cooling technologies for power plants.
+    cooling = auto()
+
+    #: Direct air capture.
+    dac = auto()
 
 
 @dataclass
@@ -20,14 +42,25 @@ class Config:
     #: then the costs are assumed to be the same from y0 to base_year.
     base_year: int = 2025
 
+    #: Year that cost reduction values are reached.
+    #: This year is used to apply the decay rate to the costs in the reference region.
+    reduction_year: int = 2100
+
+    #: Final projection year.
+    #: This is the year that costs for all regions are projected until.
+    #: If the final_projection_year is greater than the final_model_year,
+    #: then the costs are assumed to be the same from final_model_year until
+    #: the final_projection_year.
+    final_projection_year: int = 2100
+
+    #: Final model year. Note that the default is the same as the final
+    #: model year of 2110 commonly used in MESSAGEix-GLOBIOM (:doc:`/pkg-data/year`).
+    final_model_year: int = 2110
+
     #: Year of convergence; used when :attr:`.method` is "convergence". This is the year
     #: by which costs in all regions should converge to the reference region's costs.
     #: See :func:`.create_projections_converge`.
     convergence_year: int = 2050
-
-    #: Final year for projections. Note that the default is the same as the final
-    #: model year of 2110 commonly used in MESSAGEix-GLOBIOM (:doc:`/pkg-data/year`).
-    final_year: int = 2110
 
     #: Rate of exponential growth (positive values) or decrease of fixed operating and
     #: maintenance costs over time. The default of 0 implies no change over time.
@@ -52,8 +85,8 @@ class Config:
     #: - "gdp": uses :func:`.create_projections_gdp`.
     method: Literal["constant", "convergence", "gdp"] = "gdp"
 
-    #: Model variant for which to project costs.
-    module: Literal["energy", "materials", "cooling"] = "energy"
+    #: Model variant for which to project costs. A member of :class:`.MODULE`.
+    module: MODULE = MODULE.energy
 
     #: Use vintages.
     #:
@@ -109,10 +142,10 @@ class Config:
 
         This list of periods differs in that it:
 
-        1. Excludes periods after :attr:`.final_year`.
+        1. Excludes periods after :attr:`.final_model_year`.
         2. Includes 5-year periods even when these are not in :attr:`.Y`.
         """
-        return list(range(self.y0, self.final_year + 1, 5))
+        return list(range(self.y0, self.final_model_year + 1, 5))
 
     def check(self):
         """Validate settings."""
