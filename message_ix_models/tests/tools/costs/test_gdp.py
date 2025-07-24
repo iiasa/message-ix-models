@@ -2,7 +2,7 @@ import pytest
 from sdmx.model.common import Code
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.tools.costs import Config
+from message_ix_models.tools.costs import MODULE, Config
 from message_ix_models.tools.costs.gdp import (
     adjust_cost_ratios_with_gdp,
     process_raw_ssp_data,
@@ -55,8 +55,8 @@ def test_process_raw_ssp_data(test_context, node) -> None:
     assert scens == set(result.scenario.unique())
 
 
-@pytest.mark.parametrize("module", ("energy", "materials", "cooling"))
-def test_adjust_cost_ratios_with_gdp(test_context, module) -> None:
+@pytest.mark.parametrize("module", list(MODULE))
+def test_adjust_cost_ratios_with_gdp(test_context, module: MODULE) -> None:
     # Set parameters
     test_context.model.regions = "R12"
 

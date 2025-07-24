@@ -1,17 +1,16 @@
 import os
-from typing import Literal
 
 import numpy as np
 import pandas as pd
 
 from message_ix_models.util import package_data_path
 
-from .config import Config
+from .config import MODULE, Config
 from .regional_differentiation import get_raw_technology_mapping, subset_module_map
 
 
 def _get_module_scenarios_reduction(
-    module: Literal["energy", "materials", "cooling"],
+    module: "MODULE",
     energy_map_df: pd.DataFrame,
     tech_map_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -65,8 +64,8 @@ def _get_module_scenarios_reduction(
         .reset_index(drop=True)
     )
 
-    if module != "energy":
-        ffile = package_data_path("costs", module, "scenarios_reduction.csv")
+    if module != MODULE.energy:
+        ffile = package_data_path("costs", module.name, "scenarios_reduction.csv")
 
         # if file exists, read it
         # else, scenarios_joined is the same as scenarios_energy
@@ -156,11 +155,11 @@ def _get_module_scenarios_reduction(
             .reset_index(drop=True)
         )
 
-    return scenarios_all if module != "energy" else scenarios_energy
+    return scenarios_all if module != MODULE.energy else scenarios_energy
 
 
 def _get_module_cost_reduction(
-    module: Literal["energy", "materials", "cooling"],
+    module: "MODULE",
     energy_map_df: pd.DataFrame,
     tech_map_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -209,8 +208,8 @@ def _get_module_cost_reduction(
         .reset_index(drop=True)
     )
 
-    if module != "energy":
-        ffile = package_data_path("costs", module, "cost_reduction.csv")
+    if module != MODULE.energy:
+        ffile = package_data_path("costs", module.name, "cost_reduction.csv")
 
         if os.path.exists(ffile):
             reduction_module = pd.read_csv(ffile, comment="#")
@@ -289,18 +288,18 @@ def _get_module_cost_reduction(
             .reset_index(drop=True)
         )
 
-    return reduction_all if module != "energy" else reduction_energy
+    return reduction_all if module != MODULE.energy else reduction_energy
 
 
 # create function to get technology reduction scenarios data
 def get_technology_reduction_scenarios_data(
-    first_year: int, module: Literal["energy", "materials", "cooling"]
+    first_year: int, module: "MODULE"
 ) -> pd.DataFrame:
     # Get full list of technologies from mapping
-    tech_map = energy_map = get_raw_technology_mapping("energy")
+    tech_map = energy_map = get_raw_technology_mapping(MODULE.energy)
 
     # if module is not energy, run subset_module_map
-    if module != "energy":
+    if module != MODULE.energy:
         module_map = get_raw_technology_mapping(module)
         module_sub = subset_module_map(module_map)
 
@@ -364,11 +363,9 @@ def project_ref_region_inv_costs_using_reduction_rates(
     This function uses the cost reduction rates for each technology under each scenario
     to project the capital costs for each technology in the reference region.
 
-    The changing of costs is projected until the year 2100
-    (hard-coded in this function), which might not be the same
-    as :attr:`.Config.final_year` (:attr:`.Config.final_year` represents the final
-    projection year instead). 2100 is hard coded because the cost reduction values are
-    assumed to be reached by 2100.
+    The exponential decay is applied on the reference region until
+    :attr:`Config.reduction_year`: this is the year the cost reaches the reduction value
+    specified.
 
     The returned data have the list of periods given by :attr:`.Config.seq_years`.
 
@@ -401,16 +398,16 @@ def project_ref_region_inv_costs_using_reduction_rates(
     )
 
     # Filter for reference region, and merge with reduction scenarios and discount rates
-    # Calculate cost in reference region in 2100
+    # Calculate cost in reference region in :attr:`.Config.reduction_year`
     df_ref = (
         regional_diff_df.query("region == @config.ref_region")
         .merge(df_cost_reduction, on="message_technology")
         .assign(
-            cost_region_2100=lambda x: x.reg_cost_base_year
+            cost_region_reduc_year=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
-            b=lambda x: (1 - config.pre_last_year_rate) * x.cost_region_2100,
-            r=lambda x: (1 / (2100 - config.base_year))
-            * np.log((x.cost_region_2100 - x.b) / (x.reg_cost_base_year - x.b)),
+            b=lambda x: (1 - config.pre_last_year_rate) * x.cost_region_reduc_year,
+            r=lambda x: (1 / (config.reduction_year - config.base_year))
+            * np.log((x.cost_region_reduc_year - x.b) / (x.reg_cost_base_year - x.b)),
             reference_region=config.ref_region,
         )
     )
@@ -439,7 +436,7 @@ def project_ref_region_inv_costs_using_reduction_rates(
                 "fix_ratio",
                 "reduction_rate",
                 "cost_reduction",
-                "cost_region_2100",
+                "cost_region_reduc_year",
             ]
         )
         .melt(
