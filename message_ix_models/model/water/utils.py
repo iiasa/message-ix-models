@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from warnings import warn
 
 import pandas as pd
@@ -16,6 +16,8 @@ from message_ix_models.util import load_package_data
 
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from message_ix_models import ScenarioInfo
 # Configuration files
 METADATA = [
     # Information about MESSAGE-water
@@ -144,7 +146,7 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
 
 
 def get_vintage_and_active_years(
-    info, technical_lifetime: Optional[int] = None
+    info: Optional["ScenarioInfo"], technical_lifetime: Optional[int] = None
 ) -> pd.DataFrame:
     """Calculate valid vintage-activity year combinations without scenario dependency.
 

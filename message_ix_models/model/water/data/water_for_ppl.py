@@ -1,7 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import logging
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,8 @@ from message_ix_models.util import (
     same_node,
 )
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
 log = logging.getLogger(__name__)
 
 
@@ -335,7 +337,9 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
 
 
 # water & electricity for cooling technologies
-def cool_tech(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
+def cool_tech(
+    context: "Context", scenario: Optional["Scenario"] = None
+) -> dict[str, pd.DataFrame]:
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and
     then cooling fractions are calculated by using the data from
@@ -404,7 +408,6 @@ def cool_tech(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
         .drop(columns=1)
     )
 
-    scen = scenario if scenario is not None else context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
