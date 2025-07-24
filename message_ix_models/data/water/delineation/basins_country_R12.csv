@@ -1,0 +1,792 @@
+FID,Shape *,FID_basins,NAME,BASIN,REGION,BASIN_ID,area,area_km2,BCU_name,FID_gadm_c,ISO,NAME_1,REGION_1,STATUS,CONTINENT
+1,Polygon,2,Africa Indian Ocean Coast - AFR,Africa Indian Ocean Coast,AFR,2,21.127409156691915,243899.94398005688,2|AFR,ZWE,ZWE,Zimbabwe,Sub-Saharan Africa,DEV,Africa
+2,Polygon,6,Africa South Interior - AFR,Africa South Interior,AFR,6,74.3232435534603,863903.1446777217,6|AFR,ZWE,ZWE,Zimbabwe,Sub-Saharan Africa,DEV,Africa
+3,Polygon,13,Limpopo - AFR,Limpopo,AFR,80,36.34079495461681,411537.1498300887,80|AFR,ZWE,ZWE,Zimbabwe,Sub-Saharan Africa,DEV,Africa
+4,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,ZWE,ZWE,Zimbabwe,Sub-Saharan Africa,DEV,Africa
+5,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,ZMB,ZMB,Zambia,Sub-Saharan Africa,DEV,Africa
+6,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,ZMB,ZMB,Zambia,Sub-Saharan Africa,DEV,Africa
+7,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,ZMB,ZMB,Zambia,Sub-Saharan Africa,DEV,Africa
+8,Polygon,107,Africa Red Sea Gulf of Aden Coast - MEA,Africa Red Sea Gulf of Aden Coast,MEA,5,14.678437749228525,167545.99551594775,5|MEA,YEM,YEM,Yemen,Middle East & North Africa,DEV,Asia
+9,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,YEM,YEM,Yemen,Middle East & North Africa,DEV,Asia
+10,Polygon,120,Red Sea East Coast - MEA,Red Sea East Coast,MEA,120,47.703059326677455,550363.1853376139,120|MEA,YEM,YEM,Yemen,Middle East & North Africa,DEV,Asia
+11,Polygon,31,Hong Red River Xun Jiang South China Sea Coast - CHN,Hong Red River Xun Jiang South China Sea Coast,CHN,61,57.90535253640604,652476.224748953,61|CHN,VNM,VNM,Vietnam,East Asia & Pacific,DEV,Asia
+12,Polygon,172,Gulf of Thailand Coast Chao Phraya - RCPA,Gulf of Thailand Coast Chao Phraya,RCPA,59,3.351612549669,40579.35042899874,59|RCPA,VNM,VNM,Vietnam,East Asia & Pacific,DEV,Asia
+13,Polygon,173,Hong Red River Xun Jiang South China Sea Coast - RCPA,Hong Red River Xun Jiang South China Sea Coast,RCPA,61,9.37996784724748,107416.71196219622,61|RCPA,VNM,VNM,Vietnam,East Asia & Pacific,DEV,Asia
+14,Polygon,174,Mekong - RCPA,Mekong,RCPA,88,33.69474313758784,398868.3923815746,88|RCPA,VNM,VNM,Vietnam,East Asia & Pacific,DEV,Asia
+15,Polygon,178,Vietnam Coast - RCPA,Vietnam Coast,RCPA,156,16.232335815085708,192503.28043515823,156|RCPA,VNM,VNM,Vietnam,East Asia & Pacific,DEV,Asia
+16,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,VEN,VEN,Venezuela,Latin America & Caribbean,DEV,South America
+17,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,VEN,VEN,Venezuela,Latin America & Caribbean,DEV,South America
+18,Polygon,87,Magdalena - LAM,Magdalena,LAM,83,21.239101783076773,259630.15952138742,83|LAM,VEN,VEN,Venezuela,Latin America & Caribbean,DEV,South America
+19,Polygon,93,North East South America South Atlantic Coast - LAM,North East South America South Atlantic Coast,LAM,101,45.73082338113158,561056.7849104935,101|LAM,VEN,VEN,Venezuela,Latin America & Caribbean,DEV,South America
+20,Polygon,94,Orinoco - LAM,Orinoco,LAM,108,76.57332768236944,937394.0817955564,108|LAM,VEN,VEN,Venezuela,Latin America & Caribbean,DEV,South America
+21,Polygon,216,Tiber Italy West Coast - WEU,Tiber Italy West Coast,WEU,150,9.348377359549648,86241.06006968739,150|WEU,VAT,VAT,Vatican,Europe & Central Asia,DEV,Europe
+22,Polygon,166,South Pacific Islands - PAS,South Pacific Islands,PAS,140,4.262596323276906,49768.692118861014,140|PAS,VUT,VUT,Vanuatu,East Asia & Pacific,DEV,Oceania
+23,Polygon,48,Amu Darya - FSU,Amu Darya,FSU,10,68.68353479991787,638880.5263726851,10|FSU,UZB,UZB,Uzbekistan,Europe & Central Asia,IND,Asia
+24,Polygon,54,Caspian Sea East Coast - FSU,Caspian Sea East Coast,FSU,30,55.501673742285675,526071.7824260985,30|FSU,UZB,UZB,Uzbekistan,Europe & Central Asia,IND,Asia
+25,Polygon,72,Syr Darya - FSU,Syr Darya,FSU,146,120.16918994094857,1039645.465755588,146|FSU,UZB,UZB,Uzbekistan,Europe & Central Asia,IND,Asia
+26,Polygon,74,Ural Caspian Sea Coast - FSU,Ural Caspian Sea Coast,FSU,154,89.87672613136752,735674.661623416,154|FSU,UZB,UZB,Uzbekistan,Europe & Central Asia,IND,Asia
+27,Polygon,180,Amu Darya - SAS,Amu Darya,SAS,10,16.751898553072152,166771.46410916265,10|SAS,UZB,UZB,Uzbekistan,Europe & Central Asia,IND,Asia
+28,Polygon,104,Uruguay Brazil South Atlantic Coast - LAM,Uruguay Brazil South Atlantic Coast,LAM,155,107.98182095367942,1207199.919546795,155|LAM,URY,URY,Uruguay,Latin America & Caribbean,DEV,South America
+29,Polygon,125,Caribbean - NAM,Caribbean,NAM,28,0.767455212300491,8984.762469718295,28|NAM,PRI,PRI,Puerto Rico,Latin America & Caribbean,IND,North America
+30,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,USA,USA,United States of America,North America,IND,North America
+31,Polygon,90,North America Colorado - LAM,North America Colorado,LAM,97,1.372506348868123,14421.202581607597,97|LAM,USA,USA,United States of America,North America,IND,North America
+32,Polygon,98,Rio Grande Mexico Interior - LAM,Rio Grande Mexico Interior,LAM,122,45.98924971767912,503787.7982543426,122|LAM,USA,USA,United States of America,North America,IND,North America
+33,Polygon,123,Atlantic Ocean Seaboard - NAM,Atlantic Ocean Seaboard,NAM,17,89.9637413068996,700660.987058833,17|NAM,USA,USA,United States of America,North America,IND,North America
+34,Polygon,124,California - NAM,California,NAM,27,29.854729437360465,289651.6981565033,27|NAM,USA,USA,United States of America,North America,IND,North America
+35,Polygon,126,Central America Pacific Coast - NAM,Central America Pacific Coast,NAM,33,1.682305118298492,17340.475049671913,33|NAM,USA,USA,United States of America,North America,IND,North America
+36,Polygon,127,Columbia - NAM,Columbia,NAM,36,78.29819226479269,671067.4016154135,36|NAM,USA,USA,United States of America,North America,IND,North America
+37,Polygon,128,Fraser Pacific Arctic Coast - NAM,Fraser Pacific Arctic Coast,NAM,52,90.40076968152219,664913.1660413307,52|NAM,USA,USA,United States of America,North America,IND,North America
+38,Polygon,129,Great Basin - NAM,Great Basin,NAM,55,54.51303678172225,521495.8765293278,55|NAM,USA,USA,United States of America,North America,IND,North America
+39,Polygon,130,Gulf Coast - NAM,Gulf Coast,NAM,56,43.91553698813561,464467.43925699464,56|NAM,USA,USA,United States of America,North America,IND,North America
+40,Polygon,131,Gulf of Mexico North Atlantic Coast - NAM,Gulf of Mexico North Atlantic Coast,NAM,58,68.36362492402029,711651.869282991,58|NAM,USA,USA,United States of America,North America,IND,North America
+41,Polygon,134,Mississippi Missouri - NAM,Mississippi Missouri,NAM,90,351.6451592890299,3289922.3185052755,90|NAM,USA,USA,United States of America,North America,IND,North America
+42,Polygon,135,North America Colorado - NAM,North America Colorado,NAM,97,65.19678011693814,646780.2492910315,97|NAM,USA,USA,United States of America,North America,IND,North America
+43,Polygon,137,Northwestern United States - NAM,Northwestern United States,NAM,104,5.001264741008182,44964.90453601636,104|NAM,USA,USA,United States of America,North America,IND,North America
+44,Polygon,138,Pacific and Arctic Coast - NAM,Pacific and Arctic Coast,NAM,109,339.63182645803454,1826035.9259550057,109|NAM,USA,USA,United States of America,North America,IND,North America
+45,Polygon,139,Rio Grande Mexico Interior - NAM,Rio Grande Mexico Interior,NAM,122,33.17142797104994,343985.0166736573,122|NAM,USA,USA,United States of America,North America,IND,North America
+46,Polygon,140,Saskatchewan Nelson - NAM,Saskatchewan Nelson,NAM,126,143.52338042581562,1110630.5238920946,126|NAM,USA,USA,United States of America,North America,IND,North America
+47,Polygon,141,Siberia West Coast - NAM,Siberia West Coast,NAM,132,0.280137249394989,2123.638195544134,132|NAM,USA,USA,United States of America,North America,IND,North America
+48,Polygon,142,St. Lawrence - NAM,St. Lawrence,NAM,142,151.0332460002365,1288105.3897925103,142|NAM,USA,USA,United States of America,North America,IND,North America
+49,Polygon,143,United States North Atlantic Coast - NAM,United States North Atlantic Coast,NAM,153,42.72391034441159,394964.4570593727,153|NAM,USA,USA,United States of America,North America,IND,North America
+50,Polygon,205,England Wales Scotland - WEU,England Wales Scotland,WEU,49,31.515989357900203,229392.17389756607,49|WEU,GBR,GBR,United Kingdom,Europe & Central Asia,IND,Europe
+51,Polygon,208,Ireland - WEU,Ireland,WEU,68,11.400366118469977,84328.96916832874,68|WEU,GBR,GBR,United Kingdom,Europe & Central Asia,IND,Europe
+52,Polygon,214,Scotland - WEU,Scotland,WEU,128,0.225422729512069,1385.1700249374858,128|WEU,GBR,GBR,United Kingdom,Europe & Central Asia,IND,Europe
+53,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,ARE,ARE,United Arab Emirates,Middle East & North Africa,DEV,Asia
+54,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+55,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+56,Polygon,52,Black Sea North Coast - FSU,Black Sea North Coast,FSU,25,20.76260874476507,179779.6387820745,25|FSU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+57,Polygon,56,Danube - FSU,Danube,FSU,39,4.985219519909879,41684.99327573005,39|FSU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+58,Polygon,57,Dnieper - FSU,Dnieper,FSU,42,66.00332397427857,511732.4635047262,42|FSU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+59,Polygon,58,Dniester Black Sea North Coast - FSU,Dniester Black Sea North Coast,FSU,43,19.702991012211534,162723.20548749357,43|FSU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+60,Polygon,59,Don - FSU,Don,FSU,44,54.94465590103716,439083.78651657776,44|FSU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+61,Polygon,67,Oder Wisla Neman Daugava Neva Poland Baltic Coast - FSU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,FSU,106,27.282915620009476,192354.07159521506,106|FSU,UKR,UKR,Ukraine,Europe & Central Asia,IND,Europe
+62,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,UGA,UGA,Uganda,Sub-Saharan Africa,DEV,Africa
+63,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,UGA,UGA,Uganda,Sub-Saharan Africa,DEV,Africa
+64,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,UGA,UGA,Uganda,Sub-Saharan Africa,DEV,Africa
+65,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,UGA,UGA,Uganda,Sub-Saharan Africa,DEV,Africa
+66,Polygon,48,Amu Darya - FSU,Amu Darya,FSU,10,68.68353479991787,638880.5263726851,10|FSU,TKM,TKM,Turkmenistan,Europe & Central Asia,IND,Asia
+67,Polygon,54,Caspian Sea East Coast - FSU,Caspian Sea East Coast,FSU,30,55.501673742285675,526071.7824260985,30|FSU,TKM,TKM,Turkmenistan,Europe & Central Asia,IND,Asia
+68,Polygon,74,Ural Caspian Sea Coast - FSU,Ural Caspian Sea Coast,FSU,154,89.87672613136752,735674.661623416,154|FSU,TKM,TKM,Turkmenistan,Europe & Central Asia,IND,Asia
+69,Polygon,109,Caspian Sea East Coast - MEA,Caspian Sea East Coast,MEA,30,8.55976926111568,84809.68473172544,30|MEA,TKM,TKM,Turkmenistan,Europe & Central Asia,IND,Asia
+70,Polygon,180,Amu Darya - SAS,Amu Darya,SAS,10,16.751898553072152,166771.46410916265,10|SAS,TKM,TKM,Turkmenistan,Europe & Central Asia,IND,Asia
+71,Polygon,184,Caspian Sea East Coast - SAS,Caspian Sea East Coast,SAS,30,7.645296728597311,77637.22562489343,30|SAS,TKM,TKM,Turkmenistan,Europe & Central Asia,IND,Asia
+72,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+73,Polygon,53,Black Sea South Coast - FSU,Black Sea South Coast,FSU,26,3.495403618109783,31889.12218075679,26|FSU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+74,Polygon,55,Caspian Sea South West Coast - FSU,Caspian Sea South West Coast,FSU,31,37.2783475929987,338417.4708688273,31|FSU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+75,Polygon,110,Caspian Sea South West Coast - MEA,Caspian Sea South West Coast,MEA,31,18.78597808660579,184854.9447968922,31|MEA,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+76,Polygon,115,Mediterranean Sea East Coast - MEA,Mediterranean Sea East Coast,MEA,85,9.743627418639685,100961.05251973044,85|MEA,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+77,Polygon,122,Tigris Euphrates - MEA,Tigris Euphrates,MEA,151,71.9904366697333,743265.0065150171,151|MEA,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+78,Polygon,195,Adriatic Sea Greece Black Sea Coast - WEU,Adriatic Sea Greece Black Sea Coast,WEU,0,16.60253595173674,158496.72388643833,0|WEU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+79,Polygon,198,Black Sea South Coast - WEU,Black Sea South Coast,WEU,26,33.524089571662536,318478.0286105785,26|WEU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+80,Polygon,199,Caspian Sea South West Coast - WEU,Caspian Sea South West Coast,WEU,31,3.120157856849799,29506.316205280476,31|WEU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+81,Polygon,209,Mediterranean Sea East Coast - WEU,Mediterranean Sea East Coast,WEU,85,23.180504996784194,226174.47502532662,85|WEU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+82,Polygon,217,Tigris Euphrates - WEU,Tigris Euphrates,WEU,151,19.815583041053088,192100.93829124977,151|WEU,TUR,TUR,Turkey,Europe & Central Asia,IND,Asia
+83,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,TUN,TUN,Tunisia,Middle East & North Africa,DEV,Africa
+84,Polygon,116,Mediterranean South Coast - MEA,Mediterranean South Coast,MEA,87,54.23960870743565,560667.7955834967,87|MEA,TUN,TUN,Tunisia,Middle East & North Africa,DEV,Africa
+85,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,TTO,TTO,Trinidad and Tobago,Latin America & Caribbean,DEV,North America
+86,Polygon,8,Africa West Coast - AFR,Africa West Coast,AFR,8,16.012711824888612,195431.2885936325,8|AFR,TGO,TGO,Togo,Sub-Saharan Africa,DEV,Africa
+87,Polygon,24,Volta - AFR,Volta,AFR,158,33.95887497869898,410999.8014495135,158|AFR,TGO,TGO,Togo,Sub-Saharan Africa,DEV,Africa
+88,Polygon,157,Java Timor - PAS,Java Timor,PAS,72,18.73742701109972,228450.78458108645,72|PAS,TLS,TLS,Timor-Leste,East Asia & Pacific,DEV,Asia
+89,Polygon,154,Gulf of Thailand Coast Chao Phraya - PAS,Gulf of Thailand Coast Chao Phraya,PAS,59,16.33128056374787,193025.5587213427,59|PAS,THA,THA,Thailand,East Asia & Pacific,DEV,Asia
+90,Polygon,156,Irrawaddy Salween Sittang - PAS,Irrawaddy Salween Sittang,PAS,70,49.82783975429173,570205.7701780156,70|PAS,THA,THA,Thailand,East Asia & Pacific,DEV,Asia
+91,Polygon,159,Mekong - PAS,Mekong,PAS,88,17.780186988703306,209514.6665258658,88|PAS,THA,THA,Thailand,East Asia & Pacific,DEV,Asia
+92,Polygon,163,Peninsula Malaysia - PAS,Peninsula Malaysia,PAS,114,23.561498263515627,286680.3449084802,114|PAS,THA,THA,Thailand,East Asia & Pacific,DEV,Asia
+93,Polygon,172,Gulf of Thailand Coast Chao Phraya - RCPA,Gulf of Thailand Coast Chao Phraya,RCPA,59,3.351612549669,40579.35042899874,59|RCPA,THA,THA,Thailand,East Asia & Pacific,DEV,Asia
+94,Polygon,174,Mekong - RCPA,Mekong,RCPA,88,33.69474313758784,398868.3923815746,88|RCPA,THA,THA,Thailand,East Asia & Pacific,DEV,Asia
+95,Polygon,1,Africa East Central Coast - AFR,Africa East Central Coast,AFR,1,85.6407192708847,1037883.5745720636,1|AFR,TZA,TZA,Tanzania,Sub-Saharan Africa,DEV,Africa
+96,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,TZA,TZA,Tanzania,Sub-Saharan Africa,DEV,Africa
+97,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,TZA,TZA,Tanzania,Sub-Saharan Africa,DEV,Africa
+98,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,TZA,TZA,Tanzania,Sub-Saharan Africa,DEV,Africa
+99,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,TZA,TZA,Tanzania,Sub-Saharan Africa,DEV,Africa
+100,Polygon,41,Tarim Interior - CHN,Tarim Interior,CHN,148,163.25284706506787,1583765.9001210358,148|CHN,TJK,TJK,Tajikistan,Europe & Central Asia,IND,Asia
+101,Polygon,48,Amu Darya - FSU,Amu Darya,FSU,10,68.68353479991787,638880.5263726851,10|FSU,TJK,TJK,Tajikistan,Europe & Central Asia,IND,Asia
+102,Polygon,72,Syr Darya - FSU,Syr Darya,FSU,146,120.16918994094857,1039645.465755588,146|FSU,TJK,TJK,Tajikistan,Europe & Central Asia,IND,Asia
+103,Polygon,73,Tarim Interior - FSU,Tarim Interior,FSU,148,2.808148187792624,26139.25468090895,148|FSU,TJK,TJK,Tajikistan,Europe & Central Asia,IND,Asia
+104,Polygon,180,Amu Darya - SAS,Amu Darya,SAS,10,16.751898553072152,166771.46410916265,10|SAS,TJK,TJK,Tajikistan,Europe & Central Asia,IND,Asia
+105,Polygon,31,Hong Red River Xun Jiang South China Sea Coast - CHN,Hong Red River Xun Jiang South China Sea Coast,CHN,61,57.90535253640604,652476.224748953,61|CHN,CHN,TWN,Taiwan,East Asia & Pacific,DEV,Asia
+106,Polygon,169,Taiwan - PAS,Taiwan,PAS,147,3.210938585805416,36252.1186648962,147|PAS,CHN,TWN,Taiwan,East Asia & Pacific,DEV,Asia
+107,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,SYR,SYR,Syria,Middle East & North Africa,DEV,Asia
+108,Polygon,115,Mediterranean Sea East Coast - MEA,Mediterranean Sea East Coast,MEA,85,9.743627418639685,100961.05251973044,85|MEA,SYR,SYR,Syria,Middle East & North Africa,DEV,Asia
+109,Polygon,122,Tigris Euphrates - MEA,Tigris Euphrates,MEA,151,71.9904366697333,743265.0065150171,151|MEA,SYR,SYR,Syria,Middle East & North Africa,DEV,Asia
+110,Polygon,209,Mediterranean Sea East Coast - WEU,Mediterranean Sea East Coast,WEU,85,23.180504996784194,226174.47502532662,85|WEU,SYR,SYR,Syria,Middle East & North Africa,DEV,Asia
+111,Polygon,217,Tigris Euphrates - WEU,Tigris Euphrates,WEU,151,19.815583041053088,192100.93829124977,151|WEU,SYR,SYR,Syria,Middle East & North Africa,DEV,Asia
+112,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,CHE,CHE,Switzerland,Europe & Central Asia,IND,Europe
+113,Polygon,203,Ebro Spain France South Coast Rhone - WEU,Ebro Spain France South Coast Rhone,WEU,47,34.01331777428787,310081.8671132164,47|WEU,CHE,CHE,Switzerland,Europe & Central Asia,IND,Europe
+114,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,CHE,CHE,Switzerland,Europe & Central Asia,IND,Europe
+115,Polygon,212,Po Italy East Coast - WEU,Po Italy East Coast,WEU,119,18.81465140607543,166467.62583825123,119|WEU,CHE,CHE,Switzerland,Europe & Central Asia,IND,Europe
+116,Polygon,213,Scandinavia North Coast - WEU,Scandinavia North Coast,WEU,127,64.14392123970059,337093.24878528743,127|WEU,SWE,SWE,Sweden,Europe & Central Asia,IND,Europe
+117,Polygon,215,Sweden - WEU,Sweden,WEU,145,84.6997755992802,478577.1064309129,145|WEU,SWE,SWE,Sweden,Europe & Central Asia,IND,Europe
+118,Polygon,22,South Africa South Coast - AFR,South Africa South Coast,AFR,135,37.83963733963217,402570.38664923277,135|AFR,SWZ,SWZ,eSwatini,Sub-Saharan Africa,DEV,Africa
+119,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,SUR,SUR,Suriname,Latin America & Caribbean,DEV,South America
+120,Polygon,93,North East South America South Atlantic Coast - LAM,North East South America South Atlantic Coast,LAM,101,45.73082338113158,561056.7849104935,101|LAM,SUR,SUR,Suriname,Latin America & Caribbean,DEV,South America
+121,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,SDS,SSD,S. Sudan,Sub-Saharan Africa,DEV,Africa
+122,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,SDS,SSD,S. Sudan,Sub-Saharan Africa,DEV,Africa
+123,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,SDS,SSD,S. Sudan,Sub-Saharan Africa,DEV,Africa
+124,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,SDS,SSD,S. Sudan,Sub-Saharan Africa,DEV,Africa
+125,Polygon,121,Rift Valley - MEA,Rift Valley,MEA,121,1.254356411295263,15379.060317334566,121|MEA,SDS,SSD,S. Sudan,Sub-Saharan Africa,DEV,Africa
+126,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+127,Polygon,5,Africa Red Sea Gulf of Aden Coast - AFR,Africa Red Sea Gulf of Aden Coast,AFR,5,48.30444146796704,585874.3540925055,5|AFR,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+128,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+129,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+130,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+131,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+132,Polygon,107,Africa Red Sea Gulf of Aden Coast - MEA,Africa Red Sea Gulf of Aden Coast,MEA,5,14.678437749228525,167545.99551594775,5|MEA,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+133,Polygon,114,Lake Chad - MEA,Lake Chad,MEA,78,18.686602748362844,217453.42130273048,78|MEA,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+134,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,SDN,SDN,Sudan,Sub-Saharan Africa,DEV,Africa
+135,Polygon,193,Sri Lanka - SAS,Sri Lanka,SAS,141,5.399827375600596,65886.88182647502,141|SAS,LKA,LKA,Sri Lanka,South Asia,DEV,Asia
+136,Polygon,196,Africa North West Coast - WEU,Africa North West Coast,WEU,4,0.772579756796993,8357.748718836145,4|WEU,ESP,ESP,Spain,Europe & Central Asia,DEV,Europe
+137,Polygon,202,Douro Guadalquivir Tagus Guadiana Spain Portugal Atlantic Coast - WEU,Douro Guadalquivir Tagus Guadiana Spain Portugal Atlantic Coast,WEU,45,42.39939371376987,400725.2153682855,45|WEU,ESP,ESP,Spain,Europe & Central Asia,DEV,Europe
+138,Polygon,203,Ebro Spain France South Coast Rhone - WEU,Ebro Spain France South Coast Rhone,WEU,47,34.01331777428787,310081.8671132164,47|WEU,ESP,ESP,Spain,Europe & Central Asia,DEV,Europe
+139,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,ESP,ESP,Spain,Europe & Central Asia,DEV,Europe
+140,Polygon,210,Mediterranean Sea Islands - WEU,Mediterranean Sea Islands,WEU,86,6.679176136551111,63898.67467652541,86|WEU,ESP,ESP,Spain,Europe & Central Asia,DEV,Europe
+141,Polygon,160,North and South Korea Bo Hai Korean Bay North Coast - PAS,North and South Korea Bo Hai Korean Bay North Coast,PAS,98,10.024390471006885,99821.55577707561,98|PAS,KOR,KOR,South Korea,East Asia & Pacific,DEV,Asia
+142,Polygon,175,North and South Korea Bo Hai Korean Bay North Coast - RCPA,North and South Korea Bo Hai Korean Bay North Coast,RCPA,98,11.099145075490723,105478.34986691692,98|RCPA,KOR,KOR,South Korea,East Asia & Pacific,DEV,Asia
+143,Polygon,13,Limpopo - AFR,Limpopo,AFR,80,36.34079495461681,411537.1498300887,80|AFR,ZAF,ZAF,South Africa,Sub-Saharan Africa,DEV,Africa
+144,Polygon,18,Orange - AFR,Orange,AFR,107,89.09282947689191,975683.0276715701,107|AFR,ZAF,ZAF,South Africa,Sub-Saharan Africa,DEV,Africa
+145,Polygon,22,South Africa South Coast - AFR,South Africa South Coast,AFR,135,37.83963733963217,402570.38664923277,135|AFR,ZAF,ZAF,South Africa,Sub-Saharan Africa,DEV,Africa
+146,Polygon,23,South Africa West Coast - AFR,South Africa West Coast,AFR,136,10.546935747516766,110964.50662182875,136|AFR,ZAF,ZAF,South Africa,Sub-Saharan Africa,DEV,Africa
+147,Polygon,1,Africa East Central Coast - AFR,Africa East Central Coast,AFR,1,85.6407192708847,1037883.5745720636,1|AFR,SOM,SOM,Somalia,Sub-Saharan Africa,DEV,Africa
+148,Polygon,5,Africa Red Sea Gulf of Aden Coast - AFR,Africa Red Sea Gulf of Aden Coast,AFR,5,48.30444146796704,585874.3540925055,5|AFR,SOM,SOM,Somalia,Sub-Saharan Africa,DEV,Africa
+149,Polygon,21,Shebelli Juba - AFR,Shebelli Juba,AFR,130,64.76107681175364,794436.5452259014,130|AFR,SOM,SOM,Somalia,Sub-Saharan Africa,DEV,Africa
+150,Polygon,5,Africa Red Sea Gulf of Aden Coast - AFR,Africa Red Sea Gulf of Aden Coast,AFR,5,48.30444146796704,585874.3540925055,5|AFR,SOM,-99,Somaliland,Sub-Saharan Africa,DEV,Africa
+151,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,SOM,-99,Somaliland,Sub-Saharan Africa,DEV,Africa
+152,Polygon,165,Solomon Islands - PAS,Solomon Islands,PAS,133,2.999314697019439,36542.97134130001,133|PAS,SLB,SLB,Solomon Is.,East Asia & Pacific,DEV,Oceania
+153,Polygon,166,South Pacific Islands - PAS,South Pacific Islands,PAS,140,4.262596323276906,49768.692118861014,140|PAS,SLB,SLB,Solomon Is.,East Asia & Pacific,DEV,Oceania
+154,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,SVK,SVK,Slovakia,Europe & Central Asia,IND,Europe
+155,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,SVK,SVK,Slovakia,Europe & Central Asia,IND,Europe
+156,Polygon,56,Danube - FSU,Danube,FSU,39,4.985219519909879,41684.99327573005,39|FSU,SVK,SVK,Slovakia,Europe & Central Asia,IND,Europe
+157,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,SVK,SVK,Slovakia,Europe & Central Asia,IND,Europe
+158,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,SVN,SVN,Slovenia,Europe & Central Asia,IND,Europe
+159,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,SVN,SVN,Slovenia,Europe & Central Asia,IND,Europe
+160,Polygon,195,Adriatic Sea Greece Black Sea Coast - WEU,Adriatic Sea Greece Black Sea Coast,WEU,0,16.60253595173674,158496.72388643833,0|WEU,SVN,SVN,Slovenia,Europe & Central Asia,IND,Europe
+161,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,SVN,SVN,Slovenia,Europe & Central Asia,IND,Europe
+162,Polygon,212,Po Italy East Coast - WEU,Po Italy East Coast,WEU,119,18.81465140607543,166467.62583825123,119|WEU,SVN,SVN,Slovenia,Europe & Central Asia,IND,Europe
+163,Polygon,163,Peninsula Malaysia - PAS,Peninsula Malaysia,PAS,114,23.561498263515627,286680.3449084802,114|PAS,SGP,SGP,Singapore,East Asia & Pacific,DEV,Asia
+164,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,SLE,SLE,Sierra Leone,Sub-Saharan Africa,DEV,Africa
+165,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,SLE,SLE,Sierra Leone,Sub-Saharan Africa,DEV,Africa
+166,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,SRB,SRB,Serbia,Europe & Central Asia,IND,Europe
+167,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,SRB,SRB,Serbia,Europe & Central Asia,IND,Europe
+168,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,SEN,SEN,Senegal,Sub-Saharan Africa,DEV,Africa
+169,Polygon,20,Senegal - AFR,Senegal,AFR,129,38.37705064151855,456381.4087555905,129|AFR,SEN,SEN,Senegal,Sub-Saharan Africa,DEV,Africa
+170,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,SAU,SAU,Saudi Arabia,Middle East & North Africa,DEV,Asia
+171,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,SAU,SAU,Saudi Arabia,Middle East & North Africa,DEV,Asia
+172,Polygon,120,Red Sea East Coast - MEA,Red Sea East Coast,MEA,120,47.703059326677455,550363.1853376139,120|MEA,SAU,SAU,Saudi Arabia,Middle East & North Africa,DEV,Asia
+173,Polygon,122,Tigris Euphrates - MEA,Tigris Euphrates,MEA,151,71.9904366697333,743265.0065150171,151|MEA,SAU,SAU,Saudi Arabia,Middle East & North Africa,DEV,Asia
+174,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,STP,STP,São Tomé and Principe,Sub-Saharan Africa,DEV,Africa
+175,Polygon,212,Po Italy East Coast - WEU,Po Italy East Coast,WEU,119,18.81465140607543,166467.62583825123,119|WEU,SMR,SMR,San Marino,Europe & Central Asia,DEV,Europe
+176,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,VCT,VCT,St. Vin. and Gren.,Latin America & Caribbean,DEV,North America
+177,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,LCA,LCA,Saint Lucia,Latin America & Caribbean,DEV,North America
+178,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,RWA,RWA,Rwanda,Sub-Saharan Africa,DEV,Africa
+179,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,RWA,RWA,Rwanda,Sub-Saharan Africa,DEV,Africa
+180,Polygon,26,Amur - CHN,Amur,CHN,11,118.19517643682484,988839.3512508192,11|CHN,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+181,Polygon,29,Gobi Interior - CHN,Gobi Interior,CHN,54,96.4139399982324,876111.6962527168,54|CHN,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+182,Polygon,38,Ob - CHN,Ob,CHN,105,10.562941798527733,88732.82560352756,105|CHN,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+183,Polygon,40,Russia South East Coast - CHN,Russia South East Coast,CHN,123,3.643120138990455,32831.968009330085,123|CHN,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+184,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+185,Polygon,49,Amur - FSU,Amur,FSU,11,129.3266297217521,1005837.9357993124,11|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+186,Polygon,50,Arctic Ocean Islands - FSU,Arctic Ocean Islands,FSU,16,30.917560395601182,95059.08915085284,16|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+187,Polygon,51,Barents Sea Coast Northern Dvina - FSU,Barents Sea Coast Northern Dvina,FSU,23,184.3566894134257,989905.0014263876,23|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+188,Polygon,52,Black Sea North Coast - FSU,Black Sea North Coast,FSU,25,20.76260874476507,179779.6387820745,25|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+189,Polygon,53,Black Sea South Coast - FSU,Black Sea South Coast,FSU,26,3.495403618109783,31889.12218075679,26|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+190,Polygon,55,Caspian Sea South West Coast - FSU,Caspian Sea South West Coast,FSU,31,37.2783475929987,338417.4708688273,31|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+191,Polygon,57,Dnieper - FSU,Dnieper,FSU,42,66.00332397427857,511732.4635047262,42|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+192,Polygon,59,Don - FSU,Don,FSU,44,54.94465590103716,439083.78651657776,44|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+193,Polygon,60,Finland Neva - FSU,Finland Neva,FSU,51,38.109112303155314,234082.1353865948,51|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+194,Polygon,61,Gobi Interior - FSU,Gobi Interior,FSU,54,3.151819638879765,24993.793669123337,54|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+195,Polygon,62,Japan - FSU,Japan,FSU,71,0.745367978910006,6531.473637265108,71|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+196,Polygon,63,Kara Sea Coast - FSU,Kara Sea Coast,FSU,74,142.4296577402462,672080.0171170192,74|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+197,Polygon,65,Lena - FSU,Lena,FSU,79,417.76859119321,2477833.698229708,79|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+198,Polygon,66,Ob - FSU,Ob,FSU,105,442.0184000705311,3002697.035522782,105|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+199,Polygon,67,Oder Wisla Neman Daugava Neva Poland Baltic Coast - FSU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,FSU,106,27.282915620009476,192354.07159521506,106|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+200,Polygon,68,Russia South East Coast - FSU,Russia South East Coast,FSU,123,13.185769442304178,111173.21606464742,123|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+201,Polygon,69,Scandinavia North Coast - FSU,Scandinavia North Coast,FSU,127,47.82085935507239,236147.73497325863,127|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+202,Polygon,70,Siberia North Coast - FSU,Siberia North Coast,FSU,131,314.8916116490838,1204002.453584586,131|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+203,Polygon,71,Siberia West Coast - FSU,Siberia West Coast,FSU,132,577.1510550686335,3030293.781250361,132|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+204,Polygon,72,Syr Darya - FSU,Syr Darya,FSU,146,120.16918994094857,1039645.465755588,146|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+205,Polygon,74,Ural Caspian Sea Coast - FSU,Ural Caspian Sea Coast,FSU,154,89.87672613136752,735674.661623416,154|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+206,Polygon,75,Volga - FSU,Volga,FSU,157,203.59354238697986,1410727.698091355,157|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+207,Polygon,76,Yenisey - FSU,Yenisey,FSU,160,349.0750019228995,2190506.10222536,160|FSU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+208,Polygon,133,Mackenzie - NAM,Mackenzie,NAM,81,301.09196670635066,1805892.4868205711,81|NAM,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+209,Polygon,136,Northwest Territories - NAM,Northwest Territories,NAM,103,688.8937167805711,2967257.053187312,103|NAM,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+210,Polygon,138,Pacific and Arctic Coast - NAM,Pacific and Arctic Coast,NAM,109,339.63182645803454,1826035.9259550057,109|NAM,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+211,Polygon,170,Amur - RCPA,Amur,RCPA,11,30.195631982147766,251372.3250978747,11|RCPA,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+212,Polygon,171,Gobi Interior - RCPA,Gobi Interior,RCPA,54,113.07219778205119,976075.0598702495,54|RCPA,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+213,Polygon,176,Ob - RCPA,Ob,RCPA,105,1.332356268112036,11283.483212797064,105|RCPA,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+214,Polygon,177,Russia South East Coast - RCPA,Russia South East Coast,RCPA,123,1.859557958407876,17123.598447568747,123|RCPA,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+215,Polygon,179,Yenisey - RCPA,Yenisey,RCPA,160,40.243048540126324,327631.52493741363,160|RCPA,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+216,Polygon,197,Arctic Ocean Islands - WEU,Arctic Ocean Islands,WEU,16,657.8363389233635,2148130.212618792,16|WEU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+217,Polygon,206,Finland Neva - WEU,Finland Neva,WEU,51,52.765180476581904,289747.21495713183,51|WEU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+218,Polygon,207,Iceland - WEU,Iceland,WEU,64,19.36212726162057,101871.9030334847,64|WEU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+219,Polygon,213,Scandinavia North Coast - WEU,Scandinavia North Coast,WEU,127,64.14392123970059,337093.24878528743,127|WEU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+220,Polygon,215,Sweden - WEU,Sweden,WEU,145,84.6997755992802,478577.1064309129,145|WEU,RUS,RUS,Russia,Europe & Central Asia,IND,Europe
+221,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,ROU,ROU,Romania,Europe & Central Asia,IND,Europe
+222,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,ROU,ROU,Romania,Europe & Central Asia,IND,Europe
+223,Polygon,56,Danube - FSU,Danube,FSU,39,4.985219519909879,41684.99327573005,39|FSU,ROU,ROU,Romania,Europe & Central Asia,IND,Europe
+224,Polygon,58,Dniester Black Sea North Coast - FSU,Dniester Black Sea North Coast,FSU,43,19.702991012211534,162723.20548749357,43|FSU,ROU,ROU,Romania,Europe & Central Asia,IND,Europe
+225,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,QAT,QAT,Qatar,Middle East & North Africa,DEV,Asia
+226,Polygon,196,Africa North West Coast - WEU,Africa North West Coast,WEU,4,0.772579756796993,8357.748718836145,4|WEU,PRT,PRT,Portugal,Europe & Central Asia,IND,Europe
+227,Polygon,202,Douro Guadalquivir Tagus Guadiana Spain Portugal Atlantic Coast - WEU,Douro Guadalquivir Tagus Guadiana Spain Portugal Atlantic Coast,WEU,45,42.39939371376987,400725.2153682855,45|WEU,PRT,PRT,Portugal,Europe & Central Asia,IND,Europe
+228,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,POL,POL,Poland,Europe & Central Asia,IND,Europe
+229,Polygon,46,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - EEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,EEU,48,6.260043368717449,50039.7704306199,48|EEU,POL,POL,Poland,Europe & Central Asia,IND,Europe
+230,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,POL,POL,Poland,Europe & Central Asia,IND,Europe
+231,Polygon,56,Danube - FSU,Danube,FSU,39,4.985219519909879,41684.99327573005,39|FSU,POL,POL,Poland,Europe & Central Asia,IND,Europe
+232,Polygon,67,Oder Wisla Neman Daugava Neva Poland Baltic Coast - FSU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,FSU,106,27.282915620009476,192354.07159521506,106|FSU,POL,POL,Poland,Europe & Central Asia,IND,Europe
+233,Polygon,201,Denmark Germany Coast - WEU,Denmark Germany Coast,WEU,41,10.465544706724662,74244.06678613595,41|WEU,POL,POL,Poland,Europe & Central Asia,IND,Europe
+234,Polygon,211,Oder Wisla Neman Daugava Neva Poland Baltic Coast - WEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,WEU,106,0.758740232113975,5736.804760246722,106|WEU,POL,POL,Poland,Europe & Central Asia,IND,Europe
+235,Polygon,164,Philippines - PAS,Philippines,PAS,117,24.51047111201718,294935.5200677512,117|PAS,PHL,PHL,Philippines,East Asia & Pacific,DEV,Asia
+236,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,PER,PER,Peru,Latin America & Caribbean,DEV,South America
+237,Polygon,83,Columbia Ecuador Pacific Coast - LAM,Columbia Ecuador Pacific Coast,LAM,37,16.885340271398988,207407.42008433916,37|LAM,PER,PER,Peru,Latin America & Caribbean,DEV,South America
+238,Polygon,86,La Puna Region - LAM,La Puna Region,LAM,76,28.324934687429078,326056.00545524724,76|LAM,PER,PER,Peru,Latin America & Caribbean,DEV,South America
+239,Polygon,92,North Chile Pacific Coast - LAM,North Chile Pacific Coast,LAM,100,39.159711957366184,413904.33873908914,100|LAM,PER,PER,Peru,Latin America & Caribbean,DEV,South America
+240,Polygon,97,Peru Pacific Coast - LAM,Peru Pacific Coast,LAM,116,24.176115154899623,290695.997022633,116|LAM,PER,PER,Peru,Latin America & Caribbean,DEV,South America
+241,Polygon,85,La Plata - LAM,La Plata,LAM,75,235.10416077777776,2659173.349209014,75|LAM,PRY,PRY,Paraguay,Latin America & Caribbean,DEV,South America
+242,Polygon,155,Irian Jaya Coast - PAS,Irian Jaya Coast,PAS,69,66.00111844177225,808375.6843600086,69|PAS,PNG,PNG,Papua New Guinea,East Asia & Pacific,DEV,Oceania
+243,Polygon,162,Papua New Guinea Coast - PAS,Papua New Guinea Coast,PAS,112,4.457176393987877,54590.5433353988,112|PAS,PNG,PNG,Papua New Guinea,East Asia & Pacific,DEV,Oceania
+244,Polygon,165,Solomon Islands - PAS,Solomon Islands,PAS,133,2.999314697019439,36542.97134130001,133|PAS,PNG,PNG,Papua New Guinea,East Asia & Pacific,DEV,Oceania
+245,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,PAN,PAN,Panama,Latin America & Caribbean,DEV,North America
+246,Polygon,81,Central America Carribean Coast - LAM,Central America Carribean Coast,LAM,32,77.43898876993121,906204.9879963355,32|LAM,PAN,PAN,Panama,Latin America & Caribbean,DEV,North America
+247,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,PAN,PAN,Panama,Latin America & Caribbean,DEV,North America
+248,Polygon,83,Columbia Ecuador Pacific Coast - LAM,Columbia Ecuador Pacific Coast,LAM,37,16.885340271398988,207407.42008433916,37|LAM,PAN,PAN,Panama,Latin America & Caribbean,DEV,North America
+249,Polygon,33,Indus - CHN,Indus,CHN,67,9.17213900089549,95598.02243456729,67|CHN,PAK,PAK,Pakistan,South Asia,DEV,Asia
+250,Polygon,41,Tarim Interior - CHN,Tarim Interior,CHN,148,163.25284706506787,1583765.9001210358,148|CHN,PAK,PAK,Pakistan,South Asia,DEV,Asia
+251,Polygon,113,Farahud Hamun-i-Mashkel Helmand - MEA,Farahud Hamun-i-Mashkel Helmand,MEA,50,10.502482499133173,111209.81610386465,50|MEA,PAK,PAK,Pakistan,South Asia,DEV,Asia
+252,Polygon,119,Persian Gulf Coast - MEA,Persian Gulf Coast,MEA,115,23.90487342006218,260575.00005442605,115|MEA,PAK,PAK,Pakistan,South Asia,DEV,Asia
+253,Polygon,180,Amu Darya - SAS,Amu Darya,SAS,10,16.751898553072152,166771.46410916265,10|SAS,PAK,PAK,Pakistan,South Asia,DEV,Asia
+254,Polygon,182,Arabian Sea Coast - SAS,Arabian Sea Coast,SAS,15,3.138684368309237,34848.13819133374,15|SAS,PAK,PAK,Pakistan,South Asia,DEV,Asia
+255,Polygon,185,Farahud Hamun-i-Mashkel Helmand - SAS,Farahud Hamun-i-Mashkel Helmand,SAS,50,42.999246276314544,454070.05909218575,50|SAS,PAK,PAK,Pakistan,South Asia,DEV,Asia
+256,Polygon,189,Indus - SAS,Indus,SAS,67,73.6348024222214,768352.7348313686,67|SAS,PAK,PAK,Pakistan,South Asia,DEV,Asia
+257,Polygon,191,Persian Gulf Coast - SAS,Persian Gulf Coast,SAS,115,7.345039821962738,81273.2807386681,115|SAS,PAK,PAK,Pakistan,South Asia,DEV,Asia
+258,Polygon,192,Sabarmati - SAS,Sabarmati,SAS,124,47.43893245774092,525238.8252926095,124|SAS,PAK,PAK,Pakistan,South Asia,DEV,Asia
+259,Polygon,194,Tarim Interior - SAS,Tarim Interior,SAS,148,0.212744215831223,2118.0134196489284,148|SAS,PAK,PAK,Pakistan,South Asia,DEV,Asia
+260,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,OMN,OMN,Oman,Middle East & North Africa,DEV,Asia
+261,Polygon,69,Scandinavia North Coast - FSU,Scandinavia North Coast,FSU,127,47.82085935507239,236147.73497325863,127|FSU,NOR,-99,Norway,Europe & Central Asia,DEV,Europe
+262,Polygon,206,Finland Neva - WEU,Finland Neva,WEU,51,52.765180476581904,289747.21495713183,51|WEU,NOR,-99,Norway,Europe & Central Asia,DEV,Europe
+263,Polygon,213,Scandinavia North Coast - WEU,Scandinavia North Coast,WEU,127,64.14392123970059,337093.24878528743,127|WEU,NOR,-99,Norway,Europe & Central Asia,DEV,Europe
+264,Polygon,215,Sweden - WEU,Sweden,WEU,145,84.6997755992802,478577.1064309129,145|WEU,NOR,-99,Norway,Europe & Central Asia,DEV,Europe
+265,Polygon,26,Amur - CHN,Amur,CHN,11,118.19517643682484,988839.3512508192,11|CHN,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+266,Polygon,37,North and South Korea Bo Hai Korean Bay North Coast - CHN,North and South Korea Bo Hai Korean Bay North Coast,CHN,98,34.422045111631505,314886.58584533277,98|CHN,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+267,Polygon,40,Russia South East Coast - CHN,Russia South East Coast,CHN,123,3.643120138990455,32831.968009330085,123|CHN,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+268,Polygon,68,Russia South East Coast - FSU,Russia South East Coast,FSU,123,13.185769442304178,111173.21606464742,123|FSU,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+269,Polygon,160,North and South Korea Bo Hai Korean Bay North Coast - PAS,North and South Korea Bo Hai Korean Bay North Coast,PAS,98,10.024390471006885,99821.55577707561,98|PAS,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+270,Polygon,170,Amur - RCPA,Amur,RCPA,11,30.195631982147766,251372.3250978747,11|RCPA,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+271,Polygon,175,North and South Korea Bo Hai Korean Bay North Coast - RCPA,North and South Korea Bo Hai Korean Bay North Coast,RCPA,98,11.099145075490723,105478.34986691692,98|RCPA,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+272,Polygon,177,Russia South East Coast - RCPA,Russia South East Coast,RCPA,123,1.859557958407876,17123.598447568747,123|RCPA,PRK,PRK,North Korea,East Asia & Pacific,DEV,Asia
+273,Polygon,8,Africa West Coast - AFR,Africa West Coast,AFR,8,16.012711824888612,195431.2885936325,8|AFR,NGA,NGA,Nigeria,Sub-Saharan Africa,DEV,Africa
+274,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,NGA,NGA,Nigeria,Sub-Saharan Africa,DEV,Africa
+275,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,NGA,NGA,Nigeria,Sub-Saharan Africa,DEV,Africa
+276,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,NGA,NGA,Nigeria,Sub-Saharan Africa,DEV,Africa
+277,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,NER,NER,Niger,Sub-Saharan Africa,DEV,Africa
+278,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,NER,NER,Niger,Sub-Saharan Africa,DEV,Africa
+279,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,NER,NER,Niger,Sub-Saharan Africa,DEV,Africa
+280,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,NER,NER,Niger,Sub-Saharan Africa,DEV,Africa
+281,Polygon,114,Lake Chad - MEA,Lake Chad,MEA,78,18.686602748362844,217453.42130273048,78|MEA,NER,NER,Niger,Sub-Saharan Africa,DEV,Africa
+282,Polygon,117,Niger - MEA,Niger,MEA,95,14.018710521776429,160908.09672166087,95|MEA,NER,NER,Niger,Sub-Saharan Africa,DEV,Africa
+283,Polygon,81,Central America Carribean Coast - LAM,Central America Carribean Coast,LAM,32,77.43898876993121,906204.9879963355,32|LAM,NIC,NIC,Nicaragua,Latin America & Caribbean,DEV,North America
+284,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,NIC,NIC,Nicaragua,Latin America & Caribbean,DEV,North America
+285,Polygon,151,New Zealand - PAO,New Zealand,PAO,94,29.202882680693577,269075.46357761143,94|PAO,NZL,NZL,New Zealand,East Asia & Pacific,IND,Oceania
+286,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,NLD,NLD,Netherlands,Europe & Central Asia,IND,Europe
+287,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,ABW,ABW,Aruba,Latin America & Caribbean,DEV,North America
+288,Polygon,28,Ganges Bramaputra - CHN,Ganges Bramaputra,CHN,53,29.359386990568247,315813.62733644416,53|CHN,NPL,NPL,Nepal,South Asia,DEV,Asia
+289,Polygon,33,Indus - CHN,Indus,CHN,67,9.17213900089549,95598.02243456729,67|CHN,NPL,NPL,Nepal,South Asia,DEV,Asia
+290,Polygon,186,Ganges Bramaputra - SAS,Ganges Bramaputra,SAS,53,114.57466080501447,1265290.3982699495,53|SAS,NPL,NPL,Nepal,South Asia,DEV,Asia
+291,Polygon,189,Indus - SAS,Indus,SAS,67,73.6348024222214,768352.7348313686,67|SAS,NPL,NPL,Nepal,South Asia,DEV,Asia
+292,Polygon,6,Africa South Interior - AFR,Africa South Interior,AFR,6,74.3232435534603,863903.1446777217,6|AFR,NAM,NAM,Namibia,Sub-Saharan Africa,DEV,Africa
+293,Polygon,9,Angola Coast - AFR,Angola Coast,AFR,13,42.13506529286562,506503.7291720509,13|AFR,NAM,NAM,Namibia,Sub-Saharan Africa,DEV,Africa
+294,Polygon,15,Namibia Coast - AFR,Namibia Coast,AFR,92,22.833251206832262,260119.1302745445,92|AFR,NAM,NAM,Namibia,Sub-Saharan Africa,DEV,Africa
+295,Polygon,18,Orange - AFR,Orange,AFR,107,89.09282947689191,975683.0276715701,107|AFR,NAM,NAM,Namibia,Sub-Saharan Africa,DEV,Africa
+296,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,NAM,NAM,Namibia,Sub-Saharan Africa,DEV,Africa
+297,Polygon,1,Africa East Central Coast - AFR,Africa East Central Coast,AFR,1,85.6407192708847,1037883.5745720636,1|AFR,MOZ,MOZ,Mozambique,Sub-Saharan Africa,DEV,Africa
+298,Polygon,2,Africa Indian Ocean Coast - AFR,Africa Indian Ocean Coast,AFR,2,21.127409156691915,243899.94398005688,2|AFR,MOZ,MOZ,Mozambique,Sub-Saharan Africa,DEV,Africa
+299,Polygon,13,Limpopo - AFR,Limpopo,AFR,80,36.34079495461681,411537.1498300887,80|AFR,MOZ,MOZ,Mozambique,Sub-Saharan Africa,DEV,Africa
+300,Polygon,22,South Africa South Coast - AFR,South Africa South Coast,AFR,135,37.83963733963217,402570.38664923277,135|AFR,MOZ,MOZ,Mozambique,Sub-Saharan Africa,DEV,Africa
+301,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,MOZ,MOZ,Mozambique,Sub-Saharan Africa,DEV,Africa
+302,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,MAR,MAR,Morocco,Middle East & North Africa,DEV,Africa
+303,Polygon,106,Africa North West Coast - MEA,Africa North West Coast,MEA,4,48.277140757419254,523688.1261510159,4|MEA,MAR,MAR,Morocco,Middle East & North Africa,DEV,Africa
+304,Polygon,116,Mediterranean South Coast - MEA,Mediterranean South Coast,MEA,87,54.23960870743565,560667.7955834967,87|MEA,MAR,MAR,Morocco,Middle East & North Africa,DEV,Africa
+305,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,MAR,ESH,W. Sahara,Middle East & North Africa,DEV,Africa
+306,Polygon,4,Africa North West Coast - AFR,Africa North West Coast,AFR,4,25.687340655600575,298426.82337468216,4|AFR,MAR,ESH,W. Sahara,Middle East & North Africa,DEV,Africa
+307,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,MAR,ESH,W. Sahara,Middle East & North Africa,DEV,Africa
+308,Polygon,106,Africa North West Coast - MEA,Africa North West Coast,MEA,4,48.277140757419254,523688.1261510159,4|MEA,MAR,ESH,W. Sahara,Middle East & North Africa,DEV,Africa
+309,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,MNE,MNE,Montenegro,Europe & Central Asia,IND,Europe
+310,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,MNE,MNE,Montenegro,Europe & Central Asia,IND,Europe
+311,Polygon,26,Amur - CHN,Amur,CHN,11,118.19517643682484,988839.3512508192,11|CHN,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+312,Polygon,29,Gobi Interior - CHN,Gobi Interior,CHN,54,96.4139399982324,876111.6962527168,54|CHN,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+313,Polygon,38,Ob - CHN,Ob,CHN,105,10.562941798527733,88732.82560352756,105|CHN,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+314,Polygon,49,Amur - FSU,Amur,FSU,11,129.3266297217521,1005837.9357993124,11|FSU,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+315,Polygon,61,Gobi Interior - FSU,Gobi Interior,FSU,54,3.151819638879765,24993.793669123337,54|FSU,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+316,Polygon,66,Ob - FSU,Ob,FSU,105,442.0184000705311,3002697.035522782,105|FSU,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+317,Polygon,76,Yenisey - FSU,Yenisey,FSU,160,349.0750019228995,2190506.10222536,160|FSU,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+318,Polygon,170,Amur - RCPA,Amur,RCPA,11,30.195631982147766,251372.3250978747,11|RCPA,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+319,Polygon,171,Gobi Interior - RCPA,Gobi Interior,RCPA,54,113.07219778205119,976075.0598702495,54|RCPA,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+320,Polygon,176,Ob - RCPA,Ob,RCPA,105,1.332356268112036,11283.483212797064,105|RCPA,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+321,Polygon,179,Yenisey - RCPA,Yenisey,RCPA,160,40.243048540126324,327631.52493741363,160|RCPA,MNG,MNG,Mongolia,East Asia & Pacific,DEV,Asia
+322,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,MDA,MDA,Moldova,Europe & Central Asia,IND,Europe
+323,Polygon,56,Danube - FSU,Danube,FSU,39,4.985219519909879,41684.99327573005,39|FSU,MDA,MDA,Moldova,Europe & Central Asia,IND,Europe
+324,Polygon,58,Dniester Black Sea North Coast - FSU,Dniester Black Sea North Coast,FSU,43,19.702991012211534,162723.20548749357,43|FSU,MDA,MDA,Moldova,Europe & Central Asia,IND,Europe
+325,Polygon,203,Ebro Spain France South Coast Rhone - WEU,Ebro Spain France South Coast Rhone,WEU,47,34.01331777428787,310081.8671132164,47|WEU,MCO,MCO,Monaco,Europe & Central Asia,DEV,Europe
+326,Polygon,78,California - LAM,California,LAM,27,12.277303755464986,133751.60288529124,27|LAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+327,Polygon,81,Central America Carribean Coast - LAM,Central America Carribean Coast,LAM,32,77.43898876993121,906204.9879963355,32|LAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+328,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+329,Polygon,90,North America Colorado - LAM,North America Colorado,LAM,97,1.372506348868123,14421.202581607597,97|LAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+330,Polygon,98,Rio Grande Mexico Interior - LAM,Rio Grande Mexico Interior,LAM,122,45.98924971767912,503787.7982543426,122|LAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+331,Polygon,124,California - NAM,California,NAM,27,29.854729437360465,289651.6981565033,27|NAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+332,Polygon,126,Central America Pacific Coast - NAM,Central America Pacific Coast,NAM,33,1.682305118298492,17340.475049671913,33|NAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+333,Polygon,130,Gulf Coast - NAM,Gulf Coast,NAM,56,43.91553698813561,464467.43925699464,56|NAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+334,Polygon,135,North America Colorado - NAM,North America Colorado,NAM,97,65.19678011693814,646780.2492910315,97|NAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+335,Polygon,139,Rio Grande Mexico Interior - NAM,Rio Grande Mexico Interior,NAM,122,33.17142797104994,343985.0166736573,122|NAM,MEX,MEX,Mexico,Latin America & Caribbean,DEV,North America
+336,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,MRT,MRT,Mauritania,Sub-Saharan Africa,DEV,Africa
+337,Polygon,4,Africa North West Coast - AFR,Africa North West Coast,AFR,4,25.687340655600575,298426.82337468216,4|AFR,MRT,MRT,Mauritania,Sub-Saharan Africa,DEV,Africa
+338,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,MRT,MRT,Mauritania,Sub-Saharan Africa,DEV,Africa
+339,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,MRT,MRT,Mauritania,Sub-Saharan Africa,DEV,Africa
+340,Polygon,20,Senegal - AFR,Senegal,AFR,129,38.37705064151855,456381.4087555905,129|AFR,MRT,MRT,Mauritania,Sub-Saharan Africa,DEV,Africa
+341,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,MRT,MRT,Mauritania,Sub-Saharan Africa,DEV,Africa
+342,Polygon,106,Africa North West Coast - MEA,Africa North West Coast,MEA,4,48.277140757419254,523688.1261510159,4|MEA,MRT,MRT,Mauritania,Sub-Saharan Africa,DEV,Africa
+343,Polygon,210,Mediterranean Sea Islands - WEU,Mediterranean Sea Islands,WEU,86,6.679176136551111,63898.67467652541,86|WEU,MLT,MLT,Malta,Middle East & North Africa,IND,Europe
+344,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,MLI,MLI,Mali,Sub-Saharan Africa,DEV,Africa
+345,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,MLI,MLI,Mali,Sub-Saharan Africa,DEV,Africa
+346,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,MLI,MLI,Mali,Sub-Saharan Africa,DEV,Africa
+347,Polygon,20,Senegal - AFR,Senegal,AFR,129,38.37705064151855,456381.4087555905,129|AFR,MLI,MLI,Mali,Sub-Saharan Africa,DEV,Africa
+348,Polygon,24,Volta - AFR,Volta,AFR,158,33.95887497869898,410999.8014495135,158|AFR,MLI,MLI,Mali,Sub-Saharan Africa,DEV,Africa
+349,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,MLI,MLI,Mali,Sub-Saharan Africa,DEV,Africa
+350,Polygon,117,Niger - MEA,Niger,MEA,95,14.018710521776429,160908.09672166087,95|MEA,MLI,MLI,Mali,Sub-Saharan Africa,DEV,Africa
+351,Polygon,158,Kalimantan North Borneo Coast - PAS,Kalimantan North Borneo Coast,PAS,73,60.1272682255887,739353.476733488,73|PAS,MYS,MYS,Malaysia,East Asia & Pacific,DEV,Asia
+352,Polygon,163,Peninsula Malaysia - PAS,Peninsula Malaysia,PAS,114,23.561498263515627,286680.3449084802,114|PAS,MYS,MYS,Malaysia,East Asia & Pacific,DEV,Asia
+353,Polygon,1,Africa East Central Coast - AFR,Africa East Central Coast,AFR,1,85.6407192708847,1037883.5745720636,1|AFR,MWI,MWI,Malawi,Sub-Saharan Africa,DEV,Africa
+354,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,MWI,MWI,Malawi,Sub-Saharan Africa,DEV,Africa
+355,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,MWI,MWI,Malawi,Sub-Saharan Africa,DEV,Africa
+356,Polygon,14,Madagascar - AFR,Madagascar,AFR,82,51.05115592290425,592815.6465549639,82|AFR,MDG,MDG,Madagascar,Sub-Saharan Africa,DEV,Africa
+357,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,MKD,MKD,North Macedonia,Europe & Central Asia,IND,Europe
+358,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,MKD,MKD,North Macedonia,Europe & Central Asia,IND,Europe
+359,Polygon,195,Adriatic Sea Greece Black Sea Coast - WEU,Adriatic Sea Greece Black Sea Coast,WEU,0,16.60253595173674,158496.72388643833,0|WEU,MKD,MKD,North Macedonia,Europe & Central Asia,IND,Europe
+360,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,LUX,LUX,Luxembourg,Europe & Central Asia,IND,Europe
+361,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,LTU,LTU,Lithuania,Europe & Central Asia,IND,Europe
+362,Polygon,67,Oder Wisla Neman Daugava Neva Poland Baltic Coast - FSU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,FSU,106,27.282915620009476,192354.07159521506,106|FSU,LTU,LTU,Lithuania,Europe & Central Asia,IND,Europe
+363,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,LIE,LIE,Liechtenstein,Europe & Central Asia,DEV,Europe
+364,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,LBY,LBY,Libya,Middle East & North Africa,DEV,Africa
+365,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,LBY,LBY,Libya,Middle East & North Africa,DEV,Africa
+366,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,LBY,LBY,Libya,Middle East & North Africa,DEV,Africa
+367,Polygon,114,Lake Chad - MEA,Lake Chad,MEA,78,18.686602748362844,217453.42130273048,78|MEA,LBY,LBY,Libya,Middle East & North Africa,DEV,Africa
+368,Polygon,116,Mediterranean South Coast - MEA,Mediterranean South Coast,MEA,87,54.23960870743565,560667.7955834967,87|MEA,LBY,LBY,Libya,Middle East & North Africa,DEV,Africa
+369,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,LBR,LBR,Liberia,Sub-Saharan Africa,DEV,Africa
+370,Polygon,18,Orange - AFR,Orange,AFR,107,89.09282947689191,975683.0276715701,107|AFR,LSO,LSO,Lesotho,Sub-Saharan Africa,DEV,Africa
+371,Polygon,22,South Africa South Coast - AFR,South Africa South Coast,AFR,135,37.83963733963217,402570.38664923277,135|AFR,LSO,LSO,Lesotho,Sub-Saharan Africa,DEV,Africa
+372,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,LBN,LBN,Lebanon,Middle East & North Africa,DEV,Asia
+373,Polygon,115,Mediterranean Sea East Coast - MEA,Mediterranean Sea East Coast,MEA,85,9.743627418639685,100961.05251973044,85|MEA,LBN,LBN,Lebanon,Middle East & North Africa,DEV,Asia
+374,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,LVA,LVA,Latvia,Europe & Central Asia,IND,Europe
+375,Polygon,67,Oder Wisla Neman Daugava Neva Poland Baltic Coast - FSU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,FSU,106,27.282915620009476,192354.07159521506,106|FSU,LVA,LVA,Latvia,Europe & Central Asia,IND,Europe
+376,Polygon,31,Hong Red River Xun Jiang South China Sea Coast - CHN,Hong Red River Xun Jiang South China Sea Coast,CHN,61,57.90535253640604,652476.224748953,61|CHN,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+377,Polygon,36,Mekong - CHN,Mekong,CHN,88,15.13203187061711,164746.57807591927,88|CHN,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+378,Polygon,154,Gulf of Thailand Coast Chao Phraya - PAS,Gulf of Thailand Coast Chao Phraya,PAS,59,16.33128056374787,193025.5587213427,59|PAS,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+379,Polygon,159,Mekong - PAS,Mekong,PAS,88,17.780186988703306,209514.6665258658,88|PAS,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+380,Polygon,172,Gulf of Thailand Coast Chao Phraya - RCPA,Gulf of Thailand Coast Chao Phraya,RCPA,59,3.351612549669,40579.35042899874,59|RCPA,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+381,Polygon,173,Hong Red River Xun Jiang South China Sea Coast - RCPA,Hong Red River Xun Jiang South China Sea Coast,RCPA,61,9.37996784724748,107416.71196219622,61|RCPA,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+382,Polygon,174,Mekong - RCPA,Mekong,RCPA,88,33.69474313758784,398868.3923815746,88|RCPA,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+383,Polygon,178,Vietnam Coast - RCPA,Vietnam Coast,RCPA,156,16.232335815085708,192503.28043515823,156|RCPA,LAO,LAO,Laos,East Asia & Pacific,DEV,Asia
+384,Polygon,41,Tarim Interior - CHN,Tarim Interior,CHN,148,163.25284706506787,1583765.9001210358,148|CHN,KGZ,KGZ,Kyrgyzstan,Europe & Central Asia,IND,Asia
+385,Polygon,48,Amu Darya - FSU,Amu Darya,FSU,10,68.68353479991787,638880.5263726851,10|FSU,KGZ,KGZ,Kyrgyzstan,Europe & Central Asia,IND,Asia
+386,Polygon,64,Lake Balkash - FSU,Lake Balkash,FSU,77,46.68558882503665,401916.698212351,77|FSU,KGZ,KGZ,Kyrgyzstan,Europe & Central Asia,IND,Asia
+387,Polygon,72,Syr Darya - FSU,Syr Darya,FSU,146,120.16918994094857,1039645.465755588,146|FSU,KGZ,KGZ,Kyrgyzstan,Europe & Central Asia,IND,Asia
+388,Polygon,73,Tarim Interior - FSU,Tarim Interior,FSU,148,2.808148187792624,26139.25468090895,148|FSU,KGZ,KGZ,Kyrgyzstan,Europe & Central Asia,IND,Asia
+389,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,KWT,KWT,Kuwait,Middle East & North Africa,DEV,Asia
+390,Polygon,122,Tigris Euphrates - MEA,Tigris Euphrates,MEA,151,71.9904366697333,743265.0065150171,151|MEA,KWT,KWT,Kuwait,Middle East & North Africa,DEV,Asia
+391,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,SRB,-99,Kosovo,Europe & Central Asia,DEV,Europe
+392,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,SRB,-99,Kosovo,Europe & Central Asia,DEV,Europe
+393,Polygon,1,Africa East Central Coast - AFR,Africa East Central Coast,AFR,1,85.6407192708847,1037883.5745720636,1|AFR,KEN,KEN,Kenya,Sub-Saharan Africa,DEV,Africa
+394,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,KEN,KEN,Kenya,Sub-Saharan Africa,DEV,Africa
+395,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,KEN,KEN,Kenya,Sub-Saharan Africa,DEV,Africa
+396,Polygon,21,Shebelli Juba - AFR,Shebelli Juba,AFR,130,64.76107681175364,794436.5452259014,130|AFR,KEN,KEN,Kenya,Sub-Saharan Africa,DEV,Africa
+397,Polygon,121,Rift Valley - MEA,Rift Valley,MEA,121,1.254356411295263,15379.060317334566,121|MEA,KEN,KEN,Kenya,Sub-Saharan Africa,DEV,Africa
+398,Polygon,29,Gobi Interior - CHN,Gobi Interior,CHN,54,96.4139399982324,876111.6962527168,54|CHN,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+399,Polygon,35,Lake Balkash - CHN,Lake Balkash,CHN,77,8.709891138075681,77327.32300049883,77|CHN,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+400,Polygon,38,Ob - CHN,Ob,CHN,105,10.562941798527733,88732.82560352756,105|CHN,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+401,Polygon,48,Amu Darya - FSU,Amu Darya,FSU,10,68.68353479991787,638880.5263726851,10|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+402,Polygon,54,Caspian Sea East Coast - FSU,Caspian Sea East Coast,FSU,30,55.501673742285675,526071.7824260985,30|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+403,Polygon,61,Gobi Interior - FSU,Gobi Interior,FSU,54,3.151819638879765,24993.793669123337,54|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+404,Polygon,64,Lake Balkash - FSU,Lake Balkash,FSU,77,46.68558882503665,401916.698212351,77|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+405,Polygon,66,Ob - FSU,Ob,FSU,105,442.0184000705311,3002697.035522782,105|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+406,Polygon,72,Syr Darya - FSU,Syr Darya,FSU,146,120.16918994094857,1039645.465755588,146|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+407,Polygon,73,Tarim Interior - FSU,Tarim Interior,FSU,148,2.808148187792624,26139.25468090895,148|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+408,Polygon,74,Ural Caspian Sea Coast - FSU,Ural Caspian Sea Coast,FSU,154,89.87672613136752,735674.661623416,154|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+409,Polygon,75,Volga - FSU,Volga,FSU,157,203.59354238697986,1410727.698091355,157|FSU,KAZ,KAZ,Kazakhstan,Europe & Central Asia,IND,Asia
+410,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,JOR,JOR,Jordan,Middle East & North Africa,DEV,Asia
+411,Polygon,120,Red Sea East Coast - MEA,Red Sea East Coast,MEA,120,47.703059326677455,550363.1853376139,120|MEA,JOR,JOR,Jordan,Middle East & North Africa,DEV,Asia
+412,Polygon,122,Tigris Euphrates - MEA,Tigris Euphrates,MEA,151,71.9904366697333,743265.0065150171,151|MEA,JOR,JOR,Jordan,Middle East & North Africa,DEV,Asia
+413,Polygon,149,Japan - PAO,Japan,PAO,71,38.04727435334586,372329.4648488524,71|PAO,JPN,JPN,Japan,East Asia & Pacific,IND,Asia
+414,Polygon,79,Caribbean - LAM,Caribbean,LAM,28,18.219549675926682,210085.3757598381,28|LAM,JAM,JAM,Jamaica,Latin America & Caribbean,DEV,North America
+415,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+416,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+417,Polygon,195,Adriatic Sea Greece Black Sea Coast - WEU,Adriatic Sea Greece Black Sea Coast,WEU,0,16.60253595173674,158496.72388643833,0|WEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+418,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+419,Polygon,203,Ebro Spain France South Coast Rhone - WEU,Ebro Spain France South Coast Rhone,WEU,47,34.01331777428787,310081.8671132164,47|WEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+420,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+421,Polygon,210,Mediterranean Sea Islands - WEU,Mediterranean Sea Islands,WEU,86,6.679176136551111,63898.67467652541,86|WEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+422,Polygon,212,Po Italy East Coast - WEU,Po Italy East Coast,WEU,119,18.81465140607543,166467.62583825123,119|WEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+423,Polygon,216,Tiber Italy West Coast - WEU,Tiber Italy West Coast,WEU,150,9.348377359549648,86241.06006968739,150|WEU,ITA,ITA,Italy,Europe & Central Asia,IND,Europe
+424,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,ISR,ISR,Israel,Middle East & North Africa,DEV,Asia
+425,Polygon,115,Mediterranean Sea East Coast - MEA,Mediterranean Sea East Coast,MEA,85,9.743627418639685,100961.05251973044,85|MEA,ISR,ISR,Israel,Middle East & North Africa,DEV,Asia
+426,Polygon,120,Red Sea East Coast - MEA,Red Sea East Coast,MEA,120,47.703059326677455,550363.1853376139,120|MEA,ISR,ISR,Israel,Middle East & North Africa,DEV,Asia
+427,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,PSX,PSE,Palestine,Middle East & North Africa,DEV,Asia
+428,Polygon,115,Mediterranean Sea East Coast - MEA,Mediterranean Sea East Coast,MEA,85,9.743627418639685,100961.05251973044,85|MEA,PSX,PSE,Palestine,Middle East & North Africa,DEV,Asia
+429,Polygon,208,Ireland - WEU,Ireland,WEU,68,11.400366118469977,84328.96916832874,68|WEU,IRL,IRL,Ireland,Europe & Central Asia,IND,Europe
+430,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,IRQ,IRQ,Iraq,Middle East & North Africa,DEV,Asia
+431,Polygon,110,Caspian Sea South West Coast - MEA,Caspian Sea South West Coast,MEA,31,18.78597808660579,184854.9447968922,31|MEA,IRQ,IRQ,Iraq,Middle East & North Africa,DEV,Asia
+432,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,IRQ,IRQ,Iraq,Middle East & North Africa,DEV,Asia
+433,Polygon,119,Persian Gulf Coast - MEA,Persian Gulf Coast,MEA,115,23.90487342006218,260575.00005442605,115|MEA,IRQ,IRQ,Iraq,Middle East & North Africa,DEV,Asia
+434,Polygon,122,Tigris Euphrates - MEA,Tigris Euphrates,MEA,151,71.9904366697333,743265.0065150171,151|MEA,IRQ,IRQ,Iraq,Middle East & North Africa,DEV,Asia
+435,Polygon,217,Tigris Euphrates - WEU,Tigris Euphrates,WEU,151,19.815583041053088,192100.93829124977,151|WEU,IRQ,IRQ,Iraq,Middle East & North Africa,DEV,Asia
+436,Polygon,54,Caspian Sea East Coast - FSU,Caspian Sea East Coast,FSU,30,55.501673742285675,526071.7824260985,30|FSU,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+437,Polygon,55,Caspian Sea South West Coast - FSU,Caspian Sea South West Coast,FSU,31,37.2783475929987,338417.4708688273,31|FSU,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+438,Polygon,109,Caspian Sea East Coast - MEA,Caspian Sea East Coast,MEA,30,8.55976926111568,84809.68473172544,30|MEA,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+439,Polygon,110,Caspian Sea South West Coast - MEA,Caspian Sea South West Coast,MEA,31,18.78597808660579,184854.9447968922,31|MEA,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+440,Polygon,111,Central Iran - MEA,Central Iran,MEA,34,78.40310977331627,816381.1007555048,34|MEA,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+441,Polygon,113,Farahud Hamun-i-Mashkel Helmand - MEA,Farahud Hamun-i-Mashkel Helmand,MEA,50,10.502482499133173,111209.81610386465,50|MEA,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+442,Polygon,119,Persian Gulf Coast - MEA,Persian Gulf Coast,MEA,115,23.90487342006218,260575.00005442605,115|MEA,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+443,Polygon,122,Tigris Euphrates - MEA,Tigris Euphrates,MEA,151,71.9904366697333,743265.0065150171,151|MEA,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+444,Polygon,184,Caspian Sea East Coast - SAS,Caspian Sea East Coast,SAS,30,7.645296728597311,77637.22562489343,30|SAS,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+445,Polygon,185,Farahud Hamun-i-Mashkel Helmand - SAS,Farahud Hamun-i-Mashkel Helmand,SAS,50,42.999246276314544,454070.05909218575,50|SAS,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+446,Polygon,191,Persian Gulf Coast - SAS,Persian Gulf Coast,SAS,115,7.345039821962738,81273.2807386681,115|SAS,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+447,Polygon,199,Caspian Sea South West Coast - WEU,Caspian Sea South West Coast,WEU,31,3.120157856849799,29506.316205280476,31|WEU,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+448,Polygon,217,Tigris Euphrates - WEU,Tigris Euphrates,WEU,151,19.815583041053088,192100.93829124977,151|WEU,IRN,IRN,Iran,Middle East & North Africa,DEV,Asia
+449,Polygon,155,Irian Jaya Coast - PAS,Irian Jaya Coast,PAS,69,66.00111844177225,808375.6843600086,69|PAS,IDN,IDN,Indonesia,East Asia & Pacific,DEV,Asia
+450,Polygon,157,Java Timor - PAS,Java Timor,PAS,72,18.73742701109972,228450.78458108645,72|PAS,IDN,IDN,Indonesia,East Asia & Pacific,DEV,Asia
+451,Polygon,158,Kalimantan North Borneo Coast - PAS,Kalimantan North Borneo Coast,PAS,73,60.1272682255887,739353.476733488,73|PAS,IDN,IDN,Indonesia,East Asia & Pacific,DEV,Asia
+452,Polygon,161,Palau East Indonesia - PAS,Palau East Indonesia,PAS,110,5.159872558003873,63410.59821617513,110|PAS,IDN,IDN,Indonesia,East Asia & Pacific,DEV,Asia
+453,Polygon,167,Sulawesi - PAS,Sulawesi,PAS,143,15.519066942107912,190784.02356585357,143|PAS,IDN,IDN,Indonesia,East Asia & Pacific,DEV,Asia
+454,Polygon,168,Sumatra - PAS,Sumatra,PAS,144,38.39248538697765,471998.8456109558,144|PAS,IDN,IDN,Indonesia,East Asia & Pacific,DEV,Asia
+455,Polygon,28,Ganges Bramaputra - CHN,Ganges Bramaputra,CHN,53,29.359386990568247,315813.62733644416,53|CHN,IND,IND,India,South Asia,DEV,Asia
+456,Polygon,33,Indus - CHN,Indus,CHN,67,9.17213900089549,95598.02243456729,67|CHN,IND,IND,India,South Asia,DEV,Asia
+457,Polygon,153,Bay of Bengal North East Coast - PAS,Bay of Bengal North East Coast,PAS,24,4.682251853332933,54082.06818858499,24|PAS,IND,IND,India,South Asia,DEV,Asia
+458,Polygon,156,Irrawaddy Salween Sittang - PAS,Irrawaddy Salween Sittang,PAS,70,49.82783975429173,570205.7701780156,70|PAS,IND,IND,India,South Asia,DEV,Asia
+459,Polygon,181,Andaman Nicobar Islands - SAS,Andaman Nicobar Islands,SAS,12,0.611597628153476,7382.908778365886,12|SAS,IND,IND,India,South Asia,DEV,Asia
+460,Polygon,183,Bay of Bengal North East Coast - SAS,Bay of Bengal North East Coast,SAS,24,3.569228469270275,40602.964062404884,24|SAS,IND,IND,India,South Asia,DEV,Asia
+461,Polygon,186,Ganges Bramaputra - SAS,Ganges Bramaputra,SAS,53,114.57466080501447,1265290.3982699495,53|SAS,IND,IND,India,South Asia,DEV,Asia
+462,Polygon,187,India East Coast Pennar Mahandi Krishna Cauvery Brahamini Yasai - SAS,India East Coast Pennar Mahandi Krishna Cauvery Brahamini Yasai,SAS,65,106.08817528764293,1240066.3494236665,65|SAS,IND,IND,India,South Asia,DEV,Asia
+463,Polygon,188,India West Coast Tapti Narmada Mahi - SAS,India West Coast Tapti Narmada Mahi,SAS,66,27.19438641972537,315036.9621173146,66|SAS,IND,IND,India,South Asia,DEV,Asia
+464,Polygon,189,Indus - SAS,Indus,SAS,67,73.6348024222214,768352.7348313686,67|SAS,IND,IND,India,South Asia,DEV,Asia
+465,Polygon,190,Irrawaddy Salween Sittang - SAS,Irrawaddy Salween Sittang,SAS,70,1.565075925711981,17491.9034615122,70|SAS,IND,IND,India,South Asia,DEV,Asia
+466,Polygon,192,Sabarmati - SAS,Sabarmati,SAS,124,47.43893245774092,525238.8252926095,124|SAS,IND,IND,India,South Asia,DEV,Asia
+467,Polygon,194,Tarim Interior - SAS,Tarim Interior,SAS,148,0.212744215831223,2118.0134196489284,148|SAS,IND,IND,India,South Asia,DEV,Asia
+468,Polygon,207,Iceland - WEU,Iceland,WEU,64,19.36212726162057,101871.9030334847,64|WEU,ISL,ISL,Iceland,Europe & Central Asia,IND,Europe
+469,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,HUN,HUN,Hungary,Europe & Central Asia,IND,Europe
+470,Polygon,56,Danube - FSU,Danube,FSU,39,4.985219519909879,41684.99327573005,39|FSU,HUN,HUN,Hungary,Europe & Central Asia,IND,Europe
+471,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,HUN,HUN,Hungary,Europe & Central Asia,IND,Europe
+472,Polygon,81,Central America Carribean Coast - LAM,Central America Carribean Coast,LAM,32,77.43898876993121,906204.9879963355,32|LAM,HND,HND,Honduras,Latin America & Caribbean,DEV,North America
+473,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,HND,HND,Honduras,Latin America & Caribbean,DEV,North America
+474,Polygon,79,Caribbean - LAM,Caribbean,LAM,28,18.219549675926682,210085.3757598381,28|LAM,HTI,HTI,Haiti,Latin America & Caribbean,DEV,North America
+475,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,GUY,GUY,Guyana,Latin America & Caribbean,DEV,South America
+476,Polygon,93,North East South America South Atlantic Coast - LAM,North East South America South Atlantic Coast,LAM,101,45.73082338113158,561056.7849104935,101|LAM,GUY,GUY,Guyana,Latin America & Caribbean,DEV,South America
+477,Polygon,94,Orinoco - LAM,Orinoco,LAM,108,76.57332768236944,937394.0817955564,108|LAM,GUY,GUY,Guyana,Latin America & Caribbean,DEV,South America
+478,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,GNB,GNB,Guinea-Bissau,Sub-Saharan Africa,DEV,Africa
+479,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,GIN,GIN,Guinea,Sub-Saharan Africa,DEV,Africa
+480,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,GIN,GIN,Guinea,Sub-Saharan Africa,DEV,Africa
+481,Polygon,20,Senegal - AFR,Senegal,AFR,129,38.37705064151855,456381.4087555905,129|AFR,GIN,GIN,Guinea,Sub-Saharan Africa,DEV,Africa
+482,Polygon,81,Central America Carribean Coast - LAM,Central America Carribean Coast,LAM,32,77.43898876993121,906204.9879963355,32|LAM,GTM,GTM,Guatemala,Latin America & Caribbean,DEV,North America
+483,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,GTM,GTM,Guatemala,Latin America & Caribbean,DEV,North America
+484,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,GRC,GRC,Greece,Europe & Central Asia,IND,Europe
+485,Polygon,195,Adriatic Sea Greece Black Sea Coast - WEU,Adriatic Sea Greece Black Sea Coast,WEU,0,16.60253595173674,158496.72388643833,0|WEU,GRC,GRC,Greece,Europe & Central Asia,IND,Europe
+486,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,GHA,GHA,Ghana,Sub-Saharan Africa,DEV,Africa
+487,Polygon,8,Africa West Coast - AFR,Africa West Coast,AFR,8,16.012711824888612,195431.2885936325,8|AFR,GHA,GHA,Ghana,Sub-Saharan Africa,DEV,Africa
+488,Polygon,24,Volta - AFR,Volta,AFR,158,33.95887497869898,410999.8014495135,158|AFR,GHA,GHA,Ghana,Sub-Saharan Africa,DEV,Africa
+489,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,DEU,DEU,Germany,Europe & Central Asia,IND,Europe
+490,Polygon,46,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - EEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,EEU,48,6.260043368717449,50039.7704306199,48|EEU,DEU,DEU,Germany,Europe & Central Asia,IND,Europe
+491,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,DEU,DEU,Germany,Europe & Central Asia,IND,Europe
+492,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,DEU,DEU,Germany,Europe & Central Asia,IND,Europe
+493,Polygon,201,Denmark Germany Coast - WEU,Denmark Germany Coast,WEU,41,10.465544706724662,74244.06678613595,41|WEU,DEU,DEU,Germany,Europe & Central Asia,IND,Europe
+494,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,DEU,DEU,Germany,Europe & Central Asia,IND,Europe
+495,Polygon,211,Oder Wisla Neman Daugava Neva Poland Baltic Coast - WEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,WEU,106,0.758740232113975,5736.804760246722,106|WEU,DEU,DEU,Germany,Europe & Central Asia,IND,Europe
+496,Polygon,52,Black Sea North Coast - FSU,Black Sea North Coast,FSU,25,20.76260874476507,179779.6387820745,25|FSU,GEO,GEO,Georgia,Europe & Central Asia,IND,Asia
+497,Polygon,53,Black Sea South Coast - FSU,Black Sea South Coast,FSU,26,3.495403618109783,31889.12218075679,26|FSU,GEO,GEO,Georgia,Europe & Central Asia,IND,Asia
+498,Polygon,55,Caspian Sea South West Coast - FSU,Caspian Sea South West Coast,FSU,31,37.2783475929987,338417.4708688273,31|FSU,GEO,GEO,Georgia,Europe & Central Asia,IND,Asia
+499,Polygon,198,Black Sea South Coast - WEU,Black Sea South Coast,WEU,26,33.524089571662536,318478.0286105785,26|WEU,GEO,GEO,Georgia,Europe & Central Asia,IND,Asia
+500,Polygon,199,Caspian Sea South West Coast - WEU,Caspian Sea South West Coast,WEU,31,3.120157856849799,29506.316205280476,31|WEU,GEO,GEO,Georgia,Europe & Central Asia,IND,Asia
+501,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,GMB,GMB,Gambia,Sub-Saharan Africa,DEV,Africa
+502,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,GAB,GAB,Gabon,Sub-Saharan Africa,DEV,Africa
+503,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,GAB,GAB,Gabon,Sub-Saharan Africa,DEV,Africa
+504,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,FRA,-99,France,Europe & Central Asia,DEV,Europe
+505,Polygon,93,North East South America South Atlantic Coast - LAM,North East South America South Atlantic Coast,LAM,101,45.73082338113158,561056.7849104935,101|LAM,FRA,-99,France,Europe & Central Asia,DEV,Europe
+506,Polygon,202,Douro Guadalquivir Tagus Guadiana Spain Portugal Atlantic Coast - WEU,Douro Guadalquivir Tagus Guadiana Spain Portugal Atlantic Coast,WEU,45,42.39939371376987,400725.2153682855,45|WEU,FRA,-99,France,Europe & Central Asia,DEV,Europe
+507,Polygon,203,Ebro Spain France South Coast Rhone - WEU,Ebro Spain France South Coast Rhone,WEU,47,34.01331777428787,310081.8671132164,47|WEU,FRA,-99,France,Europe & Central Asia,DEV,Europe
+508,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,FRA,-99,France,Europe & Central Asia,DEV,Europe
+509,Polygon,210,Mediterranean Sea Islands - WEU,Mediterranean Sea Islands,WEU,86,6.679176136551111,63898.67467652541,86|WEU,FRA,-99,France,Europe & Central Asia,DEV,Europe
+510,Polygon,212,Po Italy East Coast - WEU,Po Italy East Coast,WEU,119,18.81465140607543,166467.62583825123,119|WEU,FRA,-99,France,Europe & Central Asia,DEV,Europe
+511,Polygon,216,Tiber Italy West Coast - WEU,Tiber Italy West Coast,WEU,150,9.348377359549648,86241.06006968739,150|WEU,FRA,-99,France,Europe & Central Asia,DEV,Europe
+512,Polygon,166,South Pacific Islands - PAS,South Pacific Islands,PAS,140,4.262596323276906,49768.692118861014,140|PAS,NCL,NCL,New Caledonia,East Asia & Pacific,DEV,Oceania
+513,Polygon,60,Finland Neva - FSU,Finland Neva,FSU,51,38.109112303155314,234082.1353865948,51|FSU,FIN,FIN,Finland,Europe & Central Asia,IND,Europe
+514,Polygon,69,Scandinavia North Coast - FSU,Scandinavia North Coast,FSU,127,47.82085935507239,236147.73497325863,127|FSU,FIN,FIN,Finland,Europe & Central Asia,IND,Europe
+515,Polygon,206,Finland Neva - WEU,Finland Neva,WEU,51,52.765180476581904,289747.21495713183,51|WEU,FIN,FIN,Finland,Europe & Central Asia,IND,Europe
+516,Polygon,213,Scandinavia North Coast - WEU,Scandinavia North Coast,WEU,127,64.14392123970059,337093.24878528743,127|WEU,FIN,FIN,Finland,Europe & Central Asia,IND,Europe
+517,Polygon,215,Sweden - WEU,Sweden,WEU,145,84.6997755992802,478577.1064309129,145|WEU,FIN,FIN,Finland,Europe & Central Asia,IND,Europe
+518,Polygon,1,Africa East Central Coast - AFR,Africa East Central Coast,AFR,1,85.6407192708847,1037883.5745720636,1|AFR,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+519,Polygon,6,Africa South Interior - AFR,Africa South Interior,AFR,6,74.3232435534603,863903.1446777217,6|AFR,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+520,Polygon,9,Angola Coast - AFR,Angola Coast,AFR,13,42.13506529286562,506503.7291720509,13|AFR,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+521,Polygon,14,Madagascar - AFR,Madagascar,AFR,82,51.05115592290425,592815.6465549639,82|AFR,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+522,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+523,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+524,Polygon,85,La Plata - LAM,La Plata,LAM,75,235.10416077777776,2659173.349209014,75|LAM,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+525,Polygon,86,La Puna Region - LAM,La Puna Region,LAM,76,28.324934687429078,326056.00545524724,76|LAM,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+526,Polygon,97,Peru Pacific Coast - LAM,Peru Pacific Coast,LAM,116,24.176115154899623,290695.997022633,116|LAM,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+527,Polygon,99,Sao Francisco - LAM,Sao Francisco,LAM,125,53.09632023941472,634872.5705693254,125|LAM,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+528,Polygon,103,Tocantins - LAM,Tocantins,LAM,152,79.33020467198169,960007.4724964618,152|LAM,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+529,Polygon,104,Uruguay Brazil South Atlantic Coast - LAM,Uruguay Brazil South Atlantic Coast,LAM,155,107.98182095367942,1207199.919546795,155|LAM,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+530,Polygon,144,Australia East Coast - PAO,Australia East Coast,PAO,18,62.265906256790494,673854.4788300542,18|PAO,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+531,Polygon,145,Australia Interior - PAO,Australia Interior,PAO,19,295.08624714811765,3293619.406743521,19|PAO,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+532,Polygon,146,Australia North Coast - PAO,Australia North Coast,PAO,20,108.41824927983637,1279972.3677937516,20|PAO,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+533,Polygon,166,South Pacific Islands - PAS,South Pacific Islands,PAS,140,4.262596323276906,49768.692118861014,140|PAS,FJI,FJI,Fiji,East Asia & Pacific,DEV,Oceania
+534,Polygon,5,Africa Red Sea Gulf of Aden Coast - AFR,Africa Red Sea Gulf of Aden Coast,AFR,5,48.30444146796704,585874.3540925055,5|AFR,ETH,ETH,Ethiopia,Sub-Saharan Africa,DEV,Africa
+535,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,ETH,ETH,Ethiopia,Sub-Saharan Africa,DEV,Africa
+536,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,ETH,ETH,Ethiopia,Sub-Saharan Africa,DEV,Africa
+537,Polygon,21,Shebelli Juba - AFR,Shebelli Juba,AFR,130,64.76107681175364,794436.5452259014,130|AFR,ETH,ETH,Ethiopia,Sub-Saharan Africa,DEV,Africa
+538,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,ETH,ETH,Ethiopia,Sub-Saharan Africa,DEV,Africa
+539,Polygon,121,Rift Valley - MEA,Rift Valley,MEA,121,1.254356411295263,15379.060317334566,121|MEA,ETH,ETH,Ethiopia,Sub-Saharan Africa,DEV,Africa
+540,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,EST,EST,Estonia,Europe & Central Asia,IND,Europe
+541,Polygon,67,Oder Wisla Neman Daugava Neva Poland Baltic Coast - FSU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,FSU,106,27.282915620009476,192354.07159521506,106|FSU,EST,EST,Estonia,Europe & Central Asia,IND,Europe
+542,Polygon,5,Africa Red Sea Gulf of Aden Coast - AFR,Africa Red Sea Gulf of Aden Coast,AFR,5,48.30444146796704,585874.3540925055,5|AFR,ERI,ERI,Eritrea,Sub-Saharan Africa,DEV,Africa
+543,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,ERI,ERI,Eritrea,Sub-Saharan Africa,DEV,Africa
+544,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,ERI,ERI,Eritrea,Sub-Saharan Africa,DEV,Africa
+545,Polygon,107,Africa Red Sea Gulf of Aden Coast - MEA,Africa Red Sea Gulf of Aden Coast,MEA,5,14.678437749228525,167545.99551594775,5|MEA,ERI,ERI,Eritrea,Sub-Saharan Africa,DEV,Africa
+546,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,ERI,ERI,Eritrea,Sub-Saharan Africa,DEV,Africa
+547,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,GNQ,GNQ,Eq. Guinea,Sub-Saharan Africa,DEV,Africa
+548,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,SLV,SLV,El Salvador,Latin America & Caribbean,DEV,North America
+549,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,EGY,EGY,Egypt,Middle East & North Africa,DEV,Africa
+550,Polygon,107,Africa Red Sea Gulf of Aden Coast - MEA,Africa Red Sea Gulf of Aden Coast,MEA,5,14.678437749228525,167545.99551594775,5|MEA,EGY,EGY,Egypt,Middle East & North Africa,DEV,Africa
+551,Polygon,112,Dead Sea Eastern Jordan Syria - MEA,Dead Sea Eastern Jordan Syria,MEA,40,21.62092899506327,229195.0383888663,40|MEA,EGY,EGY,Egypt,Middle East & North Africa,DEV,Africa
+552,Polygon,115,Mediterranean Sea East Coast - MEA,Mediterranean Sea East Coast,MEA,85,9.743627418639685,100961.05251973044,85|MEA,EGY,EGY,Egypt,Middle East & North Africa,DEV,Africa
+553,Polygon,116,Mediterranean South Coast - MEA,Mediterranean South Coast,MEA,87,54.23960870743565,560667.7955834967,87|MEA,EGY,EGY,Egypt,Middle East & North Africa,DEV,Africa
+554,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,EGY,EGY,Egypt,Middle East & North Africa,DEV,Africa
+555,Polygon,120,Red Sea East Coast - MEA,Red Sea East Coast,MEA,120,47.703059326677455,550363.1853376139,120|MEA,EGY,EGY,Egypt,Middle East & North Africa,DEV,Africa
+556,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,ECU,ECU,Ecuador,Latin America & Caribbean,DEV,South America
+557,Polygon,83,Columbia Ecuador Pacific Coast - LAM,Columbia Ecuador Pacific Coast,LAM,37,16.885340271398988,207407.42008433916,37|LAM,ECU,ECU,Ecuador,Latin America & Caribbean,DEV,South America
+558,Polygon,97,Peru Pacific Coast - LAM,Peru Pacific Coast,LAM,116,24.176115154899623,290695.997022633,116|LAM,ECU,ECU,Ecuador,Latin America & Caribbean,DEV,South America
+559,Polygon,100,Soth Chile Pacific Coast - LAM,Soth Chile Pacific Coast,LAM,134,0.647677240518081,7971.802861332157,134|LAM,ECU,ECU,Ecuador,Latin America & Caribbean,DEV,South America
+560,Polygon,79,Caribbean - LAM,Caribbean,LAM,28,18.219549675926682,210085.3757598381,28|LAM,DOM,DOM,Dominican Rep.,Latin America & Caribbean,DEV,North America
+561,Polygon,5,Africa Red Sea Gulf of Aden Coast - AFR,Africa Red Sea Gulf of Aden Coast,AFR,5,48.30444146796704,585874.3540925055,5|AFR,DJI,DJI,Djibouti,Middle East & North Africa,DEV,Africa
+562,Polygon,19,Rift Valley - AFR,Rift Valley,AFR,121,52.69147074896203,642681.064563093,121|AFR,DJI,DJI,Djibouti,Middle East & North Africa,DEV,Africa
+563,Polygon,197,Arctic Ocean Islands - WEU,Arctic Ocean Islands,WEU,16,657.8363389233635,2148130.212618792,16|WEU,GRL,GRL,Greenland,Europe & Central Asia,IND,North America
+564,Polygon,201,Denmark Germany Coast - WEU,Denmark Germany Coast,WEU,41,10.465544706724662,74244.06678613595,41|WEU,DNK,DNK,Denmark,Europe & Central Asia,IND,Europe
+565,Polygon,215,Sweden - WEU,Sweden,WEU,145,84.6997755992802,478577.1064309129,145|WEU,DNK,DNK,Denmark,Europe & Central Asia,IND,Europe
+566,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,CZE,CZE,Czechia,Europe & Central Asia,IND,Europe
+567,Polygon,46,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - EEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,EEU,48,6.260043368717449,50039.7704306199,48|EEU,CZE,CZE,Czechia,Europe & Central Asia,IND,Europe
+568,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,CZE,CZE,Czechia,Europe & Central Asia,IND,Europe
+569,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,CZE,CZE,Czechia,Europe & Central Asia,IND,Europe
+570,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,CZE,CZE,Czechia,Europe & Central Asia,IND,Europe
+571,Polygon,211,Oder Wisla Neman Daugava Neva Poland Baltic Coast - WEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,WEU,106,0.758740232113975,5736.804760246722,106|WEU,CZE,CZE,Czechia,Europe & Central Asia,IND,Europe
+572,Polygon,209,Mediterranean Sea East Coast - WEU,Mediterranean Sea East Coast,WEU,85,23.180504996784194,226174.47502532662,85|WEU,CYP,-99,N. Cyprus,Europe & Central Asia,DEV,Asia
+573,Polygon,209,Mediterranean Sea East Coast - WEU,Mediterranean Sea East Coast,WEU,85,23.180504996784194,226174.47502532662,85|WEU,CYP,CYP,Cyprus,Europe & Central Asia,IND,Asia
+574,Polygon,79,Caribbean - LAM,Caribbean,LAM,28,18.219549675926682,210085.3757598381,28|LAM,CUB,CUB,Cuba,Latin America & Caribbean,DEV,North America
+575,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,HRV,HRV,Croatia,Europe & Central Asia,IND,Europe
+576,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,HRV,HRV,Croatia,Europe & Central Asia,IND,Europe
+577,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,CIV,CIV,Côte d'Ivoire,Sub-Saharan Africa,DEV,Africa
+578,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,CIV,CIV,Côte d'Ivoire,Sub-Saharan Africa,DEV,Africa
+579,Polygon,24,Volta - AFR,Volta,AFR,158,33.95887497869898,410999.8014495135,158|AFR,CIV,CIV,Côte d'Ivoire,Sub-Saharan Africa,DEV,Africa
+580,Polygon,81,Central America Carribean Coast - LAM,Central America Carribean Coast,LAM,32,77.43898876993121,906204.9879963355,32|LAM,CRI,CRI,Costa Rica,Latin America & Caribbean,DEV,North America
+581,Polygon,82,Central America Pacific Coast - LAM,Central America Pacific Coast,LAM,33,77.7277963796977,886340.3511362586,33|LAM,CRI,CRI,Costa Rica,Latin America & Caribbean,DEV,North America
+582,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,COD,COD,Dem. Rep. Congo,Sub-Saharan Africa,DEV,Africa
+583,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,COD,COD,Dem. Rep. Congo,Sub-Saharan Africa,DEV,Africa
+584,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,COD,COD,Dem. Rep. Congo,Sub-Saharan Africa,DEV,Africa
+585,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,COD,COD,Dem. Rep. Congo,Sub-Saharan Africa,DEV,Africa
+586,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,COD,COD,Dem. Rep. Congo,Sub-Saharan Africa,DEV,Africa
+587,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,COG,COG,Congo,Sub-Saharan Africa,DEV,Africa
+588,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,COG,COG,Congo,Sub-Saharan Africa,DEV,Africa
+589,Polygon,14,Madagascar - AFR,Madagascar,AFR,82,51.05115592290425,592815.6465549639,82|AFR,COM,COM,Comoros,Sub-Saharan Africa,DEV,Africa
+590,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,COL,COL,Colombia,Latin America & Caribbean,DEV,South America
+591,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,COL,COL,Colombia,Latin America & Caribbean,DEV,South America
+592,Polygon,83,Columbia Ecuador Pacific Coast - LAM,Columbia Ecuador Pacific Coast,LAM,37,16.885340271398988,207407.42008433916,37|LAM,COL,COL,Colombia,Latin America & Caribbean,DEV,South America
+593,Polygon,87,Magdalena - LAM,Magdalena,LAM,83,21.239101783076773,259630.15952138742,83|LAM,COL,COL,Colombia,Latin America & Caribbean,DEV,South America
+594,Polygon,94,Orinoco - LAM,Orinoco,LAM,108,76.57332768236944,937394.0817955564,108|LAM,COL,COL,Colombia,Latin America & Caribbean,DEV,South America
+595,Polygon,26,Amur - CHN,Amur,CHN,11,118.19517643682484,988839.3512508192,11|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+596,Polygon,27,China Coast - CHN,China Coast,CHN,35,35.231458626208365,369974.8181924953,35|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+597,Polygon,28,Ganges Bramaputra - CHN,Ganges Bramaputra,CHN,53,29.359386990568247,315813.62733644416,53|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+598,Polygon,29,Gobi Interior - CHN,Gobi Interior,CHN,54,96.4139399982324,876111.6962527168,54|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+599,Polygon,30,Hainan - CHN,Hainan,CHN,60,2.93450163815911,34161.449856905274,60|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+600,Polygon,31,Hong Red River Xun Jiang South China Sea Coast - CHN,Hong Red River Xun Jiang South China Sea Coast,CHN,61,57.90535253640604,652476.224748953,61|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+601,Polygon,32,Huang He - CHN,Huang He,CHN,62,97.58927063760524,963305.8932157287,62|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+602,Polygon,33,Indus - CHN,Indus,CHN,67,9.17213900089549,95598.02243456729,67|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+603,Polygon,34,Irrawaddy Salween Sittang - CHN,Irrawaddy Salween Sittang,CHN,70,14.689595673361401,158244.3363255411,70|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+604,Polygon,35,Lake Balkash - CHN,Lake Balkash,CHN,77,8.709891138075681,77327.32300049883,77|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+605,Polygon,36,Mekong - CHN,Mekong,CHN,88,15.13203187061711,164746.57807591927,88|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+606,Polygon,37,North and South Korea Bo Hai Korean Bay North Coast - CHN,North and South Korea Bo Hai Korean Bay North Coast,CHN,98,34.422045111631505,314886.58584533277,98|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+607,Polygon,38,Ob - CHN,Ob,CHN,105,10.562941798527733,88732.82560352756,105|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+608,Polygon,39,Plateau of Tibet Interior - CHN,Plateau of Tibet Interior,CHN,118,38.13528661468455,398534.1217146591,118|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+609,Polygon,40,Russia South East Coast - CHN,Russia South East Coast,CHN,123,3.643120138990455,32831.968009330085,123|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+610,Polygon,41,Tarim Interior - CHN,Tarim Interior,CHN,148,163.25284706506787,1583765.9001210358,148|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+611,Polygon,42,Yangtze - CHN,Yangtze,CHN,159,180.67434134994244,1922652.308836492,159|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+612,Polygon,43,Ziya He Interior - CHN,Ziya He Interior,CHN,162,35.71538162762602,342560.63818529004,162|CHN,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+613,Polygon,48,Amu Darya - FSU,Amu Darya,FSU,10,68.68353479991787,638880.5263726851,10|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+614,Polygon,49,Amur - FSU,Amur,FSU,11,129.3266297217521,1005837.9357993124,11|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+615,Polygon,61,Gobi Interior - FSU,Gobi Interior,FSU,54,3.151819638879765,24993.793669123337,54|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+616,Polygon,64,Lake Balkash - FSU,Lake Balkash,FSU,77,46.68558882503665,401916.698212351,77|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+617,Polygon,66,Ob - FSU,Ob,FSU,105,442.0184000705311,3002697.035522782,105|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+618,Polygon,68,Russia South East Coast - FSU,Russia South East Coast,FSU,123,13.185769442304178,111173.21606464742,123|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+619,Polygon,72,Syr Darya - FSU,Syr Darya,FSU,146,120.16918994094857,1039645.465755588,146|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+620,Polygon,73,Tarim Interior - FSU,Tarim Interior,FSU,148,2.808148187792624,26139.25468090895,148|FSU,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+621,Polygon,156,Irrawaddy Salween Sittang - PAS,Irrawaddy Salween Sittang,PAS,70,49.82783975429173,570205.7701780156,70|PAS,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+622,Polygon,159,Mekong - PAS,Mekong,PAS,88,17.780186988703306,209514.6665258658,88|PAS,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+623,Polygon,170,Amur - RCPA,Amur,RCPA,11,30.195631982147766,251372.3250978747,11|RCPA,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+624,Polygon,171,Gobi Interior - RCPA,Gobi Interior,RCPA,54,113.07219778205119,976075.0598702495,54|RCPA,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+625,Polygon,173,Hong Red River Xun Jiang South China Sea Coast - RCPA,Hong Red River Xun Jiang South China Sea Coast,RCPA,61,9.37996784724748,107416.71196219622,61|RCPA,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+626,Polygon,174,Mekong - RCPA,Mekong,RCPA,88,33.69474313758784,398868.3923815746,88|RCPA,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+627,Polygon,175,North and South Korea Bo Hai Korean Bay North Coast - RCPA,North and South Korea Bo Hai Korean Bay North Coast,RCPA,98,11.099145075490723,105478.34986691692,98|RCPA,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+628,Polygon,176,Ob - RCPA,Ob,RCPA,105,1.332356268112036,11283.483212797064,105|RCPA,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+629,Polygon,177,Russia South East Coast - RCPA,Russia South East Coast,RCPA,123,1.859557958407876,17123.598447568747,123|RCPA,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+630,Polygon,180,Amu Darya - SAS,Amu Darya,SAS,10,16.751898553072152,166771.46410916265,10|SAS,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+631,Polygon,186,Ganges Bramaputra - SAS,Ganges Bramaputra,SAS,53,114.57466080501447,1265290.3982699495,53|SAS,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+632,Polygon,189,Indus - SAS,Indus,SAS,67,73.6348024222214,768352.7348313686,67|SAS,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+633,Polygon,194,Tarim Interior - SAS,Tarim Interior,SAS,148,0.212744215831223,2118.0134196489284,148|SAS,CHN,CHN,China,East Asia & Pacific,DEV,Asia
+634,Polygon,31,Hong Red River Xun Jiang South China Sea Coast - CHN,Hong Red River Xun Jiang South China Sea Coast,CHN,61,57.90535253640604,652476.224748953,61|CHN,MAC,MAC,Macao,East Asia & Pacific,DEV,Asia
+635,Polygon,31,Hong Red River Xun Jiang South China Sea Coast - CHN,Hong Red River Xun Jiang South China Sea Coast,CHN,61,57.90535253640604,652476.224748953,61|CHN,HKG,HKG,Hong Kong,East Asia & Pacific,DEV,Asia
+636,Polygon,86,La Puna Region - LAM,La Puna Region,LAM,76,28.324934687429078,326056.00545524724,76|LAM,CHL,CHL,Chile,Latin America & Caribbean,DEV,South America
+637,Polygon,88,Mar Chiquita Salinas Grandes - LAM,Mar Chiquita Salinas Grandes,LAM,84,28.69332400966023,307876.48125483684,84|LAM,CHL,CHL,Chile,Latin America & Caribbean,DEV,South America
+638,Polygon,89,Negro Central Patagonia South Argentina South Atlantic Coast - LAM,Negro Central Patagonia South Argentina South Atlantic Coast,LAM,93,79.9499701836478,705678.7467286971,93|LAM,CHL,CHL,Chile,Latin America & Caribbean,DEV,South America
+639,Polygon,92,North Chile Pacific Coast - LAM,North Chile Pacific Coast,LAM,100,39.159711957366184,413904.33873908914,100|LAM,CHL,CHL,Chile,Latin America & Caribbean,DEV,South America
+640,Polygon,97,Peru Pacific Coast - LAM,Peru Pacific Coast,LAM,116,24.176115154899623,290695.997022633,116|LAM,CHL,CHL,Chile,Latin America & Caribbean,DEV,South America
+641,Polygon,101,South America Colorado - LAM,South America Colorado,LAM,137,39.411264915105455,400803.03938645375,137|LAM,CHL,CHL,Chile,Latin America & Caribbean,DEV,South America
+642,Polygon,102,South Chile Pacific Coast - LAM,South Chile Pacific Coast,LAM,139,39.789086894376354,323440.9267847624,139|LAM,CHL,CHL,Chile,Latin America & Caribbean,DEV,South America
+643,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,TCD,TCD,Chad,Sub-Saharan Africa,DEV,Africa
+644,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,TCD,TCD,Chad,Sub-Saharan Africa,DEV,Africa
+645,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,TCD,TCD,Chad,Sub-Saharan Africa,DEV,Africa
+646,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,TCD,TCD,Chad,Sub-Saharan Africa,DEV,Africa
+647,Polygon,114,Lake Chad - MEA,Lake Chad,MEA,78,18.686602748362844,217453.42130273048,78|MEA,TCD,TCD,Chad,Sub-Saharan Africa,DEV,Africa
+648,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,CAF,CAF,Central African Rep.,Sub-Saharan Africa,DEV,Africa
+649,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,CAF,CAF,Central African Rep.,Sub-Saharan Africa,DEV,Africa
+650,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,CAF,CAF,Central African Rep.,Sub-Saharan Africa,DEV,Africa
+651,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,CAF,CAF,Central African Rep.,Sub-Saharan Africa,DEV,Africa
+652,Polygon,114,Lake Chad - MEA,Lake Chad,MEA,78,18.686602748362844,217453.42130273048,78|MEA,CAF,CAF,Central African Rep.,Sub-Saharan Africa,DEV,Africa
+653,Polygon,118,Nile - MEA,Nile,MEA,96,188.55740761982022,2234647.616865989,96|MEA,CAF,CAF,Central African Rep.,Sub-Saharan Africa,DEV,Africa
+654,Polygon,123,Atlantic Ocean Seaboard - NAM,Atlantic Ocean Seaboard,NAM,17,89.9637413068996,700660.987058833,17|NAM,CAN,CAN,Canada,North America,IND,North America
+655,Polygon,127,Columbia - NAM,Columbia,NAM,36,78.29819226479269,671067.4016154135,36|NAM,CAN,CAN,Canada,North America,IND,North America
+656,Polygon,128,Fraser Pacific Arctic Coast - NAM,Fraser Pacific Arctic Coast,NAM,52,90.40076968152219,664913.1660413307,52|NAM,CAN,CAN,Canada,North America,IND,North America
+657,Polygon,132,Hudson Bay Coast - NAM,Hudson Bay Coast,NAM,63,227.49255306149317,1639382.8977635198,63|NAM,CAN,CAN,Canada,North America,IND,North America
+658,Polygon,133,Mackenzie - NAM,Mackenzie,NAM,81,301.09196670635066,1805892.4868205711,81|NAM,CAN,CAN,Canada,North America,IND,North America
+659,Polygon,134,Mississippi Missouri - NAM,Mississippi Missouri,NAM,90,351.6451592890299,3289922.3185052755,90|NAM,CAN,CAN,Canada,North America,IND,North America
+660,Polygon,136,Northwest Territories - NAM,Northwest Territories,NAM,103,688.8937167805711,2967257.053187312,103|NAM,CAN,CAN,Canada,North America,IND,North America
+661,Polygon,138,Pacific and Arctic Coast - NAM,Pacific and Arctic Coast,NAM,109,339.63182645803454,1826035.9259550057,109|NAM,CAN,CAN,Canada,North America,IND,North America
+662,Polygon,140,Saskatchewan Nelson - NAM,Saskatchewan Nelson,NAM,126,143.52338042581562,1110630.5238920946,126|NAM,CAN,CAN,Canada,North America,IND,North America
+663,Polygon,142,St. Lawrence - NAM,St. Lawrence,NAM,142,151.0332460002365,1288105.3897925103,142|NAM,CAN,CAN,Canada,North America,IND,North America
+664,Polygon,143,United States North Atlantic Coast - NAM,United States North Atlantic Coast,NAM,153,42.72391034441159,394964.4570593727,153|NAM,CAN,CAN,Canada,North America,IND,North America
+665,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,CMR,CMR,Cameroon,Sub-Saharan Africa,DEV,Africa
+666,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,CMR,CMR,Cameroon,Sub-Saharan Africa,DEV,Africa
+667,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,CMR,CMR,Cameroon,Sub-Saharan Africa,DEV,Africa
+668,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,CMR,CMR,Cameroon,Sub-Saharan Africa,DEV,Africa
+669,Polygon,154,Gulf of Thailand Coast Chao Phraya - PAS,Gulf of Thailand Coast Chao Phraya,PAS,59,16.33128056374787,193025.5587213427,59|PAS,KHM,KHM,Cambodia,East Asia & Pacific,DEV,Asia
+670,Polygon,159,Mekong - PAS,Mekong,PAS,88,17.780186988703306,209514.6665258658,88|PAS,KHM,KHM,Cambodia,East Asia & Pacific,DEV,Asia
+671,Polygon,172,Gulf of Thailand Coast Chao Phraya - RCPA,Gulf of Thailand Coast Chao Phraya,RCPA,59,3.351612549669,40579.35042899874,59|RCPA,KHM,KHM,Cambodia,East Asia & Pacific,DEV,Asia
+672,Polygon,174,Mekong - RCPA,Mekong,RCPA,88,33.69474313758784,398868.3923815746,88|RCPA,KHM,KHM,Cambodia,East Asia & Pacific,DEV,Asia
+673,Polygon,178,Vietnam Coast - RCPA,Vietnam Coast,RCPA,156,16.232335815085708,192503.28043515823,156|RCPA,KHM,KHM,Cambodia,East Asia & Pacific,DEV,Asia
+674,Polygon,28,Ganges Bramaputra - CHN,Ganges Bramaputra,CHN,53,29.359386990568247,315813.62733644416,53|CHN,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+675,Polygon,34,Irrawaddy Salween Sittang - CHN,Irrawaddy Salween Sittang,CHN,70,14.689595673361401,158244.3363255411,70|CHN,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+676,Polygon,36,Mekong - CHN,Mekong,CHN,88,15.13203187061711,164746.57807591927,88|CHN,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+677,Polygon,153,Bay of Bengal North East Coast - PAS,Bay of Bengal North East Coast,PAS,24,4.682251853332933,54082.06818858499,24|PAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+678,Polygon,154,Gulf of Thailand Coast Chao Phraya - PAS,Gulf of Thailand Coast Chao Phraya,PAS,59,16.33128056374787,193025.5587213427,59|PAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+679,Polygon,156,Irrawaddy Salween Sittang - PAS,Irrawaddy Salween Sittang,PAS,70,49.82783975429173,570205.7701780156,70|PAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+680,Polygon,159,Mekong - PAS,Mekong,PAS,88,17.780186988703306,209514.6665258658,88|PAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+681,Polygon,163,Peninsula Malaysia - PAS,Peninsula Malaysia,PAS,114,23.561498263515627,286680.3449084802,114|PAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+682,Polygon,174,Mekong - RCPA,Mekong,RCPA,88,33.69474313758784,398868.3923815746,88|RCPA,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+683,Polygon,183,Bay of Bengal North East Coast - SAS,Bay of Bengal North East Coast,SAS,24,3.569228469270275,40602.964062404884,24|SAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+684,Polygon,186,Ganges Bramaputra - SAS,Ganges Bramaputra,SAS,53,114.57466080501447,1265290.3982699495,53|SAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+685,Polygon,190,Irrawaddy Salween Sittang - SAS,Irrawaddy Salween Sittang,SAS,70,1.565075925711981,17491.9034615122,70|SAS,MMR,MMR,Myanmar,East Asia & Pacific,DEV,Asia
+686,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,BDI,BDI,Burundi,Sub-Saharan Africa,DEV,Africa
+687,Polygon,17,Nile - AFR,Nile,AFR,96,69.57506164634255,848888.2859663849,96|AFR,BDI,BDI,Burundi,Sub-Saharan Africa,DEV,Africa
+688,Polygon,7,Africa West Coast - AFR,Africa West Coast,AFR,7,67.72074840046987,822709.4922803893,7|AFR,BFA,BFA,Burkina Faso,Sub-Saharan Africa,DEV,Africa
+689,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,BFA,BFA,Burkina Faso,Sub-Saharan Africa,DEV,Africa
+690,Polygon,24,Volta - AFR,Volta,AFR,158,33.95887497869898,410999.8014495135,158|AFR,BFA,BFA,Burkina Faso,Sub-Saharan Africa,DEV,Africa
+691,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,BGR,BGR,Bulgaria,Europe & Central Asia,IND,Europe
+692,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,BGR,BGR,Bulgaria,Europe & Central Asia,IND,Europe
+693,Polygon,195,Adriatic Sea Greece Black Sea Coast - WEU,Adriatic Sea Greece Black Sea Coast,WEU,0,16.60253595173674,158496.72388643833,0|WEU,BGR,BGR,Bulgaria,Europe & Central Asia,IND,Europe
+694,Polygon,158,Kalimantan North Borneo Coast - PAS,Kalimantan North Borneo Coast,PAS,73,60.1272682255887,739353.476733488,73|PAS,BRN,BRN,Brunei,East Asia & Pacific,DEV,Asia
+695,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+696,Polygon,84,East Brazil South Atlantic Coast - LAM,East Brazil South Atlantic Coast,LAM,46,23.323339130103136,285367.6708908674,46|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+697,Polygon,85,La Plata - LAM,La Plata,LAM,75,235.10416077777776,2659173.349209014,75|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+698,Polygon,91,North Brazil South Atlantic Coast - LAM,North Brazil South Atlantic Coast,LAM,99,22.016757330924673,270274.60740233574,99|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+699,Polygon,93,North East South America South Atlantic Coast - LAM,North East South America South Atlantic Coast,LAM,101,45.73082338113158,561056.7849104935,101|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+700,Polygon,94,Orinoco - LAM,Orinoco,LAM,108,76.57332768236944,937394.0817955564,108|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+701,Polygon,96,Parnaiba - LAM,Parnaiba,LAM,113,27.15839256452212,331511.6396342885,113|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+702,Polygon,99,Sao Francisco - LAM,Sao Francisco,LAM,125,53.09632023941472,634872.5705693254,125|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+703,Polygon,103,Tocantins - LAM,Tocantins,LAM,152,79.33020467198169,960007.4724964618,152|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+704,Polygon,104,Uruguay Brazil South Atlantic Coast - LAM,Uruguay Brazil South Atlantic Coast,LAM,155,107.98182095367942,1207199.919546795,155|LAM,BRA,BRA,Brazil,Latin America & Caribbean,DEV,South America
+705,Polygon,6,Africa South Interior - AFR,Africa South Interior,AFR,6,74.3232435534603,863903.1446777217,6|AFR,BWA,BWA,Botswana,Sub-Saharan Africa,DEV,Africa
+706,Polygon,13,Limpopo - AFR,Limpopo,AFR,80,36.34079495461681,411537.1498300887,80|AFR,BWA,BWA,Botswana,Sub-Saharan Africa,DEV,Africa
+707,Polygon,18,Orange - AFR,Orange,AFR,107,89.09282947689191,975683.0276715701,107|AFR,BWA,BWA,Botswana,Sub-Saharan Africa,DEV,Africa
+708,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,BWA,BWA,Botswana,Sub-Saharan Africa,DEV,Africa
+709,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,BIH,BIH,Bosnia and Herz.,Europe & Central Asia,IND,Europe
+710,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,BIH,BIH,Bosnia and Herz.,Europe & Central Asia,IND,Europe
+711,Polygon,77,Amazon - LAM,Amazon,LAM,9,486.78007793114733,5925336.499094576,9|LAM,BOL,BOL,Bolivia,Latin America & Caribbean,DEV,South America
+712,Polygon,85,La Plata - LAM,La Plata,LAM,75,235.10416077777776,2659173.349209014,75|LAM,BOL,BOL,Bolivia,Latin America & Caribbean,DEV,South America
+713,Polygon,86,La Puna Region - LAM,La Puna Region,LAM,76,28.324934687429078,326056.00545524724,76|LAM,BOL,BOL,Bolivia,Latin America & Caribbean,DEV,South America
+714,Polygon,92,North Chile Pacific Coast - LAM,North Chile Pacific Coast,LAM,100,39.159711957366184,413904.33873908914,100|LAM,BOL,BOL,Bolivia,Latin America & Caribbean,DEV,South America
+715,Polygon,28,Ganges Bramaputra - CHN,Ganges Bramaputra,CHN,53,29.359386990568247,315813.62733644416,53|CHN,BTN,BTN,Bhutan,South Asia,DEV,Asia
+716,Polygon,186,Ganges Bramaputra - SAS,Ganges Bramaputra,SAS,53,114.57466080501447,1265290.3982699495,53|SAS,BTN,BTN,Bhutan,South Asia,DEV,Asia
+717,Polygon,8,Africa West Coast - AFR,Africa West Coast,AFR,8,16.012711824888612,195431.2885936325,8|AFR,BEN,BEN,Benin,Sub-Saharan Africa,DEV,Africa
+718,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,BEN,BEN,Benin,Sub-Saharan Africa,DEV,Africa
+719,Polygon,24,Volta - AFR,Volta,AFR,158,33.95887497869898,410999.8014495135,158|AFR,BEN,BEN,Benin,Sub-Saharan Africa,DEV,Africa
+720,Polygon,81,Central America Carribean Coast - LAM,Central America Carribean Coast,LAM,32,77.43898876993121,906204.9879963355,32|LAM,BLZ,BLZ,Belize,Latin America & Caribbean,DEV,North America
+721,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,BEL,BEL,Belgium,Europe & Central Asia,IND,Europe
+722,Polygon,47,Oder Wisla Neman Daugava Neva Poland Baltic Coast - EEU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,EEU,106,67.78457846155922,495734.9145733114,106|EEU,BLR,BLR,Belarus,Europe & Central Asia,IND,Europe
+723,Polygon,57,Dnieper - FSU,Dnieper,FSU,42,66.00332397427857,511732.4635047262,42|FSU,BLR,BLR,Belarus,Europe & Central Asia,IND,Europe
+724,Polygon,60,Finland Neva - FSU,Finland Neva,FSU,51,38.109112303155314,234082.1353865948,51|FSU,BLR,BLR,Belarus,Europe & Central Asia,IND,Europe
+725,Polygon,67,Oder Wisla Neman Daugava Neva Poland Baltic Coast - FSU,Oder Wisla Neman Daugava Neva Poland Baltic Coast,FSU,106,27.282915620009476,192354.07159521506,106|FSU,BLR,BLR,Belarus,Europe & Central Asia,IND,Europe
+726,Polygon,80,Carribean Coast - LAM,Carribean Coast,LAM,29,28.187933095578053,342254.363448256,29|LAM,BRB,BRB,Barbados,Latin America & Caribbean,DEV,North America
+727,Polygon,153,Bay of Bengal North East Coast - PAS,Bay of Bengal North East Coast,PAS,24,4.682251853332933,54082.06818858499,24|PAS,BGD,BGD,Bangladesh,South Asia,DEV,Asia
+728,Polygon,183,Bay of Bengal North East Coast - SAS,Bay of Bengal North East Coast,SAS,24,3.569228469270275,40602.964062404884,24|SAS,BGD,BGD,Bangladesh,South Asia,DEV,Asia
+729,Polygon,186,Ganges Bramaputra - SAS,Ganges Bramaputra,SAS,53,114.57466080501447,1265290.3982699495,53|SAS,BGD,BGD,Bangladesh,South Asia,DEV,Asia
+730,Polygon,187,India East Coast Pennar Mahandi Krishna Cauvery Brahamini Yasai - SAS,India East Coast Pennar Mahandi Krishna Cauvery Brahamini Yasai,SAS,65,106.08817528764293,1240066.3494236665,65|SAS,BGD,BGD,Bangladesh,South Asia,DEV,Asia
+731,Polygon,108,Arabian Peninsula - MEA,Arabian Peninsula,MEA,14,188.45037220446503,2138132.736050085,14|MEA,BHR,BHR,Bahrain,Middle East & North Africa,DEV,Asia
+732,Polygon,79,Caribbean - LAM,Caribbean,LAM,28,18.219549675926682,210085.3757598381,28|LAM,BHS,BHS,Bahamas,Latin America & Caribbean,DEV,North America
+733,Polygon,55,Caspian Sea South West Coast - FSU,Caspian Sea South West Coast,FSU,31,37.2783475929987,338417.4708688273,31|FSU,AZE,AZE,Azerbaijan,Europe & Central Asia,IND,Asia
+734,Polygon,110,Caspian Sea South West Coast - MEA,Caspian Sea South West Coast,MEA,31,18.78597808660579,184854.9447968922,31|MEA,AZE,AZE,Azerbaijan,Europe & Central Asia,IND,Asia
+735,Polygon,199,Caspian Sea South West Coast - WEU,Caspian Sea South West Coast,WEU,31,3.120157856849799,29506.316205280476,31|WEU,AZE,AZE,Azerbaijan,Europe & Central Asia,IND,Asia
+736,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,AUT,AUT,Austria,Europe & Central Asia,IND,Europe
+737,Polygon,46,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - EEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,EEU,48,6.260043368717449,50039.7704306199,48|EEU,AUT,AUT,Austria,Europe & Central Asia,IND,Europe
+738,Polygon,200,Danube - WEU,Danube,WEU,39,16.754109860666297,139167.5962163657,39|WEU,AUT,AUT,Austria,Europe & Central Asia,IND,Europe
+739,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,AUT,AUT,Austria,Europe & Central Asia,IND,Europe
+740,Polygon,212,Po Italy East Coast - WEU,Po Italy East Coast,WEU,119,18.81465140607543,166467.62583825123,119|WEU,AUT,AUT,Austria,Europe & Central Asia,IND,Europe
+741,Polygon,144,Australia East Coast - PAO,Australia East Coast,PAO,18,62.265906256790494,673854.4788300542,18|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+742,Polygon,145,Australia Interior - PAO,Australia Interior,PAO,19,295.08624714811765,3293619.406743521,19|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+743,Polygon,146,Australia North Coast - PAO,Australia North Coast,PAO,20,108.41824927983637,1279972.3677937516,20|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+744,Polygon,147,Australia South Coast - PAO,Australia South Coast,PAO,21,45.7445416536989,479722.11256054934,21|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+745,Polygon,148,Australia West Coast - PAO,Australia West Coast,PAO,22,75.83953073407898,833937.7908367063,22|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+746,Polygon,150,Murray Darling - PAO,Murray Darling,PAO,91,100.49263466018635,1054628.2194889332,91|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+747,Polygon,151,New Zealand - PAO,New Zealand,PAO,94,29.202882680693577,269075.46357761143,94|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+748,Polygon,152,Tasmania - PAO,Tasmania,PAO,149,7.422845236670526,68369.94897987178,149|PAO,AUS,AUS,Australia,East Asia & Pacific,IND,Oceania
+749,Polygon,55,Caspian Sea South West Coast - FSU,Caspian Sea South West Coast,FSU,31,37.2783475929987,338417.4708688273,31|FSU,ARM,ARM,Armenia,Europe & Central Asia,IND,Asia
+750,Polygon,199,Caspian Sea South West Coast - WEU,Caspian Sea South West Coast,WEU,31,3.120157856849799,29506.316205280476,31|WEU,ARM,ARM,Armenia,Europe & Central Asia,IND,Asia
+751,Polygon,85,La Plata - LAM,La Plata,LAM,75,235.10416077777776,2659173.349209014,75|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+752,Polygon,86,La Puna Region - LAM,La Puna Region,LAM,76,28.324934687429078,326056.00545524724,76|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+753,Polygon,88,Mar Chiquita Salinas Grandes - LAM,Mar Chiquita Salinas Grandes,LAM,84,28.69332400966023,307876.48125483684,84|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+754,Polygon,89,Negro Central Patagonia South Argentina South Atlantic Coast - LAM,Negro Central Patagonia South Argentina South Atlantic Coast,LAM,93,79.9499701836478,705678.7467286971,93|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+755,Polygon,92,North Chile Pacific Coast - LAM,North Chile Pacific Coast,LAM,100,39.159711957366184,413904.33873908914,100|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+756,Polygon,95,Pampas Region North Argentina South Atlantic Coast - LAM,Pampas Region North Argentina South Atlantic Coast,LAM,111,39.34568254851107,391665.0783369879,111|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+757,Polygon,101,South America Colorado - LAM,South America Colorado,LAM,137,39.411264915105455,400803.03938645375,137|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+758,Polygon,102,South Chile Pacific Coast - LAM,South Chile Pacific Coast,LAM,139,39.789086894376354,323440.9267847624,139|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+759,Polygon,104,Uruguay Brazil South Atlantic Coast - LAM,Uruguay Brazil South Atlantic Coast,LAM,155,107.98182095367942,1207199.919546795,155|LAM,ARG,ARG,Argentina,Latin America & Caribbean,DEV,South America
+760,Polygon,6,Africa South Interior - AFR,Africa South Interior,AFR,6,74.3232435534603,863903.1446777217,6|AFR,AGO,AGO,Angola,Sub-Saharan Africa,DEV,Africa
+761,Polygon,9,Angola Coast - AFR,Angola Coast,AFR,13,42.13506529286562,506503.7291720509,13|AFR,AGO,AGO,Angola,Sub-Saharan Africa,DEV,Africa
+762,Polygon,10,Congo - AFR,Congo,AFR,38,301.2034699494603,3688468.8795233667,38|AFR,AGO,AGO,Angola,Sub-Saharan Africa,DEV,Africa
+763,Polygon,11,Gulf of Guinea - AFR,Gulf of Guinea,AFR,57,57.63313178858691,707844.131026168,57|AFR,AGO,AGO,Angola,Sub-Saharan Africa,DEV,Africa
+764,Polygon,25,Zambezi - AFR,Zambezi,AFR,161,115.44181703875356,1373200.9083979318,161|AFR,AGO,AGO,Angola,Sub-Saharan Africa,DEV,Africa
+765,Polygon,203,Ebro Spain France South Coast Rhone - WEU,Ebro Spain France South Coast Rhone,WEU,47,34.01331777428787,310081.8671132164,47|WEU,AND,AND,Andorra,Europe & Central Asia,DEV,Europe
+766,Polygon,204,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast - WEU,Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast,WEU,48,96.28585362953858,783670.9052742367,48|WEU,AND,AND,Andorra,Europe & Central Asia,DEV,Europe
+767,Polygon,3,Africa North Interior - AFR,Africa North Interior,AFR,3,105.21656221776642,1209639.379213199,3|AFR,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+768,Polygon,12,Lake Chad - AFR,Lake Chad,AFR,78,189.08258525617396,2245019.2153341984,78|AFR,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+769,Polygon,16,Niger - AFR,Niger,AFR,95,163.27556052098709,1954311.5905341767,95|AFR,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+770,Polygon,105,Africa North Interior - MEA,Africa North Interior,MEA,3,392.34259918145534,4307318.832830519,3|MEA,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+771,Polygon,106,Africa North West Coast - MEA,Africa North West Coast,MEA,4,48.277140757419254,523688.1261510159,4|MEA,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+772,Polygon,114,Lake Chad - MEA,Lake Chad,MEA,78,18.686602748362844,217453.42130273048,78|MEA,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+773,Polygon,116,Mediterranean South Coast - MEA,Mediterranean South Coast,MEA,87,54.23960870743565,560667.7955834967,87|MEA,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+774,Polygon,117,Niger - MEA,Niger,MEA,95,14.018710521776429,160908.09672166087,95|MEA,DZA,DZA,Algeria,Middle East & North Africa,DEV,Africa
+775,Polygon,44,Adriatic Sea Greece Black Sea Coast - EEU,Adriatic Sea Greece Black Sea Coast,EEU,0,19.014420602455203,173363.56961044922,0|EEU,ALB,ALB,Albania,Europe & Central Asia,IND,Europe
+776,Polygon,45,Danube - EEU,Danube,EEU,39,70.90828729509231,611034.2037238554,39|EEU,ALB,ALB,Albania,Europe & Central Asia,IND,Europe
+777,Polygon,195,Adriatic Sea Greece Black Sea Coast - WEU,Adriatic Sea Greece Black Sea Coast,WEU,0,16.60253595173674,158496.72388643833,0|WEU,ALB,ALB,Albania,Europe & Central Asia,IND,Europe
+778,Polygon,41,Tarim Interior - CHN,Tarim Interior,CHN,148,163.25284706506787,1583765.9001210358,148|CHN,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+779,Polygon,48,Amu Darya - FSU,Amu Darya,FSU,10,68.68353479991787,638880.5263726851,10|FSU,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+780,Polygon,54,Caspian Sea East Coast - FSU,Caspian Sea East Coast,FSU,30,55.501673742285675,526071.7824260985,30|FSU,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+781,Polygon,109,Caspian Sea East Coast - MEA,Caspian Sea East Coast,MEA,30,8.55976926111568,84809.68473172544,30|MEA,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+782,Polygon,113,Farahud Hamun-i-Mashkel Helmand - MEA,Farahud Hamun-i-Mashkel Helmand,MEA,50,10.502482499133173,111209.81610386465,50|MEA,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+783,Polygon,180,Amu Darya - SAS,Amu Darya,SAS,10,16.751898553072152,166771.46410916265,10|SAS,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+784,Polygon,184,Caspian Sea East Coast - SAS,Caspian Sea East Coast,SAS,30,7.645296728597311,77637.22562489343,30|SAS,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+785,Polygon,185,Farahud Hamun-i-Mashkel Helmand - SAS,Farahud Hamun-i-Mashkel Helmand,SAS,50,42.999246276314544,454070.05909218575,50|SAS,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+786,Polygon,189,Indus - SAS,Indus,SAS,67,73.6348024222214,768352.7348313686,67|SAS,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+787,Polygon,194,Tarim Interior - SAS,Tarim Interior,SAS,148,0.212744215831223,2118.0134196489284,148|SAS,AFG,AFG,Afghanistan,South Asia,DEV,Asia
+788,Polygon,33,Indus - CHN,Indus,CHN,67,9.17213900089549,95598.02243456729,67|CHN,IND,-99,Siachen Glacier,South Asia,DEV,Asia
+789,Polygon,41,Tarim Interior - CHN,Tarim Interior,CHN,148,163.25284706506787,1583765.9001210358,148|CHN,IND,-99,Siachen Glacier,South Asia,DEV,Asia
+790,Polygon,189,Indus - SAS,Indus,SAS,67,73.6348024222214,768352.7348313686,67|SAS,IND,-99,Siachen Glacier,South Asia,DEV,Asia
+791,Polygon,194,Tarim Interior - SAS,Tarim Interior,SAS,148,0.212744215831223,2118.0134196489284,148|SAS,IND,-99,Siachen Glacier,South Asia,DEV,Asia

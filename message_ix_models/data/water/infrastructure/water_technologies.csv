@@ -1,0 +1,28 @@
+technology,category,water_source,basin_requirement,description
+extract_surfacewater,extraction,surface_water,surface_water_basins,Freshwater extraction from rivers/lakes
+extract_groundwater,extraction,groundwater,groundwater_bearing_basins,Groundwater extraction from aquifers
+extract_salinewater_cool,extraction,saline,coastal_basins,Seawater extraction for cooling
+extract_salinewater_basin,extraction,saline,coastal_basins,Seawater extraction for desalination
+membrane,desalination,saline,coastal_basins,Membrane-based desalination
+distillation,desalination,saline,coastal_basins,Thermal desalination
+desal_t_d,distribution,desalinated,coastal_basins,Desalinated water transmission & distribution
+urban_t_d,distribution,freshwater,urban_developed_basins,Urban water transmission & distribution
+urban_unconnected,distribution,freshwater,urban_developed_basins,Urban areas without water connection
+industry_unconnected,distribution,freshwater,industrial_basins,Industrial areas without water connection
+rural_t_d,distribution,freshwater,rural_basins,Rural water transmission & distribution
+rural_unconnected,distribution,freshwater,rural_basins,Rural areas without water connection
+urban_sewerage,treatment,wastewater,urban_developed_basins,Urban wastewater collection
+urban_untreated,treatment,wastewater,urban_developed_basins,Untreated urban return flows
+urban_discharge,treatment,wastewater,urban_developed_basins,Treated urban water discharge
+urban_recycle,treatment,wastewater,urban_developed_basins,Urban water recycling
+industry_untreated,treatment,wastewater,industrial_basins,Untreated industrial return flows
+rural_sewerage,treatment,wastewater,rural_basins,Rural wastewater collection
+rural_untreated,treatment,wastewater,rural_basins,Untreated rural return flows
+rural_discharge,treatment,wastewater,rural_basins,Treated rural water discharge
+rural_recycle,treatment,wastewater,rural_basins,Rural water recycling
+ieff1,irrigation,freshwater,agricultural_basins,Low irrigation efficiency
+ieff2,irrigation,freshwater,agricultural_basins,Medium irrigation efficiency
+ieff3,irrigation,freshwater,agricultural_basins,High irrigation efficiency
+irrigation_oilcrops,irrigation,freshwater,agricultural_basins,Irrigation for oil crops
+irrigation_sugarcrops,irrigation,freshwater,agricultural_basins,Irrigation for sugar crops
+irrigation_cereal,irrigation,freshwater,agricultural_basins,Irrigation for cereal crops

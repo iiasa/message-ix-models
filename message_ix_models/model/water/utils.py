@@ -2,11 +2,12 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+from warnings import warn
 
-import numpy as np
 import pandas as pd
 import xarray as xr
+from iam_units import registry
 from sdmx.model.v21 import Code
 
 from message_ix_models import Context
@@ -15,6 +16,8 @@ from message_ix_models.util import load_package_data
 
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from message_ix_models import ScenarioInfo
 # Configuration files
 METADATA = [
     # Information about MESSAGE-water
@@ -22,6 +25,24 @@ METADATA = [
     ("water", "set"),
     ("water", "technology"),
 ]
+
+# Conversion factors used in the water module
+
+MONTHLY_CONVERSION = (
+    (30 * registry.day / registry.month).to_base_units().magnitude
+)  # MCM/day to MCM/month
+# Convert USD/(m³/day) to USD/MCM: m³/day * 365 days/year / 1e6 m³/MCM
+USD_M3DAY_TO_USD_MCM = (registry("m^3/day").to("m^3/year").magnitude) / 1e6
+USD_KM3_TO_USD_MCM = registry("USD/km^3").to("USD/m^3").magnitude * 1e6
+GWa_KM3_TO_GWa_MCM = registry("GWa/km^3").to("GWa/m^3").magnitude * 1e6
+ANNUAL_CAPACITY_FACTOR = 5  # Convert 5-year capacity to annual
+# Convert km³ to MCM: 1 km³ = 1e9 m³, 1 MCM = 1e6 m³, so factor = 1000
+KM3_TO_MCM = registry("1 km^3").to("meter^3").magnitude / 1e6  # km³ to MCM conversion
+kWh_m3_TO_GWa_MCM = registry("kWh/m^3").to("GWa/m^3").magnitude * 1e6
+
+# Convert m3/GJ to MCM/GWa
+m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
+# MCM not standard so have to remember to divide by 1e6 each time.
 
 
 def read_config(context: Optional[Context] = None):
@@ -124,44 +145,44 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
     return df.apply(func, axis=1)
 
 
-def map_yv_ya_lt(
-    periods: tuple[int, ...], lt: int, ya: Optional[int] = None
+def get_vintage_and_active_years(
+    info: Optional["ScenarioInfo"], technical_lifetime: Optional[int] = None
 ) -> pd.DataFrame:
-    """All meaningful combinations of (vintage year, active year) given `periods`.
+    """Calculate valid vintage-activity year combinations without scenario dependency.
+
+    This implements similar logic as scenario.vintage_and_active_years() but
+    uses the technical lifetime data directly instead of requiring it to be in
+    the scenario first.
 
     Parameters
     ----------
-    periods : tuple[int, ...]
-        A sequence of years.
-    lt : int, lifetime
-    ya : int, active year
-        The first active year.
+    info : ScenarioInfo
+        Contains the base yv_ya combinations and duration_period data
+    technical_lifetime : int, optional
+        Technical lifetime in years. If None, returns all combinations.
+
     Returns
     -------
     pd.DataFrame
-        A DataFrame with columns 'year_vtg' and 'year_act'.
+        DataFrame with columns ['year_vtg', 'year_act'] containing valid combinations
     """
-    if not ya:
-        ya = periods[0]
-        log.info(f"First active year set as {ya!r}")
-    if not lt:
-        raise ValueError("Add a fixed lifetime parameter 'lt'")
+    # Get base yv_ya from ScenarioInfo property
+    yv_ya = info.yv_ya
 
-    # The following lines are the same as
-    # message_ix.tests.test_feature_vintage_and_active_years._generate_yv_ya
+    # If no technical lifetime specified or is nan, return all combinations
+    if technical_lifetime is None or pd.isna(technical_lifetime):
+        warn(
+            """no technical_lifetime provided,
+            using all year vintage year active combinations""",
+            UserWarning,
+        )
+        return yv_ya
+    # Apply simple lifetime logic: year_act - year_vtg <= technical_lifetime
 
-    # - Create a mesh grid using numpy built-ins
-    # - Take the upper-triangular portion (setting the rest to 0)
-    # - Reshape
-    data = np.triu(np.meshgrid(periods, periods, indexing="ij")).reshape((2, -1))
-    # Filter only non-zero pairs
-    df = pd.DataFrame(
-        filter(sum, zip(data[0, :], data[1, :])),
-        columns=["year_vtg", "year_act"],
-        dtype=np.int64,
-    )
+    condition_values = yv_ya["year_act"] - yv_ya["year_vtg"]
 
-    # Select values using the `ya` and `lt` parameters
-    return df.loc[(ya <= df.year_act) & (df.year_act - df.year_vtg <= lt)].reset_index(
-        drop=True
-    )
+    valid_mask = condition_values <= technical_lifetime
+
+    result = yv_ya[valid_mask].reset_index(drop=True)
+
+    return result
