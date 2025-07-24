@@ -1,8 +1,8 @@
 import os
 import sys
 import pandas as pd
-import message_ix
-import ixmp
+import message_ix # type: ignore
+import ixmp # type: ignore
 import logging
 
 mp = ixmp.Platform()
@@ -15,19 +15,25 @@ from message_ix_models.tools.inter_pipe.generate_inter_pipe import (
 )
 
 # Generate bare sheets for pipe technologies and pipe supply technologies
-inter_pipe_bare()
+# inter_pipe_bare()
 
 # Building inter pipes on the scenario (scenario info set in Config)
-scen = inter_pipe_build(config_name=None)
+scen = inter_pipe_build(config_name="config.yaml") # backup of /data/inter_pipe stored at IIASA sharepoint
 
-# Add additional constraints
+# Add additional constraints on total capacity
 bound_total_capacity_up = pd.read_csv(
     Path(package_data_path("inter_pipe")) / "bound_total_capacity_up.csv"
-)
+) # constraints from last phase GEI scenarios (maybe can be removed)
 with scen.transact("Additional constraints added"):
     scen.add_par("bound_total_capacity_up", bound_total_capacity_up)
 
-# Additional steps for the specific baseline
+# Add additional constraints on the share of hydro, solar, and wind in pipe supply technologies
+# Modeling the share of pipe supply techs joining DCUHV 
+# Data selected from 88 GEIDCO planned UHV transmission projects (not open-source data)
+# Adding addtional file here
+# Path(package_data_path("inter_pipe")) / "relation_activity_share_pipe_supply.csv"
+# It is collected by function inter_pipe_build().
+
 # Add potential constraints of solar and wind (relation removed in the recent baselines)
 bound_activity_up = pd.read_csv(
     Path(package_data_path("inter_pipe")) / "bound_activity_up.csv"
