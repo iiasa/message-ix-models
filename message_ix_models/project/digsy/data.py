@@ -5,16 +5,16 @@ import pint_pandas  # noqa: F401
 from message_ix.util import make_df
 
 from message_ix_models.model.material.util import read_yaml_file
-from message_ix_models.util import private_data_path
+from message_ix_models.util import private_data_path, package_data_path, broadcast
 
 
 def read_config() -> dict:
-    config = read_yaml_file(private_data_path("digsy", "config.yaml"))
+    config = read_yaml_file(package_data_path("digsy", "config.yaml"))
     return config
 
 
 def read_industry_file(config: dict) -> pd.DataFrame:
-    path = private_data_path("digsy", config["industry_input"]["file_name"])
+    path = private_data_path("projects", "digsy", config["industry_input"]["file_name"])
     df = pd.read_excel(path, sheet_name=config["industry_input"]["sheet_name"])
     df.columns = [i.replace("TRModified_agg_", "") for i in df.columns]
     df.columns = [i if not i.isdigit() else int(i) for i in df.columns]
@@ -67,11 +67,10 @@ def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
     return pars
 
 
-def read_ict_demand() -> pd.DataFrame:
-    path = private_data_path("digsy", "DIGSY-MESSAGE_ICTs.xls")
+def read_ict_demand(scenario="DIGSY-BEST") -> pd.DataFrame:
+    path = private_data_path("projects", "digsy", "DIGSY-MESSAGE_ICTs.xls")
     dfs = pd.read_excel(path, sheet_name=None)
 
-    scenario = "DIGSY-BEST"
     scen_map = {
         "DIGSY-BEST": "Lower Bound",
         "DIGSY-WORST": "Upper Bound",
@@ -100,8 +99,19 @@ def read_ict_demand() -> pd.DataFrame:
         .assign(unit="GWa")
         .reset_index()
         .rename(columns={"Region": "node", "Year": "year"}),
-        commodity="rc_ict",
+        commodity="electr",
         level="final",
         time="year",
-    ).head()
+    )
+    # keep demand constant post 2050
+    post_2050 = (
+        df[df["year"] == df["year"].max()]
+        .assign(year=None)
+        .pipe(broadcast, year=[i for i in [2055, *[i for i in range(2060, 2111, 10)]]])
+    )
+    df = pd.concat([df, post_2050])
     return df
+
+
+if __name__ == "__main__":
+    read_ict_demand()
