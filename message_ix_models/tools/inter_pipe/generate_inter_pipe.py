@@ -629,6 +629,12 @@ def inter_pipe_bare(
 
     # Generate relation set sheet (no need to edit)
     relation = list(set(set_relation))
+    # Hard-coded for optioal relation filled by addtional input files
+    # TODO: put hard-coded relations in config too
+    hard_coded_relation = ["elec_share_gei", "elec_share_gei_CHN", "elec_share_gei_FSU"]
+    for rel in hard_coded_relation:
+        if rel not in relation:
+            relation.append(rel)
     df = pd.DataFrame({"relation": relation})
     df.to_csv(os.path.join(config_dir, "relation.csv"), index=False)
     log.info(f"Set relation csv generated.")
