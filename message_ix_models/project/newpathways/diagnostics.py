@@ -14,15 +14,19 @@ import ixmp
 import itertools
 import plotly.graph_objects as go
 
+from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.util import package_data_path
-#from message_data.tools.post_processing import iamc_report_hackathon
 from ixmp import Platform
 
 # Connect to ixmp
 mp = ixmp.Platform()
 
-full_path = package_data_path("bilateralize", "config.yaml")
-config_dir = os.path.dirname(full_path)
+config, config_path = load_config(project_name = 'newpathways', 
+                                  config_name = 'config.yaml')
+out_path = config_path.replace('config.yaml', 'diagnostics')
+
+#full_path = package_data_path("bilateralize", "config.yaml")
+#config_dir = os.path.dirname(full_path)
 
 # Trade Reporter
 def activity_to_csv(trade_tec,
@@ -113,20 +117,26 @@ def activity_to_csv(trade_tec,
             flows_out = pd.concat([flows_out, flowdf])
         
         
-    exports_out.to_csv(os.path.join(config_dir, 'diagnostics', trade_tec + '_exp.csv'),
+    exports_out.to_csv(os.path.join(out_path, trade_tec + '_exp.csv'),
                        index = False)
-    imports_out.to_csv(os.path.join(config_dir, 'diagnostics', trade_tec + '_imp.csv'),
+    imports_out.to_csv(os.path.join(out_path, trade_tec + '_imp.csv'),
                        index = False)
-    flows_out.to_csv(os.path.join(config_dir, 'diagnostics', flow_tec + '.csv'),
+    flows_out.to_csv(os.path.join(out_path, flow_tec + '.csv'),
                      index = False)
     
 # Retrieve trade flow activities
-models_scenarios = {'NP_SSP2': 'pipelines_only'}
+models_scenarios = {'NP_SSP2': 'pipelines_LNG'}
  
 activity_to_csv(trade_tec = "gas_piped", 
                 flow_tec = "gas_piped_pipe",
                 trade_commodity = 'gas (GWa)',
                 flow_commodity = 'gas pipeline (km)',
+                model_scenario_dict = models_scenarios)
+
+activity_to_csv(trade_tec = "LNG_shipped", 
+                flow_tec = "LNG_tanker",
+                trade_commodity = 'LNG (GWa)',
+                flow_commodity = 'LNG tanker capacity (Mt-km)',
                 model_scenario_dict = models_scenarios)
 
 # Build Sankey

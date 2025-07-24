@@ -15,6 +15,7 @@ import numpy as np
 import pickle
 
 from pathlib import Path
+from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.util import package_data_path
 from message_ix_models.tools.iea import web
 
@@ -29,18 +30,29 @@ gas_pipeline_file = 'GEM-GGIT-Gas-Pipelines-2024-12.xlsx'
 gas_pipeline_sheet = 'Gas Pipelines 2024-12-17'
 
 # Set up MESSAGE regions
-full_path = package_data_path("bilateralize", "config.yaml")
-with open(full_path, "r") as f:
-    config = yaml.safe_load(f) 
-message_regions = config['scenario']['regions']
-full_path = package_data_path("bilateralize", message_regions + "_node_list.yaml")
-with open(full_path, "r") as f:
-    message_regions = yaml.safe_load(f) 
-message_regions_list = [r for r in message_regions.keys() if r not in ['World', 'GLB']]
+def gem_region(project_name = None, 
+               config_name = None):
+    
+    config, config_path = load_config(project_name = project_name, 
+                                      config_name = config_name)
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f) 
+    message_regions = config['scenario']['regions']
+    
+    full_path = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
+    with open(full_path, "r") as f:
+        message_regions = yaml.safe_load(f) 
+    message_regions_list = [r for r in message_regions.keys() if r not in ['World', 'GLB']]
+    
+    return message_regions_list, message_regions
 
 # Import files
-def import_gem(input_file, input_sheet, 
-               trade_technology, flow_technology):
+def import_gem(input_file: str, 
+               input_sheet: str, 
+               trade_technology: str, 
+               flow_technology: str,
+               project_name:str = None,
+               config_name: str = None):
     
     df = pd.read_excel(os.path.join(gem_path, input_file),
                        sheet_name = input_sheet)
@@ -57,6 +69,7 @@ def import_gem(input_file, input_sheet,
         df = df.rename(columns = {'ISO': i + 'ISO'})
     
     # Add MESSAGE regions
+    message_regions_list, message_regions = gem_region(project_name, config_name)
     df['EXPORTER'] = ''; df['IMPORTER'] = ''
     for r in message_regions_list:
         df['EXPORTER'] = np.where(df['StartISO'].isin(message_regions[r]['child']), r, df['EXPORTER'])
