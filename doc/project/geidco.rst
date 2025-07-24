@@ -45,14 +45,15 @@ R12 (baseline scenario for GEIDCO V):
     see message-data branch `project/geidco_r12 <https://github.com/iiasa/message_data/tree/project/geidco_r12>`_
 
 TBA: 
-  a generator for more general use in the message-ix-models repo `project/geidco <https://github.com/iiasa/message-ix-models/tree/project/geidco>`_ (generate bare sheets, users fill in minimum techno-economic parameters for UHV technologies, build scenario)
+  a generator for more general use in the message-ix-models 
+  
+  (generate bare sheets, users fill in minimum techno-economic parameters for UHV technologies, build scenario)
 
 Code references
 ---------------
-TBA: 
-    the generator ()
-        message_ix_models.tools.generate_interpipe
-    the runner (:func: bare, :func: build, :func: solve)
-        message_ix_models.project.geidco.run_baseline
+.. autofunction:: message_ix_models.tools.inter_pipe.generate_inter_pipe.inter_pipe_bare
+
+.. autofunction:: message_ix_models.tools.inter_pipe.generate_inter_pipe.inter_pipe_build
+
 
 
