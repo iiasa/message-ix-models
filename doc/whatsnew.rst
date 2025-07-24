@@ -4,6 +4,17 @@ What's new
 Next release
 ============
 
+  Water/Nexus
+  -----------
+  
+  - Update :doc:`/water/index` with unit standardization from Km^3 to MCM and model size reduction (:pull:`371`).
+  - Deactivate share calibration constraints for cooling water technologies (:pull:`371`).
+  - Fix excess vintage activity year generation in :mod:`.model.water.utils` to reduce model size (:pull:`371`).
+  - Add missing electricity input units for water technologies in :mod:`.model.water.data.infrastructure` (:pull:`371`).
+  - Fix incorrect data for desalination projected capacity in :mod:`.model.water.data.infrastructure` (:pull:`371`).
+  - Add missing basins_country_R12.csv data file to :mod:`.model.water.data` (:pull:`371`).
+  - Convert Excel data files to CSV format and add improve test coverage for :mod:`.model.water.data` (:pull:`371`).
+
 - Improve :mod:`.tools.costs` for |ssp-scenariomip| (:pull:`378`).
 
   - :attr:`Config.module <.tools.costs.Config.module>` is no longer a :class:`str`
