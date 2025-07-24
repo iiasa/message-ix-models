@@ -86,7 +86,7 @@ def add_data(scenario: message_ix.Scenario, dry_run: bool = False) -> None:
 
 
 def add_digsy_data(
-    scenario: message_ix.Scenario, dry_run: bool = False, digsy_scenario="baseline"
+        scenario: message_ix.Scenario, dry_run: bool = False, digsy_scenario="baseline"
 ) -> None:
     """Populate `scenario` with MESSAGEix-Materials data."""
     from message_ix_models.project.digsy.data import (
@@ -100,7 +100,7 @@ def add_digsy_data(
         gen_data_petro_chemicals: "Petrochemicals",
         gen_data_aluminum: "Aluminium",
     }
-    mods = get_industry_modifiers(digsy_scenario)
+    mods = extrapolate_modifiers_past_2050(get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario))
     for func in DATA_FUNCTIONS:
         # Generate or load the data and add to the Scenario
         log.info(f"from {func.__name__}()")
@@ -139,12 +139,12 @@ def get_resid_demands(context, digsy_scenario):
 
 
 def build(
-    context: Context,
-    scenario: message_ix.Scenario,
-    old_calib: bool,
-    modify_existing_constraints: bool = True,
-    iea_data_path: Optional[str] = None,
-    digsy_scenario: str = "baseline",
+        context: Context,
+        scenario: message_ix.Scenario,
+        old_calib: bool,
+        modify_existing_constraints: bool = True,
+        iea_data_path: Optional[str] = None,
+        digsy_scenario: str = "baseline",
 ) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
     node_suffix = context.model.regions
@@ -202,7 +202,7 @@ def build(
 
 
 def calibrate_existing_constraints(
-    context, scenario: message_ix.Scenario, iea_data_path: str
+        context, scenario: message_ix.Scenario, iea_data_path: str
 ):
     if "SSP_dev" not in scenario.model:
         engage_updates._correct_balance_td_efficiencies(scenario)
@@ -303,11 +303,11 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
     for material in materials:
         for set_name in sets[material]:
             if not all(
-                [
-                    isinstance(item, list)
-                    for sublist in sets[material][set_name].values()
-                    for item in sublist
-                ]
+                    [
+                        isinstance(item, list)
+                        for sublist in sets[material][set_name].values()
+                        for item in sublist
+                    ]
             ):
                 generate_set_elements(sets[material], set_name)
 
