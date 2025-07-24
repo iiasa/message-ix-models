@@ -132,7 +132,7 @@ def broadcast_yl(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
 # Main function to generate bare sheets
 def inter_pipe_bare(
     config_name: str = None,
-):
+    ):
     """
     Generate bare sheets to collect (minimum) parameters for pipe technologies and pipe supply technologies.
 
