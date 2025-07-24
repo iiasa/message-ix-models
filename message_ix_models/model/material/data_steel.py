@@ -1,11 +1,11 @@
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Literal
 
 import message_ix
 import pandas as pd
 from message_ix import make_df
 
-# Get endogenous material demand from buildings interface
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
     calculate_ini_new_cap,
@@ -13,8 +13,11 @@ from message_ix_models.model.material.data_util import (
     read_sector_data,
     read_timeseries,
 )
-from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.material_demand.material_demand_calc import (
+    read_base_demand,
+)
 from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
     get_ssp_from_context,
     maybe_remove_water_tec,
     read_config,
@@ -439,10 +442,10 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
     # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel", "", "Global_steel_MESSAGE.xlsx")
+    data_steel = read_sector_data(scenario, "steel", None, "steel_R12.csv")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel", "", "Global_steel_MESSAGE.xlsx")
-    data_steel_rel = read_rel(scenario, "steel", "", "Global_steel_MESSAGE.xlsx")
+    data_steel_ts = read_timeseries(scenario, "steel", None, "timeseries_R12.csv")
+    data_steel_rel = read_rel(scenario, "steel", None, "relations_R12.csv")
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 
@@ -453,7 +456,16 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     nodes = nodes_ex_world(s_info.N)
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
     yv_ya = s_info.yv_ya
-    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1990]
+    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1970]
+
+    df = yv_ya.loc[yv_ya.year_act == 2020]
+    df["year_act"] = None
+    pre_model = df.pipe(broadcast, year_act=df.year_vtg)
+    pre_model = pre_model[
+        (pre_model["year_act"].ge(pre_model["year_vtg"]))
+        & (pre_model["year_act"].lt(2020))
+    ]
+    yv_ya = pd.concat([pre_model, yv_ya])
 
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
@@ -471,25 +483,33 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         )
 
     # Add relation for the maximum global scrap use in 2020
-    df_max_recycling = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "year_act": 2020,
-            "node_loc": nodes,
-            "technology": "scrap_recovery_steel",
-            "mode": "M1",
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_activity")
-                ),
-                "value",
-            ].values[0],
-        }
-    )
+    for t in [
+        "scrap_recovery_steel_1",
+        "scrap_recovery_steel_2",
+        "scrap_recovery_steel_3",
+    ]:
+        df_max_recycling = pd.DataFrame(
+            {
+                "relation": "max_global_recycling_steel",
+                "node_rel": "R12_GLB",
+                "year_rel": 2020,
+                "year_act": 2020,
+                "node_loc": nodes,
+                "technology": t,
+                "mode": "M1",
+                "unit": "???",
+                "value": data_steel_rel.loc[
+                    (
+                        (data_steel_rel["relation"] == "max_global_recycling_steel")
+                        & (data_steel_rel["parameter"] == "relation_activity")
+                    ),
+                    "value",
+                ].values[0],
+            }
+        )
+
+        results["relation_activity"].append(df_max_recycling)
+
     df_max_recycling_upper = pd.DataFrame(
         {
             "relation": "max_global_recycling_steel",
@@ -530,9 +550,25 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     gen_data_steel_rel(data_steel_rel, results, regions, modelyears)
 
     # Create external demand param
-    parname = "demand"
-    df_demand = material_demand_calc.derive_demand("steel", scenario, ssp=ssp)
-    results[parname].append(df_demand)
+    df_demand = gen_demand(ssp)
+    results["demand"].append(df_demand)
+
+    new_scrap_ratio = {
+        "R12_AFR": 0.92,
+        "R12_CHN": 0.9,
+        "R12_EEU": 0.9,
+        "R12_FSU": 0.9,
+        "R12_LAM": 0.9,
+        "R12_MEA": 0.92,
+        "R12_NAM": 0.85,
+        "R12_PAO": 0.85,
+        "R12_PAS": 0.9,
+        "R12_RCPA": 0.92,
+        "R12_SAS": 0.92,
+        "R12_WEU": 0.85,
+    }
+
+    scale_fse_demand(df_demand, new_scrap_ratio)
 
     common = dict(
         year_vtg=yv_ya.year_vtg,
@@ -576,17 +612,621 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
                 df_demand=df_demand.copy(deep=True),
                 technology="dri_gas_ccs_steel",
                 material="steel",
-                ssp="FIXME",
+                ssp=ssp,
             ),
             calculate_ini_new_cap(
                 df_demand=df_demand.copy(deep=True),
                 technology="bf_ccs_steel",
                 material="steel",
-                ssp="FIXME",
+                ssp=ssp,
             ),
         ]
     )
 
+    results["relation_activity"] = pd.concat(
+        [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
+    )
+
+    results = combine_df_dictionaries(
+        results,
+        gen_dri_act_bound(),
+        gen_dri_cap_calibration(),
+        gen_dri_coal_model(s_info),
+        get_scrap_prep_cost(s_info, ssp),
+        gen_max_recycling_rel(s_info, ssp),
+        gen_grow_cap_up(s_info, ssp),
+        gen_2020_calibration_relation(s_info, "eaf"),
+        gen_2020_calibration_relation(s_info, "bof"),
+        gen_2020_calibration_relation(s_info, "bf"),
+        gen_bof_pig_input(s_info),
+        gen_finishing_steel_io(s_info),
+        gen_manuf_steel_io(new_scrap_ratio, s_info),
+        gen_iron_ore_cost(s_info, ssp),
+        gen_bf_bound(s_info),
+        read_hist_cap("eaf"),
+        read_hist_cap("bof"),
+        read_hist_cap("bf"),
+    )
     maybe_remove_water_tec(scenario, results)
 
-    return results
+    if ssp == "SSP1":
+        df_tmp = results["relation_activity"]
+        df_tmp = df_tmp[
+            (df_tmp["relation"] == "minimum_recycling_steel")
+            & (df_tmp["technology"] == "total_EOL_steel")
+        ]
+        df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
+        df_tmp["value"] = -0.7
+
+    reduced_pdict = {}
+    for k, v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 60]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict
+
+
+def gen_cokeoven_co2_cc(s_info):
+    emi_dict = {
+        "unit": "Mt C/yr",
+        "technology": "cokeoven_steel",
+        "mode": "M1",
+        "value": 0.814 * 0.2,
+        # coal coeffient * difference between coal "final" and "dummy_emission" input
+        "relation": "CO2_cc",
+    }
+    df = (
+        make_df("relation_activity", **emi_dict)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=s_info.Y)
+        .pipe(same_node)
+    )
+    df["year_rel"] = df["year_act"]
+    return df
+
+
+def gen_dri_act_bound():
+    df_act = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_activity_2020.csv"
+        )
+    )
+    df_hist = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_activity_hist.csv"
+        )
+    )
+    return {
+        "bound_activity_up": df_act,
+        "bound_activity_lo": df_act,
+        "historical_activity": df_hist,
+    }
+
+
+def gen_dri_cap_calibration():
+    df_cap_2020 = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_capacity_2020.csv"
+        )
+    )
+    df_cap_hist = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "dri_capacity_hist.csv"
+        )
+    )
+    return {
+        "bound_new_capacity_up": df_cap_2020,
+        "bound_new_capacity_lo": df_cap_2020,
+        "historical_new_capacity": df_cap_hist,
+    }
+
+
+def gen_dri_coal_model(s_info):
+    model_years = s_info.Y
+    df = pd.read_csv(package_data_path("material", "steel", "dri_coal.csv"))
+    common = {
+        "time": "year",
+        "time_origin": "year",
+        "time_dest": "year",
+    }
+    par_dict = {}
+    for par in df.parameter.unique():
+        df_tmp = (
+            make_df(par, **df[df["parameter"] == par], **common)
+            .pipe(broadcast, year_act=model_years)
+            .pipe(same_node)
+        )
+        if "year_rel" in df_tmp.columns:
+            df_tmp["year_rel"] = df_tmp["year_act"]
+        if "year_vtg" in df_tmp.columns:
+            df_tmp["year_vtg"] = df_tmp["year_act"]
+        par_dict[par] = df_tmp
+
+    tec_lt_hist = make_df(
+        "technical_lifetime",
+        technology="dri_steel",
+        year_vtg=[i for i in range(1970, 2020, 5)],
+        value=[i for i in range(60, 30, -5)] + [30] * 4,
+        unit="???",
+        **common,
+    ).pipe(
+        broadcast,
+        node_loc=nodes_ex_world(s_info.N),
+    )
+    tec_lt = make_df(
+        "technical_lifetime",
+        technology="dri_steel",
+        value=30,
+        year_vtg=model_years,
+        unit="???",
+        **common,
+    ).pipe(
+        broadcast,
+        node_loc=nodes_ex_world(s_info.N),
+    )
+    par_dict["technical_lifetime"] = pd.concat([tec_lt_hist, tec_lt])
+    return par_dict
+
+
+def gen_2020_calibration_relation(s_info, tech: Literal["eaf", "bof", "bf"]):
+    modes = {
+        "eaf": ["M1", "M2", "M3"],
+        "bof": ["M1", "M2"],
+        "bf": ["M1", "M2", "M3", "M4"],
+    }
+    df = (
+        make_df(
+            "relation_activity",
+            relation=f"{tech}_bound_2020",
+            year_rel=2020,
+            value=1,
+            technology=f"{tech}_steel",
+            year_act=2020,
+            unit="???",
+        )
+        .pipe(broadcast, mode=modes[tech])
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(same_node)
+        .assign(node_rel=lambda x: x["node_loc"])
+    )
+
+    rel_up = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", f"{tech}_bound_2020.csv"
+        )
+    )
+
+    return {"relation_activity": df, "relation_upper": rel_up, "relation_lower": rel_up}
+
+
+def get_scrap_prep_cost(s_info, ssp):
+    years1 = [i for i in range(2020, 2065, 5)]
+    years2 = [i for i in range(2070, 2115, 10)]
+    ref_tec_ssp = {
+        "LED": "prep_secondary_steel_1",
+        "SSP1": "prep_secondary_steel_1",
+        "SSP3": "prep_secondary_steel_3",
+        "SSP5": "prep_secondary_steel_3",
+    }
+    start_val = {
+        "prep_secondary_steel_1": 70,
+        "prep_secondary_steel_2": 100,
+        "prep_secondary_steel_3": 130,
+    }
+    common = {
+        "mode": "M1",
+        "time": "year",
+        "unit": "???",
+    }
+
+    if ssp not in ref_tec_ssp.keys():
+        ref_cost1 = [
+            start_val[list(start_val.keys())[0]] * 1.025**i
+            for i, _ in enumerate(years1)
+        ]
+        ref_cost2 = [ref_cost1[-1] * 1.05 ** (i + 1) for i, _ in enumerate(years2)]
+        ref_cost = ref_cost1 + ref_cost2
+
+        tec2_1 = [
+            start_val[list(start_val.keys())[1]] * 1.025**i
+            for i, _ in enumerate(years1)
+        ]
+        tec2_2 = [tec2_1[-1] * 1.05 ** (i + 1) for i, _ in enumerate(years2)]
+        tec2 = tec2_1 + tec2_2
+
+        tec3_1 = [
+            start_val[list(start_val.keys())[2]] * 1.025**i
+            for i, _ in enumerate(years1)
+        ]
+        tec3_2 = [tec3_1[-1] * 1.05 ** (i + 1) for i, _ in enumerate(years2)]
+        tec3 = tec3_1 + tec3_2
+
+        df1 = make_df(
+            "var_cost",
+            technology=list(start_val.keys())[0],
+            year_act=years1 + years2,
+            value=ref_cost,
+            **common,
+        )
+        df2 = make_df(
+            "var_cost",
+            technology=list(start_val.keys())[1],
+            year_act=years1 + years2,
+            value=tec2,
+            **common,
+        )
+        df3 = make_df(
+            "var_cost",
+            technology=list(start_val.keys())[2],
+            year_act=years1 + years2,
+            value=tec3,
+            **common,
+        )
+    else:
+        years = years1 + years2
+        ref_cost1 = [
+            start_val[ref_tec_ssp[ssp]] * 1.025**i for i, _ in enumerate(years1)
+        ]
+        ref_cost2 = [ref_cost1[-1] * 1.05 ** (i + 1) for i, _ in enumerate(years2)]
+        ref_cost = ref_cost1 + ref_cost2
+        other_tecs = start_val.keys() - [ref_tec_ssp[ssp]]
+        tec2 = [
+            start_val[list(other_tecs)[0]]
+            + ((ref_cost[-1] - start_val[list(other_tecs)[0]]) / (len(years) - 1)) * i
+            for i, _ in enumerate(years)
+        ]
+        tec3 = [
+            start_val[list(other_tecs)[1]]
+            + ((ref_cost[-1] - start_val[list(other_tecs)[1]]) / (len(years) - 1)) * i
+            for i, _ in enumerate(years)
+        ]
+
+        df1 = make_df(
+            "var_cost",
+            technology=ref_tec_ssp[ssp],
+            year_act=years,
+            value=ref_cost,
+            **common,
+        )
+        df2 = make_df(
+            "var_cost",
+            technology=list(other_tecs)[0],
+            year_act=years,
+            value=tec2,
+            **common,
+        )
+        df3 = make_df(
+            "var_cost",
+            technology=list(other_tecs)[1],
+            year_act=years,
+            value=tec3,
+            **common,
+        )
+    df = (
+        pd.concat([df1, df2, df3])
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .assign(year_vtg=lambda x: x.year_act)
+    )
+    return {"var_cost": df}
+
+
+def gen_max_recycling_rel(s_info, ssp):
+    ssp_vals = {
+        "LED": -0.98,
+        "SSP1": -0.98,
+        "SSP2": -0.85,
+        "SSP3": -0.85,
+        "SSP4": -0.85,
+        "SSP5": -0.85,
+    }
+    df = (
+        make_df(
+            "relation_activity",
+            technology="total_EOL_steel",
+            value=ssp_vals[ssp],
+            mode="M1",
+            relation="max_regional_recycling_steel",
+            time="year",
+            time_origin="year",
+            unit="???",
+        )
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_act=[i for i in s_info.Y if i > 2020])
+        .pipe(same_node)
+        .assign(year_rel=lambda x: x.year_act)
+    )
+    return {"relation_activity": df}
+
+
+def gen_grow_cap_up(s_info, ssp):
+    ssp_vals = {
+        "LED": 0.0010,
+        "SSP1": 0.0010,
+        "SSP2": 0.0010,
+        "SSP3": 0.0009,
+        "SSP4": 0.0020,
+        "SSP5": 0.0020,
+    }
+
+    df = (
+        make_df(
+            "growth_new_capacity_up",
+            technology=["bf_ccs_steel", "dri_gas_ccs_steel"],
+            value=ssp_vals[ssp],
+            unit="???",
+        )
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_vtg=s_info.Y)
+    )
+    return {"growth_new_capacity_up": df}
+
+
+def gen_bof_pig_input(s_info):
+    """Generate BOF feed input coefficients.
+
+    Assume 20% scrap share for regions (except CHN and EEU until 2030).
+    EEU needs higher share in 2020 to be feasible with calibrated pig availability.
+    CHN uses less scrap and more pig iron due to high BF activity.
+
+    Parameters
+    ----------
+    s_info
+
+    Returns
+    -------
+
+    """
+    special_regions = ["R12_EEU"]  # , "R12_NAM"]
+    other_regions = [
+        i for i in nodes_ex_world(s_info.N) if i not in special_regions + ["R12_CHN"]
+    ]
+    years = [i for i in range(1970, 2060, 5)] + [i for i in range(2060, 2115, 10)]
+    dimensions = {
+        "technology": "bof_steel",
+        "mode": ["M1", "M2"],
+        "commodity": "pig_iron",
+        "level": "tertiary_material",
+        "time": "year",
+        "time_origin": "year",
+        "unit": "???",
+    }
+    pig_bof_conversion_eff = 0.95
+    df_other = (
+        make_df("input", value=0.8 / pig_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=other_regions)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=years)
+        .pipe(broadcast, year_vtg=years)
+    )
+    df_chn = (
+        make_df("input", value=0.83 / pig_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=["R12_CHN"])
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[2020, 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df_eeu = (
+        make_df("input", value=0.79 / pig_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=special_regions)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[2020, 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df3 = (
+        make_df("input", value=0.8 / pig_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=special_regions + ["R12_CHN"])
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[i for i in years if i > 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df = pd.concat([df_other, df_chn, df_eeu, df3])
+    dimensions = {
+        "technology": "bof_steel",
+        "mode": ["M1", "M2"],
+        "commodity": "steel",
+        "level": "new_scrap",
+        "time": "year",
+        "time_origin": "year",
+        "unit": "???",
+    }
+    scrap_bof_conversion_eff = 0.99
+    df_other = (
+        make_df("input", value=(1 - 0.8) / scrap_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=other_regions)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=years)
+        .pipe(broadcast, year_vtg=years)
+    )
+    df_chn = (
+        make_df("input", value=(1 - 0.83) / scrap_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=["R12_CHN"])
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[2020, 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df_eeu = (
+        make_df("input", value=(1 - 0.79) / scrap_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=special_regions)
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[2020, 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df3 = (
+        make_df("input", value=(1 - 0.8) / scrap_bof_conversion_eff, **dimensions)
+        .pipe(broadcast, node_loc=special_regions + ["R12_CHN"])
+        .pipe(same_node)
+        .pipe(broadcast, year_act=[i for i in years if i > 2025])
+        .pipe(broadcast, year_vtg=years)
+    )
+    df_all = pd.concat([df, df_other, df_chn, df_eeu, df3])
+    df_all = df_all[df_all["year_act"] - df_all["year_vtg"] <= 30]
+    return {"input": df_all}
+
+
+def scale_fse_demand(demand, new_scrap_ratio):
+    demand["value"] = demand.apply(
+        lambda x: x["value"] * (new_scrap_ratio[x["node"]]), axis=1
+    )
+
+
+def gen_finishing_steel_io(s_info: ScenarioInfo):
+    dimensions = {
+        "technology": "finishing_steel",
+        "mode": "M1",
+        "commodity": "steel",
+        "time": "year",
+        "time_dest": "year",
+        "unit": "???",
+    }
+    df = pd.read_csv(package_data_path("material", "steel", "finishing_loss_ratio.csv"))
+    df_out_steel = (
+        make_df("output", **df, **dimensions, level="useful_material")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_steel = df_out_steel[df_out_steel["year_act"].le(df_out_steel["year_vtg"])]
+    df_out_scrap = (
+        make_df("output", **df, **dimensions, level="new_scrap")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_scrap["value"] = df_out_scrap["value"].sub(1).abs().round(4)
+    df_out_scrap = df_out_scrap[df_out_scrap["year_act"].le(df_out_scrap["year_vtg"])]
+    return {"output": pd.concat([df_out_steel, df_out_scrap])}
+
+
+def gen_manuf_steel_io(ratio, s_info: ScenarioInfo):
+    dimensions = {
+        "technology": "manuf_steel",
+        "mode": "M1",
+        "commodity": "steel",
+        "time": "year",
+        "time_dest": "year",
+        "unit": "???",
+    }
+    df = (
+        pd.Series(ratio)
+        .to_frame()
+        .reset_index()
+        .rename(columns={"index": "node_loc", 0: "value"})
+    )
+    df_out_steel = (
+        make_df("output", **df, **dimensions, level="product")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_steel = df_out_steel[df_out_steel["year_act"].le(df_out_steel["year_vtg"])]
+    df_out_scrap = (
+        make_df("output", **df, **dimensions, level="new_scrap")
+        .pipe(same_node)
+        .pipe(broadcast, year_act=s_info.Y)
+        .assign(year_vtg=lambda x: x["year_act"])
+    )
+    df_out_scrap["value"] = df_out_scrap["value"].sub(1).abs().round(4)
+    df_out_scrap = df_out_scrap[df_out_scrap["year_act"].le(df_out_scrap["year_vtg"])]
+    return {"output": pd.concat([df_out_steel, df_out_scrap])}
+
+
+def gen_iron_ore_cost(s_info, ssp):
+    years1 = [i for i in range(2020, 2030, 5)]
+    years2 = [i for i in range(2030, 2060, 5)] + [i for i in range(2060, 2115, 10)]
+    start_val = 100
+    end_val = {
+        "LED": 130,
+        "SSP1": 130,
+        "SSP2": 80,
+        "SSP3": 100,
+        "SSP4": 60,
+        "SSP5": 80,
+    }
+    common = {
+        "technology": "DUMMY_ore_supply",
+        "mode": "M1",
+        "time": "year",
+        "unit": "???",
+    }
+
+    df1 = make_df(
+        "var_cost",
+        year_act=years1,
+        value=start_val,
+        **common,
+    )
+    df2 = make_df(
+        "var_cost",
+        year_act=years2,
+        value=end_val[ssp],
+        **common,
+    )
+    df = (
+        pd.concat([df1, df2])
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .assign(year_vtg=lambda x: x.year_act)
+    )
+    return {"var_cost": df}
+
+
+def gen_bf_bound(s_info):
+    dimensions = {
+        "technology": "bf_steel",
+        "mode": ["M3", "M4"],
+        "time": "year",
+        "unit": "???",
+        "value": 0,
+    }
+    df = (
+        make_df("bound_activity_up", **dimensions)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+        .pipe(broadcast, year_act=[2020, 2025])
+    )
+    return {"bound_activity_up": df}
+
+
+def gen_ssp_demand(ssp):
+    mapping = {
+        "SSP1": {"phi": 5, "mu": 0.1, "q": 0.01},
+        "SSP2": {"phi": 5, "mu": 0.1, "q": 0.1},
+        "SSP3": {"phi": 5, "mu": 0.05, "q": 0.25},
+        "SSP4": {"phi": 5, "mu": 0.05, "q": 0.1},
+        "SSP5": {"phi": 5, "mu": 0.1, "q": 0.5},
+    }
+    if ssp == "LED":
+        ssp = "SSP1"
+    df = pd.read_parquet(
+        package_data_path("material", "steel", "demand_projections.parquet")
+    ).drop_duplicates()
+    df = df[
+        (df["SSP"] == int(ssp.replace("SSP", "")))
+        & (df["quantile"] == mapping[ssp]["q"])
+        & (df["mu"] == mapping[ssp]["mu"])
+    ]
+    df = df.rename(columns={"region": "node", "total_demand": "value"})
+    df[["commodity", "level", "time", "unit"]] = ["steel", "demand", "year", "t"]
+    df = make_df("demand", **df).round(2)
+    return df
+
+
+def gen_demand(ssp):
+    df_2025 = pd.read_csv(package_data_path("material", "steel", "demand_2025.csv"))
+    df_2020 = (
+        read_base_demand(package_data_path("material", "steel", "demand_steel.yaml"))
+        .rename(columns={"region": "node"})
+        .assign(commodity="steel", level="demand", unit="t", time="year")
+    )
+    df_demand = gen_ssp_demand(ssp)
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2020, df_2025, df_demand])
+    return df_demand
+
+
+def read_hist_cap(tec):
+    df = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", f"{tec}_capacity.csv"
+        )
+    )
+    df = df[df["year_vtg"] < 2020]
+    return {"historical_new_capacity": df}
