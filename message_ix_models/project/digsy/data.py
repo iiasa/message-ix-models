@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 
 import pandas as pd
 import pint_pandas  # noqa: F401
@@ -6,6 +6,9 @@ from message_ix.util import make_df
 
 from message_ix_models.model.material.util import read_yaml_file
 from message_ix_models.util import private_data_path, package_data_path, broadcast
+import numpy as np
+if TYPE_CHECKING:
+    from message_ix_models import ScenarioInfo
 
 
 def read_config() -> dict:
@@ -37,6 +40,12 @@ def get_industry_modifiers(scenario: Literal["BEST", "WORST"]) -> pd.DataFrame:
     return df
 
 
+def extrapolate_modifiers_past_2050(df: pd.DataFrame, s_info: "ScenarioInfo"):
+    model_year_past_2050 = [i for i in s_info.Y if i > 2050]
+    df[model_year_past_2050] = np.tile(df[2050].values.reshape(-1, 1), len(model_year_past_2050))
+    return df
+
+
 def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
     for par, group in mods.groupby("par"):
         par_data = pars[par]
@@ -59,7 +68,7 @@ def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
             .fillna(1)
         )
         par_data_modified["value"] = (
-            par_data_modified["value"] * par_data_modified["value_mod"]
+                par_data_modified["value"] * par_data_modified["value_mod"]
         )
         par_data_modified.drop(columns=["value_mod"], inplace=True)
         par_data_modified.reset_index(inplace=True)
@@ -111,7 +120,3 @@ def read_ict_demand(scenario="DIGSY-BEST") -> pd.DataFrame:
     )
     df = pd.concat([df, post_2050])
     return df
-
-
-if __name__ == "__main__":
-    read_ict_demand()
