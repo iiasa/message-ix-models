@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Bilateralize trade flows
+Move data from bare files to the MESSAGEix scenario
 """
 # Import packages
 import os
@@ -20,36 +20,20 @@ from message_ix_models.tools.bilateralize.pull_gem import *
 from message_ix_models.tools.bilateralize.mariteam_calibration import *
 
 # Bring in configuration
-full_path = package_data_path("bilateralize", "config.yaml")
-config_dir = os.path.dirname(full_path)
-config = load_config(full_path)
+config, config_path = load_config(project_name = 'newpathways', 
+                                  config_name = 'config.yaml')
 
 covered_tec = config['covered_trade_technologies']
 message_regions = config['scenario']['regions']
 
-# Connect to ixmp
-mp = ixmp.Platform()
-
 # Get logger
 log = get_logger(__name__)
-
-# Generate bare sheets
-generate_bare_sheets(log=log, mp=mp, message_regions = message_regions)
-
-# Import calibration files from Global Energy Monitor
-import_gem(gas_pipeline_file, gas_pipeline_sheet, 
-          trade_technology = "gas_piped", flow_technology = "pipe")
-
-# Add MariTEAM calibration for maritime shipping
-calibrate_mariteam(covered_tec,
-                   message_regions,
-                   out_dir = config_dir)
 
 # Read and inflate sheets based on model horizon
 trade_dict = build_parameter_sheets(log=log)
 
 # Historical calibration for trade technology
-histdf = build_historical_activity('R12')
+histdf = build_historical_activity(message_regions)
 histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
 histdf['year_act'] = np.where(histdf['year_act'] == 2023, 2025, histdf['year_act']) # TODO: Assume 2023 values FOR NOW 
 histdf = histdf[histdf['value'] > 0]
@@ -66,7 +50,7 @@ for tec in hist_tec.keys():
 
 # Historical calibration for pipelines
 for tec in [i for i in covered_tec if 'piped' in i]:
-    histdf = pd.read_csv(os.path.join(config_dir, tec, 'GEM', 'GEM.csv'))
+    histdf = pd.read_csv(os.path.join(os.path.dirname(package_data_path("bilateralize", tec)), tec, "GEM", "GEM.csv"))
     histdf['node_loc'] = histdf['EXPORTER']
     histdf['importer'] = histdf['IMPORTER'].str.replace(config['scenario']['regions'] + '_', '').str.lower()
     histdf['technology'] = config[tec + '_trade']['flow_technology'] + '_' + histdf['importer']
@@ -100,6 +84,5 @@ for tec in [i for i in covered_tec if 'piped' in i]:
 # Update scenario
 clone_and_update(trade_dict=trade_dict,
                  log=log,
-                 mp=mp, 
-                 to_gdx = True,
-                 solve = False)
+                 to_gdx = False,
+                 solve = True)
