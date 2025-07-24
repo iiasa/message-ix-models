@@ -31,7 +31,7 @@ reimport_BACI = False
 # Dictionaries of ISO - IEA - MESSAGE Regions
 def generate_cfdict(message_regions):
     
-    dict_dir = package_data_path("bilateralize", message_regions + '_node_list.yaml')
+    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f) 
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
@@ -87,7 +87,7 @@ def generate_cfdict(message_regions):
 # This does not include natural gas pipelines or LNG, which are from IEA
 def import_uncomtrade(update_year = 2023):
     
-    dict_dir = package_data_path("bilateralize", 'commodity_codes.yaml')
+    dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
     with open(dict_dir, "r") as f:
         commodity_codes = yaml.safe_load(f) 
     
@@ -151,7 +151,7 @@ def convert_trade(message_regions,
     df['HS'] = np.where(df['HS'] == '', df['k'], df['HS'])   
     
     # Add MESSAGE regions
-    dict_dir = package_data_path("bilateralize", message_regions + '_node_list.yaml')
+    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f) 
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
@@ -314,7 +314,7 @@ def check_iea_balances(indf):
 # Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe
 def reformat_to_parameter(indf, message_regions):
 
-    dict_dir = package_data_path("bilateralize", message_regions + '_node_list.yaml')
+    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f) 
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']

@@ -21,7 +21,6 @@ from message_ix_models.tools.bilateralize import bilateralize
 
 def calibrate_mariteam(covered_tec,
                        message_regions,
-                       out_dir,
                        mtdict = {'LNG_shipped': {'astd_ship_type': 'Gas tankers',
                                                  'flow_technology': 'LNG_tanker'},
                                  'crudeoil_shipped': {'astd_ship_type': 'Crude oil tankers',
@@ -30,20 +29,8 @@ def calibrate_mariteam(covered_tec,
     # Data paths
     data_path = os.path.join("P:", "ene.model", "MESSAGE_Trade")
     mt_path = os.path.join(data_path, "MariTEAM")
-    
-    # # Link MariTEAM to MESSAGEix-Trade
-    # mtdict = {'LNG_shipped': {'astd_ship_type': 'Gas tankers',
-    #                           'flow_technology': 'LNG_tanker'},
-    #           'crudeoil_shipped': {'astd_ship_type': 'Crude oil tankers',
-    #                                'flow_technology': 'crudoil_tanker'}}
-    
-    # # Pull configuration 
-    # full_path = package_data_path("bilateralize", "config.yaml")
-    # config_dir = os.path.dirname(full_path)
-    # config = bilateralize.load_config(full_path)
-    # covered_tec = config['covered_trade_technologies']
-    # msgreg = config['scenario']['regions']
-    
+    out_path = os.path.join(os.path.dirname(package_data_path("bilateralize")), "bilateralize")
+
     # Import MariTEAM outputs
     mtdf = pd.read_csv(os.path.join(mt_path, mt_output))
     mtdf = mtdf[mtdf[message_regions + '_origin'] != mtdf[message_regions + '_destination']] # no intraregional trade
@@ -67,7 +54,7 @@ def calibrate_mariteam(covered_tec,
         regavg['mt_value_reg'] = regavg['energy_mj_sum']/(regavg['dwt']*regavg['distance_km_sum'])
         regavg = regavg[['node_loc', 'mt_value_reg']]
         
-        inputdf = pd.read_csv(os.path.join(out_dir, tec, "edit_files", "flow_technology", "input.csv"))
+        inputdf = pd.read_csv(os.path.join(out_path, tec, "edit_files", "flow_technology", "input.csv"))
         inputdf = inputdf.merge(mt_input, 
                                 left_on = ['node_loc', 'technology', 'unit'],
                                 right_on = ['node_loc', 'technology', 'unit'], how = 'left')
@@ -80,7 +67,7 @@ def calibrate_mariteam(covered_tec,
         
         inputdf = inputdf[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act', 'mode',
                            'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
-        inputdf.to_csv(os.path.join(out_dir, tec, "edit_files", "flow_technology", "input.csv"), index = False)
+        inputdf.to_csv(os.path.join(out_path, tec, "edit_files", "flow_technology", "input.csv"), index = False)
         
         # Historical activity
         histdf = basedf.copy()
@@ -92,4 +79,4 @@ def calibrate_mariteam(covered_tec,
         histdf['time'] = 'year'
         histdf = histdf[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
         
-        histdf.to_csv(os.path.join(out_dir, tec, "edit_files", "flow_technology", "historical_activity.csv"), index = False)
+        histdf.to_csv(os.path.join(out_path, tec, "edit_files", "flow_technology", "historical_activity.csv"), index = False)
