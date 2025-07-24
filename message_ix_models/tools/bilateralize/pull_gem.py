@@ -104,6 +104,7 @@ def import_gem(input_file: str,
     
     # Output to trade_technology
     export_dir = package_data_path("bilateralize", trade_technology)
+    base_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "edit_files", "flow_technology")
     export_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
     if not os.path.isdir(export_dir):
         os.makedirs(export_dir)
@@ -113,25 +114,62 @@ def import_gem(input_file: str,
     # Investment Costs
     inv_cost = df[['EXPORTER', 'IMPORTER', 'InvCost (USD/km)']].drop_duplicates()
     inv_cost['node_loc'] = inv_cost['EXPORTER']
-    inv_cost['technology'] = trade_technology + '_' + flow_technology + '_exp_' + inv_cost['IMPORTER'].str.lower().str.split('_').str[-1]
-    inv_cost['value'] = inv_cost['InvCost (USD/km)']
-    inv_cost = inv_cost[['node_loc', 'technology', 'value']]
+    inv_cost['technology'] = flow_technology + '_' + inv_cost['IMPORTER'].str.lower().str.split('_').str[-1]
+    inv_cost['value_update'] = inv_cost['InvCost (USD/km)']/1e6 # in MUSD/km
+    inv_cost = inv_cost[['node_loc', 'technology', 'value_update']]
     inv_cost.to_csv(os.path.join(export_dir, "inv_cost_GEM.csv"), index = False)
+    
+    basedf = pd.read_csv(os.path.join(base_dir, "inv_cost.csv"))
+    basedf['value'] = 100
+    inv_cost = basedf.merge(inv_cost,
+                            left_on = ['node_loc', 'technology'],
+                            right_on = ['node_loc', 'technology'],
+                            how = 'left')
+    inv_cost['value'] = np.where(inv_cost['value_update'] > 0, inv_cost['value_update'], inv_cost['value'])
+    inv_cost['year_vtg'] = 'broadcast'
+    inv_cost['unit'] = 'USD/km'
+    inv_cost = inv_cost[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
+    inv_cost.to_csv(os.path.join(base_dir, "inv_cost.csv"), index = False)
     
     # Historical activity
     hist_act = df[['EXPORTER', 'IMPORTER', 'LengthMergedKm']].drop_duplicates()
     hist_act['node_loc'] = hist_act['EXPORTER']
-    hist_act['technology'] = trade_technology + '_' + flow_technology + '_exp_' + hist_act['IMPORTER'].str.lower().str.split('_').str[-1]
+    hist_act['technology'] = flow_technology + '_' + hist_act['IMPORTER'].str.lower().str.split('_').str[-1]
     hist_act['value'] = hist_act['LengthMergedKm']
     hist_act = hist_act[['node_loc', 'technology', 'value']]
+    hist_act['year_act'] = 2025
+    hist_act['unit'] = 'km'
+    hist_act['mode'] = 'M1'
+    hist_act['time'] = 'year'
+    hist_act = hist_act[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
     hist_act.to_csv(os.path.join(export_dir, "historical_activity_GEM.csv"), index = False)
-    
+    hist_act.to_csv(os.path.join(base_dir, "historical_activity.csv"), index = False)
+
     # Relation activity
     relation = df[['EXPORTER', 'IMPORTER', 'Capacity (GWa/km)']].drop_duplicates()
     relation['node_loc'] = relation['EXPORTER']
     relation['technology'] = trade_technology + '_exp_' + relation['IMPORTER'].str.lower().str.split('_').str[-1]
-    relation['value'] = relation['Capacity (GWa/km)']
-    relation = relation[['node_loc', 'technology', 'value']]
-    relation['technology'] = relation['technology'].str.replace(trade_technology + '_exp_', trade_technology + '_pipe_')
-    relation.to_csv(os.path.join(export_dir, "relation_GEM.csv"), index = False)
+    relation['value_update'] = (1/relation['Capacity (GWa/km)'])*-1
+    relation = relation[['node_loc', 'technology', 'value_update']]
     
+    basedf = pd.read_csv(os.path.join(base_dir, "relation_activity_flow.csv"))
+    basedf['value'] = -30 # The largest capacity pipelines have maximum 300,000GWh (~30bcm) annually
+    relation = basedf.merge(relation,
+                            left_on = ['node_loc', 'technology'],
+                            right_on = ['node_loc', 'technology'],
+                            how = 'left')
+    relation['value'] = np.where((relation['value_update'] < 0) &\
+                                 (relation['value_update'] > -30) &\
+                                 (relation['technology'].str.contains(trade_technology) == True), 
+                                 relation['value_update'], 
+                                 relation['value'])
+    relation['value'] = np.where(relation['technology'].str.contains(trade_technology) == False, 
+                                 1, 
+                                 relation['value'])
+    relation['node_rel'] = relation['node_loc']
+    relation['unit'] = 'km'
+    relation = relation[['node_loc', 'technology', 'node_rel', 'relation', 'year_rel', 'year_act', 'mode', 'commodity', 'value', 'unit']]
+
+    relation.to_csv(os.path.join(export_dir, "relation_GEM.csv"), index = False)
+    relation.to_csv(os.path.join(base_dir, "relation_activity_flow.csv"), index = False)
+
