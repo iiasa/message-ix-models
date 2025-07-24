@@ -306,9 +306,8 @@ def check_iea_balances(indf):
     exports['DIFFERENCE'] = (exports['ENERGY (TJ)'] - exports['IEA-WEB VALUE'])/exports['IEA-WEB VALUE']
     imports['DIFFERENCE'] = (imports['ENERGY (TJ)'] - imports['IEA-WEB VALUE'])/imports['IEA-WEB VALUE']
 
-    outdir = package_data_path("bilateralize")
-    exports.to_csv(os.path.join(outdir, 'diagnostics', 'iea_calibration_exports.csv'))
-    imports.to_csv(os.path.join(outdir, 'diagnostics', 'iea_calibration_imports.csv'))
+    exports.to_csv(os.path.join(iea_path, 'diagnostics', 'iea_calibration_exports.csv'))
+    imports.to_csv(os.path.join(iea_path, 'diagnostics', 'iea_calibration_imports.csv'))
     
     
 # Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe

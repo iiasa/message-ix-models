@@ -47,22 +47,6 @@ for tec in hist_tec.keys():
     log.info('Add historical activity for ' + tec)
     add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
     trade_dict[tec]['trade']['historical_activity'] = add_df
-
-# Historical calibration for pipelines
-for tec in [i for i in covered_tec if 'piped' in i]:
-    histdf = pd.read_csv(os.path.join(os.path.dirname(package_data_path("bilateralize", tec)), tec, "GEM", "GEM.csv"))
-    histdf['node_loc'] = histdf['EXPORTER']
-    histdf['importer'] = histdf['IMPORTER'].str.replace(config['scenario']['regions'] + '_', '').str.lower()
-    histdf['technology'] = config[tec + '_trade']['flow_technology'] + '_' + histdf['importer']
-    histdf['year_act'] = 2025 # last historical year
-    histdf['mode'] = 'M1'
-    histdf['time'] = 'year'
-    histdf['value'] = histdf['LengthMergedKm']
-    histdf['unit'] = 'km'
-    histdf = histdf[['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit']]
-    
-    trade_dict[tec]['flow']['historical_activity'] = histdf
-
     
 ## MANUAL ADDITIONS
 # Set emission factors for piped gas # TODO
