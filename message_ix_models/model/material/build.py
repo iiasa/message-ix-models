@@ -92,6 +92,7 @@ def add_digsy_data(
     from message_ix_models.project.digsy.data import (
         apply_industry_modifiers,
         get_industry_modifiers,
+        extrapolate_modifiers_past_2050,
     )
 
     mapping = {
@@ -115,10 +116,11 @@ def add_digsy_data(
     log.info("done")
 
 
-def get_resid_demands(context, digsy_scenario):
+def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) -> dict:
     from message_ix_models.project.digsy.data import (
         apply_industry_modifiers,
         get_industry_modifiers,
+        extrapolate_modifiers_past_2050,
     )
 
     resid_demands = {
@@ -128,7 +130,7 @@ def get_resid_demands(context, digsy_scenario):
     }
 
     if digsy_scenario != "baseline":
-        mods = get_industry_modifiers(digsy_scenario)
+        mods = extrapolate_modifiers_past_2050(get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario))
         resid_demands_modified = dict()
         resid_demands_modified = apply_industry_modifiers(
             mods, resid_demands
@@ -169,7 +171,7 @@ def build(
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
-    resid_demands = get_resid_demands(digsy_scenario)
+    resid_demands = get_resid_demands(context, digsy_scenario, scenario)
     if old_calib:
         modify_demand_and_hist_activity(scenario)
     else:
