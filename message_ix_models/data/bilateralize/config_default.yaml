@@ -178,7 +178,7 @@ LNG_shipped_trade: # Name of covered trade technology (e.g., oil)
     global
   flow_fuel_input:
     - LNG
-    - fueloil
+    #- fueloil # Need to get fuel oil exports set up for this
   flow_material_input:
   flow_commodity_output:
     LNG_tanker_capacity
@@ -188,4 +188,5 @@ LNG_shipped_trade: # Name of covered trade technology (e.g., oil)
     False
   tracked_emissions: # List of tracked emission types
   bunker_technology:
-    LNG_tobunker
+    - LNG_tobunker
+    #- fueloil_tobunker # Need to get fuel oil exports set up for this
