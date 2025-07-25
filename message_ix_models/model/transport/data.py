@@ -233,6 +233,47 @@ class MERtoPPP(MaybeAdaptR11Source):
     filename = {"MERtoPPP": "mer-to-ppp.csv"}
 
 
+class PDT_CAP(ExoDataSource):
+    """Projected passenger-distance traveled (PDT) per capita."""
+
+    @dataclass
+    class Options(BaseOptions):
+        #: ID of the node code list.
+        nodes: str = ""
+
+        #: Scenario identifier.
+        scenario: str = ""
+
+    key = Key("P activity:n-t-y:exo")
+    units = "km / year"
+
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.Options.from_args(self, *args, **kwargs)
+        self.path = package_data_path(
+            "transport", opt.nodes, "pdt-cap", f"{opt.scenario}.csv"
+        )
+        log.info(f"PDT data from {self.path}")
+        assert self.path.exists()
+
+    def get(self) -> "AnyQuantity":
+        from genno.operator import load_file
+
+        return load_file(
+            self.path, dims=RENAME_DIMS, name=self.key.name, units=self.units
+        )
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        from .key import pdt_nyt, pop
+
+        # This is the key used by subsequent steps in demand.py
+        target = pdt_nyt[0]
+
+        # Multiply by population for the total
+        c.add(target, "mul", base_key, pop)
+
+        return target
+
+
 def collect_structures() -> "sdmx.message.StructureMessage":
     """Collect all SDMX data structures from :data:`FILES` and store.
 
@@ -731,14 +772,6 @@ mode_share_freight = _input_dataflow(
     path="freight-mode-share-ref",
     name="Mode shares of freight activity in the model base period",
     units="dimensionless",
-)
-
-pdt_cap_proj = _input_dataflow(
-    key="P activity:scenario-n-t-y:exo",
-    path="pdt-cap",
-    name="Projected passenger-distance travelled (PDT) per capita",
-    units="km / year",
-    required=False,
 )
 
 pdt_cap_ref = _input_dataflow(
