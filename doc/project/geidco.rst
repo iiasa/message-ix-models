@@ -8,6 +8,10 @@ For “Phase V”, as of 2025-01:
 - Project lead: :gh-user:`vruijven`, :gh-user:`byersiiasa`
 - Lead modeler: :gh-user:`adrivinca`
 
+Starting scenario
+-----------------
+SSP2 baseline scenario with GEIDCO IV application. 
+
 GEIDCO IV
 =========
 For "Phase IV", from 2022-09 to 2023-06:
@@ -44,13 +48,13 @@ R11 (original GEIDCO IV):
 R12 (baseline scenario for GEIDCO V): 
     see message-data branch `project/geidco_r12 <https://github.com/iiasa/message_data/tree/project/geidco_r12>`_
 
-TBA: 
-  a generator for more general use in the message-ix-models 
-  
-  (generate bare sheets, users fill in minimum techno-economic parameters for UHV technologies, build scenario)
-
 Code references
 ---------------
+Extending GEIDCO VI application to GEIDCO V and other starting scenarios: 
+    a generator for more general use in the message-ix-models 
+  
+    (generate bare sheets, users fill in minimum techno-economic parameters for UHV technologies, build scenario)
+
 .. autofunction:: message_ix_models.tools.inter_pipe.generate_inter_pipe.inter_pipe_bare
 
 .. autofunction:: message_ix_models.tools.inter_pipe.generate_inter_pipe.inter_pipe_build
