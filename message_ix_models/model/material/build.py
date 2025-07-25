@@ -33,6 +33,7 @@ from message_ix_models.model.material.util import (
     get_ssp_from_context,
     path_fallback,
     read_config,
+    combine_df_dictionaries,
 )
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import (
@@ -121,6 +122,7 @@ def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) ->
         apply_industry_modifiers,
         get_industry_modifiers,
         extrapolate_modifiers_past_2050,
+        read_ict_demand,
     )
 
     resid_demands = {
@@ -135,6 +137,8 @@ def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) ->
         resid_demands_modified = apply_industry_modifiers(
             mods, resid_demands
         )
+        ict_demand = read_ict_demand(scenario=f"DIGSY-{digsy_scenario}")
+        resid_demands_modified = combine_df_dictionaries(resid_demands, {"demand": ict_demand})
         return resid_demands_modified
     else:
         return resid_demands
