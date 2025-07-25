@@ -431,6 +431,9 @@ class Config(ConfigHelper):
                :attr:`message_ix.Scenario.scenario` name in an :mod:`ixmp` database, for
                instance "SSP_2024.3".
         """
+        from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
+        from message_ix_models.project.edits.structure import SCENARIO as EDITS
+
         sca = ScenarioCodeAnnotations.from_obj(code)
 
         # Look up the SSP_2024 Enum
@@ -443,7 +446,8 @@ class Config(ConfigHelper):
             self.policy.add(sca.policy)
 
         self.project["LED"] = sca.is_LED_scenario
-        self.project["EDITS"] = {"activity": sca.EDITS_activity_id}
+        self.project["DIGSY"] = DIGSY.by_urn(sca.DIGSY_scenario_URN)
+        self.project["EDITS"] = EDITS.by_urn(sca.EDITS_scenario_URN)
 
         # Construct labels including the SSP code and policy identifier
         # 1. ‘Short’ label used for workflow steps
@@ -457,7 +461,8 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
 
     SSP_URN: str
     is_LED_scenario: bool
-    EDITS_activity_id: Optional[str]
+    DIGSY_scenario_URN: str
+    EDITS_scenario_URN: str
     base_scenario_URL: str
     policy: Optional["Policy"]
 
@@ -505,16 +510,20 @@ def refresh_cl_scenario(
     """
     from sdmx.model import common
 
+    import message_ix_models.project.digsy.structure
+    import message_ix_models.project.edits.structure
     from message_ix_models.util.sdmx import read, write
 
     # Other data structures
     IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
     cl_ssp_2024 = read("ICONICS:SSP(2024)")
+    cl_edits = message_ix_models.project.edits.structure.get_cl_scenario()
+    cl_digsy = message_ix_models.project.digsy.structure.get_cl_scenario()
 
     cl: "common.Codelist" = common.Codelist(
         id="CL_TRANSPORT_SCENARIO",
         maintainer=IIASA_ECE,
-        version="1.1.0",
+        version="1.2.0",
         is_external_reference=False,
         is_final=False,
     )
@@ -530,14 +539,24 @@ def refresh_cl_scenario(
     #   latest in this sequence for which y₀=2020, rather than 2030.
     base_url = "ixmp://ixmp-dev/SSP_SSP{}_v6.1/baseline_DEFAULT_step_13"
 
-    def _code(id, name, c, led, edits):
+    def _code(
+        id: str, name: str, c_ssp: "common.Code", led: bool, edits: str, digsy: str
+    ) -> "common.Code":
         """Shorthand for creating a code."""
-        sca = ScenarioCodeAnnotations(c.urn, led, edits, base_url.format(c.id), None)
+        assert c_ssp.urn
+        sca = ScenarioCodeAnnotations(
+            c_ssp.urn,
+            led,
+            cl_digsy[digsy].urn,
+            cl_edits[edits].urn,
+            base_url.format(c_ssp.id),
+            None,
+        )
         return common.Code(id=id, name=name, **sca.get_annotations(dict))
 
     # SSP baselines and policies
-    for ssp_code in cl_ssp_2024:
-        c_base = _code(f"SSP{ssp_code.id}", "", ssp_code, False, None)
+    for c_ssp in cl_ssp_2024:
+        c_base = _code(f"SSP{c_ssp.id}", "", c_ssp, False, "_Z", "_Z")
         cl.append(c_base)
 
         # Simple carbon tax
@@ -555,19 +574,22 @@ def refresh_cl_scenario(
         cl.append(c)
 
     # LED
-    name_template = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
-    for ssp in ("1", "2"):
-        ssp_code = cl_ssp_2024[ssp]
-        name = name_template.format(ssp_code.id)
-        cl.append(_code(f"LED-SSP{ssp_code.id}", name_template, ssp_code, True, None))
+    name = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
+    for ssp_id in ("1", "2"):
+        c_ssp = cl_ssp_2024[ssp_id]
+        cl.append(
+            _code(f"LED-SSP{ssp_id}", name.format(ssp_id), c_ssp, True, "_Z", "_Z")
+        )
+
+    # DIGSY
+    c_ssp, name = cl_ssp_2024["2"], "DIGSY {!r} scenario with SSP2"
+    for id_ in ("BEST", "WORST"):
+        cl.append(_code(f"DIGSY-{id_}", name.format(id_), c_ssp, False, "_Z", id_))
 
     # EDITS
-    ssp_code = cl_ssp_2024["2"]
-    name_template = "EDITS scenario with ITF PASTA {!r} activity"
-    for id_, name in (("CA", "Current Ambition"), ("HA", "High Ambition")):
-        cl.append(
-            _code(f"EDITS-{id_}", name_template.format(id_), ssp_code, False, id_)
-        )
+    c_ssp, name = cl_ssp_2024["2"], "EDITS scenario with ITF PASTA {!r} activity"
+    for id_ in ("CA", "HA"):
+        cl.append(_code(f"EDITS-{id_}", name.format(id_), c_ssp, False, id_, "_Z"))
 
     # FIXME This condition may appear to be always False, because the date/time differs.
     #       Adjust upstream (in sdmx1) to ignore this difference.
