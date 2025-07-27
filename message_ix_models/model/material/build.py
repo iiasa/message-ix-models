@@ -30,10 +30,10 @@ from message_ix_models.model.material.share_constraints import (
     get_ssp_low_temp_shr_up,
 )
 from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
     get_ssp_from_context,
     path_fallback,
     read_config,
-    combine_df_dictionaries,
 )
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import (
@@ -87,13 +87,13 @@ def add_data(scenario: message_ix.Scenario, dry_run: bool = False) -> None:
 
 
 def add_digsy_data(
-        scenario: message_ix.Scenario, dry_run: bool = False, digsy_scenario="baseline"
+    scenario: message_ix.Scenario, dry_run: bool = False, digsy_scenario="baseline"
 ) -> None:
     """Populate `scenario` with MESSAGEix-Materials data."""
     from message_ix_models.project.digsy.data import (
         apply_industry_modifiers,
-        get_industry_modifiers,
         extrapolate_modifiers_past_2050,
+        get_industry_modifiers,
     )
 
     mapping = {
@@ -102,7 +102,9 @@ def add_digsy_data(
         gen_data_petro_chemicals: "Petrochemicals",
         gen_data_aluminum: "Aluminium",
     }
-    mods = extrapolate_modifiers_past_2050(get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario))
+    mods = extrapolate_modifiers_past_2050(
+        get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario)
+    )
     for func in DATA_FUNCTIONS:
         # Generate or load the data and add to the Scenario
         log.info(f"from {func.__name__}()")
@@ -120,8 +122,8 @@ def add_digsy_data(
 def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) -> dict:
     from message_ix_models.project.digsy.data import (
         apply_industry_modifiers,
-        get_industry_modifiers,
         extrapolate_modifiers_past_2050,
+        get_industry_modifiers,
         read_ict_demand,
     )
 
@@ -132,13 +134,15 @@ def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) ->
     }
 
     if digsy_scenario != "baseline":
-        mods = extrapolate_modifiers_past_2050(get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario))
-        resid_demands_modified = dict()
-        resid_demands_modified = apply_industry_modifiers(
-            mods, resid_demands
+        mods = extrapolate_modifiers_past_2050(
+            get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario)
         )
+        resid_demands_modified = dict()
+        resid_demands_modified = apply_industry_modifiers(mods, resid_demands)
         ict_demand = read_ict_demand(scenario=f"DIGSY-{digsy_scenario}")
-        resid_demands_modified = combine_df_dictionaries(resid_demands, {"demand": ict_demand})
+        resid_demands_modified = combine_df_dictionaries(
+            resid_demands, {"demand": ict_demand}
+        )
         return resid_demands_modified
     else:
         return resid_demands
@@ -208,7 +212,7 @@ def build(
 
 
 def calibrate_existing_constraints(
-        context, scenario: message_ix.Scenario, iea_data_path: str
+    context, scenario: message_ix.Scenario, iea_data_path: str
 ):
     if "SSP_dev" not in scenario.model:
         engage_updates._correct_balance_td_efficiencies(scenario)
@@ -309,11 +313,11 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
     for material in materials:
         for set_name in sets[material]:
             if not all(
-                    [
-                        isinstance(item, list)
-                        for sublist in sets[material][set_name].values()
-                        for item in sublist
-                    ]
+                [
+                    isinstance(item, list)
+                    for sublist in sets[material][set_name].values()
+                    for item in sublist
+                ]
             ):
                 generate_set_elements(sets[material], set_name)
 

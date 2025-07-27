@@ -48,6 +48,8 @@ def extrapolate_modifiers_past_2050(df: pd.DataFrame, s_info: "ScenarioInfo"):
 
 def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
     for par, group in mods.groupby("par"):
+        if par not in pars.keys():
+            continue
         par_data = pars[par]
         par_node_col = [i for i in par_data.columns if "node" in i][0]
         par_yr_col = [i for i in par_data.columns if "year" in i][0]
