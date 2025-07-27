@@ -59,12 +59,14 @@ def cli(ssp):
 def build_scen(
     context, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
 ):
-    # Collect CLI options and store themin context.material
-    context.material = {
-        "old_calib": old_calib,
-        "iea_data_path": iea_data_path,
-        "modify_existing_constraints": True,  # Default value from build() function
-    }
+    # # Collect CLI options and store them in context.material
+    # # This overwrites the default values from Config()
+    # from message_ix_models.model.material.config import Config
+    # context.material = Config(
+    #     old_calib=old_calib,
+    #     iea_data_path=iea_data_path,
+    #     modify_existing_constraints=True,
+    # ) # TODO: needs testing
 
     """Build a scenario.
 
