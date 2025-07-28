@@ -5,7 +5,7 @@ import message_ix # type: ignore
 import ixmp # type: ignore
 import logging
 
-mp = ixmp.Platform()
+mp = ixmp.Platform("ixmp_dev", jvmargs=["-Xmx32G"])
 from pathlib import Path
 from message_ix_models.util import package_data_path
 
@@ -13,6 +13,11 @@ from message_ix_models.tools.inter_pipe.generate_inter_pipe import (
     inter_pipe_bare,
     inter_pipe_build,
 )
+
+from message_ix_models.model.material.report.run_reporting import ( # type: ignore
+    run as report_materials,
+)
+from message_data.tools.post_processing import iamc_report_hackathon as legacy_report # type: ignore
 
 # Generate bare sheets for pipe technologies and pipe supply technologies
 # inter_pipe_bare()
@@ -62,6 +67,20 @@ solver = "MESSAGE"  # solver = "MESSAGE-MACRO"
 
 # Solve scenario
 scen.solve(solver)
+
+# Report the scenario
+# scen.check_out(timeseries_only=True)
+# df = report_materials(scen, region="R12_GLB", upload_ts=True)
+# scen.commit("Add materials reporting") 
+# # Require message_ix_models branch ssp-dev or any branch cloned from it. 
+# # Frequent rebase may be required to keep up with the latest changes in the upstream repo. 
+
+legacy_report.report(
+    mp=mp, 
+    scen=scen, 
+    merge_hist=True, 
+    run_config="materials_daccs_run_config_gei.yaml"
+)  # Require message_data branch project/geidco
 
 # Close the connection to the database
 mp.close_db()
