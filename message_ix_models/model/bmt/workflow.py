@@ -24,7 +24,7 @@ from message_ix_models.util import (
 )
 from message_ix_models.workflow import Workflow
 
-# from message_ix_models.model.buildings.build import build as build_B
+from message_ix_models.model.buildings.build import build_B as build_B
 from message_ix_models.model.material.build import build_M as build_M
 # from message_ix_models.model.transport.build import build as build_T
 

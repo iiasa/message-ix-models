@@ -31,6 +31,8 @@ from message_ix_models.model.structure import (
     get_region_codes,
 )
 from message_ix_models.util import (
+    package_data_path,
+    private_data_path,
     load_package_data,
     make_io,
     merge_data,
@@ -142,6 +144,11 @@ def get_spec(context: Context) -> Spec:
     load_config(context)
 
     s = deepcopy(context["buildings spec"])
+
+    # Read config and save to context.buildings
+    from message_ix_models.model.buildings.config import Config
+    config = Config()
+    context.buildings = config
 
     if context.buildings.with_materials:
         s.require.set["commodity"].extend(MATERIALS)
@@ -821,3 +828,91 @@ def materials(
 
     # Concatenate data frames together
     return {k: pd.concat(v) for k, v in result.items()}
+
+# works in the same way as main() but applicable for ssp baseline scenarios
+def build_B(
+    context: Context,
+    scenario: message_ix.Scenario,
+    ):
+    """Set up the structure and data for MESSAGEix_Buildings on `scenario`.
+
+    Parameters
+    ----------
+    scenario
+        Scenario to set up.
+    """
+    info = ScenarioInfo(scenario)
+
+    from message_ix_models.model.buildings.config import Config
+    config = Config()
+    context.buildings = config
+
+    scenario.check_out()
+
+    try:
+        # TODO explain what this is for
+        scenario.init_set("time_relative")
+    except ValueError:
+        pass  # Already exists
+
+    # Generate a spec for the model
+    spec = get_spec(context)
+
+    # Temporary: input for prepare data seperately read from csv
+    # prices
+    price_path = private_data_path("buildings", "input_prices_R12.csv")
+    prices = pd.read_csv(price_path)
+
+    # sturm_r
+    sturm_r_path = private_data_path("buildings", "resid_sturm.csv")
+    # sturm_r_path = package_data_path("buildings", "debug-sturm-resid.csv")
+    sturm_r = pd.read_csv(sturm_r_path, index_col=0)
+
+    # sturm_c
+    sturm_c_path = private_data_path("buildings", "comm_sturm.csv")
+    # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
+    sturm_c = pd.read_csv(sturm_c_path, index_col=0)
+
+    # # e_use
+    # e_use_path = package_data_path("buildings", "e_use.csv")
+    # e_use = pd.read_csv(e_use_path)
+
+    # demand
+    expr = "(cool|heat|hotwater)"
+    excl = "v_no_heat"
+    demand = pd.concat(
+        [
+            # e_use[~e_use.commodity.str.contains("therm")], 
+            sturm_r[sturm_r.commodity.str.contains(expr) & ~sturm_r.commodity.str.contains(excl)],
+            sturm_c[sturm_c.commodity.str.contains(expr) & ~sturm_c.commodity.str.contains(excl)],
+        ]
+    ).assign(level="useful")
+    # demand.to_csv("debug-demand.csv")
+
+    # Prepare data based on the contents of `scenario`
+    data = prepare_data(
+        scenario,
+        info,
+        demand,
+        prices,
+        sturm_r,
+        sturm_c,
+        context.buildings.with_materials,
+        relations=spec.require.set["relation"],
+    )
+
+    # Remove unused commodities and technologies
+    prune_spec(spec, data)
+
+    # Simple callback for apply_spec()
+    def _add_data(s, **kw):
+        return data
+
+    # FIXME check whether this works correctly on the re-solve of a scenario that has
+    #       already been set up
+    options = dict(fast=True)
+    build.apply_spec(scenario, spec, _add_data, **options)
+
+    scenario.set_as_default()
+
+    log.info(f"Built {scenario.url} and set as default")
