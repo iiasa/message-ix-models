@@ -1,4 +1,3 @@
-import os
 import sys
 import pandas as pd
 import logging
@@ -144,7 +143,7 @@ def inter_pipe_bare(
     if config_name is None:
         config_name = "config.yaml"
     full_path = package_data_path("inter_pipe", config_name)
-    config_dir = os.path.dirname(full_path)
+    config_dir = full_path.parent
     config = load_config(full_path)
     log.info(f"Loading config from: {full_path}")
 
@@ -218,7 +217,7 @@ def inter_pipe_bare(
             }
             spec_tech = pd.DataFrame(spec_tech)
             spec_tech.to_csv(
-                os.path.join(config_dir, "spec_tech_pipe_edit.csv"), index=False
+                config_dir / "spec_tech_pipe_edit.csv", index=False
             )
             raise Exception(
                 "The function stopped. Sheet spec_tech_pipe.csv has been generated. Fill in the specific pairs first and run again."
@@ -252,8 +251,7 @@ def inter_pipe_bare(
     df["commodity"] = commodity_mother_pipe[0]
     df["level"] = f"{level_shorten_mother_pipe[0]}_{level_suffix_pipe[0]}"
     df["value"] = None
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "input_pipe_exp_edit.csv"), index=False)
+    df.to_csv(config_dir / "input_pipe_exp_edit.csv", index=False)
     log.info(f"Input pipe exp csv generated at: {config_dir}.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
@@ -280,8 +278,7 @@ def inter_pipe_bare(
         lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
     )
     df["value"] = 1
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "output_pipe_exp.csv"), index=False)
+    df.to_csv(config_dir / "output_pipe_exp.csv", index=False)
     log.info(f"Output pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
@@ -302,9 +299,8 @@ def inter_pipe_bare(
     df["year_vtg"] = "broadcast"
     df["year_act"] = None
     df["value"] = None
-    config_dir = os.path.dirname(full_path)
     df.to_csv(
-        os.path.join(config_dir, "technical_lifetime_pipe_exp_edit.csv"), index=False
+        config_dir / "technical_lifetime_pipe_exp_edit.csv", index=False
     )
     log.info(f"Technical lifetime pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
@@ -325,8 +321,7 @@ def inter_pipe_bare(
     df["year_vtg"] = "broadcast"
     df["year_act"] = None
     df["value"] = None
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "inv_cost_pipe_exp_edit.csv"), index=False)
+    df.to_csv(config_dir / "inv_cost_pipe_exp_edit.csv", index=False)
     log.info(f"Inv cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
     inv_cost_pipe_exp = df.copy()
@@ -346,8 +341,7 @@ def inter_pipe_bare(
     df["year_vtg"] = "broadcast"
     df["year_act"] = "broadcast"
     df["value"] = None
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "fix_cost_pipe_exp_edit.csv"), index=False)
+    df.to_csv(config_dir / "fix_cost_pipe_exp_edit.csv", index=False)
     log.info(f"Fix cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
     fix_cost_pipe_exp = df.copy()
@@ -367,8 +361,7 @@ def inter_pipe_bare(
     df["year_vtg"] = "broadcast"
     df["year_act"] = "broadcast"
     df["value"] = None
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "var_cost_pipe_exp_edit.csv"), index=False)
+    df.to_csv(config_dir / "var_cost_pipe_exp_edit.csv", index=False)
     log.info(f"Var cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
     var_cost_pipe_exp = df.copy()
@@ -388,8 +381,7 @@ def inter_pipe_bare(
     df["year_vtg"] = "broadcast"
     df["year_act"] = "broadcast"
     df["value"] = 1
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "capacity_factor_pipe_exp.csv"), index=False)
+    df.to_csv(config_dir / "capacity_factor_pipe_exp.csv", index=False)
     log.info(f"Capacity factor pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
     capacity_factor_pipe_exp = df.copy()
@@ -419,8 +411,7 @@ def inter_pipe_bare(
         lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
     )
     df["value"] = 1
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "input_pipe_imp.csv"), index=False)
+    df.to_csv(config_dir / "input_pipe_imp.csv", index=False)
     log.info(f"Input pipe imp csv generated.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
@@ -446,8 +437,7 @@ def inter_pipe_bare(
     df["commodity"] = commodity_mother_pipe[0]
     df["level"] = level_mother_pipe[0]
     df["value"] = 1
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "output_pipe_imp.csv"), index=False)
+    df.to_csv(config_dir / "output_pipe_imp.csv", index=False)
     log.info(f"Output pipe imp csv generated.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
@@ -477,7 +467,7 @@ def inter_pipe_bare(
             }
             relation_tech_group = pd.DataFrame(spec_tech_group)
             relation_tech_group.to_csv(
-                os.path.join(config_dir, "relation_activity_pipe_group_edit.csv"),
+                config_dir / "relation_activity_pipe_group_edit.csv",
                 index=False,
             )
             raise Exception(
@@ -518,8 +508,7 @@ def inter_pipe_bare(
     df["commodity"] = commodity_mother_supply[0]
     df["level"] = f"{level_mother_shorten_supply[0]}_{level_suffix_supply[0]}"
     df["value"] = 1
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "output_pipe_supply.csv"), index=False)
+    df.to_csv(config_dir / "output_pipe_supply.csv", index=False)
     log.info(f"Output pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
@@ -528,9 +517,8 @@ def inter_pipe_bare(
     # Generate pipe supply technology: sheet technical_lifetime_pipe_supply (no need to edit)
     df = base.par("technical_lifetime", filters={"technology": tech_mother_supply})
     df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
-    config_dir = os.path.dirname(full_path)
     df.to_csv(
-        os.path.join(config_dir, "technical_lifetime_pipe_supply.csv"), index=False
+        config_dir / "technical_lifetime_pipe_supply.csv", index=False
     )
     log.info(f"Technical lifetime pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
@@ -540,8 +528,7 @@ def inter_pipe_bare(
     df = base.par("inv_cost", filters={"technology": tech_mother_supply})
     df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
     df["value"] = df["value"] * 1  # TODO: debugging
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "inv_cost_pipe_supply.csv"), index=False)
+    df.to_csv(config_dir / "inv_cost_pipe_supply.csv", index=False)
     log.info(f"Inv cost pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
     inv_cost_pipe_supply = df.copy()
@@ -550,8 +537,7 @@ def inter_pipe_bare(
     df = base.par("fix_cost", filters={"technology": tech_mother_supply})
     df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
     df["value"] = df["value"] * 1  # TODO: debugging
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "fix_cost_pipe_supply.csv"), index=False)
+    df.to_csv(config_dir / "fix_cost_pipe_supply.csv", index=False)
     log.info(f"Fix cost pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
     fix_cost_pipe_supply = df.copy()
@@ -560,8 +546,7 @@ def inter_pipe_bare(
     df = base.par("var_cost", filters={"technology": tech_mother_supply})
     df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
     df["value"] = df["value"] * 1  # TODO: debugging
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "var_cost_pipe_supply.csv"), index=False)
+    df.to_csv(config_dir / "var_cost_pipe_supply.csv", index=False)
     log.info(f"Var cost pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
     var_cost_pipe_supply = df.copy()
@@ -569,8 +554,7 @@ def inter_pipe_bare(
     # Generate pipe supply technology: sheet capacity_factor_pipe_supply (no need to edit)
     df = base.par("capacity_factor", filters={"technology": tech_mother_supply})
     df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
-    config_dir = os.path.dirname(full_path)
-    df.to_csv(os.path.join(config_dir, "capacity_factor_pipe_supply.csv"), index=False)
+    df.to_csv(config_dir / "capacity_factor_pipe_supply.csv", index=False)
     log.info(f"Capacity factor pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
     capacity_factor_pipe_supply = df.copy()
@@ -599,7 +583,7 @@ def inter_pipe_bare(
             }
             relation_tech_group = pd.DataFrame(template_group)
             relation_tech_group.to_csv(
-                os.path.join(config_dir, "relation_activity_supply_group_edit.csv"),
+                config_dir / "relation_activity_supply_group_edit.csv",
                 index=False,
             )
             raise Exception(
@@ -616,7 +600,7 @@ def inter_pipe_bare(
     # Generate technology set sheet (no need to edit)
     technology = list(set(set_tech))
     df = pd.DataFrame({"technology": technology})
-    df.to_csv(os.path.join(config_dir, "technology.csv"), index=False)
+    df.to_csv(config_dir / "technology.csv", index=False)
     log.info(f"Set technology csv generated.")
 
     # Generate commodity set sheet (no need to edit)
@@ -624,7 +608,7 @@ def inter_pipe_bare(
     # Generate level set sheet (no need to edit)
     level = list(set(set_level))
     df = pd.DataFrame({"level": level})
-    df.to_csv(os.path.join(config_dir, "level.csv"), index=False)
+    df.to_csv(config_dir / "level.csv", index=False)
     log.info(f"Set level csv generated.")
 
     # Generate relation set sheet (no need to edit)
@@ -636,7 +620,7 @@ def inter_pipe_bare(
         if rel not in relation:
             relation.append(rel)
     df = pd.DataFrame({"relation": relation})
-    df.to_csv(os.path.join(config_dir, "relation.csv"), index=False)
+    df.to_csv(config_dir / "relation.csv", index=False)
     log.info(f"Set relation csv generated.")
 
     # # Keep track of all csv files
