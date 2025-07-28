@@ -44,6 +44,7 @@ MODULE_WITH_CONFIG_DATACLASS: tuple[tuple[str, str, bool, bool], ...] = (
     ("message_ix_models.report.config", "report", True, False),
     ("message_ix_models.transport.config", "transport", False, False),
     ("message_ix_models.model.material.config", "material", False, False),
+    ("message_ix_models.model.buildings.config", "buildings", False, False),
 )
 
 
