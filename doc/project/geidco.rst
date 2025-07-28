@@ -55,9 +55,14 @@ Extending GEIDCO VI application to GEIDCO V and other starting scenarios:
   
     (generate bare sheets, users fill in minimum techno-economic parameters for UHV technologies, build scenario)
 
-.. autofunction:: message_ix_models.tools.inter_pipe.generate_inter_pipe.inter_pipe_bare
+.. currentmodule:: message_ix_models.tools
 
-.. autofunction:: message_ix_models.tools.inter_pipe.generate_inter_pipe.inter_pipe_build
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   inter_pipe
 
 
 
