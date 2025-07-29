@@ -564,7 +564,8 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
     for t in config["technology"]["add"]:
-        t = t.id
+        # Retrieve the id if `t` is a Code instance; otherwise use str
+        t = getattr(t, "id", t)
         params = data_steel.loc[(data_steel["technology"] == t), "parameter"].unique()
 
         # Special treatment for time-varying params
