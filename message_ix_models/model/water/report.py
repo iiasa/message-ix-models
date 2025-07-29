@@ -665,7 +665,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     electr_gw = ["in|final|electr|extract_groundwater|M1"]
     electr_fgw = ["in|final|electr|extract_gw_fossil|M1"]
     electr_sw = ["in|final|electr|extract_surfacewater|M1"]
-    extract_saline_region = ["out|saline_supply|saline_ppl|extract_salinewater|M1"]
+    extract_saline_region = ["out|saline_supply|saline_ppl|extract_salinewater_cool|M1"]
     extract_saline_basin = [
         "out|water_avail_basin|salinewater_basin|extract_salinewater_basin|M1"
     ]
