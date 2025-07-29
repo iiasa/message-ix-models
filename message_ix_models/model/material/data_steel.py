@@ -776,7 +776,7 @@ def gen_cokeoven_co2_cc(s_info: ScenarioInfo):
         DataFrame with relation_activity for CO2.
     """
     emi_dict = {
-        "unit": "Mt C/yr",
+        "unit": "-",
         "technology": "cokeoven_steel",
         "mode": "M1",
         "value": 0.814 * 0.2,
