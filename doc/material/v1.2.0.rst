@@ -13,7 +13,17 @@ Model changes
 Iron & steel sector
 -------------------
 
-*To be merged from ssp-dev*
+- Full calibration of the steel sector for 2020 and 2025, including:
+  - Historical production and capacity additions for all major steel production technologies
+  - Historical steel demand
+- Explicit representation of India-specific DRI technology based on rotary coal kilns
+- :func:`.gen_cokeoven_co2_cc` function added to generate coke oven CO2 emission factors
+- Fixed missing relation entries for maximum recycling rates
+- :func:`.get_scrap_prep_cost` function added to generate SSP differentiated scrap preparation costs
+- :func:`.gen_max_recycling_rel` function added to generate SSP differentiated maximum recycling rates
+- :func:`.gen_grow_cap_up function` added to generate growth constraints for steel CCS capacity
+- New steel projections derived from relationship of macro-economic investment data to per capita steel demand
+- General revision of techno-economic input data for several technologies
 
 Non metallic minerals sector
 ----------------------------
@@ -66,6 +76,7 @@ The following xlsx files have been replaced by multiple csv files for each sheet
 
 - :file:`aluminum_techno_economic.xlsx`
 - :file:`Global_cement_MESSAGE.xlsx`
+- :file:`Global_steel_MESSAGE.xlsx`
 
 The files are currently still available for reference, but will be removed in a future release.
 
