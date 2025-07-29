@@ -76,6 +76,25 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
         for col in ["value", "unit", "level", "commodity", "node", "time", "year"]
     )
 
+    # Check for NaN values in DataFrames
+    assert not result["demand"]["value"].isna().any(), (
+        "demand DataFrame contains NaN values"
+    )
+    assert not result["historical_new_capacity"]["value"].isna().any(), (
+        "historical_new_capacity DataFrame contains NaN values"
+    )
+
+    # Check for duplicates in DataFrames
+    demand_duplicates = result["demand"].duplicated().sum()
+    assert demand_duplicates == 0, (
+        f"demand DataFrame contains {demand_duplicates} duplicate rows"
+    )
+
+    hnc_duplicates = result["historical_new_capacity"].duplicated().sum()
+    assert hnc_duplicates == 0, (
+        f"historical_new_capacity DataFrame contains {hnc_duplicates} duplicate rows"
+    )
+
 
 @pytest.mark.parametrize("time", ["year", "month"])
 def test_add_water_availability(test_context, time):
