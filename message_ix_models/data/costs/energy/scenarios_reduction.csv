@@ -33,6 +33,7 @@ h2_elec,very_high,medium,low,medium,medium,very_high
 h2_i,low,low,low,low,low,low
 h2_smr,high,medium,low,medium,high,medium
 h2_smr_ccs,medium,medium,low,high,high,medium
+h2_pyro_elec,medium,medium,low,high,high,medium
 heat_i,low,low,low,low,low,low
 hp_el_i,high,medium,low,high,medium,medium
 hp_gas_i,high,medium,low,medium,high,medium
