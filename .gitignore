@@ -153,3 +153,15 @@ cache/
 
 # Scratch files
 *scratch*
+message_ix_models/data/ssp/0000000000000-ssp_basic_drivers_release_3.2.beta_full.csv.xz
+.gitignore
+message_ix_models/data/ssp/1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz
+message_ix_models/data/ssp/1721734326790-ssp_basic_drivers_release_3.1_full.csv.gz
+.gitignore
+message_ix_models/data/ssp/SspDb_country_data_2013-06-12.csv.zip
+message_ix_models/data/ssp/1710759470883-ssp_basic_drivers_release_3.0.1_full.csv.gz
+message_ix_models/data/ssp/0000000000000-ssp_basic_drivers_release_3.2.beta_full.txt
+.gitignore
+message_ix_models/data/ssp/SspDb_compare_regions_2013-06-12.csv.zip
+.gitignore
+message_ix_models/data/ssp/1721734326790-ssp_basic_drivers_release_3.1_full.txt
