@@ -137,15 +137,13 @@ def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) ->
         mods = extrapolate_modifiers_past_2050(
             get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario)
         )
-        resid_demands_modified = dict()
-        resid_demands_modified = apply_industry_modifiers(mods, resid_demands)
-        ict_demand = read_ict_demand(scenario=f"DIGSY-{digsy_scenario}")
-        resid_demands_modified = combine_df_dictionaries(
-            resid_demands, {"demand": ict_demand}
-        )
-        return resid_demands_modified
-    else:
-        return resid_demands
+        resid_demands = apply_industry_modifiers(mods, resid_demands)
+
+    ict_demand = read_ict_demand(scenario=digsy_scenario)
+    all_demands = combine_df_dictionaries(
+        resid_demands, {"demand": ict_demand}
+    )
+    return all_demands
 
 
 def build(
@@ -339,3 +337,12 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
         ) from None
 
     return s
+
+
+if __name__ == '__main__':
+    import ixmp
+    import message_ix
+
+    mp = ixmp.Platform('local2')
+    scen = message_ix.Scenario(mp, 'MESSAGEix-Materials', 'baseline')
+    get_resid_demands({}, "baseline", scen)
