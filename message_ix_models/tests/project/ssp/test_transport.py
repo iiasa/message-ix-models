@@ -34,6 +34,7 @@ METHOD_PARAM = (
 # Test data file paths
 V1 = "SSP_dev_SSP2_v0.1_Blv0.18_baseline_prep_lu_bkp_solved_materials_2025_macro.csv"
 V2 = "SSP_LED_v2.3.1_baseline.csv"
+V3 = "SSP_SSP2_v6.2_SSP2_-_Low_Emissions.csv"
 
 
 @pytest.fixture(scope="module")
