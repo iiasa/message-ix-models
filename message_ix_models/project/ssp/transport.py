@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 
 import genno
 import pandas as pd
-from genno import Key
+from genno import Key, quote
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codelist
@@ -41,7 +41,7 @@ EXPR_FE = re.compile(
     r"""^Final.Energy\|
     (?P<t>Bunkers(\|International.Aviation)?|(Transportation(|.\(w/.bunkers\))))
     \|?
-    (?P<c>|Liquids\|Oil)
+    (?P<c>|Electricity|Liquids\|Oil)
     $""",
     flags=re.VERBOSE,
 )
@@ -385,7 +385,7 @@ def get_computer(
     c.add(K.fe_in[0] * "UNITS", "select_expand", K.input, dim_cb=dim_cb)
     # Convert "UNIT" dim labels to Quantity.units
     c.add(K.fe_in[1], "unique_units_from_dim", K.fe_in[0] * "UNITS", dim="UNIT")
-    # Change labels; see get_label()
+    # Change labels e.g. "AFR" → "R12_AFR"; see get_label()
     c.add(K.fe_in, "relabel", K.fe_in[1], labels=get_labels())
 
     # Call a function to prepare the remaining calculations up to K.emi
@@ -420,7 +420,9 @@ def get_labels():
     - n[ode]: "AFR" → "R12_AFR" etc. "World" is not changed.
     """
     cl = get_codelist("node/R12")
-    labels = dict(c={"Liquids|Oil": "lightoil", "": "_T"}, n={})
+    labels = dict(
+        c={"Electricity": "electr", "Liquids|Oil": "lightoil", "": "_T"}, n={}
+    )
     for n in filter(lambda n: len(n.child) and n.id != "World", cl):
         labels["n"][n.id.partition("_")[2]] = n.id
     return labels
@@ -571,20 +573,25 @@ def method_BC_common(c: "Computer", k_fe_share: "Key") -> None:
         units=Key(f"units:e-UNIT:{L}"),
     )
 
+    ### Compute estimate of emissions
     # Select only total transport consumption of lightoil from K.fe_in
     indexers = {"t": "Transportation (w/ bunkers)"}
     c.add(k.fe[0], "select", K.fe_in, indexers=indexers, drop=True)
 
-    ### Compute estimate of emissions
     # Product of aviation share and FE of total transport → FE of aviation
     c.add(k.fe, "mul", k.fe[0], k_fe_share)
 
     # Convert exogenous emission intensity data to Mt / EJ
     c.add(k.ei["units"], "convert_units", k.ei, units="Mt / EJ")
 
-    # - (FE of aviation) × (emission intensity) → emissions of aviation.
+    to_mul = [k.fe, k.ei["units"]]
+
+    if True:
+        to_mul.append(track_GAINS(c))
+
+    # - (FE of aviation) × (emission intensity) × (adjustment) → emissions of aviation
     # - Drop/partial sum over 1 label ("AIR") on dimension "t".
-    c.add(k.emi0[0], "mul", k.fe, k.ei["units"], sums=True)
+    c.add(k.emi0[0], "mul", *to_mul, sums=True)
 
     # Convert units to megatonne per year
     c.add(k.emi0[1], "convert_units", k.emi0[0], units="Mt / year")
@@ -727,6 +734,35 @@ def process_file(
 
     # Execute, write the result to `path_out`
     c.get("target").to_csv(path_out, index=False)
+
+
+def track_GAINS(c: "Computer") -> "Key":
+    """Compute adjustment factor to track declining GAINS EF."""
+    k, _t, U = Key(f"ADJ:n-e-y-UNIT:{L}"), "Transportation (w/ bunkers)", "UNIT"
+
+    # Numerator: setelect total emissions from input
+    c.add(k["n0"], "select", K.emi_in, indexers={"t": "Transportation"}, drop=True)
+
+    # Relabel e.g. "AFR" → "R12_AFR"
+    c.add(k["num"], "relabel", k["n0"], labels=get_labels())
+
+    # Denominator: select transport final energy total, subtract electricity
+    c.add(k["d0"], "select", K.fe_in, indexers={"t": _t, "c": "_T"}, drop=True)
+    c.add(k["d1"], "select", K.fe_in, indexers={"t": _t, "c": "electr"}, drop=True)
+    c.add(k["denom"], "sub", k["d0"], k["d1"])
+
+    # Compute ratio → implied emission factor
+    # NB This contains y labels prior to 2020, but the other inputs to k.emi0[0],
+    #    below, do not, so these are effectively ignored.
+    c.add(k["ratio"] / U, "div", k["num"] / U, k["denom"])
+
+    # Index to y=2020 values
+    c.add(k["index"] / U, "index_to", k["ratio"] / U, quote({"y": 2020}))
+
+    # Clip values to be <= 1
+
+    c.add(k / U, lambda q: q.clip(None, 1.0), k["index"] / U)
+    return k / U
 
 
 @cache
