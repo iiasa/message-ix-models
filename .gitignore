@@ -153,7 +153,6 @@ cache/
 
 # Scratch files
 *scratch*
-
 # GDX and input files
 scenario_parameters.pkl
 */data/bilateralize/gdx/*
@@ -163,3 +162,9 @@ scenario_parameters.pkl
 */data/bilateralize/*/bare_files/*
 */data/bilateralize/*/GEM/*
 /message_ix_models/project/newpathways/diagnostics/data
+
+# SSP driver data files (large)
+message_ix_models/data/ssp/*.csv.xz
+message_ix_models/data/ssp/*.csv.gz
+message_ix_models/data/ssp/*.csv.zip
+message_ix_models/data/ssp/*.txt
