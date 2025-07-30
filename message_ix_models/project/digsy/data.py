@@ -83,9 +83,9 @@ def read_ict_demand(scenario="DIGSY-BEST") -> pd.DataFrame:
     dfs = pd.read_excel(path, sheet_name=None)
 
     scen_map = {
-        "DIGSY-BEST": "Lower Bound",
-        "DIGSY-WORST": "Upper Bound",
-        "PRISMA": "Mean",
+        "BEST": "Lower Bound",
+        "WORST": "Upper Bound",
+        "baseline": "Mean",
     }
     ssp = "SSP2"
 
