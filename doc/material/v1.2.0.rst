@@ -1,7 +1,7 @@
 Version 1.2.0 (Month X, 2025)
 *****************************
 
-Preview of the Upcoming MESSAGEix-Materials Release
+Preview of the upcoming MESSAGEix-Materials release
 
 This upcoming release of MESSAGEix-Materials introduces significant enhancements to the current model.
 It features improved calibration and updated parameterization, drawing on the latest statistics and findings from recent literature.
@@ -13,18 +13,29 @@ Model changes
 Iron & steel sector
 -------------------
 
+Revisions & fixes
+~~~~~~
+- Added missing relation entries for maximum steel recycling rates
 - Full calibration of the steel sector for 2020 and 2025, including:
+
   - Historical production and capacity additions for all major steel production technologies
   - Historical steel demand
-- Explicit representation of India-specific DRI technology based on rotary coal kilns
-- :func:`.gen_cokeoven_co2_cc` function added to generate coke oven CO2 emission factors
-- Fixed missing relation entries for maximum recycling rates
-- :func:`.get_scrap_prep_cost` function added to generate SSP differentiated scrap preparation costs
-- :func:`.gen_max_recycling_rel` function added to generate SSP differentiated maximum recycling rates
-- :func:`.gen_grow_cap_up function` added to generate growth constraints for steel CCS capacity
-- New steel projections derived from relationship of macro-economic investment data to per capita steel demand
-- General revision of techno-economic input data for several technologies
+- Update of techno-economic input data for several technologies to more recent or accurate literature
+- Removed water commodity flows due to incompatibility with new MESSAGEix-GLOBIOM-GAINS model structure
 
+Extensions
+~~~~~~~~~~
+
+- Explicit representation of India-specific DRI technology using rotary coal kilns
+- :func:`.gen_cokeoven_co2_cc` function added to generate coke oven CO2 emission factors
+- Added functionality to differentiate steel model parameterization along SSP narratives:
+
+  - :func:`.get_scrap_prep_cost` function added to generate scrap preparation costs
+  - :func:`.gen_max_recycling_rel` function added to generate maximum recycling rates
+  - :func:`.gen_grow_cap_up function` added to generate growth constraints for steel CCS capacity
+  - Use of :doc:`/api/tools-costs` for iron/steel production technologies
+- New steel projections derived from relationship of macro-economic investment to per capita steel demand
+- Regionally differentiated scrap availability from steel finishing and manufacturing based on statistics
 Non metallic minerals sector
 ----------------------------
 
