@@ -146,7 +146,7 @@ def broadcast_t_emi(
             "Transportation|Aviation|International",
         ]
         idx = slice(None) if include_international else slice(-1)
-    elif version == 2:
+    elif version in (2, 3):
         value = [1, 1, -1, -1]
         t = [
             "Bunkers",
@@ -154,7 +154,7 @@ def broadcast_t_emi(
             "Transportation",
             "Transportation|Road Rail and Domestic Shipping",
         ]
-        idx = slice(None)
+        idx = slice(-2 if version == 3 else None)
 
     return genno.Quantity(value[idx], coords={"t": t[idx]})
 
@@ -367,7 +367,7 @@ def get_computer(
     log.info(f"method 'C' will use data from {url}")
 
     # Common structure and utility quantities used by method_[ABC]
-    c.add(K.bcast, broadcast_t_emi, version=2, include_international=method == "A")
+    c.add(K.bcast, broadcast_t_emi, version=3, include_international=method == "A")
 
     # Placeholder for data-loading task. This is filled in later by process_df() or
     # process_file().
@@ -541,7 +541,9 @@ def method_B(c: "Computer") -> None:
     method_BC_common(c, fe.share)
 
 
-def method_BC_common(c: "Computer", k_fe_share: "Key") -> None:
+def method_BC_common(
+    c: "Computer", k_fe_share: "Key", k_emi_share: Optional["Key"] = None
+) -> None:
     """Common steps for :func:`.method_B` and :func:`.method_C`.
 
     1. From the input data (:data:`K.input`), select the values matching
@@ -586,7 +588,7 @@ def method_BC_common(c: "Computer", k_fe_share: "Key") -> None:
 
     to_mul = [k.fe, k.ei["units"]]
 
-    if True:
+    if False:  # See https://github.com/iiasa/message-ix-models/issues/387
         to_mul.append(track_GAINS(c))
 
     # - (FE of aviation) × (emission intensity) × (adjustment) → emissions of aviation
@@ -598,15 +600,24 @@ def method_BC_common(c: "Computer", k_fe_share: "Key") -> None:
 
     # - Add "UNIT" dimension and adjust magnitudes for species where units must be kt.
     #   See e_UNIT().
-    # - Re-add the "t" dimension with +ve sign for "Aviation" and -ve sign for "Road
-    #   Rail and Domestic Shipping".
+    # - Re-add the "t" dimension with +ve and -ve sign certain labels
     # - Drop/partial sum over dimension "c".
     c.add(k.units, e_UNIT, "e::codelist")
     c.add(K.emi[2], "mul", k.emi0[1], k.units, K.bcast)
 
+    if k_emi_share is not None:
+        # Adjust total transportation emissions: multiply k_fe_share by input data
+        c.add(K.emi_in["all"], "select", K.emi_in, indexers={"t": ["Transportation"]})
+        c.add(K.emi[3], "mul", K.emi_in["all"], k_fe_share, -1.0)
+        c.add(K.emi[4], "concat", K.emi[2], K.emi[3])
+    else:
+        c.add(K.emi[4], K.emi[2])
+
+    c.add("debug", K.emi[4])
+
     # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
     labels = dict(n={v: k for k, v in get_labels()["n"].items()})
-    c.add(K.emi[3], "relabel", K.emi[2], labels=labels)
+    c.add(K.emi, "relabel", K.emi[4], labels=labels)
     # Drop data for y0
     c.add(K.emi, "select", K.emi[3], indexers=dict(y=[2020]), inverse=True)
 
@@ -646,13 +657,20 @@ def method_C(c: "Computer") -> None:
     # Prepare `c` to compute the final energy share for aviation
     k = Keys(
         # Added by .transport.base.prepare_reporter()
-        base="in:nl-t-ya-c:transport+units",
-        share0=f"fe share:c-nl-ya:{L}",
-        share1=f"fe share:c-n-y:{L}",
+        base="in:n-t-y-c:transport+units",
+        share0=f"fe share:c-n-y:{L}",
+        share1=f"fe share:n-y:{L}+ex AIR+ex electr",
     )
 
+    # Rename dimensions as expected by method_BC_common
+    c.add(
+        k.base[0],
+        "rename_dims",
+        "in:nl-t-ya-c:transport+units",
+        name_dict={"nl": "n", "ya": "y"},
+    )
     # Relabel "R12_GLB" (added by .report.transport.aggregate()) to "World"
-    labels = {"nl": {"R12_GLB": "World"}}
+    labels = {"n": {"R12_GLB": "World"}}
     c.add(k.base[1], "relabel", k.base[0], labels=labels, sums=True)
 
     # Select the numerator; drop the 't' dimension
@@ -660,10 +678,31 @@ def method_C(c: "Computer") -> None:
     # Ratio of AIR to the total
     c.add(k.share0, "div", k.share0["num"], k.base[1] / "t")
 
-    # Rename dimensions as expected by method_BC_common
-    c.add(k.share1, "rename_dims", k.share0, name_dict={"nl": "n", "ya": "y"})
+    # Ratio of FE ex c=electr for (numerator) all modes except AIR and (denominator)
+    # all modes
+    # Common: select all except c="electr"
+    idx = dict(c=["electr"])
+    c.add(
+        k.share1[0] * ("t", "c"),
+        "select",
+        k.base[1],
+        indexers=idx,
+        inverse=True,
+        sums=True,
+    )
 
-    method_BC_common(c, k.share1)
+    # Denominator: all modes
+    idx = {"t": ["AIR"]}
+    c.add(k.share1["denom"] * "t", "select", k.share1[0] * "t", indexers=idx, sums=True)
+
+    # Numerator: all modes except "AIR"
+    idx = {"t": ["F", "P"]}
+    c.add(k.share1["num"] * "t", "select", k.share1[0] * "t", indexers=idx, sums=True)
+
+    # Ratio of numerator/denominator
+    c.add(k.share1, "div", k.share1["num"], k.share1["denom"])
+
+    method_BC_common(c, k.share0, k.share1)
 
 
 def process_df(
