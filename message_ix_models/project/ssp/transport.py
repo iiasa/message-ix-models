@@ -619,7 +619,8 @@ def method_BC_common(
     labels = dict(n={v: k for k, v in get_labels()["n"].items()})
     c.add(K.emi, "relabel", K.emi[4], labels=labels)
     # Drop data for y0
-    c.add(K.emi, "select", K.emi[3], indexers=dict(y=[2020]), inverse=True)
+    # TODO Remove this again
+    # c.add(K.emi, "select", K.emi[5], indexers=dict(y=[2020]), inverse=True)
 
     # Re-add the "t" dimension with +ve and -ve sign for certain labels
     c.add(K.fe_out[0], "mul", k.fe, broadcast_t_fe())
