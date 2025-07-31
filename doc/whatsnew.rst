@@ -15,6 +15,9 @@ Next release
   - Add missing basins_country_R12.csv data file to :mod:`.model.water.data` (:pull:`371`).
   - Convert Excel data files to CSV format and add improve test coverage for :mod:`.model.water.data` (:pull:`371`).
 
+- Improve and extend :doc:`/material/index` (:pull:`388`),
+  specifically :mod:`.material.data_steel`.
+  See :doc:`/material/v1.2.0` for details.
 - Improve :mod:`.tools.costs` for |ssp-scenariomip| (:pull:`378`).
 
   - :attr:`Config.module <.tools.costs.Config.module>` is no longer a :class:`str`
