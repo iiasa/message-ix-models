@@ -39,7 +39,7 @@ V3 = "SSP_SSP2_v6.2_SSP2_-_Low_Emissions.csv"
 
 @pytest.fixture(scope="module")
 def input_csv_path() -> "pathlib.Path":
-    return package_data_path("test", "report", V2)
+    return package_data_path("test", "report", V3)
 
 
 @pytest.fixture(scope="module")
@@ -151,8 +151,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
 def expected_variables(flag: int, method: METHOD) -> set[str]:
     """Set of expected ‘Variable’ codes according to `flag` and `method`."""
     # Shorthand
-    edb = "Energy|Demand|Bunkers"
-    edt = "Energy|Demand|Transportation"
+    edb, edt = "Energy|Demand|Bunkers", "Energy|Demand|Transportation"
 
     result = set()
 
@@ -165,7 +164,8 @@ def expected_variables(flag: int, method: METHOD) -> set[str]:
                 f"Emissions|{e}|{edb}",
                 f"Emissions|{e}|{edb}|International Aviation",
                 f"Emissions|{e}|{edt}",
-                f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
+                # NB Present up to input data format V2; not in V3
+                # f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
             }
 
     # Final Energy
