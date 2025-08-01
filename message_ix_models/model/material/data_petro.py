@@ -42,21 +42,15 @@ iea_elasticity_map = {
 }
 
 
-def read_data_petrochemicals(scenario: message_ix.Scenario) -> pd.DataFrame:
+def read_data_petrochemicals(scenario: message_ix.Scenario, fname) -> pd.DataFrame:
     """Read and clean data from :file:`petrochemicals_techno_economic.xlsx`."""
 
     # Ensure config is loaded, get the context
     s_info = ScenarioInfo(scenario)
-    fname = "petrochemicals_techno_economic.xlsx"
-
-    if "R12_CHN" in s_info.N:
-        sheet_n = "data_R12"
-    else:
-        sheet_n = "data_R11"
 
     # Read the file
-    data_petro = pd.read_excel(
-        package_data_path("material", "petrochemicals", fname), sheet_name=sheet_n
+    data_petro = pd.read_csv(
+        package_data_path("material", "petrochemicals", f"data{fname}.csv")
     )
     # Clean the data
 
@@ -326,10 +320,15 @@ def gen_data_petro_chemicals(
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
 
+    if "R12_CHN" in s_info.N:
+        fname_suffix = "_R12"
+    else:
+        fname_suffix = "_R11"
+
     # Techno-economic assumptions
-    data_petro = read_data_petrochemicals(scenario)
+    data_petro = read_data_petrochemicals(scenario, fname_suffix)
     data_petro_ts = read_timeseries(
-        scenario, "petrochemicals", None, "petrochemicals_techno_economic.xlsx"
+        scenario, "petrochemicals", None, f"timeseries{fname_suffix}.csv"
     )
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -343,7 +342,8 @@ def gen_data_petro_chemicals(
     yv_ya = s_info.yv_ya
 
     for t in config["technology"]["add"]:
-        t = t.id
+        # Retrieve the id if `t` is a Code instance; otherwise use str
+        t = getattr(t, "id", t)
         # years = s_info.Y
         params = data_petro.loc[(data_petro["technology"] == t), "parameter"].unique()
 
@@ -580,7 +580,7 @@ def gen_data_petro_chemicals(
     results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
 
     reduced_pdict = {}
-    for k,v in results.items():
+    for k, v in results.items():
         if set(["year_act", "year_vtg"]).issubset(v.columns):
             v = v[(v["year_act"] - v["year_vtg"]) <= 40]
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
