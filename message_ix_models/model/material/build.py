@@ -7,7 +7,7 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.model.build import apply_spec
 from message_ix_models.model.material.data_aluminum import gen_data_aluminum
-from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
+from message_ix_models.model.material.data_ammonia import gen_all_NH3_fert
 from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol import gen_data_methanol

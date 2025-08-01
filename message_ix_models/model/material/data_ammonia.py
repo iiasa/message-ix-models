@@ -84,13 +84,12 @@ def gen_data(
     # s_info.yv_ya
     nodes = nodes_ex_world(s_info.N)
 
-    df = pd.read_excel(
+    df = pd.read_csv(
         package_data_path(
             "material",
             "ammonia",
-            "fert_techno_economic.xlsx",
+            "data_R12.csv",
         ),
-        sheet_name="data_R12",
     )
 
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
@@ -158,10 +157,13 @@ def gen_data(
         "coal_NH3_ccs",
         "fueloil_NH3_ccs",
     ]
-    cost_conv = pd.read_excel(
-        package_data_path("material", "ammonia", "cost_conv_nh3.xlsx"),
-        sheet_name="Sheet1",
+    cost_conv = pd.read_csv(
+        package_data_path("material", "ammonia", "cost_conv_nh3.csv"),
         index_col=0,
+        dtype={
+            "year": int,
+            "convergence": float,
+        },
     )
     for p in pars:
         conv_cost_df = pd.DataFrame()
@@ -184,7 +186,7 @@ def gen_data(
 
     # HACK: quick fix to enable compatibility with water build
     maybe_remove_water_tec(scenario, par_dict)
-    #add 2020 and 2025 CCS bounds
+    # add 2020 and 2025 CCS bounds
     par_dict = combine_df_dictionaries(par_dict, gen_ccs_bounds(s_info))
 
     return par_dict
@@ -199,13 +201,12 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
     if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
 
-    df = pd.read_excel(
+    df = pd.read_csv(
         package_data_path(
             "material",
             "ammonia",
-            "fert_techno_economic.xlsx",
+            "relations_R12.csv",
         ),
-        sheet_name="relations_R12",
     )
     df.groupby("parameter")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
@@ -278,13 +279,12 @@ def gen_data_ts(
     if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
 
-    df = pd.read_excel(
+    df = pd.read_csv(
         package_data_path(
             "material",
             "ammonia",
-            "fert_techno_economic.xlsx",
+            "timeseries_R12.csv",
         ),
-        sheet_name="timeseries_R12",
     )
     df["year_act"] = df["year_act"].astype("Int64")
     df["year_vtg"] = df["year_vtg"].astype("Int64")
@@ -336,33 +336,31 @@ def read_demand() -> dict[str, pd.DataFrame]:
     :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
     # Demand scenario [Mt N/year] from GLOBIOM
 
-    N_demand_GLO = pd.read_excel(
+    N_demand_GLO = pd.read_csv(
         package_data_path(
             "material",
             "ammonia",
-            "nh3_fertilizer_demand.xlsx",
+            "NFertilizer_demand.csv",
         ),
-        sheet_name="NFertilizer_demand",
     )
+    N_demand_GLO.columns = [int(i) if i.isdigit() else i for i in N_demand_GLO.columns]
 
     # NH3 feedstock share by region in 2010 (from http://ietd.iipnetwork.org/content/ammonia#benchmarks)
-    feedshare_GLO = pd.read_excel(
+    feedshare_GLO = pd.read_csv(
         package_data_path(
             "material",
             "ammonia",
-            "nh3_fertilizer_demand.xlsx",
+            "NH3_feedstock_share.csv",
         ),
-        sheet_name="NH3_feedstock_share",
         skiprows=14,
     )
 
     # Read parameters in xlsx
-    te_params = pd.read_excel(
-        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
-        sheet_name="old_TE_sheet",
-        engine="openpyxl",
+    te_params = pd.read_csv(
+        package_data_path("material", "ammonia", "old_TE_sheet.csv"),
         nrows=72,
     )
+    te_params.columns = [int(i) if i.isdigit() else i for i in te_params.columns]
 
     n_inputs_per_tech = 12  # Number of input params per technology
 
@@ -401,14 +399,13 @@ def read_demand() -> dict[str, pd.DataFrame]:
     # N_trade_R12 = pd.read_csv(
     #    package_data_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
     # )
-    N_trade_R12 = pd.read_excel(
+    N_trade_R12 = pd.read_csv(
         package_data_path(
             "material",
             "ammonia",
-            "nh3_fertilizer_demand.xlsx",
+            "NFertilizer_trade.csv",
         ),
-        sheet_name="NFertilizer_trade",
-    )  # , index_col=0)
+    )
 
     N_trade_R12.region = "R12_" + N_trade_R12.region
     N_trade_R12.quantity = N_trade_R12.quantity
@@ -432,13 +429,12 @@ def read_demand() -> dict[str, pd.DataFrame]:
     #        "material", "ammonia", "NH3_trade_BACI_R12_aggregation.csv"
     #    )
     # )  # , index_col=0)
-    NH3_trade_R12 = pd.read_excel(
+    NH3_trade_R12 = pd.read_csv(
         package_data_path(
             "material",
             "ammonia",
-            "nh3_fertilizer_demand.xlsx",
+            "NH3_trade_R12_aggregated.csv",
         ),
-        sheet_name="NH3_trade_R12_aggregated",
     )
 
     NH3_trade_R12.region = "R12_" + NH3_trade_R12.region
@@ -517,9 +513,8 @@ def read_demand() -> dict[str, pd.DataFrame]:
 def gen_demand() -> dict[str, pd.DataFrame]:
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
-    demand_fs_org = pd.read_excel(
-        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
-        sheet_name="demand_i_feed_R12",
+    demand_fs_org = pd.read_csv(
+        package_data_path("material", "ammonia", "demand_i_feed_R12.csv"),
     )
 
     df = demand_fs_org.loc[demand_fs_org.year == 2010, :].join(
