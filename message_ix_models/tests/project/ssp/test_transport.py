@@ -14,6 +14,7 @@ from message_ix_models.project.ssp.transport import (
     get_scenario_code,
     process_df,
     process_file,
+    v_to_emi_coords,
     v_to_fe_coords,
 )
 from message_ix_models.testing import MARK
@@ -144,7 +145,7 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     if len(cond):
         msg = "Negative emissions totals after processing"
         print(f"\n{msg}:", cond.to_string(), sep="\n")
-        assert iea_eweb_test_data, msg  # Negative values → fail if NOT using test data
+        assert iea_eweb_test_data, msg  # Negative values → fail if NOT using test data
 
 
 @cache
@@ -300,6 +301,31 @@ def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
 
     # Output satisfies expectations
     check(df_in, df_out, method)
+
+
+@pytest.mark.parametrize(
+    "value, exp",
+    (
+        ("Emissions|CH4", {"e": "CH4", "s": "_T", "t": "_T"}),
+        ("Emissions|CH4|Energy", {"e": "CH4", "s": "Energy", "t": "_T"}),
+        ("Emissions|CH4|Energy|Demand", {"e": "CH4", "s": "Energy|Demand", "t": "_T"}),
+        ("Emissions|CH4|Combustion", {"e": "CH4", "s": "Combustion", "t": "_T"}),
+        (
+            "Emissions|CH4|Fossil Fuels and Industry",
+            {"e": "CH4", "s": "Fossil Fuels and Industry", "t": "_T"},
+        ),
+        (
+            "Emissions|CH4|Energy|Demand|Bunkers",
+            {"e": "CH4", "s": "Energy|Demand", "t": "Bunkers"},
+        ),
+        (
+            "Emissions|CH4|Energy|Demand|Transportation|Foo",
+            {"e": "CH4", "s": "Energy|Demand", "t": "Transportation|Foo"},
+        ),
+    ),
+)
+def test_v_to_emi_coords(value: str, exp) -> None:
+    assert exp == v_to_emi_coords(value)
 
 
 @pytest.mark.parametrize(
