@@ -5,6 +5,7 @@ import re
 from collections.abc import Hashable
 from enum import Enum, auto
 from functools import cache
+from itertools import product
 from typing import TYPE_CHECKING, Literal, Optional
 
 import genno
@@ -29,10 +30,23 @@ log = logging.getLogger(__name__)
 #: Dimensions of several quantities.
 DIMS = "e n t y UNIT".split()
 
-#: Expression used to select and extract :math:`(e, t)` dimension coordinates from
+#: Expression used to select and extract :math:`(e, s, t)` dimension coordinates from
 #: variable codes in :func:`v_to_emi_coords`.
 EXPR_EMI = re.compile(
-    r"^Emissions\|(?P<e>[^\|]+)\|Energy\|Demand\|(?P<t>(Bunkers|Transportation).*)$"
+    r"""
+    ^Emissions
+      \|(?P<e>[^\|]+)
+      (\|
+        (?P<s>
+          Energy(\|(Combustion|Demand))?
+          | Fossil.Fuels.and.Industry
+        )
+        (\|
+          (?P<t>(Bunkers|Transportation).*)
+        )?
+      )?
+    $""",
+    flags=re.VERBOSE,
 )
 
 #: Expression used to select and extract :math:`(c)` dimension coordinates from variable
@@ -54,7 +68,7 @@ L = "AIR emi"
 
 #: Fixed keys prepared by :func:`.get_computer` and other functions:
 #:
-#: - :py:`.bcast`: the output of :func:`.broadcast_t`.
+#: - :py:`.bcast`: the output of :func:`.broadcast_st_emi`.
 #: - :py:`.input`: input data from file or calling code, converted to Quantity.
 #: - :py:`.emi`: computed aviation emissions.
 #: - :py:`.emi_in`: input data for aviation and other transport emissions, to be
@@ -62,12 +76,14 @@ L = "AIR emi"
 #: - :py:`.fe`: computed final energy data.
 #: - :py:`.fe_in`: input data for transport final energy, to be adjusted or overwritten.
 K = Keys(
-    bcast=f"broadcast:t:{L}",
+    bcast=f"broadcast:s-t:{L}",
+    bcast_other=f"broadcast:e-s-t:{L}+other",
     input=f"input:n-y-VARIABLE-UNIT:{L}",
-    emi=f"emission:e-n-t-y-UNIT:{L}",
-    emi_in=f"emission:e-n-t-y-UNIT:{L}+in",
+    emi=f"emission:e-n-s-t-y-UNIT:{L}",
+    emi_in=f"emission:e-n-s-t-y-UNIT:{L}+in",
     fe_in=f"fe:c-n-t-y:{L}+in",
     fe_out=f"fe:c-n-t-y:{L}+out",
+    units=f"units:e-UNIT:{L}",
 )
 
 
@@ -106,10 +122,10 @@ def aviation_emi_share(ref: "TQuantity") -> "TQuantity":
     )
 
 
-def broadcast_t_emi(
+def broadcast_st_emi(
     version: Literal[1, 2], include_international: bool
 ) -> "AnyQuantity":
-    """Quantity to re-add the |t| dimension for emission data.
+    """Quantity to re-add the :math:`(s, t)` dimensions for emission data.
 
     Parameters
     ----------
@@ -122,9 +138,9 @@ def broadcast_t_emi(
     Return
     ------
     genno.Quantity
-        with dimension "t".
+        with dimensions :math:`(s, t)`.
 
-        If :py:`version=1`, the values include:
+        If :py:`version=1`, the :math:`t`: values include:
 
         - +1.0 for t="Transportation|Aviation", a label with missing data.
         - -1.0 for t="Transportation|Road Rail and Domestic Shipping", a label with
@@ -156,7 +172,35 @@ def broadcast_t_emi(
         ]
         idx = slice(-2 if version == 3 else None)
 
-    return genno.Quantity(value[idx], coords={"t": t[idx]})
+    return genno.Quantity(value[idx], coords={"t": t[idx]}).expand_dims(
+        {"s": ["Energy|Demand"]}
+    )
+
+
+def broadcast_est_emi_other(q_ref: "TQuantity") -> "TQuantity":
+    """Quantity to broadcast values for other :math:`(e, s, t)`.
+
+    - s = "Energy|Combustion" is included only for e in ("CH4", "CO2", "N2O"), because
+      these are the only species in the input data with existing values.
+    """
+    e, e_combustion = sorted(q_ref.coords["e"].data), ("CH4", "CO2", "N2O")
+    s = [
+        "_T",
+        "Energy",
+        "Energy|Combustion",
+        "Energy|Demand",
+        "Fossil Fuels and Industry",
+    ]
+    dims = ["e", "s"]
+    df = (
+        pd.DataFrame([list(e_s) for e_s in product(e, s)], columns=dims)
+        .assign(value=1.0)
+        .query("not (s == 'Energy|Combustion' and e not in @e_combustion)")
+        .set_index(dims)["value"]
+    )
+    del e_combustion
+
+    return type(q_ref)(df, units="").expand_dims({"t": ["_T"]})
 
 
 def broadcast_t_fe() -> "AnyQuantity":
@@ -250,9 +294,11 @@ def finalize(
         .to_frame()
         .reset_index()
         .assign(
-            Variable=lambda df: "Emissions|" + df["e"] + "|Energy|Demand|" + df["t"]
+            Variable=lambda df: (
+                "Emissions|" + df["e"] + "|" + df["s"] + "|" + df["t"]
+            ).str.replace(r"(\|_T)+$", "", regex=True)
         )
-        .drop(["e", "t"], axis=1)
+        .drop(["e", "s", "t"], axis=1)
         .set_index(s_all.index.names)[0]
         .rename("value")
     )
@@ -367,7 +413,9 @@ def get_computer(
     log.info(f"method 'C' will use data from {url}")
 
     # Common structure and utility quantities used by method_[ABC]
-    c.add(K.bcast, broadcast_t_emi, version=3, include_international=method == "A")
+    c.add(K.bcast, broadcast_st_emi, version=3, include_international=method == "A")
+    c.add(K.units, e_UNIT, "e::codelist")
+    c.add(K.bcast_other, broadcast_est_emi_other, K.units)
 
     # Placeholder for data-loading task. This is filled in later by process_df() or
     # process_file().
@@ -570,9 +618,8 @@ def method_BC_common(
     # Shorthand for keys and sequences of keys
     k = Keys(
         ei=exo.emi_intensity,  # Dimensions (c, e, t)
-        emi0=Key("emission", ("ceny"), L),
-        fe=Key("fe", tuple("cny"), f"{L}+BC"),
-        units=Key(f"units:e-UNIT:{L}"),
+        emi0=f"emission:c-e-n-y:{L}",
+        fe=f"fe:c-n-y:{L}+BC",
     )
 
     ### Compute estimate of emissions
@@ -588,7 +635,7 @@ def method_BC_common(
 
     to_mul = [k.fe, k.ei["units"]]
 
-    if False:  # See https://github.com/iiasa/message-ix-models/issues/387
+    if False:  # Disabled; see https://github.com/iiasa/message-ix-models/issues/387
         to_mul.append(track_GAINS(c))
 
     # - (FE of aviation) × (emission intensity) × (adjustment) → emissions of aviation
@@ -596,38 +643,45 @@ def method_BC_common(
     c.add(k.emi0[0], "mul", *to_mul, sums=True)
 
     # Convert units to megatonne per year
-    c.add(k.emi0[1], "convert_units", k.emi0[0], units="Mt / year")
+    c.add(k.emi0[1], "convert_units", k.emi0[0], units="Mt / year", sums=True)
 
     # - Add "UNIT" dimension and adjust magnitudes for species where units must be kt.
     #   See e_UNIT().
-    # - Re-add the "t" dimension with +ve and -ve sign certain labels
     # - Drop/partial sum over dimension "c".
-    c.add(k.units, e_UNIT, "e::codelist")
-    c.add(K.emi[2], "mul", k.emi0[1], k.units, K.bcast)
+    c.add(K.emi[2], "mul", k.emi0[1] / "c", K.units)
+    # Re-add the (s, t) dimensions with +ve and -ve signs for certain labels
+    c.add(K.emi[3], "mul", K.emi[2], K.bcast)
+    to_concat = [K.emi[3]]
 
-    if k_emi_share is not None:
-        # Adjust total transportation emissions: multiply k_fe_share by input data
-        c.add(K.emi_in["all"], "select", K.emi_in, indexers={"t": ["Transportation"]})
-        c.add(K.emi[3], "mul", K.emi_in["all"], k_fe_share, -1.0)
-        c.add(K.emi[4], "concat", K.emi[2], K.emi[3])
-    else:
-        c.add(K.emi[4], K.emi[2])
+    if k_emi_share is None:
+        raise NotImplementedError("Must supply k_emi_share")
 
-    c.add("debug", K.emi[4])
+    ### Adjust total transportation emissions: multiply k_fe_share by input data
+    c.add(K.emi_in["all"], "select", K.emi_in, indexers={"t": ["Transportation"]})
+    c.add(K.emi[4], "mul", K.emi_in["all"], k_fe_share, -1.0)
+    to_concat.append(K.emi[4])
+
+    ### Adjust totals beyond transportation
+    c.add(K.emi[5], "add", K.emi[2], K.emi[4] / ("s", "t"))
+    c.add(K.emi[6], "select", K.emi[5], indexers={"n": ["World"]})
+    c.add(K.emi[7], "mul", K.emi[6], K.bcast_other)
+    to_concat.append(K.emi[7])
+
+    # Concatenate emissions values to be modified
+    c.add(K.emi[8], "concat", *to_concat)
 
     # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
     labels = dict(n={v: k for k, v in get_labels()["n"].items()})
-    c.add(K.emi, "relabel", K.emi[4], labels=labels)
-    # Drop data for y0
-    # TODO Remove this again
-    # c.add(K.emi, "select", K.emi[5], indexers=dict(y=[2020]), inverse=True)
+    c.add(K.emi, "relabel", K.emi[8], labels=labels)
 
     # Re-add the "t" dimension with +ve and -ve sign for certain labels
     c.add(K.fe_out[0], "mul", k.fe, broadcast_t_fe())
     c.add(K.fe_out[1], "drop_vars", K.fe_out[0] * "c_new", names="c")
     c.add(K.fe_out[2], "rename_dims", K.fe_out[1], name_dict={"c_new": "c"})
+
     # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
     c.add(K.fe_out[3], "relabel", K.fe_out[2], labels=labels)
+
     # Drop data for y0
     c.add(K.fe_out, "select", K.fe_out[3], indexers=dict(y=[2020]), inverse=True)
 
@@ -824,6 +878,9 @@ def v_to_emi_coords(value: Hashable) -> Optional[dict[str, str]]:
     For use with :func:`.select_expand`.
     """
     if match := EXPR_EMI.fullmatch(str(value)):
-        return match.groupdict()
+        result = match.groupdict()
+        result["s"] = result["s"] or "_T"
+        result["t"] = result["t"] or "_T"
+        return result
     else:
         return None
