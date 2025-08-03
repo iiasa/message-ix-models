@@ -19,11 +19,19 @@ from message_ix_models.model.material.report.run_reporting import ( # type: igno
 )
 from message_data.tools.post_processing import iamc_report_hackathon as legacy_report # type: ignore
 
+# Clarify the scenario information
+start_model= "SSP_SSP2_v6.1"
+start_scen = "baseline_DEFAULT"
+target_model = "MixG_GEIDCO5_SSP2_v6.1"
+target_scen = "Base_RCP7_int_noIBWT" 
+
+base_scen = message_ix.Scenario(mp, start_model, start_scen)
+
 # Generate bare sheets for pipe technologies and pipe supply technologies
-# inter_pipe_bare()
+inter_pipe_bare(base_scen)
 
 # Building inter pipes on the scenario (scenario info set in Config)
-scen = inter_pipe_build(config_name="config.yaml") # backup of /data/inter_pipe stored at IIASA sharepoint
+scen = inter_pipe_build(base_scen, target_model, target_scen, config_name="config.yaml") # backup of /data/inter_pipe stored at IIASA sharepoint
 
 # Add additional constraints on total capacity
 bound_total_capacity_up = pd.read_csv(
