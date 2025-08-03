@@ -2,16 +2,16 @@
 # Fill in the config to generate bare sheets to collect inter pipe data
 
 # Put the scenario information here. 
-scenario:
-  start_model: 
-    - SSP_SSP2_v6.1
-  # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
-  start_scen:
-    - baseline_DEFAULT
-  target_model:
-    - MixG_GEIDCO5_SSP2_v6.1
-  target_scen:
-    - Base_RCP7_int_noIBWT # then EN1000f_RCP26_int_noIBWT for mitigation scenario
+# scenario:
+#   start_model: 
+#     - SSP_SSP2_v6.1
+#   # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
+#   start_scen:
+#     - baseline_DEFAULT
+#   target_model:
+#     - MixG_GEIDCO5_SSP2_v6.1
+#   target_scen:
+#     - Base_RCP7_int_noIBWT # then EN1000f_RCP26_int_noIBWT for mitigation scenario
 
 # How many nodes are there?
 # nodes:
