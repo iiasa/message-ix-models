@@ -130,12 +130,16 @@ def broadcast_yl(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
 
 # Main function to generate bare sheets
 def inter_pipe_bare(
+    base_scen,
+    # target_model: str,
+    # target_scen: str,
     config_name: str = None,
     ):
     """
     Generate bare sheets to collect (minimum) parameters for pipe technologies and pipe supply technologies.
 
     Args:
+        base_scen: The base scenario object to work with
         config_name (str, optional): Name of the config file.
             If None, uses default config from data/inter_pipe/config.yaml
     """
@@ -180,18 +184,9 @@ def inter_pipe_bare(
         pipe_supplytech_config.get("level_suffix_supply", []),
     )
 
-    # Load the scenario
-    start_model = str(config.get("scenario", {}).get("start_model", [])[0])
-    start_scen = str(config.get("scenario", {}).get("start_scen", [])[0])
-    if not start_model or not start_scen:
-        error_msg = (
-            "Config must contain 'scenario.start_model' and 'scenario.start_scen'\n"
-            f"Please check the config file at: {full_path}"
-        )
-        log.error(error_msg)
-        raise ValueError(error_msg)
-    base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
-    log.info(f"Loaded scenario: {start_model}/{start_scen}")
+    # Use the provided base scenario instead of loading from config
+    base = base_scen
+    log.info(f"Using provided base scenario.")
 
     # Generate export pipe technology: name techs and levels
     set_tech = []
@@ -630,11 +625,19 @@ def inter_pipe_bare(
     # return csv_files
 
 
-def inter_pipe_build(config_name: str = None):
+def inter_pipe_build(
+    base_scen,
+    target_model: str,
+    target_scen: str,
+    config_name: str = None,
+):
     """
     Read the input csv files and build the pipe tech sets and parameters.
 
     Args:
+        base_scen: The base scenario object to work with
+        target_model (str): Name of the target model
+        target_scen (str): Name of the target scenario
         config_name (str, optional): Name of the config file.
             If None, uses default config from data/inter_pipe/config.yaml
     """
@@ -651,8 +654,8 @@ def inter_pipe_build(config_name: str = None):
 
     # Load the config
     if config_name is None:
-        config_name = "inter_pipe"
-    full_path = package_data_path("inter_pipe", "config.yaml")
+        config_name = "config.yaml"
+    full_path = package_data_path("inter_pipe", config_name)
     config = load_config(full_path)
     log.info(f"Loading config from: {full_path}")
 
@@ -731,25 +734,14 @@ def inter_pipe_build(config_name: str = None):
         else:
             pass
 
-    # Load the scenario
-    start_model = str(config.get("scenario", {}).get("start_model", [])[0])
-    start_scen = str(config.get("scenario", {}).get("start_scen", [])[0])
-    if not start_model or not start_scen:
-        error_msg = (
-            "Config must contain 'scenario.start_model' and 'scenario.start_scen'\n"
-            f"Please check the config file at: {full_path}"
-        )
-        log.error(error_msg)
-        raise ValueError(error_msg)
-    base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
-    log.info(f"Loaded scenario: {start_model}/{start_scen}")
+    # Use the provided base scenario
+    base = base_scen
+    log.info(f"Using provided base scenario.")
 
-    # Clone scenario
-    target_model = str(config.get("scenario", {}).get("target_model", [])[0])
-    target_scen = str(config.get("scenario", {}).get("target_scen", [])[0])
+    # Clone scenario using provided target model and scenario names
     scen = base.clone(target_model, target_scen, keep_solution=False)
     scen.set_as_default()
-    log.info("Scenario cloned.")
+    log.info(f"Scenario cloned to: {target_model}/{target_scen}")
 
     # Add set and parameter
     with scen.transact("Added"):
