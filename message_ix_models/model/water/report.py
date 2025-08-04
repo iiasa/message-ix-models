@@ -759,7 +759,6 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 "Water Withdrawal",
                 region_withdr
                 + rural_mwdem_unconnected
-                rural_mwdem_unconnected
                 + rural_mwdem_unconnected_eff
                 + rural_mwdem_connected
                 + rural_mwdem_connected_eff
@@ -1264,7 +1263,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         "PRICE_COMMODITY", {"commodity": ["urban_mw", "rural_mw", "freshwater"]}
     )
     wp["value"] = wp["lvl"]
-    wp["unit"] = "US$2010/m3"
+    wp["unit"] = "US$2010/m3" #MillionUSD/MCM = USD/m^3
     wp = wp.rename(columns={"node": "region"})
     # get withdrawals for weighted mean
     ww = prepare_ww(ww_input=report_iam.as_pandas(), suban=suban)
