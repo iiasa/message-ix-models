@@ -246,8 +246,6 @@ def generate_bare_sheets(
     target_model = scenario_info['target_model']
     target_scen = scenario_info['target_scen']
     
-    log.info(f"Loaded scenario: {start_model}/{start_scen}")
-    
     # Generate folder for each trade technology
     for tec in covered_tec:
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
@@ -358,7 +356,11 @@ def generate_bare_sheets(
         df = pd.concat([input_trade, input_imports]).drop_duplicates()
         
         df.to_csv(os.path.join(data_path, tec, "edit_files", "input.csv"), index=False)
-        log.info(f"Input pipe exp csv generated at: {os.path.join(data_path, tec)}.")
+        log.info(f"Input csv generated at: {os.path.join(data_path, tec)}.")
+        
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "input.csv")):
+            df.to_csv(os.path.join(data_path, tec, "bare_files", "input.csv"), index=False)
+            log.info("Input csv also generated in bare_files with default values.")
 
     # Create base file: output
     for tec in covered_tec:  
@@ -399,6 +401,10 @@ def generate_bare_sheets(
         df.to_csv(os.path.join(data_path, tec, "edit_files", "output.csv"), index=False)
         log.info(f"Output csv generated at: {os.path.join(data_path, tec)}.")
         
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "output.csv")):
+            df.to_csv(os.path.join(data_path, tec, "bare_files", "output.csv"), index=False)
+            log.info("Output csv also generated in bare_files with default values.")
+            
     # Create base file: technical_lifetime
     for tec in covered_tec: # TODO: Check on why import technologies do not have technical lifetimes in base
         outdf =  build_parameterdf(network_df = network_setup[tec], 
@@ -408,6 +414,11 @@ def generate_bare_sheets(
         outdf.to_csv(os.path.join(data_path, tec, "edit_files", "technical_lifetime.csv"), index=False)
         log.info(f"Technical Lifetime csv generated at: {os.path.join(data_path, tec)}.")
 
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "technical_lifetime.csv")):
+            outdf['value'] = 20 # Set technical lifetime to 20y by default
+            outdf.to_csv(os.path.join(data_path, tec, "bare_files", "technical_lifetime.csv"), index=False)
+            log.info("Technical lifetime csv also generated in bare_files with default values.")
+            
     # Create base file: inv_cost
     for tec in covered_tec: #TODO: Imports do not have investment costs in global pool setup
         outdf =  build_parameterdf(network_df = network_setup[tec], 
@@ -465,6 +476,10 @@ def generate_bare_sheets(
         outdf.to_csv(os.path.join(data_path, tec, "edit_files", "capacity_factor.csv"), index=False) # Does not require edit
         log.info(f"Capacity factor csv generated at: {os.path.join(data_path, tec)}.")
     
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "capacity_factor.csv")):
+            outdf.to_csv(os.path.join(data_path, tec, "bare_files", "capacity_factor.csv"), index=False)
+            log.info("Capacity factor csv also generated in bare_files with default values.")
+            
     # Create base file: initial activity
     for t in ['lo', 'up']:
         for tec in covered_tec: 
@@ -693,7 +708,12 @@ def generate_bare_sheets(
                 
         input_df.to_csv(os.path.join(data_path, tec, "edit_files", "flow_technology", "input.csv"), index=False)
         log.info(f"Input flow csv generated at: {os.path.join(data_path, tec)}.")
-
+        
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", "input.csv")):
+            input_df['value'] = np.where(input_df['value'].isnull(), 1, input_df['value'])
+            input_df.to_csv(os.path.join(data_path, tec, "bare_files", "flow_technology", "input.csv"), index=False)
+            log.info("Input csv also generated in bare_files with default values.")
+            
     # Create base file: output
         output_df = input_df.copy()
         output_df['commodity'] = np.where(output_df['technology'].str.contains(full_flow_tec),
@@ -715,6 +735,11 @@ def generate_bare_sheets(
         output_df.to_csv(os.path.join(data_path, tec, "edit_files", "flow_technology", "output.csv"), index=False)
         log.info(f"Output csv generated at: {os.path.join(data_path, tec)}.")
     
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", "output.csv")):
+            output_df['value'] = np.where(output_df['value'].isnull(), 1, output_df['value'])
+            output_df.to_csv(os.path.join(data_path, tec, "bare_files", "flow_technology", "output.csv"), index=False)
+            log.info("Output csv also generated in bare_files with default values.")
+            
     # Create base file: cost for flow technology
         for cost in ['fix', 'var', 'inv']:
             costdf =  build_parameterdf(network_df = network_setup[tec], 
@@ -762,6 +787,10 @@ def generate_bare_sheets(
         cfdf.to_csv(os.path.join(data_path, tec, "edit_files", "flow_technology", "capacity_factor.csv"), index=False) # Does not require edit
         log.info(f"Capacity factor csv generated at: {os.path.join(data_path, tec)}.")
         
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", "capacity_factor.csv")):
+            cfdf.to_csv(os.path.join(data_path, tec, "bare_files", "flow_technology", "capacity_factor.csv"), index=False)
+            log.info("Capacity factor csv also generated in bare_files with default values.")
+            
     # Create base file: technical lifetime for flow technolgoy
         tecdf =  build_parameterdf(network_df = network_setup[tec], 
                                    columndict = {'year_vtg': 'broadcast',
@@ -788,6 +817,10 @@ def generate_bare_sheets(
         tecdf.to_csv(os.path.join(data_path, tec, "edit_files", "flow_technology", "technical_lifetime.csv"), index=False)
         log.info(f"Technical Lifetime csv generated at: {os.path.join(data_path, tec)}.")
       
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", "technical_lifetime.csv")):
+            tecdf.to_csv(os.path.join(data_path, tec, "bare_files", "flow_technology", "technical_lifetime.csv"), index=False)
+            log.info("Technical lifetime csv also generated in bare_files with default values.")
+            
     # Create relation to link exports to the flow technology       
         df = network_setup[tec][['exporter', 'importer', 'export_technology']]
         df = df.rename(columns = {'exporter': 'node_loc',
@@ -838,8 +871,12 @@ def generate_bare_sheets(
         outdf = pd.concat([trade_df, flow_df]).drop_duplicates()
         
         outdf.to_csv(os.path.join(data_path, tec, "edit_files", "flow_technology", "relation_activity_flow.csv"), index=False)
-        
         log.info(f"Relation activity (flow) csv generated at: {os.path.join(data_path, tec)}.")
+        
+        if not os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", "relation_activity_flow.csv")):
+            outdf.to_csv(os.path.join(data_path, tec, "bare_files", "flow_technology", "relation_activity_flow.csv"), index=False)
+            log.info("Relation activity (flow) csv also generated in bare_files with default values.")
+            
 #%% Build out bare sheets
 def build_parameter_sheets(log, 
                            project_name: str = None,

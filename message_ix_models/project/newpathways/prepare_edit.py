@@ -33,7 +33,10 @@ mp = ixmp.Platform()
 log = get_logger(__name__)
 
 # Generate bare sheets
-generate_bare_sheets(log=log, message_regions = message_regions)
+generate_bare_sheets(log=log, 
+                     project_name = 'newpathways', 
+                     config_name = 'config.yaml',
+                     message_regions = message_regions)
 
 # Import calibration files from Global Energy Monitor
 import_gem(input_file = gas_pipeline_file, 
