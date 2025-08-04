@@ -168,7 +168,7 @@ def import_gem(input_file: str,
                                  relation['value'])
     relation['node_rel'] = relation['node_loc']
     relation['unit'] = 'km'
-    relation = relation[['node_loc', 'technology', 'node_rel', 'relation', 'year_rel', 'year_act', 'mode', 'commodity', 'value', 'unit']]
+    relation = relation[['node_loc', 'technology', 'node_rel', 'relation', 'year_rel', 'year_act', 'mode', 'value', 'unit']]
 
     relation.to_csv(os.path.join(export_dir, "relation_GEM.csv"), index = False)
     relation.to_csv(os.path.join(base_dir, "relation_activity_flow.csv"), index = False)
