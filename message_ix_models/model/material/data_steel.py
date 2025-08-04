@@ -1118,7 +1118,7 @@ def gen_grow_cap_up(s_info: ScenarioInfo, ssp):
     return {"growth_new_capacity_up": df}
 
 
-def gen_bof_pig_input(s_info: ScenarioInfo):
+def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
     """Generate BOF feed input coefficients.
 
     Assume 20% scrap share for regions (except CHN and EEU until 2030).
@@ -1138,86 +1138,44 @@ def gen_bof_pig_input(s_info: ScenarioInfo):
         i for i in nodes_ex_world(s_info.N) if i not in special_regions + ["R12_CHN"]
     ]
     years = [i for i in range(1970, 2060, 5)] + [i for i in range(2060, 2115, 10)]
-    dimensions = {
-        "technology": "bof_steel",
-        "mode": ["M1", "M2"],
-        "commodity": "pig_iron",
-        "level": "tertiary_material",
-        "time": "year",
-        "time_origin": "year",
-        "unit": "???",
+
+    common = dict(
+        mode=["M1", "M2"],
+        technology="bof_steel",
+        time="year",
+        time_origin="year",
+        unit="???",
+    )
+    pig = common | dict(commodity="pig_iron", level="tertiary_material")
+    scrap = common | dict(commodity="steel", level="new_scrap")
+    conversion_eff = dict(pig=0.95, scrap=0.99)
+
+    # Accumulate data frames with distinct node_loc, year_act, and values
+    dfs = []
+    for node_loc, year_act, x in (
+        (other_regions, years, 0.8),
+        (["R12_CHN"], [2020, 2025], 0.83),
+        (special_regions, [2020, 2025], 0.79),
+        (special_regions + ["R12_CHN"], [i for i in years if i > 2025], 0.8),
+    ):
+        dfs.append(
+            pd.concat(
+                [
+                    make_df("input", value=x / conversion_eff["pig"], **pig),
+                    make_df("input", value=(1 - x) / conversion_eff["scrap"], **scrap),
+                ]
+            ).pipe(broadcast, node_loc=node_loc, year_act=year_act)
+        )
+
+    # - Concatenate all data.
+    # - Broadcast over all year_vtg, then filter excess (yV, yA) combinations.
+    # - Fill node_origin from node_loc.
+    return {
+        "input": pd.concat(dfs)
+        .pipe(broadcast, year_vtg=years)
+        .query("year_act - year_vtg <= 30")
+        .pipe(same_node)
     }
-    pig_bof_conversion_eff = 0.95
-    df_other = (
-        make_df("input", value=0.8 / pig_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=other_regions)
-        .pipe(same_node)
-        .pipe(broadcast, year_act=years)
-        .pipe(broadcast, year_vtg=years)
-    )
-    df_chn = (
-        make_df("input", value=0.83 / pig_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=["R12_CHN"])
-        .pipe(same_node)
-        .pipe(broadcast, year_act=[2020, 2025])
-        .pipe(broadcast, year_vtg=years)
-    )
-    df_eeu = (
-        make_df("input", value=0.79 / pig_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=special_regions)
-        .pipe(same_node)
-        .pipe(broadcast, year_act=[2020, 2025])
-        .pipe(broadcast, year_vtg=years)
-    )
-    df3 = (
-        make_df("input", value=0.8 / pig_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=special_regions + ["R12_CHN"])
-        .pipe(same_node)
-        .pipe(broadcast, year_act=[i for i in years if i > 2025])
-        .pipe(broadcast, year_vtg=years)
-    )
-    df = pd.concat([df_other, df_chn, df_eeu, df3])
-    dimensions = {
-        "technology": "bof_steel",
-        "mode": ["M1", "M2"],
-        "commodity": "steel",
-        "level": "new_scrap",
-        "time": "year",
-        "time_origin": "year",
-        "unit": "???",
-    }
-    scrap_bof_conversion_eff = 0.99
-    df_other = (
-        make_df("input", value=(1 - 0.8) / scrap_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=other_regions)
-        .pipe(same_node)
-        .pipe(broadcast, year_act=years)
-        .pipe(broadcast, year_vtg=years)
-    )
-    df_chn = (
-        make_df("input", value=(1 - 0.83) / scrap_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=["R12_CHN"])
-        .pipe(same_node)
-        .pipe(broadcast, year_act=[2020, 2025])
-        .pipe(broadcast, year_vtg=years)
-    )
-    df_eeu = (
-        make_df("input", value=(1 - 0.79) / scrap_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=special_regions)
-        .pipe(same_node)
-        .pipe(broadcast, year_act=[2020, 2025])
-        .pipe(broadcast, year_vtg=years)
-    )
-    df3 = (
-        make_df("input", value=(1 - 0.8) / scrap_bof_conversion_eff, **dimensions)
-        .pipe(broadcast, node_loc=special_regions + ["R12_CHN"])
-        .pipe(same_node)
-        .pipe(broadcast, year_act=[i for i in years if i > 2025])
-        .pipe(broadcast, year_vtg=years)
-    )
-    df_all = pd.concat([df, df_other, df_chn, df_eeu, df3])
-    df_all = df_all[df_all["year_act"] - df_all["year_vtg"] <= 30]
-    return {"input": df_all}
 
 
 def scale_fse_demand(demand: pd.DataFrame, new_scrap_ratio: dict[str, float]):
