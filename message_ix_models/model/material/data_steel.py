@@ -1,13 +1,12 @@
-"""
-Data and parameter generation for the steel sector in MESSAGEix models.
+"""Data and parameter generation for the steel sector in MESSAGEix models.
 
-This module provides functions to read, process, and generate parameter data
-for steel technologies, demand, recycling, CCS, trade and related constraints.
+This module provides functions to read, process, and generate parameter data for steel
+technologies, demand, recycling, CCS, trade and related constraints.
 """
 
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import message_ix
 import pandas as pd
@@ -36,6 +35,9 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
+
+if TYPE_CHECKING:
+    from message_ix_models.types import ParameterData
 
 
 def gen_mock_demand_steel(scenario: message_ix.Scenario) -> pd.DataFrame:
@@ -943,7 +945,7 @@ def gen_2020_calibration_relation(
     return {"relation_activity": df, "relation_upper": rel_up, "relation_lower": rel_up}
 
 
-def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str):
+def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate variable cost parameter for steel scrap preparation technologies.
 
     Parameters
@@ -958,8 +960,11 @@ def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str):
     dict
         Dictionary with 'var_cost' parameter DataFrame.
     """
+    # TODO Retrieve these from `s_info` instead of hard-coding
     years1 = [i for i in range(2020, 2065, 5)]
     years2 = [i for i in range(2070, 2115, 10)]
+    years = years1 + years2
+
     ref_tec_ssp = {
         "LED": "prep_secondary_steel_1",
         "SSP1": "prep_secondary_steel_1",
@@ -971,12 +976,9 @@ def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str):
         "prep_secondary_steel_2": 100,
         "prep_secondary_steel_3": 130,
     }
-    common = {
-        "mode": "M1",
-        "time": "year",
-        "unit": "???",
-    }
+    common = {"mode": "M1", "time": "year", "unit": "???", "year_act": years}
 
+    dfs = []
     if ssp not in ref_tec_ssp.keys():
         ref_cost1 = [
             start_val[list(start_val.keys())[0]] * 1.025**i
@@ -999,29 +1001,11 @@ def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str):
         tec3_2 = [tec3_1[-1] * 1.05 ** (i + 1) for i, _ in enumerate(years2)]
         tec3 = tec3_1 + tec3_2
 
-        df1 = make_df(
-            "var_cost",
-            technology=list(start_val.keys())[0],
-            year_act=years1 + years2,
-            value=ref_cost,
-            **common,
-        )
-        df2 = make_df(
-            "var_cost",
-            technology=list(start_val.keys())[1],
-            year_act=years1 + years2,
-            value=tec2,
-            **common,
-        )
-        df3 = make_df(
-            "var_cost",
-            technology=list(start_val.keys())[2],
-            year_act=years1 + years2,
-            value=tec3,
-            **common,
-        )
+        # Create 3 data frames with different var_cost values
+        for idx, value in ((0, ref_cost), (1, tec2), (2, tec3)):
+            t = list(start_val.keys())[idx]
+            dfs.append(make_df("var_cost", technology=t, value=value, **common))
     else:
-        years = years1 + years2
         ref_cost1 = [
             start_val[ref_tec_ssp[ssp]] * 1.025**i for i, _ in enumerate(years1)
         ]
@@ -1039,29 +1023,16 @@ def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str):
             for i, _ in enumerate(years)
         ]
 
-        df1 = make_df(
-            "var_cost",
-            technology=ref_tec_ssp[ssp],
-            year_act=years,
-            value=ref_cost,
-            **common,
-        )
-        df2 = make_df(
-            "var_cost",
-            technology=list(other_tecs)[0],
-            year_act=years,
-            value=tec2,
-            **common,
-        )
-        df3 = make_df(
-            "var_cost",
-            technology=list(other_tecs)[1],
-            year_act=years,
-            value=tec3,
-            **common,
-        )
+        # Create 3 data frames with different var_cost values
+        for t, value in (
+            (ref_tec_ssp[ssp], ref_cost),
+            (list(other_tecs)[0], tec2),
+            (list(other_tecs)[1], tec3),
+        ):
+            dfs.append(make_df("var_cost", technology=t, value=value, **common))
+
     df = (
-        pd.concat([df1, df2, df3])
+        pd.concat(dfs)
         .pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
         .assign(year_vtg=lambda x: x.year_act)
     )
