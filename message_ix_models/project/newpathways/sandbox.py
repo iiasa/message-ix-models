@@ -4,22 +4,42 @@ Created on Fri Jul 18 15:51:14 2025
 
 @author: shepard
 """
+# Import packages
+import os
+import sys
+import pandas as pd
+import logging
+import yaml
+import message_ix
+import ixmp
+import itertools
+
+from pathlib import Path
+from message_ix_models.util import package_data_path
+from message_ix_models.tools.bilateralize.bilateralize import *
+from message_ix_models.tools.bilateralize.historical_calibration import *
+from message_ix_models.tools.bilateralize.pull_gem import *
+from message_ix_models.tools.bilateralize.mariteam_calibration import *
 
 # Load config
-config_name = "config.yaml"
-full_path = package_data_path("bilateralize", config_name)
-config_dir = os.path.dirname(full_path)
-config = load_config(full_path)
+config, config_path = load_config(project_name = 'newpathways', 
+                                  config_name = 'config.yaml')
    
 # Load the scenario
 mp = ixmp.Platform()
  
 # Clone scenario
+start_model = config.get("scenario", {}).get("start_model", [])
+start_scen = config.get("scenario", {}).get("start_scen", [])
+
 target_model = config.get("scenario", {}).get("target_model", [])
 target_scen = config.get("scenario", {}).get("target_scen", [])
-scen = message_ix.Scenario(mp, target_model, target_scen)
-scen.set_as_default()
 
+base = message_ix.Scenario(mp, start_model, start_scen)
+scen = base.clone("NP_SSP2_baseline", "v5.3", keep_solution=True)
+scen.set_as_default()
+solver = "MESSAGE"
+scen.solve(solver, solve_options=dict(lpmethod=4))
   
 # Sandbox
 df = trade_dict['LNG_shipped']['flow']['historical_activity']
