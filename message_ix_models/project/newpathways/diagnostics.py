@@ -39,6 +39,7 @@ def activity_to_csv(trade_tec,
     mp = ixmp.Platform()
     
     exports_out = pd.DataFrame(); imports_out = pd.DataFrame(); flows_out = pd.DataFrame()
+    
     for model_name in model_scenario_dict.keys():
         scenario_name = model_scenario_dict[model_name]
         scen = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
@@ -79,8 +80,10 @@ def activity_to_csv(trade_tec,
         act_out['level'] = act_out['lvl']*act_out['value']
         act_out = act_out.groupby(['MODEL', 'SCENARIO', 'node_loc', 'technology', 'commodity', 'year_act', 'unit'])['level'].sum().reset_index()
             
-        exports = act_in[(act_in['technology'].str.contains(trade_tec + '_exp'))].copy()
-        imports = act_in[(act_in['technology'].str.contains(trade_tec + '_imp'))].copy()
+        exports = act_in[(act_in['technology'].str.contains(trade_tec))&\
+                         (act_in['technology'].str.contains('_exp'))].copy()
+        imports = act_in[(act_in['technology'].str.contains(trade_tec))&\
+                         (act_in['technology'].str.contains('_imp'))].copy()
         flow_input = act_in[(act_in['technology'].str.contains(flow_tec))].copy()
         flow_output = act_out[(act_out['technology'].str.contains(flow_tec))].copy()
         
@@ -125,71 +128,18 @@ def activity_to_csv(trade_tec,
                      index = False)
     
 # Retrieve trade flow activities
-models_scenarios = {'NP_SSP2': 'pipelines_LNG'}
+models_scenarios = {#'NP_SSP2_baseline': 'v5.2',
+                    'NP_SSP2': 'pipelines_LNG'}
  
-activity_to_csv(trade_tec = "gas_piped", 
+activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_piped_pipe",
                 trade_commodity = 'gas (GWa)',
                 flow_commodity = 'gas pipeline (km)',
                 model_scenario_dict = models_scenarios)
 
-activity_to_csv(trade_tec = "LNG_shipped", 
+activity_to_csv(trade_tec = "LNG", 
                 flow_tec = "LNG_tanker",
                 trade_commodity = 'LNG (GWa)',
                 flow_commodity = 'LNG tanker capacity (Mt-km)',
                 model_scenario_dict = models_scenarios)
 
-# Build Sankey
-def build_sankey(base_export_tec, year_list,
-                 model_name, scenario_name,
-                 out_title):
-    
-    scen = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
-    
-    activity = scen.var("ACT")
-    activity = activity[['node_loc', 'technology', 'year_act', 'lvl']].drop_duplicates().reset_index()
-    activity = activity.groupby(['node_loc', 'technology', 'year_act'])['lvl'].sum().reset_index()
-    
-    sdf = activity[(activity['technology'].str.contains(base_export_tec))].copy()
-    
-    sdf['IMPORTER'] = 'R12_' + sdf['technology'].str.upper().str.split('_').str[2]
-    sdf = sdf.rename(columns = {'node_loc': 'EXPORTER',
-                                'lvl': 'LEVEL',
-                                'year_act': 'YEAR',
-                                'technology': 'MESSAGETEC'})
-    sdf = sdf[['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGETEC', 'LEVEL']]
-    
-    unique_source = list(set(list(sdf['EXPORTER']) + list(sdf['IMPORTER'])))
-    mapdict = {k: v for v, k in enumerate(unique_source)}
-    
-    for year in year_list:
-        linksdf = sdf[sdf['YEAR'] == year].copy()
-        linksdf = linksdf[['EXPORTER', 'IMPORTER', 'LEVEL']]
-        linksdf = linksdf.rename(columns = {'EXPORTER': 'source',
-                                            'IMPORTER': 'target',
-                                            'LEVEL': 'value'})
-        
-        linksdf['source'] = linksdf['source'].map(mapdict)
-        linksdf['target'] = linksdf['target'].map(mapdict)
-        link_dict = linksdf.to_dict(orient = 'list')
-        
-        #Sankey Diagram Code 
-        fig = go.Figure(data=[go.Sankey(
-            node = dict(
-                pad = 15,
-                thickness = 20,
-                line = dict(color = "black", width = 0.5),
-                label = unique_source,),
-            link = dict(
-                source = link_dict["source"],
-                target = link_dict["target"],
-                value = link_dict["value"],
-          ))])
-        
-        fig.update_layout(title_text=out_title + '(' + str(year) + ')', font_size=10,width=1000, height=600)
-        fig.write_image(os.path.join(config_dir, 'diagnostics', 'figures', base_export_tec + '_' + model_name + '_' + scenario_name + '_' + str(year) + '.png'))
-    
-    
-# build_sankey(base_export_tec = "gas_exp", year_list = [2030, 2040, 2050, 2100],
-#              model_name = "NP_SSP2", scenario_name = "pipelines_only",
-#              out_title = "Pipeline Gas, after bilateralization ")
