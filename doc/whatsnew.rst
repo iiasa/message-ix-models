@@ -25,6 +25,12 @@ Next release
   - New submodule :mod:`.tools.costs.scenario` for TODO COMPLETE.
   - Update costs data.
 
+- Improve :mod:`.ssp.transport` (:pull:`389`, :issue:`387`):
+
+  - Adjust total transportation emissions using base-period shares of aviation in liquid final energy.
+  - Modify data for variable=“Emissions|*|Energy|Demand” and further totals.
+  - Drop year=2020 modification added in :pull:`355`.
+
 - Add 23 technologies used in |ssp-scenariomip| to :ref:`technology-yaml` (:pull:`378`).
 
 v2025.7.23
