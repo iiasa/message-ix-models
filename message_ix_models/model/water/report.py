@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Optional
 
 import numpy as np
@@ -7,6 +8,7 @@ import pyam
 from message_ix import Reporter, Scenario
 
 from message_ix_models.util import package_data_path
+from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa
 
 log = logging.getLogger(__name__)
 
@@ -264,26 +266,35 @@ def multiply_electricity_output_of_hydro(
     report_iam : pyam.IamDataFrame
         Report in pyam format
     """
+    perf_data = pd.read_csv(
+        package_data_path(
+            "water", "ppl_cooling_tech", "tech_water_performance_ssp_msg.csv"
+        )
+    )
 
     for var in elec_hydro_var:
-        if "hydro_1" in var or "hydro_hc" in var:
-            report_iam = report_iam.append(
-                # Multiply electricity output of hydro to get withdrawals
-                # this is an ex-post model calculation and the values are taken from
-                # data/water/ppl_cooling_tech/tech_water_performance_ssp_msg.csv
-                # for hydr_n water_withdrawal_mid_m3_per output is converted by
-                # multiplying with   60 * 60* 24 * 365 * 1e-9 to convert it
-                # into km3/output
-                report_iam.multiply(
-                    f"{var}", 0.161, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
-                )
+        # Extract hydro technology name using regex
+        match = re.search(r"hydro[^|]*", var)
+        if not match:
+            log.error(f"Could not extract hydro technology name from variable: {var}")
+            continue
+        tech_suffix = match.group(0)
+
+        tech = perf_data[perf_data["techology_name"] == tech_suffix]
+        if tech.empty:
+            log.error(f"No performance data found for technology: {tech_suffix}")
+            continue
+
+        water_withdrawal_ratio = (
+            tech["water_withdrawal_mid_m3_per_output"].iloc[0] * m3_GJ_TO_MCM_GWa
+        )
+        report_iam = report_iam.append(
+            report_iam.multiply(
+                f"{var}",
+                water_withdrawal_ratio,
+                f"Water Withdrawal|Electricity|Hydro|{tech_suffix}",
             )
-        else:
-            report_iam = report_iam.append(
-                report_iam.multiply(
-                    f"{var}", 0.323, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
-                )
-            )
+        )
     return report_iam
 
 
