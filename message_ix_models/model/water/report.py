@@ -7,8 +7,8 @@ import pandas as pd
 import pyam
 from message_ix import Reporter, Scenario
 
+from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa, USD_KM3_TO_USD_MCM
 from message_ix_models.util import package_data_path
-from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa
 
 log = logging.getLogger(__name__)
 
@@ -534,12 +534,12 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     extrt_sw_inv = ["inv cost|extract_surfacewater"]
     extrt_gw_inv = ["inv cost|extract_groundwater"]
     # Calculating fossil groundwater invwatments
-    # 163.56 million USD/MCM x 2 times the reneewable gw costs
+    # 163.56 million USD/KM^3 x 2 times the reneewable gw costs
 
     report_iam = report_iam.append(
         report_iam.multiply(
             "CAP_NEW|new capacity|extract_gw_fossil",
-            163.56,
+            163.56 * USD_KM3_TO_USD_MCM,
             "Fossil GW inv",
             ignore_units=True,
         )
@@ -689,7 +689,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     electr_saline = [
         "in|final|electr|distillation|M1",
         "in|final|electr|membrane|M1",
-    ]  # FIX-ME Report membrane energy input too!
+    ]
 
     electr_urban_t_d = ["in|final|electr|urban_t_d|M1"]
     electr_urban_t_d_eff = ["in|final|electr|urban_t_d|Mf"]
