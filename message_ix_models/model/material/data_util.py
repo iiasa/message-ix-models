@@ -2260,30 +2260,29 @@ def calculate_ini_new_cap(
         Formatted to "initial_new_capacity_up" columns.
     """
 
-    if ssp in ["LED", "SSP1", "SSP2"]:
-        if material == "cement":
-            SCALER = 0.001
-        if material == "steel":
-            SCALER = 0.002
-    elif ssp in ["SSP4", "SSP5"]:
-        if material == "cement":
-            SCALER = 0.002
-        if material == "steel":
-            SCALER = 0.003
-    elif ssp == "SSP3":
-        if material == "cement":
-            SCALER = 0.0008
-        if material == "steel":
-            SCALER = 0.001
-
+    SCALER = {
+        ("LED", "cement"): 0.001,
+        ("SSP1", "cement"): 0.001,
+        ("SSP2", "cement"): 0.001,
+        ("SSP3", "cement"): 0.0008,
+        ("SSP4", "cement"): 0.002,
+        ("SSP5", "cement"): 0.002,
+        ("LED", "steel"): 0.002,
+        ("SSP1", "steel"): 0.002,
+        ("SSP2", "steel"): 0.002,
+        ("SSP3", "steel"): 0.001,
+        ("SSP4", "steel"): 0.003,
+        ("SSP5", "steel"): 0.003,
+    }
+    scalar = SCALER[(ssp, material)]
     CLINKER_RATIO = 0.72 if material == "cement" else 1
 
     tmp = (
-        df_demand.eval("value = value * @CLINKER_RATIO * @SCALER")
+        df_demand.eval("value = value * @CLINKER_RATIO * @scalar")
         .rename(columns={"node": "node_loc", "year": "year_vtg"})
         .assign(technology=technology)
     )
 
     return make_df("initial_new_capacity_up", **tmp)
 
-    del SCALER, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above
+    del scalar, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above
