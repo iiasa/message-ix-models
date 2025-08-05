@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import pytest
+from genno import Computer
+from message_ix import Scenario
 
 from message_ix_models.model.transport.testing import MARK as MARK_TRANSPORT
 from message_ix_models.project.ssp.transport import (
@@ -14,6 +16,8 @@ from message_ix_models.project.ssp.transport import (
     get_scenario_code,
     process_df,
     process_file,
+    track_GAINS,
+    v_to_emi_coords,
     v_to_fe_coords,
 )
 from message_ix_models.testing import MARK
@@ -34,11 +38,12 @@ METHOD_PARAM = (
 # Test data file paths
 V1 = "SSP_dev_SSP2_v0.1_Blv0.18_baseline_prep_lu_bkp_solved_materials_2025_macro.csv"
 V2 = "SSP_LED_v2.3.1_baseline.csv"
+V3 = "SSP_SSP2_v6.2_SSP2_-_Low_Emissions.csv"
 
 
 @pytest.fixture(scope="module")
 def input_csv_path() -> "pathlib.Path":
-    return package_data_path("test", "report", V2)
+    return package_data_path("test", "report", V3)
 
 
 @pytest.fixture(scope="module")
@@ -143,15 +148,14 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     if len(cond):
         msg = "Negative emissions totals after processing"
         print(f"\n{msg}:", cond.to_string(), sep="\n")
-        assert iea_eweb_test_data, msg  # Negative values → fail if NOT using test data
+        assert iea_eweb_test_data, msg  # Negative values → fail if NOT using test data
 
 
 @cache
 def expected_variables(flag: int, method: METHOD) -> set[str]:
     """Set of expected ‘Variable’ codes according to `flag` and `method`."""
     # Shorthand
-    edb = "Energy|Demand|Bunkers"
-    edt = "Energy|Demand|Transportation"
+    edb, edt = "Energy|Demand|Bunkers", "Energy|Demand|Transportation"
 
     result = set()
 
@@ -163,9 +167,15 @@ def expected_variables(flag: int, method: METHOD) -> set[str]:
             result |= {
                 f"Emissions|{e}|{edb}",
                 f"Emissions|{e}|{edb}|International Aviation",
-                f"Emissions|{e}|{edt}",
-                f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
-            }
+            } | (
+                {
+                    f"Emissions|{e}|{edt}",
+                    # NB Present up to input data format V2; not in V3
+                    # f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
+                }
+                if method == METHOD.C
+                else set()
+            )
 
     # Final Energy
     if method != METHOD.A:
@@ -261,7 +271,11 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
 @MARK_TRANSPORT[10]
 @get_computer.minimum_version
 @pytest.mark.parametrize("method", METHOD_PARAM)
-def test_process_df(test_context, input_csv_path, method) -> None:
+def test_process_df(pytestconfig, test_context, input_csv_path, method) -> None:
+    """Test process_df().
+
+    For METHOD.C, the --ixmp-user-config CLI option **must** be given.
+    """
     # - Read input data
     # - Replace some 0 values with np.nan to replicate conditions in calling code.
     df_in = pd.read_csv(input_csv_path).pipe(
@@ -270,8 +284,22 @@ def test_process_df(test_context, input_csv_path, method) -> None:
         lambda c: str(c).isnumeric() and int(c) >= 2020,
     )
 
+    if pytestconfig.option.ixmp_user_config:
+        platform_name = None
+    else:
+        mp = test_context.get_platform()
+        platform_name = mp.name
+
+        # NB Here we might create the particular scenario that process_df() expects for
+        #    METHOD.C, but this includes a specific version, and it is not possible to
+        #    create a specific version on JDBCBackend
+        s = Scenario(
+            mp, "MESSAGEix-GLOBIOM 1.1-T-R12 ci nightly", "SSP_2024.2 baseline", "new"
+        )
+        del s
+
     # Code runs
-    df_out = process_df(df_in, method=method)
+    df_out = process_df(df_in, method=method, platform_name=platform_name)
 
     # Output satisfies expectations
     check(df_in, df_out, method)
@@ -299,6 +327,46 @@ def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
 
     # Output satisfies expectations
     check(df_in, df_out, method)
+
+
+def test_track_GAINS() -> None:
+    """Coverage-only test of :func:`.track_GAINS`."""
+    c = Computer()
+
+    # Function runs without error
+    result = track_GAINS(c)
+
+    assert set("eny") == set(result.dims)
+
+    # TODO Extend with further assertions
+
+
+@pytest.mark.parametrize(
+    "value, exp",
+    (
+        ("Emissions|CH4", {"e": "CH4", "s": "_T", "t": "_T"}),
+        ("Emissions|CH4|Energy", {"e": "CH4", "s": "Energy", "t": "_T"}),
+        ("Emissions|CH4|Energy|Demand", {"e": "CH4", "s": "Energy|Demand", "t": "_T"}),
+        (
+            "Emissions|CH4|Energy|Combustion",
+            {"e": "CH4", "s": "Energy|Combustion", "t": "_T"},
+        ),
+        (
+            "Emissions|CH4|Fossil Fuels and Industry",
+            {"e": "CH4", "s": "Fossil Fuels and Industry", "t": "_T"},
+        ),
+        (
+            "Emissions|CH4|Energy|Demand|Bunkers",
+            {"e": "CH4", "s": "Energy|Demand", "t": "Bunkers"},
+        ),
+        (
+            "Emissions|CH4|Energy|Demand|Transportation|Foo",
+            {"e": "CH4", "s": "Energy|Demand", "t": "Transportation|Foo"},
+        ),
+    ),
+)
+def test_v_to_emi_coords(value: str, exp) -> None:
+    assert exp == v_to_emi_coords(value)
 
 
 @pytest.mark.parametrize(
