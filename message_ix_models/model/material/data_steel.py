@@ -23,7 +23,6 @@ from message_ix_models.model.material.material_demand.material_demand_calc impor
     read_base_demand,
 )
 from message_ix_models.model.material.util import (
-    combine_df_dictionaries,
     get_ssp_from_context,
     maybe_remove_water_tec,
     read_config,
@@ -31,6 +30,7 @@ from message_ix_models.model.material.util import (
 )
 from message_ix_models.util import (
     broadcast,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
@@ -724,7 +724,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
     )
 
-    results = combine_df_dictionaries(
+    merge_data(
         results,
         gen_dri_act_bound(),
         gen_dri_cap_calibration(),
