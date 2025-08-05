@@ -606,6 +606,8 @@ def method_BC_common(
     k_fe_share
         A key with dimensions either :math:`(c, n)` or :math:`(c, n, y)` giving the
         share of aviation in total transport final energy.
+    k_emi_share
+        A key giving the share of aviation in total transport emissions.
     """
 
     from message_ix_models.model.transport.key import exo
@@ -635,7 +637,8 @@ def method_BC_common(
 
     to_mul = [k.fe, k.ei["units"]]
 
-    if False:  # Disabled; see https://github.com/iiasa/message-ix-models/issues/387
+    # Disabled; see https://github.com/iiasa/message-ix-models/issues/387
+    if False:  # pragma: no cover
         to_mul.append(track_GAINS(c))
 
     # - (FE of aviation) × (emission intensity) × (adjustment) → emissions of aviation
@@ -653,19 +656,20 @@ def method_BC_common(
     c.add(K.emi[3], "mul", K.emi[2], K.bcast)
     to_concat = [K.emi[3]]
 
-    if k_emi_share is None:
-        raise NotImplementedError("Must supply k_emi_share")
+    if k_emi_share:  # pragma: no cover  —only for METHOD.C
+        # Adjust total transportation emissions: multiply k_fe_share by input data
+        # TODO Also try k_emi_share here
+        c.add(K.emi_in["all"], "select", K.emi_in, indexers={"t": ["Transportation"]})
+        c.add(K.emi[4], "mul", K.emi_in["all"], k_fe_share, -1.0)
+        to_concat.append(K.emi[4])
 
-    ### Adjust total transportation emissions: multiply k_fe_share by input data
-    c.add(K.emi_in["all"], "select", K.emi_in, indexers={"t": ["Transportation"]})
-    c.add(K.emi[4], "mul", K.emi_in["all"], k_fe_share, -1.0)
-    to_concat.append(K.emi[4])
-
-    ### Adjust totals beyond transportation
-    c.add(K.emi[5], "add", K.emi[2], K.emi[4] / ("s", "t"))
-    c.add(K.emi[6], "select", K.emi[5], indexers={"n": ["World"]})
-    c.add(K.emi[7], "mul", K.emi[6], K.bcast_other)
-    to_concat.append(K.emi[7])
+        # Adjust totals beyond transportation
+        c.add(K.emi[5], "add", K.emi[2], K.emi[4] / ("s", "t"))
+        c.add(K.emi[6], "select", K.emi[5], indexers={"n": ["World"]})
+        c.add(K.emi[7], "mul", K.emi[6], K.bcast_other)
+        to_concat.append(K.emi[7])
+    else:
+        pass
 
     # Concatenate emissions values to be modified
     c.add(K.emi[8], "concat", *to_concat)
@@ -686,7 +690,7 @@ def method_BC_common(
     c.add(K.fe_out, "select", K.fe_out[3], indexers=dict(y=[2020]), inverse=True)
 
 
-def method_C(c: "Computer") -> None:
+def method_C(c: "Computer") -> None:  # pragma: no cover
     """Prepare calculations up to :data:`K.emi` using :data:`METHOD.C`.
 
     This method uses a solved MESSAGEix-Transport scenario to compute the share of
@@ -831,7 +835,7 @@ def process_file(
 
 
 def track_GAINS(c: "Computer") -> "Key":
-    """Compute adjustment factor to track declining GAINS EF."""
+    """Prepare `c` to compute adjustment factor to track declining GAINS EF."""
     k, _t, U = Key(f"ADJ:n-e-y-UNIT:{L}"), "Transportation (w/ bunkers)", "UNIT"
 
     # Numerator: setelect total emissions from input
@@ -854,7 +858,6 @@ def track_GAINS(c: "Computer") -> "Key":
     c.add(k["index"] / U, "index_to", k["ratio"] / U, quote({"y": 2020}))
 
     # Clip values to be <= 1
-
     c.add(k / U, lambda q: q.clip(None, 1.0), k["index"] / U)
     return k / U
 
