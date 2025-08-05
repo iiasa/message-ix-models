@@ -366,7 +366,7 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
         pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
         pop_sani["value"] = pop_sani.value * pop_sani.rate
         pop_sani = pop_sani[cols]
-        pop_sani_tot = pd.concat([pop_sani_tot, pop_drink])
+        pop_sani_tot = pd.concat([pop_sani_tot, pop_sani])
         pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
 
         # total values
