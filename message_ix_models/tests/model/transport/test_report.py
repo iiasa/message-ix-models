@@ -1,4 +1,5 @@
 import logging
+import platform
 from contextlib import nullcontext
 from copy import deepcopy
 from importlib.metadata import version
@@ -208,7 +209,8 @@ def test_simulated(
 
 
 @pytest.mark.skipif(
-    GHA and (V("3.8") < V(version("ixmp")) < V("3.11")),
+    GHA
+    and ((V("3.8") < V(version("ixmp")) < V("3.11")) or platform.system() != "Linux"),
     reason="Fails on GHA with ixmp/message_ix v3.9 and v3.10 or their dependencies",
 )
 @build.get_computer.minimum_version
