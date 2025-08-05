@@ -46,7 +46,7 @@ def gen_mock_demand_steel(scenario: message_ix.Scenario) -> pd.DataFrame:
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario :
         Scenario instance to build steel demand on.
 
     Returns
@@ -149,18 +149,14 @@ def gen_data_steel_ts(
 
     Parameters
     ----------
-    data_steel_ts : pd.DataFrame
+    data_steel_ts :
         DataFrame with time-series parameter data.
-    results : dict[str, list]
+    results :
         Dictionary to collect parameter DataFrames.
-    t : str
+    t :
         Technology name.
-    nodes : list[str]
+    nodes :
         List of model nodes.
-
-    Returns
-    -------
-    None
     """
     common = dict(
         time="year",
@@ -265,24 +261,20 @@ def get_data_steel_const(
 
     Parameters
     ----------
-    data_steel : pd.DataFrame
+    data_steel :
         DataFrame with constant parameter data.
-    results : dict[str, list]
+    results :
         Dictionary to collect parameter DataFrames.
-    params : Iterable
+    params :
         Iterable of parameter names.
-    t : str
+    t :
         Technology name.
-    yv_ya : pd.DataFrame
+    yv_ya :
         DataFrame with year vintage and year active combinations.
-    nodes : list[str]
+    nodes :
         List of model nodes.
-    global_region : str
+    global_region :
         Name of the global region.
-
-    Returns
-    -------
-    None
     """
     for par in params:
         # Obtain the parameter names, commodity,level,emission
@@ -425,18 +417,14 @@ def gen_data_steel_rel(
 
     Parameters
     ----------
-    data_steel_rel : pd.DataFrame
+    data_steel_rel :
         DataFrame with relation parameter data.
-    results : dict
+    results :
         Dictionary to collect parameter DataFrames.
-    regions : iterable
+    regions :
         Iterable of region names.
-    modelyears : list
+    modelyears :
         List of model years.
-
-    Returns
-    -------
-    None
     """
     for reg in regions:
         for r in data_steel_rel["relation"].unique():
@@ -518,9 +506,9 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario :
         Scenario instance to build steel model on.
-    dry_run : bool, optional
+    dry_run :
         If True, do not perform any file writing or scenario modification.
 
     Returns
@@ -767,11 +755,6 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
 def gen_cokeoven_co2_cc(s_info: ScenarioInfo):
     """Generate relation_activity for CO2 emissions from coke ovens.
 
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-        Scenario information object.
-
     Returns
     -------
     pd.DataFrame
@@ -845,16 +828,7 @@ def gen_dri_cap_calibration() -> dict[str, pd.DataFrame]:
 
 
 def gen_dri_coal_model(s_info: ScenarioInfo):
-    """Generate techno-economic coal based DRI technology model parameters.
-
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-
-    Returns
-    -------
-
-    """
+    """Generate techno-economic coal based DRI technology model parameters."""
     model_years = s_info.Y
     df = pd.read_csv(package_data_path("material", "steel", "dri_coal.csv"))
     common = {
@@ -908,9 +882,8 @@ def gen_2020_calibration_relation(
 
     Parameters
     ----------
-    s_info : ScenarioInfo
-    tech : Literal["eaf", "bof", "bf"]
-
+    tech :
+        Steel technology for which to generate historical activity data.
     Returns
     -------
 
@@ -947,13 +920,6 @@ def gen_2020_calibration_relation(
 
 def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate variable cost parameter for steel scrap preparation technologies.
-
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-        Scenario information object.
-    ssp : str
-        Shared Socioeconomic Pathway.
 
     Returns
     -------
@@ -1042,13 +1008,6 @@ def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
 def gen_max_recycling_rel(s_info: ScenarioInfo, ssp):
     """Generate maximum recycling relation activity for steel.
 
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-        Scenario information object.
-    ssp : str
-        Shared Socioeconomic Pathway.
-
     Returns
     -------
     dict
@@ -1084,13 +1043,6 @@ def gen_max_recycling_rel(s_info: ScenarioInfo, ssp):
 def gen_grow_cap_up(s_info: ScenarioInfo, ssp):
     """Generate growth constraints for new steel CCS capacity.
 
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-        Scenario information object.
-    ssp : str
-        Shared Socioeconomic Pathway.
-
     Returns
     -------
     dict
@@ -1125,13 +1077,10 @@ def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
     EEU needs higher share in 2020 to be feasible with calibrated pig availability.
     CHN uses less scrap and more pig iron due to high BF activity.
 
-    Parameters
-    ----------
-    s_info
-
     Returns
     -------
-
+    dict
+        Dictionary with 'input' parameter DataFrame.
     """
     special_regions = ["R12_EEU"]  # , "R12_NAM"]
     other_regions = [
@@ -1184,8 +1133,10 @@ def scale_fse_demand(demand: pd.DataFrame, new_scrap_ratio: dict[str, float]):
 
     Parameters
     ----------
-    demand : pd.DataFrame
-    new_scrap_ratio : dict[str, float]
+    demand :
+        Steel demand projection data.
+    new_scrap_ratio :
+        Map of new scrap ratios for each region.
     """
     demand["value"] = demand.apply(
         lambda x: x["value"] * (new_scrap_ratio[x["node"]]), axis=1
@@ -1197,13 +1148,10 @@ def gen_finishing_steel_io(s_info: ScenarioInfo) -> dict[str, pd.DataFrame]:
 
     The output ratios are derived from worldsteel statistics of 2020.
 
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-
     Returns
     -------
-
+    dict
+        Dictionary with 'output' parameter DataFrame.
     """
     dimensions = {
         "technology": "finishing_steel",
@@ -1239,12 +1187,13 @@ def gen_manuf_steel_io(
 
     Parameters
     ----------
-    ratio : dict[str, float]
-    s_info : ScenarioInfo
+    ratio :
+        Map of new scrap yield ratio in manufacturing for each region.
 
     Returns
     -------
-
+    dict
+        Dictionary with 'output' parameter DataFrame.
     """
     dimensions = {
         "technology": "manuf_steel",
@@ -1281,14 +1230,10 @@ def gen_manuf_steel_io(
 def gen_iron_ore_cost(s_info: ScenarioInfo, ssp: str) -> dict[str, pd.DataFrame]:
     """Generate variable cost parameter for iron ore supply based on SSP narrative.
 
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-    ssp : str
-
     Returns
     -------
-
+    dict
+        Dictionary with 'var_cost' parameter DataFrame.
     """
     years1 = [i for i in range(2020, 2030, 5)]
     years2 = [i for i in range(2030, 2060, 5)] + [i for i in range(2060, 2115, 10)]
@@ -1332,13 +1277,10 @@ def gen_charcoal_bf_bound(s_info: ScenarioInfo) -> dict[str, pd.DataFrame]:
     """Generate bound activity for blast furnace modes with
     charcoal input of 0 to calibrate to statistics.
 
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-
     Returns
     -------
-
+    dict
+        Dictionary with 'bound_activity_up' parameter DataFrame.
     """
     dimensions = {
         "technology": "bf_steel",
@@ -1360,13 +1302,10 @@ def gen_ssp_demand(ssp: str) -> pd.DataFrame:
 
     Timeseries is currently read from pre-computed data file.
 
-    Parameters
-    ----------
-    ssp : str
-
     Returns
     -------
-
+    pd.DataFrame
+        'demand' parameter DataFrame.
     """
     mapping = {
         "SSP1": {"phi": 5, "mu": 0.1, "q": 0.01},
@@ -1397,13 +1336,10 @@ def gen_demand(ssp: str) -> pd.DataFrame:
     Combines calibrated 2020 and 2025 demand with SSP
     dependent demand projection.
 
-    Parameters
-    ----------
-    ssp : str
-
     Returns
     -------
-
+    pd.DataFrame
+        'demand' parameter DataFrame.
     """
     df_2025 = pd.read_csv(package_data_path("material", "steel", "demand_2025.csv"))
     df_2020 = (
@@ -1422,11 +1358,13 @@ def read_hist_cap(tec: Literal["eaf", "bof", "bf"]) -> dict[str, pd.DataFrame]:
 
     Parameters
     ----------
-    tec : str
+    tec :
+        Steel technology for which to read historical capacity data.
 
     Returns
     -------
-
+    dict
+        Dictionary with 'historical_new_capacity' parameter DataFrame.
     """
     df = pd.read_csv(
         package_data_path(
