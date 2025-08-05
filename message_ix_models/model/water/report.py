@@ -469,12 +469,12 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
 
     # mapping model outputs for aggregation
     urban_infrastructure = [
-        "CAP_NEW|new capacity|rural_recycle",
-        "CAP_NEW|new capacity|rural_sewerage",
-        "CAP_NEW|new capacity|rural_t_d",
-        "CAP_NEW|new capacity|rural_treatment",
-        "CAP_NEW|new capacity|rural_unconnected",
-        "CAP_NEW|new capacity|rural_untreated",
+        "CAP_NEW|new capacity|urban_recycle",
+        "CAP_NEW|new capacity|urban_sewerage",
+        "CAP_NEW|new capacity|urban_t_d",
+        "CAP_NEW|new capacity|urban_treatment",
+        "CAP_NEW|new capacity|urban_unconnected",
+        "CAP_NEW|new capacity|urban_untreated",
     ]
 
     rural_infrastructure = [
@@ -1263,7 +1263,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         "PRICE_COMMODITY", {"commodity": ["urban_mw", "rural_mw", "freshwater"]}
     )
     wp["value"] = wp["lvl"]
-    wp["unit"] = "US$2010/m3" #MillionUSD/MCM = USD/m^3
+    wp["unit"] = "US$2010/m3"  # MillionUSD/MCM = USD/m^3
     wp = wp.rename(columns={"node": "region"})
     # get withdrawals for weighted mean
     ww = prepare_ww(ww_input=report_iam.as_pandas(), suban=suban)
