@@ -338,7 +338,7 @@ def generate_bare_sheets(
         df_output_trade = message_ix.make_df('output',
                                              node_loc = network_setup[tec]['exporter'],
                                              node_dest = network_setup[tec]['importer'],
-                                             technology = network_setup[tec]['technology'],
+                                             technology = network_setup[tec]['export_technology'],
                                              commodity = config_dict['trade_commodity'][tec],
                                              level = config_dict['trade_level'][tec],
                                              value = 1,
@@ -349,7 +349,7 @@ def generate_bare_sheets(
         df_output_import = message_ix.make_df('output',
                                               node_loc = network_setup[tec]['importer'],
                                               node_dest = network_setup[tec]['importer'],
-                                              technology = network_setup[tec]['technology'],
+                                              technology = network_setup[tec]['import_technology'],
                                               commodity = config_dict['trade_commodity'][tec],
                                               level = config_dict['import_level'][tec],
                                               value = 1,
@@ -376,8 +376,7 @@ def generate_bare_sheets(
         for tec in covered_tec:
             df_cost = build_parameterdf(cost_par,
                                         network_df = network_setup[tec],
-                                        col_values = dict(value = None,
-                                                          unit = 'USD/GWa'))
+                                        col_values = dict(unit = 'USD/GWa'))
         
         df_cost.to_csv(os.path.join(data_path, tec, "edit_files", cost_par + ".csv"), index=False)
         log.info(f"{cost_par} csv generated at: {os.path.join(data_path, tec)}.") 
