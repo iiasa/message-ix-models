@@ -1,3 +1,5 @@
+"""Structural metadata for the DIGSY project."""
+
 import sdmx.urn
 from sdmx.model import common
 
@@ -27,5 +29,7 @@ def get_cl_scenario() -> "common.Codelist":
 
 
 class SCENARIO(URNLookupEnum, metaclass=ItemSchemeEnumType):
+    """Enumeration of DIGSY scenario IDs."""
+
     def _get_item_scheme(self) -> "common.Codelist":
         return get_cl_scenario()

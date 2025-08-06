@@ -234,7 +234,11 @@ class MERtoPPP(MaybeAdaptR11Source):
 
 
 class PDT_CAP(ExoDataSource):
-    """Projected passenger-distance traveled (PDT) per capita."""
+    """Projected passenger-distance traveled (PDT) per capita.
+
+    This source locates data in files named, for instance,
+    :file:`message_ix_models/data/transport/{nodes}/pdt-cap/{scenario}.csv`.
+    """
 
     @dataclass
     class Options(BaseOptions):
