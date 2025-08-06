@@ -3,23 +3,23 @@ MESSAGEix-Transport (:mod:`.model.transport`)
 
 .. warning::
 
-   1. MESSAGEix-Transport is **under development**.
-      For details, see:
+   MESSAGEix-Transport is **under development**.
+   For details, see:
 
-      - `Issues and PRs labeled 'transport' <https://github.com/iiasa/message-ix-models/issues?q=label%3Atransport>`_ on the :mod:`.message_ix_models` GitHub repository.
-      - The `project board <https://github.com/orgs/iiasa/projects/29>`_ (IIASA only).
+   - `Issues and PRs labeled 'transport' <https://github.com/iiasa/message-ix-models/issues?q=label%3Atransport>`_
+     on the :mod:`.message_ix_models` GitHub repository.
+   - The `project board <https://github.com/orgs/iiasa/projects/29>`_ (IIASA staff only).
 
-   2. The code and data documented on these pages were recently :doc:`migrated </migrate>` from the private   :mod:`.message_data` repository to the public :mod:`message_ix_models` repository.
-      The text may still contain references to the old location.
-
-:mod:`message_ix_models.model.transport` adds a technology-rich representation of transport to models in the MESSAGEix-GLOBIOM family.
+:mod:`message_ix_models.model.transport` adds a technology-rich representation of transport
+to models in the MESSAGEix-GLOBIOM family.
 The resulting “model variant” is variously referred to as:
 
 - **MESSAGEix-Transport**,
-- “MESSAGEix-GLOBIOM ‘T’” or, with other variants like :mod:`.buildings` and :mod:`~message_ix_models.model.material`, “MESSAGEix-GLOBIOM BMT”, or
+- “MESSAGEix-GLOBIOM ‘T’” or, with other variants like :mod:`.buildings` and :mod:`.material`, “MESSAGEix-GLOBIOM BMT”, or
 - “MESSAGEix-XX-Transport” where built on a single-country base model (again, in the MESSAGEix-GLOBIOM family) named like “MESSAGEix-XX”.
 
-MESSAGEix-Transport extends the formulation described by McCollum et al. (2017) :cite:`mccollum-2017` for the older, MESSAGE V framework that predated MESSAGEix.
+MESSAGEix-Transport extends the formulation described by McCollum et al. (2017) :cite:`mccollum-2017`
+for the older, MESSAGE V framework that predated MESSAGEix.
 Some inherited information about the older model is collected at :doc:`old`.
 
 This documentation of MESSAGEix-Transport, its inputs, configuration, implementation, and output, are organized according to this diagram:
@@ -52,26 +52,35 @@ Summary
 
 The code:
 
-- Operates on a base model with a particular structure, the standard MESSAGEix-GLOBIOM representation of transport.
+- Operates on a **base model** with a particular structure,
+  the standard MESSAGEix-GLOBIOM representation of transport.
   See :ref:`transport-base-structure`.
+
+  This means that MESSAGEix-Transport retains *all the supply-side and non-transport-sector* contents of the base model.
 - **Builds** MESSAGEix-Transport on the base model:
 
-  - Use the :func:`.apply_spec` pattern, with a :class:`.Spec` that identifies:
+  - Use the :func:`.apply_spec` pattern with a :class:`.Spec` that identifies:
 
-    - Required set elements in the base model, for instance ``commodity`` elements representing the fuels used by MESSAGEix-Transport technologies.
-    - Set elements to be removed, for instance the ``technology`` elements for base model/aggregate transport technologies.
-      (Removing these elements also removes all parameter data indexed by these elements.)
+    - Required set elements in the base model,
+      for instance ``commodity`` elements representing the fuels used by MESSAGEix-Transport technologies.
+    - Set elements to be removed,
+      for instance the ``technology`` elements for base model/aggregate transport technologies.
+      Removing these elements also removes all parameter data indexed by these elements.
     - Set elements to be added.
-      These are generated dynamically based on configuration setting from files and code; see :ref:`transport-config`.
+      These are generated based on configuration setting from files and code.
+      See :ref:`transport-config`.
 
   - Use a :class:`genno.Computer` (from :func:`.build.get_computer`) to:
 
     - Read data from :ref:`transport-data-files` and other sources,
-    - Prepares the parametrization of MESSAGEix-Transport through an extensive set of computations, and
-    - Add these data to the target :class:`.Scenario`.
+    - Prepare MESSAGE parameter data for the MESSAGEix-Transport representation
+      through an extensive set of tasks, and
+    - Add these parameter data to the target :class:`.Scenario`.
 
 - **Solves** the :class:`.Scenario`.
-- Provides :mod:`message_ix_models.report` extensions to **report or post-process** the model solution data and prepare detailed transport outputs in various formats (see :doc:`output`).
+- **Post-processes/reports** the model solution data through extensions to :mod:`message_ix_models.report`
+  that produce detailed transport outputs in various formats.
+  See :doc:`output`.
 
 Details
 -------
@@ -84,8 +93,10 @@ Details
 
 On other page(s): :doc:`disutility`.
 
-- For light-duty vehicle technologies annotated with ``historical-only: True``, parameter data for ``bound_new_capacity_up`` are created with a value of 0.0.
-  These prevent new capacity of these technologies from being created during the model horizon, but allow pre-horizon installed capacity (represented by ``historical_new_capacity``) to continue to be operated within its technical lifetime.
+- For light-duty vehicle technologies annotated with ``historical-only: True``,
+  parameter data for ``bound_new_capacity_up`` are created with a value of 0.0.
+  These prevent new capacity of these technologies from being created during the model horizon,
+  but allow pre-horizon installed capacity (represented by ``historical_new_capacity``) to continue to be operated within its technical lifetime.
   (:pull:`441`)
 
 .. _transport-usage:
@@ -125,9 +136,12 @@ This can be invoked or modified by other code, or through the command-line::
 This workflow can be used in the following ways:
 
 Run the entire workflow
-   This is the method used by the :file:`transport.yaml` GitHub Actions workflow (see :ref:`transport-ci`) on a daily schedule, and thus always known to work for the combinations of arguments used in that workflow.
+   This is the method used by the :file:`transport.yaml` GitHub Actions workflow (see :ref:`transport-ci`) on a daily schedule,
+   and thus always known to work for the combinations of arguments used in that workflow.
 
-   For the same reason, *it should not be necessary to run this manually*; simply trigger the workflow.
+   For the same reason,
+   it is usually not necessary to run this manually.
+   Colleagues with appropriate permissions can trigger the workflow.
 
    .. code-block:: shell
 
@@ -139,19 +153,23 @@ Run the entire workflow
         "SSP2 policy reported" \
         --go
 
-   The options result in the following behaviour:
+   The options specifically select the following behaviour:
 
-   - :program:`--platform=ixmp-dev`: store MESSAGEix-Transport scenarios on the :mod:`ixmp` platform named "ixmp-dev".
-   - :program:`--base=auto`: identify the base scenario URLs using :func:`.base_scenario_url` / the file :ref:`CL_TRANSPORT_SCENARIO`, according to other config settings.
+   - :program:`--platform=ixmp-dev`: store MESSAGEix-Transport scenarios on the :class:`ixmp.Platform` named "ixmp-dev" in the local configuration.
+   - :program:`--base=auto`: identify the base scenario URLs using :func:`.base_scenario_url` / the file :ref:`CL_TRANSPORT_SCENARIO`,
+     according to other config settings.
    - :program:`--model-extra="ci nightly"`: append the string " ci nightly" to the model name of any created Scenario.
      This avoids accidentally producing new versions of ‘production’ (model name, scenario name) combinations.
-   - :program:`--from=""`: start from the very first step in the workflow—load the identified base scenario—and perform all subsequent workflow steps, up to and including…
+   - :program:`--from=""`: start from the very first step in the workflow:
+     load the identified base model scenario, and then perform all subsequent workflow steps, up to and including…
    - :program:`"SSP2 policy reported"`: the target step to reach.
    - :program:`--go`: Actually execute the workflow.
      Omit this to show a preview/dry-run.
 
 Debug the build for a single scenario
-   This emulates the build step, but does not use any ‘real’ base scenario; only a :mod:`.bare` RES scenario that contains structure but no data.
+   This emulates the build step,
+   but does not use any ‘real’ base scenario;
+   only a :mod:`.bare` RES scenario that contains structure but no data.
 
    .. code-block:: shell
 
@@ -162,11 +180,13 @@ Debug the build for a single scenario
         --go
 
    This produces output files (:file:`.csv`, :file:`.pdf`) for debugging the build.
-   The output for this particular command is in the directory :file:`{local-data-path}/transport/debug-ICONICS:SSP(2024).2-R12-B/`.
+   The output for this particular command is in directories with names like :file:`{local-data-path}/transport/debug-ICONICS:SSP(2024).2-R12-B/`.
    With a different target or :program:`--nodes` option, the directory name will differ accordingly.
 
 Debug the build for all scenarios
-   This performs the above debug build step for all SSPs, and then runs :func:`.debug_multi` to generate plots that compare the contents of the debug :file:`.csv` files for all 5 SSPs.
+   This performs the above debug build step for all SSPs,
+   and then runs :func:`.debug_multi` to generate plots
+   that compare the contents of the debug :file:`.csv` files for all 5 SSPs.
    The plots are output to the directory :file:`{local-data-path}/transport/`.
 
    .. code-block:: shell
@@ -190,15 +210,23 @@ Run only reporting
         --key="in:nl-t-ya-c:transport+units" \
         --go
 
-   This:
+   Here:
 
-   - First sets a shell environment variable (``$URL``) that points to an (existing model name, scenario name, version)—for instance, one produced by the GitHub Actions workflow.
-   - :program:`--url="$URL"`: runs the workflow with this as a base URL.
-   - :program:`--from="SSP2 solved"`: starts *after* the step SSP2 solved.
-     In other words, assume that all steps up to and including this step have already run, and have produced a scenario with the given ``$URL``.
-   - :program:`"SSP2 reported"`: run the reporting step.
+   - The shell environment variable (``$URL``) is set to point to an (existing model name, scenario name, version)
+     —for instance, one produced by the GitHub Actions workflow.
+   - :program:`--url="$URL"`: run the workflow with this as a base URL.
+   - :program:`--from="SSP2 solved"`: starts *after* the step of this name.
+     In other words, assume that all steps up to and including this step have already run,
+     and have produced a scenario with the given ``$URL``.
+   - :program:`"SSP2 reported"`: run up to and including this reporting step.
    - :program:`--key="in:nl-t-ya-c:transport+units"`: compute only this reporting key; display; and exit.
-     This can be changed to any other key, or omitted entirely for the default action, which is to produce *all* output files (IAMC-structured output in :file:`.csv` and :file:`.xlsx` formats, plots in :file:`.pdf` format, and files for base MESSAGEix-GLOBIOM calibration in :file:`.csv` format) and also store the IAMC-structured output as time series data with the scenario.
+     This can be changed to any other key,
+     or omitted entirely for the default action,
+     which is to produce *all* output files
+     (IAMC-structured output in :file:`.csv` and :file:`.xlsx` formats,
+     plots in :file:`.pdf` format,
+     and files for base MESSAGEix-GLOBIOM calibration in :file:`.csv` format)
+     and also store the IAMC-structured output as time series data with the Scenario.
 
 Manual
 ------
@@ -264,14 +292,20 @@ Use ``--help`` overall or for a particular command to learn more.
 
   This command produces:
 
-  - Files in :file:`{MESSAGE_LOCAL_DATA}/transport/gen-activity/{scenario}` (see :ref:`local data <local-data>`), where `scenario` reflects the command options:
+  - Files in :file:`{MESSAGE_LOCAL_DATA}/transport/gen-activity/{scenario}`
+    (see :ref:`local data <local-data>`),
+    where `scenario` reflects the command options:
 
     - :file:`pdt.csv`, :file:`pdt-cap.csv`: projected activity data.
     - :file:`demand-exo.pdf`, :file:`demand-exo-cap.pdf`: plots of the same.
 
-  - :file:`{MESSAGE_LOCAL_DATA}/transport/gen-activity/compare-[pdt,pdt-cap].pdf`: plots that contrast the data output by the current command invocation *and* any others in other sub-directories of :file:`…/gen-demand`, that is, from previous invocations.
+  - :file:`{MESSAGE_LOCAL_DATA}/transport/gen-activity/compare-[pdt,pdt-cap].pdf`:
+    plots that contrast the data output by the current command invocation
+    *and* any others in other sub-directories of :file:`…/gen-demand`,
+    that is, from previous invocations.
 
-  Thus, to prepare :file:`compare-pdt.pdf` containing projections for multiple scenarios, invoke the command repeatedly, for instance::
+  Thus, to prepare :file:`compare-pdt.pdf` containing projections for multiple scenarios,
+  invoke the command repeatedly, for instance::
 
     $ mix-models transport gen-demand --ssp=2
     $ mix-models transport gen-demand --ssp-update=1
@@ -309,13 +343,15 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
    regions=R11, years=B.
    This scenario has a “hybrid” or “dual” implementation of emissions accounting: it includes *both*:
 
-   - the ‘old’ structure, in which emissions are accounted using :mod:`message_ix` ``relation_activity`` and related parameter, but ``emission_factor`` is unused/empty, **and**
+   - the ‘old’ structure, in which emissions are accounted using :mod:`message_ix` ``relation_activity`` and related parameters,
+     but ``emission_factor`` is unused/empty, **and**
    - a ‘new’ structure in which the ``emission_factor`` parameter is actually used.
 
 ``ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline#17``
    years=B.
    Based on ENGAGE, without MACRO calibration.
-   This scenario has a non-standard ``node`` code list: there are 12 nodes, as in the ``R12`` list, but their IDs are e.g. ``R11_CHN``, ``R11_RCPA``, etc.
+   This scenario has a non-standard ``node`` code list: there are 12 nodes, as in the ``R12`` list,
+   but their IDs are e.g. ``R11_CHN``, ``R11_RCPA``, etc.
 
 ``ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline_macro#3``
    regions=R12, years=B. Includes MACRO calibration
@@ -333,11 +369,12 @@ Structure of base scenarios
 
 The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.bare` or :mod:`message_data.model.create`) contains a representation of transport with lower resolution.
 Some documentation is in the base-model documentation (:py:`message_doc`; see also `iiasa/message-ix-models#107 <https://github.com/iiasa/message-ix-models/pull/107>`_).
-This section gives additional details missing there, which are relevant to MESSAGEix-Transport.
+This section gives additional details that are missing there but relevant to MESSAGEix-Transport.
 
 - Demand (``commodity=transport``, ``level=useful``) is denoted in **energy units**, i.e. GWa.
-- Technologies producing this output; all at ``m=M1``, except where noted.
-  This is the same set as in :doc:`MESSAGE V <old>`, i.e. in MESSAGE V, the aggregate transport representation is inactive but still present.
+- Technologies producing this output; all at ``mode=M1``, except where noted.
+  This is the same set as in :doc:`MESSAGE V <old>`;
+  that is, in MESSAGE V, the aggregate transport representation is inactive but still present.
 
   - ``coal_trp``
   - ``foil_trp``
@@ -418,52 +455,69 @@ To change the assumptions that are modeled via any particular factor:
 Testing and validation
 ======================
 
-MESSAGEix-Transport includes a GitHub Actions workflow defined in the file :file:`.github/workflows.transport.yaml`.
-A list of past runs of this workflow appears `here <https://github.com/iiasa/message_data/actions/workflows/transport.yaml>`_.
+MESSAGEix-Transport includes a GitHub Actions workflow defined in the file :file:`.github/workflows/transport.yaml`.
+A list of past runs of this workflow appears `here <https://github.com/iiasa/message-ix-models/actions/workflows/transport.yaml>`_.
 This workflow:
 
 - Runs on a schedule trigger, daily.
+  It may also:
+
+  - Be triggered manually.
+    Use the “Run workflow” button and choose a branch;
+    the code and data on this branch will be the ones used to build, solve, and report MESSAGEix-Transport.
+  - Be temporarily altered aid with development:
+
+    - Run on every commit on a pull request branch:
+
+      .. code-block:: yaml
+
+         # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
+         pull_request:
+           branches: [ main, dev ]
+
+    - Run only some steps; not the full build–solve–report sequence.
+      For instance:
+
+      .. code-block:: yaml
+
+         env:
+           # Starting point of the workflow.
+           # Use this value to build from a certain scenario:
+           # base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+           # Use this value to allow the workflow to determine model & scenario names
+           # and versions:
+           base: --platform="ixmp-dev"
+
+           # Set this to a particular step to truncate the workflow
+           from-step: ".* solved"
+
+    Per the comments, **do not** merge such changes to ``dev`` or ``main``.
+    Instead, use a commit message like "TEMPORARY Adjust 'transport' CI workflow for PR";
+    then later :program:`git rebase -i` and ``drop`` the temporary commit.
+
+- Triggers a second workflow in the (private) :mod:`message_data` reopsitory.
+
+The workflow in :mod:`message_data`:
+
 - Runs on a GitHub Actions **self-hosted runner**.
-  This is hosted on a server within the IIASA network, so is able to access the ``ixmp-dev`` :mod:`ixmp` Oracle database.
+  This is hosted on a server within the IIASA network,
+  so is able to access the ``ixmp-dev`` :mod:`ixmp` Oracle database.
+  This is also the reason for the two-workflow arrangement:
+  its avoids attaching the self-hosted runners to the public :mod:`message_ix_models` repo.
 - Uses, as its starting point, the first scenario listed under :ref:`transport-base-scenarios`, above.
 - Runs multiple jobs; currently, one job for each :data:`~message_ix_models.project.ssp.SSP_2024`.
-  Each job takes about 30 minutes, and the jobs run in sequence, so the entire workflow takes 2.5 hours to run.
-- Produces an **artifact**: aside from the logs, certain files generated during the run are combined in a ZIP archive and stored by GitHub.
+  Each job takes about 30 minutes, and the jobs run in sequence,
+  so the entire workflow takes 2.5 hours to run.
+- Produces an **artifact**: aside from the logs,
+  files generated during the run are combined in a ZIP archive and stored by GitHub.
   This artifact contains, *inter alia*:
 
   - One directory per job.
-  - In each directory, files :file:`transport.csv` and :file:`transport.xlsx` containing :doc:`MESSAGEix-Transport reporting output <output>`.
-  - In each directory, files :file:`demand.csv` and :file:`bound_activity_{lo,up}.csv` containing data suitable for parametrizing the base MESSAGEix-GLOBIOM model.
-- May be triggered manually.
-  Use the “Run workflow” button and choose a branch; the code and data on this branch will be the ones used to build, solve, and report MESSAGEix-Transport.
-- May be altered to aid with development:
-
-  - Run on every commit on a pull request branch:
-
-    .. code-block:: yaml
-
-       # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
-       pull_request:
-       branches: [ main, dev ]
-
-  - Run only some steps; not the full build–solve–report sequence.
-    For instance:
-
-    .. code-block:: yaml
-
-       env:
-         # Starting point of the workflow.
-         # Use this value to build from a certain scenario:
-         # base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
-         # Use this value to allow the workflow to determine model & scenario names
-         # and versions:
-         base: --platform="ixmp-dev"
-
-         # Set this to a particular step to truncate the workflow
-         from-step: ".* solved"
-
-  Per the comments, **do not** merge such changes to ``dev`` or ``main``.
-  Instead, make them with a commit message like "TEMPORARY Adjust 'transport' CI workflow for PR"; then later :program:`git rebase -i` and ``drop`` the temporary commit.
+  - In each directory, files :file:`transport.csv` and :file:`transport.xlsx`
+    containing IAMC-structured :doc:`MESSAGEix-Transport reporting output <output>`.
+  - In each directory, files :file:`demand.csv` and :file:`bound_activity_{lo,up}.csv`
+    containing data suitable for parametrizing the base MESSAGEix-GLOBIOM model.
+  - Plots per :mod:`.transport.plot`.
 
 Code reference
 ==============
