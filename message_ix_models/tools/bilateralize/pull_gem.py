@@ -51,6 +51,7 @@ def import_gem(input_file: str,
                input_sheet: str, 
                trade_technology: str, 
                flow_technology: str,
+               flow_commodity: str,
                project_name:str = None,
                config_name: str = None):
     
@@ -81,6 +82,7 @@ def import_gem(input_file: str,
     df['LengthMergedKm'] = df['LengthMergedKm'].replace('--', '0', regex = True).astype(float)
     
     df = df[(df['CapacityBOEd'].isnull() == False) & (df['CostUSD'].isnull() == False)]
+    df_long = df.copy() # Keep for historical new capacity
     df = df.groupby(['EXPORTER', 'IMPORTER'])[['CapacityBOEd', 'CostUSD', 'LengthMergedKm']].sum().reset_index()
     
     # Convert units
@@ -104,7 +106,8 @@ def import_gem(input_file: str,
     
     # Output to trade_technology
     export_dir = package_data_path("bilateralize", trade_technology)
-    base_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "edit_files", "flow_technology")
+    trade_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "edit_files")
+    flow_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "edit_files", "flow_technology")
     export_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
     if not os.path.isdir(export_dir):
         os.makedirs(export_dir)
@@ -119,7 +122,7 @@ def import_gem(input_file: str,
     inv_cost = inv_cost[['node_loc', 'technology', 'value_update']]
     inv_cost.to_csv(os.path.join(export_dir, "inv_cost_GEM.csv"), index = False)
     
-    basedf = pd.read_csv(os.path.join(base_dir, "inv_cost.csv"))
+    basedf = pd.read_csv(os.path.join(flow_dir, "inv_cost.csv"))
     basedf['value'] = 100
     inv_cost = basedf.merge(inv_cost,
                             left_on = ['node_loc', 'technology'],
@@ -129,13 +132,13 @@ def import_gem(input_file: str,
     inv_cost['year_vtg'] = 'broadcast'
     inv_cost['unit'] = 'USD/km'
     inv_cost = inv_cost[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
-    inv_cost.to_csv(os.path.join(base_dir, "inv_cost.csv"), index = False)
+    inv_cost.to_csv(os.path.join(flow_dir, "inv_cost.csv"), index = False)
     
     # Historical activity
     hist_act = df[['EXPORTER', 'IMPORTER', 'LengthMergedKm']].drop_duplicates()
     hist_act['node_loc'] = hist_act['EXPORTER']
     hist_act['technology'] = flow_technology + '_' + hist_act['IMPORTER'].str.lower().str.split('_').str[-1]
-    hist_act['value'] = hist_act['LengthMergedKm']
+    hist_act['value'] = round(hist_act['LengthMergedKm'],0)
     hist_act = hist_act[['node_loc', 'technology', 'value']]
     hist_act['year_act'] = 2025
     hist_act['unit'] = 'km'
@@ -143,33 +146,34 @@ def import_gem(input_file: str,
     hist_act['time'] = 'year'
     hist_act = hist_act[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
     hist_act.to_csv(os.path.join(export_dir, "historical_activity_GEM.csv"), index = False)
-    hist_act.to_csv(os.path.join(base_dir, "historical_activity.csv"), index = False)
+    hist_act.to_csv(os.path.join(flow_dir, "historical_activity.csv"), index = False)
 
-    # Relation activity
-    relation = df[['EXPORTER', 'IMPORTER', 'Capacity (GWa/km)']].drop_duplicates()
-    relation['node_loc'] = relation['EXPORTER']
-    relation['technology'] = trade_technology + '_exp_' + relation['IMPORTER'].str.lower().str.split('_').str[-1]
-    relation['value_update'] = (1/relation['Capacity (GWa/km)'])*-1
-    relation = relation[['node_loc', 'technology', 'value_update']]
+    # Historical new capacity
+    hist_cap = df_long[['EXPORTER', 'IMPORTER', 'Len']]
+    # Input
+    inputdf = df[['EXPORTER', 'IMPORTER', 'Capacity (GWa/km)']].drop_duplicates()
+    inputdf['node_loc'] = inputdf['EXPORTER']
+    inputdf['technology'] = trade_technology + '_exp_' + inputdf['IMPORTER'].str.lower().str.split('_').str[-1]
+    inputdf['value_update'] = round((1/inputdf['Capacity (GWa/km)']),0)
+    inputdf['commodity'] = flow_commodity
+    inputdf = inputdf[['node_loc', 'technology', 'value_update', 'commodity']] # km/GWa
     
-    basedf = pd.read_csv(os.path.join(base_dir, "relation_activity_flow.csv"))
-    basedf['value'] = -30 # The largest capacity pipelines have maximum 300,000GWh (~30bcm) annually
-    relation = basedf.merge(relation,
-                            left_on = ['node_loc', 'technology'],
-                            right_on = ['node_loc', 'technology'],
-                            how = 'left')
-    relation['value'] = np.where((relation['value_update'] < 0) &\
-                                 (relation['value_update'] > -30) &\
-                                 (relation['technology'].str.contains(trade_technology) == True), 
-                                 relation['value_update'], 
-                                 relation['value'])
-    relation['value'] = np.where(relation['technology'].str.contains(trade_technology) == False, 
-                                 1, 
-                                 relation['value'])
-    relation['node_rel'] = relation['node_loc']
-    relation['unit'] = 'km'
-    relation = relation[['node_loc', 'technology', 'node_rel', 'relation', 'year_rel', 'year_act', 'mode', 'value', 'unit']]
-
-    relation.to_csv(os.path.join(export_dir, "relation_GEM.csv"), index = False)
-    relation.to_csv(os.path.join(base_dir, "relation_activity_flow.csv"), index = False)
+    basedf = pd.read_csv(os.path.join(trade_dir, "input.csv"))
+    basedf['value'] = np.where(basedf['commodity'] == flow_commodity,
+                               30, # The largest capacity pipelines have maximum 300,000GWh (~30bcm) annually
+                               basedf['value'])
+    
+    inputdf = basedf.merge(inputdf,
+                           left_on = ['node_loc', 'technology', 'commodity'],
+                           right_on = ['node_loc', 'technology', 'commodity'],
+                           how = 'left')
+    inputdf['value'] = np.where((inputdf['value_update'].isnull() == False)&\
+                                (inputdf['value_update']<10000) &\
+                                (inputdf['commodity'] == flow_commodity),
+                                inputdf['value_update'],
+                                inputdf['value'])
+    inputdf = inputdf.drop(['value_update'], axis = 1)
+    
+    inputdf.to_csv(os.path.join(export_dir, "inputs_GEM.csv"), index = False)
+    inputdf.to_csv(os.path.join(trade_dir, "input.csv"), index = False)
 
