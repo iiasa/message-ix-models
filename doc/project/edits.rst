@@ -11,14 +11,22 @@ Project information
 - Website: https://iiasa.ac.at/projects/edits
 - Acknowledgement:
 
-     [Work] was supported by funding from the Energy Demand changes Induced by Technological and Social innovations (EDITS) project, which is part of the initiative coordinated by the Research Institute of Innovative Technology for the Earth (RITE) and International Institute for Applied Systems Analysis (IIASA), and funded by the Ministry of Economy, Trade, and Industry (METI), Japan.
+     [Work] was supported by funding from the Energy Demand changes Induced by Technological and Social innovations (EDITS) project,
+     which is part of the initiative coordinated by the Research Institute of Innovative Technology for the Earth (RITE)
+     and International Institute for Applied Systems Analysis (IIASA),
+     and funded by the Ministry of Economy, Trade, and Industry (METI), Japan.
 
-- The EDITS project funds many activities, only a few of which are related to :mod:`message_ix_models`.
-  This code, data, and documentation concern only this subset; at the moment, specifically the **Model Complementarity Exercise** (**MCE**) activity related to transportation and involving the three models:
+- The EDITS project funds many activities,
+  only a few of which are related to :mod:`message_ix_models`.
+  This code, data, and documentation concern only this subset;
+  at the moment, specifically the **Model Complementarity Exercise** (**MCE**) activity
+  related to transportation and involving the three models:
 
   - PASTA —operated by the International Transport Forum.
   - MESSAGEix-Transport —operated by IIASA.
   - DNE21+ —operated by RITE.
+
+  See :issue:`384` for additional detail.
 
 Usage
 =====
