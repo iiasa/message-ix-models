@@ -84,8 +84,14 @@ def activity_to_csv(trade_tec,
                          (act_in['technology'].str.contains('_exp'))].copy()
         imports = act_in[(act_in['technology'].str.contains(trade_tec))&\
                          (act_in['technology'].str.contains('_imp'))].copy()
-        flow_input = act_in[(act_in['technology'].str.contains(flow_tec))].copy()
-        flow_output = act_out[(act_out['technology'].str.contains(flow_tec))].copy()
+         
+        flow_input = act_in[(act_in['technology'].str.contains(flow_tec)) &\
+                            (act_in['technology'].str.contains('_exp') == False) &\
+                            (act_in['technology'].str.contains('_imp') == False)].copy()
+        
+        flow_output = act_out[(act_out['technology'].str.contains(flow_tec)) &\
+                              (act_out['technology'].str.contains('_exp') == False) &\
+                              (act_out['technology'].str.contains('_imp') == False)].copy()
         
         exports['IMPORTER'] = 'R12_' + exports['technology'].str.upper().str.split('_').str[-1]
         exports = exports.rename(columns = {'node_loc': 'EXPORTER',
@@ -93,6 +99,7 @@ def activity_to_csv(trade_tec,
                                             'year_act': 'YEAR',
                                             'technology': 'MESSAGETEC',
                                             'unit': 'UNITS'})
+        exports = exports[exports['UNITS'] == 'GWa']
         exports = exports[['MODEL', 'SCENARIO', 'YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGETEC', 'LEVEL', 'UNITS']]
         exports['COMMODITY'] = trade_commodity
         exports_out = pd.concat([exports_out, exports])
@@ -103,6 +110,7 @@ def activity_to_csv(trade_tec,
                                             'technology': 'MESSAGETEC',
                                             'unit': 'UNITS'})
         imports = imports[['MODEL', 'SCENARIO', 'YEAR', 'IMPORTER', 'MESSAGETEC', 'LEVEL', 'UNITS']]
+        imports = imports[imports['UNITS'] == 'GWa']
         imports['COMMODITY'] = trade_commodity
         imports_out = pd.concat([imports_out, imports])
         
@@ -117,6 +125,7 @@ def activity_to_csv(trade_tec,
                                               'unit': 'UNITS'})
             flowdf = flowdf[['MODEL', 'SCENARIO', 'YEAR', 'EXPORTER', 'IMPORTER', 
                              'MESSAGETEC', 'COMMODITY', 'LEVEL', 'UNITS']]
+            flowdf['PAIR'] = flowdf['EXPORTER'] + '-' + flowdf['IMPORTER']
             flows_out = pd.concat([flows_out, flowdf])
         
         
@@ -129,12 +138,12 @@ def activity_to_csv(trade_tec,
     
 # Retrieve trade flow activities
 models_scenarios = {#'NP_SSP2_baseline': 'v5.2',
-                    'NP_SSP2': 'pipelines_LNG'}
+                    'NP_SSP2': 'pipelines_only'}
  
 activity_to_csv(trade_tec = "gas", 
-                flow_tec = "gas_piped_pipe",
+                flow_tec = "gas_pipe",
                 trade_commodity = 'gas (GWa)',
-                flow_commodity = 'gas pipeline (km)',
+                flow_commodity = 'gas_pipeline_capacity',
                 model_scenario_dict = models_scenarios)
 
 activity_to_csv(trade_tec = "LNG", 
