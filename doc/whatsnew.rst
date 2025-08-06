@@ -7,6 +7,17 @@ Next release
 - Improve and extend :doc:`/material/index` (:pull:`388`),
   specifically :mod:`.material.data_steel`.
   See :doc:`/material/v1.2.0` for details.
+- Improve :mod:`.model.transport` (:pull:`380`).
+
+  - Replace :py:`pdt_cap_proj` with :class:`PDT_CAP`.
+  - Update ``IIASA_ECE:CL_TRANSPORT_SCENARIO`` to version 1.2.0:
+
+    - Rename ``EDITS-activity-id`` annotation to ``EDITS-scenario-URN``.
+    - Add ``DIGSY-scenario-URN`` annotation.
+    - Add EDITS MCE and DIGSY scenario identifiers.
+
+  - Add input data for :doc:`/project/digsy` (:issue:`373`), :doc:`/project/edits` (:issue:`384`).
+
 - Improve :mod:`.tools.costs` for |ssp-scenariomip| (:pull:`378`).
 
   - :attr:`Config.module <.tools.costs.Config.module>` is no longer a :class:`str`
@@ -17,7 +28,7 @@ Next release
   - New submodule :mod:`.tools.costs.scenario` for TODO COMPLETE.
   - Update costs data.
 
-- Improve :mod:`.ssp.transport` (:pull:`389`, :issue:`387`):
+- Improve :mod:`.project.ssp.transport` (:pull:`389`, :issue:`387`):
 
   - Adjust total transportation emissions using base-period shares of aviation in liquid final energy.
   - Modify data for variable=“Emissions|*|Energy|Demand” and further totals.
