@@ -154,7 +154,7 @@ def import_gem(input_file: str,
     
     hist_cap['YEAR'] = 5 * round(hist_cap['YEAR'].astype(float)/5) # Round year to the nearest 5
     hist_cap = hist_cap.groupby(['EXPORTER', 'IMPORTER', 'YEAR'])['CAPACITY_KM'].sum().reset_index()
-    hist_cap = hist_cap[hist_cap['YEAR'] < 2030]
+    hist_cap = hist_cap[(hist_cap['YEAR'] < 2030) & (hist_cap['YEAR'] > 1999)]
     hist_cap = hist_cap[(hist_cap['EXPORTER'] != '') & (hist_cap['IMPORTER'] != '')] 
     hist_cap = hist_cap[hist_cap['EXPORTER'] != hist_cap['IMPORTER']] 
     hist_cap['CAPACITY_KM'] = round(hist_cap['CAPACITY_KM'], 0)
@@ -172,10 +172,10 @@ def import_gem(input_file: str,
     hist_cap['node_loc'] = hist_cap['EXPORTER']
     hist_cap['technology'] = flow_technology + '_' + hist_cap['IMPORTER'].str.lower().str.split('_').str[-1]
     hist_cap['value'] = round(hist_cap['CAPACITY_KM'],0)
-    hist_cap = hist_cap[['node_loc', 'technology', 'value']]
     hist_cap = message_ix.make_df('historical_new_capacity',
                                   node_loc = hist_cap['node_loc'],
                                   technology = hist_cap['technology'],
+                                  year_vtg = hist_cap['YEAR'],
                                   value = hist_cap['value'],
                                   unit = 'km')
     hist_cap.to_csv(os.path.join(export_dir, "historical_new_capacity_GEM.csv"), index = False)
