@@ -43,7 +43,8 @@ import_gem(input_file = gas_pipeline_file,
            input_sheet = gas_pipeline_sheet, 
            trade_technology = "gas_piped",
            flow_technology = "gas_pipe",
+           flow_commodity = "gas_pipeline_capacity",
            project_name = 'newpathways', config_name = 'config.yaml')
 
 # Add MariTEAM calibration for maritime shipping
-calibrate_mariteam(covered_tec, message_regions)
+#calibrate_mariteam(covered_tec, message_regions)

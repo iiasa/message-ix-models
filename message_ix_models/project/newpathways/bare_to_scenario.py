@@ -30,7 +30,9 @@ message_regions = config['scenario']['regions']
 log = get_logger(__name__)
 
 # Read and inflate sheets based on model horizon
-trade_dict = build_parameter_sheets(log=log)
+trade_dict = build_parameter_sheets(project_name = 'newpathways',
+                                    config_name = 'config.yaml',
+                                    log=log)
 
 # Historical calibration for trade technology
 histdf = build_historical_activity(message_regions)
@@ -67,6 +69,8 @@ for tec in hist_tec.keys():
     
 # Update scenario
 clone_and_update(trade_dict=trade_dict,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
                  log=log,
                  to_gdx = False,
                  solve = True)
