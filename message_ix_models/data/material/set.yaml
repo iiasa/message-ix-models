@@ -334,7 +334,9 @@ steel:
     - demand
     - dummy_emission
     - end_of_life
-    - dummy_end_of_life
+    - dummy_end_of_life_1
+    - dummy_end_of_life_2
+    - dummy_end_of_life_3
     - dummy_ccs
 
   technology:
@@ -345,6 +347,7 @@ steel:
     - bf_steel
     - bf_ccs_steel
     - dri_steel
+    - dri_coal_steel
     - dri_gas_steel
     - dri_gas_ccs_steel
     - dri_h2_steel
@@ -356,7 +359,9 @@ steel:
     - prep_secondary_steel_3
     - finishing_steel
     - manuf_steel
-    - scrap_recovery_steel
+    - scrap_recovery_steel_1
+    - scrap_recovery_steel_2
+    - scrap_recovery_steel_3
     - DUMMY_ore_supply
     - DUMMY_limestone_supply_steel
     - DUMMY_coal_supply
@@ -374,21 +379,25 @@ steel:
       - minimum_recycling_steel
       - max_global_recycling_steel
       - max_regional_recycling_steel
+      - eaf_bound_2020
+      - bof_bound_2020
+      - bf_bound_2020
 
-  balance_equality:
-    add:
-      - ["steel","old_scrap_1"]
-      - ["steel","old_scrap_2"]
-      - ["steel","old_scrap_3"]
-      - ["steel","end_of_life"]
-      - ["steel","product"]
-      - ["steel","new_scrap"]
-      - ["steel","useful_material"]
-      - ["steel","final_material"]
+#  balance_equality:
+#    add:
+#      - ["steel","old_scrap_1"]
+#      - ["steel","old_scrap_2"]
+#      - ["steel","old_scrap_3"]
+#      - ["steel","end_of_life"]
+#      - ["steel","product"]
+#      - ["steel","new_scrap"]
+#      - ["steel","useful_material"]
+#      - ["steel","final_material"]
 
   addon:
     add:
       - bf_ccs_steel
+      - dri_coal_steel
       - dri_gas_ccs_steel
       - dri_gas_steel
       - dri_h2_steel
@@ -409,6 +418,7 @@ steel:
     add:
       - [bf_ccs_steel_addon, bf_ccs_steel]
       - [dri_gas_ccs_steel_addon, dri_gas_ccs_steel]
+      - [dri_steel_addon, dri_coal_steel]
       - [dri_steel_addon, dri_gas_steel]
       - [dri_steel_addon, dri_h2_steel]
 

@@ -4,17 +4,9 @@ What's new
 Next release
 ============
 
-  Water/Nexus
-  -----------
-  
-  - Update :doc:`/water/index` with unit standardization from Km^3 to MCM and model size reduction (:pull:`371`).
-  - Deactivate share calibration constraints for cooling water technologies (:pull:`371`).
-  - Fix excess vintage activity year generation in :mod:`.model.water.utils` to reduce model size (:pull:`371`).
-  - Add missing electricity input units for water technologies in :mod:`.model.water.data.infrastructure` (:pull:`371`).
-  - Fix incorrect data for desalination projected capacity in :mod:`.model.water.data.infrastructure` (:pull:`371`).
-  - Add missing basins_country_R12.csv data file to :mod:`.model.water.data` (:pull:`371`).
-  - Convert Excel data files to CSV format and add improve test coverage for :mod:`.model.water.data` (:pull:`371`).
-
+- Improve and extend :doc:`/material/index` (:pull:`388`),
+  specifically :mod:`.material.data_steel`.
+  See :doc:`/material/v1.2.0` for details.
 - Improve :mod:`.tools.costs` for |ssp-scenariomip| (:pull:`378`).
 
   - :attr:`Config.module <.tools.costs.Config.module>` is no longer a :class:`str`
@@ -32,6 +24,23 @@ Next release
   - Drop year=2020 modification added in :pull:`355`.
 
 - Add 23 technologies used in |ssp-scenariomip| to :ref:`technology-yaml` (:pull:`378`).
+
+Water/Nexus
+-----------
+
+- Update :doc:`/water/index` with unit standardization from km³
+  to 10⁶ m³ (million cubic metres, or MCM) and model size reduction (:pull:`371`).
+- Deactivate share calibration constraints for cooling water technologies (:pull:`371`).
+- Fix excess vintage activity year generation in :mod:`.water.utils` to reduce model size (:pull:`371`).
+- Improve :mod:`.water.data` (:pull:`371`):
+
+  - Add missing :file:`basins_country_R12.csv` data file.
+  - Convert Excel data files to CSV format and add/improve test coverage.
+
+- Improve :mod:`.water.data.infrastructure` (:pull:`371`):
+
+  - Add missing electricity input units for water technologies.
+  - Fix incorrect data for desalination projected capacity.
 
 v2025.7.23
 ==========
