@@ -8,7 +8,7 @@ scenario:
   target_model:
     NP_SSP2
   target_scen:
-    pipelines_LNG
+    pipelines_only
   first_model_year:
     2030
   regions:
@@ -17,7 +17,7 @@ scenario:
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
   - gas_piped
-  - LNG_shipped
+  #- LNG_shipped
 
 # TRADE LIFETIMES
 trade_lifetimes:
@@ -91,17 +91,18 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   export_level: # Level that converts from supply to trade
   trade_level: # Level at point of trade (e.g., piped, shipped)
   import_level: # Level that converts from trade to use
-  flow_technology: # Technology for piping/shipping, etc. (e.g., pipe, shipping)
+  flow_technologies: # [LIST] Technology for piping/shipping, etc. (e.g., pipe, shipping)
   flow_tech_suffix: # Flow technology suffix (e.g., liquid for oil/LNG, solid for biomass/coal)
-  flow_constraint: # Is the flow technology constrained at the global level (i.e. maritime shipping) or bilaterally (pipelines)?
-  flow_fuel_input: # What are the fuels required for flow technology (e.g., gas for gas pipelines)
+  flow_constraint: # [STR] Is the flow technology constrained at the global level (i.e. maritime shipping) or bilaterally (pipelines)?
+  flow_fuel_input: # [DICT] What are the fuels required for flow technology (e.g., gas for gas pipelines)
   flow_material_input: # What are the materials required for flow technology (e.g., steel for gas pipelines)
   flow_commodity_output: # What is the flow service provided (e.g., gas_pipeline_capacity)
+  flow_units: # [STR] What are the units of the output commodity from flow technology?
   supply_technologies: # Technologies the supply the traded commodity
   # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
   specify_network: # If true, produces sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
   tracked_emissions: # List of tracked emission types
-  bunker_technology: # Bunker technology for the traded fuel if it exists (e.g., LNG_bunker, LNG_occ_bunker)
+  bunker_technology: # [DICT] Bunker technology for the traded fuel if it exists (e.g., LNG_tobunker)
 
 ### Pipeline gas exports
 gas_piped_trade:
@@ -123,17 +124,21 @@ gas_piped_trade:
     piped
   import_level:
     secondary
-  flow_technology:
-    gas_pipe
+  flow_technologies:
+    - gas_pipe
   flow_tech_suffix:
   flow_fuel_input:
-    - gas
+    gas_pipe:
+      gas
   flow_material_input:
-    - steel
+    gas_pipe:
+      - steel
   flow_commodity_output:
     gas_pipeline_capacity
   flow_constraint:
     bilateral
+  flow_units:
+    km
   supply_technologies:
     - gas_extr_1
     - gas_extr_2
@@ -171,22 +176,29 @@ LNG_shipped_trade: # Name of covered trade technology (e.g., oil)
     shipped
   import_level:
     secondary
-  flow_technology:
-    LNG_tanker
+  flow_technologies:
+    - LNG_tanker_LNG
+    - LNG_tanker_foil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
-    - LNG
-    #- fueloil # Need to get fuel oil exports set up for this
+    LNG_tanker_LNG:
+      LNG
+    LNG_tanker_foil:
+      foil
   flow_material_input:
   flow_commodity_output:
     LNG_tanker_capacity
+  flow_units:
+    Mt-km
   supply_technologies:
     - LNG_prod
   specify_network:
     False
   tracked_emissions: # List of tracked emission types
   bunker_technology:
-    - LNG_tobunker
-    #- fueloil_tobunker # Need to get fuel oil exports set up for this
+    LNG_tanker_LNG:
+      LNG_tobunker
+    LNG_tanker_foil:
+      foil_tobunker
