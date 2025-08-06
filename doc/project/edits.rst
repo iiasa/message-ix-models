@@ -73,9 +73,15 @@ Then use the command line::
 Currently :program:`edits _debug` runs :func:`.read_pasta_data`.
 See the function documentation.
 
-
 Code reference
 ==============
 
-.. automodule:: message_ix_models.project.edits
-   :members:
+.. currentmodule:: message_ix_models.project
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   edits
+
