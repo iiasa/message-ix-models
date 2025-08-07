@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
     from message_ix_models import Context
+    from message_ix_models.types import ParameterData
 
 
 def add_macro_materials(
@@ -1012,7 +1013,7 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
 
 def gen_plastics_emission_factors(
     info, species: Literal["methanol", "HVCs", "ethanol"]
-) -> dict[str, pd.DataFrame]:
+) -> "ParameterData":
     """Generate "CO2_Emission" relation parameter that
     represents stored carbon in produced plastics.
     The calculation considers:
@@ -1090,7 +1091,7 @@ def gen_plastics_emission_factors(
 
 def gen_chemicals_co2_ind_factors(
     info, species: Literal["methanol", "HVCs"]
-) -> dict[str, pd.DataFrame]:
+) -> "ParameterData":
     """Generate "CO2_ind" relation parameter that
     represents carbon in chemical feedstocks that is oxidized in the
     short-term (=during the model horizon) in downstream products.
@@ -1109,11 +1110,6 @@ def gen_chemicals_co2_ind_factors(
     ----------
     species:
         feedstock species to generate relation for
-    info: ScenarioInfo
-
-    Returns
-    -------
-    Dict[str, pd.DataFrame]
     """
 
     tec_species_map = {
@@ -1183,7 +1179,7 @@ def gen_chemicals_co2_ind_factors(
     return {"relation_activity": co2_emi_rel}
 
 
-def gen_ethanol_to_ethylene_emi_factor(info) -> dict[str, pd.DataFrame]:
+def gen_ethanol_to_ethylene_emi_factor(info: ScenarioInfo) -> "ParameterData":
     """Generate "CO2_ind" relation parameter that
     represents carbon in chemical feedstocks that is oxidized in the
     short-term (=during the model horizon) in downstream products.
@@ -1197,14 +1193,6 @@ def gen_ethanol_to_ethylene_emi_factor(info) -> dict[str, pd.DataFrame]:
 
     Values are positive since they need to be added
     to bottom-up emission accounting.
-
-    Parameters
-    ----------
-    info: ScenarioInfo
-
-    Returns
-    -------
-    Dict[str, pd.DataFrame]
     """
 
     carbon_pars = read_yaml_file(
