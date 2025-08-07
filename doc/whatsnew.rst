@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2025.8.7
+=========
 
 - Improve and extend :doc:`/material/index` (:pull:`388`),
   specifically :mod:`.material.data_steel`.
