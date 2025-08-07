@@ -28,6 +28,8 @@ from message_ix_models.model.transport.testing import (
     configure_build,
     make_mark,
 )
+from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
+from message_ix_models.project.edits.structure import SCENARIO as EDITS
 from message_ix_models.testing import bare_res
 from message_ix_models.testing.check import (
     Check,
@@ -355,6 +357,8 @@ def test_bare_res(
         dict(regions="R12", years="B"),
         # dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
         dict(regions="R12", years="B", options=dict(project={"LED": True})),
+        dict(regions="R12", years="B", options=dict(project={"EDITS": EDITS["CA"]})),
+        dict(regions="R12", years="B", options=dict(project={"DIGSY": DIGSY["BEST"]})),
         # param(dict(regions="R14", years="B"), marks=MARK[9]),
         # param(dict(regions="ISR", years="A"), marks=MARK[3]),
     ),
