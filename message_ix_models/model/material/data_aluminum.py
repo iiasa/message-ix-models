@@ -19,7 +19,6 @@ from message_ix_models.model.material.data_util import read_rel, read_timeseries
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import (
     add_R12_column,
-    combine_df_dictionaries,
     get_pycountry_iso,
     get_ssp_from_context,
     invert_dictionary,
@@ -28,6 +27,7 @@ from message_ix_models.model.material.util import (
 from message_ix_models.util import (
     broadcast,
     make_io,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
@@ -530,9 +530,7 @@ def gen_data_aluminum(
 
     ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
     ts_dict.update(gen_hist_new_cap(s_info))
-    ts_dict = combine_df_dictionaries(
-        ts_dict, gen_smelting_hist_act(), gen_refining_hist_act()
-    )
+    merge_data(ts_dict, gen_smelting_hist_act(), gen_refining_hist_act())
 
     rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
 
@@ -544,7 +542,9 @@ def gen_data_aluminum(
     scrap_cost = get_scrap_prep_cost(s_info, ssp)
     max_recyc = gen_max_recycling_rel(s_info, ssp)
     scrap_heat = gen_scrap_prep_heat(s_info, ssp)
-    results_aluminum = combine_df_dictionaries(
+    results_aluminum = {}
+    merge_data(
+        results_aluminum,
         const_dict,
         ts_dict,
         rel_dict,
@@ -1148,7 +1148,8 @@ def gen_alumina_trade_tecs(s_info):
         **common,
     )
 
-    trade_dict = combine_df_dictionaries(imp_dict, trd_dict, exp_dict)
+    trade_dict = {}
+    merge_data(trade_dict, imp_dict, trd_dict, exp_dict)
     trade_dict = {
         k: v.pipe(broadcast, year_act=modelyears).assign(year_vtg=lambda x: x.year_act)
         for k, v in trade_dict.items()
@@ -1449,7 +1450,9 @@ def gen_trade_growth_constraints(s_info):
                 + [i for i in range(2060, 2115, 10)],
             )
         )
-    return combine_df_dictionaries(par_dict1, par_dict2)
+    pars = {}
+    merge_data(pars, par_dict1, par_dict2)
+    return pars
 
 
 def gen_max_recycling_rel(s_info, ssp):
