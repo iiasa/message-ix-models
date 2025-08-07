@@ -1,3 +1,11 @@
+"""
+Data and parameter generation for the methanol sector in
+MESSAGEix-Materials model.
+
+This module provides functions to read, process, and generate parameter data
+for methanol technologies, demand, trade, and related constraints.
+"""
+
 from ast import literal_eval
 from typing import TYPE_CHECKING
 
@@ -25,6 +33,7 @@ from message_ix_models.util import (
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+    from message_ix_models.types import ParameterData
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -43,14 +52,8 @@ iea_elasticity_map = {
 }
 
 
-def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
-    """
-    Generates data for methanol industry model
-
-    Parameters
-    ----------
-    scenario: .Scenario
-    """
+def gen_data_methanol(scenario: "Scenario") -> "ParameterData":
+    """Generate parameter data for methanol industry model."""
     context = read_config()
     ssp = get_ssp_from_context(context)
     df_pars = pd.read_excel(
@@ -134,16 +137,20 @@ def broadcast_nodes(
     node_cols_codes: dict[str, pd.Series],
     i: int,
 ) -> pd.DataFrame:
-    """
-    Broadcast nodes that were stored in pivoted row
+    """Broadcast nodes that were stored in pivoted row.
 
     Parameters
     ----------
-    df_bc_node: pd.DataFrame
-    df_final: pd.DataFrame
-    node_cols: list[str]
-    node_cols_codes: dict[str, pd.Series]
-    i: int
+    df_bc_node :
+        DataFrame containing parameter data with node values pivoted
+    df_final :
+        Full list of pivoted parameter data
+    node_cols :
+        list of node columns of the respective parameter
+    node_cols_codes :
+        list of node codes used for broadcasting
+    i :
+        index of the row in df_final to be broadcasted
     """
     if len(node_cols) == 1:
         if "node_loc" in node_cols:
@@ -193,14 +200,18 @@ def broadcast_years(
     yr_cols_codes: dict[str, list[str]],
     col: str,
 ) -> pd.DataFrame:
-    """
-    Broadcast years that were stored in pivoted row
+    """Broadcast years that were stored in pivoted row.
+
     Parameters
     ----------
-    df_bc_node: pd.DataFrame
-    yr_col_out: list[str]
-    yr_cols_codes: ict[str, list[str]]
-    col: str
+    df_bc_node :
+        DataFrame containing parameter data with year values pivoted
+    yr_col_out :
+        list of year columns to be broadcasted
+    yr_cols_codes :
+        list of year codes used for broadcasting
+    col :
+        name of year column to be broadcasted
     """
     if len(yr_col_out) == 1:
         yr_list = [i[0] for i in yr_cols_codes[col]]
@@ -233,14 +244,14 @@ def broadcast_years(
     return df_bc_node
 
 
-def unpivot_input_data(df: pd.DataFrame, par_name: str):
-    """
-    Unpivot data that is already contains columns for respective MESSAGEix parameter
+def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
+    """Unpivot data that already contains columns for respective MESSAGEix parameter.
+
     Parameters
     ----------
-    df: pd.DataFrame
+    df :
         DataFrame containing parameter data with year and node values pivoted
-    par_name: str
+    par_name :
         name of MESSAGEix parameter
     """
     df_final = df
@@ -295,7 +306,14 @@ def unpivot_input_data(df: pd.DataFrame, par_name: str):
     return make_df(par_name, **df_final_full)
 
 
-def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> dict[str, pd.DataFrame]:
+def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> "ParameterData":
+    """Generate input and output parametrization for methanol downstream use technology.
+
+    Parameters
+    ----------
+    s_info:
+        Scenario info object to infer regions and years from.
+    """
     # input parameter
     yv_ya = s_info.yv_ya
     year_all = yv_ya["year_act"].unique()
