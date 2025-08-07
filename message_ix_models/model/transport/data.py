@@ -623,7 +623,7 @@ demand_scale = _input_dataflow(
 )
 
 elasticity_f = _input_dataflow(
-    key="elasticity:scenario-n-y:F+exo",
+    key="elasticity:scenario-n-t-y:F+exo",
     id="elasticity_f",
     path="elasticity-f",
     name="‘Elasticity’ of freight activity with respect to GDP(PPP)",
