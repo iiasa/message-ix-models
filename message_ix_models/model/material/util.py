@@ -73,28 +73,6 @@ def prepare_xlsx_for_explorer(filepath: str) -> None:
     df.to_excel(filepath, index=False)
 
 
-def combine_df_dictionaries(*args: dict[str, pd.DataFrame]) -> dict:
-    """
-    Iterates through dictionary items and collects all values with same keys
-     from dictionaries in one dict
-    Parameters
-    ----------
-    args: dict[str, pd.DataFrame]
-        arbitrary number of dictionaries with str keys and pd.DataFrame values
-
-    Returns
-    -------
-    dict[str, pd.DataFrame]
-        dictionary containing all unique elements of
-        pd.DataFrames provided by *args dict
-    """
-    keys = set([key for tup in args for key in tup])
-    comb_dict = {}
-    for i in keys:
-        comb_dict[i] = pd.concat([j.get(i) for j in args])
-    return comb_dict
-
-
 def read_yaml_file(file_path: Union[str, Path]) -> Union[dict, None]:
     """
     Tries to read yaml file into a dict

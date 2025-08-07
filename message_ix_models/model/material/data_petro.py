@@ -20,12 +20,12 @@ from message_ix_models.model.material.data_util import (
 )
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import (
-    combine_df_dictionaries,
     get_ssp_from_context,
     read_config,
 )
 from message_ix_models.util import (
     broadcast,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
@@ -616,7 +616,7 @@ def gen_data_petro_chemicals(
     meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "HVCs")
     meth_downstream_emi_eth = gen_ethanol_to_ethylene_emi_factor(s_info)
 
-    results = combine_df_dictionaries(
+    merge_data(
         results,
         meth_downstream_emi_top_down,
         meth_downstream_emi_bot_up,
