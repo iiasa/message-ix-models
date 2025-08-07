@@ -53,7 +53,8 @@ def import_gem(input_file: str,
                flow_technology: str,
                flow_commodity: str,
                project_name:str = None,
-               config_name: str = None):
+               config_name: str = None,
+               first_model_year: int = 2030):
     
     df = pd.read_excel(os.path.join(gem_path, input_file),
                        sheet_name = input_sheet)
@@ -82,6 +83,9 @@ def import_gem(input_file: str,
     df['LengthMergedKm'] = df['LengthMergedKm'].replace('--', '0', regex = True).astype(float)
     
     df = df[(df['CapacityBOEd'].isnull() == False) & (df['CostUSD'].isnull() == False)]
+    
+    df = df[df['StartYear1'] < first_model_year] # No planned capacity
+    
     df_long = df.copy() # Keep for historical new capacity
     df = df.groupby(['EXPORTER', 'IMPORTER'])[['CapacityBOEd', 'CostUSD', 'LengthMergedKm']].sum().reset_index()
     
@@ -128,7 +132,7 @@ def import_gem(input_file: str,
                             left_on = ['node_loc', 'technology'],
                             right_on = ['node_loc', 'technology'],
                             how = 'left')
-    inv_cost['value'] = np.where(inv_cost['value_update'] > 0, inv_cost['value_update'], inv_cost['value'])
+    inv_cost['value'] = np.where(inv_cost['value_update'] > 0, round(inv_cost['value_update'],0), inv_cost['value'])
     inv_cost['year_vtg'] = 'broadcast'
     inv_cost['unit'] = 'USD/km'
     inv_cost = inv_cost[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
@@ -154,24 +158,52 @@ def import_gem(input_file: str,
     
     hist_cap['YEAR'] = 5 * round(hist_cap['YEAR'].astype(float)/5) # Round year to the nearest 5
     hist_cap = hist_cap.groupby(['EXPORTER', 'IMPORTER', 'YEAR'])['CAPACITY_KM'].sum().reset_index()
-    hist_cap = hist_cap[(hist_cap['YEAR'] < 2030) & (hist_cap['YEAR'] > 1999)]
+    hist_cap = hist_cap[(hist_cap['YEAR'] < first_model_year) & (hist_cap['YEAR'] > 1999)]
     hist_cap = hist_cap[(hist_cap['EXPORTER'] != '') & (hist_cap['IMPORTER'] != '')] 
     hist_cap = hist_cap[hist_cap['EXPORTER'] != hist_cap['IMPORTER']] 
     hist_cap['CAPACITY_KM'] = round(hist_cap['CAPACITY_KM'], 0)
+    hist_cap = hist_cap.sort_values(by = ['EXPORTER', 'IMPORTER', 'YEAR'], ascending = True)
+
+    # Base file with all historical timesteps
+    hist_cap_base = pd.DataFrame()
+    for y in list(range(2000, 2030, 5)):
+        ydf = hist_cap[['EXPORTER', 'IMPORTER']].drop_duplicates().copy()
+        ydf['YEAR'] = y
+        hist_cap_base = pd.concat([hist_cap_base, ydf])
+    hist_cap_base = hist_cap_base[(hist_cap_base['EXPORTER'] != '') & (hist_cap_base['IMPORTER'] != '')]   
+    hist_cap_2000 = hist_cap_base[hist_cap_base['YEAR'] == 2000]
     
-    # hist_cap_base = pd.DataFrame()
-    # for y in list(range(2000, 2030, 5)):
-    #     ydf = hist_cap[['EXPORTER', 'IMPORTER']].drop_duplicates().copy()
-    #     ydf['YEAR'] = y
-    #     hist_cap_base = pd.concat([hist_cap_base, ydf])
-    # hist_cap_base = hist_cap_base[(hist_cap_base['EXPORTER'] != '') & (hist_cap_base['IMPORTER'] != '')]   
-    # hist_cap = hist_cap_base.merge(hist_cap, 
-    #                                left_on = ['EXPORTER', 'IMPORTER', 'YEAR'], 
-    #                                right_on = ['EXPORTER', 'IMPORTER', 'YEAR'], how = 'left')
+    hist_cap = hist_cap_2000.merge(hist_cap, 
+                                   left_on = ['EXPORTER', 'IMPORTER', 'YEAR'], 
+                                   right_on = ['EXPORTER', 'IMPORTER', 'YEAR'], how = 'outer') # Set 2005 to 0 if missing
+    hist_cap['CAPACITY_KM'] = np.where(hist_cap['CAPACITY_KM'].isnull(), 0, hist_cap['CAPACITY_KM'])
+    
+    hist_cap['YEAR_DIFF'] = hist_cap['YEAR'].diff() # Interpolation
+    hist_cap['YEAR_DIFF'] = np.where(hist_cap['YEAR_DIFF'] <= 5, 0, hist_cap['YEAR_DIFF'])
+    hist_cap['TIMESTEPS'] = hist_cap['YEAR_DIFF']/5 # Number of timesteps (5 years) between each set up new capacity
+    hist_cap['INTERPOLATE_CAPACITY'] = hist_cap['CAPACITY_KM'] / hist_cap['TIMESTEPS']
+    hist_cap = hist_cap[['EXPORTER', 'IMPORTER', 'YEAR', 'CAPACITY_KM', 'INTERPOLATE_CAPACITY']]
+    
+    hist_cap = hist_cap_base.merge(hist_cap, 
+                                   left_on = ['EXPORTER', 'IMPORTER', 'YEAR'], 
+                                   right_on = ['EXPORTER', 'IMPORTER', 'YEAR'], how = 'left')
+    
+    hist_cap = hist_cap.sort_values(by = ['EXPORTER', 'IMPORTER', 'YEAR'], ascending = False)
+    hist_cap['INTERPOLATE_CAPACITY'] = hist_cap.groupby(['EXPORTER', 'IMPORTER'])['INTERPOLATE_CAPACITY'].transform('ffill')
+    hist_cap['CAPACITY_KM'] = np.where(hist_cap['INTERPOLATE_CAPACITY'] <1e9, round(hist_cap['INTERPOLATE_CAPACITY'],0), hist_cap['CAPACITY_KM'])
+    hist_cap['CAPACITY_KM'] = np.where(hist_cap['CAPACITY_KM'].isnull(), 0, hist_cap['CAPACITY_KM'])
+    hist_cap = hist_cap[['EXPORTER', 'IMPORTER', 'YEAR', 'CAPACITY_KM']]
+    hist_cap = hist_cap.sort_values(by = ['EXPORTER', 'IMPORTER', 'YEAR'], ascending = True) # To check
+    
+    # hist_cap['CAPACITY_KM'] = np.where((hist_cap['YEAR'] == 2025) & (hist_cap['CAPACITY_KM'] == 0),
+    #                                    1, hist_cap['CAPACITY_KM'])
+    
+    hist_cap['CAPACITY_KM'] = hist_cap['CAPACITY_KM']/5  # Duration time is 5 years
     
     hist_cap['node_loc'] = hist_cap['EXPORTER']
     hist_cap['technology'] = flow_technology + '_' + hist_cap['IMPORTER'].str.lower().str.split('_').str[-1]
     hist_cap['value'] = round(hist_cap['CAPACITY_KM'],0)
+    hist_cap['YEAR'] = hist_cap['YEAR'].astype(int)
     hist_cap = message_ix.make_df('historical_new_capacity',
                                   node_loc = hist_cap['node_loc'],
                                   technology = hist_cap['technology'],

@@ -33,6 +33,7 @@ def activity_to_csv(trade_tec,
                     flow_tec,
                     trade_commodity,
                     flow_commodity,
+                    flow_unit,
                     model_scenario_dict,
                     first_model_year = 2030):
     
@@ -55,14 +56,20 @@ def activity_to_csv(trade_tec,
         outputdf = scen.par("output")
         outputdf = outputdf[['node_loc', 'technology', 'commodity', 'year_act', 'value', 'unit']].drop_duplicates().reset_index()
         
+        capacity = scen.var("CAP")
+        capacity = capacity[['node_loc', 'technology', 'year_act', 'lvl']].drop_duplicates()
+        capacity = capacity.rename(columns = {'lvl': 'level'})
+        capacity['commodity'] = flow_commodity
+        capacity['unit'] = flow_unit
+        
         hist_activity = scen.par('historical_activity')
         hist_activity = hist_activity[['node_loc', 'technology', 'year_act', 'value']].drop_duplicates().reset_index()
         hist_activity = hist_activity.rename(columns = {'value': 'lvl'})
         hist_activity['activity_type'] = 'historical'
         activity = pd.concat([hist_activity, activity])
 
-        activity['MODEL'] = model_name
-        activity['SCENARIO'] = scenario_name
+        activity['MODEL'] = capacity['MODEL'] = model_name
+        activity['SCENARIO'] = capacity['SCENARIO'] = scenario_name
         
         act_in = activity.merge(inputdf, 
                                  left_on = ['node_loc', 'technology', 'year_act'],
@@ -89,9 +96,9 @@ def activity_to_csv(trade_tec,
                             (act_in['technology'].str.contains('_exp') == False) &\
                             (act_in['technology'].str.contains('_imp') == False)].copy()
         
-        flow_output = act_out[(act_out['technology'].str.contains(flow_tec)) &\
-                              (act_out['technology'].str.contains('_exp') == False) &\
-                              (act_out['technology'].str.contains('_imp') == False)].copy()
+        flow_output = capacity[(capacity['technology'].str.contains(flow_tec)) &\
+                               (capacity['technology'].str.contains('_exp') == False) &\
+                               (capacity['technology'].str.contains('_imp') == False)].copy()
         
         exports['IMPORTER'] = 'R12_' + exports['technology'].str.upper().str.split('_').str[-1]
         exports = exports.rename(columns = {'node_loc': 'EXPORTER',
@@ -144,11 +151,12 @@ activity_to_csv(trade_tec = "gas",
                 flow_tec = "gas_pipe",
                 trade_commodity = 'gas (GWa)',
                 flow_commodity = 'gas_pipeline_capacity',
+                flow_unit = 'km',
                 model_scenario_dict = models_scenarios)
 
-activity_to_csv(trade_tec = "LNG", 
-                flow_tec = "LNG_tanker",
-                trade_commodity = 'LNG (GWa)',
-                flow_commodity = 'LNG tanker capacity (Mt-km)',
-                model_scenario_dict = models_scenarios)
+# activity_to_csv(trade_tec = "LNG", 
+#                 flow_tec = "LNG_tanker",
+#                 trade_commodity = 'LNG (GWa)',
+#                 flow_commodity = 'LNG tanker capacity (Mt-km)',
+#                 model_scenario_dict = models_scenarios)
 
