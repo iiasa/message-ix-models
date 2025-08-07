@@ -280,7 +280,7 @@ def multiply_electricity_output_of_hydro(
             continue
         tech_suffix = match.group(0)
 
-        tech = perf_data[perf_data["techology_name"] == tech_suffix]
+        tech = perf_data[perf_data["technology_name"] == tech_suffix]
         if tech.empty:
             log.error(f"No performance data found for technology: {tech_suffix}")
             continue
@@ -743,8 +743,12 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     map_agg_pd = pd.DataFrame(
         [
             ["Water Extraction", extract_gw + extract_fgw + extract_sw, "MCM/yr"],
-            ["Water Extraction|Groundwater", extract_gw, "MCM/yr"],
-            ["Water Extraction|Brackish Water", extract_fgw, "MCM/yr"],
+            ["Water Extraction|Groundwater", extract_gw + extract_fgw, "MCM/yr"],
+            [
+                "Water Extraction|Fossil Groundwater",
+                extract_fgw,
+                "MCM/yr",
+            ],
             ["Water Extraction|Surface Water", extract_sw, "MCM/yr"],
             [
                 "Water Extraction|Seawater",
@@ -1409,7 +1413,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     # report_pd = report_pd.drop(columns=["exclude"])
     report_pd["unit"].replace("EJ", "EJ/yr", inplace=True)
     # for country model
-    if reg not in ["R11", " R12"] and suban:
+    if reg not in ["R11", "R12"] and suban:
         country_n = map_node_dict["World"][0]
         grouped = report_pd.groupby(
             ["model", "scenario", "variable", "unit", "year", "subannual"]
