@@ -15,13 +15,13 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import (
-    combine_df_dictionaries,
     get_ssp_from_context,
     maybe_remove_water_tec,
     read_config,
 )
 from message_ix_models.util import (
     broadcast,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
@@ -226,7 +226,7 @@ def gen_data(
     # HACK: quick fix to enable compatibility with water build
     maybe_remove_water_tec(scenario, par_dict)
     # add 2020 and 2025 CCS bounds
-    par_dict = combine_df_dictionaries(par_dict, gen_ccs_bounds(s_info))
+    merge_data(par_dict, gen_ccs_bounds(s_info))
 
     return par_dict
 
