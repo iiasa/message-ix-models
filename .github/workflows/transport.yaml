@@ -36,6 +36,8 @@ env:
       "SSP4 policy",
       "SSP5",
       "SSP5 policy",
+      "DIGSY-BEST",
+      "DIGSY-WORST",
       "EDITS-CA",
       "EDITS-HA",
       "LED-SSP1",
