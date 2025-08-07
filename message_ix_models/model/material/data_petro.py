@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
     from message_ix_models.types import ParameterData
+    from message_ix_models.util import Context
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -75,7 +76,9 @@ def gen_mock_demand_petro(
     gdp_elasticity_2020: float,
     gdp_elasticity_2030: float,
 ) -> pd.DataFrame:
-    """Generate petrochemicals demand time series for MESSAGEix regions using GDP elasticities.
+    """Generate petrochemicals demand time series for MESSAGEix regions using GDP
+    elasticities.
+
     TODO: Remove this function since a copy was moved to material_demand_calc.
 
     Parameters
@@ -354,46 +357,15 @@ def broadcast_to_regions(df: pd.DataFrame, global_region: str, nodes: list[str])
     return df
 
 
-def gen_data_petro_chemicals(
-    scenario: "Scenario", dry_run: bool = False
-) -> "ParameterData":
-    """Generate all MESSAGEix parameter data for the petrochemicals sector.
-
-    Parameters
-    ----------
-    scenario :
-        Scenario instance to build petrochemicals model on.
-    dry_run :
-        *Not used, but kept for compatibility.*
-    """
-    # Load configuration
-    context = read_config()
-    config = context["material"]["petro_chemicals"]
-    ssp = get_ssp_from_context(context)
-    # Information about scenario, e.g. node, year
-    s_info = ScenarioInfo(scenario)
-
-    if "R12_CHN" in s_info.N:
-        fname_suffix = "_R12"
-    else:
-        fname_suffix = "_R11"
-
-    # Techno-economic assumptions
-    data_petro = read_data_petrochemicals(fname_suffix)
-    data_petro_ts = read_timeseries(
-        scenario, "petrochemicals", None, f"timeseries{fname_suffix}.csv"
-    )
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
-
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = nodes_ex_world(s_info.N)
-    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
-    yv_ya = s_info.yv_ya
-
+def format_par_data(
+    config: "Context",
+    data_petro: pd.DataFrame,
+    results: dict,
+    yv_ya: pd.DataFrame,
+    modelyears: list[int],
+    nodes: list[str],
+    global_region: str,
+):
     for t in config["technology"]["add"]:
         # Retrieve the id if `t` is a Code instance; otherwise use str
         t = getattr(t, "id", t)
@@ -521,6 +493,51 @@ def gen_data_petro_chemicals(
                     df = broadcast_to_regions(df, global_region, nodes)
 
                 results[param_name].append(df)
+
+
+def gen_data_petro_chemicals(
+    scenario: "Scenario", dry_run: bool = False
+) -> "ParameterData":
+    """Generate all MESSAGEix parameter data for the petrochemicals sector.
+
+    Parameters
+    ----------
+    scenario :
+        Scenario instance to build petrochemicals model on.
+    dry_run :
+        *Not used, but kept for compatibility.*
+    """
+    # Load configuration
+    context = read_config()
+    config = context["material"]["petro_chemicals"]
+    ssp = get_ssp_from_context(context)
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    if "R12_CHN" in s_info.N:
+        fname_suffix = "_R12"
+    else:
+        fname_suffix = "_R11"
+
+    # Techno-economic assumptions
+    data_petro = read_data_petrochemicals(fname_suffix)
+    data_petro_ts = read_timeseries(
+        scenario, "petrochemicals", None, f"timeseries{fname_suffix}.csv"
+    )
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+    yv_ya = s_info.yv_ya
+
+    format_par_data(
+        config, data_petro, results, yv_ya, modelyears, nodes, global_region
+    )
 
     share_dict = {
         "shares": "steam_cracker",
