@@ -25,9 +25,14 @@ def calibrate_mariteam(covered_tec,
                                                  'flow_technology': 'LNG_tanker'},
                                  'crudeoil_shipped': {'astd_ship_type': 'Crude oil tankers',
                                                       'flow_technology': 'crudoil_tanker'}},
-                       mt_output = "MariTEAM_output_2025-07-21.csv"):
+                       mt_output = "MariTEAM_output_2025-07-21.csv",
+                       project_name: str = None,
+                       config_name: str = None):
     # Data paths
-    data_path = os.path.join("P:", "ene.model", "MESSAGE_Trade")
+    config, config_path = bilateralize.load_config(project_name = project_name, 
+                                      config_name = config_name)
+    p_drive = config['p_drive_location']
+    data_path = os.path.join(p_drive, "MESSAGE_Trade")
     mt_path = os.path.join(data_path, "MariTEAM")
     out_path = os.path.join(os.path.dirname(package_data_path("bilateralize")), "bilateralize")
 

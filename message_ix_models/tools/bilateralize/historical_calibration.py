@@ -17,27 +17,56 @@ import pickle
 from pathlib import Path
 from message_ix_models.util import package_data_path
 from message_ix_models.tools.iea import web
+from message_ix_models.tools.bilateralize import bilateralize
 
 # Data paths
-data_path = os.path.join("P:", "ene.model", "MESSAGE_Trade")
-baci_path = os.path.join(data_path, "UN Comtrade", "BACI")
-iea_path = os.path.join(data_path, "IEA")
-iea_web_path = os.path.join(iea_path, "WEB2025")
+# data_path = os.path.join("P:", "ene.model", "MESSAGE_Trade")
+# baci_path = os.path.join(data_path, "UN Comtrade", "BACI")
+# iea_path = os.path.join(data_path, "IEA")
+# iea_web_path = os.path.join(iea_path, "WEB2025")
 
 # Reimport large files?
 reimport_IEA = False
 reimport_BACI = False
 
+# Set up data paths
+def setup_datapath(project_name: str = None,
+                   config_name:str = None):
+    # Pull in configuration
+    config, config_path = bilateralize.load_config(project_name = project_name, 
+                                                   config_name = config_name)
+    p_drive = config['p_drive_location']
+    
+    # Data paths
+    data_path = os.path.join(p_drive, "MESSAGE_Trade")
+    iea_path = os.path.join(data_path, "IEA")
+    iea_diagnostics_path = os.path.join(iea_path, "diagnostics")
+    iea_web_path = os.path.join(iea_path, "WEB2025")
+    iea_gas_path = os.path.join(iea_path, 'NATGAS')
+    baci_path = os.path.join(data_path, "UN Comtrade", "BACI")
+    
+    data_paths = dict(iea_web = iea_web_path,
+                      iea_gas = iea_gas_path,
+                      iea_diag = iea_diagnostics_path,
+                      baci = baci_path)
+    
+    return data_paths
+
 # Dictionaries of ISO - IEA - MESSAGE Regions
-def generate_cfdict(message_regions):
+def generate_cfdict(message_regions,
+                    project_name: str = None,
+                    config_name: str = None):
     
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f) 
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
     
+    data_paths = setup_datapath(project_name = project_name,
+                                config_name = config_name)
+    
     print('Import conversion factors')  
-    cfdf = pd.read_csv(os.path.join(iea_web_path, "CONV.txt"),
+    cfdf = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV.txt"),
                       sep='\s+', header=None,
                       encoding='windows-1252')
     cfdf.columns = ['units', 'country', 'commodity', 'metric', 'year', 'value']
@@ -51,7 +80,7 @@ def generate_cfdict(message_regions):
     cf_out = cfdf.groupby(['country', 'commodity'])['conversion (TJ/t)'].mean().reset_index()
     
     # Link ISO codes
-    cf_cw = pd.read_csv(os.path.join(iea_web_path, "CONV_country_codes.csv"))
+    cf_cw = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV_country_codes.csv"))
     cf_out = cf_out.merge(cf_cw, left_on = 'country', right_on = 'IEA COUNTRY', how = 'inner')
     
     cf_out[message_regions + '_REGION'] = ""
@@ -70,22 +99,24 @@ def generate_cfdict(message_regions):
     cf_iso = cf_out[['ISO', 'R12_REGION', 'commodity', 'conversion (TJ/t)']].copy()
     
     print('Save conversion factors')
-    cf_region.to_csv(os.path.join(iea_web_path, "conv_by_region.csv"))
-    cf_fuel.to_csv(os.path.join(iea_web_path, "conv_by_fuel.csv"))
-    cf_iso.to_csv(os.path.join(iea_web_path, "conv_by_iso.csv"))
+    cf_region.to_csv(os.path.join(data_paths['iea_web'], "conv_by_region.csv"))
+    cf_fuel.to_csv(os.path.join(data_paths['iea_web'], "conv_by_fuel.csv"))
+    cf_iso.to_csv(os.path.join(data_paths['iea_web'], "conv_by_iso.csv"))
     
     print('Full dictionaries')
     full_dict = {message_regions: cf_region,
                  'fuel': cf_fuel,
                  'ISO': cf_iso}
     
-    picklepath = os.path.join(iea_web_path,"conversion_factors.pickle")
+    picklepath = os.path.join(data_paths['iea_web'],"conversion_factors.pickle")
     with open(picklepath, 'wb') as f:
         pickle.dump(full_dict, f)
     
 # Import UN Comtrade data and link to conversion factors
 # This does not include natural gas pipelines or LNG, which are from IEA
-def import_uncomtrade(update_year = 2023):
+def import_uncomtrade(update_year = 2023,
+                      project_name: str = None,
+                      config_name: str = None):
     
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
     with open(dict_dir, "r") as f:
@@ -95,11 +126,13 @@ def import_uncomtrade(update_year = 2023):
     for c in commodity_codes.keys():
         full_hs_list = full_hs_list + commodity_codes[c]['HS']
         
+    data_paths = setup_datapath(project_name = project_name,
+                                config_name = config_name)
     print('Build BACI')     
     df = pd.DataFrame()
     for y in list(range(2005, update_year, 1)):
         print('Importing BACI' + str(y))
-        ydf = pd.read_csv(os.path.join(baci_path, 
+        ydf = pd.read_csv(os.path.join(data_paths['baci'], 
                                        "BACI_HS92_Y" + str(y) + "_V202401b.csv"),
                           encoding='windows-1252')
         ydf['k'] = ydf['k'].astype(str).str.zfill(6)
@@ -110,7 +143,7 @@ def import_uncomtrade(update_year = 2023):
         df = pd.concat([df, ydf])
     
     print('Save pickle')
-    picklepath = os.path.join(baci_path, "full_2005-2022.pickle")
+    picklepath = os.path.join(data_paths['baci'], "full_2005-2022.pickle")
     with open(picklepath, 'wb') as f:
         pickle.dump(df, f)
 
@@ -121,26 +154,30 @@ def import_uncomtrade(update_year = 2023):
                                            (df['hs6'].isin(commodity_codes[c]['HS'])),
                                            commodity_codes[c]['MESSAGE Commodity'], df['MESSAGE Commodity'])     
     
-    countrycw =  pd.read_csv(os.path.join(baci_path, "country_codes_V202401b.csv"))
+    countrycw =  pd.read_csv(os.path.join(data_paths['baci'], "country_codes_V202401b.csv"))
     df = df.merge(countrycw[['country_code', 'country_iso3']], left_on = 'i', right_on = 'country_code', how = 'left')    
     df = df.rename(columns = {'country_iso3': 'i_iso3'})
     df = df.merge(countrycw[['country_code', 'country_iso3']], left_on = 'j', right_on = 'country_code', how = 'left')    
     df = df.rename(columns = {'country_iso3': 'j_iso3'})
     df = df[['t', 'i', 'j',  'i_iso3', 'j_iso3', 'k', 'MESSAGE Commodity', 'v', 'q']]
        
-    df.to_csv(os.path.join(baci_path, "shortenedBACI.csv"))
+    df.to_csv(os.path.join(data_paths['baci'], "shortenedBACI.csv"))
 
 # Convert trade values
 def convert_trade(message_regions,
-                  conversion_factors_loc = iea_web_path):
+                  project_name: str = None,
+                  config_name: str = None):
     
-    df = pd.read_csv(os.path.join(baci_path, "shortenedBACI.csv"))
+    data_paths = setup_datapath(project_name = project_name,
+                                config_name = config_name)
     
-    with open(os.path.join(conversion_factors_loc, "conversion_factors.pickle"), 'rb') as f:
+    df = pd.read_csv(os.path.join(data_paths['baci'], "shortenedBACI.csv"))
+    
+    with open(os.path.join(data_paths['iea_web'], "conversion_factors.pickle"), 'rb') as f:
        conversion_factors = pickle.load(f)
-    with open(os.path.join(conversion_factors_loc, "CONV_addl.yaml"), 'r') as f:
+    with open(os.path.join(data_paths['iea_web'], "CONV_addl.yaml"), 'r') as f:
         conversion_addl = yaml.safe_load(f)
-    cf_codes = pd.read_csv(os.path.join(conversion_factors_loc, "CONV_hs.csv"))
+    cf_codes = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV_hs.csv"))
     
     df['k'] = df['k'].astype(str)
     cf_codes['HS'] = cf_codes['HS'].astype(str)
@@ -220,8 +257,12 @@ def convert_trade(message_regions,
     return df
 
 # Import IEA for LNG and pipeline gas
-def import_iea_gas():
-    ngd = pd.read_csv(os.path.join(iea_path, 'NATGAS', 'WIMPDAT.txt'), sep = '\s+')
+def import_iea_gas(project_name: str = None,
+                   config_name: str = None):
+    data_paths = setup_datapath(project_name = project_name,
+                                config_name = config_name)
+    
+    ngd = pd.read_csv(os.path.join(data_paths['iea_gas'], 'WIMPDAT.txt'), sep = '\s+')
     ngd.columns = ["YEAR", "PRODUCT", "IMPORTER", "EXPORTER", "VALUE"]   
     
     ngd = ngd[ngd['YEAR'] > 1989] # Keep after 1990 only
@@ -234,7 +275,7 @@ def import_iea_gas():
     ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'LNGTJ', 'LNG_shipped', ngd['MESSAGE COMMODITY'])
     ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'PIPETJ', 'gas_piped', ngd['MESSAGE COMMODITY'])
     
-    cf_cw = pd.read_csv(os.path.join(iea_web_path, "CONV_country_codes.csv"))
+    cf_cw = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV_country_codes.csv"))
     for t in ['EXPORTER', 'IMPORTER']:
         ngd = ngd.merge(cf_cw, left_on = t, right_on = 'IEA COUNTRY', how = 'left')
         ngd[t] = ngd['ISO']
@@ -248,10 +289,15 @@ def import_iea_gas():
     return ngd
     
 # Check against IEA balances
-def import_iea_balances():
-    ieadf1 = pd.read_csv(os.path.join(iea_web_path, "EARLYBIG1.txt"),
+def import_iea_balances(project_name:str = None,
+                        config_name:str = None):
+    
+    data_paths = setup_datapath(project_name = project_name,
+                                config_name = config_name)
+    
+    ieadf1 = pd.read_csv(os.path.join(data_paths['iea_web'], "EARLYBIG1.txt"),
                          sep='\s+', header=None)
-    ieadf2 = pd.read_csv(os.path.join(iea_web_path, "EARLYBIG2.txt"),
+    ieadf2 = pd.read_csv(os.path.join(data_paths['iea_web'], "EARLYBIG2.txt"),
                          sep='\s+', header=None)
     
     ieadf = pd.concat([ieadf1, ieadf2])
@@ -271,12 +317,15 @@ def import_iea_balances():
                                     'value': 'IEA-WEB VALUE'})
         iea_out = pd.concat([iea_out, tdf])
     
-    iea_out.to_csv(os.path.join(iea_web_path, "WEB_TRADEFLOWS.csv"))
+    iea_out.to_csv(os.path.join(data_paths['iea_web'], "WEB_TRADEFLOWS.csv"))
     
-def check_iea_balances(indf):
+def check_iea_balances(indf,
+                       project_name:str = None,
+                       config_name:str = None):
+    data_paths = setup_datapath(project_name = project_name, config_name = config_name)
     
-    iea = pd.read_csv(os.path.join(iea_web_path, "WEB_TRADEFLOWS.csv"))
-    ieacw = pd.read_csv(os.path.join(iea_web_path, "country_crosswalk.csv"))
+    iea = pd.read_csv(os.path.join(data_paths['iea_web'], "WEB_TRADEFLOWS.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths['iea_web'], "country_crosswalk.csv"))
     iea = iea.merge(ieacw, left_on = 'REGION', right_on = 'REGION', how = 'left')
     iea['IEA-WEB VALUE'] = np.where(iea['FLOW'] == 'EXPORTS', iea['IEA-WEB VALUE'] * -1, iea['IEA-WEB VALUE'])
         
@@ -306,12 +355,13 @@ def check_iea_balances(indf):
     exports['DIFFERENCE'] = (exports['ENERGY (TJ)'] - exports['IEA-WEB VALUE'])/exports['IEA-WEB VALUE']
     imports['DIFFERENCE'] = (imports['ENERGY (TJ)'] - imports['IEA-WEB VALUE'])/imports['IEA-WEB VALUE']
 
-    exports.to_csv(os.path.join(iea_path, 'diagnostics', 'iea_calibration_exports.csv'))
-    imports.to_csv(os.path.join(iea_path, 'diagnostics', 'iea_calibration_imports.csv'))
+    exports.to_csv(os.path.join(data_paths['iea_diag'], 'iea_calibration_exports.csv'))
+    imports.to_csv(os.path.join(data_paths['iea_diag'], 'iea_calibration_imports.csv'))
     
     
 # Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe
-def reformat_to_parameter(indf, message_regions):
+def reformat_to_parameter(indf, message_regions,
+                          project_name = None, config_name = None):
 
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
@@ -361,18 +411,21 @@ def reformat_to_parameter(indf, message_regions):
     return outdf
 
 # Run all
-def build_historical_activity(message_regions = 'R12'):
+def build_historical_activity(message_regions = 'R12',
+                              project_name = None, config_name = None):
         
     if reimport_IEA == True:
-        generate_cfdict(message_regions = message_regions)    
-        import_iea_balances()
+        generate_cfdict(message_regions = message_regions,
+                        project_name = project_name, config_name = config_name)    
+        import_iea_balances(project_name = project_name, config_name = config_name)
     if reimport_BACI == True:
-        import_uncomtrade()
+        import_uncomtrade(project_name = project_name, config_name = config_name)
         
-    bacidf = convert_trade(message_regions = message_regions)
+    bacidf = convert_trade(message_regions = message_regions,
+                           project_name = project_name, config_name = config_name)
     bacidf = bacidf[bacidf['MESSAGE COMMODITY'] != 'LNG_shipped'] # Get LNG from IEA instead
 
-    ngdf = import_iea_gas()
+    ngdf = import_iea_gas(project_name = project_name, config_name = config_name)
 
     tradedf = bacidf.merge(ngdf, 
                            left_on = ['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'],
@@ -384,9 +437,11 @@ def build_historical_activity(message_regions = 'R12'):
     tradedf['ENERGY (TJ)'] = tradedf['ENERGY (TJ)'].astype(float)
     tradedf = tradedf[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)']].reset_index()
 
-    check_iea_balances(indf = tradedf)
+    check_iea_balances(indf = tradedf,
+                       project_name = project_name, config_name = config_name)
 
     outdf = reformat_to_parameter(indf = tradedf, 
-                                  message_regions = message_regions)
+                                  message_regions = message_regions,
+                                  project_name = project_name, config_name = config_name)
     
     return outdf
