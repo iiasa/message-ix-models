@@ -11,6 +11,7 @@ import yaml
 import message_ix
 import ixmp
 import itertools
+import pickle
 
 from pathlib import Path
 from message_ix_models.util import package_data_path
@@ -68,11 +69,15 @@ for tec in hist_tec.keys():
 #           'unit': ['GWa']}
 # tdf = pd.concat([tdf, pd.DataFrame.from_dict(add_df)])
 # trade_dict['gas_piped']['trade']['historical_activity'] = tdf.reset_index(drop = True)
-    
+
+# Save trade_dictionary
+tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
+with open(tdf, 'wb') as f: pickle.dump(trade_dict, f)
+
 # Update scenario
-clone_and_update(trade_dict=trade_dict,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True)
+# clone_and_update(trade_dict=trade_dict,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True)
