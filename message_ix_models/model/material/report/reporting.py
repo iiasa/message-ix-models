@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Mar  8 12:58:21 2021
 This code produces the follwoing outputs:
@@ -21,10 +20,8 @@ Material_global_grpahs.pdf
 @author: unlu
 """
 
-import warnings
-
-warnings.simplefilter(action="ignore", category=FutureWarning)
 import os
+import warnings
 
 import matplotlib
 import numpy as np
@@ -40,6 +37,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
 
 matplotlib.use("Agg")
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def change_names(s):
