@@ -1,3 +1,7 @@
+# DATA DIRECTORIES
+p_drive_location:
+  /pdrive/projects
+  
 # SCENARIO INFORMATION
 scenario:
   start_model: 

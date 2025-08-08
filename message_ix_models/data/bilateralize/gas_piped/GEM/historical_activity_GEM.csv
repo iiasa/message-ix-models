@@ -1,0 +1,16 @@
+node_loc,technology,year_act,value,unit,mode,time
+R12_EEU,gas_pipe_fsu,2025,570.0,km,M1,year
+R12_EEU,gas_pipe_weu,2025,1843.0,km,M1,year
+R12_FSU,gas_pipe_chn,2025,6582.0,km,M1,year
+R12_FSU,gas_pipe_eeu,2025,2689.0,km,M1,year
+R12_FSU,gas_pipe_mea,2025,1854.0,km,M1,year
+R12_FSU,gas_pipe_weu,2025,9309.0,km,M1,year
+R12_MEA,gas_pipe_eeu,2025,3579.0,km,M1,year
+R12_MEA,gas_pipe_fsu,2025,291.0,km,M1,year
+R12_MEA,gas_pipe_sas,2025,2775.0,km,M1,year
+R12_MEA,gas_pipe_weu,2025,5972.0,km,M1,year
+R12_NAM,gas_pipe_lam,2025,1583.0,km,M1,year
+R12_PAS,gas_pipe_chn,2025,2577.0,km,M1,year
+R12_WEU,gas_pipe_eeu,2025,1679.0,km,M1,year
+R12_WEU,gas_pipe_fsu,2025,253.0,km,M1,year
+R12_WEU,gas_pipe_mea,2025,310.0,km,M1,year

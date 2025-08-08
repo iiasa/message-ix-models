@@ -156,5 +156,4 @@ cache/
 
 # GDX and input files
 */data/bilateralize/gdx/*
-*/data/bilateralize/gas_piped/*
 */data/bilateralize/diagnostics/*
