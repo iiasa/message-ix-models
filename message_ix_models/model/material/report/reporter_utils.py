@@ -342,8 +342,8 @@ def add_methanol_non_energy_computations(rep: message_ix.Reporter):
             "meth_bio_ccs",
             "meth_h2",
         ],
-        "c": "methanol",
-        "l": "primary_material",
+        "c": ["methanol"],
+        "l": ["primary_material"],
     }
     rep.add("out::meth-non-energy", "select", "out:nl-t-ya-m-c-l", t_filter2)
     rep.add(
