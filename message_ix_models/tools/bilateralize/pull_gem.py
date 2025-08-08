@@ -15,13 +15,9 @@ import numpy as np
 import pickle
 
 from pathlib import Path
-from message_ix_models.tools.bilateralize.bilateralize import *
+from message_ix_models.tools.bilateralize import bilateralize
 from message_ix_models.util import package_data_path
 from message_ix_models.tools.iea import web
-
-# Data paths
-data_path = os.path.join("P:", "ene.model", "MESSAGE_Trade")
-gem_path = os.path.join(data_path, "Global Energy Monitor")
 
 oil_pipeline_file = 'GEM-GOIT-Oil-NGL-Pipelines-2025-03.xlsx'
 oil_pipeline_sheet = 'Pipelines'
@@ -33,8 +29,8 @@ gas_pipeline_sheet = 'Gas Pipelines 2024-12-17'
 def gem_region(project_name = None, 
                config_name = None):
     
-    config, config_path = load_config(project_name = project_name, 
-                                      config_name = config_name)
+    config, config_path = bilateralize.load_config(project_name = project_name, 
+                                                   config_name = config_name)
     with open(config_path, "r") as f:
         config = yaml.safe_load(f) 
     message_regions = config['scenario']['regions']
@@ -55,7 +51,16 @@ def import_gem(input_file: str,
                project_name:str = None,
                config_name: str = None,
                first_model_year: int = 2030):
+
+    # Pull in configuration
+    config, config_path = bilateralize.load_config(project_name = project_name, 
+                                                   config_name = config_name)
+    p_drive = config['p_drive_location']
     
+    # Data paths
+    data_path = os.path.join(p_drive, "MESSAGE_Trade")
+    gem_path = os.path.join(data_path, "Global Energy Monitor")
+
     df = pd.read_excel(os.path.join(gem_path, input_file),
                        sheet_name = input_sheet)
     
