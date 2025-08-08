@@ -27,7 +27,7 @@ from message_ix_models.tools.bilateralize import bilateralize
 
 # Reimport large files?
 reimport_IEA = False
-reimport_BACI = False
+reimport_BACI = True
 
 # Set up data paths
 def setup_datapath(project_name: str = None,
