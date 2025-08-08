@@ -140,6 +140,9 @@ def load_config(name: str):
     file_agg = f"{name}_reporting_aggregates.yaml"
 
     rep_var_dict = read_yaml_file(path.joinpath(file))
+    assert rep_var_dict is not None, (
+        f"Could not find reporting variable mapping: {file}"
+    )
     mappings = create_var_map_from_yaml_dict(rep_var_dict)
     variable_prefix = rep_var_dict.get("iamc_prefix")
     unit = rep_var_dict.get("common").get("unit")
@@ -147,7 +150,7 @@ def load_config(name: str):
 
     if os.path.exists(path.joinpath(file_agg)):
         rep_var_dict_agg = read_yaml_file(path.joinpath(file_agg))
-
+        assert rep_var_dict_agg is not None
         filters_mapping = (
             mappings.copy(deep=True)
             .drop(["iamc_name"], axis=1)
