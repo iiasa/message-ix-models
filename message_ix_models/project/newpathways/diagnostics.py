@@ -145,7 +145,7 @@ def activity_to_csv(trade_tec,
     
 # Retrieve trade flow activities
 models_scenarios = {#'NP_SSP2_baseline': 'v5.2',
-                    'NP_SSP2': 'pipelines_only'}
+                    'NP_SSP2': 'pipelines_LNG'}
  
 activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_pipe",
@@ -154,9 +154,10 @@ activity_to_csv(trade_tec = "gas",
                 flow_unit = 'km',
                 model_scenario_dict = models_scenarios)
 
-# activity_to_csv(trade_tec = "LNG", 
-#                 flow_tec = "LNG_tanker",
-#                 trade_commodity = 'LNG (GWa)',
-#                 flow_commodity = 'LNG tanker capacity (Mt-km)',
-#                 model_scenario_dict = models_scenarios)
+activity_to_csv(trade_tec = "LNG", 
+                flow_tec = "LNG_tanker",
+                trade_commodity = 'LNG (GWa)',
+                flow_commodity = 'LNG_tanker_capacity',
+                flow_unit = 'Mt-km',
+                model_scenario_dict = models_scenarios)
 
