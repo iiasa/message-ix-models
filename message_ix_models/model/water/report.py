@@ -7,7 +7,7 @@ import pandas as pd
 import pyam
 from message_ix import Reporter, Scenario
 
-from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa, USD_KM3_TO_USD_MCM
+from message_ix_models.model.water.utils import USD_KM3_TO_USD_MCM, m3_GJ_TO_MCM_GWa
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
@@ -1300,13 +1300,19 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         "Price|Drinking Water|Urban",
         "Price|Drinking Water|Rural",
     )
+
+    def weighted_average_safe(x):
+        if x.wdr.sum() == 0:
+            return np.nan if len(x) == 0 else x.value.mean()
+        return np.average(x.value, weights=x.wdr)
+
     wr_dri_m = (
         wr_dri.groupby(
             ["region", "unit", "year"]
             if not suban
             else ["region", "unit", "year", "subannual"]
         )
-        .apply(lambda x: np.average(x.value, weights=x.wdr))
+        .apply(weighted_average_safe)
         .reset_index()
     )
     wr_dri_m["value"] = wr_dri_m[0]
@@ -1394,9 +1400,11 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         pop_sdg6 = pop_water_access(sc, reg, sdgs)
         report_pd = pd.concat([report_pd, pop_sdg6])
 
-    # add units
-    for index, row in map_agg_pd.iterrows():
-        report_pd.loc[(report_pd.variable == row["names"]), "unit"] = row["unit"]
+    # add units wo loop to reduce complexity
+    unit_mapping = dict(zip(map_agg_pd["names"], map_agg_pd["unit"]))
+    report_pd["unit"] = (
+        report_pd["variable"].map(unit_mapping).fillna(report_pd["unit"])
+    )
 
     df_unit = pyam.IamDataFrame(report_pd)
     df_unit.convert_unit("GWa", to="EJ", inplace=True)
