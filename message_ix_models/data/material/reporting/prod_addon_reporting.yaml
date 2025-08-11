@@ -5,8 +5,7 @@
 var:
   ACT
 
-common:
-  unit: Mt/yr
+unit: Mt/yr
 
 iamc_prefix:
   Production|
