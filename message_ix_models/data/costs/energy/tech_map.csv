@@ -48,7 +48,7 @@ h2_i,weo,ccgt_chp,97,,2030
 h2_liq,weo,igcc,820,,
 h2_smr,weo,igcc,737,,2010
 h2_smr_ccs,weo,igcc_ccs,1361,,2030
-h2_pyro_elec,weo,igcc,1227,,2030
+h2_pyro_elec,weo,igcc_ccs,1227,,2030
 heat_i,weo,ccgt_chp,50,0.238,1985
 hp_el_i,weo,ccgt_chp,800,0.1338,2010
 hp_gas_i,weo,ccgt_chp,880,,2010
