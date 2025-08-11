@@ -74,10 +74,3 @@ for tec in hist_tec.keys():
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
 with open(tdf, 'wb') as f: pickle.dump(trade_dict, f)
 
-# Update scenario
-# clone_and_update(trade_dict=trade_dict,
-#                  project_name = 'newpathways',
-#                  config_name = 'config.yaml',
-#                  log=log,
-#                  to_gdx = False,
-#                  solve = True)
