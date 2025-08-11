@@ -31,14 +31,12 @@ message_regions = config['scenario']['regions']
 log = get_logger(__name__)
 
 # Read and inflate sheets based on model horizon
-trade_dict = build_parameter_sheets(project_name = 'newpathways',
-                                    config_name = 'config.yaml',
+trade_dict = build_parameter_sheets(project_name = 'newpathways', config_name = 'config.yaml',
                                     log=log)
 
 # Historical calibration for trade technology
 histdf = build_historical_activity(message_regions,
-                                   project_name = 'newpathways',
-                                   config_name = 'config.yaml')
+                                   project_name = 'newpathways', config_name = 'config.yaml')
 histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
 histdf['year_act'] = np.where(histdf['year_act'] == 2023, 2025, histdf['year_act']) # TODO: Assume 2023 values FOR NOW 
 histdf = histdf[histdf['value'] > 0]
@@ -52,6 +50,19 @@ for tec in hist_tec.keys():
     log.info('Add historical activity for ' + tec)
     add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
     trade_dict[tec]['trade']['historical_activity'] = add_df
+
+# Variable cost for shipped technologies
+costdf = build_historical_price(message_regions,
+                                project_name = 'newpathways', config_name = 'config.yaml')
+cost_tec = {}
+for tec in [i for i in covered_tec if 'shipped' in i]:
+    add_tec = config[tec + '_trade']['trade_technology'] + '_exp'
+    cost_tec[tec] = add_tec
+
+for tec in cost_tec.keys():
+    log.info('Add variable cost for ' + tec)
+    add_df = costdf[costdf['technology'].str.contains(cost_tec[tec])]
+    trade_dict[tec]['trade']['var_cost'] = add_df
     
 ## MANUAL ADDITIONS
 # Set emission factors for piped gas # TODO
