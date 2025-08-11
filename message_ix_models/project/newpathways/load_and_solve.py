@@ -39,5 +39,5 @@ clone_and_update(trade_dict=trade_parameters,
                  project_name = 'newpathways',
                  config_name = 'config.yaml',
                  log=log,
-                 to_gdx = True,
-                 solve = False)
+                 to_gdx = False,
+                 solve = True)
