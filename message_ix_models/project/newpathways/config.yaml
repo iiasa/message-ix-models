@@ -13,7 +13,7 @@ scenario:
   target_model:
     NP_SSP2
   target_scen:
-    pipelines_only
+    pipelines_LNG
   first_model_year:
     2030
   regions:
@@ -22,7 +22,7 @@ scenario:
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
   - gas_piped
-  #- LNG_shipped
+  - LNG_shipped
 
 # TRADE LIFETIMES
 trade_lifetimes:

@@ -605,7 +605,7 @@ def generate_bare_sheets(
                                                     commodity = config_dict['flow_commodity_output'][tec],
                                                     unit = config_dict['flow_units'][tec],
                                                     level = config_dict['trade_level'][tec],
-                                                    time = 'year', time_origin = 'year',
+                                                    time = 'year', time_dest = 'year',
                                                     **common_years)
                 df_output = pd.concat([df_output, df_output_base])
                 
@@ -820,7 +820,7 @@ def generate_bare_sheets(
                                os.path.join("flow_technology", "technical_lifetime.csv")]
         for reqpar in required_parameters:
             if not os.path.isfile(os.path.join(data_path, tec, "bare_files", reqpar)):
-               base_file = os.path.basename(os.path.join(data_path, tec, "edit_files", reqpar))
+               base_file = os.path.join(data_path, tec, "edit_files", reqpar)
                dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
                shutil.copy2(base_file, dest_file)
                log.info(f"Copied file from edit to bare: {reqpar}")
@@ -966,9 +966,9 @@ def clone_and_update(trade_dict,
                     log.info('Removing base technology...' + t)
                     scen.remove_set('technology', t)
                     
-        # Add to sets: technology, level, commodity
+        # Add to sets: technology, level, commodity, mode
         new_sets = dict()
-        for s in ['technology', 'level', 'commodity']:
+        for s in ['technology', 'level', 'commodity', 'mode']:
             setlist = set(list(trade_dict[tec]['trade']['input'][s].unique()) +\
                           list(trade_dict[tec]['trade']['output'][s].unique()))
                 
@@ -980,7 +980,7 @@ def clone_and_update(trade_dict,
             new_sets[s] = setlist
         
         with scen.transact("Add new sets for " + tec):
-            for s in ['technology', 'level', 'commodity']:
+            for s in ['technology', 'level', 'commodity', 'mode']:
                 base_set = list(scen.set(s))
                 for i in new_sets[s]:
                     if i not in base_set:
@@ -1038,13 +1038,14 @@ def clone_and_update(trade_dict,
         # Update bunker fuels
         bunker_tec = config.get(tec + '_trade').get('bunker_technology')
         if bunker_tec != None:
-            bunkerdf_in = scen.par('input', filters = {'technology': bunker_tec})
-            bunkerdf_out = bunkerdf_in.copy()
-            bunkerdf_out['level'] = 'bunker'
-            with scen.transact('Update bunker fuel for' + tec):
-                log.info('Updating bunker level for ' + tec)
-                scen.remove_par('input', bunkerdf_in)
-                scen.add_par('input', bunkerdf_out)
+            for btec in bunker_tec.keys():
+                bunkerdf_in = scen.par('input', filters = {'technology': bunker_tec[btec]})
+                bunkerdf_out = bunkerdf_in.copy()
+                bunkerdf_out['level'] = 'bunker'
+                with scen.transact('Update bunker fuel for' + tec):
+                    log.info('Updating bunker level for ' + tec)
+                    scen.remove_par('input', bunkerdf_in)
+                    scen.add_par('input', bunkerdf_out)
             
     if (to_gdx == True) & (solve == False):
         save_to_gdx(mp = mp,
