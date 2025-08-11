@@ -8,9 +8,7 @@ var:
 iamc_prefix:
   Final Energy|Non-Energy Use|
 
-common:
-  unit:
-    GWa
+unit: GWa
 
 
 level_4:

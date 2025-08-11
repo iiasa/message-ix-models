@@ -18,11 +18,11 @@ from message_ix_models.util import broadcast, package_data_path
 class ReporterConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     iamc_prefix: str
-    message_query_key: Literal[
+    var: Literal[
         "out", "in", "ACT", "emi", "CAP"
     ]  # TODO: try to import message_ix.Reporter keys here
     unit: Literal["Mt/yr", "GWa", "Mt CH4/yr", "GW"]
-    df_mapping: pd.DataFrame  # TODO: use pandera to check on columns/dtypes etc.
+    mapping: pd.DataFrame  # TODO: use pandera to check on columns/dtypes etc.
 
 
 def create_agg_var_map_from_yaml(dictionary: dict, level: int = 1):
@@ -144,9 +144,7 @@ def load_config(name: str):
         f"Could not find reporting variable mapping: {file}"
     )
     mappings = create_var_map_from_yaml_dict(rep_var_dict)
-    variable_prefix = rep_var_dict.get("iamc_prefix")
-    unit = rep_var_dict.get("common").get("unit")
-    var = rep_var_dict.get("var")
+    rep_var_dict.pop("vars")
 
     if os.path.exists(path.joinpath(file_agg)):
         rep_var_dict_agg = read_yaml_file(path.joinpath(file_agg))
@@ -183,13 +181,9 @@ def load_config(name: str):
             )
             counter += 1
 
+    rep_var_dict["mapping"] = mappings
     # Creating config model and validate with pydantic
-    config = ReporterConfig(
-        iamc_prefix=variable_prefix,
-        message_query_key=var,
-        unit=unit,
-        df_mapping=mappings,
-    )
+    config = ReporterConfig(**rep_var_dict)
     return config
 
 
@@ -221,11 +215,11 @@ def run_fe_methanol_nh3_reporting(
     """
     nh3_mt_to_gwa = 0.697615
     fe_config = load_config("fe_methanol_ammonia")
-    df_fe = pyam_df_from_rep(rep, fe_config.message_query_key, fe_config.df_mapping)
+    df_fe = pyam_df_from_rep(rep, fe_config.var, fe_config.mapping)
 
     fs_config = load_config("fs1")
     fs_config.iamc_prefix = fe_config.iamc_prefix
-    df_fs = pyam_df_from_rep(rep, fs_config.message_query_key, fs_config.df_mapping)
+    df_fs = pyam_df_from_rep(rep, fs_config.var, fs_config.mapping)
     df_fs.loc[df_fs.index.get_level_values("iamc_name").str.contains("Ammonia")] *= (
         nh3_mt_to_gwa
     )
@@ -237,7 +231,7 @@ def run_fe_methanol_nh3_reporting(
         model_name,
         scen_name,
         fe_config.unit,
-        fe_config.df_mapping,
+        fe_config.mapping,
     )
     return py_df
 
@@ -245,9 +239,9 @@ def run_fe_methanol_nh3_reporting(
 def run_ch4_reporting(rep, model_name: str, scen_name: str):
     var = "ch4_emi"
     config = load_config(var)
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     py_df = format_reporting_df(
-        df, config.iamc_prefix, model_name, scen_name, config.unit, config.df_mapping
+        df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
     )
     return py_df
 
@@ -256,18 +250,18 @@ def run_fe_reporting(rep: message_ix.Reporter, model: str, scenario: str):
     dfs = []
 
     config = load_config("fe")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
-            df, config.iamc_prefix, model, scenario, config.unit, config.df_mapping
+            df, config.iamc_prefix, model, scenario, config.unit, config.mapping
         )
     )
 
     config = load_config("fe_solar")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
-            df, config.iamc_prefix, model, scenario, config.unit, config.df_mapping
+            df, config.iamc_prefix, model, scenario, config.unit, config.mapping
         )
     )
 
@@ -528,7 +522,7 @@ def split_fe_other(
 def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
     hvc_config = load_config("fs2")
-    df_hvc = pyam_df_from_rep(rep, hvc_config.message_query_key, hvc_config.df_mapping)
+    df_hvc = pyam_df_from_rep(rep, hvc_config.var, hvc_config.mapping)
     dfs.append(
         format_reporting_df(
             df_hvc,
@@ -536,14 +530,12 @@ def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
             model_name,
             scen_name,
             hvc_config.unit,
-            hvc_config.df_mapping,
+            hvc_config.mapping,
         )
     )
 
     nh3_meth_config = load_config("fs1")
-    df_nh3_meth = pyam_df_from_rep(
-        rep, nh3_meth_config.message_query_key, nh3_meth_config.df_mapping
-    )
+    df_nh3_meth = pyam_df_from_rep(rep, nh3_meth_config.var, nh3_meth_config.mapping)
     df_nh3_meth.loc[
         df_nh3_meth.index.get_level_values("iamc_name").str.contains("Ammonia")
     ] *= 0.697615
@@ -554,7 +546,7 @@ def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
             model_name,
             scen_name,
             nh3_meth_config.unit,
-            nh3_meth_config.df_mapping,
+            nh3_meth_config.mapping,
         )
     )
     py_df = pyam.concat(dfs)
@@ -719,7 +711,7 @@ def split_mto_feedstock(
 def run_prod_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
     config = load_config("prod")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     df.loc[df.index.get_level_values("iamc_name").str.contains("Methanol")] /= 0.697615
     dfs.append(
         format_reporting_df(
@@ -728,12 +720,12 @@ def run_prod_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str
             model_name,
             scen_name,
             config.unit,
-            config.df_mapping,
+            config.mapping,
         )
     )
 
     config = load_config("prod_addon")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
             df,
@@ -741,7 +733,7 @@ def run_prod_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str
             model_name,
             scen_name,
             config.unit,
-            config.df_mapping,
+            config.mapping,
         )
     )
 

@@ -8,8 +8,7 @@ var:
 iamc_prefix:
   Final Energy|Industry|
 
-common:
-  unit: GWa
+unit: GWa
 
 vars:
   Chemicals|Ammonia|Electricity:
