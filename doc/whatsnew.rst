@@ -1,8 +1,12 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Update documentation for
+  :doc:`project/newpathways`,(:pull:`385`).
+
 
 v2025.8.7
 =========
