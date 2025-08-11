@@ -22,9 +22,11 @@ from message_ix_models.tools.bilateralize import bilateralize
 def calibrate_mariteam(covered_tec,
                        message_regions,
                        mtdict = {'LNG_shipped': {'astd_ship_type': 'Gas tankers',
-                                                 'flow_technology': 'LNG_tanker'},
+                                                 'flow_technology': 'LNG_tanker_LNG',
+                                                 'flow_input': 'LNG'},
                                  'crudeoil_shipped': {'astd_ship_type': 'Crude oil tankers',
-                                                      'flow_technology': 'crudoil_tanker'}},
+                                                      'flow_technology': 'crudoil_tanker_foil',
+                                                      'flow_input': 'foil'}},
                        mt_output = "MariTEAM_output_2025-07-21.csv",
                        project_name: str = None,
                        config_name: str = None):
@@ -44,8 +46,7 @@ def calibrate_mariteam(covered_tec,
         
         basedf = mtdf[mtdf['astd_ship_type'] == mtdict[tec]['astd_ship_type']].copy()
         basedf['node_loc'] = basedf[message_regions + '_origin']
-        basedf['technology'] = basedf[message_regions + '_destination'].str.replace(message_regions + '_', '').str.lower()
-        basedf['technology'] = mtdict[tec]['flow_technology'] + '_' + basedf['technology']
+        basedf['technology'] = mtdict[tec]['flow_technology']
         
         # Fuel consumption (input)
         mt_input = basedf.copy()
@@ -53,7 +54,7 @@ def calibrate_mariteam(covered_tec,
         mt_input['mt_value'] = mt_input['mt_value']*3.17e-11 # GWa/t-km
         mt_input['mt_value'] = mt_input['mt_value']*1e6 # GWa/Mt-km
         mt_input['unit'] = 'GWa' # denominator assumed in output
-        mt_input = mt_input[['node_loc', 'technology', 'mt_value', 'unit']]
+        mt_input = mt_input.groupby(['node_loc', 'technology', 'unit'])['mt_value'].sum().reset_index()
         
         regavg = basedf.groupby(['node_loc'])[['energy_mj_sum', 'dwt', 'distance_km_sum']].sum().reset_index()
         regavg['mt_value_reg'] = regavg['energy_mj_sum']/(regavg['dwt']*regavg['distance_km_sum'])
@@ -80,7 +81,8 @@ def calibrate_mariteam(covered_tec,
         histdf['value'] = histdf['value'] / 1e6 # Mt-km
         histdf['unit'] = 'Mt-km'
         histdf['year_act'] = 2025 # last historical year
-        histdf['mode'] = 'M1'
+        histdf['mode'] = histdf['R12_origin'].str.replace(message_regions + '_', '') + '-' +\
+                            histdf['R12_destination'].str.replace(message_regions + '_', '')
         histdf['time'] = 'year'
         histdf = histdf[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
         
