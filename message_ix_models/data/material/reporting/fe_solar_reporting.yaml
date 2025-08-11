@@ -9,8 +9,7 @@ var:
 iamc_prefix:
   Final Energy|Industry|
 
-common:
-  unit: GWa
+unit: GWa
 
 vars:
   Other Sector|Solar:

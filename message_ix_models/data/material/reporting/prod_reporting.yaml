@@ -8,8 +8,7 @@ var:
 iamc_prefix:
   Production|
 
-common:
-  unit: Mt/yr
+unit: Mt/yr
 
 vars:
   #chemicals
