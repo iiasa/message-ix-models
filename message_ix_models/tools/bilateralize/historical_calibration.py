@@ -451,6 +451,7 @@ def build_historical_activity(message_regions = 'R12',
     return outdf
 
 # Run all for price
+import pydeflate
 def build_historical_price(message_regions = 'R12',
                            project_name = None, config_name = None):
         
@@ -463,7 +464,7 @@ def build_historical_price(message_regions = 'R12',
                                            'LNG_shipped', bacidf['MESSAGE COMMODITY'])
     
     bacidf['ENERGY (GWa)'] = bacidf['ENERGY (TJ)'] * (3.1712 * 1e-5) # TJ to GWa
-    bacidf['VALUE (MUSD)'] = bacidf['VALUE (1000USD)'] * 1e-3
+    bacidf['VALUE (MUSD)'] = bacidf['VALUE (1000USD)'] * 1e-3   
     bacidf['PRICE (MUSD/GWa)'] = bacidf['VALUE (MUSD)']/bacidf['ENERGY (GWa)']
     
     bacidf = bacidf[bacidf['ENERGY (TJ)']>0.5] # Keep linkages that are larger than 0.5TJ
@@ -481,5 +482,7 @@ def build_historical_price(message_regions = 'R12',
     
     outdf['value'] = np.where(outdf['value'] > 1000, 1000, outdf['value'])
     outdf['value'] = np.where(outdf['value'] < 150, 150, outdf['value'])
+    
+    outdf['value'] = outdf['value'] * 0.62 # TODO: Fix this deflator (2024-2005?)
     
     return outdf
