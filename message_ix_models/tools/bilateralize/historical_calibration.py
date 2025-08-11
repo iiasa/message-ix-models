@@ -252,7 +252,7 @@ def convert_trade(message_regions,
     df['WEIGHT (t)'] = df['WEIGHT (t)'].astype(float)
     df['ENERGY (TJ)'] = df['WEIGHT (t)'] * df['conversion (TJ/t)']
 
-    df = df[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)']]
+    df = df[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)', 'VALUE (1000USD)']]
     
     return df
 
@@ -360,8 +360,9 @@ def check_iea_balances(indf,
     
     
 # Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe
-def reformat_to_parameter(indf, message_regions,
-                          project_name = None, config_name = None):
+def reformat_to_parameter(indf, message_regions, parameter_name,
+                          project_name = None, config_name = None,
+                          exports_only = False):
 
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
@@ -375,42 +376,41 @@ def reformat_to_parameter(indf, message_regions,
                                                r, indf[t + ' REGION'])
 
     # Collapse to regional level
-    indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])['ENERGY (TJ)'].sum().reset_index()
+    if parameter_name in ['historical_activity']:
+        indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])['ENERGY (GWa)'].sum().reset_index()
+        metric_name = 'ENERGY (GWa)'
+    elif parameter_name in ['var_cost', 'inv_cost', 'fix_cost']:
+        indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])[['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
+        indf['PRICE (MUSD/GWa)'] = indf['VALUE (MUSD)']/indf['ENERGY (GWa)']
+        metric_name = 'PRICE (MUSD/GWa)'
+        
     indf = indf[(indf['EXPORTER REGION'] != '') & (indf['IMPORTER REGION'] != '')]
     indf = indf[indf['EXPORTER REGION'] != indf['IMPORTER REGION']]
     
     # Add MESSAGE columns for exports
-    exdf = indf.copy()
-    exdf['node_loc'] = exdf['EXPORTER REGION']
-    exdf['node_importer'] = exdf['IMPORTER REGION'].str.replace(message_regions + '_', '').str.lower()
-    
-    exdf['technology'] = exdf['MESSAGE COMMODITY'] + '_exp_' + exdf['node_importer']
-    exdf['year_act'] = exdf['YEAR']
-    exdf['mode'] = 'M1'
-    exdf['time'] = 'year'
-    exdf['unit'] = 'GWa'
-    
-    exdf['value'] = exdf['ENERGY (TJ)'] * (3.1712 * 1e-5) # TJ to GWa
-    
-    exdf = exdf[['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit']]
-    
+    exdf = message_ix.make_df(parameter_name,
+                              node_loc = indf['EXPORTER REGION'],
+                              technology = indf['MESSAGE COMMODITY'] + '_exp_' +\
+                                  indf['IMPORTER REGION'].str.replace(message_regions + '_', '').str.lower(),
+                              year_act = indf['YEAR'], year_vtg = indf['YEAR'],
+                              value = indf[metric_name],
+                              mode = 'M1',
+                              time = 'year')
+    outdf = exdf.copy()        
     # Add MESSAGE columns for imports
-    imdf = indf.copy()
-    imdf['node_loc'] = imdf['IMPORTER REGION']    
-    imdf['technology'] = imdf['MESSAGE COMMODITY'] + '_imp'
-    imdf['year_act'] = imdf['YEAR']
-    imdf['mode'] = 'M1'
-    imdf['time'] = 'year'
-    imdf['unit'] = 'GWa'
-    imdf['value'] = imdf['ENERGY (TJ)'] * (3.1712 * 1e-5) # TJ to GWa
-    
-    imdf = imdf[['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit']]
-    
-    outdf = pd.concat([exdf, imdf])
+    if exports_only == False:
+        imdf = message_ix.make_df(parameter_name,
+                                  node_loc = indf['IMPORTER REGION'],
+                                  technology = indf['MESSAGE COMMODITY'] + '_imp',
+                                  year_act = indf['YEAR'], year_vtg = indf['YEAR'],
+                                  value = indf[metric_name],
+                                  mode = 'M1', time = 'year')
+            
+        outdf = pd.concat([outdf, imdf])
     
     return outdf
 
-# Run all
+# Run all for historical activity
 def build_historical_activity(message_regions = 'R12',
                               project_name = None, config_name = None):
         
@@ -423,7 +423,7 @@ def build_historical_activity(message_regions = 'R12',
         
     bacidf = convert_trade(message_regions = message_regions,
                            project_name = project_name, config_name = config_name)
-    bacidf = bacidf[bacidf['MESSAGE COMMODITY'] != 'LNG_shipped'] # Get LNG from IEA instead
+    bacidf = bacidf[bacidf['MESSAGE COMMODITY'] != 'lng'] # Get LNG from IEA instead
 
     ngdf = import_iea_gas(project_name = project_name, config_name = config_name)
 
@@ -439,9 +439,47 @@ def build_historical_activity(message_regions = 'R12',
 
     check_iea_balances(indf = tradedf,
                        project_name = project_name, config_name = config_name)
+    
+    tradedf['ENERGY (GWa)'] = tradedf['ENERGY (TJ)'] * (3.1712 * 1e-5) # TJ to GWa
 
-    outdf = reformat_to_parameter(indf = tradedf, 
+    outdf = reformat_to_parameter(indf = tradedf,
                                   message_regions = message_regions,
+                                  parameter_name = 'historical_activity',
                                   project_name = project_name, config_name = config_name)
+    outdf['unit'] = 'GWa'
+    
+    return outdf
+
+# Run all for price
+def build_historical_price(message_regions = 'R12',
+                           project_name = None, config_name = None):
+        
+    if reimport_BACI == True:
+        import_uncomtrade(project_name = project_name, config_name = config_name)
+        
+    bacidf = convert_trade(message_regions = message_regions,
+                           project_name = project_name, config_name = config_name)    
+    bacidf['MESSAGE COMMODITY'] = np.where(bacidf['MESSAGE COMMODITY'] == 'lng', 
+                                           'LNG_shipped', bacidf['MESSAGE COMMODITY'])
+    
+    bacidf['ENERGY (GWa)'] = bacidf['ENERGY (TJ)'] * (3.1712 * 1e-5) # TJ to GWa
+    bacidf['VALUE (MUSD)'] = bacidf['VALUE (1000USD)'] * 1e-3
+    bacidf['PRICE (MUSD/GWa)'] = bacidf['VALUE (MUSD)']/bacidf['ENERGY (GWa)']
+    
+    bacidf = bacidf[bacidf['ENERGY (TJ)']>0.5] # Keep linkages that are larger than 0.5TJ
+    
+    bacidf = bacidf.groupby(['EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'])[['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
+    bacidf['YEAR'] = 'broadcast'
+    
+    outdf = reformat_to_parameter(indf = bacidf,
+                                  message_regions = message_regions,
+                                  parameter_name = 'var_cost',
+                                  project_name = project_name, config_name = config_name,
+                                  exports_only = True)
+    outdf['unit'] = 'USD/GWa'
+    outdf['value'] = round(outdf['value'], 0)
+    
+    outdf['value'] = np.where(outdf['value'] > 1000, 1000, outdf['value'])
+    outdf['value'] = np.where(outdf['value'] < 150, 150, outdf['value'])
     
     return outdf
