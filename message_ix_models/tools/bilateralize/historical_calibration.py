@@ -451,7 +451,6 @@ def build_historical_activity(message_regions = 'R12',
     return outdf
 
 # Run all for price
-import pydeflate
 def build_historical_price(message_regions = 'R12',
                            project_name = None, config_name = None):
         
