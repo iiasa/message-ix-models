@@ -14,14 +14,17 @@ import ixmp
 import itertools
 import plotly.graph_objects as go
 
+from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.tools.bilateralize.build_sankey import *
 from message_ix_models.util import package_data_path
 from ixmp import Platform
 
+# Bring in configuration
+config, config_path = load_config(project_name = 'newpathways', 
+                                  config_name = 'config.yaml')
+
 # Connect to ixmp
 mp = ixmp.Platform()
-full_path = package_data_path("bilateralize", "config.yaml")
-config_dir = os.path.dirname(full_path)
 
 # Build Sankey dataframes
 def build_sankeydf(commodities:dict,
@@ -73,4 +76,4 @@ sankey = InteractiveSankey(sankeydf)
 
 # Create dashboard
 dashboard = sankey.create_dashboard()
-dashboard.write_html(os.path.join(config_dir, "diagnostics", "sankey_diagram.html"))
+dashboard.write_html(os.path.join(config_path, "diagnostics", "sankey_diagram.html"))
