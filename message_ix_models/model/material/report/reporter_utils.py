@@ -42,7 +42,7 @@ def create_var_map_from_yaml_dict(dictionary: dict):
     """
     data = dictionary["vars"]
     all = pd.DataFrame()
-    unit = dictionary["common"]["unit"]
+    unit = dictionary["unit"]
     for iamc_key, values in data.items():
         # Extract relevant information
         filter_data = values["filter"]

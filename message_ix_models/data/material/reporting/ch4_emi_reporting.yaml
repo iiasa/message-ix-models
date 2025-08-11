@@ -8,8 +8,7 @@ var:
 iamc_prefix:
   Emissions|CH4|
 
-common:
-  unit: Mt CH4/yr
+unit: Mt CH4/yr
 
 vars:
   Industrial Processes|Chemicals:
