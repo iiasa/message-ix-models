@@ -58,7 +58,7 @@ costdf = build_historical_price(message_regions,
                                 project_name = 'newpathways', config_name = 'config.yaml')
 
 for tec in [i for i in covered_tec if 'shipped' in i]:
-    log.info('Add variable cost for ' + tec)
-    add_df = costdf[costdf['technology'].str.contains(cost_tec[tec])]
-    add_df.to_csv(os.path.join(data_path, tec, "edit_files", "var_cost.csv"),
+    log.info('Add investment cost for ' + tec)
+    add_df = costdf[costdf['technology'].str.contains(tec)]
+    add_df.to_csv(os.path.join(data_path, tec, "edit_files", "inv_cost.csv"),
                   index = False)

@@ -22,6 +22,7 @@ from ixmp import Platform
 # Bring in configuration
 config, config_path = load_config(project_name = 'newpathways', 
                                   config_name = 'config.yaml')
+data_path = os.path.dirname(config_path)
 
 # Connect to ixmp
 mp = ixmp.Platform()
@@ -56,7 +57,7 @@ def build_sankeydf(commodities:dict,
 
 sankeydf = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas'},
                           model_name = "NP_SSP2", scenario_name = "pipelines_only")
-
+sankeydf = sankeydf[sankeydf['value'] > 0]
 
 # Load data
 # Create sankey visualizer
@@ -76,4 +77,4 @@ sankey = InteractiveSankey(sankeydf)
 
 # Create dashboard
 dashboard = sankey.create_dashboard()
-dashboard.write_html(os.path.join(config_path, "diagnostics", "sankey_diagram.html"))
+dashboard.write_html(os.path.join(data_path, "diagnostics", "sankey_diagram_pipelines.html"))
