@@ -11,7 +11,7 @@ from message_ix_models.model.water.data.infrastructure import (
 from message_ix_models.util import package_data_path
 
 
-def get_technology_categories_from_source():
+def _get_technology_categories():
     """Extract technology categories and cost data directly from source data files."""
     # Get infrastructure technologies from water_distribution.csv
     infra_path = package_data_path("water", "infrastructure", "water_distribution.csv")
@@ -88,6 +88,57 @@ def _get_required_columns(function_type):
         output_required_cols = base_output_cols + ["time"]
 
     return input_required_cols, output_required_cols
+
+
+@pytest.fixture(scope="function")
+def water_function_test_data(test_context, request):
+    """Unified fixture for testing both infrastructure and desalination functions."""
+    # Parse test parameters: (function_type, sdg_config)
+    function_type, sdg_config = request.param
+
+    # Setup test context
+    if sdg_config:
+        test_context.SDG = sdg_config
+    test_context.time = "year"
+    test_context.type_reg = "country" if function_type == "infrastructure" else "global"
+    test_context.regions = "R12"
+    nodes = get_codes(f"node/{test_context.regions}")
+    nodes = list(map(str, nodes[nodes.index("World")].child))
+    test_context.map_ISO_c = {test_context.regions: nodes[0]}
+
+    # Add RCP for desalination
+    if function_type == "desalination":
+        test_context.RCP = "7p0"  # Default RCP value
+
+    # Create scenario
+    mp = test_context.get_platform()
+    scenario_info = {
+        "mp": mp,
+        "model": f"{request.node.name}/test water model",
+        "scenario": f"{request.node.name}/test water scenario",
+        "version": "new",
+    }
+    s = Scenario(**scenario_info)
+    s.add_horizon(year=[2020, 2030, 2040])
+    s.add_set("technology", ["tech1", "tech2"])
+    s.add_set("year", [2020, 2030, 2040])
+    s.commit(comment=f"basic water {function_type} test model")
+
+    test_context.set_scenario(s)
+    test_context["water build info"] = ScenarioInfo(s)
+
+    # Call appropriate function
+    if function_type == "infrastructure":
+        result = add_infrastructure_techs(context=test_context)
+    else:  # desalination
+        result = add_desalination(context=test_context)
+
+    return {
+        "result": result,
+        "function_type": function_type,
+        "sdg_config": sdg_config,
+        "context": test_context,
+    }
 
 
 @pytest.mark.parametrize(
@@ -179,7 +230,7 @@ def test_water_technology(water_function_test_data):
     result = data["result"]
     function_type = data["function_type"]
     sdg_config = data["sdg_config"]
-    tech_categories = get_technology_categories_from_source()[function_type]
+    tech_categories = _get_technology_categories()[function_type]
     input_techs = set(result["input"]["technology"].unique())
     output_techs = set(result["output"]["technology"].unique())
 
@@ -289,7 +340,7 @@ def test_water_parameter(water_function_test_data):
     result = data["result"]
     function_type = data["function_type"]
     data["sdg_config"]
-    tech_categories = get_technology_categories_from_source()[function_type]
+    tech_categories = _get_technology_categories()[function_type]
 
     # Variable cost consistency (catches variable reference bug)
     if "var_cost" in result and not result["var_cost"].empty:
@@ -345,7 +396,7 @@ def test_water_parameter(water_function_test_data):
         lifetime_df = result["technical_lifetime"]
 
         if function_type == "infrastructure":
-            tech_categories = get_technology_categories_from_source()[function_type]
+            tech_categories = _get_technology_categories()[function_type]
             dist_techs = set(tech_categories["distribution"])
             available_dist_techs = dist_techs.intersection(
                 set(lifetime_df["technology"].unique())
@@ -372,52 +423,62 @@ def test_water_parameter(water_function_test_data):
                 )
 
 
-@pytest.fixture(scope="function")
-def water_function_test_data(test_context, request):
-    """Unified fixture for testing both infrastructure and desalination functions."""
-    # Parse test parameters: (function_type, sdg_config)
-    function_type, sdg_config = request.param
+@pytest.mark.parametrize(
+    "water_function_test_data", [("infrastructure", "baseline")], indirect=True
+)
+def test_efficiency_mode_mapping(water_function_test_data):
+    """Test that Mf mode represents higher efficiency.
 
-    # Setup test context
-    if sdg_config:
-        test_context.SDG = sdg_config
-    test_context.time = "year"
-    test_context.type_reg = "country" if function_type == "infrastructure" else "global"
-    test_context.regions = "R12"
-    nodes = get_codes(f"node/{test_context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
-    test_context.map_ISO_c = {test_context.regions: nodes[0]}
+    Only tests baseline configuration where both M1 and Mf modes exist.
+    """
+    data = water_function_test_data
+    result = data["result"]
+    function_type = data["function_type"]
 
-    # Add RCP for desalination
-    if function_type == "desalination":
-        test_context.RCP = "7p0"  # Default RCP value
+    input_df = result["input"]
+    tech_categories = _get_technology_categories()[function_type]
+    distribution_techs = set(tech_categories["distribution"])
 
-    # Create scenario
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": f"{request.node.name}/test water model",
-        "scenario": f"{request.node.name}/test water scenario",
-        "version": "new",
-    }
-    s = Scenario(**scenario_info)
-    s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("year", [2020, 2030, 2040])
-    s.commit(comment=f"basic water {function_type} test model")
+    failures = []
 
-    test_context.set_scenario(s)
-    test_context["water build info"] = ScenarioInfo(s)
+    # Check distribution technologies with both M1 and Mf modes
+    for tech in distribution_techs:
+        tech_inputs = input_df[input_df["technology"] == tech]
+        if tech_inputs.empty:
+            continue
 
-    # Call appropriate function
-    if function_type == "infrastructure":
-        result = add_infrastructure_techs(context=test_context)
-    else:  # desalination
-        result = add_desalination(context=test_context)
+        modes = set(tech_inputs["mode"].unique())
+        if {"M1", "Mf"}.issubset(modes):
+            # Get input coefficients for both modes (non-electricity commodities)
+            m1_inputs = tech_inputs[
+                (tech_inputs["mode"] == "M1") & (tech_inputs["commodity"] != "electr")
+            ]
+            mf_inputs = tech_inputs[
+                (tech_inputs["mode"] == "Mf") & (tech_inputs["commodity"] != "electr")
+            ]
 
-    return {
-        "result": result,
-        "function_type": function_type,
-        "sdg_config": sdg_config,
-        "context": test_context,
-    }
+            if not m1_inputs.empty and not mf_inputs.empty:
+                m1_coeff = m1_inputs["value"].iloc[0]
+                mf_coeff = mf_inputs["value"].iloc[0]
+
+                # Mf should be more efficient (lower input coefficient)
+                if mf_coeff >= m1_coeff:
+                    failures.append(
+                        {
+                            "tech": tech,
+                            "m1_coeff": m1_coeff,
+                            "mf_coeff": mf_coeff,
+                            "issue": "Mf not more efficient than M1",
+                        }
+                    )
+
+    # Report findings from actual function outputs
+    if failures:
+        failure_details = "\n".join(
+            [
+                f"  {f['tech']}: M1={f['m1_coeff']}, Mf={f['mf_coeff']} - {f['issue']}"
+                for f in failures
+            ]
+        )
+
+        assert False, f"Efficiency mapping violations:\n{failure_details}\n\n"
