@@ -477,11 +477,10 @@ def build_historical_price(message_regions = 'R12',
                                   project_name = project_name, config_name = config_name,
                                   exports_only = True)
     outdf['unit'] = 'USD/GWa'
-    outdf['value'] = round(outdf['value'], 0)
     
     outdf['value'] = np.where(outdf['value'] > 1000, 1000, outdf['value'])
-    outdf['value'] = np.where(outdf['value'] < 150, 150, outdf['value'])
-    
+    outdf['value'] = np.where(outdf['value'] < 150, 150, outdf['value'])    
     outdf['value'] = outdf['value'] * 0.62 # TODO: Fix this deflator (2024-2005?)
-    
+    outdf['value'] = round(outdf['value'], 0)
+
     return outdf
