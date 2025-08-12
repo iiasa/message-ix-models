@@ -741,6 +741,22 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         variable="in|water_supply|freshwater|*__cl_fresh|*"
     ).variable
 
+    # Non-cooling technologies freshwater usage (all freshwater techs except already reported)
+    all_freshwater_tech = report_iam.filter(
+        variable="in|water_supply|freshwater|*|*"
+    ).variable
+    # Remove already-reported categories: irrigation and cooling technologies
+    exclude_patterns = ['irrigation_', '__ot_fresh', '__cl_fresh', '__ot_saline', '__air']
+    non_cooling_water = [
+        v for v in all_freshwater_tech 
+        if not any(pattern in v for pattern in exclude_patterns)
+    ]
+
+    # Fresh water return flow emissions from cooling technologies
+    fresh_return_emissions = report_iam.filter(
+        variable="emis|water_consumption|fresh_return|*|*"
+    ).variable
+
     cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
     cooling_air_inv = report_iam.filter(variable="inv cost|*air").variable
     cooling_ot_fresh = report_iam.filter(variable="inv cost|*ot_fresh").variable
@@ -818,6 +834,16 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             [
                 "Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water",
                 cooling_cl_fresh_water,
+                "MCM/yr",
+            ],
+            [
+                "Water Withdrawal|Energy|Non-Cooling",
+                non_cooling_water,
+                "MCM/yr",
+            ],
+            [
+                "Water Return|Electricity|Cooling",
+                fresh_return_emissions,
                 "MCM/yr",
             ],
             [
