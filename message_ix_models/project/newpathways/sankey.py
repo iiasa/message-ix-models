@@ -55,8 +55,9 @@ def build_sankeydf(commodities:dict,
     
     return sdf
 
-sankeydf = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas'},
-                          model_name = "NP_SSP2", scenario_name = "pipelines_only")
+sankeydf = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas',
+                                         'LNG_shipped': 'Shipped LNG'},
+                          model_name = "NP_SSP2", scenario_name = "pipelines_LNG")
 sankeydf = sankeydf[sankeydf['value'] > 0]
 
 # Load data
