@@ -473,7 +473,7 @@ def build_historical_price(message_regions = 'R12',
     
     outdf = reformat_to_parameter(indf = bacidf,
                                   message_regions = message_regions,
-                                  parameter_name = 'var_cost',
+                                  parameter_name = 'inv_cost',
                                   project_name = project_name, config_name = config_name,
                                   exports_only = True)
     outdf['unit'] = 'USD/GWa'
