@@ -66,7 +66,7 @@ def start_creating_input_dataframe(
         )
     if sdg != "baseline":
         for index, rows in df_dist.iterrows():
-            return pd.concat(
+            inp_df = pd.concat(
                 [
                     inp_df,
                     (
@@ -94,6 +94,7 @@ def start_creating_input_dataframe(
             )
     else:
         for index, rows in df_dist.iterrows():
+            # Add M1 mode input
             inp_df = pd.concat(
                 [
                     inp_df,
@@ -120,33 +121,35 @@ def start_creating_input_dataframe(
                     ),
                 ]
             )
-
-    return pd.concat(
-        [
-            inp_df,
-            (
-                make_df(
-                    "input",
-                    technology=rows["tec"],
-                    value=rows["value_high"],
-                    unit="MCM",
-                    level=rows["inlvl"],
-                    commodity=rows["incmd"],
-                    mode="Mf",
-                )
-                .pipe(
-                    broadcast,
-                    get_vintage_and_active_years(
-                        scenario_info, rows["technical_lifetime_mid"]
+            # Add Mf mode input for baseline to match Mf output mode
+            inp_df = pd.concat(
+                [
+                    inp_df,
+                    (
+                        make_df(
+                            "input",
+                            technology=rows["tec"],
+                            value=rows["value_high"],
+                            unit="MCM",
+                            level=rows["inlvl"],
+                            commodity=rows["incmd"],
+                            mode="Mf",
+                        )
+                        .pipe(
+                            broadcast,
+                            get_vintage_and_active_years(
+                                scenario_info, rows["technical_lifetime_mid"]
+                            ),
+                            node_loc=df_node["node"],
+                            time=sub_time,
+                        )
+                        .pipe(same_node)
+                        .pipe(same_time)
                     ),
-                    node_loc=df_node["node"],
-                    time=sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time)
-            ),
-        ]
-    )
+                ]
+            )
+
+    return inp_df
 
 
 def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
@@ -748,6 +751,27 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         .pipe(same_time)
     )
 
+    # input dataframe for extract_salinewater_basin to match M1 output mode
+    extract_inp_df = (
+        make_df(
+            "input",
+            technology="extract_salinewater_basin",
+            value=1,
+            unit="MCM/year",
+            level="water_avail_basin",
+            commodity="salinewater_basin",
+            mode="M1",
+        )
+        .pipe(
+            broadcast,
+            get_vintage_and_active_years(scenario_info, 20),
+            node_loc=df_node["node"],
+            time=pd.Series(sub_time),
+        )
+        .pipe(same_node)
+        .pipe(same_time)
+    )
+
     tl = (
         make_df(
             "technical_lifetime",
@@ -782,7 +806,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         unit="MCM/year",
     )
     # Making negative values zero
-    bound_up["value"].clip(lower=0, inplace=True)
+    bound_up["value"] = bound_up["value"].clip(lower=0)
     # Bound should start from 2025
     bound_up = bound_up[bound_up["year_act"] >= firstyear]
 
@@ -818,8 +842,6 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-        results["fix_cost"] = fix_cost
-
         # Variable cost
         var_cost = pd.concat(
             [
@@ -851,6 +873,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat, node_loc=df_node["node"])
     # )
 
+    results["fix_cost"] = fix_cost
     results["var_cost"] = var_cost
 
     tl = pd.concat(
@@ -959,6 +982,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                 ),
             ]
         )
+
+        # Add extract_salinewater_basin input to match M1 output mode
+        inp_df = pd.concat([inp_df, extract_inp_df])
 
         inp_df.dropna(inplace=True)
 
