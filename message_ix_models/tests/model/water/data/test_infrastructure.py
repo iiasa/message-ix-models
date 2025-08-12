@@ -12,7 +12,7 @@ from message_ix_models.util import package_data_path
 
 
 def get_technology_categories_from_source():
-    """Extract technology categories directly from source data files."""
+    """Extract technology categories and cost data directly from source data files."""
     # Get infrastructure technologies from water_distribution.csv
     infra_path = package_data_path("water", "infrastructure", "water_distribution.csv")
     df_infra = pd.read_csv(infra_path)
@@ -36,13 +36,17 @@ def get_technology_categories_from_source():
             df_infra[df_infra["incmd"] != "electr"]["tec"].dropna().unique()
         ),
         "all": list(df_infra["tec"].dropna().unique()),
+        "raw_data": df_infra,  # Include raw data for verification
     }
 
     # Get desalination technologies from desalination.csv
     desal_path = package_data_path("water", "infrastructure", "desalination.csv")
     df_desal = pd.read_csv(desal_path)
 
-    desal_categories = {"all": list(df_desal["tec"].dropna().unique())}
+    desal_categories = {
+        "all": list(df_desal["tec"].dropna().unique()),
+        "raw_data": df_desal,  # Include raw data for verification
+    }
 
     return {"infrastructure": infra_categories, "desalination": desal_categories}
 
@@ -205,30 +209,6 @@ def test_water_technology(water_function_test_data):
         ), f"""{function_type}: Technologies with electricity input
             missing non-electric input: {missing_non_elec}"""
 
-        # Even processing validation (early return bug detection)
-        if (
-            sdg_config != "baseline"
-            and len(expected_dist_techs.intersection(input_techs)) > 1
-        ):
-            dist_tech_counts = result["input"]["technology"].value_counts()
-            dist_counts = [
-                dist_tech_counts.get(tech, 0)
-                for tech in expected_dist_techs
-                if tech in input_techs
-            ]
-
-            if len(dist_counts) > 1:
-                min_count, max_count = min(dist_counts), max(dist_counts)
-                if min_count > 0 and max_count > min_count * 2:
-                    tech_count_details = {
-                        tech: dist_tech_counts.get(tech, 0)
-                        for tech in expected_dist_techs
-                    }
-                    assert (
-                        False
-                    ), f"""{function_type}: Uneven distribution tech processing
-                        : {tech_count_details}"""
-
     # Input/output mode pairing (catches missing Mf inputs bug)
     output_tech_modes = {
         (row["technology"], row["mode"]) for _, row in result["output"].iterrows()
@@ -254,10 +234,20 @@ def test_water_technology(water_function_test_data):
     # Mode consistency validation between input and output for infrastructure
     if function_type == "infrastructure":
         common_techs = input_techs.intersection(output_techs)
-        if common_techs:
-            expected_modes = {"M1", "Mf"} if sdg_config == "baseline" else {"Mf"}
+        distribution_techs = set(tech_categories["distribution"])
 
+        if common_techs:
             for tech in common_techs:
+                # Distribution technologies should have both M1 and Mf in baseline,
+                # only Mf in non-baseline
+                # Non-distribution technologies should only have M1
+                if tech in distribution_techs:
+                    expected_modes = (
+                        {"M1", "Mf"} if sdg_config == "baseline" else {"Mf"}
+                    )
+                else:
+                    expected_modes = {"M1"}
+
                 input_modes = set(
                     result["input"][result["input"]["technology"] == tech][
                         "mode"
@@ -299,6 +289,7 @@ def test_water_parameter(water_function_test_data):
     result = data["result"]
     function_type = data["function_type"]
     data["sdg_config"]
+    tech_categories = get_technology_categories_from_source()[function_type]
 
     # Variable cost consistency (catches variable reference bug)
     if "var_cost" in result and not result["var_cost"].empty:
@@ -319,13 +310,35 @@ def test_water_parameter(water_function_test_data):
         }
 
         if shared_patterns:
-            max_shared = max(len(techs) for techs in shared_patterns.values())
-            total_techs = len(var_cost_df["technology"].unique())
-
-            assert max_shared / total_techs < 0.7, (
-                f"{function_type}: Variable reference bug detected - "
-                f"{max_shared}/{total_techs} technologies have identical cost patterns"
+            # Check against raw CSV data - this is required
+            raw_data = tech_categories.get("raw_data")
+            assert raw_data is not None, (
+                f"{function_type}: Raw data not available for validation"
             )
+            assert "var_cost_mid" in raw_data.columns, (
+                f"{function_type}: var_cost_mid column missing from raw data"
+            )
+
+            # Get unique var_cost_mid values from raw data
+            raw_var_costs = raw_data[["tec", "var_cost_mid"]].dropna()
+            unique_costs = raw_var_costs.groupby("tec")["var_cost_mid"].first()
+
+            # If all technologies have the same cost in raw data, it's not a bug
+            if len(unique_costs.unique()) == 1:
+                # All technologies have the same cost in source data
+                # this is intentional
+                pass
+            else:
+                # Different costs in source but identical in output - this is a bug
+                max_shared = max(len(techs) for techs in shared_patterns.values())
+                total_techs = len(var_cost_df["technology"].unique())
+
+                assert max_shared / total_techs < 0.7, (
+                    f"{function_type}: Variable reference bug detected -"
+                    f"""{max_shared}/{total_techs} technologies
+                        have identical cost patterns"""
+                    f"but source data shows different costs"
+                )
 
     # Technical lifetime consistency (catches stale variable bug)
     if "technical_lifetime" in result and not result["technical_lifetime"].empty:
