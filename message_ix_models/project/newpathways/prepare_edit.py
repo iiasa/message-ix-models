@@ -26,6 +26,9 @@ config, config_path = load_config(project_name = 'newpathways',
 covered_tec = config['covered_trade_technologies']
 message_regions = config['scenario']['regions']
 
+data_path = package_data_path("bilateralize")
+data_path = os.path.join(os.path.dirname(data_path), "bilateralize")
+
 # Connect to ixmp
 mp = ixmp.Platform()
 
@@ -49,3 +52,13 @@ import_gem(input_file = gas_pipeline_file,
 # Add MariTEAM calibration for maritime shipping
 calibrate_mariteam(covered_tec, message_regions,
                    project_name = 'newpathways', config_name = 'config.yaml')
+
+# Add variable costs for shipped commodities
+costdf = build_historical_price(message_regions,
+                                project_name = 'newpathways', config_name = 'config.yaml')
+
+for tec in [i for i in covered_tec if 'shipped' in i]:
+    log.info('Add variable cost for ' + tec)
+    add_df = costdf[costdf['technology'].str.contains(cost_tec[tec])]
+    add_df.to_csv(os.path.join(data_path, tec, "edit_files", "var_cost.csv"),
+                  index = False)
