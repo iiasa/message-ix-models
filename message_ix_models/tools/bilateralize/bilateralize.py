@@ -1046,6 +1046,15 @@ def clone_and_update(trade_dict,
                     log.info('Updating bunker level for ' + tec)
                     scen.remove_par('input', bunkerdf_in)
                     scen.add_par('input', bunkerdf_out)
+        
+        # Update US reserves #TODO: REMOVE THIS (ONLY TESTING)
+        # with scen.transact('Update NAM reserves of gas'):
+        #     dfin = scen.par('resource_volume', filters = {'node': 'R12_NAM',
+        #                                                   'commodity': 'gas_1'})
+        #     dfout = dfin.copy()
+        #     dfout['value'] = 20000
+        #     scen.remove_par('resource_volume', dfin)
+        #     scen.add_par('resource_volume', dfout)
             
     if (to_gdx == True) & (solve == False):
         save_to_gdx(mp = mp,
