@@ -726,6 +726,17 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         variable="in|water_supply_basin|freshwater_basin|basin_to_reg|*"
     ).variable
 
+    # Freshwater cooling technologies water usage
+    cooling_fresh_water = report_iam.filter(
+        variable="in|water_supply|freshwater|*fresh|*"
+    ).variable
+    cooling_ot_fresh_water = report_iam.filter(
+        variable="in|water_supply|freshwater|*__ot_fresh|*"
+    ).variable
+    cooling_cl_fresh_water = report_iam.filter(
+        variable="in|water_supply|freshwater|*__cl_fresh|*"
+    ).variable
+
     cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
     cooling_air_inv = report_iam.filter(variable="inv cost|*air").variable
     cooling_ot_fresh = report_iam.filter(variable="inv cost|*ot_fresh").variable
@@ -790,6 +801,21 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             ["Water Withdrawal|Irrigation|Oil Crops", irr_o, "MCM/yr"],
             ["Water Withdrawal|Irrigation|Sugar Crops", irr_s, "MCM/yr"],
             ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "MCM/yr"],
+            [
+                "Water Withdrawal|Electricity|Cooling|Fresh Water",
+                cooling_fresh_water,
+                "MCM/yr"
+            ],
+            [
+                "Water Withdrawal|Electricity|Cooling|Once Through|Fresh Water",
+                cooling_ot_fresh_water,
+                "MCM/yr"
+            ],
+            [
+                "Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water",
+                cooling_cl_fresh_water,
+                "MCM/yr"
+            ],
             [
                 "Capacity Additions|Infrastructure|Water",
                 rural_infrastructure
