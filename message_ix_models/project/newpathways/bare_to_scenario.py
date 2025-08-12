@@ -50,19 +50,6 @@ for tec in hist_tec.keys():
     log.info('Add historical activity for ' + tec)
     add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
     trade_dict[tec]['trade']['historical_activity'] = add_df
-
-# Variable cost for shipped technologies
-costdf = build_historical_price(message_regions,
-                                project_name = 'newpathways', config_name = 'config.yaml')
-cost_tec = {}
-for tec in [i for i in covered_tec if 'shipped' in i]:
-    add_tec = config[tec + '_trade']['trade_technology'] + '_exp'
-    cost_tec[tec] = add_tec
-
-for tec in cost_tec.keys():
-    log.info('Add variable cost for ' + tec)
-    add_df = costdf[costdf['technology'].str.contains(cost_tec[tec])]
-    trade_dict[tec]['trade']['var_cost'] = add_df
     
 ## MANUAL ADDITIONS
 # Set emission factors for piped gas # TODO
