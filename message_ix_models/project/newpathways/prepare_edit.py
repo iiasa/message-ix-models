@@ -62,3 +62,4 @@ for tec in [i for i in covered_tec if 'shipped' in i]:
     add_df = costdf[costdf['technology'].str.contains(tec)]
     add_df.to_csv(os.path.join(data_path, tec, "edit_files", "inv_cost.csv"),
                   index = False)
+

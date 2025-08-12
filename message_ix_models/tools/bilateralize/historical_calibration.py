@@ -462,6 +462,8 @@ def build_historical_price(message_regions = 'R12',
     bacidf['MESSAGE COMMODITY'] = np.where(bacidf['MESSAGE COMMODITY'] == 'lng', 
                                            'LNG_shipped', bacidf['MESSAGE COMMODITY'])
     
+    bacidf = bacidf[bacidf['YEAR'] > 2020]
+    
     bacidf['ENERGY (GWa)'] = bacidf['ENERGY (TJ)'] * (3.1712 * 1e-5) # TJ to GWa
     bacidf['VALUE (MUSD)'] = bacidf['VALUE (1000USD)'] * 1e-3   
     bacidf['PRICE (MUSD/GWa)'] = bacidf['VALUE (MUSD)']/bacidf['ENERGY (GWa)']
