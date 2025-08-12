@@ -332,8 +332,12 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
     for ur in ["urban", "rural"]:
         # CHANGE TO URBAN AND RURAL POP
         pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
-        # ONLY R11!!! Need to fix when updating the reporting to work with any region
-        pop_tot = pop_tot[pop_tot.region != "GLB region (R11)"]
+        # Exclude global aggregate regions for both R11 and R12
+        pop_tot = pop_tot[
+            ~pop_tot.region.str.contains(
+                r"GLB\s+region|^World$|^Global$|Total", case=False, regex=True, na=False
+            )
+        ]
         pop_reg = np.unique(pop_tot["region"])
         # need to change names
         reg_map = mp2.regions()
@@ -804,17 +808,17 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             [
                 "Water Withdrawal|Electricity|Cooling|Fresh Water",
                 cooling_fresh_water,
-                "MCM/yr"
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Electricity|Cooling|Once Through|Fresh Water",
                 cooling_ot_fresh_water,
-                "MCM/yr"
+                "MCM/yr",
             ],
             [
                 "Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water",
                 cooling_cl_fresh_water,
-                "MCM/yr"
+                "MCM/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water",
@@ -1422,6 +1426,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     report_pd = report_pd[-report_pd.variable.isin(water_hydro_var)]
 
     # add water population
+    # FIXME add support for baseline
     if sdgs != "baseline":
         pop_sdg6 = pop_water_access(sc, reg, sdgs)
         report_pd = pd.concat([report_pd, pop_sdg6])
