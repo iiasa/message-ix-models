@@ -44,7 +44,7 @@ def start_creating_input_dataframe(
                     make_df(
                         "input",
                         technology=rows["tec"],
-                        value=rows["value_mid"],
+                        value=rows["value_high"],
                         unit="MCM",
                         # MCM as all non elec technology have water as input
                         level=rows["inlvl"],
@@ -73,7 +73,7 @@ def start_creating_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_high"],
+                            value=rows["value_mid"],
                             unit="MCM",
                             level=rows["inlvl"],
                             commodity=rows["incmd"],
@@ -102,7 +102,7 @@ def start_creating_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_mid"],
+                            value=rows["value_high"],
                             unit="MCM",
                             level=rows["inlvl"],
                             commodity=rows["incmd"],
@@ -129,7 +129,7 @@ def start_creating_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_high"],
+                            value=rows["value_mid"],
                             unit="MCM",
                             level=rows["inlvl"],
                             commodity=rows["incmd"],
@@ -578,7 +578,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
+                    value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -601,7 +601,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
+                    value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -625,7 +625,7 @@ def prepare_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
+                            value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
                             unit="GWa/MCM",
                             level="final",
                             commodity="electr",
@@ -647,7 +647,7 @@ def prepare_input_dataframe(
             inp = make_df(
                 "input",
                 technology=rows["tec"],
-                value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
+                value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
                 unit="GWa/MCM",
                 level="final",
                 commodity="electr",
