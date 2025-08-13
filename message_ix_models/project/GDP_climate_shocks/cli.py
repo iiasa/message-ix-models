@@ -367,7 +367,7 @@ def run_full(
                 f"Iteraction 0 for {sc_str}_{pp} completed. Now apply climate impacts."
             )
 
-            ## for loop across damage_model
+            # for loop across damage_model
             for dam_mod in damage_model:
                 iterate_with_climate_impacts(
                     sc_ref=sc_ref,
@@ -480,7 +480,6 @@ def run_from_messageix_scenarios(
 )
 @click.option("--model_name", help="Original model name (e.g., ENGAGE_SSP2...).")
 @click.option("--model_name-clone", help="Cloned model name for GDP-CI.")
-@click.option("--ssp", help="SSP scenario name (e.g., SSP2).")
 @click.option("--scens_ref", multiple=True, help="Reference scenario(s) to run.")
 @click.option("--damage_model", multiple=True, help="Damage model(s) to apply.")
 @click.option(
@@ -507,7 +506,6 @@ def run_magicc_rime_cli(
     config,
     model_name,
     model_name_clone,
-    ssp,
     scens_ref,
     damage_model,
     percentiles,
@@ -520,7 +518,6 @@ def run_magicc_rime_cli(
         config,
         model_name,
         model_name_clone,
-        ssp,
         scens_ref,
         damage_model,
         percentiles,
@@ -534,7 +531,6 @@ def run_magicc_rime(
     config: str = "default",
     model_name: Optional[str] = None,
     model_name_clone: Optional[str] = None,
-    ssp: Optional[str] = None,
     scens_ref: Optional[tuple[str, ...]] = None,
     damage_model: Optional[tuple[str, ...]] = None,
     percentiles: Optional[tuple[int, ...]] = None,
@@ -574,8 +570,6 @@ def run_magicc_rime(
         Original model name (e.g., "ENGAGE_SSP2").
     model_name_clone : str, optional
         Cloned model name for GDP-CI variant.
-    ssp : str, optional
-        SSP scenario name (e.g., "SSP2").
     scens_ref : tuple[str, ...], optional
         One or more reference scenarios to process.
     damage_model : tuple[str, ...], optional
@@ -598,7 +592,7 @@ def run_magicc_rime(
         cfg,
         model_name,
         model_name_clone,
-        ssp,
+        _,
         scens_ref,
         damage_model,
         percentiles,
@@ -609,7 +603,7 @@ def run_magicc_rime(
         config,
         model_name,
         model_name_clone,
-        ssp,
+        None,
         scens_ref,
         damage_model,
         percentiles,
@@ -618,19 +612,18 @@ def run_magicc_rime(
     )
 
     # Log final config values
-    # logging.info("Final configuration:")
-    # for k, v in {
-    #     "model_name": model_name,
-    #     "model_name_clone": model_name_clone,
-    #     "ssp": ssp,
-    #     "scens_ref": scens_ref,
-    #     "damage_model": damage_model,
-    #     "percentiles": percentiles,
-    #     "shift_year": shift_year,
-    #     "regions": region,
-    #     "rime_path": rime_path,
-    # }.items():
-    #     logging.info(f"  {k}: {v}")
+    logging.info("Final configuration:")
+    for k, v in {
+        "model_name": model_name,
+        "model_name_clone": model_name_clone,
+        "scens_ref": scens_ref,
+        "damage_model": damage_model,
+        "percentiles": percentiles,
+        "shift_year": shift_year,
+        "regions": region,
+        "rime_path": rime_path,
+    }.items():
+        logging.info(f"  {k}: {v}")
 
     if input_only == "single":
         run_from_single_input(

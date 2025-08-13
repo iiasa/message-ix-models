@@ -8,11 +8,6 @@ import numpy as np
 import pandas as pd
 import pyam
 import yaml
-from message_data.tools.post_processing.iamc_report_hackathon import (
-    report as legacy_reporting,
-)
-from message_data.tools.prep_submission import main as prep_submission
-from message_data.tools.utilities import add_slack
 from pycountry_convert import country_name_to_country_alpha3
 
 from message_ix_models.util import package_data_path, private_data_path
@@ -66,7 +61,8 @@ def maybe_shift_year(scenario, shift_year: int) -> dict:
 
 def load_pop_data():  # NOT NEEDED
     """
-    This function loads a CSV file containing population data from SSP 24 projections and transforms it into a specific format.
+    This function loads a CSV file containing population data from SSP
+    24 projections and transforms it into a specific format.
 
     Returns:
         pop_df (pd.DataFrame): The transformed DataFrame.
@@ -91,12 +87,14 @@ def load_pop_data():  # NOT NEEDED
 
 def load_gdp_data():
     """
-    This function loads a CSV file containing GDP data from OECD ENV-Growth 2023_GDP_PPP and transforms it into a specific format.
+    This function loads a CSV file containing GDP data from OECD ENV-Growth
+    2023_GDP_PPP and transforms it into a specific format.
+
     Returns:
         gdp_df (pd.DataFrame): The transformed DataFrame.
     """
-    csv_file_path = private_data_path(
-        "projects", "GDP_climate_shocks", "OECD ENV-Growth 2023_GDP_PPP.csv"
+    csv_file_path = package_data_path(
+        "GDP_climate_shocks", "OECD ENV-Growth 2023_GDP_PPP.csv"
     )
     assert os.path.exists(csv_file_path), f"File {csv_file_path} does not exist"
     # use pyam to read
@@ -133,6 +131,11 @@ def calculate_gdp_diff(gdp_df, pop_df):  # NOT NEEDED
 
 
 def run_legacy_reporting(sc=False, mp=False):
+    # lazy import to allow tests pass
+    from message_data.tools.post_processing.iamc_report_hackathon import (
+        report as legacy_reporting,
+    )
+
     legacy_reporting(
         mp=mp,
         scen=sc,
@@ -143,6 +146,11 @@ def run_legacy_reporting(sc=False, mp=False):
 
 
 def run_emi_reporting(sc=False, mp=False):
+    # lazy import to allow tests pass
+    from message_data.tools.post_processing.iamc_report_hackathon import (
+        report as legacy_reporting,
+    )
+
     legacy_reporting(
         mp=mp,
         scen=sc,
@@ -156,7 +164,8 @@ def run_emi_reporting(sc=False, mp=False):
 # introduce shock in growth rates
 # FUTURE loop with scenarios
 def run_message_full(sc_ref, modelName, scenario, n_iter, run_mode):  # NOT USED
-    """Initiate the scenario running the model, the reporting, prep submission and MAGICC.
+    """Initiate the scenario running the model, the reporting,
+    prep submission and MAGICC.
 
     Parameters
     ----------
@@ -186,19 +195,22 @@ def run_message_full(sc_ref, modelName, scenario, n_iter, run_mode):  # NOT USED
     return scs
 
 
-def prep_sub_GDP_shock():  # NOT USED
-    # only at the end, when all scenarios are finished
-    prep_submission(
-        config_fil,
-        context.local_data / "reporting_output",
-        out_fil,
-        add_economic_indicator=True,
-    )
+# def prep_sub_GDP_shock():  # NOT USED, leave if needed in the future
+# lazy import to allow tests pass
+#     from message_data.tools.prep_submission import main as prep_submission
+#     # only at the end, when all scenarios are finished
+#     prep_submission(
+#         config_fil,
+#         context.local_data / "reporting_output",
+#         out_fil,
+#         add_economic_indicator=True,
+#     )
 
 
 def regional_gdp_impacts(sc_string, damage_model, it, SSP, regions, pp=50):
     """
-    This function calculates the regional GDP impacts of climate change using the RIME model.
+    This function calculates the regional GDP impacts of climate
+    change using the RIME model.
 
     Parameters
     ----------
@@ -229,7 +241,8 @@ def regional_gdp_impacts(sc_string, damage_model, it, SSP, regions, pp=50):
     gdp_df = gdp_df[gdp_df["scenario"] == SSP]
     gdp_df.drop(["region", "model", "scenario"], axis=1, inplace=True)
 
-    # load RIME climate GDP impacts from csv and filter variable==RIME|All indicators|mean
+    # load RIME climate GDP impacts from csv
+    # and filter variable==RIME|All indicators|mean
     rime_path = private_data_path().parent / "reporting_output" / "rime_output"
     # sc_string = f"{sc_string}_{damage_model}" if pit != "0" else sc_string
     rime_file = f"RIME_out_COUNTRIES_5yr_{sc_string}_{pp}_{damage_model}_{pit}.csv"
@@ -381,6 +394,9 @@ def apply_growth_rates(sc, gdp_change_df):
 
 
 def add_slack_ix(sc):
+    # lazy import to allow tests pass
+    from message_data.tools.utilities import add_slack
+
     slack = {
         "growth_activity_up": {
             "a": ["R11_NAM", "eth_imp", 2030, 27, "M1"],
