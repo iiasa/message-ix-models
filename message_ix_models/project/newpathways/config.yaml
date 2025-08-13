@@ -6,12 +6,12 @@ p_drive_location:
 # SCENARIO INFORMATION
 scenario:
   start_model: 
-    SSP_SSP2_v5.3
+    SSP_SSP2_v6.2
   # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
   start_scen:
     baseline_DEFAULT
   target_model:
-    NP_SSP2
+    NP_SSP2_6.2
   target_scen:
     pipelines_LNG
   first_model_year:
@@ -26,14 +26,10 @@ covered_trade_technologies:
 
 # TRADE LIFETIMES
 trade_lifetimes:
-  #elec_piped:
-  #  10
-  #oil_shipped:
-  #  40
   gas_piped:
-    40
+    20
   LNG_shipped:
-    40
+    20
 
 # YEARS
 timeframes:

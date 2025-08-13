@@ -12,7 +12,11 @@ import yaml
 import message_ix
 import ixmp
 import itertools
+
 import plotly.graph_objects as go
+import bokeh
+import holoviews as hv
+from holoviews import dim, opts
 
 from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.tools.bilateralize.build_sankey import *
@@ -62,27 +66,42 @@ def build_sankeydf(commodities:dict,
     
     return sdf
 
-sankeydf = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas',
-                                         'LNG_shipped': 'Shipped LNG'},
-                          model_name = "NP_SSP2", scenario_name = "pipelines_LNG")
-sankeydf = sankeydf[sankeydf['value'] > 1]
+# Build data
+df = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas',
+                                   'LNG_shipped': 'Shipped LNG'},
+                    model_name = "NP_SSP2", scenario_name = "pipelines_LNG")
+df = df[df['value'] > 0.5]
 
-# Load data
-# Create sankey visualizer
+# Create sankey
 sankey = InteractiveSankey(sankeydf)
-
-#Filter data
-#sankey.filter_data(year=2023, fuel='Solar Panels')
-
-#Create visualization
-# fig = sankey.create_sankey(title="Trade Flows")
-
-# #Show in Jupyter notebook
-# fig.show()
-
-# #Or save to HTML
-# fig.write_html(os.path.join(config_dir, "diagnostics", "sankey_diagram.html"))
-
-# Create dashboard
 dashboard = sankey.create_dashboard()
-dashboard.write_html(os.path.join(data_path, "diagnostics", "sankey_diagram_pipelines.html"))
+dashboard.write_html(os.path.join(data_path, "diagnostics", "sankey.html"))
+
+# Create chord
+fuel = 'Shipped LNG'
+year = 2030
+
+cdf = df[df['year'] == year]
+cdf = cdf[cdf['fuel'] == fuel]
+cdf = cdf[['exporter', 'importer', 'value']]
+
+cdf_nodes = pd.DataFrame(set(list(cdf['exporter'].unique()) + list(cdf['importer'].unique()))).reset_index()
+cdf_nodes.columns = ['node', 'message_region']
+
+cdf = cdf.merge(cdf_nodes, left_on = 'exporter', right_on = 'message_region', how = 'left')
+cdf = cdf.merge(cdf_nodes, left_on = 'importer', right_on = 'message_region', how = 'left')
+
+cdf = cdf.rename(columns = {'node_x': 'source',
+                            'node_y': 'target'})
+cdf = cdf[['source', 'target', 'value']]
+
+cdf_nodes = hv.Dataset(cdf_nodes, 'index')
+
+chord_out = hv.Chord((cdf, cdf_nodes)).select(value=(5, None))
+chord_out.opts(opts.Chord(cmap='Category20', edge_cmap='Category20', edge_color=dim('source').str(),
+               labels='name', node_color=dim('index').str()))
+
+hv.save(chord_out, os.path.join(data_path, "diagnostics", "chord.svg"), fmt = 'svg')
+
+
+
