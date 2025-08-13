@@ -38,6 +38,13 @@ def build_sankeydf(commodities:dict,
     activity = activity[['node_loc', 'technology', 'year_act', 'lvl']].drop_duplicates().reset_index()
     activity = activity.groupby(['node_loc', 'technology', 'year_act'])['lvl'].sum().reset_index()
     
+    hist_activity = scen.par('historical_activity')
+    hist_activity = hist_activity[['node_loc', 'technology', 'year_act', 'value']].drop_duplicates().reset_index()
+    hist_activity = hist_activity.groupby(['node_loc', 'technology', 'year_act'])['value'].sum().reset_index()
+    hist_activity = hist_activity.rename(columns = {'value': 'lvl'})
+    activity = pd.concat([hist_activity, activity])
+    
+    
     slist = [c + '_exp_' for c in commodities.keys()]
     sdf = activity[activity['technology'].str.contains('|'.join(slist))].copy()
     
@@ -58,7 +65,7 @@ def build_sankeydf(commodities:dict,
 sankeydf = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas',
                                          'LNG_shipped': 'Shipped LNG'},
                           model_name = "NP_SSP2", scenario_name = "pipelines_LNG")
-sankeydf = sankeydf[sankeydf['value'] > 0]
+sankeydf = sankeydf[sankeydf['value'] > 1]
 
 # Load data
 # Create sankey visualizer
