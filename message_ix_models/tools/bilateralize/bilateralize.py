@@ -776,7 +776,7 @@ def generate_bare_sheets(
                                                    **common_years, **common_cols).drop_duplicates()
                 
                 # For shipped commodities, calculated capacities based on distance and energy content
-                distance_df = pd.read_excel(os.path.join(data_path, "distances.xlsx"), sheet_name = 'dummy') #TODO: Update dummy to distances
+                distance_df = pd.read_excel(os.path.join(data_path, "distances.xlsx"), sheet_name = 'distances')
                 energycontent_df = pd.read_excel(os.path.join(data_path, "specific_energy.xlsx"))
                 energycontent = energycontent_df[energycontent_df['Commodity'] == config_dict['trade_commodity'][tec]]['Specific Energy (GWa/Mt)'][0]
                 
