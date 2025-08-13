@@ -17,13 +17,17 @@ import pandas as pd
 import pyam
 import xarray as xr
 from dask.diagnostics import ProgressBar
-from rime.core import RegionArray  # -*- coding: utf-8 -*-
-from rime.core import GMTPathway
-from rime.process_config import *
-from rime.rime_functions import *
-from rime.utils import *
+from rime.core import (
+    GMTPathway,
+    RegionArray,  # -*- coding: utf-8 -*-
+)
+
+# from rime.process_config import *
+from rime.rime_functions import table_impacts_gwl
 
 from message_ix_models.util import private_data_path
+
+# from rime.utils import *
 
 
 def run_rime(
@@ -53,16 +57,17 @@ def run_rime(
         The aggregated regional GDP impacts of climate change.
     """
 
-    # wdir = f"C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
     # for local debuggin TEMP
-    # wdir = f"/mnt/c/Users/byers/IIASA/ECE.prog - Documents/Research Theme - NEXUS/GDP_damages/"
+    # wdir = f"C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
     # prefixes = ["Waidelich", "Burke"]
-    # prefix = 'Burke'
     if isinstance(dam_mod, str):
         dam_mod = [dam_mod]
 
     # do we need it? or does ti get it from process_config?
-    temp_variable = f"AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3|{pp}.0th Percentile"
+    temp_variable = (
+        f"AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3|{pp}.0th"
+        " Percentile"
+    )
     years = range(2015, 2101, 5)
     lvaris = 200
     num_workers = 24  # Number of workers. More workers creates more overhead
@@ -79,12 +84,11 @@ def run_rime(
             fname_input = f"{sc_string}_{it}_magicc.xlsx"
 
         fname_input_scenarios = input_path / fname_input
-
         out_file_path = private_data_path().parent / "reporting_output" / "rime_output"
 
         # if folder "magicc_output" does not exist, create it
         if not out_file_path.exists():
-            out_file_path.mkdir()
+            out_file_path.mkdir(parents=True, exist_ok=True)
 
         df_scens_in = pyam.IamDataFrame(fname_input_scenarios)
         dft = df_scens_in.filter(variable=temp_variable)
@@ -148,7 +152,10 @@ def run_rime(
         expandeddGWL = pd.concat([df_new[x] for x in df_new.index])
         print(f" Done:  {time.time() - start}")
 
-        filename = f"{out_file_path}/RIME_out_{region}_{year_res}yr_{sc_string}_{pp}_{prefix}_{it}.csv"
+        filename = (
+            f"{out_file_path}/RIME_out_{region}_{year_res}yr_"
+            f"{sc_string}_{pp}_{prefix}_{it}.csv"
+        )
 
         expandeddGWL.to_csv(filename, encoding="utf-8", index=False)
         print(f" Saved: {region} yrs={year_res}\n  {time.time() - start}")
