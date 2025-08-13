@@ -65,7 +65,7 @@ def prepare_computer(c: "Computer") -> None:
     c.add(k_cnt, "mul", base, bcast)
 
     # Project values across y using same trajectory as road freight activity
-    c.add(k_cnty[0], "mul", k_cnt, fv["ROAD index"])
+    c.add(k_cnty[0], "mul", k_cnt, fv["F ROAD index"])
     # Convert units to GWa
     c.add(k_cnty[1], "convert_units", k_cnty[0], units="GWa")
 
