@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import genno
 import numpy as np
-from genno import Key, literal
+from genno import Key, literal, quote
 from iam_units import registry
 
 from message_ix_models.report.key import GDP
@@ -59,11 +59,10 @@ def demand(c: "Computer") -> None:
     ### Prepare exo.elasticity_f
     k_e = Key(exo.elasticity_f.name, "ny", "F")
 
-    # Broadcast elasticity to all scenarios
-    coords = ["scenario::all", "n::ex world"]
-    c.add(
-        k_e[0], "broadcast_wildcard", exo.elasticity_f, *coords, dim=("scenario", "n")
-    )
+    # Broadcast elasticity to all (node, technology, scenario)
+    coords = ["scenario::all", "n::ex world", quote(["F RAIL", "F ROAD"])]
+    dim = ("scenario", "n", "t")
+    c.add(k_e[0], "broadcast_wildcard", exo.elasticity_f, *coords, dim=dim)
 
     # Select values for the current scenario
     c.add(k_e[1], "select", k_e[0], "indexers:scenario:LED")
@@ -91,16 +90,17 @@ def demand(c: "Computer") -> None:
     c.add(fv[4], "mul", fv[3], "fv factor:n-t-y")
 
     # Select certain modes. NB Do not drop so 't' labels can be used for 'c', next.
-    c.add(fv[5], "select", fv[4], indexers=dict(t=["RAIL", "ROAD"]))
+    freight_techs = ["F RAIL", "F ROAD"]
+    c.add(fv[5], "select", fv[4], indexers=dict(t=freight_techs))
 
     # Relabel
-    c.add(fv_cny, "relabel2", fv[5], new_dims={"c": "transport F {t}"})
+    c.add(fv_cny, "relabel2", fv[5], new_dims={"c": "transport {t}"})
 
     # Convert to ixmp format
     collect("demand", "as_message_df", fv_cny, **_DEMAND_KW)
 
-    # Compute indices, e.g. for use in .non_ldv.other()
-    for t in ["RAIL", "ROAD"]:
+    # Compute indices, e.g. for use in .other.prepare_computer()
+    for t in freight_techs:
         c.add(fv[5][t], "select", fv[5], indexers=dict(t=t))
         c.add(fv[f"{t} index"], "index_to", fv[5][t], literal("y"), "y0")
 
