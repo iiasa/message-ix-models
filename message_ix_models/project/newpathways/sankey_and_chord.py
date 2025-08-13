@@ -97,11 +97,54 @@ cdf = cdf[['source', 'target', 'value']]
 
 cdf_nodes = hv.Dataset(cdf_nodes, 'index')
 
-chord_out = hv.Chord((cdf, cdf_nodes)).select(value=(5, None))
+chord_out = hv.Chord((cdf, cdf_nodes))
 chord_out.opts(opts.Chord(cmap='Category20', edge_cmap='Category20', edge_color=dim('source').str(),
                labels='name', node_color=dim('index').str()))
 
 hv.save(chord_out, os.path.join(data_path, "diagnostics", "chord.svg"), fmt = 'svg')
 
 
+
+def create_chord(year:int, fuel:str):
+    cdf = df[df['year'] == year]
+    cdf = cdf[cdf['fuel'] == fuel]
+    cdf = cdf[['exporter', 'importer', 'value']]
+  
+    cdf_nodes = pd.DataFrame(set(list(cdf['exporter'].unique()) + list(cdf['importer'].unique())))
+    cdf_nodes = cdf_nodes.sort_values(by = 0).reset_index(drop = True)
+    cdf_nodes = cdf_nodes.reset_index()
+    cdf_nodes.columns = ['node', 'message_region']
+  
+    cdf = cdf.merge(cdf_nodes, left_on = 'exporter', right_on = 'message_region', how = 'left')
+    cdf = cdf.merge(cdf_nodes, left_on = 'importer', right_on = 'message_region', how = 'left')
+  
+    cdf = cdf.rename(columns = {'node_x': 'source',
+                  'node_y': 'target'})
+    cdf = cdf[['source', 'target', 'value']]
+    cdf['value'] = round(cdf['value'],0)
+  
+    # Inflate dataframe
+    inflate_cdf = pd.DataFrame()
+    for i in list(cdf.index):
+        nr = cdf['value'][i].astype(int)
+        idf = pd.DataFrame(np.empty((nr, 3)) * 1.0) 
+        idf.columns = ['source', 'target', 'value']
+        idf['source'] = cdf['source'][i]
+        idf['target'] = cdf['target'][i]
+        idf['value'] = 1
+        inflate_cdf = pd.concat([inflate_cdf, idf])
+      
+    inflate_cdf = inflate_cdf.reset_index(drop = True)
+    
+    cdf_nodes = hv.Dataset(cdf_nodes, 'index')
+    
+    chord_out = hv.Chord((inflate_cdf, cdf_nodes))
+    chord_out.opts(opts.Chord(edge_cmap = 'Category20', edge_color=dim('source').str(),
+                              node_cmap = 'Category20', node_color=dim('node').str(),
+                              labels='message_region'))
+
+    return chord_out
+  
+    
+    
 

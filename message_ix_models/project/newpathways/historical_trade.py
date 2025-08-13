@@ -45,5 +45,6 @@ for t in ['EXPORTER', 'IMPORTER']:
 country_lines = iea_gas[iea_gas['ENERGY (TJ)'] > 0]
 country_lines['PAIR'] = country_lines['EXPORTER'] + '-' + country_lines['IMPORTER']
 country_lines['REGION PAIR'] = country_lines['EXPORTER REGION'] + '-' + country_lines['IMPORTER REGION']
+country_lines = country_lines.sort_values(by = ['YEAR', 'MESSAGE COMMODITY', 'ENERGY (TJ)'])
 
 country_lines.to_csv(os.path.join(data_path, 'diagnostics', 'historical_gas_bycountry.csv'), index = False)
