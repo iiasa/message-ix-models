@@ -747,6 +747,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     ).variable
     # Remove already-reported categories: irrigation and cooling technologies
     exclude_patterns = ['irrigation_', '__ot_fresh', '__cl_fresh', '__ot_saline', '__air']
+    # FIXME: This filter may double-count industry_unconnected and other water technologies
+    # that are already reported elsewhere. Need to add more exclusion patterns.
     non_cooling_water = [
         v for v in all_freshwater_tech 
         if not any(pattern in v for pattern in exclude_patterns)
