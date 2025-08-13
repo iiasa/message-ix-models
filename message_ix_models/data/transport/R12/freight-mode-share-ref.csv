@@ -6,51 +6,51 @@
 # Units: dimensionless
 #
 node,     technology, value
-R12_AFR,  ROAD,       0.675
-R12_AFR,  RAIL,       0.285
-R12_AFR,  WATER,      0.030
-R12_AFR,  AIR,        0.010
-R12_CHN,  ROAD,       0.636
-R12_CHN,  RAIL,       0.240
-R12_CHN,  WATER,      0.120
-R12_CHN,  AIR,        0.004
-R12_EEU,  ROAD,       0.786
-R12_EEU,  RAIL,       0.183
-R12_EEU,  WATER,      0.030
-R12_EEU,  AIR,        0.001
-R12_FSU,  ROAD,       0.158
-R12_FSU,  RAIL,       0.808
-R12_FSU,  WATER,      0.030
-R12_FSU,  AIR,        0.002
-R12_LAM,  ROAD,       0.750
-R12_LAM,  RAIL,       0.217
-R12_LAM,  WATER,      0.040
-R12_LAM,  AIR,        0.003
-R12_MEA,  ROAD,       0.795
-R12_MEA,  RAIL,       0.125
-R12_MEA,  WATER,      0.050
-R12_MEA,  AIR,        0.040
-R12_NAM,  ROAD,       0.505
-R12_NAM,  RAIL,       0.414
-R12_NAM,  WATER,      0.080
-R12_NAM,  AIR,        0.006
-R12_PAO,  ROAD,       0.503
-R12_PAO,  RAIL,       0.481
-R12_PAO,  WATER,      0.003
-R12_PAO,  AIR,        0.013
-R12_PAS,  ROAD,       0.906
-R12_PAS,  RAIL,       0.061
-R12_PAS,  WATER,      0.010
-R12_PAS,  AIR,        0.021
-R12_RCPA, ROAD,       0.755
-R12_RCPA, RAIL,       0.123
-R12_RCPA, WATER,      0.120
-R12_RCPA, AIR,        0.002
-R12_SAS,  ROAD,       0.770
-R12_SAS,  RAIL,       0.200
-R12_SAS,  WATER,      0.030
-R12_SAS,  AIR,        0.001
-R12_WEU,  ROAD,       0.767
-R12_WEU,  RAIL,       0.146
-R12_WEU,  WATER,      0.070
-R12_WEU,  AIR,        0.022
+R12_AFR,  F ROAD,     0.675
+R12_AFR,  F RAIL,     0.285
+R12_AFR,  F WATER,    0.030
+R12_AFR,  F AIR,      0.010
+R12_CHN,  F ROAD,     0.636
+R12_CHN,  F RAIL,     0.240
+R12_CHN,  F WATER,    0.120
+R12_CHN,  F AIR,      0.004
+R12_EEU,  F ROAD,     0.786
+R12_EEU,  F RAIL,     0.183
+R12_EEU,  F WATER,    0.030
+R12_EEU,  F AIR,      0.001
+R12_FSU,  F ROAD,     0.158
+R12_FSU,  F RAIL,     0.808
+R12_FSU,  F WATER,    0.030
+R12_FSU,  F AIR,      0.002
+R12_LAM,  F ROAD,     0.750
+R12_LAM,  F RAIL,     0.217
+R12_LAM,  F WATER,    0.040
+R12_LAM,  F AIR,      0.003
+R12_MEA,  F ROAD,     0.795
+R12_MEA,  F RAIL,     0.125
+R12_MEA,  F WATER,    0.050
+R12_MEA,  F AIR,      0.040
+R12_NAM,  F ROAD,     0.505
+R12_NAM,  F RAIL,     0.414
+R12_NAM,  F WATER,    0.080
+R12_NAM,  F AIR,      0.006
+R12_PAO,  F ROAD,     0.503
+R12_PAO,  F RAIL,     0.481
+R12_PAO,  F WATER,    0.003
+R12_PAO,  F AIR,      0.013
+R12_PAS,  F ROAD,     0.906
+R12_PAS,  F RAIL,     0.061
+R12_PAS,  F WATER,    0.010
+R12_PAS,  F AIR,      0.021
+R12_RCPA, F ROAD,     0.755
+R12_RCPA, F RAIL,     0.123
+R12_RCPA, F WATER,    0.120
+R12_RCPA, F AIR,      0.002
+R12_SAS,  F ROAD,     0.770
+R12_SAS,  F RAIL,     0.200
+R12_SAS,  F WATER,    0.030
+R12_SAS,  F AIR,      0.001
+R12_WEU,  F ROAD,     0.767
+R12_WEU,  F RAIL,     0.146
+R12_WEU,  F WATER,    0.070
+R12_WEU,  F AIR,      0.022
