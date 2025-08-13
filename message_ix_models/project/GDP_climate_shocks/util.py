@@ -2,6 +2,7 @@
 import gc
 import logging
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,50 @@ from pycountry_convert import country_name_to_country_alpha3
 from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
+
+
+def load_config_from_path(config_path: str = "default") -> dict:
+    """
+    Load configuration from the given path or from the default package data path.
+
+    Parameters:
+    ----------
+    config_path : str, optional
+        Path to the configuration file. If set to "default", uses the packaged
+        `GDP_climate_shocks/config.yaml` file.
+
+    Returns:
+    -------
+    dict
+        Configuration data loaded from the YAML file.
+    """
+    if config_path == "default":
+        config_file = package_data_path() / "GDP_climate_shocks" / "config.yaml"
+    else:
+        config_file = Path(config_path)
+    with open(config_file, "r") as f:
+        return yaml.safe_load(f)
+
+
+def maybe_shift_year(scenario, shift_year: int) -> dict:
+    """
+    Return a dictionary with 'shift_first_model_year' if a year shift is requested.
+
+    Parameters:
+    ----------
+    scenario :
+        Scenario object containing the model's first model year attribute.
+    shift_year : int
+        Year to shift the first model year to, if different from the scenario's.
+
+    Returns:
+    -------
+    dict
+        Dictionary with 'shift_first_model_year' if needed, otherwise empty.
+    """
+    if shift_year and scenario.firstmodelyear != shift_year:
+        return {"shift_first_model_year": shift_year}
+    return {}
 
 
 def load_pop_data():  # NOT NEEDED
@@ -101,7 +146,7 @@ def run_emi_reporting(sc=False, mp=False):
     legacy_reporting(
         mp=mp,
         scen=sc,
-        merge_hist=True,
+        merge_hist=False,
         merge_ts=False,
         run_config="GDP_shock_emiss_run_config.yaml",
     )
@@ -306,9 +351,9 @@ def apply_growth_rates(sc, gdp_change_df):
     values_2100 = growth_diff_df.loc[growth_diff_df["year"] == 2100, "growth_diff"]
 
     # Assign these values to year 2110
-    growth_diff_df.loc[
-        growth_diff_df["year"] == 2110, "growth_diff"
-    ] = values_2100.values
+    growth_diff_df.loc[growth_diff_df["year"] == 2110, "growth_diff"] = (
+        values_2100.values
+    )
     # get the grow parameter from the scenarios
     grow_par = sc.par("grow").copy()
     merge_grow = grow_par.merge(growth_diff_df, on=["node", "year"], how="left")

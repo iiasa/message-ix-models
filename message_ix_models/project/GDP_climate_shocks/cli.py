@@ -11,13 +11,12 @@ adjustments in MESSAGEix using outputs from MAGICC and climate damage functions.
 
 import gc
 import logging
-from pathlib import Path
+from typing import Optional
 
 import click
 import ixmp as ix
 import message_ix
 import pandas as pd
-import yaml
 
 from message_ix_models.project.GDP_climate_shocks.call_climate_processor import (
     read_magicc_output,
@@ -28,37 +27,49 @@ from message_ix_models.project.GDP_climate_shocks.gdp_table_out_ISO import run_r
 from message_ix_models.project.GDP_climate_shocks.util import (
     add_slack_ix,
     apply_growth_rates,
+    load_config_from_path,
+    maybe_shift_year,
     regional_gdp_impacts,
     run_emi_reporting,
     run_legacy_reporting,
 )
-from message_ix_models.util import package_data_path, private_data_path
-from message_ix_models.util.click import common_params, scenario_param
+from message_ix_models.util import private_data_path
+from message_ix_models.util.click import common_params
 
 log = logging.getLogger(__name__)
 
 
-# functions that could go in utils
-def load_config_from_path(config_path: str = "default") -> dict:
-    if config_path == "default":
-        config_file = package_data_path() / "GDP_climate_shocks" / "config.yaml"
-    else:
-        config_file = Path(config_path)
-    with open(config_file, "r") as f:
-        return yaml.safe_load(f)
-
-
-def maybe_shift_year(scenario, shift_year):
-    """Return dict with shift_firstmodelyear if requested and needed."""
-    if shift_year and scenario.firstmodelyear != shift_year:
-        return {"shift_first_model_year": shift_year}
-    return {}
-
-
 def run_initial_scenario_if_needed(
-    mp, sc_ref, model_name_clone, scenario, shift_year, sc_str_rime
-):
-    """Run the base iteration (0) if MAGICC output not found."""
+    mp,
+    sc_ref,
+    model_name_clone: str,
+    scenario: str,
+    shift_year: int,
+    sc_str_rime: str,
+) -> None:
+    """
+    Run the base iteration (0) of the scenario if MAGICC output is not found.
+
+    Parameters:
+    ----------
+    mp :
+        MESSAGEix platform instance for running scenarios.
+    sc_ref :
+        Reference scenario to be cloned.
+    model_name_clone : str
+        Name for the cloned model.
+    scenario : str
+        Scenario name for the run.
+    shift_year : int
+        Year to shift the scenario's first model year to, if needed.
+    sc_str_rime : str
+        Scenario string used to locate MAGICC output files.
+
+    Returns:
+    -------
+    None
+        Runs the scenario and processes output if needed.
+    """
     input_path = private_data_path().parent / "reporting_output" / "magicc_output"
     file_in = input_path / f"{sc_str_rime}_0_magicc.xlsx"
 
@@ -78,7 +89,7 @@ def run_initial_scenario_if_needed(
         keep_solution=False,
         **kwargs,
     )
-
+    # specific to the ENGAGE scenario
     if "INDC2030" in scenario:
         log.info("Adding slack to scenario with INDC2030")
         add_slack_ix(sc0)
@@ -96,17 +107,47 @@ def run_initial_scenario_if_needed(
 
 def iterate_with_climate_impacts(
     sc_ref,
-    model_name,
-    scenario_name,
-    damage_model,
-    percentile,
-    ssp,
-    run_mode,
-    shift_year,
-    regions,
-    rime_path,
-):
-    """Run climate-GDP iterations for convergence."""
+    model_name: str,
+    scenario_name: str,
+    damage_model: str,
+    percentile: float,
+    ssp: str,
+    run_mode: str,
+    shift_year: int,
+    regions: list[str],
+    rime_path: str,
+) -> None:
+    """
+    Run iterative climate–GDP feedback calculations until temperature change converges.
+
+    Parameters:
+    ----------
+    sc_ref :
+        Reference MESSAGEix scenario to be cloned for iterations.
+    model_name : str
+        Name of the model to be used in cloned scenarios.
+    scenario_name : str
+        Base scenario name without GDP–climate iteration suffixes.
+    damage_model : str
+        Name of the damage function model used for GDP impact estimation.
+    percentile : float
+        Percentile of climate damages to use in impact calculations (no decimals).
+    ssp : str
+        Shared Socioeconomic Pathway identifier (e.g. SSP2).
+    run_mode : str
+        Model type for solving (e.g., "MESSAGE").
+    shift_year : int
+        First model year shift, if needed.
+    regions : list of str
+        List with a region code for regional GDP calculations (e.g. R12).
+    rime_path : str
+        Path to store RIME (regional integrated model evaluation) outputs.
+
+    Returns:
+    -------
+    None
+        Runs the iterative process until convergence and produces reporting outputs.
+    """
     meanT = []
     sc_str = f"{scenario_name}_GDP_CI"
     sc_str_rime = f"{model_name}_{sc_str}"
@@ -132,7 +173,7 @@ def iterate_with_climate_impacts(
             sc_str_full, damage_model, it, ssp, regions, percentile
         )
         apply_growth_rates(scs, gdp_change_df)
-
+        # specific to the ENGAGE scenario
         if "INDC2030" in scenario_name:
             log.info("Adding slack to scenario with INDC2030")
             add_slack_ix(scs)
@@ -160,6 +201,42 @@ def iterate_with_climate_impacts(
     gc.collect()
 
 
+def load_and_override_config(
+    config,
+    model_name,
+    model_name_clone,
+    ssp,
+    scens_ref,
+    damage_model,
+    percentiles,
+    shift_year,
+    regions,
+):
+    cfg = load_config_from_path(config)
+    model_name = model_name or cfg["model_name"]
+    model_name_clone = model_name_clone or cfg["model_name_clone"]
+    ssp = ssp or cfg.get("ssp")
+    scens_ref = scens_ref or cfg["scens_ref"]
+    damage_model = damage_model or cfg["damage_model"]
+    percentiles = percentiles or cfg["percentiles"]
+    shift_year = shift_year if shift_year is not None else cfg.get("shift_year")
+    regions = regions or cfg.get("regions")
+    region = regions[0] if isinstance(regions, list) else regions
+    rime_path = cfg["rime_path"]
+    return (
+        cfg,
+        model_name,
+        model_name_clone,
+        ssp,
+        scens_ref,
+        damage_model,
+        percentiles,
+        shift_year,
+        region,
+        rime_path,
+    )
+
+
 @click.group("gdp-ci")
 def cli():
     """GDP-Climate Impact iteration workflow."""
@@ -172,7 +249,7 @@ def cli():
     "--shift_year",
     type=int,
     default=None,
-    help="First model year to shift to (optional; only used if different from scenario).",
+    help="First model year to shift to (optional; used if different from scenario).",
 )
 @click.option("--scens_ref", multiple=True, help="Reference scenario(s) to run.")
 @click.option("--damage_model", multiple=True, help="Damage model(s) to apply.")
@@ -192,45 +269,66 @@ def cli():
     help='Optional config file path, or "default" to use built-in config.',
 )
 def run_full(
-    model_name,
-    model_name_clone,
-    ssp,
-    scens_ref,
-    damage_model,
-    percentiles,
-    shift_year,
-    regions,
-    config,
-):
-    """Run full workflow.
-
-    Args:
-        model_name: Original model name (e.g., ENGAGE_SSP2...).
-        model_name_clone: Cloned model name for GDP-CI.
-        ssp: SSP scenario name (e.g., SSP2).
-        scens_ref: Reference scenario(s) to run.
-        damage_model: Damage model(s) to apply.
-        percentiles: Percentile(s) to run in RIME and MAGICC.
-        shift_year: First model year to shift to (optional; only used if different from scenario).
-        regions: Region(s) to run.
-        config: Optional config file path, or "default" to use built-in config.
+    config: str = "default",
+    model_name: Optional[str] = None,
+    model_name_clone: Optional[str] = None,
+    ssp: Optional[str] = None,
+    scens_ref: Optional[tuple[str, ...]] = None,
+    damage_model: Optional[tuple[str, ...]] = None,
+    percentiles: Optional[tuple[int, ...]] = None,
+    shift_year: Optional[int] = None,
+    regions: Optional[list[str]] = None,
+) -> None:
     """
-    cfg = load_config_from_path(config)
+    Run the full GDP–Climate Impact iteration workflow.
+    1. Runs an initial scenario with MAGICC output.
+    2. For a damage function and percentile it applies the GDP damages running RIME,
+       MESSAGE-MACRO and MAGICC, untill temperature converges below a given treshold.
+    3. Runs full reporting (based on legacy reporting setup on message_data).
 
-    # Replace values from CLI if given
-    model_name = model_name or cfg["model_name"]
-    model_name_clone = model_name_clone or cfg["model_name_clone"]
-    ssp = ssp or cfg.get("ssp")
-    scens_ref = scens_ref or cfg["scens_ref"]
-    damage_model = damage_model or cfg["damage_model"]
-    percentiles = percentiles or cfg["percentiles"]
-    shift_year = shift_year if shift_year is not None else cfg.get("shift_year")
-    regions = regions or cfg.get("regions")
-    if isinstance(regions, list):
-        region = regions[0]
-    else:
-        region = regions
-    rime_path = cfg["rime_path"]
+    Parameters:
+    ----------
+    model_name : str
+        Original model name (e.g., 'ENGAGE_SSP2').
+    model_name_clone : str
+        Cloned model name for the GDP–CI workflow.
+    ssp : str
+        Shared Socioeconomic Pathway identifier (e.g., 'SSP2').
+    scens_ref : tuple of str
+        Reference scenario name(s) to run.
+    damage_model : tuple of str
+        One or more damage model names to apply.
+    percentiles : tuple of int
+        Percentile values to run in RIME and MAGICC.
+    shift_year : int
+        First model year to shift to (only used if different from the scenario's).
+    regions : list of str
+        Single region code provided as a list for CLI compatibility.
+    config : str
+        Path to an optional configuration file, or "default" to use built-in settings.
+    """
+    (
+        _,
+        model_name,
+        model_name_clone,
+        ssp,
+        scens_ref,
+        damage_model,
+        percentiles,
+        shift_year,
+        region,
+        rime_path,
+    ) = load_and_override_config(
+        config,
+        model_name,
+        model_name_clone,
+        ssp,
+        scens_ref,
+        damage_model,
+        percentiles,
+        shift_year,
+        regions,
+    )
 
     # Log final config values
     logging.info("Final configuration:")
@@ -249,8 +347,8 @@ def run_full(
     # run message-macro
     run_mode = "MESSAGE-MACRO"
 
-    #### actual build block
-    ## for loop across scens_ref
+    # actual build block
+    # for loop across scens_ref
     for scenario in scens_ref:
         # initiate scenario
         mp = ix.Platform(name="ixmp_dev", jvmargs=["-Xmx14G"])
@@ -263,11 +361,10 @@ def run_full(
         )
 
         # run RIME on sc0_magicc
-
         for pp in percentiles:
             run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
             logging.info(
-                f"Iteraction 0 for {sc_str}_{pp} completed. Ready to apply climate impacts."
+                f"Iteraction 0 for {sc_str}_{pp} completed. Now apply climate impacts."
             )
 
             ## for loop across damage_model
@@ -289,6 +386,89 @@ def run_full(
         del mp
         gc.collect()
         log.info("All scenarios completed")
+
+
+# auxiliary functions for run_magicc_rime
+def run_from_single_input(
+    cfg: dict[str, object],
+    model_name: str,
+    scens_ref: tuple[str, ...],
+    damage_model: tuple[str, ...],
+    percentiles: tuple[int, ...],
+    rime_path: str,
+):
+    """Run MAGICC and RIME from a single pre-generated MAGICC input file."""
+    magicc_input_path = cfg["magicc_input_path"]
+    logging.info("Using input-only singe mode from file: %s", magicc_input_path)
+    for scenario in scens_ref:
+        run_climate_processor_from_file(magicc_input_path, model_name, scenario)
+        logging.info("Scenario completed with MAGICC, proceed to RIME")
+        # run RIME on sc0_magicc
+        sc_str_rime = f"{model_name}_{scenario}"
+        for pp in percentiles:
+            run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
+            logging.info(f"Iteraction 0 with RIME for {sc_str_rime}_{pp} completed.")
+
+
+def run_from_input_list(
+    cfg: dict[str, object],
+    damage_model: tuple[str, ...],
+    percentiles: tuple[int, ...],
+    rime_path: str,
+):
+    """Run MAGICC and RIME for all scenarios listed in the config CSV."""
+    magicc_input_path = cfg["magicc_input_path"]
+    magicc_input_list = cfg["magicc_input_list"]
+    logging.info(
+        "Using input-only singe mode from file: %s and list: %s",
+        magicc_input_path,
+        magicc_input_list,
+    )
+    scenlist_df = pd.read_csv(magicc_input_list)
+    for m, s in zip(scenlist_df["model"], scenlist_df["scenario"]):
+        try:
+            logging.info("running MAGICC for %s, %s", m, s)
+            run_climate_processor_from_file(magicc_input_path, m, s)
+            logging.info("MAGICC done")
+            sc_str_rime = f"{m}_{s}"
+            for pp in percentiles:
+                run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
+                logging.info(
+                    f"Iteraction 0 with RIME for {sc_str_rime}_{pp} completed."
+                )
+        except Exception as e:
+            logging.info(f"❌ Failed: {s} – {e}")
+    logging.info("All scenarios completed with MAGICC and RIME")
+
+
+def run_from_messageix_scenarios(
+    model_name: str,
+    model_name_clone: str,
+    scens_ref: tuple[str, ...],
+    damage_model: tuple[str, ...],
+    percentiles: tuple[int, ...],
+    shift_year: Optional[int],
+    rime_path: str,
+):
+    """Run MAGICC and RIME directly from MESSAGEix scenarios."""
+    for scenario in scens_ref:
+        # initiate scenario
+        mp = ix.Platform(name="ixmp_dev", jvmargs=["-Xmx14G"])
+        sc_ref = message_ix.Scenario(mp, model_name, scenario, cache=True)
+        sc_str = f"{scenario}_GDP_CI"
+        sc_str_rime = f"{model_name_clone}_{sc_str}"
+        # only run the initial scenario, if magicc file not existing
+        run_initial_scenario_if_needed(
+            mp, sc_ref, model_name_clone, scenario, shift_year, sc_str_rime
+        )
+        # run RIME on sc0_magicc
+        for pp in percentiles:
+            run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
+            logging.info(f"Iteraction 0 with RIME for {sc_str}_{pp} completed.")
+
+        mp.close_db()
+        del mp
+        gc.collect()
 
 
 @cli.command("run_magicc_rime")
@@ -314,7 +494,7 @@ def run_full(
     "--shift_year",
     type=int,
     default=None,
-    help="First model year to shift to (optional; only used if different from scenario).",
+    help="First model year to shift to (optional; used if different from scenario).",
 )
 @common_params("regions")
 @click.option(
@@ -351,133 +531,121 @@ def run_magicc_rime_cli(
 
 
 def run_magicc_rime(
-    config="default",
-    model_name=None,
-    model_name_clone=None,
-    ssp=None,
-    scens_ref=None,
-    damage_model=None,
-    percentiles=None,
-    shift_year=None,
-    regions=None,
-    input_only=None,
-):
-    """Run Magicc and RIME on a scenario or a iam reporting file.
+    config: str = "default",
+    model_name: Optional[str] = None,
+    model_name_clone: Optional[str] = None,
+    ssp: Optional[str] = None,
+    scens_ref: Optional[tuple[str, ...]] = None,
+    damage_model: Optional[tuple[str, ...]] = None,
+    percentiles: Optional[tuple[int, ...]] = None,
+    shift_year: Optional[int] = None,
+    regions: Optional[list[str]] = None,
+    input_only: Optional[str] = None,
+) -> None:
+    """
+    Run MAGICC and RIME climate impact calculations for one or more scenarios.
+
+    This function runs the MAGICC climate model and the RIME impact model
+    either:
+      - Directly from MESSAGEix scenarios (default case),
+      - Or from pre-generated MAGICC input files (`input_only="single"`),
+      - Or from a list of MAGICC input scenarios (`input_only="list"`).
+
+    Cases
+    -----
+    1. **Default case** (input_only is None):
+       - Loads each reference scenario (`scens_ref`) from the MESSAGEix database.
+       - Runs MAGICC if no existing MAGICC output exists for the scenario.
+       - Runs RIME for each specified percentile.
+
+    2. **Single input file** (`input_only="single"`):
+       - Uses a single pre-generated MAGICC input file from `config:magicc_input_path`.
+       - Runs MAGICC and RIME for each `scens_ref` scenario.
+
+    3. **List of inputs** (`input_only="list"`):
+       - Reads scenario model names from a CSV file in `config:magicc_input_path`.
+       - Runs MAGICC and RIME for each listed scenario in 'config:magicc_input_list'.
 
     Parameters
     ----------
     config : str
-        Optional config file path, or "default" to use built-in config.
-    model_name : str
-        Original model name (e.g., ENGAGE_SSP2...).
-    model_name_clone : str
-        Cloned model name for GDP-CI.
-    ssp : str
-        SSP scenario name (e.g., SSP2).
-    scens_ref : str
-        Reference scenario(s) to run.
-    damage_model : str
-        Damage model(s) to apply.
-    percentiles : int
-        Percentile(s) to run in RIME and MAGICC.
-    shift_year : int
-        First model year to shift to (optional; only used if different from scenario).
-    regions : str
+        Path to a config file, or `"default"` to use the built-in one.
+    model_name : str, optional
+        Original model name (e.g., "ENGAGE_SSP2").
+    model_name_clone : str, optional
+        Cloned model name for GDP-CI variant.
+    ssp : str, optional
+        SSP scenario name (e.g., "SSP2").
+    scens_ref : tuple[str, ...], optional
+        One or more reference scenarios to process.
+    damage_model : tuple[str, ...], optional
+        One or more damage models to apply.
+    percentiles : tuple[int, ...], optional
+        Percentiles to run in RIME and MAGICC.
+    shift_year : int, optional
+        First model year to shift to (only used if different from scenario start year).
+    regions : list[str], optional
         Region(s) to run.
+    input_only : {"single", "list"}, optional
+        Use pre-generated MAGICC input files instead of running from MESSAGEix.
 
-    input_only : bool
-        Use only input files, do not use ixmp.
+    Returns
+    -------
+    None
     """
     logging.info("Config:", config)
-    cfg = load_config_from_path(config)
-
-    # Replace values from CLI if given
-    model_name = model_name or cfg["model_name"]
-    model_name_clone = model_name_clone or cfg["model_name_clone"]
-    ssp = ssp or cfg.get("ssp")
-    scens_ref = scens_ref or cfg["scens_ref"]
-    damage_model = damage_model or cfg["damage_model"]
-    percentiles = percentiles or cfg["percentiles"]
-    shift_year = shift_year if shift_year is not None else cfg.get("shift_year")
-    regions = regions or cfg.get("regions")
-    if isinstance(regions, list):
-        region = regions[0]
-    else:
-        region = regions
-    rime_path = cfg["rime_path"]
+    (
+        cfg,
+        model_name,
+        model_name_clone,
+        ssp,
+        scens_ref,
+        damage_model,
+        percentiles,
+        shift_year,
+        region,
+        rime_path,
+    ) = load_and_override_config(
+        config,
+        model_name,
+        model_name_clone,
+        ssp,
+        scens_ref,
+        damage_model,
+        percentiles,
+        shift_year,
+        regions,
+    )
 
     # Log final config values
-    logging.info("Final configuration:")
-    for k, v in {
-        "model_name": model_name,
-        "model_name_clone": model_name_clone,
-        "ssp": ssp,
-        "scens_ref": scens_ref,
-        "damage_model": damage_model,
-        "percentiles": percentiles,
-        "shift_year": shift_year,
-        "regions": region,
-        "rime_path": rime_path,
-    }.items():
-        logging.info(f"  {k}: {v}")
+    # logging.info("Final configuration:")
+    # for k, v in {
+    #     "model_name": model_name,
+    #     "model_name_clone": model_name_clone,
+    #     "ssp": ssp,
+    #     "scens_ref": scens_ref,
+    #     "damage_model": damage_model,
+    #     "percentiles": percentiles,
+    #     "shift_year": shift_year,
+    #     "regions": region,
+    #     "rime_path": rime_path,
+    # }.items():
+    #     logging.info(f"  {k}: {v}")
 
     if input_only == "single":
-        # load path from cfg
-        magicc_input_path = cfg["magicc_input_path"]
-        logging.info("Using input-only singe mode from file: %s", magicc_input_path)
-        for scenario in scens_ref:
-            run_climate_processor_from_file(magicc_input_path, model_name, scenario)
-            logging.info("Scenario completed with MAGICC, proceed to RIME")
-            # run RIME on sc0_magicc
-            sc_str_rime = f"{model_name}_{scenario}"
-            for pp in percentiles:
-                run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
-                logging.info(f"Iteraction 0 with RIME for {sc_str}_{pp} completed.")
-
-    elif input_only == "list":
-        # load path from cfg
-        magicc_input_path = cfg["magicc_input_path"]
-        magicc_input_list = cfg["magicc_input_list"]
-        logging.info(
-            "Using input-only singe mode from file: %s and list: %s",
-            magicc_input_path,
-            magicc_input_list,
+        run_from_single_input(
+            cfg, model_name, scens_ref, damage_model, percentiles, rime_path
         )
-        scenlist_df = pd.read_csv(magicc_input_list)
-        for m, s in zip(scenlist_df["model"], scenlist_df["scenario"]):
-            try:
-                logging.info("running MAGICC for %s, %s", m, s)
-                run_climate_processor_from_file(magicc_input_path, m, s)
-                logging.info("MAGICC done")
-                sc_str_rime = f"{m}_{s}"
-                for pp in percentiles:
-                    run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
-                    logging.info(
-                        f"Iteraction 0 with RIME for {sc_str_rime}_{pp} completed."
-                    )
-            except Exception as e:
-                print(f"❌ Failed: {s} – {e}")
-        logging.info("All scenarios completed with MAGICC and RIME")
-
+    elif input_only == "list":
+        run_from_input_list(cfg, damage_model, percentiles, rime_path)
     else:
-        #### actual build block
-        ## for loop across scens_ref
-        for scenario in scens_ref:
-            # initiate scenario
-            mp = ix.Platform(name="ixmp_dev", jvmargs=["-Xmx14G"])
-            sc_ref = message_ix.Scenario(mp, model_name, scenario, cache=True)
-            sc_str = f"{scenario}_GDP_CI"
-            sc_str_rime = f"{model_name_clone}_{sc_str}"
-            # only run the initial scenario, if magicc file not existing
-            run_initial_scenario_if_needed(
-                mp, sc_ref, model_name_clone, scenario, shift_year, sc_str_rime
-            )
-            # run RIME on sc0_magicc
-            for pp in percentiles:
-                run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
-                logging.info(f"Iteraction 0 with RIME for {sc_str}_{pp} completed.")
-
-            mp.close_db()
-            del mp
-            gc.collect()
+        run_from_messageix_scenarios(
+            model_name,
+            model_name_clone,
+            scens_ref,
+            damage_model,
+            percentiles,
+            shift_year,
+            rime_path,
+        )
     log.info("All scenarios completed")
