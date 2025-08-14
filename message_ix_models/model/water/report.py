@@ -678,7 +678,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     urban_mwdem_connected = ["out|final|urban_mw|urban_t_d|M1"]
     urban_mwdem_connected_eff = ["out|final|urban_mw|urban_t_d|Mf"]
     industry_mwdem_unconnected = ["out|final|industry_mw|industry_unconnected|M1"]
-
+    industry_mwdem_unconnected_eff = ["out|final|industry_mw|industry_unconnected|Mf"]
     electr_gw = ["in|final|electr|extract_groundwater|M1"]
     electr_fgw = ["in|final|electr|extract_gw_fossil|M1"]
     electr_sw = ["in|final|electr|extract_surfacewater|M1"]
@@ -746,11 +746,24 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         variable="in|water_supply|freshwater|*|*"
     ).variable
     # Remove already-reported categories: irrigation and cooling technologies
-    exclude_patterns = ['irrigation_', '__ot_fresh', '__cl_fresh', '__ot_saline', '__air']
+    exclude_patterns = [
+        "irrigation_",
+        "__ot_fresh",
+        "__cl_fresh",
+        "__ot_saline",
+        "__air",
+        "industry_unconnected",
+        "industry_untreated",
+        "urban_t_d",
+        "rural_t_d", 
+        "urban_unconnected",
+        "rural_unconnected",
+    ]
     # FIXME: This filter may double-count industry_unconnected and other water technologies
     # that are already reported elsewhere. Need to add more exclusion patterns.
     non_cooling_water = [
-        v for v in all_freshwater_tech 
+        v
+        for v in all_freshwater_tech
         if not any(pattern in v for pattern in exclude_patterns)
     ]
 
@@ -776,7 +789,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     map_agg_pd = pd.DataFrame(
         [
             ["Water Extraction", extract_gw + extract_fgw + extract_sw, "MCM/yr"],
-            ["Water Extraction|Groundwater", extract_gw + extract_fgw, "MCM/yr"],
+            ["Water Extraction|Groundwater", extract_gw, "MCM/yr"],
             [
                 "Water Extraction|Fossil Groundwater",
                 extract_fgw,
@@ -814,7 +827,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 + urban_mwdem_connected_eff
                 + urban_mwdem_unconnected
                 + urban_mwdem_unconnected_eff
-                + industry_mwdem_unconnected,
+                + industry_mwdem_unconnected
+                + industry_mwdem_unconnected_eff,
                 "MCM/yr",
             ],
             ["Water Withdrawal|Energy techs & Irrigation", region_withdr, "MCM/yr"],
@@ -991,6 +1005,11 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             [
                 "Water Withdrawal|Industrial Water|Unconnected",
                 industry_mwdem_unconnected,
+                "MCM/yr",
+            ],
+            [
+                "Water Withdrawal|Industrial Water|Unconnected Eff",
+                industry_mwdem_unconnected_eff,
                 "MCM/yr",
             ],
             # ["Water Withdrawal|Irrigation", irr_water, "MCM/yr"],
