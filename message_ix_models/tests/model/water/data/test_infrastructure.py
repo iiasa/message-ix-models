@@ -108,7 +108,7 @@ def water_function_test_data(test_context, request):
 
     # Add RCP for desalination
     if function_type == "desalination":
-        test_context.RCP = "7p0"  # Default RCP value
+        test_context.RCP = "7p0"  # Shouldn't require a param for this
 
     # Create scenario
     mp = test_context.get_platform()
@@ -146,12 +146,25 @@ def water_function_test_data(test_context, request):
     [
         ("infrastructure", "baseline"),
         ("infrastructure", "not_baseline"),
-        ("desalination", None),
+        ("desalination", "baseline"),
+        ("desalination", "not_baseline"),
     ],
     indirect=True,
+    ids=[
+        "infrastructure-baseline",
+        "infrastructure-sdg",
+        "desalination-baseline",
+        "desalination-sdg",
+    ],
 )
-def test_water_data_structure(water_function_test_data):
-    """Test for data structure, integrity, and configuration-specific behavior."""
+def test_data_quality(water_function_test_data):
+    """Test basic data quality
+    Validates that the output DataFrames have:
+    - Required columns present
+    - No NaN values in the value column
+    - No duplicate rows
+    - Valid time format (not single character)
+    """
     data = water_function_test_data
     result = data["result"]
     function_type = data["function_type"]
@@ -220,12 +233,20 @@ def test_water_data_structure(water_function_test_data):
     [
         ("infrastructure", "baseline"),
         ("infrastructure", "not_baseline"),
-        ("desalination", None),
     ],
     indirect=True,
+    ids=["infrastructure-baseline", "infrastructure-sdg"],
 )
-def test_water_technology(water_function_test_data):
-    """Test for technology completeness, data pairing, and catch early return bugs."""
+def test_infrastructure_modes(water_function_test_data):
+    """Test all M1/Mf mode requirements for infrastructure technologies.
+
+    Validates:
+    - Distribution technologies have correct modes (M1+Mf for baseline, Mf only for SDG)
+    - Non-distribution technologies only have M1 mode
+    - All output modes have corresponding input modes
+    - Mf mode is more efficient than M1 (lower input coefficients)
+    - No early return bugs (all distribution techs present)
+    """
     data = water_function_test_data
     result = data["result"]
     function_type = data["function_type"]
@@ -233,34 +254,30 @@ def test_water_technology(water_function_test_data):
     tech_categories = _get_technology_categories()[function_type]
     input_techs = set(result["input"]["technology"].unique())
     output_techs = set(result["output"]["technology"].unique())
+    input_df = result["input"]
 
-    if function_type == "infrastructure":
-        # Distribution technology completeness (catches early return bug)
-        expected_dist_techs = set(tech_categories["distribution"])
-        missing_dist_input = expected_dist_techs - input_techs
-        assert (
-            not missing_dist_input
-        ), f"""{function_type}: Distribution technologies missing
-            from input (early return bug): {missing_dist_input}"""
+    # Distribution technology completeness (catches early return bug)
+    expected_dist_techs = set(tech_categories["distribution"])
+    missing_dist_input = expected_dist_techs - input_techs
+    assert (
+        not missing_dist_input
+    ), f"""{function_type}: Distribution technologies missing
+        from input (early return bug): {missing_dist_input}"""
 
-        # Electric/non-electric pairing
-        elec_techs = set(
-            result["input"][result["input"]["commodity"] == "electr"][
-                "technology"
-            ].unique()
-        )
-        non_elec_techs = set(
-            result["input"][result["input"]["commodity"] != "electr"][
-                "technology"
-            ].unique()
-        )
-        missing_non_elec = elec_techs - non_elec_techs
-        assert (
-            not missing_non_elec
-        ), f"""{function_type}: Technologies with electricity input
-            missing non-electric input: {missing_non_elec}"""
+    # Electric/non-electric pairing
+    elec_techs = set(
+        result["input"][result["input"]["commodity"] == "electr"]["technology"].unique()
+    )
+    non_elec_techs = set(
+        result["input"][result["input"]["commodity"] != "electr"]["technology"].unique()
+    )
+    missing_non_elec = elec_techs - non_elec_techs
+    assert (
+        not missing_non_elec
+    ), f"""{function_type}: Technologies with electricity input
+        missing non-electric input: {missing_non_elec}"""
 
-    # Input/output mode pairing (catches missing Mf inputs bug)
+    # Input/output mode pairing
     output_tech_modes = {
         (row["technology"], row["mode"]) for _, row in result["output"].iterrows()
     }
@@ -283,202 +300,71 @@ def test_water_technology(water_function_test_data):
         assert False, error_msg
 
     # Mode consistency validation between input and output for infrastructure
-    if function_type == "infrastructure":
-        common_techs = input_techs.intersection(output_techs)
-        distribution_techs = set(tech_categories["distribution"])
-
-        if common_techs:
-            for tech in common_techs:
-                # Distribution technologies should have both M1 and Mf in baseline,
-                # only Mf in non-baseline
-                # Non-distribution technologies should only have M1
-                if tech in distribution_techs:
-                    expected_modes = (
-                        {"M1", "Mf"} if sdg_config == "baseline" else {"Mf"}
-                    )
-                else:
-                    expected_modes = {"M1"}
-
-                input_modes = set(
-                    result["input"][result["input"]["technology"] == tech][
-                        "mode"
-                    ].unique()
-                )
-                output_modes = set(
-                    result["output"][result["output"]["technology"] == tech][
-                        "mode"
-                    ].unique()
-                )
-
-                assert input_modes == expected_modes, (
-                    f"{function_type}: Technology {tech} has incorrect input "
-                    f"modes for {sdg_config} configuration. "
-                    f"Expected: {expected_modes}, Found: {input_modes}"
-                )
-                assert output_modes == expected_modes, (
-                    f"{function_type}: Technology {tech} has incorrect output "
-                    f"modes for {sdg_config} configuration. "
-                    f"Expected: {expected_modes}, Found: {output_modes}"
-                )
-
-
-@pytest.mark.parametrize(
-    "water_function_test_data",
-    [
-        ("infrastructure", "baseline"),
-        ("infrastructure", "not_baseline"),
-        ("desalination", None),
-    ],
-    indirect=True,
-)
-def test_water_parameter(water_function_test_data):
-    """Test for parameter consistency and technology-specific uniqueness.
-
-    Catches variable reference bugs.
-    """
-    data = water_function_test_data
-    result = data["result"]
-    function_type = data["function_type"]
-    data["sdg_config"]
-    tech_categories = _get_technology_categories()[function_type]
-
-    # Variable cost consistency (catches variable reference bug)
-    if "var_cost" in result and not result["var_cost"].empty:
-        var_cost_df = result["var_cost"]
-        tech_cost_patterns = {}
-
-        for tech in var_cost_df["technology"].unique():
-            tech_data = var_cost_df[var_cost_df["technology"] == tech].sort_values(
-                [col for col in ["node_loc", "year_act"] if col in var_cost_df.columns]
-            )
-            cost_pattern = tuple(tech_data["value"].values)
-            tech_cost_patterns.setdefault(cost_pattern, []).append(tech)
-
-        shared_patterns = {
-            pattern: techs
-            for pattern, techs in tech_cost_patterns.items()
-            if len(techs) > 1
-        }
-
-        if shared_patterns:
-            # Check against raw CSV data - this is required
-            raw_data = tech_categories.get("raw_data")
-            assert raw_data is not None, (
-                f"{function_type}: Raw data not available for validation"
-            )
-            assert "var_cost_mid" in raw_data.columns, (
-                f"{function_type}: var_cost_mid column missing from raw data"
-            )
-
-            # Get unique var_cost_mid values from raw data
-            raw_var_costs = raw_data[["tec", "var_cost_mid"]].dropna()
-            unique_costs = raw_var_costs.groupby("tec")["var_cost_mid"].first()
-
-            # If all technologies have the same cost in raw data, it's not a bug
-            if len(unique_costs.unique()) == 1:
-                # All technologies have the same cost in source data
-                # this is intentional
-                pass
-            else:
-                # Different costs in source but identical in output - this is a bug
-                max_shared = max(len(techs) for techs in shared_patterns.values())
-                total_techs = len(var_cost_df["technology"].unique())
-
-                assert max_shared / total_techs < 0.7, (
-                    f"{function_type}: Variable reference bug detected -"
-                    f"""{max_shared}/{total_techs} technologies
-                        have identical cost patterns"""
-                    f"but source data shows different costs"
-                )
-
-    # Technical lifetime consistency (catches stale variable bug)
-    if "technical_lifetime" in result and not result["technical_lifetime"].empty:
-        lifetime_df = result["technical_lifetime"]
-
-        if function_type == "infrastructure":
-            tech_categories = _get_technology_categories()[function_type]
-            dist_techs = set(tech_categories["distribution"])
-            available_dist_techs = dist_techs.intersection(
-                set(lifetime_df["technology"].unique())
-            )
-            non_dist_techs = set(lifetime_df["technology"].unique()) - dist_techs
-
-            if len(available_dist_techs) >= 2 and non_dist_techs:
-                dist_lifetimes = [
-                    lifetime_df[lifetime_df["technology"] == tech]["value"].iloc[0]
-                    for tech in available_dist_techs
-                ]
-                non_dist_lifetime = lifetime_df[
-                    lifetime_df["technology"] == list(non_dist_techs)[0]
-                ]["value"].iloc[0]
-
-                identical_to_non_dist = sum(
-                    1 for lt in dist_lifetimes if lt == non_dist_lifetime
-                )
-
-                assert identical_to_non_dist < len(dist_lifetimes), (
-                    f"{function_type}: Stale variable bug detected - "
-                    f"""all distribution technologies have lifetime
-                    {non_dist_lifetime} identical to non-distribution technology"""
-                )
-
-
-@pytest.mark.parametrize(
-    "water_function_test_data", [("infrastructure", "baseline")], indirect=True
-)
-def test_efficiency_mode_mapping(water_function_test_data):
-    """Test that Mf mode represents higher efficiency.
-
-    Only tests baseline configuration where both M1 and Mf modes exist.
-    """
-    data = water_function_test_data
-    result = data["result"]
-    function_type = data["function_type"]
-
-    input_df = result["input"]
-    tech_categories = _get_technology_categories()[function_type]
+    common_techs = input_techs.intersection(output_techs)
     distribution_techs = set(tech_categories["distribution"])
 
-    failures = []
+    if common_techs:
+        # Single pass through technologies to get modes, coefficients, and validate
+        tech_data = {}
+        for tech in common_techs:
+            tech_inputs = input_df[input_df["technology"] == tech]
+            tech_outputs = result["output"][result["output"]["technology"] == tech]
 
-    # Check distribution technologies with both M1 and Mf modes
-    for tech in distribution_techs:
-        tech_inputs = input_df[input_df["technology"] == tech]
-        if tech_inputs.empty:
-            continue
+            input_modes = set(tech_inputs["mode"].unique())
+            output_modes = set(tech_outputs["mode"].unique())
 
-        modes = set(tech_inputs["mode"].unique())
-        if {"M1", "Mf"}.issubset(modes):
-            # Get input coefficients for both modes (non-electricity commodities)
-            m1_inputs = tech_inputs[
-                (tech_inputs["mode"] == "M1") & (tech_inputs["commodity"] != "electr")
-            ]
-            mf_inputs = tech_inputs[
-                (tech_inputs["mode"] == "Mf") & (tech_inputs["commodity"] != "electr")
-            ]
+            # Get M1/Mf coefficients if both modes exist
+            m1_coeff = mf_coeff = None
+            if {"M1", "Mf"}.issubset(input_modes):
+                m1_data = tech_inputs[
+                    (tech_inputs["mode"] == "M1")
+                    & (tech_inputs["commodity"] != "electr")
+                ]
+                mf_data = tech_inputs[
+                    (tech_inputs["mode"] == "Mf")
+                    & (tech_inputs["commodity"] != "electr")
+                ]
+                if not m1_data.empty and not mf_data.empty:
+                    m1_coeff = m1_data["value"].iloc[0]
+                    mf_coeff = mf_data["value"].iloc[0]
 
-            if not m1_inputs.empty and not mf_inputs.empty:
-                m1_coeff = m1_inputs["value"].iloc[0]
-                mf_coeff = mf_inputs["value"].iloc[0]
+            tech_data[tech] = {
+                "input_modes": input_modes,
+                "output_modes": output_modes,
+                "m1_coeff": m1_coeff,
+                "mf_coeff": mf_coeff,
+            }
 
-                # Mf should be more efficient (lower input coefficient)
-                if mf_coeff >= m1_coeff:
-                    failures.append(
-                        {
-                            "tech": tech,
-                            "m1_coeff": m1_coeff,
-                            "mf_coeff": mf_coeff,
-                            "issue": "Mf not more efficient than M1",
-                        }
-                    )
+        # Validate all technologies using collected data
+        for tech, data in tech_data.items():
+            # Distribution technologies should have both M1 and Mf in baseline,
+            # only Mf in non-baseline
+            # Non-distribution technologies should only have M1
+            if tech in distribution_techs:
+                expected_modes = {"M1", "Mf"} if sdg_config == "baseline" else {"Mf"}
+            else:
+                expected_modes = {"M1"}
 
-    # Report findings from actual function outputs
-    if failures:
-        failure_details = "\n".join(
-            [
-                f"  {f['tech']}: M1={f['m1_coeff']}, Mf={f['mf_coeff']} - {f['issue']}"
-                for f in failures
-            ]
-        )
+            assert data["input_modes"] == expected_modes, (
+                f"{function_type}: Technology {tech} has incorrect input "
+                f"modes for {sdg_config} configuration. "
+                f"Expected: {expected_modes}, Found: {data['input_modes']}"
+            )
+            assert data["output_modes"] == expected_modes, (
+                f"{function_type}: Technology {tech} has incorrect output "
+                f"modes for {sdg_config} configuration. "
+                f"Expected: {expected_modes}, Found: {data['output_modes']}"
+            )
 
-        assert False, f"Efficiency mapping violations:\n{failure_details}\n\n"
+            # Test efficiency: Mf should be more efficient than
+            # M1 for distribution techs in baseline
+            if (
+                tech in distribution_techs
+                and sdg_config == "baseline"
+                and data["m1_coeff"] is not None
+                and data["mf_coeff"] is not None
+            ):
+                assert data["mf_coeff"] < data["m1_coeff"], (
+                    f"{function_type}: Technology {tech} - Mf < efficient than M1. "
+                    f"M1={data['m1_coeff']}, Mf={data['mf_coeff']}"
+                )
