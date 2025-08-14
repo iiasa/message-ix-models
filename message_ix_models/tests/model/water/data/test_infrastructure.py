@@ -100,7 +100,7 @@ def water_function_test_data(test_context, request):
     if sdg_config:
         test_context.SDG = sdg_config
     test_context.time = "year"
-    test_context.type_reg = "country" if function_type == "infrastructure" else "global"
+    test_context.type_reg = "global"
     test_context.regions = "R12"
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
@@ -256,7 +256,7 @@ def test_infrastructure_modes(water_function_test_data):
     output_techs = set(result["output"]["technology"].unique())
     input_df = result["input"]
 
-    # Distribution technology completeness (catches early return bug)
+    # Distribution technology completeness
     expected_dist_techs = set(tech_categories["distribution"])
     missing_dist_input = expected_dist_techs - input_techs
     assert (
