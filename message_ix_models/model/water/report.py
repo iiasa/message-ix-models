@@ -755,12 +755,11 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         "industry_unconnected",
         "industry_untreated",
         "urban_t_d",
-        "rural_t_d", 
+        "rural_t_d",
         "urban_unconnected",
         "rural_unconnected",
     ]
-    # FIXME: This filter may double-count industry_unconnected and other water technologies
-    # that are already reported elsewhere. Need to add more exclusion patterns.
+    # Exclude water demand technologies already reported elsewhere to avoid double-counting
     non_cooling_water = [
         v
         for v in all_freshwater_tech
@@ -864,15 +863,11 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             ],
             [
                 "Capacity Additions|Infrastructure|Water",
-                rural_infrastructure
-                + urban_infrastructure
-                + urban_treatment_recycling
-                + rural_treatment_recycling
-                + urban_dist
-                + rural_dist
-                + rural_unconnected
-                + urban_unconnected
-                + industry_unconnected,
+                # Removed sub-components to avoid double-counting since:
+                # - *_infrastructure
+                # already includes
+                # *_treatment_recycling, *_dist, *_unconnected
+                rural_infrastructure + urban_infrastructure + industry_unconnected,
                 "MCM/yr",
             ],
             [
