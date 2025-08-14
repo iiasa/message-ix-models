@@ -39,7 +39,7 @@ level_2:
   Liquids|Oil:
     short: fe_pe_oil
     components:
-      [ fe_pe_cement_oil, fe_pe_aluminum_oil, fe_pe_other_liq_bio ]
+      [ fe_pe_cement_oil, fe_pe_aluminum_oil, fe_pe_other_oil ]
   Liquids|Other:
     short: fe_pe_liq_oth
     components:
