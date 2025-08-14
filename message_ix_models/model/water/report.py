@@ -741,7 +741,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         variable="in|water_supply|freshwater|*__cl_fresh|*"
     ).variable
 
-    # Non-cooling technologies freshwater usage (all freshwater techs except already reported)
+    # Non-cooling technologies freshwater usage
+    # (all freshwater techs except already reported)
     all_freshwater_tech = report_iam.filter(
         variable="in|water_supply|freshwater|*|*"
     ).variable
@@ -759,7 +760,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         "urban_unconnected",
         "rural_unconnected",
     ]
-    # Exclude water demand technologies already reported elsewhere to avoid double-counting
+    # Exclude water demand technologies to avoid double-counting
     non_cooling_water = [
         v
         for v in all_freshwater_tech
@@ -1243,6 +1244,18 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             [
                 "Investment|Infrastructure|Water|Unconnected|Urban",
                 urban_unconnected_inv,
+                "million US$2010/yr",
+            ],
+            [
+                "Total Operation Management Cost|Infrastructure|Water",
+                # Main aggregation including all infrastructure O&M costs
+                rural_infrastructure_totalom
+                + urban_infrastructure_totalom
+                + extrt_sw_om
+                + extrt_gw_om
+                + extrt_fgw_om
+                + saline_totalom
+                + industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
