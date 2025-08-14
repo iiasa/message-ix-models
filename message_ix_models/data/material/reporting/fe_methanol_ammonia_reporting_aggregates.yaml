@@ -19,7 +19,7 @@ level_2:
   Chemicals|Methanol:
     short: fe_meth
     components:
-      [fe_meth_el, fe_meth_coal, fe_meth_gas, fe_meth_bio, fe_meth_h2 ]
+      [ fe_meth_coal, fe_meth_gas, fe_meth_bio, fe_meth_h2 ]
 
 
 level_1:

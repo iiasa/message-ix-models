@@ -75,10 +75,10 @@ level_1:
     short: prod_propy_sc
     components:
       [ prod_propy_sc_naphtha, prod_propy_sc_ago, prod_propy_sc_vgo, prod_propy_sc_eth, prod_propy_cc_prop]
-  Chemicals|High-Value Chemicals|BTX:
+  Chemicals|High-Value Chemicals|BTX|Steam Cracking:
     short: prod_btx_sc
     components:
-      [ prod_btx_sc_naphtha, prod_btx_sc_ago, prod_btx_sc_vgo, prod_btx_sc_eth, prod_btx_sc_prop]
+      [ prod_btx_sc_naphtha, prod_btx_sc_ago, prod_btx_sc_vgo, prod_btx_sc_prop]
 
   # cement
   Non-Metallic Minerals|Cement:

@@ -53,7 +53,7 @@ level_2:
   Chemicals|High-Value Chemicals|Steam Cracking:
     short: fe_fs_hvc_sc
     components:
-      [ fe_fs_hvc_gas_sc, fe_fs_hvc_oil_sc ]
+      [ fe_fs_hvc_gas_sc, fe_fs_hvc_sc_oil ]
 
 
 level_1:
