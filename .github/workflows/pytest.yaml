@@ -71,7 +71,7 @@ jobs:
           ${{ secrets.MESSAGE_STATIC_DATA_PRIVATE_KEY }}
 
     - name: Check out message-static-data
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: iiasa/message-static-data
         path: message-static-data
@@ -231,7 +231,7 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with: { ref: "${{ needs.check.outputs.ref }}" }
     - uses: astral-sh/setup-uv@v6
       with: { python-version: "${{ env.python-version }}" }
