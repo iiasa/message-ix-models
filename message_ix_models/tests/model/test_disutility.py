@@ -1,11 +1,13 @@
 """Tests of :mod:`.model.disutility`."""
 
+from collections.abc import Iterator
 from itertools import product
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from message_ix import make_df
+from message_ix import Scenario, make_df
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
 
@@ -17,6 +19,9 @@ from message_ix_models.util import (
     make_source_tech,
     merge_data,
 )
+
+if TYPE_CHECKING:
+    from message_ix_models.types import MutableParameterData, ParameterData
 
 # Common data and fixtures for test_minimal() and other tests
 
@@ -35,13 +40,13 @@ COMMON = dict(
 
 
 @pytest.fixture
-def groups():
+def groups() -> Iterator[list[Code]]:
     """Fixture: list of 2 consumer groups."""
     yield [Code(id="g0"), Code(id="g1")]
 
 
 @pytest.fixture
-def techs():
+def techs() -> Iterator[list[Code]]:
     """Fixture: list of 2 technologies for which groups can have disutility."""
     yield [Code(id="t0"), Code(id="t1")]
 
@@ -95,22 +100,28 @@ def test_add(scenario, groups, techs, template):
     assert (scenario.var("ACT")["lvl"] == 0).all()
 
 
-def minimal_test_data(scenario):
-    """Generate data for :func:`test_minimal`."""
+def minimal_test_data(scenario: Scenario) -> tuple["ParameterData", int, int]:
+    """Generate data for :func:`test_minimal`.
+
+    - Two technologies: t0 and t1.
+    - ``growth_activity_{lo,up}`` on both technologies.
+    - t1 has slightly higher ``var_cost``, such that the model will prefer to maximize
+      output of t0 within the constraint.
+    """
     common = COMMON.copy()
     common.pop("node_loc")
     common.update(dict(mode="all"))
 
-    data = dict()
+    data: "MutableParameterData" = dict()
 
     info = ScenarioInfo(scenario)
     y0 = info.Y[0]
     y1 = info.Y[1]
 
     # Output from t0 and t1
-    for t in ("t0", "t1"):
+    for t, vc in ("t0", 1.0), ("t1", 1.01):
         common.update(dict(technology=t, commodity=f"output of {t}"))
-        merge_data(data, make_source_tech(info, common, output=1.0, var_cost=1.0))
+        merge_data(data, make_source_tech(info, common, output=1.0, var_cost=vc))
 
     # Disutility input for each combination of (tech) × (group) × (2 years)
     input_data = pd.DataFrame(
@@ -135,33 +146,34 @@ def minimal_test_data(scenario):
     data["demand"] = make_df("demand", commodity=c, year=y, value=1.0, **COMMON)
 
     # Constraint on activity in the first period
-    t = sorted(input_data["technology"].unique())
+    techs = sorted(input_data["technology"].unique())
     for bound in ("lo", "up"):
         par = f"bound_activity_{bound}"
-        data[par] = make_df(par, value=0.5, technology=t, year_act=y0, **COMMON)
+        data[par] = make_df(par, value=0.5, technology=techs, year_act=y0, **COMMON)
 
     # Constraint on activity growth
     annual = (1.1 ** (1.0 / 5.0)) - 1.0
     for bound, factor in (("lo", -1.0), ("up", 1.0)):
         par = f"growth_activity_{bound}"
         data[par] = make_df(
-            par, value=factor * annual, technology=t, year_act=y1, **COMMON
+            par, value=factor * annual, technology=techs, year_act=y1, **COMMON
         )
 
     return data, y0, y1
 
 
-def test_minimal(scenario, groups, techs, template):
+def test_minimal(
+    scenario: Scenario, groups: list[Code], techs: list[Code], template: Code
+) -> None:
     """Expected results are generated from a minimal test case."""
-    # Set up structure
+    # Set up structure on `scenario`
     disutility.add(scenario, groups, techs, template)
 
     # Add test-specific data
     data, y0, y1 = minimal_test_data(scenario)
 
-    scenario.check_out()
-    add_par_data(scenario, data)
-    scenario.commit("Disutility test 1")
+    with scenario.transact("test_disutility.test_minimal case 1"):
+        add_par_data(scenario, data)
 
     # commented: pre-solve debugging output
     # for par in ("input", "output", "technical_lifetime", "var_cost"):
@@ -196,9 +208,8 @@ def test_minimal(scenario, groups, techs, template):
 
     # Re-solve
     scenario.remove_solution()
-    scenario.check_out()
-    scenario.add_par("input", data["input"])
-    scenario.commit("Disutility test 2")
+    with scenario.transact("test_disutility.test_minimal case 2"):
+        scenario.add_par("input", data["input"])
     scenario.solve(quiet=True)
 
     # Compare activity
@@ -208,9 +219,6 @@ def test_minimal(scenario, groups, techs, template):
     merged["lvl_diff"] = merged["lvl_y"] - merged["lvl_x"]
 
     merged_delta = ACT1_delta.merge(ACT2_delta, left_index=True, right_index=True)
-
-    # commented: for debugging
-    # print(merged, merged_delta)
 
     # Group g0 decreases usage of t0, and increases usage of t1, in period y1 vs. y0
     assert merged_delta.loc["usage of t0 by g0", "lvl_y"] < 0
