@@ -1,0 +1,19 @@
+var:
+  "out:nl-t-ya-m-c:curtailed_renewables"
+
+iamc_prefix:
+  Secondary Energy|Electricity|
+
+common:
+  unit: GWa
+
+vars:
+  Wind|Offshore:
+    filter: { technology: [ wind_ref ], mode: M1, commodity: electr }
+    short: se_elec_wind_off
+  Wind|Onshore:
+    filter: { technology: [ wind_res ], mode: M1, commodity: electr }
+    short: se_elec_wind_on
+  Solar|PV|Commercial:
+    filter: { technology: [ solar_res ], mode: M1, commodity: electr }
+    short: se_elec_pv_com

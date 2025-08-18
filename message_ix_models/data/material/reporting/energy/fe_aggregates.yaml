@@ -186,7 +186,7 @@ level_1:
   Non-Metallic Minerals|Cement|Electricity:
     short: fe_pe_cement_el
     components:
-      [fe_pe_cement_el_ht, fe_pe_cement_el_oth]
+      [fe_pe_cement_el_ht, fe_pe_cement_el_oth, fe_pe_clinker_el_ccs, fe_pe_clinker_el]
   Non-Metallic Minerals|Cement|Liquids|Oil:
     short: fe_pe_cement_oil
     components:

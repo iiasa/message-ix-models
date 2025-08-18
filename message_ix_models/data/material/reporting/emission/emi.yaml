@@ -1,0 +1,16 @@
+var:
+  rel
+
+iamc_prefix:
+  Emissions|CO2|
+
+common:
+  unit: Mt C
+
+vars:
+  Energy|Demand|Industry|Steel:
+    filter: { technology: [ steel ] }
+    short: emi_co2_steel
+  Industrial Processes|Non-Metallic Minerals:
+    filter: { technology: [ cement] }
+    short: emi_co2_cement

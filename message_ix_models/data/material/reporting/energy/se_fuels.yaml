@@ -1,0 +1,92 @@
+var:
+  out
+
+iamc_prefix:
+  Secondary Energy|
+
+common:
+  unit: GWa
+
+vars:
+  Gases|Biomass:
+    filter: { technology: [ gas_bio ], mode: M1, commodity: gas, level: secondary }
+    short: se_gas_bio
+  Gases|Natural Gas:
+    filter: { technology: [ gas_bal, LNG_regas, gas_imp ], mode: M1, commodity: gas, level: secondary }
+    short: se_gas_nat
+  Gases|Coal:
+    filter: { technology: [ coal_gas ], mode: M1, commodity: gas, level: secondary }
+    short: se_gas_nat
+
+  Hydrogen|Biomass|w/ CCS:
+    filter: { technology: [ h2_bio_ccs ], mode: M1, commodity: hydrogen, level: secondary }
+    short: se_h2_bio_ccs
+  Hydrogen|Biomass|w/o CCS:
+    filter: { technology: [ h2_bio ], mode: M1, commodity: hydrogen, level: secondary }
+    short: se_h2_bio_wo_ccs
+  Hydrogen|Coal|w/ CCS:
+    filter: { technology: [ h2_coal_ccs ], mode: M1, commodity: hydrogen, level: secondary }
+    short: se_h2_coal_ccs
+  Hydrogen|Coal|w/o CCS:
+    filter: { technology: [ h2_coal ], mode: M1, commodity: hydrogen, level: secondary }
+    short: se_h2_coal_wo_ccs
+  Hydrogen|Electricity:
+    filter: { technology: [ h2_elec ], mode: M1, commodity: hydrogen, level: secondary }
+    short: se_h2_elec
+  Hydrogen|Gas|w CCS:
+    filter: { technology: [ h2_smr_ccs ], mode: M1, commodity: hydrogen, level: secondary }
+    short: se_h2_gas_ccs
+  Hydrogen|Gas|w/o CCS:
+    filter: { technology: [ h2_smr ], mode: M1, commodity: hydrogen, level: secondary }
+    short: se_h2_gas_wo_ccs
+
+  Liquids|Biomass|Ethanol|w/ CCS:
+    filter: { technology: [ eth_bio_ccs ], mode: M1, commodity: ethanol, level: secondary }
+    short: se_liq_eth
+  Liquids|Biomass|Ethanol|w/o CCS:
+    filter: { technology: [ eth_bio ], mode: M1, commodity: ethanol, level: secondary }
+    short: se_liq_eth_wo_ccs
+  Liquids|Biomass|FT|w/ CCS:
+    filter: { technology: [ liq_bio_ccs ], mode: M1, commodity: ethanol, level: secondary }
+    short: se_liq_bio_ft_ccs
+  Liquids|Biomass|FT|w/o CCS:
+    filter: { technology: [ liq_bio ], mode: M1, commodity: ethanol, level: secondary }
+    short: se_liq_bio_ft_wo_ccs
+  Liquids|Biomass|Methanol|w/ CCS:
+    filter: { technology: [ meth_bio ], mode: fuel, commodity: methanol, level: secondary }
+    short: se_liq_meth_bio_ccs
+  Liquids|Biomass|Methanol|w/o CCS:
+    filter: { technology: [ meth_bio_ccs ], mode: fuel, commodity: methanol, level: secondary }
+    short: se_liq_meth_bio_wo_ccs
+  Liquids|Coal|FT|w/ CCS:
+    filter: { technology: [ syn_liq_ccs ], mode: M1, commodity: lightoil, level: secondary }
+    short: se_liq_coal_ft_ccs
+  Liquids|Coal|FT|w/o CCS:
+    filter: { technology: [ syn_liq ], mode: M1, commodity: lightoil, level: secondary }
+    short: se_liq_coal_ft_wo_ccs
+  Liquids|Coal|MTG|w/ CCS:
+    filter: { technology: [ meth_coal_ccs ], mode: fuel, commodity: methanol, level: secondary }
+    short: se_liq_meth_coal_ccs
+  Liquids|Coal|MTG|w/o CCS:
+    filter: { technology: [ meth_coal ], mode: fuel, commodity: methanol, level: secondary }
+    short: se_liq_meth_coal_wo_ccs
+  # TODO: report all refinery products separately
+  Liquids|Oil|Heavy:
+    filter: { technology: [ agg_ref ],
+              mode: [ atm_gasoil
+                atm_residue,
+                heavy_foil,
+                vacuum_residue ],
+              commodity: [ fueloil ], level: secondary }
+    short: se_liq_oil
+  Liquids|Oil|Light:
+    filter: { technology: [ agg_ref ],
+              mode: [
+                diesel,
+                gasoline,
+                kerosene,
+                light_foil,
+                refinery_gas,
+                refinery_gas_int ],
+              commodity: [ lightoil ], level: secondary }
+    short: se_liq_oil

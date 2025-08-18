@@ -1,0 +1,16 @@
+var:
+  ACT
+
+iamc_prefix:
+  ""
+
+common:
+  unit: GWa
+
+vars:
+  Population:
+    filter: { technology: [ Population ], mode: P }
+    short: pop
+  GDP|PPP:
+    filter: { technology: [ GDP_PPP ], mode: P }
+    short: gdp_ppp

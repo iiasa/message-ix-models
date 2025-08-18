@@ -1,0 +1,25 @@
+var:
+  out
+
+iamc_prefix:
+  Carbon Capture|
+
+common:
+  unit: GWa
+
+vars:
+  Industrial Processes|Non-Metallic Minerals:
+    filter: { technology: [ clinker_dry_ccs_cement, clinker_wet_ccs_cement ], mode: M1, commodity: fic_co2, level: secondary }
+    short: cc_ind_nonmet
+  Energy|Demand|Industry|Iron and Steel:
+    filter: { technology: [ bf_ccs_steel, dri_gas_ccs_steel ], mode: [ M1, M2 ], commodity: fic_co2, level: secondary }
+    short: cc_ind_steel
+  Direct Air Capture:
+    filter: { technology: [ dac_hte, dac_lt, dac_htg ], mode: M1, commodity: dac_co2, level: secondary }
+    short: cc_dac
+  Direct Air Capture|Solvent:
+    filter: { technology: [ dac_hte, dac_htg ], mode: M1, commodity: dac_co2, level: secondary }
+    short: cc_dac
+  Direct Air Capture|Sorbent:
+    filter: { technology: [ dac_lt ], mode: M1, commodity: dac_co2, level: secondary }
+    short: cc_dac

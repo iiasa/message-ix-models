@@ -32,7 +32,7 @@ vars:
 
   Chemicals|High-Value Chemicals|Electricity|Steam Cracking:
     filter:
-      { technology: steam_cracker_petro, mode: [vacuum_gasoil, atm_gasoil, naphtha, ethane, propane], commodity: electr, level: final }
+      { technology: steam_cracker_petro, mode: [ vacuum_gasoil, atm_gasoil, naphtha, ethane, propane ], commodity: electr, level: final }
     short:
       fe_pe_hvc_el_sc
 
@@ -44,7 +44,7 @@ vars:
 
   Chemicals|Resins|Electricity:
     filter:
-      { technology: [CH2O_to_resin, furnace_elec_resins], mode: M1, commodity: electr, level: final }
+      { technology: [ CH2O_to_resin, furnace_elec_resins ], mode: M1, commodity: electr, level: final }
     short:
       fe_pe_resin_el
   Chemicals|Resins|Solids|Coal:
@@ -59,7 +59,7 @@ vars:
       fe_pe_resin_bio
   Chemicals|Resins|Liquids|Oil:
     filter:
-      { technology: [furnace_foil_resins, furnace_loil_resins], mode: M1, commodity: [fueloil, lightoil], level: final }
+      { technology: [ furnace_foil_resins, furnace_loil_resins ], mode: M1, commodity: [ fueloil, lightoil ], level: final }
     short:
       fe_pe_resin_oil
   Chemicals|Resins|Liquids|Biomass:
@@ -79,7 +79,7 @@ vars:
       fe_pe_resin_gases
   Chemicals|Resins|Hydrogen:
     filter:
-      { technology: [furnace_h2_resins, fc_h2_resins], mode: M1, commodity: hydrogen, level: final }
+      { technology: [ furnace_h2_resins, fc_h2_resins ], mode: M1, commodity: hydrogen, level: final }
     short:
       fe_pe_resin_h2
   Chemicals|Resins|Liquids|Other:
@@ -159,12 +159,28 @@ vars:
 
   Non-Metallic Minerals|Cement|Electricity|Other:
     filter:
-      { technology: [clinker_dry_ccs_cement, clinker_dry_cement, clinker_wet_ccs_cement, clinker_wet_cement,
-                     grinding_ballmill_cement, grinding_vertmill_cement, raw_meal_prep_cement],
+      { technology: [ clinker_dry_cement, clinker_wet_cement,
+                      grinding_ballmill_cement, grinding_vertmill_cement, raw_meal_prep_cement ],
         mode: M1,
         commodity: electr, level: final }
     short:
       fe_pe_cement_el_oth
+
+  Non-Metallic Minerals|Cement Clinker|w/ CCS|Electricity:
+    filter:
+      { technology: [ clinker_dry_ccs_cement, clinker_wet_ccs_cement, ],
+        mode: M1,
+        commodity: electr, level: final }
+    short:
+      fe_pe_clinker_el_ccs
+
+  Non-Metallic Minerals|Cement Clinker|w/o CCS|Electricity:
+    filter:
+      { technology: [ clinker_dry_cement, clinker_wet_cement ],
+        mode: M1,
+        commodity: electr, level: final }
+    short:
+      fe_pe_clinker_el
 
   Non-Metallic Minerals|Cement|Liquids|Oil|Light:
     filter:
@@ -230,62 +246,62 @@ vars:
 
   Non-Ferrous Metals|Aluminium|Electricity|Heat:
     filter:
-      { technology: [furnace_elec_aluminum, hp_elec_aluminum, hp_gas_aluminum],
-        mode: [high_temp, low_temp], commodity: electr, level: final }
+      { technology: [ furnace_elec_aluminum, hp_elec_aluminum, hp_gas_aluminum ],
+        mode: [ high_temp, low_temp ], commodity: electr, level: final }
     short:
       fe_pe_aluminum_el_ht
 
   Non-Ferrous Metals|Aluminium|Electricity|Other:
     filter:
-      { technology: [prebake_aluminum, soderberg_aluminum], mode: M1, commodity: electr, level: final }
+      { technology: [ prebake_aluminum, soderberg_aluminum ], mode: M1, commodity: electr, level: final }
     short:
       fe_pe_aluminum_el_oth
 
   Non-Ferrous Metals|Aluminium|Liquids|Oil|Light:
     filter:
-      { technology: furnace_foil_aluminum, mode: [high_temp, low_temp], commodity: fueloil, level: final }
+      { technology: furnace_foil_aluminum, mode: [ high_temp, low_temp ], commodity: fueloil, level: final }
     short:
       fe_pe_aluminum_oil_l
 
   Non-Ferrous Metals|Aluminium|Liquids|Oil|Heavy:
     filter:
-      { technology: furnace_loil_aluminum, mode: [high_temp, low_temp], commodity: lightoil, level: final }
+      { technology: furnace_loil_aluminum, mode: [ high_temp, low_temp ], commodity: lightoil, level: final }
     short:
       fe_pe_aluminum_oil_h
 
   Non-Ferrous Metals|Aluminium|Liquids|Biomass:
     filter:
-      { technology: furnace_ethanol_aluminum, mode: [high_temp, low_temp], commodity: ethanol, level: final }
+      { technology: furnace_ethanol_aluminum, mode: [ high_temp, low_temp ], commodity: ethanol, level: final }
     short:
       fe_pe_aluminum_bio_eth
 
   Non-Ferrous Metals|Aluminium|Liquids|Other:
     filter:
-      { technology: furnace_methanol_aluminum, mode: [high_temp, low_temp], commodity: methanol, level: final }
+      { technology: furnace_methanol_aluminum, mode: [ high_temp, low_temp ], commodity: methanol, level: final }
     short:
       fe_pe_aluminum_oth
 
   Non-Ferrous Metals|Aluminium|Gases|Gas:
     filter:
-      { technology: furnace_gas_aluminum, mode: [high_temp, low_temp], commodity: gas, level: final }
+      { technology: furnace_gas_aluminum, mode: [ high_temp, low_temp ], commodity: gas, level: final }
     short:
       fe_pe_aluminum_gas
 
   Non-Ferrous Metals|Aluminium|Hydrogen:
     filter:
-      { technology: furnace_h2_aluminum, mode: [high_temp, low_temp], commodity: hydrogen, level: final }
+      { technology: furnace_h2_aluminum, mode: [ high_temp, low_temp ], commodity: hydrogen, level: final }
     short:
       fe_pe_aluminum_h2
 
   Non-Ferrous Metals|Aluminium|Solids|Biomass:
     filter:
-      { technology: furnace_biomass_aluminum, mode: [high_temp, low_temp], commodity: biomass, level: final }
+      { technology: furnace_biomass_aluminum, mode: [ high_temp, low_temp ], commodity: biomass, level: final }
     short:
       fe_pe_aluminum_bio
 
   Non-Ferrous Metals|Aluminium|Solids|Coal:
     filter:
-      { technology: furnace_coal_aluminum, mode: [high_temp, low_temp], commodity: coal, level: final }
+      { technology: furnace_coal_aluminum, mode: [ high_temp, low_temp ], commodity: coal, level: final }
     short:
       fe_pe_aluminum_coal
 
@@ -299,23 +315,23 @@ vars:
 
   Iron and Steel|Electricity:
     filter:
-      { technology: [bf_steel, bf_ccs_steel, bf_biomass_steel, bof_steel, cokeoven_steel, dri_gas_steel,
-                     dri_gas_ccs_steel, dri_h2_steel, eaf_steel,
-                     finishing_steel, pellet_steel, sinter_steel],
-        mode: [M1, M2, M3], commodity: electr, level: final }
+      { technology: [ bf_steel, bf_ccs_steel, bf_biomass_steel, bof_steel, cokeoven_steel, dri_gas_steel,
+                      dri_gas_ccs_steel, dri_h2_steel, eaf_steel,
+                      finishing_steel, pellet_steel, sinter_steel ],
+        mode: [ M1, M2, M3 ], commodity: electr, level: final }
     short:
       fe_pe_steel_el
 
   Iron and Steel|Gases|Gas:
     filter:
-      { technology: [eaf_steel, dri_gas_steel], mode: [M1, M2, M3], commodity: gas, level: final }
+      { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: gas, level: final }
     #TODO: what about dummy_emission?
     short:
       fe_pe_steel_gas
 
   Iron and Steel|Gases|Coal:
     filter:
-      { technology: [bf_steel], mode: [M1, M2, M3, M4], commodity: [co_gas], level: final }
+      { technology: [ bf_steel ], mode: [ M1, M2, M3, M4 ], commodity: [ co_gas ], level: final }
     short:
       fe_pe_steel_gases_coal
 
@@ -345,14 +361,14 @@ vars:
 
   Iron and Steel|Solids|Coal:
     filter:
-      { technology: [bf_steel, sinter_steel, pellet_steel], mode: [M1, M2, M3, M4], commodity: [coal, coke_iron], level: final }
+      { technology: [ bf_steel, sinter_steel, pellet_steel ], mode: [ M1, M2, M3, M4 ], commodity: [ coal, coke_iron ], level: final }
     # TODO: figure out, where to put cokeoven_steel?
     short:
       fe_pe_steel_solid_coal
 
   Iron and Steel|Solids|Biomass:
     filter:
-      { technology: [ bf_steel, bf_biomass_steel ], mode: [M1, M3, M4 ], commodity: [ charcoal ], level: final }
+      { technology: [ bf_steel, bf_biomass_steel ], mode: [ M1, M3, M4 ], commodity: [ charcoal ], level: final }
     short:
       fe_pe_steel_solid_bio
 
@@ -378,7 +394,7 @@ vars:
 
   Other Sector|Electricity|Specific:
     filter:
-      { technology: [sp_el_I, sp_el_I_RT], mode: M1, commodity: electr, level: [final, final_RT] }
+      { technology: [ sp_el_I, sp_el_I_RT ], mode: M1, commodity: electr, level: [ final, final_RT ] }
     short:
       fe_pe_other_el_sp
 
@@ -459,3 +475,15 @@ vars:
       { technology: coal_i, mode: M1, commodity: coal, level: final }
     short:
       fe_pe_other_coal
+
+  # DAC
+  Carbon Management|Direct Air Capture|Electricity:
+    filter:
+      { technology: [ dac_lt, dac_hte ], mode: M1, commodity: electr, level: final }
+    short:
+      fe_dac_el
+  Carbon Management|Direct Air Capture|Gases:
+    filter:
+      { technology: [ dac_lt, dac_htg ], mode: M1, commodity: gas, level: final }
+    short:
+      fe_dac_gas

@@ -1,0 +1,19 @@
+var:
+  land_out
+
+iamc_prefix:
+  Primary Energy|
+
+common:
+  unit: GWa
+
+vars:
+  Biomass|Fuelwood:
+    filter: { commodity: Primary Energy|Biomass|Fuelwood, level: land_use_reporting }
+    short: pe_bio_wood
+  Biomass|Energy Crops:
+    filter: { commodity: Primary Energy|Biomass|Energy Crops, level: land_use_reporting }
+    short: pe_bio_crops
+  Biomass|Residues:
+    filter: { commodity: Primary Energy|Biomass|Residues, level: land_use_reporting }
+    short: pe_bio_resid

@@ -1,0 +1,13 @@
+var:
+  out
+
+iamc_prefix:
+  Carbon Removal|
+
+common:
+  unit: GWa
+
+vars:
+  Geological Storage|Direct Air Capture:
+    filter: { technology: [ co2_stor ], mode: M1, commodity: dac_co2, level: secondary }
+    short: cr_dac

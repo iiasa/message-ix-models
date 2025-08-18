@@ -1,6 +1,5 @@
 from typing import List, Union
 
-import message_ix
 import numpy as np
 import pandas as pd
 import pyam
@@ -8,6 +7,8 @@ from message_ix.report import Reporter
 
 from message_ix_models.model.material.report.reporter_utils import (
     add_biometh_final_share,
+    add_cement_heat_share_calculations,
+    add_se_elec,
 )
 from message_ix_models.util import broadcast
 
@@ -32,12 +33,15 @@ def pyam_df_from_rep(
         col: list(mapping_df.index.get_level_values(col).unique())
         for col in mapping_df.index.names
     }
-    rep.set_filters(**filters_dict)
-    df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l"))
+    # rep.set_filters(**filters_dict)
+    node_col = "nl" if "nl" in mapping_df.index.names else "n"
+    y_col = "ya" if "ya" in mapping_df.index.names else "y"
+    key = f"{reporter_var}:nl-t-ya-m-c-l" if ":" not in reporter_var else reporter_var
+    df_var = pd.DataFrame(rep.get(key))
     df = (
         df_var.join(mapping_df[["iamc_name", "unit"]])
         .dropna()
-        .groupby(["nl", "ya", "iamc_name"])
+        .groupby([node_col, y_col, "iamc_name"])
         .sum(numeric_only=True)
     )
     rep.set_filters()
@@ -644,6 +648,17 @@ def run_prod_reporting(
     )
 
     py_df = pyam.concat(dfs)
+
+    #
+    dry_cli = "Production|Non-Metallic Minerals|Clinker"
+    dry_cli_ccs = "Production|Non-Metallic Minerals|Clinker|w/ CCS"
+    dry_cli_wo_ccs = "Production|Non-Metallic Minerals|Clinker|w/o CCS"
+    py_df.subtract(dry_cli, dry_cli_ccs, dry_cli_wo_ccs, fillna=0, append=True)
+    share_ccs = "Production|Non-Metallic Minerals|Clinker|w/ CCS [Share]"
+    share_non_ccs = "Production|Non-Metallic Minerals|Clinker|w/o CCS [Share]"
+    py_df.divide(dry_cli, dry_cli_wo_ccs, share_non_ccs, fillna=0, append=True)
+    py_df.subtract(1, share_non_ccs, share_ccs, append=True)
+
     # assume 15% of BOF output is secondary steel since input is 15% "new_scrap"
     bof_var = "Production|Iron and Steel|Steel|Secondary|BOF"
     bof = py_df.multiply(bof_var, 0.15, bof_var)
@@ -679,6 +694,21 @@ def run_prod_reporting(
     return py_df
 
 
+def run_se(rep: "Reporter", model_name: str, scen_name: str):
+    dfs = []
+    add_se_elec(rep)
+    for group in ["se_elec", "se_elec_curt", "se_elec_thermal", "se_fuels"]:
+        cfg = load_config(group)
+        df = pyam_df_from_rep(rep, cfg.message_query_key, cfg.df_mapping)
+        dfs.append(
+            format_reporting_df(
+                df, cfg.iamc_prefix, model_name, scen_name, cfg.unit, cfg.df_mapping
+            )
+        )
+    df = pyam.concat(dfs)
+    return df
+
+
 def run_all_categories(
     rep: message_ix.Reporter, model_name: str, scen_name: str
 ) -> List[pyam.IamDataFrame]:
@@ -690,6 +720,104 @@ def run_all_categories(
         run_ch4_reporting(rep, model_name, scen_name),
     ]
     return dfs
+
+
+def calculate_clinker_ccs_energy(scenario: "Scenario", rep, py_df):
+    add_cement_heat_share_calculations(rep)
+    df1 = (
+        pd.DataFrame(
+            rep.get(
+                "share::cement-heat-non-ccs",
+            )
+        )
+        .reset_index()
+        .drop(columns=["m", "c"])
+        .pivot(index=["nl"], columns="ya", values=0)
+        .reset_index()
+        .rename(columns={"nl": "region"})
+        .assign(
+            variable="heat-share-cement-non-ccs",
+            unit="dimensionless",
+            scenario=scenario.scenario,
+            model=scenario.model,
+        )
+    )
+    df2 = (
+        pd.DataFrame(
+            rep.get(
+                "share::cement-heat-ccs",
+            )
+        )
+        .reset_index()
+        .drop(columns=["m", "c"])
+        .pivot(index=["nl"], columns="ya", values=0)
+        .reset_index()
+        .rename(columns={"nl": "region"})
+        .assign(
+            variable="heat-share-cement-ccs",
+            unit="dimensionless",
+            scenario=scenario.scenario,
+            model=scenario.model,
+        )
+    )
+    py_df = pyam.concat([py_df, pyam.IamDataFrame(df1), pyam.IamDataFrame(df2)])
+    rep.set_filters()
+
+    fe_vars = [
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Electricity|Heat",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Gases|Gas",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Hydrogen",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Liquids|Biomass",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Liquids|Coal",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Liquids|Gas",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Liquids|Hydrogen",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Liquids|Oil",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Solids|Biomass",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Solids|Coal",
+        "Final Energy|Industry|Non-Metallic Minerals|Cement|Solids|Coke",
+    ]
+    for var in fe_vars:
+        py_df.multiply(
+            var,
+            "heat-share-cement-ccs",
+            var.replace("Cement", "Cement|w/ CCS"),
+            append=True,
+        )
+        py_df.multiply(
+            var,
+            "heat-share-cement-non-ccs",
+            var.replace("Cement", "Cement|w/o CCS"),
+            append=True,
+        )
+    prefix = "Final Energy|Industry|Non-Metallic Minerals|Cement"
+    # calculate proportional electricity use for grinding and other electricity use
+    #   excluding clinker production electricty use for both CCS and non CCS production
+    py_df.multiply(
+        f"{prefix}|Electricity|Other",
+        "Production|Non-Metallic Minerals|Clinker|w/o CCS [Share]",
+        f"{prefix}|w/o CCS|Electricity|Other",
+        append=True,
+    )
+    py_df.multiply(
+        f"{prefix}|Electricity|Other",
+        "Production|Non-Metallic Minerals|Clinker|w/ CCS [Share]",
+        f"{prefix}|w/ CCS|Electricity|Other",
+        append=True,
+    )
+    # sum clinker electricity and proportional electricity for CCS
+    #   and conventional cement making
+    py_df.add(
+        f"{prefix}|w/o CCS|Electricity|Other",
+        f"{prefix} Clinker|w/o CCS|Electricity",
+        f"{prefix}|w/o CCS|Electricity",
+        append=True,
+    )
+    py_df.add(
+        f"{prefix}|w/ CCS|Electricity|Other",
+        f"{prefix} Clinker|w/ CCS|Electricity",
+        f"{prefix}|w/ CCS|Electricity",
+        append=True,
+    )
 
 
 def run(
@@ -711,6 +839,8 @@ def run(
     dfs = run_all_categories(rep, scenario.model, scenario.scenario)
 
     py_df = pyam.concat(dfs)
+    calculate_clinker_ccs_energy(scenario, rep, py_df)
+
     if region:
         py_df.aggregate_region(py_df.variable, region=region, append=True)
     else:
@@ -723,3 +853,14 @@ def run(
     if upload_ts:
         scenario.add_timeseries(py_df.timeseries())
     return py_df
+
+
+if __name__ == "__main__":
+    import ixmp
+    import message_ix
+
+    mp = ixmp.Platform("local2")
+    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
+    rep = message_ix.Reporter.from_scenario(scen)
+    df = run_se(rep, scen.model, scen.scenario)
+    print()
