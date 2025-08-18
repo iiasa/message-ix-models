@@ -300,7 +300,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "output",
                     technology=df_out_dist["tec"],
-                    value=df_out_dist["out_value_mid"],
+                    value=df_out_dist["out_value_high"],
                     unit="MCM",
                     level=df_out_dist["outlvl"],
                     commodity=df_out_dist["outcmd"],
