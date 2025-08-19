@@ -414,9 +414,8 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
         pop_sdg6_glb = pop_sdg6_glb[cols]
 
         pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
-        log.info("Population|Drinking Water Access")
-
-        return pop_sdg6
+    log.info("Population|Drinking Water Access and Sanitation Access calculated")
+    return pop_sdg6
 
 
 def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
@@ -1481,10 +1480,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     report_pd = report_pd[-report_pd.variable.isin(water_hydro_var)]
 
     # add water population
-    # FIXME add support for baseline
-    if sdgs != "baseline":
-        pop_sdg6 = pop_water_access(sc, reg, sdgs)
-        report_pd = pd.concat([report_pd, pop_sdg6])
+    pop_sdg6 = pop_water_access(sc, reg, sdgs)
+    report_pd = pd.concat([report_pd, pop_sdg6])
 
     # add units wo loop to reduce complexity
     unit_mapping = dict(zip(map_agg_pd["names"], map_agg_pd["unit"]))
