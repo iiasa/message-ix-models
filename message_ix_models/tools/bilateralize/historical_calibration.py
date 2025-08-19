@@ -468,7 +468,7 @@ def build_historical_new_capacity_trade(message_regions = 'R12',
     
     df = df[df['year_act'] > 2000] # Start at 2000, this gets ensures diff starts correctly
     df['value'] = np.where(df['value'] < 0, 0, df['value'])
-    df['year_vtg'] = df['year_act']
+    df['year_vtg'] = df['year_act'].astype(int)
     
     df = df[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
     
