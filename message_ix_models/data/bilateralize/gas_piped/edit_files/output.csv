@@ -4,6 +4,7 @@ R12_AFR,gas_piped_exp_weu,broadcast,broadcast,M1,R12_WEU,gas,piped,year,year,1,G
 R12_CHN,gas_piped_exp_fsu,broadcast,broadcast,M1,R12_FSU,gas,piped,year,year,1,GWa
 R12_EEU,gas_piped_exp_fsu,broadcast,broadcast,M1,R12_FSU,gas,piped,year,year,1,GWa
 R12_EEU,gas_piped_exp_weu,broadcast,broadcast,M1,R12_WEU,gas,piped,year,year,1,GWa
+R12_FSU,gas_piped_exp_rcpa,broadcast,broadcast,M1,R12_RCPA,gas,piped,year,year,1,GWa
 R12_FSU,gas_piped_exp_chn,broadcast,broadcast,M1,R12_CHN,gas,piped,year,year,1,GWa
 R12_FSU,gas_piped_exp_eeu,broadcast,broadcast,M1,R12_EEU,gas,piped,year,year,1,GWa
 R12_FSU,gas_piped_exp_mea,broadcast,broadcast,M1,R12_MEA,gas,piped,year,year,1,GWa
@@ -19,6 +20,7 @@ R12_MEA,gas_piped_exp_sas,broadcast,broadcast,M1,R12_SAS,gas,piped,year,year,1,G
 R12_MEA,gas_piped_exp_weu,broadcast,broadcast,M1,R12_WEU,gas,piped,year,year,1,GWa
 R12_NAM,gas_piped_exp_lam,broadcast,broadcast,M1,R12_LAM,gas,piped,year,year,1,GWa
 R12_PAO,gas_piped_exp_fsu,broadcast,broadcast,M1,R12_FSU,gas,piped,year,year,1,GWa
+R12_PAS,gas_piped_exp_rcpa,broadcast,broadcast,M1,R12_RCPA,gas,piped,year,year,1,GWa
 R12_PAS,gas_piped_exp_chn,broadcast,broadcast,M1,R12_CHN,gas,piped,year,year,1,GWa
 R12_PAS,gas_piped_exp_fsu,broadcast,broadcast,M1,R12_FSU,gas,piped,year,year,1,GWa
 R12_PAS,gas_piped_exp_pao,broadcast,broadcast,M1,R12_PAO,gas,piped,year,year,1,GWa
@@ -32,6 +34,7 @@ R12_WEU,gas_piped_exp_mea,broadcast,broadcast,M1,R12_MEA,gas,piped,year,year,1,G
 R12_MEA,gas_piped_imp,broadcast,broadcast,M1,R12_MEA,gas,secondary,year,year,1,GWa
 R12_WEU,gas_piped_imp,broadcast,broadcast,M1,R12_WEU,gas,secondary,year,year,1,GWa
 R12_FSU,gas_piped_imp,broadcast,broadcast,M1,R12_FSU,gas,secondary,year,year,1,GWa
+R12_RCPA,gas_piped_imp,broadcast,broadcast,M1,R12_RCPA,gas,secondary,year,year,1,GWa
 R12_CHN,gas_piped_imp,broadcast,broadcast,M1,R12_CHN,gas,secondary,year,year,1,GWa
 R12_EEU,gas_piped_imp,broadcast,broadcast,M1,R12_EEU,gas,secondary,year,year,1,GWa
 R12_PAO,gas_piped_imp,broadcast,broadcast,M1,R12_PAO,gas,secondary,year,year,1,GWa

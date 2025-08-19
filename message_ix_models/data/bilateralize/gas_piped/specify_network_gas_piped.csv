@@ -44,7 +44,7 @@ R12_EEU,R12_PAS,gas_piped_exp_pas,gas_piped_imp,0
 R12_EEU,R12_SAS,gas_piped_exp_sas,gas_piped_imp,0
 R12_EEU,R12_WEU,gas_piped_exp_weu,gas_piped_imp,1
 R12_FSU,R12_AFR,gas_piped_exp_afr,gas_piped_imp,0
-R12_FSU,R12_RCPA,gas_piped_exp_rcpa,gas_piped_imp,0
+R12_FSU,R12_RCPA,gas_piped_exp_rcpa,gas_piped_imp,1
 R12_FSU,R12_CHN,gas_piped_exp_chn,gas_piped_imp,1
 R12_FSU,R12_EEU,gas_piped_exp_eeu,gas_piped_imp,1
 R12_FSU,R12_LAM,gas_piped_exp_lam,gas_piped_imp,0
@@ -99,7 +99,7 @@ R12_PAO,R12_PAS,gas_piped_exp_pas,gas_piped_imp,0
 R12_PAO,R12_SAS,gas_piped_exp_sas,gas_piped_imp,0
 R12_PAO,R12_WEU,gas_piped_exp_weu,gas_piped_imp,0
 R12_PAS,R12_AFR,gas_piped_exp_afr,gas_piped_imp,0
-R12_PAS,R12_RCPA,gas_piped_exp_rcpa,gas_piped_imp,0
+R12_PAS,R12_RCPA,gas_piped_exp_rcpa,gas_piped_imp,1
 R12_PAS,R12_CHN,gas_piped_exp_chn,gas_piped_imp,1
 R12_PAS,R12_EEU,gas_piped_exp_eeu,gas_piped_imp,0
 R12_PAS,R12_FSU,gas_piped_exp_fsu,gas_piped_imp,1

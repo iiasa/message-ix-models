@@ -4,6 +4,7 @@ R12_AFR,gas_piped_exp_weu,2000,M1,year,,GWa
 R12_CHN,gas_piped_exp_fsu,2000,M1,year,,GWa
 R12_EEU,gas_piped_exp_fsu,2000,M1,year,,GWa
 R12_EEU,gas_piped_exp_weu,2000,M1,year,,GWa
+R12_FSU,gas_piped_exp_rcpa,2000,M1,year,,GWa
 R12_FSU,gas_piped_exp_chn,2000,M1,year,,GWa
 R12_FSU,gas_piped_exp_eeu,2000,M1,year,,GWa
 R12_FSU,gas_piped_exp_mea,2000,M1,year,,GWa
@@ -19,6 +20,7 @@ R12_MEA,gas_piped_exp_sas,2000,M1,year,,GWa
 R12_MEA,gas_piped_exp_weu,2000,M1,year,,GWa
 R12_NAM,gas_piped_exp_lam,2000,M1,year,,GWa
 R12_PAO,gas_piped_exp_fsu,2000,M1,year,,GWa
+R12_PAS,gas_piped_exp_rcpa,2000,M1,year,,GWa
 R12_PAS,gas_piped_exp_chn,2000,M1,year,,GWa
 R12_PAS,gas_piped_exp_fsu,2000,M1,year,,GWa
 R12_PAS,gas_piped_exp_pao,2000,M1,year,,GWa
@@ -32,6 +34,7 @@ R12_WEU,gas_piped_exp_mea,2000,M1,year,,GWa
 R12_MEA,gas_piped_imp,2000,M1,year,,GWa
 R12_WEU,gas_piped_imp,2000,M1,year,,GWa
 R12_FSU,gas_piped_imp,2000,M1,year,,GWa
+R12_RCPA,gas_piped_imp,2000,M1,year,,GWa
 R12_CHN,gas_piped_imp,2000,M1,year,,GWa
 R12_EEU,gas_piped_imp,2000,M1,year,,GWa
 R12_PAO,gas_piped_imp,2000,M1,year,,GWa
@@ -45,6 +48,7 @@ R12_AFR,gas_piped_exp_weu,2005,M1,year,,GWa
 R12_CHN,gas_piped_exp_fsu,2005,M1,year,,GWa
 R12_EEU,gas_piped_exp_fsu,2005,M1,year,,GWa
 R12_EEU,gas_piped_exp_weu,2005,M1,year,,GWa
+R12_FSU,gas_piped_exp_rcpa,2005,M1,year,,GWa
 R12_FSU,gas_piped_exp_chn,2005,M1,year,,GWa
 R12_FSU,gas_piped_exp_eeu,2005,M1,year,,GWa
 R12_FSU,gas_piped_exp_mea,2005,M1,year,,GWa
@@ -60,6 +64,7 @@ R12_MEA,gas_piped_exp_sas,2005,M1,year,,GWa
 R12_MEA,gas_piped_exp_weu,2005,M1,year,,GWa
 R12_NAM,gas_piped_exp_lam,2005,M1,year,,GWa
 R12_PAO,gas_piped_exp_fsu,2005,M1,year,,GWa
+R12_PAS,gas_piped_exp_rcpa,2005,M1,year,,GWa
 R12_PAS,gas_piped_exp_chn,2005,M1,year,,GWa
 R12_PAS,gas_piped_exp_fsu,2005,M1,year,,GWa
 R12_PAS,gas_piped_exp_pao,2005,M1,year,,GWa
@@ -73,6 +78,7 @@ R12_WEU,gas_piped_exp_mea,2005,M1,year,,GWa
 R12_MEA,gas_piped_imp,2005,M1,year,,GWa
 R12_WEU,gas_piped_imp,2005,M1,year,,GWa
 R12_FSU,gas_piped_imp,2005,M1,year,,GWa
+R12_RCPA,gas_piped_imp,2005,M1,year,,GWa
 R12_CHN,gas_piped_imp,2005,M1,year,,GWa
 R12_EEU,gas_piped_imp,2005,M1,year,,GWa
 R12_PAO,gas_piped_imp,2005,M1,year,,GWa
@@ -86,6 +92,7 @@ R12_AFR,gas_piped_exp_weu,2010,M1,year,,GWa
 R12_CHN,gas_piped_exp_fsu,2010,M1,year,,GWa
 R12_EEU,gas_piped_exp_fsu,2010,M1,year,,GWa
 R12_EEU,gas_piped_exp_weu,2010,M1,year,,GWa
+R12_FSU,gas_piped_exp_rcpa,2010,M1,year,,GWa
 R12_FSU,gas_piped_exp_chn,2010,M1,year,,GWa
 R12_FSU,gas_piped_exp_eeu,2010,M1,year,,GWa
 R12_FSU,gas_piped_exp_mea,2010,M1,year,,GWa
@@ -101,6 +108,7 @@ R12_MEA,gas_piped_exp_sas,2010,M1,year,,GWa
 R12_MEA,gas_piped_exp_weu,2010,M1,year,,GWa
 R12_NAM,gas_piped_exp_lam,2010,M1,year,,GWa
 R12_PAO,gas_piped_exp_fsu,2010,M1,year,,GWa
+R12_PAS,gas_piped_exp_rcpa,2010,M1,year,,GWa
 R12_PAS,gas_piped_exp_chn,2010,M1,year,,GWa
 R12_PAS,gas_piped_exp_fsu,2010,M1,year,,GWa
 R12_PAS,gas_piped_exp_pao,2010,M1,year,,GWa
@@ -114,6 +122,7 @@ R12_WEU,gas_piped_exp_mea,2010,M1,year,,GWa
 R12_MEA,gas_piped_imp,2010,M1,year,,GWa
 R12_WEU,gas_piped_imp,2010,M1,year,,GWa
 R12_FSU,gas_piped_imp,2010,M1,year,,GWa
+R12_RCPA,gas_piped_imp,2010,M1,year,,GWa
 R12_CHN,gas_piped_imp,2010,M1,year,,GWa
 R12_EEU,gas_piped_imp,2010,M1,year,,GWa
 R12_PAO,gas_piped_imp,2010,M1,year,,GWa
@@ -127,6 +136,7 @@ R12_AFR,gas_piped_exp_weu,2015,M1,year,,GWa
 R12_CHN,gas_piped_exp_fsu,2015,M1,year,,GWa
 R12_EEU,gas_piped_exp_fsu,2015,M1,year,,GWa
 R12_EEU,gas_piped_exp_weu,2015,M1,year,,GWa
+R12_FSU,gas_piped_exp_rcpa,2015,M1,year,,GWa
 R12_FSU,gas_piped_exp_chn,2015,M1,year,,GWa
 R12_FSU,gas_piped_exp_eeu,2015,M1,year,,GWa
 R12_FSU,gas_piped_exp_mea,2015,M1,year,,GWa
@@ -142,6 +152,7 @@ R12_MEA,gas_piped_exp_sas,2015,M1,year,,GWa
 R12_MEA,gas_piped_exp_weu,2015,M1,year,,GWa
 R12_NAM,gas_piped_exp_lam,2015,M1,year,,GWa
 R12_PAO,gas_piped_exp_fsu,2015,M1,year,,GWa
+R12_PAS,gas_piped_exp_rcpa,2015,M1,year,,GWa
 R12_PAS,gas_piped_exp_chn,2015,M1,year,,GWa
 R12_PAS,gas_piped_exp_fsu,2015,M1,year,,GWa
 R12_PAS,gas_piped_exp_pao,2015,M1,year,,GWa
@@ -155,6 +166,7 @@ R12_WEU,gas_piped_exp_mea,2015,M1,year,,GWa
 R12_MEA,gas_piped_imp,2015,M1,year,,GWa
 R12_WEU,gas_piped_imp,2015,M1,year,,GWa
 R12_FSU,gas_piped_imp,2015,M1,year,,GWa
+R12_RCPA,gas_piped_imp,2015,M1,year,,GWa
 R12_CHN,gas_piped_imp,2015,M1,year,,GWa
 R12_EEU,gas_piped_imp,2015,M1,year,,GWa
 R12_PAO,gas_piped_imp,2015,M1,year,,GWa
@@ -168,6 +180,7 @@ R12_AFR,gas_piped_exp_weu,2020,M1,year,,GWa
 R12_CHN,gas_piped_exp_fsu,2020,M1,year,,GWa
 R12_EEU,gas_piped_exp_fsu,2020,M1,year,,GWa
 R12_EEU,gas_piped_exp_weu,2020,M1,year,,GWa
+R12_FSU,gas_piped_exp_rcpa,2020,M1,year,,GWa
 R12_FSU,gas_piped_exp_chn,2020,M1,year,,GWa
 R12_FSU,gas_piped_exp_eeu,2020,M1,year,,GWa
 R12_FSU,gas_piped_exp_mea,2020,M1,year,,GWa
@@ -183,6 +196,7 @@ R12_MEA,gas_piped_exp_sas,2020,M1,year,,GWa
 R12_MEA,gas_piped_exp_weu,2020,M1,year,,GWa
 R12_NAM,gas_piped_exp_lam,2020,M1,year,,GWa
 R12_PAO,gas_piped_exp_fsu,2020,M1,year,,GWa
+R12_PAS,gas_piped_exp_rcpa,2020,M1,year,,GWa
 R12_PAS,gas_piped_exp_chn,2020,M1,year,,GWa
 R12_PAS,gas_piped_exp_fsu,2020,M1,year,,GWa
 R12_PAS,gas_piped_exp_pao,2020,M1,year,,GWa
@@ -196,6 +210,7 @@ R12_WEU,gas_piped_exp_mea,2020,M1,year,,GWa
 R12_MEA,gas_piped_imp,2020,M1,year,,GWa
 R12_WEU,gas_piped_imp,2020,M1,year,,GWa
 R12_FSU,gas_piped_imp,2020,M1,year,,GWa
+R12_RCPA,gas_piped_imp,2020,M1,year,,GWa
 R12_CHN,gas_piped_imp,2020,M1,year,,GWa
 R12_EEU,gas_piped_imp,2020,M1,year,,GWa
 R12_PAO,gas_piped_imp,2020,M1,year,,GWa
