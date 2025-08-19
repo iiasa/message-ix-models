@@ -4,6 +4,7 @@ R12_AFR,gas_pipe_weu,broadcast,broadcast,year,1,%
 R12_CHN,gas_pipe_fsu,broadcast,broadcast,year,1,%
 R12_EEU,gas_pipe_fsu,broadcast,broadcast,year,1,%
 R12_EEU,gas_pipe_weu,broadcast,broadcast,year,1,%
+R12_FSU,gas_pipe_rcpa,broadcast,broadcast,year,1,%
 R12_FSU,gas_pipe_chn,broadcast,broadcast,year,1,%
 R12_FSU,gas_pipe_eeu,broadcast,broadcast,year,1,%
 R12_FSU,gas_pipe_mea,broadcast,broadcast,year,1,%
@@ -19,6 +20,7 @@ R12_MEA,gas_pipe_sas,broadcast,broadcast,year,1,%
 R12_MEA,gas_pipe_weu,broadcast,broadcast,year,1,%
 R12_NAM,gas_pipe_lam,broadcast,broadcast,year,1,%
 R12_PAO,gas_pipe_fsu,broadcast,broadcast,year,1,%
+R12_PAS,gas_pipe_rcpa,broadcast,broadcast,year,1,%
 R12_PAS,gas_pipe_chn,broadcast,broadcast,year,1,%
 R12_PAS,gas_pipe_fsu,broadcast,broadcast,year,1,%
 R12_PAS,gas_pipe_pao,broadcast,broadcast,year,1,%
