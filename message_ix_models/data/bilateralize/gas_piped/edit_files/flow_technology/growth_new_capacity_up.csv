@@ -4,6 +4,7 @@ R12_AFR,gas_pipe_weu,broadcast,,km
 R12_CHN,gas_pipe_fsu,broadcast,,km
 R12_EEU,gas_pipe_fsu,broadcast,,km
 R12_EEU,gas_pipe_weu,broadcast,,km
+R12_FSU,gas_pipe_rcpa,broadcast,,km
 R12_FSU,gas_pipe_chn,broadcast,,km
 R12_FSU,gas_pipe_eeu,broadcast,,km
 R12_FSU,gas_pipe_mea,broadcast,,km
@@ -19,6 +20,7 @@ R12_MEA,gas_pipe_sas,broadcast,,km
 R12_MEA,gas_pipe_weu,broadcast,,km
 R12_NAM,gas_pipe_lam,broadcast,,km
 R12_PAO,gas_pipe_fsu,broadcast,,km
+R12_PAS,gas_pipe_rcpa,broadcast,,km
 R12_PAS,gas_pipe_chn,broadcast,,km
 R12_PAS,gas_pipe_fsu,broadcast,,km
 R12_PAS,gas_pipe_pao,broadcast,,km
