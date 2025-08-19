@@ -19,12 +19,6 @@ from message_ix_models.util import package_data_path
 from message_ix_models.tools.iea import web
 from message_ix_models.tools.bilateralize import bilateralize
 
-# Data paths
-# data_path = os.path.join("P:", "ene.model", "MESSAGE_Trade")
-# baci_path = os.path.join(data_path, "UN Comtrade", "BACI")
-# iea_path = os.path.join(data_path, "IEA")
-# iea_web_path = os.path.join(iea_path, "WEB2025")
-
 # Reimport large files?
 reimport_IEA = False
 reimport_BACI = False
@@ -38,17 +32,19 @@ def setup_datapath(project_name: str = None,
     p_drive = config['p_drive_location']
     
     # Data paths
-    data_path = os.path.join(p_drive, "MESSAGE_Trade")
+    data_path = os.path.join(p_drive, "MESSAGE_trade")
     iea_path = os.path.join(data_path, "IEA")
     iea_diagnostics_path = os.path.join(iea_path, "diagnostics")
     iea_web_path = os.path.join(iea_path, "WEB2025")
     iea_gas_path = os.path.join(iea_path, 'NATGAS')
     baci_path = os.path.join(data_path, "UN Comtrade", "BACI")
+    imo_path = os.path.join(data_path, "IMO")
     
     data_paths = dict(iea_web = iea_web_path,
                       iea_gas = iea_gas_path,
                       iea_diag = iea_diagnostics_path,
-                      baci = baci_path)
+                      baci = baci_path,
+                      imo = imo_path)
     
     return data_paths
 
@@ -486,3 +482,51 @@ def build_historical_price(message_regions = 'R12',
     outdf['value'] = round(outdf['value'], 0)
 
     return outdf
+
+# Build for historical new capacity of a given maritime shipment (e.g., LNG tanker)
+def build_historical_new_capacity(infile, ship_type,
+                                  message_regions = 'R12',
+                                  project_name = None, config_name = None,
+                                  lifetime_mileage = 210000):
+    
+    # Regions
+    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
+    with open(dict_dir, "r") as f:
+        dict_message_regions = yaml.safe_load(f) 
+    region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
+    
+    # IMO data
+    data_paths = setup_datapath(project_name = project_name, config_name = config_name)
+    imodf = pd.read_csv(os.path.join(data_paths['imo'], 'GISIS', infile))
+    
+    # Get MESSAGE regions
+    imodf[message_regions] = ''
+    for r in region_list:
+        imodf[message_regions] = np.where(imodf['Flag ISO3'].isin(dict_message_regions[r]['child']),
+                                          r, imodf[message_regions])
+    
+    # Calculate capacity
+    imodf['Capacity (Mt-km)'] = (imodf['Gross Tonnage']/1e6)*lifetime_mileage
+    
+    # Collapse
+    imodf['Year of Build (5)'] = round(imodf['Year of Build'].astype(float)/5)*5 # Round year to the nearest 5
+    imodf = imodf.groupby([message_regions, 'Year of Build (5)'])['Capacity (Mt-km)'].sum().reset_index()
+    imodf['Capacity (Mt-km) (Annualized)'] = round(imodf['Capacity (Mt-km)']/5,0)
+    
+    # Parameterize
+    imodf = imodf.rename(columns = {message_regions: 'node_loc',
+                                    'Year of Build (5)': 'year_vtg',
+                                    'Capacity (Mt-km) (Annualized)': 'value'})
+    imodf['technology'] = ship_type
+    imodf['unit'] = 'Mt-km'
+    
+    imodf = imodf[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
+    
+    return imodf
+
+
+
+
+
+
+
