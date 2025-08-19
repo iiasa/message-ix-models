@@ -519,6 +519,7 @@ def build_historical_new_capacity(infile, ship_type,
                                     'Capacity (Mt-km) (Annualized)': 'value'})
     imodf['technology'] = ship_type
     imodf['unit'] = 'Mt-km'
+    imodf['year_vtg'] = imodf['year_vtg'].astype(int)
     
     imodf = imodf[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
     
