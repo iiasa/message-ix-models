@@ -41,6 +41,9 @@ histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
 histdf['year_act'] = np.where(histdf['year_act'] == 2023, 2025, histdf['year_act']) # TODO: Assume 2023 values FOR NOW 
 histdf = histdf[histdf['value'] > 0]
 
+histnc = build_historical_new_capacity_trade(message_regions,
+                                             project_name = 'newpathways', config_name = 'config.yaml')
+
 hist_tec = {}
 for tec in covered_tec:
     add_tec = config[tec + '_trade']['trade_technology'] + '_exp'
@@ -50,12 +53,16 @@ for tec in hist_tec.keys():
     log.info('Add historical activity for ' + tec)
     add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
     trade_dict[tec]['trade']['historical_activity'] = add_df
+    
+    log.info('Add historical new capacity for ' + tec)
+    add_df = histnc[histnc['technology'].str.contains(hist_tec[tec])]
+    trade_dict[tec]['trade']['historical_new_capacity'] = add_df
 
 # Historical new capacity for maritime shipping
-hist_lng_foil = build_historical_new_capacity('LNG Tankers.csv', 'LNG_tanker_foil',
-                                              project_name = 'newpathways', config_name = 'config.yaml')
-hist_lng_lng = build_historical_new_capacity('LNG Tankers.csv', 'LNG_tanker_LNG',
-                                              project_name = 'newpathways', config_name = 'config.yaml')
+hist_lng_foil = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_foil',
+                                                   project_name = 'newpathways', config_name = 'config.yaml')
+hist_lng_lng = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_LNG',
+                                                  project_name = 'newpathways', config_name = 'config.yaml')
 hist_lng_foil['value'] *= 0.2 # Assume 20% of historical LNG tankers are propelled using diesel
 hist_lng_lng['value'] *= 0.8 # Assume 80% of historical LNG tankers are propelled using LNG
 hist_lng = pd.concat([hist_lng_foil, hist_lng_lng])

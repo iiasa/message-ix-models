@@ -444,8 +444,36 @@ def build_historical_activity(message_regions = 'R12',
                                   project_name = project_name, config_name = config_name)
     outdf['unit'] = 'GWa'
     
-    return outdf
+    return outdf.drop_duplicates()
 
+# Calculate historical new capacity based on activity
+def build_historical_new_capacity_trade(message_regions = 'R12',
+                           project_name = None, config_name = None):
+    indf = build_historical_activity(message_regions = message_regions,
+                                     project_name = project_name, config_name = config_name)
+    
+    basedf = pd.DataFrame()
+    for y in list(range(2000, 2030, 5)):
+        ydf = indf[['node_loc', 'technology', 'mode', 'time', 'unit']].drop_duplicates().copy()
+        ydf['year_act'] = y
+        basedf = pd.concat([basedf, ydf])
+    
+    df = basedf.merge(indf, left_on = ['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'],
+                      right_on = ['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'], how = 'outer')
+    
+    df['year_act'] = round(df['year_act']/5, 0)*5 # Get closest 5
+    df = df.groupby(['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'])['value'].sum().reset_index()
+    df = df.sort_values(by = ['node_loc', 'technology', 'mode', 'time', 'year_act'])
+    df['value'] = df['value'].diff()
+    
+    df = df[df['year_act'] > 2000] # Start at 2000, this gets ensures diff starts correctly
+    df['value'] = np.where(df['value'] < 0, 0, df['value'])
+    df['year_vtg'] = df['year_act']
+    
+    df = df[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
+    
+    return df
+    
 # Run all for price
 def build_historical_price(message_regions = 'R12',
                            project_name = None, config_name = None):
@@ -484,10 +512,10 @@ def build_historical_price(message_regions = 'R12',
     return outdf
 
 # Build for historical new capacity of a given maritime shipment (e.g., LNG tanker)
-def build_historical_new_capacity(infile, ship_type,
-                                  message_regions = 'R12',
-                                  project_name = None, config_name = None,
-                                  lifetime_mileage = 210000):
+def build_historical_new_capacity_flow(infile, ship_type,
+                                       message_regions = 'R12',
+                                       project_name = None, config_name = None,
+                                       lifetime_mileage = 210000):
     
     # Regions
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
