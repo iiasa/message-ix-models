@@ -11,12 +11,13 @@ from message_ix_models.util import private_data_path
 
 def test_read_magicc_output():
     # create a fake dataframe
+    variable = (
+        "AR6 climate diagnostics|Surface Temperature (GSAT)|"
+        "MAGICCv7.5.3|50.0th Percentile"
+    )
     df = pd.DataFrame(
         {
-            "Variable": [
-                "AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3|",
-                "50.0th Percentile",
-            ],
+            "Variable": [variable],
             "Region": ["World"],
             "2100": [1.5],
         }
@@ -37,6 +38,7 @@ def test_read_magicc_output():
     file_path.unlink()
 
 
+# Not such a meaningful test, as we cannot run run_magicc
 def test_run_climate_processor_from_file(tmp_path):
     # create a dummy CSV input
     input_csv = tmp_path / "dummy_input.csv"
