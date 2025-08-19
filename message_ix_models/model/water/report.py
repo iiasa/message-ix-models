@@ -404,7 +404,9 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
         pop_sani_tot["variable"] = "Population|Sanitation Access"
         pop_sani_tot = pop_sani_tot[cols]
         # global values
-        pop_sdg6 = pd.concat([pd.concat([pop_sdg6, pop_drink_tot]), pop_sani_tot])
+        # pop_sdg6 already contains urban/rural drink and sani from loop above
+        # Only need to add the totals
+        pop_sdg6 = pd.concat([pop_sdg6, pop_drink_tot, pop_sani_tot])
         pop_sdg6_glb = (
             pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
             .sum()
@@ -449,8 +451,105 @@ def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
 
 
 # TODO
-def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
-    """Report nexus module results"""
+def compute_cooling_technologies(
+    report_iam: pyam.IamDataFrame
+) -> tuple[pyam.IamDataFrame, list]:
+    """Compute cooling technology metrics and return mapping rows.
+    
+    Parameters
+    ----------
+    report_iam : pyam.IamDataFrame
+        Report in pyam format
+        
+    Returns
+    -------
+    report_iam : pyam.IamDataFrame
+        Updated report with cooling technology calculations
+    cooling_rows : list
+        List of [name, variables, unit] rows for cooling metrics
+    """
+    # Freshwater cooling technologies water usage
+    cooling_fresh_water = report_iam.filter(
+        variable="in|water_supply|freshwater|*fresh|*"
+    ).variable
+    cooling_ot_fresh_water = report_iam.filter(
+        variable="in|water_supply|freshwater|*__ot_fresh|*"
+    ).variable
+    cooling_cl_fresh_water = report_iam.filter(
+        variable="in|water_supply|freshwater|*__cl_fresh|*"
+    ).variable
+
+    # Non-cooling technologies freshwater usage
+    all_freshwater_tech = report_iam.filter(
+        variable="in|water_supply|freshwater|*|*"
+    ).variable
+    exclude_patterns = [
+        "irrigation_", "__ot_fresh", "__cl_fresh", "__ot_saline", "__air",
+        "industry_unconnected", "industry_untreated", "urban_t_d", "rural_t_d",
+        "urban_unconnected", "rural_unconnected",
+    ]
+    non_cooling_water = [
+        v for v in all_freshwater_tech
+        if not any(pattern in v for pattern in exclude_patterns)
+    ]
+
+    # Fresh water return flow emissions
+    fresh_return_emissions = report_iam.filter(
+        variable="emis|water_consumption|fresh_return|*|*"
+    ).variable
+
+    # Cooling investments
+    cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
+    cooling_air_inv = report_iam.filter(variable="inv cost|*air").variable
+    cooling_ot_fresh = report_iam.filter(variable="inv cost|*ot_fresh").variable
+    cooling_cl_fresh = report_iam.filter(variable="inv cost|*cl_fresh").variable
+
+    # Hydro electricity calculations
+    elec_hydro_var = report_iam.filter(variable="out|secondary|electr|hydro*").variable
+    report_iam = multiply_electricity_output_of_hydro(elec_hydro_var, report_iam)
+    water_hydro_var = report_iam.filter(
+        variable="Water Withdrawal|Electricity|Hydro|*"
+    ).variable
+
+    # Build cooling-specific mapping rows
+    cooling_rows = [
+        ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "MCM/yr"],
+        ["Water Withdrawal|Electricity|Cooling|Fresh Water", cooling_fresh_water, "MCM/yr"],
+        ["Water Withdrawal|Electricity|Cooling|Once Through|Fresh Water", cooling_ot_fresh_water, "MCM/yr"],
+        ["Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water", cooling_cl_fresh_water, "MCM/yr"],
+        ["Water Withdrawal|Energy|Non-Cooling", non_cooling_water, "MCM/yr"],
+        ["Water Return|Electricity|Cooling", fresh_return_emissions, "MCM/yr"],
+        ["Investment|Infrastructure|Water|Cooling",
+         cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv,
+         "million US$2010/yr"],
+        ["Investment|Infrastructure|Water|Cooling|Once through freshwater", cooling_ot_fresh, "million US$2010/yr"],
+        ["Investment|Infrastructure|Water|Cooling|Closed loop freshwater", cooling_cl_fresh, "million US$2010/yr"],
+        ["Investment|Infrastructure|Water|Cooling|Once through saline", cooling_saline_inv, "million US$2010/yr"],
+        ["Investment|Infrastructure|Water|Cooling|Air cooled", cooling_air_inv, "million US$2010/yr"],
+    ]
+
+    # Store water_hydro_var for later filtering
+    report_iam.metadata = getattr(report_iam, 'metadata', {})
+    report_iam.metadata['water_hydro_var'] = water_hydro_var
+    report_iam.metadata['cooling_inv_vars'] = cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv
+    
+    return report_iam, cooling_rows
+
+
+def report(sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = True) -> None:
+    """Report nexus module results
+    
+    Parameters
+    ----------
+    sc : Scenario
+        Scenario to report
+    reg : str
+        Region to report
+    sdgs : bool, optional
+        If True, add population with access to water and sanitation for SDG6
+    include_cooling : bool, optional
+        If True, include cooling technology calculations in the report (default True)
+    """
     log.info(f"Regions given as {reg}; no warranty if it's not in ['R11','R12']")
     # Generating reporter
     rep = Reporter.from_scenario(sc)
@@ -729,60 +828,10 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
         variable="in|water_supply_basin|freshwater_basin|basin_to_reg|*"
     ).variable
 
-    # Freshwater cooling technologies water usage
-    cooling_fresh_water = report_iam.filter(
-        variable="in|water_supply|freshwater|*fresh|*"
-    ).variable
-    cooling_ot_fresh_water = report_iam.filter(
-        variable="in|water_supply|freshwater|*__ot_fresh|*"
-    ).variable
-    cooling_cl_fresh_water = report_iam.filter(
-        variable="in|water_supply|freshwater|*__cl_fresh|*"
-    ).variable
-
-    # Non-cooling technologies freshwater usage
-    # (all freshwater techs except already reported)
-    all_freshwater_tech = report_iam.filter(
-        variable="in|water_supply|freshwater|*|*"
-    ).variable
-    # Remove already-reported categories: irrigation and cooling technologies
-    exclude_patterns = [
-        "irrigation_",
-        "__ot_fresh",
-        "__cl_fresh",
-        "__ot_saline",
-        "__air",
-        "industry_unconnected",
-        "industry_untreated",
-        "urban_t_d",
-        "rural_t_d",
-        "urban_unconnected",
-        "rural_unconnected",
-    ]
-    # Exclude water demand technologies to avoid double-counting
-    non_cooling_water = [
-        v
-        for v in all_freshwater_tech
-        if not any(pattern in v for pattern in exclude_patterns)
-    ]
-
-    # Fresh water return flow emissions from cooling technologies
-    fresh_return_emissions = report_iam.filter(
-        variable="emis|water_consumption|fresh_return|*|*"
-    ).variable
-
-    cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
-    cooling_air_inv = report_iam.filter(variable="inv cost|*air").variable
-    cooling_ot_fresh = report_iam.filter(variable="inv cost|*ot_fresh").variable
-    cooling_cl_fresh = report_iam.filter(variable="inv cost|*cl_fresh").variable
-
-    elec_hydro_var = report_iam.filter(variable="out|secondary|electr|hydro*").variable
-
-    report_iam = multiply_electricity_output_of_hydro(elec_hydro_var, report_iam)
-
-    water_hydro_var = report_iam.filter(
-        variable="Water Withdrawal|Electricity|Hydro|*"
-    ).variable
+    # Process cooling technologies if enabled
+    cooling_rows = []
+    if include_cooling:
+        report_iam, cooling_rows = compute_cooling_technologies(report_iam)
 
     # mapping for aggregation
     map_agg_pd = pd.DataFrame(
@@ -835,32 +884,6 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             ["Water Withdrawal|Irrigation|Cereal", irr_c, "MCM/yr"],
             ["Water Withdrawal|Irrigation|Oil Crops", irr_o, "MCM/yr"],
             ["Water Withdrawal|Irrigation|Sugar Crops", irr_s, "MCM/yr"],
-            ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "MCM/yr"],
-            [
-                "Water Withdrawal|Electricity|Cooling|Fresh Water",
-                cooling_fresh_water,
-                "MCM/yr",
-            ],
-            [
-                "Water Withdrawal|Electricity|Cooling|Once Through|Fresh Water",
-                cooling_ot_fresh_water,
-                "MCM/yr",
-            ],
-            [
-                "Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water",
-                cooling_cl_fresh_water,
-                "MCM/yr",
-            ],
-            [
-                "Water Withdrawal|Energy|Non-Cooling",
-                non_cooling_water,
-                "MCM/yr",
-            ],
-            [
-                "Water Return|Electricity|Cooling",
-                fresh_return_emissions,
-                "MCM/yr",
-            ],
             [
                 "Capacity Additions|Infrastructure|Water",
                 # Removed sub-components to avoid double-counting since:
@@ -1113,10 +1136,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 + extrt_gw_inv
                 + extrt_fgw_inv
                 + saline_inv
-                + cooling_ot_fresh
-                + cooling_cl_fresh
-                + cooling_saline_inv
-                + cooling_air_inv
+                + (getattr(report_iam, 'metadata', {}).get('cooling_inv_vars', []))
                 + industry_unconnected_inv,
                 "million US$2010/yr",
             ],
@@ -1148,34 +1168,6 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
             [
                 "Investment|Infrastructure|Water|Desalination",
                 saline_inv,
-                "million US$2010/yr",
-            ],
-            [
-                "Investment|Infrastructure|Water|Cooling",
-                cooling_ot_fresh
-                + cooling_cl_fresh
-                + cooling_saline_inv
-                + cooling_air_inv,
-                "million US$2010/yr",
-            ],
-            [
-                "Investment|Infrastructure|Water|Cooling|Once through freshwater",
-                cooling_ot_fresh,
-                "million US$2010/yr",
-            ],
-            [
-                "Investment|Infrastructure|Water|Cooling|Closed loop freshwater",
-                cooling_cl_fresh,
-                "million US$2010/yr",
-            ],
-            [
-                "Investment|Infrastructure|Water|Cooling|Once through saline",
-                cooling_saline_inv,
-                "million US$2010/yr",
-            ],
-            [
-                "Investment|Infrastructure|Water|Cooling|Air cooled",
-                cooling_air_inv,
                 "million US$2010/yr",
             ],
             # [
@@ -1353,7 +1345,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
                 industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
-        ],
+        ] + cooling_rows,  # Add cooling rows here
         columns=["names", "list_cat", "unit"],
     )
 
@@ -1477,7 +1469,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     report_pd = report_pd.drop(columns=["to_keep"])
 
     # ecluded other intermediate variables added later to report_iam
-    report_pd = report_pd[-report_pd.variable.isin(water_hydro_var)]
+    if include_cooling and hasattr(report_iam, 'metadata') and 'water_hydro_var' in report_iam.metadata:
+        report_pd = report_pd[-report_pd.variable.isin(report_iam.metadata['water_hydro_var'])]
 
     # add water population
     pop_sdg6 = pop_water_access(sc, reg, sdgs)
@@ -1542,8 +1535,20 @@ def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     sc.commit("Reporting uploaded as timeseries")
 
 
-def report_full(sc: Scenario, reg: str, sdgs=False) -> None:
-    """Combine old and new reporting workflows"""
+def report_full(sc: Scenario, reg: str, sdgs=False, include_cooling: bool = True) -> None:
+    """Combine old and new reporting workflows
+    
+    Parameters
+    ----------
+    sc : Scenario
+        Scenario to report
+    reg : str
+        Region to report
+    sdgs : bool, optional
+        If True, add population with access to water and sanitation for SDG6
+    include_cooling : bool, optional
+        If True, include cooling technology calculations in the report (default True)
+    """
     a = sc.timeseries()
     # keep historical part, if present
     a = a[a.year >= 2020]
@@ -1558,7 +1563,7 @@ def report_full(sc: Scenario, reg: str, sdgs=False) -> None:
     run_old_reporting(sc)
     log.info("First part of reporting completed, now procede with the water variables")
 
-    report(sc, reg, sdgs)
+    report(sc, reg, sdgs, include_cooling)
     log.info("overall NAVIGATE reporting completed")
 
     # add ad-hoc caplculated variables with a function
