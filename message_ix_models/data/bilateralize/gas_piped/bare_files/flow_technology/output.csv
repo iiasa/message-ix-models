@@ -4,6 +4,7 @@ R12_AFR,gas_pipe_weu,broadcast,broadcast,M1,R12_AFR,gas_pipeline_capacity,piped,
 R12_CHN,gas_pipe_fsu,broadcast,broadcast,M1,R12_CHN,gas_pipeline_capacity,piped,year,year,1,km
 R12_EEU,gas_pipe_fsu,broadcast,broadcast,M1,R12_EEU,gas_pipeline_capacity,piped,year,year,1,km
 R12_EEU,gas_pipe_weu,broadcast,broadcast,M1,R12_EEU,gas_pipeline_capacity,piped,year,year,1,km
+R12_FSU,gas_pipe_rcpa,broadcast,broadcast,M1,R12_FSU,gas_pipeline_capacity,piped,year,year,1,km
 R12_FSU,gas_pipe_chn,broadcast,broadcast,M1,R12_FSU,gas_pipeline_capacity,piped,year,year,1,km
 R12_FSU,gas_pipe_eeu,broadcast,broadcast,M1,R12_FSU,gas_pipeline_capacity,piped,year,year,1,km
 R12_FSU,gas_pipe_mea,broadcast,broadcast,M1,R12_FSU,gas_pipeline_capacity,piped,year,year,1,km
@@ -19,6 +20,7 @@ R12_MEA,gas_pipe_sas,broadcast,broadcast,M1,R12_MEA,gas_pipeline_capacity,piped,
 R12_MEA,gas_pipe_weu,broadcast,broadcast,M1,R12_MEA,gas_pipeline_capacity,piped,year,year,1,km
 R12_NAM,gas_pipe_lam,broadcast,broadcast,M1,R12_NAM,gas_pipeline_capacity,piped,year,year,1,km
 R12_PAO,gas_pipe_fsu,broadcast,broadcast,M1,R12_PAO,gas_pipeline_capacity,piped,year,year,1,km
+R12_PAS,gas_pipe_rcpa,broadcast,broadcast,M1,R12_PAS,gas_pipeline_capacity,piped,year,year,1,km
 R12_PAS,gas_pipe_chn,broadcast,broadcast,M1,R12_PAS,gas_pipeline_capacity,piped,year,year,1,km
 R12_PAS,gas_pipe_fsu,broadcast,broadcast,M1,R12_PAS,gas_pipeline_capacity,piped,year,year,1,km
 R12_PAS,gas_pipe_pao,broadcast,broadcast,M1,R12_PAS,gas_pipeline_capacity,piped,year,year,1,km
