@@ -50,7 +50,17 @@ for tec in hist_tec.keys():
     log.info('Add historical activity for ' + tec)
     add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
     trade_dict[tec]['trade']['historical_activity'] = add_df
-    
+
+# Historical new capacity for maritime shipping
+hist_lng_foil = build_historical_new_capacity('LNG Tankers.csv', 'LNG_tanker_foil',
+                                              project_name = 'newpathways', config_name = 'config.yaml')
+hist_lng_lng = build_historical_new_capacity('LNG Tankers.csv', 'LNG_tanker_LNG',
+                                              project_name = 'newpathways', config_name = 'config.yaml')
+hist_lng_foil['value'] *= 0.2 # Assume 20% of historical LNG tankers are propelled using diesel
+hist_lng_lng['value'] *= 0.8 # Assume 80% of historical LNG tankers are propelled using LNG
+hist_lng = pd.concat([hist_lng_foil, hist_lng_lng])
+trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
+
 ## MANUAL ADDITIONS
 # Set emission factors for piped gas # TODO
 # tdf = pd.read_csv(os.path.join(package_data_path("bilateralize"), "gas_piped", "bare_files", "emission_factor.csv"))
