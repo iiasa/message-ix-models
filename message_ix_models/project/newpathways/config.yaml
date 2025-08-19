@@ -1,7 +1,7 @@
 # DATA DIRECTORIES
 p_drive_location:
-  /pdrive/projects/ene.model3
-  #P:/ene.model
+  #/pdrive/projects/ene.model3
+  P:/ene.model
 
 # SCENARIO INFORMATION
 scenario:
