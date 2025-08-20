@@ -384,38 +384,34 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
         pop_sani_tot = pd.concat([pop_sani_tot, pop_sani])
         pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
 
-        # total values
-        pop_drink_tot = (
-            pop_drink_tot.groupby(["region", "unit", "year", "model", "scenario"])[
-                "value"
-            ]
-            .sum()
-            .reset_index()
-        )
-        pop_drink_tot["variable"] = "Population|Drinking Water Access"
-        pop_drink_tot = pop_drink_tot[cols]
-        pop_sani_tot = (
-            pop_sani_tot.groupby(["region", "unit", "year", "model", "scenario"])[
-                "value"
-            ]
-            .sum()
-            .reset_index()
-        )
-        pop_sani_tot["variable"] = "Population|Sanitation Access"
-        pop_sani_tot = pop_sani_tot[cols]
-        # global values
-        # pop_sdg6 already contains urban/rural drink and sani from loop above
-        # Only need to add the totals
-        pop_sdg6 = pd.concat([pop_sdg6, pop_drink_tot, pop_sani_tot])
-        pop_sdg6_glb = (
-            pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
-            .sum()
-            .reset_index()
-        )
-        pop_sdg6_glb["region"] = "World"
-        pop_sdg6_glb = pop_sdg6_glb[cols]
+    # total values - moved outside the loop to run only once
+    pop_drink_tot = (
+        pop_drink_tot.groupby(["region", "unit", "year", "model", "scenario"])["value"]
+        .sum()
+        .reset_index()
+    )
+    pop_drink_tot["variable"] = "Population|Drinking Water Access"
+    pop_drink_tot = pop_drink_tot[cols]
+    pop_sani_tot = (
+        pop_sani_tot.groupby(["region", "unit", "year", "model", "scenario"])["value"]
+        .sum()
+        .reset_index()
+    )
+    pop_sani_tot["variable"] = "Population|Sanitation Access"
+    pop_sani_tot = pop_sani_tot[cols]
+    # global values
+    # pop_sdg6 already contains urban/rural drink and sani from loop above
+    # Only need to add the totals
+    pop_sdg6 = pd.concat([pop_sdg6, pop_drink_tot, pop_sani_tot])
+    pop_sdg6_glb = (
+        pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
+        .sum()
+        .reset_index()
+    )
+    pop_sdg6_glb["region"] = "World"
+    pop_sdg6_glb = pop_sdg6_glb[cols]
 
-        pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
+    pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
     log.info("Population|Drinking Water Access and Sanitation Access calculated")
     return pop_sdg6
 
@@ -452,15 +448,15 @@ def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
 
 # TODO
 def compute_cooling_technologies(
-    report_iam: pyam.IamDataFrame
+    report_iam: pyam.IamDataFrame,
 ) -> tuple[pyam.IamDataFrame, list]:
     """Compute cooling technology metrics and return mapping rows.
-    
+
     Parameters
     ----------
     report_iam : pyam.IamDataFrame
         Report in pyam format
-        
+
     Returns
     -------
     report_iam : pyam.IamDataFrame
@@ -484,12 +480,21 @@ def compute_cooling_technologies(
         variable="in|water_supply|freshwater|*|*"
     ).variable
     exclude_patterns = [
-        "irrigation_", "__ot_fresh", "__cl_fresh", "__ot_saline", "__air",
-        "industry_unconnected", "industry_untreated", "urban_t_d", "rural_t_d",
-        "urban_unconnected", "rural_unconnected",
+        "irrigation_",
+        "__ot_fresh",
+        "__cl_fresh",
+        "__ot_saline",
+        "__air",
+        "industry_unconnected",
+        "industry_untreated",
+        "urban_t_d",
+        "rural_t_d",
+        "urban_unconnected",
+        "rural_unconnected",
     ]
     non_cooling_water = [
-        v for v in all_freshwater_tech
+        v
+        for v in all_freshwater_tech
         if not any(pattern in v for pattern in exclude_patterns)
     ]
 
@@ -514,31 +519,65 @@ def compute_cooling_technologies(
     # Build cooling-specific mapping rows
     cooling_rows = [
         ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "MCM/yr"],
-        ["Water Withdrawal|Electricity|Cooling|Fresh Water", cooling_fresh_water, "MCM/yr"],
-        ["Water Withdrawal|Electricity|Cooling|Once Through|Fresh Water", cooling_ot_fresh_water, "MCM/yr"],
-        ["Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water", cooling_cl_fresh_water, "MCM/yr"],
+        [
+            "Water Withdrawal|Electricity|Cooling|Fresh Water",
+            cooling_fresh_water,
+            "MCM/yr",
+        ],
+        [
+            "Water Withdrawal|Electricity|Cooling|Once Through|Fresh Water",
+            cooling_ot_fresh_water,
+            "MCM/yr",
+        ],
+        [
+            "Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water",
+            cooling_cl_fresh_water,
+            "MCM/yr",
+        ],
         ["Water Withdrawal|Energy|Non-Cooling", non_cooling_water, "MCM/yr"],
         ["Water Return|Electricity|Cooling", fresh_return_emissions, "MCM/yr"],
-        ["Investment|Infrastructure|Water|Cooling",
-         cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv,
-         "million US$2010/yr"],
-        ["Investment|Infrastructure|Water|Cooling|Once through freshwater", cooling_ot_fresh, "million US$2010/yr"],
-        ["Investment|Infrastructure|Water|Cooling|Closed loop freshwater", cooling_cl_fresh, "million US$2010/yr"],
-        ["Investment|Infrastructure|Water|Cooling|Once through saline", cooling_saline_inv, "million US$2010/yr"],
-        ["Investment|Infrastructure|Water|Cooling|Air cooled", cooling_air_inv, "million US$2010/yr"],
+        [
+            "Investment|Infrastructure|Water|Cooling",
+            cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv,
+            "million US$2010/yr",
+        ],
+        [
+            "Investment|Infrastructure|Water|Cooling|Once through freshwater",
+            cooling_ot_fresh,
+            "million US$2010/yr",
+        ],
+        [
+            "Investment|Infrastructure|Water|Cooling|Closed loop freshwater",
+            cooling_cl_fresh,
+            "million US$2010/yr",
+        ],
+        [
+            "Investment|Infrastructure|Water|Cooling|Once through saline",
+            cooling_saline_inv,
+            "million US$2010/yr",
+        ],
+        [
+            "Investment|Infrastructure|Water|Cooling|Air cooled",
+            cooling_air_inv,
+            "million US$2010/yr",
+        ],
     ]
 
     # Store water_hydro_var for later filtering
-    report_iam.metadata = getattr(report_iam, 'metadata', {})
-    report_iam.metadata['water_hydro_var'] = water_hydro_var
-    report_iam.metadata['cooling_inv_vars'] = cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv
-    
+    report_iam.metadata = getattr(report_iam, "metadata", {})
+    report_iam.metadata["water_hydro_var"] = water_hydro_var
+    report_iam.metadata["cooling_inv_vars"] = (
+        cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv
+    )
+
     return report_iam, cooling_rows
 
 
-def report(sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = True) -> None:
+def report(
+    sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = True
+) -> None:
     """Report nexus module results
-    
+
     Parameters
     ----------
     sc : Scenario
@@ -1136,7 +1175,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = T
                 + extrt_gw_inv
                 + extrt_fgw_inv
                 + saline_inv
-                + (getattr(report_iam, 'metadata', {}).get('cooling_inv_vars', []))
+                + (getattr(report_iam, "metadata", {}).get("cooling_inv_vars", []))
                 + industry_unconnected_inv,
                 "million US$2010/yr",
             ],
@@ -1345,7 +1384,8 @@ def report(sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = T
                 industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
-        ] + cooling_rows,  # Add cooling rows here
+        ]
+        + cooling_rows,  # Add cooling rows here
         columns=["names", "list_cat", "unit"],
     )
 
@@ -1469,8 +1509,14 @@ def report(sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = T
     report_pd = report_pd.drop(columns=["to_keep"])
 
     # ecluded other intermediate variables added later to report_iam
-    if include_cooling and hasattr(report_iam, 'metadata') and 'water_hydro_var' in report_iam.metadata:
-        report_pd = report_pd[-report_pd.variable.isin(report_iam.metadata['water_hydro_var'])]
+    if (
+        include_cooling
+        and hasattr(report_iam, "metadata")
+        and "water_hydro_var" in report_iam.metadata
+    ):
+        report_pd = report_pd[
+            -report_pd.variable.isin(report_iam.metadata["water_hydro_var"])
+        ]
 
     # add water population
     pop_sdg6 = pop_water_access(sc, reg, sdgs)
@@ -1535,9 +1581,11 @@ def report(sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = T
     sc.commit("Reporting uploaded as timeseries")
 
 
-def report_full(sc: Scenario, reg: str, sdgs=False, include_cooling: bool = True) -> None:
+def report_full(
+    sc: Scenario, reg: str, sdgs=False, include_cooling: bool = True
+) -> None:
     """Combine old and new reporting workflows
-    
+
     Parameters
     ----------
     sc : Scenario
