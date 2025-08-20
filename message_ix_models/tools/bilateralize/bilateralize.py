@@ -921,6 +921,7 @@ def clone_and_update(trade_dict,
                      to_gdx = False,
                      project_name: str = None,
                      config_name: str = None,
+                     update_scenario_name:str = None,
                      gdx_location: str = os.path.join("H:", "script", "message_ix", "message_ix", "model", "data")):     
     # Load config
     config, config_path = load_config(project_name, config_name)
@@ -942,7 +943,12 @@ def clone_and_update(trade_dict,
      
     # Clone scenario
     target_model = config.get("scenario", {}).get("target_model", [])
-    target_scen = config.get("scenario", {}).get("target_scen", [])
+    
+    if update_scenario_name == None:
+        target_scen = config.get("scenario", {}).get("target_scen", [])
+    else:
+        target_scen = update_scenario_name
+        
     scen = base.clone(target_model, target_scen, keep_solution=False)
     scen.set_as_default()
     log.info("Scenario cloned.")
