@@ -69,11 +69,11 @@ def build_sankeydf(commodities:dict,
 # Build data
 df = build_sankeydf(commodities = {'gas_piped': 'Pipeline Gas',
                                    'LNG_shipped': 'Shipped LNG'},
-                    model_name = "NP_SSP2", scenario_name = "pipelines_LNG")
+                    model_name = "NP_SSP2_6.2", scenario_name = "pipelines_LNG")
 df = df[df['value'] > 0.5]
 
 # Create sankey
-sankey = InteractiveSankey(sankeydf)
+sankey = InteractiveSankey(df)
 dashboard = sankey.create_dashboard()
 dashboard.write_html(os.path.join(data_path, "diagnostics", "sankey.html"))
 

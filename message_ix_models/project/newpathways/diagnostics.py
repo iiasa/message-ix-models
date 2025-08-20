@@ -41,8 +41,8 @@ def activity_to_csv(trade_tec,
     
     exports_out = pd.DataFrame(); imports_out = pd.DataFrame(); flows_out = pd.DataFrame()
     
-    for model_name in model_scenario_dict.keys():
-        scenario_name = model_scenario_dict[model_name]
+    for scenario_name in model_scenario_dict.keys():
+        model_name = model_scenario_dict[scenario_name]
         scen = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
         
         activity = scen.var("ACT")
@@ -144,20 +144,20 @@ def activity_to_csv(trade_tec,
                      index = False)
     
 # Retrieve trade flow activities
-models_scenarios = {#'NP_SSP2_baseline': 'v5.2',
-                    'NP_SSP2_6.2': 'pipelines_LNG'}
+scenarios_models = {'baseline': 'NP_SSP2_6.2',
+                    'pipelines_LNG': 'NP_SSP2_6.2'}
  
 activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_pipe",
                 trade_commodity = 'gas (GWa)',
                 flow_commodity = 'gas_pipeline_capacity',
                 flow_unit = 'km',
-                model_scenario_dict = models_scenarios)
+                model_scenario_dict = scenarios_models)
 
 activity_to_csv(trade_tec = "LNG", 
                 flow_tec = "LNG_tanker",
                 trade_commodity = 'LNG (GWa)',
                 flow_commodity = 'LNG_tanker_capacity',
                 flow_unit = 'Mt-km',
-                model_scenario_dict = models_scenarios)
+                model_scenario_dict = scenarios_models)
 
