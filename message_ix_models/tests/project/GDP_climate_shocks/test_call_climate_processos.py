@@ -73,4 +73,3 @@ def test_run_climate_processor_from_file(tmp_path):
     if magicc_output_dir.exists():
         for f in magicc_output_dir.iterdir():
             f.unlink()
-        magicc_output_dir.rmdir()
