@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 13 08:41:07 2023
-
-@author: vinca & byers
-
-
-test waidelich GDP data trajectories
-"""
-
 import gc
 import time
 
