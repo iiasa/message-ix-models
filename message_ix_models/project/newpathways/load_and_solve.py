@@ -34,10 +34,35 @@ log = get_logger(__name__)
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
 trade_parameters = pd.read_pickle(tdf)
 
-# Update scenario
+# Update scenario: default values
 clone_and_update(trade_dict=trade_parameters,
                  project_name = 'newpathways',
                  config_name = 'config.yaml',
                  log=log,
                  to_gdx = False,
-                 solve = True)
+                 solve = True,
+                 update_scenario_name = 'pipeline_LNG')
+
+# Update scenario: no variable cost on flow technology
+trade_parameters_novar = trade_parameters.copy()
+del trade_parameters_novar['LNG_shipped']['flow']['var_cost']
+
+clone_and_update(trade_dict=trade_parameters_novar,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 update_scenario_name = 'LNG_noFLvarcost')
+
+# Update scenario: no fixed cost on trade for LNG 
+trade_parameters_nofix = trade_parameters.copy()
+del trade_parameters_nofix['LNG_shipped']['trade']['fix_cost']
+
+clone_and_update(trade_dict=trade_parameters_nofix,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 update_scenario_name = 'LNG_noTRfixcost')
