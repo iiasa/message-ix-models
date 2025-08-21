@@ -869,8 +869,8 @@ def report(
 
     # Process cooling technologies if enabled
     cooling_rows = []
-    if include_cooling:
-        report_iam, cooling_rows = compute_cooling_technologies(report_iam)
+    # if include_cooling:
+    report_iam, cooling_rows = compute_cooling_technologies(report_iam)
 
     # mapping for aggregation
     map_agg_pd = pd.DataFrame(
