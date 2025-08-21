@@ -36,6 +36,7 @@ Extensions
   - Use of :doc:`/api/tools-costs` for iron/steel production technologies
 - New steel projections derived from relationship of macro-economic investment to per capita steel demand
 - Regionally differentiated scrap availability from steel finishing and manufacturing based on statistics
+
 Non metallic minerals sector
 ----------------------------
 
@@ -80,16 +81,25 @@ CLI changes
 Deprecations
 ============
 
+- Functionalities of :mod:`.model.material.report.reporting` was replaced by :mod:`.model.material.report.run_reporting`. *Will be removed in the next release.*
+
 New features
 ============
 
-The following xlsx files have been replaced by multiple csv files for each sheet to facilitate version control and readability:
+- The following xlsx files have been replaced by multiple csv files for each sheet to facilitate version control and readability:
 
-- :file:`aluminum_techno_economic.xlsx`
-- :file:`Global_cement_MESSAGE.xlsx`
-- :file:`Global_steel_MESSAGE.xlsx`
+  - :file:`aluminum_techno_economic.xlsx`
+  - :file:`Global_cement_MESSAGE.xlsx`
+  - :file:`Global_steel_MESSAGE.xlsx`
 
-The files are currently still available for reference, but will be removed in a future release.
+  The files are currently still available for reference, but will be removed in a future release.
+
+- New post-processing module for the industry sector in :mod:`.model.material.report.run_reporting` providing:
+
+  - More generalized method of post-processing MESSAGEix-Materials results
+  - Configuration with YAML files in :file:`material/model/material/reporting/`
+  - Higher resolution of post-processed results
+  - Data model validatation with pydantic
 
 Bug Fixes
 ---------
