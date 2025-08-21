@@ -751,27 +751,6 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         .pipe(same_time)
     )
 
-    # input dataframe for extract_salinewater_basin to match M1 output mode
-    extract_inp_df = (
-        make_df(
-            "input",
-            technology="extract_salinewater_basin",
-            value=1,
-            unit="MCM/year",
-            level="water_avail_basin",
-            commodity="salinewater_basin",
-            mode="M1",
-        )
-        .pipe(
-            broadcast,
-            get_vintage_and_active_years(scenario_info, 20),
-            node_loc=df_node["node"],
-            time=pd.Series(sub_time),
-        )
-        .pipe(same_node)
-        .pipe(same_time)
-    )
-
     tl = (
         make_df(
             "technical_lifetime",
@@ -983,8 +962,6 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-        # Add extract_salinewater_basin input to match M1 output mode
-        inp_df = pd.concat([inp_df, extract_inp_df])
 
         inp_df.dropna(inplace=True)
 
