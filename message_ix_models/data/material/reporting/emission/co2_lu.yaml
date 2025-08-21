@@ -1,0 +1,36 @@
+var:
+  "land_out:n-s-y-c-l-h"
+
+iamc_prefix:
+  Emissions|CO2|
+
+common:
+  unit: Mt C/yr
+
+vars:
+  AFOLU|Afforestation:
+    filter: { commodity: "Emissions|CO2|AFOLU|Afforestation", level: "land_use_reporting" }
+  AFOLU|Agriculture and Biomass Burning:
+    filter: { commodity: "Emissions|CO2|AFOLU|Agriculture and Biomass Burning", level: "land_use_reporting" }
+  AFOLU|Agriculture|Biochar:
+    filter: { commodity: "Emissions|CO2|AFOLU|Agriculture|Biochar", level: "land_use_reporting" }
+  AFOLU|Agriculture|Silvopasture:
+    filter: { commodity: "Emissions|CO2|AFOLU|Agriculture|Silvopasture", level: "land_use_reporting" }
+  AFOLU|Agriculture|Soil Carbon:
+    filter: { commodity: "Emissions|CO2|AFOLU|Soil Carbon", level: "land_use_reporting" }
+  AFOLU|Agriculture|Soil Carbon|Cropland:
+    filter: { commodity: "Emissions|CO2|AFOLU|Soil Carbon|Cropland", level: "land_use_reporting" }
+  AFOLU|Agriculture|Soil Carbon|Pasture:
+    filter: { commodity: "Emissions|CO2|AFOLU|Agriculture|Soil Carbon|Pasture", level: "land_use_reporting" }
+  AFOLU|Deforestation:
+    filter: { commodity: "Emissions|CO2|AFOLU|Deforestation", level: "land_use_reporting" }
+  AFOLU|Forest Management:
+    filter: { commodity: "Emissions|CO2|AFOLU|Forest Management", level: "land_use_reporting" }
+  AFOLU|Negative:
+    filter: { commodity: "Emissions|CO2|AFOLU|Negative", level: "land_use_reporting" }
+  AFOLU|Other:
+    filter: { commodity: "Emissions|CO2|AFOLU|Other", level: "land_use_reporting" }
+  AFOLU|Other LUC:
+    filter: { commodity: "Emissions|CO2|AFOLU|Other LUC", level: "land_use_reporting" }
+  AFOLU|Positive:
+    filter: { commodity: "Emissions|CO2|AFOLU|Positive", level: "land_use_reporting" }

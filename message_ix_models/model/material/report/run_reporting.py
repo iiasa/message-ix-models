@@ -34,10 +34,10 @@ def pyam_df_from_rep(
         for col in mapping_df.index.names
     }
     # rep.set_filters(**filters_dict)
-    node_col = "nl" if "nl" in mapping_df.index.names else "n"
-    y_col = "ya" if "ya" in mapping_df.index.names else "y"
     key = f"{reporter_var}:nl-t-ya-m-c-l" if ":" not in reporter_var else reporter_var
     df_var = pd.DataFrame(rep.get(key))
+    node_col = "nl" if "nl" in df_var.index.names else "n"
+    y_col = "ya" if "ya" in df_var.index.names else "y"
     df = (
         df_var.join(mapping_df[["iamc_name", "unit"]])
         .dropna()
@@ -120,10 +120,10 @@ def run_fe_methanol_nh3_reporting(
     6. Format dataframe to IAMC standard.
     """
     nh3_mt_to_gwa = 0.697615
-    fe_config = load_config("fe_methanol_ammonia")
+    fe_config = load_config("energy/fe_methanol_ammonia")
     df_fe = pyam_df_from_rep(rep, fe_config.var, fe_config.mapping)
 
-    fs_config = load_config("fs1")
+    fs_config = load_config("energy/fs1")
     fs_config.iamc_prefix = fe_config.iamc_prefix
     df_fs = pyam_df_from_rep(rep, fs_config.var, fs_config.mapping)
     df_fs.loc[df_fs.index.get_level_values("iamc_name").str.contains("Ammonia")] *= (
@@ -144,7 +144,7 @@ def run_fe_methanol_nh3_reporting(
 
 def run_ch4_reporting(rep, model_name: str, scen_name: str) -> pyam.IamDataFrame:
     """Generate reporting for industry methane emissions."""
-    var = "ch4_emi"
+    var = "emission/ch4_emi"
     config = load_config(var)
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     py_df = format_reporting_df(
@@ -159,7 +159,7 @@ def run_fe_reporting(
     """Generate reporting for industry final energy variables."""
     dfs = []
 
-    config = load_config("fe")
+    config = load_config("energy/fe")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
@@ -167,7 +167,7 @@ def run_fe_reporting(
         )
     )
 
-    config = load_config("fe_solar")
+    config = load_config("energy/fe_solar")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
@@ -427,7 +427,7 @@ def run_fs_reporting(
 ) -> pd.DataFrame:
     """Generate reporting for industry final energy non-energy variables."""
     dfs = []
-    hvc_config = load_config("fs2")
+    hvc_config = load_config("energy/fs2")
     df_hvc = pyam_df_from_rep(rep, hvc_config.var, hvc_config.mapping)
     dfs.append(
         format_reporting_df(
@@ -440,8 +440,10 @@ def run_fs_reporting(
         )
     )
 
-    nh3_meth_config = load_config("fs1")
-    df_nh3_meth = pyam_df_from_rep(rep, nh3_meth_config.var, nh3_meth_config.mapping)
+    nh3_meth_config = load_config("energy/fs1")
+    df_nh3_meth = pyam_df_from_rep(
+        rep, nh3_meth_config.var, nh3_meth_config.mapping
+    )
     df_nh3_meth.loc[
         df_nh3_meth.index.get_level_values("iamc_name").str.contains("Ammonia")
     ] *= 0.697615
@@ -698,7 +700,7 @@ def run_se(rep: "Reporter", model_name: str, scen_name: str):
     dfs = []
     add_se_elec(rep)
     for group in ["se_elec", "se_elec_curt", "se_elec_thermal", "se_fuels"]:
-        cfg = load_config(group)
+        cfg = load_config(f"energy/{group}")
         df = pyam_df_from_rep(rep, cfg.message_query_key, cfg.df_mapping)
         dfs.append(
             format_reporting_df(
@@ -859,8 +861,8 @@ if __name__ == "__main__":
     import ixmp
     import message_ix
 
-    mp = ixmp.Platform("local2")
-    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
+    mp = ixmp.Platform("ixmp_dev")
+    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.1", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     df = run_se(rep, scen.model, scen.scenario)
     print()

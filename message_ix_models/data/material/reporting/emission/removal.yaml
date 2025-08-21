@@ -1,5 +1,5 @@
 var:
-  out
+  in
 
 iamc_prefix:
   Carbon Removal|
@@ -9,5 +9,5 @@ common:
 
 vars:
   Geological Storage|Direct Air Capture:
-    filter: { technology: [ co2_stor ], mode: M1, commodity: dac_co2, level: secondary }
+    filter: { technology: [ co2_stor ], mode: M3, commodity: dac_co2, level: final }
     short: cr_dac

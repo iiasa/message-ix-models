@@ -1,11 +1,11 @@
 var:
-  rel
+  "co2:nl-t-ya:industry"
 
 iamc_prefix:
   Emissions|CO2|
 
 common:
-  unit: Mt C
+  unit: Mt C/yr
 
 vars:
   Energy|Demand|Industry|Steel:

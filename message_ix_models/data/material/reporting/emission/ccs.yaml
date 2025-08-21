@@ -5,7 +5,7 @@ iamc_prefix:
   Carbon Capture|
 
 common:
-  unit: GWa
+  unit: Mt C/yr
 
 vars:
   Industrial Processes|Non-Metallic Minerals:

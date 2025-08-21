@@ -1,0 +1,73 @@
+var:
+  "co2:nl-t-ya:industry"
+
+iamc_prefix:
+  Emissions|CO2|
+
+common:
+  unit: Mt C/yr
+
+vars:
+  Emissions|CO2
+  Emissions|CO2|AFOLU
+  Emissions|CO2|AFOLU|Agriculture
+  Emissions|CO2|AFOLU|Agriculture and Biomass Burning
+  Emissions|CO2|Difference|Statistical
+  Emissions|CO2|Energy
+  Emissions|CO2|Energy and Industrial Processes
+  Emissions|CO2|Energy|Combustion
+  Emissions|CO2|Energy|Demand
+  Emissions|CO2|Energy|Demand|AFOFI
+  Emissions|CO2|Energy|Demand|Bunkers
+  Emissions|CO2|Energy|Demand|Bunkers|International Aviation
+  Emissions|CO2|Energy|Demand|Bunkers|International Shipping
+  Emissions|CO2|Energy|Demand|Industry
+  Emissions|CO2|Energy|Demand|Industry|Chemicals
+  Emissions|CO2|Energy|Demand|Industry|Other Sector
+  Emissions|CO2|Energy|Demand|Industry|Steel
+  Emissions|CO2|Energy|Demand|Other Sector
+  Emissions|CO2|Energy|Demand|Residential and Commercial
+  Emissions|CO2|Energy|Demand|Residential and Commercial and AFOFI
+  Emissions|CO2|Energy|Demand|Transportation
+  Emissions|CO2|Energy|Fugitive
+  Emissions|CO2|Energy|Supply
+  Emissions|CO2|Energy|Supply|Combustion
+  Emissions|CO2|Energy|Supply|Electricity
+  Emissions|CO2|Energy|Supply|Electricity and Heat
+  Emissions|CO2|Energy|Supply|Fugitive
+  Emissions|CO2|Energy|Supply|Gases
+  Emissions|CO2|Energy|Supply|Gases and Liquids Fugitive
+  Emissions|CO2|Energy|Supply|Gases|Biomass
+  Emissions|CO2|Energy|Supply|Gases|Coal
+  Emissions|CO2|Energy|Supply|Gases|Combustion
+  Emissions|CO2|Energy|Supply|Gases|Extraction
+  Emissions|CO2|Energy|Supply|Gases|Fugitive
+  Emissions|CO2|Energy|Supply|Gases|Hydrogen
+  Emissions|CO2|Energy|Supply|Gases|Natural Gas
+  Emissions|CO2|Energy|Supply|Gases|Transportation
+  Emissions|CO2|Energy|Supply|Heat
+  Emissions|CO2|Energy|Supply|Liquids
+  Emissions|CO2|Energy|Supply|Liquids|Biomass
+  Emissions|CO2|Energy|Supply|Liquids|Coal
+  Emissions|CO2|Energy|Supply|Liquids|Combustion
+  Emissions|CO2|Energy|Supply|Liquids|Extraction
+  Emissions|CO2|Energy|Supply|Liquids|Fugitive
+  Emissions|CO2|Energy|Supply|Liquids|Natural Gas
+  Emissions|CO2|Energy|Supply|Liquids|Oil
+  Emissions|CO2|Energy|Supply|Liquids|Transportation
+  Emissions|CO2|Energy|Supply|Other
+  Emissions|CO2|Energy|Supply|Other|Combustion
+  Emissions|CO2|Energy|Supply|Other|Fugitive
+  Emissions|CO2|Energy|Supply|Solids
+  Emissions|CO2|Energy|Supply|Solids and Other Fugitive
+  Emissions|CO2|Energy|Supply|Solids|Biomass
+  Emissions|CO2|Energy|Supply|Solids|Coal
+  Emissions|CO2|Energy|Supply|Solids|Combustion
+  Emissions|CO2|Energy|Supply|Solids|Extraction
+  Emissions|CO2|Energy|Supply|Solids|Fugitive
+  Emissions|CO2|Energy|Supply|Solids|Transportation
+  Emissions|CO2|Fossil Fuels and Industry
+  Emissions|CO2|Industrial Processes
+  Emissions|CO2|Industrial Processes|Metals and Minerals
+  Emissions|CO2|Industrial Processes|Non-Metallic Minerals
+  Emissions|CO2|Product Use

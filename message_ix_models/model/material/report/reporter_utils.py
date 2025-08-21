@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from genno import Key, Quantity
 
+from message_ix_models.report import prepare_reporter
+
 comm_tec_map = {
     "coal": ["meth_coal", "meth_coal_ccs"],
     "gas": ["meth_ng", "meth_ng_ccs"],
@@ -268,110 +270,67 @@ def add_methanol_non_energy_computations(rep: "Reporter"):
     return k
 
 
-def add_pass_out_turbine_inp(rep: "Reporter"):
+def add_pass_out_turbine_inp(rep: "Reporter", po_tecs_filter, po_filter):
     """Prepare reporter to compute regional pass-out turbine input"""
-    po_trb_rel_po_act = {"r": "pass_out_trb", "t": "po_turbine"}
+    rel = Key("rel:r-nl-t-ya")
+    rel1 = rel.drop("t", "r")
+    rel2 = rel.drop("r")
+    k_util = Key("util_rate:nl-ya:po_turbine")
+    relation = "pass_out_trb"
+    tec = "po_turbine"
     # calculate ratio of pass-out turbine activity to maximum possible activity
-    rep.add("rel::po_out_trb_act", "select", "rel:nl-ya-t-r", po_trb_rel_po_act)
-    po_rel_thermal_ppls = {
-        "r": "pass_out_trb",
-        "t": [
-            "bio_istig",
-            "bio_istig_ccs",
-            "bio_ppl",
-            "coal_adv",
-            "coal_adv_ccs",
-            "coal_ppl",
-            "coal_ppl_u",
-            "foil_ppl",
-            "gas_ct",
-            "gas_ppl",
-            "igcc",
-            "igcc_ccs",
-            "loil_ppl",
-            "gas_cc",
-            "gas_cc_ccs",
-            "geo_ppl",
-            "loil_cc",
-            "nuc_hc",
-            "nuc_lc",
-        ],
-    }
-    rep.add("rel::po_out_ppl", "select", "rel:r-nl-t-ya", po_rel_thermal_ppls)
+    rep.add(rel1[relation][tec], "select", rel, po_filter)
+    rep.add(rel2[relation]["powerplants"], "select", rel, po_tecs_filter)
     rep.add(
-        "rel::po_out_trb_max",
-        "group_sum",
-        "rel::po_out_ppl",
-        group=["nl", "ya"],
-        sum="t",
+        rel1["po_trb_potential"],
+        "sum",
+        rel2[relation]["powerplants"],
+        dimensions=["t"],
     )
-    rep.add(
-        "share::po_turbine_act_shr",
-        "div",
-        "rel::po_out_trb_act",
-        "rel::po_out_trb_max",
-    )
+    rep.add(k_util, "div", rel1[relation][tec], rel1["po_trb_potential"])
+
     # calculate pass-out turbine input coefficient per technology
-    rep.add(
-        "relation_activity::po_turbine",
-        "select",
-        "relation_activity:r-nl-t-ya",
-        po_trb_rel_po_act,
-    )
-    rep.add(
-        "relation_activity::po_turbine_parents",
-        "select",
-        "relation_activity:r-nl-t-ya",
-        po_rel_thermal_ppls,
-    )
-    rep.add(
-        "share::po_turbine_act_shrs",
-        "div",
-        "relation_activity::po_turbine_parents",
-        "relation_activity::po_turbine",
-    )
+    rel_act = Key("relation_activity:r-nl-t-ya")
+    rel_act1 = rel_act.drop("r", "t")
+    rel_act2 = rel_act.drop("r")
+    rep.add(rel_act1[relation][tec], "select", rel_act, po_filter)
+    rep.add(rel_act2[relation]["powerplants"], "select", rel_act, po_tecs_filter)
+    kappa = Key("coupling_coeff:nl-t-ya:po_turbine")
+    rep.add(kappa, "div", rel_act2[relation]["powerplants"], rel_act1[relation][tec])
+
     # calculate average pass-out turbine input per active year
     # usually universally 0.2, computed just for robustness
-    rep.add("in_avg", "div", "in:nl-t-ya-m-c-l-h", "ACT:nl-t-ya-m-h")
-    rep.add("in_avg::po_turbine", "select", "in_avg:nl-t-ya-m-c", {"t": "po_turbine"})
-    rep.add(
-        "in::po_turbine_by_tec",
-        "mul",
-        "share::po_turbine_act_shrs",
-        "in_avg::po_turbine",
-    )
+    eff = Key("eff:nl-t-ya-m-c")
+    k_in = Key("in:nl-t-ya-m-c")
+    rep.add(eff, "div", k_in, "ACT:nl-t-ya-m")
+    rep.add(eff[tec], "select", eff, {"t": tec})
+    inp = Key("input_coeff:nl-t-ya-m-c")
+    rep.add(inp["po_turbine"], "mul", kappa, eff[tec])
+
     # calculate maximum potential pass-out turbine input per power technology
-    rep.add(
-        "out::ppl_to_po_turbine_max",
-        "mul",
-        "in:nl-t-ya-m-c:po_turbine_by_tec",
-        "out:nl-t-ya-m-c",
-    )
+    out = Key("out:nl-t-ya-m-c")
+    rep.add(k_in["elec+po_turbine_max"], "mul", inp["po_turbine"], out)
     # allocate pass-out turbine input to all tecs
-    rep.add(
-        "out::ppl_to_po_turbine",
-        "mul",
-        "out:nl-t-ya-m-c:ppl_to_po_turbine_max",
-        "share::po_turbine_act_shr",
-    )
+    rep.add(k_in["elec+po_turbine"], "mul", k_in["elec+po_turbine_max"], k_util)
+
     # calculate electricity production excluding pass-out turbine input
     rep.add(
-        "out::po_turbine_parents",
+        out["po_turbine_ppls"],
         "select",
-        "out:nl-t-ya-m-c",
-        {"c": ["electr"], "t": po_rel_thermal_ppls["t"]},
+        out,
+        {"c": ["electr"], "t": po_tecs_filter["t"]},
     )
     rep.add(
-        "out::elec_wo_po_turbine",
+        out["elec_wo_po_turbine"],
         "sub",
-        "out:nl-t-ya-m-c:po_turbine_parents",
-        "out:nl-t-ya-m-c:ppl_to_po_turbine",
+        out["po_turbine_ppls"],
+        k_in["elec+po_turbine"],
     )
     # aggregate pass-out turbine input for check sum
-    rep.add("in::po_turbine", "select", "in:nl-t-ya-m-c", {"t": "po_turbine"})
+    rep.add(k_in.drop("t")[tec], "select", k_in, {"t": tec})
 
 
-def add_ccs_addon_calcs(rep: "Reporter"):
+def add_ccs_addon_calcs(rep: "Reporter", addon_parent_map):
     """Prepare reporter to compute CCS scrubber calculations.
     1) Calculate activity share of CCS scrubber on parent technologies
     2) Allocate electricity production from parent to CCS based on activity share
@@ -381,12 +340,6 @@ def add_ccs_addon_calcs(rep: "Reporter"):
           and subtract proportional to share
     4) concat to one dataframe for all CCS addons
     """
-    addon_parent_map = {
-        "bio_ppl": {"addon": "bio_ppl_co2scr", "parents": ["bio_ppl"]},
-        "gas_ppl": {"addon": "g_ppl_co2scr", "parents": ["gas_ppl", "gas_cc"]},
-        "gas_cc": {"addon": "g_ppl_co2scr", "parents": ["gas_ppl", "gas_cc"]},
-        "coal_ppl": {"addon": "c_ppl_co2scr", "parents": ["coal_ppl"]},
-    }
     act = Key("ACT:nl-t-ya")
     ou_t = Key("out:nl-t-ya-m-c:elec_wo_po_turbine")
     ou = ou_t.drop("t")
@@ -452,189 +405,154 @@ def add_ccs_addon_calcs(rep: "Reporter"):
     )
 
 
-def add_renewable_curtailment_calcs(rep: "Reporter"):
+def add_renewable_curtailment_calcs(
+    rep: "Reporter", renewable_tecs: dict[str, list], curtailment_tecs: list, name: str
+):
     # calculate electricity production excluding pass-out turbine input
     k1 = Key("in:nl-t-ya-m-c")
     k11 = k1.drop("t")
     k2 = Key("out:nl-t-ya-m-c")
     k3 = k2.drop("t")
     k4 = Key("share:nl-ya-m-c:")
-    wind_curt = ["wind_curtailment1", "wind_curtailment2", "wind_curtailment3"]
     rep.add(
-        k1["wind_curtailment-by-tec"],
+        k1[f"{name}_curtailment"],
         "select",
         k1,
-        {"c": ["electr"], "t": wind_curt},
+        {"c": ["electr"], "t": curtailment_tecs},
     )
     rep.add(
-        k11["wind_curtailment"],
-        "group_sum",
-        k1["wind_curtailment-by-tec"],
-        group=["nl", "ya", "m", "c"],
-        sum="t",
+        k11[f"{name}_curtailment"], "sum", k1[f"{name}_curtailment"], dimensions=["t"]
     )
-    pv_curt = ["solar_curtailment1", "solar_curtailment2", "solar_curtailment3"]
-    rep.add(
-        k1["pv_curtailment-by-tec"],
-        "select",
-        k1,
-        {"c": ["electr"], "t": pv_curt},
-    )
-    rep.add(
-        k11["pv_curtailment"],
-        "group_sum",
-        k1["pv_curtailment-by-tec"],
-        group=["nl", "ya", "m", "c"],
-        sum="t",
-    )
-    pv_ut = [
-        "solar_res1",
-        "solar_res2",
-        "solar_res3",
-        "solar_res4",
-        "solar_res5",
-        "solar_res6",
-        "solar_res7",
-        "solar_res8",
-        "solar_res_hist_2000",
-        "solar_res_hist_2005",
-        "solar_res_hist_2010",
-        "solar_res_hist_2015",
-        "solar_res_hist_2020",
-        "solar_res_hist_2025",
-    ]
-    onshore = [
-        "wind_res1",
-        "wind_res2",
-        "wind_res3",
-        "wind_res4",
-        "wind_res_hist_2000",
-        "wind_res_hist_2005",
-        "wind_res_hist_2010",
-        "wind_res_hist_2015",
-        "wind_res_hist_2020",
-        "wind_res_hist_2025",
-    ]
-    offshore = [
-        "wind_ref1",
-        "wind_ref2",
-        "wind_ref3",
-        "wind_ref4",
-        "wind_ref5",
-        "wind_ref_hist_2000",
-        "wind_ref_hist_2005",
-        "wind_ref_hist_2010",
-        "wind_ref_hist_2015",
-        "wind_ref_hist_2020",
-        "wind_ref_hist_2025",
-    ]
-    rep.add(
-        k2["wind_onshore-by-tec"],
-        "select",
-        k2,
-        {"c": ["electr"], "t": onshore},
-    )
-    rep.add(
-        k2["wind_offshore-by-tec"],
-        "select",
-        k2,
-        {"c": ["electr"], "t": offshore},
-    )
-    rep.add(
-        k2["pv_utility-by-tec"],
-        "select",
-        k2,
-        {"c": ["electr"], "t": pv_ut},
-    )
-
-    rep.add(
-        k3["wind_offshore"],
-        "group_sum",
-        k2["wind_offshore-by-tec"],
-        group=["nl", "ya", "m", "c"],
-        sum="t",
-    )
-    rep.add(
-        k3["wind_onshore"],
-        "group_sum",
-        k2["wind_onshore-by-tec"],
-        group=["nl", "ya", "m", "c"],
-        sum="t",
-    )
-    rep.add(
-        k3["pv_utility"],
-        "group_sum",
-        k2["pv_utility-by-tec"],
-        group=["nl", "ya", "m", "c"],
-        sum="t",
-    )
-
-    rep.add(k3["wind_total"], "add", k3["wind_onshore"], k3["wind_offshore"])
-    rep.add(k4["wind_offshore"], "div", k3["wind_offshore"], k3["wind_total"])
-    rep.add(k4["wind_onshore"], "div", k3["wind_onshore"], k3["wind_total"])
-    rep.add(
-        k11["wind_curtailment_offshore"],
-        "mul",
-        k11["wind_curtailment"],
-        k4["wind_offshore"],
-    )
-    rep.add(
-        k11["wind_curtailment_onshore"],
-        "mul",
-        k11["wind_curtailment"],
-        k4["wind_onshore"],
-    )
-    rep.add(
-        k3["wind_onshore_wo_curtailment"],
-        "sub",
-        k3["wind_onshore"],
-        k11["wind_curtailment_onshore"],
-    )
-    rep.add(
-        k3["wind_offshore_wo_curtailment"],
-        "sub",
-        k3["wind_offshore"],
-        k11["wind_curtailment_offshore"],
-    )
-    rep.add(
-        k3["pv_utility_wo_curtailment"], "sub", k3["pv_utility"], k11["pv_curtailment"]
-    )
-
-    rep.add(
-        k2["wind_onshore_wo_curtailment-t"],
-        "expand_dims",
-        k3["wind_onshore_wo_curtailment"],
-        {"t": ["wind_res"]},
-    )
-    rep.add(
-        k2["wind_offshore_wo_curtailment-t"],
-        "expand_dims",
-        k3["wind_offshore_wo_curtailment"],
-        {"t": ["wind_ref"]},
-    )
-    rep.add(
-        k2["pv_utility_wo_curtailment-t"],
-        "expand_dims",
-        k3["pv_utility_wo_curtailment"],
-        {"t": ["solar_res"]},
-    )
-    rep.add(
-        k2["curtailed_renewables"],
-        "concat",
-        k2["pv_utility_wo_curtailment-t"],
-        k2["wind_offshore_wo_curtailment-t"],
-        k2["wind_onshore_wo_curtailment-t"],
-    )
-    print()
+    ks = []
+    for tname, tecs in renewable_tecs.items():
+        rep.add(
+            k2[f"{tname}"],
+            "select",
+            k2,
+            {"c": ["electr"], "t": tecs},
+        )
+        rep.add(k3[f"{tname}"], "sum", k2[f"{tname}"], dimensions=["t"])
+        ks.append(k3[f"{tname}"])
+    rep.add(k3[f"{name}_total"], "add", *ks)
+    for tname in renewable_tecs.keys():
+        rep.add(k4[f"{tname}"], "div", k3[f"{tname}"], k3[f"{name}_total"])
+        rep.add(
+            k11[f"{tname}_curtailment"],
+            "mul",
+            k11[f"{name}_curtailment"],
+            k4[f"{tname}"],
+        )
+        rep.add(
+            k3[f"{tname}_wo_curtailment"],
+            "sub",
+            k3[f"{tname}"],
+            k11[f"{tname}_curtailment"],
+        )
+        rep.add(
+            k2[f"{tname}_wo_curtailment"],
+            "expand_dims",
+            k3[f"{tname}_wo_curtailment"],
+            {"t": [f"{tname}"]},
+        )
 
 
 def add_se_elec(rep: "Reporter"):
-    add_renewable_curtailment_calcs(rep)
-    add_pass_out_turbine_inp(rep)
-    add_ccs_addon_calcs(rep)
+    wind_curt = ["wind_curtailment1", "wind_curtailment2", "wind_curtailment3"]
+    tec_map = {
+        "wind_onshore": [
+            "wind_res1",
+            "wind_res2",
+            "wind_res3",
+            "wind_res4",
+            "wind_res_hist_2000",
+            "wind_res_hist_2005",
+            "wind_res_hist_2010",
+            "wind_res_hist_2015",
+            "wind_res_hist_2020",
+            "wind_res_hist_2025",
+        ],
+        "wind_offshore": [
+            "wind_ref1",
+            "wind_ref2",
+            "wind_ref3",
+            "wind_ref4",
+            "wind_ref5",
+            "wind_ref_hist_2000",
+            "wind_ref_hist_2005",
+            "wind_ref_hist_2010",
+            "wind_ref_hist_2015",
+            "wind_ref_hist_2020",
+            "wind_ref_hist_2025",
+        ],
+    }
+    add_renewable_curtailment_calcs(rep, tec_map, wind_curt, "wind")
+    pv_curt = ["solar_curtailment1", "solar_curtailment2", "solar_curtailment3"]
+    pv_ut = {
+        "pv_util": [
+            "solar_res1",
+            "solar_res2",
+            "solar_res3",
+            "solar_res4",
+            "solar_res5",
+            "solar_res6",
+            "solar_res7",
+            "solar_res8",
+            "solar_res_hist_2000",
+            "solar_res_hist_2005",
+            "solar_res_hist_2010",
+            "solar_res_hist_2015",
+            "solar_res_hist_2020",
+            "solar_res_hist_2025",
+        ]
+    }
+    add_renewable_curtailment_calcs(rep, pv_ut, pv_curt, "pv")
+    k2 = Key("out:nl-t-ya-m-c")
+    rep.add(
+        k2["curtailed_renewables"],
+        "concat",
+        k2["pv_util_wo_curtailment"],
+        k2["wind_offshore_wo_curtailment"],
+        k2["wind_onshore_wo_curtailment"],
+    )
+    rep.get(k2["curtailed_renewables"])
+
+    po_trb_rel_po_act = {"r": "pass_out_trb", "t": "po_turbine"}
+    po_rel_thermal_ppls = {
+        "r": "pass_out_trb",
+        "t": [
+            "bio_istig",
+            "bio_istig_ccs",
+            "bio_ppl",
+            "coal_adv",
+            "coal_adv_ccs",
+            "coal_ppl",
+            "coal_ppl_u",
+            "foil_ppl",
+            "gas_ct",
+            "gas_ppl",
+            "igcc",
+            "igcc_ccs",
+            "loil_ppl",
+            "gas_cc",
+            "gas_cc_ccs",
+            "geo_ppl",
+            "loil_cc",
+            "nuc_hc",
+            "nuc_lc",
+        ],
+    }
+    add_pass_out_turbine_inp(rep, po_rel_thermal_ppls, po_trb_rel_po_act)
+
+    addon_parent_map = {
+        "bio_ppl": {"addon": "bio_ppl_co2scr", "parents": ["bio_ppl"]},
+        "gas_ppl": {"addon": "g_ppl_co2scr", "parents": ["gas_ppl", "gas_cc"]},
+        "gas_cc": {"addon": "g_ppl_co2scr", "parents": ["gas_ppl", "gas_cc"]},
+        "coal_ppl": {"addon": "c_ppl_co2scr", "parents": ["coal_ppl"]},
+    }
+    add_ccs_addon_calcs(rep, addon_parent_map)
     po_out = Key("out:nl-t-ya-m-c:elec_wo_po_turbine")
-    ccs_addons = Key("out:nl-t-ya-m-c:elec_wo_po_turbine")["ccs_addons"]
-    addon_parents = Key("out:nl-t-ya-m-c:elec_wo_po_turbine")["parents_wo_scrs"]
+    ccs_addons = po_out["ccs_addons"]
+    addon_parents = po_out["parents_wo_scrs"]
     parent_tecs = rep.get(addon_parents).index.get_level_values("t").unique().tolist()
     rep.add(
         "se:nl-t-ya-m-c:elec_po", "select", po_out, {"t": parent_tecs}, inverse=True
@@ -778,23 +696,164 @@ def add_cement_elec_share_calculations(rep: "Reporter"):
     )
 
 
-if __name__ == "__main__":
+def add_net_co2_calcs(
+    rep: "Reporter",
+    non_ccs_filters: dict[str, list | str],
+    ccs_filters: dict[str, list | str],
+    name: str,
+):
+    k1 = Key("rel:r-nl-t-ya")
+    k2 = k1[f"{name}_co2"]
+    k_ccs = Key("out:nl-t-ya-m-c")
+    k_ccs2 = k_ccs[f"{name}_ccs"]
+
+    rep.add(k2, "select", k1, non_ccs_filters)
+    rep.add(k2.drop("t", "r"), "sum", k2, dimensions=["r", "t"])
+    rep.add(k_ccs2, "select", k_ccs, ccs_filters)
+    rep.add(k_ccs2.drop("t", "c", "m"), "sum", k_ccs2, dimensions=["m", "c", "t"])
+    rep.add(f"co2:nl-ya:{name}", "sub", k2.drop("t", "r"), k_ccs2.drop("t", "c", "m"))
+    rep.add(
+        f"co2:nl-t-ya:{name}", "expand_dims", f"co2:nl-ya:{name}", {"t": [f"{name}"]}
+    )
+
+
+def biogas_calc(rep, context):
+    """Partially duplicate the behaviour of :func:`.default_tables.retr_CO2emi`.
+
+    Currently, this prepares the following keys and the necessary preceding
+    calculations:
+
+    - "transport emissions full::iamc": data for the IAMC variable
+      "Emissions|CO2|Energy|Demand|Transportation|Road Rail and Domestic Shipping"
+    """
+    from functools import partial
+
+    from genno.core.key import single_key
+
+    from message_ix_models.model.bare import get_spec
+    from message_ix_models.report.compat import (
+        anon,
+        assert_dims,
+        emi,
+        get_techs,
+        inp,
+        out,
+        pe_w_ccs_retro,
+        prepare_techs,
+    )
+
+
+    # Structure information
+    spec = get_spec(context)
+    prepare_techs(rep, spec.add.set["technology"])
+
+    # Constants from report/default_units.yaml
+    rep.add("conv_c2co2:", 44.0 / 12.0)  # dimensionless
+    # “Carbon content of natural gas”
+    rep.add("crbcnt_gas:", Quantity(0.482, units="Mt / GWa / a"))
+
+    # Shorthand for get_techs(rep, …)
+    techs = partial(get_techs, rep)
+
+    def full(name: str) -> Key:
+        """Return the full key for `name`."""
+        return single_key(rep.full_key(name))
+
+    # L3059 from message_data/tools/post_processing/default_tables.py
+    # "gas_{cc,ppl}_share": shares of gas_cc and gas_ppl in the summed output of both
+    k0 = out(rep, ["gas_cc", "gas_ppl"])
+    for t in "gas_cc", "gas_ppl":
+        k1 = out(rep, [t])
+        k2 = rep.add(Key(f"{t}_share", k1.dims), "div", k0, k1)
+        assert_dims(rep, single_key(k2))
+
+    # L3026
+    # "in:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
+    # final), net of output from transmission and distribution technologies.
+    c_gas = dict(c=["gas"])
+    k0 = inp(rep, techs("gas", "all extra"), filters=c_gas)
+    k1 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
+    k2 = rep.add(Key("in", k1.dims, "nonccs_gas_tecs"), "sub", k0, k1)
+    assert_dims(rep, single_key(k2))
+
+    # L3091
+    # "Biogas_tot_abs": absolute output from t=gas_bio [energy units]
+    # "Biogas_tot": above converted to its CO₂ content = CO₂ emissions from t=gas_bio
+    # [mass/time]
+    Biogas_tot_abs = out(rep, ["gas_bio"], name="Biogas_tot_abs")
+    rep.add("Biogas_tot", "mul", Biogas_tot_abs, "crbcnt_gas", "conv_c2co2")
+
+    # L3052
+    # "in:*:all_gas_tecs": Input to all technologies using gas at l=(secondary, final),
+    # including those with CCS.
+    k0 = inp(
+        rep,
+        ["gas_cc_ccs", "meth_ng", "meth_ng_ccs", "h2_smr", "h2_smr_ccs"],
+        filters=c_gas,
+    )
+    k1 = rep.add(
+        Key("in", k0.dims, "all_gas_tecs"), "add", full("in::nonccs_gas_tecs"), k0
+    )
+    assert_dims(rep, k1)
+
+    # L3165
+    # "Hydrogen_tot:*": CO₂ emissions from t=h2_mix [mass/time]
+    k0 = emi(
+        rep,
+        ["h2_mix"],
+        name="_Hydrogen_tot",
+        filters=dict(r=["CO2_cc"]),
+        unit_key="CO2 emissions",
+    )
+    # NB Must alias here, otherwise full("Hydrogen_tot") below gets a larger set of
+    #    dimensions than intended
+    rep.add(Key("Hydrogen_tot", k0.dims), k0)
+
+    # L3063
+    # "in:*:nonccs_gas_tecs_wo_ccsretro": "in:*:nonccs_gas_tecs" minus inputs to
+    # technologies fitted with CCS add-on technologies.
+    filters = dict(c=["gas"], l=["secondary"])
+    pe_w_ccs_retro_keys = [
+        pe_w_ccs_retro(rep, *args, filters=filters)
+        for args in (
+            ("gas_cc", "g_ppl_co2scr", full("gas_cc_share")),
+            ("gas_ppl", "g_ppl_co2scr", full("gas_ppl_share")),
+            # FIXME Raises KeyError
+            # ("gas_htfc", "gfc_co2scr", None),
+        )
+    ]
+    k0 = rep.add(anon(dims=pe_w_ccs_retro_keys[0]), "add", *pe_w_ccs_retro_keys)
+    k1 = rep.add(
+        Key("in", k0.dims, "nonccs_gas_tecs_wo_ccsretro"),
+        "sub",
+        full("in::nonccs_gas_tecs"),
+        k0,
+    )
+    assert_dims(rep, k0, k1)
+
+    # L3144, L3234
+    # "Biogas_trp", "Hydrogen_trp": transportation shares of emissions savings from
+    # biogas production/use, and from hydrogen production, respectively.
+    # X_trp = X_tot * (trp input of gas / `other` inputs)
+    k0 = inp(rep, techs("trp gas"), filters=c_gas)
+    for name, other in (
+        ("Biogas", full("in::all_gas_tecs")),
+        ("Hydrogen", full("in::nonccs_gas_tecs_wo_ccsretro")),
+    ):
+        k1 = rep.add(anon(dims=other), "div", k0, other)
+        k2 = rep.add(f"{name}_trp", "mul", f"{name}_tot", k1)
+        assert_dims(rep, single_key(k1))
+
+
+if __name__ == '__main__':
+    from message_ix_models import Context
+    ctx = Context()
     import ixmp
     import message_ix
 
-    # mp = ixmp.Platform("ixmp_dev")
-    # scen = message_ix.Scenario(mp, "SSP_SSP2_v5.0", "baseline")
-    mp = ixmp.Platform("local2")
-    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
+    mp = ixmp.Platform('local3')
+    scen = message_ix.Scenario(mp, 'SSP_SSP2_v6.2', "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
-    add_se_elec(rep)
-    add_renewable_curtailment_calcs(rep)
-    add_pass_out_turbine_inp(rep)
-    add_ccs_addon_calcs(rep)
+    prepare_reporter(ctx, reporter=rep)
+    biogas_calc(rep, ctx)
     print()
-    # main = pd.DataFrame(rep.get("out::elec_wo_po_turbine_gas_ppl"))
-    # sub = pd.DataFrame(
-    #     (rep.get("out:nl-ya-m-c:elec_wo_po_turbine_gas_ppl_wo_scrubber"))
-    # )
-    # check = sub[sub[0] != 0].join(main[main[0] != 0])
-    # rep.get("in::po_turbine")

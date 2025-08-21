@@ -1,0 +1,229 @@
+var:
+  co2:nl-t-ya:industry
+
+iamc_prefix:
+  Emissions|CO2|
+
+common:
+  unit: Mt C/yr
+
+vars:
+  Capture and Removal:
+    filter: { relation: [ CO2_cc ],
+              technology: [ dac_hte, dac_htg, dac_lt, co2_trans1, co2_trans2, co2_stor ] }
+  Difference|Statistical:
+  Difference|Stock|Activity|Coal:
+  Difference|Stock|Activity|Crudeoil:
+  Difference|Stock|Activity|Fueloil:
+  Difference|Stock|Activity|LNG:
+  Difference|Stock|Activity|Lightoil:
+  Difference|Stock|Activity|Methanol:
+  Difference|Stock|Activity|Natural Gas:
+  Difference|Stock|Coal:
+  Difference|Stock|Crudeoil:
+  Difference|Stock|Fueloil:
+  Difference|Stock|LNG:
+  Difference|Stock|Lightoil:
+  Difference|Stock|Methanol:
+  Difference|Stock|Natural Gas:
+  Energy|Demand|AFOFI:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Demand|Bunkers|International Aviation:
+  Energy|Demand|Bunkers|International Shipping:
+  Energy|Demand|Industry|Chemicals|Ammonia:
+    filter: { relation: [ CO2_cc ],
+              technology: [ biomass_NH3_ccs,
+                            biomass_NH3,
+                            coal_NH3_ccs,
+                            coal_NH3,
+                            fueloil_NH3_ccs,
+                            fueloil_NH3,
+                            gas_NH3_ccs,
+                            gas_NH3 ] }
+  Energy|Demand|Industry|Chemicals|Methanol:
+    filter: { relation: [ CO2_cc ],
+              technology: [ meth_coal,
+                            meth_coal_ccs,
+                            meth_ng_ccs,
+                            meth_ng,
+                            meth_bio_ccs ] }
+  Energy|Demand|Industry|Non-Ferrous Metals|Aluminium|Gases:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_gas_aluminum ] }
+  Energy|Demand|Industry|Non-Ferrous Metals|Aluminium|Solids:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_coal_aluminum ] }
+  Energy|Demand|Industry|Non-Ferrous Metals|Aluminium|Liquids|Oil:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_loil_aluminum, furnace_foil_aluminum ] }
+  Energy|Demand|Industry|Non-Ferrous Metals|Aluminium|Liquids|Methanol:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_methanol_aluminum ] }
+  Energy|Demand|Industry|Non-Metallic Minerals|Cement|Solids:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_coal_cement ] }
+  Energy|Demand|Industry|Non-Metallic Minerals|Cement|Liquids|Oil:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_foil_cement,
+                            furnace_loil_cement ] }
+  Energy|Demand|Industry|Non-Metallic Minerals|Cement|Liquids|Methanol:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_methanol_cement ] }
+  Energy|Demand|Industry|Non-Metallic Minerals|Cement|Gases:
+    filter: { relation: [ CO2_ind ],
+              technology: [ furnace_gas_cement ] }
+  # TODO: move to biogas calcs
+  Energy|Demand|Industry|Other Sector|Gases:
+    filter: { relation: [ CO2_cc ],
+              technology: [ gas_i ] }
+  Energy|Demand|Industry|Other Sector|Solids:
+    filter: { relation: [ CO2_cc ],
+              technology: [ coal_i ] }
+  Energy|Demand|Industry|Other Sector|Liquids:
+    filter: { relation: [ CO2_cc ],
+              technology: [ foil_i,
+                            loil_i,
+                            meth_i,
+                            sp_liq_I,
+                            sp_meth_I ] }
+  # previously feedstock emissions
+  # Energy|Demand|Other Sector:
+  Energy|Demand|Residential and Commercial:
+    filter: { relation: [ CO2_r_c ],
+              technology: [ coal_rc, foil_rc, loil_rc, gas_rc, meth_rc ] }
+  Energy|Demand|Transportation|Road Rail and Domestic Shipping:
+    filter: { relation: [ CO2_trp ],
+              technology: [ gas_trp, loil_trp, meth_fc_trp, meth_ic_trp, coal_trp, foil_trp ] }
+  Energy|Supply|Electricity|Solids:
+    filter: { relation: [ CO2_cc ],
+              technology: [ coal_ppl_u,
+                            coal_ppl,
+                            coal_adv,
+                            coal_adv_ccs,
+                            igcc,
+                            igcc_ccs,
+                            bio_istig,
+                            c_ppl_co2scr,
+                            bio_ppl_co2scr,
+                            bio_istig_ccs ] }
+  Energy|Supply|Electricity|Liquids:
+    filter: { relation: [ CO2_cc ],
+              technology: [ foil_ppl,
+                            loil_ppl,
+                            loil_cc,
+                            oil_ppl ] }
+  # TODO: move to biogas calcs
+  Energy|Supply|Electricity|Gases:
+    filter: { relation: [ CO2_cc ],
+              technology: [ gas_ppl,
+                            gas_cc,
+                            gas_cc_ccs,
+                            gas_ct,
+                            g_ppl_co2scr ] }
+  Energy|Supply|Gases|Biomass|Combustion:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Gases|Biomass|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Gases|Coal|Combustion:
+  Energy|Supply|Gases|Coal|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Gases|Extraction|Combustion:
+    filter: { relation: [ CO2_cc ],
+              technology: [ gas_extr_1,
+                            gas_extr_2,
+                            gas_extr_3,
+                            gas_extr_4,
+                            gas_extr_5,
+                            gas_extr_6,
+                            gas_extr_7,
+                            gas_extr_8, ] }
+  Energy|Supply|Gases|Extraction|Fugitive:
+    filter: { relation: [ CO2_cc ],
+              technology: [ flaring_CO2 ] }
+  Energy|Supply|Gases|Hydrogen|Combustion:
+  Energy|Supply|Gases|Hydrogen|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Gases|Natural Gas|Combustion:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Gases|Natural Gas|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  # TODO: move to biogas calcs
+  Energy|Supply|Gases|Transportation|Combustion:
+  Energy|Supply|Gases|Transportation|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Heat|Coal:
+    filter: { relation: [ CO2_cc ],
+              technology: [ coal_hpl ] }
+  Energy|Supply|Heat|Fueloil:
+    filter: { relation: [ CO2_cc ],
+              technology: [ foil_hpl ] }
+  # TODO: move to biogas calcs
+  Energy|Supply|Heat|Gas:
+    filter: { relation: [ CO2_cc ],
+              technology: [ gas_hpl ] }
+  Energy|Supply|Liquids|Biomass|Combustion|Ethanol:
+    filter: { relation: [ CO2_cc ],
+              technology: [ eth_bio, liq_bio, eth_bio_ccs, liq_bio_ccs ] }
+  Energy|Supply|Liquids|Biomass|Combustion|Methanol:
+    filter: { relation: [ CO2_cc ],
+              technology: [ meth_bio_ccs ], mode: fuel }
+  Energy|Supply|Liquids|Biomass|Fugitive:
+  Energy|Supply|Liquids|Coal|Combustion:
+  Energy|Supply|Liquids|Coal|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Liquids|Extraction|Combustion:
+  Energy|Supply|Liquids|Extraction|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Liquids|Natural Gas|Combustion:
+  Energy|Supply|Liquids|Natural Gas|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Liquids|Oil|Combustion:
+  Energy|Supply|Liquids|Oil|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Liquids|Transportation|Combustion:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Liquids|Transportation|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Other|Combustion:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Other|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Solids|Biomass|Combustion:
+  Energy|Supply|Solids|Biomass|Fugitive:
+  Energy|Supply|Solids|Coal|Combustion:
+  Energy|Supply|Solids|Coal|Fugitive:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Solids|Extraction|Combustion:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Energy|Supply|Solids|Extraction|Fugitive:
+  Energy|Supply|Solids|Transportation|Combustion:
+  Energy|Supply|Solids|Transportation|Fugitive:
+  Industrial Processes|Metals and Minerals:
+  Industrial Processes|Non-Ferrous Metals|Aluminium:
+    filter: { relation: [ CO2_Emission ],
+              technology: [ prebake_aluminum, soderberg_aluminum ] }
+  Industrial Processes|Non-Metallic Minerals|Cement:
+  Product Use|Solvents:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }
+  Waste:
+    filter: { relation: [ missing ],
+              technology: [ missing ] }

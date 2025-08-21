@@ -5,7 +5,7 @@ iamc_prefix:
   ""
 
 common:
-  unit: GWa
+  unit: ???
 
 vars:
   Population:
