@@ -43,7 +43,7 @@ clone_and_update(trade_dict=trade_parameters,
                  solve = True,
                  update_scenario_name = 'pipeline_LNG')
 
-# Update scenario: no variable cost on flow technology
+# Update scenario: no cost on flow technology
 trade_parameters_novar = trade_parameters.copy()
 del trade_parameters_novar['LNG_shipped']['flow']['var_cost']
 del trade_parameters_novar['LNG_shipped']['flow']['inv_cost']

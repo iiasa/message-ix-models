@@ -906,6 +906,13 @@ def build_parameter_sheets(log,
                       (vdf['technology'].str.contains('_exp_'))]
             data_dict['trade'][par] = vdf
         
+        # Variable costs should not broadcast
+        for par in ['var_cost']:
+            if par in list(data_dict['flow'].keys()):
+                vdf = data_dict['flow'][par]
+                vdf = vdf[vdf['year_act'] == vdf['year_vtg']]
+                data_dict['flow'][par] = vdf
+            
         # # Generate relation lower bound for flow technologies
         # df = data_dict['flow']['relation_activity_flow'].copy()
         # df['value'] = 0
