@@ -745,8 +745,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "inv_cost",
                     technology="extract_gw_fossil",
-                    value=(54.52 * 150) * USD_KM3_TO_USD_MCM,
-                    # assume higher as normal GW
+                    value=7808.22 * USD_KM3_TO_USD_MCM,
+                    # 50% higher than membrane desalination (5205.48 * 1.5)
                     unit="USD/MCM",
                 ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
             ]
@@ -757,11 +757,32 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         fix_cost = make_df(
             "fix_cost",
             technology="extract_gw_fossil",
-            value=300 * USD_KM3_TO_USD_MCM,  # assumed
+            value=6780.83 * USD_KM3_TO_USD_MCM,
+            # 50% higher than distillation fix_cost (4520.55 * 1.5)
             unit="USD/MCM",
         ).pipe(broadcast, yv_ya_gw, node_loc=df_node["node"])
 
         results["fix_cost"] = fix_cost
+
+        # Add variable cost for fossil groundwater to make it truly expensive
+        var_cost_fossil = make_df(
+            "var_cost",
+            technology="extract_gw_fossil",
+            value=1000 * USD_KM3_TO_USD_MCM,
+            # High variable cost to ensure it's only used as last resort
+            unit="USD/MCM",
+            mode="M1",
+        ).pipe(
+            broadcast,
+            yv_ya_gw,
+            node_loc=df_node["node"],
+            time=pd.Series(sub_time),
+        )
+
+        if "var_cost" in results:
+            results["var_cost"] = pd.concat([results["var_cost"], var_cost_fossil])
+        else:
+            results["var_cost"] = var_cost_fossil
 
         # Remove duplicates and NaN values from all DataFrames in results
         for key, df in results.items():
