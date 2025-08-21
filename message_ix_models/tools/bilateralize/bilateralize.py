@@ -922,6 +922,7 @@ def clone_and_update(trade_dict,
                      project_name: str = None,
                      config_name: str = None,
                      update_scenario_name:str = None,
+                     additional_parameter_updates:dict = None,
                      gdx_location: str = os.path.join("H:", "script", "message_ix", "message_ix", "model", "data")):     
     # Load config
     config, config_path = load_config(project_name, config_name)
@@ -1061,7 +1062,30 @@ def clone_and_update(trade_dict,
         #     dfout['value'] = 20000
         #     scen.remove_par('resource_volume', dfin)
         #     scen.add_par('resource_volume', dfout)
-            
+    
+    if additional_parameter_updates != None:
+        for par in additional_parameter_updates.keys():
+            with scen.transact('Update additional parameter: ' + par):
+                new_df = additional_parameter_updates[par]
+                base_df = scen.par(par)
+                
+                if 'value' in new_df.columns:
+                    rem_df = new_df[[c for c in new_df.columns if c != 'value']] # everything but value
+                    base_df = base_df.merge(rem_df, left_on = list(rem_df.columns), right_on = list(rem_df.columns), how = 'inner')
+                    add_df = base_df.copy().drop(['value'], axis = 1)
+                    add_df = add_df.merge(new_df, left_on = list(rem_df.columns), right_on = list(rem_df.columns), how = 'left')
+                
+                if 'multiplier' in new_df.columns:
+                    col_list = [c for c in new_df.columns if c != 'multiplier']
+                    base_df = base_df.merge(new_df, left_on = col_list, right_on = col_list, how = 'inner')
+                    add_df = base_df.copy()
+                    base_df = base_df.drop(['multiplier'], axis = 1)
+                    add_df['value'] = add_df['value'] * add_df['multiplier']
+                    add_df = add_df.drop(['multiplier'], axis = 1)
+                    
+                scen.remove_par(par, base_df)
+                scen.add_par(par, add_df)
+        
     if (to_gdx == True) & (solve == False):
         save_to_gdx(mp = mp,
                     scenario = scen,
