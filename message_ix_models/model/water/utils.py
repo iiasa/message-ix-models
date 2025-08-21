@@ -145,11 +145,11 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
 
     return df.apply(func, axis=1)
 
-
 def get_vintage_and_active_years(
-    info: "ScenarioInfo | None", technical_lifetime: int | None = None
+    info: "ScenarioInfo | None",
+    technical_lifetime: int | None = None,
+    same_year_only: bool = False,
 ) -> pd.DataFrame:
-    """Calculate valid vintage-activity year combinations without scenario dependency.
 
     This implements similar logic as scenario.vintage_and_active_years() but
     uses the technical lifetime data directly instead of requiring it to be in
@@ -161,6 +161,9 @@ def get_vintage_and_active_years(
         Contains the base yv_ya combinations and duration_period data
     technical_lifetime : int, optional
         Technical lifetime in years. If None, returns all combinations.
+    same_year_only : bool, optional
+        If True, returns only combinations where year_vtg == year_act.
+        Useful for dummy technologies where vintage doesn't matter.
 
     Returns
     -------
@@ -169,6 +172,11 @@ def get_vintage_and_active_years(
     """
     # Get base yv_ya from ScenarioInfo property
     yv_ya = info.yv_ya
+
+    # If same_year_only is requested, return only year_vtg == year_act combinations
+    if same_year_only:
+        same_year_mask = yv_ya["year_vtg"] == yv_ya["year_act"]
+        return yv_ya[same_year_mask].reset_index(drop=True)
 
     # If no technical lifetime specified or is nan, return all combinations
     if technical_lifetime is None or pd.isna(technical_lifetime):
