@@ -63,7 +63,8 @@ def copy_template_columns(df, template, exclude_cols=["node_loc", "technology"])
 #%% Broadcast years to create vintage-activity year pairs.
 def broadcast_yv_ya(df: pd.DataFrame, 
                     ya_list: list[int],
-                    tec_lifetime: int):
+                    yv_list: list[int],
+                    tec_lifetime: pd.DataFrame):
     """
     Broadcast years to create vintage-activity year pairs.
 
@@ -73,68 +74,63 @@ def broadcast_yv_ya(df: pd.DataFrame,
         Input parameter DataFrame
     ya_list : list[int]
         List of activity years to consider
-
+    yv_list : list[int]
+        list of vintage years to consider
+    tec_lifetime: pd.DataFrame
+        technical lifetime of the technology, provided via dataframe
     Returns
     -------
     pd.DataFrame
         DataFrame with expanded rows for each vintage-activity year pair
     """
     all_new_rows = []
+    
+    tecltdf = tec_lifetime.copy()
+    tecltdf['teclt'] = tecltdf['value']
+    
+    lts = df.merge(tecltdf[['node_loc', 'technology', 'teclt']].drop_duplicates(),
+                   left_on = ['node_loc', 'technology'],
+                   right_on = ['node_loc', 'technology'],
+                   how = 'left')
+    
     # Process each row in the original DataFrame
-    for _, row in df.iterrows():
+    for _, row in lts.iterrows():
+        
+        teclt_row = row['teclt']
+
         # For each activity year
         for ya in ya_list:
             # Get all vintage years that are <= activity year for a period < technical lifetime
             yv_list = [yv for yv in ya_list if yv <= ya]
-            yv_list = [yv for yv in yv_list if yv >= ya-tec_lifetime]
-
+            yv_list = [yv for yv in yv_list if yv >= ya-teclt_row]
+            
             # Create new rows for each vintage year
             for yv in yv_list:
                 new_row = row.copy()
                 new_row["year_act"] = int(ya)
                 new_row["year_vtg"] = int(yv)
                 all_new_rows.append(new_row)
+                
     # Combine original DataFrame with new rows
-    result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
+    result_df = pd.DataFrame(all_new_rows).drop(['teclt'], axis = 1)
     result_df = result_df[result_df["year_vtg"] != "broadcast"]
     return result_df
 
 #%% Broadcast vintage years
-def broadcast_yv(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
-    """Broadcast vintage years."""
+def broadcast_years(df: pd.DataFrame, 
+                    year_type: str,
+                    year_list: list[int]) -> pd.DataFrame:
+    """Broadcast vintage, relation, or activity years."""
     all_new_rows = []
     for _, row in df.iterrows():
-        for yv in ya_list:
+        for y in year_list:
             new_row = row.copy()
-            new_row["year_vtg"] = int(yv)
+            new_row[year_type] = int(y)
             all_new_rows.append(new_row)
     result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
-    result_df = result_df[result_df["year_vtg"] != "broadcast"]
+    result_df = result_df[result_df[year_type] != "broadcast"]
     return result_df.drop_duplicates()
-#%% Broadcast relation years
-def broadcast_yl(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
-    """Broadcast relation years."""
-    all_new_rows = []
-    for _, row in df.iterrows():
-        for yv in ya_list:
-            new_row = row.copy()
-            new_row["year_rel"] = int(yv)
-            all_new_rows.append(new_row)
-    result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
-    result_df = result_df[result_df["year_rel"] != "broadcast"]
-    return result_df.drop_duplicates()
-#%% Broadcast activity years
-def broadcast_ya(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
-    """Broadcast vintage years."""
-    all_new_rows = []
-    for _, row in df.iterrows():
-        for ya in ya_list:
-            new_row = row.copy()
-            new_row["year_act"] = int(ya)
-            all_new_rows.append(new_row)
-    result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
-    result_df = result_df[result_df["year_act"] != "broadcast"]
-    return result_df.drop_duplicates()
+
 #%% Write just the GDX files
 def save_to_gdx(mp, scenario, output_path):
     from ixmp.backend import ItemType
@@ -841,7 +837,6 @@ def build_parameter_sheets(log,
     config, config_path = load_config(project_name, config_name)
 
     covered_tec = config.get('covered_trade_technologies', {})
-    trade_lifetimes = config.get('trade_lifetimes', {})
     
     outdict = dict()
     
@@ -849,7 +844,6 @@ def build_parameter_sheets(log,
     yv_list = config['timeframes']['year_vtg_list']
     
     for tec in covered_tec:
-        config_tec = config.get(tec + '_trade', {})
         
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
         
@@ -868,13 +862,15 @@ def build_parameter_sheets(log,
                 data_dict[ty][key] = pd.read_csv(csv_file)
 
         # Broadcast the data   
-        tec_lt = trade_lifetimes[tec]
-        
         for ty in ['trade', 'flow']:
+            
             for i in data_dict[ty].keys():
                 if "year_rel" in data_dict[ty][i].columns:
+                    log.info(f"Parameter {i} in {tec} {ty} broadcasted for year_rel.")
                     if data_dict[ty][i]["year_rel"].iloc[0] == "broadcast":
-                        data_dict[ty][i] = broadcast_yl(data_dict[ty][i], ya_list)
+                        data_dict[ty][i] = broadcast_years(df = data_dict[ty][i],
+                                                           year_type = 'year_rel',
+                                                           year_list = ya_list)
                         data_dict[ty][i]["year_act"] = data_dict[ty][i]["year_rel"]
                 else:
                     pass
@@ -882,20 +878,29 @@ def build_parameter_sheets(log,
                 if "year_vtg" in data_dict[ty][i].columns and "year_act" in data_dict[ty][i].columns:
                     if (data_dict[ty][i]["year_vtg"].iloc[0] == "broadcast"
                         and data_dict[ty][i]["year_act"].iloc[0] == "broadcast"):
-                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for yv and ya.")
-                        data_dict[ty][i] = broadcast_yv_ya(data_dict[ty][i], ya_list, tec_lifetime = tec_lt)
+                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for year_vtg and year_act.")
+                        data_dict[ty][i] = broadcast_yv_ya(df = data_dict[ty][i], 
+                                                           ya_list = ya_list,
+                                                           yv_list = yv_list,
+                                                           tec_lifetime = data_dict[ty]['technical_lifetime'].copy())
                     elif (data_dict[ty][i]["year_vtg"].iloc[0] == "broadcast"
                         and data_dict[ty][i]["year_act"].iloc[0] != "broadcast"):
-                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for yv.")
-                        data_dict[ty][i] = broadcast_yv(data_dict[ty][i], ya_list)
+                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for year_vtg.")
+                        data_dict[ty][i] = broadcast_years(df = data_dict[ty][i],
+                                                           year_type = 'year_vtg',
+                                                           year_list = yv_list)                
                 elif "year_vtg" in data_dict[ty][i].columns and "year_act" not in data_dict[ty][i].columns:
                     if data_dict[ty][i]["year_vtg"].iloc[0] == "broadcast":
-                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for yv.")
-                        data_dict[ty][i] = broadcast_yv(data_dict[ty][i], yv_list) 
+                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for year_vtg.")
+                        data_dict[ty][i] = broadcast_years(df = data_dict[ty][i],
+                                                           year_type = 'year_vtg',
+                                                           year_list = yv_list)   
                 elif "year_vtg" not in data_dict[ty][i].columns and "year_act" in data_dict[ty][i].columns:
                     if data_dict[ty][i]["year_act"].iloc[0] == "broadcast":
-                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for ya.")
-                        data_dict[ty][i] = broadcast_ya(data_dict[ty][i], ya_list)                    
+                        log.info(f"Parameter {i} in {tec} {ty} broadcasted for year_act.")
+                        data_dict[ty][i] = broadcast_years(df = data_dict[ty][i],
+                                                           year_type = 'year_act',
+                                                           year_list = ya_list)                     
                 else:
                     pass
 
@@ -906,17 +911,12 @@ def build_parameter_sheets(log,
                       (vdf['technology'].str.contains('_exp_'))]
             data_dict['trade'][par] = vdf
         
-        # Variable costs should not broadcast
+        # Variable costs for flows should not broadcast
         for par in ['var_cost']:
             if par in list(data_dict['flow'].keys()):
                 vdf = data_dict['flow'][par]
                 vdf = vdf[vdf['year_act'] == vdf['year_vtg']]
                 data_dict['flow'][par] = vdf
-            
-        # # Generate relation lower bound for flow technologies
-        # df = data_dict['flow']['relation_activity_flow'].copy()
-        # df['value'] = 0
-        # data_dict['flow']['relation_lower_flow'] = df
         
         outdict[tec] = data_dict
     
