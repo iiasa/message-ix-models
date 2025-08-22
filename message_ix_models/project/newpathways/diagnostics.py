@@ -145,11 +145,11 @@ def activity_to_csv(trade_tec,
     
 # Retrieve trade flow activities
 scenarios_models = {'baseline': 'NP_SSP2_6.2',
-                    'pipeline_LNG_ic': 'NP_SSP2_6.2',
-                    'LNG_noFLcost': 'NP_SSP2_6.2',
-                    'LNG_varcost5y': 'NP_SSP2_6.2',
-                    'LNG_noTRfixcost': 'NP_SSP2_6.2',
-                    'lowNAMshalecost': 'NP_SSP2_6.2'}
+                    'pipelines_LNG': 'NP_SSP2_6.2'}
+                    #'LNG_noFLcost': 'NP_SSP2_6.2',
+                    #'LNG_varcost5y': 'NP_SSP2_6.2',
+                    #'LNG_noTRfixcost': 'NP_SSP2_6.2',
+                    #'lowNAMshalecost': 'NP_SSP2_6.2'}
  
 activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_pipe",
