@@ -24,13 +24,6 @@ covered_trade_technologies:
   - gas_piped
   - LNG_shipped
 
-# TRADE LIFETIMES
-trade_lifetimes:
-  gas_piped:
-    20
-  LNG_shipped:
-    20
-
 # YEARS
 timeframes:
   year_act_list:
