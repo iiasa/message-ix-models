@@ -376,8 +376,9 @@ def reformat_to_parameter(indf, message_regions, parameter_name,
         indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])['ENERGY (GWa)'].sum().reset_index()
         metric_name = 'ENERGY (GWa)'
     elif parameter_name in ['var_cost', 'inv_cost', 'fix_cost']:
-        indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])[['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
+        indf = indf.groupby(['EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])[['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
         indf['PRICE (MUSD/GWa)'] = indf['VALUE (MUSD)']/indf['ENERGY (GWa)']
+        indf['YEAR'] = 'broadcast'
         metric_name = 'PRICE (MUSD/GWa)'
         
     indf = indf[(indf['EXPORTER REGION'] != '') & (indf['IMPORTER REGION'] != '')]
@@ -499,14 +500,14 @@ def build_historical_price(message_regions = 'R12',
     
     outdf = reformat_to_parameter(indf = bacidf,
                                   message_regions = message_regions,
-                                  parameter_name = 'inv_cost',
+                                  parameter_name = 'var_cost',
                                   project_name = project_name, config_name = config_name,
                                   exports_only = True)
     outdf['unit'] = 'USD/GWa'
     
-    outdf['value'] = np.where(outdf['value'] > 1000, 1000, outdf['value'])
+    outdf['value'] = np.where(outdf['value'] > 500, 500, outdf['value'])
     outdf['value'] = np.where(outdf['value'] < 150, 150, outdf['value'])    
-    outdf['value'] = outdf['value'] * 0.62 # TODO: Fix this deflator (2024-2005?)
+    outdf['value'] = outdf['value'] * 0.50 # TODO: Fix this deflator (2024-2005?)
     outdf['value'] = round(outdf['value'], 0)
 
     return outdf
