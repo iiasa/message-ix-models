@@ -6,4 +6,4 @@ in MESSAGE-IX models.
 
 from .generate_inter_pipe import inter_pipe_bare, inter_pipe_build
 
-__all__ = ["inter_pipe_bare", "inter_pipe_build"] 
+__all__ = ["inter_pipe_bare", "inter_pipe_build"]
