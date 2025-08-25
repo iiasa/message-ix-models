@@ -147,7 +147,6 @@ def activity_to_csv(trade_tec,
 scenarios_models = {'baseline': 'NP_SSP2_6.2',
                     'pipelines_LNG': 'NP_SSP2_6.2'}
                     #'LNG_noFLcost': 'NP_SSP2_6.2',
-                    #'LNG_varcost5y': 'NP_SSP2_6.2',
                     #'LNG_noTRfixcost': 'NP_SSP2_6.2',
                     #'lowNAMshalecost': 'NP_SSP2_6.2'}
  
