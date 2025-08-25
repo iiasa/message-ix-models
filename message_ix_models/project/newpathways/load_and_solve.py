@@ -43,47 +43,55 @@ clone_and_update(trade_dict=trade_parameters,
                  solve = True,
                  update_scenario_name = 'pipelines_LNG')
 
-# # Update scenario: no cost on flow technology
-# trade_parameters_novar = trade_parameters.copy()
-# del trade_parameters_novar['LNG_shipped']['flow']['var_cost']
-# del trade_parameters_novar['LNG_shipped']['flow']['inv_cost']
+# Update scenario: no cost on flow technology
+trade_parameters_novar = trade_parameters.copy()
+del trade_parameters_novar['LNG_shipped']['flow']['var_cost']
+del trade_parameters_novar['LNG_shipped']['flow']['inv_cost']
 
-# clone_and_update(trade_dict=trade_parameters_novar,
-#                  project_name = 'newpathways',
-#                  config_name = 'config.yaml',
-#                  log=log,
-#                  to_gdx = False,
-#                  solve = True,
-#                  update_scenario_name = 'LNG_noFLcost')
+clone_and_update(trade_dict=trade_parameters_novar,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 update_scenario_name = 'LNG_noFLcost')
 
-# # Update scenario: no fixed cost on trade for LNG 
-# trade_parameters_nofix = trade_parameters.copy()
-# del trade_parameters_nofix['LNG_shipped']['trade']['fix_cost']
+# Update scenario: no fixed cost on trade for LNG 
+trade_parameters_nofix = trade_parameters.copy()
+del trade_parameters_nofix['LNG_shipped']['trade']['fix_cost']
 
-# clone_and_update(trade_dict=trade_parameters_nofix,
-#                  project_name = 'newpathways',
-#                  config_name = 'config.yaml',
-#                  log=log,
-#                  to_gdx = False,
-#                  solve = True,
-#                  update_scenario_name = 'LNG_noTRfixcost')
+clone_and_update(trade_dict=trade_parameters_nofix,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 update_scenario_name = 'LNG_noTRfixcost')
 
-# # Update scenario: Reduce NAM shale inv and var costs by 10%
-# update_var_cost = pd.DataFrame.from_dict(dict(node_loc = ['R12_NAM'],
-#                                               technology = ['gas_extr_7'],
-#                                               multiplier = [0.9])) # 90% 
+# Update scenario: Reduce NAM shale to MEA levels
+update_var_cost = pd.DataFrame.from_dict(dict(node_loc = ['R12_NAM',
+                                                          'R12_NAM',
+                                                          'R12_NAM',
+                                                          'R12_NAM'],
+                                              technology = ['gas_extr_4',
+                                                            'gas_extr_5',
+                                                            'gas_extr_6',
+                                                            'gas_extr_7'],
+                                              value = [65.81,
+                                                       98.72,
+                                                       157.95,
+                                                       221.13])) # MEA values
 # update_inv_cost = pd.DataFrame.from_dict(dict(node_loc = ['R12_NAM'],
 #                                               technology = ['gas_extr_7'],
 #                                               multiplier = [0.9]))
 
-# additional_parameters = {'var_cost': update_var_cost,
-#                          'inv_cost': update_inv_cost}
+additional_parameters = {'var_cost': update_var_cost}
 
-# clone_and_update(trade_dict=trade_parameters,
-#                  project_name = 'newpathways',
-#                  config_name = 'config.yaml',
-#                  log=log,
-#                  to_gdx = False,
-#                  solve = True,
-#                  additional_parameter_updates = additional_parameters,
-#                  update_scenario_name = 'lowNAMshalecost')
+clone_and_update(trade_dict=trade_parameters,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 additional_parameter_updates = additional_parameters,
+                 update_scenario_name = 'lowNAMshalecost')
