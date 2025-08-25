@@ -717,143 +717,151 @@ def add_net_co2_calcs(
     )
 
 
-def biogas_calc(rep, context):
-    """Partially duplicate the behaviour of :func:`.default_tables.retr_CO2emi`.
-
-    Currently, this prepares the following keys and the necessary preceding
-    calculations:
-
-    - "transport emissions full::iamc": data for the IAMC variable
-      "Emissions|CO2|Energy|Demand|Transportation|Road Rail and Domestic Shipping"
-    """
-    from functools import partial
-
-    from genno.core.key import single_key
-
-    from message_ix_models.model.bare import get_spec
-    from message_ix_models.report.compat import (
-        anon,
-        assert_dims,
-        emi,
-        get_techs,
-        inp,
-        out,
-        pe_w_ccs_retro,
-        prepare_techs,
-    )
-
-
-    # Structure information
-    spec = get_spec(context)
-    prepare_techs(rep, spec.add.set["technology"])
-
-    # Constants from report/default_units.yaml
-    rep.add("conv_c2co2:", 44.0 / 12.0)  # dimensionless
-    # “Carbon content of natural gas”
-    rep.add("crbcnt_gas:", Quantity(0.482, units="Mt / GWa / a"))
-
-    # Shorthand for get_techs(rep, …)
-    techs = partial(get_techs, rep)
-
-    def full(name: str) -> Key:
-        """Return the full key for `name`."""
-        return single_key(rep.full_key(name))
+def add_non_ccs_gas_consumption(rep: "Reporter", addon_map: dict[str, dict]):
+    from message_ix_models.report.compat import pe_w_ccs_retro
 
     # L3059 from message_data/tools/post_processing/default_tables.py
     # "gas_{cc,ppl}_share": shares of gas_cc and gas_ppl in the summed output of both
-    k0 = out(rep, ["gas_cc", "gas_ppl"])
-    for t in "gas_cc", "gas_ppl":
-        k1 = out(rep, [t])
-        k2 = rep.add(Key(f"{t}_share", k1.dims), "div", k0, k1)
-        assert_dims(rep, single_key(k2))
+    # k0 = out(rep, addon_parent_map.keys())
+    filter = {"t": addon_map.keys(), "c": ["gas"]}
+    key = Key("in:nl-t-ya-m-c")
+    tag = "ccs_retro_ppls"
+    k1 = rep.add(key["sel"][tag], "select", key, filter, sums=True)
+    k2 = rep.add(key.drop("t")[tag], "assign_units", k1[0].drop("t"), units="GWa")
+    for t in addon_map.keys():
+        # k1 = out(rep, [t])
+        k3 = rep.add(key["sel"][t], "select", key, {"t": [t], "c": ["gas"]})
+        k4 = rep.add(key[t], "assign_units", k3, units="GWa")
+        rep.add(Key(f"{t}_share", k4.dims), "div", k4, k2)
 
+    filters = dict(c=["gas"], l=["secondary"])
+    _args = ((t, values["addon"], f"{t}_share") for t, values in addon_map.items())
+    keys = [pe_w_ccs_retro(rep, *args, filters=filters) for args in _args]
+    rep.add(Key("in", keys[0].dims, "pe_w_ccs_retro+gas"), "concat", *keys, sums=True)
+    return
+
+
+def gas_consumer(rep: "Reporter", name: str, tecs: list[str], ccs: bool = True):
+    k = Key("in:nl-t-ya-m-c:sel")[f"gas_consumer_{name}"]
+    k1 = Key("in:nl-t-ya-m-c")[f"gas_consumer_{name}"]
+    rep.add(k, "select", "in:nl-t-ya-m-c", {"t": tecs, "c": ["gas"]})
+    in_gas = rep.add(k1, "assign_units", k, units="GWa")
+
+    # pre-calc to get gas consumption by tec
     # L3026
     # "in:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
     # final), net of output from transmission and distribution technologies.
     c_gas = dict(c=["gas"])
-    k0 = inp(rep, techs("gas", "all extra"), filters=c_gas)
-    k1 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
-    k2 = rep.add(Key("in", k1.dims, "nonccs_gas_tecs"), "sub", k0, k1)
-    assert_dims(rep, single_key(k2))
-
-    # L3091
-    # "Biogas_tot_abs": absolute output from t=gas_bio [energy units]
-    # "Biogas_tot": above converted to its CO₂ content = CO₂ emissions from t=gas_bio
-    # [mass/time]
-    Biogas_tot_abs = out(rep, ["gas_bio"], name="Biogas_tot_abs")
-    rep.add("Biogas_tot", "mul", Biogas_tot_abs, "crbcnt_gas", "conv_c2co2")
-
-    # L3052
-    # "in:*:all_gas_tecs": Input to all technologies using gas at l=(secondary, final),
-    # including those with CCS.
-    k0 = inp(
-        rep,
-        ["gas_cc_ccs", "meth_ng", "meth_ng_ccs", "h2_smr", "h2_smr_ccs"],
-        filters=c_gas,
-    )
+    t_d_tecs = {"t": ["gas_t_d", "gas_t_d_ch4"]}
+    in_t = Key("in:nl-t-c-ya")
+    out_t = Key("out:nl-t-c-ya")
+    # k0 = inp(rep, techs("gas", "all extra"), filters=c_gas)
+    # k1 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
     k1 = rep.add(
-        Key("in", k0.dims, "all_gas_tecs"), "add", full("in::nonccs_gas_tecs"), k0
+        out_t["sel"]["gas_transmission"], "select", out_t, {**c_gas, **t_d_tecs}
     )
-    assert_dims(rep, k1)
-
-    # L3165
-    # "Hydrogen_tot:*": CO₂ emissions from t=h2_mix [mass/time]
-    k0 = emi(
-        rep,
-        ["h2_mix"],
-        name="_Hydrogen_tot",
-        filters=dict(r=["CO2_cc"]),
-        unit_key="CO2 emissions",
-    )
-    # NB Must alias here, otherwise full("Hydrogen_tot") below gets a larger set of
-    #    dimensions than intended
-    rep.add(Key("Hydrogen_tot", k0.dims), k0)
-
-    # L3063
-    # "in:*:nonccs_gas_tecs_wo_ccsretro": "in:*:nonccs_gas_tecs" minus inputs to
-    # technologies fitted with CCS add-on technologies.
-    filters = dict(c=["gas"], l=["secondary"])
-    pe_w_ccs_retro_keys = [
-        pe_w_ccs_retro(rep, *args, filters=filters)
-        for args in (
-            ("gas_cc", "g_ppl_co2scr", full("gas_cc_share")),
-            ("gas_ppl", "g_ppl_co2scr", full("gas_ppl_share")),
-            # FIXME Raises KeyError
-            # ("gas_htfc", "gfc_co2scr", None),
+    k11 = rep.add(out_t["gas_transmission"], "assign_units", k1, units="GWa")
+    k2 = rep.add(in_gas["incl_t_d_loss"], "sub", in_gas, k11)
+    if not ccs:
+        addon_parent_map = {
+            "gas_ppl": {"addon": "g_ppl_co2scr", "parents": ["gas_ppl", "gas_cc"]},
+            "gas_cc": {"addon": "g_ppl_co2scr", "parents": ["gas_ppl", "gas_cc"]},
+        }
+        add_non_ccs_gas_consumption(rep, addon_parent_map)
+        k21 = rep.add(
+            in_t["pe_wo_ccs_retro"], "sub", k2.drop("m"), in_t["pe_w_ccs_retro+gas"]
         )
-    ]
-    k0 = rep.add(anon(dims=pe_w_ccs_retro_keys[0]), "add", *pe_w_ccs_retro_keys)
-    k1 = rep.add(
-        Key("in", k0.dims, "nonccs_gas_tecs_wo_ccsretro"),
-        "sub",
-        full("in::nonccs_gas_tecs"),
-        k0,
+        return k21
+    return k2.drop("m")
+
+
+def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str):
+    """Function to allocate biogas to gas consumers
+    Inputs:
+        - list of gas consumers
+        - name of blendgas technology
+        - name for blendgas key
+    - Query total blendgas:nl-ya
+    - Query total gas consumption by tec: dims=full("in")
+        - include transmission losses (gas_t_d)
+        - consider CCS tecs
+    - Calculate share of blendgas in total gas consumption per nl-ya
+    - Allocate blendgas share proportionally to each gas technology,
+        by multiplying nl-ya share with total gas input nl-t-ya-m
+    - create new commodity dimension with "blendgas" as entry
+    """
+    from message_ix_models.report.compat import out
+
+    # Main calc
+    k1 = out(rep, [mix_tech], name=f"{name}_tot_abs")
+    k2 = rep.add(
+        f"{name}_tot_rel:nl-ya", "div", k1.drop("yv", "m"), in_gas.drop("t", "c")
     )
-    assert_dims(rep, k0, k1)
-
-    # L3144, L3234
-    # "Biogas_trp", "Hydrogen_trp": transportation shares of emissions savings from
-    # biogas production/use, and from hydrogen production, respectively.
-    # X_trp = X_tot * (trp input of gas / `other` inputs)
-    k0 = inp(rep, techs("trp gas"), filters=c_gas)
-    for name, other in (
-        ("Biogas", full("in::all_gas_tecs")),
-        ("Hydrogen", full("in::nonccs_gas_tecs_wo_ccsretro")),
-    ):
-        k1 = rep.add(anon(dims=other), "div", k0, other)
-        k2 = rep.add(f"{name}_trp", "mul", f"{name}_tot", k1)
-        assert_dims(rep, single_key(k1))
+    k3 = rep.add(
+        f"{name}:nl-t-ya-m", "mul", in_gas.drop("c"), k2
+    )
+    k4 = rep.add(k3.append("c"), "expand_dims", k3, {"c": [name]})
+    return k4
 
 
-if __name__ == '__main__':
+def pe_gas(rep: "Reporter"):
+    final = [
+        "gas_i",
+        "gas_rc",
+        "gas_trp",
+        "furnace_gas_steel",
+        "furnace_gas_cement",
+        "furnace_gas_aluminum",
+        "furnace_gas_petro",
+        "furnace_gas_resins",
+        "dri_gas_steel",
+        "eaf_steel",
+    ]
+    conv = [
+        "gas_cc",
+        "gas_ct",
+        "gas_ppl",
+        "gas_hpl",
+        "furnace_gas_refining",
+        "h2_smr",
+        "gas_NH3",
+        "meth_ng",
+    ]
+    ccs_tecs = [
+        "dri_gas_ccs_steel",
+        "gas_NH3_ccs",
+        "gas_cc_ccs",
+        "h2_smr_ccs",
+    ]
+    h2_tecs = [
+        "gas_rc",
+        "gas_ppl",
+        "gas_cc",
+        "gas_ct",
+        "gas_hpl",
+    ]
+    k1 = gas_consumer(rep, "h2", h2_tecs, ccs=False)
+    k2 = gas_consumer(rep, "biogas", final + ccs_tecs + conv, ccs=True)
+    k_h2 = gas_mix_calculation(rep, k1, "h2_mix", "hydrogen")
+    k_bio = gas_mix_calculation(rep, k2, "gas_bio", "biogas")
+    k = Key("in:nl-t-ya-m-c")
+    k5 = rep.add(k["gas_excl_biogas"], "sub", k2, k_bio.drop("c"))
+    k51 = rep.add(k["gas_excl_biogas_h2"], "sub", k5, k_h2.drop("c"))
+    k6 = rep.add(k["pe+gas"], "concat", k_bio, k_h2, k51)
+    k7 = rep.add("emi:nl-t-ya-m-c:gas", "mul", k51.drop("c"), Quantity(0.482))
+    return
+
+
+if __name__ == "__main__":
     from message_ix_models import Context
+
     ctx = Context()
     import ixmp
     import message_ix
 
-    mp = ixmp.Platform('local3')
-    scen = message_ix.Scenario(mp, 'SSP_SSP2_v6.2', "baseline_wo_GLOBIOM_ts")
+    mp = ixmp.Platform("local3")
+    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     prepare_reporter(ctx, reporter=rep)
-    biogas_calc(rep, ctx)
+    pe_gas(rep)
     print()
