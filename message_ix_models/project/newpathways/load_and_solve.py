@@ -77,10 +77,10 @@ update_var_cost = pd.DataFrame.from_dict(dict(node_loc = ['R12_NAM',
                                                             'gas_extr_5',
                                                             'gas_extr_6',
                                                             'gas_extr_7'],
-                                              value = [65.81,
-                                                       98.72,
-                                                       157.95,
-                                                       221.13])) # MEA values
+                                              multiplier = [0.8,
+                                                            0.8,
+                                                            0.8,
+                                                            0.8])) # MEA values
 # update_inv_cost = pd.DataFrame.from_dict(dict(node_loc = ['R12_NAM'],
 #                                               technology = ['gas_extr_7'],
 #                                               multiplier = [0.9]))
