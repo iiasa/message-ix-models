@@ -171,7 +171,9 @@ def built_transport(
     return result
 
 
-def simulated_solution(request, context: "Context", build: bool) -> Reporter:
+def simulated_solution(
+    request: "pytest.FixtureRequest", context: "Context", build: bool
+) -> Reporter:
     """Return a :class:`.Reporter` with a simulated model solution.
 
     The contents allow for performant testing of reporting code, without solving an

@@ -10,7 +10,6 @@ from message_ix_models.model.water.data.water_supply import (
 )
 
 
-@map_basin_region_wat.minimum_version
 def test_map_basin_region_wat(test_context):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
@@ -37,7 +36,6 @@ def test_map_basin_region_wat(test_context):
     )
 
 
-@map_basin_region_wat.minimum_version
 def test_add_water_supply(request, test_context):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test

@@ -15,7 +15,6 @@ from message_ix_models.model.water.data.water_for_ppl import (
 )
 
 
-@cool_tech.minimum_version
 @pytest.mark.usefixtures("ssp_user_data")
 @pytest.mark.parametrize("RCP", ["no_climate", "6p0"])
 def test_cool_tec(request, test_context, RCP):

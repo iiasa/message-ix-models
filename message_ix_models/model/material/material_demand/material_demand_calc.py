@@ -1,11 +1,10 @@
 import logging
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 import message_ix
 import numpy as np
 import pandas as pd
-import scipy.optimize as opt
 import yaml
 from message_ix import make_df
 from scipy.optimize import curve_fit
@@ -13,17 +12,29 @@ from scipy.optimize import curve_fit
 import message_ix_models.util
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.material.data_util import get_ssp_soc_eco_data
-from message_ix_models.model.material.material_demand.math import (
-    GIGA,
-    MEGA,
-    cement_function,
-    gompertz,
-    steel_function,
-)
 from message_ix_models.util import package_data_path
 
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
-log = logging.getLogger(__name__)
+giga = 10**9
+mega = 10**6
+
+material_data = {
+    "aluminum": {"dir": "aluminum", "file": "/demand_aluminum.xlsx"},
+    "steel": {"dir": "steel", "file": "/STEEL_database_2012.xlsx"},
+    "cement": {"dir": "cement", "file": "/CEMENT.BvR2010.xlsx"},
+    "HVC": {"dir": "petrochemicals"},
+    "NH3": {"dir": "ammonia"},
+    "methanol": {"dir": "methanol"},
+}
+
+ssp_mode_map = {
+    "SSP1": "low",
+    "SSP2": "normal",
+    "SSP3": "high",
+    "SSP4": "normal",
+    "SSP5": "highest",
+    "LED": "low",
+}
 
 mode_modifiers_dict = {
     "low": {
@@ -48,23 +59,18 @@ mode_modifiers_dict = {
     },
 }
 
-material_data = {
-    "aluminum": {"dir": "aluminum", "file": "/demand_aluminum.xlsx"},
-    "steel": {"dir": "steel", "file": "/STEEL_database_2012.xlsx"},
-    "cement": {"dir": "cement", "file": "/CEMENT.BvR2010.xlsx"},
-    "HVC": {"dir": "petrochemicals"},
-    "NH3": {"dir": "ammonia"},
-    "methanol": {"dir": "methanol"},
-}
+log = logging.getLogger(__name__)
 
-ssp_mode_map = {
-    "SSP1": "low",
-    "SSP2": "normal",
-    "SSP3": "high",
-    "SSP4": "normal",
-    "SSP5": "highest",
-    "LED": "low",
-}
+
+def steel_function(x: Union[pd.DataFrame, float], a: float, b: float, m: float):
+    gdp_pcap, del_t = x
+    return a * np.exp(b / gdp_pcap) * (1 - m) ** del_t
+
+
+def cement_function(x: Union[pd.DataFrame, float], a: float, b: float):
+    gdp_pcap = x[0]
+    return a * np.exp(b / gdp_pcap)
+
 
 fitting_dict = {
     "steel": {
@@ -91,8 +97,14 @@ fitting_dict = {
 }
 
 
+def gompertz(
+    phi: float, mu: float, y: Union[pd.DataFrame, float], baseyear: int = 2020
+):
+    return 1 - np.exp(-phi * np.exp(-mu * (y - baseyear)))
+
+
 def read_timer_pop(
-    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
 ):
     df_population = pd.read_excel(
         f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
@@ -110,7 +122,7 @@ def read_timer_pop(
 
 
 def read_timer_gdp(
-    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
 ):
     # Read GDP per capita data
     df_gdp = pd.read_excel(
@@ -132,9 +144,9 @@ def project_demand(df: pd.DataFrame, phi: float, mu: float):
     df_demand = df.groupby("region", group_keys=False)[df.columns].apply(
         lambda group: group.assign(
             demand_pcap_base=group["demand.tot.base"].iloc[0]
-            * GIGA
+            * giga
             / group["pop.mil"].iloc[0]
-            / MEGA
+            / mega
         )
     )
     df_demand = df_demand.groupby("region", group_keys=False)[df_demand.columns].apply(
@@ -152,7 +164,7 @@ def project_demand(df: pd.DataFrame, phi: float, mu: float):
         df_demand.groupby("region", group_keys=False)[df_demand.columns]
         .apply(
             lambda group: group.assign(
-                demand_tot=group["demand_pcap"] * group["pop.mil"] * MEGA / GIGA
+                demand_tot=group["demand_pcap"] * group["pop.mil"] * mega / giga
             )
         )
         .reset_index(drop=True)
@@ -160,7 +172,7 @@ def project_demand(df: pd.DataFrame, phi: float, mu: float):
     return df_demand[["region", "year", "demand_tot"]]
 
 
-def read_base_demand(filepath: str | Path):
+def read_base_demand(filepath: Union[str, Path]):
     with open(filepath, "r") as file:
         yaml_data = file.read()
 
@@ -307,7 +319,11 @@ def read_gdp_ppp_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
     return gdp
 
 
-def read_socio_economic_projection(scen):
+def derive_demand(
+    material: Literal["cement", "steel", "aluminum"],
+    scen: message_ix.Scenario,
+    ssp: Union[Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"], str] = "SSP2",
+):
     datapath = message_ix_models.util.package_data_path("material")
 
     # read pop projection from scenario
@@ -346,40 +362,6 @@ def read_socio_economic_projection(scen):
                 region=lambda x: "R12_" + x["Region"],
             )
         )
-    return df_gdp, df_pop
-
-
-def format_to_demand_par(df, material):
-    # format to MESSAGEix standard
-    df = df.rename({"region": "node", "demand_tot": "value"}, axis=1)
-    df["commodity"] = material
-    df["level"] = "demand"
-    df["time"] = "year"
-    df["unit"] = "t"
-    # TODO: correct unit would be Mt but might not be registered on database
-    df = make_df("demand", **df)
-    return df
-
-
-def prepare_model_input(df_pop, df_gdp, df_base_demand):
-    df_all = pd.merge(df_pop, df_base_demand.drop(columns=["year"]), how="left")
-    df_all = pd.merge(df_all, df_gdp[["region", "year", "gdp_ppp"]], how="inner")
-    df_all["del_t"] = df_all["year"] - 2010
-    df_all["gdp_pcap"] = df_all["gdp_ppp"] * GIGA / df_all["pop.mil"] / MEGA
-    df_all = df_all.rename(columns={"value": "demand.tot.base"})
-    return df_all
-
-
-def derive_demand(
-    material: Literal["cement", "steel", "aluminum"],
-    scen: message_ix.Scenario,
-    ssp: Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"] = "SSP2",
-    new: bool = False,
-    model: Literal["least-squares", "quantile"] = "least-squares",
-):
-    datapath = message_ix_models.util.package_data_path("material")
-
-    df_gdp, df_pop = read_socio_economic_projection(scen)
 
     # get base year demand of material
     df_base_demand = read_base_demand(
@@ -387,45 +369,35 @@ def derive_demand(
     )
 
     # get historical data (material consumption, pop, gdp)
-    if new:
-        df_cons = pd.read_csv(
-            "/Users/florianmaczek/PycharmProjects/IEA-statistics-analysis/input_data/steel/steel_consumption.csv"
-        )
-    else:
-        df_cons = read_hist_mat_demand(material)
+    df_cons = read_hist_mat_demand(material)
     x_data = tuple(pd.Series(df_cons[col]) for col in fitting_dict[material]["x_data"])
 
     # run regression on historical data
-    if model == "least-squares":
-        params_opt = curve_fit(
-            fitting_dict[material]["function"],
-            xdata=x_data,
-            ydata=df_cons["cons_pcap"],
-            p0=fitting_dict[material]["initial_guess"],
-        )[0]
-        mode = ssp_mode_map[ssp]
-        log.info(f"adjust regression parameters according to mode: {mode}")
-        log.info(f"before adjustment: {params_opt}")
-        for idx, multiplier in enumerate(mode_modifiers_dict[mode][material].values()):
-            params_opt[idx] *= multiplier
-        log.info(f"after adjustment: {params_opt}")
-    if model == "quantile":
-        params_opt = perform_quantile_reg(
-            x_data,
-            df_cons["cons_pcap"],
-            fitting_dict["steel"]["function"],
-            fitting_dict["steel"]["initial_guess"],
-            0.5,
-        )
+    params_opt = curve_fit(
+        fitting_dict[material]["function"],
+        xdata=x_data,
+        ydata=df_cons["cons_pcap"],
+        p0=fitting_dict[material]["initial_guess"],
+    )[0]
+    mode = ssp_mode_map[ssp]
+    log.info(f"adjust regression parameters according to mode: {mode}")
+    log.info(f"before adjustment: {params_opt}")
+    for idx, multiplier in enumerate(mode_modifiers_dict[mode][material].values()):
+        params_opt[idx] *= multiplier
+    log.info(f"after adjustment: {params_opt}")
 
     # prepare df for applying regression model and project demand
-    df_all = prepare_model_input(df_pop, df_gdp, df_base_demand)
+    df_all = pd.merge(df_pop, df_base_demand.drop(columns=["year"]), how="left")
+    df_all = pd.merge(df_all, df_gdp[["region", "year", "gdp_ppp"]], how="inner")
+    df_all["del_t"] = df_all["year"] - 2010
+    df_all["gdp_pcap"] = df_all["gdp_ppp"] * giga / df_all["pop.mil"] / mega
     df_all["demand_pcap0"] = df_all.apply(
         lambda row: fitting_dict[material]["function"](
             tuple(row[i] for i in fitting_dict[material]["x_data"]), *params_opt
         ),
         axis=1,
     )
+    df_all = df_all.rename({"value": "demand.tot.base"}, axis=1)
 
     # correct base year difference with convergence function
     df_final = project_demand(
@@ -433,8 +405,14 @@ def derive_demand(
     )
 
     # format to MESSAGEix standard
-    df_par = format_to_demand_par(df_final, material)
-    return df_par
+    df_final = df_final.rename({"region": "node", "demand_tot": "value"}, axis=1)
+    df_final["commodity"] = material
+    df_final["level"] = "demand"
+    df_final["time"] = "year"
+    df_final["unit"] = "t"
+    # TODO: correct unit would be Mt but might not be registered on database
+    df_final = make_df("demand", **df_final)
+    return df_final
 
 
 def gen_demand_petro(
@@ -542,7 +520,7 @@ def gen_demand_petro(
 
     df_melt = df_demand.melt(ignore_index=False).reset_index()
 
-    level = "demand" if chemical in ["HVC", "methanol"] else "final_material"
+    level = "demand" if chemical == "HVC" else "final_material"
 
     return make_df(
         "demand",
@@ -554,39 +532,3 @@ def gen_demand_petro(
         year=df_melt.year,
         node=df_melt["Region"],
     )
-
-
-def perform_quantile_reg(x, y, func, initial_params, tau=0.5):
-    # Define quantile loss function
-    def quantile_loss(params, x, y, tau):
-        y_pred = func(x, *params)
-        residuals = y - y_pred
-        return np.sum(
-            (tau * np.maximum(residuals, 0)) + ((1 - tau) * np.maximum(-residuals, 0))
-        )
-
-    res = opt.minimize(
-        quantile_loss, initial_params, args=(x, y, tau), method="Nelder-Mead"
-    )
-
-    # Extract optimized parameters
-    a_opt, b_opt, c_opt = res.x
-
-    # Plot results
-    # plt.scatter(x, y, alpha=0.5, label="Data")
-    # plt.plot(x, func(x, *res.x), "r-", label=f"Quantile {tau} regression")
-    # plt.legend()
-    # plt.xlabel("x")
-    # plt.ylabel("y")
-    # plt.title("Non-linear Quantile Regression")
-    # plt.show()
-    return a_opt, b_opt, c_opt
-
-
-if __name__ == "__main__":
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("local2")
-    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
-    derive_demand("steel", scen, "SSP2", "quantile")

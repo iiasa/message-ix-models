@@ -9,7 +9,7 @@ import pandas as pd
 import xarray as xr
 from message_ix import make_df
 
-from message_ix_models.util import broadcast, minimum_version, package_data_path
+from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -160,7 +160,6 @@ def target_rate_trt(df: pd.DataFrame, basin: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@minimum_version("message_ix 3.7")
 def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water sectoral demands

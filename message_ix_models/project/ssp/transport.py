@@ -292,7 +292,7 @@ def finalize(
     )
 
 
-@minimum_version("genno 1.28")
+@minimum_version("message_ix_models.model.transport.build.get_computer")
 def get_computer(
     row0: "pd.Series", method: METHOD, *, platform_name: Optional[str] = None
 ) -> "Computer":
@@ -599,14 +599,18 @@ def method_BC_common(c: "Computer", k_fe_share: "Key") -> None:
 
     # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
     labels = dict(n={v: k for k, v in get_labels()["n"].items()})
-    c.add(K.emi, "relabel", K.emi[2], labels=labels)
+    c.add(K.emi[3], "relabel", K.emi[2], labels=labels)
+    # Drop data for y0
+    c.add(K.emi, "select", K.emi[3], indexers=dict(y=[2020]), inverse=True)
 
     # Re-add the "t" dimension with +ve and -ve sign for certain labels
     c.add(K.fe_out[0], "mul", k.fe, broadcast_t_fe())
     c.add(K.fe_out[1], "drop_vars", K.fe_out[0] * "c_new", names="c")
     c.add(K.fe_out[2], "rename_dims", K.fe_out[1], name_dict={"c_new": "c"})
     # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
-    c.add(K.fe_out, "relabel", K.fe_out[2], labels=labels)
+    c.add(K.fe_out[3], "relabel", K.fe_out[2], labels=labels)
+    # Drop data for y0
+    c.add(K.fe_out, "select", K.fe_out[3], indexers=dict(y=[2020]), inverse=True)
 
 
 def method_C(c: "Computer") -> None:

@@ -2,20 +2,19 @@ import logging
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
-from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
 import genno.config
 import yaml
-from genno import Key, KeyExistsError
+from genno import Key
 from genno.compat.pyam import iamc as handle_iamc
 from genno.core.key import single_key
+from ixmp.util import discard_on_error
 from message_ix import Reporter, Scenario
 
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
@@ -166,8 +165,6 @@ def report(context: Context, *args, **kwargs):
         - :py:`context.report`, which is an instance of :class:`.report.Config`; see
           there for available configuration settings.
     """
-    from message_ix_models.util.ixmp import discard_on_error
-
     # Handle deprecated usage that appears in:
     # - .model.cli.new_baseline()
     # - .model.create.solve()
@@ -253,7 +250,6 @@ def _invoke_legacy_reporting(context):
     return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **kwargs)
 
 
-@minimum_version("message_ix 3.6")
 def prepare_reporter(
     context: Context,
     scenario: Optional[Scenario] = None,
@@ -371,14 +367,3 @@ def defaults(rep: Reporter, context: Context) -> None:
     # Add mappings for conversions to IAMC data structures
     add_replacements("c", get_codes("commodity"))
     add_replacements("t", get_codes("technology"))
-
-    # Ensure "y::model" and "y0" are present
-    # TODO remove this once message-ix-models depends on message_ix > 3.7.0 at minimum
-    for comp in (
-        ("y::model", "model_periods", "y", "cat_year"),
-        ("y0", itemgetter(0), "y::model"),
-    ):
-        try:
-            rep.add(*comp, strict=True)
-        except KeyExistsError:
-            pass  # message_ix > 3.7.0; these are already defined

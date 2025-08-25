@@ -1,16 +1,31 @@
 """Load model and project code from :mod:`message_data`."""
 
+import functools
 import re
 from collections.abc import Callable, Iterable
-from functools import update_wrapper
-from importlib import util
+from dataclasses import dataclass
+from importlib import import_module, util
 from importlib.abc import MetaPathFinder
 from importlib.machinery import ModuleSpec, SourceFileLoader
 from importlib.metadata import version
+from itertools import chain
 from logging import INFO, getLogger
-from typing import Optional
+from platform import python_version
+from typing import TYPE_CHECKING, Optional
+
+from packaging.version import parse
 
 from ._logging import once
+
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class Condition(Protocol):
+        def __call__(self) -> str: ...
+
+    class MinimumVersionDecorated(Protocol):
+        def __call__(self, *args, **kwargs): ...
+        def minimum_version(self, to_wrap): ...
 
 
 class MessageDataFinder(MetaPathFinder):
@@ -79,74 +94,134 @@ class MessageDataFinder(MetaPathFinder):
             return new_spec
 
 
-def minimum_version(
-    expr: str, raises: Optional[Iterable[type[Exception]]] = None
-) -> Callable:
-    """Decorator for functions that require a minimum version of some upstream package.
+@dataclass(frozen=True)
+class _PackageVersion:
+    """Condition that the version of package `name` is at least `v_min`."""
 
-    If the decorated function is called and the condition in `expr` is not met,
+    name: str
+    v_min: str
+
+    @functools.cache
+    def __call__(self) -> str:
+        v = python_version() if self.name == "python" else version(self.name)
+        return f"{self.name} {v} < {self.v_min}" if parse(v) < parse(self.v_min) else ""
+
+
+@dataclass(frozen=True)
+class _Recurse:
+    """Recurse to the minimum version decorator of `fully_qualified_name`."""
+
+    fully_qualified_name: str
+
+    @functools.cache
+    def __call__(self) -> str:
+        # Split the fully qualified name into a module name and item name
+        module_name, _, name = self.fully_qualified_name.strip().rpartition(".")
+        # Import the module → retrieve the item → retrieve its MVD
+        return getattr(import_module(module_name), name)._mvd.check_versions()
+
+
+class MinimumVersionDecorator:
+    """Mark callable objects as requiring minimum version(s) of upstream packages.
+
+    If the decorated object is called and any of condition(s) in `expr` is not met,
     :class:`.NotImplementedError` is raised with an informative message.
 
-    The decorated function gains an attribute :py:`.minimum_version`, a pytest
-    MarkDecorator that can be used on associated test code. This marks the test as
-    XFAIL, raising :class:`.NotImplementedError` (directly); :class:`.RuntimeError` or
-    :class:`.AssertionError` (for instance, via :mod:`.click` test utilities), or any
-    of the classes given in the `raises` argument.
+    The decorated object gains an attribute :py:`.minimum_version`, which can be used
+    like :py:`pytest.mark.xfail()` to decorate test functions. This marks the test as
+    XFAIL, raising :class:`.NotImplementedError` directly; indirectly
+    :class:`.RuntimeError` or :class:`.AssertionError` (for instance, via :mod:`.click`
+    test utilities or :mod:`genno`), or any of the classes given by the `raises`
+    argument.
 
     See :func:`.prepare_reporter` / :func:`.test_prepare_reporter` for a usage example.
 
     Parameters
     ----------
     expr :
-        Like "pkgA 1.2.3.post0; pkgB 2025.2". The condition for the decorated function
-        is that the installed version must be equal to or greater than this version.
+        Zero or more conditions like:
+
+        1. "pkgA 1.2.3.post0; pkgB 2025.2", specifying minimum version of 1 or more
+           packages.
+        2. "python 3.10", specifying a minimum version of python.
+        3. "message_ix_models.foo.bar.baz", recursively referring to the minimum version
+           required by :py:`baz` in the module :py:`message_ix_models.foo.bar`. This
+           object **must** also have been decorated with
+           :class:`MinimumVersionDecorator`.
     """
-    from platform import python_version
 
-    from packaging.version import parse
+    name: str
+    conditions: list["Condition"]
+    raises: list[type[Exception]]
 
-    # Handle `expr`, updating `condition` and `message`
-    condition, message = False, " with "
-    for spec in expr.split(";"):
-        package, v_min = spec.strip().split(" ")
-        v_package = python_version() if package == "python" else version(package)
-        if parse(v_package) < parse(v_min):
-            condition = True
-            message += f"{package} {v_package} < {v_min}"
+    def __init__(
+        self, *expr: str, raises: Optional[Iterable[type[Exception]]] = None
+    ) -> None:
+        self.raises = [NotImplementedError, AssertionError, RuntimeError]
+        self.raises.extend(raises or ())
 
-    # Create the decorator
-    def decorator(func):
-        name = f"{func.__module__}.{func.__name__}()"
+        # Assemble a list of Condition instances to be checked
+        self.conditions = []
+        for spec in chain(*[e.split(";") for e in expr]):
+            try:
+                # Split a string like "pkgA 1.2.3.post0"
+                package, v_min = spec.strip().split(" ")
+            except ValueError:
+                # Failed → something like "message_ix_models.foo.bar.baz" → recurse
+                c: "Condition" = _Recurse(spec)
+            else:
+                c = _PackageVersion(package, v_min)
+            self.conditions.append(c)
 
-        # Wrap `func`
+    def check_versions(self) -> str:
+        """Evaluate all the :attr:`conditions.
+
+        Return :py:`""` if all pass, else a :class:`str` describing failed conditions.
+        """
+        return ", ".join(filter(None, [cond() for cond in self.conditions]))
+
+    def raise_for_version(self) -> None:
+        """Raise :class:`.NotImplementedError` if :meth:`check_versions` fails."""
+        if result := self.check_versions():
+            raise NotImplementedError(f"{self.name} with {result}.")
+
+    def mark_test(self, obj):
+        """Apply a pytest XFAIL mark to test function or class `obj`."""
+        import pytest
+
+        # Evaluate the conditions
+        msg = self.check_versions()
+
+        # Create the Mark
+        mark = pytest.mark.xfail(
+            condition=bool(msg),
+            raises=tuple(self.raises),
+            reason=f"Not supported with {msg}",
+        )
+
+        # Apply the mark to obj; return the result
+        return mark(obj)
+
+    def __call__(self, to_wrap: Callable) -> "MinimumVersionDecorated":
+        """Wrap `to_wrap`."""
+        # Store name for raise_for_version()
+        self.name = f"{to_wrap.__module__}.{to_wrap.__name__}()"
+
+        # Create a wrapper around `to_wrap`
         def wrapper(*args, **kwargs):
-            if condition:
-                raise NotImplementedError(f"{name}{message}.")
-            return func(*args, **kwargs)
+            self.raise_for_version()  # MinimumVersionDecorator
+            return to_wrap(*args, **kwargs)
 
-        update_wrapper(wrapper, func)
-
-        try:
-            import pytest
-
-            # Create a MarkDecorator and store as an attribute of "wrapper"
-            setattr(
-                wrapper,
-                "minimum_version",
-                pytest.mark.xfail(
-                    condition=condition,
-                    raises=(
-                        NotImplementedError,  # Raised directly, above
-                        AssertionError,  # e.g. through CliRunner.assert_exit_0()
-                        RuntimeError,  # e.g. through genno.Computer
-                    )
-                    + tuple(raises or ()),  # Other exception classes
-                    reason=f"Not supported{message}",
-                ),
-            )
-        except ImportError:
-            pass  # Pytest not present; testing is not happening
+        # Apply update_wrapper() from the standard library
+        functools.update_wrapper(wrapper, to_wrap)
+        # Set property minimum_version that can be used to mark test functions/classes
+        setattr(wrapper, "minimum_version", self.mark_test)
+        assert hasattr(wrapper, "minimum_version")
+        # Store a reference to the current MinimumVersionDecorator for use by _Recurse
+        setattr(wrapper, "_mvd", self)
 
         return wrapper
 
-    return decorator
+
+#: Alias for :class:`.MinimumVersionDecorator`.
+minimum_version = MinimumVersionDecorator

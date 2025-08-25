@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from genno import Computer, KeySeq, Operator, quote
-from genno.operator import apply_units, rename_dims
+from genno.operator import apply_units, as_quantity, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from scipy import integrate
 from sdmx.model.common import Code, Codelist
@@ -28,7 +28,6 @@ from message_ix_models.util import (
     minimum_version,
     show_versions,
 )
-from message_ix_models.util.genno import as_quantity
 
 from .config import Config
 

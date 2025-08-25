@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
 
 import ixmp
+from ixmp.util import parse_url
 
 from ._dataclasses import asdict
 from .scenarioinfo import ScenarioInfo
@@ -161,11 +162,15 @@ class ConfigHelper:
     def hexdigest(self, length: int = -1) -> str:
         """Return a hex digest that is unique for distinct settings on the instance.
 
+        Uses :func:`dataclasses.asdict`. This means that if the names of fields defined
+        by a subclass change—including if fields are added or removed—the result will
+        differ.
+
         Returns
         -------
         str
-            If `length` is non-zero, a string of this length; otherwise a 32-character
-            string from :meth:`.blake2s.hexdigest`.
+            If `length` is greater than 0, a string of this length; otherwise a
+            32-character string from :meth:`.blake2s.hexdigest`.
         """
         # - Dump the dataclass instance to nested, sorted tuples. This is used instead
         #   of dataclass.astuple() which allows e.g. units to pass as a (possibly
@@ -371,8 +376,6 @@ class Config:
         :attr:`scenario_info`, and/or :attr:`url` settings.
         """
         from click import BadOptionUsage
-
-        from .ixmp import parse_url
 
         self.verbose = verbose
 

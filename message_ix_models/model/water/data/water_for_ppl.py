@@ -13,7 +13,6 @@ from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
-    minimum_version,
     package_data_path,
     same_node,
 )
@@ -334,7 +333,6 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
 
 
 # water & electricity for cooling technologies
-@minimum_version("message_ix 3.7")
 def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and

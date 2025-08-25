@@ -2,7 +2,6 @@
 
 import logging
 import re
-from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +11,6 @@ from iam_units import registry
 from ixmp.testing import assert_logs
 from message_ix import Scenario, make_df
 from message_ix.testing import make_dantzig
-from packaging.version import parse
 from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
@@ -25,7 +23,6 @@ from message_ix_models.util import (
     convert_units,
     copy_column,
     ffill,
-    iter_parameters,
     load_package_data,
     load_private_data,
     local_data_path,
@@ -210,19 +207,6 @@ def test_ffill():
         ffill(df, "value", [])
 
     # TODO test some specific values
-
-
-@pytest.mark.skipif(
-    parse(version("ixmp")) > parse("3.7.0"), reason="Not used with ixmp > 3.7.0"
-)
-def test_iter_parameters(test_context):
-    """Parameters indexed by set 'node' can be retrieved."""
-    result = list(iter_parameters("node"))
-    assert result[0] == "abs_cost_activity_soft_lo"
-    assert result[-1] == "var_cost"
-    # The length of this list depends on message_ix. Changes in message_ix may increase
-    # the number of parameters, so use <= to future-proof. See the method comments.
-    assert 99 <= len(result)
 
 
 @pytest.mark.parametrize("path", _actual_package_data.rglob("*.yaml"))

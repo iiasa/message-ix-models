@@ -15,12 +15,14 @@ from message_ix_models.model.transport.testing import (
     make_mark,
     simulated_solution,
 )
-from message_ix_models.report import prepare_reporter, sim
+from message_ix_models.report import prepare_reporter
 from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
     import message_ix
     from genno.types import KeyLike
+
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -171,7 +173,9 @@ def test_bare(request, test_context, tmp_path, regions, years):
         False,  # Use data from an Excel export
     ),
 )
-def test_simulated(request, test_context, build, regions="R12", years="B"):
+def test_simulated(
+    request, test_context: "Context", build: bool, regions="R12", years="B"
+) -> None:
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context, build)
@@ -200,7 +204,7 @@ def test_simulated(request, test_context, build, regions="R12", years="B"):
     assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
-@sim.to_simulate.minimum_version
+@build.get_computer.minimum_version
 @MARK[10]
 @make_mark["gh"](328)
 def test_simulated_iamc(

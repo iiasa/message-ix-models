@@ -4,11 +4,11 @@ from typing import Optional, Union
 
 import ixmp
 import pandas as pd
+from ixmp.util import maybe_check_out, maybe_commit
 from message_ix import Scenario
 from sdmx.model.v21 import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
-from message_ix_models.util.ixmp import maybe_check_out, maybe_commit
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
 log = logging.getLogger(__name__)

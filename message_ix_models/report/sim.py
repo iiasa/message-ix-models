@@ -13,13 +13,12 @@ import genno
 import pandas as pd
 from dask.core import quote
 from genno import Key, KeyExistsError
+from ixmp.report.common import RENAME_DIMS
 from message_ix import Reporter
 from pandas.api.types import is_scalar
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time, silence_log
-from message_ix_models.util.ixmp import rename_dims
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
@@ -99,10 +98,9 @@ class MockScenario:
 
 def dims_of(info: "Item") -> dict[str, str]:
     """Return a mapping from the full index names to short dimension IDs of `info`."""
-    return {d: rename_dims().get(d, d) for d in (info.dims or info.coords or [])}
+    return {d: RENAME_DIMS.get(d, d) for d in (info.dims or info.coords or [])}
 
 
-@minimum_version("message_ix 3.7.0.post0")
 @lru_cache(1)
 def to_simulate():
     """Return items to be included in a simulated solution."""
@@ -126,8 +124,6 @@ def reporter_from_excel(path: "Path") -> "Reporter":
     """
     import pandas as pd
 
-    from message_ix_models.util.ixmp import rename_dims
-
     rep = Reporter()
     info = rep.graph["scenario info"] = ScenarioInfo(model="m", scenario="s")
     ef = rep.graph["_file"] = pd.ExcelFile(path)
@@ -135,7 +131,7 @@ def reporter_from_excel(path: "Path") -> "Reporter":
 
     # Add tasks to retrieve sets from file
     for set_name in mock.set_list():
-        key = rename_dims().get(set_name, set_name)
+        key = RENAME_DIMS.get(set_name, set_name)
         rep.add(key, partial(mock.set, set_name))
 
     # Add tasks to retrieve parameter data from file
@@ -146,7 +142,7 @@ def reporter_from_excel(path: "Path") -> "Reporter":
 
     # Pre-populate some sets of `info`
     for name in "commodity", "node", "year":
-        info.set[name] = rep.get(rename_dims()[name])
+        info.set[name] = rep.get(RENAME_DIMS[name])
 
     return rep
 
@@ -189,7 +185,7 @@ def simulate_qty(
         df = pd.DataFrame(**args)
     else:
         # Provided complete data frame
-        df = item_data.rename(columns=rename_dims())
+        df = item_data.rename(columns=RENAME_DIMS)
 
     # Data must be entirely empty, or complete
     assert not df.isna().any().any() or df.isna().all().all(), data
@@ -236,7 +232,6 @@ def data_from_file(path: Path, *, name: str, dims: Sequence[str]) -> "AnyQuantit
         return genno.Quantity(tmp["value"], name=name)
 
 
-@minimum_version("message_ix 3.6")
 def add_simulated_solution(
     rep: Reporter,
     info: ScenarioInfo,
@@ -291,7 +286,7 @@ def add_simulated_solution(
 
         if item_info.type == ItemType.SET and name not in rep:
             # Add the set elements from `info`
-            rep.add(rename_dims().get(name, name), quote(info.set[name]))
+            rep.add(RENAME_DIMS.get(name, name), quote(info.set[name]))
         elif item_info.type in (ItemType.PAR, ItemType.VAR):
             # Retrieve an existing key for `name`
             try:

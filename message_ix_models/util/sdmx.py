@@ -17,11 +17,11 @@ import sdmx.message
 import sdmx.urn
 from genno import Key
 from iam_units import registry
+from ixmp.report.common import RENAME_DIMS
 from sdmx.model import common, v21
 
 from .common import package_data_path
 from .context import Context
-from .ixmp import rename_dims
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -379,7 +379,7 @@ class Dataflow:
                 return ()
 
         # Use standard RENAME_DIMS from ixmp config
-        dims = rename_dims().copy()
+        dims = RENAME_DIMS.copy()
         values = set(dims.values())
         dims.update({d: d for d in self.key.dims if d not in values})
 
@@ -609,7 +609,7 @@ Each concept in the concept scheme has:
     )
 
     # Add concepts for MESSAGE sets/dimensions
-    for k, v in rename_dims().items():
+    for k, v in RENAME_DIMS.items():
         # Retrieve or create the Concept for the set (e.g. "year" for k="year_act")
         set_name = k.split("_")[0]
         concept = cs.setdefault(

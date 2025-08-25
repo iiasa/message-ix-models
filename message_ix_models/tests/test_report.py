@@ -11,7 +11,7 @@ from ixmp.testing import assert_logs
 
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report import prepare_reporter, register, report, util
-from message_ix_models.report.sim import add_simulated_solution, to_simulate
+from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.util import package_data_path
 
 # Minimal reporting configuration for testing
@@ -47,7 +47,6 @@ def test_register(caplog) -> None:
         register(_cb)
 
 
-@prepare_reporter.minimum_version
 def test_report_bare_res(request, tmp_path, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     scenario = testing.bare_res(request, test_context, solved=True)
@@ -65,7 +64,6 @@ def test_report_bare_res(request, tmp_path, test_context):
     report(test_context)
 
 
-@prepare_reporter.minimum_version
 def test_report_deprecated(caplog, request, tmp_path, test_context):
     # Create a target scenario
     scenario = testing.bare_res(request, test_context, solved=False)
@@ -149,7 +147,6 @@ INV_COST_CONFIG = dict(
 )
 
 
-@prepare_reporter.minimum_version
 @pytest.mark.parametrize("regions", ["R11"])
 def test_apply_units(request, test_context, regions):
     test_context.regions = regions
@@ -276,7 +273,6 @@ def simulated_solution_reporter():
     return rep
 
 
-@to_simulate.minimum_version
 def test_add_simulated_solution(test_context, test_data_path):
     # Simulated solution can be added to an empty Reporter
     rep = simulated_solution_reporter()
@@ -304,7 +300,6 @@ def test_add_simulated_solution(test_context, test_data_path):
     assert np.isclose(79.76478, value.item())
 
 
-@to_simulate.minimum_version
 def test_prepare_reporter(test_context):
     rep = simulated_solution_reporter()
     N = len(rep.graph)
