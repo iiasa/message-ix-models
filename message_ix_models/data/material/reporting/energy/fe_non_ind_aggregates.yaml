@@ -1,0 +1,115 @@
+level_3:
+  Final Energy:
+    components: [  ]
+    short: missing
+
+level_2:
+  Final Energy|Electricity:
+    components: [ ]
+    short: missing
+  Final Energy|Solar:
+    components: [ ]
+    short: missing
+  Final Energy|Solids:
+    components: [ ]
+    short: missing
+
+  Final Energy|Solids|Biomass:
+    components: [ ]
+    short: missing
+  Final Energy|Solids|Biomass|Traditional:
+    components: [ ]
+    short: missing
+  Final Energy|Solids|Coal:
+    components: [ ]
+    short: missing
+
+  Final Energy|Bunkers:
+    components: [  ]
+    short: missing
+  Final Energy|Residential and Commercial:
+    components: [ ]
+    short: missing
+  Final Energy|Transportation:
+    components: [ ]
+    short: missing
+  Final Energy|Transportation (w/ bunkers):
+    components: [ ]
+    short: missing
+  Final Energy|Transportation (w/ bunkers)|Gases:
+    components: [ ]
+    short: missing
+  Final Energy|Transportation (w/ bunkers)|Liquids:
+    components: [ ]
+    short: missing
+
+  Final Energy|Residential and Commercial|Solids:
+    components: [ ]
+    short: missing
+
+  Final Energy|Carbon Management:
+    components: [ fe_dac ]
+    short: missing
+
+  Final Energy|Bunkers|Liquids:
+    components: [ fe_bunk_meth, fe_bunk_eth, fe_bunk_lgas, fe_bunk_loil, fe_bunk_foil, fe_bunk_other ]
+    short: fe_bunk_oil
+
+level_1:
+  Final Energy|Bunkers|Liquids|Oil:
+    components: [ fe_bunk_loil, fe_bunk_foil ]
+    short: fe_bunk_oil
+
+  Final Energy|Carbon Management|Direct Air Capture:
+    components: [ fe_dac_gas, fe_dac_elec ]
+    short: fe_dac
+
+  Final Energy|Electricity|Solar:
+    components: [  ]
+    short: missing
+  Final Energy|Gases:
+    components: [  ]
+    short: missing
+  Final Energy|Heat:
+    components: [  ]
+    short: missing
+  Final Energy|Hydrogen:
+    components: [  ]
+    short: missing
+  Final Energy|Liquids:
+    components: [  ]
+    short: missing
+  Final Energy|Liquids|Biomass:
+    components: [  ]
+    short: missing
+  Final Energy|Liquids|Coal:
+    components: [  ]
+    short: missing
+  Final Energy|Liquids|Gas:
+    components: [  ]
+    short: missing
+  Final Energy|Liquids|Oil:
+    components: [  ]
+    short: missing
+
+  Final Energy|Residential and Commercial|Electricity:
+    components: [ fe_rc_elec_rc, fe_rc_elec_hp, fe_rc_elec_sp, fe_rc_elec_pv ]
+    short: missing
+  Final Energy|Residential and Commercial|Hydrogen:
+    components: [ fe_rc_h2_ic, fe_rc_h2_fc ]
+    short: fe_rc_h2
+  Final Energy|Residential and Commercial|Liquids:
+    components: [ fe_rc_oil, fe_rc_eth, fe_rc_meth ]
+  Final Energy|Residential and Commercial|Liquids|Oil:
+    components: [ fe_rc_foil, fe_rc_loil ]
+    short: fe_rc_oil
+  Final Energy|Residential and Commercial|Solids|Biomass:
+    components: [ fe_rc_bio_nc, fe_rc_bio_rc ]
+    short: fe_rc_bio
+
+  Final Energy|Transportation|Liquids:
+    components: [ fe_trp_oil, fe_trp_eth_fc, fe_trp_eth_ic ]
+    short: fe_trp_liq
+  Final Energy|Transportation|Liquids|Oil:
+    components: [ fe_trp_loil, fe_trp_foil ]
+    short: fe_trp_oil
