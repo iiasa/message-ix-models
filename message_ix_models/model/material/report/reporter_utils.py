@@ -797,15 +797,15 @@ def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str):
     k2 = rep.add(
         f"{name}_tot_rel:nl-ya", "div", k1.drop("yv", "m"), in_gas.drop("t", "c")
     )
-    k3 = rep.add(
-        f"{name}:nl-t-ya-m", "mul", in_gas.drop("c"), k2
-    )
+    k3 = rep.add(f"{name}:nl-t-ya-m", "mul", in_gas.drop("c"), k2)
     k4 = rep.add(k3.append("c"), "expand_dims", k3, {"c": [name]})
     return k4
 
 
 def pe_gas(rep: "Reporter"):
     final = [
+        "gas_t_d",
+        "gas_t_d_ch4",
         "gas_i",
         "gas_rc",
         "gas_trp",
@@ -834,6 +834,8 @@ def pe_gas(rep: "Reporter"):
         "h2_smr_ccs",
     ]
     h2_tecs = [
+        "gas_t_d",
+        "gas_t_d_ch4",
         "gas_rc",
         "gas_ppl",
         "gas_cc",
@@ -848,7 +850,17 @@ def pe_gas(rep: "Reporter"):
     k5 = rep.add(k["gas_excl_biogas"], "sub", k2, k_bio.drop("c"))
     k51 = rep.add(k["gas_excl_biogas_h2"], "sub", k5, k_h2.drop("c"))
     k6 = rep.add(k["pe+gas"], "concat", k_bio, k_h2, k51)
-    k7 = rep.add("emi:nl-t-ya-m-c:gas", "mul", k51.drop("c"), Quantity(0.482))
+    return k51
+
+
+def co2(rep: "Reporter"):
+    k = pe_gas(rep)
+    k1 = rep.add("emi:nl-t-ya-m:gas", "mul", k.drop("c"), Quantity(0.482))
+    k2 = Key("rel:r-nl-t-ya-m")
+    k3 = rep.add(k2["gas_co2"], "expand_dims", k1, {"r": ["CO2_gas"]})
+    gas_tecs = rep.get(k).index.get_level_values("t").unique()
+    k4 = rep.add(k2["excl_gas_tecs"], "select", k2, {"t": gas_tecs}, inverse=True)
+    rep.add("rel:r-nl-t-ya-m:emi_factors", "concat", k3, k4)
     return
 
 
@@ -863,5 +875,5 @@ if __name__ == "__main__":
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     prepare_reporter(ctx, reporter=rep)
-    pe_gas(rep)
+    co2(rep)
     print()
