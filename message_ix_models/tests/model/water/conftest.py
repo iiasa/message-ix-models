@@ -6,6 +6,36 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util import package_data_path
+
+
+def setup_valid_basins(context, regions="R12"):
+    """Set up valid_basins attribute for test contexts.
+
+    This helper function ensures that test contexts have the valid_basins
+    attribute that is normally set by the map_basin() function during
+    model building. This is required for basin filtering functionality.
+
+    Parameters
+    ----------
+    context : Context
+        Test context object that needs valid_basins attribute
+    regions : str, default "R12"
+        Region code for basin delineation file
+    """
+    from message_ix_models.model.water.utils import filter_basins_by_region
+
+    basin_file = f"basins_by_region_simpl_{regions}.csv"
+    basin_path = package_data_path("water", "delineation", basin_file)
+    df_basins = pd.read_csv(basin_path)
+
+    # Apply basin filtering if enabled
+    df_filtered = filter_basins_by_region(df_basins, context)
+
+    # Set valid_basins as set of basin names
+    context.valid_basins = set(df_filtered["BCU_name"].astype(str))
+
+    return context
 
 
 @pytest.fixture
@@ -35,6 +65,9 @@ def water_context(test_context, request):
         nodes = get_codes(f"node/{test_context.regions}")
         nodes = list(map(str, nodes[nodes.index("World")].child))
         test_context.map_ISO_c = {test_context.regions: nodes[0]}
+
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     return test_context
 
