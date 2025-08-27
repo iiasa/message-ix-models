@@ -44,7 +44,7 @@ clone_and_update(trade_dict=trade_parameters,
                  update_scenario_name = 'pipelines_LNG')
 
 # Update scenario: no cost on flow technology
-trade_parameters_novar = trade_parameters.copy()
+trade_parameters_novar = pd.read_pickle(tdf)
 del trade_parameters_novar['LNG_shipped']['flow']['var_cost']
 del trade_parameters_novar['LNG_shipped']['flow']['inv_cost']
 
@@ -57,7 +57,7 @@ clone_and_update(trade_dict=trade_parameters_novar,
                  update_scenario_name = 'LNG_noFLcost')
 
 # Update scenario: no fixed cost on trade for LNG 
-trade_parameters_nofix = trade_parameters.copy()
+trade_parameters_nofix = pd.read_pickle(tdf)
 del trade_parameters_nofix['LNG_shipped']['trade']['fix_cost']
 
 clone_and_update(trade_dict=trade_parameters_nofix,
