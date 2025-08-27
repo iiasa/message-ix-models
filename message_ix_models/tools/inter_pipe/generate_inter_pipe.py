@@ -2,13 +2,11 @@ import logging
 import sys
 from pathlib import Path
 
-import ixmp
+import message_ix
 import pandas as pd
 import yaml
 
 from message_ix_models.util import package_data_path
-
-mp = ixmp.Platform()
 
 
 # Get logger
@@ -130,18 +128,19 @@ def broadcast_yl(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
 
 
 # Main function to generate bare sheets
+# ruff: noqa: C901
 def inter_pipe_bare(
-    base_scen,
+    base_scen: "message_ix.Scenario",
     # target_model: str,
     # target_scen: str,
-    config_name: str = None,
+    config_name: str | None = None,
 ):
     """
     Generate bare sheets to collect (minimum) parameters for pipe
     technologies and pipe supply technologies.
 
     Args:
-        base_scen: The base scenario object to work with
+        base_scen: The base scenario object to start from
         config_name (str, optional): Name of the config file.
             If None, uses default config from data/inter_pipe/config.yaml
     """
@@ -470,14 +469,19 @@ def inter_pipe_bare(
                 "has been generated. Fill in the specific pairs first and run again."
             )
     elif spec_tech_pipe_group == "False":
-        pass  
-    # TODO: adding general function, group all pipe technologies to inter, 
+        # Skip relation_tech_group processing when spec_tech_pipe_group is False
+        pass
+    # TODO: adding general function, group all pipe technologies to inter,
     # linking inter to pipe supply techs
     else:
         raise Exception("Please use True or False.")
-    df = relation_tech_group.copy()
-    set_tech.extend(df["technology"].unique())
-    set_relation.extend(df["relation"].unique())
+
+    # Only process relation_tech_group if it was defined
+    # (i.e., when spec_tech_pipe_group == "True")
+    if spec_tech_pipe_group == "True":
+        df = relation_tech_group.copy()
+        set_tech.extend(df["technology"].unique())
+        set_relation.extend(df["relation"].unique())
 
     # Generate pipe supply technology: name techs and levels
     node_name_base = base.set("node")
@@ -599,9 +603,13 @@ def inter_pipe_bare(
         # linking inter to pipe supply techs
     else:
         raise Exception("Please use True or False.")
-    df = relation_tech_group.copy()
-    set_tech.extend(df["technology"].unique())
-    set_relation.extend(df["relation"].unique())
+
+    # Only process relation_tech_group if it was defined
+    # (i.e., when spec_supply_pipe_group == "True")
+    if spec_supply_pipe_group == "True":
+        df = relation_tech_group.copy()
+        set_tech.extend(df["technology"].unique())
+        set_relation.extend(df["relation"].unique())
 
     # Generate technology set sheet (no need to edit)
     technology = list(set(set_tech))
@@ -637,19 +645,16 @@ def inter_pipe_bare(
     # return csv_files
 
 
+# ruff: noqa: C901
 def inter_pipe_build(
-    base_scen,
-    target_model: str,
-    target_scen: str,
-    config_name: str = None,
+    scen: "message_ix.Scenario",
+    config_name: str | None = None,
 ):
     """
     Read the input csv files and build the pipe tech sets and parameters.
 
     Args:
-        base_scen: The base scenario object to work with
-        target_model (str): Name of the target model
-        target_scen (str): Name of the target scenario
+        scen: The target scenario object to build inter_pipe on
         config_name (str, optional): Name of the config file.
             If None, uses default config from data/inter_pipe/config.yaml
     """
@@ -745,15 +750,6 @@ def inter_pipe_build(
             data_dict[key_name_lower] = df.copy()
         else:
             pass
-
-    # Use the provided base scenario
-    base = base_scen
-    log.info("Using provided base scenario.")
-
-    # Clone scenario using provided target model and scenario names
-    scen = base.clone(target_model, target_scen, keep_solution=False)
-    scen.set_as_default()
-    log.info(f"Scenario cloned to: {target_model}/{target_scen}")
 
     # Add set and parameter
     with scen.transact("Added"):

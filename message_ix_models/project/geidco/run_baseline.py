@@ -26,9 +26,13 @@ base_scen = message_ix.Scenario(mp, start_model, start_scen)
 # Generate bare sheets for pipe technologies and pipe supply technologies
 inter_pipe_bare(base_scen)
 
+# Clone the scenario
+tar_scen = base_scen.clone(target_model, target_scen, keep_solution=False)
+tar_scen.set_as_default()
+
 # Building inter pipes on the scenario (scenario info set in Config)
 scen = inter_pipe_build(
-    base_scen, target_model, target_scen, config_name="config.yaml"
+    tar_scen, config_name="config.yaml"
 )  # backup of /data/inter_pipe stored at IIASA sharepoint
 
 # Add additional constraints on total capacity
