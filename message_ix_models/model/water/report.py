@@ -500,7 +500,7 @@ def compute_cooling_technologies(
 
     # Fresh water return flow emissions
     fresh_return_emissions = report_iam.filter(
-        variable="emis|water_consumption|fresh_return|*|*"
+        variable="emis|fresh_return|*"
     ).variable
 
     # Cooling investments
