@@ -28,7 +28,7 @@ env:
     [
       "SSP2",
       "DIGSY-BEST",
-      "DIGSY-WORST",
+      "DIGSY-WORST"
     ]
 
   # Currently disabled:
