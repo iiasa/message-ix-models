@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Generator
 
 import pytest
 import yaml
@@ -16,7 +17,7 @@ from message_ix_models.tools.inter_pipe import inter_pipe_bare, inter_pipe_build
 
 
 @pytest.fixture
-def test_config_file():
+def test_config_file() -> Generator[Path, None, None]:
     """Generate a test config file for inter_pipe testing in the data directory."""
     config_data = {
         "scenario": {
@@ -70,7 +71,9 @@ def test_config_file():
 
 
 @pytest.fixture
-def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scenario":
+def scenario(
+    request: "pytest.FixtureRequest", test_context: "Context"
+) -> Generator["Scenario", None, None]:
     # Code only functions with R12
     test_context.model.regions = "R12"
     s = testing.bare_res(request, test_context, solved=False)
@@ -135,7 +138,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         value=30,
         unit="y",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y)
-    
+
     s.add_par("technical_lifetime", technical_lifetime_df)
 
     # Investment cost
@@ -145,7 +148,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         value=1500.0,
         unit="USD/GWa",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y)
-    
+
     s.add_par("inv_cost", inv_cost_df_elec)
 
     # Fixed cost
@@ -157,7 +160,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         mode="M1",
         time="year",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
-    
+
     s.add_par("fix_cost", fix_cost_df)
 
     # Variable cost
@@ -169,7 +172,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         mode="M1",
         time="year",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
-    
+
     s.add_par("var_cost", var_cost_df)
 
     # Capacity factor
@@ -181,7 +184,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         mode="M1",
         time="year",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
-    
+
     s.add_par("capacity_factor", capacity_factor_df)
 
     # Add solar_res1 technology
@@ -200,10 +203,10 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         value=1.0,
         unit="GWa",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
-    
+
     # Add node_dest column (same as node_loc for output)
     output_df_solar["node_dest"] = output_df_solar["node_loc"]
-    
+
     s.add_par("output", output_df_solar)
 
     # Technical lifetime for solar_res1
@@ -213,7 +216,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         value=25,
         unit="y",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y)
-    
+
     s.add_par("technical_lifetime", technical_lifetime_df_solar)
 
     # Fixed cost for solar_res1
@@ -225,7 +228,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         mode="M1",
         time="year",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
-    
+
     s.add_par("fix_cost", fix_cost_df_solar)
 
     # Variable cost for solar_res1
@@ -237,7 +240,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         mode="M1",
         time="year",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
-    
+
     s.add_par("var_cost", var_cost_df_solar)
 
     # Capacity factor for solar_res1
@@ -249,7 +252,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
         mode="M1",
         time="year",
     ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
-    
+
     s.add_par("capacity_factor", capacity_factor_df_solar)
 
     # Add inv_cost parameter for solar_res1
