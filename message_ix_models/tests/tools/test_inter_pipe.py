@@ -127,8 +127,130 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
 
     s.add_par("output", output_df)
 
+    # Add missing parameters for the dummy pipe technology
+    # Technical lifetime
+    technical_lifetime_df = make_df(
+        "technical_lifetime",
+        technology="elec_t_d",
+        value=30,
+        unit="y",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y)
+    
+    s.add_par("technical_lifetime", technical_lifetime_df)
+
+    # Investment cost
+    inv_cost_df_elec = make_df(
+        "inv_cost",
+        technology="elec_t_d",
+        value=1500.0,
+        unit="USD/GWa",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y)
+    
+    s.add_par("inv_cost", inv_cost_df_elec)
+
+    # Fixed cost
+    fix_cost_df = make_df(
+        "fix_cost",
+        technology="elec_t_d",
+        value=50.0,
+        unit="USD/GWa",
+        mode="M1",
+        time="year",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
+    
+    s.add_par("fix_cost", fix_cost_df)
+
+    # Variable cost
+    var_cost_df = make_df(
+        "var_cost",
+        technology="elec_t_d",
+        value=10.0,
+        unit="USD/GWa",
+        mode="M1",
+        time="year",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
+    
+    s.add_par("var_cost", var_cost_df)
+
+    # Capacity factor
+    capacity_factor_df = make_df(
+        "capacity_factor",
+        technology="elec_t_d",
+        value=0.85,
+        unit="%",
+        mode="M1",
+        time="year",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
+    
+    s.add_par("capacity_factor", capacity_factor_df)
+
     # Add solar_res1 technology
     s.add_set("technology", ["solar_res1"])
+
+    # Add missing parameters for dummy pipe supply technology, e.g., solar_res1
+    # Output parameter for solar_res1
+    output_df_solar = make_df(
+        "output",
+        technology="solar_res1",
+        commodity="electr",
+        level="final",
+        mode="M1",
+        time="year",
+        time_dest="year",
+        value=1.0,
+        unit="GWa",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
+    
+    # Add node_dest column (same as node_loc for output)
+    output_df_solar["node_dest"] = output_df_solar["node_loc"]
+    
+    s.add_par("output", output_df_solar)
+
+    # Technical lifetime for solar_res1
+    technical_lifetime_df_solar = make_df(
+        "technical_lifetime",
+        technology="solar_res1",
+        value=25,
+        unit="y",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y)
+    
+    s.add_par("technical_lifetime", technical_lifetime_df_solar)
+
+    # Fixed cost for solar_res1
+    fix_cost_df_solar = make_df(
+        "fix_cost",
+        technology="solar_res1",
+        value=30.0,
+        unit="USD/GWa",
+        mode="M1",
+        time="year",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
+    
+    s.add_par("fix_cost", fix_cost_df_solar)
+
+    # Variable cost for solar_res1
+    var_cost_df_solar = make_df(
+        "var_cost",
+        technology="solar_res1",
+        value=5.0,
+        unit="USD/GWa",
+        mode="M1",
+        time="year",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
+    
+    s.add_par("var_cost", var_cost_df_solar)
+
+    # Capacity factor for solar_res1
+    capacity_factor_df_solar = make_df(
+        "capacity_factor",
+        technology="solar_res1",
+        value=0.25,
+        unit="%",
+        mode="M1",
+        time="year",
+    ).pipe(broadcast, node_loc=info.N, year_vtg=info.Y, year_act=info.Y)
+    
+    s.add_par("capacity_factor", capacity_factor_df_solar)
 
     # Add inv_cost parameter for solar_res1
     # Investment cost for solar_res1 with value 1000 USD/kW
@@ -199,8 +321,6 @@ def test_inter_pipe_build_with_test_config(test_config_file, scenario):
         # target_model, target_scen, config_name
         inter_pipe_build(
             scenario,
-            "test_target_model",
-            "test_target_scenario",
             config_name=str(test_config_file),
         )
         print(f"inter_pipe_build function executed with {test_config_file}")
