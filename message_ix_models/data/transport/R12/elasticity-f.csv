@@ -3,42 +3,42 @@
 # Units: dimensionless
 #
 scenario,    node,     year, value
-LED,         R12_AFR,2020,1.0000
-LED,         R12_AFR,2030,1.0000
-LED,         R12_AFR,2110,1.0000
-LED,         R12_CHN,2020,1.0000
-LED,         R12_CHN,2030,0.8000
-LED,         R12_CHN,2110,0.5000
-LED,         R12_EEU,2020,1.0000
-LED,         R12_EEU,2030,0.8000
-LED,         R12_EEU,2110,0.8000
-LED,         R12_FSU,2020,1.0000
-LED,         R12_FSU,2030,0.4800
-LED,         R12_FSU,2110,0.4800
-LED,         R12_LAM,2020,1.0000
-LED,         R12_LAM,2030,1.0000
-LED,         R12_LAM,2110,1.0000
-LED,         R12_MEA,2020,1.0000
-LED,         R12_MEA,2030,1.0000
-LED,         R12_MEA,2110,1.0000
-LED,         R12_NAM,2020,1.0000
-LED,         R12_NAM,2030,0.4300
-LED,         R12_NAM,2110,0.4300
-LED,         R12_PAO,2020,1.0000
-LED,         R12_PAO,2030,0.8000
-LED,         R12_PAO,2110,0.8000
-LED,         R12_PAS,2020,1.0000
-LED,         R12_PAS,2030,1.0000
-LED,         R12_PAS,2110,0.6000
-LED,         R12_RCPA,2020,1.0000
-LED,         R12_RCPA,2030,1.0000
-LED,         R12_RCPA,2110,1.0000
-LED,         R12_SAS,2020,1.0000
-LED,         R12_SAS,2030,1.0000
-LED,         R12_SAS,2110,1.0000
-LED,         R12_WEU,2020,1.0000
-LED,         R12_WEU,2030,0.8000
-LED,         R12_WEU,2110,0.8000
+LED,         R12_AFR,2020,1
+LED,         R12_AFR,2030,1
+LED,         R12_AFR,2110,1
+LED,         R12_CHN,2020,1
+LED,         R12_CHN,2030,0.8
+LED,         R12_CHN,2110,0.5
+LED,         R12_EEU,2020,1
+LED,         R12_EEU,2030,0.8
+LED,         R12_EEU,2110,0.8
+LED,         R12_FSU,2020,1
+LED,         R12_FSU,2030,0.48
+LED,         R12_FSU,2110,0.48
+LED,         R12_LAM,2020,1
+LED,         R12_LAM,2030,1
+LED,         R12_LAM,2110,1
+LED,         R12_MEA,2020,1
+LED,         R12_MEA,2030,1
+LED,         R12_MEA,2110,1
+LED,         R12_NAM,2020,1
+LED,         R12_NAM,2030,0.43
+LED,         R12_NAM,2110,0.43
+LED,         R12_PAO,2020,1
+LED,         R12_PAO,2030,0.8
+LED,         R12_PAO,2110,0.8
+LED,         R12_PAS,2020,1
+LED,         R12_PAS,2030,1
+LED,         R12_PAS,2110,0.6
+LED,         R12_RCPA,2020,1
+LED,         R12_RCPA,2030,1
+LED,         R12_RCPA,2110,1
+LED,         R12_SAS,2020,1
+LED,         R12_SAS,2030,1
+LED,         R12_SAS,2110,1
+LED,         R12_WEU,2020,1
+LED,         R12_WEU,2030,0.8
+LED,         R12_WEU,2110,0.8
 
 SSP(2024).1,         R12_AFR,2020,1
 SSP(2024).1,         R12_AFR,2030,1
@@ -76,7 +76,7 @@ SSP(2024).1,         R12_SAS,2110,0.6
 SSP(2024).1,         R12_WEU,2020,1
 SSP(2024).1,         R12_WEU,2030,0.8
 SSP(2024).1,         R12_WEU,2110,0.48
-,,,
+
 SSP(2024).2,         R12_AFR,2020,1
 SSP(2024).2,         R12_AFR,2030,1
 SSP(2024).2,         R12_AFR,2110,1
@@ -224,3 +224,4 @@ SSP(2024).5,         R12_SAS,2110,1
 SSP(2024).5,         R12_WEU,2020,1
 SSP(2024).5,         R12_WEU,2030,0.8
 SSP(2024).5,         R12_WEU,2110,0.8
+
