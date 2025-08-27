@@ -80,7 +80,7 @@ def start_creating_input_dataframe(
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         time=sub_time,
                     )
@@ -112,7 +112,7 @@ def start_creating_input_dataframe(
                             get_vintage_and_active_years(
                                 scenario_info,
                                 rows["technical_lifetime_mid"],
-                                same_year_only=use_same_year
+                                same_year_only=use_same_year,
                             ),
                             node_loc=df_node["node"],
                             time=sub_time,
@@ -146,7 +146,7 @@ def start_creating_input_dataframe(
                             get_vintage_and_active_years(
                                 scenario_info,
                                 rows["technical_lifetime_mid"],
-                                same_year_only=use_same_year
+                                same_year_only=use_same_year,
                             ),
                             node_loc=df_node["node"],
                             time=sub_time,
@@ -175,7 +175,7 @@ def start_creating_input_dataframe(
                             get_vintage_and_active_years(
                                 scenario_info,
                                 rows["technical_lifetime_mid"],
-                                same_year_only=use_same_year
+                                same_year_only=use_same_year,
                             ),
                             node_loc=df_node["node"],
                             time=sub_time,
@@ -299,7 +299,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -332,7 +332,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             dist_rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year_dist
+                            same_year_only=use_same_year_dist,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -364,7 +364,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             dist_rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year_dist
+                            same_year_only=use_same_year_dist,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -391,7 +391,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             dist_rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year_dist
+                            same_year_only=use_same_year_dist,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -425,7 +425,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     get_vintage_and_active_years(
                         scenario_info,
                         rows["technical_lifetime_mid"],
-                        same_year_only=use_same_year
+                        same_year_only=use_same_year,
                     ),
                     node_loc=df_node["node"],
                     time=sub_time,
@@ -492,7 +492,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     get_vintage_and_active_years(
                         scenario_info,
                         rows["technical_lifetime_mid"],
-                        same_year_only=use_same_year
+                        same_year_only=use_same_year,
                     ),
                     node_loc=df_node["node"],
                 ),
@@ -529,7 +529,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -556,7 +556,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -584,7 +584,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -610,7 +610,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -632,7 +632,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -685,7 +685,7 @@ def prepare_input_dataframe(
                         scenario_info,
                         # 1 because elec commodities don't have technical lifetime
                         1,
-                        same_year_only=use_same_year
+                        same_year_only=use_same_year,
                     ),
                     time=sub_time,
                 )
@@ -709,7 +709,7 @@ def prepare_input_dataframe(
                         scenario_info,
                         # 1 because elec commodities don't have technical lifetime
                         1,
-                        same_year_only=use_same_year
+                        same_year_only=use_same_year,
                     ),
                     time=sub_time,
                 )
@@ -732,9 +732,7 @@ def prepare_input_dataframe(
                             broadcast,
                             # 1 because elec commodities don't have technical lifetime
                             get_vintage_and_active_years(
-                                scenario_info,
-                                1,
-                                same_year_only=use_same_year
+                                scenario_info, 1, same_year_only=use_same_year
                             ),
                             time=sub_time,
                         ),
@@ -760,9 +758,7 @@ def prepare_input_dataframe(
             ).pipe(
                 broadcast,
                 get_vintage_and_active_years(
-                    scenario_info,
-                    1,
-                    same_year_only=use_same_year
+                    scenario_info, 1, same_year_only=use_same_year
                 ),
                 time=sub_time,
             )
@@ -927,7 +923,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     get_vintage_and_active_years(
                         scenario_info,
                         rows["lifetime_mid"],
-                        same_year_only=use_same_year
+                        same_year_only=use_same_year,
                     ),
                     node_loc=df_node["node"],
                 ),
@@ -949,7 +945,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     get_vintage_and_active_years(
                         scenario_info,
                         rows["lifetime_mid"],
-                        same_year_only=use_same_year
+                        same_year_only=use_same_year,
                     ),
                     node_loc=df_node["node"],
                     time=pd.Series(sub_time),
@@ -1015,9 +1011,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         ).pipe(
             broadcast,
             get_vintage_and_active_years(
-                scenario_info,
-                rows["lifetime_mid"],
-                same_year_only=use_same_year
+                scenario_info, rows["lifetime_mid"], same_year_only=use_same_year
             ),
             time=pd.Series(sub_time),
         )
@@ -1051,9 +1045,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         ).pipe(
             broadcast,
             get_vintage_and_active_years(
-                scenario_info,
-                rows["lifetime_mid"],
-                same_year_only=use_same_year
+                scenario_info, rows["lifetime_mid"], same_year_only=use_same_year
             ),
             time=pd.Series(sub_time),
         )
@@ -1087,7 +1079,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=pd.Series(sub_time),
@@ -1097,7 +1089,6 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                 ),
             ]
         )
-
 
         inp_df.dropna(inplace=True)
 
@@ -1121,7 +1112,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                         get_vintage_and_active_years(
                             scenario_info,
                             rows["lifetime_mid"],
-                            same_year_only=use_same_year
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=pd.Series(sub_time),
