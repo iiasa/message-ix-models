@@ -1,14 +1,23 @@
-from typing import Literal, TYPE_CHECKING
+from typing import Literal
 
+import message_ix
+import numpy as np
 import pandas as pd
 import pint_pandas  # noqa: F401
 from message_ix.util import make_df
 
+# if TYPE_CHECKING:
+from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import read_yaml_file
-from message_ix_models.util import private_data_path, package_data_path, broadcast
-import numpy as np
-if TYPE_CHECKING:
-    from message_ix_models import ScenarioInfo
+from message_ix_models.util import (
+    broadcast,
+    make_io,
+    merge_data,
+    nodes_ex_world,
+    package_data_path,
+    private_data_path,
+    same_node,
+)
 
 
 def read_config() -> dict:
@@ -42,7 +51,9 @@ def get_industry_modifiers(scenario: Literal["BEST", "WORST"]) -> pd.DataFrame:
 
 def extrapolate_modifiers_past_2050(df: pd.DataFrame, s_info: "ScenarioInfo"):
     model_year_past_2050 = [i for i in s_info.Y if i > 2050]
-    df[model_year_past_2050] = np.tile(df[2050].values.reshape(-1, 1), len(model_year_past_2050))
+    df[model_year_past_2050] = np.tile(
+        df[2050].values.reshape(-1, 1), len(model_year_past_2050)
+    )
     return df
 
 
@@ -70,7 +81,7 @@ def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
             .fillna(1)
         )
         par_data_modified["value"] = (
-                par_data_modified["value"] * par_data_modified["value_mod"]
+            par_data_modified["value"] * par_data_modified["value_mod"]
         )
         par_data_modified.drop(columns=["value_mod"], inplace=True)
         par_data_modified.reset_index(inplace=True)
@@ -122,3 +133,130 @@ def read_ict_demand(scenario="DIGSY-BEST") -> pd.DataFrame:
     )
     df = pd.concat([df, post_2050])
     return df
+
+
+def read_ict_v2(
+    digsy_scenario: Literal["BEST", "WORST", "baseline", "BESTEST", "WORSTEST"],
+) -> pd.DataFrame:
+    path = private_data_path("projects", "digsy", "R12_Clean Version v2.xlsx")
+    scen_map = {
+        "baseline": {
+            "Data centre": "Scenario_Weighted_Demand (TWh)",
+            "Telecom Network": "Scenario_Weighted_Demand - Telecom Network [MEAN ratio] (TWh)",
+        },
+        "BEST": {
+            "Data centre": "Lower Bound (TWh)",
+            "Telecom Network": "Lower Bound - Telecom Network [LOW ratio] (TWh)",
+        },
+        "WORST": {
+            "Data centre": "Upper Bound (TWh)",
+            "Telecom Network": "Upper Bound - Telecom Network [HIGH ratio] (TWh)",
+        },
+        "BESTEST": {
+            "Data centre": "Lower Bound (TWh)",
+            "Telecom Network": "Lower Bound - Telecom Network [LOW ratio] (TWh)",
+        },
+        "WORSTEST": {
+            "Data centre": "Upper Bound (TWh)",
+            "Telecom Network": "Upper Bound - Telecom Network [HIGH ratio] (TWh)",
+        },
+    }
+    comm_map = {"Data centre": "data_centre_elec", "Telecom Network": "tele_comm_elec"}
+    df = pd.read_excel(path, sheet_name="R12")
+    df = df.melt(
+        id_vars=["Region", "Year", "Scenario"], var_name="Variable", value_name="Value"
+    )
+    df = df[df["Scenario"].isin(["IEA (Base)", "SSP2"])].drop(columns=["Scenario"])
+    df = df[df["Variable"].isin(scen_map[digsy_scenario].values())]
+    df.set_index(["Region", "Year", "Variable"], inplace=True)
+    df = make_df(
+        "demand",
+        **df["Value"]
+        .astype("pint[TWh]")
+        .pint.to("GWa")
+        .pint.magnitude.to_frame()
+        .assign(unit="GWa")
+        .reset_index()
+        .rename(
+            columns={
+                "Region": "node",
+                "Year": "year",
+                "Value": "value",
+                "Variable": "commodity",
+            }
+        ),
+        level="demand",
+        time="year",
+    )
+    # keep demand constant post 2050
+    post_2050 = (
+        df[df["year"] == df["year"].max()]
+        .assign(year=None)
+        .pipe(broadcast, year=[i for i in [2055, *[i for i in range(2060, 2111, 10)]]])
+    )
+    df = pd.concat([df, post_2050])
+    df["commodity"] = df["commodity"].map(
+        {scen_map[digsy_scenario][k]: comm_map[k] for k in comm_map.keys()}
+    )
+    return df
+
+
+def add_ict_elec_tecs(info: "ScenarioInfo"):
+    common = dict(
+        time="year",
+        time_origin="year",
+        time_dest="year",
+        mode="M1",
+        year_vtg=info.Y,
+        year_act=info.Y,
+    )
+    tec_comm = (
+        ("tele_comm_elec", "tele_comm_elec"),
+        ("data_centre_elec", "data_centre_elec"),
+    )
+    nodes = nodes_ex_world(info.N)
+    pars = []
+    for tec, comm in tec_comm:
+        df1 = make_io(
+            ("electr", "final", "GWa"),
+            (comm, "demand", "GWa"),
+            1,
+            technology=tec,
+            **common,
+        )
+        df1 = {
+            k: df.pipe(broadcast, node_loc=nodes).pipe(same_node)
+            for k, df in df1.items()
+        }
+        pars.append(df1)
+    merge_data(pars[0], pars[1])
+    return pars[0]
+
+
+def adjust_rc_elec(scenario: message_ix.Scenario, ict: pd.DataFrame) -> pd.DataFrame:
+    df = read_rc_elec("scenario", scenario)
+    ict_tot = ict.groupby(["node", "year"]).sum(numeric_only=True)
+    df_adj = (
+        df.set_index([i for i in df.columns if i != "value"])
+        .sub(ict_tot, fill_value=0)
+        .reset_index()
+    )
+    return df_adj
+
+
+def read_rc_elec(
+    source: Literal["scenario", "file"], scenario: message_ix.Scenario
+) -> pd.DataFrame:
+    if source == "scenario":
+        rc_elec = scenario.par("demand", filters={"commodity": "rc_spec"})
+    else:
+        rc = pd.read_csv(
+            "/Users/florianmaczek/PycharmProjects/message_single_country/models/data/demand/rc_sector/rc_demands_v11.csv"
+        )
+        rc_elec = (
+            rc[(rc["commodity"] == "comm_other_uses_electr") & (rc["ssp"] == "SSP2")]
+            .drop(columns=["ssp", "commodity"])
+            .melt(id_vars=["node"], var_name="year", value_name="value")
+        )
+        rc_elec["node"] = "R12_" + rc_elec["node"]
+    return rc_elec
