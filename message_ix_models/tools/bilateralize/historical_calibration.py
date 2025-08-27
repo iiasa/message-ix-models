@@ -516,7 +516,7 @@ def build_historical_price(message_regions = 'R12',
 def build_historical_new_capacity_flow(infile, ship_type,
                                        message_regions = 'R12',
                                        project_name = None, config_name = None,
-                                       lifetime_mileage = 210000):
+                                       annual_mileage = 100000):
     
     # Regions
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
@@ -535,7 +535,7 @@ def build_historical_new_capacity_flow(infile, ship_type,
                                           r, imodf[message_regions])
     
     # Calculate capacity
-    imodf['Capacity (Mt-km)'] = (imodf['Gross Tonnage']/1e6)*lifetime_mileage
+    imodf['Capacity (Mt-km)'] = (imodf['Gross Tonnage']/1e6)*annual_mileage
     
     # Collapse
     imodf['Year of Build (5)'] = round(imodf['Year of Build'].astype(float)/5)*5 # Round year to the nearest 5
