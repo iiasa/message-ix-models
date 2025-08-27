@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Mapping
 from typing import Any
+from functools import partial
 
 import message_ix
 import pandas as pd
@@ -119,12 +120,16 @@ def add_digsy_data(
     log.info("done")
 
 
-def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) -> dict:
+def get_resid_demands(
+    context: "Context", digsy_scenario: str, scenario: message_ix.Scenario
+) -> dict:
     from message_ix_models.project.digsy.data import (
+        add_ict_elec_tecs,
+        adjust_rc_elec,
         apply_industry_modifiers,
         extrapolate_modifiers_past_2050,
         get_industry_modifiers,
-        read_ict_demand,
+        read_ict_v2,
     )
 
     resid_demands = {
@@ -139,9 +144,11 @@ def get_resid_demands(context, digsy_scenario, scenario: message_ix.Scenario) ->
         )
         resid_demands = apply_industry_modifiers(mods, resid_demands)
 
-    ict_demand = read_ict_demand(scenario=digsy_scenario)
+    add_ict_elec_tecs(ScenarioInfo(scenario))
+    ict_demand = read_ict_v2(scenario=digsy_scenario)
+    rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand)
     all_demands = combine_df_dictionaries(
-        resid_demands, {"demand": ict_demand}
+        resid_demands, {"demand": ict_demand}, {"demand": rc_demand_adjusted}
     )
     return all_demands
 
@@ -170,7 +177,8 @@ def build(
 
     # Get the specification and apply to the base scenario
     spec = make_spec(node_suffix)
-    apply_spec(scenario, spec, add_digsy_data, fast=True)  # dry_run=True
+    data_with_digsy = partial(add_digsy_data, digsy_scenario=digsy_scenario)
+    apply_spec(scenario, spec, data_with_digsy, fast=True)  # dry_run=True
 
     add_water_par_data(scenario)
 
@@ -337,12 +345,3 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
         ) from None
 
     return s
-
-
-if __name__ == '__main__':
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform('local2')
-    scen = message_ix.Scenario(mp, 'MESSAGEix-Materials', 'baseline')
-    get_resid_demands({}, "baseline", scen)
