@@ -1126,7 +1126,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         results["output"] = out_df
 
     # putting a lower bound on desalination tecs based on hist capacities
-    df_bound = df_hist[df_hist["year"] == firstyear]
+    df_bound = df_hist[df_hist["year"] == 2025]  # firstyear dataabsent
     bound_lo = make_df(
         "bound_activity_lo",
         node_loc="B" + df_bound["BCU_name"],
