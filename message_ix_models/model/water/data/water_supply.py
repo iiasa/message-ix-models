@@ -11,6 +11,7 @@ from message_ix_models.model.water.utils import (
     KM3_TO_MCM,
     USD_KM3_TO_USD_MCM,
     GWa_KM3_TO_GWa_MCM,
+    filter_basins_by_region,
     get_vintage_and_active_years,
 )
 from message_ix_models.util import (
@@ -42,6 +43,9 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
+        
+        # Filter to only include valid basins
+        df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = package_data_path(
@@ -94,6 +98,9 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
+        
+        # Filter to only include valid basins
+        df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
         df_sw["BCU_name"] = df_x["BCU_name"]
@@ -165,6 +172,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     PATH = package_data_path("water", "delineation", FILE)
 
     df_node = pd.read_csv(PATH)
+    
+    # Apply basin filter to reduce number of basins per region
+    df_node = filter_basins_by_region(df_node, context)
+    
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
@@ -191,6 +202,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
     PATH2 = package_data_path("water", "availability", FILE2)
     df_hist = pd.read_csv(PATH2)
+    
+    # Filter to only include valid basins
+    df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
+    
     df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     if context.nexus_set == "cooling":
