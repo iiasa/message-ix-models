@@ -32,6 +32,10 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
     PATH = package_data_path("water", "delineation", FILE2)
     df_node = pd.read_csv(PATH)
+    
+    # Filter to only include valid basins
+    df_node = df_node[df_node["BCU_name"].isin(context.valid_basins)]
+    
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)

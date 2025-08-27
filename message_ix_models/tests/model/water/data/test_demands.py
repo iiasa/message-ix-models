@@ -8,6 +8,7 @@ from message_ix_models.model.water.data.demands import (
     add_sectoral_demands,
     add_water_availability,
 )
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
 
 @pytest.mark.parametrize(
@@ -45,6 +46,9 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
 
     # FIXME same as above
     test_context["water build info"] = ScenarioInfo(s)
+
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # Call the function to be tested
     result = add_sectoral_demands(context=test_context)
@@ -107,6 +111,9 @@ def test_add_water_availability(test_context, time):
     test_context.RCP = "2p6"
     test_context.REL = "low"
     test_context.time = time
+
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # Run the function to be tested
     result = add_water_availability(context=test_context)
