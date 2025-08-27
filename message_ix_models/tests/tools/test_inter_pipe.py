@@ -85,6 +85,9 @@ def scenario(
     s.add_set("level", ["secondary", "final"])
     s.add_set("mode", ["M1"])
 
+    # Add R12_GLB node for inter-regional pipe technologies
+    s.add_set("node", ["R12_GLB"])  # add temporarily for the test scenario
+
     # Add input parameter for elec_t_d
     # Input: electr at secondary level with value 1.1
     from message_ix import make_df

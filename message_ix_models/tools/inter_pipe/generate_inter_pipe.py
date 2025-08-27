@@ -1,6 +1,7 @@
 import logging
 import sys
 from pathlib import Path
+from typing import Union
 
 import message_ix
 import pandas as pd
@@ -133,7 +134,7 @@ def inter_pipe_bare(
     base_scen: "message_ix.Scenario",
     # target_model: str,
     # target_scen: str,
-    config_name: str | None = None,
+    config_name: Union[str, None] = None,
 ):
     """
     Generate bare sheets to collect (minimum) parameters for pipe
@@ -648,7 +649,7 @@ def inter_pipe_bare(
 # ruff: noqa: C901
 def inter_pipe_build(
     scen: "message_ix.Scenario",
-    config_name: str | None = None,
+    config_name: Union[str, None] = None,
 ):
     """
     Read the input csv files and build the pipe tech sets and parameters.
