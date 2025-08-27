@@ -218,6 +218,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
 
     df_dmds["time"] = "year"
+    
+    # Filter to only include basins that exist after basin filtering
+    df_dmds = df_dmds[df_dmds["node"].isin(context.valid_basins)]
 
     # Write final interpolated values as csv
     # df2_f.to_csv('final_interpolated_values.csv')
@@ -240,6 +243,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         )
         df_m = df_m[["year", "pid", "variable", "value", "month"]]
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
+        
+        # Filter monthly data to only include valid basins
+        df_m = df_m[df_m["node"].isin(context.valid_basins)]
 
         # remove yearly parts from df_dms
         df_dmds = df_dmds[
@@ -769,13 +775,11 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
     df_x = pd.read_csv(PATH)
+    
+    # Filter to only include valid basins
+    df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
 
     if "year" in context.time:
-        # path for reading basin delineation file
-        PATH = package_data_path(
-            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
-        )
-        df_x = pd.read_csv(PATH)
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = package_data_path(
@@ -786,6 +790,14 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         # Read rcp 2.6 data
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter columns to only include valid basins
+        # The columns are years, so we need to filter rows based on the original basin order
+        # First, get the indices of valid basins from the original full list
+        full_basin_df = pd.read_csv(PATH)  # Read full basin list again
+        valid_indices = full_basin_df[full_basin_df["BCU_name"].isin(context.valid_basins)].index
+        df_sw = df_sw.iloc[valid_indices]  # Keep only rows for valid basins
+        df_sw.reset_index(drop=True, inplace=True)
 
         df_sw.index = df_x["BCU_name"].index
         df_sw = df_sw.stack().reset_index()
@@ -811,6 +823,11 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         # Read groundwater data
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter to only include valid basins (same as df_sw)
+        df_gw = df_gw.iloc[valid_indices]  # Use same valid_indices from above
+        df_gw.reset_index(drop=True, inplace=True)
+        
         df_gw.index = df_x["BCU_name"].index
         df_gw = df_gw.stack().reset_index()
         df_gw.columns = pd.Index(["Region", "years", "value"])
@@ -834,6 +851,12 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         )
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter to only include valid basins
+        full_basin_df = pd.read_csv(PATH)  # Read full basin list again
+        valid_indices = full_basin_df[full_basin_df["BCU_name"].isin(context.valid_basins)].index
+        df_sw = df_sw.iloc[valid_indices]
+        df_sw.reset_index(drop=True, inplace=True)
 
         df_sw.index = df_x["BCU_name"].index
         df_sw = df_sw.stack().reset_index()
@@ -857,6 +880,10 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         )
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter to only include valid basins (same as df_sw)
+        df_gw = df_gw.iloc[valid_indices]  # Use same valid_indices from above
+        df_gw.reset_index(drop=True, inplace=True)
 
         df_gw.index = df_x["BCU_name"].index
         df_gw = df_gw.stack().reset_index()

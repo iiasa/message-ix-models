@@ -13,6 +13,7 @@ from message_ix_models.model.water.data.water_for_ppl import (
     cooling_shares_SSP_from_yaml,
     non_cooling_tec,
 )
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
 
 @pytest.mark.usefixtures("ssp_user_data")
@@ -102,13 +103,7 @@ def test_cool_tec(request, test_context, RCP):
     )
 
     # Set up valid_basins for water_for_ppl functions
-    # Read all basins from the basin delineation file to avoid filtering
-    from message_ix_models.util import package_data_path
-
-    basin_file = f"basins_by_region_simpl_{test_context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    test_context.valid_basins = set(df_basins["BCU_name"].astype(str))
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # TODO: only leaving this in so you can see which data you might want to assert to
     # be in the result. Please remove after adapting the assertions below:
@@ -132,8 +127,6 @@ def test_cool_tec(request, test_context, RCP):
     # Assert the results
     assert isinstance(result, dict)
     assert "input" in result
-    result["input"].to_csv("input_result.csv", index=False)
-    result["output"].to_csv("output_result.csv", index=False)
     # Check for NaN values in input DataFrame
     assert not result["input"]["value"].isna().any(), (
         "Input DataFrame contains NaN values"
@@ -149,7 +142,6 @@ def test_cool_tec(request, test_context, RCP):
         f"Output DataFrame contains time values: {output_time_values}. "
     )
     input_duplicates = result["input"].duplicated().sum()
-    print(result["input"].duplicated())
     assert input_duplicates == 0, (
         f"Input DataFrame contains {input_duplicates} duplicate rows"
     )

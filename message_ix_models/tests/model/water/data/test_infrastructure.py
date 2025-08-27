@@ -8,6 +8,7 @@ from message_ix_models.model.water.data.infrastructure import (
     add_desalination,
     add_infrastructure_techs,
 )
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 from message_ix_models.util import package_data_path
 
 
@@ -126,6 +127,9 @@ def water_function_test_data(test_context, request):
 
     test_context.set_scenario(s)
     test_context["water build info"] = ScenarioInfo(s)
+
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # Call appropriate function
     if function_type == "infrastructure":
@@ -341,7 +345,7 @@ def test_water_parameter(water_function_test_data):
     function_type = data["function_type"]
     data["sdg_config"]
     tech_categories = _get_technology_categories()[function_type]
-    
+
     # Check for bound constraints in desalination
     if function_type == "desalination":
         # Check for bound_total_capacity_up
@@ -351,7 +355,7 @@ def test_water_parameter(water_function_test_data):
         assert not result["bound_total_capacity_up"].empty, (
             "desalination: 'bound_total_capacity_up' DataFrame is empty"
         )
-        
+
         # Check for bound_activity_lo
         assert "bound_activity_lo" in result, (
             "desalination: Missing 'bound_activity_lo' constraint"
@@ -359,7 +363,7 @@ def test_water_parameter(water_function_test_data):
         assert not result["bound_activity_lo"].empty, (
             "desalination: 'bound_activity_lo' DataFrame is empty"
         )
-        
+
         # Check if bound_capacity exists (might be expected but missing)
         if "bound_capacity" in result:
             assert not result["bound_capacity"].empty, (
@@ -460,7 +464,8 @@ def test_efficiency_mode_mapping(water_function_test_data):
     """Test that Mf mode represents higher efficiency.
 
     Only tests baseline configuration where both M1 and Mf modes exist.
-    Since output coefficients now reflect efficiency, Mf should have higher output than M1.
+    Since output coefficients now reflect efficiency, Mf should have higher output
+    than M1.
     """
     data = water_function_test_data
     result = data["result"]
@@ -495,7 +500,7 @@ def test_efficiency_mode_mapping(water_function_test_data):
                             "tech": tech,
                             "m1_coeff": m1_coeff,
                             "mf_coeff": mf_coeff,
-                            "issue": "Mf output not higher than M1 (efficiency not reflected)",
+                            "issue": "Mf output not higher than M1",
                         }
                     )
 
@@ -508,4 +513,6 @@ def test_efficiency_mode_mapping(water_function_test_data):
             ]
         )
 
-        assert False, f"Efficiency mapping violations (output coefficients should show Mf > M1):\n{failure_details}\n\n"
+        assert False, (
+            f"Efficiency mapping violations (Mf > M1):\n{failure_details}\n\n"
+        )

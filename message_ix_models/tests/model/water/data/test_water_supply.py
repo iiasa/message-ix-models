@@ -8,6 +8,7 @@ from message_ix_models.model.water.data.water_supply import (
     add_water_supply,
     map_basin_region_wat,
 )
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
 
 def test_map_basin_region_wat(test_context):
@@ -25,14 +26,8 @@ def test_map_basin_region_wat(test_context):
     test_context.RCP = "2p6"
     test_context.REL = "med"
     test_context.time = "year"
-    # Set up valid_basins for water_for_ppl functions
-    # Read all basins from the basin delineation file to avoid filtering
-    from message_ix_models.util import package_data_path
-
-    basin_file = f"basins_by_region_simpl_{test_context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    test_context.valid_basins = set(df_basins["BCU_name"].astype(str))
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     result = map_basin_region_wat(test_context)
 
@@ -60,14 +55,8 @@ def test_add_water_supply(request, test_context):
     test_context.REL = "med"
     test_context.time = "year"
     test_context.nexus_set = "nexus"
-    # Set up valid_basins for water_for_ppl functions
-    # Read all basins from the basin delineation file to avoid filtering
-    from message_ix_models.util import package_data_path
-
-    basin_file = f"basins_by_region_simpl_{test_context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    test_context.valid_basins = set(df_basins["BCU_name"].astype(str))
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     mp = test_context.get_platform()
     scenario_info = {
@@ -146,14 +135,8 @@ def test_add_e_flow(test_context):
     test_context.time = "year"
     test_context.SDG = True
 
-    # Set up valid_basins for water_for_ppl functions
-    # Read all basins from the basin delineation file to avoid filtering
-    from message_ix_models.util import package_data_path
-
-    basin_file = f"basins_by_region_simpl_{test_context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    test_context.valid_basins = set(df_basins["BCU_name"].astype(str))
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # Call the function to be tested
     result = add_e_flow(test_context)
