@@ -621,27 +621,29 @@ def generate_bare_sheets(
             
         parameter_outputs[tec]['flow']['output'] = df_output
 
-    # Create base files for capacity constraint
+    # Create base files for capacity constraints
+    
     for tec in covered_tec:
-        parameter_outputs[tec]['flow']['growth_new_capacity_up'] = parameter_outputs[tec]['flow']['growth_new_capacity_lo'] = df_con = pd.DataFrame()
+        for par in ['growth_new_capacity', 'initial_new_capacity']:
+            parameter_outputs[tec]['flow'][par + '_up'] = parameter_outputs[tec]['flow'][par + '_lo'] = df_con = pd.DataFrame()
         
-        for flow_tec in config_dict['flow_technologies'][tec]:
-            for t in ['lo', 'up']:
-                if config_dict['flow_constraint'][tec] == 'bilateral':
-                    df_con = message_ix.make_df('growth_new_capacity_' + t,
-                                                 node_loc = network_setup[tec]['exporter'],
-                                                 technology = flow_tec + '_' +\
-                                                     network_setup[tec]['importer'].str.lower().str.split('_').str[1],
-                                                 unit = config_dict['flow_units'][tec],
-                                                 **common_years, **common_cols)
-                elif config_dict['flow_constraint'][tec] == 'global':
-                    df_con = message_ix.make_df('growth_new_capacity_' + t,
-                                                 node_loc = network_setup[tec]['exporter'],
-                                                 technology = flow_tec,
-                                                 unit = config_dict['flow_units'][tec],
-                                                 **common_years, **common_cols)
-                parameter_outputs[tec]['flow']['growth_new_capacity_' + t] = pd.concat([parameter_outputs[tec]['flow']['growth_new_capacity_' + t],
-                                                                                        df_con])
+            for flow_tec in config_dict['flow_technologies'][tec]:
+                for t in ['lo', 'up']:
+                    if config_dict['flow_constraint'][tec] == 'bilateral':
+                        df_con = message_ix.make_df(par + '_' + t,
+                                                     node_loc = network_setup[tec]['exporter'],
+                                                     technology = flow_tec + '_' +\
+                                                         network_setup[tec]['importer'].str.lower().str.split('_').str[1],
+                                                     unit = config_dict['flow_units'][tec],
+                                                     **common_years, **common_cols)
+                    elif config_dict['flow_constraint'][tec] == 'global':
+                        df_con = message_ix.make_df(par + '_' + t,
+                                                     node_loc = network_setup[tec]['exporter'],
+                                                     technology = flow_tec,
+                                                     unit = config_dict['flow_units'][tec],
+                                                     **common_years, **common_cols)
+                    parameter_outputs[tec]['flow'][par + '_' + t] = pd.concat([parameter_outputs[tec]['flow'][par + '_' + t],
+                                                                                            df_con])
     # Create base file: costs for flow technology (Fix and Investment)
     for tec in covered_tec:
         parameter_outputs[tec]['flow']['fix_cost'] = parameter_outputs[tec]['flow']['inv_cost'] = df_cost = pd.DataFrame()
