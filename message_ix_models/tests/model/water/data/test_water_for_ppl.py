@@ -7,7 +7,7 @@ from message_ix_models.model.water.data.water_for_ppl import (
     cool_tech,
     non_cooling_tec,
 )
-from message_ix_models.util import package_data_path
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
 
 def _get_test_node(regions: str) -> str:
@@ -19,14 +19,6 @@ def _get_test_node(regions: str) -> str:
     else:
         # Country model - node is the country code itself
         return regions
-
-
-def _setup_valid_basins(context) -> None:
-    """Set up valid_basins from basin delineation file."""
-    basin_file = f"basins_by_region_simpl_{context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    context.valid_basins = set(df_basins["BCU_name"].astype(str))
 
 
 @pytest.mark.usefixtures("ssp_user_data")
@@ -139,7 +131,7 @@ def test_cool_tec(request, water_context, assert_message_params):
     water_context["water build info"] = ScenarioInfo(scenario_obj=s)
 
     # Set up valid_basins for water_for_ppl functions
-    _setup_valid_basins(water_context)
+    setup_valid_basins(water_context, regions=water_context.regions)
 
     result = cool_tech(context=water_context)
 

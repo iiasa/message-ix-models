@@ -123,13 +123,44 @@ _REL = ["low", "med", "high"]
     is_flag=True,
     help="Defines whether the model solves with macro",
 )
+@click.option(
+    "--reduced-basin/--no-reduced-basin",
+    default=False,
+    help="Enable reduced basin filtering",
+)
+@click.option(
+    "--filter-list",
+    multiple=True,
+    help="Specific basins to include (can be used multiple times)",
+)
+@click.option(
+    "--num-basins",
+    type=int,
+    help="Number of basins per region to keep when reduced-basin is enabled",
+)
 @common_params("regions")
 @scenario_param("--ssp")
-def nexus_cli(context: "Context", regions, rcps, sdgs, rels, macro=False):
+def nexus_cli(
+    context: "Context",
+    regions,
+    rcps,
+    sdgs,
+    rels,
+    macro=False,
+    reduced_basin=False,
+    filter_list=None,
+    num_basins=None,
+):
     """
     Add basin structure connected to the energy sector and
     water balance linking different water demands to supply.
     """
+    # Set basin filtering configuration on context
+    context.reduced_basin = reduced_basin
+    if filter_list:
+        context.filter_list = list(filter_list)
+    if num_basins is not None:
+        context.num_basins = num_basins
 
     nexus(context, regions, rcps, sdgs, rels, macro)
 
