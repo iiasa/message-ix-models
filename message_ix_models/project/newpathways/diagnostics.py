@@ -96,9 +96,11 @@ def activity_to_csv(trade_tec,
                             (act_in['technology'].str.contains('_exp') == False) &\
                             (act_in['technology'].str.contains('_imp') == False)].copy()
         
-        flow_output = capacity[(capacity['technology'].str.contains(flow_tec)) &\
-                               (capacity['technology'].str.contains('_exp') == False) &\
-                               (capacity['technology'].str.contains('_imp') == False)].copy()
+        # flow_output = capacity[(capacity['technology'].str.contains(flow_tec)) &\
+        #                        (capacity['technology'].str.contains('_exp') == False) &\
+        #                        (capacity['technology'].str.contains('_imp') == False)].copy()
+        
+        flow_output = exports[exports['commodity'] == flow_commodity].copy()
         
         exports['IMPORTER'] = 'R12_' + exports['technology'].str.upper().str.split('_').str[-1]
         exports = exports.rename(columns = {'node_loc': 'EXPORTER',
@@ -144,11 +146,13 @@ def activity_to_csv(trade_tec,
                      index = False)
     
 # Retrieve trade flow activities
-scenarios_models = {'baseline': 'NP_SSP2_6.2',
-                    'pipelines_LNG': 'NP_SSP2_6.2',
-                    'LNG_noFLcost': 'NP_SSP2_6.2',
-                    'LNG_noTRfixcost': 'NP_SSP2_6.2',
-                    'lowNAMshalecost': 'NP_SSP2_6.2'}
+scenarios_models = {#'baseline': 'NP_SSP2_6.2',
+                    #'baseline_NAMrsc': 'NP_SSP2_6.2',
+                    #'pipelines_LNG': 'NP_SSP2_6.2',
+                    #'LNG_noFLcost': 'NP_SSP2_6.2',
+                    #'LNG_noTRfixcost': 'NP_SSP2_6.2',
+                    #'lowNAMshalecost': 'NP_SSP2_6.2',
+                    'lowerSAS_LNGvar': 'NP_SSP2_6.2'}
  
 activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_pipe",
