@@ -19,6 +19,8 @@ from message_ix_models.util import (
     same_node,
 )
 
+DIGSY_SCENS = Literal["BEST", "WORST", "baseline", "BESTEST", "WORSTEST"]
+
 
 def read_config() -> dict:
     config = read_yaml_file(package_data_path("digsy", "config.yaml"))
@@ -89,7 +91,7 @@ def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
     return pars
 
 
-def read_ict_demand(scenario="DIGSY-BEST") -> pd.DataFrame:
+def read_ict_demand(scenario: DIGSY_SCENS) -> pd.DataFrame:
     path = private_data_path("projects", "digsy", "DIGSY-MESSAGE_ICTs.xls")
     dfs = pd.read_excel(path, sheet_name=None)
 
@@ -136,7 +138,7 @@ def read_ict_demand(scenario="DIGSY-BEST") -> pd.DataFrame:
 
 
 def read_ict_v2(
-    digsy_scenario: Literal["BEST", "WORST", "baseline", "BESTEST", "WORSTEST"],
+    digsy_scenario: DIGSY_SCENS,
 ) -> pd.DataFrame:
     path = private_data_path("projects", "digsy", "R12_Clean Version v2.xlsx")
     scen_map = {
@@ -260,3 +262,62 @@ def read_rc_elec(
         )
         rc_elec["node"] = "R12_" + rc_elec["node"]
     return rc_elec
+
+
+def read_rc_materials(
+    digsy_scenario: DIGSY_SCENS,
+):
+    # TODO: commit rc material demand files to message_data and paste names here
+    fmap = {
+        "baseline": "name",
+        "BEST": "name",
+        "WORST": "name",
+        "BESTEST": "name",
+        "WORSTEST": "name",
+    }
+    path = private_data_path("projects", "digsy", fmap[digsy_scenario])
+    df = pd.read_csv(path)
+    df = df[df["commodity"].str.contains("_mat_dem")]
+    comms = {i.split("_")[-1] for i in df["commodity"].unique()}
+    dfs = []
+    for comm in comms:
+        dfs.append(
+            df[df["commodity"].str.endswith(comm)]
+            .groupby(["node", "year"])
+            .sum(numeric_only=True)
+            .assign(commodity=comm)
+        )
+    df_agg = pd.concat(dfs)
+    return df_agg
+
+
+def read_trp_materials(digsy_scenario) -> pd.DataFrame:
+    raise NotImplementedError
+
+
+def adjust_mat_dem(
+    total_demand: pd.DataFrame,
+    sector_demand_base: pd.DataFrame,
+    sector_demand_scen: pd.DataFrame,
+) -> pd.DataFrame:
+    sector_demand_commodity = sector_demand_base[
+        sector_demand_base["commodity"].isin(total_demand["commodity"].unique())
+    ]
+    sector_demand_commodity_scen = sector_demand_scen[
+        sector_demand_scen["commodity"].isin(total_demand["commodity"].unique())
+    ]
+    sector_demand_commodity.set_index("commodity", append=True, inplace=True)
+    sector_demand_commodity_scen.set_index("commodity", append=True, inplace=True)
+    total_demand_excl_sector_base = (
+        total_demand.set_index([i for i in total_demand.columns if i != "value"])
+        .sub(sector_demand_commodity, fill_value=0)
+        .reset_index()
+    )
+    total_demand_adjusted = (
+        total_demand_excl_sector_base.set_index(
+            [i for i in total_demand_excl_sector_base.columns if i != "value"]
+        )
+        .add(sector_demand_commodity_scen, fill_value=0)
+        .reset_index()
+    )
+    return total_demand_adjusted
