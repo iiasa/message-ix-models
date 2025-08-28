@@ -454,8 +454,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "input",
                     technology="extract_gw_fossil",
-                    value=((df_gwt["GW_per_km3_per_year"] + 0.043464579) * 50)
-                    * GWa_KM3_TO_GWa_MCM,  # twice as much normal gw
+                    value=((df_gwt["GW_per_km3_per_year"] + 0.043464579) * 5)
+                    * GWa_KM3_TO_GWa_MCM,  # reduced from 50 to 5
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
