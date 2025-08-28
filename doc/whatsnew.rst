@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Fix water module reporting failures and improve calculations (:issue:`407`, :pull:`396`).
 - Update documentation for
   :doc:`project/newpathways` (:pull:`385`).
 
