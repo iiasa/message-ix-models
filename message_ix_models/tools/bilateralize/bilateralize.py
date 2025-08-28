@@ -212,13 +212,6 @@ def generate_bare_sheets(
             if k not in config_dict.keys(): config_dict[k] = {}
             config_dict[k][tec] = tec_dict[k]
                  
-    # Load the scenario
-    scenario_info = config.get('scenario', {})
-    start_model = scenario_info['start_model']
-    start_scen = scenario_info['start_scen']
-    target_model = scenario_info['target_model']
-    target_scen = scenario_info['target_scen']
-    
     # Generate folder for each trade technology
     for tec in covered_tec:
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
@@ -774,15 +767,15 @@ def generate_bare_sheets(
                                                    **common_years, **common_cols).drop_duplicates()
                 
                 # For shipped commodities, calculated capacities based on distance and energy content
-                distance_df = pd.read_excel(os.path.join(data_path, "distances.xlsx"), sheet_name = 'distances')
+                distance_df = pd.read_csv(os.path.join(data_path, "distances", message_regions + "_distances.csv"))
                 energycontent_df = pd.read_excel(os.path.join(data_path, "specific_energy.xlsx"))
                 energycontent = energycontent_df[energycontent_df['Commodity'] == config_dict['trade_commodity'][tec]]['Specific Energy (GWa/Mt)'][0]
                 
                 multiplier_df = distance_df.copy()
-                multiplier_df['node_loc'] = multiplier_df['exporter']
-                multiplier_df['technology'] = config_dict['trade_technology'][tec] + '_exp_' + multiplier_df['importer'].str.lower().str.split('_').str[1]
+                multiplier_df['node_loc'] = multiplier_df['Node1']
+                multiplier_df['technology'] = config_dict['trade_technology'][tec] + '_exp_' + multiplier_df['Node2'].str.lower().str.split('_').str[1]
                 multiplier_df['energy_content'] = energycontent
-                multiplier_df['multiplier'] = multiplier_df['distance'] / multiplier_df['energy_content'] #Mt-km/GWa
+                multiplier_df['multiplier'] = multiplier_df['Distance_km'] / multiplier_df['energy_content'] #Mt-km/GWa
                 multiplier_df = multiplier_df[['node_loc', 'technology', 'multiplier']].drop_duplicates()
                 
                 df_input_flow = df_input_flow.merge(multiplier_df, 
