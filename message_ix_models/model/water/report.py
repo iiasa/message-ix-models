@@ -326,63 +326,100 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
         )
         return pd.DataFrame()
 
+    # TODO: Verify after scenario fixes timeseries issues - urban population data
+    # is missing/zero for future years (2020+) in some scenarios, causing
+    # pop_water_access calculations to fail or return zero results
+
     pop_drink_tot = pd.DataFrame()
     pop_sani_tot = pd.DataFrame()
     pop_sdg6 = pd.DataFrame()
     for ur in ["urban", "rural"]:
-        # CHANGE TO URBAN AND RURAL POP
-        pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
-        # Exclude global aggregate regions for both R11 and R12
-        pop_tot = pop_tot[
-            ~pop_tot.region.str.contains(
-                r"GLB\s+region|^World$|^Global$|Total", case=False, regex=True, na=False
+        try:
+            # CHANGE TO URBAN AND RURAL POP
+            pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
+            # Exclude global aggregate regions for both R11 and R12
+            pop_tot = pop_tot[
+                ~pop_tot.region.str.contains(
+                    r"GLB\s+region|^World$|^Global$|Total",
+                    case=False,
+                    regex=True,
+                    na=False,
+                )
+            ]
+
+            # Check for missing/zero population data
+            valid_pop = pop_tot[pop_tot.value > 0]
+            if valid_pop.empty:
+                import warnings
+                warnings.warn(
+                    f"Population|{ur.capitalize()} contains only zero or missing "
+                    f"values. This will result in zero access calculations for {ur} "
+                    f"populations. Check scenario timeseries data for "
+                    f"Population|{ur.capitalize()}.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+
+            pop_reg = np.unique(pop_tot["region"])
+            # need to change names
+            reg_map = mp2.regions()
+            reg_map = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
+                columns=["parent", "hierarchy"]
             )
-        ]
-        pop_reg = np.unique(pop_tot["region"])
-        # need to change names
-        reg_map = mp2.regions()
-        reg_map = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
-            columns=["parent", "hierarchy"]
-        )
-        reg_map["region"] = [x.split("_")[1] for x in reg_map.region]
+            reg_map["region"] = [x.split("_")[1] for x in reg_map.region]
 
-        df_rate = all_rates[all_rates.variable.str.contains(ur)]
+            df_rate = all_rates[all_rates.variable.str.contains(ur)]
 
-        df_rate = df_rate[df_rate.variable.str.contains("sdg" if sdgs else "baseline")]
+            scenario_type = "sdg" if sdgs else "baseline"
+            df_rate = df_rate[df_rate.variable.str.contains(scenario_type)]
 
-        df_rate["region"] = [x.split("|")[1] for x in df_rate.node]
-        df_rate = df_rate.drop(columns=["node"])
-        # make region mean (no weighted average)
-        df_rate = (
-            df_rate.groupby(["year", "variable", "region"])["value"]
-            .mean()
-            .reset_index()
-        )
-        # convert region name
-        df_rate = df_rate.merge(reg_map, how="left")
-        df_rate = df_rate.drop(columns=["region"])
-        df_rate = df_rate.rename(
-            columns={"mapped_to": "region", "variable": "new_var", "value": "rate"}
-        )
+            df_rate["region"] = [x.split("|")[1] for x in df_rate.node]
+            df_rate = df_rate.drop(columns=["node"])
+            # make region mean (no weighted average)
+            df_rate = (
+                df_rate.groupby(["year", "variable", "region"])["value"]
+                .mean()
+                .reset_index()
+            )
+            # convert region name
+            df_rate = df_rate.merge(reg_map, how="left")
+            df_rate = df_rate.drop(columns=["region"])
+            df_rate = df_rate.rename(
+                columns={"mapped_to": "region", "variable": "new_var", "value": "rate"}
+            )
 
-        # Population|Drinking Water Access
-        df_drink = df_rate[df_rate.new_var.str.contains("connection")]
-        pop_drink = pop_tot.merge(df_drink, how="left")
-        pop_drink["variable"] = "Population|Drinking Water Access|" + ur.capitalize()
-        pop_drink["value"] = pop_drink.value * pop_drink.rate
-        cols = pop_tot.columns
-        pop_drink = pop_drink[cols]
-        pop_drink_tot = pd.concat([pop_drink_tot, pop_drink])
-        pop_sdg6 = pd.concat([pop_sdg6, pop_drink])
+            # Population|Drinking Water Access
+            df_drink = df_rate[df_rate.new_var.str.contains("connection")]
+            pop_drink = pop_tot.merge(df_drink, how="left")
+            pop_drink["variable"] = (
+                "Population|Drinking Water Access|" + ur.capitalize()
+            )
+            pop_drink["value"] = pop_drink.value * pop_drink.rate
+            cols = pop_tot.columns
+            pop_drink = pop_drink[cols]
+            pop_drink_tot = pd.concat([pop_drink_tot, pop_drink])
+            pop_sdg6 = pd.concat([pop_sdg6, pop_drink])
 
-        # Population|Sanitation Acces
-        df_sani = df_rate[df_rate.new_var.str.contains("treatment")]
-        pop_sani = pop_tot.merge(df_sani, how="left")
-        pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
-        pop_sani["value"] = pop_sani.value * pop_sani.rate
-        pop_sani = pop_sani[cols]
-        pop_sani_tot = pd.concat([pop_sani_tot, pop_sani])
-        pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
+            # Population|Sanitation Access
+            df_sani = df_rate[df_rate.new_var.str.contains("treatment")]
+            pop_sani = pop_tot.merge(df_sani, how="left")
+            pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
+            pop_sani["value"] = pop_sani.value * pop_sani.rate
+            pop_sani = pop_sani[cols]
+            pop_sani_tot = pd.concat([pop_sani_tot, pop_sani])
+            pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
+
+        except Exception as e:
+            import warnings
+            warnings.warn(
+                f"Failed to calculate population access for {ur} populations "
+                f"due to: {e}. Check scenario data and rates files for "
+                f"Population|{ur.capitalize()}.",
+                UserWarning,
+                stacklevel=2,
+            )
+            log.error(f"Error processing {ur} population data: {e}")
+            continue
 
     # total values - moved outside the loop to run only once
     pop_drink_tot = (
