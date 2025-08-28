@@ -1,11 +1,18 @@
 import os.path
 
+import numpy as np
+import pandas as pd
 import pytest
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.report import report_full
+from message_ix_models.model.water.report import (
+    aggregate_totals,
+    get_population_values,
+    process_rates,
+    report_full,
+)
 from message_ix_models.util import package_data_path
 
 
@@ -53,3 +60,169 @@ def test_report_full(test_context, request):
         package_data_path().parents[0] / f"reporting_output/{s.model}_{s.scenario}.csv"
     )
     assert os.path.isfile(result_file)
+
+
+@pytest.mark.parametrize(
+    "population_type,expected_connection_var,expected_access_var",
+    [
+        (
+            "urban",
+            "Connection Rate|Drinking Water|Urban",
+            "Population|Drinking Water Access|Urban",
+        ),
+        (
+            "rural",
+            "Connection Rate|Drinking Water|Rural",
+            "Population|Drinking Water Access|Rural",
+        ),
+    ],
+)
+def test_process_rates(population_type, expected_connection_var, expected_access_var):
+    """Test process_rates function handles urban/rural rate processing correctly."""
+    # Create mock rates data
+    rates_data = pd.DataFrame(
+        [
+            {
+                "variable": f"{population_type}_water_connection_rate",
+                "value": 0.8,
+            },
+            {
+                "variable": f"{population_type}_water_treatment_rate",
+                "value": 0.6,
+            },
+        ]
+    )
+
+    population_value = 1000.0
+    region = "R12_AFR"
+    year = 2030
+    metadata = {"model": "test_model", "scenario": "test_scenario", "unit": "million"}
+
+    result = process_rates(
+        population_type, population_value, rates_data, region, year, metadata
+    )
+
+    # Should return 5 entries: population + 2 rates + 2 access calculations
+    assert len(result) == 5
+
+    # Check population entry
+    population_var = f"Population|{population_type.capitalize()}"
+    pop_entry = next(r for r in result if r["variable"] == population_var)
+    assert pop_entry["value"] == population_value
+    assert pop_entry["region"] == region
+    assert pop_entry["year"] == year
+
+    # Check connection rate entry
+    conn_rate_entry = next(
+        r for r in result if r["variable"] == expected_connection_var
+    )
+    assert conn_rate_entry["value"] == 0.8
+
+    # Check drinking water access calculation
+    access_entry = next(r for r in result if r["variable"] == expected_access_var)
+    assert access_entry["value"] == 800.0  # 1000 * 0.8
+
+
+def test_get_population_values():
+    """Test get_population_values extracts urban/rural population correctly."""
+    # Create mock population data
+    pop_data = pd.DataFrame(
+        [
+            {
+                "region": "R12_AFR",
+                "year": 2030,
+                "variable": "Population|Urban",
+                "value": 500.0,
+            },
+            {
+                "region": "R12_AFR",
+                "year": 2030,
+                "variable": "Population|Rural",
+                "value": 300.0,
+            },
+            {
+                "region": "R12_CHN",
+                "year": 2030,
+                "variable": "Population|Urban",
+                "value": 800.0,
+            },
+        ]
+    )
+
+    # Test successful extraction
+    urban_val, rural_val = get_population_values(pop_data, "R12_AFR", 2030)
+    assert urban_val == 500.0
+    assert rural_val == 300.0
+
+    # Test missing rural data
+    urban_val, rural_val = get_population_values(pop_data, "R12_CHN", 2030)
+    assert urban_val == 800.0
+    assert np.isnan(rural_val)
+
+    # Test missing region/year combination
+    urban_val, rural_val = get_population_values(pop_data, "R12_IND", 2040)
+    assert np.isnan(urban_val)
+    assert np.isnan(rural_val)
+
+
+def test_aggregate_totals():
+    """Test aggregate_totals creates correct regional aggregations."""
+    # Create mock result data
+    result_df = pd.DataFrame(
+        [
+            {
+                "region": "R12_AFR",
+                "year": 2030,
+                "variable": "Population|Drinking Water Access|Urban",
+                "value": 400.0,
+                "model": "test_model",
+                "scenario": "test_scenario",
+                "unit": "million",
+            },
+            {
+                "region": "R12_AFR",
+                "year": 2030,
+                "variable": "Population|Drinking Water Access|Rural",
+                "value": 240.0,
+                "model": "test_model",
+                "scenario": "test_scenario",
+                "unit": "million",
+            },
+            {
+                "region": "R12_AFR",
+                "year": 2030,
+                "variable": "Population|Urban",
+                "value": 500.0,
+                "model": "test_model",
+                "scenario": "test_scenario",
+                "unit": "million",
+            },
+            {
+                "region": "R12_AFR",
+                "year": 2030,
+                "variable": "Population|Rural",
+                "value": 300.0,
+                "model": "test_model",
+                "scenario": "test_scenario",
+                "unit": "million",
+            },
+        ]
+    )
+
+    totals = aggregate_totals(result_df)
+
+    # Should return 2 aggregated DataFrames (drinking water access + population totals)
+    assert len(totals) == 2
+
+    # Check drinking water access total
+    drink_total = next(
+        df for df in totals if "Drinking Water Access" in df["variable"].iloc[0]
+    )
+    assert len(drink_total) == 1
+    assert drink_total["variable"].iloc[0] == "Population|Drinking Water Access"
+    assert drink_total["value"].iloc[0] == 640.0  # 400 + 240
+
+    # Check population total
+    pop_total = next(df for df in totals if df["variable"].iloc[0] == "Population")
+    assert len(pop_total) == 1
+    assert pop_total["value"].iloc[0] == 800.0  # 500 + 300

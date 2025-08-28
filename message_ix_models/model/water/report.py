@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 from typing import Optional
@@ -298,122 +300,409 @@ def multiply_electricity_output_of_hydro(
     return report_iam
 
 
-def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame:
-    """Add population with access to water and sanitation to the scenario
+def get_population_data(sc: Scenario, reg: str) -> pd.DataFrame:
+    """Retrieve population data from scenario and map to R12 region codes
 
     Parameters
     ----------
-    sc : ixmp.Scenario
-        Scenario to add the population with access to water and sanitation
+    sc : Scenario
+        Scenario to retrieve population data from
     reg : str
-        Region to add the population with access to water and sanitation
-    sdgs : bool, optional
-        If True, add population with access to water and sanitation for SDG6, by default
-        False
-    """
-    # add population with sanitation or drinking water access
-    mp2 = sc.platform
+        Region specification for mapping
 
-    # load data on water and sanitation access
+    Returns
+    -------
+    pd.DataFrame
+        Population data with R12_XX region codes
+    """
+    population_data = pd.DataFrame()
+
+    # Get region mapping
+    mp2 = sc.platform
+    reg_map = mp2.regions()
+
+    for ur in ["urban", "rural"]:
+        try:
+            # Get population timeseries for urban/rural
+            pop_data = sc.timeseries(variable=f"Population|{ur.capitalize()}")
+
+            # Exclude global aggregate regions
+            pop_data = pop_data[
+                ~pop_data.region.str.contains(
+                    r"GLB\s+region|^World$|^Global$|Total",
+                    case=False,
+                    regex=True,
+                    na=False,
+                )
+            ]
+
+            if pop_data.empty:
+                log.warning(f"No Population|{ur.capitalize()} data found in scenario")
+                continue
+
+            # Get unique regions from population data
+            pop_reg = np.unique(pop_data["region"])
+
+            # Map natural language region names to R12_XX codes using reg_map
+            pop_mappings = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
+                columns=["parent", "hierarchy"]
+            )
+            population_to_r12_map = dict(
+                zip(pop_mappings.mapped_to, pop_mappings.region)
+            )
+
+            # Apply region mapping
+            pop_data["region"] = (
+                pop_data["region"].map(population_to_r12_map).fillna(pop_data["region"])
+            )
+
+            # Add urban/rural identifier
+            pop_data["variable"] = f"Population|{ur.capitalize()}"
+
+            population_data = pd.concat([population_data, pop_data])
+
+        except Exception as e:
+            log.warning(f"Failed to retrieve Population|{ur.capitalize()} data: {e}")
+            continue
+
+    # Check if we have future data (post-2020)
+    future_pop = population_data[population_data.year >= 2020]
+    if future_pop.empty:
+        log.warning("No population data with future values (>=2020) found")
+    else:
+        log.info(f"Population data available through year {population_data.year.max()}")
+
+    return population_data
+
+
+def get_rates_data(reg: str, sdgs: bool = False) -> pd.DataFrame:
+    """Load and clean water access rates data from CSV
+
+    Parameters
+    ----------
+    reg : str
+        Region specification (R11, R12, R17, etc.)
+    sdgs : bool
+        Whether to use SDG scenario rates
+
+    Returns
+    -------
+    pd.DataFrame
+        Cleaned rates data with region codes matching reg parameter
+    """
+    # Load rates data
     load_path = package_data_path("water", "demands", "harmonized", reg)
     all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
 
-    pop_check = sc.timeseries(variable="Population")
-    pop_check = pop_check[pop_check.year >= 2020]
-    if pop_check.empty:
-        log.warning(
-            "No population data with future values found. Skipping calculations."
-        )
+    # Filter for scenario type
+    scenario_type = "SDG" if sdgs else "baseline"
+    df_rate = all_rates[all_rates.variable.str.contains(scenario_type)]
+
+    if df_rate.empty:
+        log.warning(f"No rates data found for {scenario_type}")
         return pd.DataFrame()
 
-    pop_drink_tot = pd.DataFrame()
-    pop_sani_tot = pd.DataFrame()
-    pop_sdg6 = pd.DataFrame()
-    for ur in ["urban", "rural"]:
-        # CHANGE TO URBAN AND RURAL POP
-        pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
-        # Exclude global aggregate regions for both R11 and R12
-        pop_tot = pop_tot[
-            ~pop_tot.region.str.contains(
-                r"GLB\s+region|^World$|^Global$|Total", case=False, regex=True, na=False
+    # Extract region from node (e.g., "105|CHN" -> "CHN")
+    df_rate = df_rate.copy()
+    df_rate["region_short"] = [x.split("|")[1] for x in df_rate.node]
+
+    # Get region mapping for basin codes
+    import ixmp
+
+    mp = ixmp.Platform()
+    reg_map = mp.regions()
+
+    # Create basin to region mapping based on reg parameter
+    target_regions = reg_map[reg_map.region.str.startswith(f"{reg}_")]
+    basin_to_reg_map = {}
+    for _, row in target_regions.iterrows():
+        region_code = row.region.split("_")[1]  # R12_CHN -> CHN
+        basin_to_reg_map[region_code] = row.region  # CHN -> R12_CHN
+
+    df_rate["region"] = df_rate["region_short"].map(basin_to_reg_map)
+
+    # Remove unmapped regions
+    df_rate = df_rate.dropna(subset=["region"])
+    df_rate = df_rate.drop(columns=["node", "region_short"])
+
+    # Average rates across basins for each region/year/variable
+    rates_data = (
+        df_rate.groupby(["year", "variable", "region"])["value"].mean().reset_index()
+    )
+
+    return rates_data
+
+
+def get_population_values(
+    pop_data: pd.DataFrame, region: str, year: int
+) -> tuple[float, float]:
+    """Get urban and rural population values for a specific region and year.
+
+    Parameters
+    ----------
+    pop_data : pd.DataFrame
+        Population data
+    region : str
+        Region code
+    year : int
+        Year
+
+    Returns
+    -------
+    tuple[float, float]
+        Urban population value, rural population value (may be NaN)
+    """
+    pop_urban = pop_data[
+        (pop_data.region == region)
+        & (pop_data.year == year)
+        & (pop_data.variable == "Population|Urban")
+    ]
+    pop_rural = pop_data[
+        (pop_data.region == region)
+        & (pop_data.year == year)
+        & (pop_data.variable == "Population|Rural")
+    ]
+
+    urban_val = pop_urban.iloc[0]["value"] if not pop_urban.empty else np.nan
+    rural_val = pop_rural.iloc[0]["value"] if not pop_rural.empty else np.nan
+
+    return urban_val, rural_val
+
+
+def process_rates(
+    population_type: str,
+    population_value: float,
+    rates_data: pd.DataFrame,
+    region: str,
+    year: int,
+    metadata: dict,
+) -> list[dict]:
+    """Compact processing of base population,
+    connection (drinking) and treatment (sanitation).
+
+    Behaviour preserved from original: always emit base population; emit rate + access
+    entries only when a matching rate row exists.
+    """
+    pt_cap = population_type.capitalize()
+    base = {
+        "region": region,
+        "year": year,
+        "variable": f"Population|{pt_cap}",
+        "value": population_value,
+        **metadata,
+    }
+
+    out = [base]
+
+    # map pattern -> (variable_template, access_variable_template)
+    patterns = {
+        r"connection": (
+            f"Connection Rate|Drinking Water|{pt_cap}",
+            f"Population|Drinking Water Access|{pt_cap}",
+        ),
+        r"treatment": (
+            f"Treatment Rate|Sanitation|{pt_cap}",
+            f"Population|Sanitation Access|{pt_cap}",
+        ),
+    }
+
+    # search and append if found
+    for pat, (rate_var, access_var) in patterns.items():
+        found = rates_data[
+            rates_data.variable.str.contains(
+                f"{population_type}.*{pat}", case=False, regex=True
             )
         ]
-        pop_reg = np.unique(pop_tot["region"])
-        # need to change names
-        reg_map = mp2.regions()
-        reg_map = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
-            columns=["parent", "hierarchy"]
+        if found.empty:
+            continue
+        rate = found.iloc[0]["value"]
+        out.append({**base, "variable": rate_var, "value": rate})
+        access = (
+            (population_value * rate)
+            if pd.notna(population_value) and pd.notna(rate)
+            else np.nan
         )
-        reg_map["region"] = [x.split("_")[1] for x in reg_map.region]
+        out.append({**base, "variable": access_var, "value": access})
 
-        df_rate = all_rates[all_rates.variable.str.contains(ur)]
+    return out
 
-        df_rate = df_rate[df_rate.variable.str.contains("sdg" if sdgs else "baseline")]
 
-        df_rate["region"] = [x.split("|")[1] for x in df_rate.node]
-        df_rate = df_rate.drop(columns=["node"])
-        # make region mean (no weighted average)
-        df_rate = (
-            df_rate.groupby(["year", "variable", "region"])["value"]
+def aggregate_totals(result_df: pd.DataFrame) -> list[pd.DataFrame]:
+    """Aggregate regional totals for:
+      - Population|Drinking Water Access (sum)
+      - Population|Sanitation Access (sum)
+      - Population (Urban/Rural -> sum -> Population)
+    Returns list of DataFrames"""
+    totals: list[pd.DataFrame] = []
+
+    def _group_sum(df: pd.DataFrame, new_var: str):
+        g = (
+            df.groupby(["region", "year", "model", "scenario", "unit"], dropna=False)[
+                "value"
+            ]
+            .sum()
+            .reset_index()
+        )
+        g["variable"] = new_var
+        return g
+
+    # drinking water access
+    drink = result_df[
+        result_df.variable.str.contains(
+            r"Population\|Drinking Water Access", regex=True
+        )
+    ]
+    if not drink.empty:
+        totals.append(_group_sum(drink, "Population|Drinking Water Access"))
+
+    # sanitation access
+    sani = result_df[
+        result_df.variable.str.contains(r"Population\|Sanitation Access", regex=True)
+    ]
+    if not sani.empty:
+        totals.append(_group_sum(sani, "Population|Sanitation Access"))
+
+    # base population (Urban|Rural)
+    base_pop = result_df[
+        result_df.variable.str.match(r"Population\|(Urban|Rural)$", na=False)
+    ]
+    if not base_pop.empty:
+        pop_sum = (
+            base_pop.groupby(
+                ["region", "year", "model", "scenario", "unit"], dropna=False
+            )["value"]
+            .sum()
+            .reset_index()
+        )
+        pop_sum["variable"] = "Population"
+        totals.append(pop_sum)
+
+    return totals
+
+
+def aggregate_world_totals(result_df: pd.DataFrame) -> list[pd.DataFrame]:
+    """World-level aggregations:
+      - sum of non-rate variables (populations/access)
+      - mean of rate variables
+    Preserves column set ['variable','year','model','scenario','unit','value'] and
+    adds region='World'.
+    """
+    world: list[pd.DataFrame] = []
+
+    pop_vars = result_df[~result_df.variable.str.contains("Rate", na=False)]
+    rate_vars = result_df[result_df.variable.str.contains("Rate", na=False)]
+
+    if not pop_vars.empty:
+        wp = (
+            pop_vars.groupby(
+                ["variable", "year", "model", "scenario", "unit"], dropna=False
+            )["value"]
+            .sum()
+            .reset_index()
+        )
+        wp["region"] = "World"
+        world.append(wp)
+
+    if not rate_vars.empty:
+        wr = (
+            rate_vars.groupby(
+                ["variable", "year", "model", "scenario", "unit"], dropna=False
+            )["value"]
             .mean()
             .reset_index()
         )
-        # convert region name
-        df_rate = df_rate.merge(reg_map, how="left")
-        df_rate = df_rate.drop(columns=["region"])
-        df_rate = df_rate.rename(
-            columns={"mapped_to": "region", "variable": "new_var", "value": "rate"}
-        )
+        wr["region"] = "World"
+        world.append(wr)
 
-        # Population|Drinking Water Access
-        df_drink = df_rate[df_rate.new_var.str.contains("connection")]
-        pop_drink = pop_tot.merge(df_drink, how="left")
-        pop_drink["variable"] = "Population|Drinking Water Access|" + ur.capitalize()
-        pop_drink["value"] = pop_drink.value * pop_drink.rate
-        cols = pop_tot.columns
-        pop_drink = pop_drink[cols]
-        pop_drink_tot = pd.concat([pop_drink_tot, pop_drink])
-        pop_sdg6 = pd.concat([pop_sdg6, pop_drink])
+    return world
 
-        # Population|Sanitation Acces
-        df_sani = df_rate[df_rate.new_var.str.contains("treatment")]
-        pop_sani = pop_tot.merge(df_sani, how="left")
-        pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
-        pop_sani["value"] = pop_sani.value * pop_sani.rate
-        pop_sani = pop_sani[cols]
-        pop_sani_tot = pd.concat([pop_sani_tot, pop_sani])
-        pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
 
-    # total values - moved outside the loop to run only once
-    pop_drink_tot = (
-        pop_drink_tot.groupby(["region", "unit", "year", "model", "scenario"])["value"]
-        .sum()
-        .reset_index()
+def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame:
+    """Calculate population with access to water and sanitation
+
+    Parameters
+    ----------
+    sc : Scenario
+        Scenario to calculate access for
+    reg : str
+        Region specification
+    sdgs : bool
+        Whether to use SDG scenario rates
+
+    Returns
+    -------
+    pd.DataFrame
+        Population access data with all variables
+    """
+    # Get clean population and rates data
+    pop_data = get_population_data(sc, reg)
+    rates_data = get_rates_data(reg, sdgs)
+
+    if pop_data.empty:
+        log.warning("No population data found. Skipping calculations.")
+        return pd.DataFrame()
+
+    if rates_data.empty:
+        log.warning("No rates data found. Skipping calculations.")
+        return pd.DataFrame()
+
+    # Get unique combinations of region/year from both datasets
+    all_years = sorted(set(rates_data.year.unique()) | set(pop_data.year.unique()))
+    all_regions = sorted(
+        set(rates_data.region.unique()) | set(pop_data.region.unique())
     )
-    pop_drink_tot["variable"] = "Population|Drinking Water Access"
-    pop_drink_tot = pop_drink_tot[cols]
-    pop_sani_tot = (
-        pop_sani_tot.groupby(["region", "unit", "year", "model", "scenario"])["value"]
-        .sum()
-        .reset_index()
-    )
-    pop_sani_tot["variable"] = "Population|Sanitation Access"
-    pop_sani_tot = pop_sani_tot[cols]
-    # global values
-    # pop_sdg6 already contains urban/rural drink and sani from loop above
-    # Only need to add the totals
-    pop_sdg6 = pd.concat([pop_sdg6, pop_drink_tot, pop_sani_tot])
-    pop_sdg6_glb = (
-        pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
-        .sum()
-        .reset_index()
-    )
-    pop_sdg6_glb["region"] = "World"
-    pop_sdg6_glb = pop_sdg6_glb[cols]
 
-    pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
-    log.info("Population|Drinking Water Access and Sanitation Access calculated")
-    return pop_sdg6
+    # Get metadata from first pop row
+    metadata = {}
+    if not pop_data.empty:
+        first_row = pop_data.iloc[0]
+        metadata = {
+            "model": first_row["model"],
+            "scenario": first_row["scenario"],
+            "unit": first_row["unit"],
+        }
+
+    results = []
+
+    # Process each region/year combination
+    for region in all_regions:
+        for year in all_years:
+            # Get population values for this region/year
+            urban_val, rural_val = get_population_values(pop_data, region, year)
+
+            # Get rates for this region/year
+            region_year_rates = rates_data[
+                (rates_data.region == region) & (rates_data.year == year)
+            ]
+
+            # Process urban and rural using the same helper function
+            results.extend(
+                process_rates(
+                    "urban", urban_val, region_year_rates, region, year, metadata
+                )
+            )
+            results.extend(
+                process_rates(
+                    "rural", rural_val, region_year_rates, region, year, metadata
+                )
+            )
+
+    result_df = pd.DataFrame(results)
+
+    # Add aggregated totals
+    if not result_df.empty:
+        # Get regional totals
+        totals = aggregate_totals(result_df)
+        if totals:
+            result_df = pd.concat([result_df] + totals, ignore_index=True)
+
+        # Get world totals
+        world_totals = aggregate_world_totals(result_df)
+        if world_totals:
+            result_df = pd.concat([result_df] + world_totals, ignore_index=True)
+
+    log.info("Population water access calculations completed")
+    return result_df
 
 
 def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
@@ -446,7 +735,6 @@ def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
     return ww
 
 
-# TODO
 def compute_cooling_technologies(
     report_iam: pyam.IamDataFrame,
 ) -> tuple[pyam.IamDataFrame, list]:
@@ -474,7 +762,9 @@ def compute_cooling_technologies(
     cooling_cl_fresh_water = report_iam.filter(
         variable="in|water_supply|freshwater|*__cl_fresh|*"
     ).variable
-
+    cooling_ot_saline_water = report_iam.filter(
+        variable="in|saline_supply|saline_ppl|*__ot_saline|*"
+    ).variable
     # Non-cooling technologies freshwater usage
     all_freshwater_tech = report_iam.filter(
         variable="in|water_supply|freshwater|*|*"
@@ -499,9 +789,7 @@ def compute_cooling_technologies(
     ]
 
     # Fresh water return flow emissions
-    fresh_return_emissions = report_iam.filter(
-        variable="emis|fresh_return|*"
-    ).variable
+    fresh_return_emissions = report_iam.filter(variable="emis|fresh_return|*").variable
 
     # Cooling investments
     cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
@@ -532,6 +820,11 @@ def compute_cooling_technologies(
         [
             "Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water",
             cooling_cl_fresh_water,
+            "MCM/yr",
+        ],
+        [
+            "Water Withdrawal|Electricity|Cooling|Once Through|Saline Water",
+            cooling_ot_saline_water,
             "MCM/yr",
         ],
         ["Water Withdrawal|Energy|Non-Cooling", non_cooling_water, "MCM/yr"],
@@ -1524,6 +1817,29 @@ def report(
 
     # add units wo loop to reduce complexity
     unit_mapping = dict(zip(map_agg_pd["names"], map_agg_pd["unit"]))
+
+    # Add units for new water access variables
+    water_access_units = {
+        "Connection Rate|Drinking Water": "percent",
+        "Connection Rate|Drinking Water|Urban": "percent",
+        "Connection Rate|Drinking Water|Rural": "percent",
+        "Treatment Rate|Sanitation": "percent",
+        "Treatment Rate|Sanitation|Urban": "percent",
+        "Treatment Rate|Sanitation|Rural": "percent",
+        "Population|Drinking Water Access": "million",
+        "Population|Drinking Water Access|Urban": "million",
+        "Population|Drinking Water Access|Rural": "million",
+        "Population|Sanitation Access": "million",
+        "Population|Sanitation Access|Urban": "million",
+        "Population|Sanitation Access|Rural": "million",
+        "Population": "million",
+        "Population|Urban": "million",
+        "Population|Rural": "million",
+    }
+
+    # Merge both unit mappings
+    unit_mapping.update(water_access_units)
+
     report_pd["unit"] = (
         report_pd["variable"].map(unit_mapping).fillna(report_pd["unit"])
     )
