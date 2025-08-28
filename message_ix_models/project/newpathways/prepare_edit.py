@@ -18,6 +18,7 @@ from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.tools.bilateralize.historical_calibration import *
 from message_ix_models.tools.bilateralize.pull_gem import *
 from message_ix_models.tools.bilateralize.mariteam_calibration import *
+from message_ix_models.tools.bilateralize.calculate_distance import *
 
 # Bring in configuration
 config, config_path = load_config(project_name = 'newpathways', 
@@ -34,6 +35,9 @@ mp = ixmp.Platform()
 
 # Get logger
 log = get_logger(__name__)
+
+# Calculate distances
+calculate_distance(message_regions)
 
 # Generate bare sheets
 generate_bare_sheets(log=log, 

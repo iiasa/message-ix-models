@@ -1,0 +1,133 @@
+Node1,Port1,Node2,Port2,Distance_km
+R12_AFR,Port of Durban (South Africa),R12_RCPA,Danang (Vietnam),9709.87
+R12_AFR,Port of Durban (South Africa),R12_CHN,Shanghai (China),11730.8
+R12_AFR,Port of Durban (South Africa),R12_EEU,Swinoujscie (Poland),9452.67
+R12_AFR,Port of Durban (South Africa),R12_FSU,Novorossiysk (Russia),8321.75
+R12_AFR,Port of Durban (South Africa),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),7308.4
+R12_AFR,Port of Durban (South Africa),R12_MEA,Jeddah (Saudi Arabia),5773.43
+R12_AFR,Port of Durban (South Africa),R12_NAM,Houston (United States),14882.63
+R12_AFR,Port of Durban (South Africa),R12_PAO,Hakodate (Japan),13713.6
+R12_AFR,Port of Durban (South Africa),R12_PAS,Jakarta (Indonesia),8308.7
+R12_AFR,Port of Durban (South Africa),R12_SAS,Jawahar Dweep (India),7041.57
+R12_AFR,Port of Durban (South Africa),R12_WEU,Hamburg (Germany),9496.53
+R12_RCPA,Danang (Vietnam),R12_CHN,Shanghai (China),2143.48
+R12_RCPA,Danang (Vietnam),R12_EEU,Swinoujscie (Poland),8824.34
+R12_RCPA,Danang (Vietnam),R12_FSU,Novorossiysk (Russia),7220.96
+R12_RCPA,Danang (Vietnam),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),16927.27
+R12_RCPA,Danang (Vietnam),R12_MEA,Jeddah (Saudi Arabia),7238.35
+R12_RCPA,Danang (Vietnam),R12_NAM,Houston (United States),14332.27
+R12_RCPA,Danang (Vietnam),R12_PAO,Hakodate (Japan),4214.49
+R12_RCPA,Danang (Vietnam),R12_PAS,Jakarta (Indonesia),2469.7
+R12_RCPA,Danang (Vietnam),R12_SAS,Jawahar Dweep (India),3752.99
+R12_RCPA,Danang (Vietnam),R12_WEU,Hamburg (Germany),9103.69
+R12_CHN,Shanghai (China),R12_EEU,Swinoujscie (Poland),8354.14
+R12_CHN,Shanghai (China),R12_FSU,Novorossiysk (Russia),7249.29
+R12_CHN,Shanghai (China),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),18311.38
+R12_CHN,Shanghai (China),R12_MEA,Jeddah (Saudi Arabia),8162.49
+R12_CHN,Shanghai (China),R12_NAM,Houston (United States),12227.83
+R12_CHN,Shanghai (China),R12_PAO,Hakodate (Japan),2073.75
+R12_CHN,Shanghai (China),R12_PAS,Jakarta (Indonesia),4391.24
+R12_CHN,Shanghai (China),R12_SAS,Jawahar Dweep (India),5087.89
+R12_CHN,Shanghai (China),R12_WEU,Hamburg (Germany),8606.66
+R12_EEU,Swinoujscie (Poland),R12_FSU,Novorossiysk (Russia),1973.91
+R12_EEU,Swinoujscie (Poland),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),10140.18
+R12_EEU,Swinoujscie (Poland),R12_MEA,Jeddah (Saudi Arabia),4173.72
+R12_EEU,Swinoujscie (Poland),R12_NAM,Houston (United States),8531.31
+R12_EEU,Swinoujscie (Poland),R12_PAO,Hakodate (Japan),8217.55
+R12_EEU,Swinoujscie (Poland),R12_PAS,Jakarta (Indonesia),10726.09
+R12_EEU,Swinoujscie (Poland),R12_SAS,Jawahar Dweep (India),6278.28
+R12_EEU,Swinoujscie (Poland),R12_WEU,Hamburg (Germany),281.47
+R12_FSU,Novorossiysk (Russia),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),11094.62
+R12_FSU,Novorossiysk (Russia),R12_MEA,Jeddah (Saudi Arabia),2589.31
+R12_FSU,Novorossiysk (Russia),R12_NAM,Houston (United States),10468.65
+R12_FSU,Novorossiysk (Russia),R12_PAO,Hakodate (Japan),7726.41
+R12_FSU,Novorossiysk (Russia),R12_PAS,Jakarta (Indonesia),8870.77
+R12_FSU,Novorossiysk (Russia),R12_SAS,Jawahar Dweep (India),4324.58
+R12_FSU,Novorossiysk (Russia),R12_WEU,Hamburg (Germany),2227.89
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_MEA,Jeddah (Saudi Arabia),10181.76
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_NAM,Houston (United States),8072.13
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_PAO,Hakodate (Japan),17877.1
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_PAS,Jakarta (Indonesia),15438.08
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_SAS,Jawahar Dweep (India),13408.76
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_WEU,Hamburg (Germany),9905.05
+R12_MEA,Jeddah (Saudi Arabia),R12_NAM,Houston (United States),12521.31
+R12_MEA,Jeddah (Saudi Arabia),R12_PAO,Hakodate (Japan),9336.51
+R12_MEA,Jeddah (Saudi Arabia),R12_PAS,Jakarta (Indonesia),7984.75
+R12_MEA,Jeddah (Saudi Arabia),R12_SAS,Jawahar Dweep (India),3523.8
+R12_MEA,Jeddah (Saudi Arabia),R12_WEU,Hamburg (Germany),4337.92
+R12_NAM,Houston (United States),R12_PAO,Hakodate (Japan),10211.8
+R12_NAM,Houston (United States),R12_PAS,Jakarta (Indonesia),16508.9
+R12_NAM,Houston (United States),R12_SAS,Jawahar Dweep (India),14454.61
+R12_NAM,Houston (United States),R12_WEU,Hamburg (Germany),8311.49
+R12_PAO,Hakodate (Japan),R12_PAS,Jakarta (Indonesia),6332.13
+R12_PAO,Hakodate (Japan),R12_SAS,Jawahar Dweep (India),6796.12
+R12_PAO,Hakodate (Japan),R12_WEU,Hamburg (Germany),8415.1
+R12_PAS,Jakarta (Indonesia),R12_SAS,Jawahar Dweep (India),4649.25
+R12_PAS,Jakarta (Indonesia),R12_WEU,Hamburg (Germany),11005.35
+R12_SAS,Jawahar Dweep (India),R12_WEU,Hamburg (Germany),6543.22
+R12_RCPA,Danang (Vietnam),R12_AFR,Port of Durban (South Africa),9709.87
+R12_CHN,Shanghai (China),R12_AFR,Port of Durban (South Africa),11730.8
+R12_EEU,Swinoujscie (Poland),R12_AFR,Port of Durban (South Africa),9452.67
+R12_FSU,Novorossiysk (Russia),R12_AFR,Port of Durban (South Africa),8321.75
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_AFR,Port of Durban (South Africa),7308.4
+R12_MEA,Jeddah (Saudi Arabia),R12_AFR,Port of Durban (South Africa),5773.43
+R12_NAM,Houston (United States),R12_AFR,Port of Durban (South Africa),14882.63
+R12_PAO,Hakodate (Japan),R12_AFR,Port of Durban (South Africa),13713.6
+R12_PAS,Jakarta (Indonesia),R12_AFR,Port of Durban (South Africa),8308.7
+R12_SAS,Jawahar Dweep (India),R12_AFR,Port of Durban (South Africa),7041.57
+R12_WEU,Hamburg (Germany),R12_AFR,Port of Durban (South Africa),9496.53
+R12_CHN,Shanghai (China),R12_RCPA,Danang (Vietnam),2143.48
+R12_EEU,Swinoujscie (Poland),R12_RCPA,Danang (Vietnam),8824.34
+R12_FSU,Novorossiysk (Russia),R12_RCPA,Danang (Vietnam),7220.96
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_RCPA,Danang (Vietnam),16927.27
+R12_MEA,Jeddah (Saudi Arabia),R12_RCPA,Danang (Vietnam),7238.35
+R12_NAM,Houston (United States),R12_RCPA,Danang (Vietnam),14332.27
+R12_PAO,Hakodate (Japan),R12_RCPA,Danang (Vietnam),4214.49
+R12_PAS,Jakarta (Indonesia),R12_RCPA,Danang (Vietnam),2469.7
+R12_SAS,Jawahar Dweep (India),R12_RCPA,Danang (Vietnam),3752.99
+R12_WEU,Hamburg (Germany),R12_RCPA,Danang (Vietnam),9103.69
+R12_EEU,Swinoujscie (Poland),R12_CHN,Shanghai (China),8354.14
+R12_FSU,Novorossiysk (Russia),R12_CHN,Shanghai (China),7249.29
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_CHN,Shanghai (China),18311.38
+R12_MEA,Jeddah (Saudi Arabia),R12_CHN,Shanghai (China),8162.49
+R12_NAM,Houston (United States),R12_CHN,Shanghai (China),12227.83
+R12_PAO,Hakodate (Japan),R12_CHN,Shanghai (China),2073.75
+R12_PAS,Jakarta (Indonesia),R12_CHN,Shanghai (China),4391.24
+R12_SAS,Jawahar Dweep (India),R12_CHN,Shanghai (China),5087.89
+R12_WEU,Hamburg (Germany),R12_CHN,Shanghai (China),8606.66
+R12_FSU,Novorossiysk (Russia),R12_EEU,Swinoujscie (Poland),1973.91
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_EEU,Swinoujscie (Poland),10140.18
+R12_MEA,Jeddah (Saudi Arabia),R12_EEU,Swinoujscie (Poland),4173.72
+R12_NAM,Houston (United States),R12_EEU,Swinoujscie (Poland),8531.31
+R12_PAO,Hakodate (Japan),R12_EEU,Swinoujscie (Poland),8217.55
+R12_PAS,Jakarta (Indonesia),R12_EEU,Swinoujscie (Poland),10726.09
+R12_SAS,Jawahar Dweep (India),R12_EEU,Swinoujscie (Poland),6278.28
+R12_WEU,Hamburg (Germany),R12_EEU,Swinoujscie (Poland),281.47
+R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),R12_FSU,Novorossiysk (Russia),11094.62
+R12_MEA,Jeddah (Saudi Arabia),R12_FSU,Novorossiysk (Russia),2589.31
+R12_NAM,Houston (United States),R12_FSU,Novorossiysk (Russia),10468.65
+R12_PAO,Hakodate (Japan),R12_FSU,Novorossiysk (Russia),7726.41
+R12_PAS,Jakarta (Indonesia),R12_FSU,Novorossiysk (Russia),8870.77
+R12_SAS,Jawahar Dweep (India),R12_FSU,Novorossiysk (Russia),4324.58
+R12_WEU,Hamburg (Germany),R12_FSU,Novorossiysk (Russia),2227.89
+R12_MEA,Jeddah (Saudi Arabia),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),10181.76
+R12_NAM,Houston (United States),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),8072.13
+R12_PAO,Hakodate (Japan),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),17877.1
+R12_PAS,Jakarta (Indonesia),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),15438.08
+R12_SAS,Jawahar Dweep (India),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),13408.76
+R12_WEU,Hamburg (Germany),R12_LAM,DTSE/GEGUA Oil Terminal (Brazil),9905.05
+R12_NAM,Houston (United States),R12_MEA,Jeddah (Saudi Arabia),12521.31
+R12_PAO,Hakodate (Japan),R12_MEA,Jeddah (Saudi Arabia),9336.51
+R12_PAS,Jakarta (Indonesia),R12_MEA,Jeddah (Saudi Arabia),7984.75
+R12_SAS,Jawahar Dweep (India),R12_MEA,Jeddah (Saudi Arabia),3523.8
+R12_WEU,Hamburg (Germany),R12_MEA,Jeddah (Saudi Arabia),4337.92
+R12_PAO,Hakodate (Japan),R12_NAM,Houston (United States),10211.8
+R12_PAS,Jakarta (Indonesia),R12_NAM,Houston (United States),16508.9
+R12_SAS,Jawahar Dweep (India),R12_NAM,Houston (United States),14454.61
+R12_WEU,Hamburg (Germany),R12_NAM,Houston (United States),8311.49
+R12_PAS,Jakarta (Indonesia),R12_PAO,Hakodate (Japan),6332.13
+R12_SAS,Jawahar Dweep (India),R12_PAO,Hakodate (Japan),6796.12
+R12_WEU,Hamburg (Germany),R12_PAO,Hakodate (Japan),8415.1
+R12_SAS,Jawahar Dweep (India),R12_PAS,Jakarta (Indonesia),4649.25
+R12_WEU,Hamburg (Germany),R12_PAS,Jakarta (Indonesia),11005.35
+R12_WEU,Hamburg (Germany),R12_SAS,Jawahar Dweep (India),6543.22
