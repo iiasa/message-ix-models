@@ -37,23 +37,31 @@ trade_parameters = pd.read_pickle(tdf)
 # Load the scenario
 mp = ixmp.Platform()
 start_model = config.get("scenario", {}).get("target_model")
-start_scen = 'pipelines_LNG'
+start_scen = 'baseline'
 
-scen = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+scen = base.clone(start_model, 'baseline_NAMrsc', keep_solution=False)
+#scen = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
 scen.set_as_default()
 
-add_df = trade_parameters['LNG_shipped']['trade']['var_cost']
+#add_df = trade_parameters['LNG_shipped']['trade']['var_cost']
 
-scen.remove_solution()
+#scen.remove_solution()
 
-rem_df = scen.par('inv_cost', filters = {'technology': list(add_df['technology'].unique())})
+rem_df = scen.par('var_cost', filters = {'technology': ['gas_extr_4',
+                                                      'gas_extr_5',
+                                                      'gas_extr_6',
+                                                      'gas_extr_7'],
+                                         'node_loc': 'R12_NAM'})
+add_df = rem_df.copy()
+add_df['value'] = 0.8 * add_df['value']
 
-with scen.transact("Remove inv cost to LNG trade"): 
-    scen.remove_par('inv_cost', rem_df)
-    #scen.add_par('inv_cost', add_df)
+with scen.transact("Update var cost of gas_extr4-7 for NAM"): 
+    scen.remove_par('var_cost', rem_df)
+    scen.add_par('var_cost', add_df)
 
-with scen.transact("Add var cost to LNG trade"): 
-    scen.remove_par('var_cost', add_df)
+#with scen.transact("Add var cost to LNG trade"): 
+#    scen.remove_par('var_cost', add_df)
     
 solver = "MESSAGE"
 scen.solve(solver, solve_options=dict(lpmethod=4))
