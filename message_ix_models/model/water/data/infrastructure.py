@@ -1146,18 +1146,18 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     bound_lo["value"] = bound_lo["value"] / 5
 
     results["bound_activity_lo"] = bound_lo
-    
+
     # Add soft constraints for desalination bound_activity_lo
     # Parameters for soft constraints
-    relaxation_factor = 0.5  # Allow 50% relaxation of the original bounds
+    relaxation_factor = 10  # Effectively allow complete relaxation at penalty
     penalty_multiplier = 1.0  # 100% of levelized cost as penalty for violations
-    
+
     # Create soft_activity_lo parameter using the same bound_lo data
     soft_lo = bound_lo.copy()
     soft_lo["value"] = relaxation_factor
     soft_lo["unit"] = "-"
     results["soft_activity_lo"] = soft_lo
-    
+
     # Create penalty cost parameter
     penalty_lo = bound_lo.copy()
     penalty_lo["value"] = penalty_multiplier
