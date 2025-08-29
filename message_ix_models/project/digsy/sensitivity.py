@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+import pandas as pd
+
 if TYPE_CHECKING:
     from message_ix import Scenario
 
@@ -35,7 +37,66 @@ def lower_unconv_cost(scenario: "Scenario"):
             scenario.add_par(par, df)
 
 
-def adjust_rooftop_constraint(scenario: "Scenario", new_value: float = 0.4):
+def expand_reserve(scenario: "Scenario"):
+    par = "resource_volume"
+    for comm in ["gas", "crude"]:
+        reserve1 = scenario.par(par, filters={"commodity": f"{comm}_1"})
+        resource1 = scenario.par(par, filters={"commodity": f"{comm}_2"})
+        reserve2 = scenario.par(par, filters={"commodity": f"{comm}_3"})
+        resource2 = scenario.par(par, filters={"commodity": f"{comm}_4"})
+        reserve_unconv = scenario.par(par, filters={"commodity": f"{comm}_5"})
+        resource_unconv = scenario.par(par, filters={"commodity": f"{comm}_6"})
+
+        reserve1_new = reserve1.copy(deep=True)
+        reserve1_new.value *= 1.03
+        df_sub = reserve1.copy(deep=True)
+        df_sub.value *= 0.03
+        df_sub.commodity = f"{comm}_2"
+        resource1.set_index(
+            [i for i in resource1.columns if i != "value"], inplace=True
+        )
+        resource1_new = resource1.sub(
+            df_sub.set_index([i for i in df_sub.columns if i != "value"]), fill_value=0
+        )
+
+        reserve2_new = reserve2.copy(deep=True)
+        reserve2_new.value *= 1.03
+        df_sub = reserve2.copy(deep=True)
+        df_sub.value *= 0.03
+        df_sub.commodity = f"{comm}_4"
+        resource2.set_index(
+            [i for i in resource2.columns if i != "value"], inplace=True
+        )
+        resource2_new = resource2.sub(
+            df_sub.set_index([i for i in df_sub.columns if i != "value"]), fill_value=0
+        )
+
+        reserve_unconv_new = reserve_unconv.copy(deep=True)
+        reserve_unconv_new.value *= 1.15
+        df_sub = reserve_unconv.copy(deep=True)
+        df_sub.value *= 0.15
+        df_sub.commodity = f"{comm}_6"
+        resource_unconv.set_index(
+            [i for i in resource_unconv.columns if i != "value"], inplace=True
+        )
+        resource_unconv_new = resource_unconv.sub(
+            df_sub.set_index([i for i in df_sub.columns if i != "value"]), fill_value=0
+        )
+        par_new = pd.concat(
+            [
+                reserve1_new,
+                resource1_new.reset_index(),
+                reserve2_new,
+                resource2_new.reset_index(),
+                reserve_unconv_new,
+                resource_unconv_new.reset_index(),
+            ]
+        )
+        with scenario.transact():
+            scenario.add_par(par, par_new)
+
+
+def adjust_rooftop_constraint(scenario: "Scenario", new_value: float = 0.5):
     df = scenario.par(
         "share_commodity_up",
         filters={"shares": ["UE_RT_elec_share_RC_max"]},
@@ -43,7 +104,6 @@ def adjust_rooftop_constraint(scenario: "Scenario", new_value: float = 0.4):
     df.value = new_value
     with scenario.transact():
         scenario.add_par("share_commodity_up", df)
-    raise NotImplementedError
 
 
 def get_integration_constraints(scen: "Scenario"):
@@ -110,6 +170,14 @@ if __name__ == "__main__":
             "suffix": "_shale_cost",
             "modifier": lower_unconv_cost,
         },
+        "relaxed rooftop share constraint": {
+            "suffix": "_RT_50",
+            "modifier": adjust_rooftop_constraint,
+        },
+        "bigger reserve": {
+            "suffix": "_expanded_reserve",
+            "modifier": expand_reserve,
+        },
     }
 
     mp = ixmp.Platform("ixmp_dev")
@@ -118,8 +186,8 @@ if __name__ == "__main__":
     #     **sensitivity_map["lower shale cost"],
     # )
     create_sensitivity_scenarios(
-        [(f"DIGSY_SSP2{i}", "baseline_1000f") for i in [""]],
-        **sensitivity_map["relaxed electrification growth constraint"],
+        [(f"DIGSY_SSP2{i}", "baseline") for i in [""]],
+        **sensitivity_map["bigger reserve"],
     )
     # scen = message_ix.Scenario(mp, "DIGSY_SSP2", "baseline")
     # pars = query_ssp_pars(["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"])
