@@ -72,7 +72,7 @@ for tec in [i for i in covered_tec if 'shipped' in i]:
                             right_on = ['node_loc', 'technology', 'year_act', 'year_vtg',  'mode', 'time'], how = 'left')
     
     add_df['value'] = np.where(add_df['value'].isnull(), mean_cost, add_df['value'])
-    add_df['value'] = add_df['value']/5
+    add_df['value'] = round(add_df['value']/5,0)
     
     add_df['unit'] = 'USD/GWa'
     
