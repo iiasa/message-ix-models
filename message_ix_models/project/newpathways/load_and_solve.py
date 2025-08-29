@@ -68,7 +68,7 @@ clone_and_update(trade_dict=trade_parameters_nofix,
                  solve = True,
                  update_scenario_name = 'LNG_noTRvarcost')
 
-# Update scenario: Reduce variable costs by 80%
+# Update scenario: Increase var costs to full export values (5x)
 trade_parameters_LNGin = pd.read_pickle(tdf)
 update_varcost = pd.DataFrame.from_dict(dict(technology = ['LNG_shipped_exp_afr',
                                                            'LNG_shipped_exp_chn',
@@ -82,8 +82,8 @@ update_varcost = pd.DataFrame.from_dict(dict(technology = ['LNG_shipped_exp_afr'
                                                            'LNG_shipped_exp_rcpa',
                                                            'LNG_shipped_exp_sas',
                                                            'LNG_shipped_exp_weu'],
-                                             multiplier = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2,
-                                                           0.2, 0.2, 0.2, 0.2, 0.2, 0.2]))
+                                             multiplier = [5, 5, 5, 5, 5, 5,
+                                                           5, 5, 5, 5, 5, 5]))
 additional_parameters_varcost = {'var_cost': update_varcost}
 
 clone_and_update(trade_dict=trade_parameters,
