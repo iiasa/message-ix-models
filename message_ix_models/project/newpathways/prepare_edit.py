@@ -65,13 +65,13 @@ for tec in [i for i in covered_tec if 'shipped' in i]:
     log.info('Add variable cost for ' + tec)
     add_df = costdf[costdf['technology'].str.contains(tec)]
     col_list = add_df.columns
-    min_cost = add_df['value'].min()
+    mean_cost = add_df['value'].mean()
     
     input_df = pd.read_csv(os.path.join(data_path, tec, "edit_files", "input.csv"))[['node_loc', 'technology', 'year_act', 'year_vtg', 'mode', 'time']].drop_duplicates()
     add_df = input_df.merge(add_df, left_on = ['node_loc', 'technology', 'year_act', 'year_vtg',  'mode', 'time'], 
                             right_on = ['node_loc', 'technology', 'year_act', 'year_vtg',  'mode', 'time'], how = 'left')
     
-    add_df['value'] = np.where(add_df['value'].isnull(), min_cost, add_df['value'])
+    add_df['value'] = np.where(add_df['value'].isnull(), mean_cost, add_df['value'])
     add_df['value'] = add_df['value']/5
     
     add_df['unit'] = 'USD/GWa'
