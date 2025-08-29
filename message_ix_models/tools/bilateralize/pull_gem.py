@@ -58,7 +58,7 @@ def import_gem(input_file: str,
     p_drive = config['p_drive_location']
     
     # Data paths
-    data_path = os.path.join(p_drive, "MESSAGE_Trade")
+    data_path = os.path.join(p_drive, "MESSAGE_trade")
     gem_path = os.path.join(data_path, "Global Energy Monitor")
 
     df = pd.read_excel(os.path.join(gem_path, input_file),
