@@ -34,66 +34,66 @@ log = get_logger(__name__)
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
 trade_parameters = pd.read_pickle(tdf)
 
-# Update scenario: default values
-clone_and_update(trade_dict=trade_parameters,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True,
-                 update_scenario_name = 'pipelines_LNG')
+# # Update scenario: default values
+# clone_and_update(trade_dict=trade_parameters,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  update_scenario_name = 'pipelines_LNG')
 
-# Update scenario: no cost on flow technology
-trade_parameters_novar = pd.read_pickle(tdf)
-del trade_parameters_novar['LNG_shipped']['flow']['var_cost']
-del trade_parameters_novar['LNG_shipped']['flow']['inv_cost']
+# # Update scenario: no cost on flow technology
+# trade_parameters_novar = pd.read_pickle(tdf)
+# del trade_parameters_novar['LNG_shipped']['flow']['var_cost']
+# del trade_parameters_novar['LNG_shipped']['flow']['inv_cost']
 
-clone_and_update(trade_dict=trade_parameters_novar,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True,
-                 update_scenario_name = 'LNG_noFLcost')
+# clone_and_update(trade_dict=trade_parameters_novar,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  update_scenario_name = 'LNG_noFLcost')
 
-# Update scenario: no variable cost on trade for LNG 
-trade_parameters_nofix = pd.read_pickle(tdf)
-del trade_parameters_nofix['LNG_shipped']['trade']['var_cost']
+# # Update scenario: no variable cost on trade for LNG 
+# trade_parameters_nofix = pd.read_pickle(tdf)
+# del trade_parameters_nofix['LNG_shipped']['trade']['var_cost']
 
-clone_and_update(trade_dict=trade_parameters_nofix,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True,
-                 update_scenario_name = 'LNG_noTRvarcost')
+# clone_and_update(trade_dict=trade_parameters_nofix,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  update_scenario_name = 'LNG_noTRvarcost')
 
-# Update scenario: Increase var costs to full export values (5x)
-trade_parameters_LNGin = pd.read_pickle(tdf)
-update_varcost = pd.DataFrame.from_dict(dict(technology = ['LNG_shipped_exp_afr',
-                                                           'LNG_shipped_exp_chn',
-                                                           'LNG_shipped_exp_eeu',
-                                                           'LNG_shipped_exp_fsu',
-                                                           'LNG_shipped_exp_lam',
-                                                           'LNG_shipped_exp_mea',
-                                                           'LNG_shipped_exp_nam',
-                                                           'LNG_shipped_exp_pao',
-                                                           'LNG_shipped_exp_pas',
-                                                           'LNG_shipped_exp_rcpa',
-                                                           'LNG_shipped_exp_sas',
-                                                           'LNG_shipped_exp_weu'],
-                                             multiplier = [5, 5, 5, 5, 5, 5,
-                                                           5, 5, 5, 5, 5, 5]))
-additional_parameters_varcost = {'var_cost': update_varcost}
+# # Update scenario: Increase var costs to full export values (5x)
+# trade_parameters_LNGin = pd.read_pickle(tdf)
+# update_varcost = pd.DataFrame.from_dict(dict(technology = ['LNG_shipped_exp_afr',
+#                                                            'LNG_shipped_exp_chn',
+#                                                            'LNG_shipped_exp_eeu',
+#                                                            'LNG_shipped_exp_fsu',
+#                                                            'LNG_shipped_exp_lam',
+#                                                            'LNG_shipped_exp_mea',
+#                                                            'LNG_shipped_exp_nam',
+#                                                            'LNG_shipped_exp_pao',
+#                                                            'LNG_shipped_exp_pas',
+#                                                            'LNG_shipped_exp_rcpa',
+#                                                            'LNG_shipped_exp_sas',
+#                                                            'LNG_shipped_exp_weu'],
+#                                              multiplier = [5, 5, 5, 5, 5, 5,
+#                                                            5, 5, 5, 5, 5, 5]))
+# additional_parameters_varcost = {'var_cost': update_varcost}
 
-clone_and_update(trade_dict=trade_parameters,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True,
-                 additional_parameter_updates = additional_parameters_varcost,
-                 update_scenario_name = 'LNG_lowTRvarcost')
+# clone_and_update(trade_dict=trade_parameters,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  additional_parameter_updates = additional_parameters_varcost,
+#                  update_scenario_name = 'LNG_lowTRvarcost')
 
 # Update scenario: Increase fuel requirements for LNG shipping by 50%
 trade_parameters_LNGin = pd.read_pickle(tdf)
