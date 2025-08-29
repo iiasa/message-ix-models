@@ -76,8 +76,8 @@ scenario, node,     year, value
 # *,      R12_SAS,  2110, 15000  # TH high
 # *,      R12_WEU,  2020, 11000  # TH low
 # *,      R12_WEU,  2110, 11000  # TH low
-*,        R12_WEU,  2020, 11700
-*,        R12_WEU,  2110, 11700
+*,        R12_WEU,  2020, 12500
+*,        R12_WEU,  2110, 12500
 # *,      R12_WEU,  2020, 12000  # TH high
 # *,      R12_WEU,  2110, 12000  # TH high
 
