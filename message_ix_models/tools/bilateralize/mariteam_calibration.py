@@ -34,7 +34,7 @@ def calibrate_mariteam(covered_tec,
     config, config_path = bilateralize.load_config(project_name = project_name, 
                                       config_name = config_name)
     p_drive = config['p_drive_location']
-    data_path = os.path.join(p_drive, "MESSAGE_Trade")
+    data_path = os.path.join(p_drive, "MESSAGE_trade")
     mt_path = os.path.join(data_path, "MariTEAM")
     out_path = os.path.join(os.path.dirname(package_data_path("bilateralize")), "bilateralize")
 
