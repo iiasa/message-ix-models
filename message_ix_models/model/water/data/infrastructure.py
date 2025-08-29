@@ -4,6 +4,7 @@ treatment in urban & rural"""
 from collections import defaultdict
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from message_ix import make_df
 
@@ -1144,6 +1145,18 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # Divide the histroical capacity by 5 since the existing data is summed over
     # 5 years and model needs per year
     bound_lo["value"] = bound_lo["value"] / 5
+
+    # Clip activity bounds to not exceed capacity bounds
+    bound_lo = bound_lo.merge(
+        bound_up[["node_loc", "year_act", "value"]],
+        on=["node_loc", "year_act"],
+        how="left",
+        suffixes=("", "_cap"),
+    )
+    bound_lo["value"] = np.minimum(
+        bound_lo["value"], bound_lo["value_cap"].fillna(np.inf)
+    )
+    bound_lo = bound_lo.drop("value_cap", axis=1)
 
     results["bound_activity_lo"] = bound_lo
 
