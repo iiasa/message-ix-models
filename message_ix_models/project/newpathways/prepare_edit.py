@@ -78,6 +78,10 @@ for tec in [i for i in covered_tec if 'shipped' in i]:
     
     add_df = add_df[col_list]    
     
+    add_df = add_df[add_df['technology'].str.contains('_imp') == False] # No costs applied to import technologies
+    
     add_df.to_csv(os.path.join(data_path, tec, "edit_files", "var_cost.csv"),
+                  index = False)
+    add_df.to_csv(os.path.join(data_path, tec, "bare_files", "var_cost.csv"),
                   index = False)
 
