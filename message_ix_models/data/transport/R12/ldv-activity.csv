@@ -18,20 +18,20 @@
 scenario, node,     year, value
 # *,      R12_AFR,  2020, 11000  # TH low
 # *,      R12_AFR,  2110, 11000  # TH low
-*,        R12_AFR,  2020, 15500
-*,        R12_AFR,  2110, 15500
+*,        R12_AFR,  2020, 19000
+*,        R12_AFR,  2110, 19000
 # *,      R12_AFR,  2020, 19000  # TH high
 # *,      R12_AFR,  2110, 19000  # TH high
 # *,      R12_CHN,  2020,  9500  # TH low
 # *,      R12_CHN,  2110,  9500  # TH low
-*,        R12_CHN,  2020, 15000  # TH high
-*,        R12_CHN,  2110, 15000  # TH high
+*,        R12_CHN,  2020, 16000  # TH high
+*,        R12_CHN,  2110, 16000  # TH high
 # *,      R12_CHN,  2020, 16000  # Previous value
 # *,      R12_CHN,  2110, 16000  # Previous value
 # *,      R12_EEU,  2020,  8962  # Previous value
 # *,      R12_EEU,  2110,  8962  # Previous value
-*,        R12_EEU,  2020,  9000  # TH low
-*,        R12_EEU,  2110,  9000  # TH low
+*,        R12_EEU,  2020, 12500  # TH low
+*,        R12_EEU,  2110, 15000  # TH low
 # *,      R12_EEU,  2020, 10000  # TH high
 # *,      R12_EEU,  2110, 10000  # TH high
 # *,      R12_FSU,  2020, 11000  # TH low
@@ -40,24 +40,26 @@ scenario, node,     year, value
 *,        R12_FSU,  2110, 13000  # TH high = previous value
 # *,      R12_LAM,  2020, 13000  # TH low
 # *,      R12_LAM,  2110, 13000  # TH low
-*,        R12_LAM,  2020, 13500
-*,        R12_LAM,  2110, 13500
+*,        R12_LAM,  2020, 15000
+*,        R12_LAM,  2110, 15000
 # *,      R12_LAM,  2020, 15000  # TH high
 # *,      R12_LAM,  2110, 15000  # TH high
 # *,      R12_MEA,  2020, 13000  # TH low
 # *,      R12_MEA,  2110, 13000  # TH low
-*,        R12_MEA,  2020, 14500
-*,        R12_MEA,  2110, 14500
+*,        R12_MEA,  2020, 16000
+*,        R12_MEA,  2110, 16000
 # *,      R12_MEA,  2020, 16000  # TH high
 # *,      R12_MEA,  2110, 16000  # TH high
 # *,      R12_NAM,  2020, 16000  # TH low
 # *,      R12_NAM,  2110, 16000  # TH low
-*,        R12_NAM,  2020, 18400
-*,        R12_NAM,  2110, 18400
+*,        R12_NAM,  2020, 19000
+*,        R12_NAM,  2110, 19000
 # *,      R12_NAM,  2020, 19000  # TH high
 # *,      R12_NAM,  2110, 19000  # TH high
-*,        R12_PAO,  2020,  9000  # TH low = previous value
-*,        R12_PAO,  2110,  9000  # TH low = previous value
+# *,      R12_PAO,  2020,  9000  # TH low = previous value
+# *,      R12_PAO,  2110,  9000  # TH low = previous value
+*,        R12_PAO,  2020, 10000  # TH low = previous value
+*,        R12_PAO,  2110, 13000  # TH low = previous value
 # *,      R12_PAO,  2020, 10000  # TH high
 # *,      R12_PAO,  2110, 10000  # TH high
 # *,      R12_PAS,  2020, 11000  # TH low
@@ -66,18 +68,18 @@ scenario, node,     year, value
 *,        R12_PAS,  2110, 13000  # TH high = previous value
 # *,      R12_RCPA, 2020, 11000  # TH low
 # *,      R12_RCPA, 2110, 11000  # TH low
-*,        R12_RCPA, 2020, 12000  # TH high
-*,        R12_RCPA, 2110, 12000  # TH high
+*,        R12_RCPA, 2020, 15000  # TH high
+*,        R12_RCPA, 2110, 15000  # TH high
 # *,      R12_RCPA, 2020, 16000  # Previous value
 # *,      R12_RCPA, 2110, 16000  # Previous value
 *,        R12_SAS,  2020, 12000  # TH low = previous value
 *,        R12_SAS,  2110, 12000  # TH low = previous value
-# *,      R12_SAS,  2020, 15000  # TH high
-# *,      R12_SAS,  2110, 15000  # TH high
+# *,      R12_SAS,  2020, 18000  # TH high
+# *,      R12_SAS,  2110, 18000  # TH high
 # *,      R12_WEU,  2020, 11000  # TH low
 # *,      R12_WEU,  2110, 11000  # TH low
 *,        R12_WEU,  2020, 12500
-*,        R12_WEU,  2110, 12500
+*,        R12_WEU,  2110, 15000
 # *,      R12_WEU,  2020, 12000  # TH high
 # *,      R12_WEU,  2110, 12000  # TH high
 
