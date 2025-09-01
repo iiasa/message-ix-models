@@ -68,23 +68,6 @@ hist_lng_lng['value'] *= 0.8 # Assume 80% of historical LNG tankers are propelle
 hist_lng = pd.concat([hist_lng_foil, hist_lng_lng])
 trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
 
-## MANUAL ADDITIONS
-# Set emission factors for piped gas # TODO
-# tdf = pd.read_csv(os.path.join(package_data_path("bilateralize"), "gas_piped", "bare_files", "emission_factor.csv"))
-# trade_dict['gas_piped']['trade']['emission_factor'] = tdf
-
-# Set WEU imports of piped gas from FSU to 0 in 2025 #TODO: Check, as there are some exports
-# tdf = trade_dict['gas_piped']['trade']['historical_activity']
-# add_df = {'node_loc': ['R12_FSU'],
-#           'technology': ['gas_piped_exp_weu'],
-#           'year_act': [2025],
-#           'mode': ['M1'],
-#           'time': ['year'],
-#           'value': [0],
-#           'unit': ['GWa']}
-# tdf = pd.concat([tdf, pd.DataFrame.from_dict(add_df)])
-# trade_dict['gas_piped']['trade']['historical_activity'] = tdf.reset_index(drop = True)
-
 # Save trade_dictionary
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
 with open(tdf, 'wb') as f: pickle.dump(trade_dict, f)
