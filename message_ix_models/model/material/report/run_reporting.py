@@ -99,15 +99,18 @@ def format_reporting_df(
     unit: str,
     mappings,
 ) -> pyam.IamDataFrame:
-    """Formats a DataFrame created with :func:pyam_df_from_rep
-    to a pyam.IamDataFrame."""
+    """Formats a DataFrame created with :func:pyam_df_from_rep to pyam.IamDataFrame."""
     df.columns = ["value"]
-    df = df.reset_index()
-    df = df.rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
-    df["variable"] = variable_prefix + df["variable"]
-    df["Model"] = model_name
-    df["Scenario"] = scenario_name
-    df["Unit"] = unit
+    df = (
+        df.reset_index()
+        .rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
+        .assign(
+            variable=lambda x: variable_prefix + x["variable"],
+            Model=model_name,
+            Scenario=scenario_name,
+            Unit=unit,
+        )
+    )
     py_df = pyam.IamDataFrame(df)
 
     missing = [
@@ -134,8 +137,7 @@ def format_reporting_df(
 
 
 def load_config(name: str) -> ReporterConfig:
-    """Load a Reporter config for a given reporting variable category from
-    the YAML files."""
+    """Load a config for a given reporting variable category from the YAML files."""
     path = package_data_path("material", "reporting")
     file = f"{name}_reporting.yaml"
     file_agg = f"{name}_reporting_aggregates.yaml"
@@ -192,27 +194,18 @@ def run_fe_methanol_nh3_reporting(
     rep: message_ix.Reporter, model_name: str, scen_name: str
 ) -> pyam.IamDataFrame:
     """Run final energy reporting for ammonia and methanol.
-    Process energy input for methanol and ammonia is defined as the
-    difference between energy input and the embodied energy in the final product.
-    Since the model structure does not differentiate between feedstock
-    and process energy input for NH3 and CH3OH production, this needs to
-    calculated in post-processing steps:
-    1a) Query input flows to methanol and ammonia production
-    1b) Map to IAMC variable names
-    2a) Query methanol and ammonia output flows and map to same IAMC variables
-    2b) Convert ammonia output flows from Mt to GWa (not needed for methanol)
-    3) Subtract product output from energy input to get process energy
-    4) Format dataframe to IAMC standard
 
-    Parameters
-    ----------
-    rep
-    model_name
-    scen_name
+    Process energy input for methanol and ammonia is defined as the difference between
+    energy input and the embodied energy in the final product. Since the model structure
+    does not differentiate between feedstock and process energy input for NH3 and CH3OH
+    production, this needs to calculated in post-processing steps:
 
-    Returns
-    -------
-
+    1. Query input flows to methanol and ammonia production.
+    2. Map to IAMC variable names.
+    3. Query methanol and ammonia output flows and map to same IAMC variables.
+    4. Convert ammonia output flows from Mt to GWa (not needed for methanol).
+    5. Subtract product output from energy input to get process energy.
+    6. Format dataframe to IAMC standard.
     """
     nh3_mt_to_gwa = 0.697615
     fe_config = load_config("fe_methanol_ammonia")
@@ -413,19 +406,21 @@ def add_chemicals_to_final_energy_variables(
 def split_fe_other(
     rep: message_ix.Reporter, py_df_all: pyam.IamDataFrame, model: str, scenario: str
 ) -> pyam.IamDataFrame:
-    """This function takes the Final Energy|Industry|*|Liquids|Other values
-    and reallocates it to Liquids|Biomass/Coal/Oil/Gas based on the methanol
-    feedstock shares.
-    1) calculates the feedstock shares of methanol production with message_ix.Reporter
-    2) append the shares as temporary iamc variables them to the existing reporting
-        pyam object
-    3) Uses pyam multiply feature to calculate shares with each "Liquids|Other"
-        timeseries
-    4) Uses pyam aggregate to sum existing Liquids|Biomass/Coal/Oil/Gas with new
-        variables and store in separate pyam object
-    5) Filters out existing (outdated) Liquids|Biomass/Coal/Oil/Gas from reporting
-        pyam object
-    6) Concats the updated variables with the full reporting
+    """Splits Final Energy|Industry|*|Liquids|Other values.
+
+    It reallocates it to Liquids|Biomass/Coal/Oil/Gas based on the methanol feedstock
+    shares.
+
+    1. Calculate the feedstock shares of methanol production with message_ix.Reporter.
+    2. Append the shares as temporary iamc variables them to the existing reporting pyam
+       object.
+    3. Use pyam multiply feature to calculate shares with each "Liquids|Other"
+       timeseries.
+    4. Use pyam aggregate to sum existing Liquids|Biomass/Coal/Oil/Gas with new
+       variables and store in separate pyam object.
+    5. Filter out existing (outdated) Liquids|Biomass/Coal/Oil/Gas from reporting pyam
+       object.
+    6. Concat the updated variables with the full reporting.
     """
     add_biometh_final_share(rep, mode="fuel")
     # set temporary filter on Reporter to speed up queries
@@ -624,6 +619,7 @@ def run_fs_reporting(
 def split_mto_feedstock(
     rep: message_ix.Reporter, py_df_all: pyam.IamDataFrame, model: str, scenario: str
 ) -> pyam.IamDataFrame:
+    """Splits Final Energy|Non-Energy Use|*|Liquids|Other values."""
     add_biometh_final_share(rep, mode="feedstock")
     rep.set_filters(
         t=[
@@ -778,11 +774,12 @@ def run_all_categories(
     rep: message_ix.Reporter, model_name: str, scen_name: str
 ) -> List[pyam.IamDataFrame]:
     """Generate all industry reporting variables for a given scenario."""
-    dfs = []
-    dfs.append(run_fs_reporting(rep, model_name, scen_name))
-    dfs.append(run_fe_reporting(rep, model_name, scen_name))
-    dfs.append(run_prod_reporting(rep, model_name, scen_name))
-    dfs.append(run_ch4_reporting(rep, model_name, scen_name))
+    dfs = [
+        run_fs_reporting(rep, model_name, scen_name),
+        run_fe_reporting(rep, model_name, scen_name),
+        run_prod_reporting(rep, model_name, scen_name),
+        run_ch4_reporting(rep, model_name, scen_name),
+    ]
     return dfs
 
 
