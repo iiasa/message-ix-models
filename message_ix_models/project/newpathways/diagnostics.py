@@ -13,6 +13,7 @@ import message_ix
 import ixmp
 import itertools
 import plotly.graph_objects as go
+from datetime import datetime
 
 from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.util import package_data_path
@@ -43,6 +44,10 @@ def activity_to_csv(trade_tec,
     
     for scenario_name in model_scenario_dict.keys():
         model_name = model_scenario_dict[scenario_name]
+        
+        print("COMPILING SCENARIO [" + scenario_name + "]")
+        print("COMPILING MODEL [" + model_name + "]")
+        
         scen = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
         
         activity = scen.var("ACT")
@@ -137,13 +142,16 @@ def activity_to_csv(trade_tec,
             flowdf['PAIR'] = flowdf['EXPORTER'] + '-' + flowdf['IMPORTER']
             flows_out = pd.concat([flows_out, flowdf])
         
-        
-    exports_out.to_csv(os.path.join(out_path, trade_tec + '_exp.csv'),
-                       index = False)
-    imports_out.to_csv(os.path.join(out_path, trade_tec + '_imp.csv'),
-                       index = False)
-    flows_out.to_csv(os.path.join(out_path, flow_tec + '.csv'),
-                     index = False)
+        exports['PULL DATE'] = pd.Timestamp.today().strftime('%Y-%m-%d')
+        imports_out['PULL DATE'] = pd.Timestamp.today().strftime('%Y-%m-%d')
+        flows_out['PULL DATE'] = pd.Timestamp.today().strftime('%Y-%m-%d')
+
+        exports_out.to_csv(os.path.join(out_path, trade_tec + '_exp.csv'),
+                           index = False)
+        imports_out.to_csv(os.path.join(out_path, trade_tec + '_imp.csv'),
+                           index = False)
+        flows_out.to_csv(os.path.join(out_path, flow_tec + '.csv'),
+                         index = False)
     
 # Retrieve trade flow activities
 scenarios_models = {'baseline': 'NP_SSP2_6.2',
