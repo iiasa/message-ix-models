@@ -267,15 +267,10 @@ def read_rc_elec(
 def read_rc_materials(
     digsy_scenario: DIGSY_SCENS,
 ):
-    # TODO: commit rc material demand files to message_data and paste names here
-    fmap = {
-        "baseline": "name",
-        "BEST": "name",
-        "WORST": "name",
-        "BESTEST": "name",
-        "WORSTEST": "name",
-    }
-    path = private_data_path("projects", "digsy", fmap[digsy_scenario])
+    f_suffix = f"_{digsy_scenario}" if digsy_scenario != "baseline" else ""
+    path = private_data_path(
+        "projects", "digsy", "buildings", f"rc_material_demand_SSP2{f_suffix}.csv"
+    )
     df = pd.read_csv(path)
     df = df[df["commodity"].str.contains("_mat_dem")]
     comms = {i.split("_")[-1] for i in df["commodity"].unique()}
