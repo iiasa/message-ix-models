@@ -351,6 +351,7 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
             valid_pop = pop_tot[pop_tot.value > 0]
             if valid_pop.empty:
                 import warnings
+
                 warnings.warn(
                     f"Population|{ur.capitalize()} contains only zero or missing "
                     f"values. This will result in zero access calculations for {ur} "
@@ -411,6 +412,7 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
 
         except Exception as e:
             import warnings
+
             warnings.warn(
                 f"Failed to calculate population access for {ur} populations "
                 f"due to: {e}. Check scenario data and rates files for "
@@ -536,9 +538,7 @@ def compute_cooling_technologies(
     ]
 
     # Fresh water return flow emissions
-    fresh_return_emissions = report_iam.filter(
-        variable="emis|fresh_return|*"
-    ).variable
+    fresh_return_emissions = report_iam.filter(variable="emis|fresh_return|*").variable
 
     # Cooling investments
     cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
