@@ -139,8 +139,8 @@ def format_reporting_df(
 def load_config(name: str) -> ReporterConfig:
     """Load a config for a given reporting variable category from the YAML files."""
     path = package_data_path("material", "reporting")
-    file = f"{name}_reporting.yaml"
-    file_agg = f"{name}_reporting_aggregates.yaml"
+    file = f"{name}.yaml"
+    file_agg = f"{name}_aggregates.yaml"
 
     rep_var_dict = read_yaml_file(path.joinpath(file))
     assert rep_var_dict is not None, (
