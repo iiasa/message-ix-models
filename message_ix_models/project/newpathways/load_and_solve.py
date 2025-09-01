@@ -19,6 +19,7 @@ from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.tools.bilateralize.historical_calibration import *
 from message_ix_models.tools.bilateralize.pull_gem import *
 from message_ix_models.tools.bilateralize.mariteam_calibration import *
+from message_ix_models.project.newpathways.liquefaction_calibration import *
 
 # Bring in configuration
 config, config_path = load_config(project_name = 'newpathways', 
@@ -31,17 +32,30 @@ message_regions = config['scenario']['regions']
 log = get_logger(__name__)
 
 # Import pickle of parameter definitions
-tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
-trade_parameters = pd.read_pickle(tdf)
+# tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
+# trade_parameters = pd.read_pickle(tdf)
 
-# Update scenario: default values
+# # Update scenario: default values
+# clone_and_update(trade_dict=trade_parameters,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  update_scenario_name = 'pipelines_LNG')
+
+# Update scenario: Increase liquefaction gas penalty
+additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
+                                                        project_name = 'newpathways',
+                                                        config_name = 'config.yaml')
 clone_and_update(trade_dict=trade_parameters,
                  project_name = 'newpathways',
                  config_name = 'config.yaml',
                  log=log,
                  to_gdx = False,
                  solve = True,
-                 update_scenario_name = 'pipelines_LNG')
+                 additional_parameter_updates = additional_parameters_input,
+                 update_scenario_name = 'LNG_prod_penalty')
 
 # # Update scenario: no cost on flow technology
 # trade_parameters_novar = pd.read_pickle(tdf)
@@ -109,22 +123,6 @@ clone_and_update(trade_dict=trade_parameters,
 #                  solve = True,
 #                  additional_parameter_updates = additional_parameters_input,
 #                  update_scenario_name = 'high_LNGtankerfuel')
-
-# # Update scenario: Increase liquefaction gas penalty
-# update_input = pd.DataFrame.from_dict(dict(technology = ["LNG_prod"],
-#                                            commodity = ["gas"],
-#                                            level = ["primary"],
-#                                            value = [1.2]))
-# additional_parameters_input = {'input': update_input}
-
-# clone_and_update(trade_dict=trade_parameters,
-#                  project_name = 'newpathways',
-#                  config_name = 'config.yaml',
-#                  log=log,
-#                  to_gdx = False,
-#                  solve = True,
-#                  additional_parameter_updates = additional_parameters_input,
-#                  update_scenario_name = 'LNG_prod_penalty20p')
 
 # # Update scenario: Reduce NAM extraction costs by 20%
 # update_var_cost = pd.DataFrame.from_dict(dict(node_loc = ['R12_NAM',
