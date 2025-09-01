@@ -518,11 +518,14 @@ def generate_bare_sheets(
         for flow_tec in config_dict['flow_technologies'][tec]:
             
             # List of commodity/material inputs
-            flow_inputs = [config_dict['flow_fuel_input'][tec][flow_tec]]
+            flow_inputs = config_dict['flow_fuel_input'][tec][flow_tec]
+            if config_dict['flow_material_input'][tec] != None:
+                flow_inputs = flow_inputs + config_dict['flow_material_input'][tec][flow_tec]
             
             ## Create bare file: input        
             # Build by commodity input
             for c in flow_inputs:
+                print(c)
                 if c in config_dict['flow_fuel_input'][tec][flow_tec]: use_unit = 'GWa'
                 elif c in config_dict['flow_material_input'][tec][flow_tec]: use_unit = 'Mt'
                 
@@ -578,7 +581,8 @@ def generate_bare_sheets(
                                                     node_dest = network_setup[tec]['exporter'],
                                                     technology = flow_tec + '_' +\
                                                         network_setup[tec]['importer'].str.lower().str.split('_').str[1],
-                                                    commodity = config_dict['flow_commodity_output'][tec],
+                                                    commodity = config_dict['flow_commodity_output'][tec] + '_' +\
+                                                        network_setup[tec]['importer'].str.lower().str.split('_').str[1],
                                                     unit = config_dict['flow_units'][tec],
                                                     level = config_dict['trade_level'][tec],
                                                     **common_years, **common_cols)
@@ -602,12 +606,12 @@ def generate_bare_sheets(
             if config_dict['bunker_technology'][tec] is not None:
                 # Global bunker
                 df_output_gbunk = df_output.copy()
-                df_output_gbunk['technology'] = 'bunker_global_' + config_dict['flow_fuel_input'][tec][flow_tec]
+                df_output_gbunk['technology'] = 'bunker_global_' + config_dict['flow_fuel_input'][tec][flow_tec][0]
                 df_output_gbunk['node_dest'] = message_regions + '_GLB'
                 df_output_gbunk['level'] = 'bunker'
                 df_output_gbunk['unit'] = 'GWa'
                 df_output_gbunk['mode'] = 'M1'
-                df_output_gbunk['commodity'] = config_dict['flow_fuel_input'][tec][flow_tec]
+                df_output_gbunk['commodity'] = config_dict['flow_fuel_input'][tec][flow_tec][0]
                 df_output = pd.concat([df_output, df_output_gbunk])
             
             df_output = df_output.drop_duplicates()
@@ -710,7 +714,7 @@ def generate_bare_sheets(
             if config_dict['bunker_technology'][tec] is not None:
                 # Add global bunker fuel technology
                 bdf = df_cf_base.copy()
-                bdf['technology'] = 'bunker_global_' + config_dict['flow_fuel_input'][tec][flow_tec]
+                bdf['technology'] = 'bunker_global_' + config_dict['flow_fuel_input'][tec][flow_tec][0]
                 df_cf_base = pd.concat([df_cf_base, bdf])
             
             df_cf = pd.concat([df_cf, df_cf_base])
@@ -738,7 +742,7 @@ def generate_bare_sheets(
             if config_dict['bunker_technology'][tec] is not None:
                 # Add global bunker fuel technology
                 bdf = df_teclt_base.copy()
-                bdf['technology'] = 'bunker_global_' + config_dict['flow_fuel_input'][tec][flow_tec]
+                bdf['technology'] = 'bunker_global_' + config_dict['flow_fuel_input'][tec][flow_tec][0]
                 df_teclt_base = pd.concat([df_teclt_base, bdf])
             df_teclt = pd.concat([df_teclt, df_teclt_base])
             
@@ -752,7 +756,8 @@ def generate_bare_sheets(
                                                    node_loc = network_setup[tec]['exporter'],
                                                    node_origin = network_setup[tec]['exporter'],
                                                    technology = network_setup[tec]['export_technology'],
-                                                   commodity = config_dict['flow_commodity_output'][tec],
+                                                   commodity = config_dict['flow_commodity_output'][tec] + '_' +\
+                                                       network_setup[tec]['importer'].str.lower().str.split('_').str[1],
                                                    unit = config_dict['flow_units'][tec],
                                                    level = config_dict['trade_level'][tec],
                                                    **common_years, **common_cols).drop_duplicates()
