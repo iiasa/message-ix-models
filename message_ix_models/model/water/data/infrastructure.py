@@ -1160,23 +1160,23 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
     results["bound_activity_lo"] = bound_lo
 
-    # Add soft constraints for desalination bound_activity_lo
-    # Parameters for soft constraints
-    relaxation_factor = 10  # Effectively allow complete relaxation at penalty
-    penalty_multiplier = 1.0  # 100% of levelized cost as penalty for violations
-
-    # Create soft_activity_lo parameter using the same bound_lo data
-    soft_lo = bound_lo.copy()
-    soft_lo["value"] = relaxation_factor
-    soft_lo["unit"] = "-"
-    results["soft_activity_lo"] = soft_lo
-
-    # Create penalty cost parameter
-    penalty_lo = bound_lo.copy()
-    penalty_lo["value"] = penalty_multiplier
-    penalty_lo["unit"] = "-"
-    results["level_cost_activity_soft_lo"] = penalty_lo
-
+    # # Add soft constraints for desalination bound_activity_lo
+    # # Parameters for soft constraints
+    # relaxation_factor = 10  # Effectively allow complete relaxation at penalty
+    # penalty_multiplier = 1.0  # 100% of levelized cost as penalty for violations
+    #
+    # # Create soft_activity_lo parameter using the same bound_lo data
+    # soft_lo = bound_lo.copy()
+    # soft_lo["value"] = relaxation_factor
+    # soft_lo["unit"] = "-"
+    # results["soft_activity_lo"] = soft_lo
+    #
+    # # Create penalty cost parameter
+    # penalty_lo = bound_lo.copy()
+    # penalty_lo["value"] = penalty_multiplier
+    # penalty_lo["unit"] = "-"
+    # results["level_cost_activity_soft_lo"] = penalty_lo
+    #
     # Remove duplicates from all DataFrames in results
     for key, df in results.items():
         results[key] = df.dropna().drop_duplicates().reset_index(drop=True)
