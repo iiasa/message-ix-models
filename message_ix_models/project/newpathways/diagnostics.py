@@ -155,7 +155,7 @@ def activity_to_csv(trade_tec,
     
 # Retrieve trade flow activities
 scenarios_models = {'baseline': 'NP_SSP2_6.2',
-                    'pipelines_only': 'NP_SSP2_6.2'}
+                    'pipelines_LNG': 'NP_SSP2_6.2'}
                     # 'LNG_noFLcost': 'NP_SSP2_6.2',
                     # 'LNG_noTRvarcost': 'NP_SSP2_6.2',
                     # 'LNG_lowTRvarcost': 'NP_SSP2_6.2', # This is actually HIGH varcost
