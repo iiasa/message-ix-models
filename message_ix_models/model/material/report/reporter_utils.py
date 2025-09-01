@@ -11,12 +11,11 @@ comm_tec_map = {
 }
 
 
-def create_var_map_from_yaml_dict(dictionary: dict):
-    """Creates a 1-to-n mapping for IAMC template variable to the
-    corresponding query keys.
-    The used query keys are the MESSAGEix sets: technology,
-    mode, commodity, level. The resulting map is represented by
-    a pandas DataFrame with the columns:
+def create_var_map_from_yaml_dict(dictionary: dict) -> pd.DataFrame:
+    """Creates a 1-to-n mapping of IAMC template variables to the data indices.
+
+    The used query keys are the MESSAGEix sets: [technology, mode, commodity, level].
+    The resulting map is represented by a pandas DataFrame with the columns:
     - iamc_name
     - short_name
     - unit
@@ -73,18 +72,18 @@ def create_var_map_from_yaml_dict(dictionary: dict):
 
 
 def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
-    """Prepare reporter to compute regional bio-methanol
-    shares of regional total methanol production.
-    Reporter can compute share with key: share::biomethanol
+    """Prepare reporter to compute regional bio-methanol shares of regional production.
 
-    Steps:
-    1) Select all methanol production output
-    2) Aggregate vintages to get production by technology for
-        each year and node (methanol-by-tec)
-    3) Aggregate to get global totals (methanol-total)
-    4) Calculate methanol output shares by technology
-    5) Aggregate meth_bio_ccs and meth_bio shares to get total
-        bio-methanol share
+    Reporter can compute share with key: ``share::biomethanol``
+
+    Computation steps:
+
+    1. Select all methanol production output
+    2. Aggregate vintages to get production by technology for each year and node
+       (methanol-by-tec)
+    3. Aggregate to get global totals (methanol-total)
+    4. Calculate methanol output shares by technology
+    5. Aggregate meth_bio_ccs and meth_bio shares to get total bio-methanol share
 
     Parameters
     ----------
@@ -101,10 +100,10 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
             "meth_h2",
         ],
         "c": ["methanol"],
-        "l": "primary_material",
+        "l": "primary",
     }
-    if mode == "fuel":
-        t_filter2.update({"l": ["primary"]})
+    if mode == "feedstock":
+        t_filter2.update({"l": ["primary_material"]})
 
     rep.add("out::methanol-prod", "select", "out:nl-t-ya-c-l", t_filter2)
     rep.add(
@@ -139,17 +138,15 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
 
 def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
     """Prepare reporter to compute bio-methanol exports.
-    Reporter can compute exports with key: out::biomethanol-export
 
-    Steps:
-    1) Select all methanol export outputs
-    2) Aggregate to get global totals (methanol-total)
-    3) Calculate bio-methanol exports by multiplying
-    regional exports with regional bio-methanol production shares
+    Reporter can compute exports with key: ``out::biomethanol-export``
 
-    Parameters
-    ----------
-    rep
+    Computation steps:
+
+    1. Select all methanol export outputs.
+    2. Aggregate to get global totals (methanol-total).
+    3. Calculate bio-methanol exports by multiplying regional exports with regional
+       bio-methanol production shares.
     """
     add_methanol_share_calculations(rep, mode=mode)
     for comm in comm_tec_map.keys():
@@ -172,22 +169,17 @@ def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
 
 def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
     """Prepare reporter to compute bio-methanol import indicators.
-    Reporter can compute imports with key: out::biomethanol-import
 
-    Steps:
-    1) Select all methanol import outputs
-    2) Calculate bio-methanol share of global trade pool
-        by dividing all bio-methanol exports by all methanol exports
-    3) Compute bio-methanol imports by multiplying bio-methanol
-        share of global trade pool with regional imports
-    4) Calculate share of bio-methanol import as a fraction of
-        regional methanol production
+    Reporter can compute imports with key: ``out::biomethanol-import``
 
-    Parameters
-    ----------
-    rep
+    1. Select all methanol import outputs.
+    2. Calculate bio-methanol share of global trade pool by dividing all bio-methanol
+       exports by all methanol exports.
+    3. Compute bio-methanol imports by multiplying bio-methanol share of global trade
+       pool with regional imports.
+    4. Calculate share of bio-methanol import as a fraction of regional methanol
+       production.
     """
-
     add_meth_export_calculations(rep, mode=mode)
     for comm in comm_tec_map.keys():
         t_filter2 = {"t": "meth_imp", "m": mode}
@@ -222,15 +214,12 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
 
 
 def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
-    """Prepare reporter to compute bio-methanol supply to final level
-    Reporter can compute bio-methanol with key: out::biomethanol-final
+    """Prepare reporter to compute bio-methanol supply to final level.
+
+    Reporter can compute bio-methanol with key: ``out::biomethanol-final``
 
     Bio-methanol supply to final level is defined as:
-    Domestic production + Import - Exports
-
-    Parameters
-    ----------
-    rep
+    *Domestic production + Import - Exports*
     """
     add_meth_import_calculations(rep, mode=mode)
     if mode == "feedstock":
@@ -274,15 +263,13 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
 
 def add_ammonia_non_energy_computations(rep: message_ix.Reporter):
     """Prepare reporter to compute process energy input for ammonia production.
-    Reporter can compute process energy inputs with key: "in::nh3-process-energy"
 
-    Steps:
-    1) Select all feedstock inputs for ammonia production
-    2) Subtract ammonia energy output from feedstock input to get process energy input
+    Reporter can compute process energy inputs with key: ``in::nh3-process-energy``
 
-    Parameters
-    ----------
-    rep
+    Computation steps:
+
+    1. Select all feedstock inputs for ammonia production
+    2. Subtract ammonia energy output from feedstock input to get process energy input
     """
     t_filter1 = {
         "t": [
@@ -309,15 +296,13 @@ def add_ammonia_non_energy_computations(rep: message_ix.Reporter):
 
 def add_methanol_non_energy_computations(rep: message_ix.Reporter):
     """Prepare reporter to compute process energy input for methanol production.
-    Reporter can compute process energy inputs with key: "in::nh3-process-energy"
 
-    Steps:
-    1) Select all feedstock inputs for methanol production
-    2) Subtract methanol energy output from feedstock input to get process energy input
+    Reporter can compute process energy inputs with key: ``in::nh3-process-energy``
 
-    Parameters
-    ----------
-    rep
+    Computation steps:
+
+    1. Select all feedstock inputs for methanol production.
+    2. Subtract methanol energy output from feedstock input to get process energy input.
     """
     t_filter2 = {
         "t": [
