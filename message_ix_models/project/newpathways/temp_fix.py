@@ -37,28 +37,35 @@ trade_parameters = pd.read_pickle(tdf)
 # Load the scenario
 mp = ixmp.Platform()
 start_model = config.get("scenario", {}).get("target_model")
-start_scen = 'baseline'
+start_scen = 'pipelines_only'
 
-base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
-scen = base.clone(start_model, 'baseline_NAMrsc', keep_solution=False)
-#scen = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+#base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+#scen = base.clone(start_model, 'baseline_NAMrsc', keep_solution=False)
+scen = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
 scen.set_as_default()
+scen.remove_solution()
 
 #add_df = trade_parameters['LNG_shipped']['trade']['var_cost']
 
-#scen.remove_solution()
+rem_df = scen.par('input', filters = {'technology': ['gas_pipe_afr',
+                                                     'gas_pipe_chn',
+                                                     'gas_pipe_eeu',
+                                                     'gas_pipe_fsu',
+                                                     'gas_pipe_lam',
+                                                     'gas_pipe_mea',
+                                                     'gas_pipe_nam',
+                                                     'gas_pipe_pao',
+                                                     'gas_pipe_pas',
+                                                     'gas_pipe_rcpa',
+                                                     'gas_pipe_sas',
+                                                     'gas_pipe_weu'],
+                                         'commodity': 'steel'})
+#add_df = rem_df.copy()
+#add_df['value'] = 0.00002
 
-rem_df = scen.par('var_cost', filters = {'technology': ['gas_extr_4',
-                                                      'gas_extr_5',
-                                                      'gas_extr_6',
-                                                      'gas_extr_7'],
-                                         'node_loc': 'R12_NAM'})
-add_df = rem_df.copy()
-add_df['value'] = 0.8 * add_df['value']
-
-with scen.transact("Update var cost of gas_extr4-7 for NAM"): 
-    scen.remove_par('var_cost', rem_df)
-    scen.add_par('var_cost', add_df)
+with scen.transact("Remove steel input for pipelines"): 
+    scen.remove_par('input', rem_df)
+    #scen.add_par('input', add_df)
 
 #with scen.transact("Add var cost to LNG trade"): 
 #    scen.remove_par('var_cost', add_df)

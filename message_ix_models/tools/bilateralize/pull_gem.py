@@ -223,11 +223,11 @@ def import_gem(input_file: str,
     inputdf['node_loc'] = inputdf['EXPORTER']
     inputdf['technology'] = trade_technology + '_exp_' + inputdf['IMPORTER'].str.lower().str.split('_').str[-1]
     inputdf['value_update'] = round((1/inputdf['Capacity (GWa/km)']),0)
-    inputdf['commodity'] = flow_commodity
+    inputdf['commodity'] = flow_commodity + '_' + inputdf['IMPORTER'].str.lower().str.split('_').str[-1]
     inputdf = inputdf[['node_loc', 'technology', 'value_update', 'commodity']] # km/GWa
     
     basedf = pd.read_csv(os.path.join(trade_dir, "input.csv"))
-    basedf['value'] = np.where(basedf['commodity'] == flow_commodity,
+    basedf['value'] = np.where(basedf['commodity'].str.contains(flow_commodity),
                                30, # The largest capacity pipelines have maximum 300,000GWh (~30bcm) annually
                                basedf['value'])
     
@@ -237,7 +237,7 @@ def import_gem(input_file: str,
                            how = 'left')
     inputdf['value'] = np.where((inputdf['value_update'].isnull() == False)&\
                                 (inputdf['value_update']<10000) &\
-                                (inputdf['commodity'] == flow_commodity),
+                                (inputdf['commodity'].str.contains(flow_commodity)),
                                 inputdf['value_update'],
                                 inputdf['value'])
     inputdf = inputdf.drop(['value_update'], axis = 1)
