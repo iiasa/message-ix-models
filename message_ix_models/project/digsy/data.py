@@ -292,7 +292,15 @@ def read_rc_materials(
 
 
 def read_trp_materials(digsy_scenario) -> pd.DataFrame:
-    raise NotImplementedError
+    if digsy_scenario == "baseline":
+        digsy_scenario = "BASE"
+    path = private_data_path(
+        "projects", "digsy", "transport", "MixT material handover #1548.csv"
+    )
+    df = pd.read_csv(path)
+    df.value /= 1000
+    df = df[df["digsy_scenario"] == digsy_scenario]
+    return df
 
 
 def adjust_mat_dem(
