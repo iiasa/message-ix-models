@@ -13,7 +13,7 @@ scenario:
   target_model:
     NP_SSP2_6.2
   target_scen:
-    pipelines_LNG
+    pipelines_only
   first_model_year:
     2030
   regions:
