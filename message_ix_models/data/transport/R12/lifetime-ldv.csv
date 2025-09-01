@@ -30,8 +30,8 @@ scenario, node_loc, technology, year_vtg, value
 *,        R12_RCPA, *,          2110,     15
 *,        R12_SAS,  *,          1990,     25
 *,        R12_SAS,  *,          2110,     25
-*,        R12_WEU,  *,          1990,     28
-*,        R12_WEU,  *,          2110,     28
+*,        R12_WEU,  *,          1990,     20
+*,        R12_WEU,  *,          2110,     20
 
 LED,      R12_AFR,  *,          1990,     25
 LED,      R12_AFR,  *,          2050,     19.36
