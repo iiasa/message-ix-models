@@ -149,16 +149,16 @@ def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
        bio-methanol production shares.
     """
     add_methanol_share_calculations(rep, mode=mode)
+    t_filter2 = {"t": "meth_exp", "m": mode}
+    rep.add("out::methanol-export", "select", "out:nl-t-ya-m", t_filter2)
+    rep.add(
+        "out::methanol-export-total",
+        "group_sum",
+        "out::methanol-export",
+        group="ya",
+        sum="nl",
+    )
     for comm in comm_tec_map.keys():
-        t_filter2 = {"t": "meth_exp", "m": mode}
-        rep.add("out::methanol-export", "select", "out:nl-t-ya-m", t_filter2)
-        rep.add(
-            "out::methanol-export-total",
-            "group_sum",
-            "out::methanol-export",
-            group="ya",
-            sum="nl",
-        )
         rep.add(
             f"out::{comm}methanol-export",
             "mul",
@@ -181,10 +181,9 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
        production.
     """
     add_meth_export_calculations(rep, mode=mode)
+    t_filter2 = {"t": "meth_imp", "m": mode}
+    rep.add("out::methanol-import", "select", "out:nl-t-ya-m", t_filter2)
     for comm in comm_tec_map.keys():
-        t_filter2 = {"t": "meth_imp", "m": mode}
-        rep.add("out::methanol-import", "select", "out:nl-t-ya-m", t_filter2)
-
         rep.add(
             f"out::{comm}methanol-export-total",
             "group_sum",
@@ -198,7 +197,6 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
             f"out::{comm}methanol-export-total",
             "out::methanol-export-total",
         )
-
         rep.add(
             f"out::{comm}methanol-import",
             "mul",
@@ -232,11 +230,9 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
             "t": ["meth_t_d", "furnace_methanol_refining"],
             "m": [mode, "high_temp"],
         }
+    rep.add("in::methanol-final0", "select", "in:nl-t-ya-m", t_filter2)
+    rep.add("in::methanol-final", "sum", "in::methanol-final0", dimensions=["t", "m"])
     for comm in comm_tec_map.keys():
-        rep.add("in::methanol-final0", "select", "in:nl-t-ya-m", t_filter2)
-        rep.add(
-            "in::methanol-final", "sum", "in::methanol-final0", dimensions=["t", "m"]
-        )
         rep.add(
             f"out::{comm}methanol-prod",
             "mul",
@@ -246,11 +242,9 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
         rep.add(
             f"out::{comm}methanol-final",
             "combine",
-            *[
-                f"out::{comm}methanol-prod",
-                f"out::{comm}methanol-export",
-                f"out::{comm}methanol-import",
-            ],
+            f"out::{comm}methanol-prod",
+            f"out::{comm}methanol-export",
+            f"out::{comm}methanol-import",
             weights=[1, -1, 1],
         )
         rep.add(
@@ -304,29 +298,22 @@ def add_methanol_non_energy_computations(rep: message_ix.Reporter):
     1. Select all feedstock inputs for methanol production.
     2. Subtract methanol energy output from feedstock input to get process energy input.
     """
+    tecs = [
+        "meth_coal",
+        "meth_ng",
+        "meth_coal_ccs",
+        "meth_ng_ccs",
+        "meth_bio",
+        "meth_bio_ccs",
+        "meth_h2",
+    ]
     t_filter2 = {
-        "t": [
-            "meth_coal",
-            "meth_ng",
-            "meth_coal_ccs",
-            "meth_ng_ccs",
-            "meth_bio",
-            "meth_bio_ccs",
-            "meth_h2",
-        ],
+        "t": tecs,
         "c": ["coal", "gas", "biomass", "hydrogen"],
     }
     rep.add("in::meth-feedstocks", "select", "in:nl-t-ya-m-c", t_filter2)
     t_filter2 = {
-        "t": [
-            "meth_coal",
-            "meth_ng",
-            "meth_coal_ccs",
-            "meth_ng_ccs",
-            "meth_bio",
-            "meth_bio_ccs",
-            "meth_h2",
-        ],
+        "t": tecs,
         "c": ["methanol"],
         "l": ["primary_material"],
     }
