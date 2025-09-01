@@ -1,7 +1,7 @@
 # DATA DIRECTORIES
 p_drive_location:
-  /pdrive/projects/ene.model3
-  #P:/ene.model
+  #/pdrive/projects/ene.model3
+  P:/ene.model
 
 # SCENARIO INFORMATION
 scenario:
@@ -123,7 +123,7 @@ gas_piped_trade:
   flow_tech_suffix:
   flow_fuel_input:
     gas_pipe:
-      gas
+      - gas
   flow_material_input:
     gas_pipe:
       - steel
@@ -178,9 +178,9 @@ LNG_shipped_trade: # Name of covered trade technology (e.g., oil)
     global
   flow_fuel_input:
     LNG_tanker_LNG:
-      LNG
+      - LNG
     LNG_tanker_foil:
-      foil
+      - foil
   flow_material_input:
   flow_commodity_output:
     LNG_tanker_capacity
