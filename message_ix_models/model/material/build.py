@@ -97,6 +97,7 @@ def add_digsy_data(
         extrapolate_modifiers_past_2050,
         get_industry_modifiers,
         read_rc_materials,
+        read_trp_materials,
     )
 
     mapping = {
@@ -109,7 +110,9 @@ def add_digsy_data(
         get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario)
     )
     rc_mat_demands_digsy = read_rc_materials(digsy_scenario)
-    rc_mat_demands_base = read_rc_materials("base")
+    rc_mat_demands_base = read_rc_materials("baseline")
+    trp_mat_demands_digsy = read_trp_materials(digsy_scenario)
+    trp_mat_demands_base = read_trp_materials("baseline")
     for func in DATA_FUNCTIONS:
         # Generate or load the data and add to the Scenario
         log.info(f"from {func.__name__}()")
@@ -119,6 +122,9 @@ def add_digsy_data(
             )
             data["demand"] = adjust_mat_dem(
                 data["demand"], rc_mat_demands_base, rc_mat_demands_digsy
+            )
+            data["demand"] = adjust_mat_dem(
+                data["demand"], trp_mat_demands_base, trp_mat_demands_digsy
             )
         else:
             data = func(scenario)

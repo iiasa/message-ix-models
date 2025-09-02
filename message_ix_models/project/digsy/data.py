@@ -302,11 +302,13 @@ def read_trp_materials(digsy_scenario) -> pd.DataFrame:
     if digsy_scenario == "baseline":
         digsy_scenario = "BASE"
     path = private_data_path(
-        "projects", "digsy", "transport", "MixT material handover #1548.csv"
+        "projects", "digsy", "transport", "MixT material handover #1585.csv"
     )
     df = pd.read_csv(path)
     df.value /= 1000
     df = df[df["digsy_scenario"] == digsy_scenario]
+    df["commodity"] = df["commodity"].str.split("_").str[-1]
+    df = df.set_index(["node", "year"])[["value", "commodity"]]
     return df
 
 
