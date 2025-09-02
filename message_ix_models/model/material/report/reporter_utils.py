@@ -1,7 +1,4 @@
-import itertools
-
 import message_ix
-import pandas as pd
 from genno import Key
 
 comm_tec_map = {
@@ -10,67 +7,6 @@ comm_tec_map = {
     "bio": ["meth_bio", "meth_bio_ccs"],
     "h2": ["meth_h2"],
 }
-
-
-def create_var_map_from_yaml_dict(dictionary: dict) -> pd.DataFrame:
-    """Creates a 1-to-n mapping of IAMC template variables to the data indices.
-
-    The used query keys are the MESSAGEix sets: [technology, mode, commodity, level].
-    The resulting map is represented by a pandas DataFrame with the columns:
-    - iamc_name
-    - short_name
-    - unit
-    - technology
-    - mode
-    - commodity
-    - level
-
-    Parameters
-    ----------
-    dictionary
-        a dictionary with the required information about the mapping
-        needs the following tree structure of key-value pairs:
-
-        - "vars"
-            - "filter"
-            - "short"
-        - "common"
-            - "unit"
-
-    Returns
-    -------
-
-    """
-    data = dictionary["vars"]
-    all = pd.DataFrame()
-    unit = dictionary["unit"]
-    for iamc_key, values in data.items():
-        # Extract relevant information
-        filter_data = values["filter"]
-        short_name = values["short"]
-
-        # Create a list to hold the modified entries
-        # Iterate over the list of technologies
-        data = {k: [v] if isinstance(v, str) else v for k, v in filter_data.items()}
-        combinations = list(itertools.product(*data.values()))
-
-        # Create DataFrame
-        df = pd.DataFrame(combinations, columns=data.keys())
-        df["iamc_name"] = iamc_key
-        df["short_name"] = short_name
-        if "unit" in list(values.keys()):
-            df["unit"] = values["unit"]
-        else:
-            df["unit"] = unit
-
-        # append
-        all = pd.concat([all, df])
-
-    rename_dict = {"mode": "m", "technology": "t", "level": "l", "commodity": "c"}
-    rename_dict = {k: v for k, v in rename_dict.items() if k in all.columns}
-
-    all = all.rename(columns=rename_dict).set_index(list(rename_dict.values()))
-    return all
 
 
 def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
