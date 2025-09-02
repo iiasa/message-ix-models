@@ -97,9 +97,8 @@ New features
 - New post-processing module for the industry sector in :mod:`.model.material.report.run_reporting` providing:
 
   - More generalized method of post-processing MESSAGEix-Materials results
-  - Configuration with YAML files in :file:`material/model/material/reporting/`
+  - Configuration handled through :mod:`.model.material.report.config` YAML files in :file:`material/model/material/reporting/`
   - Higher resolution of post-processed results
-  - Data model validatation with pydantic
 
 Bug Fixes
 ---------
