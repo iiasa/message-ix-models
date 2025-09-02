@@ -26,7 +26,7 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-     "DIGSY-WORST",
+     "DIGSY-WORST"
     ]
 
   # Currently disabled:
