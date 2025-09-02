@@ -3,7 +3,7 @@
 # each variable specifies a list of filter for genno.operator.select()
 
 var:
-  out
+  in
 
 iamc_prefix:
   Final Energy|Industry|
