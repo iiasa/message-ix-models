@@ -2,7 +2,7 @@ import pytest
 from pytest import param
 
 from message_ix_models.model.material.report.run_reporting import load_config, run
-from message_ix_models.tests.test_tools import scenario
+from message_ix_models.tests.test_tools import scenario  # noqa: F401
 
 
 @pytest.mark.parametrize(
@@ -29,6 +29,6 @@ def test_load_config(config_name, exp_len) -> None:
 
 
 @pytest.mark.xfail(reason="Missing R12 scenario snapshot", raises=ValueError)
-def test_run(scenario) -> None:
+def test_run(scenario) -> None:  # noqa: F811
     run(scenario)
     # TODO Add assertions once test scenario is available
