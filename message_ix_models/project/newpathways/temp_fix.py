@@ -37,35 +37,33 @@ trade_parameters = pd.read_pickle(tdf)
 # Load the scenario
 mp = ixmp.Platform()
 start_model = config.get("scenario", {}).get("target_model")
-start_scen = 'pipelines_only'
+start_scen = 'pipelines_LNG'
 
-#base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
-#scen = base.clone(start_model, 'baseline_NAMrsc', keep_solution=False)
-scen = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+base = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
+scen = base.clone(start_model, 'LNG_prod_eff', keep_solution=False)
+#scen = message_ix.Scenario(mp, model=start_model, scenario=start_scen)
 scen.set_as_default()
-scen.remove_solution()
+#scen.remove_solution()
 
 #add_df = trade_parameters['LNG_shipped']['trade']['var_cost']
 
-rem_df = scen.par('input', filters = {'technology': ['gas_pipe_afr',
-                                                     'gas_pipe_chn',
-                                                     'gas_pipe_eeu',
-                                                     'gas_pipe_fsu',
-                                                     'gas_pipe_lam',
-                                                     'gas_pipe_mea',
-                                                     'gas_pipe_nam',
-                                                     'gas_pipe_pao',
-                                                     'gas_pipe_pas',
-                                                     'gas_pipe_rcpa',
-                                                     'gas_pipe_sas',
-                                                     'gas_pipe_weu'],
-                                         'commodity': 'steel'})
-#add_df = rem_df.copy()
-#add_df['value'] = 0.00002
+rem_df = scen.par('input', filters = {'technology': ['LNG_prod'],
+                                      'commodity': ['gas'],
+                                      'level': ['primary']})
 
-with scen.transact("Remove steel input for pipelines"): 
+add_df = rem_df.copy().drop(['value'], axis = 1)
+
+add_df_v = update_liquefaction_input(message_regions = message_regions,
+                                     project_name = 'newpathways',
+                                     config_name = 'config.yaml')['input']
+add_df = add_df.merge(add_df_v, 
+                      left_on = ['node_loc', 'technology', 'commodity', 'level'],
+                      right_on = ['node_loc', 'technology', 'commodity', 'level'],
+                      how = 'left')
+
+with scen.transact("Add LNG energy losses"): 
     scen.remove_par('input', rem_df)
-    #scen.add_par('input', add_df)
+    scen.add_par('input', add_df)
 
 #with scen.transact("Add var cost to LNG trade"): 
 #    scen.remove_par('var_cost', add_df)

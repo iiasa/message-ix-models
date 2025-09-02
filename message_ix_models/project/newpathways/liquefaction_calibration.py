@@ -52,7 +52,7 @@ def update_liquefaction_input(message_regions: str = "R12",
     outdf['Use Value'] = np.where(outdf['Use Value'].isnull(), liqvalue, outdf['Use Value'])
     outdf = outdf.rename(columns = {'Use Value': 'value'})
     outdf['value'] = round(outdf['value'], 2)
-    outdf['technolgoy'] = 'LNG_prod'
+    outdf['technology'] = 'LNG_prod'
     outdf['commodity'] = 'gas'
     outdf['level'] = 'primary'
     

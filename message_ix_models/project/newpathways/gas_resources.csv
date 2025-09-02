@@ -1,7 +1,0 @@
-﻿commodity,resource_reserve,source,node,value_EJ,notes
-total_resource,Resource,GEA 2012,R12_NAM,11802,Use USGS numbers for conventional gas
-total_reserve,Identified Reserve,GEA 2012,R12_NAM,6083,Use USGS numbers for conventional gas
-addl_resource,Additional Resources,GEA 2012,R12_NAM,5719,
-total_resource,Resource,Rogner 1996,R12_NAM,10927.548,Excludes ultra-deep methane (8)
-total_reserve,Identified Reserve,Rogner 1996,R12_NAM,3733.1668,Includes categories I-V
-addl_resource,Additional Resources,Rogner 1996,R12_NAM,7194.3812,
