@@ -1,61 +1,16 @@
-import os
-from typing import List, Literal, Union
+from typing import List, Union
 
 import message_ix
 import pandas as pd
 import pyam
 from message_ix.report import Reporter
-from pydantic import BaseModel, ConfigDict
 
 from message_ix_models.model.material.report.reporter_utils import (
     add_biometh_final_share,
-    create_var_map_from_yaml_dict,
 )
-from message_ix_models.model.material.util import read_yaml_file
-from message_ix_models.util import broadcast, package_data_path
+from message_ix_models.util import broadcast
 
-
-class ReporterConfig(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    iamc_prefix: str
-    var: Literal[
-        "out", "in", "ACT", "emi", "CAP"
-    ]  # TODO: try to import message_ix.Reporter keys here
-    unit: Literal["Mt/yr", "GWa", "Mt CH4/yr", "GW"]
-    mapping: pd.DataFrame  # TODO: use pandera to check on columns/dtypes etc.
-
-
-def create_agg_var_map_from_yaml(dictionary: dict, level: int = 1):
-    """Returns dataframe with 3 columns containing:
-
-    * the IAMC variable name of each aggregate variable defined in mapping dictionary at
-      the given level
-    * a short name of the variable and
-    * the short name of the sub-variable that belongs to the aggregate
-
-    The returned df can be used to join with the non-aggregate
-    sub variable produced with :func:`create_var_map_from_yaml_dict2`
-    to get the elements to compute the aggregate with message_ix.Reporter
-    """
-    data = dictionary[f"level_{level}"]
-    all = pd.DataFrame()
-    # iterate through all aggregate variable keys and compute dataframe with aggregate
-    # components mapped to aggregate short and IAMC name
-    for iamc_key, values in data.items():
-        # Extract aggregate components and short name from dictionary
-        components = values["components"]
-        short_name = values["short"]
-
-        # Create DataFrame
-        df = pd.DataFrame(components)
-        df["iamc_name"] = iamc_key
-        df["agg_short_name"] = short_name
-
-        # append to already created mapping rows
-        all = pd.concat([all, df])
-    all.columns = ["short_name", "iamc_name", "agg_short_name"]
-    all = all.set_index("short_name")
-    return all
+from .config import Config
 
 
 def pyam_df_from_rep(
@@ -134,58 +89,12 @@ def format_reporting_df(
     return py_df
 
 
-def load_config(name: str) -> ReporterConfig:
-    """Load a config for a given reporting variable category from the YAML files."""
-    path = package_data_path("material", "reporting")
-    file = f"{name}.yaml"
-    file_agg = f"{name}_aggregates.yaml"
+def load_config(name: str) -> "Config":
+    """Load a config for a given reporting variable category from the YAML files.
 
-    rep_var_dict = read_yaml_file(path.joinpath(file))
-    assert rep_var_dict is not None, (
-        f"Could not find reporting variable mapping: {file}"
-    )
-    mappings = create_var_map_from_yaml_dict(rep_var_dict)
-    rep_var_dict.pop("vars")
-
-    if os.path.exists(path.joinpath(file_agg)):
-        rep_var_dict_agg = read_yaml_file(path.joinpath(file_agg))
-        assert rep_var_dict_agg is not None
-        filters_mapping = (
-            mappings.copy(deep=True)
-            .drop(["iamc_name"], axis=1)
-            .reset_index()
-            .set_index("short_name")
-        )
-
-        # TODO: generalize to make this loop-able over arbitrary number of levels
-        # load aggregates mapping to components for level 1 variables
-        counter = 1
-        while rep_var_dict_agg.get(f"level_{counter}", None):
-            agg1_mapping = create_agg_var_map_from_yaml(rep_var_dict_agg, level=counter)
-            # Join aggregate mapping df with components df on the "short_name" values
-            # to get a row for each component of each aggregate
-            # drop the short name column afterward and replace it with the
-            #   aggregate short name
-            # finally concat the components mapping with the newly created
-            #   aggregate mapping
-            agg1_mapping = (
-                agg1_mapping.join(filters_mapping)
-                .set_index(["m", "t", "l", "c"])
-                .rename(columns={"agg_short_name": "short_name"})
-            )
-            mappings = pd.concat([mappings, agg1_mapping])
-            filters_mapping = (
-                mappings.copy(deep=True)
-                .drop(["iamc_name"], axis=1)
-                .reset_index()
-                .set_index("short_name")
-            )
-            counter += 1
-
-    rep_var_dict["mapping"] = mappings
-    # Creating config model and validate with pydantic
-    config = ReporterConfig(**rep_var_dict)
-    return config
+    This is a thin wrapper around :meth:`.Config.from_files`.
+    """
+    return Config.from_files(name)
 
 
 def run_fe_methanol_nh3_reporting(
