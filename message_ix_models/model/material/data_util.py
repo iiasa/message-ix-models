@@ -645,6 +645,7 @@ def read_sector_data(
 
     data_df = data_df.drop(["Parameter", "Level", "Commodity", "Mode"], axis=1)
     data_df = data_df.drop(data_df[data_df.Value == ""].index)
+    data_df["Value"] = data_df["Value"].astype(float)
 
     data_df.columns = data_df.columns.str.lower()
 
