@@ -27,9 +27,10 @@ def create_var_map_from_yaml_dict(dictionary: dict) -> pd.DataFrame:
 
     Parameters
     ----------
-    dictionary: dict
+    dictionary
         a dictionary with the required information about the mapping
         needs the following tree structure of key-value pairs:
+
         - "vars"
             - "filter"
             - "short"
@@ -85,10 +86,6 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
     3. Aggregate to get global totals (methanol-total)
     4. Calculate methanol output shares by technology
     5. Aggregate meth_bio_ccs and meth_bio shares to get total bio-methanol share
-
-    Parameters
-    ----------
-    rep
     """
     t_filter2 = {
         "t": [
