@@ -109,7 +109,8 @@ def format_reporting_df(
         )
     )
     py_df = pyam.IamDataFrame(df)
-
+    if py_df.empty:
+        return py_df
     missing = [
         variable_prefix + i
         for i in mappings.iamc_name.unique().tolist()
