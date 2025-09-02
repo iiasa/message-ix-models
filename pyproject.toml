@@ -65,7 +65,7 @@ docs = [
   "sphinxcontrib-bibtex",
 ]
 iea-web = ["dask[dataframe]"]
-material = ["xlrd", "pydantic"]
+material = ["xlrd"]
 migrate = [
   "git-filter-repo",
   "GitPython",
