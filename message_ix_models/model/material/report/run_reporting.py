@@ -27,18 +27,15 @@ class ReporterConfig(BaseModel):
 
 def create_agg_var_map_from_yaml(dictionary: dict, level: int = 1):
     """Returns dataframe with 3 columns containing:
+
     * the IAMC variable name of each aggregate variable defined in mapping dictionary at
-        the given level
+      the given level
     * a short name of the variable and
     * the short name of the sub-variable that belongs to the aggregate
 
     The returned df can be used to join with the non-aggregate
-    sub variable produced with :func:create_var_map_from_yaml_dict2
+    sub variable produced with :func:`create_var_map_from_yaml_dict2`
     to get the elements to compute the aggregate with message_ix.Reporter
-
-    Returns
-    -------
-    pd.DataFrame
     """
     data = dictionary[f"level_{level}"]
     all = pd.DataFrame()
