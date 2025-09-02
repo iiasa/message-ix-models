@@ -2,6 +2,7 @@ import itertools
 
 import message_ix
 import pandas as pd
+from genno import Key
 
 comm_tec_map = {
     "coal": ["meth_coal", "meth_coal_ccs"],
@@ -311,13 +312,18 @@ def add_methanol_non_energy_computations(rep: message_ix.Reporter):
         "t": tecs,
         "c": ["coal", "gas", "biomass", "hydrogen"],
     }
-    rep.add("in::meth-feedstocks", "select", "in:nl-t-ya-m-c", t_filter2)
+    k1 = Key("in:nl-t-ya-m-c")
+    k2 = Key("out:nl-t-ya-m-c")
+    rep.add(k1["meth-feedstocks"], "select", k1, t_filter2, sums=True)
     t_filter2 = {
         "t": tecs,
         "c": ["methanol"],
-        "l": ["primary_material"],
     }
-    rep.add("out::meth-non-energy", "select", "out:nl-t-ya-m-c-l", t_filter2)
-    rep.add(
-        "in::meth-process-energy", "sub", "in::meth-feedstocks", "out::meth-non-energy"
+    rep.add(k2["meth-non-energy"], "select", k2, t_filter2, sums=True)
+    k = rep.add(
+        "in:nl-t-ya-m:meth-process-energy",
+        "sub",
+        "in:nl-t-ya-m:meth-feedstocks",
+        "out:nl-t-ya-m:meth-non-energy",
     )
+    return k
