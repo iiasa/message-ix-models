@@ -14,6 +14,7 @@ from message_ix.testing import make_dantzig
 from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.testing import MARK
 from message_ix_models.util import (
     MESSAGE_DATA_PATH,
     MESSAGE_MODELS_PATH,
@@ -281,6 +282,7 @@ def test_make_source_tech0():
         make_source_tech(info, _MST_COMMON, **values)
 
 
+@MARK["ixmp#595"]
 def test_make_source_tech1(test_mp):
     """Test make_source_tech() with a Scenario object as input."""
     s = Scenario(test_mp, model="model", scenario="scenario", version="new")
