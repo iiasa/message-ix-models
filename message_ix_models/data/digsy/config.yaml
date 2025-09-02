@@ -5,8 +5,9 @@ industry_input:
   # old original config
   #  file_name: DIGSY-MESSAGE_Industry_v4.xlsx
   #  sheet_name: Final_modifier
-  file_name: Final Modifier_Industry_adj.xlsx
+  #  file_name: Final Modifier_Industry_adj.xlsx
   sheet_name: in
+  file_name: DIGSY-MESSAGE_Industry_v6_Extracted 4 Scenarios.csv
 
 # mapping of DIGSY modifier names to MESSAGEix parameters
 subsector_message_map:
@@ -58,3 +59,21 @@ subsector_message_map:
       - grinding_ballmill_cement
     par: input
     commodity: electr
+  whole plant (applies generically to different production methods):
+    technology:
+      - bf_steel
+      - bof_steel
+      - eaf_steel
+      - dri_gas_steel
+      - dri_h2_steel
+      - finishing_steel
+    par: input
+    commodity:
+      - gas
+      - hydrogen
+      - bf_gas
+      - electr
+      - co_gas
+      - coal
+      - coke_iron
+      - charcoal
