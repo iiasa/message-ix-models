@@ -97,8 +97,6 @@ generic:
     add:
     - ht_heat
     - lt_heat
-    - data_centre_elec
-    - tele_comm_elec
 
   level:
     add:
@@ -111,8 +109,6 @@ generic:
 
   technology:
     add:
-    - data_centre_elec
-    - tele_comm_elec
     - furnace_foil_steel
     - furnace_loil_steel
     - furnace_biomass_steel
@@ -725,6 +721,17 @@ power_sector:
   unit:
     add:
       - t/kW
+
+ict:
+  commodity:
+    add:
+    - data_centre_elec
+    - tele_comm_elec
+
+  technology:
+    add:
+    - data_centre_elec
+    - tele_comm_elec
 
 # NB this codelist added by #125
 
