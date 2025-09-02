@@ -35,14 +35,14 @@ log = get_logger(__name__)
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
 trade_parameters = pd.read_pickle(tdf)
 
-# # Update scenario: default values
-# clone_and_update(trade_dict=trade_parameters,
-#                  project_name = 'newpathways',
-#                  config_name = 'config.yaml',
-#                  log=log,
-#                  to_gdx = False,
-#                  solve = True,
-#                  update_scenario_name = 'pipelines_LNG')
+# Update scenario: default values
+clone_and_update(trade_dict=trade_parameters,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 update_scenario_name = 'pipelines_LNG')
 
 # Update scenario: Increase liquefaction gas penalty
 additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
