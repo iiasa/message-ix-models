@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterator
 from copy import copy
 from typing import TYPE_CHECKING, Literal
 
@@ -22,6 +23,7 @@ from message_ix_models.model.transport import (
     report,
     structure,
 )
+from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.model.transport.testing import (
     MARK,
     assert_units,
@@ -44,6 +46,8 @@ from message_ix_models.testing.check import (
 )
 
 if TYPE_CHECKING:
+    from sdmx.model.common import Code
+
     from message_ix_models.testing.check import Check
     from message_ix_models.types import KeyLike
 
@@ -273,6 +277,11 @@ def N_node(request) -> int:
         raise NotImplementedError
 
 
+@pytest.fixture(scope="session")
+def scenario_code() -> Iterator["Code"]:
+    return get_cl_scenario()["SSP2"]
+
+
 @MARK[10]
 @MARK[7]
 @build.get_computer.minimum_version
@@ -315,8 +324,16 @@ def N_node(request) -> int:
     ],
 )
 def test_bare_res(
-    request, tmp_path, test_context, regions, years, dummy_LDV: bool, nonldv, solve
-):
+    request: "pytest.FixtureRequest",
+    tmp_path: "Path",
+    test_context: "Context",
+    scenario_code: "Code",
+    regions: str,
+    years: str,
+    dummy_LDV: bool,
+    nonldv: str,
+    solve: bool,
+) -> None:
     """.transport.build() works on the bare RES, and the model solves."""
     # Generate the relevant bare RES
     ctx = test_context
@@ -325,6 +342,7 @@ def test_bare_res(
 
     # Build succeeds without error
     options = {
+        "code": scenario_code,
         "data source": {"non-LDV": nonldv},
         "dummy_LDV": dummy_LDV,
         "dummy_supply": True,
