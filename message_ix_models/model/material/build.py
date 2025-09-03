@@ -72,6 +72,7 @@ SPEC_LIST = (
     "power_sector",
     "fertilizer",
     "methanol",
+    "ict"
 )
 
 
@@ -358,3 +359,7 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
         ) from None
 
     return s
+
+if __name__ == '__main__':
+    s = make_spec("R12")
+    print()
