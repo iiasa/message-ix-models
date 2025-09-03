@@ -519,8 +519,8 @@ def generate_bare_sheets(
             
             # List of commodity/material inputs
             flow_inputs = config_dict['flow_fuel_input'][tec][flow_tec]
-            if config_dict['flow_material_input'][tec] != None:
-                flow_inputs = flow_inputs + config_dict['flow_material_input'][tec][flow_tec]
+            #if config_dict['flow_material_input'][tec] != None:
+            #    flow_inputs = flow_inputs + config_dict['flow_material_input'][tec][flow_tec]
             
             ## Create bare file: input        
             # Build by commodity input
