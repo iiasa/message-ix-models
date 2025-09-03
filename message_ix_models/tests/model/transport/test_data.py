@@ -3,10 +3,20 @@ import pytest
 
 from message_ix_models.model.transport import build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
-from message_ix_models.model.transport.data import collect_structures, read_structures
+from message_ix_models.model.transport.data import (
+    MultiFile,
+    collect_structures,
+    read_structures,
+)
 from message_ix_models.model.transport.roadmap import get_roadmap_data
 from message_ix_models.model.transport.testing import MARK, make_mark
 from message_ix_models.project.navigate import T35_POLICY
+
+
+class TestMultiFile:
+    def test_filename(self) -> None:
+        with pytest.raises(NotImplementedError):
+            MultiFile().filename
 
 
 @MARK["sdmx#230"]
