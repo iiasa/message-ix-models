@@ -91,8 +91,10 @@ def test_get_cl_scenario() -> None:
 
     # Code lists contains codes with the expected IDs
     assert {
-        "DIGSY-BEST",
-        "DIGSY-WORST",
+        "DIGSY-BEST-C",
+        "DIGSY-BEST-S",
+        "DIGSY-WORST-C",
+        "DIGSY-WORST-S",
         "EDITS-CA",
         "EDITS-HA",
         "LED-SSP1",
