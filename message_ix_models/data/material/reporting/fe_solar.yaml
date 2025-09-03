@@ -1,0 +1,19 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+# the filter is in the order: technology, mode, commodity
+
+var:
+  out
+
+iamc_prefix:
+  Final Energy|Industry|
+
+unit: GWa
+
+vars:
+  Other Sector|Solar:
+    filter:
+      { technology: solar_i, mode: M1, commodity: i_therm, level: useful }
+    short:
+      fe_pe_other_solar

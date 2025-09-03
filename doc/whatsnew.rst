@@ -8,6 +8,10 @@ Next release
   :doc:`project/newpathways` (:pull:`385`).
 
 
+- Improve and extend :doc:`/material/index` (:pull:`395`),
+  specifically :mod:`.material.report`.
+  See :doc:`/material/v1.2.0` for details.
+
 v2025.8.7
 =========
 

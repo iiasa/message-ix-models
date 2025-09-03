@@ -1,0 +1,24 @@
+# collection of industry specific production reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  ACT
+
+unit: Mt/yr
+
+iamc_prefix:
+  Production|
+
+vars:
+  Non-Metallic Minerals|Clinker|Wet|CCS:
+    filter:
+        {technology: clinker_wet_ccs_cement, mode: M1}
+    short:
+        prod_clinker_ccs
+
+  Non-Metallic Minerals|Clinker|Dry|CCS:
+    filter:
+        {technology: clinker_dry_ccs_cement, mode: M1}
+    short:
+        prod_clinker_ccs

@@ -9,6 +9,8 @@ except ImportError:
 import platform
 from collections.abc import Generator, Hashable
 from copy import deepcopy
+from importlib.metadata import version
+from importlib.util import find_spec
 from pathlib import Path
 from random import randbytes
 from tempfile import TemporaryDirectory
@@ -77,6 +79,13 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         rerun_delay=2,
         condition=GHA,
         reason="https://github.com/iiasa/message-ix-models/issues/375",
+    ),
+    "ixmp#595": pytest.mark.xfail(
+        condition=version("ixmp") > "3.11.0"
+        and find_spec("ixmp4") is not None
+        and version("ixmp4") >= "0.11.0",
+        reason="https://github.com/iiasa/ixmp#595",
+        # raises=ixmp4.core.exceptions.RunLockRequired,
     ),
     "sdmx#230": pytest.mark.xfail(
         condition=GHA,
