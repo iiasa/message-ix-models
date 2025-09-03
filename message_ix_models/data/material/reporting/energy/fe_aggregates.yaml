@@ -6,94 +6,94 @@ var:
   in
 
 iamc_prefix:
-  Final Energy|Industry|
+  Final Energy|
 
 unit: GWa
 
 
 level_2:
-  Heat:
+  Industry|Heat:
     short: fe_pe_heat
     components:
       [ fe_pe_cement_heat, fe_pe_aluminum_heat, fe_pe_steel_heat, fe_pe_other_heat ]
-  Electricity:
+  Industry|Electricity:
     short: fe_pe_el
     components:
       [ fe_pe_cement_el, fe_pe_aluminum_el, fe_pe_steel_el, fe_pe_other_el ]
-  Electricity|Solar:
+  Industry|Electricity|Solar:
     short: fe_pe_el_rt
     components:
       [ fe_pe_other_el_sp_rt ]
-  Gases|Gas:
+  Industry|Gases|Gas:
     short: fe_pe_gas
     components:
       [ fe_pe_cement_gas, fe_pe_aluminum_gas, fe_pe_steel_gas, fe_pe_other_gas ]
-  Gases:
+  Industry|Gases:
     short: fe_pe_gases
     components:
       [ fe_pe_cement_gases, fe_pe_aluminum_gases, fe_pe_steel_gases, fe_pe_other_gases ]
-  Liquids|Biomass:
+  Industry|Liquids|Biomass:
     short: fe_pe_oil
     components:
       [ fe_pe_cement_bio_eth, fe_pe_aluminum_bio_eth, fe_pe_other_eth, fe_pe_steel_liq_bio]
-  Liquids|Oil:
+  Industry|Liquids|Oil:
     short: fe_pe_oil
     components:
       [ fe_pe_cement_oil, fe_pe_aluminum_oil, fe_pe_other_oil ]
-  Liquids|Other:
+  Industry|Liquids|Other:
     short: fe_pe_liq_oth
     components:
       [ fe_pe_cement_oth, fe_pe_aluminum_oth ]
-  Liquids:
+  Industry|Liquids:
     short: fe_pe_liq
     components:
       [ fe_pe_cement_liq, fe_pe_aluminum_liq, fe_pe_other_liq ]
-  Solids:
+  Industry|Solids:
     short: fe_pe_solids
     components:
       [ fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids]
-  Solids|Coal:
+  Industry|Solids|Coal:
     short: fe_pe_coal
     components:
       [ fe_pe_cement_coal, fe_pe_aluminum_coal, fe_pe_steel_solid_coal, fe_pe_other_coal ]
-  Solids|Biomass:
+  Industry|Solids|Biomass:
     short: fe_pe_bio
     components:
       [ fe_pe_cement_bio, fe_pe_aluminum_bio, fe_pe_other_bio, fe_pe_steel_solid_bio ]
-  Hydrogen:
+  Industry|Hydrogen:
     short: fe_pe_h2
     components:
       [ fe_pe_cement_h2, fe_pe_aluminum_h2, fe_pe_steel_h2, fe_pe_other_h2 ]
 
 
-  Non-Metallic Minerals|Cement:
+  Industry|Non-Metallic Minerals|Cement:
     short: fe_pe_cement
     components:
       [ fe_pe_cement_el, fe_pe_cement_liq, fe_pe_cement_solids, fe_pe_cement_gas, fe_pe_cement_h2 ]
 
-  Non-Ferrous Metals|Aluminium:
+  Industry|Non-Ferrous Metals|Aluminium:
     short: fe_pe_alu
     components:
       [ fe_pe_aluminum_el, fe_pe_aluminum_liq, fe_pe_aluminum_solids, fe_pe_aluminum_gas, fe_pe_aluminum_h2 ]
 
-  Iron and Steel:
+  Industry|Iron and Steel:
     short: fe_pe_steel
     components:
       [ fe_pe_steel_el, fe_pe_steel_liq, fe_pe_steel_sol, fe_pe_steel_gases, fe_pe_steel_h2 ]
 
-  Chemicals|Other Sector:
+  Industry|Chemicals|Other Sector:
     short: fe_pe_chem_other
     components:
       [ fe_pe_resin_el, fe_pe_chem_other_gas, fe_pe_chem_other_oil,
         fe_pe_chem_other_eth, fe_pe_chem_other_bio, fe_pe_chem_other_coal,
         fe_pe_chem_other_h2 ]
 
-  Chemicals|High-Value Chemicals:
+  Industry|Chemicals|High-Value Chemicals:
     short: fe_pe_hvc
     components:
       [ fe_pe_hvc_el, fe_pe_hvc_liq, fe_pe_hvc_solids, fe_pe_hvc_gases, fe_pe_hvc_h2 ]
 
-  Other Sector:
+  Industry|Other Sector:
     short: fe_pe_oth
     components:
       [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_solids, fe_pe_other_gases, fe_pe_other_h2, fe_pe_other_heat ]
@@ -107,187 +107,207 @@ level_1:
   #   does this aggregation and updates all related aggregates.
   # Only the ones not generated there are mapped here
 
-  Chemicals|Liquids|Other:
+  Industry|Chemicals|Liquids|Other:
     short: fe_pe_chem_oth
     components:
       [ fe_pe_hvc_oth ]
-  Chemicals|Liquids|Biomass:
+  Industry|Chemicals|Liquids|Biomass:
     short: fe_pe_chem_bio
     components:
       [ fe_pe_hvc_bio_eth ]
 
-  Chemicals|High-Value Chemicals|Electricity:
+  Industry|Chemicals|High-Value Chemicals|Electricity:
     short: fe_pe_hvc_el
     components:
       [fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc]
-  Chemicals|High-Value Chemicals|Gases:
+  Industry|Chemicals|High-Value Chemicals|Gases:
     short: fe_pe_hvc_gases
     components:
       [ fe_pe_hvc_gas]
-  Chemicals|High-Value Chemicals|Liquids:
+  Industry|Chemicals|High-Value Chemicals|Liquids:
     short: fe_pe_hvc_liq
     components:
       [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h, fe_pe_hvc_bio_eth, fe_pe_hvc_oth]
-  Chemicals|High-Value Chemicals|Liquids|Oil:
+  Industry|Chemicals|High-Value Chemicals|Liquids|Oil:
     short: fe_pe_hvc_oil
     components:
       [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h ]
-  Chemicals|High-Value Chemicals|Solids:
+  Industry|Chemicals|High-Value Chemicals|Solids:
     short: fe_pe_hvc_solids
     components:
       [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke]
 
-  Chemicals|Other Sector|Electricity:
+  Industry|Chemicals|Other Sector|Electricity:
     short: fe_pe_chem_other_el
     components:
       [ fe_pe_resin_el ]
-  Chemicals|Other Sector|Gases|Gas:
+  Industry|Chemicals|Other Sector|Gases|Gas:
     short: fe_pe_chem_other_gas
     components:
       [ fe_pe_resin_gas ]
-  Chemicals|Other Sector|Gases:
+  Industry|Chemicals|Other Sector|Gases:
     short: fe_pe_chem_other_gases
     components:
       [ fe_pe_resin_gas ]
-  Chemicals|Other Sector|Liquids|Oil:
+  Industry|Chemicals|Other Sector|Liquids|Oil:
     short: fe_pe_chem_other_oil
     components:
       [ fe_pe_resin_oil ]
-  Chemicals|Other Sector|Liquids|Biomass:
+  Industry|Chemicals|Other Sector|Liquids|Biomass:
     short: fe_pe_chem_other_eth
     components:
       [ fe_pe_resin_eth ]
-  Chemicals|Other Sector|Liquids|Other:
+  Industry|Chemicals|Other Sector|Liquids|Other:
     short: fe_pe_chem_other_meth
     components:
       [ fe_pe_resin_meth ]
-  Chemicals|Other Sector|Liquids:
+  Industry|Chemicals|Other Sector|Liquids:
     short: fe_pe_chem_other_liq
     components:
       [ fe_pe_resin_eth, fe_pe_resin_oil ]
-  Chemicals|Other Sector|Solids|Biomass:
+  Industry|Chemicals|Other Sector|Solids|Biomass:
     short: fe_pe_chem_other_bio
     components:
       [ fe_pe_resin_bio ]
-  Chemicals|Other Sector|Solids|Coal:
+  Industry|Chemicals|Other Sector|Solids|Coal:
     short: fe_pe_chem_other_coal
     components:
       [ fe_pe_resin_coal ]
-  Chemicals|Other Sector|Solids:
+  Industry|Chemicals|Other Sector|Solids:
     short: fe_pe_chem_other_sol
     components:
       [ fe_pe_resin_coal, fe_pe_resin_bio ]
-  Chemicals|Other Sector|Hydrogen:
+  Industry|Chemicals|Other Sector|Hydrogen:
     short: fe_pe_chem_other_h2
     components:
       [ fe_pe_resin_h2 ]
 
   # cement
-  Non-Metallic Minerals|Cement|Electricity:
+  Industry|Non-Metallic Minerals|Cement|Electricity:
     short: fe_pe_cement_el
     components:
       [fe_pe_cement_el_ht, fe_pe_cement_el_oth, fe_pe_clinker_el_ccs, fe_pe_clinker_el]
-  Non-Metallic Minerals|Cement|Liquids|Oil:
+  Industry|Non-Metallic Minerals|Cement|Liquids|Oil:
     short: fe_pe_cement_oil
     components:
       [ fe_pe_cement_oil_l, fe_pe_cement_oil_h ]
-  Non-Metallic Minerals|Cement|Liquids:
+  Industry|Non-Metallic Minerals|Cement|Liquids:
     short: fe_pe_cement_liq
     components:
       [ fe_pe_cement_oil_l, fe_pe_cement_oil_h, fe_pe_cement_bio_eth, fe_pe_cement_oth ]
-  Non-Metallic Minerals|Cement|Solids:
+  Industry|Non-Metallic Minerals|Cement|Solids:
     short: fe_pe_cement_solids
     components:
       [ fe_pe_cement_bio, fe_pe_cement_coal, fe_pe_cement_coke ]
-  Non-Metallic Minerals|Cement|Gases:
+  Industry|Non-Metallic Minerals|Cement|Gases:
     short: fe_pe_cement_gases
     components:
       [ fe_pe_cement_gas ]
 
   # aluminum
-  Non-Ferrous Metals|Aluminium|Electricity:
+  Industry|Non-Ferrous Metals|Aluminium|Electricity:
     short: fe_pe_aluminum_el
     components:
       [ fe_pe_aluminum_el_ht, fe_pe_aluminum_el_oth ]
-  Non-Ferrous Metals|Aluminium|Liquids|Oil:
+  Industry|Non-Ferrous Metals|Aluminium|Liquids|Oil:
     short: fe_pe_aluminum_oil
     components:
       [ fe_pe_aluminum_oil_l, fe_pe_aluminum_oil_h ]
-  Non-Ferrous Metals|Aluminium|Liquids:
+  Industry|Non-Ferrous Metals|Aluminium|Liquids:
     short: fe_pe_aluminum_liq
     components:
       [ fe_pe_aluminum_oil_l, fe_pe_aluminum_oil_h, fe_pe_aluminum_oth, fe_pe_aluminum_bio_eth ]
-  Non-Ferrous Metals|Aluminium|Solids:
+  Industry|Non-Ferrous Metals|Aluminium|Solids:
     short: fe_pe_aluminum_solids
     components:
       [ fe_pe_aluminum_bio, fe_pe_aluminum_coal ]
-  Non-Ferrous Metals|Aluminium|Biomass:
+  Industry|Non-Ferrous Metals|Aluminium|Biomass:
     short: fe_pe_aluminum_bio_tot
     components:
       [ fe_pe_aluminum_bio, fe_pe_aluminum_bio_eth ]
-  Non-Ferrous Metals|Aluminium|Gases:
+  Industry|Non-Ferrous Metals|Aluminium|Gases:
     short: fe_pe_aluminum_gases
     components:
       [ fe_pe_aluminum_gas ]
 
   # TODO: Electricity could be further differentiated by process in fe_reporting.yaml
   # iron and steel
-  #  Steel|Electricity:
+  #  |Steel|Electricity:
   #    filter:
   #      { technology: [bf_steel , bof_steel, cokeoven_steel, dri_steel,
   #                     eaf_steel, finishing_steel, pellet_steel, sinter_steel],
   #        mode: [M1, M2, M3], commodity: electr, level: final }
   #    short:
   #      fe_pe_steel_el
-  Iron and Steel|Gases:
+  Industry|Iron and Steel|Gases:
     short: fe_pe_steel_gases
     components:
       [ fe_pe_steel_gas, fe_pe_steel_gases_coal ]
-  Iron and Steel|Liquids:
+  Industry|Iron and Steel|Liquids:
     short: fe_pe_steel_liq
     components:
       [ fe_pe_steel_liq_coal, fe_pe_steel_liq_oil, fe_pe_steel_liq_bio, fe_pe_steel_liq_gas ]
-  Iron and Steel|Solids:
+  Industry|Iron and Steel|Solids:
     short: fe_pe_steel_sol
     components:
       [ fe_pe_steel_solid_coal, fe_pe_steel_solid_bio ]
 
 
   # Residual industry
-  Other Sector|Electricity|Thermal:
+  Industry|Other Sector|Electricity|Thermal:
     short: fe_pe_other_el_th
     components:
       [fe_pe_other_el_th_res, fe_pe_other_el_th_hp ]
-  Other Sector|Electricity:
+  Industry|Other Sector|Electricity:
     short: fe_pe_other_el
     components:
       [ fe_pe_other_el_th_res, fe_pe_other_el_th_hp, fe_pe_other_el_sp ]
-  Other Sector|Gases:
+  Industry|Other Sector|Gases:
     short: fe_pe_other_gases
     components:
       [ fe_pe_other_gas ]
-  Other Sector|Hydrogen:
+  Industry|Other Sector|Hydrogen:
     short: fe_pe_other_h2
     components:
       [ fe_pe_other_h2_comb, fe_pe_other_h2_fc ]
-  Other Sector|Liquids|Oil|Light:
+  Industry|Other Sector|Liquids|Oil|Light:
     short: fe_pe_other_oil_l
     components:
       [ fe_pe_other_oil_l_th, fe_pe_other_oil_l_sp ]
-  Other Sector|Liquids|Oil:
+  Industry|Other Sector|Liquids|Oil:
     short: fe_pe_other_oil
     components:
       [ fe_pe_other_oil_l_th, fe_pe_other_oil_l_sp, fe_pe_other_oil_h_th ]
-  Other Sector|Liquids|Biomass:
+  Industry|Other Sector|Liquids|Biomass:
     short: fe_pe_other_eth
     components:
       [ fe_pe_other_eth_th, fe_pe_other_eth_sp ]
-  Other Sector|Liquids:
+  Industry|Other Sector|Liquids:
     short: fe_pe_other_liq
     components:
       [fe_pe_other_oil_l_sp, fe_pe_other_oil_l_th, fe_pe_other_oil_h_th, fe_pe_other_eth_th, fe_pe_other_eth_sp ]
-  Other Sector|Solids:
+  Industry|Other Sector|Solids:
     short: fe_pe_other_solids
     components:
       [ fe_pe_other_coal, fe_pe_other_bio ]
 
+
+  Residential and Commercial|Electricity:
+    components: [ fe_rc_elec_rc, fe_rc_elec_hp, fe_rc_elec_sp, fe_rc_elec_pv ]
+    short: fe_rc_elec
+  Residential and Commercial|Hydrogen:
+    components: [ fe_rc_h2_ic, fe_rc_h2_fc ]
+    short: fe_rc_h2
+  Residential and Commercial|Liquids|Oil:
+    components: [ fe_rc_foil, fe_rc_loil ]
+    short: fe_rc_oil
+  Residential and Commercial|Solids|Biomass:
+    components: [ fe_rc_bio_nc, fe_rc_bio_rc ]
+    short: fe_rc_bio
+
+  Transportation|Liquids:
+    components: [ fe_trp_oil, fe_trp_eth_fc, fe_trp_eth_ic ]
+    short: fe_trp_liq
+  Transportation|Liquids|Oil:
+    components: [ fe_trp_loil, fe_trp_foil ]
+    short: fe_trp_oil

@@ -6,130 +6,130 @@ var:
   in
 
 iamc_prefix:
-  Final Energy|Industry|
+  Final Energy|
 
 common:
   unit: GWa
 
 vars:
-  Final Energy|Bunkers|Electricity:
+  Bunkers|Electricity:
     filter: { technology: missing, commodity: missing, level: missing }
     short: fe_bunk_elec
-  Final Energy|Bunkers|Gases:
+  Bunkers|Gases:
     filter: { technology: LNG_bunker, commodity: gas, level: final }
     short: fe_bunk_gas
-  Final Energy|Bunkers|Hydrogen:
+  Bunkers|Hydrogen:
     filter: { technology: LH2_bunker, commodity: lh2, level: final }
     short: fe_bunk_h2
-  Final Energy|Bunkers|Liquids|Biomass:
+  Bunkers|Liquids|Biomass:
     filter: { technology: eth_bunker, commodity: ethanol, level: final }
     short: fe_bunk_eth
-  Final Energy|Bunkers|Liquids|Coal:
+  Bunkers|Liquids|Coal:
     filter: { technology: meth_bunker, commodity: methanol, level: final }
     short: fe_bunk_meth
-  Final Energy|Bunkers|Liquids|Gas:
+  Bunkers|Liquids|Gas:
     filter: { technology: missing, commodity: missing, level: missing }
     short: fe_bunk_lgas
-  Final Energy|Bunkers|Liquids|Oil|Light:
+  Bunkers|Liquids|Oil|Light:
     filter: { technology: loil_bunker, commodity: lightoil, level: final }
     short: fe_bunk_loil
-  Final Energy|Bunkers|Liquids|Oil|Heavy:
+  Bunkers|Liquids|Oil|Heavy:
     filter: { technology: foil_bunker, commodity: fueloil, level: final }
     short: fe_bunk_foil
-  Final Energy|Bunkers|Other:
+  Bunkers|Other:
     filter: { technology: NH3_bunker, commodity: NH3, level: final }
     short: fe_bunk_other
 
-  Final Energy|Carbon Management|Direct Air Capture|Electricity:
+  Carbon Management|Direct Air Capture|Electricity:
     filter: { technology: [ dac_hte,dac_htg, dac_lt ], commodity: electr, level: final, mode: M1 }
     short: fe_dac_elec
-  Final Energy|Carbon Management|Direct Air Capture|Gases:
+  Carbon Management|Direct Air Capture|Gases:
     filter: { technology: dac_htg, commodity: gas, level: final, mode: M1 }
     short: fe_dac_gas
-  Final Energy|Carbon Management|Direct Air Capture|Hydrogen:
+  Carbon Management|Direct Air Capture|Hydrogen:
     filter: { technology: missing, commodity: missing, level: missing, mode: missing }
     short: fe_dac_h2
 
-  Final Energy|Residential and Commercial|Electricity|Heating|Resistance:
+  Residential and Commercial|Electricity|Heating|Resistance:
     filter: { technology: elec_rc, commodity: electr, level: final, mode: M1 }
     short: fe_rc_elec_rc
-  Final Energy|Residential and Commercial|Electricity|Heating|Heat Pump:
+  Residential and Commercial|Electricity|Heating|Heat Pump:
     filter: { technology: hp_el_rc, commodity: electr, level: final, mode: M1 }
     short: fe_rc_elec_hp
-  Final Energy|Residential and Commercial|Electricity|Specific:
+  Residential and Commercial|Electricity|Specific:
     filter: { technology: sp_el_RC, commodity: electr, level: final, mode: M1 }
     short: fe_rc_elec_sp
-  Final Energy|Residential and Commercial|Electricity|Solar:
+  Residential and Commercial|Electricity|Solar:
     filter: { technology: solar_pv_RC, commodity: missing, level: missing, mode: missing }
     short: fe_rc_elec_pv
-  Final Energy|Residential and Commercial|Gases:
+  Residential and Commercial|Gases:
     filter: { technology: gas_rc, commodity: gas, level: final, mode: M1 }
     short: fe_rc_gas
-  Final Energy|Residential and Commercial|Heat:
+  Residential and Commercial|Heat:
     filter: { technology: heat_rc, commodity: d_heat, level: final, mode: M1 }
     short: fe_rc_heat
-  Final Energy|Residential and Commercial|Hydrogen|Fuel Cell:
+  Residential and Commercial|Hydrogen|Fuel Cell:
     filter: { technology: h2_fc_RC, commodity: hydrogen, level: final, mode: M1 }
     short: fe_rc_h2_fc
-  Final Energy|Residential and Commercial|Hydrogen|Combustion:
+  Residential and Commercial|Hydrogen|Combustion:
     filter: { technology: h2_rc, commodity: hydrogen, level: final, mode: M1 }
     short: fe_rc_h2_ic
-  Final Energy|Residential and Commercial|Liquids|Biomass:
+  Residential and Commercial|Liquids|Biomass:
     filter: { technology: eth_rc, commodity: ethanol, level: final, mode: M1 }
     short: fe_rc_eth
-  Final Energy|Residential and Commercial|Liquids|Coal:
+  Residential and Commercial|Liquids|Coal:
     filter: { technology: meth_rc, commodity: methanol, level: final, mode: M1 }
     short: fe_rc_meth
-  Final Energy|Residential and Commercial|Liquids|Gas:
+  Residential and Commercial|Liquids|Gas:
     filter: { technology: missing, commodity: missing, level: missing, mode: missing }
     short: fe_rc_lgas
-  Final Energy|Residential and Commercial|Liquids|Oil|Light:
+  Residential and Commercial|Liquids|Oil|Light:
     filter: { technology: loil_rc, commodity: lightoil, level: final, mode: M1 }
     short: fe_rc_loil
-  Final Energy|Residential and Commercial|Liquids|Oil|Heavy:
+  Residential and Commercial|Liquids|Oil|Heavy:
     filter: { technology: foil_rc, commodity: fueloil, level: final, mode: M1 }
     short: fe_rc_foil
   # TODO: needs to be added to genno key
-  Final Energy|Residential and Commercial|Other:
+  Residential and Commercial|Other:
     filter: { technology: solar_rc, commodity: ??, level: final, mode: M1 }
     short: fe_rc_other
-  Final Energy|Residential and Commercial|Solids|Biomass|Modern:
+  Residential and Commercial|Solids|Biomass|Modern:
     filter: { technology: biomass_rc, commodity: biomass, level: final, mode: M1 }
     short: fe_rc_bio_rc
-  Final Energy|Residential and Commercial|Solids|Biomass|Traditional:
+  Residential and Commercial|Solids|Biomass|Traditional:
     filter: { technology: biomass_nc, commodity: biomass, level: final, mode: M1 }
     short: fe_rc_bio_nc
-  Final Energy|Residential and Commercial|Solids|Coal:
+  Residential and Commercial|Solids|Coal:
     filter: { technology: coal_rc, commodity: coal, level: final, mode: M1 }
     short: fe_rc_coal
 
-  Final Energy|Transportation|Electricity:
+  Transportation|Electricity:
     filter: { technology: elec_trp, commodity: electr, level: final, mode: M1 }
     short: fe_trp_elec
-  Final Energy|Transportation|Gases:
+  Transportation|Gases:
     filter: { technology: gas_trp, commodity: gas, level: final, mode: M1 }
     short: fe_trp_gas
-  Final Energy|Transportation|Hydrogen:
+  Transportation|Hydrogen:
     filter: { technology: h2_fc_trp, commodity: hydrogen, level: final, mode: M1 }
     short: fe_trp_h2
-  Final Energy|Transportation|Liquids|Biomass|Fuel Cell:
+  Transportation|Liquids|Biomass|Fuel Cell:
     filter: { technology: eth_fc_trp, commodity: ethanol, level: final, mode: M1 }
     short: fe_trp_eth_fc
-  Final Energy|Transportation|Liquids|Biomass|Combustion:
+  Transportation|Liquids|Biomass|Combustion:
     filter: { technology: eth_ic_trp , commodity: ethanol, level: final, mode: M1 }
     short: fe_trp_eth_ic
-  Final Energy|Transportation|Liquids|Coal:
+  Transportation|Liquids|Coal:
     filter: { technology: missing, commodity: missing, level: missing, mode: missing }
     short: fe_trp_coal
-  Final Energy|Transportation|Liquids|Gas:
+  Transportation|Liquids|Gas:
     filter: { technology: missing, commodity: missing, level: missing, mode: missing }
     short: fe_trp_lgas
-  Final Energy|Transportation|Liquids|Oil|Light:
+  Transportation|Liquids|Oil|Light:
     filter: { technology: loil_trp, commodity: lightoil, level: final, mode: [ methanol, ethanol ] }
     short: fe_trp_loil
-  Final Energy|Transportation|Liquids|Oil|Heavy:
+  Transportation|Liquids|Oil|Heavy:
     filter: { technology: foil_trp, commodity: fueloil, level: final, mode: M1 }
     short: fe_trp_foil
-  Final Energy|Transportation|Other:
+  Transportation|Other:
     filter: { technology: coal_trp, commodity: coal, level: final, mode: M1 }
     short: fe_trp_other

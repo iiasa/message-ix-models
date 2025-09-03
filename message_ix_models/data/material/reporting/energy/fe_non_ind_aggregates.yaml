@@ -46,6 +46,9 @@ level_2:
   Final Energy|Residential and Commercial|Solids:
     components: [ ]
     short: missing
+  Residential and Commercial|Liquids:
+    components: [ fe_rc_oil, fe_rc_eth, fe_rc_meth ]
+    short: fe_rc_liq
 
   Final Energy|Carbon Management:
     components: [ fe_dac ]
@@ -91,25 +94,3 @@ level_1:
   Final Energy|Liquids|Oil:
     components: [  ]
     short: missing
-
-  Final Energy|Residential and Commercial|Electricity:
-    components: [ fe_rc_elec_rc, fe_rc_elec_hp, fe_rc_elec_sp, fe_rc_elec_pv ]
-    short: missing
-  Final Energy|Residential and Commercial|Hydrogen:
-    components: [ fe_rc_h2_ic, fe_rc_h2_fc ]
-    short: fe_rc_h2
-  Final Energy|Residential and Commercial|Liquids:
-    components: [ fe_rc_oil, fe_rc_eth, fe_rc_meth ]
-  Final Energy|Residential and Commercial|Liquids|Oil:
-    components: [ fe_rc_foil, fe_rc_loil ]
-    short: fe_rc_oil
-  Final Energy|Residential and Commercial|Solids|Biomass:
-    components: [ fe_rc_bio_nc, fe_rc_bio_rc ]
-    short: fe_rc_bio
-
-  Final Energy|Transportation|Liquids:
-    components: [ fe_trp_oil, fe_trp_eth_fc, fe_trp_eth_ic ]
-    short: fe_trp_liq
-  Final Energy|Transportation|Liquids|Oil:
-    components: [ fe_trp_loil, fe_trp_foil ]
-    short: fe_trp_oil

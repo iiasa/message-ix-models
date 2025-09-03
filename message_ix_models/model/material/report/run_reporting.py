@@ -862,7 +862,7 @@ if __name__ == "__main__":
     import message_ix
 
     mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.1", "baseline_wo_GLOBIOM_ts")
+    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
-    df = run_se(rep, scen.model, scen.scenario)
+    df = run_fe_reporting(rep, scen.model, scen.scenario)
     print()

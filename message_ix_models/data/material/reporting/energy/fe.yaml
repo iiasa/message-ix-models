@@ -6,138 +6,138 @@ var:
   in
 
 iamc_prefix:
-  Final Energy|Industry|
+  Final Energy|
 
 unit: GWa
 
 vars:
   # chemicals
-  Chemicals|Heat:
+  Industry|Chemicals|Heat:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_hvc_heat
 
-  Chemicals|High-Value Chemicals|Electricity|Heat:
+  Industry|Chemicals|High-Value Chemicals|Electricity|Heat:
     filter:
       { technology: furnace_elec_petro, mode: high_temp, commodity: electr, level: final }
     short:
       fe_pe_hvc_el_ht
 
-  Chemicals|High-Value Chemicals|Electricity|MTO:
+  Industry|Chemicals|High-Value Chemicals|Electricity|MTO:
     filter:
       { technology: MTO_petro, mode: M1, commodity: electr, level: final }
     short:
       fe_pe_hvc_el_mto
 
-  Chemicals|High-Value Chemicals|Electricity|Steam Cracking:
+  Industry|Chemicals|High-Value Chemicals|Electricity|Steam Cracking:
     filter:
       { technology: steam_cracker_petro, mode: [ vacuum_gasoil, atm_gasoil, naphtha, ethane, propane ], commodity: electr, level: final }
     short:
       fe_pe_hvc_el_sc
 
-  Chemicals|Formaldehyde|Electricity:
+  Industry|Chemicals|Formaldehyde|Electricity:
     filter:
       { technology: CH2O_synth, mode: M1, commodity: electr, level: final }
     short:
       fe_pe_ch2o_el
 
-  Chemicals|Resins|Electricity:
+  Industry|Chemicals|Resins|Electricity:
     filter:
       { technology: [ CH2O_to_resin, furnace_elec_resins ], mode: M1, commodity: electr, level: final }
     short:
       fe_pe_resin_el
-  Chemicals|Resins|Solids|Coal:
+  Industry|Chemicals|Resins|Solids|Coal:
     filter:
       { technology: furnace_coal_resins, mode: M1, commodity: coal, level: final }
     short:
       fe_pe_resin_coal
-  Chemicals|Resins|Solids|Biomass:
+  Industry|Chemicals|Resins|Solids|Biomass:
     filter:
       { technology: furnace_biomass_resins, mode: M1, commodity: biomass, level: final }
     short:
       fe_pe_resin_bio
-  Chemicals|Resins|Liquids|Oil:
+  Industry|Chemicals|Resins|Liquids|Oil:
     filter:
       { technology: [ furnace_foil_resins, furnace_loil_resins ], mode: M1, commodity: [ fueloil, lightoil ], level: final }
     short:
       fe_pe_resin_oil
-  Chemicals|Resins|Liquids|Biomass:
+  Industry|Chemicals|Resins|Liquids|Biomass:
     filter:
       { technology: [ furnace_ethanol_resins ], mode: M1, commodity: [ ethanol ], level: final }
     short:
       fe_pe_resin_eth
-  Chemicals|Resins|Gases|Gas:
+  Industry|Chemicals|Resins|Gases|Gas:
     filter:
       { technology: furnace_gas_resins, mode: M1, commodity: gas, level: final }
     short:
       fe_pe_resin_gas
-  Chemicals|Resins|Gases:
+  Industry|Chemicals|Resins|Gases:
     filter:
       { technology: furnace_gas_resins, mode: M1, commodity: gas, level: final }
     short:
       fe_pe_resin_gases
-  Chemicals|Resins|Hydrogen:
+  Industry|Chemicals|Resins|Hydrogen:
     filter:
       { technology: [ furnace_h2_resins, fc_h2_resins ], mode: M1, commodity: hydrogen, level: final }
     short:
       fe_pe_resin_h2
-  Chemicals|Resins|Liquids|Other:
+  Industry|Chemicals|Resins|Liquids|Other:
     filter:
       { technology: [ furnace_methanol_resins ], mode: M1, commodity: methanol, level: final }
     short:
       fe_pe_resin_meth
 
 
-  Chemicals|High-Value Chemicals|Liquids|Oil|Light:
+  Industry|Chemicals|High-Value Chemicals|Liquids|Oil|Light:
     filter:
       { technology: furnace_foil_petro, mode: high_temp, commodity: fueloil, level: final }
     short:
       fe_pe_hvc_oil_l
 
-  Chemicals|High-Value Chemicals|Liquids|Oil|Heavy:
+  Industry|Chemicals|High-Value Chemicals|Liquids|Oil|Heavy:
     filter:
       { technology: furnace_loil_petro, mode: high_temp, commodity: lightoil, level: final }
     short:
       fe_pe_hvc_oil_h
 
-  Chemicals|High-Value Chemicals|Liquids|Biomass:
+  Industry|Chemicals|High-Value Chemicals|Liquids|Biomass:
     filter:
       { technology: furnace_ethanol_petro, mode: high_temp, commodity: ethanol, level: final }
     short:
       fe_pe_hvc_bio_eth
 
-  Chemicals|High-Value Chemicals|Liquids|Other:
+  Industry|Chemicals|High-Value Chemicals|Liquids|Other:
     filter:
       { technology: furnace_methanol_petro, mode: high_temp, commodity: methanol, level: final }
     short:
       fe_pe_hvc_oth
 
-  Chemicals|High-Value Chemicals|Gases|Gas:
+  Industry|Chemicals|High-Value Chemicals|Gases|Gas:
     filter:
       { technology: furnace_gas_petro, mode: high_temp, commodity: gas, level: final }
     short:
       fe_pe_hvc_gas
 
-  Chemicals|High-Value Chemicals|Hydrogen:
+  Industry|Chemicals|High-Value Chemicals|Hydrogen:
     filter:
       { technology: furnace_h2_petro, mode: high_temp, commodity: hydrogen, level: final }
     short:
       fe_pe_hvc_h2
 
-  Chemicals|High-Value Chemicals|Solids|Biomass:
+  Industry|Chemicals|High-Value Chemicals|Solids|Biomass:
     filter:
       { technology: furnace_biomass_petro, mode: high_temp, commodity: biomass, level: final }
     short:
       fe_pe_hvc_bio
 
-  Chemicals|High-Value Chemicals|Solids|Coal:
+  Industry|Chemicals|High-Value Chemicals|Solids|Coal:
     filter:
       { technology: furnace_coal_petro, mode: high_temp, commodity: coal, level: final }
     short:
       fe_pe_hvc_coal
 
-  Chemicals|High-Value Chemicals|Solids|Coke:
+  Industry|Chemicals|High-Value Chemicals|Solids|Coke:
     filter:
       { technology: furnace_coke_petro, mode: high_temp, commodity: pet_coke, level: intermediate }
     short:
@@ -145,19 +145,19 @@ vars:
 
 
   # cement
-  Non-Metallic Minerals|Cement|Heat:
+  Industry|Non-Metallic Minerals|Cement|Heat:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_cement_heat
 
-  Non-Metallic Minerals|Cement|Electricity|Heat:
+  Industry|Non-Metallic Minerals|Cement|Electricity|Heat:
     filter:
       { technology: furnace_elec_cement, mode: high_temp, commodity: electr, level: final }
     short:
       fe_pe_cement_el_ht
 
-  Non-Metallic Minerals|Cement|Electricity|Other:
+  Industry|Non-Metallic Minerals|Cement|Electricity|Other:
     filter:
       { technology: [ clinker_dry_cement, clinker_wet_cement,
                       grinding_ballmill_cement, grinding_vertmill_cement, raw_meal_prep_cement ],
@@ -166,7 +166,7 @@ vars:
     short:
       fe_pe_cement_el_oth
 
-  Non-Metallic Minerals|Cement Clinker|w/ CCS|Electricity:
+  Industry|Non-Metallic Minerals|Cement Clinker|w/ CCS|Electricity:
     filter:
       { technology: [ clinker_dry_ccs_cement, clinker_wet_ccs_cement, ],
         mode: M1,
@@ -174,7 +174,7 @@ vars:
     short:
       fe_pe_clinker_el_ccs
 
-  Non-Metallic Minerals|Cement Clinker|w/o CCS|Electricity:
+  Industry|Non-Metallic Minerals|Cement Clinker|w/o CCS|Electricity:
     filter:
       { technology: [ clinker_dry_cement, clinker_wet_cement ],
         mode: M1,
@@ -182,55 +182,55 @@ vars:
     short:
       fe_pe_clinker_el
 
-  Non-Metallic Minerals|Cement|Liquids|Oil|Light:
+  Industry|Non-Metallic Minerals|Cement|Liquids|Oil|Light:
     filter:
       { technology: furnace_foil_cement, mode: high_temp, commodity: fueloil, level: final }
     short:
       fe_pe_cement_oil_l
 
-  Non-Metallic Minerals|Cement|Liquids|Oil|Heavy:
+  Industry|Non-Metallic Minerals|Cement|Liquids|Oil|Heavy:
     filter:
       { technology: furnace_loil_cement, mode: high_temp, commodity: lightoil, level: final }
     short:
       fe_pe_cement_oil_h
 
-  Non-Metallic Minerals|Cement|Liquids|Biomass:
+  Industry|Non-Metallic Minerals|Cement|Liquids|Biomass:
     filter:
       { technology: furnace_ethanol_cement, mode: high_temp, commodity: ethanol, level: final }
     short:
       fe_pe_cement_bio_eth
 
-  Non-Metallic Minerals|Cement|Liquids|Other:
+  Industry|Non-Metallic Minerals|Cement|Liquids|Other:
     filter:
       { technology: furnace_methanol_cement, mode: high_temp, commodity: methanol, level: final }
     short:
       fe_pe_cement_oth
 
-  Non-Metallic Minerals|Cement|Gases|Gas:
+  Industry|Non-Metallic Minerals|Cement|Gases|Gas:
     filter:
       { technology: furnace_gas_cement, mode: high_temp, commodity: gas, level: final }
     short:
       fe_pe_cement_gas
 
-  Non-Metallic Minerals|Cement|Hydrogen:
+  Industry|Non-Metallic Minerals|Cement|Hydrogen:
     filter:
       { technology: furnace_h2_cement, mode: high_temp, commodity: hydrogen, level: final }
     short:
       fe_pe_cement_h2
 
-  Non-Metallic Minerals|Cement|Solids|Biomass:
+  Industry|Non-Metallic Minerals|Cement|Solids|Biomass:
     filter:
       { technology: furnace_biomass_cement, mode: high_temp, commodity: biomass, level: final }
     short:
       fe_pe_cement_bio
 
-  Non-Metallic Minerals|Cement|Solids|Coal:
+  Industry|Non-Metallic Minerals|Cement|Solids|Coal:
     filter:
       { technology: furnace_coal_cement, mode: high_temp, commodity: coal, level: final }
     short:
       fe_pe_cement_coal
 
-  Non-Metallic Minerals|Cement|Solids|Coke:
+  Industry|Non-Metallic Minerals|Cement|Solids|Coke:
     filter:
       { technology: furnace_coke_cement, mode: high_temp, commodity: pet_coke, level: final }
     short:
@@ -238,68 +238,68 @@ vars:
 
 
   # aluminum
-  Non-Ferrous Metals|Aluminium|Heat:
+  Industry|Non-Ferrous Metals|Aluminium|Heat:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_aluminum_heat
 
-  Non-Ferrous Metals|Aluminium|Electricity|Heat:
+  Industry|Non-Ferrous Metals|Aluminium|Electricity|Heat:
     filter:
       { technology: [ furnace_elec_aluminum, hp_elec_aluminum, hp_gas_aluminum ],
         mode: [ high_temp, low_temp ], commodity: electr, level: final }
     short:
       fe_pe_aluminum_el_ht
 
-  Non-Ferrous Metals|Aluminium|Electricity|Other:
+  Industry|Non-Ferrous Metals|Aluminium|Electricity|Other:
     filter:
       { technology: [ prebake_aluminum, soderberg_aluminum ], mode: M1, commodity: electr, level: final }
     short:
       fe_pe_aluminum_el_oth
 
-  Non-Ferrous Metals|Aluminium|Liquids|Oil|Light:
+  Industry|Non-Ferrous Metals|Aluminium|Liquids|Oil|Light:
     filter:
       { technology: furnace_foil_aluminum, mode: [ high_temp, low_temp ], commodity: fueloil, level: final }
     short:
       fe_pe_aluminum_oil_l
 
-  Non-Ferrous Metals|Aluminium|Liquids|Oil|Heavy:
+  Industry|Non-Ferrous Metals|Aluminium|Liquids|Oil|Heavy:
     filter:
       { technology: furnace_loil_aluminum, mode: [ high_temp, low_temp ], commodity: lightoil, level: final }
     short:
       fe_pe_aluminum_oil_h
 
-  Non-Ferrous Metals|Aluminium|Liquids|Biomass:
+  Industry|Non-Ferrous Metals|Aluminium|Liquids|Biomass:
     filter:
       { technology: furnace_ethanol_aluminum, mode: [ high_temp, low_temp ], commodity: ethanol, level: final }
     short:
       fe_pe_aluminum_bio_eth
 
-  Non-Ferrous Metals|Aluminium|Liquids|Other:
+  Industry|Non-Ferrous Metals|Aluminium|Liquids|Other:
     filter:
       { technology: furnace_methanol_aluminum, mode: [ high_temp, low_temp ], commodity: methanol, level: final }
     short:
       fe_pe_aluminum_oth
 
-  Non-Ferrous Metals|Aluminium|Gases|Gas:
+  Industry|Non-Ferrous Metals|Aluminium|Gases|Gas:
     filter:
       { technology: furnace_gas_aluminum, mode: [ high_temp, low_temp ], commodity: gas, level: final }
     short:
       fe_pe_aluminum_gas
 
-  Non-Ferrous Metals|Aluminium|Hydrogen:
+  Industry|Non-Ferrous Metals|Aluminium|Hydrogen:
     filter:
       { technology: furnace_h2_aluminum, mode: [ high_temp, low_temp ], commodity: hydrogen, level: final }
     short:
       fe_pe_aluminum_h2
 
-  Non-Ferrous Metals|Aluminium|Solids|Biomass:
+  Industry|Non-Ferrous Metals|Aluminium|Solids|Biomass:
     filter:
       { technology: furnace_biomass_aluminum, mode: [ high_temp, low_temp ], commodity: biomass, level: final }
     short:
       fe_pe_aluminum_bio
 
-  Non-Ferrous Metals|Aluminium|Solids|Coal:
+  Industry|Non-Ferrous Metals|Aluminium|Solids|Coal:
     filter:
       { technology: furnace_coal_aluminum, mode: [ high_temp, low_temp ], commodity: coal, level: final }
     short:
@@ -307,13 +307,13 @@ vars:
 
 
   # iron and steel
-  Iron and Steel|Heat:
+  Industry|Iron and Steel|Heat:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_heat
 
-  Iron and Steel|Electricity:
+  Industry|Iron and Steel|Electricity:
     filter:
       { technology: [ bf_steel, bf_ccs_steel, bf_biomass_steel, bof_steel, cokeoven_steel, dri_gas_steel,
                       dri_gas_ccs_steel, dri_h2_steel, eaf_steel,
@@ -322,57 +322,57 @@ vars:
     short:
       fe_pe_steel_el
 
-  Iron and Steel|Gases|Gas:
+  Industry|Iron and Steel|Gases|Gas:
     filter:
       { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: gas, level: final }
     #TODO: what about dummy_emission?
     short:
       fe_pe_steel_gas
 
-  Iron and Steel|Gases|Coal:
+  Industry|Iron and Steel|Gases|Coal:
     filter:
       { technology: [ bf_steel ], mode: [ M1, M2, M3, M4 ], commodity: [ co_gas ], level: final }
     short:
       fe_pe_steel_gases_coal
 
-  Iron and Steel|Liquids|Coal:
+  Industry|Iron and Steel|Liquids|Coal:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_coal
 
-  Iron and Steel|Liquids|Gas:
+  Industry|Iron and Steel|Liquids|Gas:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_gas
 
-  Iron and Steel|Liquids|Oil:
+  Industry|Iron and Steel|Liquids|Oil:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_oil
 
-  Iron and Steel|Liquids|Biomass:
+  Industry|Iron and Steel|Liquids|Biomass:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_bio
 
-  Iron and Steel|Solids|Coal:
+  Industry|Iron and Steel|Solids|Coal:
     filter:
       { technology: [ bf_steel, sinter_steel, pellet_steel ], mode: [ M1, M2, M3, M4 ], commodity: [ coal, coke_iron ], level: final }
     # TODO: figure out, where to put cokeoven_steel?
     short:
       fe_pe_steel_solid_coal
 
-  Iron and Steel|Solids|Biomass:
+  Industry|Iron and Steel|Solids|Biomass:
     filter:
       { technology: [ bf_steel, bf_biomass_steel ], mode: [ M1, M3, M4 ], commodity: [ charcoal ], level: final }
     short:
       fe_pe_steel_solid_bio
 
-  Iron and Steel|Hydrogen:
+  Industry|Iron and Steel|Hydrogen:
     filter:
       { technology: [ dri_h2_steel ], mode: [ M1 ], commodity: [ hydrogen ], level: final }
     short:
@@ -380,97 +380,97 @@ vars:
 
 
   # Residual industry
-  Other Sector|Electricity|Thermal|Resistance:
+  Industry|Other Sector|Electricity|Thermal|Resistance:
     filter:
       { technology: elec_i, mode: M1, commodity: electr, level: final }
     short:
       fe_pe_other_el_th_res
 
-  Other Sector|Electricity|Thermal|Heat Pumps:
+  Industry|Other Sector|Electricity|Thermal|Heat Pumps:
     filter:
       { technology: hp_el_i, mode: M1, commodity: electr, level: final }
     short:
       fe_pe_other_el_th_hp
 
-  Other Sector|Electricity|Specific:
+  Industry|Other Sector|Electricity|Specific:
     filter:
       { technology: [ sp_el_I, sp_el_I_RT ], mode: M1, commodity: electr, level: [ final, final_RT ] }
     short:
       fe_pe_other_el_sp
 
-  Other Sector|Electricity|Specific|Rooftop:
+  Industry|Other Sector|Electricity|Specific|Rooftop:
     filter:
       { technology: sp_el_I_RT, mode: M1, commodity: electr, level: final_RT }
     short:
       fe_pe_other_el_sp_rt
 
-  Other Sector|Electricity|Specific|Other:
+  Industry|Other Sector|Electricity|Specific|Other:
     filter:
       { technology: sp_el_I, mode: M1, commodity: electr, level: final }
     short:
       fe_pe_other_el_sp_oth
 
-  Other Sector|Gases|Gas:
+  Industry|Other Sector|Gases|Gas:
     filter:
       { technology: gas_i, mode: M1, commodity: gas, level: final }
     short:
       fe_pe_other_gas
 
-  Other Sector|Heat:
+  Industry|Other Sector|Heat:
     filter:
       { technology: heat_i, mode: M1, commodity: d_heat, level: final }
     short:
       fe_pe_other_heat
 
-  Other Sector|Hydrogen|Combustion:
+  Industry|Other Sector|Hydrogen|Combustion:
     filter:
       { technology: h2_i, mode: M1, commodity: hydrogen, level: final }
     short:
       fe_pe_other_h2_comb
 
-  Other Sector|Hydrogen|Fuel Cells:
+  Industry|Other Sector|Hydrogen|Fuel Cells:
     filter:
       { technology: h2_fc_I, mode: M1, commodity: hydrogen, level: final }
     short:
       fe_pe_other_h2_fc
 
-  Other Sector|Liquids|Oil|Light|Thermal:
+  Industry|Other Sector|Liquids|Oil|Light|Thermal:
     filter:
       { technology: loil_i, mode: M1, commodity: lightoil, level: final }
     short:
       fe_pe_other_oil_l_th
 
-  Other Sector|Liquids|Oil|Light|Specific:
+  Industry|Other Sector|Liquids|Oil|Light|Specific:
     filter:
       { technology: sp_liq_I, mode: M1, commodity: lightoil, level: final }
     short:
       fe_pe_other_oil_l_sp
 
-  Other Sector|Liquids|Oil|Heavy|Thermal:
+  Industry|Other Sector|Liquids|Oil|Heavy|Thermal:
     filter:
       { technology: foil_i, mode: M1, commodity: fueloil, level: final }
     short:
       fe_pe_other_oil_h_th
 
-  Other Sector|Liquids|Biomass|Specific:
+  Industry|Other Sector|Liquids|Biomass|Specific:
     filter:
       { technology: sp_eth_I, mode: M1, commodity: ethanol, level: final }
     short:
       fe_pe_other_eth_sp
 
-  Other Sector|Liquids|Biomass|Thermal:
+  Industry|Other Sector|Liquids|Biomass|Thermal:
     filter:
       { technology: eth_i, mode: M1, commodity: ethanol, level: final }
     short:
       fe_pe_other_eth_th
 
-  Other Sector|Solids|Biomass:
+  Industry|Other Sector|Solids|Biomass:
     filter:
       { technology: biomass_i, mode: M1, commodity: biomass, level: final }
     short:
       fe_pe_other_bio
 
-  Other Sector|Solids|Coal:
+  Industry|Other Sector|Solids|Coal:
     filter:
       { technology: coal_i, mode: M1, commodity: coal, level: final }
     short:
@@ -478,12 +478,260 @@ vars:
 
   # DAC
   Carbon Management|Direct Air Capture|Electricity:
-    filter:
-      { technology: [ dac_lt, dac_hte ], mode: M1, commodity: electr, level: final }
-    short:
-      fe_dac_el
+    filter: { technology: [ dac_hte,dac_htg, dac_lt ], commodity: electr, level: final, mode: M1 }
+    short: fe_dac_elec
   Carbon Management|Direct Air Capture|Gases:
-    filter:
-      { technology: [ dac_lt, dac_htg ], mode: M1, commodity: gas, level: final }
-    short:
-      fe_dac_gas
+    filter: { technology: dac_htg, commodity: gas, level: final, mode: M1 }
+    short: fe_dac_gas
+  Carbon Management|Direct Air Capture|Hydrogen:
+    filter: { technology: missing, commodity: missing, level: missing, mode: missing }
+    short: fe_dac_h2
+
+  Bunkers|Electricity:
+    filter: { technology: missing, commodity: missing, level: missing, mode: missing }
+    short: fe_bunk_elec
+  Bunkers|Gases:
+    filter: { technology: LNG_bunker, commodity: gas, level: final, mode: [ shp_bulk_short_current,
+                                                                            shp_bulk_short_future,
+                                                                            shp_bulk_long_current,
+                                                                            shp_bulk_long_future,
+                                                                            shp_container_short_current,
+                                                                            shp_container_short_future,
+                                                                            shp_container_long_current,
+                                                                            shp_container_long_future,
+                                                                            shp_general_short_current,
+                                                                            shp_general_short_future,
+                                                                            shp_general_long_current,
+                                                                            shp_general_long_future,
+                                                                            shp_roro_short_current,
+                                                                            shp_roro_short_future,
+                                                                            shp_roro_long_current,
+                                                                            shp_roro_long_future,
+                                                                            shp_oil,
+                                                                            shp_solid,
+                                                                            shp_chemical ] }
+    short: fe_bunk_gas
+  Bunkers|Hydrogen:
+    filter: { technology: LH2_bunker, commodity: lh2, level: final, mode: [ shp_bulk_short_current,
+                                                                            shp_bulk_short_future,
+                                                                            shp_bulk_long_current,
+                                                                            shp_bulk_long_future,
+                                                                            shp_container_short_current,
+                                                                            shp_container_short_future,
+                                                                            shp_container_long_current,
+                                                                            shp_container_long_future,
+                                                                            shp_general_short_current,
+                                                                            shp_general_short_future,
+                                                                            shp_general_long_current,
+                                                                            shp_general_long_future,
+                                                                            shp_roro_short_current,
+                                                                            shp_roro_short_future,
+                                                                            shp_roro_long_current,
+                                                                            shp_roro_long_future,
+                                                                            shp_oil,
+                                                                            shp_solid,
+                                                                            shp_chemical ] }
+    short: fe_bunk_h2
+  Bunkers|Liquids|Biomass:
+    filter: { technology: eth_bunker, commodity: ethanol, level: final, mode: [ shp_bulk_short_current,
+                                                                                shp_bulk_short_future,
+                                                                                shp_bulk_long_current,
+                                                                                shp_bulk_long_future,
+                                                                                shp_container_short_current,
+                                                                                shp_container_short_future,
+                                                                                shp_container_long_current,
+                                                                                shp_container_long_future,
+                                                                                shp_general_short_current,
+                                                                                shp_general_short_future,
+                                                                                shp_general_long_current,
+                                                                                shp_general_long_future,
+                                                                                shp_roro_short_current,
+                                                                                shp_roro_short_future,
+                                                                                shp_roro_long_current,
+                                                                                shp_roro_long_future,
+                                                                                shp_oil,
+                                                                                shp_solid,
+                                                                                shp_chemical ] }
+    short: fe_bunk_eth
+  Bunkers|Liquids|Coal:
+    filter: { technology: meth_bunker, commodity: methanol, level: final, mode: [ shp_bulk_short_current,
+                                                                                  shp_bulk_short_future,
+                                                                                  shp_bulk_long_current,
+                                                                                  shp_bulk_long_future,
+                                                                                  shp_container_short_current,
+                                                                                  shp_container_short_future,
+                                                                                  shp_container_long_current,
+                                                                                  shp_container_long_future,
+                                                                                  shp_general_short_current,
+                                                                                  shp_general_short_future,
+                                                                                  shp_general_long_current,
+                                                                                  shp_general_long_future,
+                                                                                  shp_roro_short_current,
+                                                                                  shp_roro_short_future,
+                                                                                  shp_roro_long_current,
+                                                                                  shp_roro_long_future,
+                                                                                  shp_oil,
+                                                                                  shp_solid,
+                                                                                  shp_chemical ] }
+    short: fe_bunk_meth
+  Bunkers|Liquids|Gas:
+    filter: { technology: missing, commodity: missing, level: missing, mode: [ shp_bulk_short_current,
+                                                                               shp_bulk_short_future,
+                                                                               shp_bulk_long_current,
+                                                                               shp_bulk_long_future,
+                                                                               shp_container_short_current,
+                                                                               shp_container_short_future,
+                                                                               shp_container_long_current,
+                                                                               shp_container_long_future,
+                                                                               shp_general_short_current,
+                                                                               shp_general_short_future,
+                                                                               shp_general_long_current,
+                                                                               shp_general_long_future,
+                                                                               shp_roro_short_current,
+                                                                               shp_roro_short_future,
+                                                                               shp_roro_long_current,
+                                                                               shp_roro_long_future,
+                                                                               shp_oil,
+                                                                               shp_solid,
+                                                                               shp_chemical ] }
+    short: fe_bunk_lgas
+  Bunkers|Liquids|Oil|Light:
+    filter: { technology: loil_bunker, commodity: lightoil, level: final, mode: [ shp_bulk_short_current,
+                                                                                  shp_bulk_short_future,
+                                                                                  shp_bulk_long_current,
+                                                                                  shp_bulk_long_future,
+                                                                                  shp_container_short_current,
+                                                                                  shp_container_short_future,
+                                                                                  shp_container_long_current,
+                                                                                  shp_container_long_future,
+                                                                                  shp_general_short_current,
+                                                                                  shp_general_short_future,
+                                                                                  shp_general_long_current,
+                                                                                  shp_general_long_future,
+                                                                                  shp_roro_short_current,
+                                                                                  shp_roro_short_future,
+                                                                                  shp_roro_long_current,
+                                                                                  shp_roro_long_future,
+                                                                                  shp_oil,
+                                                                                  shp_solid,
+                                                                                  shp_chemical ] }
+    short: fe_bunk_loil
+  Bunkers|Liquids|Oil|Heavy:
+    filter: { technology: foil_bunker, commodity: fueloil, level: final , mode: [ shp_bulk_short_current,
+                                                                                  shp_bulk_short_future,
+                                                                                  shp_bulk_long_current,
+                                                                                  shp_bulk_long_future,
+                                                                                  shp_container_short_current,
+                                                                                  shp_container_short_future,
+                                                                                  shp_container_long_current,
+                                                                                  shp_container_long_future,
+                                                                                  shp_general_short_current,
+                                                                                  shp_general_short_future,
+                                                                                  shp_general_long_current,
+                                                                                  shp_general_long_future,
+                                                                                  shp_roro_short_current,
+                                                                                  shp_roro_short_future,
+                                                                                  shp_roro_long_current,
+                                                                                  shp_roro_long_future,
+                                                                                  shp_oil,
+                                                                                  shp_solid,
+                                                                                  shp_chemical ] }
+    short: fe_bunk_foil
+  Bunkers|Other:
+    filter: { technology: NH3_bunker, commodity: NH3, level: final, mode: [ shp_bulk_short_current,
+                                                                            shp_bulk_short_future,
+                                                                            shp_bulk_long_current,
+                                                                            shp_bulk_long_future,
+                                                                            shp_container_short_current,
+                                                                            shp_container_short_future,
+                                                                            shp_container_long_current,
+                                                                            shp_container_long_future,
+                                                                            shp_general_short_current,
+                                                                            shp_general_short_future,
+                                                                            shp_general_long_current,
+                                                                            shp_general_long_future,
+                                                                            shp_roro_short_current,
+                                                                            shp_roro_short_future,
+                                                                            shp_roro_long_current,
+                                                                            shp_roro_long_future,
+                                                                            shp_oil,
+                                                                            shp_solid,
+                                                                            shp_chemical ] }
+    short: fe_bunk_other
+
+  Residential and Commercial|Electricity|Heating|Resistance:
+    filter: { technology: elec_rc, commodity: electr, level: final, mode: M1 }
+    short: fe_rc_elec_rc
+  Residential and Commercial|Electricity|Heating|Heat Pump:
+    filter: { technology: hp_el_rc, commodity: electr, level: final, mode: M1 }
+    short: fe_rc_elec_hp
+  Residential and Commercial|Electricity|Specific:
+    filter: { technology: sp_el_RC, commodity: electr, level: final, mode: M1 }
+    short: fe_rc_elec_sp
+  Residential and Commercial|Gases:
+    filter: { technology: gas_rc, commodity: gas, level: final, mode: M1 }
+    short: fe_rc_gas
+  Residential and Commercial|Heat:
+    filter: { technology: heat_rc, commodity: d_heat, level: final, mode: M1 }
+    short: fe_rc_heat
+  Residential and Commercial|Hydrogen|Fuel Cell:
+    filter: { technology: h2_fc_RC, commodity: hydrogen, level: final, mode: M1 }
+    short: fe_rc_h2_fc
+  Residential and Commercial|Hydrogen|Combustion:
+    filter: { technology: h2_rc, commodity: hydrogen, level: final, mode: M1 }
+    short: fe_rc_h2_ic
+  Residential and Commercial|Liquids|Biomass:
+    filter: { technology: eth_rc, commodity: ethanol, level: final, mode: M1 }
+    short: fe_rc_eth
+  Residential and Commercial|Liquids|Coal:
+    filter: { technology: meth_rc, commodity: methanol, level: final, mode: M1 }
+    short: fe_rc_meth
+  Residential and Commercial|Liquids|Gas:
+    filter: { technology: missing, commodity: missing, level: missing, mode: missing }
+    short: fe_rc_lgas
+  Residential and Commercial|Liquids|Oil|Light:
+    filter: { technology: loil_rc, commodity: lightoil, level: final, mode: M1 }
+    short: fe_rc_loil
+  Residential and Commercial|Liquids|Oil|Heavy:
+    filter: { technology: foil_rc, commodity: fueloil, level: final, mode: M1 }
+    short: fe_rc_foil
+  Residential and Commercial|Solids|Biomass|Modern:
+    filter: { technology: biomass_rc, commodity: biomass, level: final, mode: M1 }
+    short: fe_rc_bio_rc
+  Residential and Commercial|Solids|Biomass|Traditional:
+    filter: { technology: biomass_nc, commodity: biomass, level: final, mode: M1 }
+    short: fe_rc_bio_nc
+  Residential and Commercial|Solids|Coal:
+    filter: { technology: coal_rc, commodity: coal, level: final, mode: M1 }
+    short: fe_rc_coal
+
+  Transportation|Electricity:
+    filter: { technology: elec_trp, commodity: electr, level: final, mode: M1 }
+    short: fe_trp_elec
+  Transportation|Gases:
+    filter: { technology: gas_trp, commodity: gas, level: final, mode: M1 }
+    short: fe_trp_gas
+  Transportation|Hydrogen:
+    filter: { technology: h2_fc_trp, commodity: hydrogen, level: final, mode: M1 }
+    short: fe_trp_h2
+  Transportation|Liquids|Biomass|Fuel Cell:
+    filter: { technology: eth_fc_trp, commodity: ethanol, level: final, mode: M1 }
+    short: fe_trp_eth_fc
+  Transportation|Liquids|Biomass|Combustion:
+    filter: { technology: eth_ic_trp , commodity: ethanol, level: final, mode: M1 }
+    short: fe_trp_eth_ic
+  Transportation|Liquids|Coal:
+    filter: { technology: missing, commodity: missing, level: missing, mode: missing }
+    short: fe_trp_coal
+  Transportation|Liquids|Gas:
+    filter: { technology: missing, commodity: missing, level: missing, mode: missing }
+    short: fe_trp_lgas
+  Transportation|Liquids|Oil|Light:
+    filter: { technology: loil_trp, commodity: lightoil, level: final, mode: [ methanol, ethanol ] }
+    short: fe_trp_loil
+  Transportation|Liquids|Oil|Heavy:
+    filter: { technology: foil_trp, commodity: fueloil, level: final, mode: M1 }
+    short: fe_trp_foil
+  Transportation|Other:
+    filter: { technology: coal_trp, commodity: coal, level: final, mode: M1 }
+    short: fe_trp_other
