@@ -537,12 +537,12 @@ def get_computer(
             raise ValueError(
                 "Both config=.transport.Config(...) and additional options={...}"
             )
-    elif options:
-        # Create a new instance using `kwargs`
-        config = Config.from_context(context, options=options)
-    else:
+    elif "transport" in context:
         # Retrieve the current .transport.Config. AttributeError if no instance exists.
         config = context.transport
+    else:
+        # Create a new instance using `kwargs`
+        config = Config.from_context(context, options=options)
 
     # Structure information for the base model
     if scenario:
