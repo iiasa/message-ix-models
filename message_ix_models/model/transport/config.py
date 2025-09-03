@@ -105,6 +105,9 @@ class Config(ConfigHelper):
     #: Information about the base model.
     base_model_info: ScenarioInfo = field(default_factory=ScenarioInfo)
 
+    # Private attribute for `code` property
+    _code: Optional["common.Code"] = None
+
     #: Scaling factors for costs.
     #:
     #: ``ldv nga``
@@ -304,7 +307,12 @@ class Config(ConfigHelper):
     #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
-    def __post_init__(self, extra_modules, futures_scenario, navigate_scenario):
+    def __post_init__(
+        self,
+        extra_modules,
+        futures_scenario,
+        navigate_scenario,
+    ) -> None:
         # Handle extra_modules
         em = extra_modules or []
         for m in em.split() if isinstance(em, str) else em:
@@ -365,17 +373,79 @@ class Config(ConfigHelper):
                 tuple(row[:-1]): row[-1] for row in config.minimum_activity
             }
 
-        # Separate data source options
+        # Separate data source options and "code"
         ds_options = options.pop("data source", {})
+        code = options.pop("code", None)
         # Update values, store on context
         result = context["transport"] = replace(
             config, **options, data_source=config.data_source.replace(**ds_options)
         )
 
+        # Set the scenario code, if any, triggering the setter magic
+        if code:
+            result.code = code
+
         # Create the structural spec
         result.spec = make_spec(context.model.regions)
 
         return result
+
+    @property
+    def code(self) -> "common.Code":
+        """A :class:`sdmx.Code <sdmx.model.common.Code>` for the transport scenario.
+
+        :py:`.code.id` is a short label suitable for a :class:`.Workflow` step name, for
+        instance "SSP3 policy" or "SSP5". See :func:`.transport.workflow.generate`.
+
+        `code` can be set either using a Code instance with
+        :class:`ScenarioCodeAnnotations`—such as from :func:`.get_cl_scenario`—or the ID
+        of a item in this particular code list. When set, other Config attributes are
+        also updated:
+
+        - :attr:`ssp`: per :attr:`ScenarioCodeAnnotations.SSP_URN`.
+        - :attr:`base_scenario_url`: per
+          :attr:`ScenarioCodeAnnotations.base_scenario_URL`.
+        - :attr:`policy`: per :attr:`ScenarioCodeAnnotations.policy`.
+        - :attr:`project`: the "DIGSY", "EDITS", and "LED" keys are set per
+          :attr:`ScenarioCodeAnnotations.DIGSY_scenario_URN`,
+          :attr:`~ScenarioCodeAnnotations.EDITS_scenario_URN`, and
+          :attr:`~ScenarioCodeAnnotations.is_LED_scenario`, respectively.
+        """
+        assert self._code is not None
+        return self._code
+
+    @code.setter
+    def code(self, value: Union[str, "common.Code"]) -> None:
+        from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
+        from message_ix_models.project.edits.structure import SCENARIO as EDITS
+
+        c = self._code = get_cl_scenario()[value] if isinstance(value, str) else value
+
+        sca = ScenarioCodeAnnotations.from_obj(c)
+
+        # Look up the SSP_2024 Enum
+        self.ssp = SSP_2024.by_urn(sca.SSP_URN)
+
+        # Store settings on the Config instance
+        self.base_scenario_url = sca.base_scenario_URL
+
+        if sca.policy:
+            self.policy.add(sca.policy)
+
+        # Update `project`
+        self.project["LED"] = sca.is_LED_scenario
+        self.project["DIGSY"] = DIGSY.by_urn(sca.DIGSY_scenario_URN)
+        self.project["EDITS"] = EDITS.by_urn(sca.EDITS_scenario_URN)
+
+    @property
+    def label(self) -> str:
+        """‘Full’ label used in the scenario name.
+
+        Compared to :attr:`code.id <code>`, this is a longer, more explicit label,
+        suitable for (part of) a :attr:`message_ix.Scenario.scenario` name in an
+        :mod:`ixmp` database, for instance "SSP_2024.3".
+        """
+        return re.sub("^SSP", "SSP_2024.", self.code.id)
 
     def check(self):
         """Check consistency of :attr:`project`."""
@@ -416,54 +486,33 @@ class Config(ConfigHelper):
         self.project.update(navigate=s)
         self.check()
 
-    def use_scenario_code(self, code: "common.Code") -> tuple[str, str]:
-        """Update settings given a `code` with :class:`ScenarioCodeAnnotations`.
-
-        Returns
-        -------
-        tuple of str
-            The entries are:
-
-            1. A short label suitable for a :class:`.Workflow` step name, for instance
-               "SSP3 policy" or "SSP5", where the first part is :py:`code.id`. See
-               :func:`.transport.workflow.generate`.
-            2. A longer, more explicity label suitable for (part of) a
-               :attr:`message_ix.Scenario.scenario` name in an :mod:`ixmp` database, for
-               instance "SSP_2024.3".
-        """
-        from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
-        from message_ix_models.project.edits.structure import SCENARIO as EDITS
-
-        sca = ScenarioCodeAnnotations.from_obj(code)
-
-        # Look up the SSP_2024 Enum
-        self.ssp = SSP_2024.by_urn(sca.SSP_URN)
-
-        # Store settings on the Config instance
-        self.base_scenario_url = sca.base_scenario_URL
-
-        if sca.policy:
-            self.policy.add(sca.policy)
-
-        self.project["LED"] = sca.is_LED_scenario
-        self.project["DIGSY"] = DIGSY.by_urn(sca.DIGSY_scenario_URN)
-        self.project["EDITS"] = EDITS.by_urn(sca.EDITS_scenario_URN)
-
-        # Construct labels including the SSP code and policy identifier
-        # 1. ‘Short’ label used for workflow steps
-        # 2. ‘Full’ label used in the scenario name
-        return code.id, re.sub("^SSP", "SSP_2024.", code.id)
-
 
 @dataclass
 class ScenarioCodeAnnotations(AnnotationsMixIn):
-    """Set of annotations appearing on each Code in ``CL_TRANSPORT_SCENARIO``."""
+    """Set of annotations appearing on each Code in ``CL_TRANSPORT_SCENARIO``.
 
+    See :attr:`.Config.code`.
+    """
+
+    #: The URN of a code identifying the SSP scenario to be used for sociodemographic
+    #: data, for instance
+    #: "urn:sdmx:org.sdmx.infomodel.codelist.Code=ICONICS:SSP(2024).1".
     SSP_URN: str
+
+    #: :data:`True` if the scenario is a "Low Energy Demand" scenario.
     is_LED_scenario: bool
+
+    #: URN of a code from :class:`.digsy.structure.SCENARIO`.
     DIGSY_scenario_URN: str
+
+    #: URN of a code from :class:`.edits.structure.SCENARIO`.
     EDITS_scenario_URN: str
+
+    #: :mod:`ixmp` URL of a base scenario on which the MESSAGEix-Transport scenario is
+    #: to be built.
     base_scenario_URL: str
+
+    #: Entries for :attr:`.Config.policy`.
     policy: Optional["Policy"]
 
     @classmethod
@@ -479,13 +528,9 @@ def get_cl_scenario() -> "common.Codelist":
     """Retrieve ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
 
     This code lists contains unique IDs for scenarios supported by the
-    MESSAGEix-Transport workflow (:mod:`.transport.workflow`), plus the annotations:
+    MESSAGEix-Transport workflow (:mod:`.transport.workflow`). Each code has the set
+    of annotations described by :class:`ScenarioCodeAnnotations`.
 
-    - ``SSP-URN``: the URN of a code identifying the SSP scenario to be used for
-      sociodemographic data, for instance
-      "urn:sdmx:org.sdmx.infomodel.codelist.Code=ICONICS:SSP(2024).1".
-    - ``is-LED-scenario``: either "True" or "False".
-    - ``EDITS-activity-id``: either "None", "'CA'", or "'HA'".
     """
     from sdmx.model import common
 
