@@ -72,7 +72,7 @@ SPEC_LIST = (
     "power_sector",
     "fertilizer",
     "methanol",
-    "ict"
+    "ict",
 )
 
 
@@ -138,7 +138,6 @@ def get_resid_demands(
     context: "Context", digsy_scenario: str, scenario: message_ix.Scenario
 ) -> dict:
     from message_ix_models.project.digsy.data import (
-        add_ict_elec_tecs,
         adjust_rc_elec,
         apply_industry_modifiers,
         extrapolate_modifiers_past_2050,
@@ -158,7 +157,6 @@ def get_resid_demands(
         )
         resid_demands = apply_industry_modifiers(mods, resid_demands)
 
-    add_ict_elec_tecs(ScenarioInfo(scenario))
     ict_demand = read_ict_v2(digsy_scenario)
     rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand)
     all_demands = combine_df_dictionaries(
@@ -199,6 +197,13 @@ def build(
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
+    from message_ix_models.project.digsy.data import add_ict_elec_tecs
+
+    ict_io = add_ict_elec_tecs(ScenarioInfo(scenario))
+    for k, v in ict_io.items():
+        with scenario.transact():
+            scenario.add_par(k, v)
+
     resid_demands = get_resid_demands(context, digsy_scenario, scenario)
     if old_calib:
         modify_demand_and_hist_activity(scenario)
@@ -359,7 +364,3 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
         ) from None
 
     return s
-
-if __name__ == '__main__':
-    s = make_spec("R12")
-    print()
