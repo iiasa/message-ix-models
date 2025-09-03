@@ -11,15 +11,17 @@ def get_cl_scenario() -> "common.Codelist":
     cl: "common.Codelist" = common.Codelist(
         id="DIGSY_SCENARIO",
         maintainer=read("IIASA_ECE:AGENCIES")["IIASA_ECE"],
-        version="0.1",
+        version="0.2",
         is_final=True,
         is_external_reference=False,
     )
 
     for id_, name in (
         ("BASE", "Base scenario"),
-        ("BEST", "Best case"),
-        ("WORST", "Worst case"),
+        ("BEST-C", "Best case, conservative"),
+        ("BEST-S", "Best case, stretch"),
+        ("WORST-C", "Worst case, conservative"),
+        ("WORST-S", "Worst case, stretch"),
         ("_Z", "Not applicable"),
     ):
         c = cl.setdefault(id=id_)

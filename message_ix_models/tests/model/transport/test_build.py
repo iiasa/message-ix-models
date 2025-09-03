@@ -376,7 +376,7 @@ def test_bare_res(
         # ("R12", "B", dict(navigate_scenario="act+ele+tec")),
         ("R12", "B", dict(code="LED-SSP2")),
         ("R12", "B", dict(code="EDITS-CA")),
-        ("R12", "B", dict(code="DIGSY-BEST")),
+        ("R12", "B", dict(code="DIGSY-BEST-C")),
         # param("R14", "B", {}, marks=MARK[9]),
         # param("ISR", "A", {}, marks=MARK[3]),
     ),
