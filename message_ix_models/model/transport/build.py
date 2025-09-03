@@ -264,6 +264,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
 
+    data.LoadFactorLDV.add_tasks(
+        c, context=context, strict=False, nodes=context.model.regions, config=config
+    )
+
 
 #: :mod:`genno` tasks for model structure information that are 'static'—that is, do not
 #: change based on :class:`~.transport.config.Config` settings. See
