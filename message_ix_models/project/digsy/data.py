@@ -9,6 +9,7 @@ from message_ix.util import make_df
 # if TYPE_CHECKING:
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import read_yaml_file
+from message_ix_models.types import ParameterData
 from message_ix_models.util import (
     broadcast,
     make_io,
@@ -215,7 +216,7 @@ def read_ict_v2(
     return df
 
 
-def add_ict_elec_tecs(info: "ScenarioInfo"):
+def add_ict_elec_tecs(info: "ScenarioInfo") -> ParameterData:
     common = dict(
         time="year",
         time_origin="year",
