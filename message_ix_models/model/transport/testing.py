@@ -177,7 +177,7 @@ def built_transport(
 
 
 def simulated_solution(
-    request: "pytest.FixtureRequest", context: "Context", build: bool
+    request: "pytest.FixtureRequest", context: "Context", build: bool, **options
 ) -> Reporter:
     """Return a :class:`.Reporter` with a simulated model solution.
 
@@ -200,7 +200,7 @@ def simulated_solution(
     if build:
         # Use some default options to force built_transport → build.main() →
         # build.get_computer() to generate config
-        options = dict(dummy_LDV=False)
+        options.setdefault("dummy_LDV", False)
 
         # Build the base model
         scenario = built_transport(request, context, options=options, solved=False)
@@ -220,7 +220,7 @@ def simulated_solution(
         rep = reporter_from_excel(path)
 
         # Ensure a Config object
-        config = Config.from_context(context)
+        config = Config.from_context(context, options)
 
         # Retrieve the ScenarioInfo generated in reporter_from_excel()
         info = rep.graph["scenario info"]
