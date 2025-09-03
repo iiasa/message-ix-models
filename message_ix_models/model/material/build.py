@@ -158,7 +158,7 @@ def get_resid_demands(
         resid_demands = apply_industry_modifiers(mods, resid_demands)
 
     add_ict_elec_tecs(ScenarioInfo(scenario))
-    ict_demand = read_ict_v2(scenario=digsy_scenario)
+    ict_demand = read_ict_v2(digsy_scenario)
     rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand)
     all_demands = combine_df_dictionaries(
         resid_demands, {"demand": ict_demand}, {"demand": rc_demand_adjusted}
