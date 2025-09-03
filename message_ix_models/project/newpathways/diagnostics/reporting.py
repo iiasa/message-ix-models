@@ -22,8 +22,9 @@ import message_ix_models.report.legacy.iamc_report_hackathon as legacy_reporting
 from ixmp import Platform
 
 # Scenario dictionary
-included_scenarios = {#"base_scenario": "NP_SSP2_6.2"}
-                      "pipelines_LNG": "NP_SSP2_6.2"}
+included_scenarios = {"base_scenario": "NP_SSP2_6.2",
+                      "pipelines_LNG": "NP_SSP2_6.2",
+                      "LNG_prod_penalty": "NP+SSP2_6.2"}
     
 def run_legacy_reporting(scenarios_models):
     # Connect to ixmp
