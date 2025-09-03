@@ -628,7 +628,7 @@ def refresh_cl_scenario(
 
     # DIGSY
     c_ssp, name = cl_ssp_2024["2"], "DIGSY {!r} scenario with SSP2"
-    for id_ in ("BEST", "WORST"):
+    for id_ in ("BEST-C", "BEST-S", "WORST-C", "WORST-S"):
         cl.append(_code(f"DIGSY-{id_}", name.format(id_), c_ssp, False, "_Z", id_))
 
     # EDITS
