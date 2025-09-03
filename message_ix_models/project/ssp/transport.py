@@ -391,7 +391,9 @@ def get_computer(
     # - Create and store a .transport.Config instance.
     # - Update it using the `sc`.
     # - Retrieve a 'label' used to construct a target scenario URL.
-    label_full = TransportConfig.from_context(context).use_scenario_code(sc)[1]
+    cfg = TransportConfig.from_context(context)
+    cfg.code = sc
+    label_full = cfg.label
     # Construct the target scenario URL
     url = workflow.scenario_url(context, label_full)
     # Optionally apply a regex substitution

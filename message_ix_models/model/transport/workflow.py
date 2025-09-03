@@ -214,8 +214,11 @@ def generate(
         # Make a copy of the base .transport.Config for this particular workflow branch
         config = deepcopy(context.transport)
 
-        # Update the .transport.Config from the `scenario_code` and `policy`
-        label, label_full = config.use_scenario_code(scenario_code)
+        # Update the .transport.Config from the `scenario_code`
+        config.code = scenario_code
+
+        # Short and long labels for workflow step names and scenario names
+        label, label_full = config.code.id, config.label
 
         # Identify the base scenario
         base_url = base_scenario_url(context, config, base_scenario_method)
