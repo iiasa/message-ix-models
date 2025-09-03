@@ -61,7 +61,7 @@ def activity_to_csv(trade_tec,
         outputdf = scen.par("output")
         outputdf = outputdf[['node_loc', 'technology', 'commodity', 'year_act', 'value', 'unit']].drop_duplicates().reset_index()
         
-        capacity = scen.var("CAP")
+        capacity = scen.var("CAP_NEW")
         capacity = capacity[['node_loc', 'technology', 'year_act', 'lvl']].drop_duplicates()
         capacity = capacity.rename(columns = {'lvl': 'level'})
         capacity['commodity'] = flow_commodity
@@ -105,7 +105,7 @@ def activity_to_csv(trade_tec,
         #                        (capacity['technology'].str.contains('_exp') == False) &\
         #                        (capacity['technology'].str.contains('_imp') == False)].copy()
         
-        flow_output = exports[exports['commodity'] == flow_commodity].copy()
+        flow_output = exports[exports['commodity'].str.contains(flow_commodity)].copy()
         
         exports['IMPORTER'] = 'R12_' + exports['technology'].str.upper().str.split('_').str[-1]
         exports = exports.rename(columns = {'node_loc': 'EXPORTER',
@@ -146,23 +146,17 @@ def activity_to_csv(trade_tec,
         imports_out['PULL DATE'] = pd.Timestamp.today().strftime('%Y-%m-%d')
         flows_out['PULL DATE'] = pd.Timestamp.today().strftime('%Y-%m-%d')
 
-        exports_out.to_csv(os.path.join(out_path, trade_tec + '_exp.csv'),
+        exports_out.to_csv(os.path.join(out_path, 'data', trade_tec + '_exp.csv'),
                            index = False)
-        imports_out.to_csv(os.path.join(out_path, trade_tec + '_imp.csv'),
+        imports_out.to_csv(os.path.join(out_path, 'data', trade_tec + '_imp.csv'),
                            index = False)
-        flows_out.to_csv(os.path.join(out_path, flow_tec + '.csv'),
+        flows_out.to_csv(os.path.join(out_path, 'data', flow_tec + '.csv'),
                          index = False)
     
 # Retrieve trade flow activities
-scenarios_models = {'baseline': 'NP_SSP2_6.2',
+scenarios_models = {'base_scenario': 'NP_SSP2_6.2',
                     'pipelines_LNG': 'NP_SSP2_6.2',
-                    # 'LNG_noFLcost': 'NP_SSP2_6.2',
-                    # 'LNG_noTRvarcost': 'NP_SSP2_6.2',
-                    # 'LNG_lowTRvarcost': 'NP_SSP2_6.2', # This is actually HIGH varcost
-                    # 'high_LNGtankerfuel': 'NP_SSP2_6.2',
-                    # 'high_LNGtankerfuel': 'NP_SSP2_6.2',
-                    # 'lowNAMshalecost': 'NP_SSP2_6.2',
-                    'LNG_prod_eff': 'NP_SSP2_6.2'}
+                    'LNG_prod_penalty': 'NP_SSP2_6.2'}
  
 activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_pipe",
