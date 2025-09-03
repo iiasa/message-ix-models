@@ -11,6 +11,7 @@ from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.transport import Config, build, key
+from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
@@ -23,8 +24,11 @@ from message_ix_models.testing import GHA
 from message_ix_models.util._logging import silence_log
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import message_ix
     from genno.types import KeyLike
+    from sdmx.model.common import Code
 
     from message_ix_models import Context
 
@@ -36,6 +40,11 @@ def quiet_genno(caplog):
     """Quiet some log messages from genno via by :func:`.reporting.prepare_reporter`."""
     caplog.set_level(logging.WARNING, logger="genno.config")
     caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
+
+
+@pytest.fixture(scope="session")
+def scenario_code() -> "Code":
+    return get_cl_scenario()["SSP2"]
 
 
 @pytest.mark.xfail(
@@ -134,7 +143,14 @@ def test_debug(
         param("ISR", "A", marks=MARK[3]),
     ),
 )
-def test_bare(request, test_context, tmp_path, regions, years):
+def test_bare(
+    request: "pytest.FixtureRequest",
+    tmp_path: "Path",
+    test_context: "Context",
+    scenario_code: "Code",
+    regions: str,
+    years: str,
+) -> None:
     """Run MESSAGEix-Transport–specific reporting."""
     from message_ix_models.model.transport.report import callback
     from message_ix_models.report import Config
@@ -152,7 +168,10 @@ def test_bare(request, test_context, tmp_path, regions, years):
     # Built and (optionally) solved scenario. dummy supply data is necessary for the
     # scenario to be feasible without any other contents.
     scenario = built_transport(
-        request, test_context, options=dict(dummy_supply=True), solved=True
+        request,
+        test_context,
+        options=dict(code=scenario_code, dummy_supply=True),
+        solved=True,
     )
 
     # commented: for debugging
@@ -160,10 +179,10 @@ def test_bare(request, test_context, tmp_path, regions, years):
     # log.info(f"Dump contents to {dump_path}")
     # scenario.to_excel(dump_path)
 
-    rep, key = prepare_reporter(test_context, scenario)
+    rep, key1 = prepare_reporter(test_context, scenario)
 
     # Reporting `key` succeeds
-    rep.get(key)
+    rep.get(key1)
 
 
 @build.get_computer.minimum_version
@@ -178,11 +197,16 @@ def test_bare(request, test_context, tmp_path, regions, years):
     ),
 )
 def test_simulated(
-    request, test_context: "Context", build: bool, regions="R12", years="B"
+    request,
+    test_context: "Context",
+    scenario_code: "Code",
+    build: bool,
+    regions="R12",
+    years="B",
 ) -> None:
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
-    rep = simulated_solution(request, test_context, build)
+    rep = simulated_solution(request, test_context, build, code=scenario_code)
 
     # A quantity for a MESSAGEix variable was added and can be retrieved
     k = rep.full_key("ACT")
@@ -216,12 +240,17 @@ def test_simulated(
 @build.get_computer.minimum_version
 @MARK[10]
 def test_simulated_iamc(
-    request, tmp_path_factory, test_context, regions="R12", years="B"
+    request: "pytest.FixtureRequest",
+    tmp_path_factory,
+    test_context: "Context",
+    scenario_code: "Code",
+    regions="R12",
+    years="B",
 ) -> None:
     test_context.update(regions=regions, years=years)
     test_context.report.output_dir = test_context.get_local_path()
 
-    rep = simulated_solution(request, test_context, build=True)
+    rep = simulated_solution(request, test_context, build=True, code=scenario_code)
 
     # Key collecting both file output/scenario update
     # NB the trailing colons are necessary because of how genno handles report.yaml
@@ -276,11 +305,18 @@ def test_simulated_iamc(
         # "stock-non-ldv",
     ],
 )
-def test_simulated_plot(request, test_context, plot_name, regions="R12", years="B"):
+def test_simulated_plot(
+    request: "pytest.FixtureRequest",
+    test_context: "Context",
+    scenario_code: "Code",
+    plot_name,
+    regions="R12",
+    years="B",
+) -> None:
     """Plots are generated correctly using simulated data."""
     test_context.update(regions=regions, years=years)
     log.debug(f"test_plot_simulated: {test_context.regions = }")
-    rep = simulated_solution(request, test_context, build=True)
+    rep = simulated_solution(request, test_context, build=True, code=scenario_code)
 
     # print(rep.describe(f"plot {plot_name}"))  # DEBUG
 
