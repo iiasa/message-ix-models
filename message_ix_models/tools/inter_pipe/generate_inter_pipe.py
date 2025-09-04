@@ -115,8 +115,8 @@ def inter_pipe_bare(
         for node in node_name_base
         if node.lower() != "world" and "glb" not in node.lower()
     }
-    spec_tech_pipe = str(config.get("spec", {}).get("spec_tech_pipe", [])[0])
-    if spec_tech_pipe == "True":
+    spec_tech_pipe = config.get("spec", {}).get("spec_tech_pipe", True)
+    if spec_tech_pipe is True:
         try:
             spec_tech = pd.read_csv(
                 Path(package_data_path("inter_pipe")) / "spec_tech_pipe.csv"
@@ -129,15 +129,13 @@ def inter_pipe_bare(
                 "The function stopped. Sheet spec_tech_pipe.csv "
                 "has been generated. Fill in the specific pairs first and run again."
             )
-    elif spec_tech_pipe == "False":
+    else:
         tech_pipe_name = [
             f"{tech_shorten_mother_pipe[0]}_{tech_suffix_pipe[0]}_exp_{node.split('_')[1]}_{i}"
             for node in node_name
             for i in range(1, tech_number_pipe[0] + 1)
         ]
         spec_tech = None
-    else:
-        raise Exception("Please use True or False.")
 
     # Generate export pipe technology: sheet input_exp_pipe
     template = get_template(base, "input", tech_mother_pipe)
@@ -348,10 +346,8 @@ def inter_pipe_bare(
 
     # Generate key relation: pipe -> pipe_group,
     # i.e, grouping exporting pipe technologies
-    spec_tech_pipe_group = str(
-        config.get("spec", {}).get("spec_tech_pipe_group", [])[0]
-    )
-    if spec_tech_pipe_group == "True":
+    spec_tech_pipe_group = config.get("spec", {}).get("spec_tech_pipe_group", True)
+    if spec_tech_pipe_group is True:
         try:
             relation_tech_group = pd.read_csv(
                 Path(package_data_path("inter_pipe"))
@@ -378,17 +374,14 @@ def inter_pipe_bare(
                 "The function stopped. Sheet relation_activity_pipe_group.csv"
                 "has been generated. Fill in the specific pairs first and run again."
             )
-    elif spec_tech_pipe_group == "False":
-        # Skip relation_tech_group processing when spec_tech_pipe_group is False
-        pass
-    # TODO: adding general function, group all pipe technologies to inter,
-    # linking inter to pipe supply techs
     else:
-        raise Exception("Please use True or False.")
+        pass  # Skip relation_tech_group processing when spec_tech_pipe_group is False
+
+    # TODO add general function, group all pipe technologies to inter, linking inter to
+    #      pipe supply techs
 
     # Only process relation_tech_group if it was defined
-    # (i.e., when spec_tech_pipe_group == "True")
-    if spec_tech_pipe_group == "True":
+    if spec_tech_pipe_group:
         df = relation_tech_group.copy()
         set_tech.extend(df["technology"].unique())
         set_relation.extend(df["relation"].unique())
@@ -478,10 +471,8 @@ def inter_pipe_bare(
 
     # Generate key relation: pipe_supply -> pipe,
     # i.e, pipe_supply techs contribute to pipe (group)
-    spec_supply_pipe_group = str(
-        config.get("spec", {}).get("spec_supply_pipe_group", [])[0]
-    )
-    if spec_supply_pipe_group == "True":
+    spec_supply_pipe_group = config.get("spec", {}).get("spec_supply_pipe_group", True)
+    if spec_supply_pipe_group is True:
         try:
             relation_tech_group = pd.read_csv(
                 Path(package_data_path("inter_pipe"))
@@ -509,16 +500,13 @@ def inter_pipe_bare(
                 "Sheet relation_activity_supply_group.csv has been generated. "
                 "Fill in the specific pairs first and run again."
             )
-    elif spec_supply_pipe_group == "False":
-        pass
-        # TODO: adding general funtion, group all pipe technologies to inter,
-        # linking inter to pipe supply techs
     else:
-        raise Exception("Please use True or False.")
+        pass
+        # TODO add general funtion, group all pipe technologies to inter, linking inter
+        #      to pipe supply techs
 
     # Only process relation_tech_group if it was defined
-    # (i.e., when spec_supply_pipe_group == "True")
-    if spec_supply_pipe_group == "True":
+    if spec_supply_pipe_group:
         df = relation_tech_group.copy()
         set_tech.extend(df["technology"].unique())
         set_relation.extend(df["relation"].unique())
