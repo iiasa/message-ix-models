@@ -1,5 +1,4 @@
 import logging
-import sys
 from pathlib import Path
 from typing import Union
 
@@ -9,27 +8,7 @@ import yaml
 
 from message_ix_models.util import package_data_path
 
-
-# Get logger
-def get_logger(name: str):
-    # Set the logging level to INFO (will show INFO and above messages)
-    log = logging.getLogger(name)
-    log.setLevel(logging.INFO)
-
-    # Define the format of log messages:
-    handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter("%(name)s %(asctime)s %(levelname)s %(message)s")
-
-    # Apply the format to the handler
-    handler.setFormatter(formatter)
-
-    # Add the handler to the logger
-    log.addHandler(handler)
-
-    return log
-
-
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 def load_config(full_path):
