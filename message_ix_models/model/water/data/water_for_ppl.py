@@ -975,6 +975,12 @@ def cool_tech(
             else df_param
         )
 
+        # Set growth_new_capacity_up to 0 for __ot_saline technologies
+        if param_name == "growth_new_capacity_up":
+            df_param_share.loc[
+                df_param_share["technology"].str.endswith("__ot_saline"), "value"
+            ] = 0
+            print(f"setting growth up new cap 0 for {df_param_share['technology']}")
         results[param_name] = pd.concat(
             [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
         )
