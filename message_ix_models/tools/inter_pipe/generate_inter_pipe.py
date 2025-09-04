@@ -236,13 +236,15 @@ def inter_pipe_bare(
             }
         )  # minimum dimensions: nl-m-c-l; required dimensions: nl-t-yv-ya-m-no-c-l-h-ho
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["mode"] = "M1"
-    df["node_origin"] = df["node_loc"]
-    df["commodity"] = commodity_mother_pipe[0]
-    df["level"] = f"{level_shorten_mother_pipe[0]}_{level_suffix_pipe[0]}"
-    df["value"] = None
+    df = df.assign(
+        year_vtg="broadcast",
+        year_act="broadcast",
+        mode="M1",
+        node_origin=df["node_loc"],
+        commodity=commodity_mother_pipe[0],
+        level=f"{level_shorten_mother_pipe[0]}_{level_suffix_pipe[0]}",
+        value=None,
+    )
     df.to_csv(config_dir / "input_pipe_exp_edit.csv", index=False)
     log.info(f"Input pipe exp csv generated at: {config_dir}.")
     set_tech.extend(df["technology"].unique())
@@ -261,15 +263,17 @@ def inter_pipe_bare(
             }
         )  # minimum dimensions: nl-m-c-l; required dimensions: nl-t-yv-ya-m-no-c-l-h-ho
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["mode"] = "M1"
-    df["node_dest"] = "R12_GLB"
-    df["commodity"] = commodity_mother_pipe[0]
-    df["level"] = df["node_loc"].apply(
-        lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
+    df = df.assign(
+        year_vtg="broadcast",
+        year_act="broadcast",
+        mode="M1",
+        node_dest="R12_GLB",
+        commodity=commodity_mother_pipe[0],
+        level=df["node_loc"].apply(
+            lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
+        ),
+        value=1,
     )
-    df["value"] = 1
     df.to_csv(config_dir / "output_pipe_exp.csv", index=False)
     log.info("Output pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())
@@ -288,9 +292,7 @@ def inter_pipe_bare(
             }
         )  # minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = None
-    df["value"] = None
+    df = df.assign(year_vtg="broadcast", year_act=None, value=None)
     df.to_csv(config_dir / "technical_lifetime_pipe_exp_edit.csv", index=False)
     log.info("Technical lifetime pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
@@ -308,9 +310,7 @@ def inter_pipe_bare(
             }
         )  # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = None
-    df["value"] = None
+    df = df.assign(year_vtg="broadcast", year_act=None, value=None)
     df.to_csv(config_dir / "inv_cost_pipe_exp_edit.csv", index=False)
     log.info("Inv cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
@@ -328,9 +328,7 @@ def inter_pipe_bare(
             }
         )  # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["value"] = None
+    df = df.assign(year_vtg="broadcast", year_act="broadcast", value=None)
     df.to_csv(config_dir / "fix_cost_pipe_exp_edit.csv", index=False)
     log.info("Fix cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
@@ -348,9 +346,7 @@ def inter_pipe_bare(
             }
         )  # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["value"] = None
+    df = df.assign(year_vtg="broadcast", year_act="broadcast", value=None)
     df.to_csv(config_dir / "var_cost_pipe_exp_edit.csv", index=False)
     log.info("Var cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
@@ -368,9 +364,7 @@ def inter_pipe_bare(
             }
         )  # minimum dimensions: nl-t; required dimensions: nl-t-yv-ya-m-h
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["value"] = 1
+    df = df.assign(year_vtg="broadcast", year_act="broadcast", value=1)
     df.to_csv(config_dir / "capacity_factor_pipe_exp.csv", index=False)
     log.info("Capacity factor pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
@@ -391,16 +385,18 @@ def inter_pipe_bare(
             }
         )
     copy_template_columns(df, template)
-    df["technology"] = tech_pipe_name
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["mode"] = "M1"
-    df["node_origin"] = "R12_GLB"
-    df["commodity"] = commodity_mother_pipe[0]
-    df["level"] = df["node_loc"].apply(
-        lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
+    df = df.assign(
+        technology=tech_pipe_name,
+        year_vtg="broadcast",
+        year_act="broadcast",
+        mode="M1",
+        node_origin="R12_GLB",
+        commodity=commodity_mother_pipe[0],
+        level=df["node_loc"].apply(
+            lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
+        ),
+        value=1,
     )
-    df["value"] = 1
     df.to_csv(config_dir / "input_pipe_imp.csv", index=False)
     log.info("Input pipe imp csv generated.")
     set_tech.extend(df["technology"].unique())
@@ -419,14 +415,16 @@ def inter_pipe_bare(
             }
         )
     copy_template_columns(df, template)
-    df["technology"] = tech_pipe_name
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["mode"] = "M1"
-    df["node_dest"] = df["node_loc"]
-    df["commodity"] = commodity_mother_pipe[0]
-    df["level"] = level_mother_pipe[0]
-    df["value"] = 1
+    df = df.assign(
+        technology=tech_pipe_name,
+        year_vtg="broadcast",
+        year_act="broadcast",
+        mode="M1",
+        node_dest=df["node_loc"],
+        commodity=commodity_mother_pipe[0],
+        level=level_mother_pipe[0],
+        value=1,
+    )
     df.to_csv(config_dir / "output_pipe_imp.csv", index=False)
     log.info("Output pipe imp csv generated.")
     set_tech.extend(df["technology"].unique())
@@ -500,13 +498,15 @@ def inter_pipe_bare(
         }
     )
     copy_template_columns(df, template)
-    df["year_vtg"] = "broadcast"
-    df["year_act"] = "broadcast"
-    df["mode"] = "M1"
-    df["node_dest"] = df["node_loc"]
-    df["commodity"] = commodity_mother_supply[0]
-    df["level"] = f"{level_mother_shorten_supply[0]}_{level_suffix_supply[0]}"
-    df["value"] = 1
+    df = df.assign(
+        year_vtg="broadcast",
+        year_act="broadcast",
+        mode="M1",
+        node_dest=df["node_loc"],
+        commodity=commodity_mother_supply[0],
+        level=f"{level_mother_shorten_supply[0]}_{level_suffix_supply[0]}",
+        value=1,
+    )
     df.to_csv(config_dir / "output_pipe_supply.csv", index=False)
     log.info("Output pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
