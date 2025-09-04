@@ -1,12 +1,13 @@
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import message_ix
 import pandas as pd
 import yaml
 
-from message_ix_models.util import package_data_path
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import broadcast, package_data_path
 
 log = logging.getLogger(__name__)
 
@@ -40,71 +41,6 @@ def copy_template_columns(df, template, exclude_cols=["node_loc", "technology"])
     for col in template.columns:
         if col not in exclude_cols:
             df[col] = template[col].iloc[0]
-
-
-# Small util function
-def broadcast_yv_ya(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
-    """
-    Broadcast years to create vintage-activity year pairs.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input parameter DataFrame
-    ya_list : list[int]
-        List of activity years to consider
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with expanded rows for each vintage-activity year pair
-    """
-    all_new_rows = []
-    # Process each row in the original DataFrame
-    for _, row in df.iterrows():
-        # For each activity year
-        for ya in ya_list:
-            # Get all vintage years that are <= activity year
-            yv_list = [yv for yv in ya_list if yv <= ya]
-
-            # Create new rows for each vintage year
-            for yv in yv_list:
-                new_row = row.copy()
-                new_row["year_act"] = int(ya)
-                new_row["year_vtg"] = int(yv)
-                all_new_rows.append(new_row)
-    # Combine original DataFrame with new rows
-    result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
-    result_df = result_df[result_df["year_vtg"] != "broadcast"]
-    return result_df
-
-
-# Small util function
-def broadcast_yv(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
-    """Broadcast vintage years."""
-    all_new_rows = []
-    for _, row in df.iterrows():
-        for yv in ya_list:
-            new_row = row.copy()
-            new_row["year_vtg"] = int(yv)
-            all_new_rows.append(new_row)
-    result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
-    result_df = result_df[result_df["year_vtg"] != "broadcast"]
-    return result_df
-
-
-# Small util function
-def broadcast_yl(df: pd.DataFrame, ya_list: list[int]) -> pd.DataFrame:
-    """Broadcast relation years."""
-    all_new_rows = []
-    for _, row in df.iterrows():
-        for yv in ya_list:
-            new_row = row.copy()
-            new_row["year_rel"] = int(yv)
-            all_new_rows.append(new_row)
-    result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
-    result_df = result_df[result_df["year_rel"] != "broadcast"]
-    return result_df
 
 
 # Main function to generate bare sheets
@@ -621,13 +557,10 @@ def inter_pipe_bare(
     # return csv_files
 
 
-# ruff: noqa: C901
 def inter_pipe_build(
-    scen: "message_ix.Scenario",
-    config_name: Union[str, None] = None,
-):
-    """
-    Read the input csv files and build the pipe tech sets and parameters.
+    scen: "message_ix.Scenario", config_name: Optional[str] = None
+) -> "message_ix.Scenario":
+    """Read the input csv files and build the pipe tech sets and parameters.
 
     Args:
         scen: The target scenario object to build inter_pipe on
@@ -672,44 +605,45 @@ def inter_pipe_build(
         "relation",
     ]
 
+    # Information about the target scenario
+    info = ScenarioInfo(scen)
+    if info.y0 != 2030:
+        raise NotImplementedError(f"inter_pipe_build() with y₀ = {info.y0} != 2030")
+
     # Broadcast the data
-    ya_list = [
-        2030,
-        2035,
-        2040,
-        2045,
-        2050,
-        2055,
-        2060,
-        2070,
-        2080,
-        2090,
-        2100,
-        2110,
-    ]  # TODO: get from config
     for i in data_dict.keys():
-        if "year_rel" in data_dict[i].columns:
-            if data_dict[i]["year_rel"].iloc[0] == "broadcast":
-                data_dict[i] = broadcast_yl(data_dict[i], ya_list)
-                data_dict[i]["year_act"] = data_dict[i]["year_rel"]
-                log.info(f"Parameter {i} Broadcasted.")
-        else:
-            pass
-        if "year_vtg" in data_dict[i].columns and "year_act" in data_dict[i].columns:
+        if (
+            "year_rel" in data_dict[i].columns
+            and data_dict[i]["year_rel"].iloc[0] == "broadcast"
+        ):
+            data_dict[i] = (
+                data_dict[i]
+                .replace("broadcast", None)
+                .pipe(broadcast, year_rel=info.Y)
+                .assign(year_act=lambda df: df.year_rel)
+            )
+            log.info(f"Parameter {i} Broadcasted.")
+        elif "year_vtg" in data_dict[i].columns and "year_act" in data_dict[i].columns:
             if (
                 data_dict[i]["year_vtg"].iloc[0] == "broadcast"
                 and data_dict[i]["year_act"].iloc[0] == "broadcast"
             ):
-                data_dict[i] = broadcast_yv_ya(data_dict[i], ya_list)
+                data_dict[i] = (
+                    data_dict[i]
+                    .replace("broadcast", None)
+                    .pipe(broadcast, info.yv_ya.query("year_vtg >= @info.y0"))
+                )
                 log.info(f"Parameter {i} Broadcasted.")
             elif (
                 data_dict[i]["year_vtg"].iloc[0] == "broadcast"
                 and data_dict[i]["year_act"].iloc[0] != "broadcast"
             ):
-                data_dict[i] = broadcast_yv(data_dict[i], ya_list)
+                data_dict[i] = (
+                    data_dict[i]
+                    .replace("broadcast", None)
+                    .pipe(broadcast, year_vtg=info.Y)
+                )
                 log.info(f"Parameter {i} Broadcasted.")
-        else:
-            pass
 
     # Generate relation upper and lower
     for i in [k for k in data_dict.keys() if "relation_activity" in k]:
@@ -718,28 +652,23 @@ def inter_pipe_build(
             df = data_dict[i][["relation", "node_rel", "year_rel", "unit"]].assign(
                 value=0
             )
-            df = broadcast_yl(df, ya_list)
+            df = df.pipe(broadcast, year_rel=info.Y)
             key_name_upper = key_name.replace("activity", "upper")
             data_dict[key_name_upper] = df.copy()
 
             key_name_lower = key_name.replace("activity", "lower")
             data_dict[key_name_lower] = df.copy()
-        else:
-            pass
 
     # Add set and parameter
     with scen.transact("Added"):
-        for i in set_list:
-            if i in data_dict:
-                i_str = (
-                    data_dict[i]
-                    .apply(lambda row: row.astype(str).str.cat(sep=", "), axis=1)
-                    .tolist()
-                )  # str or list of str only
-                scen.add_set(i, i_str)
-                log.info(f"Set {i} added.")
-            else:
-                pass
+        for i in filter(data_dict.__contains__, set_list):
+            i_str = (
+                data_dict[i]
+                .apply(lambda row: row.astype(str).str.cat(sep=", "), axis=1)
+                .tolist()
+            )  # str or list of str only
+            scen.add_set(i, i_str)
+            log.info(f"Set {i} added.")
         for i in par_list:
             # Find all keys in data_dict that contain the parameter name
             matching_keys = [k for k in data_dict.keys() if i in k]
@@ -750,7 +679,5 @@ def inter_pipe_build(
                 )
                 scen.add_par(i, combined_df)
                 log.info(f"Parameter {i} from {matching_keys} added.")
-            else:
-                pass
 
     return scen
