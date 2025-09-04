@@ -138,9 +138,11 @@ def get_resid_demands(
     context: "Context", digsy_scenario: str, scenario: message_ix.Scenario
 ) -> dict:
     from message_ix_models.project.digsy.data import (
+        adjust_act_calib,
         adjust_rc_elec,
         apply_industry_modifiers,
         extrapolate_modifiers_past_2050,
+        fe_to_ue,
         get_industry_modifiers,
         read_ict_v2,
     )
@@ -158,7 +160,10 @@ def get_resid_demands(
         resid_demands = apply_industry_modifiers(mods, resid_demands)
 
     ict_demand = read_ict_v2(digsy_scenario)
-    rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand)
+    ict_demand_ue = fe_to_ue(ict_demand, scenario)
+    rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
+    adjust_act_calib(ict_demand_ue, scenario)
+
     all_demands = combine_df_dictionaries(
         resid_demands, {"demand": ict_demand}, {"demand": rc_demand_adjusted}
     )
