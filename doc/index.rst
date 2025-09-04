@@ -8,17 +8,17 @@ and derived models including single-country models and `variants with greater se
 All are built using the `MESSAGEix framework <https://docs.messageix.org>`_
 and underlying `ix modeling platform (ixmp) <https://docs.messageix.org/ixmp/>`_.
 
-Among other tasks, the tools allow modelers to:
+Among other tasks, these tools allow modelers to:
 
 - retrieve input data from various upstream sources,
 - process/transform upstream data into model input parameters,
 - create, populate, modify, and parametrize scenarios,
 - conduct model runs,
-- set up model *variants* with additional details or features, and
+- build model variants with additional details or features, and
 - report quantities computed from model outputs.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: User guide
 
    install
@@ -61,15 +61,15 @@ API reference
 
 Commonly used classes may be imported directly from :mod:`message_ix_models`.
 
-.. automodule:: message_ix_models
+.. autosummary::
 
-   .. autosummary::
+   message_ix_models.Config
+   message_ix_models.Context
+   message_ix_models.ScenarioInfo
+   message_ix_models.Spec
+   message_ix_models.Workflow
 
-      .Config
-      .Context
-      .ScenarioInfo
-      .Spec
-      .Workflow
+Other submodules are documented on their respective pages:
 
 - :doc:`api/model`
 - :doc:`api/model-bare`
@@ -111,7 +111,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
 .. _index-variants:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Model variants
 
    buildings/index
@@ -120,7 +120,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    water/index
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Research projects
 
    project/advance
@@ -150,7 +150,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    project/uptake
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Package data
 
    pkg-data/node
