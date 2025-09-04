@@ -50,9 +50,9 @@ def test_config_file() -> Generator[Path, None, None]:
         },
         "first_model_year": [2030],
         "spec": {
-            "spec_tech_pipe": [False],
-            "spec_tech_pipe_group": [False],
-            "spec_supply_pipe_group": [False],
+            "spec_tech_pipe": False,
+            "spec_tech_pipe_group": False,
+            "spec_supply_pipe_group": False,
         },
     }
 
