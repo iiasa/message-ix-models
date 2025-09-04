@@ -191,9 +191,9 @@ def inter_pipe_bare(
     log.info("Using provided base scenario.")
 
     # Generate export pipe technology: name techs and levels
-    set_tech = []
-    set_level = []
-    set_relation = []
+    set_tech: list[str] = []
+    set_level: list[str] = []
+    set_relation: list[str] = []
     node_name_base = base.set("node")
     node_name = {
         node
@@ -208,11 +208,7 @@ def inter_pipe_bare(
             )
             tech_pipe_name = spec_tech["technology"].unique().tolist()
         except FileNotFoundError:
-            spec_tech = {
-                "node_loc": [],
-                "technology": [],
-            }
-            spec_tech = pd.DataFrame(spec_tech)
+            spec_tech = pd.DataFrame({"node_loc": [], "technology": []})
             spec_tech.to_csv(config_dir / "spec_tech_pipe_edit.csv", index=False)
             raise Exception(
                 "The function stopped. Sheet spec_tech_pipe.csv "
