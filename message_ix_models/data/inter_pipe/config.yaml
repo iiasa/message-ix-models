@@ -118,13 +118,9 @@ first_model_year:
   - 2030
 
 spec: # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
-  spec_tech_pipe: # True or False.
-    - True # A sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
-  spec_tech_pipe_group: 
-    - True # A sheet to specify groups of pipe technologies. 
-  spec_supply_pipe_group: 
-    - True # A sheet to specify groups of pipe supply technologies.     
-    
+  spec_tech_pipe: true # A sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
+  spec_tech_pipe_group: true # A sheet to specify groups of pipe technologies. 
+  spec_supply_pipe_group: true # A sheet to specify groups of pipe supply technologies.     
 
 
 
