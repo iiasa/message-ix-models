@@ -3,8 +3,9 @@ from typing import TYPE_CHECKING, Generator
 
 import pytest
 import yaml
+from message_ix import make_df
 
-from message_ix_models.util import package_data_path
+from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -76,7 +77,10 @@ def scenario(
 ) -> Generator["Scenario", None, None]:
     # Code only functions with R12
     test_context.model.regions = "R12"
-    s = testing.bare_res(request, test_context, solved=False)
+    # inter_pipe_build() only broadcasts data from 2030 onwards
+    s = testing.bare_res(request, test_context, solved=False).clone(
+        shift_first_model_year=2030
+    )
     s.check_out()
 
     # Add the elec_t_d technology and related sets
@@ -90,10 +94,6 @@ def scenario(
 
     # Add input parameter for elec_t_d
     # Input: electr at secondary level with value 1.1
-    from message_ix import make_df
-
-    from message_ix_models.util import broadcast
-
     info = ScenarioInfo(s)
 
     # Create input parameter data
