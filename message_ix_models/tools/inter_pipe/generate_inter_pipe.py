@@ -141,19 +141,24 @@ def inter_pipe_bare(
     # target_model: str,
     # target_scen: str,
     config_name: Union[str, None] = None,
+    target_dir: Optional[Path] = None,
 ):
-    """
-    Generate bare sheets to collect (minimum) parameters for pipe
-    technologies and pipe supply technologies.
+    """Generate 18 bare sheets to collect minimum data for pipe/supply techs.
 
-    Args:
-        base_scen: The base scenario object to start from
-        config_name (str, optional): Name of the config file.
-            If None, uses default config from data/inter_pipe/config.yaml
+    Parmeters
+    ---------
+    base_scen :
+        The base scenario object to start from.
+    config_name :
+        Name of the config file. If :any:`None`, use default
+        :file:`data/inter_pipe/config.yaml`.
+    target_dir :
+        Directory in which to create files. If :any:`None`, the same
+        :file:`data/inter_pipe`.
     """
     # Load the config
     c = config = Config.from_file(config_name)
-    config_dir = package_data_path("inter_pipe")
+    config_dir = target_dir or package_data_path("inter_pipe")
 
     # Use the provided base scenario instead of loading from config
     base = base_scen
