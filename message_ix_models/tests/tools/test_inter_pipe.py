@@ -322,29 +322,14 @@ def test_inter_pipe_bare_with_test_config(tmp_path, test_config_file, scenario) 
     } == set(p.stem for p in tmp_path.glob("*.csv"))
 
 
-def test_inter_pipe_build_with_test_config(test_config_file, scenario):
-    """Test inter_pipe_build function with a generated test config file."""
-    # Test that the config file was created
-    assert test_config_file.exists(), (
-        f"Test config file not created at: {test_config_file}"
-    )
+def test_inter_pipe_build_with_test_config(
+    tmp_path, test_config_file, scenario
+) -> None:
+    """Test :func:`.inter_pipe_build` with generated test config and data files."""
+    # Generate bare data files
+    inter_pipe_bare(scenario, config_name=str(test_config_file), target_dir=tmp_path)
 
-    try:
-        # Call the function with new signature: base_scen,
-        # target_model, target_scen, config_name
-        inter_pipe_build(
-            scenario,
-            config_name=str(test_config_file),
-        )
-        print(f"inter_pipe_build function executed with {test_config_file}")
-    except Exception as e:
-        # If it fails due to missing CSV files or database connection, that's expected
-        if (
-            "csv" in str(e).lower()
-            or "database" in str(e).lower()
-            or "connection" in str(e).lower()
-        ):
-            print(f"Missing data (expected): {e}")
-        else:
-            # If it fails for other reasons, that's a real error
-            pytest.fail(f"inter_pipe_build function failed unexpectedly: {e}")
+    # Function runs without error
+    inter_pipe_build(scenario, config_name=str(test_config_file), data_dir=tmp_path)
+
+    # TODO Expand with assertions about changes to the scenario
