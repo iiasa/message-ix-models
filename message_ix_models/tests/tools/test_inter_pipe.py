@@ -14,8 +14,7 @@ if TYPE_CHECKING:
 
 
 from message_ix_models import ScenarioInfo, testing
-from message_ix_models.tools.inter_pipe import inter_pipe_bare, inter_pipe_build
-from message_ix_models.tools.inter_pipe.generate_inter_pipe import Config
+from message_ix_models.tools.inter_pipe import Config, build, generate_bare_sheets
 
 
 @pytest.fixture
@@ -297,7 +296,9 @@ def test_inter_pipe_bare_with_test_config(tmp_path, test_config_file, scenario) 
     assert 0 == len(list(tmp_path.glob("*.csv")))
 
     # Function runs with the given config file
-    inter_pipe_bare(scenario, config_name=str(test_config_file), target_dir=tmp_path)
+    generate_bare_sheets(
+        scenario, config_name=str(test_config_file), target_dir=tmp_path
+    )
 
     # Expected CSV files were generated
     assert {
@@ -322,14 +323,14 @@ def test_inter_pipe_bare_with_test_config(tmp_path, test_config_file, scenario) 
     } == set(p.stem for p in tmp_path.glob("*.csv"))
 
 
-def test_inter_pipe_build_with_test_config(
-    tmp_path, test_config_file, scenario
-) -> None:
+def test_build(tmp_path, test_config_file, scenario) -> None:
     """Test :func:`.inter_pipe_build` with generated test config and data files."""
     # Generate bare data files
-    inter_pipe_bare(scenario, config_name=str(test_config_file), target_dir=tmp_path)
+    generate_bare_sheets(
+        scenario, config_name=str(test_config_file), target_dir=tmp_path
+    )
 
     # Function runs without error
-    inter_pipe_build(scenario, config_name=str(test_config_file), data_dir=tmp_path)
+    build(scenario, config_name=str(test_config_file), data_dir=tmp_path)
 
     # TODO Expand with assertions about changes to the scenario
