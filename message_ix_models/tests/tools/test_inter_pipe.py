@@ -291,24 +291,35 @@ class TestConfig:
         assert isinstance(config.supply.tech_mother, list)
 
 
-def test_inter_pipe_bare_with_test_config(test_config_file, scenario):
-    """Test inter_pipe_bare function with a generated test config file."""
-    # Test that the config file was created
-    assert test_config_file.exists(), (
-        f"Test config file not created at: {test_config_file}"
-    )
+def test_inter_pipe_bare_with_test_config(tmp_path, test_config_file, scenario) -> None:
+    """Test :func:`.inter_pipe_bare` with a generated test config file."""
+    # Temporary test directory is empty of CSV files
+    assert 0 == len(list(tmp_path.glob("*.csv")))
 
-    try:
-        # Call the function with new signature: base_scen, config_name
-        inter_pipe_bare(scenario, config_name=str(test_config_file))
-        print(f"inter_pipe_bare function executed with {test_config_file}")
-    except Exception as e:
-        # If it fails due to database connection, that's expected in test environment
-        if "database" in str(e).lower() or "connection" in str(e).lower():
-            print(f"Database connection (expected): {e}")
-        else:
-            # If it fails for other reasons, that's a real error
-            pytest.fail(f"inter_pipe_bare function failed unexpectedly: {e}")
+    # Function runs with the given config file
+    inter_pipe_bare(scenario, config_name=str(test_config_file), target_dir=tmp_path)
+
+    # Expected CSV files were generated
+    assert {
+        "capacity_factor_pipe_exp",
+        "capacity_factor_pipe_supply",
+        "fix_cost_pipe_exp_edit",
+        "fix_cost_pipe_supply",
+        "input_pipe_exp_edit",
+        "input_pipe_imp",
+        "inv_cost_pipe_exp_edit",
+        "inv_cost_pipe_supply",
+        "level",
+        "output_pipe_exp",
+        "output_pipe_imp",
+        "output_pipe_supply",
+        "relation",
+        "technical_lifetime_pipe_exp_edit",
+        "technical_lifetime_pipe_supply",
+        "technology",
+        "var_cost_pipe_exp_edit",
+        "var_cost_pipe_supply",
+    } == set(p.stem for p in tmp_path.glob("*.csv"))
 
 
 def test_inter_pipe_build_with_test_config(test_config_file, scenario):
