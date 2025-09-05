@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from itertools import product
 from pathlib import Path
 from typing import Optional, Union
 
@@ -187,17 +188,20 @@ def inter_pipe_bare(
         ]
         spec_tech = None
 
+    # Default contents for several files
+    df_default = (
+        spec_tech
+        if spec_tech is not None
+        else pd.DataFrame(
+            [[n, t] for (n, t) in product(node_name, tech_pipe_name)],
+            columns=["node_loc", "technology"],
+        )
+    )
+
     # Generate export pipe technology: sheet input_exp_pipe
     template = get_template(base, "input", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )  # minimum dimensions: nl-m-c-l; required dimensions: nl-t-yv-ya-m-no-c-l-h-ho
+    df = df_default.copy()
+    # minimum dimensions: nl-m-c-l; required dimensions: nl-t-yv-ya-m-no-c-l-h-ho
     copy_template_columns(df, template)
     df = df.assign(
         year_vtg="broadcast",
@@ -212,19 +216,11 @@ def inter_pipe_bare(
     log.info(f"Input pipe exp csv generated at: {config_dir}.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate export pipe technology: sheet output_exp_pipe (no need to edit)
     template = get_template(base, "output", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )  # minimum dimensions: nl-m-c-l; required dimensions: nl-t-yv-ya-m-no-c-l-h-ho
+    df = df_default.copy()
+    # minimum dimensions: nl-m-c-l; required dimensions: nl-t-yv-ya-m-no-c-l-h-ho
     copy_template_columns(df, template)
     df = df.assign(
         year_vtg="broadcast",
@@ -241,112 +237,63 @@ def inter_pipe_bare(
     log.info("Output pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate export pipe technology: sheet technical_lifetime_exp_pipe
     template = get_template(base, "technical_lifetime", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )  # minimum dimensions: nl-t; required dimensions: nl-t-yv
+    df = df_default.copy()
+    # minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
     df = df.assign(year_vtg="broadcast", year_act=None, value=None)
     df.to_csv(config_dir / "technical_lifetime_pipe_exp_edit.csv", index=False)
     log.info("Technical lifetime pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate export pipe technology: sheet inv_cost_exp_pipe
     template = get_template(base, "inv_cost", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )  # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
+    df = df_default.copy()
+    # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
     df = df.assign(year_vtg="broadcast", year_act=None, value=None)
     df.to_csv(config_dir / "inv_cost_pipe_exp_edit.csv", index=False)
     log.info("Inv cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate export pipe technology: sheet fix_cost_exp_pipe
     template = get_template(base, "fix_cost", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )  # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
+    df = df_default.copy()
+    # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
     df = df.assign(year_vtg="broadcast", year_act="broadcast", value=None)
     df.to_csv(config_dir / "fix_cost_pipe_exp_edit.csv", index=False)
     log.info("Fix cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate export pipe technology: sheet var_cost_exp_pipe
     template = get_template(base, "var_cost", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )  # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
+    df = df_default.copy()
+    # minimum dimensions: minimum dimensions: nl-t; required dimensions: nl-t-yv
     copy_template_columns(df, template)
     df = df.assign(year_vtg="broadcast", year_act="broadcast", value=None)
     df.to_csv(config_dir / "var_cost_pipe_exp_edit.csv", index=False)
     log.info("Var cost pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate export pipe technology: sheet capacity_factor_exp_pipe (no need to edit)
     template = get_template(base, "capacity_factor", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )  # minimum dimensions: nl-t; required dimensions: nl-t-yv-ya-m-h
+    df = df_default.copy()
+    # minimum dimensions: nl-t; required dimensions: nl-t-yv-ya-m-h
     copy_template_columns(df, template)
     df = df.assign(year_vtg="broadcast", year_act="broadcast", value=1)
     df.to_csv(config_dir / "capacity_factor_pipe_exp.csv", index=False)
     log.info("Capacity factor pipe exp csv generated.")
     set_tech.extend(df["technology"].unique())  # set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate import pipe technology: name techs and levels
     tech_pipe_name = f"{c.pipe.tech_mother_shorten}_{c.pipe.tech_suffix}_imp"
 
     # Generate import pipe technology: sheet input_imp_pipe (no need to edit)
     template = get_template(base, "input", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )
+    df = df_default.copy()
     copy_template_columns(df, template)
     df = df.assign(
         technology=tech_pipe_name,
@@ -364,19 +311,10 @@ def inter_pipe_bare(
     log.info("Input pipe imp csv generated.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate import pipe technology: sheet output_imp_pipe (no need to edit)
     template = get_template(base, "output", c.pipe.tech_mother)
-    if spec_tech is not None:
-        df = spec_tech
-    else:
-        df = pd.DataFrame(
-            {
-                "node_loc": [node for node in node_name for _ in tech_pipe_name],
-                "technology": [tech for _ in node_name for tech in tech_pipe_name],
-            }
-        )
+    df = df_default.copy()
     copy_template_columns(df, template)
     df = df.assign(
         technology=tech_pipe_name,
@@ -392,11 +330,12 @@ def inter_pipe_bare(
     log.info("Output pipe imp csv generated.")
     set_tech.extend(df["technology"].unique())
     set_level.extend(df["level"].unique())
-    df.copy()
 
     # Generate key relation: pipe -> pipe_group,
     # i.e, grouping exporting pipe technologies
     # If the setting is False, skip processing of relation_tech_group
+    # TODO add general function, group all pipe technologies to inter, linking inter to
+    #      pipe supply techs
     if config.spec.spec_tech_pipe_group is True:
         try:
             relation_tech_group = pd.read_csv(
@@ -425,22 +364,12 @@ def inter_pipe_bare(
                 "has been generated. Fill in the specific pairs first and run again."
             )
 
-    # TODO add general function, group all pipe technologies to inter, linking inter to
-    #      pipe supply techs
-
-    # Only process relation_tech_group if it was defined
-    if config.spec.spec_tech_pipe_group:
+        # Only process relation_tech_group if it was defined
         df = relation_tech_group.copy()
         set_tech.extend(df["technology"].unique())
         set_relation.extend(df["relation"].unique())
 
     # Generate pipe supply technology: name techs and levels
-    node_name_base = base.set("node")
-    node_name = {
-        node
-        for node in node_name_base
-        if node.lower() != "world" and "glb" not in node.lower()
-    }
     tech_supply_name = [
         f"{tech}_{c.supply.tech_suffix}" for tech in c.supply.tech_mother
     ]
@@ -448,10 +377,8 @@ def inter_pipe_bare(
     # Generate pipe supply technology: sheet output_pipe_supply (no need to edit)
     template = get_template(base, "output", c.supply.tech_mother[0])
     df = pd.DataFrame(
-        {
-            "node_loc": [node for node in node_name for _ in tech_supply_name],
-            "technology": [tech for _ in node_name for tech in tech_supply_name],
-        }
+        [[n, t] for (n, t) in product(node_name, tech_supply_name)],
+        columns=["node_loc", "technology"],
     )
     copy_template_columns(df, template)
     df = df.assign(
@@ -469,53 +396,24 @@ def inter_pipe_bare(
     set_level.extend(df["level"].unique())
     df.copy()
 
-    # Generate pipe supply technology:
-    # sheet technical_lifetime_pipe_supply (no need to edit)
-    df = base.par("technical_lifetime", filters={"technology": c.supply.tech_mother})
-    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
-    df.to_csv(config_dir / "technical_lifetime_pipe_supply.csv", index=False)
-    log.info("Technical lifetime pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    df.copy()
+    def _make_csv(par_name: str, set_value: bool = False) -> None:
+        """Generate pipe supply technology sheet for `par_name`."""
+        df = base.par(par_name, filters={"technology": c.supply.tech_mother})
+        df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
+        if set_value:
+            df["value"] = df["value"] * 1  # TODO: debugging
+        df.to_csv(config_dir / f"{par_name}_pipe_supply.csv", index=False)
+        log.info(f"{par_name} pipe supply csv generated.")
 
-    # Generate pipe supply technology:
-    # sheet inv_cost_pipe_supply (no need to edit)
-    df = base.par("inv_cost", filters={"technology": c.supply.tech_mother})
-    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
-    df["value"] = df["value"] * 1  # TODO: debugging
-    df.to_csv(config_dir / "inv_cost_pipe_supply.csv", index=False)
-    log.info("Inv cost pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    df.copy()
+        # Update tracking sets
+        set_tech.extend(df["technology"].unique())
 
-    # Generate pipe supply technology:
-    # sheet fix_cost_pipe_supply (no need to edit)
-    df = base.par("fix_cost", filters={"technology": c.supply.tech_mother})
-    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
-    df["value"] = df["value"] * 1  # TODO: debugging
-    df.to_csv(config_dir / "fix_cost_pipe_supply.csv", index=False)
-    log.info("Fix cost pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    df.copy()
-
-    # Generate pipe supply technology:
-    # sheet var_cost_pipe_supply (no need to edit)
-    df = base.par("var_cost", filters={"technology": c.supply.tech_mother})
-    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
-    df["value"] = df["value"] * 1  # TODO: debugging
-    df.to_csv(config_dir / "var_cost_pipe_supply.csv", index=False)
-    log.info("Var cost pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    df.copy()
-
-    # Generate pipe supply technology:
-    # sheet capacity_factor_pipe_supply (no need to edit)
-    df = base.par("capacity_factor", filters={"technology": c.supply.tech_mother})
-    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
-    df.to_csv(config_dir / "capacity_factor_pipe_supply.csv", index=False)
-    log.info("Capacity factor pipe supply csv generated.")
-    set_tech.extend(df["technology"].unique())
-    df.copy()
+    # Generate 5 CSV files; no need to edit
+    _make_csv("technical_lifetime")
+    _make_csv("inv_cost", set_value=True)
+    _make_csv("fix_cost", set_value=True)
+    _make_csv("var_cost", set_value=True)
+    _make_csv("capacity_factor")
 
     # Generate key relation: pipe_supply -> pipe,
     # i.e, pipe_supply techs contribute to pipe (group)
