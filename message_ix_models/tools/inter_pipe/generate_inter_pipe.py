@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
 
@@ -12,11 +13,101 @@ from message_ix_models.util import broadcast, package_data_path
 log = logging.getLogger(__name__)
 
 
-def load_config(full_path):
-    with open(full_path, "r") as f:
-        config = yaml.safe_load(f)
-        # safe_load is recommended over load for security
-    return config
+@dataclass
+class ScenarioConfig:
+    start_model: str
+    start_scen: str
+    target_model: str
+    target_scen: str
+
+
+@dataclass
+class SpecConfig:
+    """Options for specifying pipeline pairs.
+
+    These allow to use files to filter pipe technologies and regions to a desired set,
+    instead of using all combinations.
+    """
+
+    #: :any:`True` to use a sheet of all mapped pipe technologies and regions to filter
+    #: desired pairs.
+    spec_tech_pipe: bool
+    #: :any:`True` to use a sheet to specify groups of pipe technologies.
+    spec_tech_pipe_group: bool
+    #: :any:`True` to use a sheet to specify groups of pipe supply technologies.
+    spec_supply_pipe_group: bool
+
+
+@dataclass
+class TechConfig:
+    #: Mother commodity name.
+    commodity_mother: list[str]
+
+    #: Commodity name suffix.
+    commodity_suffix: str
+    #: Mother level name.
+    level_mother: str
+    #: Shortened :attr:`level_mother`.
+    level_mother_shorten: str
+    #: Level name suffix.
+    level_suffix: str
+    #: Number of distinct technologies with different investment costs.
+    tech_number: int
+    #: Mother technology names.
+    tech_mother: list[str]
+    #: Technology name suffix.
+    tech_suffix: str
+    #: Shortened :attr:`tech_mother`.
+    tech_mother_shorten: Optional[str] = None
+
+
+@dataclass
+class Config:
+    #: TODO Document what this means, in contrast to |y0| of the scenario itself.
+    first_model_year: int
+    #: The pipe technology is the technology that is used to transport the commodity
+    #: from one node to another.
+    pipe: TechConfig
+    #: The pipe supply technology is the technology that feed commodity to the pipe
+    #: technology.
+    supply: TechConfig
+    scenario: ScenarioConfig
+    spec: SpecConfig
+
+    @classmethod
+    def from_file(cls, path: Union[Path, str, None] = None) -> "Config":
+        """Read configuration from file.
+
+        Some notes about the file format:
+
+        - Two top-level keys called ``pipe_tech`` and ``pipe_supplytech`` contain keys
+          that have the same structure and names, except for different suffixes. For
+          example, ``tech_mother_shorten_pipe`` appears under ``pipe_tech``;
+          ``tech_mother_shorten_supply`` appears under ``pipe_supplytech``. This
+          function strips the suffixes so both can be stored as instances of
+          :class:`TechConfig`.
+        """
+        full_path = package_data_path("inter_pipe", path or "config").with_suffix(
+            ".yaml"
+        )
+        log.info(f"Load config from {full_path}")
+        with open(full_path) as f:
+            data = yaml.safe_load(f)
+
+        # Convert to keyword arguments for an instance of Config
+        kw = dict(
+            first_model_year=data.pop("first_model_year"),
+            scenario=ScenarioConfig(**data.pop("scenario")),
+            spec=SpecConfig(**data.pop("spec")),
+        )
+        for yaml_key, name in (("pipe_tech", "pipe"), ("pipe_supplytech", "supply")):
+            tech_kw = {k.rpartition("_")[0]: v for k, v in data.pop(yaml_key).items()}
+            kw[name] = TechConfig(**tech_kw)
+
+        if len(data):
+            log.warning("Ignored config file contents: {data!r}")
+
+        return cls(**kw)
 
 
 # Small util function
@@ -44,7 +135,6 @@ def copy_template_columns(df, template, exclude_cols=["node_loc", "technology"])
 
 
 # Main function to generate bare sheets
-# ruff: noqa: C901
 def inter_pipe_bare(
     base_scen: "message_ix.Scenario",
     # target_model: str,
@@ -61,45 +151,8 @@ def inter_pipe_bare(
             If None, uses default config from data/inter_pipe/config.yaml
     """
     # Load the config
-    if config_name is None:
-        config_name = "config.yaml"
-    full_path = package_data_path("inter_pipe", config_name)
-    config_dir = full_path.parent
-    config = load_config(full_path)
-    log.info(f"Loading config from: {full_path}")
-
-    # Get all config sections
-    pipe_tech_config = config.get("pipe_tech", {})
-    pipe_supplytech_config = config.get("pipe_supplytech", {})
-    tech_mother_pipe, tech_shorten_mother_pipe, tech_suffix_pipe, tech_number_pipe = (
-        pipe_tech_config.get("tech_mother_pipe", []),
-        pipe_tech_config.get("tech_shorten_mother_pipe", []),
-        pipe_tech_config.get("tech_suffix_pipe", []),
-        pipe_tech_config.get("tech_number_pipe", []),
-    )
-    commodity_mother_pipe, _commodity_suffix_pipe = (
-        pipe_tech_config.get("commodity_mother_pipe", []),
-        pipe_tech_config.get("commodity_suffix_pipe", []),
-    )
-    level_mother_pipe, level_shorten_mother_pipe, level_suffix_pipe = (
-        pipe_tech_config.get("level_mother_pipe", []),
-        pipe_tech_config.get("level_shorten_mother_pipe", []),
-        pipe_tech_config.get("level_suffix_pipe", []),
-    )
-    tech_mother_supply, tech_suffix_supply, _tech_number_supply = (
-        pipe_supplytech_config.get("tech_mother_supply", []),
-        pipe_supplytech_config.get("tech_suffix_supply", []),
-        pipe_supplytech_config.get("tech_number_supply", []),
-    )
-    commodity_mother_supply, _commodity_suffix_supply = (
-        pipe_supplytech_config.get("commodity_mother_supply", []),
-        pipe_supplytech_config.get("commodity_suffix_supply", []),
-    )
-    _level_mother_supply, level_mother_shorten_supply, level_suffix_supply = (
-        pipe_supplytech_config.get("level_mother_supply", []),
-        pipe_supplytech_config.get("level_mother_shorten_supply", []),
-        pipe_supplytech_config.get("level_suffix_supply", []),
-    )
+    c = config = Config.from_file(config_name)
+    config_dir = package_data_path("inter_pipe")
 
     # Use the provided base scenario instead of loading from config
     base = base_scen
@@ -115,12 +168,9 @@ def inter_pipe_bare(
         for node in node_name_base
         if node.lower() != "world" and "glb" not in node.lower()
     }
-    spec_tech_pipe = config.get("spec", {}).get("spec_tech_pipe", True)
-    if spec_tech_pipe is True:
+    if config.spec.spec_tech_pipe is True:
         try:
-            spec_tech = pd.read_csv(
-                Path(package_data_path("inter_pipe")) / "spec_tech_pipe.csv"
-            )
+            spec_tech = pd.read_csv(config_dir.joinpath("spec_tech_pipe.csv"))
             tech_pipe_name = spec_tech["technology"].unique().tolist()
         except FileNotFoundError:
             spec_tech = pd.DataFrame({"node_loc": [], "technology": []})
@@ -131,14 +181,14 @@ def inter_pipe_bare(
             )
     else:
         tech_pipe_name = [
-            f"{tech_shorten_mother_pipe[0]}_{tech_suffix_pipe[0]}_exp_{node.split('_')[1]}_{i}"
+            f"{c.pipe.tech_mother_shorten}_{c.pipe.tech_suffix}_exp_{node.split('_')[1]}_{i}"
             for node in node_name
-            for i in range(1, tech_number_pipe[0] + 1)
+            for i in range(1, config.pipe.tech_number + 1)
         ]
         spec_tech = None
 
     # Generate export pipe technology: sheet input_exp_pipe
-    template = get_template(base, "input", tech_mother_pipe)
+    template = get_template(base, "input", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -154,8 +204,8 @@ def inter_pipe_bare(
         year_act="broadcast",
         mode="M1",
         node_origin=df["node_loc"],
-        commodity=commodity_mother_pipe[0],
-        level=f"{level_shorten_mother_pipe[0]}_{level_suffix_pipe[0]}",
+        commodity=c.pipe.commodity_mother,
+        level=f"{c.pipe.level_mother_shorten}_{c.pipe.level_suffix}",
         value=None,
     )
     df.to_csv(config_dir / "input_pipe_exp_edit.csv", index=False)
@@ -165,7 +215,7 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate export pipe technology: sheet output_exp_pipe (no need to edit)
-    template = get_template(base, "output", tech_mother_pipe)
+    template = get_template(base, "output", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -181,9 +231,9 @@ def inter_pipe_bare(
         year_act="broadcast",
         mode="M1",
         node_dest="R12_GLB",
-        commodity=commodity_mother_pipe[0],
+        commodity=c.pipe.commodity_mother,
         level=df["node_loc"].apply(
-            lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
+            lambda x: f"{c.pipe.level_mother_shorten}_{x.split('_')[1]}"
         ),
         value=1,
     )
@@ -194,7 +244,7 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate export pipe technology: sheet technical_lifetime_exp_pipe
-    template = get_template(base, "technical_lifetime", tech_mother_pipe)
+    template = get_template(base, "technical_lifetime", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -212,7 +262,7 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate export pipe technology: sheet inv_cost_exp_pipe
-    template = get_template(base, "inv_cost", tech_mother_pipe)
+    template = get_template(base, "inv_cost", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -230,7 +280,7 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate export pipe technology: sheet fix_cost_exp_pipe
-    template = get_template(base, "fix_cost", tech_mother_pipe)
+    template = get_template(base, "fix_cost", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -248,7 +298,7 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate export pipe technology: sheet var_cost_exp_pipe
-    template = get_template(base, "var_cost", tech_mother_pipe)
+    template = get_template(base, "var_cost", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -266,7 +316,7 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate export pipe technology: sheet capacity_factor_exp_pipe (no need to edit)
-    template = get_template(base, "capacity_factor", tech_mother_pipe)
+    template = get_template(base, "capacity_factor", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -284,10 +334,10 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate import pipe technology: name techs and levels
-    tech_pipe_name = f"{tech_shorten_mother_pipe[0]}_{tech_suffix_pipe[0]}_imp"
+    tech_pipe_name = f"{c.pipe.tech_mother_shorten}_{c.pipe.tech_suffix}_imp"
 
     # Generate import pipe technology: sheet input_imp_pipe (no need to edit)
-    template = get_template(base, "input", tech_mother_pipe)
+    template = get_template(base, "input", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -304,9 +354,9 @@ def inter_pipe_bare(
         year_act="broadcast",
         mode="M1",
         node_origin="R12_GLB",
-        commodity=commodity_mother_pipe[0],
+        commodity=c.pipe.commodity_mother,
         level=df["node_loc"].apply(
-            lambda x: f"{level_shorten_mother_pipe[0]}_{x.split('_')[1]}"
+            lambda x: f"{c.pipe.level_mother_shorten}_{x.split('_')[1]}"
         ),
         value=1,
     )
@@ -317,7 +367,7 @@ def inter_pipe_bare(
     df.copy()
 
     # Generate import pipe technology: sheet output_imp_pipe (no need to edit)
-    template = get_template(base, "output", tech_mother_pipe)
+    template = get_template(base, "output", c.pipe.tech_mother)
     if spec_tech is not None:
         df = spec_tech
     else:
@@ -334,8 +384,8 @@ def inter_pipe_bare(
         year_act="broadcast",
         mode="M1",
         node_dest=df["node_loc"],
-        commodity=commodity_mother_pipe[0],
-        level=level_mother_pipe[0],
+        commodity=c.pipe.commodity_mother,
+        level=c.pipe.level_mother,
         value=1,
     )
     df.to_csv(config_dir / "output_pipe_imp.csv", index=False)
@@ -346,8 +396,8 @@ def inter_pipe_bare(
 
     # Generate key relation: pipe -> pipe_group,
     # i.e, grouping exporting pipe technologies
-    spec_tech_pipe_group = config.get("spec", {}).get("spec_tech_pipe_group", True)
-    if spec_tech_pipe_group is True:
+    # If the setting is False, skip processing of relation_tech_group
+    if config.spec.spec_tech_pipe_group is True:
         try:
             relation_tech_group = pd.read_csv(
                 Path(package_data_path("inter_pipe"))
@@ -374,14 +424,12 @@ def inter_pipe_bare(
                 "The function stopped. Sheet relation_activity_pipe_group.csv"
                 "has been generated. Fill in the specific pairs first and run again."
             )
-    else:
-        pass  # Skip relation_tech_group processing when spec_tech_pipe_group is False
 
     # TODO add general function, group all pipe technologies to inter, linking inter to
     #      pipe supply techs
 
     # Only process relation_tech_group if it was defined
-    if spec_tech_pipe_group:
+    if config.spec.spec_tech_pipe_group:
         df = relation_tech_group.copy()
         set_tech.extend(df["technology"].unique())
         set_relation.extend(df["relation"].unique())
@@ -394,11 +442,11 @@ def inter_pipe_bare(
         if node.lower() != "world" and "glb" not in node.lower()
     }
     tech_supply_name = [
-        f"{tech}_{tech_suffix_supply[0]}" for tech in tech_mother_supply
+        f"{tech}_{c.supply.tech_suffix}" for tech in c.supply.tech_mother
     ]
 
     # Generate pipe supply technology: sheet output_pipe_supply (no need to edit)
-    template = get_template(base, "output", tech_mother_supply[0])
+    template = get_template(base, "output", c.supply.tech_mother[0])
     df = pd.DataFrame(
         {
             "node_loc": [node for node in node_name for _ in tech_supply_name],
@@ -411,8 +459,8 @@ def inter_pipe_bare(
         year_act="broadcast",
         mode="M1",
         node_dest=df["node_loc"],
-        commodity=commodity_mother_supply[0],
-        level=f"{level_mother_shorten_supply[0]}_{level_suffix_supply[0]}",
+        commodity=c.supply.commodity_mother,
+        level=f"{c.supply.level_mother_shorten}_{c.supply.level_suffix}",
         value=1,
     )
     df.to_csv(config_dir / "output_pipe_supply.csv", index=False)
@@ -423,8 +471,8 @@ def inter_pipe_bare(
 
     # Generate pipe supply technology:
     # sheet technical_lifetime_pipe_supply (no need to edit)
-    df = base.par("technical_lifetime", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
+    df = base.par("technical_lifetime", filters={"technology": c.supply.tech_mother})
+    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
     df.to_csv(config_dir / "technical_lifetime_pipe_supply.csv", index=False)
     log.info("Technical lifetime pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
@@ -432,8 +480,8 @@ def inter_pipe_bare(
 
     # Generate pipe supply technology:
     # sheet inv_cost_pipe_supply (no need to edit)
-    df = base.par("inv_cost", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
+    df = base.par("inv_cost", filters={"technology": c.supply.tech_mother})
+    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
     df["value"] = df["value"] * 1  # TODO: debugging
     df.to_csv(config_dir / "inv_cost_pipe_supply.csv", index=False)
     log.info("Inv cost pipe supply csv generated.")
@@ -442,8 +490,8 @@ def inter_pipe_bare(
 
     # Generate pipe supply technology:
     # sheet fix_cost_pipe_supply (no need to edit)
-    df = base.par("fix_cost", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
+    df = base.par("fix_cost", filters={"technology": c.supply.tech_mother})
+    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
     df["value"] = df["value"] * 1  # TODO: debugging
     df.to_csv(config_dir / "fix_cost_pipe_supply.csv", index=False)
     log.info("Fix cost pipe supply csv generated.")
@@ -452,8 +500,8 @@ def inter_pipe_bare(
 
     # Generate pipe supply technology:
     # sheet var_cost_pipe_supply (no need to edit)
-    df = base.par("var_cost", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
+    df = base.par("var_cost", filters={"technology": c.supply.tech_mother})
+    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
     df["value"] = df["value"] * 1  # TODO: debugging
     df.to_csv(config_dir / "var_cost_pipe_supply.csv", index=False)
     log.info("Var cost pipe supply csv generated.")
@@ -462,8 +510,8 @@ def inter_pipe_bare(
 
     # Generate pipe supply technology:
     # sheet capacity_factor_pipe_supply (no need to edit)
-    df = base.par("capacity_factor", filters={"technology": tech_mother_supply})
-    df["technology"] = df["technology"].astype(str) + f"_{tech_suffix_supply[0]}"
+    df = base.par("capacity_factor", filters={"technology": c.supply.tech_mother})
+    df["technology"] = df["technology"].astype(str) + f"_{c.supply.tech_suffix}"
     df.to_csv(config_dir / "capacity_factor_pipe_supply.csv", index=False)
     log.info("Capacity factor pipe supply csv generated.")
     set_tech.extend(df["technology"].unique())
@@ -471,8 +519,9 @@ def inter_pipe_bare(
 
     # Generate key relation: pipe_supply -> pipe,
     # i.e, pipe_supply techs contribute to pipe (group)
-    spec_supply_pipe_group = config.get("spec", {}).get("spec_supply_pipe_group", True)
-    if spec_supply_pipe_group is True:
+    # TODO add general funtion, group all pipe technologies to inter, linking inter to
+    #      pipe supply techs
+    if config.spec.spec_supply_pipe_group is True:
         try:
             relation_tech_group = pd.read_csv(
                 Path(package_data_path("inter_pipe"))
@@ -500,13 +549,8 @@ def inter_pipe_bare(
                 "Sheet relation_activity_supply_group.csv has been generated. "
                 "Fill in the specific pairs first and run again."
             )
-    else:
-        pass
-        # TODO add general funtion, group all pipe technologies to inter, linking inter
-        #      to pipe supply techs
 
-    # Only process relation_tech_group if it was defined
-    if spec_supply_pipe_group:
+        # Only process relation_tech_group if it was defined
         df = relation_tech_group.copy()
         set_tech.extend(df["technology"].unique())
         set_relation.extend(df["relation"].unique())
@@ -567,11 +611,7 @@ def inter_pipe_build(
         data_dict[key] = pd.read_csv(csv_file)
 
     # Load the config
-    if config_name is None:
-        config_name = "config.yaml"
-    full_path = package_data_path("inter_pipe", config_name)
-    load_config(full_path)
-    log.info(f"Loading config from: {full_path}")
+    config = Config.from_file(config_name)
 
     # Generate par_list and set_list
     par_list = [
@@ -595,8 +635,10 @@ def inter_pipe_build(
 
     # Information about the target scenario
     info = ScenarioInfo(scen)
-    if info.y0 != 2030:
-        raise NotImplementedError(f"inter_pipe_build() with y₀ = {info.y0} != 2030")
+    if info.y0 != config.first_model_year:
+        raise NotImplementedError(
+            f"inter_pipe_build() with y₀ = {info.y0} != {config.first_model_year}"
+        )
 
     # Broadcast the data
     for i in data_dict.keys():
