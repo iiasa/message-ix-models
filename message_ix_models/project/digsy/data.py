@@ -203,13 +203,6 @@ def read_ict_v2(
         level="demand",
         time="year",
     )
-    # keep demand constant post 2050
-    post_2050 = (
-        df[df["year"] == df["year"].max()]
-        .assign(year=None)
-        .pipe(broadcast, year=[i for i in [2055, *[i for i in range(2060, 2111, 10)]]])
-    )
-    df = pd.concat([df, post_2050])
     df["commodity"] = df["commodity"].map(
         {scen_map[digsy_scenario][k]: comm_map[k] for k in comm_map.keys()}
     )
@@ -248,12 +241,39 @@ def add_ict_elec_tecs(info: "ScenarioInfo") -> ParameterData:
     return pars[0]
 
 
+def extrapolate_post_2050(
+    ict: pd.DataFrame, scenario: message_ix.Scenario
+) -> pd.DataFrame:
+    df = read_rc_elec("scenario", scenario)
+    # keep demand share of ICT constant post 2050
+    ict_2050 = ict[ict["year"] == ict["year"].max()]
+    share_2050 = (
+        ict_2050.set_index([i for i in ict_2050.columns if i != "value"])
+        .div(df.set_index(["node", "year"])["value"], axis=0)
+        .dropna()
+        .reset_index()
+        .assign(year=None)
+    )
+    post_2050 = (
+        share_2050.pipe(
+            broadcast, year=[i for i in [2055, *[i for i in range(2060, 2111, 10)]]]
+        )
+        .set_index([i for i in ict_2050.columns if i != "value"])
+        .mul(df.set_index(["node", "year"])["value"], axis=0)
+        .dropna()
+        .reset_index()
+    )
+    ict = pd.concat([ict, post_2050])
+    return ict
+
+
 def adjust_rc_elec(scenario: message_ix.Scenario, ict: pd.DataFrame) -> pd.DataFrame:
     df = read_rc_elec("scenario", scenario)
-    ict_tot = ict.groupby(["node", "year"]).sum(numeric_only=True)
+    ict_tot = ict.groupby(["year", "node"]).sum(numeric_only=True)
+    ict_tot_2020 = ict_tot.loc[2020]
     df_adj = (
         df.set_index([i for i in df.columns if i != "value"])
-        .sub(ict_tot, fill_value=0)
+        .sub(ict_tot_2020, fill_value=0)
         .reset_index()
     )
     return df_adj
@@ -363,8 +383,14 @@ def adjust_act_calib(ict: pd.DataFrame, scen: message_ix.Scenario):
         bound = scen.par(par, filters={"technology": "sp_el_RC"})
         ict_tot = (
             ict.rename(columns={"node": "node_loc", "year": "year_act"})
-            .groupby(["node_loc", "year_act"])
+            .groupby(
+                [
+                    "year_act",
+                    "node_loc",
+                ]
+            )
             .sum(numeric_only=True)
+            .loc[2020]
         )
         new_bound = (
             bound.set_index([i for i in bound.columns if i != "value"])
