@@ -7,10 +7,7 @@ from message_data.tools.post_processing import (
     iamc_report_hackathon as legacy_report,  # type: ignore
 )
 
-from message_ix_models.tools.inter_pipe.generate_inter_pipe import (
-    inter_pipe_bare,
-    inter_pipe_build,
-)
+from message_ix_models.tools.inter_pipe import build, generate_bare_sheets
 from message_ix_models.util import package_data_path
 
 mp = ixmp.Platform("ixmp_dev", jvmargs=["-Xmx32G"])
@@ -24,14 +21,17 @@ target_scen = "Base_RCP7_int_noIBWT"
 base_scen = message_ix.Scenario(mp, start_model, start_scen)
 
 # Generate bare sheets for pipe technologies and pipe supply technologies
-inter_pipe_bare(base_scen)
+generate_bare_sheets(
+    base_scen,
+    config_name="config.yaml",
+)
 
 # Clone the scenario
 tar_scen = base_scen.clone(target_model, target_scen, keep_solution=False)
 tar_scen.set_as_default()
 
 # Building inter pipes on the scenario (scenario info set in Config)
-scen = inter_pipe_build(
+scen = build(
     tar_scen, config_name="config.yaml"
 )  # backup of /data/inter_pipe stored at IIASA sharepoint
 
