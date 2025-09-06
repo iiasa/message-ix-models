@@ -12,6 +12,21 @@ Next release
   specifically :mod:`.material.report`.
   See :doc:`/material/v1.2.0` for details.
 
+- Add :mod:`.tools.inter_pipe` for building inter-pipe technologies and UHV transmission
+  systems (:pull:`383`). This includes:
+  
+  - :func:`.tools.inter_pipe.generate_bare_sheets` for creating CSV templates
+    that users can fill with techno-economic parameters
+  - :func:`.tools.inter_pipe.build` for adding inter-pipe technologies to scenarios
+  - Configuration system with :class:`.tools.inter_pipe.Config` for flexible
+    technology specification
+  - Test suite in :mod:`.tests.tools.test_inter_pipe`
+  
+- Add :mod:`.project.geidco` module with :file:`run_baseline.py` script for running
+  GEIDCO baseline scenarios with inter-pipe technologies (:pull:`383`). 
+  
+  See :doc:`project/geidco` for detailed usage instructions.
+
 v2025.8.7
 =========
 

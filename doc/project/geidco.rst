@@ -64,5 +64,12 @@ Extending GEIDCO VI application to GEIDCO V and other starting scenarios:
 
    inter_pipe
 
+.. currentmodule:: message_ix_models.project
 
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   geidco
 
