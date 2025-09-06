@@ -1,3 +1,26 @@
+"""GEIDCO baseline scenario runner.
+
+This script builds a baseline scenario with inter-pipe technologies under the GEIDCO
+scenario assumptions.
+It performs the following main steps:
+
+1. Generate bare sheets for inter-pipe technologies
+2. Clone the base scenario to create a new target scenario
+3. Build inter-pipe technologies and constraints
+4. Add additional constraints on total capacity and activity bounds if any
+5. Solve the scenario and generate reports
+
+One can replace other starting scenarios by changing the start_model and start_scen
+variables.
+
+Usage:
+    python run_baseline.py
+
+Configuration:
+    The script uses config.yaml and various CSV files in the inter_pipe data directory
+    to define technology parameters and constraints.
+"""
+
 from pathlib import Path
 
 import ixmp  # type: ignore
