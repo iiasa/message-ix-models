@@ -1,9 +1,8 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-from typing import Tuple
 import numpy as np
+import pandas as pd
 from message_ix import make_df
-
 
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import (
@@ -19,6 +18,7 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
+from message_ix_models import Context, ScenarioInfo
 
 
 def map_basin_region_wat(context: "Context") -> pd.DataFrame:

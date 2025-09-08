@@ -1257,6 +1257,7 @@ nexus:
       - urban_disconnected
       - rural_mw
       - rural_disconnected
+      - surfacewater
 
   level:
     add:
