@@ -1101,6 +1101,13 @@ nexus:
 
     input: { commodity: freshwater_supply }
 
+  reg_to_basin:
+    description: >-
+      technology for distributing water return flows from fresh cooling technologies
+      back to surface water basins based on basin availability shares
+
+    input: { commodity: water_return }
+
   ueff1:
     description: >-
       low urban efficiency
