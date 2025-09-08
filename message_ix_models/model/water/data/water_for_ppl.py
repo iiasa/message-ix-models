@@ -10,7 +10,10 @@ from message_ix import make_df
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
-from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa
+from message_ix_models.model.water.utils import (
+    m3_GJ_TO_MCM_GWa,
+    get_vintage_and_active_years,
+)
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
@@ -438,6 +441,18 @@ def cool_tech(
     # Convert year values into integers to be compatibel for model
     input_cool.year_vtg = input_cool.year_vtg.astype(int)
     input_cool.year_act = input_cool.year_act.astype(int)
+    
+    # Fix invalid year combinations (year_act < year_vtg) using proper vintage-active combinations
+    year_combinations = get_vintage_and_active_years(info, technical_lifetime=30, same_year_only=False)
+    
+    # Create a mapping of valid year combinations
+    valid_years = set(zip(year_combinations['year_vtg'], year_combinations['year_act']))
+    
+    # Filter input_cool to only include valid year combinations
+    input_cool_valid_mask = input_cool.apply(
+        lambda row: (int(row['year_vtg']), int(row['year_act'])) in valid_years, axis=1
+    )
+    input_cool = input_cool[input_cool_valid_mask]
     # Drops extra technologies from the data. backwards compatibility
     input_cool = input_cool[
         (input_cool["level"] != "water_supply") & (input_cool["level"] != "cooling")
@@ -533,7 +548,7 @@ def cool_tech(
                 year_act=icmse_df["year_act"],
                 mode=icmse_df["mode"],
                 node_origin=icmse_df["node_origin"],
-                commodity="freshwater",
+                commodity="surfacewater",
                 level="water_supply",
                 time="year",
                 time_origin="year",
@@ -660,10 +675,10 @@ def cool_tech(
         value=icmse_df["value_return"],
         unit="MCM/GWa",
     )
-    
+
     # Combine all outputs (share constraints + return flows)
     out = pd.concat([out, out_return])
-    
+
     # in any case save out into results
     results["output"] = out
 
@@ -677,7 +692,12 @@ def cool_tech(
             inplace=True,
         )
         df_sw["time_dest"] = df_sw["time_dest"].astype(str)
-        
+
+        # Use get_vintage_and_active_years() with tl=10 and same_year_only=True
+        year_combinations = get_vintage_and_active_years(
+            info, technical_lifetime=1, same_year_only=True
+        )
+
         # reg_to_basin technology inputs (receives return flows)
         reg_to_basin_input = make_df(
             "input",
@@ -687,34 +707,63 @@ def cool_tech(
             level="water_supply",
             time="year",
             time_origin="year",
+            node_origin=node_region,
             value=1,
             unit="MCM/GWa",
             mode="M1",
-        ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-        
+        ).pipe(broadcast, year_combinations)
         # reg_to_basin technology outputs (distributes to basins)
+        # Create base output dataframe
+        reg_to_basin_output_list = []
+
+        for region in node_region:
+            # Extract region code from node_loc (e.g., "R12_AFR" -> "AFR")
+            region_code = region.split("_")[-1]
+
+            # Filter df_sw to only basins that match this region code
+            matching_basins = df_sw[
+                df_sw["node_dest"].str.contains(region_code, na=False)
+            ]
+
+            if not matching_basins.empty:
+                region_output = (
+                    make_df(
+                        "output",
+                        technology="reg_to_basin",
+                        node_loc=region,
+                        commodity="surfacewater_basin",
+                        level="water_avail_basin",
+                        time="year",
+                        time_dest="year",
+                        value=1,
+                        unit="MCM/GWa",
+                        mode="M1",
+                    )
+                    .pipe(broadcast, year_combinations)
+                    .pipe(broadcast, node_dest=matching_basins["node_dest"].unique())
+                    .merge(
+                        matching_basins.drop_duplicates(["node_dest"])[["node_dest", "share"]],
+                        on="node_dest",
+                        how="left",
+                    )
+                )
+                reg_to_basin_output_list.append(region_output)
+
+        # Combine all region outputs
         reg_to_basin_output = (
-            make_df(
-                "output",
-                technology="reg_to_basin",
-                node_loc=node_region,
-                commodity="surfacewater_basin",
-                level="water_avail_basin",
-                time="year",
-                time_dest="year",
-                value=1,
-                unit="MCM/GWa",
-                mode="M1",
-            )
-            .pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-            .pipe(broadcast, node_dest=df_sw["node_dest"].unique())
-            .merge(df_sw.drop_duplicates(["node_dest"]), on="node_dest", how="left")
+            pd.concat(reg_to_basin_output_list, ignore_index=True)
+            if reg_to_basin_output_list
+            else pd.DataFrame()
         )
-        
+
         # Apply basin availability shares to reg_to_basin outputs
-        reg_to_basin_output["value"] = reg_to_basin_output["value"] * reg_to_basin_output["share"]
-        reg_to_basin_output = reg_to_basin_output.drop(columns=["share"]).dropna(subset=["value"])
-        
+        reg_to_basin_output["value"] = (
+            reg_to_basin_output["value"] * reg_to_basin_output["share"]
+        )
+        reg_to_basin_output = reg_to_basin_output.drop(columns=["share"]).dropna(
+            subset=["value"]
+        )
+
         # Add reg_to_basin parameters to results
         results["input"] = pd.concat([results["input"], reg_to_basin_input])
         results["output"] = pd.concat([results["output"], reg_to_basin_output])
@@ -1037,11 +1086,16 @@ def cool_tech(
         )
 
         # Set growth_new_capacity_up to 0 for __ot_saline technologies
-        # if param_name == "growth_new_capacity_up":
-        #     df_param_share.loc[
-        #         df_param_share["technology"].str.endswith("__ot_saline"), "value"
-        #     ] = 0
-        #     print(f"setting growth up new cap 0 for {df_param_share['technology']}")
+        if param_name == "growth_new_capacity_up":
+            df_param_share.loc[
+                df_param_share["technology"].str.endswith("__ot_saline"), "value"
+            ] = 0
+            print(f"setting growth up new cap 0 for {df_param_share['technology']}")
+        if param_name == "growth_activity_up":
+            df_param_share.loc[
+                df_param_share["technology"].str.endswith("__ot_saline"), "value"
+            ] = 0
+            print(f"setting growth up act 0 for {df_param_share['technology']}")
         results[param_name] = pd.concat(
             [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
         )
@@ -1121,14 +1175,14 @@ def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame
 
     # Input dataframe for non cooling technologies
     # only water withdrawals are being taken
-    # Only freshwater supply is assumed for simplicity
+    # Dedicated freshwater is assumed for simplicity
     inp_n_cool = make_df(
         "input",
         technology=n_cool_df_merge["technology"],
         value=n_cool_df_merge["value_y"],
         unit="MCM/GWa",
         level="water_supply",
-        commodity="freshwater",
+        commodity="surfacewater",
         time_origin="year",
         mode="M1",
         time="year",
