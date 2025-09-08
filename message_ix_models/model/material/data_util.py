@@ -1458,8 +1458,8 @@ def calibrate_t_d_tecs(scenario: "Scenario"):
     for i in td.index:
         try:
             row = td.iloc[i]
-        except:
-            here = 1
+        except Exception:
+            here = 1  # noqa: F841 —for debugging?
         # Retrieve input of techologies which take from the commodity/level.
         inp = scenario.par(
             "input",
