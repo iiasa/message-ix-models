@@ -653,10 +653,81 @@ def cool_tech(
             out_t.drop(columns={"share"}, inplace=True)
             out = pd.concat([out, out_t])
 
-        out = out.dropna(subset=["value"])
-        out.reset_index(drop=True, inplace=True)
+    # Add water return flows output from fresh cooling technologies to reg_to_basin
+    # Fresh cooling technologies output their return flows to reg_to_basin technology
+    out_return = make_df(
+        "output",
+        node_loc=icmse_df["node_loc"],
+        technology=icmse_df["technology_name"],
+        year_vtg=icmse_df["year_vtg"],
+        year_act=icmse_df["year_act"],
+        mode=icmse_df["mode"],
+        node_dest=icmse_df["node_origin"],
+        commodity="water_return",
+        level="water_supply",
+        time="year",
+        time_dest="year",
+        value=icmse_df["value_return"],
+        unit="MCM/GWa",
+    )
+    
+    # Combine all outputs (share constraints + return flows)
+    out = pd.concat([out, out_return])
+    
     # in any case save out into results
     results["output"] = out
+
+    # Create reg_to_basin technology for distributing return flows to basins
+    if context.nexus_set == "nexus":
+        # Get basin-region mapping
+        df_sw = map_basin_region_wat(context)
+        df_sw.drop(columns={"mode", "date", "MSGREG"}, inplace=True)
+        df_sw.rename(
+            columns={"region": "node_dest", "time": "time_dest", "year": "year_act"},
+            inplace=True,
+        )
+        df_sw["time_dest"] = df_sw["time_dest"].astype(str)
+        
+        # reg_to_basin technology inputs (receives return flows)
+        reg_to_basin_input = make_df(
+            "input",
+            technology="reg_to_basin",
+            node_loc=node_region,
+            commodity="water_return",
+            level="water_supply",
+            time="year",
+            time_origin="year",
+            value=1,
+            unit="MCM/GWa",
+            mode="M1",
+        ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
+        
+        # reg_to_basin technology outputs (distributes to basins)
+        reg_to_basin_output = (
+            make_df(
+                "output",
+                technology="reg_to_basin",
+                node_loc=node_region,
+                commodity="surfacewater_basin",
+                level="water_avail_basin",
+                time="year",
+                time_dest="year",
+                value=1,
+                unit="MCM/GWa",
+                mode="M1",
+            )
+            .pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
+            .pipe(broadcast, node_dest=df_sw["node_dest"].unique())
+            .merge(df_sw.drop_duplicates(["node_dest"]), on="node_dest", how="left")
+        )
+        
+        # Apply basin availability shares to reg_to_basin outputs
+        reg_to_basin_output["value"] = reg_to_basin_output["value"] * reg_to_basin_output["share"]
+        reg_to_basin_output = reg_to_basin_output.drop(columns=["share"]).dropna(subset=["value"])
+        
+        # Add reg_to_basin parameters to results
+        results["input"] = pd.concat([results["input"], reg_to_basin_input])
+        results["output"] = pd.concat([results["output"], reg_to_basin_output])
 
     # costs and historical parameters
     path1 = package_data_path("water", "ppl_cooling_tech", FILE1)
@@ -976,11 +1047,11 @@ def cool_tech(
         )
 
         # Set growth_new_capacity_up to 0 for __ot_saline technologies
-        if param_name == "growth_new_capacity_up":
-            df_param_share.loc[
-                df_param_share["technology"].str.endswith("__ot_saline"), "value"
-            ] = 0
-            print(f"setting growth up new cap 0 for {df_param_share['technology']}")
+        # if param_name == "growth_new_capacity_up":
+        #     df_param_share.loc[
+        #         df_param_share["technology"].str.endswith("__ot_saline"), "value"
+        #     ] = 0
+        #     print(f"setting growth up new cap 0 for {df_param_share['technology']}")
         results[param_name] = pd.concat(
             [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
         )
