@@ -85,6 +85,7 @@ cooling:
       - cl_fresh
       - air
       - ot_saline
+      - water_return
 
   level:
     require:
