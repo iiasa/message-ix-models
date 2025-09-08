@@ -1,10 +1,10 @@
 """Prepare data for water use for cooling & energy technologies."""
 
+from typing import Tuple
 import numpy as np
-import pandas as pd
 from message_ix import make_df
 
-from message_ix_models import Context, ScenarioInfo
+
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import (
     ANNUAL_CAPACITY_FACTOR,
@@ -316,8 +316,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     technology="basin_to_reg",
                     value=1,
                     unit="-",
-                    level="water_supply_basin",
-                    commodity="freshwater_basin",
+                    level="water_avail_basin",
+                    commodity="surfacewater_basin",
                     mode=df_node["mode"],
                     node_origin=df_node["node"],
                     node_loc=df_node["region"],
@@ -612,7 +612,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     value=1,
                     unit="-",
                     level="water_supply",
-                    commodity="freshwater",
+                    commodity="surfacewater",
                     time_dest="year",
                     node_loc=df_node["region"],
                     node_dest=df_node["region"],
