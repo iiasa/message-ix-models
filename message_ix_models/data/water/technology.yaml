@@ -1101,6 +1101,12 @@ nexus:
 
     input: { commodity: freshwater_supply }
 
+  basin_to_reg_all:
+    description: >-
+      dummy technology to map freshwater basin supply to regional water supply for irrigation
+
+    input: { commodity: freshwater_supply }
+
   reg_to_basin:
     description: >-
       technology for distributing water return flows from fresh cooling technologies
