@@ -419,7 +419,7 @@ def get_r12_reg(df, r12_map_inv, col_name: str):
 
 
 def add_R12_column(
-    df: pd.DataFrame, file_path: str, iso_column: str = "COUNTRY"
+    df: pd.DataFrame, file_path: Union[str, Path], iso_column: str = "COUNTRY"
 ) -> pd.DataFrame:
     """Convenience function to add R12 region column to dataframe
 

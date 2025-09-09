@@ -8,9 +8,8 @@ for aluminum technologies, demand, trade, and related constraints.
 import os
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-import message_ix
 import pandas as pd
 from message_ix import make_df
 
@@ -33,15 +32,20 @@ from message_ix_models.util import (
     same_node,
 )
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
+
+    from message_ix_models.types import ParameterData
+
 
 def read_data_aluminum(
-    scenario: message_ix.Scenario,
+    scenario: "Scenario",
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Read and clean data from aluminum techno-economic and timeseries files.
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario
         Scenario instance to build aluminum on.
 
     Returns
@@ -490,14 +494,12 @@ def gen_data_alu_const(
     return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
 
-def gen_data_aluminum(
-    scenario: message_ix.Scenario, dry_run: bool = False
-) -> dict[str, pd.DataFrame]:
+def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "ParameterData":
     """Generate all MESSAGEix parameter data for the aluminum sector.
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario
         Scenario instance to build aluminum model on.
     dry_run : bool
         *Not implemented.*
@@ -542,7 +544,7 @@ def gen_data_aluminum(
     scrap_cost = get_scrap_prep_cost(s_info, ssp)
     max_recyc = gen_max_recycling_rel(s_info, ssp)
     scrap_heat = gen_scrap_prep_heat(s_info, ssp)
-    results_aluminum = {}
+    results_aluminum: dict[str, pd.DataFrame] = {}
     merge_data(
         results_aluminum,
         const_dict,
@@ -572,7 +574,7 @@ def gen_demand(scenario, ssp):
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario : "Scenario"
         Scenario instance.
     ssp : str
         Shared Socioeconomic Pathway.
@@ -592,12 +594,12 @@ def gen_demand(scenario, ssp):
     return demand_dict
 
 
-def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
+def gen_data_alu_trade(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     """Generate trade-related parameter data for aluminum.
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario
         Scenario instance.
 
     Returns
