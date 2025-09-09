@@ -53,13 +53,11 @@ def read_config() -> Context:
 
 
 def prepare_xlsx_for_explorer(filepath: str) -> None:
-    """
-    Post-processing helper to make reporting files compliant for
-    upload to IIASA Scenario Explorer
+    """Post-processing to make timeseries comply with IIASA Scenario Explorer standard.
 
     Parameters
     ----------
-    filepath : str
+    filepath
         Path to xlsx files generated with message_ix_models.report.legacy
 
     """
@@ -74,8 +72,7 @@ def prepare_xlsx_for_explorer(filepath: str) -> None:
 
 
 def read_yaml_file(file_path: Union[str, Path]) -> Union[dict, None]:
-    """
-    Tries to read yaml file into a dict
+    """Tries to read yaml file into a dict
 
     Parameters
     ----------
@@ -95,10 +92,8 @@ def read_yaml_file(file_path: Union[str, Path]) -> Union[dict, None]:
             return None
 
 
-# NOTE guessing the type hint here, but this seems unused anyway
 def invert_dictionary(original_dict: dict[str, list[str]]) -> dict[str, list[str]]:
-    """
-    Create inverted dictionary from existing dictionary, where values turn
+    """Create inverted dictionary from existing dictionary, where values turn
     into keys and vice versa
 
     Parameters
@@ -121,16 +116,15 @@ def invert_dictionary(original_dict: dict[str, list[str]]) -> dict[str, list[str
 
 
 def excel_to_csv(material_dir: str, fname: str) -> None:
-    """
-    Helper to create trackable copies xlsx files used for MESSAGEix-Materials
+    """Helper to create trackable copies xlsx files used for MESSAGEix-Materials
     data input by printing each sheet to a csv file. Output is saved in
      "data/materials/version control"
 
     Parameters
     ----------
-    material_dir : str
+    material_dir
         path to industry sector data folder
-    fname : str
+    fname
         file name of xlsx file
     """
     xlsx_dict = pd.read_excel(
@@ -147,8 +141,7 @@ def excel_to_csv(material_dir: str, fname: str) -> None:
 
 
 def get_all_input_data_dirs() -> list[str]:
-    """
-    Iteratable for getting all material input data folders
+    """Iterable for getting all material input data folders
 
     Returns
     -------
@@ -160,47 +153,44 @@ def get_all_input_data_dirs() -> list[str]:
 
 
 def remove_from_list_if_exists(element: Any, _list: list) -> None:
-    """
-    Utility function removing element from list if it is part of the list
+    """Utility function removing element from list if it is part of the list
     Parameters
     ----------
     element
         element to remove
     _list
-        list that poetntially contains element
+        list that potentially contains element
     """
     if element in _list:
         _list.remove(element)
 
 
 def exponential(x: Union[float, list[float]], b: float, m: float) -> float:
-    """
-    Mathematical function used in Excels GROWTH function
+    """Emulates Excels GROWTH function
 
     Parameters
     ----------
-    x: float or list
+    x:
         domain of function
-    b : float
+    b
         function parameter b
-    m: float
+    m
         function parameter m
+
     Returns
     -------
-    float
+    Union[float, list[float]]
         function value for given b, m and x
     """
     return b * m**x
 
 
 def price_fit(df: pd.DataFrame) -> float:
-    """
-    Python implementation of price_ref parameter estimation implemented in
-     MESSAGEix-MACRO calibration files.
+    """``price_ref`` parameter estimation emulation in MACRO calibration files.
 
     Parameters
     ----------
-    df: pd.DataFrame
+    df
         DataFrame with required columns: "year" and "lvl"
     Returns
     -------
@@ -217,9 +207,9 @@ def price_fit(df: pd.DataFrame) -> float:
 
 
 def cost_fit(df: pd.DataFrame) -> float:
-    """
-    Python implementation of cost_ref parameter estimation implemented in
-     MESSAGEix-MACRO calibration files.
+    """Python implementation of cost_ref parameter estimation.
+
+     Originally implemented in Excel files for MACRO calibration.
 
     Parameters
     ----------
@@ -230,7 +220,6 @@ def cost_fit(df: pd.DataFrame) -> float:
     float
         estimated value for cost_ref in 2020
     """
-    # print(df.lvl)
     try:
         pars = curve_fit(exponential, df.year, df.lvl, maxfev=5000)[0]
         val = exponential([2020], *pars)[0]
@@ -243,17 +232,17 @@ def cost_fit(df: pd.DataFrame) -> float:
 def update_macro_calib_file(
     scenario: message_ix.Scenario, fname: str, extrapolate=True
 ) -> None:
-    """Function to automate manual steps in MACRO calibration
+    """Function to automate manual steps in MACRO calibration.
 
-    Tries to open a xlsx file with the given "fname" and
-    writes cost_ref and price_ref values derived from scenario
-    "COST_NODAL_NET" and PRICE_COMMODITY" variables to the respective xlsx sheets.
+    Tries to open a xlsx file with the given "fname" and writes ``cost_ref`` and
+    ``price_ref`` values derived from scenario variables ``COST_NODAL_NET`` and
+    ``PRICE_COMMODITY`` to the respective xlsx sheets.
 
     Parameters
     ----------
-    scenario: message_ix.Scenario
+    scenario
         Scenario instance to be calibrated
-    fname : str
+    fname
         file name of MACRO file used for calibration
     """
     # Change this according to the relevant data path
@@ -338,7 +327,7 @@ def get_ssp_from_context(
 
     Parameters
     ----------
-    context: Context
+    context
 
     Returns
     -------
@@ -348,6 +337,13 @@ def get_ssp_from_context(
 
 
 def maybe_remove_water_tec(scenario: message_ix.Scenario, results: dict) -> None:
+    """Helper to rename deprecated water supply technology name.
+
+    Parameters
+    ----------
+    scenario
+    results
+    """
     if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
         results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
 
@@ -377,7 +373,18 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     raise FileNotFoundError(candidates)
 
 
-def get_pycountry_iso(row, mis_dict):
+def get_pycountry_iso(row: str, mis_dict: dict[str, str]) -> str:
+    """Convenience function to get ISO3 code with pycountry or from custom mapping dict.
+
+    Parameters
+    ----------
+    row
+    mis_dict
+
+    Returns
+    -------
+    str
+    """
     try:
         row = pycountry.countries.lookup(row).alpha_3
     except LookupError:
@@ -389,7 +396,21 @@ def get_pycountry_iso(row, mis_dict):
     return row
 
 
-def get_r12_reg(df, r12_map_inv, col_name):
+def get_r12_reg(df, r12_map_inv, col_name: str):
+    """Helper function to get R12 region from dataframe
+
+    Parameters
+    ----------
+    df
+    r12_map_inv
+        dictionary with R12 regions as values and ISO3 country codes as keys
+    col_name
+        Name of the column in the dataframe to check for R12 region
+
+    Returns
+    -------
+
+    """
     try:
         df = r12_map_inv[df[col_name]]
     except KeyError:
@@ -397,9 +418,21 @@ def get_r12_reg(df, r12_map_inv, col_name):
     return df
 
 
-def add_R12_column(df, file_path, iso_column="COUNTRY"):
-    # Replace 'your_file_path.yaml' with the path to your actual YAML file
-    # file_path = private_data_path("node", "R12_SSP_V1.yaml")
+def add_R12_column(
+    df: pd.DataFrame, file_path: str, iso_column: str = "COUNTRY"
+) -> pd.DataFrame:
+    """Convenience function to add R12 region column to dataframe
+
+    Parameters
+    ----------
+    df
+    file_path
+    iso_column
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     yaml_data = read_yaml_file(file_path)
     yaml_data.pop("World")
 

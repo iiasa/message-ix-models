@@ -1,5 +1,13 @@
+"""
+Data and parameter generation for other industry sectors in MESSAGEix models.
+
+This module provides functions to read, process, and generate parameter data
+for other industry technologies, demand, and related constraints, including
+historical activity and demand adjustments based on IEA data.
+"""
+
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Union
 
 import pandas as pd
 from message_ix.util import make_df
@@ -16,20 +24,19 @@ if TYPE_CHECKING:
 
 
 def modify_demand_and_hist_activity(scen: "Scenario") -> None:
-    """Take care of demand changes due to the introduction of material parents
-    Shed industrial energy demand properly.
-    Also need take care of remove dynamic constraints for certain energy carriers.
-    Adjust the historical activity of the related industry technologies
-    that provide output to different categories of industrial demand (e.g.
-    i_therm, i_spec, i_feed). The historical activity is reduced the same %
-    as the industrial demand is reduced.
+    """Takes care of demand changes due to the introduction of material parents.
+
+    Shed industrial energy demand properly. Also need take care of remove dynamic
+    constraints for certain energy carriers. Adjust the historical activity of the
+    related industry technologies that provide output to different categories of
+    industrial demand (e.g. i_therm, i_spec, i_feed). The historical activity is reduced
+    the same % as the industrial demand is reduced.
 
     Parameters
     ----------
-    scen: .Scenario
-        scenario where industry demand should be reduced
+    scen
+        Scenario where industry demand should be adjusted.
     """
-
     # NOTE Temporarily modifying industrial energy demand
     # From IEA database (dumped to an excel)
 
@@ -274,35 +281,35 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
     # recycling is not a significant share.)
     # For petro: based on 13.1 GJ/tonne of ethylene and the demand in the model
 
-    # df = scen.par('demand', filters={'commodity':'i_therm'})
+    # df = scen.par(demand, filters={commodity:i_therm})
     # df.value = df.value * 0.38 #(30% steel, 25% cement, 7% petro)
     #
     # scen.check_out()
-    # scen.add_par('demand', df)
-    # scen.commit(comment = 'modify i_therm demand')
+    # scen.add_par(demand, df)
+    # scen.commit(comment = modify i_therm demand)
 
     # Adjust the i_spec.
     # Electricity usage seems negligable in the production of HVCs.
     # Aluminum: based on IAI China data 20%.
 
-    # df = scen.par('demand', filters={'commodity':'i_spec'})
+    # df = scen.par(demand, filters={commodity:i_spec})
     # df.value = df.value * 0.80  #(20% aluminum)
     #
     # scen.check_out()
-    # scen.add_par('demand', df)
-    # scen.commit(comment = 'modify i_spec demand')
+    # scen.add_par(demand, df)
+    # scen.commit(comment = modify i_spec demand)
 
     # Adjust the i_feedstock.
     # 45 GJ/tonne of ethylene or propylene or BTX
     # 2020 demand of one of these: 35.7 Mt
     # Makes up around 30% of total feedstock demand.
 
-    # df = scen.par('demand', filters={'commodity':'i_feed'})
+    # df = scen.par(demand, filters={commodity:i_feed})
     # df.value = df.value * 0.7  #(30% HVCs)
     #
     # scen.check_out()
-    # scen.add_par('demand', df)
-    # scen.commit(comment = 'modify i_feed demand')
+    # scen.add_par(demand, df)
+    # scen.commit(comment = modify i_feed demand)
 
     # NOTE Aggregate industrial coal demand need to adjust to
     #      the sudden intro of steel setor in the first model year
@@ -335,25 +342,23 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
 
 
 def get_hist_act_data(
-    map_fname: str, years: list or None = None, iea_data_path: str = None
+    map_fname: str, years: Union[List[int], None] = None, iea_data_path: str = None
 ) -> pd.DataFrame:
-    """
-    Reads IEA DB, maps and aggregates variables to MESSAGE technologies
+    """Reads IEA DB, maps and aggregates variables to MESSAGE technologies.
 
     Parameters
     ----------
     map_fname
-        name of MESSAGEix-technology-to-IEA-flow/product mapping file
+        Name of MESSAGEix-technology-to-IEA-flow/product mapping file.
     years
-        specifies timesteps for whom historical activity should
-        be calculated and returned
-    iea_data_path: str
-        path to IEA EWEB parquet file
+        Years for which historical activity should be calculated and returned.
+    iea_data_path
+        Path to IEA EWEB parquet file.
 
     Returns
     -------
     pd.DataFrame
-
+        Aggregated historical activity data mapped to MESSAGE technologies.
     """
     path = os.path.join(iea_data_path)
     iea_enb_df = pd.read_parquet(path, engine="fastparquet")
@@ -381,7 +386,21 @@ def get_hist_act_data(
     return df_final
 
 
-def get_2020_industry_activity(years: list, iea_data_path: str) -> pd.DataFrame:
+def get_2020_industry_activity(years: List[int], iea_data_path: str) -> pd.DataFrame:
+    """Calculate 2020 industry activity for MESSAGE technologies using IEA data.
+
+    Parameters
+    ----------
+    years
+        List of years for which activity should be calculated.
+    iea_data_path
+        Path to IEA EWEB parquet file.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame of industry activity for MESSAGE technologies.
+    """
     df_mat = get_hist_act_data("industry.csv", years=years, iea_data_path=iea_data_path)
     df_chem = get_hist_act_data(
         "chemicals.csv", years=years, iea_data_path=iea_data_path
@@ -409,396 +428,31 @@ def get_2020_industry_activity(years: list, iea_data_path: str) -> pd.DataFrame:
     return df
 
 
-def calc_hist_activity(scen: "Scenario", years: list, iea_data_path) -> pd.DataFrame:
-    df_orig = get_hist_act_data(
-        "all_technologies.csv", years=years, iea_data_path=iea_data_path
-    )
-    df_mat = get_hist_act_data("industry.csv", years=years, iea_data_path=iea_data_path)
-    df_chem = get_hist_act_data(
-        "chemicals.csv", years=years, iea_data_path=iea_data_path
-    )
+def get_hist_act(
+    scen: "Scenario",
+    years: List[int],
+    iea_file_path: Union[None, str] = None,
+    use_cached: bool = False,
+) -> dict:
+    """Derive activity calibration data for industrial technologies.
 
-    # RFE: move hardcoded assumptions (chemicals and iron and steel)
-    #  to external data files
-
-    # scale chemical activity to deduct explicitly
-    # represented activities of MESSAGEix-Materials
-    # (67% are covered by NH3, HVCs and methanol)
-    df_chem = df_chem.mul(0.67)
-    df_mat = df_mat.sub(df_chem, fill_value=0)
-
-    # calculate share of residual activity not covered
-    # by industry sector explicit technologies
-    df = df_mat.div(df_orig).dropna().sort_values("Value", ascending=False)
-    # manually set elec_i to 0 since all of it is covered by iron/steel sector
-    df.loc[:, "elec_i", :] = 0
-
-    df = df.round(5)
-    df.index.set_names(["node_loc", "technology", "year_act"], inplace=True)
-
-    tecs = df.index.get_level_values("technology").unique()
-    df_hist_act = scen.par(
-        "historical_activity", filters={"technology": tecs, "year_act": years}
-    )
-
-    df_hist_act_scaled = (
-        df_hist_act.set_index([i for i in df_hist_act.columns if i != "value"])
-        .mul(df.rename({"Value": "value"}, axis=1))
-        .dropna()
-    )
-
-    return df_hist_act_scaled.reset_index()
-
-
-def add_new_ind_hist_act(scen: "Scenario", years: list, iea_data_path: str) -> None:
-    df_act = calc_hist_activity(scen, years, iea_data_path)
-    scen.check_out()
-    scen.add_par("historical_activity", df_act)
-    scen.commit("adjust historical activity of industrial end use tecs")
-
-
-def calc_demand_shares(iea_db_df: pd.DataFrame, base_year: int) -> pd.DataFrame:
-    # RFE: refactor to use external mapping file (analogue to calc_hist_activity())
-    i_spec_material_flows = ["NONMET", "NONFERR"]  # "CHEMICAL"
-    i_therm_material_flows = ["NONMET", "CHEMICAL", "IRONSTL"]
-    i_flow = ["TOTIND"]
-    i_spec_prods = ["ELECTR", "NONBIODIES", "BIOGASOL"]
-    year = base_year
-
-    df_i_spec = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_flow))
-        & (iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & ~((iea_db_df["PRODUCT"] == ("ELECTR")) & (iea_db_df["FLOW"] == "IRONSTL"))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_spec = df_i_spec.groupby("REGION").sum(numeric_only=True)
-
-    df_i_spec_materials = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_spec_material_flows))
-        & (iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_spec_materials = df_i_spec_materials.groupby("REGION").sum(numeric_only=True)
-
-    df_i_spec_resid_shr = (
-        df_i_spec_materials.div(df_i_spec, fill_value=0).sub(1).mul(-1)
-    )
-    df_i_spec_resid_shr["commodity"] = "i_spec"
-
-    df_elec_i = iea_db_df[
-        ((iea_db_df["PRODUCT"] == ("ELECTR")) & (iea_db_df["FLOW"] == "IRONSTL"))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_elec_i = df_elec_i.groupby("REGION").sum(numeric_only=True)
-
-    agg_prods = ["MRENEW", "TOTAL"]
-    df_i_therm = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_flow))
-        & ~(iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & ~(iea_db_df["PRODUCT"].isin(agg_prods))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_therm = df_i_therm.groupby("REGION").sum(numeric_only=True)
-    df_i_therm = df_i_therm.add(df_elec_i, fill_value=0)
-
-    agg_prods = ["MRENEW", "TOTAL"]
-    df_i_therm_materials = iea_db_df[
-        (iea_db_df["FLOW"].isin(i_therm_material_flows))
-        & ~(iea_db_df["PRODUCT"].isin(i_spec_prods))
-        & ~(iea_db_df["PRODUCT"].isin(agg_prods))
-        & (iea_db_df["TIME"] == year)
-    ]
-    df_i_therm_materials = df_i_therm_materials.groupby(["REGION", "FLOW"]).sum(
-        numeric_only=True
-    )
-    # only two thirds of chemical consumption is represented
-    # by Materials module currently
-    df_i_therm_materials.loc[
-        df_i_therm_materials.index.get_level_values(1) == "CHEMICAL", "Value"
-    ] *= 0.67
-
-    # only covering cement at the moment
-    # quick fix assuming 67% of NONMET is used for cement in each region
-    # needs regional differentiation once data is collected
-    df_i_therm_materials.loc[
-        df_i_therm_materials.index.get_level_values(1) == "NONMET", "Value"
-    ] *= 0.67
-
-    df_i_therm_materials = df_i_therm_materials.groupby("REGION").sum(numeric_only=True)
-    df_i_therm_materials = df_i_therm_materials.add(df_elec_i, fill_value=0)
-
-    df_i_therm_resid_shr = df_i_therm_materials.div(df_i_therm).sub(1).mul(-1)
-    df_i_therm_resid_shr["commodity"] = "i_therm"
-
-    return (
-        pd.concat([df_i_spec_resid_shr, df_i_therm_resid_shr])
-        .set_index("commodity", append=True)
-        .drop("TIME", axis=1)
-    )
-
-
-def calc_resid_ind_demand(
-    scen: "Scenario", baseyear: int, iea_data_path: str
-) -> pd.DataFrame:
-    comms = ["i_spec", "i_therm"]
-    path = os.path.join(iea_data_path)
-    Inp = pd.read_parquet(path, engine="fastparquet")
-    Inp = map_iea_db_to_msg_regs(Inp)
-    demand_shrs_new = calc_demand_shares(pd.DataFrame(Inp), baseyear)
-    df_demands = scen.par("demand", filters={"commodity": comms}).set_index(
-        ["node", "commodity", "year"]
-    )
-    demand_shrs_new.index.set_names(["node", "commodity"], inplace=True)
-    df_demands["value"] = df_demands["value"] * demand_shrs_new["Value"]
-    return df_demands.reset_index()
-
-
-def modify_industry_demand(scen: "Scenario", baseyear: int, iea_data_path: str) -> None:
-    df_demands_new = calc_resid_ind_demand(scen, baseyear, iea_data_path)
-    scen.check_out()
-    scen.add_par("demand", df_demands_new)
-
-    # RFE: calculate deductions from IEA data instead
-    #  of assuming full coverage by MESSAGE-Materials (chemicals)
-    # remove i_spec demand separately since we assume 100% coverage by MESSAGE-Materials
-    df_i_feed = scen.par("demand", filters={"commodity": "i_feed"})
-    scen.remove_par("demand", df_i_feed)
-    scen.commit("adjust residual industry demands")
-
-
-def add_elec_lowerbound_2020(scen: "Scenario") -> None:
-    """
-    DEPRECATED
-    Adds a bound_activity_lo to the technology "sp_el_I"
     Parameters
     ----------
-    scen: .Scenario
-        scenario to apply the lower bound to
+    scen
+        Scenario instance.
+    years
+        List of years for which activity should be retrieved.
+    iea_file_path
+        Path to EWEB parquet file.
+    use_cached
+        If True, use cached CSV files instead of recomputation.
+
+    Returns
+    -------
+    dict
+        Dictionary with DataFrames for ``bound_activity_up``, ``bound_activity_lo`` and
+        ``historical_activity``.
     """
-    # To avoid zero i_spec prices only for R12_CHN, add the below section.
-    # read input parameters for relevant technology/commodity combinations for
-    # converting betwen final and useful energy
-
-    input_residual_electricity = scen.par(
-        "input",
-        filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"},
-    )
-
-    # read processed final energy data from IEA extended energy balances
-    # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
-
-    final = pd.read_csv(
-        package_data_path("material", "other", "residual_industry_2019.csv")
-    )
-
-    # downselect needed fuels and sectors
-    final_residual_electricity = final.query(
-        'MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"'
-    )
-
-    # join final energy data from IEA energy balances and input coefficients
-    # from final-to-useful technologies from MESSAGEix
-    bound_residual_electricity = pd.merge(
-        input_residual_electricity,
-        final_residual_electricity,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    # derive useful energy values by dividing final energy by
-    # input coefficient from final-to-useful technologies
-    bound_residual_electricity["value"] = (
-        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
-    )
-
-    # downselect dataframe columns for MESSAGEix parameters
-    bound_residual_electricity = bound_residual_electricity.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-    # rename columns if necessary
-    bound_residual_electricity.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    # Decrease 20% to aviod zero prices (the issue continiues otherwise)
-    bound_residual_electricity["value"] = bound_residual_electricity["value"] * 0.8
-    bound_residual_electricity = bound_residual_electricity[
-        bound_residual_electricity["node_loc"] == "R12_CHN"
-    ]
-
-    scen.check_out()
-
-    # add parameter dataframes to ixmp
-    scen.add_par("bound_activity_lo", bound_residual_electricity)
-
-    # Remove the previous bounds
-    remove_par_lo = scen.par(
-        "growth_activity_lo",
-        filters={"technology": "sp_el_I", "year_act": 2020, "node_loc": "R12_CHN"},
-    )
-    scen.remove_par("growth_activity_lo", remove_par_lo)
-
-    scen.commit("added lower bound for activity of residual electricity technologies")
-
-
-def add_coal_lowerbound_2020(scen: "Scenario") -> None:
-    """Set lower bounds for coal_i and sp_el_I technology as a calibration for 2020"""
-
-    final_resid = pd.read_csv(
-        package_data_path("material", "other", "residual_industry_2019.csv")
-    )
-
-    # read input parameters for relevant technology/commodity combinations
-    # for converting betwen final and useful energy
-    input_residual_coal = scen.par(
-        "input",
-        filters={"technology": "coal_i", "year_vtg": "2020", "year_act": "2020"},
-    )
-    input_residual_electricity = scen.par(
-        "input",
-        filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"},
-    )
-
-    # downselect needed fuels and sectors
-    final_residual_coal = final_resid.query(
-        'MESSAGE_fuel=="coal" & MESSAGE_sector=="industry_residual"'
-    )
-    final_residual_electricity = final_resid.query(
-        'MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"'
-    )
-
-    # join final energy data from IEA energy balances and input
-    # coefficients from final-to-useful technologies from MESSAGEix
-    bound_coal = pd.merge(
-        input_residual_coal,
-        final_residual_coal,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-    bound_residual_electricity = pd.merge(
-        input_residual_electricity,
-        final_residual_electricity,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-
-    # derive useful energy values by dividing final energy
-    # by input coefficient from final-to-useful technologies
-    bound_coal["value"] = bound_coal["Value"] / bound_coal["value"]
-    bound_residual_electricity["value"] = (
-        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
-    )
-
-    # downselect dataframe columns for MESSAGEix parameters
-    bound_coal = bound_coal.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-    bound_residual_electricity = bound_residual_electricity.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-
-    # rename columns if necessary
-    bound_coal.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-    bound_residual_electricity.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-    # (Artificially) lower bounds when i_spec act is too close
-    # to the bounds (avoid 0-price for macro calibration)
-    more = ["R12_MEA", "R12_EEU", "R12_SAS", "R12_PAS"]
-    # import pdb; pdb.set_trace()
-    bound_residual_electricity.loc[
-        bound_residual_electricity.node_loc.isin(["R12_PAO"]), "value"
-    ] *= 0.80
-
-    bound_residual_electricity.loc[
-        bound_residual_electricity.node_loc.isin(more), "value"
-    ] *= 0.85
-
-    scen.check_out()
-    # add parameter dataframes to ixmp
-    scen.add_par("bound_activity_lo", bound_coal)
-    # sc.add_par("bound_activity_lo", bound_cement_coal)
-    scen.add_par("bound_activity_lo", bound_residual_electricity)
-
-    # commit scenario to ixmp backend
-    scen.commit(
-        "added lower bound for activity of residual industrial coal"
-        "and cement coal furnace technologies and "
-        "adjusted 2020 residual industrial electricity demand"
-    )
-
-
-def add_coal_lowerbound_2020_cement(scen: "Scenario") -> None:
-    """
-    DEPRECATED
-    Adds a bound_activity_lo to the technology "furnace_coal_cement"
-    Parameters
-    ----------
-    scen: .Scenario
-        scenario to apply the lower bound to
-    """
-    final_resid = pd.read_csv(
-        package_data_path("material", "other", "residual_industry_2019.csv")
-    )
-    input_cement_coal = scen.par(
-        "input",
-        filters={
-            "technology": "furnace_coal_cement",
-            "year_vtg": "2020",
-            "year_act": "2020",
-            "mode": "high_temp",
-        },
-    )
-    final_cement_coal = final_resid.query(
-        'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
-    )
-    bound_cement_coal = pd.merge(
-        input_cement_coal,
-        final_cement_coal,
-        left_on="node_loc",
-        right_on="MESSAGE_region",
-        how="inner",
-    )
-    bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
-    bound_cement_coal = bound_cement_coal.filter(
-        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
-    )
-    bound_cement_coal.columns = [
-        "node_loc",
-        "technology",
-        "year_act",
-        "mode",
-        "time",
-        "value",
-        "unit",
-    ]
-
-
-def get_hist_act(scen, years, data_file_path=None, use_cached=False):
     s_info = ScenarioInfo(scen)
     fmy = s_info.y0
     if use_cached:
@@ -818,7 +472,7 @@ def get_hist_act(scen, years, data_file_path=None, use_cached=False):
                 ]
             )
     else:
-        df = get_2020_industry_activity(years, data_file_path)
+        df = get_2020_industry_activity(years, iea_file_path)
         ind_tecs = [
             i for i in scen.set("technology") if (i.endswith("_i") or i.endswith("_I"))
         ]
@@ -877,7 +531,19 @@ def get_hist_act(scen, years, data_file_path=None, use_cached=False):
     }
 
 
-def gen_other_ind_demands(ssp):
+def gen_other_ind_demands(ssp: str) -> dict[str, pd.DataFrame]:
+    """Generate demand parameter data for other industry sector (i_therm, i_spec).
+
+    Parameters
+    ----------
+    ssp
+        Shared Socioeconomic Pathway (SSP) code.
+
+    Returns
+    -------
+    dict
+        Dictionary with demand DataFrames for ``i_therm`` and ``i_spec`` commodity.
+    """
     demands = {}
     for comm in ["i_therm", "i_spec"]:
         df_fixed = pd.read_csv(
@@ -900,19 +566,3 @@ def gen_other_ind_demands(ssp):
         )
         demands[comm] = df.copy(deep=True)
     return demands
-
-
-if __name__ == "__main__":
-    gen_other_ind_demands("SSP2")
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.0", "baseline_DEFAULT")
-    dfs = get_hist_act(
-        scen,
-        [2015, 2020],
-        r"P:/ene.model/IEA_database/Florian/S3_IEA_REV2024_FiltISO_TJ_BIO.parquet",
-        use_cached=True,
-    )
-    print()
