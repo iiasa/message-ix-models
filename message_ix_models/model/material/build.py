@@ -153,8 +153,6 @@ def calibrate_existing_constraints(
         engage_updates._correct_coal_ppl_u_efficiencies(scenario)
         engage_updates._correct_td_co2cc_emissions(scenario)
 
-    s_info = ScenarioInfo(scenario)
-
     # add_coal_lowerbound_2020(scenario)
     # add_cement_bounds_2020(scenario)
 
