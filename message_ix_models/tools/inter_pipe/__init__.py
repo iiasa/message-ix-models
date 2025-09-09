@@ -1,4 +1,4 @@
-"""Inter-pipe tools for message-ix-models.
+"""Inter-pipe tools.
 
 This module provides tools for generating and building inter-pipe technologies in
 :mod:`message_ix` models.

@@ -109,8 +109,6 @@ IAMC data structures (:mod:`.tools.iamc`)
 .. automodule:: message_ix_models.tools.iamc
    :members:
 
-.. currentmodule:: message_ix_models.tools.policy
-
 Policies (:mod:`.tools.policy`)
 ===============================
 
@@ -143,5 +141,6 @@ Tools for scenario manipulation
    add_budget
    add_emission_trajectory
    add_tax_emission
+   inter_pipe
    remove_emission_bounds
    update_h2_blending
