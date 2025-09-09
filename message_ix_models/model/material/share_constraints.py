@@ -24,14 +24,13 @@ if TYPE_CHECKING:
 def gen_com_share_df(
     shr_name: str, df_vals: pd.DataFrame, type: Literal["up", "lo"] = "up"
 ) -> pd.DataFrame:
-    """
-    Generates DataFrame for "share_commodity_up/lo" parameter of MESSAGEix
+    """Generate DataFrame for ``share_commodity_up/lo`` parameter.
 
     Parameters
     ----------
-    shr_name: str
+    shr_name
         name of the share constraint
-    df_vals: pd.DataFrame
+    df_vals
         DataFrame with columns ["node", "Value"]
     type
         "lo" for minimum constraint and "up" for maximum constraint
@@ -39,7 +38,7 @@ def gen_com_share_df(
     Returns
     -------
     pd.DataFrame
-        in MESSAGEix "share_commodity_up/lo" parameter format
+        ``share_commodity_up/lo`` parameter data
     -------
     """
     df_share_com_lo = make_df(f"share_commodity_{type}", **df_vals)
@@ -270,8 +269,7 @@ def add_comm_share(
     shr_type: Literal["up", "lo"] = "up",
     years: List[str] = "all",
 ):
-    """
-    Convenience function that adds commodity share constraint to a scenario.
+    """Convenience function that adds commodity share constraint to a scenario.
 
     This process requires a numer of steps:
     1) Register name of share in "shares" set
@@ -326,8 +324,7 @@ def remove_comm_share(
     all_tecs: List[str],
     shr_tecs: List[str],
 ):
-    """
-    Convenience function that removes commodity share constraint
+    """Convenience function that removes commodity share constraint
     that was previously added with .add_comm_share() from a scenario
 
     Parameters
@@ -356,7 +353,11 @@ def remove_comm_share(
     scen.remove_set("map_shares_commodity_total", com_map_tot)
 
 
-def add_foil_shr_constraint():
+def add_foil_shr_constraint() -> None:
+    """Generate fuel oil share constraint for MESSAGEix-Materials industry sectors.
+    ** Not used in model build at the moment. **
+
+    """
     shr_const = "share_low_lim_foil_ind"
     type_tec_shr = "foil_cement"
     type_tec_tot = "all_cement"
@@ -400,7 +401,13 @@ def add_foil_shr_constraint():
         )
 
 
-def add_industry_coal_shr_constraint(scen: "Scenario"):
+def add_industry_coal_shr_constraint(scen: "Scenario") -> None:
+    """Adds an upper commodity share constraint for the residual industry sector.
+
+    Parameters
+    ----------
+    scen : message_ix.Scenario
+    """
     name = "UE_industry_th_coal"
     share_reg_values = pd.read_csv(
         package_data_path("material", "other", "coal_i_shares_2020.csv")
@@ -417,7 +424,19 @@ def add_industry_coal_shr_constraint(scen: "Scenario"):
     )
 
 
-def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp: str):
+def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp: str) -> pd.DataFrame:
+    """Generates data for an upper commodity share constraint for low temperature heat
+    for the residual industry sector based on SSP narrative.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+    ssp : str
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     lt_heat_shr_start = 0.35
     ssp_lt_heat_shr_end = {
         "SSP1": 0.65,
