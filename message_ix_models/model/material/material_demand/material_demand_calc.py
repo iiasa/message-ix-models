@@ -1,8 +1,7 @@
 import logging
 from pathlib import Path
-from typing import Literal, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Literal, Union
 
-import message_ix
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
@@ -21,6 +20,9 @@ from message_ix_models.model.material.material_demand.math import (
     steel_function,
 )
 from message_ix_models.util import package_data_path
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
 log = logging.getLogger(__name__)
@@ -92,8 +94,20 @@ fitting_dict = {
 
 
 def read_timer_pop(
-    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
 ):
+    """Read population data for a given material from TIMER model.
+
+    Parameters
+    ----------
+    datapath
+    material
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing population data with columns: [region, reg_no, year, pop]
+    """
     df_population = pd.read_excel(
         f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
         sheet_name="Timer_POP",
@@ -110,8 +124,26 @@ def read_timer_pop(
 
 
 def read_timer_gdp(
-    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
+    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
 ):
+    """Read GDP per capita data for a given material from TIMER Excel files.
+
+    Parameters
+    ----------
+    datapath
+        Path to the directory containing the TIMER data files.
+    material
+        The material type for which GDP per capita data is being read.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing GDP per capita data with the following columns:
+        - region: Region name.
+        - reg_no: Region number.
+        - year: Year of the data.
+        - gdp_pcap: GDP per capita value.
+    """
     # Read GDP per capita data
     df_gdp = pd.read_excel(
         f"{datapath}/{material_data[material]['dir']}{material_data[material]['file']}",
@@ -129,6 +161,33 @@ def read_timer_gdp(
 
 
 def project_demand(df: pd.DataFrame, phi: float, mu: float):
+    """Project material demand over time using a convergence function.
+
+    This function calculates the projected demand for materials by applying a Gompertz
+    convergence function to historical demand data. It adjusts demand per capita and
+    total demand based on population and other factors.
+
+    Parameters
+    ----------
+    df
+        Input DataFrame containing historical demand data with the following columns:
+        - demand.tot.base: Base year total demand.
+        - pop.mil: Population in millions.
+        - demand_pcap0: Initial demand per capita.
+        - year: Year of the data.
+    phi
+        Shape parameter for the Gompertz function.
+    mu
+        Rate parameter for the Gompertz function.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing projected demand data with the following columns:
+        - region: Region name.
+        - year: Year of the data.
+        - demand_tot: Projected total demand.
+    """
     df_demand = df.groupby("region", group_keys=False)[df.columns].apply(
         lambda group: group.assign(
             demand_pcap_base=group["demand.tot.base"].iloc[0]
@@ -160,7 +219,19 @@ def project_demand(df: pd.DataFrame, phi: float, mu: float):
     return df_demand[["region", "year", "demand_tot"]]
 
 
-def read_base_demand(filepath: str | Path):
+def read_base_demand(filepath: Union[str, Path]):
+    """Read base year demand data from a YAML file.
+
+    Parameters
+    ----------
+    filepath
+        Path to the YAML file containing base demand data.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns: region, year, value.
+    """
     with open(filepath, "r") as file:
         yaml_data = file.read()
 
@@ -178,6 +249,30 @@ def read_base_demand(filepath: str | Path):
 
 
 def read_hist_mat_demand(material: Literal["cement", "steel", "aluminum"]):
+    """Read historical material demand data for a specified commodity.
+
+    This function retrieves historical data on material consumption, population, and GDP
+    for the specified material. It processes the data from various sources and formats
+    it into a consistent structure.
+
+    Parameters
+    ----------
+    material
+        Commodity for which historical demand data is being read.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing historical material demand data with the following columns:
+        - region: Region name.
+        - reg_no: Region number.
+        - year: Year of the data.
+        - consumption: Material consumption.
+        - pop: Population data.
+        - gdp_pcap: GDP per capita.
+        - cons_pcap: Consumption per capita.
+        - del_t: Time difference from the base year (2010).
+    """
     datapath = message_ix_models.util.package_data_path("material")
 
     if material in ["cement", "steel"]:
@@ -271,7 +366,24 @@ def read_hist_mat_demand(material: Literal["cement", "steel", "aluminum"]):
     return df_cons
 
 
-def read_pop_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
+def read_pop_from_scen(scen: "Scenario") -> pd.DataFrame:
+    """Extract population data from a MESSAGEix scenario.
+
+    Filters the data to include only years from 2020 onwards and renames columns.
+
+    Parameters
+    ----------
+    scen : "Scenario"
+        The MESSAGEix scenario containing population data.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing population data with the following columns:
+        - region: Region name.
+        - year: Year of the data.
+        - pop.mil: Population in millions.
+    """
     pop = scen.par("bound_activity_up", {"technology": "Population"})
     pop = pop.loc[pop.year_act >= 2020].rename(
         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
@@ -280,7 +392,25 @@ def read_pop_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
     return pop
 
 
-def read_gdp_ppp_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
+def read_gdp_ppp_from_scen(scen: "Scenario") -> pd.DataFrame:
+    """Extract GDP (PPP) data from a MESSAGEix scenario.
+
+    If GDP (PPP) data is not directly available, it calculates it using GDP (MER)
+    and a MER-to-PPP conversion factor.
+
+    Parameters
+    ----------
+    scen
+        The MESSAGEix scenario containing GDP data.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing GDP (PPP) data with the following columns:
+        - year: Year of the data.
+        - region: Region name.
+        - gdp_ppp: GDP (PPP) value.
+    """
     if len(scen.par("bound_activity_up", filters={"technology": "GDP_PPP"})):
         gdp = scen.par("bound_activity_up", {"technology": "GDP_PPP"})
         gdp = gdp.rename({"value": "gdp_ppp", "year_act": "year"}, axis=1)[
@@ -307,7 +437,10 @@ def read_gdp_ppp_from_scen(scen: message_ix.Scenario) -> pd.DataFrame:
     return gdp
 
 
-def read_socio_economic_projection(scen):
+def read_socio_economic_projection(
+    scen: "Scenario",
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Read socio-economic projections (population and GDP)"""
     datapath = message_ix_models.util.package_data_path("material")
 
     # read pop projection from scenario
@@ -349,19 +482,28 @@ def read_socio_economic_projection(scen):
     return df_gdp, df_pop
 
 
-def format_to_demand_par(df, material):
-    # format to MESSAGEix standard
-    df = df.rename({"region": "node", "demand_tot": "value"}, axis=1)
-    df["commodity"] = material
-    df["level"] = "demand"
-    df["time"] = "year"
-    df["unit"] = "t"
+def format_to_demand_par(df: pd.DataFrame, material: str):
+    """Format given dataframe to MESSAGEix ``demand`` parameter.
+
+    Parameters
+    ----------
+    df
+        DataFrame containing columns: [region, year, demand_tot]
+    material
+        commodity code
+    """
+    df = df.rename({"region": "node", "demand_tot": "value"}, axis=1).assign(
+        commodity=material, level="demand", time="year", unit="t"
+    )
     # TODO: correct unit would be Mt but might not be registered on database
     df = make_df("demand", **df)
     return df
 
 
-def prepare_model_input(df_pop, df_gdp, df_base_demand):
+def prepare_model_input(
+    df_pop: pd.DataFrame, df_gdp: pd.DataFrame, df_base_demand: pd.DataFrame
+) -> pd.DataFrame:
+    """Prepare input dataframe for applying regression model."""
     df_all = pd.merge(df_pop, df_base_demand.drop(columns=["year"]), how="left")
     df_all = pd.merge(df_all, df_gdp[["region", "year", "gdp_ppp"]], how="inner")
     df_all["del_t"] = df_all["year"] - 2010
@@ -372,7 +514,7 @@ def prepare_model_input(df_pop, df_gdp, df_base_demand):
 
 def derive_demand(
     material: Literal["cement", "steel", "aluminum"],
-    scen: message_ix.Scenario,
+    scen: "Scenario",
     ssp: Union[Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"], str] = "SSP2",
     new: bool = False,
     model: Literal["least-squares", "quantile"] = "least-squares",
@@ -438,11 +580,33 @@ def derive_demand(
 
 
 def gen_demand_petro(
-    scenario: message_ix.Scenario,
+    scenario: "Scenario",
     chemical: Literal["HVC", "methanol", "NH3"],
     gdp_elasticity_2020: float,
     gdp_elasticity_2030: float,
 ):
+    """Generate petrochemical demand projections based on GDP elasticity.
+
+    This function calculates the demand for petrochemicals (HVC, methanol, NH3) using
+    distinct GDP elasticity values for 2020-2030 and post-2030. GDP projections are
+    queried from scenario if available or read from external data file.
+
+    Parameters
+    ----------
+    scenario
+        The MESSAGEix scenario containing input data.
+    chemical
+        The petrochemical for which demand is being projected.
+    gdp_elasticity_2020
+        GDP elasticity value for the period up to 2020.
+    gdp_elasticity_2030
+        GDP elasticity value for the period after 2030.
+
+    Returns
+    -------
+    pd.DataFrame
+        ``demand`` parameter data
+    """
     chemicals_implemented = ["HVC", "methanol", "NH3"]
     if chemical not in chemicals_implemented:
         raise ValueError(
@@ -455,6 +619,25 @@ def gen_demand_petro(
     def get_demand_t1_with_income_elasticity(
         demand_t0, income_t0, income_t1, elasticity
     ):
+        """
+        Calculate demand for the next year using income elasticity.
+
+        Parameters
+        ----------
+        demand_t0 : pd.Series
+            Demand in the current year.
+        income_t0 : pd.Series
+            Income in the current year.
+        income_t1 : pd.Series
+            Income in the next year.
+        elasticity : float
+            Income elasticity value.
+
+        Returns
+        -------
+        pd.Series
+            Projected demand for the next year.
+        """
         return (
             elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
         ) + demand_t0
@@ -556,7 +739,13 @@ def gen_demand_petro(
     )
 
 
-def perform_quantile_reg(x, y, func, initial_params, tau=0.5):
+def perform_quantile_reg(
+    x: tuple[pd.Series],
+    y: pd.Series,
+    func: Callable,
+    initial_params: List[int],
+    tau: float = 0.5,
+):
     # Define quantile loss function
     def quantile_loss(params, x, y, tau):
         y_pred = func(x, *params)
@@ -581,12 +770,3 @@ def perform_quantile_reg(x, y, func, initial_params, tau=0.5):
     # plt.title("Non-linear Quantile Regression")
     # plt.show()
     return a_opt, b_opt, c_opt
-
-
-if __name__ == "__main__":
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("local2")
-    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline")
-    derive_demand("steel", scen, "SSP2", "quantile")
