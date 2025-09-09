@@ -6,7 +6,7 @@ This module provides functions to read, process, and generate parameter data
 for ammonia fertilizer technologies, demand, trade, and related constraints.
 """
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -145,7 +145,6 @@ def gen_data(
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
-        df = df.to_dict()
 
         df_new = make_df(par_name, **df)
         # split df into df with default values and df with regionalized values
@@ -164,7 +163,7 @@ def gen_data(
     if lower_costs:
         par_dict = experiment_lower_CPA_SAS_costs(par_dict)
 
-    df_lifetime = par_dict.get("technical_lifetime")
+    df_lifetime = par_dict["technical_lifetime"]
     dict_lifetime = (
         df_lifetime.loc[:, ["technology", "value"]]
         .set_index("technology")
@@ -346,7 +345,6 @@ def gen_data_ts(
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
-        df = df.to_dict()
 
         df_new = make_df(par_name, **df)
         # split df into df with default values and df with regionalized values
@@ -388,7 +386,7 @@ def set_exp_imp_nodes(df: pd.DataFrame) -> None:
         df.loc[df["technology"].str.contains("import"), "node_origin"] = "R12_GLB"
 
 
-def read_demand() -> dict[str, pd.DataFrame]:
+def read_demand() -> dict[str, Union[pd.DataFrame, pd.Series]]:
     """Read and clean demand and trade data for ammonia fertilizer."""
 
     N_demand_GLO = pd.read_csv(
@@ -398,7 +396,9 @@ def read_demand() -> dict[str, pd.DataFrame]:
             "NFertilizer_demand.csv",
         ),
     )
-    N_demand_GLO.columns = [int(i) if i.isdigit() else i for i in N_demand_GLO.columns]
+    N_demand_GLO = N_demand_GLO.set_axis(
+        [int(i) if i.isdigit() else i for i in N_demand_GLO.columns], axis=1
+    )
 
     # NH3 feedstock share by region in 2010 (from http://ietd.iipnetwork.org/content/ammonia#benchmarks)
     feedshare_GLO = pd.read_csv(
@@ -415,7 +415,9 @@ def read_demand() -> dict[str, pd.DataFrame]:
         package_data_path("material", "ammonia", "old_TE_sheet.csv"),
         nrows=72,
     )
-    te_params.columns = [int(i) if i.isdigit() else i for i in te_params.columns]
+    te_params = te_params.set_axis(
+        [int(i) if i.isdigit() else i for i in te_params.columns], axis=1
+    )
 
     n_inputs_per_tech = 12  # Number of input params per technology
 
@@ -628,9 +630,10 @@ def gen_land_input(scenario: "Scenario") -> "ParameterData":
     return {"land_input": df}
 
 
-def experiment_lower_CPA_SAS_costs(par_dict: "ParameterData") -> "ParameterData":
-    """Optional function to lower coal and fueloil based production costs
-    for CPA and SAS regions.
+def experiment_lower_CPA_SAS_costs(
+    par_dict: dict[str, pd.DataFrame],
+) -> dict[str, pd.DataFrame]:
+    """Lower coal and fueloil based production costs for CPA and SAS regions.
 
     Parameters
     ----------
@@ -651,10 +654,10 @@ def experiment_lower_CPA_SAS_costs(par_dict: "ParameterData") -> "ParameterData"
             for e, t in enumerate(tec_list):
                 df_tmp.loc[df_tmp["technology"] == t, "value"] = df_tmp.loc[
                     df_tmp["technology"] == t, "value"
-                ].mul(scaler.get(k)[e])
+                ].mul(scaler[k][e])
                 df_tmp.loc[df_tmp["technology"] == t + "_ccs", "value"] = df_tmp.loc[
                     df_tmp["technology"] == t + "_ccs", "value"
-                ].mul(scaler.get(k)[e])
+                ].mul(scaler[k][e])
             df.loc[df["node_loc"] == k] = df_tmp
         par_dict[c] = df
 

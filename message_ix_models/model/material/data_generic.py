@@ -2,9 +2,8 @@
 Data and parameter generation for generic furnace and boiler technologies in
 MESSAGEix-Materials model.
 
-This module provides functions to read, process, and generate parameter data
-for generic furnace and boiler technologies, including emission coefficients
-and generic relations.
+This module provides functions to read, process, and generate parameter data for generic
+furnace and boiler technologies, including emission coefficients and generic relations.
 """
 
 import logging
@@ -29,6 +28,8 @@ log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+
+    from message_ix_models.types import ParameterData
 
 
 def read_data_generic(scenario: "Scenario") -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -145,9 +146,7 @@ def add_ind_therm_link_relations(tecs: List[str], years: List[str], nodes: List[
     return df
 
 
-def gen_data_generic(
-    scenario: "Scenario", dry_run: bool = False
-) -> dict[str, pd.DataFrame]:
+def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterData":
     """Generate all parameter data for sectoral furnace and boiler technologies.
 
     Parameters
@@ -281,8 +280,30 @@ def gen_data_generic(
 
                 results[param_name].append(df)
 
-    # Special treatment for time-varying params
+    gen_data_generic_ts(data_generic_ts, results, nodes, global_region)
 
+    results["relation_activity"].append(
+        add_non_co2_emission_coefficients(scenario, pd.concat(results["input"]))
+    )
+    results["relation_activity"].append(
+        add_ind_therm_link_relations(
+            [t.id for t in config["technology"]["add"]],
+            yv_ya["year_act"].unique(),
+            nodes,
+        )
+    )
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+    reduced_pdict = {}
+    for k, v in results.items():
+        if {"year_act", "year_vtg"}.issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+    return reduced_pdict
+
+
+def gen_data_generic_ts(
+    data_generic_ts: pd.DataFrame, results, nodes: List[str], global_region: str
+) -> None:
     tec_ts = set(data_generic_ts.technology)  # set of tecs in timeseries sheet
 
     for t in tec_ts:
@@ -365,24 +386,6 @@ def gen_data_generic(
 
             results[p].append(df)
 
-    results["relation_activity"].append(
-        add_non_co2_emission_coefficients(scenario, pd.concat(results["input"]))
-    )
-    results["relation_activity"].append(
-        add_ind_therm_link_relations(
-            [t.id for t in config["technology"]["add"]],
-            yv_ya["year_act"].unique(),
-            nodes,
-        )
-    )
-    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-    reduced_pdict = {}
-    for k, v in results.items():
-        if {"year_act", "year_vtg"}.issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-    return reduced_pdict
-
 
 def get_thermal_industry_emi_coefficients(scen: "Scenario") -> pd.DataFrame:
     """Retrieve and normalize non-CO2 emission coefficients of ``i_therm`` technologies.
@@ -395,7 +398,7 @@ def get_thermal_industry_emi_coefficients(scen: "Scenario") -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame
-        DataFrame of normalized emission coefficients indexed by node, year, and technology.
+        Normalized emission coefficients indexed by node, year, and technology.
     """
     ind_th_tecs = ["biomass_i", "coal_i", "eth_i", "foil_i", "gas_i", "loil_i"]
     relations = [
@@ -441,7 +444,7 @@ def get_furnace_inputs(scen: "Scenario", first_year: int) -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame
-        DataFrame of furnace input parameters indexed by node, year, commodity, and technology.
+        Furnace input parameters indexed by node, year, commodity, and technology.
     """
     furn_tecs = "furnace"
     df_furn = scen.par("input")

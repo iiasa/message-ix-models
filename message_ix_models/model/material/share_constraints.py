@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, List, Literal
+from typing import TYPE_CHECKING, List, Literal, Union
 
 import message_ix
 import pandas as pd
@@ -41,11 +41,9 @@ def gen_com_share_df(
         ``share_commodity_up/lo`` parameter data
     -------
     """
-    df_share_com_lo = make_df(f"share_commodity_{type}", **df_vals)
-    df_share_com_lo["time"] = "year"
-    df_share_com_lo["shares"] = shr_name
-    df_share_com_lo["unit"] = "-"
-
+    df_share_com_lo = make_df(f"share_commodity_{type}", **df_vals).assign(
+        shares=shr_name, time="year", unit="-"
+    )
     return df_share_com_lo
 
 
@@ -89,8 +87,6 @@ def remove_share_cat(
     shr_name: str,
     type_tec_all_name: str,
     type_tec_shr_name: str,
-    all_tecs: List[str],
-    shr_tecs: List[str],
 ) -> None:
     """Remove name from ``shares`` and ``type_tec`` categories from scenario.
 
@@ -111,8 +107,8 @@ def remove_share_cat(
     """
     scen.check_out()
     scen.remove_set("shares", shr_name)
-    scen.remove_cat("technology", type_tec_all_name, all_tecs)
-    scen.remove_cat("technology", type_tec_shr_name, shr_tecs)
+    scen.remove_set("type_tec", type_tec_all_name)
+    scen.remove_set("type_tec", type_tec_shr_name)
     scen.commit(
         f"Share: {shr_name} deleted. Total and share technologies "
         f"({type_tec_all_name} & {type_tec_shr_name}) category removed."
@@ -179,7 +175,7 @@ def gen_comm_shr_map(
     tecs_shr: List[str],
     nodes: Union[str, List[str]] = "all",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Generate ``map_shares_commodity_total`` and ``map_shares_commodity_share``.
+    """
 
     Parameters
     ----------
@@ -199,20 +195,25 @@ def gen_comm_shr_map(
     """
     s_info = ScenarioInfo(scen)
     if nodes == "all":
-        nodes = nodes_ex_world(s_info.N)
-    elif nodes not in nodes_ex_world(s_info.N):
-        print(
+        nodes_list = nodes_ex_world(s_info.N)
+    elif isinstance(nodes, str) and nodes in nodes_ex_world(s_info.N):
+        nodes_list = [nodes]  # wrap single node into list
+    elif isinstance(nodes, list):
+        nodes_list = nodes  # already a list of str
+    else:
+        valid = nodes_ex_world(s_info.N)
+        raise ValueError(
             f"The provided nodes: {nodes} are not contained in this scenario. "
-            f"Valid nodes of this scenario are: {nodes_ex_world(s_info.N)}"
+            f"Valid nodes of this scenario are: {valid}"
         )
-        return
 
-    df_all_set = gen_comm_map(scen, cnstrnt_name, type_tec_all_name, tecs_all, nodes)
-    df_shr_set = gen_comm_map(scen, cnstrnt_name, type_tec_shr_name, tecs_shr, nodes)
-    return (
-        df_all_set,
-        df_shr_set,
+    df_all_set = gen_comm_map(
+        scen, cnstrnt_name, type_tec_all_name, tecs_all, nodes_list
     )
+    df_shr_set = gen_comm_map(
+        scen, cnstrnt_name, type_tec_shr_name, tecs_shr, nodes_list
+    )
+    return df_all_set, df_shr_set
 
 
 def gen_comm_shr_par(
@@ -222,7 +223,8 @@ def gen_comm_shr_par(
     shr_type: Literal["up", "lo"] = "up",
     years: Union[str, List[int]] = "all",
 ) -> DataFrame:
-    """Generates data for ``share_commodity_up/lo`` parameter.
+    """Generates data frame for "share_commodity_up/lo" parameter with given values for
+    node_share and broadcasts them for given "years".
 
     Parameters
     ----------
@@ -249,7 +251,7 @@ def gen_comm_shr_par(
         df_final["year_act"] = None
         df_final = df_final.pipe(broadcast, year_act=years)
 
-    df_shares = gen_com_share_df(cname, df_final, shr_type)
+    df_shares: pd.DataFrame = gen_com_share_df(cname, df_final, shr_type)
     return df_shares
 
 
@@ -263,8 +265,8 @@ def add_comm_share(
     shr_vals: pd.DataFrame,
     shr_type: Literal["up", "lo"] = "up",
     years: Union[str, List[int]] = "all",
-) -> None:
-    """Convenience function that adds a commodity share constraint to a scenario.
+):
+    """Convenience function that adds commodity share constraint to a scenario.
 
     This process requires a numer of steps:
 
@@ -322,7 +324,7 @@ def remove_comm_share(
     """
     print(f"Removing share constraint: {name}.")
 
-    remove_share_cat(scen, name, set_tot, set_share, all_tecs, shr_tecs)
+    remove_share_cat(scen, name, set_tot, set_share)
 
     scen.check_out()
     com_map_tot, com_map_shr = gen_comm_shr_map(
@@ -334,12 +336,12 @@ def remove_comm_share(
 
 def add_foil_shr_constraint() -> None:
     """Generate fuel oil share constraint for MESSAGEix-Materials industry sectors.
-    ** Not used in model build at the moment. **
 
+    ** Not used in model build at the moment. **
     """
-    shr_const = "share_low_lim_foil_ind"
-    type_tec_shr = "foil_cement"
-    type_tec_tot = "all_cement"
+    # shr_const = "share_low_lim_foil_ind"
+    # type_tec_shr = "foil_cement"
+    # type_tec_tot = "all_cement"
 
     from share_constraints_constants import foil_ind_tecs_ht, non_foil_ind_tecs_ht
 
@@ -347,7 +349,7 @@ def add_foil_shr_constraint() -> None:
         r"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/furnace_foil_cement_share.csv",
         usecols=[0, 2],
     )
-    df_furn_cement.columns = ["node_share", "value"]
+    df_furn_cement = df_furn_cement.set_axis(["node_share", "value"], axis=1)
     all_ind_tecs = {
         a[0]: [a[1], *b[1]]
         for a, b in zip(foil_ind_tecs_ht.items(), non_foil_ind_tecs_ht.items())
@@ -363,11 +365,12 @@ def add_foil_shr_constraint() -> None:
     sc_clone = scen.clone(scen.model, scen.scenario + "foil_furn", keep_solution=False)
 
     for sec in foil_sectors:
-        df_sec_foil_shr = pd.read_csv(
-            rf"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/furnace_foil_{sec}_share.csv",
-            usecols=[0, 2],
-        )
-        df_furn_cement.columns = ["node_share", "value"]
+        # df_sec_foil_shr = pd.read_csv(
+        # f"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/
+        # furnace_foil_{sec}_share.csv",
+        #     usecols=[0, 2],
+        # )
+        df_furn_cement = df_furn_cement.set_axis(["node_share", "value"], axis=1)
         add_comm_share(
             sc_clone,
             f"{sec}_foil",
