@@ -342,7 +342,7 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
 
 
 def get_hist_act_data(
-    map_fname: str, years: Union[List[int], None] = None, iea_data_path: str = None
+    map_fname: str, iea_data_path: str, years: Union[List[int], None] = None
 ) -> pd.DataFrame:
     """Reads IEA DB, maps and aggregates variables to MESSAGE technologies.
 
@@ -401,9 +401,9 @@ def get_2020_industry_activity(years: List[int], iea_data_path: str) -> pd.DataF
     pd.DataFrame
         DataFrame of industry activity for MESSAGE technologies.
     """
-    df_mat = get_hist_act_data("industry.csv", years=years, iea_data_path=iea_data_path)
+    df_mat = get_hist_act_data("industry.csv", iea_data_path=iea_data_path, years=years)
     df_chem = get_hist_act_data(
-        "chemicals.csv", years=years, iea_data_path=iea_data_path
+        "chemicals.csv", iea_data_path=iea_data_path, years=years
     )
 
     # scale chemical activity to deduct explicitly
@@ -431,7 +431,7 @@ def get_2020_industry_activity(years: List[int], iea_data_path: str) -> pd.DataF
 def get_hist_act(
     scen: "Scenario",
     years: List[int],
-    iea_file_path: Union[None, str] = None,
+    iea_file_path: str = "",
     use_cached: bool = False,
 ) -> dict:
     """Derive activity calibration data for industrial technologies.
