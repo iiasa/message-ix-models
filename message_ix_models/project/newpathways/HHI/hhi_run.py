@@ -92,7 +92,7 @@ hhi_config, hhi_config_path = load_config(project_name = 'newpathways',
 
 hhi_limits = [0.9, 0.6, 0.25]
 
-for region in ['CHN', 'WEU']:
+for region in ['WEU']:
     
     print('Running HHI for R12_' + region)
     

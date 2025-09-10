@@ -160,7 +160,7 @@ def activity_to_csv(trade_tec,
 # Retrieve trade flow activities
 scenarios_models = {#'base_scenario': 'NP_SSP2_6.2',
                     'pipelines_LNG': 'NP_SSP2_6.2',
-                    'HHI_0.9_gas_CHN': 'NP_SSP2_6.2'}
+                    'HHI_0.5_gas_CHN': 'NP_SSP2_6.2'}
  
 activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_pipe",
