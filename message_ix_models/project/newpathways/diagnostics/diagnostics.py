@@ -62,7 +62,7 @@ def activity_to_csv(trade_tec,
         outputdf = outputdf[['node_loc', 'technology', 'commodity', 'year_act', 'value', 'unit']].drop_duplicates().reset_index()
         
         capacity = scen.var("CAP_NEW")
-        capacity = capacity[['node_loc', 'technology', 'year_act', 'lvl']].drop_duplicates()
+        capacity = capacity[['node_loc', 'technology', 'year_vtg', 'lvl']].drop_duplicates()
         capacity = capacity.rename(columns = {'lvl': 'level'})
         capacity['commodity'] = flow_commodity
         capacity['unit'] = flow_unit
@@ -97,15 +97,18 @@ def activity_to_csv(trade_tec,
         imports = act_in[(act_in['technology'].str.contains(trade_tec))&\
                          (act_in['technology'].str.contains('_imp'))].copy()
          
-        flow_input = act_in[(act_in['technology'].str.contains(flow_tec)) &\
-                            (act_in['technology'].str.contains('_exp') == False) &\
-                            (act_in['technology'].str.contains('_imp') == False)].copy()
+        flow_fuel = act_in[(act_in['technology'].str.contains(flow_tec)) &\
+                           (act_in['technology'].str.contains('_exp') == False) &\
+                           (act_in['technology'].str.contains('_imp') == False)].copy()
+        flow_fuel['VARIABLETYPE'] = 'Fuel Input'
         
-        # flow_output = capacity[(capacity['technology'].str.contains(flow_tec)) &\
-        #                        (capacity['technology'].str.contains('_exp') == False) &\
-        #                        (capacity['technology'].str.contains('_imp') == False)].copy()
-        
+        flow_newcap = capacity[(capacity['technology'].str.contains(flow_tec)) &\
+                               (capacity['technology'].str.contains('_exp') == False) &\
+                               (capacity['technology'].str.contains('_imp') == False)].copy()
+        flow_newcap['VARIABLETYPE'] = 'New Capacity'
+
         flow_output = exports[exports['commodity'].str.contains(flow_commodity)].copy()
+        flow_output['VARIABLETYPE'] = 'Flow Activity'
         
         exports['IMPORTER'] = 'R12_' + exports['technology'].str.upper().str.split('_').str[-1]
         exports = exports.rename(columns = {'node_loc': 'EXPORTER',
@@ -128,16 +131,17 @@ def activity_to_csv(trade_tec,
         imports['COMMODITY'] = trade_commodity
         imports_out = pd.concat([imports_out, imports])
         
-        for flowdf in [flow_input, flow_output]:
+        for flowdf in [flow_fuel, flow_newcap, flow_output]:
             
             flowdf['IMPORTER'] = 'R12_' + flowdf['technology'].str.upper().str.split('_').str[-1]
             flowdf = flowdf.rename(columns = {'node_loc': 'EXPORTER',
                                               'level': 'LEVEL',
                                               'year_act': 'YEAR',
+                                              'year_vtg': 'YEAR',
                                               'technology': 'MESSAGETEC',
                                               'commodity': 'COMMODITY',
                                               'unit': 'UNITS'})
-            flowdf = flowdf[['MODEL', 'SCENARIO', 'YEAR', 'EXPORTER', 'IMPORTER', 
+            flowdf = flowdf[['MODEL', 'SCENARIO', 'VARIABLETYPE', 'YEAR', 'EXPORTER', 'IMPORTER', 
                              'MESSAGETEC', 'COMMODITY', 'LEVEL', 'UNITS']]
             flowdf['PAIR'] = flowdf['EXPORTER'] + '-' + flowdf['IMPORTER']
             flows_out = pd.concat([flows_out, flowdf])
@@ -154,9 +158,9 @@ def activity_to_csv(trade_tec,
                          index = False)
     
 # Retrieve trade flow activities
-scenarios_models = {'base_scenario': 'NP_SSP2_6.2',
+scenarios_models = {#'base_scenario': 'NP_SSP2_6.2',
                     'pipelines_LNG': 'NP_SSP2_6.2',
-                    'LNG_prod_penalty': 'NP_SSP2_6.2'}
+                    'HHI_0.9_gas_CHN': 'NP_SSP2_6.2'}
  
 activity_to_csv(trade_tec = "gas", 
                 flow_tec = "gas_pipe",
@@ -171,4 +175,3 @@ activity_to_csv(trade_tec = "LNG",
                 flow_commodity = 'LNG_tanker_capacity',
                 flow_unit = 'Mt-km',
                 model_scenario_dict = scenarios_models)
-
