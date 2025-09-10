@@ -88,7 +88,7 @@ base = message_ix.Scenario(mp, model='NP_SSP2_6.2', scenario='pipelines_LNG')
 
 # Prepare outputs for HHI
 hhi_config, hhi_config_path = load_config(project_name = 'newpathways', 
-                                          config_name = 'HHI\hhi_config.yaml')
+                                          config_name = os.path.join('HHI', 'hhi_config.yaml'))
 
 hhi_limits = [0.9, 0.6, 0.25]
 
