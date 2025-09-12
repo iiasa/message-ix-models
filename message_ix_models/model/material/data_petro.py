@@ -18,7 +18,7 @@ from message_ix_models.model.material.data_util import (
     gen_plastics_emission_factors,
     read_timeseries,
 )
-from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.demand import demand
 from message_ix_models.model.material.util import (
     get_ssp_from_context,
     read_config,
@@ -79,7 +79,7 @@ def gen_mock_demand_petro(
     """Generate petrochemicals demand time series for MESSAGEix regions using GDP
     elasticities.
 
-    TODO: Remove this function since a copy was moved to material_demand_calc.
+    TODO: Remove this function since a copy was moved to demand.
 
     Parameters
     ----------
@@ -131,7 +131,7 @@ def gen_mock_demand_petro(
         .sort_index()
     )
 
-    from message_ix_models.model.material.material_demand.material_demand_calc import (
+    from message_ix_models.model.material.demand.demand import (
         read_base_demand,
     )
 
@@ -554,7 +554,7 @@ def gen_data_petro_chemicals(
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
     ]
-    df_demand = material_demand_calc.gen_demand_petro(
+    df_demand = demand.gen_demand_petro(
         scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
     df_2025 = pd.read_csv(
