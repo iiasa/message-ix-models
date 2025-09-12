@@ -18,7 +18,7 @@ from message_ix_models.model.material.data_util import (
     gen_chemicals_co2_ind_factors,
     gen_plastics_emission_factors,
 )
-from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.demand import demand
 from message_ix_models.model.material.util import (
     get_ssp_from_context,
     read_config,
@@ -93,7 +93,7 @@ def gen_data_methanol(scenario: "Scenario") -> "ParameterData":
         ssp_mode_map[ssp]
     ]
     df_2025 = pd.read_csv(package_data_path("material", "methanol", "demand_2025.csv"))
-    df_demand = material_demand_calc.gen_demand_petro(
+    df_demand = demand.gen_demand_petro(
         scenario, "methanol", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
     df_demand["value"] = df_demand["value"].apply(
