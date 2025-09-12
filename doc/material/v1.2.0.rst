@@ -60,6 +60,33 @@ Non ferrous metals sector
 - The maximum recyclable aluminum scrap ratio is now differentiated by SSP
 - The heat requirement and cost for aluminum scrap preparation is now differentiated by SSP
 
+Chemicals sector
+----------------
+
+- gen_resid_demand_NH3 modified to differentiate by SSP and fix 2025 demand
+- gen_ccs_bounds function added to generate ccs bounds for ammonia in 2020 and 2025
+
+- 2025 demand fixed independent of SSP
+- gen_meth_fs_downstream function to generate new technology for methanol downstream use
+- call gen_plastics_emission_factors and gen_chemicals_co2_ind_factors to generate emission factors for methanol end-of-life treatment
+- added procedure to filter out relations from input file that are not in new scenario versions
+
+- fix 2025 demand independent of SSP
+- call gen_plastics_emission_factors and gen_chemicals_co2_ind_factors to generate emission factors for plastics end-of-life treatment
+- call gen_ethanol_to_ethylene_emi_factor to generate negative emission factors for ethanol to ethylene conversion
+- procedure to filter out year_act-year_vtg combinations that are not within the maximum lifetime of petrochemical technologies
+
+- load_GDP_COVID removed
+- add_macro_COVID renamed to add_macro_materials
+- modify_demand_and_hist_activity_debug and modify_demand_and_hist_activity removed
+- modify_industry_demand, calc_resid_ind_demand, calc_demand_shares, add_new_ind_hist_act, calc_hist_activity removed or moved?
+- gen_te_projections extended due to tools.cost updates
+- calculate_ini_new_cap extended by ssp argument to differentiate SSPs
+- add_water_par_data function added to generate water parameters required for materials build
+- calibrate_for_SSPs function added that contains several 2020 calibration adjustments
+- gen_plastics_emission_factors, gen_chemicals_co2_ind_factors and gen_ethanol_to_ethylene_emi_factor added to generate emission factors for chemicals
+- read_sector_data and read_timeseries and read_rel adjusted to read from csv files
+
 Power sector
 ------------
 
