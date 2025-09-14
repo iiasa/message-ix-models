@@ -12,7 +12,8 @@ from scipy.optimize import curve_fit
 import message_ix_models.util
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.material.data_util import get_ssp_soc_eco_data
-from message_ix_models.model.material.demand.math import (
+from message_ix_models.model.material.demand.config import FittingConfig
+from message_ix_models.model.material.demand.math_util import (
     GIGA,
     MEGA,
     cement_function,
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
 log = logging.getLogger(__name__)
 
-mode_modifiers_dict = {
+mode_modifiers_dict: dict[str, dict[str, dict[str, float]]] = {
     "low": {
         "steel": {"a": 0.85, "b": 0.95},
         "cement": {"a": 0.8},
@@ -535,44 +536,42 @@ def derive_demand(
         )
     else:
         df_cons = read_hist_mat_demand(material)
-    x_data = tuple(pd.Series(df_cons[col]) for col in fitting_dict[material]["x_data"])
+    config = FittingConfig(**fitting_dict[material])  # type: ignore
+    x_data = tuple(pd.Series(df_cons[col]) for col in config.x_data)
 
     # run regression on historical data
     if model == "least-squares":
         params_opt = curve_fit(
-            fitting_dict[material]["function"],
+            config.function,
             xdata=x_data,
             ydata=df_cons["cons_pcap"],
-            p0=fitting_dict[material]["initial_guess"],
+            p0=config.initial_guess,
         )[0]
         mode = ssp_mode_map[ssp]
         log.info(f"adjust regression parameters according to mode: {mode}")
         log.info(f"before adjustment: {params_opt}")
-        for idx, multiplier in enumerate(mode_modifiers_dict[mode][material].values()):
+        mods = list(mode_modifiers_dict[mode][material].values())
+        for idx, multiplier in enumerate(mods):
             params_opt[idx] *= multiplier
         log.info(f"after adjustment: {params_opt}")
     if model == "quantile":
         params_opt = perform_quantile_reg(
             x_data,
             df_cons["cons_pcap"],
-            fitting_dict["steel"]["function"],
-            fitting_dict["steel"]["initial_guess"],
+            config.function,
+            config.initial_guess,
             0.5,
         )
 
     # prepare df for applying regression model and project demand
     df_all = prepare_model_input(df_pop, df_gdp, df_base_demand)
     df_all["demand_pcap0"] = df_all.apply(
-        lambda row: fitting_dict[material]["function"](
-            tuple(row[i] for i in fitting_dict[material]["x_data"]), *params_opt
-        ),
+        lambda row: config.function(tuple(row[i] for i in config.x_data), *params_opt),
         axis=1,
     )
 
     # correct base year difference with convergence function
-    df_final = project_demand(
-        df_all, fitting_dict[material]["phi"], fitting_dict[material]["mu"]
-    )
+    df_final = project_demand(df_all, config.phi, config.mu)
 
     # format to MESSAGEix standard
     df_par = format_to_demand_par(df_final, material)
@@ -740,7 +739,7 @@ def gen_demand_petro(
 
 
 def perform_quantile_reg(
-    x: tuple[pd.Series],
+    x: tuple[pd.Series, ...],
     y: pd.Series,
     func: Callable,
     initial_params: List[int],
