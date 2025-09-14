@@ -18,7 +18,5 @@ def cement_function(x: tuple[pd.Series, pd.Series], a: float, b: float):
     return a * np.exp(b / gdp_pcap)
 
 
-def gompertz(
-    phi: float, mu: float, y: Union[pd.DataFrame, float], baseyear: int = 2020
-):
+def gompertz(phi: float, mu: float, y: Union[pd.Series, float], baseyear: int = 2020):
     return 1 - np.exp(-phi * np.exp(-mu * (y - baseyear)))
