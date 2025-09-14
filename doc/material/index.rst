@@ -58,8 +58,15 @@ They can be turned on and off individually under ``DATA_FUNCTIONS`` in :mod:`__i
 .. automodule:: message_ix_models.model.material.data_methanol
   :members:
 
+.. automodule:: message_ix_models.model.material.demand.demand
+  :members:
+
+Post-processing and reporting
+-----------------------------
+
 .. automodule:: message_ix_models.model.material.report
   :members:
+
 
 Build and solve the model from CLI
 ==================================
