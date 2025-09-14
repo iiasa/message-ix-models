@@ -78,7 +78,7 @@ def mock_scenario_data(scenario: "Scenario") -> None:
         }
     ).pipe(broadcast, node_loc=nodes)
     # Scenario mock
-    scenario.var = Mock(
+    scenario.var = Mock(  # type: ignore[method-assign]
         side_effect=lambda name, **kwargs: {
             "COST_NODAL_NET": df_cost,
             "PRICE_COMMODITY": df_price,
@@ -95,13 +95,13 @@ def mock_scenario_data(scenario: "Scenario") -> None:
             return df_gdp
         return original_par(name, *args, **kwargs)
 
-    scenario.par = Mock(side_effect=par_side_effect)
+    scenario.par = Mock(side_effect=par_side_effect)  # type: ignore[method-assign]
 
 
 def test_update_macro_calib_file(scenario) -> None:
     mock_scenario_data(scenario)
     fname = "macro_calibration_input_SSP2.xlsx"
-    result = update_macro_calib_file(scenario, fname, True)
+    update_macro_calib_file(scenario, fname, True)
     dem_vals = pd.read_excel(
         package_data_path("material", "macro", fname), sheet_name="demand_ref"
     )
