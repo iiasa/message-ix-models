@@ -63,9 +63,18 @@ def test_add_new_share_cat(scenario) -> None:
 
 def test_gen_comm_map(scenario) -> None:
     df = gen_comm_map(scenario, "test", "test", ["coal_i"], ["R12_AFR"])
-    assert sorted(make_df("map_shares_commodity_share", value=1.0).columns) == sorted(
-        df.columns
-    )
+    dims = {
+        "node": "R12_AFR",
+        "node_share": "R12_AFR",
+        "commodity": "coal",
+        "level": "final",
+        "mode": "M1",
+        "shares": "test",
+        "type_tec": "test",
+    }
+    df_expected = pd.DataFrame(dims, index=[0])
+    assert sorted(df_expected.columns) == sorted(df.columns)
+    assert pd.concat([df, df_expected]).drop_duplicates(keep=False).empty
 
 
 def test_gen_comm_shr_map(scenario) -> None:
