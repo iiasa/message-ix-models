@@ -5,7 +5,7 @@ Next release
 ============
 
 SSP 3.0 development
----------------
+-------------------
 
 By topic:
 
