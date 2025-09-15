@@ -1,7 +1,7 @@
 Version 1.2.0 (Month X, 2025)
 *****************************
 
-Preview of the upcoming MESSAGEix-Materials release
+Preview of the upcoming MESSAGEix-Materials release.
 
 This upcoming release of MESSAGEix-Materials introduces significant enhancements to the current model.
 It features improved calibration and updated parameterization, drawing on the latest statistics and findings from recent literature.
@@ -18,8 +18,8 @@ Revisions & fixes
 - Added missing relation entries for maximum steel recycling rates
 - Full calibration of the steel sector for 2020 and 2025, including:
 
-  - Historical production and capacity additions for all major steel production technologies
-  - Historical steel demand
+  - Historical production and capacity additions for all major steel production technologies.
+  - Historical steel demand.
 - Update of techno-economic input data for several technologies to more recent or accurate literature.
 - Removed water commodity flows due to incompatibility with new MESSAGEix-GLOBIOM-GAINS model structure.
 
@@ -80,16 +80,16 @@ Demand generator
 Other
 -----
 
-- New residual industry demand model based on historical energy intensity trends
+- New residual industry demand model based on historical energy intensity trends.
 
-  - Calibrated to IEA energy balances for 2020
-  - Fixed 2025 technology activity based on 2017-2022 trends
-  - Added SSP specific projections for other industry energy demand
+  - Calibrated to IEA energy balances for 2020.
+  - Fixed 2025 technology activity based on 2017-2022 trends.
+  - Added SSP specific projections for other industry energy demand.
 
-- Updated share constraint parametrization for low temperature heat technologies
-- Added share constraint for coal use in residual industry based on 2020 IEA energy balances
-- Added non-CO2 emission factors for residual industry technologies based on GAINS data
-- Added furnaces to GAINS driver ``relation`` `IndThermDemLink`
+- Updated share constraint parametrization for low temperature heat technologies.
+- Added share constraint for coal use in residual industry based on 2020 IEA energy balances.
+- Added non-CO2 emission factors for residual industry technologies based on GAINS data.
+- Added furnaces to GAINS driver ``relation`` `IndThermDemLink`.
 
 CLI changes
 ===========
@@ -114,7 +114,7 @@ Removed:
    - :py:`.add_elec_lowerbound_2020`
    - :py:`.add_coal_lowerbound_2020`
 
-- :py:`.add_ccs_technologies` renamed to :func:`.add_cement_ccs_co2_tr_relation`
+- :py:`.add_ccs_technologies` renamed to :func:`.add_cement_ccs_co2_tr_relation`.
 
 Reporting:
 
@@ -123,12 +123,12 @@ Reporting:
 
 MACRO calibration:
 
-- :py:`.load_GDP_COVID` removed
-- :py:`.add_macro_COVID` renamed to :func:`.add_macro_materials`
+- :py:`.load_GDP_COVID` removed.
+- :py:`.add_macro_COVID` renamed to :func:`.add_macro_materials`.
 
 Miscellaneous:
 
--  :py:`.combine_df_dictionaries` replaced by :func:`.merge_data`
+-  :py:`.combine_df_dictionaries` replaced by :func:`.merge_data`.
 
 New features
 ============
@@ -148,7 +148,7 @@ New features
 - New post-processing module for the industry sector in :mod:`.model.material.report.run_reporting` providing:
 
   - More generalized method of post-processing MESSAGEix-Materials results.
-  - Configuration handled through :mod:`.model.material.report.config` YAML files in :file:`material/model/material/reporting/`
+  - Configuration handled through :mod:`.model.material.report.config` YAML files in :file:`material/model/material/reporting/`.
   - Higher resolution of post-processed results.
 
 - New module to generate share constraints in :mod:`.model.material.share_constraints`.
