@@ -1,3 +1,9 @@
+"""
+Mappings of process heat technologies and levels to their respective sectors.
+Currently only used to define commodity share constraints for industry sectors
+in share_constraints.py.
+"""
+
 non_foil_ind_tecs_ht = {
     # Cement industry
     "cement": [
