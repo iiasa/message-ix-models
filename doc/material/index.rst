@@ -52,7 +52,7 @@ They can be turned on and off individually under ``DATA_FUNCTIONS`` in :mod:`__i
 .. automodule:: message_ix_models.model.material.data_generic
   :members:
 
-.. automodule:: message_ix_models.model.material.data_ammonia_new
+.. automodule:: message_ix_models.model.material.data_ammonia
   :members:
 
 .. automodule:: message_ix_models.model.material.data_methanol
