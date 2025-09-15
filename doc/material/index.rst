@@ -61,6 +61,9 @@ They can be turned on and off individually under ``DATA_FUNCTIONS`` in :mod:`__i
 .. automodule:: message_ix_models.model.material.demand.demand
   :members:
 
+.. automodule:: message_ix_models.model.material.data_util
+  :members:
+
 Post-processing and reporting
 -----------------------------
 
