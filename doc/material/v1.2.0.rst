@@ -103,18 +103,18 @@ Model calibration:
 
 Removed:
 
-   - :func:`.modify_demand_and_hist_activity_debug`
-   - :func:`.modify_baseyear_bounds`
-   - :func:`.calc_hist_activity`
-   - :func:`.add_new_ind_hist_act`
-   - :func:`.calc_demand_shares`
-   - :func:`.calc_resid_ind_demand`
-   - :func:`.modify_industry_demand`
-   - :func:`.calc_demand_shares`
-   - :func:`.add_elec_lowerbound_2020`
-   - :func:`.add_coal_lowerbound_2020`
+   - :py:`.modify_demand_and_hist_activity_debug`
+   - :py:`.modify_baseyear_bounds`
+   - :py:`.calc_hist_activity`
+   - :py:`.add_new_ind_hist_act`
+   - :py:`.calc_demand_shares`
+   - :py:`.calc_resid_ind_demand`
+   - :py:`.modify_industry_demand`
+   - :py:`.calc_demand_shares`
+   - :py:`.add_elec_lowerbound_2020`
+   - :py:`.add_coal_lowerbound_2020`
 
-- :func:`.add_ccs_technologies` renamed to :func:`.add_cement_ccs_co2_tr_relation`
+- :py:`.add_ccs_technologies` renamed to :func:`.add_cement_ccs_co2_tr_relation`
 
 Reporting:
 
@@ -123,12 +123,12 @@ Reporting:
 
 MACRO calibration:
 
-- :func:`.load_GDP_COVID` removed
-- :func:`.add_macro_COVID` renamed to :func:`.add_macro_materials`
+- :py:`.load_GDP_COVID` removed
+- :py:`.add_macro_COVID` renamed to :func:`.add_macro_materials`
 
 Miscellaneous:
 
--  :func:`.combine_df_dictionaries` replaced by :func:`.merge_data`
+-  :py:`.combine_df_dictionaries` replaced by :func:`.merge_data`
 
 New features
 ============
@@ -157,7 +157,7 @@ New features
 .. note::
    The MACRO calibration workflow only supports MESSAGEix-GLOBIOM-Materials model with R12 regions.
    The implementation automates the Excel functions previously used to derive ``price_ref`` and ``cost_ref`` and is not supposed to be a longterm solution.
-   Ultimately, the ``message_ix`` :func:`.add_macro` functionalities should be used once issue `#859 <https://github.com/iiasa/message_ix/issues/859>`_ is resolved.
+   Ultimately, the ``message_ix`` :py:`.add_macro` functionalities should be used once issue `#859 <https://github.com/iiasa/message_ix/issues/859>`_ is resolved.
    See also internal Slack discussion `here <https://iiasa-ece.slack.com/archives/CD0GBHHA4/p1713430336582769>`_.
 
 Bug Fixes
