@@ -15,7 +15,7 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import read_rel, read_timeseries
-from message_ix_models.model.material.demand import demand
+from message_ix_models.model.material.demand import derive_demand
 from message_ix_models.model.material.util import (
     add_R12_column,
     get_pycountry_iso,
@@ -587,7 +587,7 @@ def gen_demand(scenario, ssp):
     parname = "demand"
     demand_dict = {}
     df_2025 = pd.read_csv(package_data_path("material", "aluminum", "demand_2025.csv"))
-    df = demand.derive_demand("aluminum", scenario, ssp=ssp)
+    df = derive_demand("aluminum", scenario, ssp=ssp)
     df = df[df["year"] != 2025]
     df = pd.concat([df_2025, df])
     demand_dict[parname] = df
