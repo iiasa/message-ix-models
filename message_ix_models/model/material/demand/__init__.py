@@ -12,15 +12,16 @@ from scipy.optimize import curve_fit
 import message_ix_models.util
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.material.data_util import get_ssp_soc_eco_data
-from message_ix_models.model.material.demand.config import FittingConfig
-from message_ix_models.model.material.demand.math_util import (
+from message_ix_models.util import package_data_path
+
+from .config import FittingConfig
+from .math_util import (
     GIGA,
     MEGA,
     cement_function,
     gompertz,
     steel_function,
 )
-from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
     from message_ix import Scenario

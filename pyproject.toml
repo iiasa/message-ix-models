@@ -125,7 +125,7 @@ module = [
   "message_ix_models.model.material.data_petro",
   "message_ix_models.model.material.data_steel",
   "message_ix_models.model.material.data_util",
-  "message_ix_models.model.material.material_demand.*",
+  "message_ix_models.model.material.demand.*",
   "message_ix_models.model.material.util",
   "message_ix_models.model.water.*",
   # Legacy codes that may not be type hinted
