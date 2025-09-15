@@ -1,3 +1,11 @@
+"""
+Data and parameter generation for the methanol sector in
+MESSAGEix-Materials model.
+
+This module provides functions to read, process, and generate parameter data
+for methanol technologies, demand, trade, and related constraints.
+"""
+
 from ast import literal_eval
 from typing import TYPE_CHECKING
 
@@ -5,13 +13,28 @@ import pandas as pd
 import yaml
 from message_ix import make_df
 
-import message_ix_models.util
-from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import read_config
-from message_ix_models.util import broadcast, same_node
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.data_util import (
+    gen_chemicals_co2_ind_factors,
+    gen_plastics_emission_factors,
+)
+from message_ix_models.model.material.demand import gen_demand_petro
+from message_ix_models.model.material.util import (
+    get_ssp_from_context,
+    read_config,
+)
+from message_ix_models.util import (
+    broadcast,
+    merge_data,
+    nodes_ex_world,
+    package_data_path,
+    same_node,
+)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+
+    from message_ix_models.types import ParameterData
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -30,34 +53,25 @@ iea_elasticity_map = {
 }
 
 
-def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
-    """
-    Generates data for methanol industry model
-
-    Parameters
-    ----------
-    scenario: .Scenario
-    """
+def gen_data_methanol(scenario: "Scenario") -> "ParameterData":
+    """Generate parameter data for methanol industry model."""
     context = read_config()
+    ssp = get_ssp_from_context(context)
     df_pars = pd.read_excel(
-        message_ix_models.util.package_data_path(
-            "material", "methanol", "methanol_sensitivity_pars.xlsx"
-        ),
+        package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
         sheet_name="Sheet1",
         dtype=object,
     )
     pars = df_pars.set_index("par").to_dict()["value"]
     if pars["mtbe_scenario"] == "phase-out":
         pars_dict = pd.read_excel(
-            message_ix_models.util.package_data_path(
-                "material", "methanol", "methanol_techno_economic.xlsx"
-            ),
+            package_data_path("material", "methanol", "methanol_techno_economic.xlsx"),
             sheet_name=None,
             dtype=object,
         )
     else:
         pars_dict = pd.read_excel(
-            message_ix_models.util.package_data_path(
+            package_data_path(
                 "material", "methanol", "methanol_techno_economic_high_demand.xlsx"
             ),
             sheet_name=None,
@@ -68,9 +82,7 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         pars_dict[i] = unpivot_input_data(pars_dict[i], i)
     # TODO: only temporary hack to ensure SSP_dev compatibility
     if "SSP_dev" in scenario.model:
-        file_path = message_ix_models.util.package_data_path(
-            "material", "methanol", "missing_rels.yaml"
-        )
+        file_path = package_data_path("material", "methanol", "missing_rels.yaml")
 
         with open(file_path, "r") as file:
             missing_rels = yaml.safe_load(file)
@@ -78,15 +90,43 @@ def gen_data_methanol(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         pars_dict["relation_activity"] = df[~df["relation"].isin(missing_rels)]
 
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
-        ssp_mode_map[context["ssp"]]
+        ssp_mode_map[ssp]
     ]
-    df_final = material_demand_calc.gen_demand_petro(
+    df_2025 = pd.read_csv(package_data_path("material", "methanol", "demand_2025.csv"))
+    df_demand = gen_demand_petro(
         scenario, "methanol", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
-    df_final["value"] = df_final["value"].apply(
+    df_demand["value"] = df_demand["value"].apply(
         lambda x: x * pars["methanol_resid_demand_share"]
     )
-    pars_dict["demand"] = df_final
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
+    pars_dict["demand"] = df_demand
+
+    s_info = ScenarioInfo(scenario)
+    downstream_tec_pars = gen_meth_fs_downstream(s_info)
+    meth_downstream_emi_top_down = gen_plastics_emission_factors(s_info, "methanol")
+    meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "methanol")
+
+    merge_data(
+        pars_dict,
+        downstream_tec_pars,
+        meth_downstream_emi_top_down,
+        meth_downstream_emi_bot_up,
+    )
+
+    scen_rel_set = scenario.set("relation")
+    for par in ["activity", "upper", "lower"]:
+        df_rel = pars_dict[f"relation_{par}"]
+        df_rel = df_rel[df_rel["relation"].isin(scen_rel_set.values)]
+        exc_rels = [
+            i for i in df_rel["relation"].unique() if i not in scen_rel_set.values
+        ]
+        print(
+            f"following relations are dropped from relation_{par} of methanol input "
+            f"data because they are not compatible with the scenario: {exc_rels}"
+        )
+        pars_dict[f"relation_{par}"] = df_rel
 
     return pars_dict
 
@@ -98,16 +138,20 @@ def broadcast_nodes(
     node_cols_codes: dict[str, pd.Series],
     i: int,
 ) -> pd.DataFrame:
-    """
-    Broadcast nodes that were stored in pivoted row
+    """Broadcast nodes that were stored in pivoted row.
 
     Parameters
     ----------
-    df_bc_node: pd.DataFrame
-    df_final: pd.DataFrame
-    node_cols: list[str]
-    node_cols_codes: dict[str, pd.Series]
-    i: int
+    df_bc_node :
+        DataFrame containing parameter data with node values pivoted
+    df_final :
+        Full list of pivoted parameter data
+    node_cols :
+        list of node columns of the respective parameter
+    node_cols_codes :
+        list of node codes used for broadcasting
+    i :
+        index of the row in df_final to be broadcasted
     """
     if len(node_cols) == 1:
         if "node_loc" in node_cols:
@@ -157,14 +201,18 @@ def broadcast_years(
     yr_cols_codes: dict[str, list[str]],
     col: str,
 ) -> pd.DataFrame:
-    """
-    Broadcast years that were stored in pivoted row
+    """Broadcast years that were stored in pivoted row.
+
     Parameters
     ----------
-    df_bc_node: pd.DataFrame
-    yr_col_out: list[str]
-    yr_cols_codes: ict[str, list[str]]
-    col: str
+    df_bc_node :
+        DataFrame containing parameter data with year values pivoted
+    yr_col_out :
+        list of year columns to be broadcasted
+    yr_cols_codes :
+        list of year codes used for broadcasting
+    col :
+        name of year column to be broadcasted
     """
     if len(yr_col_out) == 1:
         yr_list = [i[0] for i in yr_cols_codes[col]]
@@ -198,13 +246,13 @@ def broadcast_years(
 
 
 def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
-    """
-    Unpivot data that is already contains columns for respective MESSAGEix parameter
+    """Unpivot data that already contains columns for respective MESSAGEix parameter.
+
     Parameters
     ----------
-    df: pd.DataFrame
+    df :
         DataFrame containing parameter data with year and node values pivoted
-    par_name: str
+    par_name :
         name of MESSAGEix parameter
     """
     df_final = df
@@ -257,3 +305,54 @@ def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
             ].index
         )
     return make_df(par_name, **df_final_full)
+
+
+def gen_meth_fs_downstream(s_info: "ScenarioInfo") -> "ParameterData":
+    """Generate input and output parametrization for methanol downstream use technology.
+
+    Parameters
+    ----------
+    s_info:
+        Scenario info object to infer regions and years from.
+    """
+    # input parameter
+    yv_ya = s_info.yv_ya
+    year_all = yv_ya["year_act"].unique()
+
+    tec_name = "meth_ind_fs"
+    cols = {
+        "technology": tec_name,
+        "commodity": "methanol",
+        "mode": "M1",
+        "level": "final_material",
+        "time": "year",
+        "time_origin": "year",
+        "value": 1,
+        "unit": "Mt",
+    }
+    df_in = (
+        make_df("input", **cols)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=year_all)
+        .pipe(same_node)
+    )
+    df_in["year_vtg"] = df_in["year_act"]
+
+    # output parameter
+    tec_name = "meth_ind_fs"
+    cols = {
+        "technology": tec_name,
+        "commodity": "methanol",
+        "mode": "M1",
+        "level": "demand",
+        "time": "year",
+        "time_dest": "year",
+        "value": 1,
+        "unit": "Mt",
+    }
+    df_out = (
+        make_df("output", **cols)
+        .pipe(broadcast, node_loc=nodes_ex_world(s_info.N), year_act=year_all)
+        .pipe(same_node)
+    )
+    df_out["year_vtg"] = df_out["year_act"]
+    return dict(input=df_in, output=df_out)

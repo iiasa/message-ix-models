@@ -8,18 +8,16 @@ for aluminum technologies, demand, trade, and related constraints.
 import os
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-import message_ix
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import read_rel, read_timeseries
-from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.demand import derive_demand
 from message_ix_models.model.material.util import (
     add_R12_column,
-    combine_df_dictionaries,
     get_pycountry_iso,
     get_ssp_from_context,
     invert_dictionary,
@@ -28,20 +26,26 @@ from message_ix_models.model.material.util import (
 from message_ix_models.util import (
     broadcast,
     make_io,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
 )
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
+
+    from message_ix_models.types import ParameterData
+
 
 def read_data_aluminum(
-    scenario: message_ix.Scenario,
+    scenario: "Scenario",
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Read and clean data from aluminum techno-economic and timeseries files.
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario
         Scenario instance to build aluminum on.
 
     Returns
@@ -490,14 +494,12 @@ def gen_data_alu_const(
     return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
 
-def gen_data_aluminum(
-    scenario: message_ix.Scenario, dry_run: bool = False
-) -> dict[str, pd.DataFrame]:
+def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "ParameterData":
     """Generate all MESSAGEix parameter data for the aluminum sector.
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario
         Scenario instance to build aluminum model on.
     dry_run : bool
         *Not implemented.*
@@ -530,9 +532,7 @@ def gen_data_aluminum(
 
     ts_dict = gen_data_alu_ts(data_aluminum_ts, nodes)
     ts_dict.update(gen_hist_new_cap(s_info))
-    ts_dict = combine_df_dictionaries(
-        ts_dict, gen_smelting_hist_act(), gen_refining_hist_act()
-    )
+    merge_data(ts_dict, gen_smelting_hist_act(), gen_refining_hist_act())
 
     rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
 
@@ -544,7 +544,9 @@ def gen_data_aluminum(
     scrap_cost = get_scrap_prep_cost(s_info, ssp)
     max_recyc = gen_max_recycling_rel(s_info, ssp)
     scrap_heat = gen_scrap_prep_heat(s_info, ssp)
-    results_aluminum = combine_df_dictionaries(
+    results_aluminum: dict[str, pd.DataFrame] = {}
+    merge_data(
+        results_aluminum,
         const_dict,
         ts_dict,
         rel_dict,
@@ -572,7 +574,7 @@ def gen_demand(scenario, ssp):
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario : "Scenario"
         Scenario instance.
     ssp : str
         Shared Socioeconomic Pathway.
@@ -585,19 +587,19 @@ def gen_demand(scenario, ssp):
     parname = "demand"
     demand_dict = {}
     df_2025 = pd.read_csv(package_data_path("material", "aluminum", "demand_2025.csv"))
-    df = material_demand_calc.derive_demand("aluminum", scenario, ssp=ssp)
+    df = derive_demand("aluminum", scenario, ssp=ssp)
     df = df[df["year"] != 2025]
     df = pd.concat([df_2025, df])
     demand_dict[parname] = df
     return demand_dict
 
 
-def gen_data_alu_trade(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
+def gen_data_alu_trade(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     """Generate trade-related parameter data for aluminum.
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario
         Scenario instance.
 
     Returns
@@ -1148,7 +1150,8 @@ def gen_alumina_trade_tecs(s_info):
         **common,
     )
 
-    trade_dict = combine_df_dictionaries(imp_dict, trd_dict, exp_dict)
+    trade_dict = {}
+    merge_data(trade_dict, imp_dict, trd_dict, exp_dict)
     trade_dict = {
         k: v.pipe(broadcast, year_act=modelyears).assign(year_vtg=lambda x: x.year_act)
         for k, v in trade_dict.items()
@@ -1449,7 +1452,9 @@ def gen_trade_growth_constraints(s_info):
                 + [i for i in range(2060, 2115, 10)],
             )
         )
-    return combine_df_dictionaries(par_dict1, par_dict2)
+    pars = {}
+    merge_data(pars, par_dict1, par_dict2)
+    return pars
 
 
 def gen_max_recycling_rel(s_info, ssp):

@@ -19,7 +19,7 @@ from message_ix_models.model.material.data_util import (
     read_sector_data,
     read_timeseries,
 )
-from message_ix_models.model.material.material_demand.material_demand_calc import (
+from message_ix_models.model.material.demand import (
     read_base_demand,
 )
 from message_ix_models.model.material.util import (

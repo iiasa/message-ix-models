@@ -1,8 +1,11 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Improve and extend :doc:`/material/index` (:pull:`418`).
+  See :doc:`version 1.2.0 </material/v1.2.0>` for details.
 
 v2025.9.9
 =========
