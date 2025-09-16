@@ -25,6 +25,7 @@ from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
+from message_ix_models.model.bmt.utils import subtract_material_demand
 from message_ix_models.model.structure import (
     generate_set_elements,
     get_codes,
@@ -839,50 +840,18 @@ def materials(
         for name, df in data.items():
             result[name].append(df)
 
-    # Retrieve data once
-    mat_demand = scenario.par("demand", {"level": "demand"})
-    index_cols = ["node", "year", "commodity"]
+    # Use the reusable function to subtract material demand
+    # One can change the method parameter to use different approaches:
+    # - "bm_subtraction": Building material subtraction (default)
+    # - "im_subtraction": Infrastructure material subtraction (to be implemented)
+    # - "pm_subtraction": Power material subtraction (to be implemented)
+    # - "tm_subtraction": Transport material subtraction (to be implemented)
+    mat_demand = subtract_material_demand(
+        scenario, info, sturm_r, sturm_c, method="bm_subtraction"
+    )
 
-    # Subtract building material demand from existing demands in scenario
-    for rc, base_data, how in (("resid", sturm_r, "right"), ("comm", sturm_c, "outer")):
-        new_col = f"demand_{rc}_const"
-
-        # - Drop columns.
-        # - Rename "value" to e.g. "demand_resid_const".
-        # - Extract MESSAGEix-Materials commodity name from STURM commodity name.
-        # - Drop other rows.
-        # - Set index.
-        df = (
-            base_data.drop(columns=["level", "time", "unit"])
-            .rename(columns={"value": new_col})
-            .assign(
-                commodity=lambda _df: _df.commodity.str.extract(
-                    f"{rc}_mat_demand_(cement|steel|aluminum)", expand=False
-                )
-            )
-            .dropna(subset=["commodity"])
-            .set_index(index_cols)
-        )
-
-        # Merge existing demands at level "demand".
-        # - how="right": drop all rows in par("demand", …) that have no match in `df`.
-        # - how="outer": keep the union of rows in `mat_demand` (e.g. from sturm_r) and
-        #   in `df` (from sturm_c); fill NA with zeroes.
-        mat_demand = mat_demand.join(df, on=index_cols, how=how).fillna(0)
-
-    # False if main() is being run for the second time on `scenario`
-    first_pass = "construction_resid_build" not in info.set["technology"]
-
-    # If not on the first pass, this modification is already performed; skip
-    if first_pass:
-        # - Compute new value = (existing value - STURM values), but no less than 0.
-        # - Drop intermediate column.
-        # - Add to combined data.
-        result["demand"].append(
-            mat_demand.eval("value = value - demand_comm_const - demand_resid_const")
-            .assign(value=lambda df: df["value"].clip(0))
-            .drop(columns=["demand_comm_const", "demand_resid_const"])
-        )
+    # Add the modified demand to results
+    result["demand"].append(mat_demand)
 
     # Concatenate data frames together
     return {k: pd.concat(v) for k, v in result.items()}
