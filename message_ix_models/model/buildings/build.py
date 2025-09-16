@@ -308,7 +308,15 @@ def load_config(context: Context) -> None:
 
     # Generate technologies that replace corresponding *_rc|RC in the base model
     expr = re.compile("_(rc|RC)$")
+    
+    # Technologies that should not be transformed to afofi 
+    exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
+    
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
+        # Skip technologies that should not be transformed
+        if t.id in exclude_techs:
+            continue
+            
         # Generate a new Code object, preserving annotations
         new = deepcopy(t)
         new.id = expr.sub("_afofi", t.id)
@@ -533,9 +541,10 @@ def prepare_data(
         )["technology"].unique()
 
         # Mapping from source to generated names for scale_and_replace
+        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"} # Exclude technologies that should not be transformed to afofi
         replace = {
             "commodity": c_map,
-            "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs},
+            "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs if t not in exclude_techs},
         }
         # Compute shares with dimensions (t, n) for scaling parameter data
         t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
@@ -569,8 +578,7 @@ def prepare_data(
             else:
                 tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
 
-            # commented: for debugging
-            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
+            print(f"  Commodity: {commodity} -> Tech: {tech_new}")
 
             # Modify data
             for name, filters, extra in (  # type: ignore
@@ -593,6 +601,12 @@ def prepare_data(
     tmp = {k: pd.concat(v) for k, v in data.items()}
     adapt_emission_factors(tmp)
     merge_data(result, tmp)
+    
+    # Add demand data - append to existing demand if it exists
+    if "demand" in result:
+        result["demand"] = pd.concat([result["demand"], demand])
+    else:
+        result["demand"] = demand
 
     log.info(
         "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in result.items())
@@ -873,21 +887,21 @@ def build_B(
     # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
     sturm_c = pd.read_csv(sturm_c_path, index_col=0)
 
-    # # e_use
-    # e_use_path = package_data_path("buildings", "e_use.csv")
-    # e_use = pd.read_csv(e_use_path)
+    # e_use
+    e_use_path = private_data_path("buildings", "e_use.csv")
+    e_use = pd.read_csv(e_use_path, index_col=0)
 
     # demand
-    expr = "(cool|heat|hotwater)"
+    expr = "(cool|heat|hotwater|floor|other_uses)"
     excl = "v_no_heat"
     demand = pd.concat(
         [
-            # e_use[~e_use.commodity.str.contains("therm")], 
+            e_use[~e_use.commodity.str.contains("therm")], 
             sturm_r[sturm_r.commodity.str.contains(expr) & ~sturm_r.commodity.str.contains(excl)],
             sturm_c[sturm_c.commodity.str.contains(expr) & ~sturm_c.commodity.str.contains(excl)],
         ]
     ).assign(level="useful")
-    # demand.to_csv("debug-demand.csv")
+    demand.to_csv("debug-demand.csv")
 
     # Prepare data based on the contents of `scenario`
     data = prepare_data(
