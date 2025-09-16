@@ -153,6 +153,16 @@ Other submodules are documented on their respective pages:
    project/ssp
    project/uptake
 
+.. note:: The documentation for :mod:`message_data` (not public)
+   contains the following pages with information about other projects.
+   No code, data, or documentation for these projects is currently in :mod:`message_ix_models`:
+
+   :doc:`m-data:reference/projects/cd_links` —
+   :doc:`m-data:reference/projects/covid` —
+   :doc:`m-data:project/dle` —
+   :doc:`m-data:project/leap_re` —
+   :doc:`m-data:reference/projects/led`.
+
 .. toctree::
    :maxdepth: 1
    :caption: Package data
