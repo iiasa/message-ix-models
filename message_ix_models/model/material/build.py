@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import message_ix
+import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.build import apply_spec
@@ -274,6 +275,7 @@ def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
 
     return s
 
+
 # same as build(), but context-based
 def build_M(
     context: Context,
@@ -283,6 +285,7 @@ def build_M(
 
     # Read config and save to context.material
     from message_ix_models.model.material.config import Config
+
     config = Config()
     context.material = config
 
@@ -315,18 +318,21 @@ def build_M(
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
-    add_ccs_technologies(scenario)
+    # add_ccs_technologies(scenario)  # TODO: Function not found
     if context.material.old_calib:
         modify_demand_and_hist_activity(scenario)
     else:
-        modify_baseyear_bounds(scenario)
-        last_hist_year = scenario.par("historical_activity")["year_act"].max()
-        modify_industry_demand(scenario, last_hist_year, context.material.iea_data_path)
-        add_new_ind_hist_act(scenario, [last_hist_year], context.material.iea_data_path)
+        # modify_baseyear_bounds(scenario)  # TODO: Function not found
+        # last_hist_year = scenario.par("historical_activity")["year_act"].max()
+        # modify_industry_demand(scenario, last_hist_year,
+        #                      context.material.iea_data_path)
+        # TODO: Function not found
+        # add_new_ind_hist_act(scenario, [last_hist_year],
+        #                     context.material.iea_data_path)
+        # TODO: Function not found
         add_emission_accounting(scenario)
 
     if context.material.modify_existing_constraints:
         calibrate_existing_constraints(scenario)
 
     return scenario
-
