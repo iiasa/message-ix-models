@@ -754,13 +754,13 @@ def compute_cooling_technologies(
     """
     # Freshwater cooling technologies water usage
     cooling_fresh_water = report_iam.filter(
-        variable="in|water_supply|freshwater|*fresh|*"
+        variable="in|water_supply|surfacewater|*fresh|*"
     ).variable
     cooling_ot_fresh_water = report_iam.filter(
-        variable="in|water_supply|freshwater|*__ot_fresh|*"
+        variable="in|water_supply|surfacewater|*__ot_fresh|*"
     ).variable
     cooling_cl_fresh_water = report_iam.filter(
-        variable="in|water_supply|freshwater|*__cl_fresh|*"
+        variable="in|water_supply|surfacewater|*__cl_fresh|*"
     ).variable
     cooling_ot_saline_water = report_iam.filter(
         variable="in|saline_supply|saline_ppl|*__ot_saline|*"
@@ -771,16 +771,6 @@ def compute_cooling_technologies(
     ).variable
     exclude_patterns = [
         "irrigation_",
-        "__ot_fresh",
-        "__cl_fresh",
-        "__ot_saline",
-        "__air",
-        "industry_unconnected",
-        "industry_untreated",
-        "urban_t_d",
-        "rural_t_d",
-        "urban_unconnected",
-        "rural_unconnected",
     ]
     non_cooling_water = [
         v
