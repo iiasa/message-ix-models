@@ -100,13 +100,13 @@ relation:
   # Relations for which data should be adapted
   require:
   - BCA_Emission
-  - CH4_Emission
+  # - CH4_Emission
   - CO2_r_c
   - CO_Emission
   - HFC_Emission
   - HFC_foam_red
   - HFC_rescom_red
-  - N2O_Emission
+  #- N2O_Emission
   - NH3_Emission
   - NOx_Emission
   - OCA_Emission
