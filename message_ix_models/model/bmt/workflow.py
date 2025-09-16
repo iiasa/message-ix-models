@@ -10,8 +10,9 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.model.buildings.build import build_B as build_B
 from message_ix_models.model.material.build import build_M as build_M
-from message_ix_models.model.transport.build import main as build_T
 from message_ix_models.workflow import Workflow
+
+# from message_ix_models.model.transport.build import build as build_T
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +50,13 @@ def check_context(
 
 
 # Main BMT workflow
+# Baseline starts from SSP_SSP2_v*/baseline_DEFAULT_step_4
+# Baseline with M added starts from SSP_SSP2_v*/baseline_DEFAULT_step_12
+
+# Runing test with the order M->BM->others
+# Ideal order should be M->MT->BMT
+
+
 def generate(context: Context) -> Workflow:
     """Create the BMT-run workflow."""
     wf = Workflow(context)
@@ -104,7 +112,9 @@ def generate(context: Context) -> Workflow:
         "B built",
         "M solved",
         build_B,
-        target=f"{model_name}/baseline_BM",  # BM later
+        target=f"{model_name}/baseline_BM",
+        # 2025-09-08 baseline_M copied from SSP_SSP2_v6.1/baseline_DEFAULT_step_12
+        # or SSP_SSP2_v6.1/baseline_DEFAULT for testing
         clone=dict(keep_solution=False),
     )
 
@@ -113,14 +123,14 @@ def generate(context: Context) -> Workflow:
         "B built",
         solve,
         model="MESSAGE",
-        target=f"{model_name}/baseline_BM",  # BM later
+        target=f"{model_name}/baseline_BM",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
         "T built",
         "BM solved",
-        build_T,
+        # build_T,  # TODO: Uncomment when transport build is available
         target=f"{model_name}/baseline_BMT",
         clone=dict(keep_solution=False),
     )
