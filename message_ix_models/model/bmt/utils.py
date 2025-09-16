@@ -13,12 +13,106 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+def _generate_vetting_csv(
+    original_demand: pd.DataFrame,
+    modified_demand: pd.DataFrame,
+    output_path: str,
+) -> None:
+    """Generate a CSV file showing material demand subtraction details.
+
+    Parameters
+    ----------
+    original_demand : pd.DataFrame
+        Original demand data before subtraction
+    modified_demand : pd.DataFrame
+        Modified demand data after subtraction
+    output_path : str
+        Path where to save the vetting CSV file
+    """
+    # Reset index to work with columns
+    orig = original_demand.reset_index()
+    mod = modified_demand.reset_index()
+
+    # Merge original and modified data
+    vetting_data = orig.merge(
+        mod,
+        on=["node", "year", "commodity"],
+        suffixes=("_original", "_modified"),
+        how="outer",
+    ).fillna(0)
+
+    # Calculate subtraction amounts and percentages
+    vetting_data["subtracted_amount"] = (
+        vetting_data["value_original"] - vetting_data["value_modified"]
+    )
+
+    # Calculate percentage subtracted (avoid division by zero)
+    vetting_data["subtraction_percentage"] = (
+        vetting_data["subtracted_amount"]
+        / vetting_data["value_original"].replace(0, 1)
+        * 100
+    )
+
+    # Replace infinite values with 0 (when original was 0)
+    vetting_data["subtraction_percentage"] = vetting_data[
+        "subtraction_percentage"
+    ].replace([float("inf"), -float("inf")], 0)
+
+    # Round to reasonable precision
+    vetting_data["subtraction_percentage"] = vetting_data[
+        "subtraction_percentage"
+    ].round(2)
+
+    # Select and rename columns for clarity
+    output_columns = [
+        "node",
+        "year",
+        "commodity",
+        "value_original",
+        "value_modified",
+        "subtracted_amount",
+        "subtraction_percentage",
+    ]
+
+    vetting_data = vetting_data[output_columns].copy()
+    vetting_data.columns = [
+        "node",
+        "year",
+        "commodity",
+        "original_demand",
+        "modified_demand",
+        "subtracted_amount",
+        "subtraction_percentage",
+    ]
+
+    # # Filter out rows where no subtraction occurred
+    # vetting_data = vetting_data[vetting_data["subtracted_amount"] > 0]
+
+    # Sort by commodity, node, year for better readability
+    vetting_data = vetting_data.sort_values(["commodity", "node", "year"])
+
+    # Save to CSV
+    vetting_data.to_csv(output_path, index=False)
+
+    log.info(f"Vetting CSV saved to: {output_path}")
+
+    # Log summary statistics
+    if len(vetting_data) > 0:
+        avg_pct = vetting_data["subtraction_percentage"].mean()
+        max_pct = vetting_data["subtraction_percentage"].max()
+        log.info(f"Average subtraction percentage: {avg_pct:.2f}%")
+        log.info(f"Max subtraction percentage: {max_pct:.2f}%")
+
+
+# Maybe it is better to have one function for each method?
 def subtract_material_demand(
     scenario: "Scenario",
     info: "ScenarioInfo",
     sturm_r: pd.DataFrame,
     sturm_c: pd.DataFrame,
     method: str = "bm_subtraction",
+    generate_vetting_csv: bool = True,
+    vetting_output_path: str = "material_demand_subtraction_vetting.csv",
 ) -> pd.DataFrame:
     """Subtract inter-sector material demand from existing demands in scenario.
 
@@ -43,6 +137,11 @@ def subtract_material_demand(
         - "im_subtraction": substract base year and rerun material demand projection
         - "pm_subtraction": to be determined (currently treated as additional demand)
         - "tm_subtraction": to be determined
+    generate_vetting_csv : bool, optional
+        Whether to generate a CSV file showing subtraction details (default: True)
+    vetting_output_path : str, optional
+        Path for the vetting CSV file (default:
+        "material_demand_subtraction_vetting.csv")
 
     Returns
     -------
@@ -54,6 +153,9 @@ def subtract_material_demand(
     index_cols = ["node", "year", "commodity"]
 
     if method == "bm_subtraction":
+        # Store original demand for vetting if requested
+        original_demand = mat_demand.copy() if generate_vetting_csv else None
+
         # Subtract the building material demand trajectory from existing demands
         for rc, base_data, how in (
             ("resid", sturm_r, "right"),
@@ -98,6 +200,10 @@ def subtract_material_demand(
                 .assign(value=lambda df: df["value"].clip(0))
                 .drop(columns=["demand_comm_const", "demand_resid_const"])
             )
+
+            # Generate vetting CSV if requested
+            if generate_vetting_csv and original_demand is not None:
+                _generate_vetting_csv(original_demand, mat_demand, vetting_output_path)
 
     elif method == "im_subtraction":
         # TODO: to be implemented
