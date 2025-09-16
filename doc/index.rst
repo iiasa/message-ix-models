@@ -119,6 +119,8 @@ Other submodules are documented on their respective pages:
    transport/index
    water/index
 
+.. _index-projects:
+
 .. toctree::
    :maxdepth: 1
    :caption: Research projects
@@ -131,6 +133,7 @@ Other submodules are documented on their respective pages:
    project/digsy
    project/ecemf
    project/edits
+   project/efc
    project/elevate
    project/engage
    project/gea
@@ -146,6 +149,7 @@ Other submodules are documented on their respective pages:
    project/scenariomip
    project/shape
    project/sparccle
+   project/spipa
    project/ssp
    project/uptake
 
