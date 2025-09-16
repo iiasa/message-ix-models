@@ -500,6 +500,7 @@ def prepare_data(
     sturm_c: pd.DataFrame,
     with_materials: bool,
     relations: list[str],
+    afofi_demand: pd.DataFrame = None,
 ) -> "ParameterData":
     """Derive data for MESSAGEix-Buildings from `scenario`."""
 
@@ -509,27 +510,65 @@ def prepare_data(
     # Mapping from original to generated commodity names
     c_map = {f"rc_{name}": f"afofi_{name}" for name in ("spec", "therm")}
 
-    # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
-    # values are based on 2010 and 2015 data; see the code for details.
-    c_share = get_afofi_commodity_shares()
+    # Handle AFOFI demand - either from CSV file or calculated from shares
+    # NAVIGATE workflow 2023 should work well with either approach
+    if afofi_demand is not None:
+        # Use provided AFOFI demand from CSV file directly - no scaling needed
+        log.info("Using provided AFOFI demand from CSV file")
+        result["demand"] = afofi_demand
 
-    # Retrieve existing demands
-    filters: dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
-    afofi_dd = data_for_quantity(
-        "par", "demand", "value", scenario, config=dict(filters=filters)
-    )
+        # Still need to create AFOFI technologies, but without scaling
+        # Identify technologies that output to rc_spec or rc_therm
+        rc_techs = scenario.par(
+            "output", filters={"commodity": ["rc_spec", "rc_therm"]}
+        )["technology"].unique()
 
-    # On a second pass (after main() has already run once), rc_spec and rc_therm have
-    # been stripped out, so `afofi_dd` is empty; skip manipulating it.
-    if len(afofi_dd):
-        # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
-        # - Relabel commodities.
-        tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
+        # Mapping from source to generated names for scale_and_replace
+        # Exclude technologies that should not be transformed to afofi
+        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
+        replace = {
+            "commodity": c_map,
+            "technology": {
+                t: re.sub("(rc|RC)", "afofi", t)
+                for t in rc_techs
+                if t not in exclude_techs
+            },
+        }
 
-        # Convert back to a MESSAGE data frame
-        dims = dict(commodity="c", node="n", level="l", year="y", time="h")
-        # TODO Remove typing exclusion once message_ix is updated for genno 1.25
-        result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
+        # Use 1.0 scaling since we have actual demand data
+        # To match the merge_data call below
+        t_shares = Quantity(1.0, name="afofi tech share")
+
+        merge_data(
+            result,
+            # TODO Remove exclusion once message-ix-models >2025.1.10 is released
+            scale_and_replace(  # type: ignore [arg-type]
+                scenario, replace, t_shares, relations=relations, relax=0.05
+            ),
+        )
+    else:
+        # Original method: calculate AFOFI demand from shares, added by PNK 2023
+        # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
+        # values are based on 2010 and 2015 data; see the code for details.
+        c_share = get_afofi_commodity_shares()
+
+        # Retrieve existing demands
+        filters: dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
+        afofi_dd = data_for_quantity(
+            "par", "demand", "value", scenario, config=dict(filters=filters)
+        )
+
+        # On a second pass (after main() has already run once), rc_spec and rc_therm
+        # have been stripped out, so `afofi_dd` is empty; skip manipulating it.
+        if len(afofi_dd):
+            # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
+            # - Relabel commodities.
+            tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
+
+            # Convert back to a MESSAGE data frame
+            dims = dict(commodity="c", node="n", level="l", year="y", time="h")
+            # TODO Remove typing exclusion once message_ix is updated for genno 1.25
+            result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
 
         # Copy technology parameter values from rc_spec and rc_therm to new afofi.
         # Again, once rc_(spec|therm) are stripped, .par() returns nothing here, so
@@ -693,6 +732,7 @@ def main(
         sturm_c,
         context.buildings.with_materials,
         relations=spec.require.set["relation"],
+        afofi_demand=None,  # Use calculated AFOFI demand
     )
 
     # Remove unused commodities and technologies
@@ -898,6 +938,10 @@ def build_B(
     e_use_path = private_data_path("buildings", "e_use.csv")
     e_use = pd.read_csv(e_use_path, index_col=0)
 
+    # afofio
+    afofio_path = private_data_path("buildings", "afofio_demand.csv")
+    afofio = pd.read_csv(afofio_path, index_col=0)
+
     # demand
     expr = "(cool|heat|hotwater|floor|other_uses)"
     excl = "v_no_heat"
@@ -926,6 +970,7 @@ def build_B(
         sturm_c,
         context.buildings.with_materials,
         relations=spec.require.set["relation"],
+        afofi_demand=afofio,
     )
 
     # Remove unused commodities and technologies
