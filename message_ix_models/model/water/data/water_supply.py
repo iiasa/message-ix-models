@@ -313,7 +313,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 inp,
                 make_df(
                     "input",
-                    technology="basin_to_reg",
+                    technology="basin_to_reg_core",
                     value=1,
                     unit="MCM",
                     level="water_avail_basin",
@@ -331,13 +331,13 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-        # input dataframe for basin_to_reg_all technology (irrigation freshwater)
+        # input dataframe for basin_to_reg_plus technology (irrigation freshwater)
         inp = pd.concat(
             [
                 inp,
                 make_df(
                     "input",
-                    technology="basin_to_reg_all",
+                    technology="basin_to_reg_plus",
                     value=1,
                     unit="MCM",
                     level="water_supply_basin",
@@ -632,7 +632,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 output_df,
                 make_df(
                     "output",
-                    technology="basin_to_reg",
+                    technology="basin_to_reg_core",
                     value=1,
                     unit="MCM",
                     level="water_supply",
@@ -645,13 +645,14 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-        # output data frame for basin_to_reg_all technology (irrigation freshwater)
+        # output data frame for basin_to_reg_plus technology (irrigation freshwater)
+
         output_df = pd.concat(
             [
                 output_df,
                 make_df(
                     "output",
-                    technology="basin_to_reg_all",
+                    technology="basin_to_reg_plus",
                     value=1,
                     unit="MCM",
                     level="water_supply",
@@ -671,7 +672,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         # dummy variable cost for dummy water to energy technology
         var = make_df(
             "var_cost",
-            technology="basin_to_reg",
+            technology="basin_to_reg_core",
             mode=df_node["mode"],
             node_loc=df_node["region"],
             value=20 * USD_KM3_TO_USD_MCM,
@@ -679,13 +680,13 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
         var["year_act"] = var["year_vtg"]
 
-        # dummy variable cost for basin_to_reg_all technology (irrigation freshwater)
+        # dummy variable cost for basin_to_reg_plus technology (irrigation freshwater)
         var = pd.concat(
             [
                 var,
                 make_df(
                     "var_cost",
-                    technology="basin_to_reg_all",
+                    technology="basin_to_reg_plus",
                     mode=df_node["mode"],
                     node_loc=df_node["region"],
                     value=20 * USD_KM3_TO_USD_MCM,
@@ -693,9 +694,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time)),
             ]
         )
-        basin_to_reg_all_mask = var["technology"] == "basin_to_reg_all"
-        var.loc[basin_to_reg_all_mask, "year_act"] = var.loc[
-            basin_to_reg_all_mask, "year_vtg"
+        basin_to_reg_plus_mask = var["technology"] == "basin_to_reg_plus"
+        var.loc[basin_to_reg_plus_mask, "year_act"] = var.loc[
+            basin_to_reg_plus_mask, "year_vtg"
         ]
         # # Dummy cost for extract surface ewater to prioritize water sources
         # var = pd.concat([var, make_df(
@@ -729,7 +730,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         share = make_df(
             "share_mode_up",
             shares="share_basin",
-            technology="basin_to_reg",
+            technology="basin_to_reg_core",
             mode=df_sw["mode"],
             node_share=df_sw["MSGREG"],
             time=df_sw["time"],
@@ -738,14 +739,14 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             year_act=df_sw["year"],
         )
 
-        # share_mode_up for basin_to_reg_all technology (irrigation freshwater)
+        # share_mode_up for basin_to_reg_plus technology (irrigation freshwater)
         share = pd.concat(
             [
                 share,
                 make_df(
                     "share_mode_up",
                     shares="share_basin",
-                    technology="basin_to_reg_all",
+                    technology="basin_to_reg_plus",
                     mode=df_sw["mode"],
                     node_share=df_sw["MSGREG"],
                     time=df_sw["time"],
