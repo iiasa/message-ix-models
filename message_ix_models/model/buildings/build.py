@@ -31,12 +31,11 @@ from message_ix_models.model.structure import (
     get_region_codes,
 )
 from message_ix_models.util import (
-    package_data_path,
-    private_data_path,
     load_package_data,
     make_io,
     merge_data,
     nodes_ex_world,
+    private_data_path,
 )
 
 from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
@@ -147,6 +146,7 @@ def get_spec(context: Context) -> Spec:
 
     # Read config and save to context.buildings
     from message_ix_models.model.buildings.config import Config
+
     config = Config()
     context.buildings = config
 
@@ -308,15 +308,15 @@ def load_config(context: Context) -> None:
 
     # Generate technologies that replace corresponding *_rc|RC in the base model
     expr = re.compile("_(rc|RC)$")
-    
-    # Technologies that should not be transformed to afofi 
+
+    # Technologies that should not be transformed to afofi
     exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
-    
+
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
         # Skip technologies that should not be transformed
         if t.id in exclude_techs:
             continue
-            
+
         # Generate a new Code object, preserving annotations
         new = deepcopy(t)
         new.id = expr.sub("_afofi", t.id)
@@ -541,10 +541,15 @@ def prepare_data(
         )["technology"].unique()
 
         # Mapping from source to generated names for scale_and_replace
-        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"} # Exclude technologies that should not be transformed to afofi
+        # Exclude technologies that should not be transformed to afofi
+        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
         replace = {
             "commodity": c_map,
-            "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs if t not in exclude_techs},
+            "technology": {
+                t: re.sub("(rc|RC)", "afofi", t)
+                for t in rc_techs
+                if t not in exclude_techs
+            },
         }
         # Compute shares with dimensions (t, n) for scaling parameter data
         t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
@@ -601,7 +606,7 @@ def prepare_data(
     tmp = {k: pd.concat(v) for k, v in data.items()}
     adapt_emission_factors(tmp)
     merge_data(result, tmp)
-    
+
     # Add demand data - append to existing demand if it exists
     if "demand" in result:
         result["demand"] = pd.concat([result["demand"], demand])
@@ -843,11 +848,12 @@ def materials(
     # Concatenate data frames together
     return {k: pd.concat(v) for k, v in result.items()}
 
+
 # works in the same way as main() but applicable for ssp baseline scenarios
 def build_B(
     context: Context,
     scenario: message_ix.Scenario,
-    ):
+):
     """Set up the structure and data for MESSAGEix_Buildings on `scenario`.
 
     Parameters
@@ -858,6 +864,7 @@ def build_B(
     info = ScenarioInfo(scenario)
 
     from message_ix_models.model.buildings.config import Config
+
     config = Config()
     context.buildings = config
 
@@ -896,9 +903,15 @@ def build_B(
     excl = "v_no_heat"
     demand = pd.concat(
         [
-            e_use[~e_use.commodity.str.contains("therm")], 
-            sturm_r[sturm_r.commodity.str.contains(expr) & ~sturm_r.commodity.str.contains(excl)],
-            sturm_c[sturm_c.commodity.str.contains(expr) & ~sturm_c.commodity.str.contains(excl)],
+            e_use[~e_use.commodity.str.contains("therm")],
+            sturm_r[
+                sturm_r.commodity.str.contains(expr)
+                & ~sturm_r.commodity.str.contains(excl)
+            ],
+            sturm_c[
+                sturm_c.commodity.str.contains(expr)
+                & ~sturm_c.commodity.str.contains(excl)
+            ],
         ]
     ).assign(level="useful")
     demand.to_csv("debug-demand.csv")
