@@ -511,7 +511,6 @@ def prepare_data(
     c_map = {f"rc_{name}": f"afofi_{name}" for name in ("spec", "therm")}
 
     # Handle AFOFI demand - either from CSV file or calculated from shares
-    # NAVIGATE workflow 2023 should work well with either approach
     if afofi_demand is not None:
         # Use provided AFOFI demand from CSV file directly - no scaling needed
         log.info("Using provided AFOFI demand from CSV file")
@@ -547,7 +546,7 @@ def prepare_data(
             ),
         )
     else:
-        # Original method: calculate AFOFI demand from shares, added by PNK 2023
+        # Original method: calculate AFOFI demand from shares
         # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
         # values are based on 2010 and 2015 data; see the code for details.
         c_share = get_afofi_commodity_shares()
@@ -957,7 +956,12 @@ def build_B(
                 & ~sturm_c.commodity.str.contains(excl)
             ],
         ]
-    ).assign(level="useful")
+    )
+
+    # Assign useful energy and demand levels
+    demand = demand.assign(
+        level=demand.commodity.apply(lambda x: "demand" if "floor" in x else "useful")
+    )
     demand.to_csv("debug-demand.csv")
 
     # Prepare data based on the contents of `scenario`
