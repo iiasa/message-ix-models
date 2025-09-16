@@ -8,8 +8,11 @@ In the following, the bold-face words **required**, **optional**, etc. have spec
 On other pages:
 
 - :doc:`message-ix:contributing` in the MESSAGEix docs.
-  *All* of these apply to contributions to :mod:`message_ix_models` and :mod:`message_data`, including the :ref:`message-ix:code-style`.
-- :doc:`data`, for how to add and handle these.
+  *All* of these apply to contributions to :mod:`message_ix_models`
+  and :mod:`message_data`,
+  in particular the :ref:`message-ix:code-style`.
+- :doc:`howto/index` that includes specific guidelines for some development tasks.
+- :doc:`data` that explains types of data and how they are handled.
 
 On this page:
 
