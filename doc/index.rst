@@ -158,7 +158,7 @@ Other submodules are documented on their respective pages:
    No code, data, or documentation for these projects is currently in :mod:`message_ix_models`:
 
    :doc:`m-data:reference/projects/cd_links` —
-   :doc:`m-data:reference/projects/covid` —
+   :doc:`COVID-19 <m-data:reference/projects/covid>` —
    :doc:`m-data:project/dle` —
    :doc:`m-data:project/leap_re` —
    :doc:`m-data:reference/projects/led`.
