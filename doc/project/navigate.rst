@@ -7,6 +7,10 @@ NAVIGATE
 
 .. caution:: |gh-350|
 
+.. seealso::
+
+   :doc:`m-data:project/navigate` in the (non-public) :mod:`message_data` documentation.
+
 Code reference
 ==============
 

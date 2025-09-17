@@ -211,7 +211,7 @@ intersphinx_mapping = {
     "m-data": (
         f"https://{_token}:@docs.messageix.org/projects/models-internal/en/latest/",
         # Use a local copy of objects.inv, if the user has one
-        (local_inv("message_data"), None),
+        local_inv("message_data"),
     ),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pint": ("https://pint.readthedocs.io/en/stable/", None),
