@@ -2,6 +2,11 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from message_ix_models.project.digsy.supply import (
+    gen_res_marg_demand_tec_data,
+    remove_elec_t_d_res_marg,
+)
+
 if TYPE_CHECKING:
     from message_ix import Scenario
 
@@ -157,6 +162,13 @@ def create_sensitivity_scenarios(scens: list[tuple], suffix: str, modifier):
     return
 
 
+def change_res_marg(scen: "Scenario") -> None:
+    remove_elec_t_d_res_marg(scen)
+    rel = gen_res_marg_demand_tec_data(scen, 0.15)
+    with scen.transact():
+        scen.add_par("relation_activity", rel)
+
+
 if __name__ == "__main__":
     import ixmp
     import message_ix
@@ -178,6 +190,10 @@ if __name__ == "__main__":
             "suffix": "_expanded_reserve",
             "modifier": expand_reserve,
         },
+        "reserve margin": {
+            "suffix": "_res_marg_new",
+            "modifier": change_res_marg,
+        },
     }
 
     mp = ixmp.Platform("ixmp_dev")
@@ -185,9 +201,13 @@ if __name__ == "__main__":
     #     [(f"DIGSY_SSP2{i}", "baseline") for i in ["", "_BEST", "_WORST"]],
     #     **sensitivity_map["lower shale cost"],
     # )
+    # create_sensitivity_scenarios(
+    #     [(f"DIGSY_SSP2{i}", "baseline") for i in [""]],
+    #     **sensitivity_map["bigger reserve"],
+    # )
     create_sensitivity_scenarios(
-        [(f"DIGSY_SSP2{i}", "baseline") for i in [""]],
-        **sensitivity_map["bigger reserve"],
+        [(f"DIGSY_SSP2{i}", "baseline_DEFAULT") for i in [""]],
+        **sensitivity_map["reserve margin"],
     )
     # scen = message_ix.Scenario(mp, "DIGSY_SSP2", "baseline")
     # pars = query_ssp_pars(["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"])
