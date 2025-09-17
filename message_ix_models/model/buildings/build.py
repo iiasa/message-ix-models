@@ -893,22 +893,25 @@ def build_B(
     prices = pd.read_csv(price_path)
 
     # sturm_r
-    sturm_r_path = private_data_path("buildings", "resid_sturm.csv")
+    sturm_r_path = private_data_path("buildings", "resid_sturm_20250915.csv")
     # sturm_r_path = package_data_path("buildings", "debug-sturm-resid.csv")
     sturm_r = pd.read_csv(sturm_r_path, index_col=0)
 
     # sturm_c
-    sturm_c_path = private_data_path("buildings", "comm_sturm.csv")
+    sturm_c_path = private_data_path("buildings", "comm_sturm_20250915.csv")
     # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
     sturm_c = pd.read_csv(sturm_c_path, index_col=0)
 
     # e_use
-    e_use_path = private_data_path("buildings", "e_use.csv")
+    e_use_path = private_data_path("buildings", "e_use_20250915.csv")
     e_use = pd.read_csv(e_use_path, index_col=0)
+    # Exclude rows with commodity 'resid_cook_non-comm'
+    e_use = e_use[e_use.commodity != 'resid_cook_non-comm']
 
     # afofio
-    afofio_path = private_data_path("buildings", "afofio_demand.csv")
+    afofio_path = private_data_path("buildings", "afofio_demand_20250915.csv")
     afofio = pd.read_csv(afofio_path, index_col=0)
+    afofio["value"] = 0
 
     # demand
     expr = "(cool|heat|hotwater|floor|other_uses)"
