@@ -3,7 +3,7 @@ What's new
 
 Next release
 ============
-
+- Fix water module reporting failures and improve calculations (:issue:`407`, :pull:`396`).
 - Improve and extend :doc:`/material/index` (:pull:`418`).
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
 - Improve :mod:`.model.transport` (:pull:`392`).
