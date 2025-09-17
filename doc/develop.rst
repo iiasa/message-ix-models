@@ -11,7 +11,7 @@ On other pages:
   *All* of these apply to contributions to :mod:`message_ix_models`
   and :mod:`message_data`,
   in particular the :ref:`message-ix:code-style`.
-- :doc:`howto/index` that includes specific guidelines for some development tasks.
+- :doc:`howto/index` including detailed guides for some development tasks.
 - :doc:`data` that explains types of data and how they are handled.
 
 On this page:
@@ -86,6 +86,172 @@ For :mod:`message_ix_models`, we use this to designate people who are capable an
 
 - If code owners depart IIASA or are reassigned to other work, they or the :mod:`message_ix_models` maintainers **must** initiate a discussion to identify a new set of owners for their files.
 
+Organization
+============
+
+This section describes the organization or layout
+of the :mod:`message_ix_models` repository and Python package.
+The organization of :mod:`message_data` is roughly similar,
+with some differences as noted below.
+(See also :doc:`howto/migrate`
+for the relationship between this repo and :mod:`message_data`.)
+
+.. _repo-org:
+
+Repository
+----------
+
+:file:`message_ix_models/`
+   (or :file:`message_data/`)
+
+   This directory contains a Python package,
+   thus *code* that creates or manipulates MESSAGE Scenarios,
+   or handles data for these tasks.
+   See :ref:`code-org` below.
+
+:file:`message_ix_models/data/`
+   This directory contains :doc:`data`,
+   in particular metadata and input data used by code.
+   No code is kept in this directory;
+   code **must not** be added.
+   Code **should not** write output data (for example, reporting output)
+   to this directory.
+
+   Some of these files are packaged with the :mod:`message_ix_models` package
+   that is published on PyPI,
+   thus are available to any user who installs the package from this source.
+
+   In :mod:`message_data`,
+   a directory :file:`data/` at the *top level* is used instead.
+   Similarly, code cannot be kept in this directory;
+   only code under :file:`message_data/` can be imported
+   using :py:`from message_data.submodule.name import x, y, z`.
+
+:file:`doc/`
+   The source reStructuredText files for this **documentation**,
+   and Sphinx configuration (:file:`doc/conf.py`) to build it.
+
+:file:`reference/`
+   (:mod:`message_data` only)
+
+   Static files not used *or* produced by the code,
+   but provided for reference as a supplement to the documentation.
+
+.. _code-org:
+
+Code
+----
+
+The code is organized into submodules.
+The following high-level overview
+explains how the organization relates to MESSAGEix-GLOBIOM modeling workflows.
+Some general-purpose modules, classes, and functions are not mentioned;
+for these, see the table of contents.
+See also :ref:`modindex` for an auto-generated list of all modules.
+
+Models (:mod:`message_ix_model.model`)
+   **Code that creates models or mode variants.**
+   MESSAGEix-GLOBIOM is a *family* of models
+   in which the “reference energy system”
+   (RES; with specific sets and populated parameter values)
+   is similar, yet not identical.
+   Many models in the family are defined as *derivatives* of other models.
+
+   For example: :mod:`message_ix_models.model.transport` does not create an RES
+   in an empty :class:`.Scenario`, from scratch.
+   Instead, it operates on a ‘base’ model
+   and produces a new model
+   —in this case, with additional transport sector technologies.
+
+   In the long run (see :ref:`Roadmap`),
+   :mod:`message_ix_models.model` will contain a script
+   that recreates **‘main’* (single, authoritative) MESSAGEix-GLOBIOM RES,
+   from scratch.
+   Currently, this script does not exist,
+   and this ‘main’ RES is itself derived
+   from particular models and scenarios and scenarios
+   stored in the shared IIASA ECE database.
+   These were previously from the CD-LINKS project,
+   and more recently from the ENGAGE project.
+   See :doc:`m-data:reference/model`.
+
+   In the private package, :mod:`message_data.model` also contains:
+
+   - A *general-purpose* :class:`~.model.scenario_runner.ScenarioRunner`
+     *class* to manage and run interdependent sets of Scenarios.
+   - A runscript for a *standard scenario set*,
+     based on the scenario protocol of the :doc:`CD-LINKS <reference/projects/cd_links>` project;
+     see below.
+
+:ref:`index-projects` (:mod:`message_ix_models.project`)
+   **Code to create, run, and analyse scenarios
+   for specific research projects.**
+   Research projects using MESSAGEix-GLOBIOM often involve a “scenario protocol.”
+   This is some description of a set of multiple Scenarios with the same
+   (or very similar) structure,
+   and different parametrizations
+   that represent different policies, modeling assumptions, etc.
+
+   Each submodule of :mod:`message_ix_models.project`
+   (for example, :mod:`message_ix_models.project.navigate`) corresponds to a single research project,
+   and contains tools needed to execute the **project workflow**.
+   In some cases these are in the form of :class:`.Workflow` instances,
+   in other cases as ‘runscripts’.
+   Workflows usually have roughly the following steps:
+
+   1. **Start** with one of the Scenarios created by :mod:`message_ix_models.model`.
+   2. **Build** a set of :class:`.Scenario` from this base,
+      by applying various code in :mod:`message_ix_models` and :mod:`message_data`,
+      with various configuration settings and input data.
+   3. **Solve** each scenario generated in step 2.
+   4. **Report** the results.
+
+   (Sometimes steps 2 and 3 are ‘chained’,
+   with some scenarios being derived from the solution data
+   of earlier scenarios.)
+
+:doc:`Reporting and post-processing <api/report/index>` :mod:`message_ix_models.report`
+   This module builds on :mod:`message_ix.report` and :mod:`ixmp.report`
+   to provide general-purpose reporting functionality
+   for MESSAGEix-GLOBIOM family models.
+
+   This base reporting corresponds to the ‘main’ RES,
+   and is extended by :mod:`message_ix_models.model` submodules
+   to cover features of particular model variants;
+   or by :mod:`message_ix_models.project` submodules to cover variables
+   or output formats needed for particular projects.
+
+   The module was previously at :py:`message_data.reporting`.
+
+:doc:`Tools <api/tools>` (:mod:`message_ix_models.tools`)
+   This submodule contains **higher-level** tools
+   that perform operations tailored to the structure of MESSAGEix-GLOBIOM and MESSAGE,
+   or to particular upstream data sources and their formats.
+   These are *used by* code in submodules of :mod:`.model` or :mod:`.project`,
+   but generally not vice versa.
+
+:doc:`Utilities <api/util>` (:mod:`message_ix_models.util`)
+   This submodule contains a collection of **lower-level**,
+   general-purpose programming utilities
+   that can be used across the rest of the code base.
+   These include convenience wrappers and extensions for basic Python,
+   :mod:`pandas`, and other upstream packages.
+
+:ref:`repro-testing` (:mod:`message_ix_models.tests`)
+   The test suite is arranged in modules and submodules
+   that correspond to the code layout.
+   For example:
+   a function named :py:`do_thing()` in a module :py:`message_ix_models.project.foo.report.extra`
+   will be tested in a module :py:`message_ix_models.tests.project.foo.report.test_extra`,
+   and a function named :py:`test_do_thing()`.
+   This arrangement makes it easy to locate the tests for any code,
+   and vice versa.
+
+:doc:`Test utilities and fixtures <api/testing>` (:mod:`message_ix_models.testing`)
+   These are both low-level utilities and high-level tools
+   specifically to be used within the test suite.
+   They are *not* used anywhere besides :mod:`message_ix_models.tests`.
+
 .. _policy-upstream-versions:
 
 Upstream version policy
@@ -127,3 +293,32 @@ Python
   - This indicates that the marked code relies on features only available in certain upstream versions (of one of the packages mentioned above, or another package), newer than those listed in `pyproject.toml <https://github.com/iiasa/message-ix-models/blob/main/pyproject.toml>`__.
   - These minima **must** be mentioned in the :mod:`message_ix_models` documentation.
   - Users wishing to use this marked code **must** use compatible versions of those packages.
+
+.. _roadmap:
+
+Roadmap
+=======
+
+The `message-ix-models Github repository <https://github.com/iiasa/message-ix-models>`_ hosts:
+
+- `Current open issues <https://github.com/iiasa/message-ix-models/issues>`_,
+  arranged using many `labels <https://github.com/iiasa/message-ix-models/labels>`_.
+- `Project boards <https://github.com/iiasa/message-ix-models/projects>`_ for ongoing efforts.
+
+Documentation for particular submodules,
+for instance :mod:`message_ix_models.model.material`,
+may contain module- or project-specific roadmaps and change logs.
+
+The same features are available for the private :mod:`message_data` repository:
+`issues <https://github.com/iiasa/message_data/issues>`_,
+`labels <https://github.com/iiasa/message_data/labels>`_, and
+`project boards <https://github.com/iiasa/message_data/projects>`_.
+
+Inline TODOs
+------------
+
+This is an automatically generated list of every place
+where a :code:`.. todo::` directive is used in the documentation,
+including in function docstrings.
+
+.. todolist::
