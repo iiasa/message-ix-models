@@ -150,7 +150,7 @@ for these, see the table of contents.
 See also :ref:`modindex` for an auto-generated list of all modules.
 
 Models (:mod:`message_ix_model.model`)
-   **Code that creates models or mode variants.**
+   **Code that creates models or model variants.**
    MESSAGEix-GLOBIOM is a *family* of models
    in which the “reference energy system”
    (RES; with specific sets and populated parameter values)
@@ -165,11 +165,10 @@ Models (:mod:`message_ix_model.model`)
 
    In the long run (see :ref:`Roadmap`),
    :mod:`message_ix_models.model` will contain a script
-   that recreates **‘main’* (single, authoritative) MESSAGEix-GLOBIOM RES,
+   that recreates a **‘main’** (single, authoritative) MESSAGEix-GLOBIOM RES,
    from scratch.
    Currently, this script does not exist,
-   and this ‘main’ RES is itself derived
-   from particular models and scenarios and scenarios
+   and this ‘main’ RES is itself derived from particular models and scenarios
    stored in the shared IIASA ECE database.
    These were previously from the CD-LINKS project,
    and more recently from the ENGAGE project.
@@ -180,7 +179,7 @@ Models (:mod:`message_ix_model.model`)
    - A *general-purpose* :class:`~.model.scenario_runner.ScenarioRunner`
      *class* to manage and run interdependent sets of Scenarios.
    - A runscript for a *standard scenario set*,
-     based on the scenario protocol of the :doc:`CD-LINKS <reference/projects/cd_links>` project;
+     based on the scenario protocol of the :doc:`CD-LINKS <m-data:reference/projects/cd_links>` project;
      see below.
 
 :ref:`index-projects` (:mod:`message_ix_models.project`)
@@ -199,8 +198,8 @@ Models (:mod:`message_ix_model.model`)
    in other cases as ‘runscripts’.
    Workflows usually have roughly the following steps:
 
-   1. **Start** with one of the Scenarios created by :mod:`message_ix_models.model`.
-   2. **Build** a set of :class:`.Scenario` from this base,
+   1. **Start** with one of the :class:`Scenarios <.Scenario>` created by :mod:`message_ix_models.model`.
+   2. **Build** a set of scenarios from this base,
       by applying various code in :mod:`message_ix_models` and :mod:`message_data`,
       with various configuration settings and input data.
    3. **Solve** each scenario generated in step 2.
@@ -210,7 +209,7 @@ Models (:mod:`message_ix_model.model`)
    with some scenarios being derived from the solution data
    of earlier scenarios.)
 
-:doc:`Reporting and post-processing <api/report/index>` :mod:`message_ix_models.report`
+:doc:`Reporting and post-processing <api/report/index>` (:mod:`message_ix_models.report`)
    This module builds on :mod:`message_ix.report` and :mod:`ixmp.report`
    to provide general-purpose reporting functionality
    for MESSAGEix-GLOBIOM family models.

@@ -92,34 +92,34 @@ General description
    This can help indicate whether a reviewer should be fast or thorough.
 
 “PR checklist” section
-  As written in the MESSAGEix docs:
-  **do not** remove items from this section.
-  Use strikethrough to make a clear and positive indication
-  that part or all of an item is not relevant for the PR.
+   As written in the MESSAGEix docs:
+   **do not** remove items from this section.
+   Use strikethrough to make a clear and positive indication
+   that part or all of an item is not relevant for the PR.
 
-  The specific items are:
+   The specific items are:
 
-  - “Continuous integration checks all ✅”
+   - “Continuous integration checks all ✅”
 
-    This item is always **required**.
+     This item is always **required**.
 
-  - “Add or expand tests; coverage checks both ✅”
+   - “Add or expand tests; coverage checks both ✅”
 
-    This is **required** in order to pass the ``codecov/patch``
-    and ``codecov/project`` checks.
-    For changes solely to documentation, CI configuration, etc.,
-    the first part can be struck out, and the coverage checks should pass.
+     This is **required** in order to pass the ``codecov/patch``
+     and ``codecov/project`` checks.
+     For changes solely to documentation, CI configuration, etc.,
+     the first part can be struck out, and the coverage checks should pass.
 
-  - “Add, expand, or update documentation.”
+   - “Add, expand, or update documentation.”
 
-    This is **required** if the PR results in changes
-    to user-facing behaviour,
-    for instance new features or fixes to existing behaviour.
+     This is **required** if the PR results in changes
+     to user-facing behaviour,
+     for instance new features or fixes to existing behaviour.
 
-  - “Update doc/whatsnew”
+   - “Update doc/whatsnew”
 
-    Same conditions as the previous item.
-    Described below.
+     Same conditions as the previous item.
+     Described :ref:`below <#howto-pr-whatsnew>`.
 
 Complete your contribution
 ==========================
@@ -135,7 +135,7 @@ is the idea of creating tests *before* or *with* the code that is to be tested.
 It can substantially simplify and speed up development.
 
 **Create a test module** under :file:`message_ix_models/tests/`
-in a directory or folder that mirror the existing or planned structure
+in a directory or folder that mirrors existing or planned structure
 of the code you will modify in the PR.
 Then **add or modify** tests that run the target code.
 These tests express the following intentions:
@@ -242,6 +242,8 @@ the integration with ReadTheDocs will automatically run,
 building a preview of the modified docs.
 Inspect the preview and the log output
 to ensure your additions render correctly.
+
+.. _howto-pr-whatsnew:
 
 Update :file:`doc/whatsnew.rst`
 -------------------------------

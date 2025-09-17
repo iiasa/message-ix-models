@@ -219,7 +219,7 @@ and you have it available.
     This should describe *what* specific structure,
     parametrization, reporting, and other tasks are set up by the workflow(s)
     It should also include complete instructions to execute the workflows.
-    This **may** include.
+    This **may** include:
 
     - Versions of Python packages, other code, or data files known to work.
 
