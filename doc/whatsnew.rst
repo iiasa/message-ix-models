@@ -6,6 +6,8 @@ Next release
 
 - Improve and extend :doc:`/material/index` (:pull:`418`).
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
+- Expand :doc:`develop` documentation (:pull:`423`)
+  with material previously in :mod:`message_data` docs.
 
 v2025.9.9
 =========
