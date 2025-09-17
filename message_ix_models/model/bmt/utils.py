@@ -148,8 +148,11 @@ def subtract_material_demand(
     pd.DataFrame
         Modified demand data with material demand subtracted
     """
+    # Method adopted in NAVIGATE workflow 2023 by PNK
     # Retrieve data once
-    mat_demand = scenario.par("demand", {"level": "demand"})
+    target_commodities = ["cement", "steel", "aluminum"]
+    # Updated filter from level to commodities to avoid non-material commodities
+    mat_demand = scenario.par("demand", {"commodity": target_commodities})
     index_cols = ["node", "year", "commodity"]
 
     if method == "bm_subtraction":
@@ -173,7 +176,10 @@ def subtract_material_demand(
                 .rename(columns={"value": new_col})
                 .assign(
                     commodity=lambda _df: _df.commodity.str.extract(
-                        f"{rc}_mat_demand_(cement|steel|aluminum)", expand=False
+                        f"{rc}_mat_demand_(cement|steel|aluminum)",
+                        expand=False,
+                        # Directly provided by STURM reporting
+                        # No need to multiply intensities and floor space
                     )
                 )
                 .dropna(subset=["commodity"])
