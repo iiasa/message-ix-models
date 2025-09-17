@@ -8,6 +8,7 @@ import logging
 import message_ix
 
 from message_ix_models import Context
+from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import build_B as build_B
 from message_ix_models.model.material.build import build_M as build_M
 from message_ix_models.workflow import Workflow
@@ -141,6 +142,15 @@ def generate(context: Context) -> Workflow:
         solve,
         model="MESSAGE",
         target=f"{model_name}/baseline_BMT",
+        clone=False,
+    )
+
+    wf.add_step(
+        "P built",
+        "BMT baseline solved",
+        build_PM,
+        model="MESSAGE",
+        target=f"{model_name}/baseline_BMP",
         clone=False,
     )
 
