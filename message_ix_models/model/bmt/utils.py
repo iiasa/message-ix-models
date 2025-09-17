@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from message_ix_models.model.material.data_power_sector import gen_data_power_sector
+from message_ix_models.util import add_par_data
+
 if TYPE_CHECKING:
     from message_ix import Scenario
 
@@ -236,3 +239,49 @@ def subtract_material_demand(
         raise ValueError(f"Unknown method: {method}")
 
     return mat_demand
+
+
+def build_PM(context, scenario: "Scenario", **kwargs) -> "Scenario":
+    """Build the material intensity for power capacities.
+
+    This function adds power sector material intensity parameters (input_cap_new,
+    input_cap_ret, output_cap_new, output_cap_ret) to the scenario if they do not
+    already exist.
+
+    Parameters
+    ----------
+    context
+        The context of the scenario to be add intensity data to.
+    scenario : message_ix.Scenario
+        The scenario to add material-power sector linkages to.
+    **kwargs
+        Additional keyword arguments (ignored, for workflow compatibility).
+    """
+    # Check if power sector material data already exists
+    if scenario.has_par("input_cap_new"):
+        try:
+            existing_data = scenario.par("input_cap_new")
+            if (
+                not existing_data.empty
+                and "cement" in existing_data.get("commodity", pd.Series()).values
+            ):
+                log.info(
+                    "Power sector material intensity data already exists "
+                    "(found cement in input_cap_new). Skipping build_pm."
+                )
+                return scenario
+        except Exception as e:
+            log.warning(f"Could not check existing input_cap_new data: {e}")
+
+    log.info("Adding material intensity for power capacities...")
+    scenario.check_out()
+    try:
+        power_data = gen_data_power_sector(scenario, dry_run=False)
+        add_par_data(scenario, power_data, dry_run=False)
+        # but actually do not know how to provide log info while adding those parameters
+        log.info("Successfully added power sector material intensity data.")
+    except Exception as e:
+        log.error(f"Error adding power sector material data: {e}")
+        raise
+
+    return scenario
