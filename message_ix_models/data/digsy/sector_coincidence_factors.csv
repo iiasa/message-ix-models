@@ -1,0 +1,9 @@
+sector,value
+CCS,1.0
+dac,1.0
+heavy_industry,1.0
+light_industry,1.0
+rc_therm,0.9
+rc_spec,1.0
+transport,2.0
+exclude,NaN
