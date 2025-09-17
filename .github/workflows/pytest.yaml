@@ -2,11 +2,11 @@ name: Test
 
 on:
   # To debug the workflow, uncomment this entry AND comment pull_request_target
-  # pull_request:
-  #   branches: [ main ]
-  pull_request_target:
-    branches: [ main, "migrate**" ]
-    types: [ labeled, opened, reopened, synchronize ]
+  pull_request:
+     branches: [ main ]
+  # pull_request_target:
+  #   branches: [ main, "migrate**" ]
+  #   types: [ labeled, opened, reopened, synchronize ]
   schedule:
   - cron: "0 5 * * *"  # = 06:00 CET = 07:00 CEST
 
@@ -25,8 +25,20 @@ env:
   python-version: "3.13"
 
 jobs:
+  skip:
+    name: Skip workflow on PR branch
+    runs-on: ubuntu-latest
+    steps:
+    - name: Early exit
+      run: |
+        gh run cancel ${{ github.run_id }}
+        gh run watch ${{ github.run_id }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   check:
     name: Check permissions, identify ref to test
+    needs: skip
     runs-on: ubuntu-latest
     steps:
     - if: >
