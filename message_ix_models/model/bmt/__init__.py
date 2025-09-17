@@ -1,5 +1,5 @@
 """BMT runs."""
 
-from .utils import subtract_material_demand
+from .utils import build_PM, subtract_material_demand
 
-__all__ = ["subtract_material_demand"]
+__all__ = ["build_PM", "subtract_material_demand"]
