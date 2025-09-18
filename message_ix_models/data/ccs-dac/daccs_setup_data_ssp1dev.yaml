@@ -1,0 +1,1261 @@
+# LT DAC data: DAC5 LT heat pump+TES+battery
+dac_lt:
+  year_init: 2030
+  input_:
+    par_name: input
+    value: 1.09
+    unit: GWa
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      electr: 1
+    level:
+      final: 1
+    year_act:
+      rate: 0
+      2030: 0.92
+      2035: 0.87
+      2040: 0.82
+      2045: 0.79
+      2050: 0.76
+      2055: 0.74
+      2060: 0.72
+      2070: 0.71
+      2080: 0.70
+      2090: 0.70
+      2100: 0.70
+      2110: 0.70
+  output_:
+    par_name: output
+    value: 1
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      dac_co2: 1
+    level:
+      secondary: 1
+  capacity_factor_:
+    par_name: capacity_factor
+    value: 0.91
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  technical_lifetime_:
+    par_name: technical_lifetime
+    value: 20
+    unit: y
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  construction_time_:
+    par_name: construction_time
+    value: 2
+    unit: y
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  abs_cost_activity_soft_up_:
+    par_name: abs_cost_activity_soft_up
+    value: 175
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  growth_activity_lo_:
+    par_name: growth_activity_lo
+    value: -0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  initial_new_capacity_up_:
+    par_name: initial_new_capacity_up
+    value: 0.1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+      2030: 1
+      2035: 1
+      2040: 1
+      2045: 1
+      2050: 1
+      2055: 1
+      2060: 1
+      2070: 1
+      2080: 1
+      2090: 1
+      2100: 1
+      2110: 1
+  growth_new_capacity_up_:
+    par_name: growth_new_capacity_up
+    value: 0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+      2030: 1
+      2035: 1
+      2040: 1
+      2045: 1
+      2050: 1
+      2055: 1
+      2060: 1
+      2070: 1
+      2080: 1
+      2090: 1
+      2100: 1
+      2110: 1
+  level_cost_activity_soft_lo_:
+    par_name: level_cost_activity_soft_lo
+    value: 0.5
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  level_cost_activity_soft_up_:
+    par_name: level_cost_activity_soft_up
+    value: 0.5
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  relation_activity_DAC_mpen_c:
+    par_name: relation_activity
+    value: 1
+    unit: Mt C/yr
+    relation: [DAC_mpen_c]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: -1
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+
+dac_hte:
+  year_init: 2030
+  input_:
+    par_name: input
+    value: 1.05
+    unit: GWa
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      electr: 1
+    level:
+      final: 1
+    year_act:
+      rate: 0
+      2030: 0.92
+      2035: 0.87
+      2040: 0.82
+      2045: 0.79
+      2050: 0.76
+      2055: 0.74
+      2060: 0.72
+      2070: 0.71
+      2080: 0.70
+      2090: 0.70
+      2100: 0.70
+      2110: 0.70
+  output_:
+    par_name: output
+    value: 1
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      dac_co2: 1
+    level:
+      secondary: 1
+  capacity_factor_:
+    par_name: capacity_factor
+    value: 0.91
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  technical_lifetime_:
+    par_name: technical_lifetime
+    value: 30
+    unit: y
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  construction_time_:
+    par_name: construction_time
+    value: 2
+    unit: y
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  abs_cost_activity_soft_up_:
+    par_name: abs_cost_activity_soft_up
+    value: 175
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  growth_activity_lo_:
+    par_name: growth_activity_lo
+    value: -0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  initial_new_capacity_up_:
+    par_name: initial_new_capacity_up
+    value: 0.1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+      2030: 1
+      2035: 1
+      2040: 1
+      2045: 1
+      2050: 1
+      2055: 1
+      2060: 1
+      2070: 1
+      2080: 1
+      2090: 1
+      2100: 1
+      2110: 1
+  growth_new_capacity_up_:
+    par_name: growth_new_capacity_up
+    value: 0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+      2030: 1
+      2035: 1
+      2040: 1
+      2045: 1
+      2050: 1
+      2055: 1
+      2060: 1
+      2070: 1
+      2080: 1
+      2090: 1
+      2100: 1
+      2110: 1
+  level_cost_activity_soft_lo_:
+    par_name: level_cost_activity_soft_lo
+    value: 0.5
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  level_cost_activity_soft_up_:
+    par_name: level_cost_activity_soft_up
+    value: 0.5
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  relation_activity_DAC_mpen_c:
+    par_name: relation_activity
+    value: 1
+    unit: Mt C/yr
+    relation: [DAC_mpen_c]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: -1
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+
+dac_htg:
+  year_init: 2030
+  input_electr:
+    par_name: input
+    value: 0.46
+    unit: GWa
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      electr: 1
+    level:
+      final: 1
+    year_act:
+      rate: 0
+      2030: 0.92
+      2035: 0.87
+      2040: 0.82
+      2045: 0.79
+      2050: 0.76
+      2055: 0.74
+      2060: 0.72
+      2070: 0.71
+      2080: 0.70
+      2090: 0.70
+      2100: 0.70
+      2110: 0.70
+  input_gas:
+    par_name: input
+    value: 1.02
+    unit: GWa
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      gas: 1
+    level:
+      final: 1
+    year_act:
+      rate: 0
+      2030: 0.92
+      2035: 0.87
+      2040: 0.82
+      2045: 0.79
+      2050: 0.76
+      2055: 0.74
+      2060: 0.72
+      2070: 0.71
+      2080: 0.70
+      2090: 0.70
+      2100: 0.70
+      2110: 0.70
+  output_:
+    par_name: output
+    value: 1
+    unit: Mt C/yr
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M1: 1
+    commodity:
+      dac_co2: 1
+    level:
+      secondary: 1
+  capacity_factor_:
+    par_name: capacity_factor
+    value: 0.91
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  technical_lifetime_:
+    par_name: technical_lifetime
+    value: 30
+    unit: y
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  construction_time_:
+    par_name: construction_time
+    value: 2
+    unit: y
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+  abs_cost_activity_soft_up_:
+    par_name: abs_cost_activity_soft_up
+    value: 175
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  growth_activity_lo_:
+    par_name: growth_activity_lo
+    value: -0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  initial_new_capacity_up_:
+    par_name: initial_new_capacity_up
+    value: 0.1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+      2030: 1
+      2035: 1
+      2040: 1
+      2045: 1
+      2050: 1
+      2055: 1
+      2060: 1
+      2070: 1
+      2080: 1
+      2090: 1
+      2100: 1
+      2110: 1
+  growth_new_capacity_up_:
+    par_name: growth_new_capacity_up
+    value: 0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+      2030: 1
+      2035: 1
+      2040: 1
+      2045: 1
+      2050: 1
+      2055: 1
+      2060: 1
+      2070: 1
+      2080: 1
+      2090: 1
+      2100: 1
+      2110: 1
+  level_cost_activity_soft_lo_:
+    par_name: level_cost_activity_soft_lo
+    value: 0.5
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  level_cost_activity_soft_up_:
+    par_name: level_cost_activity_soft_up
+    value: 0.5
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+  relation_activity_DAC_mpen_c:
+    par_name: relation_activity
+    value: 1
+    unit: Mt C/yr
+    relation: [DAC_mpen_c]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.12 # This is emissions from gas. 0.118 MtC/GWa (IEAGHG, 2021) of gas for DAC, so 0.12 (adjusting)
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+      2030: 0.92
+      2035: 0.87
+      2040: 0.82
+      2045: 0.79
+      2050: 0.76
+      2055: 0.74
+      2060: 0.72
+      2070: 0.71
+      2080: 0.70
+      2090: 0.70
+      2100: 0.70
+      2110: 0.70
+    mode:
+      M1: 1
+
+
+DAC_mpen:
+  year_init: 2030
+#  growth_activity_up_:
+#    par_name: growth_activity_up
+#    value: 0.05
+#    unit: '-'
+#    node_loc:
+#      R12_AFR: 1
+#      R12_CHN: 1
+#      R12_RCPA: 1
+#      R12_EEU: 1
+#      R12_FSU: 1
+#      R12_LAM: 1
+#      R12_MEA: 1
+#      R12_NAM: 1
+#      R12_PAO: 1
+#      R12_PAS: 1
+#      R12_SAS: 1
+#      R12_WEU: 1
+#    year_act:
+#      rate: 0.0
+#    time:
+#      year: 1
+  soft_activity_up_:
+    par_name: soft_activity_up
+    value: 0.00 #0.05
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0.0
+    time:
+      year: 1
+#  initial_activity_up_:
+#    par_name: initial_activity_up
+#    value: 0.00824158
+#    unit: '-'
+#    node_loc:
+#      R12_AFR: 1
+#      R12_CHN: 14.1
+#      R12_RCPA: 14.1
+#      R12_EEU: 1.5
+#      R12_FSU: 2.6
+#      R12_LAM: 4.5
+#      R12_MEA: 3.4
+#      R12_NAM: 14.6
+#      R12_PAO: 3.8
+#      R12_PAS: 4.5
+#      R12_SAS: 2.8
+#      R12_WEU: 10.9
+#    year_act:
+#      rate: 0.0
+#    time:
+#      year: 1
+  relation_activity_DAC_mpen_c:
+    par_name: relation_activity
+    value: -1
+    unit: Mt C/yr  
+    relation: [DAC_mpen_c]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+
+co2_trans1:
+  year_init: 2030
+  var_cost_: 
+    par_name: var_cost
+    value: 40
+    unit: '-' #$/tCO2a
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+    year_act:
+      rate: 0
+    mode:
+      M2: 1
+    time:
+      year: 1
+  input_:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M2: 1
+    commodity:
+      dac_co2: 1
+    level:
+      secondary: 1
+  output_:
+    par_name: output
+    value: 0.99
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M2: 1
+    commodity:
+      dac_co2: 1
+    level:
+      final: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M2: 1
+
+co2_stor:
+  year_init: 2030
+  var_cost_: 
+    par_name: var_cost
+    value: 35
+    unit: '-' #$/tCO2a
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_vtg:
+      rate: 0
+    year_act:
+      rate: 0
+    mode:
+      M3: 1
+    time:
+      year: 1
+  input_dacco2:
+    par_name: input
+    value: 1
+    unit: '-'
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    mode:
+      M3: 1
+    commodity:
+      dac_co2: 1
+    level:
+      final: 1
+  relation_activity_CO2_Emission:
+    par_name: relation_activity
+    value: -0.99
+    unit: Mt C/yr
+    relation: [CO2_Emission]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M3: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M3: 1
