@@ -41,6 +41,9 @@ h2_bio_ccs,weo,igcc,3824,,2030
 h2_coal,weo,igcc,2163,,2010
 h2_coal_ccs,weo,igcc,2252,,2030
 h2_elec,weo,csp,1139,,2010
+h2_elec_alk,weo,csp,1066,,2010
+h2_elec_pem,weo,csp,1384,,2010
+h2_elec_soe,weo,csp,2900,,2030
 h2_fc_I,weo,fuel_cell,3500,,
 h2_fc_RC,weo,fuel_cell,3500,,
 h2_fc_trp,weo,fuel_cell,3500,,
