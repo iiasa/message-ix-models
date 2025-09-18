@@ -30,6 +30,9 @@ h2_bio_ccs,high,medium,low,high,medium,medium
 h2_coal,very_low,medium,medium,medium,medium,very_low
 h2_coal_ccs,very_low,medium,medium,medium,medium,very_low
 h2_elec,very_high,medium,low,medium,medium,very_high
+h2_elec_alk,very_high,medium,low,medium,medium,very_high
+h2_elec_pem,very_high,medium,low,medium,medium,very_high
+h2_elec_soe,very_high,medium,low,medium,medium,very_high
 h2_i,low,low,low,low,low,low
 h2_smr,high,medium,low,medium,high,medium
 h2_smr_ccs,medium,medium,low,high,high,medium
