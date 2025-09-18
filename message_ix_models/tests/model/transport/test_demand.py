@@ -116,13 +116,9 @@ def test_exo_report(test_context, tmp_path):
     key = Key("pdt", "nyt")
 
     # Graph structure can be visualized
-    import dask
-    from dask.optimization import cull
-
-    dsk, deps = cull(c.graph, key)
     path = tmp_path / "demand-graph.pdf"
     log.info(f"Visualize compute graph at {path}")
-    dask.visualize(dsk, filename=str(path))
+    c.visualize(path, key)
 
     # Plots can be generated
     c.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
