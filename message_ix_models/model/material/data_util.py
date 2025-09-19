@@ -966,25 +966,6 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
     """
     add_elec_i_ini_act(scenario)
 
-    # prohibit electric clinker kilns in first decade
-    common = {
-        "technology": "furnace_elec_cement",
-        "mode": ["high_temp", "low_temp"],
-        "time": "year",
-        "value": 0,
-        "unit": "GWa",
-        "year_act": [2020, 2025],
-    }
-    s_info = ScenarioInfo(scenario)
-    scenario.check_out()
-    scenario.add_par(
-        "bound_activity_up",
-        make_df("bound_activity_up", **common).pipe(
-            broadcast, node_loc=nodes_ex_world(s_info.N)
-        ),
-    )
-    scenario.commit("add bound for thermal electr use in cement")
-
     for bound in ["up", "lo"]:
         par = f"bound_activity_{bound}"
         df = scenario.par(par, filters={"year_act": 2020})
