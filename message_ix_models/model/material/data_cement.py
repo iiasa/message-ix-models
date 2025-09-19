@@ -16,8 +16,10 @@ from message_ix_models.util import (
     same_node,
 )
 
+from .data_steel import gen_data_steel_rel
 from .data_util import (
     calculate_ini_new_cap,
+    read_rel,
     read_sector_data,
     read_timeseries,
 )
@@ -172,6 +174,7 @@ def gen_data_cement(scenario: "Scenario", dry_run: bool = False) -> "ParameterDa
         read_furnace_2020_bound(),
         gen_clinker_ratios(s_info),
         gen_addon_conv_ccs(nodes, s_info.Y),
+        gen_relation_data(scenario, s_info),
     )
 
     results = drop_redundant_rows(results)
@@ -288,3 +291,12 @@ def gen_clinker_ratios(s_info: "ScenarioInfo") -> "ParameterData":
         .query("0 <= year_act - year_vtg <= 25")
     )
     return {"input": df}
+
+
+def gen_relation_data(scenario: "Scenario", s_info: "ScenarioInfo") -> "ParameterData":
+    data_cem_rel = read_rel(scenario, "cement", None, "relations_R12.csv").pipe(
+        broadcast, Region=nodes_ex_world(s_info.N)
+    )
+    pars = {"relation_activity": []}
+    gen_data_steel_rel(data_cem_rel, pars, nodes_ex_world(s_info.N), s_info.Y)
+    return {par_name: pd.concat(dfs) for par_name, dfs in pars.items()}

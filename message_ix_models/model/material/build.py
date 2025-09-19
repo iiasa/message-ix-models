@@ -138,7 +138,6 @@ def build(
         scenario.commit("new calibration of other industry")
 
     add_emission_accounting(scenario)
-    add_cement_ccs_co2_tr_relation(scenario)
 
     if modify_existing_constraints:
         calibrate_existing_constraints(context, scenario, iea_data_path)
