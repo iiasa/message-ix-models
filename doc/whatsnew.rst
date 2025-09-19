@@ -6,6 +6,20 @@ Next release
 
 - Improve and extend :doc:`/material/index` (:pull:`418`).
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
+- Improve :mod:`.model.transport` (:pull:`392`).
+
+  - New properties :attr:`.transport.Config.code` and
+    :attr:`.transport.Config.label`.
+  - New base class :class:`.MultiFile`
+    to read input data from distinct files according to scenario label.
+  - New :class:`LoadFactorLDV`, replacing :py:`load_factor_ldv`
+    and allowing a distinct file according to scenario label.
+  - Add technology dimension to :data:`.elasticity_f`.
+  - Document :class:`.ScenarioCodeAnnotations`.
+
+- Extend :mod:`.digsy.structure.SCENARIO` (:pull:`392`).
+- :class:`.ItemSchemeEnumType` automatically creates aliases
+  for SDMX item scheme members with "-" in their IDs (:pull:`392`).
 - Expand :doc:`develop` documentation (:pull:`423`)
   with material previously in :mod:`message_data` docs.
 
@@ -121,7 +135,7 @@ Base model and variants
   - Update input data for :data:`.act_non_ldv`,
     :data:`.activity_freight`,
     :data:`.elasticity_f`,
-    :data:`.load_factor_ldv`,
+    :py:`load_factor_ldv`,
     passenger mode share,
     :data:`.pdt_cap`,
     :data:`.pdt_cap_ref`, and
@@ -285,7 +299,7 @@ Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`, :pull:`32
   :data:`.speed`.
 - Add LED-specific parametrization for :data:`.activity_ldv`,
   :data:`.lifetime_ldv`,
-  :data:`.load_factor_ldv`, and
+  :py:`load_factor_ldv`, and
   :data:`.pdt_cap_proj`.
 - Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
 - Generate SDMX-ML structural metadata, including data flow definitions, and SDMX-{CSV,ML} data outputs for certain reported quantities.
