@@ -471,17 +471,22 @@ class ItemSchemeEnumType(EnumType):
         # Transfer class dct private members
         enum_dct.update(dct)
 
+        urn_name = dict()  # URNLookupEnum._urn_name attribute
+        aliases = set()  # Tuple of (original name, aliased name)
+
         # Populate the class member dictionary and URN → member name mapping
-        _urn_name = dict()
-
         if any(issubclass(c, Flag) for c in bases):
-            # Ensure the 0 member is NONE, not any of the codes
-            enum_dct["NONE"] = 0
-        for i, item in enumerate(scheme, start=1):
-            _urn_name[item.urn] = item.id
-            enum_dct[item.id] = auto()
+            enum_dct["NONE"] = 0  # Ensure the 0 member is NONE, not any of the codes
+        for item in scheme:
+            enum_dct[item.id] = auto()  # The enum member and its value
+            urn_name[item.urn] = item.id  # URN → name mapping
 
-        # Create the class
+            # Possible aliased name
+            alias = (item.id, item.id.replace("-", "_"))
+            if 2 == len(set(alias)):  # aliased name is different from original name
+                aliases.add(alias)
+
+        # Create the class and the Enum special members
         enum_class = cast(
             type["URNLookupEnum"],
             super(ItemSchemeEnumType, metacls).__new__(
@@ -490,7 +495,10 @@ class ItemSchemeEnumType(EnumType):
         )
 
         # Store the _urn_name mapping
-        setattr(enum_class, "_urn_name", _urn_name)
+        setattr(enum_class, "_urn_name", urn_name)
+        # Add aliases
+        for a, b in aliases:
+            getattr(enum_class, a)._add_alias_(b)
 
         return enum_class
 
