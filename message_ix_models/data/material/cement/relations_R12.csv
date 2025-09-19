@@ -1,0 +1,3 @@
+relation,parameter,technology,Region,value,Units
+co2_trans_disp,relation_activity,clinker_dry_ccs_cement,,-0.135,
+co2_trans_disp,relation_activity,clinker_wet_ccs_cement,,-0.135,
