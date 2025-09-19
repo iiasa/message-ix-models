@@ -57,97 +57,94 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
     df = pd.read_excel(
         package_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
     )
+    sectors = [
+        "feedstock (petrochemical industry)",
+        "feedstock (total)",
+        "industry (chemicals)",
+        "industry (iron and steel)",
+        "industry (non-ferrous metals)",
+        "industry (non-metallic minerals)",
+        "industry (total)",
+    ]
 
     # Filter the necessary variables
-    df = df[
-        (df["SECTOR"] == "feedstock (petrochemical industry)")
-        | (df["SECTOR"] == "feedstock (total)")
-        | (df["SECTOR"] == "industry (chemicals)")
-        | (df["SECTOR"] == "industry (iron and steel)")
-        | (df["SECTOR"] == "industry (non-ferrous metals)")
-        | (df["SECTOR"] == "industry (non-metallic minerals)")
-        | (df["SECTOR"] == "industry (total)")
-    ]
-    df = df[df["RYEAR"] == 2015]
+    df = df[(df["SECTOR"].isin(sectors)) & (df["RYEAR"] == 2015)]
 
-    # NOTE: Total cehmical industry energy: 27% thermal, 8% electricity, 65% feedstock
+    # NOTE: Total chemical industry energy: 27% thermal, 8% electricity, 65% feedstock
     # SOURCE: IEA Sankey 2020: https://www.iea.org/sankey/#?c=World&s=Final%20consumption
     # 67% of total chemicals energy is used for primary chemicals (ammonia,methnol,HVCs)
     # SOURCE: https://www.iea.org/data-and-statistics/charts/primary-chemical-production-in-the-sustainable-development-scenario-2000-2030
 
-    # Retreive data for i_spec
-    # 67% of total chemcials electricity demand comes from primary chemicals (IEA)
-    # (Excludes petrochemicals as the share is negligable)
+    # Retrieve data for i_spec
+    # 67% of total chemicals electricity demand comes from primary chemicals (IEA)
+    # (Excludes petrochemicals as the share is negligible)
     # Aluminum, cement and steel included.
-    # NOTE: Steel has high shares (previously it was not inlcuded in i_spec)
+    # NOTE: Steel has high shares (previously it was not included in i_spec)
 
     df_spec = df[
         (df["FUEL"] == "electricity")
-        & (df["SECTOR"] != "industry (total)")
-        & (df["SECTOR"] != "feedstock (petrochemical industry)")
-        & (df["SECTOR"] != "feedstock (total)")
+        & (
+            ~df["SECTOR"].isin(
+                [
+                    "industry (total)",
+                    "feedstock (petrochemical industry)",
+                    "feedstock (total)",
+                ]
+            )
+        )
     ]
     df_spec_total = df[
         (df["SECTOR"] == "industry (total)") & (df["FUEL"] == "electricity")
     ]
-
-    df_spec_new = pd.DataFrame(
-        columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
+    chemicals_scaler = pd.DataFrame(
+        index=["industry (chemicals)"], data={"RESULT": [0.67]}
     )
-    for r in df_spec["REGION"].unique():
-        df_spec_temp = df_spec.loc[df_spec["REGION"] == r]
-        df_spec_total_temp = df_spec_total.loc[df_spec_total["REGION"] == r]
-        df_spec_temp.loc[:, "i_spec"] = (
-            df_spec_temp.loc[:, "RESULT"]
-            / df_spec_total_temp.loc[:, "RESULT"].values[0]
+    chemicals_scaler.index.name = "SECTOR"
+    df_spec = df_spec.set_index(["REGION", "SECTOR"])[["RESULT"]].mul(
+        chemicals_scaler, fill_value=1.0
+    )
+    df_spec_new = (
+        (
+            df_spec.groupby("REGION")
+            .sum(numeric_only=True)["RESULT"]
+            .div(df_spec_total.set_index("REGION")["RESULT"])
         )
-        df_spec_new = pd.concat([df_spec_temp, df_spec_new], ignore_index=True)
-
-    df_spec_new.drop(["FUEL", "RYEAR", "UNIT_OUT", "RESULT"], axis=1, inplace=True)
-    df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] = (
-        df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"]
-        * 0.67
+        .reset_index()
+        .rename(columns={"RESULT": "i_spec"})
     )
-
-    df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
 
     # Already set to zero: ammonia, methanol, HVCs cover most of the feedstock
-
     df_feed = df[
         (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
     ]
-    # df_feed_total =
-    # df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
-    df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
-    df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
-
-    for r in df_feed["REGION"].unique():
-        i = 0
-        df_feed_temp.at[i, "REGION"] = r
-        df_feed_temp.at[i, "i_feed"] = 1
-        i = i + 1
-        df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
+    df_feed_new = df_feed[["REGION"]].assign(i_feed=1).reset_index(drop=True)
 
     # Retreive data for i_therm
     # 67% of chemical thermal energy chemicals comes from primary chemicals. (IEA)
     # NOTE: Aluminum is excluded since refining process is not explicitly represented
     # NOTE: CPA has a 3% share while it used to be 30% previosuly ??
-
     df_therm = df[
-        (df["FUEL"] != "electricity")
-        & (df["FUEL"] != "total")
-        & (df["SECTOR"] != "industry (total)")
-        & (df["SECTOR"] != "feedstock (petrochemical industry)")
-        & (df["SECTOR"] != "feedstock (total)")
-        & (df["SECTOR"] != "industry (non-ferrous metals)")
-    ]
-    df_therm_total = df[
-        (df["SECTOR"] == "industry (total)")
-        & (df["FUEL"] != "total")
-        & (df["FUEL"] != "electricity")
+        (~df["FUEL"].isin(["electricity", "total"]))
+        & (
+            ~df["SECTOR"].isin(
+                [
+                    "industry (total)",
+                    "feedstock (petrochemical industry)",
+                    "feedstock (total)",
+                    "industry (non-ferrous metals)",
+                ]
+            )
+        )
     ]
     df_therm_total = (
-        df_therm_total.groupby(by="REGION").sum().drop(["RYEAR"], axis=1).reset_index()
+        df[
+            (df["SECTOR"] == "industry (total)")
+            & (~df["FUEL"].isin(["total", "electricity"]))
+        ]
+        .groupby(by="REGION")
+        .sum()
+        .drop(["RYEAR"], axis=1)
+        .reset_index()
     )
     df_therm = (
         df_therm.groupby(by=["REGION", "SECTOR"])
@@ -155,43 +152,30 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
         .drop(["RYEAR"], axis=1)
         .reset_index()
     )
-    df_therm_new = pd.DataFrame(
-        columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
+    df_therm = df_therm.set_index(["REGION", "SECTOR"])[["RESULT"]].mul(
+        chemicals_scaler, fill_value=1.0
     )
-
-    for r in df_therm["REGION"].unique():
-        df_therm_temp = df_therm.loc[df_therm["REGION"] == r]
-        df_therm_total_temp = df_therm_total.loc[df_therm_total["REGION"] == r]
-        df_therm_temp.loc[:, "i_therm"] = (
-            df_therm_temp.loc[:, "RESULT"]
-            / df_therm_total_temp.loc[:, "RESULT"].values[0]
-        )
-        df_therm_new = pd.concat([df_therm_temp, df_therm_new], ignore_index=True)
-        df_therm_new = df_therm_new.drop(["RESULT"], axis=1)
-
-    df_therm_new.drop(["FUEL", "RYEAR", "UNIT_OUT"], axis=1, inplace=True)
-    df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"] = (
-        df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"]
-        * 0.67
+    df_therm_new = (
+        df_therm.groupby(["REGION", "SECTOR"])
+        .sum(numeric_only=True)["RESULT"]
+        .div(df_therm_total.set_index("REGION")["RESULT"])
     )
-
     # Modify CPA based on https://www.iea.org/sankey/#?c=Japan&s=Final%20consumption.
-    # Since the value did not allign with the one in the IEA website.
-    index = (df_therm_new["SECTOR"] == "industry (iron and steel)") & (
-        (df_therm_new["REGION"] == region_name_CPA)
-        | (df_therm_new["REGION"] == region_name_CHN)
+    # Since the value did not align with the one in the IEA website.
+    df_therm_new.loc[
+        [region_name_CHN, region_name_CPA], "industry (iron and steel)"
+    ] = 0.2
+    df_therm_new = (
+        df_therm_new.groupby(["REGION"])
+        .sum(numeric_only=True)
+        .reset_index()
+        .rename(columns={"RESULT": "i_therm"})
     )
-
-    df_therm_new.loc[index, "i_therm"] = 0.2
-
-    df_therm_new = df_therm_new.groupby(["REGION"]).sum(numeric_only=True).reset_index()
 
     # TODO: Useful technology efficiencies will also be included
-
     # Add the modified demand and historical activity to the scenario
-
     # Relted technologies that have outputs to useful industry level.
-    # Historical activity of theese will be adjusted
+    # Historical activity of these will be adjusted
     tec_therm = [
         "biomass_i",
         "coal_i",
@@ -224,57 +208,42 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
     useful_spec = scen.par("demand", filters={"commodity": "i_spec"})
     useful_feed = scen.par("demand", filters={"commodity": "i_feed"})
 
-    for r in df_therm_new["REGION"]:
-        r_MESSAGE = region_type + r
-
-        useful_thermal.loc[useful_thermal["node"] == r_MESSAGE, "value"] = (
-            useful_thermal.loc[useful_thermal["node"] == r_MESSAGE, "value"]
-            * (1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0])
+    new_demands = []
+    new_acts = []
+    for demand, act, scaler in zip(
+        [useful_thermal, useful_spec, useful_feed],
+        [thermal_df_hist, spec_df_hist, feed_df_hist],
+        [df_therm_new, df_spec_new, df_feed_new],
+    ):
+        new_demands.append(
+            demand.set_index([i for i in demand.columns if i != "value"])
+            .mul(
+                scaler.assign(REGION=lambda x: region_type + x["REGION"])
+                .set_axis(["node", "value"], axis=1)
+                .set_index("node")
+                .sub(1)
+                .abs()
+            )
+            .reset_index()
         )
-
-        thermal_df_hist.loc[thermal_df_hist["node_loc"] == r_MESSAGE, "value"] = (
-            thermal_df_hist.loc[thermal_df_hist["node_loc"] == r_MESSAGE, "value"]
-            * (1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0])
+        new_acts.append(
+            act.set_index([i for i in act.columns if i != "value"])
+            .mul(
+                scaler.assign(REGION=lambda x: region_type + x["REGION"])
+                .set_axis(["node_loc", "value"], axis=1)
+                .set_index("node_loc")
+                .sub(1)
+                .abs()
+            )
+            .reset_index()
         )
+    new_acts = pd.concat(new_acts)
+    new_demands = pd.concat(new_demands)
 
-    for r in df_spec_new["REGION"]:
-        r_MESSAGE = region_type + r
-
-        useful_spec.loc[useful_spec["node"] == r_MESSAGE, "value"] = useful_spec.loc[
-            useful_spec["node"] == r_MESSAGE, "value"
-        ] * (1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0])
-
-        spec_df_hist.loc[spec_df_hist["node_loc"] == r_MESSAGE, "value"] = (
-            spec_df_hist.loc[spec_df_hist["node_loc"] == r_MESSAGE, "value"]
-            * (1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0])
-        )
-
-    for r in df_feed_new["REGION"]:
-        r_MESSAGE = region_type + r
-
-        useful_feed.loc[useful_feed["node"] == r_MESSAGE, "value"] = useful_feed.loc[
-            useful_feed["node"] == r_MESSAGE, "value"
-        ] * (1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0])
-
-        feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE, "value"] = (
-            feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE, "value"]
-            * (1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0])
-        )
-
-    scen.check_out()
-    scen.add_par("demand", useful_thermal)
-    scen.add_par("demand", useful_spec)
-    scen.add_par("demand", useful_feed)
-    scen.commit("Demand values adjusted")
-
-    scen.check_out()
-    scen.add_par("historical_activity", thermal_df_hist)
-    scen.add_par("historical_activity", spec_df_hist)
-    scen.add_par("historical_activity", feed_df_hist)
-    scen.commit(
-        comment="historical activity for useful level industry \
-    technologies adjusted"
-    )
+    msg = "historical activity for useful level industry technologies adjusted"
+    with scen.transact(msg):
+        scen.add_par("demand", new_demands)
+        scen.add_par("historical_activity", new_acts)
 
     # For aluminum there is no significant deduction required
     # (refining process not included and thermal energy required from
@@ -315,30 +284,20 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
     #      the sudden intro of steel setor in the first model year
 
     t_i = ["coal_i", "elec_i", "gas_i", "heat_i", "loil_i", "solar_i"]
-
-    for t in t_i:
-        df = scen.par("growth_activity_lo", filters={"technology": t, "year_act": 2020})
-
-        scen.check_out()
+    with scen.transact("remove 2020 activity constraints"):
+        df = scen.par(
+            "growth_activity_lo", filters={"technology": t_i, "year_act": 2020}
+        )
         scen.remove_par("growth_activity_lo", df)
-        scen.commit(comment="remove growth_lo constraints")
-
-    scen.check_out()
-    for substr in ["up", "lo"]:
-        df = scen.par(f"bound_activity_{substr}")
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_fs")) & (df["year_act"] == 2020)],
-        )
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_i")) & (df["year_act"] == 2020)],
-        )
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_I")) & (df["year_act"] == 2020)],
-        )
-    scen.commit(comment="remove bounds")
+        for suffix in ["up", "lo"]:
+            par = f"bound_activity_{suffix}"
+            df = scen.par(par, filters={"year_act": 2020})
+            df = df[
+                (df["technology"].str.endswith("_fs"))
+                | (df["technology"].str.endswith("_i"))
+                | (df["technology"].str.endswith("_I"))
+            ]
+            scen.remove_par(par, df)
 
 
 def get_hist_act_data(
