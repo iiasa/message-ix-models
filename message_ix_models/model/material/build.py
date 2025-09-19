@@ -173,26 +173,6 @@ def calibrate_existing_constraints(
         get_ssp_low_temp_shr_up(ScenarioInfo(scenario), get_ssp_from_context(context)),
     )
     scenario.commit("adjust low temp heat share constraint")
-    return scenario
-
-    # remove scrap constraint for aluminum recycling in base year
-    df_scrap_inp = scenario.par(
-        "input",
-        filters={
-            "technology": "secondary_aluminum",
-            "commodity": "aluminum",
-            "year_act": 2020,
-        },
-    )
-    with scenario.transact():
-        scenario.remove_par("input", df_scrap_inp)
-
-    df_out_scrap = scenario.par(
-        "output",
-        filters={"level": "new_scrap", "commodity": "aluminum", "year_act": 2020},
-    )
-    with scenario.transact():
-        scenario.remove_par("output", df_out_scrap)
 
 
 def get_spec() -> Mapping[str, ScenarioInfo]:

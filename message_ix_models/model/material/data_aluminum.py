@@ -527,6 +527,7 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
     const_dict = gen_data_alu_const(
         data_aluminum, config, global_region, modelyears, yv_ya, nodes
     )
+    remove_scrap_in_firstyear(const_dict)
 
     demand_dict = gen_demand(scenario, ssp)
 
@@ -1654,3 +1655,24 @@ def get_scrap_prep_cost(s_info, ssp):
         .assign(year_vtg=lambda x: x.year_act)
     )
     return {"var_cost": df}
+
+
+def remove_scrap_in_firstyear(pars: dict) -> None:
+    inp = pars["input"]
+    inp = inp[
+        ~(
+            (inp["technology"] == "secondary_aluminum")
+            & (inp["commodity"] == "aluminum")
+            & (inp["year_act"] == 2020)
+        )
+    ]
+    out = pars["outut"]
+    out = out[
+        ~(
+            (out["level"] == "new_scrap")
+            & (out["commodity"] == "aluminum")
+            & (out["year_act"] == 2020)
+        )
+    ]
+    pars["input"] = inp
+    pars["output"] = out
