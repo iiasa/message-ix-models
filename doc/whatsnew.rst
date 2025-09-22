@@ -3,6 +3,7 @@ What's new
 
 Next release
 ============
+
 - Fix water module reporting failures and improve calculations (:issue:`407`, :pull:`396`).
 - Improve and extend :doc:`/material/index` (:pull:`418`).
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
@@ -23,7 +24,8 @@ Next release
 - Expand :doc:`develop` documentation (:pull:`423`)
   with material previously in :mod:`message_data` docs.
 - Update documentation for
-  :doc:`project/efc` (:pull:`426`).
+  :doc:`project/efc` (:pull:`426`) and
+  :doc:`project/elevate` (:pull:`427`).
 
 v2025.9.9
 =========
