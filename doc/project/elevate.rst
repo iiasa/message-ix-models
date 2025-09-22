@@ -49,8 +49,8 @@ Final submission will be based on the finalized SSP2 baseline scenarios.
 
 Scenario identifier:
 --------------------
-(to be added by October 2025)
+(to be added by Spring 2026)
 
 Branch:
 -------
-(on message-data repository, to be migrated to message-ix-models by October 2025)
+(on message-data repository, to be migrated to message-ix-models by Spring 2026)
