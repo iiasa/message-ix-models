@@ -8,6 +8,8 @@ Next release
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
 - Expand :doc:`develop` documentation (:pull:`423`)
   with material previously in :mod:`message_data` docs.
+- Update documentation for
+  :doc:`project/elevate` (:pull:`427`).
 
 v2025.9.9
 =========
