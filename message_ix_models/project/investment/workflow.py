@@ -36,8 +36,30 @@ def _load_fe_regression():
     return getattr(module, "main", None)
 
 
-# Load the FE_Regression function
+# Import Generate_CF from 2_Generate_CF.py to keep Shuting Fan's code
+def _load_generate_cf():
+    """Load Generate_CF function from 2_Generate_CF.py file."""
+    current_dir = Path(__file__).parent
+    file_path = current_dir / "2_Generate_CF.py"
+
+    if not file_path.exists():
+        log.warning(f"2_Generate_CF.py not found at {file_path}")
+        return None
+
+    # Create a module spec
+    spec = importlib.util.spec_from_file_location("generate_cf_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+
+    # Execute the module
+    spec.loader.exec_module(module)
+
+    # Return the main function (which is the Generate_CF function)
+    return getattr(module, "main", None)
+
+
+# Load the functions
 fe_regression = _load_fe_regression()
+generate_cf = _load_generate_cf()
 
 
 def solve(
@@ -109,7 +131,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "cf generated",
         "wacc_cf reg generated",
-        check_context,
+        generate_cf,
         target=f"{model_name}/{scen_name}",
     )
 
