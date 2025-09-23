@@ -14,7 +14,7 @@ MESSAGE team has been working with Energy Foundation (China) on the model inter-
 - IPAC-AIM/technology, Zhejiang University of Technology
 - CNCAP, Tsinghua University
 
-The CMIN database can be accessed at https://data.ene.iiasa.ac.at/cmin-explorer/#/login
+The CMIN database can be accessed at https://data.ene.iiasa.ac.at/cmin-explorer/#/login.
 The research uses :doc:`/buildings/index`.
 
 EFC 2022
@@ -34,12 +34,16 @@ EFC 2024
 
 Scenario matrix:
 ----------------
-- Cpol_netzero
-Current policy efforts through 2030 and extended to 2035, emissions (CO2 FFI) peak year by 2030 at least, net-zero CO2 FFI by 2060 in R12_CHN
+``Cpol_netzero``
+   Current policy efforts through 2030 and extended to 2035,
+   emissions (CO2 FFI) peak year by 2030 at least,
+   net-zero CO2 FFI by 2060 in R12_CHN.
 
-- Aclt_netzero
-Accelerated policy actions through 2035, key policies are extended or further accelerated in 2030 and to 2035, 
-emissions (CO2 FFI) peak year no later and lower than Cpol_netzero, net-zero CO2 FFI by 2060 in R12_CHN
+``Aclt_netzero``
+   Accelerated policy actions through 2035,
+   key policies are extended or further accelerated in 2030 and to 2035,
+   emissions (CO2 FFI) peak year no later and lower than Cpol_netzero,
+   net-zero CO2 FFI by 2060 in R12_CHN.
 
 Starting scenarios:
 -------------------
@@ -47,7 +51,7 @@ SSP2 v0.18
 
 Working paper:
 --------------
-China’s carbon neutrality pathways with consideration of energy security, a deep dive working paper led by Jun. 
+China’s carbon neutrality pathways with consideration of energy security, a deep dive working paper led by Jun, Yiyi, and Volker. Currently revising for submission as an academic journal article.
 Link (to be added)
 
 EFC 2025
@@ -55,8 +59,8 @@ EFC 2025
 - Project lead: :gh-user:`yiyi1991`, :gh-user:`volker-krey`
 - Lead modeler: :gh-user:`yiyi1991`, :gh-user:`Tyler-lc`
 
-Working paper:
---------------
+Working paper
+-------------
 
 Green Synthetic Fuels for Industrial and Transport Applications in China: Policy Assessment and Long-Term Decarbonization Pathways toward 2060, 
 a journal paper and a deep dive working paper led by Luca, Yiyi, and Sid.
@@ -75,5 +79,5 @@ China in the global supply chain of green synthetic fuels (e.g., the role of Chi
 
 Branch:
 -------
-(to be added)
+Development branch for EFC 2025 work (to be added)
 
