@@ -78,10 +78,32 @@ def _load_generate_wacc():
     return getattr(module, "main", None)
 
 
+# Import Generate_inv_cost from 4_Generate_inv_cost.py to keep Shuting Fan's code
+def _load_generate_inv_cost():
+    """Load Generate_inv_cost function from 4_Generate_inv_cost.py file."""
+    current_dir = Path(__file__).parent
+    file_path = current_dir / "4_Generate_inv_cost.py"
+
+    if not file_path.exists():
+        log.warning(f"4_Generate_inv_cost.py not found at {file_path}")
+        return None
+
+    # Create a module spec
+    spec = importlib.util.spec_from_file_location("generate_inv_cost_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+
+    # Execute the module
+    spec.loader.exec_module(module)
+
+    # Return the main function (which is the Generate_inv_cost function)
+    return getattr(module, "main", None)
+
+
 # Load the functions
 fe_regression = _load_fe_regression()
 generate_cf = _load_generate_cf()
 generate_wacc = _load_generate_wacc()
+generate_inv_cost = _load_generate_inv_cost()
 
 
 def solve(
@@ -167,7 +189,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "inv_cost generated",
         "wacc generated",
-        check_context,
+        generate_inv_cost,
         target=f"{model_name}/{scen_name}",
     )
 
