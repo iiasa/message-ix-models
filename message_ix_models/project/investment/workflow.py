@@ -3,18 +3,41 @@
 # Example cli command:
 # mix-models coc run --from="base" "glasgow+" --dry-run
 
+import importlib.util
 import logging
+from pathlib import Path
 
 import message_ix
 
 from message_ix_models import Context
-from message_ix_models.project.investment.fe_regression import main as fe_regression
 from message_ix_models.workflow import Workflow
 
 log = logging.getLogger(__name__)
 
 
-# Functions for individual workflow steps
+# Import FE_Regression from 1_FE_Regression.py to keep Shuting Fan's code
+def _load_fe_regression():
+    """Load FE_Regression function from 1_FE_Regression.py file."""
+    current_dir = Path(__file__).parent
+    file_path = current_dir / "1_FE_Regression.py"
+
+    if not file_path.exists():
+        log.warning(f"1_FE_Regression.py not found at {file_path}")
+        return None
+
+    # Create a module spec
+    spec = importlib.util.spec_from_file_location("fe_regression_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+
+    # Execute the module
+    spec.loader.exec_module(module)
+
+    # Return the main function (which is the FE_Regression function)
+    return getattr(module, "main", None)
+
+
+# Load the FE_Regression function
+fe_regression = _load_fe_regression()
 
 
 def solve(
@@ -65,19 +88,20 @@ def generate(context: Context) -> Workflow:
 
     # Define model name
     model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
+    scen_name = "Baseline_SSP2"
 
     wf.add_step(
         "base",
         None,
         log_input,
-        target=f"{model_name}/baseline",
+        target=f"{model_name}/{scen_name}",
     )
 
     wf.add_step(
         "wacc_cf reg generated",
         "base",
         fe_regression,
-        target=f"{model_name}/baseline",
+        target=f"{model_name}/{scen_name}",
     )
 
     # Tress for all SSPs and all hi/lo CF(cliamte finance) scenarios to be added later
@@ -86,28 +110,28 @@ def generate(context: Context) -> Workflow:
         "cf generated",
         "wacc_cf reg generated",
         check_context,
-        target=f"{model_name}/baseline",
+        target=f"{model_name}/{scen_name}",
     )
 
     wf.add_step(
         "wacc generated",
         "cf generated",
         check_context,
-        target=f"{model_name}/baseline",
+        target=f"{model_name}/{scen_name}",
     )
 
     wf.add_step(
         "inv_cost generated",
         "wacc generated",
         check_context,
-        target=f"{model_name}/baseline",
+        target=f"{model_name}/{scen_name}",
     )
 
     wf.add_step(
         "coc built",
         "inv_cost generated",
         check_context,
-        target=f"{model_name}/coc_added",
+        target=f"{model_name}/{scen_name}_coc_added",
         clone=dict(keep_solution=False),
     )
 
