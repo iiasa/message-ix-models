@@ -57,9 +57,31 @@ def _load_generate_cf():
     return getattr(module, "main", None)
 
 
+# Import Get_WACC from 3_WACC_Projection.py to keep Shuting Fan's code
+def _load_generate_wacc():
+    """Load Get_WACC function from 3_WACC_Projection.py file."""
+    current_dir = Path(__file__).parent
+    file_path = current_dir / "3_WACC_Projection.py"
+
+    if not file_path.exists():
+        log.warning(f"3_WACC_Projection.py not found at {file_path}")
+        return None
+
+    # Create a module spec
+    spec = importlib.util.spec_from_file_location("get_wacc_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+
+    # Execute the module
+    spec.loader.exec_module(module)
+
+    # Return the main function (which is the Get_WACC function)
+    return getattr(module, "main", None)
+
+
 # Load the functions
 fe_regression = _load_fe_regression()
 generate_cf = _load_generate_cf()
+generate_wacc = _load_generate_wacc()
 
 
 def solve(
@@ -138,7 +160,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "wacc generated",
         "cf generated",
-        check_context,
+        generate_wacc,
         target=f"{model_name}/{scen_name}",
     )
 
