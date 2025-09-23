@@ -7,7 +7,9 @@ import importlib.util
 import logging
 from pathlib import Path
 
+import ixmp
 import message_ix
+from message_data.tools.post_processing import iamc_report_hackathon
 
 from message_ix_models import Context
 from message_ix_models.workflow import Workflow
@@ -145,6 +147,58 @@ def log_input(context, scenario):
     return scenario
 
 
+def build_coc(context, scenario):
+    """Add new inv_cost parameters with disaggregated cost of capital."""
+    from pathlib import Path
+
+    import pandas as pd
+
+    log = logging.getLogger(__name__)
+
+    # Load the inv_cost.csv file from the current directory
+    current_dir = Path(__file__).parent
+    inv_cost_path = current_dir / "inv_cost.csv"
+    # TODO: maybe it is better to move the generated intermediate files to the data
+    # folder
+
+    log.info(f"Loading investment cost data from {inv_cost_path}")
+    inv_cost_df = pd.read_csv(inv_cost_path)
+
+    # Prepare the data for MESSAGEix
+    inv_cost_par = inv_cost_df[
+        ["node_loc", "technology", "year_vtg", "value", "unit"]
+    ].copy()
+
+    # Add the parameters to the scenario using transact
+    with scenario.transact("Add investment cost parameters with CoC decomposition"):
+        scenario.add_par("inv_cost", inv_cost_par)
+
+    log.info("Investment cost parameters successfully added to scenario")
+
+    return scenario
+
+
+def report(
+    context: Context,
+    scenario: message_ix.Scenario,
+) -> message_ix.Scenario:
+    # Get platform name from context
+    platform_name = context.platform_info["name"]
+
+    mp = ixmp.Platform(platform_name, jvmargs=["-Xmx14G"])
+    run_config = "materials_daccs_run_config.yaml"
+    # the legacy reporting requires message-data branches based on ssp-dev branch
+
+    iamc_report_hackathon.report(
+        mp=mp,
+        scen=scenario,
+        merge_hist=True,
+        run_config=run_config,
+    )
+
+    return scenario
+
+
 # Main CoC workflow
 def generate(context: Context) -> Workflow:
     """Create the CoC workflow."""
@@ -193,25 +247,32 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/{scen_name}",
     )
 
+    # TODO: a short loop for all SSPs and all CF scenarios below
     wf.add_step(
-        "coc built",
+        "base cloned",
         "inv_cost generated",
-        check_context,
         target=f"{model_name}/{scen_name}_coc_added",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
-        "coc_scen solved",
         "coc built",
-        solve,
-        target=f"{model_name}/coc_added",
+        "base cloned",
+        build_coc,
+        target=f"{model_name}/{scen_name}_coc_added",
     )
 
     wf.add_step(
-        "coc_scen reported",
-        "coc_scen solved",
-        check_context,
+        "coc solved",
+        "coc built",
+        solve,
+        target=f"{model_name}/{scen_name}_coc_added",
+    )
+
+    wf.add_step(
+        "coc reported",
+        "coc solved",
+        report,
         target=f"{model_name}/coc_added",
     )
 
