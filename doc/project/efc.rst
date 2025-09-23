@@ -32,8 +32,8 @@ EFC 2024
 - Project lead: :gh-user:`guofei2016`, :gh-user:`volker-krey`
 - Lead modeler: :gh-user:`yiyi1991`, :gh-user:`guofei2016`, :gh-user:`junukitashepard`
 
-Scenario matrix:
-----------------
+Scenario matrix
+---------------
 ``Cpol_netzero``
    Current policy efforts through 2030 and extended to 2035,
    emissions (CO2 FFI) peak year by 2030 at least,
@@ -45,12 +45,12 @@ Scenario matrix:
    emissions (CO2 FFI) peak year no later and lower than Cpol_netzero,
    net-zero CO2 FFI by 2060 in R12_CHN.
 
-Starting scenarios:
--------------------
+Starting scenarios
+------------------
 SSP2 v0.18
 
-Working paper:
---------------
+Working paper
+-------------
 China’s carbon neutrality pathways with consideration of energy security, a deep dive working paper led by Jun, Yiyi, and Volker. Currently revising for submission as an academic journal article.
 Link (to be added)
 
@@ -77,7 +77,7 @@ The results will show the role of green synthetic fuels in China’s decarboniza
 comparison with other mitigation options, investment required, infrastructure required, demand scaling-up levers, policy gaps, etc.), as well as the role of 
 China in the global supply chain of green synthetic fuels (e.g., the role of China in a more general context with an increasing demand for low-carbon transition globally).  
 
-Branch:
--------
+Branch
+------
 Development branch for EFC 2025 work (to be added)
 
