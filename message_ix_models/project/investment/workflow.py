@@ -1,7 +1,7 @@
 # The workflow contains the steps to add cost of capital in MESSAGE,
 # as well as the steps to apply coc-related scenario settings. See coc-workflow.svg.
 # Example cli command:
-# mix-models coc run --from="base" "glasgow+" --dry-run
+# mix-models coc run --from="base" "coc reported" --dry-run
 
 import importlib.util
 import logging
