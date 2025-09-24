@@ -15,7 +15,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.util import add_replacements
 
 from . import Config
-from .key import exo
+from .key import exo, pop
 
 if TYPE_CHECKING:
     import ixmp
@@ -475,7 +475,7 @@ def misc(c: "Computer") -> None:
     c.add("distance:nl:non-ldv", "distance_nonldv", "config")
 
     # Demand per capita
-    c.add("demand::capita", "divdemand:n-c-y", "population:n-y")
+    c.add("demand::capita", "divdemand:n-c-y", pop)
 
     # Adjustment factor for LDV calibration: fuel economy ratio
     k_num = Key("in:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
