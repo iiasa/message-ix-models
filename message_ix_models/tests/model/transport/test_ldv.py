@@ -8,8 +8,12 @@ import pytest
 from iam_units import registry
 from pytest import param
 
-from message_ix_models.model.transport import build, ldv, testing
-from message_ix_models.model.transport.testing import MARK, assert_units
+from message_ix_models.model.transport import build, ldv
+from message_ix_models.model.transport.testing import (
+    MARK,
+    assert_units,
+    configure_build,
+)
 from message_ix_models.project.navigate import T35_POLICY
 
 log = logging.getLogger(__name__)
@@ -20,20 +24,12 @@ pytestmark = MARK[10]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize("dummy_LDV", [False, True])
 @pytest.mark.parametrize("years", ["A", "B"])
-@pytest.mark.parametrize(
-    "regions",
-    [
-        param("ISR", marks=testing.MARK[3]),
-        "R11",
-        "R12",
-        "R14",
-    ],
-)
+@pytest.mark.parametrize("regions", [param("ISR", marks=MARK[3]), "R11", "R12", "R14"])
 def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None:
     # Info about the corresponding RES
     ctx = test_context
     # Prepare a Computer for LDV data calculations
-    c, info = testing.configure_build(
+    c, info = configure_build(
         ctx,
         tmp_path=tmp_path,
         regions=regions,
@@ -182,7 +178,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
     ],
 )
 def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
-    c, _ = testing.configure_build(test_context, regions=regions, years=years)
+    c, _ = configure_build(test_context, regions=regions, years=years)
 
     result = c.get("capacity_factor::LDV+ixmp")
     assert {"capacity_factor"} == set(result)
@@ -203,13 +199,13 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
         (False, "R12", "B"),
         (False, "R14", "A"),
         # Not implemented
-        param(False, "ISR", "A", marks=testing.MARK[3]),
+        param(False, "ISR", "A", marks=MARK[3]),
     ],
 )
 def test_ldv_constraint_data(test_context, dummy_LDV, regions, years):
     # Info about the corresponding RES
     ctx = test_context
-    _, info = testing.configure_build(
+    _, info = configure_build(
         ctx, regions=regions, years=years, options={"dummy_LDV": dummy_LDV}
     )
 

@@ -139,20 +139,10 @@ def prepare_computer(c: Computer):
     c.add("input:n:LDV+adj", "sum", exo.input_adj_ldv, dimensions=["scenario"])
     c.add(k.eff[2], "mul", k.eff[1], "input:n:LDV+adj")
 
-    ### Load factor
-    # Interpolate on "y" dimension
-    k.lf_nsy = Key(exo.load_factor_ldv)
-    c.add(k.lf_nsy[0], "interpolate", k.lf_nsy, "y::coords", **EXTRAPOLATE)
-
-    # Select load factor
-    k.lf_ny = k.lf_nsy / "scenario"
-    c.add(k.lf_ny[0], "select", k.lf_nsy[0], "indexers:scenario:LED")
-
-    # Insert a scaling factor that varies according to SSP
-    c.apply(factor.insert, k.lf_ny[0], name="ldv load factor", target=k.lf_ny)
-
     # Apply the function usage_data() for further processing
-    collect("usage", usage_data, k.lf_ny, "cg", "n::ex world", t_ldv, "y::model")
+    collect(
+        "usage", usage_data, exo.load_factor_ldv, "cg", "n::ex world", t_ldv, "y::model"
+    )
 
     ### Technical lifetime
     tl, k_tl = "technical_lifetime", exo.lifetime_ldv

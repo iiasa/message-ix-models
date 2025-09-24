@@ -264,6 +264,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
 
+    data.LoadFactorLDV.add_tasks(
+        c, context=context, strict=False, nodes=context.model.regions, config=config
+    )
+
 
 #: :mod:`genno` tasks for model structure information that are 'static'—that is, do not
 #: change based on :class:`~.transport.config.Config` settings. See
@@ -533,12 +537,12 @@ def get_computer(
             raise ValueError(
                 "Both config=.transport.Config(...) and additional options={...}"
             )
-    elif options:
-        # Create a new instance using `kwargs`
-        config = Config.from_context(context, options=options)
-    else:
+    elif "transport" in context:
         # Retrieve the current .transport.Config. AttributeError if no instance exists.
         config = context.transport
+    else:
+        # Create a new instance using `kwargs`
+        config = Config.from_context(context, options=options)
 
     # Structure information for the base model
     if scenario:
