@@ -238,7 +238,7 @@ class Config(ConfigHelper):
     modules: list[str] = field(
         default_factory=lambda: (
             "groups demand constraint freight ikarus ldv disutility other passenger "
-            "plot data"
+            "plot data stock"
         ).split()
     )
 
