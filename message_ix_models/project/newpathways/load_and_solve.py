@@ -42,20 +42,20 @@ clone_and_update(trade_dict=trade_parameters,
                  log=log,
                  to_gdx = False,
                  solve = True,
-                 update_scenario_name = 'pipelines_LNG')
+                 update_scenario_name = 'LNG_testfoilbunker')
 
-# Update scenario: Increase liquefaction gas penalty
-additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
-                                                        project_name = 'newpathways',
-                                                        config_name = 'config.yaml')
-clone_and_update(trade_dict=trade_parameters,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True,
-                 additional_parameter_updates = additional_parameters_input,
-                 update_scenario_name = 'LNG_prod_penalty')
+# # Update scenario: Increase liquefaction gas penalty
+# additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
+#                                                         project_name = 'newpathways',
+#                                                         config_name = 'config.yaml')
+# clone_and_update(trade_dict=trade_parameters,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  additional_parameter_updates = additional_parameters_input,
+#                  update_scenario_name = 'LNG_prod_penalty')
 
 # # Update scenario: no cost on flow technology
 # trade_parameters_novar = pd.read_pickle(tdf)

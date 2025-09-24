@@ -1,7 +1,7 @@
 # DATA DIRECTORIES
 p_drive_location:
-  /pdrive/projects/ene.model3
-  #P:/ene.model
+  #/pdrive/projects/ene.model3
+  P:/ene.model
 
 # SCENARIO INFORMATION
 scenario:
@@ -23,6 +23,7 @@ scenario:
 covered_trade_technologies:
   - gas_piped
   - LNG_shipped
+  #- coal_shipped
 
 # YEARS
 timeframes:
@@ -97,8 +98,9 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   specify_network: # If true, produces sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
   tracked_emissions: # List of tracked emission types
   bunker_technology: # [DICT] Bunker technology for the traded fuel if it exists (e.g., LNG_tobunker)
-
-### Pipeline gas exports
+########################
+# Pipeline gas exports #
+########################
 gas_piped_trade:
   base_trade_technology:
     gas_bal
@@ -150,7 +152,10 @@ gas_piped_trade:
     - TCE_other
   bunker_technology: # not applicable for pipelines
 
-LNG_shipped_trade: # Name of covered trade technology (e.g., oil)
+#####################
+# LNG shipped trade #
+#####################
+LNG_shipped_trade:
   base_trade_technology:
     - LNG_bal
     - LNG_bunker
@@ -195,4 +200,49 @@ LNG_shipped_trade: # Name of covered trade technology (e.g., oil)
     LNG_tanker_LNG:
       LNG_tobunker
     LNG_tanker_foil:
+      foil_tobunker
+
+######################
+# Coal shipped trade #
+######################
+coal_shipped_trade: # Name of covered trade technology (e.g., oil)
+  base_trade_technology:
+    - coal_bal
+  trade_technology:
+    coal_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    coal
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - energy_bulk_carrier
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    energy_bulk_carrier:
+      - foil
+  flow_material_input:
+  flow_commodity_output:
+    energy_bulk_carrier_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - coal_extr
+    - lignite_extr
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    energy_bulk_carrier:
       foil_tobunker
