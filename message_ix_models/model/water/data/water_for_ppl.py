@@ -620,44 +620,6 @@ def cool_tech(
         unit="-",
     )
 
-    # add water return flows for cooling tecs
-    # Use share of basin availability to distribute the return flow from
-    df_sw = map_basin_region_wat(context)
-    df_sw.drop(columns={"mode", "date", "MSGREG"}, inplace=True)
-    df_sw.rename(
-        columns={"region": "node_dest", "time": "time_dest", "year": "year_act"},
-        inplace=True,
-    )
-    df_sw["time_dest"] = df_sw["time_dest"].astype(str)
-    if context.nexus_set == "nexus":
-        for nn in icmse_df.node_loc.unique():
-            # input cooling fresh basin
-            icfb_df = icmse_df[icmse_df["node_loc"] == nn]
-            bs = list(df_node[df_node["region"] == nn]["node"])
-
-            out_t = (
-                make_df(
-                    "output",
-                    node_loc=icfb_df["node_loc"],
-                    technology=icfb_df["technology_name"],
-                    year_vtg=icfb_df["year_vtg"],
-                    year_act=icfb_df["year_act"],
-                    mode=icfb_df["mode"],
-                    # node_origin=icmse_df["node_origin"],
-                    commodity="surfacewater_basin",
-                    level="water_avail_basin",
-                    time="year",
-                    value=icfb_df["value_return"],
-                    unit="MCM/GWa",
-                )
-                .pipe(broadcast, node_dest=bs, time_dest=pd.Series(sub_time))
-                .merge(df_sw, how="left")
-            )
-            # multiply by basin water availability share
-            out_t["value"] = out_t["value"] * out_t["share"]
-            out_t.drop(columns={"share"}, inplace=True)
-            out = pd.concat([out, out_t])
-
     # Add water return flows output from fresh cooling technologies to reg_to_basin
     # Fresh cooling technologies output their return flows to reg_to_basin technology
     out_return = make_df(
