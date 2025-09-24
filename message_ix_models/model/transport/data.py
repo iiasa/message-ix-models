@@ -897,6 +897,14 @@ speed = _input_dataflow(
     units="km / hour",
 )
 
+stock_cap = _input_dataflow(
+    key="stock:n-t-y:cap+exo",
+    path="stock-cap",
+    name="Vehicle stock per capita",
+    description="",
+    units="vehicle/capita",
+)
+
 t_share_ldv = _input_dataflow(
     path="ldv-t-share",
     key="tech share:n-t:ldv+exo",
