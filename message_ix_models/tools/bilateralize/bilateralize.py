@@ -774,7 +774,7 @@ def generate_bare_sheets(
                 # For shipped commodities, calculated capacities based on distance and energy content
                 distance_df = pd.read_csv(os.path.join(data_path, "distances", message_regions + "_distances.csv"))
                 energycontent_df = pd.read_excel(os.path.join(data_path, "specific_energy.xlsx"))
-                energycontent = energycontent_df[energycontent_df['Commodity'] == config_dict['trade_commodity'][tec]]['Specific Energy (GWa/Mt)'][0]
+                energycontent = energycontent_df[energycontent_df['Commodity'] == config_dict['trade_commodity'][tec]]['Specific Energy (GWa/Mt)'].reset_index(drop = True)[0]
                 
                 multiplier_df = distance_df.copy()
                 multiplier_df['node_loc'] = multiplier_df['Node1']
