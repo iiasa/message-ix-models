@@ -1,0 +1,10 @@
+# Stock of vehicles (CAP) per capita
+#
+# Source: Placeholder, derived from same R12 file.
+#
+# Units: vehicle / passenger
+#
+node, technology, year, value
+*,    2W,         2020, 0.05
+*,    BUS,        2020, 0.02
+*,    F ROAD,     2020, 0.01
