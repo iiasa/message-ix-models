@@ -186,7 +186,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # The following are intermediate checks formerly in .test_demand.test_exo
     "mode share:n-t-y:base": (HasUnits(""),),
     "mode share:n-t-y": (HasUnits(""),),
-    "population:n-y": (HasUnits("Mpassenger"),),
+    key.pop: (HasUnits("Mpassenger"),),
     "cg share:n-y-cg": (HasUnits(""),),
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
     "votm:n-y": (HasUnits(""),),
