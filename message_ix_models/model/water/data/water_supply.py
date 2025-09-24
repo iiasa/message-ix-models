@@ -790,7 +790,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "technical_lifetime",
                     technology="extract_gw_fossil",
-                    value=20,
+                    value=1,  # 1 Year TL to further discourage use.
                     unit="y",
                 )
                 .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
