@@ -294,9 +294,6 @@ def prepare_computer(c: "Computer") -> None:
     --------
     TASKS
     """
-    from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
-    from message_ix_models.project.edits.structure import SCENARIO as EDITS
-
     context = c.graph["context"]
     config: "Config" = context.transport
 
@@ -309,27 +306,12 @@ def prepare_computer(c: "Computer") -> None:
     # Add other tasks for demand calculation
     c.add_queue(TASKS)
 
-    # Replace certain calculations for LED projected activity
-    exo_pdt_cap_scenario = ""
-    if config.project.get("LED", False):
-        exo_pdt_cap_scenario = "LED"
-    elif digsy_scenario := config.project.get("DIGSY", None):
-        # For DIGSY.BASE, preserve the standard calculation based on the respective SSP
-        # (fixed to SSP2 by .config.refresh_cl_scenario())
-        if digsy_scenario not in (DIGSY["_Z"], DIGSY["BASE"]):
-            exo_pdt_cap_scenario = f"DIGSY-{digsy_scenario.name}"
-    elif edits_scenario := config.project.get("EDITS", None):
-        if edits_scenario is not EDITS["_Z"]:
-            exo_pdt_cap_scenario = f"EDITS-{edits_scenario.name}"
-
-    if exo_pdt_cap_scenario:
-        log.info(f"Use exogenous PDT per capita for scenario={exo_pdt_cap_scenario!r}")
+    try:
+        # Replace certain calculations for LED projected activity
         PDT_CAP.add_tasks(
-            c,
-            context=context,
-            strict=False,
-            nodes=context.model.regions,
-            scenario=exo_pdt_cap_scenario,
+            c, context=context, strict=False, nodes=context.model.regions, config=config
         )
+    except FileNotFoundError:
+        log.info(f"No exogenous PDT_CAP data for scenario label {config.label!r}")
 
     c.add("transport_data", __name__, key="transport demand::ixmp")

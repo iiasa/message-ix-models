@@ -119,6 +119,8 @@ Other submodules are documented on their respective pages:
    transport/index
    water/index
 
+.. _index-projects:
+
 .. toctree::
    :maxdepth: 1
    :caption: Research projects
@@ -131,6 +133,7 @@ Other submodules are documented on their respective pages:
    project/digsy
    project/ecemf
    project/edits
+   project/efc
    project/elevate
    project/engage
    project/gea
@@ -146,8 +149,19 @@ Other submodules are documented on their respective pages:
    project/scenariomip
    project/shape
    project/sparccle
+   project/spipa
    project/ssp
    project/uptake
+
+.. note:: The documentation for :mod:`message_data` (not public)
+   contains the following pages with information about other projects.
+   No code, data, or documentation for these projects is currently in :mod:`message_ix_models`:
+
+   :doc:`m-data:reference/projects/cd_links` —
+   :doc:`COVID-19 <m-data:reference/projects/covid>` —
+   :doc:`m-data:project/dle` —
+   :doc:`m-data:project/leap_re` —
+   :doc:`m-data:reference/projects/led`.
 
 .. toctree::
    :maxdepth: 1

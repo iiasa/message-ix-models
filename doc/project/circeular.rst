@@ -11,14 +11,24 @@ Project information
 
 Modeling activities may include:
 
-- Improve :doc:`representation of material cycles </material/index>` (e.g., calibrate stocks and flows) (2022-09–2025-08).
-- Explore circular business models and consumption for buildings, household services and mobility (2023-03–2026-02).
-- Soft-link with service models, dynamic MFA (`MISO2 <https://github.com/socialecologyboku/MISO2>`_), MRIO (EXIOfutures), and waste (GAINS) models (2024-06–2025-08).
-- Develop integrated energy-material-emissions scenarios with focus on demand side transformation (2025-01–2026-08).
+- Improve :doc:`representation of material cycles </material/index>`
+  (e.g., calibrate stocks and flows) (2022-09–2025-08).
+- Explore circular business models and consumption for buildings,
+  household services and mobility (2023-03–2026-02).
+- Soft-link with service models,
+  dynamic MFA (`MISO2 <https://github.com/socialecologyboku/MISO2>`_),
+  MRIO (EXIOfutures),
+  and waste (GAINS) models (2024-06–2025-08).
+- Develop integrated energy-material-emissions scenarios
+  with focus on demand side transformation (2025-01–2026-08).
 
-As of 2025-01:
+IIASA roles (as of 2025-01):
 
-- Lead modeler :gh-user:`amastrucci` (buildings), :gh-user:`r-aneeque` (transport)
+- Project lead: Volker Krey
+- Lead modeler :gh-user:`amastrucci` (buildings), :gh-user:`r-aneeque` (transport).
+  
+  - Previously: Gamze Ünlü.
+- Technical advisor(s): :gh-user:`khaeru`.
 
 Code reference
 ==============

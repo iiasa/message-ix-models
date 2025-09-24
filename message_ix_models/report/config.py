@@ -39,7 +39,9 @@ class Config(ConfigHelper):
     """
 
     #: Shorthand to call :func:`use_file` on a new instance.
-    from_file: InitVar[Optional[Path]] = package_data_path("report", "global.yaml")
+    from_file: InitVar[Union[Path, str, None]] = package_data_path(
+        "report", "global.yaml"
+    )
 
     #: Shorthand to set :py:`legacy["use"]` on a new instance.
     _legacy: InitVar[Optional[bool]] = False
@@ -151,7 +153,7 @@ class Config(ConfigHelper):
 
         self.genno_config["output_dir"] = self.output_dir
 
-    def use_file(self, file_path: Union[str, Path, None]) -> None:
+    def use_file(self, file_path: Union[Path, str, None]) -> None:
         """Use genno configuration from a (YAML) file at `file_path`.
 
         See :mod:`genno.config` for the format of these files. The path is stored at

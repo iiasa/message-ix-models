@@ -32,8 +32,8 @@ def test_generate(test_context, base_scenario) -> None:
 
     # WorkflowStep objects store expected configuration for certain projects
     assert (
-        DIGSY["BEST"]
-        is wf.graph["DIGSY-BEST built"][0].kwargs["config"].project["DIGSY"]
+        DIGSY["BEST-C"]
+        is wf.graph["DIGSY-BEST-C built"][0].kwargs["config"].project["DIGSY"]
     )
     assert (
         EDITS["HA"] is wf.graph["EDITS-HA built"][0].kwargs["config"].project["EDITS"]
