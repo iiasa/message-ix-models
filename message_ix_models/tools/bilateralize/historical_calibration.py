@@ -421,7 +421,8 @@ def build_historical_activity(message_regions = 'R12',
     bacidf = convert_trade(message_regions = message_regions,
                            project_name = project_name, config_name = config_name)
     bacidf = bacidf[bacidf['MESSAGE COMMODITY'] != 'lng'] # Get LNG from IEA instead
-
+    bacidf['MESSAGE COMMODITY'] = bacidf['MESSAGE COMMODITY'] + '_shipped'
+    
     ngdf = import_iea_gas(project_name = project_name, config_name = config_name)
 
     tradedf = bacidf.merge(ngdf, 
@@ -485,8 +486,8 @@ def build_historical_price(message_regions = 'R12',
     bacidf = convert_trade(message_regions = message_regions,
                            project_name = project_name, config_name = config_name)    
     bacidf['MESSAGE COMMODITY'] = np.where(bacidf['MESSAGE COMMODITY'] == 'lng', 
-                                           'LNG_shipped', bacidf['MESSAGE COMMODITY'])
-    
+                                           'LNG', bacidf['MESSAGE COMMODITY'])
+    bacidf['MESSAGE COMMODITY'] = bacidf['MESSAGE COMMODITY'] + '_shipped'
     bacidf = bacidf[bacidf['YEAR'] > 2020]
     
     bacidf['ENERGY (GWa)'] = bacidf['ENERGY (TJ)'] * (3.1712 * 1e-5) # TJ to GWa
