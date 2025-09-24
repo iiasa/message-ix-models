@@ -6,10 +6,10 @@ from typing import Optional
 
 import pandas as pd
 from message_ix import Scenario
-from message_ix.models import MACRO
 from tqdm import tqdm
 
 from message_ix_models import Spec
+from message_ix_models.util.message_ix import MACRO
 from message_ix_models.util.pooch import SOURCE, fetch
 
 from .build import apply_spec
