@@ -21,6 +21,7 @@ g_ppl_co2scr,low,low_medium,medium,high,high,low
 gas_cc,high,medium,low,medium,high,medium
 gas_cc_ccs,medium,medium,low,high,high,medium
 gas_ct,high,medium,low,medium,high,medium
+h2_ct,high,medium,low,medium,high,medium
 gas_i,low,low,low,low,low,low
 gas_ppl,medium,medium,low,medium,high,medium
 geo_hpl,medium,medium,high,high,medium,medium
