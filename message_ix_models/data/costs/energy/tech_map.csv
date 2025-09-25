@@ -31,6 +31,7 @@ gas_bio,weo,bioenergy_large,670,,
 gas_cc,weo,ccgt,810,,2005
 gas_cc_ccs,weo,ccgt_ccs,2511,,2030
 gas_ct,weo,gas_turbine,405,,2005
+h2_ct, weo,gas_turbine,466,,2030
 gas_hpl,weo,gas_turbine,95,,
 gas_i,weo,gas_turbine,97,0.18396,1985
 gas_ppl,weo,gas_turbine,1205,,2005
