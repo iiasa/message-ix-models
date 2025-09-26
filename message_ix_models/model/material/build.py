@@ -12,6 +12,7 @@ from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol import gen_data_methanol
 from message_ix_models.model.material.data_other_industry import (
+    gen_data_other,
     gen_other_ind_demands,
     get_hist_act,
     modify_demand_and_hist_activity,
@@ -47,6 +48,7 @@ from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
+    gen_data_other,
     gen_data_aluminum,
     gen_data_methanol,
     gen_all_NH3_fert,
@@ -110,33 +112,6 @@ def build(
     apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
 
     add_water_par_data(scenario)
-
-    # Adjust exogenous energy demand to incorporate the endogenized sectors
-    # Adjust the historical activity of the useful level industry technologies
-    # Coal calibration 2020
-    if old_calib:
-        modify_demand_and_hist_activity(scenario)
-    else:
-        scenario.check_out()
-        for k, v in gen_other_ind_demands(get_ssp_from_context(context)).items():
-            scenario.add_par(
-                "demand",
-                v[
-                    v["year"].isin(
-                        scenario.vintage_and_active_years()["year_act"].unique()
-                    )
-                ],
-            )
-        scenario.commit("add new other industry demands")
-        # overwrite non-Materials industry technology calibration
-        calib_data = get_hist_act(
-            scenario, [1990, 1995, 2000, 2010, 2015, 2020], use_cached=True
-        )
-        scenario.check_out()
-        for k, v in calib_data.items():
-            scenario.add_par(k, v)
-        scenario.commit("new calibration of other industry")
-
     add_emission_accounting(scenario)
 
     if modify_existing_constraints:

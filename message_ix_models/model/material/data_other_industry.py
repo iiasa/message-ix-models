@@ -17,10 +17,13 @@ from message_ix_models.model.material.data_util import (
     map_iea_db_to_msg_regs,
     read_iea_tec_map,
 )
-from message_ix_models.util import package_data_path
+from message_ix_models.model.material.util import get_ssp_from_context, read_config
+from message_ix_models.util import merge_data, package_data_path
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+
+    from message_ix_models.types import ParameterData
 
 
 def modify_demand_and_hist_activity(scen: "Scenario") -> None:
@@ -525,3 +528,19 @@ def gen_other_ind_demands(ssp: str) -> dict[str, pd.DataFrame]:
         )
         demands[comm] = df.copy(deep=True)
     return demands
+
+
+def gen_data_other(scenario) -> "ParameterData":
+    context = read_config()
+    par_data = {}
+    demands = pd.concat(
+        v[v["year"].isin(scenario.vintage_and_active_years()["year_act"].unique())]
+        for v in gen_other_ind_demands(get_ssp_from_context(context)).values()
+    )
+    par_data["demand"] = demands
+    # overwrite non-Materials industry technology calibration
+    calib_data = get_hist_act(
+        scenario, [1990, 1995, 2000, 2010, 2015, 2020], use_cached=True
+    )
+    merge_data(par_data, calib_data)
+    return par_data
