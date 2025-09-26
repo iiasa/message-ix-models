@@ -1,0 +1,23 @@
+relation,technology,mode,value,comment
+CO2_cc,atm_distillation_ref,M1,0.0,
+CO2_cc,vacuum_distillation_ref,M1,0.0,
+CO2_cc,catalytic_cracking_ref,atm_gasoil,0.03552,"153.135153958127 kg/m3 throughput. 1m3 oil = 10.3 MWh. There are other GHG emission factors in PRELIM, but how important they are ?,PRELIM"
+CO2_cc,catalytic_cracking_ref,vacuum_gasoil,0.03552,
+CO2_cc,visbreaker_ref,M1,0.0,IKARUS
+CO2_cc,coking_ref,M1,0.0002236,PRELIM
+CO2_cc,catalytic_reforming_ref,M1,7.65715e-05,PRELIM
+CO2_cc,hydro_cracking_ref,cracking_gasoline,0.0,IKARUS
+CO2_cc,hydro_cracking_ref,cracking_loil,0.0,IKARUS
+CO2_cc,hydrotreating_ref,atm_gasoil,4.63901e-05,PRELIM
+CO2_cc,hydrotreating_ref,vacuum_gasoil,4.63901e-05,PRELIM
+CO2_cc,hydrotreating_ref,kerosene,4.63901e-05,PRELIM
+CO2_cc,hydrotreating_ref,diesel,4.63901e-05,PRELIM
+CO2_cc,hydrotreating_ref,naphtha,4.63901e-05,PRELIM
+SO2_Emission,catalytic_reforming_ref,M1,5.639848e-05,PRELIM
+SO2_Emission,catalytic_cracking_ref,atm_gasoil,0.024153786,PRELIM
+SO2_Emission,catalytic_cracking_ref,vacuum_gasoil,0.024153786,PRELIM
+# SO2_Emission,hydrotreating_ref,atm_gasoil,3.425176e-07,PRELIM
+SO2_Emission,hydrotreating_ref,vacuum_gasoil,0.0003425,PRELIM
+SO2_Emission,hydrotreating_ref,kerosene,0.00034251763,PRELIM
+SO2_Emission,hydrotreating_ref,diesel,0.00034251763,PRELIM
+SO2_Emission,hydrotreating_ref,naphtha,0.00034251763,PRELIM
