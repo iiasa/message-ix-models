@@ -283,6 +283,70 @@ def cooling_shares_SSP_from_yaml(
     return df_region
 
 
+def _add_saline_extract_bounds(results: dict, info) -> None:
+    """Add dynamic bound_activity_up for extract_salinewater_cool based on historical saline cooling demand.
+
+    Parameters
+    ----------
+    results : dict
+        Dictionary of parameter DataFrames being built
+    info :
+        Water build info context containing model years
+    """
+    if "historical_activity" not in results:
+        return
+
+    hist_activity = results["historical_activity"]
+
+    # Filter to saline cooling technologies
+    saline_hist = hist_activity[
+        hist_activity["technology"].str.endswith("__ot_saline", na=False)
+    ]
+
+    if saline_hist.empty:
+        return
+
+    # Get last historical year
+    last_hist_year = saline_hist["year_act"].max()
+
+    # Filter to last historical year and sum by region
+    last_year_saline = saline_hist[saline_hist["year_act"] == last_hist_year]
+    regional_bounds = last_year_saline.groupby("node_loc")["value"].sum().reset_index()
+
+    # Create bound values for each region (fallback to 1e4 if no activity)
+    bound_values = []
+    bound_regions = []
+
+    for _, row in regional_bounds.iterrows():
+        region = row["node_loc"]
+        total_activity = row["value"]
+        bound_value = (
+            total_activity if total_activity > 0 else 1e4
+        )  # FIXME: Aribitrary 1e4
+        bound_values.append(bound_value)
+        bound_regions.append(region)
+
+    # Create bound_activity_up for extract_salinewater_cool
+    if bound_values:
+        saline_water_cool_cap = make_df(
+            "bound_activity_up",
+            technology="extract_salinewater_cool",
+            node_loc=bound_regions,
+            mode="M1",
+            time="year",
+            value=bound_values,
+            unit="MCM",
+        ).pipe(broadcast, year_act=info.Y)
+
+        # Add to results (concatenate if bound_activity_up already exists)
+        if "bound_activity_up" in results:
+            results["bound_activity_up"] = pd.concat(
+                [results["bound_activity_up"], saline_water_cool_cap], ignore_index=True
+            )
+        else:
+            results["bound_activity_up"] = saline_water_cool_cap
+
+
 def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame:
     """Create the capacity_factor base on data in `inp` and `context.
 
@@ -441,16 +505,18 @@ def cool_tech(
     # Convert year values into integers to be compatibel for model
     input_cool.year_vtg = input_cool.year_vtg.astype(int)
     input_cool.year_act = input_cool.year_act.astype(int)
-    
+
     # Fix invalid year combinations (year_act < year_vtg) using proper vintage-active combinations
-    year_combinations = get_vintage_and_active_years(info, technical_lifetime=30, same_year_only=False)
-    
+    year_combinations = get_vintage_and_active_years(
+        info, technical_lifetime=30, same_year_only=False
+    )
+
     # Create a mapping of valid year combinations
-    valid_years = set(zip(year_combinations['year_vtg'], year_combinations['year_act']))
-    
+    valid_years = set(zip(year_combinations["year_vtg"], year_combinations["year_act"]))
+
     # Filter input_cool to only include valid year combinations
     input_cool_valid_mask = input_cool.apply(
-        lambda row: (int(row['year_vtg']), int(row['year_act'])) in valid_years, axis=1
+        lambda row: (int(row["year_vtg"]), int(row["year_act"])) in valid_years, axis=1
     )
     input_cool = input_cool[input_cool_valid_mask]
     # Drops extra technologies from the data. backwards compatibility
@@ -704,7 +770,9 @@ def cool_tech(
                     .pipe(broadcast, year_combinations)
                     .pipe(broadcast, node_dest=matching_basins["node_dest"].unique())
                     .merge(
-                        matching_basins.drop_duplicates(["node_dest"])[["node_dest", "share"]],
+                        matching_basins.drop_duplicates(["node_dest"])[
+                            ["node_dest", "share"]
+                        ],
                         on="node_dest",
                         how="left",
                     )
@@ -1009,7 +1077,7 @@ def cool_tech(
         "initial_activity_lo",
         "initial_new_capacity_up",
         "soft_activity_up",
-        "soft_activity_lo",
+        # "soft_activity_lo", #causes infeasibilty.
         "soft_new_capacity_up",
         "level_cost_activity_soft_up",
         "level_cost_activity_soft_lo",
@@ -1051,12 +1119,12 @@ def cool_tech(
         if param_name == "growth_new_capacity_up":
             df_param_share.loc[
                 df_param_share["technology"].str.endswith("__ot_saline"), "value"
-            ] = 0
+            ] = 1e-3
             print(f"setting growth up new cap 0 for {df_param_share['technology']}")
         if param_name == "growth_activity_up":
             df_param_share.loc[
                 df_param_share["technology"].str.endswith("__ot_saline"), "value"
-            ] = 0
+            ] = 1e-3
             print(f"setting growth up act 0 for {df_param_share['technology']}")
         results[param_name] = pd.concat(
             [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
@@ -1068,6 +1136,9 @@ def cool_tech(
     if not df_share.empty:
         # pd concat to the existing results["share_commodity_up"]
         results["share_commodity_up"] = pd.concat([df_share], ignore_index=True)
+
+    # Add dynamic bound_activity_up for extract_salinewater_cool
+    _add_saline_extract_bounds(results, info)
 
     return results
 
