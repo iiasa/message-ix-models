@@ -14,6 +14,7 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
     gen_chemicals_co2_ind_factors,
+    gen_emi_rel_data,
     gen_ethanol_to_ethylene_emi_factor,
     gen_plastics_emission_factors,
     read_timeseries,
@@ -635,6 +636,7 @@ def gen_data_petro_chemicals(
 
     merge_data(
         results,
+        gen_emi_rel_data(s_info, "petrochemicals"),
         meth_downstream_emi_top_down,
         meth_downstream_emi_bot_up,
         meth_downstream_emi_eth,
