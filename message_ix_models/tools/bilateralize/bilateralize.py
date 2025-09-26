@@ -930,7 +930,8 @@ def clone_and_update(trade_dict,
                      config_name: str = None,
                      update_scenario_name:str = None,
                      additional_parameter_updates:dict = None,
-                     gdx_location: str = os.path.join("H:", "script", "message_ix", "message_ix", "model", "data")):     
+                     gdx_location: str = os.path.join("H:", "script", "message_ix", "message_ix", "model", "data"),
+                     remove_pao_coal_constraint: bool = True):     
     # Load config
     config, config_path = load_config(project_name, config_name)
        
@@ -1083,7 +1084,16 @@ def clone_and_update(trade_dict,
                     
                 scen.remove_par(par, base_df)
                 scen.add_par(par, add_df)
-        
+    
+    if remove_pao_coal_constraint == True:
+        with scen.transact("Remove PAO coal and gas constraints on primary energy"):
+            for rel in ['domestic_coal', 'domestic_gas']:
+                log.info('Removing constraints on PAO primary energy: ' + rel)
+                relact_df = scen.par('relation_activity', filters = {'relation': rel})
+                relupp_df = scen.par('relation_upper', filters = {'relation': rel})
+                scen.remove_par('relation_activity', relact_df)
+                scen.remove_par('relation_upper', relupp_df)
+                
     if (to_gdx == True) & (solve == False):
         save_to_gdx(mp = mp,
                     scenario = scen,

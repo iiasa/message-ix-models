@@ -83,6 +83,7 @@ def activity_to_csv(trade_tec,
         act_in['value'] = np.where((act_in['activity_type'] == 'historical')&(act_in['value'].isnull()), 1, act_in['value'])
         act_in['level'] = act_in['lvl']*act_in['value']
         act_in = act_in.groupby(['MODEL', 'SCENARIO', 'node_loc', 'technology', 'commodity', 'year_act', 'unit'])['level'].sum().reset_index()
+        act_in['level'] = round(act_in['level'], 1)
         
         act_out = activity.merge(outputdf,
                                  left_on = ['node_loc', 'technology', 'year_act'],
@@ -91,7 +92,8 @@ def activity_to_csv(trade_tec,
         act_out['value'] = np.where((act_out['activity_type'] == 'historical')&(act_out['value'].isnull()), 1, act_out['value'])
         act_out['level'] = act_out['lvl']*act_out['value']
         act_out = act_out.groupby(['MODEL', 'SCENARIO', 'node_loc', 'technology', 'commodity', 'year_act', 'unit'])['level'].sum().reset_index()
-            
+        act_out['level'] = round(act_out['level'], 1)
+
         exports = act_in[(act_in['technology'].str.contains(trade_tec))&\
                          (act_in['technology'].str.contains('_exp'))].copy()
         imports = act_in[(act_in['technology'].str.contains(trade_tec))&\
@@ -159,10 +161,7 @@ def activity_to_csv(trade_tec,
     
 # Retrieve trade flow activities
 scenarios_models = {#'base_scenario': 'NP_SSP2_6.2',
-                    'pipelines_LNG': 'NP_SSP2_6.2',
-                    'HHI_0.6_gas_CHN': 'NP_SSP2_6.2',
-                    'HHI_0.6_gas_WEU': 'NP_SSP2_6.2',
-                    'HHI_0.25_gas_WEU': 'NP_SSP2_6.2'
+                    'gas-LNG-coal': 'NP_SSP2_6.2',
                     }
  
 activity_to_csv(trade_tec = "gas", 
@@ -176,5 +175,12 @@ activity_to_csv(trade_tec = "LNG",
                 flow_tec = "LNG_tanker",
                 trade_commodity = 'LNG (GWa)',
                 flow_commodity = 'LNG_tanker_capacity',
+                flow_unit = 'Mt-km',
+                model_scenario_dict = scenarios_models)
+
+activity_to_csv(trade_tec = "coal", 
+                flow_tec = "energy_bulk_carrier",
+                trade_commodity = 'Coal (GWa)',
+                flow_commodity = 'energy_bulk_carrier_capacity',
                 flow_unit = 'Mt-km',
                 model_scenario_dict = scenarios_models)

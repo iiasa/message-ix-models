@@ -23,7 +23,7 @@ scenario:
 covered_trade_technologies:
   - gas_piped
   - LNG_shipped
-  #- coal_shipped
+  - coal_shipped
 
 # YEARS
 timeframes:
@@ -185,7 +185,7 @@ LNG_shipped_trade:
     LNG_tanker_LNG:
       - LNG
     LNG_tanker_foil:
-      - foil
+      - fueloil
   flow_material_input:
   flow_commodity_output:
     LNG_tanker_capacity
@@ -208,6 +208,7 @@ LNG_shipped_trade:
 coal_shipped_trade: # Name of covered trade technology (e.g., oil)
   base_trade_technology:
     - coal_bal
+    - coal_trd
   trade_technology:
     coal_shipped
   trade_tech_suffix: 
@@ -231,7 +232,7 @@ coal_shipped_trade: # Name of covered trade technology (e.g., oil)
     global
   flow_fuel_input:
     energy_bulk_carrier:
-      - foil
+      - fueloil
   flow_material_input:
   flow_commodity_output:
     energy_bulk_carrier_capacity
