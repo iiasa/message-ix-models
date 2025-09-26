@@ -11,7 +11,6 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import (
     read_yaml_file,
-    remove_from_list_if_exists,
 )
 from message_ix_models.model.structure import get_region_codes
 from message_ix_models.tools.costs.config import Config
@@ -209,9 +208,6 @@ def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
 
 
 def add_emission_accounting(scen: message_ix.Scenario) -> None:
-    add_non_co2_emissions(scen)
-    add_thermal_emissions(scen)
-    add_refinery_emission(scen)
     add_fs_emission(scen)
     correct_cf4_emission(scen)
 
@@ -232,156 +228,13 @@ def get_tec_list(scen):
     return tec_list_materials
 
 
-def add_non_co2_emissions(scen):
-    # (1) ******* Add non-CO2 gases to the relevant relations. ********
-    # This is done by multiplying the input values and emission_factor
-    # per year,region and technology for furnace technologies.
-
-    tec_list = [
-        i for i in scen.set("technology") if (("furnace" in i) | ("hp_gas_" in i))
-    ]
-    tec_list_input = scen.par("input", filters={"technology": tec_list})[
-        "technology"
-    ].unique()
-
-    # The technology list to retrieve the input values for furnaces
-    tec_list_input = [
-        i for i in tec_list_input if (("furnace" in i) | ("hp_gas_" in i))
-    ]
-
-    # Retrieve the input values
-    input_df = (
-        scen.par("input", filters={"technology": tec_list_input})
-        .drop(
-            ["node_origin", "commodity", "level", "time", "time_origin", "unit"],
-            axis=1,
-        )
-        .drop_duplicates()
-    )
-    input_df = input_df[input_df["year_act"] >= 2020]
-
-    # The technology list to retrieve the emission_factors
-    tec_list_residual = [
-        "biomass_i",
-        "coal_i",
-        "gas_i",
-        "foil_i",
-        "loil_i",
-        "meth_i",
-        "hp_gas_i",
-    ]
-    # TODO: values need to be normalized to input before use to derive furnace emission
-    #  factors
-    # Retrieve the emission factors
-    emission_df = (
-        scen.par("emission_factor", filters={"technology": tec_list_residual})
-        .drop(["unit", "mode"], axis=1)
-        .drop_duplicates()
-    )
-    emission_df = emission_df[emission_df["year_act"] >= 2020]
-
-    # Mapping to multiply the emission_factor with the corresponding
-    # input values from new industry technologies
-    tec_map = {
-        "foil_i": [
-            "furnace_foil_steel",
-            "furnace_foil_aluminum",
-            "furnace_foil_cement",
-            "furnace_foil_petro",
-            "furnace_foil_refining",
-        ],
-        "biomass_i": [
-            "furnace_biomass_steel",
-            "furnace_biomass_aluminum",
-            "furnace_biomass_cement",
-            "furnace_biomass_petro",
-            "furnace_biomass_refining",
-        ],
-        "coal_i": [
-            "furnace_coal_steel",
-            "furnace_coal_aluminum",
-            "furnace_coal_cement",
-            "furnace_coal_petro",
-            "furnace_coal_refining",
-            "furnace_coke_petro",
-            "furnace_coke_refining",
-        ],
-        "loil_i": [
-            "furnace_loil_steel",
-            "furnace_loil_aluminum",
-            "furnace_loil_cement",
-            "furnace_loil_petro",
-            "furnace_loil_refining",
-        ],
-        "gas_i": [
-            "furnace_gas_steel",
-            "furnace_gas_aluminum",
-            "furnace_gas_cement",
-            "furnace_gas_petro",
-            "furnace_gas_refining",
-        ],
-        "meth_i": [
-            "furnace_methanol_steel",
-            "furnace_methanol_aluminum",
-            "furnace_methanol_cement",
-            "furnace_methanol_petro",
-            "furnace_methanol_refining",
-        ],
-        "hp_gas_i": [
-            "hp_gas_steel",
-            "hp_gas_aluminum",
-            "hp_gas_cement",
-            "hp_gas_petro",
-            "hp_gas_refining",
-        ],
-    }
-
-    # Create an empty dataframe
-    df_non_co2_emissions = pd.DataFrame()
-
-    # Find the technology, year_act, year_vtg, emission, node_loc combination
-    emissions = [e for e in emission_df["emission"].unique()]
-    remove_from_list_if_exists("CO2_industry", emissions)
-    remove_from_list_if_exists("CO2_res_com", emissions)
-
-    for t in emission_df["technology"].unique():
-        for e in emissions:
-            emission_df_filt = emission_df.loc[
-                ((emission_df["technology"] == t) & (emission_df["emission"] == e))
-            ]
-            # Filter the technologies that we need the input value
-            input_df_filt = input_df[input_df["technology"].isin(tec_map[t])]
-            if (emission_df_filt.empty) | (input_df_filt.empty):
-                continue
-            else:
-                df_merged = pd.merge(
-                    emission_df_filt,
-                    input_df_filt,
-                    on=["year_act", "year_vtg", "node_loc"],
-                )
-                df_merged["value"] = df_merged["value_x"] * df_merged["value_y"]
-                df_merged.drop(
-                    ["technology_x", "value_x", "value_y", "year_vtg", "emission"],
-                    axis=1,
-                    inplace=True,
-                )
-                df_merged.rename(columns={"technology_y": "technology"}, inplace=True)
-                relation_name = e + "_Emission"
-                df_merged["relation"] = relation_name
-                df_merged["node_rel"] = df_merged["node_loc"]
-                df_merged["year_rel"] = df_merged["year_act"]
-                df_merged["unit"] = "???"
-                df_non_co2_emissions = pd.concat([df_non_co2_emissions, df_merged])
-
-    df_non_co2_emissions = df_non_co2_emissions.drop_duplicates()
-    with scen.transact("Non-CO2 Emissions accounting for industry technologies added."):
-        scen.add_par("relation_activity", df_non_co2_emissions)
-
-
 def gen_emi_rel_data(
-    s_info: ScenarioInfo, material: Literal["aluminum", "steel", "cement"]
+    s_info: ScenarioInfo,
+    material: Literal["aluminum", "steel", "cement", "petrochemicals"],
 ) -> "ParameterData":
-    df = pd.read_csv(package_data_path("material", material, "emission_factors.csv"))
+    df = pd.read_csv(
+        package_data_path("material", material, "emission_factors.csv"), comment="#"
+    )
     df = (
         make_df(
             "relation_activity",
@@ -391,52 +244,8 @@ def gen_emi_rel_data(
         .assign(year_rel=lambda x: x["year_act"], unit="Mt C/yr")
         .pipe(same_node)
     )
+    df = df[df["value"] != 0]
     return {"relation_activity": df}
-
-
-def add_thermal_emissions(scen):
-    tec_list_materials = get_tec_list(scen)
-    # ***** (3) Add thermal industry technologies to CO2_ind relation ******
-    relation_activity_furnaces = scen.par(
-        "emission_factor",
-        filters={"emission": "CO2_industry", "technology": tec_list_materials},
-    )
-    relation_activity_furnaces = (
-        make_df(
-            "relation_activity",
-            **relation_activity_furnaces,
-            relation="CO2_ind",
-            year_rel=relation_activity_furnaces["year_act"],
-        )
-        .pipe(same_node)
-        .drop_duplicates()
-    )
-    with scen.transact():
-        scen.add_par("relation_activity", relation_activity_furnaces)
-
-
-def add_refinery_emission(scen):
-    # ***** (5) Add refinery technologies to CO2_cc ******
-    tec_list_materials = get_tec_list(scen)
-    relation_activity_ref = scen.par(
-        "emission_factor",
-        filters={
-            "emission": "CO2_transformation",
-            "technology": tec_list_materials,
-        },
-    )
-    relation_activity_ref = (
-        make_df(
-            "relation_activity",
-            **relation_activity_ref,
-            relation="CO2_cc",
-            year_rel=relation_activity_ref["year_act"],
-        )
-        .pipe(same_node)
-        .drop_duplicates()
-    )
-    with scen.transact():
-        scen.add_par("relation_activity", relation_activity_ref)
 
 
 def add_fs_emission(scen):
