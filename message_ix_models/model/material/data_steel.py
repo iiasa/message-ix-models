@@ -15,6 +15,7 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
     calculate_ini_new_cap,
+    gen_emi_rel_data,
     read_rel,
     read_sector_data,
     read_timeseries,
@@ -731,6 +732,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         read_hist_cap("eaf"),
         read_hist_cap("bof"),
         read_hist_cap("bf"),
+        gen_emi_rel_data(s_info, "steel"),
     )
     maybe_remove_water_tec(scenario, results)
 

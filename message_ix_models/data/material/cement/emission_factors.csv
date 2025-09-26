@@ -1,0 +1,6 @@
+relation,technology,mode,value,comment
+CO2_Emission,clinker_wet_ccs_cement,M1,-0.135,Voldsund (2019)
+CO2_Emission,clinker_dry_ccs_cement,M1,-0.135,Voldsund (2019)
+CO2_Emission,clinker_wet_cement,M1,0.15,"Process emissions, EcoFys (2009)"
+CO2_Emission,clinker_dry_cement,M1,0.15,"Process emissions, EcoFys (2009)"
+CO2_Emission,DUMMY_limestone_supply_steel,M1,0.12,From China steel. Assume it is included by having other industrial energy demand

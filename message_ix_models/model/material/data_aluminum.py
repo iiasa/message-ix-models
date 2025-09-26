@@ -14,7 +14,11 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_rel, read_timeseries
+from message_ix_models.model.material.data_util import (
+    gen_emi_rel_data,
+    read_rel,
+    read_timeseries,
+)
 from message_ix_models.model.material.demand import derive_demand
 from message_ix_models.model.material.util import (
     add_R12_column,
@@ -524,6 +528,8 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
     nodes = nodes_ex_world(s_info.N)
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
 
+    remove_old_cf4_alu_relation(scenario)
+
     const_dict = gen_data_alu_const(
         data_aluminum, config, global_region, modelyears, yv_ya, nodes
     )
@@ -545,6 +551,7 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
     scrap_cost = get_scrap_prep_cost(s_info, ssp)
     max_recyc = gen_max_recycling_rel(s_info, ssp)
     scrap_heat = gen_scrap_prep_heat(s_info, ssp)
+    emi_factors = gen_emi_rel_data(s_info, "aluminum")
     results_aluminum: dict[str, pd.DataFrame] = {}
     merge_data(
         results_aluminum,
@@ -560,6 +567,7 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
         scrap_cost,
         max_recyc,
         scrap_heat,
+        emi_factors,
     )
     reduced_pdict = {}
     for k, v in results_aluminum.items():
@@ -1676,3 +1684,18 @@ def remove_scrap_in_firstyear(pars: dict) -> None:
     ]
     pars["input"] = inp
     pars["output"] = out
+
+
+def remove_old_cf4_alu_relation(scen: "Scenario") -> None:
+    """Correct CF4 Emission relations.
+
+    Remove transport related technologies from `CF4_Emissions` and `CF4_alm_red`
+    relations in ``relation_activity``
+    """
+    trp_tecs = [i for i in scen.set("technology") if i.endswith("_trp")]
+    CF4_trp_emissions = scen.par(
+        "relation_activity",
+        filters={"relation": ["CF4_Emission", "CF4_alm_red"], "technology": trp_tecs},
+    )
+    #with scen.transact("CF4 relations corrected."):
+    scen.remove_par("relation_activity", CF4_trp_emissions)
