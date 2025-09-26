@@ -11,11 +11,12 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, List
 
 import pandas as pd
-from message_ix import Scenario, make_df
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     broadcast,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
@@ -47,22 +48,15 @@ def read_data_generic(scenario: "Scenario") -> tuple[pd.DataFrame, pd.DataFrame]
         - DataFrame with time-series data.
     """
     # Read the file
-    data_generic = pd.read_excel(
-        package_data_path(
-            "material", "other", "generic_furnace_boiler_techno_economic.xlsx"
-        ),
-        sheet_name="generic",
-    )
+    data_generic = pd.read_csv(package_data_path("material", "other", "generic.csv"))
 
     # Clean the data
     # Drop columns that don't contain useful information
     data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
-    data_generic_ts = read_timeseries(
-        scenario, "other", None, "generic_furnace_boiler_techno_economic.xlsx"
-    )
+    data_generic_ts = read_timeseries(scenario, "other", None, "timeseries_R12.csv")
 
     # Unit conversion
-    # At the moment this is done in the excel file, can be also done here
+    # At the moment this is done in the Excel file, can be also done here
     # To make sure we use the same units
 
     return data_generic, data_generic_ts
@@ -174,10 +168,10 @@ def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterD
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    # For each technology there are differnet input and output combinations
+    # For each technology there are different input and output combinations
     # Iterate over technologies
 
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    modelyears = s_info.Y
     yv_ya = s_info.yv_ya
 
     # Do not parametrize GLB region the same way
@@ -292,12 +286,14 @@ def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterD
             nodes,
         )
     )
+
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
     reduced_pdict = {}
     for k, v in results.items():
         if {"year_act", "year_vtg"}.issubset(v.columns):
             v = v[(v["year_act"] - v["year_vtg"]) <= 25]
         reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+    merge_data(reduced_pdict, calculate_co2_emi_coeff(reduced_pdict["input"]))
     return reduced_pdict
 
 
@@ -500,3 +496,33 @@ def calculate_furnace_non_co2_emi_coeff(
     df_final_new["year_rel"] = df_final_new["year_act"]
     df_final_new["unit"] = "???"
     return df_final_new
+
+
+def calculate_co2_emi_coeff(inp: pd.DataFrame) -> "ParameterData":
+    """Derive CO2 emission coefficients for furnace technologies.
+
+    Parameters
+    ----------
+    inp
+        ``input`` parameter data for furnace technologies.
+    """
+    fuel_ef = pd.read_csv(
+        package_data_path("material", "other", "fuels_emi_fact.csv"), index_col=0
+    )
+    inp = inp.drop(columns=["year_vtg"]).drop_duplicates()
+    inp = (
+        inp.set_index([i for i in inp.columns if i not in ["value"]])
+        .mul(fuel_ef)
+        .reset_index()
+    )
+    rel = (
+        (
+            make_df("relation_activity", **inp, relation="CO2_ind")
+            .pipe(same_node)
+            .assign(year_rel=lambda x: x.year_act)
+        )
+        .dropna()
+        .round(5)
+    )
+    rel.loc[rel["technology"].str.contains("refining"), "relation"] = "CO2_cc"
+    return {"relation_activity": rel}
