@@ -211,8 +211,6 @@ def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
 def add_emission_accounting(scen: message_ix.Scenario) -> None:
     add_non_co2_emissions(scen)
     add_thermal_emissions(scen)
-    add_co2_emissions(scen)
-    add_steel_emission(scen)
     add_refinery_emission(scen)
     add_fs_emission(scen)
     correct_cf4_emission(scen)
@@ -380,33 +378,20 @@ def add_non_co2_emissions(scen):
         scen.add_par("relation_activity", df_non_co2_emissions)
 
 
-def add_co2_emissions(scen):
-    # ***** (2) Add the CO2 emission factors to CO2_Emission relation. ******
-    # We don't need to add ammonia/fertilizer production here. Because there are
-    # no extra process emissions that need to be accounted in emissions relation.
-    # CCS negative emission_factor are added to this relation in gen_data_ammonia.py.
-    # Emissions from refining sector are categorized as 'CO2_transformation'.
-
-    tec_list_materials = get_tec_list(scen)
-    for elem in ["refrigerant_recovery", "replacement_so2", "SO2_scrub_ref"]:
-        remove_from_list_if_exists(elem, tec_list_materials)
-
-    emission_factors = scen.par(
-        "emission_factor",
-        filters={"technology": tec_list_materials, "emission": "CO2"},
-    )
-    relation_activity = (
+def gen_emi_rel_data(
+    s_info: ScenarioInfo, material: Literal["aluminum", "steel", "cement"]
+) -> "ParameterData":
+    df = pd.read_csv(package_data_path("material", material, "emission_factors.csv"))
+    df = (
         make_df(
             "relation_activity",
-            **emission_factors,
-            relation="CO2_Emission",
-            year_rel=emission_factors["year_act"],
+            **df,
         )
+        .pipe(broadcast, year_act=s_info.Y, node_loc=nodes_ex_world(s_info.N))
+        .assign(year_rel=lambda x: x["year_act"], unit="Mt C/yr")
         .pipe(same_node)
-        .drop_duplicates()
     )
-    with scen.transact("Emissions accounting for industry technologies added."):
-        scen.add_par("relation_activity", relation_activity)
+    return {"relation_activity": df}
 
 
 def add_thermal_emissions(scen):
@@ -428,30 +413,6 @@ def add_thermal_emissions(scen):
     )
     with scen.transact():
         scen.add_par("relation_activity", relation_activity_furnaces)
-
-
-def add_steel_emission(scen):
-    # ***** (4) Add steel energy input technologies to CO2_ind relation ****
-
-    relation_activity_steel = scen.par(
-        "emission_factor",
-        filters={
-            "emission": "CO2_industry",
-            "technology": ["DUMMY_coal_supply", "DUMMY_gas_supply"],
-        },
-    )
-    relation_activity_steel = (
-        make_df(
-            "relation_activity",
-            **relation_activity_steel,
-            relation="CO2_ind",
-            year_rel=relation_activity_steel["year_act"],
-        )
-        .pipe(same_node)
-        .drop_duplicates()
-    )
-    with scen.transact():
-        scen.add_par("relation_activity", relation_activity_steel)
 
 
 def add_refinery_emission(scen):
@@ -1183,3 +1144,12 @@ def gen_ethanol_to_ethylene_emi_factor(info: ScenarioInfo) -> "ParameterData":
         same_node
     )
     return {"relation_activity": co2_emi_rel}
+
+
+if __name__ == "__main__":
+    import ixmp
+    import message_ix
+
+    mp = ixmp.Platform("local3")
+    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
+    gen_emi_rel_data(ScenarioInfo(scen), "petrochemicals")

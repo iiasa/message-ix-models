@@ -72,7 +72,6 @@ bf_ccs_steel,input,R12_RCPA,final,electr,,M2,GWa/Mt,0.036773059360730595,Additio
 bf_ccs_steel,output,R12_RCPA,tertiary_material,pig_iron,,M2,Mt,1.0,,
 bf_ccs_steel,input,R12_RCPA,tertiary_material,pig_iron_dummy,,M2,Mt,1.0,,
 bf_ccs_steel,var_cost,R12_RCPA,,,,M2,MUSD/Mt,3.5511000000000004,Additional cost from TGR CCS. Converted from 2010 euro to 2005 USD,IEA ETSAP - Technology Brief
-bf_ccs_steel,emission_factor,R12_RCPA,,,CO2,M2,MtC/Mt,-0.2136818181818184,Range between 0.7 -  0.867,"Otto et al., 2017; Fan & Friedmann, 2021; TNO"
 bf_ccs_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,TNO
 bf_ccs_steel,capacity_factor,R12_RCPA,,,,,%,0.9,,
 bf_ccs_steel,growth_new_capacity_up,R12_RCPA,,,,M2,,0.001,,Same as CCS cement
@@ -123,16 +122,12 @@ dri_h2_steel,var_cost,R12_RCPA,,,,M1,MUSD/Mt,6.0,It is not specified if this is 
 dri_h2_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,average,"20 y (Pimm et al., 2021; IEA ETSAP), 40 y (Toktarova et al., 2021) (Lopez at al., 2022)​"
 dri_gas_ccs_steel,input,R12_RCPA,final,electr,,M1,GWa/Mt,0.005139100698630137,0.34 GJ/tCO2 converted,"Gielen, 2003"
 dri_gas_ccs_steel,output,R12_RCPA,dummy_ccs,gas,,M1,GWa/Mt,0.33,To be used in the materials_tables.py. This will keep track of how much gas is used as input in CCS technology which needs to be deducted from _inp_nonccs_gas_tecs,Same as CCS cement
-dri_gas_ccs_steel,emission_factor,R12_RCPA,,,CO2,M1,MtC/Mt,-0.13,"0.5 t/DRI (midrex tehcnical boruchure), 85% capture rate (IEA, CCS Working Group)",
 dri_gas_ccs_steel,technical_lifetime,R12_RCPA,,,,,y,25.0,,Figure 2.11 of IEA Iron and Steel Technology Roadmap
 dri_gas_ccs_steel,capacity_factor,R12_RCPA,,,,,%,0.9,,
 dri_gas_ccs_steel,growth_new_capacity_up,R12_RCPA,,,,M1,,0.001,,
 DUMMY_coal_supply,output,R12_RCPA,dummy_emission,coal,,M1,Mt,1.0,,
-DUMMY_coal_supply,emission_factor,R12_RCPA,,,CO2_industry,M1,MtC/Gwa,0.814,,
 DUMMY_gas_supply,output,R12_RCPA,dummy_emission,gas,,M1,Mt,1.0,,
-DUMMY_gas_supply,emission_factor,R12_RCPA,,,CO2_industry,M1,MtC/Gwa,0.482,,
 DUMMY_limestone_supply_steel,output,R12_RCPA,primary_material,limestone_iron,,M1,Mt/Mt,1.0,,
-DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,CO2,M1,MtC/Mt,0.12,,
 DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,NOx,M1,kt/Mt,1.75,,
 DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,SO2,M1,kt/Mt,0.9790000000000001,,
 DUMMY_limestone_supply_steel,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,0.000332,,

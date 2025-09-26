@@ -190,12 +190,6 @@ R12_RCPA,soderberg_aluminum,technical_lifetime,yr,30.0,1985,,
 R12_RCPA,prep_secondary_aluminum_1,capacity_factor,,1.0,1985,,
 R12_RCPA,prep_secondary_aluminum_2,capacity_factor,,1.0,1985,,
 R12_RCPA,prep_secondary_aluminum_3,capacity_factor,,1.0,1985,,
-R12_RCPA,prebake_aluminum,emission_factor|CO2,MtC / MtAl,0.44999999999999996,1985,coming from consumption of anodes,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
-R12_RCPA,soderberg_aluminum,emission_factor|CO2,MtC / MtAl,0.47727272727272724,1985,,https://iea-etsap.org/E-TechDS/PDF/I10_AlProduction_ER_March2012_Final%20GSOK.pdf
-R12_RCPA,prebake_aluminum,emission_factor|CF4,ktCF4 / MtAl,0.195,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
-R12_RCPA,soderberg_aluminum,emission_factor|CF4,ktCF4 / MtAl,0.275,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
-R12_RCPA,prebake_aluminum,emission_factor|SO2,ktSO2 / MtAl,2.19,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
-R12_RCPA,soderberg_aluminum,emission_factor|SO2,ktSO2 / MtAl,2.25,1985,,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org
 R12_RCPA,prebake_aluminum,capacity_factor,,1.0,1985,,
 R12_RCPA,soderberg_aluminum,capacity_factor,,1.0,1985,,
 R12_GLB,trade_aluminum,input|aluminum|export,,1.0,1985,,
