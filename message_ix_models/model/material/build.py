@@ -13,15 +13,10 @@ from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol import gen_data_methanol
 from message_ix_models.model.material.data_other_industry import (
     gen_data_other,
-    gen_other_ind_demands,
-    get_hist_act,
-    modify_demand_and_hist_activity,
 )
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
-    add_cement_ccs_co2_tr_relation,
-    add_emission_accounting,
     add_water_par_data,
     calibrate_for_SSPs,
 )
@@ -112,7 +107,6 @@ def build(
     apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
 
     add_water_par_data(scenario)
-    add_emission_accounting(scenario)
 
     if modify_existing_constraints:
         calibrate_existing_constraints(context, scenario, iea_data_path)
