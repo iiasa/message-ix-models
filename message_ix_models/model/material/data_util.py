@@ -207,27 +207,6 @@ def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
         scen.add_par("relation_activity", co2_trans_relation)
 
 
-def add_emission_accounting(scen: message_ix.Scenario) -> None:
-    add_fs_emission(scen)
-    correct_cf4_emission(scen)
-
-
-def get_tec_list(scen):
-    tec_list = scen.par("emission_factor")["technology"].unique()
-    tec_list_materials = [
-        i
-        for i in tec_list
-        if (
-            ("steel" in i)
-            | ("aluminum" in i)
-            | ("petro" in i)
-            | ("cement" in i)
-            | ("ref" in i)
-        )
-    ]
-    return tec_list_materials
-
-
 def gen_emi_rel_data(
     s_info: ScenarioInfo,
     material: Literal["aluminum", "steel", "cement", "petrochemicals"],
@@ -246,83 +225,6 @@ def gen_emi_rel_data(
     )
     df = df[df["value"] != 0]
     return {"relation_activity": df}
-
-
-def add_fs_emission(scen):
-    # ***** (6) Add feedstock using technologies to CO2_feedstocks *****
-    nodes = scen.par("relation_activity", filters={"relation": "CO2_feedstocks"})[
-        "node_rel"
-    ].unique()
-    years = scen.par("relation_activity", filters={"relation": "CO2_feedstocks"})[
-        "year_rel"
-    ].unique()
-    common = {
-        "relation": "CO2_feedstocks",
-        "unit": "t",
-    }
-    fueloil_emission_factor = 0.665
-    steam_cracker = {
-        "technology": "steam_cracker_petro",
-        "mode": ["atm_gasoil", "vacuum_gasoil", "naphtha"],
-        "value": [
-            fueloil_emission_factor * 1.435,
-            fueloil_emission_factor * 1.339,
-            fueloil_emission_factor * 1.537442922,
-        ],
-    }
-    gas_processing = {
-        "technology": "gas_processing_petro",
-        "mode": "M1",
-        "value": 0.482 * 1.331811263,
-    }
-    df_sc = make_df("relation_activity", **common, **steam_cracker)
-    df_gp = make_df("relation_activity", **common, **gas_processing)
-    co2_feedstocks = (
-        pd.concat([df_sc, df_gp])
-        .pipe(broadcast, node_loc=nodes, year_act=years)
-        .assign(year_rel=lambda x: x["year_act"])
-        .pipe(same_node)
-    )
-    with scen.transact("co2_feedstocks updated"):
-        scen.add_par("relation_activity", co2_feedstocks)
-
-
-def correct_cf4_emission(scen):
-    # **** (7) Correct CF4 Emission relations *****
-    # Remove transport related technologies from CF4_Emissions
-
-    # Remove transport related technologies from CF4_alm_red and add aluminum tecs.
-    trp_tecs = [i for i in scen.set("technology") if i.endswith("_trp")]
-    CF4_trp_emissions = scen.par(
-        "relation_activity",
-        filters={"relation": ["CF4_Emission", "CF4_alm_red"], "technology": trp_tecs},
-    )
-    CF4_alu_ef = scen.par(
-        "emission_factor",
-        filters={
-            "technology": ["soderberg_aluminum", "prebake_aluminum"],
-            "emission": "CF4",
-        },
-    )
-    CF4_red_add_rel = make_df(
-        "relation_activity",
-        **CF4_alu_ef,
-        relation="CF4_Emission",
-        year_rel=CF4_alu_ef["year_act"],
-    ).pipe(same_node)
-    CF4_alm_red_rel = (
-        make_df(
-            "relation_activity",
-            **CF4_alu_ef,
-            relation="CF4_alm_red",
-            year_rel=CF4_alu_ef["year_act"],
-        )
-        .pipe(same_node)
-        .assign(value=lambda x: x["value"] * 1000)
-    )
-    with scen.transact("CF4 relations corrected."):
-        scen.remove_par("relation_activity", CF4_trp_emissions)
-        scen.add_par("relation_activity", pd.concat([CF4_red_add_rel, CF4_alm_red_rel]))
 
 
 def read_sector_data(
