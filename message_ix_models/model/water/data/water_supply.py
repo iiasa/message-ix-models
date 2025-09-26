@@ -597,6 +597,23 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
+
+        # Technical lifetime for extract_salinewater_cool
+        saline_water_cool_tl = make_df(
+            "technical_lifetime",
+            technology="extract_salinewater_cool",
+            value=1,
+            unit="y",
+        ).pipe(broadcast, node_loc=node_region, year_vtg=year_wat)
+
+        # Investment cost for extract_salinewater_cool
+        saline_water_cool_inv_cost = make_df(
+            "inv_cost",
+            technology="extract_salinewater_cool",
+            value=1e-2,
+            unit="USD/MCM",
+        ).pipe(broadcast, node_loc=node_region, year_vtg=year_wat)
+
         hist_new_cap = make_df(
             "historical_new_capacity",
             node_loc=df_hist["BCU_name"],
@@ -834,7 +851,12 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         )
 
         results["inv_cost"] = inv_cost
-
+        results["technical_lifetime"] = pd.concat(
+            [results["technical_lifetime"], saline_water_cool_tl]
+        )
+        results["inv_cost"] = pd.concat(
+            [results["inv_cost"], saline_water_cool_inv_cost]
+        )
         fix_cost = make_df(
             "fix_cost",
             technology="extract_gw_fossil",
