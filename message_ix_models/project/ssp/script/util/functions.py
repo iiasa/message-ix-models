@@ -16,7 +16,7 @@ import pandas as pd
 from message_ix.utils import make_df
 
 from message_ix_models.tools.add_dac import add_tech
-from message_ix_models.tools.costs.config import Config
+from message_ix_models.tools.costs.config import Config, MODULE
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.util import broadcast, load_package_data
 
@@ -290,7 +290,7 @@ def gen_te_projections(
     dac_techs = ["dac_lt", "dac_hte", "dac_htg"]
     model_tec_set = dac_techs
     cfg = Config(
-        module="dac",
+        module=MODULE.dac,
         ref_region=ref_reg,
         method=method,
         format="message",
