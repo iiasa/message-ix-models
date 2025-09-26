@@ -42,7 +42,8 @@ clone_and_update(trade_dict=trade_parameters,
                  log=log,
                  to_gdx = False,
                  solve = True,
-                 update_scenario_name = 'LNG_testfoilbunker')
+                 gdx_location = os.path.join("H:", "message_ix", "message_ix", "model", "data"),
+                 update_scenario_name = 'gas-LNG-coal')
 
 # # Update scenario: Increase liquefaction gas penalty
 # additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
