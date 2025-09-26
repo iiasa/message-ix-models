@@ -109,7 +109,6 @@ def _load_cooling_data(
 
     # Load and process basin delineation
     df_node = pd.read_csv(basin_delineation_path)
-    df_node = df_node[df_node["BCU_name"].isin(context.valid_basins)]
 
     # Assign proper nomenclature to basin data
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
