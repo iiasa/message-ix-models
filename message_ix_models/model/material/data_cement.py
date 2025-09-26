@@ -19,6 +19,7 @@ from message_ix_models.util import (
 from .data_steel import gen_data_steel_rel
 from .data_util import (
     calculate_ini_new_cap,
+    gen_emi_rel_data,
     read_rel,
     read_sector_data,
     read_timeseries,
@@ -175,6 +176,7 @@ def gen_data_cement(scenario: "Scenario", dry_run: bool = False) -> "ParameterDa
         gen_clinker_ratios(s_info),
         gen_addon_conv_ccs(nodes, s_info.Y),
         gen_relation_data(scenario, s_info),
+        gen_emi_rel_data(s_info, "cement"),
     )
 
     results = drop_redundant_rows(results)
