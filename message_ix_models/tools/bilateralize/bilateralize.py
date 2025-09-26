@@ -930,7 +930,7 @@ def clone_and_update(trade_dict,
                      config_name: str = None,
                      update_scenario_name:str = None,
                      additional_parameter_updates:dict = None,
-                     gdx_location: str = os.path.join("H:", "script", "message_ix", "message_ix", "model", "data"),
+                     gdx_location: str = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
                      remove_pao_coal_constraint: bool = True):     
     # Load config
     config, config_path = load_config(project_name, config_name)
