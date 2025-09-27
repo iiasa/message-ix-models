@@ -1,4 +1,4 @@
-from . import pp_utils
+import message_data.tools.post_processing.pp_utils as pp_utils
 
 
 class PostProcess(object):
@@ -28,7 +28,7 @@ class PostProcess(object):
             self.ds, self.ix, "capacity_factor", tec
         ).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def fom(self, tec, units, group=["Region", "Vintage"], formatting="standard"):
@@ -59,7 +59,7 @@ class PostProcess(object):
             self.ds, self.ix, "fix_cost", tec, units, formatting=formatting
         ).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def inv_cost(self, tec, units, group=["Region"]):
@@ -132,7 +132,7 @@ class PostProcess(object):
             self.ds, self.ix, "relation_activity", relfilter, tec
         ).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def vom(self, tec, units, group=["Region", "Vintage"], formatting="standard"):
@@ -164,7 +164,7 @@ class PostProcess(object):
             self.ds, self.ix, "var_cost", tec, units, formatting=formatting
         ).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     # Functions which retrieve mutliple parameters and perform a mathematical
@@ -223,7 +223,7 @@ class PostProcess(object):
 
         df = df_out.divide(df_inp).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         df = df.groupby(group).sum(numeric_only=True)
         return df
 
@@ -258,7 +258,7 @@ class PostProcess(object):
             self.ds, self.ix, label, actflt, units
         ).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def cumcap(self, tec, units="GW", group=["Region"]):
@@ -295,7 +295,7 @@ class PostProcess(object):
         if self.ix:
             df_hist = df_hist.unstack(level=df_hist.index.names).reset_index()
             df_hist = df_hist.rename(columns={"level_0": "year", 0: "value"})
-            df_hist["Vintage"] = df_hist["year"]
+            df_hist.loc[:, "Vintage"] = df_hist.loc[:, "year"]
             df_hist = (
                 df_hist.pivot_table(
                     values="value",
@@ -308,14 +308,14 @@ class PostProcess(object):
         else:
             df_hist = df_hist.reset_index()
         if "Vintage" in df_hist.columns:
-            df_hist["Vintage"] = df_hist["Vintage"].astype("object")
+            df_hist.loc[:, "Vintage"] = df_hist.loc[:, "Vintage"].astype("object")
         df_hist = df_hist.groupby(group).sum(numeric_only=True)
 
         label = "CAP_NEW" if self.ix else "historical_new_capacity"
         df = pp_utils._retr_nic_data(self.ds, self.ix, label, tec, units)
         df = df.reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         df = df.groupby(group).sum(numeric_only=True)
         df = df[[int(y) for y in df.columns if int(y) >= fyear]]
         df = df_hist.add(df, fill_value=0)
@@ -364,7 +364,7 @@ class PostProcess(object):
         if self.ix:
             df_hist = df_hist.unstack(level=df_hist.index.names).reset_index()
             df_hist = df_hist.rename(columns={"level_0": "year", 0: "value"})
-            df_hist["Vintage"] = df_hist["year"]
+            df_hist.loc[:, "Vintage"] = df_hist.loc[:, "year"]
             df_hist = (
                 df_hist.pivot_table(
                     values="value",
@@ -377,14 +377,14 @@ class PostProcess(object):
         else:
             df_hist = df_hist.reset_index()
         if "Vintage" in df_hist.columns:
-            df_hist["Vintage"] = df_hist["Vintage"].astype("object")
+            df_hist.loc[:, "Vintage"] = df_hist.loc[:, "Vintage"].astype("object")
         df_hist = df_hist.groupby(group).sum(numeric_only=True)
 
         label = "CAP_NEW" if self.ix else "historical_new_capacity"
         df = pp_utils._retr_nic_data(self.ds, self.ix, label, tec, units)
         df = df.reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         df = df.groupby(group).sum(numeric_only=True)
         df = df[[int(y) for y in df.columns if int(y) >= fyear]]
         df = df_hist.add(df, fill_value=0)
@@ -413,7 +413,7 @@ class PostProcess(object):
         df = pp_utils._retr_tic_data(self.ds, self.ix, label, tec, units)
         df = df.reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         df = df.groupby(group).sum(numeric_only=True)
         return df
 
@@ -440,7 +440,7 @@ class PostProcess(object):
         if self.ix:
             df_extr = pp_utils._retr_extr_data(self.ds, self.ix, label, tec, units)
             for yr in range(1990, 2015, 5):
-                df_extr[yr] = 0.0
+                df_extr.loc[:, yr] = 0.0
             df_hist = pp_utils._retr_histextr_data(
                 self.ds, self.ix, "historical_extraction", tec, units
             )
@@ -450,7 +450,7 @@ class PostProcess(object):
                 self.ds, self.ix, label, tec, units
             ).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def extrc(self, tec, units, group=["Region"]):
@@ -477,18 +477,18 @@ class PostProcess(object):
         if self.ix:
             df_extr = pp_utils._retr_extr_data(self.ds, self.ix, label, tec, units)
             for yr in range(1990, 2015, 5):
-                df_extr[yr] = 0.0
+                df_extr.loc[:, yr] = 0.0
             df_hist = pp_utils._retr_histextr_data(
                 self.ds, self.ix, "historical_extraction", tec, units
             )
             for yr in range(1990, 2005, 5):
-                df_hist[yr] = 0.0
+                df_hist.loc[:, yr] = 0.0
             df = df_extr.add(df_hist, fill_value=0)
         else:
             df = pp_utils._retr_extr_data(self.ds, self.ix, label, tec, units)
         df = df.reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def cprc(self, units=None, group=["Region"]):
@@ -683,7 +683,7 @@ class PostProcess(object):
         df_out = pp_utils._retr_io_data(self.ds, self.ix, "output", outflt)
         df = df_act.multiply(df_out).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def inp(
@@ -733,7 +733,7 @@ class PostProcess(object):
         df_inp = pp_utils._retr_io_data(self.ds, self.ix, "input", inpflt)
         df = df_act.multiply(df_inp).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def emi(
@@ -785,7 +785,7 @@ class PostProcess(object):
         )
         df = df_act.multiply(df_emi, fill_value=0).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def act_rel(self, tec, relfilter, units=None, actfilter=None, group=["Region"]):
@@ -827,18 +827,10 @@ class PostProcess(object):
         )
         df = df_act.multiply(df_rel).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
-    def act_emif(
-        self,
-        tec,
-        emiffilter,
-        units=None,
-        actfilter=None,
-        group=["Region"],
-        emi_units=None,
-    ):
+    def act_emif(self, tec, emiffilter, units=None, actfilter=None, group=["Region"]):
         """Wrapper function retrieving activity * relation coefficient
         for a given technology or list of technologies
 
@@ -846,7 +838,7 @@ class PostProcess(object):
         ----------
         tec : string or list
             name of emission relation
-        emiffilter : dictionary
+        wtrfilter : dictionary
             filters specific to emission_factor tables
         units : string
             see unit doc
@@ -854,8 +846,6 @@ class PostProcess(object):
             filters specific to 'reference_activity' or 'ACT' tables
         group : list (optional, standard = ['Region'])
             defines for which indices the data should returned
-        emi_units : string
-            see unit doc
 
         Returns
         -------
@@ -874,11 +864,11 @@ class PostProcess(object):
         )
         df_act = pp_utils._retr_act_data(self.ds, self.ix, label, actflt, units)
         df_emif = pp_utils._retr_emif_data(
-            self.ds, self.ix, "emission_factor", emiflt, tec, emi_units
+            self.ds, self.ix, "emission_factor", emiflt, tec
         )
         df = df_act.multiply(df_emif).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def investment(self, tec, units, group=["Region"]):
@@ -905,18 +895,18 @@ class PostProcess(object):
             self.ds, self.ix, label, tec, "GWa"
         ).reset_index()
         if "Vintage" in df_nic.columns:
-            df_nic["Vintage"] = df_nic["Vintage"].astype("object")
+            df_nic.loc[:, "Vintage"] = df_nic.loc[:, "Vintage"].astype("object")
         df_nic = df_nic.groupby(["Region", "Technology"]).sum(numeric_only=True)
 
         df_capcost = pp_utils._retr_capcost_data(
             self.ds, "inv_cost", tec, units
         ).reset_index()
         if "Vintage" in df_capcost.columns:
-            df_capcost["Vintage"] = df_capcost["Vintage"].astype("object")
+            df_capcost.loc[:, "Vintage"] = df_capcost.loc[:, "Vintage"].astype("object")
         df_capcost = df_capcost.groupby(["Region", "Technology"]).sum(numeric_only=True)
         df = df_nic.multiply(df_capcost).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def tic_fom(self, tec, units, group=["Region"]):
@@ -953,7 +943,7 @@ class PostProcess(object):
         )
         df = df_tic.multiply(df_fom).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     def act_vom(self, tec, units, actfilter=None, group=["Region"]):
@@ -987,7 +977,7 @@ class PostProcess(object):
         )
         df = df_act.multiply(df_vom).reset_index()
         if "Vintage" in df.columns:
-            df["Vintage"] = df["Vintage"].astype("object")
+            df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
         return df.groupby(group).sum(numeric_only=True)
 
     # Functions that retrieve Land-use specific results
@@ -1035,7 +1025,7 @@ class PostProcess(object):
         df_land = pp_utils._retr_land_act(self.ds)
         df_use = pp_utils._retr_land_use(self.ds, lu_use_filter, units)
         df = df_land.multiply(df_use, fill_value=0).reset_index()
-        return df.groupby(group).sum()
+        return df.groupby(group).sum(numeric_only=True)
 
     def land_emi(self, tec, group=["Region"], units=None):
         """Wrapper function to retrieve land-use technology specific emissions
@@ -1058,35 +1048,4 @@ class PostProcess(object):
         df_land = pp_utils._retr_land_act(self.ds)
         df_emi = pp_utils._retr_land_emission(self.ds, tec, units)
         df = df_land.multiply(df_emi, fill_value=0).reset_index()
-        return df.groupby(group).sum()
-
-    def retrieve_lu_price(self, tec, scale_tec, y0=2005):
-        """Wrapper function to retrieve indexed-prices.
-
-        Indexed prices have a set of three formuals inorder to derive the sum across
-        regions. Therefore this wrapper function will retrieve the regional prices
-        and the quantity information, which is the processed together in a last step
-        in order to derive the World value.
-
-        Parameters
-        ----------
-        tec : string
-            `land_output` price commodity name
-        scale_tec : string
-            `land_output` quantity commodity name
-        y0 : int (default=2005)
-            initial indexing year ie. values are 1.
-
-        Returns
-        -------
-        df : dataframe
-            index: Region
-        """
-
-        price = self.land_out(
-            lu_out_filter={"level": ["land_use_reporting"], "commodity": [tec]}
-        )
-        quantity = self.land_out(
-            lu_out_filter={"level": ["land_use_reporting"], "commodity": [scale_tec]}
-        )
-        return pp_utils.globiom_glb_priceindex(self.ds, price, quantity, scale_tec, y0)
+        return df.groupby(group).sum(numeric_only=True)

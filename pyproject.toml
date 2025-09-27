@@ -179,6 +179,7 @@ exclude = [
   "doc/_static/png_source_files/Land-use_emulator_figures.ipynb",
   "message_ix_models/model/material/report/Historical Power Sector Stock Reporting-.ipynb",
   "message_ix_models/report/legacy/",
+  "message_ix_models/tests/report/legacy/",
   "message_ix_models/util/compat/message_data/",
 ]
 
