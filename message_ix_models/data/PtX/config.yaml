@@ -1,0 +1,8 @@
+# Configuration for the Power-to-X and Direct Air Capture technologies module
+
+# Emission coefficients associated to PtX technologies in MtC/(GWa fuel)
+# Values coincide with the emission factors for imports in MESSAGEix
+emission coefficients:
+  meth_h2: 0.549
+  gas_h2: 0.482
+  liq_h2: 0.623
