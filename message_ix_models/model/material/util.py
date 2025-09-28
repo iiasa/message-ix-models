@@ -115,43 +115,6 @@ def invert_dictionary(original_dict: dict[str, list[str]]) -> dict[str, list[str
     return inverted_dict
 
 
-def excel_to_csv(material_dir: str, fname: str) -> None:
-    """Helper to create trackable copies xlsx files used for MESSAGEix-Materials
-    data input by printing each sheet to a csv file. Output is saved in
-     "data/materials/version control"
-
-    Parameters
-    ----------
-    material_dir
-        path to industry sector data folder
-    fname
-        file name of xlsx file
-    """
-    xlsx_dict = pd.read_excel(
-        package_data_path("material", material_dir, fname), sheet_name=None
-    )
-    if not os.path.isdir(package_data_path("material", "version control")):
-        os.mkdir(package_data_path("material", "version control"))
-    os.mkdir(package_data_path("material", "version control", fname))
-    for tab in xlsx_dict.keys():
-        xlsx_dict[tab].to_csv(
-            package_data_path("material", "version control", fname, f"{tab}.csv"),
-            index=False,
-        )
-
-
-def get_all_input_data_dirs() -> list[str]:
-    """Iterable for getting all material input data folders
-
-    Returns
-    -------
-    list of folder names of material data
-    """
-    elements = os.listdir(package_data_path("material"))
-    elements = [i for i in elements if os.path.isdir(package_data_path("material", i))]
-    return elements
-
-
 def remove_from_list_if_exists(element: Any, _list: list) -> None:
     """Utility function removing element from list if it is part of the list
     Parameters
