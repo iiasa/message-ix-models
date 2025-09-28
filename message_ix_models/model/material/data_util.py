@@ -521,25 +521,6 @@ def get_ssp_soc_eco_data(
     )
 
 
-def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
-    """Adds ``initial_activity_up`` parametrization for `elec_i` ``technology``.
-
-    Values are copied from `hp_el_i` technology
-
-    Parameters
-    ----------
-    scenario
-        Scenario to update parametrization for
-    """
-    par = "initial_activity_up"
-    df_el = scenario.par(par, filters={"technology": "hp_el_i"})
-    df_el["technology"] = "elec_i"
-    scenario.check_out()
-    scenario.add_par(par, df_el)
-    scenario.commit("add initial_activity_up for elec_i")
-    return
-
-
 def calculate_ini_new_cap(
     df_demand: pd.DataFrame, technology: str, material: str, ssp: str
 ) -> pd.DataFrame:
@@ -604,45 +585,6 @@ def add_water_par_data(scenario: "Scenario") -> None:
     for par in water_dict.keys():
         scenario.add_par(par, water_dict[par])
     scenario.commit("add missing water tecs")
-
-
-def calibrate_for_SSPs(scenario: "Scenario") -> None:
-    """Calibrate technologies activity bounds and growth constraints.
-
-    This is necessary to avoid base year infeasibilities in year 2020.
-    Originally developed for the `SSP_dev_*` scenarios, where most technology activities
-    are fixed in 2020.
-
-    Parameters
-    ----------
-    scenario
-        instance to apply parameter changes to
-    """
-    add_elec_i_ini_act(scenario)
-
-    for bound in ["up", "lo"]:
-        par = f"bound_activity_{bound}"
-        df = scenario.par(par, filters={"year_act": 2020})
-        scenario.check_out()
-        scenario.remove_par(
-            f"bound_activity_{bound}", df[df["technology"].str.contains("t_d")]
-        )
-        scenario.commit("remove t_d 2020 bounds")
-
-        df = scenario.par(par, filters={"technology": "elec_i"})
-        df["value"] = 0
-        scenario.check_out()
-        scenario.add_par(par, df)
-        scenario.commit("set elec_i bounds 2020 to 0")
-
-    df = scenario.par("historical_activity", filters={"technology": "elec_i"})
-    scenario.check_out()
-    scenario.remove_par("historical_activity", df)
-    scenario.commit("remove elec_i hist act")
-    df = scenario.par("historical_new_capacity", filters={"technology": "elec_i"})
-    scenario.check_out()
-    scenario.remove_par("historical_new_capacity", df)
-    scenario.commit("remove elec_i hist capacity")
 
 
 def gen_plastics_emission_factors(
@@ -855,12 +797,3 @@ def gen_ethanol_to_ethylene_emi_factor(info: ScenarioInfo) -> "ParameterData":
         same_node
     )
     return {"relation_activity": co2_emi_rel}
-
-
-if __name__ == "__main__":
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("local3")
-    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
-    gen_emi_rel_data(ScenarioInfo(scen), "petrochemicals")

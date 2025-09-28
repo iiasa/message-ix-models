@@ -18,7 +18,6 @@ from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
     add_water_par_data,
-    calibrate_for_SSPs,
 )
 from message_ix_models.model.material.share_constraints import CommShareConfig
 from message_ix_models.model.material.util import (
@@ -30,9 +29,6 @@ from message_ix_models.util import (
     add_par_data,
     load_package_data,
     package_data_path,
-)
-from message_ix_models.util.compat.message_data import (
-    manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
 )
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
@@ -104,32 +100,9 @@ def build(
         CommShareConfig.from_files(scenario, "coal_residual_industry").add_to_scenario(
             scenario
         )
-    apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
-
+    apply_spec(scenario, spec, add_data, fast=True)
     add_water_par_data(scenario)
-
-    if modify_existing_constraints:
-        calibrate_existing_constraints(context, scenario, iea_data_path)
     return scenario
-
-
-def calibrate_existing_constraints(
-    context, scenario: message_ix.Scenario, iea_data_path: str
-):
-    if "SSP_dev" not in scenario.model:
-        engage_updates._correct_balance_td_efficiencies(scenario)
-        engage_updates._correct_coal_ppl_u_efficiencies(scenario)
-        engage_updates._correct_td_co2cc_emissions(scenario)
-
-    # add_coal_lowerbound_2020(scenario)
-    # add_cement_bounds_2020(scenario)
-
-    # Market penetration adjustments
-    # NOTE: changing demand affects the market penetration
-    # levels for the end-use technologies.
-    # FIXME: context.ssp only works for SSP1/2/3 currently missing SSP4/5
-
-    calibrate_for_SSPs(scenario)
 
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
