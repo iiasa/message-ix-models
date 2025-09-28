@@ -15,11 +15,7 @@ from message_ix_models.model.material.data_util import (
     add_macro_materials,
     gen_te_projections,
 )
-from message_ix_models.model.material.util import (
-    excel_to_csv,
-    get_all_input_data_dirs,
-    update_macro_calib_file,
-)
+from message_ix_models.model.material.util import update_macro_calib_file
 from message_ix_models.util import (
     package_data_path,
     private_data_path,
@@ -451,29 +447,6 @@ def run_LED_cprice(context, ssp, budget):
     log.info("New LED 1000f carbon prices added")
 
     scen_cprice.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
-    return
-
-
-@cli.command("make-xls-input-vc-able", hidden=True)
-@click.option(
-    "--files",
-    default="all",
-    help="optionally specify which files to make VC-able - not implemented yet",
-)
-@click.pass_obj
-def make_xls_input_vc_able(context, files):
-    if files == "all":
-        dirs = get_all_input_data_dirs()
-        dirs = [i for i in dirs if i != "version control"]
-        for dir in dirs:
-            log.info(dir)
-            files = os.listdir(package_data_path("material", dir))
-            files = [i for i in files if ((i.endswith(".xlsx")) & ~i.startswith("~$"))]
-            log.info(files)
-            for filename in files:
-                excel_to_csv(dir, filename)
-    else:
-        raise NotImplementedError
     return
 
 
