@@ -15,6 +15,7 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
+    drop_redundant_rows,
     gen_emi_rel_data,
     read_rel,
     read_timeseries,
@@ -569,13 +570,8 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
         scrap_heat,
         emi_factors,
     )
-    reduced_pdict = {}
-    for k, v in results_aluminum.items():
-        if set(["year_act", "year_vtg"]).issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 60]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-
-    return reduced_pdict
+    drop_redundant_rows(scenario, results_aluminum)
+    return results_aluminum
 
 
 def gen_demand(scenario, ssp):
@@ -1674,7 +1670,8 @@ def remove_scrap_in_firstyear(pars: dict) -> None:
             & (inp["year_act"] == 2020)
         )
     ]
-    out = pars["outut"]
+    pars["input"] = inp
+    out = pars["output"]
     out = out[
         ~(
             (out["level"] == "new_scrap")
@@ -1682,7 +1679,6 @@ def remove_scrap_in_firstyear(pars: dict) -> None:
             & (out["year_act"] == 2020)
         )
     ]
-    pars["input"] = inp
     pars["output"] = out
 
 
