@@ -17,8 +17,16 @@ from message_ix_models.model.material.data_util import (
     map_iea_db_to_msg_regs,
     read_iea_tec_map,
 )
+from message_ix_models.model.material.share_constraints import (
+    add_industry_coal_shr_constraint,
+)
 from message_ix_models.model.material.util import get_ssp_from_context, read_config
-from message_ix_models.util import merge_data, package_data_path
+from message_ix_models.util import (
+    broadcast,
+    merge_data,
+    nodes_ex_world,
+    package_data_path,
+)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -253,6 +261,63 @@ def gen_other_ind_demands(ssp: str) -> dict[str, pd.DataFrame]:
     return demands
 
 
+def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp) -> pd.DataFrame:
+    """Generate SSP-specific parametrization for ``UE_industry_th_low_temp_heat``.
+
+    Updates the original constraint values of MESSAGEix-GLOBIOM to reflect structural
+    differences in MESSAGEix-Materials industry sector based on SSP narrative.
+    """
+    lt_heat_shr_start = 0.35
+    ssp_lt_heat_shr_end = {
+        "SSP1": 0.65,
+        "SSP2": 0.5,
+        "SSP3": 0.35,
+        "SSP4": 0.6,
+        "SSP5": 0.5,
+        "LED": 0.65,
+    }
+    end_year = {
+        "SSP1": 2040,
+        "SSP2": 2055,
+        "SSP3": 2055,
+        "SSP4": 2045,
+        "SSP5": 2050,
+        "LED": 2035,
+    }
+    start_year = 2030
+    end_years = pd.DataFrame(index=list(end_year.keys()), data=end_year.values())
+    end_vals = pd.DataFrame(
+        index=list(ssp_lt_heat_shr_end.keys()), data=ssp_lt_heat_shr_end.values()
+    )
+    val_diff = end_vals - lt_heat_shr_start
+    year_diff = end_years - start_year
+    common = {
+        "shares": "UE_industry_th_low_temp_heat",
+        "time": "year",
+        "unit": "-",
+        "value": lt_heat_shr_start,
+    }
+    df = make_df("share_commodity_up", **common)
+    df = df.pipe(broadcast, node_share=nodes_ex_world(s_info.N)).pipe(
+        broadcast,
+        year_act=[i for i in s_info.yv_ya.year_act.unique() if i >= start_year],
+    )
+
+    def get_shr(row):
+        if row["year_act"] <= end_year[ssp]:
+            val = (
+                row["value"]
+                + (row["year_act"] - start_year)
+                * (val_diff / year_diff).loc[ssp].values[0]
+            )
+        else:
+            val = ssp_lt_heat_shr_end[ssp]
+        return val
+
+    df = df.assign(value=df.apply(lambda x: get_shr(x), axis=1))
+    return {"share_commodity_up":df}
+
+
 def gen_data_other(scenario) -> "ParameterData":
     context = read_config()
     par_data = {}
@@ -265,5 +330,10 @@ def gen_data_other(scenario) -> "ParameterData":
     calib_data = get_hist_act(
         scenario, [1990, 1995, 2000, 2010, 2015, 2020], use_cached=True
     )
-    merge_data(par_data, calib_data)
+    merge_data(
+        par_data,
+        calib_data,
+        add_industry_coal_shr_constraint(scenario),
+        get_ssp_low_temp_shr_up(ScenarioInfo(scenario), get_ssp_from_context(context)),
+    )
     return par_data

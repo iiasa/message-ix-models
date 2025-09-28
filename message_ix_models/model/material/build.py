@@ -20,12 +20,8 @@ from message_ix_models.model.material.data_util import (
     add_water_par_data,
     calibrate_for_SSPs,
 )
-from message_ix_models.model.material.share_constraints import (
-    add_industry_coal_shr_constraint,
-    get_ssp_low_temp_shr_up,
-)
+from message_ix_models.model.material.share_constraints import CommShareConfig
 from message_ix_models.model.material.util import (
-    get_ssp_from_context,
     path_fallback,
     read_config,
 )
@@ -104,6 +100,10 @@ def build(
 
     # Get the specification and apply to the base scenario
     spec = make_spec(node_suffix)
+    with scenario.transact():
+        CommShareConfig.from_files(scenario, "coal_residual_industry").add_to_scenario(
+            scenario
+        )
     apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
 
     add_water_par_data(scenario)
@@ -130,17 +130,6 @@ def calibrate_existing_constraints(
     # FIXME: context.ssp only works for SSP1/2/3 currently missing SSP4/5
 
     calibrate_for_SSPs(scenario)
-
-    # add share constraint for coal_i based on 2020 IEA data
-    add_industry_coal_shr_constraint(scenario)
-
-    # update low temp heat share constraint
-    scenario.check_out()
-    scenario.add_par(
-        "share_commodity_up",
-        get_ssp_low_temp_shr_up(ScenarioInfo(scenario), get_ssp_from_context(context)),
-    )
-    scenario.commit("adjust low temp heat share constraint")
 
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
