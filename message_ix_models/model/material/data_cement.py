@@ -19,6 +19,7 @@ from message_ix_models.util import (
 from .data_steel import gen_data_steel_rel
 from .data_util import (
     calculate_ini_new_cap,
+    drop_redundant_rows,
     gen_emi_rel_data,
     read_rel,
     read_sector_data,
@@ -30,7 +31,7 @@ from .util import get_ssp_from_context, read_config
 if TYPE_CHECKING:
     from message_ix import Scenario
 
-    from message_ix_models.types import MutableParameterData, ParameterData
+    from message_ix_models.types import ParameterData
 
 FIXED = dict(time="year", time_origin="year", time_dest="year")
 
@@ -179,29 +180,8 @@ def gen_data_cement(scenario: "Scenario", dry_run: bool = False) -> "ParameterDa
         gen_emi_rel_data(s_info, "cement"),
     )
 
-    results = drop_redundant_rows(results)
+    drop_redundant_rows(scenario, results)
     return results
-
-
-def drop_redundant_rows(results: "ParameterData") -> "MutableParameterData":
-    """Drop duplicate row and those where :math:`y^A - y^V > 25` years.
-
-    Parameters
-    ----------
-    results :
-        A dictionary of dataframes with parameter names as keys.
-
-    Returns
-    -------
-    ParameterData
-    """
-    reduced_pdict = {}
-    for k, v in results.items():
-        if {"year_act", "year_vtg"}.issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-
-    return reduced_pdict
 
 
 def gen_addon_conv_ccs(nodes: list[str], years: list[int]) -> "ParameterData":

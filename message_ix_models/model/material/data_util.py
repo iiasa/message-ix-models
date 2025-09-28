@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
     from message_ix_models import Context
-    from message_ix_models.types import ParameterData
+    from message_ix_models.types import MutableParameterData, ParameterData
 
 
 def add_macro_materials(
@@ -797,3 +797,31 @@ def gen_ethanol_to_ethylene_emi_factor(info: ScenarioInfo) -> "ParameterData":
         same_node
     )
     return {"relation_activity": co2_emi_rel}
+
+
+def drop_redundant_rows(scen: "Scenario", results: "MutableParameterData"):
+    r"""Drop duplicate row and those where :math:`y^A - y^V > technical\_lifetime`."""
+    lt_pars = [
+        x
+        for x in scen.par_list()
+        if ("year_vtg" in scen.idx_names(x)) & ("year_act" in scen.idx_names(x))
+    ]
+    lt_data = results["technical_lifetime"].set_index(
+        ["node_loc", "technology", "year_vtg"]
+    )["value"]
+    for par in lt_pars:
+        if par not in results.keys():
+            continue
+        df = results[par]
+        node_col_name = "node_loc" if "node_loc" in df.columns else "node"
+        df = (
+            df.set_index([node_col_name, "technology", "year_vtg"])
+            .join(lt_data, rsuffix="_lifetime")
+            .fillna(0)
+            .reset_index()
+        )
+        results[par] = (
+            df[df["year_act"] - df["year_vtg"] <= df["value_lifetime"]]
+            .drop_duplicates()
+            .drop(columns="value_lifetime")
+        )

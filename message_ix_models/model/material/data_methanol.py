@@ -15,6 +15,7 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
+    drop_redundant_rows,
     gen_chemicals_co2_ind_factors,
     gen_plastics_emission_factors,
 )
@@ -127,6 +128,7 @@ def gen_data_methanol(scenario: "Scenario") -> "ParameterData":
             f"data because they are not compatible with the scenario: {exc_rels}"
         )
         pars_dict[f"relation_{par}"] = df_rel
+    drop_redundant_rows(scenario, pars_dict)
 
     return pars_dict
 

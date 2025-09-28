@@ -13,6 +13,7 @@ from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
+    drop_redundant_rows,
     gen_chemicals_co2_ind_factors,
     gen_emi_rel_data,
     gen_ethanol_to_ethylene_emi_factor,
@@ -651,10 +652,5 @@ def gen_data_petro_chemicals(
     ].index
     results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
 
-    reduced_pdict = {}
-    for k, v in results.items():
-        if set(["year_act", "year_vtg"]).issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 40]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-
-    return reduced_pdict
+    drop_redundant_rows(scenario, results)
+    return results
