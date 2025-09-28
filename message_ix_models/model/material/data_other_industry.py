@@ -261,7 +261,7 @@ def gen_other_ind_demands(ssp: str) -> dict[str, pd.DataFrame]:
     return demands
 
 
-def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp) -> pd.DataFrame:
+def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp) -> "ParameterData":
     """Generate SSP-specific parametrization for ``UE_industry_th_low_temp_heat``.
 
     Updates the original constraint values of MESSAGEix-GLOBIOM to reflect structural
@@ -315,11 +315,71 @@ def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp) -> pd.DataFrame:
         return val
 
     df = df.assign(value=df.apply(lambda x: get_shr(x), axis=1))
-    return {"share_commodity_up":df}
+    return {"share_commodity_up": df}
+
+
+def reset_t_d_calibration(scenario: "Scenario") -> None:
+    for bound in ["up", "lo"]:
+        par = f"bound_activity_{bound}"
+        df = scenario.par(par, filters={"year_act": 2020})
+        scenario.remove_par(
+            f"bound_activity_{bound}", df[df["technology"].str.contains("t_d")]
+        )
+
+
+def reset_elec_i(info: ScenarioInfo) -> "ParameterData":
+    """Calibrate technologies activity bounds and growth constraints.
+
+    This is necessary to avoid base year infeasibilities in year 2020.
+    Originally developed for the `SSP_dev_*` scenarios, where most technology activities
+    are fixed in 2020.
+
+    Parameters
+    ----------
+    scenario
+        instance to apply parameter changes to
+    """
+    hist_years = [i for i in info.yv_ya["year_vtg"].unique() if i <= 2025]
+    act = make_df(
+        "historical_activity",
+        technology="elec_i",
+        mode="M1",
+        time="year",
+        value=0,
+        unit="???",
+        year_act=hist_years,
+    ).pipe(broadcast, node_loc=nodes_ex_world(info.N))
+    cap = make_df(
+        "historical_new_capacity",
+        technology="elec_i",
+        value=0,
+        unit="???",
+        year_vtg=hist_years,
+    ).pipe(broadcast, node_loc=nodes_ex_world(info.N))
+    par_data = {
+        "historical_activity": act[act["year_act"].lt(info.y0)],
+        "bound_activity_lo": act[act["year_act"].ge(info.y0)],
+        "bound_activity_up": act[act["year_act"].ge(info.y0)],
+        "historical_new_capacity": cap[cap["year_vtg"].lt(info.y0)],
+        "bound_new_capacity_lo": cap[cap["year_vtg"].ge(info.y0)],
+        "bound_new_capacity_up": cap[cap["year_vtg"].ge(info.y0)],
+    }
+    return par_data
+
+
+def read_elec_i_ini_act() -> "ParameterData":
+    """Reads ``initial_activity_up`` parametrization for `elec_i` ``technology``.
+
+    Values were originally copied from `hp_el_i` ``technology``.
+    """
+    df = pd.read_csv(package_data_path("material", "other", "ini_act_elec_i.csv"))
+    df["technology"] = "elec_i"
+    return {"initial_activity_up": df}
 
 
 def gen_data_other(scenario) -> "ParameterData":
     context = read_config()
+    reset_t_d_calibration(scenario)
     par_data = {}
     demands = pd.concat(
         v[v["year"].isin(scenario.vintage_and_active_years()["year_act"].unique())]
@@ -335,5 +395,7 @@ def gen_data_other(scenario) -> "ParameterData":
         calib_data,
         add_industry_coal_shr_constraint(scenario),
         get_ssp_low_temp_shr_up(ScenarioInfo(scenario), get_ssp_from_context(context)),
+        read_elec_i_ini_act(),
+        reset_elec_i(ScenarioInfo(scenario)),
     )
     return par_data
