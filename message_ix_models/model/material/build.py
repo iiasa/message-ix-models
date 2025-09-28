@@ -22,7 +22,6 @@ from message_ix_models.model.material.data_util import (
 from message_ix_models.model.material.share_constraints import CommShareConfig
 from message_ix_models.model.material.util import (
     path_fallback,
-    read_config,
 )
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import (
@@ -30,7 +29,7 @@ from message_ix_models.util import (
     load_package_data,
     package_data_path,
 )
-from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
+from message_ix_models.util.scenarioinfo import Spec
 
 log = logging.getLogger(__name__)
 
@@ -96,6 +95,7 @@ def build(
 
     # Get the specification and apply to the base scenario
     spec = make_spec(node_suffix)
+    # Add remaining structure that is not supported by make_spec() e.g. .add_cat() calls
     with scenario.transact():
         CommShareConfig.from_files(scenario, "coal_residual_industry").add_to_scenario(
             scenario
@@ -103,32 +103,6 @@ def build(
     apply_spec(scenario, spec, add_data, fast=True)
     add_water_par_data(scenario)
     return scenario
-
-
-def get_spec() -> Mapping[str, ScenarioInfo]:
-    """Return the specification for materials accounting."""
-    require = ScenarioInfo()
-    add = ScenarioInfo()
-    remove = ScenarioInfo()
-
-    # Load configuration
-    # context = Context.get_instance(-1)
-    context = read_config()
-
-    # Update the ScenarioInfo objects with required and new set elements
-    for type in SPEC_LIST:
-        for set_name, config in context["material"][type].items():
-            # for cat_name, detail in config.items():
-            # Required elements
-            require.set[set_name].extend(config.get("require", []))
-
-            # Elements to add
-            add.set[set_name].extend(config.get("add", []))
-
-            # Elements to remove
-            remove.set[set_name].extend(config.get("remove", []))
-
-    return dict(require=require, add=add, remove=remove)
 
 
 def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
