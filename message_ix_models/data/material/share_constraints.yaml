@@ -1,0 +1,21 @@
+coal_residual_industry:
+  share_name: UE_industry_th_coal
+  type_tec_all_name: UE_industry_th_coal_total
+  type_tec_share_name: UE_industry_th_coal_share
+  all_tecs:
+    - biomass_i
+    - coal_i
+    - elec_i
+    - eth_i
+    - foil_i
+    - gas_i
+    - h2_fc_I
+    - h2_i
+    - heat_i
+    - hp_el_i
+    - loil_i
+    - solar_i
+    - coal_i
+  share_tecs:
+    - coal_i
+  nodes: all
