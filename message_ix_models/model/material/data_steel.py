@@ -15,6 +15,7 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
     calculate_ini_new_cap,
+    drop_redundant_rows,
     gen_emi_rel_data,
     read_rel,
     read_sector_data,
@@ -745,13 +746,8 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
         df_tmp["value"] = -0.7
 
-    reduced_pdict = {}
-    for k, v in results.items():
-        if set(["year_act", "year_vtg"]).issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 60]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-
-    return reduced_pdict
+    drop_redundant_rows(scenario, results)
+    return results
 
 
 def gen_cokeoven_co2_cc(s_info: ScenarioInfo):
