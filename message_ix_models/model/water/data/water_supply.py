@@ -597,7 +597,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-
         # Technical lifetime for extract_salinewater_cool
         saline_water_cool_tl = make_df(
             "technical_lifetime",
@@ -780,7 +779,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             make_df(
                 "technical_lifetime",
                 technology="extract_surfacewater",
-                value=50,
+                value=30,
                 unit="y",
             )
             .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
@@ -807,7 +806,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "technical_lifetime",
                     technology="extract_gw_fossil",
-                    value=1,  # 1 Year TL to further discourage use.
+                    value=5,  # 5 Year TL to further discourage use.
                     unit="y",
                 )
                 .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
