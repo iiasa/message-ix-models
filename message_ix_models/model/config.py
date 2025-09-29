@@ -32,7 +32,7 @@ class Config(ConfigHelper):
 
     #: The 'node' codelist (regional aggregation) to use. Must be one of the lists of
     #: nodes described at :doc:`/pkg-data/node`.
-    regions: str = "R14"
+    regions: str = "R12"
 
     #: The 'relations' codelist to use. Must be one of the lists of relations described
     #: at :doc:`/pkg-data/relation`.
