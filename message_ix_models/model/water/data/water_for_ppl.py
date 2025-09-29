@@ -690,26 +690,26 @@ def _expand_parent_parameters(
     param_names = [
         "historical_activity",
         "historical_new_capacity",
-        "initial_activity_up",
-        "initial_activity_lo",
-        "initial_new_capacity_up",
-        "soft_activity_up",
-        # "soft_activity_lo", #causes infeasibilty.
-        "soft_new_capacity_up",
-        "level_cost_activity_soft_up",
-        "level_cost_activity_soft_lo",
-        # "growth_activity_lo", #cause infeasibility
-        "growth_activity_up",
-        "growth_new_capacity_up",
+        #     "initial_activity_up",
+        #     "initial_activity_lo",
+        #     "initial_new_capacity_up",
+        #     "soft_activity_up",
+        #     # "soft_activity_lo", #causes infeasibilty.
+        #     "soft_new_capacity_up",
+        #     "level_cost_activity_soft_up",
+        #     "level_cost_activity_soft_lo",
+        #     # "growth_activity_lo", #cause infeasibility
+        #     "growth_activity_up",
+        #     "growth_new_capacity_up",
     ]
 
     # Parameters that need multiplier application
     multip_list = [
         "historical_activity",
         "historical_new_capacity",
-        "initial_activity_up",
-        "initial_activity_lo",
-        "initial_new_capacity_up",
+        # "initial_activity_up",
+        # "initial_activity_lo",
+        # "initial_new_capacity_up",
     ]
 
     # Extract parameters from parent technologies
