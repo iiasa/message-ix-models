@@ -552,6 +552,7 @@ def build_historical_new_capacity_flow(infile, ship_type,
     imodf['year_vtg'] = imodf['year_vtg'].astype(int)
     
     imodf = imodf[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
+    imodf = imodf[imodf['node_loc'] != '']
     
     return imodf
 

@@ -357,7 +357,7 @@ def generate_bare_sheets(
     for tec in covered_tec:
         df_teclt = build_parameterdf('technical_lifetime',
                                      network_df = network_setup[tec],
-                                     col_values = dict(value = 10, # Make 10 years by default
+                                     col_values = dict(value = 1, # Make 1 year by default
                                                        unit = 'y'))
         
         parameter_outputs[tec]['trade']['technical_lifetime'] = df_teclt.drop_duplicates()
