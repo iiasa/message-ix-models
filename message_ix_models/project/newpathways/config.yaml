@@ -25,6 +25,7 @@ covered_trade_technologies:
   - LNG_shipped
   - coal_shipped
   - crudeoil_shipped
+  - crudeoil_piped
 
 # YEARS
 timeframes:
@@ -152,7 +153,6 @@ gas_piped_trade:
     - TCE_non-CO2
     - TCE_other
   bunker_technology: # not applicable for pipelines
-
 #####################
 # LNG shipped trade #
 #####################
@@ -202,7 +202,6 @@ LNG_shipped_trade:
       LNG_tobunker
     LNG_tanker_foil:
       foil_tobunker
-
 ######################
 # Coal shipped trade #
 ######################
@@ -248,7 +247,6 @@ coal_shipped_trade: # Name of covered trade technology (e.g., oil)
   bunker_technology:
     energy_bulk_carrier_foil:
       foil_tobunker
-
 #######################
 # Crude shipped trade #
 ########E##############
@@ -299,3 +297,52 @@ crudeoil_shipped_trade: # Name of covered trade technology (e.g., oil)
   bunker_technology:
     crudeoil_tanker_foil:
       foil_tobunker
+##########################
+# Pipeline crude exports #
+##########################
+crudeoil_piped_trade:
+  base_trade_technology:
+    oil_bal
+  trade_technology:
+    crudeoil_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    crudeoil
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    primary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    oil_pipe:
+      - crudeoil
+  flow_material_input:
+    oil_pipe:
+      - steel
+  flow_commodity_output:
+    oil_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - oil_extr_1
+    - oil_extr_2
+    - oil_extr_3
+    - oil_extr_4
+    - oil_extr_5
+    - oil_extr_6
+    - oil_extr_7
+  specify_network:
+    True
+  tracked_emissions:
+  bunker_technology: # not applicable for pipelines
