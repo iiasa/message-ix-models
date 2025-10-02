@@ -40,8 +40,8 @@ clone_and_update(trade_dict=trade_parameters,
                  project_name = 'newpathways',
                  config_name = 'config.yaml',
                  log=log,
-                 to_gdx = True,
-                 solve = False,
+                 to_gdx = False,
+                 solve = True,
                  gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
                  update_scenario_name = 'PGLNG-C-CRSCRP')
 
