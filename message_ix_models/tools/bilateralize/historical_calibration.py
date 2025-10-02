@@ -110,7 +110,7 @@ def generate_cfdict(message_regions,
     
 # Import UN Comtrade data and link to conversion factors
 # This does not include natural gas pipelines or LNG, which are from IEA
-def import_uncomtrade(update_year = 2023,
+def import_uncomtrade(update_year = 2024,
                       project_name: str = None,
                       config_name: str = None):
     
@@ -129,7 +129,7 @@ def import_uncomtrade(update_year = 2023,
     for y in list(range(2005, update_year, 1)):
         print('Importing BACI' + str(y))
         ydf = pd.read_csv(os.path.join(data_paths['baci'], 
-                                       "BACI_HS92_Y" + str(y) + "_V202401b.csv"),
+                                       "BACI_HS92_Y" + str(y) + "_V202501.csv"),
                           encoding='windows-1252')
         ydf['k'] = ydf['k'].astype(str).str.zfill(6)
         ydf['hs4'] = ydf['k'].str[0:4]
@@ -139,7 +139,7 @@ def import_uncomtrade(update_year = 2023,
         df = pd.concat([df, ydf])
     
     print('Save pickle')
-    picklepath = os.path.join(data_paths['baci'], "full_2005-2022.pickle")
+    picklepath = os.path.join(data_paths['baci'], "full_2005-2023.pickle")
     with open(picklepath, 'wb') as f:
         pickle.dump(df, f)
 
@@ -244,6 +244,7 @@ def convert_trade(message_regions,
                               'v': 'VALUE (1000USD)',
                               'q': 'WEIGHT (t)',
                               'MESSAGE Commodity': 'MESSAGE COMMODITY'})
+    df['WEIGHT (t)'] = df['WEIGHT (t)'].astype(str)
     df = df[df['WEIGHT (t)'].str.contains('NA') == False]
     df['WEIGHT (t)'] = df['WEIGHT (t)'].astype(float)
     df['ENERGY (TJ)'] = df['WEIGHT (t)'] * df['conversion (TJ/t)']
@@ -463,8 +464,12 @@ def build_historical_new_capacity_trade(message_regions = 'R12',
     df = basedf.merge(indf, left_on = ['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'],
                       right_on = ['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'], how = 'outer')
     
-    df['year_act'] = round(df['year_act']/5, 0)*5 # Get closest 5
-    df = df.groupby(['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'])['value'].sum().reset_index()
+    df['year_5'] = round(df['year_act']/5, 0)*5 # Get closest 5
+    df['year_act'] = np.where(df['year_act'] == 2023, 2025, df['year_act']) #TODO: 2023 to 2025 only for now
+    #df = df.groupby(['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'])['value'].sum().reset_index()
+    df = df[df['year_act'] == df['year_5']]
+    df['value'] = np.where(df['value'].isnull(), 0, df['value'])
+    
     df = df.sort_values(by = ['node_loc', 'technology', 'mode', 'time', 'year_act'])
     df['value'] = df['value'].diff()
     
@@ -472,7 +477,7 @@ def build_historical_new_capacity_trade(message_regions = 'R12',
     df['value'] = np.where(df['value'] < 0, 0, df['value'])
     df['year_vtg'] = df['year_act'].astype(int)
     
-    df = df[['node_loc', 'technology', 'year_vtg', 'value', 'unit']]
+    df = df[['node_loc', 'technology', 'year_vtg', 'value', 'unit']].drop_duplicates()
     
     return df
     
