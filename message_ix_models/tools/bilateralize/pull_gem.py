@@ -181,9 +181,9 @@ def import_gem(input_file: str,
         hist_tra['Capacity (GWa)'] = np.where(hist_tra['Capacity (GWa)'].isnull(), 0, hist_tra['Capacity (GWa)'])
         hist_tra['Capacity (GWa)'] = hist_tra.groupby(['EXPORTER', 'IMPORTER'])['Capacity (GWa)'].transform(pd.Series.cumsum)
         hist_tra['node_loc'] = hist_tra['EXPORTER']
-        hist_tra['technology'] = flow_technology + '_' + hist_tra['IMPORTER'].str.lower().str.split('_').str[-1]
+        hist_tra['technology'] = 'crudeoil_piped_exp_' + hist_tra['IMPORTER'].str.lower().str.split('_').str[-1]
         hist_tra['value'] = round(hist_tra['Capacity (GWa)'],0)
-        hist_tra['year_act'] = hist_tra['YEAR']
+        hist_tra['year_act'] = hist_tra['YEAR'].astype(int)
         hist_tra['unit'] = 'GWa'
         hist_tra['mode'] = 'M1'
         hist_tra['time'] = 'year'
