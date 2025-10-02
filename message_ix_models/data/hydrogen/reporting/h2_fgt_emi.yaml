@@ -1,0 +1,76 @@
+# Fugitive hydrogen emissions
+
+var:
+  emi
+
+iamc_prefix:
+  Emissions|H2|Fugitive|
+
+unit: Mt H2/yr
+
+vars:
+  Energy|Supply|Hydrogen|Production:
+    filter:
+      { technology: [h2_smr, h2_smr_ccs, h2_coal, h2_coal_ccs, h2_bio, h2_bio_ccs, h2_elec, h2_elec_ccs] }
+    short:
+      emi_h2_fgt_en_sup_h2_prod
+
+  Energy|Supply|Hydrogen|Distribution:
+    filter:
+      { technology: [h2_t_d, h2_mix] }
+    short:
+      emi_h2_fgt_en_sup_h2_dist
+
+  Energy|Demand|Industry|Steel:
+    filter:
+      { technology: [furnace_h2_steel, fc_h2_steel, dri_h2_steel] }
+    short:
+      emi_h2_fgt_en_dem_ind_steel
+
+  Energy|Demand|Industry|Cement:
+    filter:
+      { technology: [furnace_h2_cement, fc_h2_cement] }
+    short:
+      emi_h2_fgt_en_dem_ind_cement
+
+  Energy|Demand|Industry|Aluminium:
+    filter:
+      { technology: [furnace_h2_aluminum, fc_h2_aluminum] }
+    short:
+      emi_h2_fgt_en_dem_ind_alu
+
+  Energy|Demand|Industry|Chemicals:
+    filter:
+      { technology: [furnace_h2_petro, fc_h2_petro, meth_h2] }
+    short:
+      emi_h2_fgt_en_dem_ind_chem
+
+  Energy|Demand|Industry|Refining:
+    filter:
+      { technology: [furnace_h2_refining, fc_h2_refining, hydro_cracking_ref] }
+    short:
+      emi_h2_fgt_en_dem_ind_ref
+      
+  Energy|Demand|Industry|Resins:
+    filter:
+      { technology: [furnace_h2_resins, fc_h2_resins] }
+    short:
+      emi_h2_fgt_en_dem_ind_resins
+
+  Energy|Demand|Industry|Other:
+    filter:
+      { technology: [h2_i, h2_fc_I] }
+    short:
+      emi_h2_fgt_en_dem_ind_other
+
+  Energy|Demand|Residential and Commercial:
+    filter:
+      { technology: [h2_rc, h2_fc_RC] }
+    short:
+      emi_h2_fgt_en_dem_rc
+
+  Energy|Demand|Transportation:
+    filter:
+      { technology: [h2_fc_trp] }
+    short:
+      emi_h2_fgt_en_dem_trp
