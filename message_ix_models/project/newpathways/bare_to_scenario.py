@@ -45,7 +45,7 @@ histnc = build_historical_new_capacity_trade(message_regions,
                                              project_name = 'newpathways', config_name = 'config.yaml')
 
 hist_tec = {}
-for tec in covered_tec:
+for tec in [c for c in covered_tec if c != 'crudeoil_piped']:
     add_tec = config[tec + '_trade']['trade_technology'] + '_exp'
     hist_tec[tec] = add_tec
 
