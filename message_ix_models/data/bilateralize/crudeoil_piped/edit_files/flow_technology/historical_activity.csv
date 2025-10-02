@@ -1,0 +1,9 @@
+node_loc,technology,year_act,value,unit,mode,time
+R12_EEU,oil_pipe_weu,2025,439.0,km,M1,year
+R12_FSU,oil_pipe_chn,2025,1092.0,km,M1,year
+R12_FSU,oil_pipe_eeu,2025,1691.0,km,M1,year
+R12_FSU,oil_pipe_weu,2025,1768.0,km,M1,year
+R12_MEA,oil_pipe_weu,2025,1866.0,km,M1,year
+R12_PAS,oil_pipe_chn,2025,771.0,km,M1,year
+R12_SAS,oil_pipe_chn,2025,3600.0,km,M1,year
+R12_WEU,oil_pipe_eeu,2025,347.0,km,M1,year
