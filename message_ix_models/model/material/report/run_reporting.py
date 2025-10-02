@@ -1,9 +1,8 @@
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
 import numpy as np
 import pandas as pd
 import pyam
-from message_ix.report import Reporter
 
 from message_ix_models.model.material.report.reporter_utils import (
     add_biometh_final_share,
@@ -14,16 +13,19 @@ from message_ix_models.util import broadcast
 
 from .config import Config
 
+if TYPE_CHECKING:
+    from message_ix import Reporter, Scenario
+
 
 def pyam_df_from_rep(
-    rep: message_ix.Reporter, reporter_var: str, mapping_df: pd.DataFrame
+    rep: "Reporter", reporter_var: str, mapping_df: pd.DataFrame
 ) -> pd.DataFrame:
     """Queries data from Reporter and maps to IAMC variable names.
 
     Parameters
     ----------
     rep
-        message_ix.Reporter to query
+        "Reporter" to query
     reporter_var
         Registered key of Reporter to query, e.g. "out", "in", "ACT", "emi", "CAP"
     mapping_df
@@ -103,7 +105,7 @@ def load_config(name: str) -> "Config":
 
 
 def run_fe_methanol_nh3_reporting(
-    rep: message_ix.Reporter, model_name: str, scen_name: str
+    rep: "Reporter", model_name: str, scen_name: str
 ) -> pyam.IamDataFrame:
     """Run final energy reporting for ammonia and methanol.
 
@@ -153,9 +155,7 @@ def run_ch4_reporting(rep, model_name: str, scen_name: str) -> pyam.IamDataFrame
     return py_df
 
 
-def run_fe_reporting(
-    rep: message_ix.Reporter, model: str, scenario: str
-) -> pd.DataFrame:
+def run_fe_reporting(rep: "Reporter", model: str, scenario: str) -> pd.DataFrame:
     """Generate reporting for industry final energy variables."""
     dfs = []
 
@@ -219,7 +219,7 @@ def run_fe_reporting(
 
 
 def add_chemicals_to_final_energy_variables(
-    dfs: List[pyam.IamDataFrame], rep: message_ix.Reporter, model: str, scenario: str
+    dfs: List[pyam.IamDataFrame], rep: "Reporter", model: str, scenario: str
 ) -> pyam.IamDataFrame:
     """Update final energy fuel variables by adding chemicals to aggregates."""
     dfs.append(run_fe_methanol_nh3_reporting(rep, model, scenario))
@@ -316,14 +316,14 @@ def add_chemicals_to_final_energy_variables(
 
 
 def split_fe_other(
-    rep: message_ix.Reporter, py_df_all: pyam.IamDataFrame, model: str, scenario: str
+    rep: "Reporter", py_df_all: pyam.IamDataFrame, model: str, scenario: str
 ) -> pyam.IamDataFrame:
     """Splits Final Energy|Industry|*|Liquids|Other values.
 
     It reallocates it to Liquids|Biomass/Coal/Oil/Gas based on the methanol feedstock
     shares.
 
-    1. Calculate the feedstock shares of methanol production with message_ix.Reporter.
+    1. Calculate the feedstock shares of methanol production with "Reporter".
     2. Append the shares as temporary iamc variables them to the existing reporting pyam
        object.
     3. Use pyam multiply feature to calculate shares with each "Liquids|Other"
@@ -422,9 +422,7 @@ def split_fe_other(
     return py_df_all
 
 
-def run_fs_reporting(
-    rep: message_ix.Reporter, model_name: str, scen_name: str
-) -> pd.DataFrame:
+def run_fs_reporting(rep: "Reporter", model_name: str, scen_name: str) -> pd.DataFrame:
     """Generate reporting for industry final energy non-energy variables."""
     dfs = []
     hvc_config = load_config("energy/fs2")
@@ -441,9 +439,7 @@ def run_fs_reporting(
     )
 
     nh3_meth_config = load_config("energy/fs1")
-    df_nh3_meth = pyam_df_from_rep(
-        rep, nh3_meth_config.var, nh3_meth_config.mapping
-    )
+    df_nh3_meth = pyam_df_from_rep(rep, nh3_meth_config.var, nh3_meth_config.mapping)
     df_nh3_meth.loc[
         df_nh3_meth.index.get_level_values("iamc_name").str.contains("Ammonia")
     ] *= 0.697615
@@ -532,7 +528,7 @@ def run_fs_reporting(
 
 
 def split_mto_feedstock(
-    rep: message_ix.Reporter, py_df_all: pyam.IamDataFrame, model: str, scenario: str
+    rep: "Reporter", py_df_all: pyam.IamDataFrame, model: str, scenario: str
 ) -> pyam.IamDataFrame:
     """Splits Final Energy|Non-Energy Use|*|Liquids|Other values."""
     add_biometh_final_share(rep, mode="feedstock")
@@ -618,7 +614,7 @@ def split_mto_feedstock(
 
 
 def run_prod_reporting(
-    rep: message_ix.Reporter, model_name: str, scen_name: str
+    rep: "Reporter", model_name: str, scen_name: str
 ) -> pyam.IamDataFrame:
     """Generate reporting for industry production variables."""
     dfs = []
@@ -712,7 +708,7 @@ def run_se(rep: "Reporter", model_name: str, scen_name: str):
 
 
 def run_all_categories(
-    rep: message_ix.Reporter, model_name: str, scen_name: str
+    rep: "Reporter", model_name: str, scen_name: str
 ) -> List[pyam.IamDataFrame]:
     """Generate all industry reporting variables for a given scenario."""
     dfs = [
@@ -823,7 +819,7 @@ def calculate_clinker_ccs_energy(scenario: "Scenario", rep, py_df):
 
 
 def run(
-    scenario: message_ix.Scenario,
+    scenario: "Scenario",
     upload_ts: bool = False,
     region: Union[bool, str] = False,
 ) -> pyam.IamDataFrame:

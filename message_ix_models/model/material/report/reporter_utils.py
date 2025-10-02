@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from message_ix import Reporter
 
 
-def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
+def add_methanol_share_calculations(rep: "Reporter", mode: str = "feedstock"):
     """Prepare reporter to compute regional bio-methanol shares of regional production.
 
     Reporter can compute share with key: ``share::biomethanol``
@@ -153,7 +153,7 @@ def add_meth_import_calculations(rep: "Reporter", mode: str = "feedstock"):
         )
 
 
-def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
+def add_biometh_final_share(rep: "Reporter", mode: str = "feedstock"):
     """Prepare reporter to compute bio-methanol supply to final level.
 
     Reporter can compute bio-methanol with key: ``out::biomethanol-final``
