@@ -161,26 +161,23 @@ def activity_to_csv(trade_tec,
     
 # Retrieve trade flow activities
 scenarios_models = {#'base_scenario': 'NP_SSP2_6.2',
-                    'gas-LNG-coal': 'NP_SSP2_6.2',
+                    'PGLNG-C-CRSCRP': 'NP_SSP2_6.2',
                     }
- 
-activity_to_csv(trade_tec = "gas", 
-                flow_tec = "gas_pipe",
-                trade_commodity = 'gas (GWa)',
-                flow_commodity = 'gas_pipeline_capacity',
-                flow_unit = 'km',
-                model_scenario_dict = scenarios_models)
+# Trade flow dictionaries: trade_tec (gas), flow_tec (gas_pipe), trade_commodity (gas (GWa)), flow_commodity (gas_pipeline_capacity), flow_unit (km)
+tradeflows = {'gas_piped': ['gas_piped', 'gas_pipe', 'gas (GWa)', 'gas_pipeline_capacity', 'km'],
+              'LNG_shipped': ['LNG_shipped', 'LNG_tanker', 'LNG (GWa)', 'LNG_tanker_capacity', 'Mt-km'],
+              'coal_shipped': ['coal_shipped', 'energy_bulk_carrier', 'Coal (GWa)', 'energy_bulk_carrier_capacity', 'Mt-km'],
+              'crudeoil_piped': ['crudeoil_piped', 'oil_pipe', 'Crude (GWa)', 'oil_pipeline_capacity', 'km'],
+              'crudeoil_shipped': ['crudeoil_shipped', 'oil_tanker', 'Crude (GWa)', 'oil_tanker_capacity', 'Mt-km']}
 
-activity_to_csv(trade_tec = "LNG", 
-                flow_tec = "LNG_tanker",
-                trade_commodity = 'LNG (GWa)',
-                flow_commodity = 'LNG_tanker_capacity',
-                flow_unit = 'Mt-km',
-                model_scenario_dict = scenarios_models)
+for trade_tec in tradeflows.keys():
+    print("#########")
+    print(trade_tec)
+    print("#########")
 
-activity_to_csv(trade_tec = "coal", 
-                flow_tec = "energy_bulk_carrier",
-                trade_commodity = 'Coal (GWa)',
-                flow_commodity = 'energy_bulk_carrier_capacity',
-                flow_unit = 'Mt-km',
-                model_scenario_dict = scenarios_models)
+    activity_to_csv(trade_tec = tradeflows[trade_tec][0], 
+                    flow_tec = tradeflows[trade_tec][1],
+                    trade_commodity = tradeflows[trade_tec][2],
+                    flow_commodity = tradeflows[trade_tec][3],
+                    flow_unit = tradeflows[trade_tec][4],
+                    model_scenario_dict = scenarios_models)
