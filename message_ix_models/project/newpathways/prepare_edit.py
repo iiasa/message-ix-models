@@ -53,6 +53,13 @@ import_gem(input_file = gas_pipeline_file,
            flow_commodity = "gas_pipeline_capacity",
            project_name = 'newpathways', config_name = 'config.yaml')
 
+import_gem(input_file = oil_pipeline_file, 
+           input_sheet = oil_pipeline_sheet, 
+           trade_technology = "crudeoil_piped",
+           flow_technology = "oil_pipe",
+           flow_commodity = "oil_pipeline_capacity",
+           project_name = 'newpathways', config_name = 'config.yaml')
+
 # Add MariTEAM calibration for maritime shipping
 calibrate_mariteam(covered_tec, message_regions,
                    project_name = 'newpathways', config_name = 'config.yaml')
@@ -61,9 +68,16 @@ calibrate_mariteam(covered_tec, message_regions,
 costdf = build_historical_price(message_regions,
                                 project_name = 'newpathways', config_name = 'config.yaml')
 
-for tec in [i for i in covered_tec if 'shipped' in i]:
+for tec in [i for i in covered_tec if i != "gas_piped"]:
     log.info('Add variable cost for ' + tec)
-    add_df = costdf[costdf['technology'].str.contains(tec)]
+    
+    if 'piped' in tec:
+        tec_shipped = tec.replace('piped', 'shipped')
+        add_df = costdf[costdf['technology'].str.contains(tec_shipped)].copy()
+        add_df['technology'] = add_df['technology'].str.replace('shipped', 'piped')
+    else:
+        add_df = costdf[costdf['technology'].str.contains(tec)]
+        
     col_list = add_df.columns
     mean_cost = add_df['value'].mean()
     
