@@ -6,6 +6,44 @@ import pandas as pd
 from message_ix_models.util import package_data_path
 
 
+def gen_data_power_sector(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
+    """Generate data for materials representation of power industry."""
+    # Load configuration
+
+    # paths to lca data
+    data_path = package_data_path("material", "power_sector")
+
+    # Information about scenario, e.g. node, year
+
+    # read inv.cost data
+    inv_cost = scenario.par("inv_cost")
+
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    # for p in set(param_name):
+    #     df = read_material_intensities(
+    #         p, str(data_path), node, year, technology, commodity, level, inv_cost
+    #     )
+    #     print("type df:", type(df))
+    #     print(df.head())
+    #
+    #     results[p].append(df)
+
+    int_dict = read_material_intensities(str(data_path), inv_cost)
+    for k, v in int_dict.items():
+        results[k].append(v)
+
+    # create new parameters input_cap_new, output_cap_new, input_cap_ret,
+    # output_cap_ret, input_cap and output_cap if they don't exist
+    maybe_init_pars(scenario)
+
+    # Concatenate to one data frame per parameter
+    return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+
 def read_material_intensities(
     data_path: str, inv_cost: pd.DataFrame
 ) -> dict[str, pd.DataFrame]:
@@ -464,41 +502,3 @@ def maybe_init_pars(scenario: message_ix.Scenario) -> None:
                 "time_dest",
             ],
         )
-
-
-def gen_data_power_sector(
-    scenario: message_ix.Scenario, dry_run: bool = False
-) -> dict[str, pd.DataFrame]:
-    """Generate data for materials representation of power industry."""
-    # Load configuration
-
-    # paths to lca data
-    data_path = package_data_path("material", "power_sector")
-
-    # Information about scenario, e.g. node, year
-
-    # read inv.cost data
-    inv_cost = scenario.par("inv_cost")
-
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    # for p in set(param_name):
-    #     df = read_material_intensities(
-    #         p, str(data_path), node, year, technology, commodity, level, inv_cost
-    #     )
-    #     print("type df:", type(df))
-    #     print(df.head())
-    #
-    #     results[p].append(df)
-
-    int_dict = read_material_intensities(str(data_path), inv_cost)
-    for k, v in int_dict.items():
-        results[k].append(v)
-
-    # create new parameters input_cap_new, output_cap_new, input_cap_ret,
-    # output_cap_ret, input_cap and output_cap if they don't exist
-    maybe_init_pars(scenario)
-
-    # Concatenate to one data frame per parameter
-    return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
