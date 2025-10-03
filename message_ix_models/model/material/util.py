@@ -336,7 +336,7 @@ def path_fallback(context_or_regions: Context | str, *parts) -> Path:
 
 def add_region_column(
     df: pd.DataFrame, file_path: Union[str, Path], iso_column: str = "COUNTRY"
-) -> None:
+) -> pd.Series:
     """Convenience function to add R12 region column to dataframe."""
     yaml_data = read_yaml_file(file_path)
     yaml_data.pop("World")
@@ -344,4 +344,4 @@ def add_region_column(
     r12_map = {k: v["child"] for k, v in yaml_data.items()}
     r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
 
-    df["R12"] = df[iso_column].map(r12_map_inv)
+    return df[iso_column].map(r12_map_inv)
