@@ -42,106 +42,251 @@ if TYPE_CHECKING:
     from message_ix_models.types import ParameterData
 
 
-def gen_mock_demand_steel(scenario: message_ix.Scenario) -> pd.DataFrame:
-    """Generate mock steel demand time series for MESSAGEix regions.
-    ** Not used anymore **
+def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
+    """Generate all MESSAGEix parameter data for the steel sector.
 
     Parameters
     ----------
     scenario :
-        Scenario instance to build steel demand on.
+        Scenario instance to build steel model on.
+    dry_run :
+        If True, do not perform any file writing or scenario modification.
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with columns ['node', 'year', 'value'] for steel demand.
+    dict
+        Dictionary with MESSAGEix parameters as keys and parametrization as values.
     """
+    # Load configuration
+    context = read_config()
+    config = context["material"]["steel"]
+    ssp = get_ssp_from_context(context)
+    # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
-    nodes.remove("World")
 
-    # The order:
-    # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    # 'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+    # Techno-economic assumptions
+    # TEMP: now add cement sector as well
+    # => Need to separate those since now I have get_data_steel and cement
+    data_steel = read_sector_data(scenario, "steel", None, "steel_R12.csv")
+    # Special treatment for time-dependent Parameters
+    data_steel_ts = read_timeseries(scenario, "steel", None, "timeseries_R12.csv")
+    data_steel_rel = read_rel(scenario, "steel", None, "relations_R12.csv")
 
-    # Finished steel demand from:
-    # https://www.oecd.org/industry/ind/Item_4b_Worldsteel.pdf
-    # For region definitions:
-    # https://worldsteel.org/wp-content/uploads/2021-World-Steel-in-Figures.pdf
-    # For detailed assumptions and calculation see: steel_demand_calculation.xlsx
-    # under
-    # https://iiasahub.sharepoint.com/sites/eceprog?cid=75ea8244-8757-44f1-83fd-d34f94ffd06a
+    tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 
-    if "R12_CHN" in nodes:
-        nodes.remove("R12_GLB")
-        sheet_n = "data_R12"
-        region_set = "R12_"
-        d = [
-            20.04,
-            12.08,
-            56.55,
-            56.5,
-            64.94,
-            54.26,
-            97.76,
-            91.3,
-            65.2,
-            164.28,
-            131.95,
-            980.1,
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+    yv_ya = s_info.yv_ya
+    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1970]
+
+    df = yv_ya.loc[yv_ya.year_act == 2020]
+    df["year_act"] = None
+    pre_model = df.pipe(broadcast, year_act=df.year_vtg)
+    pre_model = pre_model[
+        (pre_model["year_act"].ge(pre_model["year_vtg"]))
+        & (pre_model["year_act"].lt(2020))
+    ]
+    yv_ya = pd.concat([pre_model, yv_ya])
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+    for t in config["technology"]["add"]:
+        # Retrieve the id if `t` is a Code instance; otherwise use str
+        t = getattr(t, "id", t)
+        params = data_steel.loc[(data_steel["technology"] == t), "parameter"].unique()
+
+        # Special treatment for time-varying params
+        if t in tec_ts:
+            gen_data_steel_ts(data_steel_ts, results, t, nodes)
+
+        # Iterate over parameters
+        get_data_steel_const(
+            data_steel, results, params, t, yv_ya, nodes, global_region
+        )
+
+    # Add relation for the maximum global scrap use in 2020
+    for t in [
+        "scrap_recovery_steel_1",
+        "scrap_recovery_steel_2",
+        "scrap_recovery_steel_3",
+    ]:
+        df_max_recycling = pd.DataFrame(
+            {
+                "relation": "max_global_recycling_steel",
+                "node_rel": "R12_GLB",
+                "year_rel": 2020,
+                "year_act": 2020,
+                "node_loc": nodes,
+                "technology": t,
+                "mode": "M1",
+                "unit": "???",
+                "value": data_steel_rel.loc[
+                    (
+                        (data_steel_rel["relation"] == "max_global_recycling_steel")
+                        & (data_steel_rel["parameter"] == "relation_activity")
+                    ),
+                    "value",
+                ].values[0],
+            }
+        )
+
+        results["relation_activity"].append(df_max_recycling)
+
+    df_max_recycling_upper = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_upper")
+                ),
+                "value",
+            ].values[0],
+        },
+        index=[0],
+    )
+    df_max_recycling_lower = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_lower")
+                ),
+                "value",
+            ].values[0],
+        },
+        index=[0],
+    )
+    results["relation_activity"].append(df_max_recycling)
+    results["relation_upper"].append(df_max_recycling_upper)
+    results["relation_lower"].append(df_max_recycling_lower)
+    # Add relations for scrap grades and availability
+    regions = set(data_steel_rel["Region"].values)
+    gen_data_steel_rel(data_steel_rel, results, regions, modelyears)
+
+    # Create external demand param
+    df_demand = gen_demand(ssp)
+    results["demand"].append(df_demand)
+
+    new_scrap_ratio = {
+        "R12_AFR": 0.92,
+        "R12_CHN": 0.9,
+        "R12_EEU": 0.9,
+        "R12_FSU": 0.9,
+        "R12_LAM": 0.9,
+        "R12_MEA": 0.92,
+        "R12_NAM": 0.85,
+        "R12_PAO": 0.85,
+        "R12_PAS": 0.9,
+        "R12_RCPA": 0.92,
+        "R12_SAS": 0.92,
+        "R12_WEU": 0.85,
+    }
+
+    scale_fse_demand(df_demand, new_scrap_ratio)
+
+    common = dict(
+        year_vtg=yv_ya.year_vtg,
+        year_act=yv_ya.year_act,
+        time="year",
+        time_origin="year",
+        time_dest="year",
+    )
+
+    # Add CCS as addon
+    parname = "addon_conversion"
+    bf_tec = ["bf_steel"]
+    df = make_df(
+        parname, mode="M2", type_addon="bf_ccs_steel_addon", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=bf_tec)
+    results[parname].append(df)
+
+    dri_gas_tec = ["dri_gas_steel"]
+    df = make_df(
+        parname,
+        mode="M1",
+        type_addon="dri_gas_ccs_steel_addon",
+        value=1,
+        unit="-",
+        **common,
+    ).pipe(broadcast, node=nodes, technology=dri_gas_tec)
+    results[parname].append(df)
+
+    dri_tec = ["dri_steel"]
+    df = make_df(
+        parname, mode="M1", type_addon="dri_steel_addon", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=dri_tec)
+    results[parname].append(df)
+
+    # Concatenate to one data frame per parameter
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    results["initial_new_capacity_up"] = pd.concat(
+        [
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True),
+                technology="dri_gas_ccs_steel",
+                material="steel",
+                ssp=ssp,
+            ),
+            calculate_ini_new_cap(
+                df_demand=df_demand.copy(deep=True),
+                technology="bf_ccs_steel",
+                material="steel",
+                ssp=ssp,
+            ),
         ]
+    )
 
-    else:
-        nodes.remove("R11_GLB")
-        sheet_n = "data_R11"
-        region_set = "R11_"
-        d = [
-            20.04,
-            992.18,
-            56.55,
-            56.5,
-            64.94,
-            54.26,
-            97.76,
-            91.3,
-            65.2,
-            164.28,
-            131.95,
+    results["relation_activity"] = pd.concat(
+        [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
+    )
+
+    merge_data(
+        results,
+        gen_dri_act_bound(),
+        gen_dri_cap_calibration(),
+        gen_dri_coal_model(s_info),
+        get_scrap_prep_cost(s_info, ssp),
+        gen_max_recycling_rel(s_info, ssp),
+        gen_grow_cap_up(s_info, ssp),
+        gen_2020_calibration_relation(s_info, "eaf"),
+        gen_2020_calibration_relation(s_info, "bof"),
+        gen_2020_calibration_relation(s_info, "bf"),
+        gen_bof_pig_input(s_info),
+        gen_finishing_steel_io(s_info),
+        gen_manuf_steel_io(new_scrap_ratio, s_info),
+        gen_iron_ore_cost(s_info, ssp),
+        gen_charcoal_bf_bound(s_info),
+        read_hist_cap("eaf"),
+        read_hist_cap("bof"),
+        read_hist_cap("bf"),
+        gen_emi_rel_data(s_info, "steel"),
+    )
+    maybe_remove_water_tec(scenario, results)
+
+    if ssp == "SSP1":
+        df_tmp = results["relation_activity"]
+        df_tmp = df_tmp[
+            (df_tmp["relation"] == "minimum_recycling_steel")
+            & (df_tmp["technology"] == "total_EOL_steel")
         ]
-        # MEA change from 39 to 9 to make it feasible (coal supply bound)
+        df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
+        df_tmp["value"] = -0.7
 
-    # SSP2 R11 baseline GDP projection
-    gdp_growth = pd.read_excel(
-        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
-        sheet_name=sheet_n,
-    )
-
-    gdp_growth = gdp_growth.loc[
-        (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
-
-    gdp_growth["Region"] = region_set + gdp_growth["Region"]
-
-    demand2020_steel = (
-        pd.DataFrame({"Region": nodes, "Val": d})
-        .join(gdp_growth.set_index("Region"), on="Region")
-        .rename(columns={"Region": "node"})
-    )
-
-    demand2020_steel.iloc[:, 3:] = (
-        demand2020_steel.iloc[:, 3:]
-        .div(demand2020_steel[2020], axis=0)
-        .multiply(demand2020_steel["Val"], axis=0)
-    )
-
-    demand2020_steel = pd.melt(
-        demand2020_steel.drop(["Val", "Scenario"], axis=1),
-        id_vars=["node"],
-        var_name="year",
-        value_name="value",
-    )
-
-    return demand2020_steel
+    drop_redundant_rows(scenario, results)
+    return results
 
 
 def gen_data_steel_ts(
@@ -501,253 +646,6 @@ def gen_data_steel_rel(
 
                     results[par_name].append(df)
     return
-
-
-def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
-    """Generate all MESSAGEix parameter data for the steel sector.
-
-    Parameters
-    ----------
-    scenario :
-        Scenario instance to build steel model on.
-    dry_run :
-        If True, do not perform any file writing or scenario modification.
-
-    Returns
-    -------
-    dict
-        Dictionary with MESSAGEix parameters as keys and parametrization as values.
-    """
-    # Load configuration
-    context = read_config()
-    config = context["material"]["steel"]
-    ssp = get_ssp_from_context(context)
-    # Information about scenario, e.g. node, year
-    s_info = ScenarioInfo(scenario)
-
-    # Techno-economic assumptions
-    # TEMP: now add cement sector as well
-    # => Need to separate those since now I have get_data_steel and cement
-    data_steel = read_sector_data(scenario, "steel", None, "steel_R12.csv")
-    # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, "steel", None, "timeseries_R12.csv")
-    data_steel_rel = read_rel(scenario, "steel", None, "relations_R12.csv")
-
-    tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
-
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = nodes_ex_world(s_info.N)
-    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
-    yv_ya = s_info.yv_ya
-    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1970]
-
-    df = yv_ya.loc[yv_ya.year_act == 2020]
-    df["year_act"] = None
-    pre_model = df.pipe(broadcast, year_act=df.year_vtg)
-    pre_model = pre_model[
-        (pre_model["year_act"].ge(pre_model["year_vtg"]))
-        & (pre_model["year_act"].lt(2020))
-    ]
-    yv_ya = pd.concat([pre_model, yv_ya])
-
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
-    for t in config["technology"]["add"]:
-        # Retrieve the id if `t` is a Code instance; otherwise use str
-        t = getattr(t, "id", t)
-        params = data_steel.loc[(data_steel["technology"] == t), "parameter"].unique()
-
-        # Special treatment for time-varying params
-        if t in tec_ts:
-            gen_data_steel_ts(data_steel_ts, results, t, nodes)
-
-        # Iterate over parameters
-        get_data_steel_const(
-            data_steel, results, params, t, yv_ya, nodes, global_region
-        )
-
-    # Add relation for the maximum global scrap use in 2020
-    for t in [
-        "scrap_recovery_steel_1",
-        "scrap_recovery_steel_2",
-        "scrap_recovery_steel_3",
-    ]:
-        df_max_recycling = pd.DataFrame(
-            {
-                "relation": "max_global_recycling_steel",
-                "node_rel": "R12_GLB",
-                "year_rel": 2020,
-                "year_act": 2020,
-                "node_loc": nodes,
-                "technology": t,
-                "mode": "M1",
-                "unit": "???",
-                "value": data_steel_rel.loc[
-                    (
-                        (data_steel_rel["relation"] == "max_global_recycling_steel")
-                        & (data_steel_rel["parameter"] == "relation_activity")
-                    ),
-                    "value",
-                ].values[0],
-            }
-        )
-
-        results["relation_activity"].append(df_max_recycling)
-
-    df_max_recycling_upper = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_upper")
-                ),
-                "value",
-            ].values[0],
-        },
-        index=[0],
-    )
-    df_max_recycling_lower = pd.DataFrame(
-        {
-            "relation": "max_global_recycling_steel",
-            "node_rel": "R12_GLB",
-            "year_rel": 2020,
-            "unit": "???",
-            "value": data_steel_rel.loc[
-                (
-                    (data_steel_rel["relation"] == "max_global_recycling_steel")
-                    & (data_steel_rel["parameter"] == "relation_lower")
-                ),
-                "value",
-            ].values[0],
-        },
-        index=[0],
-    )
-    results["relation_activity"].append(df_max_recycling)
-    results["relation_upper"].append(df_max_recycling_upper)
-    results["relation_lower"].append(df_max_recycling_lower)
-    # Add relations for scrap grades and availability
-    regions = set(data_steel_rel["Region"].values)
-    gen_data_steel_rel(data_steel_rel, results, regions, modelyears)
-
-    # Create external demand param
-    df_demand = gen_demand(ssp)
-    results["demand"].append(df_demand)
-
-    new_scrap_ratio = {
-        "R12_AFR": 0.92,
-        "R12_CHN": 0.9,
-        "R12_EEU": 0.9,
-        "R12_FSU": 0.9,
-        "R12_LAM": 0.9,
-        "R12_MEA": 0.92,
-        "R12_NAM": 0.85,
-        "R12_PAO": 0.85,
-        "R12_PAS": 0.9,
-        "R12_RCPA": 0.92,
-        "R12_SAS": 0.92,
-        "R12_WEU": 0.85,
-    }
-
-    scale_fse_demand(df_demand, new_scrap_ratio)
-
-    common = dict(
-        year_vtg=yv_ya.year_vtg,
-        year_act=yv_ya.year_act,
-        time="year",
-        time_origin="year",
-        time_dest="year",
-    )
-
-    # Add CCS as addon
-    parname = "addon_conversion"
-    bf_tec = ["bf_steel"]
-    df = make_df(
-        parname, mode="M2", type_addon="bf_ccs_steel_addon", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology=bf_tec)
-    results[parname].append(df)
-
-    dri_gas_tec = ["dri_gas_steel"]
-    df = make_df(
-        parname,
-        mode="M1",
-        type_addon="dri_gas_ccs_steel_addon",
-        value=1,
-        unit="-",
-        **common,
-    ).pipe(broadcast, node=nodes, technology=dri_gas_tec)
-    results[parname].append(df)
-
-    dri_tec = ["dri_steel"]
-    df = make_df(
-        parname, mode="M1", type_addon="dri_steel_addon", value=1, unit="-", **common
-    ).pipe(broadcast, node=nodes, technology=dri_tec)
-    results[parname].append(df)
-
-    # Concatenate to one data frame per parameter
-    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-
-    results["initial_new_capacity_up"] = pd.concat(
-        [
-            calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True),
-                technology="dri_gas_ccs_steel",
-                material="steel",
-                ssp=ssp,
-            ),
-            calculate_ini_new_cap(
-                df_demand=df_demand.copy(deep=True),
-                technology="bf_ccs_steel",
-                material="steel",
-                ssp=ssp,
-            ),
-        ]
-    )
-
-    results["relation_activity"] = pd.concat(
-        [results["relation_activity"], gen_cokeoven_co2_cc(s_info)]
-    )
-
-    merge_data(
-        results,
-        gen_dri_act_bound(),
-        gen_dri_cap_calibration(),
-        gen_dri_coal_model(s_info),
-        get_scrap_prep_cost(s_info, ssp),
-        gen_max_recycling_rel(s_info, ssp),
-        gen_grow_cap_up(s_info, ssp),
-        gen_2020_calibration_relation(s_info, "eaf"),
-        gen_2020_calibration_relation(s_info, "bof"),
-        gen_2020_calibration_relation(s_info, "bf"),
-        gen_bof_pig_input(s_info),
-        gen_finishing_steel_io(s_info),
-        gen_manuf_steel_io(new_scrap_ratio, s_info),
-        gen_iron_ore_cost(s_info, ssp),
-        gen_charcoal_bf_bound(s_info),
-        read_hist_cap("eaf"),
-        read_hist_cap("bof"),
-        read_hist_cap("bf"),
-        gen_emi_rel_data(s_info, "steel"),
-    )
-    maybe_remove_water_tec(scenario, results)
-
-    if ssp == "SSP1":
-        df_tmp = results["relation_activity"]
-        df_tmp = df_tmp[
-            (df_tmp["relation"] == "minimum_recycling_steel")
-            & (df_tmp["technology"] == "total_EOL_steel")
-        ]
-        df_tmp = df_tmp[df_tmp["year_rel"] >= 2030]
-        df_tmp["value"] = -0.7
-
-    drop_redundant_rows(scenario, results)
-    return results
 
 
 def gen_cokeoven_co2_cc(s_info: ScenarioInfo):
@@ -1295,6 +1193,29 @@ def gen_charcoal_bf_bound(s_info: ScenarioInfo) -> dict[str, pd.DataFrame]:
     return {"bound_activity_up": df}
 
 
+def gen_demand(ssp: str) -> pd.DataFrame:
+    """Generate steel demand DataFrame for the given SSP scenario.
+
+    Combines calibrated 2020 and 2025 demand with SSP
+    dependent demand projection.
+
+    Returns
+    -------
+    pd.DataFrame
+        'demand' parameter DataFrame.
+    """
+    df_2025 = pd.read_csv(package_data_path("material", "steel", "demand_2025.csv"))
+    df_2020 = (
+        read_base_demand(package_data_path("material", "steel", "demand_steel.yaml"))
+        .rename(columns={"region": "node"})
+        .assign(commodity="steel", level="demand", unit="t", time="year")
+    )
+    df_demand = gen_ssp_demand(ssp)
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2020, df_2025, df_demand])
+    return df_demand
+
+
 def gen_ssp_demand(ssp: str) -> pd.DataFrame:
     """Generate steel demand projections based on SSP scenarios.
 
@@ -1326,29 +1247,6 @@ def gen_ssp_demand(ssp: str) -> pd.DataFrame:
     df[["commodity", "level", "time", "unit"]] = ["steel", "demand", "year", "t"]
     df = make_df("demand", **df).round(2)
     return df
-
-
-def gen_demand(ssp: str) -> pd.DataFrame:
-    """Generate steel demand DataFrame for the given SSP scenario.
-
-    Combines calibrated 2020 and 2025 demand with SSP
-    dependent demand projection.
-
-    Returns
-    -------
-    pd.DataFrame
-        'demand' parameter DataFrame.
-    """
-    df_2025 = pd.read_csv(package_data_path("material", "steel", "demand_2025.csv"))
-    df_2020 = (
-        read_base_demand(package_data_path("material", "steel", "demand_steel.yaml"))
-        .rename(columns={"region": "node"})
-        .assign(commodity="steel", level="demand", unit="t", time="year")
-    )
-    df_demand = gen_ssp_demand(ssp)
-    df_demand = df_demand[df_demand["year"] != 2025]
-    df_demand = pd.concat([df_2020, df_2025, df_demand])
-    return df_demand
 
 
 def read_hist_cap(tec: Literal["eaf", "bof", "bf"]) -> dict[str, pd.DataFrame]:

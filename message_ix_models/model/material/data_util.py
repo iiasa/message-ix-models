@@ -174,39 +174,6 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
     return MAP
 
 
-def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
-    """Adds CCS technologies to the `co2_trans_disp` and `bco2_trans_disp` relations.
-
-    Parameters
-    ----------
-    scen
-        Scenario instance to add CCS emission factor parametrization to
-    """
-
-    # The relation coefficients for CO2_Emision and bco2_trans_disp and
-    # co2_trans_disp are both MtC. The emission factor for CCS add_ccs_technologies
-    # are specified in MtC as well.
-    co2_trans_relation = scen.par(
-        "emission_factor",
-        filters={
-            "technology": [
-                "clinker_dry_ccs_cement",
-                "clinker_wet_ccs_cement",
-            ],
-            "emission": "CO2",
-        },
-    )
-
-    co2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
-    co2_trans_relation["relation"] = "co2_trans_disp"
-    co2_trans_relation["node_rel"] = co2_trans_relation["node_loc"]
-    co2_trans_relation["year_rel"] = co2_trans_relation["year_act"]
-    co2_trans_relation["unit"] = "???"
-
-    with scen.transact("New CCS technologies added to the CO2 accounting relations."):
-        scen.add_par("relation_activity", co2_trans_relation)
-
-
 def gen_emi_rel_data(
     s_info: ScenarioInfo,
     material: Literal["aluminum", "steel", "cement", "petrochemicals"],
