@@ -1,11 +1,9 @@
-import os
 from pathlib import Path
 from typing import Any, Literal
 
 import message_ix
 import openpyxl as pxl
 import pandas as pd
-import pycountry
 import yaml
 from scipy.optimize import curve_fit
 
@@ -336,71 +334,14 @@ def path_fallback(context_or_regions: Context | str, *parts) -> Path:
     raise FileNotFoundError(candidates)
 
 
-def get_pycountry_iso(row: str, mis_dict: dict[str, str]) -> str:
-    """Convenience function to get ISO3 code with pycountry or from custom mapping dict.
-
-    Parameters
-    ----------
-    row
-    mis_dict
-
-    Returns
-    -------
-    str
-    """
-    try:
-        row = pycountry.countries.lookup(row).alpha_3
-    except LookupError:
-        try:
-            row = mis_dict[row]
-        except KeyError:
-            print(f"{row} is not mapped to an ISO")
-            row = None
-    return row
-
-
-def get_r12_reg(df, r12_map_inv, col_name: str):
-    """Helper function to get R12 region from dataframe
-
-    Parameters
-    ----------
-    df
-    r12_map_inv
-        dictionary with R12 regions as values and ISO3 country codes as keys
-    col_name
-        Name of the column in the dataframe to check for R12 region
-
-    Returns
-    -------
-
-    """
-    try:
-        df = r12_map_inv[df[col_name]]
-    except KeyError:
-        df = None
-    return df
-
-
-def add_R12_column(
-    df: pd.DataFrame, file_path: str | Path, iso_column: str = "COUNTRY"
-) -> pd.DataFrame:
-    """Convenience function to add R12 region column to dataframe
-
-    Parameters
-    ----------
-    df
-    file_path
-    iso_column
-
-    Returns
-    -------
-    pd.DataFrame
-    """
+def add_region_column(
+    df: pd.DataFrame, file_path: Union[str, Path], iso_column: str = "COUNTRY"
+) -> None:
+    """Convenience function to add R12 region column to dataframe."""
     yaml_data = read_yaml_file(file_path)
     yaml_data.pop("World")
 
     r12_map = {k: v["child"] for k, v in yaml_data.items()}
     r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
 
-    df["R12"] = df.apply(lambda x: get_r12_reg(x, r12_map_inv, iso_column), axis=1)
-    return df
+    df["R12"] = df[iso_column].map(r12_map_inv)
