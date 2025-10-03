@@ -574,7 +574,7 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
     return results_aluminum
 
 
-def gen_demand(scenario, ssp):
+def gen_demand(scenario: "Scenario", ssp: str) -> "ParameterData":
     """Generate aluminum demand parameter data.
 
     Parameters
@@ -891,7 +891,7 @@ def gen_hist_new_cap(s_info: ScenarioInfo) -> "ParameterData":
     }
 
 
-def compute_differences(df, ref_col):
+def compute_differences(df: pd.DataFrame, ref_col: str) -> pd.DataFrame:
     """Compute positive differences between columns and a reference column.
 
     Parameters
@@ -991,7 +991,7 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
     return df_prim
 
 
-def gen_smelting_hist_act():
+def gen_smelting_hist_act() -> "ParameterData":
     """Generate historical activity and bounds for aluminum smelting technologies.
 
     Returns
@@ -1055,7 +1055,7 @@ def gen_smelting_hist_act():
     return par_dict
 
 
-def gen_refining_hist_act():
+def gen_refining_hist_act() -> "ParameterData":
     """Generate historical activity and 2020 bounds for alumina refining technologies.
 
     Returns
@@ -1090,7 +1090,7 @@ def gen_refining_hist_act():
     return par_dict
 
 
-def gen_alumina_trade_tecs(s_info):
+def gen_alumina_trade_tecs(s_info: ScenarioInfo) -> "ParameterData":
     """Generate trade technology parameter data for alumina.
 
     Parameters
@@ -1159,7 +1159,7 @@ def gen_alumina_trade_tecs(s_info):
     return trade_dict
 
 
-def gen_2020_growth_constraints(s_info):
+def gen_2020_growth_constraints(s_info: ScenarioInfo) -> "ParameterData":
     """Generate 2020 growth constraints for soderberg aluminum smelters.
 
     Parameters
@@ -1323,7 +1323,7 @@ def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
     return {"bound_activity_lo": test_r12, "bound_activity_up": zbounds}
 
 
-def gen_refining_input(s_info):
+def gen_refining_input(s_info: ScenarioInfo) -> "ParameterData":
     """Generate input parameter for aluminum refining technology.
 
     Parameters
@@ -1400,7 +1400,7 @@ def gen_refining_input(s_info):
     return {"input": df_msg}
 
 
-def gen_trade_growth_constraints(s_info):
+def gen_trade_growth_constraints(s_info: ScenarioInfo) -> "ParameterData":
     """Generate growth and initial activity constraints for aluminum and alumina trade.
 
     Parameters
@@ -1442,7 +1442,7 @@ def gen_trade_growth_constraints(s_info):
     return pars
 
 
-def gen_max_recycling_rel(s_info, ssp):
+def gen_max_recycling_rel(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate parametrization for maximum recycling relation.
 
     Parameters
@@ -1484,7 +1484,7 @@ def gen_max_recycling_rel(s_info, ssp):
     return {"relation_activity": df}
 
 
-def gen_scrap_prep_heat(s_info, ssp):
+def gen_scrap_prep_heat(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate heat input parametrization for aluminum scrap preparation.
 
     Parameters
@@ -1533,7 +1533,7 @@ def gen_scrap_prep_heat(s_info, ssp):
     return {"input": df}
 
 
-def get_scrap_prep_cost(s_info, ssp):
+def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate variable cost parametrization for aluminum scrap preparation.
 
     Parameters
@@ -1673,5 +1673,5 @@ def remove_old_cf4_alu_relation(scen: "Scenario") -> None:
         "relation_activity",
         filters={"relation": ["CF4_Emission", "CF4_alm_red"], "technology": trp_tecs},
     )
-    #with scen.transact("CF4 relations corrected."):
+    # with scen.transact("CF4 relations corrected."):
     scen.remove_par("relation_activity", CF4_trp_emissions)
