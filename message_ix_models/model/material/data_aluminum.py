@@ -411,7 +411,7 @@ def gen_data_alu_const(
     """
     results = defaultdict(list)
     for t in config["technology"]["add"]:
-        t = t.id
+        t = getattr(t, "id", t)
         params = data.loc[(data["technology"] == t), "parameter"].unique()
         # Obtain the active and vintage years
         if not len(params):
@@ -837,7 +837,7 @@ def gen_hist_new_cap(s_info: ScenarioInfo) -> "ParameterData":
         }
     )
     df_cap["ISO"] = df_cap.Country.apply(lambda c: pycountry.iso_3166_alpha_3(c))
-    df_cap = add_region_column(
+    df_cap["R12"] = add_region_column(
         df_cap, file_path=package_data_path("node", "R12.yaml"), iso_column="ISO"
     )
 
@@ -958,10 +958,18 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
             [df_prim.columns.tolist()[0]] + df_prim.columns[3::2].tolist()
         ]
         df_prim.columns = ["Country"] + [int(i) for i in year_cols]
+        df_prim = df_prim[~df_prim[df_prim.columns[1:]].isna().all(axis=1)]
         pycountry.COUNTRY_NAME.update(
             {
                 "Bosnia & Herzegovina": "Bosnia and Herzegovina",
                 "Ireland, Republic of": "Ireland",
+                "Czechoslovakia": "Czechoslovakia, Czechoslovak Socialist Republic",
+                "German Democratic Rep": "German Democratic Republic",
+                "German Federal Republic": "Germany",
+                "Korea (Rep. of)": "Korea, Republic of",
+                "Korea, Dem. P.R. of": "Korea, Democratic People's Republic of",
+                "Soviet Union": "USSR, Union of Soviet Socialist Republics",
+                "Yugoslavia": "Yugoslavia, (Socialist) Federal Republic of",
             }
         )
         df_prim["ISO"] = df_prim["Country"].apply(
@@ -982,7 +990,7 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
     df_prim.reset_index(inplace=True)
 
     # add R12 column
-    df_prim = add_region_column(
+    df_prim["R12"] = add_region_column(
         df_prim.rename(columns={"ISO": "COUNTRY"}),
         package_data_path("node", "R12.yaml"),
     )
@@ -1287,10 +1295,9 @@ def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
     tec_map_df = pd.Series(fuel_tec_map).to_frame().reset_index()
     tec_map_df.columns = ["Variable", "technology"]
 
-    test_r12 = add_region_column(
-        test.reset_index(), package_data_path("node", "R12.yaml"), "ISO"
-    )
-    test_r12 = test_r12.groupby(["Variable", "R12"]).sum(numeric_only=True)
+    test = test.reset_index()
+    test["R12"] = add_region_column(test, package_data_path("node", "R12.yaml"), "ISO")
+    test_r12 = test.groupby(["Variable", "R12"]).sum(numeric_only=True)
     test_r12 = (
         test_r12.loc[["Coal", "Gas", "Oil"]]
         .div(10**6)
@@ -1675,3 +1682,12 @@ def remove_old_cf4_alu_relation(scen: "Scenario") -> None:
     )
     # with scen.transact("CF4 relations corrected."):
     scen.remove_par("relation_activity", CF4_trp_emissions)
+
+
+if __name__ == "__main__":
+    import ixmp
+    import message_ix
+
+    mp = ixmp.Platform("local3")
+    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
+    gen_data_aluminum(scen)
