@@ -67,6 +67,7 @@ calibrate_mariteam(covered_tec, message_regions,
 # Add variable costs for shipped commodities
 costdf = build_historical_price(message_regions,
                                 project_name = 'newpathways', config_name = 'config.yaml')
+costdf['technology'] = costdf['technology'].str.replace("ethanol_", "eth_")
 
 for tec in [i for i in covered_tec if i != "gas_piped"]:
     log.info('Add variable cost for ' + tec)
