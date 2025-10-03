@@ -22,8 +22,7 @@ from message_ix_models.model.material.data_util import (
 )
 from message_ix_models.model.material.demand import derive_demand
 from message_ix_models.model.material.util import (
-    add_R12_column,
-    get_pycountry_iso,
+    add_region_column,
     get_ssp_from_context,
     invert_dictionary,
     read_config,
@@ -34,6 +33,7 @@ from message_ix_models.util import (
     merge_data,
     nodes_ex_world,
     package_data_path,
+    pycountry,
     same_node,
 )
 
@@ -798,7 +798,7 @@ def gen_data_alu_trade(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
 
-def gen_hist_new_cap(s_info):
+def gen_hist_new_cap(s_info: ScenarioInfo) -> "ParameterData":
     """Generate historical new capacity data for aluminum smelters.
 
     Parameters
@@ -822,26 +822,22 @@ def gen_hist_new_cap(s_info):
     df_cap.Technology = df_cap.Technology.fillna("unknown")
     df_cap = df_cap[~df_cap[1995].isna()]
     df_cap.Country = df_cap["Country"].ffill()
-    df_cap["ISO"] = df_cap.Country.apply(
-        lambda c: get_pycountry_iso(
-            c,
-            {
-                "Surinam": "SUR",
-                "Trinidad": "TTO",
-                "Quatar": "QAT",
-                "Turkey": "TUR",
-                "UAE": "ARE",
-                "Gernamy": "DEU",
-                "Azerbaydzhan": "AZE",
-                "Russia": "RUS",
-                "Tadzhikistan": "TJK",
-                "UK": "GBR",
-                "Total": "World",
-                "Bosnia": "BIH",
-            },
-        )
+
+    pycountry.COUNTRY_NAME.update(
+        {
+            "Gernamy": "Germany",  # common misspelling
+            "UAE": "United Arab Emirates",
+            "UK": "United Kingdom",
+            "Azerbaydzhan": "Azerbaijan",  # common misspelling
+            "Trinidad": "Trinidad and Tobago",
+            "Surinam": "Suriname",
+            "Quatar": "Qatar",
+            "Bosnia": "Bosnia and Herzegovina",
+            "Tadzhikistan": "Tajikistan",  # common misspelling
+        }
     )
-    df_cap = add_R12_column(
+    df_cap["ISO"] = df_cap.Country.apply(lambda c: pycountry.iso_3166_alpha_3(c))
+    df_cap = add_region_column(
         df_cap, file_path=package_data_path("node", "R12.yaml"), iso_column="ISO"
     )
 
@@ -962,17 +958,16 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
             [df_prim.columns.tolist()[0]] + df_prim.columns[3::2].tolist()
         ]
         df_prim.columns = ["Country"] + [int(i) for i in year_cols]
-        df_prim["ISO"] = df_prim["Country"].apply(
-            lambda x: get_pycountry_iso(
-                x,
-                {
-                    "Turkey": "TUR",
-                    "Russia": "RUS",
-                    "Bosnia & Herzegovina": "BIH",
-                    "Ireland, Republic of": "IRL",
-                },
-            )
+        pycountry.COUNTRY_NAME.update(
+            {
+                "Bosnia & Herzegovina": "Bosnia and Herzegovina",
+                "Ireland, Republic of": "Ireland",
+            }
         )
+        df_prim["ISO"] = df_prim["Country"].apply(
+            lambda x: pycountry.iso_3166_alpha_3(x)
+        )
+        assert df_prim["ISO"].notna().all()
         df_prim.drop("Country", axis=1, inplace=True)
         for year in [i for i in df_prim.columns if isinstance(i, int)]:
             df_prim[year] = pd.to_numeric(df_prim[year], errors="coerce")
@@ -987,7 +982,7 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
     df_prim.reset_index(inplace=True)
 
     # add R12 column
-    df_prim = add_R12_column(
+    df_prim = add_region_column(
         df_prim.rename(columns={"ISO": "COUNTRY"}),
         package_data_path("node", "R12.yaml"),
     )
@@ -1190,19 +1185,8 @@ def gen_2020_growth_constraints(s_info):
     return {"growth_activity_up": df}
 
 
-def calibrate_2020_furnaces(s_info):
-    """Calibrate 2020 furnace activity for aluminum refining by fuel.
-
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-        Scenario information object.
-
-    Returns
-    -------
-    dict
-        Dictionary with 'bound_activity_lo' and 'bound_activity_up' DataFrames.
-    """
+def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
+    """Calibrate 2020 furnace activity for aluminum refining by fuel."""
     fname = "MetallurgicalAluminaRefiningFuelConsumption_1985-2023.csv"
     iai_ref_map = {
         "Africa & Asia (ex China)": [
@@ -1257,12 +1241,11 @@ def calibrate_2020_furnaces(s_info):
         ],
         "China": ["China"],
     }
-    iai_mis_dict = {
-        "Turkey": "TUR",
-        "Serbia and Montenegro": "SRB",
-        "US Virgin Islands": "VIR",
-        "German Democratic Republic": "DDR",
-    }
+    pycountry.COUNTRY_NAME.update(
+        {
+            "US Virgin Islands": "Virgin Islands of the United States",
+        }
+    )
     fuel_tec_map = {
         "Coal": "furnace_coal_aluminum",
         "Gas": "furnace_gas_aluminum",
@@ -1273,10 +1256,7 @@ def calibrate_2020_furnaces(s_info):
     df_iai_cmap = pd.Series(iai_ref_map).to_frame().reset_index()
 
     df_iai_cmap["ISO"] = df_iai_cmap["index"].apply(
-        lambda x: get_pycountry_iso(
-            x,
-            iai_mis_dict,
-        )
+        lambda x: pycountry.iso_3166_alpha_3(x)
     )
     df_iai_cmap.drop(columns="index", inplace=True)
 
@@ -1307,7 +1287,7 @@ def calibrate_2020_furnaces(s_info):
     tec_map_df = pd.Series(fuel_tec_map).to_frame().reset_index()
     tec_map_df.columns = ["Variable", "technology"]
 
-    test_r12 = add_R12_column(
+    test_r12 = add_region_column(
         test.reset_index(), package_data_path("node", "R12.yaml"), "ISO"
     )
     test_r12 = test_r12.groupby(["Variable", "R12"]).sum(numeric_only=True)
