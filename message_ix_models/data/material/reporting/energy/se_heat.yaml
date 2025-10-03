@@ -1,0 +1,48 @@
+var:
+  out:nl-t-ya-m-c:district_heat2
+
+iamc_prefix:
+  Secondary Energy|Heat|
+
+unit: GWa
+
+vars:
+  Biomass:
+    filter: { technology: [ bio_hpl, biomass_NH3, biomass_NH3_ccs, meth_bio,
+                            bio_istig,
+                            bio_istig_ccs,
+                            bio_ppl, ],
+              mode: [ M1, fuel, feedstock ], commodity: d_heat, level: secondary }
+    short: se_heat_bio
+  Coal:
+    filter: { technology: [ coal_hpl,
+                            coal_NH3,
+                            coal_NH3_ccs,coal_adv,
+                            coal_adv_ccs,
+                            coal_ppl,
+                            coal_ppl_u,
+                            igcc,
+                            igcc_ccs, ], mode: M1, commodity: d_heat, level: secondary }
+    short: se_heat_coal
+  Gas:
+    filter: { technology: [ gas_hpl, gas_NH3, gas_NH3_ccs,
+                            gas_cc,
+                            gas_cc_ccs,
+                            gas_ct,
+                            gas_ppl, ], mode: M1, commodity: d_heat, level: secondary }
+    short: se_heat_gas
+  Geothermal:
+    filter: { technology: [ geo_hpl, geo_ppl ], mode: M1, commodity: d_heat, level: secondary }
+    short: se_heat_geo
+  Oil:
+    filter: { technology: [ foil_hpl, fueloil_NH3, fueloil_NH3_ccs,
+                            foil_ppl,
+                            loil_ppl,
+                            loil_cc, ], mode: M1, commodity: d_heat, level: secondary }
+    short: se_heat_oil
+  Nuclear:
+    filter: { technology: [ nuc_hc, nuc_lc, ], mode: M1, commodity: d_heat, level: secondary }
+    short: se_heat_nuc
+  Electricity:
+    filter: { technology: [ electr_NH3 ], mode: M1, commodity: d_heat, level: secondary }
+    short: se_heat_elec

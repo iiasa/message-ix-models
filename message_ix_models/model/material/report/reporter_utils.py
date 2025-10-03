@@ -310,6 +310,21 @@ def add_pass_out_turbine_inp(rep: "Reporter", po_tecs_filter, po_filter):
     rep.add(k_in["elec+po_turbine_max"], "mul", inp["po_turbine"], out)
     # allocate pass-out turbine input to all tecs
     rep.add(k_in["elec+po_turbine"], "mul", k_in["elec+po_turbine_max"], k_util)
+    # allocate pass-out turbine heat output to all tecs by scaling input with io ratio
+    k = Key("out:nl-t-ya-m:heat+po_turbine")
+    k_heat = rep.add(
+        k["wrong_commodity"],
+        "div",
+        k_in["elec+po_turbine"],
+        eff[tec],
+    )
+    rep.add(k.drop("c"), "drop_vars", k_heat, ["c"])
+    rep.add(
+        k,
+        "expand_dims",
+        k_heat.drop("c"),
+        {"c": ["d_heat"]},
+    )
 
     # calculate electricity production excluding pass-out turbine input
     rep.add(
@@ -326,6 +341,19 @@ def add_pass_out_turbine_inp(rep: "Reporter", po_tecs_filter, po_filter):
     )
     # aggregate pass-out turbine input for check sum
     rep.add(k_in.drop("t")[tec], "select", k_in, {"t": tec})
+
+
+def add_heat_calcs(rep: "Reporter") -> Key:
+    k = Key("out:nl-t-ya-m-c")
+    tec_filter = {"c": ["d_heat"]}
+    rep.add(k["district_heat"], "select", k, tec_filter)
+    rep.add(
+        k["district_heat2"],
+        "concat",
+        k["district_heat"],
+        "out:nl-t-ya-m:heat+po_turbine",
+    )
+    return k["district_heat2"]
 
 
 def add_ccs_addon_calcs(rep: "Reporter", addon_parent_map):

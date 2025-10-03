@@ -7,6 +7,7 @@ import pyam
 from message_ix_models.model.material.report.reporter_utils import (
     add_biometh_final_share,
     add_cement_heat_share_calculations,
+    add_heat_calcs,
     add_se_elec,
 )
 from message_ix_models.util import broadcast
@@ -695,7 +696,8 @@ def run_prod_reporting(
 def run_se(rep: "Reporter", model_name: str, scen_name: str):
     dfs = []
     add_se_elec(rep)
-    for group in ["se_elec", "se_elec_curt", "se_elec_thermal", "se_fuels"]:
+    add_heat_calcs(rep)
+    for group in ["se_elec", "se_elec_curt", "se_elec_thermal", "se_fuels", "se_heat"]:
         cfg = load_config("energy", group)
         df = pyam_df_from_rep(rep, cfg.var, cfg.mapping)
         dfs.append(

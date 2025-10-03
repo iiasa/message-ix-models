@@ -1,0 +1,20 @@
+var:
+  "out:nl-t-ya-m-c:district_heat2"
+
+iamc_prefix:
+  Secondary Energy|Heat|
+
+unit: GWa
+
+level_1:
+  "":
+    short: se_heat
+    components:
+      [ se_heat_bio,
+        se_heat_coal,
+        se_heat_gas,
+        se_heat_geo,
+        se_heat_oil,
+        se_heat_nuc,
+        se_heat_elec,
+      ]
