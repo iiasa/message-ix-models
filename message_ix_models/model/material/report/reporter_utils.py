@@ -1,7 +1,5 @@
-import itertools
 from typing import TYPE_CHECKING
 
-import pandas as pd
 from genno import Key, Quantity
 
 from message_ix_models.report import prepare_reporter

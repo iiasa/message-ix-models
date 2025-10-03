@@ -4,8 +4,7 @@ var:
 iamc_prefix:
   Carbon Removal|
 
-common:
-  unit: GWa
+unit: GWa
 
 vars:
   Geological Storage|Direct Air Capture:

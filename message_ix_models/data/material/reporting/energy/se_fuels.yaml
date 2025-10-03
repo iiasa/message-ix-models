@@ -4,8 +4,7 @@ var:
 iamc_prefix:
   Secondary Energy|
 
-common:
-  unit: GWa
+unit: GWa
 
 vars:
   Gases|Biomass:

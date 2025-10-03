@@ -4,8 +4,7 @@ var:
 iamc_prefix:
   ""
 
-common:
-  unit: ???
+unit: ???
 
 vars:
   Population:

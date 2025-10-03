@@ -96,12 +96,12 @@ def format_reporting_df(
     return py_df
 
 
-def load_config(name: str) -> "Config":
+def load_config(folder, name: str) -> "Config":
     """Load a config for a given reporting variable category from the YAML files.
 
     This is a thin wrapper around :meth:`.Config.from_files`.
     """
-    return Config.from_files(name)
+    return Config.from_files(folder, name)
 
 
 def run_fe_methanol_nh3_reporting(
@@ -122,10 +122,10 @@ def run_fe_methanol_nh3_reporting(
     6. Format dataframe to IAMC standard.
     """
     nh3_mt_to_gwa = 0.697615
-    fe_config = load_config("energy/fe_methanol_ammonia")
+    fe_config = load_config("energy", "fe_methanol_ammonia")
     df_fe = pyam_df_from_rep(rep, fe_config.var, fe_config.mapping)
 
-    fs_config = load_config("energy/fs1")
+    fs_config = load_config("energy", "fs1")
     fs_config.iamc_prefix = fe_config.iamc_prefix
     df_fs = pyam_df_from_rep(rep, fs_config.var, fs_config.mapping)
     df_fs.loc[df_fs.index.get_level_values("iamc_name").str.contains("Ammonia")] *= (
@@ -146,8 +146,8 @@ def run_fe_methanol_nh3_reporting(
 
 def run_ch4_reporting(rep, model_name: str, scen_name: str) -> pyam.IamDataFrame:
     """Generate reporting for industry methane emissions."""
-    var = "emission/ch4_emi"
-    config = load_config(var)
+    var = "ch4_emi"
+    config = load_config("emission", var)
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     py_df = format_reporting_df(
         df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
@@ -159,7 +159,7 @@ def run_fe_reporting(rep: "Reporter", model: str, scenario: str) -> pd.DataFrame
     """Generate reporting for industry final energy variables."""
     dfs = []
 
-    config = load_config("energy/fe")
+    config = load_config("energy", "fe")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
@@ -167,7 +167,7 @@ def run_fe_reporting(rep: "Reporter", model: str, scenario: str) -> pd.DataFrame
         )
     )
 
-    config = load_config("energy/fe_solar")
+    config = load_config("energy", "fe_solar")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
@@ -425,7 +425,7 @@ def split_fe_other(
 def run_fs_reporting(rep: "Reporter", model_name: str, scen_name: str) -> pd.DataFrame:
     """Generate reporting for industry final energy non-energy variables."""
     dfs = []
-    hvc_config = load_config("energy/fs2")
+    hvc_config = load_config("energy", "fs2")
     df_hvc = pyam_df_from_rep(rep, hvc_config.var, hvc_config.mapping)
     dfs.append(
         format_reporting_df(
@@ -438,7 +438,7 @@ def run_fs_reporting(rep: "Reporter", model_name: str, scen_name: str) -> pd.Dat
         )
     )
 
-    nh3_meth_config = load_config("energy/fs1")
+    nh3_meth_config = load_config("energy", "fs1")
     df_nh3_meth = pyam_df_from_rep(rep, nh3_meth_config.var, nh3_meth_config.mapping)
     df_nh3_meth.loc[
         df_nh3_meth.index.get_level_values("iamc_name").str.contains("Ammonia")
@@ -524,7 +524,7 @@ def run_fs_reporting(rep: "Reporter", model_name: str, scen_name: str) -> pd.Dat
         .reset_index()
     )
     df_final.unit = "EJ/yr"
-    return df_final
+    return pyam.IamDataFrame(df_final)
 
 
 def split_mto_feedstock(
@@ -618,7 +618,7 @@ def run_prod_reporting(
 ) -> pyam.IamDataFrame:
     """Generate reporting for industry production variables."""
     dfs = []
-    config = load_config("prod")
+    config = load_config("", "prod")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     df.loc[df.index.get_level_values("iamc_name").str.contains("Methanol")] /= 0.697615
     dfs.append(
@@ -632,7 +632,7 @@ def run_prod_reporting(
         )
     )
 
-    config = load_config("prod_addon")
+    config = load_config("", "prod_addon")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     dfs.append(
         format_reporting_df(
@@ -696,11 +696,11 @@ def run_se(rep: "Reporter", model_name: str, scen_name: str):
     dfs = []
     add_se_elec(rep)
     for group in ["se_elec", "se_elec_curt", "se_elec_thermal", "se_fuels"]:
-        cfg = load_config(f"energy/{group}")
-        df = pyam_df_from_rep(rep, cfg.message_query_key, cfg.df_mapping)
+        cfg = load_config("energy", group)
+        df = pyam_df_from_rep(rep, cfg.var, cfg.mapping)
         dfs.append(
             format_reporting_df(
-                df, cfg.iamc_prefix, model_name, scen_name, cfg.unit, cfg.df_mapping
+                df, cfg.iamc_prefix, model_name, scen_name, cfg.unit, cfg.mapping
             )
         )
     df = pyam.concat(dfs)
@@ -857,7 +857,7 @@ if __name__ == "__main__":
     import ixmp
     import message_ix
 
-    mp = ixmp.Platform("ixmp_dev")
+    mp = ixmp.Platform("local3")
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     df = run_fe_reporting(rep, scen.model, scen.scenario)

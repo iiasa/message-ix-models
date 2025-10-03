@@ -4,8 +4,7 @@ var:
 iamc_prefix:
   Carbon Capture|
 
-common:
-  unit: Mt C/yr
+unit: Mt C/yr
 
 vars:
   Industrial Processes|Non-Metallic Minerals:

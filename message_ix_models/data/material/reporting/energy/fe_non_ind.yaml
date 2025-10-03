@@ -8,8 +8,7 @@ var:
 iamc_prefix:
   Final Energy|
 
-common:
-  unit: GWa
+unit: GWa
 
 vars:
   Bunkers|Electricity:

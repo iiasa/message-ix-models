@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 def run_co2(rep: Reporter, model_name: str, scen_name: str):
     dfs = []
-    config = load_config("emission/co2_w_ccs")
+    config = load_config("emission", "co2_w_ccs")
     filter = {
         "t": ["DUMMY_coal_supply", "DUMMY_gas_supply", "DUMMY_limestone_supply_steel"],
         "r": ["CO2_ind", "CO2_Emission"],
@@ -41,14 +41,14 @@ def run_co2(rep: Reporter, model_name: str, scen_name: str):
     }
     add_net_co2_calcs(rep, filter, filter_ccs, "cement")
     rep.add("co2:nl-t-ya:industry", "concat", "co2:nl-t-ya:cement", "co2:nl-t-ya:steel")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     df = format_reporting_df(
         df,
         config.iamc_prefix,
         model_name,
         scen_name,
         config.unit,
-        config.df_mapping,
+        config.mapping,
     )
     df_final = df.convert_unit("Mt C/yr", "Mt CO2/yr")
     return df_final
@@ -56,9 +56,9 @@ def run_co2(rep: Reporter, model_name: str, scen_name: str):
 
 def run_other(rep: Reporter, model_name: str, scen_name: str):
     data = []
-    for cfg in ["soc-eco", "emission/ccs", "emission/removal"]:
-        config = load_config(cfg)
-        df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    for folder, cfg in zip(["", "emission", "emission"], ["soc-eco", "ccs", "removal"]):
+        config = load_config(folder, cfg)
+        df = pyam_df_from_rep(rep, config.var, config.mapping)
         data.append(
             format_reporting_df(
                 df,
@@ -66,7 +66,7 @@ def run_other(rep: Reporter, model_name: str, scen_name: str):
                 model_name,
                 scen_name,
                 config.unit,
-                config.df_mapping,
+                config.mapping,
             )
         )
     df = pyam.concat(data)
@@ -74,29 +74,29 @@ def run_other(rep: Reporter, model_name: str, scen_name: str):
 
 
 def run_pe(rep: Reporter, model_name: str, scen_name: str):
-    config = load_config("energy/pe_globiom")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    config = load_config("energy", "pe_globiom")
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     df = format_reporting_df(
         df,
         config.iamc_prefix,
         model_name,
         scen_name,
         config.unit,
-        config.df_mapping,
+        config.mapping,
     )
     return df
 
 
 def run_ccs(rep: Reporter, model_name: str, scen_name: str):
-    config = load_config("emission/ccs")
-    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
+    config = load_config("emission", "ccs")
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
     df = format_reporting_df(
         df,
         config.iamc_prefix,
         model_name,
         scen_name,
         config.unit,
-        config.df_mapping,
+        config.mapping,
     )
     return df
 
@@ -105,7 +105,7 @@ def run(scenario: "Scenario", model_name: str, scen_name: str):
     rep = Reporter.from_scenario(scenario)
 
     dfs = []
-    dfs.append(run_pe(rep, model_name, scen_name))
+    # dfs.append(run_pe(rep, model_name, scen_name))
     dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
@@ -132,3 +132,4 @@ if __name__ == "__main__":
     mp = ixmp.Platform("local3")
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     df = run(scen, scen.model, scen.scenario)
+    print()

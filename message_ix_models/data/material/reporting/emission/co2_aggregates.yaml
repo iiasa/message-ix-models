@@ -4,8 +4,7 @@ var:
 iamc_prefix:
   Emissions|CO2|
 
-common:
-  unit: Mt C/yr
+unit: Mt C/yr
 
 vars:
   Emissions|CO2

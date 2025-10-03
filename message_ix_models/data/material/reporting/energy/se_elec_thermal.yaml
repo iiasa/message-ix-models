@@ -4,8 +4,7 @@ var:
 iamc_prefix:
   Secondary Energy|Electricity|
 
-common:
-  unit: GWa
+unit: GWa
 
 vars:
   Biomass|w/ CCS|1:

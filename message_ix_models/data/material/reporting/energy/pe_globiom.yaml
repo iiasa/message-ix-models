@@ -4,8 +4,7 @@ var:
 iamc_prefix:
   Primary Energy|
 
-common:
-  unit: GWa
+unit: GWa
 
 vars:
   Biomass|Fuelwood:

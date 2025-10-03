@@ -39,7 +39,7 @@ class Config:
     )
 
     @classmethod
-    def from_files(cls, category: str) -> "Config":
+    def from_files(cls, category: str, subcategory: str) -> "Config":
         """Create a Config instance from 1 or 2 YAML files.
 
         A file like :file:`message_ix_models/data/material/reporting/{category}.yaml` is
@@ -57,7 +57,9 @@ class Config:
         import yaml
 
         # Handle basic configuration file
-        path = package_data_path("material", "reporting", f"{category}.yaml")
+        path = package_data_path(
+            "material", "reporting", category, f"{subcategory}.yaml"
+        )
         with open(path) as f:  # Raises FileNotFoundError on missing file
             kw = yaml.safe_load(f)  # Raises on invalid YAML
 
@@ -71,7 +73,7 @@ class Config:
         result.use_vars_dict(vars)
 
         # Handle aggregates configuration file
-        path_agg = path.with_name(f"{category}_aggregates.yaml")
+        path_agg = path.with_name(f"{subcategory}_aggregates.yaml")
         try:
             with open(path_agg) as f:
                 data_agg = yaml.safe_load(f)
