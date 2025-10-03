@@ -1,0 +1,20 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  out
+
+iamc_prefix:
+  Secondary Energy|Electricity|
+
+unit: GWa
+
+
+level_1:
+  Solar|CSP:
+    short: se_elec_hydrogen
+    components:
+      [ se_elec_csp1,
+        se_elec_csp2,
+      ]

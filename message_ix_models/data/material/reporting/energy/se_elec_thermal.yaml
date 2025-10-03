@@ -1,5 +1,5 @@
 var:
-  "se:nl-t-ya-m-c:po+ccs"
+  "se:nl-t-ya-m-c:po+ccs2"
 
 iamc_prefix:
   Secondary Energy|Electricity|
@@ -7,18 +7,34 @@ iamc_prefix:
 unit: GWa
 
 vars:
-  Biomass|w/ CCS|1:
+  Biomass|Solids|w/ CCS|1:
     filter: { technology: [ bio_istig_ccs ], mode: M1, commodity: electr}
     short: se_elec_bio_istig_ccs
-  Biomass|w/o CCS|1:
+  Biomass|Solids|w/o CCS|1:
     filter: { technology: [ bio_istig ], mode: M1, commodity: electr}
     short: se_elec_bio_istig
-  Biomass|w/ CCS|2:
+  Biomass|Solids|w/ CCS|2:
     filter: { technology: [ bio_ppl_bio_ppl_co2scr ], mode: M1, commodity: electr}
-    short: se_elec_bio_ppl
-  Biomass|w/o CCS|2:
+    short: se_elec_bio_ppl_ccs
+  Biomass|Solids|w/o CCS|2:
     filter: { technology: [ bio_ppl ], mode: M1, commodity: electr}
     short: se_elec_bio_ppl
+
+  Biomass|Gas|w/o CCS|1:
+    filter: { technology: [ gas_cc ], mode: biogas, commodity: electr}
+    short: se_elec_biogas_cc_wo_ccs
+  Biomass|Gas|w/ CCS|1:
+    filter: { technology: [ gas_cc_g_ppl_co2scr ], mode: biogas, commodity: electr}
+    short: se_elec_biogas_cc_ccs
+  Biomass|Gas|w/o CCS|2:
+    filter: { technology: [ gas_ppl ], mode: biogas, commodity: electr}
+    short: se_elec_biogas_ppl_wo_ccs
+  Biomass|Gas|w/ CCS|2:
+    filter: { technology: [ gas_ppl_g_ppl_co2scr ], mode: biogas, commodity: electr}
+    short: se_elec_biogas_ppl_w_ccs
+  Biomass|Gas|w/o CCS|3:
+    filter: { technology: [ gas_ct ], mode: biogas, commodity: electr}
+    short: se_elec_biogas_ct
 
   Coal|w/o CCS|1:
     filter: { technology: [ igcc ], mode: M1, commodity: electr}
@@ -34,7 +50,7 @@ vars:
     short: se_elec_coal_adv_wo_ccs
   Coal|w/ CCS|3:
     filter: { technology: [ coal_ppl_c_ppl_co2scr ], mode: M1, commodity: electr}
-    short: se_elec_coal_ppl_wo_ccs
+    short: se_elec_coal_ppl_w_ccs
   Coal|w/o CCS|3:
     filter: { technology: [ coal_ppl ], mode: M1, commodity: electr}
     short: se_elec_coal_ppl_wo_ccs
@@ -53,14 +69,24 @@ vars:
     short: se_elec_gas_ppl_wo_ccs
   Gas|w/ CCS|2:
     filter: { technology: [ gas_ppl_g_ppl_co2scr ], mode: M1, commodity: electr}
-    short: se_elec_gas_ppl_wo_ccs
+    short: se_elec_gas_ppl_w_ccs
   Gas|w/o CCS|3:
     filter: { technology: [ gas_ct ], mode: M1, commodity: electr}
     short: se_elec_gas_ct
 
+  Hydrogen|1:
+    filter: { technology: [ gas_cc ], mode: hydrogen, commodity: electr}
+    short: se_elec_hydrogen_cc
+  Hydrogen|2:
+    filter: { technology: [ gas_ppl ], mode: hydrogen, commodity: electr}
+    short: se_elec_hydrogen_ppl
+  Hydrogen|3:
+    filter: { technology: [ gas_ct ], mode: hydrogen, commodity: electr}
+    short: se_elec_hydrogen_ct
+
   Geothermal:
     filter: { technology: [ geo_ppl ], mode: M1, commodity: electr}
-    short: se_elec_
+    short: se_elec_geo
 
   Nuclear:
     filter: { technology: [ nuc_lc, nuc_hc ], mode: M1, commodity: electr}

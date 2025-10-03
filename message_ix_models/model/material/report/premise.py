@@ -3,7 +3,10 @@ from typing import TYPE_CHECKING
 import pyam
 from message_ix import Reporter
 
-from message_ix_models.model.material.report.reporter_utils import add_net_co2_calcs
+from message_ix_models.model.material.report.reporter_utils import (
+    add_net_co2_calcs,
+    pe_gas,
+)
 from message_ix_models.model.material.report.run_reporting import (
     calculate_clinker_ccs_energy,
     format_reporting_df,
@@ -14,6 +17,7 @@ from message_ix_models.model.material.report.run_reporting import (
     run_prod_reporting,
     run_se,
 )
+from message_ix_models.report import prepare_reporter
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -101,17 +105,16 @@ def run_ccs(rep: Reporter, model_name: str, scen_name: str):
     return df
 
 
-def run(scenario: "Scenario", model_name: str, scen_name: str):
-    rep = Reporter.from_scenario(scenario)
-
+def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs = []
+    pe_gas(rep)
+    dfs.append(run_se(rep, model_name, scen_name))
     # dfs.append(run_pe(rep, model_name, scen_name))
     dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
     dfs.append(run_other(rep, model_name, scen_name))
     dfs.append(run_co2(rep, model_name, scen_name))
-    dfs.append(run_se(rep, model_name, scen_name))
     dfs.append(run_ccs(rep, model_name, scen_name))
     py_df = pyam.concat(dfs)
     calculate_clinker_ccs_energy(scenario, rep, py_df)
@@ -126,10 +129,15 @@ def run(scenario: "Scenario", model_name: str, scen_name: str):
 
 
 if __name__ == "__main__":
+    from message_ix_models import Context
+
+    ctx = Context()
     import ixmp
     import message_ix
 
     mp = ixmp.Platform("local3")
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
-    df = run(scen, scen.model, scen.scenario)
+    rep = Reporter.from_scenario(scen)
+    prepare_reporter(ctx, reporter=rep)
+    df = run(rep, scen, scen.model, scen.scenario)
     print()

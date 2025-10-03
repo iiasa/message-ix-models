@@ -21,7 +21,7 @@ vars:
                             csp_sm1_res6,
                             csp_sm1_res7 ],
               mode: M1, commodity: electr, level: secondary }
-    short: se_elec_csp
+    short: se_elec_csp1
   Solar|CSP|2:
     filter: { technology: [ csp_sm1_res,
                             csp_sm1_res1,

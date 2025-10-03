@@ -297,7 +297,7 @@ def add_pass_out_turbine_inp(rep: "Reporter", po_tecs_filter, po_filter):
     rep.add(kappa, "div", rel_act2[relation]["powerplants"], rel_act1[relation][tec])
 
     # calculate average pass-out turbine input per active year
-    # usually universally 0.2, computed just for robustness
+    # usually uniformly set to 0.2, computed just for robustness
     eff = Key("eff:nl-t-ya-m-c")
     k_in = Key("in:nl-t-ya-m-c")
     rep.add(eff, "div", k_in, "ACT:nl-t-ya-m")
@@ -454,7 +454,16 @@ def add_renewable_curtailment_calcs(
         )
 
 
-def add_se_elec(rep: "Reporter"):
+def add_se_elec(rep: "Reporter") -> Key:
+    """Prepare reporter to compute electricity production.
+
+    The computation steps added are:
+
+    - Renewable curtailment deductions for wind and solar
+    - Pass-out turbine deductions for thermal power plants
+    - Production allocation for power plants with CCS add-on option
+    - Biogas and hydrogen deductions on gas power plants
+    """
     wind_curt = ["wind_curtailment1", "wind_curtailment2", "wind_curtailment3"]
     tec_map = {
         "wind_onshore": [
@@ -555,13 +564,56 @@ def add_se_elec(rep: "Reporter"):
     rep.add(
         "se:nl-t-ya-m-c:elec_po", "select", po_out, {"t": parent_tecs}, inverse=True
     )
-    rep.add(
+    k = rep.add(
         "se:nl-t-ya-m-c:po+ccs",
         "concat",
         ccs_addons,
         "se:nl-t-ya-m-c:elec_po",
         addon_parents,
+        sums=False,
     )
+    # derive electricity production from biogas and h2 by scaling electricity production
+    # of gas power plants with proportion of h2 and biogas inflows to gas ppls
+    # also rescale production from natural gas by inverse share of h2 and biogas
+    gas_ppls_wo_ccs = [
+        "gas_ppl",
+        "gas_cc",
+        "gas_ct",
+    ]
+    gas_ppls = [
+        "gas_ppl",
+        "gas_cc",
+        "gas_ct",
+        "gas_cc_g_ppl_co2scr",
+        "gas_ppl_g_ppl_co2scr",
+    ]
+    h2_key = Key("share:nl-ya:hydrogen_in_pe_wo_ccs_retro")
+    bio_key = Key("share:nl-ya:biogas_in_gas_consumer_biogas+incl_t_d_loss")
+    rep.add(h2_key.append("t"), "expand_dims", h2_key, {"t": gas_ppls_wo_ccs})
+    rep.add(bio_key.append("t"), "expand_dims", bio_key, {"t": gas_ppls})
+    rep.add(k.drop("m"), "drop_vars", k, names="m")
+    k1 = rep.add(
+        "elec_from_h2:nl-t-ya-c", "mul", k.drop("m"), h2_key.append("t"), sums=False
+    )
+    k2 = rep.add(
+        "elec_from_biogas:nl-ya-c-t",
+        "mul",
+        k.drop("m"),
+        bio_key.append("t"),
+        sums=False,
+    )
+    k3 = rep.add(
+        "elec_gas_ppls_excl_blends:nl-ya-m-c-t",
+        "combine",
+        k,
+        k1,
+        k2,
+        weights=[1, -1, -1],
+    )
+    rep.add(k1.append("m"), "expand_dims", k1, {"m": ["hydrogen"]})
+    rep.add(k2.append("m"), "expand_dims", k2, {"m": ["biogas"]})
+    se = rep.add("se:nl-t-ya-m-c:po+ccs2", "concat", k1.append("m"), k2.append("m"), k3)
+    return se
 
 
 def add_cement_heat_share_calculations(rep: "Reporter"):
@@ -739,7 +791,30 @@ def add_non_ccs_gas_consumption(rep: "Reporter", addon_map: dict[str, dict]):
     return
 
 
-def gas_consumer(rep: "Reporter", name: str, tecs: list[str], ccs: bool = True):
+def gas_consumer(rep: "Reporter", name: str, tecs: list[str], ccs: bool = True) -> Key:
+    """Prepare reporter to compute gas consumption by technology.
+
+    The computation steps added are:
+
+    1) Select all gas consumers
+    2) Subtract gas consumption by transmission and distribution losses
+    3) If ccs is False, subtract gas consumption by CCS retrofit technologies
+    4) Return key with gas consumption by technology
+
+    Parameters
+    ----------
+    rep
+    name :
+        name for gas consumer key
+    tecs :
+        list of gas consuming technologies
+    ccs:
+        If False, subtract gas consumption by CCS retrofit technologies
+
+    Returns
+    -------
+    Key that computes gas consumption by technology
+    """
     k = Key("in:nl-t-ya-m-c:sel")[f"gas_consumer_{name}"]
     k1 = Key("in:nl-t-ya-m-c")[f"gas_consumer_{name}"]
     rep.add(k, "select", "in:nl-t-ya-m-c", {"t": tecs, "c": ["gas"]})
@@ -773,29 +848,42 @@ def gas_consumer(rep: "Reporter", name: str, tecs: list[str], ccs: bool = True):
     return k2.drop("m")
 
 
-def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str):
-    """Function to allocate biogas to gas consumers
-    Inputs:
-        - list of gas consumers
-        - name of blendgas technology
-        - name for blendgas key
-    - Query total blendgas:nl-ya
-    - Query total gas consumption by tec: dims=full("in")
-        - include transmission losses (gas_t_d)
-        - consider CCS tecs
-    - Calculate share of blendgas in total gas consumption per nl-ya
-    - Allocate blendgas share proportionally to each gas technology,
-        by multiplying nl-ya share with total gas input nl-t-ya-m
-    - create new commodity dimension with "blendgas" as entry
+def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str) -> Key:
+    """Function to allocate blended gas to gas consumers.
+
+    Steps:
+
+    - Query total blend gas output
+    - Calculate share of blend gas in total gas consumption per nl-ya,
+      by dividing total output by input of selected gas consumers
+    - Allocate blend gas share proportionally to each gas technology,
+      by multiplying nl-ya share with total gas input nl-t-ya-m
+    - create new commodity dimension with blend gas name as entry
+
+    Parameters
+    ----------
+    rep
+    in_gas :
+        Key with gas consumption by technology with dims: ``nl-t-ya-c``
+    mix_tech :
+        Technology representing the gas blending, e.g. "h2_mix" or "gas_bio"
+    name :
+        name for blend gas key
+
+    Returns
+    -------
+    Key that computes gas consumption by technology
     """
     from message_ix_models.report.compat import out
 
-    # Main calc
     k1 = out(rep, [mix_tech], name=f"{name}_tot_abs")
     k2 = rep.add(
-        f"{name}_tot_rel:nl-ya", "div", k1.drop("yv", "m"), in_gas.drop("t", "c")
+        f"share:nl-ya:{name}_in_{in_gas.tag}",
+        "div",
+        k1.drop("yv", "m"),
+        in_gas.drop("t", "c"),
     )
-    k3 = rep.add(f"{name}:nl-t-ya-m", "mul", in_gas.drop("c"), k2)
+    k3 = rep.add(f"in:nl-t-ya-m:{name}+{in_gas.tag}", "mul", in_gas.drop("c"), k2)
     k4 = rep.add(k3.append("c"), "expand_dims", k3, {"c": [name]})
     return k4
 
@@ -815,7 +903,7 @@ def pe_gas(rep: "Reporter"):
         "dri_gas_steel",
         "eaf_steel",
     ]
-    conv = [
+    conversion = [
         "gas_cc",
         "gas_ct",
         "gas_ppl",
@@ -841,7 +929,7 @@ def pe_gas(rep: "Reporter"):
         "gas_hpl",
     ]
     k1 = gas_consumer(rep, "h2", h2_tecs, ccs=False)
-    k2 = gas_consumer(rep, "biogas", final + ccs_tecs + conv, ccs=True)
+    k2 = gas_consumer(rep, "biogas", final + ccs_tecs + conversion, ccs=True)
     k_h2 = gas_mix_calculation(rep, k1, "h2_mix", "hydrogen")
     k_bio = gas_mix_calculation(rep, k2, "gas_bio", "biogas")
     k = Key("in:nl-t-ya-m-c")
@@ -873,5 +961,6 @@ if __name__ == "__main__":
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     prepare_reporter(ctx, reporter=rep)
-    co2(rep)
+    k1 = pe_gas(rep)
+    k2 = add_se_elec(rep)
     print()
