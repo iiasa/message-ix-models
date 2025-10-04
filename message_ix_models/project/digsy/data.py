@@ -161,11 +161,11 @@ def read_ict_v2(
         },
         "BEST": {
             "Data centre": "Lower Bound (TWh)",
-            "Telecom Network": "Lower Bound - Telecom Network [LOW ratio] (TWh)",
+            "Telecom Network": "Lower Bound - Telecom Network [MEAN ratio] (TWh)",
         },
         "WORST": {
             "Data centre": "Upper Bound (TWh)",
-            "Telecom Network": "Upper Bound - Telecom Network [HIGH ratio] (TWh)",
+            "Telecom Network": "Upper Bound - Telecom Network [MEAN ratio] (TWh)",
         },
         "BESTEST": {
             "Data centre": "Lower Bound (TWh)",
