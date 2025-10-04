@@ -31,7 +31,6 @@ from message_ix_models.model.material.share_constraints import (
     get_ssp_low_temp_shr_up,
 )
 from message_ix_models.model.material.util import (
-    combine_df_dictionaries,
     get_ssp_from_context,
     path_fallback,
     read_config,
@@ -40,6 +39,7 @@ from message_ix_models.model.structure import generate_set_elements, get_region_
 from message_ix_models.util import (
     add_par_data,
     load_package_data,
+    merge_data,
     package_data_path,
 )
 from message_ix_models.util.compat.message_data import (
@@ -166,10 +166,8 @@ def get_resid_demands(
     rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
     adjust_act_calib(ict_demand_ue, scenario)
 
-    all_demands = combine_df_dictionaries(
-        resid_demands, {"demand": ict_demand}, {"demand": rc_demand_adjusted}
-    )
-    return all_demands
+    merge_data(resid_demands, {"demand": ict_demand}, {"demand": rc_demand_adjusted})
+    return resid_demands
 
 
 def build(
