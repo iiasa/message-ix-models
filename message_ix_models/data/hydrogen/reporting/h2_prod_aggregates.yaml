@@ -1,0 +1,29 @@
+# Aggregation rules for hydrogen production reporting
+# Defines hierarchical aggregations of production variables
+
+var: out
+iamc_prefix: Production|
+unit: Mt H2/yr
+
+level_1:
+  Hydrogen|Gas:
+    short: prod_h2_gas
+    components: [ prod_h2_smr_wo_ccs, prod_h2_smr_w_ccs, prod_h2_pyro ]
+  Hydrogen|Coal:
+    short: prod_h2_coal
+    components: [ prod_h2_coal_wo_ccs, prod_h2_coal_w_ccs ]
+  Hydrogen|Biomass:
+    short: prod_h2_bio
+    components: [ prod_h2_bio_wo_ccs, prod_h2_bio_w_ccs ]
+  Hydrogen|Electricity:
+    short: prod_h2_elec
+    components: [ prod_h2_elec_alkaline, prod_h2_elec_pem, prod_h2_elec_soe ]
+  Hydrogen|Refinery:
+    short: prod_h2_refinery
+    components: [ prod_h2_refinery ]
+
+level_2:
+  Hydrogen:
+    short: prod_h2
+    components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec, prod_h2_refinery ]
+
