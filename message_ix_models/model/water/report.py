@@ -15,7 +15,7 @@ from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
-# Global variable to track cooling-only mode (scenarios without water infrastructure)
+# Global variable to track cooling-only mode (without the nexus module)
 _cooling_only = False
 
 
@@ -365,7 +365,7 @@ def get_population_data(sc: Scenario, reg: str) -> pd.DataFrame:
 
             population_data = pd.concat([population_data, pop_data])
 
-        except (KeyError, ValueError, AttributeError) as e:
+        except (KeyError, ValueError) as e:
             log.warning(f"Failed to retrieve Population|{ur.capitalize()} data: {e}")
             continue
 
