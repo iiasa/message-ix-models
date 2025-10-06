@@ -376,13 +376,15 @@ def get_population_data(sc: Scenario, reg: str) -> pd.DataFrame:
     return population_data
 
 
-def get_rates_data(reg: str, sdgs: bool = False) -> pd.DataFrame:
+def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
     """Load and clean water access rates data from CSV
 
     Parameters
     ----------
     reg : str
         Region specification (R11, R12, R17, etc.)
+    ssp : str
+        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
     sdgs : bool
         Whether to use SDG scenario rates
 
@@ -393,7 +395,7 @@ def get_rates_data(reg: str, sdgs: bool = False) -> pd.DataFrame:
     """
     # Load rates data
     load_path = package_data_path("water", "demands", "harmonized", reg)
-    all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
+    all_rates = pd.read_csv(load_path / f"all_rates_{ssp}.csv")
 
     # Filter for scenario type
     scenario_type = "SDG" if sdgs else "baseline"
@@ -616,7 +618,9 @@ def aggregate_world_totals(result_df: pd.DataFrame) -> list[pd.DataFrame]:
     return world
 
 
-def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame:
+def pop_water_access(
+    sc: Scenario, reg: str, ssp: str, sdgs: bool = False
+) -> pd.DataFrame:
     """Calculate population with access to water and sanitation
 
     Parameters
@@ -625,6 +629,8 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
         Scenario to calculate access for
     reg : str
         Region specification
+    ssp : str
+        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
     sdgs : bool
         Whether to use SDG scenario rates
 
@@ -635,7 +641,7 @@ def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame
     """
     # Get clean population and rates data
     pop_data = get_population_data(sc, reg)
-    rates_data = get_rates_data(reg, sdgs)
+    rates_data = get_rates_data(reg, ssp, sdgs)
 
     if pop_data.empty:
         log.warning("No population data found. Skipping calculations.")
@@ -736,6 +742,7 @@ def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
 
 def compute_cooling_technologies(
     report_iam: pyam.IamDataFrame,
+    sc: Scenario,
 ) -> tuple[pyam.IamDataFrame, list]:
     """Compute cooling technology metrics and return mapping rows.
 
@@ -743,6 +750,8 @@ def compute_cooling_technologies(
     ----------
     report_iam : pyam.IamDataFrame
         Report in pyam format
+    sc : Scenario
+        Scenario to extract technology data from
 
     Returns
     -------
@@ -856,7 +865,7 @@ def compute_cooling_technologies(
 
 
 def report(
-    sc: Scenario, reg: str, sdgs: bool = False, include_cooling: bool = True
+    sc: Scenario, reg: str, ssp: str, sdgs: bool = False, include_cooling: bool = True
 ) -> None:
     """Report nexus module results
 
@@ -866,6 +875,8 @@ def report(
         Scenario to report
     reg : str
         Region to report
+    ssp : str
+        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
     sdgs : bool, optional
         If True, add population with access to water and sanitation for SDG6
     include_cooling : bool, optional
@@ -1151,7 +1162,7 @@ def report(
 
     # Process cooling technologies if enabled
     # if include_cooling:
-    report_iam, cooling_rows = compute_cooling_technologies(report_iam)
+    report_iam, cooling_rows = compute_cooling_technologies(report_iam, sc)
 
     # mapping for aggregation
     map_agg_pd = pd.DataFrame(
@@ -1800,7 +1811,7 @@ def report(
         ]
 
     # add water population
-    pop_sdg6 = pop_water_access(sc, reg, sdgs)
+    pop_sdg6 = pop_water_access(sc, reg, ssp, sdgs)
     report_pd = pd.concat([report_pd, pop_sdg6])
 
     # add units wo loop to reduce complexity
@@ -1886,7 +1897,7 @@ def report(
 
 
 def report_full(
-    sc: Scenario, reg: str, sdgs=False, include_cooling: bool = True
+    sc: Scenario, reg: str, ssp: str, sdgs=False, include_cooling: bool = True
 ) -> None:
     """Combine old and new reporting workflows
 
@@ -1896,6 +1907,8 @@ def report_full(
         Scenario to report
     reg : str
         Region to report
+    ssp : str
+        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
     sdgs : bool, optional
         If True, add population with access to water and sanitation for SDG6
     include_cooling : bool, optional
@@ -1915,7 +1928,7 @@ def report_full(
     run_old_reporting(sc)
     log.info("First part of reporting completed, now procede with the water variables")
 
-    report(sc, reg, sdgs, include_cooling)
+    report(sc, reg, ssp, sdgs, include_cooling)
     log.info("overall NAVIGATE reporting completed")
 
     # add ad-hoc caplculated variables with a function

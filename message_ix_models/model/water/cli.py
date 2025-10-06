@@ -311,12 +311,13 @@ def report_cli(context: "Context", output_model, sdgs, water=False):
         Defines if and what water SDG measures are activated
     """
     reg = context.model.regions
+    ssp = context.ssp
     sc = context.get_scenario()
     if water:
         from message_ix_models.model.water.report import report
 
-        report(sc, reg, sdgs)
+        report(sc, reg, ssp, sdgs)
     else:
         from message_ix_models.model.water.report import report_full
 
-        report_full(sc, reg, sdgs)
+        report_full(sc, reg, ssp, sdgs)
