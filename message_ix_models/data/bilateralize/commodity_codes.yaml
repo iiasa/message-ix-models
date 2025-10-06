@@ -66,7 +66,7 @@ Ethanol:
   HS:
     - '2207'
     - '3826'
-  MESSAGE Commodity: ethanol
+  MESSAGE Commodity: eth
   IEA-WEB: 
     - BIODIESEL
     - BIOGASOL
@@ -82,7 +82,7 @@ Fuel Oil:
   HS:
     - '2712'
     - '2713'
-  MESSAGE Commodity: fueloil
+  MESSAGE Commodity: foil
   IEA-WEB: 
     - BITUMEN
     - PARWAX
@@ -96,7 +96,7 @@ Fuel Oil:
 Liquid Hydrogen:
   HS:
     - '280410' # hydrogen
-  MESSAGE Commodity: liquidh2
+  MESSAGE Commodity: lh2
   IEA-WEB: 
     -
 
@@ -109,7 +109,7 @@ Light Oil:
     - '271129'
     - '290110'
     - '381121'
-  MESSAGE Commodity: lightoil
+  MESSAGE Commodity: loil
   IEA-WEB: 
     - AVGAS
     - AVIATION_GASOLINE

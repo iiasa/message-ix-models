@@ -1,7 +1,7 @@
 # DATA DIRECTORIES
 p_drive_location:
-  /pdrive/projects/ene.model3
-  #P:/ene.model
+  #/pdrive/projects/ene.model3
+  P:/ene.model
 
 # SCENARIO INFORMATION
 scenario:
@@ -27,7 +27,7 @@ covered_trade_technologies:
   - crudeoil_shipped
   - crudeoil_piped
   - eth_shipped
-
+  - foil_shipped
 # YEARS
 timeframes:
   year_act_list:
