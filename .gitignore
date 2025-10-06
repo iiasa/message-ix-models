@@ -168,3 +168,6 @@ message_ix_models/data/ssp/*.csv.xz
 message_ix_models/data/ssp/*.csv.gz
 message_ix_models/data/ssp/*.csv.zip
 message_ix_models/data/ssp/*.txt
+
+# Hydrogen debug utilities
+message_ix_models/data/hydrogen/debug_utils/
