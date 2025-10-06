@@ -314,41 +314,45 @@ def gen_te_projections(
 
 def _add_new_meth_h2_modes(scenario: message_ix.Scenario):
     """
-    Add new modes for meth_h2 technology parametrization from the scenario.
+    Add new modes for meth_h2 and h2_elec technology parametrization from the scenario.
 
     meth_h2 uses CO2 to produce methanol.
     fuel and feedstock mode are split into 3 modes each
     depending on the CO2 source that is used:
     biogenic (=bic), direct air capture (=dac), fossil (=fic).
 
+    similar operations are performed to h2_elec, a technology which
+    provide h2 to meth_h2
+
     Parameters
     ----------
     scenario: message_ix.Scenario
         scenario, where parameters for new modes should be added
     """
-    par_dict = {}
-    for par in [x for x in scenario.par_list() if "mode" in scenario.idx_sets(x)]:
-        df = scenario.par(par, filters={"technology": "meth_h2"})
-        if len(df.index):
-            par_dict[par] = df.copy(deep=True)
+    for tech in ["meth_h2","h2_elec"]:
+        par_dict = {}
+        for par in [x for x in scenario.par_list() if "mode" in scenario.idx_sets(x)]:
+            df = scenario.par(par, filters={"technology": tech})
+            if len(df.index):
+                par_dict[par] = df.copy(deep=True)
 
-    par_dict_new = {k: pd.DataFrame() for k in par_dict.keys()}
-    for par, df in par_dict.items():
-        for mode in ["feedstock", "fuel"]:
-            df_tmp = df[df["mode"].values == mode].copy(deep=True)
-            df_tmp["mode"] = None
-            df_tmp = df_tmp.pipe(
-                broadcast, mode=[f"{mode}_{suffix}" for suffix in ["bic", "dac", "fic"]]
-            )
-            par_dict_new[par] = pd.concat([par_dict_new[par], df_tmp])
+        par_dict_new = {k: pd.DataFrame() for k in par_dict.keys()}
+        for par, df in par_dict.items():
+            for mode in ["feedstock", "fuel"]:
+                df_tmp = df[df["mode"].values == mode].copy(deep=True)
+                df_tmp["mode"] = None
+                df_tmp = df_tmp.pipe(
+                    broadcast, mode=[f"{mode}_{suffix}" for suffix in ["bic", "dac", "fic"]]
+                )
+                par_dict_new[par] = pd.concat([par_dict_new[par], df_tmp])
 
-    for par, df in par_dict_new.items():
-        scenario.add_par(par, df)
+        for par, df in par_dict_new.items():
+            scenario.add_par(par, df)
 
 
 def _remove_old_meth_h2_modes(scenario: message_ix.Scenario):
     """
-    Remove old modes for meth_h2 technology from the scenario.
+    Remove old modes for meth_h2 and h2_elec technologies from the scenario.
 
     Parameters
     ----------
@@ -358,7 +362,7 @@ def _remove_old_meth_h2_modes(scenario: message_ix.Scenario):
     par_dict = {}
     for par in [x for x in scenario.par_list() if "mode" in scenario.idx_sets(x)]:
         df = scenario.par(
-            par, filters={"technology": "meth_h2", "mode": ["feedstock", "fuel"]}
+            par, filters={"technology": ["meth_h2","h2_elec"], "mode": ["feedstock", "fuel"]}
         )
         if len(df.index):
             par_dict[par] = df.copy(deep=True)
@@ -369,7 +373,7 @@ def _remove_old_meth_h2_modes(scenario: message_ix.Scenario):
 
 def _register_new_modes(scenario):
     """
-    Register new modes required for meth_h2 technology parametrization
+    Register new modes required for meth_h2 and h2_elec technologies parametrization
 
     Parameters
     ----------
