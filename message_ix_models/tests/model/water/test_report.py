@@ -18,7 +18,7 @@ from message_ix_models.util import package_data_path
 
 # NB: this tests all functions in model/water/reporting
 @pytest.mark.xfail(reason="Temporary, for #106")
-def test_report_full(test_context, request):
+def test_report_full(test_context, request) -> None:
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     test_context.time = "year"
@@ -77,7 +77,9 @@ def test_report_full(test_context, request):
         ),
     ],
 )
-def test_process_rates(population_type, expected_connection_var, expected_access_var):
+def test_process_rates(
+    population_type, expected_connection_var, expected_access_var
+) -> None:
     """Test process_rates function handles urban/rural rate processing correctly."""
     # Create mock rates data
     rates_data = pd.DataFrame(
@@ -123,7 +125,7 @@ def test_process_rates(population_type, expected_connection_var, expected_access
     assert access_entry["value"] == 800.0  # 1000 * 0.8
 
 
-def test_get_population_values():
+def test_get_population_values() -> None:
     """Test get_population_values extracts urban/rural population correctly."""
     # Create mock population data
     pop_data = pd.DataFrame(
@@ -165,7 +167,7 @@ def test_get_population_values():
     assert np.isnan(rural_val)
 
 
-def test_aggregate_totals():
+def test_aggregate_totals() -> None:
     """Test aggregate_totals creates correct regional aggregations."""
     # Create mock result data
     result_df = pd.DataFrame(
