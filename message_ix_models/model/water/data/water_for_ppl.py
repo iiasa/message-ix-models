@@ -467,7 +467,9 @@ def _create_cooling_parameters(
     con2 = processed_data["con2"]
 
     results = {}
-
+    commodity_water_inp = (
+        "surfacewater" if context.nexus_set == "nexus" else "freshwater"
+    )
     # Create input parameters
     # Electricity inputs for parasitic demand
     inp = make_df(
@@ -498,7 +500,7 @@ def _create_cooling_parameters(
                 year_act=icmse_df["year_act"],
                 mode=icmse_df["mode"],
                 node_origin=icmse_df["node_origin"],
-                commodity="surfacewater",
+                commodity=commodity_water_inp,
                 level="water_supply",
                 time="year",
                 time_origin="year",
@@ -1336,13 +1338,16 @@ def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame
     # Input dataframe for non cooling technologies
     # only water withdrawals are being taken
     # Dedicated freshwater is assumed for simplicity
+    commodity_water_inp = (
+        "surfacewater" if context.nexus_set == "nexus" else "freshwater"
+    )
     inp_n_cool = make_df(
         "input",
         technology=n_cool_df_merge["technology"],
         value=n_cool_df_merge["value_y"],
         unit="MCM/GWa",
         level="water_supply",
-        commodity="surfacewater",
+        commodity=commodity_water_inp,
         time_origin="year",
         mode="M1",
         time="year",
