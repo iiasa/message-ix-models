@@ -36,10 +36,13 @@ trade_dict = build_parameter_sheets(project_name = 'newpathways', config_name = 
 
 # Historical calibration for trade technology
 histdf = build_historical_activity(message_regions,
-                                   project_name = 'newpathways', config_name = 'config.yaml')
+                                   project_name = 'newpathways', config_name = 'config.yaml',
+                                   reimport_BACI = True)
 histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
 histdf['year_act'] = np.where((histdf['year_act'] == 2023), 2025, histdf['year_act']) # TODO: Assume 2023 values FOR NOW 
 histdf = histdf[histdf['value'] > 0]
+histdf['technology'] = histdf['technology'].str.replace('ethanol_', 'eth_')
+histdf['technology'] = histdf['technology'].str.replace('fueloil_', 'foil_')
 
 histnc = build_historical_new_capacity_trade(message_regions,
                                              project_name = 'newpathways', config_name = 'config.yaml')

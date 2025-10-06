@@ -160,7 +160,7 @@ def activity_to_csv(trade_tec,
                          index = False)
     
 # Retrieve trade flow activities
-scenarios_models = {#'base_scenario': 'NP_SSP2_6.2',
+scenarios_models = {'base_scenario': 'NP_SSP2_6.2',
                     'PGLNG-C-CRSCRP-E': 'NP_SSP2_6.2',
                     }
 # Trade flow dictionaries: trade_tec (gas), flow_tec (gas_pipe), trade_commodity (gas (GWa)), flow_commodity (gas_pipeline_capacity), flow_unit (km)
