@@ -1046,7 +1046,7 @@ def report(
     extrt_sw_inv = ["inv cost|extract_surfacewater"]
     extrt_gw_inv = ["inv cost|extract_groundwater"]
     # Calculating fossil groundwater invwatments
-    # 163.56 million USD/KM^3 x 2 times the reneewable gw costs
+    # 163.56 million USD/KM^3 x 2 times the renewable gw costs
 
     report_iam = report_iam.append(
         report_iam.multiply(
