@@ -8,6 +8,7 @@ from message_ix import Scenario
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.report import (
+    ScenarioMetadata,
     aggregate_totals,
     get_population_values,
     process_rates,
@@ -25,7 +26,8 @@ def test_report_full(test_context, request) -> None:
     test_context.type_reg = "global"
     test_context.regions = "R12"
     nodes = get_codes(f"node/{test_context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
+    world_code = [n for n in nodes if str(n) == "World"][0]
+    nodes = [str(n) for n in world_code.child]
     # test_context.map_ISO_c = {test_context.regions: nodes[0]}
 
     mp = test_context.get_platform()
@@ -98,7 +100,11 @@ def test_process_rates(
     population_value = 1000.0
     region = "R12_AFR"
     year = 2030
-    metadata = {"model": "test_model", "scenario": "test_scenario", "unit": "million"}
+    metadata: ScenarioMetadata = {
+        "model": "test_model",
+        "scenario": "test_scenario",
+        "unit": "million",
+    }
 
     result = process_rates(
         population_type, population_value, rates_data, region, year, metadata

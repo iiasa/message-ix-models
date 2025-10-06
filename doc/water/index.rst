@@ -112,6 +112,10 @@ Reporting
 
    The current reporting features only work for the global model.
 
+The reporting module covers the nexus module technologies with granular detail and has
+support for cooling and non-cooling technology reporting at aggregate level.
+No guarantee of identical behavior to legacy reporting workflows.
+
 .. automodule:: message_ix_models.model.water.reporting
    :members:
 
