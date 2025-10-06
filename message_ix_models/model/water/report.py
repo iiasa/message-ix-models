@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Optional
+from typing import Optional, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,25 @@ from message_ix_models.model.water.utils import USD_KM3_TO_USD_MCM, m3_GJ_TO_MCM
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
+
+
+class ScenarioMetadata(TypedDict):
+    """Metadata dictionary for scenario reporting.
+
+    Attributes
+    ----------
+    model : str
+        Model name from scenario
+    scenario : str
+        Scenario name
+    unit : str
+        Unit of measurement (e.g., "million" for population)
+    """
+
+    model: str
+    scenario: str
+    unit: str
+
 
 # Global variable to track cooling-only mode (without the nexus module)
 _cooling_only = False
@@ -479,13 +498,29 @@ def process_rates(
     rates_data: pd.DataFrame,
     region: str,
     year: int,
-    metadata: dict,
+    metadata: ScenarioMetadata,
 ) -> list[dict]:
-    """Compact processing of base population,
-    connection (drinking) and treatment (sanitation).
+    """Process base population, connection rates, and treatment rates.
 
-    Behaviour preserved from original: always emit base population; emit rate + access
-    entries only when a matching rate row exists.
+    Parameters
+    ----------
+    population_type : str
+        Type of population ("urban" or "rural")
+    population_value : float
+        Population value for the region/year
+    rates_data : pd.DataFrame
+        DataFrame containing connection and treatment rates
+    region : str
+        Region code
+    year : int
+        Year
+    metadata : ScenarioMetadata
+        Scenario metadata (model, scenario, unit)
+
+    Returns
+    -------
+    list[dict]
+        List of result dictionaries with population, rates, and access calculations
     """
     pt_cap = population_type.capitalize()
     base = {
@@ -539,7 +574,7 @@ def aggregate_totals(result_df: pd.DataFrame) -> list[pd.DataFrame]:
     Returns list of DataFrames"""
     totals: list[pd.DataFrame] = []
 
-    def _group_sum(df: pd.DataFrame, new_var: str):
+    def _group_sum(df: pd.DataFrame, new_var: str) -> pd.DataFrame:
         g = (
             df.groupby(["region", "year", "model", "scenario", "unit"], dropna=False)[
                 "value"
@@ -918,11 +953,12 @@ def report(
     reg : str
         Region to report
     ssp : str
-        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
+        SSP scenario (e.g., :obj:`"SSP1"`, :obj:`"SSP2"`, :obj:`"SSP3"`)
     sdgs : bool, optional
-        If True, add population with access to water and sanitation for SDG6
+        If :obj:`True`, add population with access to water and sanitation for SDG6
     include_cooling : bool, optional
-        If True, include cooling technology calculations in the report (default True)
+        If :obj:`True`, include cooling technology calculations in the report
+        (default :obj:`True`)
     """
     log.info(f"Regions given as {reg}; no warranty if it's not in ['R11','R12']")
     # Generating reporter
@@ -1950,11 +1986,12 @@ def report_full(
     reg : str
         Region to report
     ssp : str
-        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
+        SSP scenario (e.g., :obj:`"SSP1"`, :obj:`"SSP2"`, :obj:`"SSP3"`)
     sdgs : bool, optional
-        If True, add population with access to water and sanitation for SDG6
+        If :obj:`True`, add population with access to water and sanitation for SDG6
     include_cooling : bool, optional
-        If True, include cooling technology calculations in the report (default True)
+        If :obj:`True`, include cooling technology calculations in the report
+        (default :obj:`True`)
     """
     a = sc.timeseries()
     # keep historical part, if present
