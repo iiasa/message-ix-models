@@ -774,16 +774,25 @@ def compute_cooling_technologies(
         variable="in|saline_supply|saline_ppl|*__ot_saline|*"
     ).variable
     # Non-cooling technologies freshwater usage
-    all_freshwater_tech = report_iam.filter(
-        variable="in|water_supply|freshwater|*|*"
-    ).variable
-    exclude_patterns = [
-        "irrigation_",
+    # Read CSV to get correct list of non-cooling technologies
+    FILE = "tech_water_performance_ssp_msg.csv"
+    path = package_data_path("water", "ppl_cooling_tech", FILE)
+    df = pd.read_csv(path)
+
+    non_cool_df = df[
+        (df["technology_group"] != "cooling")
+        & (df["water_supply_type"] == "freshwater_supply")
     ]
+
+    # Filter for technologies that exist in scenario
+    all_techs = list(sc.set("technology"))
+    tech_non_cool_csv = list(non_cool_df["technology_name"])
+    techs_in_scenario = [tec for tec in tech_non_cool_csv if tec in all_techs]
+
+    # Extract water input variables for non-cooling technologies
+    # Non-cooling techs use surfacewater commodity at water_supply level
     non_cooling_water = [
-        v
-        for v in all_freshwater_tech
-        if not any(pattern in v for pattern in exclude_patterns)
+        f"in|water_supply|surfacewater|{tech}|M1" for tech in techs_in_scenario
     ]
 
     # Fresh water return flow emissions
@@ -1929,7 +1938,7 @@ def report_full(
     log.info("First part of reporting completed, now procede with the water variables")
 
     report(sc, reg, ssp, sdgs, include_cooling)
-    log.info("overall NAVIGATE reporting completed")
+    log.info("overall reporting completed")
 
     # add ad-hoc caplculated variables with a function
     ts = sc.timeseries()
