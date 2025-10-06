@@ -7,6 +7,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import pyam
+from ixmp import Platform
 from message_ix import Reporter, Scenario
 
 from message_ix_models.model.water.utils import USD_KM3_TO_USD_MCM, m3_GJ_TO_MCM_GWa
@@ -321,7 +322,7 @@ def get_population_data(sc: Scenario, reg: str) -> pd.DataFrame:
     mp2 = sc.platform
     reg_map = mp2.regions()
 
-    for ur in ["urban", "rural"]:
+    for ur in ("urban", "rural"):
         try:
             # Get population timeseries for urban/rural
             pop_data = sc.timeseries(variable=f"Population|{ur.capitalize()}")
@@ -361,7 +362,7 @@ def get_population_data(sc: Scenario, reg: str) -> pd.DataFrame:
 
             population_data = pd.concat([population_data, pop_data])
 
-        except Exception as e:
+        except (KeyError, ValueError, AttributeError) as e:
             log.warning(f"Failed to retrieve Population|{ur.capitalize()} data: {e}")
             continue
 
@@ -407,9 +408,7 @@ def get_rates_data(reg: str, sdgs: bool = False) -> pd.DataFrame:
     df_rate["region_short"] = [x.split("|")[1] for x in df_rate.node]
 
     # Get region mapping for basin codes
-    import ixmp
-
-    mp = ixmp.Platform()
+    mp = Platform()
     reg_map = mp.regions()
 
     # Create basin to region mapping based on reg parameter
@@ -1151,7 +1150,6 @@ def report(
     ).variable
 
     # Process cooling technologies if enabled
-    cooling_rows = []
     # if include_cooling:
     report_iam, cooling_rows = compute_cooling_technologies(report_iam)
 
