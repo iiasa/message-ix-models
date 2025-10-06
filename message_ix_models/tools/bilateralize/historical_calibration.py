@@ -410,7 +410,8 @@ def reformat_to_parameter(indf, message_regions, parameter_name,
 
 # Run all for historical activity
 def build_historical_activity(message_regions = 'R12',
-                              project_name = None, config_name = None):
+                              project_name = None, config_name = None,
+                              reimport_IEA = False, reimport_BACI = False):
         
     if reimport_IEA == True:
         generate_cfdict(message_regions = message_regions,
