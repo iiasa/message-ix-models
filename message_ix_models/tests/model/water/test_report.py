@@ -52,7 +52,7 @@ def test_report_full(test_context, request):
     test_context["water build info"] = ScenarioInfo(s)
 
     # Run the function to be tested
-    report_full(sc=s, reg=test_context.regions)
+    report_full(sc=s, reg=test_context.regions, ssp="SSP2")
 
     # Since the function doesn't return anything, check that output file is produced in
     # correct location
