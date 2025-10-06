@@ -15,6 +15,9 @@ from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
+# Global variable to track cooling-only mode (scenarios without water infrastructure)
+_cooling_only = False
+
 
 def run_old_reporting(sc: Optional[Scenario] = None):
     try:
@@ -740,6 +743,36 @@ def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
     return ww
 
 
+def detect_scenario_mode(df_dmd: pd.DataFrame) -> tuple[bool, bool]:
+    """Detect if scenario is cooling-only and if it uses subannual time slices.
+
+    Cooling-only mode is detected when df_dmd is empty, indicating the nexus
+    water module is absent from the scenario.
+
+    Parameters
+    ----------
+    df_dmd : pd.DataFrame
+        Demand dataframe filtered for water_avail_basin
+
+    Returns
+    -------
+    suban : bool
+        True if scenario uses subannual time slices
+    cooling_only : bool
+        True if nexus module is absent (cooling-only mode)
+    """
+    global _cooling_only
+    if df_dmd.empty:
+        _cooling_only = True
+        suban = False
+    else:
+        _cooling_only = False
+        h_values = np.unique(df_dmd["h"])
+        suban = False if "year" in h_values else True
+
+    return suban, _cooling_only
+
+
 def compute_cooling_technologies(
     report_iam: pyam.IamDataFrame,
     sc: Scenario,
@@ -915,8 +948,8 @@ def report(
     rep_dm_df = rep_dm2.to_dataframe()
     rep_dm_df.reset_index(inplace=True)
     df_dmd = rep_dm_df[rep_dm_df["l"] == "water_avail_basin"]
-    # setting sub-annual option based on the demand
-    suban = False if "year" in np.unique(df_dmd["h"]) else True
+    # Detect scenario mode (subannual and cooling-only)
+    suban, cooling_only = detect_scenario_mode(df_dmd)
 
     # if subannual, get and subsittute variables
     report_iam = report_iam_definition(sc, rep, df_dmd, rep_dm, report_df, suban)
