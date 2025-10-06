@@ -1,4 +1,5 @@
 import os.path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -19,14 +20,14 @@ from message_ix_models.util import package_data_path
 
 # NB: this tests all functions in model/water/reporting
 @pytest.mark.xfail(reason="Temporary, for #106")
-def test_report_full(test_context, request) -> None:
+def test_report_full(test_context: Any, request: pytest.FixtureRequest) -> None:
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     test_context.time = "year"
     test_context.type_reg = "global"
     test_context.regions = "R12"
-    nodes = get_codes(f"node/{test_context.regions}")
-    world_code = [n for n in nodes if str(n) == "World"][0]
+    codes = get_codes(f"node/{test_context.regions}")
+    world_code = [n for n in codes if str(n) == "World"][0]
     nodes = [str(n) for n in world_code.child]
     # test_context.map_ISO_c = {test_context.regions: nodes[0]}
 
@@ -80,7 +81,7 @@ def test_report_full(test_context, request) -> None:
     ],
 )
 def test_process_rates(
-    population_type, expected_connection_var, expected_access_var
+    population_type: str, expected_connection_var: str, expected_access_var: str
 ) -> None:
     """Test process_rates function handles urban/rural rate processing correctly."""
     # Create mock rates data
