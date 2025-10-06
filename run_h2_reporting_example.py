@@ -1,8 +1,8 @@
 import ixmp
 import message_ix
-from message_ix.report import Reporter
 import pyam
 from pathlib import Path
+from message_ix.report import Reporter
 
 # Import the reporting function
 from message_ix_models.report.hydrogen.h2_reporting import run_h2_reporting
@@ -14,17 +14,15 @@ def main():
     """
     # --- Configuration ---
     # Name of the ixmp platform to connect to
-    platform_name = "ixmp-dev"  # TODO: User needs to change this
-
+    platform_name = "ixmp-dev"
     # Scenario identifiers
     model_name = "hyway_SSP_SSP2_v6.2"
     scenario_name = "baseline_1000f_h2_ct_h2_emissions"
 
     # Output file path
     output_dir = Path(".")  # Save in the current directory
-    output_filename = f"{model_name}_{scenario_name}_h2_report.xlsx"
+    output_filename = f"{model_name}_{scenario_name}_h2_report_w_refineries.xlsx"
     output_path = output_dir / output_filename
-    # --- End of Configuration ---
 
     print(f"Connecting to platform '{platform_name}'...")
     mp = ixmp.Platform(name=platform_name)
@@ -40,11 +38,8 @@ def main():
     print("Creating reporter...")
     rep = Reporter.from_scenario(scenario)
 
-    print("Running hydrogen fugitive emissions reporting...")
-    dfs = run_h2_reporting(rep, scenario.model, scenario.scenario)
-
-    print("Concatenating results...")
-    py_df = pyam.concat(dfs)
+    print("Running hydrogen reporting (production + emissions)...")
+    py_df = run_h2_reporting(rep, scenario.model, scenario.scenario, add_world=True)
 
     print(f"Saving report to '{output_path}'...")
     try:

@@ -30,6 +30,9 @@ def pyam_df_from_rep(
     }
     rep.set_filters(**filters_dict)
     df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l"))
+
+    # Use join to merge data - this allows partial index matching
+    # (e.g. emissions only need t,m but output needs t,m,c,l)
     df = (
         df_var.join(mapping_df[["iamc_name", "unit"]])
         .dropna()
@@ -93,7 +96,10 @@ def load_config(name: str) -> "Config":
     """
     return Config.from_files(name)
 
-def run_h2_fgt_reporting(rep: Reporter, model_name: str, scen_name: str) -> pyam.IamDataFrame:
+
+def run_h2_fgt_reporting(
+    rep: Reporter, model_name: str, scen_name: str
+) -> pyam.IamDataFrame:
     """Generate reporting for industry hydrogen fugitive emissions."""
     var = "h2_fgt_emi"
     config = load_config(var)
@@ -103,7 +109,10 @@ def run_h2_fgt_reporting(rep: Reporter, model_name: str, scen_name: str) -> pyam
     )
     return py_df
 
-def run_lh2_fgt_reporting(rep: Reporter, model_name: str, scen_name: str) -> pyam.IamDataFrame:
+
+def run_lh2_fgt_reporting(
+    rep: Reporter, model_name: str, scen_name: str
+) -> pyam.IamDataFrame:
     """Generate reporting for industry liquefied hydrogen fugitive emissions."""
     var = "lh2_fgt_emi"
     config = load_config(var)
@@ -113,12 +122,59 @@ def run_lh2_fgt_reporting(rep: Reporter, model_name: str, scen_name: str) -> pya
     )
     return py_df
 
-def run_h2_reporting(
+
+def run_h2_prod_reporting(
     rep: Reporter, model_name: str, scen_name: str
-) -> List[pyam.IamDataFrame]:
-    """Generate all hydrogen reporting variables for a given scenario."""
+) -> pyam.IamDataFrame:
+    """Generate reporting for hydrogen production."""
+    var = "h2_prod"
+    config = load_config(var)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    py_df = format_reporting_df(
+        df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
+    )
+    return py_df
+
+
+def run_h2_reporting(
+    rep: Reporter, model_name: str, scen_name: str, add_world: bool = True
+) -> pyam.IamDataFrame:
+    """Generate all hydrogen reporting variables for a given scenario.
+
+    This includes:
+    - Hydrogen production by technology and fuel type
+    - H2 fugitive emissions across the supply chain
+    - LH2 fugitive emissions
+
+    All variables include aggregated totals as defined in the reporting configuration files.
+
+    Parameters
+    ----------
+    rep
+        message_ix.Reporter to query
+    model_name
+        Name of the model
+    scen_name
+        Name of the scenario
+    add_world
+        If True, add World region as sum of all regions (default: True)
+
+    Returns
+    -------
+    pyam.IamDataFrame
+        Combined dataframe with all hydrogen reporting variables
+    """
     dfs = [
+        run_h2_prod_reporting(rep, model_name, scen_name),
         run_h2_fgt_reporting(rep, model_name, scen_name),
         run_lh2_fgt_reporting(rep, model_name, scen_name),
     ]
-    return dfs
+
+    # Concatenate all dataframes
+    py_df = pyam.concat(dfs)
+
+    # Add World region as sum of all other regions
+    if add_world:
+        py_df.aggregate_region(py_df.variable, region="World", append=True)
+
+    return py_df
