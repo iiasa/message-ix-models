@@ -165,3 +165,4 @@ message_ix_models/data/ssp/0000000000000-ssp_basic_drivers_release_3.2.beta_full
 message_ix_models/data/ssp/SspDb_compare_regions_2013-06-12.csv.zip
 .gitignore
 message_ix_models/data/ssp/1721734326790-ssp_basic_drivers_release_3.1_full.txt
+*.md
