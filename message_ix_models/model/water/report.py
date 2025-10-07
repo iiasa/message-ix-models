@@ -1239,7 +1239,6 @@ def report(
     ).variable
 
     # Process cooling technologies if enabled
-    # if include_cooling:
     report_iam, cooling_rows = compute_cooling_technologies(report_iam, sc)
 
     # mapping for aggregation
