@@ -4,6 +4,66 @@ What's new
 Next release
 ============
 
+- Improve and extend :doc:`/material/index` (:pull:`418`).
+  See :doc:`version 1.2.0 </material/v1.2.0>` for details.
+- Improve :mod:`.model.transport` (:pull:`392`).
+
+  - New properties :attr:`.transport.Config.code` and
+    :attr:`.transport.Config.label`.
+  - New base class :class:`.MultiFile`
+    to read input data from distinct files according to scenario label.
+  - New :class:`LoadFactorLDV`, replacing :py:`load_factor_ldv`
+    and allowing a distinct file according to scenario label.
+  - Add technology dimension to :data:`.elasticity_f`.
+  - Document :class:`.ScenarioCodeAnnotations`.
+
+- Extend :mod:`.digsy.structure.SCENARIO` (:pull:`392`).
+- :class:`.ItemSchemeEnumType` automatically creates aliases
+  for SDMX item scheme members with "-" in their IDs (:pull:`392`).
+- Expand :doc:`develop` documentation (:pull:`423`)
+  with material previously in :mod:`message_data` docs.
+
+v2025.9.9
+=========
+
+- Improve and extend :doc:`/material/index` (:pull:`395`),
+  specifically :mod:`.material.report`.
+  See :doc:`version 1.2.0 </material/v1.2.0>` for details.
+- Add :mod:`.tools.inter_pipe` for building inter-pipe technologies
+  and UHV transmission systems (:pull:`383`).
+  This includes:
+
+  - :func:`.inter_pipe.generate_bare_sheets` for creating CSV templates
+    that users can fill with techno-economic parameters.
+  - :func:`.inter_pipe.build` for adding inter-pipe technologies to scenarios.
+  - Configuration system with :class:`.inter_pipe.Config`
+    for flexible technology specification.
+  - Test suite in :mod:`.tools.test_inter_pipe`.
+
+- Add :mod:`.project.geidco` module with :file:`run_baseline.py` script
+  for running GEIDCO baseline scenarios with inter-pipe technologies (:pull:`383`).
+
+  See :doc:`project/geidco` for detailed usage instructions.
+- Update documentation for
+  :doc:`project/newpathways` (:pull:`385`).
+
+v2025.8.7
+=========
+
+- Improve and extend :doc:`/material/index` (:pull:`388`),
+  specifically :mod:`.material.data_steel`.
+  See :doc:`/material/v1.2.0` for details.
+- Improve :mod:`.model.transport` (:pull:`380`).
+
+  - Replace :py:`pdt_cap_proj` with :class:`PDT_CAP`.
+  - Update ``IIASA_ECE:CL_TRANSPORT_SCENARIO`` to version 1.2.0:
+
+    - Rename ``EDITS-activity-id`` annotation to ``EDITS-scenario-URN``.
+    - Add ``DIGSY-scenario-URN`` annotation.
+    - Add EDITS MCE and DIGSY scenario identifiers.
+
+  - Add input data for :doc:`/project/digsy` (:issue:`373`), :doc:`/project/edits` (:issue:`384`).
+
 - Improve :mod:`.tools.costs` for |ssp-scenariomip| (:pull:`378`).
 
   - :attr:`Config.module <.tools.costs.Config.module>` is no longer a :class:`str`
@@ -14,7 +74,30 @@ Next release
   - New submodule :mod:`.tools.costs.scenario` for TODO COMPLETE.
   - Update costs data.
 
+- Improve :mod:`.project.ssp.transport` (:pull:`389`, :issue:`387`):
+
+  - Adjust total transportation emissions using base-period shares of aviation in liquid final energy.
+  - Modify data for variable=“Emissions|*|Energy|Demand” and further totals.
+  - Drop year=2020 modification added in :pull:`355`.
+
 - Add 23 technologies used in |ssp-scenariomip| to :ref:`technology-yaml` (:pull:`378`).
+
+Water/Nexus
+-----------
+
+- Update :doc:`/water/index` with unit standardization from km³
+  to 10⁶ m³ (million cubic metres, or MCM) and model size reduction (:pull:`371`).
+- Deactivate share calibration constraints for cooling water technologies (:pull:`371`).
+- Fix excess vintage activity year generation in :mod:`.water.utils` to reduce model size (:pull:`371`).
+- Improve :mod:`.water.data` (:pull:`371`):
+
+  - Add missing :file:`basins_country_R12.csv` data file.
+  - Convert Excel data files to CSV format and add/improve test coverage.
+
+- Improve :mod:`.water.data.infrastructure` (:pull:`371`):
+
+  - Add missing electricity input units for water technologies.
+  - Fix incorrect data for desalination projected capacity.
 
 v2025.7.23
 ==========
@@ -52,7 +135,7 @@ Base model and variants
   - Update input data for :data:`.act_non_ldv`,
     :data:`.activity_freight`,
     :data:`.elasticity_f`,
-    :data:`.load_factor_ldv`,
+    :py:`load_factor_ldv`,
     passenger mode share,
     :data:`.pdt_cap`,
     :data:`.pdt_cap_ref`, and
@@ -216,7 +299,7 @@ Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`, :pull:`32
   :data:`.speed`.
 - Add LED-specific parametrization for :data:`.activity_ldv`,
   :data:`.lifetime_ldv`,
-  :data:`.load_factor_ldv`, and
+  :py:`load_factor_ldv`, and
   :data:`.pdt_cap_proj`.
 - Drop :file:`base-scenario-url.json`; store base scenario URLs in :ref:`CL_TRANSPORT_SCENARIO`.
 - Generate SDMX-ML structural metadata, including data flow definitions, and SDMX-{CSV,ML} data outputs for certain reported quantities.

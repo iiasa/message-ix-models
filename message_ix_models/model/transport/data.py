@@ -4,6 +4,7 @@ See :ref:`transport-data-files` for documentation of the input data flows.
 """
 
 import logging
+import re
 from collections import defaultdict
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
@@ -34,11 +35,15 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.sdmx import DATAFLOW, STORE, Dataflow
 
+from .util import EXTRAPOLATE
+
 if TYPE_CHECKING:
     import sdmx.message
     import sdmx.model.common
     from genno.types import AnyQuantity
     from sdmx.model.v21 import Code
+
+    from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -231,6 +236,123 @@ class MERtoPPP(MaybeAdaptR11Source):
     id = "transport MERtoPPP"
     measures = {"MERtoPPP"}
     filename = {"MERtoPPP": "mer-to-ppp.csv"}
+
+
+class MultiFile(ExoDataSource):
+    """Source that locates a file within a directory based on a scenario label.
+
+    This source locates data in files named, for instance,
+    :file:`message_ix_models/data/transport/{nodes}/{dirname}/{scenario}.csv`.
+    """
+
+    @dataclass
+    class Options(BaseOptions):
+        #: Transport configuration.
+        config: Optional["Config"] = None
+
+        #: ID of the node code list.
+        nodes: str = ""
+
+    options: Options
+
+    #: Subdirectory of :file:`message_ix_models/data/transport/{nodes}` containing data
+    #: files.
+    dirname: str = ""
+
+    units: str
+
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = package_data_path(
+            "transport", opt.nodes, self.dirname, self.filename
+        )
+        msg = f"{type(self).__name__} data from {self.path}"
+        if self.path.exists():
+            log.info(msg)
+        else:
+            raise FileNotFoundError(msg)
+
+    def get(self) -> "AnyQuantity":
+        from genno.operator import load_file
+
+        return load_file(
+            self.path, dims=RENAME_DIMS, name=self.key.name, units=self.units
+        )
+
+    @property
+    def filename(self) -> str:
+        """Subclasses **must** implement this method to construct a file name."""
+        raise NotImplementedError
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:  # pragma: no cover
+        c.add(self.key, base_key)
+        return self.key
+
+
+class LoadFactorLDV(MultiFile):
+    """Load factor (occupancy) of LDVs.
+
+    This source locates data in files named, for instance,
+    :file:`message_ix_models/data/transport/{nodes}/load-factor-ldv/{scenario}.csv`.
+
+    Units are implicitly passengers per vehicle.
+    """
+
+    key = Key("load factor ldv:n-y:exo")
+
+    dirname = "load-factor-ldv"
+    units = "dimensionless"
+
+    @property
+    def filename(self) -> str:
+        assert self.options.config
+        label = self.options.config.label
+        for pattern, repl in (
+            # For DIGSY…C, use the respective SSP
+            ("^DIGSY-.*-C$", str(self.options.config.ssp)),
+            ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED'
+            (r"\.", "_"),  # "SSP_2024.1" → "SSP_2024_1"
+        ):
+            label = re.sub(pattern, repl, label)
+        return label + ".csv"
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        from . import factor
+
+        # Interpolate on "y" dimension
+        c.add(self.key[0], "interpolate", base_key, "y::coords", **EXTRAPOLATE)
+
+        # Insert a scaling factor that varies according to SSP
+        c.apply(factor.insert, self.key[0], name="ldv load factor", target=self.key)
+        return self.key
+
+
+class PDT_CAP(MultiFile):
+    """Projected passenger-distance traveled (PDT) per capita.
+
+    This source locates data in files named, for instance,
+    :file:`message_ix_models/data/transport/{nodes}/pdt-cap/{scenario}.csv`.
+    """
+
+    dirname = "pdt-cap"
+    key = Key("P activity:n-t-y:exo")
+    units = "km / year"
+
+    @property
+    def filename(self) -> str:
+        assert self.options.config
+        return re.sub("^(LED)-SSP.$", r"\1", self.options.config.label) + ".csv"
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        from .key import pdt_nyt, pop
+
+        # This is the key used by subsequent steps in demand.py
+        target = pdt_nyt[0]
+
+        # Multiply by population for the total
+        c.add(target, "mul", base_key, pop)
+
+        return target
 
 
 def collect_structures() -> "sdmx.message.StructureMessage":
@@ -578,7 +700,7 @@ demand_scale = _input_dataflow(
 )
 
 elasticity_f = _input_dataflow(
-    key="elasticity:scenario-n-y:F+exo",
+    key="elasticity:scenario-n-t-y:F+exo",
     id="elasticity_f",
     path="elasticity-f",
     name="‘Elasticity’ of freight activity with respect to GDP(PPP)",
@@ -706,13 +828,6 @@ years for driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.""
     units="year",
 )
 
-load_factor_ldv = _input_dataflow(
-    key="load factor ldv:scenario-n-y:exo",
-    name="Load factor (occupancy) of LDVs",
-    description="""Units are implicitly passengers per vehicle.""",
-    units="dimensionless",
-)
-
 load_factor_nonldv = _input_dataflow(
     key="load factor nonldv:t:exo",
     name="Load factor (occupancy) of non-LDV passenger vehicles",
@@ -731,14 +846,6 @@ mode_share_freight = _input_dataflow(
     path="freight-mode-share-ref",
     name="Mode shares of freight activity in the model base period",
     units="dimensionless",
-)
-
-pdt_cap_proj = _input_dataflow(
-    key="P activity:scenario-n-t-y:exo",
-    path="pdt-cap",
-    name="Projected passenger-distance travelled (PDT) per capita",
-    units="km / year",
-    required=False,
 )
 
 pdt_cap_ref = _input_dataflow(

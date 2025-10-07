@@ -1,5 +1,7 @@
 import logging
+from collections.abc import Iterator
 from copy import copy
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import genno
@@ -8,6 +10,7 @@ import pytest
 from iam_units import registry
 from pytest import mark, param
 
+from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import (
     Config,
@@ -22,6 +25,7 @@ from message_ix_models.model.transport import (
     report,
     structure,
 )
+from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.model.transport.testing import (
     MARK,
     assert_units,
@@ -42,6 +46,8 @@ from message_ix_models.testing.check import (
 )
 
 if TYPE_CHECKING:
+    from sdmx.model.common import Code
+
     from message_ix_models.testing.check import Check
     from message_ix_models.types import KeyLike
 
@@ -262,13 +268,18 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
 def N_node(request) -> int:
     """Expected number of nodes, by introspection of other parameter values."""
     if "build_kw" in request.fixturenames:
-        build_kw = request.getfixturevalue("build_kw")
+        regions = request.getfixturevalue("build_kw")["regions"]
+    elif "regions" in request.fixturenames:
+        regions = request.getfixturevalue("regions")
 
-        # NB This could also be done by len(.model.structure.get_codelist(…)), but hard-
-        #    coding is probably a little faster
-        return {"ISR": 1, "R11": 11, "R12": 12, "R14": 14}[build_kw["regions"]]
-    else:
-        raise NotImplementedError
+    # NB This could also be done by len(.model.structure.get_codelist(…)), but hard-
+    #    coding is probably a little faster
+    return {"ISR": 1, "R11": 11, "R12": 12, "R14": 14}[regions]
+
+
+@pytest.fixture(scope="session")
+def scenario_code() -> Iterator["Code"]:
+    return get_cl_scenario()["SSP2"]
 
 
 @MARK[10]
@@ -313,8 +324,16 @@ def N_node(request) -> int:
     ],
 )
 def test_bare_res(
-    request, tmp_path, test_context, regions, years, dummy_LDV: bool, nonldv, solve
-):
+    request: "pytest.FixtureRequest",
+    tmp_path: "Path",
+    test_context: "Context",
+    scenario_code: "Code",
+    regions: str,
+    years: str,
+    dummy_LDV: bool,
+    nonldv: str,
+    solve: bool,
+) -> None:
     """.transport.build() works on the bare RES, and the model solves."""
     # Generate the relevant bare RES
     ctx = test_context
@@ -323,6 +342,7 @@ def test_bare_res(
 
     # Build succeeds without error
     options = {
+        "code": scenario_code,
         "data source": {"non-LDV": nonldv},
         "dummy_LDV": dummy_LDV,
         "dummy_supply": True,
@@ -345,22 +365,31 @@ def test_bare_res(
 @build.get_computer.minimum_version
 @MARK[10]
 @pytest.mark.parametrize(
-    "build_kw",
+    "regions, years, options",
     (
         # commented: Reduce runtimes of GitHub Actions jobs
-        # dict(regions="R11", years="A"),
-        # dict(regions="R11", years="B"),
-        # dict(regions="R11", years="B", options=dict(futures_scenario="A---")),
-        # dict(regions="R11", years="B", options=dict(futures_scenario="debug")),
-        dict(regions="R12", years="B"),
-        # dict(regions="R12", years="B", options=dict(navigate_scenario="act+ele+tec")),
-        dict(regions="R12", years="B", options=dict(project={"LED": True})),
-        # param(dict(regions="R14", years="B"), marks=MARK[9]),
-        # param(dict(regions="ISR", years="A"), marks=MARK[3]),
+        # ("R11", "A", {}),
+        # ("R11", "B", {}),
+        # ("R11", "B", dict(futures_scenario="A---")),
+        # ("R11", "B", dict(futures_scenario="debug")),
+        ("R12", "B", dict(code="SSP2")),
+        # ("R12", "B", dict(navigate_scenario="act+ele+tec")),
+        ("R12", "B", dict(code="LED-SSP2")),
+        ("R12", "B", dict(code="EDITS-CA")),
+        ("R12", "B", dict(code="DIGSY-BEST-C")),
+        # param("R14", "B", {}, marks=MARK[9]),
+        # param("ISR", "A", {}, marks=MARK[3]),
     ),
 )
 def test_debug(
-    test_context, tmp_path, build_kw, N_node, *, verbosity: Literal[0, 1, 2, 3] = 0
+    test_context: Context,
+    tmp_path: Path,
+    regions: str,
+    years: str,
+    options: dict,
+    N_node: int,
+    *,
+    verbosity: Literal[0, 1, 2, 3] = 0,
 ):
     """Check and debug particular steps in the transport build process.
 
@@ -378,7 +407,9 @@ def test_debug(
         Passed to :func:`.verbose_check`.
     """
     # Get a Computer prepared to build the model with the given options
-    c, info = configure_build(test_context, tmp_path=tmp_path, **build_kw)
+    c, info = configure_build(
+        test_context, regions=regions, years=years, tmp_path=tmp_path, options=options
+    )
 
     # Modify CHECKS according to the settings
     checks = CHECKS.copy()

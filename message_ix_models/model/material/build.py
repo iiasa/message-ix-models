@@ -3,40 +3,41 @@ from collections.abc import Mapping
 from typing import Any, Optional
 
 import message_ix
-import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.build import apply_spec
 from message_ix_models.model.material.data_aluminum import gen_data_aluminum
-from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
+from message_ix_models.model.material.data_ammonia import gen_all_NH3_fert
 from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol import gen_data_methanol
+from message_ix_models.model.material.data_other_industry import (
+    gen_other_ind_demands,
+    get_hist_act,
+    modify_demand_and_hist_activity,
+)
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
 from message_ix_models.model.material.data_steel import gen_data_steel
 from message_ix_models.model.material.data_util import (
-    add_ccs_technologies,
-    add_cement_bounds_2020,
-    add_coal_lowerbound_2020,
-    add_elec_i_ini_act,
-    add_elec_lowerbound_2020,
+    add_cement_ccs_co2_tr_relation,
     add_emission_accounting,
-    add_new_ind_hist_act,
-    modify_baseyear_bounds,
-    modify_demand_and_hist_activity,
-    modify_industry_demand,
+    add_water_par_data,
+    calibrate_for_SSPs,
 )
-from message_ix_models.model.material.util import path_fallback, read_config
+from message_ix_models.model.material.share_constraints import (
+    add_industry_coal_shr_constraint,
+    get_ssp_low_temp_shr_up,
+)
+from message_ix_models.model.material.util import (
+    get_ssp_from_context,
+    path_fallback,
+    read_config,
+)
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import (
     add_par_data,
-    identify_nodes,
     load_package_data,
     package_data_path,
-)
-from message_ix_models.util.compat.message_data import (
-    calibrate_UE_gr_to_demand,
-    calibrate_UE_share_constraints,
 )
 from message_ix_models.util.compat.message_data import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
@@ -71,7 +72,6 @@ SPEC_LIST = (
 )
 
 
-# Try to handle multiple data input functions from different materials
 def add_data(scenario: message_ix.Scenario, dry_run: bool = False) -> None:
     """Populate `scenario` with MESSAGEix-Materials data."""
     # Information about `scenario`
@@ -109,74 +109,71 @@ def build(
     spec = make_spec(node_suffix)
     apply_spec(scenario, spec, add_data, fast=True)  # dry_run=True
 
-    water_dict = pd.read_excel(
-        package_data_path("material", "other", "water_tec_pars.xlsx"),
-        sheet_name=None,
-    )
-    scenario.check_out()
-    for par in water_dict.keys():
-        scenario.add_par(par, water_dict[par])
-    scenario.commit("add missing water tecs")
+    add_water_par_data(scenario)
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
-    add_ccs_technologies(scenario)
     if old_calib:
         modify_demand_and_hist_activity(scenario)
     else:
-        modify_baseyear_bounds(scenario)
-        last_hist_year = scenario.par("historical_activity")["year_act"].max()
-        modify_industry_demand(scenario, last_hist_year, iea_data_path)
-        add_new_ind_hist_act(scenario, [last_hist_year], iea_data_path)
-        add_emission_accounting(scenario)
+        scenario.check_out()
+        for k, v in gen_other_ind_demands(get_ssp_from_context(context)).items():
+            scenario.add_par(
+                "demand",
+                v[
+                    v["year"].isin(
+                        scenario.vintage_and_active_years()["year_act"].unique()
+                    )
+                ],
+            )
+        scenario.commit("add new other industry demands")
+        # overwrite non-Materials industry technology calibration
+        calib_data = get_hist_act(
+            scenario, [1990, 1995, 2000, 2010, 2015, 2020], use_cached=True
+        )
+        scenario.check_out()
+        for k, v in calib_data.items():
+            scenario.add_par(k, v)
+        scenario.commit("new calibration of other industry")
+
+    add_emission_accounting(scenario)
+    add_cement_ccs_co2_tr_relation(scenario)
 
     if modify_existing_constraints:
-        calibrate_existing_constraints(scenario)
-
+        calibrate_existing_constraints(context, scenario, iea_data_path)
     return scenario
 
 
-def calibrate_existing_constraints(scenario: message_ix.Scenario):
+def calibrate_existing_constraints(
+    context, scenario: message_ix.Scenario, iea_data_path: str
+):
     if "SSP_dev" not in scenario.model:
         engage_updates._correct_balance_td_efficiencies(scenario)
         engage_updates._correct_coal_ppl_u_efficiencies(scenario)
         engage_updates._correct_td_co2cc_emissions(scenario)
 
-    from message_ix_models import ScenarioInfo
-
-    s_info = ScenarioInfo(scenario)
-    nodes = s_info.N
-
-    add_coal_lowerbound_2020(scenario)
-    add_cement_bounds_2020(scenario)
+    # add_coal_lowerbound_2020(scenario)
+    # add_cement_bounds_2020(scenario)
 
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration
     # levels for the end-use technologies.
     # FIXME: context.ssp only works for SSP1/2/3 currently missing SSP4/5
-    calibrate_UE_gr_to_demand(
-        scenario,
-        s_info,
-        data_path=package_data_path("material"),
-        ssp="SSP2",
-        region=identify_nodes(scenario),
-    )
-    calibrate_UE_share_constraints(scenario, s_info)
 
-    # Electricity calibration to avoid zero prices for CHN.
-    if "R12_CHN" in nodes:
-        add_elec_lowerbound_2020(scenario)
+    calibrate_for_SSPs(scenario)
 
-    df = scenario.par(
-        "bound_activity_lo",
-        filters={"node_loc": "R12_RCPA", "technology": "sp_el_I", "year_act": 2020},
-    )
+    # add share constraint for coal_i based on 2020 IEA data
+    add_industry_coal_shr_constraint(scenario)
+
+    # update low temp heat share constraint
     scenario.check_out()
-    scenario.remove_par("bound_activity_lo", df)
-    scenario.commit("remove sp_el_I min bound on RCPA in 2020")
-
-    add_elec_i_ini_act(scenario)
+    scenario.add_par(
+        "share_commodity_up",
+        get_ssp_low_temp_shr_up(ScenarioInfo(scenario), get_ssp_from_context(context)),
+    )
+    scenario.commit("adjust low temp heat share constraint")
+    return scenario
 
     # remove scrap constraint for aluminum recycling in base year
     df_scrap_inp = scenario.par(

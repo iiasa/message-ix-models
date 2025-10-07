@@ -1,20 +1,41 @@
-from collections import defaultdict
-from typing import Union
+"""
+Data and parameter generation for the petrochemicals sector in MESSAGEix models.
 
-import message_ix
+This module provides functions to read, process, and generate parameter data
+for petrochemical technologies, demand, trade, emissions, and related constraints.
+"""
+
+from collections import defaultdict
+from typing import TYPE_CHECKING, Union
+
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_timeseries
-from message_ix_models.model.material.material_demand import material_demand_calc
-from message_ix_models.model.material.util import get_ssp_from_context, read_config
+from message_ix_models.model.material.data_util import (
+    gen_chemicals_co2_ind_factors,
+    gen_ethanol_to_ethylene_emi_factor,
+    gen_plastics_emission_factors,
+    read_timeseries,
+)
+from message_ix_models.model.material.demand import gen_demand_petro
+from message_ix_models.model.material.util import (
+    get_ssp_from_context,
+    read_config,
+)
 from message_ix_models.util import (
     broadcast,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
 )
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
+
+    from message_ix_models.types import ParameterData
+    from message_ix_models.util import Context
 
 ssp_mode_map = {
     "SSP1": "CTS core",
@@ -33,34 +54,47 @@ iea_elasticity_map = {
 }
 
 
-def read_data_petrochemicals(scenario: message_ix.Scenario) -> pd.DataFrame:
-    """Read and clean data from :file:`petrochemicals_techno_economic.xlsx`."""
+def read_data_petrochemicals(fname) -> pd.DataFrame:
+    """Read and clean data from the petrochemicals techno-economic files.
 
-    # Ensure config is loaded, get the context
-    s_info = ScenarioInfo(scenario)
-    fname = "petrochemicals_techno_economic.xlsx"
-
-    if "R12_CHN" in s_info.N:
-        sheet_n = "data_R12"
-    else:
-        sheet_n = "data_R11"
-
+    Returns
+    -------
+    pd.DataFrame
+        Cleaned techno-economic data for petrochemicals.
+    """
     # Read the file
-    data_petro = pd.read_excel(
-        package_data_path("material", "petrochemicals", fname), sheet_name=sheet_n
+    data_petro = pd.read_csv(
+        package_data_path("material", "petrochemicals", f"data{fname}.csv")
     )
     # Clean the data
-
     data_petro = data_petro.drop(["Source", "Description"], axis=1)
-
     return data_petro
 
 
 def gen_mock_demand_petro(
-    scenario: message_ix.Scenario,
+    scenario: "Scenario",
     gdp_elasticity_2020: float,
     gdp_elasticity_2030: float,
 ) -> pd.DataFrame:
+    """Generate petrochemicals demand time series for MESSAGEix regions using GDP
+    elasticities.
+
+    TODO: Remove this function since a copy was moved to demand.
+
+    Parameters
+    ----------
+    scenario :
+        Scenario instance to build demand on.
+    gdp_elasticity_2020 :
+        GDP elasticity for years before 2030.
+    gdp_elasticity_2030 :
+        GDP elasticity for years from 2030 onward.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with demand for petrochemicals by region and year.
+    """
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y
     fy = scenario.firstmodelyear
@@ -97,30 +131,7 @@ def gen_mock_demand_petro(
         .sort_index()
     )
 
-    # 2018 production
-    # Use as 2020
-    # The Future of Petrochemicals Methodological Annex
-    # Projections here do not show too much growth until 2050 for some regions.
-    # For division of some regions assumptions made:
-    # PAO, PAS, SAS, EEU,WEU
-    # For R12: China and CPA demand divided by 0.1 and 0.9.
-    # SSP2 R11 baseline GDP projection
-    # The orders of the regions
-    # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
-    #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
-
-    # if "R12_CHN" in nodes:
-    #     nodes.remove("R12_GLB")
-    #     dem_2020 = np.array([2.4, 0.44, 3, 5, 11, 40.3, 49.8, 11,
-    #     37.5, 10.7, 29.2, 50.5])
-    #     dem_2020 = pd.Series(dem_2020)
-    #
-    # else:
-    #     nodes.remove("R11_GLB")
-    #     dem_2020 = np.array([2, 75, 30, 4, 11, 42, 60, 32, 30, 29, 35])
-    #     dem_2020 = pd.Series(dem_2020)
-
-    from message_ix_models.model.material.material_demand.material_demand_calc import (
+    from message_ix_models.model.material.demand.__init__ import (
         read_base_demand,
     )
 
@@ -168,6 +179,19 @@ def gen_mock_demand_petro(
 def gen_data_petro_ts(
     data_petro_ts: pd.DataFrame, results: dict[list], tec_ts: set[str], nodes: list[str]
 ) -> None:
+    """Generate time-series parameter data for petrochemical technologies.
+
+    Parameters
+    ----------
+    data_petro_ts :
+        DataFrame with time-series parameter data.
+    results :
+        Dictionary to collect parameter DataFrames.
+    tec_ts :
+        Set of technology names.
+    nodes :
+        List of model nodes.
+    """
     for t in tec_ts:
         common = dict(
             time="year",
@@ -184,11 +208,6 @@ def gen_data_petro_ts(
                 (data_petro_ts["technology"] == t) & (data_petro_ts["parameter"] == p),
                 "value",
             ]
-            # units = data_petro_ts.loc[
-            #     (data_petro_ts["technology"] == t) &
-            #     (data_petro_ts["parameter"] == p),
-            #     "units",
-            # ].values[0]
             mod = data_petro_ts.loc[
                 (data_petro_ts["technology"] == t) & (data_petro_ts["parameter"] == p),
                 "mode",
@@ -241,6 +260,29 @@ def assign_input_outpt(
     common: dict,
     nodes: list[str],
 ) -> pd.DataFrame:
+    """Assign input/output parameters for petrochemical technologies.
+
+    Parameters
+    ----------
+    split :
+        Split parameter name.
+    param_name :
+        Parameter name.
+    regions :
+        Regions for the parameter.
+    val :
+        Parameter values.
+    t :
+        Technology name.
+    rg :
+        Region name
+    global_region :
+        Name of the global region.
+    common :
+        Common parameter dictionary.
+    nodes :
+        Model nodes.
+    """
     com = split[1]
     lev = split[2]
     mod = split[3]
@@ -286,55 +328,47 @@ def assign_input_outpt(
 
     # Copy parameters to all regions, when node_loc is not GLB
     if (len(regions) == 1) and (rg != global_region):
-        # print("copying to all R11", rg, lev)
         df["node_loc"] = None
-        df = df.pipe(broadcast, node_loc=nodes)  # .pipe(same_node)
-        # Use same_node only for non-trade technologies
+        df = df.pipe(broadcast, node_loc=nodes)
         if (lev != "import") and (lev != "export"):
             df = df.pipe(same_node)
     return df
 
 
 def broadcast_to_regions(df: pd.DataFrame, global_region: str, nodes: list[str]):
+    """Broadcast a DataFrame to all regions if node_loc is not the global region.
+
+    Parameters
+    ----------
+    df :
+        DataFrame to broadcast regions.
+    global_region :
+        Name of the global region.
+    nodes :
+        List of model nodes.
+    """
     if "node_loc" in df.columns:
         if (
             len(set(df["node_loc"])) == 1
             and list(set(df["node_loc"]))[0] != global_region
         ):
-            # print("Copying to all R11")
             df["node_loc"] = None
             df = df.pipe(broadcast, node_loc=nodes)
     return df
 
 
-def gen_data_petro_chemicals(
-    scenario: message_ix.Scenario, dry_run: bool = False
-) -> dict[str, pd.DataFrame]:
-    # Load configuration
-    context = read_config()
-    config = context["material"]["petro_chemicals"]
-    ssp = get_ssp_from_context(context)
-    # Information about scenario, e.g. node, year
-    s_info = ScenarioInfo(scenario)
-
-    # Techno-economic assumptions
-    data_petro = read_data_petrochemicals(scenario)
-    data_petro_ts = read_timeseries(
-        scenario, "petrochemicals", None, "petrochemicals_techno_economic.xlsx"
-    )
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
-
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    nodes = nodes_ex_world(s_info.N)
-    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
-    yv_ya = s_info.yv_ya
-
+def format_par_data(
+    config: "Context",
+    data_petro: pd.DataFrame,
+    results: dict,
+    yv_ya: pd.DataFrame,
+    modelyears: list[int],
+    nodes: list[str],
+    global_region: str,
+):
     for t in config["technology"]["add"]:
-        t = t.id
+        # Retrieve the id if `t` is a Code instance; otherwise use str
+        t = getattr(t, "id", t)
         # years = s_info.Y
         params = data_petro.loc[(data_petro["technology"] == t), "parameter"].unique()
 
@@ -460,6 +494,51 @@ def gen_data_petro_chemicals(
 
                 results[param_name].append(df)
 
+
+def gen_data_petro_chemicals(
+    scenario: "Scenario", dry_run: bool = False
+) -> "ParameterData":
+    """Generate all MESSAGEix parameter data for the petrochemicals sector.
+
+    Parameters
+    ----------
+    scenario :
+        Scenario instance to build petrochemicals model on.
+    dry_run :
+        *Not used, but kept for compatibility.*
+    """
+    # Load configuration
+    context = read_config()
+    config = context["material"]["petro_chemicals"]
+    ssp = get_ssp_from_context(context)
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    if "R12_CHN" in s_info.N:
+        fname_suffix = "_R12"
+    else:
+        fname_suffix = "_R11"
+
+    # Techno-economic assumptions
+    data_petro = read_data_petrochemicals(fname_suffix)
+    data_petro_ts = read_timeseries(
+        scenario, "petrochemicals", None, f"timeseries{fname_suffix}.csv"
+    )
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+    yv_ya = s_info.yv_ya
+
+    format_par_data(
+        config, data_petro, results, yv_ya, modelyears, nodes, global_region
+    )
+
     share_dict = {
         "shares": "steam_cracker",
         "node_share": ["R12_MEA", "R12_NAM"],
@@ -475,10 +554,15 @@ def gen_data_petro_chemicals(
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
         ssp_mode_map[ssp]
     ]
-    demand_hvc = material_demand_calc.gen_demand_petro(
+    df_demand = gen_demand_petro(
         scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
-    results["demand"].append(demand_hvc)
+    df_2025 = pd.read_csv(
+        package_data_path("material", "petrochemicals", "demand_2025.csv")
+    )
+    df_demand = df_demand[df_demand["year"] != 2025]
+    df_demand = pd.concat([df_2025, df_demand])
+    results["demand"].append(df_demand)
 
     # Special treatment for time-varying params
     tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
@@ -545,6 +629,17 @@ def gen_data_petro_chemicals(
     df["technology"] = "gas_processing_petro"
     results["relation_activity"] = df
 
+    meth_downstream_emi_top_down = gen_plastics_emission_factors(s_info, "HVCs")
+    meth_downstream_emi_bot_up = gen_chemicals_co2_ind_factors(s_info, "HVCs")
+    meth_downstream_emi_eth = gen_ethanol_to_ethylene_emi_factor(s_info)
+
+    merge_data(
+        results,
+        meth_downstream_emi_top_down,
+        meth_downstream_emi_bot_up,
+        meth_downstream_emi_eth,
+    )
+
     # TODO: move this to input xlsx file
     df_gro = results["growth_activity_up"]
     drop_idx = df_gro[
@@ -553,4 +648,11 @@ def gen_data_petro_chemicals(
         & (df_gro["year_act"] == 2020)
     ].index
     results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
-    return results
+
+    reduced_pdict = {}
+    for k, v in results.items():
+        if set(["year_act", "year_vtg"]).issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 40]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+
+    return reduced_pdict

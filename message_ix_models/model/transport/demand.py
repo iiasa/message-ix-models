@@ -13,6 +13,7 @@ from message_ix_models.report.key import GDP
 from message_ix_models.util import broadcast
 
 from . import factor
+from .data import PDT_CAP
 from .key import (
     cg,
     cost,
@@ -293,7 +294,8 @@ def prepare_computer(c: "Computer") -> None:
     --------
     TASKS
     """
-    config: "Config" = c.graph["context"].transport
+    context = c.graph["context"]
+    config: "Config" = context.transport
 
     # Compute total PDT per capita
     c.apply(pdt_per_capita)
@@ -304,13 +306,12 @@ def prepare_computer(c: "Computer") -> None:
     # Add other tasks for demand calculation
     c.add_queue(TASKS)
 
-    if config.project.get("LED", False):
+    try:
         # Replace certain calculations for LED projected activity
-
-        # Select data from input file: projected PDT per capita
-        c.add(pdt_cap * "t", "select", exo.pdt_cap_proj, indexers=dict(scenario="LED"))
-
-        # Multiply by population for the total
-        c.add(pdt_nyt[0], "mul", pdt_cap * "t", pop)
+        PDT_CAP.add_tasks(
+            c, context=context, strict=False, nodes=context.model.regions, config=config
+        )
+    except FileNotFoundError:
+        log.info(f"No exogenous PDT_CAP data for scenario label {config.label!r}")
 
     c.add("transport_data", __name__, key="transport demand::ixmp")

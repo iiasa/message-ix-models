@@ -1,7 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from message_ix import make_df
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
+from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
@@ -17,6 +18,8 @@ from message_ix_models.util import (
     same_node,
 )
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
 log = logging.getLogger(__name__)
 
 
@@ -285,7 +288,6 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
     inp : pd.DataFrame
         The DataFrame representing the "input" parameter.
     context : .Context
-        The general context in which the function is run.
 
     Returns
     -------
@@ -301,10 +303,12 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
     else:
         df = cap_fact["capacity_factor"]
         # reading ppl cooling impact dataframe
-        path = package_data_path(
-            "water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx"
+        file_path = package_data_path(
+            "water",
+            "ppl_cooling_tech",
+            f"power_plant_cooling_impact_MESSAGE_{context.regions}_{context.RCP}.csv",
         )
-        df_impact = pd.read_excel(path, sheet_name=f"{context.regions}_{context.RCP}")
+        df_impact = pd.read_csv(file_path)
 
         for n in df_impact["node"]:
             conditions = [
@@ -333,7 +337,9 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
 
 
 # water & electricity for cooling technologies
-def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
+def cool_tech(
+    context: "Context", scenario: Optional["Scenario"] = None
+) -> dict[str, pd.DataFrame]:
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and
     then cooling fractions are calculated by using the data from
@@ -345,6 +351,8 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     Parameters
     ----------
     context : .Context
+    scenario : .Scenario, optional
+        Scenario to use. If not provided, uses context.get_scenario().
 
     Returns
     -------
@@ -400,7 +408,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         .drop(columns=1)
     )
 
-    scen = context.get_scenario()
+    scen = scenario or context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
@@ -449,15 +457,11 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     input_cool["cooling_fraction"] = input_cool.apply(cooling_fr, axis=1)
 
-    # Converting water withdrawal units to MCM/GWa
+    # Converting water withdrawal units from m^3/GJ to MCM/GWa
     # this refers to activity per cooling requirement (heat)
     input_cool["value_cool"] = (
         input_cool["water_withdrawal_mid_m3_per_output"]
-        * 60
-        * 60
-        * 24
-        * 365
-        * 1e-6  # MCM
+        * m3_GJ_TO_MCM_GWa
         / input_cool["cooling_fraction"]
     )
     # set to 1e-6 if value_cool is negative
@@ -631,7 +635,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
                     value=icfb_df["value_return"],
                     unit="MCM/GWa",
                 )
-                .pipe(broadcast, node_dest=bs, time_dest=sub_time)
+                .pipe(broadcast, node_dest=bs, time_dest=pd.Series(sub_time))
                 .merge(df_sw, how="left")
             )
             # multiply by basin water availability share
@@ -681,26 +685,28 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     cost.drop(columns="share", inplace=True)
     share_long["time"] = "year"
     share_long["unit"] = "-"
-    share_calib = share_long.copy()
-    # Expand for years [2020, 2025]
-    share_calib = share_calib.loc[share_calib.index.repeat(2)].reset_index(drop=True)
-    years_calib = [2020, 2025]
-    share_calib["year_act"] = years_calib * (len(share_calib) // 2)
-    # take year in info.N but not years_calib
-    years_fut = [year for year in info.Y if year not in years_calib]
-    share_fut = share_long.copy()
-    share_fut = share_fut.loc[share_fut.index.repeat(len(years_fut))].reset_index(
-        drop=True
-    )
-    share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
-    # filter only shares that contain "ot_saline"
-    share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
-    # if value < 0.4 set to 0.4, not so allow too much saline where there is no
-    share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
-    # keep only after 2050
-    share_fut = share_fut[share_fut["year_act"] >= 2050]
-    # append share_calib and (share_fut only to add constraints on ot_saline)
-    results["share_commodity_up"] = pd.concat([share_calib])
+    # FIXME : Temporarily commenting out share calib constraints.
+    # Causes 4X size explosion. Likely problematic.
+    # share_calib = share_long.copy()
+    # # Expand for years [2020, 2025]
+    # share_calib = share_calib.loc[share_calib.index.repeat(2)].reset_index(drop=True)
+    # years_calib = [2020, 2025]
+    # share_calib["year_act"] = years_calib * (len(share_calib) // 2)
+    # # take year in info.N but not years_calib
+    # years_fut = [year for year in info.Y if year not in years_calib]
+    # share_fut = share_long.copy()
+    # share_fut = share_fut.loc[share_fut.index.repeat(len(years_fut))].reset_index(
+    #     drop=True
+    # )
+    # share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
+    # # filter only shares that contain "ot_saline"
+    # share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
+    # # if value < 0.4 set to 0.4, not so allow too much saline where there is no
+    # share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
+    # # keep only after 2050
+    # share_fut = share_fut[share_fut["year_act"] >= 2050]
+    # # append share_calib and (share_fut only to add constraints on ot_saline)
+    # results["share_commodity_up"] = pd.concat([share_calib])
 
     # Filtering out 2015 data to use for historical values
     input_cool_2015 = input_cool[
@@ -714,6 +720,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
         log.debug(f"cool_tech() for year '{year}'")
         # Identify missing combinations in the current aggregate
         input_cool_2015_set = set(
+            # FIXME : This should have been a one off script for debugging.
             zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
         )
         missing_combinations = input_cool_set - input_cool_2015_set
@@ -745,6 +752,7 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     # Final check if there are still missing combinations
     input_cool_2015_set = set(
+        # FIXME : This should have been a one off script for debugging.
         zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
     )
     still_missing = input_cool_set - input_cool_2015_set
@@ -966,15 +974,13 @@ def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
 
     if not df_share.empty:
         # pd concat to the existing results["share_commodity_up"]
-        results["share_commodity_up"] = pd.concat(
-            [results["share_commodity_up"], df_share], ignore_index=True
-        )
+        results["share_commodity_up"] = pd.concat([df_share], ignore_index=True)
 
     return results
 
 
 # Water use & electricity for non-cooling technologies
-def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
+def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
     """Process data for water usage of power plants (non-cooling technology related).
     Water withdrawal values for power plants are read in from
     ``tech_water_performance_ssp_msg.csv``
@@ -982,6 +988,8 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
     Parameters
     ----------
     context : .Context
+    scenario : .Scenario, optional
+        Scenario to use. If not provided, uses context.get_scenario().
 
     Returns
     -------
@@ -1010,7 +1018,7 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
         & (df["water_supply_type"] == "freshwater_supply")
     ]
 
-    scen = context.get_scenario()
+    scen = scenario if scenario is not None else context.get_scenario()
     tec_lt = scen.par("technical_lifetime")
     all_tech = list(tec_lt["technology"].unique())
     # all_tech = list(scen.set("technology"))
@@ -1021,13 +1029,8 @@ def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
     non_cool_df = non_cool_df.rename(columns={"technology_name": "technology"})
 
     non_cool_df["value"] = (
-        non_cool_df["water_withdrawal_mid_m3_per_output"]
-        * 60
-        * 60
-        * 24
-        * 365
-        * (1e-6)  # MCM
-    )
+        non_cool_df["water_withdrawal_mid_m3_per_output"] * m3_GJ_TO_MCM_GWa
+    )  # Conversion factor
 
     non_cool_tech = list(non_cool_df["technology"].unique())
 

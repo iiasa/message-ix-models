@@ -1,0 +1,13 @@
+node,commodity,level,year,time,value,unit
+R12_AFR,steel,demand,2025,year,15.754,t
+R12_EEU,steel,demand,2025,year,35.09,t
+R12_FSU,steel,demand,2025,year,55.55,t
+R12_LAM,steel,demand,2025,year,72,t
+R12_MEA,steel,demand,2025,year,75,t
+R12_NAM,steel,demand,2025,year,110,t
+R12_PAO,steel,demand,2025,year,57.78,t
+R12_PAS,steel,demand,2025,year,122.362,t
+R12_SAS,steel,demand,2025,year,155,t
+R12_WEU,steel,demand,2025,year,155,t
+R12_CHN,steel,demand,2025,year,875,t
+R12_RCPA,steel,demand,2025,year,24.16,t

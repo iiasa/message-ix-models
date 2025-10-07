@@ -1,7 +1,7 @@
 Version 1.2.0 (Month X, 2025)
 *****************************
 
-Preview of the Upcoming MESSAGEix-Materials Release
+Preview of the upcoming MESSAGEix-Materials release.
 
 This upcoming release of MESSAGEix-Materials introduces significant enhancements to the current model.
 It features improved calibration and updated parameterization, drawing on the latest statistics and findings from recent literature.
@@ -13,9 +13,31 @@ Model changes
 Iron & steel sector
 -------------------
 
-*To be merged from ssp-dev*
+Revisions & fixes
+~~~~~~~~~~~~~~~~~
+- Added missing relation entries for maximum steel recycling rates
+- Full calibration of the steel sector for 2020 and 2025, including:
 
-Non metallic minerals sector
+  - Historical production and capacity additions for all major steel production technologies.
+  - Historical steel demand.
+- Update of techno-economic input data for several technologies to more recent or accurate literature.
+- Removed water commodity flows due to incompatibility with new MESSAGEix-GLOBIOM-GAINS model structure.
+
+Extensions
+~~~~~~~~~~
+
+- Explicit representation of India-specific DRI technology using rotary coal kilns.
+- :func:`.gen_cokeoven_co2_cc` function added to generate coke oven CO2 emission factors.
+- Added functionality to differentiate steel model parameterization along SSP narratives:
+
+  - :func:`.get_scrap_prep_cost` function added to generate scrap preparation costs.
+  - :func:`.gen_max_recycling_rel` function added to generate maximum recycling rates.
+  - :func:`.gen_grow_cap_up` function added to generate growth constraints for steel CCS capacity.
+  - Use of :doc:`/api/tools-costs` for iron/steel production technologies.
+- New steel projections derived from relationship of macro-economic investment to per capita steel demand.
+- Regionally differentiated scrap availability from steel finishing and manufacturing based on statistics.
+
+Non-metallic minerals sector
 ----------------------------
 
 - Clinker input for cement production is now differentiated by region based on literature data.
@@ -24,19 +46,27 @@ Non metallic minerals sector
 - Growth constraints for clinker CCS capacity are differentiated by SSP.
 - The energy requirement for clinker CCS was adjusted based on recent literature.
 
-Non ferrous metals sector
+Non-ferrous metals sector
 -------------------------
 
-- Trade representation for alumina has been implemented
-- The aluminum has been fixed in 2025 independent of SSP setting
-- The 2020 aluminum demand was slightly revised in some regions
-- The energy intensity of alumina refining was revised and differentiated by region based on IAI data
-- The fuel use for alumina refining in 2020 was calibrated based on IAI data
-- The energy intensity of aluminum smelting was revised and differentiated by region based on IAI data
-- The historical smelting capacity was calibrated based on an accurate global capacity data set
-- The historical smelting and refining activity in 2020 was calibrated based on BGS statistics
-- The maximum recyclable aluminum scrap ratio is now differentiated by SSP
-- The heat requirement and cost for aluminum scrap preparation is now differentiated by SSP
+- Trade representation for alumina has been implemented.
+- The aluminum has been fixed in 2025 independent of SSP setting.
+- The 2020 aluminum demand was slightly revised in some regions.
+- The energy intensity of alumina refining was revised and differentiated by region based on IAI data.
+- The fuel use for alumina refining in 2020 was calibrated based on IAI data.
+- The energy intensity of aluminum smelting was revised and differentiated by region based on IAI data.
+- The historical smelting capacity was calibrated based on an accurate global capacity data set.
+- The historical smelting and refining activity in 2020 was calibrated based on BGS statistics.
+- The maximum recyclable aluminum scrap ratio is now differentiated by SSP.
+- The heat requirement and cost for aluminum scrap preparation is now differentiated by SSP.
+
+Chemicals sector
+----------------
+
+- Functionality added to differentiate chemicals demands by SSP.
+- :func:`.gen_ccs_bounds` function added to generate CCS bounds for ammonia production in 2020 and 2025.
+- :func:`.gen_meth_fs_downstream` function added to generate new technology for methanol downstream use.
+- :func:`.gen_plastics_emission_factors`, :func:`.gen_chemicals_co2_ind_factors` and :func:`.gen_ethanol_to_ethylene_emi_factor` added to generate CO2 emission factors for chemicals.
 
 Power sector
 ------------
@@ -44,12 +74,22 @@ Power sector
 Demand generator
 ----------------
 
-*To be merged from ssp-dev*
+- Added functionality to project material demands based SSP narrative.
+- Added quantile regression option for demand projections.
 
 Other
 -----
 
-*To be merged from ssp-dev*
+- New residual industry demand model based on historical energy intensity trends.
+
+  - Calibrated to IEA energy balances for 2020.
+  - Fixed 2025 technology activity based on 2017-2022 trends.
+  - Added SSP specific projections for other industry energy demand.
+
+- Updated share constraint parametrization for low temperature heat technologies.
+- Added share constraint for coal use in residual industry based on 2020 IEA energy balances.
+- Added non-CO2 emission factors for residual industry technologies based on GAINS data.
+- Added furnaces to GAINS driver ``relation`` `IndThermDemLink`.
 
 CLI changes
 ===========
@@ -59,15 +99,66 @@ CLI changes
 Deprecations
 ============
 
+Model calibration:
+
+Removed:
+
+   - :py:`.modify_demand_and_hist_activity_debug`
+   - :py:`.modify_baseyear_bounds`
+   - :py:`.calc_hist_activity`
+   - :py:`.add_new_ind_hist_act`
+   - :py:`.calc_demand_shares`
+   - :py:`.calc_resid_ind_demand`
+   - :py:`.modify_industry_demand`
+   - :py:`.calc_demand_shares`
+   - :py:`.add_elec_lowerbound_2020`
+   - :py:`.add_coal_lowerbound_2020`
+
+- :py:`.add_ccs_technologies` renamed to :func:`.add_cement_ccs_co2_tr_relation`.
+
+Reporting:
+
+- Functionalities of :mod:`.model.material.report.reporting` replaced by :mod:`.model.material.report.run_reporting`.
+  *Will be removed completely in the future release.*
+
+MACRO calibration:
+
+- :py:`.load_GDP_COVID` removed.
+- :py:`.add_macro_COVID` renamed to :func:`.add_macro_materials`.
+
+Miscellaneous:
+
+-  :py:`.combine_df_dictionaries` replaced by :func:`.merge_data`.
+
 New features
 ============
 
-The following xlsx files have been replaced by multiple csv files for each sheet to facilitate version control and readability:
+- The following xlsx files have been replaced by multiple csv files for each sheet to facilitate version control and readability:
 
-- :file:`aluminum_techno_economic.xlsx`
-- :file:`Global_cement_MESSAGE.xlsx`
+  - :file:`aluminum_techno_economic.xlsx`
+  - :file:`Global_cement_MESSAGE.xlsx`
+  - :file:`Global_steel_MESSAGE.xlsx`
+  - :file:`fert_techno_economic.xlsx`
+  - :file:`nh3_fertilizer_demand.xlsx`
+  - :file:`cost_conv_nh3.xlsx`
 
-The files are currently still available for reference, but will be removed in a future release.
+  The files are currently still available for reference, but will be removed in a future release.
+  :func:`.read_sector_data` and :func:`.read_timeseries` and :func:`.read_rel` was adjusted to read from csv files.
+
+- New post-processing module for the industry sector in :mod:`.model.material.report.run_reporting` providing:
+
+  - More generalized method of post-processing MESSAGEix-Materials results.
+  - Configuration handled through :mod:`.model.material.report.config` YAML files in :file:`material/model/material/reporting/`.
+  - Higher resolution of post-processed results.
+
+- New module to generate share constraints in :mod:`.model.material.share_constraints`.
+- Automatized MACRO calibration input data generation with :func:`.update_macro_calib_file` including data input templates for all SSPs in :file:`data/material/macro/`.
+
+.. note::
+   The MACRO calibration workflow only supports MESSAGEix-GLOBIOM-Materials model with R12 regions.
+   The implementation automates the Excel functions previously used to derive ``price_ref`` and ``cost_ref`` and is not supposed to be a longterm solution.
+   Ultimately, the ``message_ix`` :py:`.add_macro` functionalities should be used once issue `#859 <https://github.com/iiasa/message_ix/issues/859>`_ is resolved.
+   See also internal Slack discussion `here <https://iiasa-ece.slack.com/archives/CD0GBHHA4/p1713430336582769>`_.
 
 Bug Fixes
 ---------

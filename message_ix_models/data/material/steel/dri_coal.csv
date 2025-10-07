@@ -1,0 +1,9 @@
+parameter,technology,node_loc,level,commodity,emission,relation,mode,unit,value,comment,source
+input,dri_coal_steel,R12_SAS,final,coal,,,M1,???,0.6982,converted from GCal to GWa,"TERI (2021): ENERGY-EFFICIENT TECHNOLOGY OPTIONS FOR DIRECT REDUCTION OF IRON PROCESS, page 11, https://tinyurl.com/353ttuw8"
+input,dri_coal_steel,R12_SAS,final,electr,,,M1,???,0.00799,70 kWh/t converted to GWa/Mt,"TERI (2021): ENERGY-EFFICIENT TECHNOLOGY OPTIONS FOR DIRECT REDUCTION OF IRON PROCESS, page 11, https://tinyurl.com/353ttuw8"
+output,dri_coal_steel,R12_SAS,waste_material,slag_iron,,,M1,Mt,0.085,same value as previously implemented dri_gas_steel,
+output,dri_coal_steel,R12_SAS,tertiary_material,sponge_iron,,,M1,Mt,1,all values normalized to sponge iron output,
+relation_activity,dri_coal_steel,R12_SAS,,,,CO2_ind,M1,???,0.5683,coal input multiplied by MESSAGE emission factor for coal,
+growth_activity_up,dri_coal_steel,R12_SAS,,,,,,???,0.13,based on historic growth rate reported by Indias Ministry of Steel. TOOD: add reference,
+initial_activity_up,dri_coal_steel,R12_SAS,,,,,,???,0.5,copied from other industrial MESSAGE technologies,
+growth_activity_lo,dri_coal_steel,R12_SAS,,,,,,???,-0.05,based on historic growth rate reported by Indias Ministry of Steel. TOOD: add reference,

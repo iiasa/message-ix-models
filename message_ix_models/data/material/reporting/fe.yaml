@@ -1,0 +1,461 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  in
+
+iamc_prefix:
+  Final Energy|Industry|
+
+unit: GWa
+
+vars:
+  # chemicals
+  Chemicals|Heat:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_hvc_heat
+
+  Chemicals|High-Value Chemicals|Electricity|Heat:
+    filter:
+      { technology: furnace_elec_petro, mode: high_temp, commodity: electr, level: final }
+    short:
+      fe_pe_hvc_el_ht
+
+  Chemicals|High-Value Chemicals|Electricity|MTO:
+    filter:
+      { technology: MTO_petro, mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_hvc_el_mto
+
+  Chemicals|High-Value Chemicals|Electricity|Steam Cracking:
+    filter:
+      { technology: steam_cracker_petro, mode: [vacuum_gasoil, atm_gasoil, naphtha, ethane, propane], commodity: electr, level: final }
+    short:
+      fe_pe_hvc_el_sc
+
+  Chemicals|Formaldehyde|Electricity:
+    filter:
+      { technology: CH2O_synth, mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_ch2o_el
+
+  Chemicals|Resins|Electricity:
+    filter:
+      { technology: [CH2O_to_resin, furnace_elec_resins], mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_resin_el
+  Chemicals|Resins|Solids|Coal:
+    filter:
+      { technology: furnace_coal_resins, mode: M1, commodity: coal, level: final }
+    short:
+      fe_pe_resin_coal
+  Chemicals|Resins|Solids|Biomass:
+    filter:
+      { technology: furnace_biomass_resins, mode: M1, commodity: biomass, level: final }
+    short:
+      fe_pe_resin_bio
+  Chemicals|Resins|Liquids|Oil:
+    filter:
+      { technology: [furnace_foil_resins, furnace_loil_resins], mode: M1, commodity: [fueloil, lightoil], level: final }
+    short:
+      fe_pe_resin_oil
+  Chemicals|Resins|Liquids|Biomass:
+    filter:
+      { technology: [ furnace_ethanol_resins ], mode: M1, commodity: [ ethanol ], level: final }
+    short:
+      fe_pe_resin_eth
+  Chemicals|Resins|Gases|Gas:
+    filter:
+      { technology: furnace_gas_resins, mode: M1, commodity: gas, level: final }
+    short:
+      fe_pe_resin_gas
+  Chemicals|Resins|Gases:
+    filter:
+      { technology: furnace_gas_resins, mode: M1, commodity: gas, level: final }
+    short:
+      fe_pe_resin_gases
+  Chemicals|Resins|Hydrogen:
+    filter:
+      { technology: [furnace_h2_resins, fc_h2_resins], mode: M1, commodity: hydrogen, level: final }
+    short:
+      fe_pe_resin_h2
+  Chemicals|Resins|Liquids|Other:
+    filter:
+      { technology: [ furnace_methanol_resins ], mode: M1, commodity: methanol, level: final }
+    short:
+      fe_pe_resin_meth
+
+
+  Chemicals|High-Value Chemicals|Liquids|Oil|Light:
+    filter:
+      { technology: furnace_foil_petro, mode: high_temp, commodity: fueloil, level: final }
+    short:
+      fe_pe_hvc_oil_l
+
+  Chemicals|High-Value Chemicals|Liquids|Oil|Heavy:
+    filter:
+      { technology: furnace_loil_petro, mode: high_temp, commodity: lightoil, level: final }
+    short:
+      fe_pe_hvc_oil_h
+
+  Chemicals|High-Value Chemicals|Liquids|Biomass:
+    filter:
+      { technology: furnace_ethanol_petro, mode: high_temp, commodity: ethanol, level: final }
+    short:
+      fe_pe_hvc_bio_eth
+
+  Chemicals|High-Value Chemicals|Liquids|Other:
+    filter:
+      { technology: furnace_methanol_petro, mode: high_temp, commodity: methanol, level: final }
+    short:
+      fe_pe_hvc_oth
+
+  Chemicals|High-Value Chemicals|Gases|Gas:
+    filter:
+      { technology: furnace_gas_petro, mode: high_temp, commodity: gas, level: final }
+    short:
+      fe_pe_hvc_gas
+
+  Chemicals|High-Value Chemicals|Hydrogen:
+    filter:
+      { technology: furnace_h2_petro, mode: high_temp, commodity: hydrogen, level: final }
+    short:
+      fe_pe_hvc_h2
+
+  Chemicals|High-Value Chemicals|Solids|Biomass:
+    filter:
+      { technology: furnace_biomass_petro, mode: high_temp, commodity: biomass, level: final }
+    short:
+      fe_pe_hvc_bio
+
+  Chemicals|High-Value Chemicals|Solids|Coal:
+    filter:
+      { technology: furnace_coal_petro, mode: high_temp, commodity: coal, level: final }
+    short:
+      fe_pe_hvc_coal
+
+  Chemicals|High-Value Chemicals|Solids|Coke:
+    filter:
+      { technology: furnace_coke_petro, mode: high_temp, commodity: pet_coke, level: intermediate }
+    short:
+      fe_pe_hvc_coke
+
+
+  # cement
+  Non-Metallic Minerals|Cement|Heat:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_cement_heat
+
+  Non-Metallic Minerals|Cement|Electricity|Heat:
+    filter:
+      { technology: furnace_elec_cement, mode: high_temp, commodity: electr, level: final }
+    short:
+      fe_pe_cement_el_ht
+
+  Non-Metallic Minerals|Cement|Electricity|Other:
+    filter:
+      { technology: [clinker_dry_ccs_cement, clinker_dry_cement, clinker_wet_ccs_cement, clinker_wet_cement,
+                     grinding_ballmill_cement, grinding_vertmill_cement, raw_meal_prep_cement],
+        mode: M1,
+        commodity: electr, level: final }
+    short:
+      fe_pe_cement_el_oth
+
+  Non-Metallic Minerals|Cement|Liquids|Oil|Light:
+    filter:
+      { technology: furnace_foil_cement, mode: high_temp, commodity: fueloil, level: final }
+    short:
+      fe_pe_cement_oil_l
+
+  Non-Metallic Minerals|Cement|Liquids|Oil|Heavy:
+    filter:
+      { technology: furnace_loil_cement, mode: high_temp, commodity: lightoil, level: final }
+    short:
+      fe_pe_cement_oil_h
+
+  Non-Metallic Minerals|Cement|Liquids|Biomass:
+    filter:
+      { technology: furnace_ethanol_cement, mode: high_temp, commodity: ethanol, level: final }
+    short:
+      fe_pe_cement_bio_eth
+
+  Non-Metallic Minerals|Cement|Liquids|Other:
+    filter:
+      { technology: furnace_methanol_cement, mode: high_temp, commodity: methanol, level: final }
+    short:
+      fe_pe_cement_oth
+
+  Non-Metallic Minerals|Cement|Gases|Gas:
+    filter:
+      { technology: furnace_gas_cement, mode: high_temp, commodity: gas, level: final }
+    short:
+      fe_pe_cement_gas
+
+  Non-Metallic Minerals|Cement|Hydrogen:
+    filter:
+      { technology: furnace_h2_cement, mode: high_temp, commodity: hydrogen, level: final }
+    short:
+      fe_pe_cement_h2
+
+  Non-Metallic Minerals|Cement|Solids|Biomass:
+    filter:
+      { technology: furnace_biomass_cement, mode: high_temp, commodity: biomass, level: final }
+    short:
+      fe_pe_cement_bio
+
+  Non-Metallic Minerals|Cement|Solids|Coal:
+    filter:
+      { technology: furnace_coal_cement, mode: high_temp, commodity: coal, level: final }
+    short:
+      fe_pe_cement_coal
+
+  Non-Metallic Minerals|Cement|Solids|Coke:
+    filter:
+      { technology: furnace_coke_cement, mode: high_temp, commodity: pet_coke, level: final }
+    short:
+      fe_pe_cement_coke
+
+
+  # aluminum
+  Non-Ferrous Metals|Aluminium|Heat:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_aluminum_heat
+
+  Non-Ferrous Metals|Aluminium|Electricity|Heat:
+    filter:
+      { technology: [furnace_elec_aluminum, hp_elec_aluminum, hp_gas_aluminum],
+        mode: [high_temp, low_temp], commodity: electr, level: final }
+    short:
+      fe_pe_aluminum_el_ht
+
+  Non-Ferrous Metals|Aluminium|Electricity|Other:
+    filter:
+      { technology: [prebake_aluminum, soderberg_aluminum], mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_aluminum_el_oth
+
+  Non-Ferrous Metals|Aluminium|Liquids|Oil|Light:
+    filter:
+      { technology: furnace_foil_aluminum, mode: [high_temp, low_temp], commodity: fueloil, level: final }
+    short:
+      fe_pe_aluminum_oil_l
+
+  Non-Ferrous Metals|Aluminium|Liquids|Oil|Heavy:
+    filter:
+      { technology: furnace_loil_aluminum, mode: [high_temp, low_temp], commodity: lightoil, level: final }
+    short:
+      fe_pe_aluminum_oil_h
+
+  Non-Ferrous Metals|Aluminium|Liquids|Biomass:
+    filter:
+      { technology: furnace_ethanol_aluminum, mode: [high_temp, low_temp], commodity: ethanol, level: final }
+    short:
+      fe_pe_aluminum_bio_eth
+
+  Non-Ferrous Metals|Aluminium|Liquids|Other:
+    filter:
+      { technology: furnace_methanol_aluminum, mode: [high_temp, low_temp], commodity: methanol, level: final }
+    short:
+      fe_pe_aluminum_oth
+
+  Non-Ferrous Metals|Aluminium|Gases|Gas:
+    filter:
+      { technology: furnace_gas_aluminum, mode: [high_temp, low_temp], commodity: gas, level: final }
+    short:
+      fe_pe_aluminum_gas
+
+  Non-Ferrous Metals|Aluminium|Hydrogen:
+    filter:
+      { technology: furnace_h2_aluminum, mode: [high_temp, low_temp], commodity: hydrogen, level: final }
+    short:
+      fe_pe_aluminum_h2
+
+  Non-Ferrous Metals|Aluminium|Solids|Biomass:
+    filter:
+      { technology: furnace_biomass_aluminum, mode: [high_temp, low_temp], commodity: biomass, level: final }
+    short:
+      fe_pe_aluminum_bio
+
+  Non-Ferrous Metals|Aluminium|Solids|Coal:
+    filter:
+      { technology: furnace_coal_aluminum, mode: [high_temp, low_temp], commodity: coal, level: final }
+    short:
+      fe_pe_aluminum_coal
+
+
+  # iron and steel
+  Iron and Steel|Heat:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_steel_heat
+
+  Iron and Steel|Electricity:
+    filter:
+      { technology: [bf_steel, bf_ccs_steel, bf_biomass_steel, bof_steel, cokeoven_steel, dri_gas_steel,
+                     dri_gas_ccs_steel, dri_h2_steel, eaf_steel,
+                     finishing_steel, pellet_steel, sinter_steel],
+        mode: [M1, M2, M3], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el
+
+  Iron and Steel|Gases|Gas:
+    filter:
+      { technology: [eaf_steel, dri_gas_steel], mode: [M1, M2, M3], commodity: gas, level: final }
+    #TODO: what about dummy_emission?
+    short:
+      fe_pe_steel_gas
+
+  Iron and Steel|Gases|Coal:
+    filter:
+      { technology: [bf_steel], mode: [M1, M2, M3, M4], commodity: [co_gas], level: final }
+    short:
+      fe_pe_steel_gases_coal
+
+  Iron and Steel|Liquids|Coal:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_steel_liq_coal
+
+  Iron and Steel|Liquids|Gas:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_steel_liq_gas
+
+  Iron and Steel|Liquids|Oil:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_steel_liq_oil
+
+  Iron and Steel|Liquids|Biomass:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_steel_liq_bio
+
+  Iron and Steel|Solids|Coal:
+    filter:
+      { technology: [bf_steel, sinter_steel, pellet_steel], mode: [M1, M2, M3, M4], commodity: [coal, coke_iron], level: final }
+    # TODO: figure out, where to put cokeoven_steel?
+    short:
+      fe_pe_steel_solid_coal
+
+  Iron and Steel|Solids|Biomass:
+    filter:
+      { technology: [ bf_steel, bf_biomass_steel ], mode: [M1, M3, M4 ], commodity: [ charcoal ], level: final }
+    short:
+      fe_pe_steel_solid_bio
+
+  Iron and Steel|Hydrogen:
+    filter:
+      { technology: [ dri_h2_steel ], mode: [ M1 ], commodity: [ hydrogen ], level: final }
+    short:
+      fe_pe_steel_h2
+
+
+  # Residual industry
+  Other Sector|Electricity|Thermal|Resistance:
+    filter:
+      { technology: elec_i, mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_other_el_th_res
+
+  Other Sector|Electricity|Thermal|Heat Pumps:
+    filter:
+      { technology: hp_el_i, mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_other_el_th_hp
+
+  Other Sector|Electricity|Specific:
+    filter:
+      { technology: [sp_el_I, sp_el_I_RT], mode: M1, commodity: electr, level: [final, final_RT] }
+    short:
+      fe_pe_other_el_sp
+
+  Other Sector|Electricity|Specific|Rooftop:
+    filter:
+      { technology: sp_el_I_RT, mode: M1, commodity: electr, level: final_RT }
+    short:
+      fe_pe_other_el_sp_rt
+
+  Other Sector|Electricity|Specific|Other:
+    filter:
+      { technology: sp_el_I, mode: M1, commodity: electr, level: final }
+    short:
+      fe_pe_other_el_sp_oth
+
+  Other Sector|Gases|Gas:
+    filter:
+      { technology: gas_i, mode: M1, commodity: gas, level: final }
+    short:
+      fe_pe_other_gas
+
+  Other Sector|Heat:
+    filter:
+      { technology: heat_i, mode: M1, commodity: d_heat, level: final }
+    short:
+      fe_pe_other_heat
+
+  Other Sector|Hydrogen|Combustion:
+    filter:
+      { technology: h2_i, mode: M1, commodity: hydrogen, level: final }
+    short:
+      fe_pe_other_h2_comb
+
+  Other Sector|Hydrogen|Fuel Cells:
+    filter:
+      { technology: h2_fc_I, mode: M1, commodity: hydrogen, level: final }
+    short:
+      fe_pe_other_h2_fc
+
+  Other Sector|Liquids|Oil|Light|Thermal:
+    filter:
+      { technology: loil_i, mode: M1, commodity: lightoil, level: final }
+    short:
+      fe_pe_other_oil_l_th
+
+  Other Sector|Liquids|Oil|Light|Specific:
+    filter:
+      { technology: sp_liq_I, mode: M1, commodity: lightoil, level: final }
+    short:
+      fe_pe_other_oil_l_sp
+
+  Other Sector|Liquids|Oil|Heavy|Thermal:
+    filter:
+      { technology: foil_i, mode: M1, commodity: fueloil, level: final }
+    short:
+      fe_pe_other_oil_h_th
+
+  Other Sector|Liquids|Biomass|Specific:
+    filter:
+      { technology: sp_eth_I, mode: M1, commodity: ethanol, level: final }
+    short:
+      fe_pe_other_eth_sp
+
+  Other Sector|Liquids|Biomass|Thermal:
+    filter:
+      { technology: eth_i, mode: M1, commodity: ethanol, level: final }
+    short:
+      fe_pe_other_eth_th
+
+  Other Sector|Solids|Biomass:
+    filter:
+      { technology: biomass_i, mode: M1, commodity: biomass, level: final }
+    short:
+      fe_pe_other_bio
+
+  Other Sector|Solids|Coal:
+    filter:
+      { technology: coal_i, mode: M1, commodity: coal, level: final }
+    short:
+      fe_pe_other_coal

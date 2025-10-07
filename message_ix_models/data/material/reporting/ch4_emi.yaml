@@ -1,0 +1,98 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  emi
+
+iamc_prefix:
+  Emissions|CH4|
+
+unit: Mt CH4/yr
+
+vars:
+  Industrial Processes|Chemicals:
+    filter:
+      { technology: [meth_ng, meth_ng_ccs], mode: feedstock }
+    short:
+      emi_ch4_ind_proc_chem
+
+  Energy|Demand|Industry|Chemicals:
+    filter:
+      { technology: [furnace_coal_petro, furnace_gas_petro, furnace_biomass_petro, furnace_foil_petro], mode: [high_temp, low_temp] }
+    short:
+      emi_ch4_ind_en_chem
+
+
+# cement
+#  Industrial Processes|Non-Metallic Minerals|Cement:
+#    filter:
+#      { technology: [clinker_wet_cement, clinker_dry_cement], mode: M1}
+#    short:
+#      emi_ch4_ind_proc_cement
+# not parametrized at the moment
+
+  Energy|Demand|Industry|Non-Metallic Minerals|Cement:
+    filter:
+      { technology: [furnace_coal_cement, furnace_gas_cement, furnace_biomass_cement, furnace_foil_cement], mode: [high_temp, low_temp] }
+    short:
+      emi_ch4_ind_en_cement
+
+
+# aluminum
+  Industrial Processes|Non-Ferrous Metals|Aluminium:
+    filter:
+      { technology: [prebake_aluminum, soderberg_aluminum], mode: M1}
+    short:
+      emi_ch4_ind_proc_alu
+
+  Energy|Demand|Industry|Non-Ferrous Metals|Aluminium:
+    filter:
+      { technology: [furnace_coal_aluminum, furnace_gas_aluminum, furnace_biomass_aluminum, furnace_foil_aluminum], mode: [high_temp, low_temp] }
+    short:
+      emi_ch4_ind_en_alu
+
+
+# iron and steel
+  Industrial Processes|Iron and Steel:
+    filter:
+      { technology: [DUMMY_limestone_supply_steel, prod_charcoal_steel, sinter_steel, pellet_steel, bf_steel, bof_steel,  eaf_steel, finishing_steel], mode: [M1, M2, M3, M4]}
+    short:
+      emi_ch4_ind_proc_steel
+
+#  Energy|Demand|Industry|Iron and Steel:
+#    filter:
+#      { technology: [furnace_coal_steel, furnace_gas_steel, furnace_biomass_steel, furnace_foil_steel], mode: [high_temp, low_temp] }
+#    short:
+#      emi_ch4_ind_en_steel
+
+
+# refinery
+#  Oil Refining|Electricity|Heat:
+#    filter:
+#      { technology: [furnace_elec_refining, hp_elec_refining, hp_gas_refining], mode: [high_temp, low_temp], commodity: electr, level: secondary }
+#    short:
+#      fe_pe_refining_el_ht
+#
+#  Oil Refining|Liquids|Oil|Light:
+#    filter:
+#      { technology: furnace_foil_refining, mode: high_temp, commodity: fueloil, level: secondary }
+#    short:
+#      fe_pe_refining_oil_l
+  # TODO: add refinery non co2 emission accounting
+
+
+  # ???: do we need this in the modular Materials reporting
+  # Residual industry
+
+#  Other Sector|Electricity|Thermal|Resistance:
+#    filter:
+#      { technology: elec_i, mode: M1, commodity: electr, level: final }
+#    short:
+#      fe_pe_other_el_th_res
+#
+#  Other Sector|Electricity|Thermal|Heat Pumps:
+#    filter:
+#      { technology: hp_el_I, mode: M1, commodity: electr, level: final }
+#    short:
+#      fe_pe_other_el_th_hp

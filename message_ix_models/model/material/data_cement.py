@@ -21,9 +21,7 @@ from .data_util import (
     read_sector_data,
     read_timeseries,
 )
-from .material_demand.material_demand_calc import (
-    derive_demand,
-)
+from .demand import derive_demand
 from .util import get_ssp_from_context, read_config
 
 if TYPE_CHECKING:

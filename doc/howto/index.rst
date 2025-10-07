@@ -18,6 +18,8 @@ Each HOWTO is contained on its own page:
    Run a baseline model <quickstart>
    Run mix-models on UnICC <unicc>
    path
+   pull-request
+   Document research projects <doc-project>
    migrate
    Release message-ix-models <release>
 
