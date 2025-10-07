@@ -941,9 +941,7 @@ def compute_cooling_technologies(
     return report_iam, cooling_rows
 
 
-def report(
-    sc: Scenario, reg: str, ssp: str, sdgs: bool = False, include_cooling: bool = True
-) -> None:
+def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     """Report nexus module results
 
     Parameters
@@ -956,9 +954,6 @@ def report(
         SSP scenario (e.g., :obj:`"SSP1"`, :obj:`"SSP2"`, :obj:`"SSP3"`)
     sdgs : bool, optional
         If :obj:`True`, add population with access to water and sanitation for SDG6
-    include_cooling : bool, optional
-        If :obj:`True`, include cooling technology calculations in the report
-        (default :obj:`True`)
     """
     log.info(f"Regions given as {reg}; no warranty if it's not in ['R11','R12']")
     # Generating reporter
@@ -1238,7 +1233,7 @@ def report(
         variable="in|water_supply_basin|freshwater_basin|basin_to_reg|*"
     ).variable
 
-    # Process cooling technologies if enabled
+    # Process cooling technologies
     report_iam, cooling_rows = compute_cooling_technologies(report_iam, sc)
 
     # mapping for aggregation
@@ -1878,11 +1873,7 @@ def report(
     report_pd = report_pd.drop(columns=["to_keep"])
 
     # ecluded other intermediate variables added later to report_iam
-    if (
-        include_cooling
-        and hasattr(report_iam, "metadata")
-        and "water_hydro_var" in report_iam.metadata
-    ):
+    if hasattr(report_iam, "metadata") and "water_hydro_var" in report_iam.metadata:
         report_pd = report_pd[
             -report_pd.variable.isin(report_iam.metadata["water_hydro_var"])
         ]
@@ -1973,9 +1964,7 @@ def report(
     sc.commit("Reporting uploaded as timeseries")
 
 
-def report_full(
-    sc: Scenario, reg: str, ssp: str, sdgs=False, include_cooling: bool = True
-) -> None:
+def report_full(sc: Scenario, reg: str, ssp: str, sdgs=False) -> None:
     """Combine old and new reporting workflows
 
     Parameters
@@ -1988,9 +1977,6 @@ def report_full(
         SSP scenario (e.g., :obj:`"SSP1"`, :obj:`"SSP2"`, :obj:`"SSP3"`)
     sdgs : bool, optional
         If :obj:`True`, add population with access to water and sanitation for SDG6
-    include_cooling : bool, optional
-        If :obj:`True`, include cooling technology calculations in the report
-        (default :obj:`True`)
     """
     a = sc.timeseries()
     # keep historical part, if present
@@ -2006,7 +1992,7 @@ def report_full(
     run_old_reporting(sc)
     log.info("First part of reporting completed, now procede with the water variables")
 
-    report(sc, reg, ssp, sdgs, include_cooling)
+    report(sc, reg, ssp, sdgs)
     log.info("overall reporting completed")
 
     # add ad-hoc caplculated variables with a function
