@@ -236,7 +236,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         c.add(key.GDP, keys["GDP"][0])
 
     # Ensure correct units
-    c.add("population:n-y", "mul", "pop:n-y", genno.Quantity(1.0, units="passenger"))
+    c.add(key.pop, "mul", "pop:n-y", genno.Quantity(1.0, units="passenger"))
 
     # FIXME Adjust to derive PRICE_COMMODITY c=transport from solved scenario with
     #       MESSAGEix-Transport detail, then uncomment the following line

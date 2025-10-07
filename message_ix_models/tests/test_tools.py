@@ -4,7 +4,6 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 from message_ix import make_df
-from message_ix.models import MACRO
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.testing import MARK, bare_res
@@ -20,6 +19,7 @@ from message_ix_models.tools import (
 )
 from message_ix_models.tools.add_budget import main as add_budget
 from message_ix_models.util import broadcast
+from message_ix_models.util.message_ix import MACRO
 
 if TYPE_CHECKING:
     from message_ix import Scenario

@@ -3,7 +3,6 @@ import numpy as np
 import pytest
 from genno import Key
 from message_ix import make_df
-from message_ix.models import MACRO
 
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.model.emissions import (
@@ -14,6 +13,7 @@ from message_ix_models.model.emissions import (
 from message_ix_models.testing import bare_res
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.util import package_data_path
+from message_ix_models.util.message_ix import MACRO
 
 
 class TestPRICE_EMISSION:
