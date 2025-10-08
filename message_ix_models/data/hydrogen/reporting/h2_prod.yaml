@@ -8,7 +8,7 @@ var:
 iamc_prefix:
   Production|
 
-unit: Mt H2/yr
+unit: EJ/yr
 
 vars:
   # hydrogen production
