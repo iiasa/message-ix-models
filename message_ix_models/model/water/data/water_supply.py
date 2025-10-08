@@ -886,6 +886,16 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         else:
             results["var_cost"] = var_cost_fossil
 
+        # Add growth constraint for extract_surfacewater (10% annual growth limit)
+        growth_activity_up = make_df(
+            "growth_activity_up",
+            technology="extract_surfacewater",
+            value=0.1,
+            unit="-",
+        ).pipe(broadcast, year_act=year_wat, node_loc=df_node["node"])
+
+        results["growth_activity_up"] = growth_activity_up
+
         # Remove duplicates and NaN values from all DataFrames in results
         for key, df in results.items():
             results[key] = df.dropna().drop_duplicates().reset_index(drop=True)
