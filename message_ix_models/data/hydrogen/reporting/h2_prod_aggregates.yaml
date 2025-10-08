@@ -18,9 +18,9 @@ level_1:
   Hydrogen|Electricity:
     short: prod_h2_elec
     components: [ prod_h2_elec_alkaline, prod_h2_elec_pem, prod_h2_elec_soe ]
-  Hydrogen|Refinery:
-    short: prod_h2_refinery
-    components: [ prod_h2_refinery ]
+  # Hydrogen|Refinery:
+  #   short: prod_h2_refinery
+  #   components: [ prod_h2_refinery ]
 
 level_2:
   Hydrogen:
