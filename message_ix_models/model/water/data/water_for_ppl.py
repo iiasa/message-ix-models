@@ -1277,7 +1277,7 @@ def cool_tech(
         )
 
     # Step 9: Add dynamic saline extraction bounds
-    _add_saline_extract_bounds(results, info)
+    # _add_saline_extract_bounds(results, info)
 
     return results
 
