@@ -3,7 +3,7 @@
 
 var: out
 iamc_prefix: Production|
-unit: Mt H2/yr
+unit: EJ/yr
 
 level_1:
   Hydrogen|Gas:

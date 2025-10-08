@@ -64,6 +64,10 @@ def format_reporting_df(
         )
     )
     py_df = pyam.IamDataFrame(df)
+    if unit == "EJ/yr":
+        py_df.convert_unit("", to="GWa", factor=1, inplace=True)
+        py_df.convert_unit("GWa", to="EJ/yr", factor=0.03154, inplace=True)
+
     if py_df.empty:
         return py_df
     missing = [
