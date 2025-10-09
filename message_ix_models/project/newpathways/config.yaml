@@ -13,7 +13,7 @@ scenario:
   target_model:
     NP_SSP2_6.2
   target_scen:
-    GpLNGsCsCRspEsFspLsp
+    GpLNGsCsCRspEsFspLs
   first_model_year:
     2030
   regions:
@@ -30,7 +30,7 @@ covered_trade_technologies:
   - foil_shipped
   - foil_piped
   - loil_shipped
-  - loil_piped
+#  - loil_piped
 
 # YEARS
 timeframes:
