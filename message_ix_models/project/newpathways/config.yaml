@@ -13,7 +13,7 @@ scenario:
   target_model:
     NP_SSP2_6.2
   target_scen:
-    pipelines_only
+    GpLNGsCsCRspEsFspLsp
   first_model_year:
     2030
   regions:
@@ -29,6 +29,8 @@ covered_trade_technologies:
   - eth_shipped
   - foil_shipped
   - foil_piped
+  - loil_shipped
+  - loil_piped
 
 # YEARS
 timeframes:
@@ -497,7 +499,7 @@ foil_piped_trade:
 ###########################
 # Light oil shipped trade #
 ###########################
-lightoil_shipped_trade:
+loil_shipped_trade:
   base_trade_technology:
     - loil_bal
     - loil_bunker
@@ -546,9 +548,9 @@ lightoil_shipped_trade:
   bunker_technology:
     oil_tanker_loil:
       loil_tobunker
-#############################
-# Pipeline fuel oil exports #
-#############################
+##############################
+# Pipeline light oil exports #
+##############################
 loil_piped_trade:
   base_trade_technology:
     loil_bal

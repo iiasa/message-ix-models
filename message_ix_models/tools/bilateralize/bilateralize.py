@@ -554,6 +554,8 @@ def generate_bare_sheets(
                                                        unit = use_unit,
                                                        time = 'year', time_origin = 'year',
                                                        **common_years)
+                    if "shipped" in tec:
+                        df_input_base['value'] = 1e-6 # Default is 1e-6 GWa
                     df_input = pd.concat([df_input, df_input_base])
 
                 # For shipped trade, set up bunker fuels
@@ -563,6 +565,7 @@ def generate_bare_sheets(
                     df_input_gbunk = df_input.copy()
                     df_input_gbunk['technology'] = 'bunker_global' + '_' + c
                     df_input_gbunk['mode'] = 'M1'
+                    df_input_gbunk['value'] = 1 # Default is 1 GWa
                     df_input = pd.concat([df_input, df_input_gbunk])
         
         df_input = df_input.drop_duplicates()
