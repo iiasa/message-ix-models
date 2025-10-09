@@ -91,7 +91,7 @@ def run_rime(
         # dfp = ssp_helper(dft, ssp_meta_col="Ssp_family", default_ssp="SSP2")
         # dfp = dfp.filter(Ssp_family="SSP2")
 
-        dfp = GMTPathway(dft)
+        dfp = GMTPathway(dft)  # automatically set SSP2 scenario
 
         dft = dfp.df.timeseries()  # .reset_index()
         dft = dft.join(dfp.meta["Ssp_family"]).reset_index()
