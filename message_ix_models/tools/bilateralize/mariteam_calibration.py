@@ -22,15 +22,15 @@ from message_ix_models.tools.bilateralize import bilateralize
 def calibrate_mariteam(covered_tec,
                        message_regions,
                        mtdict = {'LNG_shipped': {'astd_ship_type': 'Gas tankers',
-                                                 'flow_technology': ['LNG_tanker_LNG', 'LNG_tanker_foil']},
+                                                 'flow_technology': ['LNG_tanker_LNG', 'LNG_tanker_loil']},
                                  'crudeoil_shipped': {'astd_ship_type': 'Crude oil tankers',
-                                                      'flow_technology': ['crudeoil_tanker_foil']},
+                                                      'flow_technology': ['crudeoil_tanker_loil']},
                                  'coal_shipped': {'astd_ship_type': 'Bulk carriers',
-                                                  'flow_technology': ['energy_bulk_carrier_foil']},
+                                                  'flow_technology': ['energy_bulk_carrier_loil']},
                                  'eth_shipped': {'astd_ship_type': 'Oil product tankers',
-                                                 'flow_technology': ['oil_tanker_eth', 'oil_tanker_foil']},
+                                                 'flow_technology': ['oil_tanker_eth', 'oil_tanker_loil']},
                                  'foil_shipped': {'astd_ship_type': 'Oil product tankers',
-                                                  'flow_technology': ['oil_tanker_foil']},
+                                                  'flow_technology': ['oil_tanker_loil']},
                                  'loil_shipped': {'astd_ship_type': 'Oil product tankers',
                                                   'flow_technology': ['oil_tanker_loil']}},
                        mt_output = "MariTEAM_output_2025-07-21.csv",
@@ -82,7 +82,9 @@ def calibrate_mariteam(covered_tec,
             inputdf = inputdf[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act', 'mode',
                                'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
             inputdf.to_csv(os.path.join(out_path, tec, "edit_files", "flow_technology", "input.csv"), index = False)
-            inputdf.to_csv(os.path.join(out_path, tec, "bare_files", "flow_technology", "input.csv"), index = False)
+            
+            if not os.path.isfile(os.path.join(out_path, tec, "bare_files", "flow_technology", "input.csv")):
+                inputdf.to_csv(os.path.join(out_path, tec, "bare_files", "flow_technology", "input.csv"), index = False)
 
         # Historical activity
         histdf = pd.DataFrame()
