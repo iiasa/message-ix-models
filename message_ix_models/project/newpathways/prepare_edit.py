@@ -53,12 +53,13 @@ import_gem(input_file = gas_pipeline_file,
            flow_commodity = "gas_pipeline_capacity",
            project_name = 'newpathways', config_name = 'config.yaml')
 
-import_gem(input_file = oil_pipeline_file, 
-           input_sheet = oil_pipeline_sheet, 
-           trade_technology = "crudeoil_piped",
-           flow_technology = "oil_pipe",
-           flow_commodity = "oil_pipeline_capacity",
-           project_name = 'newpathways', config_name = 'config.yaml')
+for tradetec in ['crudeoil_piped', 'foil_piped', 'loil_piped']:
+    import_gem(input_file = oil_pipeline_file, 
+               input_sheet = oil_pipeline_sheet, 
+               trade_technology = tradetec,
+               flow_technology = "oil_pipe",
+               flow_commodity = "oil_pipeline_capacity",
+               project_name = 'newpathways', config_name = 'config.yaml')
 
 # Add MariTEAM calibration for maritime shipping
 calibrate_mariteam(covered_tec, message_regions,
