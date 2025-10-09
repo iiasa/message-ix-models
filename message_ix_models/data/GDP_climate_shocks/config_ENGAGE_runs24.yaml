@@ -1,7 +1,7 @@
 # config file for GDP_climate_shocks
 rime_path: "C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
 model_name: ENGAGE_SSP2_v4.1.8.3.1_T4.5v2_r3.1
-model_name_clone: ENGAGE_SSP2_T4.5_GDP_CI_2025_test
+model_name_clone: ENGAGE_SSP2_T4.5_GDP_CI_10.25
 ssp: SSP2
 scens_ref:
   - NPi2020
@@ -12,9 +12,11 @@ scens_ref:
   - EN_NPi2020_600f
   - EN_NPi2020_600
 damage_model:
-  - Waidelich
-  - Kotz
+  # - Waidelich
+  # - Kotz
   - Burke
+  - Nath
+  - Gilli
 percentiles:
   - 50
 shift_year: 2030  # or Null
