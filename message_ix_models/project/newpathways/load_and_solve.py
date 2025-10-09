@@ -40,10 +40,10 @@ clone_and_update(trade_dict=trade_parameters,
                  project_name = 'newpathways',
                  config_name = 'config.yaml',
                  log=log,
-                 to_gdx = False,
-                 solve = True,
+                 to_gdx = True,
+                 solve = False,
                  gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
-                 update_scenario_name = 'GpLNGsCsCRspEsFspLsp')
+                 update_scenario_name = 'GpLNGsCsCRspEsFspLs')
 
 # # Update scenario: Increase liquefaction gas penalty
 # additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
