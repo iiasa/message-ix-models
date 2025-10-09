@@ -87,7 +87,8 @@ for tec in covered_tec:
     covered_flow_tec = covered_flow_tec + flow_tecs
 
 # Ensure all years are integer
-trade_dict['crudeoil_piped']['flow']['historical_activity']['year_act'] = trade_dict['crudeoil_piped']['flow']['historical_activity']['year_act'].astype(int)
+#trade_dict['crudeoil_piped']['flow']['historical_activity']['year_act'] = trade_dict['crudeoil_piped']['flow']['historical_activity']['year_act'].astype(int)
+#trade_dict['foil_piped']['flow']['historical_activity']['year_act'] = trade_dict['foil_piped']['flow']['historical_activity']['year_act'].astype(int)
 
 # Save trade_dictionary
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')

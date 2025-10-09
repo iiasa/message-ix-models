@@ -170,7 +170,7 @@ def import_gem(input_file: str,
     hist_act['node_loc'] = hist_act['EXPORTER']
     hist_act['technology'] = flow_technology + '_' + hist_act['IMPORTER'].str.lower().str.split('_').str[-1]
     hist_act['value'] = round(hist_act['LengthMergedKm'],0)
-    hist_act['year_act'] = hist_act['YEAR']
+    hist_act['year_act'] = hist_act['YEAR'].astype(int)
     hist_act['unit'] = 'km'
     hist_act['mode'] = 'M1'
     hist_act['time'] = 'year'
@@ -192,6 +192,7 @@ def import_gem(input_file: str,
         hist_tra['mode'] = 'M1'
         hist_tra['time'] = 'year'
         hist_tra = hist_tra[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
+        hist_tra['year_act'] = hist_tra['year_act'].astype(int)
         hist_tra.to_csv(os.path.join(export_dir, "historical_activity_trade_GEM.csv"), index = False)
         hist_tra.to_csv(os.path.join(trade_dir, "historical_activity.csv"), index = False)
         hist_tra.to_csv(os.path.join(trade_dir_out, "historical_activity.csv"), index = False)
