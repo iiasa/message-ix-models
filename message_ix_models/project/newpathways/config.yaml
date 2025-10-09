@@ -1,7 +1,7 @@
 # DATA DIRECTORIES
 p_drive_location:
-  /pdrive/projects/ene.model3
-  #P:/ene.model
+  #/pdrive/projects/ene.model3
+  P:/ene.model
 
 # SCENARIO INFORMATION
 scenario:
@@ -183,15 +183,15 @@ LNG_shipped_trade:
     secondary
   flow_technologies:
     - LNG_tanker_LNG
-    - LNG_tanker_foil
+    - LNG_tanker_loil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
     LNG_tanker_LNG:
       - LNG
-    LNG_tanker_foil:
-      - fueloil
+    LNG_tanker_loil:
+      - lightoil
   flow_material_input:
   flow_commodity_output:
     LNG_tanker_capacity
@@ -205,8 +205,8 @@ LNG_shipped_trade:
   bunker_technology:
     LNG_tanker_LNG:
       LNG_tobunker
-    LNG_tanker_foil:
-      foil_tobunker
+    LNG_tanker_loil:
+      loil_tobunker
 ######################
 # Coal shipped trade #
 ######################
@@ -231,13 +231,13 @@ coal_shipped_trade: # Name of covered trade technology (e.g., oil)
   import_level:
     secondary
   flow_technologies:
-    - energy_bulk_carrier_foil
+    - energy_bulk_carrier_loil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
-    energy_bulk_carrier_foil:
-      - fueloil
+    energy_bulk_carrier_loil:
+      - lightoil
   flow_material_input:
   flow_commodity_output:
     energy_bulk_carrier_capacity
@@ -250,8 +250,8 @@ coal_shipped_trade: # Name of covered trade technology (e.g., oil)
     False
   tracked_emissions: # List of tracked emission types
   bunker_technology:
-    energy_bulk_carrier_foil:
-      foil_tobunker
+    energy_bulk_carrier_loil:
+      loil_tobunker
 #######################
 # Crude shipped trade #
 ########E##############
@@ -276,13 +276,13 @@ crudeoil_shipped_trade: # Name of covered trade technology (e.g., oil)
   import_level:
     secondary
   flow_technologies:
-    - crudeoil_tanker_foil
+    - crudeoil_tanker_loil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
-    crudeoil_tanker_foil:
-      - fueloil
+    crudeoil_tanker_loil:
+      - lightoil
   flow_material_input:
   flow_commodity_output:
     crudeoil_tanker_capacity
@@ -300,8 +300,8 @@ crudeoil_shipped_trade: # Name of covered trade technology (e.g., oil)
     False
   tracked_emissions: # List of tracked emission types
   bunker_technology:
-    crudeoil_tanker_foil:
-      foil_tobunker
+    crudeoil_tanker_loil:
+      loil_tobunker
 ##########################
 # Pipeline crude exports #
 ##########################
@@ -375,14 +375,14 @@ eth_shipped_trade:
   import_level:
     secondary
   flow_technologies:
-    - oil_tanker_foil
+    - oil_tanker_loil
     - oil_tanker_eth
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
-    oil_tanker_foil:
-      - fueloil
+    oil_tanker_loil:
+      - lightoil
     oil_tanker_eth:
       - ethanol
   flow_material_input:
@@ -399,8 +399,8 @@ eth_shipped_trade:
     False
   tracked_emissions: # List of tracked emission types
   bunker_technology:
-    oil_tanker_foil:
-      foil_tobunker
+    oil_tanker_loil:
+      loil_tobunker
     oil_tanker_eth:
       eth_tobunker
 ##########################
@@ -427,13 +427,13 @@ foil_shipped_trade:
   import_level:
     secondary
   flow_technologies:
-    - oil_tanker_foil
+    - oil_tanker_loil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
-    oil_tanker_foil:
-      - fueloil
+    oil_tanker_loil:
+      - lightoil
   flow_material_input:
   flow_commodity_output:
     oil_tanker_capacity
@@ -448,8 +448,8 @@ foil_shipped_trade:
     False
   tracked_emissions: # List of tracked emission types
   bunker_technology:
-    oil_tanker_foil:
-      foil_tobunker
+    oil_tanker_loil:
+      loil_tobunker
 #############################
 # Pipeline fuel oil exports #
 #############################
@@ -622,13 +622,13 @@ biomass_shipped_trade:
   import_level:
     primary
   flow_technologies:
-    - energy_bulk_carrier_foil
+    - energy_bulk_carrier_loil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
-    energy_bulk_carrier_foil:
-      - fueloil
+    energy_bulk_carrier_loil:
+      - lightoil
   flow_material_input:
   flow_commodity_output:
     energy_bulk_carrier_capacity
@@ -641,5 +641,5 @@ biomass_shipped_trade:
     False
   tracked_emissions: # List of tracked emission types
   bunker_technology:
-    energy_bulk_carrier_foil:
-      foil_tobunker   
+    energy_bulk_carrier_loil:
+      loil_tobunker   

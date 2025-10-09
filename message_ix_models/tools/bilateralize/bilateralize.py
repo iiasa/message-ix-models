@@ -666,7 +666,7 @@ def generate_bare_sheets(
                                                  **common_years, **common_cols)
                 df_cost = df_cost.drop_duplicates()
                 
-                if "shipping" in tec:
+                if "shipped" in tec:
                     df_cost['value'] = 0.04  # Default is 0.04 USD/GWa
                 parameter_outputs[tec]['flow'][cost_par] = pd.concat([parameter_outputs[tec]['flow'][cost_par],
                                                                         df_cost])
@@ -694,7 +694,7 @@ def generate_bare_sheets(
                                                    unit = 'USD/' + config_dict['flow_units'][tec],
                                                    time = 'year',
                                                    **common_years)
-            if "shipping" in tec:
+            if "shipped" in tec:
                 df_vcost_base['value'] = 0.002  # Default is 0.002 USD/Mt-km
             parameter_outputs[tec]['flow']['var_cost'] = pd.concat([parameter_outputs[tec]['flow']['var_cost'],
                                                                     df_vcost_base])
