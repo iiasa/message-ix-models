@@ -24,17 +24,18 @@ class Config:
     #: Data frame with:
     #:
     #: - MultiIndex levels including 1 or more of :math:`(c, l, m, t)`.
-    #: - 3 columns:
-    #:   - "iamc_name": a (fragment of) an IAMC ‘variable’ name. This is appended to
+    #: - 4 columns:
+    #:   - "iamc_name": a (fragment of) an IAMC 'variable' name. This is appended to
     #:     to :attr:`iamc_prefix` to construct a complete name.
     #:   - "short_name": …
-    #:   - "unit": units of measure.
+    #:   - "unit": units of measure for output.
+    #:   - "original_unit": units of measure from MESSAGE-IX reporter.
     #:
     #: This expresses a mapping between the index entries (=indices of reported data)
-    #: and the information in the 3 columns.
+    #: and the information in the 4 columns.
     mapping: pd.DataFrame = field(
         default_factory=lambda: pd.DataFrame(
-            columns=["iamc_name", "short_name", "unit"],
+            columns=["iamc_name", "short_name", "unit", "original_unit"],
         )
     )
 
@@ -85,7 +86,9 @@ class Config:
     def check_mapping(self) -> None:
         """Assert that :attr:`mapping` has the correct structure and is complete."""
         assert self.mapping.empty or set(self.mapping.index.names) <= set("clmt")
-        assert {"iamc_name", "short_name", "unit"} == set(self.mapping.columns)
+        assert {"iamc_name", "short_name", "unit", "original_unit"} == set(
+            self.mapping.columns
+        )
         assert not self.mapping.isna().any(axis=None)
 
     def use_aggregates_dict(self, data: dict) -> None:
@@ -103,7 +106,12 @@ class Config:
                 dfs = []
                 for k, v in data.pop(k_level).items():
                     # Extract aggregate name and components
-                    d = dict(iamc_name=k, agg=v["short"], short_name=v["components"])
+                    d = dict(
+                        iamc_name=k,
+                        agg=v["short"],
+                        short_name=v["components"],
+                        original_unit=v.get("original_unit", self.unit),
+                    )
                     # Convert to DataFrame with desired structure
                     dfs.append(pd.DataFrame(d))
             except KeyError:
@@ -112,7 +120,12 @@ class Config:
             sn = "short_name"
             agg_mapping = (
                 pd.concat(dfs)
-                .merge(self.mapping.reset_index().drop(["iamc_name"], axis=1), on=[sn])
+                .merge(
+                    self.mapping.reset_index().drop(
+                        ["iamc_name", "original_unit"], axis=1
+                    ),
+                    on=[sn],
+                )
                 .drop([sn], axis=1)
                 .rename(columns={"agg": sn})
                 .set_index(dims)
@@ -141,6 +154,7 @@ class Config:
                     iamc_name=iamc_name,
                     short_name=values["short"],
                     unit=values.get("unit", self.unit),
+                    original_unit=values.get("original_unit", "GWa"),
                 )
             )
 

@@ -34,9 +34,9 @@ def pyam_df_from_rep(
     # Use join to merge data - this allows partial index matching
     # (e.g. emissions only need t,m but output needs t,m,c,l)
     df = (
-        df_var.join(mapping_df[["iamc_name", "unit"]])
+        df_var.join(mapping_df[["iamc_name", "unit", "original_unit"]])
         .dropna()
-        .groupby(["nl", "ya", "iamc_name"])
+        .groupby(["nl", "ya", "iamc_name", "original_unit"])
         .sum(numeric_only=True)
     )
     rep.set_filters()
@@ -53,6 +53,22 @@ def format_reporting_df(
 ) -> pyam.IamDataFrame:
     """Formats a DataFrame created with :func:pyam_df_from_rep to pyam.IamDataFrame."""
     df.columns = ["value"]
+
+    # Apply unit conversions based on original_unit before creating pyam DataFrame
+    conversion_factors = {
+        ("GWa", "EJ/yr"): 0.03154,
+        ("kt H2/yr", "Mt H2/yr"): 0.001,
+        # Add more conversions as needed
+    }
+
+    # Convert values based on original_unit -> target unit
+    for (orig_unit, target_unit), factor in conversion_factors.items():
+        if unit == target_unit:
+            mask = df.reset_index()["original_unit"] == orig_unit
+            df.loc[
+                df.reset_index()[mask].set_index(df.index.names).index, "value"
+            ] *= factor
+
     df = (
         df.reset_index()
         .rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
@@ -60,13 +76,12 @@ def format_reporting_df(
             variable=lambda x: variable_prefix + x["variable"],
             Model=model_name,
             Scenario=scenario_name,
-            Unit=unit,
+            Unit=unit,  # Set target unit
         )
+        .drop(columns=["original_unit"])  # Remove original_unit column
     )
+
     py_df = pyam.IamDataFrame(df)
-    if unit == "EJ/yr":
-        py_df.convert_unit("", to="GWa", factor=1, inplace=True)
-        py_df.convert_unit("GWa", to="EJ/yr", factor=0.03154, inplace=True)
 
     if py_df.empty:
         return py_df
