@@ -30,7 +30,9 @@ def calibrate_mariteam(covered_tec,
                                  'eth_shipped': {'astd_ship_type': 'Oil product tankers',
                                                  'flow_technology': ['oil_tanker_eth', 'oil_tanker_foil']},
                                  'foil_shipped': {'astd_ship_type': 'Oil product tankers',
-                                                  'flow_technology': ['oil_tanker_foil']}},
+                                                  'flow_technology': ['oil_tanker_foil']},
+                                 'loil_shipped': {'astd_ship_type': 'Oil product tankers',
+                                                  'flow_technology': ['oil_tanker_loil']}},
                        mt_output = "MariTEAM_output_2025-07-21.csv",
                        project_name: str = None,
                        config_name: str = None):
@@ -80,7 +82,8 @@ def calibrate_mariteam(covered_tec,
             inputdf = inputdf[['node_origin', 'node_loc', 'technology', 'year_vtg', 'year_act', 'mode',
                                'commodity', 'level', 'value', 'time', 'time_origin', 'unit']]
             inputdf.to_csv(os.path.join(out_path, tec, "edit_files", "flow_technology", "input.csv"), index = False)
-            
+            inputdf.to_csv(os.path.join(out_path, tec, "bare_files", "flow_technology", "input.csv"), index = False)
+
         # Historical activity
         histdf = pd.DataFrame()
         for flow_fuel in mtdict[tec]['flow_technology']:
@@ -101,3 +104,4 @@ def calibrate_mariteam(covered_tec,
             histdf = pd.concat([histdf, basedf])
             
         histdf.to_csv(os.path.join(out_path, tec, "edit_files", "flow_technology", "historical_activity.csv"), index = False)
+        histdf.to_csv(os.path.join(out_path, tec, "bare_files", "flow_technology", "historical_activity.csv"), index = False)

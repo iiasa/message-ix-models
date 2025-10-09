@@ -132,6 +132,8 @@ def import_gem(input_file: str,
     export_dir = package_data_path("bilateralize", trade_technology)
     trade_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "edit_files")
     flow_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "edit_files", "flow_technology")
+    trade_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology, "bare_files")
+    flow_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology, "bare_files", "flow_technology")
     export_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
     if not os.path.isdir(export_dir):
         os.makedirs(export_dir)
@@ -159,7 +161,8 @@ def import_gem(input_file: str,
     inv_cost['unit'] = 'USD/km'
     inv_cost = inv_cost[['node_loc', 'technology', 'year_vtg', 'value', 'unit']].drop_duplicates()
     inv_cost.to_csv(os.path.join(flow_dir, "inv_cost.csv"), index = False)
-    
+    inv_cost.to_csv(os.path.join(flow_dir_out, "inv_cost.csv"), index = False)
+
     # Historical activity (flow)
     hist_act = df[['EXPORTER', 'IMPORTER', 'YEAR', 'LengthMergedKm']].drop_duplicates()
     hist_act['LengthMergedKm'] = np.where(hist_act['LengthMergedKm'].isnull(), 0, hist_act['LengthMergedKm'])
@@ -174,6 +177,7 @@ def import_gem(input_file: str,
     hist_act = hist_act[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
     hist_act.to_csv(os.path.join(export_dir, "historical_activity_GEM.csv"), index = False)
     hist_act.to_csv(os.path.join(flow_dir, "historical_activity.csv"), index = False)
+    hist_act.to_csv(os.path.join(flow_dir_out, "historical_activity.csv"), index = False)
 
     # Historical activity (trade for oil pipelines only)
     if trade_technology == "crudeoil_piped":
@@ -190,7 +194,8 @@ def import_gem(input_file: str,
         hist_tra = hist_tra[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
         hist_tra.to_csv(os.path.join(export_dir, "historical_activity_trade_GEM.csv"), index = False)
         hist_tra.to_csv(os.path.join(trade_dir, "historical_activity.csv"), index = False)
-    
+        hist_tra.to_csv(os.path.join(trade_dir_out, "historical_activity.csv"), index = False)
+
     # Historical new capacity
     hist_cap = df[['EXPORTER', 'IMPORTER', 'YEAR', 'LengthMergedKm']]
     hist_cap = hist_cap.rename(columns = {'LengthMergedKm': 'CAPACITY_KM'})
@@ -220,7 +225,8 @@ def import_gem(input_file: str,
                                   unit = 'km')
     hist_cap.to_csv(os.path.join(export_dir, "historical_new_capacity_GEM.csv"), index = False)
     hist_cap.to_csv(os.path.join(flow_dir, "historical_new_capacity.csv"), index = False)
-    
+    hist_cap.to_csv(os.path.join(flow_dir_out, "historical_new_capacity.csv"), index = False)
+
     # Input
     inputdf = df.groupby(['EXPORTER', 'IMPORTER'])[['Capacity (GWa)', 'LengthMergedKm']].sum().reset_index()
     inputdf['Capacity (GWa/km)'] = inputdf['Capacity (GWa)']/inputdf['LengthMergedKm']
@@ -249,4 +255,5 @@ def import_gem(input_file: str,
     
     inputdf.to_csv(os.path.join(export_dir, "inputs_GEM.csv"), index = False)
     inputdf.to_csv(os.path.join(trade_dir, "input.csv"), index = False)
+    inputdf.to_csv(os.path.join(trade_dir_out, "input.csv"), index = False)
 
