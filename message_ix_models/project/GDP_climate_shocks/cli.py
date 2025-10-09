@@ -70,6 +70,7 @@ def run_initial_scenario_if_needed(
     None
         Runs the scenario and processes output if needed.
     """
+    rep_path = input_path = private_data_path().parent / "reporting_output"
     input_path = private_data_path().parent / "reporting_output" / "magicc_output"
     file_in = input_path / f"{sc_str_rime}_0_magicc.xlsx"
 
@@ -82,22 +83,29 @@ def run_initial_scenario_if_needed(
     except FileNotFoundError:
         log.info("No MAGICC output found, running base scenario...")
 
-    kwargs = maybe_shift_year(sc_ref, shift_year)
-    sc0 = sc_ref.clone(
-        model_name_clone,
-        scenario + "_GDP_CI_0",
-        keep_solution=False,
-        **kwargs,
-    )
     # specific to the ENGAGE scenario
     if "INDC2030" in scenario:
         log.info("Adding slack to scenario with INDC2030")
         add_slack_ix(sc0)
 
-    sc0.solve(solve_options={"lpmethod": "4"}, model="MESSAGE")
-    sc0.set_as_default()
+    file_report = rep_path / f"{sc_str_rime}_0.xlsx"
+    if file_report.exists():
+        log.info(
+            f"Found existing reporting output: {file_report.name}, skipping reporting."
+        )
+        sc0 = message_ix.Scenario(mp, model_name_clone, scenario + "_GDP_CI_0")
+    else:
+        kwargs = maybe_shift_year(sc_ref, shift_year)
+        sc0 = sc_ref.clone(
+            model_name_clone,
+            scenario + "_GDP_CI_0",
+            keep_solution=False,
+            **kwargs,
+        )
+        sc0.solve(solve_options={"lpmethod": "4"}, model="MESSAGE")
+        sc0.set_as_default()
+        run_emi_reporting(sc0, mp)
 
-    run_emi_reporting(sc0, mp)
     run_climate_processor(sc0)
     log.info("Initial scenario completed")
 
@@ -399,12 +407,23 @@ def run_from_single_input(
 ):
     """Run MAGICC and RIME from a single pre-generated MAGICC input file."""
     magicc_input_path = cfg["magicc_input_path"]
+    # path to check if magicc file already exist (reduce rerunning time)
+    input_path = private_data_path().parent / "reporting_output" / "magicc_output"
     logging.info("Using input-only singe mode from file: %s", magicc_input_path)
     for scenario in scens_ref:
-        run_climate_processor_from_file(magicc_input_path, model_name, scenario)
-        logging.info("Scenario completed with MAGICC, proceed to RIME")
-        # run RIME on sc0_magicc
         sc_str_rime = f"{model_name}_{scenario}"
+        file_in = input_path / f"{sc_str_rime}_0_magicc.xlsx"
+
+        if file_in.exists():
+            log.info(
+                f"Found existing MAGICC output: {file_in.name}, skipping base run."
+            )
+        else:
+            log.info("No MAGICC output found, running base scenario...")
+            run_climate_processor_from_file(magicc_input_path, model_name, scenario)
+            logging.info("Scenario completed with MAGICC, proceed to RIME")
+
+        # run RIME on sc0_magicc
         for pp in percentiles:
             run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
             logging.info(f"Iteraction 0 with RIME for {sc_str_rime}_{pp} completed.")

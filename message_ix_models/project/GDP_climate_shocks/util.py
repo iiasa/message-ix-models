@@ -154,7 +154,7 @@ def run_emi_reporting(sc=False, mp=False):
     legacy_reporting(
         mp=mp,
         scen=sc,
-        merge_hist=False,
+        merge_hist=True,
         merge_ts=False,
         run_config="GDP_shock_emiss_run_config.yaml",
     )
@@ -249,15 +249,12 @@ def regional_gdp_impacts(sc_string, damage_model, it, SSP, regions, pp=50):
     # rename Region to iso3
     gdp_shock = pyam.IamDataFrame(rime_path / rime_file).as_pandas()
 
-    # TEMP better to harmonizy the output variable name in the RIME scripts
-    if damage_model == "Waidelich":
-        gdp_shock = gdp_shock[gdp_shock["variable"] == "RIME|All indicators|mean"]
-    #  next if damage_model == Burke or Kotz
-    elif damage_model == "Burke" or damage_model == "Kotz":
+    try:
         gdp_shock = gdp_shock[gdp_shock["variable"] == "RIME|pct.diff"]
-    else:
+        assert not gdp_shock.empty, "No data found for variable 'RIME|pct.diff'."
+    except Exception as e:
         raise AssertionError(
-            "Invalid damage model. Please define a suitable damage function."
+            f"Could not filter gdp_shock for variable 'RIME|pct.diff': {e}"
         )
 
     gdp_shock.drop(["variable", "unit"], axis=1, inplace=True)
