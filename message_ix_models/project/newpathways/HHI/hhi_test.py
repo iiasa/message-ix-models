@@ -4,13 +4,14 @@ Test HHI code
 """
 # Import packages
 import message_ix
-from message_ix.testing import make_westeros
 import ixmp
 from ixmp import Platform
 import pandas as pd
 
 # Load the Westeros scenario
 mp = ixmp.Platform()
+scen = message_ix.Scenario(mp, model='NP_HHI', scenario='Westeros')
+
 base = make_westeros(mp, emissions=True, solve=False)
 scen = base.clone(model='NP_HHI', scenario='Westeros', keep_solution = False)
 
