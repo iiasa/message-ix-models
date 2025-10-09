@@ -662,7 +662,9 @@ def generate_bare_sheets(
                                                  unit = 'USD/' + config_dict['flow_units'][tec],
                                                  **common_years, **common_cols)
                 df_cost = df_cost.drop_duplicates()
-            
+                
+                if "shipping" in tec:
+                    df_cost['value'] = 0.04  # Default is 0.04 USD/GWa
                 parameter_outputs[tec]['flow'][cost_par] = pd.concat([parameter_outputs[tec]['flow'][cost_par],
                                                                         df_cost])
 
@@ -689,7 +691,8 @@ def generate_bare_sheets(
                                                    unit = 'USD/' + config_dict['flow_units'][tec],
                                                    time = 'year',
                                                    **common_years)
-                    
+            if "shipping" in tec:
+                df_vcost_base['value'] = 0.002  # Default is 0.002 USD/Mt-km
             parameter_outputs[tec]['flow']['var_cost'] = pd.concat([parameter_outputs[tec]['flow']['var_cost'],
                                                                     df_vcost_base])
         
@@ -820,6 +823,14 @@ def generate_bare_sheets(
                dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
                shutil.copy2(base_file, dest_file)
                log.info(f"Copied file from edit to bare: {reqpar}")
+    ## Transfer cost parameters for flow technologies using shipping from edit to bare
+    for tec in covered_tec:
+        if 'shipping' in tec:
+            required_parameters = [os.path.join("flow_technology", "var_cost.csv"),
+                                   os.path.join("flow_technology", "inv_cost.csv")]
+            for reqpar in required_parameters:
+                if not os.path.isfile(os.path.join(data_path, tec, "bare_files", reqpar)):
+                    base_file = os.path.join(data_path, tec, "edit_files", reqpar)
         
 #%% Build out bare sheets
 def build_parameter_sheets(log, 
