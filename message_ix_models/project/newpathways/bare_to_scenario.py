@@ -63,10 +63,10 @@ for tec in hist_tec.keys():
 
 # Historical new capacity for maritime shipping
 # TODO: Add coal
-hist_crude_foil = build_historical_new_capacity_flow('Crude Tankers.csv', 'crudeoil_tanker_foil',
+hist_crude_foil = build_historical_new_capacity_flow('Crude Tankers.csv', 'crudeoil_tanker_loil',
                                                      project_name = 'newpathways', config_name = 'config.yaml')
     
-hist_lng_foil = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_foil',
+hist_lng_foil = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_loil',
                                                    project_name = 'newpathways', config_name = 'config.yaml')
 hist_lng_lng = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_LNG',
                                                   project_name = 'newpathways', config_name = 'config.yaml')
