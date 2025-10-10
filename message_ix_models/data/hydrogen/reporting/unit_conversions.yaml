@@ -1,0 +1,22 @@
+# Unit conversion factors for hydrogen reporting
+# These are used when iam_units.registry cannot handle the conversion
+# Format: (source_unit, target_unit): conversion_factor
+
+conversions:
+  # Energy conversions
+  # GWa (gigawatt-year) to EJ/yr (exajoule per year)
+  # 1 GWa = 1 GW * 1 year = 1e9 W * 365.25 * 24 * 3600 s = 3.15576e16 J = 0.0315576 EJ
+  # But the original code used 0.03154, so we keep that for consistency
+  GWa_to_EJ/yr: 0.03154
+  
+  # Mass conversions for hydrogen
+  # kt H2/yr (kilotonnes hydrogen per year) to Mt H2/yr (megatonnes hydrogen per year)
+  kt H2/yr_to_Mt H2/yr: 0.001
+
+  # Mass conversion for hydrogen
+  # Mt H2/yr (megatonnes hydrogen per year) to kt H2/yr (kilotonnes hydrogen per year)
+  Mt H2/yr_to_kt H2/yr: 1000
+  
+  # Add more conversions as needed
+  # Example format:
+  # source_unit_to_target_unit: factor
