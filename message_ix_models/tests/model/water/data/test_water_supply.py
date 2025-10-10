@@ -98,6 +98,40 @@ def test_add_water_supply(request, test_context):
     assert "var_cost" in result
     assert "technical_lifetime" in result
     assert "inv_cost" in result
+    assert "growth_activity_up" in result
+
+    # Verify growth_activity_up DataFrame is properly populated
+    growth_df = result["growth_activity_up"]
+    assert isinstance(growth_df, pd.DataFrame), (
+        "growth_activity_up should be a DataFrame"
+    )
+    assert not growth_df.empty, (
+        "growth_activity_up DataFrame should not be empty"
+    )
+
+    # Check for extract_surfacewater entries
+    extract_sw = growth_df[growth_df["technology"] == "extract_surfacewater"]
+    assert not extract_sw.empty, (
+        "growth_activity_up should contain extract_surfacewater entries"
+    )
+
+    # Verify correct value
+    assert (extract_sw["value"] == 0.02).all(), (
+        f"growth_activity_up for extract_surfacewater should be 0.02, "
+        f"got values: {extract_sw['value'].unique()}"
+    )
+
+    # Verify time column is not null
+    assert not extract_sw["time"].isna().any(), (
+        "growth_activity_up time column should not contain NaN values"
+    )
+
+    # Verify required columns exist
+    required_cols = ["technology", "node_loc", "year_act", "time", "value", "unit"]
+    assert all(col in growth_df.columns for col in required_cols), (
+        f"growth_activity_up missing required columns. "
+        f"Has: {growth_df.columns.tolist()}, needs: {required_cols}"
+    )
 
     for df in result.values():
         assert isinstance(df, pd.DataFrame)
