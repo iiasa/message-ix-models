@@ -779,7 +779,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             make_df(
                 "technical_lifetime",
                 technology="extract_surfacewater",
-                value=30,
+                value=50,
                 unit="y",
             )
             .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
@@ -890,7 +890,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         growth_activity_up = make_df(
             "growth_activity_up",
             technology="extract_surfacewater",
-            value=0.1,
+            value=0.02,
             unit="-",
         ).pipe(broadcast, year_act=year_wat, node_loc=df_node["node"])
 
