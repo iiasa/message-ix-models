@@ -30,7 +30,7 @@ covered_trade_technologies:
   - foil_shipped
   - foil_piped
   - loil_shipped
-#  - loil_piped
+  - loil_piped
 
 # YEARS
 timeframes:
