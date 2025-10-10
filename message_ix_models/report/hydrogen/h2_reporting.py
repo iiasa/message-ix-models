@@ -3,6 +3,7 @@ from typing import List
 import message_ix
 import pandas as pd
 import pyam
+from iam_units import registry
 from message_ix.report import Reporter
 
 from message_ix_models.util import broadcast
@@ -43,6 +44,108 @@ def pyam_df_from_rep(
     return df
 
 
+def _load_unit_conversions() -> dict:
+    """Load unit conversion factors from YAML file.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping (source_unit, target_unit) tuples to conversion factors
+    """
+    import yaml
+    from message_ix_models.util import package_data_path
+
+    try:
+        path = package_data_path("hydrogen", "reporting", "unit_conversions.yaml")
+        with open(path) as f:
+            data = yaml.safe_load(f)
+
+        # Convert the YAML format to the expected dictionary format
+        conversions = {}
+        for key, factor in data.get("conversions", {}).items():
+            # Parse keys like "GWa_to_EJ/yr" into ("GWa", "EJ/yr")
+            if "_to_" in key:
+                source_unit, target_unit = key.split("_to_", 1)
+                conversions[(source_unit, target_unit)] = factor
+
+        return conversions
+
+    except Exception as e:
+        import logging
+
+        log = logging.getLogger(__name__)
+        log.warning(f"Could not load unit conversions from YAML: {e}")
+        return {}
+
+
+def convert_units_from_mapping(df: pd.DataFrame, target_unit: str) -> pd.DataFrame:
+    """Convert units in DataFrame using iam_units.registry based on original_unit column.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with 'original_unit' in index and 'value' column
+    target_unit : str
+        Target unit to convert to
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with converted values
+    """
+    if "original_unit" not in df.index.names:
+        # No unit conversion needed if original_unit is not in the index
+        return df
+
+    # Create a copy to avoid modifying the original
+    df_converted = df.copy()
+
+    # Get unique original units from the index
+    original_units = df.reset_index()["original_unit"].unique()
+
+    # Load conversion factors from YAML file
+    yaml_conversions = _load_unit_conversions()
+
+    for orig_unit in original_units:
+        if orig_unit == target_unit:
+            # No conversion needed
+            continue
+
+        # Create mask for rows with this original unit
+        mask = df.reset_index()["original_unit"] == orig_unit
+        indices = df.reset_index()[mask].set_index(df.index.names).index
+
+        # Get the values to convert
+        values_to_convert = df.loc[indices, "value"].values
+
+        # Check if we have a YAML-defined conversion first
+        conversion_key = (orig_unit, target_unit)
+        if conversion_key in yaml_conversions:
+            factor = yaml_conversions[conversion_key]
+            df_converted.loc[indices, "value"] = values_to_convert * factor
+            continue
+
+        # Try using iam_units.registry for conversion
+        try:
+            converted_quantity = registry.Quantity(values_to_convert, orig_unit).to(
+                target_unit
+            )
+
+            # Update the values in the DataFrame
+            df_converted.loc[indices, "value"] = converted_quantity.magnitude
+
+        except Exception as e:
+            # Log the error but continue processing
+            import logging
+
+            log = logging.getLogger(__name__)
+            log.warning(f"Could not convert from {orig_unit} to {target_unit}: {e}")
+            # Keep original values if conversion fails
+            continue
+
+    return df_converted
+
+
 def format_reporting_df(
     df: pd.DataFrame,
     variable_prefix: str,
@@ -54,20 +157,8 @@ def format_reporting_df(
     """Formats a DataFrame created with :func:pyam_df_from_rep to pyam.IamDataFrame."""
     df.columns = ["value"]
 
-    # Apply unit conversions based on original_unit before creating pyam DataFrame
-    conversion_factors = {
-        ("GWa", "EJ/yr"): 0.03154,
-        ("kt H2/yr", "Mt H2/yr"): 0.001,
-        # Add more conversions as needed
-    }
-
-    # Convert values based on original_unit -> target unit
-    for (orig_unit, target_unit), factor in conversion_factors.items():
-        if unit == target_unit:
-            mask = df.reset_index()["original_unit"] == orig_unit
-            df.loc[
-                df.reset_index()[mask].set_index(df.index.names).index, "value"
-            ] *= factor
+    # Apply unit conversions using iam_units.registry
+    df = convert_units_from_mapping(df, unit)
 
     df = (
         df.reset_index()
