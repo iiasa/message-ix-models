@@ -892,7 +892,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             technology="extract_surfacewater",
             value=0.02,
             unit="-",
-        ).pipe(broadcast, year_act=year_wat, node_loc=df_node["node"])
+        ).pipe(broadcast, year_act=year_wat, node_loc=df_node["node"], time=pd.Series(sub_time))
 
         results["growth_activity_up"] = growth_activity_up
 
