@@ -34,7 +34,9 @@ def calibrate_mariteam(covered_tec,
                                  'loil_shipped': {'astd_ship_type': 'Oil product tankers',
                                                   'flow_technology': ['oil_tanker_loil']},
                                  'biomass_shipped': {'astd_ship_type': 'Bulk carriers',
-                                                     'flow_technology': ['energy_bulk_carrier_loil']}},
+                                                     'flow_technology': ['energy_bulk_carrier_loil']},
+                                 'lh2_shipped': {'astd_ship_type': 'Chemical tankers',
+                                                 'flow_technology': ['lh2_tanker_lh2', 'lh2_tanker_loil']}},
                        mt_output = "MariTEAM_output_2025-07-21.csv",
                        project_name: str = None,
                        config_name: str = None):
@@ -45,12 +47,18 @@ def calibrate_mariteam(covered_tec,
     data_path = os.path.join(p_drive, "MESSAGE_trade")
     mt_path = os.path.join(data_path, "MariTEAM")
     out_path = os.path.join(os.path.dirname(package_data_path("bilateralize")), "bilateralize")
-
+    
     # Import MariTEAM outputs
     mtdf = pd.read_csv(os.path.join(mt_path, mt_output))
     mtdf = mtdf[mtdf[message_regions + '_origin'] != mtdf[message_regions + '_destination']] # no intraregional trade
     
     for tec in [i for i in covered_tec if 'shipped' in i]:
+        
+        # If a non-energy commodity, add to bulk carriers in mtdict
+        if tec.replace('_shipped', '') in ['biomass', 'coal', 'crudeoil', 'eth', 'foil', 'lh2', 'loil', 'LNG', 'meth'] == False:
+            mtdict_add = {tec: {'astd_ship_type': 'Bulk carriers',
+                                'flow_technology': ['energy_bulk_carrier_loil']}}
+            mtdict.update(mtdict_add)
         
         for flow_fuel in mtdict[tec]['flow_technology']:
             basedf = mtdf[mtdf['astd_ship_type'] == mtdict[tec]['astd_ship_type']].copy()
