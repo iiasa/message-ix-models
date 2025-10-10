@@ -618,7 +618,7 @@ def generate_bare_sheets(
                 df_output = pd.concat([df_output, df_output_gbunk])
             
             df_output = df_output.drop_duplicates()
-            
+        df_output['value'] = 1    
         parameter_outputs[tec]['flow']['output'] = df_output
 
     # Create base files for capacity constraints
