@@ -27,7 +27,7 @@ env:
   labels: >-
     [
       "SSP2",
-      "EDITS-CA",
+      "EDITS-CA"
     ]
 
   # Currently disabled:
