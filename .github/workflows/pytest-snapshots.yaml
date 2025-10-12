@@ -36,7 +36,7 @@ jobs:
         lfs: true
 
     - name: Set up uv, Python
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v7
       with:
         activate-environment: true
         python-version: ${{ env.python-version }}

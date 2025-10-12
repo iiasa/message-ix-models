@@ -142,7 +142,7 @@ jobs:
         key: static-data-${{ matrix.os }}
 
     - name: Set up uv, Python
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v7
       with:
         activate-environment: true
         python-version: ${{ matrix.version.python }}
@@ -233,7 +233,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with: { ref: "${{ needs.check.outputs.ref }}" }
-    - uses: astral-sh/setup-uv@v6
+    - uses: astral-sh/setup-uv@v7
       with: { python-version: "${{ env.python-version }}" }
     - name: Clear and re-create the pre-commit environments
       run: uvx pre-commit clean
