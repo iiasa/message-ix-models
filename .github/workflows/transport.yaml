@@ -26,8 +26,7 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "SSP1",
-      "SSP2"
+     "EDITS-HA"
     ]
 
   # Currently disabled:
