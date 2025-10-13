@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
@@ -87,12 +87,13 @@ def main(context, scenario: Scenario) -> Scenario:
     # Save outputs
     log.info("Saving climate finance scenario series...")
 
-    # Save to the same directory as this script (project/investment)
-    current_dir = Path(__file__).parent
+    # Save to the package data directory
+    output_dir = package_data_path("investment")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    scenario0_df.to_csv(current_dir / "ccf.csv", index=False)
-    scenario1_df.to_csv(current_dir / f"cf_his_{f_tag}.csv", index=False)
-    scenario2_df.to_csv(current_dir / f"cf_fair_{f_tag}.csv", index=False)
+    scenario0_df.to_csv(output_dir / "ccf.csv", index=False)
+    scenario1_df.to_csv(output_dir / f"cf_his_{f_tag}.csv", index=False)
+    scenario2_df.to_csv(output_dir / f"cf_fair_{f_tag}.csv", index=False)
 
     log.info("Climate finance series generation completed.")
 

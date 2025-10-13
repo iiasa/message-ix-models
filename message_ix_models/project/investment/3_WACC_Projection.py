@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
@@ -116,8 +116,8 @@ def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
 
     # === Step 6: Load regression coefficients ===
     log.info("Loading regression coefficients...")
-    current_dir = Path(__file__).parent
-    coeff_path = current_dir / REG_COEFF_PATH
+    coeff_dir = package_data_path("investment")
+    coeff_path = coeff_dir / REG_COEFF_PATH
     coeff_df = pd.read_csv(coeff_path, index_col=0)
 
     # Clean index and column names: strip whitespaces
@@ -198,8 +198,28 @@ def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
 
     # === Step 10: Export result ===
     log.info("Saving WACC projections...")
-    output_path = current_dir / "predicted_wacc.csv"
-    df_result_all.to_csv(output_path, index=False)
+
+    # Create output directory if it doesn't exist
+    output_dir = package_data_path("investment")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    log.info(f"WACC files will be saved to: {output_dir}")
+
+    # Save individual files for each SSP and scenario combination
+    for ssp in SSPS:
+        for scen in SCENARIOS:
+            # Filter data for this specific SSP and scenario combination
+            ssp_scenario_data = df_result_all[
+                (df_result_all["SSP"] == ssp) & (df_result_all["Scenario"] == scen)
+            ]
+            if not ssp_scenario_data.empty:
+                output_path = output_dir / f"predicted_wacc_{ssp.lower()}_{scen}.csv"
+                ssp_scenario_data.to_csv(output_path, index=False)
+                log.info(f"Saved WACC projections for {ssp} {scen} to {output_path}")
+
+    # Also save the combined file for backward compatibility
+    combined_output_path = output_dir / "predicted_wacc.csv"
+    df_result_all.to_csv(combined_output_path, index=False)
+    log.info(f"Saved combined WACC projections to {combined_output_path}")
 
     log.info("WACC projection completed.")
 
