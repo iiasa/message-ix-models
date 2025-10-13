@@ -283,6 +283,7 @@ def test_make_source_tech0():
 
 
 @MARK["ixmp#595"]
+@MARK["ixmp#600"]
 def test_make_source_tech1(test_mp):
     """Test make_source_tech() with a Scenario object as input."""
     s = Scenario(test_mp, model="model", scenario="scenario", version="new")
