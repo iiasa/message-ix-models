@@ -92,6 +92,10 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         reason="https://github.com/khaeru/sdmx/issues/230",
         raises=sdmx.exceptions.XMLParseError,
     ),
+    "ixmp#600": pytest.mark.xfail(
+        condition=version("ixmp") == "3.11.0" and find_spec("ixmp4") is not None,
+        reason="https://github.com/iiasa/ixmp/issues/600",
+    ),
 }
 
 #: Shorthand for marking a parametrized test case that is expected to fail because it is
