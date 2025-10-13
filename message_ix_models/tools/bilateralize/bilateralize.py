@@ -982,11 +982,19 @@ def clone_and_update(trade_dict,
     for tec in covered_tec:
         
         # Remove existing technologies related to trade
+        base_tec_name = tec.replace("_shipped", "")
+        base_tec_name = base_tec_name.replace("_piped", "")
+        
         base_tec = [config.get(tec + '_trade').get('trade_commodity') + '_exp', # These may not exist but in case they do...
-                    config.get(tec + '_trade').get('trade_commodity') + '_imp']
+                    config.get(tec + '_trade').get('trade_commodity') + '_imp',
+                    base_tec_name + '_exp', # These may not exist but in case they do...
+                    base_tec_name + '_imp',]
         if tec == 'gas_piped':
             base_tec = base_tec + [i for i in scen.set('technology') if 
                                    config.get(tec + '_trade').get('trade_commodity') + '_exp_' in i]
+        if 'crudeoil' in tec:
+            base_tec = base_tec + ['oil_exp', 'oil_imp']
+            
         base_tec = list(set(base_tec))
         
         with scen.transact("Remove base trade technologies for " + tec):
