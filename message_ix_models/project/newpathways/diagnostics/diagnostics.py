@@ -95,7 +95,7 @@ def activity_to_csv(trade_tec,
         act_out['level'] = round(act_out['level'], 1)
         
         exp_technologies = [t for t in activity['technology'].unique() if "_exp" in t] # If trade tec not bilateralized, use base trade name
-        if trade_tec not in exp_technologies:
+        if any(trade_tec in i for i in exp_technologies) == False:
             trade_tec_use = trade_tec.replace("_shipped", "")
             trade_tec_use = trade_tec_use.replace("_piped", "")
         else:
@@ -174,10 +174,10 @@ scenarios_models = {'base_scenario': 'NP_SSP2_6.2',
 tradeflows = {#'LNG_shipped': ['LNG_shipped', 'LNG_tanker', 'LNG (GWa)', 'LNG_tanker_capacity', 'Mt-km'],
               #'gas_piped': ['gas_piped', 'gas_pipe', 'gas (GWa)', 'gas_pipeline_capacity', 'km'],
               #'coal_shipped': ['coal_shipped', 'energy_bulk_carrier', 'Coal (GWa)', 'energy_bulk_carrier_capacity', 'Mt-km'],
-              #'crudeoil_piped': ['crudeoil_piped', 'oil_pipe', 'Crude (GWa)', 'oil_pipeline_capacity', 'km'],
-              'crudeoil_shipped': ['crudeoil_shipped', 'oil_tanker', 'Crude (GWa)', 'oil_tanker_capacity', 'Mt-km'],
-              'eth_shipped': ['eth_shipped', 'oil_tanker', 'Ethanol (GWa)', 'oil_tanker_capacity', 'Mt-km'],
-              'foil_shipped': ['foil_shipped', 'oil_tanker', 'Fuel Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              'crudeoil_piped': ['crudeoil_piped', 'oil_pipe', 'Crude (GWa)', 'oil_pipeline_capacity', 'km'],
+              #'crudeoil_shipped': ['crudeoil_shipped', 'oil_tanker', 'Crude (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              #'eth_shipped': ['eth_shipped', 'oil_tanker', 'Ethanol (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              #'foil_shipped': ['foil_shipped', 'oil_tanker', 'Fuel Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
               'foil_piped': ['foil_piped', 'oil_pipe', 'Fuel Oil (GWa)', 'oil_pipeline_capacity', 'km'],
               'loil_shipped': ['loil_shipped', 'oil_tanker', 'Light Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
               'loil_piped': ['loil_piped', 'oil_pipe', 'Light Oil (GWa)', 'oil_pipeline_capacity', 'km'],
