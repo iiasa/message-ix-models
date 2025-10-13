@@ -31,9 +31,9 @@ message_regions = config['scenario']['regions']
 # Get logger
 log = get_logger(__name__)
 
-# # Import pickle of parameter definitions
-# tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
-# trade_parameters = pd.read_pickle(tdf)
+# Import pickle of parameter definitions
+tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
+trade_parameters = pd.read_pickle(tdf)
 
 # # Update scenario: default values
 # default_parameters = pd.read_pickle(tdf)
