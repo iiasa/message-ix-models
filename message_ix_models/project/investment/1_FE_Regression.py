@@ -10,7 +10,6 @@ factors and generates coefficients that are used for futureWACC projections.
 """
 
 import logging
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,7 @@ import statsmodels.api as sm
 from linearmodels.panel import PanelOLS
 from message_ix import Scenario
 
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
@@ -156,11 +155,13 @@ def main(context, scenario: Scenario) -> Scenario:
     if SHOW_DASH_FOR_NA:
         coef_to_save = coef_to_save.where(~coef_to_save.isna(), "–")
 
-    # Save to the same directory as this script (project/investment)
-    current_dir = Path(__file__).parent
-    output_path = current_dir / OUT_COEF_CSV
+    # Save to the package data directory
+    output_dir = package_data_path("investment")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / OUT_COEF_CSV
     coef_to_save.to_csv(output_path, float_format="%.6f")
 
+    log.info(f"Regression coefficients will be saved to: {output_dir}")
     log.info(
         f"Fixed effects regression completed. Coefficients saved to: {output_path}"
     )

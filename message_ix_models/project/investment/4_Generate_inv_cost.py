@@ -7,18 +7,17 @@ using WACC projections and original investment cost data.
 """
 
 import logging
-from pathlib import Path
 
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
 
-def main(context, scenario: Scenario) -> Scenario:
-    """Generate investment cost file with CoC decomposition.
+def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
+    """Generate investment cost files with CoC decomposition for all WACC scenarios.
 
     Parameters
     ----------
@@ -33,37 +32,29 @@ def main(context, scenario: Scenario) -> Scenario:
         The input scenario (unchanged)
     """
     # === Config ===
-    ssp = "SSP2"
-    wacc_scenario = "ccf"
     baseline_year = 2020
     A_default = 0.10
-    wacc_csv_path = "predicted_wacc.csv"
     inv_cost_filename = "inv_cost_ori.csv"  # TODO: read from parent scenario
-    out_filename = "inv_cost.csv"
     category_map_override = None
 
     def gene_coc(
-        ssp: str = "SSP2",
-        wacc_scenario: str = "ccf",
+        wacc_csv_path: str,
+        out_filename: str,
         baseline_year: int = 2020,
         A_default: float = 0.10,
-        wacc_csv_path: str = "Predicted_WACC.csv",
         inv_cost_filename: str = "inv_cost_ori.csv",
-        out_filename: str = "inv_cost.csv",
         category_map_override: dict | None = None,
     ) -> None:
         """
-        Generate investment cost file (inv_cost.csv) with CoC decomposition.
+        Generate investment cost file with CoC decomposition.
 
         Parameters
         ----------
-        ssp : SSP scenario (e.g., 'SSP2')
-        wacc_scenario : WACC scenario (e.g., 'Scen0')
+        wacc_csv_path : Path to WACC projection file
+        out_filename : Output file name
         baseline_year : Only process investments from this year onwards
         A_default : Default financing cost share (A) when WACC is missing
-        wacc_csv_path : Path to WACC projection file
         inv_cost_filename : Original investment cost file name
-        out_filename : Output file name
         category_map_override : Optional mapping to override technology-to-category
             mapping
         """
@@ -90,12 +81,12 @@ def main(context, scenario: Scenario) -> Scenario:
         inv_cost_ori = pd.read_csv(private_data_path("investment", inv_cost_filename))
         inv_cost = inv_cost_ori.loc[inv_cost_ori["year_vtg"] >= baseline_year].copy()
 
-        # Load and filter WACC data
-        log.info("Loading and filtering WACC data...")
-        current_dir = Path(__file__).parent
-        wacc_path = current_dir / wacc_csv_path
+        # Load WACC data
+        log.info("Loading WACC data...")
+        wacc_dir = package_data_path("investment")
+        wacc_path = wacc_dir / wacc_csv_path
         wacc = pd.read_csv(wacc_path)
-        wacc = wacc[(wacc["Scenario"] == wacc_scenario) & (wacc["SSP"] == ssp)].copy()
+        # Since we're using individual SSP+scenario files, no filtering needed
 
         # Rename WACC columns for merging
         wacc = wacc.rename(
@@ -170,21 +161,53 @@ def main(context, scenario: Scenario) -> Scenario:
             "non_coc_base",
         ]
         out = inv_cost[cols]
-        output_path = current_dir / out_filename
+        output_dir = package_data_path("investment")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / out_filename
         out.to_csv(output_path, index=False)
 
-    # Call the gene_coc function
-    gene_coc(
-        ssp=ssp,
-        wacc_scenario=wacc_scenario,
-        baseline_year=baseline_year,
-        A_default=A_default,
-        wacc_csv_path=wacc_csv_path,
-        inv_cost_filename=inv_cost_filename,
-        out_filename=out_filename,
-        category_map_override=category_map_override,
-    )
+    # Find all predicted_wacc_*.csv files in the package data directory
+    wacc_dir = package_data_path("investment")
+    wacc_files = list(wacc_dir.glob("predicted_wacc_*.csv"))
 
-    log.info("Investment cost generation completed.")
+    log.info(f"Looking for WACC files in: {wacc_dir}")
+
+    if not wacc_files:
+        log.warning(f"No predicted_wacc_*.csv files found in {wacc_dir}")
+        return scenario
+
+    log.info(f"Found {len(wacc_files)} WACC files to process:")
+    for wacc_file in wacc_files:
+        log.info(f"  - {wacc_file.name}")
+
+    # Process each WACC file
+    for wacc_file in wacc_files:
+        # Extract the base name
+        base_name = wacc_file.stem
+        # Create corresponding output filename
+        out_filename = f"inv_cost_{base_name.replace('predicted_wacc_', '')}.csv"
+
+        log.info(f"Processing {wacc_file.name} -> {out_filename}")
+
+        try:
+            gene_coc(
+                wacc_csv_path=wacc_file.name,
+                out_filename=out_filename,
+                baseline_year=baseline_year,
+                A_default=A_default,
+                inv_cost_filename=inv_cost_filename,
+                category_map_override=category_map_override,
+            )
+            log.info(f"Successfully generated {out_filename}")
+        except Exception as e:
+            log.error(f"Failed to process {wacc_file.name}: {e}")
+            continue
+
+    # Summary
+    output_dir = package_data_path("investment")
+    successful_files = list(output_dir.glob("inv_cost_*.csv"))
+    log.info(f"Generated {len(successful_files)} investment cost files:")
+    for inv_file in sorted(successful_files):
+        log.info(f"  - {inv_file.name}")
 
     return scenario
