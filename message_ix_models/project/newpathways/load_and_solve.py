@@ -43,7 +43,7 @@ clone_and_update(trade_dict=trade_parameters,
                  to_gdx = False,
                  solve = True,
                  gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
-                 update_scenario_name = 'GpLNGsCsCRspEsFspLspBs')
+                 update_scenario_name = 'GpLNGsCsCRspEsFspLspBsHs')
 
 # # Update scenario: Increase liquefaction gas penalty
 # additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
