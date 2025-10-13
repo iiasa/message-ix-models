@@ -31,47 +31,47 @@ message_regions = config['scenario']['regions']
 # Get logger
 log = get_logger(__name__)
 
-# Import pickle of parameter definitions
-tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
-trade_parameters = pd.read_pickle(tdf)
+# # Import pickle of parameter definitions
+# tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
+# trade_parameters = pd.read_pickle(tdf)
 
-# Update scenario: default values
-default_parameters = pd.read_pickle(tdf)
-for t in covered_tec:
-    del default_parameters[t]['trade']['growth_activity_lo']
-    del default_parameters[t]['trade']['growth_activity_up']
-    del default_parameters[t]['trade']['initial_activity_lo']
-    del default_parameters[t]['trade']['initial_activity_up']
+# # Update scenario: default values
+# default_parameters = pd.read_pickle(tdf)
+# for t in covered_tec:
+#     del default_parameters[t]['trade']['growth_activity_lo']
+#     del default_parameters[t]['trade']['growth_activity_up']
+#     del default_parameters[t]['trade']['initial_activity_lo']
+#     del default_parameters[t]['trade']['initial_activity_up']
     
-    if "shipped" in t:
-        del default_parameters[t]['flow']['inv_cost']
-        del default_parameters[t]['flow']['var_cost']
+#     if "shipped" in t:
+#         del default_parameters[t]['flow']['inv_cost']
+#         del default_parameters[t]['flow']['var_cost']
     
-clone_and_update(trade_dict=default_parameters,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True,
-                 gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
-                 update_scenario_name = 'nocosts_noconstraints')
+# clone_and_update(trade_dict=default_parameters,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
+#                  update_scenario_name = 'nocosts_noconstraints')
 
-# Update scenario: add costs
-cost_parameters = pd.read_pickle(tdf)
-for t in covered_tec:
-    del cost_parameters[t]['trade']['growth_activity_lo']
-    del cost_parameters[t]['trade']['growth_activity_up']
-    del cost_parameters[t]['trade']['initial_activity_lo']
-    del cost_parameters[t]['trade']['initial_activity_up']
+# # Update scenario: add costs
+# cost_parameters = pd.read_pickle(tdf)
+# for t in covered_tec:
+#     del cost_parameters[t]['trade']['growth_activity_lo']
+#     del cost_parameters[t]['trade']['growth_activity_up']
+#     del cost_parameters[t]['trade']['initial_activity_lo']
+#     del cost_parameters[t]['trade']['initial_activity_up']
 
-clone_and_update(trade_dict=cost_parameters,
-                 project_name = 'newpathways',
-                 config_name = 'config.yaml',
-                 log=log,
-                 to_gdx = False,
-                 solve = True,
-                 gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
-                 update_scenario_name = 'costs_noconstraints')
+# clone_and_update(trade_dict=cost_parameters,
+#                  project_name = 'newpathways',
+#                  config_name = 'config.yaml',
+#                  log=log,
+#                  to_gdx = False,
+#                  solve = True,
+#                  gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
+#                  update_scenario_name = 'costs_noconstraints')
 
 # Update scenario: add constraints
 costconstraints_parameters = pd.read_pickle(tdf)
