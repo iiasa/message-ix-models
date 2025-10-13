@@ -430,12 +430,15 @@ foil_shipped_trade:
     secondary
   flow_technologies:
     - oil_tanker_loil
+    - oil_tanker_foil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
     oil_tanker_loil:
       - lightoil
+    oil_tanker_foil:
+      - fueloil
   flow_material_input:
   flow_commodity_output:
     oil_tanker_capacity
@@ -452,6 +455,8 @@ foil_shipped_trade:
   bunker_technology:
     oil_tanker_loil:
       loil_tobunker
+    oil_tanker_foil:
+      foil_tobunker
 #############################
 # Pipeline fuel oil exports #
 #############################
