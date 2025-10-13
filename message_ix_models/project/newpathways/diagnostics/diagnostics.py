@@ -161,16 +161,22 @@ def activity_to_csv(trade_tec,
     
 # Retrieve trade flow activities
 scenarios_models = {'base_scenario': 'NP_SSP2_6.2',
-                    'PGLNG-C-CRSCRP-ES-FS': 'NP_SSP2_6.2',
+                    'GpLNGsCsCRspEsFspLspBs': 'NP_SSP2_6.2',
                     }
 # Trade flow dictionaries: trade_tec (gas), flow_tec (gas_pipe), trade_commodity (gas (GWa)), flow_commodity (gas_pipeline_capacity), flow_unit (km)
-tradeflows = {'gas_piped': ['gas_piped', 'gas_pipe', 'gas (GWa)', 'gas_pipeline_capacity', 'km'],
-              'LNG_shipped': ['LNG_shipped', 'LNG_tanker', 'LNG (GWa)', 'LNG_tanker_capacity', 'Mt-km'],
-              'coal_shipped': ['coal_shipped', 'energy_bulk_carrier', 'Coal (GWa)', 'energy_bulk_carrier_capacity', 'Mt-km'],
-              'crudeoil_piped': ['crudeoil_piped', 'oil_pipe', 'Crude (GWa)', 'oil_pipeline_capacity', 'km'],
-              'crudeoil_shipped': ['crudeoil_shipped', 'oil_tanker', 'Crude (GWa)', 'oil_tanker_capacity', 'Mt-km'],
-              'eth_shipped': ['eth_shipped', 'oil_tanker', 'Ethanol (GWa)', 'oil_tanker_capacity', 'Mt-km'],
-              'foil_shipped': ['foil_shipped', 'oil_tanker', 'Fuel Oil (GWa)', 'oil_tanker_capacity', 'Mt-km']}
+tradeflows = {#'gas_piped': ['gas_piped', 'gas_pipe', 'gas (GWa)', 'gas_pipeline_capacity', 'km'],
+              #'LNG_shipped': ['LNG_shipped', 'LNG_tanker', 'LNG (GWa)', 'LNG_tanker_capacity', 'Mt-km'],
+              #'coal_shipped': ['coal_shipped', 'energy_bulk_carrier', 'Coal (GWa)', 'energy_bulk_carrier_capacity', 'Mt-km'],
+              #'crudeoil_piped': ['crudeoil_piped', 'oil_pipe', 'Crude (GWa)', 'oil_pipeline_capacity', 'km'],
+              #'crudeoil_shipped': ['crudeoil_shipped', 'oil_tanker', 'Crude (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              #'eth_shipped': ['eth_shipped', 'oil_tanker', 'Ethanol (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              #'foil_shipped': ['foil_shipped', 'oil_tanker', 'Fuel Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              #'foil_piped': ['foil_piped', 'oil_pipe', 'Fuel Oil (GWa)', 'oil_pipeline_capacity', 'km'],
+              'loil_shipped': ['loil_shipped', 'oil_tanker', 'Light Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              'loil_piped': ['loil_piped', 'oil_pipe', 'Light Oil (GWa)', 'oil_pipeline_capacity', 'km'],
+              'biomass_shipped': ['biomass_shipped', 'energy_bulk_carrier', 'Biomass (GWa)', 'energy_bulk_carrier_capacity', 'Mt-km'],
+              'lh2_shipped': ['lh2_shipped', 'lh2_tanker', 'LH2 (GWa)', 'lh2_tanker_capacity', 'Mt-km'],
+              }
 
 for trade_tec in tradeflows.keys():
     print("#########")
