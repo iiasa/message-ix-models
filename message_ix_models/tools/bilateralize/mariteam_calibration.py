@@ -30,7 +30,7 @@ def calibrate_mariteam(covered_tec,
                                  'eth_shipped': {'astd_ship_type': 'Oil product tankers',
                                                  'flow_technology': ['oil_tanker_eth', 'oil_tanker_loil']},
                                  'foil_shipped': {'astd_ship_type': 'Oil product tankers',
-                                                  'flow_technology': ['oil_tanker_loil']},
+                                                  'flow_technology': ['oil_tanker_loil', 'oil_tanker_foil']},
                                  'loil_shipped': {'astd_ship_type': 'Oil product tankers',
                                                   'flow_technology': ['oil_tanker_loil']},
                                  'biomass_shipped': {'astd_ship_type': 'Bulk carriers',
@@ -112,7 +112,12 @@ def calibrate_mariteam(covered_tec,
             basedf = basedf[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
             
             if flow_fuel == 'LNG_tanker_LNG': basedf['value'] *= 0.8 # Assume 80% of historical LNG tankers are propelled using LNG
-            if flow_fuel == 'LNG_tanker_foil': basedf['value'] *= 0.2 # Assume 20% of historical LNG tankers are propelled using diesel
+            if flow_fuel == 'LNG_tanker_loil': basedf['value'] *= 0.2 # Assume 20% of historical LNG tankers are propelled using diesel
+            
+            if flow_fuel == 'oil_tanker_loil': basedf['value'] *= 0.90 # Assume 95% of historical oil tankers are propelled using diesel
+            if flow_fuel == 'oil_tanker_foil': basedf['value'] *= 0.07 # Assume 7% of historical oil tankers are propelled using fuel oil
+            if flow_fuel == 'oil_tanker_eth': basedf['value'] *= 0.03 # Assume 3% of historical oil tankers are propelled using ethanol
+
             histdf = pd.concat([histdf, basedf])
             
         histdf.to_csv(os.path.join(out_path, tec, "edit_files", "flow_technology", "historical_activity.csv"), index = False)
