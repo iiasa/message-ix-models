@@ -138,9 +138,65 @@ def check_context(
     return scenario
 
 
-def log_input(context, scenario):
-    """Log the location of fixed effects regression data."""
-    from message_ix_models.util import private_data_path
+def retrive_ori_inv_cost(context, scenario):
+    """
+    Retrieve the original investment cost data from the starting scenario.
+    Log the location of fixed effects regression data."""
+
+    power_tec = [
+        "coal_ppl",
+        "ucoal_ppl",
+        "coal_adv",
+        "coal_adv_ccs",
+        "igcc",
+        "igcc_ccs",
+        "foil_ppl",
+        "loil_ppl",
+        "loil_cc",
+        "gas_ppl",
+        "gas_ct",
+        "gas_cc",
+        "gas_cc_ccs",
+        "bio_ppl",
+        "bio_istig",
+        "bio_istig_ccs",
+        "geo_ppl",
+        "solar_res1",
+        "solar_res2",
+        "solar_res3",
+        "solar_res4",
+        "solar_res5",
+        "solar_res6",
+        "solar_res7",
+        "solar_res8",
+        "csp_sm1_res1",
+        "csp_sm1_res2",
+        "csp_sm1_res3",
+        "csp_sm1_res4",
+        "csp_sm1_res5",
+        "csp_sm1_res6",
+        "csp_sm1_res7",
+        "wind_res1",
+        "wind_res2",
+        "wind_res3",
+        "wind_res4",
+        "wind_ref1",
+        "wind_ref2",
+        "wind_ref3",
+        "wind_ref4",
+        "wind_ref5",
+        "nuc_lc",
+        "nuc_hc",
+        "nuc_fbr",
+    ]
+    inv_cost_ori = scenario.par("inv_cost", filters={"technology": power_tec})
+    from message_ix_models.util import package_data_path, private_data_path
+
+    output_dir = package_data_path("investment")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "inv_cost_ori.csv"
+    inv_cost_ori.to_csv(output_path, index=False)
+    log.info(f"Original investment cost data saved to: {output_path}")
 
     reg_data_path = private_data_path("coc", "Reg_data.xlsx")
     log.info(f"Fixed effects regression data located at: {reg_data_path}")
@@ -149,17 +205,26 @@ def log_input(context, scenario):
 
 def build_coc(context, scenario):
     """Add new inv_cost parameters with disaggregated cost of capital."""
-    from pathlib import Path
 
     import pandas as pd
 
+    from message_ix_models.util import package_data_path
+
     log = logging.getLogger(__name__)
 
-    # Load the inv_cost.csv file from the current directory
-    current_dir = Path(__file__).parent
-    inv_cost_path = current_dir / "inv_cost.csv"
-    # TODO: maybe it is better to move the generated intermediate files to the data
-    # folder
+    # Load the inv_cost.csv file from the data directory
+    data_dir = package_data_path("investment")
+    inv_cost_path = data_dir / "inv_cost.csv"
+
+    # If the combined file doesn't exist, look for individual files
+    if not inv_cost_path.exists():
+        inv_cost_files = list(data_dir.glob("inv_cost_*.csv"))
+        if inv_cost_files:
+            # Use the first file found (could be made configurable)
+            inv_cost_path = inv_cost_files[0]
+            log.info(f"Using individual investment cost file: {inv_cost_path}")
+        else:
+            raise FileNotFoundError(f"No investment cost files found in {data_dir}")
 
     log.info(f"Loading investment cost data from {inv_cost_path}")
     inv_cost_df = pd.read_csv(inv_cost_path)
@@ -213,13 +278,19 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "base",
         None,
-        log_input,
+        target=f"{model_name}/{scen_name}",
+    )
+
+    wf.add_step(
+        "inv_cost_ori retrieved",
+        "base",
+        retrive_ori_inv_cost,
         target=f"{model_name}/{scen_name}",
     )
 
     wf.add_step(
         "wacc_cf reg generated",
-        "base",
+        "inv_cost_ori retrieved",
         fe_regression,
         target=f"{model_name}/{scen_name}",
     )
