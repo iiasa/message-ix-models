@@ -48,7 +48,7 @@ histnc = build_historical_new_capacity_trade(message_regions,
                                              project_name = 'newpathways', config_name = 'config.yaml')
 
 hist_tec = {}
-for tec in [c for c in covered_tec if c != 'crudeoil_piped']:
+for tec in [c for c in covered_tec if c not in ['crudeoil_piped', 'foil_piped', 'loil_piped']]:
     add_tec = config[tec + '_trade']['trade_technology'] + '_exp'
     hist_tec[tec] = add_tec
 
@@ -62,21 +62,32 @@ for tec in hist_tec.keys():
     trade_dict[tec]['trade']['historical_new_capacity'] = add_df
 
 # Historical new capacity for maritime shipping
+shipping_fuel_dict = config['shipping_fuels']
 # TODO: Add coal
-# TODO: Add lh2
 hist_crude_loil = build_historical_new_capacity_flow('Crude Tankers.csv', 'crudeoil_tanker_loil',
                                                      project_name = 'newpathways', config_name = 'config.yaml')
-    
-hist_lng_loil = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_loil',
-                                                   project_name = 'newpathways', config_name = 'config.yaml')
-hist_lng_lng = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_LNG',
-                                                  project_name = 'newpathways', config_name = 'config.yaml')
-hist_lng_loil['value'] *= 0.2 # Assume 20% of historical LNG tankers are propelled using diesel
-hist_lng_lng['value'] *= 0.8 # Assume 80% of historical LNG tankers are propelled using LNG
-hist_lng = pd.concat([hist_lng_loil, hist_lng_lng])
+hist_lh2_loil = build_historical_new_capacity_flow('LH2 Tankers.csv', 'lh2_tanker_loil',
+                                                     project_name = 'newpathways', config_name = 'config.yaml')    
+hist_lng = pd.DataFrame()
+for f in ['loil', 'LNG']:
+    hist_lng_f = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_'+f,
+                                                       project_name = 'newpathways', config_name = 'config.yaml')
+    hist_lng_f['value'] *= shipping_fuel_dict['LNG_tanker']['LNG_tanker_' + f]
+    hist_lng = pd.concat([hist_lng, hist_lng_f])
 
-trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
+hist_oil = pd.DataFrame()
+for f in ['loil', 'foil', 'eth']:
+    hist_oil_f = build_historical_new_capacity_flow('Oil Tankers.csv', 'oil_tanker_'+f,
+                                                     project_name = 'newpathways', config_name = 'config.yaml')
+    hist_oil_f['value'] *= shipping_fuel_dict['oil_tanker']['oil_tanker_' + f]
+    hist_oil = pd.concat([hist_oil, hist_oil_f])
+            
 trade_dict['crudeoil_shipped']['flow']['historical_new_capacity'] = hist_crude_loil
+trade_dict['lh2_shipped']['flow']['historical_new_capacity'] = hist_lh2_loil
+trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
+trade_dict['eth_shipped']['flow']['historical_new_capacity'] = hist_oil[hist_oil['technology'] != 'oil_tanker_foil']
+trade_dict['foil_shipped']['flow']['historical_new_capacity'] = hist_oil
+trade_dict['loil_shipped']['flow']['historical_new_capacity'] = hist_oil
 
 # Ensure flow technologies are only added once
 covered_flow_tec = []
@@ -86,10 +97,6 @@ for tec in covered_tec:
         trade_dict[tec]['flow'][par] = trade_dict[tec]['flow'][par]\
             [trade_dict[tec]['flow'][par]['technology'].isin(covered_flow_tec) == False]
     covered_flow_tec = covered_flow_tec + flow_tecs
-
-# Ensure all years are integer
-#trade_dict['crudeoil_piped']['flow']['historical_activity']['year_act'] = trade_dict['crudeoil_piped']['flow']['historical_activity']['year_act'].astype(int)
-#trade_dict['foil_piped']['flow']['historical_activity']['year_act'] = trade_dict['foil_piped']['flow']['historical_activity']['year_act'].astype(int)
 
 # Save trade_dictionary
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')

@@ -34,6 +34,16 @@ covered_trade_technologies:
   - biomass_shipped
   - lh2_shipped
 
+# SHIPPING FUELS (how much of each shipping technology is propelled by each fuel)
+shipping_fuels:
+  LNG_tanker:
+    LNG_tanker_LNG: 0.8
+    LNG_tanker_loil: 0.2
+  oil_tanker:
+    oil_tanker_loil: 0.9
+    oil_tanker_foil: 0.07
+    oil_tanker_eth: 0.03
+
 # YEARS
 timeframes:
   year_act_list:

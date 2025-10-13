@@ -111,12 +111,12 @@ def calibrate_mariteam(covered_tec,
             basedf['time'] = 'year'
             basedf = basedf[['node_loc', 'technology', 'year_act', 'value', 'unit', 'mode', 'time']]
             
-            if flow_fuel == 'LNG_tanker_LNG': basedf['value'] *= 0.8 # Assume 80% of historical LNG tankers are propelled using LNG
-            if flow_fuel == 'LNG_tanker_loil': basedf['value'] *= 0.2 # Assume 20% of historical LNG tankers are propelled using diesel
+            shipping_fuel_dict = config['shipping_fuels']
             
-            if flow_fuel == 'oil_tanker_loil': basedf['value'] *= 0.90 # Assume 95% of historical oil tankers are propelled using diesel
-            if flow_fuel == 'oil_tanker_foil': basedf['value'] *= 0.07 # Assume 7% of historical oil tankers are propelled using fuel oil
-            if flow_fuel == 'oil_tanker_eth': basedf['value'] *= 0.03 # Assume 3% of historical oil tankers are propelled using ethanol
+            if 'LNG_tanker' in flow_fuel:
+                basedf['value'] *= shipping_fuel_dict['LNG_tanker'][flow_fuel]
+            if ('oil_tanker' in flow_fuel)&('crudeoil' not in flow_fuel):
+                basedf['value'] *= shipping_fuel_dict['oil_tanker'][flow_fuel]
 
             histdf = pd.concat([histdf, basedf])
             
