@@ -83,11 +83,6 @@ def run_initial_scenario_if_needed(
     except FileNotFoundError:
         log.info("No MAGICC output found, running base scenario...")
 
-    # specific to the ENGAGE scenario
-    if "INDC2030" in scenario:
-        log.info("Adding slack to scenario with INDC2030")
-        add_slack_ix(sc0)
-
     file_report = rep_path / f"{sc_str_rime}_0.xlsx"
     if file_report.exists():
         log.info(
@@ -105,6 +100,11 @@ def run_initial_scenario_if_needed(
         sc0.solve(solve_options={"lpmethod": "4"}, model="MESSAGE")
         sc0.set_as_default()
         run_emi_reporting(sc0, mp)
+
+    # specific to the ENGAGE scenario
+    if "INDC2030" in scenario:
+        log.info("Adding slack to scenario with INDC2030")
+        add_slack_ix(sc0)
 
     run_climate_processor(sc0)
     log.info("Initial scenario completed")
