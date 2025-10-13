@@ -542,6 +542,8 @@ def build_historical_new_capacity_flow(infile, ship_type,
                                           r, imodf[message_regions])
     
     # Calculate capacity
+    if imodf['Gross Tonnage'].dtype in ['O','str']:
+        imodf['Gross Tonnage'] = imodf['Gross Tonnage'].str.replace(',', '').astype(int)
     imodf['Capacity (Mt-km)'] = (imodf['Gross Tonnage']/1e6)*annual_mileage
     
     # Collapse

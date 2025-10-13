@@ -102,3 +102,4 @@ for tec in [i for i in covered_tec if i != "gas_piped"]:
     add_df.to_csv(os.path.join(data_path, tec, "bare_files", "var_cost.csv"),
                   index = False)
 
+
