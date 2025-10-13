@@ -11,7 +11,7 @@ import logging
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.util import package_data_path, private_data_path
+from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +78,9 @@ def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
 
         # Load original investment cost data
         log.info("Loading original investment cost data...")
-        inv_cost_ori = pd.read_csv(private_data_path("investment", inv_cost_filename))
+        inv_cost_dir = package_data_path("investment")
+        inv_cost_path = inv_cost_dir / inv_cost_filename
+        inv_cost_ori = pd.read_csv(inv_cost_path)
         inv_cost = inv_cost_ori.loc[inv_cost_ori["year_vtg"] >= baseline_year].copy()
 
         # Load WACC data
