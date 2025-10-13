@@ -93,10 +93,17 @@ def activity_to_csv(trade_tec,
         act_out['level'] = act_out['lvl']*act_out['value']
         act_out = act_out.groupby(['MODEL', 'SCENARIO', 'node_loc', 'technology', 'commodity', 'year_act', 'unit'])['level'].sum().reset_index()
         act_out['level'] = round(act_out['level'], 1)
-
-        exports = act_in[(act_in['technology'].str.contains(trade_tec))&\
+        
+        exp_technologies = [t for t in activity['technology'].unique() if "_exp" in t] # If trade tec not bilateralized, use base trade name
+        if trade_tec not in exp_technologies:
+            trade_tec_use = trade_tec.replace("_shipped", "")
+            trade_tec_use = trade_tec_use.replace("_piped", "")
+        else:
+            trade_tec_use = trade_tec
+            
+        exports = act_in[(act_in['technology'].str.contains(trade_tec_use))&\
                          (act_in['technology'].str.contains('_exp'))].copy()
-        imports = act_in[(act_in['technology'].str.contains(trade_tec))&\
+        imports = act_in[(act_in['technology'].str.contains(trade_tec_use))&\
                          (act_in['technology'].str.contains('_imp'))].copy()
          
         flow_fuel = act_in[(act_in['technology'].str.contains(flow_tec)) &\
@@ -152,40 +159,40 @@ def activity_to_csv(trade_tec,
         imports_out['PULL DATE'] = pd.Timestamp.today().strftime('%Y-%m-%d')
         flows_out['PULL DATE'] = pd.Timestamp.today().strftime('%Y-%m-%d')
 
-        exports_out.to_csv(os.path.join(out_path, 'data', trade_tec + '_exp.csv'),
-                           index = False)
-        imports_out.to_csv(os.path.join(out_path, 'data', trade_tec + '_imp.csv'),
-                           index = False)
-        flows_out.to_csv(os.path.join(out_path, 'data', flow_tec + '.csv'),
-                         index = False)
+    exports_out.to_csv(os.path.join(out_path, 'data', trade_tec + '_exp.csv'),
+                       index = False)
+    imports_out.to_csv(os.path.join(out_path, 'data', trade_tec + '_imp.csv'),
+                       index = False)
+    flows_out.to_csv(os.path.join(out_path, 'data', flow_tec + '.csv'),
+                     index = False)
     
 # Retrieve trade flow activities
 scenarios_models = {'base_scenario': 'NP_SSP2_6.2',
-                    'GpLNGsCsCRspEsFspLspBs': 'NP_SSP2_6.2',
+                    'GpLNGsCsCRspEsFspLspBsHs': 'NP_SSP2_6.2',
                     }
 # Trade flow dictionaries: trade_tec (gas), flow_tec (gas_pipe), trade_commodity (gas (GWa)), flow_commodity (gas_pipeline_capacity), flow_unit (km)
-tradeflows = {#'gas_piped': ['gas_piped', 'gas_pipe', 'gas (GWa)', 'gas_pipeline_capacity', 'km'],
-              #'LNG_shipped': ['LNG_shipped', 'LNG_tanker', 'LNG (GWa)', 'LNG_tanker_capacity', 'Mt-km'],
+tradeflows = {#'LNG_shipped': ['LNG_shipped', 'LNG_tanker', 'LNG (GWa)', 'LNG_tanker_capacity', 'Mt-km'],
+              #'gas_piped': ['gas_piped', 'gas_pipe', 'gas (GWa)', 'gas_pipeline_capacity', 'km'],
               #'coal_shipped': ['coal_shipped', 'energy_bulk_carrier', 'Coal (GWa)', 'energy_bulk_carrier_capacity', 'Mt-km'],
               #'crudeoil_piped': ['crudeoil_piped', 'oil_pipe', 'Crude (GWa)', 'oil_pipeline_capacity', 'km'],
-              #'crudeoil_shipped': ['crudeoil_shipped', 'oil_tanker', 'Crude (GWa)', 'oil_tanker_capacity', 'Mt-km'],
-              #'eth_shipped': ['eth_shipped', 'oil_tanker', 'Ethanol (GWa)', 'oil_tanker_capacity', 'Mt-km'],
-              #'foil_shipped': ['foil_shipped', 'oil_tanker', 'Fuel Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
-              #'foil_piped': ['foil_piped', 'oil_pipe', 'Fuel Oil (GWa)', 'oil_pipeline_capacity', 'km'],
+              'crudeoil_shipped': ['crudeoil_shipped', 'oil_tanker', 'Crude (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              'eth_shipped': ['eth_shipped', 'oil_tanker', 'Ethanol (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              'foil_shipped': ['foil_shipped', 'oil_tanker', 'Fuel Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
+              'foil_piped': ['foil_piped', 'oil_pipe', 'Fuel Oil (GWa)', 'oil_pipeline_capacity', 'km'],
               'loil_shipped': ['loil_shipped', 'oil_tanker', 'Light Oil (GWa)', 'oil_tanker_capacity', 'Mt-km'],
               'loil_piped': ['loil_piped', 'oil_pipe', 'Light Oil (GWa)', 'oil_pipeline_capacity', 'km'],
               'biomass_shipped': ['biomass_shipped', 'energy_bulk_carrier', 'Biomass (GWa)', 'energy_bulk_carrier_capacity', 'Mt-km'],
               'lh2_shipped': ['lh2_shipped', 'lh2_tanker', 'LH2 (GWa)', 'lh2_tanker_capacity', 'Mt-km'],
               }
 
-for trade_tec in tradeflows.keys():
+for tec in tradeflows.keys():
     print("#########")
-    print(trade_tec)
+    print(tec)
     print("#########")
 
-    activity_to_csv(trade_tec = tradeflows[trade_tec][0], 
-                    flow_tec = tradeflows[trade_tec][1],
-                    trade_commodity = tradeflows[trade_tec][2],
-                    flow_commodity = tradeflows[trade_tec][3],
-                    flow_unit = tradeflows[trade_tec][4],
+    activity_to_csv(trade_tec = tradeflows[tec][0], 
+                    flow_tec = tradeflows[tec][1],
+                    trade_commodity = tradeflows[tec][2],
+                    flow_commodity = tradeflows[tec][3],
+                    flow_unit = tradeflows[tec][4],
                     model_scenario_dict = scenarios_models)
