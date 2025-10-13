@@ -36,14 +36,54 @@ tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
 trade_parameters = pd.read_pickle(tdf)
 
 # Update scenario: default values
-clone_and_update(trade_dict=trade_parameters,
+default_parameters = pd.read_pickle(tdf)
+for t in covered_tec:
+    del default_parameters[t]['trade']['growth_activity_lo']
+    del default_parameters[t]['trade']['growth_activity_up']
+    del default_parameters[t]['trade']['initial_activity_lo']
+    del default_parameters[t]['trade']['initial_activity_up']
+    
+    if "shipped" in t:
+        del default_parameters[t]['flow']['inv_cost']
+        del default_parameters[t]['flow']['var_cost']
+    
+clone_and_update(trade_dict=default_parameters,
                  project_name = 'newpathways',
                  config_name = 'config.yaml',
                  log=log,
                  to_gdx = False,
                  solve = True,
                  gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
-                 update_scenario_name = 'GpLNGsCsCRspEsFspLspBsHs')
+                 update_scenario_name = 'nocosts_noconstraints')
+
+# Update scenario: add costs
+cost_parameters = pd.read_pickle(tdf)
+for t in covered_tec:
+    del cost_parameters[t]['trade']['growth_activity_lo']
+    del cost_parameters[t]['trade']['growth_activity_up']
+    del cost_parameters[t]['trade']['initial_activity_lo']
+    del cost_parameters[t]['trade']['initial_activity_up']
+
+clone_and_update(trade_dict=cost_parameters,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
+                 update_scenario_name = 'costs_noconstraints')
+
+# Update scenario: add constraints
+costconstraints_parameters = pd.read_pickle(tdf)
+
+clone_and_update(trade_dict=costconstraints_parameters,
+                 project_name = 'newpathways',
+                 config_name = 'config.yaml',
+                 log=log,
+                 to_gdx = False,
+                 solve = True,
+                 gdx_location = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
+                 update_scenario_name = 'costs_constraints')
 
 # # Update scenario: Increase liquefaction gas penalty
 # additional_parameters_input = update_liquefaction_input(message_regions = message_regions,
