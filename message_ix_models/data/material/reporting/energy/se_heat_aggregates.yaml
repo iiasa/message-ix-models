@@ -2,7 +2,7 @@ var:
   "out:nl-t-ya-m-c:district_heat2"
 
 iamc_prefix:
-  Secondary Energy|Heat|
+  Secondary Energy|Heat
 
 unit: GWa
 
