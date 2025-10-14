@@ -180,13 +180,17 @@ def import_gem(input_file: str,
     hist_act.to_csv(os.path.join(flow_dir_out, "historical_activity.csv"), index = False)
 
     # Historical activity (trade for oil pipelines only)
-    if trade_technology == "crudeoil_piped":
+    share_oil_pipelines = {'crudeoil_piped': 0.8,
+                           'loil_piped': 0.1,
+                           'foil_piped': 0.1} # The share of oil pipeline capacity used for given commodity (crude/light oil/fuel oil)
+    
+    if trade_technology in ["crudeoil_piped", "loil_piped", "foil_piped"]:
         hist_tra = df[['EXPORTER', 'IMPORTER', 'YEAR', 'Capacity (GWa)']].drop_duplicates()
         hist_tra['Capacity (GWa)'] = np.where(hist_tra['Capacity (GWa)'].isnull(), 0, hist_tra['Capacity (GWa)'])
         hist_tra['Capacity (GWa)'] = hist_tra.groupby(['EXPORTER', 'IMPORTER'])['Capacity (GWa)'].transform(pd.Series.cumsum)
         hist_tra['node_loc'] = hist_tra['EXPORTER']
-        hist_tra['technology'] = 'crudeoil_piped_exp_' + hist_tra['IMPORTER'].str.lower().str.split('_').str[-1]
-        hist_tra['value'] = round(hist_tra['Capacity (GWa)'],0)
+        hist_tra['technology'] = trade_technology + '_exp_' + hist_tra['IMPORTER'].str.lower().str.split('_').str[-1]
+        hist_tra['value'] = round(hist_tra['Capacity (GWa)'],0)*share_oil_pipelines[trade_technology]
         hist_tra['year_act'] = hist_tra['YEAR'].astype(int)
         hist_tra['unit'] = 'GWa'
         hist_tra['mode'] = 'M1'
