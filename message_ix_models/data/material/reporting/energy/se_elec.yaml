@@ -19,35 +19,24 @@ vars:
                             csp_sm1_res4,
                             csp_sm1_res5,
                             csp_sm1_res6,
-                            csp_sm1_res7 ],
-              mode: M1, commodity: electr, level: secondary }
+                            csp_sm1_res7,
+                            csp_sm1_res_hist_2000,
+                            csp_sm1_res_hist_2005,
+                            csp_sm1_res_hist_2010,
+                            csp_sm1_res_hist_2015,
+                            csp_sm1_res_hist_2020,
+                            csp_sm1_res_hist_2025 ], mode: M1, commodity: electr, level: secondary }
     short: se_elec_csp1
   Solar|CSP|2:
-    filter: { technology: [ csp_sm1_res,
-                            csp_sm1_res1,
-                            csp_sm1_res2,
-                            csp_sm1_res3,
-                            csp_sm1_res4,
-                            csp_sm1_res5,
-                            csp_sm1_res6,
-                            csp_sm1_res7 ], mode: M1, commodity: electr, level: secondary }
+    filter: { technology: [ csp_sm3_res,
+                            csp_sm3_res1,
+                            csp_sm3_res2,
+                            csp_sm3_res3,
+                            csp_sm3_res4,
+                            csp_sm3_res5,
+                            csp_sm3_res6,
+                            csp_sm3_res7 ], mode: M1, commodity: electr, level: secondary }
     short: se_elec_csp2
-  Solar|PV|Rooftop:
-    filter: { technology: [ solar_res_rt_hist_2000,
-                            solar_res_rt_hist_2005,
-                            solar_res_rt_hist_2010,
-                            solar_res_rt_hist_2015,
-                            solar_res_rt_hist_2020,
-                            solar_res_rt_hist_2025,
-                            solar_res_RT1,
-                            solar_res_RT2,
-                            solar_res_RT3,
-                            solar_res_RT4,
-                            solar_res_RT5,
-                            solar_res_RT6,
-                            solar_res_RT7,
-                            solar_res_RT8, ], mode: M1, commodity: electr, level: secondary }
-    short: se_elec_pv_rt
 
 # TODO: needs to be queried from in not out
 #  Storage Losses:
