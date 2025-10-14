@@ -33,10 +33,7 @@ def run_co2(rep: Reporter, model_name: str, scen_name: str):
     filter_ccs = {"t": ["dri_gas_ccs_steel", "bf_ccs_steel"], "c": ["fic_co2"]}
     add_net_co2_calcs(rep, filter, filter_ccs, "steel")
     filter = {
-        "t": [
-            "clinker_dry_cement",
-            "clinker_wet_cement",
-        ],
+        "t": ["clinker_dry_cement", "clinker_wet_cement"],
         "r": ["CO2_Emission"],
     }
     filter_ccs = {
@@ -59,6 +56,13 @@ def run_co2(rep: Reporter, model_name: str, scen_name: str):
 
 
 def run_other(rep: Reporter, model_name: str, scen_name: str):
+    """Run other categories needed for premise.
+
+    Currently, includes:
+    - GDP/population
+    - carbon storage
+    - CCS (DAC, steel, cement)
+    """
     data = []
     for folder, cfg in zip(["", "emission", "emission"], ["soc-eco", "ccs", "removal"]):
         config = load_config(folder, cfg)
@@ -78,21 +82,8 @@ def run_other(rep: Reporter, model_name: str, scen_name: str):
 
 
 def run_pe(rep: Reporter, model_name: str, scen_name: str):
+    """Run primary energy reporting for biomass variables needed for premise."""
     config = load_config("energy", "pe_globiom")
-    df = pyam_df_from_rep(rep, config.var, config.mapping)
-    df = format_reporting_df(
-        df,
-        config.iamc_prefix,
-        model_name,
-        scen_name,
-        config.unit,
-        config.mapping,
-    )
-    return df
-
-
-def run_ccs(rep: Reporter, model_name: str, scen_name: str):
-    config = load_config("emission", "ccs")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     df = format_reporting_df(
         df,
@@ -109,13 +100,12 @@ def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs = []
     pe_gas(rep)
     dfs.append(run_se(rep, model_name, scen_name))
+    dfs.append(run_other(rep, model_name, scen_name))
+    dfs.append(run_co2(rep, model_name, scen_name))
     # dfs.append(run_pe(rep, model_name, scen_name))
     dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
-    dfs.append(run_other(rep, model_name, scen_name))
-    dfs.append(run_co2(rep, model_name, scen_name))
-    dfs.append(run_ccs(rep, model_name, scen_name))
     py_df = pyam.concat(dfs)
     calculate_clinker_ccs_energy(scenario, rep, py_df)
 

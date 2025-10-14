@@ -780,6 +780,17 @@ def add_net_co2_calcs(
     ccs_filters: dict[str, list | str],
     name: str,
 ):
+    """Calculates net CO2 emissions for technologies with CCS addons.
+
+    Parameters
+    ----------
+    rep
+    non_ccs_filters :
+        map of technologies and CO2 accounting relation for parents
+    ccs_filters :
+        map of technologies and captured CO2 commodity name for CCS addons
+    name
+    """
     k1 = Key("rel:r-nl-t-ya")
     k2 = k1[f"{name}_co2"]
     k_ccs = Key("out:nl-t-ya-m-c")
@@ -917,6 +928,11 @@ def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str) -> Key:
 
 
 def pe_gas(rep: "Reporter"):
+    """Prepare reporter to compute gas consumption by origin.
+
+    Allocates mixed gases (biogas, hydrogen) to gas consumers proportionally to their
+    total gas consumption.
+    """
     final = [
         "gas_t_d",
         "gas_t_d_ch4",
@@ -968,6 +984,13 @@ def pe_gas(rep: "Reporter"):
 
 
 def co2(rep: "Reporter"):
+    """Prepare reporter to compute CO2 emission factors for gas consumption.
+
+    CO2 emissions from gas need to be computed separately since gas can be a mix of
+    natural gas, biogas and hydrogen. Thus, the original `CO2_cc/ind` factors cannot be
+    applied directly. Instead, the allocated natural gas consumption is multiplied with
+    the standard emission factor for natural gas used in MESSAGE.
+    """
     k = pe_gas(rep)
     k1 = rep.add("emi:nl-t-ya-m:gas", "mul", k.drop("c"), Quantity(0.482))
     k2 = Key("rel:r-nl-t-ya-m")
