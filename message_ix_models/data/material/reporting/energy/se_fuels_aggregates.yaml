@@ -1,0 +1,116 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  out
+
+iamc_prefix:
+  Secondary Energy|
+
+unit: GWa
+
+level_2:
+  Hydrogen:
+    short: se_h2
+    components:
+      [ se_h2_bio,
+        se_h2_coal,
+        se_h2_gas
+      ]
+  Liquids:
+    short: se_liq
+    components:
+      [ se_liq_bio,
+        se_liq_coal,
+        se_liq_oil
+      ]
+
+level_1:
+  Gases:
+    short: se_gases
+    components:
+      [ se_gas_bio,
+        se_gas_nat,
+        se_gas_coal
+      ]
+  Hydrogen|Biomass:
+    short: se_h2_bio
+    components:
+      [ se_h2_bio_ccs,
+        se_h2_bio_wo_ccs ]
+  Hydrogen|Coal:
+    short: se_h2_coal
+    components:
+      [ se_h2_coal_ccs,
+        se_h2_coal_wo_ccs ]
+  Hydrogen|Gas:
+    short: se_h2_gas
+    components:
+      [ se_h2_gas_ccs,
+        se_h2_gas_wo_ccs ]
+
+  Liquids|Biomass:
+    short: se_liq_bio
+    components:
+      [ se_liq_eth_w_ccs,
+        se_liq_eth_wo_ccs,
+        se_liq_bio_ft_ccs,
+        se_liq_bio_ft_wo_ccs,
+        se_liq_meth_bio_ccs,
+        se_liq_meth_bio_wo_ccs
+      ]
+  Liquids|Biomass|w/ CCS:
+    short: se_liq_bio_ccs
+    components:
+      [ se_liq_eth_w_ccs,
+        se_liq_bio_ft_ccs,
+        se_liq_meth_bio_ccs,
+      ]
+  Liquids|Biomass|w/o CCS:
+    short: se_liq_bio_wo_ccs
+    components:
+      [ se_liq_eth_wo_ccs,
+        se_liq_bio_ft_wo_ccs,
+        se_liq_meth_bio_wo_ccs
+      ]
+  Liquids|Coal:
+    short: se_liq_coal
+    components:
+      [ se_liq_coal_ft_ccs,
+        se_liq_coal_ft_wo_ccs,
+        se_liq_meth_coal_ccs,
+        se_liq_meth_coal_wo_ccs
+      ]
+  Liquids|Coal|w/ CCS:
+    short: se_liq_coal_ccs
+    components:
+      [ se_liq_coal_ft_ccs,
+        se_liq_meth_coal_ccs,
+      ]
+  Liquids|Coal|w/o CCS:
+    short: se_liq_coal_wo_ccs
+    components:
+      [
+        se_liq_coal_ft_wo_ccs,
+        se_liq_meth_coal_wo_ccs
+      ]
+  Liquids|Gas:
+    short: se_liq_gas
+    components:
+      [ se_liq_meth_gas_wo_ccs,
+        se_liq_meth_gas_ccs
+      ]
+  Liquids|Gas|w/o CCS:
+    short: se_liq_coal_wo_ccs
+    components:
+      [ se_liq_meth_gas_wo_ccs ]
+  Liquids|Gas|w/ CCS:
+    short: se_liq_coal_ccs
+    components:
+      [ se_liq_meth_gas_ccs ]
+  Liquids|Oil:
+    short: se_liq_oil
+    components:
+      [ se_liq_oil_h,
+        se_liq_oil_l ]
