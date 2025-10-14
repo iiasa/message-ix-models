@@ -98,6 +98,9 @@ for tec in covered_tec:
             [trade_dict[tec]['flow'][par]['technology'].isin(covered_flow_tec) == False]
     covered_flow_tec = covered_flow_tec + flow_tecs
 
+#TODO: REmove later
+del trade_dict['lh2_shipped']
+
 # Save trade_dictionary
 tdf = os.path.join(os.path.dirname(config_path), 'scenario_parameters.pkl')
 with open(tdf, 'wb') as f: pickle.dump(trade_dict, f)
