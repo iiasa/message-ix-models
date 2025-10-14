@@ -667,7 +667,7 @@ lh2_shipped_trade:
   base_trade_technology:
     - lh2_trd
   trade_technology:
-    biomass_shipped
+    lh2_shipped
   trade_tech_suffix: 
   trade_tech_number:
     1 
