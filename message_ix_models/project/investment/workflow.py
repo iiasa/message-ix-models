@@ -271,80 +271,101 @@ def generate(context: Context) -> Workflow:
     context.ssp = "SSP2"
     context.model.regions = "R12"
 
-    # Define model name
+    # Define model name and scenario list
     model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
-    scen_name = "Baseline_SSP2"
+    scen_names = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
 
-    wf.add_step(
-        "base",
-        None,
-        target=f"{model_name}/{scen_name}",
-    )
+    for scen_name in scen_names:
+        wf.add_step(
+            f"base {scen_name}",
+            target=f"{model_name}/{scen_name}",
+        )
 
-    wf.add_step(
-        "inv_cost_ori retrieved",
-        "base",
-        retrive_ori_inv_cost,
-        target=f"{model_name}/{scen_name}",
-    )
+    # Retrieve investment cost from different starting scenarios
+    for scen_name in scen_names:
+        wf.add_step(
+            f"inv_cost_ori retrieved {scen_name}",
+            f"base {scen_name}",
+            retrive_ori_inv_cost,
+            target=f"{model_name}/{scen_name}",
+        )
 
+    # Fixed effects regression - processes all scenarios and creates combined output
+    inv_cost_retrieved_steps = [
+        f"inv_cost_ori retrieved {scen_name}" for scen_name in scen_names
+    ]
     wf.add_step(
         "wacc_cf reg generated",
-        "inv_cost_ori retrieved",
+        inv_cost_retrieved_steps[0] if inv_cost_retrieved_steps else None,
         fe_regression,
-        target=f"{model_name}/{scen_name}",
+        target=f"{model_name}/{scen_names[0]}",
     )
 
-    # Tress for all SSPs and all hi/lo CF(cliamte finance) scenarios to be added later
-
+    # Climate finance generation - processes all scenarios and creates combined output
+    # Level of total CF is also generated in this step
     wf.add_step(
         "cf generated",
         "wacc_cf reg generated",
         generate_cf,
-        target=f"{model_name}/{scen_name}",
+        target=f"{model_name}/{scen_names[0]}",
     )
 
+    # WACC generation - processes all scenarios and creates combined output
     wf.add_step(
         "wacc generated",
         "cf generated",
         generate_wacc,
-        target=f"{model_name}/{scen_name}",
+        target=f"{model_name}/{scen_names[0]}",
     )
 
+    # Investment cost generation - processes all scenarios and creates combined output
     wf.add_step(
         "inv_cost generated",
         "wacc generated",
         generate_inv_cost,
-        target=f"{model_name}/{scen_name}",
+        target=f"{model_name}/{scen_names[0]}",
     )
 
-    # TODO: a short loop for all SSPs and all CF scenarios below
-    wf.add_step(
-        "base cloned",
-        "inv_cost generated",
-        target=f"{model_name}/{scen_name}_coc_added",
-        clone=dict(keep_solution=False),
-    )
+    # Individual scenario steps for the clone and subsequent operations
+    # These will read from the combined outputs created above
+    for scen_name in scen_names:
+        # Clone base scenario
+        wf.add_step(
+            f"base cloned {scen_name}",
+            "inv_cost generated",
+            target=f"{model_name}/{scen_name}_coc_added",
+            clone=dict(keep_solution=False),
+        )
 
-    wf.add_step(
-        "coc built",
-        "base cloned",
-        build_coc,
-        target=f"{model_name}/{scen_name}_coc_added",
-    )
+        # Build CoC parameters
+        wf.add_step(
+            f"coc built {scen_name}",
+            f"base cloned {scen_name}",
+            build_coc,
+            target=f"{model_name}/{scen_name}_coc_added",
+        )
 
-    wf.add_step(
-        "coc solved",
-        "coc built",
-        solve,
-        target=f"{model_name}/{scen_name}_coc_added",
-    )
+        # Solve the scenario
+        wf.add_step(
+            f"coc solved {scen_name}",
+            f"coc built {scen_name}",
+            solve,
+            target=f"{model_name}/{scen_name}_coc_added",
+        )
 
+        # Generate reports
+        wf.add_step(
+            f"coc reported {scen_name}",
+            f"coc solved {scen_name}",
+            report,
+            target=f"{model_name}/{scen_name}_coc_added",
+        )
+
+    coc_reported_steps = [f"coc reported {scen_name}" for scen_name in scen_names]
     wf.add_step(
         "coc reported",
-        "coc solved",
+        coc_reported_steps[0] if coc_reported_steps else None,
         report,
-        target=f"{model_name}/coc_added",
     )
 
     return wf
