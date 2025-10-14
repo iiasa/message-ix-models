@@ -1,15 +1,12 @@
 var:
-  ACT
+  bound_activity_up
 
 iamc_prefix:
   ""
 
-unit: ???
+unit: "million US$2005/yr"
 
 vars:
-  Population:
-    filter: { technology: [ Population ], mode: P }
-    short: pop
   GDP|PPP:
     filter: { technology: [ GDP_PPP ], mode: P }
     short: gdp_ppp

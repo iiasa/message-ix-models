@@ -64,7 +64,9 @@ def run_other(rep: Reporter, model_name: str, scen_name: str):
     - CCS (DAC, steel, cement)
     """
     data = []
-    for folder, cfg in zip(["", "emission", "emission"], ["soc-eco", "ccs", "removal"]):
+    for folder, cfg in zip(
+        ["", "", "emission", "emission"], ["pop", "gdp", "ccs", "removal"]
+    ):
         config = load_config(folder, cfg)
         df = pyam_df_from_rep(rep, config.var, config.mapping)
         data.append(
