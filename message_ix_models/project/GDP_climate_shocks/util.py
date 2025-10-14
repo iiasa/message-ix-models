@@ -403,6 +403,10 @@ def add_slack_ix(sc):
             "e": ["R11_NAM", "coal_adv_ccs", 2030, 6, "M1"],
             "f": ["R11_NAM", "cement_co2scr", 2030, 5, "M1"],
             "g": ["R11_NAM", "leak_repair", 2030, 1, "M1"],
+            "h": ["R11_NAM", "igcc_ccs", 2030, 4, "M1"],
+        },
+        "growth_activity_lo": {
+            "a": ["R11_NAM", "sp_liq_I", 2030, -8, "M1"],
         },
         "bound_activity_up": {
             "a": ["R11_NAM", "RCspec_5", 2030, 3.5, "M1"],
