@@ -15,4 +15,7 @@ vars:
     short: se_elec_wind_on
   Solar|PV|Commercial:
     filter: { technology: [ pv_util ], mode: M1, commodity: electr }
-    short: se_elec_pv_com
+    short: se_elec_pv_comm
+  Solar|PV|Residential:
+    filter: { technology: [ pv_rooftop ], mode: M1, commodity: electr }
+    short: se_elec_pv_resid

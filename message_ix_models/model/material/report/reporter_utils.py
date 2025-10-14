@@ -541,16 +541,43 @@ def add_se_elec(rep: "Reporter") -> Key:
         ]
     }
     add_renewable_curtailment_calcs(rep, pv_ut, pv_curt, "pv")
+    pv_rt = {
+        "pv_rooftop": [
+            "solar_res_RT1",
+            "solar_res_RT2",
+            "solar_res_RT3",
+            "solar_res_RT4",
+            "solar_res_RT5",
+            "solar_res_RT6",
+            "solar_res_RT7",
+            "solar_res_RT8",
+            "solar_res_rt_hist_2000",
+            "solar_res_rt_hist_2005",
+            "solar_res_rt_hist_2010",
+            "solar_res_rt_hist_2015",
+            "solar_res_rt_hist_2020",
+            "solar_res_rt_hist_2025",
+        ]
+    }
     k2 = Key("out:nl-t-ya-m-c")
+    rep.add(
+        k2["pv_rooftop-t"], "select", k2, {"c": ["electr"], "t": pv_rt["pv_rooftop"]}
+    )
+    rep.add(k2["pv_rooftop_agg"], "sum", k2["pv_rooftop-t"], dimensions=["t"])
+    rep.add(
+        k2["pv_rooftop"],
+        "expand_dims",
+        k2["pv_rooftop_agg"],
+        {"t": ["pv_rooftop"]},
+    )
     rep.add(
         k2["curtailed_renewables"],
         "concat",
         k2["pv_util_wo_curtailment"],
         k2["wind_offshore_wo_curtailment"],
         k2["wind_onshore_wo_curtailment"],
+        k2["pv_rooftop"],
     )
-    rep.get(k2["curtailed_renewables"])
-
     po_trb_rel_po_act = {"r": "pass_out_trb", "t": "po_turbine"}
     po_rel_thermal_ppls = {
         "r": "pass_out_trb",
