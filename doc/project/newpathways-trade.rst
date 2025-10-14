@@ -31,6 +31,18 @@ Additional functions here include:
   - ``message_ix_models.tools.bilateralize.bilateralize.import_gem(input_file, input_sheet, trade_technology, flow_technology, project_name, config_name)``: This function pulls in pre-downloaded raw data from the Global Energy Monitor in oil and gas infrastructure and can be used to calibrate the flow technology for moving oil and gas via pipeline.
   - ``message_ix_models.tools.bilateralize.bilateralize.calibrate_mariteam(covered_tec, message_regions)``: This function pulls in MariTEAM output to calibrate maritime shipping (flow technologies).
 
+**This step is not necessary for the following commodities (they are already defined):**
+  - Biomass (``biomass_shipped``)
+  - Coal (``coal_shipped``
+  - Crude Oil (``crude_shipped`` and ``crude_piped``): Note that the global pool version of MESSAGEix names this ``oil_exp`` and ``oil_imp`` and combines shipped and piped trade.
+  - Ethanol (``eth_shipped``)
+  - Fuel Oil (``foil_shipped`` and ``foil_piped``): Note that this uses the same oil pipeline infrastructure as crude oil and light oil.
+  - Light Oil (``loil_shipped`` and ``loil_piped``): See note above on pipelines
+  - Liquid H2 (``lh2_shipped``)
+  - LNG (``LNG_shipped``)
+  - Methanol (``meth_shipped``)
+  - Piped gas (``gas_piped``)
+
 2. Bare
 =======
 The second step is to review, edit, and transfer the files in ``message-ix-models/data/bilateralize/[your_trade_commodity]/edit_files/``.
