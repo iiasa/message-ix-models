@@ -10,6 +10,29 @@ iamc_prefix:
 
 unit: GWa
 
+level_2:
+  Biomass:
+    short: se_elec_bio
+    components:
+      [ se_elec_bio_wo_ccs,
+        se_elec_bio_w_ccs ]
+
+  Coal:
+    short: se_elec_coal
+    components:
+      [ se_elec_coal_w_ccs,
+        se_elec_coal_wo_ccs ]
+
+  Gas:
+    short: se_elec_gas
+    components:
+      [ se_elec_gas_wo_ccs,
+        se_elec_gas_w_ccs ]
+
+  Oil:
+    short: se_elec_oil
+    components:
+      [ se_elec_oil_wo_ccs ]
 
 level_1:
   Biomass|w/o CCS:
@@ -24,8 +47,8 @@ level_1:
   Biomass|w/ CCS:
     short: se_elec_bio_w_ccs
     components:
-      [ bio_istig_ccs,
-        bio_ppl_bio_ppl_co2scr,
+      [ se_elec_bio_istig_ccs,
+        se_elec_bio_ppl_ccs,
         se_elec_biogas_cc_ccs,
         se_elec_biogas_ppl_w_ccs,
       ]
@@ -44,6 +67,22 @@ level_1:
       [ se_elec_igcc_wo_ccs,
         se_elec_coal_adv_wo_ccs,
         se_elec_coal_ppl_wo_ccs,
+        se_elec_coal_ppl_u
+      ]
+
+  Gas|w/o CCS:
+    short: se_elec_gas_wo_ccs
+    components:
+      [ se_elec_gas_cc_wo_ccs,
+        se_elec_gas_ppl_wo_ccs,
+        se_elec_gas_ct,
+      ]
+
+  Gas|w/ CCS:
+    short: se_elec_gas_w_ccs
+    components:
+      [ se_elec_gas_cc_ccs,
+        se_elec_gas_ppl_w_ccs,
       ]
 
   Hydrogen:
@@ -52,4 +91,12 @@ level_1:
       [ se_elec_hydrogen_cc,
         se_elec_hydrogen_ppl,
         se_elec_hydrogen_ct,
+      ]
+
+  Oil|w/o CCS:
+    short: se_elec_oil_wo_ccs
+    components:
+      [ se_elec_loil_cc,
+        se_elec_loil_ppl,
+        se_elec_foil_ppl
       ]

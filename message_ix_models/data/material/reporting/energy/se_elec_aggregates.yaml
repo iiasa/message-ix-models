@@ -13,7 +13,7 @@ unit: GWa
 
 level_1:
   Solar|CSP:
-    short: se_elec_hydrogen
+    short: se_elec_csp
     components:
       [ se_elec_csp1,
         se_elec_csp2,
