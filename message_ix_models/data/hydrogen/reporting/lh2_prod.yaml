@@ -1,0 +1,21 @@
+# yaml file to report on hydrogen production
+# grouped by technology, sector and fuel input
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  out
+
+iamc_prefix:
+  Production|
+
+unit: EJ/yr
+
+vars:
+  # hydrogen production
+  # gas
+  LH2|Liquefaction:
+    filter:
+      { technology: h2_liq, mode: M1, commodity: lh2, level: primary}
+    original_unit: GWa
+    short:
+      prod_lh2_liq

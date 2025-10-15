@@ -85,7 +85,15 @@ vars:
     original_unit: GWa
     short:
       prod_h2_elec_soe
+  Hydrogen|Electricity|h2_elec_legacy:
+      filter:
+        {technology: h2_elec, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+      original_unit: GWa
+      short:
+        prod_h2_elec_legacy
 
+
+  # refinery
   Hydrogen|Refinery:
     filter:
       {technology: catalytic_reforming_ref, mode: M1, commodity: hydrogen, level: refinery}
