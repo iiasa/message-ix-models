@@ -26,12 +26,12 @@ covered_trade_technologies:
   - coal_shipped
   - crudeoil_shipped
   - crudeoil_piped
-  - eth_shipped
-  - foil_shipped
-  - foil_piped
-  - loil_shipped
-  - loil_piped
-  - biomass_shipped
+  #- eth_shipped
+  #- foil_shipped
+  #- foil_piped
+  #- loil_shipped
+  #- loil_piped
+  #- biomass_shipped
   #- lh2_shipped
 
 # SHIPPING FUELS (how much of each shipping technology is propelled by each fuel)
