@@ -1,8 +1,8 @@
 import sys
 from importlib.metadata import PackageNotFoundError, version
 
+import iam_units
 import pint
-from iam_units import registry
 
 from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.config import Config
@@ -24,7 +24,8 @@ except PackageNotFoundError:  # pragma: no cover
 setup_logging(console=False, file=False)
 
 # Use iam_units.registry as the default pint.UnitsRegistry
-pint.set_application_registry(registry)
+iam_units.configure_currency("EXC", "2005")
+pint.set_application_registry(iam_units.registry)
 
 # Ensure at least one Context instance is created
 Context()
