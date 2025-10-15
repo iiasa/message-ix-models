@@ -9,27 +9,18 @@ using WACC projections and original investment cost data.
 import logging
 
 import pandas as pd
-from message_ix import Scenario
 
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
 
-def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
+def main():  # noqa: C901
     """Generate investment cost files with CoC decomposition for all WACC scenarios.
-
-    Parameters
-    ----------
-    context
-        Workflow context
-    scenario : Scenario
-        MESSAGE scenario (not used in this function)
 
     Returns
     -------
-    Scenario
-        The input scenario (unchanged)
+    None
     """
     # === Config ===
     baseline_year = 2020
@@ -176,7 +167,7 @@ def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
 
     if not wacc_files:
         log.warning(f"No predicted_wacc_*.csv files found in {wacc_dir}")
-        return scenario
+        return None
 
     log.info(f"Found {len(wacc_files)} WACC files to process:")
     for wacc_file in wacc_files:
@@ -212,4 +203,4 @@ def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
     for inv_file in sorted(successful_files):
         log.info(f"  - {inv_file.name}")
 
-    return scenario
+    return None

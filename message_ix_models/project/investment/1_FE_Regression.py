@@ -15,27 +15,18 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from linearmodels.panel import PanelOLS
-from message_ix import Scenario
 
 from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
 
-def main(context, scenario: Scenario) -> Scenario:
+def main():
     """Run fixed effects regression analysis on historical data.
-
-    Parameters
-    ----------
-    context
-        Workflow context
-    scenario : Scenario
-        MESSAGE scenario (not used in this function)
 
     Returns
     -------
-    Scenario
-        The input scenario (unchanged)
+    None
     """
     # === Config ===
     INPUT_XLSX = "Reg_data.xlsx"
@@ -166,4 +157,4 @@ def main(context, scenario: Scenario) -> Scenario:
         f"Fixed effects regression completed. Coefficients saved to: {output_path}"
     )
 
-    return scenario
+    return None

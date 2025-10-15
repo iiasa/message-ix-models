@@ -14,27 +14,18 @@ import logging
 from pathlib import Path
 
 import pandas as pd
-from message_ix import Scenario
 
 from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
 
-def main(context, scenario: Scenario) -> Scenario:
+def main():
     """Generate climate finance scenarios for future projections.
-
-    Parameters
-    ----------
-    context
-        Workflow context
-    scenario : Scenario
-        MESSAGE scenario (not used in this function)
 
     Returns
     -------
-    Scenario
-        The input scenario (unchanged)
+    None
     """
     # === Config ===
     ICF_HIS_XLSX = "ICF_R12.xlsx"
@@ -97,7 +88,7 @@ def main(context, scenario: Scenario) -> Scenario:
 
     log.info("Climate finance series generation completed.")
 
-    return scenario
+    return None
 
 
 # -------------------------------
