@@ -342,13 +342,14 @@ def generate(context: Context) -> Workflow:
             target=f"{model_name}/{scen_name}",
         )
 
-    inv_cost_ori_steps = [
-        f"inv_cost_ori retrieved {scen_name}" for scen_name in scen_names
-    ]
-    wf.add(
+    inv_cost_ori_steps = []
+    for scen_name in scen_names:
+        inv_cost_ori_steps.append(f"inv_cost_ori retrieved {scen_name}")
+    wf.add_step(
         "inv_cost_ori retrieved",
-        log_coordination,
         inv_cost_ori_steps,
+        log_coordination,
+        dummy=True,
     )
 
     # Fixed effects regression - processes all scenarios and creates combined output
@@ -444,10 +445,11 @@ def generate(context: Context) -> Workflow:
         for cf_name in cf_names:
             combined_scen_name = f"{scen_name}_{cf_name}"
             coc_reported_steps.append(f"coc reported {combined_scen_name}")
-    wf.add(
+    wf.add_step(
         "coc reported",
-        log_coordination,
         coc_reported_steps,
+        log_coordination,
+        # dummy=True,
     )
 
     return wf
