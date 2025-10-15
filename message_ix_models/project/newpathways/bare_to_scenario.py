@@ -85,8 +85,8 @@ for f in ['loil', 'foil', 'eth']:
 trade_dict['crudeoil_shipped']['flow']['historical_new_capacity'] = hist_crude_loil
 #trade_dict['lh2_shipped']['flow']['historical_new_capacity'] = hist_lh2_loil
 trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
-#trade_dict['eth_shipped']['flow']['historical_new_capacity'] = hist_oil[hist_oil['technology'] != 'oil_tanker_foil']
-#trade_dict['foil_shipped']['flow']['historical_new_capacity'] = hist_oil
+trade_dict['eth_shipped']['flow']['historical_new_capacity'] = hist_oil[hist_oil['technology'] != 'oil_tanker_foil']
+trade_dict['foil_shipped']['flow']['historical_new_capacity'] = hist_oil
 #trade_dict['loil_shipped']['flow']['historical_new_capacity'] = hist_oil
 
 # Ensure flow technologies are only added once

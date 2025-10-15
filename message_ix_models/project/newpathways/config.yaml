@@ -26,9 +26,9 @@ covered_trade_technologies:
   - coal_shipped
   - crudeoil_shipped
   - crudeoil_piped
-  #- eth_shipped
-  #- foil_shipped
-  #- foil_piped
+  - eth_shipped
+  - foil_shipped
+  - foil_piped
   #- loil_shipped
   #- loil_piped
   #- biomass_shipped
