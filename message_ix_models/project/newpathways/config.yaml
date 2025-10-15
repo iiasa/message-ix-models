@@ -23,7 +23,7 @@ scenario:
 covered_trade_technologies:
   - gas_piped
   - LNG_shipped
-  #- coal_shipped
+  - coal_shipped
   #- crudeoil_shipped
   #- crudeoil_piped
   #- eth_shipped
