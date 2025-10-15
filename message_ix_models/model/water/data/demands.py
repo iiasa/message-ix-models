@@ -9,7 +9,11 @@ import pandas as pd
 import xarray as xr
 from message_ix import make_df
 
-from message_ix_models.model.water.utils import KM3_TO_MCM
+from message_ix_models.model.water.utils import (
+    KM3_TO_MCM,
+    get_days_per_timeslice,
+    map_month_to_timeslice,
+)
 from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
@@ -232,7 +236,12 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
         )
         df_m: pd.DataFrame = pd.read_csv(PATH)
-        df_m.value *= 30  # from mcm/day to mcm/month
+
+        # Get number of timeslices and convert mcm/day to mcm/timeslice
+        n_time = len(context.time)
+        days_per_slice = get_days_per_timeslice(n_time)
+        df_m["value"] *= days_per_slice  # from mcm/day to mcm/timeslice
+
         df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
         df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
@@ -241,9 +250,18 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
             "urbann_return2_baseline"
         )
-        df_m = df_m[["year", "pid", "variable", "value", "month"]]
+
+        # Map month numbers to timeslice names (h1, h2, ..., hn)
+        df_m["time"] = df_m["month"].apply(lambda m: map_month_to_timeslice(m, n_time))
+        df_m = df_m[["year", "pid", "variable", "value", "time"]]
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
-        
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_m = df_m.groupby(["year", "node", "variable", "time"], as_index=False).agg({
+                "value": "sum"  # Sum demands across months within same timeslice
+            })
+
         # Filter monthly data to only include valid basins
         df_m = df_m[df_m["node"].isin(context.valid_basins)]
 
@@ -260,7 +278,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 ]
             )
         ]
-        # attach the monthly demand
+        # attach the timeslice demand data
         df_dmds = pd.concat([df_dmds, df_m])
 
     urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal2_baseline"]
@@ -865,8 +883,21 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
-        df_sw["time"] = pd.DatetimeIndex(df_sw["years"]).month
+
+        # Map month to timeslice name
+        n_time = len(context.time)
+        df_sw["time"] = df_sw["years"].apply(
+            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
+        )
+
         df_sw["Region"] = df_sw["Region"].map(df_x["BCU_name"])
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_sw = df_sw.groupby(["Region", "year", "time"], as_index=False).agg({
+                "value": "sum"  # Sum water availability across months within same timeslice
+            })
+
         df_sw2210 = df_sw[df_sw["year"] == 2100].copy()
         df_sw2210["year"] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
@@ -892,8 +923,20 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
-        df_gw["time"] = pd.DatetimeIndex(df_gw["years"]).month
+
+        # Map month to timeslice name (reuse n_time from df_sw)
+        df_gw["time"] = df_gw["years"].apply(
+            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
+        )
+
         df_gw["Region"] = df_gw["Region"].map(df_x["BCU_name"])
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_gw = df_gw.groupby(["Region", "year", "time"], as_index=False).agg({
+                "value": "sum"  # Sum groundwater availability across months within same timeslice
+            })
+
         df_gw2210 = df_gw[df_gw["year"] == 2100].copy()
         df_gw2210["year"] = 2110
         df_gw = pd.concat([df_gw, df_gw2210])

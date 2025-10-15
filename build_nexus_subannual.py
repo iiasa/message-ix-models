@@ -1,33 +1,40 @@
 """
-Build MESSAGEix-Nexus scenario with subannual (monthly) timeslices.
+Build MESSAGEix-Nexus scenario with subannual timeslices.
 
 This script implements a full pipeline for creating a water-energy nexus model
-with monthly temporal resolution:
+with subannual temporal resolution:
 1. Load base annual scenario
-2. Add monthly timeslices
+2. Add subannual timeslices
 3. Validate timesliced scenario
 4. Build nexus module on timesliced scenario
 5. Solve final subannual nexus model
 """
 
 import logging
+import sys
 
 from message_ix_models import Context
 from message_ix_models.model.water.build import main as build_nexus
 from message_ix_models.model.water.cli import water_ini
 from message_ix_models.project.alps.timeslice import add_timeslices
 
-# Configure logging
+# Configure logging for SLURM - force unbuffered output to stdout
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+handler.flush = sys.stdout.flush
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[handler],
+    force=True
 )
 log = logging.getLogger(__name__)
 
 # ========== CONFIGURATION ==========
 MODEL = "MESSAGE_GLOBIOM_SSP2_v6.1"
 BASE_SCEN = "baseline"
-N_TIME = 12  # 12 monthly timeslices
+N_TIME = 2  # 2 seasonal timeslices
 REGIONS = "R12"
 
 # Nexus configuration
@@ -58,7 +65,6 @@ FILTER_LIST = [
 
 # Timeslice configuration
 REMOVE_COOLING = True  # Remove cooling techs before adding timeslices (water module adds them back)
-UPDATE_RESERVE_MARGIN = False  # Set to True if you have peak_demand data in Excel
 
 # Solve configuration
 SOLVE_OPTIONS = {
@@ -67,6 +73,10 @@ SOLVE_OPTIONS = {
     "threads": "16",
     "iis": "1"
 }
+
+# Pipeline control
+VALIDATE_TIMESLICE = True  # Set to True to solve timesliced scenario before adding nexus
+SOLVE_FINAL = True  # Set to False to skip final solve
 
 def main():
     """Execute the full subannual nexus pipeline."""
@@ -100,9 +110,7 @@ def main():
         scenario=sc_timeslice,
         context=ctx,
         n_time=N_TIME,
-        regions=REGIONS,
         remove_cooling_tec=REMOVE_COOLING,
-        update_reserve_margin=UPDATE_RESERVE_MARGIN,
     )
 
     log.info(f"Timeslices added successfully")
@@ -111,13 +119,12 @@ def main():
     times = sc_timeslice.set("time")
     log.info(f"Time slices in scenario: {list(times)}")
 
-    # ========== STEP 3: Validate Timesliced Scenario ==========
+    # ========== STEP 3: Solve Timesliced Scenario ==========
     log.info("=" * 80)
-    log.info("STEP 3: Validating timesliced scenario (optional solve)")
+    log.info("STEP 3: Solving timesliced scenario")
     log.info("=" * 80)
 
-    validate_timeslice = input("Solve timesliced scenario to validate? (y/n): ").lower()
-    if validate_timeslice == 'y':
+    if VALIDATE_TIMESLICE:
         log.info("Solving timesliced scenario...")
         sc_timeslice.set_as_default()
         try:
@@ -125,9 +132,9 @@ def main():
             log.info("Timesliced scenario solved successfully!")
         except Exception as e:
             log.error(f"Failed to solve timesliced scenario: {e}")
-            log.error("Continuing anyway to build nexus structure...")
+            raise
     else:
-        log.info("Skipping validation solve")
+        log.info("Skipping validation solve (VALIDATE_TIMESLICE=False)")
 
     # ========== STEP 4: Initialize Water Context ==========
     log.info("=" * 80)
@@ -135,7 +142,7 @@ def main():
     log.info("=" * 80)
 
     ctx.ssp = SSP
-    water_ini(ctx, regions=REGIONS, time=None)  # Will auto-detect monthly timeslices
+    water_ini(ctx, regions=REGIONS, time=None)  # Will auto-detect timeslices from scenario
 
     log.info(f"Detected time structure: {ctx.time}")
 
@@ -182,8 +189,7 @@ def main():
     log.info(f"Scenario: {sc_nexus.model}/{sc_nexus.scenario} v{sc_nexus.version}")
     log.info(f"Solve options: {SOLVE_OPTIONS}")
 
-    proceed = input("Proceed with solve? (y/n): ").lower()
-    if proceed == 'y':
+    if SOLVE_FINAL:
         log.info("Starting solve...")
         try:
             sc_nexus.solve(solve_options=SOLVE_OPTIONS)
@@ -196,7 +202,7 @@ def main():
             log.error("Check solver logs for details")
             raise
     else:
-        log.info("Solve skipped by user")
+        log.info("Solve skipped (SOLVE_FINAL=False)")
         log.info(f"Scenario ready for solving: {sc_nexus.model}/{sc_nexus.scenario} v{sc_nexus.version}")
 
     return sc_nexus

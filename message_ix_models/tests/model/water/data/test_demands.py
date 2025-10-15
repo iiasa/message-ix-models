@@ -8,13 +8,16 @@ from message_ix_models.model.water.data.demands import (
     add_sectoral_demands,
     add_water_availability,
 )
-from message_ix_models.tests.model.water.conftest import setup_valid_basins
+from message_ix_models.tests.model.water.conftest import (
+    setup_timeslices,
+    setup_valid_basins,
+)
 
 
 @pytest.mark.parametrize(
-    ["SDG", "time"], [("baseline", "year"), ("ambitious", "month")]
+    ["SDG", "n_time"], [("baseline", 1), ("ambitious", 2), ("ambitious", 12)]
 )
-def test_add_sectoral_demands(request, test_context, SDG, time):
+def test_add_sectoral_demands(request, test_context, SDG, n_time):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     # FIXME
@@ -30,7 +33,6 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
     test_context.map_ISO_c = {test_context.regions: nodes[0]}
-    test_context.time = time
 
     mp = test_context.get_platform()
     scenario_info = {
@@ -43,6 +45,10 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["tech1", "tech2"])
     s.add_set("year", [2020, 2030, 2040])
+    s.commit(comment="Test scenario with timeslices")
+
+    # Set up timeslices
+    setup_timeslices(test_context, s, n_time)
 
     # FIXME same as above
     test_context["water build info"] = ScenarioInfo(s)
@@ -88,6 +94,23 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
         "historical_new_capacity DataFrame contains NaN values"
     )
 
+    # Verify timeslice-specific assertions
+    demand_times = set(result["demand"]["time"].unique())
+    if n_time == 1:
+        # Annual only
+        assert demand_times == {"year"}, f"Expected only 'year', got {demand_times}"
+    else:
+        # Sub-annual timeslices
+        expected_times = {f"h{i+1}" for i in range(n_time)}
+        assert demand_times == expected_times, (
+            f"Expected {expected_times}, got {demand_times}"
+        )
+
+        # Verify we have data for each timeslice
+        for time in expected_times:
+            time_data = result["demand"][result["demand"]["time"] == time]
+            assert len(time_data) > 0, f"No demand data for timeslice {time}"
+
     # Check for duplicates in DataFrames
     demand_duplicates = result["demand"].duplicated().sum()
     assert demand_duplicates == 0, (
@@ -100,17 +123,32 @@ def test_add_sectoral_demands(request, test_context, SDG, time):
     )
 
 
-@pytest.mark.parametrize("time", ["year", "month"])
-def test_add_water_availability(test_context, time):
+@pytest.mark.parametrize("n_time", [1, 2, 12])
+def test_add_water_availability(request, test_context, n_time):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     sets = {"year": [2020, 2030, 2040]}
     test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    test_context.type_reg = "gloabl"
+    test_context.type_reg = "global"
     test_context.regions = "R12"
     test_context.RCP = "2p6"
     test_context.REL = "low"
-    test_context.time = time
+
+    # Create minimal scenario for timeslice setup
+    mp = test_context.get_platform()
+    scenario_info = {
+        "mp": mp,
+        "model": f"{request.node.name}/test water model",
+        "scenario": f"{request.node.name}/test water scenario",
+        "version": "new",
+    }
+    s = Scenario(**scenario_info)
+    s.add_horizon(year=[2020, 2030, 2040])
+    s.add_set("year", [2020, 2030, 2040])
+    s.commit(comment="Test scenario for water availability")
+
+    # Set up timeslices
+    setup_timeslices(test_context, s, n_time)
 
     # Set up valid_basins for basin filtering
     setup_valid_basins(test_context, regions=test_context.regions)
@@ -145,6 +183,31 @@ def test_add_water_availability(test_context, time):
             "year_act",
         ]
     )
+
+    # Verify timeslice-specific assertions
+    demand_times = set(result["demand"]["time"].unique())
+    share_times = set(result["share_commodity_lo"]["time"].unique())
+
+    if n_time == 1:
+        # Annual only
+        assert demand_times == {"year"}, f"Expected only 'year' in demand, got {demand_times}"
+        assert share_times == {"year"}, f"Expected only 'year' in share, got {share_times}"
+    else:
+        # Sub-annual timeslices
+        expected_times = {f"h{i+1}" for i in range(n_time)}
+        assert demand_times == expected_times, (
+            f"Expected {expected_times} in demand, got {demand_times}"
+        )
+        assert share_times == expected_times, (
+            f"Expected {expected_times} in share, got {share_times}"
+        )
+
+        # Verify we have data for each timeslice
+        for time in expected_times:
+            time_data = result["demand"][result["demand"]["time"] == time]
+            assert len(time_data) > 0, f"No demand data for timeslice {time}"
+            share_data = result["share_commodity_lo"][result["share_commodity_lo"]["time"] == time]
+            assert len(share_data) > 0, f"No share data for timeslice {time}"
 
 
 def test_add_irrigation_demand(request, test_context):

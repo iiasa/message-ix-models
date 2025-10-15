@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
@@ -8,10 +9,14 @@ from message_ix_models.model.water.data.water_supply import (
     add_water_supply,
     map_basin_region_wat,
 )
-from message_ix_models.tests.model.water.conftest import setup_valid_basins
+from message_ix_models.tests.model.water.conftest import (
+    setup_timeslices,
+    setup_valid_basins,
+)
 
 
-def test_map_basin_region_wat(test_context):
+@pytest.mark.parametrize("n_time", [1, 2, 12])
+def test_map_basin_region_wat(request, test_context, n_time):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     # Personalize the context
@@ -25,7 +30,23 @@ def test_map_basin_region_wat(test_context):
     test_context.map_ISO_c = map_ISO_c
     test_context.RCP = "2p6"
     test_context.REL = "med"
-    test_context.time = "year"
+
+    # Create minimal scenario for timeslice setup
+    mp = test_context.get_platform()
+    scenario_info = {
+        "mp": mp,
+        "model": f"{request.node.name}/test water model",
+        "scenario": f"{request.node.name}/test water scenario",
+        "version": "new",
+    }
+    s = Scenario(**scenario_info)
+    s.add_horizon(year=[2020, 2030, 2040])
+    s.add_set("year", [2020, 2030, 2040])
+    s.commit(comment="Test scenario")
+
+    # Set up timeslices
+    setup_timeslices(test_context, s, n_time)
+
     # Set up valid_basins for basin filtering
     setup_valid_basins(test_context, regions=test_context.regions)
 
@@ -38,8 +59,26 @@ def test_map_basin_region_wat(test_context):
         for col in ["region", "mode", "date", "MSGREG", "share", "year", "time"]
     )
 
+    # Verify timeslice-specific assertions
+    result_times = set(result["time"].unique())
+    if n_time == 1:
+        # Annual only
+        assert result_times == {"year"}, f"Expected only 'year', got {result_times}"
+    else:
+        # Sub-annual timeslices
+        expected_times = {f"h{i+1}" for i in range(n_time)}
+        assert result_times == expected_times, (
+            f"Expected {expected_times}, got {result_times}"
+        )
 
-def test_add_water_supply(request, test_context):
+        # Verify we have data for each timeslice
+        for time in expected_times:
+            time_data = result[result["time"] == time]
+            assert len(time_data) > 0, f"No data for timeslice {time}"
+
+
+@pytest.mark.parametrize("n_time", [1, 2, 12])
+def test_add_water_supply(request, test_context, n_time):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     # Personalize the context
@@ -53,7 +92,6 @@ def test_add_water_supply(request, test_context):
     test_context.map_ISO_c = map_ISO_c
     test_context.RCP = "2p6"
     test_context.REL = "med"
-    test_context.time = "year"
     test_context.nexus_set = "nexus"
     # Set up valid_basins for basin filtering
     setup_valid_basins(test_context, regions=test_context.regions)
@@ -71,6 +109,9 @@ def test_add_water_supply(request, test_context):
     s.add_set("node", ["loc1", "loc2"])
     s.add_set("year", [2020, 2030, 2040])
     s.commit(comment="Commit test scenario")
+
+    # Set up timeslices
+    setup_timeslices(test_context, s, n_time)
 
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
@@ -118,8 +159,34 @@ def test_add_water_supply(request, test_context):
         f"Output DataFrame contains {output_duplicates} duplicate rows"
     )
 
+    # Verify timeslice-specific assertions
+    input_times = set(result["input"]["time"].unique())
+    output_times = set(result["output"]["time"].unique())
 
-def test_add_e_flow(test_context):
+    if n_time == 1:
+        # Annual only
+        assert input_times == {"year"}, f"Expected only 'year' in input, got {input_times}"
+        assert output_times == {"year"}, f"Expected only 'year' in output, got {output_times}"
+    else:
+        # Sub-annual timeslices
+        expected_times = {f"h{i+1}" for i in range(n_time)}
+        assert input_times == expected_times, (
+            f"Expected {expected_times} in input, got {input_times}"
+        )
+        assert output_times == expected_times, (
+            f"Expected {expected_times} in output, got {output_times}"
+        )
+
+        # Verify we have data for each timeslice
+        for time in expected_times:
+            input_time_data = result["input"][result["input"]["time"] == time]
+            assert len(input_time_data) > 0, f"No input data for timeslice {time}"
+            output_time_data = result["output"][result["output"]["time"] == time]
+            assert len(output_time_data) > 0, f"No output data for timeslice {time}"
+
+
+@pytest.mark.parametrize("n_time", [1, 2, 12])
+def test_add_e_flow(request, test_context, n_time):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     # Personalize the context
@@ -132,8 +199,23 @@ def test_add_e_flow(test_context):
     test_context.map_ISO_c = map_ISO_c
     test_context.RCP = "2p6"
     test_context.REL = "med"
-    test_context.time = "year"
     test_context.SDG = True
+
+    # Create minimal scenario for timeslice setup
+    mp = test_context.get_platform()
+    scenario_info = {
+        "mp": mp,
+        "model": f"{request.node.name}/test water model",
+        "scenario": f"{request.node.name}/test water scenario",
+        "version": "new",
+    }
+    s = Scenario(**scenario_info)
+    s.add_horizon(year=[2020, 2030, 2040])
+    s.add_set("year", [2020, 2030, 2040])
+    s.commit(comment="Test scenario")
+
+    # Set up timeslices
+    setup_timeslices(test_context, s, n_time)
 
     # Set up valid_basins for basin filtering
     setup_valid_basins(test_context, regions=test_context.regions)
@@ -145,3 +227,22 @@ def test_add_e_flow(test_context):
     assert isinstance(result, dict)
     assert "bound_activity_lo" in result
     assert isinstance(result["bound_activity_lo"], pd.DataFrame)
+
+    # Verify timeslice-specific assertions
+    if len(result["bound_activity_lo"]) > 0:
+        bound_times = set(result["bound_activity_lo"]["time"].unique())
+
+        if n_time == 1:
+            # Annual only
+            assert bound_times == {"year"}, f"Expected only 'year', got {bound_times}"
+        else:
+            # Sub-annual timeslices
+            expected_times = {f"h{i+1}" for i in range(n_time)}
+            assert bound_times == expected_times, (
+                f"Expected {expected_times}, got {bound_times}"
+            )
+
+            # Verify we have data for each timeslice
+            for time in expected_times:
+                time_data = result["bound_activity_lo"][result["bound_activity_lo"]["time"] == time]
+                assert len(time_data) > 0, f"No data for timeslice {time}"

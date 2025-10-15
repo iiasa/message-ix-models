@@ -4,14 +4,10 @@ Subannual timeslice module for MESSAGEix models.
 
 This module provides functionality to add subannual time slices to MESSAGEix scenarios,
 enabling representation of seasonal and monthly variations in energy and water systems.
-
-The implementation is based on the original add_timeslice.py script, refactored for
-modular use within the message_ix_models framework.
 """
 
 import logging
 from itertools import product
-from pathlib import Path
 
 import pandas as pd
 
@@ -20,73 +16,32 @@ from message_ix_models import Context
 log = logging.getLogger(__name__)
 
 
-# 1.1) A function for reading input data from excel and formatting as needed
-def xls_to_df(xls, n_time, nodes, exclude_sheets=["peak_demand"]):
-    """Read and format timeslice data from Excel file.
+def generate_uniform_timeslices(n_time):
+    """Generate uniform timeslice structure.
 
     Parameters
     ----------
-    xls : pd.ExcelFile
-        Excel file containing timeslice data
     n_time : int
-        Number of time slices to create
-    nodes : list
-        List of node names
-    exclude_sheets : list, optional
-        Sheet names to exclude from processing
+        Number of timeslices to create
 
     Returns
     -------
-    duration : list
-        Duration of each timeslice as fraction of year
-    df_time : pd.DataFrame
-        Time step definitions
-    dict_xls : dict
-        Dictionary of parameter data by sheet name
+    pd.DataFrame
+        DataFrame with columns: time, lvl_temporal, parent_time, duration_time
     """
-    # Converting time series based on the number of time slices
-    df_time = xls.parse("time_steps", converters={"time": str})
-    df_time = df_time.loc[df_time["lvl_temporal"] != "Sum"]
-    n_xls = len(df_time["time"])
-    dur = df_time["duration_time"]
-    length = int(n_xls / n_time)
-    par_list = [x for x in xls.sheet_names if x not in ["time_steps"] + exclude_sheets]
+    times = [f"h{i+1}" for i in range(n_time)]
+    duration_value = 1.0 / n_time
 
-    dict_xls = {}
-    for p in par_list:
-        df_xls = xls.parse(p)
-        idx = df_xls.columns[0]
-        df_xls = df_xls.set_index(idx)
+    df_time = pd.DataFrame({
+        "time": times,
+        "lvl_temporal": ["subannual"] * n_time,
+        "parent_time": ["year"] * n_time,
+        "duration_time": [duration_value] * n_time
+    })
 
-        new = pd.DataFrame(index=range(1, n_time + 1), columns=df_xls.columns)
-        for col, rate in df_xls.loc["rate", :].to_dict().items():
-            df_xls = df_xls.loc[df_xls.index != "rate"]
-            z = 1
-            for i in list(range(0, n_xls, length)):
-                if rate == "Yes":
-                    new.loc[z, col] = float(df_xls.iloc[i : i + length, :][col].sum())
-                elif rate == "No":
-                    new.loc[z, col] = float(df_xls.iloc[i : i + length, :][col].mean())
-                z = z + 1
-            new.loc["rate", col] = rate
-
-        # populating "all" nodes
-        for col in new.columns:
-            if col.split(",")[0] == "all":
-                for node in nodes:
-                    c = node + "," + col.split(",")[1]
-                    new[c] = new.loc[:, col]
-                new = new.drop(col, axis=1)
-
-        dict_xls[p] = new
-
-    duration = [round(x, 8) for x in dur.groupby(dur.index // length).sum()]
-    df_time = df_time.loc[0 : n_time - 1, :]
-    df_time["duration_time"] = duration
-    return duration, df_time, dict_xls
+    return df_time
 
 
-# 1.2) A function for updating sets and duration time after adding time slices
 def time_setup(sc, df, last_year=False, remove_old_time_lvl=False):
     """Add subannual time slices to scenario sets.
 
@@ -95,45 +50,42 @@ def time_setup(sc, df, last_year=False, remove_old_time_lvl=False):
     sc : message_ix.Scenario
         Scenario to modify
     df : pd.DataFrame
-        Time step definitions from xls_to_df
+        Time step definitions
     last_year : int, optional
         Remove model years beyond this year
     remove_old_time_lvl : bool, optional
         Remove existing temporal hierarchy
     """
-    sc.check_out()
-    # Changing the last year if needed
-    if last_year:
-        log.info(f"Removing extra model years beyond {last_year}...")
-        for y in [x for x in sc.set("year").tolist() if int(x) > last_year]:
-            sc.remove_set("year", y)
-        log.info(f"Extra model years removed.")
+    with sc.transact("Time setup for subannual slices"):
+        if last_year:
+            log.info(f"Removing extra model years beyond {last_year}...")
+            for y in [x for x in sc.set("year").tolist() if int(x) > last_year]:
+                sc.remove_set("year", y)
+            log.info(f"Extra model years removed.")
 
-    # Adding sub-annual time slices to the set 'time'
-    for t in df["time"].tolist():
-        sc.add_set("time", t)
+        # Adding sub-annual time slices to the set 'time'
+        for t in df["time"].tolist():
+            sc.add_set("time", t)
 
-    # Adding sub-annual time levels to the set 'lvl_temporal'
-    for l in set(df["lvl_temporal"]):
-        sc.add_set("lvl_temporal", l)
+        # Adding sub-annual time levels to the set 'lvl_temporal'
+        for l in set(df["lvl_temporal"]):
+            sc.add_set("lvl_temporal", l)
 
-    # Adding temporal hierarchy
-    df_ref = sc.set("map_temporal_hierarchy")
-    d = pd.DataFrame(columns=df_ref.columns, index=[0])
+        # Adding temporal hierarchy
+        df_ref = sc.set("map_temporal_hierarchy")
+        d = pd.DataFrame(columns=df_ref.columns, index=[0])
 
-    for i in df.index:
-        d["lvl_temporal"] = df.loc[i, "lvl_temporal"]
-        d["time"] = df.loc[i, "time"]
-        d["time_parent"] = df.loc[i, "parent_time"]
-        sc.add_set("map_temporal_hierarchy", d)
+        for i in df.index:
+            d["lvl_temporal"] = df.loc[i, "lvl_temporal"]
+            d["time"] = df.loc[i, "time"]
+            d["time_parent"] = df.loc[i, "parent_time"]
+            sc.add_set("map_temporal_hierarchy", d)
 
-    if remove_old_time_lvl:
-        sc.remove_set("map_temporal_hierarchy", df_ref)
-    sc.commit("")
+        if remove_old_time_lvl:
+            sc.remove_set("map_temporal_hierarchy", df_ref)
     log.info("All sets modified for the new time slices.")
 
 
-# 1.3) A function for modifying duration time
 def duration_time(sc, df):
     """Update duration_time parameter for new timeslices.
 
@@ -144,49 +96,40 @@ def duration_time(sc, df):
     df : pd.DataFrame
         Time step definitions with duration_time column
     """
-    sc.check_out()
-    df_ref = sc.par("duration_time")
-    d = df_ref.copy()
-    sc.remove_par("duration_time", df_ref)
+    with sc.transact("duration time modified"):
+        df_ref = sc.par("duration_time")
+        d = df_ref.copy()
+        sc.remove_par("duration_time", df_ref)
 
-    for i in df.index:
-        d["time"] = df.loc[i, "time"]
-        d["unit"] = "%"
-        df["value"] = df.loc[i, "duration_time"]
-        sc.add_par("duration_time", df)
+        for i in df.index:
+            d["time"] = df.loc[i, "time"]
+            d["unit"] = "%"
+            d["value"] = df.loc[i, "duration_time"]
+            sc.add_par("duration_time", d)
 
-    check = sc.par("duration_time")
-    check.loc[0, "value"] = check.loc[0, "value"] + 1.00 - check["value"].sum()
-    sc.add_par("duration_time", check.loc[[0]])
-    sc.commit("duration time modified")
+        check = sc.par("duration_time")
+        check.loc[0, "value"] = check.loc[0, "value"] + 1.00 - check["value"].sum()
+        sc.add_par("duration_time", check.loc[[0]])
     log.info('Parameter "duration_time" updated for new values.')
 
 
-# 1.4) Setting up for parameters
-def par_setup(sc, dict_xls, par_update):
+def par_setup(sc, par_update):
     """Set up parameter data structure for timeslice addition.
 
     Parameters
     ----------
     sc : message_ix.Scenario
         Scenario to modify
-    dict_xls : dict
-        Parameter data from Excel
     par_update : dict
         Dictionary to update with parameter configurations
 
     Returns
     -------
-    par_update : dict
-        Updated parameter configurations
     index_cols : dict
         Index column names for each parameter
     """
-    sc.check_out()
-    xls_pars = [x for x in dict_xls.keys() if x in sc.par_list()]
-
     index_cols = {}
-    for parname in set(list(par_update.keys()) + xls_pars):
+    for parname in par_update.keys():
         if "technology" in sc.idx_names(parname):
             index_cols[parname] = "technology"
         elif "commodity" in sc.idx_names(parname):
@@ -194,35 +137,10 @@ def par_setup(sc, dict_xls, par_update):
         elif "relation" in sc.idx_names(parname):
             index_cols[parname] = "relation"
 
-        if parname in xls_pars:
-            df_xls = dict_xls[parname]
-
-            for item in df_xls.columns:
-                if df_xls.loc["rate", item] == "No":
-                    if "," in item:
-                        node_col = [x for x in sc.idx_names(parname) if "node" in x]
-                        df_item = sc.par(
-                            parname,
-                            {
-                                index_cols[parname]: [item.split(",")[1]],
-                                node_col[0]: [item.split(",")[0]],
-                            },
-                        )
-                    else:
-                        df_item = sc.par(parname, {index_cols[parname]: [item]})
-                    df_item["value"] = 1
-                    sc.add_par(parname, df_item)
-
-                if parname not in par_update.keys():
-                    par_update[parname] = {}
-
-                par_update[parname][item] = df_xls[item].tolist()
-    sc.commit("")
-    log.info("Input data of parameters are set up.")
-    return par_update, index_cols
+    log.info("Parameter structure set up.")
+    return index_cols
 
 
-# 1.5) The main function for adding timeslices to a scenario
 def par_time_update(
     sc, parname, data_dict, index_col, item_list, n1, nn, n_time, df_time,
     tec_inp, tec_only_inp, sc_ref=None
@@ -254,75 +172,58 @@ def par_time_update(
     sc_ref : message_ix.Scenario, optional
         Reference scenario
     """
-    sc.check_out()
-    if not sc_ref:
-        sc_ref = sc
+    with sc.transact(f"Update {parname} for timeslices"):
+        if not sc_ref:
+            sc_ref = sc
 
-    node_tec = [
-        (k.split(",")[0], k.split(",")[1]) for k in data_dict.keys() if "," in k
-    ]
-    node_col = [
-        x for x in sc.idx_names(parname) if x in ["node", "node_loc", "node_rel"]
-    ][0]
-    for key, ratio in data_dict.items():
-        df = []
+        node_col = [
+            x for x in sc.idx_names(parname) if x in ["node", "node_loc", "node_rel"]
+        ]
+        if node_col:
+            node_col = node_col[0]
+        else:
+            node_col = None
 
-        if key == "all":
-            if item_list:
-                df_ref = sc_ref.par(parname, {index_col: item_list, "time": "year"})
+        for key, ratio in data_dict.items():
+            df = []
+
+            if key == "all":
+                if item_list:
+                    df_ref = sc_ref.par(parname, {index_col: item_list, "time": "year"})
+                else:
+                    df_ref = sc_ref.par(parname, {"time": "year"})
             else:
-                df_ref = sc_ref.par(parname, {"time": "year"})
+                continue
 
-            # Excluding those technologies that have explicit CF through Excel
-            df_ref = df_ref.loc[~df_ref[index_col].isin(data_dict.keys())]
-
-            # also for "node,technology" pairs
-            for x in node_tec:
-                df_ref = df_ref.loc[
-                    (df_ref[index_col] != x[1]) & (df_ref[node_col] != x[1])
+            if not df_ref.empty:
+                if nn >= n_time:
+                    # Remove annual-level entries after timeslicing to avoid dual representation.
+                    # MESSAGE GAMS constraints (ADDON_ACTIVITY_*, ACTIVITY_CONSTRAINT_*) now aggregate
+                    # timesliced activity at annual level via map_temporal_hierarchy, making annual entries
+                    # unnecessary and problematic (would cause triple-counting in commodity balance).
+                    sc.remove_par(parname, df_ref)
+                time_cols = [
+                    x
+                    for x in sc.idx_names(parname)
+                    if x in ["time", "time_dest", "time_origin"]
                 ]
 
-        # This part is for those parameters defined per node (key='KAZ,i_spec')
-        elif "," in key:
-            df_ref = sc_ref.par(
-                parname,
-                {
-                    index_col: key.split(",")[1],
-                    node_col: key.split(",")[0],
-                    "time": "year",
-                },
-            )
+                for ti in df_time["time"][n1:nn].tolist():
+                    df_new = df_ref.copy()
+                    for col in time_cols:
+                        if col == "time_origin":
+                            df_new.loc[df_new["technology"].isin(tec_inp), col] = ti
+                        elif col == "time_dest":
+                            df_new.loc[~df_new["technology"].isin(tec_only_inp), col] = ti
+                        else:
+                            df_new[col] = ti
+                    df_new["value"] *= ratio[df_time["time"].tolist().index(ti)]
+                    df.append(df_new)
 
-        else:
-            df_ref = sc_ref.par(parname, {index_col: key, "time": "year"})
-
-        if not df_ref.empty:
-            if nn >= n_time:
-                sc.remove_par(parname, df_ref)
-            time_cols = [
-                x
-                for x in sc.idx_names(parname)
-                if x in ["time", "time_dest", "time_origin"]
-            ]
-
-            for ti in df_time["time"][n1:nn].tolist():
-                df_new = df_ref.copy()
-                for col in time_cols:
-                    if col == "time_origin":
-                        df_new.loc[df_new["technology"].isin(tec_inp), col] = ti
-                    elif col == "time_dest":
-                        df_new.loc[~df_new["technology"].isin(tec_only_inp), col] = ti
-                    else:
-                        df_new[col] = ti
-                df_new["value"] *= ratio[df_time["time"].tolist().index(ti)]
-                df.append(df_new)
-
-            df = pd.concat(df, ignore_index=True)
-            sc.add_par(parname, df)
-    sc.commit("")
+                df = pd.concat(df, ignore_index=True)
+                sc.add_par(parname, df)
 
 
-# 1.6) Removing cooling technologies from a list
 def remove_cooling(sc, tec_list):
     """Remove cooling technologies from scenario.
 
@@ -339,7 +240,6 @@ def remove_cooling(sc, tec_list):
         Updated technology list without cooling technologies
     """
     log.info("Removing cooling technologies...")
-    # Both commodity and technology must be removed
     cool_terms = ["__air", "__cl_fresh", "__ot_fresh", "__ot_saline"]
     tec_cool = [
         x
@@ -353,22 +253,20 @@ def remove_cooling(sc, tec_list):
     ]
     lvl_cool = ["cooling", "water_supply"]
 
-    sc.check_out()
-    for x in tec_cool:
-        sc.remove_set("technology", x)
-    for x in com_cool:
-        sc.remove_set("commodity", x)
-    for x in lvl_cool:
-        if x in sc.set("level"):
-            sc.remove_set("level", x)
+    with sc.transact("cooling removed"):
+        for x in tec_cool:
+            sc.remove_set("technology", x)
+        for x in com_cool:
+            sc.remove_set("commodity", x)
+        for x in lvl_cool:
+            if x in sc.set("level"):
+                sc.remove_set("level", x)
     tec_list = [x for x in tec_list if x not in tec_cool]
     tec_rem = list(set([x.split("__")[0] for x in tec_cool]))
     log.info(f"Cooling technologies for {tec_rem}, and cooling commodities/levels removed.")
-    sc.commit("cooling removed")
     return sorted(tec_list)
 
 
-# 1.7) Removing data from a parameter if value is zero
 def remove_data_zero(sc, parname, filter_dict, value=0):
     """Remove parameter data where value equals specified value.
 
@@ -388,15 +286,13 @@ def remove_data_zero(sc, parname, filter_dict, value=0):
     df : pd.DataFrame
         Removed data
     """
-    sc.check_out()
-    df = sc.par(parname, filter_dict)
-    df = df.loc[df["value"] == value]
-    sc.remove_par(parname, df)
-    sc.commit("zero removed")
+    with sc.transact("zero removed"):
+        df = sc.par(parname, filter_dict)
+        df = df.loc[df["value"] == value]
+        sc.remove_par(parname, df)
     return df
 
 
-# 1.8) Initialization of new parameters
 def init_par_time(sc, par_list=[]):
     """Initialize parameters with time dimension.
 
@@ -407,136 +303,55 @@ def init_par_time(sc, par_list=[]):
     par_list : list, optional
         Parameters to initialize
     """
-    sc.check_out()
-    if not par_list:
-        par_list = [
-            "emission_factor",
-            "relation_activity",
-            "relation_upper",
-            "relation_lower",
-        ]
-    for parname in par_list:
-        idx_s = sc.idx_sets(parname) + ["time"]
-        idx_n = sc.idx_names(parname) + ["time"]
-        try:
-            sc.par(parname + "_time")
-        except:
-            sc.init_par(parname + "_time", idx_sets=idx_s, idx_names=idx_n)
-            log.info(f"Parameter {parname}_time initialized.")
-    for setname in ["is_relation_lower_time", "is_relation_upper_time"]:
-        p = setname.split("is_")[1]
-        idx_s = sc.idx_sets(p)
-        idx_n = sc.idx_names(p)
-        try:
-            sc.set(setname)
-        except:
-            sc.init_set(setname, idx_sets=idx_s, idx_names=idx_n)
-            log.info(f"Set {setname} initialized.")
-
-    sc.commit("")
-
-
-# 1.9) Adding year-equivalent of technologies at the timeslice level
-def rel_year_equivalent(
-    sc,
-    tec_list,
-    rel_ref="res_marg",
-    tec_ref="elec_t_d",
-    rel_bound="CH4_Emission",
-    remove_existing=False,
-):
-    """Add year-equivalent relations for timeslice technologies.
-
-    Parameters
-    ----------
-    sc : message_ix.Scenario
-        Scenario to modify
-    tec_list : list
-        Technologies for which to add year-equivalent relations
-    rel_ref : str, optional
-        Reference relation to copy structure from
-    tec_ref : str, optional
-        Reference technology
-    rel_bound : str, optional
-        Relation for bounds
-    remove_existing : bool, optional
-        Remove existing relations before adding
-    """
-    parname = "relation_activity_time"
-    for tec in tec_list:
-        rel_new = tec + "_year"
-
-        # adding sets
-        if remove_existing and rel_new in set(sc.set("relation")):
-            sc.remove_set("relation", rel_new)
-
-        sc.add_set("relation", rel_new)
-
-        # The part for technologies in 'time' slices'
-        df = sc.par(parname, {"relation": rel_ref, "technology": tec_ref})
-        df["relation"] = rel_new
-        df["technology"] = tec
-        df["value"] = -1
-
-        # mapping with technical_lifetime
-        df_lt = sc.par("technical_lifetime", {"technology": tec})
-        df_lt = df_lt.set_index(["node_loc", "technology", "year_vtg"])
-        df = df.set_index(["node_loc", "technology", "year_act"])
-
-        if not df_lt.empty:
-            df = df.loc[df.index.isin(set(df_lt.index))]
-        df = df.reset_index()
-
-        # The part for equivalent technology at 'year' level
-        d = df.loc[df["time"] == df["time"][0]].copy()
-        d["value"] = 1
-        d["time"] = "year"
-
-        df = df.append(d, ignore_index=True)
-        sc.add_par(parname, df)
-
-        # relation upper and lower
-        df = df.set_index(["node_rel", "year_rel"])
-        for par in ["relation_lower_time", "relation_upper_time"]:
-            df_b = sc.par(par, {"relation": rel_bound})
-            df_b = df_b.set_index(["node_rel", "year_rel"])
-            df_b = df_b.loc[df_b.index.isin(set(df.index))]
-            df_b = df_b.reset_index()
-
-            df_b["relation"] = rel_new
-            sc.add_par(par, df_b)
+    with sc.transact("Initialize time parameters"):
+        if not par_list:
+            par_list = [
+                "emission_factor",
+                "relation_activity",
+                "relation_upper",
+                "relation_lower",
+            ]
+        for parname in par_list:
+            idx_s = sc.idx_sets(parname) + ["time"]
+            idx_n = sc.idx_names(parname) + ["time"]
+            try:
+                sc.par(parname + "_time")
+            except:
+                sc.init_par(parname + "_time", idx_sets=idx_s, idx_names=idx_n)
+                log.info(f"Parameter {parname}_time initialized.")
+        for setname in ["is_relation_lower_time", "is_relation_upper_time"]:
+            p = setname.split("is_")[1]
+            idx_s = sc.idx_sets(p)
+            idx_n = sc.idx_names(p)
+            try:
+                sc.set(setname)
+            except:
+                sc.init_set(setname, idx_sets=idx_s, idx_names=idx_n)
+                log.info(f"Set {setname} initialized.")
 
 
 def add_timeslices(
     scenario,
-    context: Context,
+    context: Context = None,
     n_time: int = 12,
-    excel_path: str = None,
-    regions: str = None,
     remove_cooling_tec: bool = True,
-    update_reserve_margin: bool = False,
     interval: int = 50,
 ):
     """Add subannual timeslices to a MESSAGEix scenario.
 
     This is the main entry point for adding timeslices to a scenario.
+    Creates uniform timeslices programmatically without external data files.
 
     Parameters
     ----------
     scenario : message_ix.Scenario
         Scenario to modify
-    context : Context
-        Model context
+    context : Context, optional
+        Model context (not currently used)
     n_time : int, optional
-        Number of timeslices (default: 12 for monthly)
-    excel_path : str, optional
-        Path to Excel file with timeslice data
-    regions : str, optional
-        Region specification (e.g., 'R12')
+        Number of timeslices (can be any positive integer)
     remove_cooling_tec : bool, optional
         Remove cooling technologies before adding timeslices
-    update_reserve_margin : bool, optional
-        Update reserve margin after adding timeslices
     interval : int, optional
         Commit interval for large operations
 
@@ -549,26 +364,8 @@ def add_timeslices(
 
     sc = scenario
 
-    # Determine regions from scenario if not provided
-    if not regions:
-        regions = context.regions if hasattr(context, 'regions') else 'R12'
-
-    # Determine Excel path
-    if not excel_path:
-        from message_ix_models.util import package_data_path
-        excel_path = package_data_path(
-            "project", "alps", "data", "timeslice_data",
-            f"input_data_{n_time}_{regions}.xlsx"
-        )
-
-    log.info(f"Loading timeslice data from {excel_path}")
-    xls = pd.ExcelFile(excel_path)
-
-    # Get nodes from scenario
-    nodes = [x for x in sc.set("node") if x not in ["World"]]
-
-    # Load and process timeslice data
-    duration, df_time, dict_xls = xls_to_df(xls, n_time, nodes)
+    # Generate uniform timeslice structure
+    df_time = generate_uniform_timeslices(n_time)
     times = df_time["time"].tolist()
 
     # Update sets related to time
@@ -608,17 +405,18 @@ def add_timeslices(
     # Initialize parameters with time dimension
     init_par_time(sc)
 
-    # Prepare parameter updates
-    par_equal = ["input", "output", "capacity_factor", "var_cost"]
+    log.info(f"Demand will be timesliced for commodities: {coms + sectors}")
 
-    sc.check_out()
-    par_update = {}
-    for parname in par_equal:
-        par_update[parname] = {"all": [1] * n_time}
-    sc.commit("")
+    # Prepare parameter updates - demand added here
+    par_equal = ["input", "output", "capacity_factor", "var_cost", "demand"]
+
+    with sc.transact("Prepare parameter update structure"):
+        par_update = {}
+        for parname in par_equal:
+            par_update[parname] = {"all": [1] * n_time}
 
     # Set up parameter data
-    par_update, index_cols = par_setup(sc, dict_xls, par_update)
+    index_cols = par_setup(sc, par_update)
 
     # Add timeslices to parameters
     log.info("Adding timeslices to parameters...")
@@ -626,6 +424,8 @@ def add_timeslices(
         index_col = index_cols[parname]
         if index_col == "technology":
             item_list = tec_list
+        elif index_col == "commodity" and parname == "demand":
+            item_list = coms + sectors
         else:
             item_list = None
         n1 = 0
@@ -639,19 +439,174 @@ def add_timeslices(
         log.info(f'Time slices added to "{parname}".')
 
     # Save tec_list as a tec_type
-    for t in tec_list:
-        sc.add_cat("technology", "time_slice", t)
-    log.info('Technologies active at time slice level saved with type_tec "time_slice".')
+    with sc.transact("Subannual timeslices added"):
+        for t in tec_list:
+            sc.add_cat("technology", "time_slice", t)
+        log.info('Technologies active at time slice level saved with type_tec "time_slice".')
 
-    # Fix zero capacity factors for VRE
-    tecs = ["wind_ppl", "wind_ppf", "solar_pv_ppl", "hydro_lc", "hydro_hc"]
-    df = sc.par("capacity_factor", {"technology": tecs, "time": times})
-    df = df.loc[df["value"] == 0].copy()
-    if not df.empty:
-        df["value"] = 0.000001
-        sc.add_par("capacity_factor", df)
-
-    sc.commit("Subannual timeslices added")
+        # Fix zero capacity factors for VRE
+        tecs = ["wind_ppl", "wind_ppf", "solar_pv_ppl", "hydro_lc", "hydro_hc"]
+        df = sc.par("capacity_factor", {"technology": tecs, "time": times})
+        df = df.loc[df["value"] == 0].copy()
+        if not df.empty:
+            df["value"] = 0.000001
+            sc.add_par("capacity_factor", df)
     log.info(f"Successfully added {n_time} timeslices to scenario.")
 
     return sc
+
+
+def setup_timeslices(scenario, n_time: int, context):
+    """Add basic time structure to scenario without modifying existing parameters.
+
+    Creates time set elements, temporal hierarchy, and duration_time parameters
+    for subannual resolution. Does not modify any existing technology parameters.
+
+    Updates context.time to reflect the new timeslices. This is critical for
+    water module to load monthly data instead of annual data.
+
+    Parameters
+    ----------
+    scenario : message_ix.Scenario
+        Scenario to modify
+    n_time : int
+        Number of timeslices to create
+    context : Context
+        Model context to update with new time structure
+
+    Returns
+    -------
+    message_ix.Scenario
+        Modified scenario with time structure
+    """
+    log.info(f"Setting up {n_time} timeslices (basic structure only)")
+
+    # Generate uniform timeslice structure
+    df_time = generate_uniform_timeslices(n_time)
+
+    # Add time sets and hierarchy
+    time_setup(scenario, df_time)
+
+    # Add duration_time parameter
+    duration_time(scenario, df_time)
+
+    log.info(f"Basic time structure with {n_time} timeslices added successfully")
+
+    # Update context.time to reflect new timeslices
+    time_set = scenario.set("time")
+    sub_time = list(time_set[time_set != "year"])
+    context.time = sub_time
+    log.info(f"Updated context.time to: {context.time}")
+
+    return scenario
+
+
+def add_electricity_router(
+    scenario,
+    n_time: int,
+    commodity: str = 'electr',
+    router_name: str = 'electr_router'
+):
+    """Add router technology to bridge annual electricity to subannual timeslices.
+
+    Creates a pass-through technology that consumes electricity at annual level
+    and outputs to each timeslice, enabling annual power plants to serve
+    subannual demands.
+
+    Parameters
+    ----------
+    scenario : message_ix.Scenario
+        Scenario with timeslices already added via setup_timeslices()
+    n_time : int
+        Number of timeslices
+    commodity : str, optional
+        Commodity to route (default: 'electr')
+    router_name : str, optional
+        Name for router technology (default: 'electr_router')
+
+    Returns
+    -------
+    message_ix.Scenario
+        Modified scenario with router technology
+    """
+    log.info(f"Adding electricity router: {router_name} for {n_time} timeslices")
+
+    # Get nodes, years, and time elements from scenario
+    nodes = [x for x in scenario.set("node") if x not in ["World"]]
+    years = scenario.set("year").tolist()
+
+    # Get actual time elements from scenario (excluding 'year')
+    time_set = scenario.set("time")
+    times = [t for t in time_set if t != "year"]
+
+    if len(times) != n_time:
+        raise ValueError(
+            f"Expected {n_time} timeslices in scenario, found {len(times)}: {times}"
+        )
+
+    with scenario.transact(f"Add {router_name} technology"):
+        # Add router to technology set
+        scenario.add_set("technology", router_name)
+
+        # For each node
+        for node in nodes:
+            # Input: consume electricity at annual level
+            input_data = pd.DataFrame({
+                'node_loc': node,
+                'technology': router_name,
+                'year_vtg': years,
+                'year_act': years,
+                'mode': 'M1',
+                'node_origin': node,
+                'commodity': commodity,
+                'level': 'secondary',
+                'time': 'year',
+                'time_origin': 'year',
+                'value': 1.0,
+                'unit': 'GWa'
+            })
+            scenario.add_par('input', input_data)
+
+            # Output: produce electricity to each timeslice
+            for t in times:
+                output_data = pd.DataFrame({
+                    'node_loc': node,
+                    'technology': router_name,
+                    'year_vtg': years,
+                    'year_act': years,
+                    'mode': 'M1',
+                    'node_dest': node,
+                    'commodity': commodity,
+                    'level': 'secondary',
+                    'time': 'year',
+                    'time_dest': t,
+                    'value': 1.0,
+                    'unit': 'GWa'
+                })
+                scenario.add_par('output', output_data)
+
+            # Technical lifetime
+            lifetime_data = pd.DataFrame({
+                'node_loc': node,
+                'technology': router_name,
+                'year_vtg': years,
+                'value': 1,  # 1 year lifetime (instantly available)
+                'unit': 'y'
+            })
+            scenario.add_par('technical_lifetime', lifetime_data)
+
+            # Capacity factor (always available)
+            for t in times:
+                cf_data = pd.DataFrame({
+                    'node_loc': node,
+                    'technology': router_name,
+                    'year_vtg': years,
+                    'year_act': years,
+                    'time': t,
+                    'value': 1.0,
+                    'unit': '-'
+                })
+                scenario.add_par('capacity_factor', cf_data)
+
+    log.info(f"Router technology {router_name} added successfully")
+    return scenario
