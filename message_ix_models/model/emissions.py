@@ -135,7 +135,10 @@ def get_emission_factors(units: Optional[str] = None) -> "AnyQuantity":
         # Identify a GWP factor for target `units`, if any
         to_units, to_species = split_species(units)
         gwp_factor = convert_gwp(
-            "AR5GWP100", (1.0, str(result.units)), "C", to_species
+            "AR5GWP100",
+            (1.0, str(result.units)),
+            "C",
+            to_species,  # type: ignore [arg-type]
         ).magnitude
     else:
         gwp_factor, to_units = 1.0, result.units
