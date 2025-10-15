@@ -13,6 +13,7 @@ from message_ix_models.model.water.utils import (
     GWa_KM3_TO_GWa_MCM,
     filter_basins_by_region,
     get_vintage_and_active_years,
+    map_month_to_timeslice,
 )
 from message_ix_models.util import (
     broadcast,
@@ -126,7 +127,19 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw.columns = pd.Index(["node", "mode", "date", "MSGREG", "share"])
         df_sw.sort_values(["node", "date", "MSGREG", "share"], inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
-        df_sw["time"] = pd.DatetimeIndex(df_sw["date"]).month
+
+        # Map month to timeslice name
+        n_time = len(context.time)
+        df_sw["time"] = df_sw["date"].apply(
+            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
+        )
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_sw = df_sw.groupby(["node", "mode", "year", "MSGREG", "time"], as_index=False).agg({
+                "share": "mean"  # Average share across months within same timeslice
+            })
+
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
         df_sw.reset_index(drop=True, inplace=True)
 
@@ -997,8 +1010,21 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env.fillna(0, inplace=True)
         df_env.reset_index(drop=True, inplace=True)
         df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
-        df_env["time"] = pd.DatetimeIndex(df_env["years"]).month
+
+        # Map month to timeslice name
+        n_time = len(context.time)
+        df_env["time"] = df_env["years"].apply(
+            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
+        )
+
         df_env["Region"] = df_env["Region"].map(df_x["BCU_name"])
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_env = df_env.groupby(["Region", "year", "time"], as_index=False).agg({
+                "value": "sum"  # Sum environmental flow requirements across months within same timeslice
+            })
+
         df_env2210 = df_env[df_env["year"] == 2100].copy()
         df_env2210["year"] = 2110
         df_env = pd.concat([df_env, df_env2210])

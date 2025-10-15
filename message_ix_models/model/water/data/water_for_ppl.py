@@ -1141,9 +1141,11 @@ def cool_tech(
     if context.nexus_set == "nexus":
         # Get basin-region mapping
         df_sw = map_basin_region_wat(context)
-        df_sw.drop(columns={"mode", "date", "MSGREG"}, inplace=True)
+        # Note: 'date' column may not exist if aggregated in subannual mode
+        df_sw.drop(columns={"mode", "date", "MSGREG"}, inplace=True, errors='ignore')
+        # Note: column is "region" in annual mode, "node" in subannual mode
         df_sw.rename(
-            columns={"region": "node_dest", "time": "time_dest", "year": "year_act"},
+            columns={"region": "node_dest", "node": "node_dest", "time": "time_dest", "year": "year_act"},
             inplace=True,
         )
         df_sw["time_dest"] = df_sw["time_dest"].astype(str)

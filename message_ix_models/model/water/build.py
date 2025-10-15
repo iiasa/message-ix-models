@@ -605,6 +605,18 @@ def main(context: Context, scenario, **options):
 
     log.info("Set up MESSAGEix-Nexus")
 
+    # Check if timeslicing needed for nexus module
+    time_set = scenario.set("time")
+    is_annual = len(time_set) == 1 and "year" in list(time_set)
+    n_time = getattr(context, 'n_time', 1)
+
+    if is_annual and n_time > 1:
+        from message_ix_models.project.alps.timeslice import setup_timeslices
+
+        log.info(f"Scenario is annual, setting up {n_time} timeslices for nexus")
+        setup_timeslices(scenario, n_time, context)
+        log.info("Timeslice setup complete, continuing with nexus build")
+
     if context.nexus_set == "nexus":
         # Add water balance
         spec = map_basin(context)
@@ -617,6 +629,14 @@ def main(context: Context, scenario, **options):
 
     # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec1, partial(add_data, context=context), **options)
+
+    # Add electricity router after nexus build is complete
+    if is_annual and n_time > 1:
+        from message_ix_models.project.alps.timeslice import add_electricity_router
+
+        log.info("Nexus build complete, adding electricity router")
+        add_electricity_router(scenario, n_time, commodity='electr')
+        log.info("Electricity router added successfully")
 
     # Uncomment to dump for debugging
     # scenario.to_excel('debug.xlsx')

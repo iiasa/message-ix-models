@@ -45,6 +45,105 @@ m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
 # MCM not standard so have to remember to divide by 1e6 each time.
 
 
+def map_month_to_timeslice(month_number: int, n_time: int) -> str:
+    """Map month number (1-12) to timeslice name (h1, h2, ..., hn).
+
+    This function enables flexible temporal aggregation by mapping monthly data
+    to arbitrary timeslice resolutions. It supports both uniform and non-uniform
+    aggregation patterns.
+
+    Parameters
+    ----------
+    month_number : int
+        Month number (1-12 for Jan-Dec)
+    n_time : int
+        Number of timeslices per year
+
+    Returns
+    -------
+    str
+        Timeslice name (h1, h2, ..., hn)
+
+    Raises
+    ------
+    ValueError
+        If month_number is not in range 1-12
+    NotImplementedError
+        If n_time > 12 (sub-monthly resolution)
+
+    Examples
+    --------
+    Monthly (n_time=12):
+    >>> map_month_to_timeslice(1, 12)  # January
+    'h1'
+    >>> map_month_to_timeslice(12, 12)  # December
+    'h12'
+
+    Quarterly (n_time=4):
+    >>> map_month_to_timeslice(1, 4)  # Jan-Mar → Q1
+    'h1'
+    >>> map_month_to_timeslice(6, 4)  # Apr-Jun → Q2
+    'h2'
+
+    Seasonal (n_time=2):
+    >>> map_month_to_timeslice(1, 2)  # Jan-Jun → first half
+    'h1'
+    >>> map_month_to_timeslice(12, 2)  # Jul-Dec → second half
+    'h2'
+    """
+    if not (1 <= month_number <= 12):
+        raise ValueError(f"month_number must be 1-12, got {month_number}")
+
+    if n_time > 12:
+        raise NotImplementedError(
+            f"Sub-monthly timeslices (n_time={n_time}) not yet supported. "
+            "Monthly data cannot be disaggregated to sub-monthly resolution."
+        )
+
+    if n_time == 12:
+        # Direct mapping: month → timeslice
+        return f"h{month_number}"
+
+    elif n_time < 12 and 12 % n_time == 0:
+        # Equal aggregation: 12 months divide evenly into n_time slices
+        # Examples: n_time=6 (2 months/slice), n_time=4 (3 months/slice),
+        #          n_time=2 (6 months/slice)
+        months_per_slice = 12 // n_time
+        timeslice_idx = ((month_number - 1) // months_per_slice) + 1
+        return f"h{timeslice_idx}"
+
+    else:
+        # Non-uniform aggregation: use proportional mapping
+        # This handles cases like n_time=5 where months don't divide evenly
+        timeslice_idx = ((month_number - 1) * n_time // 12) + 1
+        return f"h{timeslice_idx}"
+
+
+def get_days_per_timeslice(n_time: int) -> float:
+    """Calculate average days per timeslice for unit conversions.
+
+    Parameters
+    ----------
+    n_time : int
+        Number of timeslices per year
+
+    Returns
+    -------
+    float
+        Average number of days per timeslice
+
+    Examples
+    --------
+    >>> get_days_per_timeslice(12)  # Monthly
+    30.4375
+    >>> get_days_per_timeslice(4)   # Quarterly
+    91.3125
+    >>> get_days_per_timeslice(2)   # Seasonal
+    182.625
+    """
+    return 365.25 / n_time
+
+
 def read_config(context: Optional[Context] = None):
     """Read the water model configuration / metadata from file.
 

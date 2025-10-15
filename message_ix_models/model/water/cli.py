@@ -134,6 +134,13 @@ _REL = ["low", "med", "high"]
     type=int,
     help="Number of basins per region to keep when reduced-basin is enabled",
 )
+@click.option(
+    "--n-time",
+    type=int,
+    default=1,
+    show_default=True,
+    help="Number of subannual timeslices (1=annual, 12=monthly, etc.)",
+)
 @common_params("regions")
 @scenario_param("--ssp")
 def nexus_cli(
@@ -143,6 +150,7 @@ def nexus_cli(
     sdgs,
     rels,
     macro=False,
+    n_time=1,
     reduced_basin=False,
     filter_list=None,
     num_basins=None,
@@ -157,6 +165,7 @@ def nexus_cli(
         context.filter_list = list(filter_list)
     if num_basins is not None:
         context.num_basins = num_basins
+    context.n_time = n_time
 
     nexus(context, regions, rcps, sdgs, rels, macro)
 
@@ -189,9 +198,13 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
     context.SDG = sdgs
     context.REL = rels
 
+    # Set n_time if not already set by nexus_cli
+    if not hasattr(context, 'n_time'):
+        context.n_time = 1
+
     log.info(
         f"SSP assumption is {context.ssp}. SDG is {context.SDG}. "
-        f"RCP is {context.RCP}. REL is {context.REL}."
+        f"RCP is {context.RCP}. REL is {context.REL}. n_time is {context.n_time}."
     )
 
     from .build import main as build
