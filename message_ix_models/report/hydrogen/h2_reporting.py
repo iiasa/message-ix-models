@@ -233,6 +233,19 @@ def run_lh2_fgt_reporting(
     return py_df
 
 
+def run_lh2_prod_reporting(
+    rep: Reporter, model_name: str, scen_name: str
+) -> pyam.IamDataFrame:
+    """Generate reporting for liquefied hydrogen production."""
+    var = "lh2_prod"
+    config = load_config(var)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    py_df = format_reporting_df(
+        df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
+    )
+    return py_df
+
+
 def run_h2_prod_reporting(
     rep: Reporter, model_name: str, scen_name: str
 ) -> pyam.IamDataFrame:
@@ -244,6 +257,31 @@ def run_h2_prod_reporting(
         df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
     )
     return py_df
+
+
+def run_reporting(
+    var: str, rep: Reporter, model_name: str, scen_name: str
+) -> pyam.IamDataFrame:
+    """Generate reporting for any given variable."""
+    config = load_config(var)
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    py_df = format_reporting_df(
+        df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
+    )
+    return py_df
+
+
+def fetch_variables() -> List[str]:
+    """Fetch all variables from the data/hydrogen/reporting directory."""
+    import os
+    import glob
+    from message_ix_models.util import package_data_path
+
+    path = package_data_path("hydrogen", "reporting")
+    variables = [f.stem for f in path.glob("*.yaml") if f.stem != "unit_conversions"]
+    # we need to remove the _aggregates files
+    variables = [var for var in variables if not var.endswith("_aggregates")]
+    return variables
 
 
 def run_h2_reporting(
@@ -274,11 +312,9 @@ def run_h2_reporting(
     pyam.IamDataFrame
         Combined dataframe with all hydrogen reporting variables
     """
-    dfs = [
-        run_h2_prod_reporting(rep, model_name, scen_name),
-        run_h2_fgt_reporting(rep, model_name, scen_name),
-        run_lh2_fgt_reporting(rep, model_name, scen_name),
-    ]
+    variables = fetch_variables()
+    print(f"Fetched variables: {variables}")
+    dfs = [run_reporting(var, rep, model_name, scen_name) for var in variables]
 
     # Concatenate all dataframes
     py_df = pyam.concat(dfs)
