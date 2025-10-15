@@ -38,11 +38,11 @@ trade_parameters = pd.read_pickle(tdf)
 # Update scenario: default values
 default_parameters = pd.read_pickle(tdf)
 for t in covered_tec:
-    del default_parameters[t]['trade']['growth_activity_lo']
-    del default_parameters[t]['trade']['growth_activity_up']
-    del default_parameters[t]['trade']['initial_activity_lo']
-    del default_parameters[t]['trade']['initial_activity_up']
-    
+    for p in ['growth_activity_lo', 'growth_activity_up',
+              'initial_activity_lo', 'initial_activity_up']:
+        if p in default_parameters[t]['trade'].keys():
+            del default_parameters[t]['trade'][p]
+
     if "shipped" in t:
         del default_parameters[t]['flow']['inv_cost']
         del default_parameters[t]['flow']['var_cost']
@@ -59,10 +59,10 @@ clone_and_update(trade_dict=default_parameters,
 # Update scenario: add costs
 cost_parameters = pd.read_pickle(tdf)
 for t in covered_tec:
-    del cost_parameters[t]['trade']['growth_activity_lo']
-    del cost_parameters[t]['trade']['growth_activity_up']
-    del cost_parameters[t]['trade']['initial_activity_lo']
-    del cost_parameters[t]['trade']['initial_activity_up']
+    for p in ['growth_activity_lo', 'growth_activity_up',
+              'initial_activity_lo', 'initial_activity_up']:
+        if p in default_parameters[t]['trade'].keys():
+            del default_parameters[t]['trade'][p]
 
 clone_and_update(trade_dict=cost_parameters,
                  project_name = 'newpathways',
