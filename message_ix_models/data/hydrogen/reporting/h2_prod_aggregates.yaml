@@ -8,20 +8,20 @@ unit: EJ/yr
 level_1:
   Hydrogen|Gas:
     short: prod_h2_gas
-    original_unit: EJ/yr
+    original_unit: GWa
     components: [ prod_h2_smr_wo_ccs, prod_h2_smr_w_ccs, prod_h2_pyro ]
   Hydrogen|Coal:
     short: prod_h2_coal
-    original_unit: EJ/yr
+    original_unit: GWa
     components: [ prod_h2_coal_wo_ccs, prod_h2_coal_w_ccs ]
   Hydrogen|Biomass:
     short: prod_h2_bio
-    original_unit: EJ/yr
+    original_unit: GWa
     components: [ prod_h2_bio_wo_ccs, prod_h2_bio_w_ccs ]
   Hydrogen|Electricity:
     short: prod_h2_elec
-    original_unit: EJ/yr
-    components: [ prod_h2_elec_alkaline, prod_h2_elec_pem, prod_h2_elec_soe ]
+    original_unit: GWa
+    components: [ prod_h2_elec_alkaline, prod_h2_elec_pem, prod_h2_elec_soe, prod_h2_elec_legacy ]
   # Hydrogen|Refinery:
   #   short: prod_h2_refinery
   #   components: [ prod_h2_refinery ]
@@ -29,6 +29,6 @@ level_1:
 level_2:
   Hydrogen:
     short: prod_h2
-    original_unit: EJ/yr
+    original_unit: GWa
     components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec, prod_h2_refinery ]
 
