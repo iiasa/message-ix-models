@@ -60,7 +60,12 @@ class WorkflowStep:
     scenario_info: Union[dict, "TimeSeriesIdentifiers"]
 
     def __init__(
-        self, action: Optional[CallbackType], target=None, clone=False, **kwargs
+        self,
+        action: Optional[CallbackType],
+        target=None,
+        clone=False,
+        dummy=False,
+        **kwargs,
     ):
         try:
             # Store platform and scenario info by parsing the `target` URL
@@ -74,6 +79,7 @@ class WorkflowStep:
         # Store the callback and options
         self.action = action
         self.clone = clone
+        self.dummy = dummy  # Flag to indicate there will be no target scenario
         self.kwargs = kwargs
 
     def __call__(
@@ -122,8 +128,12 @@ class WorkflowStep:
         context.set_scenario(s)
 
         try:
-            # Invoke the callback
-            result = self.action(context, s, **self.kwargs)
+            if self.dummy:
+                result = (
+                    self.action()
+                )  # Functions do not take inputs such as context or scenario
+            else:
+                result = self.action(context, s, **self.kwargs)
         except Exception:  # pragma: no cover
             s.platform.close_db()  # Avoid locking the scenario
             raise
@@ -269,7 +279,23 @@ class Workflow(Computer):
         """
         task = self.graph[step_name]
         i = getattr(task[0], f"{kind}_info")
-        return (i.copy(), step_name) if len(i) else self.guess_target(task[2], kind)
+
+        # If this step has scenario/platform info, return it
+        if len(i):
+            return (i.copy(), step_name)
+
+        # Handle the case where task[2] (base step) is a list (multiple dependencies)
+        base_step = task[2]
+        if isinstance(base_step, list):
+            # For dummy steps with multiple dependencies, use the first dependency
+            if base_step:
+                return self.guess_target(base_step[0], kind)
+            else:
+                # Empty list - return empty info
+                return (dict(), step_name)
+        else:
+            # Single dependency - normal case
+            return self.guess_target(base_step, kind)
 
 
 def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Command":
