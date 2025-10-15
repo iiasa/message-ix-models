@@ -88,7 +88,7 @@ class WorkflowStep:
         """Execute the workflow step."""
         if scenario is None:
             # No base scenario
-            if self.action:
+            if self.action and not self.dummy:
                 raise RuntimeError(
                     f"Step with action {self.action!r} requires a base scenario"
                 )
@@ -96,12 +96,18 @@ class WorkflowStep:
             context.platform_info.update(self.platform_info)
             context.scenario_info.update(self.scenario_info)
             s = context.get_scenario()
-            log.info(f"Loaded ixmp://{s.platform.name}/{s.url}")
+            if not self.dummy:
+                log.info(f"Loaded ixmp://{s.platform.name}/{s.url}")
+            else:
+                log.info(f"Loaded (dummy step - no scenario access)")
         else:
             # Modify the context to identify destination scenario; possibly nothing
             context.dest_scenario.update(self.scenario_info)
             s = scenario
-            log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
+            if not self.dummy and hasattr(s, 'platform'):
+                log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
+            else:
+                log.info(f"Step runs (dummy step or list - no scenario access)")
 
         if context.dest_scenario:
             log.info(f"  with context.dest_scenario={context.dest_scenario}")
@@ -125,7 +131,8 @@ class WorkflowStep:
         log.info(f"Execute {self.action!r}")
 
         # Modify context to identify the target scenario
-        context.set_scenario(s)
+        if not self.dummy:
+            context.set_scenario(s)
 
         try:
             if self.dummy:
@@ -135,12 +142,17 @@ class WorkflowStep:
             else:
                 result = self.action(context, s, **self.kwargs)
         except Exception:  # pragma: no cover
-            s.platform.close_db()  # Avoid locking the scenario
+            if not self.dummy and hasattr(s, 'platform'):
+                s.platform.close_db()  # Avoid locking the scenario
             raise
 
         if result is None:
-            log.info(f"…nothing returned, workflow will continue with {s.url}")
-            result = s
+            if self.dummy:
+                log.info(f"…nothing returned, workflow will continue (dummy step)")
+                result = None  # Dummy steps don't return scenarios
+            else:
+                log.info(f"…nothing returned, workflow will continue with {s.url}")
+                result = s
 
         return result
 
