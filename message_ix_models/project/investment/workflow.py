@@ -17,6 +17,19 @@ from message_ix_models.workflow import Workflow
 log = logging.getLogger(__name__)
 
 
+def _extract_ssp_name(scenario_name):
+    """Extract SSP name from scenario name for file naming."""
+    import re
+
+    # Look for SSPx or sspx pattern (case insensitive)
+    match = re.search(r"(ssp\d+)", scenario_name.lower())
+    if match:
+        return match.group(1)
+
+    # Fallback: return the original name in lowercase
+    return scenario_name.lower()
+
+
 # Import FE_Regression from 1_FE_Regression.py to keep Shuting Fan's code
 def _load_fe_regression():
     """Load FE_Regression function from 1_FE_Regression.py file."""
@@ -138,9 +151,17 @@ def check_context(
     return scenario
 
 
+def log_coordination():
+    """Simple coordination function that just logs completion."""
+    log.info("All prerequisite steps completed - proceeding to next phase")
+    # Return None to indicate this step doesn't produce a scenario
+    return None
+
+
 def retrive_ori_inv_cost(context, scenario):
     """
-    Retrieve the original investment cost data from the starting scenario.
+    Retrieve the original investment cost data from the current scenario.
+    Generate a CSV file for this specific scenario.
     Log the location of fixed effects regression data."""
 
     power_tec = [
@@ -189,14 +210,32 @@ def retrive_ori_inv_cost(context, scenario):
         "nuc_hc",
         "nuc_fbr",
     ]
-    inv_cost_ori = scenario.par("inv_cost", filters={"technology": power_tec})
+
     from message_ix_models.util import package_data_path, private_data_path
 
     output_dir = package_data_path("investment")
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / "inv_cost_ori.csv"
-    inv_cost_ori.to_csv(output_path, index=False)
-    log.info(f"Original investment cost data saved to: {output_path}")
+
+    # Get scenario name from the current scenario
+    scen_name = scenario.scenario
+
+    try:
+        # Retrieve investment cost data from the current scenario
+        inv_cost_ori = scenario.par("inv_cost", filters={"technology": power_tec})
+
+        # Extract SSP name for filename
+        ssp_name = _extract_ssp_name(scen_name)
+
+        # Generate scenario-specific filename
+        output_path = output_dir / f"{ssp_name}_inv_cost_ori.csv"
+        inv_cost_ori.to_csv(output_path, index=False)
+        log.info(
+            f"Original investment cost data for {scen_name} saved to: {output_path}"
+        )
+
+    except Exception as e:
+        log.error(f"Failed to process scenario {scen_name}: {e}")
+        raise
 
     reg_data_path = private_data_path("coc", "Reg_data.xlsx")
     log.info(f"Fixed effects regression data located at: {reg_data_path}")
@@ -214,9 +253,14 @@ def build_coc(context, scenario):
 
     # Load the inv_cost.csv file from the data directory
     data_dir = package_data_path("investment")
-    inv_cost_path = data_dir / "inv_cost.csv"
 
-    # If the combined file doesn't exist, look for individual files
+    # Get the scenario name (which is the combined scenario name)
+    scenario_name = scenario.scenario
+
+    # Try to find the investment cost file for this specific scenario
+    # The file should be named: inv_cost_{scenario_name}.csv
+    inv_cost_path = data_dir / f"inv_cost_{scenario_name}.csv"
+
     if not inv_cost_path.exists():
         inv_cost_files = list(data_dir.glob("inv_cost_*.csv"))
         if inv_cost_files:
@@ -273,15 +317,23 @@ def generate(context: Context) -> Workflow:
 
     # Define model name and scenario list
     model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
-    scen_names = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
+    # List of all starting scenarios
+    scen_names = [
+        # "ssp1_1000f",
+        "ssp2_1000f",
+        "ssp3_1000f",
+        # "ssp4_1000f",
+        # "ssp5_1000f",
+    ]
 
+    # Add individual base scenario steps (no dependencies)
     for scen_name in scen_names:
         wf.add_step(
             f"base {scen_name}",
             target=f"{model_name}/{scen_name}",
         )
 
-    # Retrieve investment cost from different starting scenarios
+    # Retrieve investment cost from each scenario individually
     for scen_name in scen_names:
         wf.add_step(
             f"inv_cost_ori retrieved {scen_name}",
@@ -290,15 +342,23 @@ def generate(context: Context) -> Workflow:
             target=f"{model_name}/{scen_name}",
         )
 
-    # Fixed effects regression - processes all scenarios and creates combined output
-    inv_cost_retrieved_steps = [
+    inv_cost_ori_steps = [
         f"inv_cost_ori retrieved {scen_name}" for scen_name in scen_names
     ]
+    wf.add(
+        "inv_cost_ori retrieved",
+        log_coordination,
+        inv_cost_ori_steps,
+    )
+
+    # Fixed effects regression - processes all scenarios and creates combined output
+    # Run regression for each scenario individually, but the function processes
+    # all CSV files
     wf.add_step(
         "wacc_cf reg generated",
-        inv_cost_retrieved_steps[0] if inv_cost_retrieved_steps else None,
+        "inv_cost_ori retrieved",
         fe_regression,
-        target=f"{model_name}/{scen_names[0]}",
+        dummy=True,
     )
 
     # Climate finance generation - processes all scenarios and creates combined output
@@ -307,7 +367,7 @@ def generate(context: Context) -> Workflow:
         "cf generated",
         "wacc_cf reg generated",
         generate_cf,
-        target=f"{model_name}/{scen_names[0]}",
+        dummy=True,
     )
 
     # WACC generation - processes all scenarios and creates combined output
@@ -315,7 +375,7 @@ def generate(context: Context) -> Workflow:
         "wacc generated",
         "cf generated",
         generate_wacc,
-        target=f"{model_name}/{scen_names[0]}",
+        dummy=True,
     )
 
     # Investment cost generation - processes all scenarios and creates combined output
@@ -323,49 +383,71 @@ def generate(context: Context) -> Workflow:
         "inv_cost generated",
         "wacc generated",
         generate_inv_cost,
-        target=f"{model_name}/{scen_names[0]}",
+        dummy=True,
     )
 
     # Individual scenario steps for the clone and subsequent operations
     # These will read from the combined outputs created above
+    cf_names = [
+        "ccf",
+        "cf_his_f10",
+        "cf_fair_f10",
+    ]
+
     for scen_name in scen_names:
-        # Clone base scenario
-        wf.add_step(
-            f"base cloned {scen_name}",
-            "inv_cost generated",
-            target=f"{model_name}/{scen_name}_coc_added",
-            clone=dict(keep_solution=False),
-        )
+        for cf_name in cf_names:
+            # Create combined scenario name
+            combined_scen_name = f"{scen_name}_{cf_name}"
 
-        # Build CoC parameters
-        wf.add_step(
-            f"coc built {scen_name}",
-            f"base cloned {scen_name}",
-            build_coc,
-            target=f"{model_name}/{scen_name}_coc_added",
-        )
+            # Load the starting scenario for the next steps
+            wf.add_step(
+                f"base specified {combined_scen_name}",
+                "inv_cost generated",
+                target=f"{model_name}/{scen_name}",
+            )
 
-        # Solve the scenario
-        wf.add_step(
-            f"coc solved {scen_name}",
-            f"coc built {scen_name}",
-            solve,
-            target=f"{model_name}/{scen_name}_coc_added",
-        )
+            # Clone base scenario
+            wf.add_step(
+                f"base cloned {combined_scen_name}",
+                f"base specified {combined_scen_name}",
+                target=f"{model_name}/{combined_scen_name}",
+                clone=dict(keep_solution=False),
+            )
 
-        # Generate reports
-        wf.add_step(
-            f"coc reported {scen_name}",
-            f"coc solved {scen_name}",
-            report,
-            target=f"{model_name}/{scen_name}_coc_added",
-        )
+            # Build CoC parameters
+            wf.add_step(
+                f"coc built {combined_scen_name}",
+                f"base cloned {combined_scen_name}",
+                build_coc,
+                # target=f"{model_name}/{combined_scen_name}",
+            )
 
-    coc_reported_steps = [f"coc reported {scen_name}" for scen_name in scen_names]
-    wf.add_step(
+            # Solve the scenario
+            wf.add_step(
+                f"coc solved {combined_scen_name}",
+                f"coc built {combined_scen_name}",
+                solve,
+                # target=f"{model_name}/{combined_scen_name}",
+            )
+
+            # Generate reports
+            wf.add_step(
+                f"coc reported {combined_scen_name}",
+                f"coc solved {combined_scen_name}",
+                report,
+                # target=f"{model_name}/{combined_scen_name}",
+            )
+
+    # Collect all coc reported steps
+    coc_reported_steps = []
+    for scen_name in scen_names:
+        for cf_name in cf_names:
+            combined_scen_name = f"{scen_name}_{cf_name}"
+            coc_reported_steps.append(f"coc reported {combined_scen_name}")
+    wf.add(
         "coc reported",
-        coc_reported_steps[0] if coc_reported_steps else None,
-        report,
+        log_coordination,
+        coc_reported_steps,
     )
 
     return wf

@@ -14,27 +14,18 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from message_ix import Scenario
 
 from message_ix_models.util import package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
 
-def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
+def main():  # noqa: C901
     """Project WACC for renewable energy technologies.
-
-    Parameters
-    ----------
-    context
-        Workflow context
-    scenario : Scenario
-        MESSAGE scenario (not used in this function)
 
     Returns
     -------
-    Scenario
-        The input scenario (unchanged)
+    None
     """
     # === Config ===
     INPUT_DIR = private_data_path("investment", "SSP_scenario")
@@ -223,4 +214,4 @@ def main(context, scenario: Scenario) -> Scenario:  # noqa: C901
 
     log.info("WACC projection completed.")
 
-    return scenario
+    return None
