@@ -1028,6 +1028,79 @@ def co2(rep: "Reporter"):
     return
 
 
+def ccs(rep: "Reporter"):
+    """Prepare reporter to compute CO2 captured by CCS addons."""
+    k = Key("rel:r-nl-t-ya-m")
+    shipping_tecs = ["foil_occ_bunker", "loil_occ_bunker", "LNG_occ_bunker"]
+    k2 = rep.add(
+        k["ccs_ship"],
+        "select",
+        k,
+        {"r": "CO2_shipping", "t": shipping_tecs},
+    )
+    k_ship = rep.add(
+        k2["ccs_ship-t"], "expand_dims", k2, {"c": ["fic_co2"], "l": ["secondary"]}
+    )
+    trans_tecs = ["co2_trans1", "co2_trans2"]
+    k2 = rep.add(
+        k["leakage"],
+        "select",
+        k,
+        {
+            "r": "CO2_cc",
+            "t": ["co2_stor", "co2_trans1", "co2_trans2"],
+        },
+    )
+    k_leak = rep.add(
+        k2["leakage-c-l"], "expand_dims", k2, {"c": ["fic_co2"], "l": ["secondary"]}
+    )
+    k_out = Key("out:nl-t-m-ya-c-l")
+    # k_in = Key("in:nl-t-ya-m")
+    rep.add(k_out["co2"], "select", k_out, {"c": ["fic_co2", "bic_co2", "dac_co2"]})
+    bio_key = Key("share:nl-ya:biogas_in_gas_consumer_biogas+incl_t_d_loss")
+    gas_tecs = ["gas_cc_ccs", "g_ppl_co2scr", "h2_smr_ccs", "meth_ng_ccs"]
+    rep.add(bio_key.append("t"), "expand_dims", bio_key, {"t": gas_tecs})
+    rep.add(
+        "ccs:nl-t-m-ya-c-l:biogas",
+        "mul",
+        k_out["co2"],
+        bio_key.append("t"),
+        sums=False,
+    )
+    k_ccs_biogas = rep.add(
+        "ccs:nl-t-m-ya-c-l:biogas2",
+        "relabel",
+        "ccs:nl-t-m-ya-c-l:biogas",
+        {"c": {"fic_co2": "bic_co2"}},
+    )
+    rep.add("share:t-nl-ya:gas_excl_biogas", "sub", Quantity(1), bio_key.append("t"))
+    k_ccs_natgas = rep.add(
+        "ccs:nl-t-m-ya-c-l:natgas",
+        "mul",
+        k_out["co2"],
+        bio_key.append("t"),
+        sums=False,
+    )
+    rep.add(
+        k_out["co2_non_gas"],
+        "select",
+        k_out["co2"],
+        {"t": gas_tecs + trans_tecs},
+        inverse=True,
+    )
+    rep.add(
+        "ccs",
+        "concat",
+        k_out["co2_non_gas"],
+        k_ccs_biogas,
+        k_ccs_natgas,
+        k_ship,
+        k_leak,
+    )
+    # TODO: finish draft of this function
+    return
+
+
 if __name__ == "__main__":
     from message_ix_models import Context
 
@@ -1039,6 +1112,6 @@ if __name__ == "__main__":
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     prepare_reporter(ctx, reporter=rep)
-    k1 = pe_gas(rep)
-    k2 = add_se_elec(rep)
+    pe_gas(rep)
+    ccs(rep)
     print()

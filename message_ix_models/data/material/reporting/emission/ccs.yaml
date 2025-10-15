@@ -7,18 +7,72 @@ iamc_prefix:
 unit: Mt C/yr
 
 vars:
+
+  Direct Air Capture|Solvent:
+    filter: { technology: [ dac_hte, dac_htg ], mode: M1, commodity: dac_co2, level: secondary }
+    short: cc_dac_solv
+  Direct Air Capture|Sorbent:
+    filter: { technology: [ dac_lt ], mode: M1, commodity: dac_co2, level: secondary }
+    short: cc_dac_sorb
+
+  Energy|Demand|Industry|Chemicals|Biomass|Ammonia:
+    filter: { technology: [ biomass_NH3_ccs ], mode: feedstock, commodity: bic_co2, level: secondary }
+    short: cc_chem_bio_nh3
+  Energy|Demand|Industry|Chemicals|Biomass|Methanol:
+    filter: { technology: [ meth_bio_ccs ], mode: M1, commodity: bic_co2, level: secondary }
+    short: cc_chem_bio_meth
+  Energy|Demand|Industry|Chemicals|Fossil|Ammonia:
+    filter: { technology: [ coal_NH3_ccs, gas_NH3_ccs ], mode: M1, commodity: fic_co2, level: secondary }
+    short: cc_chem_fos_nh3
+  Energy|Demand|Industry|Chemicals|Fossil|Methanol:
+    filter: { technology: [ meth_ng_ccs, meth_coal_ccs ], mode: M1, commodity: fic_co2, level: secondary }
+    short: cc_chem_fos_meth
+
+  Energy|Demand|Industry|Iron and Steel|Fossil:
+    filter: { technology: [ bf_ccs_steel, dri_gas_ccs_steel ], mode: [ M1, M2 ], commodity: fic_co2, level: secondary }
+    short: cc_steel_foss
+
+  Energy|Demand|Transportation|Gases|Shipping:
+    filter: { technology: [ LNG_occ_bunker ], commodity: fic_co2, level: secondary }
+    short: cc_ship_lng
+  Energy|Demand|Transportation|Oil|Shipping:
+    filter: { technology: [ foil_occ_bunker, loil_occ_bunker ], commodity: fic_co2, level: secondary }
+    short: cc_ship_oil
+
+
+  Energy|Supply|Electricity|Biomass:
+    filter: { technology: [ bio_istig_ccs, bio_ppl_co2scr ], mode: M1, commodity: bic_co2, level: secondary }
+    short: cc_elec_bio
+  Energy|Supply|Electricity|Fossil:
+    filter: { technology: [ g_ppl_co2scr, gas_cc_ccs, coal_adv_ccs, c_ppl_co2scr, igcc_ccs ], mode: M1, commodity: fic_co2, level: secondary }
+    short: cc_elec_foss
+
+  Energy|Supply|Hydrogen|Biomass:
+    filter: { technology: [ h2_bio_ccs ], mode: M1, commodity: bic_co2, level: secondary }
+    short: cc_h2_bio
+  Energy|Supply|Hydrogen|Fossil:
+    filter: { technology: [ h2_coal_ccs, h2_smr_ccs ], mode: M1, commodity: fic_co2, level: secondary }
+    short: cc_h2_foss
+
+  Energy|Supply|Liquids|Biomass:
+    filter: { technology: [ eth_bio_ccs, liq_bio_ccs, meth_bio_ccs ], mode: [ M1, fuel ], commodity: bic_co2, level: secondary }
+    short: cc_liq_bio
+  Energy|Supply|Liquids|Fossil:
+    filter: { technology: [ syn_liq_ccs, meth_coal_ccs, meth_ng_ccs ],
+              mode: [ M1, fuel ], commodity: fic_co2, level: secondary }
+    short: cc_liq_foss
+
   Industrial Processes|Non-Metallic Minerals:
     filter: { technology: [ clinker_dry_ccs_cement, clinker_wet_ccs_cement ], mode: M1, commodity: fic_co2, level: secondary }
     short: cc_ind_nonmet
-  Energy|Demand|Industry|Iron and Steel:
-    filter: { technology: [ bf_ccs_steel, dri_gas_ccs_steel ], mode: [ M1, M2 ], commodity: fic_co2, level: secondary }
-    short: cc_ind_steel
-  Direct Air Capture:
-    filter: { technology: [ dac_hte, dac_lt, dac_htg ], mode: M1, commodity: dac_co2, level: secondary }
-    short: cc_dac
-  Direct Air Capture|Solvent:
-    filter: { technology: [ dac_hte, dac_htg ], mode: M1, commodity: dac_co2, level: secondary }
-    short: cc_dac
-  Direct Air Capture|Sorbent:
-    filter: { technology: [ dac_lt ], mode: M1, commodity: dac_co2, level: secondary }
-    short: cc_dac
+
+  Leakage:
+    filter: { technology: [ co2_stor, co2_trans1, co2_trans2 ], mode: [ M1, M2, M3 ], commodity: [ ], level: secondary }
+    short: cc_leakage
+
+  Utilization|Materials|Short-Lived:
+    filter: { technology: [ meth_h2 ], mode: [ feedstock_bic, feedstock_fic, feedstock_dac ], commodity: [ fic_co2, bic_co2, dac_co2 ], level: secondary }
+    short: cc_util_mat_sl
+  Utilization|Liquids:
+    filter: { technology: [ meth_h2 ], mode: [ fuel_bic, fuel_fic, fuel_dac ], commodity: [ fic_co2, bic_co2, dac_co2 ], level: secondary }
+    short: cc_util_liq

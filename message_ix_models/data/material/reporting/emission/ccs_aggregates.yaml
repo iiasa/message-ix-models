@@ -1,0 +1,120 @@
+var:
+  out
+
+iamc_prefix:
+  Carbon Capture|CO2|
+
+unit: Mt C/yr
+
+level_1:
+  Direct Air Capture:
+    components:
+      [  ]
+    short: cc_dac
+
+
+  Energy|Demand|Industry:
+    components:
+      [  ]
+    short: cc_ind
+  Energy|Demand|Industry|Biomass:
+    components:
+      [  ]
+    short: cc_ind_bio
+  Energy|Demand|Industry|Fossil:
+    components:
+      [  ]
+    short: cc_ind_fos
+  Energy|Demand|Industry|Chemicals:
+    components:
+      [  ]
+    short: cc_ind_chem
+  Energy|Demand|Industry|Chemicals|Biomass:
+    components:
+      [  ]
+    short: cc_ind_chem_bio
+  Energy|Demand|Industry|Chemicals|Fossil:
+    components:
+      [  ]
+    short: cc_ind_chem_fos
+  Energy|Demand|Industry|Iron and Steel:
+    components:
+      [  ]
+    short: cc_ind_steel
+
+  Energy|Demand|Transportation:
+    components:
+      [  ]
+    short: cc_trans
+  Energy|Demand|Transportation|Gases:
+    components:
+      [  ]
+    short: cc_trans_gas
+  Energy|Demand|Transportation|Oil:
+    components:
+      [  ]
+    short: cc_trans_oil
+
+
+  Industrial Processes:
+    components:
+      [  ]
+    short: cc_ind_proc
+  Industrial Processes|Cement:
+    components:
+      [  ]
+    short: cc_ind_proc_cem
+
+
+  Energy|Fossil:
+    components:
+      [  ]
+    short: cc_foss
+  Energy|Supply:
+    components:
+      [  ]
+    short: cc_supply
+  Energy|Supply|Electricity:
+    components:
+      [  ]
+    short: cc_elec
+  Energy|Supply|Hydrogen:
+    components:
+      [  ]
+    short: cc_h2
+  Energy|Supply|Liquids:
+    components:
+      [  ]
+    short: cc_liq
+
+
+  Geological Storage:
+    components:
+      [  ]
+    short: cc_stored
+  Geological Storage|Biomass:
+    components:
+      [  ]
+    short: cc_stored_bio
+  Geological Storage|Direct Air Capture:
+    components:
+      [  ]
+    short: cc_stored_dac
+  Geological Storage|Fossil:
+    components:
+      [  ]
+    short: cc_stored_foss
+  Geological Storage|Industrial Processes:
+    components:
+      [  ]
+    short: cc_stored_ind
+
+
+  Utilization:
+    components:
+      [  ]
+    short: cc_util
+  Utilization|Materials:
+    components:
+      [  ]
+    short: cc_util_mat

@@ -79,7 +79,7 @@ def run_other(rep: Reporter, model_name: str, scen_name: str):
                 config.mapping,
             )
         )
-    df = pyam.concat(data)
+    df = pyam.concat(data).convert_unit("Mt C/yr", "Mt CO2/yr")
     return df
 
 
