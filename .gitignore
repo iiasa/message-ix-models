@@ -159,3 +159,4 @@ cache/
 */data/bilateralize/diagnostics/*
 */projects/*/diagnostics/*
 */data/bilateralize/*/edit_files/*
+/message_ix_models/project/newpathways/diagnostics/data
