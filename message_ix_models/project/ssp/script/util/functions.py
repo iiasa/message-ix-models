@@ -13,10 +13,10 @@ from typing import Literal
 import message_ix
 import numpy as np
 import pandas as pd
-from message_ix.utils import make_df
+from message_ix import make_df
 
 from message_ix_models.tools.add_dac import add_tech
-from message_ix_models.tools.costs.config import Config, MODULE
+from message_ix_models.tools.costs.config import MODULE, Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.util import broadcast, load_package_data
 
@@ -329,7 +329,7 @@ def _add_new_meth_h2_modes(scenario: message_ix.Scenario):
     scenario: message_ix.Scenario
         scenario, where parameters for new modes should be added
     """
-    for tech in ["meth_h2","h2_elec"]:
+    for tech in ["meth_h2", "h2_elec"]:
         par_dict = {}
         for par in [x for x in scenario.par_list() if "mode" in scenario.idx_sets(x)]:
             df = scenario.par(par, filters={"technology": tech})
@@ -342,7 +342,8 @@ def _add_new_meth_h2_modes(scenario: message_ix.Scenario):
                 df_tmp = df[df["mode"].values == mode].copy(deep=True)
                 df_tmp["mode"] = None
                 df_tmp = df_tmp.pipe(
-                    broadcast, mode=[f"{mode}_{suffix}" for suffix in ["bic", "dac", "fic"]]
+                    broadcast,
+                    mode=[f"{mode}_{suffix}" for suffix in ["bic", "dac", "fic"]],
                 )
                 par_dict_new[par] = pd.concat([par_dict_new[par], df_tmp])
 
@@ -362,7 +363,11 @@ def _remove_old_meth_h2_modes(scenario: message_ix.Scenario):
     par_dict = {}
     for par in [x for x in scenario.par_list() if "mode" in scenario.idx_sets(x)]:
         df = scenario.par(
-            par, filters={"technology": ["meth_h2","h2_elec"], "mode": ["feedstock", "fuel"]}
+            par,
+            filters={
+                "technology": ["meth_h2", "h2_elec"],
+                "mode": ["feedstock", "fuel"],
+            },
         )
         if len(df.index):
             par_dict[par] = df.copy(deep=True)
@@ -398,7 +403,7 @@ def update_meth_h2_modes(scenario: message_ix.Scenario):
     _remove_old_meth_h2_modes(scenario)
 
 
-def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
+def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):  # noqa: C901
     with scen.transact(""):
         # CO2 storage potential from Matt and Sidd
         R12_potential = {
@@ -417,7 +422,7 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
         }
 
         # max rate in MtC per year
-        max_rate = np.round(15000 / 3.667, 0)
+        # max_rate = np.round(15000 / 3.667, 0)
 
         # technology modes
         modes = ["M1", "M2", "M3"]
@@ -458,10 +463,6 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):
 
         # years
         years = [year for year in list(len_periods.keys()) if year > 2025]
-
-        # SSPs to run
-        ssps = ["LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
-        ssps = ["SSP2"]
 
         # SSPs CCS parameters
         ccs_ssp_pars = {
