@@ -5,20 +5,14 @@ Created on Mon Mar 20 15:41:32 2023
 @author: pratama
 """
 
-import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import yaml
+from message_ix import make_df
 from message_ix.models import MESSAGE_ITEMS
-from message_ix.utils import make_df
 
 
-def generate_df(
-    scenario,
-    tech_data,
-):
+def generate_df(scenario, tech_data):  # noqa: C901
     """
     This function generate parameter dataframe, matching the data input
     in yaml file and parameter's dimension
