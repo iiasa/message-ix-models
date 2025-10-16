@@ -3,6 +3,7 @@ from message_ix import Scenario
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.irrigation import add_irr_structure
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
 
 def test_add_irr_structure(test_context):
@@ -29,6 +30,9 @@ def test_add_irr_structure(test_context):
 
     # FIXME same as above
     test_context["water build info"] = ScenarioInfo(s)
+
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # Call the function to be tested
     result = add_irr_structure(test_context)

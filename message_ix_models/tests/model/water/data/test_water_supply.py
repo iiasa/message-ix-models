@@ -8,6 +8,7 @@ from message_ix_models.model.water.data.water_supply import (
     add_water_supply,
     map_basin_region_wat,
 )
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
 
 def test_map_basin_region_wat(test_context):
@@ -16,8 +17,8 @@ def test_map_basin_region_wat(test_context):
     # Personalize the context
     sets = {"year": [2020, 2030, 2040]}
     test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    test_context.type_reg = "country"
-    test_context.regions = "ZMB"
+    test_context.type_reg = "global"
+    test_context.regions = "R12"
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
     map_ISO_c = {test_context.regions: nodes[0]}
@@ -25,6 +26,8 @@ def test_map_basin_region_wat(test_context):
     test_context.RCP = "2p6"
     test_context.REL = "med"
     test_context.time = "year"
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     result = map_basin_region_wat(test_context)
 
@@ -42,8 +45,8 @@ def test_add_water_supply(request, test_context):
     # Personalize the context
     sets = {"year": [2020, 2030, 2040]}
     test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    test_context.type_reg = "country"
-    test_context.regions = "ZMB"
+    test_context.type_reg = "global"
+    test_context.regions = "R12"
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
     map_ISO_c = {test_context.regions: nodes[0]}
@@ -52,6 +55,8 @@ def test_add_water_supply(request, test_context):
     test_context.REL = "med"
     test_context.time = "year"
     test_context.nexus_set = "nexus"
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     mp = test_context.get_platform()
     scenario_info = {
@@ -73,7 +78,8 @@ def test_add_water_supply(request, test_context):
     test_context["water build info"] = ScenarioInfo(s)
 
     result = add_water_supply(test_context)
-
+    result["input"].to_csv("supply_inp.csv", index=False)
+    result["output"].to_csv("supply_out.csv", index=False)
     # Assert the results
     assert isinstance(result, dict)
     assert "input" in result
@@ -128,6 +134,9 @@ def test_add_e_flow(test_context):
     test_context.REL = "med"
     test_context.time = "year"
     test_context.SDG = True
+
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # Call the function to be tested
     result = add_e_flow(test_context)
