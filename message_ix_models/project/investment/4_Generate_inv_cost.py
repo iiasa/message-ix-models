@@ -7,6 +7,7 @@ using WACC projections and original investment cost data.
 """
 
 import logging
+from typing import Optional
 
 import pandas as pd
 
@@ -25,7 +26,8 @@ def main():  # noqa: C901
     # === Config ===
     baseline_year = 2020
     A_default = 0.10
-    # The investment cost filename will be determined dynamically based on the WACC file being processed
+    # The investment cost filename will be determined dynamically based on the WACC file
+    # being processed
     category_map_override = None
 
     def gene_coc(
@@ -33,7 +35,7 @@ def main():  # noqa: C901
         out_filename: str,
         baseline_year: int = 2020,
         A_default: float = 0.10,
-        inv_cost_filename: str = None,
+        inv_cost_filename: Optional[str] = None,
         category_map_override: dict | None = None,
     ) -> None:
         """
@@ -69,12 +71,12 @@ def main():  # noqa: C901
 
         # Determine the investment cost filename based on the WACC filename
         if inv_cost_filename is None:
-            # Extract SSP name from WACC filename (e.g., "predicted_wacc_ssp2_ccf.csv" -> "ssp2")
+            # Extract SSP name from WACC filename
+            # (e.g., "predicted_wacc_ssp2_ccf.csv" -> "ssp2")
             wacc_base = wacc_csv_path.replace("predicted_wacc_", "").replace(".csv", "")
             # Extract just the SSP part (e.g., "ssp2_ccf" -> "ssp2")
             ssp_name = wacc_base.split("_")[0]
             inv_cost_filename = f"{ssp_name}_inv_cost_ori.csv"
-        
         # Load original investment cost data
         log.info("Loading original investment cost data...")
         inv_cost_dir = package_data_path("investment")

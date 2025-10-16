@@ -319,11 +319,11 @@ def generate(context: Context) -> Workflow:
     model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
     # List of all starting scenarios
     scen_names = [
-        # "ssp1_1000f",
+        "ssp1_1000f",
         "ssp2_1000f",
         "ssp3_1000f",
-        # "ssp4_1000f",
-        # "ssp5_1000f",
+        "ssp4_1000f",
+        "ssp5_1000f",
     ]
 
     # Add individual base scenario steps (no dependencies)
@@ -347,7 +347,7 @@ def generate(context: Context) -> Workflow:
         inv_cost_ori_steps.append(f"inv_cost_ori retrieved {scen_name}")
     wf.add_step(
         "inv_cost_ori retrieved",
-        inv_cost_ori_steps,
+        inv_cost_ori_steps,  # type: ignore[arg-type]
         log_coordination,
         dummy=True,
     )
@@ -390,9 +390,9 @@ def generate(context: Context) -> Workflow:
     # Individual scenario steps for the clone and subsequent operations
     # These will read from the combined outputs created above
     cf_names = [
-        "ccf",
-        "cf_his_f10",
-        "cf_fair_f10",
+        "locf",
+        "hicf_his",
+        "hicf_fair",
     ]
 
     for scen_name in scen_names:
@@ -447,7 +447,7 @@ def generate(context: Context) -> Workflow:
             coc_reported_steps.append(f"coc reported {combined_scen_name}")
     wf.add_step(
         "coc reported",
-        coc_reported_steps,
+        coc_reported_steps,  # type: ignore[arg-type]
         log_coordination,
         # dummy=True,
     )

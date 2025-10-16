@@ -30,7 +30,7 @@ def main():  # noqa: C901
     # === Config ===
     INPUT_DIR = private_data_path("investment", "SSP_scenario")
     REG_COEFF_PATH = "Reg_coeff.csv"  # Will be in project/investment folder
-    SCENARIOS = {"ccf", "cf_fair_f10", "cf_his_f10"}
+    SCENARIOS = {"locf", "hicf_fair", "hicf_his"}
     SSPS = [f"SSP{j}" for j in range(1, 6)]
     TECHS = ["solar", "wind", "bio", "hydro"]
 
@@ -39,17 +39,28 @@ def main():  # noqa: C901
         base_path = Path(input_dir)
         df_list = []
 
+        # Map new scenario names to the names of the files prepared by Shuting
+        # TODO: these files should not be preperpared.
+        scenario_file_mapping = {
+            "locf": "ccf",
+            "hicf_his": "cf_his_f10",
+            "hicf_fair": "cf_fair_f10",
+        }
+
         # TODO: this should not be hardcoded,
         # it is now manually replace parameters with SSP outputs
         # in cf scenario assumptions
         for scen in SCENARIOS:
             for ssp in SSPS:
-                file_name = f"{scen}_{ssp}_Indicators_2020_2100.xlsx"
+                # Use original file name for reading
+                original_scen_name = scenario_file_mapping[scen]
+                file_name = f"{original_scen_name}_{ssp}_Indicators_2020_2100.xlsx"
                 file_path = base_path / file_name
                 if not file_path.exists():
                     log.warning(f"File not found, skipping: {file_path}")
                     continue
                 df_tmp = pd.read_excel(file_path)
+                # Use new scenario name in the data
                 df_tmp["Scenario"] = scen
                 df_tmp["SSP"] = ssp
                 df_list.append(df_tmp)
