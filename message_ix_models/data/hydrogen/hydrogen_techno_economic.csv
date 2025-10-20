@@ -1,0 +1,47 @@
+# Hydrogen Technology Techno-Economic Parameters
+# This file contains static (time-independent) parameters for hydrogen technologies
+# Format: parameter|commodity|level|mode for input/output parameters
+# Use "default" for node_loc when parameter applies to all regions
+parameter,technology,mode,commodity,level,time,time_origin,value,unit,node_loc,time_dest,emission,availability,Description,Source
+technical_lifetime,h2_elec_alk,,,,,,,30.0,yr,default,,,2020,Lifetime of alkaline electrolyzer,IEA Hydrogen Report 2019
+technical_lifetime,h2_elec_pem,,,,,,,25.0,yr,default,,,2020,Lifetime of PEM electrolyzer,IEA Hydrogen Report 2019
+technical_lifetime,h2_elec_soe,,,,,,,25.0,yr,default,,,2025,Lifetime of solid oxide electrolyzer,IEA Hydrogen Report 2019
+technical_lifetime,h2_pyro_elec,,,,,,,30.0,yr,default,,,2020,Lifetime of pyrolysis electrolyzer,Estimated
+technical_lifetime,h2_ct,,,,,,,30.0,yr,default,,,2020,Lifetime of hydrogen combined cycle,ETSAP
+technical_lifetime,carbon_black_stor,,,,,,,50.0,yr,default,,,2020,Lifetime of carbon black storage,Estimated
+technical_lifetime,carbon_black_trans,,,,,,,50.0,yr,default,,,2020,Lifetime of carbon black transport,Estimated
+capacity_factor,h2_elec_alk,M1,,,,,,0.9,-,default,,,2020,Capacity factor for alkaline electrolyzer,IEA Hydrogen Report 2019
+capacity_factor,h2_elec_pem,M1,,,,,,0.9,-,default,,,2020,Capacity factor for PEM electrolyzer,IEA Hydrogen Report 2019
+capacity_factor,h2_elec_soe,M1,,,,,,0.9,-,default,,,2025,Capacity factor for solid oxide electrolyzer,IEA Hydrogen Report 2019
+capacity_factor,h2_pyro_elec,M1,,,,,,0.85,-,default,,,2020,Capacity factor for pyrolysis electrolyzer,Estimated
+capacity_factor,h2_ct,M1,,,,,,0.85,-,default,,,2020,Capacity factor for hydrogen combined cycle,ETSAP
+construction_time,h2_elec_alk,,,,,,,2.0,yr,default,,,2020,Construction time for alkaline electrolyzer,Estimated
+construction_time,h2_elec_pem,,,,,,,2.0,yr,default,,,2020,Construction time for PEM electrolyzer,Estimated
+construction_time,h2_elec_soe,,,,,,,2.0,yr,default,,,2025,Construction time for solid oxide electrolyzer,Estimated
+construction_time,h2_pyro_elec,,,,,,,3.0,yr,default,,,2020,Construction time for pyrolysis electrolyzer,Estimated
+construction_time,h2_ct,,,,,,,3.0,yr,default,,,2020,Construction time for hydrogen combined cycle,ETSAP
+input,h2_elec_alk,M1,electr,secondary,year,year,1.538,GWa/Mt,default,,,2020,Electricity input for alkaline electrolyzer (65% efficiency),IEA Hydrogen Report 2019
+input,h2_elec_alk,M1,freshwater_supply,water_supply,year,year,0.018,Mt/Mt,default,,,2020,Water input for alkaline electrolyzer,IEA Hydrogen Report 2019
+output,h2_elec_alk,M1,hydrogen,secondary,year,,1.0,Mt,default,year,,2020,Hydrogen output from alkaline electrolyzer,
+input,h2_elec_pem,M1,electr,secondary,year,year,1.429,GWa/Mt,default,,,2020,Electricity input for PEM electrolyzer (70% efficiency),IEA Hydrogen Report 2019
+input,h2_elec_pem,M1,freshwater_supply,water_supply,year,year,0.018,Mt/Mt,default,,,2020,Water input for PEM electrolyzer,IEA Hydrogen Report 2019
+output,h2_elec_pem,M1,hydrogen,secondary,year,,1.0,Mt,default,year,,2020,Hydrogen output from PEM electrolyzer,
+input,h2_elec_soe,M1,electr,secondary,year,year,1.220,GWa/Mt,default,,,2025,Electricity input for SOE electrolyzer (82% efficiency),IEA Hydrogen Report 2019
+input,h2_elec_soe,M1,freshwater_supply,water_supply,year,year,0.018,Mt/Mt,default,,,2025,Water input for SOE electrolyzer,IEA Hydrogen Report 2019
+output,h2_elec_soe,M1,hydrogen,secondary,year,,1.0,Mt,default,year,,2025,Hydrogen output from SOE electrolyzer,
+input,h2_pyro_elec,M1,electr,secondary,year,year,1.667,GWa/Mt,default,,,2020,Electricity input for pyrolysis electrolyzer,Estimated
+input,h2_pyro_elec,M1,gas,primary,year,year,1.5,GWa/Mt,default,,,2020,Natural gas input for pyrolysis,Estimated
+output,h2_pyro_elec,M1,hydrogen,secondary,year,,1.0,Mt,default,year,,2020,Hydrogen output from pyrolysis electrolyzer,
+output,h2_pyro_elec,M1,carbon_black,secondary,year,,3.0,Mt,default,year,,2020,Carbon black output from pyrolysis,Estimated
+input,h2_ct,M1,hydrogen,secondary,year,year,0.556,GWa/Mt,default,,,2020,Hydrogen input for combined cycle (60% efficiency),ETSAP
+output,h2_ct,M1,electr,secondary,year,,1.0,GWa,default,year,,2020,Electricity output from hydrogen combined cycle,ETSAP
+emission_factor,h2_elec_alk,M1,,,,,,0.0,tCO2/Mt,default,,H2_leak,2020,No direct CO2 emissions from alkaline electrolyzer
+emission_factor,h2_elec_pem,M1,,,,,,0.0,tCO2/Mt,default,,H2_leak,2020,No direct CO2 emissions from PEM electrolyzer
+emission_factor,h2_elec_soe,M1,,,,,,0.0,tCO2/Mt,default,,H2_leak,2025,No direct CO2 emissions from SOE electrolyzer
+emission_factor,h2_pyro_elec,M1,,,,,,0.0,tCO2/Mt,default,,CO2,2020,No direct CO2 emissions from pyrolysis (carbon captured as solid)
+emission_factor,h2_ct,M1,,,,,,0.0,tCO2/GWa,default,,CO2,2020,No direct CO2 emissions from hydrogen combustion
+input,carbon_black_stor,M1,carbon_black,secondary,year,year,1.0,Mt,default,,,2020,Carbon black input for storage,Estimated
+output,carbon_black_stor,M1,carbon_black,final,year,,1.0,Mt,default,year,,2020,Carbon black output to final use/storage,Estimated
+input,carbon_black_trans,M1,carbon_black,secondary,year,year,1.0,Mt,default,,,2020,Carbon black input for transport,Estimated
+output,carbon_black_trans,M1,carbon_black,final,year,,0.98,Mt,default,year,,2020,Carbon black output after transport (2% losses),Estimated
+
