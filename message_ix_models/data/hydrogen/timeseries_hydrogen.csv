@@ -1,0 +1,20 @@
+# Hydrogen Technology Time-Series Parameters
+# This file contains time-varying parameters (e.g., efficiency improvements, variable costs over time)
+# Years represent model years where parameter values change
+technology,parameter,region,mode,year,value,unit,Description
+h2_elec_alk,var_cost,default,M1,2020,10.0,USD/Mt,Variable cost for alkaline electrolyzer in 2020
+h2_elec_alk,var_cost,default,M1,2030,8.0,USD/Mt,Variable cost for alkaline electrolyzer in 2030 (decreasing)
+h2_elec_alk,var_cost,default,M1,2050,5.0,USD/Mt,Variable cost for alkaline electrolyzer in 2050 (learning curve)
+h2_elec_pem,var_cost,default,M1,2020,15.0,USD/Mt,Variable cost for PEM electrolyzer in 2020
+h2_elec_pem,var_cost,default,M1,2030,10.0,USD/Mt,Variable cost for PEM electrolyzer in 2030 (decreasing)
+h2_elec_pem,var_cost,default,M1,2050,6.0,USD/Mt,Variable cost for PEM electrolyzer in 2050 (learning curve)
+h2_elec_soe,var_cost,default,M1,2025,20.0,USD/Mt,Variable cost for SOE electrolyzer in 2025 (new technology)
+h2_elec_soe,var_cost,default,M1,2030,15.0,USD/Mt,Variable cost for SOE electrolyzer in 2030 (decreasing)
+h2_elec_soe,var_cost,default,M1,2050,8.0,USD/Mt,Variable cost for SOE electrolyzer in 2050 (learning curve)
+h2_pyro_elec,var_cost,default,M1,2020,12.0,USD/Mt,Variable cost for pyrolysis electrolyzer in 2020
+h2_pyro_elec,var_cost,default,M1,2030,10.0,USD/Mt,Variable cost for pyrolysis electrolyzer in 2030
+h2_pyro_elec,var_cost,default,M1,2050,7.0,USD/Mt,Variable cost for pyrolysis electrolyzer in 2050
+h2_ct,var_cost,default,M1,2020,5.0,USD/GWa,Variable cost for hydrogen combined cycle in 2020
+h2_ct,var_cost,default,M1,2030,4.5,USD/GWa,Variable cost for hydrogen combined cycle in 2030
+h2_ct,var_cost,default,M1,2050,4.0,USD/GWa,Variable cost for hydrogen combined cycle in 2050
+
