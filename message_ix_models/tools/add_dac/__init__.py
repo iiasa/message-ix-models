@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from message_ix import make_df
-from message_ix.models import MESSAGE_ITEMS
+from message_ix.models import MESSAGE
 
 
 def generate_df(scenario, tech_data):  # noqa: C901
@@ -28,6 +28,8 @@ def generate_df(scenario, tech_data):  # noqa: C901
     par_idx = {}
     data = {}
 
+    message_items = {k: v.to_dict() for k, v in MESSAGE.items.items()}
+
     # Create dicitonary of parameter indices and data
     for tech in set(tech_data):
         # add vintage and active years and update tech_data for each tech
@@ -45,7 +47,7 @@ def generate_df(scenario, tech_data):  # noqa: C901
                     name: {
                         idx: []
                         for idx in list(
-                            MESSAGE_ITEMS[tech_data[tech][name]["par_name"]].get(
+                            message_items[tech_data[tech][name]["par_name"]].get(
                                 "idx_names"
                             )
                         )
