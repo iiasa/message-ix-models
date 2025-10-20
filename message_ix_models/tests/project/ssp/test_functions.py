@@ -19,6 +19,9 @@ def scenario(request: "FixtureRequest", test_context: "Context") -> "Scenario":
     return bare_res(request, test_context, solved=False)
 
 
+pytestmark = pytest.mark.usefixtures("ssp_user_data")
+
+
 def test_add_ccs_setup(scenario: "Scenario") -> None:
     sets = [
         ("relation", "CO2_PtX_trans_disp_split"),
