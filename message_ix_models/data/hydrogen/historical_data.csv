@@ -1,0 +1,32 @@
+# Hydrogen Technology Historical Calibration Data
+# This file contains historical activity and capacity data for base year calibration
+# Parameters: historical_activity, historical_new_capacity, bound_activity_lo, bound_activity_up
+parameter,node_loc,technology,year_act,year_vtg,mode,time,value,unit,Description
+historical_activity,R12_CHN,h2_elec_alk,2015.0,,M1,year,5.0,Mt/yr,Historical activity of alkaline electrolyzer in China 2015
+historical_activity,R12_CHN,h2_elec_alk,2020.0,,M1,year,8.0,Mt/yr,Historical activity of alkaline electrolyzer in China 2020
+historical_activity,R12_NAM,h2_elec_alk,2015.0,,M1,year,2.0,Mt/yr,Historical activity of alkaline electrolyzer in North America 2015
+historical_activity,R12_NAM,h2_elec_alk,2020.0,,M1,year,3.5,Mt/yr,Historical activity of alkaline electrolyzer in North America 2020
+historical_activity,R12_WEU,h2_elec_alk,2015.0,,M1,year,1.5,Mt/yr,Historical activity of alkaline electrolyzer in Western Europe 2015
+historical_activity,R12_WEU,h2_elec_alk,2020.0,,M1,year,2.5,Mt/yr,Historical activity of alkaline electrolyzer in Western Europe 2020
+historical_activity,R12_EEU,h2_elec_alk,2015.0,,M1,year,0.5,Mt/yr,Historical activity of alkaline electrolyzer in Eastern Europe 2015
+historical_activity,R12_EEU,h2_elec_alk,2020.0,,M1,year,1.0,Mt/yr,Historical activity of alkaline electrolyzer in Eastern Europe 2020
+historical_new_capacity,R12_CHN,h2_elec_alk,,2010.0,,,0.5,GW,Historical new capacity of alkaline electrolyzer in China 2010
+historical_new_capacity,R12_CHN,h2_elec_alk,,2015.0,,,1.0,GW,Historical new capacity of alkaline electrolyzer in China 2015
+historical_new_capacity,R12_CHN,h2_elec_alk,,2020.0,,,2.0,GW,Historical new capacity of alkaline electrolyzer in China 2020
+historical_new_capacity,R12_NAM,h2_elec_alk,,2010.0,,,0.3,GW,Historical new capacity of alkaline electrolyzer in North America 2010
+historical_new_capacity,R12_NAM,h2_elec_alk,,2015.0,,,0.5,GW,Historical new capacity of alkaline electrolyzer in North America 2015
+historical_new_capacity,R12_NAM,h2_elec_alk,,2020.0,,,0.8,GW,Historical new capacity of alkaline electrolyzer in North America 2020
+historical_new_capacity,R12_WEU,h2_elec_alk,,2010.0,,,0.2,GW,Historical new capacity of alkaline electrolyzer in Western Europe 2010
+historical_new_capacity,R12_WEU,h2_elec_alk,,2015.0,,,0.4,GW,Historical new capacity of alkaline electrolyzer in Western Europe 2015
+historical_new_capacity,R12_WEU,h2_elec_alk,,2020.0,,,0.6,GW,Historical new capacity of alkaline electrolyzer in Western Europe 2020
+bound_activity_up,R12_CHN,h2_elec_alk,2020.0,,M1,year,10.0,Mt/yr,Upper bound on alkaline electrolyzer activity in China 2020
+bound_activity_lo,R12_CHN,h2_elec_alk,2020.0,,M1,year,5.0,Mt/yr,Lower bound on alkaline electrolyzer activity in China 2020
+bound_activity_up,R12_NAM,h2_elec_alk,2020.0,,M1,year,5.0,Mt/yr,Upper bound on alkaline electrolyzer activity in North America 2020
+bound_activity_lo,R12_NAM,h2_elec_alk,2020.0,,M1,year,2.0,Mt/yr,Lower bound on alkaline electrolyzer activity in North America 2020
+bound_activity_up,R12_WEU,h2_elec_alk,2020.0,,M1,year,4.0,Mt/yr,Upper bound on alkaline electrolyzer activity in Western Europe 2020
+bound_activity_lo,R12_WEU,h2_elec_alk,2020.0,,M1,year,1.5,Mt/yr,Lower bound on alkaline electrolyzer activity in Western Europe 2020
+bound_activity_up,R12_CHN,h2_elec_alk,2025.0,,M1,year,15.0,Mt/yr,Upper bound on alkaline electrolyzer activity in China 2025
+bound_activity_lo,R12_CHN,h2_elec_alk,2025.0,,M1,year,8.0,Mt/yr,Lower bound on alkaline electrolyzer activity in China 2025
+bound_activity_up,R12_NAM,h2_elec_alk,2025.0,,M1,year,8.0,Mt/yr,Upper bound on alkaline electrolyzer activity in North America 2025
+bound_activity_lo,R12_NAM,h2_elec_alk,2025.0,,M1,year,3.0,Mt/yr,Lower bound on alkaline electrolyzer activity in North America 2025
+

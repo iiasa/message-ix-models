@@ -1,0 +1,59 @@
+# Hydrogen Technology Relations and Constraints
+# This file contains constraint definitions for hydrogen technologies
+# Relation types: relation_activity (technology coefficients), relation_upper/lower (bounds)
+relation,parameter,technology,Region,value,Units,Description
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_AFR,1.0,-,Growth constraint for alkaline electrolyzer in AFR
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_AFR,1.0,-,Growth constraint for PEM electrolyzer in AFR
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_AFR,1.0,-,Growth constraint for SOE electrolyzer in AFR
+h2_elec_growth_2020,relation_upper,,R12_AFR,100.0,Mt/yr,Maximum total electrolyzer capacity growth in AFR
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_CHN,1.0,-,Growth constraint for alkaline electrolyzer in CHN
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_CHN,1.0,-,Growth constraint for PEM electrolyzer in CHN
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_CHN,1.0,-,Growth constraint for SOE electrolyzer in CHN
+h2_elec_growth_2020,relation_upper,,R12_CHN,500.0,Mt/yr,Maximum total electrolyzer capacity growth in CHN
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_EEU,1.0,-,Growth constraint for alkaline electrolyzer in EEU
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_EEU,1.0,-,Growth constraint for PEM electrolyzer in EEU
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_EEU,1.0,-,Growth constraint for SOE electrolyzer in EEU
+h2_elec_growth_2020,relation_upper,,R12_EEU,150.0,Mt/yr,Maximum total electrolyzer capacity growth in EEU
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_FSU,1.0,-,Growth constraint for alkaline electrolyzer in FSU
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_FSU,1.0,-,Growth constraint for PEM electrolyzer in FSU
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_FSU,1.0,-,Growth constraint for SOE electrolyzer in FSU
+h2_elec_growth_2020,relation_upper,,R12_FSU,200.0,Mt/yr,Maximum total electrolyzer capacity growth in FSU
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_LAM,1.0,-,Growth constraint for alkaline electrolyzer in LAM
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_LAM,1.0,-,Growth constraint for PEM electrolyzer in LAM
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_LAM,1.0,-,Growth constraint for SOE electrolyzer in LAM
+h2_elec_growth_2020,relation_upper,,R12_LAM,150.0,Mt/yr,Maximum total electrolyzer capacity growth in LAM
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_MEA,1.0,-,Growth constraint for alkaline electrolyzer in MEA
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_MEA,1.0,-,Growth constraint for PEM electrolyzer in MEA
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_MEA,1.0,-,Growth constraint for SOE electrolyzer in MEA
+h2_elec_growth_2020,relation_upper,,R12_MEA,200.0,Mt/yr,Maximum total electrolyzer capacity growth in MEA
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_NAM,1.0,-,Growth constraint for alkaline electrolyzer in NAM
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_NAM,1.0,-,Growth constraint for PEM electrolyzer in NAM
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_NAM,1.0,-,Growth constraint for SOE electrolyzer in NAM
+h2_elec_growth_2020,relation_upper,,R12_NAM,300.0,Mt/yr,Maximum total electrolyzer capacity growth in NAM
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_PAO,1.0,-,Growth constraint for alkaline electrolyzer in PAO
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_PAO,1.0,-,Growth constraint for PEM electrolyzer in PAO
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_PAO,1.0,-,Growth constraint for SOE electrolyzer in PAO
+h2_elec_growth_2020,relation_upper,,R12_PAO,100.0,Mt/yr,Maximum total electrolyzer capacity growth in PAO
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_PAS,1.0,-,Growth constraint for alkaline electrolyzer in PAS
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_PAS,1.0,-,Growth constraint for PEM electrolyzer in PAS
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_PAS,1.0,-,Growth constraint for SOE electrolyzer in PAS
+h2_elec_growth_2020,relation_upper,,R12_PAS,150.0,Mt/yr,Maximum total electrolyzer capacity growth in PAS
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_RCPA,1.0,-,Growth constraint for alkaline electrolyzer in RCPA
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_RCPA,1.0,-,Growth constraint for PEM electrolyzer in RCPA
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_RCPA,1.0,-,Growth constraint for SOE electrolyzer in RCPA
+h2_elec_growth_2020,relation_upper,,R12_RCPA,100.0,Mt/yr,Maximum total electrolyzer capacity growth in RCPA
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_SAS,1.0,-,Growth constraint for alkaline electrolyzer in SAS
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_SAS,1.0,-,Growth constraint for PEM electrolyzer in SAS
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_SAS,1.0,-,Growth constraint for SOE electrolyzer in SAS
+h2_elec_growth_2020,relation_upper,,R12_SAS,100.0,Mt/yr,Maximum total electrolyzer capacity growth in SAS
+h2_elec_growth_2020,relation_activity,h2_elec_alk,R12_WEU,1.0,-,Growth constraint for alkaline electrolyzer in WEU
+h2_elec_growth_2020,relation_activity,h2_elec_pem,R12_WEU,1.0,-,Growth constraint for PEM electrolyzer in WEU
+h2_elec_growth_2020,relation_activity,h2_elec_soe,R12_WEU,1.0,-,Growth constraint for SOE electrolyzer in WEU
+h2_elec_growth_2020,relation_upper,,R12_WEU,250.0,Mt/yr,Maximum total electrolyzer capacity growth in WEU
+h2_elec_bound_2020,relation_activity,h2_elec_alk,R12_CHN,1.0,-,2020 activity bound for alkaline electrolyzer in CHN
+h2_elec_bound_2020,relation_upper,,R12_CHN,10.0,Mt/yr,Maximum alkaline electrolyzer activity in CHN in 2020
+h2_elec_bound_2020,relation_lower,,R12_CHN,5.0,Mt/yr,Minimum alkaline electrolyzer activity in CHN in 2020
+h2_elec_bound_2020,relation_activity,h2_elec_alk,R12_NAM,1.0,-,2020 activity bound for alkaline electrolyzer in NAM
+h2_elec_bound_2020,relation_upper,,R12_NAM,5.0,Mt/yr,Maximum alkaline electrolyzer activity in NAM in 2020
+h2_elec_bound_2020,relation_lower,,R12_NAM,2.0,Mt/yr,Minimum alkaline electrolyzer activity in NAM in 2020
+
