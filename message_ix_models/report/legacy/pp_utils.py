@@ -83,7 +83,13 @@ def fil(df, fil, factor, unit_out=None):
 
     # Interpolate missing years
     for reg in df_fil.index:
-        df_fil.loc[reg] = df_fil.loc[reg].interpolate(method="index")
+        series = df_fil.loc[reg]
+        # Drop NaN from index before interpolating to avoid pandas NotImplementedError
+        if series.index.isna().any():
+            series_clean = series[~series.index.isna()]
+            df_fil.loc[reg] = series_clean.interpolate(method="index").reindex(series.index)
+        else:
+            df_fil.loc[reg] = series.interpolate(method="index")
 
     df = df_fil.fillna(0) * df.fillna(0)
     df["Unit"] = "???"
@@ -432,7 +438,6 @@ def gen_GLB(df, param, weighted_by):
     -------
     df : dataframe
     """
-
     df = df.fillna(value=0).reset_index()
     idx = ["Model", "Scenario", "Variable", "Unit"]
     if param == "sum":

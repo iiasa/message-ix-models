@@ -116,7 +116,8 @@ def retrieve_region_mapping(scen, mp=None, include_region_id=True):
         import ixmp
 
         mp = ixmp.Platform()
-    region_id = list(set([x.split("_")[0] for x in get_nodes(scen)]))[0]
+    # Filter out basin nodes (with "|") before extracting region_id
+    region_id = list(set([x.split("_")[0] for x in get_nodes(scen) if "|" not in x]))[0]
     df = mp.regions()
     df = df[df.region.isin([r for r in scen.set("node") if r != "World"])]
     if include_region_id is True:

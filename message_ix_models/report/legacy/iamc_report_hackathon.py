@@ -386,12 +386,22 @@ def report(
                 int(yr) for yr in col_yr if yr >= model_year
             ]
         ix_upload = ix_upload[cols]
+
+        # Fix data types for IXMP compatibility (from message_data ssp_dev_water branch)
+        # Ensure region column is string and handle missing values
+        ix_upload["region"] = ix_upload["region"].astype(str)
+        # Remove both NaN values and string "nan" values after conversion
+        ix_upload = ix_upload[ix_upload["region"] != "nan"]
+        ix_upload = ix_upload.dropna(subset=["region"])
+
+        # Convert year columns to int (IXMP expects integer years, not float)
+        year_cols = [col for col in ix_upload.columns if str(col).isdigit()]
+        for col in year_cols:
+            ix_upload[col] = ix_upload[col].astype(int)
+
         # ix_mp._jobj.unlockRunid(11473)
         scen.check_out(timeseries_only=True)
-        print("Starting to upload timeseries")
-        print(ix_upload.head())
         scen.add_timeseries(ix_upload)
-        print("Finished uploading timeseries")
         scen.commit("Reporting uploaded as timeseries")
 
         df = scen.timeseries(iamc=True)
