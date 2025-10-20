@@ -603,11 +603,17 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):  # noqa: C901
         # Add new setup ================================
         ## setup pipelines, storage, and non-dac ccs technologies
         add_tech(
-            scen, load_package_data("ccs-dac", f"co2infrastructure_data_{ssp}dev.yaml")
+            scen,
+            load_package_data(
+                "ccs-dac", f"co2infrastructure_data_{ssp.lower()}dev.yaml"
+            ),
         )
 
         ## setup dac technologies
-        add_tech(scen, load_package_data("ccs-dac", f"daccs_setup_data_{ssp}dev.yaml"))
+        add_tech(
+            scen,
+            load_package_data("ccs-dac", f"daccs_setup_data_{ssp.lower()}dev.yaml"),
+        )
 
         ## add dac costs using meas's tool
         ##> making the projection
