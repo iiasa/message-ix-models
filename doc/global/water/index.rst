@@ -29,12 +29,14 @@ Water resources are represented at the basin scale using a global delineation of
 * Inter-basin water transfers where infrastructure exists
 * Climate impacts on basin-specific hydrology
 
-.. _fig-basin-structure:
-.. figure:: /_static/map_3.3.png
+:numref:`fig-global-basin-map` shows the global distribution of approximately 200 basins mapped to the 12 MESSAGE regions (R12), providing the spatial foundation for the nexus module.
+
+.. _fig-global-basin-map:
+.. figure:: /_static/global_r12_basin_map.png
    :width: 800px
    :align: center
 
-   Basin delineation and MESSAGE regional mapping for the MESSAGEix-Nexus module (Awais et al., 2024 :cite:`awais_2024_nexus`).
+   Global basin delineation mapped to MESSAGE R12 regions. Basins are derived from HydroSHEDS and aggregated to provide spatially explicit water resource representation within the MESSAGEix-GLOBIOM framework (Awais et al., 2024 :cite:`awais_2024_nexus`).
 
 Temporal Resolution
 -------------------
@@ -51,7 +53,16 @@ When sub-annual time steps are defined in the MESSAGE model, the water module au
 Model Structure
 ===============
 
-The water nexus implementation follows a resource-technology-demand structure analogous to the energy system representation in MESSAGEix:
+The water nexus implementation follows a resource-technology-demand structure analogous to the energy system representation in MESSAGEix. The conceptual framework integrates water resources, supply technologies, sectoral demands, and the linkages between water, energy, and land systems as illustrated in :numref:`fig-nexus-structure`.
+
+.. _fig-nexus-structure:
+.. figure:: /_static/message_nexus_structure.png
+   :width: 800px
+   :align: center
+
+   Conceptual structure of the MESSAGEix-GLOBIOM nexus module showing the integration of water resources, supply technologies, sectoral demands, and linkages with energy and land systems (Awais et al., 2024 :cite:`awais_2024_nexus`).
+
+The nexus module comprises three main components:
 
 **Resources**: Renewable surface water and groundwater availability in each basin and time period, derived from hydrological models (see :ref:`water-supply`)
 
@@ -71,7 +82,19 @@ The water nexus implementation follows a resource-technology-demand structure an
 * Industrial manufacturing water use  
 * Agricultural irrigation (linked to GLOBIOM)
 
-Water balance equations ensure that total water extraction does not exceed renewable availability plus sustainable groundwater use, while meeting all sectoral demands and environmental flow requirements.
+Water Reference Energy System
+------------------------------
+
+The water flows through the model are represented using a Reference Energy System (RES) structure, extending the MESSAGEix energy RES to include water commodities and technologies. :numref:`fig-water-res` shows the simplified water reference energy system structure that connects water resources to sectoral demands through various supply technologies.
+
+.. _fig-water-res:
+.. figure:: /_static/water_reference_figure.png
+   :width: 800px
+   :align: center
+
+   Simplified water Reference Energy System (RES) showing the flow of water from resources (surface water, groundwater, desalination) through treatment and distribution to sectoral demands (municipal, industrial, agricultural, energy). The RES structure enables explicit tracking of water quantities, qualities, and associated costs and energy requirements (Awais et al., 2024 :cite:`awais_2024_nexus`).
+
+Water balance equations ensure that total water extraction does not exceed renewable availability plus sustainable groundwater use, while meeting all sectoral demands and environmental flow requirements. The optimization simultaneously determines the least-cost portfolio of water supply technologies and the allocation of water across competing sectoral demands.
 
 Energy-Water-Land Linkages
 ==========================
