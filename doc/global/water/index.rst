@@ -64,7 +64,7 @@ The water nexus implementation follows a resource-technology-demand structure an
 
 The nexus module comprises three main components:
 
-**Resources**: Renewable surface water and groundwater availability in each basin and time period, derived from hydrological models (see :ref:`water-supply`)
+**Resources**: Renewable surface water and groundwater availability in each basin and time period, derived from hydrological models. See :doc:`supply` for detailed description of water resources and supply technologies.
 
 **Technologies**: Water extraction, treatment, conveyance, and end-use technologies including:
 
@@ -82,13 +82,15 @@ The nexus module comprises three main components:
 * Industrial manufacturing water use  
 * Agricultural irrigation (linked to GLOBIOM)
 
+See :doc:`demand` for comprehensive coverage of all sectoral water demands and allocation mechanisms.
+
 Water Reference Energy System
 ------------------------------
 
 The water flows through the model are represented using a Reference Energy System (RES) structure, extending the MESSAGEix energy RES to include water commodities and technologies. :numref:`fig-water-res` shows the simplified water reference energy system structure that connects water resources to sectoral demands through various supply technologies.
 
 .. _fig-water-res:
-.. figure:: /_static/water_reference_figure.png
+.. figure:: /_static/water_reference_system.png
    :width: 800px
    :align: center
 
@@ -103,7 +105,7 @@ MESSAGEix-Nexus captures multiple nexus interactions:
 
 **Energy → Water**: 
 
-* Cooling water requirements for thermal power plants
+* Cooling water requirements for thermal power plants (see :doc:`cooling` for detailed cooling technology representation)
 * Water consumption in fuel extraction (coal mining, unconventional oil and gas)
 * Hydropower production from surface water resources
 * Energy requirements for water supply (pumping, treatment, desalination)
@@ -154,6 +156,8 @@ The nexus module incorporates climate change impacts on both water availability 
 * Inter-basin water transfers
 * Changes in electricity generation technology mix
 
+For comprehensive discussion of climate change impacts on the water-energy nexus, see :doc:`climate_impacts`.
+
 Sustainable Development Goals
 ==============================
 
@@ -172,8 +176,19 @@ The nexus module includes optional constraints to represent progress toward wate
 
 Implementation constraints enforce minimum investment in water supply infrastructure to achieve specified access targets in each region and time period, creating additional water demand and infrastructure requirements that compete with energy sector water use.
 
+Detailed Documentation
+=======================
+
+For detailed technical documentation of the MESSAGEix-Nexus module components, please refer to the following sections:
+
+* :doc:`supply` - Water resources and supply technologies (surface water, groundwater, desalination, wastewater reuse)
+* :doc:`demand` - Sectoral water demands (energy, municipal, industrial, agricultural) and allocation
+* :doc:`cooling` - Power plant cooling technologies and water-energy tradeoffs
+* :doc:`climate_impacts` - Climate change impacts on water availability and energy systems
+
 .. toctree::
    :maxdepth: 2
+   :hidden:
 
    supply
    demand
