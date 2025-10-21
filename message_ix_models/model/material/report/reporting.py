@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Created on Mon Mar  8 12:58:21 2021
 This code produces the follwoing outputs:
@@ -20,9 +21,10 @@ Material_global_grpahs.pdf
 @author: unlu
 """
 
-import os
 import warnings
-from typing import TYPE_CHECKING
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
+import os
 
 import matplotlib
 import numpy as np
@@ -37,13 +39,10 @@ from message_ix.report import Reporter
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
 
-if TYPE_CHECKING:
-    from message_ix import Scenario
 matplotlib.use("Agg")
-warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
-def change_names(s: str) -> str:
+def change_names(s):
     """Change the sector names according to IMAC format."""
 
     if s == "aluminum":
@@ -69,12 +68,13 @@ def change_names(s: str) -> str:
     return s
 
 
-def fix_excel(df: pd.DataFrame) -> pd.DataFrame:
-    """Fix the names of the regions or variables to be compatible with IAMC format.
-
-    This is done in the final reported excel file (path_temp) and written to a new excel
-    file (path_new).
+def fix_excel(df):
     """
+    Fix the names of the regions or variables to be compatible
+    with IAMC format. This is done in the final reported excel file
+    (path_temp) and written to a new excel file (path_new).
+    """
+    # read Excel file and sheet by name
 
     replacement = {
         "CO2_industry": "CO2",
@@ -136,12 +136,13 @@ def fix_excel(df: pd.DataFrame) -> pd.DataFrame:
         "unit": "Unit",
     }
     # Iterate over the rows and replaced
-    df = df.replace(replacement).rename(columns=columns)
+    df = df.replace(replacement)
+    df = df.rename(columns=columns)
 
     return df
 
 
-def convert_mass_to_energy(df: pyam.IamDataFrame):
+def convert_mass_to_energy(df):
     # Methanol input conversion from material to energy unit
     conv_factor = 0.6976
     inp_vars = [
@@ -183,7 +184,7 @@ def convert_mass_to_energy(df: pyam.IamDataFrame):
             )
 
 
-def report(scenario: "Scenario", print_to_excel: bool = False):  # noqa: C901
+def report(scenario, print_to_excel=False):  # noqa: C901
     # Obtain scenario information and directory
 
     s_info = ScenarioInfo(scenario)

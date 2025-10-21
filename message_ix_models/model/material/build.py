@@ -7,7 +7,7 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.model.build import apply_spec
 from message_ix_models.model.material.data_aluminum import gen_data_aluminum
-from message_ix_models.model.material.data_ammonia import gen_all_NH3_fert
+from message_ix_models.model.material.data_ammonia_new import gen_all_NH3_fert
 from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol import gen_data_methanol
@@ -152,6 +152,8 @@ def calibrate_existing_constraints(
         engage_updates._correct_balance_td_efficiencies(scenario)
         engage_updates._correct_coal_ppl_u_efficiencies(scenario)
         engage_updates._correct_td_co2cc_emissions(scenario)
+
+    s_info = ScenarioInfo(scenario)
 
     # add_coal_lowerbound_2020(scenario)
     # add_cement_bounds_2020(scenario)

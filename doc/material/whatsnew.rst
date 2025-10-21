@@ -5,7 +5,7 @@ Next release
 ============
 
 SSP 3.0 development
--------------------
+---------------
 
 By topic:
 
@@ -21,14 +21,14 @@ Non-model changes
 - a ``material-ix calibrate`` command has been added that can be used to run the MACRO calibration step in isolation.
 - values from model parameter data that have a year_act and year_vtg columns greater than the technology lifetime are dropped since they are inflating the model size unnecessarily.
 - a module :mod:`.model.material.share_constraints` for commodity share constraints was created, but is not fully used in the build yet.
-.. todo:: consider differentiating the constraints by SSP.
+.. todo:: consider differentiating the constraints by SSP
 
 Demand
 """"""
 
-- the demand commodity ``level`` of methanol has been changed from ``final_material`` to ``demand``.
+- the demand commodity ``level`` of methanol has been changed from ``final_material`` to ``demand``
 - an additional demand projection setting for aluminum, steel and cement has been introduced called "highest" which SSP5 scenarios are mapped to
-- the 2025 demands are fixed to the projected SSP2 values for each SSP.
+- the 2025 demands are fixed to the projected SSP2 values for each SSP
 - Aluminum base year demand has been updated based on IAI MFA output for 2020
 - Cement base year demand has been updated based on GlobBulk Consulting data for 2020
 - Steel base year demand has been updated based on worldsteel association data for 2020
@@ -37,7 +37,7 @@ Demand
 Post processing
 """""""""""""""
 
-- the new industry reporter has been implemented :mod:`.model.material.report`, with mapping files in ``data/material/reporting``.
+- the new industry reporter has been implemented :mod:`.model.material.report`, with mapping files in ``data/material/reporting``
 
 Model development
 ^^^^^^^^^^^^^^^^^
@@ -47,18 +47,18 @@ Model development
 General
 """""""
 
-- the power sector module has been deactivated for the SSP builds.
-- coal_i ``technology`` is share constrained in each region based on 2020 IEA statistics.
-- the low temperature share constraint for other industry is updated to reflect explicit modelling of heavy industry.
+- the power sector module has been deactivated for the SSP builds
+- coal_i ``technology`` is share constrained in each region based on 2020 IEA statistics
+- the low temperature share constraint for other industry is updated to reflect explicit modelling of heavy industry
 
-.. todo:: compile low temperature literature and set up references.
+.. todo:: compile low temperature literature and set up references
 
-- the .tools.cost module has been updated to run in "gdp" mode when called by the materials build.
+- the .tools.cost module has been updated to run in "gdp" mode when called by the materials build
 - the .tools.cost module is called twice if ``--update_costs`` option is :any:`True` in ``material-ix build`` command to be able to get the correct cost projections for the non-MESSAGEix-Materials industry technologies (e.g ``coal_i``, ``sp_el_I`` etc.)
-- the following utility functions were added/updated in utils.py.
+- the following utility functions were added/updated in utils.py
   - for mapping country names with `ISO 3166-1 alpha-3 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3>`_ codes with `pycountry <https://pypi.org/project/pycountry/>`_.
 
-  .. todo:: integrate in :mod:`.util.pycountry`.
+  .. todo:: integrate in :mod:`.util.pycountry`
 
   - adding a ``R12`` column with region values mapped based on a iso column of the same dataframe.
   - the MACRO calibration excel input file updater is now also updating the ``demand_ref`` tab based on the given scenario ``demand`` parameter values.
@@ -69,7 +69,7 @@ Aluminum
 """"""""
 
 - 2025 ``demand`` SSP2 fixing as mentioned under :ref:`general-changes` changes.
-- the aluminum build reads SSP differentiated input data by reading from :file:`data/materials/aluminum/<SSPX>/aluminum_techno_economic.xlsx`.
+- the aluminum build reads SSP differentiated input data by reading from :file:`data/materials/aluminum/<SSPX>/aluminum_techno_economic.xlsx`
 - the historical capacity of smelters is calibrated until 2020 using the genisim dataset.
 - the historical activity of smelters is calibrated until 2020 using British Geological Survey data (Soderberg activity is calibrated assuming capacity shares computed from genisim dataset).
 - the historical activity of smelters is calibrated until 2020 using British Geological Survey data.
@@ -90,18 +90,18 @@ Cement
 - 2025 ``demand`` SSP2 fixing as mentioned under :ref:`general-changes` changes.
 - the cement build reads SSP differentiated input data by reading from :file:`data/materials/cement/<SSPX>/Global_cement_MESSAGE.xlsx`.
 - selected regional ``CEMENT`` values in :file:`residual_industry_2019.csv` were updated since they seemed wrong when comparing the data to the IEA cement report.
-.. todo:: TODO: paste link to IEA cement report here.
+.. todo:: TODO: paste link to IEA cement report here
 
 - the heat input for clinker CCS addons was lowered a lot.
-.. todo:: insert US NREL publication reference here.
+.. todo:: insert US NREL publication reference here
 
 Other industry
 """"""""""""""
 
 - 2025 ``demand`` SSP2 fixing as mentioned under :ref:`general-changes` changes.
-- the demands for the other industry are generated based on IEA historical data of the non-explicitly modelled sectors.
+- the demands for the other industry are generated based on IEA historical data of the non-explicitly modelled sectors
 
-.. note:: the new demand model still sits in a private repository.
+.. note:: the new demand model still sits in a private repository
 
 - the sector furnaces were missing non CO2 emission factors of their original MESSAGE counterpart (e.g ``coal_i``). Thus, they were copied from the originals and scaled with the input coefficients.
 - the furnaces are now writing into the ``IndThermDemLink`` relation, that is required for the MESSAGE-GAINS linkage.
@@ -111,13 +111,13 @@ Other industry
 Methanol
 """"""""
 
-- the model structure was slightly updated to simplify and correct the carbon emission balance accounting.
+- the model structure was slightly updated to simplify and correct the carbon emission balance accounting
 
   - the negative emission coefficients that represent the carbon stored in long lived products, were moved from ``meth_t_d`` technology to a new technology ``meth_ind_fs``.
 
   - the carbon balance of ``MTO_petro`` was not correct. The process emissions and the ``input``/``output`` parameters were updated based on new literature.
 
-  .. todo:: compile literature list and summarize in a paragraph.
+  .. todo:: compile literature list and summarize in a paragraph
 
 Petrochemicals
 """"""""""""""

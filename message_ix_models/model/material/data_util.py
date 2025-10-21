@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional
 
 import message_ix
 import numpy as np
@@ -27,19 +27,19 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
     from message_ix_models import Context
-    from message_ix_models.types import ParameterData
 
 
 def add_macro_materials(
     scen: message_ix.Scenario, filename: str, check_converge: bool = False
 ) -> message_ix.Scenario:
-    """Prepare data for MACRO calibration by reading data from xlsx file.
+    """
+    Prepare data for MACRO calibration by reading data from xlsx file
 
     Parameters
     ----------
-    scen
+    scen: message_ix.Scenario
         Scenario to be calibrated
-    filename
+    filename: str
         name of xlsx calibration data file
     check_converge: bool
         parameter passed to MACRO calibration function
@@ -137,7 +137,8 @@ def map_iea_db_to_msg_regs(df_iea: pd.DataFrame) -> pd.DataFrame:
 
 
 def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
-    """Reads mapping file and returns relevant columns needed for technology mapping.
+    """
+    reads mapping file and returns relevant columns needed for technology mapping
 
     Parameters
     ----------
@@ -176,11 +177,12 @@ def read_iea_tec_map(tec_map_fname: str) -> pd.DataFrame:
 
 
 def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
-    """Adds CCS technologies to the `co2_trans_disp` and `bco2_trans_disp` relations.
+    """Adds the relevant CCS technologies to the co2_trans_disp and bco2_trans_disp
+    relations
 
     Parameters
     ----------
-    scen
+    scen: message_ix.Scenario
         Scenario instance to add CCS emission factor parametrization to
     """
 
@@ -580,13 +582,12 @@ def read_sector_data(
 
     Parameters
     ----------
-    scenario
-        Scenario used to get structural information like model regions and years.
-    sectname
+    scenario :
+    sectname :
         Name of industry sector.
-    ssp
+    ssp :
         If sector data should be read from an SSP-specific file.
-    filename
+    filename :
         Name of input file with suffix.
 
     Returns
@@ -666,13 +667,13 @@ def read_timeseries(
 
     Parameters
     ----------
-    scenario
+    scenario :
         Scenario used to get structural information like model regions and years.
-    material
+    material :
         Name of material folder (**‘sector’**) where `filename` is located.
-    ssp
+    ssp :
         If timeseries is available for different SSPs, the respective file is selected.
-    filename
+    filename :
         Name of data file including :file:`.csv` or :file:`.xlsx` suffix.
 
     Returns
@@ -700,7 +701,7 @@ def read_timeseries(
         df = pd.read_csv(package_data_path("material", material, filename))
 
         # Function to convert string to integer if it is a digit
-        def convert_if_digit(col_name: Union[str, int]) -> Union[str, int]:
+        def convert_if_digit(col_name):
             return int(col_name) if col_name.isdigit() else col_name
 
         # Apply the function to the DataFrame column names
@@ -738,23 +739,23 @@ def read_rel(
     scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
 ) -> pd.DataFrame:
     """
-    Read ``relation_*`` type parameter data for specific industry
+    Read relation_* type parameter data for specific industry
 
     Parameters
     ----------
-    ssp
+    ssp: str
         if relations are available for different SSPs, the respective file is selected
-    scenario
+    scenario:
         scenario used to get structural information like
-    material
+    material: str
         name of material folder where xlsx is located
-    filename
+    filename:
         name of xlsx file
 
     Returns
     -------
     pd.DataFrame
-        DataFrame containing ``relation_*`` parameter data
+        DataFrame containing relation_* parameter data
     """
     # Ensure config is loaded, get the context
 
@@ -783,27 +784,26 @@ def gen_te_projections(
     module="materials",
     reduction_year=2100,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Generate cost parameter data for scenario technology set.
-
-    Calls :mod:`message_ix_models.tools.costs` with config for MESSAGEix-Materials
-    and return ``inv_cost`` and ``fix_cost`` projections for energy and industry
-    technologies.
+    """
+    Calls message_ix_models.tools.costs with config for MESSAGEix-Materials
+    and return inv_cost and fix_cost projections for energy and materials
+    technologies
 
     Parameters
     ----------
-    scen
-        Scenario instance is required to get technology set.
-    ssp
-        SSP to use for projection assumptions.
-    method
-        method to use for cost convergence over time.
-    ref_reg
-        reference region to use for regional cost differentiation.
+    scen: message_ix.Scenario
+        Scenario instance is required to get technology set
+    ssp: str
+        SSP to use for projection assumptions
+    method: str
+        method to use for cost convergence over time
+    ref_reg: str
+        reference region to use for regional cost differentiation
 
     Returns
     -------
     tuple[pd.DataFrame, pd.DataFrame]
-        tuple with ``inv_cost`` and ``fix_cost`` data
+        tuple with "inv_cost" and "fix_cost" DataFrames
     """
     model_tec_set = list(scen.set("technology"))
     cfg = Config(
@@ -834,23 +834,25 @@ def gen_te_projections(
 def get_ssp_soc_eco_data(
     context: "Context", model: str, measure: str, tec: str
 ) -> pd.DataFrame:
-    """Generate GDP and POP data of SSP 3.0 in ``bound_activity_*`` format.
+    """
+    Function to update scenario GDP and POP timeseries to SSP 3.0
+    and format to MESSAGEix "bound_activity_*" DataFrame
 
     Parameters
     ----------
-    context
+    context: Context
         context used to prepare genno.Computer
-    model
+    model:
         model name of projections to read
-    measure
+    measure:
         Indicator to read (GDP or Population)
-    tec
+    tec:
         name to use for "technology" column
-
     Returns
     -------
     pd.DataFrame
-        DataFrame with SSP indicator data in ``bound_activity_*`` parameter format.
+        DataFrame with SSP indicator data in "bound_activity_*" parameter
+        format
     """
     from message_ix_models.project.ssp.data import SSPUpdate
 
@@ -868,14 +870,14 @@ def get_ssp_soc_eco_data(
 
 
 def add_elec_i_ini_act(scenario: message_ix.Scenario) -> None:
-    """Adds ``initial_activity_up`` parametrization for `elec_i` ``technology``.
-
-    Values are copied from `hp_el_i` technology
+    """
+    Adds initial_activity_up parameter for "elec_i" technology by copying
+    value from "hp_el_i" technology
 
     Parameters
     ----------
-    scenario
-        Scenario to update parametrization for
+    scenario: message_ix.Scenario
+        Scenario where "elec_i" should be updated
     """
     par = "initial_activity_up"
     df_el = scenario.par(par, filters={"technology": "hp_el_i"})
@@ -893,53 +895,54 @@ def calculate_ini_new_cap(
 
     Parameters
     ----------
-    df_demand
+    df_demand :
         DataFrame containing "demand" MESSAGEix parametrization.
-    technology
+    technology :
         Name of CCS technology to be parametrized.
-    material
+    material :
         Name of the material/industry sector.
 
     Returns
     -------
     pd.DataFrame
-        ``initial_new_capacity_up`` parameter data.
+        Formatted to "initial_new_capacity_up" columns.
     """
 
-    SCALER = {
-        ("LED", "cement"): 0.001,
-        ("SSP1", "cement"): 0.001,
-        ("SSP2", "cement"): 0.001,
-        ("SSP3", "cement"): 0.0008,
-        ("SSP4", "cement"): 0.002,
-        ("SSP5", "cement"): 0.002,
-        ("LED", "steel"): 0.002,
-        ("SSP1", "steel"): 0.002,
-        ("SSP2", "steel"): 0.002,
-        ("SSP3", "steel"): 0.001,
-        ("SSP4", "steel"): 0.003,
-        ("SSP5", "steel"): 0.003,
-    }
-    scalar = SCALER[(ssp, material)]
+    if ssp in ["LED", "SSP1", "SSP2"]:
+        if material == "cement":
+            SCALER = 0.001
+        if material == "steel":
+            SCALER = 0.002
+    elif ssp in ["SSP4", "SSP5"]:
+        if material == "cement":
+            SCALER = 0.002
+        if material == "steel":
+            SCALER = 0.003
+    elif ssp == "SSP3":
+        if material == "cement":
+            SCALER = 0.0008
+        if material == "steel":
+            SCALER = 0.001
+
     CLINKER_RATIO = 0.72 if material == "cement" else 1
 
     tmp = (
-        df_demand.eval("value = value * @CLINKER_RATIO * @scalar")
+        df_demand.eval("value = value * @CLINKER_RATIO * @SCALER")
         .rename(columns={"node": "node_loc", "year": "year_vtg"})
         .assign(technology=technology)
     )
 
     return make_df("initial_new_capacity_up", **tmp)
 
-    del scalar, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above
+    del SCALER, CLINKER_RATIO  # pragma: no cover — quiet lint error F821 above
 
 
 def add_water_par_data(scenario: "Scenario") -> None:
-    """Adds water supply technologies that are required for the Materials build.
+    """Adds water supply technologies that are required for the Materials build
 
     Parameters
     ----------
-    scenario
+    scenario: .Scenario
         instance to check for water technologies and add if missing
     """
     scenario.check_out()
@@ -953,15 +956,13 @@ def add_water_par_data(scenario: "Scenario") -> None:
 
 
 def calibrate_for_SSPs(scenario: "Scenario") -> None:
-    """Calibrate technologies activity bounds and growth constraints.
-
-    This is necessary to avoid base year infeasibilities in year 2020.
-    Originally developed for the `SSP_dev_*` scenarios, where most technology activities
-    are fixed in 2020.
+    """Adjust technologies activity bounds and growth constraints to avoid base year
+    infeasibilities in year 2020. Specifically developed for the SSP_dev scenarios,
+    where most technology activities are fixed in 2020.
 
     Parameters
     ----------
-    scenario
+    scenario: .Scenario
         instance to apply parameter changes to
     """
     add_elec_i_ini_act(scenario)
@@ -1012,24 +1013,28 @@ def calibrate_for_SSPs(scenario: "Scenario") -> None:
 
 def gen_plastics_emission_factors(
     info, species: Literal["methanol", "HVCs", "ethanol"]
-) -> "ParameterData":
-    """Generate "CO2_Emission" relation parameter to account stored carbon in plastics.
-
+) -> dict[str, pd.DataFrame]:
+    """Generate "CO2_Emission" relation parameter that
+    represents stored carbon in produced plastics.
     The calculation considers:
-
     * carbon content of feedstocks,
     * the share that is converted to plastics
     * the end-of-life treatment (i.e. incineration, landfill, etc.)
 
-    *NOTE:
-    Values are negative since they need to be deducted from top-down accounting, which
-    assumes that all extracted carbonaceous resources are released as carbon emissions.
-    (Which would not be correct for carbon used in long-lived products)*
+    Values are negative since they need to be deducted
+    from top-down accounting, which assumes that all extracted
+    carbonaceous resources are released as carbon emissions.
+    (Which is not correct for carbon used in long-lived products)
 
     Parameters
     ----------
-    species
+    species:
         feedstock species to generate relation for
+    info: ScenarioInfo
+
+    Returns
+    -------
+    Dict[str, pd.DataFrame]
     """
 
     tec_species_map = {"methanol": "meth_ind_fs", "HVCs": "production_HVC"}
@@ -1086,31 +1091,36 @@ def gen_plastics_emission_factors(
 
 def gen_chemicals_co2_ind_factors(
     info, species: Literal["methanol", "HVCs"]
-) -> "ParameterData":
-    """Generate `CO2_ind` ``relation_activity`` values for chemical production.
-
-    The values represent the carbon in chemical feedstocks which is oxidized in the
-    short-term (i.e. during the model horizon) in downstream products. Oxidation either
-    through natural oxidation or combustion as the end-of-life treatment of plastics.
+) -> dict[str, pd.DataFrame]:
+    """Generate "CO2_ind" relation parameter that
+    represents carbon in chemical feedstocks that is oxidized in the
+    short-term (=during the model horizon) in downstream products.
+    This happens either through natural oxidation or combustion as the
+    end-of-life treatment of plastics.
 
     The calculation considers:
-
     * carbon content of feedstocks,
     * the share that is converted to oxidizable chemicals
     * the end-of-life treatment shares (i.e. incineration, landfill, etc.)
 
-    *NOTE: Values are positive since they need to be added to bottom-up emission
-    accounting.*
+    Values are positive since they need to be added
+    to bottom-up emission accounting.
 
     Parameters
     ----------
     species:
         feedstock species to generate relation for
+    info: ScenarioInfo
+
+    Returns
+    -------
+    Dict[str, pd.DataFrame]
     """
 
     tec_species_map = {
         "methanol": "meth_ind_fs",
         "HVCs": "production_HVC",
+        "ethanol": "ethanol_to_ethylene_petro",
     }
 
     carbon_pars = read_yaml_file(
@@ -1174,20 +1184,28 @@ def gen_chemicals_co2_ind_factors(
     return {"relation_activity": co2_emi_rel}
 
 
-def gen_ethanol_to_ethylene_emi_factor(info: ScenarioInfo) -> "ParameterData":
-    """Generate `CO2_ind` ``relation_activity`` values for `ethanol_to_ethylene_petro`.
+def gen_ethanol_to_ethylene_emi_factor(info) -> dict[str, pd.DataFrame]:
+    """Generate "CO2_ind" relation parameter that
+    represents carbon in chemical feedstocks that is oxidized in the
+    short-term (=during the model horizon) in downstream products.
+    This happens either through natural oxidation or combustion as the
+    end-of-life treatment of plastics.
 
-    The values represent the carbon in chemical feedstocks which is oxidized in the
-    short-term (i.e. during the model horizon) in downstream products. Oxidation either
-    through natural oxidation or combustion as the end-of-life treatment of plastics.
+    The calculation considers:
+    * carbon content of feedstocks,
+    * the share that is converted to oxidizable chemicals
+    * the end-of-life treatment shares (i.e. incineration, landfill, etc.)
 
-     The calculation considers:
+    Values are positive since they need to be added
+    to bottom-up emission accounting.
 
-     * carbon content of feedstocks,
-     * the share that is converted to oxidizable chemicals
-     * the end-of-life treatment shares (i.e. incineration, landfill, etc.)
+    Parameters
+    ----------
+    info: ScenarioInfo
 
-     *NOTE: Values are positive since they are added to bottom-up CO2 accounting.*
+    Returns
+    -------
+    Dict[str, pd.DataFrame]
     """
 
     carbon_pars = read_yaml_file(

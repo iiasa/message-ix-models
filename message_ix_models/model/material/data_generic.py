@@ -1,15 +1,7 @@
-"""
-Data and parameter generation for generic furnace and boiler technologies in
-MESSAGEix-Materials model.
-
-This module provides functions to read, process, and generate parameter data for generic
-furnace and boiler technologies, including emission coefficients and generic relations.
-"""
-
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, List
 
+import message_ix
 import pandas as pd
 from message_ix import Scenario, make_df
 
@@ -26,26 +18,10 @@ from .util import read_config
 
 log = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from message_ix import Scenario
 
-    from message_ix_models.types import ParameterData
+def read_data_generic(scenario: Scenario) -> (pd.DataFrame, pd.DataFrame):
+    """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
 
-
-def read_data_generic(scenario: "Scenario") -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Read and clean data from the generic furnace and boiler techno-economic file.
-
-    Parameters
-    ----------
-    scenario : Scenario
-        Scenario instance to build generic technologies on.
-
-    Returns
-    -------
-    tuple of pd.DataFrame
-        - DataFrame with static techno-economic data.
-        - DataFrame with time-series data.
-    """
     # Read the file
     data_generic = pd.read_excel(
         package_data_path(
@@ -68,25 +44,7 @@ def read_data_generic(scenario: "Scenario") -> tuple[pd.DataFrame, pd.DataFrame]
     return data_generic, data_generic_ts
 
 
-def add_non_co2_emission_coefficients(
-    scen: "Scenario", df_input: pd.DataFrame, method="from_disk"
-):
-    """Derive non-CO2 emission coefficients for furnaces.
-
-    Parameters
-    ----------
-    scen : Scenario
-        Scenario instance.
-    df_input : pd.DataFrame
-        DataFrame of furnace input parameters.
-    method : str, optional
-        Method to obtain emission coefficients ("from_disk" or "from_scenario").
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with non-CO2 emission coefficients for furnaces.
-    """
+def add_non_co2_emission_coefficients(scen, df_input, method="from_disk"):
     if method == "from_disk":
         df_emi = pd.read_csv(
             package_data_path(
@@ -101,23 +59,7 @@ def add_non_co2_emission_coefficients(
     return df_furnace_emi
 
 
-def add_ind_therm_link_relations(tecs: List[str], years: List[str], nodes: List[str]):
-    """Generate industrial thermal demand link relation values for given technologies.
-
-    Parameters
-    ----------
-    tecs
-        List of technology names.
-    years
-        List of years for relation activity.
-    nodes
-        List of model nodes.
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with relation_activity for industrial thermal demand links.
-    """
+def add_ind_therm_link_relations(tecs, years, nodes):
     col_val_dict = {
         "relation": "IndThermDemLink",
         "mode": ["high_temp", "low_temp"],
@@ -146,21 +88,9 @@ def add_ind_therm_link_relations(tecs: List[str], years: List[str], nodes: List[
     return df
 
 
-def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterData":
-    """Generate all parameter data for sectoral furnace and boiler technologies.
-
-    Parameters
-    ----------
-    scenario
-        Scenario instance to build generic technologies on.
-    dry_run
-        If True, do not perform any file writing or scenario modification.
-
-    Returns
-    -------
-    dict[str, pd.DataFrame]
-        Dictionary with MESSAGEix parameters as keys and parametrization as values.
-    """
+def gen_data_generic(
+    scenario: Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     # Load configuration
 
     config = read_config()["material"]["generic"]
@@ -280,30 +210,8 @@ def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterD
 
                 results[param_name].append(df)
 
-    gen_data_generic_ts(data_generic_ts, results, nodes, global_region)
+    # Special treatment for time-varying params
 
-    results["relation_activity"].append(
-        add_non_co2_emission_coefficients(scenario, pd.concat(results["input"]))
-    )
-    results["relation_activity"].append(
-        add_ind_therm_link_relations(
-            [t.id for t in config["technology"]["add"]],
-            yv_ya["year_act"].unique(),
-            nodes,
-        )
-    )
-    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-    reduced_pdict = {}
-    for k, v in results.items():
-        if {"year_act", "year_vtg"}.issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-    return reduced_pdict
-
-
-def gen_data_generic_ts(
-    data_generic_ts: pd.DataFrame, results, nodes: List[str], global_region: str
-) -> None:
     tec_ts = set(data_generic_ts.technology)  # set of tecs in timeseries sheet
 
     for t in tec_ts:
@@ -386,19 +294,40 @@ def gen_data_generic_ts(
 
             results[p].append(df)
 
+    results["relation_activity"].append(
+        add_non_co2_emission_coefficients(scenario, pd.concat(results["input"]))
+    )
+    results["relation_activity"].append(
+        add_ind_therm_link_relations(
+            [t.id for t in config["technology"]["add"]],
+            yv_ya["year_act"].unique(),
+            nodes,
+        )
+    )
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+    reduced_pdict = {}
+    for k,v in results.items():
+        if {"year_act", "year_vtg"}.issubset(v.columns):
+            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
+        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
+    return reduced_pdict
 
-def get_thermal_industry_emi_coefficients(scen: "Scenario") -> pd.DataFrame:
-    """Retrieve and normalize non-CO2 emission coefficients of ``i_therm`` technologies.
+
+def get_thermal_industry_emi_coefficients(scen: message_ix.Scenario) -> pd.DataFrame:
+    """
+    Pulls existing parametrization for non-CO2 emission
+    coefficients of given Scenario instance
+
+    Pulls MESSAGEix-GLOBIOM emission coefficients from "relation_activity"
+    and normalizes them to fuel inputs
 
     Parameters
     ----------
-    scen
-        Scenario instance to retrieve emission coefficients from.
-
+    scen: message_ix.Scenario
+        Scenario instance to pull emission coefficients from
     Returns
     -------
     pd.DataFrame
-        Normalized emission coefficients indexed by node, year, and technology.
     """
     ind_th_tecs = ["biomass_i", "coal_i", "eth_i", "foil_i", "gas_i", "loil_i"]
     relations = [
@@ -431,20 +360,22 @@ def get_thermal_industry_emi_coefficients(scen: "Scenario") -> pd.DataFrame:
     return df_joined
 
 
-def get_furnace_inputs(scen: "Scenario", first_year: int) -> pd.DataFrame:
-    """Query input coefficients for furnace technologies from a Scenario instance.
+def get_furnace_inputs(scen: message_ix.Scenario, first_year: int) -> pd.DataFrame:
+    """Return existing parametrization for input coefficients of given Scenario instance
+     and returns only for technologies with "furnace" in the name
 
     Parameters
     ----------
-    scen
-        Scenario instance to pull input parameter from.
-    first_year
-        Earliest year for which furnace input parameter should be retrieved.
+    scen: message_ix.Scenario
+        Scenario instance to pull input parameter from
+    first_year: int
+        Earliest year for which furnace input parameter should be retrieved
 
     Returns
     -------
     pd.DataFrame
-        Furnace input parameters indexed by node, year, commodity, and technology.
+        a dataframe of furnace input paramter with index
+        ["node_loc", "year_act", "commodity", "technology"]
     """
     furn_tecs = "furnace"
     df_furn = scen.par("input")
@@ -459,22 +390,21 @@ def get_furnace_inputs(scen: "Scenario", first_year: int) -> pd.DataFrame:
 def calculate_furnace_non_co2_emi_coeff(
     df_furn: pd.DataFrame, df_emi: pd.DataFrame
 ) -> pd.DataFrame:
-    """Scale emission factors of furnace technologies with input coefficients.
-
-    ``input`` and ``CO2_ind`` ``relation_activity`` DataFrames are used to scale non-CO2
-    emission factors for furnaces.
+    """
+    Joins input and emission coefficient DataFrames on
+    region, year and commodity to derive correct
+    non-CO2 emission factor parameter for industry furnaces
 
     Parameters
     ----------
-    df_furn
-        DataFrame containing input parametrization of furnaces.
-    df_emi
-        DataFrame containing input-normalized non-CO2 emission coefficients.
+    df_furn: pd.DataFrame
+        DataFrame containing input parametrization of furnaces
+    df_emi: pd.DataFrame
+        DataFrame containing input normalized non-CO2 emission coefficients
 
     Returns
     -------
     pd.DataFrame
-        DataFrame with relation_activity for non-CO2 emissions from furnaces.
     """
     df_final = (
         pd.DataFrame(

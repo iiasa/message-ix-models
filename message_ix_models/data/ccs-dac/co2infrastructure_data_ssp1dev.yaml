@@ -475,7 +475,7 @@ biomass_NH3_ccs:
   year_init: 2030
   output_:
     par_name: output
-    value: 0.34799
+    value: 1.2769
     unit: Mt C/yr
     node_loc:
       R12_AFR: 1
@@ -766,6 +766,30 @@ co2_trans1:
       year: 1
     mode:
       all: 1
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
 
 co2_trans2:
   year_init: 2030
@@ -965,7 +989,31 @@ co2_trans2:
       rate: 0
     mode:
       M1: 1
-
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
+    node_loc:
+      R12_AFR: 1
+      R12_CHN: 1
+      R12_RCPA: 1
+      R12_EEU: 1
+      R12_FSU: 1
+      R12_LAM: 1
+      R12_MEA: 1
+      R12_NAM: 1
+      R12_PAO: 1
+      R12_PAS: 1
+      R12_SAS: 1
+      R12_WEU: 1
+    year_act:
+      rate: 0
+    mode:
+      M1: 1
+    
 
 
 # - - - - - - - - - - - - - - - -
@@ -1045,52 +1093,6 @@ co2_stor:
       bic_co2: 1
     level:
       final: 1
-  output_co2:
-    par_name: output
-    value: 0.99
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    mode:
-      M1: 1
-    commodity:
-      fic_co2: 1
-    level:
-      useful: 1
-  output_bco2:
-    par_name: output
-    value: 0.99
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    mode:
-      M2: 1
-    commodity:
-      bic_co2: 1
-    level:
-      useful: 1
   capacity_factor_:
     par_name: capacity_factor
     value: 1
@@ -1133,14 +1135,13 @@ co2_stor:
     mode:
       M1: 1
       M2: 1
-
-#--- For utilization
-co2_util:
-  year_init: 2030
-  var_cost_: 
-    par_name: var_cost
-    value: 0
-    unit: '-' #$/tCO2a
+  relation_activity_CO2_cc:
+    par_name: relation_activity
+    value: 0.01
+    unit: Mt C/yr
+    relation: [CO2_cc]
+    year_rel:
+      rate: 0
     node_loc:
       R12_AFR: 1
       R12_CHN: 1
@@ -1154,19 +1155,18 @@ co2_util:
       R12_PAS: 1
       R12_SAS: 1
       R12_WEU: 1
-    year_vtg:
-      rate: 0
     year_act:
       rate: 0
     mode:
       M1: 1
       M2: 1
-      M3: 1
-    time:
-      year: 1
-  input_co2:
+
+#--- For utilization
+meth_h2:
+  year_init: 2030
+  input_co2_fic:
     par_name: input
-    value: 1
+    value: 0.549
     unit: '-'
     node_loc:
       R12_AFR: 1
@@ -1182,14 +1182,15 @@ co2_util:
       R12_SAS: 1
       R12_WEU: 1
     mode:
-      M1: 1
+      feedstock_fic: 1
+      fuel_fic: 1
     commodity:
       fic_co2: 1
     level:
       final: 1
-  input_bco2:
+  input_co2_bic:
     par_name: input
-    value: 1
+    value: 0.549
     unit: '-'
     node_loc:
       R12_AFR: 1
@@ -1205,14 +1206,15 @@ co2_util:
       R12_SAS: 1
       R12_WEU: 1
     mode:
-      M2: 1
+      feedstock_bic: 1
+      fuel_bic: 1
     commodity:
       bic_co2: 1
     level:
       final: 1
-  input_dacco2:
+  input_co2_dac:
     par_name: input
-    value: 1
+    value: 0.549
     unit: '-'
     node_loc:
       R12_AFR: 1
@@ -1228,77 +1230,9 @@ co2_util:
       R12_SAS: 1
       R12_WEU: 1
     mode:
-      M3: 1
+      feedstock_dac: 1
+      fuel_dac: 1
     commodity:
       dac_co2: 1
-    level:
-      final: 1
-  output_co2:
-    par_name: output
-    value: 1
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    mode:
-      M1: 1
-      M2: 1
-      M3: 1
-    commodity:
-      captured_co2: 1
-    level:
-      final: 1
-  capacity_factor_:
-    par_name: capacity_factor
-    value: 1
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-
-meth_h2:
-  year_init: 2030
-  input_co2:
-    par_name: input
-    value: 1.821
-    unit: '-'
-    node_loc:
-      R12_AFR: 1
-      R12_CHN: 1
-      R12_RCPA: 1
-      R12_EEU: 1
-      R12_FSU: 1
-      R12_LAM: 1
-      R12_MEA: 1
-      R12_NAM: 1
-      R12_PAO: 1
-      R12_PAS: 1
-      R12_SAS: 1
-      R12_WEU: 1
-    mode:
-      feedstock: 1
-      fuel: 1
-    commodity:
-      captured_co2: 1
     level:
       final: 1

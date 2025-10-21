@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Literal, Union
+from typing import TYPE_CHECKING, Any, List, Literal
 
 import message_ix
 import pandas as pd
@@ -24,13 +24,14 @@ if TYPE_CHECKING:
 def gen_com_share_df(
     shr_name: str, df_vals: pd.DataFrame, type: Literal["up", "lo"] = "up"
 ) -> pd.DataFrame:
-    """Generate DataFrame for ``share_commodity_up/lo`` parameter.
+    """
+    Generates DataFrame for "share_commodity_up/lo" parameter of MESSAGEix
 
     Parameters
     ----------
-    shr_name
+    shr_name: str
         name of the share constraint
-    df_vals
+    df_vals: pd.DataFrame
         DataFrame with columns ["node", "Value"]
     type
         "lo" for minimum constraint and "up" for maximum constraint
@@ -38,12 +39,14 @@ def gen_com_share_df(
     Returns
     -------
     pd.DataFrame
-        ``share_commodity_up/lo`` parameter data
+        in MESSAGEix "share_commodity_up/lo" parameter format
     -------
     """
-    df_share_com_lo = make_df(f"share_commodity_{type}", **df_vals).assign(
-        shares=shr_name, time="year", unit="-"
-    )
+    df_share_com_lo = make_df(f"share_commodity_{type}", **df_vals)
+    df_share_com_lo["time"] = "year"
+    df_share_com_lo["shares"] = shr_name
+    df_share_com_lo["unit"] = "-"
+
     return df_share_com_lo
 
 
@@ -55,7 +58,7 @@ def add_new_share_cat(
     all_tecs: List[str],
     shr_tecs: List[str],
 ):
-    """Register new share name and technology mappings to scenario.
+    """
 
     Parameters
     ----------
@@ -87,8 +90,10 @@ def remove_share_cat(
     shr_name: str,
     type_tec_all_name: str,
     type_tec_shr_name: str,
+    all_tecs: List[str],
+    shr_tecs: List[str],
 ) -> None:
-    """Remove name from ``shares`` and ``type_tec`` categories from scenario.
+    """
 
     Parameters
     ----------
@@ -107,8 +112,8 @@ def remove_share_cat(
     """
     scen.check_out()
     scen.remove_set("shares", shr_name)
-    scen.remove_set("type_tec", type_tec_all_name)
-    scen.remove_set("type_tec", type_tec_shr_name)
+    scen.remove_cat("technology", type_tec_all_name, all_tecs)
+    scen.remove_cat("technology", type_tec_shr_name, shr_tecs)
     scen.commit(
         f"Share: {shr_name} deleted. Total and share technologies "
         f"({type_tec_all_name} & {type_tec_shr_name}) category removed."
@@ -122,19 +127,19 @@ def gen_comm_map(
     tecs: List[str],
     nodes: List[str],
 ) -> pd.DataFrame:
-    """Generate ``map_shares_commodity_total/share`` for technology ``input`` commodity.
+    """
 
     Parameters
     ----------
     scen
     shr_const_name
-        name of share
     type_tec
-        name of technology group used to calculate numerator or denominator for share
     tecs
-        list of technologies that should belong to ``type_tec``
     nodes
-        list of nodes to create mapping for
+
+    Returns
+    -------
+
     """
     df_set_all = pd.DataFrame(
         {
@@ -173,47 +178,41 @@ def gen_comm_shr_map(
     type_tec_shr_name: str,
     tecs_all: List[str],
     tecs_shr: List[str],
-    nodes: Union[str, List[str]] = "all",
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+    nodes: str or List[str] = "all",
+) -> [pd.DataFrame, pd.DataFrame]:
     """
 
     Parameters
     ----------
     scen
     cnstrnt_name
-        name of share
     type_tec_all_name
-        ``type_tec`` name for technologies used to calculate denominator of share
     type_tec_shr_name
-        ``type_tec`` name for technologies used to calculate numerator of share
     tecs_all
-        list of technologies for ``type_tec`` type_tec_all
     tecs_shr
-        list of technologies for ``type_tec`` type_tec_shr
     nodes
-        list of nodes to create mapping for or "all" for all nodes of scenario
+
+    Returns
+    -------
+    [pd.DataFrame, pd.DataFrame]
+    -------
     """
     s_info = ScenarioInfo(scen)
     if nodes == "all":
-        nodes_list = nodes_ex_world(s_info.N)
-    elif isinstance(nodes, str) and nodes in nodes_ex_world(s_info.N):
-        nodes_list = [nodes]  # wrap single node into list
-    elif isinstance(nodes, list):
-        nodes_list = nodes  # already a list of str
-    else:
-        valid = nodes_ex_world(s_info.N)
-        raise ValueError(
+        nodes = nodes_ex_world(s_info.N)
+    elif nodes not in nodes_ex_world(s_info.N):
+        print(
             f"The provided nodes: {nodes} are not contained in this scenario. "
-            f"Valid nodes of this scenario are: {valid}"
+            f"Valid nodes of this scenario are: {nodes_ex_world(s_info.N)}"
         )
+        return
 
-    df_all_set = gen_comm_map(
-        scen, cnstrnt_name, type_tec_all_name, tecs_all, nodes_list
+    df_all_set = gen_comm_map(scen, cnstrnt_name, type_tec_all_name, tecs_all, nodes)
+    df_shr_set = gen_comm_map(scen, cnstrnt_name, type_tec_shr_name, tecs_shr, nodes)
+    return (
+        df_all_set,
+        df_shr_set,
     )
-    df_shr_set = gen_comm_map(
-        scen, cnstrnt_name, type_tec_shr_name, tecs_shr, nodes_list
-    )
-    return df_all_set, df_shr_set
 
 
 def gen_comm_shr_par(
@@ -221,23 +220,28 @@ def gen_comm_shr_par(
     cname: str,
     shr_vals_df: pd.DataFrame,
     shr_type: Literal["up", "lo"] = "up",
-    years: Union[str, List[int]] = "all",
-) -> DataFrame:
+    years: str or List[int] = "all",
+) -> tuple[DataFrame, Any]:
     """Generates data frame for "share_commodity_up/lo" parameter with given values for
     node_share and broadcasts them for given "years".
 
     Parameters
     ----------
-    scen
+    scen: .Scenario
         used if years == "all" to obtain model years for column "year"
-    cname
+    cname: str
         code to use for "share" column
-    shr_vals_df
+    shr_vals_df: pd.DataFrame
         data frame with columns ["node_share", "value"]
-    shr_type
+    shr_type: str
         "up" or "lo"
-    years
+    years: str or list of int
         "all" to generate for all optimization years of scen or list of years
+
+    Returns
+    -------
+    pd.DataFrame
+        with "share_commodity_up/lo" columns
     """
     req_cols = ["node_share", "value"]
     check_cols = any(item in shr_vals_df for item in req_cols)
@@ -251,7 +255,7 @@ def gen_comm_shr_par(
         df_final["year_act"] = None
         df_final = df_final.pipe(broadcast, year_act=years)
 
-    df_shares: pd.DataFrame = gen_com_share_df(cname, df_final, shr_type)
+    df_shares = gen_com_share_df(cname, df_final, shr_type)
     return df_shares
 
 
@@ -264,27 +268,38 @@ def add_comm_share(
     shr_tecs: List[str],
     shr_vals: pd.DataFrame,
     shr_type: Literal["up", "lo"] = "up",
-    years: Union[str, List[int]] = "all",
+    years: List[str] = "all",
 ):
-    """Convenience function that adds commodity share constraint to a scenario.
+    """
+    Convenience function that adds commodity share constraint to a scenario.
 
     This process requires a numer of steps:
+    1) Register name of share in "shares" set
+    2a) Register new "type_tec" mapping of technologies that should be considered to
+            calculate the "total"
+    2b) Register new "type_tec" mapping of technologies that should be considered to
+            calculate the "share"
+    3) Add "map_shares_commodity_share/total" mapping:
+        a) Obtain involved commodities by inspecting "input" of the list of technologies
+            for both "total" and "share" technologies
+        b) Create row for each combination of nodes and commodity
+        c) Add generated DataFrames with scenario.add_cat()
+    4) Add share constraint parametrization:
+        a) Read values from "shr_vals" argument for each node
+        b) Duplicate regional entry for each specified year in "years"
+        c) Add generated DataFrames with scenario.add_par()
 
-    1. Register name of share in ``shares`` set
-    2. Register new ``type_tec`` mapping of technologies that should be considered to
-       calculate the ``total``
-    3. Register new ``type_tec`` mapping of technologies that should be considered to
-       calculate the ``share``
-    4. Add ``map_shares_commodity_share/total`` mapping
-        a. Obtain involved commodities by inspecting ``input`` of the list of
-           technologies for both "total" and "share" technologies
-        b. Create row for each combination of nodes and commodity
-        c. Add generated mapping to ``scen``
-
-    5. Add share constraint parametrization
-        a. Read values from ``shr_vals`` argument for each node
-        b. Duplicate regional entry for each specified year in ``years``
-        c. Add generated data to ``scen``
+    Parameters
+    ----------
+    scen
+    name
+    set_tot
+    set_share
+    all_tecs
+    shr_tecs
+    shr_vals
+    shr_type
+    years
     """
     print(f"Adding share constraint: {name}.")
 
@@ -310,21 +325,28 @@ def remove_comm_share(
     set_share: str,
     all_tecs: List[str],
     shr_tecs: List[str],
-) -> None:
-    """Convenience function that removes commodity share constraint.
+):
+    """
+    Convenience function that removes commodity share constraint
+    that was previously added with .add_comm_share() from a scenario
 
     Parameters
     ----------
-    scen
-    name
-    set_tot
-    set_share
-    all_tecs
-    shr_tecs
+    scen: .Scenario
+    name: str
+
+    set_tot: str
+
+    set_share: str
+
+    all_tecs: list of str
+
+    shr_tecs: list of str
+
     """
     print(f"Removing share constraint: {name}.")
 
-    remove_share_cat(scen, name, set_tot, set_share)
+    remove_share_cat(scen, name, set_tot, set_share, all_tecs, shr_tecs)
 
     scen.check_out()
     com_map_tot, com_map_shr = gen_comm_shr_map(
@@ -334,14 +356,10 @@ def remove_comm_share(
     scen.remove_set("map_shares_commodity_total", com_map_tot)
 
 
-def add_foil_shr_constraint() -> None:
-    """Generate fuel oil share constraint for MESSAGEix-Materials industry sectors.
-
-    ** Not used in model build at the moment. **
-    """
-    # shr_const = "share_low_lim_foil_ind"
-    # type_tec_shr = "foil_cement"
-    # type_tec_tot = "all_cement"
+def add_foil_shr_constraint():
+    shr_const = "share_low_lim_foil_ind"
+    type_tec_shr = "foil_cement"
+    type_tec_tot = "all_cement"
 
     from share_constraints_constants import foil_ind_tecs_ht, non_foil_ind_tecs_ht
 
@@ -349,7 +367,7 @@ def add_foil_shr_constraint() -> None:
         r"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/furnace_foil_cement_share.csv",
         usecols=[0, 2],
     )
-    df_furn_cement = df_furn_cement.set_axis(["node_share", "value"], axis=1)
+    df_furn_cement.columns = ["node_share", "value"]
     all_ind_tecs = {
         a[0]: [a[1], *b[1]]
         for a, b in zip(foil_ind_tecs_ht.items(), non_foil_ind_tecs_ht.items())
@@ -365,12 +383,11 @@ def add_foil_shr_constraint() -> None:
     sc_clone = scen.clone(scen.model, scen.scenario + "foil_furn", keep_solution=False)
 
     for sec in foil_sectors:
-        # df_sec_foil_shr = pd.read_csv(
-        # f"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/
-        # furnace_foil_{sec}_share.csv",
-        #     usecols=[0, 2],
-        # )
-        df_furn_cement = df_furn_cement.set_axis(["node_share", "value"], axis=1)
+        df_sec_foil_shr = pd.read_csv(
+            rf"C:/Users\maczek\PycharmProjects\IEA_activity_calib_SSP/furnace_foil_{sec}_share.csv",
+            usecols=[0, 2],
+        )
+        df_furn_cement.columns = ["node_share", "value"]
         add_comm_share(
             sc_clone,
             f"{sec}_foil",
@@ -383,8 +400,7 @@ def add_foil_shr_constraint() -> None:
         )
 
 
-def add_industry_coal_shr_constraint(scen: "Scenario") -> None:
-    """Add an upper share constraint for coal use in residual industry sector."""
+def add_industry_coal_shr_constraint(scen: "Scenario"):
     name = "UE_industry_th_coal"
     share_reg_values = pd.read_csv(
         package_data_path("material", "other", "coal_i_shares_2020.csv")
@@ -401,12 +417,7 @@ def add_industry_coal_shr_constraint(scen: "Scenario") -> None:
     )
 
 
-def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp) -> pd.DataFrame:
-    """Generate SSP-specific parametrization for ``UE_industry_th_low_temp_heat``.
-
-    Updates the original constraint values of MESSAGEix-GLOBIOM to reflect structural
-    differences in MESSAGEix-Materials industry sector based on SSP narrative.
-    """
+def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp: str):
     lt_heat_shr_start = 0.35
     ssp_lt_heat_shr_end = {
         "SSP1": 0.65,

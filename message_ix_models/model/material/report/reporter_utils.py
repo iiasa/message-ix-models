@@ -1,5 +1,7 @@
+import itertools
+
 import message_ix
-from genno import Key
+import pandas as pd
 
 comm_tec_map = {
     "coal": ["meth_coal", "meth_coal_ccs"],
@@ -9,19 +11,84 @@ comm_tec_map = {
 }
 
 
+def create_var_map_from_yaml_dict(dictionary: dict):
+    """Creates a 1-to-n mapping for IAMC template variable to the
+    corresponding query keys.
+    The used query keys are the MESSAGEix sets: technology,
+    mode, commodity, level. The resulting map is represented by
+    a pandas DataFrame with the columns:
+    - iamc_name
+    - short_name
+    - unit
+    - technology
+    - mode
+    - commodity
+    - level
+
+    Parameters
+    ----------
+    dictionary: dict
+        a dictionary with the required information about the mapping
+        needs the following tree structure of key-value pairs:
+        - "vars"
+            - "filter"
+            - "short"
+        - "common"
+            - "unit"
+
+    Returns
+    -------
+
+    """
+    data = dictionary["vars"]
+    all = pd.DataFrame()
+    unit = dictionary["common"]["unit"]
+    for iamc_key, values in data.items():
+        # Extract relevant information
+        filter_data = values["filter"]
+        short_name = values["short"]
+
+        # Create a list to hold the modified entries
+        # Iterate over the list of technologies
+        data = {k: [v] if isinstance(v, str) else v for k, v in filter_data.items()}
+        combinations = list(itertools.product(*data.values()))
+
+        # Create DataFrame
+        df = pd.DataFrame(combinations, columns=data.keys())
+        df["iamc_name"] = iamc_key
+        df["short_name"] = short_name
+        if "unit" in list(values.keys()):
+            df["unit"] = values["unit"]
+        else:
+            df["unit"] = unit
+
+        # append
+        all = pd.concat([all, df])
+
+    rename_dict = {"mode": "m", "technology": "t", "level": "l", "commodity": "c"}
+    rename_dict = {k: v for k, v in rename_dict.items() if k in all.columns}
+
+    all = all.rename(columns=rename_dict).set_index(list(rename_dict.values()))
+    return all
+
+
 def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
-    """Prepare reporter to compute regional bio-methanol shares of regional production.
+    """Prepare reporter to compute regional bio-methanol
+    shares of regional total methanol production.
+    Reporter can compute share with key: share::biomethanol
 
-    Reporter can compute share with key: ``share::biomethanol``
+    Steps:
+    1) Select all methanol production output
+    2) Aggregate vintages to get production by technology for
+        each year and node (methanol-by-tec)
+    3) Aggregate to get global totals (methanol-total)
+    4) Calculate methanol output shares by technology
+    5) Aggregate meth_bio_ccs and meth_bio shares to get total
+        bio-methanol share
 
-    Computation steps:
-
-    1. Select all methanol production output
-    2. Aggregate vintages to get production by technology for each year and node
-       (methanol-by-tec)
-    3. Aggregate to get global totals (methanol-total)
-    4. Calculate methanol output shares by technology
-    5. Aggregate meth_bio_ccs and meth_bio shares to get total bio-methanol share
+    Parameters
+    ----------
+    rep
     """
     t_filter2 = {
         "t": [
@@ -34,10 +101,10 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
             "meth_h2",
         ],
         "c": ["methanol"],
-        "l": "primary",
+        "l": "primary_material",
     }
-    if mode == "feedstock":
-        t_filter2.update({"l": ["primary_material"]})
+    if mode == "fuel":
+        t_filter2.update({"l": ["primary"]})
 
     rep.add("out::methanol-prod", "select", "out:nl-t-ya-c-l", t_filter2)
     rep.add(
@@ -72,27 +139,29 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
 
 def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
     """Prepare reporter to compute bio-methanol exports.
+    Reporter can compute exports with key: out::biomethanol-export
 
-    Reporter can compute exports with key: ``out::biomethanol-export``
+    Steps:
+    1) Select all methanol export outputs
+    2) Aggregate to get global totals (methanol-total)
+    3) Calculate bio-methanol exports by multiplying
+    regional exports with regional bio-methanol production shares
 
-    Computation steps:
-
-    1. Select all methanol export outputs.
-    2. Aggregate to get global totals (methanol-total).
-    3. Calculate bio-methanol exports by multiplying regional exports with regional
-       bio-methanol production shares.
+    Parameters
+    ----------
+    rep
     """
     add_methanol_share_calculations(rep, mode=mode)
-    t_filter2 = {"t": "meth_exp", "m": mode}
-    rep.add("out::methanol-export", "select", "out:nl-t-ya-m", t_filter2)
-    rep.add(
-        "out::methanol-export-total",
-        "group_sum",
-        "out::methanol-export",
-        group="ya",
-        sum="nl",
-    )
     for comm in comm_tec_map.keys():
+        t_filter2 = {"t": "meth_exp", "m": mode}
+        rep.add("out::methanol-export", "select", "out:nl-t-ya-m", t_filter2)
+        rep.add(
+            "out::methanol-export-total",
+            "group_sum",
+            "out::methanol-export",
+            group="ya",
+            sum="nl",
+        )
         rep.add(
             f"out::{comm}methanol-export",
             "mul",
@@ -103,21 +172,27 @@ def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
 
 def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstock"):
     """Prepare reporter to compute bio-methanol import indicators.
+    Reporter can compute imports with key: out::biomethanol-import
 
-    Reporter can compute imports with key: ``out::biomethanol-import``
+    Steps:
+    1) Select all methanol import outputs
+    2) Calculate bio-methanol share of global trade pool
+        by dividing all bio-methanol exports by all methanol exports
+    3) Compute bio-methanol imports by multiplying bio-methanol
+        share of global trade pool with regional imports
+    4) Calculate share of bio-methanol import as a fraction of
+        regional methanol production
 
-    1. Select all methanol import outputs.
-    2. Calculate bio-methanol share of global trade pool by dividing all bio-methanol
-       exports by all methanol exports.
-    3. Compute bio-methanol imports by multiplying bio-methanol share of global trade
-       pool with regional imports.
-    4. Calculate share of bio-methanol import as a fraction of regional methanol
-       production.
+    Parameters
+    ----------
+    rep
     """
+
     add_meth_export_calculations(rep, mode=mode)
-    t_filter2 = {"t": "meth_imp", "m": mode}
-    rep.add("out::methanol-import", "select", "out:nl-t-ya-m", t_filter2)
     for comm in comm_tec_map.keys():
+        t_filter2 = {"t": "meth_imp", "m": mode}
+        rep.add("out::methanol-import", "select", "out:nl-t-ya-m", t_filter2)
+
         rep.add(
             f"out::{comm}methanol-export-total",
             "group_sum",
@@ -131,6 +206,7 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
             f"out::{comm}methanol-export-total",
             "out::methanol-export-total",
         )
+
         rep.add(
             f"out::{comm}methanol-import",
             "mul",
@@ -146,12 +222,15 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
 
 
 def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
-    """Prepare reporter to compute bio-methanol supply to final level.
-
-    Reporter can compute bio-methanol with key: ``out::biomethanol-final``
+    """Prepare reporter to compute bio-methanol supply to final level
+    Reporter can compute bio-methanol with key: out::biomethanol-final
 
     Bio-methanol supply to final level is defined as:
-    *Domestic production + Import - Exports*
+    Domestic production + Import - Exports
+
+    Parameters
+    ----------
+    rep
     """
     add_meth_import_calculations(rep, mode=mode)
     if mode == "feedstock":
@@ -164,9 +243,11 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
             "t": ["meth_t_d", "furnace_methanol_refining"],
             "m": [mode, "high_temp"],
         }
-    rep.add("in::methanol-final0", "select", "in:nl-t-ya-m", t_filter2)
-    rep.add("in::methanol-final", "sum", "in::methanol-final0", dimensions=["t", "m"])
     for comm in comm_tec_map.keys():
+        rep.add("in::methanol-final0", "select", "in:nl-t-ya-m", t_filter2)
+        rep.add(
+            "in::methanol-final", "sum", "in::methanol-final0", dimensions=["t", "m"]
+        )
         rep.add(
             f"out::{comm}methanol-prod",
             "mul",
@@ -176,9 +257,11 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
         rep.add(
             f"out::{comm}methanol-final",
             "combine",
-            f"out::{comm}methanol-prod",
-            f"out::{comm}methanol-export",
-            f"out::{comm}methanol-import",
+            *[
+                f"out::{comm}methanol-prod",
+                f"out::{comm}methanol-export",
+                f"out::{comm}methanol-import",
+            ],
             weights=[1, -1, 1],
         )
         rep.add(
@@ -191,13 +274,15 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
 
 def add_ammonia_non_energy_computations(rep: message_ix.Reporter):
     """Prepare reporter to compute process energy input for ammonia production.
+    Reporter can compute process energy inputs with key: "in::nh3-process-energy"
 
-    Reporter can compute process energy inputs with key: ``in::nh3-process-energy``
+    Steps:
+    1) Select all feedstock inputs for ammonia production
+    2) Subtract ammonia energy output from feedstock input to get process energy input
 
-    Computation steps:
-
-    1. Select all feedstock inputs for ammonia production
-    2. Subtract ammonia energy output from feedstock input to get process energy input
+    Parameters
+    ----------
+    rep
     """
     t_filter1 = {
         "t": [
@@ -224,39 +309,43 @@ def add_ammonia_non_energy_computations(rep: message_ix.Reporter):
 
 def add_methanol_non_energy_computations(rep: message_ix.Reporter):
     """Prepare reporter to compute process energy input for methanol production.
+    Reporter can compute process energy inputs with key: "in::nh3-process-energy"
 
-    Reporter can compute process energy inputs with key: ``in::nh3-process-energy``
+    Steps:
+    1) Select all feedstock inputs for methanol production
+    2) Subtract methanol energy output from feedstock input to get process energy input
 
-    Computation steps:
-
-    1. Select all feedstock inputs for methanol production.
-    2. Subtract methanol energy output from feedstock input to get process energy input.
+    Parameters
+    ----------
+    rep
     """
-    tecs = [
-        "meth_coal",
-        "meth_ng",
-        "meth_coal_ccs",
-        "meth_ng_ccs",
-        "meth_bio",
-        "meth_bio_ccs",
-        "meth_h2",
-    ]
     t_filter2 = {
-        "t": tecs,
+        "t": [
+            "meth_coal",
+            "meth_ng",
+            "meth_coal_ccs",
+            "meth_ng_ccs",
+            "meth_bio",
+            "meth_bio_ccs",
+            "meth_h2",
+        ],
         "c": ["coal", "gas", "biomass", "hydrogen"],
     }
-    k1 = Key("in:nl-t-ya-m-c")
-    k2 = Key("out:nl-t-ya-m-c")
-    rep.add(k1["meth-feedstocks"], "select", k1, t_filter2, sums=True)
+    rep.add("in::meth-feedstocks", "select", "in:nl-t-ya-m-c", t_filter2)
     t_filter2 = {
-        "t": tecs,
-        "c": ["methanol"],
+        "t": [
+            "meth_coal",
+            "meth_ng",
+            "meth_coal_ccs",
+            "meth_ng_ccs",
+            "meth_bio",
+            "meth_bio_ccs",
+            "meth_h2",
+        ],
+        "c": "methanol",
+        "l": "primary_material",
     }
-    rep.add(k2["meth-non-energy"], "select", k2, t_filter2, sums=True)
-    k = rep.add(
-        "in:nl-t-ya-m:meth-process-energy",
-        "sub",
-        "in:nl-t-ya-m:meth-feedstocks",
-        "out:nl-t-ya-m:meth-non-energy",
+    rep.add("out::meth-non-energy", "select", "out:nl-t-ya-m-c-l", t_filter2)
+    rep.add(
+        "in::meth-process-energy", "sub", "in::meth-feedstocks", "out::meth-non-energy"
     )
-    return k

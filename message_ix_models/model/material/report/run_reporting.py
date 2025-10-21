@@ -1,32 +1,76 @@
-from typing import List, Union
+import os
+from typing import List, Literal
 
 import message_ix
 import numpy as np
 import pandas as pd
 import pyam
 from message_ix.report import Reporter
+from pydantic import BaseModel, ConfigDict
 
 from message_ix_models.model.material.report.reporter_utils import (
     add_biometh_final_share,
+    create_var_map_from_yaml_dict,
 )
-from message_ix_models.util import broadcast
+from message_ix_models.model.material.util import read_yaml_file
+from message_ix_models.util import broadcast, package_data_path
 
-from .config import Config
+
+class ReporterConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    iamc_prefix: str
+    message_query_key: Literal[
+        "out", "in", "ACT", "emi", "CAP"
+    ]  # TODO: try to import message_ix.Reporter keys here
+    unit: Literal["Mt/yr", "GWa", "Mt CH4/yr", "GW"]
+    df_mapping: pd.DataFrame  # TODO: use pandera to check on columns/dtypes etc.
+
+
+def create_agg_var_map_from_yaml(dictionary: dict, level: int = 1):
+    """Returns dataframe with 3 columns containing:
+    * the IAMC variable name of each aggregate variable defined in mapping dictionary at
+        the given level
+    * a short name of the variable and
+    * the short name of the sub-variable that belongs to the aggregate
+
+    The returned df can be used to join with the non-aggregate
+    sub variable produced with :func:create_var_map_from_yaml_dict2
+    to get the elements to compute the aggregate with message_ix.Reporter
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    data = dictionary[f"level_{level}"]
+    all = pd.DataFrame()
+    # iterate through all aggregate variable keys and compute dataframe with aggregate
+    # components mapped to aggregate short and IAMC name
+    for iamc_key, values in data.items():
+        # Extract aggregate components and short name from dictionary
+        components = values["components"]
+        short_name = values["short"]
+
+        # Create DataFrame
+        df = pd.DataFrame(components)
+        df["iamc_name"] = iamc_key
+        df["agg_short_name"] = short_name
+
+        # append to already created mapping rows
+        all = pd.concat([all, df])
+    all.columns = ["short_name", "iamc_name", "agg_short_name"]
+    all = all.set_index("short_name")
+    return all
 
 
 def pyam_df_from_rep(
     rep: message_ix.Reporter, reporter_var: str, mapping_df: pd.DataFrame
-) -> pd.DataFrame:
-    """Queries data from Reporter and maps to IAMC variable names.
+):
+    """Uses mapping_df with a message.Reporter to compute all values
+    for the IAMC variables defined in the mapping
 
-    Parameters
-    ----------
-    rep
-        message_ix.Reporter to query
-    reporter_var
-        Registered key of Reporter to query, e.g. "out", "in", "ACT", "emi", "CAP"
-    mapping_df
-        DataFrame mapping Reporter dimension values to IAMC variable names
+    Returns
+    -------
+    pd.DataFrame
     """
     filters_dict = {
         col: list(mapping_df.index.get_level_values(col).unique())
@@ -51,22 +95,23 @@ def format_reporting_df(
     scenario_name: str,
     unit: str,
     mappings,
-) -> pyam.IamDataFrame:
-    """Formats a DataFrame created with :func:pyam_df_from_rep to pyam.IamDataFrame."""
+):
+    """Returns an pyam.IamDataFrame based on a DataFrame created with
+        :func:pyam_df_from_rep to an pyam.IamDataFrame
+
+    Returns
+    -------
+    pyam.IamDataFrame
+    """
     df.columns = ["value"]
-    df = (
-        df.reset_index()
-        .rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
-        .assign(
-            variable=lambda x: variable_prefix + x["variable"],
-            Model=model_name,
-            Scenario=scenario_name,
-            Unit=unit,
-        )
-    )
+    df = df.reset_index()
+    df = df.rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
+    df["variable"] = variable_prefix + df["variable"]
+    df["Model"] = model_name
+    df["Scenario"] = scenario_name
+    df["Unit"] = unit
     py_df = pyam.IamDataFrame(df)
-    if py_df.empty:
-        return py_df
+
     missing = [
         variable_prefix + i
         for i in mappings.iamc_name.unique().tolist()
@@ -90,38 +135,95 @@ def format_reporting_df(
     return py_df
 
 
-def load_config(name: str) -> "Config":
-    """Load a config for a given reporting variable category from the YAML files.
+def load_config(name: str):
+    path = package_data_path("material", "reporting")
+    file = f"{name}_reporting.yaml"
+    file_agg = f"{name}_reporting_aggregates.yaml"
 
-    This is a thin wrapper around :meth:`.Config.from_files`.
-    """
-    return Config.from_files(name)
+    rep_var_dict = read_yaml_file(path.joinpath(file))
+    mappings = create_var_map_from_yaml_dict(rep_var_dict)
+    variable_prefix = rep_var_dict.get("iamc_prefix")
+    unit = rep_var_dict.get("common").get("unit")
+    var = rep_var_dict.get("var")
+
+    if os.path.exists(path.joinpath(file_agg)):
+        rep_var_dict_agg = read_yaml_file(path.joinpath(file_agg))
+
+        filters_mapping = (
+            mappings.copy(deep=True)
+            .drop(["iamc_name"], axis=1)
+            .reset_index()
+            .set_index("short_name")
+        )
+
+        # TODO: generalize to make this loop-able over arbitrary number of levels
+        # load aggregates mapping to components for level 1 variables
+        counter = 1
+        while rep_var_dict_agg.get(f"level_{counter}", None):
+            agg1_mapping = create_agg_var_map_from_yaml(rep_var_dict_agg, level=counter)
+            # Join aggregate mapping df with components df on the "short_name" values
+            # to get a row for each component of each aggregate
+            # drop the short name column afterward and replace it with the
+            #   aggregate short name
+            # finally concat the components mapping with the newly created
+            #   aggregate mapping
+            agg1_mapping = (
+                agg1_mapping.join(filters_mapping)
+                .set_index(["m", "t", "l", "c"])
+                .rename(columns={"agg_short_name": "short_name"})
+            )
+            mappings = pd.concat([mappings, agg1_mapping])
+            filters_mapping = (
+                mappings.copy(deep=True)
+                .drop(["iamc_name"], axis=1)
+                .reset_index()
+                .set_index("short_name")
+            )
+            counter += 1
+
+    # Creating config model and validate with pydantic
+    config = ReporterConfig(
+        iamc_prefix=variable_prefix,
+        message_query_key=var,
+        unit=unit,
+        df_mapping=mappings,
+    )
+    return config
 
 
 def run_fe_methanol_nh3_reporting(
     rep: message_ix.Reporter, model_name: str, scen_name: str
-) -> pyam.IamDataFrame:
-    """Run final energy reporting for ammonia and methanol.
+):
+    """Runs final energy reporting for ammonia and methanol.
+    Process energy input for methanol and ammonia is defined as the
+    difference between energy input and the embodied energy in the final product.
+    Since the model structure does not differentiate between feedstock
+    and process energy input for NH3 and CH3OH production, this needs to
+    calculated in post-processing steps:
+    1a) Query input flows to methanol and ammonia production
+    1b) Map to IAMC variable names
+    2a) Query methanol and ammonia output flows and map to same IAMC variables
+    2b) Convert ammonia output flows from Mt to GWa (not needed for methanol)
+    3) Subtract product output from energy input to get process energy
+    4) Format dataframe to IAMC standard
 
-    Process energy input for methanol and ammonia is defined as the difference between
-    energy input and the embodied energy in the final product. Since the model structure
-    does not differentiate between feedstock and process energy input for NH3 and CH3OH
-    production, this needs to calculated in post-processing steps:
+    Parameters
+    ----------
+    rep
+    model_name
+    scen_name
 
-    1. Query input flows to methanol and ammonia production.
-    2. Map to IAMC variable names.
-    3. Query methanol and ammonia output flows and map to same IAMC variables.
-    4. Convert ammonia output flows from Mt to GWa (not needed for methanol).
-    5. Subtract product output from energy input to get process energy.
-    6. Format dataframe to IAMC standard.
+    Returns
+    -------
+
     """
     nh3_mt_to_gwa = 0.697615
     fe_config = load_config("fe_methanol_ammonia")
-    df_fe = pyam_df_from_rep(rep, fe_config.var, fe_config.mapping)
+    df_fe = pyam_df_from_rep(rep, fe_config.message_query_key, fe_config.df_mapping)
 
     fs_config = load_config("fs1")
     fs_config.iamc_prefix = fe_config.iamc_prefix
-    df_fs = pyam_df_from_rep(rep, fs_config.var, fs_config.mapping)
+    df_fs = pyam_df_from_rep(rep, fs_config.message_query_key, fs_config.df_mapping)
     df_fs.loc[df_fs.index.get_level_values("iamc_name").str.contains("Ammonia")] *= (
         nh3_mt_to_gwa
     )
@@ -133,41 +235,37 @@ def run_fe_methanol_nh3_reporting(
         model_name,
         scen_name,
         fe_config.unit,
-        fe_config.mapping,
+        fe_config.df_mapping,
     )
     return py_df
 
 
-def run_ch4_reporting(rep, model_name: str, scen_name: str) -> pyam.IamDataFrame:
-    """Generate reporting for industry methane emissions."""
+def run_ch4_reporting(rep, model_name: str, scen_name: str):
     var = "ch4_emi"
     config = load_config(var)
-    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
     py_df = format_reporting_df(
-        df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
+        df, config.iamc_prefix, model_name, scen_name, config.unit, config.df_mapping
     )
     return py_df
 
 
-def run_fe_reporting(
-    rep: message_ix.Reporter, model: str, scenario: str
-) -> pd.DataFrame:
-    """Generate reporting for industry final energy variables."""
+def run_fe_reporting(rep: message_ix.Reporter, model: str, scenario: str):
     dfs = []
 
     config = load_config("fe")
-    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
     dfs.append(
         format_reporting_df(
-            df, config.iamc_prefix, model, scenario, config.unit, config.mapping
+            df, config.iamc_prefix, model, scenario, config.unit, config.df_mapping
         )
     )
 
     config = load_config("fe_solar")
-    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
     dfs.append(
         format_reporting_df(
-            df, config.iamc_prefix, model, scenario, config.unit, config.mapping
+            df, config.iamc_prefix, model, scenario, config.unit, config.df_mapping
         )
     )
 
@@ -185,8 +283,8 @@ def run_fe_reporting(
     py_df_all = pyam.concat(
         [py_df_all.filter(variable=var, keep=False), other_sector_agg]
     )
-    # alternative aggregation components
-    vars = [  # noqa: F841
+
+    vars = [
         "Final Energy|Industry|Other Sector",
         "Final Energy|Industry|Iron and Steel",
         "Final Energy|Industry|Non-Ferrous Metals|Aluminium",
@@ -216,8 +314,7 @@ def run_fe_reporting(
 
 def add_chemicals_to_final_energy_variables(
     dfs: List[pyam.IamDataFrame], rep: message_ix.Reporter, model: str, scenario: str
-) -> pyam.IamDataFrame:
-    """Update final energy fuel variables by adding chemicals to aggregates."""
+):
     dfs.append(run_fe_methanol_nh3_reporting(rep, model, scenario))
     py_df_all = pyam.concat(dfs)
     chem_aggs = {
@@ -225,59 +322,59 @@ def add_chemicals_to_final_energy_variables(
             "Chemicals|Ammonia",
             "Chemicals|Methanol",
             "Chemicals|High-Value Chemicals",
-            "Chemicals|Other Sector",
+            "Chemicals|Other Sector"
         ],
         "Chemicals|Electricity": [
             "Chemicals|Ammonia|Electricity",
             "Chemicals|Methanol|Electricity",
             "Chemicals|High-Value Chemicals|Electricity",
-            "Chemicals|Other Sector|Electricity",
+            "Chemicals|Other Sector|Electricity"
         ],
         "Chemicals|Gases": [
             "Chemicals|Ammonia|Gases",
             "Chemicals|Methanol|Gases",
             "Chemicals|High-Value Chemicals|Gases",
-            "Chemicals|Other Sector|Gases",
+            "Chemicals|Other Sector|Gases"
         ],
         "Chemicals|Gases|Gas": [
             "Chemicals|Ammonia|Gases|Gas",
             "Chemicals|Methanol|Gases|Gas",
             "Chemicals|High-Value Chemicals|Gases|Gas",
-            "Chemicals|Other Sector|Gases|Gas",
+            "Chemicals|Other Sector|Gases|Gas"
         ],
         "Chemicals|Liquids": [
             "Chemicals|Ammonia|Liquids",
             "Chemicals|High-Value Chemicals|Liquids",
-            "Chemicals|Other Sector|Liquids",
+            "Chemicals|Other Sector|Liquids"
         ],
         "Chemicals|Liquids|Oil": [
             "Chemicals|Ammonia|Liquids|Oil",
             "Chemicals|High-Value Chemicals|Liquids|Oil",
-            "Chemicals|Other Sector|Liquids|Oil",
+            "Chemicals|Other Sector|Liquids|Oil"
         ],
         "Chemicals|Solids": [
             "Chemicals|Ammonia|Solids",
             "Chemicals|Methanol|Solids",
             "Chemicals|High-Value Chemicals|Solids",
-            "Chemicals|Other Sector|",
+            "Chemicals|Other Sector|"
         ],
         "Chemicals|Solids|Biomass": [
             "Chemicals|Ammonia|Solids|Biomass",
             "Chemicals|Methanol|Solids|Biomasss",
             "Chemicals|High-Value Chemicals|Solids|Biomass",
-            "Chemicals|Other Sector|Solids|Biomass",
+            "Chemicals|Other Sector|Solids|Biomass"
         ],
         "Chemicals|Solids|Coal": [
             "Chemicals|Ammonia|Solids|Coal",
             "Chemicals|Methanol|Solids|Coal",
             "Chemicals|High-Value Chemicals|Solids|Coal",
-            "Chemicals|Other Sector|Solids|Coal",
+            "Chemicals|Other Sector|Solids|Coal"
         ],
         "Chemicals|Hydrogen": [
             "Chemicals|Ammonia|Hydrogen",
             "Chemicals|Methanol|Hydrogen",
             "Chemicals|High-Value Chemicals|Hydrogen",
-            "Chemicals|Other Sector|Hydrogen",
+            "Chemicals|Other Sector|Hydrogen"
         ],
     }
     prefix = "Final Energy|Industry|"
@@ -313,22 +410,31 @@ def add_chemicals_to_final_energy_variables(
 
 def split_fe_other(
     rep: message_ix.Reporter, py_df_all: pyam.IamDataFrame, model: str, scenario: str
-) -> pyam.IamDataFrame:
-    """Splits Final Energy|Industry|*|Liquids|Other values.
+):
+    """This function takes the Final Energy|Industry|*|Liquids|Other values
+    and reallocates it to Liquids|Biomass/Coal/Oil/Gas based on the methanol
+    feedstock shares.
+    1) calculates the feedstock shares of methanol production with message_ix.Reporter
+    2) append the shares as temporary iamc variables them to the existing reporting
+        pyam object
+    3) Uses pyam multiply feature to calculate shares with each "Liquids|Other"
+        timeseries
+    4) Uses pyam aggregate to sum existing Liquids|Biomass/Coal/Oil/Gas with new
+        variables and store in separate pyam object
+    5) Filters out existing (outdated) Liquids|Biomass/Coal/Oil/Gas from reporting
+        pyam object
+    6) Concats the updated variables with the full reporting
 
-    It reallocates it to Liquids|Biomass/Coal/Oil/Gas based on the methanol feedstock
-    shares.
+    Parameters
+    ----------
+    rep
+    py_df_all
+    model
+    scenario
 
-    1. Calculate the feedstock shares of methanol production with message_ix.Reporter.
-    2. Append the shares as temporary iamc variables them to the existing reporting pyam
-       object.
-    3. Use pyam multiply feature to calculate shares with each "Liquids|Other"
-       timeseries.
-    4. Use pyam aggregate to sum existing Liquids|Biomass/Coal/Oil/Gas with new
-       variables and store in separate pyam object.
-    5. Filter out existing (outdated) Liquids|Biomass/Coal/Oil/Gas from reporting pyam
-       object.
-    6. Concat the updated variables with the full reporting.
+    Returns
+    -------
+
     """
     add_biometh_final_share(rep, mode="fuel")
     # set temporary filter on Reporter to speed up queries
@@ -418,13 +524,10 @@ def split_fe_other(
     return py_df_all
 
 
-def run_fs_reporting(
-    rep: message_ix.Reporter, model_name: str, scen_name: str
-) -> pd.DataFrame:
-    """Generate reporting for industry final energy non-energy variables."""
+def run_fs_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
     hvc_config = load_config("fs2")
-    df_hvc = pyam_df_from_rep(rep, hvc_config.var, hvc_config.mapping)
+    df_hvc = pyam_df_from_rep(rep, hvc_config.message_query_key, hvc_config.df_mapping)
     dfs.append(
         format_reporting_df(
             df_hvc,
@@ -432,12 +535,14 @@ def run_fs_reporting(
             model_name,
             scen_name,
             hvc_config.unit,
-            hvc_config.mapping,
+            hvc_config.df_mapping,
         )
     )
 
     nh3_meth_config = load_config("fs1")
-    df_nh3_meth = pyam_df_from_rep(rep, nh3_meth_config.var, nh3_meth_config.mapping)
+    df_nh3_meth = pyam_df_from_rep(
+        rep, nh3_meth_config.message_query_key, nh3_meth_config.df_mapping
+    )
     df_nh3_meth.loc[
         df_nh3_meth.index.get_level_values("iamc_name").str.contains("Ammonia")
     ] *= 0.697615
@@ -448,7 +553,7 @@ def run_fs_reporting(
             model_name,
             scen_name,
             nh3_meth_config.unit,
-            nh3_meth_config.mapping,
+            nh3_meth_config.df_mapping,
         )
     )
     py_df = pyam.concat(dfs)
@@ -527,8 +632,7 @@ def run_fs_reporting(
 
 def split_mto_feedstock(
     rep: message_ix.Reporter, py_df_all: pyam.IamDataFrame, model: str, scenario: str
-) -> pyam.IamDataFrame:
-    """Splits Final Energy|Non-Energy Use|*|Liquids|Other values."""
+):
     add_biometh_final_share(rep, mode="feedstock")
     rep.set_filters(
         t=[
@@ -611,13 +715,10 @@ def split_mto_feedstock(
     return py_df_all
 
 
-def run_prod_reporting(
-    rep: message_ix.Reporter, model_name: str, scen_name: str
-) -> pyam.IamDataFrame:
-    """Generate reporting for industry production variables."""
+def run_prod_reporting(rep: message_ix.Reporter, model_name: str, scen_name: str):
     dfs = []
     config = load_config("prod")
-    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
     df.loc[df.index.get_level_values("iamc_name").str.contains("Methanol")] /= 0.697615
     dfs.append(
         format_reporting_df(
@@ -626,12 +727,12 @@ def run_prod_reporting(
             model_name,
             scen_name,
             config.unit,
-            config.mapping,
+            config.df_mapping,
         )
     )
 
     config = load_config("prod_addon")
-    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    df = pyam_df_from_rep(rep, config.message_query_key, config.df_mapping)
     dfs.append(
         format_reporting_df(
             df,
@@ -639,7 +740,7 @@ def run_prod_reporting(
             model_name,
             scen_name,
             config.unit,
-            config.mapping,
+            config.df_mapping,
         )
     )
 
@@ -679,33 +780,16 @@ def run_prod_reporting(
     return py_df
 
 
-def run_all_categories(
-    rep: message_ix.Reporter, model_name: str, scen_name: str
-) -> List[pyam.IamDataFrame]:
-    """Generate all industry reporting variables for a given scenario."""
-    dfs = [
-        run_fs_reporting(rep, model_name, scen_name),
-        run_fe_reporting(rep, model_name, scen_name),
-        run_prod_reporting(rep, model_name, scen_name),
-        run_ch4_reporting(rep, model_name, scen_name),
-    ]
+def run_all_categories(rep: message_ix.Reporter, model_name: str, scen_name: str):
+    dfs = []
+    dfs.append(run_fs_reporting(rep, model_name, scen_name))
+    dfs.append(run_fe_reporting(rep, model_name, scen_name))
+    dfs.append(run_prod_reporting(rep, model_name, scen_name))
+    dfs.append(run_ch4_reporting(rep, model_name, scen_name))
     return dfs
 
 
-def run(
-    scenario: message_ix.Scenario,
-    upload_ts: bool = False,
-    region: Union[bool, str] = False,
-) -> pyam.IamDataFrame:
-    """Run industry reporter for a given scenario.
-
-    Parameters
-    ----------
-    upload_ts
-        Option to upload reporting timeseries to the scenario.
-    region
-        Option to aggregate regional timeseries to a single (global) region.
-    """
+def run(scenario, upload_ts=False, region=False):
     rep = Reporter.from_scenario(scenario)
 
     dfs = run_all_categories(rep, scenario.model, scenario.scenario)

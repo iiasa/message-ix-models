@@ -1,36 +1,24 @@
-"""
-Data and parameter generation for the ammonia fertilizer sector in
-MESSAGEix-Materials model.
+from typing import Any, cast
 
-This module provides functions to read, process, and generate parameter data
-for ammonia fertilizer technologies, demand, trade, and related constraints.
-"""
-
-from typing import TYPE_CHECKING, Any, Union, cast
-
+import message_ix
 import numpy as np
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.demand import gen_demand_petro
+from message_ix_models.model.material.material_demand import material_demand_calc
 from message_ix_models.model.material.util import (
+    combine_df_dictionaries,
     get_ssp_from_context,
     maybe_remove_water_tec,
     read_config,
 )
 from message_ix_models.util import (
     broadcast,
-    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
 )
-
-if TYPE_CHECKING:
-    from message_ix import Scenario
-
-    from message_ix_models.types import ParameterData
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 
@@ -51,21 +39,13 @@ iea_elasticity_map = {
 }
 
 
-def gen_all_NH3_fert(scenario: "Scenario", dry_run: bool = False) -> "ParameterData":
-    """Generate all MESSAGEix parameter data for the ammonia fertilizer sector.
-
-    Parameters
-    ----------
-    scenario :
-        Scenario instance to build ammonia fertilizer model on.
-    dry_run :
-        If True, do not perform any file writing or scenario modification.
-    """
-    s_info = ScenarioInfo(scenario)
+def gen_all_NH3_fert(
+    scenario: message_ix.Scenario, dry_run: bool = False
+) -> dict[str, pd.DataFrame]:
     return {
-        **gen_data(scenario, s_info),
-        **gen_data_rel(s_info),
-        **gen_data_ts(s_info),
+        **gen_data(scenario),
+        **gen_data_rel(scenario),
+        **gen_data_ts(scenario),
         **gen_demand(),
         **gen_land_input(scenario),
         **gen_resid_demand_NH3(scenario),
@@ -75,19 +55,6 @@ def gen_all_NH3_fert(scenario: "Scenario", dry_run: bool = False) -> "ParameterD
 def broadcast_years(
     df_new: pd.DataFrame, max_lt: int, act_years: pd.Series, vtg_years: pd.Series
 ) -> pd.DataFrame:
-    """Broadcast parameter DataFrame over scenario years and vintages.
-
-    Parameters
-    ----------
-    df_new :
-        DataFrame to broadcast.
-    max_lt :
-        Maximum technical lifetime.
-    act_years :
-        Years in modelling horizon
-    vtg_years :
-        Vintage model years
-    """
     if "year_act" in df_new.columns:
         df_new = df_new.pipe(same_node).pipe(broadcast, year_act=act_years)
 
@@ -108,27 +75,22 @@ def broadcast_years(
 
 
 def gen_data(
-    scenario: "Scenario",
-    s_info: ScenarioInfo,
+    scenario: message_ix.Scenario,
+    dry_run=False,
+    add_ccs: bool = True,
     lower_costs: bool = False,
-) -> "ParameterData":
-    """Generate time-independent parameter data for ammonia fertilizer technologies.
-
-    Parameters
-    ----------
-    scenario :
-        Scenario instance to generate ammonia model data for.
-    lower_costs :
-        Switch to apply experimental lower costs for certain regions.
-    """
+) -> dict[str, pd.DataFrame]:
+    s_info = ScenarioInfo(scenario)
+    # s_info.yv_ya
     nodes = nodes_ex_world(s_info.N)
 
-    df = pd.read_csv(
+    df = pd.read_excel(
         package_data_path(
             "material",
             "ammonia",
-            "data_R12.csv",
+            "fert_techno_economic.xlsx",
         ),
+        sheet_name="data_R12",
     )
 
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
@@ -145,6 +107,7 @@ def gen_data(
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
+        df = df.to_dict()
 
         df_new = make_df(par_name, **df)
         # split df into df with default values and df with regionalized values
@@ -163,7 +126,7 @@ def gen_data(
     if lower_costs:
         par_dict = experiment_lower_CPA_SAS_costs(par_dict)
 
-    df_lifetime = par_dict["technical_lifetime"]
+    df_lifetime = par_dict.get("technical_lifetime")
     dict_lifetime = (
         df_lifetime.loc[:, ["technology", "value"]]
         .set_index("technology")
@@ -195,13 +158,10 @@ def gen_data(
         "coal_NH3_ccs",
         "fueloil_NH3_ccs",
     ]
-    cost_conv = pd.read_csv(
-        package_data_path("material", "ammonia", "cost_conv_nh3.csv"),
+    cost_conv = pd.read_excel(
+        package_data_path("material", "ammonia", "cost_conv_nh3.xlsx"),
+        sheet_name="Sheet1",
         index_col=0,
-        dtype={
-            "year": int,
-            "convergence": float,
-        },
     )
     for p in pars:
         conv_cost_df = pd.DataFrame()
@@ -224,32 +184,28 @@ def gen_data(
 
     # HACK: quick fix to enable compatibility with water build
     maybe_remove_water_tec(scenario, par_dict)
-    # add 2020 and 2025 CCS bounds
-    merge_data(par_dict, gen_ccs_bounds(s_info))
+    #add 2020 and 2025 CCS bounds
+    par_dict = combine_df_dictionaries(par_dict, gen_ccs_bounds(s_info))
 
     return par_dict
 
 
-def gen_data_rel(s_info: ScenarioInfo) -> "ParameterData":
-    """Generate relation parameter data for ammonia fertilizer sector.
-
-    Parameters
-    ----------
-    s_info:
-        Scenario information to infer model regions and years.
-    """
+def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
+    s_info = ScenarioInfo(scenario)
+    # s_info.yv_ya
     nodes = s_info.N
     if "World" in nodes:
         nodes.pop(nodes.index("World"))
     if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
 
-    df = pd.read_csv(
+    df = pd.read_excel(
         package_data_path(
             "material",
             "ammonia",
-            "relations_R12.csv",
+            "fert_techno_economic.xlsx",
         ),
+        sheet_name="relations_R12",
     )
     df.groupby("parameter")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
@@ -312,15 +268,9 @@ def gen_data_rel(s_info: ScenarioInfo) -> "ParameterData":
 
 
 def gen_data_ts(
-    s_info: ScenarioInfo,
-) -> "ParameterData":
-    """Generate time-series parameter data for ammonia fertilizer sector.
-
-    Parameters
-    ----------
-    s_info:
-        Scenario information to infer model regions.
-    """
+    scenario: message_ix.Scenario, dry_run: bool = False, add_ccs: bool = True
+) -> dict[str, pd.DataFrame]:
+    s_info = ScenarioInfo(scenario)
     # s_info.yv_ya
     nodes = s_info.N
     if "World" in nodes:
@@ -328,12 +278,13 @@ def gen_data_ts(
     if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
 
-    df = pd.read_csv(
+    df = pd.read_excel(
         package_data_path(
             "material",
             "ammonia",
-            "timeseries_R12.csv",
+            "fert_techno_economic.xlsx",
         ),
+        sheet_name="timeseries_R12",
     )
     df["year_act"] = df["year_act"].astype("Int64")
     df["year_vtg"] = df["year_vtg"].astype("Int64")
@@ -345,6 +296,7 @@ def gen_data_ts(
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
+        df = df.to_dict()
 
         df_new = make_df(par_name, **df)
         # split df into df with default values and df with regionalized values
@@ -373,50 +325,43 @@ def gen_data_ts(
 
 
 def set_exp_imp_nodes(df: pd.DataFrame) -> None:
-    """Helper to set import/export node_dest/origin to GLB for input/output technologies
-
-    Parameters
-    ----------
-    df:
-        DataFrame with technology and node columns.
-    """
     if "node_dest" in df.columns:
         df.loc[df["technology"].str.contains("export"), "node_dest"] = "R12_GLB"
     if "node_origin" in df.columns:
         df.loc[df["technology"].str.contains("import"), "node_origin"] = "R12_GLB"
 
 
-def read_demand() -> dict[str, Union[pd.DataFrame, pd.Series]]:
-    """Read and clean demand and trade data for ammonia fertilizer."""
+def read_demand() -> dict[str, pd.DataFrame]:
+    """Read and clean data from
+    :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
+    # Demand scenario [Mt N/year] from GLOBIOM
 
-    N_demand_GLO = pd.read_csv(
+    N_demand_GLO = pd.read_excel(
         package_data_path(
             "material",
             "ammonia",
-            "NFertilizer_demand.csv",
+            "nh3_fertilizer_demand.xlsx",
         ),
-    )
-    N_demand_GLO = N_demand_GLO.set_axis(
-        [int(i) if i.isdigit() else i for i in N_demand_GLO.columns], axis=1
+        sheet_name="NFertilizer_demand",
     )
 
     # NH3 feedstock share by region in 2010 (from http://ietd.iipnetwork.org/content/ammonia#benchmarks)
-    feedshare_GLO = pd.read_csv(
+    feedshare_GLO = pd.read_excel(
         package_data_path(
             "material",
             "ammonia",
-            "NH3_feedstock_share.csv",
+            "nh3_fertilizer_demand.xlsx",
         ),
+        sheet_name="NH3_feedstock_share",
         skiprows=14,
     )
 
     # Read parameters in xlsx
-    te_params = pd.read_csv(
-        package_data_path("material", "ammonia", "old_TE_sheet.csv"),
+    te_params = pd.read_excel(
+        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
+        sheet_name="old_TE_sheet",
+        engine="openpyxl",
         nrows=72,
-    )
-    te_params = te_params.set_axis(
-        [int(i) if i.isdigit() else i for i in te_params.columns], axis=1
     )
 
     n_inputs_per_tech = 12  # Number of input params per technology
@@ -456,13 +401,14 @@ def read_demand() -> dict[str, Union[pd.DataFrame, pd.Series]]:
     # N_trade_R12 = pd.read_csv(
     #    package_data_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
     # )
-    N_trade_R12 = pd.read_csv(
+    N_trade_R12 = pd.read_excel(
         package_data_path(
             "material",
             "ammonia",
-            "NFertilizer_trade.csv",
+            "nh3_fertilizer_demand.xlsx",
         ),
-    )
+        sheet_name="NFertilizer_trade",
+    )  # , index_col=0)
 
     N_trade_R12.region = "R12_" + N_trade_R12.region
     N_trade_R12.quantity = N_trade_R12.quantity
@@ -486,12 +432,13 @@ def read_demand() -> dict[str, Union[pd.DataFrame, pd.Series]]:
     #        "material", "ammonia", "NH3_trade_BACI_R12_aggregation.csv"
     #    )
     # )  # , index_col=0)
-    NH3_trade_R12 = pd.read_csv(
+    NH3_trade_R12 = pd.read_excel(
         package_data_path(
             "material",
             "ammonia",
-            "NH3_trade_R12_aggregated.csv",
+            "nh3_fertilizer_demand.xlsx",
         ),
+        sheet_name="NH3_trade_R12_aggregated",
     )
 
     NH3_trade_R12.region = "R12_" + NH3_trade_R12.region
@@ -567,12 +514,12 @@ def read_demand() -> dict[str, Union[pd.DataFrame, pd.Series]]:
     }
 
 
-def gen_demand() -> "ParameterData":
-    """Generate adjusted i_feed demand with explicit ammonia demand."""
+def gen_demand() -> dict[str, pd.DataFrame]:
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
-    demand_fs_org = pd.read_csv(
-        package_data_path("material", "ammonia", "demand_i_feed_R12.csv"),
+    demand_fs_org = pd.read_excel(
+        package_data_path("material", "ammonia", "nh3_fertilizer_demand.xlsx"),
+        sheet_name="demand_i_feed_R12",
     )
 
     df = demand_fs_org.loc[demand_fs_org.year == 2010, :].join(
@@ -593,14 +540,7 @@ def gen_demand() -> "ParameterData":
     return {"demand": df}
 
 
-def gen_resid_demand_NH3(scenario: "Scenario") -> "ParameterData":
-    """Generate residual demand for ammonia excluding fertilizer use.
-
-    Parameters
-    ----------
-    scenario:
-        Scenario to generate residual demand for.
-    """
+def gen_resid_demand_NH3(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
     context = read_config()
     ssp = get_ssp_from_context(context)
 
@@ -608,7 +548,7 @@ def gen_resid_demand_NH3(scenario: "Scenario") -> "ParameterData":
         ssp_mode_map[ssp]
     ]
     df_2025 = pd.read_csv(package_data_path("material", "ammonia", "demand_2025.csv"))
-    df_residual = gen_demand_petro(
+    df_residual = material_demand_calc.gen_demand_petro(
         scenario, "NH3", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
     df_residual = df_residual[df_residual["year"] != 2025]
@@ -617,29 +557,13 @@ def gen_resid_demand_NH3(scenario: "Scenario") -> "ParameterData":
     return {"demand": df_residual}
 
 
-def gen_land_input(scenario: "Scenario") -> "ParameterData":
-    """Read fertilizer demand from GLOBIOM soft-link and return as land input parameter.
-
-    Parameters
-    ----------
-    scenario:
-        Scenario to query fertilizer demand from.
-    """
+def gen_land_input(scenario: message_ix.Scenario) -> dict[str, pd.DataFrame]:
     df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
     df["level"] = "final_material"
     return {"land_input": df}
 
 
-def experiment_lower_CPA_SAS_costs(
-    par_dict: dict[str, pd.DataFrame],
-) -> dict[str, pd.DataFrame]:
-    """Lower coal and fueloil based production costs for CPA and SAS regions.
-
-    Parameters
-    ----------
-    par_dict:
-        Dictionary with parameter data including cost parameters.
-    """
+def experiment_lower_CPA_SAS_costs(par_dict: dict) -> dict[str, pd.DataFrame]:
     cost_list = ["inv_cost", "fix_cost"]
     scaler = {
         "R12_RCPA": [0.66 * 0.91, 0.75 * 0.9],
@@ -654,24 +578,17 @@ def experiment_lower_CPA_SAS_costs(
             for e, t in enumerate(tec_list):
                 df_tmp.loc[df_tmp["technology"] == t, "value"] = df_tmp.loc[
                     df_tmp["technology"] == t, "value"
-                ].mul(scaler[k][e])
+                ].mul(scaler.get(k)[e])
                 df_tmp.loc[df_tmp["technology"] == t + "_ccs", "value"] = df_tmp.loc[
                     df_tmp["technology"] == t + "_ccs", "value"
-                ].mul(scaler[k][e])
+                ].mul(scaler.get(k)[e])
             df.loc[df["node_loc"] == k] = df_tmp
         par_dict[c] = df
 
     return par_dict
 
 
-def gen_ccs_bounds(s_info) -> "ParameterData":
-    """Generate bounds for CCS technologies for 2020 and 2025.
-
-    Parameters
-    ----------
-    s_info:
-        Scenario information used to determine the nodes and years.
-    """
+def gen_ccs_bounds(s_info):
     common = {
         "technology": [
             "biomass_NH3_ccs",
