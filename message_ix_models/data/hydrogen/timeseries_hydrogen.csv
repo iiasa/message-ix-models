@@ -1,20 +1,180 @@
-# Hydrogen Technology Time-Series Parameters
-# This file contains time-varying parameters (e.g., efficiency improvements, variable costs over time)
-# Years represent model years where parameter values change
-technology,parameter,region,mode,year,value,unit,Description
-h2_elec_alk,var_cost,default,M1,2020,10.0,USD/Mt,Variable cost for alkaline electrolyzer in 2020
-h2_elec_alk,var_cost,default,M1,2030,8.0,USD/Mt,Variable cost for alkaline electrolyzer in 2030 (decreasing)
-h2_elec_alk,var_cost,default,M1,2050,5.0,USD/Mt,Variable cost for alkaline electrolyzer in 2050 (learning curve)
-h2_elec_pem,var_cost,default,M1,2020,15.0,USD/Mt,Variable cost for PEM electrolyzer in 2020
-h2_elec_pem,var_cost,default,M1,2030,10.0,USD/Mt,Variable cost for PEM electrolyzer in 2030 (decreasing)
-h2_elec_pem,var_cost,default,M1,2050,6.0,USD/Mt,Variable cost for PEM electrolyzer in 2050 (learning curve)
-h2_elec_soe,var_cost,default,M1,2025,20.0,USD/Mt,Variable cost for SOE electrolyzer in 2025 (new technology)
-h2_elec_soe,var_cost,default,M1,2030,15.0,USD/Mt,Variable cost for SOE electrolyzer in 2030 (decreasing)
-h2_elec_soe,var_cost,default,M1,2050,8.0,USD/Mt,Variable cost for SOE electrolyzer in 2050 (learning curve)
-h2_pyro_elec,var_cost,default,M1,2020,12.0,USD/Mt,Variable cost for pyrolysis electrolyzer in 2020
-h2_pyro_elec,var_cost,default,M1,2030,10.0,USD/Mt,Variable cost for pyrolysis electrolyzer in 2030
-h2_pyro_elec,var_cost,default,M1,2050,7.0,USD/Mt,Variable cost for pyrolysis electrolyzer in 2050
-h2_ct,var_cost,default,M1,2020,5.0,USD/GWa,Variable cost for hydrogen combined cycle in 2020
-h2_ct,var_cost,default,M1,2030,4.5,USD/GWa,Variable cost for hydrogen combined cycle in 2030
-h2_ct,var_cost,default,M1,2050,4.0,USD/GWa,Variable cost for hydrogen combined cycle in 2050
-
+# Hydrogen Technology Time-Series Parameters,,,,,,,,
+# This file contains time-varying parameters (e.g.  efficiency improvements  variable costs over time),,,,,,,,
+# Years represent model years where parameter values change,,,,,,,,
+parameter,node_loc,technology,year_act,mode,time,value,unit,year_vtg
+historical_new_capacity,R12_AFR,h2_elec_alk,,,,0.007127434,GW,2020
+historical_new_capacity,R12_AFR,h2_elec_alk,,,,0.004751622,GW,2025
+historical_new_capacity,R12_AFR,h2_elec_pem,,,,0.003002399,GW,2020
+historical_new_capacity,R12_AFR,h2_elec_pem,,,,0.012009595,GW,2025
+historical_new_capacity,R12_CHN,h2_elec_alk,,,,0.002902562,GW,2015
+historical_new_capacity,R12_CHN,h2_elec_alk,,,,0.997205455,GW,2020
+historical_new_capacity,R12_CHN,h2_elec_alk,,,,0.845359778,GW,2025
+historical_new_capacity,R12_CHN,h2_elec_pem,,,,0.002401919,GW,2015
+historical_new_capacity,R12_CHN,h2_elec_pem,,,,0.049819788,GW,2020
+historical_new_capacity,R12_CHN,h2_elec_pem,,,,0.029488119,GW,2025
+historical_new_capacity,R12_EEU,h2_elec_alk,,,,0.000678803,GW,2015
+historical_new_capacity,R12_EEU,h2_elec_alk,,,,0.002715213,GW,2020
+historical_new_capacity,R12_EEU,h2_elec_pem,,,,0.000437149,GW,2015
+historical_new_capacity,R12_EEU,h2_elec_pem,,,,0.010155314,GW,2020
+historical_new_capacity,R12_EEU,h2_elec_pem,,,,0.027622069,GW,2025
+historical_new_capacity,R12_FSU,h2_elec_pem,,,,0.001801439,GW,2020
+historical_new_capacity,R12_FSU,h2_elec_pem,,,,0.00120096,GW,2025
+historical_new_capacity,R12_LAM,h2_elec_alk,,,,0.0848504,GW,1965
+historical_new_capacity,R12_LAM,h2_elec_alk,,,,0.000562049,GW,2005
+historical_new_capacity,R12_LAM,h2_elec_alk,,,,0.002248196,GW,2010
+historical_new_capacity,R12_LAM,h2_elec_pem,,,,9.37E-06,GW,2015
+historical_new_capacity,R12_LAM,h2_elec_pem,,,,0.008272134,GW,2020
+historical_new_capacity,R12_LAM,h2_elec_pem,,,,0.006271332,GW,2025
+historical_new_capacity,R12_MEA,h2_elec_alk,,,,0.000154767,GW,2015
+historical_new_capacity,R12_MEA,h2_elec_alk,,,,0.000232151,GW,2020
+historical_new_capacity,R12_MEA,h2_elec_pem,,,,0.030023988,GW,2020
+historical_new_capacity,R12_MEA,h2_elec_pem,,,,0.018764992,GW,2025
+historical_new_capacity,R12_NAM,h2_elec_alk,,,,0.001355434,GW,2010
+historical_new_capacity,R12_NAM,h2_elec_alk,,,,0.000423709,GW,2015
+historical_new_capacity,R12_NAM,h2_elec_alk,,,,0.001357606,GW,2020
+historical_new_capacity,R12_NAM,h2_elec_pem,,,,0.026811421,GW,2000
+historical_new_capacity,R12_NAM,h2_elec_pem,,,,0.019003947,GW,2005
+historical_new_capacity,R12_NAM,h2_elec_pem,,,,0.028505921,GW,2010
+historical_new_capacity,R12_NAM,h2_elec_pem,,,,0.005704558,GW,2015
+historical_new_capacity,R12_NAM,h2_elec_pem,,,,0.160978053,GW,2020
+historical_new_capacity,R12_NAM,h2_elec_pem,,,,0.168146701,GW,2025
+historical_new_capacity,R12_PAO,h2_elec_alk,,,,0.000271521,GW,2010
+historical_new_capacity,R12_PAO,h2_elec_alk,,,,0.000407282,GW,2015
+historical_new_capacity,R12_PAO,h2_elec_alk,,,,0.040809649,GW,2020
+historical_new_capacity,R12_PAO,h2_elec_pem,,,,0.002287347,GW,2015
+historical_new_capacity,R12_PAO,h2_elec_pem,,,,0.016765275,GW,2020
+historical_new_capacity,R12_PAO,h2_elec_pem,,,,0.010533616,GW,2025
+historical_new_capacity,R12_PAS,h2_elec_alk,,,,0.00018735,GW,2015
+historical_new_capacity,R12_PAS,h2_elec_alk,,,,0.000749399,GW,2020
+historical_new_capacity,R12_PAS,h2_elec_pem,,,,0.001207205,GW,2015
+historical_new_capacity,R12_PAS,h2_elec_pem,,,,0.001826419,GW,2020
+historical_new_capacity,R12_SAS,h2_elec_alk,,,,0.001386388,GW,2010
+historical_new_capacity,R12_SAS,h2_elec_alk,,,,0.005545551,GW,2015
+historical_new_capacity,R12_SAS,h2_elec_alk,,,,0.002443692,GW,2020
+historical_new_capacity,R12_SAS,h2_elec_alk,,,,0.009774766,GW,2025
+historical_new_capacity,R12_SAS,h2_elec_pem,,,,1.87E-05,GW,2010
+historical_new_capacity,R12_SAS,h2_elec_pem,,,,1.25E-05,GW,2015
+historical_new_capacity,R12_SAS,h2_elec_pem,,,,0.006817247,GW,2020
+historical_new_capacity,R12_SAS,h2_elec_pem,,,,0.027249471,GW,2025
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.001425487,GW,1990
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.000950324,GW,1995
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.00019278,GW,2000
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.00020975,GW,2005
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.028192421,GW,2010
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.069384818,GW,2015
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.123339462,GW,2020
+historical_new_capacity,R12_WEU,h2_elec_alk,,,,0.155659757,GW,2025
+historical_new_capacity,R12_WEU,h2_elec_pem,,,,0.00150168,GW,2010
+historical_new_capacity,R12_WEU,h2_elec_pem,,,,0.035854646,GW,2015
+historical_new_capacity,R12_WEU,h2_elec_pem,,,,0.253813893,GW,2020
+historical_new_capacity,R12_WEU,h2_elec_pem,,,,0.211117327,GW,2025
+historical_new_capacity,R12_WEU,h2_elec_soe,,,,0.000117406,GW,2015
+historical_new_capacity,R12_WEU,h2_elec_soe,,,,0.011310268,GW,2020
+historical_new_capacity,R12_WEU,h2_elec_soe,,,,0.006984528,GW,2025
+historical_activity,R12_LAM,h2_elec_alk,1965,M1,year,0.08060788,GWa,
+historical_activity,R12_LAM,h2_elec_alk,1970,M1,year,0.08060788,GWa,
+historical_activity,R12_LAM,h2_elec_alk,1975,M1,year,0.08060788,GWa,
+historical_activity,R12_LAM,h2_elec_alk,1980,M1,year,0.08060788,GWa,
+historical_activity,R12_LAM,h2_elec_alk,1985,M1,year,0.08060788,GWa,
+historical_activity,R12_LAM,h2_elec_alk,1990,M1,year,0.08060788,GWa,
+historical_activity,R12_WEU,h2_elec_alk,1990,M1,year,0.001354212,GWa,
+historical_activity,R12_LAM,h2_elec_alk,1995,M1,year,0.08060788,GWa,
+historical_activity,R12_WEU,h2_elec_alk,1995,M1,year,0.002257021,GWa,
+historical_activity,R12_LAM,h2_elec_alk,2000,M1,year,0.08060788,GWa,
+historical_activity,R12_NAM,h2_elec_pem,2000,M1,year,0.02547085,GWa,
+historical_activity,R12_WEU,h2_elec_alk,2000,M1,year,0.002440162,GWa,
+historical_activity,R12_LAM,h2_elec_alk,2005,M1,year,0.081141827,GWa,
+historical_activity,R12_NAM,h2_elec_pem,2005,M1,year,0.0435246,GWa,
+historical_activity,R12_WEU,h2_elec_alk,2005,M1,year,0.002639424,GWa,
+historical_activity,R12_LAM,h2_elec_alk,2010,M1,year,0.083277613,GWa,
+historical_activity,R12_NAM,h2_elec_alk,2010,M1,year,0.001287663,GWa,
+historical_activity,R12_NAM,h2_elec_pem,2010,M1,year,0.070605225,GWa,
+historical_activity,R12_PAO,h2_elec_alk,2010,M1,year,0.000257945,GWa,
+historical_activity,R12_SAS,h2_elec_alk,2010,M1,year,0.001317068,GWa,
+historical_activity,R12_SAS,h2_elec_pem,2010,M1,year,1.78E-05,GWa,
+historical_activity,R12_WEU,h2_elec_alk,2010,M1,year,0.029422224,GWa,
+historical_activity,R12_WEU,h2_elec_pem,2010,M1,year,0.001426596,GWa,
+historical_activity,R12_CHN,h2_elec_alk,2015,M1,year,0.002757434,GWa,
+historical_activity,R12_CHN,h2_elec_pem,2015,M1,year,0.002281823,GWa,
+historical_activity,R12_EEU,h2_elec_alk,2015,M1,year,0.000644863,GWa,
+historical_activity,R12_EEU,h2_elec_pem,2015,M1,year,0.000415292,GWa,
+historical_activity,R12_LAM,h2_elec_alk,2015,M1,year,0.083277613,GWa,
+historical_activity,R12_LAM,h2_elec_pem,2015,M1,year,8.90E-06,GWa,
+historical_activity,R12_MEA,h2_elec_alk,2015,M1,year,0.000147029,GWa,
+historical_activity,R12_NAM,h2_elec_alk,2015,M1,year,0.001690186,GWa,
+historical_activity,R12_NAM,h2_elec_pem,2015,M1,year,0.076024555,GWa,
+historical_activity,R12_PAO,h2_elec_alk,2015,M1,year,0.000644863,GWa,
+historical_activity,R12_PAO,h2_elec_pem,2015,M1,year,0.00217298,GWa,
+historical_activity,R12_PAS,h2_elec_alk,2015,M1,year,0.000177982,GWa,
+historical_activity,R12_PAS,h2_elec_pem,2015,M1,year,0.001146844,GWa,
+historical_activity,R12_SAS,h2_elec_alk,2015,M1,year,0.006585341,GWa,
+historical_activity,R12_SAS,h2_elec_pem,2015,M1,year,2.97E-05,GWa,
+historical_activity,R12_WEU,h2_elec_alk,2015,M1,year,0.095337802,GWa,
+historical_activity,R12_WEU,h2_elec_pem,2015,M1,year,0.03548851,GWa,
+historical_activity,R12_WEU,h2_elec_soe,2015,M1,year,0.000111536,GWa,
+historical_activity,R12_AFR,h2_elec_alk,2020,M1,year,0.006771062,GWa,
+historical_activity,R12_AFR,h2_elec_pem,2020,M1,year,0.002852279,GWa,
+historical_activity,R12_CHN,h2_elec_alk,2020,M1,year,0.950102616,GWa,
+historical_activity,R12_CHN,h2_elec_pem,2020,M1,year,0.049610622,GWa,
+historical_activity,R12_EEU,h2_elec_alk,2020,M1,year,0.003224315,GWa,
+historical_activity,R12_EEU,h2_elec_pem,2020,M1,year,0.01006284,GWa,
+historical_activity,R12_FSU,h2_elec_pem,2020,M1,year,0.001711367,GWa,
+historical_activity,R12_LAM,h2_elec_alk,2020,M1,year,0.083277613,GWa,
+historical_activity,R12_LAM,h2_elec_pem,2020,M1,year,0.007867427,GWa,
+historical_activity,R12_MEA,h2_elec_alk,2020,M1,year,0.000367572,GWa,
+historical_activity,R12_MEA,h2_elec_pem,2020,M1,year,0.028522788,GWa,
+historical_activity,R12_NAM,h2_elec_alk,2020,M1,year,0.002979912,GWa,
+historical_activity,R12_NAM,h2_elec_pem,2020,M1,year,0.228953705,GWa,
+historical_activity,R12_PAO,h2_elec_alk,2020,M1,year,0.039414029,GWa,
+historical_activity,R12_PAO,h2_elec_pem,2020,M1,year,0.018099991,GWa,
+historical_activity,R12_PAS,h2_elec_alk,2020,M1,year,0.000889911,GWa,
+historical_activity,R12_PAS,h2_elec_pem,2020,M1,year,0.002881943,GWa,
+historical_activity,R12_SAS,h2_elec_alk,2020,M1,year,0.008906848,GWa,
+historical_activity,R12_SAS,h2_elec_pem,2020,M1,year,0.006506048,GWa,
+historical_activity,R12_WEU,h2_elec_alk,2020,M1,year,0.212510291,GWa,
+historical_activity,R12_WEU,h2_elec_pem,2020,M1,year,0.276611708,GWa,
+historical_activity,R12_WEU,h2_elec_soe,2020,M1,year,0.01085629,GWa,
+historical_activity,R12_AFR,h2_elec_alk,2025,M1,year,0.011285103,GWa,
+historical_activity,R12_AFR,h2_elec_pem,2025,M1,year,0.014261394,GWa,
+historical_activity,R12_CHN,h2_elec_alk,2025,M1,year,1.753194406,GWa,
+historical_activity,R12_CHN,h2_elec_pem,2025,M1,year,0.077624335,GWa,
+historical_activity,R12_EEU,h2_elec_alk,2025,M1,year,0.003224315,GWa,
+historical_activity,R12_EEU,h2_elec_pem,2025,M1,year,0.036303805,GWa,
+historical_activity,R12_FSU,h2_elec_pem,2025,M1,year,0.002852279,GWa,
+historical_activity,R12_LAM,h2_elec_alk,2025,M1,year,0.083277613,GWa,
+historical_activity,R12_LAM,h2_elec_pem,2025,M1,year,0.013825192,GWa,
+historical_activity,R12_MEA,h2_elec_alk,2025,M1,year,0.000367572,GWa,
+historical_activity,R12_MEA,h2_elec_pem,2025,M1,year,0.046349531,GWa,
+historical_activity,R12_NAM,h2_elec_alk,2025,M1,year,0.002979912,GWa,
+historical_activity,R12_NAM,h2_elec_pem,2025,M1,year,0.388693071,GWa,
+historical_activity,R12_PAO,h2_elec_alk,2025,M1,year,0.036305789,GWa,
+historical_activity,R12_PAO,h2_elec_pem,2025,M1,year,0.028106926,GWa,
+historical_activity,R12_PAS,h2_elec_alk,2025,M1,year,0.000889911,GWa,
+historical_activity,R12_PAS,h2_elec_pem,2025,M1,year,0.002881943,GWa,
+historical_activity,R12_SAS,h2_elec_alk,2025,M1,year,0.018192876,GWa,
+historical_activity,R12_SAS,h2_elec_pem,2025,M1,year,0.032393046,GWa,
+historical_activity,R12_WEU,h2_elec_alk,2025,M1,year,0.36038706,GWa,
+historical_activity,R12_WEU,h2_elec_pem,2025,M1,year,0.477173169,GWa,
+historical_activity,R12_WEU,h2_elec_soe,2025,M1,year,0.017491591,GWa,
+historical_activity,R12_AFR,h2_elec_alk,2030,M1,year,0.011285103,GWa,
+historical_activity,R12_AFR,h2_elec_pem,2030,M1,year,0.014261394,GWa,
+historical_activity,R12_CHN,h2_elec_alk,2030,M1,year,1.753194406,GWa,
+historical_activity,R12_CHN,h2_elec_pem,2030,M1,year,0.077624335,GWa,
+historical_activity,R12_EEU,h2_elec_alk,2030,M1,year,0.003224315,GWa,
+historical_activity,R12_EEU,h2_elec_pem,2030,M1,year,0.036303805,GWa,
+historical_activity,R12_FSU,h2_elec_pem,2030,M1,year,0.002852279,GWa,
+historical_activity,R12_LAM,h2_elec_alk,2030,M1,year,0.083277613,GWa,
+historical_activity,R12_LAM,h2_elec_pem,2030,M1,year,0.013825192,GWa,
+historical_activity,R12_MEA,h2_elec_alk,2030,M1,year,0.000367572,GWa,
+historical_activity,R12_MEA,h2_elec_pem,2030,M1,year,0.046349531,GWa,
+historical_activity,R12_NAM,h2_elec_alk,2030,M1,year,0.002979912,GWa,
+historical_activity,R12_NAM,h2_elec_pem,2030,M1,year,0.388693071,GWa,
+historical_activity,R12_PAO,h2_elec_alk,2030,M1,year,0.016959898,GWa,
+historical_activity,R12_PAO,h2_elec_pem,2030,M1,year,0.026966015,GWa,
+historical_activity,R12_PAS,h2_elec_alk,2030,M1,year,0.000889911,GWa,
+historical_activity,R12_PAS,h2_elec_pem,2030,M1,year,0.002881943,GWa,
+historical_activity,R12_SAS,h2_elec_alk,2030,M1,year,0.018192876,GWa,
+historical_activity,R12_SAS,h2_elec_pem,2030,M1,year,0.032393046,GWa,
+historical_activity,R12_WEU,h2_elec_alk,2030,M1,year,0.36038706,GWa,
+historical_activity,R12_WEU,h2_elec_pem,2030,M1,year,0.477173169,GWa,
+historical_activity,R12_WEU,h2_elec_soe,2030,M1,year,0.017491591,GWa,
