@@ -6,11 +6,93 @@ import pandas as pd
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import load_package_data, package_data_path
+from message_ix_models.util.transaction import transact
 
 # Configuration files
 METADATA = [
     ("hydrogen", "set"),
 ]
+
+
+def add_hydrogen_sets(scen, ssp="SSP2"):
+    """
+    Add new hydrogen related sets to a MESSAGEix scenario
+    It takes as input a MESSAGEix scenario object,
+    This method only adds the sets, not the parameters.
+    The sets to be added are defined in data/hydrogen/set.yaml
+
+    # Parameters:
+    - scen: MESSAGEix Scenario Object
+    - ssp: default is SSP2
+    -----------
+    """
+    # TODO: we can actually take the keys from the set.yaml file
+    # and check what are the sets that have the "add" key and loop over them.
+    # I would do something like this:
+    # sets = [k for k in req["hydrogen"].keys() if "add" in req["hydrogen"][k]]
+
+    # load the hydrogen techs to be added
+    reqs = get_requirements()
+
+    # extract the technologies:
+    tecs = reqs["technology"]["add"]
+    techs_to_add = check_sets_in_scenario(scen, tecs, "technology")
+    with scen.transact(commit_message="Adding hydrogen Techs"):
+        for tec in techs_to_add:
+            scen.add_set("technology", tec)
+
+    # we also need to add the black carbon commodity
+    commodities = reqs["commodity"]["add"]
+    commodities_to_add = check_sets_in_scenario(scen, commodities, "commodity")
+
+    with scen.transact(commit_message="Adding hydrogen Commodities"):
+        for com in commodities_to_add:
+            scen.add_set("commodity", com)
+
+    # finally, we need to add the leakage emissions
+    emissions = reqs["emission"]["add"]
+    emissions_to_add = check_sets_in_scenario(scen, emissions, "emission")
+    with scen.transact(commit_message="Adding hydrogen Emissions"):
+        for em in emissions_to_add:
+            scen.add_set("emission", em)
+
+
+def check_sets_in_scenario(scen, tech_list: list[str], set_name: str) -> list[str]:
+    """
+    Check if hydrogen technologies are already in the scenario
+
+    Parameters:
+    -----------
+    - scen: MESSAGEix Scenario Object
+
+    Returns:
+    --------
+    - te: True if all hydrogen techs are in the scenario, False otherwise
+    """
+
+    existing_entries = scen.set(set_name)
+    entries_to_add = []
+    for tec in tech_list:
+        if tec not in existing_entries:
+            entries_to_add.append(tec)
+        if tec in existing_entries:
+            print(f" WARNING: Technology {tec} already exists in the scenario.")
+    return entries_to_add
+
+
+def get_requirements():
+    """Get requirements from hydrogen set.yaml.
+
+    Returns
+    -------
+    dict
+        Requirements specified in hydrogen set.yaml
+    """
+    context = read_config()
+    return context["hydrogen set"]
+
+
+## first of all
 
 
 def read_config() -> Context:
