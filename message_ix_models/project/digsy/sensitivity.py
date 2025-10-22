@@ -42,6 +42,18 @@ def lower_unconv_cost(scenario: "Scenario"):
             scenario.add_par(par, df)
 
 
+def lower_cv_cost(scenario: "Scenario", scaler: float):
+    wind_tecs = ["wind_cv1", "wind_cv2", "wind_cv3", "wind_cv4"]
+    sol_tecs = ["solar_cv1", "solar_cv2", "solar_cv3", "solar_cv4"]
+    df = scenario.par(
+        "var_cost",
+        filters={"technology": sol_tecs + wind_tecs},
+    )
+    df.value *= scaler
+    with scenario.transact():
+        scenario.add_par("var_cost", df)
+
+
 def expand_reserve(scenario: "Scenario"):
     par = "resource_volume"
     for comm in ["gas", "crude"]:
