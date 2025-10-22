@@ -50,18 +50,18 @@ def load_commodity_sets(scenario: message_ix.Scenario):
                 # read the set data
                 if set_name in ["technology", "commodity", "emission"]:
                     set_data = pd.read_csv(file_path, header=None)
-                    print(f"Adding {set_name} set")
+                    print(f"Adding {set_name} set for commodity {commodity}")
                     scenario.check_out()
                     set_values = set_data[0].to_list()
                     scenario.add_set(set_name, set_values)
                     scenario.commit(f"Add {commodity} commodity sets")
                     scenario.set_as_default()
-                    df_commodity = pd.DataFrame(scenario.set("commodity"))
-                    print(df_commodity)
-                    # Filter by the first column (index 0) instead of column name "0"
-                    df_commodity = df_commodity[df_commodity.iloc[:, 0] == commodity]
-                    print(f"Verification - {commodity} in commodity set:")
-                    print(df_commodity)
+                    # df_commodity = pd.DataFrame(scenario.set("commodity"))
+                    # print(df_commodity)
+                    # # Filter by the first column (index 0) instead of column name "0"
+                    # df_commodity = df_commodity[df_commodity.iloc[:, 0] == commodity]
+                    # print(f"Verification - {commodity} in commodity set:")
+                    # print(df_commodity)
                 else:
                     set_data = pd.read_csv(file_path)
                     print(f"Adding set {set_name}")
@@ -104,21 +104,21 @@ def load_emission_sets(scenario: message_ix.Scenario):
 
                 # read the set data
                 if set_name in ["technology", "commodity", "emission"]:
-                    print(f"SET NAME IS {set_name}")
+                    # print(f"SET NAME IS {set_name}")
                     set_data = pd.read_csv(file_path, header=None)
-                    print(f"Adding {set_name} set")
+                    # print(f"Adding {set_name} set")
                     scenario.check_out()
                     set_values = set_data[0].to_list()
-                    print(f"SET VALUES ARE {set_values}")
+                    # print(f"SET VALUES ARE {set_values}")
                     scenario.add_set(set_name, set_values)
                     scenario.commit(f"Add {emission} emission sets")
                     scenario.set_as_default()
-                    df_emission = pd.DataFrame(scenario.set("emission"))
-                    print(df_emission)
-                    # Filter by the first column (index 0) instead of column name "0"
-                    df_emission = df_emission[df_emission.iloc[:, 0] == emission]
-                    print(f"Verification - {emission} in emission set:")
-                    print(df_emission)
+                    # df_emission = pd.DataFrame(scenario.set("emission"))
+                    # print(df_emission)
+                    # # Filter by the first column (index 0) instead of column name "0"
+                    # df_emission = df_emission[df_emission.iloc[:, 0] == emission]
+                    # print(f"Verification - {emission} in emission set:")
+                    # print(df_emission)
                 else:
                     set_data = pd.read_csv(file_path)
                     print(f"Adding set {set_name}")
@@ -175,7 +175,7 @@ def load_hydrogen_sets(scenario: message_ix.Scenario):
                 # MESSAGEix scenario This is a placeholder print statement
                 if set_name in ["technology", "commodity", "emission"]:
                     set_data = pd.read_csv(file_path, header=None)
-                    print("Adding Technology Set")
+                    print(f"Adding {set_name} Set for {tech}")
                     scenario.check_out()
                     tech_name_set = set_data[0].to_list()
                     scenario.add_set(set_name, tech_name_set)
@@ -183,7 +183,7 @@ def load_hydrogen_sets(scenario: message_ix.Scenario):
                     scenario.set_as_default()
                 else:
                     set_data = pd.read_csv(file_path)
-                    print(f"Adding set {set_name}")
+                    print(f"Adding {set_name} Set for {tech}")
                     scenario.check_out()
                     scenario.add_set(set_name, set_data)
                     scenario.commit("Add hydrogen sets")
@@ -229,14 +229,14 @@ def load_hydrogen_parameters(scenario: message_ix.Scenario):
             if file.endswith(".csv"):
                 param_name = file[:-4]  # remove .csv extension
                 file_path = os.path.join(param_path, file)
-                print(f"Retrieving parameter {param_name}")
+                # print(f"Retrieving parameter {param_name}")
 
                 # read the parameter data
                 param_data = pd.read_csv(file_path)
 
                 # Here you would add the code to insert the parameter data into the
                 # MESSAGEix scenario This is a placeholder print statement
-                print(f"Adding parameter {param_name} to model")
+                print(f"Adding parameter {param_name} for {tec} to model")
 
                 scenario.check_out()
                 scenario.add_par(param_name, param_data)
