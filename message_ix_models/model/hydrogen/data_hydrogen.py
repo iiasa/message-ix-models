@@ -32,6 +32,13 @@ if TYPE_CHECKING:
     from message_ix_models.types import ParameterData
 
 
+"""
+What I want to do here:
+read a bunch of csv files with techno-economic data for hydrogen technologies 
+and add them to message_ix default workflow.
+"""
+
+
 def read_data_hydrogen(
     scenario: "Scenario",
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
