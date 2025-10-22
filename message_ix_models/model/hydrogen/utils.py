@@ -16,6 +16,121 @@ METADATA = [
 ]
 
 
+def load_commodity_sets(scenario: message_ix.Scenario):
+    """
+    this method will load the commodity sets for the commodities it finds in
+    data/hydrogen/set.yaml file.
+    it looks inside the data/hydrogen/sets folder for all the folder names
+    that match the commodity names, and then looks inside those folders for the
+    set csv files. The CSV file names must match the set names in MESSAGEix.
+    This method will automatically add the sets to the scenario.
+    """
+    commodities = get_requirements()["hydrogen"]["commodity"]["add"]
+    for commodity in commodities:
+        # build the path to the set files
+        set_path = package_data_path("hydrogen", "sets", commodity)
+
+        # check if the path exists
+        if not os.path.exists(set_path):
+            print(
+                f" WARNING: No set folder found for commodity {commodity} "
+                f"at {set_path}. Skipping."
+            )
+            continue
+
+        # loop over all csv files in the folder
+        for file in os.listdir(set_path):
+
+            # skip files that start with is_ (automatically generated sets)
+            if file.endswith(".csv") and not file.startswith("is_"):
+                set_name = file[:-4]  # remove .csv extension
+                file_path = os.path.join(set_path, file)
+                print(f"Loading set {set_name} for commodity {commodity}")
+
+                # read the set data
+                if set_name in ["technology", "commodity", "emission"]:
+                    set_data = pd.read_csv(file_path, header=None)
+                    print(f"Adding {set_name} set")
+                    scenario.check_out()
+                    set_values = set_data[0].to_list()
+                    scenario.add_set(set_name, set_values)
+                    scenario.commit(f"Add {commodity} commodity sets")
+                    scenario.set_as_default()
+                    df_commodity = pd.DataFrame(scenario.set("commodity"))
+                    print(df_commodity)
+                    # Filter by the first column (index 0) instead of column name "0"
+                    df_commodity = df_commodity[df_commodity.iloc[:, 0] == commodity]
+                    print(f"Verification - {commodity} in commodity set:")
+                    print(df_commodity)
+                else:
+                    set_data = pd.read_csv(file_path)
+                    print(f"Adding set {set_name}")
+                    scenario.check_out()
+                    scenario.add_set(set_name, set_data)
+                    scenario.commit(f"Add {commodity} commodity sets")
+                    scenario.set_as_default()
+
+
+def load_emission_sets(scenario: message_ix.Scenario):
+    """
+    this method will load the emission sets for the emissions it finds in
+    data/hydrogen/set.yaml file.
+    it looks inside the data/hydrogen/sets folder for all the folder names
+    that match the emission names, and then looks inside those folders for the
+    set csv files. The CSV file names must match the set names in MESSAGEix.
+    This method will automatically add the sets to the scenario.
+    """
+    emissions = get_requirements()["hydrogen"]["emission"]["add"]
+    for emission in emissions:
+        # build the path to the set files
+        set_path = package_data_path("hydrogen", "sets", emission)
+
+        # check if the path exists
+        if not os.path.exists(set_path):
+            print(
+                f" WARNING: No set folder found for emission {emission} "
+                f"at {set_path}. Skipping."
+            )
+            continue
+
+        # loop over all csv files in the folder
+        for file in os.listdir(set_path):
+
+            # skip files that start with is_ (automatically generated sets)
+            if file.endswith(".csv") and not file.startswith("is_"):
+                set_name = file[:-4]  # remove .csv extension
+                file_path = os.path.join(set_path, file)
+                print(f"Loading set {set_name} for emission {emission}")
+
+                # read the set data
+                if set_name in ["technology", "commodity", "emission"]:
+                    print(f"SET NAME IS {set_name}")
+                    set_data = pd.read_csv(file_path, header=None)
+                    print(f"Adding {set_name} set")
+                    scenario.check_out()
+                    set_values = set_data[0].to_list()
+                    print(f"SET VALUES ARE {set_values}")
+                    scenario.add_set(set_name, set_values)
+                    scenario.commit(f"Add {emission} emission sets")
+                    scenario.set_as_default()
+                    df_emission = pd.DataFrame(scenario.set("emission"))
+                    print(df_emission)
+                    # Filter by the first column (index 0) instead of column name "0"
+                    df_emission = df_emission[df_emission.iloc[:, 0] == emission]
+                    print(f"Verification - {emission} in emission set:")
+                    print(df_emission)
+                else:
+                    set_data = pd.read_csv(file_path)
+                    print(f"Adding set {set_name}")
+                    scenario.check_out()
+                    scenario.add_set(set_name, set_data)
+                    scenario.commit(f"Add {emission} emission sets")
+                    scenario.set_as_default()
+
+
+# def remove_deprecated_sets(scenario: message_ix.Scenario):
+
+
 def load_hydrogen_sets(scenario: message_ix.Scenario):
     """
     this method will load the hydrogen sets for the technologies it finds in
@@ -56,12 +171,23 @@ def load_hydrogen_sets(scenario: message_ix.Scenario):
                 print(f"Loading set {set_name}")
 
                 # read the set data
-                set_data = pd.read_csv(file_path)
                 # Here you would add the code to insert the set data into the
                 # MESSAGEix scenario This is a placeholder print statement
-                print(f"Adding set {set_name}")
-
-                scenario.add_set(set_name, set_data)
+                if set_name in ["technology", "commodity", "emission"]:
+                    set_data = pd.read_csv(file_path, header=None)
+                    print("Adding Technology Set")
+                    scenario.check_out()
+                    tech_name_set = set_data[0].to_list()
+                    scenario.add_set(set_name, tech_name_set)
+                    scenario.commit("Add hydrogen technology sets")
+                    scenario.set_as_default()
+                else:
+                    set_data = pd.read_csv(file_path)
+                    print(f"Adding set {set_name}")
+                    scenario.check_out()
+                    scenario.add_set(set_name, set_data)
+                    scenario.commit("Add hydrogen sets")
+                    scenario.set_as_default()
 
     # return statement is only for testing purposes
     return set_data
@@ -112,7 +238,10 @@ def load_hydrogen_parameters(scenario: message_ix.Scenario):
                 # MESSAGEix scenario This is a placeholder print statement
                 print(f"Adding parameter {param_name} to model")
 
+                scenario.check_out()
                 scenario.add_par(param_name, param_data)
+                scenario.commit("Add hydrogen parameters")
+                scenario.set_as_default()
 
     # return statement is only for testing purposes
     return param_data
