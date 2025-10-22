@@ -13,7 +13,7 @@ from scipy.optimize import curve_fit
 import message_ix_models.util
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.material.data_util import get_ssp_soc_eco_data
-from message_ix_models.model.material.material_demand.math import (
+from message_ix_models.model.material.demand.math import (
     GIGA,
     MEGA,
     cement_function,
