@@ -1,0 +1,5 @@
+node_loc,technology,year_act,mode,time,value,unit
+R12_WEU,h2_elec_soe,2015,M1,year,0.00011153551199999997,GWa
+R12_WEU,h2_elec_soe,2020,M1,year,0.01085628970105263,GWa
+R12_WEU,h2_elec_soe,2025,M1,year,0.017491591016842105,GWa
+R12_WEU,h2_elec_soe,2030,M1,year,0.017491591016842105,GWa
