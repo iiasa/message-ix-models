@@ -1,16 +1,14 @@
 import os
-from pathlib import Path
-from typing import Any, Literal, Optional, Union
 
-import pandas as pd
-
-from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util import load_package_data, package_data_path
+# from pathlib import Path
+from typing import Literal
 
 # from message_ix_models.util.transaction import transact
-
-import ixmp
 import message_ix
+import pandas as pd
+
+from message_ix_models import Context
+from message_ix_models.util import load_package_data, package_data_path
 
 # Configuration files
 METADATA = [
@@ -18,7 +16,7 @@ METADATA = [
 ]
 
 
-def load_hydrogen_sets(mp: ixmp.Platform, scenario: message_ix.Scenario):
+def load_hydrogen_sets(scenario: message_ix.Scenario):
     """
     this method will load the hydrogen sets for the technologies it finds in
     data/hydrogen/set.yaml file.
@@ -28,8 +26,7 @@ def load_hydrogen_sets(mp: ixmp.Platform, scenario: message_ix.Scenario):
     This method will automatically add the sets to the scenario.
 
 
-    ## Parameters:
-    - mp: ixmp Platform Object
+    ## Parameters:ß
     - scenario: MESSAGEix Scenario Object
     """
 
@@ -56,19 +53,21 @@ def load_hydrogen_sets(mp: ixmp.Platform, scenario: message_ix.Scenario):
             if file.endswith(".csv") and not file.startswith("is_"):
                 set_name = file[:-4]  # remove .csv extension
                 file_path = os.path.join(set_path, file)
-                print(f" Loading set {set_name} for technology {tech} from {file_path}")
+                print(f"Loading set {set_name}")
 
                 # read the set data
                 set_data = pd.read_csv(file_path)
                 # Here you would add the code to insert the set data into the
                 # MESSAGEix scenario This is a placeholder print statement
-                print(f" Set data for {set_name}:\n{set_data}")
+                print(f"Adding set {set_name}")
+
+                scenario.add_set(set_name, set_data)
 
     # return statement is only for testing purposes
     return set_data
 
 
-def load_hydrogen_parameters(mp: ixmp.Platform, scenario: message_ix.Scenario):
+def load_hydrogen_parameters(scenario: message_ix.Scenario):
     """
     this method will load the hydrogen parameters for the technologies it
     finds in the data/hydrogen/set.yaml file.
@@ -81,7 +80,6 @@ def load_hydrogen_parameters(mp: ixmp.Platform, scenario: message_ix.Scenario):
     This method will automatically add the parameters to the scenario.
 
     ## Parameters:
-    - mp: ixmp Platform Object
     - scenario: MESSAGEix Scenario Object
     """
 
@@ -105,16 +103,16 @@ def load_hydrogen_parameters(mp: ixmp.Platform, scenario: message_ix.Scenario):
             if file.endswith(".csv"):
                 param_name = file[:-4]  # remove .csv extension
                 file_path = os.path.join(param_path, file)
-                print(
-                    f" Loading parameter {param_name} for technology {tec} from {file_path}"
-                )
+                print(f"Retrieving parameter {param_name}")
 
                 # read the parameter data
                 param_data = pd.read_csv(file_path)
 
                 # Here you would add the code to insert the parameter data into the
                 # MESSAGEix scenario This is a placeholder print statement
-                print(f" Parameter data for {param_name}:\n{param_data.head()}")
+                print(f"Adding parameter {param_name} to model")
+
+                scenario.add_par(param_name, param_data)
 
     # return statement is only for testing purposes
     return param_data
