@@ -163,7 +163,7 @@ def fetch_codelist(id: str) -> "sdmx.model.common.Codelist":
         url="https://api.worldbank.org/v2/sdmx/rest/codelist/WB/", known_hash=None
     )
     # Read the retrieved SDMX StructureMessage and extract the code list
-    sm = cast("StructureMessage", sdmx.read_sdmx(file))
+    sm = cast("StructureMessage", sdmx.read_sdmx(file, format="xml"))
 
     return sm.codelist[id]
 
