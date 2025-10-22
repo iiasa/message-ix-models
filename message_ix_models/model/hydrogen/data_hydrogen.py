@@ -39,13 +39,17 @@ and add them to message_ix default workflow.
 
 def add_hydrogen_techs(scenario: Scenario):
     """
-    this method simply calls the two methods from message_ix_models.model.hydrogen.utils
+    this method simply calls the four methods from message_ix_models.model.hydrogen.utils
     """
     from message_ix_models.model.hydrogen.utils import (
+        load_commodity_sets,
+        load_emission_sets,
         load_hydrogen_parameters,
         load_hydrogen_sets,
     )
 
+    load_commodity_sets(scenario)
+    load_emission_sets(scenario)
     load_hydrogen_sets(scenario)
     load_hydrogen_parameters(scenario)
 
