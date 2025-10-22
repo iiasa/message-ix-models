@@ -14,6 +14,53 @@ METADATA = [
 ]
 
 
+def load_hydrogen_parameters():
+    """
+    this method will load the hydrogen parameters for the technologies it
+    finds in the data/hydrogen/set.yaml file.
+
+    it looks inside the data/hydrogen/parameters folder for all the folder names
+    that match the technology names, and then looks inside those folders for the
+    parameter csv files. The CSV file names must match the parameter names in
+    MESSAGEix.
+
+
+    """
+
+    # load the hydrogen techs to be added
+    techs = get_requirements()["hydrogen"]["technology"]["add"]
+
+    for tec in techs:
+        # build the path to the parameter files
+        param_path = package_data_path("hydrogen", "parameters", tec)
+
+        # check if the path exists
+        if not os.path.exists(param_path):
+            print(
+                f" WARNING: No parameter folder found for technology {tec} "
+                f"at {param_path}. Skipping."
+            )
+            continue
+
+        # loop over all csv files in the folder
+        for file in os.listdir(param_path):
+            if file.endswith(".csv"):
+                param_name = file[:-4]  # remove .csv extension
+                file_path = os.path.join(param_path, file)
+                print(
+                    f" Loading parameter {param_name} for technology {tec} from {file_path}"
+                )
+
+                # read the parameter data
+                param_data = pd.read_csv(file_path)
+
+                # Here you would add the code to insert the parameter data into the MESSAGEix scenario
+                # This is a placeholder print statement
+                print(f" Parameter data for {param_name}:\n{param_data.head()}")
+
+    return param_data
+
+
 def add_hydrogen_sets(scen, ssp="SSP2"):
     """
     Add new hydrogen related sets to a MESSAGEix scenario

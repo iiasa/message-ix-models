@@ -1,0 +1,4 @@
+node_loc,technology,year_vtg,value,unit
+R12_WEU,h2_elec_soe,2015,0.00011740580210526313,GW
+R12_WEU,h2_elec_soe,2020,0.011310267567423822,GW
+R12_WEU,h2_elec_soe,2025,0.006984527700831024,GW
