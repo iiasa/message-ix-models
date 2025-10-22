@@ -8,7 +8,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from message_ix import make_df
+from message_ix import Scenario, make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.hydrogen.utils import (
@@ -27,8 +27,6 @@ from message_ix_models.util import (
 )
 
 if TYPE_CHECKING:
-    from message_ix import Scenario
-
     from message_ix_models.types import ParameterData
 
 
@@ -37,6 +35,19 @@ What I want to do here:
 read a bunch of csv files with techno-economic data for hydrogen technologies 
 and add them to message_ix default workflow.
 """
+
+
+def add_hydrogen_techs(scenario: Scenario):
+    """
+    this method simply calls the two methods from message_ix_models.model.hydrogen.utils
+    """
+    from message_ix_models.model.hydrogen.utils import (
+        load_hydrogen_parameters,
+        load_hydrogen_sets,
+    )
+
+    load_hydrogen_sets(scenario)
+    load_hydrogen_parameters(scenario)
 
 
 def read_data_hydrogen(
