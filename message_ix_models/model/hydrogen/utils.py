@@ -6,7 +6,11 @@ import pandas as pd
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import load_package_data, package_data_path
-from message_ix_models.util.transaction import transact
+
+# from message_ix_models.util.transaction import transact
+
+import ixmp
+import message_ix
 
 # Configuration files
 METADATA = [
@@ -14,7 +18,57 @@ METADATA = [
 ]
 
 
-def load_hydrogen_parameters():
+def load_hydrogen_sets(mp: ixmp.Platform, scenario: message_ix.Scenario):
+    """
+    this method will load the hydrogen sets for the technologies it finds in
+    data/hydrogen/set.yaml file.
+    it looks inside the data/hydrogen/sets folder for all the folder names
+    that match the technology names, and then looks inside those folders for the
+    set yaml files. The YAML file names must match the set names in MESSAGEix.
+    This method will automatically add the sets to the scenario.
+
+
+    ## Parameters:
+    - mp: ixmp Platform Object
+    - scenario: MESSAGEix Scenario Object
+    """
+
+    # load the hydrogen techs to be added:
+    techs = get_requirements()["hydrogen"]["technology"]["add"]
+    for tech in techs:
+        # build the path to the set files
+        set_path = package_data_path("hydrogen", "sets", tech)
+
+        # check if the path exists
+        if not os.path.exists(set_path):
+            print(
+                f" WARNING: No set folder found for technology {tech} "
+                f"at {set_path}. Skipping."
+            )
+            continue
+
+        # loop over all csv files in the folder
+        for file in os.listdir(set_path):
+
+            # we want to skip the files that start with is_
+            # these are automatically generated sets.
+            # We don't need to add them manually.
+            if file.endswith(".csv") and not file.startswith("is_"):
+                set_name = file[:-4]  # remove .csv extension
+                file_path = os.path.join(set_path, file)
+                print(f" Loading set {set_name} for technology {tech} from {file_path}")
+
+                # read the set data
+                set_data = pd.read_csv(file_path)
+                # Here you would add the code to insert the set data into the
+                # MESSAGEix scenario This is a placeholder print statement
+                print(f" Set data for {set_name}:\n{set_data}")
+
+    # return statement is only for testing purposes
+    return set_data
+
+
+def load_hydrogen_parameters(mp: ixmp.Platform, scenario: message_ix.Scenario):
     """
     this method will load the hydrogen parameters for the technologies it
     finds in the data/hydrogen/set.yaml file.
@@ -24,7 +78,11 @@ def load_hydrogen_parameters():
     parameter csv files. The CSV file names must match the parameter names in
     MESSAGEix.
 
+    This method will automatically add the parameters to the scenario.
 
+    ## Parameters:
+    - mp: ixmp Platform Object
+    - scenario: MESSAGEix Scenario Object
     """
 
     # load the hydrogen techs to be added
@@ -54,10 +112,11 @@ def load_hydrogen_parameters():
                 # read the parameter data
                 param_data = pd.read_csv(file_path)
 
-                # Here you would add the code to insert the parameter data into the MESSAGEix scenario
-                # This is a placeholder print statement
+                # Here you would add the code to insert the parameter data into the
+                # MESSAGEix scenario This is a placeholder print statement
                 print(f" Parameter data for {param_name}:\n{param_data.head()}")
 
+    # return statement is only for testing purposes
     return param_data
 
 
