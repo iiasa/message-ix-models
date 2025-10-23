@@ -1,6 +1,6 @@
 var: emi
 iamc_prefix: Emissions|H2|Fugitive|
-unit: Mt H2/yr
+unit: Mt/yr
 
 level_1:
   Energy|Supply|Hydrogen|Production|Gas:
