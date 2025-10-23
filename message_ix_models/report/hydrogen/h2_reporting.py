@@ -165,6 +165,9 @@ def format_reporting_df(
         .rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
         .assign(
             variable=lambda x: variable_prefix + x["variable"],
+            region=lambda x: x["region"].str.replace(
+                "R12_", "", regex=False
+            ),  # Remove R12_ prefix
             Model=model_name,
             Scenario=scenario_name,
             Unit=unit,  # Set target unit
