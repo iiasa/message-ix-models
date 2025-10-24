@@ -85,6 +85,7 @@ cooling:
       - cl_fresh
       - air
       - ot_saline
+      - water_return
 
   level:
     require:
@@ -1256,6 +1257,7 @@ nexus:
       - urban_disconnected
       - rural_mw
       - rural_disconnected
+      - surfacewater
 
   level:
     add:
