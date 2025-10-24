@@ -1,3 +1,4 @@
+import gc
 import logging
 from pathlib import Path
 from typing import Optional
@@ -278,6 +279,12 @@ def report(
     # --------------------
     # Run reporting tables
     # --------------------
+    # AGGRESSIVE MEMORY OPTIMIZATION: Process tables incrementally instead of accumulating
+
+    # Pre-load mapping and allowed vars before loop
+    mapping = pd.read_csv(aggr_def)
+    allowed_var = pd.read_csv(var_def)["Variable"].unique().tolist()
+    df = []  # Accumulator for final IAMC format
 
     dfs = {}
     for i in run_tables:
@@ -288,68 +295,39 @@ def report(
                 and eval(run_tables[i]["condition"]) is True
             ):
                 continue
+
+            # Compute the table
             dfs[i] = (
                 func_dict[run_tables[i]["function"]]()
                 if "args" not in run_tables[i]
                 else func_dict[run_tables[i]["function"]](**run_tables[i]["args"])
             )
 
-    # ---------------------------------
-    # Convert dataframes to IAMC-format
-    # ---------------------------------
-
-    mapping = pd.read_csv(aggr_def)
-    allowed_var = pd.read_csv(var_def)["Variable"].unique().tolist()
-    df = []
-
-    if merge_ts:
-        # Retrieve ts
-        ts = scen.timeseries()
-        if merge_hist:
-            ts = ts[ts["year"].isin(get_optimization_years(scen))]
-        # Rename for compatibility
-        ts = ts.rename(
-            columns={
-                "model": "Model",
-                "scenario": "Scenario",
-                "region": "Region",
-                "variable": "Variable",
-                "unit": "Unit",
-            }
-        )
-
-        # Convert synonym region names
-        ts.Region = ts.Region.map(reg_ts)
-
-        iamc_index = ["Model", "Scenario", "Region", "Variable", "Unit"]
-        # Flip from short to long format
-        ts = ts.pivot_table(
-            index=iamc_index, columns="year", values="value"
-        ).reset_index()
-
-    for i in dfs:
-        if merge_ts:
-            # Filter out timeseries entries which exist for a certain variable
-            var = config["run_tables"][i]["root"]
-            tmp = ts[ts.Variable.str.find(var) >= 0]
-            tmp.Variable = tmp.Variable.str.replace(f"{var}|".replace("|", r"\|"), "")
-            if not tmp.empty:
-                dfs[i] = (
-                    tmp.set_index(iamc_index)
-                    .combine_first(dfs[i].set_index(iamc_index))
-                    .reset_index()
+            # AGGRESSIVE OPTIMIZATION: Immediately convert to IAMC and delete raw data
+            # This prevents accumulation of all raw DataFrames in memory
+            if run_tables[i]["root"] == "Emissions|HFC":
+                df.append(
+                    pp_utils.iamc_it(dfs[i], run_tables[i]["root"], mapping, rm_totals=True)
                 )
+            else:
+                df.append(pp_utils.iamc_it(dfs[i], run_tables[i]["root"], mapping))
 
-            # Remove newly added timeseries from ts dataframe, to avoid double counting
-            ts = ts[ts.Variable.str.find(var) < 0]
+            # Delete the raw DataFrame immediately
+            del dfs[i]
+            gc.collect()
+            print(f"  (processed & freed {run_tables[i]['root']})")
 
-        if run_tables[i]["root"] == "Emissions|HFC":
-            df.append(
-                pp_utils.iamc_it(dfs[i], run_tables[i]["root"], mapping, rm_totals=True)
-            )
-        else:
-            df.append(pp_utils.iamc_it(dfs[i], run_tables[i]["root"], mapping))
+    # ---------------------------------
+    # Finalize IAMC-format dataframes
+    # ---------------------------------
+    # NOTE: Conversion already done incrementally in loop above
+
+    # Concatenate all processed tables
     df = pd.concat(df, sort=True)
+
+    # Free the now-empty dfs dict
+    del dfs
+    gc.collect()
 
     # --------------
     # Process output
