@@ -4,6 +4,8 @@ What's new
 Next release
 ============
 
+- :mod:`message_ix_models` is tested and compatible with `Python 3.14 <https://www.python.org/downloads/release/python-3140/>`__ (:pull:`443`).
+- Support for Python 3.9 is dropped (:pull:`443`), as it has reached end-of-life.
 - Fix water module reporting failures and improve calculations (:issue:`407`, :pull:`396`).
 - Improve and extend :doc:`/material/index` (:pull:`418`).
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
