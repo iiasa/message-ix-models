@@ -3,7 +3,7 @@
 .. caution:: |gh-350|
 """
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .add_CO2_emission_constraint import main as add_CO2_emission_constraint
 
@@ -15,7 +15,7 @@ def main(
     scen: "Scenario",
     relation_name: str,
     reg: str = "R11_GLB",
-    constraint_value: Optional[float] = None,
+    constraint_value: float | None = None,
 ) -> None:
     """Add accounting possibility for CO2 emissions from FFI.
 

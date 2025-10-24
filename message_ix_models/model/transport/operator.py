@@ -6,7 +6,7 @@ from collections.abc import Hashable, Sequence
 from functools import partial
 from itertools import product
 from operator import gt, le, lt
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import genno
 import numpy as np
@@ -210,9 +210,9 @@ def broadcast(q1: "AnyQuantity", q2: "AnyQuantity") -> "AnyQuantity":
 
 def broadcast_t_c_l(
     technologies: list[Code],
-    commodities: list[Union[Code, str]],
+    commodities: list[Code | str],
     kind: str,
-    default_level: Optional[str] = None,
+    default_level: str | None = None,
 ) -> "AnyQuantity":
     """Return a Quantity for broadcasting dimension (t) to (c, l) for `kind`.
 
@@ -582,7 +582,7 @@ def factor_ssp(
     years: list[int],
     *others: list,
     info: "message_ix_models.model.transport.factor.Factor",
-    extra_dims: Optional[Sequence[str]] = None,
+    extra_dims: Sequence[str] | None = None,
 ) -> "AnyQuantity":
     """Return a scaling factor for an SSP realization."""
     kw = dict(n=nodes, y=years, scenario=config["transport"].ssp)
@@ -707,8 +707,8 @@ def max(
     qty: "AnyQuantity",
     dim: "Dims" = None,
     *,
-    skipna: Optional[bool] = None,
-    keep_attrs: Optional[bool] = None,
+    skipna: bool | None = None,
+    keep_attrs: bool | None = None,
     **kwargs: Any,
 ) -> "AnyQuantity":
     """Like :meth:`xarray.DataArray.max`."""
@@ -750,8 +750,8 @@ def min(
     qty: "AnyQuantity",
     dim: "Dims" = None,
     *,
-    skipna: Optional[bool] = None,
-    keep_attrs: Optional[bool] = None,
+    skipna: bool | None = None,
+    keep_attrs: bool | None = None,
     **kwargs: Any,
 ) -> "AnyQuantity":
     """Like :meth:`xarray.DataArray.min`."""
@@ -837,7 +837,7 @@ def price_units(qty: "TQuantity") -> "TQuantity":
 
 
 def quantity_from_config(
-    config: dict, name: str, dimensionality: Optional[dict] = None
+    config: dict, name: str, dimensionality: dict | None = None
 ) -> "AnyQuantity":
     if dimensionality:
         raise NotImplementedError

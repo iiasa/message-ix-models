@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Sequence
-from typing import Union
 
 from message_ix import Scenario
 from sdmx.model.v21 import Code
@@ -125,7 +124,7 @@ def identify_nodes(scenario: Scenario) -> str:
         return id
 
 
-def nodes_ex_world(nodes: Sequence[Union[str, Code]]) -> list[Union[str, Code]]:
+def nodes_ex_world(nodes: Sequence[str | Code]) -> list[str | Code]:
     """Exclude "World" and anything containing "GLB" from `nodes`.
 
     May also be used as a genno (reporting) operator.

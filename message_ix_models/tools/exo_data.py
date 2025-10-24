@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from operator import itemgetter
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 from warnings import warn
 
 from genno import Key, quote
@@ -70,7 +70,7 @@ class BaseOptions:
     dims: tuple[str, ...] = ("n", "y")
 
     @classmethod
-    def from_args(cls, source_id: Union[str, "ExoDataSource"], *args, **kwargs):
+    def from_args(cls, source_id: "str | ExoDataSource", *args, **kwargs):
         """Construct an instance from keyword arguments.
 
         Parameters
@@ -120,12 +120,12 @@ class ExoDataSource(ABC):
     use_test_data: bool = False
 
     #: :py:`where` keyword argument to :func:`.path_fallback`. See :meth:`_where`.
-    where: list[Union[str, "Path"]] = []
+    where: list["str | Path"] = []
 
     # Class methods
 
     @classmethod
-    def _where(self) -> list[Union[str, "Path"]]:
+    def _where(self) -> list["str | Path"]:
         """Helper for :meth:`__init__` methods in concrete classes.
 
         Return :attr:`where`
@@ -139,7 +139,7 @@ class ExoDataSource(ABC):
         cls,
         c: "Computer",
         *args,
-        context: Optional["Context"] = None,
+        context: "Context | None" = None,
         strict: bool = True,
         **kwargs,
     ) -> tuple:
@@ -381,7 +381,7 @@ def prepare_computer(
     context,
     c: "Computer",
     source="test",
-    source_kw: Optional[Mapping] = None,
+    source_kw: Mapping | None = None,
     *,
     strict: bool = True,
 ) -> tuple[Key, ...]:
@@ -436,7 +436,7 @@ def prepare_computer(
 
 
 def register_source(
-    cls: type[ExoDataSource], *, id: Optional[str] = None
+    cls: type[ExoDataSource], *, id: str | None = None
 ) -> type[ExoDataSource]:
     """Register :class:`.ExoDataSource` `cls` as a source of exogenous data."""
     id_ = id or cls.__name__

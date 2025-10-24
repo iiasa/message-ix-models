@@ -1,6 +1,5 @@
 import logging
 from collections.abc import Callable, Mapping
-from typing import Optional, Union
 
 import ixmp
 import pandas as pd
@@ -30,8 +29,8 @@ def _add_unit(mp: ixmp.Platform, unit: str, comment: str) -> None:
 # FIXME Reduce complexity from 14 to ≤13
 def apply_spec(  # noqa: C901
     scenario: Scenario,
-    spec: Union[Spec, Mapping[str, ScenarioInfo]],
-    data: Optional[Callable] = None,
+    spec: Spec | Mapping[str, ScenarioInfo],
+    data: Callable | None = None,
     **options,
 ):
     """Apply `spec` to `scenario`.

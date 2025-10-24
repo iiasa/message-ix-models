@@ -7,7 +7,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, field, replace
 from enum import Flag, auto
 from functools import lru_cache, reduce
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import yaml
 from sdmx.model.common import Code
@@ -73,7 +73,7 @@ class T35_POLICY(Flag):
 #:   In the NAVIGATE workflow, the :attr:`demand_scenario` values (scenario info style,
 #:   a :class:`dict` of ``model`` name, ``scenario`` name, and optional ``version``) are
 #:   set in .navigate.workflow.generate().
-CLIMATE_POLICY: dict[Optional[str], WfConfig] = {
+CLIMATE_POLICY: dict[str | None, WfConfig] = {
     # Default
     None: WfConfig(
         reserve_margin=False,
@@ -221,7 +221,7 @@ def _read() -> list[Code]:
         _content = yaml.safe_load(f)
 
     # Transform into a form intelligible by as_codes()
-    content: dict[str, Union[str, Code]] = {}
+    content: dict[str, str | Code] = {}
     for item in _content:
         if isinstance(item, str):
             content[item] = Code(id=item, name=item)
@@ -238,7 +238,7 @@ def get_policy_config(label, **kwargs) -> WfConfig:
 
 
 def iter_scenario_codes(
-    context, filters: Optional[Mapping] = None
+    context, filters: Mapping | None = None
 ) -> Generator[Code, None, None]:
     """Iterate over the scenarios defined in the ``navigate-workflow`` repository.
 
@@ -283,7 +283,7 @@ class Config:
     policy_year: Literal[2025, 2030] = 2030
 
     #: Single target scenario for :mod:`.navigate.workflow.generate_workflow`
-    scenario: Optional[str] = None
+    scenario: str | None = None
 
     #: :data:`True` to use MESSAGEix-Buildings (:mod:`.model.buildings`).
     buildings: bool = True

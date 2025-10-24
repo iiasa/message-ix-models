@@ -7,7 +7,7 @@ historical activity and demand adjustments based on IEA data.
 """
 
 import os
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List
 
 import pandas as pd
 from message_ix.util import make_df
@@ -342,7 +342,7 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
 
 
 def get_hist_act_data(
-    map_fname: str, iea_data_path: str, years: Union[List[int], None] = None
+    map_fname: str, iea_data_path: str, years: List[int] | None = None
 ) -> pd.DataFrame:
     """Reads IEA DB, maps and aggregates variables to MESSAGE technologies.
 

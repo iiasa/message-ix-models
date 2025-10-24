@@ -3,7 +3,7 @@ from collections.abc import Callable
 from dataclasses import InitVar, dataclass, field
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, TypeVar
 
 from message_ix_models.util import package_data_path
 from message_ix_models.util.config import ConfigHelper, _local_data_factory
@@ -39,12 +39,10 @@ class Config(ConfigHelper):
     """
 
     #: Shorthand to call :func:`use_file` on a new instance.
-    from_file: InitVar[Union[Path, str, None]] = package_data_path(
-        "report", "global.yaml"
-    )
+    from_file: InitVar[Path | str | None] = package_data_path("report", "global.yaml")
 
     #: Shorthand to set :py:`legacy["use"]` on a new instance.
-    _legacy: InitVar[Optional[bool]] = False
+    _legacy: InitVar[bool | None] = False
 
     # NB InitVars should appear first so they can be used positionally, followed by
     #    all others in alpha order. With Python ≥ 3.10, can use field(…, kw_only=True).
@@ -72,13 +70,13 @@ class Config(ConfigHelper):
     callback: list[Callback] = field(default_factory=_default_callbacks)
 
     #: Path to write reporting outputs when invoked from the command line.
-    cli_output: Optional[Path] = None
+    cli_output: Path | None = None
 
     #: Configuration to be handled by :mod:`genno.config`.
     genno_config: dict = field(default_factory=dict)
 
     #: Key for the Quantity or computation to report.
-    key: Optional["KeyLike"] = None
+    key: "KeyLike | None" = None
 
     #: Directory for output.
     output_dir: Path = field(
@@ -98,7 +96,7 @@ class Config(ConfigHelper):
         self.use_file(from_file)
         self.legacy.update(use=_legacy)
 
-    def register(self, name_or_callback: Union[Callback, str]) -> Optional[str]:
+    def register(self, name_or_callback: Callback | str) -> str | None:
         """Register a :attr:`callback` function for :func:`prepare_reporter`.
 
         Parameters
@@ -142,7 +140,7 @@ class Config(ConfigHelper):
         self.callback.append(callback)
         return name
 
-    def set_output_dir(self, arg: Optional[Path]) -> None:
+    def set_output_dir(self, arg: Path | None) -> None:
         """Set :attr:`output_dir`, the output directory.
 
         The value is also stored to be passed to :mod:`genno` as the "output_dir"
@@ -153,7 +151,7 @@ class Config(ConfigHelper):
 
         self.genno_config["output_dir"] = self.output_dir
 
-    def use_file(self, file_path: Union[Path, str, None]) -> None:
+    def use_file(self, file_path: Path | str | None) -> None:
         """Use genno configuration from a (YAML) file at `file_path`.
 
         See :mod:`genno.config` for the format of these files. The path is stored at

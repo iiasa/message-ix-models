@@ -2,7 +2,7 @@
 
 from abc import ABC
 from collections.abc import Collection
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from typing import TypeVar
@@ -31,9 +31,7 @@ class Policy(ABC):
         return hash(type(self))
 
 
-def single_policy_of_type(
-    collection: Collection[Policy], cls: type["T"]
-) -> Optional["T"]:
+def single_policy_of_type(collection: Collection[Policy], cls: type["T"]) -> "T | None":
     """Return a single member of `collection` of type `cls`."""
     if matches := list(filter(lambda p: isinstance(p, cls), collection)):
         if len(matches) > 1:

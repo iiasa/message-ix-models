@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from functools import cache, partial
 from itertools import chain
 from operator import le
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 import genno
 import pandas as pd
@@ -73,7 +73,7 @@ class IEA_Future_of_Trucks(ExoDataSource):
     @dataclass
     class Options(BaseOptions):
         measure: str = "0"
-        convert_units: Optional[str] = None
+        convert_units: str | None = None
 
     options: Options
 
@@ -167,7 +167,7 @@ class MaybeAdaptR11Source(ExoDataSource):
     #: Mapping from :attr:`.measures` entries to file names.
     filename: Mapping[str, str] = dict()
 
-    _adapter: Optional[Callable] = None
+    _adapter: Callable | None = None
 
     def __init__(self, *args, **kwargs) -> None:
         from .util import region_path_fallback
@@ -248,7 +248,7 @@ class MultiFile(ExoDataSource):
     @dataclass
     class Options(BaseOptions):
         #: Transport configuration.
-        config: Optional["Config"] = None
+        config: "Config | None" = None
 
         #: ID of the node code list.
         nodes: str = ""

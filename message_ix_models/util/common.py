@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from functools import cache
 from importlib.util import find_spec
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 from warnings import warn
 
 import pandas as pd
@@ -25,7 +25,7 @@ HAS_MESSAGE_DATA = False
 
 #: Root directory of the :mod:`message_data` repository. This package is always
 #: installed from source.
-MESSAGE_DATA_PATH: Optional[Path] = None
+MESSAGE_DATA_PATH: Path | None = None
 
 if _spec := find_spec("message_data"):  # pragma: no cover
     HAS_MESSAGE_DATA = True
@@ -119,13 +119,13 @@ class MappingAdapter(Adapter):
     """
 
     maps: Mapping
-    on_missing: Optional[Literal["log", "raise", "warn"]]
+    on_missing: Literal["log", "raise", "warn"] | None
 
     def __init__(
         self,
         maps: Mapping[str, Sequence[tuple[str, str]]],
         *,
-        on_missing: Optional[Literal["log", "raise", "warn"]] = None,
+        on_missing: Literal["log", "raise", "warn"] | None = None,
     ) -> None:
         self.maps = maps
         self.on_missing = on_missing
@@ -137,7 +137,7 @@ class MappingAdapter(Adapter):
         dims: Sequence[str],
         map_leaves: bool = True,
         # Passed to __init__
-        on_missing: Optional[Literal["log", "raise", "warn"]],
+        on_missing: Literal["log", "raise", "warn"] | None,
     ) -> "MappingAdapter":
         """Construct a MappingAdapter from sequences of :class:`dict` and dimensions."""
         maps: dict[str, list[tuple[str, str]]] = dict()
@@ -261,7 +261,7 @@ class WildcardAdapter(Adapter):
 
 
 def _load(
-    var: dict, base_path: Path, *parts: str, default_suffix: Optional[str] = None
+    var: dict, base_path: Path, *parts: str, default_suffix: str | None = None
 ) -> Any:
     """Helper for :func:`.load_package_data` and :func:`.load_private_data`."""
     key = " ".join(parts)
@@ -282,14 +282,12 @@ def _load(
     return var[key]
 
 
-def _make_path(
-    base_path: Path, *parts: str, default_suffix: Optional[str] = None
-) -> Path:
+def _make_path(base_path: Path, *parts: str, default_suffix: str | None = None) -> Path:
     p = base_path.joinpath(*parts)
     return p.with_suffix(p.suffix or default_suffix) if default_suffix else p
 
 
-def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Any:
+def load_package_data(*parts: str, suffix: str | None = ".yaml") -> Any:
     """Load a :mod:`message_ix_models` package data file and return its contents.
 
     Data is re-used if already loaded.
@@ -352,7 +350,7 @@ def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs messag
     return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts)
 
 
-def local_data_path(*parts, context: Optional["Context"] = None) -> Path:
+def local_data_path(*parts, context: "Context | None" = None) -> Path:
     """Construct a path for local data.
 
     The setting ``message local data`` in the user's :ref:`ixmp configuration file

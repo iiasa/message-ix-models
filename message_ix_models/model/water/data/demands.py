@@ -2,7 +2,7 @@
 
 import os
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -16,9 +16,7 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 
-def get_basin_sizes(
-    basin: pd.DataFrame, node: str
-) -> Sequence[Union[pd.Series, Literal[0]]]:
+def get_basin_sizes(basin: pd.DataFrame, node: str) -> Sequence[pd.Series | Literal[0]]:
     """Returns the sizes of developing and developed basins for a given node"""
     temp = basin[basin["BCU_name"] == node]
     print(temp)
@@ -27,7 +25,7 @@ def get_basin_sizes(
     # sizes_### = sizes["###"] if "###" in sizes.index else 0
     sizes_dev = sizes["DEV"] if "DEV" in sizes.index else 0
     sizes_ind = sizes["IND"] if "IND" in sizes.index else 0
-    return_tuple: tuple[Union[pd.Series, Literal[0]], Union[pd.Series, Literal[0]]] = (
+    return_tuple: tuple[pd.Series | Literal[0], pd.Series | Literal[0]] = (
         sizes_dev,
         sizes_ind,
     )  # type: ignore # Somehow, mypy is unable to recognize the proper type without forcing it

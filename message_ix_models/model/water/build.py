@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Mapping
 from functools import lru_cache, partial
-from typing import Optional
 
 import pandas as pd
 from sdmx.model.v21 import Code
@@ -108,7 +107,7 @@ def share_map_cool(
     share_keys: list[str],
     type_tec_keys: list[str],
     regions_df: list[str],
-    commodity_mapping: Optional[dict[str, str]] = None,
+    commodity_mapping: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Helper function to create the share mapping DataFrame for both 'tot' and 'share'

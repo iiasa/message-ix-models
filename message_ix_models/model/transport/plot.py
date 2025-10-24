@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import genno.compat.plotnine
 import pandas as pd
@@ -36,7 +36,7 @@ class LabelFirst:
     Subsequent items are named with the bare value only.
     """
 
-    __name__: Optional[str] = None
+    __name__: str | None = None
 
     def __init__(self, fmt_string):
         self.fmt_string = fmt_string
@@ -61,15 +61,15 @@ class Plot(genno.compat.plotnine.Plot):
 
     #: Fixed plot title string. If not given, the first line of the class docstring is
     #: used.
-    title: Optional[str] = None
+    title: str | None = None
 
     #: Units expression for plot title.
-    unit: Optional[str] = None
+    unit: str | None = None
 
     #: :obj:`False` for plots not intended to be run on a solved scenario.
     runs_on_solved_scenario: bool = True
 
-    def ggtitle(self, extra: Optional[str] = None):
+    def ggtitle(self, extra: str | None = None):
         """Return :class:`plotnine.ggtitle` including the current date & time."""
         title_parts = [
             (self.title or self.__doc__ or "").splitlines()[0].rstrip("."),
@@ -101,7 +101,7 @@ class Plot(genno.compat.plotnine.Plot):
                 ),
             )
 
-    def save(self, config, *args, **kwargs) -> Optional[Path]:
+    def save(self, config, *args, **kwargs) -> Path | None:
         # Strip off the last of `args`, a pre-computed path, and store
         *_args, self.path, self.scenario = args
         # Call the parent method with the remaining arguments
