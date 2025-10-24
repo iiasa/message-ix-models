@@ -1,0 +1,52 @@
+##########################
+# Fuel oil shipped trade #
+##########################
+foil_shipped_trade:
+  base_trade_technology:
+    - foil_bal
+    - foil_bunker
+  trade_technology:
+    foil_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    fueloil
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    secondary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_tanker_loil
+    - oil_tanker_foil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    oil_tanker_loil:
+      - lightoil
+    oil_tanker_foil:
+      - fueloil
+  flow_material_input:
+  flow_commodity_output:
+    oil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - foil_imp
+    - agg_ref_MODE_vacuum_residue # Note that agg_reg has 3 modes: vacuum_residue, atm_gasoil, heavy_foil
+    - agg_ref_MODE_atm_gasoil
+    - agg_ref_MODE_heavy_foil
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    oil_tanker_loil:
+      loil_tobunker
+    oil_tanker_foil:
+      foil_tobunker

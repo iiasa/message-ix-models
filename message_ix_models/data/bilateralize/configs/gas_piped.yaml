@@ -1,0 +1,53 @@
+########################
+# Pipeline gas exports #
+########################
+gas_piped_trade:
+  base_trade_technology:
+    gas_bal
+  trade_technology:
+    gas_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    gas
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    primary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - gas_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    gas_pipe:
+      - gas
+  flow_material_input:
+    gas_pipe:
+      - steel
+  flow_commodity_output:
+    gas_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - gas_extr_1
+    - gas_extr_2
+    - gas_extr_3
+    - gas_extr_4
+    - gas_extr_5
+    - gas_extr_6
+    - gas_extr_7
+  specify_network:
+    True
+  tracked_emissions:
+    - CH4_GAS_TRANS&STORE
+    - TCE
+    - TCE_non-CO2
+    - TCE_other
+  bunker_technology: # not applicable for pipelines

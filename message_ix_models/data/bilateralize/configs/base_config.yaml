@@ -1,3 +1,5 @@
+# BASE CONFIGURATION FILE FOR BILATERALIZATION #
+
 # DATA DIRECTORIES
 p_drive_location:
   #/pdrive/projects/ene.model3
@@ -7,13 +9,12 @@ p_drive_location:
 scenario:
   start_model: 
     SSP_SSP2_v6.2
-  # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
   start_scen:
     baseline_DEFAULT
   target_model:
-    NP_SSP2_6.2
+    bilat_default
   target_scen:
-    GpLNGsCsCRspEsFspLspBsHs
+    SSP2_v6.2_bilat
   first_model_year:
     2030
   regions:
