@@ -15,7 +15,7 @@ concurrency:
 
 env:
   gams-version: 43.4.1
-  python-version: "3.13"
+  python-version: "3.14"
   upstream: main
 
 jobs:
