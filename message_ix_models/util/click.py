@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from importlib.metadata import version
 from pathlib import Path
-from typing import Literal, Optional, Union, cast
+from typing import Literal, cast
 
 import click
 import click.testing
@@ -91,7 +91,7 @@ def exec_cb(expression: str) -> Callable:
     ...     ...
     """
 
-    def _cb(context: Union[click.Context, Context], param, value):
+    def _cb(context: click.Context | Context, param, value):
         ctx = context.obj if isinstance(context, click.Context) else context
         exec(expression, {}, {"context": ctx, "value": value})
         return value
@@ -111,10 +111,10 @@ def format_sys_argv() -> str:
 
 
 def scenario_param(
-    param_decls: Union[str, list[str]],
+    param_decls: str | list[str],
     *,
-    values: Optional[list[str]] = None,
-    default: Optional[str] = None,
+    values: list[str] | None = None,
+    default: str | None = None,
 ):
     """Add an SSP or scenario option or argument to a :class:`click.Command`.
 
@@ -205,7 +205,7 @@ def scenario_param(
     return decorator
 
 
-def store_context(context: Union[click.Context, Context], param, value):
+def store_context(context: click.Context | Context, param, value):
     """Callback that simply stores a value on the :class:`.Context` object.
 
     Use this for parameters that are not used directly in a @click.command() function,
@@ -231,7 +231,7 @@ def temporary_command(group: "click.Group", command: "click.Command"):
 
 
 def urls_from_file(
-    context: Union[click.Context, Context], param, value
+    context: click.Context | Context, param, value
 ) -> list[ScenarioInfo]:
     """Callback to parse scenario URLs from `value`."""
     si: list[ScenarioInfo] = []
@@ -265,7 +265,7 @@ def unique_id() -> str:
 
     # Collapse CLI (sub)commands and their arguments to a hashable data structure
     # This also includes CLI options *not* given
-    c: Optional[click.Context] = click_context
+    c: click.Context | None = click_context
     data = []
     while c is not None:
         data.append((c.command.name, tuple(sorted(c.params.items()))))

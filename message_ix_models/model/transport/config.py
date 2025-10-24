@@ -2,7 +2,7 @@ import logging
 import re
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 from genno import Quantity
 from genno.operator import as_quantity
@@ -106,7 +106,7 @@ class Config(ConfigHelper):
     base_model_info: ScenarioInfo = field(default_factory=ScenarioInfo)
 
     # Private attribute for `code` property
-    _code: Optional["common.Code"] = None
+    _code: "common.Code | None" = None
 
     #: Scaling factors for costs.
     #:
@@ -297,7 +297,7 @@ class Config(ConfigHelper):
     #: space-delimited string (:py:`"module_a -module_b"`) or sequence of strings.
     #: Values prefixed with a hyphen (:py:`"-module_b"`) are *removed* from
     #: :attr:`.modules`.
-    extra_modules: InitVar[Union[str, list[str]]] = None
+    extra_modules: InitVar[str | list[str]] = None
 
     #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
     #: :meth:`.ScenarioFlags.parse_futures`.
@@ -331,7 +331,7 @@ class Config(ConfigHelper):
         self.set_navigate_scenario(navigate_scenario)
 
     @classmethod
-    def from_context(cls, context: Context, options: Optional[dict] = None) -> "Config":
+    def from_context(cls, context: Context, options: dict | None = None) -> "Config":
         """Configure `context` for building MESSAGEix-Transport.
 
         :py:`context.transport` is set to an instance of :class:`Config`.
@@ -415,7 +415,7 @@ class Config(ConfigHelper):
         return self._code
 
     @code.setter
-    def code(self, value: Union[str, "common.Code"]) -> None:
+    def code(self, value: "str | common.Code") -> None:
         from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
         from message_ix_models.project.edits.structure import SCENARIO as EDITS
 
@@ -455,7 +455,7 @@ class Config(ConfigHelper):
         if all(map(lambda s: s.value > 0, [s1, s2])):
             raise ValueError(f"Scenario settings {s1} and {s2} are not compatible")
 
-    def set_futures_scenario(self, value: Optional[str]) -> None:
+    def set_futures_scenario(self, value: str | None) -> None:
         """Update :attr:`project` from a string indicating a Transport Futures scenario.
 
         See :meth:`ScenarioFlags.parse_futures`. This method alters :attr:`mode_share`
@@ -474,7 +474,7 @@ class Config(ConfigHelper):
             log.info(f"Set fixed demand for TF scenario {value!r}")
             self.fixed_demand = as_quantity("275000 km / year")
 
-    def set_navigate_scenario(self, value: Optional[str]) -> None:
+    def set_navigate_scenario(self, value: str | None) -> None:
         """Update :attr:`project` from a string representing a NAVIGATE scenario.
 
         See :meth:`ScenarioFlags.parse_navigate`.
@@ -513,7 +513,7 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
     base_scenario_URL: str
 
     #: Entries for :attr:`.Config.policy`.
-    policy: Optional["Policy"]
+    policy: "Policy | None"
 
     @classmethod
     def from_obj(cls, obj, globals=None):
@@ -545,9 +545,7 @@ def get_cl_scenario() -> "common.Codelist":
     )
 
 
-def refresh_cl_scenario(
-    existing: Optional["common.Codelist"] = None,
-) -> "common.Codelist":
+def refresh_cl_scenario(existing: "common.Codelist | None" = None) -> "common.Codelist":
     """Refresh ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
 
     The code list is entirely regenerated. If it is different from `cl`, the new

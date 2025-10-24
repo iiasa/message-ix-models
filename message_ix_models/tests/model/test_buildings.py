@@ -1,6 +1,6 @@
 from collections import namedtuple
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ def buildings_context(test_context: "Context") -> Generator["Context", None, Non
 
 
 @pytest.mark.parametrize("commodity", [None, "gas"])
-def test_get_techs(buildings_context: "Context", commodity: Optional[str]) -> None:
+def test_get_techs(buildings_context: "Context", commodity: str | None) -> None:
     ctx = buildings_context
     ctx.regions = "R12"
     spec = get_spec(ctx)

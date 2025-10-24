@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from message_ix import Scenario
 
@@ -51,7 +51,7 @@ def solve(
     context: "Context",
     scenario: Scenario,
     *,
-    config: Optional[Config] = None,
+    config: Config | None = None,
     set_as_default: bool = False,
 ):
     """Common model solve step for ENGAGE, NAVIGATE, and other workflows.

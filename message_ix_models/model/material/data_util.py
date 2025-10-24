@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import message_ix
 import numpy as np
@@ -574,7 +574,7 @@ def add_emission_accounting(scen: message_ix.Scenario) -> None:
 
 
 def read_sector_data(
-    scenario: message_ix.Scenario, sectname: str, ssp: Optional[str], filename: str
+    scenario: message_ix.Scenario, sectname: str, ssp: str | None, filename: str
 ) -> pd.DataFrame:
     """Read sector data for industry with `sectname`.
 
@@ -657,7 +657,7 @@ def read_sector_data(
 
 
 def read_timeseries(
-    scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
+    scenario: message_ix.Scenario, material: str, ssp: str | None, filename: str
 ) -> pd.DataFrame:
     """Read ‘time-series’ data from a material-specific `filename`.
 
@@ -700,7 +700,7 @@ def read_timeseries(
         df = pd.read_csv(package_data_path("material", material, filename))
 
         # Function to convert string to integer if it is a digit
-        def convert_if_digit(col_name: Union[str, int]) -> Union[str, int]:
+        def convert_if_digit(col_name: str | int) -> str | int:
             return int(col_name) if col_name.isdigit() else col_name
 
         # Apply the function to the DataFrame column names
@@ -735,7 +735,7 @@ def read_timeseries(
 
 
 def read_rel(
-    scenario: message_ix.Scenario, material: str, ssp: Optional[str], filename: str
+    scenario: message_ix.Scenario, material: str, ssp: str | None, filename: str
 ) -> pd.DataFrame:
     """
     Read ``relation_*`` type parameter data for specific industry

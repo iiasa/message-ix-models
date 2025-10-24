@@ -3,7 +3,7 @@
 from functools import partial
 from itertools import product
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import genno
 import numpy as np
@@ -438,7 +438,7 @@ def to_csv(
     base: "genno.Key",
     *,
     name: str,
-    header_key: Optional["KeyLike"] = None,
+    header_key: "KeyLike | None" = None,
     **write_kw,
 ):
     """Helper to add computations to output data to CSV."""

@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING, cast
 from warnings import warn
 
 if TYPE_CHECKING:
@@ -182,7 +182,7 @@ def once(logger: "Logger", level: int, *args, **kwargs) -> None:
 
 
 @contextmanager
-def preserve_log_handlers(name: Optional[str] = None):
+def preserve_log_handlers(name: str | None = None):
     """Context manager to preserve the handlers of a `logger`."""
     # Access the named logger
     logger = logging.getLogger(name)
@@ -268,7 +268,7 @@ def configure() -> None:
 
 
 def setup(
-    level: Union[str, int] = 99,
+    level: str | int = 99,
     console: bool = True,
     *,
     file: bool = False,
@@ -308,7 +308,7 @@ def flush() -> None:
 
 
 @contextmanager
-def silence_log(names: Optional[str] = None, level: int = logging.ERROR):
+def silence_log(names: str | None = None, level: int = logging.ERROR):
     """Context manager to temporarily quiet 1 or more loggers.
 
     Parameters

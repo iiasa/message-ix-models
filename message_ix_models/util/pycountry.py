@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from pycountry import countries, historic_countries
 
@@ -17,7 +16,7 @@ COUNTRY_NAME = {
 
 
 @lru_cache(maxsize=2**9)
-def iso_3166_alpha_3(name: str) -> Optional[str]:
+def iso_3166_alpha_3(name: str) -> str | None:
     """Return an ISO 3166 alpha-3 code for a country `name`.
 
     Parameters

@@ -5,7 +5,7 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from hashlib import blake2s
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Hashable, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Hashable, cast
 
 import ixmp
 from ixmp.util import parse_url
@@ -77,7 +77,7 @@ class ConfigHelper:
         return result
 
     @classmethod
-    def _canonical_name(cls, name: Hashable) -> Optional[str]:
+    def _canonical_name(cls, name: Hashable) -> str | None:
         """Canonicalize a name into a valid Python attribute name."""
         _name = str(name).replace(" ", "_").replace("-", "_")
         return _name if _name in cls._fields() else None
@@ -199,7 +199,7 @@ class Config:
     debug_paths: Sequence[Path] = field(default_factory=list)
 
     #: Like :attr:`url`, used by e.g. :meth:`.clone_to_dest`.
-    dest: Optional[str] = None
+    dest: str | None = None
 
     # NB the below works around python/mypy#5723
     #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
@@ -228,20 +228,18 @@ class Config:
     )
 
     # Private reference to an ixmp.Platform
-    _mp: Optional["ixmp.Platform"] = None
+    _mp: "ixmp.Platform | None" = None
 
     #: Keyword arguments—`model`, `scenario`, and optionally `version`—for the
     #: :class:`ixmp.Scenario` constructor, as given by the :program:`--model`/
     #: :program:`--scenario` or :program:`--url` CLI options.
-    scenario_info: MutableMapping[str, Optional[Union[int, str]]] = field(
-        default_factory=dict
-    )
+    scenario_info: MutableMapping[str, int | str | None] = field(default_factory=dict)
 
     #: Like `scenario_info`, but a list for operations affecting multiple scenarios.
     scenarios: list[ScenarioInfo] = field(default_factory=list)
 
     #: A scenario URL, e.g. as given by the :program:`--url` CLI option.
-    url: Optional[str] = None
+    url: str | None = None
 
     #: Flag for causing verbose output to logs or stdout. Different modules will respect
     #: :attr:`verbose` in distinct ways.
@@ -361,12 +359,12 @@ class Config:
 
     def handle_cli_args(
         self,
-        url: Optional[str] = None,
-        platform: Optional[str] = None,
-        model_name: Optional[str] = None,
-        scenario_name: Optional[str] = None,
-        version: Optional[str] = None,
-        local_data: Optional[str] = None,
+        url: str | None = None,
+        platform: str | None = None,
+        model_name: str | None = None,
+        scenario_name: str | None = None,
+        version: str | None = None,
+        local_data: str | None = None,
         verbose: bool = False,
         _store_as: tuple[str, str] = ("platform_info", "scenario_info"),
     ):

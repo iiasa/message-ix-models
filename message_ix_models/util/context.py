@@ -6,7 +6,7 @@ from dataclasses import is_dataclass
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import ixmp
 
@@ -170,7 +170,7 @@ class Context:
             return self._values[base_key]
 
     # General item access
-    def get(self, key: str, default: Optional[Any] = None):
+    def get(self, key: str, default: Any | None = None):
         """Retrieve the value for `key`."""
         target = self._dealias(key)
         if isinstance(target, dict):

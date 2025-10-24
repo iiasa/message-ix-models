@@ -4,7 +4,7 @@ import logging
 from collections.abc import Mapping
 from functools import partial
 from itertools import chain, count
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from genno import Key, Quantity, quote
 from genno.core.key import iter_keys, single_key
@@ -59,14 +59,14 @@ TECH_FILTERS = {
 _ANON = map(lambda n: Key(f"_{n}"), count())
 
 
-def anon(name: Optional[str] = None, dims: Optional[Key] = None) -> Key:
+def anon(name: str | None = None, dims: Key | None = None) -> Key:
     """Create an ‘anonymous’ :class:`.Key`, optionally with `dims` from another Key."""
     result = next(_ANON) if name is None else Key(name)
 
     return result.append(*getattr(dims, "dims", []))
 
 
-def get_techs(c: "Computer", prefix: str, kinds: Optional[str] = None) -> list[str]:
+def get_techs(c: "Computer", prefix: str, kinds: str | None = None) -> list[str]:
     """Return a list of technologies.
 
     The list is assembled from lists in `c` with keys like "t::{prefix} {kind}",
@@ -82,7 +82,7 @@ def get_techs(c: "Computer", prefix: str, kinds: Optional[str] = None) -> list[s
 
 
 def make_shorthand_function(
-    base_name: str, to_drop: str, default_unit_key: Optional[str] = None
+    base_name: str, to_drop: str, default_unit_key: str | None = None
 ):
     """Create a shorthand function for adding tasks to a :class:`.Reporter`."""
     _to_drop = to_drop.split()
@@ -91,9 +91,9 @@ def make_shorthand_function(
         c: "Computer",
         technologies: list[str],
         *,
-        name: Optional[str] = None,
-        filters: Optional[dict] = None,
-        unit_key: Optional[str] = default_unit_key,
+        name: str | None = None,
+        filters: dict | None = None,
+        unit_key: str | None = default_unit_key,
     ) -> Key:
         f"""Select data from "{base_name}:*" and apply units.
 
@@ -145,8 +145,8 @@ out = make_shorthand_function("out", "c h hd l nd t", "energy")
 def eff(
     c: "Computer",
     technologies: list[str],
-    filters_in: Optional[dict] = None,
-    filters_out: Optional[dict] = None,
+    filters_in: dict | None = None,
+    filters_out: dict | None = None,
 ) -> Key:
     """Throughput efficiency (input / output) for `technologies`.
 
@@ -176,8 +176,8 @@ def pe_w_ccs_retro(
     c: "Computer",
     t: str,
     t_scrub: str,
-    k_share: Optional[Key],
-    filters: Optional[dict] = None,
+    k_share: Key | None,
+    filters: dict | None = None,
 ) -> Key:
     """Calculate primary energy use of technologies with scrubbers.
 

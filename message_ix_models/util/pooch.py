@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import click
 import pooch
@@ -132,7 +132,7 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
 
 
 def fetch(
-    pooch_args: dict, *, extra_cache_path: Optional[str] = None, **fetch_kwargs
+    pooch_args: dict, *, extra_cache_path: str | None = None, **fetch_kwargs
 ) -> tuple[Path, ...]:
     """Create a :class:`~pooch.Pooch` instance and fetch a single file.
 

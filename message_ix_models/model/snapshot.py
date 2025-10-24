@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 from message_ix import Scenario
@@ -101,7 +100,7 @@ def read_excel(scenario: Scenario, path: Path) -> None:
 
 
 def load(
-    scenario: Scenario, snapshot_id: int, extra_cache_path: Optional[str] = None
+    scenario: Scenario, snapshot_id: int, extra_cache_path: str | None = None
 ) -> None:
     """Fetch and load snapshot with ID `snapshot_id` into `scenario`.
 
