@@ -46,12 +46,15 @@ def add_hydrogen_techs(scenario: Scenario):
         load_emission_sets,
         load_hydrogen_parameters,
         load_hydrogen_sets,
+        remove_deprecated_sets,
     )
 
-    load_commodity_sets(scenario)
-    load_emission_sets(scenario)
-    load_hydrogen_sets(scenario)
-    load_hydrogen_parameters(scenario)
+    with scenario.transact(commit_message="Adding hydrogen sets"):
+        load_commodity_sets(scenario)
+        load_emission_sets(scenario)
+        load_hydrogen_sets(scenario)
+        load_hydrogen_parameters(scenario)
+        remove_deprecated_sets(scenario)
 
 
 def read_data_hydrogen(
