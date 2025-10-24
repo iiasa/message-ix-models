@@ -8,7 +8,7 @@ import logging
 import re
 from collections.abc import Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import genno.compat.plotnine
 import pandas as pd
@@ -68,7 +68,7 @@ class Plot(genno.compat.plotnine.Plot):
     unit = None
 
     #: Scenario URL for plot title.
-    url: Optional[str] = None
+    url: str | None = None
 
     # NB only here to narrow typing
     inputs: Sequence[str] = []

@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from .structure import SSP, SSP_2017, SSP_2024, generate
 
@@ -19,7 +19,7 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def parse(value: Union[str, SSP_2017, SSP_2024]) -> Union[SSP_2017, SSP_2024]:
+def parse(value: str | SSP_2017 | SSP_2024) -> SSP_2017 | SSP_2024:
     """Parse `value` to a member of :data:`SSP_2017` or :data:`SSP_2024`."""
     if isinstance(value, (SSP_2017, SSP_2024)):
         return value
@@ -35,7 +35,7 @@ def parse(value: Union[str, SSP_2017, SSP_2024]) -> Union[SSP_2017, SSP_2024]:
 class ssp_field:
     """SSP field for use in data classes."""
 
-    def __init__(self, default: Union[SSP_2017, SSP_2024]):
+    def __init__(self, default: SSP_2017 | SSP_2024):
         self._default = default
 
     def __set_name__(self, owner, name):

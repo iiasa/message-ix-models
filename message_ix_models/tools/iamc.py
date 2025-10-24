@@ -1,7 +1,7 @@
 """Tools for working with IAMC-structured data."""
 
 from collections.abc import MutableMapping
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 
 import genno
 import pandas as pd
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-def describe(data: pd.DataFrame, extra: Optional[str] = None) -> StructureMessage:
+def describe(data: pd.DataFrame, extra: str | None = None) -> StructureMessage:
     """Generate SDMX structure information from `data` in IAMC format.
 
     Parameters
@@ -118,10 +118,10 @@ def iamc_like_data_for_query(
     path: "pathlib.Path",
     query: str,
     *,
-    archive_member: Optional[str] = None,
-    drop: Optional[list[str]] = None,
+    archive_member: str | None = None,
+    drop: list[str] | None = None,
     non_iso_3166: Literal["keep", "discard"] = "discard",
-    replace: Optional[dict] = None,
+    replace: dict | None = None,
     unique: str = "MODEL SCENARIO VARIABLE UNIT",
     **kwargs,
 ) -> "AnyQuantity":
@@ -185,9 +185,9 @@ def to_quantity(
     data: "pd.DataFrame",
     *,
     query: str,
-    drop: Optional[list[str]] = None,
+    drop: list[str] | None = None,
     non_iso_3166: Literal["keep", "discard"] = "discard",
-    replace: Optional[dict] = None,
+    replace: dict | None = None,
     unique: str = "MODEL SCENARIO VARIABLE UNIT",
 ) -> "AnyQuantity":
     """Convert `data` in IAMC ‘wide’ structure to :class:`genno.Quantity`.

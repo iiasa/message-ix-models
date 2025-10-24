@@ -2,7 +2,7 @@
 
 import logging
 from textwrap import wrap
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import sdmx
 import sdmx.urn
@@ -138,7 +138,7 @@ including by geo-engineering if necessary.""",
 )
 
 
-def generate(context: "Context", base_dir: Optional["PathLike"] = None):
+def generate(context: "Context", base_dir: "PathLike | None" = None):
     """Generate SDMX code lists containing the SSPs."""
     # Agency for ICONICS as the maintainer of other objects
     ICONICS = common.Agency(

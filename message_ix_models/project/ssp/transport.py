@@ -6,7 +6,7 @@ from collections.abc import Hashable
 from enum import Enum, auto
 from functools import cache
 from itertools import product
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal
 
 import genno
 import pandas as pd
@@ -340,7 +340,7 @@ def finalize(
 
 @minimum_version("message_ix_models.model.transport.build.get_computer")
 def get_computer(
-    row0: "pd.Series", method: METHOD, *, platform_name: Optional[str] = None
+    row0: "pd.Series", method: METHOD, *, platform_name: str | None = None
 ) -> "Computer":
     """Prepare `c` to process aviation emissions data.
 
@@ -592,7 +592,7 @@ def method_B(c: "Computer") -> None:
 
 
 def method_BC_common(
-    c: "Computer", k_fe_share: "Key", k_emi_share: Optional["Key"] = None
+    c: "Computer", k_fe_share: "Key", k_emi_share: "Key | None" = None
 ) -> None:
     """Common steps for :func:`.method_B` and :func:`.method_C`.
 
@@ -770,7 +770,7 @@ def process_df(
     data: pd.DataFrame,
     *,
     method: METHOD = METHOD.B,
-    platform_name: Optional[str] = None,
+    platform_name: str | None = None,
 ) -> pd.DataFrame:
     """Process `data`.
 
@@ -805,7 +805,7 @@ def process_file(
     path_out: "pathlib.Path",
     *,
     method: METHOD,
-    platform_name: Optional[str] = None,
+    platform_name: str | None = None,
 ) -> None:
     """Process data from file.
 
@@ -865,7 +865,7 @@ def track_GAINS(c: "Computer") -> "Key":
 
 
 @cache
-def v_to_fe_coords(value: Hashable) -> Optional[dict[str, str]]:
+def v_to_fe_coords(value: Hashable) -> dict[str, str] | None:
     """Match ‘variable’ names codes using :data:`EXPR_FE`.
 
     For use with :func:`.select_expand`.
@@ -877,7 +877,7 @@ def v_to_fe_coords(value: Hashable) -> Optional[dict[str, str]]:
 
 
 @cache
-def v_to_emi_coords(value: Hashable) -> Optional[dict[str, str]]:
+def v_to_emi_coords(value: Hashable) -> dict[str, str] | None:
     """Match ‘variable’ names codes using :data:`EXPR_EMI`.
 
     For use with :func:`.select_expand`.

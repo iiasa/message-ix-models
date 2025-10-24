@@ -12,7 +12,7 @@ from enum import EnumMeta as EnumType
 from functools import cache
 from importlib.metadata import version
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, Optional, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 from warnings import warn
 
 import sdmx
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-CodeLike = Union[str, common.Code]
+CodeLike = str | common.Code
 
 #: Collection of :class:`.Dataflow` instances.
 DATAFLOW: dict[str, "Dataflow"] = {}
@@ -55,7 +55,7 @@ class AnnotationsMixIn:
     """Mix-in for dataclasses to allow (de)serializing as SDMX annotations."""
 
     # TODO Type with overrides: list → list
-    def get_annotations(self, _rtype: Union[type[list], type[dict]]):
+    def get_annotations(self, _rtype: type[list] | type[dict]):
         """Return a collection of :class:`.Annotation` for the fields of the object.
 
         Returns
@@ -79,7 +79,7 @@ class AnnotationsMixIn:
 
     @classmethod
     def from_obj(
-        cls: type["Self"], obj: common.AnnotableArtefact, globals: Optional[dict] = None
+        cls: type["Self"], obj: common.AnnotableArtefact, globals: dict | None = None
     ) -> "Self":
         """Return a new instance of `cls` given an AnnotableArtefact `obj`."""
         args = []
@@ -158,14 +158,14 @@ class Dataflow:
         self,
         *,
         module: str,
-        id: Optional[str] = None,
+        id: str | None = None,
         name: str,
         units: str,
-        description: Optional[str] = None,
-        key: Optional["KeyLike"] = None,
-        dims: Optional[tuple[str, ...]] = None,
+        description: str | None = None,
+        key: "KeyLike | None" = None,
+        dims: tuple[str, ...] | None = None,
         i_o: FLAG = FLAG.IN,
-        path: Union[str, tuple[str, ...], None] = None,
+        path: str | tuple[str, ...] | None = None,
         required: bool = True,
         # Used only for creation
         replace: bool = False,
@@ -510,7 +510,7 @@ class ItemSchemeEnumType(EnumType):
 
 # FIXME Reduce complexity from 13 → ≤11
 def as_codes(  # noqa: C901
-    data: Union[list[str], dict[str, CodeLike]],
+    data: list[str] | dict[str, CodeLike],
 ) -> list[common.Code]:
     """Convert `data` to a :class:`list` of :class:`.Code` objects.
 
@@ -637,13 +637,13 @@ def eval_anno(obj: common.AnnotableArtefact, id: str):
         return value
 
 
-def get(urn: str) -> Optional["common.MaintainableArtefact"]:
+def get(urn: str) -> "common.MaintainableArtefact | None":
     """Return an object given its URN."""
     full_urn = sdmx.urn.expand(urn)
     return STORE.get(sdmx.urn.URN(full_urn).id)
 
 
-def get_cl(name: str, context: Optional["Context"] = None) -> "common.Codelist":
+def get_cl(name: str, context: "Context | None" = None) -> "common.Codelist":
     """Return a code list."""
     from message_ix_models.model.structure import get_codes
 
@@ -770,7 +770,7 @@ def get_concept(string: str, *, cs_urn: tuple[str, ...] = tuple()) -> "common.Co
         filter(
             None,
             cast(
-                Iterable[Optional["common.ItemScheme"]],
+                Iterable["common.ItemScheme | None"],
                 [get("ConceptScheme=IIASA_ECE:CS_MESSAGE_IX_MODELS")]
                 + [get(u) for u in cs_urn],
             ),
@@ -790,7 +790,7 @@ def get_concept(string: str, *, cs_urn: tuple[str, ...] = tuple()) -> "common.Co
 
 
 @cache
-def get_version(with_dev: Optional[bool] = True) -> str:
+def get_version(with_dev: bool | None = True) -> str:
     """Return a :class:`sdmx.model.common.Version` for :mod:`message_ix_models`.
 
     .. todo:: Remove :py:`str(...)` once sdmx1 > 2.21.1 can handle Version.
@@ -806,7 +806,7 @@ def get_version(with_dev: Optional[bool] = True) -> str:
     return str(common.Version(tmp))
 
 
-def read(urn: str, base_dir: Optional["PathLike"] = None):
+def read(urn: str, base_dir: "PathLike | None" = None):
     """Read SDMX object from package data given its `urn`."""
     # Identify a path that matches `urn`
     base_dir = Path(base_dir or package_data_path("sdmx"))
@@ -834,7 +834,7 @@ def read(urn: str, base_dir: Optional["PathLike"] = None):
             pass
 
 
-def write(obj, base_dir: Optional["PathLike"] = None, basename: Optional[str] = None):
+def write(obj, base_dir: "PathLike | None" = None, basename: str | None = None):
     """Store an SDMX object as package data."""
     base_dir = Path(base_dir or package_data_path("sdmx"))
 

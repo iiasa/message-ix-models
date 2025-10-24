@@ -6,7 +6,7 @@ for petrochemical technologies, demand, trade, emissions, and related constraint
 """
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from message_ix import make_df
@@ -253,7 +253,7 @@ def assign_input_outpt(
     split: str,
     param_name: str,
     regions: pd.DataFrame,
-    val: Union[float, int],
+    val: float | int,
     t: str,
     rg: str,
     global_region: str,

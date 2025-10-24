@@ -7,7 +7,7 @@ from collections.abc import Callable, Hashable, Mapping
 from contextlib import nullcontext
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from message_ix import Reporter, Scenario
@@ -75,7 +75,7 @@ make_mark: dict[Hashable, Callable[..., pytest.MarkDecorator]] = {
 
 
 def assert_units(
-    df: "pandas.DataFrame", expected: Union[str, dict, "pint.Unit", "pint.Quantity"]
+    df: "pandas.DataFrame", expected: "str | dict | pint.Unit | pint.Quantity"
 ):
     """Assert that `df` has the unique, `expected` units."""
     import pint
@@ -101,7 +101,7 @@ def configure_build(
     *,
     regions: str,
     years: str,
-    tmp_path: Optional[Path] = None,
+    tmp_path: Path | None = None,
     options=None,
 ) -> tuple["Computer", ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
@@ -124,7 +124,7 @@ def configure_build(
 def built_transport(
     request: "pytest.FixtureRequest",
     context: "Context",
-    options: Optional[dict] = None,
+    options: dict | None = None,
     solved: bool = False,
     quiet: bool = True,
 ) -> Scenario:

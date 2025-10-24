@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Mapping
 from functools import singledispatch
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from iam_units import registry
@@ -47,7 +47,7 @@ def convert_units(data: Any, **kwargs):
 @convert_units.register
 def _(
     data: pd.Series,
-    unit_info: Mapping[str, tuple[float, str, Optional[str]]],
+    unit_info: Mapping[str, tuple[float, str, str | None]],
     store="magnitude",
 ) -> pd.Series:
     if store not in "magnitude quantity":

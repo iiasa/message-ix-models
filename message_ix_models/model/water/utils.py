@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from warnings import warn
 
 import pandas as pd
@@ -18,7 +18,8 @@ log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from message_ix_models import ScenarioInfo
-# Configuration files
+
+#: Configuration files.
 METADATA = [
     # Information about MESSAGE-water
     ("water", "config"),
@@ -45,7 +46,7 @@ m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
 # MCM not standard so have to remember to divide by 1e6 each time.
 
 
-def read_config(context: Optional[Context] = None):
+def read_config(context: Context | None = None):
     """Read the water model configuration / metadata from file.
 
     Numerical values are converted to computation-ready data structures.
@@ -146,7 +147,7 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
 
 
 def get_vintage_and_active_years(
-    info: Optional["ScenarioInfo"], technical_lifetime: Optional[int] = None
+    info: "ScenarioInfo | None", technical_lifetime: int | None = None
 ) -> pd.DataFrame:
     """Calculate valid vintage-activity year combinations without scenario dependency.
 

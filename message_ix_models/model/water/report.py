@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 import numpy as np
 import pandas as pd
@@ -38,7 +38,7 @@ class ScenarioMetadata(TypedDict):
 _cooling_only = False
 
 
-def run_old_reporting(sc: Optional[Scenario] = None):
+def run_old_reporting(sc: Scenario | None = None):
     try:
         from message_data.tools.post_processing.iamc_report_hackathon import (
             report as legacy_report,
