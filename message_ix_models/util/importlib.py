@@ -11,7 +11,7 @@ from importlib.metadata import version
 from itertools import chain
 from logging import INFO, getLogger
 from platform import python_version
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from packaging.version import parse
 
@@ -155,7 +155,7 @@ class MinimumVersionDecorator:
     raises: list[type[Exception]]
 
     def __init__(
-        self, *expr: str, raises: Optional[Iterable[type[Exception]]] = None
+        self, *expr: str, raises: Iterable[type[Exception]] | None = None
     ) -> None:
         self.raises = [NotImplementedError, AssertionError, RuntimeError]
         self.raises.extend(raises or ())

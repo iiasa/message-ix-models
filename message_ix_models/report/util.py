@@ -1,6 +1,5 @@
 import logging
 from collections.abc import Iterable
-from typing import Optional
 
 import pandas as pd
 from dask.core import quote
@@ -149,7 +148,7 @@ def collapse_gwp_info(df, var):
     return df.drop(cols, axis=1), var
 
 
-def copy_ts(rep: Reporter, other: str, filters: Optional[dict]) -> Key:
+def copy_ts(rep: Reporter, other: str, filters: dict | None) -> Key:
     """Prepare `rep` to copy time series data from `other` to `scenario`.
 
     Parameters

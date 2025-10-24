@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Mapping
 from itertools import product
-from typing import Optional
 
 import pandas as pd
 import pytest
@@ -117,7 +116,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
 
     # Information about returned parameters
     # TODO Include unit checks, above, in this collection
-    par_info: Mapping[str, tuple[bool, Optional[list[int]], int]] = {
+    par_info: Mapping[str, tuple[bool, list[int] | None, int]] = {
         "bound_new_capacity_lo": (False, [info.y0], 1),
         "bound_new_capacity_up": (False, [info.y0], 1),
         "emission_factor": (True, None, 0),

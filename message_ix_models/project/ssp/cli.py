@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import click
 
@@ -35,7 +35,7 @@ def gen_structures(context, **kwargs):
     required=False,
 )
 @click.pass_obj
-def transport_cmd(context: "Context", method, path_in: Path, path_out: Optional[Path]):
+def transport_cmd(context: "Context", method, path_in: Path, path_out: Path | None):
     """Postprocess aviation emissions.
 
     Data are read from PATH_IN, in .xlsx or .csv format. If .xlsx, the data are first

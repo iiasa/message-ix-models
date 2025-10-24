@@ -16,7 +16,6 @@ from collections.abc import Callable
 from dataclasses import is_dataclass
 from enum import Enum
 from types import FunctionType
-from typing import Union
 
 import genno.caching
 import ixmp
@@ -85,7 +84,7 @@ def _dataclass(o: object):
 
 
 @genno.caching.Encoder.register
-def _repr_only(o: Union[FunctionType]):
+def _repr_only(o: FunctionType):
     return repr(o)
 
 

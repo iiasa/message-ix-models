@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.node import identify_nodes
@@ -73,7 +73,7 @@ class Config(ConfigHelper):
                 )
 
     def regions_from_scenario(
-        self, scenario: Optional["message_ix.Scenario"] = None
+        self, scenario: "message_ix.Scenario | None" = None
     ) -> None:
         """Update :attr:`regions` by inspection of an existing `scenario`.
 

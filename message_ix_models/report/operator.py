@@ -12,7 +12,7 @@ from collections.abc import (
 )
 from functools import reduce
 from itertools import filterfalse, product
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import genno
 import ixmp
@@ -64,7 +64,7 @@ __all__ = [
 def broadcast_wildcard(
     qty: "TQuantity",
     *coords: Sequence["SupportsLessThan"],
-    dim: Union[Hashable, Sequence[Hashable]] = "n",
+    dim: Hashable | Sequence[Hashable] = "n",
 ) -> "TQuantity":
     """Broadcast over coordinates `coords` along respective dimension(s) `dim`.
 
@@ -158,9 +158,9 @@ def filter_ts(df: pd.DataFrame, expr: re.Pattern, *, column="variable") -> pd.Da
 
 def get_ts(
     scenario: ixmp.Scenario,
-    filters: Optional[dict] = None,
+    filters: dict | None = None,
     iamc: bool = False,
-    subannual: Union[bool, str] = "auto",
+    subannual: bool | str = "auto",
 ):
     """Retrieve timeseries data from `scenario`.
 
@@ -207,7 +207,7 @@ def gwp_factors() -> "AnyQuantity":
     )
 
 
-def make_output_path(config: Mapping, name: Union[str, "Path"]) -> "Path":
+def make_output_path(config: Mapping, name: "str | Path") -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
     return config["output_dir"].joinpath(name)
 
@@ -234,7 +234,7 @@ def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:
 
 
 def nodes_world_agg(
-    config: dict, *, dim: Hashable = "nl", name: Optional[str] = "{}_GLB"
+    config: dict, *, dim: Hashable = "nl", name: str | None = "{}_GLB"
 ) -> Mapping[Hashable, Mapping[Hashable, list[str]]]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
@@ -271,8 +271,8 @@ def nodes_world_agg(
 
 def remove_ts(
     scenario: ixmp.Scenario,
-    config: Optional[dict] = None,
-    after: Optional[int] = None,
+    config: dict | None = None,
+    after: int | None = None,
     dump: bool = False,
 ) -> None:
     """Remove all time series data from `scenario`.

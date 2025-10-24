@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import yaml
@@ -36,7 +35,7 @@ def report(
     lu_hist=None,
     verbose=False,
     *,
-    context: Optional[Context] = None,
+    context: Context | None = None,
 ):
     """Main reporting function.
 

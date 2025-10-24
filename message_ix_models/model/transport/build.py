@@ -5,7 +5,7 @@ from functools import partial
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import genno
 import pandas as pd
@@ -491,11 +491,11 @@ def add_structure(c: Computer) -> None:
 )
 def get_computer(
     context: Context,
-    obj: Optional[Computer] = None,
+    obj: Computer | None = None,
     *,
     visualize: bool = True,
-    scenario: Optional[Scenario] = None,
-    options: Optional[dict] = None,
+    scenario: Scenario | None = None,
+    options: dict | None = None,
 ) -> Computer:
     """Return a :class:`genno.Computer` set up for model-building computations.
 
@@ -615,7 +615,7 @@ def get_computer(
 def main(
     context: Context,
     scenario: Scenario,
-    options: Optional[dict] = None,
+    options: dict | None = None,
     **option_kwargs,
 ):
     """Build MESSAGEix-Transport on `scenario`.

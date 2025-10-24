@@ -3,7 +3,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 from warnings import warn
 
 import genno.config
@@ -118,7 +118,7 @@ def iamc(c: Reporter, info):
     c.add("concat", f"{info['variable']}::iamc", *keys)
 
 
-def register(name_or_callback: Union["Callback", str]) -> Optional[str]:
+def register(name_or_callback: "Callback | str") -> str | None:
     """Deprecated alias for :meth:`.report.Config.register`.
 
     This version uses :meth:`Context.get_instance()` to get the 0-th Context, and calls
@@ -252,9 +252,9 @@ def _invoke_legacy_reporting(context):
 
 def prepare_reporter(
     context: Context,
-    scenario: Optional[Scenario] = None,
-    reporter: Optional[Reporter] = None,
-) -> tuple[Reporter, Optional["KeyLike"]]:
+    scenario: Scenario | None = None,
+    reporter: Reporter | None = None,
+) -> tuple[Reporter, "KeyLike | None"]:
     """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
 
     Parameters

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from copy import deepcopy
 from itertools import chain
-from typing import Any, Union
+from typing import Any
 
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
@@ -40,7 +40,7 @@ TEMPLATE = Code(
 
 
 def get_technology_groups(
-    technologies: Union[Spec, ScenarioInfo, Sequence["Code"]],
+    technologies: Spec | ScenarioInfo | Sequence["Code"],
 ) -> dict[str, list[str]]:
     """Subsets of transport technologies for aggregation, mapping, and filtering.
 

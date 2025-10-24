@@ -7,7 +7,7 @@ ACCESS and STURM and MESSAGEix itself.
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import ixmp
 import message_ix
@@ -92,7 +92,7 @@ class Config:
     with_materials: bool = True
 
     #: Path for STURM output.
-    _output_path: Optional[Path] = None
+    _output_path: Path | None = None
 
     #: Run the ACCESS model on every iteration.
     run_access: bool = False

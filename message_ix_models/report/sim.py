@@ -7,7 +7,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import cache, lru_cache, partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import genno
 import pandas as pd
@@ -148,7 +148,7 @@ def reporter_from_excel(path: "Path") -> "Reporter":
 
 
 def simulate_qty(
-    name: str, dims: list[str], item_data: Union[dict, pd.DataFrame]
+    name: str, dims: list[str], item_data: dict | pd.DataFrame
 ) -> "AnyQuantity":
     """Return simulated data for item `name`.
 
@@ -235,8 +235,8 @@ def data_from_file(path: Path, *, name: str, dims: Sequence[str]) -> "AnyQuantit
 def add_simulated_solution(
     rep: Reporter,
     info: ScenarioInfo,
-    data: Optional[dict] = None,
-    path: Optional[Path] = None,
+    data: dict | None = None,
+    path: Path | None = None,
 ):
     """Add a simulated model solution to `rep`.
 

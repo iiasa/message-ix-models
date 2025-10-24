@@ -6,7 +6,7 @@ from collections.abc import Callable, Collection
 from datetime import date
 from itertools import count, product
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from message_ix import Reporter, Scenario
@@ -38,7 +38,7 @@ def _model_name(value: str) -> str:
     return value.split(" (NAVIGATE)")[0]
 
 
-def _scenario_name(context: Context, value: str) -> Optional[str]:
+def _scenario_name(context: Context, value: str) -> str | None:
     """Return a scenario ID for submission from the NAVIGATE scenarios codelist.
 
     `value` should be a scenario name (:attr:`.Scenario.scenario`) constructed by

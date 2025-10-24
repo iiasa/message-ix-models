@@ -3,7 +3,7 @@
 import logging
 import re
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Literal, Optional, Union, overload
+from typing import TYPE_CHECKING, Literal, overload
 
 from genno import Computer
 from ixmp.util import parse_url
@@ -44,24 +44,22 @@ class WorkflowStep:
 
     #: Function to be executed on the subject scenario. If :obj:`None`, the target
     #: scenario is loaded via :meth:`Context.get_scenario`.
-    action: Optional[CallbackType] = None
+    action: CallbackType | None = None
 
     #: :obj:`True` or a :class:`dict` with keyword arguments to clone before
     #: :attr:`action` is executed. Default: :obj:`False`, do not clone.
-    clone: Union[bool, dict] = False
+    clone: bool | dict = False
 
     #: Keyword arguments passed to :attr:`action`.
     kwargs: dict
 
     #: Target platform name and additional options.
-    platform_info: Union["PlatformInfo", dict]
+    platform_info: "PlatformInfo | dict"
 
     #: Target model name, scenario name, and optional version.
-    scenario_info: Union[dict, "TimeSeriesIdentifiers"]
+    scenario_info: "dict | TimeSeriesIdentifiers"
 
-    def __init__(
-        self, action: Optional[CallbackType], target=None, clone=False, **kwargs
-    ):
+    def __init__(self, action: CallbackType | None, target=None, clone=False, **kwargs):
         try:
             # Store platform and scenario info by parsing the `target` URL
             self.platform_info, self.scenario_info = parse_url(target)
@@ -76,9 +74,7 @@ class WorkflowStep:
         self.clone = clone
         self.kwargs = kwargs
 
-    def __call__(
-        self, context: Context, scenario: Optional[Scenario] = None
-    ) -> Scenario:
+    def __call__(self, context: Context, scenario: Scenario | None = None) -> Scenario:
         """Execute the workflow step."""
         if scenario is None:
             # No base scenario
@@ -158,8 +154,8 @@ class Workflow(Computer):
     def add_step(
         self,
         name: str,
-        base: Optional[str] = None,
-        action: Optional[CallbackType] = None,
+        base: str | None = None,
+        action: CallbackType | None = None,
         replace=False,
         **kwargs,
     ) -> str:
@@ -200,7 +196,7 @@ class Workflow(Computer):
         # Add to the Computer; return the name of the added step
         return str(self.add_single(name, step, "context", base, strict=True))
 
-    def run(self, name_or_names: Union[str, list[str]]):
+    def run(self, name_or_names: str | list[str]):
         """Run all workflow steps necessary to produce `name_or_names`.
 
         Parameters

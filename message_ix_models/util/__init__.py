@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import partial, singledispatch
 from itertools import count
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import message_ix
 import pandas as pd
@@ -145,7 +145,7 @@ def aggregate_codes(df: pd.DataFrame, dim: str, codes):  # pragma: no cover
 
 
 def broadcast(
-    df: pd.DataFrame, labels: Optional[pd.DataFrame] = None, **kwargs
+    df: pd.DataFrame, labels: pd.DataFrame | None = None, **kwargs
 ) -> pd.DataFrame:
     """Fill missing data in `df` by broadcasting.
 
@@ -289,7 +289,7 @@ def datetime_now_with_tz() -> datetime:
     return datetime.now(tz)
 
 
-def either_dict_or_kwargs(name: str, dict_arg: Optional[dict], kwargs: dict) -> dict:
+def either_dict_or_kwargs(name: str, dict_arg: dict | None, kwargs: dict) -> dict:
     """Return either `dict_arg` or `kwargs`; raise :class:`ValueError` if both."""
     if dict_arg is None:
         return kwargs
@@ -300,7 +300,7 @@ def either_dict_or_kwargs(name: str, dict_arg: Optional[dict], kwargs: dict) -> 
 
 
 def ffill(
-    df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: Optional[str] = None
+    df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: str | None = None
 ) -> pd.DataFrame:
     """Forward-fill `df` on `dim` to cover `values`.
 
@@ -414,8 +414,8 @@ def make_io(
 
 
 def make_matched_dfs(
-    base: Union[MutableMapping, pd.DataFrame],
-    **par_value: Union[float, pint.Quantity, dict],
+    base: MutableMapping | pd.DataFrame,
+    **par_value: float | pint.Quantity | dict,
 ) -> "MutableParameterData":
     """Return data frames derived from `base` for multiple parameters.
 
@@ -470,7 +470,7 @@ def make_matched_dfs(
 
 
 def make_source_tech(
-    info: Union[message_ix.Scenario, ScenarioInfo], common, **values
+    info: message_ix.Scenario | ScenarioInfo, common, **values
 ) -> "MutableParameterData":
     """Return parameter data for a ‘source’ technology.
 
@@ -522,7 +522,7 @@ def make_source_tech(
     return result
 
 
-def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
+def maybe_query(series: pd.Series, query: str | None) -> pd.Series:
     """Apply :meth:`pandas.DataFrame.query` if the `query` arg is not :obj:`None`.
 
     :meth:`~pandas.DataFrame.query` is not chainable (`pandas-dev/pandas#37941
@@ -546,9 +546,9 @@ def merge_data(base: "MutableParameterData", *others: "ParameterData") -> None:
 
 
 def path_fallback(
-    *parts: Union[str, Path],
-    where: Union[str, list[Union[str, Path]]] = "",
-    context: Optional["Context"] = None,
+    *parts: str | Path,
+    where: str | list[str | Path] = "",
+    context: "Context | None" = None,
 ) -> Path:
     """Locate a path constructed from `parts` found in the first of several directories.
 
@@ -627,9 +627,9 @@ def path_fallback(
 
 def replace_par_data(
     scenario: message_ix.Scenario,
-    parameters: Union[str, Sequence[str]],
-    filters: Mapping[str, Union[str, int, Collection[str], Collection[int]]],
-    to_replace: Mapping[str, Union[Mapping[str, str], Mapping[int, int]]],
+    parameters: str | Sequence[str],
+    filters: Mapping[str, str | int | Collection[str] | Collection[int]],
+    to_replace: Mapping[str, Mapping[str, str] | Mapping[int, int]],
 ) -> None:
     """Replace data in `parameters` of `scenario`.
 
@@ -748,7 +748,7 @@ def strip_par_data(  # noqa: C901
     set_name: str,
     element: str,
     dry_run: bool = False,
-    dump: Optional["MutableParameterData"] = None,
+    dump: "MutableParameterData | None" = None,
 ) -> int:
     """Remove `element` from `set_name` in scenario, optionally dumping to `dump`.
 

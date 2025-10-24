@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 import pytest
 from message_ix import Scenario
@@ -260,7 +258,7 @@ def test_non_cooling_tec(request, test_context):
 )
 def test_apply_act_cap_multiplier(
     param_name: str,
-    cap_fact_parent: Optional[pd.DataFrame],
+    cap_fact_parent: pd.DataFrame | None,
     expected_values: list[float],
 ) -> None:
     # Dummy input data

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -111,7 +111,7 @@ EXP = {
     ),
 )
 def test_assign_income_groups(
-    cl_ig: "sdmx.model.common.Codelist", nodes: str, method: str, replace: Optional[int]
+    cl_ig: "sdmx.model.common.Codelist", nodes: str, method: str, replace: int | None
 ) -> None:
     cl_node = get_codelist(f"node/{nodes}")
 

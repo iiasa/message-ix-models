@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Literal, Union
+from typing import TYPE_CHECKING, List, Literal
 
 import message_ix
 import pandas as pd
@@ -173,7 +173,7 @@ def gen_comm_shr_map(
     type_tec_shr_name: str,
     tecs_all: List[str],
     tecs_shr: List[str],
-    nodes: Union[str, List[str]] = "all",
+    nodes: str | List[str] = "all",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
 
@@ -221,7 +221,7 @@ def gen_comm_shr_par(
     cname: str,
     shr_vals_df: pd.DataFrame,
     shr_type: Literal["up", "lo"] = "up",
-    years: Union[str, List[int]] = "all",
+    years: str | List[int] = "all",
 ) -> DataFrame:
     """Generates data frame for "share_commodity_up/lo" parameter with given values for
     node_share and broadcasts them for given "years".
@@ -264,7 +264,7 @@ def add_comm_share(
     shr_tecs: List[str],
     shr_vals: pd.DataFrame,
     shr_type: Literal["up", "lo"] = "up",
-    years: Union[str, List[int]] = "all",
+    years: str | List[int] = "all",
 ):
     """Convenience function that adds commodity share constraint to a scenario.
 

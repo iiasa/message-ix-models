@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, List, Literal, Union
+from typing import TYPE_CHECKING, Callable, List, Literal
 
 import numpy as np
 import pandas as pd
@@ -96,7 +96,7 @@ fitting_dict = {
 
 
 def read_timer_pop(
-    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
+    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
 ):
     """Read population data for a given material from TIMER model.
 
@@ -126,7 +126,7 @@ def read_timer_pop(
 
 
 def read_timer_gdp(
-    datapath: Union[str, Path], material: Literal["cement", "steel", "aluminum"]
+    datapath: str | Path, material: Literal["cement", "steel", "aluminum"]
 ):
     """Read GDP per capita data for a given material from TIMER Excel files.
 
@@ -221,7 +221,7 @@ def project_demand(df: pd.DataFrame, phi: float, mu: float):
     return df_demand[["region", "year", "demand_tot"]]
 
 
-def read_base_demand(filepath: Union[str, Path]):
+def read_base_demand(filepath: str | Path):
     """Read base year demand data from a YAML file.
 
     Parameters
@@ -517,7 +517,7 @@ def prepare_model_input(
 def derive_demand(
     material: Literal["cement", "steel", "aluminum"],
     scen: "Scenario",
-    ssp: Union[Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"], str] = "SSP2",
+    ssp: Literal["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"] | str = "SSP2",
     new: bool = False,
     model: Literal["least-squares", "quantile"] = "least-squares",
 ):

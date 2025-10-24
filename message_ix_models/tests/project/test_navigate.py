@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 
@@ -111,7 +111,7 @@ def test_scenario_name(
     test_context: "Context",
     dsd: Literal["iiasa-ece", "navigate"],
     input: str,
-    expected: Optional[str],
+    expected: str | None,
 ) -> None:
     test_context.setdefault("navigate", Config(dsd=dsd))
     assert expected == _scenario_name(test_context, input)
@@ -139,5 +139,5 @@ class TestT35_POLICY:
             ),
         ),
     )
-    def test_parse(self, value: str, expected: Optional[int]) -> None:
+    def test_parse(self, value: str, expected: int | None) -> None:
         assert expected is T35_POLICY.parse(value)

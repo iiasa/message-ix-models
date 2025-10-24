@@ -2,7 +2,7 @@ import logging
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from itertools import filterfalse
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from genno import Keys
 
@@ -60,7 +60,7 @@ class SSPDataSource(ExoDataSource):
     variable = {"GDP": "GDP|PPP", "POP": "Population"}
 
     #: `replace` argument to :func:`iamc.to_quantity`.
-    replace: dict[str, Union[str, dict[str, str]]] = {}
+    replace: dict[str, str | dict[str, str]] = {}
 
     #: `unique` argument to :func:`iamc.to_quantity`.
     unique: str = "MODEL SCENARIO VARIABLE UNIT"

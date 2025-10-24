@@ -5,7 +5,7 @@
 import logging
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal
 
 import genno
 import numpy as np
@@ -128,7 +128,7 @@ class IEA_EEI(ExoDataSource):
 
         #: Name of a :class:`.Key` containing a mapping for
         #: :func:`genno.operator.broadcast_map`.
-        broadcast_map: Optional["Key"] = None
+        broadcast_map: "Key | None" = None
 
         #: Add a task with the key "plot IEA_EEI debug" to generate diagnostic plot
         #: using :class:`.Plot`.

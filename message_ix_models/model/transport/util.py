@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Hashable, Iterable, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from message_ix_models import Context
 from message_ix_models.util import package_data_path
@@ -45,7 +45,7 @@ def has_input_commodity(technology: "Code", commodity: str) -> bool:
         return False
 
 
-def region_path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
+def region_path_fallback(context_or_regions: Context | str, *parts) -> Path:
     """Return a :class:`.Path` constructed from `parts`.
 
     If ``context.model.regions`` (or a string value as the first argument) is defined

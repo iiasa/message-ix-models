@@ -5,7 +5,7 @@ from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 from genno import KeyExistsError
 from genno.caching import hash_args
@@ -193,7 +193,7 @@ def build_solve_buildings(
     context: Context,
     scenario: Scenario,
     navigate_scenario: str,
-    config: Optional[dict] = None,
+    config: dict | None = None,
 ) -> Scenario:
     """Workflow steps 5–7."""
     from message_ix_models.model.buildings import sturm
@@ -320,7 +320,7 @@ def report(
     context: Context,
     scenario: Scenario,
     *,
-    other_scenario_info: Optional[dict] = None,
+    other_scenario_info: dict | None = None,
     use_legacy_reporting: bool = True,
 ) -> Scenario:
     """Workflow steps 8–10.
@@ -538,7 +538,7 @@ def tax_emission(context: Context, scenario: Scenario, price: float) -> "Scenari
 
 def iter_scenarios(
     context, filters
-) -> Generator[tuple[str, Optional[str], Optional[str], Optional[str]], None, None]:
+) -> Generator[tuple[str, str | None, str | None, str | None], None, None]:
     """Iterate over filtered scenario codes while unpacking information.
 
     Yields a sequence of 4-tuples:
@@ -563,7 +563,7 @@ def iter_scenarios(
         assert match
         label = match.group(2)
 
-        info: list[Optional[str]] = []
+        info: list[str | None] = []
 
         # Values for 3 annotations
         for name in ("climate_policy", "T35_policy", "WP6_production"):
@@ -600,7 +600,7 @@ def generate(context: Context) -> Workflow:  # noqa: C901
     # Mapping from short IDs → 2-tuple with:
     # 1. Name of the final step in the policy sequence (if any).
     # 2. Args for report(…, other_scenario_info=…) —either None or model/scenario name.
-    to_report: dict[str, tuple[str, Optional[Mapping]]] = {}
+    to_report: dict[str, tuple[str, Mapping | None]] = {}
 
     # Step 1
     wf.add_step(
@@ -840,7 +840,7 @@ def generate(context: Context) -> Workflow:  # noqa: C901
 
 
 def add_reporting_steps(
-    wf: Workflow, to_report: Mapping[str, tuple[str, Optional[Mapping]]]
+    wf: Workflow, to_report: Mapping[str, tuple[str, Mapping | None]]
 ) -> list[str]:
     """Add reporting and prep-solution steps to `wf` for each item in `to_report`.
 
