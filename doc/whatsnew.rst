@@ -22,6 +22,8 @@ Next release
   for SDMX item scheme members with "-" in their IDs (:pull:`392`).
 - Expand :doc:`develop` documentation (:pull:`423`)
   with material previously in :mod:`message_data` docs.
+- Update documentation for
+  :doc:`project/efc` (:pull:`426`).
 
 v2025.9.9
 =========
