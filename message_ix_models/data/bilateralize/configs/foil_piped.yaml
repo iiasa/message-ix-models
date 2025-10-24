@@ -1,0 +1,46 @@
+#############################
+# Pipeline fuel oil exports #
+#############################
+foil_piped_trade:
+  base_trade_technology:
+    foil_bal
+  trade_technology:
+    foil_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    fueloil
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    secondary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    oil_pipe:
+      - fueloil
+  flow_material_input:
+    oil_pipe:
+      - steel
+  flow_commodity_output:
+    oil_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - foil_imp
+    - agg_ref_MODE_vacuum_residue # Note that agg_reg has 3 modes: vacuum_residue, atm_gasoil, heavy_foil
+    - agg_ref_MODE_atm_gasoil
+    - agg_ref_MODE_heavy_foil
+  specify_network:
+    True
+  tracked_emissions:
+  bunker_technology: # not applicable for pipelines
