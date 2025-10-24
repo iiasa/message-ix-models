@@ -1,0 +1,25 @@
+# TEMPLATE FOR TRADE CONFIGURATION FILES
+# The trade technology is the technology that is used to transport the commodity from one node to another.
+template_trade_technology: # Name of covered trade technology (e.g., oil)
+  base_trade_technology: # [Optional] If there is this technology in the base scenario, put here (e.g., oil_trd)
+  trade_technology: # Technology name used in bilateralization
+  trade_tech_suffix: # [Optional] Suffix on technology (e.g., UHV for elec, for ultra high voltage)
+  trade_tech_number: # [Optional] Number of pipes/routes per edge. 
+  trade_commodity: # Commodity being traded (e.g., crudeoil)
+  trade_commodity_suffix: # [Optional] Suffix on commodity (e.g., gei for electr in GEIDCO project)
+  trade_form: # How is the commodity shipped? (e.g., pipe, shp)
+  export_level: # Level that converts from supply to trade
+  trade_level: # Level at point of trade (e.g., piped, shipped)
+  import_level: # Level that converts from trade to use
+  flow_technologies: # [LIST] Technology for piping/shipping, etc. (e.g., pipe, shipping)
+  flow_tech_suffix: # Flow technology suffix (e.g., liquid for oil/LNG, solid for biomass/coal)
+  flow_constraint: # [STR] Is the flow technology constrained at the global level (i.e. maritime shipping) or bilaterally (pipelines)?
+  flow_fuel_input: # [DICT] What are the fuels required for flow technology (e.g., gas for gas pipelines)
+  flow_material_input: # What are the materials required for flow technology (e.g., steel for gas pipelines)
+  flow_commodity_output: # What is the flow service provided (e.g., gas_pipeline_capacity)
+  flow_units: # [STR] What are the units of the output commodity from flow technology?
+  supply_technologies: # Technologies the supply the traded commodity
+  # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
+  specify_network: # If true, produces sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
+  tracked_emissions: # List of tracked emission types
+  bunker_technology: # [DICT] Bunker technology for the traded fuel if it exists (e.g., LNG_tobunker)

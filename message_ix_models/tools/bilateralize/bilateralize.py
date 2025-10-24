@@ -38,8 +38,21 @@ def get_logger(name: str):
 
 #%% Load config yaml
 def load_config(project_name:str = None,
-                config_name:str = None):
+                config_name:str = None,
+                load_tec_config:bool = False):
+    """
+    Load config file and optional trade-specific config files.
     
+    Args:
+        project_name: Name of the project (message_ix_models/project/[THIS])
+        config_name: Name of the base config file (e.g., config.yaml)
+        load_tec_config: If True, load the trade-specific config files (default is False)
+        
+    Returns:
+        config: Config dictionary (base config)
+        config_path: Path to the config file
+        tec_config_dict: Dictionary of trade-specific config files (if load_tec_config is True)
+    """
     # Load config
     if (project_name is None) & (config_name is None):
         config_path = os.path.abspath(os.path.join(os.path.dirname(package_data_path("bilateralize")), 
@@ -52,10 +65,30 @@ def load_config(project_name:str = None,
     with open(config_path, "r") as f:
         config = yaml.safe_load(f) # safe_load is recommended over load for security
     
-    return config, config_path
+    if load_tec_config == False:
+        return config, config_path
+    elif load_tec_config == True:
+        tec_config_dict = dict()
+        for tec in config['covered_trade_technologies']:
+            tec_config_path = os.path.abspath(os.path.join(os.path.dirname(package_data_path("bilateralize")), 
+                                         "bilateralize", "configs", tec + ".yaml"))
+            with open(tec_config_path, "r") as f:
+                tec_config = yaml.safe_load(f)
+            tec_config_dict[tec] = tec_config
+        return config, config_path, tec_config_dict
 
 #%% Copy columns from template, if exists
-def copy_template_columns(df, template, exclude_cols=["node_loc", "technology"]):
+def copy_template_columns(df, 
+                          template, 
+                          exclude_cols=["node_loc", "technology"]):
+    """
+    Copy columns from template to dataframe.
+    
+    Args:
+        df: Dataframe to copy columns to
+        template: Template dataframe
+        exclude_cols: Columns to exclude from copying
+    """
     for col in template.columns:
         if col not in exclude_cols:
             df[col] = template[col].iloc[0]
@@ -68,20 +101,13 @@ def broadcast_yv_ya(df: pd.DataFrame,
     """
     Broadcast years to create vintage-activity year pairs.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input parameter DataFrame
-    ya_list : list[int]
-        List of activity years to consider
-    yv_list : list[int]
-        list of vintage years to consider
-    tec_lifetime: pd.DataFrame
-        technical lifetime of the technology, provided via dataframe
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with expanded rows for each vintage-activity year pair
+    Args:
+        df: Input parameter DataFrame
+        ya_list: List of activity years to consider
+        yv_list: List of vintage years to consider
+        tec_lifetime: Technical lifetime of the technology, provided via dataframe
+    Returns:
+        pd.DataFrame: DataFrame with expanded rows for each vintage-activity year pair
     """
     all_new_rows = []
     
@@ -120,7 +146,16 @@ def broadcast_yv_ya(df: pd.DataFrame,
 def broadcast_years(df: pd.DataFrame, 
                     year_type: str,
                     year_list: list[int]) -> pd.DataFrame:
-    """Broadcast vintage, relation, or activity years."""
+    """
+    Broadcast vintage, relation, or activity years.
+    
+    Args:
+        df: Input parameter DataFrame
+        year_type: Type of year to broadcast (e.g., 'year_vtg', 'year_rel', 'year_act')
+        year_list: List of years to broadcast
+    Returns:
+        pd.DataFrame: DataFrame with expanded rows for each year
+    """
     all_new_rows = []
     for _, row in df.iterrows():
         for y in year_list:
@@ -132,7 +167,17 @@ def broadcast_years(df: pd.DataFrame,
     return result_df.drop_duplicates()
 
 #%% Write just the GDX files
-def save_to_gdx(mp, scenario, output_path):
+def save_to_gdx(mp: ixmp.Platform,
+                scenario: str, 
+                output_path: str):
+    """
+    Save the scenario to a GDX file.
+    
+    Args:
+        mp: ixmp platform
+        scenario: Scenario name
+        output_path: Path to save the GDX file
+    """
     from ixmp.backend import ItemType
     mp._backend.write_file(output_path,
                            ItemType.SET | ItemType.PAR,
@@ -181,8 +226,7 @@ def build_parameterdf(
 def generate_bare_sheets(
         log,
         project_name: str = None,
-        config_name: str = None,
-        message_regions: str = 'R12'):
+        config_name: str = None):
     """
     Generate bare sheets to collect required parameters
 
@@ -198,16 +242,15 @@ def generate_bare_sheets(
     
     # Load config
     log.info(f"Loading config file")
-    config, config_path = load_config(project_name, config_name)
+    config_base, config_path, config_tec = load_config(project_name, config_name, load_tec_config=True)
 
     # Retrieve config sections    
-    #define_parameters = config.get('define_parameters', {})
-    
-    covered_tec = config.get('covered_trade_technologies', {})
+    message_regions = config_base.get('scenario', {}).get('regions')
+    covered_tec = config_base.get('covered_trade_technologies', {})
 
     config_dict = {}    
     for tec in covered_tec:
-        tec_dict = config.get(tec + '_trade', {})
+        tec_dict = config_tec.get(tec).get(tec + '_trade', {})
         for k in tec_dict.keys():
             if k not in config_dict.keys(): config_dict[k] = {}
             config_dict[k][tec] = tec_dict[k]
@@ -846,6 +889,8 @@ def build_parameter_sheets(log,
         project_name (str, optional): Project name (message_ix_models/project/[THIS]) 
         config_name (str, optional): Name of the config file.
             If None, uses default config from data/bilateralize/config_default.yaml
+    Outputs:
+        outdict: Dictionary of parameter dataframes
     """
     # Load config
     config, config_path = load_config(project_name, config_name)
@@ -946,13 +991,30 @@ def clone_and_update(trade_dict,
                      additional_parameter_updates:dict = None,
                      gdx_location: str = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
                      remove_pao_coal_constraint: bool = True):     
+    """
+    Clone and update scenario.
+    
+    Args:
+        trade_dict: Dictionary of parameter dataframes
+        log: Log file to track progress
+        solve: If True, solve scenario
+        to_gdx: If True, save scenario to a GDX file
+    Optional Args:
+        project_name: Name of project (message_ix_models/project/[THIS])
+        config_name: Name of config file.
+            If None, uses default config from data/bilateralize/config_default.yaml
+        update_scenario_name: Name of scenario to update
+        additional_parameter_updates: Dictionary of additional parameter updates
+        gdx_location: Location to save GDX file
+        remove_pao_coal_constraint: If True, remove PAO coal and gas constraints on primary energy
+    """
     # Load config
-    config, config_path = load_config(project_name, config_name)
+    config_base, config_path, config_tec = load_config(project_name, config_name, load_tec_config=True)
        
     # Load the scenario
     mp = ixmp.Platform()
-    start_model = config.get("scenario", {}).get("start_model")
-    start_scen = config.get("scenario", {}).get("start_scen")
+    start_model = config_base.get("scenario", {}).get("start_model")
+    start_scen = config_base.get("scenario", {}).get("start_scen")
      
     if not start_model or not start_scen:
         error_msg = (
@@ -965,10 +1027,10 @@ def clone_and_update(trade_dict,
     log.info(f"Loaded scenario: {start_model}/{start_scen}")
      
     # Clone scenario
-    target_model = config.get("scenario", {}).get("target_model", [])
+    target_model = config_base.get("scenario", {}).get("target_model", [])
     
     if update_scenario_name == None:
-        target_scen = config.get("scenario", {}).get("target_scen", [])
+        target_scen = config_base.get("scenario", {}).get("target_scen", [])
     else:
         target_scen = update_scenario_name
         
@@ -977,7 +1039,7 @@ def clone_and_update(trade_dict,
     log.info("Scenario cloned.")
     
     # Add sets and parameters for each covered technology
-    covered_tec = config.get('covered_trade_technologies')
+    covered_tec = config_base.get('covered_trade_technologies')
     
     for tec in covered_tec:
         
@@ -985,13 +1047,13 @@ def clone_and_update(trade_dict,
         base_tec_name = tec.replace("_shipped", "")
         base_tec_name = base_tec_name.replace("_piped", "")
         
-        base_tec = [config.get(tec + '_trade').get('trade_commodity') + '_exp', # These may not exist but in case they do...
-                    config.get(tec + '_trade').get('trade_commodity') + '_imp',
+        base_tec = [config_tec.get(tec).get(tec + '_trade').get('trade_commodity') + '_exp', # These may not exist but in case they do...
+                    config_tec.get(tec).get(tec + '_trade').get('trade_commodity') + '_imp',
                     base_tec_name + '_exp', # These may not exist but in case they do...
                     base_tec_name + '_imp',]
         if tec == 'gas_piped':
             base_tec = base_tec + [i for i in scen.set('technology') if 
-                                   config.get(tec + '_trade').get('trade_commodity') + '_exp_' in i]
+                                   config_tec.get(tec).get(tec + '_trade').get('trade_commodity') + '_exp_' in i]
         if 'crudeoil' in tec:
             base_tec = base_tec + ['oil_exp', 'oil_imp']
             
@@ -1073,7 +1135,7 @@ def clone_and_update(trade_dict,
                         scen.add_par(rel_par, rel_par_df)
         
         # Update bunker fuels
-        bunker_tec = config.get(tec + '_trade').get('bunker_technology')
+        bunker_tec = config_tec.get(tec).get(tec + '_trade').get('bunker_technology')
         if bunker_tec != None:
             for btec in bunker_tec.keys():
                 bunkerdf_in = scen.par('input', filters = {'technology': bunker_tec[btec]})

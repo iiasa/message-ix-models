@@ -1,0 +1,52 @@
+###########################
+# Light oil shipped trade #
+###########################
+loil_shipped_trade:
+  base_trade_technology:
+    - loil_bal
+    - loil_bunker
+  trade_technology:
+    loil_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    lightoil
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    secondary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_tanker_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    oil_tanker_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    oil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - loil_imp
+    - syn_liq
+    - syn_liq_ccs
+    - agg_ref_MODE_kerosene
+    - agg_ref_MODE_diesel
+    - agg_ref_MODE_light_foil
+    - agg_ref_MODE_refinery_gas
+    - agg_ref_MODE_gasoline
+    - agg_ref_MODE_refinery_gas_int
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    oil_tanker_loil:
+      loil_tobunker
