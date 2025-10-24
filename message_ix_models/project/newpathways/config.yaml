@@ -1,0 +1,710 @@
+# DATA DIRECTORIES
+p_drive_location:
+  #/pdrive/projects/ene.model3
+  P:/ene.model
+
+# SCENARIO INFORMATION
+scenario:
+  start_model: 
+    SSP_SSP2_v6.2
+  # Remains blank to pop out error messages to make sure the correct config has been filled in before running the script. 
+  start_scen:
+    baseline_DEFAULT
+  target_model:
+    NP_SSP2_6.2
+  target_scen:
+    GpLNGsCsCRspEsFspLspBsHs
+  first_model_year:
+    2030
+  regions:
+    R12
+
+# COVERED TRADE TECHNOLOGIES
+covered_trade_technologies:
+  - gas_piped
+  - LNG_shipped
+  - coal_shipped
+  - crudeoil_shipped
+  - crudeoil_piped
+  - eth_shipped
+  - foil_shipped
+  - foil_piped
+  - loil_shipped
+  - loil_piped
+  - biomass_shipped
+  - lh2_shipped
+
+# SHIPPING FUELS (how much of each shipping technology is propelled by each fuel)
+shipping_fuels:
+  LNG_tanker:
+    LNG_tanker_LNG: 0.8
+    LNG_tanker_loil: 0.2
+  oil_tanker:
+    oil_tanker_loil: 0.9
+    oil_tanker_foil: 0.07
+    oil_tanker_eth: 0.03
+
+# YEARS
+timeframes:
+  year_act_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+  year_vtg_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+
+# PARAMETERS THAT NEED TO BE DEFINED
+define_parameters:
+  base_required_par: # Parameters that need to be defined at a minimum
+      - input
+      - output
+      - technical_lifetime
+      - inv_cost
+      - fix_cost
+      - var_cost
+      - capacity_factor
+
+# NAME TRADE TECHNOLOGIES
+# The trade technology is the technology that is used to transport the commodity from one node to another.
+template_trade_technology: # Name of covered trade technology (e.g., oil)
+  base_trade_technology: # [Optional] If there is this technology in the base scenario, put here (e.g., oil_trd)
+  trade_technology: # Technology name used in bilateralization
+  trade_tech_suffix: # [Optional] Suffix on technology (e.g., UHV for elec, for ultra high voltage)
+  trade_tech_number: # [Optional] Number of pipes/routes per edge. 
+  trade_commodity: # Commodity being traded (e.g., crudeoil)
+  trade_commodity_suffix: # [Optional] Suffix on commodity (e.g., gei for electr in GEIDCO project)
+  trade_form: # How is the commodity shipped? (e.g., pipe, shp)
+  export_level: # Level that converts from supply to trade
+  trade_level: # Level at point of trade (e.g., piped, shipped)
+  import_level: # Level that converts from trade to use
+  flow_technologies: # [LIST] Technology for piping/shipping, etc. (e.g., pipe, shipping)
+  flow_tech_suffix: # Flow technology suffix (e.g., liquid for oil/LNG, solid for biomass/coal)
+  flow_constraint: # [STR] Is the flow technology constrained at the global level (i.e. maritime shipping) or bilaterally (pipelines)?
+  flow_fuel_input: # [DICT] What are the fuels required for flow technology (e.g., gas for gas pipelines)
+  flow_material_input: # What are the materials required for flow technology (e.g., steel for gas pipelines)
+  flow_commodity_output: # What is the flow service provided (e.g., gas_pipeline_capacity)
+  flow_units: # [STR] What are the units of the output commodity from flow technology?
+  supply_technologies: # Technologies the supply the traded commodity
+  # Do you want to specify the pipeline pairs? (instead of using all possible pairs) 
+  specify_network: # If true, produces sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
+  tracked_emissions: # List of tracked emission types
+  bunker_technology: # [DICT] Bunker technology for the traded fuel if it exists (e.g., LNG_tobunker)
+########################
+# Pipeline gas exports #
+########################
+gas_piped_trade:
+  base_trade_technology:
+    gas_bal
+  trade_technology:
+    gas_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    gas
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    primary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - gas_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    gas_pipe:
+      - gas
+  flow_material_input:
+    gas_pipe:
+      - steel
+  flow_commodity_output:
+    gas_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - gas_extr_1
+    - gas_extr_2
+    - gas_extr_3
+    - gas_extr_4
+    - gas_extr_5
+    - gas_extr_6
+    - gas_extr_7
+  specify_network:
+    True
+  tracked_emissions:
+    - CH4_GAS_TRANS&STORE
+    - TCE
+    - TCE_non-CO2
+    - TCE_other
+  bunker_technology: # not applicable for pipelines
+#####################
+# LNG shipped trade #
+#####################
+LNG_shipped_trade:
+  base_trade_technology:
+    - LNG_bal
+    - LNG_bunker
+  trade_technology:
+    LNG_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    LNG
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - LNG_tanker_LNG
+    - LNG_tanker_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    LNG_tanker_LNG:
+      - LNG
+    LNG_tanker_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    LNG_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - LNG_prod
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    LNG_tanker_LNG:
+      LNG_tobunker
+    LNG_tanker_loil:
+      loil_tobunker
+######################
+# Coal shipped trade #
+######################
+coal_shipped_trade: # Name of covered trade technology (e.g., oil)
+  base_trade_technology:
+    - coal_bal
+    - coal_trd
+  trade_technology:
+    coal_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    coal
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - energy_bulk_carrier_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    energy_bulk_carrier_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    energy_bulk_carrier_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - coal_extr
+    - lignite_extr
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    energy_bulk_carrier_loil:
+      loil_tobunker
+#######################
+# Crude shipped trade #
+########E##############
+crudeoil_shipped_trade: # Name of covered trade technology (e.g., oil)
+  base_trade_technology:
+    - oil_bal
+    - oil_trd
+  trade_technology:
+    crudeoil_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    crudeoil
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - crudeoil_tanker_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    crudeoil_tanker_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    crudeoil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - oil_extr_1
+    - oil_extr_2
+    - oil_extr_3
+    - oil_extr_4
+    - oil_extr_5
+    - oil_extr_6
+    - oil_extr_7
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    crudeoil_tanker_loil:
+      loil_tobunker
+##########################
+# Pipeline crude exports #
+##########################
+crudeoil_piped_trade:
+  base_trade_technology:
+    oil_bal
+  trade_technology:
+    crudeoil_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    crudeoil
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    primary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    oil_pipe:
+      - crudeoil
+  flow_material_input:
+    oil_pipe:
+      - steel
+  flow_commodity_output:
+    oil_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - oil_extr_1
+    - oil_extr_2
+    - oil_extr_3
+    - oil_extr_4
+    - oil_extr_5
+    - oil_extr_6
+    - oil_extr_7
+  specify_network:
+    True
+  tracked_emissions:
+  bunker_technology: # not applicable for pipelines
+#########################
+# Ethanol shipped trade #
+#########################
+eth_shipped_trade:
+  base_trade_technology:
+    - eth_bal
+    - eth_bunker
+  trade_technology:
+    eth_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    ethanol
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_tanker_loil
+    - oil_tanker_eth
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    oil_tanker_loil:
+      - lightoil
+    oil_tanker_eth:
+      - ethanol
+  flow_material_input:
+  flow_commodity_output:
+    oil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - eth_bio
+    - eth_bio_ccs
+    - liq_bio
+    - liq_bio_ccs
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    oil_tanker_loil:
+      loil_tobunker
+    oil_tanker_eth:
+      eth_tobunker
+##########################
+# Fuel oil shipped trade #
+##########################
+foil_shipped_trade:
+  base_trade_technology:
+    - foil_bal
+    - foil_bunker
+  trade_technology:
+    foil_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    fueloil
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    secondary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_tanker_loil
+    - oil_tanker_foil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    oil_tanker_loil:
+      - lightoil
+    oil_tanker_foil:
+      - fueloil
+  flow_material_input:
+  flow_commodity_output:
+    oil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - foil_imp
+    - agg_ref_MODE_vacuum_residue # Note that agg_reg has 3 modes: vacuum_residue, atm_gasoil, heavy_foil
+    - agg_ref_MODE_atm_gasoil
+    - agg_ref_MODE_heavy_foil
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    oil_tanker_loil:
+      loil_tobunker
+    oil_tanker_foil:
+      foil_tobunker
+#############################
+# Pipeline fuel oil exports #
+#############################
+foil_piped_trade:
+  base_trade_technology:
+    foil_bal
+  trade_technology:
+    foil_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    fueloil
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    secondary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    oil_pipe:
+      - fueloil
+  flow_material_input:
+    oil_pipe:
+      - steel
+  flow_commodity_output:
+    oil_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - foil_imp
+    - agg_ref_MODE_vacuum_residue # Note that agg_reg has 3 modes: vacuum_residue, atm_gasoil, heavy_foil
+    - agg_ref_MODE_atm_gasoil
+    - agg_ref_MODE_heavy_foil
+  specify_network:
+    True
+  tracked_emissions:
+  bunker_technology: # not applicable for pipelines
+###########################
+# Light oil shipped trade #
+###########################
+loil_shipped_trade:
+  base_trade_technology:
+    - loil_bal
+    - loil_bunker
+  trade_technology:
+    loil_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    lightoil
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    secondary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_tanker_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    oil_tanker_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    oil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - loil_imp
+    - syn_liq
+    - syn_liq_ccs
+    - agg_ref_MODE_kerosene
+    - agg_ref_MODE_diesel
+    - agg_ref_MODE_light_foil
+    - agg_ref_MODE_refinery_gas
+    - agg_ref_MODE_gasoline
+    - agg_ref_MODE_refinery_gas_int
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    oil_tanker_loil:
+      loil_tobunker
+##############################
+# Pipeline light oil exports #
+##############################
+loil_piped_trade:
+  base_trade_technology:
+    loil_bal
+  trade_technology:
+    loil_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    lightoil
+  trade_commodity_suffix:
+  trade_form:
+    piped
+  export_level:
+    secondary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    oil_pipe:
+      - lightoil
+  flow_material_input:
+    oil_pipe:
+      - steel
+  flow_commodity_output:
+    oil_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - loil_imp
+    - syn_liq
+    - syn_liq_ccs
+    - agg_ref_MODE_kerosene
+    - agg_ref_MODE_diesel
+    - agg_ref_MODE_light_foil
+    - agg_ref_MODE_refinery_gas
+    - agg_ref_MODE_gasoline
+    - agg_ref_MODE_refinery_gas_int
+  specify_network:
+    True
+  tracked_emissions:
+  bunker_technology: # not applicable for pipelines
+#########################
+# Biomass shipped trade #
+#########################
+biomass_shipped_trade:
+  base_trade_technology:
+    - biomass_trd
+  trade_technology:
+    biomass_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    biomass
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    primary
+  flow_technologies:
+    - energy_bulk_carrier_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    energy_bulk_carrier_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    energy_bulk_carrier_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - land_use_biomass
+    - biomass_imp
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    energy_bulk_carrier_loil:
+      loil_tobunker   
+###########################
+# Liquid H2 shipped trade #
+###########################
+lh2_shipped_trade:
+  base_trade_technology:
+    - lh2_trd
+  trade_technology:
+    lh2_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    lh2
+  trade_commodity_suffix:
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    primary
+  flow_technologies:
+    - lh2_tanker_lh2
+    - lh2_tanker_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    lh2_tanker_lh2:
+      - lh2
+    lh2_tanker_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    lh2_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - h2_liq
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    lh2_tanker_lh2:
+      lh2_tobunker
+    lh2_tanker_loil:
+      loil_tobunker
