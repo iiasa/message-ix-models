@@ -22,7 +22,7 @@ defaults:
 env:
   gams-version: 43.4.1
   label: "safe to test"
-  python-version: "3.13"
+  python-version: "3.14"
 
 jobs:
   check:
@@ -98,13 +98,13 @@ jobs:
         # - Latest supported Python version for those or other dependencies.
         # Minimum version given in pyproject.toml + earlier version of Python
         # For this job only, the oldest version of Python supported by message-ix-models
-        - { upstream: v3.8.0,  python: "3.9"  }  # Released 2024-01-12
-        - { upstream: v3.9.0,  python: "3.13" }  # 2024-06-04
-        - { upstream: v3.10.0, python: "3.13" }  # 2025-02-21
+        - { upstream: v3.8.0,  python: "3.10"  }  # Released 2024-01-12
+        - { upstream: v3.9.0,  python: "3.14" }  # 2024-06-04
+        - { upstream: v3.10.0, python: "3.14" }  # 2025-02-21
         # Latest released version + latest released Python
-        - { upstream: v3.11.0, python: "3.13" }  # 2025-05-27
+        - { upstream: v3.11.0, python: "3.14" }  # 2025-05-27
         # Development version + latest released Python
-        - { upstream: main,    python: "3.13" }
+        - { upstream: main,    python: "3.14" }
 
         exclude:
         # Specific version combinations that are invalid / not to be used
