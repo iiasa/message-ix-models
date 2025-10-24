@@ -128,7 +128,20 @@ def load_emission_sets(scenario: message_ix.Scenario):
                     scenario.set_as_default()
 
 
-# def remove_deprecated_sets(scenario: message_ix.Scenario):
+def remove_deprecated_sets(scenario: message_ix.Scenario):
+    """
+    this method will remove the deprecated sets for the technologies it finds in
+    data/hydrogen/set.yaml file.
+    it looks inside the data/hydrogen/sets folder for all the folder names
+    that match the technology names, and then looks inside those folders for the
+    set yaml files. The YAML file names must match the set names in MESSAGEix.
+    This method will automatically remove the sets from the scenario.
+    """
+    deprecated_sets = get_requirements()["hydrogen"]["technology"]["remove"]
+    for set_name in deprecated_sets:
+        scenario.check_out()
+        scenario.remove_set("technology", set_name)
+        scenario.commit(f"Remove deprecated set {set_name}")
 
 
 def load_hydrogen_sets(scenario: message_ix.Scenario):
