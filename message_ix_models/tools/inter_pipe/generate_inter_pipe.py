@@ -631,7 +631,16 @@ def inter_pipe_bare(
     relation = list(set(set_relation))
     # Hard-coded for optioal relation filled by addtional input files
     # TODO: put hard-coded relations in config too
-    hard_coded_relation = ["elec_share_gei", "elec_share_gei_CHN", "elec_share_gei_FSU"]
+    hard_coded_relation = [
+        "elec_share_gei", 
+        "elec_share_gei_CHN1", 
+        "elec_share_gei_CHN2", 
+        "elec_share_gei_FSU1",
+        "elec_share_gei_FSU2",
+        "elec_share_gei_FSU3",
+        "elec_share_gei_FSU4",
+        "elec_share_gei_FSU5",
+        ]
     for rel in hard_coded_relation:
         if rel not in relation:
             relation.append(rel)
