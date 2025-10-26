@@ -940,9 +940,8 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
         * 0.95,  # 0.95 buffer factor to avoid numerical error
         unit="-",
     )
-
     df_share["value"] = df_share["value"].fillna(0)
-
+    df_share["value"] = np.clip(df_share["value"], 0, 1)
     results["share_commodity_lo"] = df_share
 
     return results
