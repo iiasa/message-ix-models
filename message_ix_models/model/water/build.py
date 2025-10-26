@@ -11,7 +11,7 @@ from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import broadcast, package_data_path
 
-from .utils import read_config
+from .utils import filter_basins_by_region, read_config
 
 log = logging.getLogger(__name__)
 
@@ -557,6 +557,10 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     PATH = package_data_path("water", "delineation", FILE)
 
     df = pd.read_csv(PATH)
+
+    # Apply basin filter to reduce number of basins per region
+    df = filter_basins_by_region(df, context)
+
     # Assigning proper nomenclature
     df["node"] = "B" + df["BCU_name"].astype(str)
     df["mode"] = "M" + df["BCU_name"].astype(str)
@@ -578,6 +582,8 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     results["map_node"] = nodes
 
     context.all_nodes = df["node"]
+    # Store the filtered basin names for use in other functions
+    context.valid_basins = set(df["BCU_name"].astype(str))
 
     for set_name, config in results.items():
         # Sets to add

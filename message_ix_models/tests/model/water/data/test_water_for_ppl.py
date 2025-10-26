@@ -13,10 +13,11 @@ from message_ix_models.model.water.data.water_for_ppl import (
     cooling_shares_SSP_from_yaml,
     non_cooling_tec,
 )
+from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
 
 @pytest.mark.usefixtures("ssp_user_data")
-@pytest.mark.parametrize("RCP", ["no_climate", "6p0"])
+@pytest.mark.parametrize("RCP", ["no_climate", "7p0"])
 def test_cool_tec(request, test_context, RCP):
     mp = test_context.get_platform()
     scenario_info = {
@@ -28,7 +29,7 @@ def test_cool_tec(request, test_context, RCP):
     s = Scenario(**scenario_info)
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["gad_cc", "coal_ppl"])
-    s.add_set("node", ["R11_CPA"])
+    s.add_set("node", ["R12_CPA"])
     s.add_set("year", [2020, 2030, 2040])
     s.add_set("mode", ["M1", "M2"])
     s.add_set("commodity", ["electricity", "gas"])
@@ -38,12 +39,12 @@ def test_cool_tec(request, test_context, RCP):
     # make a df for input
     df_add = pd.DataFrame(
         {
-            "node_loc": ["R11_CPA"],
+            "node_loc": ["R12_CPA"],
             "technology": ["coal_ppl"],
             "year_vtg": [2020],
             "year_act": [2020],
             "mode": ["M1"],
-            "node_origin": ["R11_CPA"],
+            "node_origin": ["R12_CPA"],
             "commodity": ["electricity"],
             "level": ["secondary"],
             "time": "year",
@@ -55,7 +56,7 @@ def test_cool_tec(request, test_context, RCP):
     # make a df for historical activity
     df_ha = pd.DataFrame(
         {
-            "node_loc": ["R11_CPA"],
+            "node_loc": ["R12_CPA"],
             "technology": ["coal_ppl"],
             "year_act": [2020],
             "mode": ["M1"],
@@ -66,7 +67,7 @@ def test_cool_tec(request, test_context, RCP):
     )
     df_hnc = pd.DataFrame(
         {
-            "node_loc": ["R11_CPA"],
+            "node_loc": ["R12_CPA"],
             "technology": ["coal_ppl"],
             "year_vtg": [2020],
             "value": [1],
@@ -91,7 +92,7 @@ def test_cool_tec(request, test_context, RCP):
     test_context.set_scenario(s)
     test_context["water build info"] = ScenarioInfo(scenario_obj=s)
     test_context.type_reg = "global"
-    test_context.regions = "R11"
+    test_context.regions = "R12"
     test_context.time = "year"
     test_context.nexus_set = "nexus"
     # TODO add
@@ -100,6 +101,9 @@ def test_cool_tec(request, test_context, RCP):
         REL="med",
         ssp="SSP2",
     )
+
+    # Set up valid_basins for water_for_ppl functions
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     # TODO: only leaving this in so you can see which data you might want to assert to
     # be in the result. Please remove after adapting the assertions below:
@@ -123,7 +127,6 @@ def test_cool_tec(request, test_context, RCP):
     # Assert the results
     assert isinstance(result, dict)
     assert "input" in result
-
     # Check for NaN values in input DataFrame
     assert not result["input"]["value"].isna().any(), (
         "Input DataFrame contains NaN values"
@@ -288,7 +291,7 @@ def test_apply_act_cap_multiplier(
     )
 
 
-@pytest.mark.parametrize("SSP, regions", [("SSP2", "R11"), ("LED", "R12")])
+@pytest.mark.parametrize("SSP, regions", [("SSP2", "R12"), ("LED", "R12")])
 def test_cooling_shares_SSP_from_yaml(request, test_context, SSP, regions):
     test_context.model.regions = regions
     scenario = testing.bare_res(request, test_context)
