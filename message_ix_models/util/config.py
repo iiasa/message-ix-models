@@ -164,7 +164,7 @@ class ConfigHelper:
 
         Uses :func:`dataclasses.asdict`. This means that if the names of fields defined
         by a subclass change—including if fields are added or removed—the result will
-        differ.
+        differ. The returned value should be the same across versions of Python.
 
         Returns
         -------
@@ -172,16 +172,16 @@ class ConfigHelper:
             If `length` is greater than 0, a string of this length; otherwise a
             32-character string from :meth:`.blake2s.hexdigest`.
         """
-        # - Dump the dataclass instance to nested, sorted tuples. This is used instead
-        #   of dataclass.astuple() which allows e.g. units to pass as a (possibly
-        #   unsorted) dict.
-        # - Pickle this collection.
-        # - Hash.
-        h = blake2s(
-            pickle.dumps(asdict(self, dict_factory=lambda kv: tuple(sorted(kv))))
-        )
+        # Dump the dataclass instance to nested, sorted tuples. This is used instead of
+        # of dataclass.astuple() which allows e.g. units to pass as a dict that may not
+        # be sorted.
+        data = asdict(self, dict_factory=lambda kv: tuple(sorted(kv)))
+
+        # Pickle the data, using a fixed protocol version for all Pythons, then hash
+        hashed = blake2s(pickle.dumps(data, protocol=5))
+
         # Return the whole digest or a part
-        return h.hexdigest()[0 : length if length > 0 else h.digest_size]
+        return hashed.hexdigest()[0 : length if length > 0 else hashed.digest_size]
 
 
 @dataclass
