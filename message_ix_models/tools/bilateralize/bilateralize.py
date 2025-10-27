@@ -993,7 +993,10 @@ def clone_and_update(trade_dict,
                      to_gdx = False,
                      project_name: str = None,
                      config_name: str = None,
-                     update_scenario_name:str = None,
+                     start_scenario_name:str = None,
+                     start_model_name:str = None,
+                     target_scenario_name:str = None,
+                     target_model_name:str = None,
                      additional_parameter_updates:dict = None,
                      gdx_location: str = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
                      remove_pao_coal_constraint: bool = True):     
@@ -1009,7 +1012,10 @@ def clone_and_update(trade_dict,
         project_name: Name of project (message_ix_models/project/[THIS])
         config_name: Name of config file.
             If None, uses default config from data/bilateralize/config_default.yaml
-        update_scenario_name: Name of scenario to update
+        start_scenario_name: Name of scenario to start from
+        start_model_name: Name of model to start from
+        target_scenario_name: Name of scenario to target
+        target_model_name: Name of model to target
         additional_parameter_updates: Dictionary of additional parameter updates
         gdx_location: Location to save GDX file
         remove_pao_coal_constraint: If True, remove PAO coal and gas constraints on primary energy
@@ -1019,8 +1025,14 @@ def clone_and_update(trade_dict,
        
     # Load the scenario
     mp = ixmp.Platform()
-    start_model = config_base.get("scenario", {}).get("start_model")
-    start_scen = config_base.get("scenario", {}).get("start_scen")
+    if start_model_name == None:
+        start_model = config_base.get("scenario", {}).get("start_model")
+    else:
+        start_model = start_model_name
+    if start_scenario_name == None:
+        start_scen = config_base.get("scenario", {}).get("start_scen")
+    else:
+        start_scen = start_scenario_name
      
     if not start_model or not start_scen:
         error_msg = (
@@ -1033,12 +1045,15 @@ def clone_and_update(trade_dict,
     log.info(f"Loaded scenario: {start_model}/{start_scen}")
      
     # Clone scenario
-    target_model = config_base.get("scenario", {}).get("target_model", [])
-    
-    if update_scenario_name == None:
-        target_scen = config_base.get("scenario", {}).get("target_scen", [])
+    if target_model_name == None:
+        target_model = config_base.get("scenario", {}).get("target_model", [])
     else:
-        target_scen = update_scenario_name
+        target_model = target_model_name
+    
+    if target_scenario_name == None:
+        target_scen = config_base.get("scenario", {}).get("target_scen")
+    else:
+        target_scen = target_scenario_name
         
     scen = base.clone(target_model, target_scen, keep_solution=False)
     scen.set_as_default()
