@@ -139,6 +139,7 @@ Tools for scenario manipulation
    add_FFI_CO2_accounting
    add_alternative_TCE_accounting
    add_budget
+   add_dac
    add_emission_trajectory
    add_tax_emission
    inter_pipe
