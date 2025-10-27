@@ -63,6 +63,10 @@ def _alias() -> dict[str, str]:
         cls = getattr(import_module(module_name), "Config")
         # Alias each of the fields of `cls` to the `key`
         result.update({f.name: key for f in fields(cls)})
+        # Alias property instances of `cls` to `key`
+        result.update(
+            {n: key for n, v in cls.__dict__.items() if isinstance(v, property)}
+        )
 
     return result
 
