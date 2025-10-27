@@ -56,7 +56,7 @@ def import_gem(input_file: str,
     config, config_path = bilateralize.load_config(project_name = project_name, 
                                                    config_name = config_name)
     p_drive = config['p_drive_location']
-    
+
     # Data paths
     data_path = os.path.join(p_drive, "MESSAGE_trade")
     gem_path = os.path.join(data_path, "Global Energy Monitor")
