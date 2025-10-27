@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from functools import partial
 from itertools import count
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 import genno
 import pandas as pd
@@ -69,7 +69,7 @@ class Check(ABC):
         return not bool(fail), "\n".join(lines)
 
     @abstractmethod
-    def run(self, obj) -> Union[bool, tuple[bool, str]]:
+    def run(self, obj) -> bool | tuple[bool, str]:
         """Run the check on `obj` and return either :any:`True` or :any:`False`."""
 
 
@@ -137,7 +137,7 @@ class Dump(Check):
 
         return True, ""
 
-    def run(self, obj, *, name: Optional[str] = None):
+    def run(self, obj, *, name: str | None = None):
         if isinstance(obj, dict):
             return self.recurse_parameter_data(obj)
 
@@ -202,7 +202,7 @@ class HasCoords(Check):
 class HasUnits(Check):
     """Quantity has the expected units."""
 
-    units: Optional[Union[str, dict, "pint.registry.Quantity", "pint.registry.Unit"]]
+    units: "str | dict | pint.registry.Quantity | pint.registry.Unit | None"
     types = (genno.Quantity, pd.DataFrame, dict)
 
     def run(self, obj):
@@ -275,7 +275,7 @@ class Log(Check):
     """
 
     #: Number of rows to log.
-    rows: Optional[int] = 7
+    rows: int | None = 7
 
     types = (dict, pd.DataFrame, genno.Quantity)
 
@@ -411,7 +411,7 @@ def insert_checks(
     return result
 
 
-def verbose_check(verbosity: int, tmp_path: Optional[Path] = None) -> list[Check]:
+def verbose_check(verbosity: int, tmp_path: Path | None = None) -> list[Check]:
     """Return 0 or more checks that display the data to which they are applied.
 
     These may be appended to collections passed as inputs to :func:`.insert_checks`.

@@ -5,7 +5,7 @@ import re
 from collections import defaultdict
 from dataclasses import InitVar, dataclass, field
 from itertools import product
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pint
@@ -18,9 +18,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-# TODO: use kw_only=True once python 3.10 is oldest supported version
 # FIXME the .. autosummary part does not render correctly in VSCode preview
-@dataclass
+@dataclass(kw_only=True)
 class ScenarioInfo:
     """Information about a :class:`.Scenario` object.
 
@@ -61,21 +60,20 @@ class ScenarioInfo:
     .Spec
     """
 
-    # TODO: give this field kw_only=False once python 3.10 is the minimum version
     # Parameters for initialization only
-    scenario_obj: InitVar[Optional["Scenario"]] = field(default=None)
+    scenario_obj: InitVar["Scenario | None"] = field(default=None, kw_only=False)
     empty: InitVar[bool] = False
 
-    platform_name: Optional[str] = None
+    platform_name: str | None = None
 
     #: Model name; equivalent to :attr:`.TimeSeries.model`.
-    model: Optional[str] = None
+    model: str | None = None
 
     #: Scenario name; equivalent to :attr:`.TimeSeries.scenario`.
-    scenario: Optional[str] = None
+    scenario: str | None = None
 
     #: Scenario version; equivalent to :attr:`.TimeSeries.version`.
-    version: Optional[int] = None
+    version: int | None = None
 
     #: Elements of :mod:`ixmp`/:mod:`message_ix` sets.
     set: dict[str, list] = field(default_factory=lambda: defaultdict(list))
@@ -89,9 +87,9 @@ class ScenarioInfo:
     #: :obj:`True` if a MESSAGE-MACRO scenario.
     is_message_macro: bool = False
 
-    _yv_ya: Optional[pd.DataFrame] = None
+    _yv_ya: pd.DataFrame | None = None
 
-    def __post_init__(self, scenario_obj: Optional["Scenario"], empty: bool):
+    def __post_init__(self, scenario_obj: "Scenario | None", empty: bool):
         if not scenario_obj:
             return
 
@@ -260,7 +258,7 @@ class ScenarioInfo:
             raise TypeError(f"{set_name!s} element {code!r} is str, not Code")
 
     def io_units(
-        self, technology: str, commodity: str, level: Optional[str] = None
+        self, technology: str, commodity: str, level: str | None = None
     ) -> pint.Unit:
         """Return units for the MESSAGE ``input`` or ``output`` parameter.
 

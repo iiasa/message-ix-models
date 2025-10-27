@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import pytest
 from message_ix import make_df
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from message_ix_models import Context
     from message_ix_models.util.click import CliRunner
 
-_REQUEST: Optional["pytest.FixtureRequest"] = None
+_REQUEST: "pytest.FixtureRequest | None" = None
 
 # Functions for WorkflowSteps
 
@@ -25,7 +25,7 @@ def changes_a(c: "Context", s: "Scenario") -> None:
         s.add_set("technology", "test_tech")
 
 
-def changes_b(c: "Context", s: "Scenario", value: Optional[float] = None) -> None:
+def changes_b(c: "Context", s: "Scenario", value: float | None = None) -> None:
     """Change a scenario by modifying parameter data, but not structure."""
     with s.transact():
         s.add_par(
@@ -63,9 +63,9 @@ def wf(request: "pytest.FixtureRequest", test_context: "Context") -> Workflow:
 def _wf(
     context: "Context",
     *,
-    base_url: Optional[str] = None,
-    base_platform: Optional[str] = None,
-    request: Optional["pytest.FixtureRequest"] = None,
+    base_url: str | None = None,
+    base_platform: str | None = None,
+    request: "pytest.FixtureRequest | None" = None,
 ) -> "Workflow":
     request = request or _REQUEST
     assert request is not None

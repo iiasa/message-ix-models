@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import partial
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from genno import Computer, Key, Quantity
@@ -92,7 +92,7 @@ class Constant(Layer):
     #: Units.
     units: str = "dimensionless"
 
-    def __init__(self, value: Union[float, Quantity], dims: Union[str, Sequence[str]]):
+    def __init__(self, value: float | Quantity, dims: str | Sequence[str]):
         self.value = (
             value if isinstance(value, Quantity) else Quantity(value, units=self.units)
         )
@@ -178,7 +178,7 @@ class Map(Layer):
     operation = operator.mul
 
     def __init__(
-        self, dim: str, values: Optional[dict[str, Layer]] = None, **value_kwargs: Layer
+        self, dim: str, values: dict[str, Layer] | None = None, **value_kwargs: Layer
     ):
         self.dim = dim
         self.values = values or value_kwargs
@@ -212,7 +212,7 @@ class ScenarioSetting(Layer):
 
     operation = operator.mul
 
-    def __init__(self, setting: Optional[dict] = None, *, default=None, **setting_kw):
+    def __init__(self, setting: dict | None = None, *, default=None, **setting_kw):
         self.setting = setting or setting_kw
         self.default = default
 

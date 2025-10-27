@@ -6,7 +6,7 @@ This module provides functions to read, process, and generate parameter data
 for ammonia fertilizer technologies, demand, trade, and related constraints.
 """
 
-from typing import TYPE_CHECKING, Any, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
@@ -386,7 +386,7 @@ def set_exp_imp_nodes(df: pd.DataFrame) -> None:
         df.loc[df["technology"].str.contains("import"), "node_origin"] = "R12_GLB"
 
 
-def read_demand() -> dict[str, Union[pd.DataFrame, pd.Series]]:
+def read_demand() -> dict[str, pd.DataFrame | pd.Series]:
     """Read and clean demand and trade data for ammonia fertilizer."""
 
     N_demand_GLO = pd.read_csv(

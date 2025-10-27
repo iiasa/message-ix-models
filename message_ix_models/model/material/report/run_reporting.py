@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List
 
 import message_ix
 import numpy as np
@@ -695,7 +695,7 @@ def run_all_categories(
 def run(
     scenario: message_ix.Scenario,
     upload_ts: bool = False,
-    region: Union[bool, str] = False,
+    region: bool | str = False,
 ) -> pyam.IamDataFrame:
     """Run industry reporter for a given scenario.
 

@@ -1,7 +1,7 @@
 """Types for hinting."""
 
 from collections.abc import Mapping, MutableMapping
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, TypedDict
 
 import pandas as pd
 import sdmx.model.common
@@ -39,15 +39,15 @@ class AnnotableArtefactArgs(TypedDict, total=False):
 
 
 class NameableArtefactArgs(AnnotableArtefactArgs, total=False):
-    name: Optional[str]
-    description: Optional[str]
+    name: str | None
+    description: str | None
 
 
 class MaintainableArtefactArgs(NameableArtefactArgs, total=False):
     """Some keyword arguments to :class:`sdmx.model.common.MaintainableArtefact`."""
 
-    is_external_reference: Optional[bool]
-    is_final: Optional[bool]
+    is_external_reference: bool | None
+    is_final: bool | None
     maintainer: Any
     # NB Only present from sdmx1 2.16; minimum for message-ix-models is sdmx1 2.13.1
-    version: Optional[Union[str, "sdmx.model.common.Version"]]
+    version: "str | sdmx.model.common.Version | None"

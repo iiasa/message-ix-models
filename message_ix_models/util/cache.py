@@ -16,7 +16,6 @@ from collections.abc import Callable
 from dataclasses import is_dataclass
 from enum import Enum
 from types import FunctionType
-from typing import Union
 
 import genno.caching
 import ixmp
@@ -55,11 +54,6 @@ except TypeError:  # Python 3.10 or earlier
 
 # Upstream
 @genno.caching.Encoder.register
-def _enum(o: Enum):
-    return repr(o)
-
-
-@genno.caching.Encoder.register
 def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
     return str(o)
 
@@ -84,8 +78,10 @@ def _dataclass(o: object):
     )
 
 
-@genno.caching.Encoder.register
-def _repr_only(o: Union[FunctionType]):
+@genno.caching.Encoder.register(slice)
+@genno.caching.Encoder.register(Enum)
+@genno.caching.Encoder.register(FunctionType)
+def _repr_only(o):
     return repr(o)
 
 

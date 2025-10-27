@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 import message_ix
 import openpyxl as pxl
@@ -71,7 +71,7 @@ def prepare_xlsx_for_explorer(filepath: str) -> None:
     df.to_excel(filepath, index=False)
 
 
-def read_yaml_file(file_path: Union[str, Path]) -> Union[dict, None]:
+def read_yaml_file(file_path: str | Path) -> dict | None:
     """Tries to read yaml file into a dict
 
     Parameters
@@ -165,7 +165,7 @@ def remove_from_list_if_exists(element: Any, _list: list) -> None:
         _list.remove(element)
 
 
-def exponential(x: Union[float, list[float]], b: float, m: float) -> float:
+def exponential(x: float | list[float], b: float, m: float) -> float:
     """Emulates Excels GROWTH function
 
     Parameters
@@ -348,7 +348,7 @@ def maybe_remove_water_tec(scenario: message_ix.Scenario, results: dict) -> None
         results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
 
 
-def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
+def path_fallback(context_or_regions: Context | str, *parts) -> Path:
     """Return a :class:`.Path` constructed from `parts`.
 
     If ``context.model.regions`` (or a string value as the first argument) is defined
@@ -419,7 +419,7 @@ def get_r12_reg(df, r12_map_inv, col_name: str):
 
 
 def add_R12_column(
-    df: pd.DataFrame, file_path: Union[str, Path], iso_column: str = "COUNTRY"
+    df: pd.DataFrame, file_path: str | Path, iso_column: str = "COUNTRY"
 ) -> pd.DataFrame:
     """Convenience function to add R12 region column to dataframe
 

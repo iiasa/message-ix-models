@@ -6,7 +6,7 @@ from collections.abc import Hashable, Iterable, Mapping
 from dataclasses import dataclass
 from enum import Flag
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 import genno
 import pandas as pd
@@ -113,9 +113,7 @@ class TRANSFORM(Flag):
     DEFAULT = A
 
     @classmethod
-    def from_value(
-        cls, value: Union[str, int, "TRANSFORM", None] = None
-    ) -> "TRANSFORM":
+    def from_value(cls, value: "str | int | TRANSFORM | None" = None) -> "TRANSFORM":
         """Return a member of the enumeration given a name, :class:`int`, or None.
 
         :meth:`.is_valid` is called on the result.
@@ -162,10 +160,10 @@ class IEA_EWEB(ExoDataSource):
         edition: str = ""
 
         #: Select only these labels from the 'PRODUCT' dimension.
-        product: Union[str, list[str]] = ""
+        product: str | list[str] = ""
 
         #: Select only these labels from the 'FLOW' dimension.
-        flow: Union[str, list[str]] = ""
+        flow: str | list[str] = ""
 
         #: Either "A" (default) or "B". See :meth:`.transform`.
         transform: TRANSFORM = TRANSFORM.DEFAULT
@@ -386,7 +384,7 @@ def load_data(
     provider: str,
     edition: str,
     query_expr="MEASURE == 'TJ' and TIME >= 1980",
-    path: Optional[Path] = None,
+    path: Path | None = None,
 ) -> pd.DataFrame:
     """Load data from the IEA World Energy Balances.
 
@@ -416,7 +414,7 @@ def load_data(
 
 
 def generate_code_lists(
-    provider: str, edition: str, output_path: Optional["os.PathLike"] = None
+    provider: str, edition: str, output_path: "os.PathLike | None" = None
 ) -> None:
     """Extract structure from the data itself."""
     import sdmx.model.v21 as m

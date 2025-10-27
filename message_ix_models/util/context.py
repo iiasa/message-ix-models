@@ -6,7 +6,7 @@ from dataclasses import is_dataclass
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import ixmp
 
@@ -63,6 +63,10 @@ def _alias() -> dict[str, str]:
         cls = getattr(import_module(module_name), "Config")
         # Alias each of the fields of `cls` to the `key`
         result.update({f.name: key for f in fields(cls)})
+        # Alias property instances of `cls` to `key`
+        result.update(
+            {n: key for n, v in cls.__dict__.items() if isinstance(v, property)}
+        )
 
     return result
 
@@ -170,7 +174,7 @@ class Context:
             return self._values[base_key]
 
     # General item access
-    def get(self, key: str, default: Optional[Any] = None):
+    def get(self, key: str, default: Any | None = None):
         """Retrieve the value for `key`."""
         target = self._dealias(key)
         if isinstance(target, dict):

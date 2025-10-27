@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import genno
 import pandas as pd
@@ -73,7 +73,7 @@ class PRICE_EMISSION(ExoDataSource):
         return load_file(self.path, dims=dims)
 
 
-def get_emission_factors(units: Optional[str] = None) -> "AnyQuantity":
+def get_emission_factors(units: str | None = None) -> "AnyQuantity":
     """Return carbon emission factors.
 
     Values are from the file :file:`message_ix_models/data/ipcc/1996_v3_t1-2.csv`, in
@@ -152,7 +152,7 @@ def get_emission_factors(units: Optional[str] = None) -> "AnyQuantity":
 def add_tax_emission(
     scen: Scenario,
     price: float,
-    conversion_factor: Optional[float] = None,
+    conversion_factor: float | None = None,
     drate_parameter="drate",
 ) -> None:
     """Add a global CO₂ price to `scen`.
@@ -217,7 +217,7 @@ def add_tax_emission(
         scen.add_par(name, data)
 
 
-def split_species(unit_expr: str) -> tuple[str, Optional[str]]:
+def split_species(unit_expr: str) -> tuple[str, str | None]:
     """Split `unit_expr` to an expression without a unit mention, and maybe species."""
     if match := re.fullmatch("(.*)(CO2|C)(.*)", unit_expr):
         return f"{match.group(1)}{match.group(3)}", match.group(2)

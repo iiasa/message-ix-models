@@ -5,7 +5,7 @@
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import sphinx.application
@@ -186,7 +186,7 @@ extlinks = {
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
 
 
-def local_inv(name: str, *parts: str) -> Optional[str]:
+def local_inv(name: str, *parts: str) -> str | None:
     """Construct the path to a local intersphinx inventory."""
     if 0 == len(parts):
         parts = ("doc", "_build", "html")

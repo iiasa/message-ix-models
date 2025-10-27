@@ -10,7 +10,7 @@ adapted to be reusable, particularly in the Workflow pattern used in e.g.
 import logging
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 from iam_units import convert_gwp
 from message_ix import Scenario
@@ -52,7 +52,7 @@ class PolicyConfig(model_workflow.Config):
     #: In :func:`step_1`, actual quantity of the carbon budget to be imposed , or the
     #: value "calc", in which case the value is calculated from :attr:`label` by
     #: :meth:`.ScenarioRunner.calc_budget`.
-    budget: Union[int, Literal["calc"]] = "calc"
+    budget: int | Literal["calc"] = "calc"
 
     #: In :func:`step_3`, optional information on a second scenario from which to copy
     #: ``tax_emission`` data.
@@ -112,8 +112,8 @@ def calc_hist_cum_CO2(
 def calc_budget(
     context: Context,
     scenario: Scenario,
-    bdgt: Union[float, str],
-    method: Union[float, Literal["calc"]],
+    bdgt: float | str,
+    method: float | Literal["calc"],
     type_emission="TCE",
 ) -> None:
     """Calculate **and apply** budget.
@@ -334,7 +334,7 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
 
 def add_steps(
-    workflow: Workflow, base: str, config: PolicyConfig, name: Optional[str] = None
+    workflow: Workflow, base: str, config: PolicyConfig, name: str | None = None
 ) -> str:
     """Add steps to `workflow` for running ENGAGE scenarios on `base`.
 

@@ -2,7 +2,7 @@
 
 import logging
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from message_ix import make_df
 
@@ -39,8 +39,8 @@ log = logging.getLogger(__name__)
 def add_AFOLU_CO2_accounting(
     scen: "Scenario",
     relation_name: str,
-    constraint_value: Optional[float] = None,
-    emission: Optional[str] = None,
+    constraint_value: float | None = None,
+    emission: str | None = None,
     level: str = "LU",
     suffix: str = "",
     *,
@@ -197,7 +197,7 @@ def add_par_A(
     land_output: "DataFrame",
     level: str,
     relation_name: str,
-    glb_reg: Optional[str],
+    glb_reg: str | None,
     land_scenarios: list[str],
 ) -> None:
     """Add parameter data specific to :attr:`METHOD.A`."""

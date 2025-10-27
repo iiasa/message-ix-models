@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Literal, Optional
+from typing import Literal
 
 from message_ix_models import ScenarioInfo
 
@@ -101,7 +101,7 @@ class Config:
 
     #: Reference region. If not given, :py:`"{node}_NAM"`` for a given :attr:`.node`.
     #: This default **must** be overridden if there is no such node.
-    ref_region: Optional[str] = None
+    ref_region: str | None = None
 
     #: Set of SSPs referenced by :attr:`scenario`. One of:
     #:

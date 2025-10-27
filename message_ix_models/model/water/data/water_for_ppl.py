@@ -1,7 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -137,7 +137,7 @@ def shares(
 def apply_act_cap_multiplier(
     df: pd.DataFrame,
     hold_cost: pd.DataFrame,
-    cap_fact_parent: Optional[pd.DataFrame] = None,
+    cap_fact_parent: pd.DataFrame | None = None,
     param_name: str = "",
 ) -> pd.DataFrame:
     """
@@ -338,7 +338,7 @@ def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFr
 
 # water & electricity for cooling technologies
 def cool_tech(
-    context: "Context", scenario: Optional["Scenario"] = None
+    context: "Context", scenario: "Scenario | None" = None
 ) -> dict[str, pd.DataFrame]:
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and

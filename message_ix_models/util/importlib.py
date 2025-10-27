@@ -11,7 +11,7 @@ from importlib.metadata import version
 from itertools import chain
 from logging import INFO, getLogger
 from platform import python_version
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from packaging.version import parse
 
@@ -143,7 +143,7 @@ class MinimumVersionDecorator:
 
         1. "pkgA 1.2.3.post0; pkgB 2025.2", specifying minimum version of 1 or more
            packages.
-        2. "python 3.10", specifying a minimum version of python.
+        2. "python 3.11", specifying a minimum version of python.
         3. "message_ix_models.foo.bar.baz", recursively referring to the minimum version
            required by :py:`baz` in the module :py:`message_ix_models.foo.bar`. This
            object **must** also have been decorated with
@@ -155,7 +155,7 @@ class MinimumVersionDecorator:
     raises: list[type[Exception]]
 
     def __init__(
-        self, *expr: str, raises: Optional[Iterable[type[Exception]]] = None
+        self, *expr: str, raises: Iterable[type[Exception]] | None = None
     ) -> None:
         self.raises = [NotImplementedError, AssertionError, RuntimeError]
         self.raises.extend(raises or ())

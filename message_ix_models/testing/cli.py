@@ -1,4 +1,4 @@
-from typing import IO, Union
+from typing import IO
 
 import click
 
@@ -79,7 +79,7 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         if "advance" in filename:
             # Manually unpack one member of the multi-member archive `path_in`
             zf_member_name = NAME
-            target: Union[IO, Path, str] = zipfile.ZipFile(path_in).extract(
+            target: IO | Path | str = zipfile.ZipFile(path_in).extract(
                 zf_member_name, path=td_path
             )
         elif "iea" in filename:

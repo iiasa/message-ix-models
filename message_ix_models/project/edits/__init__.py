@@ -3,7 +3,7 @@
 import logging
 import sys
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import genno
 import pandas as pd
@@ -78,9 +78,7 @@ def pasta_native_to_sdmx() -> "AnyQuantity":
     return q
 
 
-def generate_pasta_structures(
-    data: Optional["AnyQuantity"] = None,
-) -> "StructureMessage":
+def generate_pasta_structures(data: "AnyQuantity | None" = None) -> "StructureMessage":
     """Generate SDMX data structures for the PASTA activity data flows.
 
     The file :file:`{[message_local_data]}/edits/pasta-structures.xml` is created or
@@ -130,7 +128,7 @@ def generate_pasta_structures(
 
 
 def coords_to_codelists(
-    qty: "AnyQuantity", *, id_transform: Optional[Callable] = str.upper, **kwargs
+    qty: "AnyQuantity", *, id_transform: Callable | None = str.upper, **kwargs
 ) -> list["Codelist"]:
     """Convert the coordinates of `qty` to a collection of :class:`.Codelist`.
 
