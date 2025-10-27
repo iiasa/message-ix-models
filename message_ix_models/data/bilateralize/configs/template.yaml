@@ -6,6 +6,7 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   trade_tech_suffix: # [Optional] Suffix on technology (e.g., UHV for elec, for ultra high voltage)
   trade_tech_number: # [Optional] Number of pipes/routes per edge. 
   trade_commodity: # Commodity being traded (e.g., crudeoil)
+  trade_unit: # Units of traded commodity (e.g., GWa)
   trade_commodity_suffix: # [Optional] Suffix on commodity (e.g., gei for electr in GEIDCO project)
   trade_form: # How is the commodity shipped? (e.g., pipe, shp)
   export_level: # Level that converts from supply to trade

@@ -12,6 +12,8 @@ biomass_shipped_trade:
   trade_commodity:
     biomass
   trade_commodity_suffix:
+  trade_units:
+    GWa
   trade_form:
     shp
   export_level:
