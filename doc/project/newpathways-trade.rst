@@ -19,11 +19,11 @@ Tool
 ****
 The ``bilateralize`` tool is a Python script that can be used to bilateralize trade flows in MESSAGEix. It is located in the ``message-ix-models/tools/bilateralize`` directory.
 
-The tool follows the following steps:
+The tool follows the following steps, which are also available in ``tool/bilateralize/workflow.py``:
 
-1. Edit
+1. Edit (``tools/bilateralize/prepare_edit.py``)
 =======
-The first step is to generate empty (or default valued) parameters that are required for bilateralization, specified by commodity. This step requires updates to a configuration file (``config.yaml``) that should be housed in a project directory (e.g., ``message-ix-models/projects/newpathways-trade/config.yaml``). A template configuration file is provided at ``message-ix-models/data/config_default.yaml``. Once the configuration is updated, the user can run ``message_ix_models.tools.bilateralize.bilateralize.generate_bare_sheets(log, message_regions)`` to produce empty (or default valued) parameters as CSV files. These CSV files will populate in ``message-ix-models/data/[your_trade_commodity]/edit_files``. 
+The first step is to generate empty (or default valued) parameters that are required for bilateralization, specified by commodity. This step requires updates to a configuration file (``config.yaml``) that should be housed in a project directory (e.g., ``message-ix-models/projects/newpathways-trade/config.yaml``). A template configuration file is provided at ``message-ix-models/data/bilateralize/configs/base_config.yaml``. Once the configuration is updated, the user can run ``message_ix_models.tools.bilateralize.bilateralize.generate_bare_sheets(log, message_regions)`` to produce empty (or default valued) parameters as CSV files. These CSV files will populate in ``message-ix-models/data/[your_trade_commodity]/edit_files``. 
 
 The tools may stop if the user specifies in their config that they want to specify a trade network (i.e., specify which regions can trade with regions). In this case, a file called ``specify_trade_network.csv`` will appear in ``message-ix-models/data/bilateralize/[your_trade_commodity]/speciy_network_[your_trade_commodity].csv``.
 
@@ -43,7 +43,7 @@ Additional functions here include:
   - Methanol (``meth_shipped``)
   - Piped gas (``gas_piped``)
 
-2. Bare
+2. Bare (``tools/bilateralize/bare_to_scenario``)
 =======
 The second step is to review, edit, and transfer the files in ``message-ix-models/data/bilateralize/[your_trade_commodity]/edit_files/``.
 
@@ -68,7 +68,7 @@ The user can call ``message_ix_models.tools.bilateralize.bilateralize.build_para
 Additional functions here include:
   - ``message_ix_models.tools.bilateralize.bilateralize.build_historical_activity(message_regions)``: This function pulls raw IEA World Energy Balances/Natural Gas Flow data to build historical activity in the regionality specified.
 
-3. Build 
+3. Build (``tools/bilateralize/load_and_solve.py``)
 ========
 This step builds a scenario. 
 
@@ -82,10 +82,20 @@ Solve can be completed using the ``message_ix_models.tools.bilateralize.bilatera
 =========
 This code is in progress.
 
+To add a new commodity
+***********************
+To add a new commodity:
+
+- Create a new configuration file for the commodity in ``data/bilateralize/configs/`` (see examples from existing configurations or use ``template.yaml``)
+
+- Add the commodity to the ``base_config.yaml`` under ``covered_trade_technologies``
+
+- Run the workflow from ``prepare_edit``, then ``bare_to_scenario``, then ``load_and_solve``
+
 Scenario Identifier
 *******************
 - Model: ``NP-SSP2`` (We are basing this framework on SSP2 by default)
-- Scenario (Gas bilateralization): ``pipelines_LNG``
+- Scenario (default bilateralization): ``default_bilat``
 
 
 Data
