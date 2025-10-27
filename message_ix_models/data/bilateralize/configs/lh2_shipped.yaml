@@ -12,6 +12,8 @@ lh2_shipped_trade:
   trade_commodity:
     lh2
   trade_commodity_suffix:
+  trade_units:
+    GWa
   trade_form:
     shp
   export_level:

@@ -13,6 +13,8 @@ LNG_shipped_trade:
   trade_commodity:
     LNG
   trade_commodity_suffix:
+  trade_units:
+    GWa
   trade_form:
     shp
   export_level:

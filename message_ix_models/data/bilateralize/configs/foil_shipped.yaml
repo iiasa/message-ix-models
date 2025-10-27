@@ -13,6 +13,8 @@ foil_shipped_trade:
   trade_commodity:
     fueloil
   trade_commodity_suffix:
+  trade_units:
+    GWa
   trade_form:
     shp
   export_level:
