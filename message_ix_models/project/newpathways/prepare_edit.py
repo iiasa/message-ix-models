@@ -42,8 +42,7 @@ calculate_distance(message_regions)
 # Generate bare sheets
 generate_bare_sheets(log=log, 
                      project_name = 'newpathways', 
-                     config_name = 'config.yaml',
-                     message_regions = message_regions)
+                     config_name = 'config.yaml')
 
 # Import calibration files from Global Energy Monitor
 import_gem(input_file = gas_pipeline_file, 
