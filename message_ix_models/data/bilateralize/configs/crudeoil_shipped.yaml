@@ -13,6 +13,8 @@ crudeoil_shipped_trade: # Name of covered trade technology (e.g., oil)
   trade_commodity:
     crudeoil
   trade_commodity_suffix:
+  trade_units:
+    GWa
   trade_form:
     shp
   export_level:

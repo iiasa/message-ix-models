@@ -12,6 +12,8 @@ loil_piped_trade:
   trade_commodity:
     lightoil
   trade_commodity_suffix:
+  trade_units:
+    GWa
   trade_form:
     piped
   export_level:
