@@ -104,6 +104,13 @@ def bare_to_scenario(project_name: str = None,
     trade_dict['foil_shipped']['flow']['historical_new_capacity'] = hist_oil
     trade_dict['loil_shipped']['flow']['historical_new_capacity'] = hist_oil
 
+    # Historical activity should only be added for technologies in input
+    for tec in covered_tec:
+        if 'historical_activity' in trade_dict[tec]['trade'].keys():
+            trade_dict[tec]['trade']['historical_activity'] = trade_dict[tec]['trade']['historical_activity'][trade_dict[tec]['trade']['historical_activity']['technology'].isin(trade_dict[tec]['trade']['input']['technology'])]
+        if 'historical_new_capacity' in trade_dict[tec]['trade'].keys():
+            trade_dict[tec]['trade']['historical_new_capacity'] = trade_dict[tec]['trade']['historical_new_capacity'][trade_dict[tec]['trade']['historical_new_capacity']['technology'].isin(trade_dict[tec]['trade']['input']['technology'])]
+
     # Ensure flow technologies are only added once
     covered_flow_tec = []
     for tec in covered_tec:
