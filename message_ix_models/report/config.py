@@ -44,9 +44,6 @@ class Config(ConfigHelper):
     #: Shorthand to set :py:`legacy["use"]` on a new instance.
     _legacy: InitVar[bool | None] = False
 
-    # NB InitVars should appear first so they can be used positionally, followed by
-    #    all others in alpha order. With Python ≥ 3.10, can use field(…, kw_only=True).
-
     #: List of callbacks for preparing the :class:`.Reporter`.
     #:
     #: Each registered function is called by :meth:`prepare_reporter`, in order to add
@@ -67,20 +64,20 @@ class Config(ConfigHelper):
     #:
     #:     # Register this callback on an existing Context instance
     #:     context.report.register(cb)
-    callback: list[Callback] = field(default_factory=_default_callbacks)
+    callback: list[Callback] = field(default_factory=_default_callbacks, kw_only=True)
 
     #: Path to write reporting outputs when invoked from the command line.
     cli_output: Path | None = None
 
     #: Configuration to be handled by :mod:`genno.config`.
-    genno_config: dict = field(default_factory=dict)
+    genno_config: dict = field(default_factory=dict, kw_only=True)
 
     #: Key for the Quantity or computation to report.
     key: "KeyLike | None" = None
 
     #: Directory for output.
     output_dir: Path = field(
-        default_factory=lambda: _local_data_factory().joinpath("report")
+        default_factory=lambda: _local_data_factory().joinpath("report"), kw_only=True
     )
 
     #: :data:`True` to use an output directory based on the scenario's model name and
@@ -89,7 +86,9 @@ class Config(ConfigHelper):
 
     #: Keyword arguments for :func:`.report.legacy.iamc_report_hackathon.report`, plus
     #: the key "use", which should be :any:`True` if legacy reporting is to be used.
-    legacy: dict = field(default_factory=lambda: dict(use=False, merge_hist=True))
+    legacy: dict = field(
+        default_factory=lambda: dict(use=False, merge_hist=True), kw_only=True
+    )
 
     def __post_init__(self, from_file, _legacy) -> None:
         # Handle InitVars

@@ -12,13 +12,7 @@ import copy
 import sys
 import types
 from dataclasses import fields
-
-try:
-    from types import EllipsisType, NoneType, NotImplementedType
-except ImportError:  # Python 3.9
-    EllipsisType = type(...)  # type: ignore [misc]
-    NoneType = type(None)  # type: ignore [misc]
-    NotImplementedType = type(NotImplemented)  # type: ignore [misc]
+from types import EllipsisType, NoneType, NotImplementedType
 
 __all__ = [
     "asdict",

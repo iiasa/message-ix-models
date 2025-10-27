@@ -18,9 +18,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-# TODO: use kw_only=True once python 3.10 is oldest supported version
 # FIXME the .. autosummary part does not render correctly in VSCode preview
-@dataclass
+@dataclass(kw_only=True)
 class ScenarioInfo:
     """Information about a :class:`.Scenario` object.
 
@@ -61,9 +60,8 @@ class ScenarioInfo:
     .Spec
     """
 
-    # TODO: give this field kw_only=False once python 3.10 is the minimum version
     # Parameters for initialization only
-    scenario_obj: InitVar["Scenario | None"] = field(default=None)
+    scenario_obj: InitVar["Scenario | None"] = field(default=None, kw_only=False)
     empty: InitVar[bool] = False
 
     platform_name: str | None = None
