@@ -486,9 +486,7 @@ def add_structure(c: Computer) -> None:
     )
 
 
-@minimum_version(
-    "genno 1.28", "message_ix_models.model.transport.operator.uniform_in_dim"
-)
+@minimum_version("genno 1.28")
 def get_computer(
     context: Context,
     obj: Computer | None = None,

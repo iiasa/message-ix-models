@@ -8,13 +8,7 @@ from genno import Computer, Key
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
 
-from message_ix_models.model.transport import (
-    build,
-    # Ensure .util.sdmx.DATAFLOW is populated. This seems needed only for Python ≤ 3.9
-    # TODO Remove once Python 3.9 is no longer supported
-    data,  # noqa: F401
-    testing,
-)
+from message_ix_models.model.transport import build, testing
 from message_ix_models.util.sdmx import (
     DATAFLOW,
     Dataflow,
@@ -161,10 +155,11 @@ class TestItemSchemeEnum:
         def _exp_max_value(cls) -> int:
             """Expected maximum value.
 
-            Currently the NONE value counts towards len(cls) with Python 3.9, but not
-            with Python 3.13. It's unclear why.
+            In Python 3.11 there were changes to len(Flag) such that the NONE value no
+            longer counts towards len().
+            https://docs.python.org/3/whatsnew/3.11.html#enum
             """
-            L = len(cls) - 1 - (0 if sys.version_info >= (3, 10) else 1)
+            L = len(cls) - 1 - (0 if sys.version_info >= (3, 11) else 1)
             return 2**L
 
         # Expected maximum value

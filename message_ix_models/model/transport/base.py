@@ -98,7 +98,7 @@ def fixed_scale_1(
     )
 
 
-@minimum_version("pandas 2; python 3.10")
+@minimum_version("pandas 2")
 def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
     """Implement ‘smoothing’ for `key` along the dimension `dim`.
 

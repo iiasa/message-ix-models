@@ -22,12 +22,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.report.operator import compound_growth
-from message_ix_models.util import (
-    MappingAdapter,
-    datetime_now_with_tz,
-    minimum_version,
-    show_versions,
-)
+from message_ix_models.util import MappingAdapter, datetime_now_with_tz, show_versions
 
 from .config import Config
 
@@ -894,7 +889,6 @@ def relabel2(qty: "TQuantity", new_dims: dict) -> "TQuantity":
     return result
 
 
-@minimum_version("python 3.10")
 def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
     """Construct a uniform distribution from `value` along its :math:`y`-dimension.
 
