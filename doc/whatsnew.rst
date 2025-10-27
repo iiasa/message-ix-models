@@ -20,6 +20,7 @@ Next release
   - Add technology dimension to :data:`.elasticity_f`.
   - Document :class:`.ScenarioCodeAnnotations`.
 
+- New module :mod:`.tools.add_dac` and usage :func:`.add_ccs_setup` (:pull:`419`).
 - Extend :mod:`.digsy.structure.SCENARIO` (:pull:`392`).
 - :class:`.ItemSchemeEnumType` automatically creates aliases
   for SDMX item scheme members with "-" in their IDs (:pull:`392`).

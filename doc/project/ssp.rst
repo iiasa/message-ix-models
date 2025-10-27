@@ -129,3 +129,15 @@ Transport
    - The CLI command :program:`mix-models ssp ceds-data-for-transport` generates values
      that can be used to update :file:`data/transport/emi-intensity.csv`.
      See :func:`.ceds_data_for_transport` for details.
+
+Code reference
+==============
+
+.. currentmodule:: message_ix_models.project
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   ssp
