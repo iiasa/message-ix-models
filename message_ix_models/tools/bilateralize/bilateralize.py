@@ -56,7 +56,7 @@ def load_config(project_name:str = None,
     # Load config
     if (project_name is None) & (config_name is None):
         config_path = os.path.abspath(os.path.join(os.path.dirname(package_data_path("bilateralize")), 
-                                                   "bilateralize", "config_default.yaml"))
+                                                   "bilateralize", "configs", "base_config.yaml"))
     if project_name is not None:
         if config_name is None: config_name = "config.yaml"
         config_path = os.path.abspath(os.path.join(os.path.dirname(package_data_path(project_name)), 
@@ -349,7 +349,7 @@ def generate_bare_sheets(
                                             commodity = config_dict['trade_commodity'][tec],
                                             level = config_dict['export_level'][tec],
                                             value = 1,
-                                            unit = 'GWa',
+                                            unit = config_dict['trade_units'][tec],
                                             **common_years, **common_cols)
                                  
         # Import Level (piped/shipped to import)
@@ -360,7 +360,7 @@ def generate_bare_sheets(
                                              commodity = config_dict['trade_commodity'][tec],
                                              level = config_dict['trade_level'][tec],
                                              value = 1,
-                                             unit = 'GWa',
+                                             unit = config_dict['trade_units'][tec],
                                              **common_years, **common_cols)
         
         df_input = pd.concat([df_input_trade, df_input_import]).drop_duplicates()
@@ -378,7 +378,7 @@ def generate_bare_sheets(
                                              commodity = config_dict['trade_commodity'][tec],
                                              level = config_dict['trade_level'][tec],
                                              value = 1,
-                                             unit = 'GWa',
+                                             unit = config_dict['trade_units'][tec],
                                              **common_years, **common_cols)
         
         # Import Level
@@ -389,7 +389,7 @@ def generate_bare_sheets(
                                               commodity = config_dict['trade_commodity'][tec],
                                               level = config_dict['import_level'][tec],
                                               value = 1,
-                                              unit = 'GWa',
+                                              unit = config_dict['trade_units'][tec],
                                               **common_years, **common_cols)
     
         df_output = pd.concat([df_output_trade, df_output_import]).drop_duplicates()
@@ -410,7 +410,7 @@ def generate_bare_sheets(
         for tec in covered_tec:
             df_cost = build_parameterdf(cost_par,
                                         network_df = network_setup[tec],
-                                        col_values = dict(unit = 'USD/GWa'))
+                                        col_values = dict(unit = 'USD/' + config_dict['trade_units'][tec]))
         
         parameter_outputs[tec]['trade'][cost_par] = df_cost.drop_duplicates()
 
@@ -420,7 +420,7 @@ def generate_bare_sheets(
         for y in list(range(2000, 2025, 5)):
             ydf =  build_parameterdf('historical_activity',
                                      network_df = network_setup[tec], 
-                                     col_values = dict(unit = 'GWa'))
+                                     col_values = dict(unit = config_dict['trade_units'][tec]))
             ydf['year_act'] = y
             df_hist = pd.concat([df_hist, ydf])
             
@@ -442,8 +442,11 @@ def generate_bare_sheets(
             for tec in covered_tec:
                 df_con = build_parameterdf(par_name + '_' + t,
                                            network_df = network_setup[tec],
-                                           col_values = dict(unit = 'GWa'))
+                                           col_values = dict(unit = config_dict['trade_units'][tec]))
                 
+                if (par_name == 'growth_activity'):
+                    if t == 'lo': df_con['value'] = -0.05
+                    if t == 'up': df_con['value'] = 0.05
                 parameter_outputs[tec]['trade'][par_name + '_' + t] = df_con.drop_duplicates()
   
     # Create base file: emission_factor
@@ -823,12 +826,14 @@ def generate_bare_sheets(
                 # For shipped commodities, calculated capacities based on distance and energy content
                 distance_df = pd.read_csv(os.path.join(data_path, "distances", message_regions + "_distances.csv"))
                 energycontent_df = pd.read_excel(os.path.join(data_path, "specific_energy.xlsx"))
-                energycontent = energycontent_df[energycontent_df['Commodity'] == config_dict['trade_commodity'][tec]]['Specific Energy (GWa/Mt)'].reset_index(drop = True)[0]
-                
+                if config_dict['trade_units'][tec] == 'GWa':
+                    specificcontent = energycontent_df[energycontent_df['Commodity'] == config_dict['trade_commodity'][tec]]['Specific Energy (GWa/Mt)'].reset_index(drop = True)[0]
+                else:
+                    specificcontent = 1
                 multiplier_df = distance_df.copy()
                 multiplier_df['node_loc'] = multiplier_df['Node1']
                 multiplier_df['technology'] = config_dict['trade_technology'][tec] + '_exp_' + multiplier_df['Node2'].str.lower().str.split('_').str[1]
-                multiplier_df['energy_content'] = energycontent
+                multiplier_df['energy_content'] = specificcontent
                 multiplier_df['multiplier'] = multiplier_df['Distance_km'] / multiplier_df['energy_content'] #Mt-km/GWa
                 multiplier_df = multiplier_df[['node_loc', 'technology', 'multiplier']].drop_duplicates()
                 
@@ -843,15 +848,16 @@ def generate_bare_sheets(
      
     ## Export files
     for tec in covered_tec:
+        log.info(f"Exporting trade parameters for {tec}")
         for parname in parameter_outputs[tec]['trade'].keys():
             parameter_outputs[tec]['trade'][parname].to_csv(os.path.join(data_path, tec, "edit_files", parname + '.csv'),
                                                             index=False)
-            log.info(f"Exported trade technology parameter: {parname}")
+            log.info(f"...trade {parname}")
         for parname in parameter_outputs[tec]['flow'].keys():
             parameter_outputs[tec]['flow'][parname].to_csv(os.path.join(data_path, tec, "edit_files", "flow_technology",
                                                                         parname + ".csv"),
                                                            index = False)
-            log.info(f"Exported flow technology parameter: {parname}")
+            log.info(f"...flow {parname}")
             
     ## Transfer files from edit to bare if they do not already exist
     for tec in covered_tec:
@@ -889,7 +895,7 @@ def build_parameter_sheets(log,
         project_name (str, optional): Project name (message_ix_models/project/[THIS]) 
         config_name (str, optional): Name of the config file.
             If None, uses default config from data/bilateralize/config_default.yaml
-    Outputs:
+    Returns:
         outdict: Dictionary of parameter dataframes
     """
     # Load config

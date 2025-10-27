@@ -53,3 +53,19 @@ def test_build_parameter_sheets():
         assert 'trade' in test_dict[tec].keys()
         assert 'flow' in test_dict[tec].keys()
 
+# Test on scenario
+@pytest.fixture
+def test_bilat_scenario(
+    request: "pytest.FixtureRequest",
+    test_context: "Context"):
+
+    test_dict = build_parameter_sheets(log=log)
+    clone_and_update(trade_dict=test_dict,
+                    log=log,
+                    solve=False,
+                    to_gdx=False,
+                    update_scenario_name='test_bilat_scenario',
+                    additional_parameter_updates=None,
+                    remove_pao_coal_constraint=True)
+
+    assert True
