@@ -24,6 +24,10 @@ from message_ix_models.tools.bilateralize.bilateralize import *
 def load_and_solve(project_name: str = None, 
                    config_name: str = None,
                    solve_scenario: bool = True,
+                   start_model_name: str = None,
+                   start_scenario_name: str = None,
+                   target_model_name: str = None,
+                   target_scenario_name: str = None,
                    gdx_location: str = None,
                    scenario_parameter_name: str = "scenario_parameters.pkl"):
     """
@@ -62,5 +66,9 @@ def load_and_solve(project_name: str = None,
                     log=log,
                     to_gdx = to_gdx,
                     solve = solve_scenario,
-                    gdx_location = gdx_location)
+                    gdx_location = gdx_location,
+                    start_model_name = start_model_name,
+                    start_scenario_name = start_scenario_name,
+                    target_model_name = target_model_name,
+                    target_scenario_name = target_scenario_name)
 
