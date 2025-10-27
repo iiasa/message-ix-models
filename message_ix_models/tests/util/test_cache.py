@@ -47,17 +47,21 @@ def test_cached(caplog, test_context, tmp_path) -> None:
     """:func:`.cached` works as expected."""
     # Store in the temporary directory for this session, to avoid collisions across
     # sessions
-    test_context.cache_path = tmp_path.joinpath("cache")
+    test_context.core.cache_path = tmp_path.joinpath("cache")
+    test_context.core.cache_path.mkdir(parents=True, exist_ok=True)
 
     # A dummy path to be hashed as an argument
     path_foo = tmp_path.joinpath("foo", "bar")
+
+    # Number of times each function has executed
+    count = dict(func0=0, func1=0)
 
     with caplog.at_level(logging.DEBUG, logger="message_ix_models"):
 
         @cached
         def func0(ctx, a, path, b=3):
             """A test function."""
-            log.info("func0 runs")
+            count["func0"] += 1
             return f"{id(ctx)}, {a + b}"
 
     # Docstring is modified
@@ -66,20 +70,20 @@ def test_cached(caplog, test_context, tmp_path) -> None:
     @cached
     def func1(x=1, y=2, **kwargs):
         # Function with defaults for all arguments
-        log.info("func1 runs")
+        count["func1"] += 1
         return x + y
 
     caplog.clear()
 
-    # pathlib.Path argument is serialized to JSON as part of the argument hash;
-    # function runs, messages logged
-    with assert_logs(caplog, "func0 runs"):
-        result0 = func0(test_context, 1, path_foo)
+    # pathlib.Path argument is serialized to JSON as part of the argument hash; function
+    # runs, messages logged
+    result0 = func0(test_context, 1, path_foo)
+    assert 1 == count["func0"]
 
     caplog.clear()
     result1 = func0(test_context, 1, path_foo)
     # Function does not run
-    assert "func0 runs" not in caplog.messages
+    assert 1 == count["func0"]
     assert caplog.messages[0].startswith("Cache hit for func0")
     # Results identical
     assert result0 == result1
@@ -90,7 +94,7 @@ def test_cached(caplog, test_context, tmp_path) -> None:
 
     result2 = func0(ctx2, 1, path_foo)
     # Function does not run
-    assert "func0 runs" not in caplog.messages
+    assert 1 == count["func0"]
     # Results are identical, i.e. including the old ID
     assert result0 == result2
 
@@ -98,8 +102,9 @@ def test_cached(caplog, test_context, tmp_path) -> None:
     caplog.clear()
 
     # Hash of no arguments is the same, function only runs once
+    assert 0 == count["func1"]
     assert 3 == func1() == func1()
-    assert 1 == sum(m == "func1 runs" for m in caplog.messages)
+    assert 1 == count["func1"]
 
     # Warnings logged for unhashables; ScenarioInfo is hashed as dict
     caplog.clear()
@@ -113,7 +118,8 @@ def test_cached(caplog, test_context, tmp_path) -> None:
         func1(ds=xr.Dataset(), mp=test_context.get_platform(), si=ScenarioInfo())
 
     # Unserializable type raises an exception
-    with pytest.raises(
-        TypeError, match="Object of type slice is not JSON serializable"
-    ):
-        func1(arg=slice(None))
+    class Foo:
+        pass
+
+    with pytest.raises(TypeError, match="Object of type Foo is not JSON serializable"):
+        func1(arg=Foo())
