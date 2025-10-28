@@ -24,8 +24,17 @@ reimport_IEA = False
 reimport_BACI = False
 
 # Set up data paths
-def setup_datapath(project_name: str = None,
-                   config_name:str = None):
+def setup_datapath(project_name: str | None = None,
+                   config_name:str | None = None):
+    """
+    Set up data paths.
+    
+    Args:
+        project_name: Name of project
+        config_name: Name of config file
+    Outputs:
+        data_paths: Dictionary of data paths
+    """
     # Pull in configuration
     config, config_path = bilateralize.load_config(project_name = project_name, 
                                                    config_name = config_name)
@@ -49,10 +58,17 @@ def setup_datapath(project_name: str = None,
     return data_paths
 
 # Dictionaries of ISO - IEA - MESSAGE Regions
-def generate_cfdict(message_regions,
-                    project_name: str = None,
-                    config_name: str = None):
+def generate_cfdict(message_regions: str,
+                    project_name: str | None = None,
+                    config_name: str | None = None):
+    """
+    Generate conversion factor dictionary.
     
+    Args:
+        message_regions: Regional resolution
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f) 
@@ -110,10 +126,17 @@ def generate_cfdict(message_regions,
     
 # Import UN Comtrade data and link to conversion factors
 # This does not include natural gas pipelines or LNG, which are from IEA
-def import_uncomtrade(update_year = 2024,
-                      project_name: str = None,
-                      config_name: str = None):
+def import_uncomtrade(update_year: int = 2024,
+                      project_name: str | None = None,
+                      config_name: str | None = None):
+    """
+    Import UN Comtrade data and link to conversion factors, save as CSV and pickle.
     
+    Args:
+        update_year: Year of last data update
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
     with open(dict_dir, "r") as f:
         commodity_codes = yaml.safe_load(f) 
@@ -160,10 +183,17 @@ def import_uncomtrade(update_year = 2024,
     df.to_csv(os.path.join(data_paths['baci'], "shortenedBACI.csv"))
 
 # Convert trade values
-def convert_trade(message_regions,
-                  project_name: str = None,
-                  config_name: str = None):
+def convert_trade(message_regions: str,
+                  project_name: str | None = None,
+                  config_name: str | None = None):
+    """
+    Convert trade values to energy units.
     
+    Args:
+        message_regions: Regional resolution
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     data_paths = setup_datapath(project_name = project_name,
                                 config_name = config_name)
     
@@ -254,8 +284,15 @@ def convert_trade(message_regions,
     return df
 
 # Import IEA for LNG and pipeline gas
-def import_iea_gas(project_name: str = None,
-                   config_name: str = None):
+def import_iea_gas(project_name: str | None= None,
+                   config_name: str | None = None):
+    """
+    Import IEA data for LNG and pipeline gas.
+    
+    Args:
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     data_paths = setup_datapath(project_name = project_name,
                                 config_name = config_name)
     
@@ -286,9 +323,15 @@ def import_iea_gas(project_name: str = None,
     return ngd
     
 # Check against IEA balances
-def import_iea_balances(project_name:str = None,
-                        config_name:str = None):
+def import_iea_balances(project_name:str | None = None,
+                        config_name:str | None = None):
+    """
+    Import IEA balances and save as CSV.
     
+    Args:
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     data_paths = setup_datapath(project_name = project_name,
                                 config_name = config_name)
     
@@ -317,8 +360,16 @@ def import_iea_balances(project_name:str = None,
     iea_out.to_csv(os.path.join(data_paths['iea_web'], "WEB_TRADEFLOWS.csv"))
     
 def check_iea_balances(indf,
-                       project_name:str = None,
-                       config_name:str = None):
+                       project_name:str | None= None,
+                       config_name:str | None= None):
+    """
+    Check against IEA balances.
+    
+    Args:
+        indf: Input dataframe
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     data_paths = setup_datapath(project_name = project_name, config_name = config_name)
     
     iea = pd.read_csv(os.path.join(data_paths['iea_web'], "WEB_TRADEFLOWS.csv"))
@@ -360,7 +411,17 @@ def check_iea_balances(indf,
 def reformat_to_parameter(indf, message_regions, parameter_name,
                           project_name = None, config_name = None,
                           exports_only = False):
-
+    """
+    Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe.
+    
+    Args:
+        indf: Input dataframe
+        message_regions: Regional resolution
+        parameter_name: Name of parameter
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+        exports_only: If True, only include exports
+    """
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f) 
@@ -410,9 +471,19 @@ def reformat_to_parameter(indf, message_regions, parameter_name,
 
 # Run all for historical activity
 def build_historical_activity(message_regions = 'R12',
-                              project_name = None, config_name = None,
+                              project_name: str | None = None,
+                              config_name: str | None = None,
                               reimport_IEA = False, reimport_BACI = False):
-        
+    """
+    Build historical activity parameter dataframe.
+    
+    Args:
+        message_regions: Regional resolution
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+        reimport_IEA: If True, reimport IEA data
+        reimport_BACI: If True, reimport BACI data
+    """
     if reimport_IEA == True:
         generate_cfdict(message_regions = message_regions,
                         project_name = project_name, config_name = config_name)    
@@ -452,7 +523,16 @@ def build_historical_activity(message_regions = 'R12',
 
 # Calculate historical new capacity based on activity
 def build_historical_new_capacity_trade(message_regions = 'R12',
-                           project_name = None, config_name = None):
+                           project_name: str | None = None,
+                           config_name: str | None = None):
+    """
+    Build historical new capacity based on activity.
+    
+    Args:
+        message_regions: Regional resolution
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     indf = build_historical_activity(message_regions = message_regions,
                                      project_name = project_name, config_name = config_name)
     
@@ -484,8 +564,16 @@ def build_historical_new_capacity_trade(message_regions = 'R12',
     
 # Run all for price
 def build_historical_price(message_regions = 'R12',
-                           project_name = None, config_name = None):
-        
+                           project_name: str | None = None,
+                           config_name: str | None = None):
+    """
+    Build historical price parameter dataframe.
+    
+    Args:
+        message_regions: Regional resolution
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+    """
     if reimport_BACI == True:
         import_uncomtrade(project_name = project_name, config_name = config_name)
         
@@ -520,11 +608,23 @@ def build_historical_price(message_regions = 'R12',
     return outdf
 
 # Build for historical new capacity of a given maritime shipment (e.g., LNG tanker)
-def build_historical_new_capacity_flow(infile, ship_type,
-                                       message_regions = 'R12',
-                                       project_name = None, config_name = None,
+def build_historical_new_capacity_flow(infile: str, 
+                                       ship_type: str,
+                                       message_regions: str = 'R12',
+                                       project_name: str | None = None,
+                                       config_name: str | None = None,
                                        annual_mileage = 100000):
+    """
+    Build historical new capacity of a given maritime shipment (e.g., LNG tanker).
     
+    Args:
+        infile: Name of input file
+        ship_type: Ship type (e.g., 'LNG_tanker_loil')
+        message_regions: Regional resolution
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+        annual_mileage: Average annual mileage of ship in km
+    """
     # Regions
     dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
     with open(dict_dir, "r") as f:

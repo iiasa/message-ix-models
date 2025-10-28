@@ -21,8 +21,8 @@ from message_ix_models.util import package_data_path
 from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.tools.bilateralize.historical_calibration import *
 
-def bare_to_scenario(project_name: str = None, 
-                     config_name: str = None,
+def bare_to_scenario(project_name: str | None = None, 
+                     config_name: str | None = None,
                      scenario_parameter_name: str = "scenario_parameters.pkl"):
     """
     Move data from bare files to a dictionary compatible with updating a MESSAGEix scenario

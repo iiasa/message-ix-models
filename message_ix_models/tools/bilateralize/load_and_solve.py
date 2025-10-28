@@ -21,14 +21,14 @@ from pathlib import Path
 from message_ix_models.util import package_data_path
 from message_ix_models.tools.bilateralize.bilateralize import *
 
-def load_and_solve(project_name: str = None, 
-                   config_name: str = None,
+def load_and_solve(project_name: str | None = None, 
+                   config_name: str | None = None,
                    solve_scenario: bool = True,
-                   start_model_name: str = None,
-                   start_scenario_name: str = None,
-                   target_model_name: str = None,
-                   target_scenario_name: str = None,
-                   gdx_location: str = None,
+                   start_model_name: str | None = None,
+                   start_scenario_name: str | None = None,
+                   target_model_name: str | None = None,
+                   target_scenario_name: str | None = None,
+                   gdx_location: str | None = None,
                    scenario_parameter_name: str = "scenario_parameters.pkl"):
     """
     Load and solve a MESSAGEix scenario

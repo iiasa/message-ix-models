@@ -38,11 +38,10 @@ def calibrate_mariteam(covered_tec,
                                  'lh2_shipped': {'astd_ship_type': 'Chemical tankers',
                                                  'flow_technology': ['lh2_tanker_lh2', 'lh2_tanker_loil']}},
                        mt_output = "MariTEAM_output_2025-07-21.csv",
-                       project_name: str = None,
-                       config_name: str = None):
+                       project_name: str | None = None,
+                       config_name: str | None = None):
     # Data paths
-    config, config_path = bilateralize.load_config(project_name = project_name, 
-                                      config_name = config_name)
+    config, config_path = bilateralize.load_config(project_name = project_name, config_name = config_name)
     p_drive = config['p_drive_location']
     data_path = os.path.join(p_drive, "MESSAGE_trade")
     mt_path = os.path.join(data_path, "MariTEAM")
