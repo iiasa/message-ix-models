@@ -24,8 +24,8 @@ from message_ix_models.tools.bilateralize.pull_gem import *
 from message_ix_models.tools.bilateralize.mariteam_calibration import *
 from message_ix_models.tools.bilateralize.calculate_distance import *
 
-def prepare_edit_files(project_name: str = None, 
-                        config_name: str = None):
+def prepare_edit_files(project_name: str | None = None, 
+                        config_name: str | None = None):
     """
     Prepare edit files for bilateralize tool
     

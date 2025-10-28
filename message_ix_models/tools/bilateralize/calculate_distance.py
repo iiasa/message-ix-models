@@ -8,11 +8,21 @@ import math
 from message_ix_models.util import package_data_path
 import os
 
-def haversine_distance(lat1, lon1, lat2, lon2):
+def haversine_distance(lat1: float, 
+                       lon1: float, 
+                       lat2: float, 
+                       lon2: float) -> float:
     """
     Calculate the great circle distance between two points 
     on the earth (specified in decimal degrees) using the Haversine formula.
-    Returns distance in kilometers.
+    
+    Args:
+        lat1: Latitude of the first point
+        lon1: Longitude of the first point
+        lat2: Latitude of the second point
+        lon2: Longitude of the second point
+    Outputs:
+        Distance in kilometers
     """
     # Convert decimal degrees to radians
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
@@ -28,15 +38,15 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     
     return c * r
 
-def calculate_port_distances(df):
+def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
     """
     Read CSV file with port data and calculate distances between all port combinations.
     
-    Parameters:
-    csv_file_path (str): Path to the CSV file containing Port, Latitude, Longitude columns
+    Args:
+        df: DataFrame containing Port, Latitude, Longitude columns
     
-    Returns:
-    pandas.DataFrame: DataFrame with columns 'Port1', 'Port2', 'Distance_km'
+    Outputs:
+        DataFrame with columns 'Port1', 'Port2', 'Distance_km'
     """  
     # Check if required columns exist
     required_columns = ['Port', 'Latitude', 'Longitude']
@@ -86,11 +96,11 @@ def calculate_port_distances(df):
     outdf = pd.concat([outdf1, outdf2])
     return outdf
         
-def calculate_distance(regional_specification):
+def calculate_distance(regional_specification: str):
     '''
     Run distance calculation.
     
-    Inputs:
+    Args:
         regional_specification: MESSAGE regional specification (e.g., "R12")
     Outputs:
         CSV file in data/bilateralize/distances/ that includes the 
