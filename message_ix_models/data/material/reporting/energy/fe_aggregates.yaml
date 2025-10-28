@@ -270,6 +270,10 @@ level_1:
     short: fe_pe_other_h2
     components:
       [ fe_pe_other_h2_comb, fe_pe_other_h2_fc ]
+  Industry|Other Sector|Liquids|Oil|Thermal:
+    short: fe_pe_other_oil_l
+    components:
+      [ fe_pe_other_oil_h_th, fe_pe_other_oil_l_th ]
   Industry|Other Sector|Liquids|Oil|Light:
     short: fe_pe_other_oil_l
     components:
