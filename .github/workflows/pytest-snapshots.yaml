@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  gams-version: 43.4.1
+  gams-version: 48.7.0
   python-version: "3.14"
   upstream: main
 
