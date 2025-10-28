@@ -182,7 +182,13 @@ def read_ict_v2(
         id_vars=["Region", "Year", "Scenario"], var_name="Variable", value_name="Value"
     )
     df = df[df["Scenario"].isin(["IEA (Base)", "SSP2"])].drop(columns=["Scenario"])
-    df = df[df["Variable"].isin(scen_map[digsy_scenario].values())]
+    df = df[
+        ((df["Variable"].isin(scen_map["baseline"].values())) & (df["Year"] < 2030))
+        | (
+            (df["Variable"].isin(scen_map[digsy_scenario].values()))
+            & (df["Year"] >= 2030)
+        )
+    ]
     df.set_index(["Region", "Year", "Variable"], inplace=True)
     df = make_df(
         "demand",
@@ -203,9 +209,11 @@ def read_ict_v2(
         level="demand",
         time="year",
     )
-    df["commodity"] = df["commodity"].map(
-        {scen_map[digsy_scenario][k]: comm_map[k] for k in comm_map.keys()}
+    comm_map_final = {scen_map[digsy_scenario][k]: comm_map[k] for k in comm_map.keys()}
+    comm_map_final.update(
+        {scen_map["baseline"][k]: comm_map[k] for k in comm_map.keys()}
     )
+    df["commodity"] = df["commodity"].map(comm_map_final)
     return df
 
 
@@ -399,3 +407,7 @@ def adjust_act_calib(ict: pd.DataFrame, scen: message_ix.Scenario):
         ).dropna()
         with scen.transact():
             scen.add_par(par, new_bound)
+
+
+if __name__ == "__main__":
+    read_ict_v2("BEST")
