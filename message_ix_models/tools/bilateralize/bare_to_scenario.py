@@ -6,22 +6,16 @@ This script is the second step in implementing the bilateralize tool.
 It moves data from /data/bilateralize/[your_trade_commodity]/bare_files/ to a dictionary compatible with updating a MESSAGEix scenario.
 """
 # Import packages
-import os  
-import sys
-import pandas as pd
-import logging
-import yaml
-import message_ix
-import ixmp
-import itertools
+import os
 import pickle
 
-from pathlib import Path
-from message_ix_models.util import package_data_path
+import pandas as pd
+
 from message_ix_models.tools.bilateralize.bilateralize import *
 from message_ix_models.tools.bilateralize.historical_calibration import *
 
-def bare_to_scenario(project_name: str | None = None, 
+
+def bare_to_scenario(project_name: str | None = None,
                      config_name: str | None = None,
                      scenario_parameter_name: str = "scenario_parameters.pkl"):
     """
@@ -36,7 +30,7 @@ def bare_to_scenario(project_name: str | None = None,
         trade_dict: Dictionary compatible with updating a MESSAGEix scenario
     """
     # Bring in configuration
-    config, config_path, tec_config = load_config(project_name = project_name, 
+    config, config_path, tec_config = load_config(project_name = project_name,
                                                   config_name = config_name,
                                                   load_tec_config = True)
 
@@ -50,11 +44,11 @@ def bare_to_scenario(project_name: str | None = None,
     trade_dict = build_parameter_sheets(log=log, project_name = project_name, config_name = config_name)
 
     # Historical calibration for trade technology
-    histdf = build_historical_activity(message_regions = message_regions, 
+    histdf = build_historical_activity(message_regions = message_regions,
                                         project_name = project_name, config_name = config_name,
                                         reimport_BACI = False)
     histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
-    histdf['year_act'] = np.where((histdf['year_act'] == 2023), 2025, histdf['year_act']) # TODO: Assume 2023 values FOR NOW 
+    histdf['year_act'] = np.where((histdf['year_act'] == 2023), 2025, histdf['year_act']) # TODO: Assume 2023 values FOR NOW
     histdf = histdf[histdf['value'] > 0]
     histdf['technology'] = histdf['technology'].str.replace('ethanol_', 'eth_')
     histdf['technology'] = histdf['technology'].str.replace('fueloil_', 'foil_')
@@ -71,7 +65,7 @@ def bare_to_scenario(project_name: str | None = None,
         log.info('Add historical activity for ' + tec)
         add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
         trade_dict[tec]['trade']['historical_activity'] = add_df
-        
+
         log.info('Add historical new capacity for ' + tec)
         add_df = histnc[histnc['technology'].str.contains(hist_tec[tec])]
         trade_dict[tec]['trade']['historical_new_capacity'] = add_df
@@ -82,7 +76,7 @@ def bare_to_scenario(project_name: str | None = None,
     hist_crude_loil = build_historical_new_capacity_flow('Crude Tankers.csv', 'crudeoil_tanker_loil',
                                                          project_name = project_name, config_name = config_name)
     hist_lh2_loil = build_historical_new_capacity_flow('LH2 Tankers.csv', 'lh2_tanker_loil',
-                                                        project_name = project_name, config_name = config_name)    
+                                                        project_name = project_name, config_name = config_name)
     hist_lng = pd.DataFrame()
     for f in ['loil', 'LNG']:
         hist_lng_f = build_historical_new_capacity_flow('LNG Tankers.csv', 'LNG_tanker_'+f,
@@ -96,7 +90,7 @@ def bare_to_scenario(project_name: str | None = None,
                                                         project_name = project_name, config_name = config_name)
         hist_oil_f['value'] *= shipping_fuel_dict['oil_tanker']['oil_tanker_' + f]
         hist_oil = pd.concat([hist_oil, hist_oil_f])
-                
+
     trade_dict['crudeoil_shipped']['flow']['historical_new_capacity'] = hist_crude_loil
     trade_dict['lh2_shipped']['flow']['historical_new_capacity'] = hist_lh2_loil
     trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
@@ -112,7 +106,7 @@ def bare_to_scenario(project_name: str | None = None,
             trade_dict[tec]['trade']['historical_new_capacity'] = trade_dict[tec]['trade']['historical_new_capacity'][trade_dict[tec]['trade']['historical_new_capacity']['technology'].isin(trade_dict[tec]['trade']['input']['technology'])]
 
     # Ensure flow technologies are only added once
-    covered_flow_tec = []
+    covered_flow_tec: list[str] = []
     for tec in covered_tec:
         flow_tecs = list(trade_dict[tec]['flow']['input']['technology'].unique())
         for par in trade_dict[tec]['flow'].keys():
