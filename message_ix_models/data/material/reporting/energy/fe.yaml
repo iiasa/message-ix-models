@@ -735,3 +735,6 @@ vars:
   Transportation|Other:
     filter: { technology: coal_trp, commodity: coal, level: final, mode: M1 }
     short: fe_trp_other
+  Transportation|Solids|Coal:
+    filter: { technology: coal_trp, commodity: coal, level: final, mode: M1 }
+    short: fe_trp_coal
