@@ -48,8 +48,8 @@ def import_gem(input_file: str,
                trade_technology: str, 
                flow_technology: str,
                flow_commodity: str,
-               project_name:str = None,
-               config_name: str = None,
+               project_name:str | None = None,
+               config_name: str | None = None,
                first_model_year: int = 2030):
 
     # Pull in configuration
