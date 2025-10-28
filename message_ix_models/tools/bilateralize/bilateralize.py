@@ -170,7 +170,7 @@ def broadcast_years(df: pd.DataFrame,
 #%% Write just the GDX files
 def save_to_gdx(mp: ixmp.Platform,
                 scenario, 
-                output_path: str):
+                output_path: os.Pathlike[str]):
     """
     Save the scenario to a GDX file.
     
@@ -226,8 +226,8 @@ def build_parameterdf(
 #%% Main function to generate bare sheets
 def generate_bare_sheets(
         log,
-        project_name: str = None,
-        config_name: str = None):
+        project_name: str | None = None,
+        config_name: str | None = None):
     """
     Generate bare sheets to collect required parameters
 
@@ -888,8 +888,8 @@ def generate_bare_sheets(
         
 #%% Build out bare sheets
 def build_parameter_sheets(log, 
-                           project_name: str = None,
-                           config_name: str = None):
+                           project_name: str | None = None,
+                           config_name: str | None = None):
     """
     Read the input csv files and build the tech sets and parameters.
 
@@ -993,13 +993,13 @@ def clone_and_update(trade_dict,
                      log,
                      solve = False,
                      to_gdx = False,
-                     project_name: str = None,
-                     config_name: str = None,
-                     start_scenario_name:str = None,
-                     start_model_name:str = None,
-                     target_scenario_name:str = None,
-                     target_model_name:str = None,
-                     additional_parameter_updates:dict = None,
+                     project_name: str | None = None,
+                     config_name: str | None = None,
+                     start_scenario_name:str | None = None,
+                     start_model_name:str | None = None,
+                     target_scenario_name:str | None = None,
+                     target_model_name:str | None = None,
+                     additional_parameter_updates:dict | None = None,
                      gdx_location: str = os.path.join("C:", "GitHub", "message_ix", "message_ix", "model", "data"),
                      remove_pao_coal_constraint: bool = True):     
     """
