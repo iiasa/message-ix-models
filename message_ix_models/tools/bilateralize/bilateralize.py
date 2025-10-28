@@ -3,6 +3,7 @@
 Bilateralize trade flows
 """
 # Import packages
+from contextlib import nullcontext
 import ixmp
 import itertools
 import logging
@@ -37,8 +38,8 @@ def get_logger(name: str):
     return log
 
 #%% Load config yaml
-def load_config(project_name:str = None,
-                config_name:str = None,
+def load_config(project_name:str | None = None,
+                config_name:str | None = None,
                 load_tec_config:bool = False):
     """
     Load config file and optional trade-specific config files.
@@ -54,7 +55,7 @@ def load_config(project_name:str = None,
         tec_config_dict: Dictionary of trade-specific config files (if load_tec_config is True)
     """
     # Load config
-    if (project_name is None) & (config_name is None):
+    if project_name is None and config_name is None:
         config_path = os.path.abspath(os.path.join(os.path.dirname(package_data_path("bilateralize")), 
                                                    "bilateralize", "configs", "base_config.yaml"))
     if project_name is not None:
@@ -78,9 +79,9 @@ def load_config(project_name:str = None,
         return config, config_path, tec_config_dict
 
 #%% Copy columns from template, if exists
-def copy_template_columns(df, 
-                          template, 
-                          exclude_cols=["node_loc", "technology"]):
+def copy_template_columns(df: pd.DataFrame, 
+                          template: pd.DataFrame, 
+                          exclude_cols: list[str] = ["node_loc", "technology"]):
     """
     Copy columns from template to dataframe.
     
@@ -168,7 +169,7 @@ def broadcast_years(df: pd.DataFrame,
 
 #%% Write just the GDX files
 def save_to_gdx(mp: ixmp.Platform,
-                scenario: str, 
+                scenario, 
                 output_path: str):
     """
     Save the scenario to a GDX file.
@@ -188,13 +189,8 @@ def build_parameterdf(
         par_name: str,
         network_df: pd.DataFrame,
         col_values: dict,
-        common_years: dict = dict(year_vtg = 'broadcast',
-                                  year_rel = 'broadcast',
-                                  year_act = 'broadcast'),
-        common_cols: dict = dict(mode= 'M1',
-                                 time= 'year',
-                                 time_origin= 'year',
-                                 time_dest= 'year'),
+        common_years: dict | None = None,
+        common_cols: dict | None = None,
         export_only: bool = False):
 
     """
@@ -207,6 +203,11 @@ def build_parameterdf(
         export_only: If True, only produces dataframe for export technology
     """
     
+    if common_years is None:
+        common_years = dict(year_vtg='broadcast', year_rel='broadcast', year_act='broadcast')
+    if common_cols is None:
+        common_cols = dict(mode='M1', time='year', time_origin='year', time_dest='year')
+
     df_export = message_ix.make_df(par_name,
                                    node_loc = network_df['exporter'],
                                    technology = network_df['export_technology'],
@@ -408,11 +409,12 @@ def generate_bare_sheets(
     # Create base files: inv_cost, fix_cost, var_cost
     for cost_par in ['inv_cost', 'fix_cost', 'var_cost']:
         for tec in covered_tec:
-            df_cost = build_parameterdf(cost_par,
-                                        network_df = network_setup[tec],
-                                        col_values = dict(unit = 'USD/' + config_dict['trade_units'][tec]))
-        
-        parameter_outputs[tec]['trade'][cost_par] = df_cost.drop_duplicates()
+            df_cost = build_parameterdf(
+                cost_par,
+                network_df=network_setup[tec],
+                col_values=dict(unit='USD/' + config_dict['trade_units'][tec]),
+            )
+            parameter_outputs[tec]['trade'][cost_par] = df_cost.drop_duplicates()
 
     # Create base file: historical activity
     for tec in covered_tec:
@@ -571,7 +573,7 @@ def generate_bare_sheets(
             ## Create bare file: input        
             # Build by commodity input
             for c in flow_inputs:
-                print(c)
+                log.debug(str(c))
                 if c in config_dict['flow_fuel_input'][tec][flow_tec]: use_unit = 'GWa'
                 elif c in config_dict['flow_material_input'][tec][flow_tec]: use_unit = 'Mt'
                 
@@ -622,7 +624,7 @@ def generate_bare_sheets(
         parameter_outputs[tec]['flow']['output'] = df_output = pd.DataFrame()
         
         for flow_tec in config_dict['flow_technologies'][tec]:
-            print(flow_tec)
+            log.debug(str(flow_tec))
             # If bilaterally constrained (e.g., pipelines), technologies and outputs are bilateral
             if config_dict['flow_constraint'][tec] == "bilateral": 
                 df_output_base = message_ix.make_df('output',
