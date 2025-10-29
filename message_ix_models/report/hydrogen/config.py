@@ -24,18 +24,26 @@ class Config:
     #: Data frame with:
     #:
     #: - MultiIndex levels including 1 or more of :math:`(c, l, m, t)`.
-    #: - 4 columns:
+    #: - 5 columns:
     #:   - "iamc_name": a (fragment of) an IAMC 'variable' name. This is appended to
     #:     to :attr:`iamc_prefix` to construct a complete name.
     #:   - "short_name": …
     #:   - "unit": units of measure for output.
     #:   - "original_unit": units of measure from MESSAGE-IX reporter.
+    #:   - "stoichiometric_factor": optional factor to convert output commodity to
+    #:     hydrogen content (applied after unit conversion, defaults to 1.0).
     #:
     #: This expresses a mapping between the index entries (=indices of reported data)
-    #: and the information in the 4 columns.
+    #: and the information in the 5 columns.
     mapping: pd.DataFrame = field(
         default_factory=lambda: pd.DataFrame(
-            columns=["iamc_name", "short_name", "unit", "original_unit"],
+            columns=[
+                "iamc_name",
+                "short_name",
+                "unit",
+                "original_unit",
+                "stoichiometric_factor",
+            ],
         )
     )
 
@@ -86,9 +94,13 @@ class Config:
     def check_mapping(self) -> None:
         """Assert that :attr:`mapping` has the correct structure and is complete."""
         assert self.mapping.empty or set(self.mapping.index.names) <= set("clmte")
-        assert {"iamc_name", "short_name", "unit", "original_unit"} == set(
-            self.mapping.columns
-        )
+        assert {
+            "iamc_name",
+            "short_name",
+            "unit",
+            "original_unit",
+            "stoichiometric_factor",
+        } == set(self.mapping.columns)
         assert not self.mapping.isna().any(axis=None)
 
     def use_aggregates_dict(self, data: dict) -> None:
@@ -111,6 +123,7 @@ class Config:
                         agg=v["short"],
                         short_name=v["components"],
                         original_unit=v.get("original_unit", self.unit),
+                        stoichiometric_factor=v.get("stoichiometric_factor", 1.0),
                     )
                     # Convert to DataFrame with desired structure
                     dfs.append(pd.DataFrame(d))
@@ -122,7 +135,7 @@ class Config:
                 pd.concat(dfs)
                 .merge(
                     self.mapping.reset_index().drop(
-                        ["iamc_name", "original_unit"], axis=1
+                        ["iamc_name", "original_unit", "stoichiometric_factor"], axis=1
                     ),
                     on=[sn],
                 )
@@ -155,6 +168,7 @@ class Config:
                     short_name=values["short"],
                     unit=values.get("unit", self.unit),
                     original_unit=values.get("original_unit", "GWa"),
+                    stoichiometric_factor=values.get("stoichiometric_factor", 1.0),
                 )
             )
 

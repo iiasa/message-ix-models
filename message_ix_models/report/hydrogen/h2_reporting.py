@@ -35,9 +35,11 @@ def pyam_df_from_rep(
     # Use join to merge data - this allows partial index matching
     # (e.g. emissions only need t,m but output needs t,m,c,l)
     df = (
-        df_var.join(mapping_df[["iamc_name", "unit", "original_unit"]])
+        df_var.join(
+            mapping_df[["iamc_name", "unit", "original_unit", "stoichiometric_factor"]]
+        )
         .dropna()
-        .groupby(["nl", "ya", "iamc_name", "original_unit"])
+        .groupby(["nl", "ya", "iamc_name", "original_unit", "stoichiometric_factor"])
         .sum(numeric_only=True)
     )
     rep.set_filters()
@@ -81,10 +83,13 @@ def _load_unit_conversions() -> dict:
 def convert_units_from_mapping(df: pd.DataFrame, target_unit: str) -> pd.DataFrame:
     """Convert units in DataFrame using iam_units.registry based on original_unit column.
 
+    Also applies stoichiometric factors if present in the index, which are used to convert
+    the output commodity (e.g., ammonia) to hydrogen content after unit conversion.
+
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame with 'original_unit' in index and 'value' column
+        DataFrame with 'original_unit' and optionally 'stoichiometric_factor' in index and 'value' column
     target_unit : str
         Target unit to convert to
 
@@ -143,6 +148,14 @@ def convert_units_from_mapping(df: pd.DataFrame, target_unit: str) -> pd.DataFra
             # Keep original values if conversion fails
             continue
 
+    # Apply stoichiometric factors if present (after unit conversion)
+    # This converts the output commodity (e.g., ammonia in EJ) to hydrogen content (EJ H2)
+    if "stoichiometric_factor" in df_converted.index.names:
+        df_reset = df_converted.reset_index()
+        # Apply stoichiometric factor to each row
+        df_reset["value"] = df_reset["value"] * df_reset["stoichiometric_factor"]
+        df_converted = df_reset.set_index(df_converted.index.names)
+
     return df_converted
 
 
@@ -160,6 +173,11 @@ def format_reporting_df(
     # Apply unit conversions using iam_units.registry
     df = convert_units_from_mapping(df, unit)
 
+    # Prepare list of columns to drop
+    cols_to_drop = ["original_unit"]
+    if "stoichiometric_factor" in df.index.names:
+        cols_to_drop.append("stoichiometric_factor")
+
     df = (
         df.reset_index()
         .rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
@@ -172,7 +190,9 @@ def format_reporting_df(
             Scenario=scenario_name,
             Unit=unit,  # Set target unit
         )
-        .drop(columns=["original_unit"])  # Remove original_unit column
+        .drop(
+            columns=cols_to_drop
+        )  # Remove original_unit and stoichiometric_factor columns
     )
 
     py_df = pyam.IamDataFrame(df)

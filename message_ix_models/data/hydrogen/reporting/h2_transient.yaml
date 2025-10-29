@@ -1,0 +1,156 @@
+# yaml file to report on transient hydrogen production
+# grouped by technology, sector and fuel input
+# Transient hydrogen is defined as hydrogen production for 
+# the production of other commodities, such as ammonia and methanol.
+# each variable specifies a list of filter for genno.operator.select()
+#
+# Stoichiometric factors convert output commodity (ammonia/methanol) to hydrogen content:
+# - Ammonia: 1.114 EJ H2 per EJ NH3
+# - Methanol (coal/bio/ng): 0.937 EJ H2 per EJ methanol
+# - Methanol (h2-based): 1.124 EJ H2 per EJ methanol
+
+var:
+  out
+
+iamc_prefix:
+  Production|Hydrogen|Transient|
+
+unit: EJ/yr
+
+vars:
+  # Ammonia production - all technologies produce transient hydrogen
+  # Factor: 1.114 EJ H2 per EJ NH3
+  
+  Ammonia|Biomass w/o CCS:
+    filter:
+      { technology: biomass_NH3, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_biomass
+  
+  Ammonia|Biomass w/ CCS:
+    filter:
+      { technology: biomass_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_biomass_ccs
+  
+  Ammonia|Electricity:
+    filter:
+      { technology: electr_NH3, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_electricity
+  
+  Ammonia|Gas w/o CCS:
+    filter:
+      { technology: gas_NH3, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_gas
+  
+  Ammonia|Gas w/ CCS:
+    filter:
+      { technology: gas_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_gas_ccs
+  
+  Ammonia|Coal w/o CCS:
+    filter:
+      { technology: coal_NH3, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_coal
+  
+  Ammonia|Coal w/ CCS:
+    filter:
+      { technology: coal_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_coal_ccs
+  
+  Ammonia|Oil w/o CCS:
+    filter:
+      { technology: fueloil_NH3, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_oil
+  
+  Ammonia|Oil w/ CCS:
+    filter:
+      { technology: fueloil_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
+    original_unit: GWa
+    stoichiometric_factor: 1.114
+    short:
+      prod_h2_transient_nh3_oil_ccs
+  
+  # Methanol production - transient hydrogen from conventional processes
+  # Factor: 0.937 EJ H2 per EJ methanol (0.15 kg H2/kg methanol × HHV ratio)
+  
+  Methanol|Biomass w/o CCS:
+    filter:
+      {technology: meth_bio, mode: [feedstock, fuel], commodity: methanol, level: [primary_material, primary]}
+    original_unit: GWa
+    stoichiometric_factor: 0.937
+    short:
+      prod_h2_transient_meth_bio
+  
+  Methanol|Biomass w/ CCS:
+    filter:
+      {technology: meth_bio_ccs, mode: [feedstock, fuel], commodity: methanol, level: [primary_material, primary]}
+    original_unit: GWa
+    stoichiometric_factor: 0.937
+    short:
+      prod_h2_transient_meth_bio_ccs
+  
+  Methanol|Coal w/o CCS:
+    filter:
+      {technology: meth_coal, mode: [feedstock, fuel], commodity: methanol, level: [primary_material, primary]}
+    original_unit: GWa
+    stoichiometric_factor: 0.937
+    short:
+      prod_h2_transient_meth_coal
+  
+  Methanol|Coal w/ CCS:
+    filter:
+      {technology: meth_coal_ccs, mode: [feedstock, fuel], commodity: methanol, level: [primary_material, primary]}
+    original_unit: GWa
+    stoichiometric_factor: 0.937
+    short:
+      prod_h2_transient_meth_coal_ccs
+  
+  Methanol|Gas w/o CCS:
+    filter:
+      {technology: meth_ng, mode: [feedstock, fuel], commodity: methanol, level: [primary_material, primary]}
+    original_unit: GWa
+    stoichiometric_factor: 0.937
+    short:
+      prod_h2_transient_meth_ng
+  
+  Methanol|Gas w/ CCS:
+    filter:
+      {technology: meth_ng_ccs, mode: [feedstock, fuel], commodity: methanol, level: [primary_material, primary]}
+    original_unit: GWa
+    stoichiometric_factor: 0.937
+    short:
+      prod_h2_transient_meth_ng_ccs
+  
+  # Methanol from hydrogen - higher transient hydrogen content
+  # Factor: 1.124 EJ H2 per EJ methanol (0.18 kg H2/kg methanol × HHV ratio)
+  
+  Methanol|Hydrogen-based:
+    filter:
+      {technology: meth_h2, mode: [feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: methanol, level: [primary_material, primary]}
+    original_unit: GWa
+    stoichiometric_factor: 1.124
+    short:
+      prod_h2_transient_meth_h2
