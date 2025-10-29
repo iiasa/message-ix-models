@@ -506,6 +506,12 @@ vars:
   Carbon Management|Direct Air Capture|Electricity:
     filter: { technology: [ dac_hte,dac_htg, dac_lt ], commodity: electr, level: final, mode: M1 }
     short: fe_dac_elec
+  Carbon Management|Direct Air Capture|Solvent|Electricity:
+    filter: { technology: [ dac_hte, dac_htg ], commodity: electr, level: final, mode: M1 }
+    short: fe_dac_elec_solv
+  Carbon Management|Direct Air Capture|Sorbent|Electricity:
+    filter: { technology: [ dac_lt ], commodity: electr, level: final, mode: M1 }
+    short: fe_dac_elec_sorb
   Carbon Management|Direct Air Capture|Gases:
     filter: { technology: dac_htg, commodity: gas, level: final, mode: M1 }
     short: fe_dac_gas
