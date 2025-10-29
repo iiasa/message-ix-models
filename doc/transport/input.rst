@@ -147,6 +147,7 @@ Quick links to each of the data flows:
 :data:`~.data.pop_share_driver`
 :data:`~.data.population_suburb_share`
 :data:`~.data.speed`
+:data:`~.data.stock_cap`
 :data:`~.data.t_share_ldv`
 
 .. autodata:: message_ix_models.model.transport.data.act_non_ldv
@@ -275,6 +276,7 @@ Quick links to each of the data flows:
 
    In MESSAGE(V)-Transport, values from Schäefer et al. (2010) were used.
 
+.. autodata:: message_ix_models.model.transport.data.stock_cap
 .. autodata:: message_ix_models.model.transport.data.t_share_ldv
 
 Other data sources
