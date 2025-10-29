@@ -6,7 +6,6 @@ Utility functions for the bilateralize tool
 import logging
 import os
 import sys
-from typing import TypedDict
 
 import yaml
 

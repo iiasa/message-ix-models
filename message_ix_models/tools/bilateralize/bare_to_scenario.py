@@ -299,18 +299,18 @@ def bare_to_scenario(project_name: str | None = None,
     # Historical new capacity for maritime shipping
     shipping_fuel_dict = config['shipping_fuels']
     # TODO: Add coal
-    hist_crude_loil = build_hist_new_capacity_flow(file_name = 'Crude Tankers.csv',
-                                                   technology = 'crudeoil_tanker_loil',
+    hist_crude_loil = build_hist_new_capacity_flow(infile = 'Crude Tankers.csv',
+                                                   ship_type = 'crudeoil_tanker_loil',
                                                    project_name = project_name,
                                                    config_name = config_name)
-    hist_lh2_loil = build_hist_new_capacity_flow(file_name = 'LH2 Tankers.csv',
-                                                 technology = 'lh2_tanker_loil',
+    hist_lh2_loil = build_hist_new_capacity_flow(infile = 'LH2 Tankers.csv',
+                                                 ship_type = 'lh2_tanker_loil',
                                                  project_name = project_name,
                                                  config_name = config_name)
     hist_lng = pd.DataFrame()
     for f in ['loil', 'LNG']:
-        hist_lng_f = build_hist_new_capacity_flow(file_name = 'LNG Tankers.csv',
-                                                  technology = 'LNG_tanker_'+f,
+        hist_lng_f = build_hist_new_capacity_flow(infile = 'LNG Tankers.csv',
+                                                  ship_type = 'LNG_tanker_'+f,
                                                   project_name = project_name,
                                                   config_name = config_name)
         hist_lng_f['value'] *= shipping_fuel_dict['LNG_tanker']['LNG_tanker_' + f]
@@ -318,8 +318,8 @@ def bare_to_scenario(project_name: str | None = None,
 
     hist_oil = pd.DataFrame()
     for f in ['loil', 'foil', 'eth']:
-        hist_oil_f = build_hist_new_capacity_flow(file_name = 'Oil Tankers.csv',
-                                                  technology = 'oil_tanker_'+f,
+        hist_oil_f = build_hist_new_capacity_flow(infile = 'Oil Tankers.csv',
+                                                  ship_type = 'oil_tanker_'+f,
                                                   project_name = project_name,
                                                   config_name = config_name)
         hist_oil_f['value'] *= shipping_fuel_dict['oil_tanker']['oil_tanker_' + f]

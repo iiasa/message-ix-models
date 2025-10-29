@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from message_ix_models.tools.bilateralize import bilateralize
+from message_ix_models.tools.bilateralize.utils import load_config
 from message_ix_models.util import package_data_path
 
 # Reimport large files?
@@ -23,7 +23,7 @@ def setup_datapath(project_name: str | None = None,
                    config_name:str | None = None):
     """
     Set up data paths.
-    
+
     Args:
         project_name: Name of project
         config_name: Name of config file
@@ -31,8 +31,8 @@ def setup_datapath(project_name: str | None = None,
         data_paths: Dictionary of data paths
     """
     # Pull in configuration
-    config, config_path = bilateralize.load_config(project_name = project_name,
-                                                   config_name = config_name)
+    config, config_path = load_config(project_name = project_name,
+                                      config_name = config_name)
     p_drive = config['p_drive_location']
 
     # Data paths
@@ -58,13 +58,14 @@ def generate_cfdict(message_regions: str,
                     config_name: str | None = None):
     """
     Generate conversion factor dictionary.
-    
+
     Args:
         message_regions: Regional resolution
         project_name: Name of project (e.g., 'newpathways')
         config_name: Name of config file
     """
-    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
+    dict_dir = package_data_path("bilateralize", "node_lists",
+                                 message_regions + "_node_list.yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
@@ -79,25 +80,33 @@ def generate_cfdict(message_regions: str,
     cfdf.columns = ['units', 'country', 'commodity', 'metric', 'year', 'value']
     cfdf = cfdf[cfdf['year'] > 1990]
     cfdf = cfdf[cfdf['units'] == 'KJKG'] #KJ/KG
-    cfdf = cfdf[cfdf['metric'].isin(['NAVERAGE', 'NINDPROD'])] #Average NCV and NCV of production
+    cfdf = cfdf[cfdf['metric'].isin(['NAVERAGE', 'NINDPROD'])] # Mean NCV and NCV
     cfdf = cfdf[cfdf['value'] != 'x']
 
     cfdf['conversion (TJ/t)'] = (cfdf['value'].astype(float) * 1000)*(1e-9)
 
-    cf_out = cfdf.groupby(['country', 'commodity'])['conversion (TJ/t)'].mean().reset_index()
+    cf_out = cfdf.groupby(['country', 'commodity'])\
+                          [['conversion (TJ/t)']].mean().reset_index()
 
     # Link ISO codes
-    cf_cw = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV_country_codes.csv"))
-    cf_out = cf_out.merge(cf_cw, left_on = 'country', right_on = 'IEA COUNTRY', how = 'inner')
+    cf_cw = pd.read_csv(os.path.join(data_paths['iea_web'],
+                                     "CONV_country_codes.csv"))
+    cf_out = cf_out.merge(cf_cw,
+                          left_on = 'country', right_on = 'IEA COUNTRY',
+                          how = 'inner')
 
-    cf_out[message_regions + '_REGION'] = ""
+    regvar = message_regions + '_REGION'
+    cf_out[regvar] = ''
     for k in region_list:
         if "child" in dict_message_regions[k].keys():
-            cf_out[message_regions + '_REGION'] = np.where(cf_out['ISO'].isin(dict_message_regions[k]['child']),
-                                                           k, cf_out[message_regions + '_REGION'])
+            cf_out[regvar] = np.where(cf_out['ISO'].isin(\
+                                          dict_message_regions[k]['child']),\
+                                      k,
+                                      cf_out[regvar])
 
     print('Collapse conversion factors to REGION level')
-    cf_region = cf_out.groupby([message_regions + '_REGION', 'commodity'])['conversion (TJ/t)'].mean().reset_index()
+    cf_region = cf_out.groupby([regvar, 'commodity'])\
+                       [['conversion (TJ/t)']].mean().reset_index()
 
     print('Collapse conversion factors to FUEL level')
     cf_fuel = cf_out.groupby(['commodity'])['conversion (TJ/t)'].mean().reset_index()
@@ -126,7 +135,7 @@ def import_uncomtrade(update_year: int = 2024,
                       config_name: str | None = None):
     """
     Import UN Comtrade data and link to conversion factors, save as CSV and pickle.
-    
+
     Args:
         update_year: Year of last data update
         project_name: Name of project (e.g., 'newpathways')
@@ -153,7 +162,9 @@ def import_uncomtrade(update_year: int = 2024,
         ydf['hs4'] = ydf['k'].str[0:4]
         ydf['hs5'] = ydf['k'].str[0:5]
         ydf['hs6'] = ydf['k'].str[0:6]
-        ydf = ydf[(ydf['hs4'].isin(full_hs_list))|(ydf['hs5'].isin(full_hs_list))|(ydf['hs6'].isin(full_hs_list))]
+        ydf = ydf[(ydf['hs4'].isin(full_hs_list))|\
+                  (ydf['hs5'].isin(full_hs_list))|\
+                  (ydf['hs6'].isin(full_hs_list))].copy()
         df = pd.concat([df, ydf])
 
     print('Save pickle')
@@ -166,12 +177,18 @@ def import_uncomtrade(update_year: int = 2024,
         df['MESSAGE Commodity'] = np.where((df['hs4'].isin(commodity_codes[c]['HS']))|\
                                            (df['hs5'].isin(commodity_codes[c]['HS']))|\
                                            (df['hs6'].isin(commodity_codes[c]['HS'])),
-                                           commodity_codes[c]['MESSAGE Commodity'], df['MESSAGE Commodity'])
+                                           commodity_codes[c]['MESSAGE Commodity'],
+                                           df['MESSAGE Commodity'])
 
-    countrycw =  pd.read_csv(os.path.join(data_paths['baci'], "country_codes_V202401b.csv"))
-    df = df.merge(countrycw[['country_code', 'country_iso3']], left_on = 'i', right_on = 'country_code', how = 'left')
+    countrycw =  pd.read_csv(os.path.join(data_paths['baci'],
+                                          "country_codes_V202401b.csv"))
+    df = df.merge(countrycw[['country_code', 'country_iso3']],
+                  left_on = 'i', right_on = 'country_code',
+                  how = 'left')
     df = df.rename(columns = {'country_iso3': 'i_iso3'})
-    df = df.merge(countrycw[['country_code', 'country_iso3']], left_on = 'j', right_on = 'country_code', how = 'left')
+    df = df.merge(countrycw[['country_code', 'country_iso3']],
+                  left_on = 'j', right_on = 'country_code',
+                  how = 'left')
     df = df.rename(columns = {'country_iso3': 'j_iso3'})
     df = df[['t', 'i', 'j',  'i_iso3', 'j_iso3', 'k', 'MESSAGE Commodity', 'v', 'q']]
 
@@ -183,7 +200,7 @@ def convert_trade(message_regions: str,
                   config_name: str | None = None):
     """
     Convert trade values to energy units.
-    
+
     Args:
         message_regions: Regional resolution
         project_name: Name of project (e.g., 'newpathways')
@@ -194,7 +211,8 @@ def convert_trade(message_regions: str,
 
     df = pd.read_csv(os.path.join(data_paths['baci'], "shortenedBACI.csv"))
 
-    with open(os.path.join(data_paths['iea_web'], "conversion_factors.pickle"), 'rb') as f:
+    with open(os.path.join(data_paths['iea_web'],
+                           "conversion_factors.pickle"), 'rb') as f:
        conversion_factors = pickle.load(f)
     with open(os.path.join(data_paths['iea_web'], "CONV_addl.yaml"), 'r') as f:
         conversion_addl = yaml.safe_load(f)
@@ -209,15 +227,18 @@ def convert_trade(message_regions: str,
     df['HS'] = np.where(df['HS'] == '', df['k'], df['HS'])
 
     # Add MESSAGE regions
-    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + '_node_list.yaml')
+    dict_dir = package_data_path("bilateralize", "node_lists",
+                                 message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
 
     df['MESSAGE Region'] = ''
     for r in region_list:
-        df['MESSAGE Region'] = np.where(df['i_iso3'].isin(dict_message_regions[r]['child']),
-                                        r, df['MESSAGE Region'])
+        df['MESSAGE Region'] = np.where(df['i_iso3'].isin(\
+                                        dict_message_regions[r]['child']),
+                                        r,
+                                        df['MESSAGE Region'])
     # Add IEA conversion factors
     df = df.merge(cf_codes,
                   left_on = 'HS', right_on = 'HS', how = 'left')
@@ -255,7 +276,8 @@ def convert_trade(message_regions: str,
 
     # Add additional conversion factors if missing
     for f in conversion_addl.keys():
-        df['conversion (TJ/t)'] = np.where((df['conversion (TJ/t)'].isnull()) & (df['MESSAGE Commodity'] == f),
+        df['conversion (TJ/t)'] = np.where((df['conversion (TJ/t)'].isnull()) &\
+                                           (df['MESSAGE Commodity'] == f),
                                            conversion_addl[f],
                                            df['conversion (TJ/t)'])
 
@@ -270,11 +292,12 @@ def convert_trade(message_regions: str,
                               'q': 'WEIGHT (t)',
                               'MESSAGE Commodity': 'MESSAGE COMMODITY'})
     df['WEIGHT (t)'] = df['WEIGHT (t)'].astype(str)
-    df = df[df['WEIGHT (t)'].str.contains('NA') == False]
+    df = df[~df['WEIGHT (t)'].str.contains('NA')]
     df['WEIGHT (t)'] = df['WEIGHT (t)'].astype(float)
     df['ENERGY (TJ)'] = df['WEIGHT (t)'] * df['conversion (TJ/t)']
 
-    df = df[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)', 'VALUE (1000USD)']]
+    df = df[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY',
+             'ENERGY (TJ)', 'VALUE (1000USD)']]
 
     return df
 
@@ -283,7 +306,7 @@ def import_iea_gas(project_name: str | None= None,
                    config_name: str | None = None):
     """
     Import IEA data for LNG and pipeline gas.
-    
+
     Args:
         project_name: Name of project (e.g., 'newpathways')
         config_name: Name of config file
@@ -297,23 +320,30 @@ def import_iea_gas(project_name: str | None= None,
     ngd = ngd[ngd['YEAR'] > 1989] # Keep after 1990 only
     ngd = ngd[ngd['PRODUCT'].isin(['LNGTJ', 'PIPETJ'])] # Keep only TJ values
 
-    ngd['ENERGY (TJ)'] = np.where(ngd['VALUE'].isin(['..', 'x','c']), np.nan, ngd['VALUE'])
+    ngd['ENERGY (TJ)'] = np.where(ngd['VALUE'].isin(['..', 'x','c']),
+                                  np.nan,
+                                  ngd['VALUE'])
     ngd['ENERGY (TJ)'] = ngd['ENERGY (TJ)'].astype(float)
 
     ngd['MESSAGE COMMODITY'] = ''
-    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'LNGTJ', 'LNG_shipped', ngd['MESSAGE COMMODITY'])
-    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'PIPETJ', 'gas_piped', ngd['MESSAGE COMMODITY'])
+    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'LNGTJ',
+                                        'LNG_shipped',
+                                        ngd['MESSAGE COMMODITY'])
+    ngd['MESSAGE COMMODITY'] = np.where(ngd['PRODUCT'] == 'PIPETJ',
+                                        'gas_piped',
+                                        ngd['MESSAGE COMMODITY'])
 
     cf_cw = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV_country_codes.csv"))
     for t in ['EXPORTER', 'IMPORTER']:
         ngd = ngd.merge(cf_cw, left_on = t, right_on = 'IEA COUNTRY', how = 'left')
         ngd[t] = ngd['ISO']
         ngd = ngd.drop(['ISO', 'IEA COUNTRY'], axis = 1)
-        ngd = ngd[ngd[t].isnull() == False]
+        ngd = ngd[~ngd[t].isnull()]
 
     ngd = ngd[['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY', 'ENERGY (TJ)']]
 
-    ngd = ngd.groupby(['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'])['ENERGY (TJ)'].sum().reset_index()
+    ngd = ngd.groupby(['YEAR', 'EXPORTER', 'IMPORTER',
+                       'MESSAGE COMMODITY'])['ENERGY (TJ)'].sum().reset_index()
 
     return ngd
 
@@ -322,7 +352,7 @@ def import_iea_balances(project_name:str | None = None,
                         config_name:str | None = None):
     """
     Import IEA balances and save as CSV.
-    
+
     Args:
         project_name: Name of project (e.g., 'newpathways')
         config_name: Name of config file
@@ -336,7 +366,8 @@ def import_iea_balances(project_name:str | None = None,
                          sep=r'\s+', header=None)
 
     ieadf = pd.concat([ieadf1, ieadf2])
-    ieadf.columns = ['region', 'fuel', 'year', 'flow', 'unit', 'value', 'statisticalerror']
+    ieadf.columns = ['region', 'fuel', 'year', 'flow',
+                     'unit', 'value', 'statisticalerror']
 
     iea_out = pd.DataFrame()
     for t in ['EXPORTS', 'IMPORTS']:
@@ -359,7 +390,7 @@ def check_iea_balances(indf,
                        config_name:str | None= None):
     """
     Check against IEA balances.
-    
+
     Args:
         indf: Input dataframe
         project_name: Name of project (e.g., 'newpathways')
@@ -370,45 +401,64 @@ def check_iea_balances(indf,
     iea = pd.read_csv(os.path.join(data_paths['iea_web'], "WEB_TRADEFLOWS.csv"))
     ieacw = pd.read_csv(os.path.join(data_paths['iea_web'], "country_crosswalk.csv"))
     iea = iea.merge(ieacw, left_on = 'REGION', right_on = 'REGION', how = 'left')
-    iea['IEA-WEB VALUE'] = np.where(iea['FLOW'] == 'EXPORTS', iea['IEA-WEB VALUE'] * -1, iea['IEA-WEB VALUE'])
+    iea['IEA-WEB VALUE'] = np.where(iea['FLOW'] == 'EXPORTS',
+                                    iea['IEA-WEB VALUE'] * -1,
+                                    iea['IEA-WEB VALUE'])
 
-    indf = indf[indf['MESSAGE COMMODITY'].isin(['gas_piped', 'LNG_shipped']) == False].copy() # LNG and pipe gas are directly from IEA
+    # LNG and pipe gas are directly from IEA
+    indf = indf[~indf['MESSAGE COMMODITY'].isin(['gas_piped', 'LNG_shipped'])].copy()
 
     dict_dir = package_data_path("bilateralize", 'commodity_codes.yaml')
     with open(dict_dir, "r") as f:
         commodity_codes = yaml.safe_load(f)
 
-    iea['COMMODITY'] = ''; indf['COMMODITY'] = ''
+    iea['COMMODITY'] = ''
+    indf['COMMODITY'] = ''
     for c in commodity_codes.keys():
-        iea['COMMODITY'] = np.where(iea['IEA-WEB COMMODITY'].isin(commodity_codes[c]['IEA-WEB']), c, iea['COMMODITY'])
-        indf['COMMODITY'] = np.where(indf['MESSAGE COMMODITY'] == commodity_codes[c]['MESSAGE Commodity'], c, indf['COMMODITY'])
+        iea['COMMODITY'] = np.where(iea['IEA-WEB COMMODITY'].isin(\
+                                        commodity_codes[c]['IEA-WEB']),
+                                    c,
+                                    iea['COMMODITY'])
+        indf['COMMODITY'] = np.where(indf['MESSAGE COMMODITY'] ==\
+                                        commodity_codes[c]['MESSAGE Commodity'],
+                                     c,
+                                     indf['COMMODITY'])
 
-    exports = indf.groupby(['YEAR', 'EXPORTER', 'COMMODITY'])['ENERGY (TJ)'].sum().reset_index()
-    imports = indf.groupby(['YEAR', 'IMPORTER', 'COMMODITY'])['ENERGY (TJ)'].sum().reset_index()
+    exports = indf.groupby(['YEAR', 'EXPORTER', 'COMMODITY'])\
+                           ['ENERGY (TJ)'].sum().reset_index()
+    imports = indf.groupby(['YEAR', 'IMPORTER', 'COMMODITY'])\
+                           ['ENERGY (TJ)'].sum().reset_index()
 
-    exports = exports.merge(iea[iea['FLOW'] == 'EXPORTS'][['ISO', 'COMMODITY', 'YEAR', 'IEA-WEB UNIT', 'IEA-WEB VALUE']],
+    exports = exports.merge(iea[iea['FLOW'] == 'EXPORTS']\
+                                    [['ISO', 'COMMODITY', 'YEAR',
+                                      'IEA-WEB UNIT', 'IEA-WEB VALUE']],
                             left_on = ['YEAR', 'EXPORTER', 'COMMODITY'],
                             right_on = ['YEAR', 'ISO', 'COMMODITY'],
                             how = 'left')
-    imports = imports.merge(iea[iea['FLOW'] == 'IMPORTS'][['ISO', 'COMMODITY', 'YEAR', 'IEA-WEB UNIT', 'IEA-WEB VALUE']],
+    imports = imports.merge(iea[iea['FLOW'] == 'IMPORTS']\
+                                    [['ISO', 'COMMODITY', 'YEAR',
+                                      'IEA-WEB UNIT', 'IEA-WEB VALUE']],
                             left_on = ['YEAR', 'IMPORTER', 'COMMODITY'],
                             right_on = ['YEAR', 'ISO', 'COMMODITY'],
                             how = 'left')
 
-    exports['DIFFERENCE'] = (exports['ENERGY (TJ)'] - exports['IEA-WEB VALUE'])/exports['IEA-WEB VALUE']
-    imports['DIFFERENCE'] = (imports['ENERGY (TJ)'] - imports['IEA-WEB VALUE'])/imports['IEA-WEB VALUE']
+    exports['DIFFERENCE'] = (exports['ENERGY (TJ)'] - exports['IEA-WEB VALUE'])/\
+                            exports['IEA-WEB VALUE']
+    imports['DIFFERENCE'] = (imports['ENERGY (TJ)'] - imports['IEA-WEB VALUE'])/\
+                            imports['IEA-WEB VALUE']
 
     exports.to_csv(os.path.join(data_paths['iea_diag'], 'iea_calibration_exports.csv'))
     imports.to_csv(os.path.join(data_paths['iea_diag'], 'iea_calibration_imports.csv'))
 
 
-# Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe
+# Aggregate UN Comtrade data to MESSAGE regions
 def reformat_to_parameter(indf, message_regions, parameter_name,
                           project_name = None, config_name = None,
                           exports_only = False):
     """
-    Aggregate UN Comtrade data to MESSAGE regions and set up historical activity parameter dataframe.
-    
+    Aggregate UN Comtrade data to MESSAGE regions and
+    set up historical activity parameter dataframe.
+
     Args:
         indf: Input dataframe
         message_regions: Regional resolution
@@ -417,23 +467,30 @@ def reformat_to_parameter(indf, message_regions, parameter_name,
         config_name: Name of config file
         exports_only: If True, only include exports
     """
-    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + '_node_list.yaml')
+    dict_dir = package_data_path("bilateralize", "node_lists",
+                                 message_regions + '_node_list.yaml')
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
 
-    indf['EXPORTER REGION'] = ''; indf['IMPORTER REGION'] = ''
+    indf['EXPORTER REGION'] = ''
+    indf['IMPORTER REGION'] = ''
     for t in ['EXPORTER', 'IMPORTER']:
         for r in region_list:
-            indf[t + ' REGION'] = np.where(indf[t].isin(dict_message_regions[r]['child']),
-                                               r, indf[t + ' REGION'])
+            indf[t + ' REGION'] = np.where(indf[t].isin(\
+                                           dict_message_regions[r]['child']),
+                                           r, indf[t + ' REGION'])
 
     # Collapse to regional level
     if parameter_name in ['historical_activity']:
-        indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])['ENERGY (GWa)'].sum().reset_index()
+        indf = indf.groupby(['YEAR', 'EXPORTER REGION', 'IMPORTER REGION',
+                             'MESSAGE COMMODITY'])\
+                        [['ENERGY (GWa)']].sum().reset_index()
         metric_name = 'ENERGY (GWa)'
     elif parameter_name in ['var_cost', 'inv_cost', 'fix_cost']:
-        indf = indf.groupby(['EXPORTER REGION', 'IMPORTER REGION', 'MESSAGE COMMODITY'])[['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
+        indf = indf.groupby(['EXPORTER REGION', 'IMPORTER REGION',
+                             'MESSAGE COMMODITY'])\
+                        [['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
         indf['PRICE (MUSD/GWa)'] = indf['VALUE (MUSD)']/indf['ENERGY (GWa)']
         indf['YEAR'] = 'broadcast'
         metric_name = 'PRICE (MUSD/GWa)'
@@ -445,14 +502,16 @@ def reformat_to_parameter(indf, message_regions, parameter_name,
     exdf = message_ix.make_df(parameter_name,
                               node_loc = indf['EXPORTER REGION'],
                               technology = indf['MESSAGE COMMODITY'] + '_exp_' +\
-                                  indf['IMPORTER REGION'].str.replace(message_regions + '_', '').str.lower(),
+                                  indf['IMPORTER REGION'].str.replace(\
+                                    message_regions + '_', '').str.lower(),
                               year_act = indf['YEAR'], year_vtg = indf['YEAR'],
                               value = indf[metric_name],
                               mode = 'M1',
                               time = 'year')
     outdf = exdf.copy()
+
     # Add MESSAGE columns for imports
-    if exports_only == False:
+    if not exports_only:
         imdf = message_ix.make_df(parameter_name,
                                   node_loc = indf['IMPORTER REGION'],
                                   technology = indf['MESSAGE COMMODITY'] + '_imp',
@@ -471,7 +530,7 @@ def build_historical_activity(message_regions = 'R12',
                               reimport_IEA = False, reimport_BACI = False):
     """
     Build historical activity parameter dataframe.
-    
+
     Args:
         message_regions: Regional resolution
         project_name: Name of project (e.g., 'newpathways')
@@ -479,11 +538,11 @@ def build_historical_activity(message_regions = 'R12',
         reimport_IEA: If True, reimport IEA data
         reimport_BACI: If True, reimport BACI data
     """
-    if reimport_IEA == True:
+    if reimport_IEA:
         generate_cfdict(message_regions = message_regions,
                         project_name = project_name, config_name = config_name)
         import_iea_balances(project_name = project_name, config_name = config_name)
-    if reimport_BACI == True:
+    if reimport_BACI:
         import_uncomtrade(project_name = project_name, config_name = config_name)
 
     bacidf = convert_trade(message_regions = message_regions,
@@ -494,14 +553,18 @@ def build_historical_activity(message_regions = 'R12',
     ngdf = import_iea_gas(project_name = project_name, config_name = config_name)
 
     tradedf = bacidf.merge(ngdf,
-                           left_on = ['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'],
-                           right_on = ['YEAR', 'EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'],
+                           left_on = ['YEAR', 'EXPORTER',
+                                      'IMPORTER', 'MESSAGE COMMODITY'],
+                           right_on = ['YEAR', 'EXPORTER',
+                                       'IMPORTER', 'MESSAGE COMMODITY'],
                            how = 'outer')
     tradedf['ENERGY (TJ)'] = tradedf['ENERGY (TJ)_x']
-    tradedf['ENERGY (TJ)'] = np.where(tradedf['MESSAGE COMMODITY'].isin(['LNG_shipped', 'gas_piped']),
+    tradedf['ENERGY (TJ)'] = np.where(tradedf['MESSAGE COMMODITY'].isin(\
+                                      ['LNG_shipped', 'gas_piped']),\
                                       tradedf['ENERGY (TJ)_y'], tradedf['ENERGY (TJ)'])
     tradedf['ENERGY (TJ)'] = tradedf['ENERGY (TJ)'].astype(float)
-    tradedf = tradedf[['YEAR', 'EXPORTER', 'IMPORTER', 'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)']].reset_index()
+    tradedf = tradedf[['YEAR', 'EXPORTER', 'IMPORTER',
+                       'HS', 'MESSAGE COMMODITY', 'ENERGY (TJ)']].reset_index()
 
     check_iea_balances(indf = tradedf,
                        project_name = project_name, config_name = config_name)
@@ -511,7 +574,8 @@ def build_historical_activity(message_regions = 'R12',
     outdf = reformat_to_parameter(indf = tradedf,
                                   message_regions = message_regions,
                                   parameter_name = 'historical_activity',
-                                  project_name = project_name, config_name = config_name)
+                                  project_name = project_name,
+                                  config_name = config_name)
     outdf['unit'] = 'GWa'
 
     return outdf.drop_duplicates()
@@ -522,34 +586,39 @@ def build_hist_new_capacity_trade(message_regions = 'R12',
                                   config_name: str | None = None):
     """
     Build historical new capacity based on activity.
-    
+
     Args:
         message_regions: Regional resolution
         project_name: Name of project (e.g., 'newpathways')
         config_name: Name of config file
     """
     indf = build_historical_activity(message_regions = message_regions,
-                                     project_name = project_name, config_name = config_name)
+                                     project_name = project_name,
+                                     config_name = config_name)
 
     basedf = pd.DataFrame()
     for y in list(range(2000, 2030, 5)):
-        ydf = indf[['node_loc', 'technology', 'mode', 'time', 'unit']].drop_duplicates().copy()
+        ydf = indf[['node_loc', 'technology',
+                    'mode', 'time', 'unit']].drop_duplicates().copy()
         ydf['year_act'] = y
         basedf = pd.concat([basedf, ydf])
 
-    df = basedf.merge(indf, left_on = ['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'],
-                      right_on = ['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'], how = 'outer')
+    df = basedf.merge(indf,
+                      left_on = ['node_loc', 'technology', 'mode',
+                                 'time', 'unit', 'year_act'],
+                      right_on = ['node_loc', 'technology', 'mode',
+                                  'time', 'unit', 'year_act'],
+                      how = 'outer')
 
     df['year_5'] = round(df['year_act']/5, 0)*5 # Get closest 5
-    df['year_act'] = np.where(df['year_act'] == 2023, 2025, df['year_act']) #TODO: 2023 to 2025 only for now
-    #df = df.groupby(['node_loc', 'technology', 'mode', 'time', 'unit', 'year_act'])['value'].sum().reset_index()
+    df['year_act'] = np.where(df['year_act'] == 2023, 2025, df['year_act'])
     df = df[df['year_act'] == df['year_5']]
     df['value'] = np.where(df['value'].isnull(), 0, df['value'])
 
     df = df.sort_values(by = ['node_loc', 'technology', 'mode', 'time', 'year_act'])
     df['value'] = df['value'].diff()
 
-    df = df[df['year_act'] > 2000] # Start at 2000, this gets ensures diff starts correctly
+    df = df[df['year_act'] > 2000] # Start at 2000, this ensures diff starts correctly
     df['value'] = np.where(df['value'] < 0, 0, df['value'])
     df['year_vtg'] = df['year_act'].astype(int)
 
@@ -563,13 +632,13 @@ def build_historical_price(message_regions = 'R12',
                            config_name: str | None = None):
     """
     Build historical price parameter dataframe.
-    
+
     Args:
         message_regions: Regional resolution
         project_name: Name of project (e.g., 'newpathways')
         config_name: Name of config file
     """
-    if reimport_BACI == True:
+    if reimport_BACI:
         import_uncomtrade(project_name = project_name, config_name = config_name)
 
     bacidf = convert_trade(message_regions = message_regions,
@@ -583,20 +652,22 @@ def build_historical_price(message_regions = 'R12',
     bacidf['VALUE (MUSD)'] = bacidf['VALUE (1000USD)'] * 1e-3
     bacidf['PRICE (MUSD/GWa)'] = bacidf['VALUE (MUSD)']/bacidf['ENERGY (GWa)']
 
-    bacidf = bacidf[bacidf['ENERGY (TJ)']>0.5] # Keep linkages that are larger than 0.5TJ
+    bacidf = bacidf[bacidf['ENERGY (TJ)']>0.5] # Keep linkages >0.5TJ
 
-    bacidf = bacidf.groupby(['EXPORTER', 'IMPORTER', 'MESSAGE COMMODITY'])[['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
+    bacidf = bacidf.groupby(['EXPORTER',
+                             'IMPORTER',
+                             'MESSAGE COMMODITY'])\
+                             [['ENERGY (GWa)', 'VALUE (MUSD)']].sum().reset_index()
     bacidf['YEAR'] = 'broadcast'
 
     outdf = reformat_to_parameter(indf = bacidf,
                                   message_regions = message_regions,
                                   parameter_name = 'var_cost',
-                                  project_name = project_name, config_name = config_name,
+                                  project_name = project_name,
+                                  config_name = config_name,
                                   exports_only = True)
     outdf['unit'] = 'USD/GWa'
 
-    #outdf['value'] = np.where(outdf['value'] > 500, 500, outdf['value'])
-    #outdf['value'] = np.where(outdf['value'] < 150, 150, outdf['value'])
     outdf['value'] = outdf['value'] * 0.50 # TODO: Fix this deflator (2024-2005?)
     outdf['value'] = round(outdf['value'], 0)
 
@@ -611,7 +682,7 @@ def build_hist_new_capacity_flow(infile: str,
                                  annual_mileage = 100000):
     """
     Build historical new capacity of a given maritime shipment (e.g., LNG tanker).
-    
+
     Args:
         infile: Name of GISIS input file
         ship_type: Ship type (e.g., 'LNG_tanker_loil')
@@ -621,7 +692,8 @@ def build_hist_new_capacity_flow(infile: str,
         annual_mileage: Average annual mileage of ship in km
     """
     # Regions
-    dict_dir = package_data_path("bilateralize", "node_lists", message_regions + "_node_list.yaml")
+    dict_dir = package_data_path("bilateralize", "node_lists",
+                                 message_regions + "_node_list.yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != 'World']
@@ -633,8 +705,10 @@ def build_hist_new_capacity_flow(infile: str,
     # Get MESSAGE regions
     imodf[message_regions] = ''
     for r in region_list:
-        imodf[message_regions] = np.where(imodf['Flag ISO3'].isin(dict_message_regions[r]['child']),
-                                          r, imodf[message_regions])
+        imodf[message_regions] = np.where(imodf['Flag ISO3'].isin(\
+                                            dict_message_regions[r]['child']),
+                                          r,
+                                          imodf[message_regions])
 
     # Calculate capacity
     if imodf['Gross Tonnage'].dtype in ['O','str']:
@@ -644,7 +718,8 @@ def build_hist_new_capacity_flow(infile: str,
     # Collapse
     imodf['Year of Build (5)'] = round(imodf['Year of Build'].astype(float)/5)*5
     imodf = imodf.groupby([message_regions,
-                           'Year of Build (5)'])[['Capacity (Mt-km)']].sum().reset_index()
+                           'Year of Build (5)'])\
+                            [['Capacity (Mt-km)']].sum().reset_index()
     imodf['Capacity (Mt-km) (Annualized)'] = round(imodf['Capacity (Mt-km)']/5,0)
 
     # Parameterize
