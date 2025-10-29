@@ -1,5 +1,5 @@
 report_config:
-    table_def: "message_ix_models.report.legacy.emissions_tables"
+    table_def: "message_data.tools.post_processing.materials_dac_tables"
     aggr_def: "default_aggregates.csv"
     var_def: "default_variable_definitions.csv"
     unit_yaml: "GDP_shock_units.yaml"
@@ -96,13 +96,13 @@ run_tables:
     Emi_N2O:
         root: Emissions|N2O
         active: True
-        function: retr_othemi
+        function: retr_NONCO2emi
         args: {"var": "N2O",
                "units": "kt N2O/yr"}
     Emi_CH4:
         root: Emissions|CH4
         active: True
-        function: retr_othemi
+        function: retr_NONCO2emi
         args: {"var": "CH4",
                "units": "Mt CH4/yr"}
     Emi_NH3:
