@@ -1,0 +1,12 @@
+var:
+  "elec_from_storage:nl-t-ya-m-c"
+
+iamc_prefix:
+  Secondary Energy|Electricity|
+
+unit: GWa
+
+vars:
+  Storage:
+    filter: { technology: [ stor_ppl ], mode: M1, commodity: electr, level: secondary }
+    short: se_elec_stor

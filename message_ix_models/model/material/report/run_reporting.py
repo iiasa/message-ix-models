@@ -693,7 +693,15 @@ def run_se(rep: "Reporter", model_name: str, scen_name: str):
     dfs = []
     ut.add_se_elec(rep)
     ut.add_heat_calcs(rep)
-    for group in ["se_elec", "se_elec_curt", "se_elec_thermal", "se_fuels", "se_heat"]:
+    ut.add_se_elec_stor(rep)
+    for group in [
+        "se_elec",
+        "se_elec_curt",
+        "se_elec_thermal",
+        "se_fuels",
+        "se_heat",
+        "se_elec_storage",
+    ]:
         cfg = load_config("energy", group)
         df = pyam_df_from_rep(rep, cfg.var, cfg.mapping)
         dfs.append(

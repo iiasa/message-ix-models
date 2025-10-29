@@ -37,8 +37,3 @@ vars:
                             csp_sm3_res6,
                             csp_sm3_res7 ], mode: M1, commodity: electr, level: secondary }
     short: se_elec_csp2
-
-# TODO: needs to be queried from in not out
-#  Storage Losses:
-#    filter: { technology: [ stor_ppl ], mode: M1, commodity: electr, level: secondary }
-#    short: se_elec_stor

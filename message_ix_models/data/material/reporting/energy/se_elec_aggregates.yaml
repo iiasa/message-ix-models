@@ -10,7 +10,6 @@ iamc_prefix:
 
 unit: GWa
 
-
 level_1:
   Solar|CSP:
     short: se_elec_csp

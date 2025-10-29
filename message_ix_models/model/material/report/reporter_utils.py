@@ -693,6 +693,13 @@ def add_se_elec(rep: "Reporter") -> Key:
     return se
 
 
+def add_se_elec_stor(rep: "Reporter") -> Key:
+    k = Key(f"{IN}:nl-t-ya-m-c")
+    k1 = rep.add(k["stor_ppl"], "select", k, {"t": ["stor_ppl"]})
+    k3 = rep.add("elec_from_storage:nl-t-ya-m-c", "mul", k1, Quantity(3))
+    return k3
+
+
 def add_cement_heat_share_calculations(rep: "Reporter"):
     rep.set_filters(
         t=[
@@ -1168,7 +1175,6 @@ def concat_hist_and_act(rep: "Reporter"):
         "historical_activity:nl-t-ya-m",
         sums=True,
     )
-    return
 
 
 if __name__ == "__main__":
