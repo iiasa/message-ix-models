@@ -7,6 +7,7 @@ Next release
 - :mod:`message_ix_models` is tested and compatible with `Python 3.14 <https://www.python.org/downloads/release/python-3140/>`__ (:pull:`443`).
 - Support for Python 3.9 is dropped (:pull:`443`), as it has reached end-of-life.
 - Fix water module reporting failures and improve calculations (:issue:`407`, :pull:`396`).
+- Add :py:`clone`, :py:`solve`, and :py:`scen` parameters to :func:`.water.cli.cooling` (:pull:`446`).
 - Improve and extend :doc:`/material/index` (:pull:`418`).
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
 - Improve :mod:`.model.transport` (:pull:`392`, :pull:`430`).
@@ -25,6 +26,7 @@ Next release
 - Extend :mod:`.digsy.structure.SCENARIO` (:pull:`392`).
 - :class:`.ItemSchemeEnumType` automatically creates aliases
   for SDMX item scheme members with "-" in their IDs (:pull:`392`).
+- Adjust cost assumptions for coal technologies in SSP3 (:pull:`446`).
 - Expand :doc:`develop` documentation (:pull:`423`)
   with material previously in :mod:`message_data` docs.
 - Update documentation for
