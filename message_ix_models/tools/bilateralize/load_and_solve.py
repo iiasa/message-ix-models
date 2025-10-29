@@ -16,7 +16,7 @@ import ixmp
 import message_ix
 import pandas as pd
 
-from message_ix_models.tools.bilateralize.utils import load_config, get_logger
+from message_ix_models.tools.bilateralize.utils import get_logger, load_config
 
 
 # %% Remove existing trade technologies
@@ -287,7 +287,7 @@ def solve_or_save(
         scen.solve(solver, solve_options=dict(lpmethod=4))
 
         print("Unlock run ID of the scenario")
-        runid = scen.run_id()
+        # runid = scen.run_id()
         # mp._backend.jobj.unlockRunid(runid)
 
 

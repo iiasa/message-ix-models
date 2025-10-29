@@ -88,7 +88,6 @@ def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
     test_context.time = "year"
     test_context.type_reg = "global"
     test_context.regions = "R12"
-    nodes = get_codes(f"node/{test_context.regions}")
 
     mp = test_context.get_platform()
     scenario_info = {

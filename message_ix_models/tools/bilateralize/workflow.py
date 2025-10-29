@@ -23,7 +23,13 @@ config_name = None  # Name of the config file (e.g., 'config.yaml')
 prepare_edit_files(project_name=project_name, config_name=config_name)
 
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
-bare_to_scenario(project_name=project_name, config_name=config_name)
+trade_dict = bare_to_scenario(project_name=project_name, config_name=config_name)
 
 # Update MESSAGEix scenario(s) with bilateralized dictionary and solve scenario
-load_and_solve(project_name=project_name, config_name=config_name, solve=True)
+load_and_solve(
+    project_name=project_name,
+    config_name=config_name,
+    trade_dict=trade_dict,
+    log=log,
+    solve=True,
+)
