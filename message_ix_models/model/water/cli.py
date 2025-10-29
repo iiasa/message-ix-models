@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 import click
 
@@ -6,6 +7,8 @@ from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util.click import common_params, scenario_param
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
 log = logging.getLogger(__name__)
 
 
@@ -232,7 +235,15 @@ def cooling_cli(context, regions, rcps, rels):
     cooling(context, regions, rcps, rels)
 
 
-def cooling(context, regions, rcps, rels, solve=True, clone=True, scen=None):
+def cooling(
+    context: "Context",
+    regions,
+    rcps,
+    rels,
+    solve: bool = True,
+    clone: bool = True,
+    scen: "Scenario | None" = None,
+) -> None:
     """Build and solve model with new cooling technologies.
 
     Use the --url option to specify the base scenario.
