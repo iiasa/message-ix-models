@@ -1095,7 +1095,8 @@ def generate_edit_files(log,
 
             # Flow capacity constraints
             for par in ['growth_new_capacity', 'initial_new_capacity']:
-                parameter_outputs = build_flow_capacity_constraints(par = par, **flow_args)
+                parameter_outputs = build_flow_capacity_constraints(par = par,
+                                                                    **flow_args)
 
             # Flow costs
             parameter_outputs = build_flow_FIcosts(**flow_args)

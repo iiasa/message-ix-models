@@ -15,9 +15,9 @@ def haversine_distance(lat1: float,
                        lat2: float,
                        lon2: float) -> float:
     """
-    Calculate the great circle distance between two points 
+    Calculate the great circle distance between two points
     on the earth (specified in decimal degrees) using the Haversine formula.
-    
+
     Args:
         lat1: Latitude of the first point
         lon1: Longitude of the first point
@@ -43,10 +43,10 @@ def haversine_distance(lat1: float,
 def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
     """
     Read CSV file with port data and calculate distances between all port combinations.
-    
+
     Args:
         df: DataFrame containing Port, Latitude, Longitude columns
-    
+
     Outputs:
         DataFrame with columns 'Port1', 'Port2', 'Distance_km'
     """
@@ -101,16 +101,17 @@ def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
 def calculate_distance(regional_specification: str = 'R12'):
     '''
     Run distance calculation.
-    
+
     Args:
         regional_specification: MESSAGE regional specification (e.g., "R12")
     Outputs:
-        CSV file in data/bilateralize/distances/ that includes the 
+        CSV file in data/bilateralize/distances/ that includes
         distances for regional specification
     '''
     # Specify the path to CSV file
-    csv_path = os.path.abspath(os.path.join(os.path.dirname(package_data_path("bilateralize")),
-                                            "bilateralize", "distances"))
+    csv_path = os.path.abspath(
+                    os.path.join(os.path.dirname(package_data_path("bilateralize")),
+                                 "bilateralize", "distances"))
 
     infile = pd.read_excel(os.path.join(csv_path, 'distances.xlsx'),
                            sheet_name = 'node_ports')

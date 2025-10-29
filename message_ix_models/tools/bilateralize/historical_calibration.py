@@ -517,9 +517,9 @@ def build_historical_activity(message_regions = 'R12',
     return outdf.drop_duplicates()
 
 # Calculate historical new capacity based on activity
-def build_historical_new_capacity_trade(message_regions = 'R12',
-                           project_name: str | None = None,
-                           config_name: str | None = None):
+def build_hist_new_capacity_trade(message_regions = 'R12',
+                                  project_name: str | None = None,
+                                  config_name: str | None = None):
     """
     Build historical new capacity based on activity.
     
@@ -603,17 +603,17 @@ def build_historical_price(message_regions = 'R12',
     return outdf
 
 # Build for historical new capacity of a given maritime shipment (e.g., LNG tanker)
-def build_historical_new_capacity_flow(infile: str,
-                                       ship_type: str,
-                                       message_regions: str = 'R12',
-                                       project_name: str | None = None,
-                                       config_name: str | None = None,
-                                       annual_mileage = 100000):
+def build_hist_new_capacity_flow(infile: str,
+                                 ship_type: str,
+                                 message_regions: str = 'R12',
+                                 project_name: str | None = None,
+                                 config_name: str | None = None,
+                                 annual_mileage = 100000):
     """
     Build historical new capacity of a given maritime shipment (e.g., LNG tanker).
     
     Args:
-        infile: Name of input file
+        infile: Name of GISIS input file
         ship_type: Ship type (e.g., 'LNG_tanker_loil')
         message_regions: Regional resolution
         project_name: Name of project (e.g., 'newpathways')
@@ -642,8 +642,9 @@ def build_historical_new_capacity_flow(infile: str,
     imodf['Capacity (Mt-km)'] = (imodf['Gross Tonnage']/1e6)*annual_mileage
 
     # Collapse
-    imodf['Year of Build (5)'] = round(imodf['Year of Build'].astype(float)/5)*5 # Round year to the nearest 5
-    imodf = imodf.groupby([message_regions, 'Year of Build (5)'])['Capacity (Mt-km)'].sum().reset_index()
+    imodf['Year of Build (5)'] = round(imodf['Year of Build'].astype(float)/5)*5
+    imodf = imodf.groupby([message_regions,
+                           'Year of Build (5)'])[['Capacity (Mt-km)']].sum().reset_index()
     imodf['Capacity (Mt-km) (Annualized)'] = round(imodf['Capacity (Mt-km)']/5,0)
 
     # Parameterize
