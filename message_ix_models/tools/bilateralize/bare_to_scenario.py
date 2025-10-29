@@ -234,7 +234,8 @@ def build_parameter_sheets(log,
 
 def bare_to_scenario(project_name: str | None = None,
                      config_name: str | None = None,
-                     scenario_parameter_name: str = "scenario_parameters.pkl"):
+                     scenario_parameter_name: str = "scenario_parameters.pkl",
+                     p_drive_access: bool = False):
     """
     Move data from bare files to a dictionary to update a MESSAGEix scenario
 
@@ -262,89 +263,90 @@ def bare_to_scenario(project_name: str | None = None,
                                         project_name = project_name,
                                         config_name = config_name)
 
-    # Historical calibration for trade technology
-    histdf = build_historical_activity(message_regions = message_regions,
-                                       project_name = project_name,
-                                       config_name = config_name,
-                                       reimport_BACI = False)
-    histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
-    histdf['year_act'] = np.where((histdf['year_act'] == 2023),
-                                  2025, # TODO: 2023 to 2025 only for now
-                                  histdf['year_act'])
-    histdf = histdf[histdf['value'] > 0]
-    histdf['technology'] = histdf['technology'].str.replace('ethanol_', 'eth_')
-    histdf['technology'] = histdf['technology'].str.replace('fueloil_', 'foil_')
+    if p_drive_access:
+        # Historical calibration for trade technology
+        histdf = build_historical_activity(message_regions = message_regions,
+                                        project_name = project_name,
+                                        config_name = config_name,
+                                        reimport_BACI = False)
+        histdf = histdf[histdf['year_act'].isin([2000, 2005, 2010, 2015, 2020, 2023])]
+        histdf['year_act'] = np.where((histdf['year_act'] == 2023),
+                                    2025, # TODO: 2023 to 2025 only for now
+                                    histdf['year_act'])
+        histdf = histdf[histdf['value'] > 0]
+        histdf['technology'] = histdf['technology'].str.replace('ethanol_', 'eth_')
+        histdf['technology'] = histdf['technology'].str.replace('fueloil_', 'foil_')
 
-    histnc = build_hist_new_capacity_trade(message_regions = message_regions,
-                                           project_name = project_name,
-                                           config_name = config_name)
+        histnc = build_hist_new_capacity_trade(message_regions = message_regions,
+                                            project_name = project_name,
+                                            config_name = config_name)
 
-    hist_tec = {}
-    for tec in [c for c in covered_tec if c not in ['crudeoil_piped',
-                                                    'foil_piped',
-                                                    'loil_piped']]:
-        add_tec = tec_config[tec][tec + '_trade']['trade_technology'] + '_exp'
-        hist_tec[tec] = add_tec
+        hist_tec = {}
+        for tec in [c for c in covered_tec if c not in ['crudeoil_piped',
+                                                        'foil_piped',
+                                                        'loil_piped']]:
+            add_tec = tec_config[tec][tec + '_trade']['trade_technology'] + '_exp'
+            hist_tec[tec] = add_tec
 
-    for tec in hist_tec.keys():
-        log.info('Add historical activity for ' + tec)
-        add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
-        trade_dict[tec]['trade']['historical_activity'] = add_df
+        for tec in hist_tec.keys():
+            log.info('Add historical activity for ' + tec)
+            add_df = histdf[histdf['technology'].str.contains(hist_tec[tec])]
+            trade_dict[tec]['trade']['historical_activity'] = add_df
 
-        log.info('Add historical new capacity for ' + tec)
-        add_df = histnc[histnc['technology'].str.contains(hist_tec[tec])]
-        trade_dict[tec]['trade']['historical_new_capacity'] = add_df
+            log.info('Add historical new capacity for ' + tec)
+            add_df = histnc[histnc['technology'].str.contains(hist_tec[tec])]
+            trade_dict[tec]['trade']['historical_new_capacity'] = add_df
 
-    # Historical new capacity for maritime shipping
-    shipping_fuel_dict = config['shipping_fuels']
-    # TODO: Add coal
-    hist_crude_loil = build_hist_new_capacity_flow(infile = 'Crude Tankers.csv',
-                                                   ship_type = 'crudeoil_tanker_loil',
-                                                   project_name = project_name,
-                                                   config_name = config_name)
-    hist_lh2_loil = build_hist_new_capacity_flow(infile = 'LH2 Tankers.csv',
-                                                 ship_type = 'lh2_tanker_loil',
-                                                 project_name = project_name,
-                                                 config_name = config_name)
-    hist_lng = pd.DataFrame()
-    for f in ['loil', 'LNG']:
-        hist_lng_f = build_hist_new_capacity_flow(infile = 'LNG Tankers.csv',
-                                                  ship_type = 'LNG_tanker_'+f,
-                                                  project_name = project_name,
-                                                  config_name = config_name)
-        hist_lng_f['value'] *= shipping_fuel_dict['LNG_tanker']['LNG_tanker_' + f]
-        hist_lng = pd.concat([hist_lng, hist_lng_f])
+        # Historical new capacity for maritime shipping
+        shipping_fuel_dict = config['shipping_fuels']
+        # TODO: Add coal
+        hist_cr_loil = build_hist_new_capacity_flow(infile = 'Crude Tankers.csv',
+                                                    ship_type = 'crudeoil_tanker_loil',
+                                                    project_name = project_name,
+                                                    config_name = config_name)
+        hist_lh2_loil = build_hist_new_capacity_flow(infile = 'LH2 Tankers.csv',
+                                                     ship_type = 'lh2_tanker_loil',
+                                                     project_name = project_name,
+                                                     config_name = config_name)
+        hist_lng = pd.DataFrame()
+        for f in ['loil', 'LNG']:
+            hist_lng_f = build_hist_new_capacity_flow(infile = 'LNG Tankers.csv',
+                                                      ship_type = 'LNG_tanker_'+f,
+                                                      project_name = project_name,
+                                                      config_name = config_name)
+            hist_lng_f['value'] *= shipping_fuel_dict['LNG_tanker']['LNG_tanker_' + f]
+            hist_lng = pd.concat([hist_lng, hist_lng_f])
 
-    hist_oil = pd.DataFrame()
-    for f in ['loil', 'foil', 'eth']:
-        hist_oil_f = build_hist_new_capacity_flow(infile = 'Oil Tankers.csv',
-                                                  ship_type = 'oil_tanker_'+f,
-                                                  project_name = project_name,
-                                                  config_name = config_name)
-        hist_oil_f['value'] *= shipping_fuel_dict['oil_tanker']['oil_tanker_' + f]
-        hist_oil = pd.concat([hist_oil, hist_oil_f])
-    hist_eth = hist_oil[hist_oil['technology'] != 'oil_tanker_foil']
+        hist_oil = pd.DataFrame()
+        for f in ['loil', 'foil', 'eth']:
+            hist_oil_f = build_hist_new_capacity_flow(infile = 'Oil Tankers.csv',
+                                                      ship_type = 'oil_tanker_'+f,
+                                                      project_name = project_name,
+                                                      config_name = config_name)
+            hist_oil_f['value'] *= shipping_fuel_dict['oil_tanker']['oil_tanker_' + f]
+            hist_oil = pd.concat([hist_oil, hist_oil_f])
+        hist_eth = hist_oil[hist_oil['technology'] != 'oil_tanker_foil']
 
-    trade_dict['crudeoil_shipped']['flow']['historical_new_capacity'] = hist_crude_loil
-    trade_dict['lh2_shipped']['flow']['historical_new_capacity'] = hist_lh2_loil
-    trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
-    trade_dict['eth_shipped']['flow']['historical_new_capacity'] = hist_eth
-    trade_dict['foil_shipped']['flow']['historical_new_capacity'] = hist_oil
-    trade_dict['loil_shipped']['flow']['historical_new_capacity'] = hist_oil
+        trade_dict['crudeoil_shipped']['flow']['historical_new_capacity'] = hist_cr_loil
+        trade_dict['lh2_shipped']['flow']['historical_new_capacity'] = hist_lh2_loil
+        trade_dict['LNG_shipped']['flow']['historical_new_capacity'] = hist_lng
+        trade_dict['eth_shipped']['flow']['historical_new_capacity'] = hist_eth
+        trade_dict['foil_shipped']['flow']['historical_new_capacity'] = hist_oil
+        trade_dict['loil_shipped']['flow']['historical_new_capacity'] = hist_oil
 
-    # Historical activity should only be added for technologies in input
-    for tec in covered_tec:
-        input_tecs = trade_dict[tec]['trade']['input']['technology']
+        # Historical activity should only be added for technologies in input
+        for tec in covered_tec:
+            input_tecs = trade_dict[tec]['trade']['input']['technology']
 
-        if 'historical_activity' in trade_dict[tec]['trade'].keys():
-            tdf = trade_dict[tec]['trade']['historical_activity']
-            tdf = tdf[tdf['technology'].isin(input_tecs)]
-            trade_dict[tec]['trade']['historical_activity'] = tdf
+            if 'historical_activity' in trade_dict[tec]['trade'].keys():
+                tdf = trade_dict[tec]['trade']['historical_activity']
+                tdf = tdf[tdf['technology'].isin(input_tecs)]
+                trade_dict[tec]['trade']['historical_activity'] = tdf
 
-        if 'historical_new_capacity' in trade_dict[tec]['trade'].keys():
-            tdf = trade_dict[tec]['trade']['historical_new_capacity']
-            tdf = tdf[tdf['technology'].isin(input_tecs)]
-            trade_dict[tec]['trade']['historical_new_capacity'] = tdf
+            if 'historical_new_capacity' in trade_dict[tec]['trade'].keys():
+                tdf = trade_dict[tec]['trade']['historical_new_capacity']
+                tdf = tdf[tdf['technology'].isin(input_tecs)]
+                trade_dict[tec]['trade']['historical_new_capacity'] = tdf
 
     # Ensure flow technologies are only added once
     covered_flow_tec: list[str] = []
@@ -359,3 +361,5 @@ def bare_to_scenario(project_name: str | None = None,
     tdf = os.path.join(os.path.dirname(config_path), scenario_parameter_name)
     with open(tdf, 'wb') as file_handler:
         pickle.dump(trade_dict, file_handler)
+
+    return trade_dict
