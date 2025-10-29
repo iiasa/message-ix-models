@@ -85,7 +85,7 @@ class Config:
 
     def check_mapping(self) -> None:
         """Assert that :attr:`mapping` has the correct structure and is complete."""
-        assert self.mapping.empty or set(self.mapping.index.names) <= set("clmt")
+        assert self.mapping.empty or set(self.mapping.index.names) <= set("clmte")
         assert {"iamc_name", "short_name", "unit", "original_unit"} == set(
             self.mapping.columns
         )
