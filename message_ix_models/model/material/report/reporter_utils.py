@@ -1177,6 +1177,15 @@ def concat_hist_and_act(rep: "Reporter"):
     )
 
 
+
+
+def add_eff(rep: "Reporter"):
+    k = Key(f"{OUT}:nl-t-ya-m-c")
+    k_el = rep.add(k["elec"], "select", k, {"c": ["electr"]}, sums=True)
+    k2 = Key(f"{IN}:nl-t-ya-m-c")
+    rep.add("eff", "div", k2, k_el[0].drop("c"))
+
+
 if __name__ == "__main__":
     from message_ix_models import Context
 
