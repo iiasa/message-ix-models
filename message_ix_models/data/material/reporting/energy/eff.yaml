@@ -1,0 +1,99 @@
+var:
+  "eff:nl-t-ya-m-c"
+
+iamc_prefix:
+  Efficiency|Electricity|
+
+unit: "%"
+
+vars:
+  Biomass|Solids|w/ CCS|1:
+    filter: { technology: [ bio_istig_ccs ], mode: M1, commodity: biomass }
+    short: eff_elec_bio_istig_ccs
+  Biomass|Solids|w/o CCS|1:
+    filter: { technology: [ bio_istig ], mode: M1, commodity: biomass }
+    short: eff_elec_bio_istig
+  Biomass|Solids|w/ CCS|2:
+    filter: { technology: [ bio_ppl_bio_ppl_co2scr ], mode: M1, commodity: biomass }
+    short: eff_elec_bio_ppl_ccs
+  Biomass|Solids|w/o CCS|2:
+    filter: { technology: [ bio_ppl ], mode: M1, commodity: biomass }
+    short: eff_elec_bio_ppl
+
+#  Biomass|Gas|w/o CCS|1:
+#    filter: { technology: [ gas_cc ], mode: biogas, commodity: biogas }
+#    short: eff_elec_biogas_cc_wo_ccs
+#  Biomass|Gas|w/ CCS|1:
+#    filter: { technology: [ gas_cc_g_ppl_co2scr ], mode: biogas, commodity: biogas }
+#    short: eff_elec_biogas_cc_ccs
+#  Biomass|Gas|w/o CCS|2:
+#    filter: { technology: [ gas_ppl ], mode: biogas, commodity: biogas }
+#    short: eff_elec_biogas_ppl_wo_ccs
+#  Biomass|Gas|w/ CCS|2:
+#    filter: { technology: [ gas_ppl_g_ppl_co2scr ], mode: biogas, commodity: biogas }
+#    short: eff_elec_biogas_ppl_w_ccs
+#  Biomass|Gas|w/o CCS|3:
+#    filter: { technology: [ gas_ct ], mode: biogas, commodity: biogas }
+#    short: eff_elec_biogas_ct
+
+  Coal|w/o CCS|1:
+    filter: { technology: [ igcc ], mode: M1, commodity: coal }
+    short: eff_elec_igcc_wo_ccs
+  Coal|w/ CCS|1:
+    filter: { technology: [ igcc_ccs ], mode: M1, commodity: coal }
+    short: eff_elec_igcc_ccs
+  Coal|w/ CCS|2:
+    filter: { technology: [ coal_adv_ccs ], mode: M1, commodity: coal }
+    short: eff_elec_coal_adv_ccs
+  Coal|w/o CCS|2:
+    filter: { technology: [ coal_adv ], mode: M1, commodity: coal }
+    short: eff_elec_coal_adv_wo_ccs
+  Coal|w/ CCS|3:
+    filter: { technology: [ coal_ppl_c_ppl_co2scr ], mode: M1, commodity: coal }
+    short: eff_elec_coal_ppl_w_ccs
+  Coal|w/o CCS|3:
+    filter: { technology: [ coal_ppl ], mode: M1, commodity: coal }
+    short: eff_elec_coal_ppl_wo_ccs
+  Coal|w/o CCS|4:
+    filter: { technology: [ coal_ppl_u ], mode: M1, commodity: coal }
+    short: eff_elec_coal_ppl_u
+
+  Gas|w/o CCS|1:
+    filter: { technology: [ gas_cc ], mode: M1, commodity: gas }
+    short: eff_elec_gas_cc_wo_ccs
+  Gas|w/ CCS|1:
+    filter: { technology: [ gas_cc_g_ppl_co2scr ], mode: M1, commodity: gas }
+    short: eff_elec_gas_cc_ccs
+  Gas|w/o CCS|2:
+    filter: { technology: [ gas_ppl ], mode: M1, commodity: gas }
+    short: eff_elec_gas_ppl_wo_ccs
+  Gas|w/ CCS|2:
+    filter: { technology: [ gas_ppl_g_ppl_co2scr ], mode: M1, commodity: gas }
+    short: eff_elec_gas_ppl_w_ccs
+  Gas|w/o CCS|3:
+    filter: { technology: [ gas_ct ], mode: M1, commodity: gas }
+    short: eff_elec_gas_ct
+
+#  Hydrogen|1:
+#    filter: { technology: [ gas_cc ], mode: hydrogen, commodity: hydrogen }
+#    short: eff_elec_hydrogen_cc
+#  Hydrogen|2:
+#    filter: { technology: [ gas_ppl ], mode: hydrogen, commodity: hydrogen }
+#    short: eff_elec_hydrogen_ppl
+#  Hydrogen|3:
+#    filter: { technology: [ gas_ct ], mode: hydrogen, commodity: hydrogen }
+#    short: eff_elec_hydrogen_ct
+
+  Nuclear:
+    filter: { technology: [ nuc_lc, nuc_hc ], mode: M1, commodity: u5 }
+    short: eff_elec_nuc
+
+  Oil|w/o CCS|1:
+    filter: { technology: [ loil_cc ], mode: M1, commodity: lightoil }
+    short: eff_elec_loil_cc
+  Oil|w/o CCS|2:
+    filter: { technology: [ loil_ppl ], mode: M1, commodity: lightoil }
+    short: eff_elec_loil_ppl
+  Oil|w/o CCS|3:
+    filter: { technology: [ foil_ppl ], mode: M1, commodity: fueloil }
+    short: eff_elec_foil_ppl

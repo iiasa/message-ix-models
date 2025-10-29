@@ -4,6 +4,7 @@ import pyam
 from message_ix import Reporter
 
 from message_ix_models.model.material.report import reporter_utils
+from message_ix_models.model.material.report.reporter_utils import add_eff
 from message_ix_models.model.material.report.run_reporting import (
     calculate_clinker_ccs_energy,
     format_reporting_df,
@@ -94,11 +95,27 @@ def run_pe(rep: Reporter, model_name: str, scen_name: str):
     return df
 
 
+def run_eff(rep, model_name: str, scen_name: str):
+    add_eff(rep)
+    config = load_config("energy", "eff")
+    df = pyam_df_from_rep(rep, config.var, config.mapping)
+    df = format_reporting_df(
+        df,
+        config.iamc_prefix,
+        model_name,
+        scen_name,
+        config.unit,
+        config.mapping,
+    )
+    return df
+
+
 def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs = []
     reporter_utils.pe_gas(rep)
-    dfs.append(run_fe_reporting(rep, model_name, scen_name))
+    dfs.append(run_eff(rep, model_name, scen_name))
     dfs.append(run_se(rep, model_name, scen_name))
+    dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_other(rep, model_name, scen_name))
     dfs.append(run_co2(rep, model_name, scen_name))
     # dfs.append(run_pe(rep, model_name, scen_name))
@@ -107,7 +124,9 @@ def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     py_df = pyam.concat(dfs)
     calculate_clinker_ccs_energy(scenario, rep, py_df)
 
-    py_df.aggregate_region(py_df.variable, append=True)
+    py_df.aggregate_region(
+        [i for i in py_df.variable if "Efficiency" not in i], append=True
+    )
     py_df.filter(variable="Share*", keep=False, inplace=True)
     # py_df.filter(
     #     year=[i for i in scenario.set("year") if i >= scenario.firstmodelyear],
