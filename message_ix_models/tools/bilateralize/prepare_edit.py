@@ -16,6 +16,7 @@ import shutil
 from pathlib import Path
 
 import message_ix
+from typing import Dict, Any
 import numpy as np
 import pandas as pd
 import yaml
@@ -50,7 +51,7 @@ def folders_for_trade(covered_tec: list[str]):
 def define_networks(log,
                     message_regions:str,
                     covered_tec: list[str],
-                    config_dict: dict[str, str],
+                    config_dict: Dict[str, Dict[str, Any]],
                     data_path: str):
     """
     Define network dataframe
@@ -986,7 +987,7 @@ def generate_edit_files(log,
     message_regions = config_base.get('scenario', {}).get('regions')
     covered_tec = config_base.get('covered_trade_technologies', {})
 
-    config_dict = {}
+    config_dict: Dict[str, Dict[str, Any]] = {}
     for tec in covered_tec:
         tec_dict = config_tec.get(tec).get(tec + '_trade', {})
         for k in tec_dict.keys():
@@ -1013,7 +1014,7 @@ def generate_edit_files(log,
                        time_origin= 'year',
                        time_dest = 'year')
 
-    parameter_outputs = dict() # This will get populated
+    parameter_outputs: Dict[str, Dict[str, Any]] = {} # This will get populated
     for tec in covered_tec:
         parameter_outputs[tec] = dict(trade = dict(),
                                       flow = dict())

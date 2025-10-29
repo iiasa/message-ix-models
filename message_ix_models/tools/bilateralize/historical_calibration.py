@@ -125,8 +125,8 @@ def generate_cfdict(message_regions: str,
                  'ISO': cf_iso}
 
     picklepath = os.path.join(data_paths['iea_web'],"conversion_factors.pickle")
-    with open(picklepath, 'wb') as f:
-        pickle.dump(full_dict, f)
+    with open(picklepath, 'wb') as file_handler:
+        pickle.dump(full_dict, file_handler)
 
 # Import UN Comtrade data and link to conversion factors
 # This does not include natural gas pipelines or LNG, which are from IEA
@@ -169,8 +169,8 @@ def import_uncomtrade(update_year: int = 2024,
 
     print('Save pickle')
     picklepath = os.path.join(data_paths['baci'], "full_2005-2023.pickle")
-    with open(picklepath, 'wb') as f:
-        pickle.dump(df, f)
+    with open(picklepath, 'wb') as file_handler:
+        pickle.dump(df, file_handler)
 
     df['MESSAGE Commodity'] = ''
     for c in commodity_codes.keys():
@@ -212,10 +212,10 @@ def convert_trade(message_regions: str,
     df = pd.read_csv(os.path.join(data_paths['baci'], "shortenedBACI.csv"))
 
     with open(os.path.join(data_paths['iea_web'],
-                           "conversion_factors.pickle"), 'rb') as f:
-       conversion_factors = pickle.load(f)
-    with open(os.path.join(data_paths['iea_web'], "CONV_addl.yaml"), 'r') as f:
-        conversion_addl = yaml.safe_load(f)
+                           "conversion_factors.pickle"), 'rb') as file_handler:
+       conversion_factors = pickle.load(file_handler)
+    with open(os.path.join(data_paths['iea_web'], "CONV_addl.yaml"), 'r') as file_handler:
+        conversion_addl = yaml.safe_load(file_handler)
     cf_codes = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV_hs.csv"))
 
     df['k'] = df['k'].astype(str)

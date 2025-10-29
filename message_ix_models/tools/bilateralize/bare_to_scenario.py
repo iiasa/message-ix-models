@@ -14,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from typing import Dict, Any
 
 from message_ix_models.tools.bilateralize.historical_calibration import (
     build_hist_new_capacity_flow,
@@ -189,9 +190,7 @@ def build_parameter_sheets(log,
 
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
 
-        data_dict = {}
-        data_dict['trade'] = {}
-        data_dict['flow'] = {}
+        data_dict: Dict[str, Dict[str, Any]] = {"trade": {}, "flow": {}}
 
         for ty in ['trade', 'flow']:
             if ty == 'trade':
@@ -358,5 +357,5 @@ def bare_to_scenario(project_name: str | None = None,
 
     # Save trade_dictionary
     tdf = os.path.join(os.path.dirname(config_path), scenario_parameter_name)
-    with open(tdf, 'wb') as f:
-        pickle.dump(trade_dict, f)
+    with open(tdf, 'wb') as file_handler:
+        pickle.dump(trade_dict, file_handler)

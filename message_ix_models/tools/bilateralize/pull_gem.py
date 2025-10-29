@@ -10,6 +10,8 @@ import message_ix
 import numpy as np
 import pandas as pd
 import yaml
+
+from message_ix_models.tools.bilateralize.utils import load_config
 from message_ix_models.util import package_data_path
 
 oil_pipeline_file = 'GEM-GOIT-Oil-NGL-Pipelines-2025-03.xlsx'
@@ -29,8 +31,8 @@ def gem_region(project_name: str | None = None,
         config_name: Name of config file
     """
 
-    config, config_path = bilateralize.load_config(project_name = project_name,
-                                                   config_name = config_name)
+    config, config_path = load_config(project_name = project_name,
+                                      config_name = config_name)
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     message_regions = config['scenario']['regions']
@@ -68,8 +70,8 @@ def import_gem(input_file: str | Path,
     """
 
     # Pull in configuration
-    config, config_path = bilateralize.load_config(project_name = project_name,
-                                                   config_name = config_name)
+    config, config_path = load_config(project_name = project_name,
+                                      config_name = config_name)
     p_drive = config['p_drive_location']
 
     # Data paths
@@ -166,7 +168,7 @@ def import_gem(input_file: str | Path,
                                 "bare_files", "flow_technology")
     export_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
     if not os.path.isdir(export_dir):
-        os.makedirs(export_dir)
+        os.makedirs(Path(export_dir))
 
     df.to_csv(os.path.join(export_dir, "GEM.csv"))
 

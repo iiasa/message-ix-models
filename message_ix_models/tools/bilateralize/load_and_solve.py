@@ -62,9 +62,9 @@ def add_trade_sets(scen: message_ix.Scenario,
             add_list = set(list(trade_dict[tec]['flow']['input'][s].unique()) +\
                             list(trade_dict[tec]['flow']['output'][s].unique()))
             setlist = setlist.union(add_list)
-        setlist = list(setlist)
+        setlist_out = list(setlist)
 
-        new_sets[s] = setlist
+        new_sets[s] = setlist_out
 
     with scen.transact("Add new sets for " + tec):
         for s in ['technology', 'level', 'commodity', 'mode']:
@@ -152,7 +152,7 @@ def update_bunker_fuels(scen: message_ix.Scenario,
     """
     Update bunker fuels
     """
-    bunker_tec = config_tec.get(tec).get(tec + '_trade').get('bunker_technology')
+    bunker_tec = config_tec[tec][tec + '_trade']['bunker_technology']
     if bunker_tec is not None:
         for btec in bunker_tec.keys():
             bunkerdf_in = scen.par('input',
@@ -209,7 +209,7 @@ def remove_pao_coal_constraint(scen: message_ix.Scenario,
     """
     Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM
     """
-    if remove_pao_coal_constraint:
+    if MESSAGEix_GLOBIOM:
         with scen.transact("Remove PAO coal and gas constraints on primary energy"):
             for rel in ['domestic_coal', 'domestic_gas']:
                 log.info('Removing constraints on PAO primary energy: ' + rel)
@@ -240,15 +240,17 @@ def solve_or_save(mp: ixmp.Platform,
                   scen: message_ix.Scenario,
                   solve: bool = False,
                   to_gdx: bool = False,
-                  gdx_location: str | None = None):
+                  gdx_location: str | None = None,
+                  target_model: str | None = None,
+                  target_scen: str | None = None):
     """
     Solve or save scenario.
     """
-    if to_gdx and not solve:
+    if to_gdx and not solve and gdx_location is not None:
         save_to_gdx(mp = mp,
                     scenario = scen,
-                    output_path = Path(os.path.join(gdx_location,
-                    'MsgData_{target_model}_{target_scen}.gdx')))
+                    output_path = os.path.join(gdx_location,
+                    f'MsgData_{target_model}_{target_scen}.gdx'))
 
     if solve:
         solver = "MESSAGE"
@@ -366,4 +368,6 @@ def load_and_solve(trade_dict,
                   scen = scen,
                   solve = solve,
                   to_gdx = to_gdx,
-                  gdx_location = gdx_location)
+                  gdx_location = gdx_location,
+                  target_model = target_model,
+                  target_scen = target_scen)

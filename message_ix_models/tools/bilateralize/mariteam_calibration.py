@@ -6,7 +6,8 @@ Calibration with MariTEAM output
 import numpy as np
 import os
 import pandas as pd
-    
+
+from message_ix_models.tools.bilateralize.utils import load_config
 from message_ix_models.util import package_data_path
 
 
@@ -40,8 +41,8 @@ def calibrate_mariteam(covered_tec,
                        project_name: str | None = None,
                        config_name: str | None = None):
     # Data paths
-    config, config_path = bilateralize.load_config(project_name = project_name,
-                                                   config_name = config_name)
+    config, config_path = load_config(project_name = project_name,
+                                      config_name = config_name)
     p_drive = config['p_drive_location']
     data_path = os.path.join(p_drive, "MESSAGE_trade")
     mt_path = os.path.join(data_path, "MariTEAM")
