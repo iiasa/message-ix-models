@@ -1,6 +1,7 @@
 """
 Calculate distances between pairs of ports
 """
+
 import math
 import os
 from itertools import combinations
@@ -10,10 +11,7 @@ import pandas as pd
 from message_ix_models.util import package_data_path
 
 
-def haversine_distance(lat1: float,
-                       lon1: float,
-                       lat2: float,
-                       lon2: float) -> float:
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
     Calculate the great circle distance between two points
     on the earth (specified in decimal degrees) using the Haversine formula.
@@ -32,13 +30,17 @@ def haversine_distance(lat1: float,
     # Haversine formula
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    )
     c = 2 * math.asin(math.sqrt(a))
 
     # Radius of earth in kilometers
     r = 6371
 
     return c * r
+
 
 def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -51,14 +53,14 @@ def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
         DataFrame with columns 'Port1', 'Port2', 'Distance_km'
     """
     # Check if required columns exist
-    required_columns = ['Port', 'Latitude', 'Longitude']
+    required_columns = ["Port", "Latitude", "Longitude"]
     missing_columns = [col for col in required_columns if col not in df.columns]
 
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Remove rows with missing coordinates
-    df_clean = df.dropna(subset=['Latitude', 'Longitude'])
+    df_clean = df.dropna(subset=["Latitude", "Longitude"])
 
     if df_clean.empty:
         raise ValueError("No valid coordinate data found in the file")
@@ -78,28 +80,29 @@ def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
         port2 = df_clean.iloc[j]
 
         distance = haversine_distance(
-            port1['Latitude'], port1['Longitude'],
-            port2['Latitude'], port2['Longitude']
+            port1["Latitude"], port1["Longitude"], port2["Latitude"], port2["Longitude"]
         )
 
-        distances.append({
-            'Port1': port1['Port'],
-            'Port2': port2['Port'],
-            'Distance_km': round(distance, 2)
-        })
+        distances.append(
+            {
+                "Port1": port1["Port"],
+                "Port2": port2["Port"],
+                "Distance_km": round(distance, 2),
+            }
+        )
 
     # Create DataFrame with results
     outdf1 = pd.DataFrame(distances)
 
     # Concatenate other direction too
     outdf2 = outdf1.copy()
-    outdf2 = outdf2.rename(columns = {'Port1': 'Port2',
-                                      'Port2': 'Port1'})
+    outdf2 = outdf2.rename(columns={"Port1": "Port2", "Port2": "Port1"})
     outdf = pd.concat([outdf1, outdf2])
     return outdf
 
-def calculate_distance(regional_specification: str = 'R12'):
-    '''
+
+def calculate_distance(regional_specification: str = "R12"):
+    """
     Run distance calculation.
 
     Args:
@@ -107,25 +110,32 @@ def calculate_distance(regional_specification: str = 'R12'):
     Outputs:
         CSV file in data/bilateralize/distances/ that includes
         distances for regional specification
-    '''
+    """
     # Specify the path to CSV file
     csv_path = os.path.abspath(
-                    os.path.join(os.path.dirname(package_data_path("bilateralize")),
-                                 "bilateralize", "distances"))
+        os.path.join(
+            os.path.dirname(package_data_path("bilateralize")),
+            "bilateralize",
+            "distances",
+        )
+    )
 
-    infile = pd.read_excel(os.path.join(csv_path, 'distances.xlsx'),
-                           sheet_name = 'node_ports')
-    infile = infile[infile['Regionalization'] == regional_specification]
+    infile = pd.read_excel(
+        os.path.join(csv_path, "distances.xlsx"), sheet_name="node_ports"
+    )
+    infile = infile[infile["Regionalization"] == regional_specification]
 
     # Calculate distances
     df = calculate_port_distances(infile)
 
     # Add regions back
-    for i in ['1', '2']:
-        df = df.merge(infile[['Node', 'Port']],
-                      left_on = 'Port' + i, right_on = 'Port', how = 'left')
-        df = df.rename(columns = {'Node': 'Node' + i})
-    df = df[['Node1', 'Port1', 'Node2', 'Port2', 'Distance_km']]
+    for i in ["1", "2"]:
+        df = df.merge(
+            infile[["Node", "Port"]], left_on="Port" + i, right_on="Port", how="left"
+        )
+        df = df.rename(columns={"Node": "Node" + i})
+    df = df[["Node1", "Port1", "Node2", "Port2", "Distance_km"]]
 
-    df.to_csv(os.path.join(csv_path, regional_specification + "_distances.csv"),
-              index = False)
+    df.to_csv(
+        os.path.join(csv_path, regional_specification + "_distances.csv"), index=False
+    )
