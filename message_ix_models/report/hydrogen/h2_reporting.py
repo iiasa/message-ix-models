@@ -30,7 +30,7 @@ def pyam_df_from_rep(
         for col in mapping_df.index.names
     }
     rep.set_filters(**filters_dict)
-    df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l"))
+    df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l-e"))
 
     # Use join to merge data - this allows partial index matching
     # (e.g. emissions only need t,m but output needs t,m,c,l)

@@ -11,6 +11,6 @@ unit: Mt/yr
 vars:
   Energy|Supply|LH2:
     filter:
-      { technology: [h2_liq, lh2_bal, lh2_exp, lh2_imp, lh2_regas, lh2_t_d] }
+      { technology: [h2_liq, lh2_bal, lh2_exp, lh2_imp, lh2_regas, lh2_t_d], emission: H2_leak }
     short:
       emi_lh2_fgt_en_sup_lh2
