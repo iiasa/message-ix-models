@@ -30,6 +30,5 @@ load_and_solve(
     project_name=project_name,
     config_name=config_name,
     trade_dict=trade_dict,
-    log=log,
     solve=True,
 )

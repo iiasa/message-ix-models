@@ -9,7 +9,6 @@ import pytest
 from message_ix import Scenario
 
 from message_ix_models import Context
-from message_ix_models.model.structure import get_codes
 from message_ix_models.tools.bilateralize.bare_to_scenario import bare_to_scenario
 from message_ix_models.tools.bilateralize.load_and_solve import (
     add_trade_parameters,
