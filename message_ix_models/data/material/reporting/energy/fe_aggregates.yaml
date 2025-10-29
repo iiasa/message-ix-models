@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  in
+  "in:nl-t-ya-m-c-l:FE"
 
 iamc_prefix:
   Final Energy|
@@ -24,10 +24,14 @@ level_2:
     short: fe_pe_el_rt
     components:
       [ fe_pe_other_el_sp_rt ]
+  Industry|Gases|Biomass:
+    short: fe_pe_gas
+    components:
+      [ fe_pe_cement_gases_bio, fe_pe_aluminum_gases_bio, fe_pe_steel_gases_bio, fe_pe_other_gases_bio ]
   Industry|Gases|Gas:
     short: fe_pe_gas
     components:
-      [ fe_pe_cement_gas, fe_pe_aluminum_gas, fe_pe_steel_gas, fe_pe_other_gas ]
+      [ fe_pe_cement_gases_gas, fe_pe_aluminum_gases_gas, fe_pe_steel_gases_gas, fe_pe_other_gases_gas ]
   Industry|Gases:
     short: fe_pe_gases
     components:
@@ -123,7 +127,7 @@ level_1:
   Industry|Chemicals|High-Value Chemicals|Gases:
     short: fe_pe_hvc_gases
     components:
-      [ fe_pe_hvc_gas]
+      [ fe_pe_hvc_gases_gas, fe_pe_hvc_gases_bio ]
   Industry|Chemicals|High-Value Chemicals|Liquids:
     short: fe_pe_hvc_liq
     components:
@@ -202,7 +206,7 @@ level_1:
   Industry|Non-Metallic Minerals|Cement|Gases:
     short: fe_pe_cement_gases
     components:
-      [ fe_pe_cement_gas ]
+      [ fe_pe_cement_gases_gas, fe_pe_cement_gases_bio ]
 
   # aluminum
   Industry|Non-Ferrous Metals|Aluminium|Electricity:
@@ -228,7 +232,7 @@ level_1:
   Industry|Non-Ferrous Metals|Aluminium|Gases:
     short: fe_pe_aluminum_gases
     components:
-      [ fe_pe_aluminum_gas ]
+      [ fe_pe_aluminum_gases_gas, fe_pe_aluminum_gases_bio ]
 
   # TODO: Electricity could be further differentiated by process in fe_reporting.yaml
   # iron and steel
@@ -242,7 +246,7 @@ level_1:
   Industry|Iron and Steel|Gases:
     short: fe_pe_steel_gases
     components:
-      [ fe_pe_steel_gas, fe_pe_steel_gases_coal ]
+      [ fe_pe_steel_gases_gas, fe_pe_steel_gases_bio, fe_pe_steel_gases_coal ]
   Industry|Iron and Steel|Liquids:
     short: fe_pe_steel_liq
     components:
@@ -265,7 +269,7 @@ level_1:
   Industry|Other Sector|Gases:
     short: fe_pe_other_gases
     components:
-      [ fe_pe_other_gas ]
+      [ fe_pe_other_gases_gas, fe_pe_other_gases_bio ]
   Industry|Other Sector|Hydrogen:
     short: fe_pe_other_h2
     components:

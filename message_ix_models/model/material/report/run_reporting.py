@@ -7,6 +7,7 @@ import pyam
 from message_ix_models.model.material.report.reporter_utils import (
     add_biometh_final_share,
     add_cement_heat_share_calculations,
+    add_fe_key,
     add_heat_calcs,
     add_se_elec,
 )
@@ -158,6 +159,7 @@ def run_ch4_reporting(rep, model_name: str, scen_name: str) -> pyam.IamDataFrame
 
 def run_fe_reporting(rep: "Reporter", model: str, scenario: str) -> pd.DataFrame:
     """Generate reporting for industry final energy variables."""
+    add_fe_key(rep)
     dfs = []
 
     config = load_config("energy", "fe")

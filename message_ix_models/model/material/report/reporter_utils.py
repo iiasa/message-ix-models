@@ -907,11 +907,9 @@ def gas_consumer(rep: "Reporter", name: str, tecs: list[str], ccs: bool = True) 
             "gas_cc": {"addon": "g_ppl_co2scr", "parents": ["gas_ppl", "gas_cc"]},
         }
         add_non_ccs_gas_consumption(rep, addon_parent_map)
-        k21 = rep.add(
-            in_t["pe_wo_ccs_retro"], "sub", k2.drop("m"), in_t["pe_w_ccs_retro+gas"]
-        )
+        k21 = rep.add(in_t["pe_wo_ccs_retro"], "sub", k2, in_t["pe_w_ccs_retro+gas"])
         return k21
-    return k2.drop("m")
+    return k2  # .drop("m")
 
 
 def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str) -> Key:
@@ -1101,6 +1099,49 @@ def ccs(rep: "Reporter"):
     return
 
 
+def add_fe_key(rep: "Reporter") -> Key:
+    pe_gas(rep)
+    gas_final = [
+        "gas_t_d",
+        "gas_t_d_ch4",
+        "gas_i",
+        "gas_rc",
+        "gas_trp",
+        "furnace_gas_steel",
+        "furnace_gas_cement",
+        "furnace_gas_aluminum",
+        "furnace_gas_petro",
+        "furnace_gas_resins",
+        "dri_gas_steel",
+        "eaf_steel",
+        "gas_NH3",
+        "meth_ng",
+        "dri_gas_ccs_steel",
+        "gas_NH3_ccs",
+    ]
+    k = Key("in:nl-t-ya-m-c-l")
+    rep.add(k["fe_non_gas"], "select", k, {"t": gas_final}, inverse=True)
+    rep.add(k["fe_gases"], "expand_dims", k.drop("l")["pe+gas"], {"l": ["final"]})
+    rep.add(k["FE"], "concat", k["fe_non_gas"], k["fe_gases"])
+    # TODO: mode dimension is is dropped in pe_gas. need to check if can be added with
+    # compatibility for co2 reporting
+    return k["FE"]
+
+
+def concat_hist_and_act(rep: "Reporter"):
+    cat_year = rep.get("cat_year")
+    fmy = cat_year[cat_year["type_year"] == "firstmodelyear"]["year"].values[0]
+    modelyears = list(set(cat_year[cat_year["year"] >= fmy]["year"].values))
+    # hist_years = list(set(cat_year[cat_year["year"] < fmy]["year"].values))
+    k = rep.add(
+        "ACT:nl-t-ya-m:modelyears", "select", "ACT:nl-t-ya-m", {"ya": modelyears}
+    )
+    k2 = rep.add(
+        "ACT:nl-t-ya-m:incl_historical", "concat", k, "historical_activity:nl-t-ya-m"
+    )
+    return
+
+
 if __name__ == "__main__":
     from message_ix_models import Context
 
@@ -1112,6 +1153,7 @@ if __name__ == "__main__":
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     prepare_reporter(ctx, reporter=rep)
-    pe_gas(rep)
+    concat_hist_and_act(rep)
+    add_fe_key(rep)
     ccs(rep)
     print()

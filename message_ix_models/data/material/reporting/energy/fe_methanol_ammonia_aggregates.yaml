@@ -36,7 +36,7 @@ level_1:
   Chemicals|Ammonia|Gases:
     short: fe_nh3_gases
     components:
-      [ fe_nh3_gas ]
+      [ fe_nh3_gases_gas, fe_nh3_gases_bio ]
 
   Chemicals|Methanol|Solids:
     short: fe_meth_solids

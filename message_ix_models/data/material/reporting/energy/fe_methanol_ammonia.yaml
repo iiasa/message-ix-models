@@ -38,7 +38,11 @@ vars:
   Chemicals|Ammonia|Gases|Gas:
     filter:
       { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: gas, level: secondary }
-    short: fe_nh3_gas
+    short: fe_nh3_gases_gas
+  Chemicals|Ammonia|Gases|Biomass:
+    filter:
+      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: biogas, level: secondary }
+    short: fe_nh3_gases_bio
 
 
   Chemicals|Methanol|Electricity:

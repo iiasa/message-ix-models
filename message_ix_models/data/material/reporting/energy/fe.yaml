@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  in
+  "in:nl-t-ya-m-c-l:FE"
 
 iamc_prefix:
   Final Energy|
@@ -117,7 +117,12 @@ vars:
     filter:
       { technology: furnace_gas_petro, mode: high_temp, commodity: gas, level: final }
     short:
-      fe_pe_hvc_gas
+      fe_pe_hvc_gases_gas
+  Industry|Chemicals|High-Value Chemicals|Gases|Biomass:
+    filter:
+      { technology: furnace_gas_petro, mode: high_temp, commodity: biogas, level: final }
+    short:
+      fe_pe_hvc_gases_bio
 
   Industry|Chemicals|High-Value Chemicals|Hydrogen:
     filter:
@@ -210,7 +215,13 @@ vars:
     filter:
       { technology: furnace_gas_cement, mode: high_temp, commodity: gas, level: final }
     short:
-      fe_pe_cement_gas
+      fe_pe_cement_gases_gas
+
+  Industry|Non-Metallic Minerals|Cement|Gases|Biomass:
+    filter:
+      { technology: furnace_gas_cement, mode: high_temp, commodity: biogas, level: final }
+    short:
+      fe_pe_cement_gases_bio
 
   Industry|Non-Metallic Minerals|Cement|Hydrogen:
     filter:
@@ -285,7 +296,12 @@ vars:
     filter:
       { technology: furnace_gas_aluminum, mode: [ high_temp, low_temp ], commodity: gas, level: final }
     short:
-      fe_pe_aluminum_gas
+      fe_pe_aluminum_gases_gas
+  Industry|Non-Ferrous Metals|Aluminium|Gases|Biomass:
+    filter:
+      { technology: furnace_gas_aluminum, mode: [ high_temp, low_temp ], commodity: biogas, level: final }
+    short:
+      fe_pe_aluminum_gases_bio
 
   Industry|Non-Ferrous Metals|Aluminium|Hydrogen:
     filter:
@@ -325,9 +341,14 @@ vars:
   Industry|Iron and Steel|Gases|Gas:
     filter:
       { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: gas, level: final }
-    #TODO: what about dummy_emission?
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gases_gas
+
+  Industry|Iron and Steel|Gases|Biomass:
+    filter:
+      { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: biogas, level: final }
+    short:
+      fe_pe_steel_gases_bio
 
   Industry|Iron and Steel|Gases|Coal:
     filter:
@@ -414,7 +435,12 @@ vars:
     filter:
       { technology: gas_i, mode: M1, commodity: gas, level: final }
     short:
-      fe_pe_other_gas
+      fe_pe_other_gases_gas
+  Industry|Other Sector|Gases|Biomass:
+    filter:
+      { technology: gas_i, mode: M1, commodity: biogas, level: final }
+    short:
+      fe_pe_other_gases_bio
 
   Industry|Other Sector|Heat:
     filter:
@@ -669,6 +695,12 @@ vars:
     filter: { technology: sp_el_RC, commodity: electr, level: final, mode: M1 }
     short: fe_rc_elec_sp
   Residential and Commercial|Gases:
+    filter: { technology: gas_rc, commodity: [ gas, biogas ], level: final, mode: M1 }
+    short: fe_rc_gases
+  Residential and Commercial|Gases|Biomass:
+    filter: { technology: gas_rc, commodity: biogas, level: final, mode: M1 }
+    short: fe_rc_gas_bio
+  Residential and Commercial|Gas:
     filter: { technology: gas_rc, commodity: gas, level: final, mode: M1 }
     short: fe_rc_gas
   Residential and Commercial|Heat:
@@ -678,7 +710,7 @@ vars:
     filter: { technology: h2_fc_RC, commodity: hydrogen, level: final, mode: M1 }
     short: fe_rc_h2_fc
   Residential and Commercial|Hydrogen|Combustion:
-    filter: { technology: h2_rc, commodity: hydrogen, level: final, mode: M1 }
+    filter: { technology: [ gas_rc, h2_rc ], commodity: hydrogen, level: final, mode: M1 }
     short: fe_rc_h2_ic
   Residential and Commercial|Liquids|Biomass:
     filter: { technology: eth_rc, commodity: ethanol, level: final, mode: M1 }
@@ -709,6 +741,12 @@ vars:
     filter: { technology: elec_trp, commodity: electr, level: final, mode: M1 }
     short: fe_trp_elec
   Transportation|Gases:
+    filter: { technology: gas_trp, commodity: [ biogas, gas ], level: final, mode: M1 }
+    short: fe_trp_gases
+  Transportation|Gases|Biomass:
+    filter: { technology: gas_trp, commodity: biogas, level: final, mode: M1 }
+    short: fe_trp_gas_bio
+  Transportation|Gases|Gas:
     filter: { technology: gas_trp, commodity: gas, level: final, mode: M1 }
     short: fe_trp_gas
   Transportation|Hydrogen:
