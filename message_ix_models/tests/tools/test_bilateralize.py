@@ -1,6 +1,7 @@
 """
 Test the bilateralize tool
 """
+
 # Import packages
 import os
 
@@ -26,6 +27,7 @@ from message_ix_models.util import package_data_path
 # Get logger
 log = get_logger(__name__)
 
+
 # Test generate_bare_sheets()
 @pytest.fixture
 def test_generate_edit_files():
@@ -33,22 +35,25 @@ def test_generate_edit_files():
     Checks that required files are generated in both
     edit_files and bare_files directories.
     """
-    config_base, config_path, config_tec = load_config(project_name=None,
-                                                       config_name=None,
-                                                       load_tec_config=True)
+    config_base, config_path, config_tec = load_config(
+        project_name=None, config_name=None, load_tec_config=True
+    )
     data_path = package_data_path("bilateralize")
     data_path = os.path.join(os.path.dirname(data_path), "bilateralize")
 
     generate_edit_files(log=log)
 
-    req_files = ['input', 'output', 'technical_lifetime', 'capacity_factor']
+    req_files = ["input", "output", "technical_lifetime", "capacity_factor"]
 
     for tec in config_tec.keys():
         for file in req_files:
-            assert os.path.isfile(os.path.join(data_path, tec,
-                                               "edit_files", file + ".csv"))
-            assert os.path.isfile(os.path.join(data_path, tec,
-                                               "bare_files", file + ".csv"))
+            assert os.path.isfile(
+                os.path.join(data_path, tec, "edit_files", file + ".csv")
+            )
+            assert os.path.isfile(
+                os.path.join(data_path, tec, "bare_files", file + ".csv")
+            )
+
 
 # Test build_parameter_sheets()
 @pytest.fixture
@@ -56,37 +61,34 @@ def test_build_parameter_sheets():
     """
     Checks that dictionary of parameter dataframes is built correctly.
     """
-    config_base, config_path, config_tec = load_config(project_name=None,
-                                                       config_name=None,
-                                                       load_tec_config=True)
+    config_base, config_path, config_tec = load_config(
+        project_name=None, config_name=None, load_tec_config=True
+    )
 
-    test_dict = bare_to_scenario(project_name=None,
-                                 config_name=None,
-                                 p_drive_access=False)
+    test_dict = bare_to_scenario(
+        project_name=None, config_name=None, p_drive_access=False
+    )
 
     assert isinstance(test_dict, dict)
     assert len(test_dict) == len(config_tec)
     for tec in config_tec.keys():
         assert isinstance(test_dict[tec], dict)
-        assert 'trade' in test_dict[tec].keys()
-        assert 'flow' in test_dict[tec].keys()
+        assert "trade" in test_dict[tec].keys()
+        assert "flow" in test_dict[tec].keys()
+
 
 # Test on scenario
 @pytest.fixture
-def test_bilat_scenario(
-    request: pytest.FixtureRequest,
-    test_context: Context):
-
-    config_base, config_path, config_tec = load_config(project_name=None,
-                                                       config_name=None,
-                                                       load_tec_config=True)
+def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
+    config_base, config_path, config_tec = load_config(
+        project_name=None, config_name=None, load_tec_config=True
+    )
 
     # Set up test scenario
     test_context.time = "year"
     test_context.type_reg = "global"
     test_context.regions = "R12"
     nodes = get_codes(f"node/{test_context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
 
     mp = test_context.get_platform()
     scenario_info = {
@@ -98,48 +100,32 @@ def test_bilat_scenario(
     scen = Scenario(**scenario_info)
 
     # Set up bilateralization dictionary
-    bilat_dict = bare_to_scenario(log=log)
+    bilat_dict = bare_to_scenario(
+        project_name=None, config_name=None, p_drive_access=False
+    )
 
-    covered_tec = config_base.get('covered_trade_technologies')
+    covered_tec = config_base.get("covered_trade_technologies")
 
     for tec in covered_tec:
         # Remove existing technologies related to trade
-        remove_trade_tech(scen = scen,
-                          log = log,
-                          config_tec = config_tec,
-                          tec = tec)
+        remove_trade_tech(scen=scen, log=log, config_tec=config_tec, tec=tec)
 
         # Add to sets: technology, level, commodity, mode
-        add_trade_sets(scen = scen,
-                       log = log,
-                       trade_dict = bilat_dict,
-                       tec = tec)
+        add_trade_sets(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
 
         # Add parameters
-        add_trade_parameters(scen = scen,
-                             log = log,
-                             trade_dict = bilat_dict,
-                             tec = tec)
+        add_trade_parameters(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
 
         # Relation activity, upper, and lower
-        update_relation_parameters(scen = scen,
-                                   log = log,
-                                   trade_dict = bilat_dict,
-                                   tec = tec)
+        update_relation_parameters(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
 
         # Update bunker fuels
-        update_bunker_fuels(scen = scen,
-                            tec = tec,
-                            log = log,
-                            config_tec = config_tec)
+        update_bunker_fuels(scen=scen, tec=tec, log=log, config_tec=config_tec)
 
     # Update additional parameters
-    update_additional_parameters(scen = scen,
-                                 extra_parameter_updates = None)
+    update_additional_parameters(scen=scen, extra_parameter_updates=None)
 
     # Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM
-    remove_pao_coal_constraint(scen = scen,
-                               log = log,
-                               MESSAGEix_GLOBIOM = False)
+    remove_pao_coal_constraint(scen=scen, log=log, MESSAGEix_GLOBIOM=False)
 
     assert True
