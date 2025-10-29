@@ -65,6 +65,18 @@ class Config:
 
         # Remove the "vars" top-level key from the file
         vars = kw.pop("vars")
+        from .reporter_utils import HIST_TRUE
+
+        if HIST_TRUE:
+            replacements = {
+                "out": "out_hist",
+                "in": "in_hist",
+                "ACT": "historical_activity",
+                "rel": "rel_hist",
+            }
+            for old, new in replacements.items():
+                if kw["var"].startswith(old):
+                    kw["var"] = new + kw["var"].removeprefix(old)
 
         # Create a ReporterConfig instance
         result = cls(**kw)
@@ -77,6 +89,16 @@ class Config:
         try:
             with open(path_agg) as f:
                 data_agg = yaml.safe_load(f)
+                if HIST_TRUE:
+                    replacements = {
+                        "out": "out_hist",
+                        "in": "in_hist",
+                        "ACT": "historical_activity",
+                        "rel": "rel_hist",
+                    }
+                    for old, new in replacements.items():
+                        if data_agg["var"].startswith(old):
+                            data_agg["var"] = new + data_agg["var"].removeprefix(old)
         except FileNotFoundError:
             data_agg = dict()  # No aggregates file
 

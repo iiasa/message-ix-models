@@ -4,13 +4,7 @@ import numpy as np
 import pandas as pd
 import pyam
 
-from message_ix_models.model.material.report.reporter_utils import (
-    add_biometh_final_share,
-    add_cement_heat_share_calculations,
-    add_fe_key,
-    add_heat_calcs,
-    add_se_elec,
-)
+from message_ix_models.model.material.report import reporter_utils as ut
 from message_ix_models.util import broadcast
 
 from .config import Config
@@ -159,7 +153,7 @@ def run_ch4_reporting(rep, model_name: str, scen_name: str) -> pyam.IamDataFrame
 
 def run_fe_reporting(rep: "Reporter", model: str, scenario: str) -> pd.DataFrame:
     """Generate reporting for industry final energy variables."""
-    add_fe_key(rep)
+    ut.add_fe_key(rep)
     dfs = []
 
     config = load_config("energy", "fe")
@@ -337,7 +331,7 @@ def split_fe_other(
        object.
     6. Concat the updated variables with the full reporting.
     """
-    add_biometh_final_share(rep, mode="fuel")
+    ut.add_biometh_final_share(rep, mode="fuel")
     # set temporary filter on Reporter to speed up queries
     rep.set_filters(
         t=[
@@ -534,7 +528,7 @@ def split_mto_feedstock(
     rep: "Reporter", py_df_all: pyam.IamDataFrame, model: str, scenario: str
 ) -> pyam.IamDataFrame:
     """Splits Final Energy|Non-Energy Use|*|Liquids|Other values."""
-    add_biometh_final_share(rep, mode="feedstock")
+    ut.add_biometh_final_share(rep, mode="feedstock")
     rep.set_filters(
         t=[
             "meth_bunker",
@@ -697,8 +691,8 @@ def run_prod_reporting(
 
 def run_se(rep: "Reporter", model_name: str, scen_name: str):
     dfs = []
-    add_se_elec(rep)
-    add_heat_calcs(rep)
+    ut.add_se_elec(rep)
+    ut.add_heat_calcs(rep)
     for group in ["se_elec", "se_elec_curt", "se_elec_thermal", "se_fuels", "se_heat"]:
         cfg = load_config("energy", group)
         df = pyam_df_from_rep(rep, cfg.var, cfg.mapping)
@@ -725,7 +719,7 @@ def run_all_categories(
 
 
 def calculate_clinker_ccs_energy(scenario: "Scenario", rep, py_df):
-    add_cement_heat_share_calculations(rep)
+    ut.add_cement_heat_share_calculations(rep)
     df1 = (
         pd.DataFrame(
             rep.get(
@@ -800,12 +794,6 @@ def calculate_clinker_ccs_energy(scenario: "Scenario", rep, py_df):
         f"{prefix}|w/o CCS|Electricity|Other",
         append=True,
     )
-    py_df.multiply(
-        f"{prefix}|Electricity|Other",
-        "Production|Non-Metallic Minerals|Clinker|w/ CCS [Share]",
-        f"{prefix}|w/ CCS|Electricity|Other",
-        append=True,
-    )
     # sum clinker electricity and proportional electricity for CCS
     #   and conventional cement making
     py_df.add(
@@ -814,12 +802,21 @@ def calculate_clinker_ccs_energy(scenario: "Scenario", rep, py_df):
         f"{prefix}|w/o CCS|Electricity",
         append=True,
     )
-    py_df.add(
-        f"{prefix}|w/ CCS|Electricity|Other",
-        f"{prefix} Clinker|w/ CCS|Electricity",
-        f"{prefix}|w/ CCS|Electricity",
-        append=True,
-    )
+    try:
+        py_df.multiply(
+            f"{prefix}|Electricity|Other",
+            "Production|Non-Metallic Minerals|Clinker|w/ CCS [Share]",
+            f"{prefix}|w/ CCS|Electricity|Other",
+            append=True,
+        )
+        py_df.add(
+            f"{prefix}|w/ CCS|Electricity|Other",
+            f"{prefix} Clinker|w/ CCS|Electricity",
+            f"{prefix}|w/ CCS|Electricity",
+            append=True,
+        )
+    except:
+        print("No clinker with CCS production in this scenario.")
 
 
 def run(

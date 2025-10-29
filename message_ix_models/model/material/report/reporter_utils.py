@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from genno import Key, Quantity
 
-from message_ix_models.report import prepare_reporter
+from message_ix_models.report import compat, prepare_reporter
 
 comm_tec_map = {
     "coal": ["meth_coal", "meth_coal_ccs"],
@@ -13,6 +13,20 @@ comm_tec_map = {
 
 if TYPE_CHECKING:
     from message_ix import Reporter
+
+HIST_TRUE: bool = compat.HIST_TRUE
+
+if HIST_TRUE:
+    OUT = "out_hist"
+    IN = "in_hist"
+    REL = "rel_hist"
+    ACT = "historical_activity"
+else:
+    OUT = "out"
+    IN = "in"
+    REL = "rel"
+    ACT = "ACT"
+compat.HIST_TRUE = HIST_TRUE
 
 
 def add_methanol_share_calculations(rep: "Reporter", mode: str = "feedstock"):
@@ -45,26 +59,26 @@ def add_methanol_share_calculations(rep: "Reporter", mode: str = "feedstock"):
     if mode == "feedstock":
         t_filter2.update({"l": ["primary_material"]})
 
-    rep.add("out::methanol-prod", "select", "out:nl-t-ya-c-l", t_filter2)
+    rep.add(f"{OUT}::methanol-prod", "select", f"{OUT}:nl-t-ya-c-l", t_filter2)
     rep.add(
-        "out::methanol-prod-by-tec",
+        f"{OUT}::methanol-prod-by-tec",
         "group_sum",
-        "out::methanol-prod",
+        f"{OUT}::methanol-prod",
         group="t",
         sum="c",
     )
     rep.add(
-        "out::methanol-prod-total",
+        f"{OUT}::methanol-prod-total",
         "group_sum",
-        "out::methanol-prod",
+        f"{OUT}::methanol-prod",
         group=["nl", "ya"],
         sum="t",
     )
     rep.add(
         "share::methanol-prod-by-tec",
         "div",
-        "out::methanol-prod-by-tec",
-        "out::methanol-prod-total",
+        f"{OUT}::methanol-prod-by-tec",
+        f"{OUT}::methanol-prod-total",
     )
     for comm, tecs in comm_tec_map.items():
         rep.add(
@@ -90,19 +104,19 @@ def add_meth_export_calculations(rep: "Reporter", mode: str = "feedstock"):
     """
     add_methanol_share_calculations(rep, mode=mode)
     t_filter2 = {"t": "meth_exp", "m": mode}
-    rep.add("out::methanol-export", "select", "out:nl-t-ya-m", t_filter2)
+    rep.add(f"{OUT}::methanol-export", "select", f"{OUT}:nl-t-ya-m", t_filter2)
     rep.add(
-        "out::methanol-export-total",
+        f"{OUT}::methanol-export-total",
         "group_sum",
-        "out::methanol-export",
+        f"{OUT}::methanol-export",
         group="ya",
         sum="nl",
     )
     for comm in comm_tec_map.keys():
         rep.add(
-            f"out::{comm}methanol-export",
+            f"{OUT}::{comm}methanol-export",
             "mul",
-            "out::methanol-export",
+            f"{OUT}::methanol-export",
             f"share::{comm}-methanol-prod",
         )
 
@@ -122,32 +136,32 @@ def add_meth_import_calculations(rep: "Reporter", mode: str = "feedstock"):
     """
     add_meth_export_calculations(rep, mode=mode)
     t_filter2 = {"t": "meth_imp", "m": mode}
-    rep.add("out::methanol-import", "select", "out:nl-t-ya-m", t_filter2)
+    rep.add(f"{OUT}::methanol-import", "select", f"{OUT}:nl-t-ya-m", t_filter2)
     for comm in comm_tec_map.keys():
         rep.add(
-            f"out::{comm}methanol-export-total",
+            f"{OUT}::{comm}methanol-export-total",
             "group_sum",
-            f"out::{comm}methanol-export",
+            f"{OUT}::{comm}methanol-export",
             group="ya",
             sum="nl",
         )
         rep.add(
             f"share::{comm}methanol-export",
             "div",
-            f"out::{comm}methanol-export-total",
-            "out::methanol-export-total",
+            f"{OUT}::{comm}methanol-export-total",
+            f"{OUT}::methanol-export-total",
         )
         rep.add(
-            f"out::{comm}methanol-import",
+            f"{OUT}::{comm}methanol-import",
             "mul",
-            "out::methanol-import",
+            f"{OUT}::methanol-import",
             f"share::{comm}methanol-export",
         )
         rep.add(
             f"share::{comm}methanol-import",
             "div",
-            f"out::{comm}methanol-import",
-            "out::methanol-prod-total",
+            f"{OUT}::{comm}methanol-import",
+            f"{OUT}::methanol-prod-total",
         )
 
 
@@ -170,28 +184,30 @@ def add_biometh_final_share(rep: "Reporter", mode: str = "feedstock"):
             "t": ["meth_t_d", "furnace_methanol_refining"],
             "m": [mode, "high_temp"],
         }
-    rep.add("in::methanol-final0", "select", "in:nl-t-ya-m", t_filter2)
-    rep.add("in::methanol-final", "sum", "in::methanol-final0", dimensions=["t", "m"])
+    rep.add(f"{IN}::methanol-final0", "select", f"{IN}:nl-t-ya-m", t_filter2)
+    rep.add(
+        f"{IN}::methanol-final", "sum", f"{IN}::methanol-final0", dimensions=["t", "m"]
+    )
     for comm in comm_tec_map.keys():
         rep.add(
-            f"out::{comm}methanol-prod",
+            f"{OUT}::{comm}methanol-prod",
             "mul",
-            "out::methanol-prod-total",
+            f"{OUT}::methanol-prod-total",
             f"share::{comm}-methanol-prod",
         )
         rep.add(
-            f"out::{comm}methanol-final",
+            f"{OUT}::{comm}methanol-final",
             "combine",
-            f"out::{comm}methanol-prod",
-            f"out::{comm}methanol-export",
-            f"out::{comm}methanol-import",
+            f"{OUT}::{comm}methanol-prod",
+            f"{OUT}::{comm}methanol-export",
+            f"{OUT}::{comm}methanol-import",
             weights=[1, -1, 1],
         )
         rep.add(
             f"share::{comm}methanol-final",
             "div",
-            f"out::{comm}methanol-final",
-            "in::methanol-final",
+            f"{OUT}::{comm}methanol-final",
+            f"{IN}::methanol-final",
         )
 
 
@@ -217,14 +233,20 @@ def add_ammonia_non_energy_computations(rep: "Reporter"):
         "c": ["coal", "gas", "fueloil", "biomass"],
     }
     t_filter2 = {"t": ["electr_NH3"], "c": ["electr"]}
-    rep.add("in::nh3-feedstocks1", "select", "in:nl-t-ya-m-c", t_filter1)
-    rep.add("in::nh3-feedstocks2", "select", "in:nl-t-ya-m-c", t_filter2)
+    rep.add(f"{IN}::nh3-feedstocks1", "select", f"{IN}:nl-t-ya-m-c", t_filter1)
+    rep.add(f"{IN}::nh3-feedstocks2", "select", f"{IN}:nl-t-ya-m-c", t_filter2)
     rep.add(
-        "in::nh3-feedstocks", "concat", "in::nh3-feedstocks1", "in::nh3-feedstocks2"
+        f"{IN}::nh3-feedstocks",
+        "concat",
+        f"{IN}::nh3-feedstocks1",
+        f"{IN}::nh3-feedstocks2",
     )
 
     rep.add(
-        "in::nh3-process-energy", "sub", "in::nh3-feedstocks", "out::nh3-non-energy"
+        f"{IN}::nh3-process-energy",
+        "sub",
+        f"{IN}::nh3-feedstocks",
+        f"{OUT}::nh3-non-energy",
     )
 
 
@@ -251,8 +273,8 @@ def add_methanol_non_energy_computations(rep: "Reporter"):
         "t": tecs,
         "c": ["coal", "gas", "biomass", "hydrogen"],
     }
-    k1 = Key("in:nl-t-ya-m-c")
-    k2 = Key("out:nl-t-ya-m-c")
+    k1 = Key(f"{IN}:nl-t-ya-m-c")
+    k2 = Key(f"{OUT}:nl-t-ya-m-c")
     rep.add(k1["meth-feedstocks"], "select", k1, t_filter2, sums=True)
     t_filter2 = {
         "t": tecs,
@@ -260,17 +282,17 @@ def add_methanol_non_energy_computations(rep: "Reporter"):
     }
     rep.add(k2["meth-non-energy"], "select", k2, t_filter2, sums=True)
     k = rep.add(
-        "in:nl-t-ya-m:meth-process-energy",
+        f"{IN}:nl-t-ya-m:meth-process-energy",
         "sub",
-        "in:nl-t-ya-m:meth-feedstocks",
-        "out:nl-t-ya-m:meth-non-energy",
+        f"{IN}:nl-t-ya-m:meth-feedstocks",
+        f"{OUT}:nl-t-ya-m:meth-non-energy",
     )
     return k
 
 
 def add_pass_out_turbine_inp(rep: "Reporter", po_tecs_filter, po_filter):
     """Prepare reporter to compute regional pass-out turbine input"""
-    rel = Key("rel:r-nl-t-ya")
+    rel = Key(f"{REL}:r-nl-t-ya")
     rel1 = rel.drop("t", "r")
     rel2 = rel.drop("r")
     k_util = Key("util_rate:nl-ya:po_turbine")
@@ -299,19 +321,19 @@ def add_pass_out_turbine_inp(rep: "Reporter", po_tecs_filter, po_filter):
     # calculate average pass-out turbine input per active year
     # usually uniformly set to 0.2, computed just for robustness
     eff = Key("eff:nl-t-ya-m-c")
-    k_in = Key("in:nl-t-ya-m-c")
-    rep.add(eff, "div", k_in, "ACT:nl-t-ya-m")
+    k_in = Key(f"{IN}:nl-t-ya-m-c")
+    rep.add(eff, "div", k_in, f"{ACT}:nl-t-ya-m:")
     rep.add(eff[tec], "select", eff, {"t": tec})
     inp = Key("input_coeff:nl-t-ya-m-c")
     rep.add(inp["po_turbine"], "mul", kappa, eff[tec])
 
     # calculate maximum potential pass-out turbine input per power technology
-    out = Key("out:nl-t-ya-m-c")
+    out = Key(f"{OUT}:nl-t-ya-m-c")
     rep.add(k_in["elec+po_turbine_max"], "mul", inp["po_turbine"], out)
     # allocate pass-out turbine input to all tecs
     rep.add(k_in["elec+po_turbine"], "mul", k_in["elec+po_turbine_max"], k_util)
     # allocate pass-out turbine heat output to all tecs by scaling input with io ratio
-    k = Key("out:nl-t-ya-m:heat+po_turbine")
+    k = Key(f"{OUT}:nl-t-ya-m:heat+po_turbine")
     k_heat = rep.add(
         k["wrong_commodity"],
         "div",
@@ -344,14 +366,14 @@ def add_pass_out_turbine_inp(rep: "Reporter", po_tecs_filter, po_filter):
 
 
 def add_heat_calcs(rep: "Reporter") -> Key:
-    k = Key("out:nl-t-ya-m-c")
+    k = Key(f"{OUT}:nl-t-ya-m-c")
     tec_filter = {"c": ["d_heat"]}
     rep.add(k["district_heat"], "select", k, tec_filter)
     rep.add(
         k["district_heat2"],
         "concat",
         k["district_heat"],
-        "out:nl-t-ya-m:heat+po_turbine",
+        f"{OUT}:nl-t-ya-m:heat+po_turbine",
     )
     return k["district_heat2"]
 
@@ -366,10 +388,10 @@ def add_ccs_addon_calcs(rep: "Reporter", addon_parent_map):
           and subtract proportional to share
     4) concat to one dataframe for all CCS addons
     """
-    act = Key("ACT:nl-t-ya")
-    ou_t = Key("out:nl-t-ya-m-c:elec_wo_po_turbine")
+    act = Key(f"{ACT}:nl-t-ya:")
+    ou_t = Key(f"{OUT}:nl-t-ya-m-c:elec_wo_po_turbine")
     ou = ou_t.drop("t")
-    k_in = Key("in:nl-t-ya-m-c")
+    k_in = Key(f"{IN}:nl-t-ya-m-c")
     sh = Key("share:nl-t-ya:")
     for parent, map in addon_parent_map.items():
         addon = map["addon"]
@@ -377,7 +399,7 @@ def add_ccs_addon_calcs(rep: "Reporter", addon_parent_map):
         k = Key(act[addon])
         k2 = act.drop("t")[parent]
 
-        rep.add(k, "select", "ACT:nl-t-ya", {"t": [addon]})
+        rep.add(k, "select", f"{ACT}:nl-t-ya", {"t": [addon]})
         rep.add(k["parents-t"], "select", act, {"t": parents})
         rep.add(k["parents"], "group_sum", k["parents-t"], group=["nl", "ya"], sum="t")
         rep.add(sh[addon], "div", k, k["parents"])
@@ -404,7 +426,7 @@ def add_ccs_addon_calcs(rep: "Reporter", addon_parent_map):
             {"t": {addon: parent}},
         )
         # 3)
-        rep.add(k_in[f"elec_{addon}"], "select", k_in, {"t": addon})
+        rep.add(k_in[f"elec_{addon}"], "select", k_in, {"t": [addon]})
         rep.add(sh[f"{addon}_parents_{parent}"], "div", k2, k["parents"])
         rep.add(
             k_in[f"elec_{addon}_{parent}"],
@@ -435,9 +457,9 @@ def add_renewable_curtailment_calcs(
     rep: "Reporter", renewable_tecs: dict[str, list], curtailment_tecs: list, name: str
 ):
     # calculate electricity production excluding pass-out turbine input
-    k1 = Key("in:nl-t-ya-m-c")
+    k1 = Key(f"{IN}:nl-t-ya-m-c")
     k11 = k1.drop("t")
-    k2 = Key("out:nl-t-ya-m-c")
+    k2 = Key(f"{OUT}:nl-t-ya-m-c")
     k3 = k2.drop("t")
     k4 = Key("share:nl-ya-m-c:")
     rep.add(
@@ -559,7 +581,7 @@ def add_se_elec(rep: "Reporter") -> Key:
             "solar_res_rt_hist_2025",
         ]
     }
-    k2 = Key("out:nl-t-ya-m-c")
+    k2 = Key(f"{OUT}:nl-t-ya-m-c")
     rep.add(
         k2["pv_rooftop-t"], "select", k2, {"c": ["electr"], "t": pv_rt["pv_rooftop"]}
     )
@@ -612,7 +634,7 @@ def add_se_elec(rep: "Reporter") -> Key:
         "coal_ppl": {"addon": "c_ppl_co2scr", "parents": ["coal_ppl"]},
     }
     add_ccs_addon_calcs(rep, addon_parent_map)
-    po_out = Key("out:nl-t-ya-m-c:elec_wo_po_turbine")
+    po_out = Key(f"{OUT}:nl-t-ya-m-c:elec_wo_po_turbine")
     ccs_addons = po_out["ccs_addons"]
     addon_parents = po_out["parents_wo_scrs"]
     parent_tecs = rep.get(addon_parents).index.get_level_values("t").unique().tolist()
@@ -691,48 +713,48 @@ def add_cement_heat_share_calculations(rep: "Reporter"):
             "clinker_wet_cement",
         ]
     }
-    rep.add("in::heat-cement", "select", "in:nl-t-ya-m-c-l", t_filter)
+    rep.add(f"{IN}::heat-cement", "select", f"{IN}:nl-t-ya-m-c-l", t_filter)
     rep.add(
-        "in::cement-heat-total",
+        f"{IN}::cement-heat-total",
         "group_sum",
-        "in::heat-cement",
+        f"{IN}::heat-cement",
         group=["nl", "ya"],
         sum="t",
     )
-    rep.add("in::heat-cement-non-ccs", "select", "in:nl-t-ya-m-c-l", t_filter1)
-    rep.add("in::heat-cement-ccs", "select", "in:nl-t-ya-m-c-l", t_filter2)
+    rep.add(f"{IN}::heat-cement-non-ccs", "select", f"{IN}:nl-t-ya-m-c-l", t_filter1)
+    rep.add(f"{IN}::heat-cement-ccs", "select", f"{IN}:nl-t-ya-m-c-l", t_filter2)
     rep.add(
-        "in::heat-cement-ccs2",
+        f"{IN}::heat-cement-ccs2",
         "group_sum",
-        "in::heat-cement-ccs",
+        f"{IN}::heat-cement-ccs",
         group="c",
         sum="t",
     )
     rep.add(
-        "in::heat-cement-non-ccs2",
+        f"{IN}::heat-cement-non-ccs2",
         "group_sum",
-        "in::heat-cement-non-ccs",
+        f"{IN}::heat-cement-non-ccs",
         group="c",
         sum="t",
     )
     rep.add(
-        "out::methanol-prod-by-tec",
+        f"{OUT}::methanol-prod-by-tec",
         "group_sum",
-        "out::methanol-prod",
+        f"{OUT}::methanol-prod",
         group="t",
         sum="c",
     )
     rep.add(
         "share::cement-heat-ccs",
         "div",
-        "in::heat-cement-ccs2",
-        "in::cement-heat-total",
+        f"{IN}::heat-cement-ccs2",
+        f"{IN}::cement-heat-total",
     )
     rep.add(
         "share::cement-heat-non-ccs",
         "div",
-        "in::heat-cement-non-ccs2",
-        "in::cement-heat-total",
+        f"{IN}::heat-cement-non-ccs2",
+        f"{IN}::cement-heat-total",
     )
 
 
@@ -756,48 +778,48 @@ def add_cement_elec_share_calculations(rep: "Reporter"):
             "clinker_wet_cement",
         ]
     }
-    rep.add("in::elec-cement", "select", "in:nl-t-ya-m-c-l", t_filter)
+    rep.add(f"{IN}::elec-cement", "select", f"{IN}:nl-t-ya-m-c-l", t_filter)
     rep.add(
-        "in::cement-elec-total",
+        f"{IN}::cement-elec-total",
         "group_sum",
-        "in::elec-cement",
+        f"{IN}::elec-cement",
         group=["nl", "ya"],
         sum="t",
     )
-    rep.add("in::elec-cement-non-ccs", "select", "in:nl-t-ya-m-c-l", t_filter1)
-    rep.add("in::elec-cement-ccs", "select", "in:nl-t-ya-m-c-l", t_filter2)
+    rep.add(f"{IN}::elec-cement-non-ccs", "select", f"{IN}:nl-t-ya-m-c-l", t_filter1)
+    rep.add(f"{IN}::elec-cement-ccs", "select", f"{IN}:nl-t-ya-m-c-l", t_filter2)
     rep.add(
-        "in::elec-cement-ccs2",
+        f"{IN}::elec-cement-ccs2",
         "group_sum",
-        "in::elec-cement-ccs",
+        f"{IN}::elec-cement-ccs",
         group="c",
         sum="t",
     )
     rep.add(
-        "in::elec-cement-non-ccs2",
+        f"{IN}::elec-cement-non-ccs2",
         "group_sum",
-        "in::elec-cement-non-ccs",
+        f"{IN}::elec-cement-non-ccs",
         group="c",
         sum="t",
     )
     rep.add(
-        "out::methanol-prod-by-tec",
+        f"{OUT}::methanol-prod-by-tec",
         "group_sum",
-        "out::methanol-prod",
+        f"{OUT}::methanol-prod",
         group="t",
         sum="c",
     )
     rep.add(
         "share::cement-elec-ccs",
         "div",
-        "in::elec-cement-ccs2",
-        "in::cement-elec-total",
+        f"{IN}::elec-cement-ccs2",
+        f"{IN}::cement-elec-total",
     )
     rep.add(
         "share::cement-elec-non-ccs",
         "div",
-        "in::elec-cement-non-ccs2",
-        "in::cement-elec-total",
+        f"{IN}::elec-cement-non-ccs2",
+        f"{IN}::cement-elec-total",
     )
 
 
@@ -818,9 +840,9 @@ def add_net_co2_calcs(
         map of technologies and captured CO2 commodity name for CCS addons
     name
     """
-    k1 = Key("rel:r-nl-t-ya")
+    k1 = Key(f"{REL}:r-nl-t-ya")
     k2 = k1[f"{name}_co2"]
-    k_ccs = Key("out:nl-t-ya-m-c")
+    k_ccs = Key(f"{OUT}:nl-t-ya-m-c")
     k_ccs2 = k_ccs[f"{name}_ccs"]
 
     rep.add(k2, "select", k1, non_ccs_filters)
@@ -834,13 +856,11 @@ def add_net_co2_calcs(
 
 
 def add_non_ccs_gas_consumption(rep: "Reporter", addon_map: dict[str, dict]):
-    from message_ix_models.report.compat import pe_w_ccs_retro
-
     # L3059 from message_data/tools/post_processing/default_tables.py
     # "gas_{cc,ppl}_share": shares of gas_cc and gas_ppl in the summed output of both
     # k0 = out(rep, addon_parent_map.keys())
     filter = {"t": addon_map.keys(), "c": ["gas"]}
-    key = Key("in:nl-t-ya-m-c")
+    key = Key(f"{IN}:nl-t-ya-m-c")
     tag = "ccs_retro_ppls"
     k1 = rep.add(key["sel"][tag], "select", key, filter, sums=True)
     k2 = rep.add(key.drop("t")[tag], "assign_units", k1[0].drop("t"), units="GWa")
@@ -852,8 +872,10 @@ def add_non_ccs_gas_consumption(rep: "Reporter", addon_map: dict[str, dict]):
 
     filters = dict(c=["gas"], l=["secondary"])
     _args = ((t, values["addon"], f"{t}_share") for t, values in addon_map.items())
-    keys = [pe_w_ccs_retro(rep, *args, filters=filters) for args in _args]
-    rep.add(Key("in", keys[0].dims, "pe_w_ccs_retro+gas"), "concat", *keys, sums=True)
+    keys = [compat.pe_w_ccs_retro(rep, *args, filters=filters) for args in _args]
+    rep.add(
+        Key(f"{IN}", keys[0].dims, "pe_w_ccs_retro+gas"), "concat", *keys, sums=True
+    )
     return
 
 
@@ -881,19 +903,19 @@ def gas_consumer(rep: "Reporter", name: str, tecs: list[str], ccs: bool = True) 
     -------
     Key that computes gas consumption by technology
     """
-    k = Key("in:nl-t-ya-m-c:sel")[f"gas_consumer_{name}"]
-    k1 = Key("in:nl-t-ya-m-c")[f"gas_consumer_{name}"]
-    rep.add(k, "select", "in:nl-t-ya-m-c", {"t": tecs, "c": ["gas"]})
+    k = Key(f"{IN}:nl-t-ya-m-c:sel")[f"gas_consumer_{name}"]
+    k1 = Key(f"{IN}:nl-t-ya-m-c")[f"gas_consumer_{name}"]
+    rep.add(k, "select", f"{IN}:nl-t-ya-m-c", {"t": tecs, "c": ["gas"]})
     in_gas = rep.add(k1, "assign_units", k, units="GWa")
 
     # pre-calc to get gas consumption by tec
     # L3026
-    # "in:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
+    # f"{IN}:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
     # final), net of output from transmission and distribution technologies.
     c_gas = dict(c=["gas"])
     t_d_tecs = {"t": ["gas_t_d", "gas_t_d_ch4"]}
-    in_t = Key("in:nl-t-c-ya")
-    out_t = Key("out:nl-t-c-ya")
+    in_t = Key(f"{IN}:nl-t-c-ya")
+    out_t = Key(f"{OUT}:nl-t-c-ya")
     # k0 = inp(rep, techs("gas", "all extra"), filters=c_gas)
     # k1 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
     k1 = rep.add(
@@ -938,16 +960,15 @@ def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str) -> Key:
     -------
     Key that computes gas consumption by technology
     """
-    from message_ix_models.report.compat import out
 
-    k1 = out(rep, [mix_tech], name=f"{name}_tot_abs")
+    k1 = compat.out(rep, [mix_tech], name=f"{name}_tot_abs")
     k2 = rep.add(
         f"share:nl-ya:{name}_in_{in_gas.tag}",
         "div",
         k1.drop("yv", "m"),
         in_gas.drop("t", "c"),
     )
-    k3 = rep.add(f"in:nl-t-ya-m:{name}+{in_gas.tag}", "mul", in_gas.drop("c"), k2)
+    k3 = rep.add(f"{IN}:nl-t-ya-m:{name}+{in_gas.tag}", "mul", in_gas.drop("c"), k2)
     k4 = rep.add(k3.append("c"), "expand_dims", k3, {"c": [name]})
     return k4
 
@@ -1001,7 +1022,7 @@ def pe_gas(rep: "Reporter"):
     k2 = gas_consumer(rep, "biogas", final + ccs_tecs + conversion, ccs=True)
     k_h2 = gas_mix_calculation(rep, k1, "h2_mix", "hydrogen")
     k_bio = gas_mix_calculation(rep, k2, "gas_bio", "biogas")
-    k = Key("in:nl-t-ya-m-c")
+    k = Key(f"{IN}:nl-t-ya-m-c")
     k5 = rep.add(k["gas_excl_biogas"], "sub", k2, k_bio.drop("c"))
     k51 = rep.add(k["gas_excl_biogas_h2"], "sub", k5, k_h2.drop("c"))
     k6 = rep.add(k["pe+gas"], "concat", k_bio, k_h2, k51)
@@ -1018,17 +1039,17 @@ def co2(rep: "Reporter"):
     """
     k = pe_gas(rep)
     k1 = rep.add("emi:nl-t-ya-m:gas", "mul", k.drop("c"), Quantity(0.482))
-    k2 = Key("rel:r-nl-t-ya-m")
+    k2 = Key(f"{REL}:r-nl-t-ya-m")
     k3 = rep.add(k2["gas_co2"], "expand_dims", k1, {"r": ["CO2_gas"]})
     gas_tecs = rep.get(k).index.get_level_values("t").unique()
     k4 = rep.add(k2["excl_gas_tecs"], "select", k2, {"t": gas_tecs}, inverse=True)
-    rep.add("rel:r-nl-t-ya-m:emi_factors", "concat", k3, k4)
+    rep.add(f"{REL}:r-nl-t-ya-m:emi_factors", "concat", k3, k4)
     return
 
 
 def ccs(rep: "Reporter"):
     """Prepare reporter to compute CO2 captured by CCS addons."""
-    k = Key("rel:r-nl-t-ya-m")
+    k = Key(f"{REL}:r-nl-t-ya-m")
     shipping_tecs = ["foil_occ_bunker", "loil_occ_bunker", "LNG_occ_bunker"]
     k2 = rep.add(
         k["ccs_ship"],
@@ -1052,8 +1073,8 @@ def ccs(rep: "Reporter"):
     k_leak = rep.add(
         k2["leakage-c-l"], "expand_dims", k2, {"c": ["fic_co2"], "l": ["secondary"]}
     )
-    k_out = Key("out:nl-t-m-ya-c-l")
-    # k_in = Key("in:nl-t-ya-m")
+    k_out = Key(f"{OUT}:nl-t-m-ya-c-l")
+    # k_in = Key(f"{IN}:nl-t-ya-m")
     rep.add(k_out["co2"], "select", k_out, {"c": ["fic_co2", "bic_co2", "dac_co2"]})
     bio_key = Key("share:nl-ya:biogas_in_gas_consumer_biogas+incl_t_d_loss")
     gas_tecs = ["gas_cc_ccs", "g_ppl_co2scr", "h2_smr_ccs", "meth_ng_ccs"]
@@ -1119,7 +1140,7 @@ def add_fe_key(rep: "Reporter") -> Key:
         "dri_gas_ccs_steel",
         "gas_NH3_ccs",
     ]
-    k = Key("in:nl-t-ya-m-c-l")
+    k = Key(f"{IN}:nl-t-ya-m-c-l")
     rep.add(k["fe_non_gas"], "select", k, {"t": gas_final}, inverse=True)
     rep.add(k["fe_gases"], "expand_dims", k.drop("l")["pe+gas"], {"l": ["final"]})
     rep.add(k["FE"], "concat", k["fe_non_gas"], k["fe_gases"])
@@ -1133,11 +1154,19 @@ def concat_hist_and_act(rep: "Reporter"):
     fmy = cat_year[cat_year["type_year"] == "firstmodelyear"]["year"].values[0]
     modelyears = list(set(cat_year[cat_year["year"] >= fmy]["year"].values))
     # hist_years = list(set(cat_year[cat_year["year"] < fmy]["year"].values))
-    k = rep.add(
-        "ACT:nl-t-ya-m:modelyears", "select", "ACT:nl-t-ya-m", {"ya": modelyears}
+    rep.add(
+        "ACT:nl-t-ya-m:modelyears",
+        "select",
+        "ACT:nl-t-ya-m",
+        {"ya": modelyears},
+        sums=True,
     )
-    k2 = rep.add(
-        "ACT:nl-t-ya-m:incl_historical", "concat", k, "historical_activity:nl-t-ya-m"
+    rep.add(
+        "ACT:nl-t-ya-m:incl_historical",
+        "concat",
+        "ACT:nl-t-ya-m:modelyears",
+        "historical_activity:nl-t-ya-m",
+        sums=True,
     )
     return
 

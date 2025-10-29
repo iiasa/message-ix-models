@@ -3,10 +3,7 @@ from typing import TYPE_CHECKING
 import pyam
 from message_ix import Reporter
 
-from message_ix_models.model.material.report.reporter_utils import (
-    add_net_co2_calcs,
-    pe_gas,
-)
+from message_ix_models.model.material.report import reporter_utils
 from message_ix_models.model.material.report.run_reporting import (
     calculate_clinker_ccs_energy,
     format_reporting_df,
@@ -17,7 +14,6 @@ from message_ix_models.model.material.report.run_reporting import (
     run_prod_reporting,
     run_se,
 )
-from message_ix_models.report import prepare_reporter
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -31,7 +27,7 @@ def run_co2(rep: Reporter, model_name: str, scen_name: str):
         "r": ["CO2_ind", "CO2_Emission"],
     }
     filter_ccs = {"t": ["dri_gas_ccs_steel", "bf_ccs_steel"], "c": ["fic_co2"]}
-    add_net_co2_calcs(rep, filter, filter_ccs, "steel")
+    reporter_utils.add_net_co2_calcs(rep, filter, filter_ccs, "steel")
     filter = {
         "t": ["clinker_dry_cement", "clinker_wet_cement"],
         "r": ["CO2_Emission"],
@@ -40,7 +36,7 @@ def run_co2(rep: Reporter, model_name: str, scen_name: str):
         "t": ["clinker_dry_ccs_cement", "clinker_wet_ccs_cement"],
         "c": ["fic_co2"],
     }
-    add_net_co2_calcs(rep, filter, filter_ccs, "cement")
+    reporter_utils.add_net_co2_calcs(rep, filter, filter_ccs, "cement")
     rep.add("co2:nl-t-ya:industry", "concat", "co2:nl-t-ya:cement", "co2:nl-t-ya:steel")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     df = format_reporting_df(
@@ -100,36 +96,21 @@ def run_pe(rep: Reporter, model_name: str, scen_name: str):
 
 def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs = []
-    pe_gas(rep)
+    reporter_utils.pe_gas(rep)
+    dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_se(rep, model_name, scen_name))
     dfs.append(run_other(rep, model_name, scen_name))
     dfs.append(run_co2(rep, model_name, scen_name))
     # dfs.append(run_pe(rep, model_name, scen_name))
     dfs.append(run_fs_reporting(rep, model_name, scen_name))
-    dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
     py_df = pyam.concat(dfs)
     calculate_clinker_ccs_energy(scenario, rep, py_df)
 
     py_df.aggregate_region(py_df.variable, append=True)
     py_df.filter(variable="Share*", keep=False, inplace=True)
-    py_df.filter(
-        year=[i for i in scenario.set("year") if i >= scenario.firstmodelyear],
-        inplace=True,
-    )
+    # py_df.filter(
+    #     year=[i for i in scenario.set("year") if i >= scenario.firstmodelyear],
+    #     inplace=True,
+    # )
     return py_df
-
-
-if __name__ == "__main__":
-    from message_ix_models import Context
-
-    ctx = Context()
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("local3")
-    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
-    rep = Reporter.from_scenario(scen)
-    prepare_reporter(ctx, reporter=rep)
-    df = run(rep, scen, scen.model, scen.scenario)
-    print()

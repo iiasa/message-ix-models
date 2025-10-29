@@ -9,12 +9,15 @@ from typing import TYPE_CHECKING, Any, Optional
 from genno import Key, Quantity, quote
 from genno.core.key import iter_keys, single_key
 
+from .hist_flag import hist_flag
+
 if TYPE_CHECKING:
     from genno import Computer
     from ixmp import Reporter
     from sdmx.model.common import Code
 
     from message_ix_models import Context
+
 
 __all__ = [
     "TECH_FILTERS",
@@ -26,7 +29,18 @@ __all__ = [
     "out",
     "prepare_techs",
 ]
+HIST_TRUE: bool = hist_flag
 
+if HIST_TRUE:
+    OUT = "out_hist"
+    IN = "in_hist"
+    REL = "rel_hist"
+    ACT = "historical_activity"
+else:
+    OUT = "out"
+    IN = "in"
+    REL = "rel"
+    ACT = "ACT"
 log = logging.getLogger(__name__)
 
 #: Filters for determining subsets of technologies.
@@ -137,9 +151,9 @@ def make_shorthand_function(
     return func
 
 
-inp = make_shorthand_function("in", "c h ho l no t", "energy")
-emi = make_shorthand_function("rel", "nr r t yr")
-out = make_shorthand_function("out", "c h hd l nd t", "energy")
+inp = make_shorthand_function(f"{IN}", "c h ho l no t", "energy")
+emi = make_shorthand_function(f"{REL}", "nr r t yr")
+out = make_shorthand_function(f"{OUT}", "c h hd l nd t", "energy")
 
 
 def eff(
@@ -183,7 +197,17 @@ def pe_w_ccs_retro(
 
     Equivalent to :func:`default_tables._pe_wCCS_retro` at L129.
     """
-    ACT: Key = single_key(c.full_key("ACT"))
+    if HIST_TRUE:
+        OUT = "out_hist"
+        IN = "in_hist"
+        REL = "rel_hist"
+        ACT = "historical_activity"
+    else:
+        OUT = "out"
+        IN = "in"
+        REL = "rel"
+        ACT = "ACT"
+    ACT: Key = single_key(c.full_key(f"{ACT}"))
 
     k0 = out(c, [t_scrub])
     k1 = c.add(anon(), "mul", k0, k_share) if k_share else k0
@@ -325,12 +349,12 @@ def callback(rep: "Reporter", context: "Context") -> None:
         assert_dims(rep, single_key(k2))
 
     # L3026
-    # "in:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
+    # f"{IN}:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
     # final), net of output from transmission and distribution technologies.
     c_gas = dict(c=["gas"])
     k0 = inp(rep, techs("gas", "all extra"), filters=c_gas)
     k1 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
-    k2 = rep.add(Key("in", k1.dims, "nonccs_gas_tecs"), "sub", k0, k1)
+    k2 = rep.add(Key(f"{IN}", k1.dims, "nonccs_gas_tecs"), "sub", k0, k1)
     assert_dims(rep, single_key(k2))
 
     # L3091
@@ -341,7 +365,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
     rep.add("Biogas_tot", "mul", Biogas_tot_abs, "crbcnt_gas", "conv_c2co2")
 
     # L3052
-    # "in:*:all_gas_tecs": Input to all technologies using gas at l=(secondary, final),
+    # f"{IN}:*:all_gas_tecs": Input to all technologies using gas at l=(secondary, final),
     # including those with CCS.
     k0 = inp(
         rep,
@@ -349,7 +373,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
         filters=c_gas,
     )
     k1 = rep.add(
-        Key("in", k0.dims, "all_gas_tecs"), "add", full("in::nonccs_gas_tecs"), k0
+        Key(f"{IN}", k0.dims, "all_gas_tecs"), "add", full(f"{IN}::nonccs_gas_tecs"), k0
     )
     assert_dims(rep, k1)
 
@@ -367,7 +391,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
     rep.add(Key("Hydrogen_tot", k0.dims), k0)
 
     # L3063
-    # "in:*:nonccs_gas_tecs_wo_ccsretro": "in:*:nonccs_gas_tecs" minus inputs to
+    # f"{IN}:*:nonccs_gas_tecs_wo_ccsretro": f"{IN}:*:nonccs_gas_tecs" minus inputs to
     # technologies fitted with CCS add-on technologies.
     filters = dict(c=["gas"], l=["secondary"])
     pe_w_ccs_retro_keys = [
@@ -381,9 +405,9 @@ def callback(rep: "Reporter", context: "Context") -> None:
     ]
     k0 = rep.add(anon(dims=pe_w_ccs_retro_keys[0]), "add", *pe_w_ccs_retro_keys)
     k1 = rep.add(
-        Key("in", k0.dims, "nonccs_gas_tecs_wo_ccsretro"),
+        Key(f"{IN}", k0.dims, "nonccs_gas_tecs_wo_ccsretro"),
         "sub",
-        full("in::nonccs_gas_tecs"),
+        full(f"{IN}::nonccs_gas_tecs"),
         k0,
     )
     assert_dims(rep, k0, k1)
@@ -394,8 +418,8 @@ def callback(rep: "Reporter", context: "Context") -> None:
     # X_trp = X_tot * (trp input of gas / `other` inputs)
     k0 = inp(rep, techs("trp gas"), filters=c_gas)
     for name, other in (
-        ("Biogas", full("in::all_gas_tecs")),
-        ("Hydrogen", full("in::nonccs_gas_tecs_wo_ccsretro")),
+        ("Biogas", full(f"{IN}::all_gas_tecs")),
+        ("Hydrogen", full(f"{IN}::nonccs_gas_tecs_wo_ccsretro")),
     ):
         k1 = rep.add(anon(dims=other), "div", k0, other)
         k2 = rep.add(f"{name}_trp", "mul", f"{name}_tot", k1)
