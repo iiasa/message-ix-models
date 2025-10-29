@@ -9,7 +9,7 @@ Next release
 - Fix water module reporting failures and improve calculations (:issue:`407`, :pull:`396`).
 - Improve and extend :doc:`/material/index` (:pull:`418`).
   See :doc:`version 1.2.0 </material/v1.2.0>` for details.
-- Improve :mod:`.model.transport` (:pull:`392`).
+- Improve :mod:`.model.transport` (:pull:`392`, :pull:`430`).
 
   - New properties :attr:`.transport.Config.code` and
     :attr:`.transport.Config.label`.
@@ -17,6 +17,7 @@ Next release
     to read input data from distinct files according to scenario label.
   - New :class:`LoadFactorLDV`, replacing :py:`load_factor_ldv`
     and allowing a distinct file according to scenario label.
+  - New submodule :mod:`~.transport.stock` and input data flow :data:`.stock_cap`.
   - Add technology dimension to :data:`.elasticity_f`.
   - Document :class:`.ScenarioCodeAnnotations`.
 
