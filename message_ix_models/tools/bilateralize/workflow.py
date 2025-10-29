@@ -29,4 +29,4 @@ bare_to_scenario(project_name = project_name,
 # Update MESSAGEix scenario(s) with bilateralized dictionary and solve scenario
 load_and_solve(project_name = project_name,
                config_name = config_name,
-               solve_scenario = True)
+               solve = True)

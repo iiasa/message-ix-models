@@ -166,11 +166,11 @@ def import_gem(input_file: str | Path,
                                  "bare_files")
     flow_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology,
                                 "bare_files", "flow_technology")
-    export_dir = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
+    gem_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
     if not os.path.isdir(export_dir):
         os.makedirs(Path(export_dir))
 
-    df.to_csv(os.path.join(export_dir, "GEM.csv"))
+    df.to_csv(os.path.join(gem_dir_out, "GEM.csv"))
 
     # Investment Costs
     inv_cost = df.groupby(['EXPORTER', 'IMPORTER'])\

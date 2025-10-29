@@ -231,7 +231,7 @@ def save_to_gdx(mp: ixmp.Platform,
         output_path: Path to save the GDX file
     """
     from ixmp.backend import ItemType
-    mp._backend.write_file(output_path,
+    mp._backend.write_file(Path(output_path),
                            ItemType.SET | ItemType.PAR,
                            filters={"scenario": scenario},
                            )

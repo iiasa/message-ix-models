@@ -1003,7 +1003,7 @@ def generate_edit_files(log,
                                     message_regions,
                                     covered_tec,
                                     config_dict,
-                                    data_path)
+                                    Path(data_path))
 
     # Common values across parameters
     common_years = dict(year_vtg= 'broadcast',
@@ -1113,7 +1113,7 @@ def generate_edit_files(log,
             parameter_outputs = flow_as_trade_input(**flow_args)
 
     ## Export files
-    export_edit_files(covered_tec, log, data_path, parameter_outputs)
+    export_edit_files(covered_tec, log, Path(data_path), parameter_outputs)
 
 def prepare_edit_files(project_name: str | None = None,
                        config_name: str | None = None):
@@ -1135,7 +1135,7 @@ def prepare_edit_files(project_name: str | None = None,
     message_regions = config['scenario']['regions']
 
     data_path = package_data_path("bilateralize")
-    data_path = os.path.join(os.path.dirname(data_path), "bilateralize")
+    data_path = Path(os.path.join(os.path.dirname(data_path), "bilateralize"))
 
     # Calculate distances
     calculate_distance(message_regions)

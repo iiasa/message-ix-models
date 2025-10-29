@@ -6,10 +6,12 @@ import ixmp
 import pytest
 import yaml
 
-from message_ix_models.tools.bilateralize.bilateralize import *
+from message_ix_models.tools.bilateralize.utils import get_logger, load_config
+from message_ix_models.tools.bilateralize.bare_to_scenario import clone_and_update
+from message_ix_models.tools.bilateralize.prepare_edit import generate_bare_sheets, build_parameter_sheets
 from message_ix_models.util import package_data_path
 
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import ScenarioInfo, testing, Context
 
 # Connect to ixmp
 mp = ixmp.Platform()
