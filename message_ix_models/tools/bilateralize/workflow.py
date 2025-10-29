@@ -10,9 +10,9 @@ This includes:
    file for direct solve in GAMS.
 """
 # Import packages
-from message_ix_models.tools.bilateralize.prepare_edit import prepare_edit_files
 from message_ix_models.tools.bilateralize.bare_to_scenario import bare_to_scenario
 from message_ix_models.tools.bilateralize.load_and_solve import load_and_solve
+from message_ix_models.tools.bilateralize.prepare_edit import prepare_edit_files
 
 # Project setup
 project_name = None # Name of the project (e.g., 'newpathways')

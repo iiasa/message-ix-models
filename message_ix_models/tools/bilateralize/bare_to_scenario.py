@@ -11,10 +11,10 @@ import logging
 import os
 import pickle
 from pathlib import Path
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Any
 
 from message_ix_models.tools.bilateralize.historical_calibration import (
     build_hist_new_capacity_flow,

@@ -3,8 +3,9 @@
 Calibration with MariTEAM output
 """
 # Import packages
-import numpy as np
 import os
+
+import numpy as np
 import pandas as pd
 
 from message_ix_models.tools.bilateralize.utils import load_config

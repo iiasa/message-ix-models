@@ -214,7 +214,8 @@ def convert_trade(message_regions: str,
     with open(os.path.join(data_paths['iea_web'],
                            "conversion_factors.pickle"), 'rb') as file_handler:
        conversion_factors = pickle.load(file_handler)
-    with open(os.path.join(data_paths['iea_web'], "CONV_addl.yaml"), 'r') as file_handler:
+    with open(os.path.join(data_paths['iea_web'],
+                           "CONV_addl.yaml"), 'r') as file_handler:
         conversion_addl = yaml.safe_load(file_handler)
     cf_codes = pd.read_csv(os.path.join(data_paths['iea_web'], "CONV_hs.csv"))
 

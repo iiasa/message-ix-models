@@ -14,9 +14,9 @@ import logging
 import os
 import shutil
 from pathlib import Path
+from typing import Any, Dict
 
 import message_ix
-from typing import Dict, Any
 import numpy as np
 import pandas as pd
 import yaml
@@ -52,7 +52,7 @@ def define_networks(log,
                     message_regions:str,
                     covered_tec: list[str],
                     config_dict: Dict[str, Dict[str, Any]],
-                    data_path: str):
+                    data_path: Path):
     """
     Define network dataframe
 
@@ -851,7 +851,7 @@ def flow_as_trade_input(flow_tec: str,
                         common_cols: dict,
                         parameter_outputs: dict,
                         message_regions: str,
-                        data_path: str):
+                        data_path: Path):
     """
     Generate flow technology as trade technology input parameter
     """
@@ -914,7 +914,7 @@ def flow_as_trade_input(flow_tec: str,
 #%% Export edit files
 def export_edit_files(covered_tec: list[str],
                       log: logging.Logger,
-                      data_path: str,
+                      data_path: Path,
                       parameter_outputs: dict):
     """
     Export edit files
@@ -1003,7 +1003,7 @@ def generate_edit_files(log,
                                     message_regions,
                                     covered_tec,
                                     config_dict,
-                                    Path(data_path))
+                                    data_path)
 
     # Common values across parameters
     common_years = dict(year_vtg= 'broadcast',
@@ -1113,7 +1113,7 @@ def generate_edit_files(log,
             parameter_outputs = flow_as_trade_input(**flow_args)
 
     ## Export files
-    export_edit_files(covered_tec, log, Path(data_path), parameter_outputs)
+    export_edit_files(covered_tec, log, data_path, parameter_outputs)
 
 def prepare_edit_files(project_name: str | None = None,
                        config_name: str | None = None):
