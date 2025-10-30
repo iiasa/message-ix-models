@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  "in:nl-t-ya-m-c-l:FE"
+  "in:nl-t-ya-m-c-l:FE2"
 
 iamc_prefix:
   Final Energy|
@@ -323,12 +323,6 @@ vars:
 
 
   # iron and steel
-  Industry|Iron and Steel|Heat:
-    filter:
-      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
-    short:
-      fe_pe_steel_heat
-
   Industry|Iron and Steel|Electricity:
     filter:
       { technology: [ bf_steel, bf_ccs_steel, bf_biomass_steel, bof_steel, cokeoven_steel, dri_gas_steel,
@@ -337,61 +331,220 @@ vars:
         mode: [ M1, M2, M3 ], commodity: electr, level: final }
     short:
       fe_pe_steel_el
+  #BF
+  Industry|Iron and Steel|BF|w/ CCS|Electricity:
+    filter:
+      { technology: [ bf_ccs_steel, bf_steel ],
+        mode: [ M2, M4 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_bf
+  Industry|Iron and Steel|BF|w/o CCS|Electricity:
+    filter:
+      { technology: [ bf_steel, bf_biomass_steel ],
+        mode: [ M1, M3 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_bf_ccs
+  Industry|Iron and Steel|BF|w/ CCS|Gases|Coal:
+    filter:
+      { technology: [ bf_steel ], mode: [ M2, M4 ], commodity: co_gas, level: final }
+    short:
+      fe_pe_steel_gases_coal_ccs
+  Industry|Iron and Steel|BF|w/o CCS|Gases|Coal:
+    filter:
+      { technology: [ bf_steel ], mode: [ M1, M3 ], commodity: co_gas, level: final }
+    short:
+      fe_pe_steel_gases_coal
+  Industry|Iron and Steel|BF|w/ CCS|Solids|Biomass:
+    filter:
+      { technology: [ bf_steel ], mode: [ M4 ], commodity: [ charcoal ], level: final }
+    short:
+      fe_pe_steel_solid_bio_bf_ccs
+  Industry|Iron and Steel|BF|w/o CCS|Solids|Biomass:
+    filter:
+      { technology: [ bf_steel, bf_biomass_steel ], mode: [ M1, M3 ], commodity: [ charcoal ], level: final }
+    short:
+      fe_pe_steel_solid_bio_bf
+  Industry|Iron and Steel|BF|w/ CCS|Solids|Coal:
+    filter:
+      { technology: [ bf_steel ], mode: [ M2, M4 ], commodity: [ coal, coke_iron ], level: final }
+    short:
+      fe_pe_steel_solid_coal_bf_ccs
+  Industry|Iron and Steel|BF|w/o CCS|Solids|Coal:
+    filter:
+      { technology: [ bf_steel ], mode: [ M1, M3 ], commodity: [ coal, coke_iron ], level: final }
+    short:
+      fe_pe_steel_solid_coal_bf
+  #BOF
+  Industry|Iron and Steel|BOF|Conventional|Electricity:
+    filter:
+      { technology: [ bof_steel ], mode: [ M1 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_bof_conv
+  Industry|Iron and Steel|BOF|TGR|Electricity:
+    filter:
+      { technology: [ bof_steel ], mode: [ M2 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_bof_trg
+  #DRI
+  Industry|Iron and Steel|DRI|w/ CCS|Electricity:
+    filter:
+      { technology: [ dri_gas_ccs_steel ],
+        mode: [ M1 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_dri_ccs
+  Industry|Iron and Steel|DRI|w/ CCS|Gases|Gas:
+    filter:
+      { technology: [ dri_gas_ccs_steel ], mode: [ M1 ], commodity: gas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|DRI|w/ CCS|Gases|Biomass:
+    filter:
+      { technology: [ dri_gas_ccs_steel ], mode: [ M1 ], commodity: biogas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|DRI|w/o CCS|Electricity:
+    filter:
+      { technology: [ dri_gas_ccs_steel ],
+        mode: [ M1 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_dri
+  Industry|Iron and Steel|DRI|w/o CCS|Gases|Gas:
+    filter:
+      { technology: [ dri_gas_steel ], mode: [ M1 ], commodity: gas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|DRI|w/o CCS|Gases|Biomass:
+    filter:
+      { technology: [ dri_gas_steel ], mode: [ M1 ], commodity: biogas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|DRI|Solids|Coal:
+    filter:
+      { technology: [ dri_coal_steel ], mode: M1, commodity: coal, level: final }
+    short:
+      fe_pe_steel_dri_coal
+  #EAF
+  Industry|Iron and Steel|EAF|Electricity:
+    filter:
+      { technology: [ eaf_steel ],
+        mode: [ M1, M2, M3 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_eaf
+  Industry|Iron and Steel|EAF|Pig Iron|Electricity:
+    filter:
+      { technology: [ eaf_steel ],
+        mode: [ M1 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_eaf_pig
+  Industry|Iron and Steel|EAF|Pig Iron|Gases|Biomass:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M1 ], commodity: biogas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|EAF|Pig Iron|Gases|Gas:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M1 ], commodity: gas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|EAF|Scrap|Electricity:
+    filter:
+      { technology: [ eaf_steel ],
+        mode: [ M2 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_eaf_scrap
+  Industry|Iron and Steel|EAF|Scrap|Gases|Biomass:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M2 ], commodity: biogas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|EAF|Scrap|Gases|Gas:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M2 ], commodity: gas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|EAF|Sponge Iron|Electricity:
+    filter:
+      { technology: [ eaf_steel ],
+        mode: [ M3 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_eaf_dri
+  Industry|Iron and Steel|EAF|Sponge Iron|Gases|Biomass:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M3 ], commodity: biogas, level: final }
+    short:
+      fe_pe_steel_gas
+  Industry|Iron and Steel|EAF|Sponge Iron|Gases|Gas:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M3 ], commodity: gas, level: final }
+    short:
+      fe_pe_steel_gas
+
+  Industry|Iron and Steel|Other|Electricity:
+    filter:
+      { technology: [ cokeoven_steel, finishing_steel, pellet_steel, sinter_steel ],
+        mode: [ M1 ], commodity: electr, level: final }
+    short:
+      fe_pe_steel_el_other
 
   Industry|Iron and Steel|Gases|Gas:
     filter:
       { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: gas, level: final }
     short:
       fe_pe_steel_gases_gas
-
   Industry|Iron and Steel|Gases|Biomass:
     filter:
       { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: biogas, level: final }
     short:
       fe_pe_steel_gases_bio
-
   Industry|Iron and Steel|Gases|Coal:
     filter:
       { technology: [ bf_steel ], mode: [ M1, M2, M3, M4 ], commodity: [ co_gas ], level: final }
     short:
       fe_pe_steel_gases_coal
 
+  Industry|Iron and Steel|Heat:
+    filter:
+      { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
+    short:
+      fe_pe_steel_heat
+
   Industry|Iron and Steel|Liquids|Coal:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_coal
-
   Industry|Iron and Steel|Liquids|Gas:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_gas
-
   Industry|Iron and Steel|Liquids|Oil:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_oil
-
   Industry|Iron and Steel|Liquids|Biomass:
     filter:
       { technology: [ empty ], mode: [ empty ], commodity: [ empty ], level: empty }
     short:
       fe_pe_steel_liq_bio
 
-  Industry|Iron and Steel|Solids|Coal:
-    filter:
-      { technology: [ bf_steel, sinter_steel, pellet_steel ], mode: [ M1, M2, M3, M4 ], commodity: [ coal, coke_iron ], level: final }
-    # TODO: figure out, where to put cokeoven_steel?
-    short:
-      fe_pe_steel_solid_coal
-
   Industry|Iron and Steel|Solids|Biomass:
     filter:
       { technology: [ bf_steel, bf_biomass_steel ], mode: [ M1, M3, M4 ], commodity: [ charcoal ], level: final }
     short:
       fe_pe_steel_solid_bio
+  Industry|Iron and Steel|Solids|Coal:
+    filter:
+      { technology: [ bf_steel, sinter_steel, dri_coal_steel ], mode: [ M1, M2, M3, M4 ], commodity: [ coal, coke_iron ], level: final }
+    # TODO: figure out, where to put cokeoven_steel?
+    short:
+      fe_pe_steel_solid_coal
+  Industry|Iron and Steel|Solids|Coal|Other:
+    filter:
+      { technology: [ sinter_steel ], mode: [ M1 ], commodity: [ coal ], level: final }
+    short:
+      fe_pe_steel_solid_coal_other
 
   Industry|Iron and Steel|Hydrogen:
     filter:

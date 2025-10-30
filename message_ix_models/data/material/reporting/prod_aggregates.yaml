@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  out
+  "prod:nl-t-ya-m-c-l"
 
 iamc_prefix:
   Production|
@@ -42,7 +42,16 @@ level_2:
   Chemicals|High-Value Chemicals|BTX:
     short: prod_btx
     components:
-      [ prod_btx_sc, prod_btx_ref]
+      [ prod_btx_sc, prod_btx_ref ]
+  Iron and Steel|Steel:
+    short: prod_steel
+    components:
+      [ prod_steel_sec, prod_steel_prim ]
+  Steel:
+    short: prod_steel
+    components:
+      [ prod_steel_sec, prod_steel_prim ]
+
 
 level_1:
   Chemicals|Ammonia|Gases:
@@ -97,19 +106,11 @@ level_1:
       [ prod_alu_prim, prod_alu_sec ]
 
   #steel
-  Steel:
-    short: prod_steel
-    components:
-      [ prod_steel_prim_eaf, prod_steel_sec_eaf ]
-  Iron and Steel|Steel:
-    short: prod_steel
-    components:
-      [ prod_steel_prim_eaf, prod_steel_sec_eaf ]
   Iron and Steel|Steel|Secondary:
     short: prod_steel_sec
     components:
-      [ prod_steel_sec_eaf ]
+      [ prod_steel_sec_bof_conv, prod_steel_sec_bof_tgr, prod_steel_sec_eaf_scrap ]
   Iron and Steel|Steel|Primary:
     short: prod_steel_prim
     components:
-      [ prod_steel_prim_eaf ]
+      [ prod_steel_prim_bof_conv, prod_steel_prim_bof_tgr, prod_steel_prim_eaf_bf, prod_steel_prim_eaf_dri ]

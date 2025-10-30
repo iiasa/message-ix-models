@@ -1127,6 +1127,29 @@ def ccs(rep: "Reporter"):
     return
 
 
+def fe_dri(rep: "Reporter", in_key):
+    """Prepare reporter to compute energy consumption in steel production."""
+    ccs_filter = {"t": ["dri_gas_ccs_steel"]}
+    no_ccs_filter = {"t": ["dri_gas_steel"]}
+    k = Key("ACT:nl-t-ya")
+    rep.add(k["DRI-CCS"], "select", k, ccs_filter, sums=True)
+    rep.add(k["DRI"], "select", k, no_ccs_filter, sums=True)
+    shr = rep.add(
+        "Share:nl-ya:dri_ccs", "div", k.drop("t")["DRI-CCS"], k.drop("t")["DRI"]
+    )
+    shr2 = rep.add("Share:nl-ya:dri_no_ccs", "sub", Quantity(1), shr)
+
+    k2 = in_key  # Key("in:nl-t-ya-m-c")
+    dri_in = rep.add(k["dri_tot"], "select", k2, no_ccs_filter)
+    k3 = rep.add(k2["dri"], "mul", dri_in, shr2)
+    k4 = rep.add(k2["dri_ccs_wrong_tec"], "mul", dri_in, shr)
+    k5 = rep.add(
+        k2["dri_ccs"], "relabel", k4, {"t": {"dri_gas_steel": "dri_gas_ccs_steel"}}
+    )
+    key = rep.add(k["dri_split"], "concat", k3, k5)
+    return key
+
+
 def add_fe_key(rep: "Reporter") -> Key:
     pe_gas(rep)
     gas_final = [
@@ -1150,10 +1173,15 @@ def add_fe_key(rep: "Reporter") -> Key:
     k = Key(f"{IN}:nl-t-ya-m-c-l")
     rep.add(k["fe_non_gas"], "select", k, {"t": gas_final}, inverse=True)
     rep.add(k["fe_gases"], "expand_dims", k.drop("l")["pe+gas"], {"l": ["final"]})
+    no_ccs_filter = {"t": ["dri_gas_steel"]}
+
     rep.add(k["FE"], "concat", k["fe_non_gas"], k["fe_gases"])
-    # TODO: mode dimension is is dropped in pe_gas. need to check if can be added with
-    # compatibility for co2 reporting
-    return k["FE"]
+    splitted_dri = fe_dri(rep, k["FE"])
+    fe_excl_dri = rep.add(
+        k["FE"]["excl_dri"], "select", k["FE"], no_ccs_filter, inverse=True
+    )
+    rep.add(k["FE2"], "concat", fe_excl_dri, splitted_dri)
+    return k["FE2"]
 
 
 def concat_hist_and_act(rep: "Reporter"):
@@ -1177,6 +1205,27 @@ def concat_hist_and_act(rep: "Reporter"):
     )
 
 
+def iron_prod(rep: "Reporter"):
+    """Add key that allocates iron and steel production and append to ``out``"""
+    k = Key(f"{ACT}:nl-t-ya-m")
+    rep.add("out:nl-t-ya-m:dri_ccs", "select", k, {"t": ["dri_gas_ccs_steel"]})
+    k2 = rep.add(
+        "prod:nl-t-ya-m-c-l:dri_ccs",
+        "expand_dims",
+        k,
+        {"c": ["sponge_iron"], "l": ["tertiary_material"]},
+    )
+    k_out = Key(f"{OUT}:nl-t-ya-m-c")
+    bof = rep.add(k_out["bof"], "select", k_out, {"t": ["bof_steel"], "c": ["steel"]})
+    prim = rep.add(k_out["bof_prim"], "mul", bof, Quantity(0.85))
+    prim2 = rep.add(
+        k_out.append("l")["bof_prim"], "expand_dims", prim, {"l": ["primary"]}
+    )
+    sec = rep.add(k_out["bof_sec"], "mul", bof, Quantity(0.15))
+    sec2 = rep.add(
+        k_out.append("l")["bof_sec"], "expand_dims", sec, {"l": ["secondary"]}
+    )
+    rep.add("prod:nl-t-ya-m-c-l", "concat", k_out.append("l"), k2, prim2, sec2)
 
 
 def add_eff(rep: "Reporter"):
@@ -1197,6 +1246,7 @@ if __name__ == "__main__":
     scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
     rep = message_ix.Reporter.from_scenario(scen)
     prepare_reporter(ctx, reporter=rep)
+    add_eff(rep)
     concat_hist_and_act(rep)
     add_fe_key(rep)
     ccs(rep)

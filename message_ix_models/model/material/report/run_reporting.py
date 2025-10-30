@@ -615,6 +615,7 @@ def run_prod_reporting(
 ) -> pyam.IamDataFrame:
     """Generate reporting for industry production variables."""
     dfs = []
+    ut.iron_prod(rep)
     config = load_config("", "prod")
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     df.loc[df.index.get_level_values("iamc_name").str.contains("Methanol")] /= 0.697615
@@ -644,7 +645,6 @@ def run_prod_reporting(
 
     py_df = pyam.concat(dfs)
 
-    #
     dry_cli = "Production|Non-Metallic Minerals|Clinker"
     dry_cli_ccs = "Production|Non-Metallic Minerals|Clinker|w/ CCS"
     dry_cli_wo_ccs = "Production|Non-Metallic Minerals|Clinker|w/o CCS"
@@ -653,39 +653,6 @@ def run_prod_reporting(
     share_non_ccs = "Production|Non-Metallic Minerals|Clinker|w/o CCS [Share]"
     py_df.divide(dry_cli, dry_cli_wo_ccs, share_non_ccs, fillna=0, append=True)
     py_df.subtract(1, share_non_ccs, share_ccs, append=True)
-
-    # assume 15% of BOF output is secondary steel since input is 15% "new_scrap"
-    bof_var = "Production|Iron and Steel|Steel|Secondary|BOF"
-    bof = py_df.multiply(bof_var, 0.15, bof_var)
-    py_df.filter(variable=bof_var, keep=False, inplace=True)
-    py_df = pyam.concat([py_df, bof])
-    updated = []
-    to_update = [
-        "Production|Iron and Steel|Steel|Secondary",
-        "Production|Steel",
-        "Production|Iron and Steel|Steel",
-    ]
-    for agg_var in to_update:
-        updated.append(py_df.add(agg_var, bof_var, agg_var))
-    py_df.filter(variable=to_update, keep=False, inplace=True)
-    py_df = pyam.concat([py_df, pyam.concat(updated)])
-
-    # assume 85% of BOF output is primary steel since input is 85% "pig_iron"
-    bof_var = "Production|Iron and Steel|Steel|Primary|BOF"
-    bof = py_df.multiply(bof_var, 0.85, bof_var)
-    py_df.filter(variable=bof_var, keep=False, inplace=True)
-    py_df = pyam.concat([py_df, bof])
-    updated = []
-    to_update = [
-        "Production|Iron and Steel|Steel|Primary",
-        "Production|Steel",
-        "Production|Iron and Steel|Steel",
-    ]
-    for agg_var in to_update:
-        updated.append(py_df.add(agg_var, bof_var, agg_var))
-    py_df.filter(variable=to_update, keep=False, inplace=True)
-    py_df = pyam.concat([py_df, pyam.concat(updated)])
-
     return py_df
 
 
@@ -825,6 +792,7 @@ def calculate_clinker_ccs_energy(scenario: "Scenario", rep, py_df):
         )
     except:
         print("No clinker with CCS production in this scenario.")
+    return py_df
 
 
 def run(

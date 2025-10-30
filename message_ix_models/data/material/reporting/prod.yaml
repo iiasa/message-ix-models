@@ -3,7 +3,7 @@
 # each variable specifies a list of filter for genno.operator.select()
 
 var:
-  out
+  "prod:nl-t-ya-m-c-l"
 
 iamc_prefix:
   Production|
@@ -283,28 +283,72 @@ vars:
     short:
       prod_alu_prim
 
-
   # steel
-  Iron and Steel|Steel|Secondary|BOF:
+  Iron and Steel|Steel|Primary|BOF|Conventional:
     filter:
-      { technology: [bof_steel], mode:[M1, M2], commodity: steel, level: final_material }
+      { technology: [ bof_steel ], mode: [ M1 ], commodity: steel, level: primary }
     short:
-      prod_steel_sec_bof
+      prod_steel_prim_bof_conv
+  Iron and Steel|Steel|Primary|BOF|TGR:
+    filter:
+      { technology: [ bof_steel ], mode: [ M2 ], commodity: steel, level: primary }
+    short:
+      prod_steel_prim_bof_tgr
+  Iron and Steel|Steel|Secondary|BOF|Conventional:
+    filter:
+      { technology: [ bof_steel ], mode: [ M1 ], commodity: steel, level: secondary }
+    short:
+      prod_steel_sec_bof_conv
+  Iron and Steel|Steel|Secondary|BOF|TGR:
+    filter:
+      { technology: [ bof_steel ], mode: [ M2 ], commodity: steel, level: secondary }
+    short:
+      prod_steel_sec_bof_tgr
 
-  Iron and Steel|Steel|Secondary|EAF:
+  Iron and Steel|Steel|Secondary|EAF|Scrap:
     filter:
-      { technology: [ eaf_steel ], mode: [ M2], commodity: steel, level: final_material }
+      { technology: [ eaf_steel ], mode: [ M2 ], commodity: steel, level: final_material }
     short:
-      prod_steel_sec_eaf
+      prod_steel_sec_eaf_scrap
+  Iron and Steel|Steel|Primary|EAF|Pig Iron:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M1 ], commodity: steel, level: final_material }
+    short:
+      prod_steel_prim_eaf_bf
+  Iron and Steel|Steel|Primary|EAF|Sponge Iron:
+    filter:
+      { technology: [ eaf_steel ], mode: [ M3 ], commodity: steel, level: final_material }
+    short:
+      prod_steel_prim_eaf_dri
 
-  Iron and Steel|Steel|Primary|EAF:
+  Iron and Steel|Sponge Iron|Gas|w/ CCS:
     filter:
-      { technology: [eaf_steel], mode: [M1, M3], commodity: steel, level: final_material }
+      { technology: [ dri_gas_ccs_steel ], mode: [ M1 ], commodity: sponge_iron, level: tertiary_material }
     short:
-      prod_steel_prim_eaf
+      prod_iron_dri
+  Iron and Steel|Sponge Iron|Gas|w/o CCS:
+    filter:
+      { technology: [ dri_gas_steel ], mode: [ M1 ], commodity: sponge_iron, level: tertiary_material }
+    short:
+      prod_iron_dri
+  Iron and Steel|Sponge Iron|Coal|w/o CCS:
+    filter:
+      { technology: [ dri_coal_steel ], mode: [ M1 ], commodity: sponge_iron, level: tertiary_material }
+    short:
+      prod_iron_dri
+  Iron and Steel|Sponge Iron|Hydrogen:
+    filter:
+      { technology: [ dri_h2_steel ], mode: [ M1 ], commodity: sponge_iron, level: tertiary_material }
+    short:
+      prod_iron_dri
 
-  Iron and Steel|Steel|Primary|BOF:
+  Iron and Steel|Pig Iron|w/o CCS:
     filter:
-      { technology: [ bof_steel ], mode: [ M1, M2 ], commodity: steel, level: final_material }
+      { technology: [ bf_steel ], mode: [ M1, M3 ], commodity: pig_iron, level: tertiary_material }
     short:
-      prod_steel_prim_bof
+      prod_iron_bf
+  Iron and Steel|Pig Iron|w/ CCS:
+    filter:
+      { technology: [ bf_ccs_steel ], mode: [ M2 ], commodity: pig_iron, level: tertiary_material }
+    short:
+      prod_iron_bf_ccs
