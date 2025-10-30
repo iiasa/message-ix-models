@@ -826,7 +826,7 @@ vars:
   Residential and Commercial|Electricity|Thermal|Resistance:
     filter: { technology: elec_rc, commodity: electr, level: final, mode: M1 }
     short: fe_rc_elec_rc
-  Residential and Commercial|Electricity|Heating|Heat Pump:
+  Residential and Commercial|Electricity|Thermal|Heat Pumps:
     filter: { technology: hp_el_rc, commodity: electr, level: final, mode: M1 }
     short: fe_rc_elec_hp
   Residential and Commercial|Electricity|Specific:
@@ -838,7 +838,7 @@ vars:
   Residential and Commercial|Gases|Biomass:
     filter: { technology: gas_rc, commodity: biogas, level: final, mode: M1 }
     short: fe_rc_gas_bio
-  Residential and Commercial|Gas:
+  Residential and Commercial|Gases|Gas:
     filter: { technology: gas_rc, commodity: gas, level: final, mode: M1 }
     short: fe_rc_gas
   Residential and Commercial|Heat:

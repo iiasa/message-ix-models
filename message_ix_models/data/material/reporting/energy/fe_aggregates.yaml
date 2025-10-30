@@ -300,6 +300,10 @@ level_1:
       [ fe_pe_other_coal, fe_pe_other_bio ]
 
 
+  Bunkers|Liquids|Oil:
+    components: [ fe_bunk_loil, fe_bunk_foil ]
+    short: fe_rc_elec
+
   Residential and Commercial|Electricity:
     components: [ fe_rc_elec_rc, fe_rc_elec_hp, fe_rc_elec_sp, fe_rc_elec_pv ]
     short: fe_rc_elec
