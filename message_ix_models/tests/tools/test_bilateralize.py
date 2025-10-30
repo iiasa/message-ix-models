@@ -27,8 +27,6 @@ from message_ix_models.util import package_data_path
 log = get_logger(__name__)
 
 
-# Test generate_bare_sheets()
-@pytest.fixture
 def test_generate_edit_files():
     """
     Checks that required files are generated in both
@@ -40,7 +38,7 @@ def test_generate_edit_files():
     data_path = package_data_path("bilateralize")
     data_path = os.path.join(os.path.dirname(data_path), "bilateralize")
 
-    generate_edit_files(log=log)
+    generate_edit_files(log=log, project_name=None, config_name=None)
 
     req_files = ["input", "output", "technical_lifetime", "capacity_factor"]
 
@@ -54,8 +52,6 @@ def test_generate_edit_files():
             )
 
 
-# Test build_parameter_sheets()
-@pytest.fixture
 def test_build_parameter_sheets():
     """
     Checks that dictionary of parameter dataframes is built correctly.
@@ -76,9 +72,10 @@ def test_build_parameter_sheets():
         assert "flow" in test_dict[tec].keys()
 
 
-# Test on scenario
-@pytest.fixture
 def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
+    """
+    Test bilateralization on a scenario.
+    """
     config_base, config_path, config_tec = load_config(
         project_name=None, config_name=None, load_tec_config=True
     )
