@@ -158,48 +158,49 @@ main.add_command(ixmp_cli.commands["config"])
 #: Each of these should contain a function named ``cli`` decorated with @click.command
 #: or @click.group.
 submodules = [
-    "message_ix_models.model.buildings.cli",
-    "message_ix_models.model.cli",
-    "message_ix_models.model.structure",
-    "message_ix_models.model.transport.cli",
-    "message_ix_models.model.water.cli",
-    "message_ix_models.project.circeular.cli",
-    "message_ix_models.project.edits.cli",
-    "message_ix_models.project.navigate.cli",
-    "message_ix_models.project.ssp.cli",
-    "message_ix_models.report.cli",
-    "message_ix_models.model.material.cli",
-    "message_ix_models.testing.cli",
-    "message_ix_models.util.pooch",
-    "message_ix_models.util.slurm",
+    # "message_ix_models.model.buildings.cli",
+    # "message_ix_models.model.cli",
+    # "message_ix_models.model.structure",
+    # "message_ix_models.model.transport.cli",
+    # "message_ix_models.model.water.cli",
+    "message_ix_models.project.alps.cli",
+    # "message_ix_models.project.circeular.cli",
+    # "message_ix_models.project.edits.cli",
+    # "message_ix_models.project.navigate.cli",
+    # "message_ix_models.project.ssp.cli",
+    # "message_ix_models.report.cli",
+    # "message_ix_models.model.material.cli",
+    # "message_ix_models.testing.cli",
+    # "message_ix_models.util.pooch",
+    # "message_ix_models.util.slurm",
 ]
 
-try:
-    import message_data.cli
-except ImportError:
-    # message_data is not installed or contains some ImportError of its own
-    import ixmp
-
-    if ixmp.config.get("no message_data") is not True:
-        print(
-            "Warning: message_data is not installed or cannot be imported; see the "
-            "documentation via --help"
-        )
-
-    # commented: Display verbose information for debugging
-    # from traceback import format_exception
-    #
-    # etype, value, tb = sys.exc_info()
-    # print(
-    #     "",
-    #     *format_exception(etype, value, tb, limit=-1, chain=False)[1:],
-    #     sep="\n",
-    # )
-else:  # pragma: no cover  (needs message_data)
-    # Also add message_data submodules
-    submodules.extend(
-        f"message_data.{name}" for name in message_data.cli.MODULES_WITH_CLI
-    )
+# try:
+#     import message_data.cli
+# except ImportError:
+#     # message_data is not installed or contains some ImportError of its own
+#     import ixmp
+#
+#     if ixmp.config.get("no message_data") is not True:
+#         print(
+#             "Warning: message_data is not installed or cannot be imported; see the "
+#             "documentation via --help"
+#         )
+#
+#     # commented: Display verbose information for debugging
+#     # from traceback import format_exception
+#     #
+#     # etype, value, tb = sys.exc_info()
+#     # print(
+#     #     "",
+#     #     *format_exception(etype, value, tb, limit=-1, chain=False)[1:],
+#     #     sep="\n",
+#     # )
+# else:  # pragma: no cover  (needs message_data)
+#     # Also add message_data submodules
+#     submodules.extend(
+#         f"message_data.{name}" for name in message_data.cli.MODULES_WITH_CLI
+#     )
 
 for name in submodules:
     # Import the module and retrieve the click.Command object
