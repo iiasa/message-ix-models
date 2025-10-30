@@ -122,7 +122,7 @@ def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
     py_df = pyam.concat(dfs)
-    calculate_clinker_ccs_energy(scenario, rep, py_df)
+    py_df = calculate_clinker_ccs_energy(scenario, rep, py_df)
 
     py_df.aggregate_region(
         [i for i in py_df.variable if "Efficiency" not in i], append=True
