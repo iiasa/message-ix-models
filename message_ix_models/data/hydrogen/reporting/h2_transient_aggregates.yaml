@@ -1,0 +1,67 @@
+# Aggregation rules for transient hydrogen production reporting
+# Defines hierarchical aggregations of transient production variables
+# Transient hydrogen is defined as hydrogen production for 
+# the production of other commodities, such as ammonia and methanol.
+#
+# Stoichiometric factors convert output commodity (ammonia/methanol) to hydrogen content:
+# - Ammonia: 1.114 EJ H2 per EJ NH3
+# - Methanol (coal/bio/ng): 0.937 EJ H2 per EJ methanol
+# - Methanol (h2-based): 1.124 EJ H2 per EJ methanol
+
+var: out
+iamc_prefix: Production|Hydrogen|Transient|
+unit: EJ/yr
+
+level_1:
+  Ammonia|Biomass:
+    short: prod_h2_transient_nh3_biomass_total
+    original_unit: GWa
+    components: [ prod_h2_transient_nh3_biomass, prod_h2_transient_nh3_biomass_ccs ]
+  Ammonia|Electricity:
+    short: prod_h2_transient_nh3_electricity_total
+    original_unit: GWa
+    components: [ prod_h2_transient_nh3_electricity ]
+  Ammonia|Gas:
+    short: prod_h2_transient_nh3_gas_total
+    original_unit: GWa
+    components: [ prod_h2_transient_nh3_gas, prod_h2_transient_nh3_gas_ccs ]
+  Ammonia|Coal:
+    short: prod_h2_transient_nh3_coal_total
+    original_unit: GWa
+    components: [ prod_h2_transient_nh3_coal, prod_h2_transient_nh3_coal_ccs ]
+  Ammonia|Oil:
+    short: prod_h2_transient_nh3_oil_total
+    original_unit: GWa
+    components: [ prod_h2_transient_nh3_oil, prod_h2_transient_nh3_oil_ccs ]
+  Methanol|Biomass:
+    short: prod_h2_transient_meth_bio_total
+    original_unit: GWa
+    components: [ prod_h2_transient_meth_bio, prod_h2_transient_meth_bio_ccs ]
+  Methanol|Coal:
+    short: prod_h2_transient_meth_coal_total
+    original_unit: GWa
+    components: [ prod_h2_transient_meth_coal, prod_h2_transient_meth_coal_ccs ]
+  Methanol|Gas:
+    short: prod_h2_transient_meth_ng_total
+    original_unit: GWa
+    components: [ prod_h2_transient_meth_ng, prod_h2_transient_meth_ng_ccs ]
+  Methanol|Hydrogen:
+    short: prod_h2_transient_meth_h2_total
+    original_unit: GWa
+    components: [ prod_h2_transient_meth_h2 ]
+
+level_2:
+  Ammonia:
+    short: prod_h2_transient_nh3
+    original_unit: GWa
+    components: [ prod_h2_transient_nh3_biomass_total, prod_h2_transient_nh3_electricity_total, prod_h2_transient_nh3_gas_total, prod_h2_transient_nh3_coal_total, prod_h2_transient_nh3_oil_total ]
+  Methanol:
+    short: prod_h2_transient_meth
+    original_unit: GWa
+    components: [ prod_h2_transient_meth_bio_total, prod_h2_transient_meth_coal_total, prod_h2_transient_meth_ng_total, prod_h2_transient_meth_h2_total ]
+
+level_3:
+  Transient:
+    short: prod_h2_transient
+    original_unit: GWa
+    components: [ prod_h2_transient_nh3, prod_h2_transient_meth ]
