@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 import click
 
@@ -6,6 +7,8 @@ from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util.click import common_params, scenario_param
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
 log = logging.getLogger(__name__)
 
 
@@ -232,7 +235,15 @@ def cooling_cli(context, regions, rcps, rels):
     cooling(context, regions, rcps, rels)
 
 
-def cooling(context, regions, rcps, rels):
+def cooling(
+    context: "Context",
+    regions,
+    rcps,
+    rels,
+    solve: bool = True,
+    clone: bool = True,
+    scen: "Scenario | None" = None,
+) -> None:
     """Build and solve model with new cooling technologies.
 
     Use the --url option to specify the base scenario.
@@ -259,29 +270,31 @@ def cooling(context, regions, rcps, rels):
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
+    if clone is True:
+        output_scenario_name = context.output_scenario + "_cooling"
+        output_model_name = context.output_model
 
-    output_scenario_name = context.output_scenario + "_cooling"
-    output_model_name = context.output_model
+        # Clone and build
+        scen = context.get_scenario().clone(
+            model=output_model_name, scenario=output_scenario_name, keep_solution=False
+        )
 
-    # Clone and build
-    scen = context.get_scenario().clone(
-        model=output_model_name, scenario=output_scenario_name, keep_solution=False
-    )
+        print(scen.model)
+        print(scen.scenario)
 
-    print(scen.model)
-    print(scen.scenario)
-
-    # Exporting the built model (Scenario) to GAMS with an optional case name
-    caseName = scen.model + "__" + scen.scenario + "__v" + str(scen.version)
+        # Exporting the built model (Scenario) to GAMS with an optional case name
+        caseName = scen.model + "__" + scen.scenario + "__v" + str(scen.version)
 
     # Build
     build(context, scen)
 
-    # Set scenario as default
-    scen.set_as_default()
+    if clone:
+        # Set scenario as default
+        scen.set_as_default()
 
-    # Solve
-    scen.solve(solve_options={"lpmethod": "4", "scaind": "1"}, case=caseName)
+    if solve:
+        # Solve
+        scen.solve(solve_options={"lpmethod": "4", "scaind": "1"}, case=caseName)
 
 
 @cli.command("report")
