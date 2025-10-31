@@ -14,7 +14,6 @@ if __name__ == "__main__":
     )
     adjust_electrification_constraint(scen)
     adjust_rooftop_constraint(scen, 0.4)
-    scen.solve("MESSAGE-MACRO")
     del scen
     scen = message_ix.Scenario(mp, "DIGSY_SSP2_BESTEST", "INDC2030i_weak").clone(
         "DIGSY_SSP2_BESTEST",
@@ -24,14 +23,3 @@ if __name__ == "__main__":
     adjust_electrification_constraint(scen)
     adjust_rooftop_constraint(scen, 0.45)
     lower_cv_cost(scen, 0.666)
-    scen.solve("MESSAGE-MACRO")
-    del scen
-    scen = message_ix.Scenario(mp, "DIGSY_SSP2_WORSTEST", "INDC2030i_weak").clone(
-        "DIGSY_SSP2_WORSTEST",
-        "INDC2030i_weak",
-        keep_solution=False,
-    )
-    adjust_electrification_constraint(scen)
-    adjust_rooftop_constraint(scen, 0.5)
-    lower_cv_cost(scen, 1.25)
-    scen.solve("MESSAGE-MACRO")

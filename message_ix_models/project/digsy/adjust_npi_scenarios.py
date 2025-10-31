@@ -26,12 +26,11 @@ if __name__ == "__main__":
     lower_cv_cost(scen, 0.666)
     scen.solve("MESSAGE-MACRO")
     del scen
-    scen = message_ix.Scenario(mp, "DIGSY_SSP2_WORSTEST", "NPiREF").clone(
+    scen = message_ix.Scenario(mp, "DIGSY_SSP2_WORSTEST", "NPiREF", version=1).clone(
         "DIGSY_SSP2_WORSTEST",
         "NPiREF",
         keep_solution=False,
     )
-    adjust_electrification_constraint(scen)
-    adjust_rooftop_constraint(scen, 0.5)
     lower_cv_cost(scen, 1.25)
     scen.solve("MESSAGE-MACRO")
+    scen.set_as_default()
