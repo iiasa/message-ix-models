@@ -16,3 +16,4 @@ if __name__ == "__main__":
     adjust_electrification_constraint(scen)
     adjust_rooftop_constraint(scen, 0.4)
     scen.solve("MESSAGE-MACRO")
+    scen.set_as_default()

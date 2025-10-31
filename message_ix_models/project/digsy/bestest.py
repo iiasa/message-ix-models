@@ -20,3 +20,4 @@ if __name__ == "__main__":
     adjust_rooftop_constraint(scen, 0.45)
     lower_cv_cost(scen, 0.666)
     scen.solve("MESSAGE-MACRO")
+    scen.set_as_default()
