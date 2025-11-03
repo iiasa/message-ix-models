@@ -4,7 +4,7 @@ Test the bilateralize tool
 
 # Import packages
 import os
-
+from pathlib import Path
 import pytest
 
 from message_ix_models import Context, testing
@@ -37,7 +37,7 @@ def test_generate_edit_files(access_to_p: bool = False):
         project_name=None, config_name=None, load_tec_config=True
     )
     data_path = package_data_path("bilateralize")
-    data_path = os.path.join(os.path.dirname(data_path), "bilateralize")
+    data_path = Path(os.path.join(os.path.dirname(data_path), "bilateralize"))
 
     prepare_edit_files(project_name=None, config_name=None, P_access=access_to_p)
 
