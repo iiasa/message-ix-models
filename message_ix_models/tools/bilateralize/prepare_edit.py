@@ -69,8 +69,8 @@ def define_networks(
     node_path = package_data_path(
         "bilateralize", "node_lists", message_regions + "_node_list.yaml"
     )
-    with open(node_path, "r") as f:
-        node_set = yaml.safe_load(f)
+    with open(node_path, "r", encoding="utf-8") as file_handler:
+        node_set = yaml.safe_load(file_handler)
     node_set = [r for r in node_set.keys() if r not in ["World", "GLB"]]
 
     node_df = pd.DataFrame(itertools.product(node_set, node_set))

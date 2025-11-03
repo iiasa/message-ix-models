@@ -36,12 +36,11 @@ def remove_trade_tech(scen: message_ix.Scenario, log, config_tec: dict, tec: str
     base_tec = base_tec + [
         i
         for i in scen.set("technology")
-        if config_tec[tec][tec + "trade"]["trade_commodity"] + "_exp_" in i
+        if config_tec[tec][tec + "_trade"]["trade_commodity"] + "_exp_" in i
     ]
     base_tec = base_tec + ["oil_exp", "oil_imp"]  # for crude
 
     base_tec = list(set(base_tec))
-
     with scen.transact("Remove base trade technologies for " + tec):
         for t in base_tec:
             if t in list(scen.set("technology")):
