@@ -6,9 +6,8 @@ Test the bilateralize tool
 import os
 
 import pytest
-from message_ix import Scenario
 
-from message_ix_models import Context
+from message_ix_models import Context, testing
 from message_ix_models.tools.bilateralize.bare_to_scenario import bare_to_scenario
 from message_ix_models.tools.bilateralize.load_and_solve import (
     add_trade_parameters,
@@ -81,18 +80,16 @@ def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
     )
 
     # Set up test scenario
-    test_context.time = "year"
-    test_context.type_reg = "global"
-    test_context.regions = "R12"
+    test_context.model.regions = "R12"
+    scen = testing.bare_res(request, test_context)
 
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": f"{request.node.name}/test bilateral",
-        "scenario": f"{request.node.name}/test bilateral",
-        "version": "new",
-    }
-    scen = Scenario(**scenario_info)
+    # Add unit
+    mp = scen.platform
+    mp.add_unit("Mt-km")
+
+    # Add global node
+    with scen.transact("Add global node"):
+        scen.add_set("node", "R12_GLB")
 
     # Set up bilateralization dictionary
     bilat_dict = bare_to_scenario(
@@ -100,7 +97,6 @@ def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
     )
 
     covered_tec = config_base.get("covered_trade_technologies")
-
     for tec in covered_tec:
         # Remove existing technologies related to trade
         remove_trade_tech(scen=scen, log=log, config_tec=config_tec, tec=tec)
@@ -120,7 +116,7 @@ def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
     # Update additional parameters
     update_additional_parameters(scen=scen, extra_parameter_updates=None)
 
-    # Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM
+    # Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM (won't run in test)
     remove_pao_coal_constraint(scen=scen, log=log, MESSAGEix_GLOBIOM=False)
 
     assert True
