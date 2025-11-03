@@ -35,6 +35,7 @@ v2025.10.31
 - Update documentation for
   :doc:`project/efc` (:pull:`426`) and
   :doc:`project/elevate` (:pull:`427`).
+- New module :mod:`.tools.bilateralize` for bilateralizing scenarios (:pull:`438`).
 
 v2025.9.9
 =========
