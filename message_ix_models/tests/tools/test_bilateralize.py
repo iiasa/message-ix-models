@@ -5,6 +5,7 @@ Test the bilateralize tool
 # Import packages
 import os
 from pathlib import Path
+
 import pytest
 
 from message_ix_models import Context, testing
