@@ -9,7 +9,9 @@ On this page:
 Elsewhere:
 
 - ``global.yaml``, the :doc:`default-config`.
-- Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.report`, and :mod:`message_ix.report`.
+- Documentation for :mod:`genno` (:doc:`genno:index`),
+  :mod:`ixmp.report`, and
+  :mod:`message_ix.report`.
 - Reporting for specific model variants:
 
   - :mod:`.water.reporting`
@@ -86,6 +88,22 @@ By combining these genno, ixmp, message_ix, and message_ix_models features,
 the following functionality is provided.
 
 .. note:: If any of this does not appear to work as advertised, file a bug!
+
+Scope of :mod:`genno`-based vs. :mod:`.legacy` reporting
+--------------------------------------------------------
+
+:func:`.prepare_reporter` currently handles only a subset
+of the IAMC-structured data produced by :mod:`.report.legacy`.
+The module globals :data:`.NOT_IMPLEMENTED_MEASURE` and :mod:`NOT_IMPLEMENTED_IAMC`
+express the measures and IAMC ‘variables’ that are either not implemented
+or not exactly matching the legacy reporting output.
+The test :func:`.test_report.test_compare` compares outputs
+from the two forms of reporting using :func:`.iamc.compare`,
+ensuring that data match for all entries *except* these exclusions.
+
+See GitHub issues and pull requests with the
+`'report' label <https://github.com/iiasa/message-ix-models/issues?q=state%3Aopen%20label%3Areport>`_
+for ongoing work to expand the scope of :func:`prepare_reporter`.
 
 Units
 -----
