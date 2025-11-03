@@ -6,7 +6,8 @@ Next release
 
 - :mod:`message_ix_models` supports and is tested against `Pandas 3.0.0 <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v3.0.0.html>`_,
   released 2026-01-21 (:pull:`470`).
-
+- New module :mod:`tools.bilateralize <message_ix_models.tools.bilateralize>`
+  to change scenarios to a bilateral representation of trade (:pull:`438`).
 - Fix water module parameter bugs and refactor cooling (:pull:`405`):
   infrastructure M1/Mf mode fixes, regional average shares for cooling allocation,
   water supply level hierarchy corrections, and test suite improvements.
