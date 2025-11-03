@@ -1,8 +1,19 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Improvements to :class:`.report.Config` (:pull:`178`):
+
+  - New attribute :attr:`~.report.Config.modules`.
+  - New method :meth:`~.report.Config.iter_callbacks`.
+
+- New function :func:`.tools.iamc.compare` (:pull:`178`).
+- Expand :doc:`api/report/index` documentation (:pull:`178`)
+  to cover features implemented/not implemented by :mod:`genno`-based reporting.
+  Module globals :data:`.NOT_IMPLEMENTED_MEASURE` and :data:`.NOT_IMPLEMENTED_IAMC`
+  record not-yet-implemented measures and IAMC ‘variables’.
 
 v2025.10.31
 ===========
