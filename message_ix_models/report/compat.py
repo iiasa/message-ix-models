@@ -193,13 +193,11 @@ def pe_w_ccs_retro(
 
     # TODO determine the dimensions to drop for the numerator
     k3, *_ = iter_keys(c.add(anon(dims=k2), "div", k2.drop("yv"), k2, sums=True))
-    assert_dims(c, k3)
 
     filters_out = dict(c=["electr"], l=["secondary"])
     k4 = eff(c, [t], filters_in=filters, filters_out=filters_out)
     k5 = single_key(c.add(anon(), "mul", k3, k4))
     k6 = single_key(c.add(anon(dims=k5), "div", k1, k5))
-    assert_dims(c, k6)
 
     return k6
 
@@ -252,39 +250,6 @@ def prepare_techs(c: "Computer", technologies: list["Code"]) -> None:
         c.add(f"t::{k}", quote(sorted(v)))
 
 
-def assert_dims(c: "Computer", *keys: Key):
-    """Check the dimensions of `keys` for an "add", "sub", or "div" task.
-
-    This is a sanity check needed because :py:`c.add("name", "div", …)` does not (yet)
-    automatically infer the dimensions of the resulting key. This is in contrast to
-    :py:`c.add("name", "mul", …)`, which *does* infer.
-
-    Use this function after manual construction of a key for a "add", "div", or "sub"
-    task, in order to ensure the key matches the dimensionality of the quantity that
-    will result from the task.
-
-    .. deprecated:: 2025-02-17
-       Handled upstream in :func:`genno.operator.add_binop` with genno ≥1.20.
-    """
-    from warnings import warn
-
-    warn(
-        "message-ix-models.report.compat.assert_dims()",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    for key in keys:
-        task = c.graph[key]
-        expected = Key.product("foo", *task[1:])
-
-        op = f" {task[0].__name__} "
-        assert set(key.dims) == set(expected.dims), (
-            f"Task should produce {op.join(repr(k) for k in task[1:])} = "
-            f"{str(expected).split(':')[1]}; key indicates {str(key).split(':')[1]}"
-        )
-
-
 def callback(rep: "Reporter", context: "Context") -> None:
     """Partially duplicate the behaviour of :func:`.default_tables.retr_CO2emi`.
 
@@ -321,8 +286,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
     k0 = out(rep, ["gas_cc", "gas_ppl"])
     for t in "gas_cc", "gas_ppl":
         k1 = out(rep, [t])
-        k2 = rep.add(Key(f"{t}_share", k1.dims), "div", k0, k1)
-        assert_dims(rep, single_key(k2))
+        rep.add(Key(f"{t}_share", k1.dims), "div", k0, k1)
 
     # L3026
     # "in:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
@@ -330,8 +294,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
     c_gas = dict(c=["gas"])
     k0 = inp(rep, techs("gas", "all extra"), filters=c_gas)
     k1 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
-    k2 = rep.add(Key("in", k1.dims, "nonccs_gas_tecs"), "sub", k0, k1)
-    assert_dims(rep, single_key(k2))
+    rep.add(Key("in", k1.dims, "nonccs_gas_tecs"), "sub", k0, k1)
 
     # L3091
     # "Biogas_tot_abs": absolute output from t=gas_bio [energy units]
@@ -351,7 +314,6 @@ def callback(rep: "Reporter", context: "Context") -> None:
     k1 = rep.add(
         Key("in", k0.dims, "all_gas_tecs"), "add", full("in::nonccs_gas_tecs"), k0
     )
-    assert_dims(rep, k1)
 
     # L3165
     # "Hydrogen_tot:*": CO₂ emissions from t=h2_mix [mass/time]
@@ -386,7 +348,6 @@ def callback(rep: "Reporter", context: "Context") -> None:
         full("in::nonccs_gas_tecs"),
         k0,
     )
-    assert_dims(rep, k0, k1)
 
     # L3144, L3234
     # "Biogas_trp", "Hydrogen_trp": transportation shares of emissions savings from
@@ -398,8 +359,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
         ("Hydrogen", full("in::nonccs_gas_tecs_wo_ccsretro")),
     ):
         k1 = rep.add(anon(dims=other), "div", k0, other)
-        k2 = rep.add(f"{name}_trp", "mul", f"{name}_tot", k1)
-        assert_dims(rep, single_key(k1))
+        rep.add(f"{name}_trp", "mul", f"{name}_tot", k1)
 
     # L3346
     # "FE_Transport": CO₂ emissions from all transportation technologies directly using
@@ -420,7 +380,6 @@ def callback(rep: "Reporter", context: "Context") -> None:
     k1, *_ = iter_keys(
         rep.add(Key("Transport", k0.dims), "add", k0, full("Hydrogen_trp"), sums=True)
     )
-    assert_dims(rep, k0, k1)
 
     # TODO Identify where to sum on "h", "m", "yv" dimensions
 
