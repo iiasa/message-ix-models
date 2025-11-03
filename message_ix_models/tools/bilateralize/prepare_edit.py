@@ -1270,7 +1270,11 @@ def generate_edit_files(
     export_edit_files(covered_tec, log, data_path, parameter_outputs)
 
 
-def prepare_edit_files(project_name: str | None = None, config_name: str | None = None, P_access: bool = True):
+def prepare_edit_files(
+    project_name: str | None = None,
+    config_name: str | None = None,
+    P_access: bool = True,
+):
     """
     Prepare edit files for bilateralize tool
 
@@ -1332,25 +1336,45 @@ def prepare_edit_files(project_name: str | None = None, config_name: str | None 
             if "piped" in tec:
                 tec_shipped = tec.replace("piped", "shipped")
                 add_df = costdf[costdf["technology"].str.contains(tec_shipped)].copy()
-                add_df["technology"] = add_df["technology"].str.replace("shipped", "piped")
+                add_df["technology"] = add_df["technology"].str.replace(
+                    "shipped", "piped"
+                )
             else:
                 add_df = costdf[costdf["technology"].str.contains(tec)]
 
             col_list = add_df.columns
             mean_cost = add_df["value"].mean()
 
-            input_df = pd.read_csv(os.path.join(data_path, tec, "edit_files", "input.csv"))
+            input_df = pd.read_csv(
+                os.path.join(data_path, tec, "edit_files", "input.csv")
+            )
             input_df = input_df[
                 ["node_loc", "technology", "year_act", "year_vtg", "mode", "time"]
             ].drop_duplicates()
             add_df = input_df.merge(
                 add_df,
-                left_on=["node_loc", "technology", "year_act", "year_vtg", "mode", "time"],
-                right_on=["node_loc", "technology", "year_act", "year_vtg", "mode", "time"],
+                left_on=[
+                    "node_loc",
+                    "technology",
+                    "year_act",
+                    "year_vtg",
+                    "mode",
+                    "time",
+                ],
+                right_on=[
+                    "node_loc",
+                    "technology",
+                    "year_act",
+                    "year_vtg",
+                    "mode",
+                    "time",
+                ],
                 how="left",
             )
 
-            add_df["value"] = np.where(add_df["value"].isnull(), mean_cost, add_df["value"])
+            add_df["value"] = np.where(
+                add_df["value"].isnull(), mean_cost, add_df["value"]
+            )
             add_df["value"] = round(add_df["value"] / 5, 0)
 
             add_df["unit"] = "USD/GWa"
