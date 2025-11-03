@@ -25,6 +25,8 @@ if TYPE_CHECKING:
     from .config import Callback
 
 __all__ = [
+    "NOT_IMPLEMENTED_IAMC",
+    "NOT_IMPLEMENTED_MEASURE",
     "Config",
     "prepare_reporter",
     "register",
@@ -44,6 +46,66 @@ except AttributeError:
     @genno.config.handles("_iamc formats")
     def _(c: Reporter, info):
         pass
+
+
+PE0 = r"Primary Energy\|(Coal|Gas|Hydro|Nuclear|Solar|Wind)"
+PE1 = r"Primary Energy\|(Coal|Gas|Solar|Wind)"
+E = (
+    r"Emissions\|CO2\|Energy\|Demand\|Transportation\|Road Rail and Domestic "
+    "Shipping"
+)
+
+#: Measures for which reporting is not implemented. See :data:`NOT_IMPLEMENTED_IAMC`.
+NOT_IMPLEMENTED_MEASURE = {
+    "(Agricultural|Forestry) (Demand|Production)",
+    "Capacity Additions",
+    "Capacity",
+    "Capital Cost",
+    "Carbon Sequestration",
+    "Consumption",
+    r"Cost\|Cost Nodal Net",
+    "Cumulative Capacity",
+    "Efficiency",
+    r"Emissions\|(BC|CF4|CH4|CO|CO2|F-Gases|HFC|Kyoto Gases|N2O|NH3|NOx|OC|SF6|Sulfur)",
+    r"Emissions\|(VOC)",
+    "Fertilizer Use",
+    "Final Energy",
+    "Food Demand",
+    "GDP",
+    "GLOBIOM",
+    "Investment",
+    "Land Cover",
+    "Lifetime",
+    "OM Cost",
+    "Population",
+    "Price",
+    r"Resource\|(Cumulative )?Extraction",
+    "Secondary Energy",
+    "Trade",
+    "Useful Energy",
+    "Water Consumption",
+    "Water Withdrawal",
+    "Yield",
+}
+
+
+#: Expressions for IAMC variable names not implemented by :func:`prepare_reporter`.
+NOT_IMPLEMENTED_IAMC = [
+    # Other 'variable' codes are missing from `obs`
+    rf"variable='({'|'.join(NOT_IMPLEMENTED_MEASURE)})(\|.*)?': no right data",
+    # 'variable' codes with further parts are missing from `obs`
+    f"variable='{PE0}.*': no right data",
+    # For `pe1` (NB: not Hydro or Solar) units and most values differ
+    f"variable='{PE1}.*': units mismatch .*EJ/yr.*'', nan",
+    r"variable='Primary Energy|Coal': 220 of 240 values with \|diff",
+    r"variable='Primary Energy|Gas': 234 of 240 values with \|diff",
+    r"variable='Primary Energy|Solar': 191 of 240 values with \|diff",
+    r"variable='Primary Energy|Wind': 179 of 240 values with \|diff",
+    # For `e` units and most values differ
+    f"variable='{E}': units mismatch: .*Mt CO2/yr.*Mt / a",
+    rf"variable='{E}': 20 missing right entries",
+    rf"variable='{E}': 220 of 240 values with \|diff",
+]
 
 
 @genno.config.handles("iamc")
