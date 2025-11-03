@@ -104,7 +104,8 @@ def dims_of(info: "Item") -> dict[str, str]:
 @lru_cache(1)
 def to_simulate():
     """Return items to be included in a simulated solution."""
-    from message_ix.models import MACRO, MESSAGE
+
+    from message_ix_models.util._message_ix import MACRO, MESSAGE
 
     # Items to included in a simulated solution: MESSAGE sets and parameters; some
     # variables
