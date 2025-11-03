@@ -18,7 +18,9 @@ from message_ix_models.tools.bilateralize.load_and_solve import (
     update_bunker_fuels,
     update_relation_parameters,
 )
-from message_ix_models.tools.bilateralize.prepare_edit import generate_edit_files
+from message_ix_models.tools.bilateralize.prepare_edit import (
+    prepare_edit_files,
+)
 from message_ix_models.tools.bilateralize.utils import get_logger, load_config
 from message_ix_models.util import package_data_path
 
@@ -26,7 +28,7 @@ from message_ix_models.util import package_data_path
 log = get_logger(__name__)
 
 
-def test_generate_edit_files():
+def test_generate_edit_files(access_to_p: bool = False):
     """
     Checks that required files are generated in both
     edit_files and bare_files directories.
@@ -37,7 +39,7 @@ def test_generate_edit_files():
     data_path = package_data_path("bilateralize")
     data_path = os.path.join(os.path.dirname(data_path), "bilateralize")
 
-    generate_edit_files(log=log, project_name=None, config_name=None)
+    prepare_edit_files(project_name=None, config_name=None, P_access=access_to_p)
 
     req_files = ["input", "output", "technical_lifetime", "capacity_factor"]
 
