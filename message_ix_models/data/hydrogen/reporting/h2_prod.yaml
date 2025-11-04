@@ -91,12 +91,3 @@ vars:
       original_unit: GWa
       short:
         prod_h2_elec_legacy
-
-
-  # refinery
-  Hydrogen|Refinery:
-    filter:
-      {technology: catalytic_reforming_ref, mode: M1, commodity: hydrogen, level: refinery}
-    original_unit: GWa
-    short:
-      prod_h2_refinery
