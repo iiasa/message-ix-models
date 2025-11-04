@@ -1304,8 +1304,7 @@ def prepare_edit_files(
     generate_edit_files(log=log,
                         project_name=project_name, 
                         config_name=config_name, 
-                        message_regions=message_regions,
-                        data_path=data_path)
+                        message_regions=message_regions)
 
     # Import calibration files from Global Energy Monitor
     if P_access is True:
