@@ -39,9 +39,7 @@ def gem_region(project_name: str | None = None, config_name: str | None = None):
         config = yaml.safe_load(f)
     message_regions = config["scenario"]["regions"]
 
-    full_path = package_data_path(
-        "bilateralize", "node_lists", message_regions + "_node_list.yaml"
-    )
+    full_path = package_data_path("node", message_regions + ".yaml")
     with open(full_path, "r") as f:
         message_regions = yaml.safe_load(f)
     message_regions_list = [
