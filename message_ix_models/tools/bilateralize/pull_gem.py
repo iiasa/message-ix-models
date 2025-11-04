@@ -180,13 +180,17 @@ def import_gem(
     export_dir = package_data_path("bilateralize", trade_technology)
     gem_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
 
-    trade_dir = os.path.join(os.path.dirname(gem_dir_out), "edit_files")
-    flow_dir = os.path.join(
-        os.path.dirname(gem_dir_out), "edit_files", "flow_technology"
+    trade_dir = os.path.join(
+        os.path.dirname(gem_dir_out), trade_technology, "edit_files"
     )
-    trade_dir_out = os.path.join(os.path.dirname(gem_dir_out), "bare_files")
+    flow_dir = os.path.join(
+        os.path.dirname(gem_dir_out), trade_technology, "edit_files", "flow_technology"
+    )
+    trade_dir_out = os.path.join(
+        os.path.dirname(gem_dir_out), trade_technology, "bare_files"
+    )
     flow_dir_out = os.path.join(
-        os.path.dirname(gem_dir_out), "bare_files", "flow_technology"
+        os.path.dirname(gem_dir_out), trade_technology, "bare_files", "flow_technology"
     )
     if not os.path.isdir(gem_dir_out):
         os.makedirs(Path(gem_dir_out))
