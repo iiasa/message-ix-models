@@ -66,9 +66,7 @@ def define_networks(
         message_regions: Regional resolution
     """
     # Generate full combination of nodes to build technology-specific network
-    node_path = package_data_path(
-        "bilateralize", "node_lists", message_regions + "_node_list.yaml"
-    )
+    node_path = package_data_path("node", message_regions + ".yaml")
     with open(node_path, "r", encoding="utf-8") as file_handler:
         node_set = yaml.safe_load(file_handler)
     node_set = [r for r in node_set.keys() if r not in ["World", "GLB"]]
@@ -1304,8 +1302,7 @@ def prepare_edit_files(
     generate_edit_files(log=log,
                         project_name=project_name, 
                         config_name=config_name, 
-                        message_regions=message_regions,
-                        data_path=data_path)
+                        message_regions=message_regions)
 
     # Import calibration files from Global Energy Monitor
     if P_access is True:

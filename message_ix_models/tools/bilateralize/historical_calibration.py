@@ -71,9 +71,7 @@ def generate_cfdict(
         project_name: Name of project (e.g., 'newpathways')
         config_name: Name of config file
     """
-    dict_dir = package_data_path(
-        "bilateralize", "node_lists", message_regions + "_node_list.yaml"
-    )
+    dict_dir = package_data_path("node",message_regions + ".yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
@@ -256,9 +254,7 @@ def convert_trade(
     df["HS"] = np.where(df["HS"] == "", df["k"], df["HS"])
 
     # Add MESSAGE regions
-    dict_dir = package_data_path(
-        "bilateralize", "node_lists", message_regions + "_node_list.yaml"
-    )
+    dict_dir = package_data_path("node", message_regions + ".yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
@@ -568,9 +564,7 @@ def reformat_to_parameter(
         config_name: Name of config file
         exports_only: If True, only include exports
     """
-    dict_dir = package_data_path(
-        "bilateralize", "node_lists", message_regions + "_node_list.yaml"
-    )
+    dict_dir = package_data_path("node", message_regions + ".yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
@@ -846,9 +840,7 @@ def build_hist_new_capacity_flow(
         annual_mileage: Average annual mileage of ship in km
     """
     # Regions
-    dict_dir = package_data_path(
-        "bilateralize", "node_lists", message_regions + "_node_list.yaml"
-    )
+    dict_dir = package_data_path("node", message_regions + ".yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
