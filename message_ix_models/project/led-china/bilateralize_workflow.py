@@ -15,11 +15,12 @@ models_scenarios = config['models_scenarios']
 prepare_edit_files(project_name = 'led-china', 
                    config_name = 'config.yaml',
                    P_access = True)
-                   
+
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'led-china', 
-                              config_name = 'config.yaml')
-
+                              config_name = 'config.yaml',
+                              P_access = True)
+                              
 # Update base scenarios
 for model_scen in models_scenarios.keys():
     base_model = models_scenarios[model_scen]['model']
@@ -28,11 +29,10 @@ for model_scen in models_scenarios.keys():
     print(base_model)
     print(base_scen)
 
-    load_and_solve(trade_dict = trade_dict,
-                   solve = True,
-                   project_name = 'led-china', 
+    load_and_solve(project_name = 'led-china', 
                    config_name = 'config.yaml', 
-                   start_model = base_model,
-                   start_scen = base_scen,
-                   target_model = 'china_security',
-                   target_scen = base_scen)
+                   start_model_name = base_model,
+                   start_scenario_name = base_scen,
+                   target_model_name = 'china_security',
+                   target_scenario_name = base_scen,
+                   solve_scenario = True)
