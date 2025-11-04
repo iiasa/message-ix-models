@@ -1,0 +1,12 @@
+# HHI constraint on electricity in R12_WEU
+electricity:
+  commodity:
+    electr
+  level:
+    secondary
+  time:
+    year
+  nodes:
+    - R12_WEU
+  value:
+    0.85

@@ -1,0 +1,93 @@
+# DATA DIRECTORIES
+p_drive_location:
+  #/pdrive/projects/ene.model3
+  P:/ene.model
+
+# SCENARIO INFORMATION
+scenario:
+  start_model: # in model_scenarios
+  start_scen:
+  target_model:
+  target_scen:
+  first_model_year:
+    2030
+  regions:
+    R12
+
+models_scenarios:
+  SSP2_Baseline:
+    model: SSP_SSP2_v6.2
+    scenario: baseline
+  
+# COVERED TRADE TECHNOLOGIES
+covered_trade_technologies:
+  - gas_piped
+  - LNG_shipped
+  - coal_shipped
+  - crudeoil_shipped
+  - crudeoil_piped
+  - eth_shipped
+  - foil_shipped
+  - foil_piped
+  - loil_shipped
+  - loil_piped
+  - biomass_shipped
+  - lh2_shipped
+
+# SHIPPING FUELS (how much of each shipping technology is propelled by each fuel)
+shipping_fuels:
+  LNG_tanker:
+    LNG_tanker_LNG: 0.8
+    LNG_tanker_loil: 0.2
+  oil_tanker:
+    oil_tanker_loil: 0.9
+    oil_tanker_foil: 0.07
+    oil_tanker_eth: 0.03
+
+# YEARS
+timeframes:
+  year_act_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+  year_vtg_list:
+    - 2010
+    - 2015
+    - 2020
+    - 2025
+    - 2030
+    - 2035
+    - 2040
+    - 2045
+    - 2050
+    - 2055
+    - 2060
+    - 2070
+    - 2080
+    - 2090
+    - 2100
+    - 2110
+
+# PARAMETERS THAT NEED TO BE DEFINED
+define_parameters:
+  base_required_par: # Parameters that need to be defined at a minimum
+      - input
+      - output
+      - technical_lifetime
+      - inv_cost
+      - fix_cost
+      - var_cost
+      - capacity_factor
