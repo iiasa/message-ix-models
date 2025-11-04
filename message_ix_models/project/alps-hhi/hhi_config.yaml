@@ -1,0 +1,13 @@
+# HHI configurations
+
+hhi_constraint:
+  electricity:
+    commodity:
+      electr
+    level:
+      secondary
+    nodes:
+      - R12_WEU
+    value:
+      - 0.99
+  
