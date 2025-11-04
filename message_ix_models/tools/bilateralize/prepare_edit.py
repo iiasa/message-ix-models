@@ -1297,12 +1297,11 @@ def prepare_edit_files(
     calculate_distance(message_regions)
 
     # Generate bare sheets
-    generate_edit_files(
-        log=log,
-        project_name=project_name,
-        config_name=config_name,
-        message_regions=message_regions,
-    )
+    generate_edit_files(log=log,
+                        project_name=project_name, 
+                        config_name=config_name, 
+                        message_regions=message_regions,
+                        data_path=data_path)
 
     # Import calibration files from Global Energy Monitor
     if P_access is True:
@@ -1313,7 +1312,7 @@ def prepare_edit_files(
             flow_technology="gas_pipe",
             flow_commodity="gas_pipeline_capacity",
             project_name=project_name,
-            config_name=config_name,
+            config_name=config_name
         )
 
         for tradetec in ["crudeoil_piped", "foil_piped", "loil_piped"]:
@@ -1324,16 +1323,13 @@ def prepare_edit_files(
                 flow_technology="oil_pipe",
                 flow_commodity="oil_pipeline_capacity",
                 project_name=project_name,
-                config_name=config_name,
+                config_name=config_name
             )
 
         # Add MariTEAM calibration for maritime shipping
-        calibrate_mariteam(
-            covered_tec,
-            message_regions,
-            project_name=project_name,
-            config_name=config_name,
-        )
+        calibrate_mariteam(covered_tec, message_regions,
+                           project_name=project_name,
+                           config_name=config_name)
 
         # Add variable costs for shipped commodities
         costdf = build_historical_price(
