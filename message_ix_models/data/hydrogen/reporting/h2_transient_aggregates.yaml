@@ -9,59 +9,71 @@
 # - Methanol (h2-based): 1.124 EJ H2 per EJ methanol
 
 var: out
-iamc_prefix: Production|Hydrogen|Transient|
+iamc_prefix: Production|Hydrogen|
 unit: EJ/yr
 
 level_1:
-  Ammonia|Biomass:
+  Transient|Ammonia|Biomass:
     short: prod_h2_transient_nh3_biomass_total
     original_unit: GWa
     components: [ prod_h2_transient_nh3_biomass, prod_h2_transient_nh3_biomass_ccs ]
-  Ammonia|Electricity:
-    short: prod_h2_transient_nh3_electricity_total
-    original_unit: GWa
-    components: [ prod_h2_transient_nh3_electricity ]
-  Ammonia|Gas:
+    stoichiometric_factor: 1.114
+  # Ammonia|Electricity:
+  #   short: prod_h2_transient_nh3_electricity_total
+  #   original_unit: GWa
+  #   components: [ prod_h2_transient_nh3_electricity ]
+  #   stoichiometric_factor: 1.114
+  Transient|Ammonia|Gas:
     short: prod_h2_transient_nh3_gas_total
     original_unit: GWa
     components: [ prod_h2_transient_nh3_gas, prod_h2_transient_nh3_gas_ccs ]
-  Ammonia|Coal:
+    stoichiometric_factor: 1.114
+  Transient|Ammonia|Coal:
     short: prod_h2_transient_nh3_coal_total
     original_unit: GWa
     components: [ prod_h2_transient_nh3_coal, prod_h2_transient_nh3_coal_ccs ]
-  Ammonia|Oil:
+    stoichiometric_factor: 1.114
+  Transient|Ammonia|Oil:
     short: prod_h2_transient_nh3_oil_total
     original_unit: GWa
     components: [ prod_h2_transient_nh3_oil, prod_h2_transient_nh3_oil_ccs ]
-  Methanol|Biomass:
+    stoichiometric_factor: 1.114
+  Transient|Methanol|Biomass:
     short: prod_h2_transient_meth_bio_total
     original_unit: GWa
     components: [ prod_h2_transient_meth_bio, prod_h2_transient_meth_bio_ccs ]
-  Methanol|Coal:
+    stoichiometric_factor: 0.937
+  Transient|Methanol|Coal:
     short: prod_h2_transient_meth_coal_total
     original_unit: GWa
     components: [ prod_h2_transient_meth_coal, prod_h2_transient_meth_coal_ccs ]
-  Methanol|Gas:
+    stoichiometric_factor: 0.937
+  Transient|Methanol|Gas:
     short: prod_h2_transient_meth_ng_total
     original_unit: GWa
     components: [ prod_h2_transient_meth_ng, prod_h2_transient_meth_ng_ccs ]
-  Methanol|Hydrogen:
-    short: prod_h2_transient_meth_h2_total
-    original_unit: GWa
-    components: [ prod_h2_transient_meth_h2 ]
+    stoichiometric_factor: 0.937
+  # Transient|Methanol|Hydrogen:
+  #   short: prod_h2_transient_meth_h2_total
+  #   original_unit: GWa
+  #   components: [ prod_h2_transient_meth_h2 ]
+  #   stoichiometric_factor: 1.124
 
 level_2:
-  Ammonia:
+  Transient|Ammonia:
     short: prod_h2_transient_nh3
     original_unit: GWa
-    components: [ prod_h2_transient_nh3_biomass_total, prod_h2_transient_nh3_electricity_total, prod_h2_transient_nh3_gas_total, prod_h2_transient_nh3_coal_total, prod_h2_transient_nh3_oil_total ]
-  Methanol:
+    stoichiometric_factor: 1.0
+    components: [ prod_h2_transient_nh3_biomass_total, prod_h2_transient_nh3_electricity, prod_h2_transient_nh3_gas_total, prod_h2_transient_nh3_coal_total, prod_h2_transient_nh3_oil_total ]
+  Transient|Methanol:
     short: prod_h2_transient_meth
     original_unit: GWa
-    components: [ prod_h2_transient_meth_bio_total, prod_h2_transient_meth_coal_total, prod_h2_transient_meth_ng_total, prod_h2_transient_meth_h2_total ]
+    stoichiometric_factor: 1.0
+    components: [ prod_h2_transient_meth_bio_total, prod_h2_transient_meth_coal_total, prod_h2_transient_meth_ng_total, prod_h2_transient_meth_h2 ]
 
 level_3:
   Transient:
     short: prod_h2_transient
     original_unit: GWa
-    components: [ prod_h2_transient_nh3, prod_h2_transient_meth ]
+    stoichiometric_factor: 1.0
+    components: [ prod_h2_transient_nh3, prod_h2_transient_meth, prod_h2_transient_refinery ]
