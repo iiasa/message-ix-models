@@ -9,5 +9,5 @@ hhi_constraint:
     nodes:
       - R12_WEU
     value:
-      - 0.99
+      0.99
   
