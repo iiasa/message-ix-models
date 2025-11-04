@@ -34,5 +34,5 @@ for model_scen in models_scenarios.keys():
                    config_name = 'config.yaml', 
                    start_model = base_model,
                    start_scen = base_scen,
-                   target_model = 'china_security',
+                   target_model = 'alps_hhi',
                    target_scen = base_scen)
