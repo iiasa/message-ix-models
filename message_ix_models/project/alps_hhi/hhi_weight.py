@@ -19,6 +19,7 @@ def hhi_weightsum_run(project_name: str,
                       base_model: str,
                       base_scenario: str,
                       hhi_config_name: str,
+                      hhi_commodities: list[str] = None,
                       lambda_ws: float = 0.5,
                       cost_max_total: float = 1000000,
                       hhi_max_total: float = 1.0,
@@ -34,6 +35,16 @@ def hhi_weightsum_run(project_name: str,
         Name of the config file
     hhi_config_name: str
         Name of the HHI config file
+    hhi_commodities: list[str]
+        List of commodities to include in the HHI
+    lambda_ws: float
+        Weight for weighted sum
+    cost_max_total: float
+        Maximum cost for total cost
+    hhi_max_total: float
+        Maximum HHI for total HHI
+    hhi_scale: float
+        Scale for HHI 
     """
     log = get_logger(__name__)
 
