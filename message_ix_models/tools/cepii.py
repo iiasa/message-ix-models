@@ -12,17 +12,44 @@ import genno
 import numpy as np
 
 from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
-from message_ix_models.util import cached, path_fallback, silence_log
+from message_ix_models.util import MappingAdapter, cached, path_fallback, silence_log
 from message_ix_models.util.pooch import SOURCE, fetch
 
 if TYPE_CHECKING:
     from pathlib import Path
     from re import Pattern
 
-    from genno.types import AnyQuantity
+    from genno.types import AnyQuantity, Key
     from pandas import DataFrame
 
 log = logging.getLogger(__name__)
+
+#: Labels appearing in the :math:`(i, j)` dimensions of the :class:`BACI` data that are
+#: not current ISO 3166-1 numeric codes. These are generally of 3 kinds:
+#:
+#: - Numeric codes that are in ISO 3166-3 (“Code for formerly used names of countries”),
+#:   not ISO 3166-1.
+#: - Numeric codes for countries that exist in ISO 3166-1, but simply differ. For
+#:   example, ISO has 250 for “France”, but BACI uses 251.
+#: - Numeric codes for countries or country groups that do not appear in ISO 3166.
+#:
+#: This is a subset of the labels appearing in the ``country_code`` column of the file
+#: :file:`country_codes_V202501.csv` in the archive :file:`BACI_HS92_V202501.zip`. Only
+#: the labels appearing in the data files are included.
+COUNTRY_CODES = [
+    (58, "BEL"),  # "Belgium-Luxembourg (...1998)"; 56 in ISO 3166-1
+    (251, "FRA"),  # 250
+    (490, "S19"),  # "Other Asia, nes", not in ISO 3166-1
+    (530, "ANT"),  # Part of ISO 3166-3, not -1
+    (579, "NOR"),  # 578
+    (699, "IND"),  # 356
+    (711, "ZA1"),  # "Southern African Customs Union (...1999)"; not in ISO 3166-1
+    (736, "SDN"),  # "Sudan (...2011)"; 729
+    (757, "CHE"),  # 756
+    (842, "USA"),  # 840
+    (849, "PUS"),  # "US Misc. Pacific Isds", not in ISO 3166-1
+    (891, "SCG"),  # Part of ISO 3166-3, not -1
+]
 
 #: Dimensions and data types for input data. In order to reduce memory and disk usage:
 #:
@@ -47,10 +74,7 @@ class BACI(ExoDataSource):
     - The 202501 release only.
     - The 1992 Harmonized System (HS92) only.
 
-    .. todo::
-       - Transform ISO 3166-1 numeric codes for the :math:`i, j` dimensions to
-         alpha-3 codes.
-       - Aggregate to MESSAGE regions.
+    .. todo:: Aggregate to MESSAGE regions.
     """
 
     @dataclass
@@ -136,6 +160,15 @@ class BACI(ExoDataSource):
             .iloc[:, 0]
         )
 
+    def transform(self, c: "genno.Computer", base_key: "Key") -> "Key":
+        """Prepare `c` to transform raw data from `base_key`.
+
+        1. Map BACI codes for the :math:`(i, j)` dimensions from numeric (mainly ISO
+           3166-1 numeric) to ISO 3166-1 alpha_3. See :func:`get_mapping`.
+        """
+        c.add(base_key[0], get_mapping(), base_key)
+        return base_key[0]
+
 
 @cached
 def baci_data_from_files(
@@ -166,6 +199,27 @@ def baci_data_from_files(
 
     log.info(f"{len(result)} observations")
     return result
+
+
+def get_mapping() -> MappingAdapter:
+    """Return an adapter from codes appearing in BACI data.
+
+    The BACI data for dimensions :math:`i` (exporter) and :math:`j` (importer) contain
+    ISO 3166-1 numeric codes, plus some other idiosyncratic codes from
+    :data:`COUNTRY_CODES`. The returned adapter maps these to the corresponding alpha-3
+    code.
+
+    Using the adapter makes data suitable for aggregation using the
+    :mod:`message_ix_models` ``node`` code lists, which include those alpha-3 codes as
+    children of each region code.
+    """
+    from pycountry import countries
+
+    # All values from ISO 3166-1, plus some idiosyncratic values from COUNTRY_CODES
+    num_to_a3 = COUNTRY_CODES + [(int(c.numeric), c.alpha_3) for c in countries]
+
+    # Use the same mapping for both i and j dimensions
+    return MappingAdapter({"i": num_to_a3, "j": num_to_a3}, on_missing="raise")
 
 
 if __name__ == "__main__":  # pragma: no cover
