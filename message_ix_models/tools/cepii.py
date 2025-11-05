@@ -74,7 +74,10 @@ class BACI(ExoDataSource):
     - The 202501 release only.
     - The 1992 Harmonized System (HS92) only.
 
-    .. todo:: Aggregate to MESSAGE regions.
+    .. todo::
+       - Aggregate to MESSAGE regions.
+       - Test with additional HS categorizations.
+       - Test with additional releases.
     """
 
     @dataclass
@@ -101,6 +104,10 @@ class BACI(ExoDataSource):
         #: in :attr:`dims`; values **must** be regular expressions or compiled
         #: :class:`re.Pattern` that fullmatch the :class:`str` representation of labels
         #: on the respective dimension.
+        #:
+        #: For example, :py:`filter_pattern=dict(k="270(4..|576)")` matches any 6-digit
+        #: label on the :math:`k` dimension starting with '2704', or the exact label
+        #: '270576'.
         filter_pattern: dict[str, "str | Pattern"] = field(default_factory=dict)
 
         #: Set to :any:`True` to use test data from the :mod:`message_ix_models`
@@ -129,9 +136,9 @@ class BACI(ExoDataSource):
         This method performs the following steps:
 
         1. If needed, retrieve the data archive from :data:`.pooch.SOURCE` using the
-           entry "CEPII_BACI". The file is stored in the :attr:`.Config.cache_dir`, and
+           entry "CEPII_BACI". The file is stored in the :attr:`.Config.cache_path`, and
            is about 2.2 GiB.
-        2. If needed, extract all the members of the archive to the :file:`cepii-baci`
+        2. If needed, extract all the members of the archive to a :file:`…/cepii-baci/`
            subdirectory of the cache directory. The extracted size is about 7.9 GiB,
            containing about 2.6 × 10⁸ observations.
         3. Call :func:`.baci_data_from_files` to read the data files and apply
