@@ -80,6 +80,18 @@ GH_MAIN = "https://github.com/iiasa/message-ix-models/raw/main/message_ix_models
 
 #: Supported remote sources of data.
 SOURCE: Mapping[str, Mapping[str, Any]] = {
+    "CEPII_BACI": dict(
+        pooch_args=dict(
+            base_url="https://www.cepii.fr/DATA_DOWNLOAD/baci/data/",
+            registry={
+                "BACI_HS92_V202501.zip": (
+                    "sha256:9b36cd9529d6dae0df3fc42ac42af2daecd1f4cd6fb9c281ee66187974f"
+                    "a025c"
+                ),
+            },
+        ),
+        processor=Extract(extract_dir="cepii-baci"),
+    ),
     "PRIMAP": dict(
         pooch_args=dict(
             base_url="ftp://datapub.gfz-potsdam.de/download/10.5880.PIK.2019.001/",
