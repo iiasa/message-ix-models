@@ -156,10 +156,7 @@ class MappingAdapter(Adapter):
         result = qty
         coords = qty.coords
 
-        for dim, labels in self.maps.items():
-            if dim not in qty.dims:
-                continue
-
+        for dim, labels in filter(lambda dl: dl[0] in qty.dims, self.maps.items()):
             dim_coords = set(coords[dim].data)
 
             # Check for coords in the data that are missing from `maps`.
