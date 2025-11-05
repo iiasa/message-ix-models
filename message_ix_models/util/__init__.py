@@ -33,6 +33,8 @@ from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
 if TYPE_CHECKING:
+    from typing import IO
+
     import genno
 
     from message_ix_models.types import MutableParameterData, ParameterData
@@ -75,6 +77,7 @@ __all__ = [
     "path_fallback",
     "preserve_log_level",
     "private_data_path",
+    "random_sample_from_file",
     "replace_par_data",
     "same_node",
     "same_time",
@@ -623,6 +626,61 @@ def path_fallback(
         if not dirs
         else f"'{Path(*parts)!s}' not found in any of {dirs}"
     )
+
+
+def random_sample_from_file(
+    target: "str | Path | IO",
+    frac: float,
+    *,
+    cols: list[str] = [],
+    comment: str | None = None,
+    engine: str = "pyarrow",
+    na_values: list[str] = [],
+    sep: str = ",",
+) -> "pd.DataFrame":
+    """Read from `target` and return a `frac` of the data with random values."""
+    import dask.dataframe as dd
+    import pandas as pd
+    from numpy import char, random
+
+    # - Read the data
+    #   - Use dask & pyarrow.
+    #   - Prevent values like "NA" being auto-transformed to np.nan.
+    # - Subset the data if `frac` < 1.0.
+    # - Compute the resulting pandas.DataFrame.
+    with silence_log("fsspec.local"):
+        df = (
+            dd.read_csv(
+                target,
+                keep_default_na=False,
+                comment=comment,
+                engine=engine,
+                na_values=na_values,
+                sep=sep,
+            )
+            .sample(frac=frac)
+            .compute()
+        )
+
+    # Determine columns in which to replace numerical data
+    if not cols:
+        # All columns with numeric names, for instance 2000, 2001, etc.
+        cols = list(filter(lambda c: char.isnumeric(c) or c.lower() == c, df.columns))
+
+    # Shape of random data
+    size = (df.shape[0], len(cols))
+
+    # - Generate random data of this shape, with columns `cols` and same index as `df`.
+    # - Keep only the elements corresponding to non-NA elements of `df`.
+    # - Update `df` with these values.*
+    generator = random.default_rng()
+    df.update(
+        df.where(
+            df.isna(),
+            pd.DataFrame(generator.random(size), columns=cols, index=df.index),
+        )
+    )
+    return df
 
 
 def replace_par_data(
