@@ -227,6 +227,97 @@ def format_reporting_df(
     return py_df
 
 
+def compute_aggregates_from_iamc(
+    df: pyam.IamDataFrame, aggregates: dict, iamc_prefix: str, short_to_iamc: dict
+) -> pyam.IamDataFrame:
+    """Compute aggregate variables by summing already-processed IAMC variables.
+
+    This function aggregates variables at the IAMC level (after unit conversion and
+    stoichiometric factor application), rather than re-querying raw MESSAGE data.
+    This ensures that variables with different stoichiometric factors (e.g., methanol
+    from different feedstocks) are correctly summed.
+
+    Parameters
+    ----------
+    df : pyam.IamDataFrame
+        DataFrame with computed leaf variables (after unit conversion and
+        stoichiometric factor application)
+    aggregates : dict
+        Aggregate definitions from Config.get_aggregate_definitions()
+        Structure: {level: {iamc_name: {"short": str, "components": list}}}
+    iamc_prefix : str
+        IAMC variable prefix (e.g., "Production|" or "Production|Hydrogen|")
+    short_to_iamc : dict
+        Mapping from short_name to IAMC variable name (fragment after prefix)
+
+    Returns
+    -------
+    pyam.IamDataFrame
+        Combined DataFrame with both leaf variables and computed aggregates
+    """
+    if not aggregates:
+        return df
+
+    # Convert to pandas for easier manipulation
+    df_work = df.as_pandas().copy()
+
+    # Build reverse mapping: short_name -> full variable name
+    short_to_full_var = {
+        short: iamc_prefix + iamc_name for short, iamc_name in short_to_iamc.items()
+    }
+
+    # Process aggregates level by level to handle hierarchical aggregation
+    for level_key in sorted(
+        aggregates.keys()
+    ):  # Process in order: level_1, level_2, etc.
+        level_aggregates = aggregates[level_key]
+        level_rows = []
+
+        for iamc_name, agg_def in level_aggregates.items():
+            components = agg_def["components"]
+            short_name = agg_def["short"]
+
+            # Find component variables in the DataFrame
+            component_vars = []
+            for comp_short in components:
+                if comp_short in short_to_full_var:
+                    component_vars.append(short_to_full_var[comp_short])
+
+            if not component_vars:
+                # No components found - skip this aggregate
+                continue
+
+            # Filter dataframe for these component variables
+            df_components = df_work[df_work["variable"].isin(component_vars)]
+
+            if df_components.empty:
+                continue
+
+            # Sum the components grouped by model, scenario, region, year, unit
+            df_agg = (
+                df_components.groupby(["model", "scenario", "region", "year", "unit"])
+                .agg({"value": "sum"})
+                .reset_index()
+            )
+
+            # Assign the aggregate variable name
+            full_var_name = iamc_prefix + iamc_name
+            df_agg["variable"] = full_var_name
+
+            # Add to this level's collection
+            level_rows.append(df_agg)
+
+            # Register this aggregate for use in higher-level aggregates
+            short_to_full_var[short_name] = full_var_name
+
+        # Add this level's aggregates to df_work so they're available for next level
+        if level_rows:
+            df_work = pd.concat([df_work] + level_rows, ignore_index=True)
+
+    # Return the combined dataframe with all leaves and aggregates
+    return pyam.IamDataFrame(df_work)
+
+
 def load_config(name: str) -> "Config":
     """Load a config for a given reporting variable category from the YAML files.
 
@@ -290,12 +381,37 @@ def run_h2_prod_reporting(
 def run_reporting(
     var: str, rep: Reporter, model_name: str, scen_name: str
 ) -> pyam.IamDataFrame:
-    """Generate reporting for any given variable."""
+    """Generate reporting for any given variable.
+
+    This function now computes leaf variables first (applying unit conversion and
+    stoichiometric factors), then aggregates them at the IAMC level to handle
+    cases where different components have different stoichiometric factors.
+    """
     config = load_config(var)
+
+    # Get leaf variables only (config.mapping only contains leaves now)
     df = pyam_df_from_rep(rep, config.var, config.mapping)
+
+    # Format and convert units/factors for leaf variables
     py_df = format_reporting_df(
         df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
     )
+
+    # Build mapping from short_name to iamc_name for aggregation
+    short_to_iamc = (
+        config.mapping.reset_index()[["short_name", "iamc_name"]]
+        .drop_duplicates()
+        .set_index("short_name")["iamc_name"]
+        .to_dict()
+    )
+
+    # Compute aggregates from processed IAMC variables
+    aggregates = config.get_aggregate_definitions()
+    if aggregates:
+        py_df = compute_aggregates_from_iamc(
+            py_df, aggregates, config.iamc_prefix, short_to_iamc
+        )
+
     return py_df
 
 

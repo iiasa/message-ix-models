@@ -47,6 +47,10 @@ class Config:
         )
     )
 
+    #: Aggregate definitions from *_aggregates.yaml files.
+    #: Structure: {level: {iamc_name: {"short": ..., "components": [...]}}}
+    aggregates: dict = field(default_factory=dict)
+
     @classmethod
     def from_files(cls, category: str) -> "Config":
         """Create a Config instance from 1 or 2 YAML files.
@@ -87,7 +91,8 @@ class Config:
         except FileNotFoundError:
             data_agg = dict()  # No aggregates file
 
-        result.use_aggregates_dict(data_agg)
+        # Store aggregates separately for use in IAMC-level aggregation
+        result.store_aggregates(data_agg)
 
         return result
 
@@ -102,6 +107,46 @@ class Config:
             "stoichiometric_factor",
         } == set(self.mapping.columns)
         assert not self.mapping.isna().any(axis=None)
+
+    def store_aggregates(self, data: dict) -> None:
+        """Store aggregate definitions from YAML data for IAMC-level aggregation.
+
+        This method extracts aggregate hierarchies without creating technology-level
+        mappings. Stoichiometric factors are NOT used at the aggregate level - they
+        are applied only at the leaf level, and aggregates sum already-factored values.
+
+        Parameters
+        ----------
+        data : dict
+            Dictionary loaded from *_aggregates.yaml file
+        """
+        if not data:
+            return
+
+        # Remove metadata keys
+        for k in ("iamc_prefix", "unit", "var"):
+            data.pop(k, None)
+
+        # Store aggregate definitions by level
+        for k_level in map("level_{}".format, count(start=1)):
+            if k_level not in data:
+                break
+            self.aggregates[k_level] = data[k_level]
+
+    def get_aggregate_definitions(self) -> dict:
+        """Get aggregate definitions for IAMC-level aggregation.
+
+        Returns a structured dictionary of aggregate hierarchies where each
+        aggregate is defined by its components (which can be leaf variables
+        or lower-level aggregates).
+
+        Returns
+        -------
+        dict
+            Structure: {level: {iamc_name: {"short": str, "components": list}}}
+            where components are short_names of leaf or lower-level variables.
+        """
+        return self.aggregates
 
     def use_aggregates_dict(self, data: dict) -> None:
         """Update :attr:`mapping` from `data`."""
