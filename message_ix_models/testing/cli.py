@@ -53,12 +53,12 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     from pathlib import Path
     from tempfile import TemporaryDirectory
 
-    import dask.dataframe as dd
-    import pandas as pd
-    from numpy import char, random
-
     from message_ix_models.project.advance.data import NAME
-    from message_ix_models.util import package_data_path, path_fallback
+    from message_ix_models.util import (
+        package_data_path,
+        path_fallback,
+        random_sample_from_file,
+    )
 
     # Paths
     p = Path(filename)
@@ -66,11 +66,14 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     path_out = package_data_path("test", p)
 
     # Shared arguments for read_csv() and to_csv()
-    comment, engine, sep = None, "pyarrow", ","
+    args: dict = dict(sep=",")
     if "GFEI" in str(p):
-        comment, engine = "#", "c"
+        args.update(comment="#", engine="c")
     if p.suffix == ".mif":
-        sep = ";"
+        args.update(sep=";")
+    if any(s in filename for s in ("iea", "edits")):
+        # Specific columns in which to replace numeric data
+        args.update(cols=["Value"])
 
     # Read the data
     zf_member_name = None
@@ -96,45 +99,7 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
             target = path_in
 
         print(f"Read {target}")
-
-        # - Read the data
-        #   - Use dask & pyarrow.
-        #   - Prevent values like "NA" being auto-transformed to np.nan.
-        # - Subset the data if `frac` < 1.0.
-        # - Compute the resulting pandas.DataFrame.
-        df = (
-            dd.read_csv(
-                target,
-                comment=comment,
-                engine=engine,
-                keep_default_na=False,
-                na_values=[],
-                sep=sep,
-            )
-            .sample(frac=frac)
-            .compute()
-        )
-
-    # Determine columns in which to replace numerical data
-    if any(s in filename for s in ("iea", "edits")):
-        # Specific column
-        cols = ["Value"]
-    else:
-        # All columns with numeric names, for instance 2000, 2001, etc.
-        cols = list(filter(lambda c: char.isnumeric(c) or c.lower() == c, df.columns))
-
-    # Shape of random data
-    size = (df.shape[0], len(cols))
-    # - Generate random data of this shape, with columns `cols` and same index as `df`.
-    # - Keep only the elements corresponding to non-NA elements of `df`.
-    # - Update `df` with these values.*
-    generator = random.default_rng()
-    df.update(
-        df.where(
-            df.isna(),
-            pd.DataFrame(generator.random(size), columns=cols, index=df.index),
-        )
-    )
+        df = random_sample_from_file(target, frac, **args)
 
     # Write to file, keeping only a few decimal points
     path_out.parent.mkdir(parents=True, exist_ok=True)
@@ -149,4 +114,4 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         target = path_out
         print(f"Write to {path_out}")
 
-    df.to_csv(target, float_format="%.2f", index=False, sep=sep)
+    df.to_csv(target, float_format="%.2f", index=False, sep=args["sep"])
