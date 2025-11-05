@@ -1,7 +1,6 @@
 """Tools for IEA (Extended) World Energy Balance (WEB) data."""
 
 import logging
-import zipfile
 from collections.abc import Hashable, Iterable, Mapping
 from dataclasses import dataclass
 from enum import Flag
@@ -23,6 +22,7 @@ from message_ix_models.util import (
     path_fallback,
 )
 from message_ix_models.util._logging import silence_log
+from message_ix_models.util.zipfile import extract_if_newer
 
 if TYPE_CHECKING:
     import os
@@ -319,25 +319,6 @@ def fwf_to_csv(path: Path, progress: bool = False) -> Path:  # pragma: no cover
     return path_out
 
 
-def unpack_zip(path: Path) -> Path:
-    """Unpack a ZIP archive."""
-    cache_dir = user_cache_path("message-ix-models", ensure_exists=True).joinpath("iea")
-
-    log.info(f"Decompress {path} to {cache_dir}")
-    with zipfile.ZipFile(path) as zf:
-        members = zf.infolist()
-        assert 1 == len(members)
-        zi = members[0]
-
-        # Candidate path for the extracted file
-        target = cache_dir.joinpath(zi.filename)
-        if target.exists() and target.stat().st_size >= zi.file_size:
-            log.info(f"Skip extraction of {target}")
-            return target
-        else:
-            return Path(zf.extract(members[0], path=cache_dir))
-
-
 @cached
 def iea_web_data_for_query(
     base_path: Path, *filenames: str, query_expr: str
@@ -359,7 +340,9 @@ def iea_web_data_for_query(
         path = base_path.joinpath(filename)
 
         if path.suffix == ".zip":
-            path = unpack_zip(path)
+            path, *_ = extract_if_newer(
+                path, target_dir=user_cache_path("message-ix-models").joinpath("iea")
+            )
 
         if path.suffix == ".TXT":  # pragma: no cover
             names_to_read.append(fwf_to_csv(path, progress=True))
