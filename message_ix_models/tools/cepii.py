@@ -166,3 +166,28 @@ def baci_data_from_files(
 
     log.info(f"{len(result)} observations")
     return result
+
+
+if __name__ == "__main__":  # pragma: no cover
+    from tqdm import tqdm
+
+    from message_ix_models.util import random_sample_from_file
+
+    print("Generate test data for BACI")
+
+    # - Fetch (if necessary) and unpack (if necessary) the BACI data archive.
+    # - Select only the data files.
+    paths = filter(lambda p: p.name.startswith("BACI"), fetch(**SOURCE["CEPII_BACI"]))
+
+    # Target for test data files
+    target_dir = path_fallback("cepii-baci", where="test")
+
+    # Fraction of data to retain
+    frac = 0.001
+
+    for file in tqdm(paths):
+        # - Read data, sample, and replace with random values.
+        # - Write to the test data directory.
+        random_sample_from_file(file, frac, cols=["q", "v"], na_values=[""]).to_csv(
+            target_dir.joinpath(file.name), float_format="%.3f", index=False
+        )
