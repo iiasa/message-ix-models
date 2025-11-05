@@ -4,6 +4,7 @@ CEPII is the “Centre d’études prospectives et d’informations internationa
 """
 
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -11,7 +12,8 @@ import genno
 import numpy as np
 
 from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
-from message_ix_models.util import cached, silence_log
+from message_ix_models.util import cached, path_fallback, silence_log
+from message_ix_models.util.pooch import SOURCE, fetch
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -77,6 +79,10 @@ class BACI(ExoDataSource):
         #: on the respective dimension.
         filter_pattern: dict[str, "str | Pattern"] = field(default_factory=dict)
 
+        #: Set to :any:`True` to use test data from the :mod:`message_ix_models`
+        #: repository.
+        test: bool = False
+
         def __post_init__(self) -> None:
             if self.measure not in ("quantity", "value"):
                 raise ValueError(
@@ -110,21 +116,21 @@ class BACI(ExoDataSource):
            in a cache hit.
         4. Convert to :class:`genno.Quantity` and return.
         """
-        from message_ix_models.util.pooch import SOURCE, fetch
 
-        # Fetch (if necessary) and unpack (if necessary) the BACI data archive
-        paths = fetch(**SOURCE["CEPII_BACI"])
-
-        # Select only the data files
-        names_to_read = list(filter(lambda p: p.name.startswith("BACI"), paths))
+        if not self.options.test:  # pragma: no cover
+            # - Fetch (if necessary) and unpack (if necessary) the BACI data archive.
+            # - Select only the data files.
+            paths: Iterable[Path] = filter(
+                lambda p: p.name.startswith("BACI"), fetch(**SOURCE["CEPII_BACI"])
+            )
+        else:
+            paths = path_fallback("cepii-baci", where="test").glob("*.csv")
 
         # - Read data from the files for the given measure and filters; cache.
         # - Convert from data frame to genno.Quantity.
         return genno.Quantity(
             baci_data_from_files(
-                names_to_read,
-                self.options.measure,
-                self.options.filter_pattern,
+                list(paths), self.options.measure, self.options.filter_pattern
             )
             .set_index(list(self.options.dims))
             .iloc[:, 0]
