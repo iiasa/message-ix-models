@@ -13,11 +13,13 @@ from ixmp import Platform
 import message_ix
 
 from message_ix_models.tools.bilateralize.utils import load_config, get_logger
-from message_ix_models.project.alps_hhi.hhi_utils import hhi_df_build
 
 def hhi_constraint_run(project_name: str, 
                        config_name: str,
-                       hhi_config_name: str):
+                       base_model: str,
+                       base_scenario: str,
+                       hhi_config_name: str,
+                       hhi_commodities: list | None = None):
     """Run HHI constraint"""
     """
     Parameters
@@ -40,32 +42,56 @@ def hhi_constraint_run(project_name: str,
     # Create platform
     mp = ixmp.Platform()
 
-    for k in ['baseline']:
-        log.info(f"HHI option: HC")
+    log.info(f"HHI option: HC")
 
-        base_model_name = 'alps_hhi'
-        base_scen_name = k
-        target_model_name = 'alps_hhi'
-        target_scen_name = k + f'_hhi_HC'
+    target_model_name = 'alps_hhi'
+    target_scen_name = base_scenario + '_hhi_HC'
 
-        log.info(f"Base scenario: {base_model_name}/{base_scen_name}")
-        log.info(f"Target scenario: {target_model_name}/{target_scen_name}")
+    log.info(f"Base scenario: {base_model}/{base_scenario}")
+    log.info(f"Target scenario: {target_model_name}/{target_scen_name}")
 
-        base_scenario = message_ix.Scenario(mp, model=base_model_name, scenario=base_scen_name)
-        hhi_scenario = base_scenario.clone(target_model_name, target_scen_name, 
-                                           keep_solution = False)
-        hhi_scenario.set_as_default()
+    base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scenario)
+    hhi_scenario = base_scenario.clone(target_model_name, target_scen_name, 
+                                       keep_solution = False)
+    hhi_scenario.set_as_default()
 
-        hhi_df = hhi_df_build(hhi_scenario = hhi_scenario,
-                              hhi_config = hhi_config,
-                              log = log)
+    if hhi_commodities is None:
+        hhi_commodities = list(hhi_config.keys())
 
-        with hhi_scenario.transact("Add HHI constraint"):
-            hhi_scenario.add_par('hhi_limit', hhi_df)
+    with hhi_scenario.transact("Add HHI commodity and level"):
+        hhi_scenario.add_set('commodity', hhi_commodities)
+        hhi_scenario.add_set('level', 'hhi')
 
-        hhi_scenario.solve(gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
+    hhi_output = pd.DataFrame()
+    for k in hhi_commodities:
+        log.info(f"Building HHI pseudo output for {k}")
+        df = hhi_scenario.par('output')
+        df = df[df['technology'].isin(hhi_config[k]['technologies'])]
+        df = df[(df['node_loc'].isin(hhi_config[k]['nodes'])) |\
+            (df['technology'].str.contains('exp'))]
+        df['commodity'] = k
+        df['level'] = 'hhi'
+        df['unit'] = '???'
+        hhi_output = pd.concat([hhi_output, df])
 
+    with hhi_scenario.transact(f"Add HHI pseudo output"):
+        hhi_scenario.add_par('output', hhi_output)
+     
+    log.info(f"Adding HHI limit")
+    hhi_limit_df = hhi_output[['node_loc', 'commodity',
+                               'level', 'year_act',
+                               'value', 'unit']].drop_duplicates().reset_index(drop = True)
+    hhi_limit_df = hhi_limit_df.rename(columns = {'year_act': 'year',
+                                                  'node_loc': 'node'})
+    hhi_limit_df = hhi_limit_df[hhi_limit_df['year'] > 2025]
+    for k in hhi_commodities:
+        hhi_limit_df.loc[hhi_limit_df['commodity'] == k, 'value'] = hhi_config[k]['value']
+    hhi_limit_df['time'] = 'year'
 
-hhi_constraint_run(project_name = 'alps_hhi', 
-                   config_name = 'config.yaml',
-                   hhi_config_name = 'hhi_constraint_config.yaml')
+    with hhi_scenario.transact("Add HHI limit"):
+        hhi_scenario.add_par('hhi_limit', hhi_limit_df)
+
+    log.info(f"Solving HHI scenario {k}")
+    hhi_scenario.solve(gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
+
+    mp.close_db()
