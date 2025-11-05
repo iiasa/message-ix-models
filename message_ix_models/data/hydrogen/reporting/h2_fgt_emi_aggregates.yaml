@@ -1,3 +1,10 @@
+# Aggregation rules for hydrogen fugitive emissions reporting
+# Defines hierarchical aggregations of fugitive emission variables
+#
+# NOTE: Unit conversion is applied at the LEAF LEVEL ONLY (in h2_fgt_emi.yaml).
+# Aggregates sum already-converted values, so no original_unit is needed here.
+# The aggregation happens at the IAMC variable level (after processing), not at the MESSAGE data level.
+
 var: emi
 iamc_prefix: Emissions|H2|Fugitive|
 unit: Mt/yr
