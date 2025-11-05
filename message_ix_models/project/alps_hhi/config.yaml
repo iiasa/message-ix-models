@@ -15,10 +15,22 @@ scenario:
     R12
 
 models_scenarios:
-  SSP2_Baseline:
+#  SSP1:
+#    model: SSP_SSP1_v6.2
+#    scenario: baseline
+  SSP2:
     model: SSP_SSP2_v6.2
     scenario: baseline
-  
+#  SSP3:
+#    model: SSP_SSP3_v6.2
+#    scenario: baseline
+#  SSP4:
+#    model: SSP_SSP4_v6.2
+#    scenario: baseline
+#  SSP5:
+#    model: SSP_SSP5_v6.2
+#    scenario: baseline
+
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
   - gas_piped
