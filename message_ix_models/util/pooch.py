@@ -144,7 +144,11 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
 
 
 def fetch(
-    pooch_args: dict, *, extra_cache_path: str | None = None, **fetch_kwargs
+    pooch_args: dict,
+    *,
+    extra_cache_path: str | None = None,
+    verbose: bool = False,
+    **fetch_kwargs,
 ) -> tuple[Path, ...]:
     """Create a :class:`~pooch.Pooch` instance and fetch a single file.
 
@@ -184,10 +188,12 @@ def fetch(
     # Convert to pathlib.Path
     paths = tuple(map(Path, filenames))
 
-    log.info(
-        "Fetched"
-        + (f" {paths[0]}" if len(paths) == 1 else "\n".join(map(str, (":",) + paths)))
-    )
+    if len(paths) == 1:
+        log.info(f"Fetched {paths[0]}")
+    else:
+        log.info(f"Fetched {len(paths)} files")
+        for p in paths if verbose else ():
+            log.debug(str(p))
 
     return paths
 
