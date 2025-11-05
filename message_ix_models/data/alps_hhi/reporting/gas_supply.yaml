@@ -1,0 +1,55 @@
+# collection of industry specific Final Energy non-energy reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  out
+
+iamc_prefix:
+  Gas Supply|
+
+unit: GWa
+
+vars:
+# Piped gas imports
+  Gas Supply|Imports|Piped Gas|:
+    filter:
+      { technology: [gas_piped_exp, check], mode: M1, commodity: gas, level: piped }
+    short:
+      gas_piped_exp
+
+# Shipped LNG imports
+  Gas Supply|Imports|Shipped LNG|:
+    filter:
+      { technology: [LNG_shipped_exp], mode: M1, commodity: LNG, level: shipped }
+    short:
+      LNG_shipped_exp
+
+# Coal gasification
+  Gas Supply|Domestic|Coal Gasification:
+    filter:
+      { technology: [coal_gas], mode: M1, commodity: gas, level: secondary }
+    short:
+      coal_gas_dom
+
+# Gas Extraction
+  Gas Supply|Domestic|Gas Extraction:
+    filter:
+      { technology: [gas_bal], mode: M1, commodity: gas, level: secondary }
+    short:
+      extr_gas_dom
+
+# Synthetic gas production from biomass
+  Gas Supply|Domestic|Synthetic Gas from Biomass:
+    filter:
+      { technology: [gas_bio], mode: M1, commodity: gas, level: secondary }
+    short:
+      gas_bio_dom
+
+# Hydrogen injection into natural gas system
+  Gas Supply|Domestic|Hydrogen Injection:
+    filter:
+      { technology: [h2_mix], mode: M1, commodity: gas, level: secondary }
+    short:
+      h2_mix_dom
+
