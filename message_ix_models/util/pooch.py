@@ -9,6 +9,7 @@ import click
 import pooch
 
 from .context import Context
+from .zipfile import extract_if_newer
 
 log = logging.getLogger(__name__)
 
@@ -27,40 +28,7 @@ class Extract:
         self.extract_dir = Path(extract_dir or ".")
 
     def __call__(self, fname, action, pooch):
-        import tarfile
-        import zipfile
-
-        path = Path(fname)
-
-        # Identify the directory for extracted files
-        if self.extract_dir.is_absolute():
-            # Some absolute path
-            extract_dir = self.extract_dir
-        else:
-            # A relative path, possibly the default
-            extract_dir = path.parent.joinpath(self.extract_dir)
-
-        # Ensure the directory exists
-        extract_dir.mkdir(parents=True, exist_ok=True)
-
-        members = self.members
-
-        # Select the class/method to open the archive, and the method name for listing
-        # members
-        cls, list_method = {
-            ".zip": (zipfile.ZipFile, "namelist"),
-            ".xz": (tarfile.TarFile.open, "getnames"),
-            ".gz": (tarfile.TarFile.open, "getnames"),
-        }[path.suffix]
-
-        with cls(path) as archive:
-            if members is None:
-                members = getattr(archive, list_method)()
-                log.info(f"Unpack all {len(members)} members of {path}")
-
-            archive.extractall(members=members, path=extract_dir)
-
-        return members
+        return extract_if_newer(Path(fname), self.extract_dir, self.members)
 
 
 class UnpackSnapshot:

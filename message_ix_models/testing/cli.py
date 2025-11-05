@@ -84,9 +84,11 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
             )
         elif "iea" in filename:
             # Manually unpack so that dask.dataframe.read_csv() can be used
-            from message_ix_models.tools.iea.web import fwf_to_csv, unpack_zip
+            from message_ix_models.tools.iea.web import fwf_to_csv
+            from message_ix_models.util.zipfile import Archive
 
-            target = unpack_zip(path_in)
+            with Archive(path_in) as a:
+                target = a.extract()
             zf_member_name = target.name
             if target.suffix == ".TXT":
                 target = fwf_to_csv(target, progress=True)
