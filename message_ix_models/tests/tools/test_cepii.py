@@ -28,19 +28,36 @@ class TestBACI:
         ],
     )
     @pytest.mark.parametrize(
-        "filter_pattern, size",
+        "test_data, filter_pattern, size",
         # Subset of the product codes for MESSAGE commodity="coal"
-        [(dict(k="270(11[129]|[246]..)"), 112319)],
+        [
+            pytest.param(
+                False,
+                dict(k="270(11[129]|[246]..)"),
+                112319,
+                marks=pytest.mark.skip(reason="High resource usage"),
+            ),
+            (True, dict(k="270(11[129]|[246]..)"), 110),
+        ],
     )
     def test_add_tasks(
-        self, test_context: "Context", measure: str, filter_pattern: dict, size: int
+        self,
+        test_context: "Context",
+        measure: str,
+        filter_pattern: dict,
+        test_data: bool,
+        size: int,
     ) -> None:
         test_context.model.regions = "R12"
 
         c = Computer()
 
         keys = BACI.add_tasks(
-            c, context=test_context, measure=measure, filter_pattern=filter_pattern
+            c,
+            context=test_context,
+            measure=measure,
+            filter_pattern=filter_pattern,
+            test=test_data,
         )
 
         # Preparation of data runs successfully
