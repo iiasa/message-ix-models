@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from message_ix import make_df
-from message_ix.models import MESSAGE
+
+from message_ix_models.util._message_ix import MESSAGE
 
 
 def generate_df(scenario, tech_data):  # noqa: C901

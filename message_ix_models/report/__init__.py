@@ -25,6 +25,8 @@ if TYPE_CHECKING:
     from .config import Callback
 
 __all__ = [
+    "NOT_IMPLEMENTED_IAMC",
+    "NOT_IMPLEMENTED_MEASURE",
     "Config",
     "prepare_reporter",
     "register",
@@ -44,6 +46,66 @@ except AttributeError:
     @genno.config.handles("_iamc formats")
     def _(c: Reporter, info):
         pass
+
+
+PE0 = r"Primary Energy\|(Coal|Gas|Hydro|Nuclear|Solar|Wind)"
+PE1 = r"Primary Energy\|(Coal|Gas|Solar|Wind)"
+E = (
+    r"Emissions\|CO2\|Energy\|Demand\|Transportation\|Road Rail and Domestic "
+    "Shipping"
+)
+
+#: Measures for which reporting is not implemented. See :data:`NOT_IMPLEMENTED_IAMC`.
+NOT_IMPLEMENTED_MEASURE = {
+    "(Agricultural|Forestry) (Demand|Production)",
+    "Capacity Additions",
+    "Capacity",
+    "Capital Cost",
+    "Carbon Sequestration",
+    "Consumption",
+    r"Cost\|Cost Nodal Net",
+    "Cumulative Capacity",
+    "Efficiency",
+    r"Emissions\|(BC|CF4|CH4|CO|CO2|F-Gases|HFC|Kyoto Gases|N2O|NH3|NOx|OC|SF6|Sulfur)",
+    r"Emissions\|(VOC)",
+    "Fertilizer Use",
+    "Final Energy",
+    "Food Demand",
+    "GDP",
+    "GLOBIOM",
+    "Investment",
+    "Land Cover",
+    "Lifetime",
+    "OM Cost",
+    "Population",
+    "Price",
+    r"Resource\|(Cumulative )?Extraction",
+    "Secondary Energy",
+    "Trade",
+    "Useful Energy",
+    "Water Consumption",
+    "Water Withdrawal",
+    "Yield",
+}
+
+
+#: Expressions for IAMC variable names not implemented by :func:`prepare_reporter`.
+NOT_IMPLEMENTED_IAMC = [
+    # Other 'variable' codes are missing from `obs`
+    rf"variable='({'|'.join(NOT_IMPLEMENTED_MEASURE)})(\|.*)?': no right data",
+    # 'variable' codes with further parts are missing from `obs`
+    f"variable='{PE0}.*': no right data",
+    # For `pe1` (NB: not Hydro or Solar) units and most values differ
+    f"variable='{PE1}.*': units mismatch .*EJ/yr.*'', nan",
+    r"variable='Primary Energy|Coal': 220 of 240 values with \|diff",
+    r"variable='Primary Energy|Gas': 234 of 240 values with \|diff",
+    r"variable='Primary Energy|Solar': 191 of 240 values with \|diff",
+    r"variable='Primary Energy|Wind': 179 of 240 values with \|diff",
+    # For `e` units and most values differ
+    f"variable='{E}': units mismatch: .*Mt CO2/yr.*Mt / a",
+    rf"variable='{E}': 20 missing right entries",
+    rf"variable='{E}': 220 of 240 values with \|diff",
+]
 
 
 @genno.config.handles("iamc")
@@ -74,6 +136,11 @@ def iamc(c: Reporter, info):
     # Common
     base_key = Key(info["base"])
 
+    # First part of the 'Variable' name
+    name = info.pop("variable", base_key.name)
+    # Parts (string literals or dimension names) to concatenate into variable name
+    var_parts = info.pop("var", [name])
+
     # Use message_ix_models custom collapse() method
     info.setdefault("collapse", {})
 
@@ -96,7 +163,7 @@ def iamc(c: Reporter, info):
         # TODO allow iterable of str
         dims = dims.split("-")
 
-        label = f"{info['variable']} {'-'.join(dims) or 'full'}"
+        label = f"{name} {'-'.join(dims) or 'full'}"
 
         # Modified copy of `info` for this invocation
         _info = info.copy()
@@ -104,9 +171,7 @@ def iamc(c: Reporter, info):
         _info.update(base=base_key.drop(*dims), variable=label)
         # Exclude any summed dimensions from the IAMC Variable to be constructed
         _info["collapse"].update(
-            callback=partial(
-                collapse, var=list(filter(lambda v: v not in dims, info.get("var", [])))
-            )
+            callback=partial(collapse, var=[v for v in var_parts if v not in dims])
         )
 
         # Invoke the genno built-in handler
@@ -115,7 +180,7 @@ def iamc(c: Reporter, info):
         keys.append(f"{label}::iamc")
 
     # Concatenate together the multiple tables
-    c.add("concat", f"{info['variable']}::iamc", *keys)
+    c.add("concat", f"{name}::iamc", *keys)
 
 
 def register(name_or_callback: "Callback | str") -> str | None:
@@ -324,8 +389,11 @@ def prepare_reporter(
     )
     rep.configure(model=deepcopy(context.model))
 
+    # Add a placeholder task to concatenate IAMC-structured data
+    rep.add("all::iamc", "concat")
+
     # Apply callbacks for other modules which define additional reporting computations
-    for callback in context.report.callback:
+    for callback in context.report.iter_callbacks():
         callback(rep, context)
 
     key = context.report.key
