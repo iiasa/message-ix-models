@@ -6,7 +6,6 @@ biomass:
 coal:
   name: Coal
   units: GWa
-  report: Solids|Fossil
   # NB same value as "Coking coal"; this choice is arbitrary
   # NB in message_doc, this appears as "Hard coal", but this
   #    term usually refers to anthracite, which has a higher
@@ -76,7 +75,6 @@ fueloil:
 gas:
   name: Natural Gas
   units: GWa
-  report: Gases
   ipcc-1996-name: "Natural Gas (Dry)"
   iea-eweb-product: [NATGAS]
 
