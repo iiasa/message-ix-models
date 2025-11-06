@@ -18,21 +18,21 @@ models_scenarios:
   SSP2_Baseline:
     model: SSP_SSP2_v6.2
     scenario: baseline
- # SSP2_2C:
- #   model: SSP_SSP2_v6.2
- #   scenario: baseline_1000f
- # SSP2_Commitments:
- #   model: SSP_SSP2_v6.2
- #   scenario: SSP2 - Low Emissions
-#  LED_Baseline:
-#    model: SSP_LED_v6.2
-#    scenario: baseline
- # LED_2C:
- #   model: SSP_LED_v6.2
- #   scenario: baseline_1000f
- # LED_Commitments:
- #   model: SSP_LED_v6.2
- #   scenario: INDC2030i_uncon_SSP2 - Low Emissions
+  SSP2_2C:
+    model: SSP_SSP2_v6.2
+    scenario: baseline_1000f
+  SSP2_Commitments:
+    model: SSP_SSP2_v6.2
+    scenario: SSP2 - Low Emissions
+  LED_Baseline:
+    model: SSP_LED_v6.2
+    scenario: baseline
+  LED_2C:
+    model: SSP_LED_v6.2
+    scenario: baseline_1000f
+  LED_Commitments:
+    model: SSP_LED_v6.2
+    scenario: INDC2030i_uncon_SSP2 - Low Emissions
   
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
