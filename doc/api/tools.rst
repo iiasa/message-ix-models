@@ -8,6 +8,7 @@ General purpose modeling tools (:mod:`.tools`)
 
 On other pages:
 
+- :doc:`tools-bilateralize`
 - :doc:`tools-costs`
 
 On this page:
