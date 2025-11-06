@@ -4,6 +4,7 @@ import logging
 import re
 from collections.abc import (
     Callable,
+    Collection,
     Hashable,
     Iterable,
     Mapping,
@@ -16,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 import genno
 import ixmp
+import numpy as np
 import pandas as pd
 from genno.operator import pow
 from iam_units import convert_gwp
@@ -58,6 +60,7 @@ __all__ = [
     "select_allow_empty",
     "select_expand",
     "share_curtailment",
+    "zeros_like",
 ]
 
 
@@ -465,3 +468,15 @@ def share_curtailment(curt, *parts):
     multiple technologies; one for each of *parts*.
     """
     return parts[0] - curt * (parts[0] / sum(parts))
+
+
+def zeros_like(qty: "TQuantity", *, drop: Collection[str] = []) -> "TQuantity":
+    """Return a quantity with the same coords as `qty`, filled with zeros."""
+    coords, shape = {}, []
+    for d, labels in qty.coords.items():
+        if d in drop:
+            continue
+        coords[d] = sorted(labels.data)
+        shape.append(len(labels))
+
+    return type(qty)(np.zeros(shape), coords=coords, units=qty.units)
