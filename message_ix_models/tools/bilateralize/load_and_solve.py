@@ -9,6 +9,7 @@ or save as a GDX data file for direct solve in GAMS.
 """
 
 # Import packages
+import logging
 import os
 from pathlib import Path
 
@@ -266,8 +267,6 @@ def solve_or_save(
     solve: bool = False,
     to_gdx: bool = False,
     gdx_location: str | None = None,
-    target_model: str | None = None,
-    target_scen: str | None = None,
 ):
     """
     Solve or save scenario.
@@ -277,7 +276,7 @@ def solve_or_save(
             mp=mp,
             scenario=scen,
             output_path=os.path.join(
-                gdx_location, f"MsgData_{target_model}_{target_scen}.gdx"
+                gdx_location, f"MsgData_{scen.model}_{scen.scenario}.gdx"
             ),
         )
 
@@ -290,51 +289,27 @@ def solve_or_save(
         # mp._backend.jobj.unlockRunid(runid)
 
 
-# %% Clone and update scenario
-def load_and_solve(
-    trade_dict,
-    solve=False,
-    to_gdx=False,
-    project_name: str | None = None,
-    config_name: str | None = None,
+def load_and_clone(
+    mp: ixmp.Platform,
+    log: logging.Logger,
+    config_base: dict,
     start_scen: str | None = None,
     start_model: str | None = None,
     target_scen: str | None = None,
     target_model: str | None = None,
-    extra_parameter_updates: dict | None = None,
-    gdx_location: str | None = None,
-    MESSAGEix_GLOBIOM: bool = True,
-):
-    """
-    Clone and update scenario.
-
+) -> message_ix.Scenario:
+    """Load and clone scenario.
     Args:
-        trade_dict: Dictionary of parameter dataframes
-        log: Log file to track progress
-        solve: If True, solve scenario
-        to_gdx: If True, save scenario to a GDX file
-    Optional Args:
-        project_name: Name of project (message_ix_models/project/[THIS])
-        config_name: Name of config file.
-            If None, uses default config from data/bilateralize/config_default.yaml
-        start_scenario_name: Name of scenario to start from
-        start_model_name: Name of model to start from
-        target_scenario_name: Name of scenario to target
-        target_model_name: Name of model to target
-        additional_parameter_updates: Dictionary of additional parameter updates
-        gdx_location: Location to save GDX file
-        remove_pao_coal_constraint: Remove PAO coal and gas constraints
+        mp: ixmp platform
+        log: Logger
+        project_name: Name of project
+        config_name: Name of config file
+        start_scen: Name of scenario to start from
+        start_model: Name of model to start from
+        target_scen: Name of scenario to target
+        target_model: Name of model to target
     """
     # Load config
-    config_base, config_path, config_tec = load_config(
-        project_name, config_name, load_tec_config=True
-    )
-
-    log = get_logger(name="load_and_solve")
-    log.info("Loading and solving scenario")
-    # Load the scenario
-    mp = ixmp.Platform()
-
     if start_model is None:
         start_model = config_base.get("scenario", {}).get("start_model")
     if start_scen is None:
@@ -351,7 +326,74 @@ def load_and_solve(
 
     scen = base.clone(target_model, target_scen, keep_solution=False)
     scen.set_as_default()
-    log.info("Scenario cloned.")
+
+    log.info("Scenario loaded and cloned.")
+
+    return scen
+
+
+# %% Clone and update scenario
+def load_and_solve(
+    trade_dict,
+    solve=False,
+    to_gdx=False,
+    project_name: str | None = None,
+    config_name: str | None = None,
+    start_scen: str | None = None,
+    start_model: str | None = None,
+    target_scen: str | None = None,
+    target_model: str | None = None,
+    scenario: message_ix.Scenario | None = None,
+    extra_parameter_updates: dict | None = None,
+    gdx_location: str | None = None,
+    MESSAGEix_GLOBIOM: bool = True,
+):
+    """
+    Clone and update scenario.
+
+    Args:
+        trade_dict: Dictionary of parameter dataframes
+    Optional Args:
+        solve: If True, solve scenario
+        to_gdx: If True, save scenario to a GDX file
+        project_name: Name of project (message_ix_models/project/[THIS])
+        config_name: Name of config file.
+            If None, uses default config from data/bilateralize/config_default.yaml
+        start_scen: Name of scenario to start from
+        start_model: Name of model to start from
+        start_model_name: Name of model to start from
+        target_scen: Name of scenario to target
+        target_model: Name of model to target
+        target_model_name: Name of model to target
+        scenario: Scenario to update (if None, will clone from project yaml)
+        additional_parameter_updates: Dictionary of additional parameter updates
+        gdx_location: Location to save GDX file
+        remove_pao_coal_constraint: Remove PAO coal and gas constraints
+    """
+    # Load config
+    config_base, config_path, config_tec = load_config(
+        project_name, config_name, load_tec_config=True
+    )
+
+    log = get_logger(name="load_and_solve")
+    log.info("Loading and solving scenario")
+
+    # Load the scenario
+    mp = ixmp.Platform()
+
+    if scenario is None:
+        scenario = load_and_clone(
+            mp=mp,
+            log=log,
+            config_base=config_base,
+            start_scen=start_scen,
+            start_model=start_model,
+            target_scen=target_scen,
+            target_model=target_model,
+        )
+    else:
+        log.info(f"Using existing scenario: {scenario.model}/{scenario.scenario}")
+        scen = scenario
 
     # Add sets and parameters for each covered technology
     covered_tec = config_base.get("covered_trade_technologies")
@@ -387,6 +429,4 @@ def load_and_solve(
         solve=solve,
         to_gdx=to_gdx,
         gdx_location=gdx_location,
-        target_model=target_model,
-        target_scen=target_scen,
     )
