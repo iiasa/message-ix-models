@@ -347,6 +347,4 @@ def test_compare(test_context) -> None:
     messages = iamc.compare(exp, obs, ignore=NOT_IMPLEMENTED_IAMC)
 
     # Other messages that were not explicitly ignored → some error
-    assert "20 matching of 519792 left and 220 right values" == messages[0], "\n".join(
-        messages
-    )
+    assert ["517 matching of 519792 left and 2160 right values"] == messages

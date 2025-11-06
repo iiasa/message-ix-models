@@ -3,6 +3,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
+from re import escape
 from typing import TYPE_CHECKING
 from warnings import warn
 
@@ -79,7 +80,7 @@ NOT_IMPLEMENTED_MEASURE = {
     "OM Cost",
     "Population",
     "Price",
-    r"Resource\|(Cumulative )?Extraction",
+    r"Resource\|Cumulative Extraction",
     "Secondary Energy",
     "Trade",
     "Useful Energy",
@@ -101,10 +102,14 @@ NOT_IMPLEMENTED_IAMC = [
     r"variable='Primary Energy|Gas': 234 of 240 values with \|diff",
     r"variable='Primary Energy|Solar': 191 of 240 values with \|diff",
     r"variable='Primary Energy|Wind': 179 of 240 values with \|diff",
+    r"variable='Resource\|Extraction.*': \d{2,3} of 240 values with",
     # For `e` units and most values differ
     f"variable='{E}': units mismatch: .*Mt CO2/yr.*Mt / a",
     rf"variable='{E}': 20 missing right entries",
     rf"variable='{E}': 220 of 240 values with \|diff",
+    #
+    # Missing from data/test/report/snapshot-1.tar.gz
+    escape("variable='Resource|Extraction|Uranium': no left data"),
 ]
 
 
