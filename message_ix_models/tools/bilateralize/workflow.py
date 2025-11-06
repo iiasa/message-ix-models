@@ -29,6 +29,7 @@ trade_dict = bare_to_scenario(project_name=project_name, config_name=config_name
 load_and_solve(
     project_name=project_name,
     config_name=config_name,
+    scenario=None,  # Specifies MESSAGEix scenario, or will use project yaml
     trade_dict=trade_dict,
     solve=True,
 )
