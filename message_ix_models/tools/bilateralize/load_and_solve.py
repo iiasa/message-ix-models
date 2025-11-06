@@ -386,7 +386,7 @@ def load_and_solve(
     mp = ixmp.Platform()
 
     if scenario is None:
-        scenario = load_and_clone(
+        scen = load_and_clone(
             mp=mp,
             log=log,
             config_base=config_base,
