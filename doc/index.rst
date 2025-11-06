@@ -100,6 +100,7 @@ Other submodules are documented on their respective pages:
    api/disutility
    api/report/index
    api/tools
+   api/tools-bilateralize
    api/tools-costs
    api/tools-messagev
    api/data-sources
