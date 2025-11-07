@@ -77,6 +77,7 @@ def main(model, scenario, output_dir, platform, run_config, merge_hist):
             run_config=run_config,
             merge_hist=merge_hist,
             merge_ts=False,
+            out_dir=str(output_dir_path),
         )
     except Exception as e:
         print(f"Reporting failed: {e}")
@@ -86,8 +87,6 @@ def main(model, scenario, output_dir, platform, run_config, merge_hist):
 
     # Load and interpolate
     raw_file = output_dir_path / f"{model}_{scenario}.xlsx"
-    if not raw_file.exists():
-        raw_file = Path("reporting_output") / f"{model}_{scenario}.xlsx"
     if not raw_file.exists():
         print(f"Output file not found: {raw_file}")
         return 1

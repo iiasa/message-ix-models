@@ -30,6 +30,7 @@ from message_ix_models.util import package_data_path
 
 RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
 MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "magicc_output")
+CLIMATE_ASSESSMENT_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "climate_assessment_output")
 
 R12_BASINS = {
     "1.0": "AFR",
@@ -49,14 +50,16 @@ R12_BASINS = {
 
 def load_magicc_temperature(
     magicc_file: Path,
-    percentile: float = 50.0
+    percentile: float = None,
+    run_id: int = None
 ) -> pd.DataFrame:
     """
     Load GSAT temperature trajectory from MAGICC output.
 
     Args:
         magicc_file: Path to MAGICC Excel output
-        percentile: Which percentile to use (5, 10, 50, 90, 95, etc.)
+        percentile: Which percentile to use (5, 10, 50, 90, 95, etc.). Defaults to 50.0 if run_id not specified.
+        run_id: Specific run_id to extract (e.g., 0-599). If provided, percentile is ignored.
 
     Returns:
         DataFrame with columns: year, gsat_anomaly_K, model, scenario, ssp_family
@@ -65,17 +68,40 @@ def load_magicc_temperature(
 
     df = pd.read_excel(magicc_file, sheet_name='data')
 
-    percentile_str = f"{percentile}th Percentile" if percentile != 50.0 else "50.0th Percentile"
-    var_pattern = f"AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3|{percentile_str}"
+    # Determine selection mode
+    if run_id is not None:
+        # Select by run_id (new behavior for surrogate modeling)
+        print(f"  Selecting run_id: {run_id}")
+        model_pattern = f"|run_{run_id}"
+        var_pattern = "AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3"
 
-    temp_data = df[df['Variable'] == var_pattern]
+        temp_data = df[
+            (df['Model'].str.contains(model_pattern, na=False)) &
+            (df['Variable'].str.contains(var_pattern, na=False))
+        ]
 
-    if len(temp_data) == 0:
-        available = df[df['Variable'].str.contains('GSAT', case=False, na=False)]['Variable'].unique()
-        raise ValueError(
-            f"No temperature data found for percentile {percentile}.\n"
-            f"Available percentiles:\n" + "\n".join(f"  - {v}" for v in available)
-        )
+        if len(temp_data) == 0:
+            available_models = df['Model'].unique()
+            raise ValueError(
+                f"No temperature data found for run_id {run_id}.\n"
+                f"Available models:\n" + "\n".join(f"  - {m}" for m in available_models[:10])
+            )
+    else:
+        # Select by percentile (old behavior)
+        if percentile is None:
+            percentile = 50.0
+        print(f"  Selecting percentile: {percentile}")
+        percentile_str = f"{percentile}th Percentile" if percentile != 50.0 else "50.0th Percentile"
+        var_pattern = f"AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3|{percentile_str}"
+
+        temp_data = df[df['Variable'] == var_pattern]
+
+        if len(temp_data) == 0:
+            available = df[df['Variable'].str.contains('GSAT', case=False, na=False)]['Variable'].unique()
+            raise ValueError(
+                f"No temperature data found for percentile {percentile}.\n"
+                f"Available percentiles:\n" + "\n".join(f"  - {v}" for v in available)
+            )
 
     temp_row = temp_data.iloc[0]
 
@@ -275,7 +301,10 @@ def save_results_message(
     output_dir: Path,
     variable: str,
     suban: str,
-    scenario: str
+    scenario: str,
+    model: str = None,
+    percentile: float = None,
+    run_id: int = None
 ):
     """
     Save RIME predictions in MESSAGE water availability format.
@@ -287,6 +316,9 @@ def save_results_message(
         variable: Variable name
         suban: Subannual mode
         scenario: Scenario name
+        model: Model name (optional)
+        percentile: Temperature percentile (optional)
+        run_id: MAGICC run_id (optional, for surrogate modeling)
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -295,8 +327,21 @@ def save_results_message(
 
     # Use MESSAGE naming convention (qtot vs qtot_mean, qr vs qr)
     var_short = 'qtot' if 'qtot' in variable else 'qr'
-    base_filename = f"{var_short}_{suban}_{scenario}"
 
+    # Build filename with all parameters
+    parts = [var_short, suban, scenario]
+    if model:
+        parts.append(model)
+    # Always include either percentile or run_id in filename
+    if run_id is not None:
+        parts.append(f"run{run_id}")
+    elif percentile is not None:
+        parts.append(f"p{int(percentile)}")
+    else:
+        # Default to p50 if neither specified
+        parts.append("p50")
+
+    base_filename = "_".join(parts)
     csv_file = output_dir / f"{base_filename}.csv"
 
     message_df.to_csv(csv_file, index=True)
@@ -420,82 +465,61 @@ def create_summary_plots(
     plt.close()
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Run RIME predictions on MAGICC temperature output",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Run with default settings (MESSAGE format, 217 basins, median temp, both variables)
-  uv run --no-sync run_rime_on_magicc.py
+def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_id=None, variable='both', suban='annual', output_dir=None, output_format='message'):
+    """Run RIME predictions on MAGICC temperature output.
 
-  # Run with IAMC format (12 R12 regional basins with plots)
-  uv run --no-sync run_rime_on_magicc.py --output-format iamc
+    Args:
+        model: Model name (e.g., MESSAGE_GLOBIOM_SSP2_v6.4)
+        scenario: Scenario name (e.g., baseline)
+        magicc_file: Path to MAGICC Excel output file (overrides model/scenario)
+        percentile: GSAT percentile to use (default: 50.0 if run_id not specified)
+        run_id: Specific run_id to extract (0-599). If provided, percentile is ignored.
+        variable: Hydrological variable to predict ('qtot_mean', 'qr', or 'both')
+        suban: Subannual aggregation mode ('annual' or '2step')
+        output_dir: Output directory for results
+        output_format: Output format ('iamc' for 12 R12 regions or 'message' for 217 basins)
+    """
+    import argparse
 
-  # Run with 90th percentile temperature
-  uv run --no-sync run_rime_on_magicc.py --percentile 90
+    class Args:
+        pass
 
-  # Run for groundwater recharge only with seasonal aggregation
-  uv run --no-sync run_rime_on_magicc.py --variable qr --suban 2step
+    args = Args()
 
-  # MESSAGE format for specific scenario
-  uv run --no-sync run_rime_on_magicc.py --magicc-file SSP_SSP2_baseline_magicc.xlsx --output-format message
-        """
-    )
+    # Construct path from model/scenario if provided
+    if model and scenario and magicc_file is None:
+        args.magicc_file = MAGICC_OUTPUT_DIR / f"{model}_{scenario}_magicc.xlsx"
+    elif magicc_file:
+        args.magicc_file = Path(magicc_file)
+    else:
+        args.magicc_file = None
 
-    parser.add_argument(
-        '--magicc-file',
-        type=Path,
-        help='Path to MAGICC Excel output file'
-    )
-
-    parser.add_argument(
-        '--percentile',
-        type=float,
-        default=50.0,
-        help='GSAT percentile to use (5, 10, 50, 90, 95, etc.). Default: 50 (median)'
-    )
-
-    parser.add_argument(
-        '--variable',
-        type=str,
-        choices=['qtot_mean', 'qr', 'both'],
-        default='both',
-        help='Hydrological variable to predict. Default: both'
-    )
-
-    parser.add_argument(
-        '--suban',
-        type=str,
-        choices=['annual', '2step'],
-        default='annual',
-        help='Subannual aggregation mode. Default: annual'
-    )
-
-    parser.add_argument(
-        '--output-dir',
-        type=Path,
-        default=None,
-        help='Output directory for results. Default: <magicc_output_dir>/rime_predictions/'
-    )
-
-    parser.add_argument(
-        '--output-format',
-        type=str,
-        choices=['iamc', 'message'],
-        default='message',
-        help='Output format: "iamc" (12 R12 regions) or "message" (217 basins). Default: message'
-    )
-
-    args = parser.parse_args()
+    args.percentile = percentile
+    args.run_id = run_id
+    args.variable = variable
+    args.suban = suban
+    args.output_dir = Path(output_dir) if output_dir else None
+    args.output_format = output_format
 
     if args.magicc_file is None:
-        magicc_files = list(MAGICC_OUTPUT_DIR.glob("*.xlsx"))
-        if not magicc_files:
-            print(f"Error: No MAGICC output files found in {MAGICC_OUTPUT_DIR}")
-            return 1
-        args.magicc_file = max(magicc_files, key=lambda p: p.stat().st_mtime)
-        print(f"Using most recent MAGICC file: {args.magicc_file.name}")
+        # Choose directory based on mode
+        if args.run_id is not None:
+            # run_id mode: use climate-assessment output
+            climate_assessment_file = CLIMATE_ASSESSMENT_OUTPUT_DIR / "data_rawoutput.xlsx"
+            if climate_assessment_file.exists():
+                args.magicc_file = climate_assessment_file
+                print(f"Using climate-assessment output: {args.magicc_file.name}")
+            else:
+                print(f"Error: No climate-assessment output found at {climate_assessment_file}")
+                return 1
+        else:
+            # percentile mode: use old MAGICC output
+            magicc_files = list(MAGICC_OUTPUT_DIR.glob("*_magicc.xlsx"))
+            if not magicc_files:
+                print(f"Error: No MAGICC output files found in {MAGICC_OUTPUT_DIR}")
+                return 1
+            args.magicc_file = max(magicc_files, key=lambda p: p.stat().st_mtime)
+            print(f"Using most recent MAGICC file: {args.magicc_file.name}")
 
     if not args.magicc_file.exists():
         print(f"Error: MAGICC file not found: {args.magicc_file}")
@@ -525,7 +549,7 @@ Examples:
     print(f"  Will predict for {len(basin_ids_to_predict)} unique basin IDs")
     print()
 
-    temp_df = load_magicc_temperature(args.magicc_file, args.percentile)
+    temp_df = load_magicc_temperature(args.magicc_file, percentile=args.percentile, run_id=args.run_id)
 
     gmt_input = create_rime_input(temp_df)
 
@@ -566,7 +590,10 @@ Examples:
                 args.output_dir,
                 variable,
                 args.suban,
-                scenario_name
+                scenario_name,
+                model=temp_df['model'].iloc[0],
+                percentile=args.percentile,
+                run_id=args.run_id
             )
         else:
             save_results_iamc(
@@ -595,5 +622,75 @@ Examples:
     return 0
 
 
+import click
+
+@click.command()
+@click.option(
+    '--model',
+    help='Model name (e.g., MESSAGE_GLOBIOM_SSP2_v6.4)'
+)
+@click.option(
+    '--scenario',
+    help='Scenario name (e.g., baseline)'
+)
+@click.option(
+    '--magicc-file',
+    type=click.Path(path_type=Path),
+    default=None,
+    help='Path to MAGICC Excel output file (overrides model/scenario, default: most recent)'
+)
+@click.option(
+    '--percentile',
+    type=float,
+    default=None,
+    help='GSAT percentile to use (default: 50.0 if run-id not specified)'
+)
+@click.option(
+    '--run-id',
+    type=int,
+    default=None,
+    help='Specific run_id to extract (0-599). If provided, percentile is ignored.'
+)
+@click.option(
+    '--variable',
+    type=click.Choice(['qtot_mean', 'qr', 'both']),
+    default='both',
+    help='Hydrological variable to predict (default: both)'
+)
+@click.option(
+    '--suban',
+    type=click.Choice(['annual', '2step']),
+    default='annual',
+    help='Subannual aggregation mode (default: annual)'
+)
+@click.option(
+    '--output-dir',
+    type=click.Path(path_type=Path),
+    default=None,
+    help='Output directory for results (default: magicc_output/rime_predictions/)'
+)
+@click.option(
+    '--output-format',
+    type=click.Choice(['iamc', 'message']),
+    default='message',
+    help='Output format: iamc (12 R12 regions) or message (217 basins) (default: message)'
+)
+def main(model, scenario, magicc_file, percentile, run_id, variable, suban, output_dir, output_format):
+    """Run RIME predictions on MAGICC temperature output.
+
+    Example:
+        mix-models alps run-rime --model MESSAGE_GLOBIOM_SSP2_v6.4 --scenario baseline
+        mix-models alps run-rime --magicc-file path/to/file.xlsx --run-id 42
+    """
+    try:
+        result = run_rime(model, scenario, magicc_file, percentile, run_id, variable, suban, output_dir, output_format)
+        sys.exit(result)
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
