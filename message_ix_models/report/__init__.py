@@ -435,6 +435,9 @@ def defaults(rep: Reporter, context: Context) -> None:
     from . import key as k
     from .util import add_replacements
 
+    # Add tasks to return groups of codes for aggregation
+    rep.add(k.groups.c, "get_commodity_groups")
+
     # Add a placeholder task to concatenate IAMC-structured data
     rep.add(k.all_iamc, "concat")
 
