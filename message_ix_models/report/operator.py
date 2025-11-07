@@ -11,9 +11,9 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from functools import reduce
+from functools import cache, reduce
 from itertools import filterfalse, product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import genno
 import ixmp
@@ -23,7 +23,9 @@ from genno.operator import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 
+from message_ix_models.model.structure import get_codelist
 from message_ix_models.util import MappingAdapter, add_par_data, nodes_ex_world
+from message_ix_models.util.sdmx import leaf_ids
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -48,6 +50,7 @@ __all__ = [
     "compound_growth",
     "filter_ts",
     "from_url",
+    "get_commodity_groups",
     "get_ts",
     "gwp_factors",
     "make_output_path",
@@ -157,6 +160,16 @@ def filter_ts(df: pd.DataFrame, expr: re.Pattern, *, column="variable") -> pd.Da
     return df[df[column].str.fullmatch(expr)].assign(
         variable=df[column].str.replace(expr, r"\1", regex=True)
     )
+
+
+@cache
+def get_commodity_groups() -> dict[Literal["c"], dict[str, list[str]]]:
+    """Return groups of commodities for reporting of extraction.
+
+    The structure is retrieved from :ref:`commodity-yaml` using :func:`.leaf_ids`.
+    """
+    cl = get_codelist("commodity")
+    return {"c": {c.id: leaf_ids(c) for c in filter(lambda c: len(c.child), cl)}}
 
 
 def get_ts(

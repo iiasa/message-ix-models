@@ -1,8 +1,8 @@
-from functools import cache
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from genno import Keys
 
+from .key import groups
 from .util import IAMCConversion
 
 if TYPE_CHECKING:
@@ -21,29 +21,6 @@ CONV = IAMCConversion(
     unit="EJ/yr",
     GLB_zeros=True,
 )
-
-
-@cache
-def get_commodity_groups() -> dict[Literal["c"], dict[str, list[str]]]:
-    """Return groups of commodities for reporting of extraction.
-
-    Transcribed from
-    :mod:`message_ix_models.report.legacy.default_tables.retr_extraction`.
-
-    .. todo:: Construct this by processing information in :file:`commodity.yaml`.
-    """
-    result = {
-        "Coal": ["coal", "lignite"],
-        "Oil|Conventional": ["crude_1", "crude_2", "crude_3"],
-        "Oil|Unconventional": ["crude_4", "crude_5", "crude_6", "crude_7", "crude_8"],
-        "Gas|Conventional": ["gas_1", "gas_2", "gas_3", "gas_4"],
-        "Gas|Unconventional": ["gas_5", "gas_6", "gas_7", "gas_8"],
-        "Uranium": ["uranium"],
-    }
-    result["Gas"] = result["Gas|Conventional"] + result["Gas|Unconventional"]
-    result["Oil"] = result["Oil|Conventional"] + result["Oil|Unconventional"]
-
-    return dict(c=result)
 
 
 def callback(c: "Computer", context: "Context") -> None:
@@ -66,8 +43,7 @@ def callback(c: "Computer", context: "Context") -> None:
     c.add(K.all[1], "convert_units", K.all[0], units=CONV.unit)
 
     # Aggregate on 'c' dimension
-    c.add(f"c::{__name__} agg", get_commodity_groups())
-    c.add(K.all[2], "aggregate", K.all[1], f"c::{__name__} agg", keep=False)
+    c.add(K.all[2], "aggregate", K.all[1], groups.c, keep=False)
 
     # Transform to IAMC-structured data
     CONV.add_tasks(c)
