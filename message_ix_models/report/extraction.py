@@ -6,7 +6,7 @@ from .key import groups
 from .util import IAMCConversion
 
 if TYPE_CHECKING:
-    from genno import Computer
+    from message_ix import Reporter
 
     from message_ix_models import Context
 
@@ -23,27 +23,23 @@ CONV = IAMCConversion(
 )
 
 
-def callback(c: "Computer", context: "Context") -> None:
-    from message_ix_models.report import util
+def callback(r: "Reporter", context: "Context") -> None:
+    """Prepare reporting of resource extraction."""
+    # TODO Generalize the following 3 blocks. Similar operations will be used in other
+    # cases.
 
-    # Discard "EXT|" prefix on constructed variable names
-    # TODO Improve handle_iamc() or underlying code to make this unnecessary
-    util.REPLACE_VARS[r"^EXT\|"] = ""
-
-    # TODO Generalize the following 3 blocks
-
-    # Apply units
-    c.add(K.hist[0], "apply_units", K.hist, units="GWa/year")
-    c.add(K.model[0], "apply_units", K.model, units="GWa/year")
+    # Apply missing units to model contents
+    r.add(K.hist[0], "apply_units", K.hist, units="GWa/year")
+    r.add(K.model[0], "apply_units", K.model, units="GWa/year")
 
     # Add historical and current values together
-    c.add(K.all[0], "add", K.hist[0], K.model[0])
+    r.add(K.all[0], "add", K.hist[0], K.model[0])
 
     # Convert to target units
-    c.add(K.all[1], "convert_units", K.all[0], units=CONV.unit)
+    r.add(K.all[1], "convert_units", K.all[0], units=CONV.unit)
 
-    # Aggregate on 'c' dimension
-    c.add(K.all[2], "aggregate", K.all[1], groups.c, keep=False)
+    # Aggregate on 'c' dimension using groups from commodity_groups()
+    r.add(K.all[2], "aggregate", K.all[1], groups.c, keep=False)
 
-    # Transform to IAMC-structured data
-    CONV.add_tasks(c)
+    # Add tasks to (a) transform to IAMC-structured data, (b) concatenate to all::iamc
+    CONV.add_tasks(r)
