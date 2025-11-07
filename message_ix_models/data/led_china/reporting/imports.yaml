@@ -7,73 +7,73 @@ iamc_prefix:
 unit: GWa
 
 vars:
-  Gross Imports|Gas|Piped:
+  Gross Imports|Gas|Piped|:
     filter:
       { technology: [gas_piped_exp], mode: M1, commodity: gas, level: piped }
     short:
       gas_piped_exp
 
-  Gross Imports|Gas|Shipped LNG:
+  Gross Imports|Gas|Shipped LNG|:
     filter:
       { technology: [LNG_shipped_exp], mode: M1, commodity: LNG, level: shipped }
     short:
       LNG_shipped_exp
 
-  Gross Imports|Coal|Shipped:
+  Gross Imports|Coal|Shipped|:
     filter:
       { technology: [coal_shipped_exp], mode: M1, commodity: coal, level: shipped }
     short:
       coal_shipped_exp
 
-  Gross Imports|Crude Oil|Shipped:
+  Gross Imports|Crude Oil|Shipped|:
     filter:
       { technology: [crudeoil_shipped_exp], mode: M1, commodity: crudeoil, level: shipped }
     short:
       crudeoil_shipped_exp
 
-  Gross Imports|Crude Oil|Piped:
+  Gross Imports|Crude Oil|Piped|:
     filter:
       { technology: [crudeoil_piped_exp], mode: M1, commodity: crudeoil, level: piped }
     short:
       crudeoil_piped_exp
 
-  Gross Imports|Ethanol|Shipped:
+  Gross Imports|Ethanol|Shipped|:
     filter:
       { technology: [eth_shipped_exp], mode: M1, commodity: ethanol, level: shipped }
     short:
       eth_shipped_exp
 
-  Gross Imports|Fuel Oil|Shipped:
+  Gross Imports|Fuel Oil|Shipped|:
     filter:
       { technology: [foil_shipped_exp], mode: M1, commodity: fueloil, level: shipped }
     short:
       foil_shipped_exp
 
-  Gross Imports|Fuel Oil|Piped:
+  Gross Imports|Fuel Oil|Piped|:
     filter:
       { technology: [foil_piped_exp], mode: M1, commodity: fueloil, level: piped }
     short:
       foil_piped_exp
 
-  Gross Imports|Liquid Oil|Shipped:
+  Gross Imports|Liquid Oil|Shipped|:
     filter:
       { technology: [loil_shipped_exp], mode: M1, commodity: loil, level: shipped }
     short:
       loil_shipped_exp
 
-  Gross Imports|Liquid Oil|Piped:
+  Gross Imports|Liquid Oil|Piped|:
     filter:
       { technology: [loil_piped_exp], mode: M1, commodity: loil, level: piped }
     short:
       loil_piped_exp
 
-  Gross Imports|Biomass|Shipped:
+  Gross Imports|Biomass|Shipped|:
     filter:
       { technology: [biomass_shipped_exp], mode: M1, commodity: biomass, level: shipped }
     short:
       biomass_shipped_exp
 
-  Gross Imports|Liquid Hydrogen|Shipped:
+  Gross Imports|Liquid Hydrogen|Shipped|:
     filter:
       { technology: [lh2_shipped_exp], mode: M1, commodity: lh2, level: shipped }
     short:
