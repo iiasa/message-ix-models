@@ -264,6 +264,8 @@ def solve_scen(context, add_calibration, add_macro, macro_file, shift_model_year
         default_solve_opt.update({"model": "MESSAGE-MACRO"})
 
     log.info("Start solving the scenario")
+    if scenario.has_solution():
+        scenario.remove_solution()
     scenario.solve(**default_solve_opt)
     scenario.set_as_default()
 
