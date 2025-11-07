@@ -10,6 +10,11 @@ PRICE_COMMODITY = Key("PRICE_COMMODITY", "nclyh")
 #: All IAMC-structured data.
 all_iamc = Key("all", (), "iamc")
 
+#: Identifiers for coordinates.
+coords = Keys(
+    n_glb="n::glb",
+)
+
 #: Identifiers for grouping/aggregation mappings.
 groups = Keys(
     c="c::groups",
