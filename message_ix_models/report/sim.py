@@ -265,7 +265,7 @@ def add_simulated_solution(
     N = len(rep.graph)
 
     # Ensure "scenario" is present in the graph
-    rep.graph.setdefault("scenario", None)
+    rep.graph.setdefault("scenario", info)
 
     # Add simulated data
     data = data or dict()
