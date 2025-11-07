@@ -90,8 +90,9 @@ mp = ixmp.Platform()
 
 outdf = pd.DataFrame()
 
-scen = 'SSP2_Baseline'
-#for scen in ['SSP2_Baseline']:
+#scen = 'SSP2_Baseline'
+for scen in ['SSP2_Baseline', 'SSP2_2C']:#, 'SSP2_Commitments',
+             #'LED_Baseline', 'LED_2C', 'LED_Commitments']:
     scenario = message_ix.Scenario(mp, model = 'china_security', scenario = scen)
     rep = Reporter.from_scenario(scenario)
     base_df = rep.get("message::default").data 
@@ -106,8 +107,8 @@ scen = 'SSP2_Baseline'
     df['year'] = df['ya']
     df['unit'] = 'GWa'
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
-    outdf = pd.concat([outdf, df])
+    outdf = pd.concat([outdf, base_df, df])
 
-outdf.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))
+outdf.to_csv(package_data_path('led_china', 'reporting', 'reporting.csv'))
 
 mp.close_db()
