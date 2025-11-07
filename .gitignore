@@ -153,3 +153,37 @@ cache/
 
 # Scratch files
 *scratch*
+
+# Project-specific: MESSAGE-ALPS
+# Markdown analysis files
+*.md
+
+# Backup files
+*.backup
+
+# Windows Zone.Identifier files
+*:Zone.Identifier
+
+# Analysis plots and outputs
+*.png
+*.txt
+
+# Excel diff/temporary files
+_*.xlsx
+~$*.xlsx
+
+# Reporting output directories
+message_ix_models/data/report/legacy/reporting_output/
+message_ix_models/report/legacy/reporting_output/
+
+# Analysis data directories
+/data/
+
+# Shell setup scripts
+setup_env.sh
+
+# UV lock file
+uv.lock
+
+# Wasteland directory for throwaway scripts
+/wasteland/
