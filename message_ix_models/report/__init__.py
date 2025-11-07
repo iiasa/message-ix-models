@@ -435,6 +435,9 @@ def defaults(rep: Reporter, context: Context) -> None:
     from . import key as k
     from .util import add_replacements
 
+    # Add tasks to return coordinates for data manpulation, e.g. expand_dims, select
+    rep.add(k.coords.n_glb, "node_glb", "n")
+
     # Add tasks to return groups of codes for aggregation
     rep.add(k.groups.c, "get_commodity_groups")
 

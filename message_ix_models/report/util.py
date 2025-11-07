@@ -12,8 +12,6 @@ from genno.core.key import single_key
 from message_ix import Reporter
 from sdmx.model.v21 import Code
 
-from message_ix_models.util import nodes_ex_world
-
 if TYPE_CHECKING:
     from genno import Computer
 
@@ -76,11 +74,6 @@ REPLACE_VARS = {
 }
 
 
-def n_glb(nodes: list[str]) -> dict[str, list[str]]:
-    """Return :py:`{"n": ["R##_GLB"]}` based on the existing `nodes`."""
-    return {"n": ["".join(str(nodes_ex_world(nodes)[0]).partition("_")[:2] + ("GLB",))]}
-
-
 _RENAME = {"n": "region", "nl": "region", "y": "year", "ya": "year", "yv": "year"}
 
 
@@ -115,7 +108,7 @@ class IAMCConversion:
     def add_tasks(self, c: "Computer") -> None:
         from genno.compat.pyam import iamc as handle_iamc
 
-        from .key import all_iamc
+        from .key import all_iamc, coords
 
         k = Keys(base=self.base, glb=self.base + "glb")
 
@@ -123,12 +116,8 @@ class IAMCConversion:
             # Quantity of zeros like self.base
             c.add(k.glb[0], "zeros_like", self.base, drop=["n"])
 
-            # Add a key that gives an expand_dims arg for the next task
-            # TODO Move to add_structure()
-            c.add("n::glb", n_glb, "n")
-
             # Add the 'n' dimension
-            c.add(k.glb[1], "expand_dims", k.glb[0], "n::glb")
+            c.add(k.glb[1], "expand_dims", k.glb[0], coords.n_glb)
 
             # Add zeros to base data & update the base key for next steps
             k.base += "glb"

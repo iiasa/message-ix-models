@@ -56,6 +56,7 @@ __all__ = [
     "make_output_path",
     "merge_data",
     "model_periods",
+    "node_glb",
     "nodes_ex_world",
     "nodes_world_agg",
     "quantity_from_iamc",
@@ -247,6 +248,11 @@ def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:
     """
     y0 = cat_year.query("type_year == 'firstmodelyear'")["year"].item()
     return list(filter(lambda year: y0 <= year, y))
+
+
+def node_glb(nodes: list[str]) -> dict[str, list[str]]:
+    """Return :py:`{"n": ["R##_GLB"]}` derived from existing `nodes`."""
+    return {"n": ["".join(str(nodes_ex_world(nodes)[0]).partition("_")[:2] + ("GLB",))]}
 
 
 def nodes_world_agg(
