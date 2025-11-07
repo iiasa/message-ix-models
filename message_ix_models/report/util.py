@@ -120,8 +120,13 @@ class IAMCConversion:
             c.add(k.glb[1], "expand_dims", k.glb[0], coords.n_glb)
 
             # Add zeros to base data & update the base key for next steps
-            k.base += "glb"
-            c.add(k.base, "add", self.base, k.glb[1])
+            c.add(k.base[0], "add", self.base, k.glb[1])
+        else:
+            # Simple alias
+            c.add(k.base[0], k.base)
+
+        # Convert to target units
+        c.add(k.base[1], "convert_units", k.base[0], units=self.unit, sums=True)
 
         # Common keyword arguments for genno.compat.pyam.iamc
         args: dict = dict(rename=_RENAME, unit=self.unit)
@@ -151,7 +156,7 @@ class IAMCConversion:
                 c,
                 args
                 | dict(
-                    base=k.base.drop(*dims),
+                    base=k.base[1].drop(*dims),
                     variable=f"{label} {i}",
                     collapse=dict(callback=collapse, var=var_parts),
                 ),
