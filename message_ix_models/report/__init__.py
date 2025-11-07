@@ -394,9 +394,6 @@ def prepare_reporter(
     )
     rep.configure(model=deepcopy(context.model))
 
-    # Add a placeholder task to concatenate IAMC-structured data
-    rep.add("all::iamc", "concat")
-
     # Apply callbacks for other modules which define additional reporting computations
     for callback in context.report.iter_callbacks():
         callback(rep, context)
@@ -435,7 +432,11 @@ def prepare_reporter(
 def defaults(rep: Reporter, context: Context) -> None:
     from message_ix_models.model.structure import get_codes
 
+    from . import key as k
     from .util import add_replacements
+
+    # Add a placeholder task to concatenate IAMC-structured data
+    rep.add(k.all_iamc, "concat")
 
     # Add mappings for conversions to IAMC data structures
     add_replacements("c", get_codes("commodity"))
