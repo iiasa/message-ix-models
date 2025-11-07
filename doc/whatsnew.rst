@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- New provider for exogenous data from the :ref:`tools-cepii` :class:`.BACI` data source (:pull:`450`).
 - Improvements to :class:`.report.Config` (:pull:`178`):
 
   - New attribute :attr:`~.report.Config.modules`.
@@ -14,6 +15,7 @@ Next release
   to cover features implemented/not implemented by :mod:`genno`-based reporting.
   Module globals :data:`.NOT_IMPLEMENTED_MEASURE` and :data:`.NOT_IMPLEMENTED_IAMC`
   record not-yet-implemented measures and IAMC ‘variables’.
+- New utility functions :func:`.extract_if_newer`, :func:`.random_sample_from_files` (:pull:`450`).
 
 v2025.10.31
 ===========
