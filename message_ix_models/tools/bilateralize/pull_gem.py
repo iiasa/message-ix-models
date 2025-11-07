@@ -180,16 +180,16 @@ def import_gem(
     gem_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
 
     trade_dir = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "edit_files"
+        os.path.dirname(gem_dir_out), "edit_files"
     )
     flow_dir = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "edit_files", "flow_technology"
+        os.path.dirname(gem_dir_out), "edit_files", "flow_technology"
     )
     trade_dir_out = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "bare_files"
+        os.path.dirname(gem_dir_out), "bare_files"
     )
     flow_dir_out = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "bare_files", "flow_technology"
+        os.path.dirname(gem_dir_out), "bare_files", "flow_technology"
     )
     if not os.path.isdir(gem_dir_out):
         os.makedirs(Path(gem_dir_out))
@@ -210,7 +210,7 @@ def import_gem(
     )
     inv_cost["value_update"] = inv_cost["InvCost (USD/km)"] / 1e6  # in MUSD/km
     inv_cost = inv_cost[["node_loc", "technology", "value_update"]]
-    inv_cost.to_csv(os.path.join(export_dir, "inv_cost_GEM.csv"), index=False)
+    inv_cost.to_csv(os.path.join(gem_dir_out, "inv_cost_GEM.csv"), index=False)
 
     basedf = pd.read_csv(os.path.join(flow_dir, "inv_cost.csv"))
     basedf["value"] = 100
@@ -254,7 +254,7 @@ def import_gem(
         ["node_loc", "technology", "year_act", "value", "unit", "mode", "time"]
     ]
     hist_act.to_csv(
-        os.path.join(export_dir, "historical_activity_GEM.csv"), index=False
+        os.path.join(gem_dir_out, "historical_activity_GEM.csv"), index=False
     )
     hist_act.to_csv(os.path.join(flow_dir, "historical_activity.csv"), index=False)
     hist_act.to_csv(os.path.join(flow_dir_out, "historical_activity.csv"), index=False)
@@ -292,7 +292,7 @@ def import_gem(
         ]
         hist_tra["year_act"] = hist_tra["year_act"].astype(int)
         hist_tra.to_csv(
-            os.path.join(export_dir, "historical_activity_trade_GEM.csv"), index=False
+            os.path.join(gem_dir_out, "historical_activity_trade_GEM.csv"), index=False
         )
         hist_tra.to_csv(os.path.join(trade_dir, "historical_activity.csv"), index=False)
         hist_tra.to_csv(
@@ -335,7 +335,7 @@ def import_gem(
         unit="km",
     )
     hist_cap.to_csv(
-        os.path.join(export_dir, "historical_new_capacity_GEM.csv"), index=False
+        os.path.join(gem_dir_out, "historical_new_capacity_GEM.csv"), index=False
     )
     hist_cap.to_csv(os.path.join(flow_dir, "historical_new_capacity.csv"), index=False)
     hist_cap.to_csv(
@@ -383,6 +383,6 @@ def import_gem(
     )
     inputdf = inputdf.drop(["value_update"], axis=1)
 
-    inputdf.to_csv(os.path.join(export_dir, "inputs_GEM.csv"), index=False)
+    inputdf.to_csv(os.path.join(gem_dir_out, "inputs_GEM.csv"), index=False)
     inputdf.to_csv(os.path.join(trade_dir, "input.csv"), index=False)
     inputdf.to_csv(os.path.join(trade_dir_out, "input.csv"), index=False)
