@@ -129,8 +129,12 @@ def get_spec(context) -> Spec:
     # Add levels
     add.set["level"] = get_codes("level")
 
-    # Add commodities
-    add.set["commodity"] = get_codes("commodity")
+    # Add commodities. Omit those with the annotation ``report-only: true``
+    add.set["commodity"].extend(
+        filter(
+            lambda c: not c.eval_annotation(id="report-only"), get_codes("commodity")
+        )
+    )
 
     # Add units, associated with commodities
     units = set(
