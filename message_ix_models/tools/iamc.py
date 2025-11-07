@@ -116,9 +116,9 @@ def compare(
         suffixes=("_left", "_right"),
     ).groupby(["model", "scenario"]):
         if group_0.value_left.isna().all():
-            record("No left data for model={model!r}, scenario={scenario!r}")
+            record(f"No left data for model={model!r}, scenario={scenario!r}")
         elif group_0.value_right.isna().all():
-            record("No right data for model={model!r}, scenario={scenario!r}")
+            record(f"No right data for model={model!r}, scenario={scenario!r}")
         else:
             group_0.groupby(["variable"]).apply(checks)
 
