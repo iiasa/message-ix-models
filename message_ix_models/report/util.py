@@ -98,7 +98,7 @@ class IAMCConversion:
     #: Dimension(s) to sum over.
     sums: list[str] = field(default_factory=list)
 
-    #: If :any:`True`, ensure data is present for "R11_GLB".
+    #: If :any:`True`, ensure data is present for ``R##_GLB``.
     GLB_zeros: bool = False
 
     def __post_init__(self) -> None:
@@ -106,6 +106,47 @@ class IAMCConversion:
         self.base = Key(self.base)
 
     def add_tasks(self, c: "Computer") -> None:
+        """Add tasks to convert :attr:`base` to IAMC structure.
+
+        The tasks include, in order:
+
+        1. If :attr:`GLB_zeroes` is :any:`True`:
+
+           - Create a quantity with the same shape as :attr:`base`, filled with all
+             zeros (:func:`.zeros_like`) and a single coord like ``R##_GLB`` for the
+             :math:`n` dimension (:func:`.node_glb`).
+           - Add this to :attr:`base`.
+
+           These steps ensure that values for ``R##_GLB`` will appear in the
+           IAMC-structured result.
+
+        2. Convert to the given :attr:`units` (:func:`~genno.operator.convert_units`).
+           The :attr:`base` quantity **must** have dimensionally compatible units.
+
+        Steps (3) to (6) are repeated for (at least) an empty string (:py:`""`) and for
+        any expressions like :py:`"x-y-z"` in :attr:`sums`.
+
+        3. Subtract the given dimension(s) (if any) from the dimensions of :attr:`base`.
+           For example, if :attr:`base` is ``<foo:x-y-z>`` and :attr:`sums` includes
+           :py:`"x-z"`, this gives a reference to ``<foo:y>``, which is the base
+           quantity summed over the :math:`(x, z)` dimensions.
+
+        4. Reduce the :attr:`var_parts` in the same way. For example, if
+           :attr:`var_parts` is :py:`["Variable prefix", "z", "x", "y", "Foo"]`, the
+           above sum reduces this to :py:`["Variable prefix", "y", "Foo"]`.
+
+        5. Call :func:`genno.compat.pyam.iamc` to add further tasks to convert the
+           quantity from (3) to IAMC structure. :func:`callback` in this module is used
+           to help format the individual dimension labels and collapsed ‘variable’
+           labels.
+
+           This step results in keys like ``base 0::iamc``, ``base 1::iamc``, etc. added
+           to `rep`.
+
+        6. Append the key from (5) to the task at :data:`.report.key.all_iamc`. This
+           ensures that the converted data is concatenated with all other
+           IAMC-structured data.
+        """
         from genno.compat.pyam import iamc as handle_iamc
 
         from .key import all_iamc, coords
@@ -113,7 +154,7 @@ class IAMCConversion:
         k = Keys(base=self.base, glb=self.base + "glb")
 
         if self.GLB_zeros:
-            # Quantity of zeros like self.base
+            # Quantity of zeros in the same shape as self.base, without an 'n' dimension
             c.add(k.glb[0], "zeros_like", self.base, drop=["n"])
 
             # Add the 'n' dimension
@@ -147,7 +188,7 @@ class IAMCConversion:
             # Exclude any summed dimensions from the expression.
             var_parts = [v for v in self.var_parts if v not in dims]
 
-            # Invoke genno's built-in handler
+            # Invoke genno's built-in handler to add more tasks:
             # - Base key: the partial sum of k.base over any `dims`.
             # - "variable" argument is used only to construct keys; the resulting IAMC-
             #   structured data is available at `{variable}::iamc`.
