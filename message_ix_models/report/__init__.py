@@ -29,6 +29,7 @@ __all__ = [
     "NOT_IMPLEMENTED_IAMC",
     "NOT_IMPLEMENTED_MEASURE",
     "Config",
+    "defaults",
     "prepare_reporter",
     "register",
     "report",
@@ -327,6 +328,9 @@ def prepare_reporter(
 ) -> tuple[Reporter, "KeyLike | None"]:
     """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
 
+    Every function returned by :attr:`.Config.iter_callbacks` is called, in order, to
+    allow each to populate the `reporter` with additional tasks.
+
     Parameters
     ----------
     context : .Context
@@ -342,8 +346,8 @@ def prepare_reporter(
     Returns
     -------
     .Reporter
-        Reporter prepared with MESSAGEix-GLOBIOM calculations; if `reporter` is given,
-        this is a reference to the same object.
+        Reporter prepared with tasks for reporting a MESSAGEix-GLOBIOM scenario; if
+        `reporter` is given, this is a reference to the same object.
 
         If :attr:`.cli_output` is given, a task with the key "cli-output" is added that
         writes the :attr:`.Config.key` to that path.
@@ -430,6 +434,16 @@ def prepare_reporter(
 
 
 def defaults(rep: Reporter, context: Context) -> None:
+    """Prepare default contents and configuration of `rep` for MESSAGEix-GLOBIOM.
+
+    This includes:
+
+    - Populate :data:`.key.coords` and :data:`.key.groups`.
+    - Add a :func:`genno.operator.concat` task with no arguments at
+      :data:`.key.all_iamc`.
+    - Call :func:`.add_replacements` for members of the :ref:`commodity-yaml` and
+      :ref:`technology-yaml` code lists
+    """
     from message_ix_models.model.structure import get_codes
 
     from . import key as k

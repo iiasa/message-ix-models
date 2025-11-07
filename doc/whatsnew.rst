@@ -11,6 +11,11 @@ Next release
   - New method :meth:`~.report.Config.iter_callbacks`.
 
 - New function :func:`.tools.iamc.compare` (:pull:`178`).
+- New module :mod:`.report.extraction` for reporting of resource extraction (:pull:`451`).
+- New reporting operators (:pull:`451`):
+  :func:`.get_commodity_groups`,
+  :func:`.node_glb`, and
+  :func:`.zeros_like`.
 - Expand :doc:`api/report/index` documentation (:pull:`178`)
   to cover features implemented/not implemented by :mod:`genno`-based reporting.
   Module globals :data:`.NOT_IMPLEMENTED_MEASURE` and :data:`.NOT_IMPLEMENTED_IAMC`

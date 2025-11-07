@@ -18,9 +18,18 @@ These codes have the following annotations:
 ``units`` (mandatory)
    Units typically associated with this commodity.
 ``iea-eweb-flow`` (optional)
-   List of ``FLOW`` codes from the IEA :ref:`tools-iea-web` associated with this MESSAGEix-GLOBIOM commodity.
+   List of ``FLOW`` codes from the IEA :ref:`tools-iea-web`
+   associated with this MESSAGEix-GLOBIOM commodity.
 ``iea-eweb-product`` (optional)
-   List of ``PRODUCT`` codes from the IEA :ref:`tools-iea-web` associated with this MESSAGEix-GLOBIOM commodity.
+   List of ``PRODUCT`` codes from the IEA :ref:`tools-iea-web`
+   associated with this MESSAGEix-GLOBIOM commodity.
+``report`` (optional)
+   English name for IAMC-structured reporting output.
+   See :func:`.add_replacements`.
+``report-only`` (optional)
+   :class:`bool`.
+   If :any:`True`,
+   the code is ignored by :func:`.bare.get_spec`.
 
 .. literalinclude:: ../../message_ix_models/data/commodity.yaml
    :language: yaml

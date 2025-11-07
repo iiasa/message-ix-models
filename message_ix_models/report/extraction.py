@@ -1,3 +1,5 @@
+"""Report resource extraction."""
+
 from typing import TYPE_CHECKING
 
 from genno import Keys
