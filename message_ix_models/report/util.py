@@ -24,6 +24,8 @@ log = logging.getLogger(__name__)
 #:
 #: - Applied to whole strings along each dimension.
 #: - These columns have :meth:`str.title` applied before these replacements.
+#:
+#: See also :func:`add_replacements`.
 REPLACE_DIMS: dict[str, dict[str, str]] = {
     "c": {
         # in land_out, for CH4 emissions from GLOBIOM
@@ -36,14 +38,15 @@ REPLACE_DIMS: dict[str, dict[str, str]] = {
     "t": dict(),
 }
 
-#: Replacements used in :meth:`collapse` after the 'variable' column is assembled.
-#: These are applied using :meth:`pandas.DataFrame.replace` with ``regex=True``; see
-#: the documentation of that method. For documentation of regular expressions, see
+#: Replacements used in :func:`collapse` after 'variable' labels are constructed. These
+#: are applied using :meth:`pandas.DataFrame.replace` with ``regex=True``; see the
+#: documentation of that method. For documentation of regular expressions, see
 #: https://docs.python.org/3/library/re.html and https://regex101.com.
 #:
-#: .. todo:: These may be particular or idiosyncratic to a single "template". The
-#:    strings used to collapse multiple conceptual dimensions into the IAMC "variable"
-#:    column are known to vary in poorly-documented ways across these templates.
+#: .. todo:: These may be particular or idiosyncratic to a single 'template'. The
+#:    strings used to collapse multiple conceptual dimensions into the IAMC 'variable'
+#:    dimension are known to vary across these templates, in ways that are sometimes not
+#:    documented.
 #:
 #:    This setting is currently applied universally. To improve, specify a different
 #:    mapping with the replacements needed for each individual template, and load the
@@ -212,18 +215,19 @@ def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
     """Callback for the `collapse` argument to :meth:`~.Reporter.convert_pyam`.
 
     Replacements from :data:`REPLACE_DIMS` and :data:`REPLACE_VARS` are applied.
-    The dimensions listed in the `var` arguments are automatically dropped from the
-    returned :class:`pyam.IamDataFrame`. If ``var[0]`` contains the word "emissions",
-    then :meth:`collapse_gwp_info` is invoked.
+    The dimensions listed in the `var` argument are automatically dropped from the
+    returned :class:`pyam.IamDataFrame`. If :py:`var[0]` contains the word "emissions",
+    then :func:`collapse_gwp_info` is invoked.
 
     Adapted from :func:`genno.compat.pyam.collapse`.
 
     Parameters
     ----------
     var : list of str, optional
-        Strings or dimensions to concatenate to the 'Variable' column. The first of
-        these is usually a string value used to populate the column. These are joined
-        using the pipe ('|') character.
+        Strings or dimensions to concatenate to a 'variable' string. The first of these
+        usually a :class:`str` used to populate the column; others may be fixed strings
+        or the IDs of dimensions in the input data. The components are joined using the
+        pipe ('|') character.
 
     See also
     --------
@@ -314,7 +318,25 @@ def copy_ts(rep: Reporter, other: str, filters: dict | None) -> Key:
 
 
 def add_replacements(dim: str, codes: Iterable[Code]) -> None:
-    """Update :data:`REPLACE_DIMS` for dimension `dim` with values from `codes`."""
+    """Update :data:`REPLACE_DIMS` for dimension `dim` with values from `codes`.
+
+    For every code in `codes` that has an annotation with the ID ``report``, the code
+    ID is mapped to the value of the annotation. For example, the following in one of
+    the :doc:`/pkg-data/codelists`:
+
+    .. code-block:: yaml
+
+       foo:
+         report: fOO
+
+       bar:
+         report: Baz
+
+       qux: {}  # No "report" annotation → no mapping
+
+    …results in entries :py:`{"foo": "fOO", "bar": "Baz"}` added to :data:`REPLACE_DIMS`
+    and used by :func:`collapse`.
+    """
     for code in codes:
         try:
             label = str(code.get_annotation(id="report").text)

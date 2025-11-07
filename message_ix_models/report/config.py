@@ -28,6 +28,7 @@ def _default_callbacks() -> list[Callback]:
 
     from . import defaults, extraction
 
+    # NB When updating this list, also update the docstring of Config.callback
     return [defaults, extraction.callback, plot.callback]
 
 
@@ -45,13 +46,17 @@ class Config(ConfigHelper):
     #: Shorthand to set :py:`legacy["use"]` on a new instance.
     _legacy: InitVar[bool | None] = False
 
-    #: List of callbacks for preparing the :class:`.Reporter`.
+    #: List of callback functions for preparing the :class:`.Reporter`.
     #:
     #: Each registered function is called by :func:`~.report.prepare_reporter` in order
     #: to add or modify the task graph. Specific model variants and projects can
-    #: register a callback to extend the reporting graph.
+    #: register a callback to extend the reporting graph. The default list is:
     #:
-    #: Callback functions **must** take two arguments: the Computer/Reporter, and a
+    #: 1. :func:`.report.defaults`
+    #: 2. :func:`.report.extraction.callback`
+    #: 3. :func:`.report.plot.callback`
+    #:
+    #: A callback function **must** take two arguments: the Computer/Reporter, and a
     #: :class:`.Context`:
     #:
     #: .. code-block:: python
@@ -63,7 +68,7 @@ class Config(ConfigHelper):
     #:         # Modify `rep` by calling its methods ...
     #:         pass
     #:
-    #:     # Register this callback on an existing Context instance
+    #:     # Register this callback on an existing Context/report.Config instance
     #:     context.report.register(cb)
     #:
     #: See also :attr:`modules`.
@@ -78,7 +83,7 @@ class Config(ConfigHelper):
     #: Key for the Quantity or computation to report.
     key: "KeyLike | None" = None
 
-    #: Names of modules with reporting callbacks. See also :attr:`callbacks` and
+    #: Names of modules with reporting callbacks. See also :attr:`callback` and
     #: :meth:`iter_callbacks`.
     modules: list[str] = field(default_factory=list)
 
@@ -106,8 +111,8 @@ class Config(ConfigHelper):
         """Iterate over callback functions.
 
         1. All module names in :attr:`modules` are passed to :meth:`register`, such that
-           their callback functions are appended to :attr:`callbacks`.
-        2. The :attr:`callbacks` are yielded iteratively.
+           their callback functions are appended to :attr:`callback`.
+        2. The :attr:`callback` are yielded iteratively.
         """
         for name in self.modules:
             self.register(name)

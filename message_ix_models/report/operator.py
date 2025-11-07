@@ -165,9 +165,19 @@ def filter_ts(df: pd.DataFrame, expr: re.Pattern, *, column="variable") -> pd.Da
 
 @cache
 def get_commodity_groups() -> dict[Literal["c"], dict[str, list[str]]]:
-    """Return groups of commodities for reporting of extraction.
+    """Return groups of commodities for aggregation.
 
-    The structure is retrieved from :ref:`commodity-yaml` using :func:`.leaf_ids`.
+    The structure is retrieved from :ref:`commodity-yaml` using :func:`.leaf_ids`. The
+    group IDs include only those commodities from the code list with children. The
+    group members include only 'leaf' codes via :func:`.leaf_ids`; any intermediate
+    codes that have children are expanded to the list of those children.
+
+    Returns
+    -------
+    dict
+        with one top-level key, 'c', and at the second level mapping from group IDs to
+        their components. This is suitable for use as the :py:`groups` argument to
+        :func:`genno.operator.aggregate`.
     """
     cl = get_codelist("commodity")
     return {"c": {c.id: leaf_ids(c) for c in filter(lambda c: len(c.child), cl)}}
