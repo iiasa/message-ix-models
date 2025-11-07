@@ -10,7 +10,8 @@ import pandas.testing as pdt
 import pytest
 from ixmp.testing import assert_logs
 
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import Context, ScenarioInfo, testing
+from message_ix_models.model.bare import get_spec
 from message_ix_models.report import (
     NOT_IMPLEMENTED_IAMC,
     prepare_reporter,
@@ -266,10 +267,16 @@ def simulated_solution_reporter(snapshot_id: int = 0) -> "Reporter":
 
     rep = Reporter()
 
+    # Ensure that structure keys ("n", "y", etc.) are populated
+    ctx = Context()
+    ctx.model.regions = "R11"
+    ctx.model.years = "B"
+    spec = get_spec(ctx)
+
     # Simulated solution can be added to an empty Reporter
     add_simulated_solution(
         rep,
-        ScenarioInfo(),
+        spec.add,
         path=package_data_path(
             "test",
             f"snapshot-{snapshot_id}",
