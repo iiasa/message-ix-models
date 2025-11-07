@@ -1,13 +1,21 @@
 import logging
 from collections.abc import Iterable
+from dataclasses import dataclass, field
+from itertools import count
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from dask.core import quote
-from genno import Key
+from genno import Key, Keys
 from genno.compat.pyam.util import collapse as genno_collapse
 from genno.core.key import single_key
 from message_ix import Reporter
 from sdmx.model.v21 import Code
+
+from message_ix_models.util import nodes_ex_world
+
+if TYPE_CHECKING:
+    from genno import Computer
 
 log = logging.getLogger(__name__)
 
@@ -66,6 +74,103 @@ REPLACE_VARS = {
     r"Import Energy\|(Liquids\|(Biomass|Oil))": r"Secondary Energy|\1",
     r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
 }
+
+
+def n_glb(nodes: list[str]) -> dict[str, list[str]]:
+    """Return :py:`{"n": ["R##_GLB"]}` based on the existing `nodes`."""
+    return {"n": ["".join(str(nodes_ex_world(nodes)[0]).partition("_")[:2] + ("GLB",))]}
+
+
+_RENAME = {"n": "region", "nl": "region", "y": "year", "ya": "year", "yv": "year"}
+
+
+@dataclass
+class IAMCConversion:
+    """Description of a conversion to IAMC data structure.
+
+    Instance fields contain information needed to prepare the conversion.
+    :meth:`add_tasks` adds tasks to a :class:`.Computer` to perform it.
+    """
+
+    #: Key for data to be converted.
+    base: Key
+
+    #: Parts of the variable expression. This is passed as the :py:`var` argument to
+    #: :func:`collapse`.
+    var_parts: list[str]
+
+    #: Exact unit string for output.
+    unit: str
+
+    #: Dimension(s) to sum over.
+    sums: list[str] = field(default_factory=list)
+
+    #: If :any:`True`, ensure data is present for "R11_GLB".
+    GLB_zeros: bool = False
+
+    def __post_init__(self) -> None:
+        # Ensure base is a Key
+        self.base = Key(self.base)
+
+    def add_tasks(self, c: "Computer") -> None:
+        from genno.compat.pyam import iamc as handle_iamc
+
+        from .key import all_iamc
+
+        k = Keys(base=self.base, glb=self.base + "glb")
+
+        if self.GLB_zeros:
+            # Quantity of zeros like self.base
+            c.add(k.glb[0], "zeros_like", self.base, drop=["n"])
+
+            # Add a key that gives an expand_dims arg for the next task
+            # TODO Move to add_structure()
+            c.add("n::glb", n_glb, "n")
+
+            # Add the 'n' dimension
+            c.add(k.glb[1], "expand_dims", k.glb[0], "n::glb")
+
+            # Add zeros to base data & update the base key for next steps
+            k.base += "glb"
+            c.add(k.base, "add", self.base, k.glb[1])
+
+        # Common keyword arguments for genno.compat.pyam.iamc
+        args: dict = dict(rename=_RENAME, unit=self.unit)
+
+        # Identify a `start` value that does not duplicate existing keys
+        label = self.var_parts[0]
+        for start in count():
+            if f"{label} {start}::iamc" not in c:
+                break
+
+        # Iterate over dimensions to be partly summed
+        # TODO move some or all of this logic upstream
+        keys = []
+        for i, dims in enumerate(
+            map(lambda s: s.split("-"), [""] + self.sums), start=start
+        ):
+            # Parts (string literals or dimension IDs) to concatenate into ‘variable’.
+            # Exclude any summed dimensions from the expression.
+            var_parts = [v for v in self.var_parts if v not in dims]
+
+            # Invoke genno's built-in handler
+            # - Base key: the partial sum of k.base over any `dims`.
+            # - "variable" argument is used only to construct keys; the resulting IAMC-
+            #   structured data is available at `{variable}::iamc`.
+            # - Collapse using `var_parts` and the collapse() function in this module.
+            handle_iamc(
+                c,
+                args
+                | dict(
+                    base=k.base.drop(*dims),
+                    variable=f"{label} {i}",
+                    collapse=dict(callback=collapse, var=var_parts),
+                ),
+            )
+            keys.append(f"{label} {i}::iamc")
+
+        # Concatenate each of `keys` into all::iamc
+        c.graph[all_iamc] += tuple(keys)
 
 
 def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
