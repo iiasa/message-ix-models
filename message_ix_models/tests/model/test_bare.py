@@ -6,7 +6,7 @@ from message_ix_models.model.bare import Config
 
 #: Number of items in the respective YAML files.
 SET_SIZE = dict(
-    commodity=18,
+    commodity=35,
     level=7,
     node=14 + 1,  # R14 is default, and 'World' exists automatically
     relation=20,
