@@ -129,9 +129,7 @@ def compute_weighted_cvar(values_3d: np.ndarray,
             values_dist = values_3d[:, basin_idx, year_idx]
 
             # Weighted expectation
-            results['expectation'][basin_idx, year_idx] = compute_weighted_expectation(
-                values_dist, weights
-            )
+            results['expectation'][basin_idx, year_idx] = np.average(values_dist, weights=weights)
 
             # Weighted CVaR for each level
             for alpha in cvar_levels:
