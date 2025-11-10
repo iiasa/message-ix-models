@@ -18,7 +18,10 @@ log = logging.getLogger(__name__)
 
 
 def _extract_ssp_name(scenario_name):
-    """Extract SSP name from scenario name for file naming."""
+    """Extract SSP name from scenario name for file naming.
+    
+    Returns the SSP number (e.g., 'ssp2') if found, otherwise returns None.
+    """
     import re
 
     # Look for SSPx or sspx pattern (case insensitive)
@@ -26,8 +29,8 @@ def _extract_ssp_name(scenario_name):
     if match:
         return match.group(1)
 
-    # Fallback: return the original name in lowercase
-    return scenario_name.lower()
+    # Return None if no SSP pattern found (caller will default to ssp2)
+    return None
 
 
 # Import FE_Regression from 1_FE_Regression.py to keep Shuting Fan's code
@@ -158,11 +161,23 @@ def log_coordination():
     return None
 
 
-def retrive_ori_inv_cost(context, scenario):
+def retrive_ori_inv_cost(platform_name=None, scenario_name=None, model_name=None):
     """
-    Retrieve the original investment cost data from the current scenario.
-    Generate a CSV file for this specific scenario.
-    Log the location of fixed effects regression data."""
+    Retrieve the original investment cost data from scenarios.
+    Generate CSV files for each scenario in the list.
+    Log the location of fixed effects regression data.
+    
+    Parameters
+    ----------
+    platform_name : str, optional
+        Platform name to use when loading scenarios. Defaults to "ixmp-dev".
+    scenario_name : list of str, optional
+        List of scenario names to process.
+    model_name : str, optional
+        Model name to use when loading scenarios. Defaults to 
+        "MESSAGEix-GLOBIOM 2.0-M-R12 Investment".
+    """
+    import ixmp
 
     power_tec = [
         "coal_ppl",
@@ -190,6 +205,14 @@ def retrive_ori_inv_cost(context, scenario):
         "solar_res6",
         "solar_res7",
         "solar_res8",
+        "solar_res_RT1",
+        "solar_res_RT2",
+        "solar_res_RT3",
+        "solar_res_RT4",
+        "solar_res_RT5",
+        "solar_res_RT6",
+        "solar_res_RT7",
+        "solar_res_RT8",
         "csp_sm1_res1",
         "csp_sm1_res2",
         "csp_sm1_res3",
@@ -213,33 +236,54 @@ def retrive_ori_inv_cost(context, scenario):
 
     from message_ix_models.util import package_data_path, private_data_path
 
+    # Set defaults
+    if platform_name is None:
+        platform_name = "ixmp-dev"
+    if model_name is None:
+        model_name = "MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
+    if scenario_name is None:
+        raise ValueError("scenario_name must be provided as a list")
+
+    # Ensure scenario_name is a list
+    if not isinstance(scenario_name, list):
+        scenario_name = [scenario_name]
+
+    # Get platform
+    mp = ixmp.Platform(platform_name)
+
     output_dir = package_data_path("investment")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Get scenario name from the current scenario
-    scen_name = scenario.scenario
+    # Process each scenario in the list
+    for scen_name in scenario_name:
+        try:
+            # Load scenario
+            scenario = message_ix.Scenario(mp, model_name, scen_name)
+            log.info(f"Loaded scenario: {model_name}/{scen_name}")
 
-    try:
-        # Retrieve investment cost data from the current scenario
-        inv_cost_ori = scenario.par("inv_cost", filters={"technology": power_tec})
+            # Retrieve investment cost data from the scenario
+            inv_cost_ori = scenario.par("inv_cost", filters={"technology": power_tec})
 
-        # Extract SSP name for filename
-        ssp_name = _extract_ssp_name(scen_name)
+            # Extract SSP name for filename (default to ssp2 if no SSP found)
+            ssp_name = _extract_ssp_name(scen_name)
+            if ssp_name is None:
+                # No SSP pattern found, default to ssp2
+                ssp_name = "ssp2"
+                log.info(f"No SSP pattern found in {scen_name}, using ssp2 for filename")
 
-        # Generate scenario-specific filename
-        output_path = output_dir / f"{ssp_name}_inv_cost_ori.csv"
-        inv_cost_ori.to_csv(output_path, index=False)
-        log.info(
-            f"Original investment cost data for {scen_name} saved to: {output_path}"
-        )
+            # Generate scenario-specific filename
+            output_path = output_dir / f"{ssp_name}_inv_cost_ori.csv"
+            inv_cost_ori.to_csv(output_path, index=False)
+            log.info(
+                f"Original investment cost data for {scen_name} saved to: {output_path}"
+            )
 
-    except Exception as e:
-        log.error(f"Failed to process scenario {scen_name}: {e}")
-        raise
+        except Exception as e:
+            log.error(f"Failed to process scenario {scen_name}: {e}")
+            raise
 
     reg_data_path = private_data_path("coc", "Reg_data.xlsx")
     log.info(f"Fixed effects regression data located at: {reg_data_path}")
-    return scenario
 
 
 def build_coc(context, scenario):
@@ -316,39 +360,36 @@ def generate(context: Context) -> Workflow:
     context.model.regions = "R12"
 
     # Define model name and scenario list
-    model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
-    # List of all starting scenarios
+    model_orig = "MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
+    platform_name = "ixmp-dev"
+    model_name = f"ixmp://{platform_name}/{model_orig}"
+    
+    # List of all starting scenario names
     scen_names = [
-        # "ssp1_1000f",
+        "ssp1_1000f",
         "ssp2_1000f",
         "ssp3_1000f",
-        # "ssp4_1000f",
-        # "ssp5_1000f",
+        "ssp4_1000f",
+        "ssp5_1000f",
     ]
 
-    # Add individual base scenario steps (no dependencies)
-    for scen_name in scen_names:
-        wf.add_step(
-            f"base {scen_name}",
-            target=f"{model_name}/{scen_name}",
-        )
-
-    # Retrieve investment cost from each scenario individually
-    for scen_name in scen_names:
-        wf.add_step(
-            f"inv_cost_ori retrieved {scen_name}",
-            f"base {scen_name}",
-            retrive_ori_inv_cost,
-            target=f"{model_name}/{scen_name}",
-        )
-
-    inv_cost_ori_steps = [
-        f"inv_cost_ori retrieved {scen_name}" for scen_name in scen_names
-    ]
-    wf.add(
+    # Retrieve investment cost from all scenarios
+    # Pass the entire list of scenario names to the function
+    # First create a dummy base step that loads a scenario (needed because genno passes function as scenario when base=None)
+    dummy_target = f"{model_name}/{scen_names[0]}"  # Use first scenario as dummy target
+    wf.add_step(
+        "base",
+        target=dummy_target,
+    )
+    # Now add the actual step with the dummy base
+    wf.add_step(
         "inv_cost_ori retrieved",
-        log_coordination,
-        inv_cost_ori_steps,
+        "base",
+        lambda _, __: retrive_ori_inv_cost(
+            platform_name=platform_name,
+            scenario_name=scen_names,
+            model_name=model_orig,
+        ),
     )
 
     # Fixed effects regression - processes all scenarios and creates combined output
@@ -357,8 +398,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "wacc_cf reg generated",
         "inv_cost_ori retrieved",
-        fe_regression,
-        dummy=True,
+        lambda _, __: fe_regression() if fe_regression else None,
     )
 
     # Climate finance generation - processes all scenarios and creates combined output
@@ -366,32 +406,29 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "cf generated",
         "wacc_cf reg generated",
-        generate_cf,
-        dummy=True,
+        lambda _, __: generate_cf() if generate_cf else None,
     )
 
     # WACC generation - processes all scenarios and creates combined output
     wf.add_step(
         "wacc generated",
         "cf generated",
-        generate_wacc,
-        dummy=True,
+        lambda _, __: generate_wacc() if generate_wacc else None,
     )
 
     # Investment cost generation - processes all scenarios and creates combined output
     wf.add_step(
         "inv_cost generated",
         "wacc generated",
-        generate_inv_cost,
-        dummy=True,
+        lambda _, __: generate_inv_cost() if generate_inv_cost else None,
     )
 
     # Individual scenario steps for the clone and subsequent operations
     # These will read from the combined outputs created above
     cf_names = [
-        "ccf",
-        "cf_his_f10",
-        "cf_fair_f10",
+        "locf",
+        "hicf_his",
+        "hicf_fair",
     ]
 
     for scen_name in scen_names:
@@ -444,10 +481,10 @@ def generate(context: Context) -> Workflow:
         for cf_name in cf_names:
             combined_scen_name = f"{scen_name}_{cf_name}"
             coc_reported_steps.append(f"coc reported {combined_scen_name}")
-    wf.add(
+    wf.add_step(
         "coc reported",
-        log_coordination,
-        coc_reported_steps,
+        coc_reported_steps,  # type: ignore[arg-type]
+        lambda _, __: log_coordination(),
     )
 
     return wf
