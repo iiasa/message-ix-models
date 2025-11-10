@@ -23,85 +23,53 @@ from climate_assessment.cli import run_workflow as climate_assessment_run_workfl
 from climate_processor import MAGICCProcessor, MAGICCRunType
 
 
-def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_dir=None,
-               return_all_runs=True):
-    """Run MAGICC climate processing on MESSAGE emissions using climate-assessment.
+def _load_and_validate_emissions(input_file, run_type_enum, workers):
+    """Load emissions file and validate for MAGICC processing.
 
     Args:
-        scenario: Scenario name (Excel filename without .xlsx)
-        run_type: 'fast' (1 config), 'medium' (100 configs), 'complete' (600 configs), 'isimip3b' (14 configs)
-        workers: Number of parallel workers (passed to climate-assessment)
-        input_dir: Input directory for emissions files
-        output_dir: Output directory for MAGICC results
-        return_all_runs: If True, returns all individual run timeseries with run_id (default: True)
+        input_file: Path to emissions Excel file
+        run_type_enum: MAGICCRunType enum value
+        workers: Number of parallel workers
 
-    Example:
-        mix-models alps run-magicc --scenario MESSAGE_GLOBIOM_SSP2_v6.4_baseline --run-type isimip3b
+    Returns:
+        tuple: (IamDataFrame, MAGICCProcessor)
     """
-    scenario_string = scenario
-
-    print("="*70)
-    print("MAGICC CLIMATE ASSESSMENT PIPELINE")
-    print("="*70)
-
-    if input_dir is None:
-        input_dir = package_data_path("report", "legacy", "reporting_output")
-    if output_dir is None:
-        output_dir = package_data_path("report", "legacy", "reporting_output", "climate_assessment_output")
-
-    # Map run_type to MAGICCRunType enum
-    run_type_map = {
-        'fast': MAGICCRunType.FAST,
-        'medium': MAGICCRunType.MEDIUM,
-        'complete': MAGICCRunType.COMPLETE,
-        'isimip3b': MAGICCRunType.ISIMIP3B,
-    }
-    num_configs = {'fast': 1, 'medium': 100, 'complete': 600, 'isimip3b': 14}
-
-    print(f"\nScenario: {scenario_string}")
-    print(f"Run type: {run_type} ({num_configs[run_type]} configurations)")
-    print(f"Workers: {workers}")
-    print(f"Return all runs: {return_all_runs}")
-    print(f"Input directory: {input_dir}")
-    print(f"Output directory: {output_dir}")
-
-    # Check if input file exists
-    input_file = input_dir / f"{scenario_string}.xlsx"
-    if not input_file.exists():
-        print(f"\n✗ ERROR: Input file not found: {input_file}")
-        print(f"\nAvailable files in {input_dir}:")
-        for f in input_dir.glob("*.xlsx"):
-            print(f"  - {f.name}")
-        raise SystemExit(1)
-
-    # Step 1: Load data as IamDataFrame and preprocess
     print("\n" + "="*70)
-    print("STEP 1: Preprocessing emissions data")
+    print("Loading and validating emissions data")
     print("="*70)
 
-    # Load as IamDataFrame (handles unit definitions)
     df = pyam.IamDataFrame(input_file)
     print(f"  Loaded {len(df)} rows from {input_file.name}")
 
-    # Convert R12_World to World
     if "R12_World" in df.region:
         df = df.rename(region={"R12_World": "World"})
         print("  Converted region: R12_World -> World")
 
-    # Create MAGICCProcessor to use its preprocessing
     processor = MAGICCProcessor(
-        run_type=run_type_map[run_type],
+        run_type=run_type_enum,
         magicc_worker_number=workers,
     )
 
-    # Validate required data
     print("  Validating required emissions variables...")
     df = processor.required_data_validator.apply(df)
     print("  ✓ Validation passed")
 
-    # Step 2: Run climate-assessment with proper setup
+    return df, processor
+
+
+def _run_climate_assessment_workflow(df, processor, output_dir, workers, num_configs, return_all_runs):
+    """Run climate-assessment MAGICC workflow.
+
+    Args:
+        df: IamDataFrame with emissions
+        processor: MAGICCProcessor instance
+        output_dir: Output directory for climate-assessment
+        workers: Number of parallel workers
+        num_configs: Number of MAGICC configurations
+        return_all_runs: Whether to return all individual runs
+    """
     print("\n" + "="*70)
-    print("STEP 2: Running climate-assessment with MAGICC")
+    print("Running climate-assessment with MAGICC")
     print("="*70)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -109,7 +77,6 @@ def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_di
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as data_tempdir, \
          tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as magicc_worker_dir:
 
-        # Set MAGICC environment variables
         magicc_binary = "magicc.exe" if sys.platform.startswith("win") else "magicc"
         os.environ["MAGICC_EXECUTABLE_7"] = str(
             processor.magicc_config.magicc_location / "bin" / magicc_binary
@@ -118,7 +85,6 @@ def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_di
         os.environ["MAGICC_WORKER_ROOT_DIR"] = magicc_worker_dir
         print("  Set MAGICC environment variables")
 
-        # Filter to World region and required variables, save as CSV
         from climate_processor import MAGICC_MAXIMUM_VARIABLE_SET
         temp_csv = Path(data_tempdir) / "data.csv"
         df.filter(region="World", variable=MAGICC_MAXIMUM_VARIABLE_SET).to_csv(temp_csv)
@@ -126,17 +92,16 @@ def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_di
 
         print(f"  Config: {processor.magicc_config.probabilistic_file_name}")
         print(f"  Model: magicc v7.5.3")
-        print(f"  Num configs: {num_configs[run_type]}")
+        print(f"  Num configs: {num_configs}")
         print(f"  Harmonization: False")
         print(f"  Return all runs: {return_all_runs}")
 
         try:
-            # Call climate-assessment with output to our directory
             workflow_params = dict(processor.magicc_config.run_workflow_input)
             workflow_params['harmonize'] = False
-            workflow_params['inputcheck'] = False  # Disable validation
-            workflow_params['postprocess'] = False  # Skip emissions postprocessing (Kyoto gases checks)
-            workflow_params['return_all_runs'] = return_all_runs  # Return all runs in IAMC format
+            workflow_params['inputcheck'] = False
+            workflow_params['postprocess'] = False
+            workflow_params['return_all_runs'] = return_all_runs
 
             climate_assessment_run_workflow(
                 input_emissions_file=str(temp_csv),
@@ -150,27 +115,43 @@ def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_di
             traceback.print_exc()
             raise SystemExit(1)
 
-    # Step 3: Rename output files to include scenario name
+
+def _rename_and_cleanup_outputs(scenario, output_dir, suffix=''):
+    """Rename climate-assessment outputs and cleanup intermediate files.
+
+    Args:
+        scenario: Scenario name for output files
+        output_dir: Directory containing climate-assessment outputs
+        suffix: Optional suffix for output filenames (e.g., '_reference_isimip3b')
+
+    Returns:
+        dict: Paths to renamed output files
+    """
     print("\n" + "="*70)
-    print("STEP 3: Renaming output files")
+    print("Renaming output files and cleaning up")
     print("="*70)
 
     import shutil
 
-    # Rename rawoutput (all runs) if it exists
+    magicc_output_dir = output_dir.parent / "magicc_output"
+    magicc_output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_files = {}
+
+    # Rename rawoutput (all runs)
     rawoutput_file = output_dir / "data_rawoutput.xlsx"
-    if rawoutput_file.exists() and return_all_runs:
-        renamed_file = output_dir.parent / "magicc_output" / f"{scenario_string}_magicc_all_runs.xlsx"
-        renamed_file.parent.mkdir(parents=True, exist_ok=True)
+    if rawoutput_file.exists():
+        renamed_file = magicc_output_dir / f"{scenario}_magicc{suffix}.xlsx"
         shutil.copy2(rawoutput_file, renamed_file)
+        output_files['all_runs'] = renamed_file
         print(f"  Copied: data_rawoutput.xlsx -> {renamed_file.name}")
 
-    # Rename IAMC output (percentiles) if it exists
+    # Rename IAMC output (percentiles)
     iamc_file = output_dir / "data_IAMC_climateassessment.xlsx"
     if iamc_file.exists():
-        renamed_file = output_dir.parent / "magicc_output" / f"{scenario_string}_magicc.xlsx"
-        renamed_file.parent.mkdir(parents=True, exist_ok=True)
+        renamed_file = magicc_output_dir / f"{scenario}_magicc_percentiles{suffix}.xlsx"
         shutil.copy2(iamc_file, renamed_file)
+        output_files['percentiles'] = renamed_file
         print(f"  Copied: data_IAMC_climateassessment.xlsx -> {renamed_file.name}")
 
     # Clean up intermediate files
@@ -190,18 +171,135 @@ def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_di
             print(f"    Removed: {filename}")
     print("  ✓ Cleanup complete")
 
-    # Step 4: Report results
-    print("\n" + "="*70)
-    print("STEP 4: Results Summary")
+    return output_files
+
+
+def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_dir=None,
+               return_all_runs=True, generate_reference=False):
+    """Run MAGICC climate processing on MESSAGE emissions using climate-assessment.
+
+    Args:
+        scenario: Scenario name (Excel filename without .xlsx)
+        run_type: 'fast' (1 config), 'medium' (100 configs), 'complete' (600 configs), 'isimip3b' (14 configs)
+        workers: Number of parallel workers (passed to climate-assessment)
+        input_dir: Input directory for emissions files
+        output_dir: Output directory for MAGICC results
+        return_all_runs: If True, returns all individual run timeseries with run_id (default: True)
+        generate_reference: If True, also run ISIMIP3b (14 runs) as reference distribution for importance weighting
+
+    Example:
+        mix-models alps run-magicc --scenario MESSAGE_GLOBIOM_SSP2_v6.4_baseline --run-type medium --generate-reference
+    """
+    print("="*70)
+    print("MAGICC CLIMATE ASSESSMENT PIPELINE")
     print("="*70)
 
-    if return_all_runs:
-        print(f"\n✓ Output contains all {num_configs[run_type]} individual MAGICC runs with run_id column")
-        print(f"✓ Saved to: magicc_output/{scenario_string}_magicc_all_runs.xlsx")
-    print(f"✓ Percentiles saved to: magicc_output/{scenario_string}_magicc.xlsx")
+    # Setup directories
+    if input_dir is None:
+        input_dir = package_data_path("report", "legacy", "reporting_output")
+    if output_dir is None:
+        output_dir = package_data_path("report", "legacy", "reporting_output", "climate_assessment_output")
+
+    # Configuration mappings
+    run_type_map = {
+        'fast': MAGICCRunType.FAST,
+        'medium': MAGICCRunType.MEDIUM,
+        'complete': MAGICCRunType.COMPLETE,
+        'isimip3b': MAGICCRunType.ISIMIP3B,
+    }
+    num_configs = {'fast': 1, 'medium': 100, 'complete': 600, 'isimip3b': 14}
+
+    print(f"\nScenario: {scenario}")
+    print(f"Run type: {run_type} ({num_configs[run_type]} configurations)")
+    print(f"Workers: {workers}")
+    print(f"Return all runs: {return_all_runs}")
+    print(f"Generate reference: {generate_reference}")
+
+    # Validate input file exists
+    input_file = input_dir / f"{scenario}.xlsx"
+    if not input_file.exists():
+        print(f"\n✗ ERROR: Input file not found: {input_file}")
+        print(f"\nAvailable files in {input_dir}:")
+        for f in input_dir.glob("*.xlsx"):
+            print(f"  - {f.name}")
+        raise SystemExit(1)
+
+    # Load and validate emissions (once for both main and reference runs)
+    df, processor = _load_and_validate_emissions(
+        input_file,
+        run_type_map[run_type],
+        workers
+    )
+
+    # Run main MAGICC configuration
+    _run_climate_assessment_workflow(
+        df,
+        processor,
+        output_dir,
+        workers,
+        num_configs[run_type],
+        return_all_runs
+    )
+
+    # Rename and cleanup main outputs
+    main_outputs = _rename_and_cleanup_outputs(
+        scenario,
+        output_dir,
+        suffix='_all_runs' if return_all_runs else ''
+    )
+
+    # Generate reference distribution if requested
+    reference_outputs = {}
+    if generate_reference and run_type != 'isimip3b':
+        print("\n" + "="*70)
+        print("Generating ISIMIP3b reference distribution")
+        print("="*70)
+        print(f"  Running MAGICC with ISIMIP3b configuration (14 runs)")
+        print(f"  Will be used for importance weighting")
+
+        # Create new processor for ISIMIP3b configuration
+        ref_processor = MAGICCProcessor(
+            run_type=MAGICCRunType.ISIMIP3B,
+            magicc_worker_number=workers,
+        )
+
+        # Run ISIMIP3b with same emissions data
+        _run_climate_assessment_workflow(
+            df,
+            ref_processor,
+            output_dir,
+            workers,
+            num_configs['isimip3b'],
+            return_all_runs=True
+        )
+
+        # Rename and cleanup reference outputs with special suffix
+        reference_outputs = _rename_and_cleanup_outputs(
+            scenario,
+            output_dir,
+            suffix='_reference_isimip3b'
+        )
+
+    # Report results
+    print("\n" + "="*70)
+    print("Results Summary")
+    print("="*70)
+
+    if 'all_runs' in main_outputs:
+        print(f"\n✓ Main run: {num_configs[run_type]} configurations")
+        print(f"  {main_outputs['all_runs'].name}")
+    if 'percentiles' in main_outputs:
+        print(f"  {main_outputs['percentiles'].name}")
+
+    if reference_outputs:
+        print(f"\n✓ Reference distribution: 14 ISIMIP3b configurations")
+        if 'all_runs' in reference_outputs:
+            print(f"  {reference_outputs['all_runs'].name}")
+        if 'percentiles' in reference_outputs:
+            print(f"  {reference_outputs['percentiles'].name}")
 
     print("\n" + "="*70)
-    print("SUCCESS - Full MAGICC pipeline completed!")
+    print("SUCCESS - MAGICC pipeline completed!")
     print("="*70)
 
 
@@ -240,9 +338,14 @@ def run_magicc(scenario, run_type='medium', workers=4, input_dir=None, output_di
     default=True,
     help='Return all individual run timeseries with run_id column (default: True)'
 )
-def main(scenario, run_type, workers, input_dir, output_dir, return_all_runs):
+@click.option(
+    '--generate-reference/--no-generate-reference',
+    default=False,
+    help='Also generate ISIMIP3b reference distribution (14 runs) for importance weighting (default: False)'
+)
+def main(scenario, run_type, workers, input_dir, output_dir, return_all_runs, generate_reference):
     """CLI wrapper for run_magicc."""
-    run_magicc(scenario, run_type, workers, input_dir, output_dir, return_all_runs)
+    run_magicc(scenario, run_type, workers, input_dir, output_dir, return_all_runs, generate_reference)
 
 
 if __name__ == "__main__":
