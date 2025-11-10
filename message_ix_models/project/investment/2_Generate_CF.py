@@ -3,9 +3,9 @@
 Authors: Shuting Fan, Yiyi Ju
 
 This module generates three different climate finance scenarios for future projections:
-- Scenario 0: Constant financing (no growth)
-- Scenario 1: Path dependency (linear growth preserving 2022 shares)
-- Scenario 2: Fairness weighted (redistributed based on per-capita CO2 emissions)
+- locf: Constant financing (no growth)
+- hicf_his: Path dependency (linear growth preserving 2022 shares)
+- hicf_fair: Fairness weighted (redistributed based on per-capita CO2 emissions)
 
 TODO: properly rename the scenarios to the final scenario matrix
 """
@@ -58,7 +58,6 @@ def main():
     global_fin = df_hist.groupby("Year")["Total_Fin"].sum()
     gf2022 = global_fin.loc[2022]
     gf2050 = gf2022 * growth_factor
-    f_tag = f"f{growth_factor}"  # for filenames
 
     # Compute 2022 share for path dependency scenario
     fin2022 = df_hist[df_hist["Year"] == 2022].set_index("Region")["Total_Fin"]
@@ -82,9 +81,9 @@ def main():
     output_dir = package_data_path("investment")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    scenario0_df.to_csv(output_dir / "ccf.csv", index=False)
-    scenario1_df.to_csv(output_dir / f"cf_his_{f_tag}.csv", index=False)
-    scenario2_df.to_csv(output_dir / f"cf_fair_{f_tag}.csv", index=False)
+    scenario0_df.to_csv(output_dir / "locf.csv", index=False)
+    scenario1_df.to_csv(output_dir / "hicf_his.csv", index=False)
+    scenario2_df.to_csv(output_dir / "hicf_fair.csv", index=False)
 
     log.info("Climate finance series generation completed.")
 
