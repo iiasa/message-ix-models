@@ -141,7 +141,36 @@ def run_magicc_cmd(**kwargs):
     default='message',
     help='Output format: iamc (12 R12 regions) or message (217 basins) (default: message)'
 )
+@click.option(
+    '--weighted/--no-weighted',
+    default=False,
+    help='Compute importance-weighted expectations and CVaR (requires reference file)'
+)
+@click.option(
+    '--n-runs',
+    type=int,
+    default=None,
+    help='Number of runs to process in weighted mode (default: all)'
+)
+@click.option(
+    '--cvar-levels',
+    default='10,50,90',
+    help='Comma-separated CVaR percentiles for weighted mode (default: 10,50,90)'
+)
+@click.option(
+    '--gwl-bin-width',
+    type=float,
+    default=0.5,
+    help='GWL bin width for importance weighting in °C (default: 0.5)'
+)
 def run_rime_cmd(**kwargs):
     """Run RIME predictions on MAGICC temperature output."""
     from .run_rime_on_magicc import run_rime
+    # Parse CVaR levels if weighted
+    if kwargs.get('weighted'):
+        cvar_str = kwargs.pop('cvar_levels')
+        kwargs['cvar_levels'] = [float(x.strip()) for x in cvar_str.split(',')]
+    # Remove unused parameters
+    kwargs.pop('suban', None)
+    kwargs.pop('output_format', None)
     run_rime(**kwargs)
