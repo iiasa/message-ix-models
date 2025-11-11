@@ -163,13 +163,17 @@ def run_magicc_cmd(**kwargs):
     default=0.5,
     help='GWL bin width for importance weighting in °C (default: 0.5)'
 )
+@click.option(
+    '--include-emulator-uncertainty/--no-include-emulator-uncertainty',
+    default=False,
+    help='Propagate RIME emulator uncertainty using stratified sampling (can be combined with --weighted)'
+)
 def run_rime_cmd(**kwargs):
     """Run RIME predictions on MAGICC temperature output."""
     from .run_rime_on_magicc import run_rime
-    # Parse CVaR levels if weighted
-    if kwargs.get('weighted'):
-        cvar_str = kwargs.pop('cvar_levels')
-        kwargs['cvar_levels'] = [float(x.strip()) for x in cvar_str.split(',')]
+    # Parse CVaR levels string to list
+    cvar_str = kwargs.pop('cvar_levels')
+    kwargs['cvar_levels'] = [float(x.strip()) for x in cvar_str.split(',')]
     # Remove unused parameters
     kwargs.pop('suban', None)
     kwargs.pop('output_format', None)
