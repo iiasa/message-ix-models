@@ -153,8 +153,6 @@ jobs:
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
-      # Work around ts-graphviz/setup-graphviz#630
-      if: matrix.os != 'macos-13'
 
     - name: Set Java version on Windows
       if: startsWith(matrix.os, 'windows-')
