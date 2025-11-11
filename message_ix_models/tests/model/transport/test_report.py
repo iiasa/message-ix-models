@@ -132,7 +132,6 @@ def test_debug(
 
 
 @MARK[10]
-@MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years",
@@ -187,7 +186,6 @@ def test_bare(
 
 @build.get_computer.minimum_version
 @MARK[10]
-@MARK[7]
 @mark.usefixtures("quiet_genno")
 @mark.parametrize(
     "build",

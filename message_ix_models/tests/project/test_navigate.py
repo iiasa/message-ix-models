@@ -64,7 +64,6 @@ BLOCKS = [
 ]
 
 
-@testing.MARK[1]
 def test_generate_workflow_cli(test_context, mix_models_cli) -> None:
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
 

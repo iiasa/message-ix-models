@@ -283,7 +283,6 @@ def scenario_code() -> Iterator["Code"]:
 
 
 @MARK[10]
-@MARK[7]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
     "regions, years, dummy_LDV, nonldv, solve",
