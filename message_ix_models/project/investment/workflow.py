@@ -475,15 +475,34 @@ def generate(context: Context) -> Workflow:
                 # target=f"{model_name}/{combined_scen_name}",
             )
 
-    # Collect all coc reported steps
-    coc_reported_steps = []
+    # Group each SSP
+    ssp_names = []
     for scen_name in scen_names:
-        for cf_name in cf_names:
-            combined_scen_name = f"{scen_name}_{cf_name}"
-            coc_reported_steps.append(f"coc reported {combined_scen_name}")
+        ssp_name = _extract_ssp_name(scen_name)
+        if ssp_name and ssp_name not in ssp_names:
+            ssp_names.append(ssp_name)
+    
+    ssp_grouping_steps = []
+    for ssp_name in ssp_names:
+        ssp_cf_steps = []
+        for scen_name in scen_names:
+            if _extract_ssp_name(scen_name) == ssp_name:
+                for cf_name in cf_names:
+                    combined_scen_name = f"{scen_name}_{cf_name}"
+                    ssp_cf_steps.append(f"coc reported {combined_scen_name}")
+        
+        ssp_step_name = f"coc reported {ssp_name}"
+        wf.add_step(
+            ssp_step_name,
+            ssp_cf_steps,  # type: ignore[arg-type]
+            lambda _, __: log_coordination(),
+        )
+        ssp_grouping_steps.append(ssp_step_name)
+
+    # Final step that collects all SSP-level steps
     wf.add_step(
         "coc reported",
-        coc_reported_steps,  # type: ignore[arg-type]
+        ssp_grouping_steps,  # type: ignore[arg-type]
         lambda _, __: log_coordination(),
     )
 
