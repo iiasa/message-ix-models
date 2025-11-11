@@ -18,6 +18,8 @@ from rime.rime_functions import predict_from_gmt
 from .rime import (
     extract_temperature_timeseries,
     batch_rime_predictions,
+    batch_rime_predictions_with_percentiles,
+    expand_predictions_with_emulator_uncertainty,
     extract_all_run_ids,
     compute_expectation,
     compute_rime_cvar
@@ -34,7 +36,7 @@ MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "m
 
 def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_id=None,
              variable='both', output_dir=None, weighted=False, n_runs=None,
-             cvar_levels=None, gwl_bin_width=0.5):
+             cvar_levels=None, gwl_bin_width=0.5, include_emulator_uncertainty=False):
     """Run RIME predictions on MAGICC temperature output.
 
     Args:
@@ -49,6 +51,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         n_runs: Number of runs to process in weighted mode (default: all)
         cvar_levels: CVaR percentiles for weighted mode (default: [10, 50, 90])
         gwl_bin_width: GWL bin width for importance weighting (default: 0.5°C)
+        include_emulator_uncertainty: If True, propagate RIME emulator uncertainty using stratified sampling
     """
     if cvar_levels is None:
         cvar_levels = [10, 50, 90]
@@ -94,68 +97,82 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
     print(f"  Loaded mapping for {len(basin_mapping)} MESSAGE basins")
     print()
 
-    # Handle weighted mode
-    weights = None
-    if weighted:
-        print("\n" + "="*80)
-        print("IMPORTANCE WEIGHTING MODE")
-        print("="*80)
+    # Determine processing mode using pattern matching
+    match (weighted, include_emulator_uncertainty):
+        case (True, True):
+            # Mode: Importance weighting + emulator uncertainty
+            print("\n" + "="*80)
+            print("MODE: IMPORTANCE WEIGHTING + EMULATOR UNCERTAINTY")
+            print("="*80)
 
-        # Construct reference file path
-        scenario_prefix = magicc_file.stem.replace("_magicc_all_runs", "")
-        ref_file = magicc_file.parent / f"{scenario_prefix}_magicc_reference_isimip3b.xlsx"
+            # Load reference and compute importance weights
+            scenario_prefix = magicc_file.stem.replace("_magicc_all_runs", "")
+            ref_file = magicc_file.parent / f"{scenario_prefix}_magicc_reference_isimip3b.xlsx"
+            if not ref_file.exists():
+                print(f"Error: Reference file not found: {ref_file}")
+                return 1
 
-        if not ref_file.exists():
-            print(f"Error: Reference file not found: {ref_file}")
-            print("Generate reference by running MAGICC with --generate-reference flag")
-            return 1
+            ref_df = pd.read_excel(ref_file, sheet_name='data')
+            target_ts = extract_gmt_timeseries(magicc_df)
+            ref_ts = extract_gmt_timeseries(ref_df)
+            weight_result = compute_gwl_importance_weights(target_ts, ref_ts, gwl_bin_width=gwl_bin_width)
 
-        print(f"Reference file: {ref_file}")
-        print(f"GWL bin width: {gwl_bin_width}°C")
+            weights = weight_result['weights'] / weight_result['weights'].sum()
+            run_ids = weight_result['run_ids'][:n_runs] if n_runs else weight_result['run_ids']
+            weights = weights[:len(run_ids)]
+            weights = weights / weights.sum()
 
-        # Load reference data
-        print("\nLoading reference data...")
-        ref_df = pd.read_excel(ref_file, sheet_name='data')
+            ess = weight_result['diagnostics']['ess']
+            print(f"ESS: {ess:.1f} / {len(run_ids)} ({100*ess/len(run_ids):.1f}%)")
 
-        # Compute importance weights
-        print("Computing importance weights...")
-        target_ts = extract_gmt_timeseries(magicc_df)
-        ref_ts = extract_gmt_timeseries(ref_df)
-        weight_result = compute_gwl_importance_weights(target_ts, ref_ts, gwl_bin_width=gwl_bin_width)
+        case (True, False):
+            # Mode: Importance weighting only
+            print("\n" + "="*80)
+            print("MODE: IMPORTANCE WEIGHTING")
+            print("="*80)
 
-        weights = weight_result['weights']
-        run_ids_all = weight_result['run_ids']
-        ess = weight_result['diagnostics']['ess']
+            scenario_prefix = magicc_file.stem.replace("_magicc_all_runs", "")
+            ref_file = magicc_file.parent / f"{scenario_prefix}_magicc_reference_isimip3b.xlsx"
+            if not ref_file.exists():
+                print(f"Error: Reference file not found: {ref_file}")
+                return 1
 
-        # Normalize weights to sum to 1
-        weights = weights / weights.sum()
+            ref_df = pd.read_excel(ref_file, sheet_name='data')
+            target_ts = extract_gmt_timeseries(magicc_df)
+            ref_ts = extract_gmt_timeseries(ref_df)
+            weight_result = compute_gwl_importance_weights(target_ts, ref_ts, gwl_bin_width=gwl_bin_width)
 
-        print(f"  Computed weights for {len(run_ids_all)} runs")
-        print(f"  Effective Sample Size (ESS): {ess:.1f} / {len(run_ids_all)} ({100*ess/len(run_ids_all):.1f}%)")
+            weights = weight_result['weights'] / weight_result['weights'].sum()
+            run_ids = weight_result['run_ids'][:n_runs] if n_runs else weight_result['run_ids']
+            weights = weights[:len(run_ids)]
+            weights = weights / weights.sum()
 
-        # Limit runs if requested
-        if n_runs is not None and n_runs < len(run_ids_all):
-            print(f"\nLimiting to first {n_runs} runs...")
-            run_ids_all = run_ids_all[:n_runs]
-            weights = weights[:n_runs]
-            weights = weights / weights.sum()  # Renormalize
+            ess = weight_result['diagnostics']['ess']
+            print(f"ESS: {ess:.1f} / {len(run_ids)} ({100*ess/len(run_ids):.1f}%)")
 
-        run_ids = run_ids_all.tolist()
-        print(f"\nProcessing {len(run_ids)} runs")
+        case (False, True):
+            # Mode: Emulator uncertainty only (uniform weights)
+            print("\n" + "="*80)
+            print("MODE: EMULATOR UNCERTAINTY (UNIFORM WEIGHTS)")
+            print("="*80)
 
-    # Determine which run_ids to process (non-weighted mode)
-    elif run_id is not None:
-        run_ids = [run_id]
-    else:
-        # Use percentile - extract that single temperature trajectory
-        # For CLI simplicity, just process the percentile trajectory
-        print(f"Extracting percentile {percentile or 50.0} trajectory...")
-        temp_df = extract_temperature_timeseries(magicc_df, percentile=percentile)
-        print(f"  Temperature range: {temp_df['gsat_anomaly_K'].min():.3f}K to {temp_df['gsat_anomaly_K'].max():.3f}K")
+            all_runs = extract_all_run_ids(magicc_df)
+            run_ids = all_runs[:n_runs] if n_runs else all_runs
+            weights = np.ones(len(run_ids)) / len(run_ids)
+            print(f"Processing {len(run_ids)} runs with uniform weights")
 
-        # For single percentile, we'll just save directly without batch processing
-        # This maintains backward compatibility with the old CLI
-        run_ids = None  # Signal to use percentile mode
+        case (False, False):
+            # Mode: Baseline (p50 only, no special weighting)
+            if run_id is not None:
+                run_ids = [run_id]
+                weights = None
+            else:
+                # Percentile mode
+                print(f"Extracting percentile {percentile or 50.0} trajectory...")
+                temp_df = extract_temperature_timeseries(magicc_df, percentile=percentile)
+                print(f"  Temperature range: {temp_df['gsat_anomaly_K'].min():.3f}K to {temp_df['gsat_anomaly_K'].max():.3f}K")
+                run_ids = None
+                weights = None
 
     variables = ['qtot_mean', 'qr'] if variable == 'both' else [variable]
 
@@ -175,51 +192,80 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         print(f"Loading RIME dataset: {dataset_filename}")
 
         if run_ids is not None:
-            # Batch mode (run_id specified or weighted mode)
-            print(f"Running batch RIME predictions for {len(run_ids)} run(s)...")
-            predictions = batch_rime_predictions(
-                magicc_df,
-                run_ids,
-                dataset_path,
-                basin_mapping,
-                var
-            )
+            # Batch mode - get predictions based on emulator uncertainty flag
+            if include_emulator_uncertainty:
+                # Extract p10, p50, p90 and expand to pseudo-runs
+                print(f"Running batch RIME predictions with percentiles for {len(run_ids)} run(s)...")
+                predictions_p10, predictions_p50, predictions_p90 = batch_rime_predictions_with_percentiles(
+                    magicc_df,
+                    run_ids,
+                    dataset_path,
+                    basin_mapping,
+                    var
+                )
 
-            if weighted:
-                # Weighted mode: compute expectations and CVaR
-                print(f"\nComputing importance-weighted expectations and CVaR...")
+                print(f"Expanding predictions with emulator uncertainty (stratified sampling K=5)...")
+                predictions, run_ids_array, expanded_weights = expand_predictions_with_emulator_uncertainty(
+                    predictions_p10,
+                    predictions_p50,
+                    predictions_p90,
+                    run_ids,
+                    weights
+                )
+                print(f"  Expanded from N={len(run_ids)} to N×K={len(run_ids_array)} pseudo-runs")
+
+                # Update weights to expanded version
+                weights = expanded_weights
+
+            else:
+                # Standard batch mode without emulator uncertainty
+                print(f"Running batch RIME predictions for {len(run_ids)} run(s)...")
+                predictions = batch_rime_predictions(
+                    magicc_df,
+                    run_ids,
+                    dataset_path,
+                    basin_mapping,
+                    var
+                )
                 run_ids_array = np.array(run_ids)
 
-                # Weighted results
-                weighted_mean = compute_expectation(predictions, run_ids_array, weights=weights)
-                weighted_cvar = compute_rime_cvar(predictions, weights, run_ids_array, cvar_levels)
+            # Compute expectations and CVaR if needed
+            if weighted or include_emulator_uncertainty:
+                print(f"\nComputing expectations and CVaR...")
 
-                # Unweighted results
-                unweighted_mean = compute_expectation(predictions, run_ids_array, weights=None)
-                uniform_weights = np.ones(len(run_ids)) / len(run_ids)
-                unweighted_cvar = compute_rime_cvar(predictions, uniform_weights, run_ids_array, cvar_levels)
+                # Results with configured weights (importance or uniform)
+                result_mean = compute_expectation(predictions, run_ids_array, weights=weights)
+                result_cvar = compute_rime_cvar(predictions, weights, run_ids_array, cvar_levels)
+
+                # Comparison: uniform weights
+                uniform_weights = np.ones(len(run_ids_array)) / len(run_ids_array)
+                uniform_mean = compute_expectation(predictions, run_ids_array, weights=None)
+                uniform_cvar = compute_rime_cvar(predictions, uniform_weights, run_ids_array, cvar_levels)
 
                 # Save results
                 var_short = 'qtot' if 'qtot' in var else 'qr'
                 scenario_name = f"{model}_{scenario}" if model and scenario else magicc_file.stem.replace("_magicc_all_runs", "")
 
-                print(f"\nSaving weighted results...")
-                weighted_mean.to_csv(output_dir / f"{var_short}_{scenario_name}_weighted_expectation.csv")
-                for level in cvar_levels:
-                    weighted_cvar[f'cvar_{int(level)}'].to_csv(
-                        output_dir / f"{var_short}_{scenario_name}_weighted_cvar{int(level)}.csv"
-                    )
-                print(f"  {var_short}_{scenario_name}_weighted_expectation.csv")
-                print(f"  {var_short}_{scenario_name}_weighted_cvar{{10,50,90}}.csv")
+                # Determine suffix based on weighting mode
+                result_suffix = "weighted" if weighted else "emulator_unc"
 
-                print(f"\nSaving unweighted results...")
-                unweighted_mean.to_csv(output_dir / f"{var_short}_{scenario_name}_unweighted_expectation.csv")
+                print(f"\nSaving {result_suffix} results...")
+                result_mean.to_csv(output_dir / f"{var_short}_{scenario_name}_{result_suffix}_expectation.csv")
                 for level in cvar_levels:
-                    unweighted_cvar[f'cvar_{int(level)}'].to_csv(
-                        output_dir / f"{var_short}_{scenario_name}_unweighted_cvar{int(level)}.csv"
+                    result_cvar[f'cvar_{int(level)}'].to_csv(
+                        output_dir / f"{var_short}_{scenario_name}_{result_suffix}_cvar{int(level)}.csv"
                     )
-                print(f"  {var_short}_{scenario_name}_unweighted_expectation.csv")
-                print(f"  {var_short}_{scenario_name}_unweighted_cvar{{10,50,90}}.csv")
+                print(f"  {var_short}_{scenario_name}_{result_suffix}_expectation.csv")
+                print(f"  {var_short}_{scenario_name}_{result_suffix}_cvar{{10,50,90}}.csv")
+
+                print(f"\nSaving uniform results...")
+                uniform_mean.to_csv(output_dir / f"{var_short}_{scenario_name}_uniform_expectation.csv")
+                for level in cvar_levels:
+                    uniform_cvar[f'cvar_{int(level)}'].to_csv(
+                        output_dir / f"{var_short}_{scenario_name}_uniform_cvar{int(level)}.csv"
+                    )
+                print(f"  {var_short}_{scenario_name}_uniform_expectation.csv")
+                print(f"  {var_short}_{scenario_name}_uniform_cvar{{10,50,90}}.csv")
 
             else:
                 # Non-weighted batch mode: save each run
