@@ -1,0 +1,45 @@
+plot_primary_energy:
+  iamc_vars:
+    - Primary Energy|Biomass
+    - Primary Energy|Coal
+    - Primary Energy|Gas
+    - Primary Energy|Geothermal
+    - Primary Energy|Hydro
+    - Primary Energy|Nuclear
+    - Primary Energy|Ocean
+    - Primary Energy|Oil
+    - Primary Energy|Other
+    - Primary Energy|Solar
+    - Primary Energy|Wind
+  labels:
+    Fossil:
+      - Primary Energy|Coal
+      - Primary Energy|Gas
+      - Primary Energy|Oil
+
+########################
+# COLOR PALETTE: FUELS #
+########################
+resource_palette:
+  Biomass:
+    '#228B22'
+  Coal:
+    '#2F2F2F'
+  Gas:
+    '#FF8C00'
+  Geothermal:
+    '#DC143C'
+  Hydro:
+    '#8DD3C7'
+  Nuclear:
+    '#8A2BE2'
+  Ocean:
+    '#003366'
+  Oil:
+    '#8B4513'
+  Other:
+    '#D9D9D9'
+  Solar:
+    '#FFD700'
+  Wind:
+    '#4682B4'
