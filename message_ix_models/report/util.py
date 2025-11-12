@@ -1,5 +1,6 @@
 import logging
-from collections.abc import Iterable
+from collections import Counter
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from itertools import count
 from typing import TYPE_CHECKING
@@ -77,9 +78,6 @@ REPLACE_VARS = {
 }
 
 
-_RENAME = {"n": "region", "nl": "region", "y": "year", "ya": "year", "yv": "year"}
-
-
 @dataclass
 class IAMCConversion:
     """Description of a conversion to IAMC data structure.
@@ -97,6 +95,9 @@ class IAMCConversion:
 
     #: Exact unit string for output.
     unit: str
+
+    #: Explicit dimension renaming.
+    rename: Mapping[str, str] = field(default_factory=dict)
 
     #: Dimension(s) to sum over.
     sums: list[str] = field(default_factory=list)
@@ -170,10 +171,22 @@ class IAMCConversion:
             c.add(k.base[0], k.base)
 
         # Convert to target units
-        c.add(k.base[1], "convert_units", k.base[0], units=self.unit, sums=True)
+        c.add(k.base[1], "convert_units", k.base[0], units=self.unit)
 
         # Common keyword arguments for genno.compat.pyam.iamc
-        args: dict = dict(rename=_RENAME, unit=self.unit)
+        args: dict = dict(rename=self.rename, unit=self.unit)
+
+        # Populate rename
+        for d in set(self.base.dims) - set(self.var_parts):
+            if d in {"n", "nd", "nl", "no"}:
+                args["rename"].setdefault(d, "region")
+            elif d in {"y", "ya", "yv"}:
+                args["rename"].setdefault(d, "year")
+
+        # Check rename arg
+        assert dict(region=1, year=1) == Counter(args["rename"].values()), (
+            f"Expected 1 region and 1 year dimension; got {args['rename']}"
+        )
 
         # Identify a `start` value that does not duplicate existing keys
         label = self.var_parts[0]
@@ -187,6 +200,10 @@ class IAMCConversion:
         for i, dims in enumerate(
             map(lambda s: s.split("-"), [""] + self.sums), start=start
         ):
+            k.sum = k.base[1].drop(*dims)
+            if k.sum != k.base[1]:
+                c.add(k.sum, "sum", k.base[1], dimensions=dims)
+
             # Parts (string literals or dimension IDs) to concatenate into ‘variable’.
             # Exclude any summed dimensions from the expression.
             var_parts = [v for v in self.var_parts if v not in dims]
@@ -200,7 +217,7 @@ class IAMCConversion:
                 c,
                 args
                 | dict(
-                    base=k.base[1].drop(*dims),
+                    base=k.sum,
                     variable=f"{label} {i}",
                     collapse=dict(callback=collapse, var=var_parts),
                 ),
