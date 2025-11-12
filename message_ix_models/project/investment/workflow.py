@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 def _extract_ssp_name(scenario_name):
     """Extract SSP name from scenario name for file naming.
-    
+
     Returns the SSP number (e.g., 'ssp2') if found, otherwise returns None.
     """
     import re
@@ -166,7 +166,7 @@ def retrive_ori_inv_cost(platform_name=None, scenario_name=None, model_name=None
     Retrieve the original investment cost data from scenarios.
     Generate CSV files for each scenario in the list.
     Log the location of fixed effects regression data.
-    
+
     Parameters
     ----------
     platform_name : str, optional
@@ -174,7 +174,7 @@ def retrive_ori_inv_cost(platform_name=None, scenario_name=None, model_name=None
     scenario_name : list of str, optional
         List of scenario names to process.
     model_name : str, optional
-        Model name to use when loading scenarios. Defaults to 
+        Model name to use when loading scenarios. Defaults to
         "MESSAGEix-GLOBIOM 2.0-M-R12 Investment".
     """
     import ixmp
@@ -269,7 +269,9 @@ def retrive_ori_inv_cost(platform_name=None, scenario_name=None, model_name=None
             if ssp_name is None:
                 # No SSP pattern found, default to ssp2
                 ssp_name = "ssp2"
-                log.info(f"No SSP pattern found in {scen_name}, using ssp2 for filename")
+                log.info(
+                    f"No SSP pattern found in {scen_name}, using ssp2 for filename"
+                )
 
             # Generate scenario-specific filename
             output_path = output_dir / f"{ssp_name}_inv_cost_ori.csv"
@@ -363,7 +365,7 @@ def generate(context: Context) -> Workflow:
     model_orig = "MESSAGEix-GLOBIOM 2.0-M-R12 Investment"
     platform_name = "ixmp-dev"
     model_name = f"ixmp://{platform_name}/{model_orig}"
-    
+
     # List of all starting scenario names
     scen_names = [
         "ssp1_1000f",
@@ -375,7 +377,8 @@ def generate(context: Context) -> Workflow:
 
     # Retrieve investment cost from all scenarios
     # Pass the entire list of scenario names to the function
-    # First create a dummy base step that loads a scenario (needed because genno passes function as scenario when base=None)
+    # First create a dummy base step that loads a scenario
+    # (needed because genno passes function as scenario when base=None)
     dummy_target = f"{model_name}/{scen_names[0]}"  # Use first scenario as dummy target
     wf.add_step(
         "base",
@@ -481,7 +484,7 @@ def generate(context: Context) -> Workflow:
         ssp_name = _extract_ssp_name(scen_name)
         if ssp_name and ssp_name not in ssp_names:
             ssp_names.append(ssp_name)
-    
+
     ssp_grouping_steps = []
     for ssp_name in ssp_names:
         ssp_cf_steps = []
@@ -490,7 +493,7 @@ def generate(context: Context) -> Workflow:
                 for cf_name in cf_names:
                     combined_scen_name = f"{scen_name}_{cf_name}"
                     ssp_cf_steps.append(f"coc reported {combined_scen_name}")
-        
+
         ssp_step_name = f"coc reported {ssp_name}"
         wf.add_step(
             ssp_step_name,
