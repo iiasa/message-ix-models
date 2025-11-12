@@ -139,12 +139,36 @@ API reference
 .. automodule:: message_ix_models.report
    :members:
 
+   General-purpose code:
+
    .. autosummary::
 
       Config
+      defaults
       prepare_reporter
       register
       report
+
+   The following submodules prepare reporting of specific measures or quantities:
+
+   .. autosummary::
+      :toctree: _autosummary
+      :template: autosummary-module.rst
+      :recursive:
+
+      extraction
+
+.. currentmodule:: message_ix_models.report.key
+
+Keys
+----
+
+.. automodule:: message_ix_models.report.key
+   :members:
+
+   Pre-set :class:`genno.Key` instances
+   and :class:`genno.Keys` in this module can be referenced across modules,
+   instead of hand-typing the same strings in multiple places.
 
 .. currentmodule:: message_ix_models.report.plot
 
@@ -167,17 +191,25 @@ Operators
 
    .. autosummary::
 
+      broadcast_wildcard
+      call
       codelist_to_groups
       compound_growth
       exogenous_data
       filter_ts
       from_url
+      get_commodity_groups
       get_ts
       gwp_factors
       make_output_path
       model_periods
+      node_glb
+      nodes_world_agg
       remove_ts
+      select_allow_empty
+      select_expand
       share_curtailment
+      zeros_like
 
    The following functions, defined elsewhere,
    are exposed through :mod:`.operator`
@@ -186,6 +218,8 @@ Operators
    .. autosummary::
 
       message_ix_models.util.add_par_data
+      message_ix_models.util.merge_data
+      message_ix_models.util.nodes_ex_world
 
    Other operators or genno-compatible functions are provided by:
 
@@ -219,6 +253,7 @@ Utilities
 
    .. autosummary::
 
+      IAMCConversion
       add_replacements
       collapse
       collapse_gwp_info

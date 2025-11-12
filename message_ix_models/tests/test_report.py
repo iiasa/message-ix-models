@@ -10,7 +10,8 @@ import pandas.testing as pdt
 import pytest
 from ixmp.testing import assert_logs
 
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import Context, testing
+from message_ix_models.model.bare import get_spec
 from message_ix_models.report import (
     NOT_IMPLEMENTED_IAMC,
     prepare_reporter,
@@ -264,19 +265,23 @@ def simulated_solution_reporter(snapshot_id: int = 0) -> "Reporter":
     """Reporter with a simulated solution for `snapshot_id`."""
     from message_ix import Reporter
 
+    # Generate a ScenarioInfo object with the model name, scenario name, and structure
+    # (set members) of the simulated scenario. This ensures that structure keys ("n",
+    # "y", etc.) are populated in `rep`.
+    ctx = Context()
+    ctx.model.regions = "R11"
+    ctx.model.years = "B"
+
+    info = get_spec(ctx).add
+    info.model = "MESSAGEix-GLOBIOM_1.1_R11_no-policy"
+    info.scenario = "baseline_v1"
+
+    # Path to a directory with unpacked snapshot data
+    p = package_data_path("test", f"snapshot-{snapshot_id}", f"{info.model}_baseline")
+
+    # Add the simulated solution to an empty Reporter
     rep = Reporter()
-
-    # Simulated solution can be added to an empty Reporter
-    add_simulated_solution(
-        rep,
-        ScenarioInfo(),
-        path=package_data_path(
-            "test",
-            f"snapshot-{snapshot_id}",
-            "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
-        ),
-    )
-
+    add_simulated_solution(rep, info, path=p)
     return rep
 
 
@@ -318,24 +323,16 @@ def test_prepare_reporter(test_context):
     assert 14299 <= len(rep.graph) - N
 
 
-def test_compare(test_context) -> None:
+def test_compare(test_context, snapshot_id: int = 1) -> None:
     """Compare the output of genno-based and legacy reporting."""
-    key = "all::iamc"
-    # key = "pe test"
+    from message_ix_models.report.key import all_iamc
 
     # Obtain the output from reporting `key` on `snapshot_id`
-    snapshot_id: int = 1
     rep = simulated_solution_reporter(snapshot_id)
-    rep.add(
-        "scenario",
-        ScenarioInfo(
-            model="MESSAGEix-GLOBIOM_1.1_R11_no-policy", scenario="baseline_v1"
-        ),
-    )
     test_context.report.modules.append("message_ix_models.report.compat")
     prepare_reporter(test_context, reporter=rep)
     # print(rep.describe(key)); assert False
-    obs = rep.get(key).as_pandas()  # Convert from pyam.IamDataFrame to pd.DataFrame
+    obs = rep.get(all_iamc).as_pandas()  # Convert pyam.IamDataFrame → pd.DataFrame
 
     # Retrieve expected results from file
     exp = pd.read_csv(
@@ -347,6 +344,4 @@ def test_compare(test_context) -> None:
     messages = iamc.compare(exp, obs, ignore=NOT_IMPLEMENTED_IAMC)
 
     # Other messages that were not explicitly ignored → some error
-    assert "20 matching of 519792 left and 220 right values" == messages[0], "\n".join(
-        messages
-    )
+    assert ["517 matching of 519792 left and 2160 right values"] == messages

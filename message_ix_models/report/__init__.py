@@ -3,6 +3,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
+from re import escape
 from typing import TYPE_CHECKING
 from warnings import warn
 
@@ -28,6 +29,7 @@ __all__ = [
     "NOT_IMPLEMENTED_IAMC",
     "NOT_IMPLEMENTED_MEASURE",
     "Config",
+    "defaults",
     "prepare_reporter",
     "register",
     "report",
@@ -79,7 +81,7 @@ NOT_IMPLEMENTED_MEASURE = {
     "OM Cost",
     "Population",
     "Price",
-    r"Resource\|(Cumulative )?Extraction",
+    r"Resource\|Cumulative Extraction",
     "Secondary Energy",
     "Trade",
     "Useful Energy",
@@ -101,10 +103,14 @@ NOT_IMPLEMENTED_IAMC = [
     r"variable='Primary Energy|Gas': 234 of 240 values with \|diff",
     r"variable='Primary Energy|Solar': 191 of 240 values with \|diff",
     r"variable='Primary Energy|Wind': 179 of 240 values with \|diff",
+    r"variable='Resource\|Extraction.*': \d{2,3} of 240 values with",
     # For `e` units and most values differ
     f"variable='{E}': units mismatch: .*Mt CO2/yr.*Mt / a",
     rf"variable='{E}': 20 missing right entries",
     rf"variable='{E}': 220 of 240 values with \|diff",
+    #
+    # Missing from data/test/report/snapshot-1.tar.gz
+    escape("variable='Resource|Extraction|Uranium': no left data"),
 ]
 
 
@@ -322,6 +328,9 @@ def prepare_reporter(
 ) -> tuple[Reporter, "KeyLike | None"]:
     """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
 
+    Every function returned by :attr:`.Config.iter_callbacks` is called, in order, to
+    allow each to populate the `reporter` with additional tasks.
+
     Parameters
     ----------
     context : .Context
@@ -337,8 +346,8 @@ def prepare_reporter(
     Returns
     -------
     .Reporter
-        Reporter prepared with MESSAGEix-GLOBIOM calculations; if `reporter` is given,
-        this is a reference to the same object.
+        Reporter prepared with tasks for reporting a MESSAGEix-GLOBIOM scenario; if
+        `reporter` is given, this is a reference to the same object.
 
         If :attr:`.cli_output` is given, a task with the key "cli-output" is added that
         writes the :attr:`.Config.key` to that path.
@@ -389,9 +398,6 @@ def prepare_reporter(
     )
     rep.configure(model=deepcopy(context.model))
 
-    # Add a placeholder task to concatenate IAMC-structured data
-    rep.add("all::iamc", "concat")
-
     # Apply callbacks for other modules which define additional reporting computations
     for callback in context.report.iter_callbacks():
         callback(rep, context)
@@ -428,9 +434,29 @@ def prepare_reporter(
 
 
 def defaults(rep: Reporter, context: Context) -> None:
+    """Prepare default contents and configuration of `rep` for MESSAGEix-GLOBIOM.
+
+    This includes:
+
+    - Populate :data:`.key.coords` and :data:`.key.groups`.
+    - Add a :func:`genno.operator.concat` task with no arguments at
+      :data:`.key.all_iamc`.
+    - Call :func:`.add_replacements` for members of the :ref:`commodity-yaml` and
+      :ref:`technology-yaml` code lists
+    """
     from message_ix_models.model.structure import get_codes
 
+    from . import key as k
     from .util import add_replacements
+
+    # Add tasks to return coordinates for data manpulation, e.g. expand_dims, select
+    rep.add(k.coords.n_glb, "node_glb", "n")
+
+    # Add tasks to return groups of codes for aggregation
+    rep.add(k.groups.c, "get_commodity_groups")
+
+    # Add a placeholder task to concatenate IAMC-structured data
+    rep.add(k.all_iamc, "concat")
 
     # Add mappings for conversions to IAMC data structures
     add_replacements("c", get_codes("commodity"))
