@@ -36,7 +36,8 @@ MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "m
 
 def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_id=None,
              variable='both', output_dir=None, weighted=False, n_runs=None,
-             cvar_levels=None, gwl_bin_width=0.5, include_emulator_uncertainty=False):
+             cvar_levels=None, gwl_bin_width=0.5, include_emulator_uncertainty=False,
+             suban=False):
     """Run RIME predictions on MAGICC temperature output.
 
     Args:
@@ -52,6 +53,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         cvar_levels: CVaR percentiles for weighted mode (default: [10, 50, 90])
         gwl_bin_width: GWL bin width for importance weighting (default: 0.5°C)
         include_emulator_uncertainty: If True, propagate RIME emulator uncertainty using stratified sampling
+        suban: If True, use seasonal (2-step) temporal resolution; if False, use annual (default: False)
     """
     if cvar_levels is None:
         cvar_levels = [10, 50, 90]
@@ -176,12 +178,35 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
 
     variables = ['qtot_mean', 'qr'] if variable == 'both' else [variable]
 
+    # Determine temporal resolution
+    temporal_res = "seasonal2step" if suban else "annual"
+
+    # Save original weights and run_ids for reuse across variables
+    original_weights = weights.copy() if weights is not None else None
+    original_run_ids = run_ids.copy() if run_ids is not None else None
+
     for var in variables:
+        # Reset weights and run_ids for each variable
+        weights = original_weights.copy() if original_weights is not None else None
+        run_ids = original_run_ids.copy() if original_run_ids is not None else None
         print("\n" + "="*80)
         print(f"Processing variable: {var}")
+        print(f"Temporal resolution: {temporal_res}")
         print("="*80)
 
-        dataset_filename = f"rime_regionarray_{var}_CWatM_annual_window0.nc"
+        # Map variable to RIME dataset name
+        var_map = {'local_temp': 'temp_mean_anomaly'}
+        rime_var = var_map.get(var, var)
+
+        # temp_mean_anomaly only available as annual window0
+        if rime_var == 'temp_mean_anomaly':
+            dataset_temporal_res = 'annual'
+            window = '0'
+        else:
+            dataset_temporal_res = temporal_res
+            window = '11'  # Using window11 for smoothed RIME emulator
+
+        dataset_filename = f"rime_regionarray_{rime_var}_CWatM_{dataset_temporal_res}_window{window}.nc"
         dataset_path = RIME_DATASETS_DIR / dataset_filename
 
         if not dataset_path.exists():
@@ -201,7 +226,8 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                     run_ids,
                     dataset_path,
                     basin_mapping,
-                    var
+                    var,
+                    suban
                 )
 
                 print(f"Expanding predictions with emulator uncertainty (stratified sampling K=5)...")
@@ -243,36 +269,50 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                 uniform_cvar = compute_rime_cvar(predictions, uniform_weights, run_ids_array, cvar_levels)
 
                 # Save results
-                var_short = 'qtot' if 'qtot' in var else 'qr'
+                if 'qtot' in var:
+                    var_short = 'qtot'
+                elif 'qr' in var:
+                    var_short = 'qr'
+                elif var == 'local_temp':
+                    var_short = 'temp'
+                else:
+                    var_short = var
                 scenario_name = f"{model}_{scenario}" if model and scenario else magicc_file.stem.replace("_magicc_all_runs", "")
 
                 # Determine suffix based on weighting mode
                 result_suffix = "weighted" if weighted else "emulator_unc"
 
                 print(f"\nSaving {result_suffix} results...")
-                result_mean.to_csv(output_dir / f"{var_short}_{scenario_name}_{result_suffix}_expectation.csv")
+                result_mean.to_csv(output_dir / f"{var_short}_{temporal_res}_{scenario_name}_{result_suffix}_expectation.csv")
                 for level in cvar_levels:
                     result_cvar[f'cvar_{int(level)}'].to_csv(
-                        output_dir / f"{var_short}_{scenario_name}_{result_suffix}_cvar{int(level)}.csv"
+                        output_dir / f"{var_short}_{temporal_res}_{scenario_name}_{result_suffix}_cvar{int(level)}.csv"
                     )
-                print(f"  {var_short}_{scenario_name}_{result_suffix}_expectation.csv")
-                print(f"  {var_short}_{scenario_name}_{result_suffix}_cvar{{10,50,90}}.csv")
+                print(f"  {var_short}_{temporal_res}_{scenario_name}_{result_suffix}_expectation.csv")
+                print(f"  {var_short}_{temporal_res}_{scenario_name}_{result_suffix}_cvar{{10,50,90}}.csv")
 
                 print(f"\nSaving uniform results...")
-                uniform_mean.to_csv(output_dir / f"{var_short}_{scenario_name}_uniform_expectation.csv")
+                uniform_mean.to_csv(output_dir / f"{var_short}_{temporal_res}_{scenario_name}_uniform_expectation.csv")
                 for level in cvar_levels:
                     uniform_cvar[f'cvar_{int(level)}'].to_csv(
-                        output_dir / f"{var_short}_{scenario_name}_uniform_cvar{int(level)}.csv"
+                        output_dir / f"{var_short}_{temporal_res}_{scenario_name}_uniform_cvar{int(level)}.csv"
                     )
-                print(f"  {var_short}_{scenario_name}_uniform_expectation.csv")
-                print(f"  {var_short}_{scenario_name}_uniform_cvar{{10,50,90}}.csv")
+                print(f"  {var_short}_{temporal_res}_{scenario_name}_uniform_expectation.csv")
+                print(f"  {var_short}_{temporal_res}_{scenario_name}_uniform_cvar{{10,50,90}}.csv")
 
             else:
                 # Non-weighted batch mode: save each run
                 for rid, pred_df in predictions.items():
-                    var_short = 'qtot' if 'qtot' in var else 'qr'
+                    if 'qtot' in var:
+                        var_short = 'qtot'
+                    elif 'qr' in var:
+                        var_short = 'qr'
+                    elif var == 'local_temp':
+                        var_short = 'temp'
+                    else:
+                        var_short = var
                     scenario_name = f"{model}_{scenario}" if model and scenario else "scenario"
-                    filename = f"{var_short}_annual_{scenario_name}_run{rid}.csv"
+                    filename = f"{var_short}_{temporal_res}_{scenario_name}_run{rid}.csv"
                     output_file = output_dir / filename
                     pred_df.to_csv(output_file)
                     print(f"  Saved: {output_file}")
@@ -285,7 +325,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
             # Predict for each year
             predictions_list = []
             for gmt in gmt_values:
-                pred = predict_from_gmt(gmt, str(dataset_path), var)
+                pred = predict_from_gmt(gmt, str(dataset_path), rime_var)
                 predictions_list.append(pred)
 
             # Stack into DataFrame (n_basins × n_years)
@@ -293,10 +333,17 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
             pred_df = pd.DataFrame(predictions_array, columns=years)
 
             # Save
-            var_short = 'qtot' if 'qtot' in var else 'qr'
+            if 'qtot' in var:
+                var_short = 'qtot'
+            elif 'qr' in var:
+                var_short = 'qr'
+            elif var == 'local_temp':
+                var_short = 'temp'
+            else:
+                var_short = var
             scenario_name = f"{model}_{scenario}" if model and scenario else "scenario"
             p_val = int(percentile) if percentile else 50
-            filename = f"{var_short}_annual_{scenario_name}_p{p_val}.csv"
+            filename = f"{var_short}_{temporal_res}_{scenario_name}_p{p_val}.csv"
             output_file = output_dir / filename
             pred_df.to_csv(output_file)
             print(f"  Saved: {output_file}")
