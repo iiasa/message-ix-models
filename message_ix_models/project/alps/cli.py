@@ -124,10 +124,9 @@ def run_magicc_cmd(**kwargs):
     help='Hydrological variable to predict (default: both)'
 )
 @click.option(
-    '--suban',
-    type=click.Choice(['annual', '2step']),
-    default='annual',
-    help='Subannual aggregation mode (default: annual)'
+    '--suban/--no-suban',
+    default=False,
+    help='Use seasonal (2-step) temporal resolution instead of annual (default: annual)'
 )
 @click.option(
     '--output-dir',
@@ -175,6 +174,5 @@ def run_rime_cmd(**kwargs):
     cvar_str = kwargs.pop('cvar_levels')
     kwargs['cvar_levels'] = [float(x.strip()) for x in cvar_str.split(',')]
     # Remove unused parameters
-    kwargs.pop('suban', None)
     kwargs.pop('output_format', None)
     run_rime(**kwargs)
