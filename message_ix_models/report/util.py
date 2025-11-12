@@ -361,3 +361,44 @@ def add_replacements(dim: str, codes: Iterable[Code]) -> None:
             pass
         else:
             REPLACE_DIMS[dim][f"{code.id.title()}$"] = label
+
+
+# TODO Type c as (string) "Computer" once genno supports this
+def store_write_ts(c: Computer, base_key: Key) -> "Key":
+    """Write `base_key` to CSV, XLSX, and/or both; and/or store on "scenario".
+
+    If `base_key` is, for instance, "foo::iamc", this function adds the following keys:
+
+    - "foo::iamc+all": both of:
+
+      - "foo::iamc+file": both of:
+
+        - "foo::iamc+csv": write the data in `base_key` to a file named :file:`foo.csv`.
+        - "foo::iamc+xlsx": write the data in `base_key` to a file named
+          :file:`foo.xlsx`.
+
+        The files are created in a subdirectory using :func:`make_output_path`—that is,
+        including a path component given by the scenario URL.
+
+      - "foo::iamc+store" store the data in `base_key` as time series data on the
+        scenario identified by the key "scenario".
+    """
+    k = Key(base_key)
+
+    file_keys = []
+    for suffix in ("csv", "xlsx"):
+        # Create the path
+        path = c.add(
+            k[f"{suffix} path"], "make_output_path", "config", name=f"{k.name}.{suffix}"
+        )
+        # Write `key` to the path
+        file_keys.append(c.add(k[suffix], "write_report", base_key, path))
+
+    # Write all files
+    c.add(k["file"], file_keys)
+
+    # Store data on "scenario"
+    c.add(k["store"], "store_ts", "scenario", base_key)
+
+    # Both write and store
+    return single_key(c.add(k["all"], [k["file"], k["store"]]))
