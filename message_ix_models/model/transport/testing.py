@@ -1,7 +1,6 @@
 """Utilities for testing :mod:`~message_ix_models.model.transport`."""
 
 import logging
-import platform
 from collections import ChainMap
 from collections.abc import Callable, Hashable, Mapping
 from contextlib import nullcontext
@@ -18,7 +17,6 @@ from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.testing import GHA, SOLVE_OPTIONS, bare_res
 from message_ix_models.util import silence_log
-from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, build
 
@@ -47,10 +45,6 @@ MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
             reason="Missing ISR/mer-to-ppp.csv + not supported by MaybeAdaptR11Source",
         ),
         4: pytest.mark.xfail(reason="Currently unsupported"),
-        7: pytest.mark.xfail(
-            condition=GHA and platform.system() == "Darwin" and not HAS_GRAPHVIZ,
-            reason="Graphviz missing on macos-13 GitHub Actions runners",
-        ),
         9: pytest.mark.xfail(reason="Missing R14 input data/config"),
         10: pytest.mark.usefixtures(
             "advance_test_data", "iea_eweb_test_data", "ssp_user_data"
