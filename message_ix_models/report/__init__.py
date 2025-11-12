@@ -155,15 +155,16 @@ def iamc(c: Reporter, info):
     info.setdefault("collapse", {})
 
     # Add standard renames
-    info.setdefault("rename", {})
-    for dim, target in (
-        ("n", "region"),
-        ("nl", "region"),
-        ("y", "year"),
-        ("ya", "year"),
-        ("yv", "year"),
-    ):
-        info["rename"].setdefault(dim, target)
+    if "rename" not in info:
+        r = info["rename"] = {}
+        for dim, target in (
+            ("n", "region"),
+            ("nl", "region"),
+            ("y", "year"),
+            ("ya", "year"),
+            ("yv", "year"),
+        ):
+            r.setdefault(dim, target)
 
     # Iterate over partial sums
     # TODO move some or all of this logic upstream
