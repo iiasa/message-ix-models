@@ -17,7 +17,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
-from .util import IAMCConversion
+from .util import IAMCConversion, add_replacements, store_write_ts
 
 if TYPE_CHECKING:
     from genno.core.key import KeyLike  # TODO Import from genno.types
@@ -396,7 +396,6 @@ def defaults(rep: Reporter, context: Context) -> None:
     from message_ix_models.model.structure import get_codes
 
     from . import key as k
-    from .util import add_replacements
 
     # Add tasks to return coordinates for data manpulation, e.g. expand_dims, select
     rep.add(k.coords.n_glb, "node_glb", "n")
@@ -406,6 +405,9 @@ def defaults(rep: Reporter, context: Context) -> None:
 
     # Add a placeholder task to concatenate IAMC-structured data
     rep.add(k.all_iamc, "concat")
+
+    # Add tasks to store and write IAMC-structured data
+    rep.apply(store_write_ts, k.all_iamc)
 
     # Add mappings for conversions to IAMC data structures
     add_replacements("c", get_codes("commodity"))
