@@ -1307,8 +1307,8 @@ def prepare_edit_files(
     # Import calibration files from Global Energy Monitor
     if P_access is True:
         import_gem(
-            input_file="GEM-GGIT-Gas-Pipelines-2024-12.xlsx",
-            input_sheet="Gas Pipelines 2024-12-17",
+            input_file="GEM-GGIT-Gas-Pipelines-2024-12.csv",
+            #input_sheet="Gas Pipelines 2024-12-17",
             trade_technology="gas_piped",
             flow_technology="gas_pipe",
             flow_commodity="gas_pipeline_capacity",
@@ -1318,8 +1318,8 @@ def prepare_edit_files(
 
         for tradetec in ["crudeoil_piped", "foil_piped", "loil_piped"]:
             import_gem(
-                input_file="GEM-GOIT-Oil-NGL-Pipelines-2025-03.xlsx",
-                input_sheet="Pipelines",
+                input_file="GEM-GOIT-Oil-NGL-Pipelines-2025-03.csv",
+                #input_sheet="Pipelines",
                 trade_technology=tradetec,
                 flow_technology="oil_pipe",
                 flow_commodity="oil_pipeline_capacity",
