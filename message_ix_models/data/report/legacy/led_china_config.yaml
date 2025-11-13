@@ -1,0 +1,65 @@
+report_config:
+    table_def: "message_ix_models.report.legacy.default_tables"
+    aggr_def: "default_aggregates.csv"
+    var_def: "default_variable_definitions.csv"
+    unit_yaml: "default_units.yaml"
+    urban_perc: "default_pop_urban_rural.csv"
+    kyoto_hist: "default_kyoto_hist.csv"
+    lu_hist: "default_lu_co2_hist.csv"  
+run_tables:
+    Res_extr:
+        root: Resource|Extraction
+        active: True
+        function: retr_extraction
+        args: {"units": "EJ/yr"}
+    Res_extr_cum:
+        root: Resource|Cumulative Extraction
+        active: True
+        function: retr_cumulative_extraction
+        args: {"units": "ZJ"}
+    Res_remain:
+        root: Resource|Remaining
+        active: False # This function is not yet working
+        function: retr_remaining_resources
+        args: {"units": "ZJ"}
+    Enrgy_PE:
+        root: Primary Energy
+        active: True
+        function: retr_pe
+        args: {"units": "EJ/yr"}
+    Enrgy_PE_sub:
+        root: Primary Energy (substitution method)
+        active: True
+        function: retr_pe
+        args: {"units": "EJ/yr",
+               "method": "substitution"}
+    Enrgy_FE:
+        root: Final Energy
+        active: True
+        function: retr_fe
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_elec:
+        root: Secondary Energy|Electricity
+        active: True
+        function: retr_SE_elecgen
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_heat:
+        root: Secondary Energy|Heat
+        active: True
+        function: retr_SE_district_heat
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_syn:
+        root: Secondary Energy
+        active: True
+        function: retr_SE_synfuels
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_gas:
+        root: Secondary Energy|Gases
+        active: True
+        function: retr_SE_gases
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_solid:
+        root: Secondary Energy|Solids
+        active: True
+        function: retr_SE_solids
+        args: {"units": "EJ/yr"}

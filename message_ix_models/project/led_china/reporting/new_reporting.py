@@ -24,8 +24,6 @@ def load_config(name: str) -> "Config":
     """
     return Config.from_files(name)
 
-global_dict = load_config(package_data_path("report", "global"))
-
 key_base_trade = Key("out:nl-nd-t-ya-c") # TODO: remote t
 
 CONVERT_IAMC = (
@@ -35,11 +33,13 @@ CONVERT_IAMC = (
         base= key_base_trade + "trade",
         rename={"nd": "region", "ya": "year"},
         var=["Gross Imports", "nl", "c"],
+        unit="EJ/yr",
         ),
     dict(
         variable="trade gross exports",
         base=key_base_trade + "trade",
         var=["Gross Exports", "nd","c"],
+        unit="EJ/yr",
     ))
 
 def convert_iamc(c: "genno.Computer"
@@ -71,23 +71,11 @@ rep.add(key_base_trade + "trade", "select", key_base_trade, "t::trade filters", 
 
 convert_iamc(rep) # bring in exports as IAMC format
 
-# Primary energy
-#rep.add("l::primary filters", genno.quote(dict(l = ["primary"])))
-#rep.add("out::primary", "select", "out:nl-ya-c")
-
 base_df = rep.get("message::default")
 base_df.to_csv(package_data_path('led_china', 'reporting', 'base_message.csv'))
 
 ge = rep.get("trade gross exports::iamc")
-ge.to_csv(package_data_path('led_china', 'reporting', 'gross_exports.csv'))
+ge.to_csv(package_data_path('led_china', 'reporting', 'gross_exports', f'{scenario.model}_{scenario.scenario}.csv'))
 
 gi = rep.get("trade gross imports::iamc")
-gi.to_csv(package_data_path('led_china', 'reporting', 'gross_imports.csv'))
-
-ne = rep.get("trade net exports::iamc")
-
-
-afr_imports = gi.data.copy()
-afr_imports = afr_imports[(afr_imports["t"] == "Lng_Shipped_Exp_Afr")]
-afr_exports = ge.data.copy()
-afr_exports = afr_exports[(afr_exports["t"] == "Lng_Shipped_Exp_Afr")]
+gi.to_csv(package_data_path('led_china', 'reporting', 'gross_imports', f'{scenario.model}_{scenario.scenario}.csv'))

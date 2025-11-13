@@ -9,10 +9,14 @@ scen_name = "SSP2_Baseline"
 mp = ixmp.Platform("ixmp_dev", jvmargs=["-Xmx32G"])
 scen = message_ix.Scenario(mp, model=model_name, scenario=scen_name)
 
+#check = mp.scenario_list()
+#check = check[check['cre_user'] == 'shepard']
+#check = check[check['scenario'] == scen_name]
+
 legacy_report(
     mp=mp, 
     scen=scen, 
-    run_config="default_run_config.yaml",
+    run_config="led_china_config.yaml",
     out_dir = package_data_path("led_china", "reporting", "legacy")
 ) 
 
