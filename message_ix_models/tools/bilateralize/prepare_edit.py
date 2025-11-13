@@ -532,8 +532,7 @@ def build_accounting_relations(
     # Regional exports
     rel_use = (
         config_dict["trade_technology"][tec]
-        + "_exp_from_"
-        + network_setup[tec]["exporter"].str.lower().str.split("_").str[1]
+        + "_exp"
     )
     df_rel = message_ix.make_df(
         "relation_activity",
@@ -554,8 +553,7 @@ def build_accounting_relations(
     # Regional imports
     rel_use = (
         config_dict["trade_technology"][tec]
-        + "_imp_to_"
-        + network_setup[tec]["importer"].str.lower().str.split("_").str[1]
+        + "_imp"
     )
     df_rel = message_ix.make_df(
         "relation_activity",
@@ -1088,6 +1086,7 @@ def export_edit_files(
             os.path.join("input.csv"),
             os.path.join("output.csv"),
             os.path.join("technical_lifetime.csv"),
+            os.path.join("relation_activity_regional_exp.csv"), # necessary for legacy reporting
             os.path.join("flow_technology", "capacity_factor.csv"),
             os.path.join("flow_technology", "input.csv"),
             os.path.join("flow_technology", "output.csv"),
