@@ -1,13 +1,25 @@
 plot_primary_energy:
   iamc_vars:
     - Primary Energy|Biomass
-    - Primary Energy|Coal
-    - Primary Energy|Gas
+    - Primary Energy|Coal|Electricity
+    - Primary Energy|Coal|Gases
+    - Primary Energy|Coal|Hydrogen
+    - Primary Energy|Coal|Liquids
+    - Primary Energy|Coal|Solids
+    - Primary Energy|Gas|Electricity
+    - Primary Energy|Gas|Gases
+    - Primary Energy|Gas|Hydrogen
+    - Primary Energy|Gas|Liquids
+    - Primary Energy|Gas|Solids
     - Primary Energy|Geothermal
     - Primary Energy|Hydro
     - Primary Energy|Nuclear
     - Primary Energy|Ocean
-    - Primary Energy|Oil
+    - Primary Energy|Oil|Electricity
+    - Primary Energy|Oil|Gases
+    - Primary Energy|Oil|Hydrogen
+    - Primary Energy|Oil|Liquids
+    - Primary Energy|Oil|Solids
     - Primary Energy|Other
     - Primary Energy|Solar
     - Primary Energy|Wind
@@ -16,6 +28,12 @@ plot_primary_energy:
       - Primary Energy|Coal
       - Primary Energy|Gas
       - Primary Energy|Oil
+
+plot_net_imports:
+  iamc_vars:
+    - Net Imports|Primary Energy|Coal
+    - Net Imports|Primary Energy|Gas
+    - Net Imports|Primary Energy|Oil
 
 ########################
 # COLOR PALETTE: FUELS #
