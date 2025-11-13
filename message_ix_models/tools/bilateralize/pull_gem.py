@@ -52,7 +52,7 @@ def gem_region(project_name: str | None = None, config_name: str | None = None):
 # Import files
 def import_gem(
     input_file: str | Path,
-    input_sheet: str,
+    #input_sheet: str,
     trade_technology: str,
     flow_technology: str,
     flow_commodity: str,
@@ -84,7 +84,8 @@ def import_gem(
     data_path = os.path.join(p_drive, "MESSAGE_trade")
     gem_path = os.path.join(data_path, "Global Energy Monitor")
 
-    df = pd.read_excel(os.path.join(gem_path, input_file), sheet_name=input_sheet)
+    #df = pd.read_excel(os.path.join(gem_path, input_file), sheet_name=input_sheet)
+    df = pd.read_csv(os.path.join(gem_path, input_file))
 
     df = df[df["StopYear"].isnull()]  # Only continuing projects
 
