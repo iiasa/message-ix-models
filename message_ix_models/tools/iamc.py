@@ -15,6 +15,7 @@ from message_ix_models.util.pycountry import iso_3166_alpha_3
 if TYPE_CHECKING:
     import pathlib
 
+    import numpy as np
     from genno.types import AnyQuantity
 
 __all__ = [
@@ -59,54 +60,62 @@ def compare(
     list of str
         A collection of messages describing differences between `left` and `right`.
     """
+    prefix = ""
     result = []
     matching = 0
 
     _ignore = [re.compile(pattern) for pattern in ignore]
 
-    def record(message: str, condition: bool | None = True) -> None:
+    def record(message: str, condition: "bool | np.bool | None" = True) -> bool:
+        message = (f"{prefix} " if prefix else "") + message
         if not condition or any(p.match(message) for p in _ignore):
-            return
+            return False
         result.append(message)
+        return True
 
     def checks(df: pd.DataFrame):
-        nonlocal matching
+        nonlocal prefix, matching
         prefix = f"variable={df.variable.iloc[0]!r}:"
 
         if df.value_left.isna().all():
-            record(f"{prefix} no left data")
+            record("no left data")
             return
         elif df.value_right.isna().all():
-            record(f"{prefix} no right data")
+            record("no right data")
             return
 
-        tmp = df.eval("value_diff = value_right - value_left").eval(
+        tmp: pd.DataFrame = df.eval("value_diff = value_right - value_left").eval(  # type: ignore [assignment,union-attr]
             "value_rel = value_diff / value_left"
         )
 
+        # Entries in `left` with NA values or units
         na_left = tmp.isna()[["unit_left", "value_left"]]
-        if na_left.any(axis=None):
-            record(f"{prefix} {na_left.sum(axis=0).max()} missing left entries")
-            tmp = tmp[~na_left.any(axis=1)]
+        record(
+            f"{na_left.sum(axis=0).max()} missing left entries",
+            condition=na_left.any(axis=None),
+        )
+        tmp = tmp[~na_left.any(axis=1)]  # Omit these rows from further processing
+
+        # Entries in `right` with NA values or units
         na_right = tmp.isna()[["unit_right", "value_right"]]
-        if na_right.any(axis=None):
-            record(f"{prefix} {na_right.sum(axis=0).max()} missing right entries")
-            tmp = tmp[~na_right.any(axis=1)]
+        record(
+            f"{na_right.sum(axis=0).max()} missing right entries",
+            condition=na_right.any(axis=None),
+        )
+        tmp = tmp[~na_right.any(axis=1)]  # Omit these rows from further processing
 
         units_left = set(tmp.unit_left.unique())
         units_right = set(tmp.unit_right.unique())
         record(
             condition=units_left != units_right,
-            message=f"{prefix} units mismatch: {units_left} != {units_right}",
+            message=f"units mismatch: {units_left} != {units_right}",
         )
 
         N0 = len(df)
-
         mask1 = tmp.query("abs(value_diff) > @atol")
-        record(
-            condition=bool(len(mask1)),
-            message=f"{prefix} {len(mask1)} of {N0} values with |diff| > {atol}",
-        )
+        record(f"{len(mask1)} of {N0} values with |diff| > {atol}", bool(len(mask1)))
+
+        # Increment number of matching rows
         matching += N0 - len(mask1)
 
     for (model, scenario), group_0 in left.merge(
@@ -115,6 +124,7 @@ def compare(
         on=["model", "scenario", "variable", "region", "year"],
         suffixes=("_left", "_right"),
     ).groupby(["model", "scenario"]):
+        prefix = ""
         if group_0.value_left.isna().all():
             record(f"No left data for model={model!r}, scenario={scenario!r}")
         elif group_0.value_right.isna().all():
@@ -176,7 +186,7 @@ def describe(data: pd.DataFrame, extra: str | None = None) -> StructureMessage:
         group_units = group_data["UNIT"].unique()
         cl_variable.append(
             common.Code(
-                id=variable,
+                id=str(variable),
                 annotations=[
                     v21.Annotation(
                         id="preferred-unit-measure", text=", ".join(group_units)

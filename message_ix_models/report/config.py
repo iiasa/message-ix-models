@@ -24,12 +24,16 @@ Callback = Callable[[ComputerT, "Context"], None]
 
 
 def _default_callbacks() -> list[Callback]:
-    from message_ix_models.report import plot
-
-    from . import defaults, extraction
+    from . import defaults, extraction, gdp, plot, price
 
     # NB When updating this list, also update the docstring of Config.callback
-    return [defaults, extraction.callback, plot.callback]
+    return [
+        defaults,
+        extraction.callback,
+        gdp.callback,
+        price.callback,
+        plot.callback,
+    ]
 
 
 @dataclass
@@ -54,7 +58,9 @@ class Config(ConfigHelper):
     #:
     #: 1. :func:`.report.defaults`
     #: 2. :func:`.report.extraction.callback`
-    #: 3. :func:`.report.plot.callback`
+    #: 3. :func:`.report.gdp.callback`
+    #: 4. :func:`.report.plot.callback`
+    #: 5. :func:`.report.price.callback`
     #:
     #: A callback function **must** take two arguments: the Computer/Reporter, and a
     #: :class:`.Context`:
