@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
 )
 from functools import cache, reduce
-from itertools import filterfalse, product
+from itertools import chain, filterfalse, product
 from typing import TYPE_CHECKING, Any, Literal
 
 import genno
@@ -232,6 +232,12 @@ def gwp_factors() -> "AnyQuantity":
     return genno.Quantity(
         pd.DataFrame(data, columns=dims + ["value"]).set_index(dims)["value"].dropna()
     )
+
+
+def groups_to_selectors(groups: dict, dim: str, keys: Iterable[str], *key_args) -> dict:
+    return {
+        dim: list(chain(*[groups[dim][k] for k in sorted(set(keys) | set(key_args))]))
+    }
 
 
 def make_output_path(config: Mapping, name: "str | Path") -> "Path":
