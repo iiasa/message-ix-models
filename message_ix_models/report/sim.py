@@ -213,7 +213,7 @@ def data_from_file(path: Path, *, name: str, dims: Sequence[str]) -> "AnyQuantit
         cols = list(dims) + ["Val", "Marginal", "Lower", "Upper", "Scale"]
 
         return genno.Quantity(
-            pd.read_csv(path, engine="pyarrow")
+            pd.read_csv(path, engine="pyarrow", na_values=["Eps"])
             .set_axis(cols, axis=1)
             .set_index(cols[:-5])["Val"],
             name=name,
