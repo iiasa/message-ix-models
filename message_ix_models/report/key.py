@@ -24,6 +24,8 @@ coords = Keys(
 #: Identifiers for grouping/aggregation mappings, including:
 #:
 #: - :py:`.c`: the output of :func:`.get_commodity_groups`.
+#: - :py:`.t`: the output of :func:`.get_technology_groups`.
 groups = Keys(
     c="c::groups",
+    t="t::groups",
 )

@@ -393,7 +393,7 @@ def defaults(rep: Reporter, context: Context) -> None:
     - Call :func:`.add_replacements` for members of the :ref:`commodity-yaml` and
       :ref:`technology-yaml` code lists
     """
-    from message_ix_models.model.structure import get_codes
+    from message_ix_models.model.structure import get_codes, get_technology_groups
 
     from . import key as k
 
@@ -402,6 +402,7 @@ def defaults(rep: Reporter, context: Context) -> None:
 
     # Add tasks to return groups of codes for aggregation
     rep.add(k.groups.c, "get_commodity_groups")
+    rep.add(k.groups.t, get_technology_groups)
 
     # Add a placeholder task to concatenate IAMC-structured data
     rep.add(k.all_iamc, "concat")
