@@ -18,7 +18,6 @@ units:
     '-': ''
 
   apply:
-    GDP: billion USD_2005 / year
     PRICE_COMMODITY: USD_2010 / kWa
     # These were initially "carbon", which is not a unit.
     # TODO check that Mt (rather than t or kt) is correct for all values.
@@ -747,12 +746,6 @@ general:
   args:
     units: 'GWa / year'
 
-- key: gdp_ppp
-  comp: product
-  inputs:
-  - GDP
-  - MERtoPPP
-
 # CH4 emissions from GLOBIOM: select only the subset
 - key: land_out:n-s-y-c-l-h:CH4_0
   comp: select
@@ -839,14 +832,6 @@ _iamc formats:
 
 
 iamc:
-- variable: GDP|MER
-  base: GDP:n-y
-  unit: billion USD_2010 / year
-
-- variable: GDP|PPP
-  base: gdp_ppp:n-y
-  unit: billion USD_2010 / year
-
 - variable: Primary Energy|Coal
   base: coal:nl-ya
   <<: *pe_iamc
@@ -1050,11 +1035,6 @@ report:
   - Primary Energy|Nuclear::iamc
   - Primary Energy|Solar::iamc
   - Primary Energy|Wind::iamc
-
-- key: gdp test
-  members:
-  - GDP|MER::iamc
-  - GDP|PPP::iamc
 
 - key: se test
   members:
