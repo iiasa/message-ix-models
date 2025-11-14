@@ -419,7 +419,10 @@ def select_allow_empty(
     try:
         return genno.operator.select(qty, indexers=indexers, inverse=inverse, drop=drop)
     except KeyError:
-        return genno.Quantity([], coords={d: [] for d in qty.dims})
+        # Dimensions to retain: all those of `qty` *except* those for which `indexers`
+        # contains a scalar. These dimensions would be dropped by the select() operator.
+        dims = {d for d in qty.dims if not isinstance(indexers.get(d, []), str)}
+        return type(qty)([], coords={d: [] for d in dims}, units=qty.units)
 
 
 def select_expand(
