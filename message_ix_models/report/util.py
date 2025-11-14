@@ -225,7 +225,7 @@ class IAMCConversion:
             keys.append(f"{label} {i}::iamc")
 
         # Concatenate each of `keys` into all::iamc
-        c.graph[all_iamc] += tuple(keys)
+        c.graph[all_iamc] = c.graph.pop(all_iamc, ("concat",)) + tuple(keys)
 
 
 def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
