@@ -1332,7 +1332,9 @@ def prepare_edit_files(
                            config_name=config_name)
 
         # Add variable costs for shipped commodities
-        costdf = build_historical_price(message_regions)
+        costdf = build_historical_price(message_regions,
+                                        project_name=project_name,
+                                        config_name=config_name)
         costdf["technology"] = costdf["technology"].str.replace("ethanol_", "eth_")
         costdf["technology"] = costdf["technology"].str.replace("fueloil_", "foil_")
 
