@@ -24,12 +24,15 @@ Callback = Callable[[ComputerT, "Context"], None]
 
 
 def _default_callbacks() -> list[Callback]:
-    from message_ix_models.report import plot
-
-    from . import defaults, extraction
+    from . import defaults, extraction, gdp, plot
 
     # NB When updating this list, also update the docstring of Config.callback
-    return [defaults, extraction.callback, plot.callback]
+    return [
+        defaults,
+        extraction.callback,
+        gdp.callback,
+        plot.callback,
+    ]
 
 
 @dataclass
