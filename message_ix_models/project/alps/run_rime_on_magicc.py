@@ -22,15 +22,14 @@ from .rime import (
     expand_predictions_with_emulator_uncertainty,
     extract_all_run_ids,
     compute_expectation,
-    compute_rime_cvar
+    compute_rime_cvar,
+    get_rime_dataset_path
 )
 from .importance_weighting import (
     extract_gmt_timeseries,
     compute_gwl_importance_weights
 )
 
-
-RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
 MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "magicc_output")
 
 
@@ -46,7 +45,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         magicc_file: Path to MAGICC Excel output file (overrides model/scenario)
         percentile: GSAT percentile to use (single percentile, default: 50.0)
         run_id: Specific run_id to extract (0-599). If provided, percentile is ignored.
-        variable: Hydrological variable to predict ('qtot_mean', 'qr', or 'both')
+        variable: Variable to predict ('qtot_mean', 'qr', 'hydro' (both hydrological), or 'capacity_factor')
         output_dir: Output directory for results
         weighted: If True, compute importance-weighted expectations and CVaR
         n_runs: Number of runs to process in weighted mode (default: all)
@@ -176,7 +175,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                 run_ids = None
                 weights = None
 
-    variables = ['qtot_mean', 'qr'] if variable == 'both' else [variable]
+    variables = ['qtot_mean', 'qr'] if variable == 'hydro' else [variable]
 
     # Determine temporal resolution
     temporal_res = "seasonal2step" if suban else "annual"
@@ -194,27 +193,15 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         print(f"Temporal resolution: {temporal_res}")
         print("="*80)
 
-        # Map variable to RIME dataset name
-        var_map = {'local_temp': 'temp_mean_anomaly'}
-        rime_var = var_map.get(var, var)
-
-        # temp_mean_anomaly only available as annual window0
-        if rime_var == 'temp_mean_anomaly':
-            dataset_temporal_res = 'annual'
-            window = '0'
-        else:
-            dataset_temporal_res = temporal_res
-            window = '11'  # Using window11 for smoothed RIME emulator
-
-        dataset_filename = f"rime_regionarray_{rime_var}_CWatM_{dataset_temporal_res}_window{window}.nc"
-        dataset_path = RIME_DATASETS_DIR / dataset_filename
-
-        if not dataset_path.exists():
-            print(f"Warning: RIME dataset not found: {dataset_path}")
+        # Get dataset path using shared helper function
+        try:
+            dataset_path = get_rime_dataset_path(var, temporal_res)
+        except (FileNotFoundError, NotImplementedError) as e:
+            print(f"Warning: {e}")
             print(f"Skipping {var}...")
             continue
 
-        print(f"Loading RIME dataset: {dataset_filename}")
+        print(f"Loading RIME dataset: {dataset_path.name}")
 
         if run_ids is not None:
             # Batch mode - get predictions based on emulator uncertainty flag
@@ -321,6 +308,10 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
             print(f"Running RIME predictions for percentile {percentile or 50.0}...")
             years = temp_df['year'].values
             gmt_values = temp_df['gsat_anomaly_K'].values
+
+            # Map variable name for dataset lookup
+            var_map = {'local_temp': 'temp_mean_anomaly'}
+            rime_var = var_map.get(var, var)
 
             # Predict for each year
             predictions_list = []
