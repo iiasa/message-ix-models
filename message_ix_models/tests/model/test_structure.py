@@ -282,7 +282,7 @@ def test_get_technology_groups() -> None:
     assert {"t"} == set(result)
 
     # Next level: expecte number of groups
-    assert 523 == len(result["t"])
+    assert 524 == len(result["t"])
 
     # Certain keys are present
     assert "* * → secondary electr" in result["t"]
