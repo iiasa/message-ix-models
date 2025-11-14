@@ -3,18 +3,14 @@ from collections import Counter
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from itertools import count
-from typing import TYPE_CHECKING
 
 import pandas as pd
 from dask.core import quote
-from genno import Key, Keys
+from genno import Computer, Key, Keys
 from genno.compat.pyam.util import collapse as genno_collapse
 from genno.core.key import single_key
 from message_ix import Reporter
 from sdmx.model.v21 import Code
-
-if TYPE_CHECKING:
-    from genno import Computer
 
 log = logging.getLogger(__name__)
 
@@ -157,22 +153,6 @@ class IAMCConversion:
 
         k = Keys(base=self.base, glb=self.base + "glb")
 
-        if self.GLB_zeros:
-            # Quantity of zeros in the same shape as self.base, without an 'n' dimension
-            c.add(k.glb[0], "zeros_like", self.base, drop=["n"])
-
-            # Add the 'n' dimension
-            c.add(k.glb[1], "expand_dims", k.glb[0], coords.n_glb)
-
-            # Add zeros to base data & update the base key for next steps
-            c.add(k.base[0], "add", self.base, k.glb[1])
-        else:
-            # Simple alias
-            c.add(k.base[0], k.base)
-
-        # Convert to target units
-        c.add(k.base[1], "convert_units", k.base[0], units=self.unit)
-
         # Common keyword arguments for genno.compat.pyam.iamc
         args: dict = dict(rename=self.rename, unit=self.unit)
 
@@ -187,6 +167,30 @@ class IAMCConversion:
         assert dict(region=1, year=1) == Counter(args["rename"].values()), (
             f"Expected 1 region and 1 year dimension; got {args['rename']}"
         )
+
+        # Identify node/region dimension
+        dim_n = next(kv[0] for kv in args["rename"].items() if kv[1] == "region")
+
+        if self.GLB_zeros:
+            # Quantity of zeros in the same shape as self.base, without an 'n' dimension
+            c.add(k.glb[0], "zeros_like", self.base, drop=[dim_n])
+
+            # Add the 'n' dimension
+            if dim_n != "n":
+                c.add(f"{dim_n}::glb", lambda d: {dim_n: d["n"]}, coords.n_glb)
+            c.add(k.glb[1], "expand_dims", k.glb[0], f"{dim_n}::glb")
+
+            # Add zeros to base data & update the base key for next steps
+            c.add(k.base[0], "add", self.base, k.glb[1])
+        else:
+            # Simple alias
+            c.add(k.base[0], k.base)
+
+        # Convert to target units
+        if self.unit is not None:
+            c.add(k.base[1], "convert_units", k.base[0], units=self.unit)
+        else:
+            c.add(k.base[1], k.base[0])
 
         # Identify a `start` value that does not duplicate existing keys
         label = self.var_parts[0]
