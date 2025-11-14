@@ -43,8 +43,9 @@ START_YEAR = 2025
 RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
 
 
-def split_basin_macroregion(rime_predictions: np.ndarray,
-                            basin_mapping: Optional[pd.DataFrame] = None) -> np.ndarray:
+def split_basin_macroregion(
+    rime_predictions: np.ndarray, basin_mapping: Optional[pd.DataFrame] = None
+) -> np.ndarray:
     """Expand RIME predictions (157 basins) to MESSAGE format (217 rows) by area-weighted splitting.
 
     RIME emulators predict at basin level (157 unique basins), but MESSAGE R12 representation
@@ -79,16 +80,20 @@ def split_basin_macroregion(rime_predictions: np.ndarray,
     if basin_mapping is None:
         basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
         basin_df = pd.read_csv(basin_file)
-        basin_mapping = basin_df[basin_df['model_region'] == 'R12'].copy()
+        basin_mapping = basin_df[basin_df["model_region"] == "R12"].copy()
         basin_mapping = basin_mapping.reset_index(drop=True)
 
     # Load RIME region IDs from dataset
-    dataset_path = RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
+    dataset_path = (
+        RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
+    )
     ds = xr.open_dataset(dataset_path)
     rime_region_ids = ds.region.values  # [1, 2, 3, ..., 162] with gaps, 157 total
 
     # Create BASIN_ID → RIME array index mapping
-    basin_id_to_rime_idx = {int(region_id): i for i, region_id in enumerate(rime_region_ids)}
+    basin_id_to_rime_idx = {
+        int(region_id): i for i, region_id in enumerate(rime_region_ids)
+    }
 
     # Handle seasonal (157, n_timesteps, n_seasons) or annual (157, n_timesteps)
     is_seasonal = rime_predictions.ndim == 3
@@ -100,12 +105,12 @@ def split_basin_macroregion(rime_predictions: np.ndarray,
         message_predictions = np.full((217, n_timesteps), np.nan)
 
     # Compute total area for each BASIN_ID (for basins spanning multiple regions)
-    basin_total_areas = basin_mapping.groupby('BASIN_ID')['area_km2'].sum()
+    basin_total_areas = basin_mapping.groupby("BASIN_ID")["area_km2"].sum()
 
     # Map each MESSAGE row to RIME prediction, split by area fraction
     for i, row in basin_mapping.iterrows():
-        basin_id = row['BASIN_ID']
-        area_km2 = row['area_km2']
+        basin_id = row["BASIN_ID"]
+        area_km2 = row["area_km2"]
 
         if basin_id in basin_id_to_rime_idx:
             rime_idx = basin_id_to_rime_idx[basin_id]
@@ -113,15 +118,69 @@ def split_basin_macroregion(rime_predictions: np.ndarray,
             area_fraction = area_km2 / total_area
 
             if is_seasonal:
-                message_predictions[i, :, :] = rime_predictions[rime_idx, :, :] * area_fraction
+                message_predictions[i, :, :] = (
+                    rime_predictions[rime_idx, :, :] * area_fraction
+                )
             else:
-                message_predictions[i, :] = rime_predictions[rime_idx, :] * area_fraction
+                message_predictions[i, :] = (
+                    rime_predictions[rime_idx, :] * area_fraction
+                )
 
     return message_predictions
 
 
-def predict_rime(gmt_array, variable: str, temporal_res: str = 'annual',
-                 percentile: Optional[str] = None):
+def get_rime_dataset_path(variable: str, temporal_res: str = "annual") -> Path:
+    """Get dataset path for a RIME variable.
+
+    Args:
+        variable: Target variable ('qtot_mean', 'qr', 'local_temp', 'capacity_factor')
+        temporal_res: Temporal resolution ('annual' or 'seasonal2step')
+
+    Returns:
+        Path to RIME dataset file
+
+    Raises:
+        NotImplementedError: If capacity_factor requested with seasonal resolution
+        FileNotFoundError: If dataset file doesn't exist
+    """
+    if variable == "capacity_factor":
+        if temporal_res == "seasonal2step":
+            raise NotImplementedError(
+                "Capacity factor only supports annual temporal resolution"
+            )
+        dataset_path = RIME_DATASETS_DIR / "stage3_gwl_binned.nc"
+    else:
+        # Variable mapping for basin-level variables
+        var_map = {"local_temp": "temp_mean_anomaly"}
+        rime_var = var_map.get(variable, variable)
+
+        # Determine window based on variable and temporal resolution
+        if rime_var == "temp_mean_anomaly" and temporal_res == "annual":
+            window = "0"
+        else:
+            window = "11"  # Using window11 for smoothed emulators
+
+        dataset_filename = (
+            f"rime_regionarray_{rime_var}_CWatM_{temporal_res}_window{window}.nc"
+        )
+        dataset_path = RIME_DATASETS_DIR / dataset_filename
+
+    if not dataset_path.exists():
+        raise FileNotFoundError(
+            f"RIME dataset not found: {dataset_path}\n"
+            f"Available variables: qtot_mean, qr, local_temp, capacity_factor\n"
+            f"Available temporal resolutions: annual, seasonal2step"
+        )
+
+    return dataset_path
+
+
+def predict_rime(
+    gmt_array,
+    variable: str,
+    temporal_res: str = "annual",
+    percentile: Optional[str] = None,
+):
     """Predict RIME variable from GMT array with automatic dataset loading.
 
     User-friendly wrapper around predict_from_gmt that handles:
@@ -129,18 +188,22 @@ def predict_rime(gmt_array, variable: str, temporal_res: str = 'annual',
     - Automatic dataset selection based on variable and temporal resolution
     - Correct window selection (window11 for smoothed emulators, window0 for temp_mean_anomaly)
     - Expansion from 157 RIME basins to 217 MESSAGE rows (area-weighted splitting)
+    - Regional aggregates (R12) for capacity_factor
 
     Args:
         gmt_array: Array of GMT values (°C)
-        variable: Target variable ('qtot_mean', 'qr', 'local_temp')
+        variable: Target variable ('qtot_mean', 'qr', 'local_temp', 'capacity_factor')
         temporal_res: Temporal resolution ('annual' or 'seasonal2step')
         percentile: Optional percentile suffix ('p10', 'p50', 'p90') for uncertainty bounds
 
     Returns:
-        Predictions array expanded to MESSAGE format
-            Shape: (217, n_timesteps) for annual
-                   (217, n_timesteps, n_seasons) for seasonal
+        For basin-level variables (qtot_mean, qr, local_temp):
+            - annual: array (217, n_timesteps)
+            - seasonal: tuple (dry, wet) where each is (217, n_timesteps)
             NOTE: Basins 0, 141, 154 have missing RIME data (filled with NaN)
+        For regional variables (capacity_factor):
+            - annual: array (12, n_timesteps) for R12 regions
+            - seasonal: not supported
 
     Examples:
         # Predict total runoff from GMT timeseries
@@ -151,38 +214,44 @@ def predict_rime(gmt_array, variable: str, temporal_res: str = 'annual',
 
         # Predict local temperature anomaly (annual only)
         temp_predictions = predict_rime(gmt_array, 'local_temp')
+
+        # Predict thermoelectric capacity factor (R12 regional)
+        capacity_predictions = predict_rime(gmt_array, 'capacity_factor', percentile='p50')
     """
-    # Variable mapping
-    var_map = {'local_temp': 'temp_mean_anomaly'}
+    # Get dataset path using shared helper
+    dataset_path = get_rime_dataset_path(variable, temporal_res)
+
+    # For regional variables (capacity_factor), return directly without basin expansion
+    if variable == "capacity_factor":
+        predict_var = variable if percentile is None else f"{variable}_{percentile}"
+        return predict_from_gmt(gmt_array, str(dataset_path), predict_var)
+
+    # Variable mapping for basin-level variables
+    var_map = {"local_temp": "temp_mean_anomaly"}
     rime_var = var_map.get(variable, variable)
 
-    # Determine window and temporal resolution based on variable
-    if rime_var == 'temp_mean_anomaly':
-        dataset_temporal_res = 'annual'
-        window = '0'
-    else:
-        dataset_temporal_res = temporal_res
-        window = '11'  # Using window11 for smoothed RIME emulator
-
-    # Build dataset path
-    dataset_filename = f"rime_regionarray_{rime_var}_CWatM_{dataset_temporal_res}_window{window}.nc"
-    dataset_path = RIME_DATASETS_DIR / dataset_filename
-
-    if not dataset_path.exists():
-        raise FileNotFoundError(
-            f"RIME dataset not found: {dataset_path}\n"
-            f"Available variables: qtot_mean, qr, local_temp\n"
-            f"Available temporal resolutions: annual, seasonal2step"
+    # For seasonal, predict dry and wet separately and return as tuple
+    if temporal_res == "seasonal2step":
+        # Predict dry season
+        var_dry = (
+            f"{rime_var}_dry" if percentile is None else f"{rime_var}_dry_{percentile}"
         )
+        pred_dry = predict_from_gmt(gmt_array, str(dataset_path), var_dry)
+        pred_dry_expanded = split_basin_macroregion(pred_dry)
 
-    # Build variable name with percentile suffix if provided
-    predict_var = rime_var if percentile is None else f"{rime_var}_{percentile}"
+        # Predict wet season
+        var_wet = (
+            f"{rime_var}_wet" if percentile is None else f"{rime_var}_wet_{percentile}"
+        )
+        pred_wet = predict_from_gmt(gmt_array, str(dataset_path), var_wet)
+        pred_wet_expanded = split_basin_macroregion(pred_wet)
 
-    # Call predict_from_gmt (returns 157 RIME basins)
-    rime_predictions = predict_from_gmt(gmt_array, str(dataset_path), predict_var)
-
-    # Expand to 217 MESSAGE rows with area-weighted splitting
-    return split_basin_macroregion(rime_predictions)
+        return (pred_dry_expanded, pred_wet_expanded)
+    else:
+        # Annual: single prediction
+        predict_var = rime_var if percentile is None else f"{rime_var}_{percentile}"
+        rime_predictions = predict_from_gmt(gmt_array, str(dataset_path), predict_var)
+        return split_basin_macroregion(rime_predictions)
 
 
 def load_country_to_region_mapping() -> pd.DataFrame:
@@ -203,8 +272,11 @@ def load_country_to_region_mapping() -> pd.DataFrame:
     return pd.read_csv(mapping_path)
 
 
-def aggregate_basins_to_regions(basin_predictions: np.ndarray, variable: str,
-                                 basin_mapping: Optional[pd.DataFrame] = None) -> np.ndarray:
+def aggregate_basins_to_regions(
+    basin_predictions: np.ndarray,
+    variable: str,
+    basin_mapping: Optional[pd.DataFrame] = None,
+) -> np.ndarray:
     """Aggregate basin-level predictions to R12 regional level.
 
     Args:
@@ -232,20 +304,20 @@ def aggregate_basins_to_regions(basin_predictions: np.ndarray, variable: str,
     if basin_mapping is None:
         basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
         basin_df = pd.read_csv(basin_file)
-        basin_mapping = basin_df[basin_df['model_region'] == 'R12'].copy()
+        basin_mapping = basin_df[basin_df["model_region"] == "R12"].copy()
         basin_mapping = basin_mapping.reset_index(drop=True)
 
     # Determine aggregation function
-    var_map = {'local_temp': 'temp_mean_anomaly'}
+    var_map = {"local_temp": "temp_mean_anomaly"}
     mapped_var = var_map.get(variable, variable)
 
-    if mapped_var == 'temp_mean_anomaly':
+    if mapped_var == "temp_mean_anomaly":
         agg_func = np.nanmean
     else:  # qtot_mean, qr
         agg_func = np.nansum
 
     # Get unique regions sorted alphabetically
-    regions = sorted(basin_mapping['REGION'].unique())
+    regions = sorted(basin_mapping["REGION"].unique())
     n_regions = len(regions)
 
     # Handle seasonal (217, n_timesteps, n_seasons) or annual (217, n_timesteps)
@@ -259,7 +331,7 @@ def aggregate_basins_to_regions(basin_predictions: np.ndarray, variable: str,
 
     # Aggregate each region
     for i, region in enumerate(regions):
-        region_basins = basin_mapping[basin_mapping['REGION'] == region].index.tolist()
+        region_basins = basin_mapping[basin_mapping["REGION"] == region].index.tolist()
 
         if is_seasonal:
             region_data = basin_predictions[region_basins, :, :]
@@ -271,9 +343,11 @@ def aggregate_basins_to_regions(basin_predictions: np.ndarray, variable: str,
     return region_predictions
 
 
-def extract_temperature_timeseries(magicc_df: pd.DataFrame,
-                                   percentile: Optional[float] = None,
-                                   run_id: Optional[int] = None) -> pd.DataFrame:
+def extract_temperature_timeseries(
+    magicc_df: pd.DataFrame,
+    percentile: Optional[float] = None,
+    run_id: Optional[int] = None,
+) -> pd.DataFrame:
     """Extract GSAT temperature trajectory from MAGICC DataFrame.
 
     Args:
@@ -291,8 +365,8 @@ def extract_temperature_timeseries(magicc_df: pd.DataFrame,
         var_pattern = "AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3"
 
         temp_data = magicc_df[
-            (magicc_df['Model'].str.contains(model_pattern, na=False, regex=False)) &
-            (magicc_df['Variable'].str.contains(var_pattern, na=False, regex=False))
+            (magicc_df["Model"].str.contains(model_pattern, na=False, regex=False))
+            & (magicc_df["Variable"].str.contains(var_pattern, na=False, regex=False))
         ]
 
         if len(temp_data) == 0:
@@ -301,10 +375,12 @@ def extract_temperature_timeseries(magicc_df: pd.DataFrame,
         # Select by percentile
         if percentile is None:
             percentile = 50.0
-        percentile_str = f"{percentile}th Percentile" if percentile != 50.0 else "50.0th Percentile"
+        percentile_str = (
+            f"{percentile}th Percentile" if percentile != 50.0 else "50.0th Percentile"
+        )
         var_pattern = f"AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3|{percentile_str}"
 
-        temp_data = magicc_df[magicc_df['Variable'] == var_pattern]
+        temp_data = magicc_df[magicc_df["Variable"] == var_pattern]
 
         if len(temp_data) == 0:
             raise ValueError(f"No temperature data found for percentile {percentile}")
@@ -312,40 +388,40 @@ def extract_temperature_timeseries(magicc_df: pd.DataFrame,
     temp_row = temp_data.iloc[0]
 
     # Extract year columns (strings like '1990', '2000', etc.)
-    year_cols = [col for col in magicc_df.columns
-                 if isinstance(col, str) and col.isdigit()]
+    year_cols = [
+        col for col in magicc_df.columns if isinstance(col, str) and col.isdigit()
+    ]
 
-    temps = {int(year): temp_row[year]
-             for year in year_cols
-             if pd.notna(temp_row[year])}
+    temps = {
+        int(year): temp_row[year] for year in year_cols if pd.notna(temp_row[year])
+    }
 
-    temp_df = pd.DataFrame({
-        'year': list(temps.keys()),
-        'gsat_anomaly_K': list(temps.values())
-    })
+    temp_df = pd.DataFrame(
+        {"year": list(temps.keys()), "gsat_anomaly_K": list(temps.values())}
+    )
 
     # Extract metadata
-    scenario_name = temp_row['Scenario']
-    model_name = temp_row['Model']
+    scenario_name = temp_row["Scenario"]
+    model_name = temp_row["Model"]
 
     # Determine SSP family
     scenario_lower = scenario_name.lower()
-    if 'ssp1' in scenario_lower:
-        ssp_family = 'SSP1'
-    elif 'ssp2' in scenario_lower:
-        ssp_family = 'SSP2'
-    elif 'ssp3' in scenario_lower:
-        ssp_family = 'SSP3'
-    elif 'ssp4' in scenario_lower:
-        ssp_family = 'SSP4'
-    elif 'ssp5' in scenario_lower:
-        ssp_family = 'SSP5'
+    if "ssp1" in scenario_lower:
+        ssp_family = "SSP1"
+    elif "ssp2" in scenario_lower:
+        ssp_family = "SSP2"
+    elif "ssp3" in scenario_lower:
+        ssp_family = "SSP3"
+    elif "ssp4" in scenario_lower:
+        ssp_family = "SSP4"
+    elif "ssp5" in scenario_lower:
+        ssp_family = "SSP5"
     else:
-        ssp_family = 'SSP2'  # default
+        ssp_family = "SSP2"  # default
 
-    temp_df['model'] = model_name
-    temp_df['scenario'] = scenario_name
-    temp_df['ssp_family'] = ssp_family
+    temp_df["model"] = model_name
+    temp_df["scenario"] = scenario_name
+    temp_df["ssp_family"] = ssp_family
 
     return temp_df
 
@@ -360,43 +436,47 @@ def extract_all_run_ids(magicc_df: pd.DataFrame) -> list[int]:
         Sorted list of run_ids
     """
     gsat_data = magicc_df[
-        magicc_df['Variable'].str.contains(
-            'AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3',
+        magicc_df["Variable"].str.contains(
+            "AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3",
             na=False,
-            regex=False
+            regex=False,
         )
     ]
 
     def parse_run_id(model_str):
-        if '|run_' in model_str:
+        if "|run_" in model_str:
             try:
-                return int(model_str.split('|run_')[1].split('|')[0])
+                return int(model_str.split("|run_")[1].split("|")[0])
             except (IndexError, ValueError):
                 return None
         return None
 
-    run_ids = [parse_run_id(m) for m in gsat_data['Model'].unique()]
+    run_ids = [parse_run_id(m) for m in gsat_data["Model"].unique()]
     run_ids = [r for r in run_ids if r is not None]
 
     return sorted(run_ids)
 
 
-def batch_rime_predictions(magicc_df: pd.DataFrame,
-                           run_ids: list[int],
-                           dataset_path: Path,
-                           basin_mapping: pd.DataFrame,
-                           variable: str) -> dict[int, pd.DataFrame]:
+def batch_rime_predictions(
+    magicc_df: pd.DataFrame,
+    run_ids: list[int],
+    dataset_path: Path,
+    basin_mapping: pd.DataFrame,
+    variable: str,
+) -> dict[int, pd.DataFrame]:
     """Run RIME predictions on multiple runs using vectorized GMT lookups.
 
     Args:
         magicc_df: MAGICC output DataFrame
         run_ids: List of run IDs to process
         dataset_path: Path to RIME dataset NetCDF file
-        basin_mapping: Basin mapping DataFrame
-        variable: Variable name (qtot_mean or qr)
+        basin_mapping: Basin mapping DataFrame (unused for regional variables)
+        variable: Variable name (qtot_mean, qr, capacity_factor)
 
     Returns:
-        Dictionary mapping run_id -> MESSAGE format DataFrame (217 rows × year columns)
+        Dictionary mapping run_id -> DataFrame with predictions
+        - Basin-level variables (qtot_mean, qr): 157 rows × year columns
+        - Regional variables (capacity_factor): 12 rows × year columns
     """
     # Extract GMT timeseries for all runs
     gmt_timeseries = []
@@ -404,9 +484,9 @@ def batch_rime_predictions(magicc_df: pd.DataFrame,
 
     for run_id in run_ids:
         temp_df = extract_temperature_timeseries(magicc_df, run_id=run_id)
-        gmt_timeseries.append(temp_df['gsat_anomaly_K'].values)
+        gmt_timeseries.append(temp_df["gsat_anomaly_K"].values)
         if years is None:
-            years = temp_df['year'].values
+            years = temp_df["year"].values
 
     # Stack into 2D array (n_runs × n_years)
     gmt_array = np.array(gmt_timeseries)
@@ -416,15 +496,14 @@ def batch_rime_predictions(magicc_df: pd.DataFrame,
     gmt_flat = gmt_array.flatten()
 
     # Call predict_from_gmt for each unique GMT value (cached dataset)
-    # Results: (n_runs * n_years) × n_basins
-    predictions_flat = np.array([
-        predict_from_gmt(gmt, str(dataset_path), variable)
-        for gmt in gmt_flat
-    ])
+    # Results: (n_runs * n_years) × n_regions where n_regions = 157 basins or 12 R12 regions
+    predictions_flat = np.array(
+        [predict_from_gmt(gmt, str(dataset_path), variable) for gmt in gmt_flat]
+    )
 
-    # Reshape back to 3D: (n_runs × n_years × n_basins)
-    n_basins = predictions_flat.shape[1]
-    predictions_3d = predictions_flat.reshape(n_runs, n_years, n_basins)
+    # Reshape back to 3D: (n_runs × n_years × n_regions)
+    n_regions = predictions_flat.shape[1]
+    predictions_3d = predictions_flat.reshape(n_runs, n_years, n_regions)
 
     # Convert each run to MESSAGE format DataFrame
     results = {}
@@ -432,7 +511,7 @@ def batch_rime_predictions(magicc_df: pd.DataFrame,
         # predictions_3d[i]: (n_years × n_basins)
         df = pd.DataFrame(
             predictions_3d[i].T,  # Transpose to (n_basins × n_years)
-            columns=years
+            columns=years,
         )
         results[run_id] = df
 
@@ -440,10 +519,7 @@ def batch_rime_predictions(magicc_df: pd.DataFrame,
 
 
 def _extract_percentile_predictions(
-    gmt_flat: np.ndarray,
-    dataset_path: str,
-    var_prefix: str,
-    percentiles: list[int]
+    gmt_flat: np.ndarray, dataset_path: str, var_prefix: str, percentiles: list[int]
 ) -> dict[int, np.ndarray]:
     """Helper to extract predictions for multiple percentiles.
 
@@ -458,10 +534,12 @@ def _extract_percentile_predictions(
     """
     results = {}
     for p in percentiles:
-        predictions = np.array([
-            predict_from_gmt(gmt, dataset_path, f"{var_prefix}_p{p}")
-            for gmt in gmt_flat
-        ])
+        predictions = np.array(
+            [
+                predict_from_gmt(gmt, dataset_path, f"{var_prefix}_p{p}")
+                for gmt in gmt_flat
+            ]
+        )
         results[p] = predictions
     return results
 
@@ -472,7 +550,7 @@ def batch_rime_predictions_with_percentiles(
     dataset_path: Path,
     basin_mapping: pd.DataFrame,
     variable: str,
-    suban: bool = False
+    suban: bool = False,
 ) -> tuple[dict[int, pd.DataFrame], dict[int, pd.DataFrame], dict[int, pd.DataFrame]]:
     """Run RIME predictions extracting p10, p50, p90 for each GMT value.
 
@@ -480,24 +558,33 @@ def batch_rime_predictions_with_percentiles(
         magicc_df: MAGICC output DataFrame
         run_ids: List of run IDs to process
         dataset_path: Path to RIME dataset NetCDF file
-        basin_mapping: Basin mapping DataFrame
-        variable: Base variable name (qtot_mean or qr)
+        basin_mapping: Basin mapping DataFrame (unused for regional variables)
+        variable: Base variable name (qtot_mean, qr, capacity_factor)
         suban: If True, use seasonal (dry/wet) resolution; if False, use annual
+               NOTE: Not supported for capacity_factor
 
     Returns:
         Tuple of three dictionaries (predictions_p10, predictions_p50, predictions_p90),
-        each mapping run_id -> MESSAGE format DataFrame.
+        each mapping run_id -> DataFrame with predictions.
+        - Basin-level variables: 157 rows × year columns (217 after expansion)
+        - Regional variables (capacity_factor): 12 rows × year columns
         For seasonal mode, columns are interleaved: [year_dry, year_wet, ...].
     """
+    # Validate parameters
+    if variable == "capacity_factor" and suban:
+        raise NotImplementedError(
+            "Capacity factor only supports annual temporal resolution"
+        )
+
     # Extract GMT timeseries for all runs
     gmt_timeseries = []
     years = None
 
     for run_id in run_ids:
         temp_df = extract_temperature_timeseries(magicc_df, run_id=run_id)
-        gmt_timeseries.append(temp_df['gsat_anomaly_K'].values)
+        gmt_timeseries.append(temp_df["gsat_anomaly_K"].values)
         if years is None:
-            years = temp_df['year'].values
+            years = temp_df["year"].values
 
     # Stack into 2D array (n_runs × n_years)
     gmt_array = np.array(gmt_timeseries)
@@ -524,7 +611,9 @@ def batch_rime_predictions_with_percentiles(
         # Clip low values to GMT_MIN + skewed noise
         gmt_flat[low_gmt_mask] = GMT_MIN + noise
 
-        print(f"Warning: {n_low}/{len(gmt_flat)} GMT values below {GMT_MIN}°C were clipped to [{GMT_MIN}, {GMT_MIN + GMT_MAX_NOISE}]°C with skewed noise")
+        print(
+            f"Warning: {n_low}/{len(gmt_flat)} GMT values below {GMT_MIN}°C were clipped to [{GMT_MIN}, {GMT_MIN + GMT_MAX_NOISE}]°C with skewed noise"
+        )
         print(f"  Original range: {gmt_array.min():.3f}°C to {gmt_array.max():.3f}°C")
         print(f"  Clipped range:  {gmt_flat.min():.3f}°C to {gmt_flat.max():.3f}°C")
 
@@ -541,10 +630,10 @@ def batch_rime_predictions_with_percentiles(
         )
 
         # Interleave dry and wet: [year0_dry, year0_wet, year1_dry, year1_wet, ...]
-        n_basins = dry_preds[10].shape[1]
-        predictions_p10_flat = np.empty((len(gmt_flat) * 2, n_basins))
-        predictions_p50_flat = np.empty((len(gmt_flat) * 2, n_basins))
-        predictions_p90_flat = np.empty((len(gmt_flat) * 2, n_basins))
+        n_regions = dry_preds[10].shape[1]
+        predictions_p10_flat = np.empty((len(gmt_flat) * 2, n_regions))
+        predictions_p50_flat = np.empty((len(gmt_flat) * 2, n_regions))
+        predictions_p90_flat = np.empty((len(gmt_flat) * 2, n_regions))
 
         predictions_p10_flat[0::2] = dry_preds[10]
         predictions_p10_flat[1::2] = wet_preds[10]
@@ -565,20 +654,24 @@ def batch_rime_predictions_with_percentiles(
         n_timesteps = n_years
 
     # ASSERTION: Validate prediction ranges
-    min_allowed = -100 if variable.startswith('qr') else 0
-    for pred, name in [(predictions_p10_flat, 'p10'), (predictions_p50_flat, 'p50'), (predictions_p90_flat, 'p90')]:
+    min_allowed = -100 if variable.startswith("qr") else 0
+    for pred, name in [
+        (predictions_p10_flat, "p10"),
+        (predictions_p50_flat, "p50"),
+        (predictions_p90_flat, "p90"),
+    ]:
         if not np.all(pred >= min_allowed):
             # Find where NaN or invalid values occur
             invalid_mask = ~(pred >= min_allowed)  # NaN or < min_allowed
             invalid_indices = np.where(invalid_mask)
 
-            # Map back to (run, timestep, basin) indices
-            n_basins = pred.shape[1]
+            # Map back to (run, timestep, region) indices
+            n_regions = pred.shape[1]
             for flat_idx in range(len(invalid_indices[0])):
                 row = invalid_indices[0][flat_idx]
                 col = invalid_indices[1][flat_idx]
 
-                basin_id = col
+                region_id = col
                 pred_value = pred[row, col]
 
                 # For seasonal mode, row corresponds to interleaved dry/wet timesteps
@@ -587,20 +680,26 @@ def batch_rime_predictions_with_percentiles(
                     # row spans (n_runs * n_years * 2) because of interleaving
                     # But gmt_flat only has (n_runs * n_years) values
                     # row = run*n_years*2 + timestep where timestep is in [0, n_years*2)
-                    gmt_idx = row // 2  # Maps interleaved index back to annual GMT index
+                    gmt_idx = (
+                        row // 2
+                    )  # Maps interleaved index back to annual GMT index
                     season = "dry" if row % 2 == 0 else "wet"
                     run_id = gmt_idx // n_years
                     year_idx = gmt_idx % n_years
                     gmt_value = gmt_flat[gmt_idx]
-                    print(f"  Invalid {name} at run={run_ids[run_id]}, year_idx={year_idx}, season={season}, basin={basin_id}: "
-                          f"GMT={gmt_value:.3f}, prediction={pred_value}")
+                    print(
+                        f"  Invalid {name} at run={run_ids[run_id]}, year_idx={year_idx}, season={season}, region={region_id}: "
+                        f"GMT={gmt_value:.3f}, prediction={pred_value}"
+                    )
                 else:
                     # Annual mode: row directly indexes gmt_flat
                     run_id = row // n_years
                     year_idx = row % n_years
                     gmt_value = gmt_flat[row]
-                    print(f"  Invalid {name} at run={run_ids[run_id]}, year_idx={year_idx}, basin={basin_id}: "
-                          f"GMT={gmt_value:.3f}, prediction={pred_value}")
+                    print(
+                        f"  Invalid {name} at run={run_ids[run_id]}, year_idx={year_idx}, region={region_id}: "
+                        f"GMT={gmt_value:.3f}, prediction={pred_value}"
+                    )
 
                 # Only print first 10 violations
                 if flat_idx >= 9:
@@ -608,13 +707,15 @@ def batch_rime_predictions_with_percentiles(
                     print(f"  ... ({n_total} total violations)")
                     break
 
-            assert False, f"{name} values exceed allowed threshold: min={pred.min()}, allowed>={min_allowed}"
+            assert False, (
+                f"{name} values exceed allowed threshold: min={pred.min()}, allowed>={min_allowed}"
+            )
 
-    # Reshape all to 3D: (n_runs × n_timesteps × n_basins)
-    n_basins = predictions_p10_flat.shape[1]
-    predictions_p10_3d = predictions_p10_flat.reshape(n_runs, n_timesteps, n_basins)
-    predictions_p50_3d = predictions_p50_flat.reshape(n_runs, n_timesteps, n_basins)
-    predictions_p90_3d = predictions_p90_flat.reshape(n_runs, n_timesteps, n_basins)
+    # Reshape all to 3D: (n_runs × n_timesteps × n_regions)
+    n_regions = predictions_p10_flat.shape[1]
+    predictions_p10_3d = predictions_p10_flat.reshape(n_runs, n_timesteps, n_regions)
+    predictions_p50_3d = predictions_p50_flat.reshape(n_runs, n_timesteps, n_regions)
+    predictions_p90_3d = predictions_p90_flat.reshape(n_runs, n_timesteps, n_regions)
 
     # ASSERTION: Verify percentile ordering (p10 ≤ p50 ≤ p90)
     if not np.all(predictions_p10_3d <= predictions_p50_3d):
@@ -639,7 +740,7 @@ def batch_rime_predictions_with_percentiles(
         columns = years
 
     for i, run_id in enumerate(run_ids):
-        # Transpose to (n_basins × n_timesteps)
+        # Transpose to (n_regions × n_timesteps)
         results_p10[run_id] = pd.DataFrame(predictions_p10_3d[i].T, columns=columns)
         results_p50[run_id] = pd.DataFrame(predictions_p50_3d[i].T, columns=columns)
         results_p90[run_id] = pd.DataFrame(predictions_p90_3d[i].T, columns=columns)
@@ -654,7 +755,7 @@ def expand_predictions_with_emulator_uncertainty(
     run_ids: list[int],
     weights: np.ndarray,
     n_samples: int = 5,
-    seed: int = 42
+    seed: int = 42,
 ) -> tuple[dict[int, pd.DataFrame], np.ndarray, np.ndarray]:
     """Expand predictions with emulator uncertainty using RIME-style shuffled sampling.
 
@@ -712,9 +813,11 @@ def expand_predictions_with_emulator_uncertainty(
 
         # Vectorized fit: fit all (basin, year) distributions at once
         # fit_dist automatically dispatches to vectorized version when inputs are arrays
-        vec_dist = fit_dist([p50_array, p10_array, p90_array],
-                            quantiles=[0.5, 0.05, 0.95],
-                            dist_name='lognorm')
+        vec_dist = fit_dist(
+            [p50_array, p10_array, p90_array],
+            quantiles=[0.5, 0.05, 0.95],
+            dist_name="lognorm",
+        )
 
         # RIME-style shuffling: sample independent random quantiles for each (basin, year, sample)
         # Shape: (n_samples, n_basins, n_years)
@@ -734,9 +837,7 @@ def expand_predictions_with_emulator_uncertainty(
             samples = np.maximum(samples, 0.0)
 
             pseudo_run_df = pd.DataFrame(
-                samples,
-                index=basin_index,
-                columns=year_columns
+                samples, index=basin_index, columns=year_columns
             )
 
             # Store with sequential integer key
@@ -752,9 +853,11 @@ def expand_predictions_with_emulator_uncertainty(
     return expanded_predictions, expanded_run_ids, expanded_weights
 
 
-def compute_expectation(predictions: dict[int, pd.DataFrame],
-                        run_ids: np.ndarray,
-                        weights: Optional[np.ndarray] = None) -> pd.DataFrame:
+def compute_expectation(
+    predictions: dict[int, pd.DataFrame],
+    run_ids: np.ndarray,
+    weights: Optional[np.ndarray] = None,
+) -> pd.DataFrame:
     """Compute expectation across RIME predictions.
 
     Args:
@@ -783,26 +886,26 @@ def compute_expectation(predictions: dict[int, pd.DataFrame],
         mean = np.mean(values_3d, axis=0)
 
     # Convert back to DataFrame
-    result = pd.DataFrame(
-        mean,
-        index=first_pred.index,
-        columns=first_pred.columns
-    )
+    result = pd.DataFrame(mean, index=first_pred.index, columns=first_pred.columns)
 
     # ASSERTION: Check for negative values in expectation
     if np.any(result.values < 0):
         n_negative = np.sum(result.values < 0)
         min_value = result.values.min()
-        print(f"WARNING: Expectation contains {n_negative}/{result.size} negative values, "
-              f"min={min_value:.6f}")
+        print(
+            f"WARNING: Expectation contains {n_negative}/{result.size} negative values, "
+            f"min={min_value:.6f}"
+        )
 
     return result
 
 
-def compute_rime_cvar(predictions: dict[int, pd.DataFrame],
-                      weights: np.ndarray,
-                      run_ids: np.ndarray,
-                      cvar_levels: list[float] = [10, 50, 90]) -> dict[str, pd.DataFrame]:
+def compute_rime_cvar(
+    predictions: dict[int, pd.DataFrame],
+    weights: np.ndarray,
+    run_ids: np.ndarray,
+    cvar_levels: list[float] = [10, 50, 90],
+) -> dict[str, pd.DataFrame]:
     """Compute weighted CVaR across RIME predictions.
 
     Args:
@@ -831,11 +934,7 @@ def compute_rime_cvar(predictions: dict[int, pd.DataFrame],
 
     # Compute weighted CVaR
     cvar_results = compute_weighted_cvar(
-        values_3d,
-        weights,
-        cvar_levels,
-        basin_ids=basin_ids,
-        year_columns=year_columns
+        values_3d, weights, cvar_levels, basin_ids=basin_ids, year_columns=year_columns
     )
 
     # ASSERTION: Check for negative values in CVaR results
@@ -843,7 +942,9 @@ def compute_rime_cvar(predictions: dict[int, pd.DataFrame],
         if np.any(result_df.values < 0):
             n_negative = np.sum(result_df.values < 0)
             min_value = result_df.values.min()
-            print(f"WARNING: CVaR '{key}' contains {n_negative}/{result_df.size} negative values, "
-                  f"min={min_value:.6f}")
+            print(
+                f"WARNING: CVaR '{key}' contains {n_negative}/{result_df.size} negative values, "
+                f"min={min_value:.6f}"
+            )
 
     return cvar_results

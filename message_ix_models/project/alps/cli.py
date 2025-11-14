@@ -119,9 +119,9 @@ def run_magicc_cmd(**kwargs):
 )
 @click.option(
     '--variable',
-    type=click.Choice(['qtot_mean', 'qr', 'both']),
-    default='both',
-    help='Hydrological variable to predict (default: both)'
+    type=click.Choice(['qtot_mean', 'qr', 'hydro', 'capacity_factor']),
+    default='hydro',
+    help='Variable to predict: qtot_mean, qr, hydro (both hydrological), or capacity_factor (default: hydro)'
 )
 @click.option(
     '--suban/--no-suban',
