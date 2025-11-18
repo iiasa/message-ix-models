@@ -1,11 +1,21 @@
 import pytest
 
+_sd = ["--style=directives"]
+
 
 @pytest.mark.parametrize(
     "sbatch_opts, env",
     (
-        (["--username=u", "--venv=/path/to/venv"], {}),  # Use CLI options
-        ([], {"USER": "u", "VIRTUAL_ENV": "/path/to/venv"}),  # Options from env vars
+        # All dry-run
+        (_sd + ["--username=u", "--venv=/path/to/venv"], {}),  # Use CLI options
+        (_sd, {"USER": "u", "VIRTUAL_ENV": "/path/to/venv"}),  # Options from env vars
+        (_sd + ["--remote", "--username=u", "--venv=/path/to/venv"], {}),
+        # With --go fails because the default config references a non-existent host
+        pytest.param(
+            _sd + ["--remote", "--username=u", "--venv=/path/to/venv", "--go"],
+            {},
+            marks=pytest.mark.xfail(raises=RuntimeError),
+        ),
     ),
 )
 def test_cli(monkeypatch, tmp_path, mix_models_cli, sbatch_opts, env) -> None:
@@ -28,7 +38,7 @@ def test_cli(monkeypatch, tmp_path, mix_models_cli, sbatch_opts, env) -> None:
     # Template is rendered correctly
     for line in (
         "#SBATCH --mail-user=u@iiasa.ac.at",
-        f"#SBATCH -o {home}/out/solve_%J.out",
+        f"#SBATCH --output={home}/slurm/solve_%J.out",
         "source /path/to/venv/bin/activate",
         "export IXMP_DATA=/path/to/venv/share/ixmp",
         "mix-models --opt0=0 foo --opt1=1 bar --opt2=2 baz",
