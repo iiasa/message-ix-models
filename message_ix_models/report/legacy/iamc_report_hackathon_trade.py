@@ -234,7 +234,7 @@ def report(
 
     # Based on the default config, populate func_dict, which
     # has all the function required for running the reporting.
-    DEFAULT_table_def = "message_data.tools.post_processing.default_tables_trade"
+    DEFAULT_table_def = "message_ix_models.report.legacy.default_tables_trade"
     dflt_tbl = __import__(DEFAULT_table_def, fromlist=[None])
     dflt_tbl.pp = pp
     dflt_tbl.mu = mu
