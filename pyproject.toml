@@ -141,7 +141,6 @@ module = [
   "colorama",
   "fabric",
   "message_data.*",
-  "plotnine",
   "pooch",
   "pycountry",
   # Indirectly via message_ix
