@@ -52,7 +52,7 @@ def gem_region(project_name: str | None = None, config_name: str | None = None):
 # Import files
 def import_gem(
     input_file: str | Path,
-    #input_sheet: str,
+    # input_sheet: str,
     trade_technology: str,
     flow_technology: str,
     flow_commodity: str,
@@ -84,7 +84,7 @@ def import_gem(
     data_path = os.path.join(p_drive, "MESSAGE_trade")
     gem_path = os.path.join(data_path, "Global Energy Monitor")
 
-    #df = pd.read_excel(os.path.join(gem_path, input_file), sheet_name=input_sheet)
+    # df = pd.read_excel(os.path.join(gem_path, input_file), sheet_name=input_sheet)
     df = pd.read_csv(os.path.join(gem_path, input_file))
 
     df = df[df["StopYear"].isnull()]  # Only continuing projects
@@ -180,15 +180,11 @@ def import_gem(
     export_dir = package_data_path("bilateralize", trade_technology)
     gem_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
 
-    trade_dir = os.path.join(
-        os.path.dirname(gem_dir_out), "edit_files"
-    )
+    trade_dir = os.path.join(os.path.dirname(gem_dir_out), "edit_files")
     flow_dir = os.path.join(
         os.path.dirname(gem_dir_out), "edit_files", "flow_technology"
     )
-    trade_dir_out = os.path.join(
-        os.path.dirname(gem_dir_out), "bare_files"
-    )
+    trade_dir_out = os.path.join(os.path.dirname(gem_dir_out), "bare_files")
     flow_dir_out = os.path.join(
         os.path.dirname(gem_dir_out), "bare_files", "flow_technology"
     )
