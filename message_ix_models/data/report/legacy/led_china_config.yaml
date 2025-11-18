@@ -1,5 +1,5 @@
 report_config:
-    table_def: "message_data.tools.post_processing.default_tables_trade"
+    table_def: "message_ix_models.report.legacy.default_tables_trade"
     aggr_def: "materials_dac_aggregates.csv"
     var_def: "materials_dac_variable_definitions.csv"
     #"default_variable_definitions.csv"
@@ -8,6 +8,17 @@ report_config:
     kyoto_hist: False
     lu_hist: False
 run_tables:
+    Prc:
+        root: Price
+        active: True
+        function: retr_price
+        args: {"units_CPrc_co2": "US$2010/tCO2",
+               "units_CPrc_co2_outp": "US$2010/t CO2", # Name of units in output file
+               "units_energy": "US$2010/GJ",
+               "units_energy_outp": "US$2010/GJ",
+               "units_CPrc_c": "US$2010/tC",
+               "conv_CPrc_co2_to_c": 0.03171,
+               "units_agri": "Index (2020 = 1)"}
     Enrgy_Trd:
         root: Trade
         active: True
@@ -17,4 +28,66 @@ run_tables:
                "units_emi_val": "billion US$2010/yr",
                "units_emi_vol": "Mt CO2-equiv/yr",
                "units_agri_vol": "million t DM/yr",
-               "units_for_vol": "million m3/yr"}
+               "units_for_vol": "million m3/yr",
+    }
+    Tec_Invst:
+        root: Investment|Energy Supply
+        active: True
+        function: retr_supply_inv
+        args: {"units_energy": "billion US$2010/yr",
+               "units_emi": "Mt CO2/yr",
+               "units_ene_mdl": "GWa"}
+    GDP:
+        root: GDP
+        active: True
+        function: retr_macro
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Cst:
+        root: Cost
+        active: True
+        function: retr_cost
+        condition: scen.var("COST_NODAL_NET").empty
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Enrgy_PE:
+        root: Primary Energy
+        active: True
+        function: retr_pe
+        args: {"units": "EJ/yr"}
+    Enrgy_PE_sub:
+        root: Primary Energy (substitution method)
+        active: False
+        function: retr_pe
+        args: {"units": "EJ/yr",
+               "method": "substitution"}
+    Enrgy_FE:
+        root: Final Energy
+        active: True
+        function: retr_fe
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_elec:
+        root: Secondary Energy|Electricity
+        active: True
+        function: retr_SE_elecgen
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_heat:
+        root: Secondary Energy|Heat
+        active: True
+        function: retr_SE_district_heat
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_syn:
+        root: Secondary Energy
+        active: True
+        function: retr_SE_synfuels
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_gas:
+        root: Secondary Energy|Gases
+        active: True
+        function: retr_SE_gases
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_solid:
+        root: Secondary Energy|Solids
+        active: True
+        function: retr_SE_solids
+        args: {"units": "EJ/yr"}
