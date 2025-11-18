@@ -203,7 +203,10 @@ else:  # pragma: no cover  (needs message_data)
 
 for name in submodules:
     # Import the module and retrieve the click.Command object
-    __import__(name)
+    try:
+        __import__(name)
+    except ImportError as e:
+        print(e)
     cmd = getattr(sys.modules[name], "cli")
 
     # Avoid replacing message-ix-models CLI with message_data CLI
