@@ -71,7 +71,7 @@ def generate_cfdict(
         project_name: Name of project (e.g., 'newpathways')
         config_name: Name of config file
     """
-    dict_dir = package_data_path("node",message_regions + ".yaml")
+    dict_dir = package_data_path("node", message_regions + ".yaml")
     with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
