@@ -20,7 +20,7 @@ prepare_edit_files(project_name = 'led_china',
 constraint_pars = ["initial_activity_lo", "initial_activity_up",
                    "growth_activity_lo", "growth_activity_up"]
 data_path = package_data_path("bilateralize")
-for tec in config['covered_trade_technologies']:
+for tec in config['constraint_values'].keys():
     for par in constraint_pars:
         df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
         if par in ["initial_activity_lo", "initial_activity_up"]:
