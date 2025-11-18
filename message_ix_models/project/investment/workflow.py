@@ -292,6 +292,7 @@ def build_coc(context, scenario):
     """Add new inv_cost parameters with disaggregated cost of capital."""
 
     import pandas as pd
+    import re
 
     from message_ix_models.util import package_data_path
 
@@ -303,20 +304,66 @@ def build_coc(context, scenario):
     # Get the scenario name (which is the combined scenario name)
     scenario_name = scenario.scenario
 
-    # Try to find the investment cost file for this specific scenario
-    # The file should be named: inv_cost_{scenario_name}.csv
-    inv_cost_path = data_dir / f"inv_cost_{scenario_name}.csv"
+    # Extract SSP and CF parts from scenario name to match file names
+    # Extract SSP part (ssp1, ssp2, etc.)
+    ssp_match = re.search(r"(ssp\d+)", scenario_name.lower())
+    if not ssp_match:
+        raise ValueError(
+            f"Could not extract SSP name from scenario: {scenario_name}. "
+            f"Expected pattern like 'ssp1_*' or 'ssp2_*'"
+        )
+    ssp_name = ssp_match.group(1)
+    
+    # Dynamically extract CF patterns from available files
+    inv_cost_files = list(data_dir.glob("inv_cost_*.csv"))
+    cf_patterns = set()
+    
+    # Extract CF names from filenames (pattern: inv_cost_ssp*_{cf_name}.csv)
+    for file_path in inv_cost_files:
+        filename = file_path.stem  # Get filename without extension
+        # Match pattern: inv_cost_ssp\d+_(.*)
+        match = re.match(r"inv_cost_ssp\d+_(.+)", filename)
+        if match:
+            cf_patterns.add(match.group(1))
+    
+    if not cf_patterns:
+        raise FileNotFoundError(
+            f"No investment cost files found matching pattern 'inv_cost_ssp*_*.csv' in {data_dir}"
+        )
+    
+    cf_patterns_sorted = sorted(cf_patterns, key=len, reverse=True)
+    
+    # Extract CF part from scenario name by matching against available patterns
+    cf_name = None
+    scenario_lower = scenario_name.lower()
+    
+    for cf_pattern in cf_patterns_sorted:
+        if cf_pattern.lower() in scenario_lower:
+            cf_name = cf_pattern
+            break
+    
+    if not cf_name:
+        raise ValueError(
+            f"Could not extract CF name from scenario: {scenario_name}. "
+            f"Available CF patterns: {sorted(cf_patterns)}. "
+            f"Scenario name should contain one of these patterns."
+        )
+    
+    # Construct the expected filename
+    expected_filename = f"inv_cost_{ssp_name}_{cf_name}.csv"
+    inv_cost_path = data_dir / expected_filename
 
     if not inv_cost_path.exists():
-        inv_cost_files = list(data_dir.glob("inv_cost_*.csv"))
-        if inv_cost_files:
-            # Use the first file found (could be made configurable)
-            inv_cost_path = inv_cost_files[0]
-            log.info(f"Using individual investment cost file: {inv_cost_path}")
-        else:
-            raise FileNotFoundError(f"No investment cost files found in {data_dir}")
+        raise FileNotFoundError(
+            f"Investment cost file not found for scenario '{scenario_name}'. "
+            f"Expected: {expected_filename} in {data_dir}. "
+            f"Extracted SSP: {ssp_name}, CF: {cf_name}"
+        )
 
-    log.info(f"Loading investment cost data from {inv_cost_path}")
+    log.info(
+        f"Loading investment cost data from {inv_cost_path.name} "
+        f"for scenario {scenario_name} (matched: ssp={ssp_name}, cf={cf_name})"
+    )
     inv_cost_df = pd.read_csv(inv_cost_path)
 
     # Prepare the data for MESSAGEix
