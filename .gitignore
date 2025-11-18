@@ -157,7 +157,8 @@ cache/
 # GDX and input files
 */data/bilateralize/gdx/*
 */data/bilateralize/diagnostics/*
-*/projects/*/diagnostics/*
+*/project/*/diagnostics/*
+*/project/*/reporting/*
 */data/bilateralize/*/edit_files/*
 */data/bilateralize/*/bare_files/*
 */data/bilateralize/*/GEM/*
