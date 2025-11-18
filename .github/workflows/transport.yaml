@@ -62,7 +62,7 @@ jobs:
     - name: Assemble JSON payload
       run: |
         echo '{
-          "ref": "${{ github.ref }}",
+          "ref": "transport/2025-w44",
           "base": "${{ env.base }}",
           "from-step": "${{ env.from-step }}",
           "labels": ${{ env.labels }}
