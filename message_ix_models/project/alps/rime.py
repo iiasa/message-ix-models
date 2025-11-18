@@ -26,14 +26,15 @@ GMT < 0.6°C occurs.
 
 import numpy as np
 import pandas as pd
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 from scipy.stats import norm
 
 from rime.rime_functions import predict_from_gmt
-from rimeX.stats import fit_dist
 from message_ix_models.util import package_data_path
 from .weighted_cvar import compute_weighted_cvar
+from .utils import fit_dist
 
 # START YEAR FOR RIME PREDICTIONS
 # Set to 2025 to avoid early years with GMT < 0.6°C (minimum GMT with empirical support)
