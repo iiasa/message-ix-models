@@ -1340,7 +1340,7 @@ def prepare_edit_files(
         costdf["technology"] = costdf["technology"].str.replace("fueloil_", "foil_")
 
         for tec in [i for i in covered_tec if i != "gas_piped"]:
-            log.info("Add variable cost for " + tec)
+            log.info("Add fix cost for " + tec)
 
             if "piped" in tec:
                 tec_shipped = tec.replace("piped", "shipped")
@@ -1358,7 +1358,7 @@ def prepare_edit_files(
                 os.path.join(data_path, tec, "edit_files", "input.csv")
             )
             input_df = input_df[
-                ["node_loc", "technology", "year_act", "year_vtg", "mode", "time"]
+                ["node_loc", "technology", "year_act", "year_vtg"] # "mode", "time"
             ].drop_duplicates()
             add_df = input_df.merge(
                 add_df,
@@ -1367,16 +1367,12 @@ def prepare_edit_files(
                     "technology",
                     "year_act",
                     "year_vtg",
-                    "mode",
-                    "time",
                 ],
                 right_on=[
                     "node_loc",
                     "technology",
                     "year_act",
                     "year_vtg",
-                    "mode",
-                    "time",
                 ],
                 how="left",
             )
@@ -1392,9 +1388,12 @@ def prepare_edit_files(
 
             add_df = add_df[~add_df["technology"].str.contains("_imp")]
 
+            add_df = add_df[["node_loc", "technology", "year_act", "year_vtg", "value", "unit"]]
+            add_df = add_df.drop_duplicates()
+
             add_df.to_csv(
-                os.path.join(data_path, tec, "edit_files", "var_cost.csv"), index=False
+                os.path.join(data_path, tec, "edit_files", "fix_cost.csv"), index=False
             )
             add_df.to_csv(
-                os.path.join(data_path, tec, "bare_files", "var_cost.csv"), index=False
+                os.path.join(data_path, tec, "bare_files", "fix_cost.csv"), index=False
             )
