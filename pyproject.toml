@@ -139,6 +139,7 @@ ignore_errors = true
 # Packages/modules for which no type hints are available
 module = [
   "colorama",
+  "fabric",
   "message_data.*",
   "plotnine",
   "pooch",
