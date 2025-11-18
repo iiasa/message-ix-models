@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
 
-from message_ix_models.model.transport import build, testing
+from message_ix_models.model.transport import Config, build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
+from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.model.transport.data import (
+    LoadFactorLDV,
     MultiFile,
     collect_structures,
     read_structures,
@@ -17,6 +19,16 @@ class TestMultiFile:
     def test_filename(self) -> None:
         with pytest.raises(NotImplementedError):
             MultiFile().filename
+
+
+class TestLoadFactorLDV:
+    @pytest.mark.parametrize("code", get_cl_scenario())
+    def test_filename(self, code) -> None:
+        """:attr:`LoadFactorLDV.filename` works for all defined scenario codes."""
+        obj = LoadFactorLDV(config=Config(_code=code), nodes="R12")
+        result = obj.filename
+
+        assert result.endswith(".csv")
 
 
 @MARK["sdmx#230"]
