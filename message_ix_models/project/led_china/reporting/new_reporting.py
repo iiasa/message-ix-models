@@ -26,20 +26,25 @@ def load_config(name: str) -> "Config":
 
 key_base_trade = Key("out:nl-nd-t-ya-c") # TODO: remote t
 
+BILATERAL_FLOWS = 
+dict(
+    Biomass = ["biomass_shipped"],
+    Coal = ["coal_shipped"],
+    Oil = ["crudeoil_shipped", "crudeoil_piped"],
+    Gas = ["gas_piped", "LNG_shipped"],
+)
 CONVERT_IAMC = (
     # These are variables that represent trade flows in model outputs
     dict(
         variable="trade gross imports",
-        base= key_base_trade + "trade",
+        base= key_base_trade + "tradeunits",
         rename={"nd": "region", "ya": "year"},
         var=["Gross Imports", "nl", "c"],
-        unit="EJ/yr",
         ),
     dict(
         variable="trade gross exports",
-        base=key_base_trade + "trade",
+        base=key_base_trade + "tradeunits",
         var=["Gross Exports", "nd","c"],
-        unit="EJ/yr",
     ))
 
 def convert_iamc(c: "genno.Computer"
@@ -56,6 +61,7 @@ def convert_iamc(c: "genno.Computer"
     # Concatenate IAMC-format tables
     k = Key("trade", tag="iamc")
     c.add(k, "concat", *keys)
+    #c.add(k+"units", "apply_units", k, units="GWa/yr")
 
 
 # Call reporter
@@ -68,13 +74,16 @@ rep = Reporter.from_scenario(scenario)
 trade_tecs = [t for t in scenario.set("technology") if "_exp_" in t]
 rep.add("t::trade filters", genno.quote(dict(t = trade_tecs)))
 rep.add(key_base_trade + "trade", "select", key_base_trade, "t::trade filters", sums = True)
+rep.add(key_base_trade + "tradeunits", "apply_units", key_base_trade + "trade", units="GWa/yr")
 
 convert_iamc(rep) # bring in exports as IAMC format
 
-base_df = rep.get("message::default")
-base_df.to_csv(package_data_path('led_china', 'reporting', 'base_message.csv'))
+#base_df = rep.get("message::default")
+#base_df.to_csv(package_data_path('led_china', 'reporting', 'base_message.csv'))
 
 ge = rep.get("trade gross exports::iamc")
+ge = ge.convert_unit("GWa / a", to = "EJ/yr")
+
 ge.to_csv(package_data_path('led_china', 'reporting', 'gross_exports', f'{scenario.model}_{scenario.scenario}.csv'))
 
 gi = rep.get("trade gross imports::iamc")
