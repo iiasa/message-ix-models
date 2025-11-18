@@ -7,10 +7,23 @@ from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
 
+import os
+
 # Import scenario and models
 config, config_path = load_config(project_name = 'led_china', config_name = 'config.yaml')
 models_scenarios = config['models_scenarios']
+data_path = package_data_path("bilateralize")
 
+# Clear bare files
+print("Clearing bare files")
+for tec in config['covered_trade_technologies']:
+    for file in os.listdir(os.path.join(data_path, tec, "bare_files")):
+        if os.path.isfile(os.path.join(data_path, tec, "bare_files", file)):
+            os.remove(os.path.join(data_path, tec, "bare_files", file))
+    for file in os.listdir(os.path.join(data_path, tec, "bare_files", "flow_technology")):
+        if os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", file)):
+            os.remove(os.path.join(data_path, tec, "bare_files", "flow_technology", file))
+    
 # Generate edit files
 prepare_edit_files(project_name = 'led_china', 
                    config_name = 'config.yaml',
@@ -19,7 +32,6 @@ prepare_edit_files(project_name = 'led_china',
 # Add constraints to the dictionary
 constraint_pars = ["initial_activity_lo", "initial_activity_up",
                    "growth_activity_lo", "growth_activity_up"]
-data_path = package_data_path("bilateralize")
 for tec in config['constraint_values'].keys():
     for par in constraint_pars:
         df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
