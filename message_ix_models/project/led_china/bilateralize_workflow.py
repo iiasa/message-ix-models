@@ -15,7 +15,25 @@ models_scenarios = config['models_scenarios']
 prepare_edit_files(project_name = 'led_china', 
                    config_name = 'config.yaml',
                    P_access = True)
-                   
+
+# Add constraints to the dictionary
+constraint_pars = ["initial_activity_lo", "initial_activity_up",
+                   "growth_activity_lo", "growth_activity_up"]
+data_path = package_data_path("bilateralize")
+for tec in config['covered_trade_technologies']:
+    for par in constraint_pars:
+        df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
+        if par in ["initial_activity_lo", "initial_activity_up"]:
+            df["value"] = 2
+        if par in ["growth_activity_lo", "growth_activity_up"]:
+            constraint_value = config['constraint_values'][tec][par]
+            if isinstance(constraint_value, dict):
+                for region in constraint_value.keys():
+                    df.loc[df["node_loc"] == region, "value"] = constraint_value[region]
+            else:
+                df["value"] = constraint_value
+        df.to_csv(os.path.join(data_path, tec, "bare_files", par + ".csv"), index=False)
+
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'led_china', 
                               config_name = 'config.yaml')

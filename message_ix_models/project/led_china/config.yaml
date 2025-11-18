@@ -18,21 +18,21 @@ models_scenarios:
   SSP2_Baseline:
     model: SSP_SSP2_v6.2
     scenario: baseline
-  SSP2_2C:
-    model: SSP_SSP2_v6.2
-    scenario: baseline_1000f
-  SSP2_Commitments:
-    model: SSP_SSP2_v6.2
-    scenario: SSP2 - Low Emissions
-  LED_Baseline:
-    model: SSP_LED_v6.2
-    scenario: baseline
-  LED_2C:
-    model: SSP_LED_v6.2
-    scenario: baseline_1000f
-  LED_Commitments:
-    model: SSP_LED_v6.2
-    scenario: INDC2030i_uncon_SSP2 - Low Emissions
+  #SSP2_2C:
+  #  model: SSP_SSP2_v6.2
+  #  scenario: baseline_1000f
+  #SSP2_Commitments:
+  #  model: SSP_SSP2_v6.2
+  #  scenario: SSP2 - Low Emissions
+  #LED_Baseline:
+  #  model: SSP_LED_v6.2
+  #  scenario: baseline
+  #LED_2C:
+  #  model: SSP_LED_v6.2
+  #  scenario: baseline_1000f
+  #LED_Commitments:
+  #  model: SSP_LED_v6.2
+  #  scenario: INDC2030i_uncon_SSP2 - Low Emissions
   
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
@@ -106,3 +106,66 @@ define_parameters:
       - fix_cost
       - var_cost
       - capacity_factor
+
+# CONSTRAINT PARAMETERS
+constraint_values:
+  gas_piped:
+    growth_activity_lo: -0.05
+    growth_activity_up: 0.05
+  LNG_shipped:
+    growth_activity_lo: -0.05
+    growth_activity_up: 0.05    
+  coal_shipped:
+    growth_activity_lo: -0.1
+    growth_activity_up: 0.1
+  crudeoil_shipped:
+    growth_activity_lo: 
+      R12_AFR: -0.05
+      R12_CHN: -0.1
+      R12_RCPA: -0.1
+      R12_EEU: -0.05
+      R12_FSU: -0.05
+      R12_LAM: -0.1
+      R12_MEA: -0.15
+      R12_NAM: -0.1
+      R12_PAO: -0.05
+      R12_PAS: -0.05
+      R12_SAS: -0.05
+      R12_WEU: -0.05
+    growth_activity_up:
+      R12_AFR: 0.3
+      R12_CHN: 0.05
+      R12_RCPA: 0.05
+      R12_EEU: 0.1
+      R12_FSU: 0.05
+      R12_LAM: 0.05
+      R12_MEA: 0.12
+      R12_NAM: 0.05
+      R12_PAO: 0.1
+      R12_PAS: 0.1
+      R12_SAS: 0.05
+      R12_WEU: 0.1
+  crudeoil_piped:
+    growth_activity_lo: -0.1
+    growth_activity_up: 0.1
+  eth_shipped:
+    growth_activity_lo: -0.05
+    growth_activity_up: 0.1
+  foil_shipped:
+    growth_activity_lo: -0.05
+    growth_activity_up: 0.1
+  foil_piped:
+    growth_activity_lo: -0.05
+    growth_activity_up: 0.1
+  loil_shipped:
+    growth_activity_lo: -0.1
+    growth_activity_up: 0.1
+  loil_piped:
+    growth_activity_lo: -0.1
+    growth_activity_up: 0.1
+  biomass_shipped:
+    growth_activity_lo: -0.05
+    growth_activity_up: 0.1
+  lh2_shipped:
+    growth_activity_lo: -0.05
+    growth_activity_up: 0.1
