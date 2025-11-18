@@ -21,7 +21,6 @@ from functools import lru_cache
 
 import pandas as pd
 from genno import Quantity
-from jaydebeapi import connect
 
 __all__ = [
     "get_afofi_commodity_shares",
@@ -107,6 +106,7 @@ def return_PERC_AFOFI() -> tuple[pd.DataFrame, pd.DataFrame]:
         - Values like 0.152, i.e. **shares**: note this contradicts "perc"ent in the
           function and column name, which would suggest percent values like 15.2.
     """
+    from jaydebeapi import connect
 
     # Connect to database
     conn = connect(
