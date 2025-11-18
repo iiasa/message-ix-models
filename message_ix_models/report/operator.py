@@ -4,24 +4,28 @@ import logging
 import re
 from collections.abc import (
     Callable,
+    Collection,
     Hashable,
     Iterable,
     Mapping,
     MutableMapping,
     Sequence,
 )
-from functools import reduce
+from functools import cache, reduce
 from itertools import filterfalse, product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import genno
 import ixmp
+import numpy as np
 import pandas as pd
 from genno.operator import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 
+from message_ix_models.model.structure import get_codelist
 from message_ix_models.util import MappingAdapter, add_par_data, nodes_ex_world
+from message_ix_models.util.sdmx import leaf_ids
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -46,11 +50,13 @@ __all__ = [
     "compound_growth",
     "filter_ts",
     "from_url",
+    "get_commodity_groups",
     "get_ts",
     "gwp_factors",
     "make_output_path",
     "merge_data",
     "model_periods",
+    "node_glb",
     "nodes_ex_world",
     "nodes_world_agg",
     "quantity_from_iamc",
@@ -58,6 +64,7 @@ __all__ = [
     "select_allow_empty",
     "select_expand",
     "share_curtailment",
+    "zeros_like",
 ]
 
 
@@ -156,6 +163,26 @@ def filter_ts(df: pd.DataFrame, expr: re.Pattern, *, column="variable") -> pd.Da
     )
 
 
+@cache
+def get_commodity_groups() -> dict[Literal["c"], dict[str, list[str]]]:
+    """Return groups of commodities for aggregation.
+
+    The structure is retrieved from :ref:`commodity-yaml` using :func:`.leaf_ids`. The
+    group IDs include only those commodities from the code list with children. The
+    group members include only 'leaf' codes via :func:`.leaf_ids`; any intermediate
+    codes that have children are expanded to the list of those children.
+
+    Returns
+    -------
+    dict
+        with one top-level key, 'c', and at the second level mapping from group IDs to
+        their components. This is suitable for use as the :py:`groups` argument to
+        :func:`genno.operator.aggregate`.
+    """
+    cl = get_codelist("commodity")
+    return {"c": {c.id: leaf_ids(c) for c in filter(lambda c: len(c.child), cl)}}
+
+
 def get_ts(
     scenario: ixmp.Scenario,
     filters: dict | None = None,
@@ -231,6 +258,11 @@ def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:
     """
     y0 = cat_year.query("type_year == 'firstmodelyear'")["year"].item()
     return list(filter(lambda year: y0 <= year, y))
+
+
+def node_glb(nodes: list[str]) -> dict[str, list[str]]:
+    """Return :py:`{"n": ["R##_GLB"]}` derived from existing `nodes`."""
+    return {"n": ["".join(str(nodes_ex_world(nodes)[0]).partition("_")[:2] + ("GLB",))]}
 
 
 def nodes_world_agg(
@@ -465,3 +497,15 @@ def share_curtailment(curt, *parts):
     multiple technologies; one for each of *parts*.
     """
     return parts[0] - curt * (parts[0] / sum(parts))
+
+
+def zeros_like(qty: "TQuantity", *, drop: Collection[str] = []) -> "TQuantity":
+    """Return a quantity with the same coords as `qty`, filled with zeros."""
+    coords, shape = {}, []
+    for d, labels in qty.coords.items():
+        if d in drop:
+            continue
+        coords[d] = sorted(labels.data)
+        shape.append(len(labels))
+
+    return type(qty)(np.zeros(shape), coords=coords, units=qty.units)

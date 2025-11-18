@@ -6,7 +6,6 @@ biomass:
 coal:
   name: Coal
   units: GWa
-  report: Solids|Fossil
   # NB same value as "Coking coal"; this choice is arbitrary
   # NB in message_doc, this appears as "Hard coal", but this
   #    term usually refers to anthracite, which has a higher
@@ -32,6 +31,45 @@ coal:
   - PATFUEL
   - PEAT
   - SUBCOAL
+
+crude_1:
+  description: Crude oil resource.
+
+crude_2:
+  description: Crude oil resource.
+
+crude_3:
+  description: Crude oil resource.
+
+Oil|Conventional:
+  description: Reporting aggregate for oil resources.
+  report-only: true
+  child: [crude_1, crude_2, crude_3]
+
+crude_4:
+  description: Crude oil resource.
+
+crude_5:
+  description: Crude oil resource.
+
+crude_6:
+  description: Crude oil resource.
+
+crude_7:
+  description: Crude oil resource.
+
+crude_8:
+  description: Crude oil resource.
+
+Oil|Unconventional:
+  description: Reporting aggregate for oil resources.
+  report-only: true
+  child: [crude_4, crude_5, crude_6, crude_7, crude_8]
+
+Oil:
+  description: Reporting aggregate for oil resources.
+  report-only: true
+  child: [Oil|Conventional, Oil|Unconventional]
 
 crudeoil:
   name: Crude oil
@@ -76,9 +114,51 @@ fueloil:
 gas:
   name: Natural Gas
   units: GWa
-  report: Gases
   ipcc-1996-name: "Natural Gas (Dry)"
   iea-eweb-product: [NATGAS]
+
+gas_1:
+  description: Natural gas resource.
+
+gas_2:
+  description: Natural gas resource.
+
+gas_3:
+  description: Natural gas resource.
+
+gas_4:
+  description: Natural gas resource.
+
+Gas|Conventional:
+  description: Reporting aggregate for gas resources.
+  report-only: true
+  child: [gas_1, gas_2, gas_3, gas_4]
+
+gas_5:
+  description: Natural gas resource.
+
+gas_6:
+  description: Natural gas resource.
+
+gas_7:
+  description: Natural gas resource.
+
+gas_8:
+  description: Natural gas resource.
+
+Gas|Unconventional:
+  description: Reporting aggregate for gas resources.
+  report-only: true
+  child: [gas_5, gas_6, gas_7, gas_8]
+
+_Gas:
+  description: >-
+    Reporting aggregate for gas resources.
+    The ID is prefixed with an underscore to distinguish from "gas",
+    which is not a component.
+  report-only: true
+  report: Gas
+  child: [Gas|Conventional, Gas|Unconventional]
 
 hydrogen:
   name: Gaseous hydrogen
@@ -115,6 +195,15 @@ lignite:
   name: Lignite
   ipcc-1996-name: "Lignite"
 
+_Coal:
+  description: >- 
+    Reporting aggregate for coal resources.
+    The ID is prefixed with an underscore to distinguish from "coal",
+    which is only 1 of multiple children.
+  report-only: true
+  report: Coal
+  child: [coal, lignite]
+
 methanol:
   name: Methanol
   units: GWa
@@ -142,6 +231,15 @@ transport:
   level: useful
   units: GWa
   iea-eweb-flow: [DOMESAIR, DOMESNAV, RAIL, ROAD, TRNONSPE]
+
+uranium:
+  description: Uranium resource.
+
+_Uranium:
+  description: Reporting aggregate for uranium resources.
+  report-only: true
+  report: Uranium
+  child: [uranium]
 
 # The following codes also appear in a recent (2020-02-28) SSP2 scenario, but
 # are not currently used by model.bare.create_res.
@@ -205,14 +303,6 @@ transport:
 # cooling__nuc_lc
 # cooling__solar_th_ppl
 # CrpLnd
-# crude_1
-# crude_2
-# crude_3
-# crude_4
-# crude_5
-# crude_6
-# crude_7
-# crude_8
 # Def_CO2_G4M
 # Def_CO2_GLO
 # dumagr
@@ -260,15 +350,6 @@ transport:
 # freshwater_instream
 # FuelWood
 # FuelWood_G4M
-# gas
-# gas_1
-# gas_2
-# gas_3
-# gas_4
-# gas_5
-# gas_6
-# gas_7
-# gas_8
 # gas_afr
 # gas_cpa
 # gas_eeu
@@ -355,7 +436,6 @@ transport:
 # u5t
 # upstream_landuse
 # uq
-# uranium
 # VOC_LandUseChangeEM
 # VOC_SavanBurnEM
 # water_constraint

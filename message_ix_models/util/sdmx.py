@@ -11,6 +11,7 @@ from enum import Enum, Flag, auto
 from enum import EnumMeta as EnumType
 from functools import cache
 from importlib.metadata import version
+from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 from warnings import warn
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
     import pint
     from genno import Computer, Key
     from sdmx.message import StructureMessage
+    from sdmx.model.common import Item
 
     from message_ix_models.types import KeyLike
 
@@ -804,6 +806,11 @@ def get_version(with_dev: bool | None = True) -> str:
     tmp, *_ = version(__package__.split(".")[0]).partition("+" if with_dev else ".dev")
 
     return str(common.Version(tmp))
+
+
+def leaf_ids(obj: "Item") -> list[str]:
+    """Recursively collect leaf IDs."""
+    return list(chain(*[leaf_ids(c) if len(c.child) else (c.id,) for c in obj.child]))
 
 
 def read(urn: str, base_dir: "PathLike | None" = None):

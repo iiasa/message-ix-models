@@ -1,6 +1,16 @@
 Tools for specific data sources
 *******************************
 
+.. _tools-cepii:
+
+“Centre d’études prospectives et d’informations internationales” (CEPII) (:mod:`.tools.cepii`)
+==============================================================================================
+
+.. currentmodule:: message_ix_models.tools.cepii
+
+.. automodule:: message_ix_models.tools.cepii
+   :members:
+
 .. _tools-gfei:
 
 Global Fuel Economy Initiative (GFEI) (:mod:`.tools.gfei`)

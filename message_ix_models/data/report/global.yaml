@@ -685,7 +685,7 @@ general:
 # All other technologies not in out::h2
 - key: out:*:se_0
   comp: select
-  inputs: [out]
+  inputs: [ out ]
   args:
     indexers:
       t: [h2_coal, h2_coal_ccs, h2_smr, h2_smr_ccs, h2_bio, h2_bio_ccs]
@@ -862,12 +862,12 @@ iamc:
 #   <<: *pe_iamc
 
 - variable: Primary Energy|Hydro
-  base: out:nl-t-ya-m-c-l:se
+  base: out:nl-t-ya-m-c-l:se_1+se
   select: {l: [secondary], t: [hydro]}
   <<: *pe_iamc
 
 - variable: Primary Energy|Nuclear
-  base: out:nl-t-ya-m-c-l:se
+  base: out:nl-t-ya-m-c-l:se_1+se
   select: {l: [secondary], t: [nuclear]}
   <<: *pe_iamc
 
@@ -1043,7 +1043,7 @@ iamc:
 report:
 - key: pe test
   members:
-#  - Primary Energy|Biomass::iamc
+  # - Primary Energy|Biomass::iamc
   - Primary Energy|Coal::iamc
   - Primary Energy|Gas::iamc
   - Primary Energy|Hydro::iamc

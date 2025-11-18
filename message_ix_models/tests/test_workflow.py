@@ -5,7 +5,6 @@ import pytest
 from message_ix import make_df
 
 from message_ix_models import Workflow, testing
-from message_ix_models.testing import MARK
 from message_ix_models.workflow import WorkflowStep, make_click_command, solve
 
 if TYPE_CHECKING:
@@ -92,7 +91,6 @@ def _wf(
     return wf
 
 
-@MARK[1]
 def test_make_click_command(
     request: "pytest.FixtureRequest", mix_models_cli: "CliRunner"
 ) -> None:

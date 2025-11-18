@@ -1,5 +1,6 @@
 """Tools for working with IAMC-structured data."""
 
+import re
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -17,9 +18,114 @@ if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
 __all__ = [
+    "compare",
     "describe",
     "iamc_like_data_for_query",
 ]
+
+
+def compare(
+    left: pd.DataFrame,
+    right: pd.DataFrame,
+    atol: float = 1e-3,
+    ignore=list[str | re.Pattern],
+) -> list[str]:
+    """Compare IAMC-structured data in `left` and `right`.
+
+    The returned messages may include:
+
+    - "No left data for model='...', scenario='...'".
+    - "No right data for model='...', scenario='...'".
+    - "variable='...': no left data"
+    - "variable='...': no right data"
+    - "variable='...': ### missing left entries"
+    - "variable='...': ### missing right entries"
+    - "variable='...': units mismatch: '...' != '...'"
+    - "variable='...': ### of ### values with |diff| > {atol}"
+    - "### matching of ### left and ### right values"
+
+    Parameters
+    ----------
+    left, right :
+        Data frames with columns 'model', 'scenario', 'region', 'variable', and 'year'
+        (that is, in 'long' IAMC structure).
+    atol :
+        Absolute tolerance for differences.
+    ignore :
+        Collection of regular expressions
+
+    Returns
+    -------
+    list of str
+        A collection of messages describing differences between `left` and `right`.
+    """
+    result = []
+    matching = 0
+
+    _ignore = [re.compile(pattern) for pattern in ignore]
+
+    def record(message: str, condition: bool | None = True) -> None:
+        if not condition or any(p.match(message) for p in _ignore):
+            return
+        result.append(message)
+
+    def checks(df: pd.DataFrame):
+        nonlocal matching
+        prefix = f"variable={df.variable.iloc[0]!r}:"
+
+        if df.value_left.isna().all():
+            record(f"{prefix} no left data")
+            return
+        elif df.value_right.isna().all():
+            record(f"{prefix} no right data")
+            return
+
+        tmp = df.eval("value_diff = value_right - value_left").eval(
+            "value_rel = value_diff / value_left"
+        )
+
+        na_left = tmp.isna()[["unit_left", "value_left"]]
+        if na_left.any(axis=None):
+            record(f"{prefix} {na_left.sum(axis=0).max()} missing left entries")
+            tmp = tmp[~na_left.any(axis=1)]
+        na_right = tmp.isna()[["unit_right", "value_right"]]
+        if na_right.any(axis=None):
+            record(f"{prefix} {na_right.sum(axis=0).max()} missing right entries")
+            tmp = tmp[~na_right.any(axis=1)]
+
+        units_left = set(tmp.unit_left.unique())
+        units_right = set(tmp.unit_right.unique())
+        record(
+            condition=units_left != units_right,
+            message=f"{prefix} units mismatch: {units_left} != {units_right}",
+        )
+
+        N0 = len(df)
+
+        mask1 = tmp.query("abs(value_diff) > @atol")
+        record(
+            condition=bool(len(mask1)),
+            message=f"{prefix} {len(mask1)} of {N0} values with |diff| > {atol}",
+        )
+        matching += N0 - len(mask1)
+
+    for (model, scenario), group_0 in left.merge(
+        right,
+        how="outer",
+        on=["model", "scenario", "variable", "region", "year"],
+        suffixes=("_left", "_right"),
+    ).groupby(["model", "scenario"]):
+        if group_0.value_left.isna().all():
+            record(f"No left data for model={model!r}, scenario={scenario!r}")
+        elif group_0.value_right.isna().all():
+            record(f"No right data for model={model!r}, scenario={scenario!r}")
+        else:
+            group_0.groupby(["variable"]).apply(checks)
+
+    result.append(
+        f"{matching} matching of {len(left)} left and {len(right)} right values"
+    )
+    return result
 
 
 def describe(data: pd.DataFrame, extra: str | None = None) -> StructureMessage:
