@@ -97,7 +97,6 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
     )
 
 
-@MARK[7]
 @build.get_computer.minimum_version
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
@@ -228,7 +227,6 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 
 
 @MARK["#375"]
-@MARK[7]
 @build.get_computer.minimum_version
 @workflow.generate.minimum_version
 @pytest.mark.parametrize(

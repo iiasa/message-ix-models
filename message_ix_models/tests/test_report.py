@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Hashable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -9,10 +10,21 @@ import pandas.testing as pdt
 import pytest
 from ixmp.testing import assert_logs
 
-from message_ix_models import ScenarioInfo, testing
-from message_ix_models.report import prepare_reporter, register, report, util
+from message_ix_models import Context, testing
+from message_ix_models.model.bare import get_spec
+from message_ix_models.report import (
+    NOT_IMPLEMENTED_IAMC,
+    prepare_reporter,
+    register,
+    report,
+    util,
+)
 from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.tools import iamc
 from message_ix_models.util import package_data_path
+
+if TYPE_CHECKING:
+    from message_ix import Reporter
 
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
@@ -249,27 +261,27 @@ def test_collapse(input, exp):
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
 
 
-def simulated_solution_reporter():
-    """Reporter with a simulated solution for snapshot 0.
-
-    This uses :func:`.add_simulated_solution`, so test functions that use it should be
-    marked with :py:`@to_simulate.minimum_version`.
-    """
+def simulated_solution_reporter(snapshot_id: int = 0) -> "Reporter":
+    """Reporter with a simulated solution for `snapshot_id`."""
     from message_ix import Reporter
 
+    # Generate a ScenarioInfo object with the model name, scenario name, and structure
+    # (set members) of the simulated scenario. This ensures that structure keys ("n",
+    # "y", etc.) are populated in `rep`.
+    ctx = Context()
+    ctx.model.regions = "R11"
+    ctx.model.years = "B"
+
+    info = get_spec(ctx).add
+    info.model = "MESSAGEix-GLOBIOM_1.1_R11_no-policy"
+    info.scenario = "baseline_v1"
+
+    # Path to a directory with unpacked snapshot data
+    p = package_data_path("test", f"snapshot-{snapshot_id}", f"{info.model}_baseline")
+
+    # Add the simulated solution to an empty Reporter
     rep = Reporter()
-
-    # Simulated solution can be added to an empty Reporter
-    add_simulated_solution(
-        rep,
-        ScenarioInfo(),
-        path=package_data_path(
-            "test",
-            "snapshot-0",
-            "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
-        ),
-    )
-
+    add_simulated_solution(rep, info, path=p)
     return rep
 
 
@@ -309,3 +321,27 @@ def test_prepare_reporter(test_context):
 
     # A number of keys were added
     assert 14299 <= len(rep.graph) - N
+
+
+def test_compare(test_context, snapshot_id: int = 1) -> None:
+    """Compare the output of genno-based and legacy reporting."""
+    from message_ix_models.report.key import all_iamc
+
+    # Obtain the output from reporting `key` on `snapshot_id`
+    rep = simulated_solution_reporter(snapshot_id)
+    test_context.report.modules.append("message_ix_models.report.compat")
+    prepare_reporter(test_context, reporter=rep)
+    # print(rep.describe(key)); assert False
+    obs = rep.get(all_iamc).as_pandas()  # Convert pyam.IamDataFrame → pd.DataFrame
+
+    # Retrieve expected results from file
+    exp = pd.read_csv(
+        package_data_path("test", "report", f"snapshot-{snapshot_id}.csv.gz"),
+        engine="pyarrow",
+    )
+
+    # Perform the comparison, ignoring some messages
+    messages = iamc.compare(exp, obs, ignore=NOT_IMPLEMENTED_IAMC)
+
+    # Other messages that were not explicitly ignored → some error
+    assert ["517 matching of 519792 left and 2160 right values"] == messages
