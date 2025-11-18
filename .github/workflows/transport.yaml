@@ -80,7 +80,6 @@ jobs:
       run: |
         echo '{
           "ref": "${{ github.ref }}",
-          "sha": "${{ github.sha }}",
           "base": "${{ env.base }}",
           "from-step": "${{ env.from-step }}",
           "labels": ${{ env.labels }}
