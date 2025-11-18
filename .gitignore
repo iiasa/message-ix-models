@@ -161,4 +161,5 @@ cache/
 */data/bilateralize/*/edit_files/*
 */data/bilateralize/*/bare_files/*
 */data/bilateralize/*/GEM/*
+*/data/bilateralize/*/reporting
 /message_ix_models/project/newpathways/diagnostics/data
