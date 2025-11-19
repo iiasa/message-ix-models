@@ -143,7 +143,7 @@ def run_magicc_cmd(**kwargs):
 @click.option(
     '--weighted/--no-weighted',
     default=False,
-    help='Compute importance-weighted expectations and CVaR (requires reference file)'
+    help='Compute importance-weighted expectations and CVaR (disabled by default: no significant effect detected)'
 )
 @click.option(
     '--n-runs',
@@ -166,6 +166,12 @@ def run_magicc_cmd(**kwargs):
     '--include-emulator-uncertainty/--no-include-emulator-uncertainty',
     default=False,
     help='Propagate RIME emulator uncertainty using stratified sampling (can be combined with --weighted)'
+)
+@click.option(
+    '--cvar-method',
+    type=click.Choice(['pointwise', 'coherent']),
+    default='coherent',
+    help='CVaR computation method: coherent (trajectory-based) or pointwise (independent per timestep) (default: coherent)'
 )
 def run_rime_cmd(**kwargs):
     """Run RIME predictions on MAGICC temperature output."""

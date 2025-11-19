@@ -36,7 +36,7 @@ MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "m
 def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_id=None,
              variable='both', output_dir=None, weighted=False, n_runs=None,
              cvar_levels=None, gwl_bin_width=0.5, include_emulator_uncertainty=False,
-             suban=False):
+             suban=False, cvar_method='coherent'):
     """Run RIME predictions on MAGICC temperature output.
 
     Args:
@@ -53,6 +53,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         gwl_bin_width: GWL bin width for importance weighting (default: 0.5°C)
         include_emulator_uncertainty: If True, propagate RIME emulator uncertainty using stratified sampling
         suban: If True, use seasonal (2-step) temporal resolution; if False, use annual (default: False)
+        cvar_method: CVaR computation method ('coherent' or 'pointwise', default: 'coherent')
     """
     if cvar_levels is None:
         cvar_levels = [10, 50, 90]
@@ -248,12 +249,12 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
 
                 # Results with configured weights (importance or uniform)
                 result_mean = compute_expectation(predictions, run_ids_array, weights=weights)
-                result_cvar = compute_rime_cvar(predictions, weights, run_ids_array, cvar_levels)
+                result_cvar = compute_rime_cvar(predictions, weights, run_ids_array, cvar_levels, method=cvar_method)
 
                 # Comparison: uniform weights
                 uniform_weights = np.ones(len(run_ids_array)) / len(run_ids_array)
                 uniform_mean = compute_expectation(predictions, run_ids_array, weights=None)
-                uniform_cvar = compute_rime_cvar(predictions, uniform_weights, run_ids_array, cvar_levels)
+                uniform_cvar = compute_rime_cvar(predictions, uniform_weights, run_ids_array, cvar_levels, method=cvar_method)
 
                 # Save results
                 if 'qtot' in var:
