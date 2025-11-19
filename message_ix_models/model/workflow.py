@@ -80,13 +80,12 @@ def solve(
        :obj:`True`.
     """
 
-    from message_data.scenario_generation.reserve_margin import res_marg
-    from message_data.tools.utilities import transfer_demands
-
     config = config or Config()
 
     # Set reserve margin values
     if config.reserve_margin:
+        from message_data.scenario_generation.reserve_margin import res_marg
+
         res_marg.main(scenario)
 
     # Explicit list of model variables for which to read data
@@ -98,6 +97,8 @@ def solve(
     if config.demand_scenario:
         # Retrieve DEMAND variable data from a different scenario and set as values
         # for the demand parameter
+        from message_data.tools.utilities import transfer_demands
+
         source = Scenario(scenario.platform, **config.demand_scenario)
         transfer_demands(source, scenario)
 
