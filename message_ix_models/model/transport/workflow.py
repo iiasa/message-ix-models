@@ -23,8 +23,9 @@ log = logging.getLogger(__name__)
 #: Default :class:`.workflow.Config` for solving MESSAGEix-Transport.
 #:
 #: - :py:`lpmethod=4, scaind=1` to overcome LP status 5 (optimal with unscaled
-#:   infeasibilities) when running on SSP(2024) base scenarios.
+#:   infeasibilities) when running on SSP(2024) base scenarios in some situations.
 #: - :py:`iis=1` to display verbose conflict information on infeasibility.
+#: - :py:`threads=8` for performance on UniCC.
 #: - :py:`tilim=45 * 60` to limit runtime to 45 minutes on IIASA-hosted GitHub Actions
 #:   runners.
 SOLVE_CONFIG = WorkflowConfig(
@@ -33,8 +34,9 @@ SOLVE_CONFIG = WorkflowConfig(
         model="MESSAGE",
         solve_options=dict(
             iis=1,
-            lpmethod=4,
-            scaind=1,
+            lpmethod=6,
+            scaind=0,
+            threads=8,
             tilim=45 * 60,
         ),
     ),
