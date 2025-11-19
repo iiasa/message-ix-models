@@ -246,6 +246,11 @@ class Config:
     #: :attr:`verbose` in distinct ways.
     verbose: bool = False
 
+    def __post_init__(self):
+        from . import cache
+
+        cache.COMPUTER.graph["config"]["cache_path"] = self._cache_path
+
     def __deepcopy__(self, memo):
         # Hide "_mp" from the copy
         mp = self._mp
