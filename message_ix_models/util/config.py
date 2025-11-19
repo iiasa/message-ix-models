@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 
 ixmp.config.register("no message_data", bool, False)
 ixmp.config.register("message local data", Path, Path.cwd())
+ixmp.config.register("slurm remote args", str, "ssh\0MISSING.iiasa.ac.at")
 
 
 def _cache_path_factory() -> Path:
