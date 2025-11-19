@@ -35,6 +35,7 @@ SOLVE_CONFIG = WorkflowConfig(
             iis=1,
             lpmethod=4,
             scaind=1,
+            threads=8,
             tilim=45 * 60,
         ),
     ),
