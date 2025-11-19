@@ -31,7 +31,6 @@ from pathlib import Path
 from typing import Optional
 from scipy.stats import norm
 
-from rime.rime_functions import predict_from_gmt
 from message_ix_models.util import package_data_path
 from .weighted_cvar import compute_weighted_cvar
 from .utils import fit_dist
@@ -42,6 +41,24 @@ START_YEAR = 2025
 
 # RIME datasets directory
 RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
+
+
+def _separate_metadata_and_years(df: pd.DataFrame) -> tuple[list, pd.DataFrame]:
+    """Separate year columns from metadata columns in RIME output DataFrames.
+
+    Year columns are integers (e.g., 2020, 2021, ..., 2100).
+    Metadata columns are everything else (BASIN_ID, NAME, REGION, etc.).
+
+    Args:
+        df: DataFrame with mixed year and metadata columns
+
+    Returns:
+        (year_columns, metadata_df): List of year column names and DataFrame of metadata columns
+    """
+    year_columns = [col for col in df.columns if isinstance(col, (int, np.integer))]
+    metadata_cols = [col for col in df.columns if col not in year_columns]
+    metadata_df = df[metadata_cols].copy() if metadata_cols else pd.DataFrame(index=df.index)
+    return year_columns, metadata_df
 
 
 def split_basin_macroregion(
@@ -219,6 +236,9 @@ def predict_rime(
         # Predict thermoelectric capacity factor (R12 regional)
         capacity_predictions = predict_rime(gmt_array, 'capacity_factor', percentile='p50')
     """
+    # Lazy import to avoid loading RIME at module import time
+    from rime.rime_functions import predict_from_gmt
+
     # Get dataset path using shared helper
     dataset_path = get_rime_dataset_path(variable, temporal_res)
 
@@ -479,6 +499,9 @@ def batch_rime_predictions(
         - Basin-level variables (qtot_mean, qr): 157 rows × year columns
         - Regional variables (capacity_factor): 12 rows × year columns
     """
+    # Lazy import to avoid loading RIME at module import time
+    from rime.rime_functions import predict_from_gmt
+
     # Extract GMT timeseries for all runs
     gmt_timeseries = []
     years = None
@@ -533,6 +556,9 @@ def _extract_percentile_predictions(
     Returns:
         Dict mapping percentile -> predictions array (n_gmt, n_basins)
     """
+    # Lazy import to avoid loading RIME at module import time
+    from rime.rime_functions import predict_from_gmt
+
     results = {}
     for p in percentiles:
         predictions = np.array(
@@ -713,10 +739,10 @@ def batch_rime_predictions_with_percentiles(
             )
 
     # Reshape all to 3D: (n_runs × n_timesteps × n_regions)
-    n_regions = predictions_p10_flat.shape[1]
-    predictions_p10_3d = predictions_p10_flat.reshape(n_runs, n_timesteps, n_regions)
-    predictions_p50_3d = predictions_p50_flat.reshape(n_runs, n_timesteps, n_regions)
-    predictions_p90_3d = predictions_p90_flat.reshape(n_runs, n_timesteps, n_regions)
+    n_rime_basins = predictions_p10_flat.shape[1]  # 157 RIME basins
+    predictions_p10_3d = predictions_p10_flat.reshape(n_runs, n_timesteps, n_rime_basins)
+    predictions_p50_3d = predictions_p50_flat.reshape(n_runs, n_timesteps, n_rime_basins)
+    predictions_p90_3d = predictions_p90_flat.reshape(n_runs, n_timesteps, n_rime_basins)
 
     # ASSERTION: Verify percentile ordering (p10 ≤ p50 ≤ p90)
     if not np.all(predictions_p10_3d <= predictions_p50_3d):
@@ -726,7 +752,44 @@ def batch_rime_predictions_with_percentiles(
         n_violations = np.sum(predictions_p50_3d > predictions_p90_3d)
         print(f"WARNING: {n_violations} cases where p50 > p90")
 
-    # Convert to MESSAGE format DataFrames
+    # Expand from 157 RIME basins to 217 MESSAGE rows (basin-region fragments)
+    # Apply split_basin_macroregion to each run
+    n_message_rows = 217
+    predictions_p10_expanded = np.full((n_runs, n_timesteps, n_message_rows), np.nan)
+    predictions_p50_expanded = np.full((n_runs, n_timesteps, n_message_rows), np.nan)
+    predictions_p90_expanded = np.full((n_runs, n_timesteps, n_message_rows), np.nan)
+
+    for i in range(n_runs):
+        # Transpose from (n_timesteps, n_rime_basins) to (n_rime_basins, n_timesteps) for split_basin_macroregion
+        predictions_p10_expanded[i, :, :] = split_basin_macroregion(
+            predictions_p10_3d[i].T, basin_mapping
+        ).T
+        predictions_p50_expanded[i, :, :] = split_basin_macroregion(
+            predictions_p50_3d[i].T, basin_mapping
+        ).T
+        predictions_p90_expanded[i, :, :] = split_basin_macroregion(
+            predictions_p90_3d[i].T, basin_mapping
+        ).T
+
+    # Replace original arrays with expanded versions
+    predictions_p10_3d = predictions_p10_expanded
+    predictions_p50_3d = predictions_p50_expanded
+    predictions_p90_3d = predictions_p90_expanded
+    n_regions = n_message_rows  # Update for downstream code
+
+    # Load basin mapping for metadata
+    if basin_mapping is None:
+        from message_ix_models.util import package_data_path
+        basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
+        basin_df = pd.read_csv(basin_file)
+        basin_mapping = basin_df[basin_df["model_region"] == "R12"].copy()
+        basin_mapping = basin_mapping.reset_index(drop=True)
+
+    # Extract basin metadata
+    metadata_cols = ['BASIN_ID', 'NAME', 'BASIN', 'REGION', 'BCU_name', 'area_km2']
+    basin_metadata = basin_mapping[metadata_cols].copy()
+
+    # Convert to MESSAGE format DataFrames with metadata
     results_p10 = {}
     results_p50 = {}
     results_p90 = {}
@@ -742,9 +805,14 @@ def batch_rime_predictions_with_percentiles(
 
     for i, run_id in enumerate(run_ids):
         # Transpose to (n_regions × n_timesteps)
-        results_p10[run_id] = pd.DataFrame(predictions_p10_3d[i].T, columns=columns)
-        results_p50[run_id] = pd.DataFrame(predictions_p50_3d[i].T, columns=columns)
-        results_p90[run_id] = pd.DataFrame(predictions_p90_3d[i].T, columns=columns)
+        data_p10 = pd.DataFrame(predictions_p10_3d[i].T, columns=columns)
+        data_p50 = pd.DataFrame(predictions_p50_3d[i].T, columns=columns)
+        data_p90 = pd.DataFrame(predictions_p90_3d[i].T, columns=columns)
+
+        # Add metadata columns
+        results_p10[run_id] = pd.concat([basin_metadata, data_p10], axis=1)
+        results_p50[run_id] = pd.concat([basin_metadata, data_p50], axis=1)
+        results_p90[run_id] = pd.concat([basin_metadata, data_p90], axis=1)
 
     return results_p10, results_p50, results_p90
 
@@ -795,11 +863,12 @@ def expand_predictions_with_emulator_uncertainty(
     K = n_samples
     N = len(run_ids)
 
-    # Get dimensions
+    # Get dimensions and separate metadata from data
     first_pred = predictions_p50[run_ids[0]]
-    n_basins, n_years = first_pred.shape
-    year_columns = first_pred.columns
-    basin_index = first_pred.index
+    year_columns, basin_metadata = _separate_metadata_and_years(first_pred)
+
+    n_basins = len(first_pred)
+    n_years = len(year_columns)
 
     # Initialize expanded predictions dict
     expanded_predictions = {}
@@ -807,10 +876,10 @@ def expand_predictions_with_emulator_uncertainty(
 
     # Process each run
     for i, run_id in enumerate(run_ids):
-        # Get p10, p50, p90 arrays for this run (n_basins × n_years)
-        p10_array = predictions_p10[run_id].values
-        p50_array = predictions_p50[run_id].values
-        p90_array = predictions_p90[run_id].values
+        # Get p10, p50, p90 arrays for this run (n_basins × n_years), excluding metadata
+        p10_array = predictions_p10[run_id][year_columns].values
+        p50_array = predictions_p50[run_id][year_columns].values
+        p90_array = predictions_p90[run_id][year_columns].values
 
         # Vectorized fit: fit all (basin, year) distributions at once
         # fit_dist automatically dispatches to vectorized version when inputs are arrays
@@ -837,9 +906,11 @@ def expand_predictions_with_emulator_uncertainty(
             # Affects ~0.08% of samples in extreme CVaR tails.
             samples = np.maximum(samples, 0.0)
 
-            pseudo_run_df = pd.DataFrame(
-                samples, index=basin_index, columns=year_columns
-            )
+            # Create DataFrame with year data
+            data_df = pd.DataFrame(samples, columns=year_columns)
+
+            # Add metadata columns
+            pseudo_run_df = pd.concat([basin_metadata.reset_index(drop=True), data_df], axis=1)
 
             # Store with sequential integer key
             expanded_predictions[pseudo_run_id] = pseudo_run_df
@@ -868,17 +939,20 @@ def compute_expectation(
                  If None, uses uniform weights (unweighted mean).
 
     Returns:
-        DataFrame with (weighted) mean predictions (MESSAGE format)
+        DataFrame with (weighted) mean predictions (MESSAGE format with metadata)
     """
-    # Stack predictions into 3D array (n_runs × n_basins × n_years)
+    # Separate metadata from data
     first_pred = predictions[run_ids[0]]
+    year_columns, basin_metadata = _separate_metadata_and_years(first_pred)
+
+    # Stack predictions into 3D array (n_runs × n_basins × n_years)
     n_runs = len(run_ids)
     n_basins = len(first_pred)
-    n_years = len(first_pred.columns)
+    n_years = len(year_columns)
 
     values_3d = np.zeros((n_runs, n_basins, n_years))
     for i, run_id in enumerate(run_ids):
-        values_3d[i, :, :] = predictions[run_id].values
+        values_3d[i, :, :] = predictions[run_id][year_columns].values
 
     # Compute (weighted) mean
     if weights is not None:
@@ -886,15 +960,16 @@ def compute_expectation(
     else:
         mean = np.mean(values_3d, axis=0)
 
-    # Convert back to DataFrame
-    result = pd.DataFrame(mean, index=first_pred.index, columns=first_pred.columns)
+    # Convert back to DataFrame with metadata
+    result_data = pd.DataFrame(mean, columns=year_columns)
+    result = pd.concat([basin_metadata.reset_index(drop=True), result_data], axis=1)
 
-    # ASSERTION: Check for negative values in expectation
-    if np.any(result.values < 0):
-        n_negative = np.sum(result.values < 0)
-        min_value = result.values.min()
+    # ASSERTION: Check for negative values in expectation (year columns only)
+    if np.any(result_data.values < 0):
+        n_negative = np.sum(result_data.values < 0)
+        min_value = result_data.values.min()
         print(
-            f"WARNING: Expectation contains {n_negative}/{result.size} negative values, "
+            f"WARNING: Expectation contains {n_negative}/{result_data.size} negative values, "
             f"min={min_value:.6f}"
         )
 
@@ -906,6 +981,7 @@ def compute_rime_cvar(
     weights: np.ndarray,
     run_ids: np.ndarray,
     cvar_levels: list[float] = [10, 50, 90],
+    method: str = "pointwise",
 ) -> dict[str, pd.DataFrame]:
     """Compute weighted CVaR across RIME predictions.
 
@@ -914,37 +990,50 @@ def compute_rime_cvar(
         weights: Array of importance weights (must sum to ~1.0)
         run_ids: Array of run IDs corresponding to weights
         cvar_levels: List of CVaR percentiles (default: [10, 50, 90])
+        method: CVaR computation method (default: "pointwise")
+            - "pointwise": Independent CVaR at each timestep (maximally pessimistic)
+            - "coherent": Trajectory-based CVaR (temporally coherent, realizable paths)
 
     Returns:
         Dictionary with keys 'expectation', 'cvar_10', 'cvar_50', 'cvar_90'
-        Each value is a DataFrame (MESSAGE format: n_basins × year columns)
+        Each value is a DataFrame (MESSAGE format: n_basins × year columns + metadata)
     """
-    # Stack predictions into 3D array (n_runs × n_basins × n_years)
+    # Separate metadata from year columns
     first_pred = predictions[run_ids[0]]
+    year_columns, basin_metadata = _separate_metadata_and_years(first_pred)
+
+    # Stack predictions into 3D array (n_runs × n_basins × n_years)
     n_runs = len(run_ids)
     n_basins = len(first_pred)
-    n_years = len(first_pred.columns)
+    n_years = len(year_columns)
 
     values_3d = np.zeros((n_runs, n_basins, n_years))
     for i, run_id in enumerate(run_ids):
-        values_3d[i, :, :] = predictions[run_id].values
+        values_3d[i, :, :] = predictions[run_id][year_columns].values
 
-    # Get basin indices and year columns for DataFrame output
+    # Get basin indices for DataFrame output
     basin_ids = list(first_pred.index)
-    year_columns = list(first_pred.columns)
 
     # Compute weighted CVaR
-    cvar_results = compute_weighted_cvar(
-        values_3d, weights, cvar_levels, basin_ids=basin_ids, year_columns=year_columns
+    cvar_results_raw = compute_weighted_cvar(
+        values_3d, weights, cvar_levels, basin_ids=basin_ids, year_columns=year_columns, method=method
     )
+
+    # Add metadata back to each result DataFrame
+    cvar_results = {}
+    for key, result_df in cvar_results_raw.items():
+        result_with_metadata = pd.concat([basin_metadata.reset_index(drop=True), result_df.reset_index(drop=True)], axis=1)
+        cvar_results[key] = result_with_metadata
 
     # ASSERTION: Check for negative values in CVaR results
     for key, result_df in cvar_results.items():
-        if np.any(result_df.values < 0):
-            n_negative = np.sum(result_df.values < 0)
-            min_value = result_df.values.min()
+        # Check only year columns for negative values
+        year_data = result_df[year_columns]
+        if np.any(year_data.values < 0):
+            n_negative = np.sum(year_data.values < 0)
+            min_value = year_data.values.min()
             print(
-                f"WARNING: CVaR '{key}' contains {n_negative}/{result_df.size} negative values, "
+                f"WARNING: CVaR '{key}' contains {n_negative}/{year_data.size} negative values, "
                 f"min={min_value:.6f}"
             )
 

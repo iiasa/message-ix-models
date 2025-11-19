@@ -892,3 +892,123 @@ class TestSeasonalDataIntegration:
         for pred_df in expanded_preds.values():
             assert pred_df.shape[1] == expected_n_timesteps
             assert np.all(pred_df.values >= 0), "Expanded predictions must be non-negative"
+
+
+class TestBasinExpansion:
+    """Test basin expansion from 157 RIME basins to 217 MESSAGE rows."""
+
+    def test_batch_rime_basin_expansion(self):
+        """Test that batch_rime_predictions_with_percentiles correctly expands 157 RIME basins to 217 MESSAGE rows.
+
+        Regression test for bug where predictions were misaligned by row index instead of BASIN_ID,
+        causing Amazon (BASIN_ID=9 at MESSAGE row 76) to receive Basin 77's value (RIME index 76).
+
+        Critical assertions:
+        1. Output DataFrame has 217 rows (not 157)
+        2. Amazon basin (BASIN_ID=9) appears at correct row with correct name
+        3. Amazon value is reasonable (>1000 km³/yr, not <100 km³/yr)
+        4. Row indices match BASIN_ID mapping from basin_mapping CSV
+        5. All BASIN_IDs in output match basin_mapping exactly
+        """
+        # Load test MAGICC data
+        test_data_path = Path(__file__).parent / "alps" / "data" / "magicc_ssp2_snippet.csv"
+
+        if not test_data_path.exists():
+            pytest.skip(f"Test data not found: {test_data_path}")
+
+        magicc_df = pd.read_csv(test_data_path)
+
+        # Load basin mapping (R12 only)
+        basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
+        basin_df = pd.read_csv(basin_file)
+        basin_mapping = basin_df[basin_df["model_region"] == "R12"].copy().reset_index(drop=True)
+
+        # Get RIME dataset
+        RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
+        dataset_path = RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window0.nc"
+
+        if not dataset_path.exists():
+            pytest.skip(f"RIME dataset not found: {dataset_path}")
+
+        # Run predictions with 2 runs for efficiency
+        run_ids = [0, 1]
+        predictions_p10, predictions_p50, predictions_p90 = batch_rime_predictions_with_percentiles(
+            magicc_df, run_ids, dataset_path, basin_mapping, "qtot_mean", suban=False
+        )
+
+        # Test with first run's p50 predictions
+        pred = predictions_p50[0]
+
+        # ASSERTION 1: Output has 217 rows (not 157)
+        assert len(pred) == 217, f"Expected 217 MESSAGE rows, got {len(pred)}"
+
+        # ASSERTION 2: Verify basin metadata columns exist
+        required_cols = ['BASIN_ID', 'NAME', 'BASIN', 'REGION', 'BCU_name', 'area_km2']
+        for col in required_cols:
+            assert col in pred.columns, f"Missing metadata column: {col}"
+
+        # ASSERTION 3: Amazon basin (BASIN_ID=9) has reasonable value
+        amazon_rows = pred[pred['BASIN_ID'] == 9]
+        assert len(amazon_rows) == 1, f"Expected exactly 1 Amazon basin row, got {len(amazon_rows)}"
+
+        amazon_row = amazon_rows.iloc[0]
+        year_cols = [col for col in pred.columns if isinstance(col, (int, np.integer))]
+        amazon_values = amazon_row[year_cols].values
+
+        # Amazon should have runoff > 1000 km³/yr (it's a huge basin with ~5900 km³/yr)
+        # If basin expansion bug exists, it would show <100 km³/yr from a different basin
+        assert np.all(amazon_values > 1000), \
+            f"Amazon runoff should be >1000 km³/yr, got {amazon_values.min():.1f} - {amazon_values.max():.1f}"
+
+        # More specific check: Amazon should be in reasonable range 4000-7000 km³/yr
+        assert np.all(amazon_values > 4000) and np.all(amazon_values < 7000), \
+            f"Amazon runoff should be 4000-7000 km³/yr, got {amazon_values.min():.1f} - {amazon_values.max():.1f}"
+
+        # ASSERTION 4: Verify Amazon basin name
+        assert amazon_row['BASIN'] == 'Amazon', \
+            f"BASIN_ID=9 should be 'Amazon', got '{amazon_row['BASIN']}'"
+        assert amazon_row['REGION'] == 'LAM', \
+            f"Amazon should be in LAM region, got '{amazon_row['REGION']}'"
+
+        # ASSERTION 5: All BASIN_IDs match basin_mapping exactly
+        pred_basin_ids = set(pred['BASIN_ID'].values)
+        mapping_basin_ids = set(basin_mapping['BASIN_ID'].values)
+
+        assert pred_basin_ids == mapping_basin_ids, \
+            f"BASIN_IDs don't match. Missing: {mapping_basin_ids - pred_basin_ids}, Extra: {pred_basin_ids - mapping_basin_ids}"
+
+        # ASSERTION 6: Verify row-by-row alignment with basin_mapping
+        for idx in range(len(pred)):
+            pred_row = pred.iloc[idx]
+            mapping_row = basin_mapping.iloc[idx]
+
+            # Check BASIN_ID matches
+            assert pred_row['BASIN_ID'] == mapping_row['BASIN_ID'], \
+                f"Row {idx}: BASIN_ID mismatch - pred={pred_row['BASIN_ID']}, mapping={mapping_row['BASIN_ID']}"
+
+            # Check area_km2 matches (strong indicator of correct basin)
+            assert pred_row['area_km2'] == mapping_row['area_km2'], \
+                f"Row {idx}: area_km2 mismatch for BASIN_ID={pred_row['BASIN_ID']} - pred={pred_row['area_km2']}, mapping={mapping_row['area_km2']}"
+
+            # Check BCU_name matches (unique identifier)
+            assert pred_row['BCU_name'] == mapping_row['BCU_name'], \
+                f"Row {idx}: BCU_name mismatch - pred={pred_row['BCU_name']}, mapping={mapping_row['BCU_name']}"
+
+        # ASSERTION 7: Verify all three percentile outputs have same structure
+        assert len(predictions_p10[0]) == 217, "p10 should have 217 rows"
+        assert len(predictions_p90[0]) == 217, "p90 should have 217 rows"
+
+        # Verify Amazon values are ordered correctly (p10 < p50 < p90)
+        amazon_p10 = predictions_p10[0][predictions_p10[0]['BASIN_ID'] == 9].iloc[0][year_cols].values
+        amazon_p50 = predictions_p50[0][predictions_p50[0]['BASIN_ID'] == 9].iloc[0][year_cols].values
+        amazon_p90 = predictions_p90[0][predictions_p90[0]['BASIN_ID'] == 9].iloc[0][year_cols].values
+
+        assert np.all(amazon_p10 <= amazon_p50), "Amazon p10 should be <= p50"
+        assert np.all(amazon_p50 <= amazon_p90), "Amazon p50 should be <= p90"
+
+        print(f"✓ Basin expansion test passed:")
+        print(f"  - 217 MESSAGE rows (expanded from 157 RIME basins)")
+        print(f"  - Amazon (BASIN_ID=9) at row {amazon_rows.index[0]}")
+        print(f"  - Amazon runoff: {amazon_values.min():.0f} - {amazon_values.max():.0f} km³/yr")
+        print(f"  - All BASIN_IDs match basin_mapping")
+        print(f"  - All row indices aligned correctly")
