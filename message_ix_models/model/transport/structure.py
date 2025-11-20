@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from copy import deepcopy
-from itertools import chain
 from typing import Any
 
 from sdmx.model.common import Code
@@ -10,6 +9,7 @@ from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import load_package_data, package_data_path
+from message_ix_models.util.sdmx import leaf_ids
 
 from .util import region_path_fallback
 
@@ -67,22 +67,15 @@ def get_technology_groups(
 
     result: dict[str, list[str]] = {"historical-only": [], "LDV usage": []}
 
-    def _leaf_ids(node) -> list[str]:
-        """Recursively collect leaf IDs."""
-        return list(
-            chain(*[_leaf_ids(c) if len(c.child) else (c.id,) for c in node.child])
-        )
-
     for tech in t_list:
         if len(tech.child):
             # Code with child codes → a group of technologies → store all the leaf IDs
-            result[tech.id] = _leaf_ids(tech)
-        else:
+            result[tech.id] = leaf_ids(tech)
+        elif tech.eval_annotation(id="historical-only") is True:
             # Code without children = an individual technology → add to certain groups
-            if tech.eval_annotation(id="historical-only") is True:
-                result["historical-only"].append(tech.id)
-            if tech.eval_annotation(id="is-disutility") is True:
-                result["LDV usage"].append(tech.id)
+            result["historical-only"].append(tech.id)
+        elif tech.eval_annotation(id="is-disutility") is True:
+            result["LDV usage"].append(tech.id)
 
     return result
 

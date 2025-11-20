@@ -32,6 +32,7 @@ from message_ix_models.util import (
     package_data_path,
     path_fallback,
     private_data_path,
+    random_sample_from_file,
     replace_par_data,
     same_node,
     same_time,
@@ -376,6 +377,17 @@ def test_same(name, func, col):
     assert not df_out.isna().any(axis=None)
     assert_series_equal(df_out[f"{name}_dest"], df_in[col], check_names=False)
     assert_series_equal(df_out[f"{name}_origin"], df_in[col], check_names=False)
+
+
+def test_random_sample_from_file(test_data_path: Path) -> None:
+    # File has 13026 rows
+    target = test_data_path.joinpath("report", "SSP_LED_v2.3.1_baseline.csv")
+
+    # Function runs without error
+    result = random_sample_from_file(target, frac=0.1, na_values=[""])
+
+    # Result has expected number of rows
+    assert 1303 == len(result)
 
 
 def test_replace_par_data(caplog, test_context):

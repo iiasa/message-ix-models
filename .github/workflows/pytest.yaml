@@ -52,7 +52,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ macos-13, macos-latest, ubuntu-latest, windows-latest ]
+        os: [ macos-15-intel, macos-latest, ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: francisbilham11/action-cached-lfs-checkout@v3
@@ -88,7 +88,7 @@ jobs:
     strategy:
       matrix:
         os:
-        - macos-13
+        - macos-15-intel
         - macos-latest
         - ubuntu-latest
         - windows-latest
@@ -99,7 +99,7 @@ jobs:
         # Minimum version given in pyproject.toml + earlier version of Python
         # For this job only, the oldest version of Python supported by message-ix-models
         - { upstream: v3.8.0,  python: "3.10"  }  # Released 2024-01-12
-        - { upstream: v3.9.0,  python: "3.14" }  # 2024-06-04
+        - { upstream: v3.9.0,  python: "3.13" }  # 2024-06-04
         - { upstream: v3.10.0, python: "3.14" }  # 2025-02-21
         # Latest released version + latest released Python
         - { upstream: v3.11.0, python: "3.14" }  # 2025-05-27
@@ -112,9 +112,9 @@ jobs:
         - { os: macos-latest, version: { upstream: v3.8.0 }}
         - { os: macos-latest, version: { upstream: v3.9.0 }}
         # Redundant with macos-latest
-        - { os: macos-13, version: { upstream: v3.10.0 }}
-        - { os: macos-13, version: { upstream: v3.11.0 }}
-        - { os: macos-13, version: { upstream: main }}
+        - { os: macos-15-intel, version: { upstream: v3.10.0 }}
+        - { os: macos-15-intel, version: { upstream: v3.11.0 }}
+        - { os: macos-15-intel, version: { upstream: main }}
 
       fail-fast: false
 
@@ -153,8 +153,6 @@ jobs:
         license: ${{ secrets.GAMS_LICENSE }}
 
     - uses: ts-graphviz/setup-graphviz@v2
-      # Work around ts-graphviz/setup-graphviz#630
-      if: matrix.os != 'macos-13'
 
     - name: Set Java version on Windows
       if: startsWith(matrix.os, 'windows-')

@@ -6,7 +6,6 @@ try:
     from base64 import b32hexencode as b32encode
 except ImportError:
     from base64 import b32encode
-import platform
 from collections.abc import Generator, Hashable
 from copy import deepcopy
 from importlib.metadata import version
@@ -14,6 +13,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from random import randbytes
 from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING
 
 import message_ix
 import pandas as pd
@@ -25,6 +25,9 @@ from message_ix_models import util
 from message_ix_models.model import snapshot
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
+
+if TYPE_CHECKING:
+    from importlib.resources.abc import Traversable
 
 log = logging.getLogger(__name__)
 
@@ -63,12 +66,6 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
     0: pytest.mark.xfail(
         condition=GHA,
         reason="GitHub-hosted runner has no access to IIASA-internal databases",
-    ),
-    1: pytest.mark.xfail(
-        condition=GHA
-        and platform.system() == "Darwin"
-        and not bool(shutil.which("dot")),
-        reason="Graphviz not available for GitHub Actions jobs on some macOS runners",
     ),
     2: pytest.mark.xfail(
         condition=not util.HAS_MESSAGE_DATA,
@@ -330,6 +327,14 @@ def ssp_user_data(pytestconfig, monkeypatch) -> None:
         monkeypatch.setattr(
             cls, "where", cls.where + [pytestconfig.stash[KEY["user-local-data"]]]
         )
+
+
+@pytest.fixture(scope="session")
+def test_data_path() -> "Traversable":
+    """Path to the test data directory, :file:`message_ix_models/data/tests/`."""
+    from importlib.resources import files
+
+    return files(__name__.partition(".")[0]).joinpath("data/test")
 
 
 # Testing utility functions

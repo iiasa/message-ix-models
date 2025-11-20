@@ -1,8 +1,26 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- New provider for exogenous data from the :ref:`tools-cepii` :class:`.BACI` data source (:pull:`450`).
+- Improvements to :class:`.report.Config` (:pull:`178`):
+
+  - New attribute :attr:`~.report.Config.modules`.
+  - New method :meth:`~.report.Config.iter_callbacks`.
+
+- New function :func:`.tools.iamc.compare` (:pull:`178`).
+- New module :mod:`.report.extraction` for reporting of resource extraction (:pull:`451`).
+- New reporting operators (:pull:`451`):
+  :func:`.get_commodity_groups`,
+  :func:`.node_glb`, and
+  :func:`.zeros_like`.
+- Expand :doc:`api/report/index` documentation (:pull:`178`)
+  to cover features implemented/not implemented by :mod:`genno`-based reporting.
+  Module globals :data:`.NOT_IMPLEMENTED_MEASURE` and :data:`.NOT_IMPLEMENTED_IAMC`
+  record not-yet-implemented measures and IAMC ‘variables’.
+- New utility functions :func:`.extract_if_newer`, :func:`.random_sample_from_files` (:pull:`450`).
 
 v2025.10.31
 ===========

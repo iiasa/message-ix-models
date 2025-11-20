@@ -530,11 +530,7 @@ def build_accounting_relations(
     parameter_outputs[tec]["trade"]["relation_activity_global_aggregate"] = df_rel
 
     # Regional exports
-    rel_use = (
-        config_dict["trade_technology"][tec]
-        + "_exp_from_"
-        + network_setup[tec]["exporter"].str.lower().str.split("_").str[1]
-    )
+    rel_use = config_dict["trade_technology"][tec] + "_exp"
     df_rel = message_ix.make_df(
         "relation_activity",
         node_loc=network_setup[tec]["exporter"],
@@ -552,11 +548,7 @@ def build_accounting_relations(
     parameter_outputs[tec]["trade"]["relation_activity_regional_exp"] = df_rel
 
     # Regional imports
-    rel_use = (
-        config_dict["trade_technology"][tec]
-        + "_imp_to_"
-        + network_setup[tec]["importer"].str.lower().str.split("_").str[1]
-    )
+    rel_use = config_dict["trade_technology"][tec] + "_imp"
     df_rel = message_ix.make_df(
         "relation_activity",
         node_loc=network_setup[tec]["importer"],
@@ -1088,6 +1080,9 @@ def export_edit_files(
             os.path.join("input.csv"),
             os.path.join("output.csv"),
             os.path.join("technical_lifetime.csv"),
+            os.path.join(
+                "relation_activity_regional_exp.csv"
+            ),  # necessary for legacy reporting
             os.path.join("flow_technology", "capacity_factor.csv"),
             os.path.join("flow_technology", "input.csv"),
             os.path.join("flow_technology", "output.csv"),
@@ -1299,41 +1294,48 @@ def prepare_edit_files(
     calculate_distance(message_regions)
 
     # Generate bare sheets
-    generate_edit_files(log=log,
-                        project_name=project_name, 
-                        config_name=config_name, 
-                        message_regions=message_regions)
+    generate_edit_files(
+        log=log,
+        project_name=project_name,
+        config_name=config_name,
+        message_regions=message_regions,
+    )
 
     # Import calibration files from Global Energy Monitor
     if P_access is True:
         import_gem(
-            input_file="GEM-GGIT-Gas-Pipelines-2024-12.xlsx",
-            input_sheet="Gas Pipelines 2024-12-17",
+            input_file="GEM-GGIT-Gas-Pipelines-2024-12.csv",
+            # input_sheet="Gas Pipelines 2024-12-17",
             trade_technology="gas_piped",
             flow_technology="gas_pipe",
             flow_commodity="gas_pipeline_capacity",
             project_name=project_name,
-            config_name=config_name
+            config_name=config_name,
         )
 
         for tradetec in ["crudeoil_piped", "foil_piped", "loil_piped"]:
             import_gem(
-                input_file="GEM-GOIT-Oil-NGL-Pipelines-2025-03.xlsx",
-                input_sheet="Pipelines",
+                input_file="GEM-GOIT-Oil-NGL-Pipelines-2025-03.csv",
+                # input_sheet="Pipelines",
                 trade_technology=tradetec,
                 flow_technology="oil_pipe",
                 flow_commodity="oil_pipeline_capacity",
                 project_name=project_name,
-                config_name=config_name
+                config_name=config_name,
             )
 
         # Add MariTEAM calibration for maritime shipping
-        calibrate_mariteam(covered_tec, message_regions,
-                           project_name=project_name,
-                           config_name=config_name)
+        calibrate_mariteam(
+            covered_tec,
+            message_regions,
+            project_name=project_name,
+            config_name=config_name,
+        )
 
         # Add variable costs for shipped commodities
-        costdf = build_historical_price(message_regions)
+        costdf = build_historical_price(
+            message_regions, project_name=project_name, config_name=config_name
+        )
         costdf["technology"] = costdf["technology"].str.replace("ethanol_", "eth_")
         costdf["technology"] = costdf["technology"].str.replace("fueloil_", "foil_")
 

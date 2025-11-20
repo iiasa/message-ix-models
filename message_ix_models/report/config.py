@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import InitVar, dataclass, field
 from importlib import import_module
 from pathlib import Path
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from message_ix_models.util.context import Context
 
+
 log = logging.getLogger(__name__)
 
 #: Type signature of callback functions referenced by :attr:`.Config.callback` and
@@ -25,9 +26,10 @@ Callback = Callable[[ComputerT, "Context"], None]
 def _default_callbacks() -> list[Callback]:
     from message_ix_models.report import plot
 
-    from . import defaults
+    from . import defaults, extraction
 
-    return [defaults, plot.callback]
+    # NB When updating this list, also update the docstring of Config.callback
+    return [defaults, extraction.callback, plot.callback]
 
 
 @dataclass
@@ -44,13 +46,17 @@ class Config(ConfigHelper):
     #: Shorthand to set :py:`legacy["use"]` on a new instance.
     _legacy: InitVar[bool | None] = False
 
-    #: List of callbacks for preparing the :class:`.Reporter`.
+    #: List of callback functions for preparing the :class:`.Reporter`.
     #:
-    #: Each registered function is called by :meth:`prepare_reporter`, in order to add
-    #: or modify reporting keys. Specific model variants and projects can register a
-    #: callback to extend the reporting graph.
+    #: Each registered function is called by :func:`~.report.prepare_reporter` in order
+    #: to add or modify the task graph. Specific model variants and projects can
+    #: register a callback to extend the reporting graph. The default list is:
     #:
-    #: Callback functions must take two arguments: the Computer/Reporter, and a
+    #: 1. :func:`.report.defaults`
+    #: 2. :func:`.report.extraction.callback`
+    #: 3. :func:`.report.plot.callback`
+    #:
+    #: A callback function **must** take two arguments: the Computer/Reporter, and a
     #: :class:`.Context`:
     #:
     #: .. code-block:: python
@@ -62,8 +68,10 @@ class Config(ConfigHelper):
     #:         # Modify `rep` by calling its methods ...
     #:         pass
     #:
-    #:     # Register this callback on an existing Context instance
+    #:     # Register this callback on an existing Context/report.Config instance
     #:     context.report.register(cb)
+    #:
+    #: See also :attr:`modules`.
     callback: list[Callback] = field(default_factory=_default_callbacks, kw_only=True)
 
     #: Path to write reporting outputs when invoked from the command line.
@@ -74,6 +82,10 @@ class Config(ConfigHelper):
 
     #: Key for the Quantity or computation to report.
     key: "KeyLike | None" = None
+
+    #: Names of modules with reporting callbacks. See also :attr:`callback` and
+    #: :meth:`iter_callbacks`.
+    modules: list[str] = field(default_factory=list)
 
     #: Directory for output.
     output_dir: Path = field(
@@ -95,8 +107,19 @@ class Config(ConfigHelper):
         self.use_file(from_file)
         self.legacy.update(use=_legacy)
 
+    def iter_callbacks(self) -> Generator[Callback, None, None]:
+        """Iterate over callback functions.
+
+        1. All module names in :attr:`modules` are passed to :meth:`register`, such that
+           their callback functions are appended to :attr:`callback`.
+        2. The :attr:`callback` are yielded iteratively.
+        """
+        for name in self.modules:
+            self.register(name)
+        yield from self.callback
+
     def register(self, name_or_callback: Callback | str) -> str | None:
-        """Register a :attr:`callback` function for :func:`prepare_reporter`.
+        """Register a :attr:`callback` function for :func:`.report.prepare_reporter`.
 
         Parameters
         ----------
@@ -129,6 +152,7 @@ class Config(ConfigHelper):
                 raise ModuleNotFoundError(" or ".join(candidates))
             callback = mod.callback
         else:
+            # Callable
             callback = name_or_callback
             name = callback.__name__
 
