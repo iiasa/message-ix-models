@@ -6,12 +6,9 @@ from typing import TYPE_CHECKING, Literal
 from genno import KeyExistsError
 
 from message_ix_models.model.workflow import Config as WorkflowConfig
-from message_ix_models.tools.policy import single_policy_of_type
 from message_ix_models.util import minimum_version
 
 if TYPE_CHECKING:
-    from message_ix import Scenario
-
     from message_ix_models.util.context import Context
     from message_ix_models.workflow import Workflow
 
@@ -142,35 +139,6 @@ def short_hash(value: str) -> str:
     return blake2s(value.encode()).hexdigest()[:3]
 
 
-def tax_emission(context: "Context", scenario: "Scenario", price: float) -> "Scenario":
-    """Add emission tax.
-
-    See also
-    --------
-    message_ix_models.project.engage.workflow.step_0
-    message_ix_models.project.navigate.workflow.tax_emission
-    """
-    from message_ix import make_df
-
-    from message_ix_models.model.workflow import step_0
-    from message_ix_models.project.navigate import workflow as navigate_workflow
-    from message_ix_models.util import broadcast
-
-    # Prepare emissions accounting for carbon pricing
-    scenario = step_0(context, scenario)
-
-    # Add values for the MACRO 'drate' parameter.
-    # message_data.tools.utilities.add_tax_emission() refers to this parameter, rather
-    # than the MESSAGE 'interestrate' parameter, to compute nominal future values of the
-    # tax. The parameter is not present if MACRO has not been set up on the scenario.
-    name = "drate"
-    df = make_df(name, value=0.05, unit="-").pipe(broadcast, node=scenario.set("node"))
-    with scenario.transact(f"Add values for {name}"):
-        scenario.add_par(name, df)
-
-    return navigate_workflow.tax_emission(context, scenario, price)
-
-
 @minimum_version("message_ix 3.11")
 def generate(
     context: "Context",
@@ -182,12 +150,11 @@ def generate(
     from message_ix.tools.migrate import initial_new_capacity_up_v311
 
     from message_ix_models import Workflow
-    from message_ix_models.model.workflow import solve
+    from message_ix_models.model.workflow import solve, step_0
     from message_ix_models.report import report
 
     from . import build
     from .config import CL_SCENARIO, Config
-    from .policy import ExogenousEmissionPrice, TaxEmission
     from .report import multi
 
     # Handle CLI options
@@ -252,18 +219,17 @@ def generate(
             config=config,
         )
 
+        if config.policy:
+            # Prepare emissions accounting for carbon pricing
+            kw = dict(remove_emission_parameters=("bound_emission",))
+            name = wf.add_step(f"{label} step_0", name, step_0, **kw)
+
         # Adjust initial_new_capacity_up values for message_ix#924
         name = wf.add_step(
             f"{label} incu adjusted",
             name,
             lambda _, s: initial_new_capacity_up_v311(s, safety_factor=1.05),
         )
-
-        # Add step(s) to implement policies
-        if p0 := single_policy_of_type(config.policy, TaxEmission):
-            name = wf.add_step(f"{label} added", name, tax_emission, price=p0.value)
-        elif p1 := single_policy_of_type(config.policy, ExogenousEmissionPrice):
-            log.info(f"Not implemented: {p1}")
 
         # 'Simulate' build and produce debug outputs
         debug.append(f"{label} debug build")
