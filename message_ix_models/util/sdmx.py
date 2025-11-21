@@ -814,7 +814,13 @@ def leaf_ids(obj: "Item") -> list[str]:
 
 
 def read(urn: str, base_dir: "PathLike | None" = None):
-    """Read SDMX object from package data given its `urn`."""
+    """Read SDMX object from package data given its `urn`.
+
+    Glob matching is used, so that any path that matches `urn` with a prefix or suffix
+    is included. If more than one path matches, a message is logged, and the path that
+    sorts last is used; usually this will be the highest version among multiple versions
+    of a URN.
+    """
     # Identify a path that matches `urn`
     base_dir = Path(base_dir or package_data_path("sdmx"))
     urn = urn.replace(":", "_")  # ":" invalid on Windows
@@ -824,9 +830,10 @@ def read(urn: str, base_dir: "PathLike | None" = None):
 
     if len(paths) > 1:
         log.info(
-            f"Match {paths[0].relative_to(base_dir)} for {urn!r}; {len(paths) - 1} "
+            f"Match {paths[-1].relative_to(base_dir)} for {urn!r}; {len(paths) - 1} "
             "other result(s)"
         )
+        paths = paths[-1:]
 
     try:
         with open(paths[0], "rb") as f:
@@ -840,8 +847,10 @@ def read(urn: str, base_dir: "PathLike | None" = None):
         except StopIteration:
             pass
 
+    raise NameError(urn)
 
-def write(obj, base_dir: "PathLike | None" = None, basename: str | None = None):
+
+def write(obj, base_dir: "PathLike | None" = None, basename: str | None = None) -> None:
     """Store an SDMX object as package data."""
     base_dir = Path(base_dir or package_data_path("sdmx"))
 
