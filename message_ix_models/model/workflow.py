@@ -1,6 +1,7 @@
 """Common steps for workflows."""
 
 import logging
+from collections.abc import Collection
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -111,7 +112,13 @@ def solve(
     return scenario
 
 
-def step_0(context: "Context", scenario: "Scenario", **kwargs) -> "Scenario":
+def step_0(
+    context: "Context",
+    scenario: "Scenario",
+    *,
+    remove_emission_parameters: Collection[str] = ("bound_emission", "tax_emission"),
+    **kwargs,
+) -> "Scenario":
     """Preparation step for climate policy workflows.
 
     This is similar to (and shares the name of) :func:`.project.engage.workflow.step_0`,
@@ -140,12 +147,15 @@ def step_0(context: "Context", scenario: "Scenario", **kwargs) -> "Scenario":
         remove_emission_bounds,
     )
 
+    if len(kwargs):  # pragma: no cover
+        raise TypeError("Unhandled keyword arguments: {kwargs}")
+
     try:
         scenario.remove_solution()
     except ValueError:
         pass  # Solution did not exist
 
-    remove_emission_bounds.main(scenario)
+    remove_emission_bounds.main(scenario, parameters=remove_emission_parameters)
 
     # Identify the node codelist used by `scenario` (in case it is not set on `context`)
     context.model.regions = identify_nodes(scenario)
