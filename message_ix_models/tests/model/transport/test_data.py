@@ -1,9 +1,8 @@
 import numpy as np
 import pytest
 
-from message_ix_models.model.transport import Config, build, testing
+from message_ix_models.model.transport import CL_SCENARIO, Config, build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
-from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.model.transport.data import (
     LoadFactorLDV,
     MultiFile,
@@ -22,7 +21,7 @@ class TestMultiFile:
 
 
 class TestLoadFactorLDV:
-    @pytest.mark.parametrize("code", get_cl_scenario())
+    @pytest.mark.parametrize("code", CL_SCENARIO.get())
     def test_filename(self, code) -> None:
         """:attr:`LoadFactorLDV.filename` works for all defined scenario codes."""
         obj = LoadFactorLDV(config=Config(_code=code), nodes="R12")
