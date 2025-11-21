@@ -64,6 +64,7 @@ __all__ = [
     "select_allow_empty",
     "select_expand",
     "share_curtailment",
+    "summarize",
     "zeros_like",
 ]
 
@@ -497,6 +498,84 @@ def share_curtailment(curt, *parts):
     multiple technologies; one for each of *parts*.
     """
     return parts[0] - curt * (parts[0] / sum(parts))
+
+
+def summarize(*args: Any) -> str:
+    """Return a summary of mixed `args`.
+
+    This operator may be used to show brief information about a large number of tasks
+    that have side-effects (e.g. file output) but whose return values are only summaries
+    of those.
+
+    `args` may include nested :class:`list` or :class:`tuple` of :class:`pathlib.Path`,
+    :any:`None`, or any other entries. The returned summary is a formatted :class:`str`
+    that resembles::
+
+       9 file or directory paths:
+          4 in /example/base/dir/
+          1 in /example/base/dir/foo/
+          2 in /example/base/dir/bar/
+          2 in /example/base/dir/baz/
+      16 × None
+       0 other items
+
+    .. todo::
+       - Expand to summarize other types including :class:`genno.Quantity`,
+         :class:`str`, etc.
+       - Move upstream, to :mod:`genno.operator`.
+    """
+    import math
+    from collections import defaultdict
+    from pathlib import PurePath
+
+    count: dict[str, int] = defaultdict(lambda: int(0))
+    paths: set[PurePath] = set()
+
+    def _summarize_recursive(item: Any) -> None:
+        """Recursively summarize `item`."""
+        match item:
+            case PurePath():
+                count["path"] += 1
+                paths.add(item)
+            case list() | tuple():
+                for i in item:
+                    _summarize_recursive(i)
+            case None:
+                count["none"] += 1
+            case _:
+                count["other"] += 1
+
+    _summarize_recursive(args)
+
+    # Width for formatting
+    width = math.floor(math.log10(max(count.values()))) + 1
+
+    # Format counts
+    lines: list[str] = [
+        f"{count['path']:{width}} file or directory paths:",
+        f"{count['none']:{width}} × None",
+        f"{count['other']:{width}} other items",
+    ]
+
+    # Sets of paths within each parent directory
+    by_parent = defaultdict(set)
+    for path in paths:
+        for parent in path.parents:
+            by_parent[parent].add(path)
+
+    # Iterate over sets from longest (=deepest) to shortest parent directory name
+    for parent, p in sorted(by_parent.items(), reverse=True):
+        # Set of remaining, un-summarized paths that are within this parent
+        if remaining := paths & p:
+            # Format a line, insert in proper order
+            lines.insert(1, f"   {len(remaining):{width}} in {parent / ' '!s}".rstrip())
+            # Ignore these paths under subsequent parent directories
+            paths -= p
+        # Exit once nothing remains to summarize
+        if not paths:
+            break
+
+    return "\n".join(lines)
 
 
 def zeros_like(qty: "TQuantity", *, drop: Collection[str] = []) -> "TQuantity":

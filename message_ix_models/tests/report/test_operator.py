@@ -1,4 +1,6 @@
+import os
 import re
+from pathlib import Path
 
 import ixmp
 import message_ix
@@ -22,6 +24,7 @@ from message_ix_models.report.operator import (
     model_periods,
     remove_ts,
     share_curtailment,
+    summarize,
 )
 
 
@@ -160,3 +163,48 @@ def test_model_periods():
 @pytest.mark.xfail(reason="Incomplete")
 def test_share_curtailment():
     share_curtailment()
+
+
+_p = Path("/example/base/dir")
+
+# Arguments to summarize(); example of the "transport all" report key as of 2025-11-21
+SUMMARIZE_ARGS = [
+    [
+        _p / "base-fe-intensity-gdp.pdf",
+        _p / "inv-cost-ldv.pdf",
+        _p / "demand.pdf",
+        _p / "demand" / "share.pdf",
+        None,
+        _p / "energy" / "c.pdf",
+        _p / "energy" / "c-share.pdf",
+        _p / "stock" / "ldv.pdf",
+        _p / "stock" / "non-ldv.pdf",
+    ],
+    [[None, None], None],
+    _p / "sdmx",
+    [None, None, None, None, None, None, None, None, None, None, None, None],
+]
+
+
+@pytest.mark.parametrize(
+    "args",
+    (
+        (SUMMARIZE_ARGS,),  # Single list arg to summarize() containing further items
+        SUMMARIZE_ARGS,  # Multiple positional args to summarize()
+    ),
+)
+def test_summarize(args) -> None:
+    # Operator runs
+    result = summarize(*args)
+
+    # Results as expected
+    assert re.fullmatch(
+        rf""" 9 file or directory paths:
+    4 in ({re.escape(os.sep)})example\1base\1dir\1
+    1 in \1example\1base\1dir\1demand\1
+    2 in \1example\1base\1dir\1energy\1
+    2 in \1example\1base\1dir\1stock\1
+16 × None
+ 0 other items""",
+        result,
+    )
