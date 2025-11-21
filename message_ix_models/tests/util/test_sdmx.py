@@ -128,7 +128,7 @@ class TestItemSchemeEnum:
             ("ICONICS:SSP(2024)", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2024).1"),
             ("SSP(2017)", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2017).1"),
             ("SSP(2024)", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2024).1"),
-            ("SSP", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2017).1"),
+            ("SSP", f"{_urn_prefix}.codelist.Code=ICONICS:SSP(2024).1"),
             ("AGENCIES", f"{_urn_prefix}.base.Agency=IIASA_ECE:AGENCIES(0.1).IEA"),
         ),
     )
@@ -214,7 +214,7 @@ def test_eval_anno(caplog, recwarn):
         ("ICONICS:SSP(2024)", "Codelist=ICONICS:SSP(2024)"),
         ("SSP(2017)", "Codelist=ICONICS:SSP(2017)"),
         ("SSP(2024)", "Codelist=ICONICS:SSP(2024)"),
-        ("SSP", "Codelist=ICONICS:SSP(2017)"),
+        ("SSP", "Codelist=ICONICS:SSP(2024)"),
         ("AGENCIES", "AgencyScheme=IIASA_ECE:AGENCIES(0.1)"),
         ("IIASA_ECE:AGENCIES", "AgencyScheme=IIASA_ECE:AGENCIES(0.1)"),
         ("IIASA_ECE:AGENCIES(0.1)", "AgencyScheme=IIASA_ECE:AGENCIES(0.1)"),
