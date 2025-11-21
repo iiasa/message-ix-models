@@ -14,6 +14,7 @@ from genno import Key, quote
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codelist
+from message_ix_models.model.transport import CL_SCENARIO
 from message_ix_models.tools.iamc import iamc_like_data_for_query, to_quantity
 from message_ix_models.util import minimum_version
 from message_ix_models.util.genno import Keys
@@ -484,7 +485,6 @@ def get_scenario_code(model_name: str, scenario_name: str) -> "sdmx.model.common
     See :func:`.get_cl_scenario`. This function handles (`model_name`, `scenario_name`)
     combinations seen in base model outputs as of 2025-04-02.
     """
-    from message_ix_models.model.transport.config import get_cl_scenario
 
     model_parts = model_name.split("_")
 
@@ -493,7 +493,7 @@ def get_scenario_code(model_name: str, scenario_name: str) -> "sdmx.model.common
     else:
         code_id = model_parts[1]
 
-    return get_cl_scenario()[code_id]
+    return CL_SCENARIO.get()[code_id]
 
 
 def method_A(c: "Computer") -> None:

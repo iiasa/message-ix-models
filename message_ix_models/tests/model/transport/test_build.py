@@ -13,6 +13,7 @@ from pytest import mark, param
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import (
+    CL_SCENARIO,
     Config,
     build,
     constraint,
@@ -25,7 +26,6 @@ from message_ix_models.model.transport import (
     report,
     structure,
 )
-from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.model.transport.testing import (
     MARK,
     assert_units,
@@ -279,7 +279,7 @@ def N_node(request) -> int:
 
 @pytest.fixture(scope="session")
 def scenario_code() -> Iterator["Code"]:
-    return get_cl_scenario()["SSP2"]
+    return CL_SCENARIO.get()["SSP2"]
 
 
 @MARK[10]

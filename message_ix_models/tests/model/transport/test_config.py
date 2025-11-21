@@ -1,6 +1,6 @@
 import pytest
 
-from message_ix_models.model.transport.config import Config, get_cl_scenario
+from message_ix_models.model.transport.config import CL_SCENARIO, Config
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.project.transport_futures import SCENARIO as TF_SCENARIO
@@ -86,32 +86,33 @@ class TestConfig:
             c.set_futures_scenario("A---")
 
 
-def test_get_cl_scenario() -> None:
-    result = get_cl_scenario()
+class TestCL_SCENARIO:
+    def test_get(self) -> None:
+        result = CL_SCENARIO.get(force=True)
 
-    # Code lists contains codes with the expected IDs
-    assert {
-        "DIGSY-BEST-C",
-        "DIGSY-BEST-S",
-        "DIGSY-WORST-C",
-        "DIGSY-WORST-S",
-        "EDITS-CA",
-        "EDITS-HA",
-        "LED-SSP1",
-        "LED-SSP2",
-        "SSP1 exo price",
-        "SSP1 tax",
-        "SSP1",
-        "SSP2 exo price",
-        "SSP2 tax",
-        "SSP2",
-        "SSP3 exo price",
-        "SSP3 tax",
-        "SSP3",
-        "SSP4 exo price",
-        "SSP4 tax",
-        "SSP4",
-        "SSP5 exo price",
-        "SSP5 tax",
-        "SSP5",
-    } == set(result.items.keys())
+        # Code lists contains codes with the expected IDs
+        assert {
+            "DIGSY-BEST-C",
+            "DIGSY-BEST-S",
+            "DIGSY-WORST-C",
+            "DIGSY-WORST-S",
+            "EDITS-CA",
+            "EDITS-HA",
+            "LED-SSP1",
+            "LED-SSP2",
+            "SSP1 exo price",
+            "SSP1 tax",
+            "SSP1",
+            "SSP2 exo price",
+            "SSP2 tax",
+            "SSP2",
+            "SSP3 exo price",
+            "SSP3 tax",
+            "SSP3",
+            "SSP4 exo price",
+            "SSP4 tax",
+            "SSP4",
+            "SSP5 exo price",
+            "SSP5 tax",
+            "SSP5",
+        } == set(result.items.keys())
