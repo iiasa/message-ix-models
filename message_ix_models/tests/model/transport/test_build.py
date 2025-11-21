@@ -23,6 +23,7 @@ from message_ix_models.model.transport import (
     ldv,
     other,
     passenger,
+    policy,
     report,
     structure,
 )
@@ -261,6 +262,11 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         ),
         Passenger(),
     ),
+    policy.TARGET: (
+        HasCoords({"type_emission": ["TCE"]}),
+        # No structure in base scenarios to accommodate these values → discard
+        HasCoords({"type_emission": ["CO2_shipping_IMO"]}, inverse=True),
+    ),
 }
 
 
@@ -372,6 +378,8 @@ def test_bare_res(
         # ("R11", "B", dict(futures_scenario="A---")),
         # ("R11", "B", dict(futures_scenario="debug")),
         ("R12", "B", dict(code="SSP2")),
+        ("R12", "B", dict(code="SSP2 tax")),
+        ("R12", "B", dict(code="SSP2 exo price")),
         # ("R12", "B", dict(navigate_scenario="act+ele+tec")),
         ("R12", "B", dict(code="LED-SSP2")),
         ("R12", "B", dict(code="EDITS-CA")),
