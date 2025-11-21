@@ -209,6 +209,7 @@ Operators
       select_allow_empty
       select_expand
       share_curtailment
+      summarize
       zeros_like
 
    The following functions, defined elsewhere,
