@@ -186,7 +186,7 @@ def generate(
     from message_ix_models.report import report
 
     from . import build
-    from .config import Config, get_cl_scenario
+    from .config import CL_SCENARIO, Config
     from .policy import ExogenousEmissionPrice, TaxEmission
     from .report import multi
 
@@ -212,7 +212,7 @@ def generate(
     debug, reported, targets = [], [], []
 
     # Iterate over all scenarios in IIASA_ECE:CL_TRANSPORT_SCENARIO
-    for scenario_code in get_cl_scenario():
+    for scenario_code in CL_SCENARIO.get():
         # Make a copy of the base .transport.Config for this particular workflow branch
         config = deepcopy(context.transport)
 
