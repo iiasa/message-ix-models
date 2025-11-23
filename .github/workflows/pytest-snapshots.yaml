@@ -31,7 +31,7 @@ jobs:
         key: ubuntu-latest
 
     - name: Check out message-ix-models
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         lfs: true
 
