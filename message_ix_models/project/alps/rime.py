@@ -237,7 +237,7 @@ def predict_rime(
         capacity_predictions = predict_rime(gmt_array, 'capacity_factor', percentile='p50')
     """
     # Lazy import to avoid loading RIME at module import time
-    from rime.rime_functions import predict_from_gmt
+    from .rime_functions import predict_from_gmt
 
     # Get dataset path using shared helper
     dataset_path = get_rime_dataset_path(variable, temporal_res)
@@ -487,59 +487,26 @@ def batch_rime_predictions(
 ) -> dict[int, pd.DataFrame]:
     """Run RIME predictions on multiple runs using vectorized GMT lookups.
 
+    Wrapper around batch_rime_predictions_with_percentiles that returns only p50
+    predictions without metadata columns.
+
     Args:
         magicc_df: MAGICC output DataFrame
         run_ids: List of run IDs to process
         dataset_path: Path to RIME dataset NetCDF file
-        basin_mapping: Basin mapping DataFrame (unused for regional variables)
+        basin_mapping: Basin mapping DataFrame
         variable: Variable name (qtot_mean, qr, capacity_factor)
 
     Returns:
         Dictionary mapping run_id -> DataFrame with predictions
-        - Basin-level variables (qtot_mean, qr): 157 rows × year columns
-        - Regional variables (capacity_factor): 12 rows × year columns
+        - 217 rows (MESSAGE basins) × year columns
+        - No metadata columns (just prediction values)
     """
-    # Lazy import to avoid loading RIME at module import time
-    from rime.rime_functions import predict_from_gmt
-
-    # Extract GMT timeseries for all runs
-    gmt_timeseries = []
-    years = None
-
-    for run_id in run_ids:
-        temp_df = extract_temperature_timeseries(magicc_df, run_id=run_id)
-        gmt_timeseries.append(temp_df["gsat_anomaly_K"].values)
-        if years is None:
-            years = temp_df["year"].values
-
-    # Stack into 2D array (n_runs × n_years)
-    gmt_array = np.array(gmt_timeseries)
-    n_runs, n_years = gmt_array.shape
-
-    # Flatten to 1D for vectorized lookup
-    gmt_flat = gmt_array.flatten()
-
-    # Call predict_from_gmt for each unique GMT value (cached dataset)
-    # Results: (n_runs * n_years) × n_regions where n_regions = 157 basins or 12 R12 regions
-    predictions_flat = np.array(
-        [predict_from_gmt(gmt, str(dataset_path), variable) for gmt in gmt_flat]
+    _, p50, _ = batch_rime_predictions_with_percentiles(
+        magicc_df, run_ids, dataset_path, basin_mapping, variable, suban=False
     )
-
-    # Reshape back to 3D: (n_runs × n_years × n_regions)
-    n_regions = predictions_flat.shape[1]
-    predictions_3d = predictions_flat.reshape(n_runs, n_years, n_regions)
-
-    # Convert each run to MESSAGE format DataFrame
-    results = {}
-    for i, run_id in enumerate(run_ids):
-        # predictions_3d[i]: (n_years × n_basins)
-        df = pd.DataFrame(
-            predictions_3d[i].T,  # Transpose to (n_basins × n_years)
-            columns=years,
-        )
-        results[run_id] = df
-
-    return results
+    # Strip metadata columns (first 6: BASIN_ID, NAME, BASIN, REGION, BCU_name, area_km2)
+    return {run_id: df.iloc[:, 6:] for run_id, df in p50.items()}
 
 
 def _extract_percentile_predictions(
@@ -557,7 +524,7 @@ def _extract_percentile_predictions(
         Dict mapping percentile -> predictions array (n_gmt, n_basins)
     """
     # Lazy import to avoid loading RIME at module import time
-    from rime.rime_functions import predict_from_gmt
+    from .rime_functions import predict_from_gmt
 
     results = {}
     for p in percentiles:
