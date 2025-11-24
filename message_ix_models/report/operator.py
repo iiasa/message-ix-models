@@ -32,8 +32,10 @@ if TYPE_CHECKING:
     from typing import Protocol
 
     from genno.types import AnyQuantity, TQuantity
+    from ixmp import Platform
     from sdmx.model.v21 import Code
 
+    from message_ix_models import ScenarioInfo
     from message_ix_models.types import ParameterData
 
     class SupportsLessThan(Protocol):
@@ -233,6 +235,90 @@ def gwp_factors() -> "AnyQuantity":
     return genno.Quantity(
         pd.DataFrame(data, columns=dims + ["value"]).set_index(dims)["value"].dropna()
     )
+
+
+def latest_reporting_from_file(
+    info: "ScenarioInfo", base_dir: "Path", name: str = "all.csv"
+) -> tuple[Any, int, pd.DataFrame]:
+    """Locate and retrieve the latest reported output for the scenario `info`.
+
+    The file `name` is sought in a subdirectory of `base_dir` identified by
+    :attr:`.ScenarioInfo.path`.
+
+    Returns
+    -------
+    tuple
+        1. The path of the file read.
+        2. :class:`int`: The scenario version corresponding to the data read.
+        3. :class:`pandas.DataFrame`: the data.
+
+        If no data is found, all the elements are :any:`None`.
+    """
+    dirs = sorted(base_dir.glob(info.path.replace("vNone", "v*")), reverse=True)
+    for _dir in dirs:
+        path = _dir.joinpath(name)
+        if not path.exists():
+            log.info(f"Skip {_dir}; no file '{name}'")
+            continue
+        path_version = int(path.parent.name.split("v")[-1])
+        return (
+            path,
+            path_version,
+            pd.read_csv(path).assign(
+                Scenario=lambda df: df.Scenario + f"#{path_version}"
+            ),
+        )
+
+    return None, -1, pd.DataFrame()
+
+
+def latest_reporting_from_platform(
+    info: "ScenarioInfo", platform: "Platform", minimum_version: int = -1
+) -> tuple[Any, int, pd.DataFrame]:
+    """Retrieve the latest reported output for the scenario described by `info`.
+
+    The time series data attached to a scenario on `platform` is retrieved.
+
+    Returns
+    -------
+    tuple
+        1. The :class:`.Scenario` object.
+        2. :class:`int`: The scenario version corresponding to the data read.
+        3. :class:`pandas.DataFrame`: the data.
+
+        If no data is found or the latest version with reporting time series data is
+        <= `minimum_version`, all the elements are :any:`None`.
+    """
+    from message_ix import Scenario
+
+    for _, row in (
+        platform.scenario_list(model=info.model, scen=info.scenario, default=False)
+        .sort_values(["version"], ascending=False)
+        .iterrows()
+    ):
+        if row.version <= minimum_version:
+            log.info(f"{row.version} ≤ minimum {minimum_version}")
+            break
+        elif row.is_locked:
+            log.info(f"Skip {info.url} {row.version}; locked")
+            continue
+
+        s = Scenario(
+            platform, model=info.model, scenario=info.scenario, version=row.version
+        )
+        if s.has_solution():
+            return (
+                s,
+                row.version,
+                s.timeseries().assign(
+                    # Scenario=lambda df: df.Scenario + f"v{row.version}"
+                ),
+            )
+        else:
+            log.info(f"Skip {info.url} {row.version}; no reporting output")
+            del s
+
+    return None, -1, pd.DataFrame()
 
 
 def make_output_path(config: Mapping, name: "str | Path") -> "Path":
