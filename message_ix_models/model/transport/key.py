@@ -114,6 +114,7 @@ price = KeySeq(PRICE_COMMODITY / ("h", "l") + "transport")
 #: Keys for :mod:`.transport.report`.
 report = SimpleNamespace(
     all="transport all",
+    plot="transport plot",
     sdmx=Key("transport::sdmx"),
 )
 
