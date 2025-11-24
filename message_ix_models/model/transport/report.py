@@ -3,6 +3,7 @@
 import logging
 import re
 from copy import deepcopy
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -422,7 +423,7 @@ def multi(context: Context, targets: list[str], *, use_platform: bool = False) -
 
     from message_ix_models.tools.iamc import to_quantity
 
-    from .plot import MultiStock
+    from . import plot
 
     k = Keys(
         in_="in::pd",
@@ -442,7 +443,7 @@ def multi(context: Context, targets: list[str], *, use_platform: bool = False) -
     # Expected by .transport.plot.Plot.add_tasks
     c.graph["config"]["transport build debug dir"] = context.get_local_path("report")
 
-    # Retrieve data for each of the `targets`
+    # Retrieve all data for each of the `targets` as pd.DataFrame
     kw0 = dict(filename="transport.csv", use={"file"})
     for i, info in enumerate(map(ScenarioInfo.from_url, targets)):
         c.add(k.in_[i], "latest_reporting", "context", info, **kw0)
@@ -465,11 +466,12 @@ def multi(context: Context, targets: list[str], *, use_platform: bool = False) -
     expr = r"Transport\|Stock\|Road\|Passenger\|LDV\|(.*)"
     c.add(k.plot_data[0], "quantity_from_iamc", k.all1, variable=expr)
 
-    # Plot
-    c.add("plot multi-stock", MultiStock, k.plot_data[0])
+    # Key used by .plot.Plot for formatting titles
+    c.add("scenario", SimpleNamespace(url="Multiple scenarios"))
 
     # Collect all plots
-    c.add("multi", "summarize", "plot multi-stock")
+    c.add("multi", "summarize")
+    plot.prepare_computer(c, kind=plot.Kind.REPORT_MULTI, target="multi")
 
     return c.get("multi")
 

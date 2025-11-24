@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import genno
 import pandas as pd
-from genno import Computer, KeyExistsError, quote
+from genno import Computer, Key, KeyExistsError, Keys, quote
 from message_ix import Scenario
 
 from message_ix_models import Context, ScenarioInfo
@@ -29,7 +29,6 @@ from .operator import indexer_scenario
 from .structure import get_technology_groups
 
 if TYPE_CHECKING:
-    import pathlib
     from typing import TypedDict
 
     from message_ix_models.tools.exo_data import ExoDataSource
@@ -42,8 +41,8 @@ log = logging.getLogger(__name__)
 
 def add_debug(c: Computer) -> None:
     """Add tasks for debugging the build."""
-    from genno import Key, KeySeq
 
+    from . import plot
     from .key import gdp_cap, ms, pdt_nyt
 
     context: Context = c.graph["context"]
@@ -65,54 +64,29 @@ def add_debug(c: Computer) -> None:
     c.graph["config"]["transport build debug dir"] = output_dir
 
     # FIXME Duplicated from base.prepare_reporter()
-    e_iea = Key("energy:n-y-product-flow:iea")
-    e_fnp = KeySeq(e_iea.drop("y"))
-    e_cnlt = Key("energy:c-nl-t:iea+0")
+    e = Keys(iea="energy:n-y-product-flow:iea", cnlt="energy:c-nl-t:iea+0")
+    e.fnp = Key(e.iea / "y")
     # Transform IEA EWEB data for comparison
-    c.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
-    c.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
-    c.add(e_cnlt, "rename_dims", e_fnp[1], quote(dict(flow="t", n="nl", product="c")))
+    c.add(e.fnp[0], "select", e.iea, indexers=dict(y=2020), drop=True)
+    c.add(e.fnp[1], "aggregate", e.fnp[0], "groups::iea to transport", keep=False)
+    c.add(e.cnlt, "rename_dims", e.fnp[1], quote(dict(flow="t", n="nl", product="c")))
 
     # Write some intermediate calculations from the build process to file
-    debug_keys = []
+    k_debug = Key("transport debug")
     for i, (key, stem) in enumerate(
         (
             (gdp_cap, "gdp-ppp-cap"),
             (pdt_nyt, "pdt"),
             (pdt_nyt + "capita+post", "pdt-cap"),
             (ms, "mode-share"),
-            (e_fnp[0], "energy-iea-0"),
-            (e_cnlt, "energy-iea-1"),
+            (e.fnp[0], "energy-iea-0"),
+            (e.cnlt, "energy-iea-1"),
         )
     ):
-        debug_keys.append(f"transport debug {i}")
-        c.add(
-            debug_keys[-1],
-            "write_report_debug",
-            key,
-            output_dir.joinpath(f"{stem}.csv"),
-        )
+        c.add(k_debug[i], "write_report_debug", key, output_dir.joinpath(f"{stem}.csv"))
 
-    def _(*args) -> "pathlib.Path":
-        """Do nothing with the computed `args`, but return `output_path`."""
-        return output_dir
-
-    debug_plots = (
-        "demand-exo demand-exo-capita demand-exo-capita-gdp inv_cost"
-        # FIXME The following currently don't work, as their required/expected input
-        #       keys (from the post-solve/report step) do not exist in the build step
-        # " var-cost fix-cost"
-    ).split()
-
-    c.add(
-        "transport build debug",
-        _,
-        # NB To omit some or all of these calculations / plots from the debug outputs
-        #    for individuals, comment 1 or both of the following lines
-        *debug_keys,
-        *[f"plot {p}" for p in debug_plots],
-    )
-    # log.info(c.describe("transport build debug"))
+    c.add("transport build debug", "summarize", *k_debug.generated)
+    plot.prepare_computer(c, kind=plot.Kind.BUILD, target="transport build debug")
 
     # Also generate these debugging outputs when building the scenario
     c.graph["add transport data"].append("transport build debug")
@@ -120,7 +94,7 @@ def add_debug(c: Computer) -> None:
 
 def debug_multi(context: Context, *paths: Path) -> None:
     """Generate plots comparing data from multiple build debug directories."""
-    from .plot import ComparePDT, ComparePDTCap0, ComparePDTCap1
+    from . import plot
 
     if isinstance(paths[0], Scenario):
         # Workflow was called with --from="…", so paths from the previous step are not
@@ -134,9 +108,9 @@ def debug_multi(context: Context, *paths: Path) -> None:
     c = Computer(config={"transport build debug dir": paths[0].parent})
     c.require_compat("message_ix_models.report.operator")
 
-    for cls in (ComparePDT, ComparePDTCap0, ComparePDTCap1):
-        key = c.add(f"compare {cls.basename}", cls, *paths)
-        c.get(key)
+    plot.prepare_computer(c, kind=plot.Kind.BUILD_MULTI, target="debug multi")
+
+    c.get("debug multi")
 
 
 def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
