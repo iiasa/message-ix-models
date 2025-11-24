@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from ixmp import Platform
     from sdmx.model.v21 import Code
 
-    from message_ix_models import ScenarioInfo
+    from message_ix_models import Context, ScenarioInfo
     from message_ix_models.types import ParameterData
 
     class SupportsLessThan(Protocol):
@@ -237,8 +237,52 @@ def gwp_factors() -> "AnyQuantity":
     )
 
 
+def latest_reporting(
+    context: "Context",
+    info: "ScenarioInfo",
+    *,
+    filename: str | None = None,
+    use: set[str] = {"file", "platform"},
+) -> pd.DataFrame | None:
+    """Locate and retrieve the latest reported output for scenario `info`."""
+    report_dir = context.get_local_path("report")
+
+    if "file" in use:
+        path, path_version, df_path = latest_reporting_from_file(
+            info, report_dir, name=filename
+        )
+    else:
+        path_version = -1
+
+    if "platform" in use:
+        # Check only versions >= path_version
+        scen, scen_version, df_scen = latest_reporting_from_platform(
+            info, context.get_platform(), minimum_version=path_version
+        )
+    else:
+        scen_version = -1
+
+    _url = info.url.replace("#None", "")  # Cleaner URL for log messages
+
+    if path_version == scen_version == -1:
+        log.warning(f"{_url} → NO DATA")
+        return None
+    elif path_version >= scen_version:
+        source = "file"
+        df = df_path
+        version = path_version
+    else:
+        source = "platform"
+        df = df_scen
+        version = scen_version
+
+    log.info(f"{_url} → v{version} from {source}")
+
+    return df.rename(columns=lambda c: c.lower())
+
+
 def latest_reporting_from_file(
-    info: "ScenarioInfo", base_dir: "Path", name: str = "all.csv"
+    info: "ScenarioInfo", base_dir: "Path", name: str | None = None
 ) -> tuple[Any, int, pd.DataFrame]:
     """Locate and retrieve the latest reported output for the scenario `info`.
 
@@ -254,6 +298,8 @@ def latest_reporting_from_file(
 
         If no data is found, all the elements are :any:`None`.
     """
+    name = name or "all.csv"
+
     dirs = sorted(base_dir.glob(info.path.replace("vNone", "v*")), reverse=True)
     for _dir in dirs:
         path = _dir.joinpath(name)
@@ -291,32 +337,33 @@ def latest_reporting_from_platform(
     """
     from message_ix import Scenario
 
+    m, s = info.model, info.scenario
+
     for _, row in (
-        platform.scenario_list(model=info.model, scen=info.scenario, default=False)
+        platform.scenario_list(model=m, scen=s, default=False)
+        .query("model == @m and scenario == @s")  # Handle m or s is None
         .sort_values(["version"], ascending=False)
         .iterrows()
     ):
-        if row.version <= minimum_version:
+        if row.version <= minimum_version:  # pragma: no cover
             log.info(f"{row.version} ≤ minimum {minimum_version}")
             break
-        elif row.is_locked:
+        elif row.is_locked:  # pragma: no cover
             log.info(f"Skip {info.url} {row.version}; locked")
             continue
 
-        s = Scenario(
-            platform, model=info.model, scenario=info.scenario, version=row.version
-        )
-        if s.has_solution():
+        scen = Scenario(platform, model=m, scenario=s, version=row.version)
+        if scen.has_solution():
             return (
-                s,
+                scen,
                 row.version,
-                s.timeseries().assign(
+                scen.timeseries().assign(
                     # Scenario=lambda df: df.Scenario + f"v{row.version}"
                 ),
             )
         else:
-            log.info(f"Skip {info.url} {row.version}; no reporting output")
-            del s
+            log.info(f"Skip {scen.url}; no reporting output")
+            del scen
 
     return None, -1, pd.DataFrame()
 
