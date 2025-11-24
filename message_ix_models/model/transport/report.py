@@ -1,12 +1,12 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 
 import logging
+import re
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-import genno
 import pandas as pd
-from genno import Computer, Key, KeySeq, MissingKeyError
+from genno import Computer, Key, Keys, KeySeq, MissingKeyError
 from genno.core.key import single_key
 from message_ix import Reporter
 
@@ -17,8 +17,6 @@ from . import Config
 from .key import exo, pop
 
 if TYPE_CHECKING:
-    from genno import Computer
-
     from message_ix_models import Spec
 
 log = logging.getLogger(__name__)
@@ -419,65 +417,61 @@ def misc(c: "Computer") -> None:
     )
 
 
-def multi(context: Context, targets):
+def multi(context: Context, targets: list[str], *, use_platform: bool = False) -> None:
     """Report outputs from multiple scenarios."""
-    import plotnine as p9
 
-    from message_ix_models.report.operator import quantity_from_iamc
-    from message_ix_models.tools.iamc import _drop_unique
+    from message_ix_models.tools.iamc import to_quantity
 
-    report_dir = context.get_local_path("report")
-    platform = context.get_platform()
+    from .plot import MultiStock
 
-    dfs = []
-    for target in map(ScenarioInfo.from_url, targets):
-        path, path_version, df_path = latest_reporting_from_file(target, report_dir)
-        scen, scen_version, df_scen = latest_reporting_from_platform(target, platform)
-
-        if path_version == scen_version == -1:
-            raise RuntimeError(f"No reporting output available for {target}")
-        elif path_version >= scen_version:
-            source = "file"
-            df = df_path
-            version = path_version
-        else:
-            source = "platform"
-            df = df_scen
-            version = scen_version
-
-        log.info(f"{target.url = } {source = } {version = }")
-
-        dfs.append(df)
-
-    # Convert to a genno.Quantity
-    cols = ["Variable", "Model", "Scenario", "Region", "Unit"]
-    data = genno.Quantity(
-        pd.concat(dfs)
-        .sort_values(cols)
-        .melt(id_vars=cols, var_name="y")
-        .astype({"y": int})
-        .pipe(_drop_unique, columns="Model", record=dict())
-        .rename(columns={"Variable": "v", "Scenario": "s", "Region": "n"})
-        .dropna(subset=["value"])
-        .set_index("v s n y Unit".split())["value"]
+    k = Keys(
+        in_="in::pd",
+        concat="concat::pd",
+        all0="all:n-SCENARIO-UNIT-VARIABLE-y",
+        all1="all:n-s-UNIT-v-y",
+        plot_data="plot data:n-s-y",
     )
 
-    # Select a subset of data
-    qty = quantity_from_iamc(data, r"Transport\|Stock\|Road\|Passenger\|LDV\|(.*)")
+    c = Computer()
+    # Order is important: use genno.compat.pyam.operator.quantity_from_iamc over local
+    c.require_compat("message_ix_models.report.operator")
+    c.require_compat("pyam")
+
+    c.add("context", context)
+
+    # Expected by .transport.plot.Plot.add_tasks
+    c.graph["config"]["transport build debug dir"] = context.get_local_path("report")
+
+    # Retrieve data for each of the `targets`
+    kw0 = dict(filename="transport.csv", use={"file"})
+    for i, info in enumerate(map(ScenarioInfo.from_url, targets)):
+        c.add(k.in_[i], "latest_reporting", "context", info, **kw0)
+
+    # Concatenate these together
+    c.add(k.concat, pd.concat, list(k.in_.generated))
+
+    # Change e.g. "SSP_2024.1 exo price baseline" to "SSP_2024.1 exo price"
+    # FIXME Address this in .transport.workflow
+    replace = dict(SCENARIO={re.compile("([^12345]) baseline"): r"\1"})
+
+    # Convert to genno.Quantity
+    kw1 = dict(non_iso_3166="keep", replace=replace, unique="MODEL")
+    c.add(k.all0, to_quantity, k.concat, **kw1)
+
+    # Rename dimensions
+    c.add(k.all1, "rename_dims", k.all0, name_dict={"SCENARIO": "s", "VARIABLE": "v"})
+
+    # Select a subset of data and reduce dimensionality
+    expr = r"Transport\|Stock\|Road\|Passenger\|LDV\|(.*)"
+    c.add(k.plot_data[0], "quantity_from_iamc", k.all1, variable=expr)
 
     # Plot
-    # TODO Move to .transport.plot
-    plot = (
-        p9.ggplot(qty.to_dataframe().reset_index())
-        + p9.aes(x="y", y="value", color="v")
-        + p9.facet_grid("n ~ s")
-        + p9.geom_point()
-        + p9.geom_line()
-        + p9.theme(figure_size=(11.7, 16.6))
-    )
-    plot.save("debug.pdf")
+    c.add("plot multi-stock", MultiStock, k.plot_data[0])
 
-    return data
+    # Collect all plots
+    c.add("multi", "summarize", "plot multi-stock")
+
+    return c.get("multi")
 
 
 def reapply_units(c: "Computer") -> None:
