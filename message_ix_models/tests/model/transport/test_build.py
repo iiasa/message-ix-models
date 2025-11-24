@@ -191,7 +191,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "cg share:n-y-cg": (HasUnits(""),),
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
     "votm:n-y": (HasUnits(""),),
-    key.price.base: (HasUnits("USD / km"),),
+    key.price: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
     key.pdt_nyt[0]: (HasUnits("passenger km / year"),),
     key.pdt_nyt[1]: (HasUnits("passenger km / year"),),
@@ -396,7 +396,7 @@ def test_debug(
     options: dict,
     N_node: int,
     *,
-    verbosity: Literal[0, 1, 2, 3] = 0,
+    verbosity: Literal[0, 1, 2, 3] = 1,
 ):
     """Check and debug particular steps in the transport build process.
 
@@ -440,6 +440,7 @@ def test_debug(
 
     # DEBUG Show and compute a different key
     # k = key.pdt_cny
+    k = "transport::policy+ixmp"
 
     # Show what will be computed
     # verbosity = True  # DEBUG Force printing the description
@@ -452,7 +453,7 @@ def test_debug(
     tmp = c.get(k)
 
     # DEBUG Handle a subset of the result for inspection
-    # print(tmp)
+    print(tmp)
 
     assert result, "1 or more checks failed"
     del tmp

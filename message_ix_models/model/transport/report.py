@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from genno import Computer, Key, Keys, KeySeq, MissingKeyError
+from genno import Computer, Key, Keys, MissingKeyError
 from genno.core.key import single_key
 from message_ix import Reporter
 
@@ -134,16 +134,13 @@ def add_iamc_store_write(c: Computer, base_key) -> "Key":
 
     .. todo:: Move upstream, to :mod:`message_ix_models`.
     """
-    k = KeySeq(base_key)
+    k = Key(base_key)
 
     file_keys = []
     for suffix in ("csv", "xlsx"):
         # Create the path
         path = c.add(
-            k[f"{suffix} path"],
-            "make_output_path",
-            "config",
-            name=f"{k.base.name}.{suffix}",
+            k[f"{suffix} path"], "make_output_path", "config", name=f"{k.name}.{suffix}"
         )
         # Write `key` to the path
         file_keys.append(c.add(k[suffix], "write_report", base_key, path))
@@ -164,12 +161,12 @@ def aggregate(c: "Computer") -> None:
 
     config: Config = c.graph["config"]["transport"]
 
-    for key in map(lambda s: KeySeq(c.infer_keys(s)), "emi in out".split()):
+    for key in map(lambda s: Key(c.infer_keys(s)), "emi in out".split()):
         try:
             # Reference the function to avoid the genno magic which would treat as sum()
             # NB aggregation on the nl dimension *could* come first, but this can use a
             #    lot of memory when applied to e.g. out:*: for a full global model.
-            c.add(key[0], func, key.base, "t::transport agg", keep=False)
+            c.add(key[0], func, key, "t::transport agg", keep=False)
             c.add(key[1], func, key[0], "nl::world agg", keep=False)
             c.add(key["transport"], "select", key[1], "t::transport modes 1", sums=True)
         except MissingKeyError:
