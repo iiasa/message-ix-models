@@ -207,9 +207,9 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         if run_ids is not None:
             # Batch mode - get predictions based on emulator uncertainty flag
             if include_emulator_uncertainty:
-                # Extract p10, p50, p90 and expand to pseudo-runs
-                print(f"Running batch RIME predictions with percentiles for {len(run_ids)} run(s)...")
-                predictions_p10, predictions_p50, predictions_p90 = batch_rime_predictions_with_percentiles(
+                # Create base ensemble (lazy evaluation)
+                print(f"Running batch RIME predictions for {len(run_ids)} run(s)...")
+                ensemble = batch_rime_predictions_with_percentiles(
                     magicc_df,
                     run_ids,
                     dataset_path,
@@ -219,14 +219,11 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                 )
 
                 print(f"Expanding predictions with emulator uncertainty (stratified sampling K=5)...")
-                predictions, run_ids_array, expanded_weights = expand_predictions_with_emulator_uncertainty(
-                    predictions_p10,
-                    predictions_p50,
-                    predictions_p90,
-                    run_ids,
+                predictions, expanded_weights = expand_predictions_with_emulator_uncertainty(
+                    ensemble,
                     weights
                 )
-                print(f"  Expanded from N={len(run_ids)} to N×K={len(run_ids_array)} pseudo-runs")
+                print(f"  Expanded from N={len(run_ids)} to N×K={len(predictions.gmt_trajectories)} pseudo-runs")
 
                 # Update weights to expanded version
                 weights = expanded_weights
@@ -241,20 +238,20 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                     basin_mapping,
                     var
                 )
-                run_ids_array = np.array(run_ids)
 
             # Compute expectations and CVaR if needed
             if weighted or include_emulator_uncertainty:
                 print(f"\nComputing expectations and CVaR...")
 
                 # Results with configured weights (importance or uniform)
-                result_mean = compute_expectation(predictions, run_ids_array, weights=weights)
-                result_cvar = compute_rime_cvar(predictions, weights, run_ids_array, cvar_levels, method=cvar_method)
+                result_mean = compute_expectation(predictions, weights=weights)
+                result_cvar = compute_rime_cvar(predictions, weights, cvar_levels=cvar_levels, method=cvar_method)
 
                 # Comparison: uniform weights
-                uniform_weights = np.ones(len(run_ids_array)) / len(run_ids_array)
-                uniform_mean = compute_expectation(predictions, run_ids_array, weights=None)
-                uniform_cvar = compute_rime_cvar(predictions, uniform_weights, run_ids_array, cvar_levels, method=cvar_method)
+                n_runs = len(predictions.gmt_trajectories) if hasattr(predictions, 'gmt_trajectories') else len(predictions)
+                uniform_weights = np.ones(n_runs) / n_runs
+                uniform_mean = compute_expectation(predictions, weights=None)
+                uniform_cvar = compute_rime_cvar(predictions, uniform_weights, cvar_levels=cvar_levels, method=cvar_method)
 
                 # Save results
                 if 'qtot' in var:
