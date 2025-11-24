@@ -191,7 +191,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "cg share:n-y-cg": (HasUnits(""),),
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
     "votm:n-y": (HasUnits(""),),
-    key.price.base: (HasUnits("USD / km"),),
+    key.price: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
     key.pdt_nyt[0]: (HasUnits("passenger km / year"),),
     key.pdt_nyt[1]: (HasUnits("passenger km / year"),),
