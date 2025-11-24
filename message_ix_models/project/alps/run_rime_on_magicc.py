@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 
 from message_ix_models.util import package_data_path
-from rime.rime_functions import predict_from_gmt
+from .rime_functions import predict_from_gmt
 from .rime import (
     extract_temperature_timeseries,
     batch_rime_predictions,
