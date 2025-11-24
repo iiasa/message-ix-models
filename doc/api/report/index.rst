@@ -201,6 +201,9 @@ Operators
       get_commodity_groups
       get_ts
       gwp_factors
+      latest_reporting
+      latest_reporting_from_platform
+      latest_reporting_from_file
       make_output_path
       model_periods
       node_glb
