@@ -2,8 +2,7 @@
 
 import logging
 from copy import deepcopy
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import genno
 import pandas as pd
@@ -18,7 +17,6 @@ from . import Config
 from .key import exo, pop
 
 if TYPE_CHECKING:
-    import ixmp
     from genno import Computer
 
     from message_ix_models import Spec
@@ -368,94 +366,6 @@ def convert_sdmx(c: "Computer") -> None:
 
     # Connect to the main report key
     c.graph[k_report.all].append(k_report.sdmx)
-
-
-def latest_reporting_from_file(
-    info: ScenarioInfo, base_dir: Path
-) -> tuple[Any, int, pd.DataFrame]:
-    """Locate and retrieve the latest reported output for the scenario `info`.
-
-    The file :file:`transport.csv` is sought in a subdirectory of `base_dir` identified
-    by :attr:`.ScenarioInfo.path`.
-
-    .. todo:: Move upstream, to :mod:`message_ix_models`.
-
-    Returns
-    -------
-    tuple
-        1. The path of the file read.
-        2. :class:`int`: The scenario version corresponding to the data read.
-        3. :class:`pandas.DataFrame`: the data.
-
-        If no data is found, all the elements are :any:`None`.
-    """
-    dirs = sorted(base_dir.glob(info.path.replace("vNone", "v*")), reverse=True)
-    for _dir in dirs:
-        path = _dir.joinpath("transport.csv")
-        if not path.exists():
-            log.info(f"Skip {_dir}; no file 'transport.csv'")
-            continue
-        path_version = int(path.parent.name.split("v")[-1])
-        return (
-            path,
-            path_version,
-            pd.read_csv(path).assign(
-                Scenario=lambda df: df.Scenario + f"#{path_version}"
-            ),
-        )
-
-    return None, -1, pd.DataFrame()
-
-
-def latest_reporting_from_platform(
-    info: ScenarioInfo, platform: "ixmp.Platform", minimum_version: int = -1
-) -> tuple[Any, int, pd.DataFrame]:
-    """Retrieve the latest reported output for the scenario described by `info`.
-
-    The time series data attached to a scenario on `platform` is retrieved.
-
-    .. todo:: Move upstream, to :mod:`message_ix_models`.
-
-    Returns
-    -------
-    tuple
-        1. The :class:`.Scenario` object.
-        2. :class:`int`: The scenario version corresponding to the data read.
-        3. :class:`pandas.DataFrame`: the data.
-
-        If no data is found or the latest version with reporting time series data is
-        <= `minimum_version`, all the elements are :any:`None`.
-    """
-    from message_ix import Scenario
-
-    for _, row in (
-        platform.scenario_list(model=info.model, scen=info.scenario, default=False)
-        .sort_values(["version"], ascending=False)
-        .iterrows()
-    ):
-        if row.version <= minimum_version:
-            log.info(f"{row.version} ≤ minimum {minimum_version}")
-            break
-        elif row.is_locked:
-            log.info(f"Skip {info.url} {row.version}; locked")
-            continue
-
-        s = Scenario(
-            platform, model=info.model, scenario=info.scenario, version=row.version
-        )
-        if s.has_solution():
-            return (
-                s,
-                row.version,
-                s.timeseries().assign(
-                    # Scenario=lambda df: df.Scenario + f"v{row.version}"
-                ),
-            )
-        else:
-            log.info(f"Skip {info.url} {row.version}; no reporting output")
-            del s
-
-    return None, -1, pd.DataFrame()
 
 
 def misc(c: "Computer") -> None:
