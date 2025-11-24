@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from ixmp import Platform
     from sdmx.model.v21 import Code
 
-    from message_ix_models import ScenarioInfo
+    from message_ix_models import Context, ScenarioInfo
     from message_ix_models.types import ParameterData
 
     class SupportsLessThan(Protocol):
@@ -237,8 +237,51 @@ def gwp_factors() -> "AnyQuantity":
     )
 
 
+def latest_reporting(
+    context: "Context",
+    info: "ScenarioInfo",
+    *,
+    filename: str | None = None,
+    use: set[str] = {"file", "platform"},
+) -> pd.DataFrame | None:
+    """Locate and retrieve the latest reported output for scenario `info`."""
+    report_dir = context.get_local_path("report")
+
+    if "file" in use:
+        path, path_version, df_path = latest_reporting_from_file(
+            info, report_dir, name=filename
+        )
+    else:
+        path_version = -1
+
+    if "platform" in use:
+        scen, scen_version, df_scen = latest_reporting_from_platform(
+            info, context.get_platform()
+        )
+    else:
+        scen_version = -1
+
+    _url = info.url.replace("#None", "")  # Cleaner URL for log messages
+
+    if path_version == scen_version == -1:
+        log.warning(f"{_url} → NO DATA")
+        return None
+    elif path_version >= scen_version:
+        source = "file"
+        df = df_path
+        version = path_version
+    else:
+        source = "platform"
+        df = df_scen
+        version = scen_version
+
+    log.info(f"{_url} → v{version} from {source}")
+
+    return df
+
+
 def latest_reporting_from_file(
-    info: "ScenarioInfo", base_dir: "Path", name: str = "all.csv"
+    info: "ScenarioInfo", base_dir: "Path", name: str | None = None
 ) -> tuple[Any, int, pd.DataFrame]:
     """Locate and retrieve the latest reported output for the scenario `info`.
 
@@ -254,6 +297,8 @@ def latest_reporting_from_file(
 
         If no data is found, all the elements are :any:`None`.
     """
+    name = name or "all.csv"
+
     dirs = sorted(base_dir.glob(info.path.replace("vNone", "v*")), reverse=True)
     for _dir in dirs:
         path = _dir.joinpath(name)
