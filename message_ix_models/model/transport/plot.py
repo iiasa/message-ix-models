@@ -662,6 +662,31 @@ class EnergyCmdty1(EnergyCmdty0):
             yield ggplot
 
 
+class MultiStock(Plot):
+    """Stock, LDV technologies, SSP × policy."""
+
+    basename = "multi-stock"
+    runs_on_solved_scenario = False
+
+    static = Plot.static + [
+        p9.aes(x="y", y="value", color="v"),
+        p9.facet_wrap("s", ncol=3, nrow=5),
+        p9.geom_point(),
+        p9.geom_line(),
+        p9.scale_color_brewer(type="qualitative", palette="Paired"),
+        p9.labs(x="Period", y="", color="Technology"),
+        p9.theme(figure_size=(11.7, 16.6)),
+    ]
+
+    def generate(self, data):
+        self.unit = data["unit"].unique()[0]
+
+        for _, ggplot in self.groupby_plot(data, "n"):
+            # Maximum y-limit for this node
+            y_max = max(ggplot.data["value"])
+            yield ggplot + p9.expand_limits(y=[0, y_max])
+
+
 class Scale1Diff(Plot):
     """scale-1 factor in y=2020; changes between 2 scenarios."""
 
