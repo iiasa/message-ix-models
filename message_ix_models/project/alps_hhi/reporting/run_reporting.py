@@ -89,8 +89,11 @@ def pyam_df_from_rep(
 mp = ixmp.Platform()
 
 outdf = pd.DataFrame()
-for scen in ['SSP2', 'SSP2_hhi_HC', 'SSP2_hhi_WS']:
-    scenario = message_ix.Scenario(mp, model = 'alps_hhi', scenario = scen)
+for mod, scen in [('alps_hhi', 'SSP2'),
+                  ('alps_hhi', 'SSP2_hhi_HC'),
+                  ('alps_hhi', 'SSP2_hhi_WS')]:
+                  #('SSP_SSP2_v6.2', 'baseline')]:
+    scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
     rep = Reporter.from_scenario(scenario)
     #base_df = rep.get("message::default").data 
     supply_config = load_config('gas_supply')
@@ -102,8 +105,23 @@ for scen in ['SSP2', 'SSP2_hhi_HC', 'SSP2_hhi_WS']:
     df['region'] = df['nl']
     df['variable'] = df['iamc_name']
     df['year'] = df['ya']
-    df['unit'] = 'GWa'
+    df['value'] = df['value'] * .03154
+    df['unit'] = 'EJ/yr'
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
+    
+    # Add HHI
+    df_tot_com = df.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
+    df_tot_com = df_tot_com.rename(columns = {'value': 'total_com'})
+    df_hhi = df.merge(df_tot_com, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left').reset_index()
+    df_hhi['HHI'] = (df_hhi['value'] / df_hhi['total_com'])**2
+    df_hhi = df_hhi.groupby(['model', 'scenario', 'region', 'unit', 'year'])['HHI'].sum().reset_index()
+
+    df = df.merge(df_hhi, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
+    
+    # Add labels
+    df['supply_type'] = np.where(df['variable'].str.contains('Domestic'), 'Domestic', 'Imports')
+    df['fuel_type'] = np.where(df['variable'].str.contains('LNG'), 'LNG', 'Gas')
+
     outdf = pd.concat([outdf, df])
 
 outdf.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))

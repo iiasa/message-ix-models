@@ -14,7 +14,7 @@ vars:
 # Piped gas imports
   Gas Supply|Imports|Piped Gas|:
     filter:
-      { technology: [gas_piped_exp, check], mode: M1, commodity: gas, level: piped }
+      { technology: [gas_piped_exp], mode: M1, commodity: gas, level: piped }
     short:
       gas_piped_exp
 

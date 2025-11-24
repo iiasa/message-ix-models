@@ -1,0 +1,59 @@
+report_config:
+    table_def: "message_data.tools.post_processing.materials_dac_tables"
+    aggr_def: "materials_dac_aggregates.csv"
+    var_def: "materials_dac_variable_definitions.csv"
+    unit_yaml: 'materials_dac_units.yaml'
+run_tables:
+    Prc:
+        root: Price
+        active: True
+        function: retr_price
+        args: {"units_CPrc_co2": "US$2010/tCO2",
+               "units_CPrc_co2_outp": "US$2010/t CO2", # Name of units in output file
+               "units_energy": "US$2010/GJ",
+               "units_energy_outp": "US$2010/GJ",
+               "units_CPrc_c": "US$2010/tC",
+               "conv_CPrc_co2_to_c": 0.03171,
+               "conv_CPrc_co2_to_c": .03154,
+               "units_agri": "Index (2020 = 1)",}
+    Enrgy_Trd:
+        root: Trade
+        active: True
+        function: retr_trade
+        args: {"units_energy": "EJ/yr",
+               "units_CPrc_co2": "US$2010/tCO2",
+               "units_emi_val": "billion US$2010/yr",
+               "units_emi_vol": "Mt CO2-equiv/yr",
+               "units_emi_trade": "Mt CO2/yr",
+               "units_energy_price": "US$2010/GJ",
+               "units_CPrc_c": "US$2010/tC",
+               "conv_CPrc_co2_to_c": .03154,
+               "units_agri_vol": "million t DM/yr",
+               "units_for_vol": "million m3/yr",
+}
+    Emi_Crb_rem:
+        root: Carbon Removal
+        active: True
+        function: retr_carbon_removal
+        args: {"units_emi": "Mt CO2/yr",
+               "units_ene": "EJ/yr"
+        }
+    
+    Emi_Crb_Cap:
+        root: Carbon Capture
+        active: True
+        function: retr_CO2_Capture
+        args: {"units_emi": "Mt CO2/yr",
+               "units_ene": "EJ/yr"}
+    Emi_N2O:
+        root: Emissions|N2O
+        active: True
+        function: retr_NONCO2emi
+        args: {"var": "N2O",
+               "units": "kt N2O/yr"}
+    Emi_CH4:
+        root: Emissions|CH4
+        active: True
+        function: retr_NONCO2emi
+        args: {"var": "CH4",
+               "units": "Mt CH4/yr"}

@@ -90,5 +90,3 @@ def trade_reporting(scenario: message_ix.Scenario = None,
 
     gt = pyam.concat([ge, gi])
     gt.to_csv(out_dir / f'{scenario.model}_{scenario.scenario}_trade.csv')
-
-trade_reporting(model_name = 'china_security', scenario_name = 'SSP2_Baseline')
