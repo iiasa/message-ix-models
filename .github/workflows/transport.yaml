@@ -26,29 +26,11 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "SSP1",
-      "SSP1 exo price",
-      "SSP1 tax",
       "SSP2",
-      "SSP2 exo price",
-      "SSP2 tax",
-      "SSP3",
-      "SSP3 exo price",
-      "SSP3 tax",
-      "SSP4",
-      "SSP4 exo price",
-      "SSP4 tax",
-      "SSP5",
-      "SSP5 exo price",
-      "SSP5 tax",
       "DIGSY-BEST-C",
       "DIGSY-BEST-S",
       "DIGSY-WORST-C",
-      "DIGSY-WORST-S",
-      "EDITS-CA",
-      "EDITS-HA",
-      "LED-SSP1",
-      "LED-SSP2"
+      "DIGSY-WORST-S"
     ]
 
   # Currently disabled:
