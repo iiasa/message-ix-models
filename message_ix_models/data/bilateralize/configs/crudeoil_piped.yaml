@@ -49,3 +49,7 @@ crudeoil_piped_trade:
     True
   tracked_emissions:
   bunker_technology: # not applicable for pipelines
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20

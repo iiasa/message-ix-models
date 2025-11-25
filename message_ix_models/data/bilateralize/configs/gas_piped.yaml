@@ -53,3 +53,7 @@ gas_piped_trade:
     - TCE_non-CO2
     - TCE_other
   bunker_technology: # not applicable for pipelines
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20

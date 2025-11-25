@@ -50,3 +50,7 @@ crudeoil_shipped_trade: # Name of covered trade technology (e.g., oil)
   bunker_technology:
     crudeoil_tanker_loil:
       loil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20

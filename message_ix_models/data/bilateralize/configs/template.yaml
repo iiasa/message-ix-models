@@ -24,3 +24,5 @@ template_trade_technology: # Name of covered trade technology (e.g., oil)
   specify_network: # If true, produces sheet of all mapped pipe technologies and regions, to be used to delete to desirable pairs. 
   tracked_emissions: # List of tracked emission types
   bunker_technology: # [DICT] Bunker technology for the traded fuel if it exists (e.g., LNG_tobunker)
+  trade_technical_lifetime: # Technical lifetime of trade decision (default should be 1y)
+  flow_technical_lifetime: # Technical lifetime of flow technology (default is 20y)

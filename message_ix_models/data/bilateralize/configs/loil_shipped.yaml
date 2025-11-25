@@ -52,3 +52,7 @@ loil_shipped_trade:
   bunker_technology:
     oil_tanker_loil:
       loil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20
