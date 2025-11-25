@@ -10,6 +10,81 @@ from message_ix_models.util import broadcast
 
 from .config import Config
 
+LOG = logging.getLogger(__name__)
+
+
+def ensure_historical_keys(rep: Reporter) -> None:
+    """Ensure historical reporter keys exist.
+
+    Creates 'out_hist' and 'emi_hist' keys if they don't already exist.
+
+    - out_hist = output × historical_activity (for historical production data)
+    - emi_hist = emission_factor × historical_activity (for historical emissions)
+      Note: emi (model emissions) = emission_factor × ACT
+            emi_hist (historical emissions) = emission_factor × historical_activity
+
+    Only creates keys if the base keys are available in the reporter.
+    """
+    # Check what keys are available - need to check for keys with any dimension combo
+    # Keys in reporter often have dimensions like "historical_activity:nl-t-ya-m"
+    # So we need to check if the base key name exists (before the colon)
+    has_output = any("output" == str(k).split(":")[0] for k in rep.keys())
+    has_historical_activity = any(
+        "historical_activity" == str(k).split(":")[0] for k in rep.keys()
+    )
+    has_emission_factor = any(
+        "emission_factor" == str(k).split(":")[0] for k in rep.keys()
+    )
+
+    # Check if historical keys already exist
+    has_out_hist = any("out_hist" == str(k).split(":")[0] for k in rep.keys())
+    has_emi_hist = any("emi_hist" == str(k).split(":")[0] for k in rep.keys())
+
+    # Check if base keys exist with dimensions
+    try:
+        if not has_out_hist and has_output and has_historical_activity:
+            rep.add("out_hist", "mul", "output", "historical_activity")
+        elif not has_out_hist:
+            LOG.warning(
+                "Cannot create out_hist: output=%s historical_activity=%s",
+                has_output,
+                has_historical_activity,
+            )
+    except Exception as exc:
+        LOG.error("Error creating out_hist key: %s", exc)
+
+    try:
+        if not has_emi_hist and has_emission_factor and has_historical_activity:
+            rep.add("emi_hist", "mul", "emission_factor", "historical_activity")
+        elif not has_emi_hist:
+            LOG.warning(
+                "Cannot create emi_hist: emission_factor=%s historical_activity=%s",
+                has_emission_factor,
+                has_historical_activity,
+            )
+    except Exception as exc:
+        LOG.error("Error creating emi_hist key: %s", exc)
+
+
+# Cache attribute name for storing first model year on Reporter
+_FIRST_MODEL_YEAR_ATTR = "_h2_first_model_year"
+
+
+def get_first_model_year(rep: Reporter) -> Optional[int]:
+    """Return the first model year defined in cat_year."""
+    cached = getattr(rep, _FIRST_MODEL_YEAR_ATTR, None)
+    if cached is not None:
+        return cached
+    try:
+        df = rep.get("cat_year")
+        fm = df.loc[df["type_year"] == "firstmodelyear", "year"].astype(int).min()
+        setattr(rep, _FIRST_MODEL_YEAR_ATTR, fm)
+        return fm
+    except Exception:
+        LOG.warning("Could not determine first model year from cat_year")
+        setattr(rep, _FIRST_MODEL_YEAR_ATTR, None)
+        return None
+
 
 def pyam_df_from_rep(
     rep: message_ix.Reporter, reporter_var: str, mapping_df: pd.DataFrame
