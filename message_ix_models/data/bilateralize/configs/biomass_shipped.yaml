@@ -44,3 +44,7 @@ biomass_shipped_trade:
   bunker_technology:
     energy_bulk_carrier_loil:
       loil_tobunker   
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20

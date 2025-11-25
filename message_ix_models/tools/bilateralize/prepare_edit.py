@@ -290,7 +290,7 @@ def build_output(
 
 # %% Generate technical lifetime parameter (trade technology)
 def build_technical_lifetime(
-    tec: str, network_setup: dict, parameter_outputs: dict, **kwargs
+    tec: str, network_setup: dict, config_dict: dict, parameter_outputs: dict, **kwargs
 ):
     """
     Generate technical lifetime parameter (trade technology)
@@ -299,7 +299,7 @@ def build_technical_lifetime(
         "technical_lifetime",
         network_df=network_setup[tec],
         col_values=dict(
-            value=1,  # Make 1 year by default
+            value=config_dict["trade_technical_lifetime"][tec],
             unit="y",
         ),
     )
@@ -933,7 +933,7 @@ def build_flow_technical_lifetime(
         "technical_lifetime",
         network_df=network_setup[tec],
         col_values=dict(
-            value=20,  # Default is 20y
+            value=config_dict["flow_technical_lifetime"][tec],
             unit="y",
         ),
         export_only=True,

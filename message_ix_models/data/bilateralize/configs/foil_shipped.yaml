@@ -52,3 +52,7 @@ foil_shipped_trade:
       loil_tobunker
     oil_tanker_foil:
       foil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20

@@ -49,3 +49,7 @@ LNG_shipped_trade:
       LNG_tobunker
     LNG_tanker_loil:
       loil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20

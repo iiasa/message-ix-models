@@ -45,3 +45,8 @@ coal_shipped_trade: # Name of covered trade technology (e.g., oil)
   bunker_technology:
     energy_bulk_carrier_loil:
       loil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20
+      
