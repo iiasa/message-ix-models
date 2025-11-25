@@ -72,7 +72,7 @@ def generate_cfdict(
         config_name: Name of config file
     """
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r") as f:
+    with open(dict_dir, "r", encoding="utf-8") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 
@@ -153,7 +153,7 @@ def import_uncomtrade(
         config_name: Name of config file
     """
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
-    with open(dict_dir, "r") as f:
+    with open(dict_dir, "r", encoding="utf-8") as f:
         commodity_codes = yaml.safe_load(f)
 
     full_hs_list: list[str] = []
@@ -240,7 +240,7 @@ def convert_trade(
     ) as file_handler:
         conversion_factors = pickle.load(file_handler)
     with open(
-        os.path.join(data_paths["iea_web"], "CONV_addl.yaml"), "r"
+        os.path.join(data_paths["iea_web"], "CONV_addl.yaml"), "r", encoding="utf-8"
     ) as file_handler:
         conversion_addl = yaml.safe_load(file_handler)
     cf_codes = pd.read_csv(os.path.join(data_paths["iea_web"], "CONV_hs.csv"))
@@ -255,7 +255,7 @@ def convert_trade(
 
     # Add MESSAGE regions
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r") as f:
+    with open(dict_dir, "r", encoding="utf-8") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 
@@ -487,7 +487,7 @@ def check_iea_balances(
     indf = indf[~indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
 
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
-    with open(dict_dir, "r") as f:
+    with open(dict_dir, "r", encoding="utf-8") as f:
         commodity_codes = yaml.safe_load(f)
 
     iea["COMMODITY"] = ""
@@ -565,7 +565,7 @@ def reformat_to_parameter(
         exports_only: If True, only include exports
     """
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r") as f:
+    with open(dict_dir, "r", encoding="utf-8") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 
@@ -841,7 +841,7 @@ def build_hist_new_capacity_flow(
     """
     # Regions
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r") as f:
+    with open(dict_dir, "r", encoding="utf-8") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 

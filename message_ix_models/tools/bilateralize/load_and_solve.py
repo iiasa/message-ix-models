@@ -36,7 +36,7 @@ def remove_trade_tech(scen: message_ix.Scenario, log, config_tec: dict, tec: str
     ]
 
     base_tec = base_tec + config_tec[tec][tec + "_trade"]["base_trade_technology"]
-    
+
     base_tec = base_tec + [
         i
         for i in scen.set("technology")
