@@ -58,7 +58,7 @@ def pyam_df_from_rep(
     
     rep.set_filters(**filters_dict)
     
-    if reporter_var == 'out':
+    if reporter_var in ['out', 'out_hist']:
         df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-nd-t-ya-m-c-l"))
         df = (
                 df_var.join(mapping_df[["iamc_name", "unit"]])
@@ -89,15 +89,18 @@ def pyam_df_from_rep(
 mp = ixmp.Platform()
 
 outdf = pd.DataFrame()
-for mod, scen in [('alps_hhi', 'SSP2'),
-                  ('alps_hhi', 'SSP2_hhi_HC'),
-                  ('alps_hhi', 'SSP2_hhi_WS')]:
+for mod, scen in [('alps_hhi', 'SSP2')]: #,
+                  #('alps_hhi', 'SSP2_hhi_HC'),
+                  #('alps_hhi', 'SSP2_hhi_WS_lambda100p')]:
                   #('SSP_SSP2_v6.2', 'baseline')]:
     scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
     rep = Reporter.from_scenario(scenario)
     #base_df = rep.get("message::default").data 
     supply_config = load_config('gas_supply')
-    df = pyam_df_from_rep(rep, supply_config.var, supply_config.mapping)
+    df = pd.DataFrame()
+    for var in ['out', 'out_hist']:
+        rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
+        df = pd.concat([df, rdf])
     df = df.reset_index()
     df = df.rename(columns = {0:'value'})
     df['model'] = scenario.model
@@ -108,7 +111,7 @@ for mod, scen in [('alps_hhi', 'SSP2'),
     df['value'] = df['value'] * .03154
     df['unit'] = 'EJ/yr'
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
-    
+
     # Add HHI
     df_tot_com = df.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
     df_tot_com = df_tot_com.rename(columns = {'value': 'total_com'})
@@ -116,6 +119,13 @@ for mod, scen in [('alps_hhi', 'SSP2'),
     df_hhi['HHI'] = (df_hhi['value'] / df_hhi['total_com'])**2
     df_hhi = df_hhi.groupby(['model', 'scenario', 'region', 'unit', 'year'])['HHI'].sum().reset_index()
 
+    # Add share
+    df_tot = df.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
+    df_tot = df_tot.rename(columns = {'value': 'total'})
+    df = df.merge(df_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
+    df['share'] = df['value'] / df['total']
+    df.drop(columns = ['total'], inplace = True)
+    
     df = df.merge(df_hhi, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
     
     # Add labels
