@@ -1,0 +1,94 @@
+# yaml file to report on hydrogen production
+# grouped by technology, sector and fuel input
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  out_hist
+
+iamc_prefix:
+  Production|
+
+unit: EJ/yr
+
+vars:
+  # hydrogen production
+  # gas
+  Hydrogen|Gas|SMR w/o CCS:
+    filter:
+      { technology: h2_smr, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_smr_wo_ccs
+
+  Hydrogen|Gas|SMR w/ CCS:
+    filter:
+      {technology: h2_smr_ccs, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_smr_w_ccs
+
+  Hydrogen|Gas|Pyrolysis:
+    filter:
+      {technology: h2_pyro_elec, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_pyro
+
+  # coal
+  Hydrogen|Coal|w/o CCS:
+    filter:
+      {technology: h2_coal, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_coal_wo_ccs
+
+  Hydrogen|Coal|w/ CCS:
+    filter:
+      {technology: h2_coal_ccs, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_coal_w_ccs
+
+  # biomass
+  Hydrogen|Biomass|w/o CCS:
+    filter:
+      {technology: h2_bio, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_bio_wo_ccs
+
+  Hydrogen|Biomass|w/ CCS:
+    filter:
+      {technology: h2_bio_ccs, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_bio_w_ccs
+
+  # electricity
+  Hydrogen|Electricity|Alkaline:
+    filter:
+      {technology: h2_elec_alk, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_elec_alkaline
+
+  Hydrogen|Electricity|PEM:
+    filter:
+      {technology: h2_elec_pem, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_elec_pem
+
+  Hydrogen|Electricity|SOE:
+    filter:
+      {technology: h2_elec_soe, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_elec_soe
+  Hydrogen|Electricity|h2_elec_legacy:
+      filter:
+        {technology: h2_elec, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+      original_unit: GWa
+      short:
+        prod_h2_elec_legacy
+

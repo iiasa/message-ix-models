@@ -1,0 +1,86 @@
+# Fugitive hydrogen emissions
+
+var:
+  emi_hist
+
+iamc_prefix:
+  Emissions|H2|Fugitive|
+
+unit: Mt/yr
+
+vars:
+  # --- Production ---
+  Energy|Supply|Hydrogen|Production|Gas|SMR:
+    filter: { technology: h2_smr, mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_prod_gas_smr
+  Energy|Supply|Hydrogen|Production|Gas|SMR w/ CCS:
+    filter: { technology: h2_smr_ccs, mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_prod_gas_smr_ccs
+  Energy|Supply|Hydrogen|Production|Gas|Pyrolysis:
+    filter: { technology: h2_pyro_elec, mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_prod_gas_pyro
+  Energy|Supply|Hydrogen|Production|Coal|w/o CCS:
+    filter: { technology: h2_coal, mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_prod_coal_wo_ccs
+  Energy|Supply|Hydrogen|Production|Coal|w/ CCS:
+    filter: { technology: h2_coal_ccs, mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_prod_coal_w_ccs
+  Energy|Supply|Hydrogen|Production|Biomass|w/o CCS:
+    filter: { technology: h2_bio, mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_prod_bio_wo_ccs
+  Energy|Supply|Hydrogen|Production|Biomass|w/ CCS:
+    filter: { technology: h2_bio_ccs, mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_prod_bio_w_ccs
+  Energy|Supply|Hydrogen|Production|Electricity:
+    filter: { technology: [h2_elec_pem, h2_elec_soe, h2_elec_alk], mode:[M1, feedstock, fuel], emission: H2_leak }
+    short: emi_h2_fgt_prod_elec
+
+  # --- Distribution ---
+  Energy|Supply|Hydrogen|Distribution:
+    filter: { technology: [h2_t_d, h2_mix], mode: M1, emission: H2_leak }
+    short: emi_h2_fgt_dist
+
+  # --- Demand: Industry ---
+  Energy|Demand|Industry|Iron and Steel:
+  # fc_h2_steel does not have high_temp mode!
+  # probably need to add an exception for fc_h2_steel in the 
+  # reporting script!
+  # turns out that as long as something is returned, the reporting script does not crash!
+  # so if we have both high_temp and low_temp, the reporting script works.
+    filter: { technology: [furnace_h2_steel, fc_h2_steel, dri_h2_steel], mode: [high_temp, low_temp], emission: H2_leak } 
+    short: emi_h2_fgt_dem_ind_steel
+
+  Energy|Demand|Industry|Non-Metallic Minerals|Cement:
+    filter: { technology: [furnace_h2_cement], mode: [high_temp, low_temp], emission: H2_leak }
+    short: emi_h2_fgt_dem_ind_cement
+
+  # fc_h2_aluminum does not have high_temp mode!
+  Energy|Demand|Industry|Non-Ferrous Metals|Aluminium:
+    filter: { technology: [furnace_h2_aluminum, fc_h2_aluminum], mode: [high_temp, low_temp], emission: H2_leak }
+    short: emi_h2_fgt_dem_ind_alu
+
+  # the fc_x technologies do not have high_temp mode!
+  Energy|Demand|Industry|Chemicals:
+    filter: { technology: [furnace_h2_petro, fc_h2_petro, furnace_h2_resins, fc_h2_resins], mode: [high_temp, low_temp], emission: H2_leak }
+    short: emi_h2_fgt_dem_ind_chem
+
+  Energy|Demand|Industry|Methanol:
+    filter: { technology: [meth_h2], mode: [feedstock_dac, feedstock_bic, feedstock_fic, fuel_dac, fuel_bic, fuel_fic], emission: H2_leak }
+    short: emi_h2_fgt_dem_ind_meth
+
+  Energy|Demand|Industry|Other:
+    filter: { technology: [furnace_h2_refining, fc_h2_refining, hydro_cracking_ref, h2_i, h2_fc_I], emission: H2_leak }
+    short: emi_h2_fgt_dem_ind_other
+
+  # --- Demand: Other Sectors ---
+  Energy|Demand|Residential and Commercial:
+    filter: { technology: [h2_rc, h2_fc_RC], emission: H2_leak }
+    short: emi_h2_fgt_dem_rc
+  Energy|Demand|Transportation:
+    filter: { technology: [h2_fc_trp], emission: H2_leak }
+    short: emi_h2_fgt_dem_trp
+  Energy|Demand|Power:
+    filter: { technology: [h2_ct], emission: H2_leak }
+    short: emi_h2_fgt_dem_pwr
+
+

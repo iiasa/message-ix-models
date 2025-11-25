@@ -1,0 +1,57 @@
+# Aggregation rules for transient hydrogen production reporting
+# Defines hierarchical aggregations of transient production variables
+# Transient hydrogen is defined as hydrogen production for 
+# the production of other commodities, such as ammonia and methanol.
+#
+# NOTE: Unit conversion and stoichiometric factors are applied at the LEAF LEVEL ONLY (in h2_transient.yaml).
+# Aggregates sum already-converted values, so no original_unit or factors are needed here.
+# The aggregation happens at the IAMC variable level (after processing), not at the MESSAGE data level.
+# This approach correctly handles cases where components have different factors
+# (e.g., methanol from coal/bio/ng: 0.937 vs. methanol from H2: 1.124).
+
+var: out_hist
+iamc_prefix: Production|Hydrogen|
+unit: EJ/yr
+
+level_1:
+  Transient|Ammonia|Biomass:
+    short: prod_h2_transient_nh3_biomass_total
+    components: [ prod_h2_transient_nh3_biomass, prod_h2_transient_nh3_biomass_ccs ]
+  # Ammonia|Electricity:
+  #   short: prod_h2_transient_nh3_electricity_total
+  #   components: [ prod_h2_transient_nh3_electricity ]
+  Transient|Ammonia|Gas:
+    short: prod_h2_transient_nh3_gas_total
+    components: [ prod_h2_transient_nh3_gas, prod_h2_transient_nh3_gas_ccs ]
+  Transient|Ammonia|Coal:
+    short: prod_h2_transient_nh3_coal_total
+    components: [ prod_h2_transient_nh3_coal, prod_h2_transient_nh3_coal_ccs ]
+  Transient|Ammonia|Oil:
+    short: prod_h2_transient_nh3_oil_total
+    components: [ prod_h2_transient_nh3_oil, prod_h2_transient_nh3_oil_ccs ]
+  Transient|Methanol|Biomass:
+    short: prod_h2_transient_meth_bio_total
+    components: [ prod_h2_transient_meth_bio, prod_h2_transient_meth_bio_ccs ]
+  Transient|Methanol|Coal:
+    short: prod_h2_transient_meth_coal_total
+    components: [ prod_h2_transient_meth_coal, prod_h2_transient_meth_coal_ccs ]
+  Transient|Methanol|Gas:
+    short: prod_h2_transient_meth_ng_total
+    components: [ prod_h2_transient_meth_ng, prod_h2_transient_meth_ng_ccs ]
+  # Transient|Methanol|Hydrogen:
+  #   short: prod_h2_transient_meth_h2_total
+  #   components: [ prod_h2_transient_meth_h2 ]
+
+level_2:
+  Transient|Ammonia:
+    short: prod_h2_transient_nh3
+    components: [ prod_h2_transient_nh3_biomass_total, prod_h2_transient_nh3_electricity, prod_h2_transient_nh3_gas_total, prod_h2_transient_nh3_coal_total, prod_h2_transient_nh3_oil_total ]
+  Transient|Methanol:
+    short: prod_h2_transient_meth
+    components: [ prod_h2_transient_meth_bio_total, prod_h2_transient_meth_coal_total, prod_h2_transient_meth_ng_total, prod_h2_transient_meth_h2 ]
+
+level_3:
+  Transient:
+    short: prod_h2_transient
+    components: [ prod_h2_transient_nh3, prod_h2_transient_meth, prod_h2_transient_refinery ]
+
