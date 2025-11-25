@@ -161,6 +161,19 @@ def log_coordination():
     return None
 
 
+def load_base_scenario(context: Context, scenario: message_ix.Scenario | None = None) -> message_ix.Scenario:
+    """Load the base scenario specified in context.dest_scenario, ignoring any input scenario.
+    """
+    # The workflow step has already set context.dest_scenario from the target parameter
+    # This function updates context.scenario_info to match, then load the scenario
+    if context.dest_scenario:
+        # Update scenario_info from dest_scenario to load the correct scenario
+        context.scenario_info.update(context.dest_scenario)
+    base_scenario = context.get_scenario()
+    log.info(f"Loaded base scenario (ignoring previous context): {base_scenario.url}")
+    return base_scenario
+
+
 def retrive_ori_inv_cost(platform_name=None, scenario_name=None, model_name=None):
     """
     Retrieve the original investment cost data from scenarios.
@@ -486,10 +499,11 @@ def generate(context: Context) -> Workflow:
             # Create combined scenario name
             combined_scen_name = f"{scen_name}_{cf_name}"
 
-            # Load the starting scenario for the next steps
+            # Load the specified starting scenario instead of the one from previous dummy step
             wf.add_step(
                 f"base specified {combined_scen_name}",
                 "inv_cost generated",
+                load_base_scenario,
                 target=f"{model_name}/{scen_name}",
             )
 
