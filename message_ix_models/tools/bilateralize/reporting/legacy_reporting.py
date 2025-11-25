@@ -6,7 +6,7 @@ from message_ix_models.util import package_data_path
 # Specify the scenario
 model_name = "china_security"
 scen_name = "SSP2_Baseline"
-mp = ixmp.Platform("ixmp_dev", jvmargs=["-Xmx32G"])
+mp = ixmp.Platform()
 scen = message_ix.Scenario(mp, model=model_name, scenario=scen_name)
 
 legacy_report(

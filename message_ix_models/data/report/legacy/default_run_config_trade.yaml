@@ -1,5 +1,5 @@
 report_config:
-    table_def: "message_ix_models.report.legacy.default_tables"
+    table_def: "message_ix_models.report.legacy.default_tables_trade"
     aggr_def: "materials_dac_aggregates.csv"
     var_def: "materials_dac_variable_definitions.csv"
     #"default_variable_definitions.csv"

@@ -98,14 +98,14 @@ def report(
     model_nm = model_out if model_out else scen.model
     scen_nm = scenario_out if scenario_out else scen.scenario
     run_history = ref_sol
-    path = private_data_path() / "report"
+    path = package_data_path('report', 'legacy')
 
     # ----------------------------
     # Read reporting configuration
     # ----------------------------
 
     # Default config
-    with open(package_data_path('report', 'legacy', 'default_run_config.yaml')) as f:
+    with open(package_data_path('report', 'legacy', 'default_run_config_trade.yaml')) as f:
         config = yaml.load(f, Loader=SafeLoader)
 
     # Alternative config
