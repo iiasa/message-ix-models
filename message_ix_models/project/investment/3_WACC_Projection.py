@@ -150,7 +150,7 @@ def main():  # noqa: C901
         ln_pred_col = f"ln_pred_{tech}"
         pred_col = f"pred_{tech}"
 
-        df[ln_pred_col] = df[base_ln_col] + coef_dict.get("Constant", 0)
+        df[ln_pred_col] = df[base_ln_col]
         for var, beta in coef_dict.items():
             if var == "Constant":
                 continue
