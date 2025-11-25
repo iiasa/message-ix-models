@@ -1,12 +1,14 @@
-from typing import List
+import logging
+from typing import List, Optional
 
 import message_ix
 import pandas as pd
 import pyam
+import yaml
 from iam_units import registry
 from message_ix.report import Reporter
 
-from message_ix_models.util import broadcast
+from message_ix_models.util import broadcast, package_data_path
 
 from .config import Config
 
@@ -104,8 +106,44 @@ def pyam_df_from_rep(
         col: list(mapping_df.index.get_level_values(col).unique())
         for col in mapping_df.index.names
     }
+    if reporter_var == "historical_activity":
+        valid_dims = {"nl", "t", "ya", "m", "h"}
+        filters_dict = {k: v for k, v in filters_dict.items() if k in valid_dims}
     rep.set_filters(**filters_dict)
-    df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l-e"))
+
+    # Try to get the data, but handle missing keys gracefully
+    try:
+        if reporter_var == "historical_activity":
+            key_suffix = "nl-t-ya-m-h"
+        else:
+            key_suffix = "nl-t-ya-m-c-l-e"
+        df_var = pd.DataFrame(rep.get(f"{reporter_var}:{key_suffix}"))
+    except Exception as e:
+        # If the key doesn't exist (e.g., historical data not available),
+        # return an empty dataframe with the expected structure
+        # More informative message about which data is missing
+        if "_hist" in reporter_var:
+            LOG.debug(
+                "Historical data missing for %s (requires historical_activity)",
+                reporter_var,
+            )
+        else:
+            LOG.warning("Could not retrieve %s:nl-t-ya-m-c-l-e: %s", reporter_var, e)
+
+        rep.set_filters()
+        return pd.DataFrame(
+            columns=["value"],
+            index=pd.MultiIndex.from_tuples(
+                [],
+                names=[
+                    "nl",
+                    "ya",
+                    "iamc_name",
+                    "original_unit",
+                    "stoichiometric_factor",
+                ],
+            ),
+        )
 
     # Use join to merge data - this allows partial index matching
     # (e.g. emissions only need t,m but output needs t,m,c,l)
@@ -114,9 +152,24 @@ def pyam_df_from_rep(
             mapping_df[["iamc_name", "unit", "original_unit", "stoichiometric_factor"]]
         )
         .dropna()
-        .groupby(["nl", "ya", "iamc_name", "original_unit", "stoichiometric_factor"])
-        .sum(numeric_only=True)
+        .reset_index()
     )
+
+    # If the reporter is looking at historical data, we need to filter
+    # all the values that have yv == ya
+    # This is because the historical_activity only has ya, while output
+    # has also yv and ya. When cartesian product happens, it multiplies the
+    # output over all yv for each ya. So we get the same activity multiple times
+    # (however many times there are unique yv values per ya)
+    if reporter_var in {"out_hist", "emi_hist"} and {"yv", "ya"}.issubset(df.columns):
+        df = df[df["yv"] == df["ya"]]
+
+    dim_candidates = ["nl", "t", "ya", "m", "c", "l", "e", "h", "yv"]
+    dim_cols = [col for col in dim_candidates if col in df.columns]
+    group_cols = dim_cols + ["iamc_name", "original_unit", "stoichiometric_factor"]
+
+    df = df.groupby(group_cols, dropna=False).sum(numeric_only=True)
+    df.index.names = group_cols
     rep.set_filters()
     return df
 
@@ -129,9 +182,6 @@ def _load_unit_conversions() -> dict:
     dict
         Dictionary mapping (source_unit, target_unit) tuples to conversion factors
     """
-    import yaml
-    from message_ix_models.util import package_data_path
-
     try:
         path = package_data_path("hydrogen", "reporting", "unit_conversions.yaml")
         with open(path) as f:
@@ -148,23 +198,22 @@ def _load_unit_conversions() -> dict:
         return conversions
 
     except Exception as e:
-        import logging
-
-        log = logging.getLogger(__name__)
-        log.warning(f"Could not load unit conversions from YAML: {e}")
+        LOG.warning("Could not load unit conversions from YAML: %s", e)
         return {}
 
 
 def convert_units_from_mapping(df: pd.DataFrame, target_unit: str) -> pd.DataFrame:
-    """Convert units in DataFrame using iam_units.registry based on original_unit column.
+    """Convert units in DataFrame using iam_units.registry.
 
-    Also applies stoichiometric factors if present in the index, which are used to convert
-    the output commodity (e.g., ammonia) to hydrogen content after unit conversion.
+    Conversion uses the ``original_unit`` column. Stoichiometric factors (when
+    present) are applied after unit conversion to translate output commodity
+    totals (e.g., ammonia) into hydrogen content.
 
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame with 'original_unit' and optionally 'stoichiometric_factor' in index and 'value' column
+        Contains ``original_unit`` and optionally ``stoichiometric_factor`` in
+        the index plus a ``value`` column.
     target_unit : str
         Target unit to convert to
 
@@ -216,15 +265,14 @@ def convert_units_from_mapping(df: pd.DataFrame, target_unit: str) -> pd.DataFra
 
         except Exception as e:
             # Log the error but continue processing
-            import logging
-
-            log = logging.getLogger(__name__)
-            log.warning(f"Could not convert from {orig_unit} to {target_unit}: {e}")
+            LOG.warning(
+                "Could not convert from %s to %s: %s", orig_unit, target_unit, e
+            )
             # Keep original values if conversion fails
             continue
 
     # Apply stoichiometric factors if present (after unit conversion)
-    # This converts the output commodity (e.g., ammonia in EJ) to hydrogen content (EJ H2)
+    # This converts commodity totals (e.g., ammonia in EJ) to hydrogen (EJ H2)
     if "stoichiometric_factor" in df_converted.index.names:
         df_reset = df_converted.reset_index()
         # Apply stoichiometric factor to each row
@@ -241,8 +289,25 @@ def format_reporting_df(
     scenario_name: str,
     unit: str,
     mappings,
+    year_filter=None,
 ) -> pyam.IamDataFrame:
     """Formats a DataFrame created with :func:pyam_df_from_rep to pyam.IamDataFrame."""
+    # If DataFrame is empty, return empty pyam.IamDataFrame immediately
+    if df.empty:
+        return pyam.IamDataFrame(
+            pd.DataFrame(
+                columns=[
+                    "model",
+                    "scenario",
+                    "region",
+                    "variable",
+                    "unit",
+                    "year",
+                    "value",
+                ]
+            )
+        )
+
     df.columns = ["value"]
 
     # Apply unit conversions using iam_units.registry
@@ -268,7 +333,19 @@ def format_reporting_df(
         .drop(
             columns=cols_to_drop
         )  # Remove original_unit and stoichiometric_factor columns
-        .groupby(
+    )
+
+    extra_dims = [
+        col for col in ["t", "m", "c", "l", "e", "h", "yv"] if col in df.columns
+    ]
+    if extra_dims:
+        df = df.drop(columns=extra_dims)
+
+    if year_filter is not None:
+        df = df[df["Year"].apply(year_filter)]
+
+    df = (
+        df.groupby(
             ["Model", "Scenario", "region", "variable", "Year", "Unit"], dropna=False
         )
         .sum(numeric_only=True)
@@ -300,6 +377,24 @@ def format_reporting_df(
         )
         py_df = pyam.concat([py_df, zero_ts])
     return py_df
+
+
+def _filter_years(
+    py_df: pyam.IamDataFrame, first_model_year: Optional[int], is_hist: bool
+) -> pyam.IamDataFrame:
+    """Filter pyam data by year based on first model year."""
+    if first_model_year is None or py_df is None or py_df.empty:
+        return py_df
+    df = py_df.as_pandas()
+    if df.empty:
+        return py_df
+    if is_hist:
+        df = df[df["year"] < first_model_year]
+    else:
+        df = df[df["year"] >= first_model_year]
+    if df.empty:
+        return pyam.IamDataFrame()
+    return pyam.IamDataFrame(df)
 
 
 def compute_aggregates_from_iamc(
@@ -409,9 +504,15 @@ def run_h2_fgt_reporting(
     config = load_config(var)
     df = pyam_df_from_rep(rep, config.var, config.mapping)
     py_df = format_reporting_df(
-        df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
+        df,
+        config.iamc_prefix,
+        model_name,
+        scen_name,
+        config.unit,
+        config.mapping,
     )
-    return py_df
+    first_model_year = get_first_model_year(rep)
+    return _filter_years(py_df, first_model_year, is_hist=False)
 
 
 def run_lh2_fgt_reporting(
@@ -424,7 +525,8 @@ def run_lh2_fgt_reporting(
     py_df = format_reporting_df(
         df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
     )
-    return py_df
+    first_model_year = get_first_model_year(rep)
+    return _filter_years(py_df, first_model_year, is_hist=False)
 
 
 def run_lh2_prod_reporting(
@@ -437,7 +539,8 @@ def run_lh2_prod_reporting(
     py_df = format_reporting_df(
         df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
     )
-    return py_df
+    first_model_year = get_first_model_year(rep)
+    return _filter_years(py_df, first_model_year, is_hist=False)
 
 
 def run_h2_prod_reporting(
@@ -450,7 +553,8 @@ def run_h2_prod_reporting(
     py_df = format_reporting_df(
         df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
     )
-    return py_df
+    first_model_year = get_first_model_year(rep)
+    return _filter_years(py_df, first_model_year, is_hist=False)
 
 
 def run_reporting(
@@ -462,6 +566,9 @@ def run_reporting(
     stoichiometric factors), then aggregates them at the IAMC level to handle
     cases where different components have different stoichiometric factors.
     """
+    # Ensure historical reporter keys are available
+    ensure_historical_keys(rep)
+
     config = load_config(var)
 
     # Get leaf variables only (config.mapping only contains leaves now)
@@ -471,6 +578,13 @@ def run_reporting(
     py_df = format_reporting_df(
         df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
     )
+
+    first_model_year = get_first_model_year(rep)
+    is_hist = var.endswith("_hist")
+    py_df = _filter_years(py_df, first_model_year, is_hist)
+
+    if py_df.empty:
+        return py_df
 
     # Build mapping from short_name to iamc_name for aggregation
     short_to_iamc = (
@@ -492,8 +606,6 @@ def run_reporting(
 
 def fetch_variables() -> List[str]:
     """Fetch all variables from the data/hydrogen/reporting directory."""
-    import os
-    import glob
     from message_ix_models.util import package_data_path
 
     path = package_data_path("hydrogen", "reporting")
@@ -513,7 +625,8 @@ def run_h2_reporting(
     - H2 fugitive emissions across the supply chain
     - LH2 fugitive emissions
 
-    All variables include aggregated totals as defined in the reporting configuration files.
+    All variables include aggregated totals as defined in the reporting
+    configuration files.
 
     Parameters
     ----------
@@ -532,7 +645,7 @@ def run_h2_reporting(
         Combined dataframe with all hydrogen reporting variables
     """
     variables = fetch_variables()
-    print(f"Fetched variables: {variables}")
+    LOG.debug("Fetched hydrogen reporting variables: %s", variables)
     dfs = [run_reporting(var, rep, model_name, scen_name) for var in variables]
 
     # Concatenate all dataframes
