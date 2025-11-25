@@ -60,14 +60,20 @@ Additional functions used here include:
 (they are already defined in ``scenario_parameters.pkl`` in 
 ``message-ix-models/data/bilateralize/configs/``):**
   - Biomass (``biomass_shipped``)
+
   - Coal (``coal_shipped``)
+
   - Crude Oil (``crude_shipped`` and ``crude_piped``): Note that the global pool version of 
   MESSAGEix names this ``oil_exp`` and ``oil_imp`` 
   and combines shipped and piped trade.
+
   - Ethanol (``eth_shipped``)
+
   - Fuel Oil (``foil_shipped`` and ``foil_piped``): Note that this uses the same oil pipeline 
   infrastructure as crude oil and light oil.
+
   - Light Oil (``loil_shipped`` and ``loil_piped``): See note above on pipelines
+
   - Liquid H2 (``lh2_shipped``)
   - LNG (``LNG_shipped``)
   - Methanol (``meth_shipped``)
@@ -91,6 +97,7 @@ can be built (even if that scenario doesn't make a ton of sense).
    - ``input``
    - ``output``
    - ``technical_lifetime``
+
 - For **flow technologies** (i.e., how a commodity is transported when traded, 
 such as via pipelines or maritime shipping)
    - ``capacity_factor``
@@ -106,12 +113,15 @@ Note that this function pulls from ``bare_files`` and not ``edit_files``, so the
 the right files are transferred in the previous step.
 
 Additional functions here include:
-  - ``message_ix_models.tools.bilateralize.historical_calibration.build_hist_new_capacity_flow(message_regions)``: 
-  Builds new capacity dataframes for historical activity of flow technologies (e.g., pipelines)
-  - ``message_ix_models.tools.bilateralize.historical_calibration.build_hist_new_capacity_trade(message_regions)``: 
-  Builds new capacity dataframes for historical activity of trade technologies (e.g., piped gas)
-  - ``message_ix_models.tools.bilateralize.historical_calibration.build_historical_activity(message_regions)``: 
-  Builds historical activity dataframes
+
+``message_ix_models.tools.bilateralize.historical_calibration.build_hist_new_capacity_flow(message_regions)``: 
+Builds new capacity dataframes for historical activity of flow technologies (e.g., pipelines)
+
+``message_ix_models.tools.bilateralize.historical_calibration.build_hist_new_capacity_trade(message_regions)``: 
+Builds new capacity dataframes for historical activity of trade technologies (e.g., piped gas)
+
+``message_ix_models.tools.bilateralize.historical_calibration.build_historical_activity(message_regions)``: 
+Builds historical activity dataframes
 
 Step 3 | Build (``tools/bilateralize/load_and_solve.py``)
 ===============
