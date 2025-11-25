@@ -1,0 +1,39 @@
+# Aggregation rules for hydrogen fugitive emissions reporting
+# Defines hierarchical aggregations of fugitive emission variables
+#
+# NOTE: Unit conversion is applied at the LEAF LEVEL ONLY (in h2_fgt_emi.yaml).
+# Aggregates sum already-converted values, so no original_unit is needed here.
+# The aggregation happens at the IAMC variable level (after processing), not at the MESSAGE data level.
+
+var: emi_hist
+iamc_prefix: Emissions|H2|Fugitive|
+unit: Mt/yr
+
+level_1:
+  Energy|Supply|Hydrogen|Production|Gas:
+    short: emi_h2_fgt_prod_gas
+    components: [ emi_h2_fgt_prod_gas_smr, emi_h2_fgt_prod_gas_smr_ccs, emi_h2_fgt_prod_gas_pyro ]
+  Energy|Supply|Hydrogen|Production|Coal:
+    short: emi_h2_fgt_prod_coal
+    components: [ emi_h2_fgt_prod_coal_wo_ccs, emi_h2_fgt_prod_coal_w_ccs ]
+  Energy|Supply|Hydrogen|Production|Biomass:
+    short: emi_h2_fgt_prod_bio
+    components: [ emi_h2_fgt_prod_bio_wo_ccs, emi_h2_fgt_prod_bio_w_ccs ]
+
+level_2:
+  Energy|Supply|Hydrogen|Production:
+    short: emi_h2_fgt_prod
+    components: [ emi_h2_fgt_prod_gas, emi_h2_fgt_prod_coal, emi_h2_fgt_prod_bio, emi_h2_fgt_prod_elec ]
+
+level_3:
+  Energy|Demand|Industry:
+    short: emi_h2_fgt_dem_ind
+    components: [ emi_h2_fgt_dem_ind_steel, emi_h2_fgt_dem_ind_cement, emi_h2_fgt_dem_ind_alu, emi_h2_fgt_dem_ind_chem, emi_h2_fgt_dem_ind_meth, emi_h2_fgt_dem_ind_other ]
+  Energy|Supply|Hydrogen:
+    short: emi_h2_fgt_sup
+    components: [ emi_h2_fgt_prod, emi_h2_fgt_dist ]
+level_4:
+  Energy|Demand:
+    short: emi_h2_fgt_dem
+    components: [ emi_h2_fgt_dem_ind, emi_h2_fgt_dem_rc, emi_h2_fgt_dem_trp, emi_h2_fgt_dem_pwr ]
+
