@@ -58,8 +58,8 @@ env:
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
   # push:
   #   branches: [ main ]
   schedule:
@@ -79,7 +79,7 @@ jobs:
     - name: Assemble JSON payload
       run: |
         echo '{
-          "ref": "${{ github.ref }}",
+          "ref": "project/circeular/2025-w48",
           "base": "${{ env.base }}",
           "from-step": "${{ env.from-step }}",
           "labels": ${{ env.labels }}
