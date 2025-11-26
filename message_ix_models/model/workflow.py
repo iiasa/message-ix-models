@@ -3,6 +3,7 @@
 import logging
 from collections.abc import Collection
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 from message_ix import Scenario
@@ -21,6 +22,19 @@ if TYPE_CHECKING:
 
 
 log = logging.getLogger(__name__)
+
+
+class STAGE(Enum):
+    """Enumeration of common workflow stages."""
+
+    #: Build stage of a workflow.
+    BUILD = auto()
+
+    #: Solve stage of a workflow.
+    SOLVE = auto()
+
+    #: Report stage of a workflow.
+    REPORT = auto()
 
 
 @dataclass
