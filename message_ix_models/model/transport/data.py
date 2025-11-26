@@ -804,6 +804,13 @@ input_base = _input_dataflow(
     units="GWa",
 )
 
+input_cap_new = _input_dataflow(
+    key="input_cap_new:scenario-n-t-y-c:transport+exo",
+    name="Material input associated with new transport vehicles",
+    required=False,
+    units="kg / vehicle",
+)
+
 input_ref_ldv = _input_dataflow(
     path="ldv-input-ref",
     key="fuel economy:nl-m:ldv+ref",
