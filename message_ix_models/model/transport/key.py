@@ -72,6 +72,8 @@ cg = Key("cg share:n-y-cg")
 
 cost = Key("cost", "nyct")
 
+debug = Key("transport debug")
+
 #: Population.
 pop = Key("population", "ny")
 
