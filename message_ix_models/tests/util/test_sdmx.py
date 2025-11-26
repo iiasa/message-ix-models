@@ -91,6 +91,8 @@ class TestDataflow:
         # Dimensions are as expected
         assert set(Key(result).dims) == set(file.key.dims)
 
+        # log.info(f"{len(result)} observations")  # DEBUG
+
     def test_generate_csv_template(self, any_df: "Dataflow") -> None:
         with pytest.raises(NotImplementedError):
             any_df.generate_csv_template()
