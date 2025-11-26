@@ -3,7 +3,6 @@
 import logging
 import re
 from copy import deepcopy
-from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -12,10 +11,10 @@ from genno.core.key import single_key
 from message_ix import Reporter
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.report import STAGE, add_plots
 from message_ix_models.report.util import add_replacements
 
-from . import Config
-from .key import exo, pop
+from . import Config, key, plot
 
 if TYPE_CHECKING:
     from message_ix_models import Spec
@@ -161,14 +160,14 @@ def aggregate(c: "Computer") -> None:
 
     config: Config = c.graph["config"]["transport"]
 
-    for key in map(lambda s: Key(c.infer_keys(s)), "emi in out".split()):
+    for k in map(lambda s: Key(c.infer_keys(s)), "emi in out".split()):
         try:
             # Reference the function to avoid the genno magic which would treat as sum()
             # NB aggregation on the nl dimension *could* come first, but this can use a
             #    lot of memory when applied to e.g. out:*: for a full global model.
-            c.add(key[0], func, key, "t::transport agg", keep=False)
-            c.add(key[1], func, key[0], "nl::world agg", keep=False)
-            c.add(key["transport"], "select", key[1], "t::transport modes 1", sums=True)
+            c.add(k[0], func, k, "t::transport agg", keep=False)
+            c.add(k[1], func, k[0], "nl::world agg", keep=False)
+            c.add(k["transport"], "select", k[1], "t::transport modes 1", sums=True)
         except MissingKeyError:
             if config.with_solution:
                 raise
@@ -186,18 +185,14 @@ def callback(rep: Reporter, context: Context) -> None:
       If the scenario to be reported is not solved, only a subset of plots are added.
     - :data:`.key.report.all`: all of the above.
     """
-    from . import base, build, key
+    from . import base, build
 
     N_keys = len(rep.graph)
-
-    # Collect all reporting tasks
-    rep.add(key.report.all, [])
 
     # - Configure MESSAGEix-Transport.
     # - Add structure and other information.
     # - Call, inter alia:
     #   - demand.prepare_computer() for ex-post mode and demand calculations.
-    #   - plot.prepare_computer() for plots; adds to key.report.all.
     check = build.get_computer(
         context, obj=rep, visualize=False, scenario=rep.graph.get("scenario")
     )
@@ -226,6 +221,7 @@ def callback(rep: Reporter, context: Context) -> None:
     misc(rep)
     convert_iamc(rep)  # Adds to key.report.all
     convert_sdmx(rep)  # Adds to key.report.all
+    add_plots(rep, plot, key.report.plot)
     base.prepare_reporter(rep)  # Tasks that prepare data to parametrize the base model
 
     log.info(f"Added {len(rep.graph) - N_keys} keys")
@@ -381,7 +377,7 @@ def misc(c: "Computer") -> None:
     c.add("distance:nl:non-ldv", "distance_nonldv", "config")
 
     # Demand per capita
-    c.add("demand::capita", "divdemand:n-c-y", pop)
+    c.add("demand::capita", "divdemand:n-c-y", key.pop)
 
     # Adjustment factor for LDV calibration: fuel economy ratio
     k_num = Key("in:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
@@ -396,7 +392,7 @@ def misc(c: "Computer") -> None:
     )
 
     k_ratio = single_key(
-        c.add("fuel economy::ratio", "div", exo.input_ref_ldv, k_check + "sel")
+        c.add("fuel economy::ratio", "div", key.exo.input_ref_ldv, k_check + "sel")
     )
     c.add("calibrate fe path", "make_output_path", "config", name="calibrate-fe.csv")
     hc = "\n\n".join(
@@ -420,8 +416,6 @@ def multi(context: Context, targets: list[str], *, use_platform: bool = False) -
 
     from message_ix_models.tools.iamc import to_quantity
 
-    from . import plot
-
     k = Keys(
         in_="in::pd",
         concat="concat::pd",
@@ -430,15 +424,13 @@ def multi(context: Context, targets: list[str], *, use_platform: bool = False) -
         plot_data="plot data:n-s-y",
     )
 
-    c = Computer()
+    # Computer, with configuration expected by Plot.add_tasks
+    c = Computer(config=dict(output_dir=context.get_local_path("report")))
     # Order is important: use genno.compat.pyam.operator.quantity_from_iamc over local
     c.require_compat("message_ix_models.report.operator")
     c.require_compat("pyam")
 
     c.add("context", context)
-
-    # Expected by .transport.plot.Plot.add_tasks
-    c.graph["config"]["transport build debug dir"] = context.get_local_path("report")
 
     # Retrieve all data for each of the `targets` as pd.DataFrame
     kw0 = dict(filename="transport.csv", use={"file"})
@@ -459,16 +451,8 @@ def multi(context: Context, targets: list[str], *, use_platform: bool = False) -
     # Rename dimensions
     c.add(k.all1, "rename_dims", k.all0, name_dict={"SCENARIO": "s", "VARIABLE": "v"})
 
-    # Select a subset of data and reduce dimensionality
-    expr = r"Transport\|Stock\|Road\|Passenger\|LDV\|(.*)"
-    c.add(k.plot_data[0], "quantity_from_iamc", k.all1, variable=expr)
-
-    # Key used by .plot.Plot for formatting titles
-    c.add("scenario", SimpleNamespace(url="Multiple scenarios"))
-
     # Collect all plots
-    c.add("multi", "summarize")
-    plot.prepare_computer(c, kind=plot.Kind.REPORT_MULTI, target="multi")
+    add_plots(c, plot, "multi", stage=STAGE.REPORT, single=False)
 
     return c.get("multi")
 
@@ -514,7 +498,7 @@ def select_transport_techs(c: "Computer") -> None:
     Applied to the quantities in :data:`SELECT`.
     """
     # Infer the full dimensionality of each key to be selected
-    for key in map(lambda name: c.infer_keys(f"{name}:*"), SELECT):
-        c.add(key + "transport all", "select", key, "t::transport all", sums=True)
-        c.add(key + "ldv", "select", key, "t::transport LDV", sums=True)
-        c.add(key + "non-ldv", "select", key, "t::transport P ex LDV", sums=True)
+    for k in map(lambda name: c.infer_keys(f"{name}:*"), SELECT):
+        c.add(k + "transport all", "select", k, "t::transport all", sums=True)
+        c.add(k + "ldv", "select", k, "t::transport LDV", sums=True)
+        c.add(k + "non-ldv", "select", k, "t::transport P ex LDV", sums=True)
