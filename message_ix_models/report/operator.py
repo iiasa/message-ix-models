@@ -667,6 +667,7 @@ def summarize(*args: Any) -> str:
     from pathlib import PurePath
 
     count: dict[str, int] = defaultdict(lambda: int(0))
+    count["nothing"] = 1  # Input to log10(max(…)) if `args` is entirely empty
     paths: set[PurePath] = set()
 
     def _summarize_recursive(item: Any) -> None:
