@@ -1,6 +1,7 @@
 """Build MESSAGEix-Transport on a base model."""
 
 import logging
+from copy import copy
 from functools import partial
 from importlib import import_module
 from operator import itemgetter
@@ -70,7 +71,7 @@ def add_debug(c: Computer) -> None:
     c.add(e.cnlt, "rename_dims", e.fnp[1], quote(dict(flow="t", n="nl", product="c")))
 
     # Write some intermediate calculations from the build process to file
-    k_debug = Key("transport debug")
+    k_debug = copy(key.debug)  # Make a copy so the original does not collect .generated
     for i, (k, stem) in enumerate(
         (
             (key.gdp_cap, "gdp-ppp-cap"),
@@ -134,7 +135,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
-    from . import data, key
+    from . import data
 
     # Added keys
     keys = {}
@@ -345,7 +346,6 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
-    from . import key
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -497,7 +497,7 @@ def get_computer(
        "config" is present: if so, the corresponding value **must** be an instance
        of :class:`.transport.Config`, and this is used directly.
     """
-    from . import key, operator
+    from . import operator
 
     # Update .model.Config with the regions of a given scenario
     context.model.regions_from_scenario(scenario)
@@ -627,7 +627,7 @@ def main(
         log.info(f"Added {sum_numeric(result)} total obs")
 
     if context.core.dry_run:
-        return c.get("transport build debug")
+        return c.get(key.debug)
 
     # First strip existing emissions data
     strip_emissions_data(scenario, context)
