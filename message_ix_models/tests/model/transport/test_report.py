@@ -10,8 +10,7 @@ from packaging.version import Version as V
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport import Config, build, key
-from message_ix_models.model.transport.config import get_cl_scenario
+from message_ix_models.model.transport import CL_SCENARIO, Config, build, key
 from message_ix_models.model.transport.report import configure_legacy_reporting
 from message_ix_models.model.transport.testing import (
     MARK,
@@ -44,7 +43,7 @@ def quiet_genno(caplog):
 
 @pytest.fixture(scope="session")
 def scenario_code() -> "Code":
-    return get_cl_scenario()["SSP2"]
+    return CL_SCENARIO.get()["SSP2"]
 
 
 @pytest.mark.xfail(

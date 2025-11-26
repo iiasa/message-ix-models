@@ -10,8 +10,11 @@ from pytest import param
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import Config, build, demand, testing, workflow
+from message_ix_models.model.transport import plot as plots
 from message_ix_models.model.transport.testing import MARK, make_mark
+from message_ix_models.model.workflow import STAGE
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
+from message_ix_models.report import plot
 
 log = logging.getLogger(__name__)
 
@@ -119,8 +122,13 @@ def test_exo_report(test_context, tmp_path):
     log.info(f"Visualize compute graph at {path}")
     c.visualize(path, key)
 
-    # Plots can be generated
+    # Add all BUILD/single plots and necessary keys, e.g. 'scenario'
+    plot.prepare_computer(c, plots, "demand plots", stage=STAGE.BUILD)
+
+    # Select only a couple
     c.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
+
+    # Plots can be generated
     c.get("demand plots")
 
 

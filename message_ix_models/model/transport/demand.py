@@ -115,13 +115,13 @@ TASKS = [
     ((price[1], "select", price[0]), dict(indexers=dict(c="transport"), drop=True)),
     (price[2], "price_units", price[1]),
     # Smooth prices to avoid zig-zag in share projections
-    (price.base, "smooth", price[2]),
+    (price, "smooth", price[2]),
     # Interpolate speed data
     (("speed:scenario-n-t-y:0", "interpolate", exo.speed, "y::coords"), EXTRAPOLATE),
     # Select speed data
     ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", "indexers:scenario"),
     # Cost of transport (n, t, y)
-    (cost, "cost", price.base, gdp_cap, "whour:", "speed:n-t-y", "votm:n-y", y),
+    (cost, "cost", price, gdp_cap, "whour:", "speed:n-t-y", "votm:n-y", y),
     # Share weights (n, t, y)
     (
         sw,
