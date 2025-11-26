@@ -1,162 +1,16 @@
 """Plots for MESSAGEix-Transport reporting."""
 
-import logging
-from datetime import datetime
-from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import genno.compat.plotnine
 import pandas as pd
 import plotnine as p9
-from genno import Computer
 from iam_units import registry
 
-from message_ix_models.util.genno import append
-
 from .key import gdp_cap, pdt_nyt
-from .key import report as k_report
 
 if TYPE_CHECKING:
-    from genno.core.key import KeyLike
-
-    # NB The following is itself within an if TYPE_CHECKING block; mypy can't find it
-    from plotnine.typing import PlotAddable  # type: ignore [attr-defined]
-
-
-log = logging.getLogger(__name__)
-
-# Quiet messages like:
-#   "Fontsize 0.00 < 1.0 pt not allowed by FreeType. Setting fontsize= 1 pt"
-# TODO Investigate or move upstream
-logging.getLogger("matplotlib.font_manager").setLevel(logging.INFO + 1)
-
-
-class Kind(Enum):
-    """Kinds of transport :class:`Plots <.Plot>`."""
-
-    #: Plots for :func:`.transport.build.get_computer`, that is, during the process of
-    #: building a single scenario. These are used within a :class:`~.genno.Computer`,
-    #: without a built or solved Scenario.
-    BUILD = auto()
-
-    #: Plots for pre-solve or build-process analysis of multiple scenarios. These are
-    #: added by :func:`.transport.build.debug_multi`.
-    BUILD_MULTI = auto()
-
-    #: Plots for post-solve reporting of single MESSAGEix-Transport scenarios. These are
-    #: added to a :class:`.Reporter` via :func:`.transport.report.callback`.
-    REPORT = auto()
-
-    #: Plots of post-solve reporting of multiple MESSAGEix-Transport scenarios, or
-    #: of data reported from these. These are added by :class:`.transport.report.multi`.
-    REPORT_MULTI = auto()
-
-
-class LabelFirst:
-    """Labeller that labels the first item using a format string.
-
-    Subsequent items are named with the bare value only.
-    """
-
-    __name__: str | None = None
-
-    def __init__(self, fmt_string):
-        self.fmt_string = fmt_string
-        self.first = True
-
-    def __call__(self, value):
-        first = self.first
-        self.first = False
-        return self.fmt_string.format(value) if first else value
-
-
-class Plot(genno.compat.plotnine.Plot):
-    """Base class for plots.
-
-    This class extends :class:`genno.compat.plotnine.Plot` with extra features.
-    """
-
-    #: Kind of plot.
-    kind: Kind = Kind.REPORT
-
-    #: 'Static' geoms: list of plotnine objects that are not dynamic
-    static: list["PlotAddable"] = [
-        p9.theme(figure_size=(11.7, 8.3)),
-    ]
-
-    #: Fixed plot title string. If not given, the first line of the class docstring is
-    #: used.
-    title: str | None = None
-
-    #: Units expression for plot title.
-    unit: str | None = None
-
-    def ggtitle(self, extra: str | None = None):
-        """Return :class:`plotnine.ggtitle` including the current date & time."""
-        title_parts = [
-            (self.title or self.__doc__ or "").splitlines()[0].rstrip("."),
-            f"[{self.unit}]" if self.unit else None,
-            f"— {extra}" if extra else None,
-        ]
-        subtitle_parts = [
-            getattr(self.scenario, "url", "no Scenario"),
-            "—",
-            datetime.now().isoformat(timespec="minutes"),
-        ]
-        return p9.labs(
-            title=" ".join(filter(None, title_parts)), subtitle=" ".join(subtitle_parts)
-        )
-
-    def groupby_plot(self, data: pd.DataFrame, *args):
-        """Combination of groupby and ggplot().
-
-        Groups by `args` and yields a series of :class:`plotnine.ggplot` objects, one
-        per group, with :attr:`static` geoms and :func:`ggtitle` appended to each.
-        """
-        for group_key, group_df in data.groupby(*args):
-            yield (
-                group_key,
-                (
-                    p9.ggplot(group_df)
-                    + self.static
-                    + self.ggtitle(f"{'-'.join(args)}={group_key!r}")
-                ),
-            )
-
-    def save(self, config, *args, **kwargs) -> Path | None:
-        # Strip off the last of `args`, a pre-computed path, and store
-        *_args, self.path, self.scenario = args
-        # Call the parent method with the remaining arguments
-        return super().save(config, *_args, **kwargs)
-
-    @classmethod
-    def add_tasks(
-        cls, c: Computer, key: "KeyLike", *inputs, strict: bool = False
-    ) -> "KeyLike":
-        """Use a custom output path."""
-        from operator import itemgetter
-
-        from genno import quote
-
-        # Output path for this parameter
-        k_path = f"plot {cls.basename} path"
-        filename = f"{cls.basename}{cls.suffix}"
-        if cls.kind is Kind.REPORT:
-            # Make a path including the Scenario URL
-            c.add(k_path, "make_output_path", "config", name=filename)
-        else:
-            # Build phase: no Scenario/URL exists; use a path set by add_debug()
-            c.add(f"{k_path} 0", itemgetter("transport build debug dir"), "config")
-            c.add(k_path, Path.joinpath, f"{k_path} 0", quote(filename))
-
-        # Same as the parent method
-        _inputs = list(inputs if inputs else cls.inputs)
-
-        # Append the key for `path` to the inputs
-        return super(Plot, cls).add_tasks(
-            c, key, *_inputs, k_path, "scenario", strict=strict
-        )
+    from genno import Computer
 
 
 class BaseEnergy0(Plot):
@@ -800,36 +654,11 @@ class Stock1(Plot):
             yield ggplot + p9.expand_limits(y=[0, y_max])
 
 
-def prepare_computer(
-    c: Computer, *, kind: Kind = Kind.REPORT, target: "KeyLike" = k_report.all
-) -> None:
-    """Add :data:`.PLOTS` to `c`.
+def prepare_computer(c: "Computer") -> None:
+    """Callback for :func:`.model.transport.build.get_computer`: add debug plots."""
+    from message_ix_models.model.workflow import STAGE
+    from message_ix_models.report import plot
 
-    Adds:
-
-    - 1 key like **"plot inv-cost"** corresponding to the :attr:`~.Plot.basename` of
-      each :class:`.Plot` subclass defined in this module with a matching `kind`.
-    - The key **"transport plots"** that triggers writing all the plots to file.
-    """
-    # Force matplotlib to use a non-interactive backend for plotting
-    import matplotlib
-
-    matplotlib.use("pdf")
-
-    # Iterate over the Plot subclasses defined in the current module
-    keys = []
-    for plot in filter(
-        lambda cls: isinstance(cls, type)
-        and issubclass(cls, Plot)
-        and cls is not Plot
-        and cls.kind is kind,
-        globals().values(),
-    ):
-        keys.append(f"plot {plot.basename}")
-        c.add(keys[-1], plot)
-
-    log.info(f"Add {k_report.plot!r} collecting {len(keys)} plots")
-    c.add(k_report.plot, "summarize", keys)
-
-    # Extend the task at `target` with k_report.plot
-    append(c, target, k_report.plot)
+    plot.prepare_computer(
+        c, __name__, "transport debug plot", stage=STAGE.BUILD, single=True
+    )
