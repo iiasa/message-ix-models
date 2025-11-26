@@ -15,6 +15,7 @@ from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codelist
+from message_ix_models.report import STAGE, add_plots
 from message_ix_models.util import (
     MappingAdapter,
     WildcardAdapter,
@@ -24,7 +25,7 @@ from message_ix_models.util import (
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
-from . import Config
+from . import Config, key, plot
 from .operator import indexer_scenario
 from .structure import get_technology_groups
 
@@ -42,9 +43,6 @@ log = logging.getLogger(__name__)
 def add_debug(c: Computer) -> None:
     """Add tasks for debugging the build."""
 
-    from . import plot
-    from .key import gdp_cap, ms, pdt_nyt
-
     context: Context = c.graph["context"]
     config: Config = context.transport
 
@@ -61,7 +59,7 @@ def add_debug(c: Computer) -> None:
     output_dir.mkdir(exist_ok=True, parents=True)
 
     # Store in the config, but not at "output_dir" that is used by e.g. reporting
-    c.graph["config"]["transport build debug dir"] = output_dir
+    c.graph["config"]["build debug dir"] = output_dir
 
     # FIXME Duplicated from base.prepare_reporter()
     e = Keys(iea="energy:n-y-product-flow:iea", cnlt="energy:c-nl-t:iea+0")
@@ -73,29 +71,27 @@ def add_debug(c: Computer) -> None:
 
     # Write some intermediate calculations from the build process to file
     k_debug = Key("transport debug")
-    for i, (key, stem) in enumerate(
+    for i, (k, stem) in enumerate(
         (
-            (gdp_cap, "gdp-ppp-cap"),
-            (pdt_nyt, "pdt"),
-            (pdt_nyt + "capita+post", "pdt-cap"),
-            (ms, "mode-share"),
+            (key.gdp_cap, "gdp-ppp-cap"),
+            (key.pdt_nyt, "pdt"),
+            (key.pdt_nyt + "capita+post", "pdt-cap"),
+            (key.ms, "mode-share"),
             (e.fnp[0], "energy-iea-0"),
             (e.cnlt, "energy-iea-1"),
         )
     ):
-        c.add(k_debug[i], "write_report_debug", key, output_dir.joinpath(f"{stem}.csv"))
+        c.add(k_debug[i], "write_report_debug", k, output_dir.joinpath(f"{stem}.csv"))
 
-    c.add("transport build debug", "summarize", *k_debug.generated)
-    plot.prepare_computer(c, kind=plot.Kind.BUILD, target="transport build debug")
+    add_plots(c, plot, k_debug["plot"], stage=STAGE.BUILD, single=True)
 
     # Also generate these debugging outputs when building the scenario
-    c.graph["add transport data"].append("transport build debug")
+    c.add(k_debug, "summarize", *k_debug.generated)
+    c.graph["add transport data"].append(k_debug)
 
 
 def debug_multi(context: Context, *paths: Path) -> None:
     """Generate plots comparing data from multiple build debug directories."""
-    from . import plot
-
     if isinstance(paths[0], Scenario):
         # Workflow was called with --from="…", so paths from the previous step are not
         # available; try to guess
@@ -105,10 +101,10 @@ def debug_multi(context: Context, *paths: Path) -> None:
             )
         )
 
-    c = Computer(config={"transport build debug dir": paths[0].parent})
+    c = Computer(config={"build debug dir": paths[0].parent})
     c.require_compat("message_ix_models.report.operator")
 
-    plot.prepare_computer(c, kind=plot.Kind.BUILD_MULTI, target="debug multi")
+    add_plots(c, plot, "debug multi", stage=STAGE.BUILD, single=False)
 
     c.get("debug multi")
 
@@ -249,6 +245,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #:
 #: These include:
 #:
+#: - ``add transport data``: an empty list. The :py:`prepare_computer()` functions in
+#:   individual modules listed by :attr:`.transport.Config.modules` can append keys.
+#: - :data:`key.report.all`: same, but for reporting.
 #: - ``info``: :attr:`transport.Config.base_model_info
 #:   <transport.config.Config.base_model_info>`, an instance of :class:`.ScenarioInfo`.
 #: - ``transport info``: the logical union of
@@ -267,7 +266,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #:   1).
 #: - ``nl::world agg``: :class:`dict` mapping to aggregate "World" from individual |n|.
 #:   See :func:`.nodes_world_agg`.
-STRUCTURE_STATIC = (
+STRUCTURE_STATIC: tuple[tuple, ...] = (
+    ("add transport data", []),
+    (key.report.all, []),
     ("info", lambda c: c.transport.base_model_info, "context"),
     (
         "transport info",
@@ -556,10 +557,6 @@ def get_computer(
     # Attach the context and scenario
     c.add("context", context)
     c.add("scenario", scenario)
-    # Add a computation that is an empty list.
-    # Individual modules's prepare_computer() functions can append keys.
-    c.add("add transport data", [])
-    c.add(key.report.all, [])  # Needed by .plot.prepare_computer()
 
     # Add structure-related keys
     add_structure(c)
