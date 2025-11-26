@@ -371,9 +371,11 @@ def latest_reporting_from_platform(
     return None, -1, pd.DataFrame()
 
 
-def make_output_path(config: Mapping, name: "str | Path") -> "Path":
+def make_output_path(
+    config: Mapping, name: "str | Path", *, config_key: str = "output_dir"
+) -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
-    return config["output_dir"].joinpath(name)
+    return config[config_key].joinpath(name)
 
 
 def merge_data(*others: "ParameterData") -> "ParameterData":
