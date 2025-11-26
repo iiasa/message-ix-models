@@ -550,6 +550,43 @@ class EnergyCmdty1(EnergyCmdty0):
             yield ggplot
 
 
+class MultiFE(PlotFromIAMC):
+    """Final energy, passenger."""
+
+    basename = "multi-fe"
+    single = False
+
+    inputs = ["all:n-s-UNIT-v-y"]
+
+    # NB This pattern excludes the total. A pattern which includes the total (as an
+    #    empty string in the 'v' dimension) is:
+    #    r"Final Energy\|Transportation\|P\|?(|Electricity|Gas|Hydrogen|Liquids.*)"
+    iamc_variable_pattern = (
+        r"Final Energy\|Transportation\|P\|(Electricity|Gas|Hydrogen|Liquids.*)"
+    )
+
+    static = STATIC + [
+        p9.aes(x="y", y="value", fill="v"),
+        p9.facet_wrap("s", ncol=3, nrow=5),
+        p9.geom_area(color="black", size=0.2),
+        p9.scale_fill_brewer(type="qualitative", palette="Paired"),
+        p9.labs(x="Period", y="", fill="Technology"),
+        COMMON["A3 portrait"],
+    ]
+
+    def generate(self, data):
+        # Show only data in the model horizon
+        # TODO Remove once historical data are included in the input
+        data = data.query("y >= 2020")
+
+        self.unit = data["unit"].unique()[0]
+
+        for _, ggplot in self.groupby_plot(data, "n"):
+            # Maximum y-limit for this node
+            y_max = max(ggplot.data["value"])
+            yield ggplot + p9.expand_limits(y=[0, y_max])
+
+
 class MultiStock(PlotFromIAMC):
     """LDV technology stock."""
 
@@ -569,6 +606,10 @@ class MultiStock(PlotFromIAMC):
     ]
 
     def generate(self, data):
+        # Show only data in the model horizon
+        # TODO Remove once historical data are included in the input
+        data = data.query("y >= 2020")
+
         self.unit = data["unit"].unique()[0]
 
         for _, ggplot in self.groupby_plot(data, "n"):
