@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def N_node(request) -> int:
+def N_node(request: "pytest.FixtureRequest") -> int:
     """Expected number of nodes, by introspection of other parameter values."""
     if "build_kw" in request.fixturenames:
         regions = request.getfixturevalue("build_kw")["regions"]
@@ -142,11 +142,18 @@ def test_bare_res(
         ("R12", "B", dict(code="LED-SSP2")),
         ("R12", "B", dict(code="EDITS-CA")),
         ("R12", "B", dict(code="DIGSY-BEST-C")),
+        pytest.param(
+            "R12",
+            "B",
+            dict(code="SSP2", extra_modules=["material"]),
+            marks=pytest.mark.xfail(raises=NotImplementedError),
+        ),
         # param("R14", "B", {}, marks=MARK[9]),
         # param("ISR", "A", {}, marks=MARK[3]),
     ),
 )
 def test_debug(
+    request: "pytest.FixtureRequest",
     test_context: Context,
     tmp_path: Path,
     regions: str,
@@ -172,9 +179,10 @@ def test_debug(
         Passed to :func:`.verbose_check`.
     """
     # Get a Computer prepared to build the model with the given options
-    c, _ = configure_build(
-        test_context, regions=regions, years=years, tmp_path=tmp_path, options=options
-    )
+    c, _ = configure_build(test_context, regions, years, tmp_path, options=options)
+
+    # Fixture: a scenario
+    c.add("scenario", bare_res(request, test_context))
 
     # Insert key-specific and common checks
     result = check.insert(c, N_node, verbosity, tmp_path)

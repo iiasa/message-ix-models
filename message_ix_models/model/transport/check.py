@@ -9,6 +9,7 @@ from message_ix_models.model.transport import (
     freight,
     key,
     ldv,
+    material,
     other,
     passenger,
     policy,
@@ -263,20 +264,36 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     ),
 }
 
-
-def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckResult":
-    """Insert :data:`CHECKS` into `c`."""
-    context: "Context" = c.graph["context"]
-    info: "ScenarioInfo" = c.get("info")
-
-    # Modify CHECKS according to the settings
-    checks = CHECKS.copy()
-    if context.model.regions == "R12":
-        checks["transport::O+ixmp"] = (
+CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
+    'context.model.regions == "R12"': {
+        "transport::O+ixmp": (
             ContainsDataForParameters(
                 {"bound_activity_lo", "bound_activity_up", "input"}
             ),
         )
+    },
+    'context.transport.modules == "FOO"': {
+        material.TARGET: (
+            ContainsDataForParameters({"demand", "input_cap_new", "output_cap_ret"}),
+            NoDuplicates(),
+        ),
+    },
+}
+
+
+def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckResult":
+    """Insert :data:`CHECKS` into `c`."""
+    context: "Context" = c.graph["context"]  # noqa: F841
+    info: "ScenarioInfo" = c.get("info")
+
+    # Checks to insert
+    checks = CHECKS.copy()
+
+    # Handle CHECKS_CONDITIONAL: if the condition (key) evaluates True, add some checks
+    for condition, to_update in CHECKS_CONDITIONAL.items():
+        if not eval(condition):
+            continue
+        checks.update(to_update)
 
     # Has exactly the periods (y) in the model horizon
     k = "disutility:n-cg-t-y"
