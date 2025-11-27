@@ -2,7 +2,7 @@ report_config:
     table_def: "message_data.tools.post_processing.materials_dac_tables"
     aggr_def: "default_aggregates.csv"
     var_def: "default_variable_definitions.csv"
-    unit_yaml: "GDP_shock_units.yaml"
+    unit_yaml: "materials_dac_units.yaml"
     urban_perc: "default_pop_urban_rural.csv"
     kyoto_hist: "default_kyoto_hist.csv"
     lu_hist: "default_lu_co2_hist.csv"  
