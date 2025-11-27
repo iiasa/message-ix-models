@@ -288,6 +288,83 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         )
         results["output"] = output_df
 
+        # Electricity input for extract_surfacewater (same as nexus mode)
+        # Value: 0.018835616 GWa/km³ (mid estimate from literature)
+        inp_sw = (
+            make_df(
+                "input",
+                technology="extract_surfacewater",
+                value=0.018835616 * GWa_KM3_TO_GWa_MCM,
+                unit="GWa/MCM",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+            .pipe(same_node)
+        )
+
+        # Electricity input for extract_groundwater (depth-dependent + fixed)
+        inp_gw = (
+            make_df(
+                "input",
+                technology="extract_groundwater",
+                value=(df_gwt["GW_per_km3_per_year"].mean() + 0.043464579)
+                * GWa_KM3_TO_GWa_MCM,
+                unit="GWa/MCM",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+            .pipe(same_node)
+        )
+
+        results["input"] = pd.concat([inp_sw, inp_gw], ignore_index=True)
+
+        # Variable cost for water extraction (LCOW-based)
+        # LCOW = Annualized CAPEX + OPEX + Energy
+        # Using: CRF=0.094 (r=8%, n=25yr), O&M=3%, implied from inv_cost
+        # Surface water: inv_cost=155.57 USD/km³ → LCOW ≈ 29 USD/km³
+        # Groundwater: inv_cost=54.52 USD/km³ → LCOW ≈ 15 USD/km³ (but higher energy)
+        var_sw = (
+            make_df(
+                "var_cost",
+                technology="extract_surfacewater",
+                value=29 * USD_KM3_TO_USD_MCM,
+                unit="USD/MCM",
+                mode="M1",
+                time="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+        )
+
+        var_gw = (
+            make_df(
+                "var_cost",
+                technology="extract_groundwater",
+                value=25 * USD_KM3_TO_USD_MCM,  # Lower CAPEX but higher energy
+                unit="USD/MCM",
+                mode="M1",
+                time="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+        )
+
+        results["var_cost"] = pd.concat([var_sw, var_gw], ignore_index=True)
+
     elif context.nexus_set == "nexus":
         # input data frame  for slack technology balancing equality with demands
         inp = (

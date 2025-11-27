@@ -1,7 +1,110 @@
 """Pytest fixtures and test helpers for water module tests."""
 
+import json
+from pathlib import Path
+
 import pandas as pd
+import pytest
+
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import package_data_path
+
+FIXTURE_DIR = Path(__file__).parent / "data" / "fixtures"
+
+
+class MockScenario:
+    """Mock scenario that returns fixture data for .par() calls.
+
+    Provides minimal interface needed by water module functions:
+    - par(name, filters) -> DataFrame
+    - firstmodelyear -> int
+    """
+
+    def __init__(self, fixture_df: pd.DataFrame, firstmodelyear: int = 2030):
+        self._data = {}
+        for param in fixture_df["_param"].unique():
+            df = fixture_df[fixture_df["_param"] == param].drop(columns=["_param"]).copy()
+            df = df.dropna(axis=1, how="all")
+            # Convert year columns to int
+            for col in ["year_vtg", "year_act"]:
+                if col in df.columns:
+                    df[col] = df[col].astype(int)
+            # Convert value column to float
+            if "value" in df.columns:
+                df["value"] = pd.to_numeric(df["value"], errors="coerce")
+            self._data[param] = df
+        self.firstmodelyear = firstmodelyear
+
+    def par(self, name: str, filters: dict = None) -> pd.DataFrame:
+        """Return parameter data, optionally filtered."""
+        df = self._data.get(name, pd.DataFrame())
+        if filters and not df.empty:
+            for col, values in filters.items():
+                if col in df.columns:
+                    if not isinstance(values, (list, pd.Series)):
+                        values = [values]
+                    df = df[df[col].isin(values)]
+        return df.copy()
+
+
+def load_cool_tech_fixture():
+    """Load the cool_tech test fixture data.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, dict]
+        (fixture_df, metadata) where fixture_df contains all parameter data
+        and metadata contains years, nodes, firstmodelyear, etc.
+    """
+    parquet_path = FIXTURE_DIR / "cool_tech_fixture.parquet"
+    meta_path = FIXTURE_DIR / "cool_tech_meta.json"
+
+    if not parquet_path.exists():
+        raise FileNotFoundError(
+            f"Fixture not found at {parquet_path}. "
+            "Run extract script to generate from ixmp_dev."
+        )
+
+    fixture_df = pd.read_parquet(parquet_path)
+    with open(meta_path) as f:
+        meta = json.load(f)
+
+    return fixture_df, meta
+
+
+def create_mock_scenario_info(meta: dict) -> ScenarioInfo:
+    """Create a ScenarioInfo from fixture metadata without needing ixmp.
+
+    Parameters
+    ----------
+    meta : dict
+        Metadata dict with keys: years, nodes, firstmodelyear
+
+    Returns
+    -------
+    ScenarioInfo
+        Populated with year/node sets for use in water module functions.
+    """
+    info = ScenarioInfo()
+    info.set["year"] = [int(y) for y in meta["years"]]
+    info.set["node"] = meta["nodes"]
+    info.y0 = int(meta["firstmodelyear"])
+    return info
+
+
+@pytest.fixture
+def cool_tech_fixture():
+    """Pytest fixture providing mock scenario and ScenarioInfo for cool_tech tests.
+
+    Returns
+    -------
+    tuple[MockScenario, ScenarioInfo, dict]
+        (mock_scenario, scenario_info, metadata)
+    """
+    fixture_df, meta = load_cool_tech_fixture()
+    mock_scen = MockScenario(fixture_df, firstmodelyear=meta["firstmodelyear"])
+    info = create_mock_scenario_info(meta)
+    return mock_scen, info, meta
 
 
 def setup_timeslices(context, scenario, n_time):

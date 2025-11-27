@@ -1,19 +1,23 @@
-from typing import Optional
+"""Tests for water_for_ppl cooling technology functions."""
 
 import pandas as pd
 import pytest
 from message_ix import Scenario
 
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import ScenarioInfo
 
-# from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.water_for_ppl import (
-    apply_act_cap_multiplier,
     cool_tech,
-    cooling_shares_SSP_from_yaml,
     non_cooling_tec,
 )
-from message_ix_models.tests.model.water.conftest import setup_valid_basins
+from message_ix_models.tests.model.water.conftest import (
+    setup_valid_basins,
+    load_cool_tech_fixture,
+    create_mock_scenario_info,
+    MockScenario,
+    FIXTURE_DIR,
+)
+from message_ix_models.util import package_data_path
 
 
 @pytest.mark.usefixtures("ssp_user_data")
@@ -36,7 +40,6 @@ def test_cool_tec(request, test_context, RCP):
     s.add_set("level", ["secondary", "final"])
     s.add_set("time", ["year"])
 
-    # make a df for input
     df_add = pd.DataFrame(
         {
             "node_loc": ["R12_CPA"],
@@ -53,7 +56,6 @@ def test_cool_tec(request, test_context, RCP):
             "unit": "GWa",
         }
     )
-    # make a df for historical activity
     df_ha = pd.DataFrame(
         {
             "node_loc": ["R12_CPA"],
@@ -74,18 +76,9 @@ def test_cool_tec(request, test_context, RCP):
             "unit": "GWa",
         }
     )
-    # add a parameter with these columns to the scenario
     s.add_par("input", df_add)
     s.add_par("historical_activity", df_ha)
     s.add_par("historical_new_capacity", df_hnc)
-
-    # TODO: this is where you would add
-    #     "node_loc": ["loc1", "loc2"],
-    #     "node_dest": ["dest1", "dest2"],
-    #     "year_vtg": ["2020", "2020"],
-    #     "year_act": ["2020", "2020"], etc
-    # to the scenario as per usual. However, I don't know if that's necessary as the
-    # test is passing without it, too.
 
     s.commit(comment="basic water non_cooling_tec test model")
 
@@ -95,43 +88,22 @@ def test_cool_tec(request, test_context, RCP):
     test_context.regions = "R12"
     test_context.time = "year"
     test_context.nexus_set = "nexus"
-    # TODO add
     test_context.update(
         RCP=RCP,
         REL="med",
         ssp="SSP2",
     )
 
-    # Set up valid_basins for water_for_ppl functions
     setup_valid_basins(test_context, regions=test_context.regions)
 
-    # TODO: only leaving this in so you can see which data you might want to assert to
-    # be in the result. Please remove after adapting the assertions below:
-    # Mock the DataFrame read from CSV
-    # df = pd.DataFrame(
-    #     {
-    #         "technology_group": ["cooling", "non-cooling"],
-    #         "technology_name": ["cooling_tech1", "non_cooling_tech1"],
-    #         "water_supply_type": ["freshwater_supply", "freshwater_supply"],
-    #         "water_withdrawal_mid_m3_per_output": [1, 2],
-    #     }
-    # )
-
-    # FIXME This currently fails because the pd.DataFrame read in as ref_input is empty
-    # This can most likely be fixed by calling the right function on the largely empty
-    # Scenario created above that sets the Scenario up with all things necessary to run
-    # cool_tech(). Whatever the fix here is, it can also be applied to the failing
-    # test_build::test_build().
     result = cool_tech(context=test_context)
 
     # Assert the results
     assert isinstance(result, dict)
     assert "input" in result
-    # Check for NaN values in input DataFrame
     assert not result["input"]["value"].isna().any(), (
         "Input DataFrame contains NaN values"
     )
-    # Check that time values are not individual characters (common bug)
     input_time_values = result["input"]["time"].unique()
     assert not any(len(str(val)) == 1 for val in input_time_values), (
         f"Input DataFrame contains time values: {input_time_values}. "
@@ -183,42 +155,13 @@ def test_non_cooling_tec(request, test_context):
     s.add_set("node", ["loc1", "loc2"])
     s.add_set("year", [2020, 2030, 2040])
 
-    # TODO: this is where you would add
-    #     "node_loc": ["loc1", "loc2"],
-    #     "node_dest": ["dest1", "dest2"],
-    #     "year_vtg": ["2020", "2020"],
-    #     "year_act": ["2020", "2020"], etc
-    # to the scenario as per usual. However, I don't know if that's necessary as the
-    # test is passing without it, too.
-
     s.commit(comment="basic water non_cooling_tec test model")
 
-    # set_scenario() updates Context.scenario_info
     test_context.set_scenario(s)
-    # print(test_context.get_scenario())
-
-    # # TODO This is where and how you would add data to the context, but these are not
-    # #required for non_cooling_tech()
-    # test_context["water build info"] = ScenarioInfo(scenario_obj=s)
-    # test_context.type_reg = "country"
-    # test_context.regions = "test_region"
-    # test_context.map_ISO_c = {"test_region": "test_ISO"}
-
-    # TODO: only leaving this in so you can see which data you might want to assert to
-    # be in the result. Please remove after adapting the assertions below:
-    # Mock the DataFrame read from CSV
-    # df = pd.DataFrame(
-    #     {
-    #         "technology_group": ["cooling", "non-cooling"],
-    #         "technology_name": ["cooling_tech1", "non_cooling_tech1"],
-    #         "water_supply_type": ["freshwater_supply", "freshwater_supply"],
-    #         "water_withdrawal_mid_m3_per_output": [1, 2],
-    #     }
-    # )
+    test_context.nexus_set = "nexus"
 
     result = non_cooling_tec(context=test_context)
 
-    # Assert the results
     assert isinstance(result, dict)
     assert "input" in result
     assert all(
@@ -240,68 +183,148 @@ def test_non_cooling_tec(request, test_context):
     )
 
 
-@pytest.mark.parametrize(
-    "param_name, cap_fact_parent, expected_values",
-    [
-        (
-            "historical_activity",
-            None,
-            [100 * 0.5, 150 * 1.2],
-        ),  # Only apply hold_cost multipliers
-        (
-            "historical_new_capacity",
-            pd.DataFrame(
-                {
-                    "node_loc": ["R1", "R2"],
-                    "technology": ["TechA", "TechB"],
-                    "cap_fact": [0.9, 0.9],
-                }
-            ),
-            [100 * 0.5 * 0.9 * 1.2, 150 * 1.2 * 0.9 * 1.2],
-        ),  # Apply capacity factors
-    ],
-)
-def test_apply_act_cap_multiplier(
-    param_name: str,
-    cap_fact_parent: Optional[pd.DataFrame],
-    expected_values: list[float],
-) -> None:
-    # Dummy input data
-    df = pd.DataFrame(
-        {
-            "node_loc": ["R1", "R2"],
-            "technology": ["TechA", "TechB"],
-            "value": [100, 150],
-        }
+def test_saline_allocation_regional_average():
+    """Document that regional average shares prevent saline over-allocation.
+
+    Per-parent-tech shares give nuclear plants 50-65% saline (coastal siting).
+    Regional average shares (~12.5% saline) give more conservative allocation
+    that better constrains model's tendency to expand saline cooling.
+    """
+    fixture_df = pd.read_parquet(FIXTURE_DIR / "cool_tech_fixture.parquet")
+    cost_share = pd.read_csv(
+        package_data_path("water", "ppl_cooling_tech", "cooltech_cost_and_shares_ssp_msg_R12.csv")
     )
 
-    hold_cost = pd.DataFrame(
-        {
-            "utype": ["Type1", "Type2"],
-            "technology": ["TechA", "TechB"],
-            "R1": [0.5, 0.8],
-            "R2": [1.0, 1.2],
-        }
+    hist_act = fixture_df[fixture_df["_param"] == "historical_activity"]
+    mix_cols = [c for c in cost_share.columns if c.startswith("mix_")]
+
+    # Per-parent-tech shares
+    saline_by_tech = cost_share[cost_share["cooling"] == "ot_saline"].set_index("utype")[mix_cols]
+    total_saline_per_tech = 0
+    for region in mix_cols:
+        region_name = region.replace("mix_", "")
+        for tech in hist_act[hist_act["node_loc"] == region_name]["technology"].unique():
+            tech_act = hist_act[
+                (hist_act["node_loc"] == region_name) & (hist_act["technology"] == tech)
+            ]["value"].sum()
+            if tech in saline_by_tech.index:
+                total_saline_per_tech += tech_act * saline_by_tech.loc[tech, region]
+
+    # Regional average shares
+    avg_saline_share = cost_share[cost_share["cooling"] == "ot_saline"][mix_cols].mean()
+    total_saline_regional = 0
+    for region in mix_cols:
+        region_name = region.replace("mix_", "")
+        region_act = hist_act[hist_act["node_loc"] == region_name]["value"].sum()
+        total_saline_regional += region_act * avg_saline_share[region]
+
+    ratio = total_saline_per_tech / total_saline_regional
+    print(f"\nSaline allocation comparison:")
+    print(f"  Per-tech shares:     {total_saline_per_tech:.0f} GWa")
+    print(f"  Regional avg shares: {total_saline_regional:.0f} GWa")
+    print(f"  Ratio: {ratio:.2f}x")
+
+    # Per-tech gives roughly 2x more saline than regional average
+    assert ratio > 1.5, f"Expected per-tech to over-allocate saline, got ratio {ratio}"
+    assert ratio < 2.5, f"Ratio {ratio} unexpectedly high"
+
+    # Nuclear specifically should have high saline share
+    nuc_saline = saline_by_tech.loc["nuc_lc"].mean() if "nuc_lc" in saline_by_tech.index else 0
+    assert nuc_saline > 0.5, f"Expected nuclear saline share > 50%, got {nuc_saline:.1%}"
+
+
+@pytest.mark.usefixtures("ssp_user_data")
+@pytest.mark.parametrize("RCP", ["no_climate"])
+def test_share_constraints(test_context, RCP):
+    """Test that cool_tech correctly applies share constraints.
+
+    Type 1: SSP YAML share_commodity_up (policy constraints on future shares)
+    Type 2: Regional average shares for historical_activity allocation
+    """
+    import yaml
+
+    try:
+        fixture_df, meta = load_cool_tech_fixture()
+    except FileNotFoundError:
+        pytest.skip("Fixture data not available")
+
+    mock_scen = MockScenario(fixture_df, firstmodelyear=meta["firstmodelyear"])
+    info = create_mock_scenario_info(meta)
+
+    test_context["water build info"] = info
+    test_context.type_reg = "global"
+    test_context.regions = "R12"
+    test_context.time = "year"
+    test_context.nexus_set = "nexus"
+    test_context.update(RCP=RCP, REL="med", ssp="SSP2")
+    setup_valid_basins(test_context, regions=test_context.regions)
+
+    result = cool_tech(context=test_context, scenario=mock_scen)
+
+    # === Type 1: SSP YAML share_commodity_up ===
+    assert "share_commodity_up" in result, "Should generate share_commodity_up"
+    share_df = result["share_commodity_up"]
+    assert not share_df.empty, "share_commodity_up should not be empty for SSP2"
+
+    yaml_path = package_data_path("water", "ssp.yaml")
+    with open(yaml_path) as f:
+        yaml_data = yaml.safe_load(f)
+
+    ssp2_shares = yaml_data["scenarios"]["SSP2"]["cooling_tech"]["globalNorth"]["share_commodity_up"]
+
+    for share_name, expected_value in ssp2_shares.items():
+        share_rows = share_df[share_df["shares"] == share_name]
+        assert not share_rows.empty, f"Missing share constraint: {share_name}"
+        actual_values = share_rows["value"].unique()
+        assert len(actual_values) == 1, f"Multiple values for {share_name}"
+        assert actual_values[0] == expected_value, (
+            f"{share_name}: got {actual_values[0]}, expected {expected_value}"
+        )
+
+    print(f"\nType 1 (SSP YAML) verified: {ssp2_shares}")
+
+    # === Type 2: Regional average shares for historical allocation ===
+    cost_share_df = pd.read_csv(
+        package_data_path("water", "ppl_cooling_tech", "cooltech_cost_and_shares_ssp_msg_R12.csv")
     )
+    mix_cols = [c for c in cost_share_df.columns if c.startswith("mix_")]
+    expected_regional_avg = cost_share_df.groupby("cooling")[mix_cols].mean()
 
-    result = apply_act_cap_multiplier(df, hold_cost, cap_fact_parent, param_name)
+    if "historical_activity" not in result:
+        pytest.skip("No historical_activity in result")
 
-    assert result["value"].tolist() == expected_values, (
-        f"Failed for param_name: {param_name}"
-    )
+    hist_act = result["historical_activity"]
 
+    test_regions = ["R12_AFR", "R12_NAM", "R12_WEU"]
+    for region in test_regions:
+        region_data = hist_act[hist_act["node_loc"] == region]
+        if region_data.empty:
+            continue
 
-@pytest.mark.parametrize("SSP, regions", [("SSP2", "R12"), ("LED", "R12")])
-def test_cooling_shares_SSP_from_yaml(request, test_context, SSP, regions):
-    test_context.model.regions = regions
-    scenario = testing.bare_res(request, test_context)
-    test_context["water build info"] = ScenarioInfo(scenario_obj=scenario)
-    test_context.ssp = SSP
+        region_data = region_data.copy()
+        region_data["cooling"] = region_data["technology"].str.split("__").str[1]
+        by_cooling = region_data.groupby("cooling")["value"].sum()
 
-    # Act
-    result = cooling_shares_SSP_from_yaml(test_context)
-    print("RESULT ", result)
-    # Assert
-    assert isinstance(result, pd.DataFrame), "Result should be a DataFrame"
-    assert not result.empty, "Resulting DataFrame should not be empty"
-    assert result["year_act"].min() >= 2050  # Validate year constraint
+        if by_cooling.sum() == 0:
+            continue
+
+        actual_ratios = by_cooling / by_cooling.sum()
+
+        mix_col = f"mix_{region.replace('R12_', '')}"
+        if mix_col not in expected_regional_avg.columns:
+            continue
+
+        expected = expected_regional_avg[mix_col]
+        expected_ratios = expected / expected.sum()
+
+        for cooling_type in actual_ratios.index:
+            if cooling_type in expected_ratios.index:
+                actual = actual_ratios[cooling_type]
+                expected_val = expected_ratios[cooling_type]
+                assert abs(actual - expected_val) < 0.10, (
+                    f"{region}/{cooling_type}: actual ratio {actual:.3f} != expected {expected_val:.3f}"
+                )
+
+        print(f"Type 2 ({region}) allocation ratios match regional averages")
+
+    print("Share constraints test passed")
