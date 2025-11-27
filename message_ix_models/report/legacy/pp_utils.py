@@ -8,12 +8,11 @@ from functools import cmp_to_key
 
 import numpy as np
 import pandas as pd
+from message_ix_models.util import private_data_path
 from pandas.api.types import is_numeric_dtype
 
-from message_ix_models.util import package_data_path
-from message_ix_models.util.compat.message_data import utilities
-
 from . import iamc_tree
+import message_ix_models.util.compat.message_data.utilities as utilities
 
 all_years = None
 years = None
@@ -56,7 +55,7 @@ def combineDict(*args):
 def fil(df, fil, factor, unit_out=None):
     """Uses predefined values from a fil file"""
     inf = os.path.join(
-        package_data_path(), "report", "legacy", "fil_files", "*-{}.fil".format(fil)
+        private_data_path(), "report", "fil_files", "*-{}.fil".format(fil)
     )
     files = glob.glob(inf)
     dfs = []
@@ -249,9 +248,9 @@ def globiom_glb_priceindex(ds, price, quantity, quanity_variable, y0=2005):
 
     fischer = (las * paas) ** 0.5
 
-    quantity.loc["World"] = fischer
+    price.loc["World"] = fischer
 
-    return quantity
+    return price
 
 
 def numcols(df):
@@ -317,7 +316,7 @@ def _convert_units(df, unit_out):
             )
         except Exception:
             print(
-                f"No unit conversion factor found to convert {df['Unit'].unique()[0]} to {unit_out}"
+                f"No unit conversion factor found to convert {df.Unit.unique()[0]} to {unit_out}"
             )
     df.Unit = unit_out
 
@@ -443,7 +442,7 @@ def gen_GLB(df, param, weighted_by):
         # Global region needs to be dropped or else it is used for calcualting
         # the mean
         df_tmp = df[df.Region != "World"]
-        df_tmp = df_tmp.groupby(idx).mean(numeric_only=True).reset_index()
+        df_tmp = df_tmp.groupby(idx).mean().reset_index()
     elif param == "weighted_avg":
         weighted_by = weighted_by.reset_index()
         weighted_by = weighted_by[weighted_by.Region != "World"].set_index("Region")
@@ -555,7 +554,7 @@ def _make_emptydf(tec, vintage=None, grade=None, units="GWa"):
         dfs.append(df)
     df = pd.concat(dfs, sort=True)
     if "Vintage" in df.columns:
-        df.loc[:, "Vintage"] = df.loc[:, "Vintage"].astype("object")
+        df.Vintage = df.Vintage.astype("object")
     return df.sort_index()
 
 
@@ -1865,10 +1864,46 @@ def _retr_crb_prc(ds, units):
     """
 
     # Retrieve VAR - PRICE_EMISSION
-    # TODO iiasa/message_ix#726 is reworking PRICE_EMISSION_NEW to become the new PRICE_EMISSION
-    # Adjust the name here according to what you're running on
     var = "PRICE_EMISSION"
     df = ds.var(var, {"type_tec": ["all"]})
+
+    # For scenarios where this both a constraint on TCE and TCE_CO2
+    # Add the TCE_CO2 price to that of the regional TCE
+    if "TCE" in df.type_emission.unique() and "TCE_CO2" in df.type_emission.unique():
+        print("Detected two emission prices for TCE and TCE_CO2; applying aggregation")
+        for reg in [
+            r
+            for r in df.loc[df.type_emission == "TCE"].node.unique()
+            if r not in ["World", "R12_GLB"]
+        ]:
+            tmp = df.loc[(df.node == reg) & (df.type_emission == "TCE")]
+            tmp = tmp.merge(
+                df.loc[df.type_emission == "TCE_CO2"].drop(
+                    ["node", "type_emission", "type_tec", "mrg"], axis=1
+                ),
+                on=["year"],
+                how="outer",
+            )
+            # Fill nan for years not in on or the other price
+            tmp.lvl_x = tmp.lvl_x.fillna(0)
+
+            for col in ["node", "type_emission", "type_tec", "mrg"]:
+                tmp[col] = tmp[col].ffill().bfill()
+
+            # Idenify the year at which the regional TCE price peaks
+            ypeak = tmp.loc[tmp.lvl_x == max(tmp.lvl_x), "year"].iloc[0]
+
+            # Set the TCE_CO2 price to 0
+            tmp.loc[tmp.year <= ypeak, "lvl_y"] = np.nan
+            tmp.lvl_y = tmp.lvl_y.fillna(0)
+
+            tmp["lvl"] = tmp["lvl_x"] + tmp["lvl_y"]
+            tmp = tmp.drop(["lvl_x", "lvl_y"], axis=1)
+
+            # Remove exisitng regional "TCE" price and add new one
+            df = df.loc[~((df.node == reg) & (df.type_emission == "TCE"))]
+            df = pd.concat([df, tmp], ignore_index=True)
+
     if df.empty:
         if var == "PRICE_EMISSION":
             df = ds.par("tax_emission", {"type_tec": ["all"]})
@@ -2142,7 +2177,7 @@ def _retr_var_consumption(ds):
     return df.sort_index()
 
 
-def _retr_var_gdp(ds, ix):
+def _retr_var_gdp(ds):
     """Retrieve variable "GDP"
 
     Parameters
@@ -2155,44 +2190,70 @@ def _retr_var_gdp(ds, ix):
         index: Region, Technology
     """
 
-    if ix:
-        df = ds.var("GDP")
+    df = ds.var("GDP")
+    if df.empty:
+        if verbose:
+            print(
+                (
+                    inspect.stack()[0][3],
+                    ": variable GDP dataframe empty,",
+                    " using parameter: bound_activity_lo for technology GDP",
+                )
+            )
+        df = ds.par("bound_activity_lo", filters={"technology": "GDP"})
         if df.empty:
             if verbose:
                 print(
                     (
                         inspect.stack()[0][3],
-                        ": variable GDP dataframe empty,",
-                        " using parameter: gdp_calibrate",
+                        ": parameter bound_activity_lo for technology GDP dataframe empty",
                     )
                 )
-            df = ds.par("gdp_calibrate")
-            if df.empty:
-                if verbose:
-                    print(
-                        (
-                            inspect.stack()[0][3],
-                            ": parameter gdp_calibrate dataframe empty",
-                        )
-                    )
-                df = _make_emptydf("GDP")
-            else:
-                add = {"Technology": "GDP"}
-                df = _drap(df, ["value", "year"], add=add)
-        else:
-            drop = ["mrg"]
-            add = {"Technology": "GDP"}
-            df = _drap(df, ["lvl", "year"], drop=drop, add=add)
-    else:
-        df = ds.par("historical_activity", filters={"technology": "GDP"})
-        if df.empty:
-            if verbose:
-                print((inspect.stack()[0][3], ": technology", "GDP", "dataframe empty"))
             df = _make_emptydf("GDP")
         else:
             drop = ["time"]
             group = ["node_loc", "technology", "unit", "year_act", "mode"]
             df = _drap(df, ["value", "year_act"], drop=drop, group=group)
+
+    else:
+        drop = ["mrg"]
+        add = {"Technology": "GDP"}
+        df = _drap(df, ["lvl", "year"], drop=drop, add=add)
+
+    df = _clean_up_regions(df)
+    df = _clean_up_years(df)
+    df = _clean_up_formatting(df)
+
+    return df.sort_index()
+
+
+def _retr_par_PPP(ds):
+    """Retrieve variable "GDP"
+
+    Parameters
+    ----------
+    ds : ix-datastructure
+
+    Returns
+    -------
+    df: dataframe
+        index: Region, Technology
+    """
+
+    df = ds.par("bound_activity_lo", filters={"technology": "GDP_PPP"})
+    if df.empty:
+        if verbose:
+            print(
+                (
+                    inspect.stack()[0][3],
+                    ": parameter bound_activity_lo for technology GDP dataframe empty",
+                )
+            )
+        df = _make_emptydf("GDP")
+    else:
+        drop = ["time"]
+        group = ["node_loc", "technology", "unit", "year_act", "mode"]
+        df = _drap(df, ["value", "year_act"], drop=drop, group=group)
 
     df = _clean_up_regions(df)
     df = _clean_up_years(df)
@@ -2428,7 +2489,11 @@ def _retr_emiss(ds, emission, type_tec):
         index: Region, Technology
     """
 
-    filter = {"emission": [emission], "type_tec": [type_tec]}
+    if type(emission) != list:
+        emission = [emission]
+    if type(type_tec) != list:
+        type_tec = [type_tec]
+    filter = {"emission": emission, "type_tec": type_tec}
     df = ds.var("EMISS", filter)
     if df.empty:
         if verbose:
