@@ -237,11 +237,7 @@ class _RimeEnsemble:
     def _array_to_dataframe(self, pred_array: np.ndarray) -> pd.DataFrame:
         """Convert prediction array to DataFrame with metadata (basin variables)."""
         if self.basin_mapping is None:
-            from message_ix_models.util import package_data_path
-            basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
-            basin_df = pd.read_csv(basin_file)
-            self.basin_mapping = basin_df[basin_df["model_region"] == "R12"].copy()
-            self.basin_mapping = self.basin_mapping.reset_index(drop=True)
+            self.basin_mapping = load_basin_mapping()
 
         # Extract metadata
         metadata_cols = ['BASIN_ID', 'NAME', 'BASIN', 'REGION', 'BCU_name', 'area_km2']
@@ -313,10 +309,7 @@ def split_basin_macroregion(
 
     # Load basin mapping
     if basin_mapping is None:
-        basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
-        basin_df = pd.read_csv(basin_file)
-        basin_mapping = basin_df[basin_df["model_region"] == "R12"].copy()
-        basin_mapping = basin_mapping.reset_index(drop=True)
+        basin_mapping = load_basin_mapping()
 
     # Load RIME region IDs from dataset
     dataset_path = (
@@ -364,12 +357,15 @@ def split_basin_macroregion(
     return message_predictions
 
 
-def get_rime_dataset_path(variable: str, temporal_res: str = "annual") -> Path:
+def get_rime_dataset_path(
+    variable: str, temporal_res: str = "annual", hydro_model: str = "CWatM"
+) -> Path:
     """Get dataset path for a RIME variable.
 
     Args:
         variable: Target variable ('qtot_mean', 'qr', 'local_temp', 'capacity_factor', 'EI_cool', 'EI_heat')
         temporal_res: Temporal resolution ('annual' or 'seasonal2step')
+        hydro_model: Hydrological model ('CWatM' or 'H08')
 
     Returns:
         Path to RIME dataset file
@@ -398,14 +394,15 @@ def get_rime_dataset_path(variable: str, temporal_res: str = "annual") -> Path:
         var_map = {"local_temp": "temp_mean_anomaly"}
         rime_var = var_map.get(variable, variable)
 
-        # Determine window based on variable and temporal resolution
+        # Determine window - use window11 as default (smoothed emulators)
+        # Exception: temp_mean_anomaly annual uses window0
         if rime_var == "temp_mean_anomaly" and temporal_res == "annual":
             window = "0"
         else:
-            window = "11"  # Using window11 for smoothed emulators
+            window = "11"
 
         dataset_filename = (
-            f"rime_regionarray_{rime_var}_CWatM_{temporal_res}_window{window}.nc"
+            f"rime_regionarray_{rime_var}_{hydro_model}_{temporal_res}_window{window}.nc"
         )
         dataset_path = RIME_DATASETS_DIR / dataset_filename
 
@@ -413,7 +410,8 @@ def get_rime_dataset_path(variable: str, temporal_res: str = "annual") -> Path:
         raise FileNotFoundError(
             f"RIME dataset not found: {dataset_path}\n"
             f"Available variables: qtot_mean, qr, local_temp, capacity_factor, EI_cool, EI_heat\n"
-            f"Available temporal resolutions: annual, seasonal2step (not for capacity_factor/EI)"
+            f"Available temporal resolutions: annual, seasonal2step (not for capacity_factor/EI)\n"
+            f"Available hydro models: CWatM, H08, MIROC-INTEG-LAND, WaterGAP2-2e"
         )
 
     return dataset_path
@@ -425,6 +423,7 @@ def predict_rime(
     temporal_res: str = "annual",
     percentile: Optional[str] = None,
     sel: Optional[dict] = None,
+    hydro_model: str = "CWatM",
 ):
     """Predict RIME variable from GMT array with automatic dataset loading.
 
@@ -444,6 +443,7 @@ def predict_rime(
         sel: Optional dimension selection for building variables.
              E.g., {'region': 'NAM', 'arch': 'mfh_s1', 'urt': 'urban'}
              Reduces dimensionality by selecting specific values.
+        hydro_model: Hydrological model ('CWatM' or 'H08') for basin variables
 
     Returns:
         For basin-level variables (qtot_mean, qr, local_temp):
@@ -480,7 +480,7 @@ def predict_rime(
     from .rime_functions import predict_from_gmt
 
     # Get dataset path using shared helper
-    dataset_path = get_rime_dataset_path(variable, temporal_res)
+    dataset_path = get_rime_dataset_path(variable, temporal_res, hydro_model)
 
     # Handle building energy intensity variables
     if variable.startswith("EI_"):
@@ -545,6 +545,28 @@ def load_country_to_region_mapping() -> pd.DataFrame:
     return pd.read_csv(mapping_path)
 
 
+def load_basin_mapping() -> pd.DataFrame:
+    """Load R12 basin mapping with MESSAGE basin codes.
+
+    Returns:
+        DataFrame with 217 rows (R12 basins) and columns including:
+        ['BASIN_ID', 'NAME', 'BASIN', 'REGION', 'BCU_name', 'area_km2', 'model_region', 'basin_code']
+
+        The 'basin_code' column contains MESSAGE format codes (e.g., 'B107|AFR').
+
+    Examples:
+        mapping = load_basin_mapping()
+        basin_codes = mapping['basin_code'].tolist()  # ['B0|AFR', 'B0|EEU', ...]
+        amazon_area = mapping[mapping['BASIN_ID'] == 100]['area_km2'].sum()
+    """
+    basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
+    basin_df = pd.read_csv(basin_file)
+    basin_df = basin_df[basin_df["model_region"] == "R12"].copy()
+    basin_df = basin_df.reset_index(drop=True)
+    basin_df["basin_code"] = "B" + basin_df["BASIN_ID"].astype(str) + "|" + basin_df["REGION"]
+    return basin_df
+
+
 def aggregate_basins_to_regions(
     basin_predictions: np.ndarray,
     variable: str,
@@ -573,12 +595,9 @@ def aggregate_basins_to_regions(
         basin_preds = predict_rime(gmt, 'qtot_mean', temporal_res='seasonal2step')
         region_preds = aggregate_basins_to_regions(basin_preds, 'qtot_mean')
     """
-    # Load basin mapping using same logic as plotting.py
+    # Load basin mapping
     if basin_mapping is None:
-        basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
-        basin_df = pd.read_csv(basin_file)
-        basin_mapping = basin_df[basin_df["model_region"] == "R12"].copy()
-        basin_mapping = basin_mapping.reset_index(drop=True)
+        basin_mapping = load_basin_mapping()
 
     # Determine aggregation function
     var_map = {"local_temp": "temp_mean_anomaly"}
@@ -736,6 +755,7 @@ def batch_rime_predictions(
     dataset_path: Path,
     basin_mapping: pd.DataFrame,
     variable: str,
+    suban: bool = False,
 ) -> dict[int, pd.DataFrame]:
     """Run RIME predictions on multiple runs (eager evaluation).
 
@@ -748,12 +768,13 @@ def batch_rime_predictions(
         dataset_path: Path to RIME dataset NetCDF file
         basin_mapping: Basin mapping DataFrame
         variable: Variable name (qtot_mean, qr, capacity_factor)
+        suban: If True, use seasonal (dry/wet) resolution; if False, use annual
 
     Returns:
         Dictionary mapping run_id -> DataFrame with predictions (MESSAGE format with metadata)
     """
     ensemble = batch_rime_predictions_with_percentiles(
-        magicc_df, run_ids, dataset_path, basin_mapping, variable, suban=False
+        magicc_df, run_ids, dataset_path, basin_mapping, variable, suban=suban
     )
     return ensemble.evaluate(as_dataframe=True)
 
