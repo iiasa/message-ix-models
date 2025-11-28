@@ -95,7 +95,7 @@ class _RimeEnsemble:
         percentile_sampling: Optional dict mapping run_id → percentile choices per year.
                            For emulator uncertainty: array of [10, 50, 90] indices.
                            Shape: (n_years,) per run.
-        suban: Whether predictions use seasonal resolution
+        temporal_res: Temporal resolution ('annual' or 'seasonal2step')
         basin_mapping: Optional basin mapping DataFrame (for basin variables)
     """
     gmt_trajectories: dict[int, np.ndarray]
@@ -103,7 +103,7 @@ class _RimeEnsemble:
     dataset_path: Path
     years: np.ndarray
     percentile_sampling: Optional[dict[int, np.ndarray]] = None
-    suban: bool = False
+    temporal_res: str = "annual"
     basin_mapping: Optional[pd.DataFrame] = None
 
     def _evaluate_single_run(
@@ -125,7 +125,7 @@ class _RimeEnsemble:
         gmt = self.gmt_trajectories[run_id]
 
         # Pattern match on (seasonal mode, emulator uncertainty)
-        match (self.suban, self.percentile_sampling is not None):
+        match (self.temporal_res == "seasonal2step", self.percentile_sampling is not None):
             case (True, True):
                 # Seasonal + emulator uncertainty: sample percentiles, interleave dry/wet
                 percentile_indices = self.percentile_sampling[run_id]
@@ -206,7 +206,7 @@ class _RimeEnsemble:
             run_ids: Optional subset of runs to evaluate. If None, evaluates all.
             sel: Optional dimension selection for building variables
                  (e.g., {'region': 'NAM', 'arch': 'mfh_s1'})
-            as_dataframe: If True, return DataFrames with metadata (basin variables only)
+            as_dataframe: If True, return DataFrames with metadata (basin and regional)
 
         Returns:
             Dict mapping run_id → predictions (array or DataFrame)
@@ -214,20 +214,25 @@ class _RimeEnsemble:
         if run_ids is None:
             run_ids = list(self.gmt_trajectories.keys())
 
+        var_type = _get_variable_type(self.variable)
         predictions = {}
         for run_id in run_ids:
             pred = self._evaluate_single_run(run_id, sel=sel)
 
-            # For basin variables with DataFrame output
-            if as_dataframe and _get_variable_type(self.variable) == "basin":
-                # Apply basin expansion if needed
-                if pred.ndim == 2 and pred.shape[0] == 157:
-                    pred_expanded = split_basin_macroregion(pred, self.basin_mapping)
+            if as_dataframe:
+                if var_type == "basin":
+                    # Apply basin expansion if needed
+                    if pred.ndim == 2 and pred.shape[0] == 157:
+                        pred_expanded = split_basin_macroregion(pred, self.basin_mapping)
+                    else:
+                        pred_expanded = pred
+                    pred_df = self._array_to_dataframe(pred_expanded)
+                elif var_type == "regional":
+                    pred_df = self._regional_array_to_dataframe(pred)
                 else:
-                    pred_expanded = pred
-
-                # Create DataFrame with metadata
-                pred_df = self._array_to_dataframe(pred_expanded)
+                    # Building variables - return as-is for now
+                    predictions[run_id] = pred
+                    continue
                 predictions[run_id] = pred_df
             else:
                 predictions[run_id] = pred
@@ -244,7 +249,7 @@ class _RimeEnsemble:
         basin_metadata = self.basin_mapping[metadata_cols].copy()
 
         # Create year columns
-        if self.suban:
+        if self.temporal_res == "seasonal2step":
             columns = []
             for year in self.years:
                 columns.extend([f"{year}_dry", f"{year}_wet"])
@@ -254,6 +259,43 @@ class _RimeEnsemble:
         # Create DataFrame
         data_df = pd.DataFrame(pred_array, columns=columns)
         return pd.concat([basin_metadata, data_df], axis=1)
+
+    def _regional_array_to_dataframe(self, pred_array: np.ndarray) -> pd.DataFrame:
+        """Convert prediction array to DataFrame with metadata (regional variables).
+
+        Args:
+            pred_array: Regional predictions array, shape (12, n_years) or (n_years,)
+
+        Returns:
+            DataFrame with 'region' column + year columns
+        """
+        # R12 region codes in alphabetical order (matches RIME output)
+        R12_REGIONS = ['AFR', 'CHN', 'EEU', 'FSU', 'LAM', 'MEA', 'NAM', 'PAO', 'PAS', 'RCPA', 'SAS', 'WEU']
+
+        # Handle 1D array (single region selection) vs 2D (all regions)
+        if pred_array.ndim == 1:
+            # Single timeseries - reshape to (1, n_years)
+            pred_array = pred_array.reshape(1, -1)
+
+        # Create year columns
+        if self.temporal_res == "seasonal2step":
+            columns = []
+            for year in self.years:
+                columns.extend([f"{year}_dry", f"{year}_wet"])
+        else:
+            columns = list(self.years)
+
+        # Create DataFrame
+        data_df = pd.DataFrame(pred_array, columns=columns)
+
+        # Add region metadata
+        if len(data_df) == 12:
+            data_df.insert(0, 'region', R12_REGIONS)
+        else:
+            # Subset of regions - use index
+            data_df.insert(0, 'region', [f'region_{i}' for i in range(len(data_df))])
+
+        return data_df
 
 
 def _separate_metadata_and_years(df: pd.DataFrame) -> tuple[list, pd.DataFrame]:
@@ -388,7 +430,7 @@ def get_rime_dataset_path(
             raise NotImplementedError(
                 "Capacity factor only supports annual temporal resolution"
             )
-        dataset_path = RIME_DATASETS_DIR / "stage3_gwl_binned.nc"
+        dataset_path = RIME_DATASETS_DIR / "r12_capacity_gwl_ensemble.nc"
     else:
         # Variable mapping for basin-level variables
         var_map = {"local_temp": "temp_mean_anomaly"}
@@ -755,7 +797,7 @@ def batch_rime_predictions(
     dataset_path: Path,
     basin_mapping: pd.DataFrame,
     variable: str,
-    suban: bool = False,
+    temporal_res: str = "annual",
 ) -> dict[int, pd.DataFrame]:
     """Run RIME predictions on multiple runs (eager evaluation).
 
@@ -768,13 +810,13 @@ def batch_rime_predictions(
         dataset_path: Path to RIME dataset NetCDF file
         basin_mapping: Basin mapping DataFrame
         variable: Variable name (qtot_mean, qr, capacity_factor)
-        suban: If True, use seasonal (dry/wet) resolution; if False, use annual
+        temporal_res: Temporal resolution ('annual' or 'seasonal2step')
 
     Returns:
         Dictionary mapping run_id -> DataFrame with predictions (MESSAGE format with metadata)
     """
     ensemble = batch_rime_predictions_with_percentiles(
-        magicc_df, run_ids, dataset_path, basin_mapping, variable, suban=suban
+        magicc_df, run_ids, dataset_path, basin_mapping, variable, temporal_res=temporal_res
     )
     return ensemble.evaluate(as_dataframe=True)
 
@@ -814,7 +856,7 @@ def batch_rime_predictions_with_percentiles(
     dataset_path: Path,
     basin_mapping: pd.DataFrame,
     variable: str,
-    suban: bool = False,
+    temporal_res: str = "annual",
 ) -> _RimeEnsemble:
     """Run RIME predictions with lazy evaluation for memory efficiency.
 
@@ -827,8 +869,8 @@ def batch_rime_predictions_with_percentiles(
         dataset_path: Path to RIME dataset NetCDF file
         basin_mapping: Basin mapping DataFrame (for basin variables)
         variable: Base variable name (qtot_mean, qr, capacity_factor, EI_cool, EI_heat)
-        suban: If True, use seasonal (dry/wet) resolution; if False, use annual
-               NOTE: Not supported for capacity_factor or EI variables
+        temporal_res: Temporal resolution ('annual' or 'seasonal2step')
+                     NOTE: Not supported for capacity_factor or EI variables
 
     Returns:
         _RimeEnsemble object with lazy evaluation.
@@ -836,7 +878,7 @@ def batch_rime_predictions_with_percentiles(
         Call ensemble.evaluate(as_dataframe=False) to get arrays only.
     """
     # Validate parameters
-    if variable == "capacity_factor" and suban:
+    if variable == "capacity_factor" and temporal_res == "seasonal2step":
         raise NotImplementedError(
             "Capacity factor only supports annual temporal resolution"
         )
@@ -861,8 +903,8 @@ def batch_rime_predictions_with_percentiles(
     # Clip GMT values below RIME minimum with skewed noise
     # Annual emulators: 0.6°C to 7.4°C (complete coverage)
     # Seasonal emulators: 0.8°C to 7.4°C (0.6-0.7°C has 87% NaN for many basins)
-    GMT_MIN = 0.8 if suban else 0.6
-    GMT_MAX_NOISE = 1.2 if suban else 0.9  # Maximum noise to add
+    GMT_MIN = 0.8 if temporal_res == "seasonal2step" else 0.6
+    GMT_MAX_NOISE = 1.2 if temporal_res == "seasonal2step" else 0.9  # Maximum noise to add
 
     low_gmt_mask = gmt_flat < GMT_MIN
     n_low = np.sum(low_gmt_mask)
@@ -895,7 +937,7 @@ def batch_rime_predictions_with_percentiles(
         dataset_path=dataset_path,
         years=years,
         percentile_sampling=None,  # No sampling yet (added by expand_predictions_with_emulator_uncertainty)
-        suban=suban,
+        temporal_res=temporal_res,
         basin_mapping=basin_mapping,
     )
 
@@ -999,7 +1041,7 @@ def expand_predictions_with_emulator_uncertainty(
         dataset_path=ensemble.dataset_path,
         years=ensemble.years,
         percentile_sampling=percentile_sampling,
-        suban=ensemble.suban,
+        temporal_res=ensemble.temporal_res,
         basin_mapping=ensemble.basin_mapping,
     )
 
