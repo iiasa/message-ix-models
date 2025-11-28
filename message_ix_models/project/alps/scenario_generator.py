@@ -36,6 +36,8 @@ from message_ix_models.project.alps.replace_water_cids import (
     prepare_demand_parameter,
     prepare_groundwater_share,
     replace_water_availability,
+    prepare_capacity_factor_parameter,
+    replace_cooling_capacity_factor,
 )
 from message_ix_models.project.alps.timeslice import (
     generate_uniform_timeslices,
@@ -131,10 +133,11 @@ def generate_scenario(
     temporal_res: str,
     n_runs: int = 100,
     dry_run: bool = False,
+    cid_type: str = "nexus",
 ) -> Optional[Scenario]:
     """Generate a single CID scenario.
 
-    Clone starter → add timeslices (if seasonal) → run RIME → replace water params → commit
+    Clone starter → add timeslices (if seasonal) → run RIME → replace CID params → commit
 
     Parameters
     ----------
@@ -156,6 +159,8 @@ def generate_scenario(
         Number of MAGICC runs for expectation (default: 100)
     dry_run : bool
         If True, validate but don't create scenario
+    cid_type : str
+        CID type: 'nexus' (water) or 'cooling' (capacity_factor)
 
     Returns
     -------
@@ -168,9 +173,14 @@ def generate_scenario(
     print(f"  Starter: {starter_model}/{starter_scenario}")
     print(f"  MAGICC: {magicc_file.name}")
     print(f"  Temporal: {temporal_res}")
+    print(f"  CID type: {cid_type}")
 
     if not magicc_file.exists():
         raise FileNotFoundError(f"MAGICC file not found: {magicc_file}")
+
+    # Validate cid_type constraints
+    if cid_type == "cooling" and temporal_res == "seasonal":
+        raise ValueError("Cooling CID only supports annual temporal resolution")
 
     if dry_run:
         print("  [DRY RUN] Validation passed")
@@ -191,8 +201,8 @@ def generate_scenario(
     )
     print(f"   Created {scen.model}/{scen.scenario} version {scen.version}")
 
-    # Add timeslices if seasonal (time_setup/duration_time use transact internally)
-    if temporal_res == "seasonal":
+    # Add timeslices if seasonal (nexus only, cooling is always annual)
+    if temporal_res == "seasonal" and cid_type == "nexus":
         print("\n3. Adding timeslices...")
         add_timeslices_to_scenario(scen, n_time=2)
         print("   Timeslices committed")
@@ -204,7 +214,29 @@ def generate_scenario(
     run_ids = tuple(all_run_ids[:n_runs])
     print(f"   Using {len(run_ids)} runs for expectation")
 
-    # Run RIME predictions
+    # Dispatch based on CID type
+    if cid_type == "nexus":
+        scen_updated = _generate_nexus_cid(
+            scen, magicc_file, run_ids, temporal_res, n_runs
+        )
+    elif cid_type == "cooling":
+        scen_updated = _generate_cooling_cid(
+            scen, magicc_file, run_ids, n_runs
+        )
+    else:
+        raise ValueError(f"Unknown cid_type: {cid_type}. Expected 'nexus' or 'cooling'")
+
+    return scen_updated
+
+
+def _generate_nexus_cid(
+    scen: Scenario,
+    magicc_file: Path,
+    run_ids: tuple,
+    temporal_res: str,
+    n_runs: int,
+) -> Scenario:
+    """Generate nexus (water) CID scenario."""
     rime_temporal = "seasonal2step" if temporal_res == "seasonal" else "annual"
 
     print(f"\n5. Running RIME predictions for qtot_mean ({rime_temporal})...")
@@ -277,6 +309,47 @@ def generate_scenario(
     return scen_updated
 
 
+def _generate_cooling_cid(
+    scen: Scenario,
+    magicc_file: Path,
+    run_ids: tuple,
+    n_runs: int,
+) -> Scenario:
+    """Generate cooling (capacity_factor) CID scenario."""
+    print("\n5. Running RIME predictions for capacity_factor (annual)...")
+    cf_predictions = cached_rime_prediction(
+        magicc_file, run_ids, "capacity_factor", temporal_res="annual"
+    )
+    print(f"   Got {len(cf_predictions)} prediction sets")
+
+    # Compute expectation
+    print("\n6. Computing expectation...")
+    cf_expected = compute_expectation(
+        cf_predictions, run_ids=np.array(list(run_ids)), weights=None
+    )
+    print(f"   capacity_factor shape: {cf_expected.shape}")
+
+    # Prepare MESSAGE parameter
+    print("\n7. Preparing MESSAGE capacity_factor parameter...")
+    cf_new = prepare_capacity_factor_parameter(cf_expected, scen)
+    print(f"   capacity_factor: {len(cf_new)} rows")
+
+    # Replace capacity_factor
+    print("\n8. Replacing cooling capacity_factor...")
+    commit_msg = (
+        f"CID cooling projection: {magicc_file.stem.split('_')[-3]}f\n"
+        f"MAGICC: {magicc_file.name}\n"
+        f"RIME: n_runs={n_runs}, variable=capacity_factor"
+    )
+
+    scen_updated = replace_cooling_capacity_factor(
+        scen, cf_new, commit_message=commit_msg
+    )
+    print(f"   Committed version {scen_updated.version}")
+
+    return scen_updated
+
+
 def generate_all(
     config: dict,
     budgets: Optional[str] = None,
@@ -316,10 +389,14 @@ def generate_all(
     platform_name = config['platform_info']['name']
     jvmargs = config['platform_info'].get('jvmargs')
 
+    # Get CID type (default: nexus for backward compatibility)
+    cid_type = config.get('cid_type', 'nexus')
+
     print("="*60)
     print("CID SCENARIO GENERATION")
     print("="*60)
     print(f"Platform: {platform_name}")
+    print(f"CID type: {cid_type}")
     print(f"Starter: {config['starter']['model']}/{config['starter']['scenario']}")
     print(f"Budget filter: {budget_filter or 'all'}")
     print(f"Temporal filter: {temporal_filter}")
@@ -336,9 +413,15 @@ def generate_all(
             if temp_res not in temporal_filter:
                 continue
 
+            # Skip seasonal for cooling (not supported)
+            if cid_type == "cooling" and temp_res == "seasonal":
+                print(f"  Skipping {budget}/{temp_res}: cooling only supports annual")
+                continue
+
             # Handle null budget (baseline counterfactual)
             if budget is None or budget == "":
-                output_name = f"nexus_baseline_{temp_res}"
+                # Use cid_type prefix for baseline name
+                output_name = f"{cid_type}_baseline_{temp_res}"
             else:
                 output_name = config['output']['scenario_template'].format(
                     budget=budget, temporal=temp_res
@@ -374,6 +457,7 @@ def generate_all(
                 magicc_file=spec['magicc_file'],
                 temporal_res=spec['temporal'],
                 n_runs=config['rime']['n_runs'],
+                cid_type=cid_type,
                 dry_run=dry_run,
             )
             if scen:

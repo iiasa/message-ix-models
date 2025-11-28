@@ -61,14 +61,17 @@ def cached_rime_prediction(
     run_ids : tuple
         Run IDs to process (must be tuple for hashing)
     variable : str
-        Variable to predict ('qtot_mean' or 'qr')
+        Variable to predict ('qtot_mean', 'qr', 'capacity_factor', 'EI_cool', 'EI_heat')
     temporal_res : str
         Temporal resolution ('annual' or 'seasonal2step')
+        Note: 'capacity_factor' and 'EI_*' only support 'annual'
 
     Returns
     -------
     dict
-        Dictionary mapping run_id -> basin predictions DataFrame
+        Dictionary mapping run_id -> predictions DataFrame
+        For basin variables: DataFrame with 217 rows + metadata columns + year columns
+        For regional variables: DataFrame with 12 rows (R12) + region column + year columns
         For seasonal: DataFrame has interleaved columns (2020_dry, 2020_wet, ...)
     """
     cache_key = f"{magicc_file.stem}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}"
@@ -82,14 +85,22 @@ def cached_rime_prediction(
     # Load MAGICC data
     magicc_df = pd.read_excel(magicc_file, sheet_name="data")
 
-    # Load basin mapping
-    basin_mapping_path = package_data_path(
-        "water", "delineation", "basins_by_region_simpl_R12.csv"
-    )
-    basin_mapping = pd.read_csv(basin_mapping_path)
-
     # Get dataset path
     dataset_path = get_rime_dataset_path(variable, temporal_res)
+
+    # Determine variable type for appropriate handling
+    is_regional = variable in ('capacity_factor', 'EI_cool', 'EI_heat')
+
+    if is_regional:
+        # Regional variables don't need basin mapping
+        # batch_rime_predictions handles this internally via _get_variable_type()
+        basin_mapping = None
+    else:
+        # Load basin mapping for basin-level variables
+        basin_mapping_path = package_data_path(
+            "water", "delineation", "basins_by_region_simpl_R12.csv"
+        )
+        basin_mapping = pd.read_csv(basin_mapping_path)
 
     # Run predictions (suban=True for seasonal datasets)
     predictions = batch_rime_predictions(

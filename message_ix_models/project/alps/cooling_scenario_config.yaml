@@ -1,0 +1,39 @@
+# CID Scenario Generation Configuration - Cooling
+# Generates thermoelectric capacity factor scenarios from MAGICC temperature via RIME
+
+platform_info:
+  name: ixmp_dev
+  jvmargs: "-Xmx16G"
+
+starter:
+  model: SSP_SSP2_v6.5_CID
+  scenario: baseline
+
+output:
+  model: SSP_SSP2_v6.5_CID
+  scenario_template: "cooling_baseline_{budget}_annual"
+
+cid_type: cooling
+
+rime:
+  n_runs: 100
+  # capacity_factor is R12 regional (12 values), annual only
+  variables:
+    - capacity_factor
+
+# Cooling only supports annual (no seasonal capacity factor emulator)
+scenarios:
+  - budget: null
+    temporal: [annual]
+  - budget: 850f
+    temporal: [annual]
+  - budget: 1100f
+    temporal: [annual]
+  - budget: 1350f
+    temporal: [annual]
+  - budget: 1850f
+    temporal: [annual]
+  - budget: 2100f
+    temporal: [annual]
+  - budget: 2350f
+    temporal: [annual]

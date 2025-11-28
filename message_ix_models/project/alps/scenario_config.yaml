@@ -1,5 +1,9 @@
 # CID Scenario Generation Configuration
-# Generates water CID scenarios from MAGICC temperature projections via RIME
+# Generates CID scenarios from MAGICC temperature projections via RIME
+#
+# Supported CID types:
+#   - nexus: Water availability (surfacewater, groundwater, gw_share) from qtot_mean + qr
+#   - cooling: Thermoelectric capacity factor from capacity_factor (R12 regional)
 
 platform_info:
   name: ixmp_dev
@@ -13,8 +17,15 @@ output:
   model: SSP_SSP2_v6.5_CID
   scenario_template: "nexus_baseline_{budget}_{temporal}"
 
+# CID type determines which RIME variables and MESSAGE parameters are used
+# Default: nexus (backward compatible)
+cid_type: nexus
+
 rime:
   n_runs: 100
+  # Variables used depend on cid_type:
+  #   nexus: qtot_mean, qr (basin-level, 217 rows)
+  #   cooling: capacity_factor (regional, 12 R12)
   variables:
     - qtot_mean
     - qr

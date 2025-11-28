@@ -623,3 +623,122 @@ def replace_water_availability(
 
     scenario.set_as_default()
     return scenario
+
+
+# ==============================================================================
+# Cooling Capacity Factor Functions (Regional CID)
+# ==============================================================================
+
+# R12 region codes in RIME order (alphabetical)
+R12_REGIONS = ['AFR', 'CHN', 'EEU', 'FSU', 'LAM', 'MEA', 'NAM', 'PAO', 'PAS', 'RCPA', 'SAS', 'WEU']
+
+
+def prepare_capacity_factor_parameter(
+    rime_df: pd.DataFrame,
+    scenario: "Scenario",
+) -> pd.DataFrame:
+    """Convert RIME regional capacity_factor predictions to MESSAGE parameter format.
+
+    Parameters
+    ----------
+    rime_df : pd.DataFrame
+        RIME capacity_factor predictions with columns: region + year columns (2025-2100)
+        Shape: 12 rows (R12 regions) x N year columns
+        Values: capacity factor (0-1)
+
+    scenario : Scenario
+        MESSAGE scenario to get existing capacity_factor structure from
+
+    Returns
+    -------
+    pd.DataFrame
+        MESSAGE capacity_factor parameter with columns:
+        [node_loc, technology, year_vtg, year_act, time, value, unit]
+        Only includes freshwater cooling technologies (contains 'fresh')
+    """
+    # Get existing capacity_factor for freshwater cooling techs
+    existing_cf = scenario.par('capacity_factor')
+    fresh_cf = existing_cf[existing_cf['technology'].str.contains('fresh', na=False)].copy()
+
+    if len(fresh_cf) == 0:
+        raise ValueError("No freshwater cooling technologies found in scenario capacity_factor")
+
+    # Get year columns from RIME predictions
+    year_cols = [c for c in rime_df.columns if isinstance(c, (int, np.integer))]
+
+    # Build region -> RIME value lookup per year
+    # RIME df has 'region' column with short codes (AFR, CHN, etc.)
+    rime_lookup = {}
+    for _, row in rime_df.iterrows():
+        region = row.get('region', row.name) if 'region' in rime_df.columns else R12_REGIONS[row.name]
+        for year in year_cols:
+            rime_lookup[(region, year)] = row[year]
+
+    # Create new capacity_factor DataFrame
+    new_cf = fresh_cf.copy()
+
+    # Map node_loc (R12_AFR) to RIME region (AFR) and apply RIME values
+    def get_rime_value(row):
+        # Extract region code from node_loc (e.g., R12_AFR -> AFR)
+        node = row['node_loc']
+        if node.startswith('R12_'):
+            region = node[4:]
+        else:
+            region = node
+
+        year = row['year_act']
+
+        # Find closest year in RIME data
+        if year in year_cols:
+            key = (region, year)
+        else:
+            # Find nearest year
+            nearest = min(year_cols, key=lambda y: abs(y - year))
+            key = (region, nearest)
+
+        return rime_lookup.get(key, row['value'])
+
+    new_cf['value'] = new_cf.apply(get_rime_value, axis=1)
+
+    return new_cf
+
+
+def replace_cooling_capacity_factor(
+    scenario: "Scenario",
+    cf_new: pd.DataFrame,
+    commit_message: str = "Replace cooling capacity_factor with RIME projections",
+) -> "Scenario":
+    """Replace freshwater cooling capacity_factor with RIME climate projections.
+
+    Parameters
+    ----------
+    scenario : Scenario
+        MESSAGE scenario with cooling technologies
+
+    cf_new : pd.DataFrame
+        New capacity_factor parameter for freshwater cooling techs
+        Required columns: node_loc, technology, year_vtg, year_act, time, value, unit
+
+    commit_message : str
+        Annotation for scenario commit
+
+    Returns
+    -------
+    Scenario
+        Modified scenario with updated capacity_factor (committed)
+    """
+    # Get existing freshwater cooling capacity_factor to remove
+    existing_cf = scenario.par('capacity_factor')
+    fresh_cf_old = existing_cf[existing_cf['technology'].str.contains('fresh', na=False)].copy()
+
+    print(f"   Replacing {len(fresh_cf_old)} freshwater cooling capacity_factor rows")
+    print(f"   Technologies: {fresh_cf_old['technology'].nunique()} unique")
+    print(f"   Regions: {fresh_cf_old['node_loc'].nunique()} unique")
+
+    # Replace atomically
+    with scenario.transact(commit_message):
+        scenario.remove_par('capacity_factor', fresh_cf_old)
+        scenario.add_par('capacity_factor', cf_new)
+
+    scenario.set_as_default()
+    return scenario
