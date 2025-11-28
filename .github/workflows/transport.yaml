@@ -27,10 +27,7 @@ env:
   labels: >-
     [
       "SSP2",
-      "DIGSY-BEST-C",
-      "DIGSY-BEST-S",
-      "DIGSY-WORST-C",
-      "DIGSY-WORST-S"
+      "DIGSY-BEST-C"
     ]
 
   # Currently disabled:
