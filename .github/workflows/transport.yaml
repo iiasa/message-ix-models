@@ -3,7 +3,7 @@ name: MESSAGEix-Transport
 env:
   # The repository, ref (branch), and workflow file name to dispatch
   target-repo: iiasa/message_data
-  target-ref: dev
+  target-ref: ci/git-clone-remote
   target-workflow: transport
 
   # Starting point of the workflow.
