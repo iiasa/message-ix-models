@@ -16,9 +16,7 @@ from diskcache import FanoutCache
 from scipy import stats
 
 from message_ix_models.util import package_data_path
-
-# MAGICC output directory
-MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "magicc_output")
+from message_ix_models.project.alps.constants import MAGICC_OUTPUT_DIR
 
 # Cache setup for GMT lookups
 CACHE_DIR = Path(__file__).parent.parent / ".cache" / "gmt_lookups"

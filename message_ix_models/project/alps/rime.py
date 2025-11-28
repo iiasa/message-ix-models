@@ -33,6 +33,7 @@ from scipy.stats import norm
 from dataclasses import dataclass, field
 
 from message_ix_models.util import package_data_path
+from .constants import R12_REGIONS
 from .weighted_cvar import compute_weighted_cvar
 from .utils import fit_dist
 
@@ -269,9 +270,6 @@ class _RimeEnsemble:
         Returns:
             DataFrame with 'region' column + year columns
         """
-        # R12 region codes in alphabetical order (matches RIME output)
-        R12_REGIONS = ['AFR', 'CHN', 'EEU', 'FSU', 'LAM', 'MEA', 'NAM', 'PAO', 'PAS', 'RCPA', 'SAS', 'WEU']
-
         # Handle 1D array (single region selection) vs 2D (all regions)
         if pred_array.ndim == 1:
             # Single timeseries - reshape to (1, n_years)
@@ -569,24 +567,6 @@ def predict_rime(
         return split_basin_macroregion(rime_predictions)
 
 
-def load_country_to_region_mapping() -> pd.DataFrame:
-    """Load country ISO3 to R12 region mapping.
-
-    Returns:
-        DataFrame with columns: ['ISO3', 'UN_Code', 'Shik_code', 'Country_Name', 'Status', 'R11', 'R12']
-
-    Examples:
-        # Get R12 region for a country
-        mapping = load_country_to_region_mapping()
-        usa_region = mapping[mapping['ISO3'] == 'USA']['R12'].iloc[0]  # 'NAM'
-
-        # Get all countries in a region
-        lam_countries = mapping[mapping['R12'] == 'LAM']['Country_Name'].tolist()
-    """
-    mapping_path = package_data_path("water", "demands", "country_region_map_key.csv")
-    return pd.read_csv(mapping_path)
-
-
 def load_basin_mapping() -> pd.DataFrame:
     """Load R12 basin mapping with MESSAGE basin codes.
 
@@ -821,35 +801,6 @@ def batch_rime_predictions(
     return ensemble.evaluate(as_dataframe=True)
 
 
-def _extract_percentile_predictions(
-    gmt_flat: np.ndarray, dataset_path: str, var_prefix: str, percentiles: list[int]
-) -> dict[int, np.ndarray]:
-    """Helper to extract predictions for multiple percentiles.
-
-    Args:
-        gmt_flat: Flattened GMT values (1D array)
-        dataset_path: Path to RIME dataset NetCDF file
-        var_prefix: Variable prefix (e.g., "qtot_mean", "qtot_mean_dry", "qr_wet")
-        percentiles: List of percentiles to extract (e.g., [10, 50, 90])
-
-    Returns:
-        Dict mapping percentile -> predictions array (n_gmt, n_basins)
-    """
-    # Lazy import to avoid loading RIME at module import time
-    from .rime_functions import predict_from_gmt
-
-    results = {}
-    for p in percentiles:
-        predictions = np.array(
-            [
-                predict_from_gmt(gmt, dataset_path, f"{var_prefix}_p{p}")
-                for gmt in gmt_flat
-            ]
-        )
-        results[p] = predictions
-    return results
-
-
 def batch_rime_predictions_with_percentiles(
     magicc_df: pd.DataFrame,
     run_ids: list[int],
@@ -945,31 +896,6 @@ def batch_rime_predictions_with_percentiles(
 # ==============================================================================
 # Legacy Helper (Deprecated - will be removed)
 # ==============================================================================
-
-
-def _extract_percentile_predictions_DEPRECATED(
-    gmt_flat: np.ndarray, dataset_path: str, var_prefix: str, percentiles: list[int]
-) -> dict[int, np.ndarray]:
-    """DEPRECATED: This function materializes predictions eagerly.
-
-    Kept temporarily for reference. Use _RimeEnsemble.evaluate() instead.
-    """
-    # Lazy import to avoid loading RIME at module import time
-    from .rime_functions import predict_from_gmt
-
-    results = {}
-    for p in percentiles:
-        predictions = np.array(
-            [
-                predict_from_gmt(gmt, dataset_path, f"{var_prefix}_p{p}")
-                for gmt in gmt_flat
-            ]
-        )
-        results[p] = predictions
-    return results
-
-
-# Skip old implementation - now handled by _RimeEnsemble
 
 
 def expand_predictions_with_emulator_uncertainty(

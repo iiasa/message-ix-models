@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from message_ix_models.util import package_data_path
+from .constants import MAGICC_OUTPUT_DIR
 from .rime_functions import predict_from_gmt
 from .rime import (
     extract_temperature_timeseries,
@@ -23,14 +23,13 @@ from .rime import (
     extract_all_run_ids,
     compute_expectation,
     compute_rime_cvar,
-    get_rime_dataset_path
+    get_rime_dataset_path,
+    load_basin_mapping,
 )
 from .importance_weighting import (
     extract_gmt_timeseries,
     compute_gwl_importance_weights
 )
-
-MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "magicc_output")
 
 
 def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_id=None,
@@ -94,8 +93,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
 
     # Load basin mapping
     print("Loading MESSAGE basin mapping...")
-    basin_mapping_path = package_data_path("water", "delineation", "basins_by_region_simpl_R12.csv")
-    basin_mapping = pd.read_csv(basin_mapping_path)
+    basin_mapping = load_basin_mapping()
     print(f"  Loaded mapping for {len(basin_mapping)} MESSAGE basins")
     print()
 
@@ -215,7 +213,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                     dataset_path,
                     basin_mapping,
                     var,
-                    suban
+                    temporal_res=temporal_res
                 )
 
                 print(f"Expanding predictions with emulator uncertainty (stratified sampling K=5)...")
@@ -236,7 +234,8 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                     run_ids,
                     dataset_path,
                     basin_mapping,
-                    var
+                    var,
+                    temporal_res=temporal_res
                 )
 
             # Compute expectations and CVaR if needed

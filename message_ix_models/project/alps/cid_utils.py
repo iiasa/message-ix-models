@@ -10,21 +10,19 @@ from diskcache import FanoutCache
 
 from ixmp import Platform
 from message_ix import Scenario
-from message_ix_models.util import package_data_path
 from message_ix_models.project.alps.rime import (
     batch_rime_predictions,
     compute_expectation,
     get_rime_dataset_path,
     extract_all_run_ids,
+    load_basin_mapping,
 )
+from message_ix_models.project.alps.constants import MAGICC_OUTPUT_DIR
 
 # Cache setup
 CACHE_DIR = Path(__file__).parent / ".cache" / "rime_predictions"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 cache = FanoutCache(str(CACHE_DIR), shards=8)
-
-# Default MAGICC output directory
-MAGICC_OUTPUT_DIR = package_data_path("report", "legacy", "reporting_output", "magicc_output")
 
 
 def get_magicc_file(model: str, scenario: str) -> Path:
@@ -97,15 +95,12 @@ def cached_rime_prediction(
         basin_mapping = None
     else:
         # Load basin mapping for basin-level variables
-        basin_mapping_path = package_data_path(
-            "water", "delineation", "basins_by_region_simpl_R12.csv"
-        )
-        basin_mapping = pd.read_csv(basin_mapping_path)
+        basin_mapping = load_basin_mapping()
 
-    # Run predictions (suban=True for seasonal datasets)
+    # Run predictions
     predictions = batch_rime_predictions(
         magicc_df, list(run_ids), dataset_path, basin_mapping, variable,
-        suban=(temporal_res == "seasonal2step")
+        temporal_res=temporal_res
     )
 
     # Cache result

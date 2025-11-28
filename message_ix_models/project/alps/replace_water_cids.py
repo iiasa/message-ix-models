@@ -16,10 +16,7 @@ import numpy as np
 from functools import lru_cache
 
 from message_ix_models.util import package_data_path
-
-# MESSAGE model years
-MESSAGE_YEARS = [2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060,
-                 2070, 2080, 2090, 2100, 2110]
+from message_ix_models.project.alps.constants import MESSAGE_YEARS, R12_REGIONS
 
 # Default timeslice definitions (n_time=2)
 DEFAULT_H1_MONTHS = {1, 2, 3, 4, 5, 6}
@@ -628,9 +625,6 @@ def replace_water_availability(
 # ==============================================================================
 # Cooling Capacity Factor Functions (Regional CID)
 # ==============================================================================
-
-# R12 region codes in RIME order (alphabetical)
-R12_REGIONS = ['AFR', 'CHN', 'EEU', 'FSU', 'LAM', 'MEA', 'NAM', 'PAO', 'PAS', 'RCPA', 'SAS', 'WEU']
 
 
 def prepare_capacity_factor_parameter(
