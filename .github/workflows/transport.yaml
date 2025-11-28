@@ -62,6 +62,7 @@ jobs:
       run: |
         echo '{
           "ref": "project/circeular/2025-w48",
+          "remote": "https://github.com/iiasa/message-ix-models.git",
           "base": "${{ env.base }}",
           "from-step": "${{ env.from-step }}",
           "labels": ${{ env.labels }}
