@@ -245,6 +245,8 @@ def retrive_ori_inv_cost(platform_name=None, scenario_name=None, model_name=None
         "nuc_lc",
         "nuc_hc",
         "nuc_fbr",
+        "hydro_rc",
+        "hydro_hc",
     ]
 
     from message_ix_models.util import package_data_path, private_data_path
