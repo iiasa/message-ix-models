@@ -771,6 +771,87 @@ def extract_all_run_ids(magicc_df: pd.DataFrame) -> list[int]:
     return sorted(run_ids)
 
 
+def _get_gmt_ensemble(
+    magicc_df: pd.DataFrame,
+    run_ids: list[int],
+) -> tuple[dict[int, np.ndarray], np.ndarray]:
+    """Extract GMT trajectories for all runs from MAGICC DataFrame.
+
+    Internal helper that extracts raw GMT values without any clipping or processing.
+
+    Args:
+        magicc_df: MAGICC output DataFrame (IAMC format)
+        run_ids: List of run IDs to extract
+
+    Returns:
+        Tuple of (gmt_trajectories, years) where:
+        - gmt_trajectories: Dict mapping run_id -> GMT array (n_years,)
+        - years: Array of year labels
+    """
+    gmt_trajectories = {}
+    years = None
+
+    for run_id in run_ids:
+        temp_df = extract_temperature_timeseries(magicc_df, run_id=run_id)
+        gmt_trajectories[run_id] = temp_df["gsat_anomaly_K"].values
+        if years is None:
+            years = temp_df["year"].values
+
+    return gmt_trajectories, years
+
+
+def get_gmt_expectation(
+    magicc_df: pd.DataFrame,
+    run_ids: Optional[list[int]] = None,
+    n_runs: Optional[int] = None,
+    years: Optional[list[int]] = None,
+) -> pd.DataFrame:
+    """Compute expected GMT from MAGICC ensemble.
+
+    Public API for computing expected (mean) GMT across MAGICC ensemble members.
+    Use this instead of extracting individual run temperatures.
+
+    Args:
+        magicc_df: MAGICC output DataFrame (IAMC format)
+        run_ids: Specific run IDs to use. If None, extracts all available.
+        n_runs: Limit to first N runs (applied after run_ids selection).
+                Useful for baseline (100 runs) vs budget scenarios (600 runs).
+        years: Filter to specific years (e.g., MESSAGE_YEARS). If None, returns all years.
+
+    Returns:
+        DataFrame with columns ['year', 'gmt'] containing expected GMT per year.
+
+    Example:
+        >>> magicc_df = pd.read_excel('magicc_output.xlsx')
+        >>> gmt_expected = get_gmt_expectation(magicc_df, n_runs=100)
+        >>> gmt_expected[gmt_expected['year'] == 2050]['gmt'].values[0]
+        1.834
+    """
+    # Get run_ids if not provided
+    if run_ids is None:
+        run_ids = extract_all_run_ids(magicc_df)
+
+    # Limit runs if specified
+    if n_runs is not None:
+        run_ids = run_ids[:n_runs]
+
+    # Extract GMT ensemble
+    gmt_trajectories, all_years = _get_gmt_ensemble(magicc_df, run_ids)
+
+    # Stack into array and compute mean
+    gmt_array = np.array([gmt_trajectories[rid] for rid in run_ids])
+    gmt_expected = np.mean(gmt_array, axis=0)
+
+    # Build result DataFrame
+    result = pd.DataFrame({"year": all_years, "gmt": gmt_expected})
+
+    # Filter years if specified
+    if years is not None:
+        result = result[result["year"].isin(years)].reset_index(drop=True)
+
+    return result
+
+
 def batch_rime_predictions(
     magicc_df: pd.DataFrame,
     run_ids: list[int],
@@ -834,18 +915,11 @@ def batch_rime_predictions_with_percentiles(
             "Capacity factor only supports annual temporal resolution"
         )
 
-    # Extract GMT timeseries for all runs
-    gmt_timeseries = []
-    years = None
-
-    for run_id in run_ids:
-        temp_df = extract_temperature_timeseries(magicc_df, run_id=run_id)
-        gmt_timeseries.append(temp_df["gsat_anomaly_K"].values)
-        if years is None:
-            years = temp_df["year"].values
+    # Extract GMT ensemble using shared helper
+    gmt_trajectories, years = _get_gmt_ensemble(magicc_df, run_ids)
 
     # Stack into 2D array (n_runs × n_years)
-    gmt_array = np.array(gmt_timeseries)
+    gmt_array = np.array([gmt_trajectories[rid] for rid in run_ids])
     n_runs, n_years = gmt_array.shape
 
     # Flatten to 1D for vectorized lookup
