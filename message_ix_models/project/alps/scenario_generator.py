@@ -22,6 +22,7 @@ import pandas as pd
 from ixmp import Platform
 from message_ix import Scenario
 
+from message_ix_models import Context
 from message_ix_models.util import package_data_path
 from message_ix_models.project.alps.cid_utils import (
     MAGICC_OUTPUT_DIR,
@@ -309,6 +310,50 @@ def _generate_nexus_cid(
     return scen_updated
 
 
+def _build_cooling_module(scen: Scenario) -> Scenario:
+    """Build cooling module onto scenario if not already present.
+
+    Checks if freshwater cooling technologies exist. If not, builds the
+    water/cooling module to add them.
+
+    Parameters
+    ----------
+    scen : Scenario
+        MESSAGE scenario to modify
+
+    Returns
+    -------
+    Scenario
+        Modified scenario with cooling technologies
+    """
+    from message_ix_models.model.water.build import main as build_water
+
+    # Check if cooling technologies already exist
+    existing_cf = scen.par('capacity_factor')
+    cooling_techs = existing_cf[
+        existing_cf['technology'].str.match(r'^(ot_fresh_|cl_fresh_)', na=False)
+    ]
+
+    if len(cooling_techs) > 0:
+        print(f"   Cooling technologies already present: {cooling_techs['technology'].nunique()} types")
+        return scen
+
+    print("   Building cooling module...")
+
+    # Set up context for cooling build
+    context = Context.get_instance(-1)
+    context.set_scenario(scen)
+    context.nexus_set = "cooling"
+    context.RCP = "no_climate"
+    context.REL = "mid"
+
+    # Build cooling module
+    build_water(context, scen)
+    print("   Cooling module built successfully")
+
+    return scen
+
+
 def _generate_cooling_cid(
     scen: Scenario,
     magicc_file: Path,
@@ -316,7 +361,11 @@ def _generate_cooling_cid(
     n_runs: int,
 ) -> Scenario:
     """Generate cooling (capacity_factor) CID scenario."""
-    print("\n5. Running RIME predictions for capacity_factor (annual)...")
+    # Build cooling module first
+    print("\n5. Building cooling module...")
+    scen = _build_cooling_module(scen)
+
+    print("\n6. Running RIME predictions for capacity_factor (annual)...")
     cf_predictions = cached_rime_prediction(
         magicc_file, run_ids, "capacity_factor", temporal_res="annual"
     )
