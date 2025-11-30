@@ -2,7 +2,7 @@
 
 from types import SimpleNamespace
 
-from genno import Key, KeySeq
+from genno import Key
 
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 from message_ix_models.util.genno import Keys
@@ -109,11 +109,12 @@ pdt_ny = _pdt + "total"
 pdt_nyt = _pdt * "t"
 
 #: Prices.
-price = KeySeq(PRICE_COMMODITY / ("h", "l") + "transport")
+price = Key(PRICE_COMMODITY / ("h", "l") + "transport")
 
 #: Keys for :mod:`.transport.report`.
 report = SimpleNamespace(
     all="transport all",
+    plot="transport plot",
     sdmx=Key("transport::sdmx"),
 )
 

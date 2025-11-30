@@ -252,6 +252,9 @@ unit:
     kt / Gv / km: kilotonnes emitted per 10⁹ vehicle kilometres
     Mt / Gv / km: megatonnes emitted per 10⁹ vehicle kilometres
 
+    # tax_emission
+    USD / t: USD per tonne carbon-equivalent; same as "USD/tC"
+
 # MA3T sets
 census_division:
   add:

@@ -311,7 +311,7 @@ class LoadFactorLDV(MultiFile):
             # For DIGSY…C, use the respective SSP
             ("^DIGSY-.*-C$", str(self.options.config.ssp)),
             ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED'
-            (r"\.", "_"),  # "SSP_2024.1" → "SSP_2024_1"
+            (r"(SSP_.*)\.(\d)( .*)?", r"\1_\2"),  # "SSP_2024.1 foo" → "SSP_2024_1"
         ):
             label = re.sub(pattern, repl, label)
         return label + ".csv"
