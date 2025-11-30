@@ -162,17 +162,10 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
             print(f"Processing {len(run_ids)} runs with uniform weights")
 
         case (False, False):
-            # Mode: Baseline (p50 only, no special weighting)
-            if run_id is not None:
-                run_ids = [run_id]
-                weights = None
-            else:
-                # Percentile mode
-                print(f"Extracting percentile {percentile or 50.0} trajectory...")
-                temp_df = extract_temperature_timeseries(magicc_df, percentile=percentile)
-                print(f"  Temperature range: {temp_df['gsat_anomaly_K'].min():.3f}K to {temp_df['gsat_anomaly_K'].max():.3f}K")
-                run_ids = None
-                weights = None
+            raise ValueError(
+                "--n-runs requires --include-emulator-uncertainty flag. "
+                "CVaR computation requires emulator uncertainty propagation."
+            )
 
     variables = ['qtot_mean', 'qr'] if variable == 'hydro' else [variable]
 
