@@ -566,6 +566,8 @@ def split_mto_feedstock(
                 variable=f"Share|{c}-methanol-fs",
             )
         )
+        # in case in::methanol-final is zero in sepcific year/node
+        to_append = pyam.IamDataFrame(to_append.data.replace([np.inf, -np.inf], 0))
         py_df_all = pyam.concat([py_df_all, to_append])
         updated_rows = []
 
