@@ -7,7 +7,7 @@
 # Unit: gigavehicle kilometre / (gigawatt year)
 #
 node,technology,year,value
-11_AFR,ELC_100,2020,49.723183
+R11_AFR,ELC_100,2020,49.723183
 R11_AFR,ELC_100,2025,103.65375
 R11_AFR,ELC_100,2030,112.49825
 R11_AFR,ELC_100,2035,116.48861
