@@ -2,7 +2,7 @@ import numbers
 
 import pandas as pd
 
-from .get_nodes import get_nodes
+from message_ix_models.util.compat.message_data.get_nodes import get_nodes
 
 # default dataframe index
 df_idx = ["Model", "Scenario", "Region", "Variable", "Unit"]
@@ -17,7 +17,7 @@ all_gases = sorted(
 
 def closest(List, K):
     """Finds the member of a list closest to a value (k)"""
-    return list[min(range(len(List)), key=lambda i: abs(list[i] - K))]
+    return List[min(range(len(List)), key=lambda i: abs(List[i] - K))]
 
 
 def f_index(df1, df2):
@@ -46,7 +46,7 @@ def idx_memb(List, x, distance):
     """Retrurns the member of the list with distance from x"""
 
     if List.index(x) + distance < len(List):
-        return list[List.index(x) + distance]
+        return List[List.index(x) + distance]
     else:
         return False
 
@@ -149,7 +149,8 @@ def rename_timeseries_regions(df, mp=None):
     mapping = mp.regions()
     mapping = mapping.loc[mapping.mapped_to.isin(df.region.unique())]
     mapping = mapping[["mapped_to", "region"]].set_index("mapped_to").to_dict()
-    df["region"] = df["region"].map(mapping["region"])
+    for reg in mapping["region"]:
+        df.loc[df.region == reg, "region"] = mapping["region"][reg]
     return df
 
 
@@ -188,7 +189,7 @@ def retrieve_hierarchy(variables, splitter="|"):
 def expand_gases(df, gases=None):
     """Replace all values of XXX in a dataframe with gas for all gases"""
     gases = all_gases if gases is None else gases
-    dfs = [df.applymap(lambda x: x.replace("XXX", gas)) for gas in gases]
+    dfs = [df.map(lambda x: x.replace("XXX", gas)) for gas in gases]
     return pd.concat(dfs, ignore_index=True, axis=0, sort=True)
 
 
