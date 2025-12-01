@@ -56,15 +56,15 @@ def main(click_ctx, **kwargs):
     mark_time(quiet=True)
 
     # Check for a non-trivial execution of the CLI
-    non_trivial = (
-        not any(s in sys.argv for s in {"config", "last-log", "--help"})
-        and click_ctx.invoked_subcommand != "_test"
-        and "pytest" not in sys.argv[0]
+    needs_log_file = not (
+        "pytest" in sys.argv[0]
+        or "--help" in sys.argv
+        or click_ctx.invoked_subcommand in {"_test", "config", "last-log", "sbatch"}
     )
 
     # Log to console: either DEBUG or INFO.
     # Don't start file logging for a non-trivial execution.
-    setup_logging(level="DEBUG" if kwargs["verbose"] else "INFO", file=non_trivial)
+    setup_logging(level="DEBUG" if kwargs["verbose"] else "INFO", file=needs_log_file)
 
     if "pytest" not in sys.argv[0]:
         log.debug("CLI invoked with:\n" + "\n  ".join(sys.argv))
@@ -203,7 +203,10 @@ else:  # pragma: no cover  (needs message_data)
 
 for name in submodules:
     # Import the module and retrieve the click.Command object
-    __import__(name)
+    try:
+        __import__(name)
+    except ImportError as e:
+        print(e)
     cmd = getattr(sys.modules[name], "cli")
 
     # Avoid replacing message-ix-models CLI with message_data CLI

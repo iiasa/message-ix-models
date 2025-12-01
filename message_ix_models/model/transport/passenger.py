@@ -6,7 +6,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from genno import Computer, Key, KeySeq, Quantity, quote
+from genno import Computer, Key, Quantity, quote
 from message_ix import make_df
 from sdmx.model.v21 import Code
 
@@ -96,8 +96,8 @@ def prepare_computer(c: Computer):
 
     #### NB lines below duplicated from .transport.base
     e_iea = Key("energy:n-y-product-flow:iea")
-    e_fnp = KeySeq(e_iea.drop("y"))
-    e = KeySeq("energy:commodity-flow-node_loc:iea")
+    e_fnp = Key(e_iea.drop("y"))
+    e = Key("energy:commodity-flow-node_loc:iea")
 
     # Transform IEA EWEB data for comparison
 
@@ -219,7 +219,7 @@ def bound_activity_lo(c: Computer) -> None:
             units="GWa",
         )
 
-    k = KeySeq("bound_activity_lo:n-t-y:transport minimum")
+    k = Key("bound_activity_lo:n-t-y:transport minimum")
     c.add(next(k), _, "n::ex world", "t::transport", "y0", "config")
 
     # Produce MESSAGE parameter bound_activity_lo:nl-t-ya-m-h
