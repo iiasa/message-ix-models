@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any
 from genno import Key, Quantity, quote
 from genno.core.key import iter_keys, single_key
 
+from .util import IAMCConversion
+
 if TYPE_CHECKING:
     from genno import Computer
     from ixmp import Reporter
@@ -261,8 +263,6 @@ def callback(rep: "Reporter", context: "Context") -> None:
     """
     from message_ix_models.model.bare import get_spec
 
-    from . import iamc
-
     N = len(rep.graph)
 
     # Structure information
@@ -384,13 +384,13 @@ def callback(rep: "Reporter", context: "Context") -> None:
     # TODO Identify where to sum on "h", "m", "yv" dimensions
 
     # Convert to IAMC structure
-    var = "Emissions|CO2|Energy|Demand|Transportation|Road Rail and Domestic Shipping"
-    info = dict(variable="transport emissions", base=k1.drop("h", "m", "yv"), var=[var])
-    iamc(rep, info)
-
-    # Append to the "all::iamc" task
-    # TODO Use a helper function for this
-    rep.graph["all::iamc"] += ("transport emissions::iamc",)
+    IAMCConversion(
+        base=k1.drop("h", "m", "yv"),
+        var_parts=[
+            "Emissions|CO2|Energy|Demand|Transportation|Road Rail and Domestic Shipping"
+        ],
+        unit="Mt/yr",
+    ).add_tasks(rep)
 
     # TODO use store_ts() to store on scenario
 
