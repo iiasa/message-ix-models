@@ -162,7 +162,7 @@ submodules = [
     # "message_ix_models.model.cli",
     # "message_ix_models.model.structure",
     # "message_ix_models.model.transport.cli",
-    # "message_ix_models.model.water.cli",
+    "message_ix_models.model.water.cli",
     "message_ix_models.project.alps.cli",
     # "message_ix_models.project.circeular.cli",
     # "message_ix_models.project.edits.cli",
