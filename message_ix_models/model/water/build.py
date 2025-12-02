@@ -631,11 +631,12 @@ def main(context: Context, scenario, **options):
     build.apply_spec(scenario, spec1, partial(add_data, context=context), **options)
 
     # Add electricity router after nexus build is complete
-    if is_annual and n_time > 1:
+    # Router needed when context.time has subannual elements (water on h1/h2, energy on year)
+    if len(context.time) > 0 and "year" not in context.time:
         from message_ix_models.project.alps.timeslice import add_electricity_router
 
         log.info("Nexus build complete, adding electricity router")
-        add_electricity_router(scenario, n_time, commodity='electr')
+        add_electricity_router(scenario, len(context.time), commodity='electr')
         log.info("Electricity router added successfully")
 
     # Uncomment to dump for debugging

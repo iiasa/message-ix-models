@@ -53,8 +53,8 @@ def water_ini(context: "Context", regions, time):
                 "with your 'regions' choice"
             )
     else:
-        log.info("Use default --regions=R11")
-        regions = "R11"
+        log.info("Use default --regions=R12")
+        regions = "R12"
     # add an attribute to distinguish country models
     if regions in ["R11", "R12", "R14", "R32", "RCP"]:
         context.type_reg = "global"
