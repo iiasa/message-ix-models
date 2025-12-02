@@ -15,35 +15,35 @@ Usage:
 
 from pathlib import Path
 from typing import Optional
-import yaml
+
 import numpy as np
 import pandas as pd
-
+import yaml
 from ixmp import Platform
 from message_ix import Scenario
 
 from message_ix_models import Context
-from message_ix_models.util import package_data_path
 from message_ix_models.project.alps.cid_utils import (
     MAGICC_OUTPUT_DIR,
     cached_rime_prediction,
     deinterleave_seasonal,
 )
+from message_ix_models.project.alps.replace_water_cids import (
+    prepare_capacity_factor_parameter,
+    prepare_water_cids,
+    replace_parameter,
+    replace_water_availability,
+)
 from message_ix_models.project.alps.rime import (
     compute_expectation,
     extract_all_run_ids,
 )
-from message_ix_models.project.alps.replace_water_cids import (
-    prepare_water_cids,
-    replace_water_availability,
-    prepare_capacity_factor_parameter,
-    replace_parameter,
-)
 from message_ix_models.project.alps.timeslice import (
+    duration_time,
     generate_uniform_timeslices,
     time_setup,
-    duration_time,
 )
+from message_ix_models.util import package_data_path
 
 
 def load_config(config_path: Path) -> dict:
@@ -63,7 +63,7 @@ def load_config(config_path: Path) -> dict:
         config = yaml.safe_load(f)
 
     # Validate required keys
-    required = ['platform_info', 'starter', 'output', 'rime', 'scenarios']
+    required = ["platform_info", "starter", "output", "rime", "scenarios"]
     missing = [k for k in required if k not in config]
     if missing:
         raise ValueError(f"Config missing required keys: {missing}")
@@ -117,7 +117,7 @@ def add_timeslices_to_scenario(scenario: Scenario, n_time: int = 2) -> Scenario:
     duration_time(scenario, df_time)
 
     time_set = set(scenario.set("time").tolist())
-    subannual = time_set - {'year'}
+    subannual = time_set - {"year"}
     print(f"   Timeslices added: {subannual}")
 
     return scenario
@@ -167,9 +167,9 @@ def generate_scenario(
     Scenario or None
         Created scenario, or None if dry_run
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Generating: {output_scenario}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Starter: {starter_model}/{starter_scenario}")
     print(f"  MAGICC: {magicc_file.name}")
     print(f"  Temporal: {temporal_res}")
@@ -205,7 +205,7 @@ def generate_scenario(
     # Skip if starter already has h1/h2 timeslices
     if temporal_res == "seasonal" and cid_type == "nexus":
         existing_times = set(scen.set("time").tolist())
-        if 'h1' in existing_times and 'h2' in existing_times:
+        if "h1" in existing_times and "h2" in existing_times:
             print("\n3. Timeslices already present in starter, skipping")
         else:
             print("\n3. Adding timeslices...")
@@ -225,9 +225,7 @@ def generate_scenario(
             scen, magicc_file, run_ids, temporal_res, n_runs
         )
     elif cid_type == "cooling":
-        scen_updated = _generate_cooling_cid(
-            scen, magicc_file, run_ids, n_runs
-        )
+        scen_updated = _generate_cooling_cid(scen, magicc_file, run_ids, n_runs)
     else:
         raise ValueError(f"Unknown cid_type: {cid_type}. Expected 'nexus' or 'cooling'")
 
@@ -322,13 +320,17 @@ def _build_cooling_module(scen: Scenario) -> Scenario:
 
     # Check if cooling technologies already exist
     # Cooling tech naming: {parent}__ot_fresh, {parent}__cl_fresh, etc.
-    existing_cf = scen.par('capacity_factor')
+    existing_cf = scen.par("capacity_factor")
     cooling_techs = existing_cf[
-        existing_cf['technology'].str.contains(r'__(ot_fresh|cl_fresh)', regex=True, na=False)
+        existing_cf["technology"].str.contains(
+            r"__(ot_fresh|cl_fresh)", regex=True, na=False
+        )
     ]
 
     if len(cooling_techs) > 0:
-        print(f"   Cooling technologies already present: {cooling_techs['technology'].nunique()} types")
+        print(
+            f"   Cooling technologies already present: {cooling_techs['technology'].nunique()} types"
+        )
         return scen
 
     print("   Building cooling module...")
@@ -336,6 +338,7 @@ def _build_cooling_module(scen: Scenario) -> Scenario:
     # Set up context for cooling build
     context = Context.get_instance(-1)
     context.set_scenario(scen)
+    # Use no climate and mid since CID replacement will happen anyway.
     context.nexus_set = "cooling"
     context.RCP = "no_climate"
     context.REL = "mid"
@@ -419,7 +422,7 @@ def generate_all(
     # Parse budget filter
     budget_filter = None
     if budgets:
-        budget_filter = set(b.strip() for b in budgets.split(','))
+        budget_filter = set(b.strip() for b in budgets.split(","))
 
     # Parse temporal filter
     if temporal == "both":
@@ -428,15 +431,15 @@ def generate_all(
         temporal_filter = {temporal}
 
     # Connect to platform
-    platform_name = config['platform_info']['name']
-    jvmargs = config['platform_info'].get('jvmargs')
+    platform_name = config["platform_info"]["name"]
+    jvmargs = config["platform_info"].get("jvmargs")
 
     # Get CID type (default: nexus for backward compatibility)
-    cid_type = config.get('cid_type', 'nexus')
+    cid_type = config.get("cid_type", "nexus")
 
-    print("="*60)
+    print("=" * 60)
     print("CID SCENARIO GENERATION")
-    print("="*60)
+    print("=" * 60)
     print(f"Platform: {platform_name}")
     print(f"CID type: {cid_type}")
     print(f"Starter: {config['starter']['model']}/{config['starter']['scenario']}")
@@ -446,12 +449,12 @@ def generate_all(
 
     # Build scenario list
     scenarios_to_generate = []
-    for scen_spec in config['scenarios']:
-        budget = scen_spec['budget']
+    for scen_spec in config["scenarios"]:
+        budget = scen_spec["budget"]
         if budget_filter and budget not in budget_filter:
             continue
 
-        for temp_res in scen_spec['temporal']:
+        for temp_res in scen_spec["temporal"]:
             if temp_res not in temporal_filter:
                 continue
 
@@ -469,15 +472,17 @@ def generate_all(
                 else:
                     output_name = f"{cid_type}_baseline_{temp_res}"
             else:
-                output_name = config['output']['scenario_template'].format(
+                output_name = config["output"]["scenario_template"].format(
                     budget=budget, temporal=temp_res
                 )
-            scenarios_to_generate.append({
-                'budget': budget,
-                'temporal': temp_res,
-                'output_scenario': output_name,
-                'magicc_file': derive_magicc_path(budget),
-            })
+            scenarios_to_generate.append(
+                {
+                    "budget": budget,
+                    "temporal": temp_res,
+                    "output_scenario": output_name,
+                    "magicc_file": derive_magicc_path(budget),
+                }
+            )
 
     print(f"\nScenarios to generate: {len(scenarios_to_generate)}")
     for s in scenarios_to_generate:
@@ -488,7 +493,9 @@ def generate_all(
         return []
 
     # Connect to platform
-    mp = Platform(platform_name, jvmargs=jvmargs) if jvmargs else Platform(platform_name)
+    mp = (
+        Platform(platform_name, jvmargs=jvmargs) if jvmargs else Platform(platform_name)
+    )
 
     # Generate scenarios
     created = []
@@ -496,13 +503,13 @@ def generate_all(
         try:
             scen = generate_scenario(
                 mp=mp,
-                starter_model=config['starter']['model'],
-                starter_scenario=config['starter']['scenario'],
-                output_model=config['output']['model'],
-                output_scenario=spec['output_scenario'],
-                magicc_file=spec['magicc_file'],
-                temporal_res=spec['temporal'],
-                n_runs=config['rime']['n_runs'],
+                starter_model=config["starter"]["model"],
+                starter_scenario=config["starter"]["scenario"],
+                output_model=config["output"]["model"],
+                output_scenario=spec["output_scenario"],
+                magicc_file=spec["magicc_file"],
+                temporal_res=spec["temporal"],
+                n_runs=config["rime"]["n_runs"],
                 cid_type=cid_type,
                 dry_run=dry_run,
             )
@@ -512,8 +519,8 @@ def generate_all(
             print(f"\nERROR generating {spec['output_scenario']}: {e}")
             raise
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"GENERATION COMPLETE: {len(created)} scenarios created")
-    print("="*60)
+    print("=" * 60)
 
     return created
