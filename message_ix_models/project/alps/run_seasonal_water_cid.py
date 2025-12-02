@@ -35,8 +35,7 @@ from message_ix_models.project.alps.rime import (
     extract_all_run_ids,
 )
 from message_ix_models.project.alps.replace_water_cids import (
-    prepare_demand_parameter,
-    prepare_groundwater_share,
+    prepare_water_cids,
     replace_water_availability,
 )
 from message_ix_models.project.alps.timeslice import (
@@ -237,41 +236,43 @@ Examples:
     print(f"   Dry qtot sample (basin 1, 2020): {qtot_dry[qtot_dry['BASIN_ID']==1][2020].values[0]:.2f} km³")
     print(f"   Wet qtot sample (basin 1, 2020): {qtot_wet[qtot_wet['BASIN_ID']==1][2020].values[0]:.2f} km³")
 
+    # Clone for modification if needed (before prepare to use scenario for filtering)
+    if scen.has_solution():
+        scen = scen.clone(keep_solution=False)
+        print(f"   Cloned to version {scen.version}")
+
     # Step 7: Transform to MESSAGE format (applies basin-specific dry/wet -> h1/h2)
     print("\n8. Transforming to MESSAGE parameter format (h1/h2)...")
-    sw_demand = prepare_demand_parameter(
-        (qtot_dry, qtot_wet), "surfacewater_basin", temporal_res="seasonal"
+    sw_data, gw_data, share_data = prepare_water_cids(
+        (qtot_dry, qtot_wet), (qr_dry, qr_wet), scen, temporal_res="seasonal"
     )
-    gw_demand = prepare_demand_parameter(
-        (qr_dry, qr_wet), "groundwater_basin", temporal_res="seasonal"
-    )
-    gw_share = prepare_groundwater_share(
-        (qtot_dry, qtot_wet), (qr_dry, qr_wet), temporal_res="seasonal"
-    )
+    sw_new, sw_old = sw_data
+    gw_new, gw_old = gw_data
+    share_new, share_old = share_data
 
-    print(f"   sw_demand: {len(sw_demand)} rows")
-    print(f"   gw_demand: {len(gw_demand)} rows")
-    print(f"   gw_share: {len(gw_share)} rows")
+    print(f"   sw: {len(sw_new)} new, {len(sw_old)} old rows")
+    print(f"   gw: {len(gw_new)} new, {len(gw_old)} old rows")
+    print(f"   share: {len(share_new)} new, {len(share_old)} old rows")
 
     # Step 8: Verify structure
     print("\n9. Verifying parameter structure...")
     try:
-        verify_parameter_structure(sw_demand, gw_demand, gw_share, temporal_res="seasonal")
+        verify_parameter_structure(sw_new, gw_new, share_new, temporal_res="seasonal")
     except AssertionError as e:
         print(f"   ERROR: {e}")
         return 1
 
     # Check NaN values
-    total_nan = report_nan_values(sw_demand, gw_demand, gw_share)
+    total_nan = report_nan_values(sw_new, gw_new, share_new)
 
     # Report value ranges
     print("\n10. Value ranges:")
-    report_value_ranges(sw_demand, gw_demand, gw_share)
+    report_value_ranges(sw_new, gw_new, share_new)
 
     # Show sample values
     print("\n11. Sample parameter values:")
     print("\n   sw_demand (first 5 rows):")
-    print(sw_demand.head(5).to_string(index=False))
+    print(sw_new.head(5).to_string(index=False))
 
     # Step 9: Replace water availability
     if not args.dry_run:
@@ -284,13 +285,8 @@ Examples:
             f"Transformation: basin-specific dry/wet -> h1/h2 via regime shift mapping"
         )
 
-        # Clone for modification if needed
-        if scen.has_solution():
-            scen = scen.clone(keep_solution=False)
-            print(f"   Cloned to version {scen.version}")
-
         scen_updated = replace_water_availability(
-            scen, sw_demand, gw_demand, gw_share, commit_message=commit_msg
+            scen, sw_data, gw_data, share_data, commit_message=commit_msg
         )
         print(f"   Committed new version: {scen_updated.version}")
         print(f"   Model: {scen_updated.model}")

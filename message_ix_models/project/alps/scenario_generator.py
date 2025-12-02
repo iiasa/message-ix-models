@@ -34,11 +34,10 @@ from message_ix_models.project.alps.rime import (
     extract_all_run_ids,
 )
 from message_ix_models.project.alps.replace_water_cids import (
-    prepare_demand_parameter,
-    prepare_groundwater_share,
+    prepare_water_cids,
     replace_water_availability,
     prepare_capacity_factor_parameter,
-    replace_cooling_capacity_factor,
+    replace_parameter,
 )
 from message_ix_models.project.alps.timeslice import (
     generate_uniform_timeslices,
@@ -203,10 +202,15 @@ def generate_scenario(
     print(f"   Created {scen.model}/{scen.scenario} version {scen.version}")
 
     # Add timeslices if seasonal (nexus only, cooling is always annual)
+    # Skip if starter already has h1/h2 timeslices
     if temporal_res == "seasonal" and cid_type == "nexus":
-        print("\n3. Adding timeslices...")
-        add_timeslices_to_scenario(scen, n_time=2)
-        print("   Timeslices committed")
+        existing_times = set(scen.set("time").tolist())
+        if 'h1' in existing_times and 'h2' in existing_times:
+            print("\n3. Timeslices already present in starter, skipping")
+        else:
+            print("\n3. Adding timeslices...")
+            add_timeslices_to_scenario(scen, n_time=2)
+            print("   Timeslices committed")
 
     # Load MAGICC data and extract run IDs
     print("\n4. Loading MAGICC temperature data...")
@@ -263,36 +267,24 @@ def _generate_nexus_cid(
     print(f"   qtot shape: {qtot_expected.shape}, qr shape: {qr_expected.shape}")
 
     # Prepare MESSAGE parameters
+    print(f"\n8. Preparing MESSAGE parameters ({temporal_res})...")
     if temporal_res == "annual":
-        print("\n8. Preparing MESSAGE parameters (annual)...")
-        sw_demand = prepare_demand_parameter(
-            qtot_expected, "surfacewater_basin", temporal_res="annual"
-        )
-        gw_demand = prepare_demand_parameter(
-            qr_expected, "groundwater_basin", temporal_res="annual"
-        )
-        gw_share = prepare_groundwater_share(
-            qtot_expected, qr_expected, temporal_res="annual"
+        sw_data, gw_data, share_data = prepare_water_cids(
+            qtot_expected, qr_expected, scen, temporal_res="annual"
         )
     else:
-        print("\n8. Preparing MESSAGE parameters (seasonal)...")
-        # De-interleave seasonal data
         qtot_dry, qtot_wet = deinterleave_seasonal(qtot_expected)
         qr_dry, qr_wet = deinterleave_seasonal(qr_expected)
-
-        sw_demand = prepare_demand_parameter(
-            (qtot_dry, qtot_wet), "surfacewater_basin", temporal_res="seasonal"
-        )
-        gw_demand = prepare_demand_parameter(
-            (qr_dry, qr_wet), "groundwater_basin", temporal_res="seasonal"
-        )
-        gw_share = prepare_groundwater_share(
-            (qtot_dry, qtot_wet), (qr_dry, qr_wet), temporal_res="seasonal"
+        sw_data, gw_data, share_data = prepare_water_cids(
+            (qtot_dry, qtot_wet), (qr_dry, qr_wet), scen, temporal_res="seasonal"
         )
 
-    print(f"   sw_demand: {len(sw_demand)} rows")
-    print(f"   gw_demand: {len(gw_demand)} rows")
-    print(f"   gw_share: {len(gw_share)} rows")
+    sw_new, sw_old = sw_data
+    gw_new, gw_old = gw_data
+    share_new, share_old = share_data
+    print(f"   sw: {len(sw_new)} new, {len(sw_old)} old rows")
+    print(f"   gw: {len(gw_new)} new, {len(gw_old)} old rows")
+    print(f"   share: {len(share_new)} new, {len(share_old)} old rows")
 
     # Replace water availability
     print("\n9. Replacing water availability...")
@@ -303,7 +295,7 @@ def _generate_nexus_cid(
     )
 
     scen_updated = replace_water_availability(
-        scen, sw_demand, gw_demand, gw_share, commit_message=commit_msg
+        scen, sw_data, gw_data, share_data, commit_message=commit_msg
     )
     print(f"   Committed version {scen_updated.version}")
 
@@ -329,9 +321,10 @@ def _build_cooling_module(scen: Scenario) -> Scenario:
     from message_ix_models.model.water.build import main as build_water
 
     # Check if cooling technologies already exist
+    # Cooling tech naming: {parent}__ot_fresh, {parent}__cl_fresh, etc.
     existing_cf = scen.par('capacity_factor')
     cooling_techs = existing_cf[
-        existing_cf['technology'].str.match(r'^(ot_fresh_|cl_fresh_)', na=False)
+        existing_cf['technology'].str.contains(r'__(ot_fresh|cl_fresh)', regex=True, na=False)
     ]
 
     if len(cooling_techs) > 0:
@@ -380,8 +373,8 @@ def _generate_cooling_cid(
 
     # Prepare MESSAGE parameter
     print("\n7. Preparing MESSAGE capacity_factor parameter...")
-    cf_new = prepare_capacity_factor_parameter(cf_expected, scen)
-    print(f"   capacity_factor: {len(cf_new)} rows")
+    cf_new, cf_old = prepare_capacity_factor_parameter(cf_expected, scen)
+    print(f"   capacity_factor: {len(cf_new)} new, {len(cf_old)} old rows")
 
     # Replace capacity_factor
     print("\n8. Replacing cooling capacity_factor...")
@@ -391,8 +384,8 @@ def _generate_cooling_cid(
         f"RIME: n_runs={n_runs}, variable=capacity_factor"
     )
 
-    scen_updated = replace_cooling_capacity_factor(
-        scen, cf_new, commit_message=commit_msg
+    scen_updated = replace_parameter(
+        scen, "capacity_factor", cf_old, cf_new, commit_msg
     )
     print(f"   Committed version {scen_updated.version}")
 
@@ -470,7 +463,11 @@ def generate_all(
             # Handle null budget (baseline counterfactual)
             if budget is None or budget == "":
                 # Use cid_type prefix for baseline name
-                output_name = f"{cid_type}_baseline_{temp_res}"
+                # Cooling mode: no temporal suffix (only annual supported)
+                if cid_type == "cooling":
+                    output_name = f"{cid_type}_baseline"
+                else:
+                    output_name = f"{cid_type}_baseline_{temp_res}"
             else:
                 output_name = config['output']['scenario_template'].format(
                     budget=budget, temporal=temp_res
