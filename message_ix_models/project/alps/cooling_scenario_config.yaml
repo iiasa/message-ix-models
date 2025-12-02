@@ -1,5 +1,6 @@
-# CID Scenario Generation Configuration - Cooling
+# CID Scenario Generation Configuration - Cooling (v2)
 # Generates thermoelectric capacity factor scenarios from MAGICC temperature via RIME
+# Uses baseline_cooling as starter (already has cooling module built)
 
 platform_info:
   name: ixmp_dev
@@ -7,11 +8,11 @@ platform_info:
 
 starter:
   model: SSP_SSP2_v6.5_CID
-  scenario: baseline
+  scenario: baseline_cooling
 
 output:
   model: SSP_SSP2_v6.5_CID
-  scenario_template: "cooling_baseline_{budget}_annual"
+  scenario_template: "cooling_{budget}"
 
 cid_type: cooling
 
