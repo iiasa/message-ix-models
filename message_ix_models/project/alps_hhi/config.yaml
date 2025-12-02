@@ -116,42 +116,39 @@ constraint_values:
 # SENSITIVITY SCENARIOS
 sensitivities:
   FSU_frictions:
-    R12_FSU:
-      - gas_piped_exp_weu
-      - gas_piped_exp_nam
-      - LNG_shipped_exp_weu
-      - LNG_shipped_exp_nam
-      - coal_shipped_exp_weu
-      - coal_shipped_exp_nam
-      - crudeoil_shipped_exp_weu
-      - crudeoil_shipped_exp_nam
-      - crudeoil_piped_exp_weu
-      - crudeoil_piped_exp_nam
-      - eth_shipped_exp_weu
-      - eth_shipped_exp_nam
-      - foil_shipped_exp_weu
-      - foil_shipped_exp_nam
-      - foil_piped_exp_weu
-      - foil_piped_exp_nam   
-      - loil_shipped_exp_weu
-      - loil_shipped_exp_nam
-      - loil_piped_exp_weu
-      - loil_piped_exp_nam       
-      - biomass_shipped_exp_weu
-      - biomass_shipped_exp_nam
-      - lh2_shipped_exp_weu
-      - lh2_shipped_exp_nam    
+    exporters:
+      - R12_FSU
+    importers:
+      - R12_WEU
+      - R12_NAM
+    technologies:
+      - gas_piped
+      - LNG_shipped
+      - coal_shipped
+      - crudeoil_shipped
+      - crudeoil_piped
+      - eth_shipped
+      - foil_shipped
+      - foil_piped
+      - loil_shipped
+      - loil_piped
+      - biomass_shipped
+      - lh2_shipped  
   FSU_WEU_frictions:
-    R12_FSU:
-      - gas_piped_exp_weu
-      - LNG_shipped_exp_weu
-      - coal_shipped_exp_weu
-      - crudeoil_shipped_exp_weu
-      - crudeoil_piped_exp_weu
-      - eth_shipped_exp_weu
-      - foil_shipped_exp_weu
-      - foil_piped_exp_weu
-      - loil_shipped_exp_weu
-      - loil_piped_exp_weu
-      - biomass_shipped_exp_weu
-      - lh2_shipped_exp_weu
+    exporters:
+      - R12_FSU
+    importers:
+      - R12_WEU
+    technologies:
+      - gas_piped
+      - LNG_shipped
+      - coal_shipped
+      - crudeoil_shipped
+      - crudeoil_piped
+      - eth_shipped
+      - foil_shipped
+      - foil_piped
+      - loil_shipped
+      - loil_piped
+      - biomass_shipped
+      - lh2_shipped  
