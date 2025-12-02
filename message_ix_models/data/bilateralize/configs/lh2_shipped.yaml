@@ -1,0 +1,54 @@
+###########################
+# Liquid H2 shipped trade #
+###########################
+lh2_shipped_trade:
+  base_trade_technology:
+    - lh2_trd
+  trade_technology:
+    lh2_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    lh2
+  trade_commodity_suffix:
+  trade_units:
+    GWa
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    primary
+  flow_technologies:
+    - lh2_tanker_lh2
+    - lh2_tanker_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    lh2_tanker_lh2:
+      - lh2
+    lh2_tanker_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    lh2_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - h2_liq
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    lh2_tanker_lh2:
+      lh2_tobunker
+    lh2_tanker_loil:
+      loil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20
