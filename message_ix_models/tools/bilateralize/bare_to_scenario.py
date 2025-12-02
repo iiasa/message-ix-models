@@ -234,15 +234,16 @@ def build_parameter_sheets(
 
         # Imports do not vintage
         for par in ["capacity_factor", "input", "output"]:
-            vdf = data_dict["trade"][par]
-            vdf = vdf[
-                (
-                    (vdf["technology"].str.contains("_imp"))
-                    & (vdf["year_vtg"] == vdf["year_act"])
-                )
-                | (vdf["technology"].str.contains("_exp_"))
-            ]
-            data_dict["trade"][par] = vdf
+            if par in list(data_dict["trade"].keys()):
+                vdf = data_dict["trade"][par]
+                vdf = vdf[
+                    (
+                        (vdf["technology"].str.contains("_imp"))
+                        & (vdf["year_vtg"] == vdf["year_act"])
+                    )
+                    | (vdf["technology"].str.contains("_exp_"))
+                ]
+                data_dict["trade"][par] = vdf
 
         # Variable costs for flows should not broadcast
         for par in ["var_cost"]:
@@ -393,12 +394,13 @@ def bare_to_scenario(
     # Ensure flow technologies are only added once
     covered_flow_tec: list[str] = []
     for tec in covered_tec:
-        flow_tecs = list(trade_dict[tec]["flow"]["input"]["technology"].unique())
-        for par in trade_dict[tec]["flow"].keys():
-            trade_dict[tec]["flow"][par] = trade_dict[tec]["flow"][par][
-                ~trade_dict[tec]["flow"][par]["technology"].isin(covered_flow_tec)
-            ]
-        covered_flow_tec = covered_flow_tec + flow_tecs
+        if "input" in list(trade_dict[tec]["flow"].keys()):
+            flow_tecs = list(trade_dict[tec]["flow"]["input"]["technology"].unique())
+            for par in trade_dict[tec]["flow"].keys():
+                trade_dict[tec]["flow"][par] = trade_dict[tec]["flow"][par][
+                    ~trade_dict[tec]["flow"][par]["technology"].isin(covered_flow_tec)
+                ]
+            covered_flow_tec = covered_flow_tec + flow_tecs
 
     # Save trade_dictionary
     tdf = os.path.join(os.path.dirname(config_path), scenario_parameter_name)
