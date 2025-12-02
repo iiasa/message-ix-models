@@ -535,3 +535,230 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
         .pipe(add_aggregates, 1)
         .sort_values(COLS)
     )
+
+# the report4 here
+def reportb_bmt(
+    scenario: message_ix.Scenario = None,
+    model_name: str = None,
+    scenario_name: str = None,
+) -> None:
+    """Generate buildings reporting output using genno-based approach.
+
+    Direct call function (not yet blended in callback and context) that processes buildings
+    data (FE, prices, Emissions, energy service), applies units, converts to IAMC format
+    using convert_iamc, writes XLSX file, and stores data to scenario time series.
+
+    Currently implements:
+    - Final Energy|*
+    - Price|*
+
+    TODO:
+    - Building Stock|*|Floor Space
+    - Emissions|*
+
+    Parameters
+    ----------
+    scenario : message_ix.Scenario, optional
+        The scenario to report. If None, will load from model_name/scenario_name.
+    model_name : str, optional
+        Model name if scenario is not provided.
+    scenario_name : str, optional
+        Scenario name if scenario is not provided.
+
+    Examples
+    --------
+    >>> from message_ix import Scenario
+    >>> from message_ix_models.model.buildings.report import report_bmt
+    >>> scenario = Scenario(platform, model="model", scenario="scenario")
+    >>> report_bmt(scenario=scenario)
+    """
+    from copy import deepcopy
+
+    import ixmp
+    from genno import Computer, Key, KeySeq
+    from genno.core.key import single_key
+    from message_ix import Reporter
+    from message_ix_models.report import iamc as handle_iamc
+
+    # Load scenario if not provided
+    if scenario is None:
+        mp = ixmp.Platform()
+        scenario = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
+
+    # Create reporter
+    rep = Reporter.from_scenario(scenario)
+    
+    # Add replacement rule to strip PRICE_COMMODITY prefix from variable names
+    from message_ix_models.report.util import REPLACE_VARS
+    REPLACE_VARS[r"^PRICE_COMMODITY\|"] = ""
+
+    # TBD: use callback and context
+    # Add scenario to graph for use in store_ts
+    # In callback-based reporting, prepare_reporter() adds it automatically
+    # For direct calls, this need to be added explicitly to the graph
+    # Set it directly in the graph (not as a task) so store_ts can access it
+    rep.graph["scenario"] = scenario
+
+    # Get buildings technology filters
+    all_techs = scenario.set("technology").tolist()
+    tech_re = re.compile("(resid|comm).*(apps|cool|cook|heat|hotwater)")
+    buildings_techs = list(
+        filter(lambda t: tech_re.search(t) or t == "biomass_nc", all_techs)
+    )
+
+    import genno
+
+    rep.add("t::buildings filters", genno.quote(dict(t=buildings_techs)))
+    rep.add("buildings filters 1", buildings_filters1, "y::model")
+
+    # Step 1: Report FE
+    rep.add(
+        "in:nl-t-ya-c-l:buildings techs",
+        "select",
+        "in:nl-t-ya-c-l",
+        "t::buildings filters",
+        sums=True,
+    ) # select() only takes 2 positional args (qty, indexers)
+    buildings_fe = Key("buildings fe:nl-t-ya-c-l")
+    rep.add(
+        "select",
+        buildings_fe + "0",
+        "in:nl-t-ya-c-l:buildings techs",
+        "buildings filters 1",
+        sums=True,
+    )
+    
+    # buildings_fe + "0" = "buildings fe:nl-t-ya-c-l:0" (selected data)
+    # buildings_fe + "1" = "buildings fe:nl-t-ya-c-l:1" (after assign_units)
+    # buildings_fe + "2" = "buildings fe:nl-t-ya-c-l:2" (after convert_units)
+    rep.add("assign_units", buildings_fe + "1", buildings_fe + "0", "GWa/year")
+    rep.add("convert_units", buildings_fe + "2", buildings_fe + "1", "EJ / a", sums=True)
+
+    # Step 2: Report price
+    all_comms = scenario.set("commodity").tolist()
+    comm_re = re.compile("(resid|comm)_(apps|cook|cool|heat|hotwater)_(biomass|coal|lightoil|gas|electr|d_heat)")
+    buildings_comms = list(filter(lambda c: comm_re.search(c), all_comms))
+    
+    # Select PRICE_COMMODITY for buildings commodities at useful level
+    # Use rep.full_key() or rep.infer_keys() to get the correct key
+    from message_ix_models.report.key import PRICE_COMMODITY
+    
+    # Get the full key for PRICE_COMMODITY (it should be available from from_scenario)
+    try:
+        price_key = rep.full_key("PRICE_COMMODITY")
+    except KeyError:
+        # If not available, use the Key object directly
+        price_key = PRICE_COMMODITY
+    
+    price_filters = dict(c=buildings_comms, l=["useful"])
+    rep.add(
+        "PRICE_COMMODITY:nclyh:buildings",
+        "select",
+        price_key,
+        price_filters,
+    )
+
+    # Convert USD/GWa to USD/GJ for IAMC reporting
+    # Note: Use USD/GJ (not US$2010/GJ) for convert_units - pint can't parse scaling factors
+    # The IAMC conversion will handle the final unit string formatting
+    price_base = Key("PRICE_COMMODITY:nclyh:buildings")
+    rep.add("assign_units", price_base + "1", price_base, "USD_2010 / GWa")
+    rep.add("convert_units", price_base + "2", price_base + "1", "USD / GJ", sums=True)
+    # Drop hourly dimension to get annual data (the / "h" syntax automatically sums over h)
+    price_base_annual = (price_base + "2") / "h"
+
+    # Step 3: IAMC conversion
+    _FE_UNIT = "EJ/yr"  # Exact value required for IAMC handling 
+    # YJ: Not sure why this is needed. Can be a constant ensures consistency and avoids typos so I kept. 
+
+    CONVERT_IAMC = (
+        dict(
+            variable="buildings fe",
+            base=(buildings_fe + "2") / "l",  # Remove level dimension
+            var=["Final Energy|Residential and Commercial", "t", "c"],
+            sums=["c"],  # Sum over commodities
+            unit=_FE_UNIT,
+        ),
+        dict(
+            variable="buildings prices",
+            base=price_base_annual,  # Use aggregated annual data (h dimension dropped)
+            # rename is handled automatically by iamc() - n->region, y->year
+            var=["Price|Residential and Commercial", "c"],
+            # No sums: individual commodity prices are reported separately
+            # (summing prices over commodities doesn't make economic sense)
+            unit="USD_2010 / GJ", 
+        ),
+    )
+
+    keys = []
+    for info in CONVERT_IAMC:
+        handle_iamc(rep, deepcopy(info))
+        keys.append(f"{info['variable']}::iamc")
+
+    # TODO: should be improved
+    # Concatenate IAMC-format tables
+    # Use custom function because buildings fe has technology dimension (t) in Variable
+    # while buildings prices doesn't (PRICE_COMMODITY has no t dimension)
+    def concat_iamc(*dfs):
+        """Concatenate IAMC tables via underlying DataFrames, dropping h and l columns."""
+        import pyam
+        data_frames = [df.data if isinstance(df, pyam.IamDataFrame) else df for df in dfs]
+        combined = pd.concat(data_frames, ignore_index=True)
+        # Drop h and l columns if they exist (these dimensions were already aggregated/dropped)
+        columns_to_drop = [col for col in ['h', 'l'] if col in combined.columns]
+        if columns_to_drop:
+            combined = combined.drop(columns=columns_to_drop)
+        return pyam.IamDataFrame(combined)
+    
+    k = Key("buildings bmt", tag="iamc")
+    rep.add(k, concat_iamc, *keys)
+
+    # Step 4: Add tasks for writing CSV and storing on the scenario
+    k_seq = KeySeq(k)
+
+    # Generate dynamic filename: model_scenario_date.csv
+    from datetime import datetime
+    from pathlib import Path
+    
+    # Use full model and scenario names with date
+    date_str = datetime.now().strftime("%Y%m%d")
+    
+    csv_filename = f"{scenario.model}_{scenario.scenario}_{date_str}.csv"
+    rep.graph[k_seq["csv path"]] = Path.cwd() / csv_filename
+    csv_key = rep.add(k_seq["csv"], "write_report", k, k_seq["csv path"])
+
+    # Store data on "scenario"
+    # store_ts is a genno operator registered in message_ix.Reporter
+    # It converts IamDataFrame to timeseries format and calls scenario.add_timeseries()
+    # The operator handles: scenario.check_out(timeseries_only=True), scenario.add_timeseries(), scenario.commit()
+    store_key = rep.add(k_seq["store"], "store_ts", "scenario", k)
+
+    all_key = single_key(rep.add(k_seq["all"], [csv_key, store_key]))
+
+    # Step 5: Execute the reporting
+    rep.get(all_key)
+
+    log.info(
+        f"Buildings BMT reporting completed for {scenario.model}/{scenario.scenario}"
+    )
+    
+    # Verify that data was stored to timeseries by checking scenario
+    # Get variables that should have been stored (Final Energy and Price)
+    try:
+        ts = scenario.timeseries()
+        # Filter for our variables (using regex pattern correctly)
+        pattern = "Final Energy.*Residential and Commercial|Price.*Residential and Commercial"
+        our_vars = ts[ts["variable"].str.contains(pattern, regex=True, na=False)]
+        if len(our_vars) > 0:
+            log.info(
+                f"Verified: {len(our_vars)} time series entries stored to scenario."
+            )
+        else:
+            log.warning(
+                f"No matching timeseries found in scenario. "
+                f"Total timeseries entries: {len(ts)}"
+            )
+    except Exception as e:
+        log.warning(
+            f"Could not verify timeseries storage: {e}"
+        )
