@@ -25,15 +25,33 @@ for tec in config['covered_trade_technologies']:
         for file in os.listdir(os.path.join(data_path, tec, "bare_files", "flow_technology")):
             if os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", file)):
                 os.remove(os.path.join(data_path, tec, "bare_files", "flow_technology", file))
-    
+        
 # Generate edit files
 prepare_edit_files(project_name = 'alps_hhi', 
                    config_name = 'config.yaml',
                    P_access = True)
 
+# Add constraints to the dictionary
+constraint_pars = ["initial_activity_lo", "initial_activity_up",
+                   "growth_activity_lo", "growth_activity_up"]
+for tec in config['constraint_values'].keys():
+    for par in constraint_pars:
+        df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
+        if par in ["initial_activity_lo", "initial_activity_up"]:
+            df["value"] = 2
+        if par in ["growth_activity_lo", "growth_activity_up"]:
+            constraint_value = config['constraint_values'][tec][par]
+            if isinstance(constraint_value, dict):
+                for region in constraint_value.keys():
+                    df.loc[df["node_loc"] == region, "value"] = constraint_value[region]
+            else:
+                df["value"] = constraint_value
+        df.to_csv(os.path.join(data_path, tec, "bare_files", par + ".csv"), index=False)
+        
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'alps_hhi', 
-                              config_name = 'config.yaml')
+                              config_name = 'config.yaml',
+                              p_drive_access = True)
 
 # Update base scenarios
 for model_scen in models_scenarios.keys():

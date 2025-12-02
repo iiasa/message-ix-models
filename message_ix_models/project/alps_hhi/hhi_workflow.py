@@ -28,4 +28,15 @@ hhi_weightsum_run(project_name = 'alps_hhi',
                   config_name = 'config.yaml',
                   base_model = 'alps_hhi',
                   base_scenario = 'SSP2',
-                  hhi_config_name = 'hhi_config.yaml')
+                  hhi_config_name = 'hhi_config.yaml',
+                  lambda_ws = 1.0,
+                  target_scen_add = 'lambda100p')
+
+#hhi_weightsum_run(project_name = 'alps_hhi', 
+#                  config_name = 'config.yaml',
+#                  base_model = 'alps_hhi',
+#                  base_scenario = 'SSP2',
+#                  hhi_config_name = 'hhi_config.yaml',
+#                  lambda_ws = 0.8,
+#                  target_scen_add = 'lambda80p')
+

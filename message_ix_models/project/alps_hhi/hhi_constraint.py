@@ -81,9 +81,8 @@ def hhi_constraint_run(project_name: str,
     hhi_limit_df = hhi_output[['node_loc', 'commodity',
                                'level', 'year_act',
                                'value', 'unit']].drop_duplicates().reset_index(drop = True)
-    hhi_limit_df = hhi_limit_df.rename(columns = {'year_act': 'year',
-                                                  'node_loc': 'node'})
-    hhi_limit_df = hhi_limit_df[hhi_limit_df['year'] > 2025]
+    hhi_limit_df = hhi_limit_df.rename(columns = {'node_loc': 'node'})
+    hhi_limit_df = hhi_limit_df[hhi_limit_df['year_act'] > 2025]
     for k in hhi_commodities:
         hhi_limit_df.loc[hhi_limit_df['commodity'] == k, 'value'] = hhi_config[k]['value']
     hhi_limit_df['time'] = 'year'

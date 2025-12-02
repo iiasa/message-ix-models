@@ -20,10 +20,10 @@ def hhi_weightsum_run(project_name: str,
                       base_scenario: str,
                       hhi_config_name: str,
                       hhi_commodities: list[str] = None,
-                      lambda_ws: float = 0.5,
-                      cost_max_total: float = 1000000,
+                      lambda_ws: float = 1,
                       hhi_max_total: float = 1.0,
-                      hhi_scale: float = 0.002):
+                      hhi_scale: float = 0.002,
+                      target_scen_add: str = None):
 
     """Run HHI weighted sum"""
     """
@@ -62,14 +62,17 @@ def hhi_weightsum_run(project_name: str,
     base_model_name = 'alps_hhi'
     base_scen_name = base_scenario
     target_model_name = 'alps_hhi'
-    target_scen_name = base_scenario + '_hhi_WS'
+    if target_scen_add is None:
+        target_scen_name = base_scenario + '_hhi_WS'
+    else:
+        target_scen_name = base_scenario + '_hhi_WS_' + target_scen_add
 
     log.info(f"Base scenario: {base_model}/{base_scenario}")
     log.info(f"Target scenario: {target_model_name}/{target_scen_name}")
 
     base_scenario = message_ix.Scenario(mp, model=base_model_name, scenario=base_scen_name)
     hhi_scenario = base_scenario.clone(target_model_name, target_scen_name, 
-                                        keep_solution = False)
+                                       keep_solution = False)
     hhi_scenario.set_as_default()
 
     if hhi_commodities is None:
@@ -98,6 +101,19 @@ def hhi_weightsum_run(project_name: str,
     hhi_indic = hhi_output[['node_loc', 'commodity', 'level', 'value', 'unit']]
     hhi_indic = hhi_indic.drop_duplicates().reset_index(drop = True)
     hhi_indic = hhi_indic.rename(columns = {'node_loc': 'node'})
+
+    log.info("Collating base scenario activity levels")
+    base_act = list()
+    for k in hhi_commodities:
+        base_act_k = base_scenario.var("ACT", filters = {'technology': hhi_config[k]['technologies']})
+        base_act_k = base_act_k[base_act_k['node_loc'].isin(hhi_config[k]['nodes'])]
+        base_act_k = base_act_k.groupby(['year_act'])['lvl'].sum().reset_index()
+        base_act_k = base_act_k['lvl'].max()
+        base_act.append(base_act_k)
+    hhi_scale = round(1/np.mean(base_act), 4)
+
+    log.info("Collating base scenario objective")
+    cost_max_total = base_scenario.var("OBJ")['lvl']
 
     with hhi_scenario.transact("Add HHI indicator parameter"):
         hhi_scenario.add_par('include_commodity_hhi', hhi_indic)

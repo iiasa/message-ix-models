@@ -1,7 +1,7 @@
 # DATA DIRECTORIES
 p_drive_location:
-  #/pdrive/projects/ene.model3
-  P:/ene.model
+  /pdrive/projects/ene.model3
+  #P:/ene.model
 
 # SCENARIO INFORMATION
 scenario:
@@ -103,3 +103,55 @@ define_parameters:
       - fix_cost
       - var_cost
       - capacity_factor
+
+# CONSTRAINT PARAMETERS
+constraint_values:
+  gas_piped:
+    growth_activity_lo: -0.1
+    growth_activity_up: 0.1
+  LNG_shipped:
+    growth_activity_lo: -0.1
+    growth_activity_up: 0.1    
+
+# SENSITIVITY SCENARIOS
+sensitivities:
+  FSU_frictions:
+    R12_FSU:
+      - gas_piped_exp_weu
+      - gas_piped_exp_nam
+      - LNG_shipped_exp_weu
+      - LNG_shipped_exp_nam
+      - coal_shipped_exp_weu
+      - coal_shipped_exp_nam
+      - crudeoil_shipped_exp_weu
+      - crudeoil_shipped_exp_nam
+      - crudeoil_piped_exp_weu
+      - crudeoil_piped_exp_nam
+      - eth_shipped_exp_weu
+      - eth_shipped_exp_nam
+      - foil_shipped_exp_weu
+      - foil_shipped_exp_nam
+      - foil_piped_exp_weu
+      - foil_piped_exp_nam   
+      - loil_shipped_exp_weu
+      - loil_shipped_exp_nam
+      - loil_piped_exp_weu
+      - loil_piped_exp_nam       
+      - biomass_shipped_exp_weu
+      - biomass_shipped_exp_nam
+      - lh2_shipped_exp_weu
+      - lh2_shipped_exp_nam    
+  FSU_WEU_frictions:
+    R12_FSU:
+      - gas_piped_exp_weu
+      - LNG_shipped_exp_weu
+      - coal_shipped_exp_weu
+      - crudeoil_shipped_exp_weu
+      - crudeoil_piped_exp_weu
+      - eth_shipped_exp_weu
+      - foil_shipped_exp_weu
+      - foil_piped_exp_weu
+      - loil_shipped_exp_weu
+      - loil_piped_exp_weu
+      - biomass_shipped_exp_weu
+      - lh2_shipped_exp_weu
