@@ -58,23 +58,28 @@ def pyam_df_from_rep(
     
     rep.set_filters(**filters_dict)
     
-    if reporter_var in ['out', 'out_hist']:
-        df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-nd-t-ya-m-c-l"))
-        df = (
-                df_var.join(mapping_df[["iamc_name", "unit"]])
-                .dropna()
-                .groupby(["nl", "nd", "ya", "iamc_name"])
-                .sum(numeric_only=True)
-            )
-        # Adjust df to include exporters in iamc_name for trade variables
-        dfn = df.index.to_frame(index = False)
-        ndiff = dfn['nl'] != dfn['nd']
-        dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
-        dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
-        df.index = pd.MultiIndex.from_frame(dfn)
+    if reporter_var in ['out']:
+        df_hist = pd.DataFrame(rep.get(f"{reporter_var}:nl-nd-t-ya-m-c-l:historical+current"))
+        df_model = pd.DataFrame(rep.get(f"{reporter_var}:nl-nd-t-ya-m-c-l"))
+
+        df_out = pd.DataFrame()
+        for dfv in [df_hist, df_model]:
+            df = (
+                    dfv.join(mapping_df[["iamc_name", "unit"]])
+                    .dropna()
+                    .groupby(["nl", "nd", "ya", "iamc_name"])
+                    .sum(numeric_only=True)
+                )
+            # Adjust df to include exporters in iamc_name for trade variables
+            dfn = df.index.to_frame(index = False)
+            ndiff = dfn['nl'] != dfn['nd']
+            dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
+            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
+            df.index = pd.MultiIndex.from_frame(dfn)
+            df_out = pd.concat([df_out, df])
     else:
         df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l"))
-        df = (
+        df_out = (
             df_var.join(mapping_df[["iamc_name", "unit"]])
             .dropna()
             .groupby(["nl", "ya", "iamc_name"])
@@ -83,22 +88,22 @@ def pyam_df_from_rep(
         
     rep.set_filters()
     
-    return df
+    return df_out
 
 # Call reporter
 mp = ixmp.Platform()
 
 outdf = pd.DataFrame()
-for mod, scen in [('alps_hhi', 'SSP2')]: #,
-                  #('alps_hhi', 'SSP2_hhi_HC'),
-                  #('alps_hhi', 'SSP2_hhi_WS_lambda100p')]:
-                  #('SSP_SSP2_v6.2', 'baseline')]:
+for mod, scen in [('alps_hhi', 'SSP2'),
+                  ('alps_hhi', 'SSP2_hhi_HC'),
+                  ('alps_hhi', 'SSP2_hhi_WS_lambda100p'),
+                  ('alps_hhi', 'SSP_SSP2_v6.2')]:
     scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
     rep = Reporter.from_scenario(scenario)
     #base_df = rep.get("message::default").data 
     supply_config = load_config('gas_supply')
     df = pd.DataFrame()
-    for var in ['out', 'out_hist']:
+    for var in ['out']:
         rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
         df = pd.concat([df, rdf])
     df = df.reset_index()
