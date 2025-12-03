@@ -95,18 +95,23 @@ mp = ixmp.Platform()
 
 outdf = pd.DataFrame()
 for mod, scen in [('alps_hhi', 'SSP2'),
+                  #('alps_hhi', 'SSP2_FSU_frictions'),
+                  ('alps_hhi', 'SSP2_FSU_WEU_frictions'),
                   ('alps_hhi', 'SSP2_hhi_HC'),
                   ('alps_hhi', 'SSP2_hhi_WS_lambda100p'),
+                  ('alps_hhi', 'SSP2_hhi_WS_lambda80p'),
+                  #('alps_hhi', 'SSP2_hhi_WS_lambda70p'),
+                  #('alps_hhi', 'SSP2_hhi_WS_lambda50p'),
                   ('alps_hhi', 'SSP_SSP2_v6.2')]:
     scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
     rep = Reporter.from_scenario(scenario)
     #base_df = rep.get("message::default").data 
     supply_config = load_config('gas_supply')
-    df = pd.DataFrame()
+    full_df = pd.DataFrame()
     for var in ['out']:
         rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
-        df = pd.concat([df, rdf])
-    df = df.reset_index()
+        full_df = pd.concat([full_df, rdf])
+    df = full_df.reset_index()
     df = df.rename(columns = {0:'value'})
     df['model'] = scenario.model
     df['scenario'] = scenario.scenario

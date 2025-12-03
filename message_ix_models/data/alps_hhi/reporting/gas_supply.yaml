@@ -14,14 +14,14 @@ vars:
 # Piped gas imports
   Gas Supply|Imports|Piped Gas|:
     filter:
-      { technology: [gas_piped_exp], mode: M1, commodity: gas, level: piped }
+      { technology: [gas_piped_exp, 'gas_imp'], mode: M1, commodity: gas, level: [piped, secondary] }
     short:
       gas_piped_exp
 
 # Shipped LNG imports
   Gas Supply|Imports|Shipped LNG|:
     filter:
-      { technology: [LNG_shipped_exp], mode: M1, commodity: LNG, level: shipped }
+      { technology: [LNG_shipped_exp, 'LNG_imp'], mode: M1, commodity: LNG, level: [shipped, secondary] }
     short:
       LNG_shipped_exp
 
