@@ -29,9 +29,8 @@ from message_ix_models.project.alps.cid_utils import (
     deinterleave_seasonal,
 )
 from message_ix_models.project.alps.replace_water_cids import (
-    prepare_capacity_factor_parameter,
+    generate_cooling_cid_scenario,
     prepare_water_cids,
-    replace_parameter,
     replace_water_availability,
 )
 from message_ix_models.project.alps.rime import (
@@ -43,7 +42,6 @@ from message_ix_models.project.alps.timeslice import (
     generate_uniform_timeslices,
     time_setup,
 )
-from message_ix_models.util import package_data_path
 
 
 def load_config(config_path: Path) -> dict:
@@ -225,7 +223,7 @@ def generate_scenario(
             scen, magicc_file, run_ids, temporal_res, n_runs
         )
     elif cid_type == "cooling":
-        scen_updated = _generate_cooling_cid(scen, magicc_file, run_ids, n_runs)
+        scen_updated = generate_cooling_cid_scenario(scen, magicc_file, run_ids, n_runs)
     else:
         raise ValueError(f"Unknown cid_type: {cid_type}. Expected 'nexus' or 'cooling'")
 
@@ -348,51 +346,6 @@ def _build_cooling_module(scen: Scenario) -> Scenario:
     print("   Cooling module built successfully")
 
     return scen
-
-
-def _generate_cooling_cid(
-    scen: Scenario,
-    magicc_file: Path,
-    run_ids: tuple,
-    n_runs: int,
-) -> Scenario:
-    """Generate cooling (capacity_factor) CID scenario."""
-    # Build cooling module first
-    print("\n5. Building cooling module...")
-    scen = _build_cooling_module(scen)
-
-    print("\n6. Running RIME predictions for capacity_factor (annual)...")
-    cf_predictions = cached_rime_prediction(
-        magicc_file, run_ids, "capacity_factor", temporal_res="annual"
-    )
-    print(f"   Got {len(cf_predictions)} prediction sets")
-
-    # Compute expectation
-    print("\n6. Computing expectation...")
-    cf_expected = compute_expectation(
-        cf_predictions, run_ids=np.array(list(run_ids)), weights=None
-    )
-    print(f"   capacity_factor shape: {cf_expected.shape}")
-
-    # Prepare MESSAGE parameter
-    print("\n7. Preparing MESSAGE capacity_factor parameter...")
-    cf_new, cf_old = prepare_capacity_factor_parameter(cf_expected, scen)
-    print(f"   capacity_factor: {len(cf_new)} new, {len(cf_old)} old rows")
-
-    # Replace capacity_factor
-    print("\n8. Replacing cooling capacity_factor...")
-    commit_msg = (
-        f"CID cooling projection: {magicc_file.stem.split('_')[-3]}f\n"
-        f"MAGICC: {magicc_file.name}\n"
-        f"RIME: n_runs={n_runs}, variable=capacity_factor"
-    )
-
-    scen_updated = replace_parameter(
-        scen, "capacity_factor", cf_old, cf_new, commit_msg
-    )
-    print(f"   Committed version {scen_updated.version}")
-
-    return scen_updated
 
 
 def generate_all(
