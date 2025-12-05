@@ -315,6 +315,7 @@ def _make_technical_lifetime(
 def _make_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame:
     """Generate capacity_factor parameter with optional climate impacts."""
     cap_fact = make_matched_dfs(inp, capacity_factor=1)["capacity_factor"]
+    cap_fact["unit"] = "-"  # capacity_factor is dimensionless
 
     if context.RCP == "no_climate":
         return cap_fact
