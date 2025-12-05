@@ -806,9 +806,15 @@ def add_jones_relation_constraints(
     """Add relation_activity constraints to bound freshwater cooling by Jones factors.
 
     Constraint form:
-        ACT[fresh_cooling] <= jones_ratio * ACT[parent] * cooling_fraction
+        ACT[fresh_cooling] <= jones_ratio * fresh_share_ref * cooling_fraction * ACT[parent]
 
-    where jones_ratio = CF(region, year) / CF(region, baseline_gwl).
+    where:
+        jones_ratio = CF(region, year, GMT) / CF(region, baseline_gwl)
+        fresh_share_ref = baseline freshwater share from cooltech_cost_and_shares data
+        cooling_fraction = addon_conversion (cooling per unit electricity)
+
+    The constraint bounds the freshwater share of total cooling to:
+        fresh_share <= jones_ratio * fresh_share_ref
 
     Parameters
     ----------
@@ -875,6 +881,44 @@ def add_jones_relation_constraints(
         f"   Found {len(parent_to_fresh)} parent technologies with freshwater cooling"
     )
 
+    # Load baseline freshwater share from cooltech_cost_and_shares data
+    # fresh_share_ref = cl_fresh + ot_fresh share per (region, parent_tech)
+    from message_ix_models.util import package_data_path
+
+    share_file = package_data_path(
+        "water", "ppl_cooling_tech", "cooltech_cost_and_shares_ssp_msg_R12.csv"
+    )
+    share_df = pd.read_csv(share_file)
+
+    # Melt to long format: (utype, cooling, region) -> share
+    mix_cols = [c for c in share_df.columns if c.startswith("mix_R12_")]
+    share_long = share_df.melt(
+        id_vars=["utype", "cooling"],
+        value_vars=mix_cols,
+        var_name="region",
+        value_name="share",
+    )
+    share_long["region"] = share_long["region"].str.replace("mix_", "")
+
+    # Sum cl_fresh + ot_fresh to get total freshwater share
+    fresh_types = ["cl_fresh", "ot_fresh"]
+    fresh_share_df = (
+        share_long[share_long["cooling"].isin(fresh_types)]
+        .groupby(["region", "utype"])["share"]
+        .sum()
+        .reset_index()
+    )
+    fresh_share_df.columns = ["region", "parent_tech", "fresh_share_ref"]
+
+    # Build lookup: (region, parent_tech) -> fresh_share_ref
+    fresh_share_lookup = {}
+    for _, row in fresh_share_df.iterrows():
+        fresh_share_lookup[(row["region"], row["parent_tech"])] = row["fresh_share_ref"]
+
+    print(
+        f"   Loaded baseline freshwater shares for {len(fresh_share_lookup)} (region, tech) pairs"
+    )
+
     # Parse jones_factors to get year columns and region mapping
     year_cols = [c for c in jones_factors.columns if isinstance(c, (int, np.integer))]
 
@@ -934,6 +978,15 @@ def add_jones_relation_constraints(
                     continue
                 cooling_fraction = cf_row.iloc[0]["cooling_fraction"]
 
+                # Get baseline freshwater share for this (region, parent_tech)
+                fresh_share_ref = fresh_share_lookup.get((region, parent_tech), None)
+                if fresh_share_ref is None:
+                    raise KeyError(
+                        f"No baseline freshwater share for ({region}, {parent_tech})"
+                    )
+                if fresh_share_ref <= 0:
+                    continue
+
                 # Get jones_factor for this (region, year)
                 if (region_short, year) in jones_lookup:
                     jones_factor = jones_lookup[(region_short, year)]
@@ -964,7 +1017,8 @@ def add_jones_relation_constraints(
                         }
                     )
 
-                # Add relation_activity for parent tech: coefficient = -jones_ratio * cooling_fraction
+                # Add relation_activity for parent tech:
+                # coefficient = -jones_ratio * fresh_share_ref * cooling_fraction
                 relation_activity_rows.append(
                     {
                         "relation": rel_name,
@@ -974,7 +1028,7 @@ def add_jones_relation_constraints(
                         "technology": parent_tech,
                         "year_act": year,
                         "mode": "M1",
-                        "value": -jones_ratio * cooling_fraction,
+                        "value": -jones_ratio * fresh_share_ref * cooling_fraction,
                         "unit": "-",
                     }
                 )
