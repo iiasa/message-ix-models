@@ -252,6 +252,7 @@ def report_water_nexus(
         - "water_avail": Water availability by basin
         - "water_infra_elec": Water infrastructure electricity consumption
         - "water_demand": Final water demands by sector
+        - "irrigation": Irrigation water demands by crop type
         If None, computes all keys.
     format : str
         Output format: "csv", "xlsx", or "parquet" (default: "csv").
@@ -270,7 +271,7 @@ def report_water_nexus(
     report_keys = keys or [
         "cooling_cap", "cooling_act", "cooling_elec",
         "water_cap", "water_act", "water_avail",
-        "water_infra_elec", "water_demand",
+        "water_infra_elec", "water_demand", "irrigation",
     ]
 
     # Cooling capacity
@@ -396,6 +397,26 @@ def report_water_nexus(
             results.append(df)
         except Exception as e:
             log.warning(f"Could not extract water demands: {e}")
+
+    # Irrigation water demands (from land_input parameter)
+    if "irrigation" in report_keys:
+        log.info("Extracting irrigation demands...")
+        try:
+            result = rep.get("irrigation_demand:n-c-l-y")
+            df = result.to_dataframe().reset_index()
+            # Map level to crop type for variable naming
+            level_map = {
+                "irr_cereal": "Cereals",
+                "irr_oilcrops": "Oilcrops",
+                "irr_sugarcrops": "Sugarcrops",
+            }
+            df["variable"] = "Demand|Water|Irrigation|" + df["l"].map(level_map)
+            df = df.rename(columns={"n": "region", "y": "year", "land_input": "value"})
+            df["unit"] = "MCM"
+            df = df[["region", "variable", "year", "value", "unit"]]
+            results.append(df)
+        except Exception as e:
+            log.warning(f"Could not extract irrigation demands: {e}")
 
     if not results:
         log.warning("No data extracted")
