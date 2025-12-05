@@ -245,10 +245,10 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
         df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
-            "urbann_withdrawal2_baseline"
+            "urban_withdrawal2_baseline"
         )
         df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
-            "urbann_return2_baseline"
+            "urban_return2_baseline"
         )
 
         # Map month numbers to timeslice names (h1, h2, ..., hn)
