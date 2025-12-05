@@ -1,0 +1,300 @@
+# Water/Cooling Reporting Configuration for ALPS Project
+#
+# Genno-based reporting for water-nexus and cooling module results.
+# All value computations via genno (aggregations, selections, unit assignment).
+# Python handles only final packaging (metadata, concat, file output).
+#
+# Usage:
+#   from message_ix_models.project.alps.report import prepare_water_reporter
+#   rep, key = prepare_water_reporter(scenario)
+#   result = rep.get(key)  # Returns AttrSeries, convert via .to_dataframe()
+
+units:
+  define: |
+    MCM = 1e6 * m^3
+    km3 = 1e9 * m^3
+    GWa = GW * year
+
+  apply:
+    # Power sector quantities
+    CAP: GW
+    CAP_NEW: GW / year
+    ACT: GWa
+    # Water extraction uses MCM - handled via separate keys below
+
+
+# =============================================================================
+# AGGREGATIONS: Group technologies by type
+# =============================================================================
+aggregate:
+
+# Cooling capacity by type
+- _quantities: [CAP]
+  _tag: cool_cap
+  _dim: t
+
+  Cooling|Once-through Fresh:
+    - bio_istig__ot_fresh
+    - bio_ppl__ot_fresh
+    - coal_adv__ot_fresh
+    - coal_ppl__ot_fresh
+    - coal_ppl_u__ot_fresh
+    - foil_ppl__ot_fresh
+    - gas_cc__ot_fresh
+    - gas_ct__ot_fresh
+    - gas_ppl__ot_fresh
+    - geo_ppl__ot_fresh
+    - igcc__ot_fresh
+    - loil_cc__ot_fresh
+    - loil_ppl__ot_fresh
+    - nuc_hc__ot_fresh
+    - nuc_lc__ot_fresh
+    - oil_ppl__ot_fresh
+
+  Cooling|Closed-loop Fresh:
+    - bio_istig__cl_fresh
+    - bio_ppl__cl_fresh
+    - coal_adv__cl_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl_u__cl_fresh
+    - foil_ppl__cl_fresh
+    - gas_cc__cl_fresh
+    - gas_ct__cl_fresh
+    - gas_ppl__cl_fresh
+    - geo_ppl__cl_fresh
+    - igcc__cl_fresh
+    - loil_cc__cl_fresh
+    - loil_ppl__cl_fresh
+    - nuc_hc__cl_fresh
+    - nuc_lc__cl_fresh
+    - oil_ppl__cl_fresh
+
+  Cooling|Air:
+    - bio_istig__air
+    - bio_ppl__air
+    - coal_adv__air
+    - coal_ppl__air
+    - coal_ppl_u__air
+    - foil_ppl__air
+    - gas_cc__air
+    - gas_ct__air
+    - gas_ppl__air
+    - geo_ppl__air
+    - igcc__air
+    - loil_cc__air
+    - loil_ppl__air
+    - nuc_hc__air
+    - nuc_lc__air
+    - oil_ppl__air
+
+  Cooling|Once-through Saline:
+    - bio_istig__ot_saline
+    - bio_ppl__ot_saline
+    - coal_adv__ot_saline
+    - coal_ppl__ot_saline
+    - coal_ppl_u__ot_saline
+    - foil_ppl__ot_saline
+    - gas_cc__ot_saline
+    - gas_ct__ot_saline
+    - gas_ppl__ot_saline
+    - geo_ppl__ot_saline
+    - igcc__ot_saline
+    - loil_cc__ot_saline
+    - loil_ppl__ot_saline
+    - nuc_hc__ot_saline
+    - nuc_lc__ot_saline
+    - oil_ppl__ot_saline
+
+# Cooling activity by type (includes time dimension)
+- _quantities: [ACT]
+  _tag: cool_act
+  _dim: t
+
+  Cooling|Once-through Fresh:
+    - bio_istig__ot_fresh
+    - bio_ppl__ot_fresh
+    - coal_adv__ot_fresh
+    - coal_ppl__ot_fresh
+    - coal_ppl_u__ot_fresh
+    - foil_ppl__ot_fresh
+    - gas_cc__ot_fresh
+    - gas_ct__ot_fresh
+    - gas_ppl__ot_fresh
+    - geo_ppl__ot_fresh
+    - igcc__ot_fresh
+    - loil_cc__ot_fresh
+    - loil_ppl__ot_fresh
+    - nuc_hc__ot_fresh
+    - nuc_lc__ot_fresh
+    - oil_ppl__ot_fresh
+
+  Cooling|Closed-loop Fresh:
+    - bio_istig__cl_fresh
+    - bio_ppl__cl_fresh
+    - coal_adv__cl_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl_u__cl_fresh
+    - foil_ppl__cl_fresh
+    - gas_cc__cl_fresh
+    - gas_ct__cl_fresh
+    - gas_ppl__cl_fresh
+    - geo_ppl__cl_fresh
+    - igcc__cl_fresh
+    - loil_cc__cl_fresh
+    - loil_ppl__cl_fresh
+    - nuc_hc__cl_fresh
+    - nuc_lc__cl_fresh
+    - oil_ppl__cl_fresh
+
+  Cooling|Air:
+    - bio_istig__air
+    - bio_ppl__air
+    - coal_adv__air
+    - coal_ppl__air
+    - coal_ppl_u__air
+    - foil_ppl__air
+    - gas_cc__air
+    - gas_ct__air
+    - gas_ppl__air
+    - geo_ppl__air
+    - igcc__air
+    - loil_cc__air
+    - loil_ppl__air
+    - nuc_hc__air
+    - nuc_lc__air
+    - oil_ppl__air
+
+  Cooling|Once-through Saline:
+    - bio_istig__ot_saline
+    - bio_ppl__ot_saline
+    - coal_adv__ot_saline
+    - coal_ppl__ot_saline
+    - coal_ppl_u__ot_saline
+    - foil_ppl__ot_saline
+    - gas_cc__ot_saline
+    - gas_ct__ot_saline
+    - gas_ppl__ot_saline
+    - geo_ppl__ot_saline
+    - igcc__ot_saline
+    - loil_cc__ot_saline
+    - loil_ppl__ot_saline
+    - nuc_hc__ot_saline
+    - nuc_lc__ot_saline
+    - oil_ppl__ot_saline
+
+# Water extraction capacity (MCM units)
+- _quantities: [water_extract_cap]
+  _tag: water_cap
+  _dim: t
+
+  Extraction|Surface Water: [extract_surfacewater]
+  Extraction|Groundwater: [extract_groundwater]
+  Extraction|Fossil Groundwater: [extract_gw_fossil]
+
+# Water extraction activity (MCM units)
+- _quantities: [water_extract_act]
+  _tag: water_act
+  _dim: t
+
+  Extraction|Surface Water: [extract_surfacewater]
+  Extraction|Groundwater: [extract_groundwater]
+  Extraction|Fossil Groundwater: [extract_gw_fossil]
+
+
+# =============================================================================
+# GENERAL: Selections and unit conversions
+# =============================================================================
+general:
+
+# Cooling capacity factors (for CID verification)
+- key: cooling_cf:nl-t-yv-ya-h
+  comp: select
+  inputs: [capacity_factor]
+  args:
+    indexers:
+      t:
+        - bio_ppl__ot_fresh
+        - bio_ppl__cl_fresh
+        - coal_ppl__ot_fresh
+        - coal_ppl__cl_fresh
+        - coal_ppl_u__ot_fresh
+        - coal_ppl_u__cl_fresh
+        - gas_cc__ot_fresh
+        - gas_cc__cl_fresh
+        - gas_ppl__ot_fresh
+        - gas_ppl__cl_fresh
+        - nuc_lc__ot_fresh
+        - nuc_lc__cl_fresh
+        - nuc_hc__ot_fresh
+        - nuc_hc__cl_fresh
+
+# Water extraction CAP with MCM units (not GW)
+- key: water_extract_cap_raw:nl-t-yv-ya
+  comp: select
+  inputs: [CAP]
+  args:
+    indexers:
+      t: [extract_surfacewater, extract_groundwater, extract_gw_fossil]
+
+- key: water_extract_cap:nl-t-yv-ya
+  comp: assign_units
+  inputs: [water_extract_cap_raw:nl-t-yv-ya]
+  args:
+    units: MCM
+
+# Water extraction ACT with MCM units (not GWa)
+- key: water_extract_act_raw:nl-t-yv-ya-m-h
+  comp: select
+  inputs: [ACT]
+  args:
+    indexers:
+      t: [extract_surfacewater, extract_groundwater, extract_gw_fossil]
+
+- key: water_extract_act:nl-t-yv-ya-m-h
+  comp: assign_units
+  inputs: [water_extract_act_raw:nl-t-yv-ya-m-h]
+  args:
+    units: MCM
+
+# Water availability (basin-level supply as negative demand)
+- key: water_avail:n-c-l-y-h
+  comp: select
+  inputs: [demand]
+  args:
+    indexers:
+      l: [water_avail_basin]
+      c: [surfacewater_basin, groundwater_basin]
+
+# -----------------------------------------------------------------------------
+# FINAL DEMANDS (basin-level water demands)
+# -----------------------------------------------------------------------------
+
+- key: water_demand_final:n-c-l-y-h
+  comp: select
+  inputs: [demand]
+  args:
+    indexers:
+      l: [final]
+      c: [urban_mw, rural_mw, industry_mw, urban_disconnected, rural_disconnected]
+
+# NOTE: Electricity consumption keys (cooling_elec, water_infra_elec) are added
+# programmatically in report.py using tech lists from technology.yaml
+
+
+# =============================================================================
+# REPORT KEYS
+# Keys to request from reporter. Python packaging handles metadata/concat.
+# =============================================================================
+# Available keys (use rep.get(key) -> AttrSeries -> .to_dataframe()):
+#
+# Cooling:
+#   CAP:nl-t-ya:cool_cap          - Capacity by cooling type (GW)
+#   ACT:nl-t-ya-h:cool_act        - Activity by cooling type, seasonal (GWa)
+#   cooling_cf:nl-t-yv-ya-h       - Capacity factors for freshwater cooling
+#
+# Water Extraction:
+#   water_extract_cap:nl-t-ya:water_cap   - Capacity by extraction type (MCM)
+#   water_extract_act:nl-t-ya-h:water_act - Activity by type, seasonal (MCM)
+#
+# Water Availability:
+#   water_avail:n-c-l-y-h         - Basin-level supply (MCM, negative=supply)
