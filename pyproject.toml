@@ -106,7 +106,10 @@ exclude_also = [
 omit = [
   "message_ix_models/project/ssp/script/*",
   # The single existing test is far from enough
-  "message_ix_models/report/legacy/*",
+  "message_ix_models/report/legacy/*_tables.py",
+  "message_ix_models/report/legacy/iamc_*.py",
+  "message_ix_models/report/legacy/postprocess.py",
+  "message_ix_models/report/legacy/pp_utils.py",
   "message_ix_models/util/migrate.py",
 ]
 
@@ -129,7 +132,7 @@ module = [
   "message_ix_models.model.material.util",
   "message_ix_models.model.water.*",
   # Legacy codes that may not be type hinted
-  "message_ix_models.report.legacy.*",
+  "message_ix_models.report.legacy.iamc_report_hackathon",
   "message_ix_models.tools.messagev",
   "message_ix_models.util.compat.message_data.*",
 ]
@@ -175,10 +178,13 @@ markers = [
 ]
 
 [tool.ruff]
-exclude = [
+extend-exclude = [
   "doc/_static/png_source_files/Land-use_emulator_figures.ipynb",
   "message_ix_models/model/material/report/Historical Power Sector Stock Reporting-.ipynb",
-  "message_ix_models/report/legacy/",
+  "message_ix_models/report/legacy/*_tables.py",
+  "message_ix_models/report/legacy/iamc_*.py",
+  "message_ix_models/report/legacy/postprocess.py",
+  "message_ix_models/report/legacy/pp_utils.py",
   "message_ix_models/util/compat/message_data/",
 ]
 
