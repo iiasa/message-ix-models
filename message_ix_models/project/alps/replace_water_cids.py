@@ -10,15 +10,16 @@ Key functionality:
 - Atomic parameter replacement in scenarios
 """
 
+from functools import lru_cache
+from pathlib import Path
 from typing import Tuple
 
-from message_ix import Scenario
-import pandas as pd
 import numpy as np
-from functools import lru_cache
+import pandas as pd
+from message_ix import Scenario
 
-from message_ix_models.util import package_data_path
 from message_ix_models.project.alps.constants import MESSAGE_YEARS, R12_REGIONS
+from message_ix_models.util import package_data_path
 
 # Default timeslice definitions (n_time=2)
 DEFAULT_H1_MONTHS = {1, 2, 3, 4, 5, 6}
@@ -26,23 +27,34 @@ DEFAULT_H2_MONTHS = {7, 8, 9, 10, 11, 12}
 
 
 @lru_cache(maxsize=1)
-def load_bifurcation_mapping() -> pd.DataFrame:
+def load_bifurcation_mapping(expand_to_message: bool = True) -> pd.DataFrame:
     """Load basin-specific month→season mapping from regime shift analysis.
+
+    Parameters
+    ----------
+    expand_to_message : bool
+        If True (default), expand from 157 RIME basins to 217 MESSAGE basins
+        by duplicating values for basins that span multiple regions.
+        If False, return the raw 157-basin mapping.
 
     Returns
     -------
     pd.DataFrame
         DataFrame with columns:
-        - BASIN_ID: Basin identifier (1-157)
+        - BASIN_ID: Basin identifier (1-157 for raw, repeated for expanded)
         - wet_months: Set of month numbers (1-12) classified as wet
         - dry_months: Set of month numbers classified as dry
         - r2_joint: Fit quality of regime shift classification
+        If expanded, also includes: BCU_name, REGION, basin_code, area_km2
 
     Notes
     -----
     The mapping is derived from joint regime shift analysis of qtot and qr
     timeseries. Each basin has its own seasonal classification based on
     hydrological patterns, not a global definition.
+
+    Bifurcation is an intensive variable (property of location), so values
+    are duplicated (not area-weighted) when expanding to MESSAGE basins.
     """
     path = package_data_path(
         "alps", "rime_datasets", "joint_bifurcation_mapping_CWatM_2step.csv"
@@ -58,7 +70,28 @@ def load_bifurcation_mapping() -> pd.DataFrame:
     df["wet_months"] = df["wet_months"].apply(parse_months)
     df["dry_months"] = df["dry_months"].apply(parse_months)
 
-    return df
+    if not expand_to_message:
+        return df
+
+    # Expand to 217 MESSAGE basins by joining on BASIN_ID
+    from message_ix_models.project.alps.rime import load_basin_mapping
+
+    basin_mapping = load_basin_mapping()  # 217 rows
+    expanded = basin_mapping.merge(df, on="BASIN_ID", how="left")
+
+    # For basins without bifurcation data, use default 50/50 split
+    default_wet = {7, 8, 9, 10, 11, 12}
+    default_dry = {1, 2, 3, 4, 5, 6}
+    missing_mask = expanded["wet_months"].isna()
+    if missing_mask.any():
+        expanded.loc[missing_mask, "wet_months"] = expanded.loc[missing_mask].apply(
+            lambda _: default_wet, axis=1
+        )
+        expanded.loc[missing_mask, "dry_months"] = expanded.loc[missing_mask].apply(
+            lambda _: default_dry, axis=1
+        )
+
+    return expanded
 
 
 def compute_season_to_timeslice_matrix(
@@ -244,7 +277,11 @@ def _filter_with_fallback(
 
     basins_with_valid = set(valid[node_col].unique())
     missing_basins = existing_basins - basins_with_valid
-    missing = old_df[old_df[node_col].isin(missing_basins)] if missing_basins else pd.DataFrame()
+    missing = (
+        old_df[old_df[node_col].isin(missing_basins)]
+        if missing_basins
+        else pd.DataFrame()
+    )
 
     return pd.concat([valid, preserved, missing], ignore_index=True)
 
@@ -261,16 +298,20 @@ def _sample_and_extend_years(df: pd.DataFrame) -> Tuple[pd.DataFrame, list]:
 def _to_demand_long(df: pd.DataFrame, commodity: str, time_val: str) -> pd.DataFrame:
     """Convert wide DataFrame to MESSAGE demand format."""
     years = [c for c in df.columns if isinstance(c, int)]
-    long = df.melt(id_vars=["BCU_name"], value_vars=years, var_name="year", value_name="value")
-    result = pd.DataFrame({
-        "node": "B" + long["BCU_name"].astype(str),
-        "commodity": commodity,
-        "level": "water_avail_basin",
-        "year": long["year"],
-        "time": time_val,
-        "value": -long["value"] * 1000,  # km³ → MCM, negate
-        "unit": "MCM/year",
-    })
+    long = df.melt(
+        id_vars=["BCU_name"], value_vars=years, var_name="year", value_name="value"
+    )
+    result = pd.DataFrame(
+        {
+            "node": "B" + long["BCU_name"].astype(str),
+            "commodity": commodity,
+            "level": "water_avail_basin",
+            "year": long["year"],
+            "time": time_val,
+            "value": -long["value"] * 1000,  # km³ → MCM, negate
+            "unit": "MCM/year",
+        }
+    )
     # Clip positive values (depleting aquifers after negation)
     result.loc[result["value"] > 0, "value"] = 0.0
     return result
@@ -281,15 +322,188 @@ def _to_share_long(qtot: pd.DataFrame, qr: pd.DataFrame, time_val: str) -> pd.Da
     years = [c for c in qtot.columns if isinstance(c, int)]
     share_values = (qr[years] / (qtot[years] + qr[years]) * 0.95).clip(0, 1)
     share = pd.concat([qtot[["BCU_name"]], share_values], axis=1)
-    long = share.melt(id_vars=["BCU_name"], value_vars=years, var_name="year", value_name="value")
-    return pd.DataFrame({
-        "shares": "share_low_lim_GWat",
-        "node_share": "B" + long["BCU_name"].astype(str),
-        "year_act": long["year"],
-        "time": time_val,
-        "value": long["value"],
-        "unit": "-",
-    })
+    long = share.melt(
+        id_vars=["BCU_name"], value_vars=years, var_name="year", value_name="value"
+    )
+    return pd.DataFrame(
+        {
+            "shares": "share_low_lim_GWat",
+            "node_share": "B" + long["BCU_name"].astype(str),
+            "year_act": long["year"],
+            "time": time_val,
+            "value": long["value"],
+            "unit": "-",
+        }
+    )
+
+
+# =============================================================================
+# FINAL DEMAND TRANSFORMATION (monthly → h1/h2)
+# =============================================================================
+
+# Days per month for volume conversion
+DAYS_PER_MONTH = {
+    1: 31, 2: 28.25, 3: 31, 4: 30, 5: 31, 6: 30,
+    7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+}
+
+
+def load_monthly_demands(regions: str = "R12") -> pd.DataFrame:
+    """Load monthly sectoral water demands.
+
+    Parameters
+    ----------
+    regions : str
+        Regional aggregation (default: 'R12')
+
+    Returns
+    -------
+    pd.DataFrame
+        Monthly demands with columns:
+        [sector, type, pid, year, month, value, units]
+        where pid = 'basin_id|region' and value is in mcm_per_day
+    """
+    path = package_data_path(
+        "water", "demands", "harmonized", regions, "ssp2_m_water_demands.csv"
+    )
+    return pd.read_csv(path)
+
+
+def aggregate_monthly_to_timeslice(
+    monthly_df: pd.DataFrame,
+    sector: str,
+    demand_type: str = "withdrawal",
+    n_time: int = 2,
+) -> pd.DataFrame:
+    """Aggregate monthly demands directly to MESSAGE timeslices.
+
+    This is the LOSSLESS approach: we have monthly resolution, so we
+    aggregate directly to h1/h2 without going through wet/dry intermediate.
+
+    Parameters
+    ----------
+    monthly_df : pd.DataFrame
+        Monthly demand data from load_monthly_demands()
+    sector : str
+        Sector to extract ('urban', 'rural', 'industry')
+    demand_type : str
+        Type of demand ('withdrawal' or 'return')
+    n_time : int
+        Number of timeslices (default: 2 for h1/h2)
+
+    Returns
+    -------
+    pd.DataFrame
+        Aggregated demands with columns:
+        [BCU_name, year, time, value]
+        where value is in MCM/timeslice
+    """
+    if n_time != 2:
+        raise NotImplementedError(f"Only n_time=2 supported, got {n_time}")
+
+    # Filter to sector and type
+    df = monthly_df[
+        (monthly_df["sector"] == sector) & (monthly_df["type"] == demand_type)
+    ].copy()
+
+    if len(df) == 0:
+        raise ValueError(f"No data for sector={sector}, type={demand_type}")
+
+    # Parse basin ID from pid (format: 'basin_id|region')
+    df["BCU_name"] = df["pid"].str.split("|").str[0].astype(int)
+
+    # Convert mcm_per_day to MCM/month
+    df["value_mcm"] = df.apply(
+        lambda row: row["value"] * DAYS_PER_MONTH.get(row["month"], 30), axis=1
+    )
+
+    # Assign timeslice: h1 = months 1-6, h2 = months 7-12
+    df["time"] = df["month"].apply(lambda m: "h1" if m <= 6 else "h2")
+
+    # Aggregate: sum monthly values within each timeslice
+    agg = df.groupby(["BCU_name", "year", "time"])["value_mcm"].sum().reset_index()
+    agg = agg.rename(columns={"value_mcm": "value"})
+
+    return agg
+
+
+def prepare_final_demand_cids(
+    scenario: "Scenario",
+    sector: str,
+    commodity: str,
+    temporal_res: str = "seasonal",
+    regions: str = "R12",
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Prepare final-level demand parameters for seasonal CID scenarios.
+
+    Uses DIRECT monthly→h1/h2 aggregation (lossless) rather than
+    wet/dry transformation.
+
+    Parameters
+    ----------
+    scenario : Scenario
+        MESSAGE scenario for filtering to existing basins
+    sector : str
+        Sector ('urban', 'rural', 'industry')
+    commodity : str
+        MESSAGE commodity name (e.g., 'urban_mw', 'rural_mw', 'industry_mw')
+    temporal_res : str
+        'annual' or 'seasonal' (default: 'seasonal')
+    regions : str
+        Regional aggregation (default: 'R12')
+
+    Returns
+    -------
+    tuple of (new_df, old_df)
+        New and old demand DataFrames for replacement
+    """
+    # Load and aggregate monthly data
+    monthly = load_monthly_demands(regions)
+    agg = aggregate_monthly_to_timeslice(monthly, sector, "withdrawal", n_time=2)
+
+    # Filter to MESSAGE years
+    msg_years = [y for y in MESSAGE_YEARS if y in agg["year"].unique()]
+    agg = agg[agg["year"].isin(msg_years)]
+
+    # Extend 2100 → 2110
+    if 2100 in agg["year"].unique():
+        ext = agg[agg["year"] == 2100].copy()
+        ext["year"] = 2110
+        agg = pd.concat([agg, ext], ignore_index=True)
+
+    # Format for MESSAGE
+    if temporal_res == "annual":
+        # Sum h1+h2 for annual
+        annual = agg.groupby(["BCU_name", "year"])["value"].sum().reset_index()
+        new_df = pd.DataFrame({
+            "node": "B" + annual["BCU_name"].astype(str),
+            "commodity": commodity,
+            "level": "final",
+            "year": annual["year"],
+            "time": "year",
+            "value": annual["value"],
+            "unit": "MCM",
+        })
+    else:
+        # Keep h1/h2 for seasonal
+        new_df = pd.DataFrame({
+            "node": "B" + agg["BCU_name"].astype(str),
+            "commodity": commodity,
+            "level": "final",
+            "year": agg["year"],
+            "time": agg["time"],
+            "value": agg["value"],
+            "unit": "MCM",
+        })
+
+    # Get existing demands from scenario for filtering
+    old_df = scenario.par("demand", {"commodity": commodity, "level": "final"})
+
+    # Filter new data to existing basins
+    existing_basins = set(old_df["node"].unique())
+    new_df = new_df[new_df["node"].isin(existing_basins)].copy()
+
+    return new_df, old_df
 
 
 def prepare_water_cids(
@@ -364,29 +578,46 @@ def prepare_water_cids(
         else:
             sw_h1, sw_h2 = qtot_h1, qtot_h2
 
-        sw_new = pd.concat([
-            _to_demand_long(sw_h1, "surfacewater_basin", "h1"),
-            _to_demand_long(sw_h2, "surfacewater_basin", "h2"),
-        ], ignore_index=True)
-        gw_new = pd.concat([
-            _to_demand_long(qr_h1, "groundwater_basin", "h1"),
-            _to_demand_long(qr_h2, "groundwater_basin", "h2"),
-        ], ignore_index=True)
-        share_new = pd.concat([
-            _to_share_long(qtot_h1, qr_h1, "h1"),
-            _to_share_long(qtot_h2, qr_h2, "h2"),
-        ], ignore_index=True)
+        sw_new = pd.concat(
+            [
+                _to_demand_long(sw_h1, "surfacewater_basin", "h1"),
+                _to_demand_long(sw_h2, "surfacewater_basin", "h2"),
+            ],
+            ignore_index=True,
+        )
+        gw_new = pd.concat(
+            [
+                _to_demand_long(qr_h1, "groundwater_basin", "h1"),
+                _to_demand_long(qr_h2, "groundwater_basin", "h2"),
+            ],
+            ignore_index=True,
+        )
+        share_new = pd.concat(
+            [
+                _to_share_long(qtot_h1, qr_h1, "h1"),
+                _to_share_long(qtot_h2, qr_h2, "h2"),
+            ],
+            ignore_index=True,
+        )
     else:
-        raise ValueError(f"temporal_res must be 'annual' or 'seasonal', got {temporal_res}")
+        raise ValueError(
+            f"temporal_res must be 'annual' or 'seasonal', got {temporal_res}"
+        )
 
     # Load old values and filter
     sw_old = scenario.par("demand", {"commodity": "surfacewater_basin"})
     gw_old = scenario.par("demand", {"commodity": "groundwater_basin"})
     share_old = scenario.par("share_commodity_lo", {"shares": "share_low_lim_GWat"})
 
-    sw_filtered = _filter_with_fallback(sw_new, sw_old, "node", ["node", "year", "time"])
-    gw_filtered = _filter_with_fallback(gw_new, gw_old, "node", ["node", "year", "time"])
-    share_filtered = _filter_with_fallback(share_new, share_old, "node_share", ["node_share", "year_act", "time"])
+    sw_filtered = _filter_with_fallback(
+        sw_new, sw_old, "node", ["node", "year", "time"]
+    )
+    gw_filtered = _filter_with_fallback(
+        gw_new, gw_old, "node", ["node", "year", "time"]
+    )
+    share_filtered = _filter_with_fallback(
+        share_new, share_old, "node_share", ["node_share", "year_act", "time"]
+    )
 
     return (sw_filtered, sw_old), (gw_filtered, gw_old), (share_filtered, share_old)
 
@@ -562,3 +793,301 @@ def prepare_capacity_factor_parameter(
     return new_cf, fresh_cf
 
 
+# Baseline GWL for Jones capacity factor normalization (2020 warming level)
+BASELINE_GWL = 1.0
+
+
+def add_jones_relation_constraints(
+    scen: Scenario,
+    jones_factors: pd.DataFrame,
+    commit_message: str = "Add Jones freshwater cooling constraints",
+    baseline_gwl: float = BASELINE_GWL,
+) -> Scenario:
+    """Add relation_activity constraints to bound freshwater cooling by Jones factors.
+
+    Constraint form:
+        ACT[fresh_cooling] <= jones_ratio * ACT[parent] * cooling_fraction
+
+    where jones_ratio = CF(region, year) / CF(region, baseline_gwl).
+
+    Parameters
+    ----------
+    scen : Scenario
+        MESSAGE scenario with cooling module (must have addon_conversion params)
+    jones_factors : pd.DataFrame
+        Jones capacity factors with columns: region + year columns (2025-2100)
+        Values are absolute capacity factors (0-1)
+    baseline_gwl : float
+        Baseline global warming level for normalization (default: 1.0C)
+
+    Returns
+    -------
+    Scenario
+        Modified scenario with relation constraints added
+    """
+    from message_ix_models.project.alps.rime import predict_rime
+
+    print("   Extracting cooling structure from scenario...")
+
+    # Get baseline CF at reference GWL for normalization
+    cf_baseline = predict_rime(np.array([baseline_gwl]), "capacity_factor")  # (12, 1)
+    cf_baseline = cf_baseline.flatten()  # (12,)
+
+    # Build region -> baseline_cf lookup
+    baseline_lookup = dict(zip(R12_REGIONS, cf_baseline))
+    print(
+        f"   Baseline CF at GWL={baseline_gwl}C: {dict(list(baseline_lookup.items())[:3])}..."
+    )
+
+    # Get addon_conversion to find parent techs and cooling_fraction values
+    addon = scen.par("addon_conversion")
+    cooling_addon = addon[addon["type_addon"].str.startswith("cooling__")].copy()
+
+    if len(cooling_addon) == 0:
+        raise ValueError("No cooling addon_conversion found in scenario")
+
+    # Extract parent tech from type_addon (e.g., "cooling__coal_ppl" -> "coal_ppl")
+    cooling_addon["parent_tech"] = cooling_addon["type_addon"].str.replace(
+        "cooling__", "", regex=False
+    )
+
+    # Get cooling_fraction per (region, parent_tech, year_act)
+    # Must be year-specific since addon_conversion varies by vintage/activity year
+    cooling_frac = (
+        cooling_addon.groupby(["node", "parent_tech", "year_act"])["value"]
+        .first()
+        .reset_index()
+    )
+    cooling_frac.columns = ["node", "parent_tech", "year_act", "cooling_fraction"]
+
+    # Get capacity_factor to find freshwater cooling tech names
+    cf = scen.par("capacity_factor")
+    fresh_cf = cf[cf["technology"].str.contains("_fresh", na=False)].copy()
+    fresh_cf["parent_tech"] = fresh_cf["technology"].str.rsplit("__", n=1).str[0]
+
+    # Build lookup: parent_tech -> list of freshwater cooling variants
+    parent_to_fresh = {}
+    for parent in fresh_cf["parent_tech"].unique():
+        variants = fresh_cf[fresh_cf["parent_tech"] == parent]["technology"].unique()
+        parent_to_fresh[parent] = list(variants)
+
+    print(
+        f"   Found {len(parent_to_fresh)} parent technologies with freshwater cooling"
+    )
+
+    # Parse jones_factors to get year columns and region mapping
+    year_cols = [c for c in jones_factors.columns if isinstance(c, (int, np.integer))]
+
+    # Build jones factor lookup: (region_short, year) -> factor
+    jones_lookup = {}
+    for _, row in jones_factors.iterrows():
+        region = row.get("region", row.name)
+        for year in year_cols:
+            jones_lookup[(region, year)] = row[year]
+
+    # Get valid (node, parent_tech, year) combinations from technical_lifetime
+    tl = scen.par("technical_lifetime")
+    parent_techs = list(parent_to_fresh.keys())
+    tl_parents = tl[tl["technology"].isin(parent_techs)]
+    valid_combinations = set(
+        zip(tl_parents["node_loc"], tl_parents["technology"], tl_parents["year_vtg"])
+    )
+    print(f"   Valid (node, tech, year) combinations: {len(valid_combinations)}")
+
+    # Get model years from scenario (filtered to Jones data range)
+    model_years = [int(y) for y in scen.set("year") if int(y) >= min(year_cols)]
+    regions = cooling_frac["node"].unique()
+
+    print(
+        f"   Building constraints for {len(model_years)} years, {len(regions)} regions..."
+    )
+
+    # Prepare parameter DataFrames
+    relation_set_entries = []
+    relation_activity_rows = []
+    relation_upper_rows = []
+
+    for parent_tech, fresh_variants in parent_to_fresh.items():
+        rel_name = f"fresh_cool_bound_{parent_tech}"
+        relation_set_entries.append(rel_name)
+
+        for region in regions:
+            # Extract short region name (R12_AFR -> AFR)
+            region_short = (
+                region.replace("R12_", "") if region.startswith("R12_") else region
+            )
+
+            # Get baseline CF for this region
+            baseline_cf = baseline_lookup.get(region_short, 1.0)
+
+            for year in model_years:
+                if (region, parent_tech, year) not in valid_combinations:
+                    continue
+
+                # Get year-specific cooling_fraction from addon_conversion
+                cf_row = cooling_frac[
+                    (cooling_frac["node"] == region)
+                    & (cooling_frac["parent_tech"] == parent_tech)
+                    & (cooling_frac["year_act"] == year)
+                ]
+                if len(cf_row) == 0:
+                    continue
+                cooling_fraction = cf_row.iloc[0]["cooling_fraction"]
+
+                # Get jones_factor for this (region, year)
+                if (region_short, year) in jones_lookup:
+                    jones_factor = jones_lookup[(region_short, year)]
+                else:
+                    nearest_year = min(year_cols, key=lambda y: abs(y - year))
+                    jones_factor = jones_lookup.get((region_short, nearest_year), 1.0)
+
+                # Normalize to baseline GWL
+                jones_ratio = jones_factor / baseline_cf if baseline_cf > 0 else 1.0
+
+                # Skip if no constraint needed (ratio >= 1 means no degradation)
+                if jones_ratio >= 1.0:
+                    continue
+
+                # Add relation_activity for freshwater variants: coefficient = +1
+                for fresh_tech in fresh_variants:
+                    relation_activity_rows.append(
+                        {
+                            "relation": rel_name,
+                            "node_rel": region,
+                            "year_rel": year,
+                            "node_loc": region,
+                            "technology": fresh_tech,
+                            "year_act": year,
+                            "mode": "M1",
+                            "value": 1.0,
+                            "unit": "-",
+                        }
+                    )
+
+                # Add relation_activity for parent tech: coefficient = -jones_ratio * cooling_fraction
+                relation_activity_rows.append(
+                    {
+                        "relation": rel_name,
+                        "node_rel": region,
+                        "year_rel": year,
+                        "node_loc": region,
+                        "technology": parent_tech,
+                        "year_act": year,
+                        "mode": "M1",
+                        "value": -jones_ratio * cooling_fraction,
+                        "unit": "-",
+                    }
+                )
+
+                # Add relation_upper: bound = 0
+                relation_upper_rows.append(
+                    {
+                        "relation": rel_name,
+                        "node_rel": region,
+                        "year_rel": year,
+                        "value": 0.0,
+                        "unit": "-",
+                    }
+                )
+
+    print(f"   Created {len(relation_set_entries)} relations")
+    print(f"   Created {len(relation_activity_rows)} relation_activity rows")
+    print(f"   Created {len(relation_upper_rows)} relation_upper rows")
+
+    if len(relation_activity_rows) == 0:
+        print("   No constraints needed (jones_ratio >= 1.0 for all cases)")
+        return scen
+
+    rel_act_df = pd.DataFrame(relation_activity_rows)
+    rel_upper_df = pd.DataFrame(relation_upper_rows)
+
+    with scen.transact(commit_message):
+        for rel_name in set(relation_set_entries):
+            scen.add_set("relation", rel_name)
+        scen.add_par("relation_activity", rel_act_df)
+        scen.add_par("relation_upper", rel_upper_df)
+
+    scen.set_as_default()
+    print(f"   Committed version {scen.version}")
+
+    return scen
+
+
+def generate_cooling_cid_scenario(
+    scen: Scenario,
+    magicc_file: Path,
+    run_ids: tuple,
+    n_runs: int,
+    use_relation_constraint: bool = True,
+    baseline_gwl: float = BASELINE_GWL,
+) -> Scenario:
+    """Generate cooling CID scenario with thermodynamic constraints.
+
+    Parameters
+    ----------
+    scen : Scenario
+        MESSAGE scenario to modify
+    magicc_file : Path
+        Path to MAGICC all_runs Excel file
+    run_ids : tuple
+        Run IDs for RIME prediction
+    n_runs : int
+        Number of runs for expectation computation
+    use_relation_constraint : bool
+        If True (default), use relation_activity constraints to bound freshwater
+        cooling activity. If False, use legacy capacity_factor replacement.
+    baseline_gwl : float
+        Baseline GWL for jones_ratio normalization (default: 1.0C)
+
+    Returns
+    -------
+    Scenario
+        Modified scenario with cooling CID constraints
+    """
+    from message_ix_models.project.alps.cid_utils import cached_rime_prediction
+    from message_ix_models.project.alps.rime import compute_expectation
+    from message_ix_models.project.alps.scenario_generator import _build_cooling_module
+
+    # Build cooling module first
+    print("\n5. Building cooling module...")
+    scen = _build_cooling_module(scen)
+
+    print("\n6. Running RIME predictions for capacity_factor (annual)...")
+    cf_predictions = cached_rime_prediction(
+        magicc_file, run_ids, "capacity_factor", temporal_res="annual"
+    )
+    print(f"   Got {len(cf_predictions)} prediction sets")
+
+    # Compute expectation
+    print("\n7. Computing expectation...")
+    cf_expected = compute_expectation(
+        cf_predictions, run_ids=np.array(list(run_ids)), weights=None
+    )
+    print(f"   capacity_factor shape: {cf_expected.shape}")
+
+    if use_relation_constraint:
+        print("\n8. Adding Jones relation constraints...")
+        commit_msg = (
+            f"CID cooling: Jones relation constraints for {magicc_file.stem.split('_')[-3]}f\n"
+            f"MAGICC: {magicc_file.name}\n"
+            f"RIME: n_runs={n_runs}, variable=capacity_factor"
+        )
+        scen_updated = add_jones_relation_constraints(
+            scen, cf_expected, commit_msg, baseline_gwl=baseline_gwl
+        )
+    else:
+        print("\n8. Replacing cooling capacity_factor...")
+        cf_new, cf_old = prepare_capacity_factor_parameter(cf_expected, scen)
+        print(f"   capacity_factor: {len(cf_new)} new, {len(cf_old)} old rows")
+
+        commit_msg = (
+            f"CID cooling projection: {magicc_file.stem.split('_')[-3]}f\n"
+            f"MAGICC: {magicc_file.name}\n"
+            f"RIME: n_runs={n_runs}, variable=capacity_factor"
+        )
+        scen_updated = replace_parameter(
+            scen, "capacity_factor", cf_old, cf_new, commit_msg
+        )
+
+    print(f"   Committed version {scen_updated.version}")
+    return scen_updated
