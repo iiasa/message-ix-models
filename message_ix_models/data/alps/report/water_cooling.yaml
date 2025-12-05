@@ -277,6 +277,15 @@ general:
       l: [final]
       c: [urban_mw, rural_mw, industry_mw, urban_disconnected, rural_disconnected]
 
+# Irrigation water demands (from land_input, not demand parameter)
+- key: irrigation_demand:n-c-l-y
+  comp: select
+  inputs: [land_input]
+  args:
+    indexers:
+      c: [freshwater]
+      l: [irr_cereal, irr_oilcrops, irr_sugarcrops]
+
 # NOTE: Electricity consumption keys (cooling_elec, water_infra_elec) are added
 # programmatically in report.py using tech lists from technology.yaml
 
