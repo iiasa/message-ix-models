@@ -23,8 +23,16 @@ rime:
     - capacity_factor
 
 # Cooling only supports annual (no seasonal capacity factor emulator)
+#
+# Scenario types:
+# - no_climate: No CID applied - uses original capacity factors from starter scenario
+# - baseline: CID from SSP2 baseline emissions → MAGICC → RIME capacity factors
+# - {budget}f: CID from carbon budget pathway → MAGICC → RIME capacity factors
+#
 scenarios:
-  - budget: null
+  - budget: no_climate
+    temporal: [annual]
+  - budget: baseline
     temporal: [annual]
   - budget: 850f
     temporal: [annual]

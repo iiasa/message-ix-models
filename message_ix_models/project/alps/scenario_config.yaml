@@ -11,7 +11,7 @@ platform_info:
 
 starter:
   model: SSP_SSP2_v6.5_CID
-  scenario: nexus_baseline
+  scenario: nexus_baseline_seasonal
 
 output:
   model: SSP_SSP2_v6.5_CID

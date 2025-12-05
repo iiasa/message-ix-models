@@ -45,7 +45,7 @@ def get_magicc_file(model: str, scenario: str) -> Path:
 
 
 def cached_rime_prediction(
-    magicc_file: Path,
+    magicc_df: pd.DataFrame,
     run_ids: tuple,
     variable: str,
     temporal_res: str = "annual"
@@ -54,8 +54,8 @@ def cached_rime_prediction(
 
     Parameters
     ----------
-    magicc_file : Path
-        Path to MAGICC Excel output
+    magicc_df : pd.DataFrame
+        MAGICC output DataFrame (IAMC format). Loaded once at top level.
     run_ids : tuple
         Run IDs to process (must be tuple for hashing)
     variable : str
@@ -72,16 +72,15 @@ def cached_rime_prediction(
         For regional variables: DataFrame with 12 rows (R12) + region column + year columns
         For seasonal: DataFrame has interleaved columns (2020_dry, 2020_wet, ...)
     """
-    cache_key = f"{magicc_file.stem}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}"
+    # Cache key from DataFrame scenario name (synthetic or from file)
+    source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
+    cache_key = f"{source_name}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}"
 
     if cache_key in cache:
         print(f"   Cache hit for {variable} ({temporal_res})")
         return cache[cache_key]
 
     print(f"   Cache miss for {variable} ({temporal_res}) - computing predictions...")
-
-    # Load MAGICC data
-    magicc_df = pd.read_excel(magicc_file, sheet_name="data")
 
     # Get dataset path
     dataset_path = get_rime_dataset_path(variable, temporal_res)

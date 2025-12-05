@@ -69,22 +69,72 @@ def load_config(config_path: Path) -> dict:
     return config
 
 
+def generate_synthetic_magicc_df(
+    n_runs: int = 100,
+    gwl: float = 1.0,
+    noise_std: float = 0.01,
+    years: tuple = tuple(range(1990, 2101, 5)),
+) -> pd.DataFrame:
+    """Generate synthetic MAGICC-style DataFrame with constant GWL.
+
+    Creates an IAMC-format DataFrame mimicking MAGICC output but with
+    constant global warming level. Used for no_climate counterfactual
+    scenarios where climate is held at present-day levels.
+
+    Parameters
+    ----------
+    n_runs : int
+        Number of synthetic runs (default: 100)
+    gwl : float
+        Global warming level in °C (default: 1.0)
+    noise_std : float
+        Standard deviation of Gaussian noise added to GWL (default: 0.01)
+    years : tuple
+        Years to include in timeseries (default: 1990-2100 every 5 years)
+
+    Returns
+    -------
+    pd.DataFrame
+        IAMC-format DataFrame with columns: Model, Scenario, Region, Variable, Unit, {years}
+    """
+    rows = []
+    variable = "AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3"
+
+    for run_id in range(n_runs):
+        row = {
+            "Model": f"SYNTHETIC|run_{run_id}|",
+            "Scenario": "no_climate",
+            "Region": "World",
+            "Variable": variable,
+            "Unit": "K",
+        }
+        # Add year columns with constant GWL + small noise
+        for year in years:
+            row[str(year)] = gwl + np.random.normal(0, noise_std)
+        rows.append(row)
+
+    return pd.DataFrame(rows)
+
+
 def derive_magicc_path(budget: str, model_prefix: str = "SSP_SSP2_v6.5_CID") -> Path:
     """Derive MAGICC file path from budget identifier.
 
     Parameters
     ----------
     budget : str or None
-        Budget identifier (e.g., '600f', '850f', '1100f'), or None for baseline
+        Budget identifier (e.g., '600f', '850f', '1100f'), 'baseline' for SSP2 baseline
+        emissions, or 'no_climate' to skip CID entirely
     model_prefix : str
         Model prefix for MAGICC filename (default: SSP_SSP2_v6.5_CID)
 
     Returns
     -------
-    Path
-        Path to MAGICC all_runs Excel file
+    Path or None
+        Path to MAGICC all_runs Excel file, or None for no_climate
     """
-    if budget is None or budget == "":
+    if budget == "no_climate":
+        return None
+    elif budget is None or budget == "" or budget == "baseline":
         filename = f"{model_prefix}_baseline_magicc_all_runs.xlsx"
     else:
         filename = f"{model_prefix}_baseline_{budget}_magicc_all_runs.xlsx"
@@ -127,7 +177,7 @@ def generate_scenario(
     starter_scenario: str,
     output_model: str,
     output_scenario: str,
-    magicc_file: Path,
+    magicc_file: Optional[Path],
     temporal_res: str,
     n_runs: int = 100,
     dry_run: bool = False,
@@ -136,6 +186,9 @@ def generate_scenario(
     """Generate a single CID scenario.
 
     Clone starter → add timeslices (if seasonal) → run RIME → replace CID params → commit
+
+    This is the only function that handles file I/O. All downstream functions
+    receive DataFrame only.
 
     Parameters
     ----------
@@ -149,8 +202,8 @@ def generate_scenario(
         Model name for output scenario
     output_scenario : str
         Scenario name for output scenario
-    magicc_file : Path
-        Path to MAGICC all_runs Excel file
+    magicc_file : Optional[Path]
+        Path to MAGICC all_runs Excel file, or None for synthetic no_climate (GWL=1.0C)
     temporal_res : str
         Temporal resolution: 'annual' or 'seasonal'
     n_runs : int
@@ -169,11 +222,12 @@ def generate_scenario(
     print(f"Generating: {output_scenario}")
     print(f"{'=' * 60}")
     print(f"  Starter: {starter_model}/{starter_scenario}")
-    print(f"  MAGICC: {magicc_file.name}")
+    print(f"  MAGICC: {magicc_file.name if magicc_file else 'SYNTHETIC (GWL=1.0C)'}")
     print(f"  Temporal: {temporal_res}")
     print(f"  CID type: {cid_type}")
 
-    if not magicc_file.exists():
+    # Validate file exists (unless synthetic no_climate)
+    if magicc_file is not None and not magicc_file.exists():
         raise FileNotFoundError(f"MAGICC file not found: {magicc_file}")
 
     # Validate cid_type constraints
@@ -212,18 +266,23 @@ def generate_scenario(
 
     # Load MAGICC data and extract run IDs
     print("\n4. Loading MAGICC temperature data...")
-    magicc_df = pd.read_excel(magicc_file, sheet_name="data")
+    if magicc_file is None:
+        # Synthetic no_climate: constant GWL=1.0C
+        print("   Generating synthetic MAGICC data (GWL=1.0C)...")
+        magicc_df = generate_synthetic_magicc_df(n_runs=n_runs, gwl=1.0, noise_std=0.01)
+    else:
+        magicc_df = pd.read_excel(magicc_file, sheet_name="data")
     all_run_ids = extract_all_run_ids(magicc_df)
     run_ids = tuple(all_run_ids[:n_runs])
     print(f"   Using {len(run_ids)} runs for expectation")
 
-    # Dispatch based on CID type
+    # Dispatch based on CID type (pass magicc_df to avoid re-reading)
     if cid_type == "nexus":
         scen_updated = _generate_nexus_cid(
-            scen, magicc_file, run_ids, temporal_res, n_runs
+            scen, magicc_df, run_ids, temporal_res, n_runs
         )
     elif cid_type == "cooling":
-        scen_updated = generate_cooling_cid_scenario(scen, magicc_file, run_ids, n_runs)
+        scen_updated = generate_cooling_cid_scenario(scen, magicc_df, run_ids, n_runs)
     else:
         raise ValueError(f"Unknown cid_type: {cid_type}. Expected 'nexus' or 'cooling'")
 
@@ -232,7 +291,7 @@ def generate_scenario(
 
 def _generate_nexus_cid(
     scen: Scenario,
-    magicc_file: Path,
+    magicc_df: pd.DataFrame,
     run_ids: tuple,
     temporal_res: str,
     n_runs: int,
@@ -242,13 +301,13 @@ def _generate_nexus_cid(
 
     print(f"\n5. Running RIME predictions for qtot_mean ({rime_temporal})...")
     qtot_predictions = cached_rime_prediction(
-        magicc_file, run_ids, "qtot_mean", temporal_res=rime_temporal
+        magicc_df, run_ids, "qtot_mean", temporal_res=rime_temporal
     )
     print(f"   Got {len(qtot_predictions)} prediction sets")
 
     print(f"\n6. Running RIME predictions for qr ({rime_temporal})...")
     qr_predictions = cached_rime_prediction(
-        magicc_file, run_ids, "qr", temporal_res=rime_temporal
+        magicc_df, run_ids, "qr", temporal_res=rime_temporal
     )
     print(f"   Got {len(qr_predictions)} prediction sets")
 
@@ -284,9 +343,10 @@ def _generate_nexus_cid(
 
     # Replace water availability
     print("\n9. Replacing water availability...")
+    # Get source name from DataFrame (Scenario column contains source identifier)
+    source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
     commit_msg = (
-        f"CID water projection: {magicc_file.stem.split('_')[-3]}f, {temporal_res}\n"
-        f"MAGICC: {magicc_file.name}\n"
+        f"CID water projection: {source_name}, {temporal_res}\n"
         f"RIME: n_runs={n_runs}, variables=qtot_mean,qr"
     )
 
@@ -416,9 +476,12 @@ def generate_all(
                 print(f"  Skipping {budget}/{temp_res}: cooling only supports annual")
                 continue
 
-            # Handle null budget (baseline counterfactual)
-            if budget is None or budget == "":
-                # Use cid_type prefix for baseline name
+            # Handle special budget values
+            if budget == "no_climate":
+                # No CID applied - just clone starter
+                output_name = f"{cid_type}_no_climate"
+            elif budget is None or budget == "" or budget == "baseline":
+                # CID from baseline emissions trajectory
                 # Cooling mode: no temporal suffix (only annual supported)
                 if cid_type == "cooling":
                     output_name = f"{cid_type}_baseline"

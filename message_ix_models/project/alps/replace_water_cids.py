@@ -1069,7 +1069,7 @@ def add_jones_relation_constraints(
 
 def generate_cooling_cid_scenario(
     scen: Scenario,
-    magicc_file: Path,
+    magicc_df: pd.DataFrame,
     run_ids: tuple,
     n_runs: int,
     use_relation_constraint: bool = True,
@@ -1081,8 +1081,8 @@ def generate_cooling_cid_scenario(
     ----------
     scen : Scenario
         MESSAGE scenario to modify
-    magicc_file : Path
-        Path to MAGICC all_runs Excel file
+    magicc_df : pd.DataFrame
+        MAGICC output DataFrame (IAMC format)
     run_ids : tuple
         Run IDs for RIME prediction
     n_runs : int
@@ -1108,7 +1108,7 @@ def generate_cooling_cid_scenario(
 
     print("\n6. Running RIME predictions for capacity_factor (annual)...")
     cf_predictions = cached_rime_prediction(
-        magicc_file, run_ids, "capacity_factor", temporal_res="annual"
+        magicc_df, run_ids, "capacity_factor", temporal_res="annual"
     )
     print(f"   Got {len(cf_predictions)} prediction sets")
 
@@ -1119,11 +1119,13 @@ def generate_cooling_cid_scenario(
     )
     print(f"   capacity_factor shape: {cf_expected.shape}")
 
+    # Get source name from DataFrame
+    source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
+
     if use_relation_constraint:
         print("\n8. Adding Jones relation constraints...")
         commit_msg = (
-            f"CID cooling: Jones relation constraints for {magicc_file.stem.split('_')[-3]}f\n"
-            f"MAGICC: {magicc_file.name}\n"
+            f"CID cooling: Jones relation constraints for {source_name}\n"
             f"RIME: n_runs={n_runs}, variable=capacity_factor"
         )
         scen_updated = add_jones_relation_constraints(
@@ -1135,8 +1137,7 @@ def generate_cooling_cid_scenario(
         print(f"   capacity_factor: {len(cf_new)} new, {len(cf_old)} old rows")
 
         commit_msg = (
-            f"CID cooling projection: {magicc_file.stem.split('_')[-3]}f\n"
-            f"MAGICC: {magicc_file.name}\n"
+            f"CID cooling projection: {source_name}\n"
             f"RIME: n_runs={n_runs}, variable=capacity_factor"
         )
         scen_updated = replace_parameter(
