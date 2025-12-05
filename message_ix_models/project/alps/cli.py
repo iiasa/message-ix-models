@@ -460,6 +460,219 @@ def compare_cmd(model, scenarios, baseline, variable, output_dir, platform):
     print(f"\nResults saved to {output_path}")
 
 
+@cli.command("report")
+@click.option(
+    "--model",
+    required=True,
+    help="Model name"
+)
+@click.option(
+    "--scenario",
+    required=True,
+    help="Scenario name"
+)
+@click.option(
+    "--key",
+    type=click.Choice(["all", "cooling_capacity", "cooling_activity", "water_extraction"]),
+    default="all",
+    help="Report key: all (default), cooling_capacity, cooling_activity, water_extraction"
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(),
+    default=".",
+    help="Output directory for report files"
+)
+@click.option(
+    "--format",
+    type=click.Choice(["csv", "xlsx", "parquet"]),
+    default="csv",
+    help="Output format (default: csv)"
+)
+@click.option(
+    "--platform",
+    default="ixmp_dev",
+    help="ixmp platform name"
+)
+def report_cmd(model, scenario, key, output_dir, format, platform):
+    """Run water/cooling reporting on a solved scenario.
+
+    Extracts cooling and water data directly from genno aggregations:
+    - Cooling capacity by type (once-through, closed-loop, air, saline)
+    - Cooling activity by type
+    - Water extraction capacity
+
+    Examples:
+
+        # Full report (all variables)
+        mix-models alps report --model MODEL_NAME --scenario SCENARIO_NAME
+
+        # Only cooling capacity
+        mix-models alps report --model MODEL_NAME --scenario SCENARIO_NAME \\
+            --key cooling_capacity
+
+        # Output as Excel
+        mix-models alps report --model MODEL_NAME --scenario SCENARIO_NAME \\
+            --format xlsx --output-dir ./reports
+    """
+    from pathlib import Path
+    from ixmp import Platform
+    from message_ix import Scenario as MsgScenario
+
+    from .report import report_water_cooling
+
+    mp = Platform(platform)
+    sc = MsgScenario(mp, model=model, scenario=scenario)
+
+    if not sc.has_solution():
+        print(f"ERROR: Scenario {model}/{scenario} has no solution")
+        return
+
+    print(f"Running water/cooling report for {model}/{scenario}...")
+    # Map CLI key option to function keys parameter
+    keys_map = {
+        "all": None,  # None means all keys
+        "cooling_capacity": ["cooling_cap"],
+        "cooling_activity": ["cooling_act"],
+        "water_extraction": ["water_cap", "water_act"],
+    }
+    keys_param = keys_map.get(key)
+
+    df = report_water_cooling(
+        sc,
+        output_dir=Path(output_dir),
+        keys=keys_param,
+        format=format,
+    )
+
+    print(f"\nReport complete: {len(df)} rows")
+    if "variable" in df.columns:
+        print("\nVariables reported:")
+        for var in sorted(df["variable"].unique()):
+            n = len(df[df["variable"] == var])
+            print(f"  - {var}: {n} rows")
+
+
+@cli.command("report-batch")
+@click.option(
+    "--model",
+    required=True,
+    help="Model name"
+)
+@click.option(
+    "--pattern",
+    default=None,
+    help="Filter scenarios by pattern (e.g., 'cooling', 'nexus')"
+)
+@click.option(
+    "--scenarios",
+    default=None,
+    help="Comma-separated scenario names (alternative to --pattern)"
+)
+@click.option(
+    "--key",
+    type=click.Choice(["all", "cooling_capacity", "cooling_activity", "water_extraction"]),
+    default="all",
+    help="Report key (default: all)"
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(),
+    default=".",
+    help="Output directory for report files"
+)
+@click.option(
+    "--format",
+    type=click.Choice(["csv", "xlsx", "parquet"]),
+    default="csv",
+    help="Output format (default: csv)"
+)
+@click.option(
+    "--platform",
+    default="ixmp_dev",
+    help="ixmp platform name"
+)
+def report_batch_cmd(model, pattern, scenarios, key, output_dir, format, platform):
+    """Run water/cooling reporting on multiple scenarios.
+
+    Processes scenarios sequentially with garbage collection to manage memory.
+
+    Examples:
+
+        # Report all cooling scenarios
+        mix-models alps report-batch --model SSP_SSP2_v6.5_CID --pattern cooling
+
+        # Report specific scenarios
+        mix-models alps report-batch --model SSP_SSP2_v6.5_CID \\
+            --scenarios cooling_850f,cooling_1100f
+    """
+    import gc
+    import time
+    from pathlib import Path
+
+    from ixmp import Platform
+    from message_ix import Scenario as MsgScenario
+
+    from .report import report_water_cooling
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    mp = Platform(platform)
+
+    # Get scenario list
+    if scenarios:
+        scenario_list = [s.strip() for s in scenarios.split(",")]
+    else:
+        all_scenarios = mp.scenario_list(model=model, default=True)
+        if pattern:
+            all_scenarios = all_scenarios[all_scenarios["scenario"].str.contains(pattern)]
+        scenario_list = all_scenarios["scenario"].tolist()
+
+    print(f"Found {len(scenario_list)} scenarios")
+    if len(scenario_list) <= 20:
+        print(f"Scenarios: {scenario_list}")
+    print()
+
+    # Map CLI key option to function keys parameter
+    keys_map = {
+        "all": None,  # None means all keys
+        "cooling_capacity": ["cooling_cap"],
+        "cooling_activity": ["cooling_act"],
+        "water_extraction": ["water_cap", "water_act"],
+    }
+    keys_param = keys_map.get(key)
+
+    results = []
+    for scen_name in scenario_list:
+        start_time = time.time()
+
+        try:
+            sc = MsgScenario(mp, model=model, scenario=scen_name)
+
+            if not sc.has_solution():
+                print(f"  [{scen_name}] No solution, skipping")
+                results.append({"scenario": scen_name, "status": "no_solution", "rows": 0})
+                continue
+
+            df = report_water_cooling(sc, output_dir=output_path, keys=keys_param, format=format)
+            elapsed = time.time() - start_time
+
+            print(f"  [{scen_name}] {len(df)} rows, {elapsed:.1f}s")
+            results.append({"scenario": scen_name, "status": "ok", "rows": len(df), "time": elapsed})
+
+            del sc, df
+            gc.collect()
+
+        except Exception as e:
+            print(f"  [{scen_name}] ERROR: {e}")
+            results.append({"scenario": scen_name, "status": "error", "error": str(e)})
+
+    ok_count = len([r for r in results if r["status"] == "ok"])
+    print(f"\nCompleted {ok_count} / {len(scenario_list)} scenarios")
+    print(f"Output saved to {output_path}")
+
+
 @cli.command("validate")
 @click.option(
     "--model",
