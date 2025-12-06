@@ -13,12 +13,12 @@ from message_ix import Reporter, Scenario
 
 import message_ix_models.report
 from message_ix_models import ScenarioInfo, testing
-from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.testing import GHA, SOLVE_OPTIONS, bare_res
 from message_ix_models.util import silence_log
 
-from . import Config, build
+from . import build
+from .config import CL_SCENARIO, Config
 
 if TYPE_CHECKING:
     import pandas
@@ -181,7 +181,7 @@ def built_transport(
 @cache
 def _default_scenario_code() -> "Code":
     """Return a default scenario code for :meth:`.configure_build`."""
-    return get_cl_scenario()["SSP2"]
+    return CL_SCENARIO.get()["SSP2"]
 
 
 def simulated_solution(

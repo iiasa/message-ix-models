@@ -13,6 +13,7 @@ from pytest import mark, param
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import (
+    CL_SCENARIO,
     Config,
     build,
     constraint,
@@ -22,10 +23,10 @@ from message_ix_models.model.transport import (
     ldv,
     other,
     passenger,
+    policy,
     report,
     structure,
 )
-from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.model.transport.testing import (
     MARK,
     assert_units,
@@ -190,7 +191,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "cg share:n-y-cg": (HasUnits(""),),
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
     "votm:n-y": (HasUnits(""),),
-    key.price.base: (HasUnits("USD / km"),),
+    key.price: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
     key.pdt_nyt[0]: (HasUnits("passenger km / year"),),
     key.pdt_nyt[1]: (HasUnits("passenger km / year"),),
@@ -261,6 +262,11 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         ),
         Passenger(),
     ),
+    policy.TARGET: (
+        HasCoords({"type_emission": ["TCE"]}),
+        # No structure in base scenarios to accommodate these values → discard
+        HasCoords({"type_emission": ["CO2_shipping_IMO"]}, inverse=True),
+    ),
 }
 
 
@@ -279,7 +285,7 @@ def N_node(request) -> int:
 
 @pytest.fixture(scope="session")
 def scenario_code() -> Iterator["Code"]:
-    return get_cl_scenario()["SSP2"]
+    return CL_SCENARIO.get()["SSP2"]
 
 
 @MARK[10]
@@ -372,6 +378,8 @@ def test_bare_res(
         # ("R11", "B", dict(futures_scenario="A---")),
         # ("R11", "B", dict(futures_scenario="debug")),
         ("R12", "B", dict(code="SSP2")),
+        ("R12", "B", dict(code="SSP2 tax")),
+        ("R12", "B", dict(code="SSP2 exo price")),
         # ("R12", "B", dict(navigate_scenario="act+ele+tec")),
         ("R12", "B", dict(code="LED-SSP2")),
         ("R12", "B", dict(code="EDITS-CA")),
@@ -388,7 +396,7 @@ def test_debug(
     options: dict,
     N_node: int,
     *,
-    verbosity: Literal[0, 1, 2, 3] = 0,
+    verbosity: Literal[0, 1, 2, 3] = 1,
 ):
     """Check and debug particular steps in the transport build process.
 
@@ -432,6 +440,7 @@ def test_debug(
 
     # DEBUG Show and compute a different key
     # k = key.pdt_cny
+    k = "transport::policy+ixmp"
 
     # Show what will be computed
     # verbosity = True  # DEBUG Force printing the description
@@ -444,7 +453,7 @@ def test_debug(
     tmp = c.get(k)
 
     # DEBUG Handle a subset of the result for inspection
-    # print(tmp)
+    print(tmp)
 
     assert result, "1 or more checks failed"
     del tmp
