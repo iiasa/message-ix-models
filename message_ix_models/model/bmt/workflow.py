@@ -65,7 +65,7 @@ def generate(context: Context) -> Workflow:
     context.model.regions = "R12"
 
     # Define model name
-    model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM BMT-R12"
+    model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.2-BMT-R12"
 
     wf.add_step(
         "base",
@@ -78,40 +78,13 @@ def generate(context: Context) -> Workflow:
         "base cloned",
         "base",
         check_context,
-        # target="ixmp://ixmp-dev/SSP_SSP2_v4.0/baseline_DEFAULT_step_4",
-        target=f"{model_name}/baseline",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "base solved",
-        "base cloned",
-        solve,
-        model="MESSAGE",
-        target=f"{model_name}/baseline",
-        clone=False,
-    )
-
-    wf.add_step(
-        "M built",
-        "base solved",
-        build_M,
         target=f"{model_name}/baseline_M",
         clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "M solved",
-        "M built",
-        solve,
-        model="MESSAGE",
-        target=f"{model_name}/baseline_M",
-        clone=False,
     )
 
     wf.add_step(
         "B built",
-        "M solved",
+        "base cloned",
         build_B,
         target=f"{model_name}/baseline_BM",
         # 2025-09-08 baseline_M copied from SSP_SSP2_v6.1/baseline_DEFAULT_step_12
@@ -137,20 +110,19 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "BMT baseline solved",
+        "P built",
         "T built",
-        solve,
-        model="MESSAGE",
-        target=f"{model_name}/baseline_BMT",
+        build_PM,
+        target=f"{model_name}/baseline_BMTP",
         clone=False,
     )
 
     wf.add_step(
-        "P built",
         "BMT baseline solved",
-        build_PM,
+        "P built",
+        solve,
         model="MESSAGE",
-        target=f"{model_name}/baseline_BMP",
+        target=f"{model_name}/baseline_BMTP",
         clone=False,
     )
 
@@ -159,7 +131,7 @@ def generate(context: Context) -> Workflow:
         "BMT baseline solved",
         solve,
         model="MESSAGE",
-        target=f"{model_name}/baseline_BMT",
+        target=f"{model_name}/baseline_BMTP",
         clone=False,
     )
 
@@ -168,7 +140,7 @@ def generate(context: Context) -> Workflow:
         "NPi2030",
         solve,
         model="MESSAGE",
-        target=f"{model_name}/baseline_BMT",
+        target=f"{model_name}/baseline_BMTP",
         clone=False,
     )
 
@@ -186,7 +158,7 @@ def generate(context: Context) -> Workflow:
         "NDC2030",
         solve,
         model="MESSAGE",
-        target=f"{model_name}/baseline_BMT",
+        target=f"{model_name}/baseline_BMTP",
         clone=False,
     )
 
@@ -195,7 +167,7 @@ def generate(context: Context) -> Workflow:
         "NDC2030",
         solve,
         model="MESSAGE",
-        target=f"{model_name}/baseline_BMT",
+        target=f"{model_name}/baseline_BMTP",
         clone=False,
     )
 
