@@ -28,6 +28,9 @@ from message_ix_models.project.alps.cid_utils import (
     cached_rime_prediction,
     deinterleave_seasonal,
 )
+from message_ix_models.project.alps.replace_building_cids import (
+    generate_building_cid_scenario,
+)
 from message_ix_models.project.alps.replace_water_cids import (
     generate_cooling_cid_scenario,
     prepare_water_cids,
@@ -233,6 +236,8 @@ def generate_scenario(
     # Validate cid_type constraints
     if cid_type == "cooling" and temporal_res == "seasonal":
         raise ValueError("Cooling CID only supports annual temporal resolution")
+    if cid_type == "buildings" and temporal_res == "seasonal":
+        raise ValueError("Buildings CID only supports annual temporal resolution")
 
     if dry_run:
         print("  [DRY RUN] Validation passed")
@@ -282,9 +287,27 @@ def generate_scenario(
             scen, magicc_df, run_ids, temporal_res, n_runs
         )
     elif cid_type == "cooling":
-        scen_updated = generate_cooling_cid_scenario(scen, magicc_df, run_ids, n_runs)
+        # Skip cooling CID for no_climate (synthetic GWL) - just use cloned scenario as-is
+        if magicc_file is None:
+            print("\n5. Skipping cooling CID (no_climate) - no constraints applied")
+            scen.set_as_default()
+            print(f"   Using cloned scenario version {scen.version} as-is")
+            scen_updated = scen
+        else:
+            scen_updated = generate_cooling_cid_scenario(scen, magicc_df, run_ids, n_runs)
+    elif cid_type == "buildings":
+        # Skip buildings CID for no_climate (synthetic GWL)
+        if magicc_file is None:
+            print("\n5. Skipping buildings CID (no_climate) - no demand changes applied")
+            scen.set_as_default()
+            print(f"   Using cloned scenario version {scen.version} as-is")
+            scen_updated = scen
+        else:
+            scen_updated = generate_building_cid_scenario(
+                scen, magicc_df, n_runs=n_runs, coeff_scenario="S1"
+            )
     else:
-        raise ValueError(f"Unknown cid_type: {cid_type}. Expected 'nexus' or 'cooling'")
+        raise ValueError(f"Unknown cid_type: {cid_type}. Expected 'nexus', 'cooling', or 'buildings'")
 
     return scen_updated
 
@@ -471,9 +494,9 @@ def generate_all(
             if temp_res not in temporal_filter:
                 continue
 
-            # Skip seasonal for cooling (not supported)
-            if cid_type == "cooling" and temp_res == "seasonal":
-                print(f"  Skipping {budget}/{temp_res}: cooling only supports annual")
+            # Skip seasonal for cooling and buildings (not supported)
+            if cid_type in ("cooling", "buildings") and temp_res == "seasonal":
+                print(f"  Skipping {budget}/{temp_res}: {cid_type} only supports annual")
                 continue
 
             # Handle special budget values
@@ -482,8 +505,8 @@ def generate_all(
                 output_name = f"{cid_type}_no_climate"
             elif budget is None or budget == "" or budget == "baseline":
                 # CID from baseline emissions trajectory
-                # Cooling mode: no temporal suffix (only annual supported)
-                if cid_type == "cooling":
+                # Cooling/buildings mode: no temporal suffix (only annual supported)
+                if cid_type in ("cooling", "buildings"):
                     output_name = f"{cid_type}_baseline"
                 else:
                     output_name = f"{cid_type}_baseline_{temp_res}"
