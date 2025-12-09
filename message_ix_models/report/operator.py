@@ -419,7 +419,7 @@ def select_allow_empty(
     try:
         return genno.operator.select(qty, indexers=indexers, inverse=inverse, drop=drop)
     except KeyError:
-        return genno.Quantity([], coords={d: [] for d in qty.dims})
+        return type(qty)([], coords={d: [] for d in qty.dims})
 
 
 def select_expand(

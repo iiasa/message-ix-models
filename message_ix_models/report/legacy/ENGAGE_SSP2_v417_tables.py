@@ -763,7 +763,7 @@ def retr_lnd_cvr(units):
     vars["Forest|Afforestation and Reforestation"] = pp.land_out(
         lu_out_filter={
             "level": ["land_use_reporting"],
-            "commodity": ["Land Cover|Forest|Afforestation and" " Reforestation"],
+            "commodity": ["Land Cover|Forest|Afforestation and Reforestation"],
         }
     )
 
@@ -897,7 +897,7 @@ def retr_frst_prd(units):
     vars["Roundwood|Industrial Roundwood"] = pp.land_out(
         lu_out_filter={
             "level": ["land_use_reporting"],
-            "commodity": ["Forestry Production|Roundwood|Industrial" " Roundwood"],
+            "commodity": ["Forestry Production|Roundwood|Industrial Roundwood"],
         }
     )
 
@@ -1412,7 +1412,7 @@ def retr_othemi(var, units):
             lu_out_filter={
                 "level": ["land_use_reporting"],
                 "commodity": [
-                    "Emissions|CH4|Land Use|Agriculture|Enteric" " Fermentation"
+                    "Emissions|CH4|Land Use|Agriculture|Enteric Fermentation"
                 ],
             }
         )
@@ -1492,21 +1492,21 @@ def retr_othemi(var, units):
         vars["AFOLU|Land|Grassland Pastures"] = pp.land_out(
             lu_out_filter={
                 "level": ["land_use_reporting"],
-                "commodity": ["Emissions|N2O|Land Use|Agriculture|" "Pasture"],
+                "commodity": ["Emissions|N2O|Land Use|Agriculture|Pasture"],
             }
         )
 
         vars["AFOLU|Agriculture|Managed Soils"] = pp.land_out(
             lu_out_filter={
                 "level": ["land_use_reporting"],
-                "commodity": ["Emissions|N2O|Land Use|Agriculture|" "Cropland Soils"],
+                "commodity": ["Emissions|N2O|Land Use|Agriculture|Cropland Soils"],
             }
         )
 
         vars["AFOLU|Agriculture|Livestock|Manure Management"] = pp.land_out(
             lu_out_filter={
                 "level": ["land_use_reporting"],
-                "commodity": ["Emissions|N2O|Land Use|Agriculture|" "AWM"],
+                "commodity": ["Emissions|N2O|Land Use|Agriculture|AWM"],
             }
         )
 
@@ -3112,12 +3112,9 @@ def retr_CO2emi(units_emi, units_ene_mdl):
 
     vars["Energy|Supply|Gases|Coal|Fugitive"] = pp_utils._make_zero()
 
-    vars[
-        "Energy|Supply|Gases|Extraction|Combustion"
-    ] = _Other_gases_extr_comb + _Diff1 * (
-        abs(_Other_gases_extr_comb) / _Total_wo_BECCS
-    ).fillna(
-        0
+    vars["Energy|Supply|Gases|Extraction|Combustion"] = (
+        _Other_gases_extr_comb
+        + _Diff1 * (abs(_Other_gases_extr_comb) / _Total_wo_BECCS).fillna(0)
     )
 
     # _Diff1 is not disctributed across the variable
@@ -3148,32 +3145,24 @@ def retr_CO2emi(units_emi, units_ene_mdl):
 
     vars["Energy|Supply|Gases|Transportation|Fugitive"] = pp_utils._make_zero()
 
-    vars[
-        "Energy|Supply|Liquids|Biomass|Combustion"
-    ] = _Other_liquids_biomass_comb + _Diff1 * (
-        abs(_Other_liquids_biomass_comb_woBECCS) / _Total_wo_BECCS
-    ).fillna(
-        0
+    vars["Energy|Supply|Liquids|Biomass|Combustion"] = (
+        _Other_liquids_biomass_comb
+        + _Diff1
+        * (abs(_Other_liquids_biomass_comb_woBECCS) / _Total_wo_BECCS).fillna(0)
     )
 
     vars["Energy|Supply|Liquids|Biomass|Fugitive"] = pp_utils._make_zero()
 
-    vars[
-        "Energy|Supply|Liquids|Coal|Combustion"
-    ] = _Other_liquids_coal_comb + _Diff1 * (
-        abs(_Other_liquids_coal_comb) / _Total_wo_BECCS
-    ).fillna(
-        0
+    vars["Energy|Supply|Liquids|Coal|Combustion"] = (
+        _Other_liquids_coal_comb
+        + _Diff1 * (abs(_Other_liquids_coal_comb) / _Total_wo_BECCS).fillna(0)
     )
 
     vars["Energy|Supply|Liquids|Coal|Fugitive"] = pp_utils._make_zero()
 
-    vars[
-        "Energy|Supply|Liquids|Extraction|Combustion"
-    ] = _Other_liquids_extr_comb + _Diff1 * (
-        abs(_Other_liquids_extr_comb) / _Total_wo_BECCS
-    ).fillna(
-        0
+    vars["Energy|Supply|Liquids|Extraction|Combustion"] = (
+        _Other_liquids_extr_comb
+        + _Diff1 * (abs(_Other_liquids_extr_comb) / _Total_wo_BECCS).fillna(0)
     )
 
     vars["Energy|Supply|Liquids|Extraction|Fugitive"] = pp_utils._make_zero()
@@ -3210,12 +3199,9 @@ def retr_CO2emi(units_emi, units_ene_mdl):
     vars["Energy|Supply|Solids|Coal|Combustion"] = pp_utils._make_zero()
     vars["Energy|Supply|Solids|Coal|Fugitive"] = pp_utils._make_zero()
 
-    vars[
-        "Energy|Supply|Solids|Extraction|Combustion"
-    ] = _Other_solids_coal_trans_comb + _Diff1 * (
-        abs(_Other_solids_coal_trans_comb) / _Total_wo_BECCS
-    ).fillna(
-        0
+    vars["Energy|Supply|Solids|Extraction|Combustion"] = (
+        _Other_solids_coal_trans_comb
+        + _Diff1 * (abs(_Other_solids_coal_trans_comb) / _Total_wo_BECCS).fillna(0)
     )
 
     vars["Energy|Supply|Solids|Extraction|Fugitive"] = pp_utils._make_zero()
@@ -4061,7 +4047,6 @@ def retr_pe(units, method=None):
     vars["Other"] = pp.inp("LH2_bunker", units)
 
     if method != "substitution":
-
         # ------------------------------------
         # Primary Energy Electricity from coal
         # ------------------------------------
