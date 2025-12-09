@@ -106,9 +106,10 @@ def generate_building_cid_scenario(
 
     # Replace in single transact
     with scen.transact(f"Inject building CIDs ({coeff_scenario})"):
-        # Get existing parameters
-        rc_spec = scen.par("rc_spec")
-        rc_therm = scen.par("rc_therm")
+        # Get existing demand and filter by commodity
+        demand = scen.par("demand")
+        rc_spec = demand[demand["commodity"] == "rc_spec"].copy()
+        rc_therm = demand[demand["commodity"] == "rc_therm"].copy()
 
         # Merge fractions
         rc_spec = rc_spec.merge(
@@ -155,19 +156,19 @@ def generate_building_cid_scenario(
         rc_spec["value"] = rc_spec["value"] + rc_spec["cool_add"]
         rc_therm["value"] = rc_therm["value"] + rc_therm["heat_add"]
 
-        # Clean up columns for add_par
-        rc_spec_cols = [c for c in rc_spec.columns if c not in [
-            "frac_resid_cool", "frac_comm_cool", "cool_frac", "cool_add"
-        ]]
-        rc_therm_cols = [c for c in rc_therm.columns if c not in [
-            "frac_resid_heat", "frac_comm_heat", "heat_frac", "heat_add"
-        ]]
+        # Clean up columns for add_par - keep only demand parameter columns
+        demand_cols = ["node", "commodity", "level", "year", "time", "value", "unit"]
+        rc_spec_clean = rc_spec[demand_cols].copy()
+        rc_therm_clean = rc_therm[demand_cols].copy()
 
-        # Remove old and add new
-        scen.remove_par("rc_spec", rc_spec[rc_spec_cols])
-        scen.add_par("rc_spec", rc_spec[rc_spec_cols])
+        # Remove old rc_spec/rc_therm rows and add updated ones
+        old_rc_spec = demand[demand["commodity"] == "rc_spec"]
+        old_rc_therm = demand[demand["commodity"] == "rc_therm"]
 
-        scen.remove_par("rc_therm", rc_therm[rc_therm_cols])
-        scen.add_par("rc_therm", rc_therm[rc_therm_cols])
+        scen.remove_par("demand", old_rc_spec)
+        scen.add_par("demand", rc_spec_clean)
+
+        scen.remove_par("demand", old_rc_therm)
+        scen.add_par("demand", rc_therm_clean)
 
     return scen
