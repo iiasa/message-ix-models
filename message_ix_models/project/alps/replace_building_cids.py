@@ -14,6 +14,10 @@ from message_ix_models.util import package_data_path
 from .building_energy import compute_energy_demand_ensemble, get_gsat_ensemble
 from .constants import MESSAGE_YEARS
 
+# Unit conversion: demand parameter expects GWa, building_energy outputs EJ
+# 1 GWa = 0.031536 EJ, so 1 EJ = 31.71 GWa
+EJ_TO_GWA = 1.0 / 0.031536  # ≈ 31.71
+
 
 def load_sector_fractions() -> pd.DataFrame:
     """Load sector fractions for cooling/heating demand decomposition."""
@@ -119,8 +123,12 @@ def generate_building_cid_scenario(
     Scenario
         Modified scenario with building CIDs
     """
-    # Compute building CIDs
+    # Compute building CIDs (returns EJ)
     cooling_total, heating_total = compute_building_cids(magicc_df, n_runs, coeff_scenario)
+
+    # Convert EJ to GWa for MESSAGE demand parameter
+    cooling_total["value"] = cooling_total["value"] * EJ_TO_GWA
+    heating_total["value"] = heating_total["value"] * EJ_TO_GWA
 
     # Load sector fractions
     fractions = load_sector_fractions()
