@@ -41,7 +41,8 @@ def cli():
 def emissions_report(**kwargs):
     """Run complete emissions reporting workflow."""
     from .run_emissions_workflow import main
-    main(**kwargs)
+    # Call .callback() to bypass Click's context creation on the decorated function
+    main.callback(**kwargs)
 
 
 @cli.command("run-magicc")
