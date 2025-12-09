@@ -173,8 +173,8 @@ _*.xlsx
 ~$*.xlsx
 
 # Reporting output directories
-message_ix_models/data/report/legacy/reporting_output/
-message_ix_models/report/legacy/reporting_output/
+#message_ix_models/data/report/legacy/reporting_output/
+#message_ix_models/report/legacy/reporting_output/
 
 # Analysis data directories
 /data/
