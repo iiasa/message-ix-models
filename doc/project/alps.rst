@@ -93,90 +93,19 @@ They are basins 0, 141, and 154; original scenario values are preserved for thes
 Seasonal Transformation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-RIME outputs seasonal values (dry, wet) based on each basin's hydrological regime.
-For computatinal tractability we fix MESSAGE to use: h1 (Jan-Jun), h2 (Jul-Dec).
-RIME seasonal emulators output annualized rates (km³/year), not seasonal volumes.
-A transformation matrix :math:`\mathbf{T}` converts these to annualized timeslice rates for MESSAGE.
-
-A basin's "dry season" may span different calendar months depending on hemisphere and local climate.
-Basin 1 has dry season in May-December; Basin 50 might have dry season in January-June.
+The transformation is equivalent to having monthly timeseries per basin and aggregating into two half-year periods.
+RIME seasonal emulators were developed first to analyze per-basin seasonality (dry/wet regimes vary by hemisphere and local climate).
+MESSAGE computational constraints then required aggregation to two timeslices: h1 (Jan-Jun) and h2 (Jul-Dec).
 
 The file :file:`joint_bifurcation_mapping_CWatM_2step.csv` specifies which months belong to dry vs wet season for each basin.
-
-Given:
-
-- :math:`D`: Set of month numbers (1-12) in dry season
-- :math:`W`: Set of month numbers in wet season
-- :math:`H_1 = \{1,2,3,4,5,6\}`: Months in timeslice h1
-- :math:`H_2 = \{7,8,9,10,11,12\}`: Months in timeslice h2
-
-Compute overlap counts:
-
-.. math::
-
-   n_{d,h1} = |D \cap H_1|, \quad n_{d,h2} = |D \cap H_2|
-
-   n_{w,h1} = |W \cap H_1|, \quad n_{w,h2} = |W \cap H_2|
-
-Build the transformation matrix by dividing by timeslice length (not season length):
-
-.. math::
-
-   \mathbf{T} = \begin{bmatrix}
-   n_{d,h1}/6 & n_{w,h1}/6 \\
-   n_{d,h2}/6 & n_{w,h2}/6
-   \end{bmatrix}
-
-Apply transformation:
+A transformation matrix redistributes seasonal rates to fixed timeslices based on month overlap:
 
 .. math::
 
    \begin{bmatrix} R_{h1} \\ R_{h2} \end{bmatrix} = \mathbf{T} \begin{bmatrix} R_{dry} \\ R_{wet} \end{bmatrix}
 
-Each column sums to :math:`n_{\text{season}}/6`, ensuring annual volume is preserved:
-
-.. math::
-
-   V_{\text{annual}} = R_{dry} \times \frac{|D|}{12} + R_{wet} \times \frac{|W|}{12} = R_{h1} \times 0.5 + R_{h2} \times 0.5
-
-Worked example (Basin 1)
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-From the bifurcation CSV, Basin 1 has:
-
-- Wet months: {1, 2, 3, 4} (January-April)
-- Dry months: {5, 6, 7, 8, 9, 10, 11, 12} (May-December)
-
-Overlap counts:
-
-.. math::
-
-   n_{d,h1} = |\{5,6,7,8,9,10,11,12\} \cap \{1,2,3,4,5,6\}| = |\{5,6\}| = 2
-
-   n_{d,h2} = |\{5,6,7,8,9,10,11,12\} \cap \{7,8,9,10,11,12\}| = 6
-
-   n_{w,h1} = |\{1,2,3,4\} \cap \{1,2,3,4,5,6\}| = 4
-
-   n_{w,h2} = |\{1,2,3,4\} \cap \{7,8,9,10,11,12\}| = 0
-
-Transformation matrix:
-
-.. math::
-
-   \mathbf{T} = \begin{bmatrix} 2/6 & 4/6 \\ 6/6 & 0/6 \end{bmatrix} = \begin{bmatrix} 0.333 & 0.667 \\ 1.000 & 0.000 \end{bmatrix}
-
-Interpretation:
-
-- h1 (Jan-Jun) receives 33% of dry-season rate + 67% of wet-season rate
-- h2 (Jul-Dec) receives 100% of dry-season rate + 0% of wet-season rate
-
-With :math:`R_{dry} = 100` km³/yr, :math:`R_{wet} = 200` km³/yr:
-
-.. math::
-
-   \begin{bmatrix} R_{h1} \\ R_{h2} \end{bmatrix} = \begin{bmatrix} 0.333 & 0.667 \\ 1.000 & 0.000 \end{bmatrix} \begin{bmatrix} 100 \\ 200 \end{bmatrix} = \begin{bmatrix} 166.7 \\ 100.0 \end{bmatrix} \text{ km}^3/\text{yr}
-
-Volume check: :math:`100 \times \frac{8}{12} + 200 \times \frac{4}{12} = 133.3` km³ = :math:`166.7 \times 0.5 + 100.0 \times 0.5 = 133.3` km³.
+where :math:`\mathbf{T}_{ij}` is the fraction of season :math:`j` months falling in timeslice :math:`i`, divided by 6.
+Annual volume is preserved since each column sums to the season's share of the year.
 
 Thermoelectric Capacity Factor
 ------------------------------
@@ -204,7 +133,7 @@ The capacity factor dataset :file:`r12_capacity_gwl_ensemble.nc` was produced th
 1. Distributional downscaling from 86 countries to R12 regions using LOWESS/isotonic regression
 2. Variance restoration via block bootstrap with coverage-based shrinkage
 3. Ensemble generation (50 realizations × 15 GCM-SSP combinations)
-4. GWL binning at 0.1°C increments
+4. GWL binning at :math:`0.1°\text{C}` increments
 
 Capacity factors become ``relation_activity`` constraints that bound freshwater cooling technology activity relative to parent power plant activity:
 
@@ -244,23 +173,24 @@ The following MESSAGE parameters are modified:
 Building Energy Intensity
 -------------------------
 
-Building CIDs modify space cooling (``rc_spec``) and heating (``rc_therm``) demands based on CHILLED energy intensity emulators.
+Building CIDs modify space cooling (``rc_spec``) and heating (``rc_therm``) demands based on RIME energy intensity emulators.
+These emulators are derived from the CHILLED building energy model, processed through the same RIME framework used for water and cooling CIDs.
 
 Total energy demand is decomposed into climate and non-climate components.
 The CID replacement preserves non-climate drivers (efficiency improvements, AC adoption, behavioral changes) while updating the climate response:
 
 .. math::
 
-   E(t, r, a) = \gamma(t, r, a) \times C(r, a, \text{GSAT}(t)) \times F(t, r, a)
+   E(t, r, a) = \gamma(t, r, a) \times \text{EI}(r, a, \text{GSAT}(t)) \times F(t, r, a)
 
 where:
 
 - :math:`\gamma` is the correction coefficient (dimensionless), capturing non-climate drivers
-- :math:`C` is CHILLED energy intensity at year-specific GSAT (MJ/m²)
+- :math:`\text{EI}` is RIME energy intensity at year-specific GSAT (MJ/m²)
 - :math:`F` is floor area from STURM projections (Mm²)
 - :math:`t` is year, :math:`r` is R12 region, :math:`a` is building archetype
 
-The coefficient :math:`\gamma` isolates non-climate drivers by comparing baseline demand to a reference climate state (GWL = 1.2°C):
+The coefficient :math:`\gamma` isolates non-climate drivers by comparing baseline demand to a reference climate state (:math:`\text{GWL} = 1.2°\text{C}`):
 
 .. math::
 
@@ -295,13 +225,18 @@ The following MESSAGE parameters are modified:
 GMT Range and Clipping
 ======================
 
-RIME emulators have empirical support for GMT ∈ [0.6°C, 7.4°C].
+RIME emulators have empirical support for :math:`\text{GMT} \in [0.6, 7.4]°\text{C}`.
+This is becasuse they are derived from ISIMIP3b datasets which cover ssp-rcp : 126,370,585 over 5 GCMs gfdl-esm4, ipsl-cm6a-lr, mpi-esm1-2-hr
+,mri-esm2-0, ukesm1-0-ll.
+
 Overshoot scenarios see temperatures fall in late century.
+This means very lower emissions scenarios, exit the support (ex: sub 1000 Gton full century budget scenarios).
+In general we choose the reference range 1100f - 2350f to cover 250 Gton intervals. For subsequent work VLLO style scenarios would be recommended.
 
 Mitigation strategy:
 
-- Annual emulators: clip GMT below 0.6°C to [0.6°C, 0.9°C] with beta(2,5) noise
-- Seasonal emulators: clip to [0.8°C, 1.2°C] (higher threshold due to NaN coverage at low GWL)
+- Annual emulators: clip GMT below :math:`0.6°\text{C}` to :math:`[0.6, 0.9]°\text{C}` with :math:`\text{Beta}(2,5)` noise
+- Seasonal emulators: clip to :math:`[0.8, 1.2]°\text{C}` (higher threshold due to NaN coverage at low GWL)
 
 Scenario Generation
 ===================
