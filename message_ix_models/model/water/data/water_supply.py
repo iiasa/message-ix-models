@@ -13,8 +13,8 @@ from message_ix_models.model.water.utils import (
     GWa_KM3_TO_GWa_MCM,
     filter_basins_by_region,
     get_vintage_and_active_years,
-    map_month_to_timeslice,
 )
+from message_ix_models.project.alps.timeslice import map_months_to_timeslices
 from message_ix_models.util import (
     broadcast,
     package_data_path,
@@ -129,10 +129,8 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
 
         # Map month to timeslice name
-        n_time = len(context.time)
-        df_sw["time"] = df_sw["date"].apply(
-            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
-        )
+        months = pd.DatetimeIndex(df_sw["date"]).month
+        df_sw["time"] = map_months_to_timeslices(months, context.timeslice_months)
 
         # Aggregate if multiple months map to same timeslice (n_time < 12)
         if n_time < 12:
@@ -1091,10 +1089,8 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
 
         # Map month to timeslice name
-        n_time = len(context.time)
-        df_env["time"] = df_env["years"].apply(
-            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
-        )
+        months = pd.DatetimeIndex(df_env["years"]).month
+        df_env["time"] = map_months_to_timeslices(months, context.timeslice_months)
 
         df_env["Region"] = df_env["Region"].map(df_x["BCU_name"])
 

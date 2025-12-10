@@ -12,8 +12,8 @@ from message_ix import make_df
 from message_ix_models.model.water.utils import (
     KM3_TO_MCM,
     get_days_per_timeslice,
-    map_month_to_timeslice,
 )
+from message_ix_models.project.alps.timeslice import map_months_to_timeslices
 from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
@@ -252,7 +252,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         )
 
         # Map month numbers to timeslice names (h1, h2, ..., hn)
-        df_m["time"] = df_m["month"].apply(lambda m: map_month_to_timeslice(m, n_time))
+        df_m["time"] = map_months_to_timeslices(df_m["month"], context.timeslice_months)
         df_m = df_m[["year", "pid", "variable", "value", "time"]]
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
 
@@ -885,10 +885,8 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
 
         # Map month to timeslice name
-        n_time = len(context.time)
-        df_sw["time"] = df_sw["years"].apply(
-            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
-        )
+        months = pd.DatetimeIndex(df_sw["years"]).month
+        df_sw["time"] = map_months_to_timeslices(months, context.timeslice_months)
 
         df_sw["Region"] = df_sw["Region"].map(df_x["BCU_name"])
 
@@ -924,10 +922,9 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
 
-        # Map month to timeslice name (reuse n_time from df_sw)
-        df_gw["time"] = df_gw["years"].apply(
-            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
-        )
+        # Map month to timeslice name
+        months = pd.DatetimeIndex(df_gw["years"]).month
+        df_gw["time"] = map_months_to_timeslices(months, context.timeslice_months)
 
         df_gw["Region"] = df_gw["Region"].map(df_x["BCU_name"])
 

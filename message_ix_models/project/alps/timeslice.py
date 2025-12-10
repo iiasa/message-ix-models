@@ -16,28 +16,64 @@ from message_ix_models import Context
 log = logging.getLogger(__name__)
 
 
-def generate_uniform_timeslices(n_time):
-    """Generate uniform timeslice structure.
+def map_months_to_timeslices(months, timeslice_months: list[set]) -> list:
+    """Map month numbers to timeslice names.
+
+    Parameters
+    ----------
+    months : array-like
+        Month numbers (1-12)
+    timeslice_months : list of set
+        Months belonging to each timeslice, e.g. [{1,6,7,8,9,10,11,12}, {2,3,4,5}]
+
+    Returns
+    -------
+    list of str
+        Timeslice names (h1, h2, ...)
+    """
+    month_to_slice = {}
+    for i, ts_months in enumerate(timeslice_months):
+        for m in ts_months:
+            month_to_slice[m] = f"h{i+1}"
+    return [month_to_slice[m] for m in months]
+
+
+def generate_timeslices(n_time, split=None):
+    """Generate timeslice structure with specified durations.
 
     Parameters
     ----------
     n_time : int
         Number of timeslices to create
+    split : list of int, optional
+        Number of months per timeslice. Must sum to 12.
+        If None, uses uniform split (12/n_time months each).
+        Example: [10, 2] for 10-month h1, 2-month h2.
 
     Returns
     -------
     pd.DataFrame
         DataFrame with columns: time, lvl_temporal, parent_time, duration_time
     """
-    times = [f"h{i+1}" for i in range(n_time)]
-    duration_value = 1.0 / n_time
+    times = [f"h{i + 1}" for i in range(n_time)]
 
-    df_time = pd.DataFrame({
-        "time": times,
-        "lvl_temporal": ["subannual"] * n_time,
-        "parent_time": ["year"] * n_time,
-        "duration_time": [duration_value] * n_time
-    })
+    if split is None:
+        durations = [1.0 / n_time] * n_time
+    else:
+        if len(split) != n_time:
+            raise ValueError(f"split length {len(split)} != n_time {n_time}")
+        if sum(split) != 12:
+            raise ValueError(f"split must sum to 12, got {sum(split)}")
+        durations = [s / 12 for s in split]
+
+    df_time = pd.DataFrame(
+        {
+            "time": times,
+            "lvl_temporal": ["subannual"] * n_time,
+            "parent_time": ["year"] * n_time,
+            "duration_time": durations,
+        }
+    )
 
     return df_time
 
@@ -142,8 +178,18 @@ def par_setup(sc, par_update):
 
 
 def par_time_update(
-    sc, parname, data_dict, index_col, item_list, n1, nn, n_time, df_time,
-    tec_inp, tec_only_inp, sc_ref=None
+    sc,
+    parname,
+    data_dict,
+    index_col,
+    item_list,
+    n1,
+    nn,
+    n_time,
+    df_time,
+    tec_inp,
+    tec_only_inp,
+    sc_ref=None,
 ):
     """Add timeslice dimension to parameters.
 
@@ -214,7 +260,9 @@ def par_time_update(
                         if col == "time_origin":
                             df_new.loc[df_new["technology"].isin(tec_inp), col] = ti
                         elif col == "time_dest":
-                            df_new.loc[~df_new["technology"].isin(tec_only_inp), col] = ti
+                            df_new.loc[
+                                ~df_new["technology"].isin(tec_only_inp), col
+                            ] = ti
                         else:
                             df_new[col] = ti
                     df_new["value"] *= ratio[df_time["time"].tolist().index(ti)]
@@ -263,7 +311,9 @@ def remove_cooling(sc, tec_list):
                 sc.remove_set("level", x)
     tec_list = [x for x in tec_list if x not in tec_cool]
     tec_rem = list(set([x.split("__")[0] for x in tec_cool]))
-    log.info(f"Cooling technologies for {tec_rem}, and cooling commodities/levels removed.")
+    log.info(
+        f"Cooling technologies for {tec_rem}, and cooling commodities/levels removed."
+    )
     return sorted(tec_list)
 
 
@@ -365,7 +415,7 @@ def add_timeslices(
     sc = scenario
 
     # Generate uniform timeslice structure
-    df_time = generate_uniform_timeslices(n_time)
+    df_time = generate_timeslices(n_time)
     times = df_time["time"].tolist()
 
     # Update sets related to time
@@ -384,14 +434,20 @@ def add_timeslices(
     tec_inp = sorted(set(sc.par("input", {"commodity": coms})["technology"]))
 
     # Exclude technologies with zero output
-    df_rem_out = set(remove_data_zero(sc, "output", {"technology": tec_out})["technology"])
+    df_rem_out = set(
+        remove_data_zero(sc, "output", {"technology": tec_out})["technology"]
+    )
     tec_out = sorted([x for x in tec_out if x not in df_rem_out])
 
-    df_rem_in = set(remove_data_zero(sc, "input", {"technology": tec_inp})["technology"])
+    df_rem_in = set(
+        remove_data_zero(sc, "input", {"technology": tec_inp})["technology"]
+    )
     tec_inp = sorted([x for x in tec_inp if x not in df_rem_in])
 
     # Technologies with output to 'useful' level
-    use_tec = set(sc.par("output", {"commodity": sectors, "level": "useful"})["technology"])
+    use_tec = set(
+        sc.par("output", {"commodity": sectors, "level": "useful"})["technology"]
+    )
 
     # Technologies with only input needed at timeslice
     tec_only_inp = [x for x in tec_inp if x not in tec_out and x not in use_tec]
@@ -432,8 +488,17 @@ def add_timeslices(
         while n1 < n_time:
             nn = min([n_time, n1 + interval - 1])
             par_time_update(
-                sc, parname, data_dict, index_col, item_list, n1, nn,
-                n_time, df_time, tec_inp, tec_only_inp
+                sc,
+                parname,
+                data_dict,
+                index_col,
+                item_list,
+                n1,
+                nn,
+                n_time,
+                df_time,
+                tec_inp,
+                tec_only_inp,
             )
             n1 = n1 + interval
         log.info(f'Time slices added to "{parname}".')
@@ -442,7 +507,9 @@ def add_timeslices(
     with sc.transact("Subannual timeslices added"):
         for t in tec_list:
             sc.add_cat("technology", "time_slice", t)
-        log.info('Technologies active at time slice level saved with type_tec "time_slice".')
+        log.info(
+            'Technologies active at time slice level saved with type_tec "time_slice".'
+        )
 
         # Fix zero capacity factors for VRE
         tecs = ["wind_ppl", "wind_ppf", "solar_pv_ppl", "hydro_lc", "hydro_hc"]
@@ -482,7 +549,7 @@ def setup_timeslices(scenario, n_time: int, context):
     log.info(f"Setting up {n_time} timeslices (basic structure only)")
 
     # Generate uniform timeslice structure
-    df_time = generate_uniform_timeslices(n_time)
+    df_time = generate_timeslices(n_time)
 
     # Add time sets and hierarchy
     time_setup(scenario, df_time)
@@ -502,10 +569,7 @@ def setup_timeslices(scenario, n_time: int, context):
 
 
 def add_electricity_router(
-    scenario,
-    n_time: int,
-    commodity: str = 'electr',
-    router_name: str = 'electr_router'
+    scenario, n_time: int, commodity: str = "electr", router_name: str = "electr_router"
 ):
     """Add router technology to bridge annual electricity to subannual timeslices.
 
@@ -551,62 +615,70 @@ def add_electricity_router(
         # For each node
         for node in nodes:
             # Input: consume electricity at annual level
-            input_data = pd.DataFrame({
-                'node_loc': node,
-                'technology': router_name,
-                'year_vtg': years,
-                'year_act': years,
-                'mode': 'M1',
-                'node_origin': node,
-                'commodity': commodity,
-                'level': 'secondary',
-                'time': 'year',
-                'time_origin': 'year',
-                'value': 1.0,
-                'unit': 'GWa'
-            })
-            scenario.add_par('input', input_data)
+            input_data = pd.DataFrame(
+                {
+                    "node_loc": node,
+                    "technology": router_name,
+                    "year_vtg": years,
+                    "year_act": years,
+                    "mode": "M1",
+                    "node_origin": node,
+                    "commodity": commodity,
+                    "level": "secondary",
+                    "time": "year",
+                    "time_origin": "year",
+                    "value": 1.0,
+                    "unit": "GWa",
+                }
+            )
+            scenario.add_par("input", input_data)
 
             # Output: produce electricity to each timeslice
             for t in times:
-                output_data = pd.DataFrame({
-                    'node_loc': node,
-                    'technology': router_name,
-                    'year_vtg': years,
-                    'year_act': years,
-                    'mode': 'M1',
-                    'node_dest': node,
-                    'commodity': commodity,
-                    'level': 'secondary',
-                    'time': 'year',
-                    'time_dest': t,
-                    'value': 1.0,
-                    'unit': 'GWa'
-                })
-                scenario.add_par('output', output_data)
+                output_data = pd.DataFrame(
+                    {
+                        "node_loc": node,
+                        "technology": router_name,
+                        "year_vtg": years,
+                        "year_act": years,
+                        "mode": "M1",
+                        "node_dest": node,
+                        "commodity": commodity,
+                        "level": "secondary",
+                        "time": "year",
+                        "time_dest": t,
+                        "value": 1.0,
+                        "unit": "GWa",
+                    }
+                )
+                scenario.add_par("output", output_data)
 
             # Technical lifetime
-            lifetime_data = pd.DataFrame({
-                'node_loc': node,
-                'technology': router_name,
-                'year_vtg': years,
-                'value': 1,  # 1 year lifetime (instantly available)
-                'unit': 'y'
-            })
-            scenario.add_par('technical_lifetime', lifetime_data)
+            lifetime_data = pd.DataFrame(
+                {
+                    "node_loc": node,
+                    "technology": router_name,
+                    "year_vtg": years,
+                    "value": 1,  # 1 year lifetime (instantly available)
+                    "unit": "y",
+                }
+            )
+            scenario.add_par("technical_lifetime", lifetime_data)
 
             # Capacity factor (always available)
             for t in times:
-                cf_data = pd.DataFrame({
-                    'node_loc': node,
-                    'technology': router_name,
-                    'year_vtg': years,
-                    'year_act': years,
-                    'time': t,
-                    'value': 1.0,
-                    'unit': '-'
-                })
-                scenario.add_par('capacity_factor', cf_data)
+                cf_data = pd.DataFrame(
+                    {
+                        "node_loc": node,
+                        "technology": router_name,
+                        "year_vtg": years,
+                        "year_act": years,
+                        "time": t,
+                        "value": 1.0,
+                        "unit": "-",
+                    }
+                )
+                scenario.add_par("capacity_factor", cf_data)
 
     log.info(f"Router technology {router_name} added successfully")
     return scenario

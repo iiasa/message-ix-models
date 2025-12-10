@@ -45,7 +45,7 @@ from message_ix_models.project.alps.rime import (
 )
 from message_ix_models.project.alps.timeslice import (
     duration_time,
-    generate_uniform_timeslices,
+    generate_timeslices,
     time_setup,
 )
 
@@ -106,10 +106,10 @@ def load_config(config_path: Path) -> dict:
     return config
 
 
-def add_timeslices_to_scenario(scenario: Scenario, n_time: int = 2) -> Scenario:
+def add_timeslices_to_scenario(
+    scenario: Scenario, n_time: int = 2, split: list = None
+) -> Scenario:
     """Add timeslice structure to scenario.
-
-    Creates h1, h2 timeslices with uniform duration (0.5 each).
 
     Parameters
     ----------
@@ -117,15 +117,18 @@ def add_timeslices_to_scenario(scenario: Scenario, n_time: int = 2) -> Scenario:
         MESSAGE scenario to modify (must be checked out)
     n_time : int
         Number of timeslices (default: 2 for seasonal)
+    split : list of int, optional
+        Number of months per timeslice. Must sum to 12.
+        If None, uses uniform split. Example: [10, 2] for optimal dry/wet.
 
     Returns
     -------
     Scenario
         Modified scenario with timeslices
     """
-    log.info(f"Adding {n_time} timeslices to scenario...")
+    log.info(f"Adding {n_time} timeslices to scenario with split={split}...")
 
-    df_time = generate_uniform_timeslices(n_time)
+    df_time = generate_timeslices(n_time, split)
     time_setup(scenario, df_time)
     duration_time(scenario, df_time)
 
@@ -298,8 +301,15 @@ def _generate_nexus_cid(
         qr_dry = _ndarray_to_dataframe(qr_dry_arr, years, basin_mapping)
         qr_wet = _ndarray_to_dataframe(qr_wet_arr, years, basin_mapping)
         log.debug(f"qtot_dry shape: {qtot_dry.shape}, qr_dry shape: {qr_dry.shape}")
+
+        context = Context.get_instance(-1)
+        timeslice_months = context.timeslice_months
         sw_data, gw_data, share_data = prepare_water_cids(
-            (qtot_dry, qtot_wet), (qr_dry, qr_wet), scen, temporal_res="seasonal"
+            (qtot_dry, qtot_wet),
+            (qr_dry, qr_wet),
+            scen,
+            temporal_res="seasonal",
+            timeslice_months=timeslice_months,
         )
 
     sw_new, sw_old = sw_data
