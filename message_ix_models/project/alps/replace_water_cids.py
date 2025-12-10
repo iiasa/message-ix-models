@@ -217,7 +217,9 @@ def transform_seasonal_to_timeslice(
             dry_months = basin_row.iloc[0]["dry_months"]
 
             # Compute transformation matrix for this basin
-            T = compute_season_to_timeslice_matrix(wet_months, dry_months, timeslice_months)
+            T = compute_season_to_timeslice_matrix(
+                wet_months, dry_months, timeslice_months
+            )
 
             # Apply transformation: [h1, h2] = T @ [dry, wet]
             for j in range(n_years):
@@ -491,49 +493,4 @@ def replace_water_availability(
         scenario.add_par("share_commodity_lo", share_new)
 
     scenario.set_as_default()
-    return scenario
-
-
-# ==============================================================================
-# Generic CID Replacement Helper
-# ==============================================================================
-
-
-def replace_parameter(
-    scenario: Scenario,
-    parameter: str,
-    old_df: pd.DataFrame,
-    new_df: pd.DataFrame,
-    commit_message: str,
-    set_default: bool = True,
-) -> Scenario:
-    """Atomically replace parameter values using transact().
-
-    Parameters
-    ----------
-    scenario : Scenario
-        MESSAGE scenario to modify
-    parameter : str
-        Parameter name (e.g., 'demand', 'capacity_factor', 'share_commodity_lo')
-    old_df : pd.DataFrame
-        Existing parameter rows to remove
-    new_df : pd.DataFrame
-        New parameter rows to add
-    commit_message : str
-        Annotation for scenario commit
-    set_default : bool
-        Whether to mark scenario as default after commit (default: True)
-
-    Returns
-    -------
-    Scenario
-        Modified scenario (committed)
-    """
-    with scenario.transact(commit_message):
-        scenario.remove_par(parameter, old_df)
-        scenario.add_par(parameter, new_df)
-
-    if set_default:
-        scenario.set_as_default()
-
     return scenario
