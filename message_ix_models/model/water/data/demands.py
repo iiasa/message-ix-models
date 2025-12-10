@@ -2,21 +2,27 @@
 
 import os
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from message_ix import make_df
 
-from message_ix_models.model.water.utils import KM3_TO_MCM
+from message_ix_models.model.water.utils import (
+    KM3_TO_MCM,
+    get_days_per_timeslice,
+    map_month_to_timeslice,
+)
 from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
     from message_ix_models import Context
 
 
-def get_basin_sizes(basin: pd.DataFrame, node: str) -> Sequence[pd.Series | Literal[0]]:
+def get_basin_sizes(
+    basin: pd.DataFrame, node: str
+) -> Sequence[Union[pd.Series, Literal[0]]]:
     """Returns the sizes of developing and developed basins for a given node"""
     temp = basin[basin["BCU_name"] == node]
     print(temp)
@@ -25,7 +31,7 @@ def get_basin_sizes(basin: pd.DataFrame, node: str) -> Sequence[pd.Series | Lite
     # sizes_### = sizes["###"] if "###" in sizes.index else 0
     sizes_dev = sizes["DEV"] if "DEV" in sizes.index else 0
     sizes_ind = sizes["IND"] if "IND" in sizes.index else 0
-    return_tuple: tuple[pd.Series | Literal[0], pd.Series | Literal[0]] = (
+    return_tuple: tuple[Union[pd.Series, Literal[0]], Union[pd.Series, Literal[0]]] = (
         sizes_dev,
         sizes_ind,
     )  # type: ignore # Somehow, mypy is unable to recognize the proper type without forcing it
@@ -216,6 +222,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
 
     df_dmds["time"] = "year"
+    
+    # Filter to only include basins that exist after basin filtering
+    df_dmds = df_dmds[df_dmds["node"].isin(context.valid_basins)]
 
     # Write final interpolated values as csv
     # df2_f.to_csv('final_interpolated_values.csv')
@@ -227,17 +236,34 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
             "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
         )
         df_m: pd.DataFrame = pd.read_csv(PATH)
-        df_m.value *= 30  # from mcm/day to mcm/month
+
+        # Get number of timeslices and convert mcm/day to mcm/timeslice
+        n_time = len(context.time)
+        days_per_slice = get_days_per_timeslice(n_time)
+        df_m["value"] *= days_per_slice  # from mcm/day to mcm/timeslice
+
         df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
         df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
-            "urbann_withdrawal2_baseline"
+            "urban_withdrawal2_baseline"
         )
         df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
-            "urbann_return2_baseline"
+            "urban_return2_baseline"
         )
-        df_m = df_m[["year", "pid", "variable", "value", "month"]]
+
+        # Map month numbers to timeslice names (h1, h2, ..., hn)
+        df_m["time"] = df_m["month"].apply(lambda m: map_month_to_timeslice(m, n_time))
+        df_m = df_m[["year", "pid", "variable", "value", "time"]]
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_m = df_m.groupby(["year", "node", "variable", "time"], as_index=False).agg({
+                "value": "sum"  # Sum demands across months within same timeslice
+            })
+
+        # Filter monthly data to only include valid basins
+        df_m = df_m[df_m["node"].isin(context.valid_basins)]
 
         # remove yearly parts from df_dms
         df_dmds = df_dmds[
@@ -252,7 +278,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 ]
             )
         ]
-        # attach the monthly demand
+        # attach the timeslice demand data
         df_dmds = pd.concat([df_dmds, df_m])
 
     urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal2_baseline"]
@@ -767,13 +793,11 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
     df_x = pd.read_csv(PATH)
+    
+    # Filter to only include valid basins
+    df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
 
     if "year" in context.time:
-        # path for reading basin delineation file
-        PATH = package_data_path(
-            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
-        )
-        df_x = pd.read_csv(PATH)
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = package_data_path(
@@ -784,6 +808,14 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         # Read rcp 2.6 data
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter columns to only include valid basins
+        # The columns are years, so we need to filter rows based on the original basin order
+        # First, get the indices of valid basins from the original full list
+        full_basin_df = pd.read_csv(PATH)  # Read full basin list again
+        valid_indices = full_basin_df[full_basin_df["BCU_name"].isin(context.valid_basins)].index
+        df_sw = df_sw.iloc[valid_indices]  # Keep only rows for valid basins
+        df_sw.reset_index(drop=True, inplace=True)
 
         df_sw.index = df_x["BCU_name"].index
         df_sw = df_sw.stack().reset_index()
@@ -809,6 +841,11 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         # Read groundwater data
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter to only include valid basins (same as df_sw)
+        df_gw = df_gw.iloc[valid_indices]  # Use same valid_indices from above
+        df_gw.reset_index(drop=True, inplace=True)
+        
         df_gw.index = df_x["BCU_name"].index
         df_gw = df_gw.stack().reset_index()
         df_gw.columns = pd.Index(["Region", "years", "value"])
@@ -832,6 +869,12 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         )
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter to only include valid basins
+        full_basin_df = pd.read_csv(PATH)  # Read full basin list again
+        valid_indices = full_basin_df[full_basin_df["BCU_name"].isin(context.valid_basins)].index
+        df_sw = df_sw.iloc[valid_indices]
+        df_sw.reset_index(drop=True, inplace=True)
 
         df_sw.index = df_x["BCU_name"].index
         df_sw = df_sw.stack().reset_index()
@@ -840,8 +883,21 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
-        df_sw["time"] = pd.DatetimeIndex(df_sw["years"]).month
+
+        # Map month to timeslice name
+        n_time = len(context.time)
+        df_sw["time"] = df_sw["years"].apply(
+            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
+        )
+
         df_sw["Region"] = df_sw["Region"].map(df_x["BCU_name"])
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_sw = df_sw.groupby(["Region", "year", "time"], as_index=False).agg({
+                "value": "sum"  # Sum water availability across months within same timeslice
+            })
+
         df_sw2210 = df_sw[df_sw["year"] == 2100].copy()
         df_sw2210["year"] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
@@ -855,6 +911,10 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         )
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        
+        # Filter to only include valid basins (same as df_sw)
+        df_gw = df_gw.iloc[valid_indices]  # Use same valid_indices from above
+        df_gw.reset_index(drop=True, inplace=True)
 
         df_gw.index = df_x["BCU_name"].index
         df_gw = df_gw.stack().reset_index()
@@ -863,8 +923,20 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
-        df_gw["time"] = pd.DatetimeIndex(df_gw["years"]).month
+
+        # Map month to timeslice name (reuse n_time from df_sw)
+        df_gw["time"] = df_gw["years"].apply(
+            lambda d: map_month_to_timeslice(pd.DatetimeIndex([d]).month[0], n_time)
+        )
+
         df_gw["Region"] = df_gw["Region"].map(df_x["BCU_name"])
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_gw = df_gw.groupby(["Region", "year", "time"], as_index=False).agg({
+                "value": "sum"  # Sum groundwater availability across months within same timeslice
+            })
+
         df_gw2210 = df_gw[df_gw["year"] == 2100].copy()
         df_gw2210["year"] = 2110
         df_gw = pd.concat([df_gw, df_gw2210])
@@ -938,9 +1010,8 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
         * 0.95,  # 0.95 buffer factor to avoid numerical error
         unit="-",
     )
-
     df_share["value"] = df_share["value"].fillna(0)
-
+    df_share["value"] = np.clip(df_share["value"], 0, 1)
     results["share_commodity_lo"] = df_share
 
     return results
