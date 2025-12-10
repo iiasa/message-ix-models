@@ -187,3 +187,13 @@ uv.lock
 
 # Wasteland directory for throwaway scripts
 /wasteland/
+
+# ALPS analysis module (local development only)
+message_ix_models/project/alps/analysis/
+
+# ALPS plotting module (local development only)
+message_ix_models/project/alps/plotting.py
+
+# Legacy reporting data (local only)
+message_ix_models/data/report/legacy/
+reporting_output/
