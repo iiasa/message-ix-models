@@ -1,12 +1,13 @@
 import logging
 from copy import deepcopy
-from hashlib import blake2s
 from typing import TYPE_CHECKING, Literal
 
 from genno import KeyExistsError
 
 from message_ix_models.model.workflow import Config as WorkflowConfig
 from message_ix_models.util import minimum_version
+
+from .util import short_hash
 
 if TYPE_CHECKING:
     from message_ix_models.util.context import Context
@@ -132,11 +133,6 @@ def scenario_url(context: "Context", label: str | None = None) -> str:
                 f"{label or ''} {s_extra}".strip(),
             )
         )
-
-
-def short_hash(value: str) -> str:
-    """Return a short (length 3) hash of `value`."""
-    return blake2s(value.encode()).hexdigest()[:3]
 
 
 @minimum_version("message_ix 3.11")
