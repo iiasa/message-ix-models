@@ -10,8 +10,10 @@ from message_ix import Scenario
 
 from message_ix_models.project.alps.constants import R12_REGIONS, BASELINE_GWL
 from message_ix_models.project.alps.rime import predict_rime
-from message_ix_models.project.alps.cid_utils import cached_rime_prediction
-from message_ix_models.project.alps.utils import extract_region_code
+from message_ix_models.project.alps.cid_utils import (
+    cached_rime_prediction,
+    extract_region_code,
+)
 from message_ix_models.util import package_data_path
 
 

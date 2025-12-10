@@ -12,8 +12,9 @@ from typing import Tuple
 from message_ix import Scenario
 from message_ix_models.util import package_data_path
 
-from .building_energy import compute_energy_demand_ensemble, get_gsat_ensemble
+from .building_energy import compute_energy_demand_ensemble
 from .constants import MESSAGE_YEARS
+from .rime import get_gmt_ensemble
 
 # Unit conversion using pint: demand parameter expects GWa, building_energy outputs EJ
 _ureg = pint.UnitRegistry()
@@ -50,35 +51,17 @@ def compute_building_cids(
     Tuple[pd.DataFrame, pd.DataFrame]
         (cooling_demand, heating_demand) with columns: node, year, value (EJ)
     """
-    # Convert MAGICC df to ensemble format
-    gsat_data = magicc_df[
-        magicc_df["Variable"] == "AR6 climate diagnostics|Surface Temperature (GSAT)|MAGICCv7.5.3"
-    ].copy()
-    gsat_data['run'] = gsat_data['Model'].str.extract(r'run_(\d+)')[0].astype(int)
-
-    # Filter to requested number of runs
-    gsat_data = gsat_data[gsat_data['run'] < n_runs]
-
-    # Year columns
-    year_cols = [col for col in magicc_df.columns if isinstance(col, (int, float)) or (
-        isinstance(col, str) and col.isdigit()
-    )]
-
-    # Melt to long format
-    gsat_ensemble = gsat_data.melt(
-        id_vars=['run'],
-        value_vars=year_cols,
-        var_name='year',
-        value_name='gsat'
-    )
-    gsat_ensemble['year'] = gsat_ensemble['year'].astype(int)
+    # Extract GMT ensemble from MAGICC
+    gmt_trajectories, years = get_gmt_ensemble(magicc_df, n_runs=n_runs)
 
     # Compute cooling demand (resid + comm) with ensemble averaging
     cooling_resid = compute_energy_demand_ensemble(
-        mode="cool", scenario=coeff_scenario, gsat_ensemble=gsat_ensemble, sector="resid"
+        mode="cool", scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories, years=years, sector="resid"
     )
     cooling_comm = compute_energy_demand_ensemble(
-        mode="cool", scenario=coeff_scenario, gsat_ensemble=gsat_ensemble, sector="comm"
+        mode="cool", scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories, years=years, sector="comm"
     )
     cooling_total = pd.concat([cooling_resid, cooling_comm])
     cooling_total = cooling_total.groupby(["region", "year"])["E_cool_mean_EJ"].sum().reset_index()
@@ -87,10 +70,12 @@ def compute_building_cids(
 
     # Compute heating demand (resid + comm) with ensemble averaging
     heating_resid = compute_energy_demand_ensemble(
-        mode="heat", scenario=coeff_scenario, gsat_ensemble=gsat_ensemble, sector="resid"
+        mode="heat", scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories, years=years, sector="resid"
     )
     heating_comm = compute_energy_demand_ensemble(
-        mode="heat", scenario=coeff_scenario, gsat_ensemble=gsat_ensemble, sector="comm"
+        mode="heat", scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories, years=years, sector="comm"
     )
     heating_total = pd.concat([heating_resid, heating_comm])
     heating_total = heating_total.groupby(["region", "year"])["E_heat_mean_EJ"].sum().reset_index()

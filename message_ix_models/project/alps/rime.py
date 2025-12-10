@@ -618,23 +618,27 @@ def extract_all_run_ids(magicc_df: pd.DataFrame) -> list[int]:
     return sorted(run_ids)
 
 
-def _get_gmt_ensemble(
+def get_gmt_ensemble(
     magicc_df: pd.DataFrame,
-    run_ids: list[int],
+    run_ids: Optional[list[int]] = None,
+    n_runs: Optional[int] = None,
 ) -> tuple[dict[int, np.ndarray], np.ndarray]:
     """Extract GMT trajectories for all runs from MAGICC DataFrame.
 
-    Internal helper that extracts raw GMT values without any clipping or processing.
-
     Args:
         magicc_df: MAGICC output DataFrame (IAMC format)
-        run_ids: List of run IDs to extract
+        run_ids: List of run IDs to extract. If None, extracts all.
+        n_runs: Limit to first N runs (applied after run_ids).
 
     Returns:
         Tuple of (gmt_trajectories, years) where:
         - gmt_trajectories: Dict mapping run_id -> GMT array (n_years,)
         - years: Array of year labels
     """
+    if run_ids is None:
+        run_ids = extract_all_run_ids(magicc_df)
+    if n_runs is not None:
+        run_ids = run_ids[:n_runs]
     gmt_trajectories = {}
     years = None
 
@@ -683,7 +687,7 @@ def get_gmt_expectation(
         run_ids = run_ids[:n_runs]
 
     # Extract GMT ensemble
-    gmt_trajectories, all_years = _get_gmt_ensemble(magicc_df, run_ids)
+    gmt_trajectories, all_years = get_gmt_ensemble(magicc_df, run_ids)
 
     # Stack into array and compute mean
     gmt_array = np.array([gmt_trajectories[rid] for rid in run_ids])

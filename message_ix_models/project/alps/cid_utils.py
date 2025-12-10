@@ -25,6 +25,22 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 cache = FanoutCache(str(CACHE_DIR), shards=8)
 
 
+def extract_region_code(node: str) -> str:
+    """Extract short region code from MESSAGE node name.
+
+    Parameters
+    ----------
+    node : str
+        MESSAGE node name (e.g., 'R12_AFR', 'AFR')
+
+    Returns
+    -------
+    str
+        Short region code (e.g., 'AFR')
+    """
+    return node[4:] if node.startswith("R12_") else node
+
+
 def get_magicc_file(model: str, scenario: str) -> Path:
     """Get path to MAGICC output file for a model/scenario.
 
