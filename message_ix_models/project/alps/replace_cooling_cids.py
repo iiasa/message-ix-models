@@ -24,23 +24,22 @@ from message_ix_models.project.alps.cid_utils import (
     extract_region_code,
     sample_to_message_years,
 )
-from message_ix_models.project.alps.constants import BASELINE_GWL, R12_REGIONS
+from message_ix_models.project.alps.constants import (
+    ANNUAL_YEARS,
+    BASELINE_GWL,
+    MESSAGE_YEARS,
+    R12_REGIONS,
+)
 from message_ix_models.project.alps.rime import predict_rime
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
 
-def _extract_years_from_magicc(magicc_df: pd.DataFrame) -> list[int]:
-    """Extract year columns from MAGICC IAMC-format DataFrame."""
-    year_cols = [c for c in magicc_df.columns if str(c).isdigit()]
-    return sorted(int(y) for y in year_cols)
-
-
 def _build_lookups(
     jones_factors: pd.DataFrame, baseline_gwl: float
-) -> tuple[dict, dict, dict, list]:
-    """Build all lookup dictionaries for constraint computation.
+) -> tuple[dict, dict]:
+    """Build lookup dictionaries for constraint computation.
 
     Returns
     -------
@@ -48,10 +47,6 @@ def _build_lookups(
         Region short code -> baseline capacity factor at reference GWL
     fresh_share_lookup : dict[tuple[str, str], float]
         (region, parent_tech) -> baseline freshwater cooling share
-    jones_lookup : dict[tuple[str, int], float]
-        (region_short, year) -> Jones capacity factor
-    year_cols : list[int]
-        Year columns from jones_factors
     """
     # Baseline CF at reference GWL
     cf_baseline = predict_rime(np.array([baseline_gwl]), "capacity_factor").flatten()
@@ -81,15 +76,7 @@ def _build_lookups(
         for _, row in fresh_share_df.iterrows()
     }
 
-    # Jones factors by (region, year)
-    year_cols = [c for c in jones_factors.columns if isinstance(c, (int, np.integer))]
-    jones_lookup = {}
-    for _, row in jones_factors.iterrows():
-        region = row.get("region", row.name)
-        for year in year_cols:
-            jones_lookup[(region, year)] = row[year]
-
-    return baseline_lookup, fresh_share_lookup, jones_lookup, year_cols
+    return baseline_lookup, fresh_share_lookup
 
 
 def _get_freshwater_cooling_mapping(scen: Scenario) -> dict[str, list[str]]:
@@ -135,18 +122,13 @@ def _compute_jones_ratio(
     region_short: str,
     year: int,
     baseline_lookup: dict,
-    jones_lookup: dict,
-    year_cols: list,
+    jones_factors: pd.DataFrame,
 ) -> float | None:
     """Compute Jones ratio (CF / baseline_CF). Returns None if ratio >= 1 (no constraint)."""
     baseline_cf = baseline_lookup.get(region_short, 1.0)
-
-    if (region_short, year) in jones_lookup:
-        jones_factor = jones_lookup[(region_short, year)]
-    else:
-        nearest_year = min(year_cols, key=lambda y: abs(y - year))
-        jones_factor = jones_lookup.get((region_short, nearest_year), 1.0)
-
+    jones_factor = (
+        jones_factors.loc[region_short, year] if year in jones_factors.columns else 1.0
+    )
     jones_ratio = jones_factor / baseline_cf if baseline_cf > 0 else 1.0
     return None if jones_ratio >= 1.0 else jones_ratio
 
@@ -178,14 +160,14 @@ def add_jones_relation_constraints(
         Modified scenario with relation constraints added
     """
     log.info("Building constraint lookups...")
-    baseline_lookup, fresh_share_lookup, jones_lookup, year_cols = _build_lookups(
-        jones_factors, baseline_gwl
-    )
+    baseline_lookup, fresh_share_lookup = _build_lookups(jones_factors, baseline_gwl)
 
     log.info("Extracting cooling structure from scenario...")
     parent_to_fresh = _get_freshwater_cooling_mapping(scen)
     cooling_frac = _get_cooling_fraction_df(scen)
-    log.info(f"Found {len(parent_to_fresh)} parent technologies with freshwater cooling")
+    log.info(
+        f"Found {len(parent_to_fresh)} parent technologies with freshwater cooling"
+    )
 
     # Valid (node, tech, year) from technical_lifetime
     tl = scen.par("technical_lifetime")
@@ -194,9 +176,12 @@ def add_jones_relation_constraints(
         zip(tl_parents["node_loc"], tl_parents["technology"], tl_parents["year_vtg"])
     )
 
-    model_years = [int(y) for y in scen.set("year") if int(y) >= min(year_cols)]
+    # Use MESSAGE_YEARS directly (jones_factors already sampled by helper)
+    model_years = MESSAGE_YEARS
     regions = cooling_frac["node"].unique()
-    log.info(f"Building constraints for {len(model_years)} years, {len(regions)} regions")
+    log.info(
+        f"Building constraints for {len(model_years)} years, {len(regions)} regions"
+    )
 
     # Build constraint rows
     relation_set_entries = []
@@ -231,50 +216,58 @@ def add_jones_relation_constraints(
 
                 # Compute Jones ratio
                 jones_ratio = _compute_jones_ratio(
-                    region_short, year, baseline_lookup, jones_lookup, year_cols
+                    region_short, year, baseline_lookup, jones_factors
                 )
                 if jones_ratio is None:
                     continue
 
                 # Freshwater variants: coefficient = +1
                 for fresh_tech in fresh_variants:
-                    relation_activity_rows.append({
+                    relation_activity_rows.append(
+                        {
+                            "relation": rel_name,
+                            "node_rel": region,
+                            "year_rel": year,
+                            "node_loc": region,
+                            "technology": fresh_tech,
+                            "year_act": year,
+                            "mode": "M1",
+                            "value": 1.0,
+                            "unit": "-",
+                        }
+                    )
+
+                # Parent: coefficient = -jones_ratio * fresh_share_ref * cooling_fraction
+                relation_activity_rows.append(
+                    {
                         "relation": rel_name,
                         "node_rel": region,
                         "year_rel": year,
                         "node_loc": region,
-                        "technology": fresh_tech,
+                        "technology": parent_tech,
                         "year_act": year,
                         "mode": "M1",
-                        "value": 1.0,
+                        "value": -jones_ratio * fresh_share_ref * cooling_fraction,
                         "unit": "-",
-                    })
-
-                # Parent: coefficient = -jones_ratio * fresh_share_ref * cooling_fraction
-                relation_activity_rows.append({
-                    "relation": rel_name,
-                    "node_rel": region,
-                    "year_rel": year,
-                    "node_loc": region,
-                    "technology": parent_tech,
-                    "year_act": year,
-                    "mode": "M1",
-                    "value": -jones_ratio * fresh_share_ref * cooling_fraction,
-                    "unit": "-",
-                })
+                    }
+                )
 
                 # Upper bound = 0
-                relation_upper_rows.append({
-                    "relation": rel_name,
-                    "node_rel": region,
-                    "year_rel": year,
-                    "value": 0.0,
-                    "unit": "-",
-                })
+                relation_upper_rows.append(
+                    {
+                        "relation": rel_name,
+                        "node_rel": region,
+                        "year_rel": year,
+                        "value": 0.0,
+                        "unit": "-",
+                    }
+                )
 
-    log.info(f"Created {len(set(relation_set_entries))} relations, "
-             f"{len(relation_activity_rows)} activity rows, "
-             f"{len(relation_upper_rows)} upper bound rows")
+    log.info(
+        f"Created {len(set(relation_set_entries))} relations, "
+        f"{len(relation_activity_rows)} activity rows, "
+        f"{len(relation_upper_rows)} upper bound rows"
+    )
 
     if len(relation_activity_rows) == 0:
         log.info("No constraints needed (jones_ratio >= 1.0 for all cases)")
@@ -334,10 +327,9 @@ def generate_cooling_cid_scenario(
     log.info(f"   Got capacity_factor array shape: {cf_array.shape}")
 
     # Convert ndarray to DataFrame with proper format
-    years = _extract_years_from_magicc(magicc_df)
-    cf_annual = pd.DataFrame(cf_array, index=R12_REGIONS, columns=years)
+    cf_annual = pd.DataFrame(cf_array, index=R12_REGIONS, columns=ANNUAL_YEARS)
     cf_annual = cf_annual.reset_index().rename(columns={"index": "region"})
-    cf_expected = sample_to_message_years(cf_annual, method=year_sampling)
+    cf_expected = sample_to_message_years(cf_annual, ["region"], method=year_sampling)
     cf_expected = cf_expected.set_index("region")
     log.info(f"   capacity_factor DataFrame shape: {cf_expected.shape}")
 

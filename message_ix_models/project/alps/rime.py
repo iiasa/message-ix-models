@@ -32,7 +32,6 @@ import xarray as xr
 from message_ix_models.util import package_data_path
 
 from .constants import RIME_DATASETS_DIR, VAR_MAP
-from .cvar import compute_cvar
 
 
 # ==============================================================================
@@ -644,6 +643,7 @@ def get_gmt_ensemble(
 
     for run_id in run_ids:
         temp_df = extract_temperature_timeseries(magicc_df, run_id=run_id)
+        temp_df = temp_df[temp_df["year"] >= 2020]
         gmt_trajectories[run_id] = temp_df["gsat_anomaly_K"].values
         if years is None:
             years = temp_df["year"].values

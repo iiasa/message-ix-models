@@ -1,5 +1,6 @@
 """Replace water availability parameters with climate impact projections.
 
+
 This module provides functions to swap water CID (Climate Impact Driver) parameters
 in MESSAGE scenarios with RIME-based climate projections.
 
@@ -17,7 +18,11 @@ import pandas as pd
 from message_ix import Scenario
 
 from message_ix_models.project.alps.cid_utils import sample_to_message_years
-from message_ix_models.project.alps.constants import NAN_BASIN_IDS
+from message_ix_models.project.alps.constants import (
+    ANNUAL_YEARS,
+    MESSAGE_YEARS,
+    NAN_BASIN_IDS,
+)
 from message_ix_models.util import package_data_path
 
 
@@ -182,19 +187,15 @@ def transform_seasonal_to_timeslice(
     # Load bifurcation mapping
     bifurc = load_bifurcation_mapping()
 
-    # Get year columns (integers)
-    year_cols = [c for c in dry_df.columns if isinstance(c, (int, np.integer))]
-    metadata_cols = [c for c in dry_df.columns if c not in year_cols]
-
     # Initialize output arrays
     n_basins = len(dry_df)
-    n_years = len(year_cols)
+    n_years = len(ANNUAL_YEARS)
     h1_values = np.zeros((n_basins, n_years))
     h2_values = np.zeros((n_basins, n_years))
 
     # Get dry and wet values as arrays
-    dry_values = dry_df[year_cols].values  # (n_basins, n_years)
-    wet_values = wet_df[year_cols].values
+    dry_values = dry_df[ANNUAL_YEARS].values  # (n_basins, n_years)
+    wet_values = wet_df[ANNUAL_YEARS].values
 
     # Apply transformation per basin
     for i in range(n_basins):
@@ -229,12 +230,12 @@ def transform_seasonal_to_timeslice(
                 h2_values[i, j] = timeslice[1]
 
     # Construct output DataFrames
-    h1_df = dry_df[metadata_cols].copy()
-    h2_df = wet_df[metadata_cols].copy()
+    h1_df = dry_df[["BCU_name"]].copy()
+    h2_df = wet_df[["BCU_name"]].copy()
 
-    for idx, col in enumerate(year_cols):
-        h1_df[col] = h1_values[:, idx]
-        h2_df[col] = h2_values[:, idx]
+    for idx, year in enumerate(ANNUAL_YEARS):
+        h1_df[year] = h1_values[:, idx]
+        h2_df[year] = h2_values[:, idx]
 
     return h1_df, h2_df
 
@@ -284,9 +285,11 @@ def _filter_with_fallback(
 
 def _to_demand_long(df: pd.DataFrame, commodity: str, time_val: str) -> pd.DataFrame:
     """Convert wide DataFrame to MESSAGE demand format."""
-    years = [c for c in df.columns if isinstance(c, int)]
     long = df.melt(
-        id_vars=["BCU_name"], value_vars=years, var_name="year", value_name="value"
+        id_vars=["BCU_name"],
+        value_vars=MESSAGE_YEARS,
+        var_name="year",
+        value_name="value",
     )
     result = pd.DataFrame(
         {
@@ -306,11 +309,15 @@ def _to_demand_long(df: pd.DataFrame, commodity: str, time_val: str) -> pd.DataF
 
 def _to_share_long(qtot: pd.DataFrame, qr: pd.DataFrame, time_val: str) -> pd.DataFrame:
     """Compute groundwater share and convert to MESSAGE format."""
-    years = [c for c in qtot.columns if isinstance(c, int)]
-    share_values = (qr[years] / (qtot[years] + qr[years]) * 0.95).clip(0, 1)
+    share_values = (
+        qr[MESSAGE_YEARS] / (qtot[MESSAGE_YEARS] + qr[MESSAGE_YEARS]) * 0.95
+    ).clip(0, 1)
     share = pd.concat([qtot[["BCU_name"]], share_values], axis=1)
     long = share.melt(
-        id_vars=["BCU_name"], value_vars=years, var_name="year", value_name="value"
+        id_vars=["BCU_name"],
+        value_vars=MESSAGE_YEARS,
+        var_name="year",
+        value_name="value",
     )
     return pd.DataFrame(
         {
@@ -365,14 +372,15 @@ def prepare_water_cids(
         ready for replace_water_availability.
     """
     if temporal_res == "annual":
-        qtot_sampled = sample_to_message_years(qtot, method=year_sampling)
-        qr_sampled = sample_to_message_years(qr, method=year_sampling)
+        qtot_sampled = sample_to_message_years(qtot, ["BCU_name"], method=year_sampling)
+        qr_sampled = sample_to_message_years(qr, ["BCU_name"], method=year_sampling)
 
         # Compute surfacewater source
         if sw_from_residual:
             sw_source = qtot_sampled.copy()
-            year_cols = [c for c in sw_source.columns if isinstance(c, int)]
-            sw_source[year_cols] = qtot_sampled[year_cols] - qr_sampled[year_cols]
+            sw_source[MESSAGE_YEARS] = (
+                qtot_sampled[MESSAGE_YEARS] - qr_sampled[MESSAGE_YEARS]
+            )
         else:
             sw_source = qtot_sampled
 
@@ -394,18 +402,17 @@ def prepare_water_cids(
             qr_dry, qr_wet, timeslice_months, n_time=2
         )
 
-        qtot_h1 = sample_to_message_years(qtot_h1, method=year_sampling)
-        qtot_h2 = sample_to_message_years(qtot_h2, method=year_sampling)
-        qr_h1 = sample_to_message_years(qr_h1, method=year_sampling)
-        qr_h2 = sample_to_message_years(qr_h2, method=year_sampling)
+        qtot_h1 = sample_to_message_years(qtot_h1, ["BCU_name"], method=year_sampling)
+        qtot_h2 = sample_to_message_years(qtot_h2, ["BCU_name"], method=year_sampling)
+        qr_h1 = sample_to_message_years(qr_h1, ["BCU_name"], method=year_sampling)
+        qr_h2 = sample_to_message_years(qr_h2, ["BCU_name"], method=year_sampling)
 
         # Compute surfacewater source
         if sw_from_residual:
-            year_cols = [c for c in qtot_h1.columns if isinstance(c, int)]
             sw_h1 = qtot_h1.copy()
-            sw_h1[year_cols] = qtot_h1[year_cols] - qr_h1[year_cols]
+            sw_h1[MESSAGE_YEARS] = qtot_h1[MESSAGE_YEARS] - qr_h1[MESSAGE_YEARS]
             sw_h2 = qtot_h2.copy()
-            sw_h2[year_cols] = qtot_h2[year_cols] - qr_h2[year_cols]
+            sw_h2[MESSAGE_YEARS] = qtot_h2[MESSAGE_YEARS] - qr_h2[MESSAGE_YEARS]
         else:
             sw_h1, sw_h2 = qtot_h1, qtot_h2
 

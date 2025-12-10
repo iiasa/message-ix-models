@@ -4,12 +4,12 @@ Replaces climate-driven portions of rc_spec (cooling) and rc_therm (heating)
 with RIME-based projections.
 """
 
-import pandas as pd
-import numpy as np
-import pint
 from typing import Tuple
 
+import pandas as pd
+import pint
 from message_ix import Scenario
+
 from message_ix_models.util import package_data_path
 
 from .building_energy import compute_energy_demand_ensemble
@@ -29,14 +29,16 @@ def load_sector_fractions() -> pd.DataFrame:
 
 def _sample_long_format(df: pd.DataFrame, method: str) -> pd.DataFrame:
     """Apply year sampling to long-format DataFrame (node, year, value)."""
+    from message_ix_models.project.alps.constants import MESSAGE_YEARS
+
     # Pivot to wide: node as index, years as columns
     wide = df.pivot(index="node", columns="year", values="value").reset_index()
     # Sample to MESSAGE years
-    sampled = sample_to_message_years(wide, method=method)
+    sampled = sample_to_message_years(wide, ["node"], method=method)
     # Pivot back to long
-    year_cols = [c for c in sampled.columns if isinstance(c, (int, np.integer))]
-    return sampled.melt(id_vars=["node"], value_vars=year_cols,
-                        var_name="year", value_name="value")
+    return sampled.melt(
+        id_vars=["node"], value_vars=MESSAGE_YEARS, var_name="year", value_name="value"
+    )
 
 
 def compute_building_cids(
@@ -71,30 +73,50 @@ def compute_building_cids(
 
     # Compute cooling demand (resid + comm) with ensemble averaging
     cooling_resid = compute_energy_demand_ensemble(
-        mode="cool", scenario=coeff_scenario,
-        gmt_trajectories=gmt_trajectories, years=years, sector="resid"
+        mode="cool",
+        scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories,
+        years=years,
+        sector="resid",
     )
     cooling_comm = compute_energy_demand_ensemble(
-        mode="cool", scenario=coeff_scenario,
-        gmt_trajectories=gmt_trajectories, years=years, sector="comm"
+        mode="cool",
+        scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories,
+        years=years,
+        sector="comm",
     )
     cooling_total = pd.concat([cooling_resid, cooling_comm])
-    cooling_total = cooling_total.groupby(["region", "year"])["E_cool_mean_EJ"].sum().reset_index()
-    cooling_total.rename(columns={"region": "node", "E_cool_mean_EJ": "value"}, inplace=True)
+    cooling_total = (
+        cooling_total.groupby(["region", "year"])["E_cool_mean_EJ"].sum().reset_index()
+    )
+    cooling_total.rename(
+        columns={"region": "node", "E_cool_mean_EJ": "value"}, inplace=True
+    )
     cooling_total["node"] = "R12_" + cooling_total["node"]
 
     # Compute heating demand (resid + comm) with ensemble averaging
     heating_resid = compute_energy_demand_ensemble(
-        mode="heat", scenario=coeff_scenario,
-        gmt_trajectories=gmt_trajectories, years=years, sector="resid"
+        mode="heat",
+        scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories,
+        years=years,
+        sector="resid",
     )
     heating_comm = compute_energy_demand_ensemble(
-        mode="heat", scenario=coeff_scenario,
-        gmt_trajectories=gmt_trajectories, years=years, sector="comm"
+        mode="heat",
+        scenario=coeff_scenario,
+        gmt_trajectories=gmt_trajectories,
+        years=years,
+        sector="comm",
     )
     heating_total = pd.concat([heating_resid, heating_comm])
-    heating_total = heating_total.groupby(["region", "year"])["E_heat_mean_EJ"].sum().reset_index()
-    heating_total.rename(columns={"region": "node", "E_heat_mean_EJ": "value"}, inplace=True)
+    heating_total = (
+        heating_total.groupby(["region", "year"])["E_heat_mean_EJ"].sum().reset_index()
+    )
+    heating_total.rename(
+        columns={"region": "node", "E_heat_mean_EJ": "value"}, inplace=True
+    )
     heating_total["node"] = "R12_" + heating_total["node"]
 
     # Apply year sampling
@@ -154,12 +176,12 @@ def generate_building_cid_scenario(
         rc_spec = rc_spec.merge(
             fractions[["node", "year", "frac_resid_cool", "frac_comm_cool"]],
             on=["node", "year"],
-            how="left"
+            how="left",
         )
         rc_therm = rc_therm.merge(
             fractions[["node", "year", "frac_resid_heat", "frac_comm_heat"]],
             on=["node", "year"],
-            how="left"
+            how="left",
         )
 
         # Fill missing fractions with 0 (no reduction)
@@ -180,12 +202,12 @@ def generate_building_cid_scenario(
         rc_spec = rc_spec.merge(
             cooling_total.rename(columns={"value": "cool_add"}),
             on=["node", "year"],
-            how="left"
+            how="left",
         )
         rc_therm = rc_therm.merge(
             heating_total.rename(columns={"value": "heat_add"}),
             on=["node", "year"],
-            how="left"
+            how="left",
         )
 
         rc_spec["cool_add"] = rc_spec["cool_add"].fillna(0)

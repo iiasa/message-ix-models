@@ -75,6 +75,9 @@ MESSAGE_YEARS = [
     2110,
 ]
 
+# Annual years from RIME/MAGICC predictions (2020-2100)
+ANNUAL_YEARS = list(range(2020, 2101))
+
 
 # ==============================================================================
 # Timeslice Definitions

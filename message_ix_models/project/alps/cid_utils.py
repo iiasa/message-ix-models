@@ -14,10 +14,7 @@ from message_ix import Scenario
 
 from message_ix_models.project.alps.constants import MAGICC_OUTPUT_DIR, MESSAGE_YEARS
 from message_ix_models.project.alps.rime import (
-    extract_all_run_ids,
     get_gmt_ensemble,
-    get_rime_dataset_path,
-    load_basin_mapping,
     predict_rime,
 )
 
@@ -31,59 +28,39 @@ cache = FanoutCache(str(CACHE_DIR), shards=8)
 
 def sample_to_message_years(
     df: pd.DataFrame,
+    id_cols: list[str],
     method: str = "point",
-    id_cols: list[str] = None,
 ) -> pd.DataFrame:
     """Sample annual data to MESSAGE timesteps.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Wide DataFrame with annual year columns (integers) and optional ID columns
+        Wide DataFrame with annual year columns (2020-2100) and ID columns
+    id_cols : list of str
+        Non-year columns to preserve (e.g., ['BCU_name'], ['region'])
     method : str
         'point' - take value at MESSAGE year
         'average' - average preceding period (e.g., 2026-2030 for timestep 2030)
-    id_cols : list of str, optional
-        Non-year columns to preserve. If None, auto-detects non-integer columns.
 
     Returns
     -------
     pd.DataFrame
-        DataFrame with MESSAGE year columns only, plus 2110 duplicated from 2100
+        DataFrame with MESSAGE_YEARS columns (2020-2110)
     """
-    # Identify year columns vs metadata
-    if id_cols is None:
-        id_cols = [c for c in df.columns if not isinstance(c, (int, np.integer))]
-    year_cols = sorted(c for c in df.columns if isinstance(c, (int, np.integer)))
-
-    # MESSAGE years up to 2100 (2110 handled separately)
-    msg_years = [y for y in MESSAGE_YEARS if y <= 2100 and y in year_cols]
+    msg_years_input = MESSAGE_YEARS[:-1]  # 2020-2100, input doesn't have 2110
 
     if method == "point":
-        result = df[id_cols + msg_years].copy()
-
+        result = df[id_cols + msg_years_input].copy()
     elif method == "average":
         result = df[id_cols].copy()
-        for i, msg_year in enumerate(msg_years):
-            # Determine period start: previous MESSAGE year + 1, or first available
-            if i == 0:
-                period_start = min(year_cols)
-            else:
-                period_start = msg_years[i - 1] + 1
-
-            # Average years in [period_start, msg_year]
-            period_years = [y for y in year_cols if period_start <= y <= msg_year]
-            if period_years:
-                result[msg_year] = df[period_years].mean(axis=1)
-            elif msg_year in year_cols:
-                result[msg_year] = df[msg_year]
+        for i, y in enumerate(msg_years_input):
+            start = MESSAGE_YEARS[i - 1] + 1 if i > 0 else 2020
+            result[y] = df[list(range(start, y + 1))].mean(axis=1)
     else:
         raise ValueError(f"method must be 'point' or 'average', got {method}")
 
-    # Extend 2100 → 2110
-    if 2100 in result.columns:
-        result[2110] = result[2100]
-
+    result[2110] = result[2100]
     return result
 
 
