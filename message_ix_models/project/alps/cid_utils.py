@@ -11,8 +11,8 @@ from diskcache import FanoutCache
 from ixmp import Platform
 from message_ix import Scenario
 from message_ix_models.project.alps.rime import (
-    batch_rime_predictions,
-    compute_expectation,
+    predict_rime,
+    _get_gmt_ensemble,
     get_rime_dataset_path,
     extract_all_run_ids,
     load_basin_mapping,
@@ -49,8 +49,11 @@ def cached_rime_prediction(
     run_ids: tuple,
     variable: str,
     temporal_res: str = "annual"
-) -> dict:
-    """Cached wrapper for RIME predictions.
+) -> np.ndarray:
+    """Cached RIME expectation prediction.
+
+    Extracts GMT ensemble from MAGICC, runs predict_rime with 2D input,
+    and returns E[RIME(GMT_i)] as ndarray.
 
     Parameters
     ----------
@@ -66,15 +69,12 @@ def cached_rime_prediction(
 
     Returns
     -------
-    dict
-        Dictionary mapping run_id -> predictions DataFrame
-        For basin variables: DataFrame with 217 rows + metadata columns + year columns
-        For regional variables: DataFrame with 12 rows (R12) + region column + year columns
-        For seasonal: DataFrame has interleaved columns (2020_dry, 2020_wet, ...)
+    np.ndarray or tuple
+        For annual: ndarray (217, n_years) for basin vars, (12, n_years) for regional
+        For seasonal: tuple (dry, wet) where each is (217, n_years)
     """
-    # Cache key from DataFrame scenario name (synthetic or from file)
     source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
-    cache_key = f"{source_name}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}"
+    cache_key = f"{source_name}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}_v2"
 
     if cache_key in cache:
         print(f"   Cache hit for {variable} ({temporal_res})")
@@ -82,30 +82,15 @@ def cached_rime_prediction(
 
     print(f"   Cache miss for {variable} ({temporal_res}) - computing predictions...")
 
-    # Get dataset path
-    dataset_path = get_rime_dataset_path(variable, temporal_res)
+    # Extract GMT as 2D array
+    gmt_dict, years = _get_gmt_ensemble(magicc_df, list(run_ids))
+    gmt_2d = np.array([gmt_dict[rid] for rid in run_ids])
 
-    # Determine variable type for appropriate handling
-    is_regional = variable in ('capacity_factor', 'EI_cool', 'EI_heat')
+    # Run predict_rime with 2D input → returns E[RIME(GMT_i)]
+    result = predict_rime(gmt_2d, variable, temporal_res)
 
-    if is_regional:
-        # Regional variables don't need basin mapping
-        # batch_rime_predictions handles this internally via _get_variable_type()
-        basin_mapping = None
-    else:
-        # Load basin mapping for basin-level variables
-        basin_mapping = load_basin_mapping()
-
-    # Run predictions
-    predictions = batch_rime_predictions(
-        magicc_df, list(run_ids), dataset_path, basin_mapping, variable,
-        temporal_res=temporal_res
-    )
-
-    # Cache result
-    cache[cache_key] = predictions
-
-    return predictions
+    cache[cache_key] = result
+    return result
 
 
 def load_scenario_for_cid(

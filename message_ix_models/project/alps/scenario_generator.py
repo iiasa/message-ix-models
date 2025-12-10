@@ -26,7 +26,6 @@ from message_ix_models import Context
 from message_ix_models.project.alps.cid_utils import (
     MAGICC_OUTPUT_DIR,
     cached_rime_prediction,
-    deinterleave_seasonal,
 )
 from message_ix_models.project.alps.replace_building_cids import (
     generate_building_cid_scenario,
@@ -37,14 +36,44 @@ from message_ix_models.project.alps.replace_water_cids import (
     replace_water_availability,
 )
 from message_ix_models.project.alps.rime import (
-    compute_expectation,
     extract_all_run_ids,
+    load_basin_mapping,
+    _get_gmt_ensemble,
 )
 from message_ix_models.project.alps.timeslice import (
     duration_time,
     generate_uniform_timeslices,
     time_setup,
 )
+
+
+def _ndarray_to_dataframe(
+    arr: np.ndarray,
+    years: np.ndarray,
+    basin_mapping: pd.DataFrame = None,
+) -> pd.DataFrame:
+    """Wrap RIME ndarray prediction in DataFrame with basin metadata.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Prediction array, shape (217, n_years)
+    years : np.ndarray
+        Year labels for columns
+    basin_mapping : pd.DataFrame, optional
+        Basin mapping with BCU_name. If None, loads from rime module.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with BCU_name column + integer year columns
+    """
+    if basin_mapping is None:
+        basin_mapping = load_basin_mapping()
+
+    df = pd.DataFrame(arr, columns=years.astype(int))
+    df.insert(0, "BCU_name", basin_mapping["BCU_name"].values)
+    return df
 
 
 def load_config(config_path: Path) -> dict:
@@ -322,37 +351,38 @@ def _generate_nexus_cid(
     """Generate nexus (water) CID scenario."""
     rime_temporal = "seasonal2step" if temporal_res == "seasonal" else "annual"
 
+    # Get years from MAGICC for DataFrame construction
+    _, years = _get_gmt_ensemble(magicc_df, list(run_ids)[:1])
+    basin_mapping = load_basin_mapping()
+
     print(f"\n5. Running RIME predictions for qtot_mean ({rime_temporal})...")
-    qtot_predictions = cached_rime_prediction(
+    qtot_arr = cached_rime_prediction(
         magicc_df, run_ids, "qtot_mean", temporal_res=rime_temporal
     )
-    print(f"   Got {len(qtot_predictions)} prediction sets")
 
     print(f"\n6. Running RIME predictions for qr ({rime_temporal})...")
-    qr_predictions = cached_rime_prediction(
+    qr_arr = cached_rime_prediction(
         magicc_df, run_ids, "qr", temporal_res=rime_temporal
     )
-    print(f"   Got {len(qr_predictions)} prediction sets")
-
-    # Compute expectations
-    print("\n7. Computing expectations...")
-    qtot_expected = compute_expectation(
-        qtot_predictions, run_ids=np.array(list(run_ids)), weights=None
-    )
-    qr_expected = compute_expectation(
-        qr_predictions, run_ids=np.array(list(run_ids)), weights=None
-    )
-    print(f"   qtot shape: {qtot_expected.shape}, qr shape: {qr_expected.shape}")
 
     # Prepare MESSAGE parameters
-    print(f"\n8. Preparing MESSAGE parameters ({temporal_res})...")
+    print(f"\n7. Preparing MESSAGE parameters ({temporal_res})...")
     if temporal_res == "annual":
+        qtot_df = _ndarray_to_dataframe(qtot_arr, years, basin_mapping)
+        qr_df = _ndarray_to_dataframe(qr_arr, years, basin_mapping)
+        print(f"   qtot shape: {qtot_df.shape}, qr shape: {qr_df.shape}")
         sw_data, gw_data, share_data = prepare_water_cids(
-            qtot_expected, qr_expected, scen, temporal_res="annual"
+            qtot_df, qr_df, scen, temporal_res="annual"
         )
     else:
-        qtot_dry, qtot_wet = deinterleave_seasonal(qtot_expected)
-        qr_dry, qr_wet = deinterleave_seasonal(qr_expected)
+        # Seasonal: cached_rime_prediction returns (dry, wet) tuple
+        qtot_dry_arr, qtot_wet_arr = qtot_arr
+        qr_dry_arr, qr_wet_arr = qr_arr
+        qtot_dry = _ndarray_to_dataframe(qtot_dry_arr, years, basin_mapping)
+        qtot_wet = _ndarray_to_dataframe(qtot_wet_arr, years, basin_mapping)
+        qr_dry = _ndarray_to_dataframe(qr_dry_arr, years, basin_mapping)
+        qr_wet = _ndarray_to_dataframe(qr_wet_arr, years, basin_mapping)
+        print(f"   qtot_dry shape: {qtot_dry.shape}, qr_dry shape: {qr_dry.shape}")
         sw_data, gw_data, share_data = prepare_water_cids(
             (qtot_dry, qtot_wet), (qr_dry, qr_wet), scen, temporal_res="seasonal"
         )

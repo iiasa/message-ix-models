@@ -14,11 +14,11 @@ import pandas as pd
 import numpy as np
 
 from .constants import MAGICC_OUTPUT_DIR
-from .rime_functions import predict_from_gmt
 from .rime import (
+    predict_from_gmt,
     extract_temperature_timeseries,
     batch_rime_predictions,
-    batch_rime_predictions_with_percentiles,
+    create_rime_ensemble,
     expand_predictions_with_emulator_uncertainty,
     extract_all_run_ids,
     compute_expectation,
@@ -139,7 +139,7 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
             if include_emulator_uncertainty:
                 # Create base ensemble (lazy evaluation)
                 print(f"Running batch RIME predictions for {len(run_ids)} run(s)...")
-                ensemble = batch_rime_predictions_with_percentiles(
+                ensemble = create_rime_ensemble(
                     magicc_df,
                     run_ids,
                     dataset_path,

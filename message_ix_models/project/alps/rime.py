@@ -26,9 +26,10 @@ GMT < 0.6°C occurs.
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional, Literal, Union
+from typing import Optional, Literal, Union, Dict
 from scipy.stats import norm
 from dataclasses import dataclass, field
 
@@ -43,6 +44,47 @@ START_YEAR = 2025
 
 # RIME datasets directory
 RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
+
+
+# ==============================================================================
+# Core RIME Prediction (from rime_functions.py)
+# ==============================================================================
+
+
+@lru_cache(maxsize=8)
+def _load_rime_dataset(dataset_path: str) -> xr.Dataset:
+    """Cached dataset loading."""
+    return xr.open_dataset(dataset_path)
+
+
+def predict_from_gmt(
+    gmt: float,
+    dataset_path: str,
+    variable: str,
+    sel: Optional[Dict[str, any]] = None
+) -> any:
+    """Predict from GMT value with optional dimension selection.
+
+    Args:
+        gmt: Global mean temperature (float, C above pre-industrial)
+        dataset_path: Path to RIME NetCDF dataset
+        variable: Variable name (e.g., 'qtot_mean', 'qr', 'EI_ac_m2')
+        sel: Optional dict of dimension selections (e.g., {'region': 'R12_AFR', 'arch': 'SFH'})
+             Applied before gwl interpolation to reduce dimensionality
+
+    Returns:
+        Array of predictions. Shape depends on variable and selections.
+    """
+    ds = _load_rime_dataset(dataset_path)
+    data = ds[variable]
+
+    if sel is not None:
+        for dim, value in sel.items():
+            if dim in data.dims:
+                data = data.sel({dim: value})
+
+    predictions = data.sel(gwl=gmt, method='nearest').values
+    return predictions
 
 
 # ==============================================================================
@@ -121,8 +163,6 @@ class _RimeEnsemble:
         Returns:
             Predictions array. Shape depends on variable type and sel parameter.
         """
-        from .rime_functions import predict_from_gmt
-
         gmt = self.gmt_trajectories[run_id]
 
         # Pattern match on (seasonal mode, emulator uncertainty)
@@ -299,7 +339,10 @@ class _RimeEnsemble:
 def _separate_metadata_and_years(df: pd.DataFrame) -> tuple[list, pd.DataFrame]:
     """Separate year columns from metadata columns in RIME output DataFrames.
 
-    Year columns are integers (e.g., 2020, 2021, ..., 2100).
+    Year columns are either:
+    - Integers (e.g., 2020, 2021, ..., 2100) for annual data
+    - Strings matching '{year}_{season}' pattern (e.g., '2020_dry', '2020_wet') for seasonal
+
     Metadata columns are everything else (BASIN_ID, NAME, REGION, etc.).
 
     Args:
@@ -308,7 +351,17 @@ def _separate_metadata_and_years(df: pd.DataFrame) -> tuple[list, pd.DataFrame]:
     Returns:
         (year_columns, metadata_df): List of year column names and DataFrame of metadata columns
     """
-    year_columns = [col for col in df.columns if isinstance(col, (int, np.integer))]
+    def is_year_column(col):
+        if isinstance(col, (int, np.integer)):
+            return True
+        if isinstance(col, str) and '_' in col:
+            # Check if it matches '{year}_{season}' pattern
+            parts = col.split('_')
+            if len(parts) == 2 and parts[0].isdigit() and parts[1] in ('dry', 'wet'):
+                return True
+        return False
+
+    year_columns = [col for col in df.columns if is_year_column(col)]
     metadata_cols = [col for col in df.columns if col not in year_columns]
     metadata_df = df[metadata_cols].copy() if metadata_cols else pd.DataFrame(index=df.index)
     return year_columns, metadata_df
@@ -397,6 +450,42 @@ def split_basin_macroregion(
     return message_predictions
 
 
+def _clip_gmt(gmt_array: np.ndarray, temporal_res: str, seed: int = 42) -> np.ndarray:
+    """Clip GMT values below RIME emulator minimum with skewed noise.
+
+    RIME emulators have limited support at low GMT values:
+    - Annual: 0.6°C to 7.4°C
+    - Seasonal: 0.8°C to 7.4°C (0.6-0.7°C has 87% NaN for many basins)
+
+    Values below minimum are clipped and offset with skewed noise via beta(2,5)
+    to avoid boundary artifacts.
+
+    Args:
+        gmt_array: GMT values, shape (n_years,) or (n_runs, n_years)
+        temporal_res: Temporal resolution ('annual' or 'seasonal2step')
+        seed: Random seed for reproducibility
+
+    Returns:
+        Clipped GMT array (same shape as input)
+    """
+    gmt_clipped = np.asarray(gmt_array).copy()
+    original_shape = gmt_clipped.shape
+    gmt_flat = gmt_clipped.flatten()
+
+    GMT_MIN = 0.8 if temporal_res == "seasonal2step" else 0.6
+    GMT_MAX_NOISE = 1.2 if temporal_res == "seasonal2step" else 0.9
+
+    low_gmt_mask = gmt_flat < GMT_MIN
+    n_low = np.sum(low_gmt_mask)
+
+    if n_low > 0:
+        rng = np.random.default_rng(seed)
+        noise = rng.beta(2, 5, size=n_low) * GMT_MAX_NOISE
+        gmt_flat[low_gmt_mask] = GMT_MIN + noise
+
+    return gmt_flat.reshape(original_shape)
+
+
 def get_rime_dataset_path(
     variable: str, temporal_res: str = "annual", hydro_model: str = "CWatM"
 ) -> Path:
@@ -467,101 +556,110 @@ def predict_rime(
 ):
     """Predict RIME variable from GMT array with automatic dataset loading.
 
-    User-friendly wrapper around predict_from_gmt that handles:
-    - Variable name mapping (e.g., 'local_temp' → 'temp_mean_anomaly')
-    - Automatic dataset selection based on variable and temporal resolution
-    - Correct window selection (window11 for smoothed emulators, window0 for temp_mean_anomaly)
-    - Expansion from 157 RIME basins to 217 MESSAGE rows (area-weighted splitting)
-    - Regional aggregates (R12) for capacity_factor and building variables
-    - Dimension selection for building energy intensity variables
+    Handles single trajectories (1D) or ensembles (2D). For 2D input, computes
+    E[RIME(GMT_i)] - the expectation of RIME predictions across ensemble members.
 
     Args:
-        gmt_array: Array of GMT values (°C)
+        gmt_array: GMT values (°C). Shape (n_years,) for single trajectory,
+                   or (n_runs, n_years) for ensemble (returns expectation).
         variable: Target variable ('qtot_mean', 'qr', 'local_temp', 'capacity_factor', 'EI_cool', 'EI_heat')
         temporal_res: Temporal resolution ('annual' or 'seasonal2step')
         percentile: Optional percentile suffix ('p10', 'p50', 'p90') for uncertainty bounds
         sel: Optional dimension selection for building variables.
-             E.g., {'region': 'NAM', 'arch': 'mfh_s1', 'urt': 'urban'}
-             Reduces dimensionality by selecting specific values.
         hydro_model: Hydrological model ('CWatM' or 'H08') for basin variables
 
     Returns:
         For basin-level variables (qtot_mean, qr, local_temp):
             - annual: array (217, n_timesteps)
             - seasonal: tuple (dry, wet) where each is (217, n_timesteps)
-            NOTE: Basins 0, 141, 154 have missing RIME data (filled with NaN)
         For regional variables (capacity_factor):
             - annual: array (12, n_timesteps) for R12 regions
-            - seasonal: not supported
         For building variables (EI_cool, EI_heat):
-            - Without sel: array (12, 10, 3, n_timesteps) for (region, arch, urt, time)
+            - Without sel: array (12, 10, 3, n_timesteps)
             - With sel: reduced array based on selections
 
     Examples:
-        # Predict total runoff from GMT timeseries
-        predictions = predict_rime(gmt_array, 'qtot_mean', temporal_res='seasonal2step')
+        # Single trajectory
+        predictions = predict_rime(gmt_1d, 'qtot_mean')
 
-        # Get 90th percentile predictions for groundwater recharge
-        predictions_p90 = predict_rime(gmt_array, 'qr', percentile='p90')
-
-        # Predict thermoelectric capacity factor (R12 regional)
-        capacity_predictions = predict_rime(gmt_array, 'capacity_factor', percentile='p50')
-
-        # Predict cooling EI for all building types
-        ei_all = predict_rime(gmt_array, 'EI_cool', percentile='p50')  # (12, 10, 3, n_years)
-
-        # Predict cooling EI for specific building type
-        ei_sfh_urban_nam = predict_rime(
-            gmt_array, 'EI_cool', percentile='p50',
-            sel={'region': 'NAM', 'arch': 'mfh_s1', 'urt': 'urban'}
-        )  # (n_years,) scalar per timestep
+        # Ensemble expectation E[RIME(GMT_i)]
+        gmt_ensemble = np.random.randn(100, 76) + 2.0  # (n_runs, n_years)
+        expected = predict_rime(gmt_ensemble, 'qtot_mean')  # Same shape as single trajectory
     """
-    # Lazy import to avoid loading RIME at module import time
-    from .rime_functions import predict_from_gmt
+    gmt_array = np.asarray(gmt_array)
 
-    # Get dataset path using shared helper
+    if gmt_array.ndim == 1:
+        # Single trajectory: direct prediction
+        return _predict_rime_single(
+            gmt_array, variable, temporal_res, percentile, sel, hydro_model
+        )
+
+    elif gmt_array.ndim == 2:
+        # Ensemble: compute E[RIME(GMT_i)]
+        n_runs, n_years = gmt_array.shape
+        gmt_clipped = _clip_gmt(gmt_array, temporal_res)
+
+        # Predict for each run
+        predictions = [
+            _predict_rime_single(
+                gmt_clipped[i], variable, temporal_res, percentile, sel, hydro_model
+            )
+            for i in range(n_runs)
+        ]
+
+        # Stack and compute mean
+        if temporal_res == "seasonal2step":
+            # predictions is list of (dry, wet) tuples
+            dry_stack = np.stack([p[0] for p in predictions], axis=0)
+            wet_stack = np.stack([p[1] for p in predictions], axis=0)
+            return (np.mean(dry_stack, axis=0), np.mean(wet_stack, axis=0))
+        else:
+            return np.mean(np.stack(predictions, axis=0), axis=0)
+
+    else:
+        raise ValueError(f"gmt_array must be 1D or 2D, got shape {gmt_array.shape}")
+
+
+def _predict_rime_single(
+    gmt_array: np.ndarray,
+    variable: str,
+    temporal_res: str,
+    percentile: Optional[str],
+    sel: Optional[dict],
+    hydro_model: str,
+):
+    """Single-trajectory RIME prediction (internal helper)."""
     dataset_path = get_rime_dataset_path(variable, temporal_res, hydro_model)
 
     # Handle building energy intensity variables
     if variable.startswith("EI_"):
-        # Extract mode (cool or heat)
         mode = variable.split("_")[1]
-        # Build variable name with percentile if provided
         if mode == "cool":
             var_name = "EI_ac_m2" if percentile is None else f"EI_ac_m2_{percentile}"
-        else:  # heat
+        else:
             var_name = "EI_h_m2" if percentile is None else f"EI_h_m2_{percentile}"
-
         return predict_from_gmt(gmt_array, str(dataset_path), var_name, sel=sel)
 
-    # For regional variables (capacity_factor), return directly without basin expansion
+    # Regional variables (capacity_factor)
     elif variable == "capacity_factor":
         predict_var = variable if percentile is None else f"{variable}_{percentile}"
         return predict_from_gmt(gmt_array, str(dataset_path), predict_var)
 
-    # Variable mapping for basin-level variables
+    # Basin-level variables
     var_map = {"local_temp": "temp_mean_anomaly"}
     rime_var = var_map.get(variable, variable)
 
-    # For seasonal, predict dry and wet separately and return as tuple
     if temporal_res == "seasonal2step":
-        # Predict dry season
-        var_dry = (
-            f"{rime_var}_dry" if percentile is None else f"{rime_var}_dry_{percentile}"
-        )
+        var_dry = f"{rime_var}_dry" if percentile is None else f"{rime_var}_dry_{percentile}"
         pred_dry = predict_from_gmt(gmt_array, str(dataset_path), var_dry)
         pred_dry_expanded = split_basin_macroregion(pred_dry)
 
-        # Predict wet season
-        var_wet = (
-            f"{rime_var}_wet" if percentile is None else f"{rime_var}_wet_{percentile}"
-        )
+        var_wet = f"{rime_var}_wet" if percentile is None else f"{rime_var}_wet_{percentile}"
         pred_wet = predict_from_gmt(gmt_array, str(dataset_path), var_wet)
         pred_wet_expanded = split_basin_macroregion(pred_wet)
 
         return (pred_dry_expanded, pred_wet_expanded)
     else:
-        # Annual: single prediction
         predict_var = rime_var if percentile is None else f"{rime_var}_{percentile}"
         rime_predictions = predict_from_gmt(gmt_array, str(dataset_path), predict_var)
         return split_basin_macroregion(rime_predictions)
@@ -862,9 +960,6 @@ def batch_rime_predictions(
 ) -> dict[int, pd.DataFrame]:
     """Run RIME predictions on multiple runs (eager evaluation).
 
-    Wrapper that creates lazy ensemble and immediately evaluates it for backward compatibility.
-    Use batch_rime_predictions_with_percentiles() directly for lazy evaluation.
-
     Args:
         magicc_df: MAGICC output DataFrame
         run_ids: List of run IDs to process
@@ -876,13 +971,13 @@ def batch_rime_predictions(
     Returns:
         Dictionary mapping run_id -> DataFrame with predictions (MESSAGE format with metadata)
     """
-    ensemble = batch_rime_predictions_with_percentiles(
+    ensemble = create_rime_ensemble(
         magicc_df, run_ids, dataset_path, basin_mapping, variable, temporal_res=temporal_res
     )
     return ensemble.evaluate(as_dataframe=True)
 
 
-def batch_rime_predictions_with_percentiles(
+def create_rime_ensemble(
     magicc_df: pd.DataFrame,
     run_ids: list[int],
     dataset_path: Path,
@@ -890,10 +985,13 @@ def batch_rime_predictions_with_percentiles(
     variable: str,
     temporal_res: str = "annual",
 ) -> _RimeEnsemble:
-    """Run RIME predictions with lazy evaluation for memory efficiency.
+    """Create lazy RIME ensemble for memory-efficient processing.
 
-    Stores GMT trajectories instead of materialized predictions (180× memory reduction).
+    Stores GMT trajectories instead of materialized predictions (180x memory reduction).
     Predictions are reconstructed on-demand when calling ensemble.evaluate().
+
+    Used by batch_rime_predictions() internally, and by expand_predictions_with_emulator_uncertainty()
+    for the emulator uncertainty workflow.
 
     Args:
         magicc_df: MAGICC output DataFrame
@@ -902,12 +1000,10 @@ def batch_rime_predictions_with_percentiles(
         basin_mapping: Basin mapping DataFrame (for basin variables)
         variable: Base variable name (qtot_mean, qr, capacity_factor, EI_cool, EI_heat)
         temporal_res: Temporal resolution ('annual' or 'seasonal2step')
-                     NOTE: Not supported for capacity_factor or EI variables
 
     Returns:
         _RimeEnsemble object with lazy evaluation.
-        Call ensemble.evaluate(as_dataframe=True) to materialize predictions as DataFrames.
-        Call ensemble.evaluate(as_dataframe=False) to get arrays only.
+        Call ensemble.evaluate(as_dataframe=True) to materialize predictions.
     """
     # Validate parameters
     if variable == "capacity_factor" and temporal_res == "seasonal2step":
