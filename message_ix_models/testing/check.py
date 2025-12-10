@@ -241,6 +241,31 @@ class HasUnits(Check):
 
 
 @dataclass
+class NoDuplicates(Check):
+    """No duplicate indices in parameter data."""
+
+    setting: None = None
+    types = (pd.DataFrame, dict)
+
+    rows: int = 7
+
+    def run(self, obj):
+        if isinstance(obj, dict):
+            return self.recurse_parameter_data(obj)
+
+        columns = list(filter(lambda c: c not in {"value", "unit"}, obj.columns))
+        duplicated = obj.duplicated(subset=columns)
+
+        if duplicated.any():
+            log.debug(obj[duplicated].to_string(max_rows=self.rows, min_rows=self.rows))
+            return (
+                False,
+                f"{duplicated.sum()} duplicated keys:",
+            )
+        return True, self._description
+
+
+@dataclass
 class NoneMissing(Check):
     """No missing values."""
 
