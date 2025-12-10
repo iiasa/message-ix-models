@@ -29,17 +29,52 @@ import pandas as pd
 import xarray as xr
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional, Literal, Dict
+from typing import Optional, Dict
 
 from message_ix_models.util import package_data_path
 from .cvar import compute_cvar
 
-# START YEAR FOR RIME PREDICTIONS
-# Set to 2025 to avoid early years with GMT < 0.6°C (minimum GMT with empirical support)
-START_YEAR = 2025
-
 # RIME datasets directory
 RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
+
+# Variable name mapping: user-facing name -> RIME dataset variable name
+VAR_MAP = {"local_temp": "temp_mean_anomaly"}
+
+
+# ==============================================================================
+# Cached Data Loaders
+# ==============================================================================
+
+
+@lru_cache(maxsize=1)
+def _get_rime_region_mapping() -> dict[int, int]:
+    """Cached mapping from BASIN_ID to RIME array index.
+
+    RIME datasets have 157 basins indexed by region IDs [1, 2, ..., 162] with gaps.
+    This returns a dict mapping BASIN_ID -> array index for efficient lookups.
+    """
+    dataset_path = RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
+    ds = xr.open_dataset(dataset_path)
+    rime_region_ids = ds.region.values
+    return {int(region_id): i for i, region_id in enumerate(rime_region_ids)}
+
+
+@lru_cache(maxsize=1)
+def load_basin_mapping() -> pd.DataFrame:
+    """Load R12 basin mapping with MESSAGE basin codes (cached).
+
+    Returns:
+        DataFrame with 217 rows (R12 basins) and columns including:
+        ['BASIN_ID', 'NAME', 'BASIN', 'REGION', 'BCU_name', 'area_km2', 'model_region', 'basin_code']
+
+        The 'basin_code' column contains MESSAGE format codes (e.g., 'B107|AFR').
+    """
+    basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
+    basin_df = pd.read_csv(basin_file)
+    basin_df = basin_df[basin_df["model_region"] == "R12"].copy()
+    basin_df = basin_df.reset_index(drop=True)
+    basin_df["basin_code"] = "B" + basin_df["BASIN_ID"].astype(str) + "|" + basin_df["REGION"]
+    return basin_df
 
 
 # ==============================================================================
@@ -83,35 +118,6 @@ def predict_from_gmt(
     return predictions
 
 
-# ==============================================================================
-# Variable Type Classification
-# ==============================================================================
-
-
-def _get_variable_type(variable: str) -> Literal["basin", "regional", "building"]:
-    """Classify RIME variable by dimensionality.
-
-    Args:
-        variable: Variable name (e.g., 'qtot_mean', 'capacity_factor', 'EI_cool')
-
-    Returns:
-        'basin': Basin-level hydrology (qtot_mean, qr, local_temp)
-        'regional': Regional aggregates (capacity_factor)
-        'building': Building energy intensity (EI_cool, EI_heat)
-    """
-    if variable in ("qtot_mean", "qr", "local_temp"):
-        return "basin"
-    elif variable == "capacity_factor":
-        return "regional"
-    elif variable.startswith("EI_"):
-        return "building"
-    else:
-        raise ValueError(
-            f"Unknown variable type: {variable}. "
-            f"Expected: qtot_mean, qr, local_temp, capacity_factor, EI_cool, EI_heat"
-        )
-
-
 def split_basin_macroregion(
     rime_predictions: np.ndarray, basin_mapping: Optional[pd.DataFrame] = None
 ) -> np.ndarray:
@@ -127,39 +133,18 @@ def split_basin_macroregion(
                    (157, n_timesteps, n_seasons) for seasonal
         basin_mapping: Basin mapping DataFrame (R12 basins only, reset index)
             Must have columns: ['BASIN_ID', 'area_km2']
-            If None, loads and filters all_basins.csv to R12
+            If None, uses cached load_basin_mapping()
 
     Returns:
         message_predictions: Expanded predictions array
             Shape: (217, n_timesteps) for annual
                    (217, n_timesteps, n_seasons) for seasonal
             NOTE: Basins 0, 141, 154 have missing RIME data (filled with NaN)
-
-    Examples:
-        # RIME predicts 100 km³/yr for basin spanning 3 regions
-        # Basin appears in AFR (area=1000), WEU (area=500), MEA (area=500)
-        # Total area = 2000 km²
-        # AFR gets: 100 * (1000/2000) = 50 km³/yr
-        # WEU gets: 100 * (500/2000) = 25 km³/yr
-        # MEA gets: 100 * (500/2000) = 25 km³/yr
     """
-    import xarray as xr
-
-    # Load basin mapping
     if basin_mapping is None:
         basin_mapping = load_basin_mapping()
 
-    # Load RIME region IDs from dataset
-    dataset_path = (
-        RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
-    )
-    ds = xr.open_dataset(dataset_path)
-    rime_region_ids = ds.region.values  # [1, 2, 3, ..., 162] with gaps, 157 total
-
-    # Create BASIN_ID → RIME array index mapping
-    basin_id_to_rime_idx = {
-        int(region_id): i for i, region_id in enumerate(rime_region_ids)
-    }
+    basin_id_to_rime_idx = _get_rime_region_mapping()
 
     # Handle seasonal (157, n_timesteps, n_seasons) or annual (157, n_timesteps)
     is_seasonal = rime_predictions.ndim == 3
@@ -264,9 +249,8 @@ def get_rime_dataset_path(
             )
         dataset_path = RIME_DATASETS_DIR / "r12_capacity_gwl_ensemble.nc"
     else:
-        # Variable mapping for basin-level variables
-        var_map = {"local_temp": "temp_mean_anomaly"}
-        rime_var = var_map.get(variable, variable)
+        # Basin-level variables
+        rime_var = VAR_MAP.get(variable, variable)
 
         # Determine window - use window11 as default (smoothed emulators)
         # Exception: temp_mean_anomaly annual uses window0
@@ -459,8 +443,7 @@ def _predict_rime_single(
         return predict_from_gmt(gmt_array, str(dataset_path), predict_var)
 
     # Basin-level variables
-    var_map = {"local_temp": "temp_mean_anomaly"}
-    rime_var = var_map.get(variable, variable)
+    rime_var = VAR_MAP.get(variable, variable)
 
     if temporal_res == "seasonal2step":
         var_dry = f"{rime_var}_dry" if percentile is None else f"{rime_var}_dry_{percentile}"
@@ -478,92 +461,51 @@ def _predict_rime_single(
         return split_basin_macroregion(rime_predictions)
 
 
-def load_basin_mapping() -> pd.DataFrame:
-    """Load R12 basin mapping with MESSAGE basin codes.
-
-    Returns:
-        DataFrame with 217 rows (R12 basins) and columns including:
-        ['BASIN_ID', 'NAME', 'BASIN', 'REGION', 'BCU_name', 'area_km2', 'model_region', 'basin_code']
-
-        The 'basin_code' column contains MESSAGE format codes (e.g., 'B107|AFR').
-
-    Examples:
-        mapping = load_basin_mapping()
-        basin_codes = mapping['basin_code'].tolist()  # ['B0|AFR', 'B0|EEU', ...]
-        amazon_area = mapping[mapping['BASIN_ID'] == 100]['area_km2'].sum()
-    """
-    basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
-    basin_df = pd.read_csv(basin_file)
-    basin_df = basin_df[basin_df["model_region"] == "R12"].copy()
-    basin_df = basin_df.reset_index(drop=True)
-    basin_df["basin_code"] = "B" + basin_df["BASIN_ID"].astype(str) + "|" + basin_df["REGION"]
-    return basin_df
-
-
 def aggregate_basins_to_regions(
-    basin_predictions: np.ndarray,
+    basin_predictions,
     variable: str,
     basin_mapping: Optional[pd.DataFrame] = None,
-) -> np.ndarray:
+):
     """Aggregate basin-level predictions to R12 regional level.
 
     Args:
-        basin_predictions: Basin-level predictions array
-            Shape: (217, n_timesteps) for annual
-                   (217, n_timesteps, n_seasons) for seasonal
+        basin_predictions: Basin-level predictions
+            - ndarray (217, n_timesteps) for annual
+            - tuple (dry, wet) where each is (217, n_timesteps) for seasonal
         variable: Variable name to determine aggregation method
             - 'qtot_mean', 'qr': sum across basins (hydrology volumes)
             - 'local_temp': mean across basins (temperature)
-        basin_mapping: Basin mapping DataFrame (R12 basins only, reset index)
-            If None, loads and filters all_basins.csv to R12
+        basin_mapping: Basin mapping DataFrame. If None, uses cached load_basin_mapping()
 
     Returns:
-        region_predictions: Regional predictions array
-            Shape: (12, n_timesteps) for annual (12 R12 regions)
-                   (12, n_timesteps, n_seasons) for seasonal
-            Regions ordered alphabetically
-
-    Examples:
-        # Aggregate basin predictions to regions
-        basin_preds = predict_rime(gmt, 'qtot_mean', temporal_res='seasonal2step')
-        region_preds = aggregate_basins_to_regions(basin_preds, 'qtot_mean')
+        - ndarray (12, n_timesteps) for annual
+        - tuple (dry, wet) where each is (12, n_timesteps) for seasonal
+        Regions ordered alphabetically.
     """
-    # Load basin mapping
+    # Handle seasonal tuple input
+    if isinstance(basin_predictions, tuple):
+        dry_agg = aggregate_basins_to_regions(basin_predictions[0], variable, basin_mapping)
+        wet_agg = aggregate_basins_to_regions(basin_predictions[1], variable, basin_mapping)
+        return (dry_agg, wet_agg)
+
     if basin_mapping is None:
         basin_mapping = load_basin_mapping()
 
     # Determine aggregation function
-    var_map = {"local_temp": "temp_mean_anomaly"}
-    mapped_var = var_map.get(variable, variable)
-
-    if mapped_var == "temp_mean_anomaly":
-        agg_func = np.nanmean
-    else:  # qtot_mean, qr
-        agg_func = np.nansum
+    mapped_var = VAR_MAP.get(variable, variable)
+    agg_func = np.nanmean if mapped_var == "temp_mean_anomaly" else np.nansum
 
     # Get unique regions sorted alphabetically
     regions = sorted(basin_mapping["REGION"].unique())
     n_regions = len(regions)
 
-    # Handle seasonal (217, n_timesteps, n_seasons) or annual (217, n_timesteps)
-    is_seasonal = basin_predictions.ndim == 3
-    if is_seasonal:
-        n_basins, n_timesteps, n_seasons = basin_predictions.shape
-        region_predictions = np.zeros((n_regions, n_timesteps, n_seasons))
-    else:
-        n_basins, n_timesteps = basin_predictions.shape
-        region_predictions = np.zeros((n_regions, n_timesteps))
+    n_basins, n_timesteps = basin_predictions.shape
+    region_predictions = np.zeros((n_regions, n_timesteps))
 
-    # Aggregate each region
     for i, region in enumerate(regions):
         region_basins = basin_mapping[basin_mapping["REGION"] == region].index.tolist()
-
-        if is_seasonal:
-            region_data = basin_predictions[region_basins, :, :]
-            region_predictions[i, :, :] = agg_func(region_data, axis=0)
-        else:
-            region_data = basin_predictions[region_basins, :]
-            region_predictions[i, :] = agg_func(region_data, axis=0)
+        region_data = basin_predictions[region_basins, :]
+        region_predictions[i, :] = agg_func(region_data, axis=0)
 
     return region_predictions
 
