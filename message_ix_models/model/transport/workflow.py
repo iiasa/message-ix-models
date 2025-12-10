@@ -134,9 +134,9 @@ def scenario_url(context: "Context", label: str | None = None) -> str:
         )
 
 
-def short_hash(value: str) -> str:
+def short_hash(value: str, len: int = 3) -> str:
     """Return a short (length 3) hash of `value`."""
-    return blake2s(value.encode()).hexdigest()[:3]
+    return blake2s(value.encode()).hexdigest()[:len]
 
 
 @minimum_version("message_ix 3.11")
