@@ -1,0 +1,93 @@
+# Vehicle speed
+#
+# - This is the mean for all vehicles of all technologies in the given
+#   mode.
+# - The code that handles this file interpolates on the ‘year’
+#   dimension.
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Unit: km / hour
+#
+scenario,    node,     technology, year, value
+SSP(2017).2, Austria,  LDV,        2020,  54.5
+SSP(2017).2, Austria,  LDV,        2110,  54.5
+SSP(2017).2, Austria,  2W,         2020,  31
+SSP(2017).2, Austria,  2W,         2110,  31
+SSP(2017).2, Austria,  AIR,        2020, 270
+SSP(2017).2, Austria,  AIR,        2110, 270
+SSP(2017).2, Austria,  BUS,        2020,  19
+SSP(2017).2, Austria,  BUS,        2110,  19
+SSP(2017).2, Austria,  RAIL,       2020,  35
+SSP(2017).2, Austria,  RAIL,       2110,  35
+
+SSP(2024).1, Austria,  LDV,        2020,  54.5
+SSP(2024).1, Austria,  LDV,        2110,  54.5
+SSP(2024).1, Austria,  2W,         2020,  31
+SSP(2024).1, Austria,  2W,         2110,  31
+SSP(2024).1, Austria,  AIR,        2020, 270
+SSP(2024).1, Austria,  AIR,        2110, 200
+SSP(2024).1, Austria,  BUS,        2020,  19
+SSP(2024).1, Austria,  BUS,        2110,  42
+SSP(2024).1, Austria,  RAIL,       2020,  35
+SSP(2024).1, Austria,  RAIL,       2110,  70
+
+# Used for calculating LED-SSP1 scenario.
+# See details
+# https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1741694112498399?thread_ts=1741692868.952549&cid=CCFHDNA6P
+
+# SSP(2024).1, Austria,  2W,        2020,  31
+# SSP(2024).1, Austria,  2W,        2110,  31
+# SSP(2024).1, Austria,  AIR,       2020, 270
+# SSP(2024).1, Austria,  AIR,       2110, 200
+# SSP(2024).1, Austria,  BUS,       2020,  19
+# SSP(2024).1, Austria,  BUS,       2110,  50
+# SSP(2024).1, Austria,  LDV,       2020,  54.5
+# SSP(2024).1, Austria,  LDV,       2110,  41.189289
+# SSP(2024).1, Austria,  RAIL,      2020,  35
+# SSP(2024).1, Austria,  RAIL,      2110,  70
+
+SSP(2024).2, Austria,  LDV,        2020,  54.5
+SSP(2024).2, Austria,  LDV,        2110,  70
+SSP(2024).2, Austria,  2W,         2020,  31
+SSP(2024).2, Austria,  2W,         2110,  31
+SSP(2024).2, Austria,  AIR,        2020, 270
+SSP(2024).2, Austria,  AIR,        2110, 300
+SSP(2024).2, Austria,  BUS,        2020,  19
+SSP(2024).2, Austria,  BUS,        2110,  32
+SSP(2024).2, Austria,  RAIL,       2020,  35
+SSP(2024).2, Austria,  RAIL,       2110,  58
+
+SSP(2024).3, Austria,  LDV,        2020,  54.5
+SSP(2024).3, Austria,  LDV,        2110,  70
+SSP(2024).3, Austria,  2W,         2020,  31
+SSP(2024).3, Austria,  2W,         2110,  31
+SSP(2024).3, Austria,  AIR,        2020, 270
+SSP(2024).3, Austria,  AIR,        2110, 200
+SSP(2024).3, Austria,  BUS,        2020,  19
+SSP(2024).3, Austria,  BUS,        2110,  32
+SSP(2024).3, Austria,  RAIL,       2020,  35
+SSP(2024).3, Austria,  RAIL,       2110,  58
+
+SSP(2024).4, Austria,  LDV,        2020,  54.5
+SSP(2024).4, Austria,  LDV,        2110,  70
+SSP(2024).4, Austria,  2W,         2020,  31
+SSP(2024).4, Austria,  2W,         2110,  31
+SSP(2024).4, Austria,  AIR,        2020, 270
+SSP(2024).4, Austria,  AIR,        2110, 300
+SSP(2024).4, Austria,  BUS,        2020,  19
+SSP(2024).4, Austria,  BUS,        2110,  32
+SSP(2024).4, Austria,  RAIL,       2020,  35
+SSP(2024).4, Austria,  RAIL,       2110,  58
+
+SSP(2024).5, Austria,  LDV,        2020,  54.5
+SSP(2024).5, Austria,  LDV,        2110,  70
+SSP(2024).5, Austria,  2W,         2020,  31
+SSP(2024).5, Austria,  2W,         2110,  31
+SSP(2024).5, Austria,  AIR,        2020, 270
+SSP(2024).5, Austria,  AIR,        2110, 330
+SSP(2024).5, Austria,  BUS,        2020,  19
+SSP(2024).5, Austria,  BUS,        2110,  19
+SSP(2024).5, Austria,  RAIL,       2020,  35
+SSP(2024).5, Austria,  RAIL,       2110,  35
