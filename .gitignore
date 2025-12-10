@@ -197,3 +197,33 @@ message_ix_models/project/alps/plotting.py
 # Legacy reporting data (local only)
 message_ix_models/data/report/legacy/
 reporting_output/
+
+# Root-level analysis outputs (not tracked)
+/*.gdx
+/*.csv
+/*.pdf
+/*.html
+/*.parquet
+/*.xlsx
+
+# Root-level one-off scripts
+/energy_mix_plot.py
+/plot_pe_regional.py
+/plot_pe_streamgraph.py
+/unlock_scen.py
+/verify_desalination_bounds.py
+
+# Output directories (symlinks)
+GDX_dir
+unicc_reporting
+
+# RIME datasets for non-primary hydro models (only CWatM tracked)
+message_ix_models/data/alps/rime_datasets/*H08*
+message_ix_models/data/alps/rime_datasets/*MIROC*
+message_ix_models/data/alps/rime_datasets/*WaterGAP*
+
+# Local analysis/config files
+message_ix_models/data/report/binding.yaml
+message_ix_models/report/binding.py
+message_ix_models/project/alps/reduced_baseline_seasonal_cid_config.yaml
+message_ix_models/data/alps/rime_datasets/rime_regionarray_temp_mean_anomaly_*
