@@ -74,7 +74,6 @@ The groundwater share is computed as:
    \text{gw\_share} = 0.95 \times \frac{q_r}{q_{tot} + q_r}
 
 capped at [0, 1].
-The 0.95 factor prevents numerical issues from 100% groundwater dependence.
 
 Basin Geometry
 ~~~~~~~~~~~~~~
