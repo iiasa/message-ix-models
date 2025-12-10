@@ -9,9 +9,9 @@ IMPORTANT: RIME Emulator GMT Range Limitations
 ----------------------------------------------
 All RIME emulators (annual and seasonal) have empirical support for GMT range: 0.6°C to 7.4°C
 
-Analysis of MAGICC output shows ~1% of GMT observations fall below 0.6°C, primarily
-in early years (1995-2002) where some runs have GMT as low as 0.34°C. These values
-are out of support and the emulators fail to interpolate outside this range.
+Low budget overshoot scenarios (sub-1000 GtCO2) peak mid-century then decline as negative
+emissions take effect. This late-century temperature decline can exit the lower bound of
+RIME support (0.6°C). The emulators fail to interpolate outside this range.
 
 Mitigation strategy:
 - Clip GMT values below threshold to [0.6°C, 0.9°C] for annual emulators
@@ -19,9 +19,6 @@ Mitigation strategy:
   (seasonal emulators have 87% NaN coverage for many basins at 0.6-0.7°C)
 - Add skewed noise using beta(2,5) distribution to avoid artifacts at boundary
 - This ensures predictions remain within the emulators' support domain
-
-By starting predictions at 2025, we avoid most problematic early years where
-GMT < 0.6°C occurs.
 """
 
 from functools import lru_cache
