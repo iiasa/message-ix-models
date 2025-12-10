@@ -34,7 +34,7 @@ from dataclasses import dataclass, field
 
 from message_ix_models.util import package_data_path
 from .constants import R12_REGIONS
-from .weighted_cvar import compute_weighted_cvar
+from .cvar import compute_weighted_cvar
 from .utils import fit_dist
 
 # START YEAR FOR RIME PREDICTIONS
@@ -965,11 +965,6 @@ def batch_rime_predictions_with_percentiles(
         temporal_res=temporal_res,
         basin_mapping=basin_mapping,
     )
-
-
-# ==============================================================================
-# Legacy Helper (Deprecated - will be removed)
-# ==============================================================================
 
 
 def expand_predictions_with_emulator_uncertainty(

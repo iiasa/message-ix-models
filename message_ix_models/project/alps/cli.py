@@ -142,31 +142,20 @@ def run_magicc_cmd(**kwargs):
     help='Output format: iamc (12 R12 regions) or message (217 basins) (default: message)'
 )
 @click.option(
-    '--weighted/--no-weighted',
-    default=False,
-    help='Compute importance-weighted expectations and CVaR (disabled by default: no significant effect detected)'
-)
-@click.option(
     '--n-runs',
     type=int,
     default=None,
-    help='Number of runs to process in weighted mode (default: all)'
+    help='Number of runs to process (default: all)'
 )
 @click.option(
     '--cvar-levels',
     default='10,50,90',
-    help='Comma-separated CVaR percentiles for weighted mode (default: 10,50,90)'
-)
-@click.option(
-    '--gwl-bin-width',
-    type=float,
-    default=0.5,
-    help='GWL bin width for importance weighting in °C (default: 0.5)'
+    help='Comma-separated CVaR percentiles (default: 10,50,90)'
 )
 @click.option(
     '--include-emulator-uncertainty/--no-include-emulator-uncertainty',
     default=False,
-    help='Propagate RIME emulator uncertainty using stratified sampling (can be combined with --weighted)'
+    help='Propagate RIME emulator uncertainty using stratified sampling'
 )
 @click.option(
     '--cvar-method',

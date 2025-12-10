@@ -26,15 +26,11 @@ from .rime import (
     get_rime_dataset_path,
     load_basin_mapping,
 )
-from .importance_weighting import (
-    extract_gmt_timeseries,
-    compute_gwl_importance_weights
-)
 
 
 def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_id=None,
-             variable='both', output_dir=None, weighted=False, n_runs=None,
-             cvar_levels=None, gwl_bin_width=0.5, include_emulator_uncertainty=False,
+             variable='both', output_dir=None, n_runs=None,
+             cvar_levels=None, include_emulator_uncertainty=False,
              suban=False, cvar_method='coherent'):
     """Run RIME predictions on MAGICC temperature output.
 
@@ -46,10 +42,8 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
         run_id: Specific run_id to extract (0-599). If provided, percentile is ignored.
         variable: Variable to predict ('qtot_mean', 'qr', 'hydro' (both hydrological), or 'capacity_factor')
         output_dir: Output directory for results
-        weighted: If True, compute importance-weighted expectations and CVaR
-        n_runs: Number of runs to process in weighted mode (default: all)
-        cvar_levels: CVaR percentiles for weighted mode (default: [10, 50, 90])
-        gwl_bin_width: GWL bin width for importance weighting (default: 0.5°C)
+        n_runs: Number of runs to process (default: all)
+        cvar_levels: CVaR percentiles (default: [10, 50, 90])
         include_emulator_uncertainty: If True, propagate RIME emulator uncertainty using stratified sampling
         suban: If True, use seasonal (2-step) temporal resolution; if False, use annual (default: False)
         cvar_method: CVaR computation method ('coherent' or 'pointwise', default: 'coherent')
@@ -97,75 +91,20 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
     print(f"  Loaded mapping for {len(basin_mapping)} MESSAGE basins")
     print()
 
-    # Determine processing mode using pattern matching
-    match (weighted, include_emulator_uncertainty):
-        case (True, True):
-            # Mode: Importance weighting + emulator uncertainty
-            print("\n" + "="*80)
-            print("MODE: IMPORTANCE WEIGHTING + EMULATOR UNCERTAINTY")
-            print("="*80)
+    # Determine processing mode
+    if include_emulator_uncertainty:
+        print("\n" + "="*80)
+        print("MODE: EMULATOR UNCERTAINTY (UNIFORM WEIGHTS)")
+        print("="*80)
 
-            # Load reference and compute importance weights
-            scenario_prefix = magicc_file.stem.replace("_magicc_all_runs", "")
-            ref_file = magicc_file.parent / f"{scenario_prefix}_magicc_reference_isimip3b.xlsx"
-            if not ref_file.exists():
-                print(f"Error: Reference file not found: {ref_file}")
-                return 1
-
-            ref_df = pd.read_excel(ref_file, sheet_name='data')
-            target_ts = extract_gmt_timeseries(magicc_df)
-            ref_ts = extract_gmt_timeseries(ref_df)
-            weight_result = compute_gwl_importance_weights(target_ts, ref_ts, gwl_bin_width=gwl_bin_width)
-
-            weights = weight_result['weights'] / weight_result['weights'].sum()
-            run_ids = weight_result['run_ids'][:n_runs] if n_runs else weight_result['run_ids']
-            weights = weights[:len(run_ids)]
-            weights = weights / weights.sum()
-
-            ess = weight_result['diagnostics']['ess']
-            print(f"ESS: {ess:.1f} / {len(run_ids)} ({100*ess/len(run_ids):.1f}%)")
-
-        case (True, False):
-            # Mode: Importance weighting only
-            print("\n" + "="*80)
-            print("MODE: IMPORTANCE WEIGHTING")
-            print("="*80)
-
-            scenario_prefix = magicc_file.stem.replace("_magicc_all_runs", "")
-            ref_file = magicc_file.parent / f"{scenario_prefix}_magicc_reference_isimip3b.xlsx"
-            if not ref_file.exists():
-                print(f"Error: Reference file not found: {ref_file}")
-                return 1
-
-            ref_df = pd.read_excel(ref_file, sheet_name='data')
-            target_ts = extract_gmt_timeseries(magicc_df)
-            ref_ts = extract_gmt_timeseries(ref_df)
-            weight_result = compute_gwl_importance_weights(target_ts, ref_ts, gwl_bin_width=gwl_bin_width)
-
-            weights = weight_result['weights'] / weight_result['weights'].sum()
-            run_ids = weight_result['run_ids'][:n_runs] if n_runs else weight_result['run_ids']
-            weights = weights[:len(run_ids)]
-            weights = weights / weights.sum()
-
-            ess = weight_result['diagnostics']['ess']
-            print(f"ESS: {ess:.1f} / {len(run_ids)} ({100*ess/len(run_ids):.1f}%)")
-
-        case (False, True):
-            # Mode: Emulator uncertainty only (uniform weights)
-            print("\n" + "="*80)
-            print("MODE: EMULATOR UNCERTAINTY (UNIFORM WEIGHTS)")
-            print("="*80)
-
-            all_runs = extract_all_run_ids(magicc_df)
-            run_ids = all_runs[:n_runs] if n_runs else all_runs
-            weights = np.ones(len(run_ids)) / len(run_ids)
-            print(f"Processing {len(run_ids)} runs with uniform weights")
-
-        case (False, False):
-            raise ValueError(
-                "--n-runs requires --include-emulator-uncertainty flag. "
-                "CVaR computation requires emulator uncertainty propagation."
-            )
+        all_runs = extract_all_run_ids(magicc_df)
+        run_ids = all_runs[:n_runs] if n_runs else all_runs
+        weights = np.ones(len(run_ids)) / len(run_ids)
+        print(f"Processing {len(run_ids)} runs with uniform weights")
+    else:
+        # Simple expectation mode without CVaR
+        run_ids = None
+        weights = None
 
     variables = ['qtot_mean', 'qr'] if variable == 'hydro' else [variable]
 
@@ -231,68 +170,32 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                     temporal_res=temporal_res
                 )
 
-            # Compute expectations and CVaR if needed
-            if weighted or include_emulator_uncertainty:
-                print(f"\nComputing expectations and CVaR...")
+            # Compute expectations and CVaR
+            print(f"\nComputing expectations and CVaR...")
 
-                # Results with configured weights (importance or uniform)
-                result_mean = compute_expectation(predictions, weights=weights)
-                result_cvar = compute_rime_cvar(predictions, weights, cvar_levels=cvar_levels, method=cvar_method)
+            result_mean = compute_expectation(predictions, weights=weights)
+            result_cvar = compute_rime_cvar(predictions, weights, cvar_levels=cvar_levels, method=cvar_method)
 
-                # Comparison: uniform weights
-                n_runs = len(predictions.gmt_trajectories) if hasattr(predictions, 'gmt_trajectories') else len(predictions)
-                uniform_weights = np.ones(n_runs) / n_runs
-                uniform_mean = compute_expectation(predictions, weights=None)
-                uniform_cvar = compute_rime_cvar(predictions, uniform_weights, cvar_levels=cvar_levels, method=cvar_method)
-
-                # Save results
-                if 'qtot' in var:
-                    var_short = 'qtot'
-                elif 'qr' in var:
-                    var_short = 'qr'
-                elif var == 'local_temp':
-                    var_short = 'temp'
-                else:
-                    var_short = var
-                scenario_name = f"{model}_{scenario}" if model and scenario else magicc_file.stem.replace("_magicc_all_runs", "")
-
-                # Determine suffix based on weighting mode
-                result_suffix = "weighted" if weighted else "emulator_unc"
-
-                print(f"\nSaving {result_suffix} results...")
-                result_mean.to_csv(output_dir / f"{var_short}_{temporal_res}_{scenario_name}_{result_suffix}_expectation.csv")
-                for level in cvar_levels:
-                    result_cvar[f'cvar_{int(level)}'].to_csv(
-                        output_dir / f"{var_short}_{temporal_res}_{scenario_name}_{result_suffix}_cvar{int(level)}.csv"
-                    )
-                print(f"  {var_short}_{temporal_res}_{scenario_name}_{result_suffix}_expectation.csv")
-                print(f"  {var_short}_{temporal_res}_{scenario_name}_{result_suffix}_cvar{{10,50,90}}.csv")
-
-                print(f"\nSaving uniform results...")
-                uniform_mean.to_csv(output_dir / f"{var_short}_{temporal_res}_{scenario_name}_uniform_expectation.csv")
-                for level in cvar_levels:
-                    uniform_cvar[f'cvar_{int(level)}'].to_csv(
-                        output_dir / f"{var_short}_{temporal_res}_{scenario_name}_uniform_cvar{int(level)}.csv"
-                    )
-                print(f"  {var_short}_{temporal_res}_{scenario_name}_uniform_expectation.csv")
-                print(f"  {var_short}_{temporal_res}_{scenario_name}_uniform_cvar{{10,50,90}}.csv")
-
+            # Save results
+            if 'qtot' in var:
+                var_short = 'qtot'
+            elif 'qr' in var:
+                var_short = 'qr'
+            elif var == 'local_temp':
+                var_short = 'temp'
             else:
-                # Non-weighted batch mode: save each run
-                for rid, pred_df in predictions.items():
-                    if 'qtot' in var:
-                        var_short = 'qtot'
-                    elif 'qr' in var:
-                        var_short = 'qr'
-                    elif var == 'local_temp':
-                        var_short = 'temp'
-                    else:
-                        var_short = var
-                    scenario_name = f"{model}_{scenario}" if model and scenario else "scenario"
-                    filename = f"{var_short}_{temporal_res}_{scenario_name}_run{rid}.csv"
-                    output_file = output_dir / filename
-                    pred_df.to_csv(output_file)
-                    print(f"  Saved: {output_file}")
+                var_short = var
+            scenario_name = f"{model}_{scenario}" if model and scenario else magicc_file.stem.replace("_magicc_all_runs", "")
+
+            print(f"\nSaving results...")
+            result_mean.to_csv(output_dir / f"{var_short}_{temporal_res}_{scenario_name}_expectation.csv")
+            for level in cvar_levels:
+                result_cvar[f'cvar_{int(level)}'].to_csv(
+                    output_dir / f"{var_short}_{temporal_res}_{scenario_name}_cvar{int(level)}.csv"
+                )
+            print(f"  {var_short}_{temporal_res}_{scenario_name}_expectation.csv")
+            print(f"  {var_short}_{temporal_res}_{scenario_name}_cvar{{10,50,90}}.csv")
+
         else:
             # Single percentile mode
             print(f"Running RIME predictions for percentile {percentile or 50.0}...")
