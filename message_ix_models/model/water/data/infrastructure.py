@@ -1159,6 +1159,12 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # 5 years and model needs per year
     bound_lo["value"] = bound_lo["value"] / 5
 
+    # Scale by number of timeslices for subannual resolution
+    # Activity bounds are per-timeslice; annual value must be distributed
+    n_time = len(sub_time)
+    if n_time > 1:
+        bound_lo["value"] = bound_lo["value"] / n_time
+
     # Clip activity bounds to not exceed capacity bounds
     bound_lo = bound_lo.merge(
         bound_up[["node_loc", "year_act", "value"]],
