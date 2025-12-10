@@ -1,6 +1,15 @@
 MESSAGEix-GLOBIOM global model
 ==============================
 
+.. caution:: This section of the documentation is under revision
+   on this branch.
+   See :issue:`424` for details.
+
+   Text on these pages may mix old and revised material;
+   links may be broken;
+   and in general these pages **should not** be used as reference
+   until changes are reviewed and merged via :pull:`425`.
+
 These pages document the IIASA Integrated Assessment Modeling (IAM) framework, also referred to as **MESSAGEix-GLOBIOM**, owing to the fact that the energy model |MESSAGEix| and the land use model GLOBIOM are its most important components.
 |MESSAGEix|-GLOBIOM was developed for the quantification of the so-called Shared Socio-economic Pathways (SSPs) which are the first application of the IAM framework.
 
