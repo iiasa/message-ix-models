@@ -13,7 +13,7 @@ from message_ix import Scenario
 from message_ix_models.util import package_data_path
 
 from .building_energy import compute_energy_demand_ensemble
-from .constants import MESSAGE_YEARS
+from .cid_utils import sample_to_message_years
 from .rime import get_gmt_ensemble
 
 # Unit conversion using pint: demand parameter expects GWa, building_energy outputs EJ
@@ -27,10 +27,23 @@ def load_sector_fractions() -> pd.DataFrame:
     return pd.read_csv(filepath, comment="#")
 
 
+def _sample_long_format(df: pd.DataFrame, method: str) -> pd.DataFrame:
+    """Apply year sampling to long-format DataFrame (node, year, value)."""
+    # Pivot to wide: node as index, years as columns
+    wide = df.pivot(index="node", columns="year", values="value").reset_index()
+    # Sample to MESSAGE years
+    sampled = sample_to_message_years(wide, method=method)
+    # Pivot back to long
+    year_cols = [c for c in sampled.columns if isinstance(c, (int, np.integer))]
+    return sampled.melt(id_vars=["node"], value_vars=year_cols,
+                        var_name="year", value_name="value")
+
+
 def compute_building_cids(
     magicc_df: pd.DataFrame,
     n_runs: int = 100,
     coeff_scenario: str = "S1",
+    year_sampling: str = "point",
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Compute building energy CIDs from MAGICC temperature ensemble.
 
@@ -45,6 +58,8 @@ def compute_building_cids(
         Number of MAGICC runs for ensemble (default: 100)
     coeff_scenario : str
         Correction coefficient scenario ('S1', 'S2', 'S3')
+    year_sampling : str
+        'point' - sample at MESSAGE years, 'average' - average preceding period
 
     Returns
     -------
@@ -82,7 +97,11 @@ def compute_building_cids(
     heating_total.rename(columns={"region": "node", "E_heat_mean_EJ": "value"}, inplace=True)
     heating_total["node"] = "R12_" + heating_total["node"]
 
-    return cooling_total, heating_total
+    # Apply year sampling
+    cooling_sampled = _sample_long_format(cooling_total, year_sampling)
+    heating_sampled = _sample_long_format(heating_total, year_sampling)
+
+    return cooling_sampled, heating_sampled
 
 
 def generate_building_cid_scenario(
@@ -90,6 +109,7 @@ def generate_building_cid_scenario(
     magicc_df: pd.DataFrame,
     n_runs: int = 100,
     coeff_scenario: str = "S1",
+    year_sampling: str = "point",
 ) -> Scenario:
     """Inject building energy CIDs into scenario.
 
@@ -103,6 +123,8 @@ def generate_building_cid_scenario(
         Number of MAGICC runs for GMT expectation
     coeff_scenario : str
         Correction coefficient scenario ('S1', 'S2', 'S3')
+    year_sampling : str
+        'point' - sample at MESSAGE years, 'average' - average preceding period
 
     Returns
     -------
@@ -110,7 +132,9 @@ def generate_building_cid_scenario(
         Modified scenario with building CIDs
     """
     # Compute building CIDs (returns EJ)
-    cooling_total, heating_total = compute_building_cids(magicc_df, n_runs, coeff_scenario)
+    cooling_total, heating_total = compute_building_cids(
+        magicc_df, n_runs, coeff_scenario, year_sampling
+    )
 
     # Convert EJ to GWa for MESSAGE demand parameter
     cooling_total["value"] = cooling_total["value"] * EJ_TO_GWA

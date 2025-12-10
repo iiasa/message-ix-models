@@ -16,10 +16,8 @@ import numpy as np
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.project.alps.constants import (
-    MESSAGE_YEARS,
-    NAN_BASIN_IDS,
-)
+from message_ix_models.project.alps.cid_utils import sample_to_message_years
+from message_ix_models.project.alps.constants import NAN_BASIN_IDS
 from message_ix_models.util import package_data_path
 
 
@@ -282,15 +280,6 @@ def _filter_with_fallback(
     )
 
 
-def _sample_and_extend_years(df: pd.DataFrame) -> tuple[pd.DataFrame, list]:
-    """Sample at MESSAGE years and duplicate 2100 → 2110."""
-    years = [y for y in MESSAGE_YEARS if y in df.columns and y <= 2100]
-    sampled = df[["BCU_name"] + years].copy()
-    if 2100 in sampled.columns:
-        sampled[2110] = sampled[2100]
-    return sampled, years + [2110]
-
-
 def _to_demand_long(df: pd.DataFrame, commodity: str, time_val: str) -> pd.DataFrame:
     """Convert wide DataFrame to MESSAGE demand format."""
     years = [c for c in df.columns if isinstance(c, int)]
@@ -340,6 +329,7 @@ def prepare_water_cids(
     temporal_res: str = "annual",
     sw_from_residual: bool = False,
     timeslice_months: list[set] = None,
+    year_sampling: str = "point",
 ) -> tuple[
     tuple[pd.DataFrame, pd.DataFrame],
     tuple[pd.DataFrame, pd.DataFrame],
@@ -363,6 +353,8 @@ def prepare_water_cids(
     timeslice_months : list of set
         Required for seasonal. Months belonging to each timeslice,
         e.g. [{1,6,7,8,9,10,11,12}, {2,3,4,5}]
+    year_sampling : str
+        'point' - sample at MESSAGE years, 'average' - average preceding period
 
     Returns
     -------
@@ -371,8 +363,8 @@ def prepare_water_cids(
         ready for replace_water_availability.
     """
     if temporal_res == "annual":
-        qtot_sampled, _ = _sample_and_extend_years(qtot)
-        qr_sampled, _ = _sample_and_extend_years(qr)
+        qtot_sampled = sample_to_message_years(qtot, method=year_sampling)
+        qr_sampled = sample_to_message_years(qr, method=year_sampling)
 
         # Compute surfacewater source
         if sw_from_residual:
@@ -400,10 +392,10 @@ def prepare_water_cids(
             qr_dry, qr_wet, timeslice_months, n_time=2
         )
 
-        qtot_h1, _ = _sample_and_extend_years(qtot_h1)
-        qtot_h2, _ = _sample_and_extend_years(qtot_h2)
-        qr_h1, _ = _sample_and_extend_years(qr_h1)
-        qr_h2, _ = _sample_and_extend_years(qr_h2)
+        qtot_h1 = sample_to_message_years(qtot_h1, method=year_sampling)
+        qtot_h2 = sample_to_message_years(qtot_h2, method=year_sampling)
+        qr_h1 = sample_to_message_years(qr_h1, method=year_sampling)
+        qr_h2 = sample_to_message_years(qr_h2, method=year_sampling)
 
         # Compute surfacewater source
         if sw_from_residual:

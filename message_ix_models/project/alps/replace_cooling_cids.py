@@ -22,6 +22,7 @@ from message_ix import Scenario
 from message_ix_models.project.alps.cid_utils import (
     cached_rime_prediction,
     extract_region_code,
+    sample_to_message_years,
 )
 from message_ix_models.project.alps.constants import BASELINE_GWL, R12_REGIONS
 from message_ix_models.project.alps.rime import predict_rime
@@ -296,6 +297,7 @@ def generate_cooling_cid_scenario(
     run_ids: tuple,
     n_runs: int,
     baseline_gwl: float = BASELINE_GWL,
+    year_sampling: str = "point",
 ) -> Scenario:
     """Generate cooling CID scenario with thermodynamic constraints.
 
@@ -311,6 +313,8 @@ def generate_cooling_cid_scenario(
         Number of runs for expectation computation
     baseline_gwl : float
         Baseline GWL for jones_ratio normalization (default: 1.0C)
+    year_sampling : str
+        'point' - sample at MESSAGE years, 'average' - average preceding period
 
     Returns
     -------
@@ -331,7 +335,10 @@ def generate_cooling_cid_scenario(
 
     # Convert ndarray to DataFrame with proper format
     years = _extract_years_from_magicc(magicc_df)
-    cf_expected = pd.DataFrame(cf_array, index=R12_REGIONS, columns=years)
+    cf_annual = pd.DataFrame(cf_array, index=R12_REGIONS, columns=years)
+    cf_annual = cf_annual.reset_index().rename(columns={"index": "region"})
+    cf_expected = sample_to_message_years(cf_annual, method=year_sampling)
+    cf_expected = cf_expected.set_index("region")
     log.info(f"   capacity_factor DataFrame shape: {cf_expected.shape}")
 
     # Get source name from DataFrame
