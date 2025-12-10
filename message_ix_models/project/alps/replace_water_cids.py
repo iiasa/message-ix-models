@@ -930,7 +930,7 @@ def generate_cooling_cid_scenario(
         Modified scenario with cooling CID constraints
     """
     from message_ix_models.project.alps.cid_utils import cached_rime_prediction
-    from message_ix_models.project.alps.rime import compute_expectation
+    from message_ix_models.project.alps.rime import _get_gmt_ensemble
     from message_ix_models.project.alps.scenario_generator import _build_cooling_module
 
     # Build cooling module first
@@ -938,17 +938,16 @@ def generate_cooling_cid_scenario(
     scen = _build_cooling_module(scen)
 
     print("\n6. Running RIME predictions for capacity_factor (annual)...")
-    cf_predictions = cached_rime_prediction(
+    cf_array = cached_rime_prediction(
         magicc_df, run_ids, "capacity_factor", temporal_res="annual"
     )
-    print(f"   Got {len(cf_predictions)} prediction sets")
+    print(f"   Got capacity_factor array shape: {cf_array.shape}")
 
-    # Compute expectation
-    print("\n7. Computing expectation...")
-    cf_expected = compute_expectation(
-        cf_predictions, run_ids=np.array(list(run_ids)), weights=None
-    )
-    print(f"   capacity_factor shape: {cf_expected.shape}")
+    # Convert ndarray to DataFrame with proper format
+    # Get years from MAGICC data
+    _, years = _get_gmt_ensemble(magicc_df, [list(run_ids)[0]])
+    cf_expected = pd.DataFrame(cf_array, index=R12_REGIONS, columns=years.astype(int))
+    print(f"   capacity_factor DataFrame shape: {cf_expected.shape}")
 
     # Get source name from DataFrame
     source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
