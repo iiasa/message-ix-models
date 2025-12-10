@@ -19,6 +19,7 @@ from message_ix_models.testing.check import (
     ContainsDataForParameters,
     HasCoords,
     HasUnits,
+    NoDuplicates,
     NoneMissing,
     NonNegative,
     Size,
@@ -129,6 +130,10 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     ),
     #
     # From .constraint
+    # NB Cannot use NoDuplicates here yet due to:
+    # - initial_new_capacity_up: 336 duplicated keys
+    # - growth_activity_lo: 336 duplicated keys
+    # - growth_new_capacity_up: 336 duplicated keys
     constraint.TARGET: (
         ContainsDataForParameters(
             {
@@ -206,6 +211,10 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     #
     "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
     # The following partly replicates .test_ldv.test_get_ldv_data()
+    # NB Cannot use NoDuplicates here yet due to:
+    # - inv_cost: 50076 duplicated keys
+    # - emission_factor: 2280 duplicated keys
+    # - capacity_factor: 54432 duplicated keys
     ldv.TARGET: (
         ContainsDataForParameters(
             {
@@ -227,6 +236,8 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     other.TARGET: (
         ContainsDataForParameters({"bound_activity_lo", "bound_activity_up", "input"}),
     ),
+    # NB Cannot use NoDuplicates here yet due to:
+    # - output: 1260 duplicated keys
     passenger.TARGET: (
         ContainsDataForParameters(
             {
