@@ -239,47 +239,6 @@ def verify_parameter_structure(
     print("   Parameter structure verified")
 
 
-def deinterleave_seasonal(df: pd.DataFrame) -> tuple:
-    """Convert interleaved seasonal DataFrame to (dry, wet) tuple.
-
-    RIME seasonal output has interleaved columns: 2020_dry, 2020_wet, 2021_dry, ...
-    This function splits into separate dry and wet DataFrames with integer year columns.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        DataFrame with metadata columns + interleaved year_season columns
-
-    Returns
-    -------
-    tuple of (dry_df, wet_df)
-        Each with metadata columns + integer year columns
-    """
-    # Identify metadata vs data columns
-    metadata_cols = [c for c in df.columns if not (isinstance(c, str) and '_' in c and c.split('_')[0].isdigit())]
-    data_cols = [c for c in df.columns if c not in metadata_cols]
-
-    # Separate dry and wet columns
-    dry_cols = [c for c in data_cols if c.endswith('_dry')]
-    wet_cols = [c for c in data_cols if c.endswith('_wet')]
-
-    # Extract years
-    dry_years = [int(c.replace('_dry', '')) for c in dry_cols]
-    wet_years = [int(c.replace('_wet', '')) for c in wet_cols]
-
-    # Build output DataFrames
-    dry_df = df[metadata_cols].copy()
-    wet_df = df[metadata_cols].copy()
-
-    for col, year in zip(dry_cols, dry_years):
-        dry_df[year] = df[col]
-
-    for col, year in zip(wet_cols, wet_years):
-        wet_df[year] = df[col]
-
-    return dry_df, wet_df
-
-
 def report_nan_values(
     sw_demand: pd.DataFrame,
     gw_demand: pd.DataFrame,
