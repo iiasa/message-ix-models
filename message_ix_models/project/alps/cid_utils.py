@@ -100,10 +100,7 @@ def get_magicc_file(model: str, scenario: str) -> Path:
 
 
 def cached_rime_prediction(
-    magicc_df: pd.DataFrame,
-    run_ids: tuple,
-    variable: str,
-    temporal_res: str = "annual"
+    magicc_df: pd.DataFrame, run_ids: tuple, variable: str, temporal_res: str = "annual"
 ) -> np.ndarray:
     """Cached RIME expectation prediction.
 
@@ -128,8 +125,12 @@ def cached_rime_prediction(
         For annual: ndarray (217, n_years) for basin vars, (12, n_years) for regional
         For seasonal: tuple (dry, wet) where each is (217, n_years)
     """
-    source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
-    cache_key = f"{source_name}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}_v2"
+    source_name = (
+        magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
+    )
+    cache_key = (
+        f"{source_name}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}_v2"
+    )
 
     if cache_key in cache:
         log.debug(f"Cache hit for {variable} ({temporal_res})")
@@ -146,111 +147,3 @@ def cached_rime_prediction(
 
     cache[cache_key] = result
     return result
-
-
-def load_scenario_for_cid(
-    platform_name: str,
-    model: str,
-    scenario: str,
-    clone_without_solution: bool = True
-) -> Scenario:
-    """Load and validate MESSAGE scenario for CID replacement.
-
-    Parameters
-    ----------
-    platform_name : str
-        ixmp platform name (e.g., 'ixmp_dev', 'local')
-    model : str
-        MESSAGE model name
-    scenario : str
-        MESSAGE scenario name
-    clone_without_solution : bool
-        If True and scenario has solution, clone without it
-
-    Returns
-    -------
-    Scenario
-        Loaded scenario ready for CID replacement
-
-    Raises
-    ------
-    ValueError
-        If scenario lacks required water parameters (nexus module)
-    """
-    log.info(f"Loading scenario from {platform_name}...")
-    mp = Platform(platform_name)
-    scen = Scenario(mp, model, scenario)
-    log.info(f"Loaded: {scen.model} / {scen.scenario} (version {scen.version})")
-    log.debug(f"Has solution: {scen.has_solution()}")
-
-    # Clone without solution if needed
-    if scen.has_solution() and clone_without_solution:
-        log.info("Cloning scenario without solution...")
-        scen = scen.clone(keep_solution=False)
-        log.info(f"Cloned to version {scen.version}")
-
-    # Verify nexus module exists
-    verify_nexus_module(scen)
-
-    return scen
-
-
-def verify_nexus_module(scen: Scenario) -> None:
-    """Verify scenario has nexus module (water availability parameters).
-
-    Parameters
-    ----------
-    scen : Scenario
-        MESSAGE scenario to verify
-
-    Raises
-    ------
-    ValueError
-        If required water parameters are missing
-    """
-    try:
-        existing_sw = scen.par("demand", {"commodity": "surfacewater_basin"})
-        existing_gw = scen.par("demand", {"commodity": "groundwater_basin"})
-        log.info(
-            f"Scenario has nexus module "
-            f"({len(existing_sw)} surfacewater, {len(existing_gw)} groundwater rows)"
-        )
-    except Exception as e:
-        raise ValueError(f"Scenario missing water parameters (nexus module): {e}")
-
-
-def verify_timeslices(scen: Scenario, expected_times: set = None) -> bool:
-    """Verify scenario has required timeslices.
-
-    Parameters
-    ----------
-    scen : Scenario
-        MESSAGE scenario to verify
-    expected_times : set, optional
-        Expected timeslice names (default: {'h1', 'h2'})
-
-    Returns
-    -------
-    bool
-        True if timeslices are present
-    """
-    if expected_times is None:
-        expected_times = {'h1', 'h2'}
-
-    time_set = set(scen.set("time").tolist())
-    subannual_times = time_set - {'year'}
-
-    if expected_times <= subannual_times:
-        log.info(f"Scenario has timeslices: {subannual_times}")
-        return True
-    else:
-        log.warning(f"Scenario timeslices: {subannual_times}")
-        log.warning(f"Missing required: {expected_times - subannual_times}")
-        return False
-
-
-def clear_cache() -> None:
-    """Clear the RIME prediction cache."""
-    log.info(f"Clearing cache at {CACHE_DIR}...")
-    cache.clear()
-    log.info("Cache cleared")
