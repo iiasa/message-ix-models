@@ -30,8 +30,10 @@ from message_ix_models.project.alps.cid_utils import (
 from message_ix_models.project.alps.replace_building_cids import (
     generate_building_cid_scenario,
 )
-from message_ix_models.project.alps.replace_water_cids import (
+from message_ix_models.project.alps.replace_cooling_cids import (
     generate_cooling_cid_scenario,
+)
+from message_ix_models.project.alps.replace_water_cids import (
     prepare_water_cids,
     replace_water_availability,
 )
