@@ -28,6 +28,7 @@ from message_ix_models.project.alps.cid_utils import (
     cached_rime_prediction,
     get_magicc_file,
 )
+from message_ix_models.project.alps.constants import TIMESLICE_PRESETS
 from message_ix_models.project.alps.replace_building_cids import (
     generate_building_cid_scenario,
 )
@@ -491,6 +492,14 @@ def generate_all(
     mp = (
         Platform(platform_name, jvmargs=jvmargs) if jvmargs else Platform(platform_name)
     )
+
+    # Set timeslice_months on context from config preset
+    timeslice_preset = config.get("timeslice", "default")
+    if timeslice_preset not in TIMESLICE_PRESETS:
+        raise ValueError(f"Unknown timeslice preset: {timeslice_preset}")
+    context = Context.get_instance(-1)
+    context.timeslice_months = TIMESLICE_PRESETS[timeslice_preset]
+    log.info(f"Timeslice preset: {timeslice_preset}")
 
     # Generate scenarios
     created = []

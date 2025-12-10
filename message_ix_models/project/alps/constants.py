@@ -89,8 +89,11 @@ DEFAULT_H2_MONTHS = {7, 8, 9, 10, 11, 12}
 GLOBAL_DRY_MONTHS = {1, 6, 7, 8, 9, 10, 11, 12}  # 8 months
 GLOBAL_WET_MONTHS = {2, 3, 4, 5}  # 4 months
 
-H1_MONTHS = {}
-H2_MONTHS = {}
+# Preset timeslice configurations for YAML config lookup
+TIMESLICE_PRESETS = {
+    "default": [DEFAULT_H1_MONTHS, DEFAULT_H2_MONTHS],  # 50/50
+    "optimal": [GLOBAL_DRY_MONTHS, GLOBAL_WET_MONTHS],  # 8/4 volume-weighted
+}
 
 # ==============================================================================
 # NaN Basins (RIME returns invalid data for these)

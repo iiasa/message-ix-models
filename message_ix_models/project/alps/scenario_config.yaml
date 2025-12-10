@@ -21,6 +21,12 @@ output:
 # Default: nexus (backward compatible)
 cid_type: nexus
 
+# Timeslice month split for seasonal runs
+# Options:
+#   "default" - 50/50 split: h1={1-6}, h2={7-12}
+#   "optimal" - volume-weighted 8/4 split: h1={1,6-12}, h2={2-5}
+timeslice: default
+
 rime:
   n_runs: 100
   # Variables used depend on cid_type:
