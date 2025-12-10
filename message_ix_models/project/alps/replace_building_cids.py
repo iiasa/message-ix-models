@@ -6,6 +6,7 @@ with RIME-based projections.
 
 import pandas as pd
 import numpy as np
+import pint
 from typing import Tuple
 
 from message_ix import Scenario
@@ -14,9 +15,9 @@ from message_ix_models.util import package_data_path
 from .building_energy import compute_energy_demand_ensemble, get_gsat_ensemble
 from .constants import MESSAGE_YEARS
 
-# Unit conversion: demand parameter expects GWa, building_energy outputs EJ
-# 1 GWa = 0.031536 EJ, so 1 EJ = 31.71 GWa
-EJ_TO_GWA = 1.0 / 0.031536  # ≈ 31.71
+# Unit conversion using pint: demand parameter expects GWa, building_energy outputs EJ
+_ureg = pint.UnitRegistry()
+EJ_TO_GWA = (1 * _ureg.EJ).to(_ureg.GW * _ureg.year).magnitude
 
 
 def load_sector_fractions() -> pd.DataFrame:
