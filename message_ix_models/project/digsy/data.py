@@ -104,7 +104,12 @@ def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
     return pars
 
 
-def read_ict_demand(scenario: DIGSY_SCENS) -> pd.DataFrame:
+def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3) -> pd.DataFrame:
+    read = {1: read_ict_v1, 2: read_ict_v2, 3: read_ict_v3}
+    return read[version](scenario, ssp)
+
+
+def read_ict_v1(scenario: DIGSY_SCENS, ssp):
     path = private_data_path("projects", "digsy", "DIGSY-MESSAGE_ICTs.xls")
     dfs = pd.read_excel(path, sheet_name=None)
 
@@ -113,7 +118,6 @@ def read_ict_demand(scenario: DIGSY_SCENS) -> pd.DataFrame:
         "WORST": "Upper Bound",
         "baseline": "Mean",
     }
-    ssp = "SSP2"
 
     df2030 = (
         dfs["2030"]
@@ -140,18 +144,12 @@ def read_ict_demand(scenario: DIGSY_SCENS) -> pd.DataFrame:
         level="final",
         time="year",
     )
-    # keep demand constant post 2050
-    post_2050 = (
-        df[df["year"] == df["year"].max()]
-        .assign(year=None)
-        .pipe(broadcast, year=[i for i in [2055, *[i for i in range(2060, 2111, 10)]]])
-    )
-    df = pd.concat([df, post_2050])
     return df
 
 
 def read_ict_v2(
     digsy_scenario: DIGSY_SCENS,
+    ssp="SSP2",
 ) -> pd.DataFrame:
     path = private_data_path("projects", "digsy", "R12_Clean Version v2.xlsx")
     scen_map = {
@@ -181,7 +179,78 @@ def read_ict_v2(
     df = df.melt(
         id_vars=["Region", "Year", "Scenario"], var_name="Variable", value_name="Value"
     )
-    df = df[df["Scenario"].isin(["IEA (Base)", "SSP2"])].drop(columns=["Scenario"])
+    df = df[df["Scenario"].isin(["IEA (Base)", ssp])].drop(columns=["Scenario"])
+    df = df[
+        ((df["Variable"].isin(scen_map["baseline"].values())) & (df["Year"] < 2030))
+        | (
+            (df["Variable"].isin(scen_map[digsy_scenario].values()))
+            & (df["Year"] >= 2030)
+        )
+    ]
+    df.set_index(["Region", "Year", "Variable"], inplace=True)
+    df = make_df(
+        "demand",
+        **df["Value"]
+        .astype("pint[TWh]")
+        .pint.to("GWa")
+        .pint.magnitude.to_frame()
+        .assign(unit="GWa")
+        .reset_index()
+        .rename(
+            columns={
+                "Region": "node",
+                "Year": "year",
+                "Value": "value",
+                "Variable": "commodity",
+            }
+        ),
+        level="demand",
+        time="year",
+    )
+    comm_map_final = {scen_map[digsy_scenario][k]: comm_map[k] for k in comm_map.keys()}
+    comm_map_final.update(
+        {scen_map["baseline"][k]: comm_map[k] for k in comm_map.keys()}
+    )
+    df["commodity"] = df["commodity"].map(comm_map_final)
+    return df
+
+
+def read_ict_v3(digsy_scenario: DIGSY_SCENS, ssp="SSP2") -> pd.DataFrame:
+    path = private_data_path(
+        "projects", "digsy", "R12 Clean MESSAGE version_Finalised.xlsx"
+    )
+    scen_map = {
+        "BESTEST": {
+            "Data centre": "DC lower Bound (TWh)",
+            "Telecom Network": "BESTEST ICT (TWh)",
+        },
+        "BEST": {
+            "Data centre": "DC lower Bound (TWh)",
+            "Telecom Network": "BEST ICT (TWh)",
+        },
+        "baseline": {
+            "Data centre": "DC Central Estimate (TWh)",
+            "Telecom Network": "Central Estimate (TWh)",
+        },
+        "WORST": {
+            "Data centre": "DC Upper Bound (TWh)",
+            "Telecom Network": "WORST ICT (TWh)",
+        },
+        "WORSTEST": {
+            "Data centre": "DC Upper Bound (TWh)",
+            "Telecom Network": "WORSTEST ICT  (TWh)",
+        },
+    }
+    comm_map = {"Data centre": "data_centre_elec", "Telecom Network": "tele_comm_elec"}
+    df = pd.read_excel(path, sheet_name="Option 1")
+    for cols in scen_map.values():
+        df[cols["Telecom Network"]] = (
+            df[cols["Telecom Network"]] - df[cols["Data centre"]]
+        )
+    df = df.melt(
+        id_vars=["Region", "Year", "Scenario"], var_name="Variable", value_name="Value"
+    )
+    df = df[df["Scenario"].isin(["IEA (Base)", ssp])].drop(columns=["Scenario"])
     df = df[
         ((df["Variable"].isin(scen_map["baseline"].values())) & (df["Year"] < 2030))
         | (
@@ -407,7 +476,3 @@ def adjust_act_calib(ict: pd.DataFrame, scen: message_ix.Scenario):
         ).dropna()
         with scen.transact():
             scen.add_par(par, new_bound)
-
-
-if __name__ == "__main__":
-    read_ict_v2("BEST")

@@ -145,7 +145,7 @@ def get_resid_demands(
         extrapolate_post_2050,
         fe_to_ue,
         get_industry_modifiers,
-        read_ict_v2,
+        read_ict_demand,
     )
 
     resid_demands = {
@@ -160,7 +160,7 @@ def get_resid_demands(
         )
         resid_demands = apply_industry_modifiers(mods, resid_demands)
 
-    ict_demand = read_ict_v2(digsy_scenario)
+    ict_demand = read_ict_demand(digsy_scenario, get_ssp_from_context(context))
     ict_demand = extrapolate_post_2050(ict_demand, scenario)
     ict_demand_ue = fe_to_ue(ict_demand, scenario)
     rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
