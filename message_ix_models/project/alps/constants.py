@@ -14,6 +14,9 @@ MAGICC_OUTPUT_DIR = package_data_path(
     "report", "legacy", "reporting_output", "magicc_output"
 )
 
+# RIME emulator datasets directory
+RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
+
 
 # ==============================================================================
 # Region Definitions
@@ -59,3 +62,33 @@ MESSAGE_YEARS = [
     2020, 2025, 2030, 2035, 2040, 2045, 2050,
     2055, 2060, 2070, 2080, 2090, 2100, 2110
 ]
+
+
+# ==============================================================================
+# Timeslice Definitions
+# ==============================================================================
+
+# Default timeslice month assignments (n_time=2)
+DEFAULT_H1_MONTHS = {1, 2, 3, 4, 5, 6}
+DEFAULT_H2_MONTHS = {7, 8, 9, 10, 11, 12}
+
+
+# ==============================================================================
+# Climate Reference Values
+# ==============================================================================
+
+# Baseline global warming level for normalization (2020 reference, degrees C)
+BASELINE_GWL = 1.0
+
+# Carbon budget forcing levels (GtCO2)
+FORCING_ORDER = ["600f", "850f", "1100f", "1350f", "1850f", "2100f", "2350f"]
+
+
+# ==============================================================================
+# Variable Mappings
+# ==============================================================================
+
+# RIME variable name mapping (external name -> dataset name)
+VAR_MAP = {"local_temp": "temp_mean_anomaly"}
+
+

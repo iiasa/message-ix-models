@@ -9,6 +9,22 @@ import scipy.stats as stat
 from functools import lru_cache
 
 
+def extract_region_code(node: str) -> str:
+    """Extract short region code from MESSAGE node name.
+
+    Parameters
+    ----------
+    node : str
+        MESSAGE node name (e.g., 'R12_AFR', 'AFR')
+
+    Returns
+    -------
+    str
+        Short region code (e.g., 'AFR')
+    """
+    return node[4:] if node.startswith("R12_") else node
+
+
 class VectorizedDist:
     """Vectorized distribution object for efficient sampling across multiple distributions.
 

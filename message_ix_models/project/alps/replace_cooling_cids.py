@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.project.alps.constants import R12_REGIONS
+from message_ix_models.project.alps.constants import R12_REGIONS, BASELINE_GWL
 from message_ix_models.project.alps.rime import predict_rime
 from message_ix_models.project.alps.cid_utils import cached_rime_prediction
 from message_ix_models.project.alps.utils import extract_region_code
@@ -20,9 +20,6 @@ def _extract_years_from_magicc(magicc_df: pd.DataFrame) -> list[int]:
     # IAMC format has years as column names (integers or strings of integers)
     year_cols = [c for c in magicc_df.columns if str(c).isdigit()]
     return sorted(int(y) for y in year_cols)
-
-# Baseline GWL for Jones capacity factor normalization (2020 warming level)
-BASELINE_GWL = 1.0
 
 
 def add_jones_relation_constraints(

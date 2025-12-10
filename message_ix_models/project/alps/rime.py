@@ -31,14 +31,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional, Dict
 
-from message_ix_models.util import package_data_path
+from .constants import RIME_DATASETS_DIR, VAR_MAP
 from .cvar import compute_cvar
-
-# RIME datasets directory
-RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
-
-# Variable name mapping: user-facing name -> RIME dataset variable name
-VAR_MAP = {"local_temp": "temp_mean_anomaly"}
 
 
 # ==============================================================================

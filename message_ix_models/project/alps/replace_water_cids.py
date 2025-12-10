@@ -16,12 +16,12 @@ import numpy as np
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.project.alps.constants import MESSAGE_YEARS
+from message_ix_models.project.alps.constants import (
+    MESSAGE_YEARS,
+    DEFAULT_H1_MONTHS,
+    DEFAULT_H2_MONTHS,
+)
 from message_ix_models.util import package_data_path
-
-# Default timeslice definitions (n_time=2)
-DEFAULT_H1_MONTHS = {1, 2, 3, 4, 5, 6}
-DEFAULT_H2_MONTHS = {7, 8, 9, 10, 11, 12}
 
 
 @lru_cache(maxsize=1)
