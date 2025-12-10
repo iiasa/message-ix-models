@@ -11,6 +11,7 @@ import pandas as pd
 import ixmp
 from ixmp import Platform
 import message_ix
+from itertools import product
 
 # Import packages
 from message_ix_models.tools.bilateralize.prepare_edit import *
@@ -42,23 +43,42 @@ def friction_dictionary(sensitivity_scenario: str):
     sens_j = config['sensitivities'][sensitivity_scenario]['importers']
     sens_techs = config['sensitivities'][sensitivity_scenario]['technologies']
 
+    bound_out = pd.DataFrame()
     for tec in sens_techs:
         sens_j_ref = [j.replace("R12_", "").lower() for j in sens_j]
         tec_list = [tec + '_exp_' + j for j in sens_j_ref]
 
-        base_var_cost = pd.read_csv(os.path.join(data_path, tec, "edit_files", "var_cost.csv"))
-        base_var_cost = base_var_cost[base_var_cost['node_loc'].isin(sens_i)]
-        base_var_cost = base_var_cost[base_var_cost['technology'].isin(tec_list)]
+        basedf = pd.DataFrame(product(sens_i, tec_list,
+                                  [2030, 2035, 2040, 2045, 2050, 2055,
+                                   2060, 2070, 2080, 2090, 2100],
+                                  ["M1"],
+                                  ["year"]))
+        basedf.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time']
 
-        base_var_cost['value'] = 100
+        bounddf = message_ix.make_df(
+            "bound_activity_up",
+              node_loc = basedf['node_loc'],
+              technology = basedf['technology'],
+              value = 0,
+              year_act = basedf['year_act'],
+              mode = basedf['mode'],
+              time = basedf['time'],
+              unit = '-')
 
-        base_var_cost.to_csv(os.path.join(data_path, tec, "bare_files", "var_cost.csv"), index=False)
+        bound_out = pd.concat([bound_out, bounddf])
+        #base_inv_cost = pd.read_csv(os.path.join(data_path, tec, "edit_files", "inv_cost.csv"))
+        #base_inv_cost = base_inv_cost[base_inv_cost['node_loc'].isin(sens_i)]
+        #base_inv_cost = base_inv_cost[base_inv_cost['technology'].isin(tec_list)]
+
+        #base_inv_cost['value'] = 100
+
+        #base_inv_cost.to_csv(os.path.join(data_path, tec, "bare_files", "inv_cost.csv"), index=False)
     
-    trade_dict_sens = bare_to_scenario(project_name = 'alps_hhi', 
-                                       config_name = 'config.yaml',
-                                       p_drive_access = False)
+    #trade_dict_sens = bare_to_scenario(project_name = 'alps_hhi', 
+    #                                   config_name = 'config.yaml',
+    #                                   p_drive_access = False)
     
-    return trade_dict_sens
+    return bound_out
 
 def run_friction_scenario(base_scenario_name: str,
                           sensitivity_scenario: str):
@@ -67,7 +87,7 @@ def run_friction_scenario(base_scenario_name: str,
     config, config_path = load_config(project_name = 'alps_hhi', config_name = 'config.yaml')
 
     # Build dictionary
-    trade_dict_sens = friction_dictionary(sensitivity_scenario)
+    bound_out = friction_dictionary(sensitivity_scenario)
 
     mp = ixmp.Platform()
 
@@ -75,9 +95,16 @@ def run_friction_scenario(base_scenario_name: str,
     target_scenario = base_scenario.clone('alps_hhi', base_scenario_name + '_' + sensitivity_scenario, keep_solution = False)
     target_scenario.set_as_default()
 
-    for tec in config['sensitivities'][sensitivity_scenario]['technologies']:
-        with target_scenario.transact(f"Add friction sensitivity for {tec}"):
-            target_scenario.add_par('var_cost', trade_dict_sens[tec]['trade']['var_cost'])
+    with target_scenario.transact(f"Add friction sensitivity"):
+        target_scenario.add_par('bound_activity_up', bound_out)
+
+    with target_scenario.transact("Remove constraints on shocked technologies"):
+        for par in ["growth_activity_lo", "growth_activity_up", "initial_activity_lo", "initial_activity_up"]:
+            basepar = target_scenario.par(par, filters = {"technology": bound_out['technology'],
+                                                          "node_loc": bound_out['node_loc']})
+            if len(basepar) != 0:
+                print(f"...{par}")
+                target_scenario.remove_par(par, basepar)
 
     if "HC" in base_scenario_name:
         target_scenario.solve(gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
@@ -86,4 +113,6 @@ def run_friction_scenario(base_scenario_name: str,
     else:
         target_scenario.solve(quiet = False)
 
+for alps_base in ['SSP2', 'SSP2_hhi_HC', 'SSP2_hhi_WS_l80p']:
+    run_friction_scenario(alps_base, 'FSU_WEU_frictions')
 
