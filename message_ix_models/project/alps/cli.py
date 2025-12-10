@@ -1,4 +1,8 @@
+import logging
+
 import click
+
+log = logging.getLogger(__name__)
 
 
 @click.group("alps")
@@ -201,10 +205,10 @@ def report_cmd(model, scenario, key, output_dir, format, platform):
     sc = MsgScenario(mp, model=model, scenario=scenario)
 
     if not sc.has_solution():
-        print(f"ERROR: Scenario {model}/{scenario} has no solution")
+        log.error(f"Scenario {model}/{scenario} has no solution")
         return
 
-    print(f"Running water/cooling report for {model}/{scenario}...")
+    log.info(f"Running water/cooling report for {model}/{scenario}...")
     # Map CLI key option to function keys parameter
     keys_map = {
         "all": None,  # None means all keys
@@ -221,12 +225,12 @@ def report_cmd(model, scenario, key, output_dir, format, platform):
         format=format,
     )
 
-    print(f"\nReport complete: {len(df)} rows")
+    log.info(f"Report complete: {len(df)} rows")
     if "variable" in df.columns:
-        print("\nVariables reported:")
+        log.info("Variables reported:")
         for var in sorted(df["variable"].unique()):
             n = len(df[df["variable"] == var])
-            print(f"  - {var}: {n} rows")
+            log.info(f"  - {var}: {n} rows")
 
 
 @cli.command("report-batch")
@@ -305,10 +309,9 @@ def report_batch_cmd(model, pattern, scenarios, key, output_dir, format, platfor
             all_scenarios = all_scenarios[all_scenarios["scenario"].str.contains(pattern)]
         scenario_list = all_scenarios["scenario"].tolist()
 
-    print(f"Found {len(scenario_list)} scenarios")
+    log.info(f"Found {len(scenario_list)} scenarios")
     if len(scenario_list) <= 20:
-        print(f"Scenarios: {scenario_list}")
-    print()
+        log.info(f"Scenarios: {scenario_list}")
 
     # Map CLI key option to function keys parameter
     keys_map = {
@@ -327,23 +330,23 @@ def report_batch_cmd(model, pattern, scenarios, key, output_dir, format, platfor
             sc = MsgScenario(mp, model=model, scenario=scen_name)
 
             if not sc.has_solution():
-                print(f"  [{scen_name}] No solution, skipping")
+                log.warning(f"[{scen_name}] No solution, skipping")
                 results.append({"scenario": scen_name, "status": "no_solution", "rows": 0})
                 continue
 
             df = report_water_cooling(sc, output_dir=output_path, keys=keys_param, format=format)
             elapsed = time.time() - start_time
 
-            print(f"  [{scen_name}] {len(df)} rows, {elapsed:.1f}s")
+            log.info(f"[{scen_name}] {len(df)} rows, {elapsed:.1f}s")
             results.append({"scenario": scen_name, "status": "ok", "rows": len(df), "time": elapsed})
 
             del sc, df
             gc.collect()
 
         except Exception as e:
-            print(f"  [{scen_name}] ERROR: {e}")
+            log.error(f"[{scen_name}] ERROR: {e}")
             results.append({"scenario": scen_name, "status": "error", "error": str(e)})
 
     ok_count = len([r for r in results if r["status"] == "ok"])
-    print(f"\nCompleted {ok_count} / {len(scenario_list)} scenarios")
-    print(f"Output saved to {output_path}")
+    log.info(f"Completed {ok_count} / {len(scenario_list)} scenarios")
+    log.info(f"Output saved to {output_path}")

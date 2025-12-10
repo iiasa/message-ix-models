@@ -3,21 +3,25 @@
 Shared functions for water CID replacement scripts (annual and seasonal).
 """
 
+import logging
 from pathlib import Path
-import pandas as pd
-import numpy as np
-from diskcache import FanoutCache
 
+import numpy as np
+import pandas as pd
+from diskcache import FanoutCache
 from ixmp import Platform
 from message_ix import Scenario
-from message_ix_models.project.alps.rime import (
-    predict_rime,
-    _get_gmt_ensemble,
-    get_rime_dataset_path,
-    extract_all_run_ids,
-    load_basin_mapping,
-)
+
 from message_ix_models.project.alps.constants import MAGICC_OUTPUT_DIR
+from message_ix_models.project.alps.rime import (
+    extract_all_run_ids,
+    get_gmt_ensemble,
+    get_rime_dataset_path,
+    load_basin_mapping,
+    predict_rime,
+)
+
+log = logging.getLogger(__name__)
 
 # Cache setup
 CACHE_DIR = Path(__file__).parent / ".cache" / "rime_predictions"
@@ -93,13 +97,13 @@ def cached_rime_prediction(
     cache_key = f"{source_name}_{variable}_{temporal_res}_{len(run_ids)}runs_{hash(run_ids)}_v2"
 
     if cache_key in cache:
-        print(f"   Cache hit for {variable} ({temporal_res})")
+        log.debug(f"Cache hit for {variable} ({temporal_res})")
         return cache[cache_key]
 
-    print(f"   Cache miss for {variable} ({temporal_res}) - computing predictions...")
+    log.info(f"Cache miss for {variable} ({temporal_res}) - computing predictions...")
 
     # Extract GMT as 2D array
-    gmt_dict, years = _get_gmt_ensemble(magicc_df, list(run_ids))
+    gmt_dict, years = get_gmt_ensemble(magicc_df, list(run_ids))
     gmt_2d = np.array([gmt_dict[rid] for rid in run_ids])
 
     # Run predict_rime with 2D input → returns E[RIME(GMT_i)]
@@ -138,17 +142,17 @@ def load_scenario_for_cid(
     ValueError
         If scenario lacks required water parameters (nexus module)
     """
-    print(f"Loading scenario from {platform_name}...")
+    log.info(f"Loading scenario from {platform_name}...")
     mp = Platform(platform_name)
     scen = Scenario(mp, model, scenario)
-    print(f"   Loaded: {scen.model} / {scen.scenario} (version {scen.version})")
-    print(f"   Has solution: {scen.has_solution()}")
+    log.info(f"Loaded: {scen.model} / {scen.scenario} (version {scen.version})")
+    log.debug(f"Has solution: {scen.has_solution()}")
 
     # Clone without solution if needed
     if scen.has_solution() and clone_without_solution:
-        print("   Cloning scenario without solution...")
+        log.info("Cloning scenario without solution...")
         scen = scen.clone(keep_solution=False)
-        print(f"   Cloned to version {scen.version}")
+        log.info(f"Cloned to version {scen.version}")
 
     # Verify nexus module exists
     verify_nexus_module(scen)
@@ -172,8 +176,8 @@ def verify_nexus_module(scen: Scenario) -> None:
     try:
         existing_sw = scen.par("demand", {"commodity": "surfacewater_basin"})
         existing_gw = scen.par("demand", {"commodity": "groundwater_basin"})
-        print(
-            f"   Scenario has nexus module "
+        log.info(
+            f"Scenario has nexus module "
             f"({len(existing_sw)} surfacewater, {len(existing_gw)} groundwater rows)"
         )
     except Exception as e:
@@ -202,102 +206,16 @@ def verify_timeslices(scen: Scenario, expected_times: set = None) -> bool:
     subannual_times = time_set - {'year'}
 
     if expected_times <= subannual_times:
-        print(f"   Scenario has timeslices: {subannual_times}")
+        log.info(f"Scenario has timeslices: {subannual_times}")
         return True
     else:
-        print(f"   Scenario timeslices: {subannual_times}")
-        print(f"   Missing required: {expected_times - subannual_times}")
+        log.warning(f"Scenario timeslices: {subannual_times}")
+        log.warning(f"Missing required: {expected_times - subannual_times}")
         return False
-
-
-def verify_parameter_structure(
-    sw_demand: pd.DataFrame,
-    gw_demand: pd.DataFrame,
-    gw_share: pd.DataFrame,
-    temporal_res: str = "annual"
-) -> None:
-    """Verify CID parameters have correct structure.
-
-    Parameters
-    ----------
-    sw_demand : pd.DataFrame
-        Surfacewater demand parameter
-    gw_demand : pd.DataFrame
-        Groundwater demand parameter
-    gw_share : pd.DataFrame
-        Groundwater share parameter
-    temporal_res : str
-        Expected temporal resolution ('annual' or 'seasonal')
-
-    Raises
-    ------
-    AssertionError
-        If parameter structure is invalid
-    """
-    # Check columns
-    demand_cols = {"node", "commodity", "level", "year", "time", "value", "unit"}
-    share_cols = {"shares", "node_share", "year_act", "time", "value", "unit"}
-
-    assert set(sw_demand.columns) == demand_cols, f"sw_demand columns: {set(sw_demand.columns)}"
-    assert set(gw_demand.columns) == demand_cols, f"gw_demand columns: {set(gw_demand.columns)}"
-    assert set(gw_share.columns) == share_cols, f"gw_share columns: {set(gw_share.columns)}"
-
-    # Check time values
-    if temporal_res == "annual":
-        expected_times = {'year'}
-    else:
-        expected_times = {'h1', 'h2'}
-
-    assert set(sw_demand['time'].unique()) == expected_times, f"sw_demand time: {sw_demand['time'].unique()}"
-    assert set(gw_demand['time'].unique()) == expected_times, f"gw_demand time: {gw_demand['time'].unique()}"
-    assert set(gw_share['time'].unique()) == expected_times, f"gw_share time: {gw_share['time'].unique()}"
-
-    print("   Parameter structure verified")
-
-
-def report_nan_values(
-    sw_demand: pd.DataFrame,
-    gw_demand: pd.DataFrame,
-    gw_share: pd.DataFrame
-) -> int:
-    """Report NaN values in CID parameters.
-
-    Returns
-    -------
-    int
-        Total number of NaN values across all parameters
-    """
-    nan_sw = sw_demand["value"].isna().sum()
-    nan_gw = gw_demand["value"].isna().sum()
-    nan_share = gw_share["value"].isna().sum()
-
-    if nan_sw > 0:
-        print(f"   Warning: {nan_sw} NaN values in sw_demand")
-    if nan_gw > 0:
-        print(f"   Warning: {nan_gw} NaN values in gw_demand")
-    if nan_share > 0:
-        print(f"   Warning: {nan_share} NaN values in gw_share")
-
-    total_nan = nan_sw + nan_gw + nan_share
-    if total_nan == 0:
-        print("   No NaN values detected")
-
-    return total_nan
-
-
-def report_value_ranges(
-    sw_demand: pd.DataFrame,
-    gw_demand: pd.DataFrame,
-    gw_share: pd.DataFrame
-) -> None:
-    """Report value ranges for CID parameters."""
-    print(f"   sw_demand: [{sw_demand['value'].min():.2f}, {sw_demand['value'].max():.2f}] MCM/year")
-    print(f"   gw_demand: [{gw_demand['value'].min():.2f}, {gw_demand['value'].max():.2f}] MCM/year")
-    print(f"   gw_share:  [{gw_share['value'].min():.4f}, {gw_share['value'].max():.4f}] (fraction)")
 
 
 def clear_cache() -> None:
     """Clear the RIME prediction cache."""
-    print(f"Clearing cache at {CACHE_DIR}...")
+    log.info(f"Clearing cache at {CACHE_DIR}...")
     cache.clear()
-    print("   Cache cleared")
+    log.info("Cache cleared")

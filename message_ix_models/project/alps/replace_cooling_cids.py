@@ -4,17 +4,21 @@ Implements Jones et al. thermodynamic constraints on freshwater cooling
 via relation_activity bounds in MESSAGE scenarios.
 """
 
+import logging
+
 import numpy as np
 import pandas as pd
 from message_ix import Scenario
 
-from message_ix_models.project.alps.constants import R12_REGIONS, BASELINE_GWL
-from message_ix_models.project.alps.rime import predict_rime
 from message_ix_models.project.alps.cid_utils import (
     cached_rime_prediction,
     extract_region_code,
 )
+from message_ix_models.project.alps.constants import BASELINE_GWL, R12_REGIONS
+from message_ix_models.project.alps.rime import predict_rime
 from message_ix_models.util import package_data_path
+
+log = logging.getLogger(__name__)
 
 
 def _extract_years_from_magicc(magicc_df: pd.DataFrame) -> list[int]:
@@ -58,7 +62,7 @@ def add_jones_relation_constraints(
     Scenario
         Modified scenario with relation constraints added
     """
-    print("   Extracting cooling structure from scenario...")
+    log.info("Extracting cooling structure from scenario...")
 
     # Get baseline CF at reference GWL for normalization
     cf_baseline = predict_rime(np.array([baseline_gwl]), "capacity_factor")  # (12, 1)
@@ -66,8 +70,8 @@ def add_jones_relation_constraints(
 
     # Build region -> baseline_cf lookup
     baseline_lookup = dict(zip(R12_REGIONS, cf_baseline))
-    print(
-        f"   Baseline CF at GWL={baseline_gwl}C: {dict(list(baseline_lookup.items())[:3])}..."
+    log.debug(
+        f"Baseline CF at GWL={baseline_gwl}C: {dict(list(baseline_lookup.items())[:3])}..."
     )
 
     # Get addon_conversion to find parent techs and cooling_fraction values
@@ -101,8 +105,8 @@ def add_jones_relation_constraints(
         variants = fresh_cf[fresh_cf["parent_tech"] == parent]["technology"].unique()
         parent_to_fresh[parent] = list(variants)
 
-    print(
-        f"   Found {len(parent_to_fresh)} parent technologies with freshwater cooling"
+    log.info(
+        f"Found {len(parent_to_fresh)} parent technologies with freshwater cooling"
     )
 
     # Load baseline freshwater share from cooltech_cost_and_shares data
@@ -136,7 +140,7 @@ def add_jones_relation_constraints(
     for _, row in fresh_share_df.iterrows():
         fresh_share_lookup[(row["region"], row["parent_tech"])] = row["fresh_share_ref"]
 
-    print(
+    log.info(
         f"   Loaded baseline freshwater shares for {len(fresh_share_lookup)} (region, tech) pairs"
     )
 
@@ -157,13 +161,13 @@ def add_jones_relation_constraints(
     valid_combinations = set(
         zip(tl_parents["node_loc"], tl_parents["technology"], tl_parents["year_vtg"])
     )
-    print(f"   Valid (node, tech, year) combinations: {len(valid_combinations)}")
+    log.info(f"   Valid (node, tech, year) combinations: {len(valid_combinations)}")
 
     # Get model years from scenario (filtered to Jones data range)
     model_years = [int(y) for y in scen.set("year") if int(y) >= min(year_cols)]
     regions = cooling_frac["node"].unique()
 
-    print(
+    log.info(
         f"   Building constraints for {len(model_years)} years, {len(regions)} regions..."
     )
 
@@ -262,12 +266,12 @@ def add_jones_relation_constraints(
                     }
                 )
 
-    print(f"   Created {len(relation_set_entries)} relations")
-    print(f"   Created {len(relation_activity_rows)} relation_activity rows")
-    print(f"   Created {len(relation_upper_rows)} relation_upper rows")
+    log.info(f"   Created {len(relation_set_entries)} relations")
+    log.info(f"   Created {len(relation_activity_rows)} relation_activity rows")
+    log.info(f"   Created {len(relation_upper_rows)} relation_upper rows")
 
     if len(relation_activity_rows) == 0:
-        print("   No constraints needed (jones_ratio >= 1.0 for all cases)")
+        log.info("   No constraints needed (jones_ratio >= 1.0 for all cases)")
         return scen
 
     rel_act_df = pd.DataFrame(relation_activity_rows)
@@ -280,7 +284,7 @@ def add_jones_relation_constraints(
         scen.add_par("relation_upper", rel_upper_df)
 
     scen.set_as_default()
-    print(f"   Committed version {scen.version}")
+    log.info(f"   Committed version {scen.version}")
 
     return scen
 
@@ -315,26 +319,26 @@ def generate_cooling_cid_scenario(
     from message_ix_models.project.alps.scenario_generator import _build_cooling_module
 
     # Build cooling module first
-    print("Building cooling module...")
+    log.info("Building cooling module...")
     scen = _build_cooling_module(scen)
 
-    print("Running RIME predictions for capacity_factor (annual)...")
+    log.info("Running RIME predictions for capacity_factor (annual)...")
     cf_array = cached_rime_prediction(
         magicc_df, run_ids, "capacity_factor", temporal_res="annual"
     )
-    print(f"   Got capacity_factor array shape: {cf_array.shape}")
+    log.info(f"   Got capacity_factor array shape: {cf_array.shape}")
 
     # Convert ndarray to DataFrame with proper format
     years = _extract_years_from_magicc(magicc_df)
     cf_expected = pd.DataFrame(cf_array, index=R12_REGIONS, columns=years)
-    print(f"   capacity_factor DataFrame shape: {cf_expected.shape}")
+    log.info(f"   capacity_factor DataFrame shape: {cf_expected.shape}")
 
     # Get source name from DataFrame
     source_name = (
         magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
     )
 
-    print("Adding Jones relation constraints...")
+    log.info("Adding Jones relation constraints...")
     commit_msg = (
         f"CID cooling: Jones relation constraints for {source_name}\n"
         f"RIME: n_runs={n_runs}, variable=capacity_factor"
@@ -343,5 +347,5 @@ def generate_cooling_cid_scenario(
         scen, cf_expected, commit_msg, baseline_gwl=baseline_gwl
     )
 
-    print(f"   Committed version {scen_updated.version}")
+    log.info(f"   Committed version {scen_updated.version}")
     return scen_updated

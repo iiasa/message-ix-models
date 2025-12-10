@@ -13,12 +13,16 @@ For commercial, CHILLED EI is based on floor-weighted MFH average.
 See: sturm/data/input_csv_SSP_2023_comm/cool_intensity.csv (commercial = MFH values)
 """
 
-import pandas as pd
-import numpy as np
-import xarray as xr
+import logging
 from typing import Literal, Optional
 
+import numpy as np
+import pandas as pd
+import xarray as xr
+
 from message_ix_models.util import package_data_path
+
+log = logging.getLogger(__name__)
 
 
 def predict_EI_buildings(
@@ -208,7 +212,7 @@ def compute_energy_demand_ensemble(
     pd.DataFrame
         Energy demand with mean and std across ensemble
     """
-    print(f"\nComputing {mode.upper()} energy demand ensemble (scenario {scenario}, sector {sector})...")
+    log.info(f"Computing {mode.upper()} energy demand ensemble (scenario {scenario}, sector {sector})...")
 
     coeff_df, chilled_ds, floor_df = load_data(mode, scenario, sector)
     ei_var = 'EI_ac_m2' if mode == 'cool' else 'EI_h_m2'
@@ -219,14 +223,14 @@ def compute_energy_demand_ensemble(
     mfh_ei_cache = {}
     if sector == 'comm':
         resid_floor_df = pd.read_csv(package_data_path("alps", "sturm_floor_area_R12_resid.csv"))
-        print("  Pre-computing MFH-weighted EI for commercial (following STURM precedent)")
+        log.info("Pre-computing MFH-weighted EI for commercial (following STURM precedent)")
 
     # Build year -> index mapping
     years_list = list(years)
     year_to_idx = {int(y): i for i, y in enumerate(years_list)}
     run_ids = sorted(gmt_trajectories.keys())
     n_runs = len(run_ids)
-    print(f"  Using {n_runs} MAGICC ensemble members")
+    log.info(f"Using {n_runs} MAGICC ensemble members")
 
     results = []
     n_total = 0
@@ -293,6 +297,6 @@ def compute_energy_demand_ensemble(
         })
         n_success += 1
 
-    print(f"  Processed {n_total} combinations")
-    print(f"  Successful: {n_success} ({100*n_success/n_total:.1f}%)")
+    log.info(f"Processed {n_total} combinations")
+    log.info(f"Successful: {n_success} ({100*n_success/n_total:.1f}%)")
     return pd.DataFrame(results)

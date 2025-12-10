@@ -13,6 +13,7 @@ Usage:
     mix-models alps scen-gen --config scenario_config.yaml --budgets 600f --temporal annual
 """
 
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -39,14 +40,16 @@ from message_ix_models.project.alps.replace_water_cids import (
 )
 from message_ix_models.project.alps.rime import (
     extract_all_run_ids,
+    get_gmt_ensemble,
     load_basin_mapping,
-    _get_gmt_ensemble,
 )
 from message_ix_models.project.alps.timeslice import (
     duration_time,
     generate_uniform_timeslices,
     time_setup,
 )
+
+log = logging.getLogger(__name__)
 
 
 def _ndarray_to_dataframe(
@@ -120,7 +123,7 @@ def add_timeslices_to_scenario(scenario: Scenario, n_time: int = 2) -> Scenario:
     Scenario
         Modified scenario with timeslices
     """
-    print(f"   Adding {n_time} timeslices to scenario...")
+    log.info(f"Adding {n_time} timeslices to scenario...")
 
     df_time = generate_uniform_timeslices(n_time)
     time_setup(scenario, df_time)
@@ -128,7 +131,7 @@ def add_timeslices_to_scenario(scenario: Scenario, n_time: int = 2) -> Scenario:
 
     time_set = set(scenario.set("time").tolist())
     subannual = time_set - {"year"}
-    print(f"   Timeslices added: {subannual}")
+    log.info(f"Timeslices added: {subannual}")
 
     return scenario
 
@@ -179,13 +182,13 @@ def generate_scenario(
     """
     is_no_climate = magicc_file is None
 
-    print(f"\n{'=' * 60}")
-    print(f"Generating: {output_scenario}")
-    print(f"{'=' * 60}")
-    print(f"  Starter: {starter_model}/{starter_scenario}")
-    print(f"  MAGICC: {'no_climate (skip CID)' if is_no_climate else magicc_file.name}")
-    print(f"  Temporal: {temporal_res}")
-    print(f"  CID type: {cid_type}")
+    log.info("=" * 60)
+    log.info(f"Generating: {output_scenario}")
+    log.info("=" * 60)
+    log.info(f"Starter: {starter_model}/{starter_scenario}")
+    log.info(f"MAGICC: {'no_climate (skip CID)' if is_no_climate else magicc_file.name}")
+    log.info(f"Temporal: {temporal_res}")
+    log.info(f"CID type: {cid_type}")
 
     if magicc_file and not magicc_file.exists():
         raise FileNotFoundError(f"MAGICC file not found: {magicc_file}")
@@ -195,45 +198,45 @@ def generate_scenario(
             raise ValueError(f"{cid_type} CID only supports annual temporal resolution")
 
     if dry_run:
-        print("  [DRY RUN] Validation passed")
+        log.info("[DRY RUN] Validation passed")
         return None
 
     # Clone starter
-    print("\n1. Loading starter scenario...")
+    log.info("1. Loading starter scenario...")
     starter = Scenario(mp, starter_model, starter_scenario)
-    print(f"   Loaded version {starter.version}")
+    log.info(f"Loaded version {starter.version}")
 
-    print("\n2. Cloning scenario...")
+    log.info("2. Cloning scenario...")
     scen = starter.clone(
         model=output_model,
         scenario=output_scenario,
         keep_solution=False,
         shift_first_model_year=None,
     )
-    print(f"   Created {scen.model}/{scen.scenario} version {scen.version}")
+    log.info(f"Created {scen.model}/{scen.scenario} version {scen.version}")
 
     # no_climate: just clone, no CID application
     if is_no_climate:
         scen.set_as_default()
-        print("   no_climate: skipping CID, returning cloned scenario")
+        log.info("no_climate: skipping CID, returning cloned scenario")
         return scen
 
     # Add timeslices if seasonal nexus
     if temporal_res == "seasonal" and cid_type == "nexus":
         existing_times = set(scen.set("time").tolist())
         if "h1" in existing_times and "h2" in existing_times:
-            print("\n3. Timeslices already present in starter, skipping")
+            log.info("3. Timeslices already present in starter, skipping")
         else:
-            print("\n3. Adding timeslices...")
+            log.info("3. Adding timeslices...")
             add_timeslices_to_scenario(scen, n_time=2)
-            print("   Timeslices committed")
+            log.info("Timeslices committed")
 
     # Load MAGICC data
-    print("\n4. Loading MAGICC temperature data...")
+    log.info("4. Loading MAGICC temperature data...")
     magicc_df = pd.read_excel(magicc_file, sheet_name="data")
     all_run_ids = extract_all_run_ids(magicc_df)
     run_ids = tuple(all_run_ids[:n_runs])
-    print(f"   Using {len(run_ids)} runs for expectation")
+    log.info(f"Using {len(run_ids)} runs for expectation")
 
     # Dispatch by CID type
     match cid_type:
@@ -264,25 +267,25 @@ def _generate_nexus_cid(
     rime_temporal = "seasonal2step" if temporal_res == "seasonal" else "annual"
 
     # Get years from MAGICC for DataFrame construction
-    _, years = _get_gmt_ensemble(magicc_df, list(run_ids)[:1])
+    _, years = get_gmt_ensemble(magicc_df, list(run_ids)[:1])
     basin_mapping = load_basin_mapping()
 
-    print(f"\n5. Running RIME predictions for qtot_mean ({rime_temporal})...")
+    log.info(f"5. Running RIME predictions for qtot_mean ({rime_temporal})...")
     qtot_arr = cached_rime_prediction(
         magicc_df, run_ids, "qtot_mean", temporal_res=rime_temporal
     )
 
-    print(f"\n6. Running RIME predictions for qr ({rime_temporal})...")
+    log.info(f"6. Running RIME predictions for qr ({rime_temporal})...")
     qr_arr = cached_rime_prediction(
         magicc_df, run_ids, "qr", temporal_res=rime_temporal
     )
 
     # Prepare MESSAGE parameters
-    print(f"\n7. Preparing MESSAGE parameters ({temporal_res})...")
+    log.info(f"7. Preparing MESSAGE parameters ({temporal_res})...")
     if temporal_res == "annual":
         qtot_df = _ndarray_to_dataframe(qtot_arr, years, basin_mapping)
         qr_df = _ndarray_to_dataframe(qr_arr, years, basin_mapping)
-        print(f"   qtot shape: {qtot_df.shape}, qr shape: {qr_df.shape}")
+        log.debug(f"qtot shape: {qtot_df.shape}, qr shape: {qr_df.shape}")
         sw_data, gw_data, share_data = prepare_water_cids(
             qtot_df, qr_df, scen, temporal_res="annual"
         )
@@ -294,7 +297,7 @@ def _generate_nexus_cid(
         qtot_wet = _ndarray_to_dataframe(qtot_wet_arr, years, basin_mapping)
         qr_dry = _ndarray_to_dataframe(qr_dry_arr, years, basin_mapping)
         qr_wet = _ndarray_to_dataframe(qr_wet_arr, years, basin_mapping)
-        print(f"   qtot_dry shape: {qtot_dry.shape}, qr_dry shape: {qr_dry.shape}")
+        log.debug(f"qtot_dry shape: {qtot_dry.shape}, qr_dry shape: {qr_dry.shape}")
         sw_data, gw_data, share_data = prepare_water_cids(
             (qtot_dry, qtot_wet), (qr_dry, qr_wet), scen, temporal_res="seasonal"
         )
@@ -302,12 +305,12 @@ def _generate_nexus_cid(
     sw_new, sw_old = sw_data
     gw_new, gw_old = gw_data
     share_new, share_old = share_data
-    print(f"   sw: {len(sw_new)} new, {len(sw_old)} old rows")
-    print(f"   gw: {len(gw_new)} new, {len(gw_old)} old rows")
-    print(f"   share: {len(share_new)} new, {len(share_old)} old rows")
+    log.info(f"sw: {len(sw_new)} new, {len(sw_old)} old rows")
+    log.info(f"gw: {len(gw_new)} new, {len(gw_old)} old rows")
+    log.info(f"share: {len(share_new)} new, {len(share_old)} old rows")
 
     # Replace water availability
-    print("\n9. Replacing water availability...")
+    log.info("9. Replacing water availability...")
     # Get source name from DataFrame (Scenario column contains source identifier)
     source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
     commit_msg = (
@@ -318,7 +321,7 @@ def _generate_nexus_cid(
     scen_updated = replace_water_availability(
         scen, sw_data, gw_data, share_data, commit_message=commit_msg
     )
-    print(f"   Committed version {scen_updated.version}")
+    log.info(f"Committed version {scen_updated.version}")
 
     return scen_updated
 
@@ -351,12 +354,12 @@ def _build_cooling_module(scen: Scenario) -> Scenario:
     ]
 
     if len(cooling_techs) > 0:
-        print(
-            f"   Cooling technologies already present: {cooling_techs['technology'].nunique()} types"
+        log.info(
+            f"Cooling technologies already present: {cooling_techs['technology'].nunique()} types"
         )
         return scen
 
-    print("   Building cooling module...")
+    log.info("Building cooling module...")
 
     # Set up context for cooling build
     context = Context.get_instance(-1)
@@ -368,7 +371,7 @@ def _build_cooling_module(scen: Scenario) -> Scenario:
 
     # Build cooling module
     build_water(context, scen)
-    print("   Cooling module built successfully")
+    log.info("Cooling module built successfully")
 
     return scen
 
@@ -415,15 +418,15 @@ def generate_all(
     # Get CID type (default: nexus for backward compatibility)
     cid_type = config.get("cid_type", "nexus")
 
-    print("=" * 60)
-    print("CID SCENARIO GENERATION")
-    print("=" * 60)
-    print(f"Platform: {platform_name}")
-    print(f"CID type: {cid_type}")
-    print(f"Starter: {config['starter']['model']}/{config['starter']['scenario']}")
-    print(f"Budget filter: {budget_filter or 'all'}")
-    print(f"Temporal filter: {temporal_filter}")
-    print(f"Mode: {'DRY RUN' if dry_run else 'GENERATE'}")
+    log.info("=" * 60)
+    log.info("CID SCENARIO GENERATION")
+    log.info("=" * 60)
+    log.info(f"Platform: {platform_name}")
+    log.info(f"CID type: {cid_type}")
+    log.info(f"Starter: {config['starter']['model']}/{config['starter']['scenario']}")
+    log.info(f"Budget filter: {budget_filter or 'all'}")
+    log.info(f"Temporal filter: {temporal_filter}")
+    log.info(f"Mode: {'DRY RUN' if dry_run else 'GENERATE'}")
 
     # Build scenario list
     scenarios_to_generate = []
@@ -438,7 +441,7 @@ def generate_all(
 
             # Skip seasonal for cooling and buildings (not supported)
             if cid_type in ("cooling", "buildings") and temp_res == "seasonal":
-                print(f"  Skipping {budget}/{temp_res}: {cid_type} only supports annual")
+                log.debug(f"Skipping {budget}/{temp_res}: {cid_type} only supports annual")
                 continue
 
             # Derive output name and MAGICC file from budget
@@ -466,12 +469,12 @@ def generate_all(
                 }
             )
 
-    print(f"\nScenarios to generate: {len(scenarios_to_generate)}")
+    log.info(f"Scenarios to generate: {len(scenarios_to_generate)}")
     for s in scenarios_to_generate:
-        print(f"  - {s['output_scenario']}")
+        log.info(f"  - {s['output_scenario']}")
 
     if not scenarios_to_generate:
-        print("No scenarios match filters")
+        log.warning("No scenarios match filters")
         return []
 
     # Connect to platform
@@ -498,11 +501,11 @@ def generate_all(
             if scen:
                 created.append(scen)
         except Exception as e:
-            print(f"\nERROR generating {spec['output_scenario']}: {e}")
+            log.error(f"ERROR generating {spec['output_scenario']}: {e}")
             raise
 
-    print("\n" + "=" * 60)
-    print(f"GENERATION COMPLETE: {len(created)} scenarios created")
-    print("=" * 60)
+    log.info("=" * 60)
+    log.info(f"GENERATION COMPLETE: {len(created)} scenarios created")
+    log.info("=" * 60)
 
     return created

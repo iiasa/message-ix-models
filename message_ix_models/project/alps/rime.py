@@ -24,12 +24,15 @@ By starting predictions at 2025, we avoid most problematic early years where
 GMT < 0.6°C occurs.
 """
 
+from functools import lru_cache
+from pathlib import Path
+from typing import Dict, Optional
+
 import numpy as np
 import pandas as pd
 import xarray as xr
-from functools import lru_cache
-from pathlib import Path
-from typing import Optional, Dict
+
+from message_ix_models.util import package_data_path
 
 from .constants import RIME_DATASETS_DIR, VAR_MAP
 from .cvar import compute_cvar
