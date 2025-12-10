@@ -94,30 +94,26 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
     # Determine processing mode
     if include_emulator_uncertainty:
         print("\n" + "="*80)
-        print("MODE: EMULATOR UNCERTAINTY (UNIFORM WEIGHTS)")
+        print("MODE: EMULATOR UNCERTAINTY")
         print("="*80)
 
         all_runs = extract_all_run_ids(magicc_df)
         run_ids = all_runs[:n_runs] if n_runs else all_runs
-        weights = np.ones(len(run_ids)) / len(run_ids)
-        print(f"Processing {len(run_ids)} runs with uniform weights")
+        print(f"Processing {len(run_ids)} runs")
     else:
         # Simple expectation mode without CVaR
         run_ids = None
-        weights = None
 
     variables = ['qtot_mean', 'qr'] if variable == 'hydro' else [variable]
 
     # Determine temporal resolution
     temporal_res = "seasonal2step" if suban else "annual"
 
-    # Save original weights and run_ids for reuse across variables
-    original_weights = weights.copy() if weights is not None else None
+    # Save original run_ids for reuse across variables
     original_run_ids = run_ids.copy() if run_ids is not None else None
 
     for var in variables:
-        # Reset weights and run_ids for each variable
-        weights = original_weights.copy() if original_weights is not None else None
+        # Reset run_ids for each variable
         run_ids = original_run_ids.copy() if original_run_ids is not None else None
         print("\n" + "="*80)
         print(f"Processing variable: {var}")
@@ -149,14 +145,8 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
                 )
 
                 print(f"Expanding predictions with emulator uncertainty (stratified sampling K=5)...")
-                predictions, expanded_weights = expand_predictions_with_emulator_uncertainty(
-                    ensemble,
-                    weights
-                )
+                predictions = expand_predictions_with_emulator_uncertainty(ensemble)
                 print(f"  Expanded from N={len(run_ids)} to N×K={len(predictions.gmt_trajectories)} pseudo-runs")
-
-                # Update weights to expanded version
-                weights = expanded_weights
 
             else:
                 # Standard batch mode without emulator uncertainty
@@ -173,8 +163,8 @@ def run_rime(model=None, scenario=None, magicc_file=None, percentile=None, run_i
             # Compute expectations and CVaR
             print(f"\nComputing expectations and CVaR...")
 
-            result_mean = compute_expectation(predictions, weights=weights)
-            result_cvar = compute_rime_cvar(predictions, weights, cvar_levels=cvar_levels, method=cvar_method)
+            result_mean = compute_expectation(predictions)
+            result_cvar = compute_rime_cvar(predictions, cvar_levels=cvar_levels, method=cvar_method)
 
             # Save results
             if 'qtot' in var:

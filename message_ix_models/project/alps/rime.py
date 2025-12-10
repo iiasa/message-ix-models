@@ -1,9 +1,9 @@
-"""RIME processing with importance weighting and CVaR calculation.
+"""RIME processing with CVaR calculation.
 
 Core functions for:
 - Extracting temperature timeseries from MAGICC output
 - Running vectorized RIME predictions across multiple runs
-- Computing weighted expectations and CVaR risk metrics
+- Computing expectations and CVaR risk metrics
 
 IMPORTANT: RIME Emulator GMT Range Limitations
 ----------------------------------------------
@@ -35,7 +35,7 @@ from dataclasses import dataclass, field
 
 from message_ix_models.util import package_data_path
 from .constants import R12_REGIONS
-from .cvar import compute_weighted_cvar
+from .cvar import compute_cvar
 from .utils import fit_dist
 
 # START YEAR FOR RIME PREDICTIONS
@@ -1065,10 +1065,9 @@ def create_rime_ensemble(
 
 def expand_predictions_with_emulator_uncertainty(
     ensemble: _RimeEnsemble,
-    weights: np.ndarray,
     n_samples: int = 5,
     seed: int = 42,
-) -> tuple[_RimeEnsemble, np.ndarray]:
+) -> _RimeEnsemble:
     """Expand ensemble with emulator uncertainty using stratified percentile sampling.
 
     RIME's philosophy (see rimeX/preproc/quantilemaps.py):
@@ -1084,14 +1083,11 @@ def expand_predictions_with_emulator_uncertainty(
 
     Args:
         ensemble: Base RIME ensemble (N runs, no emulator uncertainty)
-        weights: Original importance weights (length N)
         n_samples: Number of pseudo-runs per MAGICC run (default: 5)
         seed: Random seed for reproducibility (default: 42)
 
     Returns:
-        Tuple of:
-        - expanded_ensemble: New ensemble with N×K pseudo-runs and percentile sampling schedule
-        - expanded_weights: Array of weights for N×K pseudo-runs (each = original_weight / K)
+        Expanded ensemble with N×K pseudo-runs and percentile sampling schedule
     """
     rng = np.random.default_rng(seed)
     K = n_samples
@@ -1122,9 +1118,6 @@ def expand_predictions_with_emulator_uncertainty(
             percentile_sampling[pseudo_run_id] = percentile_choices
             pseudo_run_id += 1
 
-    # Expand weights: each original weight is split equally among K samples
-    expanded_weights = np.repeat(weights / K, K)
-
     # Create new ensemble with expanded structure
     expanded_ensemble = _RimeEnsemble(
         gmt_trajectories=expanded_gmt,
@@ -1136,24 +1129,21 @@ def expand_predictions_with_emulator_uncertainty(
         basin_mapping=ensemble.basin_mapping,
     )
 
-    return expanded_ensemble, expanded_weights
+    return expanded_ensemble
 
 
 def compute_expectation(
     predictions: Union[_RimeEnsemble, dict[int, pd.DataFrame]],
     run_ids: Optional[np.ndarray] = None,
-    weights: Optional[np.ndarray] = None,
 ) -> pd.DataFrame:
     """Compute expectation across RIME predictions.
 
     Args:
         predictions: Either _RimeEnsemble (lazy) or dict mapping run_id -> DataFrame (eager)
         run_ids: Array of run IDs (required if predictions is dict, ignored if _RimeEnsemble)
-        weights: Optional array of importance weights (must sum to ~1.0).
-                 If None, uses uniform weights (unweighted mean).
 
     Returns:
-        DataFrame with (weighted) mean predictions (MESSAGE format with metadata)
+        DataFrame with mean predictions (MESSAGE format with metadata)
     """
     # Handle input type
     if isinstance(predictions, _RimeEnsemble):
@@ -1179,11 +1169,8 @@ def compute_expectation(
     for i, run_id in enumerate(run_ids):
         values_3d[i, :, :] = predictions_dict[run_id][year_columns].values
 
-    # Compute (weighted) mean
-    if weights is not None:
-        mean = np.average(values_3d, axis=0, weights=weights)
-    else:
-        mean = np.mean(values_3d, axis=0)
+    # Compute mean
+    mean = np.mean(values_3d, axis=0)
 
     # Convert back to DataFrame with metadata
     result_data = pd.DataFrame(mean, columns=year_columns)
@@ -1203,16 +1190,14 @@ def compute_expectation(
 
 def compute_rime_cvar(
     predictions: Union[_RimeEnsemble, dict[int, pd.DataFrame]],
-    weights: np.ndarray,
     run_ids: Optional[np.ndarray] = None,
     cvar_levels: list[float] = [10, 50, 90],
     method: str = "pointwise",
 ) -> dict[str, pd.DataFrame]:
-    """Compute weighted CVaR across RIME predictions.
+    """Compute CVaR across RIME predictions.
 
     Args:
         predictions: Either _RimeEnsemble (lazy) or dict mapping run_id -> DataFrame (eager)
-        weights: Array of importance weights (must sum to ~1.0)
         run_ids: Array of run IDs (required if predictions is dict, ignored if _RimeEnsemble)
         cvar_levels: List of CVaR percentiles (default: [10, 50, 90])
         method: CVaR computation method (default: "pointwise")
@@ -1250,9 +1235,9 @@ def compute_rime_cvar(
     # Get basin indices for DataFrame output
     basin_ids = list(first_pred.index)
 
-    # Compute weighted CVaR
-    cvar_results_raw = compute_weighted_cvar(
-        values_3d, weights, cvar_levels, basin_ids=basin_ids, year_columns=year_columns, method=method
+    # Compute CVaR
+    cvar_results_raw = compute_cvar(
+        values_3d, cvar_levels, basin_ids=basin_ids, year_columns=year_columns, method=method
     )
 
     # Add metadata back to each result DataFrame

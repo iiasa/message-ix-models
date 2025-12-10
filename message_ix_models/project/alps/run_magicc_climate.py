@@ -186,7 +186,6 @@ def run_magicc(
     input_dir=None,
     output_dir=None,
     return_all_runs=True,
-    generate_reference=False,
 ):
     """Run MAGICC climate processing on MESSAGE emissions using climate-assessment.
 
@@ -197,10 +196,9 @@ def run_magicc(
         input_dir: Input directory for emissions files
         output_dir: Output directory for MAGICC results
         return_all_runs: If True, returns all individual run timeseries with run_id (default: True)
-        generate_reference: If True, also run ISIMIP3b (14 runs) as reference distribution for importance weighting
 
     Example:
-        mix-models alps run-magicc --scenario MESSAGE_GLOBIOM_SSP2_v6.4_baseline --run-type medium --generate-reference
+        mix-models alps run-magicc --scenario MESSAGE_GLOBIOM_SSP2_v6.4_baseline --run-type medium
     """
     print("=" * 70)
     print("MAGICC CLIMATE ASSESSMENT PIPELINE")
@@ -227,7 +225,6 @@ def run_magicc(
     print(f"Run type: {run_type} ({num_configs[run_type]} configurations)")
     print(f"Workers: {workers}")
     print(f"Return all runs: {return_all_runs}")
-    print(f"Generate reference: {generate_reference}")
 
     # Validate input file exists
     input_file = input_dir / f"{scenario}.xlsx"
@@ -253,36 +250,6 @@ def run_magicc(
         scenario, output_dir, suffix="_all_runs" if return_all_runs else ""
     )
 
-    # Generate reference distribution if requested
-    reference_outputs = {}
-    if generate_reference and run_type != "isimip3b":
-        print("\n" + "=" * 70)
-        print("Generating ISIMIP3b reference distribution")
-        print("=" * 70)
-        print(f"  Running MAGICC with ISIMIP3b configuration (14 runs)")
-        print(f"  Will be used for importance weighting")
-
-        # Create new processor for ISIMIP3b configuration
-        ref_processor = MAGICCProcessor(
-            run_type=MAGICCRunType.ISIMIP3B,
-            magicc_worker_number=workers,
-        )
-
-        # Run ISIMIP3b with same emissions data
-        _run_climate_assessment_workflow(
-            df,
-            ref_processor,
-            output_dir,
-            workers,
-            num_configs["isimip3b"],
-            return_all_runs=True,
-        )
-
-        # Rename and cleanup reference outputs with special suffix
-        reference_outputs = _rename_and_cleanup_outputs(
-            scenario, output_dir, suffix="_reference_isimip3b"
-        )
-
     # Report results
     print("\n" + "=" * 70)
     print("Results Summary")
@@ -293,13 +260,6 @@ def run_magicc(
         print(f"  {main_outputs['all_runs'].name}")
     if "percentiles" in main_outputs:
         print(f"  {main_outputs['percentiles'].name}")
-
-    if reference_outputs:
-        print(f"\n✓ Reference distribution: 14 ISIMIP3b configurations")
-        if "all_runs" in reference_outputs:
-            print(f"  {reference_outputs['all_runs'].name}")
-        if "percentiles" in reference_outputs:
-            print(f"  {reference_outputs['percentiles'].name}")
 
     print("\n" + "=" * 70)
     print("SUCCESS - MAGICC pipeline completed!")
@@ -336,11 +296,6 @@ def run_magicc(
     default=True,
     help="Return all individual run timeseries with run_id column (default: True)",
 )
-@click.option(
-    "--generate-reference/--no-generate-reference",
-    default=False,
-    help="Also generate ISIMIP3b reference distribution (14 runs) for importance weighting (default: False)",
-)
 def main(
     scenario,
     run_type,
@@ -348,7 +303,6 @@ def main(
     input_dir,
     output_dir,
     return_all_runs,
-    generate_reference,
 ):
     """CLI wrapper for run_magicc."""
     run_magicc(
@@ -358,7 +312,6 @@ def main(
         input_dir,
         output_dir,
         return_all_runs,
-        generate_reference,
     )
 
 

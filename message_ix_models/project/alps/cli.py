@@ -80,11 +80,6 @@ def emissions_report(**kwargs):
     default=True,
     help='Return all individual run timeseries with run_id column (default: True)'
 )
-@click.option(
-    '--generate-reference/--no-generate-reference',
-    default=False,
-    help='Also generate ISIMIP3b reference distribution (14 runs) for importance weighting (default: False)'
-)
 def run_magicc_cmd(**kwargs):
     """Run MAGICC climate processing on MESSAGE emissions."""
     from .run_magicc_climate import run_magicc

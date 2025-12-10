@@ -1,6 +1,6 @@
-"""Weighted CVaR calculation for ensemble risk metrics.
+"""CVaR calculation for ensemble risk metrics.
 
-Computes importance-weighted conditional value-at-risk (CVaR) for ensemble data.
+Computes conditional value-at-risk (CVaR) for ensemble data.
 CVaR_α represents the expected value in the worst α% of outcomes.
 
 Pure functions operate on data structures (arrays, DataFrames).
@@ -9,90 +9,48 @@ File I/O is handled by calling code.
 
 import numpy as np
 import pandas as pd
-from typing import Union
 
 
-def compute_weighted_expectation(values: np.ndarray, weights: np.ndarray) -> float:
-    """Compute weighted expectation.
-
-    Args:
-        values: Array of values
-        weights: Array of normalized weights (must sum to 1)
-
-    Returns:
-        Weighted mean
-    """
-    values = np.asarray(values)
-    weights = np.asarray(weights)
-
-    if len(values) != len(weights):
-        raise ValueError(f"values ({len(values)}) and weights ({len(weights)}) must have same length")
-
-    return float(np.average(values, weights=weights))
-
-
-def compute_weighted_cvar_single(values: np.ndarray, weights: np.ndarray, alpha: float) -> float:
-    """Compute weighted CVaR for a single distribution.
+def compute_cvar_single(values: np.ndarray, alpha: float) -> float:
+    """Compute CVaR for a single distribution.
 
     CVaR_α = E[X | X ≤ q_α] where q_α is the α-th percentile.
 
     Args:
         values: Array of values (e.g., water availability for one basin-year)
-        weights: Array of normalized weights (must sum to 1)
         alpha: CVaR level as percentile (e.g., 10 for 10th percentile = worst 10%)
 
     Returns:
-        Weighted CVaR value
+        CVaR value (mean of worst α% of values)
     """
     values = np.asarray(values)
-    weights = np.asarray(weights)
-
-    if len(values) != len(weights):
-        raise ValueError(f"values ({len(values)}) and weights ({len(weights)}) must have same length")
+    n = len(values)
 
     if not 0 < alpha < 100:
         raise ValueError(f"alpha must be between 0 and 100, got {alpha}")
 
     # Sort by values (ascending for lower tail)
-    sort_idx = np.argsort(values)
-    sorted_values = values[sort_idx]
-    sorted_weights = weights[sort_idx]
+    sorted_values = np.sort(values)
 
-    # Find cutoff using cumulative weights
-    cum_weights = np.cumsum(sorted_weights)
-    threshold = alpha / 100.0
+    # Find cutoff index for bottom α%
+    cutoff_idx = max(1, int(np.ceil(n * alpha / 100.0)))
 
-    # Find index where cumulative weight exceeds threshold
-    cutoff_idx = np.searchsorted(cum_weights, threshold, side='right')
-
-    if cutoff_idx == 0:
-        # Edge case: threshold so low that tail is empty, use minimum
-        return float(sorted_values[0])
-
-    # Compute weighted mean of tail
+    # Mean of tail values
     tail_values = sorted_values[:cutoff_idx]
-    tail_weights = sorted_weights[:cutoff_idx]
-
-    if tail_weights.sum() > 0:
-        cvar = np.average(tail_values, weights=tail_weights)
-    else:
-        # Fallback to minimum if tail has zero weight
-        cvar = sorted_values[0]
-
-    return float(cvar)
+    return float(np.mean(tail_values))
 
 
-def compute_weighted_cvar(values_3d: np.ndarray,
-                          weights: np.ndarray,
-                          cvar_levels: list[float],
-                          basin_ids: list = None,
-                          year_columns: list = None,
-                          method: str = "pointwise") -> dict[str, pd.DataFrame]:
-    """Compute weighted CVaR across ensemble for all basin-year combinations.
+def compute_cvar(
+    values_3d: np.ndarray,
+    cvar_levels: list[float],
+    basin_ids: list = None,
+    year_columns: list = None,
+    method: str = "pointwise",
+) -> dict[str, pd.DataFrame]:
+    """Compute CVaR across ensemble for all basin-year combinations.
 
     Args:
         values_3d: 3D array (n_runs, n_basins, n_years) of ensemble values
-        weights: 1D array (n_runs,) of normalized weights
         cvar_levels: List of CVaR percentiles (e.g., [10, 50, 90])
         basin_ids: Optional list of basin identifiers for DataFrame index
         year_columns: Optional list of year values for DataFrame columns
@@ -114,35 +72,32 @@ def compute_weighted_cvar(values_3d: np.ndarray,
         temporal structure by conditioning on trajectory selection.
     """
     values_3d = np.asarray(values_3d)
-    weights = np.asarray(weights)
 
     if values_3d.ndim != 3:
         raise ValueError(f"values_3d must be 3D array, got shape {values_3d.shape}")
 
-    n_runs, n_basins, n_years = values_3d.shape
-
-    if len(weights) != n_runs:
-        raise ValueError(f"weights ({len(weights)}) must match first dimension of values_3d ({n_runs})")
-
-    # Verify weights are normalized
-    if not np.isclose(weights.sum(), 1.0, atol=1e-6):
-        raise ValueError(f"weights must sum to 1.0, got {weights.sum()}")
-
     # Dispatch to method-specific implementation
     match method:
         case "pointwise":
-            return _compute_cvar_pointwise(values_3d, weights, cvar_levels, basin_ids, year_columns)
+            return _compute_cvar_pointwise(
+                values_3d, cvar_levels, basin_ids, year_columns
+            )
         case "coherent":
-            return _compute_cvar_coherent(values_3d, weights, cvar_levels, basin_ids, year_columns)
+            return _compute_cvar_coherent(
+                values_3d, cvar_levels, basin_ids, year_columns
+            )
         case _:
-            raise ValueError(f"Unknown method '{method}'. Expected 'pointwise' or 'coherent'.")
+            raise ValueError(
+                f"Unknown method '{method}'. Expected 'pointwise' or 'coherent'."
+            )
 
 
-def _compute_cvar_pointwise(values_3d: np.ndarray,
-                            weights: np.ndarray,
-                            cvar_levels: list[float],
-                            basin_ids: list = None,
-                            year_columns: list = None) -> dict[str, pd.DataFrame]:
+def _compute_cvar_pointwise(
+    values_3d: np.ndarray,
+    cvar_levels: list[float],
+    basin_ids: list = None,
+    year_columns: list = None,
+) -> dict[str, pd.DataFrame]:
     """Pointwise CVaR: compute independently at each (basin, year).
 
     This is the original RIME methodology. CVaR at each timestep can draw from
@@ -151,11 +106,9 @@ def _compute_cvar_pointwise(values_3d: np.ndarray,
     n_runs, n_basins, n_years = values_3d.shape
 
     # Initialize result arrays
-    results = {
-        'expectation': np.zeros((n_basins, n_years))
-    }
+    results = {"expectation": np.zeros((n_basins, n_years))}
     for alpha in cvar_levels:
-        results[f'cvar_{int(alpha)}'] = np.zeros((n_basins, n_years))
+        results[f"cvar_{int(alpha)}"] = np.zeros((n_basins, n_years))
 
     # Compute statistics for each basin-year
     for basin_idx in range(n_basins):
@@ -163,13 +116,13 @@ def _compute_cvar_pointwise(values_3d: np.ndarray,
             # Extract values across runs for this basin-year
             values_dist = values_3d[:, basin_idx, year_idx]
 
-            # Weighted expectation
-            results['expectation'][basin_idx, year_idx] = np.average(values_dist, weights=weights)
+            # Expectation (simple mean)
+            results["expectation"][basin_idx, year_idx] = np.mean(values_dist)
 
-            # Weighted CVaR for each level
+            # CVaR for each level
             for alpha in cvar_levels:
-                results[f'cvar_{int(alpha)}'][basin_idx, year_idx] = compute_weighted_cvar_single(
-                    values_dist, weights, alpha
+                results[f"cvar_{int(alpha)}"][basin_idx, year_idx] = (
+                    compute_cvar_single(values_dist, alpha)
                 )
 
     # Convert to DataFrames
@@ -179,20 +132,17 @@ def _compute_cvar_pointwise(values_3d: np.ndarray,
         year_columns = list(range(n_years))
 
     for key in results:
-        results[key] = pd.DataFrame(
-            results[key],
-            index=basin_ids,
-            columns=year_columns
-        )
+        results[key] = pd.DataFrame(results[key], index=basin_ids, columns=year_columns)
 
     return results
 
 
-def _compute_cvar_coherent(values_3d: np.ndarray,
-                          weights: np.ndarray,
-                          cvar_levels: list[float],
-                          basin_ids: list = None,
-                          year_columns: list = None) -> dict[str, pd.DataFrame]:
+def _compute_cvar_coherent(
+    values_3d: np.ndarray,
+    cvar_levels: list[float],
+    basin_ids: list = None,
+    year_columns: list = None,
+) -> dict[str, pd.DataFrame]:
     """Coherent CVaR: select worst trajectories, then average them.
 
     This approach maintains temporal coherence by conditioning on trajectory selection.
@@ -201,7 +151,7 @@ def _compute_cvar_coherent(values_3d: np.ndarray,
     Implementation:
     1. Compute trajectory-level "badness" score (mean across basins and years)
     2. For each CVaR level, select worst X% of trajectories based on this score
-    3. Compute weighted average of selected trajectories
+    3. Compute mean of selected trajectories
     """
     n_runs, n_basins, n_years = values_3d.shape
 
@@ -210,43 +160,25 @@ def _compute_cvar_coherent(values_3d: np.ndarray,
     trajectory_scores = np.mean(values_3d, axis=(1, 2))
 
     # Initialize result arrays
-    results = {
-        'expectation': np.zeros((n_basins, n_years))
-    }
+    results = {"expectation": np.zeros((n_basins, n_years))}
     for alpha in cvar_levels:
-        results[f'cvar_{int(alpha)}'] = np.zeros((n_basins, n_years))
+        results[f"cvar_{int(alpha)}"] = np.zeros((n_basins, n_years))
 
-    # Compute expectation (weighted average over all runs)
-    results['expectation'] = np.average(values_3d, axis=0, weights=weights)
+    # Compute expectation (mean over all runs)
+    results["expectation"] = np.mean(values_3d, axis=0)
 
     # Compute CVaR for each level
     for alpha in cvar_levels:
         # Sort trajectories by badness score (ascending = worst first)
         sort_idx = np.argsort(trajectory_scores)
         sorted_values = values_3d[sort_idx, :, :]
-        sorted_weights = weights[sort_idx]
 
-        # Find cutoff using cumulative weights
-        cum_weights = np.cumsum(sorted_weights)
-        threshold = alpha / 100.0
-        cutoff_idx = np.searchsorted(cum_weights, threshold, side='right')
+        # Find cutoff index for bottom α%
+        cutoff_idx = max(1, int(np.ceil(n_runs * alpha / 100.0)))
 
-        if cutoff_idx == 0:
-            # Edge case: use worst single trajectory
-            results[f'cvar_{int(alpha)}'] = sorted_values[0, :, :]
-        else:
-            # Compute weighted average of tail trajectories
-            tail_values = sorted_values[:cutoff_idx, :, :]
-            tail_weights = sorted_weights[:cutoff_idx]
-
-            if tail_weights.sum() > 0:
-                # Weighted average: (n_basins, n_years)
-                results[f'cvar_{int(alpha)}'] = np.average(
-                    tail_values, axis=0, weights=tail_weights
-                )
-            else:
-                # Fallback to worst trajectory
-                results[f'cvar_{int(alpha)}'] = sorted_values[0, :, :]
+        # Mean of tail trajectories
+        tail_values = sorted_values[:cutoff_idx, :, :]
+        results[f"cvar_{int(alpha)}"] = np.mean(tail_values, axis=0)
 
     # Convert to DataFrames
     if basin_ids is None:
@@ -255,23 +187,20 @@ def _compute_cvar_coherent(values_3d: np.ndarray,
         year_columns = list(range(n_years))
 
     for key in results:
-        results[key] = pd.DataFrame(
-            results[key],
-            index=basin_ids,
-            columns=year_columns
-        )
+        results[key] = pd.DataFrame(results[key], index=basin_ids, columns=year_columns)
 
     return results
 
 
-def validate_cvar_monotonicity(cvar_results: dict[str, pd.DataFrame],
-                                cvar_levels: list[float]) -> dict:
+def validate_cvar_monotonicity(
+    cvar_results: dict[str, pd.DataFrame], cvar_levels: list[float]
+) -> dict:
     """Validate that CVaR results satisfy monotonicity constraints.
 
     CVaR should be monotonically increasing: CVaR_10 ≤ CVaR_50 ≤ E[X]
 
     Args:
-        cvar_results: Dictionary from compute_weighted_cvar
+        cvar_results: Dictionary from compute_cvar
         cvar_levels: List of CVaR percentiles used
 
     Returns:
@@ -285,28 +214,28 @@ def validate_cvar_monotonicity(cvar_results: dict[str, pd.DataFrame],
         level_low = sorted_levels[i]
         level_high = sorted_levels[i + 1]
 
-        cvar_low = cvar_results[f'cvar_{int(level_low)}']
-        cvar_high = cvar_results[f'cvar_{int(level_high)}']
+        cvar_low = cvar_results[f"cvar_{int(level_low)}"]
+        cvar_high = cvar_results[f"cvar_{int(level_high)}"]
 
         violation_mask = cvar_low > cvar_high
         n_violations = violation_mask.sum().sum()
 
-        violations[f'cvar_{int(level_low)}_vs_{int(level_high)}'] = int(n_violations)
+        violations[f"cvar_{int(level_low)}_vs_{int(level_high)}"] = int(n_violations)
 
     # Check CVaR_max ≤ expectation
     if sorted_levels:
         highest_level = sorted_levels[-1]
-        cvar_max = cvar_results[f'cvar_{int(highest_level)}']
-        expectation = cvar_results['expectation']
+        cvar_max = cvar_results[f"cvar_{int(highest_level)}"]
+        expectation = cvar_results["expectation"]
 
         violation_mask = cvar_max > expectation
         n_violations = violation_mask.sum().sum()
-        violations[f'cvar_{int(highest_level)}_vs_expectation'] = int(n_violations)
+        violations[f"cvar_{int(highest_level)}_vs_expectation"] = int(n_violations)
 
     total_violations = sum(violations.values())
 
     return {
-        'violations': violations,
-        'total_violations': total_violations,
-        'is_valid': total_violations == 0
+        "violations": violations,
+        "total_violations": total_violations,
+        "is_valid": total_violations == 0,
     }
