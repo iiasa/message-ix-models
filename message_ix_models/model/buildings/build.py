@@ -25,6 +25,7 @@ from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
+from message_ix_models.model.bmt.utils import subtract_material_demand
 from message_ix_models.model.structure import (
     generate_set_elements,
     get_codes,
@@ -35,6 +36,7 @@ from message_ix_models.util import (
     make_io,
     merge_data,
     nodes_ex_world,
+    private_data_path,
 )
 
 from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
@@ -142,6 +144,12 @@ def get_spec(context: Context) -> Spec:
     load_config(context)
 
     s = deepcopy(context["buildings spec"])
+
+    # Read config and save to context.buildings
+    from message_ix_models.model.buildings.config import Config
+
+    config = Config()
+    context.buildings = config
 
     if context.buildings.with_materials:
         s.require.set["commodity"].extend(MATERIALS)
@@ -301,7 +309,15 @@ def load_config(context: Context) -> None:
 
     # Generate technologies that replace corresponding *_rc|RC in the base model
     expr = re.compile("_(rc|RC)$")
+
+    # Technologies that should not be transformed to afofi
+    exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
+
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
+        # Skip technologies that should not be transformed
+        if t.id in exclude_techs:
+            continue
+
         # Generate a new Code object, preserving annotations
         new = deepcopy(t)
         new.id = expr.sub("_afofi", t.id)
@@ -485,6 +501,7 @@ def prepare_data(
     sturm_c: pd.DataFrame,
     with_materials: bool,
     relations: list[str],
+    afofi_demand: pd.DataFrame = None,
 ) -> "ParameterData":
     """Derive data for MESSAGEix-Buildings from `scenario`."""
 
@@ -494,27 +511,64 @@ def prepare_data(
     # Mapping from original to generated commodity names
     c_map = {f"rc_{name}": f"afofi_{name}" for name in ("spec", "therm")}
 
-    # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
-    # values are based on 2010 and 2015 data; see the code for details.
-    c_share = get_afofi_commodity_shares()
+    # Handle AFOFI demand - either from CSV file or calculated from shares
+    if afofi_demand is not None:
+        # Use provided AFOFI demand from CSV file directly - no scaling needed
+        log.info("Using provided AFOFI demand from CSV file")
+        result["demand"] = afofi_demand
 
-    # Retrieve existing demands
-    filters: dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
-    afofi_dd = data_for_quantity(
-        "par", "demand", "value", scenario, config=dict(filters=filters)
-    )
+        # Still need to create AFOFI technologies, but without scaling
+        # Identify technologies that output to rc_spec or rc_therm
+        rc_techs = scenario.par(
+            "output", filters={"commodity": ["rc_spec", "rc_therm"]}
+        )["technology"].unique()
 
-    # On a second pass (after main() has already run once), rc_spec and rc_therm have
-    # been stripped out, so `afofi_dd` is empty; skip manipulating it.
-    if len(afofi_dd):
-        # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
-        # - Relabel commodities.
-        tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
+        # Mapping from source to generated names for scale_and_replace
+        # Exclude technologies that should not be transformed to afofi
+        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
+        replace = {
+            "commodity": c_map,
+            "technology": {
+                t: re.sub("(rc|RC)", "afofi", t)
+                for t in rc_techs
+                if t not in exclude_techs
+            },
+        }
 
-        # Convert back to a MESSAGE data frame
-        dims = dict(commodity="c", node="n", level="l", year="y", time="h")
-        # TODO Remove typing exclusion once message_ix is updated for genno 1.25
-        result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
+        # Use 1.0 scaling since we have actual demand data
+        # To match the merge_data call below
+        t_shares = Quantity(1.0, name="afofi tech share")
+
+        merge_data(
+            result,
+            # TODO Remove exclusion once message-ix-models >2025.1.10 is released
+            scale_and_replace(  # type: ignore [arg-type]
+                scenario, replace, t_shares, relations=relations, relax=0.05
+            ),
+        )
+    else:
+        # Original method: calculate AFOFI demand from shares
+        # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
+        # values are based on 2010 and 2015 data; see the code for details.
+        c_share = get_afofi_commodity_shares()
+
+        # Retrieve existing demands
+        filters: dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
+        afofi_dd = data_for_quantity(
+            "par", "demand", "value", scenario, config=dict(filters=filters)
+        )
+
+        # On a second pass (after main() has already run once), rc_spec and rc_therm
+        # have been stripped out, so `afofi_dd` is empty; skip manipulating it.
+        if len(afofi_dd):
+            # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
+            # - Relabel commodities.
+            tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
+
+            # Convert back to a MESSAGE data frame
+            dims = dict(commodity="c", node="n", level="l", year="y", time="h")
+            # TODO Remove typing exclusion once message_ix is updated for genno 1.25
+            result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
 
         # Copy technology parameter values from rc_spec and rc_therm to new afofi.
         # Again, once rc_(spec|therm) are stripped, .par() returns nothing here, so
@@ -526,9 +580,15 @@ def prepare_data(
         )["technology"].unique()
 
         # Mapping from source to generated names for scale_and_replace
+        # Exclude technologies that should not be transformed to afofi
+        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
         replace = {
             "commodity": c_map,
-            "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs},
+            "technology": {
+                t: re.sub("(rc|RC)", "afofi", t)
+                for t in rc_techs
+                if t not in exclude_techs
+            },
         }
         # Compute shares with dimensions (t, n) for scaling parameter data
         t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
@@ -562,8 +622,7 @@ def prepare_data(
             else:
                 tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
 
-            # commented: for debugging
-            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
+            print(f"  Commodity: {commodity} -> Tech: {tech_new}")
 
             # Modify data
             for name, filters, extra in (  # type: ignore
@@ -586,6 +645,12 @@ def prepare_data(
     tmp = {k: pd.concat(v) for k, v in data.items()}
     adapt_emission_factors(tmp)
     merge_data(result, tmp)
+
+    # Add demand data - append to existing demand if it exists
+    if "demand" in result:
+        result["demand"] = pd.concat([result["demand"], demand])
+    else:
+        result["demand"] = demand
 
     log.info(
         "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in result.items())
@@ -667,6 +732,7 @@ def main(
         sturm_c,
         context.buildings.with_materials,
         relations=spec.require.set["relation"],
+        afofi_demand=None,  # Use calculated AFOFI demand
     )
 
     # Remove unused commodities and technologies
@@ -774,50 +840,127 @@ def materials(
         for name, df in data.items():
             result[name].append(df)
 
-    # Retrieve data once
-    mat_demand = scenario.par("demand", {"level": "demand"})
-    index_cols = ["node", "year", "commodity"]
+    # Use the reusable function to subtract material demand
+    # One can change the method parameter to use different approaches:
+    # - "bm_subtraction": Building material subtraction (default)
+    # - "im_subtraction": Infrastructure material subtraction (to be implemented)
+    # - "pm_subtraction": Power material subtraction (to be implemented)
+    # - "tm_subtraction": Transport material subtraction (to be implemented)
+    mat_demand = subtract_material_demand(
+        scenario, info, sturm_r, sturm_c, method="bm_subtraction"
+    )
 
-    # Subtract building material demand from existing demands in scenario
-    for rc, base_data, how in (("resid", sturm_r, "right"), ("comm", sturm_c, "outer")):
-        new_col = f"demand_{rc}_const"
-
-        # - Drop columns.
-        # - Rename "value" to e.g. "demand_resid_const".
-        # - Extract MESSAGEix-Materials commodity name from STURM commodity name.
-        # - Drop other rows.
-        # - Set index.
-        df = (
-            base_data.drop(columns=["level", "time", "unit"])
-            .rename(columns={"value": new_col})
-            .assign(
-                commodity=lambda _df: _df.commodity.str.extract(
-                    f"{rc}_mat_demand_(cement|steel|aluminum)", expand=False
-                )
-            )
-            .dropna(subset=["commodity"])
-            .set_index(index_cols)
-        )
-
-        # Merge existing demands at level "demand".
-        # - how="right": drop all rows in par("demand", …) that have no match in `df`.
-        # - how="outer": keep the union of rows in `mat_demand` (e.g. from sturm_r) and
-        #   in `df` (from sturm_c); fill NA with zeroes.
-        mat_demand = mat_demand.join(df, on=index_cols, how=how).fillna(0)
-
-    # False if main() is being run for the second time on `scenario`
-    first_pass = "construction_resid_build" not in info.set["technology"]
-
-    # If not on the first pass, this modification is already performed; skip
-    if first_pass:
-        # - Compute new value = (existing value - STURM values), but no less than 0.
-        # - Drop intermediate column.
-        # - Add to combined data.
-        result["demand"].append(
-            mat_demand.eval("value = value - demand_comm_const - demand_resid_const")
-            .assign(value=lambda df: df["value"].clip(0))
-            .drop(columns=["demand_comm_const", "demand_resid_const"])
-        )
+    # Add the modified demand to results
+    result["demand"].append(mat_demand)
 
     # Concatenate data frames together
     return {k: pd.concat(v) for k, v in result.items()}
+
+
+# works in the same way as main() but applicable for ssp baseline scenarios
+def build_B(
+    context: Context,
+    scenario: message_ix.Scenario,
+):
+    """Set up the structure and data for MESSAGEix_Buildings on `scenario`.
+
+    Parameters
+    ----------
+    scenario
+        Scenario to set up.
+    """
+    info = ScenarioInfo(scenario)
+
+    from message_ix_models.model.buildings.config import Config
+
+    config = Config()
+    context.buildings = config
+
+    scenario.check_out()
+
+    try:
+        # TODO explain what this is for
+        scenario.init_set("time_relative")
+    except ValueError:
+        pass  # Already exists
+
+    # Generate a spec for the model
+    spec = get_spec(context)
+
+    # Temporary: input for prepare data seperately read from csv
+    # prices
+    price_path = private_data_path("buildings", "input_prices_R12.csv")
+    prices = pd.read_csv(price_path)
+
+    # sturm_r
+    sturm_r_path = private_data_path("buildings", "resid_sturm_20250915.csv")
+    # sturm_r_path = package_data_path("buildings", "debug-sturm-resid.csv")
+    sturm_r = pd.read_csv(sturm_r_path, index_col=0)
+
+    # sturm_c
+    sturm_c_path = private_data_path("buildings", "comm_sturm_20250915.csv")
+    # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
+    sturm_c = pd.read_csv(sturm_c_path, index_col=0)
+
+    # e_use
+    e_use_path = private_data_path("buildings", "e_use_20250915.csv")
+    e_use = pd.read_csv(e_use_path, index_col=0)
+    # Exclude rows with commodity 'resid_cook_non-comm'
+    e_use = e_use[e_use.commodity != 'resid_cook_non-comm']
+
+    # afofio
+    afofio_path = private_data_path("buildings", "afofio_demand_20250915.csv")
+    afofio = pd.read_csv(afofio_path, index_col=0)
+    afofio["value"] = 0
+
+    # demand
+    expr = "(cool|heat|hotwater|floor|other_uses)"
+    excl = "v_no_heat"
+    demand = pd.concat(
+        [
+            e_use[~e_use.commodity.str.contains("therm")],
+            sturm_r[
+                sturm_r.commodity.str.contains(expr)
+                & ~sturm_r.commodity.str.contains(excl)
+            ],
+            sturm_c[
+                sturm_c.commodity.str.contains(expr)
+                & ~sturm_c.commodity.str.contains(excl)
+            ],
+        ]
+    )
+
+    # Assign useful energy and demand levels
+    demand = demand.assign(
+        level=demand.commodity.apply(lambda x: "demand" if "floor" in x else "useful")
+    )
+    demand.to_csv("debug-demand.csv")
+
+    # Prepare data based on the contents of `scenario`
+    data = prepare_data(
+        scenario,
+        info,
+        demand,
+        prices,
+        sturm_r,
+        sturm_c,
+        context.buildings.with_materials,
+        relations=spec.require.set["relation"],
+        afofi_demand=afofio,
+    )
+
+    # Remove unused commodities and technologies
+    prune_spec(spec, data)
+
+    # Simple callback for apply_spec()
+    def _add_data(s, **kw):
+        return data
+
+    # FIXME check whether this works correctly on the re-solve of a scenario that has
+    #       already been set up
+    options = dict(fast=True)
+    build.apply_spec(scenario, spec, _add_data, **options)
+
+    scenario.set_as_default()
+
+    log.info(f"Built {scenario.url} and set as default")
