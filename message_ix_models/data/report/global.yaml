@@ -18,11 +18,6 @@ units:
     '-': ''
 
   apply:
-    GDP: billion USD_2005 / year
-    PRICE_COMMODITY: USD_2010 / kWa
-    # These were initially "carbon", which is not a unit.
-    # TODO check that Mt (rather than t or kt) is correct for all values.
-    PRICE_EMISSION: USD_2005 / Mt
     tax_emission: USD_2005 / Mt
     # Inconsistent units. These quantities (and others computed from them)
     # must be split apart into separate quantities with consistent units.
@@ -454,100 +449,6 @@ combine:
   - quantity: land_out::CH4_0+1
     weight: 0.025
 
-
-# Prices
-
-- key: price_carbon:n-y
-  # TODO PRICE_EMISSION has dimension "y", tax_emission has dimension
-  #      "type_year". Implement a dimension rename so that the two can be
-  #      combined in this way.
-  inputs:
-  - quantity: PRICE_EMISSION
-    select: {type_emission: [TCE], type_tec: [all]}
-  # - quantity: tax_emission
-  #   select: {type_emission: [TCE], type_tec: [all]}
-
-# Commodity price minus emission price
-# NB This is only for illustration.
-# TODO use emission factor must be used to convert the following to compatible
-#      units:
-# - PRICE_COMMODITY with (c, l) dimensions and units [currency] / [energy]
-# - 'price emission' with (e, t) dimensions and units [currency] / [mass]
-- key: price ex carbon:n-t-y-c-l-e
-  inputs:
-  - quantity: PRICE_COMMODITY:n-c-l-y
-  - quantity: price emission:n-e-t-y
-    weight: -1
-
-# TODO remove these entries once the one-step conversion is checked.
-# - The following entries subset the components of PRICE_COMMODITY used in the
-#   legacy reporting. The preferred method is to convert the entire variable to
-#   IAMC format in one step; see below in the "iamc:" section.
-# - l: [import] is sometimes included to pick up prices at the global node(s).
-# - In general, PRICE_COMMODITY has data for n=GLB and level=import OR for
-#   other nodes and l=primary or secondary—but not otherwise.
-- key: price_c:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [coal], l: [primary, import]}
-- key: price_g_w:n-y-h
-  # Only includes 11 regions; no data for c="gas" for global regions, instead
-  # c="LNG" is used. The name "LNG" is replaced later.
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [gas], l: [primary]}
-- key: price_o_w:n-y-h
-  # l="import" is used for the global region.
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [crudeoil], l: [primary, import]}
-- key: price_b_w:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [biomass], l: [primary]}
-- key: price_e_w:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [electr], l: [secondary]}
-- key: price_h_w:n-y-h
-  # For the global region: l="import", c="l2h".
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [hydrogen], l: [secondary]}
-- key: price_liq_o_w:n-y-h
-  # l="import" is used for the global region.
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [lightoil], l: [secondary, import]}
-- key: price_liq_b_w:n-y-h
-  # l="import" is used for the global region.
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [ethanol], l: [secondary, import]}
-- key: price_final_e:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [electr], l: [final]}
-- key: price_final_sol_c:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [coal], l: [final]}
-- key: price_final_sol_b:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [biomass], l: [final]}
-- key: price_final_liq_o:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [lightoil], l: [final]}
-- key: price_final_liq_b:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [ethanol], l: [final]}
-- key: price_final_gas:n-y-h
-  inputs:
-  - quantity: PRICE_COMMODITY
-    select: {c: [gas], l: [final]}
 # TODO complete or replace this
 # - key: land_out:n-s-y-h
 #   inputs:
@@ -747,12 +648,6 @@ general:
   args:
     units: 'GWa / year'
 
-- key: gdp_ppp
-  comp: product
-  inputs:
-  - GDP
-  - MERtoPPP
-
 # CH4 emissions from GLOBIOM: select only the subset
 - key: land_out:n-s-y-c-l-h:CH4_0
   comp: select
@@ -839,14 +734,6 @@ _iamc formats:
 
 
 iamc:
-- variable: GDP|MER
-  base: GDP:n-y
-  unit: billion USD_2010 / year
-
-- variable: GDP|PPP
-  base: gdp_ppp:n-y
-  unit: billion USD_2010 / year
-
 - variable: Primary Energy|Coal
   base: coal:nl-ya
   <<: *pe_iamc
@@ -973,72 +860,7 @@ iamc:
   - gwp metric
   unit: Mt / year  # Species captured in 'e equivalent'
 
-# Prices
-# Preferred method: convert all the contents of the variable at once.
-- variable: Price
-  base: PRICE_COMMODITY:n-c-l-y
-  var: [l, c]
-  <<: *price_iamc
-- variable: Price|Carbon
-  base: price_carbon:n-y
-  # This was initially "carbon_dioxide", which is not a unit.
-  # TODO check that Mt (rather than t or kt) is correct.
-  # TODO check whether there is a species / GWP conversion here.
-  unit: USD_2010 / Mt
-  rename: {y: year}
-# commented: see above
-# - variable: Price w/o carbon
-#   base: price ex carbon:n-t-y-c-e
-#   var: [t, c, l, e]
 #   rename: {y: year}
-
-# TODO ensure these are covered by the preferred method, above, and then
-#      remove these separate conversions.
-- variable: Price (legacy)|Primary Energy wo carbon price|Biomass
-  base: price_b_w:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Primary Energy wo carbon price|Coal
-  base: price_c:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Primary Energy wo carbon price|Gas
-  base: price_g_w:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Primary Energy wo carbon price|Oil
-  base: price_o_w:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Secondary Energy wo carbon price|Electricity
-  base: price_e_w:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Secondary Energy wo carbon price|Hydrogen
-  base: price_h_w:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Secondary Energy wo carbon price|Liquids|Biomass
-  base: price_liq_b_w:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Secondary Energy wo carbon price|Liquids|Oil
-  base: price_liq_o_w:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Final Energy wo carbon price|Residential|Electricity
-  base: price_final_e:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Final Energy wo carbon price|Residential|Gases|Natural Gas
-  base: price_final_gas:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Biomass
-  base: price_final_liq_b:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Oil
-  base: price_final_liq_o:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Final Energy wo carbon price|Residential|Solids|Biomass
-  base: price_final_sol_b:n-y-h
-  <<: *price_iamc
-- variable: Price (legacy)|Final Energy wo carbon price|Residential|Solids|Coal
-  base: price_final_sol_c:n-y-h
-  <<: *price_iamc
-#- variable: Price (legacy)|Agriculture|Non-Energy Crops and Livestock|Index
-#  base: price_agriculture:n-y-h
-#  rename: {y: year}
 
 report:
 - key: pe test
@@ -1050,11 +872,6 @@ report:
   - Primary Energy|Nuclear::iamc
   - Primary Energy|Solar::iamc
   - Primary Energy|Wind::iamc
-
-- key: gdp test
-  members:
-  - GDP|MER::iamc
-  - GDP|PPP::iamc
 
 - key: se test
   members:
@@ -1080,28 +897,3 @@ report:
   # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive::iamc
   # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive::iamc
 
-- key: price test
-  members:
-  - Price::iamc
-  - Price|Carbon::iamc
-  # commented: see above
-  # - Price w/o carbon::iamc
-
-  # TODO ensure these are covered by the preferred method, above, then remove
-  #      these
-  - Price (legacy)|Primary Energy wo carbon price|Biomass::iamc
-  - Price (legacy)|Primary Energy wo carbon price|Coal::iamc
-  - Price (legacy)|Primary Energy wo carbon price|Gas::iamc
-  - Price (legacy)|Primary Energy wo carbon price|Oil::iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Electricity::iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Hydrogen::iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Biomass::iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Oil::iamc
-  # NB for "Price|Secondary Energy|Liquids|Oil", the legacy reporting inserts a
-  #    zero matrix.
-  - Price (legacy)|Final Energy wo carbon price|Residential|Electricity::iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Gases|Natural Gas::iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Biomass::iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Oil::iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Biomass::iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Coal::iamc

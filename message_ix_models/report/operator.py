@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
 )
 from functools import cache, reduce
-from itertools import filterfalse, product
+from itertools import chain, filterfalse, product
 from typing import TYPE_CHECKING, Any, Literal
 
 import genno
@@ -234,6 +234,12 @@ def gwp_factors() -> "AnyQuantity":
     )
 
 
+def groups_to_selectors(groups: dict, dim: str, keys: Iterable[str], *key_args) -> dict:
+    return {
+        dim: list(chain(*[groups[dim][k] for k in sorted(set(keys) | set(key_args))]))
+    }
+
+
 def make_output_path(config: Mapping, name: "str | Path") -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
     return config["output_dir"].joinpath(name)
@@ -419,7 +425,10 @@ def select_allow_empty(
     try:
         return genno.operator.select(qty, indexers=indexers, inverse=inverse, drop=drop)
     except KeyError:
-        return genno.Quantity([], coords={d: [] for d in qty.dims})
+        # Dimensions to retain: all those of `qty` *except* those for which `indexers`
+        # contains a scalar. These dimensions would be dropped by the select() operator.
+        dims = {d for d in qty.dims if not isinstance(indexers.get(d, []), str)}
+        return type(qty)([], coords={d: [] for d in dims}, units=qty.units)
 
 
 def select_expand(
