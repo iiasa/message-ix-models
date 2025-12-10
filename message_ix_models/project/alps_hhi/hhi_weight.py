@@ -21,7 +21,7 @@ def hhi_weightsum_run(project_name: str,
                       hhi_config_name: str,
                       hhi_commodities: list[str] = None,
                       lambda_ws: float = 1,
-                      hhi_max_total: float = 1.0,
+                      hhi_max_total: float = 1,
                       hhi_scale: float = 0.002,
                       target_scen_add: str = None):
 
@@ -106,11 +106,25 @@ def hhi_weightsum_run(project_name: str,
     base_act = list()
     for k in hhi_commodities:
         base_act_k = base_scenario.var("ACT", filters = {'technology': hhi_config[k]['technologies']})
-        base_act_k = base_act_k[base_act_k['node_loc'].isin(hhi_config[k]['nodes'])]
-        base_act_k = base_act_k.groupby(['year_act'])['lvl'].sum().reset_index()
-        base_act_k = base_act_k['lvl'].max()
+        base_act_k = base_act_k[(base_act_k['technology'].str.contains('exp'))|(base_act_k['node_loc'].isin(hhi_config[k]['nodes']))]
+        base_act_k = base_act_k['lvl'].sum()
         base_act.append(base_act_k)
-    hhi_scale = round(1/np.mean(base_act), 4)
+    hhi_scale_denom = np.mean(base_act)*2
+    hhi_scale = round(1/hhi_scale_denom, 8)
+    
+    log.info("Add growth constraint to coal_gas for WEU")
+    if "weu_gas_supply" in hhi_commodities:
+        growth_up = base_scenario.par("growth_activity_up", filters = {'technology': 'coal_gas', 
+                                                                      'node_loc': 'R12_SAS'})
+        initial_up = base_scenario.par("initial_activity_up", filters = {'technology': 'coal_gas', 
+                                                                         'node_loc': 'R12_SAS'})
+        growth_up['node_loc'] = 'R12_WEU'
+        initial_up['node_loc'] = 'R12_WEU'
+        initial_up['value'] = 0.01
+
+        with hhi_scenario.transact("Add growth constraint to coal_gas for WEU"):
+            hhi_scenario.add_par("growth_activity_up", growth_up)
+            hhi_scenario.add_par("initial_activity_up", initial_up)
 
     log.info("Collating base scenario objective")
     cost_max_total = base_scenario.var("OBJ")['lvl']
