@@ -92,16 +92,19 @@ def assert_units(
 
 def configure_build(
     test_context: "Context",
-    *,
     regions: str,
     years: str,
     tmp_path: Path | None = None,
-    options=None,
+    **kwargs,
 ) -> tuple["Computer", ScenarioInfo]:
+    """:func:`.transport.build.get_computer` wrapper for testing."""
     test_context.update(regions=regions, years=years, output_path=tmp_path)
 
-    # Set defaults for some options
-    options = options or {}
+    # Set defaults for some arguments to get_computer
+    kwargs.setdefault("visualize", False)
+
+    # Set defaults for some options; use a copy of any passed arg
+    options = kwargs["options"] = kwargs.pop("options", {}).copy()
 
     # Use scenario code "SSP2"
     options.setdefault("code", _default_scenario_code())
@@ -110,7 +113,7 @@ def configure_build(
     options.setdefault("extra_modules", [])
     options["extra_modules"].append("-plot")
 
-    c = build.get_computer(test_context, visualize=False, options=options)
+    c = build.get_computer(test_context, **kwargs)
 
     return c, test_context.transport.base_model_info
 
