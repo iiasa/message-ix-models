@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 import genno
 import pandas as pd
 from genno import Computer, Key, KeyExistsError, Keys, quote
+from ixmp.report.operator import data_for_quantity
 from message_ix import Scenario
 
 from message_ix_models import Context, ScenarioInfo
@@ -275,6 +276,12 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
         "transport info",
         lambda c: c.transport.base_model_info | c.transport.spec.add,
         "context",
+    ),
+    (
+        key.demand_base,
+        partial(data_for_quantity, "par", "demand", "value"),
+        "scenario",
+        "config",
     ),
     ("dry_run", lambda c: c.core.dry_run, "context"),
     ("e::codelist", partial(get_codelist, "emission")),
