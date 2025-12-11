@@ -51,7 +51,11 @@ def gen_res_marg_demand_tec_data(
 ) -> pd.DataFrame:
     factors = read_peak_load_data()
     vals = (
-        query_elec_inp(scen).mul(factors).mul(-(1+contingency_factor)).dropna().reset_index()
+        query_elec_inp(scen)
+        .mul(factors)
+        .mul(-(1 + contingency_factor))
+        .dropna()
+        .reset_index()
     )
     rel = (
         make_df("relation_activity", **vals, relation="res_marg")
@@ -100,11 +104,8 @@ def gen_sector_tec_list() -> pd.DataFrame:
     return df
 
 
-if __name__ == "__main__":
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("local3")
-    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
-
-    gen_res_marg_demand_tec_data(scen)
+def change_res_marg(scen: "Scenario") -> None:
+    remove_elec_t_d_res_marg(scen)
+    rel = gen_res_marg_demand_tec_data(scen, 0.15)
+    with scen.transact():
+        scen.add_par("relation_activity", rel)

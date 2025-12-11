@@ -1,10 +1,10 @@
 import ixmp
 import message_ix
 
+from message_ix_models.project.digsy.quick_fixes import lower_cv_cost
 from message_ix_models.project.digsy.sensitivity import (
     adjust_electrification_constraint,
     adjust_rooftop_constraint,
-    lower_cv_cost,
 )
 
 if __name__ == "__main__":
