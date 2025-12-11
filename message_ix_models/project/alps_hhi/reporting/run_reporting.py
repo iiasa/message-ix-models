@@ -90,28 +90,14 @@ def pyam_df_from_rep(
     
     return df_out
 
-# Call reporter
-mp = ixmp.Platform()
-
-outdf = pd.DataFrame()
-for mod, scen in [('alps_hhi', 'SSP2'),
-                  #('alps_hhi', 'SSP2_FSU_frictions'),
-                  ('alps_hhi', 'SSP2_FSU_WEU_frictions'),
-                  ('alps_hhi', 'SSP2_hhi_HC'),
-                  ('alps_hhi', 'SSP2_hhi_WS_lambda100p'),
-                  ('alps_hhi', 'SSP2_hhi_WS_lambda80p'),
-                  #('alps_hhi', 'SSP2_hhi_WS_lambda70p'),
-                  #('alps_hhi', 'SSP2_hhi_WS_lambda50p'),
-                  ('alps_hhi', 'SSP_SSP2_v6.2')]:
-    scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
-    rep = Reporter.from_scenario(scenario)
-    #base_df = rep.get("message::default").data 
+# Full reporting output for gas supply
+def gas_supply_reporting(rep: Reporter, scenario: message_ix.Scenario) -> pd.DataFrame:
     supply_config = load_config('gas_supply')
     full_df = pd.DataFrame()
     for var in ['out']:
         rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
         full_df = pd.concat([full_df, rdf])
-    df = full_df.reset_index()
+    df = full_df.copy().reset_index()
     df = df.rename(columns = {0:'value'})
     df['model'] = scenario.model
     df['scenario'] = scenario.scenario
@@ -121,6 +107,7 @@ for mod, scen in [('alps_hhi', 'SSP2'),
     df['value'] = df['value'] * .03154
     df['unit'] = 'EJ/yr'
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
+    df = df.drop_duplicates()
 
     # Add HHI
     df_tot_com = df.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
@@ -142,8 +129,47 @@ for mod, scen in [('alps_hhi', 'SSP2'),
     df['supply_type'] = np.where(df['variable'].str.contains('Domestic'), 'Domestic', 'Imports')
     df['fuel_type'] = np.where(df['variable'].str.contains('LNG'), 'LNG', 'Gas')
 
-    outdf = pd.concat([outdf, df])
+    return df 
 
-outdf.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))
+# Call reporter
+mp = ixmp.Platform()
+
+gas_supply_out = pd.DataFrame()
+for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
+                  ('alps_hhi', 'SSP2'),
+                  #('alps_hhi', 'SSP2_hhi_HC_supply'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply'),
+                  #('alps_hhi', 'SSP2_FSU_WEU_frictions'),
+                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_WEU_frictions'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_WEU_frictions')
+                  ]:
+    print(f"COMPILING {mod}/{scen}")
+    print(f"--------------------------------")
+    scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
+    rep = Reporter.from_scenario(scenario)
+    
+    # Collect all gas supply reporting
+    gas_supply_df = gas_supply_reporting(rep, scenario)
+    gas_supply_out = pd.concat([gas_supply_out, gas_supply_df])
+
+gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Domestic|', '')
+gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Imports|', '')
+
+gas_supply_out.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))
+
+# Compare across scenarios
+gas_supply_out = pd.read_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))
+gas_wide = gas_supply_out[['model', 'scenario', 'region',
+                           'unit', 'year', 'variable', 'value']].drop_duplicates().copy()
+gas_wide = gas_wide.pivot_table(index = ['model', 'region', 'unit', 'year', 'variable'],
+                                columns = 'scenario',
+                                values = 'value',
+                                aggfunc = 'sum')
+gas_wide = gas_wide.reset_index()
+
+#for s in ['SSP2', 'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_HC_supply']:
+#    gas_wide[s + '_diff'] = gas_wide[s + '_FSU_WEU_frictions'] - gas_wide[s]
+
+gas_wide.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting_wide.csv'))
 
 mp.close_db()

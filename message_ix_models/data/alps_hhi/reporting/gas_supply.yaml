@@ -32,12 +32,14 @@ vars:
     short:
       coal_gas_dom
 
-# Gas Extraction
+# Aggregate gas extraction
   Gas Supply|Domestic|Gas Extraction:
     filter:
-      { technology: [gas_bal], mode: M1, commodity: gas, level: secondary }
+      { technology: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5, gas_extr_6, gas_extr_7], mode: M1, commodity: gas, level: primary }
     short:
       extr_gas_dom
+
+
 
 # Synthetic gas production from biomass
   Gas Supply|Domestic|Synthetic Gas from Biomass:
