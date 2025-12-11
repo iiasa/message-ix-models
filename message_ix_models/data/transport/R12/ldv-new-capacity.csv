@@ -23,14 +23,14 @@ R12_AFR,  PHEV_ptrp,  2025,     3.42e-05
 R12_CHN,  ELC_100,    2010,     0.000244
 R12_CHN,  ELC_100,    2015,     0.04909
 R12_CHN,  ELC_100,    2020,     0.6972
-R12_CHN,  ELC_100,    2025,     1.4576
+R12_CHN,  ELC_100,    2025,     7.0
 R12_CHN,  PHEV_bus,   2015,     0.008566
 R12_CHN,  PHEV_bus,   2020,     0.004816
 R12_CHN,  PHEV_bus,   2025,     8e-04
 R12_CHN,  PHEV_ptrp,  2010,     6.8e-05
 R12_CHN,  PHEV_ptrp,  2015,     0.017262
 R12_CHN,  PHEV_ptrp,  2020,     0.1818056
-R12_CHN,  PHEV_ptrp,  2025,     0.410332
+R12_CHN,  PHEV_ptrp,  2025,     4.0
 R12_EEU,  ELC_100,    2010,     7.8e-06
 R12_EEU,  ELC_100,    2015,     0.0008358
 R12_EEU,  ELC_100,    2020,     0.0104692
@@ -84,14 +84,14 @@ R12_SAS,  PHEV_ptrp,  2025,     1.46e-05
 R12_WEU,  ELC_100,    2010,     0.0006884
 R12_WEU,  ELC_100,    2015,     0.048377
 R12_WEU,  ELC_100,    2020,     0.3203518
-R12_WEU,  ELC_100,    2025,     0.572605
+R12_WEU,  ELC_100,    2025,     1.03
 R12_WEU,  PHEV_bus,   2015,     1.4e-06
 R12_WEU,  PHEV_bus,   2020,     0.000107
 R12_WEU,  PHEV_bus,   2025,     1.88e-05
 R12_WEU,  PHEV_ptrp,  2010,     5.8e-06
 R12_WEU,  PHEV_ptrp,  2015,     0.0336334
-R12_WEU,  PHEV_ptrp,  2020,     0.2521448
-R12_WEU,  PHEV_ptrp,  2025,     0.4020514
+R12_WEU,  PHEV_ptrp,  2020,     0.4521448
+R12_WEU,  PHEV_ptrp,  2025,     0.6220514
 # PNK: commented: there is no model region R12_XXX, so these would cause errors
 # R12_XXX,  ELC_100,    2015,     0.0007806
 # R12_XXX,  ELC_100,    2020,     0.0028742
@@ -133,7 +133,7 @@ R12_MEA,  ICE_conv,   2020,     2.569833648
 R12_NAM,  ICE_conv,   2005,     8.603419
 R12_NAM,  ICE_conv,   2010,     7.4953316
 R12_NAM,  ICE_conv,   2015,     7.9270812
-R12_NAM,  ICE_conv,   2020,     5.71890652
+R12_NAM,  ICE_conv,   2020,     17.01
 R12_PAO,  ICE_conv,   2005,     5.615403
 R12_PAO,  ICE_conv,   2010,     5.1048088
 R12_PAO,  ICE_conv,   2015,     5.2454674
