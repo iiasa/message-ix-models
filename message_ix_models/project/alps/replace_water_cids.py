@@ -198,36 +198,19 @@ def transform_seasonal_to_timeslice(
     wet_values = wet_df[ANNUAL_YEARS].values
 
     # Apply transformation per basin
+    # Both bifurc and input DataFrames are aligned by row index to basin_mapping
     for i in range(n_basins):
-        # Get basin ID (RIME uses 1-indexed BASIN_ID)
-        if "BASIN_ID" in dry_df.columns:
-            basin_id = dry_df.iloc[i]["BASIN_ID"]
-        else:
-            # Fallback: use row index + 1
-            basin_id = i + 1
+        wet_months = bifurc.iloc[i]["wet_months"]
+        dry_months = bifurc.iloc[i]["dry_months"]
 
-        # Look up bifurcation mapping for this basin
-        basin_row = bifurc[bifurc["BASIN_ID"] == basin_id]
+        T = compute_season_to_timeslice_matrix(wet_months, dry_months, timeslice_months)
 
-        if len(basin_row) == 0:
-            # Basin not in mapping - use identity (dry→h1, wet→h2)
-            h1_values[i, :] = dry_values[i, :]
-            h2_values[i, :] = wet_values[i, :]
-        else:
-            wet_months = basin_row.iloc[0]["wet_months"]
-            dry_months = basin_row.iloc[0]["dry_months"]
-
-            # Compute transformation matrix for this basin
-            T = compute_season_to_timeslice_matrix(
-                wet_months, dry_months, timeslice_months
-            )
-
-            # Apply transformation: [h1, h2] = T @ [dry, wet]
-            for j in range(n_years):
-                seasonal = np.array([dry_values[i, j], wet_values[i, j]])
-                timeslice = T @ seasonal
-                h1_values[i, j] = timeslice[0]
-                h2_values[i, j] = timeslice[1]
+        # Apply transformation: [h1, h2] = T @ [dry, wet]
+        for j in range(n_years):
+            seasonal = np.array([dry_values[i, j], wet_values[i, j]])
+            timeslice = T @ seasonal
+            h1_values[i, j] = timeslice[0]
+            h2_values[i, j] = timeslice[1]
 
     # Construct output DataFrames
     h1_df = dry_df[["BCU_name"]].copy()
