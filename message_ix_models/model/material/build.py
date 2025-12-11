@@ -92,7 +92,7 @@ def add_digsy_data(
     scenario: message_ix.Scenario, dry_run: bool = False, digsy_scenario="baseline"
 ) -> None:
     """Populate `scenario` with MESSAGEix-Materials data."""
-    from message_ix_models.project.digsy.data import (
+    from message_ix_models.project.digsy.industry import (
         adjust_mat_dem,
         apply_industry_modifiers,
         extrapolate_modifiers_past_2050,
@@ -137,16 +137,17 @@ def add_digsy_data(
 def get_resid_demands(
     context: "Context", digsy_scenario: str, scenario: message_ix.Scenario
 ) -> dict:
-    from message_ix_models.project.digsy.data import (
-        adjust_act_calib,
+    from message_ix_models.project.digsy.ict_demand import (
         adjust_rc_elec,
-        apply_industry_modifiers,
-        extrapolate_modifiers_past_2050,
         extrapolate_post_2050,
-        fe_to_ue,
-        get_industry_modifiers,
         read_ict_demand,
     )
+    from message_ix_models.project.digsy.industry import (
+        apply_industry_modifiers,
+        extrapolate_modifiers_past_2050,
+        get_industry_modifiers,
+    )
+    from message_ix_models.project.digsy.utils import adjust_act_calib, fe_to_ue
 
     resid_demands = {
         "demand": pd.concat(
