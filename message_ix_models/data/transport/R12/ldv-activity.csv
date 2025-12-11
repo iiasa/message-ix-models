@@ -25,7 +25,7 @@ scenario, node,     year, value
 
 # *,      R12_CHN,  2020,  9500  # TH low
 # *,      R12_CHN,  2110,  9500  # TH low
-*,        R12_CHN,  2020, 15000  # TH high
+*,        R12_CHN,  2020, 12000  # TH high
 *,        R12_CHN,  2110, 22000  # TH high
 # *,      R12_CHN,  2020, 16000  # Previous value
 # *,      R12_CHN,  2110, 22000  # Previous value
