@@ -1,0 +1,52 @@
+# Configuration for power plant cooling technologies
+# Extracted from water_for_ppl.py magic numbers
+
+# Cooling technology suffixes appended to parent technology names
+cooling_suffixes:
+  - __ot_fresh    # Once-through freshwater
+  - __cl_fresh    # Closed-loop freshwater
+  - __air         # Air cooling (dry)
+  - __ot_saline   # Once-through saline/seawater
+
+# Default input efficiency values for technologies missing from scenario
+# Used when parent technology has no input parameter defined
+# Format: technology_substring -> 1/efficiency
+missing_tech_efficiencies:
+  geo_hpl: 1.176       # 1/0.850
+  geo_ppl: 2.597       # 1/0.385
+  gas_hpl: 3.333       # 1/0.3
+  foil_hpl: 4.0        # 1/0.25
+  nuc_hc: 3.067        # 1/0.326
+  nuc_lc: 3.067        # 1/0.326
+  solar_th_ppl: 2.597  # 1/0.385
+  csp_sm1_res: 2.597   # 1/0.385
+  csp_sm3_res: 2.597   # 1/0.385
+
+# Thermodynamic parameters
+flue_gas_loss_fraction: 0.1  # 10% heat loss to flue gases (non-heat-plant technologies)
+
+# Technical parameters
+technical_lifetime_years: 30
+min_vintage_year: 1990
+
+# Flexibility factors for constraints
+share_flexibility_factor: 1.05      # Multiplier on regional cooling shares
+min_share_value: 0.0001             # Minimum share to avoid zero
+capacity_flexibility_factor: 1.2    # Multiplier on historical capacity
+
+# Bounds
+default_saline_bound: 10000.0  # MCM fallback when no historical saline activity
+
+# Share constraint parameters
+share_constraint_start_year: 2050
+
+# Technologies to exclude from cost projections (no cooling variants needed)
+excluded_cooling_techs:
+  - mw_ppl
+  - nuc_fbr
+  - nuc_htemp
+
+# Unit conversion: m3/GJ to MCM/GWa
+# 1 GWa = 31.536e6 GJ, 1 MCM = 1e6 m3
+# Factor = 31.536e6 / 1e6 = 31.536
+m3_gj_to_mcm_gwa: 31.536
