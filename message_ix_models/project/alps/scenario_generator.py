@@ -434,7 +434,8 @@ def generate_all(
     log.info("=" * 60)
     log.info(f"Platform: {platform_name}")
     log.info(f"CID type: {cid_type}")
-    log.info(f"Starter: {config['starter']['model']}/{config['starter']['scenario']}")
+    starter_info = config["starter"].get("scenario_template", config["starter"].get("scenario", ""))
+    log.info(f"Starter: {config['starter']['model']}/{starter_info}")
     log.info(f"Budget filter: {budget_filter or 'all'}")
     log.info(f"Temporal filter: {temporal_filter}")
     log.info(f"Mode: {'DRY RUN' if dry_run else 'GENERATE'}")
@@ -505,10 +506,15 @@ def generate_all(
     created = []
     for spec in scenarios_to_generate:
         try:
+            # Support templated starter scenario (e.g., "cooling_{budget}")
+            starter_scen = config["starter"].get(
+                "scenario_template", config["starter"].get("scenario", "")
+            ).format(budget=spec["budget"])
+
             scen = generate_scenario(
                 mp=mp,
                 starter_model=config["starter"]["model"],
-                starter_scenario=config["starter"]["scenario"],
+                starter_scenario=starter_scen,
                 output_model=config["output"]["model"],
                 output_scenario=spec["output_scenario"],
                 magicc_file=spec["magicc_file"],

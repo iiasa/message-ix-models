@@ -1,0 +1,42 @@
+# CID Scenario Generation Configuration - Combined Cooling + Buildings
+# Applies building energy demand CIDs to existing cooling scenarios
+# Chain: baseline -> cooling_{budget} -> cooling_buildings_{budget}
+
+platform_info:
+  name: ixmp_dev
+  jvmargs: "-Xmx16G"
+
+starter:
+  model: SSP_SSP2_v6.5_CID
+  # Template: starter scenario varies by budget
+  scenario_template: "cooling_{budget}"
+
+output:
+  model: SSP_SSP2_v6.5_CID
+  scenario_template: "cooling_buildings_{budget}"
+
+cid_type: buildings
+
+rime:
+  n_runs: 100
+  coeff_scenario: S1
+  variables:
+    - EI_cool
+    - EI_heat
+
+# Budgets: intersection of existing cooling and buildings scenarios
+# Cooling has: 850f, 1100f, 1350f, 1850f, 2100f, 2350f, no_climate
+# Buildings has: 1100f, 1350f, 1850f, 2100f, 2350f
+# Combined: 1100f, 1350f, 1850f, 2100f, 2350f
+
+scenarios:
+  - budget: 1100f
+    temporal: [annual]
+  - budget: 1350f
+    temporal: [annual]
+  - budget: 1850f
+    temporal: [annual]
+  - budget: 2100f
+    temporal: [annual]
+  - budget: 2350f
+    temporal: [annual]
