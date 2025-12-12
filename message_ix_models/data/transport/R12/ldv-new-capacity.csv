@@ -21,9 +21,9 @@ R12_AFR,  PHEV_ptrp,  2015,     2.42e-05
 R12_AFR,  PHEV_ptrp,  2020,     0.0001428
 R12_AFR,  PHEV_ptrp,  2025,     3.42e-05
 R12_CHN,  ELC_100,    2010,     0.000244
-R12_CHN,  ELC_100,    2015,     0.04909
-R12_CHN,  ELC_100,    2020,     0.6972
-R12_CHN,  ELC_100,    2025,     7.0
+R12_CHN,  ELC_100,    2015,     0.4909
+R12_CHN,  ELC_100,    2020,     1.6972
+R12_CHN,  ELC_100,    2025,     6.2
 R12_CHN,  PHEV_bus,   2015,     0.008566
 R12_CHN,  PHEV_bus,   2020,     0.004816
 R12_CHN,  PHEV_bus,   2025,     8e-04
