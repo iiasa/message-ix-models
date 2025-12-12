@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Mapping
-from typing import Any
 from functools import partial
+from typing import Any
 
 import message_ix
 import pandas as pd
@@ -137,37 +137,23 @@ def add_digsy_data(
 def get_resid_demands(
     context: "Context", digsy_scenario: str, scenario: message_ix.Scenario
 ) -> dict:
-    from message_ix_models.project.digsy.ict_demand import (
-        adjust_rc_elec,
-        extrapolate_post_2050,
-        read_ict_demand,
-    )
     from message_ix_models.project.digsy.industry import (
         apply_industry_modifiers,
         extrapolate_modifiers_past_2050,
         get_industry_modifiers,
     )
-    from message_ix_models.project.digsy.utils import adjust_act_calib, fe_to_ue
 
     resid_demands = {
         "demand": pd.concat(
             gen_other_ind_demands(get_ssp_from_context(context)).values()
         )
     }
-
     if digsy_scenario != "baseline":
         mods = extrapolate_modifiers_past_2050(
             get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario)
         )
         resid_demands = apply_industry_modifiers(mods, resid_demands)
-
-    ict_demand = read_ict_demand(digsy_scenario, get_ssp_from_context(context))
-    ict_demand = extrapolate_post_2050(ict_demand, scenario)
-    ict_demand_ue = fe_to_ue(ict_demand, scenario)
-    rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
-    adjust_act_calib(ict_demand_ue, scenario)
-
-    merge_data(resid_demands, {"demand": ict_demand}, {"demand": rc_demand_adjusted})
+    merge_data(resid_demands)
     return resid_demands
 
 
@@ -203,12 +189,6 @@ def build(
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
-    from message_ix_models.project.digsy.data import add_ict_elec_tecs
-
-    ict_io = add_ict_elec_tecs(ScenarioInfo(scenario))
-    for k, v in ict_io.items():
-        with scenario.transact():
-            scenario.add_par(k, v)
 
     resid_demands = get_resid_demands(context, digsy_scenario, scenario)
     if old_calib:

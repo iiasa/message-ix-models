@@ -6,7 +6,12 @@ import pint_pandas  # noqa: F401
 from message_ix.util import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.project.digsy.utils import DIGSY_SCENS
+from message_ix_models.model.material.util import get_ssp_from_context
+from message_ix_models.project.digsy.utils import (
+    DIGSY_SCENS,
+    adjust_act_calib,
+    fe_to_ue,
+)
 from message_ix_models.types import ParameterData
 from message_ix_models.util import (
     broadcast,
@@ -19,8 +24,54 @@ from message_ix_models.util import (
 
 
 def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3) -> pd.DataFrame:
-    read = {1: read_ict_v1, 2: read_ict_v2, 3: read_ict_v3}
-    return read[version](scenario, ssp)
+    read = {1: read_ict_v1, 2: read_ict_v2, 3: read_ict_v3, "prisma": read_ict_v3}
+    if version == 3:
+        scen_map = {
+            "BESTEST": {
+                "Data centre": "DC lower Bound (TWh)",
+                "Telecom Network": "BESTEST ICT (TWh)",
+            },
+            "BEST": {
+                "Data centre": "DC lower Bound (TWh)",
+                "Telecom Network": "BEST ICT (TWh)",
+            },
+            "baseline": {
+                "Data centre": "DC Central Estimate (TWh)",
+                "Telecom Network": "Central Estimate (TWh)",
+            },
+            "WORST": {
+                "Data centre": "DC Upper Bound (TWh)",
+                "Telecom Network": "WORST ICT (TWh)",
+            },
+            "WORSTEST": {
+                "Data centre": "DC Upper Bound (TWh)",
+                "Telecom Network": "WORSTEST ICT  (TWh)",
+            },
+        }
+        dc_scen = scen_map[scenario]["Data centre"]
+        tele_scen = scen_map[scenario]["Telecom Network"]
+        df = read[version](dc_scen, tele_scen, ssp)
+    elif version == "prisma":
+        scen_map = {
+            "Low": {
+                "Data centre": "DC lower Bound (TWh)",
+                "Telecom Network": "BESTEST ICT (TWh)",
+            },
+            "Medium": {
+                "Data centre": "DC Central Estimate (TWh)",
+                "Telecom Network": "Central Estimate (TWh)",
+            },
+            "High": {
+                "Data centre": "DC Upper Bound (TWh)",
+                "Telecom Network": "WORSTEST ICT  (TWh)",
+            },
+        }
+        dc_scen = scen_map[scenario]["Data centre"]
+        tele_scen = scen_map[scenario]["Telecom Network"]
+        df = read[version](dc_scen, tele_scen, ssp)
+    else:
+        df = read[version](scenario, ssp)
+    return df
 
 
 def read_ict_v1(scenario: DIGSY_SCENS, ssp):
@@ -129,48 +180,27 @@ def read_ict_v2(
     return df
 
 
-def read_ict_v3(digsy_scenario: DIGSY_SCENS, ssp="SSP2") -> pd.DataFrame:
+def read_ict_v3(dc_scen, tele_scen, ssp="SSP2") -> pd.DataFrame:
     path = private_data_path(
         "projects", "digsy", "R12 Clean MESSAGE version_Finalised.xlsx"
     )
-    scen_map = {
-        "BESTEST": {
-            "Data centre": "DC lower Bound (TWh)",
-            "Telecom Network": "BESTEST ICT (TWh)",
-        },
-        "BEST": {
-            "Data centre": "DC lower Bound (TWh)",
-            "Telecom Network": "BEST ICT (TWh)",
-        },
-        "baseline": {
-            "Data centre": "DC Central Estimate (TWh)",
-            "Telecom Network": "Central Estimate (TWh)",
-        },
-        "WORST": {
-            "Data centre": "DC Upper Bound (TWh)",
-            "Telecom Network": "WORST ICT (TWh)",
-        },
-        "WORSTEST": {
-            "Data centre": "DC Upper Bound (TWh)",
-            "Telecom Network": "WORSTEST ICT  (TWh)",
-        },
-    }
-    comm_map = {"Data centre": "data_centre_elec", "Telecom Network": "tele_comm_elec"}
+    comm_map = {dc_scen: "data_centre_elec", tele_scen: "tele_comm_elec"}
     df = pd.read_excel(path, sheet_name="Option 1")
-    for cols in scen_map.values():
-        df[cols["Telecom Network"]] = (
-            df[cols["Telecom Network"]] - df[cols["Data centre"]]
-        )
+    df[tele_scen] = df[tele_scen] - df[dc_scen]
     df = df.melt(
         id_vars=["Region", "Year", "Scenario"], var_name="Variable", value_name="Value"
     )
     df = df[df["Scenario"].isin(["IEA (Base)", ssp])].drop(columns=["Scenario"])
     df = df[
-        ((df["Variable"].isin(scen_map["baseline"].values())) & (df["Year"] < 2030))
-        | (
-            (df["Variable"].isin(scen_map[digsy_scenario].values()))
-            & (df["Year"] >= 2030)
+        (
+            (
+                df["Variable"].isin(
+                    ["DC Central Estimate (TWh)", "Central Estimate (TWh)"]
+                )
+            )
+            & (df["Year"] < 2030)
         )
+        | ((df["Variable"].isin([dc_scen, tele_scen])) & (df["Year"] >= 2030))
     ]
     df.set_index(["Region", "Year", "Variable"], inplace=True)
     df = make_df(
@@ -192,11 +222,7 @@ def read_ict_v3(digsy_scenario: DIGSY_SCENS, ssp="SSP2") -> pd.DataFrame:
         level="demand",
         time="year",
     )
-    comm_map_final = {scen_map[digsy_scenario][k]: comm_map[k] for k in comm_map.keys()}
-    comm_map_final.update(
-        {scen_map["baseline"][k]: comm_map[k] for k in comm_map.keys()}
-    )
-    df["commodity"] = df["commodity"].map(comm_map_final)
+    df["commodity"] = df["commodity"].map(comm_map)
     return df
 
 
@@ -286,3 +312,14 @@ def read_rc_elec(
         )
         rc_elec["node"] = "R12_" + rc_elec["node"]
     return rc_elec
+
+
+def gen_ict_demands(context, scenario, ict_scenario, ict_version) -> pd.DataFrame:
+    ict_demand = read_ict_demand(
+        ict_scenario, get_ssp_from_context(context), ict_version
+    )
+    ict_demand = extrapolate_post_2050(ict_demand, scenario)
+    ict_demand_ue = fe_to_ue(ict_demand, scenario)
+    rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
+    adjust_act_calib(ict_demand_ue, scenario)
+    return pd.concat([ict_demand, rc_demand_adjusted])
