@@ -174,7 +174,7 @@ class Config(ConfigHelper):
     #:
     #: - :py:`"A"`: use data from :file:`ldv-new-capacity.csv`, if it exists.
     #: - :py:`"B"`: use func:`.ldv.stock`; see the function documentation.
-    ldv_stock_method: Literal["A", "B"] = "A"
+    ldv_stock_method: Literal["A", "B"] = "B"
 
     #: Tuples of (node, technology (transport mode), commodity) for which minimum
     #: activity should be enforced. See :func:`.non_ldv.bound_activity_lo`.
