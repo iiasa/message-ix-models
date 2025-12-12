@@ -6,12 +6,13 @@ from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pytest
+from genno import ComputationError
 from packaging.version import Version as V
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.transport import CL_SCENARIO, Config, build, key
-from message_ix_models.model.transport.report import configure_legacy_reporting
+from message_ix_models.model.transport.report import configure_legacy_reporting, multi
 from message_ix_models.model.transport.testing import (
     MARK,
     built_transport,
@@ -181,6 +182,13 @@ def test_bare(
 
     # Reporting `key` succeeds
     rep.get(key1)
+
+
+@build.get_computer.minimum_version
+def test_multi(test_context: "Context") -> None:
+    # TODO Add a fixture with example data that can be reported
+    with pytest.raises(ComputationError):
+        multi(test_context, [])
 
 
 @build.get_computer.minimum_version
