@@ -13,12 +13,12 @@ from message_ix import Reporter, Scenario
 
 import message_ix_models.report
 from message_ix_models import ScenarioInfo, testing
-from message_ix_models.model.transport.config import get_cl_scenario
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.testing import GHA, SOLVE_OPTIONS, bare_res
 from message_ix_models.util import silence_log
 
-from . import Config, build
+from . import build
+from .config import CL_SCENARIO, Config
 
 if TYPE_CHECKING:
     import pandas
@@ -92,16 +92,19 @@ def assert_units(
 
 def configure_build(
     test_context: "Context",
-    *,
     regions: str,
     years: str,
     tmp_path: Path | None = None,
-    options=None,
+    **kwargs,
 ) -> tuple["Computer", ScenarioInfo]:
+    """:func:`.transport.build.get_computer` wrapper for testing."""
     test_context.update(regions=regions, years=years, output_path=tmp_path)
 
-    # Set defaults for some options
-    options = options or {}
+    # Set defaults for some arguments to get_computer
+    kwargs.setdefault("visualize", False)
+
+    # Set defaults for some options; use a copy of any passed arg
+    options = kwargs["options"] = kwargs.pop("options", {}).copy()
 
     # Use scenario code "SSP2"
     options.setdefault("code", _default_scenario_code())
@@ -110,7 +113,7 @@ def configure_build(
     options.setdefault("extra_modules", [])
     options["extra_modules"].append("-plot")
 
-    c = build.get_computer(test_context, visualize=False, options=options)
+    c = build.get_computer(test_context, **kwargs)
 
     return c, test_context.transport.base_model_info
 
@@ -181,7 +184,7 @@ def built_transport(
 @cache
 def _default_scenario_code() -> "Code":
     """Return a default scenario code for :meth:`.configure_build`."""
-    return get_cl_scenario()["SSP2"]
+    return CL_SCENARIO.get()["SSP2"]
 
 
 def simulated_solution(

@@ -1,8 +1,22 @@
 import sys
 from importlib.metadata import PackageNotFoundError, version
+from warnings import filterwarnings
 
 import iam_units
 import pint
+
+# This warning is raised because of import message_ix_models.util → import message_ix →
+# import ixmp._config → import ixmp4 → [unclear]. Although recent ixmp and message_ix
+# install the same filter, message_ix_models may be used with older versions of these
+# packages, so for redundancy it is also installed here.
+
+filterwarnings(
+    "ignore",
+    "Core Pydantic V1 functionality isn't compatible with Python 3.14",
+    UserWarning,
+    "fastapi.*",
+)
+# ruff: noqa: E402
 
 from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.config import Config

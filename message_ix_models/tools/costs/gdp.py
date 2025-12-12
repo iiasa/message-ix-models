@@ -3,7 +3,6 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-from genno import KeySeq
 
 from message_ix_models import Context
 
@@ -82,13 +81,13 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
     # Concatenate single-scenario data
     k_pop = Key("pop", dims)
     c.add(k_pop, "concat", *keys["pop"])
-    k_gdp = KeySeq("gdp", dims)
-    c.add(k_gdp.base, "concat", *keys["gdp"])
+    k_gdp = Key("gdp", dims)
+    c.add(k_gdp, "concat", *keys["gdp"])
 
     # Further calculations
 
     # GDP per capita
-    c.add(k_gdp["cap"], "div", k_gdp.base, k_pop)
+    c.add(k_gdp["cap"], "div", k_gdp, k_pop)
 
     # Ratio to reference region value
     c.add(
@@ -114,7 +113,7 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
         )
 
     k_result = "data::pandas"
-    c.add(k_result, merge, k_pop, k_gdp.base, k_gdp["cap"], k_gdp["indexed"])
+    c.add(k_result, merge, k_pop, k_gdp, k_gdp["cap"], k_gdp["indexed"])
 
     # log.debug(c.describe(k_result))  # DEBUG Show what would be done
     result = c.get(k_result)
