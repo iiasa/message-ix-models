@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal
 import genno
 import ixmp
 import pytest
+from message_ix.testing import make_dantzig
 from pytest import mark, param
 
 from message_ix_models import Context
@@ -206,6 +207,21 @@ def test_debug(
 
     result.assert_all_passed()
     del tmp
+
+
+def test_debug_multi(test_mp: ixmp.Platform, test_context: Context) -> None:
+    if type(test_mp._backend).__name__ != "JDBCBackend":
+        pytest.skip()
+
+    # Fixture: directories required to run the function
+    # TODO Expand with data files usable to generate plots
+    base_dir = test_context.get_local_path("transport")
+    base_dir.joinpath("debug-ICONICS_...").mkdir(parents=True, exist_ok=True)
+
+    s = make_dantzig(test_mp)
+
+    with pytest.raises(genno.ComputationError):
+        build.debug_multi(test_context, s)  # type: ignore [arg-type]
 
 
 @pytest.mark.ece_db
