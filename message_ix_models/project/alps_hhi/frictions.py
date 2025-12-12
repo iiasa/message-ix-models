@@ -66,18 +66,7 @@ def friction_dictionary(sensitivity_scenario: str):
               unit = '-')
 
         bound_out = pd.concat([bound_out, bounddf])
-        #base_inv_cost = pd.read_csv(os.path.join(data_path, tec, "edit_files", "inv_cost.csv"))
-        #base_inv_cost = base_inv_cost[base_inv_cost['node_loc'].isin(sens_i)]
-        #base_inv_cost = base_inv_cost[base_inv_cost['technology'].isin(tec_list)]
-
-        #base_inv_cost['value'] = 100
-
-        #base_inv_cost.to_csv(os.path.join(data_path, tec, "bare_files", "inv_cost.csv"), index=False)
-    
-    #trade_dict_sens = bare_to_scenario(project_name = 'alps_hhi', 
-    #                                   config_name = 'config.yaml',
-    #                                   p_drive_access = False)
-    
+        
     return bound_out
 
 def run_friction_scenario(base_scenario_name: str,
@@ -113,6 +102,6 @@ def run_friction_scenario(base_scenario_name: str,
     else:
         target_scenario.solve(quiet = False)
 
-for alps_base in ['SSP2', 'SSP2_hhi_HC', 'SSP2_hhi_WS_l80p']:
-    run_friction_scenario(alps_base, 'FSU_WEU_frictions')
+for alps_base in ['SSP2', 'SSP2_hhi_HC_supply', 'SSP2_hhi_HC_imports', 'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_WS_l90p_imports']:
+    run_friction_scenario(alps_base, 'FSU_EUR_frictions')
 

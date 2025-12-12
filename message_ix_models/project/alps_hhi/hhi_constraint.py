@@ -19,6 +19,7 @@ def hhi_constraint_run(project_name: str,
                        base_model: str,
                        base_scenario: str,
                        hhi_config_name: str,
+                       target_scenario_add: str = None,
                        hhi_commodities: list | None = None):
     """Run HHI constraint"""
     """
@@ -46,7 +47,9 @@ def hhi_constraint_run(project_name: str,
 
     target_model_name = 'alps_hhi'
     target_scen_name = base_scenario + '_hhi_HC'
-
+    if target_scenario_add is not None:
+        target_scen_name = target_scen_name + '_' + target_scenario_add
+        
     log.info(f"Base scenario: {base_model}/{base_scenario}")
     log.info(f"Target scenario: {target_model_name}/{target_scen_name}")
 
@@ -76,7 +79,34 @@ def hhi_constraint_run(project_name: str,
 
     with hhi_scenario.transact(f"Add HHI pseudo output"):
         hhi_scenario.add_par('output', hhi_output)
-     
+
+    log.info("Add growth constraint to coal_gas for WEU")
+    if "weu_gas_supply" in hhi_commodities:
+        growth_up = base_scenario.par("growth_activity_up", filters = {'technology': 'coal_gas', 
+                                                                      'node_loc': 'R12_SAS'})
+        initial_up = base_scenario.par("initial_activity_up", filters = {'technology': 'coal_gas', 
+                                                                         'node_loc': 'R12_SAS'})
+        growth_up['node_loc'] = 'R12_WEU'
+        initial_up['node_loc'] = 'R12_WEU'
+        initial_up['value'] = 0.01
+
+        with hhi_scenario.transact("Add growth constraint to coal_gas for WEU"):
+            hhi_scenario.add_par("growth_activity_up", growth_up)
+            hhi_scenario.add_par("initial_activity_up", initial_up)
+    
+    log.info("Aggregate technology for gas extraction")
+    if "weu_gas_supply" in hhi_commodities:
+        tec_aggregation(scenario = hhi_scenario,
+                        tec_list_base = ["gas_extr_1", "gas_extr_2", "gas_extr_3", "gas_extr_4",
+                                         "gas_extr_5", "gas_extr_6", "gas_extr_7"],
+                        output_commodity_base = "gas",
+                        output_level_base = "primary",
+                        output_commodity0 = "gas",
+                        output_level0 = "extraction",
+                        output_technology = "gas_extr_agg",
+                        output_commodity1 = "gas",
+                        output_level1 = "primary")
+            
     log.info(f"Adding HHI limit")
     hhi_limit_df = hhi_output[['node_loc', 'commodity',
                                'level', 'year_act',

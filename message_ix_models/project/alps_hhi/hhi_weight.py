@@ -5,7 +5,6 @@ HHI with weighted sum
 # Import packages
 from typing import Any
 
-
 import numpy as np
 import pandas as pd
 import ixmp
@@ -13,7 +12,9 @@ import ixmp
 import message_ix
 
 from message_ix_models.tools.bilateralize.utils import load_config, get_logger
+from message_ix_models.project.alps_hhi.aggregate_tec import tec_aggregation
 
+        
 def hhi_weightsum_run(project_name: str, 
                       config_name: str,
                       base_model: str,
@@ -106,10 +107,10 @@ def hhi_weightsum_run(project_name: str,
     base_act = list()
     for k in hhi_commodities:
         base_act_k = base_scenario.var("ACT", filters = {'technology': hhi_config[k]['technologies']})
-        base_act_k = base_act_k[(base_act_k['technology'].str.contains('exp'))|(base_act_k['node_loc'].isin(hhi_config[k]['nodes']))]
+        #base_act_k = base_act_k[(base_act_k['technology'].str.contains('exp'))|(base_act_k['node_loc'].isin(hhi_config[k]['nodes']))]
         base_act_k = base_act_k['lvl'].sum()
         base_act.append(base_act_k)
-    hhi_scale_denom = np.mean(base_act)*2
+    hhi_scale_denom = np.mean(base_act)*10
     hhi_scale = round(1/hhi_scale_denom, 8)
     
     log.info("Add growth constraint to coal_gas for WEU")
@@ -126,6 +127,19 @@ def hhi_weightsum_run(project_name: str,
             hhi_scenario.add_par("growth_activity_up", growth_up)
             hhi_scenario.add_par("initial_activity_up", initial_up)
 
+    log.info("Aggregate technology for gas extraction")
+    if "weu_gas_supply" in hhi_commodities:
+        tec_aggregation(scenario = hhi_scenario,
+                        tec_list_base = ["gas_extr_1", "gas_extr_2", "gas_extr_3", "gas_extr_4",
+                                         "gas_extr_5", "gas_extr_6", "gas_extr_7"],
+                        output_commodity_base = "gas",
+                        output_level_base = "primary",
+                        output_commodity0 = "gas",
+                        output_level0 = "extraction",
+                        output_technology = "gas_extr_agg",
+                        output_commodity1 = "gas",
+                        output_level1 = "primary")
+        
     log.info("Collating base scenario objective")
     cost_max_total = base_scenario.var("OBJ")['lvl']
 

@@ -33,7 +33,8 @@ prepare_edit_files(project_name = 'alps_hhi',
 
 # Add constraints to the dictionary
 constraint_pars = ["initial_activity_lo", "initial_activity_up",
-                   "growth_activity_lo", "growth_activity_up"]
+                   "growth_activity_lo", "growth_activity_up",
+                   "soft_activity_lo", "soft_activity_up"]
 for tec in config['constraint_values'].keys():
     for par in constraint_pars:
         df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
