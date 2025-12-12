@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 
 ixmp.config.register("no message_data", bool, False)
 ixmp.config.register("message local data", Path, Path.cwd())
+ixmp.config.register("slurm remote args", str, "ssh\0MISSING.iiasa.ac.at")
 
 
 def _cache_path_factory() -> Path:
@@ -244,6 +245,11 @@ class Config:
     #: Flag for causing verbose output to logs or stdout. Different modules will respect
     #: :attr:`verbose` in distinct ways.
     verbose: bool = False
+
+    def __post_init__(self):
+        from . import cache
+
+        cache.COMPUTER.graph["config"]["cache_path"] = self._cache_path
 
     def __deepcopy__(self, memo):
         # Hide "_mp" from the copy

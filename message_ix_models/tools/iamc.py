@@ -290,7 +290,7 @@ def iamc_like_data_for_query(
 def to_quantity(
     data: "pd.DataFrame",
     *,
-    query: str,
+    query: str | None = None,
     drop: list[str] | None = None,
     non_iso_3166: Literal["keep", "discard"] = "discard",
     replace: dict | None = None,
@@ -349,10 +349,13 @@ def to_quantity(
         set(["MODEL", "SCENARIO", "VARIABLE", "UNIT"]) - set(unique.split())
     )
 
+    def _maybe_query(df: pd.DataFrame, *, query: str | None) -> pd.DataFrame:
+        return df if query is None else df.query(query)
+
     unique_values: dict[str, Any] = dict()
     tmp = (
         data.drop(columns=drop or [])
-        .query(query)
+        .pipe(_maybe_query, query=query)
         .replace(replace or {})
         .dropna(how="all", axis=1)
         .rename(columns=lambda c: c.upper())

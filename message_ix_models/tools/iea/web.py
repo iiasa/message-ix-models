@@ -11,7 +11,6 @@ import genno
 import pandas as pd
 from genno import Key
 from genno.operator import concat
-from platformdirs import user_cache_path
 
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource, register_source
@@ -340,9 +339,11 @@ def iea_web_data_for_query(
         path = base_path.joinpath(filename)
 
         if path.suffix == ".zip":
-            path, *_ = extract_if_newer(
-                path, target_dir=user_cache_path("message-ix-models").joinpath("iea")
-            )
+            # Identify the same path used by the @cached decorator
+            from message_ix_models.util import cache
+
+            target_dir = cache.COMPUTER.graph["config"]["cache_path"].joinpath("iea")
+            path, *_ = extract_if_newer(path, target_dir=target_dir)
 
         if path.suffix == ".TXT":  # pragma: no cover
             names_to_read.append(fwf_to_csv(path, progress=True))

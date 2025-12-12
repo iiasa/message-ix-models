@@ -4,7 +4,7 @@ Most code appearing here **should** be migrated upstream, to genno itself.
 """
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -86,6 +86,16 @@ class Collector:
         c.graph[self._target] = c.graph[self._target] + (key,)
 
         return key
+
+
+def append(c: "Computer", key: "KeyLike", *items: Any) -> None:
+    match c.graph[key]:
+        case list():
+            c.graph[key] += list(items)
+        case tuple():
+            c.graph[key] += items
+        case _:  # pragma: no cover
+            raise TypeError(type(c.graph[key]))
 
 
 def update_computer(a: "Computer", b: "Computer") -> None:

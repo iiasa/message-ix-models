@@ -32,7 +32,7 @@ def prepare_computer(c: "Computer") -> None:
     # Merge parameter data
     c[TARGET] = "merge_data", *keys
 
-    log.warning("Disabled: add {__name__} data")
+    log.warning(f"Disabled: add {__name__} data")
     return
 
     # Connect `TARGET` to the "add transport data" key

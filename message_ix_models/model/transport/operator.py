@@ -12,7 +12,7 @@ import genno
 import numpy as np
 import pandas as pd
 import xarray as xr
-from genno import Computer, KeySeq, Operator, quote
+from genno import Computer, Key, Operator, quote
 from genno.operator import apply_units, as_quantity, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from scipy import integrate
@@ -355,9 +355,9 @@ def distance_nonldv(context: "Context") -> "AnyQuantity":
     source_kw = dict(measure="Vehicle use", aggregate=True)
     keys = exo_data.prepare_computer(context, c, "IEA EEI", source_kw)
 
-    ks = KeySeq(keys[0])
+    ks = Key(keys[0])
 
-    c.add(ks[0], "select", ks.base, indexers={"SECTOR": "transport"}, drop=True)
+    c.add(ks[0], "select", ks, indexers={"SECTOR": "transport"}, drop=True)
     c.add(ks[1], "rename", ks[0], quote({"Mode/vehicle type": "t"}))
     # Replace IEA EEI technology codes with MESSAGEix-Transport ones
     c.add(ks[2], "relabel", ks[1], labels=dict(t=EEI_TECH_MAP))

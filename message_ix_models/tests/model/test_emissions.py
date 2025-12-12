@@ -39,6 +39,8 @@ class TestPRICE_EMISSION:
     def test_add_tasks(
         self, request, test_context, source_kw, shape, method, regions="R12"
     ) -> None:
+        test_context.get_platform().add_unit("USD / t", "")
+
         test_context.model.regions = regions
 
         source_kw.update(
