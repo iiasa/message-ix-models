@@ -308,10 +308,11 @@ def load_config(context: Context) -> None:
         s.add.set["commodity"].append(new)
 
     # Generate technologies that replace corresponding *_rc|RC in the base model
-    expr = re.compile("_(rc|RC)$")
+    # Match both _RC/_rc at end and _RC_RT/_rc_RT patterns
+    expr = re.compile("_(rc|RC)(_RT)?$")
 
     # Technologies that should not be transformed to afofi
-    exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
+    exclude_techs = {}
 
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
         # Skip technologies that should not be transformed
@@ -320,7 +321,14 @@ def load_config(context: Context) -> None:
 
         # Generate a new Code object, preserving annotations
         new = deepcopy(t)
-        new.id = expr.sub("_afofi", t.id)
+        # Replace _RC or _rc with _afofi, preserving _RT suffix if present
+        # e.g., sp_el_RC_RT -> sp_el_afofi_RT, loil_rc -> loil_afofi
+        if t.id.endswith("_RT"):
+            # Replace _RC_RT or _rc_RT with _afofi_RT
+            new.id = re.sub("_(rc|RC)_RT$", "_afofi_RT", t.id)
+        else:
+            # Replace _RC or _rc at end with _afofi
+            new.id = re.sub("_(rc|RC)$", "_afofi", t.id)
         new.annotations.append(Annotation(id="derived-from", text=t.id))
 
         # This will be added
@@ -525,11 +533,27 @@ def prepare_data(
 
         # Mapping from source to generated names for scale_and_replace
         # Exclude technologies that should not be transformed to afofi
-        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
+        exclude_techs = {}
+        
+        def transform_tech_name(tech_name: str) -> str:
+            """Transform RC technology name to AFOFI version.
+            
+            Examples:
+            - sp_el_RC_RT -> sp_el_afofi_RT
+            - loil_rc -> loil_afofi
+            - sp_el_RC -> sp_el_afofi
+            """
+            if tech_name.endswith("_RT"):
+                # Handle _RC_RT or _rc_RT -> _afofi_RT
+                return re.sub("_(rc|RC)_RT$", "_afofi_RT", tech_name)
+            else:
+                # Handle _RC or _rc at end -> _afofi
+                return re.sub("_(rc|RC)$", "_afofi", tech_name)
+        
         replace = {
             "commodity": c_map,
             "technology": {
-                t: re.sub("(rc|RC)", "afofi", t)
+                t: transform_tech_name(t)
                 for t in rc_techs
                 if t not in exclude_techs
             },
@@ -568,7 +592,8 @@ def prepare_data(
             # Convert back to a MESSAGE data frame
             dims = dict(commodity="c", node="n", level="l", year="y", time="h")
             # TODO Remove typing exclusion once message_ix is updated for genno 1.25
-            result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
+            demand_df = as_message_df(tmp, "demand", dims, {})  # type: ignore [arg-type]
+            result.update(demand_df)
 
         # Copy technology parameter values from rc_spec and rc_therm to new afofi.
         # Again, once rc_(spec|therm) are stripped, .par() returns nothing here, so
@@ -581,11 +606,27 @@ def prepare_data(
 
         # Mapping from source to generated names for scale_and_replace
         # Exclude technologies that should not be transformed to afofi
-        exclude_techs = {"sp_el_RC", "sp_el_RC_RT"}
+        exclude_techs = {}
+        
+        def transform_tech_name(tech_name: str) -> str:
+            """Transform RC technology name to AFOFI version.
+            
+            Examples:
+            - sp_el_RC_RT -> sp_el_afofi_RT
+            - loil_rc -> loil_afofi
+            - sp_el_RC -> sp_el_afofi
+            """
+            if tech_name.endswith("_RT"):
+                # Handle _RC_RT or _rc_RT -> _afofi_RT
+                return re.sub("_(rc|RC)_RT$", "_afofi_RT", tech_name)
+            else:
+                # Handle _RC or _rc at end -> _afofi
+                return re.sub("_(rc|RC)$", "_afofi", tech_name)
+        
         replace = {
             "commodity": c_map,
             "technology": {
-                t: re.sub("(rc|RC)", "afofi", t)
+                t: transform_tech_name(t)
                 for t in rc_techs
                 if t not in exclude_techs
             },
@@ -643,6 +684,31 @@ def prepare_data(
     # - Adapt relation_activity values that represent emission factors.
     # - Merge to results.
     tmp = {k: pd.concat(v) for k, v in data.items()}
+    
+    # Deal with rooftop technologies
+    # All technologies containing "electr" should have:
+    # - M1: electr at level "final" (already exists)
+    # - M2: electr at level "final_RT" (add this)
+    if "input" in tmp and len(tmp["input"]) > 0:
+        # Find all electricity technologies (containing "electr" anywhere in name)
+        # Technology names are like "electr_resid_apps", "electr_comm_cool", etc.
+        electr_inputs = tmp["input"][
+            (tmp["input"]["technology"].str.contains("electr", regex=False, case=False))
+            & (tmp["input"]["commodity"] == "electr")
+            & (tmp["input"]["level"] == "final")
+            & (tmp["input"]["mode"] == "M1")
+        ].copy()
+        
+        if len(electr_inputs) > 0:
+            # Create M2 inputs with level "final_RT"
+            electr_inputs_m2 = electr_inputs.assign(
+                level="final_RT",
+                mode="M2"
+            )
+            # Append to existing input data
+            tmp["input"] = pd.concat([tmp["input"], electr_inputs_m2], ignore_index=True)
+            log.info(f"Added {len(electr_inputs_m2)} M2 input rows for electricity technologies")
+    
     adapt_emission_factors(tmp)
     merge_data(result, tmp)
 
@@ -663,6 +729,14 @@ def prepare_data(
     # commented: This is superseded by .navigate.workflow.add_globiom_step
     # # Add data for a backstop supply of (biomass, secondary)
     # merge_data(result, bio_backstop(scenario))
+
+    # Ensure all year columns are integers (not floats like 2020.0)
+    # Convert year columns in all DataFrames in result dict
+    for key, df in result.items():
+        if isinstance(df, pd.DataFrame) and len(df) > 0:
+            year_cols = [col for col in df.columns if col.startswith("year")]
+            if year_cols:
+                result[key] = df.astype({col: int for col in year_cols})
 
     return result
 

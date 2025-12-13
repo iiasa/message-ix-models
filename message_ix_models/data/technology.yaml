@@ -2896,6 +2896,14 @@ sp_el_RC:
   input: [electr, final]
   output: [rc_spec, useful]
 
+sp_el_RC_RT:
+  name: sp_el_RC
+  description: Specific use of electricity in residential/commercial from rooftop PV
+  type: useful
+  sector: residential/commercial
+  input: [electr, final]
+  output: [rc_spec, useful]
+
 h2_fc_RC:
   name: h2_fc_RC
   description: Specific use of hydrogen fuel cell cogeneration system in res/comm
