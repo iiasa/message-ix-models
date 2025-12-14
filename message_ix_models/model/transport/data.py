@@ -308,6 +308,8 @@ class LoadFactorLDV(MultiFile):
         assert self.options.config
         label = self.options.config.label
         for pattern, repl in (
+            # No distinction for materials scenarios
+            ("^M ", ""),
             # For DIGSY…C, use the respective SSP
             ("^DIGSY-.*-C$", str(self.options.config.ssp)),
             ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED'
