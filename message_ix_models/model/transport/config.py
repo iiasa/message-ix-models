@@ -420,6 +420,8 @@ class Config(ConfigHelper):
         self.project["DIGSY"] = DIGSY.by_urn(sca.DIGSY_scenario_URN)
         self.project["EDITS"] = EDITS.by_urn(sca.EDITS_scenario_URN)
 
+        self.use_modules(sca.extra_modules)
+
     @property
     def label(self) -> str:
         """‘Full’ label used in the scenario name.
@@ -428,7 +430,7 @@ class Config(ConfigHelper):
         suitable for (part of) a :attr:`message_ix.Scenario.scenario` name in an
         :mod:`ixmp` database, for instance "SSP_2024.3".
         """
-        return re.sub("^SSP", "SSP_2024.", self.code.id)
+        return re.sub("^(M )?SSP", "SSP_2024.", self.code.id)
 
     def check(self):
         """Check consistency of :attr:`project`."""
@@ -511,6 +513,9 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
     #: Entries for :attr:`.Config.policy`.
     policy: "Policy | None"
 
+    #: Entries for :attr:`.Config.extra_modules`.
+    extra_modules: list[str] = field(default_factory=list)
+
     @classmethod
     def from_obj(cls, obj, globals=None):
         globals = (globals or {}) | dict(
@@ -529,7 +534,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
     """
 
     urn = "IIASA_ECE:CL_TRANSPORT_SCENARIO"
-    version = "1.2.1"
+    version = "1.3.0"
 
     #: - Model name:
     #:   - 2024-11-25: use _v1.1 per a Microsoft Teams message.
@@ -574,16 +579,20 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
             policy=None,
         ) -> None:
             """Shorthand for creating a code."""
-            sca = ScenarioCodeAnnotations(
-                cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
-                led,
-                cl_digsy[digsy].urn,
-                cl_edits[edits].urn,
-                cls.base_url.format(ssp),  # Format base scenario URL
-                policy,
-            )
-            code = common.Code(id=id, name=name or id, **sca.get_annotations(dict))
-            cl.append(code)
+            for prefix, modules in ("", []), ("M ", ["material"]):
+                sca = ScenarioCodeAnnotations(
+                    cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
+                    led,
+                    cl_digsy[digsy].urn,
+                    cl_edits[edits].urn,
+                    cls.base_url.format(ssp),  # Format base scenario URL
+                    policy,
+                    modules,
+                )
+                code = common.Code(
+                    id=prefix + id, name=name, **sca.get_annotations(dict)
+                )
+                cl.append(code)
 
         # Baselines and policy scenarios for each SSP
         te = TaxEmission(1000.0)

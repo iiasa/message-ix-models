@@ -1,5 +1,6 @@
 import pytest
 
+from message_ix_models import Context
 from message_ix_models.model.transport.config import CL_SCENARIO, Config
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
@@ -87,10 +88,13 @@ class TestConfig:
 
 
 class TestCL_SCENARIO:
-    def test_get(self) -> None:
+    def test_get(self, test_context: Context) -> None:
         result = CL_SCENARIO.get(force=True)
 
-        # Code lists contains codes with the expected IDs
+        # Code list has the expected length
+        assert 46 == len(result)
+
+        # Code list contains codes with the expected IDs
         assert {
             "DIGSY-BEST-C",
             "DIGSY-BEST-S",
@@ -115,4 +119,11 @@ class TestCL_SCENARIO:
             "SSP5 exo price",
             "SSP5 tax",
             "SSP5",
-        } == set(result.items.keys())
+        } <= set(result.items.keys())
+
+        # Codes for material-enabled scenarios are present
+        c = result["M SSP2"]
+
+        # Config created using these codes has the 'material' module enabled
+        cfg = Config.from_context(test_context, dict(code=c))
+        assert "material" in cfg.modules
