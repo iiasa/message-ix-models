@@ -296,7 +296,7 @@ class Config(ConfigHelper):
     #: space-delimited string (:py:`"module_a -module_b"`) or sequence of strings.
     #: Values prefixed with a hyphen (:py:`"-module_b"`) are *removed* from
     #: :attr:`.modules`.
-    extra_modules: InitVar[str | list[str]] = None
+    extra_modules: InitVar[str | list[str]] = []
 
     #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
     #: :meth:`.ScenarioFlags.parse_futures`.
@@ -306,24 +306,8 @@ class Config(ConfigHelper):
     #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
-    def __post_init__(
-        self,
-        extra_modules,
-        futures_scenario,
-        navigate_scenario,
-    ) -> None:
-        # Handle extra_modules
-        em = extra_modules or []
-        for m in em.split() if isinstance(em, str) else em:
-            if m.startswith("-"):
-                try:
-                    idx = self.modules.index(m[1:])
-                except ValueError:
-                    pass
-                else:
-                    self.modules.pop(idx)
-            else:
-                self.modules.append(m)
+    def __post_init__(self, extra_modules, futures_scenario, navigate_scenario) -> None:
+        self.use_modules(extra_modules)
 
         # Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`
         self.set_futures_scenario(futures_scenario)
@@ -484,6 +468,19 @@ class Config(ConfigHelper):
         s = NAVIGATE_SCENARIO.parse(value)
         self.project.update(navigate=s)
         self.check()
+
+    def use_modules(self, *module_names: str) -> None:
+        """Handle extra_modules."""
+        for entry in module_names:
+            for m in entry.split() if isinstance(entry, str) else entry:
+                if m.startswith("-"):
+                    # Remove a module
+                    try:
+                        self.modules.remove(m[1:])
+                    except ValueError:
+                        pass
+                else:
+                    self.modules.append(m)
 
 
 @dataclass
