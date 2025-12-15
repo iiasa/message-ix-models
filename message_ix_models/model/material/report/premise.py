@@ -11,7 +11,6 @@ from message_ix_models.model.material.report.run_reporting import (
     load_config,
     pyam_df_from_rep,
     run_fe_reporting,
-    run_fs_reporting,
     run_prod_reporting,
     run_se,
 )
@@ -119,7 +118,6 @@ def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs.append(run_other(rep, model_name, scen_name))
     dfs.append(run_co2(rep, model_name, scen_name))
     # dfs.append(run_pe(rep, model_name, scen_name))
-    # dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
     py_df = pyam.concat(dfs)
     py_df = calculate_clinker_ccs_energy(scenario, rep, py_df)
@@ -128,8 +126,8 @@ def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
         [i for i in py_df.variable if "Efficiency" not in i], append=True
     )
     py_df.filter(variable="Share*", keep=False, inplace=True)
-    # py_df.filter(
-    #     year=[i for i in scenario.set("year") if i >= scenario.firstmodelyear],
-    #     inplace=True,
-    # )
+    py_df.filter(
+        year=[i for i in scenario.set("year") if i >= scenario.firstmodelyear],
+        inplace=True,
+    )
     return py_df
