@@ -26,55 +26,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-#: All files in :file:`data/transport/R12/price-emission/`.
-PRICE_EMISSION_URL = {
-    # "LED-SSP2": "SSP_LED_v5.3.1/baseline_1000f#1",
-    # "LED-SSP2": "SSP_LED_v5.3.1/INDC2030i_SSP2 - Very Low Emissions#1",
-    "LED-SSP2": "SSP_LED_v5.3.1/SSP2 - Very Low Emissions#2",
-    # "SSP1": "SSP_SSP1_v5.3.1/baseline_1000f#1",
-    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Low Emissions_a#1",
-    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Low Emissions#1",
-    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Very Low Emissions#1",
-    # "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Low Emissions_a#2",
-    "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Low Emissions#2",
-    # "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Very Low Emissions#2",
-    # "SSP2": "SSP_SSP2_v5.3.1/baseline_1000f#2",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_10#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_110#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_15#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_20#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_25#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_50#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_5#3",
-    # "SSP2": "SSP_SSP2_v5.3.1/INDC2030i_SSP2 - Low Emissions_a#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/INDC2030i_SSP2 - Low Emissions#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/npiref2035_low_dem_scen2#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPIREF_price_cap_5$_bkp#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Low Overshootf_price_cap_5$_bkp#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Low Overshootf#3",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Medium-Low Emissionsf#1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF#10",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Emissions_a#2",
-    "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Emissions#2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Overshoot#2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium Emissions_a#2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium Emissions#2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium-Low Emissions#2",
-    "SSP3": "SSP_SSP3_v5.3.1/baseline_1000f#1",
-    # "SSP4": "SSP_SSP4_v5.3.1/baseline_1000f#1",
-    # "SSP4": "SSP_SSP4_v5.3.1/NPi2030#1",
-    # "SSP4": "SSP_SSP4_v5.3.1/NPiREF_SSP4 - Low Overshootf#1",
-    # "SSP4": "SSP_SSP4_v5.3.1/NPiREF#1",
-    "SSP4": "SSP_SSP4_v5.3.1/SSP4 - Low Overshoot#2",
-    # "SSP5": "SSP_SSP5_v5.3.1/baseline_1000f#2",
-    # "SSP5": "SSP_SSP5_v5.3.1/baseline2055_low_dem_scen#1",
-    # "SSP5": "SSP_SSP5_v5.3.1/baseline2060_low_dem_scen#2",
-    # "SSP5": "SSP_SSP5_v5.3.1/NPi2030#1",
-    # "SSP5": "SSP_SSP5_v5.3.1/NPiREF_SSP5 - Low Overshootf#1",
-    # "SSP5": "SSP_SSP5_v5.3.1/NPiREF#1",
-    "SSP5": "SSP_SSP5_v5.3.1/SSP5 - Low Overshoot#2",
-}
-
 
 @dataclass
 class DataSourceConfig(ConfigHelper):
@@ -581,7 +532,10 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
             policy=None,
         ) -> None:
             """Shorthand for creating a code."""
-            for prefix, modules in ("", []), ("M ", ["material"]):
+            for modules, id_prefix, name_suffix in (
+                ([], "", ""),
+                (["material"], "M ", " with materials"),
+            ):
                 sca = ScenarioCodeAnnotations(
                     cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
                     led,
@@ -592,7 +546,9 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
                     modules,
                 )
                 code = common.Code(
-                    id=prefix + id, name=name, **sca.get_annotations(dict)
+                    id=id_prefix + id,
+                    name=name + name_suffix,
+                    **sca.get_annotations(dict),
                 )
                 cl.append(code)
 
@@ -606,9 +562,9 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
             _append_code(id_ + " tax", name + " with tax", ssp, policy=te)
 
             # PRICE_EMISSION from exogenous data file
-            eep = ExogenousEmissionPrice("ixmp://ixmp-dev/" + PRICE_EMISSION_URL[id_])
-            name += " with exogenous price"
-            _append_code(id_ + " exo price", name, ssp, policy=eep)
+            for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
+                name += " with exogenous price"
+                _append_code(f"{id_} exo price {hash}", name, ssp, policy=eep)
 
         # LED
         name = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
@@ -619,6 +575,15 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
         ssp, name = "2", "DIGSY {!r} scenario with SSP2"
         for id_ in ("BEST-C", "BEST-S", "WORST-C", "WORST-S"):
             _append_code(f"DIGSY-{id_}", name.format(id_), ssp, digsy=id_)
+
+            # PRICE_EMISSION from exogenous data file
+            for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
+                _append_code(
+                    f"DIGSY-{id_} exo price {hash}",
+                    name.format(id_) + " with exogenous price",
+                    ssp,
+                    policy=eep,
+                )
 
         # EDITS
         ssp, name = "2", "EDITS scenario with ITF PASTA {!r} activity"
