@@ -370,12 +370,18 @@ def bare_to_scenario(
             hist_oil = pd.concat([hist_oil, hist_oil_f])
         hist_eth = hist_oil[hist_oil["technology"] != "oil_tanker_foil"]
 
-        trade_dict["crudeoil_shipped"]["flow"]["historical_new_capacity"] = hist_cr_loil
-        trade_dict["lh2_shipped"]["flow"]["historical_new_capacity"] = hist_lh2_loil
-        trade_dict["LNG_shipped"]["flow"]["historical_new_capacity"] = hist_lng
-        trade_dict["eth_shipped"]["flow"]["historical_new_capacity"] = hist_eth
-        trade_dict["foil_shipped"]["flow"]["historical_new_capacity"] = hist_oil
-        trade_dict["loil_shipped"]["flow"]["historical_new_capacity"] = hist_oil
+        if "crudeoil_shipped" in trade_dict.keys():
+            trade_dict["crudeoil_shipped"]["flow"]["historical_new_capacity"] = hist_cr_loil
+        if "lh2_shipped" in trade_dict.keys():
+            trade_dict["lh2_shipped"]["flow"]["historical_new_capacity"] = hist_lh2_loil
+        if "LNG_shipped" in trade_dict.keys():
+            trade_dict["LNG_shipped"]["flow"]["historical_new_capacity"] = hist_lng
+        if "eth_shipped" in trade_dict.keys():
+            trade_dict["eth_shipped"]["flow"]["historical_new_capacity"] = hist_eth
+        if "foil_shipped" in trade_dict.keys():
+            trade_dict["foil_shipped"]["flow"]["historical_new_capacity"] = hist_oil
+        if "loil_shipped" in trade_dict.keys():
+            trade_dict["loil_shipped"]["flow"]["historical_new_capacity"] = hist_oil
 
         # Historical activity should only be added for technologies in input
         for tec in covered_tec:
