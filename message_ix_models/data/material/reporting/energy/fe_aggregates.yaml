@@ -3,13 +3,31 @@
 # each variable specifies a list of filter
 
 var:
-  "in:nl-t-ya-m-c-l:FE2"
+  "in:nl-t-ya-m-c-l:FE5"
 
 iamc_prefix:
   Final Energy|
 
 unit: GWa
 
+
+level_4:
+  Non-Energy Use|Chemicals|High-Value Chemicals:
+    short: fe_fs_hvc
+    components:
+      [ fe_fs_hvc_liq, fe_fs_hvc_gases ]
+
+level_3:
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids:
+    short: fe_fs_hvc_liq
+    components:
+      [ fe_fs_hvc_liq_oil, fe_fs_hvc_liq_bio]
+    # [fe_fs_hvc_oth] exclude MTO since final energy is accounted in methanol pathway
+
+  Non-Energy Use|Chemicals|High-Value Chemicals|Gases:
+    short: fe_fs_hvc_gases
+    components:
+      [ fe_fs_hvc_gas_sc_eth, fe_fs_hvc_gas_sc_prop ]
 
 level_2:
   Industry|Heat:
@@ -39,7 +57,7 @@ level_2:
   Industry|Liquids|Biomass:
     short: fe_pe_oil
     components:
-      [ fe_pe_cement_bio_eth, fe_pe_aluminum_bio_eth, fe_pe_other_eth, fe_pe_steel_liq_bio]
+      [ fe_pe_cement_bio_eth, fe_pe_aluminum_bio_eth, fe_pe_other_eth, fe_pe_steel_liq_bio ]
   Industry|Liquids|Oil:
     short: fe_pe_oil
     components:
@@ -55,7 +73,7 @@ level_2:
   Industry|Solids:
     short: fe_pe_solids
     components:
-      [ fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids]
+      [ fe_pe_cement_solids, fe_pe_aluminum_solids, fe_pe_steel_sol, fe_pe_other_solids ]
   Industry|Solids|Coal:
     short: fe_pe_coal
     components:
@@ -101,16 +119,42 @@ level_2:
     short: fe_pe_oth
     components:
       [ fe_pe_other_el, fe_pe_other_liq, fe_pe_other_solids, fe_pe_other_gases, fe_pe_other_h2, fe_pe_other_heat ]
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Oil:
+    short: fe_fs_hvc_liq_oil
+    components:
+      [ fe_fs_hvc_sc_oil ]
+
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Biomass:
+    short: fe_fs_hvc_liq_bio
+    components:
+      [ fe_fs_hvc_bio_etha ]
+
+  Non-Energy Use|Chemicals|High-Value Chemicals|Gases|Gas:
+    short: fe_fs_hvc_gases_gas
+    components:
+      [ fe_fs_hvc_gas_sc_eth, fe_fs_hvc_gas_sc_prop ]
+
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Other:
+    short: fe_fs_hvc_oth
+    components:
+      [ fe_fs_hvc_oth_mto ]
+
+  Non-Energy Use|Chemicals|High-Value Chemicals|Steam Cracking:
+    short: fe_fs_hvc_sc
+    components:
+      [ fe_fs_hvc_gas_sc, fe_fs_hvc_sc_oil ]
+
+  Industry|Chemicals|Ammonia:
+    short: fe_nh3
+    components:
+      [ fe_pe_nh3_el, fe_nh3_coal, fe_nh3_gases_gas, fe_nh3_gases_bio, fe_nh3_oil, fe_nh3_bio ]
+
+  Chemicals|Methanol:
+    short: fe_meth
+    components:
+      [ fe_meth_coal, fe_meth_gases, fe_meth_bio, fe_meth_h2 ]
 
 level_1:
-
-  # some Chemicals|<Fuels>|<Sub-fuel> variables are not specified here
-  #   because they are generated later in the workflow, after the
-  #   Methanol/HVC/Ammonia subcomponents are generated.
-  # The function run_reporting.add_chemicals_to_final_energy_variables
-  #   does this aggregation and updates all related aggregates.
-  # Only the ones not generated there are mapped here
-
   Industry|Chemicals|Liquids|Other:
     short: fe_pe_chem_oth
     components:
@@ -123,7 +167,7 @@ level_1:
   Industry|Chemicals|High-Value Chemicals|Electricity:
     short: fe_pe_hvc_el
     components:
-      [fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc]
+      [ fe_pe_hvc_el_ht, fe_pe_hvc_el_mto, fe_pe_hvc_el_sc ]
   Industry|Chemicals|High-Value Chemicals|Gases:
     short: fe_pe_hvc_gases
     components:
@@ -131,7 +175,7 @@ level_1:
   Industry|Chemicals|High-Value Chemicals|Liquids:
     short: fe_pe_hvc_liq
     components:
-      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h, fe_pe_hvc_bio_eth, fe_pe_hvc_oth]
+      [ fe_pe_hvc_oil_l, fe_pe_hvc_oil_h, fe_pe_hvc_bio_eth, fe_pe_hvc_oth ]
   Industry|Chemicals|High-Value Chemicals|Liquids|Oil:
     short: fe_pe_hvc_oil
     components:
@@ -139,7 +183,7 @@ level_1:
   Industry|Chemicals|High-Value Chemicals|Solids:
     short: fe_pe_hvc_solids
     components:
-      [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke]
+      [ fe_pe_hvc_bio, fe_pe_hvc_coal, fe_pe_hvc_coke ]
 
   Industry|Chemicals|Other Sector|Electricity:
     short: fe_pe_chem_other_el
@@ -190,7 +234,7 @@ level_1:
   Industry|Non-Metallic Minerals|Cement|Electricity:
     short: fe_pe_cement_el
     components:
-      [fe_pe_cement_el_ht, fe_pe_cement_el_oth, fe_pe_clinker_el_ccs, fe_pe_clinker_el]
+      [ fe_pe_cement_el_ht, fe_pe_cement_el_oth, fe_pe_clinker_el_ccs, fe_pe_clinker_el ]
   Industry|Non-Metallic Minerals|Cement|Liquids|Oil:
     short: fe_pe_cement_oil
     components:
@@ -261,7 +305,7 @@ level_1:
   Industry|Other Sector|Electricity|Thermal:
     short: fe_pe_other_el_th
     components:
-      [fe_pe_other_el_th_res, fe_pe_other_el_th_hp ]
+      [ fe_pe_other_el_th_res, fe_pe_other_el_th_hp ]
   Industry|Other Sector|Electricity:
     short: fe_pe_other_el
     components:
@@ -293,7 +337,7 @@ level_1:
   Industry|Other Sector|Liquids:
     short: fe_pe_other_liq
     components:
-      [fe_pe_other_oil_l_sp, fe_pe_other_oil_l_th, fe_pe_other_oil_h_th, fe_pe_other_eth_th, fe_pe_other_eth_sp ]
+      [ fe_pe_other_oil_l_sp, fe_pe_other_oil_l_th, fe_pe_other_oil_h_th, fe_pe_other_eth_th, fe_pe_other_eth_sp ]
   Industry|Other Sector|Solids:
     short: fe_pe_other_solids
     components:
@@ -323,3 +367,72 @@ level_1:
   Transportation|Liquids|Oil:
     components: [ fe_trp_loil, fe_trp_foil ]
     short: fe_trp_oil
+
+
+  Non-Energy Use|Chemicals|Ammonia:
+    short: fe_fs_nh3
+    components:
+      [ fe_fs_nh3_coal, fe_fs_nh3_gas, fe_fs_nh3_gas_bio, fe_fs_nh3_oil, fe_fs_nh3_bio ]
+
+  Non-Energy Use|Chemicals|Methanol:
+    short: fe_fs_meth
+    components:
+      [ fe_fs_meth_coal, fe_fs_meth_gas, fe_fs_meth_bio, fe_fs_meth_h2 ]
+  Non-Energy Use|Chemicals|Ammonia|Solids:
+    short: fe_fs_nh3_solids
+    components:
+      [ fe_fs_nh3_coal, fe_fs_nh3_bio ]
+
+  Non-Energy Use|Chemicals|Ammonia|Liquids:
+    short: fe_fs_nh3_liq
+    components:
+      [ fe_fs_nh3_oil ]
+
+  Non-Energy Use|Chemicals|Ammonia|Gases:
+    short: fe_fs_nh3_gases
+    components:
+      [ fe_fs_nh3_gas, fe_fs_nh3_gas_bio ]
+
+  Non-Energy Use|Chemicals|Methanol|Solids:
+    short: fe_fs_meth_solids
+    components:
+      [ fe_fs_meth_coal, fe_fs_meth_bio ]
+
+  Non-Energy Use|Chemicals|Methanol|Gases:
+    short: fe_fs_meth_gases
+    components:
+      [ fe_fs_meth_gas ]
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Oil|Steam Cracking:
+    short: fe_fs_hvc_sc_oil
+    components:
+      [ fe_fs_hvc_oil_sc_naphtha, fe_fs_hvc_oil_sc_ago, fe_fs_hvc_oil_sc_vgo ]
+
+  Non-Energy Use|Chemicals|High-Value Chemicals|Gases|Gas|Steam Cracking:
+    short: fe_fs_hvc_gas_sc
+    components:
+      [ fe_fs_hvc_gas_sc_eth, fe_fs_hvc_gas_sc_prop ]
+
+  Industry|Chemicals|Ammonia|Solids:
+    short: fe_nh3_solids
+    components:
+      [ fe_nh3_coal, fe_nh3_bio ]
+
+  Industry|Chemicals|Ammonia|Liquids:
+    short: fe_nh3_liq
+    components:
+      [ fe_nh3_oil ]
+
+  Industry|Chemicals|Ammonia|Gases:
+    short: fe_nh3_gases
+    components:
+      [ fe_nh3_gases_gas, fe_nh3_gases_bio ]
+
+  Industry|Chemicals|Methanol|Solids:
+    short: fe_meth_solids
+    components:
+      [ fe_meth_coal, fe_meth_bio ]
+
+  Industry|Chemicals|Methanol|Gases:
+    short: fe_meth_gases
+    components:
+      [ fe_meth_gas, fe_meth_gas_bio ]

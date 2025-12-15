@@ -172,8 +172,8 @@ def run_fe_reporting(rep: "Reporter", model: str, scenario: str) -> pd.DataFrame
         )
     )
 
-    py_df_all = add_chemicals_to_final_energy_variables(dfs, rep, model, scenario)
-
+    # py_df_all = add_chemicals_to_final_energy_variables(dfs, rep, model, scenario)
+    py_df_all = pyam.concat(dfs)
     py_df_all = split_fe_other(rep, py_df_all, model, scenario)
 
     # Add solar to "other industry" aggregate
@@ -677,7 +677,14 @@ def run_se(rep: "Reporter", model_name: str, scen_name: str):
             )
         )
     df = pyam.concat(dfs)
-    return df
+    df_final = (
+        df.filter(unit="dimensionless", keep=False)
+        .convert_unit("GWa", "EJ")
+        .timeseries()
+        .reset_index()
+    )
+    df_final.unit = "EJ/yr"
+    return df_final
 
 
 def run_all_categories(

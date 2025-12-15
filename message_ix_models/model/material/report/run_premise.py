@@ -14,4 +14,8 @@ if __name__ == "__main__":
     rep = Reporter.from_scenario(scen)
     prepare_reporter(ctx, reporter=rep)
     df = premise.run(rep, scen, scen.model, scen.scenario)
+    df = df.filter(unit=["dimensionless", "", None], keep=False).rename(
+        mapping={"unit": {"Mt / a": "Mt/yr", "EJ / a": "EJ/yr"}}
+    )
+    df.to_excel("premise_out.xlsx")
     print()

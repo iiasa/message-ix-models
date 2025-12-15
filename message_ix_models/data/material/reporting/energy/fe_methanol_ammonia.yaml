@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  in
+  "in:nl-t-ya-m-c-l:FE2"
 
 iamc_prefix:
   Final Energy|Industry|
@@ -11,62 +11,4 @@ iamc_prefix:
 unit: GWa
 
 vars:
-  Chemicals|Ammonia|Electricity:
-    filter:
-      { technology: [biomass_NH3, biomass_NH3_ccs, coal_NH3, coal_NH3_ccs,
-                     electr_NH3, fueloil_NH3, fueloil_NH3_ccs, gas_NH3, gas_NH3_ccs ],
-        mode: M1,
-        commodity: electr, level: secondary }
-    short:
-      fe_pe_nh3_el
 
-  Chemicals|Ammonia|Solids|Biomass:
-    filter:
-      { technology: [ biomass_NH3, biomass_NH3_ccs ], mode: M1, commodity: biomass, level: primary }
-    short: fe_nh3_bio
-
-  Chemicals|Ammonia|Solids|Coal:
-    filter:
-      { technology: [ coal_NH3, coal_NH3_ccs ], mode: M1, commodity: coal, level: secondary }
-    short: fe_nh3_coal
-
-  Chemicals|Ammonia|Liquids|Oil:
-    filter:
-      { technology: [ fueloil_NH3, fueloil_NH3_ccs ], mode: M1, commodity: fueloil, level: secondary }
-    short: fe_nh3_oil
-
-  Chemicals|Ammonia|Gases|Gas:
-    filter:
-      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: gas, level: secondary }
-    short: fe_nh3_gases_gas
-  Chemicals|Ammonia|Gases|Biomass:
-    filter:
-      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: biogas, level: secondary }
-    short: fe_nh3_gases_bio
-
-
-  Chemicals|Methanol|Electricity:
-    filter:
-      { technology: [meth_h2, meth_ng_ccs], mode: [feedstock, feedstock_dac, feedstock_fic, feedstock_bic], commodity: electr, level: secondary }
-    short:
-      fe_pe_meth_el
-
-  Chemicals|Methanol|Solids|Coal:
-    filter:
-      {technology: [meth_coal, meth_coal_ccs], mode: feedstock, commodity: coal, level: secondary}
-    short: fe_meth_coal
-
-  Chemicals|Methanol|Solids|Biomass:
-    filter:
-      {technology: [meth_bio, meth_bio_ccs], mode: feedstock, commodity: biomass, level: primary}
-    short: fe_meth_bio
-
-  Chemicals|Methanol|Gases|Gas:
-    filter:
-      {technology: [meth_ng, meth_ng_ccs], mode: feedstock, commodity: gas, level: secondary}
-    short: fe_meth_gas
-
-  Chemicals|Methanol|Hydrogen:
-    filter:
-      {technology: meth_h2, mode: [feedstock_dac, feedstock_fic, feedstock_bic], commodity: hydrogen, level: secondary}
-    short: fe_meth_h2

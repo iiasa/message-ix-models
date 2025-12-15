@@ -113,13 +113,13 @@ def run_eff(rep, model_name: str, scen_name: str):
 def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs = []
     reporter_utils.pe_gas(rep)
+    dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_eff(rep, model_name, scen_name))
     dfs.append(run_se(rep, model_name, scen_name))
-    dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_other(rep, model_name, scen_name))
     dfs.append(run_co2(rep, model_name, scen_name))
     # dfs.append(run_pe(rep, model_name, scen_name))
-    dfs.append(run_fs_reporting(rep, model_name, scen_name))
+    # dfs.append(run_fs_reporting(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
     py_df = pyam.concat(dfs)
     py_df = calculate_clinker_ccs_energy(scenario, rep, py_df)

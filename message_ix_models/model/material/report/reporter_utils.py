@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from genno import Key, Quantity
 
@@ -461,7 +461,7 @@ def add_renewable_curtailment_calcs(
     k11 = k1.drop("t")
     k2 = Key(f"{OUT}:nl-t-ya-m-c")
     k3 = k2.drop("t")
-    k4 = Key("share:nl-ya-m-c:")
+    k4 = Key("share:nl-ya-m-c")
     rep.add(
         k1[f"{name}_curtailment"],
         "select",
@@ -673,7 +673,7 @@ def add_se_elec(rep: "Reporter") -> Key:
         "elec_from_h2:nl-t-ya-c", "mul", k.drop("m"), h2_key.append("t"), sums=False
     )
     k2 = rep.add(
-        "elec_from_biogas:nl-ya-c-t",
+        "elec_from_biogas:nl-t-ya-c",
         "mul",
         k.drop("m"),
         bio_key.append("t"),
@@ -973,11 +973,82 @@ def gas_mix_calculation(rep, in_gas: Key, mix_tech: str, name: str) -> Key:
         f"share:nl-ya:{name}_in_{in_gas.tag}",
         "div",
         k1.drop("yv", "m"),
-        in_gas.drop("t", "c"),
+        in_gas.drop("t", "c", "m"),
     )
     k3 = rep.add(f"{IN}:nl-t-ya-m:{name}+{in_gas.tag}", "mul", in_gas.drop("c"), k2)
     k4 = rep.add(k3.append("c"), "expand_dims", k3, {"c": [name]})
     return k4
+
+
+def add_non_energy_calc(rep: "Reporter") -> Key:
+    """Add procedure to derive non-energy fraction for methanol and ammonia.
+
+    1) Select methanol technologies and ammonia technologies.
+    2) Convert ammonia production from Mt to GWa.
+    3) Combine non-energy technologies for gas consumers.
+    4) Split biogas and natural gas non-energy technologies based on biogas share.
+    5) Expand dimensions to create separate entries for biogas and natural gas.
+    6) Repeat steps 1,2,4 for other methanol and ammonia technologies.
+
+    Parameters
+    ----------
+    rep
+        Reporter to add keys to.
+
+    Returns
+    -------
+    Key with non-energy flows with dims: `nl-t-ya-m-c`
+    """
+    k = Key("ACT:nl-t-ya-m")
+    k1 = rep.add(
+        k["meth_ng"], "select", k, {"t": ["meth_ng", "meth_ng_ccs"], "m": ["feedstock"]}
+    )
+    k2 = rep.add(k["gas_NH3+Mt"], "select", k, {"t": ["gas_NH3", "gas_NH3_ccs"]})
+    k3 = rep.add(k["gas_NH3+GWa"], "mul", k2, Quantity(0.697615))
+    k4 = rep.add(k["gas_non_energy_tecs"], "concat", k3, k1)
+    k5 = rep.add(
+        k["biogas_non_energy_tecs"],
+        "mul",
+        k4,
+        "share:nl-ya:biogas_in_gas_consumer_biogas+incl_t_d_loss",
+    )
+    k6 = rep.add(k["natgas_non_energy_tecs"], "sub", k4, k5)
+    k7 = rep.add(
+        k["biogas_non_energy_tecs"].append("c"), "expand_dims", k5, {"c": ["biogas"]}
+    )
+    k8 = rep.add(
+        k["natgas_non_energy_tecs"].append("c"), "expand_dims", k6, {"c": ["gas"]}
+    )
+    k9 = rep.add(k["gas_non_energy_tecs"].append("c"), "concat", k8, k7)
+    comm_tec_map = {
+        "coal": {"t": ["meth_coal", "meth_coal_ccs"], "m": ["feedstock"]},
+        "biomass": {"t": ["meth_bio", "meth_bio_ccs"], "m": ["feedstock"]},
+        "hydrogen": {
+            "t": ["meth_h2"],
+            "m": ["feedstock_fic", "feedstock_bic", "feedstock_dac"],
+        },
+    }
+    comm_tec_map2 = {
+        "coal": {"t": ["coal_NH3", "coal_NH3_ccs"]},
+        "biomass": {"t": ["biomass_NH3", "biomass_NH3_ccs"]},
+        "fueloil": {"t": ["fueloil_NH3", "fueloil_NH3_ccs"]},
+        "electr": {"t": ["electr_NH3"]},
+    }
+    keys = []
+    for comm, filter in comm_tec_map.items():
+        k1 = rep.add(k[f"{comm}_methanol"], "select", k, filter)
+        k3 = rep.add(
+            k[f"{comm}_methanol"].append("c"), "expand_dims", k1, {"c": [comm]}
+        )
+        keys.append(k3)
+    for comm, filter in comm_tec_map2.items():
+        k1 = rep.add(k[f"{comm}_NH3+Mt"], "select", k, filter)
+        k2 = rep.add(k[f"{comm}_NH3+GWa"], "mul", k1, Quantity(0.697615))
+        k4 = rep.add(k[f"{comm}_NH3"].append("c"), "expand_dims", k1, {"c": [comm]})
+        keys.append(k4)
+    k = rep.add(k["non_energy_tecs"].append("c"), "concat", k9, *keys)
+    k1 = rep.add(k["non_energy_tecs+GWa"], "assign_units", k, units="GWa")
+    return k1
 
 
 def pe_gas(rep: "Reporter"):
@@ -1171,7 +1242,7 @@ def add_fe_key(rep: "Reporter") -> Key:
         "gas_NH3_ccs",
     ]
     k = Key(f"{IN}:nl-t-ya-m-c-l")
-    rep.add(k["fe_non_gas"], "select", k, {"t": gas_final}, inverse=True)
+    rep.add(k["fe_non_gas"], "select", k, {"c": ["gas"]}, inverse=True)
     rep.add(k["fe_gases"], "expand_dims", k.drop("l")["pe+gas"], {"l": ["final"]})
     no_ccs_filter = {"t": ["dri_gas_steel"]}
 
@@ -1181,7 +1252,14 @@ def add_fe_key(rep: "Reporter") -> Key:
         k["FE"]["excl_dri"], "select", k["FE"], no_ccs_filter, inverse=True
     )
     rep.add(k["FE2"], "concat", fe_excl_dri, splitted_dri)
-    return k["FE2"]
+    rep.add(k["FE2+GWa"], "assign_units", k["FE2"], units="GWa")
+    non_energy = add_non_energy_calc(rep)
+    k4 = rep.add(
+        non_energy.append("s"), "expand_dims", non_energy, {"l": ["feedstock"]}
+    )
+    rep.add(k["FE3"], "sub", k["FE2+GWa"], non_energy)
+    rep.add(k["FE5"], "concat", k["FE3"], k4)
+    return k["FE5"]
 
 
 def concat_hist_and_act(rep: "Reporter"):

@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  "in:nl-t-ya-m-c-l:FE2"
+  "in:nl-t-ya-m-c-l:FE5"
 
 iamc_prefix:
   Final Energy|
@@ -140,6 +140,176 @@ vars:
     short:
       fe_pe_hvc_coke
 
+
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Oil|Steam Cracking|Naphtha:
+    filter:
+      { technology: steam_cracker_petro, mode: naphtha, commodity: naphtha, level: final }
+    # TODO: think about how to add co-production inputs
+    short:
+      fe_fs_hvc_oil_sc_naphtha
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Oil|Steam Cracking|Atmospheric Gasoil:
+    filter:
+      { technology: steam_cracker_petro, mode: atm_gasoil, commodity: atm_gasoil, level: final }
+    # TODO: think about how to add co-production inputs
+    short:
+      fe_fs_hvc_oil_sc_ago
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Oil|Steam Cracking|Vacuum Gasoil:
+    filter:
+      { technology: steam_cracker_petro, mode: vacuum_gasoil, commodity: vacuum_gasoil, level: final }
+    # TODO: think about how to add co-production inputs
+    short:
+      fe_fs_hvc_oil_sc_vgo
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Biomass|Ethanol-to-Ethylene:
+    filter:
+      { technology: ethanol_to_ethylene_petro, mode: M1, commodity: ethanol, level: final }
+    short:
+      fe_fs_hvc_bio_etha
+  # TODO: broadcast with methanol shares to get coal/gas/biomass/hydrogen
+  Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Other|MTO:
+    filter:
+      { technology: MTO_petro, mode: M1, commodity: methanol, level: final_material }
+    short:
+      fe_fs_hvc_oth_mto
+  Non-Energy Use|Chemicals|High-Value Chemicals|Gases|Gas|Steam Cracking|Ethane:
+    filter:
+      { technology: steam_cracker_petro, mode: ethane, commodity: ethane, level: secondary_material }
+    # TODO: think about how to add co-production inputs
+    short:
+      fe_fs_hvc_gas_sc_eth
+  Non-Energy Use|Chemicals|High-Value Chemicals|Gases|Gas|Steam Cracking|Propane:
+    filter:
+      { technology: steam_cracker_petro, mode: propane, commodity: propane, level: secondary_material }
+    # TODO: think about how to add co-production inputs
+    short:
+      fe_fs_hvc_gas_sc_prop
+
+
+# ammonia
+  Non-Energy Use|Chemicals|Ammonia|Electricity:
+    filter:
+      { technology: [ electr_NH3 ], mode: M1, commodity: electr, level: feedstock }
+    short:
+      fe_fs_nh3_el
+
+  Non-Energy Use|Chemicals|Ammonia|Solids|Biomass:
+    filter:
+      { technology: [ biomass_NH3, biomass_NH3_ccs ], mode: M1, commodity: biomass, level: feedstock }
+    short:
+      fe_fs_nh3_bio
+
+  Non-Energy Use|Chemicals|Ammonia|Solids|Coal:
+    filter:
+      { technology: [ coal_NH3, coal_NH3_ccs ], mode: M1, commodity: coal, level: feedstock }
+    short:
+      fe_fs_nh3_coal
+
+  Non-Energy Use|Chemicals|Ammonia|Liquids|Oil:
+    filter:
+      { technology: [fueloil_NH3, fueloil_NH3_ccs], mode: M1, commodity: fueloil, level: feedstock }
+    short:
+      fe_fs_nh3_oil
+
+  Non-Energy Use|Chemicals|Ammonia|Gases|Gas:
+    filter:
+      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: gas, level: feedstock }
+    short:
+      fe_fs_nh3_gas
+  Non-Energy Use|Chemicals|Ammonia|Gases|Biomass:
+    filter:
+      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: biogas, level: feedstock }
+    short:
+      fe_fs_nh3_gas_bio
+
+
+# methanol
+  Non-Energy Use|Chemicals|Methanol|Solids|Coal:
+    filter:
+        {technology: [meth_coal, meth_coal_ccs], mode: feedstock, commodity: coal, level: feedstock}
+    short:
+        fe_fs_meth_coal
+
+  Non-Energy Use|Chemicals|Methanol|Solids|Biomass:
+    filter:
+        {technology: [meth_bio, meth_bio_ccs], mode: feedstock, commodity: biomass, level: feedstock}
+    short:
+        fe_fs_meth_bio
+
+  Non-Energy Use|Chemicals|Methanol|Gases|Gas:
+    filter:
+        {technology: [meth_ng, meth_ng_ccs], mode: feedstock, commodity: gas, level: feedstock}
+    short:
+        fe_fs_meth_gas
+
+  Non-Energy Use|Chemicals|Methanol|Hydrogen:
+    filter:
+        {technology: meth_h2, mode: [feedstock_dac, feedstock_fic, feedstock_bic], commodity: hydrogen, level: feedstock}
+    short:
+        fe_fs_meth_h2
+
+  Industry|Chemicals|Ammonia|Electricity:
+    filter:
+      { technology: [biomass_NH3, biomass_NH3_ccs, coal_NH3, coal_NH3_ccs,
+                     electr_NH3, fueloil_NH3, fueloil_NH3_ccs, gas_NH3, gas_NH3_ccs ],
+        mode: M1,
+        commodity: electr, level: secondary }
+    short:
+      fe_pe_nh3_el
+
+  Industry|Chemicals|Ammonia|Solids|Biomass:
+    filter:
+      { technology: [ biomass_NH3, biomass_NH3_ccs ], mode: M1, commodity: biomass, level: primary }
+    short: fe_nh3_bio
+
+  Industry|Chemicals|Ammonia|Solids|Coal:
+    filter:
+      { technology: [ coal_NH3, coal_NH3_ccs ], mode: M1, commodity: coal, level: secondary }
+    short: fe_nh3_coal
+
+  Industry|Chemicals|Ammonia|Liquids|Oil:
+    filter:
+      { technology: [ fueloil_NH3, fueloil_NH3_ccs ], mode: M1, commodity: fueloil, level: secondary }
+    short: fe_nh3_oil
+
+  Industry|Chemicals|Ammonia|Gases|Gas:
+    filter:
+      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: gas, level: final }
+    short: fe_nh3_gases_gas
+  Industry|Chemicals|Ammonia|Gases|Biomass:
+    filter:
+      { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: biogas, level: final }
+    short: fe_nh3_gases_bio
+
+
+  Industry|Chemicals|Methanol|Electricity:
+    filter:
+      { technology: [meth_h2, meth_ng_ccs], mode: [feedstock, feedstock_dac, feedstock_fic, feedstock_bic], commodity: electr, level: secondary }
+    short:
+      fe_pe_meth_el
+
+  Industry|Chemicals|Methanol|Solids|Coal:
+    filter:
+      {technology: [meth_coal, meth_coal_ccs], mode: feedstock, commodity: coal, level: secondary}
+    short: fe_meth_coal
+
+  Industry|Chemicals|Methanol|Solids|Biomass:
+    filter:
+      {technology: [meth_bio, meth_bio_ccs], mode: feedstock, commodity: biomass, level: primary}
+    short: fe_meth_bio
+
+  Industry|Chemicals|Methanol|Gases|Gas:
+    filter:
+      {technology: [meth_ng, meth_ng_ccs], mode: feedstock, commodity: gas, level: final}
+    short: fe_meth_gas
+
+  Industry|Chemicals|Methanol|Gases|Biomass:
+    filter:
+      { technology: [ meth_ng, meth_ng_ccs ], mode: feedstock, commodity: biogas, level: final }
+    short: fe_meth_gas_bio
+
+  Industry|Chemicals|Methanol|Hydrogen:
+    filter:
+      {technology: meth_h2, mode: [feedstock_dac, feedstock_fic, feedstock_bic], commodity: hydrogen, level: secondary}
+    short: fe_meth_h2
 
   # cement
   Industry|Non-Metallic Minerals|Cement|Heat:
