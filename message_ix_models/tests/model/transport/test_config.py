@@ -1,7 +1,11 @@
 import pytest
 
 from message_ix_models import Context
-from message_ix_models.model.transport.config import CL_SCENARIO, Config
+from message_ix_models.model.transport.config import (
+    CL_SCENARIO,
+    Config,
+    iter_price_emission,
+)
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.project.transport_futures import SCENARIO as TF_SCENARIO
@@ -127,3 +131,21 @@ class TestCL_SCENARIO:
         # Config created using these codes has the 'material' module enabled
         cfg = Config.from_context(test_context, dict(code=c))
         assert "material" in cfg.modules
+
+
+
+
+@pytest.mark.parametrize(
+    "ssp_or_led, N_exp",
+    (
+        ("SSP1", 7),
+        ("SSP2", 22),
+        ("SSP3", 1),
+        ("SSP4", 5),
+        ("SSP5", 7),
+    ),
+)
+def test_iter_price_emission(ssp_or_led: str, N_exp: int, regions="R12") -> None:
+    # Currently only data available for R12
+    result = list(iter_price_emission(regions, ssp_or_led))
+    assert N_exp == len(result)

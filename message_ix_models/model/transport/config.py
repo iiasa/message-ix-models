@@ -1,5 +1,6 @@
 import logging
 import re
+from collections.abc import Iterator
 from dataclasses import InitVar, dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -15,6 +16,7 @@ from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.sdmx import AnnotationsMixIn, StructureFactory
 
 from .policy import ExogenousEmissionPrice, TaxEmission
+from .util import short_hash
 
 if TYPE_CHECKING:
     from sdmx.model import common
@@ -624,3 +626,32 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
             _append_code(f"EDITS-{id_}", name.format(id_), ssp, edits=id_)
 
         return cl
+
+
+def iter_price_emission(
+    regions: str, ssp_or_led: str
+) -> Iterator[tuple[ExogenousEmissionPrice, str]]:
+    """Iterate over available data in :file:`transport/{regions}/price-emission/`.
+
+    Yields 2-tuple, similar to :meth:`.ScenarionInfo.from_path`:
+
+    1. :class:`ExogenousEmissionPrice` with the scenario URL matching the filename.
+    2. A 4-character hash of the scenario URL.
+
+    Only files with paths/model names containing ``SSP{ssp_or_led}`` are returned; all
+    others are skipped.
+    """
+    # TODO Integrate some or all of this functionality with the PRICE_EMISSION class
+
+    base_dir = package_data_path("transport", regions, "price-emission")
+    model_pattern = r"SSP_(?P<ssp_or_led>SSP[12345]|LED)_v(?P<model_version>[\d\.]+)"
+
+    for path in base_dir.glob("*.csv"):
+        info, groups = ScenarioInfo.from_path(path, model_pattern=model_pattern)
+        if groups["ssp_or_led"] != ssp_or_led:
+            continue
+
+        yield (
+            ExogenousEmissionPrice(f"ixmp://ixmp-dev/{info.url}"),
+            short_hash(info.url, 4),
+        )
