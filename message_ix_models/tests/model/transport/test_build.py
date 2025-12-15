@@ -138,7 +138,7 @@ def test_bare_res(
         # ("R11", "B", dict(futures_scenario="debug")),
         ("R12", "B", dict(code="SSP2")),
         ("R12", "B", dict(code="SSP2 tax")),
-        ("R12", "B", dict(code="SSP2 exo price")),
+        ("R12", "B", dict(code="SSP2 exo price a30e")),
         # ("R12", "B", dict(navigate_scenario="act+ele+tec")),
         ("R12", "B", dict(code="LED-SSP2")),
         ("R12", "B", dict(code="EDITS-CA")),

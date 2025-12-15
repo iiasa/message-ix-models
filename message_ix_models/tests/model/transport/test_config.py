@@ -96,7 +96,7 @@ class TestCL_SCENARIO:
         result = CL_SCENARIO.get(force=True)
 
         # Code list has the expected length
-        assert 46 == len(result)
+        assert 296 == len(result)
 
         # Code list contains codes with the expected IDs
         assert {
@@ -108,19 +108,14 @@ class TestCL_SCENARIO:
             "EDITS-HA",
             "LED-SSP1",
             "LED-SSP2",
-            "SSP1 exo price",
             "SSP1 tax",
             "SSP1",
-            "SSP2 exo price",
             "SSP2 tax",
             "SSP2",
-            "SSP3 exo price",
             "SSP3 tax",
             "SSP3",
-            "SSP4 exo price",
             "SSP4 tax",
             "SSP4",
-            "SSP5 exo price",
             "SSP5 tax",
             "SSP5",
         } <= set(result.items.keys())
@@ -132,7 +127,12 @@ class TestCL_SCENARIO:
         cfg = Config.from_context(test_context, dict(code=c))
         assert "material" in cfg.modules
 
+        # Codes with policies discovered in the data dir are present
+        c = result["M SSP2 exo price 2e17"]
 
+        assert "SSP_SSP2_v5.3.1/SSP2 - Low Emissions#2" in str(
+            c.get_annotation(id="policy").text
+        )
 
 
 @pytest.mark.parametrize(
