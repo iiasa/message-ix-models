@@ -184,25 +184,30 @@ def read_ict_v3(dc_scen, tele_scen, ssp="SSP2") -> pd.DataFrame:
     path = private_data_path(
         "projects", "digsy", "R12 Clean MESSAGE version_Finalised.xlsx"
     )
-    comm_map = {dc_scen: "data_centre_elec", tele_scen: "tele_comm_elec"}
-    df = pd.read_excel(path, sheet_name="Option 1")
-    df[tele_scen] = df[tele_scen] - df[dc_scen]
-    df = df.melt(
-        id_vars=["Region", "Year", "Scenario"], var_name="Variable", value_name="Value"
-    )
-    df = df[df["Scenario"].isin(["IEA (Base)", ssp])].drop(columns=["Scenario"])
-    df = df[
-        (
-            (
-                df["Variable"].isin(
-                    ["DC Central Estimate (TWh)", "Central Estimate (TWh)"]
-                )
-            )
-            & (df["Year"] < 2030)
-        )
-        | ((df["Variable"].isin([dc_scen, tele_scen])) & (df["Year"] >= 2030))
+    comm_map = {
+        dc_scen: "data_centre_elec",
+        tele_scen: "tele_comm_elec",
+        "DC Central Estimate (TWh)": "data_centre_elec",
+        "Central Estimate (TWh)": "tele_comm_elec",
+    }
+    df = pd.read_excel(path, sheet_name="Option 1", index_col=[2, 1, 0])
+    df_iea = df.loc["IEA (Base)"].loc[[2020, 2025]][
+        ["DC Central Estimate (TWh)", "Central Estimate (TWh)"]
     ]
-    df.set_index(["Region", "Year", "Variable"], inplace=True)
+    df_iea["Central Estimate (TWh)"] = (
+        df_iea["Central Estimate (TWh)"] - df_iea["DC Central Estimate (TWh)"]
+    )
+    df_2030 = df.loc["IEA (Base)"].loc[[2030]][[dc_scen, tele_scen]]
+    df_2030[tele_scen] = df_2030[tele_scen] - df_2030[dc_scen]
+
+    df_ssp = df.loc[ssp][[dc_scen, tele_scen]]
+    df_ssp[tele_scen] = df_ssp[tele_scen] - df_ssp[dc_scen]
+    df = (
+        pd.concat([df_iea, df_2030, df_ssp])
+        .melt(ignore_index=False, var_name="Variable", value_name="Value")
+        .dropna()
+    )
+    df.set_index("Variable", append=True, inplace=True)
     df = make_df(
         "demand",
         **df["Value"]
