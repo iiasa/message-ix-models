@@ -1229,10 +1229,12 @@ def iron_prod(rep: "Reporter"):
 
 
 def add_eff(rep: "Reporter"):
-    k = Key(f"{OUT}:nl-t-ya-m-c")
+    # k = Key(f"{OUT}:nl-t-ya-m-c")
+    k = Key("output:nl-t-ya-m-c")
     k_el = rep.add(k["elec"], "select", k, {"c": ["electr"]}, sums=True)
-    k2 = Key(f"{IN}:nl-t-ya-m-c")
-    rep.add("eff", "div", k2, k_el[0].drop("c"))
+    k2 = Key("input:nl-t-ya-m-c")
+    k3 = rep.add("eff", "div", k_el[0].drop("c"), k2)
+    rep.add("eff+%", "mul", k3, Quantity(100))
 
 
 if __name__ == "__main__":
