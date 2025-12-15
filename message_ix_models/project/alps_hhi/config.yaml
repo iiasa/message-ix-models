@@ -107,38 +107,24 @@ define_parameters:
 # CONSTRAINT PARAMETERS
 constraint_values:
   gas_piped:
-    growth_activity_lo: -0.1
-    growth_activity_up: 0.1
+    growth_activity_lo: -0.01
+    growth_activity_up: 0.01
+    soft_activity_lo: -0.01
+    soft_activity_up: 0.01
   LNG_shipped:
-    growth_activity_lo: -0.1
-    growth_activity_up: 0.1    
-
+    growth_activity_lo: -0.01
+    growth_activity_up: 0.01   
+    soft_activity_lo: -0.01
+    soft_activity_up: 0.01
+    
 # SENSITIVITY SCENARIOS
 sensitivities:
-  FSU_frictions:
+  FSU_EUR_frictions:
     exporters:
       - R12_FSU
     importers:
       - R12_WEU
-      - R12_NAM
-    technologies:
-      - gas_piped
-      - LNG_shipped
-      - coal_shipped
-      - crudeoil_shipped
-      - crudeoil_piped
-      - eth_shipped
-      - foil_shipped
-      - foil_piped
-      - loil_shipped
-      - loil_piped
-      - biomass_shipped
-      - lh2_shipped  
-  FSU_WEU_frictions:
-    exporters:
-      - R12_FSU
-    importers:
-      - R12_WEU
+      - R12_EEU
     technologies:
       - gas_piped
       - LNG_shipped

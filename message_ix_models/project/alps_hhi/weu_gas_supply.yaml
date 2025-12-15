@@ -1,0 +1,24 @@
+# HHI constraint on gas imports and production in R12_WEU
+weu_gas_supply:
+  nodes:
+    - R12_WEU
+  value:
+    0.6
+  technologies:
+    - gas_piped_exp_weu
+    - LNG_shipped_exp_weu
+    - coal_gas
+    - gas_extr_agg
+    #- gas_extr_1
+    #- gas_extr_2
+    #- gas_extr_3
+    #- gas_extr_4
+    #- gas_extr_5
+    #- gas_extr_6
+    #- gas_extr_7    
+    - gas_bio
+    - h2_mix
+  commodities:
+    gas:
+      - primary
+      - secondary

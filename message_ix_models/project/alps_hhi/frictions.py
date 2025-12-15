@@ -26,19 +26,6 @@ def friction_dictionary(sensitivity_scenario: str):
     config, config_path = load_config(project_name = 'alps_hhi', config_name = 'config.yaml')
     data_path = package_data_path("bilateralize")
 
-    # Clear bare files
-    print("Clearing bare files for " + sensitivity_scenario)
-    for tec in config['covered_trade_technologies']:
-        if os.path.exists(os.path.join(data_path, tec, "bare_files")):
-            for file in os.listdir(os.path.join(data_path, tec, "bare_files")):
-                if os.path.isfile(os.path.join(data_path, tec, "bare_files", file)):
-                    if 'technical_lifetime' not in file:
-                        os.remove(os.path.join(data_path, tec, "bare_files", file))
-        if os.path.exists(os.path.join(data_path, tec, "bare_files", "flow_technology")):
-            for file in os.listdir(os.path.join(data_path, tec, "bare_files", "flow_technology")):
-                if os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", file)):
-                    os.remove(os.path.join(data_path, tec, "bare_files", "flow_technology", file))
-
     sens_i = config['sensitivities'][sensitivity_scenario]['exporters']
     sens_j = config['sensitivities'][sensitivity_scenario]['importers']
     sens_techs = config['sensitivities'][sensitivity_scenario]['technologies']
@@ -66,18 +53,7 @@ def friction_dictionary(sensitivity_scenario: str):
               unit = '-')
 
         bound_out = pd.concat([bound_out, bounddf])
-        #base_inv_cost = pd.read_csv(os.path.join(data_path, tec, "edit_files", "inv_cost.csv"))
-        #base_inv_cost = base_inv_cost[base_inv_cost['node_loc'].isin(sens_i)]
-        #base_inv_cost = base_inv_cost[base_inv_cost['technology'].isin(tec_list)]
-
-        #base_inv_cost['value'] = 100
-
-        #base_inv_cost.to_csv(os.path.join(data_path, tec, "bare_files", "inv_cost.csv"), index=False)
-    
-    #trade_dict_sens = bare_to_scenario(project_name = 'alps_hhi', 
-    #                                   config_name = 'config.yaml',
-    #                                   p_drive_access = False)
-    
+        
     return bound_out
 
 def run_friction_scenario(base_scenario_name: str,
@@ -113,6 +89,8 @@ def run_friction_scenario(base_scenario_name: str,
     else:
         target_scenario.solve(quiet = False)
 
-for alps_base in ['SSP2', 'SSP2_hhi_HC', 'SSP2_hhi_WS_l80p']:
-    run_friction_scenario(alps_base, 'FSU_WEU_frictions')
+for alps_base in ['SSP2', 'SSP2_hhi_HC_supply', 'SSP2_hhi_HC_imports',
+                  'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_WS_l90p_imports',
+                  'SSP2_hhi_WS_l80p_supply', 'SSP2_hhi_WS_l80p_imports']:
+    run_friction_scenario(alps_base, 'FSU_EUR_frictions')
 
