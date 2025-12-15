@@ -35,7 +35,7 @@ def gem_region(project_name: str | None = None, config_name: str | None = None):
     config, config_path = load_config(
         project_name=project_name, config_name=config_name
     )
-    with open(config_path, "r") as f:
+    with open(config_path, "r", encoding="utf8") as f:
         config = yaml.safe_load(f)
     message_regions = config["scenario"]["regions"]
 
