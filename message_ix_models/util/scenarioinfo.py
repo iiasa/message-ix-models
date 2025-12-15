@@ -13,6 +13,8 @@ import sdmx.model.v21 as sdmx_model
 from ixmp.util import parse_url
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from message_ix import Scenario
 
 log = logging.getLogger(__name__)
@@ -121,6 +123,21 @@ class ScenarioInfo:
         self.y0 = int(fmy[0]) if len(fmy) else self.set["year"][0]
 
         self._yv_ya = scenario_obj.vintage_and_active_years()
+
+    @classmethod
+    def from_path(
+        cls, path: "Path", model_pattern: str = ".*", scenario_pattern: str = ".*"
+    ) -> tuple["ScenarioInfo", dict]:
+        """Inverse of :attr:`.path`."""
+        pattern = rf"(?P<m>{model_pattern})_(?P<s>{scenario_pattern})_v(?P<v>\d+)"
+        if match := re.fullmatch(pattern, path.stem):
+            groups = match.groupdict()
+            return cls(
+                model=groups.pop("m"),
+                scenario=groups.pop("s"),
+                version=int(groups.pop("v")),
+            ), groups
+        raise ValueError(f"{path.stem} did not match {pattern!r}")
 
     @classmethod
     def from_url(cls, url: str) -> "ScenarioInfo":
