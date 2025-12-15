@@ -21,7 +21,8 @@ def tec_aggregation(scenario: message_ix.Scenario,
                     output_level0: str,
                     output_technology: str,
                     output_commodity1: str,
-                    output_level1: str):
+                    output_level1: str,
+                    log):
     base_output = scenario.par("output", filters = {"technology": tec_list_base,
                                                     "commodity": output_commodity_base,
                                                     "level": output_level_base})
@@ -46,6 +47,12 @@ def tec_aggregation(scenario: message_ix.Scenario,
     agg_output1['level'] = output_level1
     agg_output1['value'] = 1
 
+    log.info("Add required sets")
+    with scenario.transact("Add levels and commodities"):
+        scenario.add_set("level", [output_level0, output_level1])
+        scenario.add_set("commodity", [output_commodity0, output_commodity1])
+        scenario.add_set("technology", [output_technology])
+        
     log.info(f"Remove base output for {tec_list_base}")
     with scenario.transact(f"Remove base output for {tec_list_base}"):
         scenario.remove_par("output", base_output)
