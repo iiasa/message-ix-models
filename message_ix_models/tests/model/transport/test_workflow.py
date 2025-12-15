@@ -28,7 +28,7 @@ def test_generate(test_context, base_scenario) -> None:
 
     # Separate steps for tax and GHG pricing policies are included
     assert "SSP5 tax reported" in wf
-    assert "SSP5 exo price reported" in wf
+    assert "SSP5 exo price 5cab reported" in wf
 
     # WorkflowStep objects store expected configuration for certain projects
     assert (
