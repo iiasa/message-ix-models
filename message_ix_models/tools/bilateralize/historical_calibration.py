@@ -45,6 +45,7 @@ def setup_datapath(project_name: str | None = None, config_name: str | None = No
     iea_gas_path = os.path.join(iea_path, "NATGAS")
     baci_path = os.path.join(data_path, "UN Comtrade", "BACI")
     imo_path = os.path.join(data_path, "IMO")
+    cw_path = os.path.join(data_path, "crosswalks")
 
     data_paths = dict(
         iea_web=iea_web_path,
@@ -52,6 +53,7 @@ def setup_datapath(project_name: str | None = None, config_name: str | None = No
         iea_diag=iea_diagnostics_path,
         baci=baci_path,
         imo=imo_path,
+        cw = cw_path
     )
 
     return data_paths
@@ -391,11 +393,12 @@ def import_iea_gas(project_name: str | None = None, config_name: str | None = No
         ngd["PRODUCT"] == "PIPETJ", "gas_piped", ngd["MESSAGE COMMODITY"]
     )
 
-    cf_cw = pd.read_csv(os.path.join(data_paths["iea_web"], "CONV_country_codes.csv"))
+    cf_cw = pd.read_excel(os.path.join(data_paths["cw"], "country_crosswalk.xlsx"))
+    cf_cw = cf_cw[["message_country", "iea_country"]]
     for t in ["EXPORTER", "IMPORTER"]:
-        ngd = ngd.merge(cf_cw, left_on=t, right_on="IEA COUNTRY", how="left")
-        ngd[t] = ngd["ISO"]
-        ngd = ngd.drop(["ISO", "IEA COUNTRY"], axis=1)
+        ngd = ngd.merge(cf_cw, left_on=t, right_on="iea_country", how="left")
+        ngd[t] = ngd["message_country"]
+        ngd = ngd.drop(["iea_country", "message_country"], axis=1)
         ngd = ngd[~ngd[t].isnull()]
 
     ngd = ngd[["YEAR", "EXPORTER", "IMPORTER", "MESSAGE COMMODITY", "ENERGY (TJ)"]]
@@ -691,6 +694,7 @@ def build_historical_activity(
     ].reset_index()
 
     check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
+
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
 
