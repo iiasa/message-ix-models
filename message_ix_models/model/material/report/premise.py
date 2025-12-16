@@ -82,7 +82,11 @@ def run_other(rep: Reporter, model_name: str, scen_name: str):
 def run_pe(rep: Reporter, model_name: str, scen_name: str):
     """Run primary energy reporting for biomass variables needed for premise."""
     config = load_config("energy", "pe_globiom")
+    rep.set_filters(
+        l="land_use_reporting", c=config.mapping.index.get_level_values("c").tolist()
+    )
     df = pyam_df_from_rep(rep, config.var, config.mapping)
+    rep.set_filters()
     df = format_reporting_df(
         df,
         config.iamc_prefix,
@@ -91,7 +95,14 @@ def run_pe(rep: Reporter, model_name: str, scen_name: str):
         config.unit,
         config.mapping,
     )
-    return df
+    df_final = (
+        df.filter(unit="dimensionless", keep=False)
+        .convert_unit("GWa", "EJ")
+        .timeseries()
+        .reset_index()
+    )
+    df_final.unit = "EJ/yr"
+    return df_final
 
 
 def run_eff(rep, model_name: str, scen_name: str):
@@ -109,21 +120,44 @@ def run_eff(rep, model_name: str, scen_name: str):
     return df
 
 
+def query_total_co2(scen: "Scenario") -> pyam.IamDataFrame:
+    df = scen.timeseries(variable="Emissions|CO2")
+    reg_map = {
+        "China (R12)": "R12_CHN",
+        "Rest of Centrally planned Asia (R12)": "R12_RCPA",
+        "Former Soviet Union (R12)": "R12_FSU",
+        "Latin America (R12)": "R12_LAM",
+        "Middle East and Africa (R12)": "R12_MEA",
+        "South Asia (R12)": "R12_SAS",
+        "Pacific Asia (R12)": "R12_PAS",
+        "Western Europe (R12)": "R12_WEU",
+        "Eastern Europe (R12)": "R12_EEU",
+        "Pacific OECD (R12)": "R12_PAO",
+        "Subsaharan Africa (R12)": "R12_AFR",
+        "North America (R12)": "R12_NAM",
+        "GLB region (R12)": "World",
+    }
+    df["region"] = df["region"].map(reg_map)
+    py_df = pyam.IamDataFrame(df)
+    return py_df
+
+
 def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs = []
     reporter_utils.pe_gas(rep)
+    dfs.append(run_pe(rep, model_name, scen_name))
     dfs.append(run_fe_reporting(rep, model_name, scen_name))
     dfs.append(run_eff(rep, model_name, scen_name))
     dfs.append(run_se(rep, model_name, scen_name))
     dfs.append(run_other(rep, model_name, scen_name))
     dfs.append(run_co2(rep, model_name, scen_name))
-    # dfs.append(run_pe(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
+    dfs.append(query_total_co2(scenario))
     py_df = pyam.concat(dfs)
     py_df = calculate_clinker_ccs_energy(scenario, rep, py_df)
 
     py_df.aggregate_region(
-        [i for i in py_df.variable if "Efficiency" not in i], append=True
+        [i for i in py_df.variable if ("Efficiency" not in i) & (i != "Emissions|CO2")], append=True
     )
     py_df.filter(variable="Share*", keep=False, inplace=True)
     py_df.filter(

@@ -56,9 +56,11 @@ def format_reporting_df(
 ) -> pyam.IamDataFrame:
     """Formats a DataFrame created with :func:pyam_df_from_rep to pyam.IamDataFrame."""
     df.columns = ["value"]
+    reg_col = "nl" if "nl" in df.index.names else "n"
+    year_col = "ya" if "ya" in df.index.names else "y"
     df = (
         df.reset_index()
-        .rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
+        .rename(columns={"iamc_name": "variable", reg_col: "region", year_col: "Year"})
         .assign(
             variable=lambda x: variable_prefix + x["variable"],
             Model=model_name,
