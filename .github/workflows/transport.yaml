@@ -26,7 +26,6 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "DIGSY-BEST-C",
       "DIGSY-BEST-C exo price 2e17"
     ]
 
