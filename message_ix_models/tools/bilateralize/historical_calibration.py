@@ -676,6 +676,34 @@ def build_historical_activity(
 
     ngdf = import_iea_gas(project_name=project_name, config_name=config_name)
 
+    # Calibrate gas to IEA WEB data
+    data_paths = setup_datapath(project_name=project_name, config_name=config_name)
+    web = pd.read_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_crosswalk.csv"))
+    web = web.merge(ieacw, left_on="REGION", right_on="REGION", how="left")
+    web["IEA-WEB VALUE"] = np.where(
+        web["FLOW"] == "EXPORTS", web["IEA-WEB VALUE"] * -1, web["IEA-WEB VALUE"]
+    )
+    web = web[web['IEA-WEB COMMODITY'] == 'NATURAL_GAS']
+
+    web_tot = web[web["FLOW"] == "EXPORTS"][['YEAR', 'ISO', 'IEA-WEB VALUE']]
+    web_tot = web_tot.groupby(["YEAR", "ISO"])["IEA-WEB VALUE"].sum().reset_index()
+    web_tot = web_tot.rename(columns={"ISO": "EXPORTER",
+                                       "IEA-WEB VALUE": "WEB TOTAL"})
+    ngdf_tot = ngdf.groupby(["YEAR", "EXPORTER"])["ENERGY (TJ)"].sum().reset_index()
+    ngdf_tot = ngdf_tot.rename(columns={"EXPORTER": "EXPORTER",
+                                        "ENERGY (TJ)": "NGDF TOTAL"})
+    ngdf_tot = ngdf_tot.merge(web_tot, left_on=["YEAR", "EXPORTER"], right_on=["YEAR", "EXPORTER"], how="outer")
+
+    ngdf_tot["CALIBRATION FACTOR"] = ngdf_tot["WEB TOTAL"] / ngdf_tot["NGDF TOTAL"]
+    ngdf_tot["CALIBRATION FACTOR"] = np.where(ngdf_tot["CALIBRATION FACTOR"].isnull(), 1, ngdf_tot["CALIBRATION FACTOR"])
+    ngdf_tot["CALIBRATION FACTOR"] = np.where(ngdf_tot["CALIBRATION FACTOR"]<1, 1, ngdf_tot["CALIBRATION FACTOR"])
+    ngdf_tot = ngdf_tot[['YEAR', 'EXPORTER', 'CALIBRATION FACTOR']]
+
+    ngdf = ngdf.merge(ngdf_tot, left_on=["YEAR", "EXPORTER"], right_on=["YEAR", "EXPORTER"], how="left")
+    ngdf["ENERGY (TJ)"] = ngdf["ENERGY (TJ)"] * ngdf_tot["CALIBRATION FACTOR"]
+    ngdf = ngdf.drop(columns=["CALIBRATION FACTOR"])
+
     tradedf = bacidf.merge(
         ngdf,
         left_on=["YEAR", "EXPORTER", "IMPORTER", "MESSAGE COMMODITY"],
@@ -694,7 +722,6 @@ def build_historical_activity(
     ].reset_index()
 
     check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
-
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
 
