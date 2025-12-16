@@ -3,7 +3,7 @@ weu_gas_supply:
   nodes:
     - R12_WEU
   value:
-    0.6
+    0.7
   technologies:
     - gas_piped_exp_weu
     - LNG_shipped_exp_weu
@@ -21,4 +21,5 @@ weu_gas_supply:
   commodities:
     gas:
       - primary
+      - extraction
       - secondary

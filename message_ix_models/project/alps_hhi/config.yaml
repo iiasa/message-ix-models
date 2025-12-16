@@ -21,6 +21,9 @@ models_scenarios:
   SSP2:
     model: SSP_SSP2_v6.2
     scenario: baseline
+  #SSP2_1000f:
+  #  model: SSP_SSP2_v6.2
+  #  scenario: 1000f
 #  SSP3:
 #    model: SSP_SSP3_v6.2
 #    scenario: baseline
@@ -119,7 +122,7 @@ constraint_values:
     
 # SENSITIVITY SCENARIOS
 sensitivities:
-  FSU_EUR_frictions:
+  FSU_EUR:
     exporters:
       - R12_FSU
     importers:
@@ -128,13 +131,14 @@ sensitivities:
     technologies:
       - gas_piped
       - LNG_shipped
-      - coal_shipped
-      - crudeoil_shipped
-      - crudeoil_piped
-      - eth_shipped
-      - foil_shipped
-      - foil_piped
-      - loil_shipped
-      - loil_piped
-      - biomass_shipped
-      - lh2_shipped  
+      
+  FSU_EUR_NAM_PAO:
+    exporters:
+      - R12_FSU
+    importers:
+      - R12_WEU
+      - R12_EEU
+      - R12_PAO
+      - R12_NAM
+    technologies:
+      - LNG_shipped

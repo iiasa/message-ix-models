@@ -90,7 +90,7 @@ def run_friction_scenario(base_scenario_name: str,
         target_scenario.solve(quiet = False)
 
 for alps_base in ['SSP2', 'SSP2_hhi_HC_supply', 'SSP2_hhi_HC_imports',
-                  'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_WS_l90p_imports',
-                  'SSP2_hhi_WS_l80p_supply', 'SSP2_hhi_WS_l80p_imports']:
-    run_friction_scenario(alps_base, 'FSU_EUR_frictions')
+                  'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_WS_l90p_imports']:
+    run_friction_scenario(alps_base, 'FSU_EUR')
+    run_friction_scenario(alps_base, 'FSU_EUR_NAM_PAO')
 
