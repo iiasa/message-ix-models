@@ -22,10 +22,10 @@ F ROAD,          lightoil,  growth_activity_lo,       -0.0371
 F ROAD,          *,         growth_new_capacity_up,    0.0192
 F ROAD,          *,         initial_new_capacity_up,   2.0
 
-LDV,             *,         growth_activity_lo,       -0.0371
+LDV,             *,         growth_activity_lo,       -0.0539
 ELC_100,         *,         growth_activity_lo,       -0.0192
 
-ICE_conv,         *,        growth_new_capacity_lo,   -0.0539
+ICE_conv,         *,        growth_new_capacity_lo,   -0.0700
 ELC_100,          *,        growth_new_capacity_lo,   -0.0539
 
 # Some LDV technologies
