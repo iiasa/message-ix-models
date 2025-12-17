@@ -1,7 +1,7 @@
 # DATA DIRECTORIES
 p_drive_location:
-  #/pdrive/projects/ene.model3
-  P:/ene.model
+  /pdrive/projects/ene.model3
+  #P:/ene.model
 
 # SCENARIO INFORMATION
 scenario:
@@ -110,15 +110,16 @@ define_parameters:
 # CONSTRAINT PARAMETERS
 constraint_values:
   gas_piped:
-    growth_activity_lo: -0.01
-    growth_activity_up: 0.01
+    growth_activity_lo: 
+      R12_AFR: -0.01
+    growth_activity_up: 0.1
     soft_activity_lo: -0.01
-    soft_activity_up: 0.01
+    soft_activity_up: 0.1
   LNG_shipped:
     growth_activity_lo: -0.01
-    growth_activity_up: 0.01   
+    growth_activity_up: 0.02   
     soft_activity_lo: -0.01
-    soft_activity_up: 0.01
+    soft_activity_up: 0.02
     
 # SENSITIVITY SCENARIOS
 sensitivities:

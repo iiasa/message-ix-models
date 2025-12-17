@@ -701,7 +701,7 @@ def build_historical_activity(
     ngdf_tot = ngdf_tot[['YEAR', 'EXPORTER', 'CALIBRATION FACTOR']]
 
     ngdf = ngdf.merge(ngdf_tot, left_on=["YEAR", "EXPORTER"], right_on=["YEAR", "EXPORTER"], how="left")
-    ngdf["ENERGY (TJ)"] = ngdf["ENERGY (TJ)"] * ngdf_tot["CALIBRATION FACTOR"]
+    ngdf["ENERGY (TJ)"] = ngdf["ENERGY (TJ)"] * ngdf["CALIBRATION FACTOR"]
     ngdf = ngdf.drop(columns=["CALIBRATION FACTOR"])
 
     tradedf = bacidf.merge(

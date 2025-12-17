@@ -298,6 +298,7 @@ def bare_to_scenario(
             config_name=config_name,
             reimport_BACI=False,
         )
+        histdf.to_csv('check.csv')
         histdf = histdf[histdf["year_act"].isin([2000, 2005, 2010, 2015, 2020, 2023])]
         histdf["year_act"] = np.where(
             (histdf["year_act"] == 2023),
