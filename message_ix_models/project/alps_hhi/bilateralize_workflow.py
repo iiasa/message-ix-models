@@ -32,15 +32,18 @@ prepare_edit_files(project_name = 'alps_hhi',
                    P_access = True)
 
 # Add constraints to the dictionary
+print("Add constraints to the dictionary")
 constraint_pars = ["initial_activity_lo", "initial_activity_up",
                    "growth_activity_lo", "growth_activity_up"]
                    #"soft_activity_lo", "soft_activity_up"]
 constraint_tec = config['constrained_tec']
 
 for con in constraint_pars:
+    print(f"...{con}")
     for tec in constraint_tec:
-        df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), par + ".csv"))
-        df.to_csv(os.path.join(data_path, tec, "bare_files", par + ".csv"), index = False)
+        print(f"......{tec}")
+        df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), con + ".csv"))
+        df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
         
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'alps_hhi', 
