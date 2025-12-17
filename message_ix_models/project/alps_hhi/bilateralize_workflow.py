@@ -33,24 +33,14 @@ prepare_edit_files(project_name = 'alps_hhi',
 
 # Add constraints to the dictionary
 constraint_pars = ["initial_activity_lo", "initial_activity_up",
-                   "growth_activity_lo", "growth_activity_up",
-                   "soft_activity_lo", "soft_activity_up"]
-for tec in config['constraint_values'].keys():
-    for par in constraint_pars:
-        df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
-        
-        if par in ["initial_activity_lo", "initial_activity_up"]:
-            df["value"] = 2
-            
-        if par in ["growth_activity_lo", "growth_activity_up"]:
-            constraint_value = config['constraint_values'][tec][par]
-            
-            if isinstance(constraint_value, dict):
-                for region in constraint_value.keys():
-                    df.loc[df["node_loc"] == region, "value"] = constraint_value[region]
-            else:
-                df["value"] = constraint_value
-        df.to_csv(os.path.join(data_path, tec, "bare_files", par + ".csv"), index=False)
+                   "growth_activity_lo", "growth_activity_up"]
+                   #"soft_activity_lo", "soft_activity_up"]
+constraint_tec = config['constrained_tec']
+
+for con in constraint_pars:
+    for tec in constraint_tec:
+        df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), par + ".csv"))
+        df.to_csv(os.path.join(data_path, tec, "bare_files", par + ".csv"), index = False)
         
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'alps_hhi', 

@@ -108,18 +108,9 @@ define_parameters:
       - capacity_factor
 
 # CONSTRAINT PARAMETERS
-constraint_values:
-  gas_piped:
-    growth_activity_lo: 
-      R12_AFR: -0.01
-    growth_activity_up: 0.1
-    soft_activity_lo: -0.01
-    soft_activity_up: 0.1
-  LNG_shipped:
-    growth_activity_lo: -0.01
-    growth_activity_up: 0.02   
-    soft_activity_lo: -0.01
-    soft_activity_up: 0.02
+constrained_tec:
+  - gas_piped
+  - LNG_shipped
     
 # SENSITIVITY SCENARIOS
 sensitivities:
