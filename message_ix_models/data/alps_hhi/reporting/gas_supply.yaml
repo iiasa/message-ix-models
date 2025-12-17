@@ -14,16 +14,30 @@ vars:
 # Piped gas imports
   Gas Supply|Imports|Piped Gas|:
     filter:
-      { technology: [gas_piped_exp, 'gas_imp'], mode: M1, commodity: gas, level: [piped, secondary] }
+      { technology: [gas_piped_exp], mode: M1, commodity: gas, level: [piped] }
     short:
       gas_piped_exp
 
 # Shipped LNG imports
   Gas Supply|Imports|Shipped LNG|:
     filter:
-      { technology: [LNG_shipped_exp, 'LNG_imp'], mode: M1, commodity: LNG, level: [shipped, secondary] }
+      { technology: [LNG_shipped_exp], mode: M1, commodity: LNG, level: [shipped] }
     short:
       LNG_shipped_exp
+
+# Piped gas imports
+  Gas Supply|Imports|Piped Gas (Base)|:
+    filter:
+      { technology: [gas_imp], mode: M1, commodity: gas, level: secondary }
+    short:
+      gas_imp
+
+# Shipped LNG imports
+  Gas Supply|Imports|Shipped LNG (Base)|:
+    filter:
+      { technology: LNG_imp, mode: M1, commodity: LNG, level: secondary }
+    short:
+      LNG_imp
 
 # Coal gasification
   Gas Supply|Domestic|Coal Gasification:
@@ -39,7 +53,12 @@ vars:
     short:
       extr_gas_dom
 
-
+# Aggregate gas extraction
+  Gas Supply|Domestic|Gas Extraction (Aggregate):
+    filter:
+      { technology: [gas_extr_agg], mode: M1, commodity: gas, level: [primary] }
+    short:
+      extr_gas_dom
 
 # Synthetic gas production from biomass
   Gas Supply|Domestic|Synthetic Gas from Biomass:

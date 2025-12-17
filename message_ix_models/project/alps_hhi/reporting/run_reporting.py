@@ -58,9 +58,9 @@ def pyam_df_from_rep(
     
     rep.set_filters(**filters_dict)
     
-    if reporter_var in ['out']:
-        df_hist = pd.DataFrame(rep.get(f"{reporter_var}:nl-nd-t-ya-m-c-l:historical+current"))
-        df_model = pd.DataFrame(rep.get(f"{reporter_var}:nl-nd-t-ya-m-c-l"))
+    if reporter_var == 'out':
+        df_hist = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-yv-m-c-l:historical+current"))
+        df_model = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-m-c-l"))
 
         df_out = pd.DataFrame()
         for dfv in [df_hist, df_model]:
@@ -68,7 +68,7 @@ def pyam_df_from_rep(
                     dfv.join(mapping_df[["iamc_name", "unit"]])
                     .dropna()
                     .groupby(["nl", "nd", "ya", "iamc_name"])
-                    .sum(numeric_only=True)
+                    .max(numeric_only=True)
                 )
             # Adjust df to include exporters in iamc_name for trade variables
             dfn = df.index.to_frame(index = False)
@@ -96,6 +96,7 @@ def gas_supply_reporting(rep: Reporter, scenario: message_ix.Scenario) -> pd.Dat
     full_df = pd.DataFrame()
     for var in ['out']:
         rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
+        rdf = rdf.drop_duplicates()
         full_df = pd.concat([full_df, rdf])
     df = full_df.copy().reset_index()
     df = df.rename(columns = {0:'value'})
@@ -136,12 +137,23 @@ mp = ixmp.Platform()
 
 gas_supply_out = pd.DataFrame()
 for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
+
                   ('alps_hhi', 'SSP2'),
+
                   #('alps_hhi', 'SSP2_hhi_HC_supply'),
                   #('alps_hhi', 'SSP2_hhi_WS_l90p_supply'),
-                  #('alps_hhi', 'SSP2_FSU_WEU_frictions'),
-                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_WEU_frictions'),
-                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_WEU_frictions')
+
+                  #('alps_hhi', 'SSP2_hhi_HC_imports'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_imports'),
+
+                  #('alps_hhi', 'SSP2_FSU_EUR'),
+                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR'),
+
+                  #('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO'),
+                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR_NAM_PAO'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_NAM_PAO'),
+                  
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
@@ -154,6 +166,10 @@ for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
 
 gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Domestic|', '')
 gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Imports|', '')
+
+gas_supply_out_tot = gas_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
+gas_supply_out_tot = gas_supply_out_tot.rename(columns = {'value': 'total'})
+gas_supply_out = gas_supply_out.merge(gas_supply_out_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
 
 gas_supply_out.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))
 
