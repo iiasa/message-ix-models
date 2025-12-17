@@ -28,14 +28,3 @@ R12_WEU,gas_piped_exp_afr,broadcast,year,-0.01,GWa
 R12_WEU,gas_piped_exp_eeu,broadcast,year,-0.01,GWa
 R12_WEU,gas_piped_exp_fsu,broadcast,year,-0.01,GWa
 R12_WEU,gas_piped_exp_mea,broadcast,year,-0.01,GWa
-R12_MEA,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_WEU,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_FSU,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_RCPA,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_CHN,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_EEU,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_PAS,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_SAS,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_NAM,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_AFR,gas_piped_imp,broadcast,year,-0.01,GWa
-R12_LAM,gas_piped_imp,broadcast,year,-0.01,GWa
