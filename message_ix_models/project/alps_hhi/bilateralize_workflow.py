@@ -64,7 +64,7 @@ for t in config['covered_trade_technologies']:
 
         use_inv = trade_dict[t]['flow']['inv_cost']
         #use_inv['technology'] = use_inv['technology'].str.replace('pipe', 'piped_exp')
-        use_inv['value'] = 0
+        use_inv['value'] /= 10
         trade_dict[t]['flow']['inv_cost'] = use_inv
 
         #if t in ['loil_piped', 'foil_piped', 'crudeoil_piped']:
