@@ -50,35 +50,6 @@ trade_dict = bare_to_scenario(project_name = 'alps_hhi',
                               config_name = 'config.yaml',
                               p_drive_access = True)
 
-# Remove pipeline inputs to trade technologies
-#print(f"Detaching pipeline capacity and adding investment costs directly to trade")
-#for t in config['covered_trade_technologies']:
-#    if "piped" in t:
-#        print(f"...{t}")
-        #pipeline_input = trade_dict[t]['trade']['input']['commodity'].unique()
-        #pipeline_input = [i for i in pipeline_input if 'pipeline_capacity' in i]
-        #print(f"......{pipeline_input}")
-        #use_input = trade_dict[t]['trade']['input'].copy()
-        #use_input = use_input[use_input['commodity'].isin(pipeline_input) == False]
-        #trade_dict[t]['trade']['input'] = use_input
-
-        #use_inv = trade_dict[t]['flow']['inv_cost']
-        #use_inv['technology'] = use_inv['technology'].str.replace('pipe', 'piped_exp')
-        #use_inv['value'] = np.where(use_inv['technology'].str.contains('chn'),
-        #                            0, use_inv['value'])
-        #use_inv['value'] = np.where(use_inv['technology'].str.contains('sas'),
-        #                            0, use_inv['value'])
-        #trade_dict[t]['flow']['inv_cost'] = use_inv
-
-        #if t in ['loil_piped', 'foil_piped', 'crudeoil_piped']:
-        #    use_inv['technology'] = use_inv['technology'].str.replace('oil_piped', t)
-
-        #trade_dict[t]['trade']['inv_cost'] = use_inv
-
-        #use_tlt = trade_dict[t]['trade']['technical_lifetime']
-        #use_tlt['value'] = 30 # Assume 30 year lifetime for pipelines
-        #trade_dict[t]['trade']['technical_lifetime'] = use_tlt
-
 # Update base scenarios
 for model_scen in models_scenarios.keys():
     base_model = models_scenarios[model_scen]['model']

@@ -29,7 +29,7 @@ remdf = hhi_scenario.par('growth_activity_up', filters = {'technology': ['gas_pi
                                                                            'gas_piped_exp_sas',
                                                                            'LNG_shipped_exp_chn',
                                                                            'LNG_shipped_exp_sas']})
-
+remdf2 = hhi_s
 with hhi_scenario.transact("Remove constraints from CHN/SAS"):
     hhi_scenario.remove_par('growth_activity_up', remdf)
     
