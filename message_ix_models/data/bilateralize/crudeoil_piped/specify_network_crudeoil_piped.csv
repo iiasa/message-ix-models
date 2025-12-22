@@ -22,7 +22,7 @@ R12_SAS,R12_PAO,crudeoil_piped_exp_pao,crudeoil_piped_imp,0
 R12_SAS,R12_PAS,crudeoil_piped_exp_pas,crudeoil_piped_imp,1
 R12_SAS,R12_WEU,crudeoil_piped_exp_weu,crudeoil_piped_imp,0
 R12_RCPA,R12_AFR,crudeoil_piped_exp_afr,crudeoil_piped_imp,0
-R12_RCPA,R12_CHN,crudeoil_piped_exp_chn,crudeoil_piped_imp,0
+R12_RCPA,R12_CHN,crudeoil_piped_exp_chn,crudeoil_piped_imp,1
 R12_RCPA,R12_EEU,crudeoil_piped_exp_eeu,crudeoil_piped_imp,0
 R12_RCPA,R12_FSU,crudeoil_piped_exp_fsu,crudeoil_piped_imp,0
 R12_RCPA,R12_LAM,crudeoil_piped_exp_lam,crudeoil_piped_imp,0
@@ -67,7 +67,7 @@ R12_NAM,R12_SAS,crudeoil_piped_exp_sas,crudeoil_piped_imp,0
 R12_NAM,R12_WEU,crudeoil_piped_exp_weu,crudeoil_piped_imp,0
 R12_MEA,R12_AFR,crudeoil_piped_exp_afr,crudeoil_piped_imp,1
 R12_MEA,R12_RCPA,crudeoil_piped_exp_rcpa,crudeoil_piped_imp,0
-R12_MEA,R12_CHN,crudeoil_piped_exp_chn,crudeoil_piped_imp,0
+R12_MEA,R12_CHN,crudeoil_piped_exp_chn,crudeoil_piped_imp,1
 R12_MEA,R12_EEU,crudeoil_piped_exp_eeu,crudeoil_piped_imp,1
 R12_MEA,R12_FSU,crudeoil_piped_exp_fsu,crudeoil_piped_imp,1
 R12_MEA,R12_LAM,crudeoil_piped_exp_lam,crudeoil_piped_imp,0
@@ -110,11 +110,11 @@ R12_EEU,R12_PAS,crudeoil_piped_exp_pas,crudeoil_piped_imp,0
 R12_EEU,R12_SAS,crudeoil_piped_exp_sas,crudeoil_piped_imp,0
 R12_EEU,R12_WEU,crudeoil_piped_exp_weu,crudeoil_piped_imp,1
 R12_CHN,R12_AFR,crudeoil_piped_exp_afr,crudeoil_piped_imp,0
-R12_CHN,R12_RCPA,crudeoil_piped_exp_rcpa,crudeoil_piped_imp,0
+R12_CHN,R12_RCPA,crudeoil_piped_exp_rcpa,crudeoil_piped_imp,1
 R12_CHN,R12_EEU,crudeoil_piped_exp_eeu,crudeoil_piped_imp,0
 R12_CHN,R12_FSU,crudeoil_piped_exp_fsu,crudeoil_piped_imp,1
 R12_CHN,R12_LAM,crudeoil_piped_exp_lam,crudeoil_piped_imp,0
-R12_CHN,R12_MEA,crudeoil_piped_exp_mea,crudeoil_piped_imp,0
+R12_CHN,R12_MEA,crudeoil_piped_exp_mea,crudeoil_piped_imp,1
 R12_CHN,R12_NAM,crudeoil_piped_exp_nam,crudeoil_piped_imp,0
 R12_CHN,R12_PAO,crudeoil_piped_exp_pao,crudeoil_piped_imp,0
 R12_CHN,R12_PAS,crudeoil_piped_exp_pas,crudeoil_piped_imp,0

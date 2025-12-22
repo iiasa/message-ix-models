@@ -11,7 +11,7 @@ R12_AFR,R12_PAS,loil_piped_exp_pas,loil_piped_imp,0
 R12_AFR,R12_SAS,loil_piped_exp_sas,loil_piped_imp,0
 R12_AFR,R12_WEU,loil_piped_exp_weu,loil_piped_imp,1
 R12_RCPA,R12_AFR,loil_piped_exp_afr,loil_piped_imp,0
-R12_RCPA,R12_CHN,loil_piped_exp_chn,loil_piped_imp,0
+R12_RCPA,R12_CHN,loil_piped_exp_chn,loil_piped_imp,1
 R12_RCPA,R12_EEU,loil_piped_exp_eeu,loil_piped_imp,0
 R12_RCPA,R12_FSU,loil_piped_exp_fsu,loil_piped_imp,0
 R12_RCPA,R12_LAM,loil_piped_exp_lam,loil_piped_imp,0
@@ -22,11 +22,11 @@ R12_RCPA,R12_PAS,loil_piped_exp_pas,loil_piped_imp,0
 R12_RCPA,R12_SAS,loil_piped_exp_sas,loil_piped_imp,0
 R12_RCPA,R12_WEU,loil_piped_exp_weu,loil_piped_imp,0
 R12_CHN,R12_AFR,loil_piped_exp_afr,loil_piped_imp,0
-R12_CHN,R12_RCPA,loil_piped_exp_rcpa,loil_piped_imp,0
+R12_CHN,R12_RCPA,loil_piped_exp_rcpa,loil_piped_imp,1
 R12_CHN,R12_EEU,loil_piped_exp_eeu,loil_piped_imp,0
 R12_CHN,R12_FSU,loil_piped_exp_fsu,loil_piped_imp,1
 R12_CHN,R12_LAM,loil_piped_exp_lam,loil_piped_imp,0
-R12_CHN,R12_MEA,loil_piped_exp_mea,loil_piped_imp,0
+R12_CHN,R12_MEA,loil_piped_exp_mea,loil_piped_imp,1
 R12_CHN,R12_NAM,loil_piped_exp_nam,loil_piped_imp,0
 R12_CHN,R12_PAO,loil_piped_exp_pao,loil_piped_imp,0
 R12_CHN,R12_PAS,loil_piped_exp_pas,loil_piped_imp,0
@@ -67,7 +67,7 @@ R12_LAM,R12_SAS,loil_piped_exp_sas,loil_piped_imp,0
 R12_LAM,R12_WEU,loil_piped_exp_weu,loil_piped_imp,0
 R12_MEA,R12_AFR,loil_piped_exp_afr,loil_piped_imp,1
 R12_MEA,R12_RCPA,loil_piped_exp_rcpa,loil_piped_imp,0
-R12_MEA,R12_CHN,loil_piped_exp_chn,loil_piped_imp,0
+R12_MEA,R12_CHN,loil_piped_exp_chn,loil_piped_imp,1
 R12_MEA,R12_EEU,loil_piped_exp_eeu,loil_piped_imp,1
 R12_MEA,R12_FSU,loil_piped_exp_fsu,loil_piped_imp,1
 R12_MEA,R12_LAM,loil_piped_exp_lam,loil_piped_imp,0
