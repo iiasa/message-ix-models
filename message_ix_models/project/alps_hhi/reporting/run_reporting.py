@@ -139,21 +139,23 @@ gas_supply_out = pd.DataFrame()
 for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
 
                   ('alps_hhi', 'SSP2'),
-                  #('alps_hhi', 'SSP2_growth'),
+                  ('alps_hhi', 'SSP2_noinvgp'),
 
-                  ('alps_hhi', 'SSP2_hhi_HC_supply'),
-                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply'),
+                  #('alps_hhi', 'SSP2_hhi_HC_supply'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply'),
 
-                  ('alps_hhi', 'SSP2_hhi_HC_imports'),
-                  ('alps_hhi', 'SSP2_hhi_WS_l90p_imports'),
+                  #('alps_hhi', 'SSP2_hhi_HC_imports'),
+                 # ('alps_hhi', 'SSP2_hhi_WS_l90p_imports'),
 
-                  ('alps_hhi', 'SSP2_FSU_EUR'),
-                  ('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR'),
-                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR'),
+                  #('alps_hhi', 'SSP2_FSU_EUR_2110'),
+                  #('alps_hhi', 'SSP2_FSU_EUR_2040'),
 
-                  ('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO'),
-                  ('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR_NAM_PAO'),
-                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_NAM_PAO'),
+                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR'),
+
+                  #('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO'),
+                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR_NAM_PAO'),
+                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_NAM_PAO'),
                   
                   ]:
     print(f"COMPILING {mod}/{scen}")
@@ -184,8 +186,9 @@ gas_wide = gas_wide.pivot_table(index = ['model', 'region', 'unit', 'year', 'var
                                 aggfunc = 'sum')
 gas_wide = gas_wide.reset_index()
 
-#for s in ['SSP2', 'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_HC_supply']:
-#    gas_wide[s + '_diff'] = gas_wide[s + '_FSU_WEU_frictions'] - gas_wide[s]
+for s in ['SSP2']:
+    gas_wide[s + '_diff_FSU_EUR_2110'] = (gas_wide[s + '_FSU_EUR_2110'] - gas_wide[s]) / gas_wide[s]
+    gas_wide[s + '_diff_FSU_EUR_2040'] = (gas_wide[s + '_FSU_EUR_2040'] - gas_wide[s]) / gas_wide[s]
 
 gas_wide.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting_wide.csv'))
 

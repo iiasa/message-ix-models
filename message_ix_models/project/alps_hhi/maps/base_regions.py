@@ -9,7 +9,7 @@ import pandas as pd
 
 from message_ix_models.util import package_data_path
 
-def base_regions_map():
+def base_regions_map(legend_fontsize:str = '14px'):
     map = folium.Map([40, 180],
                     zoom_start=2,
                     tiles='cartodbpositron')
@@ -55,18 +55,18 @@ def base_regions_map():
     ).add_to(map)
 
     # Add a custom legend
-    legend_html = '''
+    legend_html = f'''
     <div style="position: fixed; 
         top: 10px; right: 10px; width: 120px; 
         background-color: white; z-index:9999; font-size:12px;
         border:2px solid grey; border-radius: 5px; padding: 10px;
         max-height: 90vh; overflow-y: auto;">
-        <p style="margin:0 0 10px 0; font-weight: bold; font-size:14px;">R12 Regions</p>
+        <p style="margin:0 0 10px 0; font-weight: bold; font-size:{legend_fontsize};">Regions</p>
     '''
 
     for region in regions:
         color = region_colors[region]
-        legend_html += f'''<p style="margin:5px 0;">
+        legend_html += f'''<p style="margin:5px 0; font-size:{legend_fontsize};">
                         <span style="background-color:{color}; 
                         width:20px; height:15px; display:inline-block; 
                         border:1px solid black; margin-right:5px;"></span>

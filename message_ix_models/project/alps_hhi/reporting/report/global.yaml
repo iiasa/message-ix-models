@@ -1,0 +1,1107 @@
+# Configuration for reporting of the MESSAGEix-GLOBIOM global model
+#
+#
+# EDITING
+#
+# - Keep lists of labels—technologies, etc.—in alphabetical order.
+# - Long lists can be on a single line.
+
+
+units:
+  # Unit definitions are loaded from iam-units; only add units here which are
+  # idiosyncrasies of MESSAGEix-GLOBIOM.
+  # define: |
+  #   USD = [value]
+
+  replace:
+    '???': ''
+    '-': ''
+
+  apply:
+    GDP: billion USD_2005 / year
+    PRICE_COMMODITY: USD_2010 / kWa
+    # These were initially "carbon", which is not a unit.
+    # TODO check that Mt (rather than t or kt) is correct for all values.
+    PRICE_EMISSION: USD_2005 / Mt
+    tax_emission: USD_2005 / Mt
+    # Inconsistent units. These quantities (and others computed from them)
+    # must be split apart into separate quantities with consistent units.
+    # Also applies to "emi". This value preserved because it works for the
+    # reporting of CH4 emissions.
+    emission_factor: "Mt / year"
+
+# Files with external data
+# files:
+# - path: ./foo.csv
+#   key: gwp:e-gwp_source
+#   dims:
+#     message_act_name: e
+#     gwp: gwp_source
+
+
+# Filters
+#
+# These limit the data that is retrieved from the backend by ixmp.reporting;
+# so ALL quantities in the Reporter are limited to these values. Use these for
+# debugging.
+
+# filters:
+#   t: [coal_ppl, po_turbine, c_ppl_co2scr]
+
+
+# Aggregate across dimensions of single quantities
+#
+# - The dimension `_dim` is not removed; it gains new labels that are the sum
+#   of the listed members. Basically regrouping over one dimension.
+# - Keep members in alphabetical order.
+aggregate:
+  # Quantities to aggregate
+- _quantities: [in, out]
+  # Added to the end of the each key (e.g. '[key]:pe' or '[key]:[tag]+pe')
+  _tag: pe
+  # Dimension along which to aggregate
+  _dim: t
+
+  # Mappings from group names to members along _dim
+  # Coal
+  coal: [coal_extr, coal_extr_ch4]
+  lignite: [lignite_extr]
+  gas conventional: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4]
+  gas unconventional: [gas_extr_5, gas_extr_6, gas_extr_7, gas_extr_8]
+  oil conventional: [oil_extr_1_ch4, oil_extr_2_ch4, oil_extr_3_ch4,
+                     oil_extr_1, oil_extr_2, oil_extr_3]
+  oil unconventional: [oil_extr_4_ch4, oil_extr_4, oil_extr_5, oil_extr_6,
+                       oil_extr_7, oil_extr_8]
+
+- _quantities:
+  - in
+  # This quantity (defined below in 'general:') has the non-main outputs of
+  # dual-output technologies removed; e.g. for t=h2_coal, only c=hydrogen and
+  # not c=electr is included.
+  - out::se_1
+  # Produces 'in::se' and 'out::se_1+se'
+  _tag: se
+  _dim: t
+
+  # Electricity
+  # Electricity missing.
+  Electricity|Biomass: [bio_istig, bio_istig_ccs ,bio_ppl]
+  Electricity|Biomass|w/o CCS: [bio_istig, bio_ppl]
+  Electricity|Biomass|w/ CCS: [bio_istig_ccs]
+  Electricity|Coal: [coal_adv, coal_adv_ccs, coal_ppl, coal_ppl_u, igcc, igcc_ccs]
+  Electricity|Coal|w/o CCS: [coal_adv, coal_ppl, coal_ppl_u, igcc]
+  Electricity|Coal|w/ CCS: [coal_adv_ccs, igcc_ccs]
+  # Electricity|Fossil will be in 'combine:' section
+  Electricity|Gas: [gas_cc, gas_cc_ccs, gas_ct, gas_htfc, gas_ppl]
+  Electricity|Gas|w/o CCS: [gas_cc, gas_ct, gas_htfc, gas_ppl]
+  Electricity|Gas|w/ CCS: [gas_cc_ccs]
+  Electricity|Geothermal: [geo_ppl]
+  Electricity|Hydro: [hydro_hc, hydro_lc]
+  # Non-biomass in 'combine:' section
+  Electricity|Nuclear: [nuc_fbr, nuc_hc, nuc_lc]
+  Electricity|Oil: [foil_ppl, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl]
+  Electricity|Oil|w/o CCS: [foil_ppl, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl]
+  # Electricity|Other:
+  # TODO include missing and these 3 below in 'combine:' section, as an
+  #      operation:
+  # Electricity|Fossil: [coal_adv, coal_adv_ccs, coal_ppl, coal_ppl_u, foil_ppl, gas_cc, gas_cc_ccs, gas_ct, gas_htfc, gas_ppl, igcc, igcc_ccs, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl]
+  # Electricity|Fossil|w/o CCS: [coal_ppl, coal_ppl_u, foil_ppl, gas_cc, gas_ct, gas_htfc, gas_ppl, igcc, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl]
+  # Electricity|Fossil|w/ CCS: [coal_adv_ccs, gas_cc_ccs, igcc_ccs]
+
+  # Gases
+  # Gases: in 'combine:' section
+  Gases|Biomass: [gas_bio]
+  Gases|Coal: [coal_gas]
+  # Notice NG imports are included here.
+  Gases|Natural Gas: [LNG_regas, gas_imp, gas_bal]
+  # TODO use an input-based calculation here.
+  Gases|Other: [h2_mix]
+
+  # Heat
+  Heat: [bio_hpl, coal_hpl, gas_hpl, geo_hpl, foil_hpl, po_turbine]
+  Heat|Biomass: [bio_hpl]
+  Heat|Coal: [coal_hpl]
+  Heat|Gas: [gas_hpl]
+  Heat|Geothermal: [geo_hpl]
+  Heat|Oil: [foil_hpl]
+  Heat|Other: [po_turbine]
+
+  # Hydrogen
+  Hydrogen: [h2_bio, h2_bio_ccs, h2_coal, h2_coal_ccs, h2_elec, h2_smr, h2_smr_ccs]
+  Hydrogen|Biomass: [h2_bio, h2_bio_ccs]  # Skip electr
+  Hydrogen|Biomass|w/o CCS: [h2_bio]
+  Hydrogen|Biomass|w/ CCS: [h2_bio_ccs]
+  Hydrogen|Coal: [h2_coal, h2_coal_ccs]  # Skip electr
+  Hydrogen|Coal|w/o CCS: [h2_coal]
+  Hydrogen|Coal|w/ CCS: [h2_coal_ccs]
+  Hydrogen|Electricity: [h2_elec]
+  Hydrogen|Fossil: [h2_coal, h2_coal_ccs, h2_smr, h2_smr_ccs]
+  Hydrogen|Fossil|w/o CCS: [h2_coal, h2_smr]
+  Hydrogen|Fossil|w/ CCS: [h2_coal_ccs, h2_smr_ccs]
+  Hydrogen|Gas: [h2_smr, h2_smr_ccs]
+  Hydrogen|Gas|w/o CCS: [h2_smr]
+  Hydrogen|Gas|w/ CCS: [h2_smr_ccs]
+
+  # Liquids
+  # Liquids missing. Do the calculation in 'combine:' section
+  Liquids|Biomass: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
+  Liquids|Biomass|w/o CCS: [eth_bio, liq_bio]
+  Liquids|Biomass|w/ CCS: [eth_bio_ccs, liq_bio_ccs]
+  Liquids|Coal: [meth_coal, meth_coal_ccs, syn_liq, syn_liq_ccs]
+  Liquids|Coal|w/o CCS: [syn_liq, meth_coal]
+  Liquids|Coal|w/ CCS: [syn_liq_ccs, meth_coal_ccs]
+  Liquids|Fossil: [meth_coal, meth_coal_ccs, meth_ng, meth_ng_ccs, ref_hil, ref_lol, syn_liq, syn_liq_ccs, SO2_scrub_ref]
+  Liquids|Fossil|w/o CCS: [syn_liq, meth_coal, meth_ng, meth_ng_ccs, ref_hil, ref_lol, SO2_scrub_ref]
+  Liquids|Fossil|w/ CCS: [syn_liq_ccs, meth_coal_ccs, meth_ng_ccs]
+  Liquids|Gas: [meth_ng, meth_ng_ccs]
+  Liquids|Gas|w/o CCS: [meth_ng]
+  Liquids|Gas|w/ CCS: [meth_ng_ccs]
+  Liquids|Oil: [ref_hil, ref_lol, SO2_scrub_ref]
+
+  # Solids
+  Solids: [biomass_i, biomass_nc, biomass_rc, coal_i, coal_fs, coal_rc, coal_trp]
+  Solids|Biomass: [biomass_i, biomass_nc, biomass_rc]
+  Solids|Coal: [coal_i, coal_fs, coal_rc, coal_trp]
+
+  # Wind
+  wind curtailment: [wind_curtailment1, wind_curtailment2, wind_curtailment3]
+  wind gen onshore: [wind_res1, wind_res2, wind_res3, wind_res4]
+  wind gen offshore: [wind_ref1, wind_ref2, wind_ref3, wind_ref4, wind_ref5]
+
+  # Solar
+  solar pv gen elec: [solar_res1, solar_res2, solar_res3, solar_res4, solar_res5, solar_res6, solar_res7, solar_res8]
+  solar pv gen elec RC: [solar_pv_RC]
+  solar pv gen elec I: [solar_pv_I]
+  solar pv curtailment: [solar_curtailment1, solar_curtailment2, solar_curtailment3]
+  solar csp gen elec sm1: [csp_sm1_res, csp_sm1_res1, csp_sm1_res2, csp_sm1_res3, csp_sm1_res4, csp_sm1_res5, csp_sm1_res6, csp_sm1_res7]
+  solar csp gen elec sm3: [csp_sm3_res, csp_sm3_res1, csp_sm3_res2, csp_sm3_res3, csp_sm3_res4, csp_sm3_res5, csp_sm3_res6, csp_sm3_res7]
+  solar csp gen heat rc: [solar_rc]
+  solar csp gen heat i: [solar_i]
+
+  # Storage
+  storage elec: [stor_ppl]
+
+  # Cogeneration
+  cogeneration plants: [bio_istig, bio_istig_ccs, bio_ppl, coal_adv, coal_adv_ccs, coal_ppl, coal_ppl_u, foil_ppl, gas_cc, gas_cc_ccs, gas_ct, gas_htfc, gas_ppl, geo_ppl, igcc_ccs, igcc, loil_cc, loil_ppl, nuc_hc, nuc_lc]
+  passout turbine: [po_turbine]
+
+  # CO2 Scrubber
+  coal scrubber: [c_ppl_co2scr]
+  gas scrubber: [g_ppl_co2scr]
+
+
+# Emissions of CH4
+- _quantities: [emi]
+  _tag: CH4_0
+  _dim: t
+
+  Waste: [CH4_WasteBurnEM, CH4_DomWasteWa, CH4_IndWasteWa, CH4n_landfills, landfill_compost1, landfill_digester1, landfill_direct1, landfill_ele, landfill_flaring, landfill_heatprdn, landfill_mechbio]
+  Industrial Processes: [CH4_IndNonEnergyEM]
+  AFOLU|Biomass Burning: [CH4_AgWasteEM]
+  Heat: [bio_hpl, coal_hpl, foil_hpl, gas_hpl]
+  Electricity: [bio_istig_ccs, bio_istig, bio_ppl, coal_adv_ccs, coal_adv, coal_ppl_u, coal_ppl, foil_ppl, gas_cc_ccs, gas_cc, gas_ct, gas_htfc, gas_ppl, igcc_ccs, igcc, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl]
+
+  # Fugitive - gas
+  Gases|Extraction: [flaring_CO2, gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5, gas_extr_6, gas_extr_7, gas_extr_8]
+  Gases|Transportation: [gas_t_d, gas_t_d_ch4]
+  Gases|Coal: [coal_gas]
+  Gases|Hydrogen: [h2_bio_ccs, h2_bio, h2_coal_ccs, h2_coal, h2_smr_ccs, h2_smr]
+
+  # Fugitive - liquid
+  Liquids|Extraction: [oil_extr_1, oil_extr_1_ch4, oil_extr_2, oil_extr_2_ch4, oil_extr_3, oil_extr_3_ch4, oil_extr_4, oil_extr_4_ch4, oil_extr_5, oil_extr_6, oil_extr_7, oil_extr_8]
+  Liquids|Transportation: [eth_t_d, foil_t_d, loil_t_d, meth_t_d]
+  Liquids|Oil: [ref_hil, ref_lol, SO2_scrub_ref]
+  Liquids|Natural Gas: [meth_ng, meth_ng_ccs]
+  Liquids|Coal: [meth_coal, meth_coal_ccs, syn_liq, syn_liq_ccs]
+  Liquids|Biomass: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
+
+  # Fugitive - solid
+  Solids|Extraction: [coal_extr, coal_extr_ch4, lignite_extr]
+  Solids|Transportation: [biomass_t_d, coal_t_d]
+
+  # Demand
+  Energy|Demand|Residential and Commercial: [biomass_nc, biomass_rc, coal_rc, elec_rc, eth_rc, foil_rc, gas_rc, h2_fc_RC, h2_rc, heat_rc, hp_el_rc, hp_gas_rc, loil_rc, meth_rc, other_sc, solar_pv_RC, solar_rc, sp_el_RC]
+  Energy|Demand|Transportation|Road Rail and Domestic Shipping: [coal_trp, elec_trp, eth_fc_trp, eth_ic_trp, foil_trp, gas_trp, h2_fc_trp, loil_trp, meth_fc_trp, meth_ic_trp]
+
+# Second stage of CH4 aggregation
+- _quantities: [emi::CH4_0]
+  _tag: '1'
+  _dim: t
+
+  Fugitive: [Gases|Coal, Gases|Extraction, Gases|Hydrogen, Gases|Transportation, Liquids|Biomass, Liquids|Coal, Liquids|Extraction, Liquids|Gas, Liquids|Oil, Liquids|Transportation, Solids|Extraction, Solids|Transportation]
+
+# Third stage of CH4 aggregation
+- _quantities: [emi::CH4_0+1]
+  _tag: '2'
+  _dim: e
+
+  CH4: [CH4_Emission, CH4_Emission_bunkers, CH4_new_Emission, CH4_nonenergy]
+
+# Transmission & distribution
+- _quantities: [in, out]
+  _tag: t_d
+  _dim: t
+
+  biomass: [biomass_t_d]
+  coal: [coal_t_d-rc-06p, coal_t_d-in-06p, coal_t_d-in-SO2, coal_t_d-rc-SO2, coal_t_d]
+  elec: [elec_t_d]
+  gas: [gas_t_d, gas_t_d_ch4]
+  heat: [heat_t_d]
+  oil: [loil_t_d, foil_t_d]
+
+# Bunkers
+- _quantities: [in, out]
+  _tag: bunker
+  _dim: t
+
+  methanol: [methanol_bunker]
+  gas: [LNG_bunker]
+  lh2: [LH2_bunker]
+  oil: [loil_bunker, foil_bunker]
+
+# Imports
+- _quantities: [in, out]
+  _tag: import
+  _dim: t
+
+  coal: [coal_imp]
+  elec: [elec_imp]
+  ethanol: [eth_imp]
+  # TODO check if LNG_imp should be included here. In old reporting it was not.
+  gas: [LNG_imp, gas_imp]
+  lh2: [lh2_imp]
+  methanol: [meth_imp]
+  oil: [oil_imp, loil_imp, foil_imp]
+
+# Exports
+- _quantities: [in, out]
+  _tag: export
+  _dim: t
+
+  coal: [coal_exp]
+  elec: [elec_exp]
+  ethanol: [eth_exp]
+  lh2: [lh2_exp]
+  gas: [LNG_exp, gas_exp_nam, gas_exp_weu, gas_exp_eeu, gas_exp_pao,
+        gas_exp_cpa, gas_exp_afr, gas_exp_sas, gas_exp_pas]
+  methanol: [meth_exp]
+  oil: [oil_exp, loil_exp, foil_exp]
+
+# Aggregate emissions species
+- _quantities: [emi::gwpe]
+  _tag: agg
+  _dim: e
+
+  F gases: [CF4, HFC, SF6]
+
+# Parent technologies that have addon
+# - _quantities: ['addon pot']
+#   _tag: addon_tecs
+#   _dim: type_addon
+#
+#   cogeneration: [cogeneration_heat]
+#   scrubber: [scrubber_CO2_coal, scrubber_CO2_gas, scrubber_CO2_bio, scrubber_CO2_cement]
+
+
+# Create new quantities by weighted sum across multiple quantities
+combine:
+  # Name and dimensions of quantity to be created
+- key: coal:nl-ya
+  # Inputs to sum
+  inputs:
+    # Input quantity. If dimensions are none ('name::tag') then the necessary
+    # dimensions are inferred: the union of the dimensions of 'key:' above,
+    # plus any dimensions appearing in 'select:''
+  - quantity: in::pe  # e.g. 'in:nl-t-ya:pe' is inferred
+    # Values to select
+    select: {t: [coal, lignite]}
+    # Weight for these values in the weighted sum
+  - quantity: in::import
+    select: {t: coal}
+  - quantity: in::export
+    select: {t: coal}
+    weight: -1
+  # commented (PNK 2019-10-07): doesn't exist
+  # - quantity: in::bunker
+  #   select: {t: coal}
+
+- key: gas:nl-ya
+  inputs:
+  - quantity: in::pe
+    select: {t: ['gas conventional', 'gas unconventional']}
+  - quantity: in::import
+    select: {t: gas}
+  - quantity: in::export
+    select: {t: gas}
+    weight: -1
+  - quantity: in::bunker
+    select: {t: gas}
+
+- key: oil:nl-ya
+  inputs:
+  - quantity: in::pe
+    select: {t: ['oil conventional', 'oil unconventional']}
+  - quantity: in::import
+    select: {t: oil}
+  - quantity: in::export
+    select: {t: oil}
+  - quantity: in::bunker
+    select: {t: oil}
+    weight: 1
+
+- key: solar:nl-ya
+  inputs:
+  - quantity: out::se_1+se
+    select:
+      t:
+      - solar pv gen elec
+      - solar pv gen elec RC
+      - solar pv gen elec I
+      - solar csp gen elec sm1
+      - solar csp gen elec sm3
+      - solar csp gen heat rc
+      - solar csp gen heat i
+      # c: [electr]
+  - quantity: in::se
+    select: {t: solar pv curtailment}  #, c: [electr]}
+    weight: -1
+
+- key: se_trade:nl-ya
+  inputs:
+  - quantity: out::import
+    select: {t: [elec, ethanol, lh2, methanol]}
+  - quantity: in::export
+    select: {t: [elec, ethanol, lh2, methanol]}
+    weight: -1
+
+- key: wind:nl-ya
+  inputs:
+  - quantity: out::se_1+se
+    select: {t: ['wind gen onshore', 'wind gen offshore']}
+  - quantity: in::se
+    select: {t: wind curtailment}
+    weight: -1
+
+# TODO check if the sum of Electricity in aggregate:se should give the same
+# values as the operation below
+# - key: elec:nl-ya
+#   inputs:
+#   # Electricity going into the grid: [prod + exp - imp]
+#   - quantity: in::t_d
+#     select: {t: elec}
+#   # Minus electricity from imports, to obtain the net electricity production
+#     by conversion technologies
+#   - quantity: out::import
+#     select: {t: elec}
+#     weight: -1
+#   # Plus electricity from exports
+#   - quantity: in::export
+#     select: {t: elec}
+
+- key: electr_fossil:nl-ya
+  inputs:
+  - quantity: out::se_1+se
+    # TOO check if this should include electr from h2_coal.
+    select: {t: Electricity|Coal}
+  - quantity: out::se_1+se
+    select: {t: Electricity|Gas}
+  - quantity: out::se_1+se
+    select: {t: Electricity|Oil}
+
+- key: electr_fossil_w/_ccs:nl-ya
+  inputs:
+  - quantity: out::se_1+se
+    select: {t: Electricity|Coal|w/ CCS}
+  - quantity: out::se_1+se
+    select: {t: Electricity|Gas|w/ CCS}
+  # - quantity: out::se_1+se
+  #   select: {t: Electricity|Oil|w/ CCS}
+
+- key: electr_fossil_w/o_ccs:nl-ya
+  inputs:
+  - quantity: out::se_1+se
+    select: {t: Electricity|Coal|w/o CCS}
+  - quantity: out::se_1+se
+    select: {t: Electricity|Gas|w/o CCS}
+  - quantity: out::se_1+se
+    select: {t: Electricity|Oil|w/o CCS}
+
+- key: gases:nl-ya
+  inputs:
+  - quantity: out::se_1+se
+    select: {t: Gases|Biomass}
+  - quantity: out::se_1+se
+    select: {t: Gases|Coal}
+  - quantity: out::se_1+se
+    select: {t: Gases|Natural Gas}
+  - quantity: in::se
+    select: {t: Gases|Other}
+
+- key: liquids:nl-ya
+  inputs:
+  - quantity: out::se_1+se
+    select: {t: Liquids|Biomass}
+  - quantity: out::se_1+se
+    select: {t: Liquids|Fossil}
+
+
+# Emissions
+
+# CH4 emissions from GLOBIOM: apply a factor of 0.025 to land_out
+# TODO document why this is needed
+- key: land_out:n-s-y-c:CH4_0+1+2
+  inputs:
+  - quantity: land_out::CH4_0+1
+    weight: 0.025
+
+
+# Prices
+
+- key: price_carbon:n-y
+  # TODO PRICE_EMISSION has dimension "y", tax_emission has dimension
+  #      "type_year". Implement a dimension rename so that the two can be
+  #      combined in this way.
+  inputs:
+  - quantity: PRICE_EMISSION
+    select: {type_emission: [TCE], type_tec: [all]}
+  # - quantity: tax_emission
+  #   select: {type_emission: [TCE], type_tec: [all]}
+
+# Commodity price minus emission price
+# NB This is only for illustration.
+# TODO use emission factor must be used to convert the following to compatible
+#      units:
+# - PRICE_COMMODITY with (c, l) dimensions and units [currency] / [energy]
+# - 'price emission' with (e, t) dimensions and units [currency] / [mass]
+- key: price ex carbon:n-t-y-c-l-e
+  inputs:
+  - quantity: PRICE_COMMODITY:n-c-l-y
+  - quantity: price emission:n-e-t-y
+    weight: -1
+
+# TODO remove these entries once the one-step conversion is checked.
+# - The following entries subset the components of PRICE_COMMODITY used in the
+#   legacy reporting. The preferred method is to convert the entire variable to
+#   IAMC format in one step; see below in the "iamc:" section.
+# - l: [import] is sometimes included to pick up prices at the global node(s).
+# - In general, PRICE_COMMODITY has data for n=GLB and level=import OR for
+#   other nodes and l=primary or secondary—but not otherwise.
+- key: price_c:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [coal], l: [primary, import]}
+- key: price_g_w:n-y-h
+  # Only includes 11 regions; no data for c="gas" for global regions, instead
+  # c="LNG" is used. The name "LNG" is replaced later.
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [gas], l: [primary]}
+- key: price_o_w:n-y-h
+  # l="import" is used for the global region.
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [crudeoil], l: [primary, import]}
+- key: price_b_w:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [biomass], l: [primary]}
+- key: price_e_w:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [electr], l: [secondary]}
+- key: price_h_w:n-y-h
+  # For the global region: l="import", c="l2h".
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [hydrogen], l: [secondary]}
+- key: price_liq_o_w:n-y-h
+  # l="import" is used for the global region.
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [lightoil], l: [secondary, import]}
+- key: price_liq_b_w:n-y-h
+  # l="import" is used for the global region.
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [ethanol], l: [secondary, import]}
+- key: price_final_e:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [electr], l: [final]}
+- key: price_final_sol_c:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [coal], l: [final]}
+- key: price_final_sol_b:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [biomass], l: [final]}
+- key: price_final_liq_o:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [lightoil], l: [final]}
+- key: price_final_liq_b:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [ethanol], l: [final]}
+- key: price_final_gas:n-y-h
+  inputs:
+  - quantity: PRICE_COMMODITY
+    select: {c: [gas], l: [final]}
+# TODO complete or replace this
+# - key: land_out:n-s-y-h
+#   inputs:
+#   - quantity: land_output
+#     select:
+#       l: [land_use_reporting]
+#       c: ["Price|Agriculture|Non-Energy Crops and Livestock|Index"]
+
+
+general:
+- key: Liquids:nl-ya
+  comp: apply_units
+  inputs: [liquids:nl-ya]
+  args:
+    units: 'GWa / year'
+
+- key: Gases:nl-ya
+  comp: apply_units
+  inputs: [gases:nl-ya]
+  args:
+    units: 'GWa / year'
+
+- key: Electricity|Fossil|w/o CCS:nl-ya
+  comp: apply_units
+  inputs: [electr_fossil_w/o_ccs:nl-ya]
+  args:
+    units: 'GWa / year'
+
+- key: Electricity|Fossil|w/ CCS:nl-ya
+  comp: apply_units
+  inputs: [electr_fossil_w/_ccs:nl-ya]
+  args:
+    units: 'GWa / year'
+
+- key: Electricity|Fossil:nl-ya
+  comp: apply_units
+  inputs: [electr_fossil:nl-ya]
+  args:
+    units: 'GWa / year'
+
+- key: secondary_energy:nl-t-ya
+  comp: select
+  inputs: [out:nl-t-ya:se_1+se]
+  args:
+    indexers:
+      t:
+      # - Electricity
+      - Electricity|Biomass
+      - Electricity|Biomass|w/ CCS
+      - Electricity|Biomass|w/o CCS
+      - Electricity|Coal
+      - Electricity|Coal|w/ CCS
+      - Electricity|Coal|w/o CCS
+      # - Electricity|Fossil
+      # - Electricity|Fossil|w/ CCS
+      # - Electricity|Fossil|w/o CCS
+      - Electricity|Gas
+      - Electricity|Gas|w/ CCS
+      - Electricity|Gas|w/o CCS
+      - Electricity|Geothermal
+      - Electricity|Hydro
+      # - Electricity|Non-Biomass Renewables
+      - Electricity|Nuclear
+      - Electricity|Oil
+      - Electricity|Oil|w/o CCS
+      # - Electricity|Other
+      # - Electricity|Solar
+      # - Electricity|Solar|CSP
+      # - Electricity|Solar|PV
+      # - Electricity|Storage Losses
+      # - Electricity|Transmission Losses
+      # - Electricity|Wind
+      # - Electricity|Wind|Offshore
+      # - Electricity|Wind|Onshore
+      # - Gases
+      - Gases|Biomass
+      - Gases|Coal
+      - Gases|Natural Gas
+      - Gases|Other
+      - Heat
+      - Heat|Biomass
+      - Heat|Coal
+      - Heat|Gas
+      - Heat|Geothermal
+      - Heat|Oil
+      - Heat|Other
+      - Hydrogen
+      - Hydrogen|Biomass
+      - Hydrogen|Biomass|w/ CCS
+      - Hydrogen|Biomass|w/o CCS
+      - Hydrogen|Coal
+      - Hydrogen|Coal|w/ CCS
+      - Hydrogen|Coal|w/o CCS
+      - Hydrogen|Electricity
+      - Hydrogen|Fossil
+      - Hydrogen|Fossil|w/ CCS
+      - Hydrogen|Fossil|w/o CCS
+      - Hydrogen|Gas
+      - Hydrogen|Gas|w/ CCS
+      - Hydrogen|Gas|w/o CCS
+      # - Liquids
+      - Liquids|Biomass
+      - Liquids|Biomass|w/ CCS
+      - Liquids|Biomass|w/o CCS
+      - Liquids|Coal
+      - Liquids|Coal|w/ CCS
+      - Liquids|Coal|w/o CCS
+      - Liquids|Fossil
+      - Liquids|Fossil|w/ CCS
+      - Liquids|Fossil|w/o CCS
+      - Liquids|Gas
+      - Liquids|Gas|w/ CCS
+      - Liquids|Gas|w/o CCS
+      - Liquids|Oil
+      # - Solids
+      # - Solids|Biomass
+      # - Solids|Coal
+
+- key: secondary_energy2:nl-t-ya
+  comp: apply_units
+  inputs: [secondary_energy:nl-t-ya]
+  args:
+    units: 'GWa / year'
+
+# For secondary energy, only the 'main' output of technologies that produce
+# hydrogen
+- key: out:*:h2
+  comp: select
+  inputs: [out]
+  args:
+    indexers:
+      t: [h2_coal, h2_coal_ccs, h2_smr, h2_smr_ccs, h2_bio, h2_bio_ccs]
+      c: [hydrogen]
+
+# All other technologies not in out::h2
+- key: out:*:se_0
+  comp: select
+  inputs: [out]
+  args:
+    indexers:
+      t: [h2_coal, h2_coal_ccs, h2_smr, h2_smr_ccs, h2_bio, h2_bio_ccs]
+    inverse: true
+
+# For secondary energy, only the 'main' output of technologies that produce
+# ethanol
+- key: out::eth
+  comp: select
+  inputs: [out]
+  args:
+    indexers:
+      t: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
+      c: [ethanol]
+
+# For secondary energy, only the 'main' output of technologies that produce
+# methanol
+- key: out::meth
+  comp: select
+  inputs: [out]
+  args:
+    indexers:
+      t: [meth_coal, meth_coal_ccs]
+      c: [methanol]
+
+# For secondary energy, only the 'main' output of technologies that produce
+# lightoil
+- key: out::liq
+  comp: select
+  inputs: [out]
+  args:
+    indexers:
+      t: [syn_liq, syn_liq_ccs]
+      c: [lightoil]
+
+# TODO re-combine out::liq (and others?), similar to how out::h2 is handled
+#      below.
+
+# Re-combine only the 'main' outputs of technologies for SE computations
+- key: out:*:se_1
+  comp: concat
+  inputs:
+  - out::h2
+  - out::se_0
+
+- key: solids_sum:nl-t-ya
+  comp: select
+  inputs: [in:nl-t-ya:se]
+  args:
+    indexers:
+      t:
+      - Solids
+      - Solids|Biomass
+      - Solids|Coal
+
+- key: solids:nl-t-ya
+  comp: apply_units
+  inputs: [solids_sum:nl-t-ya]
+  args:
+    units: 'GWa / year'
+
+- key: gdp_ppp
+  comp: product
+  inputs:
+  - GDP
+  - MERtoPPP
+
+# CH4 emissions from GLOBIOM: select only the subset
+- key: land_out:n-s-y-c-l-h:CH4_0
+  comp: select
+  inputs: [land_out]
+  args:
+    indexers:
+      c:
+      - Agri_CH4
+      - Emissions|CH4|Land Use|Agriculture|Enteric Fermentation
+      - Emissions|CH4|Land Use|Agriculture|AWM
+      l:
+      - land_use_reporting
+  sums: true
+
+# Auto-sum over [l, h], apply units
+- key: land_out:n-s-y-c:CH4_0+1
+  comp: apply_units
+  inputs: [land_out:n-s-y-c:CH4_0]
+  args:
+    units: 'Mt / year'
+  sums: true
+
+# Remove elements from 'emi' so that the remainder have consistent units.
+# 1. 'TCE' emissions. These appear to be used for some internal model purpose
+#    (maybe relations?) and have units 'tC'.
+# 2. Water-related emissions. These have units '-'.
+#
+# TODO check if this is correct. If the actual units for different 'e' values
+#      are not the same, then add another 'comp: select' so that emi is split
+#      into two (or more) separate quantities, each with consistent units
+- key: emi::_0
+  comp: select
+  inputs: [emi]
+  args:
+    # Remove the elements below
+    inverse: true
+    indexers:
+      e: [TCE,
+          fresh_consumption, fresh_thermal_pollution, fresh_wastewater,
+          instream_consumption,
+          saline_consumption, saline_thermal_polution, saline_wastewater]
+
+# <emi::_0> filters out elements with units other than 'kg / kWa'. The units
+# of emission_factor are stored as 'kg / kWa', and 'ACT' is in GWa / year, so
+# assigning kt / year gives correct results.
+#
+- key: emi:nl-t-yv-ya-m-e-h:ghg
+  inputs: [emi::_0]
+  comp: apply_units
+  args:
+    units: 'kt / year'  # TODO check if this is correct
+  sums: true
+
+# GWP factors retrieved from the iam_units package. Dimensionless
+- key: gwp factors:gwp metric-e-e equivalent
+  comp: gwp_factors
+
+# Emissions converted to GWP-equivalent species
+- key: emi::gwpe
+  comp: product
+  inputs:
+  - emi::ghg
+  - gwp factors
+
+
+# Groups of keys for re-use. These keys are not parsed by
+# reporting.prepare_reporter; they only exist to be referenced further in
+# the file.
+#
+# - Ending a line with '&label' defines a YAML anchor.
+# - Using the YAML alias '<<: *label' re-uses the referenced keys.
+_iamc formats:
+  primary energy: &pe_iamc
+    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+    - c
+    - l
+    - m
+    - nd
+    - 'no'  # Bare no is a special YAML value for False, so must quote here.
+    - t
+
+  price_iamc: &price_iamc
+    unit: USD_2010 / GJ
+
+
+iamc:
+- variable: GDP|MER
+  base: GDP:n-y
+  unit: billion USD_2010 / year
+
+- variable: GDP|PPP
+  base: gdp_ppp:n-y
+  unit: billion USD_2010 / year
+
+- variable: Primary Energy|Coal
+  base: coal:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Gas
+  base: gas:nl-ya
+  <<: *pe_iamc
+
+# NB still incomplete
+# - variable: Primary Energy|Geothermal
+#   base: out:nl-t-ya-m-c-l
+#   select: {l: [secondary], t: [geothermal elec, geothermal heat]}
+#   <<: *pe_iamc
+
+- variable: Primary Energy|Hydro
+  base: out:nl-t-ya-m-c-l:se
+  select: {l: [secondary], t: [hydro]}
+  <<: *pe_iamc
+
+- variable: Primary Energy|Nuclear
+  base: out:nl-t-ya-m-c-l:se
+  select: {l: [secondary], t: [nuclear]}
+  <<: *pe_iamc
+
+- variable: Primary Energy|Oil
+  base: oil:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Other
+  base: in:nl-t-ya-m-c-l:bunker
+  select: {t: [lh2]}
+  <<: *pe_iamc
+
+- variable: Primary Energy|Secondary Energy Trade
+  base: se_trade:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Solar
+  base: solar:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Wind
+  base: wind:nl-ya
+  <<: *pe_iamc
+
+# Secondary Energy
+- variable: Secondary Energy
+  base: secondary_energy2:nl-t-ya
+  unit: 'EJ/yr'
+  var: [t]
+
+- variable: Secondary Energy|Electricity|Fossil
+  base: Electricity|Fossil:nl-ya
+  unit: 'EJ/yr'
+
+- variable: Secondary Energy|Electricity|Fossil|w/ CCS
+  base: Electricity|Fossil|w/ CCS:nl-ya
+  unit: 'EJ/yr'
+
+- variable: Secondary Energy|Electricity|Fossil|w/o CCS
+  base: Electricity|Fossil|w/o CCS:nl-ya
+  unit: 'EJ/yr'
+
+- variable: Secondary Energy|Gases
+  base: Gases:nl-ya
+  unit: 'EJ/yr'
+
+- variable: Secondary Energy|Liquids
+  base: Liquids:nl-ya
+  unit: 'EJ/yr'
+
+- variable: Secondary Energy|Solids
+  base: solids:nl-t-ya
+  unit: 'EJ/yr'
+  var: [t]
+
+
+# Emissions
+
+# CH4 emissions from MESSAGE technologies
+- variable: Emissions|CH4
+  # Auto-sum over dimensions yv, m, h
+  base: emi:nl-t-ya:CH4_0+1+2
+  var: [t]
+  unit: 'Mt / year'  # CH4; the species is indicated by 'variable'
+  select:
+    t:
+    - AFOLU|Biomass Burning
+    - Electricity
+    - Energy|Demand|Residential and Commercial
+    - Energy|Demand|Transportation|Road Rail and Domestic Shipping
+    - Fugitive
+    - Gases|Coal
+    - Gases|Extraction
+    - Gases|Hydrogen
+    - Gases|Transportation
+    - Heat
+    - Industrial Processes
+    - Liquids|Biomass
+    - Liquids|Coal
+    - Liquids|Extraction
+    - Liquids|Natural Gas
+    - Liquids|Oil
+    - Liquids|Transportation
+    - Solids|Extraction
+    - Solids|Transportation
+    - Waste
+
+# CH4 emissions from GLOBIOM
+# - The variable name signals utils.collapse to make some replacements, then is
+#   removed.
+- variable: land_out CH4
+  base: land_out:n-s-y-c:CH4_0+1+2
+  rename: {y: year}
+  var: [c, s]
+
+# SF6 emissions
+- variable: Emissions
+  # Auto sum over t, yv, m, h
+  base: emi:nl-ya-e-gwp metric-e equivalent:gwpe+agg
+  var:  # Add these to 'variable' column; collapse_gwp_info() is applied
+  - e
+  - e equivalent
+  - gwp metric
+  unit: Mt / year  # Species captured in 'e equivalent'
+
+# Prices
+# Preferred method: convert all the contents of the variable at once.
+- variable: Price
+  base: PRICE_COMMODITY:n-c-l-y
+  var: [l, c]
+  <<: *price_iamc
+- variable: Price|Carbon
+  base: price_carbon:n-y
+  # This was initially "carbon_dioxide", which is not a unit.
+  # TODO check that Mt (rather than t or kt) is correct.
+  # TODO check whether there is a species / GWP conversion here.
+  unit: USD_2010 / Mt
+  rename: {y: year}
+# commented: see above
+# - variable: Price w/o carbon
+#   base: price ex carbon:n-t-y-c-e
+#   var: [t, c, l, e]
+#   rename: {y: year}
+
+# TODO ensure these are covered by the preferred method, above, and then
+#      remove these separate conversions.
+- variable: Price (legacy)|Primary Energy wo carbon price|Biomass
+  base: price_b_w:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Primary Energy wo carbon price|Coal
+  base: price_c:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Primary Energy wo carbon price|Gas
+  base: price_g_w:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Primary Energy wo carbon price|Oil
+  base: price_o_w:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Secondary Energy wo carbon price|Electricity
+  base: price_e_w:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Secondary Energy wo carbon price|Hydrogen
+  base: price_h_w:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Secondary Energy wo carbon price|Liquids|Biomass
+  base: price_liq_b_w:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Secondary Energy wo carbon price|Liquids|Oil
+  base: price_liq_o_w:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Final Energy wo carbon price|Residential|Electricity
+  base: price_final_e:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Final Energy wo carbon price|Residential|Gases|Natural Gas
+  base: price_final_gas:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Biomass
+  base: price_final_liq_b:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Oil
+  base: price_final_liq_o:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Final Energy wo carbon price|Residential|Solids|Biomass
+  base: price_final_sol_b:n-y-h
+  <<: *price_iamc
+- variable: Price (legacy)|Final Energy wo carbon price|Residential|Solids|Coal
+  base: price_final_sol_c:n-y-h
+  <<: *price_iamc
+#- variable: Price (legacy)|Agriculture|Non-Energy Crops and Livestock|Index
+#  base: price_agriculture:n-y-h
+#  rename: {y: year}
+
+report:
+- key: pe test
+  members:
+#  - Primary Energy|Biomass::iamc
+  - Primary Energy|Coal::iamc
+  - Primary Energy|Gas::iamc
+  - Primary Energy|Hydro::iamc
+  - Primary Energy|Nuclear::iamc
+  - Primary Energy|Solar::iamc
+  - Primary Energy|Wind::iamc
+
+- key: gdp test
+  members:
+  - GDP|MER::iamc
+  - GDP|PPP::iamc
+
+- key: se test
+  members:
+  - Secondary Energy::iamc
+  - Secondary Energy|Electricity|Fossil::iamc
+  - Secondary Energy|Electricity|Fossil|w/ CCS::iamc
+  - Secondary Energy|Electricity|Fossil|w/o CCS::iamc
+  - Secondary Energy|Gases::iamc
+  - Secondary Energy|Liquids::iamc
+  - Secondary Energy|Solids::iamc
+
+- key: emissions
+  members:
+  - Emissions::iamc
+
+- key: CH4 emissions
+  members:
+  - Emissions|CH4::iamc
+  - land_out CH4::iamc
+  # - Emissions|CH4|Fossil Fuels and Industry::iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive::iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive::iamc
+  # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive::iamc
+  # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive::iamc
+
+- key: price test
+  members:
+  - Price::iamc
+  - Price|Carbon::iamc
+  # commented: see above
+  # - Price w/o carbon::iamc
+
+  # TODO ensure these are covered by the preferred method, above, then remove
+  #      these
+  - Price (legacy)|Primary Energy wo carbon price|Biomass::iamc
+  - Price (legacy)|Primary Energy wo carbon price|Coal::iamc
+  - Price (legacy)|Primary Energy wo carbon price|Gas::iamc
+  - Price (legacy)|Primary Energy wo carbon price|Oil::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Electricity::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Hydrogen::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Biomass::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Oil::iamc
+  # NB for "Price|Secondary Energy|Liquids|Oil", the legacy reporting inserts a
+  #    zero matrix.
+  - Price (legacy)|Final Energy wo carbon price|Residential|Electricity::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Gases|Natural Gas::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Biomass::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Oil::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Biomass::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Coal::iamc
