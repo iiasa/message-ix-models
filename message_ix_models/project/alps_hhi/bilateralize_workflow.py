@@ -18,9 +18,9 @@ data_path = package_data_path("bilateralize")
 print("Clearing bare files")
 for tec in config['covered_trade_technologies']:
     if os.path.exists(os.path.join(data_path, tec, "bare_files")):
-        for file in os.listdir(os.path.join(data_path, tec, "bare_files")):
+       for file in os.listdir(os.path.join(data_path, tec, "bare_files")):
             if os.path.isfile(os.path.join(data_path, tec, "bare_files", file)):
-                os.remove(os.path.join(data_path, tec, "bare_files", file))
+               os.remove(os.path.join(data_path, tec, "bare_files", file))
     if os.path.exists(os.path.join(data_path, tec, "bare_files", "flow_technology")):
         for file in os.listdir(os.path.join(data_path, tec, "bare_files", "flow_technology")):
             if os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", file)):
@@ -43,6 +43,15 @@ for con in constraint_pars:
     for tec in constraint_tec:
         print(f"......{tec}")
         df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), con + ".csv"))
+
+        df['omit'] = 0
+        df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu',
+                                                     'gas_piped_exp_weu']) == False) &\
+                              (df['node_loc'] != 'R12_WEU'),
+                             1, 0)
+        df = df[df['omit'] == 0]
+        df = df.drop(columns = ['omit'])
+        
         df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
         
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
@@ -65,4 +74,4 @@ for model_scen in models_scenarios.keys():
                    start_model = base_model,
                    start_scen = base_scen,
                    target_model = 'alps_hhi',
-                   target_scen = model_scen)
+                   target_scen = model_scen + '_unconstr')

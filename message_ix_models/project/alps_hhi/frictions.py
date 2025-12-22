@@ -20,7 +20,8 @@ from message_ix_models.tools.bilateralize.load_and_solve import *
 
 import os
 
-def friction_dictionary(sensitivity_scenario: str):
+def friction_dictionary(sensitivity_scenario: str,
+                        friction_endyear:int):
 
     # Import scenario and models
     config, config_path = load_config(project_name = 'alps_hhi', config_name = 'config.yaml')
@@ -30,14 +31,17 @@ def friction_dictionary(sensitivity_scenario: str):
     sens_j = config['sensitivities'][sensitivity_scenario]['importers']
     sens_techs = config['sensitivities'][sensitivity_scenario]['technologies']
 
+    base_years = [2030, 2035, 2040, 2045, 2050, 2055,
+                  2060, 2070, 2080, 2090, 2100, 2110]
+    fric_years = [y for y in base_years if y <= friction_endyear]
+    
     bound_out = pd.DataFrame()
     for tec in sens_techs:
         sens_j_ref = [j.replace("R12_", "").lower() for j in sens_j]
         tec_list = [tec + '_exp_' + j for j in sens_j_ref]
 
         basedf = pd.DataFrame(product(sens_i, tec_list,
-                                  [2030, 2035, 2040, 2045, 2050, 2055,
-                                   2060, 2070, 2080, 2090, 2100],
+                                  fric_years,
                                   ["M1"],
                                   ["year"]))
         basedf.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time']
@@ -57,18 +61,21 @@ def friction_dictionary(sensitivity_scenario: str):
     return bound_out
 
 def run_friction_scenario(base_scenario_name: str,
-                          sensitivity_scenario: str):
+                          sensitivity_scenario: str,
+                          friction_endyear = 2110):
     
     # Import scenario and models
     config, config_path = load_config(project_name = 'alps_hhi', config_name = 'config.yaml')
 
     # Build dictionary
-    bound_out = friction_dictionary(sensitivity_scenario)
+    bound_out = friction_dictionary(sensitivity_scenario, friction_endyear)
 
     mp = ixmp.Platform()
 
     base_scenario = message_ix.Scenario(mp, model = 'alps_hhi', scenario = base_scenario_name)
-    target_scenario = base_scenario.clone('alps_hhi', base_scenario_name + '_' + sensitivity_scenario, keep_solution = False)
+    target_scenario = base_scenario.clone('alps_hhi',
+                                          base_scenario_name + '_' + sensitivity_scenario + "_" + str(friction_endyear), 
+                                          keep_solution = False)
     target_scenario.set_as_default()
 
     with target_scenario.transact(f"Add friction sensitivity"):
@@ -89,8 +96,10 @@ def run_friction_scenario(base_scenario_name: str,
     else:
         target_scenario.solve(quiet = False)
 
-for alps_base in ['SSP2', 'SSP2_hhi_HC_supply', 'SSP2_hhi_HC_imports',
-                  'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_WS_l90p_imports']:
-    run_friction_scenario(alps_base, 'FSU_EUR')
-    run_friction_scenario(alps_base, 'FSU_EUR_NAM_PAO')
+for alps_base in ['SSP2',]: 
+                  #'SSP2_hhi_HC_supply', 'SSP2_hhi_HC_imports',
+                  #'SSP2_hhi_WS_l90p_supply', 'SSP2_hhi_WS_l90p_imports']:
+    run_friction_scenario(alps_base, 'FSU_EUR', 2110)
+    run_friction_scenario(alps_base, 'FSU_EUR', 2040)
+    #run_friction_scenario(alps_base, 'FSU_EUR_NAM_PAO')
 

@@ -1,0 +1,25 @@
+# HHI constraint on gas imports and production in R12_WEU
+weu_gas_supply:
+  nodes:
+    - R12_AFR
+    - R12_CHN
+    - R12_EEU
+    - R12_FSU
+    - R12_LAM
+    - R12_MEA    
+    - R12_NAM
+    - R12_PAO
+    - R12_PAS
+    - R12_RCPA
+    - R12_SAS
+    - R12_WEU
+  value:
+    0.5
+  technologies:
+    - gas_piped_exp_weu
+    - LNG_shipped_exp_weu
+  commodities:
+    gas:
+      - primary
+      - extraction
+      - secondary
