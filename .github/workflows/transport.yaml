@@ -26,7 +26,10 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "M SSP2"
+      "SSP2",
+      "SSP2 exo price 2e17",
+      "SSP2 exo price 4a33",
+      "SSP2 exo price 5cad" 
     ]
 
   # Currently disabled:
