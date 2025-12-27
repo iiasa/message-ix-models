@@ -509,7 +509,6 @@ def prepare_data(
     sturm_c: pd.DataFrame,
     with_materials: bool,
     relations: list[str],
-    afofi_demand: pd.DataFrame = None,
 ) -> "ParameterData":
     """Derive data for MESSAGEix-Buildings from `scenario`."""
 
@@ -519,81 +518,27 @@ def prepare_data(
     # Mapping from original to generated commodity names
     c_map = {f"rc_{name}": f"afofi_{name}" for name in ("spec", "therm")}
 
-    # Handle AFOFI demand - either from CSV file or calculated from shares
-    if afofi_demand is not None:
-        # Use provided AFOFI demand from CSV file directly - no scaling needed
-        log.info("Using provided AFOFI demand from CSV file")
-        result["demand"] = afofi_demand
+    # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
+    # values are based on 2010 and 2015 data; see the code for details.
+    c_share = get_afofi_commodity_shares()
 
-        # Still need to create AFOFI technologies, but without scaling
-        # Identify technologies that output to rc_spec or rc_therm
-        rc_techs = scenario.par(
-            "output", filters={"commodity": ["rc_spec", "rc_therm"]}
-        )["technology"].unique()
+    # Retrieve existing demands
+    filters: dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
+    afofi_dd = data_for_quantity(
+        "par", "demand", "value", scenario, config=dict(filters=filters)
+    )
 
-        # Mapping from source to generated names for scale_and_replace
-        # Exclude technologies that should not be transformed to afofi
-        exclude_techs = {}
-        
-        def transform_tech_name(tech_name: str) -> str:
-            """Transform RC technology name to AFOFI version.
-            
-            Examples:
-            - sp_el_RC_RT -> sp_el_afofi_RT
-            - loil_rc -> loil_afofi
-            - sp_el_RC -> sp_el_afofi
-            """
-            if tech_name.endswith("_RT"):
-                # Handle _RC_RT or _rc_RT -> _afofi_RT
-                return re.sub("_(rc|RC)_RT$", "_afofi_RT", tech_name)
-            else:
-                # Handle _RC or _rc at end -> _afofi
-                return re.sub("_(rc|RC)$", "_afofi", tech_name)
-        
-        replace = {
-            "commodity": c_map,
-            "technology": {
-                t: transform_tech_name(t)
-                for t in rc_techs
-                if t not in exclude_techs
-            },
-        }
+    # On a second pass (after main() has already run once), rc_spec and rc_therm have
+    # been stripped out, so `afofi_dd` is empty; skip manipulating it.
+    if len(afofi_dd):
+        # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
+        # - Relabel commodities.
+        tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
 
-        # Use 1.0 scaling since we have actual demand data
-        # To match the merge_data call below
-        t_shares = Quantity(1.0, name="afofi tech share")
-
-        merge_data(
-            result,
-            # TODO Remove exclusion once message-ix-models >2025.1.10 is released
-            scale_and_replace(  # type: ignore [arg-type]
-                scenario, replace, t_shares, relations=relations, relax=0.05
-            ),
-        )
-    else:
-        # Original method: calculate AFOFI demand from shares
-        # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
-        # values are based on 2010 and 2015 data; see the code for details.
-        c_share = get_afofi_commodity_shares()
-
-        # Retrieve existing demands
-        filters: dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
-        afofi_dd = data_for_quantity(
-            "par", "demand", "value", scenario, config=dict(filters=filters)
-        )
-
-        # On a second pass (after main() has already run once), rc_spec and rc_therm
-        # have been stripped out, so `afofi_dd` is empty; skip manipulating it.
-        if len(afofi_dd):
-            # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
-            # - Relabel commodities.
-            tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
-
-            # Convert back to a MESSAGE data frame
-            dims = dict(commodity="c", node="n", level="l", year="y", time="h")
-            # TODO Remove typing exclusion once message_ix is updated for genno 1.25
-            demand_df = as_message_df(tmp, "demand", dims, {})  # type: ignore [arg-type]
-            result.update(demand_df)
+        # Convert back to a MESSAGE data frame
+        dims = dict(commodity="c", node="n", level="l", year="y", time="h")
+        # TODO Remove typing exclusion once message_ix is updated for genno 1.25
+        result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
 
         # Copy technology parameter values from rc_spec and rc_therm to new afofi.
         # Again, once rc_(spec|therm) are stripped, .par() returns nothing here, so
@@ -605,31 +550,9 @@ def prepare_data(
         )["technology"].unique()
 
         # Mapping from source to generated names for scale_and_replace
-        # Exclude technologies that should not be transformed to afofi
-        exclude_techs = {}
-        
-        def transform_tech_name(tech_name: str) -> str:
-            """Transform RC technology name to AFOFI version.
-            
-            Examples:
-            - sp_el_RC_RT -> sp_el_afofi_RT
-            - loil_rc -> loil_afofi
-            - sp_el_RC -> sp_el_afofi
-            """
-            if tech_name.endswith("_RT"):
-                # Handle _RC_RT or _rc_RT -> _afofi_RT
-                return re.sub("_(rc|RC)_RT$", "_afofi_RT", tech_name)
-            else:
-                # Handle _RC or _rc at end -> _afofi
-                return re.sub("_(rc|RC)$", "_afofi", tech_name)
-        
         replace = {
             "commodity": c_map,
-            "technology": {
-                t: transform_tech_name(t)
-                for t in rc_techs
-                if t not in exclude_techs
-            },
+            "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs},
         }
         # Compute shares with dimensions (t, n) for scaling parameter data
         t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
@@ -663,7 +586,6 @@ def prepare_data(
             else:
                 tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
 
-            print(f"  Commodity: {commodity} -> Tech: {tech_new}")
 
             # Modify data
             for name, filters, extra in (  # type: ignore
@@ -684,39 +606,8 @@ def prepare_data(
     # - Adapt relation_activity values that represent emission factors.
     # - Merge to results.
     tmp = {k: pd.concat(v) for k, v in data.items()}
-    
-    # Deal with rooftop technologies
-    # All technologies containing "electr" should have:
-    # - M1: electr at level "final" (already exists)
-    # - M2: electr at level "final_RT" (add this)
-    if "input" in tmp and len(tmp["input"]) > 0:
-        # Find all electricity technologies (containing "electr" anywhere in name)
-        # Technology names are like "electr_resid_apps", "electr_comm_cool", etc.
-        electr_inputs = tmp["input"][
-            (tmp["input"]["technology"].str.contains("electr", regex=False, case=False))
-            & (tmp["input"]["commodity"] == "electr")
-            & (tmp["input"]["level"] == "final")
-            & (tmp["input"]["mode"] == "M1")
-        ].copy()
-        
-        if len(electr_inputs) > 0:
-            # Create M2 inputs with level "final_RT"
-            electr_inputs_m2 = electr_inputs.assign(
-                level="final_RT",
-                mode="M2"
-            )
-            # Append to existing input data
-            tmp["input"] = pd.concat([tmp["input"], electr_inputs_m2], ignore_index=True)
-            log.info(f"Added {len(electr_inputs_m2)} M2 input rows for electricity technologies")
-    
     adapt_emission_factors(tmp)
     merge_data(result, tmp)
-
-    # Add demand data - append to existing demand if it exists
-    if "demand" in result:
-        result["demand"] = pd.concat([result["demand"], demand])
-    else:
-        result["demand"] = demand
 
     log.info(
         "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in result.items())
@@ -729,14 +620,6 @@ def prepare_data(
     # commented: This is superseded by .navigate.workflow.add_globiom_step
     # # Add data for a backstop supply of (biomass, secondary)
     # merge_data(result, bio_backstop(scenario))
-
-    # Ensure all year columns are integers (not floats like 2020.0)
-    # Convert year columns in all DataFrames in result dict
-    for key, df in result.items():
-        if isinstance(df, pd.DataFrame) and len(df) > 0:
-            year_cols = [col for col in df.columns if col.startswith("year")]
-            if year_cols:
-                result[key] = df.astype({col: int for col in year_cols})
 
     return result
 
