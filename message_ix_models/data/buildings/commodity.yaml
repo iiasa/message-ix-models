@@ -1,0 +1,77 @@
+# biomass_rc
+resid_cook_biomass:
+  description: Biomass demand for residential cooking
+resid_heat_biomass:
+  description: Biomass demand for residential heating
+resid_hotwater_biomass:
+  description: Biomass demand for residential hotwater
+comm_heat_biomass:
+  description: Biomass demand for commercial heating
+comm_hotwater_biomass:
+  description: Biomass demand for commercial hotwater
+
+# coal_rc
+resid_heat_coal:
+  description: Coal demand for residential heating
+resid_hotwater_coal:
+  description: Coal demand for residential hotwater
+comm_heat_coal:
+  description: Coal demand for commercial heating
+comm_hotwater_coal:
+  description: Coal demand for commercial hotwater
+
+# heat_rc
+resid_heat_d_heat:
+  description: District heat demand for residential heating
+resid_hotwater_d_heat:
+  description: District heat demand for residential hotwater
+comm_heat_d_heat:
+  description: District heat demand for commercial heating
+comm_hotwater_d_heat:
+  description: District heat demand for commercial hotwater
+
+# elec_rc
+resid_cook_electr:
+  description: Electricity demand for residential cooking
+resid_heat_electr:
+  description: Electricity demand for residential heating
+resid_hotwater_electr:
+  description: Electricity demand for residential hotwater
+comm_heat_electr:
+  description: Electricity demand for commercial heating
+comm_hotwater_electr:
+  description: Electricity demand for commercial hotwater
+
+# sp_el_RC
+resid_cool_electr:
+  description: Electricity demand for residential cooling
+comm_cool_electr:
+  description: Electricity demand for commercial cooling
+resid_apps_electr:
+  description: Electricity demand for residential appliances
+resid_other_uses_electr:
+  description: Electricity demand for residential other uses
+comm_other_uses_electr:
+  description: Electricity demand for commercial other uses
+
+# gas_rc
+resid_heat_gas:
+  description: Gas demand for residential heating
+resid_hotwater_gas:
+  description: Gas demand for residential hotwater
+comm_heat_gas:
+  description: Gas demand for commercial heating
+comm_hotwater_gas:
+  description: Gas demand for commercial hotwater
+
+# loil_rc
+resid_cook_lightoil:
+  description: Lightoil demand for residential cooking
+resid_hotwater_lightoil:
+  description: Lightoil demand for residential hotwater
+comm_hotwater_lightoil:
+  description: Lightoil demand for commercial hotwater
+resid_heat_lightoil:
+  description: Lightoil demand for residential heating
+comm_heat_lightoil:
+  description: Lightoil demand for commercial heating
