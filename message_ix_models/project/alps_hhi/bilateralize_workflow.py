@@ -47,7 +47,6 @@ for tec in config['covered_trade_technologies']:
 print("Add constraints to the dictionary")
 constraint_pars = ["initial_activity_lo", "initial_activity_up",
                    "growth_activity_lo", "growth_activity_up"]
-                   "soft_activity_lo", "soft_activity_up"]
 constraint_tec = config['constrained_tec']
 
 #for con in constraint_pars:

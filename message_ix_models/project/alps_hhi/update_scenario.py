@@ -40,8 +40,13 @@ hhi_scenario.set_as_default()
 remdf = hhi_scenario.par('inv_cost')
 remdf = remdf[(remdf['technology'].str.contains('gas_pipe'))]
 
-with hhi_scenario.transact("Remove inv cost from gas pipeline"):
+upddf = hhi_scenario.par('inv_cost')
+upddf = upddf[(upddf['technology'].str.contains('gas_pipe'))]
+upddf['value'] *= 0.5
+
+with hhi_scenario.transact("Update inv cost from gas pipeline"):
     hhi_scenario.remove_par('inv_cost', remdf)
+    hhi_scenario.add_par('inv_cost', upddf)
     
 hhi_scenario.solve()
 mp.close_db()
