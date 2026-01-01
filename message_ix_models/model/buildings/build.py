@@ -623,6 +623,7 @@ def prepare_data(
 
     return result
 
+
 def prepare_data_B(
     scenario: message_ix.Scenario,
     info: ScenarioInfo,
@@ -822,6 +823,7 @@ def prepare_data_B(
     )
 
     return result
+
 
 def prune_spec(spec: Spec, data: "ParameterData") -> None:
     """Remove extraneous entries from `spec`."""
