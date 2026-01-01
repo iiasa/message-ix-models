@@ -304,7 +304,7 @@ def load_config(context: Context) -> None:
     # Generate commodities that replace corresponding rc_* in the base model
     for c in filter(lambda x: x.id.startswith("rc_"), get_codes("commodity")):
         new = deepcopy(c)
-        new.id = c.id.replace("rc_", "afofi_")
+        new.id = c.id.replace("rc_", "afofio_")
         s.add.set["commodity"].append(new)
 
     # Generate technologies that replace corresponding *_rc|RC in the base model
@@ -321,14 +321,14 @@ def load_config(context: Context) -> None:
 
         # Generate a new Code object, preserving annotations
         new = deepcopy(t)
-        # Replace _RC or _rc with _afofi, preserving _RT suffix if present
-        # e.g., sp_el_RC_RT -> sp_el_afofi_RT, loil_rc -> loil_afofi
+        # Replace _RC or _rc with _afofio, preserving _RT suffix if present
+        # e.g., sp_el_RC_RT -> sp_el_afofio_RT, loil_rc -> loil_afofio
         if t.id.endswith("_RT"):
-            # Replace _RC_RT or _rc_RT with _afofi_RT
-            new.id = re.sub("_(rc|RC)_RT$", "_afofi_RT", t.id)
+            # Replace _RC_RT or _rc_RT with _afofio_RT
+            new.id = re.sub("_(rc|RC)_RT$", "_afofio_RT", t.id)
         else:
-            # Replace _RC or _rc at end with _afofi
-            new.id = re.sub("_(rc|RC)$", "_afofi", t.id)
+            # Replace _RC or _rc at end with _afofio
+            new.id = re.sub("_(rc|RC)$", "_afofio", t.id)
         new.annotations.append(Annotation(id="derived-from", text=t.id))
 
         # This will be added
@@ -623,6 +623,205 @@ def prepare_data(
 
     return result
 
+def prepare_data_B(
+    scenario: message_ix.Scenario,
+    info: ScenarioInfo,
+    prices: pd.DataFrame,
+    sturm_r: pd.DataFrame,
+    sturm_c: pd.DataFrame,
+    demand_static: pd.DataFrame = None,
+    with_materials: bool = True,
+    relations: list[str] = [],
+) -> "ParameterData":
+    """Derive data for MESSAGEix-Buildings from `scenario`. 
+    Function-wise same as prepare_data(). 
+
+    Input data:
+    - Use the MESSAGE-format report of MESSAGEix-Buildings (demand_resid and demand_comm)
+    - Static external demand that is not updated in each iteration (demand_static)
+
+    Buildings demand includes:
+    - A: Resid and Comm cool/heat/hotwater demand (from STURM, with price iteration)
+    - B: Resid app/cook demand (from ACCESS, no iteration)
+    - C: Resid non-commecial biomass demand (from ACCESS, no iteration)
+    - D: Resid and Comm material demand (from STURM, no iteration)
+    - E: Residual AFOFIO demand (external)
+    """
+
+    # Data frames for each parameter
+    result: "MutableParameterData" = dict()
+
+    # Reset index 
+    for df in [sturm_r, sturm_c, demand_static]:
+        if df is not None and "node" not in df.columns:
+            df.reset_index(inplace=True)
+
+    # Add 2110 data by copying from 2100 if missing
+    for df_name, df in [("sturm_r", sturm_r), ("sturm_c", sturm_c), ("demand_static", demand_static)]:
+        if df is not None and "year" in df.columns:
+            if 2110 not in df["year"].values and 2100 in df["year"].values:
+                # Copy 2100 data to 2110
+                df_2100 = df[df["year"] == 2100].copy()
+                df_2100["year"] = 2110
+                # Update the original dataframe
+                if df_name == "sturm_r":
+                    sturm_r = pd.concat([sturm_r, df_2100], ignore_index=True)
+                elif df_name == "sturm_c":
+                    sturm_c = pd.concat([sturm_c, df_2100], ignore_index=True)
+                elif df_name == "demand_static":
+                    demand_static = pd.concat([demand_static, df_2100], ignore_index=True)
+                log.info(f"Added 2110 data by copying from 2100 for {df_name}")
+
+    # Step 1: generate new technologies and commodities for Buildings demands (part A, B)
+    # Prepare demand data
+    commodity_info = cast("MutableMapping", load_package_data("buildings", "commodity.yaml"))
+    buildings_commodities = set(commodity_info.keys()) 
+    #TODO: another way is to use the add in set.yaml
+    demand = pd.concat([sturm_r, sturm_c, demand_static], ignore_index=True)
+    demand = demand[demand["commodity"].isin(buildings_commodities)]
+
+    result["demand"] = demand
+
+    # Quit building if the scenario already has Buildings demands
+    try:
+        existing_commodities = set(scenario.par("demand")["commodity"].unique())
+        if existing_commodities & buildings_commodities:
+            log.info(f"Scenario already has Buildings demands. Skipping technology generation.")
+            return result
+    except (KeyError, ValueError):
+        pass
+
+    # Mapping from commodity to base model's *_rc technology
+    rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
+    data = defaultdict(list)
+
+    # Generate input, output, capacity_factor, emission_factor, relation_activity for new technologies
+    # Deal with 2 exceptions:
+    # - Rooftop technologies for input
+    # - Lightoil gas
+    for fuel in prices["commodity"].unique():
+        # Find the original rc technology for the fuel
+        tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
+
+        # Create the technologies for the new commodities
+        for commodity in filter(
+            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
+        ):
+            # Fix for lightoil gas included
+            if "lightoil-gas" in commodity:
+                tech_new = f"{fuel}_lg_" + commodity.replace("_lightoil-gas", "")
+            else:
+                tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
+            log.info(f"  Commodity: {commodity} -> Tech: {tech_new}")
+
+            # Modify data
+            for name, filters, extra in (  # type: ignore
+                ("input", {}, {}),  # NB value=1.0 is done by adapt_emission_factors()
+                ("output", {}, dict(commodity=commodity, value=1.0)),
+                ("capacity_factor", {}, {}),
+                ("emission_factor", {}, {}),
+                ("relation_activity", dict(relation=relations), {}),
+            ):
+                filters["technology"] = [tech_orig]
+                input_data = scenario.par(name, filters=filters).assign(
+                    technology=tech_new, **extra
+                )
+                data[name].append(input_data)
+                # Deal with rooftop technologies for input
+                # All newly created technologies containing "electr" should have:
+                # - M1: electr at level "final" (already exists)
+                # - M2: electr at level "final_RT" (add this)
+                if name == "input" and len(input_data) > 0:
+                    # Check if this is an electricity technology with electr input at final level, M1 mode
+                    electr_inputs = input_data[
+                        (input_data["technology"].str.contains("electr", regex=False, case=False))
+                        & (input_data["commodity"] == "electr")
+                        & (input_data["level"] == "final")
+                        & (input_data["mode"] == "M1")
+                    ].copy()
+                    if len(electr_inputs) > 0:
+                        # Create M2 inputs with level "final_RT"
+                        electr_inputs_m2 = electr_inputs.assign(
+                            level="final_RT",
+                            mode="M2"
+                        )
+                        data[name].append(electr_inputs_m2)
+                        log.info(f"Added {len(electr_inputs_m2)} M2 input rows for technology {tech_new}")
+
+    tmp = {k: pd.concat(v) for k, v in data.items()}
+    
+    adapt_emission_factors(tmp)
+    merge_data(result, tmp)
+
+    # Step 2: generate new technologies and commodities for Buildings demands (part C)
+    try:
+        existing_commodities = set(scenario.par("demand")["commodity"].unique())
+        if "non-comm" not in existing_commodities:
+            log.info("Scenario does not have 'non-comm' demand.")
+            # TODO: add the chain to build biomass_nc technologies too
+            # TODO: not clear about the logic of keeping which version of non-comm
+            return result
+    except (KeyError, ValueError):
+        pass
+
+    # Step 3: generate new technologies and commodities for the residual rc (part E)
+    # - replace rc_spec and rc_therm with afofio_spec and afofio_therm
+    # - AFOFIO demand read from CSV files
+    afofio_demand = demand_static[demand_static["commodity"].isin(["afofio_spec", "afofio_therm"])]
+    result["demand"] = pd.concat([result["demand"], afofio_demand], ignore_index=True)
+
+    # Mapping from original to generated commodity names
+    c_map = {f"rc_{name}": f"afofio_{name}" for name in ("spec", "therm")}
+
+    # Create AFOFIO technologies by transforming RC technologies
+    # Identify technologies that output to rc_spec or rc_therm
+    rc_techs = scenario.par(
+        "output", filters={"commodity": ["rc_spec", "rc_therm"]}
+    )["technology"].unique()
+
+    def transform_tech_name(tech_name: str) -> str:
+        if tech_name.endswith("_RT"):
+            # Handle _RC_RT or _rc_RT -> _afofio_RT
+            return re.sub("_(rc|RC)_RT$", "_afofio_RT", tech_name)
+        else:
+            # Handle _RC or _rc at end -> _afofio
+            return re.sub("_(rc|RC)$", "_afofio", tech_name)
+
+    replace = {
+        "commodity": c_map,
+        "technology": {
+            t: transform_tech_name(t)
+            for t in rc_techs
+        },
+    }
+
+    t_shares = Quantity(1.0, name="afofio tech share") 
+    # 1.0 scaling as actual demand data read in
+
+    merge_data(
+        result,
+        scale_and_replace(  # type: ignore [arg-type]
+            scenario, replace, t_shares, relations=relations, relax=0.05
+        ),
+    )
+
+    # Step 4: build materials for new constructions and demolitions (part D)
+    if with_materials:
+        # Set up buildings-materials linkage
+        merge_data(result, materials(scenario, info, sturm_r, sturm_c))
+
+    # Step 5: other format check and adjustments
+    for key, df in result.items(): # convert year columns in all DataFrames in result dict
+        year_cols = [col for col in df.columns if col.startswith("year")]
+        if year_cols:
+            result[key] = df.astype({col: int for col in year_cols})
+    result["demand"] = result["demand"].assign( # assign levels
+        level=result["demand"].commodity.apply(
+            lambda x: "demand" if ("floor" in x or any(mat in x.lower() for mat in MATERIALS)) else "useful"
+        )
+    )
+
+    return result
 
 def prune_spec(spec: Spec, data: "ParameterData") -> None:
     """Remove extraneous entries from `spec`."""
@@ -760,10 +959,14 @@ def materials(
         df_mat = (sturm_r if rc == "resid" else sturm_c).query(
             f"commodity == '{c}' and node == '{n}'"
         )
-        # Input or output efficiency:
-        # - Duplicate the final (2100) value for 2110.
-        # - Take a number of values corresponding to len(info.Y), allowing the first
-        #   model year to be 2020 or 2025.
+        # Handle missing years: if 2020 missing use 2025; if 2110 missing use 2100
+        for target, source in [(2020, 2025), (2110, 2100)]:
+            if target not in df_mat["year"].values:
+                df_source = df_mat[df_mat["year"] == source]
+                if len(df_source) > 0:
+                    df_target = df_source.copy()
+                    df_target["year"] = target
+                    df_mat = pd.concat([df_mat, df_target], ignore_index=True).sort_values("year")
         eff = pd.concat([df_mat.value, df_mat.value.tail(1)]).iloc[-len(info.Y) :]
 
         if typ == "demand":
@@ -797,6 +1000,17 @@ def materials(
         for name, df in data.items():
             result[name].append(df)
 
+    # Add floor construction and demolition demands from sturm_r and sturm_c if not already present
+    expr = "(comm|resid)_floor_(construc|demoli)tion"
+    existing = pd.concat(result["demand"], ignore_index=True) if result["demand"] else pd.DataFrame()
+    if not (len(existing) > 0 and existing["commodity"].str.fullmatch(expr, na=False).any()):
+        floor_demand = pd.concat([
+            df[df["commodity"].str.fullmatch(expr, na=False)] 
+            for df in [sturm_r, sturm_c] if df is not None and len(df) > 0
+        ], ignore_index=True)
+        if len(floor_demand) > 0:
+            result["demand"].append(floor_demand)
+    
     # Use the reusable function to subtract material demand
     # One can change the method parameter to use different approaches:
     # - "bm_subtraction": Building material subtraction (default)
@@ -850,60 +1064,31 @@ def build_B(
     prices = pd.read_csv(price_path)
 
     # sturm_r
-    sturm_r_path = private_data_path("buildings", "resid_sturm_20250915.csv")
+    sturm_r_path = private_data_path("buildings", "report_MESSAGE_resid_SSP2_nopol_post.csv")
     # sturm_r_path = package_data_path("buildings", "debug-sturm-resid.csv")
     sturm_r = pd.read_csv(sturm_r_path, index_col=0)
 
     # sturm_c
-    sturm_c_path = private_data_path("buildings", "comm_sturm_20250915.csv")
+    sturm_c_path = private_data_path("buildings", "report_MESSAGE_comm_SSP2_nopol_post.csv")
     # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
     sturm_c = pd.read_csv(sturm_c_path, index_col=0)
+    sturm_c.loc[sturm_c["commodity"].str.contains("other_uses", na=False), "value"] = 0
 
-    # e_use
-    e_use_path = private_data_path("buildings", "e_use_20250915.csv")
-    e_use = pd.read_csv(e_use_path, index_col=0)
-    # Exclude rows with commodity 'resid_cook_non-comm'
-    e_use = e_use[e_use.commodity != 'resid_cook_non-comm']
-
-    # afofio
-    afofio_path = private_data_path("buildings", "afofio_demand_20250915.csv")
-    afofio = pd.read_csv(afofio_path, index_col=0)
-    afofio["value"] = 0
-
-    # demand
-    expr = "(cool|heat|hotwater|floor|other_uses)"
-    excl = "v_no_heat"
-    demand = pd.concat(
-        [
-            e_use[~e_use.commodity.str.contains("therm")],
-            sturm_r[
-                sturm_r.commodity.str.contains(expr)
-                & ~sturm_r.commodity.str.contains(excl)
-            ],
-            sturm_c[
-                sturm_c.commodity.str.contains(expr)
-                & ~sturm_c.commodity.str.contains(excl)
-            ],
-        ]
-    )
-
-    # Assign useful energy and demand levels
-    demand = demand.assign(
-        level=demand.commodity.apply(lambda x: "demand" if "floor" in x else "useful")
-    )
-    demand.to_csv("debug-demand.csv")
+    # static demand
+    demand_static_path = private_data_path("buildings", "static_20251227.csv")
+    demand_static = pd.read_csv(demand_static_path, index_col=0)
+    demand_static.loc[demand_static["commodity"].str.contains("afofio", na=False), "value"] = 0
 
     # Prepare data based on the contents of `scenario`
-    data = prepare_data(
+    data = prepare_data_B(
         scenario,
         info,
-        demand,
         prices,
         sturm_r,
         sturm_c,
+        demand_static,
         context.buildings.with_materials,
         relations=spec.require.set["relation"],
-        afofi_demand=afofio,
     )
 
     # Remove unused commodities and technologies
