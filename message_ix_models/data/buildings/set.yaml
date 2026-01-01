@@ -7,9 +7,9 @@
 # NB this cannot be "sector", as it collides with the MACRO set of the same name
 buildings_sector:
   add:
-    afofi:
-      name: Agriculture, forestry, and fisheries
-      report: AFOFI
+    afofio:
+      name: Agriculture, forestry, fisheries, and others
+      report: AFOFIO
     comm:
       name: Commercial buildings
       report: Commercial
@@ -114,11 +114,13 @@ relation:
   - VOC_Emission
   - oper_res
   - solar_th_pot
-
+  - gas_mix_lim
+  # - share_low_lim_NFPE
+  # - share_low_lim_REPE
 
 technology:
   add:
-    # NB some others like meth_afofi are generated in .buildings.build
+    # NB some others like meth_afofio are generated in .buildings.build
     "{commodity.id}_{buildings_sector.id}_{enduse.id}":
       # name: "{commodity.name}-powered {enduse.name.lower()} in {buildings_sector.name.lower()}"
       name: "{commodity.name}-powered {enduse.name} in {buildings_sector.name}"
