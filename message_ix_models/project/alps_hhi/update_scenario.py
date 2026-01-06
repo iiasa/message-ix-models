@@ -42,7 +42,7 @@ updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
 updf = updf[updf['node_loc'].isin(['R12_WEU'])]
 
 remdf = updf.copy()
-updf['value'] = 0.01
+updf['value'] = 0.02
 
 with hhi_scenario.transact("update growth activity up to gas_extr_mpen"):
     hhi_scenario.remove_par('growth_activity_up', remdf)
