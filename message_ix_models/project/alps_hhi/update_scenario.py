@@ -30,23 +30,17 @@ mp = ixmp.Platform()
 base_model_name = 'alps_hhi'
 base_scen_name = 'SSP2'
 target_model_name = 'alps_hhi'
-target_scen_name = 'SSP2_noinvgp'
+target_scen_name = 'SSP2_mpen'
 
 base_scenario = message_ix.Scenario(mp, model=base_model_name, scenario=base_scen_name)
 hhi_scenario = base_scenario.clone(target_model_name, target_scen_name, 
                                    keep_solution = False)
 hhi_scenario.set_as_default()
 
-remdf = hhi_scenario.par('inv_cost')
-remdf = remdf[(remdf['technology'].str.contains('gas_pipe'))]
+lodf = hhi_scenario.par('initial_activity_lo', filters = {'technology': 'gas_extr_mpen'})
 
-upddf = hhi_scenario.par('inv_cost')
-upddf = upddf[(upddf['technology'].str.contains('gas_pipe'))]
-upddf['value'] *= 0.5
-
-with hhi_scenario.transact("remove inv cost from gas pipeline"):
-    hhi_scenario.remove_par('inv_cost', remdf)
-    #hhi_scenario.add_par('inv_cost', upddf)
+with hhi_scenario.transact("add initial activity up to gas_extr_mpen"):
+    hhi_scenario.add_par('initial_activity_up', lodf)
     
 hhi_scenario.solve()
 mp.close_db()

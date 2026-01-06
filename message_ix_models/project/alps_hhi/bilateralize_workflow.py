@@ -64,7 +64,7 @@ for con in constraint_pars:
         df = df.drop(columns = ['omit'])
         
         df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
-        
+
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'alps_hhi', 
                               config_name = 'config.yaml',
