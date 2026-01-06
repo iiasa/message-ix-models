@@ -8,6 +8,7 @@ from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
 
 import os
+from ixmp import Platform
 
 # Import scenario and models
 config, config_path = load_config(project_name = 'alps_hhi', config_name = 'config.yaml')
@@ -78,11 +79,33 @@ for model_scen in models_scenarios.keys():
     print(f"Base model: {base_model}/{base_scen}")
     print(f"Target model: alps_hhi/{model_scen}")
 
+    print("Setting up scenario")
     load_and_solve(trade_dict = trade_dict,
-                   solve = True,
+                   solve = False,
                    project_name = 'alps_hhi', 
                    config_name = 'config.yaml', 
                    start_model = base_model,
                    start_scen = base_scen,
                    target_model = 'alps_hhi',
                    target_scen = model_scen)
+
+    print("Updating extraction constraints")
+    mp = ixmp.Platform()
+    base_scenario = message_ix.Scenario(mp, model='alps_hhi', scenario=model_scen)
+    hhi_scenario = base_scenario.clone('alps_hhi', model_scen)
+    hhi_scenario.set_as_default()
+
+    updf = hhi_scenario.par('growth_activity_up')
+    updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
+    updf = updf[updf['node_loc'].isin(['R12_WEU'])]
+
+    remdf = updf.copy()
+    updf['value'] = 0.01
+
+    with hhi_scenario.transact("update growth activity up to gas_extr_mpen"):
+        hhi_scenario.remove_par('growth_activity_up', remdf)
+        hhi_scenario.add_par('growth_activity_up', updf)
+
+    print("Solve scenario")
+    hhi_scenario.solve()
+    mp.close_db()

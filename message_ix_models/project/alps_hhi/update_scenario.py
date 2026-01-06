@@ -42,7 +42,8 @@ updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
 updf = updf[updf['node_loc'].isin(['R12_WEU'])]
 
 remdf = updf.copy()
-updf['value'] = 0.02
+updf['value'] = 0.01
+#updf['value'] = np.where(updf['year_act'] > 2060, 0.01, updf['value'])
 
 with hhi_scenario.transact("update growth activity up to gas_extr_mpen"):
     hhi_scenario.remove_par('growth_activity_up', remdf)
