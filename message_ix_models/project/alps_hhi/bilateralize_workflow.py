@@ -49,21 +49,21 @@ constraint_pars = ["initial_activity_lo", "initial_activity_up",
                    "growth_activity_lo", "growth_activity_up"]
 constraint_tec = config['constrained_tec']
 
-#for con in constraint_pars:
-#    print(f"...{con}")
-#    for tec in constraint_tec:
-#        print(f"......{tec}")
-#        df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), con + ".csv"))
+for con in constraint_pars:
+    print(f"...{con}")
+    for tec in constraint_tec:
+        print(f"......{tec}")
+        df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), con + ".csv"))
 
-#        df['omit'] = 0
-#        df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu',
-#                                                     'gas_piped_exp_weu']) == False) &\
-#                              (df['node_loc'] != 'R12_WEU'),
-#                             1, 0)
-#        df = df[df['omit'] == 0]
-#        df = df.drop(columns = ['omit'])
-#        
-#        df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
+        df['omit'] = 0
+        df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu',
+                                                     'gas_piped_exp_weu']) == False) &\
+                              (df['node_loc'] != 'R12_WEU'),
+                             1, 0)
+        df = df[df['omit'] == 0]
+        df = df.drop(columns = ['omit'])
+        
+        df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
         
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'alps_hhi', 
