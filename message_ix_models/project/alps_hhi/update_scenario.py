@@ -30,14 +30,14 @@ mp = ixmp.Platform()
 base_model_name = 'alps_hhi'
 base_scen_name = 'SSP2'
 target_model_name = 'alps_hhi'
-target_scen_name = 'SSP2_mpen'
+target_scen_name = 'SSP2_update'
 
 base_scenario = message_ix.Scenario(mp, model=base_model_name, scenario=base_scen_name)
 hhi_scenario = base_scenario.clone(target_model_name, target_scen_name, 
                                    keep_solution = False)
 hhi_scenario.set_as_default()
 
-lodf = hhi_scenario.par('initial_activity_lo', filters = {'technology': 'gas_extr_mpen'})
+updf = hhi_scenario.par('growth_activity_up', filters = {'technology': ['gas})
 
 with hhi_scenario.transact("add initial activity up to gas_extr_mpen"):
     hhi_scenario.add_par('initial_activity_up', lodf)
