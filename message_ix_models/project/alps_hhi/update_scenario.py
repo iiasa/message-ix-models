@@ -37,10 +37,12 @@ hhi_scenario = base_scenario.clone(target_model_name, target_scen_name,
                                    keep_solution = False)
 hhi_scenario.set_as_default()
 
-updf = hhi_scenario.par('growth_activity_up', filters = {'technology': ['gas})
+updf = hhi_scenario.par('initial_activity_up')
+updf = updf[(updf['technology'].str.contains('gas_piped_exp'))]
+updf = updf[updf['node_loc'].isin(['R12_AFR', 'R12_FSU', 'R12_LAM', 'R12_MEA']) == False]
 
 with hhi_scenario.transact("add initial activity up to gas_extr_mpen"):
-    hhi_scenario.add_par('initial_activity_up', lodf)
+    hhi_scenario.remove_par('initial_activity_up', updf)
     
 hhi_scenario.solve()
 mp.close_db()
