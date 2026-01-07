@@ -128,7 +128,7 @@ def gas_supply_reporting(rep: Reporter, scenario: message_ix.Scenario) -> pd.Dat
     
     # Add labels
     df['supply_type'] = np.where(df['variable'].str.contains('Domestic'), 'Domestic', 'Imports')
-    df['fuel_type'] = np.where(df['variable'].str.contains('LNG'), 'LNG', 'Gas')
+    df['fuel_type'] = np.where(df['variable'].str.contains('LNG'), 'LNG', 'Piped Gas')
 
     return df 
 
@@ -141,21 +141,21 @@ for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
                   ('alps_hhi', 'SSP2'),
                   ('alps_hhi', 'SSP2_update'),
 
-                  #('alps_hhi', 'SSP2_hhi_HC_supply'),
-                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply'),
+                  ('alps_hhi', 'SSP2_hhi_HC_supply'),
+                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply'),
 
-                  #('alps_hhi', 'SSP2_hhi_HC_imports'),
-                  #('alps_hhi', 'SSP2_hhi_WS_l90p_imports'),
+                  ('alps_hhi', 'SSP2_hhi_HC_imports'),
+                  ('alps_hhi', 'SSP2_hhi_WS_l90p_imports'),
 
-                  #('alps_hhi', 'SSP2_FSU_EUR_2110'),
-                  #('alps_hhi', 'SSP2_FSU_EUR_2040'),
+                  ('alps_hhi', 'SSP2_FSU_EUR_2110'),
+                  ('alps_hhi', 'SSP2_FSU_EUR_2040'),
 
-                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR'),
-                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR'),
+                  ('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR'),
+                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR'),
 
-                  #('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO'),
-                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR_NAM_PAO'),
-                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_NAM_PAO'),
+                  ('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO'),
+                  ('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR_NAM_PAO'),
+                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_NAM_PAO'),
                   
                   ]:
     print(f"COMPILING {mod}/{scen}")
@@ -167,8 +167,18 @@ for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
     gas_supply_df = gas_supply_reporting(rep, scenario)
     gas_supply_out = pd.concat([gas_supply_out, gas_supply_df])
 
-gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Domestic|', '')
+gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Domestic|', 'Domestic|')
 gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Imports|', '')
+
+gas_supply_out['exporter'] = ''
+gas_supply_out['exporter'] = np.where(gas_supply_out['variable'].str.contains('Piped Gas'),
+                                      gas_supply_out['variable'].str.replace('Piped Gas|', ''),
+                                      gas_supply_out['exporter'])
+gas_supply_out['exporter'] = np.where(gas_supply_out['variable'].str.contains('Shipped LNG'),
+                                      gas_supply_out['variable'].str.replace('Shipped LNG|', ''),
+                                      gas_supply_out['exporter'])
+
+gas_supply_out['legend'] = gas_supply_out['exporter'] + ' (' + gas_supply_out['fuel_type'] + ')
 
 gas_supply_out_tot = gas_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
 gas_supply_out_tot = gas_supply_out_tot.rename(columns = {'value': 'total'})
