@@ -179,6 +179,9 @@ gas_supply_out['exporter'] = np.where(gas_supply_out['variable'].str.contains('S
                                       gas_supply_out['exporter'])
 
 gas_supply_out['legend'] = gas_supply_out['exporter'] + ' (' + gas_supply_out['fuel_type'] + ')'
+gas_supply_out['legend'] = np.where(gas_supply_out['variable'].str.contains('Domestic'),
+                                    "Domestic (" + gas_supply_out['variable'].str.replace('Domestic|', '') + ")",
+                                    gas_supply_out['legend'])
 
 gas_supply_out_tot = gas_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
 gas_supply_out_tot = gas_supply_out_tot.rename(columns = {'value': 'total'})
