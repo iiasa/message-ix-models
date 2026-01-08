@@ -200,6 +200,22 @@ aggregate:
   Extraction|Groundwater: [extract_groundwater]
   Extraction|Fossil Groundwater: [extract_gw_fossil]
 
+# Desalination capacity (MCM units)
+- _quantities: [desal_cap]
+  _tag: desal_cap
+  _dim: t
+
+  Desalination|Membrane: [membrane]
+  Desalination|Distillation: [distillation]
+
+# Desalination activity (MCM units)
+- _quantities: [desal_act]
+  _tag: desal_act
+  _dim: t
+
+  Desalination|Membrane: [membrane]
+  Desalination|Distillation: [distillation]
+
 
 # =============================================================================
 # GENERAL: Selections and unit conversions
@@ -256,6 +272,34 @@ general:
   args:
     units: MCM
 
+# Desalination CAP with MCM units
+- key: desal_cap_raw:nl-t-yv-ya
+  comp: select
+  inputs: [CAP]
+  args:
+    indexers:
+      t: [membrane, distillation]
+
+- key: desal_cap:nl-t-yv-ya
+  comp: assign_units
+  inputs: [desal_cap_raw:nl-t-yv-ya]
+  args:
+    units: MCM
+
+# Desalination ACT with MCM units
+- key: desal_act_raw:nl-t-yv-ya-m-h
+  comp: select
+  inputs: [ACT]
+  args:
+    indexers:
+      t: [membrane, distillation]
+
+- key: desal_act:nl-t-yv-ya-m-h
+  comp: assign_units
+  inputs: [desal_act_raw:nl-t-yv-ya-m-h]
+  args:
+    units: MCM
+
 # Water availability (basin-level supply as negative demand)
 - key: water_avail:n-c-l-y-h
   comp: select
@@ -304,6 +348,10 @@ general:
 # Water Extraction:
 #   water_extract_cap:nl-t-ya:water_cap   - Capacity by extraction type (MCM)
 #   water_extract_act:nl-t-ya-h:water_act - Activity by type, seasonal (MCM)
+#
+# Desalination:
+#   desal_cap:nl-t-ya:desal_cap   - Capacity by desal type (MCM)
+#   desal_act:nl-t-ya-h:desal_act - Activity by desal type, seasonal (MCM)
 #
 # Water Availability:
 #   water_avail:n-c-l-y-h         - Basin-level supply (MCM, negative=supply)
