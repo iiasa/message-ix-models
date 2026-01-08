@@ -1165,15 +1165,21 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     if n_time > 1:
         bound_lo["value"] = bound_lo["value"] / n_time
 
-    # Clip activity bounds to not exceed capacity bounds
+    # Clip activity bounds to not exceed per-timeslice capacity limits.
+    # Capacity constraint in GAMS: ACT ≤ CAP × cf × duration_time
+    # For seasonal scenarios with equal timeslices, duration_time = 1/n_time,
+    # so per-timeslice activity limit ≈ CAP / n_time (assuming cf = 1).
     bound_lo = bound_lo.merge(
         bound_up[["node_loc", "year_act", "value"]],
         on=["node_loc", "year_act"],
         how="left",
         suffixes=("", "_cap"),
     )
+    cap_per_timeslice = (
+        (bound_lo["value_cap"] / n_time) if n_time > 1 else bound_lo["value_cap"]
+    )
     bound_lo["value"] = np.minimum(
-        bound_lo["value"], bound_lo["value_cap"].fillna(np.inf)
+        bound_lo["value"], cap_per_timeslice.fillna(np.inf)
     )
     bound_lo = bound_lo.drop("value_cap", axis=1)
 
