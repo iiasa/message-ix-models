@@ -22,6 +22,65 @@ def placeholder(
     """Placeholder function that does nothing, just for building workflow."""
     return scenario
 
+def make_scenario_runner(context):
+
+    from message_data.model.scenario_runner import ScenarioRunner
+    from message_ix_models.util import private_data_path
+    import yaml
+
+    try:
+        biomass_trade = context.biomass_trade
+    except AttributeError:
+        biomass_trade = False
+
+    context.ssp = 'SSP2'
+    context.run_reporting_only = False
+    context.policy_data_file = 'ngfs_p6_policy_data.xlsx'
+    context.policy_config = 'ngfs_p6_config.yaml'
+    context.region_id = "R12"
+
+    # Load slack data from config.yaml
+    config_file = private_data_path('projects', 'ngfs', 'config.yaml')
+    with open(config_file) as f:
+        model_config = yaml.safe_load(f)['MESSAGEix-GLOBIOM 2.2-NGFS-R12']
+
+    sr = ScenarioRunner(
+        context,
+        slack_data=model_config['policy_slacks'][model_config['slack_scn']][context.ssp],
+        biomass_trade=biomass_trade,
+    )
+
+    return sr
+
+
+def add_NPi2030(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Add NPi2030 to the scenario."""
+
+    sr = make_scenario_runner(context)
+    
+    # Pre-populate policy_baseline 
+    if "policy_baseline" not in sr.scen:
+        sr.scen["policy_baseline"] = message_ix.Scenario(
+            mp=sr.mp,
+            model=sr.model_name,
+            scenario="baseline",
+            cache=False,
+        )
+    
+    sr.add(
+        "NPi2030", 
+        "baseline_DEFAULT",
+        mk_INDC=True, 
+        slice_year=2025, 
+        policy_year=2030, 
+        target_kind="Target",
+    )
+    
+    sr.run_all()
+    
+    return sr.scen["NPi2030"]
 
 def solve(
     context: Context, scenario: message_ix.Scenario, model="MESSAGE"
@@ -74,7 +133,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "base",
         None,
-        target="ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT",
+        target="ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline",
         # fmy of the whole workflow afterwards starts from 2030
         # TODO: replace with bmt baseline later
         # target = f"{model_name}/baseline",
@@ -84,8 +143,8 @@ def generate(context: Context) -> Workflow:
         "base cloned",
         "base",
         placeholder,
-        target=f"{model_name}/baseline",
-        clone=dict(keep_solution=False),
+        target=f"{model_name}/baseline_DEFAULT",
+        clone=dict(keep_solution=True),
     )
 
     wf.add_step(
@@ -97,9 +156,8 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "NPi2030 solved",
         "base reported",
-        placeholder,
+        add_NPi2030,
         target=f"{model_name}/NPi2030",
-        clone=dict(keep_solution=False),
     )
 
     wf.add_step(
