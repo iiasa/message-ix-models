@@ -88,6 +88,21 @@ EXTRACTION_TYPES = [
     "Extraction|Fossil Groundwater",
 ]
 
+DESALINATION_TYPES = [
+    "Desalination|Membrane",
+    "Desalination|Distillation",
+]
+
+# Config for standard report extractions: (key, genno_key, prefix, unit, time_col, filter_types)
+STANDARD_REPORT_CONFIGS = (
+    ("cooling_cap", "CAP:nl-t-ya:cool_cap", "Capacity|Electricity|Cooling", "GW", None, COOLING_TYPES),
+    ("cooling_act", "ACT:nl-t-ya-h:cool_act", "Activity|Electricity|Cooling", "GWa", "h", COOLING_TYPES),
+    ("water_cap", "water_extract_cap:nl-t-ya:water_cap", "Capacity|Water|Extraction", "MCM", None, EXTRACTION_TYPES),
+    ("water_act", "water_extract_act:nl-t-ya-h:water_act", "Activity|Water|Extraction", "MCM", "h", EXTRACTION_TYPES),
+    ("desal_cap", "desal_cap:nl-t-ya:desal_cap", "Capacity|Water|Desalination", "MCM", None, DESALINATION_TYPES),
+    ("desal_act", "desal_act:nl-t-ya-h:desal_act", "Activity|Water|Desalination", "MCM", "h", DESALINATION_TYPES),
+)
+
 
 def _get_config_path() -> Path:
     """Return path to water_cooling.yaml config."""
@@ -270,71 +285,26 @@ def report_water_nexus(
     results = []
     report_keys = keys or [
         "cooling_cap", "cooling_act", "cooling_elec",
-        "water_cap", "water_act", "water_avail",
-        "water_infra_elec", "water_demand", "irrigation",
+        "water_cap", "water_act", "desal_cap", "desal_act",
+        "water_avail", "water_infra_elec", "water_demand", "irrigation",
     ]
 
-    # Cooling capacity
-    if "cooling_cap" in report_keys:
-        log.info("Extracting cooling capacity...")
-        try:
-            result = rep.get("CAP:nl-t-ya:cool_cap")
-            df = _package_genno_result(
-                result,
-                variable_prefix="Capacity|Electricity|Cooling",
-                unit="GW",
-                filter_types=COOLING_TYPES,
-            )
-            results.append(df)
-        except Exception as e:
-            log.warning(f"Could not extract cooling capacity: {e}")
-
-    # Cooling activity (seasonal)
-    if "cooling_act" in report_keys:
-        log.info("Extracting cooling activity...")
-        try:
-            result = rep.get("ACT:nl-t-ya-h:cool_act")
-            df = _package_genno_result(
-                result,
-                variable_prefix="Activity|Electricity|Cooling",
-                unit="GWa",
-                time_col="h",
-                filter_types=COOLING_TYPES,
-            )
-            results.append(df)
-        except Exception as e:
-            log.warning(f"Could not extract cooling activity: {e}")
-
-    # Water extraction capacity
-    if "water_cap" in report_keys:
-        log.info("Extracting water extraction capacity...")
-        try:
-            result = rep.get("water_extract_cap:nl-t-ya:water_cap")
-            df = _package_genno_result(
-                result,
-                variable_prefix="Capacity|Water|Extraction",
-                unit="MCM",
-                filter_types=EXTRACTION_TYPES,
-            )
-            results.append(df)
-        except Exception as e:
-            log.warning(f"Could not extract water extraction capacity: {e}")
-
-    # Water extraction activity (seasonal)
-    if "water_act" in report_keys:
-        log.info("Extracting water extraction activity...")
-        try:
-            result = rep.get("water_extract_act:nl-t-ya-h:water_act")
-            df = _package_genno_result(
-                result,
-                variable_prefix="Activity|Water|Extraction",
-                unit="MCM",
-                time_col="h",
-                filter_types=EXTRACTION_TYPES,
-            )
-            results.append(df)
-        except Exception as e:
-            log.warning(f"Could not extract water extraction activity: {e}")
+    # Standard report extractions (cooling, water extraction, desalination)
+    for key, genno_key, prefix, unit, time_col, filter_types in STANDARD_REPORT_CONFIGS:
+        if key in report_keys:
+            log.info(f"Extracting {key}...")
+            try:
+                result = rep.get(genno_key)
+                df = _package_genno_result(
+                    result,
+                    variable_prefix=prefix,
+                    unit=unit,
+                    time_col=time_col,
+                    filter_types=filter_types,
+                )
+                results.append(df)
+            except Exception as e:
+                log.warning(f"Could not extract {key}: {e}")
 
     # Water availability (basin-level)
     if "water_avail" in report_keys:
