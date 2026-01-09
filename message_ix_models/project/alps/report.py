@@ -21,9 +21,11 @@ Python API:
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import Optional, Union
 
+import pandas as pd
 import yaml
+from genno import Key
 from message_ix import Reporter, Scenario
 
 from message_ix_models.util import package_data_path
@@ -63,8 +65,6 @@ def _load_elec_consuming_techs() -> dict[str, list[str]]:
 
     return {"cooling_parasitic": cooling_elec, "water_infra": water_elec}
 
-if TYPE_CHECKING:
-    import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -95,12 +95,54 @@ DESALINATION_TYPES = [
 
 # Config for standard report extractions: (key, genno_key, prefix, unit, time_col, filter_types)
 STANDARD_REPORT_CONFIGS = (
-    ("cooling_cap", "CAP:nl-t-ya:cool_cap", "Capacity|Electricity|Cooling", "GW", None, COOLING_TYPES),
-    ("cooling_act", "ACT:nl-t-ya-h:cool_act", "Activity|Electricity|Cooling", "GWa", "h", COOLING_TYPES),
-    ("water_cap", "water_extract_cap:nl-t-ya:water_cap", "Capacity|Water|Extraction", "MCM", None, EXTRACTION_TYPES),
-    ("water_act", "water_extract_act:nl-t-ya-h:water_act", "Activity|Water|Extraction", "MCM", "h", EXTRACTION_TYPES),
-    ("desal_cap", "desal_cap:nl-t-ya:desal_cap", "Capacity|Water|Desalination", "MCM", None, DESALINATION_TYPES),
-    ("desal_act", "desal_act:nl-t-ya-h:desal_act", "Activity|Water|Desalination", "MCM", "h", DESALINATION_TYPES),
+    (
+        "cooling_cap",
+        "CAP:nl-t-ya:cool_cap",
+        "Capacity|Electricity|Cooling",
+        "GW",
+        None,
+        COOLING_TYPES,
+    ),
+    (
+        "cooling_act",
+        "ACT:nl-t-ya-h:cool_act",
+        "Activity|Electricity|Cooling",
+        "GWa",
+        "h",
+        COOLING_TYPES,
+    ),
+    (
+        "water_cap",
+        "water_extract_cap:nl-t-ya:water_cap",
+        "Capacity|Water|Extraction",
+        "MCM",
+        None,
+        EXTRACTION_TYPES,
+    ),
+    (
+        "water_act",
+        "water_extract_act:nl-t-ya-h:water_act",
+        "Activity|Water|Extraction",
+        "MCM",
+        "h",
+        EXTRACTION_TYPES,
+    ),
+    (
+        "desal_cap",
+        "desal_cap:nl-t-ya:desal_cap",
+        "Capacity|Water|Desalination",
+        "MCM",
+        None,
+        DESALINATION_TYPES,
+    ),
+    (
+        "desal_act",
+        "desal_act:nl-t-ya-h:desal_act",
+        "Activity|Water|Desalination",
+        "MCM",
+        "h",
+        DESALINATION_TYPES,
+    ),
 )
 
 
@@ -157,8 +199,6 @@ def prepare_water_reporter(
         f"{len(elec_techs['water_infra'])} water infra electricity-consuming techs"
     )
 
-    from genno import Key
-
     # Full input key with all dimensions
     in_key = Key("in:nl-t-yv-ya-m-no-c-l-h-ho")
 
@@ -199,12 +239,11 @@ def _package_genno_result(
     type_col: str = "t",
     value_col: Optional[str] = None,
     filter_types: Optional[list] = None,
-) -> "pd.DataFrame":
+) -> pd.DataFrame:
     """Convert genno AttrSeries to DataFrame with standard columns.
 
     This is pure packaging - no value computation.
     """
-    import pandas as pd
 
     df = result.to_dataframe().reset_index()
 
@@ -241,12 +280,13 @@ def _package_genno_result(
     return df[[c for c in cols if c in df.columns]]
 
 
+# FIXME : Remove bare excepts and simplify complexity.
 def report_water_nexus(
     scenario: Scenario,
     output_dir: Optional[Union[str, Path]] = None,
     keys: Optional[list[str]] = None,
     format: str = "csv",
-) -> "pd.DataFrame":
+) -> pd.DataFrame:
     """Run water/nexus report and optionally save results.
 
     All value computation via genno. Python handles only packaging.
@@ -278,15 +318,21 @@ def report_water_nexus(
         Report data with columns: model, scenario, region, variable,
         year, [subannual], value, unit
     """
-    import pandas as pd
-
     rep, temporal_res = prepare_water_reporter(scenario)
 
     results = []
     report_keys = keys or [
-        "cooling_cap", "cooling_act", "cooling_elec",
-        "water_cap", "water_act", "desal_cap", "desal_act",
-        "water_avail", "water_infra_elec", "water_demand", "irrigation",
+        "cooling_cap",
+        "cooling_act",
+        "cooling_elec",
+        "water_cap",
+        "water_act",
+        "desal_cap",
+        "desal_act",
+        "water_avail",
+        "water_infra_elec",
+        "water_demand",
+        "irrigation",
     ]
 
     # Standard report extractions (cooling, water extraction, desalination)
@@ -314,7 +360,14 @@ def report_water_nexus(
             df = result.to_dataframe().reset_index()
             # Custom packaging for water availability
             df["variable"] = "Water Availability|" + df["c"].str.replace("_basin", "")
-            df = df.rename(columns={"n": "region", "y": "year", "h": "subannual", "demand": "value"})
+            df = df.rename(
+                columns={
+                    "n": "region",
+                    "y": "year",
+                    "h": "subannual",
+                    "demand": "value",
+                }
+            )
             df["value"] = -df["value"]  # Flip sign: negative demand = positive supply
             df["unit"] = "MCM"
             df = df[["region", "variable", "year", "subannual", "value", "unit"]]
@@ -361,7 +414,14 @@ def report_water_nexus(
             result = rep.get("water_demand_final:n-c-l-y-h")
             df = result.to_dataframe().reset_index()
             df["variable"] = "Demand|Water|" + df["c"].astype(str)
-            df = df.rename(columns={"n": "region", "y": "year", "h": "subannual", "demand": "value"})
+            df = df.rename(
+                columns={
+                    "n": "region",
+                    "y": "year",
+                    "h": "subannual",
+                    "demand": "value",
+                }
+            )
             df["unit"] = "MCM"
             df = df[["region", "variable", "year", "subannual", "value", "unit"]]
             results.append(df)
