@@ -50,6 +50,15 @@ def make_scenario_runner(context):
         biomass_trade=biomass_trade,
     )
 
+    # Pre-populate policy_baseline 
+    if "policy_baseline" not in sr.scen:
+        sr.scen["policy_baseline"] = message_ix.Scenario(
+            mp=sr.mp,
+            model=sr.model_name,
+            scenario="baseline",
+            cache=False,
+        )
+
     return sr
 
 
@@ -59,19 +68,10 @@ def add_NPi2030(
     """Add NPi2030 to the scenario."""
 
     sr = make_scenario_runner(context)
-    
-    # Pre-populate policy_baseline 
-    if "policy_baseline" not in sr.scen:
-        sr.scen["policy_baseline"] = message_ix.Scenario(
-            mp=sr.mp,
-            model=sr.model_name,
-            scenario="baseline",
-            cache=False,
-        )
-    
     sr.add(
         "NPi2030", 
         "baseline_DEFAULT",
+        # must start with this scenario name (hard-coded in the general scenario runner)
         mk_INDC=True, 
         slice_year=2025, 
         policy_year=2030, 
@@ -81,6 +81,25 @@ def add_NPi2030(
     sr.run_all()
     
     return sr.scen["NPi2030"]
+
+def add_NDC2030(context, scenario):
+    """Add NDC policies to the scenario.
+    """
+    sr = make_scenario_runner(context)  
+
+    sr.add(
+        "INDC2030i",
+        "baseline_DEFAULT",
+        mk_INDC=True,
+        slice_year=2025,
+        policy_year=2030,
+        target_kind="Target",
+    )    
+    
+    sr.run_all()
+
+    return sr.scen["INDC2030i"]
+
 
 def solve(
     context: Context, scenario: message_ix.Scenario, model="MESSAGE"
@@ -171,9 +190,8 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "NDC2030 solved",
         "base reported",
-        placeholder,
-        target=f"{model_name}/NDC2030",
-        clone=dict(keep_solution=False),
+        add_NDC2030,
+        target=f"{model_name}/INDC2030i",
     )
 
     wf.add_step(
