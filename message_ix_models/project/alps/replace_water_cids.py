@@ -291,10 +291,12 @@ def _to_demand_long(df: pd.DataFrame, commodity: str, time_val: str) -> pd.DataF
 
 
 def _to_share_long(qtot: pd.DataFrame, qr: pd.DataFrame, time_val: str) -> pd.DataFrame:
-    """Compute groundwater share and convert to MESSAGE format."""
-    share_values = (
-        qr[MESSAGE_YEARS] / (qtot[MESSAGE_YEARS] + qr[MESSAGE_YEARS]) * 0.95
-    ).clip(0, 1)
+    """Compute groundwater share and convert to MESSAGE format.
+
+    Share = qr / qtot × 0.95, representing sustainable GW fraction of total runoff.
+    Since surfacewater = qtot - qr and groundwater = qr, total available = qtot.
+    """
+    share_values = (qr[MESSAGE_YEARS] / qtot[MESSAGE_YEARS] * 0.95).clip(0, 1).fillna(0)
     share = pd.concat([qtot[["BCU_name"]], share_values], axis=1)
     long = share.melt(
         id_vars=["BCU_name"],
@@ -319,7 +321,7 @@ def prepare_water_cids(
     qr,
     scenario: Scenario,
     temporal_res: str = "annual",
-    sw_from_residual: bool = False,
+    sw_from_residual: bool = True,
     timeslice_months: list[set] = None,
     year_sampling: str = "point",
 ) -> tuple[
@@ -340,8 +342,9 @@ def prepare_water_cids(
     temporal_res : str
         'annual' or 'seasonal' (default: 'annual')
     sw_from_residual : bool
-        If True, compute surfacewater as qtot - qr. If False, use qtot directly.
-        Default: False.
+        If True, compute surfacewater as qtot - qr (avoids double-counting qr
+        which contributes to baseflow in qtot). If False, use qtot directly.
+        Default: True.
     timeslice_months : list of set
         Required for seasonal. Months belonging to each timeslice,
         e.g. [{1,6,7,8,9,10,11,12}, {2,3,4,5}]
