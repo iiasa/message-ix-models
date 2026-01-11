@@ -1105,6 +1105,43 @@ def build_B(
     options = dict(fast=True)
     build.apply_spec(scenario, spec, _add_data, **options)
 
+    # TODO: think about if bound of residiual rc should be removed at all or not
+    # Make sure the historical bound correctly calibrated
+    # Remove bounds for technologies containing "_rc", "_RC_RT", or "_afofio"
+    bound_parameters = [
+        'bound_activity_lo',
+        'bound_activity_up',
+        'bound_new_capacity_lo',
+        'bound_new_capacity_up',
+        'bound_total_capacity_lo',
+        'bound_total_capacity_up',
+    ]
+    
+    patterns_to_remove = ["_rc", "_RC_RT", "_afofio"]
+    
+    with scenario.transact("Remove bounds for residual rc"):
+        for par_name in bound_parameters:
+            # Get parameter data
+            par_df = scenario.par(par_name)
+            
+            if par_df.empty:
+                continue
+            
+            # Filter technologies containing the patterns
+            tech_mask = par_df['technology'].str.contains('|'.join(patterns_to_remove), case=False, na=False)
+            techs_to_remove = par_df[tech_mask]
+            
+            if not techs_to_remove.empty:
+                # Get unique technologies that will be removed
+                removed_techs = sorted(techs_to_remove['technology'].unique())
+                log.info(
+                    f"Removing {len(techs_to_remove)} rows from {par_name} "
+                    f"for technologies: {removed_techs}"
+                )
+                
+                # Remove the parameter data
+                scenario.remove_par(par_name, techs_to_remove)
+
     scenario.set_as_default()
 
     log.info(f"Built {scenario.url} and set as default")
