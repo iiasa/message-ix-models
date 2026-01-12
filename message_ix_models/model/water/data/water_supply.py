@@ -477,7 +477,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
 
         # input data frame  for freshwater supply
         # Use first basin node for vintage-activity year mapping
-        yv_ya_sw = get_vintage_and_active_years(scen_info, 20)
+        yv_ya_sw = get_vintage_and_active_years(scen_info, 30)  # Must match technical_lifetime
 
         inp = pd.concat(
             [
