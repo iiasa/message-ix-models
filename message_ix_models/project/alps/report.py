@@ -182,6 +182,13 @@ def prepare_water_reporter(
     else:
         rep = reporter
 
+    # Duration-weight ACT for proper annual totals
+    # ACT is annualized rate; multiply by duration_time to get period volume
+    # Invariant: annual scenarios have duration_time=1.0, no change
+    act_key = rep.full_key("ACT")
+    rep.add(Key("ACT", act_key.dims, "orig"), rep.graph[act_key])
+    rep.add(act_key, "mul", Key("ACT", act_key.dims, "orig"), "duration_time:h")
+
     config_path = _get_config_path()
     if config_path.exists():
         log.info(f"Loading ALPS water/cooling report config from {config_path}")
