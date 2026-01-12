@@ -48,3 +48,5 @@ scenarios:
     temporal: [annual]
   - budget: 3350f
     temporal: [annual]
+  - budget: 3500f
+    temporal: [annual]
