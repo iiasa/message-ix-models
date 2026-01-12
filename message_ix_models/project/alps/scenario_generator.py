@@ -10,7 +10,7 @@ configuration file. Each scenario is created by:
 
 Usage:
     mix-models alps scen-gen --config scenario_config.yaml
-    mix-models alps scen-gen --config scenario_config.yaml --budgets 600f --temporal annual
+    mix-models alps scen-gen --config scenario_config.yaml --budgets 600f
 """
 
 import logging
@@ -154,7 +154,7 @@ def generate_scenario(
 ) -> Optional[Scenario]:
     """Generate a single CID scenario.
 
-    Clone starter → add timeslices (if seasonal) → run RIME → replace CID params → commit
+    Clone starter -> add timeslices (if seasonal) -> run RIME -> replace CIDs
 
     Parameters
     ----------
@@ -190,7 +190,9 @@ def generate_scenario(
     log.info(f"Generating: {output_scenario}")
     log.info("=" * 60)
     log.info(f"Starter: {starter_model}/{starter_scenario}")
-    log.info(f"MAGICC: {'no_climate (skip CID)' if is_no_climate else magicc_file.name}")
+    log.info(
+        f"MAGICC: {'no_climate (skip CID)' if is_no_climate else magicc_file.name}"
+    )
     log.info(f"Temporal: {temporal_res}")
     log.info(f"CID type: {cid_type}")
 
@@ -249,7 +251,9 @@ def generate_scenario(
                 scen, magicc_df, run_ids, temporal_res, n_runs
             )
         case "cooling":
-            scen_updated = generate_cooling_cid_scenario(scen, magicc_df, run_ids, n_runs)
+            scen_updated = generate_cooling_cid_scenario(
+                scen, magicc_df, run_ids, n_runs
+            )
         case "buildings":
             scen_updated = generate_building_cid_scenario(
                 scen, magicc_df, n_runs=n_runs, coeff_scenario="S1"
@@ -323,7 +327,9 @@ def _generate_nexus_cid(
     # Replace water availability
     log.info("9. Replacing water availability...")
     # Get source name from DataFrame (Scenario column contains source identifier)
-    source_name = magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
+    source_name = (
+        magicc_df["Scenario"].iloc[0] if "Scenario" in magicc_df.columns else "unknown"
+    )
     commit_msg = (
         f"CID water projection: {source_name}, {temporal_res}\n"
         f"RIME: n_runs={n_runs}, variables=qtot_mean,qr"
@@ -366,7 +372,7 @@ def _build_cooling_module(scen: Scenario) -> Scenario:
 
     if len(cooling_techs) > 0:
         log.info(
-            f"Cooling technologies already present: {cooling_techs['technology'].nunique()} types"
+            f"Cooling techs present: {cooling_techs['technology'].nunique()} types"
         )
         return scen
 
@@ -434,7 +440,9 @@ def generate_all(
     log.info("=" * 60)
     log.info(f"Platform: {platform_name}")
     log.info(f"CID type: {cid_type}")
-    starter_info = config["starter"].get("scenario_template", config["starter"].get("scenario", ""))
+    starter_info = config["starter"].get(
+        "scenario_template", config["starter"].get("scenario", "")
+    )
     log.info(f"Starter: {config['starter']['model']}/{starter_info}")
     log.info(f"Budget filter: {budget_filter or 'all'}")
     log.info(f"Temporal filter: {temporal_filter}")
@@ -453,7 +461,9 @@ def generate_all(
 
             # Skip seasonal for cooling and buildings (not supported)
             if cid_type in ("cooling", "buildings") and temp_res == "seasonal":
-                log.debug(f"Skipping {budget}/{temp_res}: {cid_type} only supports annual")
+                log.debug(
+                    f"Skipping {budget}/{temp_res}: {cid_type} only supports annual"
+                )
                 continue
 
             # Derive output name and MAGICC file from budget
@@ -463,7 +473,9 @@ def generate_all(
                     output_name = f"{cid_type}_no_climate"
                     magicc_file = None
                 case None | "" | "baseline":
-                    suffix = "" if cid_type in ("cooling", "buildings") else f"_{temp_res}"
+                    suffix = (
+                        "" if cid_type in ("cooling", "buildings") else f"_{temp_res}"
+                    )
                     output_name = f"{cid_type}_baseline{suffix}"
                     magicc_file = get_magicc_file(magicc_model, "baseline")
                 case _:
@@ -506,10 +518,12 @@ def generate_all(
     created = []
     for spec in scenarios_to_generate:
         try:
-            # Support templated starter scenario (e.g., "cooling_{budget}")
-            starter_scen = config["starter"].get(
-                "scenario_template", config["starter"].get("scenario", "")
-            ).format(budget=spec["budget"])
+            # Templated starter (e.g., "cooling_{budget}", "nexus_baseline_{temporal}")
+            starter_scen = (
+                config["starter"]
+                .get("scenario_template", config["starter"].get("scenario", ""))
+                .format(budget=spec["budget"], temporal=spec["temporal"])
+            )
 
             scen = generate_scenario(
                 mp=mp,

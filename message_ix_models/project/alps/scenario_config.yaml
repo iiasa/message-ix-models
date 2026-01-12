@@ -11,7 +11,8 @@ platform_info:
 
 starter:
   model: SSP_SSP2_v6.5_CID
-  scenario: nexus_baseline_seasonal
+  # Template supports {temporal} substitution: annual→nexus_baseline_annual, seasonal→nexus_baseline_seasonal
+  scenario_template: "nexus_baseline_{temporal}"
 
 output:
   model: SSP_SSP2_v6.5_CID
