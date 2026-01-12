@@ -124,11 +124,22 @@ def _compute_jones_ratio(
     baseline_lookup: dict,
     jones_factors: pd.DataFrame,
 ) -> float | None:
-    """Compute Jones ratio (CF / baseline_CF). Returns None if ratio >= 1 (no constraint)."""
-    baseline_cf = baseline_lookup.get(region_short, 1.0)
-    jones_factor = (
-        jones_factors.loc[region_short, year] if year in jones_factors.columns else 1.0
-    )
+    """Compute Jones ratio (CF / baseline_CF). Returns None if ratio >= 1."""
+    baseline_cf = baseline_lookup.get(region_short)
+    if baseline_cf is None:
+        log.warning(
+            "Missing baseline capacity factor for region %s, using 1.0", region_short
+        )
+        baseline_cf = 1.0
+
+    if year not in jones_factors.columns:
+        log.warning(
+            "Year %d not in jones_factors for region %s, using 1.0", year, region_short
+        )
+        jones_factor = 1.0
+    else:
+        jones_factor = jones_factors.loc[region_short, year]
+
     jones_ratio = jones_factor / baseline_cf if baseline_cf > 0 else 1.0
     return None if jones_ratio >= 1.0 else jones_ratio
 
@@ -176,8 +187,10 @@ def add_jones_relation_constraints(
         zip(tl_parents["node_loc"], tl_parents["technology"], tl_parents["year_vtg"])
     )
 
-    # Use MESSAGE_YEARS directly (jones_factors already sampled by helper)
-    model_years = MESSAGE_YEARS
+    # Filter years to those present in jones_factors (avoids early years with
+    # near-unity Jones ratios that create infeasible constraints)
+    year_cols = [c for c in jones_factors.columns if isinstance(c, (int, np.integer))]
+    model_years = [int(y) for y in scen.set("year") if int(y) >= min(year_cols)]
     regions = cooling_frac["node"].unique()
     log.info(
         f"Building constraints for {len(model_years)} years, {len(regions)} regions"
@@ -187,6 +200,10 @@ def add_jones_relation_constraints(
     relation_set_entries = []
     relation_activity_rows = []
     relation_upper_rows = []
+
+    # Track skipped cases for aggregated warnings
+    skipped_no_fresh_share = set()
+    skipped_no_cooling_frac = set()
 
     for parent_tech, fresh_variants in parent_to_fresh.items():
         rel_name = f"fresh_cool_bound_{parent_tech}"
@@ -206,12 +223,14 @@ def add_jones_relation_constraints(
                     & (cooling_frac["year_act"] == year)
                 ]
                 if len(cf_row) == 0:
+                    skipped_no_cooling_frac.add((region, parent_tech))
                     continue
                 cooling_fraction = cf_row.iloc[0]["cooling_fraction"]
 
                 # Get freshwater share
                 fresh_share_ref = fresh_share_lookup.get((region, parent_tech))
                 if fresh_share_ref is None or fresh_share_ref <= 0:
+                    skipped_no_fresh_share.add((region, parent_tech))
                     continue
 
                 # Compute Jones ratio
@@ -237,7 +256,7 @@ def add_jones_relation_constraints(
                         }
                     )
 
-                # Parent: coefficient = -jones_ratio * fresh_share_ref * cooling_fraction
+                # Parent: coeff = -jones_ratio * fresh_share_ref * cooling_fraction
                 relation_activity_rows.append(
                     {
                         "relation": rel_name,
@@ -262,6 +281,20 @@ def add_jones_relation_constraints(
                         "unit": "-",
                     }
                 )
+
+    # Log aggregated warnings for skipped cases
+    if skipped_no_fresh_share:
+        log.warning(
+            "Skipped %d (region, tech) pairs with missing/zero freshwater share: %s",
+            len(skipped_no_fresh_share),
+            sorted(skipped_no_fresh_share)[:5],
+        )
+    if skipped_no_cooling_frac:
+        log.warning(
+            "Skipped %d (region, tech) pairs with missing cooling fraction: %s",
+            len(skipped_no_cooling_frac),
+            sorted(skipped_no_cooling_frac)[:5],
+        )
 
     log.info(
         f"Created {len(set(relation_set_entries))} relations, "

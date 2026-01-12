@@ -11,6 +11,7 @@ Key functionality:
 - Atomic parameter replacement in scenarios
 """
 
+import logging
 from functools import lru_cache
 
 import numpy as np
@@ -24,6 +25,8 @@ from message_ix_models.project.alps.constants import (
     NAN_BASIN_IDS,
 )
 from message_ix_models.util import package_data_path
+
+log = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
@@ -84,6 +87,12 @@ def load_bifurcation_mapping(expand_to_message: bool = True) -> pd.DataFrame:
     default_dry = {1, 2, 3, 4, 5, 6}
     missing_mask = expanded["wet_months"].isna()
     if missing_mask.any():
+        missing_basins = expanded.loc[missing_mask, "BCU_name"].unique().tolist()
+        log.warning(
+            "Using default 50/50 seasonal split for %d basins without bifurcation: %s",
+            len(missing_basins),
+            missing_basins[:10],  # Show first 10
+        )
         expanded.loc[missing_mask, "wet_months"] = expanded.loc[missing_mask].apply(
             lambda _: default_wet, axis=1
         )
@@ -169,7 +178,7 @@ def transform_seasonal_to_timeslice(
     Returns
     -------
     tuple of (h1_df, h2_df)
-        DataFrames with same structure as input, values are VOLUMES (km³) for each timeslice
+        DataFrames with same structure, values are VOLUMES (km³) per timeslice
 
     Notes
     -----
@@ -229,17 +238,48 @@ def _extract_basin_id(node_str: str) -> int:
     return int(node_str[1:].split("|")[0])
 
 
+def _validate_timeslice_compatibility(
+    new_df: pd.DataFrame, old_df: pd.DataFrame, time_col: str = "time"
+) -> None:
+    """Validate that new and old DataFrames have compatible timeslice structure.
+
+    Raises
+    ------
+    ValueError
+        If timeslices are incompatible (e.g., new has 'year' but old has 'h1/h2')
+    """
+    new_times = set(new_df[time_col].unique())
+    old_times = set(old_df[time_col].unique())
+
+    if not new_times & old_times:
+        raise ValueError(
+            f"Timeslice mismatch: new data has {sorted(new_times)}, "
+            f"old scenario has {sorted(old_times)}. "
+            f"Cannot create annual scenarios from seasonal starter or vice versa. "
+            f"Use a starter scenario with matching temporal resolution."
+        )
+
+
 def _filter_with_fallback(
     new_df: pd.DataFrame,
     old_df: pd.DataFrame,
     node_col: str,
     key_cols: list[str],
 ) -> pd.DataFrame:
-    """Filter new values to existing basins, preserve original where RIME has NaN or missing.
+    """Filter new values to existing basins, preserve original where RIME has NaN.
 
     Also preserves original values for NAN_BASIN_IDS (B0, B141, B154) where RIME
     predictions are invalid.
+
+    Raises
+    ------
+    ValueError
+        If timeslice structure is incompatible between new and old data.
     """
+    # Validate timeslice compatibility upfront
+    if "time" in key_cols:
+        _validate_timeslice_compatibility(new_df, old_df)
+
     existing_basins = set(old_df[node_col].unique())
     candidate = new_df[new_df[node_col].isin(existing_basins)].copy()
 
@@ -255,15 +295,45 @@ def _filter_with_fallback(
 
     basins_with_valid = set(valid[node_col].unique())
     missing_basins = existing_basins - basins_with_valid
+
+    # Log warnings for fallback cases
+    if len(nan_rows) > 0:
+        nan_basin_ids = set(nan_rows["_basin_id"].unique())
+        log.warning(
+            "Using original values for %d basins with NaN RIME predictions: %s",
+            len(nan_basin_ids),
+            sorted(nan_basin_ids)[:10],  # Show first 10
+        )
+
+    if missing_basins:
+        log.warning(
+            "Using original values for %d basins missing from RIME output: %s",
+            len(missing_basins),
+            sorted(missing_basins)[:10],  # Show first 10
+        )
+
     missing = (
         old_df[old_df[node_col].isin(missing_basins)]
         if missing_basins
         else pd.DataFrame()
     )
 
-    return pd.concat([valid, preserved, missing], ignore_index=True).drop(
+    result = pd.concat([valid, preserved, missing], ignore_index=True).drop(
         columns=["_basin_id"], errors="ignore"
     )
+
+    # Validate output row count
+    expected_rows = len(old_df)
+    actual_rows = len(result)
+    if actual_rows < expected_rows * 0.9:
+        log.warning(
+            "Output has fewer rows than expected: %d vs %d (%.1f%% retention)",
+            actual_rows,
+            expected_rows,
+            100 * actual_rows / expected_rows,
+        )
+
+    return result
 
 
 def _to_demand_long(df: pd.DataFrame, commodity: str, time_val: str) -> pd.DataFrame:

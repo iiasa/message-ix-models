@@ -4,6 +4,7 @@ Replaces climate-driven portions of rc_spec (cooling) and rc_therm (heating)
 with RIME-based projections.
 """
 
+import logging
 from typing import Tuple
 
 import pandas as pd
@@ -15,6 +16,8 @@ from message_ix_models.util import package_data_path
 from .building_energy import compute_energy_demand_ensemble
 from .cid_utils import sample_to_message_years
 from .rime import get_gmt_ensemble
+
+log = logging.getLogger(__name__)
 
 # Unit conversion using pint: demand parameter expects GWa, building_energy outputs EJ
 _ureg = pint.UnitRegistry()
@@ -184,7 +187,30 @@ def generate_building_cid_scenario(
             how="left",
         )
 
-        # Fill missing fractions with 0 (no reduction)
+        # Fill missing fractions with 0 (no reduction) - log if any missing
+        missing_cool_frac = rc_spec["frac_resid_cool"].isna().sum()
+        missing_heat_frac = rc_therm["frac_resid_heat"].isna().sum()
+        if missing_cool_frac > 0:
+            missing_nodes = rc_spec.loc[
+                rc_spec["frac_resid_cool"].isna(), "node"
+            ].unique()
+            log.warning(
+                "Missing cooling sector fractions for %d rows (%d nodes), using 0: %s",
+                missing_cool_frac,
+                len(missing_nodes),
+                list(missing_nodes)[:5],
+            )
+        if missing_heat_frac > 0:
+            missing_nodes = rc_therm.loc[
+                rc_therm["frac_resid_heat"].isna(), "node"
+            ].unique()
+            log.warning(
+                "Missing heating sector fractions for %d rows (%d nodes), using 0: %s",
+                missing_heat_frac,
+                len(missing_nodes),
+                list(missing_nodes)[:5],
+            )
+
         rc_spec["frac_resid_cool"] = rc_spec["frac_resid_cool"].fillna(0)
         rc_spec["frac_comm_cool"] = rc_spec["frac_comm_cool"].fillna(0)
         rc_therm["frac_resid_heat"] = rc_therm["frac_resid_heat"].fillna(0)
@@ -209,6 +235,26 @@ def generate_building_cid_scenario(
             on=["node", "year"],
             how="left",
         )
+
+        # Log if climate demand missing for any regions
+        missing_cool_add = rc_spec["cool_add"].isna().sum()
+        missing_heat_add = rc_therm["heat_add"].isna().sum()
+        if missing_cool_add > 0:
+            missing_nodes = rc_spec.loc[rc_spec["cool_add"].isna(), "node"].unique()
+            log.warning(
+                "Missing RIME cooling demand for %d rows (%d nodes), using 0: %s",
+                missing_cool_add,
+                len(missing_nodes),
+                list(missing_nodes)[:5],
+            )
+        if missing_heat_add > 0:
+            missing_nodes = rc_therm.loc[rc_therm["heat_add"].isna(), "node"].unique()
+            log.warning(
+                "Missing RIME heating demand for %d rows (%d nodes), using 0: %s",
+                missing_heat_add,
+                len(missing_nodes),
+                list(missing_nodes)[:5],
+            )
 
         rc_spec["cool_add"] = rc_spec["cool_add"].fillna(0)
         rc_therm["heat_add"] = rc_therm["heat_add"].fillna(0)
