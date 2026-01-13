@@ -186,6 +186,19 @@ gas_supply_out_tot = gas_supply_out.groupby(['model', 'scenario', 'region', 'uni
 gas_supply_out_tot = gas_supply_out_tot.rename(columns = {'value': 'total'})
 gas_supply_out = gas_supply_out.merge(gas_supply_out_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
 
+gas_exports = gas_supply_out.copy()
+gas_exports = gas_exports[['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
+gas_exports = gas_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
+gas_exports = gas_exports[gas_exports['supply_type'] == 'Imports']
+gas_exports['variable'] = 'Exports|' + gas_exports['fuel_type']
+gas_exports = gas_exports.rename(columns = {'exporter': 'region'})
+gas_exports['exporter'] = ''
+gas_exports['supply_type'] = 'Exports'
+
+gas_supply_out = gas_supply_out[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
+gas_exports = gas_exports[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
+gas_supply_out = pd.concat([gas_supply_out, gas_exports])
+
 gas_supply_out.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))
 
 # Compare across scenarios
