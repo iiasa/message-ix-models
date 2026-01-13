@@ -1096,7 +1096,7 @@ def export_edit_files(
                 log.info(f"Copied file from edit to bare: {reqpar}")
     ## Transfer cost parameters for flow technologies using shipping from edit to bare
     for tec in covered_tec:
-        if "shipping" in tec:
+        if "shipped" in tec:
             required_parameters = [
                 os.path.join("flow_technology", "var_cost.csv"),
                 os.path.join("flow_technology", "inv_cost.csv"),
@@ -1106,7 +1106,9 @@ def export_edit_files(
                     os.path.join(data_path, tec, "bare_files", reqpar)
                 ):
                     base_file = os.path.join(data_path, tec, "edit_files", reqpar)
-
+                    dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
+                    shutil.copy2(base_file, dest_file)
+                    log.info(f"Copied file from edit to bare: {reqpar}")
 
 # %% Main function to generate bare sheets
 def generate_edit_files(
