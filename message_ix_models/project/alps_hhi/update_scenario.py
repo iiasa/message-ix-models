@@ -28,26 +28,26 @@ data_path = package_data_path("bilateralize")
 mp = ixmp.Platform()
 
 base_model_name = 'alps_hhi'
-base_scen_name = 'SSP2'
+base_scen_name = 'SSP3'
 target_model_name = 'alps_hhi'
-target_scen_name = 'SSP2_update'
+target_scen_name = 'SSP3'
 
 base_scenario = message_ix.Scenario(mp, model=base_model_name, scenario=base_scen_name)
 hhi_scenario = base_scenario.clone(target_model_name, target_scen_name, 
                                    keep_solution = False)
-hhi_scenario.set_as_default()
+#hhi_scenario.set_as_default()
 
-updf = hhi_scenario.par('growth_activity_up')
-updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
-updf = updf[updf['node_loc'].isin(['R12_WEU'])]
+#updf = hhi_scenario.par('growth_activity_up')
+#updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
+#updf = updf[updf['node_loc'].isin(['R12_WEU'])]
 
-remdf = updf.copy()
-updf['value'] = 0.01
+#remdf = updf.copy()
+#updf['value'] = 0.01
 #updf['value'] = np.where(updf['year_act'] > 2060, 0.01, updf['value'])
 
-with hhi_scenario.transact("update growth activity up to gas_extr_mpen"):
-    hhi_scenario.remove_par('growth_activity_up', remdf)
-    hhi_scenario.add_par('growth_activity_up', updf)
+#with hhi_scenario.transact("update growth activity up to gas_extr_mpen"):
+#    hhi_scenario.remove_par('growth_activity_up', remdf)
+#    hhi_scenario.add_par('growth_activity_up', updf)
     
 hhi_scenario.solve()
 mp.close_db()
