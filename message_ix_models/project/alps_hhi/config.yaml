@@ -18,15 +18,15 @@ models_scenarios:
 #  SSP1:
 #    model: SSP_SSP1_v6.2
 #    scenario: baseline
-#  SSP2:
-#    model: SSP_SSP2_v6.2
-#    scenario: baseline
+  SSP2:
+    model: SSP_SSP2_v6.2
+    scenario: baseline
 #  SSP2_1000f:
 #    model: SSP_SSP2_v6.2
 #    scenario: 1000f
-  SSP3:
-    model: SSP_SSP3_v6.2
-    scenario: baseline
+#  SSP3:
+#    model: SSP_SSP3_v6.2
+#    scenario: baseline
 #  SSP4:
 #    model: SSP_SSP4_v6.2
 #    scenario: baseline
