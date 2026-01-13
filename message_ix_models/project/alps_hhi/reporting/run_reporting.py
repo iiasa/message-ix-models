@@ -139,6 +139,7 @@ gas_supply_out = pd.DataFrame()
 for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
 
                   ('alps_hhi', 'SSP2'),
+                  ('alps_hhi', 'SSP2_nopcosts'), #REMOVE LATER
 
                   ('alps_hhi', 'SSP2_hhi_HC_supply'),
                   ('alps_hhi', 'SSP2_hhi_WS_l90p_supply'),
