@@ -1,0 +1,65 @@
+# CID Scenario Generation Configuration - Buildings
+# Generates building energy demand scenarios (rc_spec, rc_therm) from MAGICC temperature
+# Formula: E(t,r) = gamma * EI(r, GMT(t)) * F(t,r)
+# Uses S1 (baseline) correction coefficients
+
+platform_info:
+  name: ixmp_dev
+  jvmargs: "-Xmx16G"
+
+starter:
+  model: SSP_SSP2_v6.5_CID
+  scenario: baseline
+
+output:
+  model: SSP_SSP2_v6.5_CID
+  scenario_template: "buildings_{budget}"
+
+cid_type: buildings
+
+rime:
+  n_runs: 100
+  coeff_scenario: S1
+  # Buildings uses EI_cool and EI_heat variables from region-level emulators
+  variables:
+    - EI_cool
+    - EI_heat
+
+# Buildings only supports annual (no seasonal EI emulator)
+#
+# Scenario types:
+# - no_climate: No CID applied - uses original rc_spec/rc_therm from starter scenario
+# - baseline: CID from SSP2 baseline emissions -> MAGICC -> building energy demand
+# - {budget}f: CID from carbon budget pathway -> MAGICC -> building energy demand
+#
+# Parameters modified:
+# - rc_spec: Commercial cooling demand (space cooling)
+# - rc_therm: Thermal demand (heating)
+#
+scenarios:
+  - budget: no_climate
+    temporal: [annual]
+  - budget: baseline
+    temporal: [annual]
+  - budget: 850f
+    temporal: [annual]
+  - budget: 1100f
+    temporal: [annual]
+  - budget: 1350f
+    temporal: [annual]
+  - budget: 1850f
+    temporal: [annual]
+  - budget: 2100f
+    temporal: [annual]
+  - budget: 2350f
+    temporal: [annual]
+  - budget: 2600f
+    temporal: [annual]
+  - budget: 2850f
+    temporal: [annual]
+  - budget: 3100f
+    temporal: [annual]
+  - budget: 3350f
+    temporal: [annual]
+  - budget: 3500f
+    temporal: [annual]

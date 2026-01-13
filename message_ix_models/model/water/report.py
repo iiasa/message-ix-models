@@ -1,44 +1,17 @@
-from __future__ import annotations
-
 import logging
-import re
-from typing import TypedDict
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 import pyam
-from ixmp import Platform
 from message_ix import Reporter, Scenario
 
-from message_ix_models.model.water.utils import USD_KM3_TO_USD_MCM, m3_GJ_TO_MCM_GWa
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
 
-class ScenarioMetadata(TypedDict):
-    """Metadata dictionary for scenario reporting.
-
-    Attributes
-    ----------
-    model : str
-        Model name from scenario
-    scenario : str
-        Scenario name
-    unit : str
-        Unit of measurement (e.g., "million" for population)
-    """
-
-    model: str
-    scenario: str
-    unit: str
-
-
-# Global variable to track cooling-only mode (without the nexus module)
-_cooling_only = False
-
-
-def run_old_reporting(sc: Scenario | None = None):
+def run_old_reporting(sc: Optional[Scenario] = None):
     try:
         from message_data.tools.post_processing.iamc_report_hackathon import (
             report as legacy_report,
@@ -173,7 +146,7 @@ def report_iam_definition(
         "Water Resource|Surface Water",
         inplace=True,
     )
-    df_dmd["unit"] = "MCM"
+    df_dmd["unit"] = "km3"
     df_dmd1 = pyam.IamDataFrame(df_dmd)
 
     if not suban:
@@ -291,461 +264,144 @@ def multiply_electricity_output_of_hydro(
     report_iam : pyam.IamDataFrame
         Report in pyam format
     """
-    perf_data = pd.read_csv(
-        package_data_path(
-            "water", "ppl_cooling_tech", "tech_water_performance_ssp_msg.csv"
-        )
-    )
 
     for var in elec_hydro_var:
-        # Extract hydro technology name using regex
-        match = re.search(r"hydro[^|]*", var)
-        if not match:
-            log.error(f"Could not extract hydro technology name from variable: {var}")
-            continue
-        tech_suffix = match.group(0)
-
-        tech = perf_data[perf_data["technology_name"] == tech_suffix]
-        if tech.empty:
-            log.error(f"No performance data found for technology: {tech_suffix}")
-            continue
-
-        water_withdrawal_ratio = (
-            tech["water_withdrawal_mid_m3_per_output"].iloc[0] * m3_GJ_TO_MCM_GWa
-        )
-        report_iam = report_iam.append(
-            report_iam.multiply(
-                f"{var}",
-                water_withdrawal_ratio,
-                f"Water Withdrawal|Electricity|Hydro|{tech_suffix}",
+        if "hydro_1" in var or "hydro_hc" in var:
+            report_iam = report_iam.append(
+                # Multiply electricity output of hydro to get withdrawals
+                # this is an ex-post model calculation and the values are taken from
+                # data/water/ppl_cooling_tech/tech_water_performance_ssp_msg.csv
+                # for hydr_n water_withdrawal_mid_m3_per output is converted by
+                # multiplying with   60 * 60* 24 * 365 * 1e-9 to convert it
+                # into km3/output
+                report_iam.multiply(
+                    f"{var}", 0.161, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
+                )
             )
-        )
+        else:
+            report_iam = report_iam.append(
+                report_iam.multiply(
+                    f"{var}", 0.323, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
+                )
+            )
     return report_iam
 
 
-def get_population_data(sc: Scenario, reg: str) -> pd.DataFrame:
-    """Retrieve population data from scenario and map to R12 region codes
+def pop_water_access(sc: Scenario, reg: str, sdgs: bool = False) -> pd.DataFrame:
+    """Add population with access to water and sanitation to the scenario
 
     Parameters
     ----------
-    sc : Scenario
-        Scenario to retrieve population data from
+    sc : ixmp.Scenario
+        Scenario to add the population with access to water and sanitation
     reg : str
-        Region specification for mapping
-
-    Returns
-    -------
-    pd.DataFrame
-        Population data with R12_XX region codes
+        Region to add the population with access to water and sanitation
+    sdgs : bool, optional
+        If True, add population with access to water and sanitation for SDG6, by default
+        False
     """
-    population_data = pd.DataFrame()
-
-    # Get region mapping
+    # add population with sanitation or drinking water access
     mp2 = sc.platform
-    reg_map = mp2.regions()
 
-    for ur in ("urban", "rural"):
-        try:
-            # Get population timeseries for urban/rural
-            pop_data = sc.timeseries(variable=f"Population|{ur.capitalize()}")
-
-            # Exclude global aggregate regions
-            pop_data = pop_data[
-                ~pop_data.region.str.contains(
-                    r"GLB\s+region|^World$|^Global$|Total",
-                    case=False,
-                    regex=True,
-                    na=False,
-                )
-            ]
-
-            if pop_data.empty:
-                log.warning(f"No Population|{ur.capitalize()} data found in scenario")
-                continue
-
-            # Get unique regions from population data
-            pop_reg = np.unique(pop_data["region"])
-
-            # Map natural language region names to R12_XX codes using reg_map
-            pop_mappings = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
-                columns=["parent", "hierarchy"]
-            )
-            population_to_r12_map = dict(
-                zip(pop_mappings.mapped_to, pop_mappings.region)
-            )
-
-            # Apply region mapping
-            pop_data["region"] = (
-                pop_data["region"].map(population_to_r12_map).fillna(pop_data["region"])
-            )
-
-            # Add urban/rural identifier
-            pop_data["variable"] = f"Population|{ur.capitalize()}"
-
-            population_data = pd.concat([population_data, pop_data])
-
-        except (KeyError, ValueError) as e:
-            log.warning(f"Failed to retrieve Population|{ur.capitalize()} data: {e}")
-            continue
-
-    # Check if we have future data (post-2020)
-    future_pop = population_data[population_data.year >= 2020]
-    if future_pop.empty:
-        log.warning("No population data with future values (>=2020) found")
-    else:
-        log.info(f"Population data available through year {population_data.year.max()}")
-
-    return population_data
-
-
-def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
-    """Load and clean water access rates data from CSV
-
-    Parameters
-    ----------
-    reg : str
-        Region specification (R11, R12, R17, etc.)
-    ssp : str
-        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
-    sdgs : bool
-        Whether to use SDG scenario rates
-
-    Returns
-    -------
-    pd.DataFrame
-        Cleaned rates data with region codes matching reg parameter
-    """
-    # Load rates data
+    # load data on water and sanitation access
     load_path = package_data_path("water", "demands", "harmonized", reg)
-    all_rates = pd.read_csv(load_path / f"all_rates_{ssp}.csv")
+    all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
 
-    # Filter for scenario type
-    scenario_type = "SDG" if sdgs else "baseline"
-    df_rate = all_rates[all_rates.variable.str.contains(scenario_type)]
-
-    if df_rate.empty:
-        log.warning(f"No rates data found for {scenario_type}")
+    pop_check = sc.timeseries(variable="Population")
+    pop_check = pop_check[pop_check.year >= 2020]
+    if pop_check.empty:
+        log.warning(
+            "No population data with future values found. Skipping calculations."
+        )
         return pd.DataFrame()
 
-    # Extract region from node (e.g., "105|CHN" -> "CHN")
-    df_rate = df_rate.copy()
-    df_rate["region_short"] = [x.split("|")[1] for x in df_rate.node]
-
-    # Get region mapping for basin codes
-    mp = Platform()
-    reg_map = mp.regions()
-
-    # Create basin to region mapping based on reg parameter
-    target_regions = reg_map[reg_map.region.str.startswith(f"{reg}_")]
-    basin_to_reg_map = {}
-    for _, row in target_regions.iterrows():
-        region_code = row.region.split("_")[1]  # R12_CHN -> CHN
-        basin_to_reg_map[region_code] = row.region  # CHN -> R12_CHN
-
-    df_rate["region"] = df_rate["region_short"].map(basin_to_reg_map)
-
-    # Remove unmapped regions
-    df_rate = df_rate.dropna(subset=["region"])
-    df_rate = df_rate.drop(columns=["node", "region_short"])
-
-    # Average rates across basins for each region/year/variable
-    rates_data = (
-        df_rate.groupby(["year", "variable", "region"])["value"].mean().reset_index()
-    )
-
-    return rates_data
-
-
-def get_population_values(
-    pop_data: pd.DataFrame, region: str, year: int
-) -> tuple[float, float]:
-    """Get urban and rural population values for a specific region and year.
-
-    Parameters
-    ----------
-    pop_data : pd.DataFrame
-        Population data
-    region : str
-        Region code
-    year : int
-        Year
-
-    Returns
-    -------
-    tuple[float, float]
-        Urban population value, rural population value (may be NaN)
-    """
-    pop_urban = pop_data[
-        (pop_data.region == region)
-        & (pop_data.year == year)
-        & (pop_data.variable == "Population|Urban")
-    ]
-    pop_rural = pop_data[
-        (pop_data.region == region)
-        & (pop_data.year == year)
-        & (pop_data.variable == "Population|Rural")
-    ]
-
-    urban_val = pop_urban.iloc[0]["value"] if not pop_urban.empty else np.nan
-    rural_val = pop_rural.iloc[0]["value"] if not pop_rural.empty else np.nan
-
-    return urban_val, rural_val
-
-
-def process_rates(
-    population_type: str,
-    population_value: float,
-    rates_data: pd.DataFrame,
-    region: str,
-    year: int,
-    metadata: ScenarioMetadata,
-) -> list[dict]:
-    """Process base population, connection rates, and treatment rates.
-
-    Parameters
-    ----------
-    population_type : str
-        Type of population ("urban" or "rural")
-    population_value : float
-        Population value for the region/year
-    rates_data : pd.DataFrame
-        DataFrame containing connection and treatment rates
-    region : str
-        Region code
-    year : int
-        Year
-    metadata : ScenarioMetadata
-        Scenario metadata (model, scenario, unit)
-
-    Returns
-    -------
-    list[dict]
-        List of result dictionaries with population, rates, and access calculations
-    """
-    pt_cap = population_type.capitalize()
-    base = {
-        "region": region,
-        "year": year,
-        "variable": f"Population|{pt_cap}",
-        "value": population_value,
-        **metadata,
-    }
-
-    out = [base]
-
-    # map pattern -> (variable_template, access_variable_template)
-    patterns = {
-        r"connection": (
-            f"Connection Rate|Drinking Water|{pt_cap}",
-            f"Population|Drinking Water Access|{pt_cap}",
-        ),
-        r"treatment": (
-            f"Treatment Rate|Sanitation|{pt_cap}",
-            f"Population|Sanitation Access|{pt_cap}",
-        ),
-    }
-
-    # search and append if found
-    for pat, (rate_var, access_var) in patterns.items():
-        found = rates_data[
-            rates_data.variable.str.contains(
-                f"{population_type}.*{pat}", case=False, regex=True
-            )
-        ]
-        if found.empty:
-            continue
-        rate = found.iloc[0]["value"]
-        out.append({**base, "variable": rate_var, "value": rate})
-        access = (
-            (population_value * rate)
-            if pd.notna(population_value) and pd.notna(rate)
-            else np.nan
+    pop_drink_tot = pd.DataFrame()
+    pop_sani_tot = pd.DataFrame()
+    pop_sdg6 = pd.DataFrame()
+    for ur in ["urban", "rural"]:
+        # CHANGE TO URBAN AND RURAL POP
+        pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
+        # ONLY R11!!! Need to fix when updating the reporting to work with any region
+        pop_tot = pop_tot[-(pop_tot.region == "GLB region (R11)")]
+        pop_reg = np.unique(pop_tot["region"])
+        # need to change names
+        reg_map = mp2.regions()
+        reg_map = reg_map[reg_map.mapped_to.isin(pop_reg)].drop(
+            columns=["parent", "hierarchy"]
         )
-        out.append({**base, "variable": access_var, "value": access})
+        reg_map["region"] = [x.split("_")[1] for x in reg_map.region]
 
-    return out
+        df_rate = all_rates[all_rates.variable.str.contains(ur)]
 
+        df_rate = df_rate[df_rate.variable.str.contains("sdg" if sdgs else "baseline")]
 
-def aggregate_totals(result_df: pd.DataFrame) -> list[pd.DataFrame]:
-    """Aggregate regional totals for:
-      - Population|Drinking Water Access (sum)
-      - Population|Sanitation Access (sum)
-      - Population (Urban/Rural -> sum -> Population)
-    Returns list of DataFrames"""
-    totals: list[pd.DataFrame] = []
+        df_rate["region"] = [x.split("|")[1] for x in df_rate.node]
+        df_rate = df_rate.drop(columns=["node"])
+        # make region mean (no weighted average)
+        df_rate = (
+            df_rate.groupby(["year", "variable", "region"])["value"]
+            .mean()
+            .reset_index()
+        )
+        # convert region name
+        df_rate = df_rate.merge(reg_map, how="left")
+        df_rate = df_rate.drop(columns=["region"])
+        df_rate = df_rate.rename(
+            columns={"mapped_to": "region", "variable": "new_var", "value": "rate"}
+        )
 
-    def _group_sum(df: pd.DataFrame, new_var: str) -> pd.DataFrame:
-        g = (
-            df.groupby(["region", "year", "model", "scenario", "unit"], dropna=False)[
+        # Population|Drinking Water Access
+        df_drink = df_rate[df_rate.new_var.str.contains("connection")]
+        pop_drink = pop_tot.merge(df_drink, how="left")
+        pop_drink["variable"] = "Population|Drinking Water Access|" + ur.capitalize()
+        pop_drink["value"] = pop_drink.value * pop_drink.rate
+        cols = pop_tot.columns
+        pop_drink = pop_drink[cols]
+        pop_drink_tot = pd.concat([pop_drink_tot, pop_drink])
+        pop_sdg6 = pd.concat([pop_sdg6, pop_drink])
+
+        # Population|Sanitation Acces
+        df_sani = df_rate[df_rate.new_var.str.contains("treatment")]
+        pop_sani = pop_tot.merge(df_sani, how="left")
+        pop_sani["variable"] = "Population|Sanitation Access|" + ur.capitalize()
+        pop_sani["value"] = pop_sani.value * pop_sani.rate
+        pop_sani = pop_sani[cols]
+        pop_sani_tot = pd.concat([pop_sani_tot, pop_drink])
+        pop_sdg6 = pd.concat([pop_sdg6, pop_sani])
+
+        # total values
+        pop_drink_tot = (
+            pop_drink_tot.groupby(["region", "unit", "year", "model", "scenario"])[
                 "value"
             ]
             .sum()
             .reset_index()
         )
-        g["variable"] = new_var
-        return g
-
-    # drinking water access
-    drink = result_df[
-        result_df.variable.str.contains(
-            r"Population\|Drinking Water Access", regex=True
-        )
-    ]
-    if not drink.empty:
-        totals.append(_group_sum(drink, "Population|Drinking Water Access"))
-
-    # sanitation access
-    sani = result_df[
-        result_df.variable.str.contains(r"Population\|Sanitation Access", regex=True)
-    ]
-    if not sani.empty:
-        totals.append(_group_sum(sani, "Population|Sanitation Access"))
-
-    # base population (Urban|Rural)
-    base_pop = result_df[
-        result_df.variable.str.match(r"Population\|(Urban|Rural)$", na=False)
-    ]
-    if not base_pop.empty:
-        pop_sum = (
-            base_pop.groupby(
-                ["region", "year", "model", "scenario", "unit"], dropna=False
-            )["value"]
-            .sum()
-            .reset_index()
-        )
-        pop_sum["variable"] = "Population"
-        totals.append(pop_sum)
-
-    return totals
-
-
-def aggregate_world_totals(result_df: pd.DataFrame) -> list[pd.DataFrame]:
-    """World-level aggregations:
-      - sum of non-rate variables (populations/access)
-      - mean of rate variables
-    Preserves column set ['variable','year','model','scenario','unit','value'] and
-    adds region='World'.
-    """
-    world: list[pd.DataFrame] = []
-
-    pop_vars = result_df[~result_df.variable.str.contains("Rate", na=False)]
-    rate_vars = result_df[result_df.variable.str.contains("Rate", na=False)]
-
-    if not pop_vars.empty:
-        wp = (
-            pop_vars.groupby(
-                ["variable", "year", "model", "scenario", "unit"], dropna=False
-            )["value"]
-            .sum()
-            .reset_index()
-        )
-        wp["region"] = "World"
-        world.append(wp)
-
-    if not rate_vars.empty:
-        wr = (
-            rate_vars.groupby(
-                ["variable", "year", "model", "scenario", "unit"], dropna=False
-            )["value"]
-            .mean()
-            .reset_index()
-        )
-        wr["region"] = "World"
-        world.append(wr)
-
-    return world
-
-
-def pop_water_access(
-    sc: Scenario, reg: str, ssp: str, sdgs: bool = False
-) -> pd.DataFrame:
-    """Calculate population with access to water and sanitation
-
-    Parameters
-    ----------
-    sc : Scenario
-        Scenario to calculate access for
-    reg : str
-        Region specification
-    ssp : str
-        SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
-    sdgs : bool
-        Whether to use SDG scenario rates
-
-    Returns
-    -------
-    pd.DataFrame
-        Population access data with all variables
-    """
-    # Get clean population and rates data
-    pop_data = get_population_data(sc, reg)
-    rates_data = get_rates_data(reg, ssp, sdgs)
-
-    if pop_data.empty:
-        log.warning("No population data found. Skipping calculations.")
-        return pd.DataFrame()
-
-    if rates_data.empty:
-        log.warning("No rates data found. Skipping calculations.")
-        return pd.DataFrame()
-
-    # Get unique combinations of region/year from both datasets
-    all_years = sorted(set(rates_data.year.unique()) | set(pop_data.year.unique()))
-    all_regions = sorted(
-        set(rates_data.region.unique()) | set(pop_data.region.unique())
-    )
-
-    # Get metadata from first pop row
-    metadata = {}
-    if not pop_data.empty:
-        first_row = pop_data.iloc[0]
-        metadata = {
-            "model": first_row["model"],
-            "scenario": first_row["scenario"],
-            "unit": first_row["unit"],
-        }
-
-    results = []
-
-    # Process each region/year combination
-    for region in all_regions:
-        for year in all_years:
-            # Get population values for this region/year
-            urban_val, rural_val = get_population_values(pop_data, region, year)
-
-            # Get rates for this region/year
-            region_year_rates = rates_data[
-                (rates_data.region == region) & (rates_data.year == year)
+        pop_drink_tot["variable"] = "Population|Drinking Water Access"
+        pop_drink_tot = pop_drink_tot[cols]
+        pop_sani_tot = (
+            pop_sani_tot.groupby(["region", "unit", "year", "model", "scenario"])[
+                "value"
             ]
+            .sum()
+            .reset_index()
+        )
+        pop_sani_tot["variable"] = "Population|Sanitation Access"
+        pop_sani_tot = pop_sani_tot[cols]
+        # global values
+        pop_sdg6 = pd.concat([pd.concat([pop_sdg6, pop_drink_tot]), pop_sani_tot])
+        pop_sdg6_glb = (
+            pop_sdg6.groupby(["variable", "unit", "year", "model", "scenario"])["value"]
+            .sum()
+            .reset_index()
+        )
+        pop_sdg6_glb["region"] = "World"
+        pop_sdg6_glb = pop_sdg6_glb[cols]
 
-            # Process urban and rural using the same helper function
-            results.extend(
-                process_rates(
-                    "urban", urban_val, region_year_rates, region, year, metadata
-                )
-            )
-            results.extend(
-                process_rates(
-                    "rural", rural_val, region_year_rates, region, year, metadata
-                )
-            )
+        pop_sdg6 = pd.concat([pop_sdg6, pop_sdg6_glb])
+        log.info("Population|Drinking Water Access")
 
-    result_df = pd.DataFrame(results)
-
-    # Add aggregated totals
-    if not result_df.empty:
-        # Get regional totals
-        totals = aggregate_totals(result_df)
-        if totals:
-            result_df = pd.concat([result_df] + totals, ignore_index=True)
-
-        # Get world totals
-        world_totals = aggregate_world_totals(result_df)
-        if world_totals:
-            result_df = pd.concat([result_df] + world_totals, ignore_index=True)
-
-    log.info("Population water access calculations completed")
-    return result_df
+        return pop_sdg6
 
 
 def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
@@ -778,183 +434,9 @@ def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
     return ww
 
 
-def detect_scenario_mode(df_dmd: pd.DataFrame) -> tuple[bool, bool]:
-    """Detect if scenario is cooling-only and if it uses subannual time slices.
-
-    Cooling-only mode is detected when df_dmd is empty, indicating the nexus
-    water module is absent from the scenario.
-
-    Parameters
-    ----------
-    df_dmd : pd.DataFrame
-        Demand dataframe filtered for water_avail_basin
-
-    Returns
-    -------
-    suban : bool
-        True if scenario uses subannual time slices
-    cooling_only : bool
-        True if nexus module is absent (cooling-only mode)
-    """
-    global _cooling_only
-    if df_dmd.empty:
-        _cooling_only = True
-        suban = False
-    else:
-        _cooling_only = False
-        h_values = np.unique(df_dmd["h"])
-        suban = False if "year" in h_values else True
-
-    return suban, _cooling_only
-
-
-def compute_cooling_technologies(
-    report_iam: pyam.IamDataFrame,
-    sc: Scenario,
-) -> tuple[pyam.IamDataFrame, list]:
-    """Compute cooling technology metrics and return mapping rows.
-
-    Parameters
-    ----------
-    report_iam : pyam.IamDataFrame
-        Report in pyam format
-    sc : Scenario
-        Scenario to extract technology data from
-
-    Returns
-    -------
-    report_iam : pyam.IamDataFrame
-        Updated report with cooling technology calculations
-    cooling_rows : list
-        List of [name, variables, unit] rows for cooling metrics
-    """
-    # Freshwater cooling technologies water usage
-    cooling_fresh_water = report_iam.filter(
-        variable="in|water_supply|surfacewater|*fresh|*"
-    ).variable
-    cooling_ot_fresh_water = report_iam.filter(
-        variable="in|water_supply|surfacewater|*__ot_fresh|*"
-    ).variable
-    cooling_cl_fresh_water = report_iam.filter(
-        variable="in|water_supply|surfacewater|*__cl_fresh|*"
-    ).variable
-    cooling_ot_saline_water = report_iam.filter(
-        variable="in|saline_supply|saline_ppl|*__ot_saline|*"
-    ).variable
-    # Non-cooling technologies freshwater usage
-    # Read CSV to get correct list of non-cooling technologies
-    FILE = "tech_water_performance_ssp_msg.csv"
-    path = package_data_path("water", "ppl_cooling_tech", FILE)
-    df = pd.read_csv(path)
-
-    non_cool_df = df[
-        (df["technology_group"] != "cooling")
-        & (df["water_supply_type"] == "freshwater_supply")
-    ]
-
-    # Filter for technologies that exist in scenario
-    all_techs = list(sc.set("technology"))
-    tech_non_cool_csv = list(non_cool_df["technology_name"])
-    techs_in_scenario = [tec for tec in tech_non_cool_csv if tec in all_techs]
-
-    # Extract water input variables for non-cooling technologies
-    # Non-cooling techs use surfacewater commodity at water_supply level
-    non_cooling_water = [
-        f"in|water_supply|surfacewater|{tech}|M1" for tech in techs_in_scenario
-    ]
-
-    # Fresh water return flow emissions
-    fresh_return_emissions = report_iam.filter(variable="emis|fresh_return|*").variable
-
-    # Cooling investments
-    cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
-    cooling_air_inv = report_iam.filter(variable="inv cost|*air").variable
-    cooling_ot_fresh = report_iam.filter(variable="inv cost|*ot_fresh").variable
-    cooling_cl_fresh = report_iam.filter(variable="inv cost|*cl_fresh").variable
-
-    # Hydro electricity calculations
-    elec_hydro_var = report_iam.filter(variable="out|secondary|electr|hydro*").variable
-    report_iam = multiply_electricity_output_of_hydro(elec_hydro_var, report_iam)
-    water_hydro_var = report_iam.filter(
-        variable="Water Withdrawal|Electricity|Hydro|*"
-    ).variable
-
-    # Build cooling-specific mapping rows
-    cooling_rows = [
-        ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "MCM/yr"],
-        [
-            "Water Withdrawal|Electricity|Cooling|Fresh Water",
-            cooling_fresh_water,
-            "MCM/yr",
-        ],
-        [
-            "Water Withdrawal|Electricity|Cooling|Once Through|Fresh Water",
-            cooling_ot_fresh_water,
-            "MCM/yr",
-        ],
-        [
-            "Water Withdrawal|Electricity|Cooling|Closed Loop|Fresh Water",
-            cooling_cl_fresh_water,
-            "MCM/yr",
-        ],
-        [
-            "Water Withdrawal|Electricity|Cooling|Once Through|Saline Water",
-            cooling_ot_saline_water,
-            "MCM/yr",
-        ],
-        ["Water Withdrawal|Energy|Non-Cooling", non_cooling_water, "MCM/yr"],
-        ["Water Return|Electricity|Cooling", fresh_return_emissions, "MCM/yr"],
-        [
-            "Investment|Infrastructure|Water|Cooling",
-            cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv,
-            "million US$2010/yr",
-        ],
-        [
-            "Investment|Infrastructure|Water|Cooling|Once through freshwater",
-            cooling_ot_fresh,
-            "million US$2010/yr",
-        ],
-        [
-            "Investment|Infrastructure|Water|Cooling|Closed loop freshwater",
-            cooling_cl_fresh,
-            "million US$2010/yr",
-        ],
-        [
-            "Investment|Infrastructure|Water|Cooling|Once through saline",
-            cooling_saline_inv,
-            "million US$2010/yr",
-        ],
-        [
-            "Investment|Infrastructure|Water|Cooling|Air cooled",
-            cooling_air_inv,
-            "million US$2010/yr",
-        ],
-    ]
-
-    # Store water_hydro_var for later filtering
-    report_iam.metadata = getattr(report_iam, "metadata", {})
-    report_iam.metadata["water_hydro_var"] = water_hydro_var
-    report_iam.metadata["cooling_inv_vars"] = (
-        cooling_ot_fresh + cooling_cl_fresh + cooling_saline_inv + cooling_air_inv
-    )
-
-    return report_iam, cooling_rows
-
-
-def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
-    """Report nexus module results
-
-    Parameters
-    ----------
-    sc : Scenario
-        Scenario to report
-    reg : str
-        Region to report
-    ssp : str
-        SSP scenario (e.g., :obj:`"SSP1"`, :obj:`"SSP2"`, :obj:`"SSP3"`)
-    sdgs : bool, optional
-        If :obj:`True`, add population with access to water and sanitation for SDG6
-    """
+# TODO
+def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
+    """Report nexus module results"""
     log.info(f"Regions given as {reg}; no warranty if it's not in ['R11','R12']")
     # Generating reporter
     rep = Reporter.from_scenario(sc)
@@ -979,20 +461,20 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     rep_dm_df = rep_dm2.to_dataframe()
     rep_dm_df.reset_index(inplace=True)
     df_dmd = rep_dm_df[rep_dm_df["l"] == "water_avail_basin"]
-    # Detect scenario mode (subannual and cooling-only)
-    suban, cooling_only = detect_scenario_mode(df_dmd)
+    # setting sub-annual option based on the demand
+    suban = False if "year" in np.unique(df_dmd["h"]) else True
 
     # if subannual, get and subsittute variables
     report_iam = report_iam_definition(sc, rep, df_dmd, rep_dm, report_df, suban)
 
     # mapping model outputs for aggregation
     urban_infrastructure = [
-        "CAP_NEW|new capacity|urban_recycle",
-        "CAP_NEW|new capacity|urban_sewerage",
-        "CAP_NEW|new capacity|urban_t_d",
-        "CAP_NEW|new capacity|urban_treatment",
-        "CAP_NEW|new capacity|urban_unconnected",
-        "CAP_NEW|new capacity|urban_untreated",
+        "CAP_NEW|new capacity|rural_recycle",
+        "CAP_NEW|new capacity|rural_sewerage",
+        "CAP_NEW|new capacity|rural_t_d",
+        "CAP_NEW|new capacity|rural_treatment",
+        "CAP_NEW|new capacity|rural_unconnected",
+        "CAP_NEW|new capacity|rural_untreated",
     ]
 
     rural_infrastructure = [
@@ -1041,12 +523,12 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     extrt_sw_inv = ["inv cost|extract_surfacewater"]
     extrt_gw_inv = ["inv cost|extract_groundwater"]
     # Calculating fossil groundwater invwatments
-    # 163.56 million USD/KM^3 x 2 times the renewable gw costs
+    # 163.56 million USD/km3 x 2 times the reneewable gw costs
 
     report_iam = report_iam.append(
         report_iam.multiply(
             "CAP_NEW|new capacity|extract_gw_fossil",
-            163.56 * USD_KM3_TO_USD_MCM,
+            163.56,
             "Fossil GW inv",
             ignore_units=True,
         )
@@ -1110,8 +592,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "total om cost|distillation",
     ]
 
-    extrt_sw_om = ["total om cost|extract_surfacewater"]
-    extrt_gw_om = ["total om cost|extract_groundwater"]
     extrt_fgw_om = ["total om cost|extract_gw_fossil"]
 
     urban_infrastructure_totalom = [
@@ -1181,7 +661,7 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     urban_mwdem_connected = ["out|final|urban_mw|urban_t_d|M1"]
     urban_mwdem_connected_eff = ["out|final|urban_mw|urban_t_d|Mf"]
     industry_mwdem_unconnected = ["out|final|industry_mw|industry_unconnected|M1"]
-    industry_mwdem_unconnected_eff = ["out|final|industry_mw|industry_unconnected|Mf"]
+
     electr_gw = ["in|final|electr|extract_groundwater|M1"]
     electr_fgw = ["in|final|electr|extract_gw_fossil|M1"]
     electr_sw = ["in|final|electr|extract_surfacewater|M1"]
@@ -1195,7 +675,7 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     electr_rural_recycle = ["in|final|electr|rural_recycle|M1"]
     electr_saline = [
         "in|final|electr|distillation|M1",
-        "in|final|electr|membrane|M1",
+        "in|final|electr|distillation|M1",
     ]
 
     electr_urban_t_d = ["in|final|electr|urban_t_d|M1"]
@@ -1233,40 +713,46 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         variable="in|water_supply_basin|freshwater_basin|basin_to_reg|*"
     ).variable
 
-    # Process cooling technologies
-    report_iam, cooling_rows = compute_cooling_technologies(report_iam, sc)
+    cooling_saline_inv = report_iam.filter(variable="inv cost|*saline").variable
+    cooling_air_inv = report_iam.filter(variable="inv cost|*air").variable
+    cooling_ot_fresh = report_iam.filter(variable="inv cost|*ot_fresh").variable
+    cooling_cl_fresh = report_iam.filter(variable="inv cost|*cl_fresh").variable
+
+    elec_hydro_var = report_iam.filter(variable="out|secondary|electr|hydro*").variable
+
+    report_iam = multiply_electricity_output_of_hydro(elec_hydro_var, report_iam)
+
+    water_hydro_var = report_iam.filter(
+        variable="Water Withdrawal|Electricity|Hydro|*"
+    ).variable
 
     # mapping for aggregation
     map_agg_pd = pd.DataFrame(
         [
-            ["Water Extraction", extract_gw + extract_fgw + extract_sw, "MCM/yr"],
-            ["Water Extraction|Groundwater", extract_gw, "MCM/yr"],
-            [
-                "Water Extraction|Fossil Groundwater",
-                extract_fgw,
-                "MCM/yr",
-            ],
-            ["Water Extraction|Surface Water", extract_sw, "MCM/yr"],
+            ["Water Extraction", extract_gw + extract_fgw + extract_sw, "km3/yr"],
+            ["Water Extraction|Groundwater", extract_gw, "km3/yr"],
+            ["Water Extraction|Brackish Water", extract_fgw, "km3/yr"],
+            ["Water Extraction|Surface Water", extract_sw, "km3/yr"],
             [
                 "Water Extraction|Seawater",
                 extract_saline_basin + extract_saline_region,
-                "MCM/yr",
+                "km3/yr",
             ],
-            ["Water Extraction|Seawater|Desalination", extract_saline_basin, "MCM/yr"],
-            ["Water Extraction|Seawater|Cooling", extract_saline_region, "MCM/yr"],
-            ["Water Desalination", desal_membrane + desal_distill, "MCM/yr"],
-            ["Water Desalination|Membrane", desal_membrane, "MCM/yr"],
-            ["Water Desalination|Distillation", desal_distill, "MCM/yr"],
+            ["Water Extraction|Seawater|Desalination", extract_saline_basin, "km3/yr"],
+            ["Water Extraction|Seawater|Cooling", extract_saline_region, "km3/yr"],
+            ["Water Desalination", desal_membrane + desal_distill, "km3/yr"],
+            ["Water Desalination|Membrane", desal_membrane, "km3/yr"],
+            ["Water Desalination|Distillation", desal_distill, "km3/yr"],
             [
                 "Water Transfer",
                 urban_transfer
                 + rural_transfer
                 + urban_transfer_eff
                 + rural_transfer_eff,
-                "MCM/yr",
+                "km3/yr",
             ],
-            ["Water Transfer|Urban", urban_transfer + urban_transfer_eff, "MCM/yr"],
-            ["Water Transfer|Rural", rural_transfer + rural_transfer_eff, "MCM/yr"],
+            ["Water Transfer|Urban", urban_transfer + urban_transfer_eff, "km3/yr"],
+            ["Water Transfer|Rural", rural_transfer + rural_transfer_eff, "km3/yr"],
             [
                 "Water Withdrawal",
                 region_withdr
@@ -1278,38 +764,42 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                 + urban_mwdem_connected_eff
                 + urban_mwdem_unconnected
                 + urban_mwdem_unconnected_eff
-                + industry_mwdem_unconnected
-                + industry_mwdem_unconnected_eff,
-                "MCM/yr",
+                + industry_mwdem_unconnected,
+                "km3/yr",
             ],
-            ["Water Withdrawal|Energy techs & Irrigation", region_withdr, "MCM/yr"],
-            # ["Water Withdrawal|Irrigation", irr_c + irr_o + irr_s, "MCM/yr"],
-            ["Water Withdrawal|Irrigation|Cereal", irr_c, "MCM/yr"],
-            ["Water Withdrawal|Irrigation|Oil Crops", irr_o, "MCM/yr"],
-            ["Water Withdrawal|Irrigation|Sugar Crops", irr_s, "MCM/yr"],
+            ["Water Withdrawal|Energy techs & Irrigation", region_withdr, "km3/yr"],
+            # ["Water Withdrawal|Irrigation", irr_c + irr_o + irr_s, "km3/yr"],
+            ["Water Withdrawal|Irrigation|Cereal", irr_c, "km3/yr"],
+            ["Water Withdrawal|Irrigation|Oil Crops", irr_o, "km3/yr"],
+            ["Water Withdrawal|Irrigation|Sugar Crops", irr_s, "km3/yr"],
+            ["Water Withdrawal|Electricity|Hydro", water_hydro_var, "km3/yr"],
             [
                 "Capacity Additions|Infrastructure|Water",
-                # Removed sub-components to avoid double-counting since:
-                # - *_infrastructure
-                # already includes
-                # *_treatment_recycling, *_dist, *_unconnected
-                rural_infrastructure + urban_infrastructure + industry_unconnected,
-                "MCM/yr",
+                rural_infrastructure
+                + urban_infrastructure
+                + urban_treatment_recycling
+                + rural_treatment_recycling
+                + urban_dist
+                + rural_dist
+                + rural_unconnected
+                + urban_unconnected
+                + industry_unconnected,
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction",
                 extrt_sw_cap + extrt_gw_cap + extrt_fgw_cap,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction|Surface Water",
                 extrt_sw_cap,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction|Groundwater",
                 extrt_gw_cap + extrt_fgw_cap,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 (
@@ -1317,60 +807,60 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                     " Additions|Infrastructure|Water|Extraction|Groundwater|Renewable"
                 ),
                 extrt_gw_cap,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction|Groundwater|Fossil",
                 extrt_fgw_cap,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Rural",
                 rural_infrastructure,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Urban",
                 urban_infrastructure,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Industrial",
                 industry_unconnected,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Urban",
                 urban_treatment_recycling,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Rural",
                 rural_treatment_recycling,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Distribution|Rural",
                 rural_dist,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Distribution|Urban",
                 urban_dist,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Unconnected|Rural",
                 rural_unconnected,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Unconnected|Urban",
                 urban_unconnected,
-                "MCM/yr",
+                "km3/yr",
             ],
-            ["Freshwater|Environmental Flow", env_flow, "MCM/yr"],
-            ["Groundwater Recharge", gw_recharge, "MCM/yr"],
+            ["Freshwater|Environmental Flow", env_flow, "km3/yr"],
+            ["Groundwater Recharge", gw_recharge, "km3/yr"],
             [
                 "Water Withdrawal|Municipal Water",
                 rural_mwdem_unconnected
@@ -1381,59 +871,54 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                 + urban_mwdem_unconnected_eff
                 + urban_mwdem_connected
                 + urban_mwdem_connected_eff,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Rural",
                 rural_mwdem_unconnected,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Rural Eff",
                 rural_mwdem_unconnected_eff,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Rural",
                 rural_mwdem_connected,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Rural Eff",
                 rural_mwdem_connected_eff,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Urban",
                 urban_mwdem_unconnected,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Unconnected|Urban Eff",
                 urban_mwdem_unconnected_eff,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Urban",
                 urban_mwdem_connected,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Municipal Water|Connected|Urban Eff",
                 urban_mwdem_connected_eff,
-                "MCM/yr",
+                "km3/yr",
             ],
             [
                 "Water Withdrawal|Industrial Water|Unconnected",
                 industry_mwdem_unconnected,
-                "MCM/yr",
+                "km3/yr",
             ],
-            [
-                "Water Withdrawal|Industrial Water|Unconnected Eff",
-                industry_mwdem_unconnected_eff,
-                "MCM/yr",
-            ],
-            # ["Water Withdrawal|Irrigation", irr_water, "MCM/yr"],
+            # ["Water Withdrawal|Irrigation", irr_water, "km3/yr"],
             [
                 "Final Energy|Commercial",
                 electr_saline
@@ -1480,14 +965,10 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                 "GWa",
             ],
             ["Final Energy|Commercial|Water|Irrigation", electr_irr, "GWa"],
-            [
-                "Final Energy|Commercial|Water|Treatment",
-                electr_rural_trt + electr_urban_trt,
-                "GWa",
-            ],
+            ["Final Energy|Commercial|Water|Treatment", electr_rural_trt, "GWa"],
             [
                 "Final Energy|Commercial|Water|Treatment|Rural",
-                electr_rural_trt,
+                electr_urban_trt + electr_rural_trt,
                 "GWa",
             ],
             ["Final Energy|Commercial|Water|Treatment|Urban", electr_urban_trt, "GWa"],
@@ -1507,30 +988,30 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             ],
             [
                 "Final Energy|Commercial|Water|Transfer|Rural",
-                electr_rural_t_d + electr_rural_t_d_eff,
+                electr_rural_t_d + electr_urban_t_d_eff,
                 "GWa",
             ],
             [
                 "Water Waste|Collected",
                 urban_collctd_wstwtr + rural_collctd_wstwtr,
-                "MCM/yr",
+                "km3/yr",
             ],
-            ["Water Waste|Collected|Urban", urban_collctd_wstwtr, "MCM/yr"],
-            ["Water Waste|Collected|Rural", rural_collctd_wstwtr, "MCM/yr"],
+            ["Water Waste|Collected|Urban", urban_collctd_wstwtr, "km3/yr"],
+            ["Water Waste|Collected|Rural", rural_collctd_wstwtr, "km3/yr"],
             [
                 "Water Waste|Treated",
                 urban_treated_wstwtr + rural_treated_wstwtr,
-                "MCM/yr",
+                "km3/yr",
             ],
-            ["Water Waste|Treated|Urban", urban_treated_wstwtr, "MCM/yr"],
-            ["Water Waste|Treated|Rural", rural_treated_wstwtr, "MCM/yr"],
+            ["Water Waste|Treated|Urban", urban_treated_wstwtr, "km3/yr"],
+            ["Water Waste|Treated|Rural", rural_treated_wstwtr, "km3/yr"],
             [
                 "Water Waste|Reuse",
                 urban_wstwtr_recycle + rural_wstwtr_recycle,
-                "MCM/yr",
+                "km3/yr",
             ],
-            ["Water Waste|Reuse|Urban", urban_wstwtr_recycle, "MCM/yr"],
-            ["Water Waste|Reuse|Rural", rural_wstwtr_recycle, "MCM/yr"],
+            ["Water Waste|Reuse|Urban", urban_wstwtr_recycle, "km3/yr"],
+            ["Water Waste|Reuse|Rural", rural_wstwtr_recycle, "km3/yr"],
             [
                 "Investment|Infrastructure|Water",
                 rural_infrastructure_inv
@@ -1539,12 +1020,20 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                 + extrt_gw_inv
                 + extrt_fgw_inv
                 + saline_inv
-                + (getattr(report_iam, "metadata", {}).get("cooling_inv_vars", []))
+                + cooling_ot_fresh
+                + cooling_cl_fresh
+                + cooling_saline_inv
+                + cooling_air_inv
                 + industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
                 "Investment|Infrastructure|Water|Extraction",
+                extrt_sw_inv + extrt_gw_inv + extrt_fgw_inv,
+                "million US$2010/yr",
+            ],
+            [
+                "Investment|Infrastructure|Water|Other",
                 extrt_sw_inv + extrt_gw_inv + extrt_fgw_inv,
                 "million US$2010/yr",
             ],
@@ -1571,6 +1060,34 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             [
                 "Investment|Infrastructure|Water|Desalination",
                 saline_inv,
+                "million US$2010/yr",
+            ],
+            [
+                "Investment|Infrastructure|Water|Cooling",
+                cooling_ot_fresh
+                + cooling_cl_fresh
+                + cooling_saline_inv
+                + cooling_air_inv,
+                "million US$2010/yr",
+            ],
+            [
+                "Investment|Infrastructure|Water|Cooling|Once through freshwater",
+                cooling_ot_fresh,
+                "million US$2010/yr",
+            ],
+            [
+                "Investment|Infrastructure|Water|Cooling|Closed loop freshwater",
+                cooling_cl_fresh,
+                "million US$2010/yr",
+            ],
+            [
+                "Investment|Infrastructure|Water|Cooling|Once through saline",
+                cooling_saline_inv,
+                "million US$2010/yr",
+            ],
+            [
+                "Investment|Infrastructure|Water|Cooling|Air cooled",
+                cooling_air_inv,
                 "million US$2010/yr",
             ],
             # [
@@ -1641,25 +1158,13 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water",
-                # Main aggregation including all infrastructure O&M costs
-                rural_infrastructure_totalom
-                + urban_infrastructure_totalom
-                + extrt_sw_om
-                + extrt_gw_om
-                + extrt_fgw_om
-                + saline_totalom
-                + industry_unconnected_totalom,
-                "million US$2010/yr",
-            ],
-            [
                 "Total Operation Management Cost|Infrastructure|Water|Desalination",
                 saline_totalom,
                 "million US$2010/yr",
             ],
             [
                 "Total Operation Management Cost|Infrastructure|Water|Extraction",
-                extrt_sw_om + extrt_gw_om + extrt_fgw_om,
+                extrt_fgw_om,
                 "million US$2010/yr",
             ],
             [
@@ -1698,7 +1203,7 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             ],
             [
                 "Total Operation Management Cost|Infrastructure|Water| Distribution",
-                rural_dist_totalom + urban_dist_totalom,
+                rural_dist_totalom + rural_dist_totalom,
                 "million US$2010/yr",
             ],
             [
@@ -1748,8 +1253,7 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                 industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
-        ]
-        + cooling_rows,  # Add cooling rows here
+        ],
         columns=["names", "list_cat", "unit"],
     )
 
@@ -1757,8 +1261,8 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     wp = sc.var(
         "PRICE_COMMODITY", {"commodity": ["urban_mw", "rural_mw", "freshwater"]}
     )
-    wp["value"] = wp["lvl"]
-    wp["unit"] = "US$2010/m3"  # MillionUSD/MCM = USD/m^3
+    wp["value"] = wp["lvl"] / 1000
+    wp["unit"] = "US$2010/m3"
     wp = wp.rename(columns={"node": "region"})
     # get withdrawals for weighted mean
     ww = prepare_ww(ww_input=report_iam.as_pandas(), suban=suban)
@@ -1780,19 +1284,13 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "Price|Drinking Water|Urban",
         "Price|Drinking Water|Rural",
     )
-
-    def weighted_average_safe(x):
-        if x.wdr.sum() == 0:
-            return np.nan if len(x) == 0 else x.value.mean()
-        return np.average(x.value, weights=x.wdr)
-
     wr_dri_m = (
         wr_dri.groupby(
             ["region", "unit", "year"]
             if not suban
             else ["region", "unit", "year", "subannual"]
         )
-        .apply(weighted_average_safe)
+        .apply(lambda x: np.average(x.value, weights=x.wdr))
         .reset_index()
     )
     wr_dri_m["value"] = wr_dri_m[0]
@@ -1873,43 +1371,15 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     report_pd = report_pd.drop(columns=["to_keep"])
 
     # ecluded other intermediate variables added later to report_iam
-    if hasattr(report_iam, "metadata") and "water_hydro_var" in report_iam.metadata:
-        report_pd = report_pd[
-            -report_pd.variable.isin(report_iam.metadata["water_hydro_var"])
-        ]
+    report_pd = report_pd[-report_pd.variable.isin(water_hydro_var)]
 
     # add water population
-    pop_sdg6 = pop_water_access(sc, reg, ssp, sdgs)
+    pop_sdg6 = pop_water_access(sc, reg, sdgs)
     report_pd = pd.concat([report_pd, pop_sdg6])
 
-    # add units wo loop to reduce complexity
-    unit_mapping = dict(zip(map_agg_pd["names"], map_agg_pd["unit"]))
-
-    # Add units for new water access variables
-    water_access_units = {
-        "Connection Rate|Drinking Water": "percent",
-        "Connection Rate|Drinking Water|Urban": "percent",
-        "Connection Rate|Drinking Water|Rural": "percent",
-        "Treatment Rate|Sanitation": "percent",
-        "Treatment Rate|Sanitation|Urban": "percent",
-        "Treatment Rate|Sanitation|Rural": "percent",
-        "Population|Drinking Water Access": "million",
-        "Population|Drinking Water Access|Urban": "million",
-        "Population|Drinking Water Access|Rural": "million",
-        "Population|Sanitation Access": "million",
-        "Population|Sanitation Access|Urban": "million",
-        "Population|Sanitation Access|Rural": "million",
-        "Population": "million",
-        "Population|Urban": "million",
-        "Population|Rural": "million",
-    }
-
-    # Merge both unit mappings
-    unit_mapping.update(water_access_units)
-
-    report_pd["unit"] = (
-        report_pd["variable"].map(unit_mapping).fillna(report_pd["unit"])
-    )
+    # add units
+    for index, row in map_agg_pd.iterrows():
+        report_pd.loc[(report_pd.variable == row["names"]), "unit"] = row["unit"]
 
     df_unit = pyam.IamDataFrame(report_pd)
     df_unit.convert_unit("GWa", to="EJ", inplace=True)
@@ -1926,7 +1396,7 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     # report_pd = report_pd.drop(columns=["exclude"])
     report_pd["unit"].replace("EJ", "EJ/yr", inplace=True)
     # for country model
-    if reg not in ["R11", "R12"] and suban:
+    if reg not in ["R11", " R12"] and suban:
         country_n = map_node_dict["World"][0]
         grouped = report_pd.groupby(
             ["model", "scenario", "variable", "unit", "year", "subannual"]
@@ -1964,20 +1434,8 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     sc.commit("Reporting uploaded as timeseries")
 
 
-def report_full(sc: Scenario, reg: str, ssp: str, sdgs=False) -> None:
-    """Combine old and new reporting workflows
-
-    Parameters
-    ----------
-    sc : Scenario
-        Scenario to report
-    reg : str
-        Region to report
-    ssp : str
-        SSP scenario (e.g., :obj:`"SSP1"`, :obj:`"SSP2"`, :obj:`"SSP3"`)
-    sdgs : bool, optional
-        If :obj:`True`, add population with access to water and sanitation for SDG6
-    """
+def report_full(sc: Scenario, reg: str, sdgs=False) -> None:
+    """Combine old and new reporting workflows"""
     a = sc.timeseries()
     # keep historical part, if present
     a = a[a.year >= 2020]
@@ -1992,8 +1450,8 @@ def report_full(sc: Scenario, reg: str, ssp: str, sdgs=False) -> None:
     run_old_reporting(sc)
     log.info("First part of reporting completed, now procede with the water variables")
 
-    report(sc, reg, ssp, sdgs)
-    log.info("overall reporting completed")
+    report(sc, reg, sdgs)
+    log.info("overall NAVIGATE reporting completed")
 
     # add ad-hoc caplculated variables with a function
     ts = sc.timeseries()

@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Mapping
 from functools import lru_cache, partial
+from typing import Optional
 
 import pandas as pd
 from sdmx.model.v21 import Code
@@ -10,7 +11,7 @@ from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import broadcast, package_data_path
 
-from .utils import read_config
+from .utils import filter_basins_by_region, read_config
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +108,7 @@ def share_map_cool(
     share_keys: list[str],
     type_tec_keys: list[str],
     regions_df: list[str],
-    commodity_mapping: dict[str, str] | None = None,
+    commodity_mapping: Optional[dict[str, str]] = None,
 ) -> pd.DataFrame:
     """
     Helper function to create the share mapping DataFrame for both 'tot' and 'share'
@@ -556,6 +557,10 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     PATH = package_data_path("water", "delineation", FILE)
 
     df = pd.read_csv(PATH)
+
+    # Apply basin filter to reduce number of basins per region
+    df = filter_basins_by_region(df, context)
+
     # Assigning proper nomenclature
     df["node"] = "B" + df["BCU_name"].astype(str)
     df["mode"] = "M" + df["BCU_name"].astype(str)
@@ -577,6 +582,8 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     results["map_node"] = nodes
 
     context.all_nodes = df["node"]
+    # Store the filtered basin names for use in other functions
+    context.valid_basins = set(df["BCU_name"].astype(str))
 
     for set_name, config in results.items():
         # Sets to add
@@ -598,6 +605,18 @@ def main(context: Context, scenario, **options):
 
     log.info("Set up MESSAGEix-Nexus")
 
+    # Check if timeslicing needed for nexus module
+    time_set = scenario.set("time")
+    is_annual = len(time_set) == 1 and "year" in list(time_set)
+    n_time = getattr(context, 'n_time', 1)
+
+    if is_annual and n_time > 1:
+        from message_ix_models.project.alps.timeslice import setup_timeslices
+
+        log.info(f"Scenario is annual, setting up {n_time} timeslices for nexus")
+        setup_timeslices(scenario, n_time, context)
+        log.info("Timeslice setup complete, continuing with nexus build")
+
     if context.nexus_set == "nexus":
         # Add water balance
         spec = map_basin(context)
@@ -610,6 +629,15 @@ def main(context: Context, scenario, **options):
 
     # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec1, partial(add_data, context=context), **options)
+
+    # Add electricity router after nexus build is complete
+    # Router needed when context.time has subannual elements (water on h1/h2, energy on year)
+    if len(context.time) > 0 and "year" not in context.time:
+        from message_ix_models.project.alps.timeslice import add_electricity_router
+
+        log.info("Nexus build complete, adding electricity router")
+        add_electricity_router(scenario, len(context.time), commodity='electr')
+        log.info("Electricity router added successfully")
 
     # Uncomment to dump for debugging
     # scenario.to_excel('debug.xlsx')

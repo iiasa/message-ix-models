@@ -11,8 +11,10 @@ from message_ix_models.model.water.utils import (
     KM3_TO_MCM,
     USD_KM3_TO_USD_MCM,
     GWa_KM3_TO_GWa_MCM,
+    filter_basins_by_region,
     get_vintage_and_active_years,
 )
+from message_ix_models.project.alps.timeslice import map_months_to_timeslices
 from message_ix_models.util import (
     broadcast,
     package_data_path,
@@ -42,6 +44,9 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
+        
+        # Filter to only include valid basins
+        df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = package_data_path(
@@ -94,6 +99,9 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
+        
+        # Filter to only include valid basins
+        df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
         df_sw["BCU_name"] = df_x["BCU_name"]
@@ -119,7 +127,17 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw.columns = pd.Index(["node", "mode", "date", "MSGREG", "share"])
         df_sw.sort_values(["node", "date", "MSGREG", "share"], inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
-        df_sw["time"] = pd.DatetimeIndex(df_sw["date"]).month
+
+        # Map month to timeslice name
+        months = pd.DatetimeIndex(df_sw["date"]).month
+        df_sw["time"] = map_months_to_timeslices(months, context.timeslice_months)
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_sw = df_sw.groupby(["node", "mode", "year", "MSGREG", "time"], as_index=False).agg({
+                "share": "mean"  # Average share across months within same timeslice
+            })
+
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
         df_sw.reset_index(drop=True, inplace=True)
 
@@ -165,6 +183,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     PATH = package_data_path("water", "delineation", FILE)
 
     df_node = pd.read_csv(PATH)
+    
+    # Apply basin filter to reduce number of basins per region
+    df_node = filter_basins_by_region(df_node, context)
+    
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
@@ -191,7 +213,11 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
     PATH2 = package_data_path("water", "availability", FILE2)
     df_hist = pd.read_csv(PATH2)
-    df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
+
+    # Filter to only include valid basins (nexus mode only)
+    if context.nexus_set == "nexus":
+        df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
+        df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     if context.nexus_set == "cooling":
         # Add output df  for surfacewater supply for regions
@@ -260,6 +286,83 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         )
         results["output"] = output_df
 
+        # Electricity input for extract_surfacewater (same as nexus mode)
+        # Value: 0.018835616 GWa/km³ (mid estimate from literature)
+        inp_sw = (
+            make_df(
+                "input",
+                technology="extract_surfacewater",
+                value=0.018835616 * GWa_KM3_TO_GWa_MCM,
+                unit="GWa/MCM",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+            .pipe(same_node)
+        )
+
+        # Electricity input for extract_groundwater (depth-dependent + fixed)
+        inp_gw = (
+            make_df(
+                "input",
+                technology="extract_groundwater",
+                value=(df_gwt["GW_per_km3_per_year"].mean() + 0.043464579)
+                * GWa_KM3_TO_GWa_MCM,
+                unit="GWa/MCM",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+            .pipe(same_node)
+        )
+
+        results["input"] = pd.concat([inp_sw, inp_gw], ignore_index=True)
+
+        # Variable cost for water extraction (LCOW-based)
+        # LCOW = Annualized CAPEX + OPEX + Energy
+        # Using: CRF=0.094 (r=8%, n=25yr), O&M=3%, implied from inv_cost
+        # Surface water: inv_cost=155.57 USD/km³ → LCOW ≈ 29 USD/km³
+        # Groundwater: inv_cost=54.52 USD/km³ → LCOW ≈ 15 USD/km³ (but higher energy)
+        var_sw = (
+            make_df(
+                "var_cost",
+                technology="extract_surfacewater",
+                value=29 * USD_KM3_TO_USD_MCM,
+                unit="USD/MCM",
+                mode="M1",
+                time="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+        )
+
+        var_gw = (
+            make_df(
+                "var_cost",
+                technology="extract_groundwater",
+                value=25 * USD_KM3_TO_USD_MCM,  # Lower CAPEX but higher energy
+                unit="USD/MCM",
+                mode="M1",
+                time="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+        )
+
+        results["var_cost"] = pd.concat([var_sw, var_gw], ignore_index=True)
+
     elif context.nexus_set == "nexus":
         # input data frame  for slack technology balancing equality with demands
         inp = (
@@ -267,7 +370,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 "input",
                 technology="return_flow",
                 value=1,
-                unit="-",
+                unit="MCM",
                 level="water_avail_basin",
                 commodity="surfacewater_basin",
                 mode="M1",
@@ -290,7 +393,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     "input",
                     technology="gw_recharge",
                     value=1,
-                    unit="-",
+                    unit="MCM",
                     level="water_avail_basin",
                     commodity="groundwater_basin",
                     mode="M1",
@@ -313,9 +416,33 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 inp,
                 make_df(
                     "input",
-                    technology="basin_to_reg",
+                    technology="basin_to_reg_core",
                     value=1,
-                    unit="-",
+                    unit="MCM",
+                    level="water_avail_basin",
+                    commodity="surfacewater_basin",
+                    mode=df_node["mode"],
+                    node_origin=df_node["node"],
+                    node_loc=df_node["region"],
+                )
+                .pipe(
+                    broadcast,
+                    year_vtg=year_wat,
+                    time=pd.Series(sub_time),
+                )
+                .pipe(same_time),
+            ]
+        )
+
+        # input dataframe for basin_to_reg_plus technology (irrigation freshwater)
+        inp = pd.concat(
+            [
+                inp,
+                make_df(
+                    "input",
+                    technology="basin_to_reg_plus",
+                    value=1,
+                    unit="MCM",
                     level="water_supply_basin",
                     commodity="freshwater_basin",
                     mode=df_node["mode"],
@@ -337,7 +464,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         #         "input",
         #         technology="salinewater_return",
         #         value=1,
-        #         unit="-",
+        #         unit="MCM",
         #         level="water_avail_basin",
         #         commodity="salinewater_basin",
         #         mode="M1",
@@ -350,7 +477,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
 
         # input data frame  for freshwater supply
         # Use first basin node for vintage-activity year mapping
-        yv_ya_sw = get_vintage_and_active_years(scen_info, 20)
+        yv_ya_sw = get_vintage_and_active_years(scen_info, 30)  # Must match technical_lifetime
 
         inp = pd.concat(
             [
@@ -359,7 +486,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     "input",
                     technology="extract_surfacewater",
                     value=1,
-                    unit="-",
+                    unit="MCM",
                     level="water_avail_basin",
                     commodity="surfacewater_basin",
                     mode="M1",
@@ -385,7 +512,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     "input",
                     technology="extract_groundwater",
                     value=1,
-                    unit="-",
+                    unit="MCM",
                     level="water_avail_basin",
                     commodity="groundwater_basin",
                     mode="M1",
@@ -454,8 +581,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "input",
                     technology="extract_gw_fossil",
-                    value=((df_gwt["GW_per_km3_per_year"] + 0.043464579) * 2)
-                    * GWa_KM3_TO_GWa_MCM,  # twice as much normal gw
+                    value=((df_gwt["GW_per_km3_per_year"] + 0.043464579) * 5)
+                    * GWa_KM3_TO_GWa_MCM,  # reduced from 50 to 5
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -472,10 +599,12 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         )
 
         if context.type_reg == "global":
+            # Reduce fossil groundwater extraction in South Asia by 50% in 2020
+            sas_node = f"{context.regions}_SAS"
             inp.loc[
                 (inp["technology"].str.contains("extract_gw_fossil"))
                 & (inp["year_act"] == 2020)
-                & (inp["node_loc"] == "R11_SAS"),
+                & (inp["node_loc"] == sas_node),
                 "value",
             ] *= 0.5
 
@@ -487,7 +616,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 "output",
                 technology="extract_surfacewater",
                 value=1,
-                unit="-",
+                unit="MCM",
                 level="water_supply_basin",
                 commodity="freshwater_basin",
                 mode="M1",
@@ -509,7 +638,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     "output",
                     technology="extract_groundwater",
                     value=1,
-                    unit="-",
+                    unit="MCM",
                     level="water_supply_basin",
                     commodity="freshwater_basin",
                     mode="M1",
@@ -533,7 +662,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                     "output",
                     technology="extract_gw_fossil",
                     value=1,
-                    unit="-",
+                    unit="MCM",
                     level="water_supply_basin",
                     commodity="freshwater_basin",
                     mode="M1",
@@ -573,6 +702,22 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
+        # Technical lifetime for extract_salinewater_cool
+        saline_water_cool_tl = make_df(
+            "technical_lifetime",
+            technology="extract_salinewater_cool",
+            value=1,
+            unit="y",
+        ).pipe(broadcast, node_loc=node_region, year_vtg=year_wat)
+
+        # Investment cost for extract_salinewater_cool
+        saline_water_cool_inv_cost = make_df(
+            "inv_cost",
+            technology="extract_salinewater_cool",
+            value=1e-2,
+            unit="USD/MCM",
+        ).pipe(broadcast, node_loc=node_region, year_vtg=year_wat)
+
         hist_new_cap = make_df(
             "historical_new_capacity",
             node_loc=df_hist["BCU_name"],
@@ -608,9 +753,29 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 output_df,
                 make_df(
                     "output",
-                    technology="basin_to_reg",
+                    technology="basin_to_reg_core",
                     value=1,
-                    unit="-",
+                    unit="MCM",
+                    level="water_supply",
+                    commodity="surfacewater",
+                    time_dest="year",
+                    node_loc=df_node["region"],
+                    node_dest=df_node["region"],
+                    mode=df_node["mode"],
+                ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time)),
+            ]
+        )
+
+        # output data frame for basin_to_reg_plus technology (irrigation freshwater)
+
+        output_df = pd.concat(
+            [
+                output_df,
+                make_df(
+                    "output",
+                    technology="basin_to_reg_plus",
+                    value=1,
+                    unit="MCM",
                     level="water_supply",
                     commodity="freshwater",
                     time_dest="year",
@@ -628,13 +793,32 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         # dummy variable cost for dummy water to energy technology
         var = make_df(
             "var_cost",
-            technology="basin_to_reg",
+            technology="basin_to_reg_core",
             mode=df_node["mode"],
             node_loc=df_node["region"],
             value=20 * USD_KM3_TO_USD_MCM,
             unit="USD/MCM",
         ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
         var["year_act"] = var["year_vtg"]
+
+        # dummy variable cost for basin_to_reg_plus technology (irrigation freshwater)
+        var = pd.concat(
+            [
+                var,
+                make_df(
+                    "var_cost",
+                    technology="basin_to_reg_plus",
+                    mode=df_node["mode"],
+                    node_loc=df_node["region"],
+                    value=20 * USD_KM3_TO_USD_MCM,
+                    unit="USD/MCM",
+                ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time)),
+            ]
+        )
+        basin_to_reg_plus_mask = var["technology"] == "basin_to_reg_plus"
+        var.loc[basin_to_reg_plus_mask, "year_act"] = var.loc[
+            basin_to_reg_plus_mask, "year_vtg"
+        ]
         # # Dummy cost for extract surface ewater to prioritize water sources
         # var = pd.concat([var, make_df(
         #     "var_cost",
@@ -667,7 +851,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         share = make_df(
             "share_mode_up",
             shares="share_basin",
-            technology="basin_to_reg",
+            technology="basin_to_reg_core",
             mode=df_sw["mode"],
             node_share=df_sw["MSGREG"],
             time=df_sw["time"],
@@ -676,13 +860,31 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             year_act=df_sw["year"],
         )
 
+        # share_mode_up for basin_to_reg_plus technology (irrigation freshwater)
+        share = pd.concat(
+            [
+                share,
+                make_df(
+                    "share_mode_up",
+                    shares="share_basin",
+                    technology="basin_to_reg_plus",
+                    mode=df_sw["mode"],
+                    node_share=df_sw["MSGREG"],
+                    time=df_sw["time"],
+                    value=df_sw["share"],
+                    unit="%",
+                    year_act=df_sw["year"],
+                ),
+            ]
+        )
+
         results["share_mode_up"] = share
 
         tl = (
             make_df(
                 "technical_lifetime",
                 technology="extract_surfacewater",
-                value=50,
+                value=30,
                 unit="y",
             )
             .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
@@ -709,7 +911,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "technical_lifetime",
                     technology="extract_gw_fossil",
-                    value=20,
+                    value=5,  # 5 Year TL to further discourage use.
                     unit="y",
                 )
                 .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
@@ -745,23 +947,49 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "inv_cost",
                     technology="extract_gw_fossil",
-                    value=(54.52 * 150) * USD_KM3_TO_USD_MCM,
-                    # assume higher as normal GW
+                    value=7808.22 * USD_KM3_TO_USD_MCM,
+                    # 50% higher than membrane desalination (5205.48 * 1.5)
                     unit="USD/MCM",
                 ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
             ]
         )
 
         results["inv_cost"] = inv_cost
-
+        results["technical_lifetime"] = pd.concat(
+            [results["technical_lifetime"], saline_water_cool_tl]
+        )
+        results["inv_cost"] = pd.concat(
+            [results["inv_cost"], saline_water_cool_inv_cost]
+        )
         fix_cost = make_df(
             "fix_cost",
             technology="extract_gw_fossil",
-            value=300 * USD_KM3_TO_USD_MCM,  # assumed
+            value=6780.83 * USD_KM3_TO_USD_MCM,
+            # 50% higher than distillation fix_cost (4520.55 * 1.5)
             unit="USD/MCM",
         ).pipe(broadcast, yv_ya_gw, node_loc=df_node["node"])
 
         results["fix_cost"] = fix_cost
+
+        # Add variable cost for fossil groundwater to make it truly expensive
+        var_cost_fossil = make_df(
+            "var_cost",
+            technology="extract_gw_fossil",
+            value=1000 * USD_KM3_TO_USD_MCM,
+            # High variable cost to ensure it's only used as last resort
+            unit="USD/MCM",
+            mode="M1",
+        ).pipe(
+            broadcast,
+            yv_ya_gw,
+            node_loc=df_node["node"],
+            time=pd.Series(sub_time),
+        )
+
+        if "var_cost" in results:
+            results["var_cost"] = pd.concat([results["var_cost"], var_cost_fossil])
+        else:
+            results["var_cost"] = var_cost_fossil
 
         # Remove duplicates and NaN values from all DataFrames in results
         for key, df in results.items():
@@ -859,8 +1087,19 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env.fillna(0, inplace=True)
         df_env.reset_index(drop=True, inplace=True)
         df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
-        df_env["time"] = pd.DatetimeIndex(df_env["years"]).month
+
+        # Map month to timeslice name
+        months = pd.DatetimeIndex(df_env["years"]).month
+        df_env["time"] = map_months_to_timeslices(months, context.timeslice_months)
+
         df_env["Region"] = df_env["Region"].map(df_x["BCU_name"])
+
+        # Aggregate if multiple months map to same timeslice (n_time < 12)
+        if n_time < 12:
+            df_env = df_env.groupby(["Region", "year", "time"], as_index=False).agg({
+                "value": "sum"  # Sum environmental flow requirements across months within same timeslice
+            })
+
         df_env2210 = df_env[df_env["year"] == 2100].copy()
         df_env2210["year"] = 2110
         df_env = pd.concat([df_env, df_env2210])

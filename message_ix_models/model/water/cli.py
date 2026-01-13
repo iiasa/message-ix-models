@@ -1,5 +1,4 @@
 import logging
-from typing import TYPE_CHECKING
 
 import click
 
@@ -7,8 +6,6 @@ from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util.click import common_params, scenario_param
 
-if TYPE_CHECKING:
-    from message_ix import Scenario
 log = logging.getLogger(__name__)
 
 
@@ -56,8 +53,8 @@ def water_ini(context: "Context", regions, time):
                 "with your 'regions' choice"
             )
     else:
-        log.info("Use default --regions=R11")
-        regions = "R11"
+        log.info("Use default --regions=R12")
+        regions = "R12"
     # add an attribute to distinguish country models
     if regions in ["R11", "R12", "R14", "R32", "RCP"]:
         context.type_reg = "global"
@@ -122,13 +119,53 @@ _REL = ["low", "med", "high"]
     is_flag=True,
     help="Defines whether the model solves with macro",
 )
+@click.option(
+    "--reduced-basin/--no-reduced-basin",
+    default=False,
+    help="Enable reduced basin filtering",
+)
+@click.option(
+    "--filter-list",
+    multiple=True,
+    help="Specific basins to include (can be used multiple times)",
+)
+@click.option(
+    "--num-basins",
+    type=int,
+    help="Number of basins per region to keep when reduced-basin is enabled",
+)
+@click.option(
+    "--n-time",
+    type=int,
+    default=1,
+    show_default=True,
+    help="Number of subannual timeslices (1=annual, 12=monthly, etc.)",
+)
 @common_params("regions")
 @scenario_param("--ssp")
-def nexus_cli(context: "Context", regions, rcps, sdgs, rels, macro=False):
+def nexus_cli(
+    context: "Context",
+    regions,
+    rcps,
+    sdgs,
+    rels,
+    macro=False,
+    n_time=1,
+    reduced_basin=False,
+    filter_list=None,
+    num_basins=None,
+):
     """
     Add basin structure connected to the energy sector and
     water balance linking different water demands to supply.
     """
+    # Set basin filtering configuration on context
+    context.reduced_basin = reduced_basin
+    if filter_list:
+        context.filter_list = list(filter_list)
+    if num_basins is not None:
+        context.num_basins = num_basins
+    context.n_time = n_time
 
     nexus(context, regions, rcps, sdgs, rels, macro)
 
@@ -161,9 +198,13 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
     context.SDG = sdgs
     context.REL = rels
 
+    # Set n_time if not already set by nexus_cli
+    if not hasattr(context, 'n_time'):
+        context.n_time = 1
+
     log.info(
         f"SSP assumption is {context.ssp}. SDG is {context.SDG}. "
-        f"RCP is {context.RCP}. REL is {context.REL}."
+        f"RCP is {context.RCP}. REL is {context.REL}. n_time is {context.n_time}."
     )
 
     from .build import main as build
@@ -235,15 +276,7 @@ def cooling_cli(context, regions, rcps, rels):
     cooling(context, regions, rcps, rels)
 
 
-def cooling(
-    context: "Context",
-    regions,
-    rcps,
-    rels,
-    solve: bool = True,
-    clone: bool = True,
-    scen: "Scenario | None" = None,
-) -> None:
+def cooling(context, regions, rcps, rels):
     """Build and solve model with new cooling technologies.
 
     Use the --url option to specify the base scenario.
@@ -270,31 +303,29 @@ def cooling(
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
-    if clone is True:
-        output_scenario_name = context.output_scenario + "_cooling"
-        output_model_name = context.output_model
 
-        # Clone and build
-        scen = context.get_scenario().clone(
-            model=output_model_name, scenario=output_scenario_name, keep_solution=False
-        )
+    output_scenario_name = context.output_scenario + "_cooling"
+    output_model_name = context.output_model
 
-        print(scen.model)
-        print(scen.scenario)
+    # Clone and build
+    scen = context.get_scenario().clone(
+        model=output_model_name, scenario=output_scenario_name, keep_solution=False
+    )
 
-        # Exporting the built model (Scenario) to GAMS with an optional case name
-        caseName = scen.model + "__" + scen.scenario + "__v" + str(scen.version)
+    print(scen.model)
+    print(scen.scenario)
+
+    # Exporting the built model (Scenario) to GAMS with an optional case name
+    caseName = scen.model + "__" + scen.scenario + "__v" + str(scen.version)
 
     # Build
     build(context, scen)
 
-    if clone:
-        # Set scenario as default
-        scen.set_as_default()
+    # Set scenario as default
+    scen.set_as_default()
 
-    if solve:
-        # Solve
-        scen.solve(solve_options={"lpmethod": "4", "scaind": "1"}, case=caseName)
+    # Solve
+    scen.solve(solve_options={"lpmethod": "4", "scaind": "1"}, case=caseName)
 
 
 @cli.command("report")
@@ -324,13 +355,12 @@ def report_cli(context: "Context", output_model, sdgs, water=False):
         Defines if and what water SDG measures are activated
     """
     reg = context.model.regions
-    ssp = context.ssp
     sc = context.get_scenario()
     if water:
         from message_ix_models.model.water.report import report
 
-        report(sc, reg, ssp, sdgs)
+        report(sc, reg, sdgs)
     else:
         from message_ix_models.model.water.report import report_full
 
-        report_full(sc, reg, ssp, sdgs)
+        report_full(sc, reg, sdgs)
