@@ -45,31 +45,6 @@ m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
 # MCM not standard so have to remember to divide by 1e6 each time.
 
 
-def get_days_per_timeslice(n_time: int) -> float:
-    """Calculate average days per timeslice for unit conversions.
-
-    Parameters
-    ----------
-    n_time : int
-        Number of timeslices per year
-
-    Returns
-    -------
-    float
-        Average number of days per timeslice
-
-    Examples
-    --------
-    >>> get_days_per_timeslice(12)  # Monthly
-    30.4375
-    >>> get_days_per_timeslice(4)   # Quarterly
-    91.3125
-    >>> get_days_per_timeslice(2)   # Seasonal
-    182.625
-    """
-    return 365.25 / n_time
-
-
 def read_config(context: Optional[Context] = None):
     """Read the water model configuration / metadata from file.
 

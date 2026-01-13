@@ -9,10 +9,7 @@ import pandas as pd
 import xarray as xr
 from message_ix import make_df
 
-from message_ix_models.model.water.utils import (
-    KM3_TO_MCM,
-    get_days_per_timeslice,
-)
+from message_ix_models.model.water.utils import KM3_TO_MCM
 from message_ix_models.project.alps.timeslice import map_months_to_timeslices
 from message_ix_models.util import broadcast, package_data_path
 
@@ -237,10 +234,10 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         )
         df_m: pd.DataFrame = pd.read_csv(PATH)
 
-        # Get number of timeslices and convert mcm/day to mcm/timeslice
+        # Convert mcm/day to mcm/month (summing later gives mcm/timeslice)
         n_time = len(context.time)
-        days_per_slice = get_days_per_timeslice(n_time)
-        df_m["value"] *= days_per_slice  # from mcm/day to mcm/timeslice
+        days_per_month = 365.25 / 12  # Average days per month
+        df_m["value"] *= days_per_month  # from mcm/day to mcm/month
 
         df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
