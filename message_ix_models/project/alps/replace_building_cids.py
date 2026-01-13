@@ -278,4 +278,5 @@ def generate_building_cid_scenario(
         scen.remove_par("demand", old_rc_therm)
         scen.add_par("demand", rc_therm_clean)
 
+    scen.set_as_default()
     return scen
