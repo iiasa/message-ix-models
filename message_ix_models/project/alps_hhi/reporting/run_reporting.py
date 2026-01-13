@@ -194,6 +194,7 @@ gas_exports['variable'] = 'Exports|' + gas_exports['fuel_type']
 gas_exports = gas_exports.rename(columns = {'exporter': 'region'})
 gas_exports['exporter'] = ''
 gas_exports['supply_type'] = 'Exports'
+gas_exports['value'] *= -1 # Set to negative
 
 gas_supply_out = gas_supply_out[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
 gas_exports = gas_exports[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
