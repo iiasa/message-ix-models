@@ -16,9 +16,11 @@ from ixmp.util import discard_on_error
 from message_ix import Reporter, Scenario
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.workflow import STAGE
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
+from .plot import prepare_computer as add_plots
 
 if TYPE_CHECKING:
     from genno.core.key import KeyLike  # TODO Import from genno.types
@@ -28,7 +30,9 @@ if TYPE_CHECKING:
 __all__ = [
     "NOT_IMPLEMENTED_IAMC",
     "NOT_IMPLEMENTED_MEASURE",
+    "STAGE",
     "Config",
+    "add_plots",
     "defaults",
     "prepare_reporter",
     "register",

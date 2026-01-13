@@ -32,8 +32,10 @@ if TYPE_CHECKING:
     from typing import Protocol
 
     from genno.types import AnyQuantity, TQuantity
+    from ixmp import Platform
     from sdmx.model.v21 import Code
 
+    from message_ix_models import Context, ScenarioInfo
     from message_ix_models.types import ParameterData
 
     class SupportsLessThan(Protocol):
@@ -64,6 +66,7 @@ __all__ = [
     "select_allow_empty",
     "select_expand",
     "share_curtailment",
+    "summarize",
     "zeros_like",
 ]
 
@@ -234,9 +237,142 @@ def gwp_factors() -> "AnyQuantity":
     )
 
 
-def make_output_path(config: Mapping, name: "str | Path") -> "Path":
+def latest_reporting(
+    context: "Context",
+    info: "ScenarioInfo",
+    *,
+    filename: str | None = None,
+    use: set[str] = {"file", "platform"},
+) -> pd.DataFrame | None:
+    """Locate and retrieve the latest reported output for scenario `info`."""
+    report_dir = context.get_local_path("report")
+
+    if "file" in use:
+        path, path_version, df_path = latest_reporting_from_file(
+            info, report_dir, name=filename
+        )
+    else:
+        path_version = -1
+
+    if "platform" in use:
+        # Check only versions >= path_version
+        scen, scen_version, df_scen = latest_reporting_from_platform(
+            info, context.get_platform(), minimum_version=path_version
+        )
+    else:
+        scen_version = -1
+
+    _url = info.url.replace("#None", "")  # Cleaner URL for log messages
+
+    if path_version == scen_version == -1:
+        log.warning(f"{_url} → NO DATA")
+        return None
+    elif path_version >= scen_version:
+        source = "file"
+        df = df_path
+        version = path_version
+    else:
+        source = "platform"
+        df = df_scen
+        version = scen_version
+
+    log.info(f"{_url} → v{version} from {source}")
+
+    return df.rename(columns=lambda c: c.lower())
+
+
+def latest_reporting_from_file(
+    info: "ScenarioInfo", base_dir: "Path", name: str | None = None
+) -> tuple[Any, int, pd.DataFrame]:
+    """Locate and retrieve the latest reported output for the scenario `info`.
+
+    The file `name` is sought in a subdirectory of `base_dir` identified by
+    :attr:`.ScenarioInfo.path`.
+
+    Returns
+    -------
+    tuple
+        1. The path of the file read.
+        2. :class:`int`: The scenario version corresponding to the data read.
+        3. :class:`pandas.DataFrame`: the data.
+
+        If no data is found, all the elements are :any:`None`.
+    """
+    name = name or "all.csv"
+
+    dirs = sorted(base_dir.glob(info.path.replace("vNone", "v*")), reverse=True)
+    for _dir in dirs:
+        path = _dir.joinpath(name)
+        if not path.exists():
+            log.info(f"Skip {_dir}; no file '{name}'")
+            continue
+        path_version = int(path.parent.name.split("v")[-1])
+        return (
+            path,
+            path_version,
+            pd.read_csv(path).assign(
+                Scenario=lambda df: df.Scenario + f"#{path_version}"
+            ),
+        )
+
+    return None, -1, pd.DataFrame()
+
+
+def latest_reporting_from_platform(
+    info: "ScenarioInfo", platform: "Platform", minimum_version: int = -1
+) -> tuple[Any, int, pd.DataFrame]:
+    """Retrieve the latest reported output for the scenario described by `info`.
+
+    The time series data attached to a scenario on `platform` is retrieved.
+
+    Returns
+    -------
+    tuple
+        1. The :class:`.Scenario` object.
+        2. :class:`int`: The scenario version corresponding to the data read.
+        3. :class:`pandas.DataFrame`: the data.
+
+        If no data is found or the latest version with reporting time series data is
+        <= `minimum_version`, all the elements are :any:`None`.
+    """
+    from message_ix import Scenario
+
+    m, s = info.model, info.scenario
+
+    for _, row in (
+        platform.scenario_list(model=m, scen=s, default=False)
+        .query("model == @m and scenario == @s")  # Handle m or s is None
+        .sort_values(["version"], ascending=False)
+        .iterrows()
+    ):
+        if row.version <= minimum_version:  # pragma: no cover
+            log.info(f"{row.version} ≤ minimum {minimum_version}")
+            break
+        elif row.is_locked:  # pragma: no cover
+            log.info(f"Skip {info.url} {row.version}; locked")
+            continue
+
+        scen = Scenario(platform, model=m, scenario=s, version=row.version)
+        if scen.has_solution():
+            return (
+                scen,
+                row.version,
+                scen.timeseries().assign(
+                    # Scenario=lambda df: df.Scenario + f"v{row.version}"
+                ),
+            )
+        else:
+            log.info(f"Skip {scen.url}; no reporting output")
+            del scen
+
+    return None, -1, pd.DataFrame()
+
+
+def make_output_path(
+    config: Mapping, name: "str | Path", *, config_key: str = "output_dir"
+) -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
-    return config["output_dir"].joinpath(name)
+    return config[config_key].joinpath(name)
 
 
 def merge_data(*others: "ParameterData") -> "ParameterData":
@@ -497,6 +633,85 @@ def share_curtailment(curt, *parts):
     multiple technologies; one for each of *parts*.
     """
     return parts[0] - curt * (parts[0] / sum(parts))
+
+
+def summarize(*args: Any) -> str:
+    """Return a summary of mixed `args`.
+
+    This operator may be used to show brief information about a large number of tasks
+    that have side-effects (e.g. file output) but whose return values are only summaries
+    of those.
+
+    `args` may include nested :class:`list` or :class:`tuple` of :class:`pathlib.Path`,
+    :any:`None`, or any other entries. The returned summary is a formatted :class:`str`
+    that resembles::
+
+       9 file or directory paths:
+          4 in /example/base/dir/
+          1 in /example/base/dir/foo/
+          2 in /example/base/dir/bar/
+          2 in /example/base/dir/baz/
+      16 × None
+       0 other items
+
+    .. todo::
+       - Expand to summarize other types including :class:`genno.Quantity`,
+         :class:`str`, etc.
+       - Move upstream, to :mod:`genno.operator`.
+    """
+    import math
+    from collections import defaultdict
+    from pathlib import PurePath
+
+    count: dict[str, int] = defaultdict(lambda: int(0))
+    count["nothing"] = 1  # Input to log10(max(…)) if `args` is entirely empty
+    paths: set[PurePath] = set()
+
+    def _summarize_recursive(item: Any) -> None:
+        """Recursively summarize `item`."""
+        match item:
+            case PurePath():
+                count["path"] += 1
+                paths.add(item)
+            case list() | tuple():
+                for i in item:
+                    _summarize_recursive(i)
+            case None:
+                count["none"] += 1
+            case _:
+                count["other"] += 1
+
+    _summarize_recursive(args)
+
+    # Width for formatting
+    width = math.floor(math.log10(max(count.values()))) + 1
+
+    # Format counts
+    lines: list[str] = [
+        f"{count['path']:{width}} file or directory paths:",
+        f"{count['none']:{width}} × None",
+        f"{count['other']:{width}} other items",
+    ]
+
+    # Sets of paths within each parent directory
+    by_parent = defaultdict(set)
+    for path in paths:
+        for parent in path.parents:
+            by_parent[parent].add(path)
+
+    # Iterate over sets from longest (=deepest) to shortest parent directory name
+    for parent, p in sorted(by_parent.items(), reverse=True):
+        # Set of remaining, un-summarized paths that are within this parent
+        if remaining := paths & p:
+            # Format a line, insert in proper order
+            lines.insert(1, f"   {len(remaining):{width}} in {parent / ' '!s}".rstrip())
+            # Ignore these paths under subsequent parent directories
+            paths -= p
+        # Exit once nothing remains to summarize
+        if not paths:
+            break
+
+    return "\n".join(lines)
 
 
 def zeros_like(qty: "TQuantity", *, drop: Collection[str] = []) -> "TQuantity":

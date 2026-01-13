@@ -3,7 +3,7 @@ name: MESSAGEix-Transport
 env:
   # The repository, ref (branch), and workflow file name to dispatch
   target-repo: iiasa/message_data
-  target-ref: dev
+  target-ref: ci/git-clone-remote
   target-workflow: transport
 
   # Starting point of the workflow.
@@ -26,24 +26,7 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "SSP1",
-      "SSP1 policy",
-      "SSP2",
-      "SSP2 policy",
-      "SSP3",
-      "SSP3 policy",
-      "SSP4",
-      "SSP4 policy",
-      "SSP5",
-      "SSP5 policy",
-      "DIGSY-BEST-C",
-      "DIGSY-BEST-S",
-      "DIGSY-WORST-C",
-      "DIGSY-WORST-S",
-      "EDITS-CA",
-      "EDITS-HA",
-      "LED-SSP1",
-      "LED-SSP2"
+      "M SSP2"
     ]
 
   # Currently disabled:
@@ -53,8 +36,8 @@ env:
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
   # push:
   #   branches: [ main ]
   schedule:
@@ -74,8 +57,8 @@ jobs:
     - name: Assemble JSON payload
       run: |
         echo '{
-          "ref": "${{ github.ref }}",
-          "sha": "${{ github.sha }}",
+          "ref": "project/circeular/2025-w48",
+          "remote": "https://github.com/iiasa/message-ix-models.git",
           "base": "${{ env.base }}",
           "from-step": "${{ env.from-step }}",
           "labels": ${{ env.labels }}

@@ -308,10 +308,12 @@ class LoadFactorLDV(MultiFile):
         assert self.options.config
         label = self.options.config.label
         for pattern, repl in (
+            # No distinction for materials scenarios
+            ("^M ", ""),
             # For DIGSY…C, use the respective SSP
             ("^DIGSY-.*-C$", str(self.options.config.ssp)),
             ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED'
-            (r"\.", "_"),  # "SSP_2024.1" → "SSP_2024_1"
+            (r"(SSP_.*)\.(\d)( .*)?", r"\1_\2"),  # "SSP_2024.1 foo" → "SSP_2024_1"
         ):
             label = re.sub(pattern, repl, label)
         return label + ".csv"
@@ -802,6 +804,13 @@ input_base = _input_dataflow(
     key="input:t-c-h:base",
     name="Base model input efficiency",
     units="GWa",
+)
+
+input_cap_new = _input_dataflow(
+    key="input_cap_new:scenario-n-t-y-c:transport+exo",
+    name="Material input associated with new transport vehicles",
+    required=False,
+    units="kg / vehicle",
 )
 
 input_ref_ldv = _input_dataflow(

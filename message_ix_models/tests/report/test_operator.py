@@ -1,4 +1,8 @@
+import os
 import re
+from collections.abc import Iterator
+from copy import deepcopy
+from pathlib import Path
 
 import ixmp
 import message_ix
@@ -10,7 +14,7 @@ from genno import Computer, Quantity
 from ixmp.testing import assert_logs
 from message_ix.testing import make_dantzig
 
-from message_ix_models import ScenarioInfo
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.report.operator import (
     compound_growth,
@@ -18,10 +22,12 @@ from message_ix_models.report.operator import (
     from_url,
     get_ts,
     gwp_factors,
+    latest_reporting,
     make_output_path,
     model_periods,
     remove_ts,
     share_curtailment,
+    summarize,
 )
 
 
@@ -132,6 +138,83 @@ def test_gwp_factors():
     assert ("gwp metric", "e", "e equivalent") == result.dims
 
 
+@pytest.fixture(scope="module")
+def context_with_reporting_data(session_context: Context) -> Iterator[Context]:
+    context = deepcopy(session_context)
+
+    # Common time series data
+    data = pd.DataFrame(
+        [["m", "s", "", "DantzigLand", "u", 1234, 1.0]],
+        columns=["Model", "Scenario", "Variable", "Region", "Unit", "Year", "Value"],
+    )
+
+    # Data for latest_reporting_from_file()
+    base_dir = context.get_local_path("report")
+    for v in (3, 4):
+        path = base_dir.joinpath(f"test_latest_reporting_s_v{v}", "all.csv")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data.assign(Variable=f"Variable|File {v}", value=float(v)).to_csv(
+            path, index=False
+        )
+    # A dummy/empty directory
+    base_dir.joinpath("test_latest_reporting_s_v99").mkdir(exist_ok=True)
+
+    # Data for latest_reporting_from_platform()
+    mp = context.get_platform()
+    s = make_dantzig(mp, solve=True)
+    for v in (1, 2):
+        s_clone = s.clone(model="test_latest_reporting", scenario="s")
+        assert v == s_clone.version
+        s_clone.check_out(timeseries_only=True)
+        s_clone.add_timeseries(
+            data.assign(Variable=f"Variable|Platform {v}", value=float(v))
+        )
+        s_clone.commit("")
+    # A clone, but with no solution
+    s_clone = s.clone(model="test_latest_reporting", scenario="s", keep_solution=False)
+
+    try:
+        yield context
+    finally:
+        context.delete()
+
+
+@pytest.mark.parametrize(
+    "use, variable",
+    [
+        ({"file"}, "Variable|File 4"),
+        ({"platform"}, "Variable|Platform 2"),
+        ({"file", "platform"}, "Variable|File 4"),  # Version 4 from file > 2 from mp
+    ],
+)
+def test_latest_reporting(
+    caplog: pytest.LogCaptureFixture,
+    context_with_reporting_data: Context,
+    use: set[str],
+    variable: str,
+) -> None:
+    ctx = context_with_reporting_data
+
+    # With missing scenario identifiers
+    info = ScenarioInfo()
+    # Function runs
+    result = latest_reporting(ctx, info, use=use)
+    # Returns None
+    assert None is result
+    # Message is logged about unavailable data
+    assert "None/None → NO DATA" == caplog.messages[0]
+
+    # With existing data
+    info = ScenarioInfo(model="test_latest_reporting", scenario="s")
+
+    # Operator returns a data frame
+    result = latest_reporting(ctx, info, use=use)
+    assert result is not None
+
+    # Data frame is from the expected source and version
+    assert variable in result.variable.unique()
+
+
 def test_make_output_path(tmp_path, c):
     # Configure a Computer, ensuring the output_dir configuration attribute is set
     c.configure(output_dir=tmp_path)
@@ -160,3 +243,48 @@ def test_model_periods():
 @pytest.mark.xfail(reason="Incomplete")
 def test_share_curtailment():
     share_curtailment()
+
+
+_p = Path("/example/base/dir")
+
+# Arguments to summarize(); example of the "transport all" report key as of 2025-11-21
+SUMMARIZE_ARGS = [
+    [
+        _p / "base-fe-intensity-gdp.pdf",
+        _p / "inv-cost-ldv.pdf",
+        _p / "demand.pdf",
+        _p / "demand" / "share.pdf",
+        None,
+        _p / "energy" / "c.pdf",
+        _p / "energy" / "c-share.pdf",
+        _p / "stock" / "ldv.pdf",
+        _p / "stock" / "non-ldv.pdf",
+    ],
+    [[None, None], None],
+    _p / "sdmx",
+    [None, None, None, None, None, None, None, None, None, None, None, None],
+]
+
+
+@pytest.mark.parametrize(
+    "args",
+    (
+        (SUMMARIZE_ARGS,),  # Single list arg to summarize() containing further items
+        SUMMARIZE_ARGS,  # Multiple positional args to summarize()
+    ),
+)
+def test_summarize(args) -> None:
+    # Operator runs
+    result = summarize(*args)
+
+    # Results as expected
+    assert re.fullmatch(
+        rf""" 9 file or directory paths:
+    4 in ({re.escape(os.sep)})example\1base\1dir\1
+    1 in \1example\1base\1dir\1demand\1
+    2 in \1example\1base\1dir\1energy\1
+    2 in \1example\1base\1dir\1stock\1
+16 × None
+ 0 other items""",
+        result,
+    )

@@ -7,265 +7,30 @@ from typing import TYPE_CHECKING, Literal
 import genno
 import ixmp
 import pytest
-from iam_units import registry
+from message_ix.testing import make_dantzig
 from pytest import mark, param
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import (
-    Config,
+    CL_SCENARIO,
     build,
-    constraint,
-    disutility,
-    freight,
-    key,
-    ldv,
-    other,
-    passenger,
+    check,
     report,
     structure,
 )
-from message_ix_models.model.transport.config import get_cl_scenario
-from message_ix_models.model.transport.testing import (
-    MARK,
-    assert_units,
-    configure_build,
-    make_mark,
-)
+from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
 from message_ix_models.testing import bare_res
-from message_ix_models.testing.check import (
-    Check,
-    ContainsDataForParameters,
-    HasCoords,
-    HasUnits,
-    NoneMissing,
-    NonNegative,
-    Size,
-    insert_checks,
-    verbose_check,
-)
 
 if TYPE_CHECKING:
     from sdmx.model.common import Code
 
-    from message_ix_models.testing.check import Check
-    from message_ix_models.types import KeyLike
 
 log = logging.getLogger(__name__)
 
 
-class LDV_PHEV_input(Check):
-    """Check magnitudes of input energy intensities of LDV PHEV technologies.
-
-    There are three conditions:
-
-    1. Electricity input to the PHEV is less than electricity input to BEV.
-    2. Light oil input to the PHEV is less than light oil input to an ICEV.
-    3. Total energy input to the PHEV is between the BEV and ICEV.
-    """
-
-    # Technologies to check
-    _t = ("ELC_100", "PHEV_ptrp", "ICE_conv")
-
-    types = (dict,)
-
-    def run(self, obj):
-        def _join_levels(df):
-            """Join multi-index labels to a single str."""
-            return df.set_axis(
-                df.columns.to_series().apply(lambda v: " ".join(map(str, v))), axis=1
-            )
-
-        t0, t1, t2 = self._t
-        tmp = (
-            obj["input"]
-            .query(f"technology in {self._t!r}")
-            .set_index(["node_loc", "year_vtg", "year_act"])
-            .pivot(columns=["technology", "commodity"], values="value")
-            .pipe(_join_levels)
-            .eval(f"`{t1}` = `{t1} electr` + `{t1} lightoil`")
-            .eval(f"c1 = `{t1} electr` <= `{t0} electr`")
-            .eval(f"c2 = `{t1} lightoil` <= `{t2} lightoil`")
-            .eval(f"c3 = `{t0} electr` < `{t1}` < `{t2} lightoil`")
-            .eval("cond = c1 & c2 & c3")
-        )
-
-        if not tmp.cond.all():
-            fail = tmp[~tmp.cond]
-            return (
-                False,
-                f"LDV input does not satisfy conditions in {len(fail)} cases:\n"
-                f"{fail.to_string()}",
-            )
-        else:
-            return True, "LDV input satisfies conditions"
-
-
-class Passenger(Check):
-    """Check data from :mod:`.transport.passenger`.
-
-    These assertions were formerly in a test at
-    :py:`.tests.transport.test_data.test_get_non_ldv_data()`.
-    """
-
-    types = (dict,)
-
-    def run(self, obj):
-        # Input data have expected units
-        df_input = obj["input"]
-        mask0 = df_input["technology"].str.endswith(" usage")
-        mask1 = df_input["technology"].str.startswith("transport other")
-
-        assert_units(df_input[mask0], registry("Gv km"))
-        if mask1.any():
-            assert_units(df_input[mask1], registry("GWa"))
-        assert_units(df_input[~(mask0 | mask1)], registry("1.0 GWa / (Gv km)"))
-
-        # Output data exist for all non-LDV modes
-        df_output = obj["output"]
-        modes = list(filter(lambda m: m != "LDV", Config().demand_modes))
-        obs = set(df_output["commodity"].unique())
-        assert len(modes) * 2 == len(obs)
-
-        # Output data have expected units
-        mask = df_output["technology"].str.endswith(" usage")
-        assert_units(df_output[~mask], {"[vehicle]": 1, "[length]": 1})
-        assert_units(df_output[mask], {"[passenger]": 1, "[length]": 1})
-
-        return True, "Passenger non-LDV input and output satisfy conditions"
-
-
-#: Inline checks for :func:`.test_debug`.
-CHECKS: dict["KeyLike", tuple[Check, ...]] = {
-    # .build.add_structure()
-    "broadcast:t-c-l:transport+input": (HasUnits("dimensionless"),),
-    "broadcast:t-c-l:transport+output": (
-        HasUnits("dimensionless"),
-        HasCoords({"commodity": ["transport F RAIL vehicle"]}),
-    ),
-    #
-    # From .constraint
-    constraint.TARGET: (
-        ContainsDataForParameters(
-            {
-                "bound_new_capacity_up",
-                "growth_activity_lo",
-                "growth_activity_up",
-                "growth_new_capacity_lo",
-                "growth_new_capacity_up",
-                "initial_activity_lo",
-                "initial_activity_up",
-                "initial_new_capacity_lo",
-                "initial_new_capacity_up",
-            }
-        ),
-    ),
-    #
-    # From .freight
-    # The following replicates a deleted .transport.test_data.test_get_freight_data()
-    freight.TARGET: (
-        ContainsDataForParameters(
-            {
-                "demand",
-                "capacity_factor",
-                "input",
-                "output",
-                "technical_lifetime",
-            }
-        ),
-        # HasCoords({"technology": ["f rail electr"]}),
-    ),
-    "output::F+ixmp": (
-        HasCoords(
-            {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
-        ),
-    ),
-    # .freight.other()
-    "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
-    #
-    # The following are intermediate checks formerly in .test_demand.test_exo
-    "mode share:n-t-y:base": (HasUnits(""),),
-    "mode share:n-t-y": (HasUnits(""),),
-    key.pop: (HasUnits("Mpassenger"),),
-    "cg share:n-y-cg": (HasUnits(""),),
-    "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
-    "votm:n-y": (HasUnits(""),),
-    key.price.base: (HasUnits("USD / km"),),
-    "cost:n-y-c-t": (HasUnits("USD / km"),),
-    key.pdt_nyt[0]: (HasUnits("passenger km / year"),),
-    key.pdt_nyt[1]: (HasUnits("passenger km / year"),),
-    key.ldv_ny + "total": (HasUnits("Gp km / a"),),
-    # FIXME Handle dimensionality instead of exact units
-    # demand.ldv_nycg: (HasUnits({"[length]": 1, "[passenger]": 1, "[time]": -1}),),
-    "pdt factor:n-y-t": (HasUnits(""),),
-    # "fv factor:n-y": (HasUnits(""),),  # Fails: this key no longer exists
-    # "fv:n:advance": (HasUnits(""),),  # Fails: only fuzzed data in message-ix-models
-    key.fv_cny: (HasUnits("Gt km"),),
-    #
-    # Exogenous demand calculation succeeds
-    "transport demand::ixmp": (
-        # Data is returned for the demand parameter only
-        ContainsDataForParameters({"demand"}),
-        HasCoords({"level": ["useful"]}),
-        # Certain labels are specifically excluded/dropped in the calculation
-        HasCoords(
-            {"commodity": ["transport pax ldv", "transport F WATER"]}, inverse=True
-        ),
-        # No negative values
-        NonNegative(),
-        # …plus default NoneMissing
-    ),
-    f"input{ldv.Li}": (LDV_PHEV_input(),),
-    # .disutility.prepare_computer()
-    "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
-    disutility.TARGET: (ContainsDataForParameters({"input"}),),
-    #
-    "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
-    # The following partly replicates .test_ldv.test_get_ldv_data()
-    ldv.TARGET: (
-        ContainsDataForParameters(
-            {
-                "bound_new_capacity_lo",
-                "bound_new_capacity_up",
-                "capacity_factor",
-                "emission_factor",
-                "fix_cost",
-                "historical_new_capacity",
-                "input",
-                "inv_cost",
-                "output",
-                "relation_activity",
-                "technical_lifetime",
-                "var_cost",
-            }
-        ),
-    ),
-    other.TARGET: (
-        ContainsDataForParameters({"bound_activity_lo", "bound_activity_up", "input"}),
-    ),
-    passenger.TARGET: (
-        ContainsDataForParameters(
-            {
-                "bound_activity_lo",  # From .passenger.other(). For R11 this is empty.
-                "bound_activity_up",  # act-non_ldv.csv via .passenger.bound_activity()
-                "capacity_factor",
-                # "emission_factor",
-                "fix_cost",
-                "input",
-                "inv_cost",
-                "output",
-                # "relation_activity",
-                "technical_lifetime",
-                "var_cost",
-            }
-        ),
-        Passenger(),
-    ),
-}
-
-
 @pytest.fixture
-def N_node(request) -> int:
+def N_node(request: "pytest.FixtureRequest") -> int:
     """Expected number of nodes, by introspection of other parameter values."""
     if "build_kw" in request.fixturenames:
         regions = request.getfixturevalue("build_kw")["regions"]
@@ -279,7 +44,7 @@ def N_node(request) -> int:
 
 @pytest.fixture(scope="session")
 def scenario_code() -> Iterator["Code"]:
-    return get_cl_scenario()["SSP2"]
+    return CL_SCENARIO.get()["SSP2"]
 
 
 @MARK[10]
@@ -372,15 +137,24 @@ def test_bare_res(
         # ("R11", "B", dict(futures_scenario="A---")),
         # ("R11", "B", dict(futures_scenario="debug")),
         ("R12", "B", dict(code="SSP2")),
+        ("R12", "B", dict(code="SSP2 tax")),
+        ("R12", "B", dict(code="SSP2 exo price")),
         # ("R12", "B", dict(navigate_scenario="act+ele+tec")),
         ("R12", "B", dict(code="LED-SSP2")),
         ("R12", "B", dict(code="EDITS-CA")),
         ("R12", "B", dict(code="DIGSY-BEST-C")),
+        pytest.param(
+            "R12",
+            "B",
+            dict(code="SSP2", extra_modules=["material"]),
+            marks=pytest.mark.xfail(raises=NotImplementedError),
+        ),
         # param("R14", "B", {}, marks=MARK[9]),
         # param("ISR", "A", {}, marks=MARK[3]),
     ),
 )
 def test_debug(
+    request: "pytest.FixtureRequest",
     test_context: Context,
     tmp_path: Path,
     regions: str,
@@ -406,30 +180,15 @@ def test_debug(
         Passed to :func:`.verbose_check`.
     """
     # Get a Computer prepared to build the model with the given options
-    c, info = configure_build(
-        test_context, regions=regions, years=years, tmp_path=tmp_path, options=options
-    )
+    c, _ = configure_build(test_context, regions, years, tmp_path, options=options)
 
-    # Modify CHECKS according to the settings
-    checks = CHECKS.copy()
-    if test_context.model.regions == "R12":
-        checks["transport::O+ixmp"] = (
-            ContainsDataForParameters(
-                {"bound_activity_lo", "bound_activity_up", "input"}
-            ),
-        )
-
-    # Has exactly the periods (y) in the model horizon
-    k = "disutility:n-cg-t-y"
-    checks[k] = checks[k] + (HasCoords({"y": info.Y}),)
-
-    # Construct a list of common checks to be appended to every value in `checks`
-    common = [Size({"n": N_node}), NoneMissing()] + verbose_check(verbosity, tmp_path)
+    # Fixture: a scenario
+    c.add("scenario", bare_res(request, test_context))
 
     # Insert key-specific and common checks
-    k = "test_debug"
-    result = insert_checks(c, k, checks, common)
+    result = check.insert(c, N_node, verbosity, tmp_path)
 
+    k = "test_debug"
     # DEBUG Show and compute a different key
     # k = key.pdt_cny
 
@@ -446,8 +205,20 @@ def test_debug(
     # DEBUG Handle a subset of the result for inspection
     # print(tmp)
 
-    assert result, "1 or more checks failed"
+    result.assert_all_passed()
     del tmp
+
+
+def test_debug_multi(test_mp: ixmp.Platform, test_context: Context) -> None:
+    # Fixture: directories required to run the function
+    # TODO Expand with data files usable to generate plots
+    base_dir = test_context.get_local_path("transport")
+    base_dir.joinpath("debug-ICONICS_...").mkdir(parents=True, exist_ok=True)
+
+    s = make_dantzig(test_mp)
+
+    with pytest.raises(genno.ComputationError):
+        build.debug_multi(test_context, s)  # type: ignore [arg-type]
 
 
 @pytest.mark.ece_db

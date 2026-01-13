@@ -1,26 +1,22 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 
 import logging
+import re
 from copy import deepcopy
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-import genno
 import pandas as pd
-from genno import Computer, Key, KeySeq, MissingKeyError
+from genno import Computer, Key, Keys, MissingKeyError
 from genno.core.key import single_key
 from message_ix import Reporter
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.report import STAGE, add_plots
 from message_ix_models.report.util import add_replacements
 
-from . import Config
-from .key import exo, pop
+from . import Config, key, plot
 
 if TYPE_CHECKING:
-    import ixmp
-    from genno import Computer
-
     from message_ix_models import Spec
 
 log = logging.getLogger(__name__)
@@ -137,16 +133,13 @@ def add_iamc_store_write(c: Computer, base_key) -> "Key":
 
     .. todo:: Move upstream, to :mod:`message_ix_models`.
     """
-    k = KeySeq(base_key)
+    k = Key(base_key)
 
     file_keys = []
     for suffix in ("csv", "xlsx"):
         # Create the path
         path = c.add(
-            k[f"{suffix} path"],
-            "make_output_path",
-            "config",
-            name=f"{k.base.name}.{suffix}",
+            k[f"{suffix} path"], "make_output_path", "config", name=f"{k.name}.{suffix}"
         )
         # Write `key` to the path
         file_keys.append(c.add(k[suffix], "write_report", base_key, path))
@@ -167,14 +160,14 @@ def aggregate(c: "Computer") -> None:
 
     config: Config = c.graph["config"]["transport"]
 
-    for key in map(lambda s: KeySeq(c.infer_keys(s)), "emi in out".split()):
+    for k in map(lambda s: Key(c.infer_keys(s)), "emi in out".split()):
         try:
             # Reference the function to avoid the genno magic which would treat as sum()
             # NB aggregation on the nl dimension *could* come first, but this can use a
             #    lot of memory when applied to e.g. out:*: for a full global model.
-            c.add(key[0], func, key.base, "t::transport agg", keep=False)
-            c.add(key[1], func, key[0], "nl::world agg", keep=False)
-            c.add(key["transport"], "select", key[1], "t::transport modes 1", sums=True)
+            c.add(k[0], func, k, "t::transport agg", keep=False)
+            c.add(k[1], func, k[0], "nl::world agg", keep=False)
+            c.add(k["transport"], "select", k[1], "t::transport modes 1", sums=True)
         except MissingKeyError:
             if config.with_solution:
                 raise
@@ -192,18 +185,14 @@ def callback(rep: Reporter, context: Context) -> None:
       If the scenario to be reported is not solved, only a subset of plots are added.
     - :data:`.key.report.all`: all of the above.
     """
-    from . import base, build, key
+    from . import base, build
 
     N_keys = len(rep.graph)
-
-    # Collect all reporting tasks
-    rep.add(key.report.all, [])
 
     # - Configure MESSAGEix-Transport.
     # - Add structure and other information.
     # - Call, inter alia:
     #   - demand.prepare_computer() for ex-post mode and demand calculations.
-    #   - plot.prepare_computer() for plots; adds to key.report.all.
     check = build.get_computer(
         context, obj=rep, visualize=False, scenario=rep.graph.get("scenario")
     )
@@ -232,6 +221,7 @@ def callback(rep: Reporter, context: Context) -> None:
     misc(rep)
     convert_iamc(rep)  # Adds to key.report.all
     convert_sdmx(rep)  # Adds to key.report.all
+    add_plots(rep, plot, key.report.plot)
     base.prepare_reporter(rep)  # Tasks that prepare data to parametrize the base model
 
     log.info(f"Added {len(rep.graph) - N_keys} keys")
@@ -370,94 +360,6 @@ def convert_sdmx(c: "Computer") -> None:
     c.graph[k_report.all].append(k_report.sdmx)
 
 
-def latest_reporting_from_file(
-    info: ScenarioInfo, base_dir: Path
-) -> tuple[Any, int, pd.DataFrame]:
-    """Locate and retrieve the latest reported output for the scenario `info`.
-
-    The file :file:`transport.csv` is sought in a subdirectory of `base_dir` identified
-    by :attr:`.ScenarioInfo.path`.
-
-    .. todo:: Move upstream, to :mod:`message_ix_models`.
-
-    Returns
-    -------
-    tuple
-        1. The path of the file read.
-        2. :class:`int`: The scenario version corresponding to the data read.
-        3. :class:`pandas.DataFrame`: the data.
-
-        If no data is found, all the elements are :any:`None`.
-    """
-    dirs = sorted(base_dir.glob(info.path.replace("vNone", "v*")), reverse=True)
-    for _dir in dirs:
-        path = _dir.joinpath("transport.csv")
-        if not path.exists():
-            log.info(f"Skip {_dir}; no file 'transport.csv'")
-            continue
-        path_version = int(path.parent.name.split("v")[-1])
-        return (
-            path,
-            path_version,
-            pd.read_csv(path).assign(
-                Scenario=lambda df: df.Scenario + f"#{path_version}"
-            ),
-        )
-
-    return None, -1, pd.DataFrame()
-
-
-def latest_reporting_from_platform(
-    info: ScenarioInfo, platform: "ixmp.Platform", minimum_version: int = -1
-) -> tuple[Any, int, pd.DataFrame]:
-    """Retrieve the latest reported output for the scenario described by `info`.
-
-    The time series data attached to a scenario on `platform` is retrieved.
-
-    .. todo:: Move upstream, to :mod:`message_ix_models`.
-
-    Returns
-    -------
-    tuple
-        1. The :class:`.Scenario` object.
-        2. :class:`int`: The scenario version corresponding to the data read.
-        3. :class:`pandas.DataFrame`: the data.
-
-        If no data is found or the latest version with reporting time series data is
-        <= `minimum_version`, all the elements are :any:`None`.
-    """
-    from message_ix import Scenario
-
-    for _, row in (
-        platform.scenario_list(model=info.model, scen=info.scenario, default=False)
-        .sort_values(["version"], ascending=False)
-        .iterrows()
-    ):
-        if row.version <= minimum_version:
-            log.info(f"{row.version} ≤ minimum {minimum_version}")
-            break
-        elif row.is_locked:
-            log.info(f"Skip {info.url} {row.version}; locked")
-            continue
-
-        s = Scenario(
-            platform, model=info.model, scenario=info.scenario, version=row.version
-        )
-        if s.has_solution():
-            return (
-                s,
-                row.version,
-                s.timeseries().assign(
-                    # Scenario=lambda df: df.Scenario + f"v{row.version}"
-                ),
-            )
-        else:
-            log.info(f"Skip {info.url} {row.version}; no reporting output")
-            del s
-
-    return None, -1, pd.DataFrame()
-
-
 def misc(c: "Computer") -> None:
     """Add miscellaneous tasks.
 
@@ -475,7 +377,7 @@ def misc(c: "Computer") -> None:
     c.add("distance:nl:non-ldv", "distance_nonldv", "config")
 
     # Demand per capita
-    c.add("demand::capita", "divdemand:n-c-y", pop)
+    c.add("demand::capita", "divdemand:n-c-y", key.pop)
 
     # Adjustment factor for LDV calibration: fuel economy ratio
     k_num = Key("in:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
@@ -490,7 +392,7 @@ def misc(c: "Computer") -> None:
     )
 
     k_ratio = single_key(
-        c.add("fuel economy::ratio", "div", exo.input_ref_ldv, k_check + "sel")
+        c.add("fuel economy::ratio", "div", key.exo.input_ref_ldv, k_check + "sel")
     )
     c.add("calibrate fe path", "make_output_path", "config", name="calibrate-fe.csv")
     hc = "\n\n".join(
@@ -509,65 +411,50 @@ def misc(c: "Computer") -> None:
     )
 
 
-def multi(context: Context, targets):
+def multi(context: Context, targets: list[str], *, use_platform: bool = False) -> None:
     """Report outputs from multiple scenarios."""
-    import plotnine as p9
 
-    from message_ix_models.report.operator import quantity_from_iamc
-    from message_ix_models.tools.iamc import _drop_unique
+    from message_ix_models.tools.iamc import to_quantity
 
-    report_dir = context.get_local_path("report")
-    platform = context.get_platform()
-
-    dfs = []
-    for target in map(ScenarioInfo.from_url, targets):
-        path, path_version, df_path = latest_reporting_from_file(target, report_dir)
-        scen, scen_version, df_scen = latest_reporting_from_platform(target, platform)
-
-        if path_version == scen_version == -1:
-            raise RuntimeError(f"No reporting output available for {target}")
-        elif path_version >= scen_version:
-            source = "file"
-            df = df_path
-            version = path_version
-        else:
-            source = "platform"
-            df = df_scen
-            version = scen_version
-
-        log.info(f"{target.url = } {source = } {version = }")
-
-        dfs.append(df)
-
-    # Convert to a genno.Quantity
-    cols = ["Variable", "Model", "Scenario", "Region", "Unit"]
-    data = genno.Quantity(
-        pd.concat(dfs)
-        .sort_values(cols)
-        .melt(id_vars=cols, var_name="y")
-        .astype({"y": int})
-        .pipe(_drop_unique, columns="Model", record=dict())
-        .rename(columns={"Variable": "v", "Scenario": "s", "Region": "n"})
-        .dropna(subset=["value"])
-        .set_index("v s n y Unit".split())["value"]
+    k = Keys(
+        in_="in::pd",
+        concat="concat::pd",
+        all0="all:n-SCENARIO-UNIT-VARIABLE-y",
+        all1="all:n-s-UNIT-v-y",
+        plot_data="plot data:n-s-y",
     )
 
-    # Select a subset of data
-    qty = quantity_from_iamc(data, r"Transport\|Stock\|Road\|Passenger\|LDV\|(.*)")
+    # Computer, with configuration expected by Plot.add_tasks
+    c = Computer(config=dict(output_dir=context.get_local_path("report")))
+    # Order is important: use genno.compat.pyam.operator.quantity_from_iamc over local
+    c.require_compat("message_ix_models.report.operator")
+    c.require_compat("pyam")
 
-    # Plot
-    # TODO Move to .transport.plot
-    plot = (
-        p9.ggplot(qty.to_dataframe().reset_index())
-        + p9.aes(x="y", y="value", color="v")
-        + p9.facet_grid("n ~ s")
-        + p9.geom_point()
-        + p9.geom_line()
-        + p9.theme(figure_size=(11.7, 16.6))
-    )
-    plot.save("debug.pdf")
+    c.add("context", context)
 
-    return data
+    # Retrieve all data for each of the `targets` as pd.DataFrame
+    kw0 = dict(filename="transport.csv", use={"file"})
+    for i, info in enumerate(map(ScenarioInfo.from_url, targets)):
+        c.add(k.in_[i], "latest_reporting", "context", info, **kw0)
+
+    # Concatenate these together
+    c.add(k.concat, pd.concat, list(k.in_.generated))
+
+    # Change e.g. "SSP_2024.1 exo price baseline" to "SSP_2024.1 exo price"
+    # FIXME Address this in .transport.workflow
+    replace = dict(SCENARIO={re.compile("([^12345]) baseline"): r"\1"})
+
+    # Convert to genno.Quantity
+    kw1 = dict(non_iso_3166="keep", replace=replace, unique="MODEL")
+    c.add(k.all0, to_quantity, k.concat, **kw1)
+
+    # Rename dimensions
+    c.add(k.all1, "rename_dims", k.all0, name_dict={"SCENARIO": "s", "VARIABLE": "v"})
+
+    # Collect all plots
+    add_plots(c, plot, "multi", stage=STAGE.REPORT, single=False)
+
+    return c.get("multi")
 
 
 def reapply_units(c: "Computer") -> None:
@@ -611,7 +498,7 @@ def select_transport_techs(c: "Computer") -> None:
     Applied to the quantities in :data:`SELECT`.
     """
     # Infer the full dimensionality of each key to be selected
-    for key in map(lambda name: c.infer_keys(f"{name}:*"), SELECT):
-        c.add(key + "transport all", "select", key, "t::transport all", sums=True)
-        c.add(key + "ldv", "select", key, "t::transport LDV", sums=True)
-        c.add(key + "non-ldv", "select", key, "t::transport P ex LDV", sums=True)
+    for k in map(lambda name: c.infer_keys(f"{name}:*"), SELECT):
+        c.add(k + "transport all", "select", k, "t::transport all", sums=True)
+        c.add(k + "ldv", "select", k, "t::transport LDV", sums=True)
+        c.add(k + "non-ldv", "select", k, "t::transport P ex LDV", sums=True)

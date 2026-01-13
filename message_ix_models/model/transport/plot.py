@@ -1,139 +1,21 @@
 """Plots for MESSAGEix-Transport reporting."""
 
-import logging
-from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import cast
 
-import genno.compat.plotnine
 import pandas as pd
 import plotnine as p9
-from genno import Computer
 from iam_units import registry
 
-from .key import gdp_cap, pdt_nyt
-from .key import report as k_report
+from message_ix_models.model.workflow import STAGE
+from message_ix_models.report.plot import COMMON, LabelFirst, Plot, PlotFromIAMC
 
-if TYPE_CHECKING:
-    from genno.core.key import KeyLike
+from . import key
 
-    # NB The following is itself within an if TYPE_CHECKING block; mypy can't find it
-    from plotnine.typing import PlotAddable  # type: ignore [attr-defined]
-
-    from .config import Config
-
-log = logging.getLogger(__name__)
-
-# Quiet messages like:
-#   "Fontsize 0.00 < 1.0 pt not allowed by FreeType. Setting fontsize= 1 pt"
-# TODO Investigate or move upstream
-logging.getLogger("matplotlib.font_manager").setLevel(logging.INFO + 1)
-
-
-class LabelFirst:
-    """Labeller that labels the first item using a format string.
-
-    Subsequent items are named with the bare value only.
-    """
-
-    __name__: str | None = None
-
-    def __init__(self, fmt_string):
-        self.fmt_string = fmt_string
-        self.first = True
-
-    def __call__(self, value):
-        first = self.first
-        self.first = False
-        return self.fmt_string.format(value) if first else value
-
-
-class Plot(genno.compat.plotnine.Plot):
-    """Base class for plots.
-
-    This class extends :class:`genno.compat.plotnine.Plot` with extra features.
-    """
-
-    #: 'Static' geoms: list of plotnine objects that are not dynamic
-    static: list["PlotAddable"] = [
-        p9.theme(figure_size=(11.7, 8.3)),
-    ]
-
-    #: Fixed plot title string. If not given, the first line of the class docstring is
-    #: used.
-    title: str | None = None
-
-    #: Units expression for plot title.
-    unit: str | None = None
-
-    #: :obj:`False` for plots not intended to be run on a solved scenario.
-    runs_on_solved_scenario: bool = True
-
-    def ggtitle(self, extra: str | None = None):
-        """Return :class:`plotnine.ggtitle` including the current date & time."""
-        title_parts = [
-            (self.title or self.__doc__ or "").splitlines()[0].rstrip("."),
-            f"[{self.unit}]" if self.unit else None,
-            f"— {extra}" if extra else None,
-        ]
-        subtitle_parts = [
-            getattr(self.scenario, "url", "no Scenario"),
-            "—",
-            datetime.now().isoformat(timespec="minutes"),
-        ]
-        return p9.labs(
-            title=" ".join(filter(None, title_parts)), subtitle=" ".join(subtitle_parts)
-        )
-
-    def groupby_plot(self, data: pd.DataFrame, *args):
-        """Combination of groupby and ggplot().
-
-        Groups by `args` and yields a series of :class:`plotnine.ggplot` objects, one
-        per group, with :attr:`static` geoms and :func:`ggtitle` appended to each.
-        """
-        for group_key, group_df in data.groupby(*args):
-            yield (
-                group_key,
-                (
-                    p9.ggplot(group_df)
-                    + self.static
-                    + self.ggtitle(f"{'-'.join(args)}={group_key!r}")
-                ),
-            )
-
-    def save(self, config, *args, **kwargs) -> Path | None:
-        # Strip off the last of `args`, a pre-computed path, and store
-        *_args, self.path, self.scenario = args
-        # Call the parent method with the remaining arguments
-        return super().save(config, *_args, **kwargs)
-
-    @classmethod
-    def add_tasks(
-        cls, c: Computer, key: "KeyLike", *inputs, strict: bool = False
-    ) -> "KeyLike":
-        """Use a custom output path."""
-        from operator import itemgetter
-
-        from genno import quote
-
-        # Output path for this parameter
-        k_path = f"plot {cls.basename} path"
-        filename = f"{cls.basename}{cls.suffix}"
-        if cls.runs_on_solved_scenario:
-            # Make a path including the Scenario URL
-            c.add(k_path, "make_output_path", "config", name=filename)
-        else:
-            # Build phase: no Scenario/URL exists; use a path set by add_debug()
-            c.add(f"{k_path} 0", itemgetter("transport build debug dir"), "config")
-            c.add(k_path, Path.joinpath, f"{k_path} 0", quote(filename))
-
-        # Same as the parent method
-        _inputs = list(inputs if inputs else cls.inputs)
-
-        # Append the key for `path` to the inputs
-        return super(Plot, cls).add_tasks(
-            c, key, *_inputs, k_path, "scenario", strict=strict
-        )
+#: Common, static settings
+STATIC = [
+    COMMON["A4 landscape"],
+]
 
 
 class BaseEnergy0(Plot):
@@ -141,7 +23,7 @@ class BaseEnergy0(Plot):
 
     basename = "base-fe-intensity-gdp"
     inputs = ["fe intensity:nl-ya:units"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="value", color="nl"),
         p9.geom_line(),
         p9.geom_point(),
@@ -160,7 +42,7 @@ class CapNewLDV(Plot):
 
     basename = "cap-new-t-ldv"
     inputs = ["historical_new_capacity:nl-t-yv:ldv", "CAP_NEW:nl-t-yv:ldv"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="yv", y="value", color="t"),
         p9.geom_vline(xintercept=2020, size=4, color="white"),
         p9.geom_line(),
@@ -212,7 +94,7 @@ class ComparePDT(Plot):
 
     This plot is used in :func:`.transport.build.debug_multi`, not in ordinary
     reporting. Rather than receiving data from computed quantities already in the graph,
-    it reads them from files named :file:`pdt.csv` (per :attr:`.kind`) in the
+    it reads them from files named :file:`pdt.csv` (per :attr:`.measure`) in the
     directories generated by the workflow steps like "SSP1 debug build" (
     :func:`.transport.build.debug`).
 
@@ -221,10 +103,10 @@ class ComparePDT(Plot):
     - One line with points per scenario, coloured by scenario.
     """
 
-    runs_on_solved_scenario = False
     basename = "compare-pdt"
-
-    static = Plot.static + [
+    stage = STAGE.BUILD
+    single = False
+    static = STATIC + [
         p9.aes(x="y", y="value", color="scenario"),
         p9.facet_wrap("t", ncol=5),
         p9.geom_line(),
@@ -234,7 +116,7 @@ class ComparePDT(Plot):
     ]
 
     #: Base name for source data files, for instance :file:`pdt.csv`.
-    kind = "pdt"
+    measure = "pdt"
 
     #: Units of input files
     unit = "km/a"
@@ -242,7 +124,10 @@ class ComparePDT(Plot):
     factor = 1e6
 
     def generate(self, *paths: Path):
-        data = read_csvs(self.kind, *paths).eval("value = value / @self.factor")
+        data = cast(
+            pd.DataFrame,
+            read_csvs(self.measure, *paths).eval("value = value / @self.factor"),
+        )
 
         # Add factor to the unit expression
         if self.factor != 1.0:
@@ -259,12 +144,12 @@ class ComparePDTCap0(ComparePDT):
     """
 
     basename = "compare-pdt-cap"
-    kind = "pdt-cap"
+    measure = "pdt-cap"
     factor = 1e3
 
 
 #: Common layers for :class:`ComparePDTCap1` and :class:`DemandExoCap1`.
-PDT_CAP_GDP_STATIC = Plot.static + [
+PDT_CAP_GDP_STATIC = STATIC + [
     p9.aes(x="gdp", y="value", color="t"),
     p9.geom_line(),
     p9.geom_point(),
@@ -284,8 +169,9 @@ class ComparePDTCap1(Plot):
     - One line with points per |t| (=transport mode), coloured by mode.
     """
 
-    runs_on_solved_scenario = False
     basename = "compare-pdt-capita-gdp"
+    stage = STAGE.BUILD
+    single = False
     static = PDT_CAP_GDP_STATIC + [
         p9.facet_wrap("scenario", ncol=5),
     ]
@@ -316,7 +202,7 @@ class InvCost0(Plot):
 
     basename = "inv-cost-transport"
     inputs = ["inv_cost:nl-t-yv:transport all"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="yv", y="inv_cost", color="t"),
         p9.geom_line(),
         p9.geom_point(),
@@ -355,7 +241,7 @@ class FixCost(Plot):
 
     basename = "fix-cost"
     inputs = ["fix_cost:nl-t-yv-ya:transport all"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="fix_cost", color="t", group="t * yv"),
         p9.geom_line(),
         p9.geom_point(),
@@ -374,7 +260,7 @@ class VarCost(Plot):
 
     basename = "var-cost"
     inputs = ["var_cost:nl-t-yv-ya:transport all"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="var_cost", color="t", group="t * yv"),
         p9.geom_line(),
         p9.geom_point(),
@@ -393,7 +279,7 @@ class LDV_IO(Plot):
 
     basename = "ldv-efficiency"
     inputs = ["input:nl-t-yv-ya:transport all"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="input", color="t"),
         # TODO remove typing exclusion once plotnine >0.12.4 is released
         p9.facet_wrap(
@@ -415,7 +301,7 @@ class OutShareLDV0(Plot):
 
     basename = "out-share-t-ldv"
     inputs = ["out:nl-t-ya:ldv+units"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
         # # Select a palette with up to 12 colors
@@ -438,7 +324,7 @@ class OutShareLDV1(Plot):
 
     basename = "out-share-t-cg-ldv"
     inputs = ["out:nl-t-ya-c", "cg"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="value", fill="t"),
         p9.facet_wrap(["c"], ncol=5),
         p9.geom_bar(stat="identity", width=4),
@@ -476,7 +362,7 @@ class Demand0(Plot):
 
     basename = "demand"
     inputs = ["demand:n-c-y", "c::transport", "cg"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="y", y="demand", fill="c_group"),
         p9.geom_bar(stat="identity", width=4),
         p9.labs(x="Period", y="", fill="Transport mode"),
@@ -518,7 +404,7 @@ class DemandCap(Plot):
 
     basename = "demand-capita"
     inputs = ["demand:n-c-y:capita", "c::transport", "cg"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="y", y="value", fill="c"),
         p9.geom_bar(stat="identity", width=4),
         p9.labs(x="Period", y="", fill="Transport mode group"),
@@ -526,7 +412,7 @@ class DemandCap(Plot):
 
     def generate(self, data, commodities, cg):
         # Convert and select data
-        data = data.query(f"c in {repr(list(map(str, commodities)))}").pipe(c_group, cg)
+        data = data.query(f"c in {list(map(str, commodities))!r}").pipe(c_group, cg)
         for _, ggplot in self.groupby_plot(data, "n"):
             yield ggplot
 
@@ -536,7 +422,9 @@ def _reduce_units(df: pd.DataFrame, target_units) -> tuple[pd.DataFrame, str]:
     assert 1 == len(df_units)
     tmp = registry.Quantity(1.0, df_units[0]).to(target_units)
     return (
-        df.eval("value = value * @tmp.magnitude").assign(unit=f"{tmp.units:~}"),
+        cast(pd.DataFrame, df.eval("value = value * @tmp.magnitude")).assign(
+            unit=f"{tmp.units:~}"
+        ),
         f"{tmp.units:~}",
     )
 
@@ -544,10 +432,10 @@ def _reduce_units(df: pd.DataFrame, target_units) -> tuple[pd.DataFrame, str]:
 class DemandExo(Plot):
     """Passenger transport activity."""
 
-    runs_on_solved_scenario = False
     basename = "demand-exo"
-    inputs = [pdt_nyt]
-    static = Plot.static + [
+    stage = STAGE.BUILD
+    inputs = [key.pdt_nyt]
+    static = STATIC + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
         p9.labs(x="Period", y="", fill="Mode (tech group)"),
@@ -566,10 +454,10 @@ class DemandExo(Plot):
 class DemandExoCap0(Plot):
     """Passenger transport activity per person."""
 
-    runs_on_solved_scenario = False
     basename = "demand-exo-capita"
-    inputs = [pdt_nyt + "capita+post"]
-    static = Plot.static + [
+    stage = STAGE.BUILD
+    inputs = [key.pdt_nyt + "capita+post"]
+    static = STATIC + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
         p9.labs(x="Period", y="", fill="Transport mode"),
@@ -591,9 +479,9 @@ class DemandExoCap1(DemandExoCap0):
     Unlike :class:`DemandExoCap0`, this uses GDP per capita as the abscissa/x-aesthetic.
     """
 
-    runs_on_solved_scenario = False
     basename = "demand-exo-capita-gdp"
-    inputs = [pdt_nyt + "capita+post", gdp_cap]
+    stage = STAGE.BUILD
+    inputs = [key.pdt_nyt + "capita+post", key.gdp_cap]
     static = PDT_CAP_GDP_STATIC
 
     def generate(self, df_pdt, df_gdp):
@@ -618,7 +506,7 @@ class EnergyCmdty0(Plot):
 
     basename = "energy-c"
     inputs = ["y0", "in:nl-ya-c:transport all"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="value", fill="c"),
         p9.geom_bar(stat="identity", width=5, color="black"),
         p9.labs(x="Period", y="Energy", fill="Commodity"),
@@ -662,16 +550,83 @@ class EnergyCmdty1(EnergyCmdty0):
             yield ggplot
 
 
+class MultiFE(PlotFromIAMC):
+    """Final energy, passenger."""
+
+    basename = "multi-fe"
+    single = False
+
+    inputs = ["all:n-s-UNIT-v-y"]
+
+    # NB This pattern excludes the total. A pattern which includes the total (as an
+    #    empty string in the 'v' dimension) is:
+    #    r"Final Energy\|Transportation\|P\|?(|Electricity|Gas|Hydrogen|Liquids.*)"
+    iamc_variable_pattern = (
+        r"Final Energy\|Transportation\|P\|(Electricity|Gas|Hydrogen|Liquids.*)"
+    )
+
+    static = STATIC + [
+        p9.aes(x="y", y="value", fill="v"),
+        p9.facet_wrap("s", ncol=3, nrow=5),
+        p9.geom_area(color="black", size=0.2),
+        p9.scale_fill_brewer(type="qualitative", palette="Paired"),
+        p9.labs(x="Period", y="", fill="Technology"),
+        COMMON["A3 portrait"],
+    ]
+
+    def generate(self, data):
+        # Show only data in the model horizon
+        # TODO Remove once historical data are included in the input
+        data = data.query("y >= 2020")
+
+        self.unit = data["unit"].unique()[0]
+
+        for _, ggplot in self.groupby_plot(data, "n"):
+            # Maximum y-limit for this node
+            y_max = max(ggplot.data["value"])
+            yield ggplot + p9.expand_limits(y=[0, y_max])
+
+
+class MultiStock(PlotFromIAMC):
+    """LDV technology stock."""
+
+    basename = "multi-stock"
+    single = False
+    inputs = ["all:n-s-UNIT-v-y"]
+    iamc_variable_pattern = r"Transport\|Stock\|Road\|Passenger\|LDV\|(.*)"
+
+    static = STATIC + [
+        p9.aes(x="y", y="value", color="v"),
+        p9.facet_wrap("s", ncol=3, nrow=5),
+        p9.geom_point(),
+        p9.geom_line(),
+        p9.scale_color_brewer(type="qualitative", palette="Paired"),
+        p9.labs(x="Period", y="", color="Technology"),
+        COMMON["A3 portrait"],
+    ]
+
+    def generate(self, data):
+        # Show only data in the model horizon
+        # TODO Remove once historical data are included in the input
+        data = data.query("y >= 2020")
+
+        self.unit = data["unit"].unique()[0]
+
+        for _, ggplot in self.groupby_plot(data, "n"):
+            # Maximum y-limit for this node
+            y_max = max(ggplot.data["value"])
+            yield ggplot + p9.expand_limits(y=[0, y_max])
+
+
 class Scale1Diff(Plot):
     """scale-1 factor in y=2020; changes between 2 scenarios."""
 
     basename = "scale-1-diff"
-
-    runs_on_solved_scenario = False
+    stage = STAGE.BUILD
     inputs = ["scale-1:nl-t-c-l-h:a", "scale-1:nl-t-c-l-h:b"]
 
     _s, _v, _y = "scenario", "value", "t + ' ' + c"
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x=_v, y=_y, yend=_y, group=_s, color=_s, shape=_s),
         p9.facet_wrap("nl", scales="free_x"),
         p9.geom_vline(p9.aes(xintercept=_v), pd.DataFrame([[1.0]], columns=[_v])),
@@ -710,7 +665,7 @@ class Stock0(Plot):
     basename = "stock-ldv"
     # Partial sum over driver_type dimension
     inputs = ["CAP:nl-t-ya:ldv+units"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="CAP", color="t"),
         p9.geom_line(),
         p9.geom_point(),
@@ -733,7 +688,7 @@ class Stock1(Plot):
 
     basename = "stock-non-ldv"
     inputs = ["CAP:nl-t-ya:non-ldv+units"]
-    static = Plot.static + [
+    static = STATIC + [
         p9.aes(x="ya", y="CAP", color="t"),
         p9.geom_line(),
         p9.geom_point(),
@@ -749,42 +704,3 @@ class Stock1(Plot):
 
         for _, ggplot in self.groupby_plot(data, "nl"):
             yield ggplot + p9.expand_limits(y=[0, y_max])
-
-
-def prepare_computer(c: Computer):
-    """Add :data:`.PLOTS` to `c`.
-
-    Adds:
-
-    - 1 key like **"plot inv-cost"** corresponding to the :attr:`~.Plot.basename` of
-      each :class:`.Plot` subclass defined in this module.
-    - The key **"transport plots"** that triggers writing all the plots to file.
-    """
-    import matplotlib
-
-    # Force matplotlib to use a non-interactive backend for plotting
-    matplotlib.use("pdf")
-
-    keys = []
-
-    config: "Config" = c.graph["config"]["transport"]
-
-    # Iterate over the Plot subclasses defined in the current module
-    for plot in filter(
-        lambda cls: isinstance(cls, type) and issubclass(cls, Plot) and cls is not Plot,
-        globals().values(),
-    ):
-        if (not plot.runs_on_solved_scenario and config.with_solution) or (
-            False  # Use True here or uncomment below to skip some or all plots
-            # "stock" not in plot.basename
-        ):
-            log.info(f"Skip {plot}")
-            continue
-        keys.append(f"plot {plot.basename}")
-        c.add(keys[-1], plot)
-
-    key = "transport plots"
-    log.info(f"Add {repr(key)} collecting {len(keys)} plots")
-    c.add(key, keys)
-
-    c.graph[k_report.all].append(key)
