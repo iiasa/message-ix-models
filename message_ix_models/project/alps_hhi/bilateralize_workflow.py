@@ -57,13 +57,13 @@ for con in constraint_pars:
         print(f"......{tec}")
         df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), con + ".csv"))
 
-        #df['omit'] = 0
-        #df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu',
-        #                                             'gas_piped_exp_weu']) == False) &\
-        #                      (df['node_loc'] != 'R12_WEU'),
-        #                     1, 0)
-        #df = df[df['omit'] == 0]
-        #df = df.drop(columns = ['omit'])
+        df['omit'] = 0
+        df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu',
+                                                     'gas_piped_exp_weu']) == False) &\
+                              (df['node_loc'] != 'R12_WEU'),
+                             1, 0)
+        df = df[df['omit'] == 0]
+        df = df.drop(columns = ['omit'])
         
         df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
 
@@ -103,7 +103,7 @@ for model_scen in models_scenarios.keys():
     
         remdf = updf.copy()
         if g == 'growth_activity_up':
-            updf['value'] = 0.01
+            updf['value'] = 0.05
         elif g == 'growth_activity_lo':
             updf['value'] = -0.01
             
