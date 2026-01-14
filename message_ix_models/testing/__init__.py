@@ -77,6 +77,13 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         condition=GHA,
         reason="https://github.com/iiasa/message-ix-models/issues/375",
     ),
+    # Used in .material.test_{build,data_steel}
+    "#447": pytest.mark.skipif(GHA, reason="Stalls or times out on GitHub Actions"),
+    # Alternate version: don't allow tests to run more than 5 minutes. This appears to
+    # interact badly with pytest-xdist, so skip is used instead.
+    # "#447": pytest.mark.timeout(
+    #     600, method="thread" if platform.system() == "Windows" else "thread"
+    # ),
     "ixmp#595": pytest.mark.xfail(
         condition=version("ixmp") > "3.11.0"
         and find_spec("ixmp4") is not None

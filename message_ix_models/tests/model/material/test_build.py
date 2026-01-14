@@ -1,11 +1,10 @@
 import logging
-import platform
 
 import pytest
 
 from message_ix_models.model.material import build
 from message_ix_models.model.structure import get_codes
-from message_ix_models.testing import GHA, bare_res
+from message_ix_models.testing import GHA, MARK, NIE, bare_res
 
 log = logging.getLogger(__name__)
 
@@ -28,29 +27,19 @@ def test_make_spec(regions_arg, regions_exp, material):
     assert expected == spec["require"].set["node"]
 
 
-# Conditions and marks for one case of test_build_bare_res() on GitHub Actions
-_C1 = GHA and platform.system() == "Windows"
-_C2 = GHA and platform.system() == "Darwin"
-_MARKS = [
-    # On Windows, the test frequently fails; if it passes, the run time is ~1200
-    # seconds (20 minutes). Always SKIP.
-    pytest.mark.skipif(_C1, reason="Slow/Java heap space error"),
-    # On macOS, the test occasionally times out the run (~360 minutes = 21600 seconds).
-    # When it passes, it does so in ~700 seconds.
-    #
-    # # Time out after a +20% margin, and XFAIL if this timeout occurs.
-    # pytest.mark.xfail(_C2, reason="Times out"),
-    # pytest.mark.timeout(700 * 1.2 if _C2 else 0),
-    #
-    # Skip unconditionally. See
-    # https://github.com/iiasa/message-ix-models/pull/346#issuecomment-2873056272
-    pytest.mark.skipif(_C2, reason="Times out"),
-    pytest.mark.xfail(
-        condition=GHA and platform.system() == "Linux",
-        raises=KeyError,
-        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/345, "
-        "pending adjustment to access of context['ssp']",
-    ),
+#: Conditions and marks for one case of test_build_bare_res() on GitHub Actions.
+#:
+#: - On Windows, the test frequently fails; if it passes, the run time is ~1200 seconds.
+#: - On macOS, the test occasionally times out the run (~360 minutes = 21600 seconds).
+#:   When it passes, it does so in ~700 seconds.
+#:
+#: See also:
+#: - https://github.com/iiasa/message-ix-models/pull/447
+#: - https://github.com/iiasa/message-ix-models/pull/346#issuecomment-2873056272
+#: - https://github.com/iiasa/message-ix-models/pull/345
+MARKS = [
+    # pytest.mark.xfail(reason="Times out"),  # Used with pytest.mark.timeout
+    MARK["#447"],
 ]
 
 
@@ -58,10 +47,8 @@ _MARKS = [
 @pytest.mark.parametrize(
     "regions, years, relations, solve",
     [
-        pytest.param("R12", "B", "B", False, marks=_MARKS),
-        pytest.param(
-            "R11", "B", "B", False, marks=pytest.mark.xfail(raises=NotImplementedError)
-        ),
+        pytest.param("R12", "B", "B", False, marks=MARKS if GHA else []),
+        pytest.param("R11", "B", "B", False, marks=NIE),
     ],
 )
 def test_build_bare_res(
