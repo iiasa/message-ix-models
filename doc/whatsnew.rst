@@ -5,22 +5,86 @@ Next release
 ============
 
 - New provider for exogenous data from the :ref:`tools-cepii` :class:`.BACI` data source (:pull:`450`).
-- Improvements to :class:`.report.Config` (:pull:`178`):
+- New tools and utilities:
+
+  - Enumeration :class:`.workflow.STAGE` (:pull:`447`).
+  - Classes
+    :class:`.sdmx.StructureFactory` and
+    :class:`.testing.check.NoDuplicates` (:pull:`447`).
+  - Method :meth:`.ScenarioInfo.from_path` (:pull:`447`).
+  - Functions :func:`.zipfile.extract_if_newer` (:pull:`450`),
+    :func:`.random_sample_from_file` (:pull:`450`),
+    :func:`~message_ix_models.util.genno.append` (:pull:`447`), and
+    :func:`.iamc.compare` (:pull:`178`).
+
+- Add :py:`parameters` argument  to :func:`.remove_emission_bounds.main` (:pull:`447`),
+  to control which parameter(s) are cleared.
+- Change :py:`query=...` argument to :func:`.iamc.to_quantity`, :func:`.iamc_like_data_for_query` to be optional (:pull:`447`).
+- Improve and extend :mod:`.util.slurm` and :program:`mix-models sbatch` CLI command (:pull:`447`);
+  new class :class:`.slurm.Template`;
+  new configuration setting "slurm remote args".
+
+Reporting
+---------
+
+- Expand :doc:`reporting documentation <api/report/index>` (:pull:`178`)
+  to cover features implemented/not implemented by :mod:`genno`-based reporting.
+  Module globals :data:`.NOT_IMPLEMENTED_MEASURE` and :data:`.NOT_IMPLEMENTED_IAMC`
+  record not-yet-implemented measures and IAMC ‘variables’.
+- Improve :class:`.report.Config` (:pull:`178`):
 
   - New attribute :attr:`~.report.Config.modules`.
   - New method :meth:`~.report.Config.iter_callbacks`.
 
-- New function :func:`.tools.iamc.compare` (:pull:`178`).
 - New module :mod:`.report.extraction` for reporting of resource extraction (:pull:`451`).
-- New reporting operators (:pull:`451`):
-  :func:`.get_commodity_groups`,
-  :func:`.node_glb`, and
-  :func:`.zeros_like`.
-- Expand :doc:`api/report/index` documentation (:pull:`178`)
-  to cover features implemented/not implemented by :mod:`genno`-based reporting.
-  Module globals :data:`.NOT_IMPLEMENTED_MEASURE` and :data:`.NOT_IMPLEMENTED_IAMC`
-  record not-yet-implemented measures and IAMC ‘variables’.
-- New utility functions :func:`.extract_if_newer`, :func:`.random_sample_from_files` (:pull:`450`).
+- New operators:
+
+  - :func:`.get_commodity_groups` (:pull:`451`),
+  - :func:`.latest_reporting` (:pull:`447`),
+  - :func:`.latest_reporting_from_platform` (:pull:`447`),
+  - :func:`.latest_reporting_from_file` (:pull:`447`),
+  - :func:`.node_glb` (:pull:`451`),
+  - :func:`.summarize` (:pull:`447`), and
+  - :func:`.zeros_like` (:pull:`451`).
+
+- Relocate from :mod:`.transport.report.plot` to :mod:`.report.plot` (:pull:`447`)
+  and generalize:
+
+  - Classes :class:`.LabelFirst`, :class:`.PlotTimeSeries`, :class:`.PlotFromIAMC`.
+  - Extensions to the behaviour of :class:`.Plot`.
+- New helper functions :func:`.report.plot.collect`,
+  :func:`.report.plot.prepare_computer` (:pull:`447`).
+
+Projects and model variants
+---------------------------
+
+- Add :doc:`/project/circeular` code list :class:`~.circeular.structure.CL_TRANSPORT_SCENARIO` (:pull:`447`).
+- Improve :mod:`.model.transport` (:pull:`447`).
+
+  - Add :meth:`Config.use_modules <.transport.config.Config.use_modules>`.
+  - Bump Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO to version 1.3.0.
+
+    - Include model variants with MESSAGEix-Materials
+      by adding and using :attr:`.ScenarioCodeAnnotations.extra_modules`.
+    - Include all available emission price trajectories.
+
+  - New modules:
+
+    - :mod:`.transport.check`
+      with checks and assertions for the build process.
+      These were previously embedded in the test suite.
+    - :mod:`.transport.material`
+      and data flow :data:`.input_cap_new`
+      for integration of MESSAGEix-Transport and -Materials.
+    - :mod:`.transport.slurm` including a :data:`~.transport.slurm.TEMPLATE`.
+
+  - New plots :class:`~.transport.plot.MultiFE`,
+    :class:`~.transport.plot.MultiStock`.
+  - Implement :meth:`.transport.policy.ExogenousEmissionPrice.add_tasks`,
+    :meth:`.TaxEmission.add_tasks`;
+    add :func:`~.transport.policy.prepare_computer`;
+    remove custom code from :func:`.transport.workflow.generate`.
+  - Expand tests.
 
 v2025.10.31
 ===========
