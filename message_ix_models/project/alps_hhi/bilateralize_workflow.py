@@ -96,16 +96,20 @@ for model_scen in models_scenarios.keys():
     hhi_scenario = base_scenario.clone('alps_hhi', model_scen)
     hhi_scenario.set_as_default()
 
-    updf = hhi_scenario.par('growth_activity_up')
-    updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
-    updf = updf[updf['node_loc'].isin(['R12_WEU'])]
-
-    remdf = updf.copy()
-    updf['value'] = 0.01
-
-    with hhi_scenario.transact("update growth activity up to gas_extr_mpen"):
-        hhi_scenario.remove_par('growth_activity_up', remdf)
-        hhi_scenario.add_par('growth_activity_up', updf)
+    for g in ['growth_activity_up', 'growth_activity_lo']:
+        updf = hhi_scenario.par(g)
+        updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
+        updf = updf[updf['node_loc'].isin(['R12_WEU'])]
+    
+        remdf = updf.copy()
+        if g == 'growth_activity_up':
+            updf['value'] = 0.01
+        elif g == 'growth_activity_lo':
+            updf['value'] = -0.01
+            
+        with hhi_scenario.transact("update growth activity to gas_extr_mpen"):
+            hhi_scenario.remove_par(g, remdf)
+            hhi_scenario.add_par(g, updf)
 
     print("Solve scenario")
     hhi_scenario.solve()
