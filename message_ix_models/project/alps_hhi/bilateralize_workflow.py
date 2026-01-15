@@ -103,7 +103,7 @@ for model_scen in models_scenarios.keys():
     
         remdf = updf.copy()
         if g == 'growth_activity_up':
-            updf['value'] = 0.05
+            updf['value'] = 0.01
         elif g == 'growth_activity_lo':
             updf['value'] = -0.01
             
