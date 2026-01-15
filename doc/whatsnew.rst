@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2026.1.15
+==========
 
 - New provider for exogenous data from the :ref:`tools-cepii` :class:`.BACI` data source (:pull:`450`).
 - New tools and utilities:
