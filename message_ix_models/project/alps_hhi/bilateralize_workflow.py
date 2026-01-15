@@ -96,7 +96,7 @@ for model_scen in models_scenarios.keys():
     hhi_scenario = base_scenario.clone('alps_hhi', model_scen)
     hhi_scenario.set_as_default()
 
-    for g in ['growth_activity_up', 'growth_activity_lo']:
+    for g in ['growth_activity_up']:
         updf = hhi_scenario.par(g)
         updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
         updf = updf[updf['node_loc'].isin(['R12_WEU'])]
