@@ -2,6 +2,7 @@
 
 import logging
 import re
+from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, fields
 from datetime import datetime
@@ -44,6 +45,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 CodeLike = str | common.Code
+MaintainableT = TypeVar("MaintainableT", bound=common.MaintainableArtefact)
 
 #: Collection of :class:`.Dataflow` instances.
 DATAFLOW: dict[str, "Dataflow"] = {}
@@ -403,6 +405,70 @@ class Dataflow:
         # dm = DataMessage()
         # dm.data.append(DataSet(structure))
         # template =
+
+
+class StructureFactory(ABC, Generic[MaintainableT]):
+    """Class to generate an SDMX structural metadata artefact.
+
+    Subclasses **must**:
+
+    1. Parametrize the generic type for a specific subclass of
+       :class:`sdmx.model.common.MaintainableArtefact`.
+    2. Give values for the :attr:`urn` and :attr:`version` attributes.
+    3. Define a concrete method :meth:`create`.
+
+    …and **may** define other attributes and methods as necessary to achieve (3). Note
+    that StructureFactory classes are never instantiated, so :py:`__init__` and similar
+    methods **should** not be used.
+
+    User code **may** then call :py:`CL_EXAMPLE.get()` to either retrieve the latest
+    version of the artefact from file, or refresh and store the latest version using
+    (3).
+    """
+
+    #: Partial URN for the artefact that is returned, excluding the version.
+    urn: str
+
+    #: Version.
+    version: str
+
+    @classmethod
+    def get(cls, *, force: bool = False) -> MaintainableT:
+        """Retrieve the artefact, possibly from file.
+
+        The highest version of the artefact with :attr:`urn` is loaded using from file
+        using :func:`read`.
+
+        If the artefact from file has a version that does not match :attr:`version`
+        **or** if :py:`force=True`, :meth:`create` is called to regenerate a complete
+        and up-to-date version of the artefact as of :attr:`version`. This updated
+        version is stored using :func:`write`.
+        """
+        existing = read(cls.urn)
+
+        if existing.version != cls.version or force:
+            result = cls.create()
+
+            # Touch up `existing` for a fair comparison
+            existing.maintainer = result.maintainer
+
+            # Compare `existing` and `result`
+            if not existing.compare(result, strict=True):
+                # `result` somehow differs from `existing`:
+                # - `existing` is an older version; cls.version has been bumped.
+                # - Some other change to cls.generate()`
+
+                # Save the new version
+                write(result)
+
+            return result
+        else:
+            return existing
+
+    @classmethod
+    @abstractmethod
+    def create(cls) -> MaintainableT:
+        """Create and return the artefact."""
 
 
 T = TypeVar("T", bound=Enum)
@@ -814,7 +880,13 @@ def leaf_ids(obj: "Item") -> list[str]:
 
 
 def read(urn: str, base_dir: "PathLike | None" = None):
-    """Read SDMX object from package data given its `urn`."""
+    """Read SDMX object from package data given its `urn`.
+
+    Glob matching is used, so that any path that matches `urn` with a prefix or suffix
+    is included. If more than one path matches, a message is logged, and the path that
+    sorts last is used; usually this will be the highest version among multiple versions
+    of a URN.
+    """
     # Identify a path that matches `urn`
     base_dir = Path(base_dir or package_data_path("sdmx"))
     urn = urn.replace(":", "_")  # ":" invalid on Windows
@@ -824,9 +896,10 @@ def read(urn: str, base_dir: "PathLike | None" = None):
 
     if len(paths) > 1:
         log.info(
-            f"Match {paths[0].relative_to(base_dir)} for {urn!r}; {len(paths) - 1} "
+            f"Match {paths[-1].relative_to(base_dir)} for {urn!r}; {len(paths) - 1} "
             "other result(s)"
         )
+        paths = paths[-1:]
 
     try:
         with open(paths[0], "rb") as f:
@@ -840,8 +913,10 @@ def read(urn: str, base_dir: "PathLike | None" = None):
         except StopIteration:
             pass
 
+    raise NameError(urn)
 
-def write(obj, base_dir: "PathLike | None" = None, basename: str | None = None):
+
+def write(obj, base_dir: "PathLike | None" = None, basename: str | None = None) -> None:
     """Store an SDMX object as package data."""
     base_dir = Path(base_dir or package_data_path("sdmx"))
 

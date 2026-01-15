@@ -1,6 +1,6 @@
 import logging
 import re
-from copy import deepcopy
+from collections.abc import Iterator
 from dataclasses import InitVar, dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -13,9 +13,10 @@ from message_ix_models.project.ssp import SSP_2024, ssp_field
 from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
 from message_ix_models.util import package_data_path
 from message_ix_models.util.config import ConfigHelper
-from message_ix_models.util.sdmx import AnnotationsMixIn
+from message_ix_models.util.sdmx import AnnotationsMixIn, StructureFactory
 
 from .policy import ExogenousEmissionPrice, TaxEmission
+from .util import short_hash
 
 if TYPE_CHECKING:
     from sdmx.model import common
@@ -24,55 +25,6 @@ if TYPE_CHECKING:
 
 
 log = logging.getLogger(__name__)
-
-#: All files in :file:`data/transport/R12/price-emission/`.
-PRICE_EMISSION_URL = {
-    # "LED-SSP2": "SSP_LED_v5.3.1/baseline_1000f_v1",
-    # "LED-SSP2": "SSP_LED_v5.3.1/INDC2030i_SSP2 - Very Low Emissions_v1",
-    "LED-SSP2": "SSP_LED_v5.3.1/SSP2 - Very Low Emissions_v2",
-    # "SSP1": "SSP_SSP1_v5.3.1/baseline_1000f_v1",
-    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Low Emissions_a_v1",
-    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Low Emissions_v1",
-    # "SSP1": "SSP_SSP1_v5.3.1/INDC2030i_SSP1 - Very Low Emissions_v1",
-    # "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Low Emissions_a_v2",
-    "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Low Emissions_v2",
-    # "SSP1": "SSP_SSP1_v5.3.1/SSP1 - Very Low Emissions_v2",
-    # "SSP2": "SSP_SSP2_v5.3.1/baseline_1000f_v2",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_10_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_110_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_15_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_20_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_25_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_50_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/baselineS_5_v3",
-    # "SSP2": "SSP_SSP2_v5.3.1/INDC2030i_SSP2 - Low Emissions_a_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/INDC2030i_SSP2 - Low Emissions_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/npiref2035_low_dem_scen2_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPIREF_price_cap_5$_bkp_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Low Overshootf_price_cap_5$_bkp_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Low Overshootf_v3",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_SSP2 - Medium-Low Emissionsf_v1",
-    # "SSP2": "SSP_SSP2_v5.3.1/NPiREF_v10",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Emissions_a_v2",
-    "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Emissions_v2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Low Overshoot_v2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium Emissions_a_v2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium Emissions_v2",
-    # "SSP2": "SSP_SSP2_v5.3.1/SSP2 - Medium-Low Emissions_v2",
-    "SSP3": "SSP_SSP3_v5.3.1/baseline_1000f_v1",
-    # "SSP4": "SSP_SSP4_v5.3.1/baseline_1000f_v1",
-    # "SSP4": "SSP_SSP4_v5.3.1/NPi2030_v1",
-    # "SSP4": "SSP_SSP4_v5.3.1/NPiREF_SSP4 - Low Overshootf_v1",
-    # "SSP4": "SSP_SSP4_v5.3.1/NPiREF_v1",
-    "SSP4": "SSP_SSP4_v5.3.1/SSP4 - Low Overshoot_v2",
-    # "SSP5": "SSP_SSP5_v5.3.1/baseline_1000f_v2",
-    # "SSP5": "SSP_SSP5_v5.3.1/baseline2055_low_dem_scen_v1",
-    # "SSP5": "SSP_SSP5_v5.3.1/baseline2060_low_dem_scen_v2",
-    # "SSP5": "SSP_SSP5_v5.3.1/NPi2030_v1",
-    # "SSP5": "SSP_SSP5_v5.3.1/NPiREF_SSP5 - Low Overshootf_v1",
-    # "SSP5": "SSP_SSP5_v5.3.1/NPiREF_v1",
-    "SSP5": "SSP_SSP5_v5.3.1/SSP5 - Low Overshoot_v2",
-}
 
 
 @dataclass
@@ -238,7 +190,7 @@ class Config(ConfigHelper):
     modules: list[str] = field(
         default_factory=lambda: (
             "groups demand constraint freight ikarus ldv disutility other passenger "
-            "plot data stock"
+            "data stock policy"
         ).split()
     )
 
@@ -297,7 +249,7 @@ class Config(ConfigHelper):
     #: space-delimited string (:py:`"module_a -module_b"`) or sequence of strings.
     #: Values prefixed with a hyphen (:py:`"-module_b"`) are *removed* from
     #: :attr:`.modules`.
-    extra_modules: InitVar[str | list[str]] = None
+    extra_modules: InitVar[str | list[str]] = []
 
     #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
     #: :meth:`.ScenarioFlags.parse_futures`.
@@ -307,24 +259,8 @@ class Config(ConfigHelper):
     #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
-    def __post_init__(
-        self,
-        extra_modules,
-        futures_scenario,
-        navigate_scenario,
-    ) -> None:
-        # Handle extra_modules
-        em = extra_modules or []
-        for m in em.split() if isinstance(em, str) else em:
-            if m.startswith("-"):
-                try:
-                    idx = self.modules.index(m[1:])
-                except ValueError:
-                    pass
-                else:
-                    self.modules.pop(idx)
-            else:
-                self.modules.append(m)
+    def __post_init__(self, extra_modules, futures_scenario, navigate_scenario) -> None:
+        self.use_modules(extra_modules)
 
         # Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`
         self.set_futures_scenario(futures_scenario)
@@ -419,7 +355,7 @@ class Config(ConfigHelper):
         from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
         from message_ix_models.project.edits.structure import SCENARIO as EDITS
 
-        c = self._code = get_cl_scenario()[value] if isinstance(value, str) else value
+        c = self._code = CL_SCENARIO.get()[value] if isinstance(value, str) else value
 
         sca = ScenarioCodeAnnotations.from_obj(c)
 
@@ -437,6 +373,8 @@ class Config(ConfigHelper):
         self.project["DIGSY"] = DIGSY.by_urn(sca.DIGSY_scenario_URN)
         self.project["EDITS"] = EDITS.by_urn(sca.EDITS_scenario_URN)
 
+        self.use_modules(sca.extra_modules)
+
     @property
     def label(self) -> str:
         """‘Full’ label used in the scenario name.
@@ -445,7 +383,7 @@ class Config(ConfigHelper):
         suitable for (part of) a :attr:`message_ix.Scenario.scenario` name in an
         :mod:`ixmp` database, for instance "SSP_2024.3".
         """
-        return re.sub("^SSP", "SSP_2024.", self.code.id)
+        return re.sub("^(M )?SSP", "SSP_2024.", self.code.id)
 
     def check(self):
         """Check consistency of :attr:`project`."""
@@ -486,6 +424,19 @@ class Config(ConfigHelper):
         self.project.update(navigate=s)
         self.check()
 
+    def use_modules(self, *module_names: str) -> None:
+        """Handle extra_modules."""
+        for entry in module_names:
+            for m in entry.split() if isinstance(entry, str) else entry:
+                if m.startswith("-"):
+                    # Remove a module
+                    try:
+                        self.modules.remove(m[1:])
+                    except ValueError:
+                        pass
+                else:
+                    self.modules.append(m)
+
 
 @dataclass
 class ScenarioCodeAnnotations(AnnotationsMixIn):
@@ -515,6 +466,9 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
     #: Entries for :attr:`.Config.policy`.
     policy: "Policy | None"
 
+    #: Entries for :attr:`.Config.extra_modules`.
+    extra_modules: list[str] = field(default_factory=list)
+
     @classmethod
     def from_obj(cls, obj, globals=None):
         globals = (globals or {}) | dict(
@@ -524,121 +478,145 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
         return super().from_obj(obj, globals=globals)
 
 
-def get_cl_scenario() -> "common.Codelist":
-    """Retrieve ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
+class CL_SCENARIO(StructureFactory["common.Codelist"]):
+    """SDMX code list ``IIASA_ECE:CL_TRANSPORT_SCENARIO``.
 
     This code lists contains unique IDs for scenarios supported by the
     MESSAGEix-Transport workflow (:mod:`.transport.workflow`). Each code has the set
     of annotations described by :class:`ScenarioCodeAnnotations`.
-
     """
-    from sdmx.model import common
 
-    from message_ix_models.util.sdmx import read
+    urn = "IIASA_ECE:CL_TRANSPORT_SCENARIO"
+    version = "1.3.0"
 
-    IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
-
-    return refresh_cl_scenario(
-        common.Codelist(
-            id="CL_TRANSPORT_SCENARIO", maintainer=IIASA_ECE, version="1.0.0"
-        )
-    )
-
-
-def refresh_cl_scenario(existing: "common.Codelist | None" = None) -> "common.Codelist":
-    """Refresh ``Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO``.
-
-    The code list is entirely regenerated. If it is different from `cl`, the new
-    version is returned. Otherwise, `cl` is returned unaltered.
-    """
-    from sdmx.model import common
-
-    import message_ix_models.project.digsy.structure
-    import message_ix_models.project.edits.structure
-    from message_ix_models.util.sdmx import read, write
-
-    # Other data structures
-    IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
-    cl_ssp_2024 = read("ICONICS:SSP(2024)")
-    cl_edits = message_ix_models.project.edits.structure.get_cl_scenario()
-    cl_digsy = message_ix_models.project.digsy.structure.get_cl_scenario()
-
-    cl: "common.Codelist" = common.Codelist(
-        id="CL_TRANSPORT_SCENARIO",
-        maintainer=IIASA_ECE,
-        version="1.2.0",
-        is_external_reference=False,
-        is_final=False,
-    )
-
-    # - Model name:
-    #   - 2024-11-25: use _v1.1 per a Microsoft Teams message.
-    #   - 2025-02-20: update to _v2.1 per discussion with OF. At this point _v2.3 is the
-    #     latest appearing in the database.
-    #   - 2025-05-05: update to _v5.0.
-    #   - 2025-06-24: update to _v6.1.
-    # - The scenario names appear to form a sequence from "baseline_DEFAULT" to
-    #   "baseline_DEFAULT_step_15" and finally "baseline". The one used below is the
-    #   latest in this sequence for which y₀=2020, rather than 2030.
+    #: - Model name:
+    #:   - 2024-11-25: use _v1.1 per a Microsoft Teams message.
+    #:   - 2025-02-20: update to _v2.1 per discussion with OF. At this point _v2.3 is
+    #:     the latest appearing in the database.
+    #:   - 2025-05-05: update to _v5.0.
+    #:   - 2025-06-24: update to _v6.1.
+    #: - The scenario names appear to form a sequence from "baseline_DEFAULT" to
+    #:   "baseline_DEFAULT_step_15" and finally "baseline". The one used below is the
+    #:   latest in this sequence for which y₀=2020, rather than 2030.
     base_url = "ixmp://ixmp-dev/SSP_SSP{}_v6.1/baseline_DEFAULT_step_13"
 
-    def _code(
-        id: str, name: str, c_ssp: "common.Code", led: bool, edits: str, digsy: str
-    ) -> "common.Code":
-        """Shorthand for creating a code."""
-        assert c_ssp.urn
-        sca = ScenarioCodeAnnotations(
-            c_ssp.urn,
-            led,
-            cl_digsy[digsy].urn,
-            cl_edits[edits].urn,
-            base_url.format(c_ssp.id),
-            None,
-        )
-        return common.Code(id=id, name=name, **sca.get_annotations(dict))
+    @classmethod
+    def create(cls) -> "common.Codelist":
+        from sdmx.model import common
 
-    # SSP baselines and policies
-    for c_ssp in cl_ssp_2024:
-        c_base = _code(f"SSP{c_ssp.id}", "", c_ssp, False, "_Z", "_Z")
-        cl.append(c_base)
+        import message_ix_models.project.digsy.structure
+        import message_ix_models.project.edits.structure
+        from message_ix_models.util.sdmx import read
 
-        # Simple carbon tax
-        c = deepcopy(c_base)
-        c.get_annotation(id="policy").text = repr(TaxEmission(1000.0))
-        c.id += " tax"
-        cl.append(c)
+        # Other data structures
+        IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
+        cl_ssp_2024 = read("ICONICS:SSP(2024)")
+        cl_edits = message_ix_models.project.edits.structure.get_cl_scenario()
+        cl_digsy = message_ix_models.project.digsy.structure.get_cl_scenario()
 
-        # PRICE_EMISSION from exogenous data file
-        c = deepcopy(c_base)
-        c.get_annotation(id="policy").text = repr(
-            ExogenousEmissionPrice("ixmp://ixmp-dev/" + PRICE_EMISSION_URL[c.id])
-        )
-        c.id += " exo price"
-        cl.append(c)
-
-    # LED
-    name = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
-    for ssp_id in ("1", "2"):
-        c_ssp = cl_ssp_2024[ssp_id]
-        cl.append(
-            _code(f"LED-SSP{ssp_id}", name.format(ssp_id), c_ssp, True, "_Z", "_Z")
+        cl: "common.Codelist" = common.Codelist(
+            id="CL_TRANSPORT_SCENARIO",
+            maintainer=IIASA_ECE,
+            version=cls.version,
+            is_external_reference=False,
+            is_final=True,
         )
 
-    # DIGSY
-    c_ssp, name = cl_ssp_2024["2"], "DIGSY {!r} scenario with SSP2"
-    for id_ in ("BEST-C", "BEST-S", "WORST-C", "WORST-S"):
-        cl.append(_code(f"DIGSY-{id_}", name.format(id_), c_ssp, False, "_Z", id_))
+        def _append_code(
+            id: str,
+            name: str,
+            ssp: str,
+            led: bool = False,
+            edits: str = "_Z",
+            digsy: str = "_Z",
+            policy=None,
+        ) -> None:
+            """Shorthand for creating a code."""
+            for modules, id_prefix, name_suffix in (
+                ([], "", ""),
+                (["material"], "M ", " with materials"),
+            ):
+                sca = ScenarioCodeAnnotations(
+                    cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
+                    led,
+                    cl_digsy[digsy].urn,
+                    cl_edits[edits].urn,
+                    cls.base_url.format(ssp),  # Format base scenario URL
+                    policy,
+                    modules,
+                )
+                code = common.Code(
+                    id=id_prefix + id,
+                    name=name + name_suffix,
+                    **sca.get_annotations(dict),
+                )
+                cl.append(code)
 
-    # EDITS
-    c_ssp, name = cl_ssp_2024["2"], "EDITS scenario with ITF PASTA {!r} activity"
-    for id_ in ("CA", "HA"):
-        cl.append(_code(f"EDITS-{id_}", name.format(id_), c_ssp, False, id_, "_Z"))
+        # Baselines and policy scenarios for each SSP
+        te = TaxEmission(1000.0)
+        for ssp in "12345":
+            id_ = name = f"SSP{ssp}"
+            _append_code(id_, name + " baseline", ssp)
 
-    # FIXME This condition may appear to be always False, because the date/time differs.
-    #       Adjust upstream (in sdmx1) to ignore this difference.
-    if existing is None or not cl.compare(existing, strict=True):
-        # No existing code list or new code list differs from existing
-        write(cl)
+            # Simple carbon tax
+            _append_code(id_ + " tax", name + " with tax", ssp, policy=te)
+
+            # PRICE_EMISSION from exogenous data file
+            for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
+                name += " with exogenous price"
+                _append_code(f"{id_} exo price {hash}", name, ssp, policy=eep)
+
+        # LED
+        name = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
+        for ssp in "12":
+            _append_code(f"LED-SSP{ssp}", name.format(ssp), ssp, led=True)
+
+        # DIGSY
+        ssp, name = "2", "DIGSY {!r} scenario with SSP2"
+        for id_ in ("BEST-C", "BEST-S", "WORST-C", "WORST-S"):
+            _append_code(f"DIGSY-{id_}", name.format(id_), ssp, digsy=id_)
+
+            # PRICE_EMISSION from exogenous data file
+            for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
+                _append_code(
+                    f"DIGSY-{id_} exo price {hash}",
+                    name.format(id_) + " with exogenous price",
+                    ssp,
+                    policy=eep,
+                )
+
+        # EDITS
+        ssp, name = "2", "EDITS scenario with ITF PASTA {!r} activity"
+        for id_ in ("CA", "HA"):
+            _append_code(f"EDITS-{id_}", name.format(id_), ssp, edits=id_)
+
         return cl
-    else:
-        return existing
+
+
+def iter_price_emission(
+    regions: str, ssp_or_led: str
+) -> Iterator[tuple[ExogenousEmissionPrice, str]]:
+    """Iterate over available data in :file:`transport/{regions}/price-emission/`.
+
+    Yields 2-tuple, similar to :meth:`.ScenarionInfo.from_path`:
+
+    1. :class:`ExogenousEmissionPrice` with the scenario URL matching the filename.
+    2. A 4-character hash of the scenario URL.
+
+    Only files with paths/model names containing ``SSP{ssp_or_led}`` are returned; all
+    others are skipped.
+    """
+    # TODO Integrate some or all of this functionality with the PRICE_EMISSION class
+
+    base_dir = package_data_path("transport", regions, "price-emission")
+    model_pattern = r"SSP_(?P<ssp_or_led>SSP[12345]|LED)_v(?P<model_version>[\d\.]+)"
+
+    for path in base_dir.glob("*.csv"):
+        info, groups = ScenarioInfo.from_path(path, model_pattern=model_pattern)
+        if groups["ssp_or_led"] != ssp_or_led:
+            continue
+
+        yield (
+            ExogenousEmissionPrice(f"ixmp://ixmp-dev/{info.url}"),
+            short_hash(info.url, 4),
+        )

@@ -1,6 +1,7 @@
 """Build MESSAGEix-Transport on a base model."""
 
 import logging
+from copy import copy
 from functools import partial
 from importlib import import_module
 from operator import itemgetter
@@ -9,12 +10,14 @@ from typing import TYPE_CHECKING, Any
 
 import genno
 import pandas as pd
-from genno import Computer, KeyExistsError, quote
+from genno import Computer, Key, KeyExistsError, Keys, quote
+from ixmp.report.operator import data_for_quantity
 from message_ix import Scenario
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codelist
+from message_ix_models.report import STAGE, add_plots
 from message_ix_models.util import (
     MappingAdapter,
     WildcardAdapter,
@@ -24,12 +27,11 @@ from message_ix_models.util import (
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
-from . import Config
+from . import Config, key, plot
 from .operator import indexer_scenario
 from .structure import get_technology_groups
 
 if TYPE_CHECKING:
-    import pathlib
     from typing import TypedDict
 
     from message_ix_models.tools.exo_data import ExoDataSource
@@ -42,9 +44,6 @@ log = logging.getLogger(__name__)
 
 def add_debug(c: Computer) -> None:
     """Add tasks for debugging the build."""
-    from genno import Key, KeySeq
-
-    from .key import gdp_cap, ms, pdt_nyt
 
     context: Context = c.graph["context"]
     config: Config = context.transport
@@ -62,66 +61,39 @@ def add_debug(c: Computer) -> None:
     output_dir.mkdir(exist_ok=True, parents=True)
 
     # Store in the config, but not at "output_dir" that is used by e.g. reporting
-    c.graph["config"]["transport build debug dir"] = output_dir
+    c.graph["config"]["build debug dir"] = output_dir
 
     # FIXME Duplicated from base.prepare_reporter()
-    e_iea = Key("energy:n-y-product-flow:iea")
-    e_fnp = KeySeq(e_iea.drop("y"))
-    e_cnlt = Key("energy:c-nl-t:iea+0")
+    e = Keys(iea="energy:n-y-product-flow:iea", cnlt="energy:c-nl-t:iea+0")
+    e.fnp = Key(e.iea / "y")
     # Transform IEA EWEB data for comparison
-    c.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
-    c.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
-    c.add(e_cnlt, "rename_dims", e_fnp[1], quote(dict(flow="t", n="nl", product="c")))
+    c.add(e.fnp[0], "select", e.iea, indexers=dict(y=2020), drop=True)
+    c.add(e.fnp[1], "aggregate", e.fnp[0], "groups::iea to transport", keep=False)
+    c.add(e.cnlt, "rename_dims", e.fnp[1], quote(dict(flow="t", n="nl", product="c")))
 
     # Write some intermediate calculations from the build process to file
-    debug_keys = []
-    for i, (key, stem) in enumerate(
+    k_debug = copy(key.debug)  # Make a copy so the original does not collect .generated
+    for i, (k, stem) in enumerate(
         (
-            (gdp_cap, "gdp-ppp-cap"),
-            (pdt_nyt, "pdt"),
-            (pdt_nyt + "capita+post", "pdt-cap"),
-            (ms, "mode-share"),
-            (e_fnp[0], "energy-iea-0"),
-            (e_cnlt, "energy-iea-1"),
+            (key.gdp_cap, "gdp-ppp-cap"),
+            (key.pdt_nyt, "pdt"),
+            (key.pdt_nyt + "capita+post", "pdt-cap"),
+            (key.ms, "mode-share"),
+            (e.fnp[0], "energy-iea-0"),
+            (e.cnlt, "energy-iea-1"),
         )
     ):
-        debug_keys.append(f"transport debug {i}")
-        c.add(
-            debug_keys[-1],
-            "write_report_debug",
-            key,
-            output_dir.joinpath(f"{stem}.csv"),
-        )
+        c.add(k_debug[i], "write_report_debug", k, output_dir.joinpath(f"{stem}.csv"))
 
-    def _(*args) -> "pathlib.Path":
-        """Do nothing with the computed `args`, but return `output_path`."""
-        return output_dir
-
-    debug_plots = (
-        "demand-exo demand-exo-capita demand-exo-capita-gdp inv_cost"
-        # FIXME The following currently don't work, as their required/expected input
-        #       keys (from the post-solve/report step) do not exist in the build step
-        # " var-cost fix-cost"
-    ).split()
-
-    c.add(
-        "transport build debug",
-        _,
-        # NB To omit some or all of these calculations / plots from the debug outputs
-        #    for individuals, comment 1 or both of the following lines
-        *debug_keys,
-        *[f"plot {p}" for p in debug_plots],
-    )
-    # log.info(c.describe("transport build debug"))
+    add_plots(c, plot, k_debug["plot"], stage=STAGE.BUILD, single=True)
 
     # Also generate these debugging outputs when building the scenario
-    c.graph["add transport data"].append("transport build debug")
+    c.add(k_debug, "summarize", *k_debug.generated)
+    c.graph["add transport data"].append(k_debug)
 
 
 def debug_multi(context: Context, *paths: Path) -> None:
     """Generate plots comparing data from multiple build debug directories."""
-    from .plot import ComparePDT, ComparePDTCap0, ComparePDTCap1
-
     if isinstance(paths[0], Scenario):
         # Workflow was called with --from="…", so paths from the previous step are not
         # available; try to guess
@@ -131,12 +103,12 @@ def debug_multi(context: Context, *paths: Path) -> None:
             )
         )
 
-    c = Computer(config={"transport build debug dir": paths[0].parent})
+    c = Computer(config={"build debug dir": paths[0].parent})
     c.require_compat("message_ix_models.report.operator")
 
-    for cls in (ComparePDT, ComparePDTCap0, ComparePDTCap1):
-        key = c.add(f"compare {cls.basename}", cls, *paths)
-        c.get(key)
+    add_plots(c, plot, "debug multi", stage=STAGE.BUILD, single=False)
+
+    c.get("debug multi")
 
 
 def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
@@ -164,7 +136,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.util.sdmx import Dataflow
 
     # Ensure that the MERtoPPP data provider is available
-    from . import data, key
+    from . import data
 
     # Added keys
     keys = {}
@@ -275,6 +247,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #:
 #: These include:
 #:
+#: - ``add transport data``: an empty list. The :py:`prepare_computer()` functions in
+#:   individual modules listed by :attr:`.transport.Config.modules` can append keys.
+#: - :data:`key.report.all`: same, but for reporting.
 #: - ``info``: :attr:`transport.Config.base_model_info
 #:   <transport.config.Config.base_model_info>`, an instance of :class:`.ScenarioInfo`.
 #: - ``transport info``: the logical union of
@@ -293,12 +268,20 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #:   1).
 #: - ``nl::world agg``: :class:`dict` mapping to aggregate "World" from individual |n|.
 #:   See :func:`.nodes_world_agg`.
-STRUCTURE_STATIC = (
+STRUCTURE_STATIC: tuple[tuple, ...] = (
+    ("add transport data", []),
+    (key.report.all, []),
     ("info", lambda c: c.transport.base_model_info, "context"),
     (
         "transport info",
         lambda c: c.transport.base_model_info | c.transport.spec.add,
         "context",
+    ),
+    (
+        key.demand_base,
+        partial(data_for_quantity, "par", "demand", "value"),
+        "scenario",
+        "config",
     ),
     ("dry_run", lambda c: c.core.dry_run, "context"),
     ("e::codelist", partial(get_codelist, "emission")),
@@ -370,7 +353,6 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
-    from . import key
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -522,7 +504,7 @@ def get_computer(
        "config" is present: if so, the corresponding value **must** be an instance
        of :class:`.transport.Config`, and this is used directly.
     """
-    from . import key, operator
+    from . import operator
 
     # Update .model.Config with the regions of a given scenario
     context.model.regions_from_scenario(scenario)
@@ -582,10 +564,6 @@ def get_computer(
     # Attach the context and scenario
     c.add("context", context)
     c.add("scenario", scenario)
-    # Add a computation that is an empty list.
-    # Individual modules's prepare_computer() functions can append keys.
-    c.add("add transport data", [])
-    c.add(key.report.all, [])  # Needed by .plot.prepare_computer()
 
     # Add structure-related keys
     add_structure(c)
@@ -656,7 +634,7 @@ def main(
         log.info(f"Added {sum_numeric(result)} total obs")
 
     if context.core.dry_run:
-        return c.get("transport build debug")
+        return c.get(key.debug)
 
     # First strip existing emissions data
     strip_emissions_data(scenario, context)

@@ -6,13 +6,13 @@ from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pytest
+from genno import ComputationError
 from packaging.version import Version as V
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport import Config, build, key
-from message_ix_models.model.transport.config import get_cl_scenario
-from message_ix_models.model.transport.report import configure_legacy_reporting
+from message_ix_models.model.transport import CL_SCENARIO, Config, build, key
+from message_ix_models.model.transport.report import configure_legacy_reporting, multi
 from message_ix_models.model.transport.testing import (
     MARK,
     built_transport,
@@ -44,7 +44,7 @@ def quiet_genno(caplog):
 
 @pytest.fixture(scope="session")
 def scenario_code() -> "Code":
-    return get_cl_scenario()["SSP2"]
+    return CL_SCENARIO.get()["SSP2"]
 
 
 @pytest.mark.xfail(
@@ -185,6 +185,13 @@ def test_bare(
 
 
 @build.get_computer.minimum_version
+def test_multi(test_context: "Context") -> None:
+    # TODO Add a fixture with example data that can be reported
+    with pytest.raises(ComputationError):
+        multi(test_context, [])
+
+
+@build.get_computer.minimum_version
 @MARK[10]
 @mark.usefixtures("quiet_genno")
 @mark.parametrize(
@@ -232,8 +239,8 @@ def test_simulated(
 
 @pytest.mark.skipif(
     GHA
-    and ((V("3.8") < V(version("ixmp")) < V("3.11")) or platform.system() != "Linux"),
-    reason="Fails on GHA with ixmp/message_ix v3.9 and v3.10 or their dependencies",
+    and ((V("3.8") <= V(version("ixmp")) < V("3.11")) or platform.system() != "Linux"),
+    reason="Fails on GHA with ixmp/message_ix v3.8–v3.10 or their dependencies",
 )
 @build.get_computer.minimum_version
 @MARK[10]

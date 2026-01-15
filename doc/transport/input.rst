@@ -133,6 +133,7 @@ Quick links to each of the data flows:
 :data:`~.data.ikarus_var_cost`
 :data:`~.data.input_adj_ldv`
 :data:`~.data.input_base`
+:data:`~.data.input_cap_new`
 :data:`~.data.input_ref_ldv`
 :data:`~.data.input_share`
 :data:`~.data.lifetime_ldv`
@@ -228,6 +229,7 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.ikarus_var_cost
 .. autodata:: message_ix_models.model.transport.data.input_adj_ldv
 .. autodata:: message_ix_models.model.transport.data.input_base
+.. autodata:: message_ix_models.model.transport.data.input_cap_new
 .. autodata:: message_ix_models.model.transport.data.input_ref_ldv
 .. autodata:: message_ix_models.model.transport.data.input_share
 .. autodata:: message_ix_models.model.transport.data.lifetime_ldv
