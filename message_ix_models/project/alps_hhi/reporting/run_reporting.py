@@ -148,13 +148,13 @@ for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
                   ('alps_hhi', 'SSP2_hhi_HC_imports'),
                   ('alps_hhi', 'SSP2_hhi_WS_l90p_imports'),
 
-#                  ('alps_hhi', 'SSP2_FSU_EUR_2110'),
-#                  ('alps_hhi', 'SSP2_FSU_EUR_2040'),
+                  ('alps_hhi', 'SSP2_FSU_EUR_2110'),
+                  ('alps_hhi', 'SSP2_FSU_EUR_2040'),
 
-#                  ('alps_hhi', 'SSP2_hhi_HC_imports_FSU_EUR_2110'),
-#                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_2110'),
+                  ('alps_hhi', 'SSP2_hhi_HC_imports_FSU_EUR_2110'),
+                  ('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_2110'),
 
-#                  ('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO_2110'),
+                  ('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO_2110'),
                   
                   ]:
     print(f"COMPILING {mod}/{scen}")
