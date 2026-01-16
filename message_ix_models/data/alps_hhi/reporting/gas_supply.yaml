@@ -66,15 +66,12 @@ vars:
     short:
       extr_gas_dom
 
-
-# Aggregate gas extraction
   Gas Supply|Domestic|Gas Extraction|Category 3:
     filter:
       { technology: [gas_extr_3], mode: M1, commodity: gas, level: primary }
     short:
       extr_gas_dom
 
-# Aggregate gas extraction
   Gas Supply|Domestic|Gas Extraction|Category 4:
     filter:
       { technology: [gas_extr_4], mode: M1, commodity: gas, level: primary }

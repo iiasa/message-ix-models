@@ -68,7 +68,7 @@ def pyam_df_from_rep(
                     dfv.join(mapping_df[["iamc_name", "unit"]])
                     .dropna()
                     .groupby(["nl", "nd", "ya", "iamc_name"])
-                    .max(numeric_only=True)
+                    .sum(numeric_only=True)
                 )
             # Adjust df to include exporters in iamc_name for trade variables
             dfn = df.index.to_frame(index = False)
@@ -96,6 +96,7 @@ def gas_supply_reporting(rep: Reporter, scenario: message_ix.Scenario) -> pd.Dat
     full_df = pd.DataFrame()
     for var in ['out']:
         rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
+        rdf = rdf.reset_index()
         rdf = rdf.drop_duplicates()
         full_df = pd.concat([full_df, rdf])
     df = full_df.copy().reset_index()
@@ -154,8 +155,6 @@ for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
                   ('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_2110'),
 
                   ('alps_hhi', 'SSP2_FSU_EUR_NAM_PAO_2110'),
-                  #('alps_hhi', 'SSP2_hhi_HC_supply_FSU_EUR_NAM_PAO'),
-                  #('alps_hhi', 'SSP2_hhi_WS_l90p_supply_FSU_EUR_NAM_PAO'),
                   
                   ]:
     print(f"COMPILING {mod}/{scen}")
@@ -212,10 +211,6 @@ gas_wide = gas_wide.pivot_table(index = ['model', 'region', 'unit', 'year', 'var
                                 values = 'value',
                                 aggfunc = 'sum')
 gas_wide = gas_wide.reset_index()
-
-for s in ['SSP2']:
-    gas_wide[s + '_diff_FSU_EUR_2110'] = (gas_wide[s + '_FSU_EUR_2110'] - gas_wide[s]) / gas_wide[s]
-    gas_wide[s + '_diff_FSU_EUR_2040'] = (gas_wide[s + '_FSU_EUR_2040'] - gas_wide[s]) / gas_wide[s]
 
 gas_wide.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting_wide.csv'))
 
