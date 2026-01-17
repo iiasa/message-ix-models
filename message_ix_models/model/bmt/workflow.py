@@ -41,15 +41,6 @@ def solve(
     return scenario
 
 
-def check_context(
-    context: Context,
-    scenario: message_ix.Scenario,
-) -> message_ix.Scenario:
-    context.print_contents()
-
-    return scenario
-
-
 # Main BMT workflow
 # Baseline starts from SSP_SSP2_v*/baseline_DEFAULT_step_4
 # Baseline with M added starts from SSP_SSP2_v*/baseline_DEFAULT_step_12
@@ -70,14 +61,13 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "base",
         None,
-        target="ixmp://ixmp-dev/SSP_SSP2_v6.1/baseline_DEFAULT_step_4",
+        target="ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT_step_14",
         # target = f"{model_name}/baseline",
     )
 
     wf.add_step(
         "base cloned",
         "base",
-        check_context,
         target=f"{model_name}/baseline_M",
         clone=dict(keep_solution=False),
     )
@@ -123,7 +113,7 @@ def generate(context: Context) -> Workflow:
         solve,
         model="MESSAGE",
         target=f"{model_name}/baseline_BMTP",
-        clone=False,
+        clone=False, # clone true here and shift fmy to 2030
     )
 
     wf.add_step(
