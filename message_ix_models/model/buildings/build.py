@@ -729,13 +729,21 @@ def prepare_data_B(
                 )
                 data[name].append(input_data)
                 # Deal with rooftop technologies for input
-                # All newly created technologies containing "electr" should have:
+                # All newly created electricity technologies that can use rooftop PV should have:
                 # - M1: electr at level "final" (already exists)
                 # - M2: electr at level "final_RT" (add this)
+                rt_tech= [
+                    "electr_comm_cool", 
+                    "electr_resid_cool",
+                    "electr_resid_apps",
+                    "electr_resid_other_uses",
+                    "electr_comm_other_uses",
+                    "electr_resid_cook",
+                    # not hotwater and heating as they requires corresponding storage technologies
+                ]
                 if name == "input" and len(input_data) > 0:
-                    # Check if this is an electricity technology with electr input at final level, M1 mode
                     electr_inputs = input_data[
-                        (input_data["technology"].str.contains("electr", regex=False, case=False))
+                        (input_data["technology"].isin(rt_tech))
                         & (input_data["commodity"] == "electr")
                         & (input_data["level"] == "final")
                         & (input_data["mode"] == "M1")
@@ -748,6 +756,15 @@ def prepare_data_B(
                         )
                         data[name].append(electr_inputs_m2)
                         log.info(f"Added {len(electr_inputs_m2)} M2 input rows for technology {tech_new}")
+                elif name == "output" and len(input_data) > 0:
+                    electr_outputs = input_data[
+                        (input_data["technology"].isin(rt_tech))
+                        & (input_data["mode"] == "M1")
+                    ].copy()
+                    if len(electr_outputs) > 0:
+                        electr_outputs_m2 = electr_outputs.assign(mode="M2")
+                        data[name].append(electr_outputs_m2)
+                        log.info(f"Added {len(electr_outputs_m2)} M2 output rows for technology {tech_new}")
 
     tmp = {k: pd.concat(v) for k, v in data.items()}
     
@@ -1074,7 +1091,7 @@ def build_B(
     sturm_c_path = private_data_path("buildings", "report_MESSAGE_comm_SSP2_nopol_post.csv")
     # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
     sturm_c = pd.read_csv(sturm_c_path, index_col=0)
-    sturm_c.loc[sturm_c["commodity"].str.contains("other_uses", na=False), "value"] = 0
+    # sturm_c.loc[sturm_c["commodity"].str.contains("other_uses", na=False), "value"] = 0
 
     # static demand
     demand_static_path = private_data_path("buildings", "static_20251227.csv")
