@@ -22,7 +22,7 @@ except ImportError:  # ixmp/message_ix v3.7.0
         as_message_df,
     )
 from sdmx.model.v21 import Annotation, Code
-
+from message_ix import make_df
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
 from message_ix_models.model.bmt.utils import subtract_material_demand
@@ -32,6 +32,7 @@ from message_ix_models.model.structure import (
     get_region_codes,
 )
 from message_ix_models.util import (
+    broadcast,
     load_package_data,
     make_io,
     merge_data,
@@ -44,7 +45,7 @@ from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
 if TYPE_CHECKING:
-    from message_ix import Scenario
+    from message_ix import Scenario, make_df
 
     from message_ix_models.types import MutableParameterData, ParameterData
 
@@ -1158,6 +1159,63 @@ def build_B(
                 
                 # Remove the parameter data
                 scenario.remove_par(par_name, techs_to_remove)
+
+    # TODO: think about how to systematically cover all UE constraints related to rc
+    # Converting share_commodity_up UE_RT_elec_share_RC_max to share_mode_up
+
+    # Remove old share_commodity_up constraint and from shares set
+    with scenario.transact("Remove old UE_RT_elec_share_RC_max constraint"):
+        ue_rt_rows = scenario.par("share_commodity_up", filters={"shares": "UE_RT_elec_share_RC_max"})
+        if not ue_rt_rows.empty:
+            scenario.remove_par("share_commodity_up", ue_rt_rows)
+            log.info(f"Removed {len(ue_rt_rows)} rows from share_commodity_up for UE_RT_elec_share_RC_max")
+
+        if "UE_RT_elec_share_RC_max" in scenario.set("shares").tolist():
+            scenario.remove_set("shares", "UE_RT_elec_share_RC_max")
+            log.info("Removed UE_RT_elec_share_RC_max from shares set")
+    
+    # Get all regions and years from the scenario
+    all_regions = sorted([r for r in scenario.set('node') if "R12_" in r])
+    all_years = sorted([int(y) for y in scenario.set('year')])
+
+    # Technologies to apply the constraint to
+    technologies = [
+        "electr_comm_cool", 
+        "electr_resid_cool",
+        "electr_resid_apps",
+        "electr_resid_other_uses",
+        "electr_comm_other_uses",
+        "electr_resid_cook",
+        # "electr_resid_heat",
+        # "electr_comm_heat",
+        # "electr_resid_hotwater",
+        # "electr_comm_hotwater",
+    ]
+
+    # Create base DataFrame with fixed dimensions, then broadcast over variable dimensions
+    df_share_mode_up = (
+        make_df(
+            "share_mode_up",
+            shares="RT_elec_share_RC_max",
+            mode="M2",
+            time="year",
+            value=0.35,
+            unit="-",
+        )
+        .assign(node_share=None, technology=None, year_act=None)
+        .pipe(
+            broadcast,
+            node_share=all_regions,
+            technology=technologies,
+            year_act=all_years,
+        )
+    )
+
+    # Add par
+    with scenario.transact("add the share mode constraint"):
+        scenario.add_set("shares", "RT_elec_share_RC_max")   
+        scenario.add_par("share_mode_up", df_share_mode_up)
+        log.info(f"Added share mode constraint RT_elec_share_RC_max")
 
     scenario.set_as_default()
 
