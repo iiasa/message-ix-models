@@ -30,7 +30,7 @@ def main():  # noqa: C901
     # === Config ===
     INPUT_DIR = private_data_path("investment", "SSP_scenario")
     REG_COEFF_PATH = "Reg_coeff.csv"  # Will be in project/investment folder
-    SCENARIOS = {"locf", "hicf_fair", "hicf_his"}
+    SCENARIOS = {"locf", "hicf_fair", "hicf_his", "rebase"}
     SSPS = [f"SSP{j}" for j in range(1, 6)]
     TECHS = ["solar", "wind", "bio", "hydro"]
 
@@ -42,9 +42,10 @@ def main():  # noqa: C901
         # Map new scenario names to the names of the files prepared by Shuting
         # TODO: these files should not be preperpared.
         scenario_file_mapping = {
-            "locf": "ccf",
-            "hicf_his": "cf_his_f10",
-            "hicf_fair": "cf_fair_f10",
+            "locf": "Low_ICF_his",
+            "hicf_his": "High_ICF_his",
+            "hicf_fair": "High_ICF_coc",
+            "rebase": "Baseline",
         }
 
         # TODO: this should not be hardcoded,
