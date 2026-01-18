@@ -126,18 +126,22 @@ def solve(
 
 # NGFS P6 scenarios:
 _scen_all = [
-    "ndc", 
-    "frag", 
-    "cpol", 
-    "1p5c", 
-    "2c", 
-    "delayed"
+    "h_ndc", 
+    "h_ndc_2035",
+    "d_delfrag", 
+    "d_delfrag_2035",
+    "h_cpol", 
+    "o_1p5c", 
+    "o_2c", 
+    "d_strain",
+    "d_strain_2025",
     ]
 
 _scen_en_steps = [
-    "1p5c", 
-    "2c", 
-    "delayed",
+    "o_1p5c", 
+    "o_2c", 
+    "d_delfrag",
+    "d_delfrag_2035",
     ]
 
 def generate(context: Context) -> Workflow:
@@ -180,10 +184,10 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "cpol solved",
+        "h_cpol solved",
         "NPi2030 solved",
         placeholder,
-        target=f"{model_name}/cpol",
+        target=f"{model_name}/h_cpol",
         clone=dict(keep_solution=False),
     )
 
@@ -195,11 +199,25 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "ndc solved",
+        "h_ndc solved",
         "NDC2030 solved",
         placeholder,
-        target=f"{model_name}/ndc",
+        target=f"{model_name}/h_ndc",
         clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "NDC2035 solved",
+        "NDC2030 solved",
+        add_NDC2030,
+        target=f"{model_name}/INDC2035i",
+    )
+
+    wf.add_step(
+        "h_ndc_2035 solved",
+        "NDC2035 solved",
+        add_NDC2030,
+        target=f"{model_name}/h_ndc_2035",
     )
 
     wf.add_step(
@@ -211,26 +229,58 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "frag solved",
+        "d_strain solved",
         "glasgow_partial_2030 solved",
         placeholder,
-        target=f"{model_name}/frag",
+        target=f"{model_name}/d_strain",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
-        "2c built",
-        "glasgow_partial_2030 solved",
+        "glasgow_partial_2025 solved",
+        "base reported",
         placeholder,
-        target=f"{model_name}/2c_built",
+        target=f"{model_name}/glasgow_partial_2025",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
-        "delayed built",
+        "d_strain_2025 solved",
+        "glasgow_partial_2025 solved",
+        placeholder,
+        target=f"{model_name}/d_strain_2025",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "o_2c built",
         "glasgow_partial_2030 solved",
         placeholder,
-        target=f"{model_name}/delayed_built",
+        target=f"{model_name}/o_2c_built",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "d_delfrag built",
+        "glasgow_partial_2030 solved",
+        placeholder,
+        target=f"{model_name}/d_delfrag_built",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "glasgow_partial_2035 solved",
+        "base reported",
+        placeholder,
+        target=f"{model_name}/glasgow_partial_2035",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "d_delfrag_2035 built",
+        "glasgow_partial_2035 solved",
+        placeholder,
+        target=f"{model_name}/d_delfrag_2035_built",
         clone=dict(keep_solution=False),
     )
 
@@ -243,10 +293,10 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "1p5c built",
+        "o_1p5c built",
         "glasgow_full_2030 solved",
         placeholder,
-        target=f"{model_name}/1p5cbuilt",
+        target=f"{model_name}/o_1p5c_built",
         clone=dict(keep_solution=False),
     )
 
