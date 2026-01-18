@@ -60,7 +60,7 @@ jobs:
         ref: ${{ needs.check.outputs.ref }}
 
     - name: Cache static data
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: message-static-data
         key: static-data-${{ matrix.os }}
@@ -123,7 +123,7 @@ jobs:
 
     steps:
     - name: Cache test data
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           local-data
@@ -136,7 +136,7 @@ jobs:
         ref: ${{ needs.check.outputs.ref }}
 
     - name: Restore message-static-data from cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: message-static-data
         key: static-data-${{ matrix.os }}
