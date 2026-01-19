@@ -1044,7 +1044,7 @@ def add_non_energy_calc(rep: "Reporter") -> Key:
     for comm, filter in comm_tec_map2.items():
         k1 = rep.add(k[f"{comm}_NH3+Mt"], "select", k, filter)
         k2 = rep.add(k[f"{comm}_NH3+GWa"], "mul", k1, Quantity(0.697615))
-        k4 = rep.add(k[f"{comm}_NH3"].append("c"), "expand_dims", k1, {"c": [comm]})
+        k4 = rep.add(k[f"{comm}_NH3"].append("c"), "expand_dims", k2, {"c": [comm]})
         keys.append(k4)
     k = rep.add(k["non_energy_tecs"].append("c"), "concat", k9, *keys)
     k1 = rep.add(k["non_energy_tecs+GWa"], "assign_units", k, units="GWa")
