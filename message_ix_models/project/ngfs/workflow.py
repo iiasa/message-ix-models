@@ -43,6 +43,32 @@ def _get_ngfs_config(context):
     
     return context.ngfs_config
 
+def report(context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Report the scenario."""
+    from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
+    from message_ix_models.model.material.report.run_reporting import (
+        run as _materials_report,
+    )
+
+    run_config = "materials_daccs_run_config.yaml"
+    # run_config = "materials_daccs_bmt_run_config.yaml" # TODO: replace with bmt config later
+
+    def _legacy_report(scen):
+        iamc_report_hackathon.report(
+            mp=scen.platform,
+            scen=scen,
+            merge_hist=True,
+            run_config=run_config,
+        )
+
+    scenario.check_out(timeseries_only=True)
+    df = _materials_report(scenario, region="R12_GLB", upload_ts=True)
+    scenario.commit("Add materials reporting")
+
+    _legacy_report(scenario)
+    
+    return scenario
 
 def placeholder(
     context: Context, scenario: message_ix.Scenario
@@ -405,7 +431,7 @@ def generate(context: Context) -> Workflow:
         wf.add_step(
             f"{scen} reported",
             f"{scen} solved",
-            placeholder,
+            report,
         )
 
     return wf
