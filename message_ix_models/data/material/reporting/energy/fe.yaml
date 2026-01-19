@@ -558,33 +558,33 @@ vars:
     filter:
       { technology: [ dri_gas_ccs_steel ], mode: [ M1 ], commodity: gas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_dri_ccs
   Industry|Iron and Steel|DRI|w/ CCS|Gases|Biomass:
     filter:
       { technology: [ dri_gas_ccs_steel ], mode: [ M1 ], commodity: biogas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_bio_dri_wo_ccs
   Industry|Iron and Steel|DRI|w/o CCS|Electricity:
     filter:
       { technology: [ dri_gas_ccs_steel ],
         mode: [ M1 ], commodity: electr, level: final }
     short:
-      fe_pe_steel_el_dri
+      fe_pe_steel_el_dri_wo_ccs
   Industry|Iron and Steel|DRI|w/o CCS|Gases|Gas:
     filter:
       { technology: [ dri_gas_steel ], mode: [ M1 ], commodity: gas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_dri_wo_ccs
   Industry|Iron and Steel|DRI|w/o CCS|Gases|Biomass:
     filter:
       { technology: [ dri_gas_steel ], mode: [ M1 ], commodity: biogas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_bio_dri_wo_ccs
   Industry|Iron and Steel|DRI|Solids|Coal:
     filter:
       { technology: [ dri_coal_steel ], mode: M1, commodity: coal, level: final }
     short:
-      fe_pe_steel_dri_coal
+      fe_pe_steel_dri_coal_dri
   #EAF
   Industry|Iron and Steel|EAF|Electricity:
     filter:
@@ -602,12 +602,12 @@ vars:
     filter:
       { technology: [ eaf_steel ], mode: [ M1 ], commodity: biogas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_eaf_pig_gas_bio
   Industry|Iron and Steel|EAF|Pig Iron|Gases|Gas:
     filter:
       { technology: [ eaf_steel ], mode: [ M1 ], commodity: gas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_eaf_pig_gas
   Industry|Iron and Steel|EAF|Scrap|Electricity:
     filter:
       { technology: [ eaf_steel ],
@@ -618,12 +618,12 @@ vars:
     filter:
       { technology: [ eaf_steel ], mode: [ M2 ], commodity: biogas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_eaf_scrap_gas_bio
   Industry|Iron and Steel|EAF|Scrap|Gases|Gas:
     filter:
       { technology: [ eaf_steel ], mode: [ M2 ], commodity: gas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_eaf_scrap_gas
   Industry|Iron and Steel|EAF|Sponge Iron|Electricity:
     filter:
       { technology: [ eaf_steel ],
@@ -634,12 +634,12 @@ vars:
     filter:
       { technology: [ eaf_steel ], mode: [ M3 ], commodity: biogas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_eaf_dri_gas_bio
   Industry|Iron and Steel|EAF|Sponge Iron|Gases|Gas:
     filter:
       { technology: [ eaf_steel ], mode: [ M3 ], commodity: gas, level: final }
     short:
-      fe_pe_steel_gas
+      fe_pe_steel_gas_eaf_dri_gas
 
   Industry|Iron and Steel|Other|Electricity:
     filter:
@@ -650,12 +650,12 @@ vars:
 
   Industry|Iron and Steel|Gases|Gas:
     filter:
-      { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: gas, level: final }
+      { technology: [ eaf_steel, dri_gas_steel, dri_gas_ccs_steel ], mode: [ M1, M2, M3 ], commodity: gas, level: final }
     short:
       fe_pe_steel_gases_gas
   Industry|Iron and Steel|Gases|Biomass:
     filter:
-      { technology: [ eaf_steel, dri_gas_steel ], mode: [ M1, M2, M3 ], commodity: biogas, level: final }
+      { technology: [ eaf_steel, dri_gas_steel, dri_gas_ccs_steel ], mode: [ M1, M2, M3 ], commodity: biogas, level: final }
     short:
       fe_pe_steel_gases_bio
   Industry|Iron and Steel|Gases|Coal:
@@ -824,7 +824,7 @@ vars:
     filter: { technology: missing, commodity: missing, level: missing, mode: missing }
     short: fe_bunk_elec
   Bunkers|Gases:
-    filter: { technology: LNG_bunker, commodity: gas, level: final, mode: [ shp_bulk_short_current,
+    filter: { technology: LNG_bunker, commodity: LNG, level: final, mode: [ shp_bulk_short_current,
                                                                             shp_bulk_short_future,
                                                                             shp_bulk_long_current,
                                                                             shp_bulk_long_future,
@@ -1039,7 +1039,7 @@ vars:
     filter: { technology: biomass_rc, commodity: biomass, level: final, mode: M1 }
     short: fe_rc_bio_rc
   Residential and Commercial|Solids|Biomass|Traditional:
-    filter: { technology: biomass_nc, commodity: biomass, level: final, mode: M1 }
+    filter: { technology: biomass_nc, commodity: biomass, level: primary, mode: M1 }
     short: fe_rc_bio_nc
   Residential and Commercial|Solids|Coal:
     filter: { technology: coal_rc, commodity: coal, level: final, mode: M1 }
@@ -1074,7 +1074,7 @@ vars:
     filter: { technology: missing, commodity: missing, level: missing, mode: missing }
     short: fe_trp_lgas
   Transportation|Liquids|Oil|Light:
-    filter: { technology: loil_trp, commodity: lightoil, level: final, mode: [ methanol, ethanol ] }
+    filter: { technology: loil_trp, commodity: lightoil, level: final, mode: [ M1, ethanol ] }
     short: fe_trp_loil
   Transportation|Liquids|Oil|Heavy:
     filter: { technology: foil_trp, commodity: fueloil, level: final, mode: M1 }

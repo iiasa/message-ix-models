@@ -95,12 +95,7 @@ def run_pe(rep: Reporter, model_name: str, scen_name: str):
         config.unit,
         config.mapping,
     )
-    df_final = (
-        df.filter(unit="dimensionless", keep=False)
-        .convert_unit("GWa", "EJ")
-        .timeseries()
-        .reset_index()
-    )
+    df_final = df.filter(unit="dimensionless", keep=False).timeseries().reset_index()
     df_final.unit = "EJ/yr"
     return df_final
 
