@@ -1,0 +1,9 @@
+# Freight activity
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: Gt km
+#
+node,     value
+Austria,  3000
