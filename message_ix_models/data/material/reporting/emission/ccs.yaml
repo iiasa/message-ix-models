@@ -16,16 +16,16 @@ vars:
     short: cc_dac_sorb
 
   Energy|Demand|Industry|Chemicals|Biomass|Ammonia:
-    filter: { technology: [ biomass_NH3_ccs ], mode: feedstock, commodity: bic_co2, level: secondary }
+    filter: { technology: [ biomass_NH3_ccs ], mode: M1, commodity: bic_co2, level: secondary }
     short: cc_chem_bio_nh3
   Energy|Demand|Industry|Chemicals|Biomass|Methanol:
-    filter: { technology: [ meth_bio_ccs ], mode: M1, commodity: bic_co2, level: secondary }
+    filter: { technology: [ meth_bio_ccs ], mode: feedstock, commodity: bic_co2, level: secondary }
     short: cc_chem_bio_meth
   Energy|Demand|Industry|Chemicals|Fossil|Ammonia:
     filter: { technology: [ coal_NH3_ccs, gas_NH3_ccs ], mode: M1, commodity: fic_co2, level: secondary }
     short: cc_chem_fos_nh3
   Energy|Demand|Industry|Chemicals|Fossil|Methanol:
-    filter: { technology: [ meth_ng_ccs, meth_coal_ccs ], mode: M1, commodity: fic_co2, level: secondary }
+    filter: { technology: [ meth_ng_ccs, meth_coal_ccs ], mode: feedstock, commodity: fic_co2, level: secondary }
     short: cc_chem_fos_meth
 
   Energy|Demand|Industry|Iron and Steel|Fossil:
