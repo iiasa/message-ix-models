@@ -9,11 +9,39 @@ import message_ix
 
 from message_ix_models import Context
 from message_ix_models.workflow import Workflow
+from message_ix_models.project.ngfs import interpolate_c_price
+# TODO: think about if it makes sense to integrate the interpolate_c_price function into the scenario runner
 
 
 log = logging.getLogger(__name__)
 
 # Functions for individual workflow steps
+
+
+def _get_ngfs_config(context):
+    """Load and cache NGFS config from config.yaml.
+    
+    The config is stored in context.ngfs_config to avoid reloading.
+    
+    Parameters
+    ----------
+    context : Context
+        Context object where config will be cached
+        
+    Returns
+    -------
+    dict
+        The model config dictionary from config.yaml
+    """
+    if not hasattr(context, 'ngfs_config') or context.ngfs_config is None:
+        from message_ix_models.util import private_data_path
+        import yaml
+        
+        config_file = private_data_path('projects', 'ngfs', 'config.yaml')
+        with open(config_file) as f:
+            context.ngfs_config = yaml.safe_load(f)['MESSAGEix-GLOBIOM 2.2-NGFS-R12']
+    
+    return context.ngfs_config
 
 
 def placeholder(
@@ -23,11 +51,15 @@ def placeholder(
     return scenario
 
 def make_scenario_runner(context):
-
+    """Create and configure a ScenarioRunner instance for NGFS workflows.
+    
+    This function sets up the necessary context attributes and creates a ScenarioRunner
+    instance that is used to build and run NGFS policy scenarios. It also pre-populates
+    the policy_baseline scenario if it doesn't already exist.
+    """
     from message_data.model.scenario_runner import ScenarioRunner
-    from message_ix_models.util import private_data_path
-    import yaml
-
+    
+    # Get biomass_trade setting from context, default to False if not set
     try:
         biomass_trade = context.biomass_trade
     except AttributeError:
@@ -39,18 +71,17 @@ def make_scenario_runner(context):
     context.policy_config = 'ngfs_p6_config.yaml'
     context.region_id = "R12"
 
-    # Load slack data from config.yaml
-    config_file = private_data_path('projects', 'ngfs', 'config.yaml')
-    with open(config_file) as f:
-        model_config = yaml.safe_load(f)['MESSAGEix-GLOBIOM 2.2-NGFS-R12']
+    # Load config (cached in context for reuse)
+    model_config = _get_ngfs_config(context)
 
+    # Slack data is selected based on the slack scenario from config
     sr = ScenarioRunner(
         context,
         slack_data=model_config['policy_slacks'][model_config['slack_scn']][context.ssp],
         biomass_trade=biomass_trade,
     )
 
-    # Pre-populate policy_baseline 
+    # Pre-populate policy_baseline scenario if it does not exist
     if "policy_baseline" not in sr.scen:
         sr.scen["policy_baseline"] = message_ix.Scenario(
             mp=sr.mp,
@@ -61,6 +92,25 @@ def make_scenario_runner(context):
 
     return sr
 
+def solve(
+    context: Context, scenario: message_ix.Scenario, model="MESSAGE"
+) -> message_ix.Scenario:
+    """Plain solve."""
+    message_ix.models.DEFAULT_CPLEX_OPTIONS = {
+        "advind": 0,
+        "lpmethod": 4,
+        "threads": 4,
+        "epopt": 1e-6,
+        "scaind": -1,
+        # "predual": 1,
+        "barcrossalg": 0,
+    }
+
+    # scenario.solve(model, gams_args=["--cap_comm=0"])
+    scenario.solve(model)
+    scenario.set_as_default()
+
+    return scenario
 
 def add_NPi2030(
     context: Context, scenario: message_ix.Scenario
@@ -76,6 +126,8 @@ def add_NPi2030(
         slice_year=2025, 
         policy_year=2030, 
         target_kind="Target",
+        run_reporting = False,
+        solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
     )
     
     sr.run_all()
@@ -100,28 +152,36 @@ def add_NDC2030(context, scenario):
 
     return sr.scen["INDC2030i"]
 
+def add_NPiREF(context, scenario):
+    """Add NPi forever.
+    """
+    # TODO:not using _post_target for now
+    # sr = make_scenario_runner(context)
+    # sr.add("NPiREF", 
+    #        "NPi2030", 
+    #        pst=False,
+    #        slice_year=2030,
+    # ) 
 
-def solve(
-    context: Context, scenario: message_ix.Scenario, model="MESSAGE"
-) -> message_ix.Scenario:
-    """Plain solve."""
-    message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-        "advind": 0,
-        "lpmethod": 4,
-        "threads": 4,
-        "epopt": 1e-6,
-        "scaind": -1,
-        # "predual": 1,
-        "barcrossalg": 0,
-    }
+    # sr.run_all()
+    # return sr.scen["NPiREF"]
 
-    # scenario.solve(model, gams_args=["--cap_comm=0"])
-    scenario.solve(model)
+    # Use interpolate for carbon prices instead
+    model_config = _get_ngfs_config(context)
+    prc_terminal = model_config['h_cpol']['prc_terminal']
+    prc_start_scen = "NPi2030"
+    sc_ref = message_ix.Scenario(scenario.platform, scenario.model, prc_start_scen)
+
+    df_price = interpolate_c_price(sc_ref, price_2100=prc_terminal)
+
+    with scenario.transact("Interpolate C-price"):
+        scenario.add_par("tax_emission", df_price)
+        log.info(f"Added interpolated carbon prices to terminal year {prc_terminal} USD/tC")
+
+    solve(context, scenario)
     scenario.set_as_default()
 
     return scenario
-
-
 
 
 # NGFS P6 scenarios:
@@ -186,8 +246,39 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "h_cpol solved",
         "NPi2030 solved",
-        placeholder,
+        add_NPiREF,
         target=f"{model_name}/h_cpol",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "d_strain solved",
+        "h_cpol solved",
+        placeholder,
+        target=f"{model_name}/d_strain",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "NPi2025 solved",
+        "base reported",
+        placeholder,
+        target=f"{model_name}/NPi2025",
+    )
+
+    wf.add_step(
+        "h_cpol_2025 solved",
+        "NPi2025 solved",
+        placeholder,
+        target=f"{model_name}/h_cpol_2025",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "d_strain_2025 solved",
+        "h_cpol_2025 solved",
+        placeholder,
+        target=f"{model_name}/d_strain_2025",
         clone=dict(keep_solution=False),
     )
 
@@ -228,29 +319,6 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
-    wf.add_step(
-        "d_strain solved",
-        "glasgow_partial_2030 solved",
-        placeholder,
-        target=f"{model_name}/d_strain",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "glasgow_partial_2025 solved",
-        "base reported",
-        placeholder,
-        target=f"{model_name}/glasgow_partial_2025",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "d_strain_2025 solved",
-        "glasgow_partial_2025 solved",
-        placeholder,
-        target=f"{model_name}/d_strain_2025",
-        clone=dict(keep_solution=False),
-    )
 
     wf.add_step(
         "o_2c built",
