@@ -4,7 +4,7 @@ weu_gas_imports:
     - R12_WEU
     - R12_EEU
   value:
-    0.5
+    0.3
   technologies:
     - gas_piped_exp_weu
     - LNG_shipped_exp_weu
