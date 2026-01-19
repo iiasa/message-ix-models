@@ -126,6 +126,7 @@ def hhi_constraint_run(project_name: str,
         for c in ['growth_activity_up', 'growth_activity_lo', 'initial_activity_up', 'initial_activity_lo']:
             rempar = hhi_scenario.par(c, filters = {'technology': ['LNG_shipped_exp_weu', 'gas_piped_exp_weu',
                                                                    'LNG_shipped_exp_eeu', 'gas_piped_exp_eeu']})
+            rempar = rempar[rempar['node_loc'] == 'R12_FSU']                        
             hhi_scenario.remove_par(c, rempar)
         
     log.info(f"Solving HHI scenario {k}")
