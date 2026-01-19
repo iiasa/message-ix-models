@@ -121,8 +121,10 @@ sensitivities:
       - R12_WEU
       - R12_EEU
     technologies:
-      - gas_piped
-      - LNG_shipped
+      - gas_piped_exp_eeu
+      - gas_piped_exp_weu
+      - LNG_shipped_exp_eeu
+      - LNG_shipped_exp_weu
       
   FSU_EUR_NAM_PAO:
     exporters:
@@ -133,4 +135,9 @@ sensitivities:
       - R12_PAO
       - R12_NAM
     technologies:
-      - LNG_shipped
+      - gas_piped_exp_eeu
+      - gas_piped_exp_weu
+      - LNG_shipped_exp_eeu
+      - LNG_shipped_exp_weu
+      - LNG_shipped_exp_nam
+      - LNG_shipped_exp_pao

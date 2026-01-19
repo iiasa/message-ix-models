@@ -37,9 +37,10 @@ def friction_dictionary(sensitivity_scenario: str,
     
     bound_out = pd.DataFrame()
     for tec in sens_techs:
-        sens_j_ref = [j.replace("R12_", "").lower() for j in sens_j]
-        tec_list = [tec + '_exp_' + j for j in sens_j_ref]
-
+        #sens_j_ref = [j.replace("R12_", "").lower() for j in sens_j]
+        #tec_list = [tec + '_exp_' + j for j in sens_j_ref]
+        tec_list = sens_techs
+        
         basedf = pd.DataFrame(product(sens_i, tec_list,
                                   fric_years,
                                   ["M1"],
@@ -97,11 +98,11 @@ def run_friction_scenario(base_scenario_name: str,
         target_scenario.solve(quiet = False)
 
 # Run scenarios
-run_friction_scenario('SSP2', 'FSU_EUR', 2110)
-run_friction_scenario('SSP2', 'FSU_EUR', 2040)
+#run_friction_scenario('SSP2', 'FSU_EUR', 2110)
+#run_friction_scenario('SSP2', 'FSU_EUR', 2040)
 
-run_friction_scenario('SSP2_hhi_HC_imports', 'FSU_EUR', 2110)
-run_friction_scenario('SSP2_hhi_WS_l90p_supply', 'FSU_EUR', 2110)
+#run_friction_scenario('SSP2_hhi_HC_imports', 'FSU_EUR', 2110)
+#run_friction_scenario('SSP2_hhi_WS_l90p_supply', 'FSU_EUR', 2110)
 
 run_friction_scenario('SSP2', 'FSU_EUR_NAM_PAO', 2110)
 
