@@ -2,11 +2,14 @@
 weu_gas_imports:
   nodes:
     - R12_WEU
+    - R12_EEU
   value:
     0.5
   technologies:
     - gas_piped_exp_weu
     - LNG_shipped_exp_weu
+    - gas_piped_exp_eeu
+    - LNG_shipped_exp_eeu
     - h2_mix # dummy
   commodities:
     gas:

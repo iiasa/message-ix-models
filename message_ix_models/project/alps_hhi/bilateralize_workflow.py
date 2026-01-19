@@ -57,11 +57,11 @@ for con in constraint_pars:
         print(f"......{tec}")
         df = pd.read_csv(os.path.join(package_data_path("alps_hhi", "scenario_updates", tec), con + ".csv"))
 
-        df['omit'] = 0
-        df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu',
-                                                     'gas_piped_exp_weu']) == False) &\
-                              (df['node_loc'] != 'R12_WEU'),
-                             1, 0)
+        df['omit'] = 1
+        df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu', 'gas_piped_exp_weu', 
+                                                     'LNG_shipped_exp_eeu', 'gas_piped_exp_eeu'])) |\
+                              (df['node_loc'].isin(['R12_WEU', 'R12_EEU'])),
+                             0, df['omit'])
         df = df[df['omit'] == 0]
         df = df.drop(columns = ['omit'])
         
