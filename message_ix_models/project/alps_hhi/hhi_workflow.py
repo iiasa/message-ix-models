@@ -24,12 +24,12 @@ hhi_constraint_run(project_name = 'alps_hhi',
                    target_scenario_add = 'imports',
                    hhi_config_name = 'eur_gas_imports.yaml')
 
-hhi_constraint_run(project_name = 'alps_hhi', 
-                   config_name = 'config.yaml',
-                   base_model = 'alps_hhi',
-                   base_scenario = 'SSP2',
-                   target_scenario_add = 'supply',
-                   hhi_config_name = 'eur_gas_supply.yaml')
+#hhi_constraint_run(project_name = 'alps_hhi', 
+#                   config_name = 'config.yaml',
+#                   base_model = 'alps_hhi',
+#                   base_scenario = 'SSP2',
+#                   target_scenario_add = 'supply',
+#                   hhi_config_name = 'eur_gas_supply.yaml')
 
 # Run HHI weight sum workflow on SSP2
 #hhi_weightsum_run(project_name = 'alps_hhi', 

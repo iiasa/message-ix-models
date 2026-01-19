@@ -114,16 +114,16 @@ def hhi_constraint_run(project_name: str,
                                'level', 'year_act',
                                'value', 'unit']].drop_duplicates().reset_index(drop = True)
     hhi_limit_df = hhi_limit_df.rename(columns = {'node_loc': 'node'})
-    hhi_limit_df = hhi_limit_df[hhi_limit_df['year_act'] > 2030] # SWITCH TO 2025
+    hhi_limit_df = hhi_limit_df[hhi_limit_df['year_act'] > 2025]
     for k in hhi_commodities:
         hhi_limit_df.loc[hhi_limit_df['commodity'] == k, 'value'] = hhi_config[k]['value']
     hhi_limit_df['time'] = 'year'
 
     with hhi_scenario.transact("Add HHI limit"):
         hhi_scenario.add_par('hhi_limit', hhi_limit_df)
-
+        
     with hhi_scenario.transact("remove constraints on traded coms"):
-        for c in ['growth_activity_up', 'growth_activity_lo']:
+        for c in ['growth_activity_up', 'growth_activity_lo', 'initial_activity_up', 'initial_activity_lo']:
             rempar = hhi_scenario.par(c, filters = {'technology': ['LNG_shipped_exp_weu', 'gas_piped_exp_weu',
                                                                    'LNG_shipped_exp_eeu', 'gas_piped_exp_eeu']})
             hhi_scenario.remove_par(c, rempar)
