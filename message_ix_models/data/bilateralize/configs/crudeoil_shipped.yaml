@@ -1,0 +1,52 @@
+#######################
+# Crude shipped trade #
+########E##############
+crudeoil_shipped_trade: # Name of covered trade technology (e.g., oil)
+  base_trade_technology:
+    - oil_bal
+    - oil_trd
+  trade_technology:
+    crudeoil_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    crudeoil
+  trade_commodity_suffix:
+  trade_units:
+    GWa
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - crudeoil_tanker_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    crudeoil_tanker_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    crudeoil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - oil_extr_1
+    - oil_extr_2
+    - oil_extr_3
+    - oil_extr_4
+    - oil_extr_5
+    - oil_extr_6
+    - oil_extr_7
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    crudeoil_tanker_loil:
+      loil_tobunker
