@@ -114,7 +114,7 @@ def hhi_constraint_run(project_name: str,
                                'level', 'year_act',
                                'value', 'unit']].drop_duplicates().reset_index(drop = True)
     hhi_limit_df = hhi_limit_df.rename(columns = {'node_loc': 'node'})
-    hhi_limit_df = hhi_limit_df[hhi_limit_df['year_act'] > 2025]
+    hhi_limit_df = hhi_limit_df[hhi_limit_df['year_act'] > 2030] # SWITCH TO 2025
     for k in hhi_commodities:
         hhi_limit_df.loc[hhi_limit_df['commodity'] == k, 'value'] = hhi_config[k]['value']
     hhi_limit_df['time'] = 'year'
@@ -123,6 +123,7 @@ def hhi_constraint_run(project_name: str,
         hhi_scenario.add_par('hhi_limit', hhi_limit_df)
 
     log.info(f"Solving HHI scenario {k}")
-    hhi_scenario.solve(gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
+ 
+    hhi_scenario.solve(solve_options = {"scaind":1}, gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
 
     mp.close_db()
