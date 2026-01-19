@@ -1739,6 +1739,75 @@ lh2_t/d:
   input: [liquid hydrogen, secondary]
   output: [liquid hydrogen, final]
 
+dac_1_exports:
+  name: dac_1_exports
+  description: Direct air capture technology
+  type: secondary
+  vintaged: TRUE
+  sector: direct_air_capture
+  input: [electr, secondary]
+
+dac_2_exports:
+  name: dac_2_exports
+  description: Direct air capture technology
+  type: secondary
+  vintaged: TRUE
+  sector: direct_air_capture
+  input: [electr, secondary]
+
+dac_3_exports:
+  name: dac_3_exports
+  description: Direct air capture technology
+  type: secondary
+  vintaged: TRUE
+  sector: direct_air_capture
+  input: [gas, secondary]
+
+dac_4_exports:
+  name: dac_4_exports
+  description: Direct air capture technology
+  type: secondary
+  vintaged: TRUE
+  sector: direct_air_capture
+  input: [electr, secondary]
+
+liq_h2:
+  name: liq_h2
+  description: Hydrogen-to-liquids technology, representing Fischer-Tropsh synthesis.
+  type: secondary
+  vintaged: TRUE
+  sector: power-to-x
+  input:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+  output:
+    - [lightoil, secondary]
+    - [ht_heat, secondary]
+
+gas_h2:
+  name: gas_h2
+  description: Hydrogen-to-methane technology, representing methanation (Sabatier reaction) synthesis.
+  type: secondary
+  vintaged: TRUE
+  sector: power-to-x
+  input: [hydrogen, secondary]
+  output:
+    - [gas, secondary]
+    - [ht_heat, secondary]
+
+meth_h2:
+  name: meth_h2
+  description: Hydrogen-to-methanol technology, representing direct methanol synthesis.
+  type: secondary
+  vintaged: TRUE
+  sector: power-to-x
+  input:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+  output:
+    - [methanol, secondary]
+    - [ht_heat, secondary]
+
 back_bio_ind:
   name: back_bio_ind
   description: Backstop for diagnosing model infeasibility
