@@ -122,6 +122,12 @@ def hhi_constraint_run(project_name: str,
     with hhi_scenario.transact("Add HHI limit"):
         hhi_scenario.add_par('hhi_limit', hhi_limit_df)
 
+    with hhi_scenario.transact("remove constraints on traded coms"):
+        for c in ['growth_activity_up', 'growth_activity_lo']:
+            rempar = hhi_scenario.par(c, filters = {'technology': ['LNG_shipped_exp_weu', 'gas_piped_exp_weu',
+                                                                   'LNG_shipped_exp_eeu', 'gas_piped_exp_eeu']})
+            hhi_scenario.remove_par(c, rempar)
+        
     log.info(f"Solving HHI scenario {k}")
  
     hhi_scenario.solve(solve_options = {"scaind":1, "predual":1}, gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
