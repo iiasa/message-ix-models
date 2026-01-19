@@ -147,6 +147,7 @@ for mod, scen in [('alps_hhi', 'SSP_SSP2_v6.2'),
 
                   ('alps_hhi', 'SSP2_hhi_HC_imports'),
                   ('alps_hhi', 'SSP2_hhi_WS_l90p_imports'),
+                  ('alps_hhi', 'SSP2_hhi_HC_imports_regional'),
 
                   ('alps_hhi', 'SSP2_FSU_EUR_2110'),
                   ('alps_hhi', 'SSP2_FSU_EUR_2040'),
@@ -177,11 +178,6 @@ gas_supply_out['exporter'] = np.where(gas_supply_out['variable'].str.contains('S
                                       gas_supply_out['variable'].str.replace('Shipped LNG|', ''),
                                       gas_supply_out['exporter'])
 
-gas_supply_out['legend'] = gas_supply_out['exporter'] + ' (' + gas_supply_out['fuel_type'] + ')'
-gas_supply_out['legend'] = np.where(gas_supply_out['variable'].str.contains('Domestic'),
-                                    "Domestic (" + gas_supply_out['variable'].str.replace('Domestic|', '') + ")",
-                                    gas_supply_out['legend'])
-
 gas_supply_out_tot = gas_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
 gas_supply_out_tot = gas_supply_out_tot.rename(columns = {'value': 'total'})
 gas_supply_out = gas_supply_out.merge(gas_supply_out_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
@@ -199,6 +195,11 @@ gas_exports['value'] *= -1 # Set to negative
 gas_supply_out = gas_supply_out[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
 gas_exports = gas_exports[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
 gas_supply_out = pd.concat([gas_supply_out, gas_exports])
+
+gas_supply_out['legend'] = gas_supply_out['exporter'] + ' (' + gas_supply_out['fuel_type'] + ')'
+gas_supply_out['legend'] = np.where(gas_supply_out['variable'].str.contains('Domestic'),
+                                    "Domestic (" + gas_supply_out['variable'].str.replace('Domestic|', '') + ")",
+                                    gas_supply_out['legend'])
 
 gas_supply_out.to_csv(package_data_path('alps_hhi', 'reporting', 'reporting.csv'))
 
