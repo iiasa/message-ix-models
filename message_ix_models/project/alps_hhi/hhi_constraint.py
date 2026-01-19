@@ -124,6 +124,6 @@ def hhi_constraint_run(project_name: str,
 
     log.info(f"Solving HHI scenario {k}")
  
-    hhi_scenario.solve(solve_options = {"scaind":1}, gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
+    hhi_scenario.solve(solve_options = {"scaind":1, "predual":1}, gams_args = ['--HHI_CONSTRAINT=1'], quiet = False)
 
     mp.close_db()
