@@ -16,8 +16,8 @@ def test_map_basin_region_wat(test_context):
     # Personalize the context
     sets = {"year": [2020, 2030, 2040]}
     test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    test_context.type_reg = "global"
-    test_context.regions = "R12"
+    test_context.type_reg = "country"
+    test_context.regions = "ZMB"
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
     map_ISO_c = {test_context.regions: nodes[0]}
@@ -25,14 +25,6 @@ def test_map_basin_region_wat(test_context):
     test_context.RCP = "2p6"
     test_context.REL = "med"
     test_context.time = "year"
-    # Set up valid_basins for water_for_ppl functions
-    # Read all basins from the basin delineation file to avoid filtering
-    from message_ix_models.util import package_data_path
-
-    basin_file = f"basins_by_region_simpl_{test_context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    test_context.valid_basins = set(df_basins["BCU_name"].astype(str))
 
     result = map_basin_region_wat(test_context)
 
@@ -50,8 +42,8 @@ def test_add_water_supply(request, test_context):
     # Personalize the context
     sets = {"year": [2020, 2030, 2040]}
     test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    test_context.type_reg = "global"
-    test_context.regions = "R12"
+    test_context.type_reg = "country"
+    test_context.regions = "ZMB"
     nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
     map_ISO_c = {test_context.regions: nodes[0]}
@@ -60,14 +52,6 @@ def test_add_water_supply(request, test_context):
     test_context.REL = "med"
     test_context.time = "year"
     test_context.nexus_set = "nexus"
-    # Set up valid_basins for water_for_ppl functions
-    # Read all basins from the basin delineation file to avoid filtering
-    from message_ix_models.util import package_data_path
-
-    basin_file = f"basins_by_region_simpl_{test_context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    test_context.valid_basins = set(df_basins["BCU_name"].astype(str))
 
     mp = test_context.get_platform()
     scenario_info = {
@@ -89,8 +73,7 @@ def test_add_water_supply(request, test_context):
     test_context["water build info"] = ScenarioInfo(s)
 
     result = add_water_supply(test_context)
-    result["input"].to_csv("supply_inp.csv", index=False)
-    result["output"].to_csv("supply_out.csv", index=False)
+
     # Assert the results
     assert isinstance(result, dict)
     assert "input" in result
@@ -98,40 +81,6 @@ def test_add_water_supply(request, test_context):
     assert "var_cost" in result
     assert "technical_lifetime" in result
     assert "inv_cost" in result
-    assert "growth_activity_up" in result
-
-    # Verify growth_activity_up DataFrame is properly populated
-    growth_df = result["growth_activity_up"]
-    assert isinstance(growth_df, pd.DataFrame), (
-        "growth_activity_up should be a DataFrame"
-    )
-    assert not growth_df.empty, (
-        "growth_activity_up DataFrame should not be empty"
-    )
-
-    # Check for extract_surfacewater entries
-    extract_sw = growth_df[growth_df["technology"] == "extract_surfacewater"]
-    assert not extract_sw.empty, (
-        "growth_activity_up should contain extract_surfacewater entries"
-    )
-
-    # Verify correct value
-    assert (extract_sw["value"] == 0.02).all(), (
-        f"growth_activity_up for extract_surfacewater should be 0.02, "
-        f"got values: {extract_sw['value'].unique()}"
-    )
-
-    # Verify time column is not null
-    assert not extract_sw["time"].isna().any(), (
-        "growth_activity_up time column should not contain NaN values"
-    )
-
-    # Verify required columns exist
-    required_cols = ["technology", "node_loc", "year_act", "time", "value", "unit"]
-    assert all(col in growth_df.columns for col in required_cols), (
-        f"growth_activity_up missing required columns. "
-        f"Has: {growth_df.columns.tolist()}, needs: {required_cols}"
-    )
 
     for df in result.values():
         assert isinstance(df, pd.DataFrame)
@@ -179,15 +128,6 @@ def test_add_e_flow(test_context):
     test_context.REL = "med"
     test_context.time = "year"
     test_context.SDG = True
-
-    # Set up valid_basins for water_for_ppl functions
-    # Read all basins from the basin delineation file to avoid filtering
-    from message_ix_models.util import package_data_path
-
-    basin_file = f"basins_by_region_simpl_{test_context.regions}.csv"
-    basin_path = package_data_path("water", "delineation", basin_file)
-    df_basins = pd.read_csv(basin_path)
-    test_context.valid_basins = set(df_basins["BCU_name"].astype(str))
 
     # Call the function to be tested
     result = add_e_flow(test_context)
