@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  "in:nl-t-ya-m-c-l:FE5"
+  "in:nl-t-ya-m-c-l:FE6"
 
 iamc_prefix:
   Final Energy|
@@ -445,3 +445,8 @@ level_1:
     short: fe_meth_gases
     components:
       [ fe_meth_gas, fe_meth_gas_bio ]
+
+  Industry|Solar:
+    short: fe_pe_solar
+    components:
+      [ fe_pe_other_solar ]

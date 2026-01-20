@@ -126,14 +126,6 @@ def run_fe_reporting(rep: "Reporter", model: str, scenario: str) -> pd.DataFrame
         )
     )
 
-    config = load_config("energy", "fe_solar")
-    df = pyam_df_from_rep(rep, config.var, config.mapping)
-    dfs.append(
-        format_reporting_df(
-            df, config.iamc_prefix, model, scenario, config.unit, config.mapping
-        )
-    )
-
     # py_df_all = add_chemicals_to_final_energy_variables(dfs, rep, model, scenario)
     py_df_all = pyam.concat(dfs)
     py_df_all = split_fe_other(rep, py_df_all, model, scenario)

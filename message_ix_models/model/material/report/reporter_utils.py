@@ -1259,7 +1259,9 @@ def add_fe_key(rep: "Reporter") -> Key:
     )
     rep.add(k["FE3"], "sub", k["FE2+GWa"], non_energy)
     rep.add(k["FE5"], "concat", k["FE3"], k4)
-    return k["FE5"]
+    k_solar = fe_solar_integrated(rep)
+    rep.add(k["FE6"], "concat", k["FE5"], k_solar)
+    return k["FE6"]
 
 
 def concat_hist_and_act(rep: "Reporter"):
@@ -1313,6 +1315,30 @@ def add_eff(rep: "Reporter"):
     k2 = Key("input:nl-t-ya-m-c")
     k3 = rep.add("eff", "div", k_el[0].drop("c"), k2)
     rep.add("eff+%", "mul", k3, Quantity(100))
+
+
+def fe_solar_integrated(rep) -> Key:
+    solar_integrated = [
+        "solar_i",
+        "solar_rc",
+        "solar_res_rt_hist_2025",
+        "solar_res_rt_hist_2020",
+        "solar_res_rt_hist_2015",
+        "solar_res_rt_hist_2010",
+        "solar_res_rt_hist_2005",
+        "solar_res_rt_hist_2000",
+        "solar_res_RT8",
+        "solar_res_RT7",
+        "solar_res_RT6",
+        "solar_res_RT5",
+        "solar_res_RT4",
+        "solar_res_RT3",
+        "solar_res_RT2",
+        "solar_res_RT1",
+    ]
+    k = Key(f"{OUT}:nl-t-ya-m-c-l")
+    k1 = rep.add(k["solar_integrated"], "select", k, {"t": solar_integrated})
+    return k1
 
 
 if __name__ == "__main__":

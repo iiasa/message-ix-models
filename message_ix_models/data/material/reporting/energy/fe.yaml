@@ -3,7 +3,7 @@
 # each variable specifies a list of filter
 
 var:
-  "in:nl-t-ya-m-c-l:FE5"
+  "in:nl-t-ya-m-c-l:FE6"
 
 iamc_prefix:
   Final Energy|
@@ -1085,3 +1085,29 @@ vars:
   Transportation|Solids|Coal:
     filter: { technology: coal_trp, commodity: coal, level: final, mode: M1 }
     short: fe_trp_coal
+
+
+  Industry|Other Sector|Solar:
+    filter:
+      { technology: solar_i, mode: M1, commodity: i_therm, level: useful }
+    short:
+      fe_pe_other_solar
+  Residential and Commercial|Other:
+    filter: { technology: solar_rc, commodity: rc_therm, level: final, mode: M1 }
+    short: fe_rc_solar
+  Residential and Commercial|Electricity|Solar:
+    filter: { technology: [ solar_res_rt_hist_2025,
+                            solar_res_rt_hist_2020,
+                            solar_res_rt_hist_2015,
+                            solar_res_rt_hist_2010,
+                            solar_res_rt_hist_2005,
+                            solar_res_rt_hist_2000,
+                            solar_res_RT8,
+                            solar_res_RT7,
+                            solar_res_RT6,
+                            solar_res_RT5,
+                            solar_res_RT4,
+                            solar_res_RT3,
+                            solar_res_RT2,
+                            solar_res_RT1 ], commodity: electr, level: final_RT, mode: M1 }
+    short: fe_rc_elec_pv
