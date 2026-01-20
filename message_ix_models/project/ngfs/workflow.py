@@ -156,6 +156,15 @@ def add_NPi2030(
         solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
     )
     
+    # sr.add(
+    #     "npi_low_dem_scen", 
+    #     "NPi2030", 
+    #     slice_year=2030, 
+    #     tax_emission=200,
+    #     run_reporting = False,
+    #     solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
+    # )
+
     sr.run_all()
     
     return sr.scen["NPi2030"]
@@ -172,11 +181,42 @@ def add_NDC2030(context, scenario):
         slice_year=2025,
         policy_year=2030,
         target_kind="Target",
+        run_reporting = False,
+        solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
+    )    
+    
+    # sr.add(
+    #     "indci_low_dem_scen", 
+    #     "INDC2030i", 
+    #     slice_year=2030, 
+    #     tax_emission=250,
+    #     run_reporting = False,
+    #     solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
+    # )
+
+    sr.run_all()
+
+    return sr.scen["INDC2030i"]
+
+def add_glasgow(context, scenario, level, start_scen, slice_yr):
+    """Add Glasgow policies to the scenario.
+    """
+    sr = make_scenario_runner(context)
+   
+    target_scen = "glasgow" + "_" + level.lower() + '_' +str(slice_yr)
+    sr.add(
+        target_scen,
+        start_scen,
+        mk_INDC=True,
+        slice_year=slice_yr,
+        run_reporting = False,
+        solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
     )    
     
     sr.run_all()
 
-    return sr.scen["INDC2030i"]
+    # Return the target scenario that was created
+    return sr.scen[target_scen]
 
 def add_NPiREF(context, scenario):
     """Add NPi forever.
@@ -280,9 +320,11 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "d_strain solved",
         "h_cpol solved",
-        placeholder,
+        add_glasgow,
         target=f"{model_name}/d_strain",
-        clone=dict(keep_solution=False),
+        start_scen = "h_cpol",
+        level = "Partial",
+        slice_yr = 2030,
     )
 
     wf.add_step(
