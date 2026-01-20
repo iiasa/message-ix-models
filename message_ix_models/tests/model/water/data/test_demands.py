@@ -1,8 +1,6 @@
 import pytest
-from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.demands import (
     add_irrigation_demand,
     add_sectoral_demands,
@@ -11,172 +9,80 @@ from message_ix_models.model.water.data.demands import (
 
 
 @pytest.mark.parametrize(
-    ["SDG", "time"], [("baseline", "year"), ("ambitious", "month")]
+    "water_context",
+    [
+        {"regions": "ZMB", "type_reg": "country", "SDG": "baseline", "time": "year"},
+        {"regions": "ZMB", "type_reg": "country", "SDG": "ambitious", "time": "month"},
+    ],
+    indirect=True,
 )
-def test_add_sectoral_demands(request, test_context, SDG, time):
-    # FIXME You probably want this to be part of a common setup rather than writing
-    # something like this for every test
-    # FIXME
-    # This doesn't work with ZMB because delineation/basins_country_ZMB.csv doesn't
-    # contain "IND" for any STATUS field, but this is expected in
-    # demands/get_basin_sizes(), which is required output to check which
-    # set_target_rate_develop*() should be called
-    # This doesn't work with R11 or R12 because
-    # demands/harmonized/R*/ssp2_m_water_demands.csv doesn't exist
-    test_context.SDG = SDG
-    test_context.type_reg = "country"
-    test_context.regions = "ZMB"
-    nodes = get_codes(f"node/{test_context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
-    test_context.map_ISO_c = {test_context.regions: nodes[0]}
-    test_context.time = time
+def test_add_sectoral_demands(water_context, water_scenario, assert_message_params):
+    """Test add_sectoral_demands with country model configuration.
 
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": f"{request.node.name}/test water model",
-        "scenario": f"{request.node.name}/test water scenario",
-        "version": "new",
-    }
-    s = Scenario(**scenario_info)
-    s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("year", [2020, 2030, 2040])
+    Note: ZMB doesn't have complete data for all STATUS fields, and R11/R12
+    lack harmonized ssp2_m_water_demands.csv files.
+    """
+    result = add_sectoral_demands(context=water_context)
 
-    # FIXME same as above
-    test_context["water build info"] = ScenarioInfo(s)
+    assert_message_params(result)
 
-    # Call the function to be tested
-    result = add_sectoral_demands(context=test_context)
-
-    # Assert the results
-    assert isinstance(result, dict)
+    # Check expected keys
     assert all(
-        key
-        in (
-            "demand",
-            "historical_new_capacity",
-            "historical_activity",
-            "share_commodity_lo",
-        )
+        key in ("demand", "historical_new_capacity", "historical_activity", "share_commodity_lo")
         for key in result.keys()
     )
-    assert all(
-        col in result["historical_new_capacity"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "node_loc",
-            "year_vtg",
-        ]
-    )
+
+    # Validate demand columns
     assert all(
         col in result["demand"].columns
         for col in ["value", "unit", "level", "commodity", "node", "time", "year"]
     )
 
-    # Check for NaN values in DataFrames
-    assert not result["demand"]["value"].isna().any(), (
-        "demand DataFrame contains NaN values"
-    )
-    assert not result["historical_new_capacity"]["value"].isna().any(), (
-        "historical_new_capacity DataFrame contains NaN values"
-    )
-
-    # Check for duplicates in DataFrames
-    demand_duplicates = result["demand"].duplicated().sum()
-    assert demand_duplicates == 0, (
-        f"demand DataFrame contains {demand_duplicates} duplicate rows"
-    )
-
-    hnc_duplicates = result["historical_new_capacity"].duplicated().sum()
-    assert hnc_duplicates == 0, (
-        f"historical_new_capacity DataFrame contains {hnc_duplicates} duplicate rows"
+    # Validate historical_new_capacity columns
+    assert all(
+        col in result["historical_new_capacity"].columns
+        for col in ["technology", "value", "unit", "node_loc", "year_vtg"]
     )
 
 
-@pytest.mark.parametrize("time", ["year", "month"])
-def test_add_water_availability(test_context, time):
-    # FIXME You probably want this to be part of a common setup rather than writing
-    # something like this for every test
+@pytest.mark.parametrize(
+    "water_context",
+    [
+        {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "year"},
+        {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "month"},
+    ],
+    indirect=True,
+)
+def test_add_water_availability(water_context, assert_message_params):
+    """Test add_water_availability with global model configuration."""
+    # ScenarioInfo needed for year sets
     sets = {"year": [2020, 2030, 2040]}
-    test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    test_context.type_reg = "gloabl"
-    test_context.regions = "R12"
-    test_context.RCP = "2p6"
-    test_context.REL = "low"
-    test_context.time = time
+    water_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
 
-    # Run the function to be tested
-    result = add_water_availability(context=test_context)
+    result = add_water_availability(context=water_context)
 
-    # Assert the results
-    assert isinstance(result, dict)
-    assert "demand" in result
-    assert "share_commodity_lo" in result
+    assert_message_params(result, expected_keys=["demand", "share_commodity_lo"])
+
+    # Validate demand columns
     assert all(
         col in result["demand"].columns
-        for col in [
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "node",
-            "time",
-            "year",
-        ]
+        for col in ["value", "unit", "level", "commodity", "node", "time", "year"]
     )
+
+    # Validate share_commodity_lo columns
     assert all(
         col in result["share_commodity_lo"].columns
-        for col in [
-            "shares",
-            "value",
-            "unit",
-            "time",
-            "node_share",
-            "year_act",
-        ]
+        for col in ["shares", "value", "unit", "time", "node_share", "year_act"]
     )
 
 
-def test_add_irrigation_demand(request, test_context):
-    # FIXME You probably want this to be part of a common setup rather than writing
-    # something like this for every test
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": f"{request.node.name}/test water model",
-        "scenario": f"{request.node.name}/test water scenario",
-        "version": "new",
-    }
-    s = Scenario(**scenario_info)
-    s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("year", [2020, 2030, 2040])
-
-    s.commit(comment="basic water add_irrigation_demand test model")
-
-    test_context.set_scenario(s)
-
-    # FIXME same as above
-    test_context["water build info"] = ScenarioInfo(s)
-
-    # Run the function to be tested
+def test_add_irrigation_demand(water_scenario, test_context, assert_message_params):
+    """Test add_irrigation_demand with basic scenario."""
     result = add_irrigation_demand(context=test_context)
 
-    # Assert the results
-    assert isinstance(result, dict)
-    assert "land_input" in result
+    assert_message_params(result, expected_keys=["land_input"])
+
     assert all(
         col in result["land_input"].columns
-        for col in [
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "node",
-            "time",
-            "year",
-        ]
+        for col in ["value", "unit", "level", "commodity", "node", "time", "year"]
     )
