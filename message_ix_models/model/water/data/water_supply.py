@@ -202,11 +202,11 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
     PATH2 = package_data_path("water", "availability", FILE2)
     df_hist = pd.read_csv(PATH2)
-    
-    # Filter to only include valid basins
-    df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
-    
-    df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
+
+    # Filter to only include valid basins (nexus mode only)
+    if context.nexus_set == "nexus":
+        df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
+        df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     if context.nexus_set == "cooling":
         # Add output df  for surfacewater supply for regions
