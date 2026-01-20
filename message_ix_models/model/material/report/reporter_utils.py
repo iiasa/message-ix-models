@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
+import pandas as pd
 from genno import Key, Quantity
 
 from message_ix_models.report import compat, prepare_reporter
@@ -405,8 +406,11 @@ def add_ccs_addon_calcs(rep: "Reporter", addon_parent_map):
         rep.add(sh[addon], "div", k, k["parents"])
 
         rep.add(k2, "select", act, {"t": parent})
-
-        rep.add(sh[f"non_{addon}_{parent}"], "sub", Quantity(1), sh[addon])
+        mi = pd.MultiIndex.from_product(
+            [rep.get("y"), [addon], rep.get("n")], names=["ya", "t", "nl"]
+        )
+        s = pd.Series(1.0, index=mi, name=None)
+        rep.add(sh[f"non_{addon}_{parent}"], "sub", Quantity(s), sh[addon])
         # 2)
         rep.add(ou[parent], "select", ou_t, {"t": parent})
         rep.add(ou_t[f"{parent}_scr"], "mul", ou[parent], sh[addon])
