@@ -150,6 +150,7 @@ def get_vintage_and_active_years(
     technical_lifetime: int | None = None,
     same_year_only: bool = False,
 ) -> pd.DataFrame:
+    """Get valid vintage and active year combinations.
 
     This implements similar logic as scenario.vintage_and_active_years() but
     uses the technical lifetime data directly instead of requiring it to be in
