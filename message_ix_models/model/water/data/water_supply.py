@@ -260,6 +260,48 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         )
         results["output"] = output_df
 
+        # Electricity input for extract_surfacewater
+        # Value: 0.018835616 GWa/km3 (mid estimate from literature)
+        inp_sw = (
+            make_df(
+                "input",
+                technology="extract_surfacewater",
+                value=0.018835616 * GWa_KM3_TO_GWa_MCM,
+                unit="GWa/MCM",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+            .pipe(same_node)
+        )
+
+        # Electricity input for extract_groundwater (depth-dependent + fixed)
+        inp_gw = (
+            make_df(
+                "input",
+                technology="extract_groundwater",
+                value=(df_gwt["GW_per_km3_per_year"].mean() + 0.043464579)
+                * GWa_KM3_TO_GWa_MCM,
+                unit="GWa/MCM",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                year_vtg=year_wat,
+                year_act=year_wat,
+            )
+            .pipe(broadcast, node_loc=node_region)
+            .pipe(same_node)
+        )
+
+        results["input"] = pd.concat([inp_sw, inp_gw], ignore_index=True)
+
     elif context.nexus_set == "nexus":
         # input data frame  for slack technology balancing equality with demands
         inp = (
