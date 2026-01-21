@@ -285,7 +285,7 @@ def _make_addon_params(input_cool: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataF
         type_addon="cooling__" + input_cool["parent_tech"].astype(str),
         value=input_cool["cooling_fraction"],
         unit="-",
-    )
+    ).drop_duplicates().reset_index(drop=True)
     addon_lo = make_matched_dfs(addon, addon_lo=1)["addon_lo"]
     return addon, addon_lo
 
@@ -316,6 +316,7 @@ def _make_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame
     """Generate capacity_factor parameter with optional climate impacts."""
     cap_fact = make_matched_dfs(inp, capacity_factor=1)["capacity_factor"]
     cap_fact["unit"] = "-"  # capacity_factor is dimensionless
+    cap_fact = cap_fact.drop_duplicates().reset_index(drop=True)
 
     if context.RCP == "no_climate":
         return cap_fact
