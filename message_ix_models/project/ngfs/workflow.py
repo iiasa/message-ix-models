@@ -10,7 +10,7 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.workflow import Workflow
 from message_ix_models.project.ngfs import interpolate_c_price
-from message_ix_models.project.engage.workflow import step_1, PolicyConfig
+from message_ix_models.project.engage.workflow import step_1, step_2, PolicyConfig
 # TODO: think about if it makes sense to integrate the interpolate_c_price function into the scenario runner
 
 
@@ -270,18 +270,6 @@ def step_1_and_solve(
     
     This function gets the scenario name from context, loads the budget from config,
     validates it, applies the budget constraint using step_1, and then solves the scenario.
-    
-    Parameters
-    ----------
-    context : Context
-        Context object containing configuration and scenario info
-    scenario : Scenario
-        The scenario to apply budget and solve
-        
-    Returns
-    -------
-    Scenario
-        The solved scenario
     """
     # Get scenario name from context and extract base name (remove _EN1 suffix if present)
     scen = context.scenario_info.get("scenario", scenario.scenario)
@@ -304,6 +292,31 @@ def step_1_and_solve(
     policy_config = PolicyConfig(label=str(budget_value), budget="calc")
     
     step_1(context, scenario, policy_config)
+    solve(context, scenario)
+    
+    return scenario
+
+def step_2_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Apply emission trajectory (step_2 of the EN 3 steps) and solve the scenario.
+    
+    This function applies the emission trajectory constraint using step_2, which
+    retrieves the CO2 emission trajectory from the solved scenario and applies it
+    as bound_emission. Then it solves the scenario.
+    
+    Note: step_2 requires the scenario to have a solution (from step_1) to retrieve
+    the emission trajectory from.
+    """
+
+    if not hasattr(context, 'run_reporting_only'):
+        context.run_reporting_only = False # step_2 uses its own scenario_runner under engage, but does not matter here
+    
+    # TODO: discuss with Paul, step_2 does not actually use any PolicyConfig attributes?
+    # Create an empty PolicyConfig to satisfy the function signature
+    policy_config = PolicyConfig()
+    
+    step_2(context, scenario, policy_config)
     solve(context, scenario)
     
     return scenario
@@ -507,9 +520,9 @@ def generate(context: Context) -> Workflow:
         wf.add_step(
             f"{scen} EN2",
             f"{scen} EN1",
-            placeholder,
+            step_2_and_solve,
             target=f"{model_name}/{scen}_EN2",
-            clone=dict(keep_solution=False),
+            clone=dict(keep_solution=True), # must have solution (to retrieve emission trajectories from)
         )
 
         wf.add_step(
