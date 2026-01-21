@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TypedDict
+from typing import TypedDict, cast
 
 import numpy as np
 import pandas as pd
@@ -721,12 +721,22 @@ def pop_water_access(
             # Process urban and rural using the same helper function
             results.extend(
                 process_rates(
-                    "urban", urban_val, region_year_rates, region, year, metadata
+                    "urban",
+                    urban_val,
+                    region_year_rates,
+                    region,
+                    year,
+                    cast(ScenarioMetadata, metadata),
                 )
             )
             results.extend(
                 process_rates(
-                    "rural", rural_val, region_year_rates, region, year, metadata
+                    "rural",
+                    rural_val,
+                    region_year_rates,
+                    region,
+                    year,
+                    cast(ScenarioMetadata, metadata),
                 )
             )
 
