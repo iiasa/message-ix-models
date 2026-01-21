@@ -81,10 +81,9 @@ def _load_scenario_and_cooling_data(
         ref_output = scen.par("output", {"technology": missing})
         if not ref_output.empty:
             # Map output columns to input column semantics
-            ref_output = ref_output.rename(columns={
-                "node_dest": "node_origin",
-                "time_dest": "time_origin"
-            })
+            ref_output = ref_output.rename(
+                columns={"node_dest": "node_origin", "time_dest": "time_origin"}
+            )
             ref_input = pd.concat([ref_input, ref_output], ignore_index=True)
 
     # Load cost/share data for later use
@@ -149,9 +148,7 @@ def _compute_cooling_rates(input_cool: pd.DataFrame) -> pd.DataFrame:
     return input_cool
 
 
-def _make_input_params(
-    input_cool: pd.DataFrame, context: "Context"
-) -> pd.DataFrame:
+def _make_input_params(input_cool: pd.DataFrame, context: "Context") -> pd.DataFrame:
     """Generate input parameter DataFrame."""
     commodity = "surfacewater" if context.nexus_set == "nexus" else "freshwater"
 
@@ -282,18 +279,22 @@ def _make_emission_factor(input_cool: pd.DataFrame) -> pd.DataFrame:
 
 def _make_addon_params(input_cool: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Generate addon_conversion and addon_lo parameters."""
-    addon = make_df(
-        "addon_conversion",
-        node=input_cool["node_loc"],
-        technology=input_cool["parent_tech"],
-        year_vtg=input_cool["year_vtg"],
-        year_act=input_cool["year_act"],
-        mode=input_cool["mode"],
-        time="year",
-        type_addon="cooling__" + input_cool["parent_tech"].astype(str),
-        value=input_cool["cooling_fraction"],
-        unit="-",
-    ).drop_duplicates().reset_index(drop=True)
+    addon = (
+        make_df(
+            "addon_conversion",
+            node=input_cool["node_loc"],
+            technology=input_cool["parent_tech"],
+            year_vtg=input_cool["year_vtg"],
+            year_act=input_cool["year_act"],
+            mode=input_cool["mode"],
+            time="year",
+            type_addon="cooling__" + input_cool["parent_tech"].astype(str),
+            value=input_cool["cooling_fraction"],
+            unit="-",
+        )
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
     addon_lo = make_matched_dfs(addon, addon_lo=1)["addon_lo"]
     return addon, addon_lo
 
@@ -364,9 +365,7 @@ def _make_investment_cost(context: "Context") -> pd.DataFrame:
 
     excluded = CONFIG["excluded_cooling_techs"]
     techs_to_remove = [
-        f"{t}{suffix}"
-        for t in excluded
-        for suffix in CONFIG["cooling_suffixes"]
+        f"{t}{suffix}" for t in excluded for suffix in CONFIG["cooling_suffixes"]
     ]
 
     cfg = Config(
@@ -393,9 +392,8 @@ def _expand_historical_params(
 ) -> dict:
     """Expand historical_activity and historical_new_capacity to cooling variants.
 
-    Uses regional average shares (not per-parent-tech) to avoid over-allocating
-    to saline cooling. Per-tech shares gave nuclear plants 50-65% saline which
-    inflated saline historical_activity by 2x, causing model to expand saline.
+    Allocates parent technology activity to cooling variants using regional average
+    shares across all cooling types, rather than per-parent-technology shares.
     """
     results = {}
     suffixes = CONFIG["cooling_suffixes"]
@@ -428,9 +426,7 @@ def _expand_historical_params(
 
     # Build share lookup: cooling_type -> region -> share
     regional_shares_long = regional_avg_shares.reset_index().melt(
-        id_vars=["cooling"],
-        var_name="node_loc",
-        value_name="share"
+        id_vars=["cooling"], var_name="node_loc", value_name="share"
     )
 
     # Get average cooling fraction per cooling type per region
@@ -446,25 +442,21 @@ def _expand_historical_params(
             continue
 
         # Expand to cooling variants
-        expanded = pd.concat([
-            parent_data.assign(technology=parent_data["technology"] + suffix)
-            for suffix in suffixes
-        ])
+        expanded = pd.concat(
+            [
+                parent_data.assign(technology=parent_data["technology"] + suffix)
+                for suffix in suffixes
+            ]
+        )
         expanded["cooling"] = expanded["technology"].str.split("__").str[1]
 
         # Merge regional average share
         expanded = expanded.merge(
-            regional_shares_long,
-            on=["cooling", "node_loc"],
-            how="left"
+            regional_shares_long, on=["cooling", "node_loc"], how="left"
         )
 
         # Merge average cooling fraction
-        expanded = expanded.merge(
-            avg_cf,
-            on=["cooling", "node_loc"],
-            how="left"
-        )
+        expanded = expanded.merge(avg_cf, on=["cooling", "node_loc"], how="left")
 
         # Apply multiplier: share × cooling_fraction (zero if missing cf)
         cf = expanded["cooling_fraction"].fillna(0)
@@ -655,9 +647,9 @@ def cool_tech(
     info = context["water build info"]
 
     # Load data
-    (
-        cooling_df, ref_input, df_node, node_region, scen, cost_share_df
-    ) = _load_scenario_and_cooling_data(context, scenario)
+    (cooling_df, ref_input, df_node, node_region, scen, cost_share_df) = (
+        _load_scenario_and_cooling_data(context, scenario)
+    )
 
     # Fill missing efficiency values
     ref_input = _fill_missing_tech_values(ref_input)
