@@ -146,7 +146,7 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
     return df.apply(func, axis=1)
 
 def get_vintage_and_active_years(
-    info: "ScenarioInfo | None",
+    info: "ScenarioInfo",
     technical_lifetime: int | None = None,
     same_year_only: bool = False,
 ) -> pd.DataFrame:
@@ -190,13 +190,18 @@ def get_vintage_and_active_years(
 
     # Memory optimization: use same-year logic for short-lived technologies
     # to reduce unused equations. Time steps are 5-year intervals pre-2060,
-    # 10-year intervals post-2060. Short lifetimes don't benefit from advance construction.
+    # 10-year intervals post-2060. Short lifetimes don't benefit from
+    # advance construction.
     kink_year = 2060
-    
-    if (technical_lifetime <= 5) or (technical_lifetime <= 10 and (yv_ya["year_act"] >= kink_year).any()):
+
+    has_post_kink = (yv_ya["year_act"] >= kink_year).any()
+    short_lived = technical_lifetime <= 5
+    medium_lived = technical_lifetime <= 10 and has_post_kink
+
+    if short_lived or medium_lived:
         # Pre-2060: use same-year if lifetime <= 5
         # Post-2060: use same-year if lifetime <= 10
-        if technical_lifetime <= 5:
+        if short_lived:
             # Same-year for entire horizon
             same_year_mask = yv_ya["year_vtg"] == yv_ya["year_act"]
             return yv_ya[same_year_mask].reset_index(drop=True)
@@ -204,16 +209,20 @@ def get_vintage_and_active_years(
             # Same-year only for post-2060, normal logic for pre-2060
             pre_kink = yv_ya[yv_ya["year_act"] < kink_year]
             post_kink = yv_ya[yv_ya["year_act"] >= kink_year]
-            
+
             # Pre-2060: normal lifetime filtering
-            pre_kink_filtered = pre_kink[(pre_kink["year_act"] - pre_kink["year_vtg"]) <= technical_lifetime]
-            
+            age = pre_kink["year_act"] - pre_kink["year_vtg"]
+            pre_kink_filtered = pre_kink[age <= technical_lifetime]
+
             # Post-2060: same-year only
-            post_kink_same_year = post_kink[post_kink["year_vtg"] == post_kink["year_act"]]
-            
-            result = pd.concat([pre_kink_filtered, post_kink_same_year], ignore_index=True)
+            same_yr = post_kink["year_vtg"] == post_kink["year_act"]
+            post_kink_same_year = post_kink[same_yr]
+
+            result = pd.concat(
+                [pre_kink_filtered, post_kink_same_year], ignore_index=True
+            )
             return result.reset_index(drop=True)
-    
+
     # Apply simple lifetime logic: year_act - year_vtg <= technical_lifetime
     condition_values = yv_ya["year_act"] - yv_ya["year_vtg"]
     valid_mask = condition_values <= technical_lifetime
